@@ -515,7 +515,8 @@ impl Analyzer<'_> {
         )?;
         type_info.type_key_history = Some(key_history);
         type_info.analysis_completed = true;
-        self.environment.record_definition(class_global.clone(), type_info);
+        self.environment.record_definition_metered(class_global.clone(), type_info,
+            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
         Ok((declaration, class_global))
     }
     /// Pinned analyzer parse-type and compiler :defrecord/:deftype retain the

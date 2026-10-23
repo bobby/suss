@@ -173,7 +173,7 @@ fn analyzer_literal_namespace_routes_keep_source_controls_cold_and_live_dispatch
             namespace:"user".into(),aliases:Default::default(),refers:Default::default(),
             used_refers:Default::default(),renamed_refers:Default::default(),excluded_core:Default::default(),
             macro_aliases:Default::default(),macro_refers:Default::default(),used_macro_refers:Default::default(),
-            renamed_macro_refers:Default::default(),declarations:Default::default(),identities:vec![],
+            renamed_macro_refers:Default::default(),declarations:Default::default(),identities:Default::default(),
         });
         let (value, controls)={
             let mut graph=AnalysisGraph::new(&bridge,&mut session);

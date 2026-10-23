@@ -18,6 +18,7 @@ pub mod artifact_identity;
 pub mod core_bindings;
 pub mod compiler_facts;
 mod namespace_revision;
+pub mod persistent;
 pub use namespace_revision::NamespaceRevision;
 pub mod compiler_names;
 pub mod aot;

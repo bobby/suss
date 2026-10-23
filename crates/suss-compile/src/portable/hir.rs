@@ -442,17 +442,19 @@ pub struct Method {
 #[derive(Debug, Clone)]
 pub struct SourceNamespace {
     pub namespace: String,
-    pub aliases: BTreeMap<String, String>,
-    pub refers: BTreeMap<String, Global>,
-    pub used_refers: BTreeSet<String>,
-    pub renamed_refers: BTreeSet<String>,
-    pub excluded_core: BTreeSet<String>,
-    pub macro_aliases: BTreeMap<String, String>,
-    pub macro_refers: BTreeMap<String, (String, String)>,
-    pub used_macro_refers: BTreeSet<String>,
-    pub renamed_macro_refers: BTreeSet<String>,
-    pub declarations: BTreeMap<Global, std::sync::Arc<super::resolve::DefinitionInfo>>,
-    pub identities: Vec<Global>,
+    /// Shared with the live scope until that scope is next edited.
+    pub aliases: std::sync::Arc<BTreeMap<String, String>>,
+    pub refers: std::sync::Arc<BTreeMap<String, Global>>,
+    pub used_refers: std::sync::Arc<BTreeSet<String>>,
+    pub renamed_refers: std::sync::Arc<BTreeSet<String>>,
+    pub excluded_core: std::sync::Arc<BTreeSet<String>>,
+    pub macro_aliases: std::sync::Arc<BTreeMap<String, String>>,
+    pub macro_refers: std::sync::Arc<BTreeMap<String, (String, String)>>,
+    pub used_macro_refers: std::sync::Arc<BTreeSet<String>>,
+    pub renamed_macro_refers: std::sync::Arc<BTreeSet<String>>,
+    /// Structurally shared revisions of the live namespace index.
+    pub declarations: super::persistent::PersistentMap<Global, std::sync::Arc<super::resolve::DefinitionInfo>>,
+    pub identities: super::persistent::PersistentSet<Global>,
 }
 impl SourceNamespace {
     pub fn capture(environment: &Environment, phase: Phase) -> Self {
@@ -461,41 +463,7 @@ impl SourceNamespace {
     }
     /// Capture an actual namespace revision without installing it as current.
     pub fn capture_namespace(environment: &Environment, phase: Phase, namespace: &str) -> Option<Self> {
-        let scope = environment.namespace_scope_for(phase, namespace)?;
-        Some(Self {
-            namespace: scope.namespace.into(),
-            aliases: scope.aliases.clone(),
-            refers: scope.refers.clone(),
-            used_refers: scope.used_refers.clone(),
-            renamed_refers: scope.renamed_refers.clone(),
-            excluded_core: scope.excluded_core.clone(),
-            macro_aliases: scope.macro_aliases.clone(),
-            macro_refers: scope.macro_refers.clone(),
-            used_macro_refers: scope.used_macro_refers.clone(),
-            renamed_macro_refers: scope.renamed_macro_refers.clone(),
-            declarations: scope
-                .declarations
-                .into_iter()
-                .map(|(global, _)| {
-                    (
-                        global.clone(),
-                        environment
-                            .shared_definition_info(global)
-                            .expect("captured declaration revision")
-                            .clone(),
-                    )
-                })
-                .collect(),
-            identities: environment
-                .cells()
-                .into_iter()
-                .filter(|global| {
-                    global.phase() == phase
-                        && global.namespace() == scope.namespace
-                        && !environment.is_hidden_cell(phase, global.namespace(), global.name())
-                })
-                .collect(),
-        })
+        environment.source_namespace(phase, namespace)
     }
 }
 #[derive(Debug, Clone)]
@@ -1371,7 +1339,8 @@ impl Analyzer<'_> {
             &mut |work| self.expander.charge_expansion_work(work, span.clone()))? {
             ResolvedBinding::Cell(global) => Ok((Expression::Global(global), Type::Value)),
             ResolvedBinding::Arithmetic { global, .. } | ResolvedBinding::Core { global, .. } => {
-                self.environment.materialize_bootstrap(global.clone());
+                self.environment.materialize_bootstrap_metered(global.clone(),
+                    &mut |work| self.expander.charge_expansion_work(work, span.clone()))?;
                 Ok((Expression::Global(global), Type::Value))
             }
             _ => Err(fail(
@@ -1524,7 +1493,8 @@ impl Analyzer<'_> {
                 .and_then(|work| u64::try_from(work).ok())
                 .ok_or_else(|| fail(form.span.clone(), "Definition owner work overflow"))?;
             self.expander.charge_expansion_work(owner_work, form.span.clone())?;
-            Some(self.environment.record_definition_shared(global.clone(), definition.clone()))
+            Some(self.environment.record_definition_shared_metered(global.clone(), definition.clone(),
+                &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?)
         } else {
             None
         };
@@ -1548,8 +1518,8 @@ impl Analyzer<'_> {
         if !preserve_declaration {
             definition.completed_values = super::resolve::CompletedDeclarationSource::capture(
                 &global, &definition, &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
-            self.environment
-                .record_definition(global.clone(), definition);
+            self.environment.record_definition_metered(global.clone(), definition,
+                &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
         }
         Ok(Hir {
             source: None,

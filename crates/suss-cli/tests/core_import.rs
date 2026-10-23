@@ -1,4 +1,6 @@
 //! Execute the generated, provenance-checked upstream bootstrap form.
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod eval_with_compilation_fuel;
 use suss_cli::portable_session::{Session, SessionError, SessionValue};
 use wasmtime::{Rooted, Val};
 
@@ -10,7 +12,10 @@ fn loaded() -> Session {
         session.eval("(identity 7)"),
         Err(SessionError::Compile(_))
     ));
-    session.eval(CORE).unwrap();
+    // Compiling the whole imported library is one cumulative operation of
+    // about 33M native units under #252 accounting; it uses the calibrated
+    // compilation allowance. Later evaluations keep the Session defaults.
+    eval_with_compilation_fuel::eval(&mut session, CORE).unwrap();
     session.enter_namespace("user").unwrap();
     session
 }
@@ -322,7 +327,7 @@ fn imported_boolean_callee_is_captured_before_argument_rebinding_and_core_reload
     let value = session.eval("(core/not nil)").unwrap();
     assert!(!boolean(&mut session, &value));
     session.collect().unwrap();
-    session.eval(CORE).unwrap();
+    eval_with_compilation_fuel::eval(&mut session, CORE).unwrap();
     session.enter_namespace("app").unwrap();
     session.collect().unwrap();
     for source in [

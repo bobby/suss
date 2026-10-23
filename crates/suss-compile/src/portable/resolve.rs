@@ -7,9 +7,11 @@ use super::{
     hir::{Arithmetic, ArrayOperation, Bitwise, Comparison},
 };
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::{BTreeMap, BTreeSet, HashMap},
+    hash::{BuildHasherDefault, Hash, Hasher},
     ops::Range,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 use suss_reader::Symbol;
 
@@ -17,12 +19,13 @@ mod type_key_history;
 pub use type_key_history::TypeKeyHistory;
 mod completed_values;
 mod namespace_snapshot;
+mod namespace_index;
 pub use completed_values::CompletedDeclarationSource;
 pub(crate) use completed_values::{TypeValuePlan, TypeSourceValue, VALUE_FIELDS, own_definition_form};
 pub(crate) use type_key_history::{TypeKey, KeyOrigin as TypeKeyOrigin, LiteralSite as TypeKeyLiteralSite};
 pub(crate) use type_key_history::{RetainedKey, RetainedSite};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Phase {
     Runtime,
     Macro,
@@ -119,6 +122,20 @@ trait GlobalKey {
 impl GlobalKey for Global {
     fn parts(&self) -> (Phase, &str, &str) { (self.phase(), self.namespace(), self.name()) }
 }
+// Owned keys and borrowed queries hash the same identity parts, so a hashed
+// table finds the Global by value without acquiring an owner or String.
+impl Hash for Global {
+    fn hash<H: Hasher>(&self, state: &mut H) { self.parts().hash(state) }
+}
+impl Hash for GlobalIdentity {
+    fn hash<H: Hasher>(&self, state: &mut H) { (self.phase, self.namespace.as_str(), self.name.as_str()).hash(state) }
+}
+impl Hash for dyn GlobalKey + '_ {
+    fn hash<H: Hasher>(&self, state: &mut H) { self.parts().hash(state) }
+}
+/// Fixed-key SipHash keeps table layout, probing and therefore metered
+/// comparison sequences deterministic across processes.
+pub(crate) type BindingTable = HashMap<Global, Binding, BuildHasherDefault<std::collections::hash_map::DefaultHasher>>;
 impl<'a> std::borrow::Borrow<dyn GlobalKey + 'a> for Global {
     fn borrow(&self) -> &(dyn GlobalKey + 'a) { self }
 }
@@ -148,10 +165,15 @@ impl GlobalKey for Query<'_> {
         Some(compare(phase, namespace, name))
     }
 }
-fn lookup_global<'s, V>(map: &'s BTreeMap<Global, V>, phase: Phase, namespace: &str,
+fn lookup_global<'s, V>(map: &'s HashMap<Global, V, impl std::hash::BuildHasher>, phase: Phase, namespace: &str,
     name: &str, meter: &mut OwnerMeter<'_>) -> Result<Option<(&'s Global, &'s V)>, Diagnostic>
 {
     meter(12)?; // stack query/state/closure setup, result selection and bounded retirement
+    // One keyed hash over the phase and both texts, plus its fixed finalization,
+    // before the table is probed. Equality checks below are paid separately.
+    let hash = namespace.len().checked_add(name.len()).and_then(|n| n.checked_add(16))
+        .ok_or_else(|| error("Global hash work overflow"))?;
+    owner_charge(meter, hash)?;
     let state = std::cell::RefCell::new((meter, None));
     let compare = |other_phase: Phase, other_namespace: &str, other_name: &str| {
         let mut state = state.borrow_mut();
@@ -182,7 +204,7 @@ fn lookup_global<'s, V>(map: &'s BTreeMap<Global, V>, phase: Phase, namespace: &
     let failure = state.borrow_mut().1.take();
     match failure { Some(error) => Err(error), None => Ok(result) }
 }
-fn lookup_global_setup<'s, V>(map: &'s BTreeMap<Global, V>, phase: Phase,
+fn lookup_global_setup<'s, V>(map: &'s HashMap<Global, V, impl std::hash::BuildHasher>, phase: Phase,
     namespace: &str, name: &str) -> Option<(&'s Global, &'s V)>
 {
     // Existing infallible predicates acquire no new owner or String. Active
@@ -318,31 +340,32 @@ impl Binding {
     }
 }
 #[derive(Debug, Clone)]
+/// Source snapshots retain these maps; a later scope edit copies on write.
 struct Scope {
     namespace: String,
-    aliases: BTreeMap<String, String>,
-    refers: BTreeMap<String, Global>,
-    used_refers: BTreeSet<String>,
-    renamed_refers: BTreeSet<String>,
-    excluded_core: BTreeSet<String>,
-    macro_aliases: BTreeMap<String, String>,
-    macro_refers: BTreeMap<String, (String, String)>,
-    used_macro_refers: BTreeSet<String>,
-    renamed_macro_refers: BTreeSet<String>,
+    aliases: Arc<BTreeMap<String, String>>,
+    refers: Arc<BTreeMap<String, Global>>,
+    used_refers: Arc<BTreeSet<String>>,
+    renamed_refers: Arc<BTreeSet<String>>,
+    excluded_core: Arc<BTreeSet<String>>,
+    macro_aliases: Arc<BTreeMap<String, String>>,
+    macro_refers: Arc<BTreeMap<String, (String, String)>>,
+    used_macro_refers: Arc<BTreeSet<String>>,
+    renamed_macro_refers: Arc<BTreeSet<String>>,
 }
 impl Scope {
     fn new(namespace: &str) -> Self {
         Self {
             namespace: namespace.into(),
-            aliases: BTreeMap::new(),
-            refers: BTreeMap::new(),
-            used_refers: BTreeSet::new(),
-            renamed_refers: BTreeSet::new(),
-            excluded_core: BTreeSet::new(),
-            macro_aliases: BTreeMap::new(),
-            macro_refers: BTreeMap::new(),
-            used_macro_refers: BTreeSet::new(),
-            renamed_macro_refers: BTreeSet::new(),
+            aliases: Default::default(),
+            refers: Default::default(),
+            used_refers: Default::default(),
+            renamed_refers: Default::default(),
+            excluded_core: Default::default(),
+            macro_aliases: Default::default(),
+            macro_refers: Default::default(),
+            used_macro_refers: Default::default(),
+            renamed_macro_refers: Default::default(),
         }
     }
 }
@@ -427,8 +450,11 @@ pub struct NamespaceScope<'a> {
 pub struct Environment {
     pub(crate) reader_state: super::syntax_quote::ReaderState,
     namespaces: BTreeSet<(Phase, String)>,
-    bindings: BTreeMap<Global, Binding>,
+    bindings: BindingTable,
     definitions: BTreeMap<Global, std::sync::Arc<DefinitionInfo>>,
+    /// Number of binding values carrying each cell Global, for identity indexing.
+    cell_refs: HashMap<Global, usize, BuildHasherDefault<std::collections::hash_map::DefaultHasher>>,
+    namespace_index: namespace_index::NamespaceIndexes,
     source_generation: u64,
     scopes: BTreeMap<(Phase, String), Scope>,
     current: BTreeMap<Phase, String>,
@@ -502,8 +528,10 @@ impl Environment {
         let mut env = Self {
             reader_state: super::syntax_quote::ReaderState::default(),
             namespaces: BTreeSet::new(),
-            bindings: BTreeMap::new(),
+            bindings: BindingTable::default(),
             definitions: BTreeMap::new(),
+            cell_refs: Default::default(),
+            namespace_index: Default::default(),
             source_generation: 0,
             scopes: BTreeMap::new(),
             current: BTreeMap::new(),
@@ -528,8 +556,7 @@ impl Environment {
             ] {
                 let global = Global::new_metered(phase, "suss.core", name, meter)?;
                 meter(2)?; // prepaid key/Binding retains before insertion
-                env.bindings
-                    .insert(global.clone(), Binding::Arithmetic { global, operator });
+                env.set_binding(global.clone(), Binding::Arithmetic { global, operator });
             }
             for (name, export) in [
                 ("int", "primitive-int-function"),
@@ -583,8 +610,7 @@ impl Environment {
             ] {
                 let global = Global::new_metered(phase, "suss.core", name, meter)?;
                 meter(2)?; // prepaid key/Binding retains before insertion
-                env.bindings
-                    .insert(global.clone(), Binding::Core { global, export });
+                env.set_binding(global.clone(), Binding::Core { global, export });
             }
             // Explicit owned host bindings, not declarations of a loaded JS namespace.
             for (name, export) in [
@@ -597,8 +623,7 @@ impl Environment {
             ] {
                 let global = Global::new_metered(phase, "js", name, meter)?;
                 meter(2)?; // prepaid key/Binding retains before insertion
-                env.bindings
-                    .insert(global.clone(), Binding::Core { global, export });
+                env.set_binding(global.clone(), Binding::Core { global, export });
             }
             // Private callable adapters used by the bundled compiled async library.
             for (name, export) in [
@@ -654,8 +679,7 @@ impl Environment {
             ] {
                 let global = Global::new_metered(phase, "suss.internal.async", name, meter)?;
                 meter(2)?; // prepaid key/Binding retains before insertion
-                env.bindings
-                    .insert(global.clone(), Binding::Core { global, export });
+                env.set_binding(global.clone(), Binding::Core { global, export });
             }
             for (name, form) in [
                 ("deftype", NominalForm::Deftype),
@@ -670,8 +694,7 @@ impl Environment {
             ] {
                 let global = Global::new_metered(phase, "suss.core", name, meter)?;
                 meter(2)?; // prepaid key/Binding retains before insertion
-                env.bindings
-                    .insert(global.clone(), Binding::Nominal { global, form });
+                env.set_binding(global.clone(), Binding::Nominal { global, form });
             }
             for name in [
                 "when",
@@ -689,7 +712,7 @@ impl Environment {
             ] {
                 let global = Global::new_metered(phase, "suss.core", name, meter)?;
                 meter(2)?; // prepaid key/Binding retains before insertion
-                env.bindings.insert(
+                env.set_binding(
                     global.clone(),
                     Binding::BootstrapControl {
                         global,
@@ -711,7 +734,7 @@ impl Environment {
                 } else {
                     Binding::BootstrapDefonce(global.clone())
                 };
-                env.bindings.insert(global, binding);
+                env.set_binding(global, binding);
             }
         }
         Ok(env)
@@ -740,18 +763,18 @@ impl Environment {
         for global in globals {
             match before.bindings.get(global) {
                 Some(value) => {
-                    self.bindings.insert(global.clone(), value.clone());
+                    self.set_binding(global.clone(), value.clone());
                 }
                 None => {
-                    self.bindings.remove(global);
+                    self.remove_binding(global);
                 }
             }
             match before.definitions.get(global) {
                 Some(value) => {
-                    self.definitions.insert(global.clone(), value.clone());
+                    self.set_definition(global.clone(), value.clone());
                 }
                 None => {
-                    self.definitions.remove(global);
+                    self.remove_definition(global);
                 }
             }
             let export = (phase, global.namespace.clone(), global.name.clone());
@@ -805,16 +828,25 @@ impl Environment {
         self.definitions.get(global)
     }
     pub(crate) fn record_definition(&mut self, global: Global, info: DefinitionInfo) {
-        self.source_changed();
-        self.definitions.insert(global, std::sync::Arc::new(info));
+        self.record_definition_metered(global, info, &mut |_| Ok(())).expect("unmetered definition record");
+    }
+    pub(crate) fn record_definition_metered(&mut self, global: Global, info: DefinitionInfo,
+        meter: &mut OwnerMeter<'_>) -> Result<(), Diagnostic> {
+        self.record_definition_shared_metered(global, info, meter).map(drop)
     }
     /// Publish and retain this exact immutable revision without a second lookup.
     /// The caller meters the allocation and retained reference before calling.
     pub(crate) fn record_definition_shared(&mut self, global: Global, info: DefinitionInfo) -> std::sync::Arc<DefinitionInfo> {
+        self.record_definition_shared_metered(global, info, &mut |_| Ok(())).expect("unmetered definition record")
+    }
+    /// The namespace revision's structural update is prepaid before publication.
+    pub(crate) fn record_definition_shared_metered(&mut self, global: Global, info: DefinitionInfo,
+        meter: &mut OwnerMeter<'_>) -> Result<std::sync::Arc<DefinitionInfo>, Diagnostic> {
+        meter(self.definition_update_work(&global))?;
         let owner = std::sync::Arc::new(info);
         self.source_changed();
-        self.definitions.insert(global, owner.clone());
-        owner
+        self.set_definition(global, owner.clone());
+        Ok(owner)
     }
     /// Explicit declarations, not evidence that any source file has loaded.
     pub fn has_namespace(&self, phase: Phase, namespace: &str) -> bool {
@@ -835,10 +867,22 @@ impl Environment {
             .into_iter()
             .collect()
     }
+    #[cfg(test)]
+    pub(crate) fn clear_bindings(&mut self) {
+        let keys: Vec<_> = self.bindings.keys().cloned().collect();
+        for key in keys { self.remove_binding(&key); }
+    }
     pub(crate) fn materialize_bootstrap(&mut self, global: Global) {
-        if self.materialized_bootstrap.insert(global) {
+        self.materialize_bootstrap_metered(global, &mut |_| Ok(())).expect("unmetered bootstrap materialization");
+    }
+    pub(crate) fn materialize_bootstrap_metered(&mut self, global: Global, meter: &mut OwnerMeter<'_>) -> Result<(), Diagnostic> {
+        if !self.materialized_bootstrap.contains(&global) {
+            meter(self.bootstrap_update_work(&global))?;
+            self.materialized_bootstrap.insert(global.clone());
             self.source_changed();
+            self.index_bootstrap(&global);
         }
+        Ok(())
     }
     /// Bootstrap cell initializers for native hosts; source values share these
     /// canonical identities and later declarations may replace their contents.
@@ -851,6 +895,8 @@ impl Environment {
                 }
                 _ => None,
             })
+            .collect::<BTreeMap<_, _>>()
+            .into_iter()
             .collect()
     }
     pub fn arithmetic_bindings(&self, phase: Phase) -> Vec<(Global, Arithmetic)> {
@@ -862,6 +908,8 @@ impl Environment {
                 }
                 _ => None,
             })
+            .collect::<BTreeMap<_, _>>()
+            .into_iter()
             .collect()
     }
     pub fn declare_namespace(&mut self, phase: Phase, namespace: &str) -> Result<(), Diagnostic> {
@@ -928,8 +976,9 @@ impl Environment {
         let global = if let Some((key, _)) = existing { key.retain_metered(meter)? }
             else { Global::new_metered(phase, namespace, name, meter)? };
         meter(2)?;
+        meter(self.binding_update_work(&global, Some(&Binding::Cell(global.clone()))))?;
         self.declare_namespace(phase, global.namespace())?;
-        self.bindings.insert(global.clone(), Binding::Cell(global.clone()));
+        self.set_binding(global.clone(), Binding::Cell(global.clone()));
         self.source_changed();
         Ok(global)
     }
@@ -964,9 +1013,14 @@ impl Environment {
         let fallback = if let Some((key, _)) = private { key.retain_metered(meter)? }
             else { Global::new_metered(phase, "suss.internal.reader", "sequence", meter)? };
         meter(2 * usize::from(new_global) as u64 + 2 * usize::from(fresh) as u64)?;
-        if new_global { self.bindings.insert(global.clone(), Binding::ReaderCell(global.clone())); }
+        // Each bound covers its own update; the second's index grows by at most one.
+        let mut work = 0;
+        if new_global { work += self.binding_update_work(&global, Some(&Binding::ReaderCell(global.clone()))); }
+        if fresh { work += self.binding_update_work(&fallback, Some(&Binding::InternalCell(fallback.clone()))) + 64; }
+        meter(work)?;
+        if new_global { self.set_binding(global.clone(), Binding::ReaderCell(global.clone())); }
         if fresh {
-            self.bindings.insert(fallback.clone(), Binding::InternalCell(fallback.clone()));
+            self.set_binding(fallback.clone(), Binding::InternalCell(fallback.clone()));
             self.source_changed();
         }
         Ok((global, fallback, fresh))
@@ -986,7 +1040,8 @@ impl Environment {
             else { Global::own(GlobalIdentity { phase, namespace: owner_text("suss.internal.reify", meter)?, name }, meter)? };
         if fresh {
             meter(2)?;
-            self.bindings.insert(global.clone(), Binding::InternalCell(global.clone()));
+            meter(self.binding_update_work(&global, Some(&Binding::InternalCell(global.clone()))))?;
+            self.set_binding(global.clone(), Binding::InternalCell(global.clone()));
             self.source_changed();
         }
         Ok(global)
@@ -1015,7 +1070,8 @@ impl Environment {
             key.retain_metered(meter)?
         } else { Global::own(GlobalIdentity { phase: protocol.phase, namespace: owner_text("suss.internal.protocol-keys", meter)?, name }, meter)? };
         meter(2)?;
-        self.bindings.insert(global.clone(), Binding::InternalCell(global.clone()));
+        meter(self.binding_update_work(&global, Some(&Binding::InternalCell(global.clone()))))?;
+        self.set_binding(global.clone(), Binding::InternalCell(global.clone()));
         Ok(global)
     }
     /// Retain the explicit source require edge, including imports without aliases.
@@ -1039,11 +1095,11 @@ impl Environment {
             )));
         }
         let scope = self.scope_mut(phase);
-        let aliases = if macros {
+        let aliases = Arc::make_mut(if macros {
             &mut scope.macro_aliases
         } else {
             &mut scope.aliases
-        };
+        });
         if aliases.get(namespace).is_some_and(|old| old != target) {
             return Err(error(format!(
                 "Ambiguous required namespace alias {namespace}"
@@ -1071,8 +1127,7 @@ impl Environment {
         {
             return Err(error(format!("Ambiguous namespace alias {alias}")));
         }
-        self.scope_mut(phase)
-            .aliases
+        Arc::make_mut(&mut self.scope_mut(phase).aliases)
             .insert(alias.into(), namespace.into());
         Ok(())
     }
@@ -1126,14 +1181,14 @@ impl Environment {
         }
         let global = target.retain_metered(meter)?;
         let scope = self.scope_mut(phase);
-        scope.refers.insert(local.into(), global);
-        if renamed { &mut scope.renamed_refers } else { &mut scope.used_refers }
+        Arc::make_mut(&mut scope.refers).insert(local.into(), global);
+        Arc::make_mut(if renamed { &mut scope.renamed_refers } else { &mut scope.used_refers })
             .insert(local.into());
         Ok(())
     }
     pub fn exclude_core(&mut self, phase: Phase, name: &str) -> Result<(), Diagnostic> {
         valid_name(name)?;
-        self.scope_mut(phase).excluded_core.insert(name.into());
+        Arc::make_mut(&mut self.scope_mut(phase).excluded_core).insert(name.into());
         Ok(())
     }
     /// Macro catalogs describe functions in the isolated host, never Runtime cells.
@@ -1184,7 +1239,7 @@ impl Environment {
         {
             return Err(error(format!("Ambiguous macro namespace alias {alias}")));
         }
-        scope.macro_aliases.insert(alias.into(), namespace.into());
+        Arc::make_mut(&mut scope.macro_aliases).insert(alias.into(), namespace.into());
         Ok(())
     }
     pub fn macro_refer(
@@ -1221,12 +1276,12 @@ impl Environment {
         {
             return Err(error(format!("Ambiguous macro binding {local}")));
         }
-        scope.macro_refers.insert(local.into(), target);
-        if renamed {
+        Arc::make_mut(&mut scope.macro_refers).insert(local.into(), target);
+        Arc::make_mut(if renamed {
             &mut scope.renamed_macro_refers
         } else {
             &mut scope.used_macro_refers
-        }
+        })
         .insert(local.into());
         Ok(())
     }
@@ -2101,7 +2156,7 @@ mod global_ownership_tests {
                 assert_eq!(charges, expected_charges, "exactly one search and one retained result for {symbol}");
                 drop(selected);
                 assert_eq!(allocations(), before, "lookup hit allocates no identity owner");
-                assert!(charges.len() > 2, "real BTree comparisons and retained result are charged");
+                assert!(charges.len() > 2, "real hash, comparisons and retained result are charged");
                 for reject in 0..charges.len() {
                     let mut calls = 0;
                     let result = env.resolve_metered(phase, &symbol, 11..19, &mut |_| {
@@ -2133,17 +2188,18 @@ mod global_ownership_tests {
             assert_eq!(failure.message, "no lookup budget");
             assert_eq!(calls, 2);
 
-            // A singleton fixes the comparison path independently of BTree
-            // layout: setup, phase, namespace, name, then the single clone.
+            // A singleton fixes the hashed lookup path: setup, keyed hash of
+            // "one"/"hit" plus finalization, then phase, namespace and name of
+            // the one probed candidate, then the single clone.
             let mut singleton = Environment::new("one").unwrap();
-            singleton.bindings.clear();
+            singleton.clear_bindings();
             let owner = singleton.declare_cell(phase, "one", "hit").unwrap();
             let before = allocations();
             let mut charges = Vec::new();
             let selected = singleton.resolve_metered(phase, &Symbol::new("hit"), 11..19,
                 &mut |work| { charges.push(work); Ok(()) }).unwrap();
-            assert_eq!(charges, vec![4, 4, 12, 4, 8, 8, 1]);
-            assert_eq!(charges.iter().sum::<u64>(), 41);
+            assert_eq!(charges, vec![4, 4, 12, 22, 4, 8, 8, 1]);
+            assert_eq!(charges.iter().sum::<u64>(), 63);
             assert!(same_owner(&owner, selected.global()));
             assert_eq!(allocations(), before);
         }
@@ -2192,7 +2248,7 @@ mod global_ownership_tests {
                 let name = if reader { "hidden-reader" } else { "hidden-internal" };
                 env.declare_cell(phase, "suss.core", name).unwrap();
                 let hidden = env.declare_cell(phase, "current.lookup", name).unwrap();
-                env.bindings.insert(hidden.clone(), if reader {
+                env.set_binding(hidden.clone(), if reader {
                     Binding::ReaderCell(hidden.clone())
                 } else { Binding::InternalCell(hidden.clone()) });
                 let bindings = env.bindings.clone();

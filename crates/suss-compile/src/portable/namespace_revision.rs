@@ -420,10 +420,21 @@ mod tests {
                         Ok(())
                     })
                     .unwrap();
-                // Actual variable scans/clone/retain/growth/hidden-query boundaries,
-                // NOT the old fixed two/three-site assumption or fuel quota sweep.
+                // Capture shares live revisions: its charges cover the scope
+                // query, namespace text and retained roots, and do not grow
+                // with the namespace. Every one of them is still a cut point.
                 if mode != 1 {
-                    assert!(costs.len() > 30);
+                    assert!(costs.len() > 3);
+                    let mut larger = env.clone();
+                    for index in 0..200 {
+                        larger.declare_cell(phase, "revision.user", &format!("extra-{index}")).unwrap();
+                    }
+                    let fresh_costs = |env: &Environment| {
+                        let mut costs = Vec::new();
+                        factory().capture(env, phase, &mut |work| { costs.push(work); Ok(()) }).unwrap();
+                        costs
+                    };
+                    assert_eq!(fresh_costs(&larger), fresh_costs(&env), "capture work is independent of namespace size");
                 }
                 for cut in 0..costs.len() {
                     let (env, trial, held) = setup();
@@ -518,7 +529,7 @@ mod tests {
                     Ok(())
                 })
                 .unwrap();
-            assert!(count > 30);
+            assert!(count > 3, "manual fallback still has several capture cut points");
             for cut in 0..count {
                 let mut index = 0;
                 let failure = context

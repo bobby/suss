@@ -126,8 +126,8 @@ impl NamespaceKey {
         Self(namespace.clone())
     }
     fn compare_declarations(
-        left: &BTreeMap<portable::resolve::Global, Arc<portable::resolve::DefinitionInfo>>,
-        right: &BTreeMap<portable::resolve::Global, Arc<portable::resolve::DefinitionInfo>>,
+        left: &portable::persistent::PersistentMap<portable::resolve::Global, Arc<portable::resolve::DefinitionInfo>>,
+        right: &portable::persistent::PersistentMap<portable::resolve::Global, Arc<portable::resolve::DefinitionInfo>>,
     ) -> Ordering {
         let mut left = left.iter();
         let mut right = right.iter();
@@ -1573,12 +1573,12 @@ impl<'a> AnalysisGraph<'a> {
     fn namespace_membership(&mut self, namespace: &SourceNamespace) -> Result<Value> {
         let name = self.symbol(&namespace.namespace)?;
         let mut aliases = Vec::new();
-        for (alias, target) in &namespace.aliases {
+        for (alias, target) in namespace.aliases.iter() {
             aliases.push((self.symbol(alias)?, self.symbol(target)?));
         }
         let aliases = self.nullable_map(aliases)?;
         let mut refers = Vec::new();
-        for (local, global) in &namespace.refers {
+        for (local, global) in namespace.refers.iter() {
             refers.push((
                 self.symbol(local)?,
                 self.symbol(&format!("{}/{}", global.namespace(), global.name()))?,
@@ -1656,12 +1656,12 @@ impl<'a> AnalysisGraph<'a> {
     ) -> Result<Value> {
         let name = self.symbol(&namespace.namespace)?;
         let mut aliases = Vec::new();
-        for (alias, target) in &namespace.aliases {
+        for (alias, target) in namespace.aliases.iter() {
             aliases.push((self.symbol(alias)?, self.symbol(target)?));
         }
         let aliases = self.nullable_map(aliases)?;
         let mut refers = Vec::new();
-        for (alias, target) in &namespace.refers {
+        for (alias, target) in namespace.refers.iter() {
             refers.push((
                 self.symbol(alias)?,
                 self.symbol(&format!("{}/{}", target.namespace(), target.name()))?,
@@ -1670,7 +1670,7 @@ impl<'a> AnalysisGraph<'a> {
         let refers = self.map_values(refers)?;
         let mut uses = Vec::new();
         let mut renames = Vec::new();
-        for (local, target) in &namespace.refers {
+        for (local, target) in namespace.refers.iter() {
             if namespace.used_refers.contains(local) {
                 uses.push((self.symbol(local)?, self.symbol(target.namespace())?));
             }
@@ -1684,13 +1684,13 @@ impl<'a> AnalysisGraph<'a> {
         let uses = self.nullable_map(uses)?;
         let renames = self.map_values(renames)?;
         let mut macro_aliases = Vec::new();
-        for (alias, target) in &namespace.macro_aliases {
+        for (alias, target) in namespace.macro_aliases.iter() {
             macro_aliases.push((self.symbol(alias)?, self.symbol(target)?));
         }
         let macro_aliases = self.nullable_map(macro_aliases)?;
         let mut macro_uses = Vec::new();
         let mut macro_renames = Vec::new();
-        for (local, (ns, original)) in &namespace.macro_refers {
+        for (local, (ns, original)) in namespace.macro_refers.iter() {
             if namespace.used_macro_refers.contains(local) {
                 macro_uses.push((self.symbol(local)?, self.symbol(ns)?));
             }
@@ -3626,10 +3626,10 @@ mod sharing_tests {
         // Keep actual immutable namespace facts; change only ordinary aliases.
         let mut large = small.clone();
         for index in 0..128 {
-            large.aliases.insert(format!("identity-probe-{index}"), "identity.target".into());
+            Arc::make_mut(&mut large.aliases).insert(format!("identity-probe-{index}"), "identity.target".into());
         }
         // Keep namespace text equal so the comparison isolates fact count.
-        small.aliases.clear();
+        Arc::make_mut(&mut small.aliases).clear();
         let small = Arc::new(small);
         let large = Arc::new(large);
         let equal_content = Arc::new(large.as_ref().clone());
@@ -3706,36 +3706,38 @@ mod sharing_tests {
             match field {
                 0 => changed.namespace.push_str(".different"),
                 1 => {
-                    changed.aliases.insert("probe".into(), "other".into());
+                    Arc::make_mut(&mut changed.aliases).insert("probe".into(), "other".into());
                 }
                 2 => {
-                    changed.refers.insert("probe".into(), target.clone());
+                    Arc::make_mut(&mut changed.refers).insert("probe".into(), target.clone());
                 }
                 3 => {
-                    changed.used_refers.insert("probe".into());
+                    Arc::make_mut(&mut changed.used_refers).insert("probe".into());
                 }
                 4 => {
-                    changed.renamed_refers.insert("probe".into());
+                    Arc::make_mut(&mut changed.renamed_refers).insert("probe".into());
                 }
                 5 => {
-                    changed.excluded_core.insert("probe".into());
+                    Arc::make_mut(&mut changed.excluded_core).insert("probe".into());
                 }
                 6 => {
-                    changed.macro_aliases.insert("probe".into(), "other".into());
+                    Arc::make_mut(&mut changed.macro_aliases).insert("probe".into(), "other".into());
                 }
                 7 => {
-                    changed
-                        .macro_refers
+                    Arc::make_mut(&mut changed.macro_refers)
                         .insert("probe".into(), ("other".into(), "macro".into()));
                 }
                 8 => {
-                    changed.used_macro_refers.insert("probe".into());
+                    Arc::make_mut(&mut changed.used_macro_refers).insert("probe".into());
                 }
                 9 => {
-                    changed.renamed_macro_refers.insert("probe".into());
+                    Arc::make_mut(&mut changed.renamed_macro_refers).insert("probe".into());
                 }
                 10 => {
-                    changed.identities.push(target.clone());
+                    // Identities are a sorted set; add a genuinely new member.
+                    let probe = portable::resolve::Environment::new("identity.probe").unwrap()
+                        .declare_cell(portable::resolve::Phase::Macro, "identity.probe", "probe").unwrap();
+                    changed.identities.push(probe);
                 }
                 _ => unreachable!(),
             }
@@ -3747,7 +3749,7 @@ mod sharing_tests {
         }
 
         let mut changed_facts = source.as_ref().clone();
-        changed_facts.excluded_core.insert("cache-probe".into());
+        Arc::make_mut(&mut changed_facts.excluded_core).insert("cache-probe".into());
         let changed_facts = Arc::new(changed_facts);
         assert_ne!(
             NamespaceKey::new(&source),

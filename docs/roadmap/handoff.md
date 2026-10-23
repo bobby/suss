@@ -1,3 +1,35 @@
+## PR263 — structurally shared namespace revisions and hashed global lookup
+
+Root cause of the 17 failing default CORE imports: every analyzer namespace
+capture (per top-level form, function scope and method) rescanned all
+Environment bindings/definitions and copied the namespace's BTreeMaps, now
+charged under #252, so one whole-CORE eval cost 16,118,501,852 native units
+(measured at the root host). Environment now keeps per-(phase, namespace)
+persistent AVL revisions of declarations and visible identities
+(`portable::persistent`, `resolve::namespace_index`), updated on every binding,
+definition and bootstrap mutation with the update work prepaid before
+publication; scope maps are Arc-shared copy-on-write. Capture retains roots, so
+its charges are independent of namespace size. Bindings use a fixed-key hashed
+table; a lookup charges its keyed hash then the actual probed comparisons.
+Whole-CORE compilation now measures 32.7M units: legitimate linear host work, so
+per the 2026-10-23 user decision the CORE-loading `core_import` evals use the
+documented #252 compilation allowance (support/compilation_fuel.rs, 100B);
+Runtime limits and later evaluations keep Session defaults.
+
+Results on the clean source (diagnostics removed, two byte-identical BOOT
+generations adopted, `scripts/verify_bootstrap_identity.py` passes):
+`cargo test -p suss-compile --locked --lib -- --test-threads=4 persistent
+namespace resolve:: hir:: sharing_tests analyzer_literal` 125 PASS/0 FAIL
+(2958s); `--test portable_resolution` 14/0; `-p suss-cli --test core_import`
+17/0. New tests: persistent map/set vs BTreeMap with revision retention, a
+400-step mixed mutation sequence checked after every step against the complete
+legacy rescan, capture cost independent of namespace size, exact singleton
+hashed-lookup charges. Limitations: the explicit default-budget constructor
+control (A13) still fails; its caller &env transport needs 61.8M under the
+first-use certification path (write-domain provenance walks, canonical seed
+member scans, nested expectation re-projection). The pinned map control (A12)
+also still fails. Full baseline and final-head CI not yet run.
+
 ## Independent PR177 review — typed invocation before guest initialization
 
 Reviewed native file/WIT selection and explicit mappings, shared compiled source/

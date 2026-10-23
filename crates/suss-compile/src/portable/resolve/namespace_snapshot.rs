@@ -6,16 +6,13 @@
 //! Apache-2.0), not guessed sizeof(BTreeMap) backing. Original metering model:
 //! https://github.com/rust-lang/rust/blob/1.96.0/library/alloc/src/collections/btree/node.rs
 //! https://github.com/rust-lang/rust/blob/1.96.0/library/alloc/src/collections/btree/search.rs
-use super::{
-    Binding, DefinitionInfo, Environment, Global, OwnerMeter, Phase, Scope, canonical, error,
-    lookup_global,
-};
+use super::{Environment, OwnerMeter, Phase, Scope, canonical, error};
+#[cfg(test)]
+use super::{Binding, DefinitionInfo, Global, lookup_global};
 use crate::portable::{Diagnostic, hir::SourceNamespace};
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    mem::{align_of, size_of},
-    sync::Arc,
-};
+use std::mem::size_of;
+#[cfg(test)]
+use std::{collections::{BTreeMap, BTreeSet}, mem::align_of, sync::Arc};
 
 const KEYS: usize = 11;
 const EDGES: usize = KEYS + 1;
@@ -48,6 +45,7 @@ fn begin_iter<I>(n: usize, meter: &mut OwnerMeter<'_>) -> Result<(), Diagnostic>
         add(mul(2, size_of::<I>())?, mul(levels(n), EDGES + 4)?)?,
     )
 }
+#[cfg(test)]
 // Internal node upper bound: 11 K/V slots, 12 child links, parent, two u16s,
 // alignment allowance at all six leaf/internal field joins. Covers leaves too.
 // No private std memory is inspected/cast; this is not an exact node-count fee.
@@ -61,26 +59,6 @@ fn node_bytes<K, V>() -> Result<usize, Diagnostic> {
             mul(EDGES + 1, size_of::<usize>())?,
         )?,
         add(2 * size_of::<u16>(), mul(6, alignment)?)?,
-    )
-}
-fn clone_tree<K, V>(n: usize, meter: &mut OwnerMeter<'_>) -> Result<(), Diagnostic> {
-    meter(4)?;
-    if n == 0 {
-        return Ok(());
-    } // std clone's explicit empty fast path allocates nothing
-    meter(64)?; // checked node/layout/count preflight, no allocation yet
-    // At most n+1 nodes, conservatively including a possible empty root. Allocate+retire
-    // backing and all entry initialization/retirement BEFORE clone allocates.
-    let nodes = add(n, 1)?;
-    pay(
-        meter,
-        add(
-            mul(mul(2, nodes)?, node_bytes::<K, V>()?)?,
-            add(
-                mul(mul(2, n)?, add(size_of::<K>(), size_of::<V>())?)?,
-                mul(nodes, 2 * (KEYS + EDGES + 4))?,
-            )?,
-        )?,
     )
 }
 fn text_eq(a: &str, b: &str, meter: &mut OwnerMeter<'_>) -> Result<bool, Diagnostic> {
@@ -100,59 +78,18 @@ impl Field for String {
         )
     }
 }
+#[cfg(test)]
 impl Field for Global {
     fn prepay_clone(&self, meter: &mut OwnerMeter<'_>) -> Result<(), Diagnostic> {
         meter(1)?; // established Global retain unit, before clone
         pay(meter, 2 * size_of::<Self>() + 4)
     }
 }
-impl Field for (String, String) {
-    fn prepay_clone(&self, meter: &mut OwnerMeter<'_>) -> Result<(), Diagnostic> {
-        self.0.prepay_clone(meter)?;
-        self.1.prepay_clone(meter)
-    }
-}
-fn clone_map<K: Field + Ord, V: Field>(
-    source: &BTreeMap<K, V>,
-    meter: &mut OwnerMeter<'_>,
-) -> Result<BTreeMap<K, V>, Diagnostic> {
-    pay(meter, 2 * size_of::<BTreeMap<K, V>>() + 4)?;
-    let n = source.len();
-    clone_tree::<K, V>(n, meter)?;
-    begin_iter::<std::collections::btree_map::Iter<'_, K, V>>(n, meter)?;
-    let mut input = source.iter();
-    loop {
-        step(n, meter)?;
-        let Some((key, value)) = input.next() else {
-            break;
-        };
-        key.prepay_clone(meter)?;
-        value.prepay_clone(meter)?;
-        // Later structural clone traversal, independent of this prepaid plan.
-        step(n, meter)?;
-    }
-    Ok(source.clone())
-}
-fn clone_set<K: Field + Ord>(
-    source: &BTreeSet<K>,
-    meter: &mut OwnerMeter<'_>,
-) -> Result<BTreeSet<K>, Diagnostic> {
-    pay(meter, 2 * size_of::<BTreeSet<K>>() + 4)?;
-    let n = source.len();
-    clone_tree::<K, ()>(n, meter)?;
-    begin_iter::<std::collections::btree_set::Iter<'_, K>>(n, meter)?;
-    let mut input = source.iter();
-    loop {
-        step(n, meter)?;
-        let Some(key) = input.next() else { break };
-        key.prepay_clone(meter)?;
-        step(n, meter)?;
-    }
-    Ok(source.clone())
-}
+#[cfg(test)]
 fn global_text(global: &Global) -> Result<usize, Diagnostic> {
     add(global.namespace().len(), global.name().len())
 }
+#[cfg(test)]
 // Native BTree insertion: <=11 comparisons per level, <=one new sibling per
 // old level plus a new root. Allocate+retire node backing and two-node relocation
 // bounds per level before insert. Actual incoming/max-existing key byte lengths
@@ -177,6 +114,7 @@ fn insertion<K, V>(
         add(add(compare, backing)?, add(relocation, controls)?)?,
     )
 }
+#[cfg(test)]
 fn push_global(
     output: &mut Vec<Global>,
     value: Global,
@@ -238,6 +176,22 @@ impl Environment {
         }
         unreachable!("declared current namespace") // same missing-scope invariant
     }
+    /// Test oracle: the live index equals a complete rescan of the bindings,
+    /// bootstrap materializations and definitions, with the same key owners.
+    #[cfg(test)]
+    pub(crate) fn assert_index_matches_full_scan(&self, phase: Phase) {
+        for namespace in self.scopes.keys().filter(|(p, _)| *p == phase).map(|(_, n)| n.clone()).collect::<Vec<_>>() {
+            let snapshot = self.source_namespace(phase, &namespace).unwrap();
+            let full_declarations = self.snapshot_declarations_metered(phase, &namespace, &mut |_| Ok(())).unwrap();
+            let full_identities = self.snapshot_identities_metered(phase, &namespace, &mut |_| Ok(())).unwrap();
+            assert!(snapshot.declarations.len() == full_declarations.len()
+                && snapshot.declarations.iter().zip(&full_declarations).all(|((a, ai), (b, bi))|
+                    Arc::ptr_eq(&a.0, &b.0) && Arc::ptr_eq(ai, bi)), "indexed declarations diverged in {namespace}");
+            assert!(snapshot.identities.len() == full_identities.len()
+                && snapshot.identities.iter().zip(&full_identities).all(|(a, b)| a == b), "indexed identities diverged in {namespace}");
+        }
+    }
+    #[cfg(test)]
     fn snapshot_declarations_metered(
         &self,
         phase: Phase,
@@ -272,6 +226,7 @@ impl Environment {
         }
         Ok(output)
     }
+    #[cfg(test)]
     fn snapshot_identities_metered(
         &self,
         phase: Phase,
@@ -301,7 +256,7 @@ impl Environment {
                 Ok::<(), Diagnostic>(())
             };
         let n = self.bindings.len();
-        begin_iter::<std::collections::btree_map::Iter<'_, Global, Binding>>(n, meter)?;
+        begin_iter::<std::collections::hash_map::Iter<'_, Global, Binding>>(n, meter)?;
         let mut bindings = self.bindings.iter();
         loop {
             step(n, meter)?;
@@ -356,6 +311,28 @@ impl Environment {
         }
         Ok(output)
     }
+    /// Share every immutable namespace fact; no collection is copied.
+    pub(crate) fn source_namespace(&self, phase: Phase, namespace: &str) -> Option<SourceNamespace> {
+        let scope = self.scopes.get(&(phase, canonical(namespace).into()))?;
+        Some(self.share_scope(phase, scope))
+    }
+    fn share_scope(&self, phase: Phase, scope: &Scope) -> SourceNamespace {
+        let index = self.namespace_index(phase, &scope.namespace);
+        SourceNamespace {
+            namespace: scope.namespace.clone(),
+            aliases: scope.aliases.clone(),
+            refers: scope.refers.clone(),
+            used_refers: scope.used_refers.clone(),
+            renamed_refers: scope.renamed_refers.clone(),
+            excluded_core: scope.excluded_core.clone(),
+            macro_aliases: scope.macro_aliases.clone(),
+            macro_refers: scope.macro_refers.clone(),
+            used_macro_refers: scope.used_macro_refers.clone(),
+            renamed_macro_refers: scope.renamed_macro_refers.clone(),
+            declarations: index.map(|index| index.declarations.clone()).unwrap_or_default(),
+            identities: index.map(|index| index.identities.clone()).unwrap_or_default(),
+        }
+    }
     pub(crate) fn capture_source_namespace_metered(
         &self,
         phase: Phase,
@@ -364,34 +341,13 @@ impl Environment {
         pay(meter, 2 * size_of::<SourceNamespace>() + 32)?;
         let scope = self.snapshot_scope_metered(phase, meter)?;
         scope.namespace.prepay_clone(meter)?;
-        let namespace = scope.namespace.clone();
-        let aliases = clone_map(&scope.aliases, meter)?;
-        let refers = clone_map(&scope.refers, meter)?;
-        let used_refers = clone_set(&scope.used_refers, meter)?;
-        let renamed_refers = clone_set(&scope.renamed_refers, meter)?;
-        let excluded_core = clone_set(&scope.excluded_core, meter)?;
-        let macro_aliases = clone_map(&scope.macro_aliases, meter)?;
-        let macro_refers = clone_map(&scope.macro_refers, meter)?;
-        let used_macro_refers = clone_set(&scope.used_macro_refers, meter)?;
-        let renamed_macro_refers = clone_set(&scope.renamed_macro_refers, meter)?;
-        let declarations = self.snapshot_declarations_metered(phase, &scope.namespace, meter)?;
-        let identities = self.snapshot_identities_metered(phase, &scope.namespace, meter)?;
-        let snapshot = SourceNamespace {
-            namespace,
-            aliases,
-            refers,
-            used_refers,
-            renamed_refers,
-            excluded_core,
-            macro_aliases,
-            macro_refers,
-            used_macro_refers,
-            renamed_macro_refers,
-            declarations,
-            identities,
-        };
-        // Cancellation arriving during a prepaid clone is checked before factory
-        // Arc allocation/publication. Destruction on this error was prepaid too.
+        // One checked index query, then one retained root for each of the nine
+        // scope collections and two indexed revisions, independent of size.
+        pay(meter, add(scope.namespace.len(), 24)?)?;
+        pay(meter, mul(11, 2 * size_of::<usize>() + 4)?)?;
+        let snapshot = self.share_scope(phase, scope);
+        // Cancellation arriving during the prepaid retains is checked before
+        // factory Arc allocation/publication.
         meter(1)?;
         Ok(snapshot)
     }
@@ -441,13 +397,13 @@ mod tests {
         // Public alias()/refer() use Scope and do not themselves manufacture
         // this storage layout. No production invariant permits key filtering.
         let value_only = env.declare_cell(phase, "prefilter.user", "value-only").unwrap();
-        assert!(env.bindings.remove(&value_only).is_some());
+        assert!(env.bindings.contains_key(&value_only)); env.remove_binding(&value_only);
         let foreign_key = env.declare_cell(other_phase, "outside.key", "foreign-key").unwrap();
-        env.bindings.insert(foreign_key, Binding::Cell(value_only));
+        env.set_binding(foreign_key, Binding::Cell(value_only));
         let key_only = env.declare_cell(phase, "prefilter.user", "key-only").unwrap();
-        env.bindings.insert(key_only, Binding::Cell(outside));
+        env.set_binding(key_only, Binding::Cell(outside));
         let bootstrap_only = env.declare_cell(phase, "prefilter.user", "bootstrap-only").unwrap();
-        assert!(env.bindings.remove(&bootstrap_only).is_some());
+        assert!(env.bindings.contains_key(&bootstrap_only)); env.remove_binding(&bootstrap_only);
         env.materialize_bootstrap(bootstrap_only);
         env
     }
@@ -476,6 +432,9 @@ mod tests {
     fn namespace_identity_prefilter_matches_legacy_values_order_hidden_cells_and_info_owners() {
         for phase in [Phase::Runtime, Phase::Macro] {
             let environment = environment(phase, 128);
+            // SourceNamespace::capture shares the same index; the full rescan
+            // is the independent legacy oracle for every namespace.
+            environment.assert_index_matches_full_scan(phase);
             let generation = environment.source_generation();
             let expected = SourceNamespace::capture(&environment, phase);
             let actual = environment.capture_source_namespace_metered(phase, &mut |_| Ok(())).unwrap();
@@ -486,7 +445,7 @@ mod tests {
             assert!(!actual.identities.iter().any(|g| g.name() == "key-only"));
             assert!(!actual.identities.iter().any(|g| g.name().starts_with("opposite-")));
             assert_eq!(actual.identities.iter().filter(|g| g.name() == "local").count(), 1);
-            assert!(actual.identities.windows(2).all(|pair| pair[0] < pair[1]));
+            assert!(actual.identities.iter().zip(actual.identities.iter().skip(1)).all(|(a, b)| a < b));
             assert_eq!(environment.source_generation(), generation);
 
             // Legacy capture also rejects real Reader/Internal values from
@@ -494,6 +453,7 @@ mod tests {
             for namespace in ["suss.core", "suss.internal.reader"] {
                 let mut hidden = environment.clone();
                 hidden.enter_namespace(phase, namespace).unwrap();
+                hidden.assert_index_matches_full_scan(phase);
                 let expected = SourceNamespace::capture(&hidden, phase);
                 let actual = hidden.capture_source_namespace_metered(phase, &mut |_| Ok(())).unwrap();
                 same_snapshot(&actual, &expected);
@@ -554,6 +514,54 @@ mod tests {
             }
             same_snapshot(&SourceNamespace::capture(&environment, phase), &expected);
             assert_eq!(environment.source_generation(), generation);
+        }
+    }
+
+    #[test]
+    fn indexed_revisions_track_every_binding_definition_and_bootstrap_mutation() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut env = environment(phase, 8);
+            let mut state = 0x2545_f491_4f6c_dd1du64;
+            let mut next = || { state ^= state << 13; state ^= state >> 7; state ^= state << 17; state };
+            let mut snapshots = Vec::new();
+            for step in 0..400 {
+                let choice = next() % 7;
+                let namespace = ["prefilter.user", "outside.ns", "suss.core"][(next() % 3) as usize];
+                let name = format!("m-{}", next() % 24);
+                let owner = Global::new_metered(phase, namespace, &name, &mut |_| Ok(())).unwrap();
+                match choice {
+                    // Compiler-owned names reject redeclaration; the index must not move.
+                    0 => { let _ = env.declare_cell(phase, namespace, &name); }
+                    1 => env.set_binding(owner.clone(), Binding::InternalCell(owner)),
+                    2 => env.set_binding(owner.clone(), Binding::ReaderCell(owner)),
+                    3 => env.remove_binding(&owner),
+                    4 => env.materialize_bootstrap(owner),
+                    5 => {
+                        // A foreign key carries another namespace's cell value.
+                        let foreign = Global::new_metered(phase, "foreign.key", &name, &mut |_| Ok(())).unwrap();
+                        env.set_binding(foreign, Binding::Cell(owner));
+                    }
+                    _ => {
+                        let before = env.clone();
+                        let source = format!("(def {name} {step})");
+                        let forms = suss_reader::forms::read_forms(&source).unwrap();
+                        if let Ok((_, prepared)) = crate::portable::hir::prepare(&forms, 0..source.len(), &env, phase) {
+                            env = prepared;
+                            if step % 2 == 0 {
+                                let declared = env.resolve(phase, &suss_reader::Symbol::new(&name), 0..0).unwrap().global().clone();
+                                env.restore_declarations(&before, &[declared], phase);
+                            }
+                        }
+                    }
+                }
+                env.assert_index_matches_full_scan(phase);
+                if step % 50 == 0 { snapshots.push((env.clone(), SourceNamespace::capture(&env, phase))); }
+            }
+            // Earlier structural revisions are unaffected by later mutations.
+            for (old, snapshot) in snapshots {
+                old.assert_index_matches_full_scan(phase);
+                same_snapshot(&SourceNamespace::capture(&old, phase), &snapshot);
+            }
         }
     }
 }

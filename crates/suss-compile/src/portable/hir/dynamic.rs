@@ -23,7 +23,8 @@ impl Analyzer<'_> {
         {
             ResolvedBinding::Cell(global) => Ok(global),
             ResolvedBinding::Arithmetic { global, .. } | ResolvedBinding::Core { global, .. } => {
-                self.environment.materialize_bootstrap(global.clone());
+                self.environment.materialize_bootstrap_metered(global.clone(),
+                    &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
                 Ok(global)
             }
             _ => Err(fail(
