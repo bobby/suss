@@ -229,14 +229,14 @@ impl MapContext<(u8, usize)> for Meter<'_> {
 /// One CLOSED read-only pass only. Never keep this across a constructor or
 /// callback. Native Rc identities are an ephemeral work index, not authority.
 struct Audit {
-    checked: TryOrderedMap<(u8, usize), bool>,
+    checked: crate::portable::metered_map::TryHashMap<(u8, usize), bool>,
     native: crate::portable_session::certification_audit::CertificationAudit,
 }
 impl Audit {
     fn new(session: &mut Session) -> Result<Self> {
         session.charge_host_work(2)?;
         Ok(Self {
-            checked: TryOrderedMap::default(),
+            checked: Default::default(),
             native: crate::portable_session::certification_audit::CertificationAudit::new(session)?,
         })
     }
@@ -432,12 +432,12 @@ impl Root {
 // A distinct CLOSED negative-retention pass. Its index can never substitute
 // for Audit health or vice versa; no result survives a constructor/callback.
 struct RetainedAudit {
-    checked: TryOrderedMap<(u8, usize), bool>,
+    checked: crate::portable::metered_map::TryHashMap<(u8, usize), bool>,
 }
 impl RetainedAudit {
     fn new(session: &mut Session) -> Result<Self> {
         session.charge_host_work(2)?;
-        Ok(Self { checked: TryOrderedMap::default() })
+        Ok(Self { checked: Default::default() })
     }
     fn check(&mut self, graph: &mut AnalysisGraph<'_>, evidence: &Evidence) -> Result<bool> {
         let mut pending = Vec::new();

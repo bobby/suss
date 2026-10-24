@@ -33,7 +33,7 @@ fn append_original_refs<T>(session: &mut Session, values: &mut Vec<T>, entries: 
 pub(crate) struct OriginalDataInputs<'a> {
     inputs: &'a [Evidence],
     current: &'a ConstructionRecords,
-    checked: &'a mut TryOrderedMap<(u8, usize), bool>,
+    checked: &'a mut crate::portable::metered_map::TryHashMap<(u8, usize), bool>,
     ledgers: Option<Vec<&'a ConstructionRecords>>,
     unavailable: bool,
 }
@@ -42,7 +42,7 @@ impl<'a> OriginalDataInputs<'a> {
     // claim a healthy bit, or create strict/memo/write authority.
     pub(super) fn new(
         session: &mut Session, inputs: &'a [Evidence],
-        checked: &'a mut TryOrderedMap<(u8, usize), bool>, current: &'a ConstructionRecords,
+        checked: &'a mut crate::portable::metered_map::TryHashMap<(u8, usize), bool>, current: &'a ConstructionRecords,
     ) -> Result<Self> {
         session.charge_host_work((2 * std::mem::size_of::<Self>() + 8) as u64)?;
         Ok(Self { inputs, current, checked, ledgers: None, unavailable: false })
@@ -59,7 +59,7 @@ impl<'a> OriginalDataInputs<'a> {
         // Prepay all transient headers/init/move/retirement before acquisition.
         session.charge_host_work((
             2 * std::mem::size_of::<Vec<&Evidence>>()
-            + 2 * std::mem::size_of::<TryOrderedMap<(u8, usize), bool>>()
+            + 2 * std::mem::size_of::<crate::portable::metered_map::TryHashMap<(u8, usize), bool>>()
             + 2 * std::mem::size_of::<Vec<&ConstructionRecords>>() + 8
         ) as u64)?;
         let mut pending: Vec<&'a Evidence> = Vec::new();

@@ -158,11 +158,11 @@ fn keyword_key_equal(
     a: &suss_reader::Keyword,
     b: &suss_reader::Keyword,
 ) -> Result<bool> {
-    // New call/option/extent/branch controls precede all added native work.
+    // Call/option/extent/branch controls precede the spelling comparison. The
+    // partition-sensitive keyword_equal is not the locator (different
+    // partitions can construct one fqn); the paired traversal applies it to
+    // the matched value itself.
     session.charge_host_work(12)?;
-    // Keep the old comparison AND its existing conditional text debits. Its
-    // result is not the locator: different partitions can construct one fqn.
-    let _same_partition = keyword_equal(session, a, b)?;
     let rendered_len = |key: &suss_reader::Keyword| -> Result<usize> {
         key.namespace.as_ref().map_or(Some(key.name.len()), |ns|
             ns.len().checked_add(1).and_then(|n| n.checked_add(key.name.len())))

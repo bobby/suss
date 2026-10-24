@@ -856,3 +856,34 @@ mod tests {
         assert_eq!(map.len(), 1);
     }
 }
+
+/// Unordered storage for small fixed-width identity keys (no key data beyond
+/// their words), with fixed-key hashing. A lookup pays one keyed hash, group
+/// probe and key compare; an insertion also prepays growth (new backing,
+/// rehash of every live entry and retirement) before allocating. Meter errors
+/// never mutate the map.
+pub struct TryHashMap<K, V>(std::collections::HashMap<K, V,
+    std::hash::BuildHasherDefault<std::collections::hash_map::DefaultHasher>>);
+impl<K, V> Default for TryHashMap<K, V> {
+    fn default() -> Self { Self(Default::default()) }
+}
+const HASH_PROBE: u64 = 4 * mem::size_of::<usize>() as u64;
+impl<K: std::hash::Hash + Eq, V> TryHashMap<K, V> {
+    pub fn len(&self) -> usize { self.0.len() }
+    pub fn get<C: Context<K>>(&self, key: &K, context: &mut C) -> Result<Option<&V>, C::Error> {
+        context.charge(HASH_PROBE + mem::size_of::<K>() as u64)?;
+        Ok(self.0.get(key))
+    }
+    pub fn insert<C: Context<K>>(&mut self, key: K, value: V, context: &mut C) -> Result<Option<V>, C::Error> {
+        context.charge(HASH_PROBE + mem::size_of::<K>() as u64)?;
+        if self.0.len() == self.0.capacity() {
+            let next = self.0.capacity().saturating_mul(2).max(4);
+            let entry = (mem::size_of::<(K, V)>() + 1) as u64;
+            let bytes = (2 * next + self.0.capacity()) as u64 * entry + self.0.len() as u64 * HASH_PROBE;
+            context.charge(bytes)?;
+            self.0.reserve(next - self.0.len());
+        }
+        context.charge(4)?; // slot, control byte and length writes
+        Ok(self.0.insert(key, value))
+    }
+}
