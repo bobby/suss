@@ -78,6 +78,8 @@ struct State {
     nodes: Vec<Node>,
     children: Vec<ChildDomain>,
     sealed: bool,
+    // Recorded provenance walks from this sealed domain's original outputs.
+    walk_plans: std::collections::BTreeMap<usize, Arc<[factory_inputs::PlanStep]>>,
 }
 pub(crate) struct WriteDomain {
     state: Mutex<State>,
@@ -91,6 +93,7 @@ impl WriteDomain {
                 nodes: Vec::new(),
                 children: Vec::new(),
                 sealed: false,
+                walk_plans: Default::default(),
             }),
             handles: Arc::new(AtomicUsize::new(0)),
         })

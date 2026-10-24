@@ -30,6 +30,13 @@ impl FactoryPoint {
     }
 }
 
+/// One visit of a recorded provenance walk. Positions and Weak owners only.
+pub(super) enum PlanStep {
+    Member { domain: Weak<WriteDomain>, node: usize, member: super::super::canonical_seeds::SeedMember },
+    Output { domain: Weak<WriteDomain>, node: usize },
+    End,
+}
+
 // Immediate edges already satisfy construction membership in matches_local.
 // Classify without guest calls, current-storage capture or an operation refill.
 fn factory_immediate(session: &mut Session, value: &SessionValue) -> Result<bool> {
@@ -41,6 +48,38 @@ fn factory_immediate(session: &mut Session, value: &SessionValue) -> Result<bool
 
 fn invalid_factory(message: &'static str) -> SessionError {
     SessionError::Host(wasmtime::Error::msg(message))
+}
+type SeenNodes = std::collections::HashSet<(usize, usize),
+    std::hash::BuildHasherDefault<std::collections::hash_map::DefaultHasher>>;
+/// Visited output nodes of one provenance walk: a keyed probe instead of a
+/// scan of every earlier visit. Growth prepays new backing, rehash and the
+/// retired table before allocation, as reserve_factory does for vectors.
+fn insert_seen(
+    session: &mut Session,
+    seen: &mut SeenNodes,
+    key: (usize, usize),
+) -> Result<bool> {
+    session.charge_host_work(12)?; // hash of two words, group probe and compare
+    if seen.contains(&key) {
+        return Ok(false);
+    }
+    if seen.len() == seen.capacity() {
+        let next = seen.capacity().checked_mul(2).unwrap_or(usize::MAX).max(4);
+        let entry = std::mem::size_of::<(usize, usize)>() + 1; // slot and control byte
+        let bytes = next
+            .checked_mul(2)
+            .and_then(|n| n.checked_add(seen.capacity()))
+            .and_then(|n| n.checked_mul(entry))
+            .and_then(|n| n.checked_add(seen.len().checked_mul(12)?))
+            .and_then(|n| u64::try_from(n).ok())
+            .ok_or_else(|| invalid_factory("Factory provenance backing overflow"))?;
+        session.charge_host_work(bytes)?;
+        seen.try_reserve(next - seen.len())
+            .map_err(|_| invalid_factory("Factory provenance allocation failed"))?;
+    }
+    session.charge_host_work(3)?;
+    seen.insert(key);
+    Ok(true)
 }
 pub(super) fn reserve_factory<T>(
     session: &mut Session,
@@ -206,8 +245,29 @@ impl WriteDomain {
         if origin.live(session)?.is_none() {
             return Ok(None);
         }
+        if origin.point.member.is_none() {
+            if let Some(plan) = Self::walk_plan(session, &origin.point)? {
+                let replayed = Self::replay(session, &plan, value)?;
+                #[cfg(test)]
+                {
+                    // Oracle: the recorded plan answers exactly as the walk.
+                    let walked = Self::walk_contains(session, origin, value)?;
+                    let key = |point: &Option<FactoryPoint>| point.as_ref().map(|point|
+                        (point.domain.as_ptr() as usize, point.node, point.member.is_some()));
+                    assert_eq!(key(&replayed), key(&walked), "recorded provenance walk diverged");
+                }
+                return Ok(replayed);
+            }
+        }
+        Self::walk_contains(session, origin, value)
+    }
+    fn walk_contains(
+        session: &mut Session,
+        origin: &FactoryOrigin,
+        value: &SessionValue,
+    ) -> Result<Option<FactoryPoint>> {
         let mut pending = Vec::new();
-        let mut seen = Vec::new();
+        let mut seen = SeenNodes::default();
         reserve_factory(session, &mut pending, 1)?;
         pending.push(origin.point.retained(session)?);
         while let Some(point) = pending.pop() {
@@ -237,20 +297,9 @@ impl WriteDomain {
                 continue;
             }
             let key = (Arc::as_ptr(&domain) as usize, point.node);
-            let mut duplicate = false;
-            for old in &seen {
-                session.charge_host_work(3)?;
-                if *old == key {
-                    duplicate = true;
-                    break;
-                }
-            }
-            if duplicate {
+            if !insert_seen(session, &mut seen, key)? {
                 continue;
             }
-            reserve_factory(session, &mut seen, 1)?;
-            session.charge_host_work(3)?;
-            seen.push(key);
             // Compare the borrowed exact output first. A hit needs neither
             // owned root/seed/edge staging nor expansion scratch.
             let seed = {
@@ -327,6 +376,137 @@ impl WriteDomain {
                     session.charge_host_work(2)?;
                     pending.push(owner);
                 }
+            }
+        }
+        Ok(None)
+    }
+    // The walk below visits the same sequence for every queried value: sealed
+    // topology, edge owners and seeds are immutable, and only the comparisons
+    // depend on the value. Record that sequence once per original output
+    // (positions and Weak domains only) and replay it, so each later query
+    // pays its comparisons, not edge copying and owner resolution again.
+    fn walk_plan(session: &mut Session, start: &FactoryPoint) -> Result<Option<Arc<[PlanStep]>>> {
+        session.charge_host_work(6)?; // Weak upgrade, lock and cache probe
+        let Some(domain) = start.domain.upgrade() else { return Ok(None) };
+        {
+            let state = registry_lock(&domain.state);
+            let probe = (usize::BITS - state.walk_plans.len().leading_zeros()) as u64 + 1;
+            session.charge_host_work(4 * probe + 4)?; // ordered probe over plan keys
+            if let Some(plan) = state.walk_plans.get(&start.node) {
+                return Ok(Some(plan.clone()));
+            }
+        }
+        let mut steps = Vec::new();
+        let mut pending = Vec::new();
+        let mut seen = SeenNodes::default();
+        reserve_factory(session, &mut pending, 1)?;
+        pending.push(start.retained(session)?);
+        while let Some(point) = pending.pop() {
+            session.charge_host_work(6)?; // pop, Weak upgrade/drop and identity controls
+            reserve_factory(session, &mut steps, 1)?;
+            let Some(domain) = point.domain.upgrade() else {
+                steps.push(PlanStep::End);
+                break;
+            };
+            session.charge_host_work(4)?;
+            if let Some(member) = point.member {
+                // A strong terminal member would outlive its owning link here.
+                if member.holds_reference() { return Ok(None); }
+                session.charge_host_work(3)?; // seed variant/option access
+                let state = registry_lock(&domain.state);
+                // Only permanent outcomes are recorded; an unsealed domain may
+                // later seal, so that walk is not cached.
+                if !state.sealed { return Ok(None); }
+                if state.nodes.get(point.node).and_then(Node::seed).is_none() {
+                    steps.push(PlanStep::End);
+                    break;
+                }
+                steps.push(PlanStep::Member { domain: point.domain, node: point.node, member });
+                continue;
+            }
+            let key = (Arc::as_ptr(&domain) as usize, point.node);
+            if !insert_seen(session, &mut seen, key)? {
+                continue;
+            }
+            let edges = {
+                session.charge_host_work(8)?; // lock/sealed/index/eligibility reads
+                let state = registry_lock(&domain.state);
+                if !state.sealed { return Ok(None); }
+                let Some(node) = state.nodes.get(point.node) else {
+                    steps.push(PlanStep::End);
+                    break;
+                };
+                session.charge_host_work(5)?; // original-storage variant/option checks
+                if !node.has_original_storage() {
+                    continue;
+                }
+                steps.push(PlanStep::Output { domain: point.domain.clone(), node: point.node });
+                let mut edges = Vec::new();
+                session.charge_host_work(3)?; // one borrowed edge slice accessor
+                let original_edges = node.edges();
+                reserve_factory(session, &mut edges, original_edges.len())?;
+                for edge in original_edges {
+                    session.charge_host_work((2 * std::mem::size_of::<SessionValue>() + 3) as u64)?;
+                    edges.push(edge.clone());
+                }
+                edges
+            };
+            for edge in edges {
+                session.charge_host_work(3)?;
+                if factory_immediate(session, &edge)? {
+                    continue;
+                }
+                if let Some(owner) = domain.original_edge_owner(session, &edge)? {
+                    reserve_factory(session, &mut pending, 1)?;
+                    session.charge_host_work(2)?;
+                    pending.push(owner);
+                }
+            }
+        }
+        // Shared plan backing plus one ordered-map entry, insertion path and
+        // a possible node split, before publication.
+        let entry = std::mem::size_of::<(usize, Arc<[PlanStep]>)>();
+        session.charge_host_work((2 * steps.len() * std::mem::size_of::<PlanStep>() + 12 * entry + 64) as u64)?;
+        let plan: Arc<[PlanStep]> = steps.into();
+        registry_lock(&domain.state).walk_plans.insert(start.node, plan.clone());
+        Ok(Some(plan))
+    }
+    // Same comparisons, in the same order, with the walk's early exits: a hit
+    // returns that point, and a dead/unsealed/missing step ends with None.
+    fn replay(session: &mut Session, plan: &[PlanStep], value: &SessionValue) -> Result<Option<FactoryPoint>> {
+        for step in plan {
+            session.charge_host_work(6)?; // step read, Weak upgrade/drop and identity controls
+            let (weak, index) = match step {
+                PlanStep::End => return Ok(None),
+                PlanStep::Member { domain, node, .. } | PlanStep::Output { domain, node } => (domain, *node),
+            };
+            let Some(domain) = weak.upgrade() else { return Ok(None) };
+            session.charge_host_work(8)?; // lock/sealed/index/eligibility reads
+            let (seed, exact) = {
+                let state = registry_lock(&domain.state);
+                let Some(node) = state.nodes.get(index).filter(|_| state.sealed) else { return Ok(None) };
+                let exact = match step {
+                    PlanStep::Output { .. } => {
+                        session.charge_host_work(6)?; // borrowed root, match controls and value accessor
+                        session.values_identical(value, node.value())?
+                    }
+                    _ => false,
+                };
+                session.charge_host_work(5)?; // seed accessor
+                (node.seed().cloned(), exact)
+            };
+            if exact {
+                return Ok(Some(FactoryPoint { domain: weak.clone(), node: index, member: None }));
+            }
+            let Some(seed) = seed else {
+                if matches!(step, PlanStep::Member { .. }) { return Ok(None); }
+                continue;
+            };
+            session.charge_host_work((2 * std::mem::size_of::<Arc<CanonicalSeed>>() + 4) as u64)?;
+            let within = match step { PlanStep::Member { member, .. } => Some(member), _ => None };
+            if let Some(member) = seed.original_member(session, value, within)? {
+                session.charge_host_work(3)?;
+                return Ok(Some(FactoryPoint { domain: weak.clone(), node: index, member: Some(member) }));
             }
         }
         Ok(None)
@@ -463,6 +643,7 @@ impl WriteDomain {
             if local {
                 continue;
             }
+
             for origin in &candidates {
                 session.charge_host_work(2)?;
                 if let Some(owner) = Self::origin_contains(session, origin, edge)? {

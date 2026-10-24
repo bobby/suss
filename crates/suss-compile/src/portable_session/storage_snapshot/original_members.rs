@@ -9,7 +9,18 @@ enum MemberScope {
     Node(usize),
     Terminal(SessionValue),
 }
+/// One full-root membership candidate: an original Node, or an opaque/i31
+/// atom by (node, field) position. Positions only; no reference is retained.
+#[derive(Debug, Clone, Copy)]
+pub(super) enum FullMember {
+    Node(usize),
+    Atom(usize, usize),
+}
 impl OriginalMember {
+    /// A terminal scope owns a strong guest reference; a node scope is a position.
+    pub(in crate::portable_session) fn holds_reference(&self) -> bool {
+        matches!(self.scope, MemberScope::Terminal(_))
+    }
     pub(in crate::portable_session) fn retained(&self, session: &mut Session) -> Result<Self> {
         session.charge_host_work((2 * size_of::<Self>() + 6) as u64)?;
         let scope = match &self.scope {
@@ -184,43 +195,71 @@ impl StorageSnapshot {
             };
             return Ok(Some(OriginalMember { scope }));
         }
-        // Borrowed iterator metadata/init/retirement only; no pending/seen,
-        // snapshot copy, reference clone or temporary lookup allocation.
-        meter.work((2 * size_of::<std::iter::Enumerate<std::slice::Iter<'_, Node>>>() + 4) as u64)?;
-        let mut nodes = self.nodes.iter().enumerate();
-        loop {
-            meter.work(6)?; // next/index/borrow/tag, including final None
-            let Some((index, node)) = nodes.next() else { break; };
-            meter.work(3)?; // original Node atom initialization and retirement
-            if self.atom_matches(&Atom::Node(index), target.clone(), meter)? {
-                meter.work((2 * size_of::<OriginalMember>() + 4) as u64)?;
-                return Ok(Some(OriginalMember { scope: MemberScope::Node(index) }));
+        let members = match self.full_members.get() {
+            Some(members) => members,
+            None => {
+                let members = self.full_member_order(meter)?;
+                let _ = self.full_members.set(members);
+                self.full_members.get().expect("installed full-root member order")
             }
-            meter.work(3)?; // complete contents and Struct/Array branch
-            let contents = node.contents.as_ref()
-                .ok_or_else(|| invalid("Incomplete original snapshot node"))?;
-            let atoms = match contents {
-                Contents::Struct(atoms) | Contents::Array(atoms) => atoms,
-            };
-            meter.work((2 * size_of::<std::slice::Iter<'_, Atom>>() + 4) as u64)?;
-            let mut atoms = atoms.iter();
-            loop {
-                meter.work(4)?; // next/tag/borrow, including final None
-                let Some(atom) = atoms.next() else { break; };
-                // All Node roots are visited above. Only original opaque cuts
-                // and i31 values can mint terminal AnyRef membership. Never
-                // descend through opaque leaves or through unused cut entries.
-                if matches!(atom, Atom::I31(_) | Atom::Opaque(_))
-                    && self.atom_matches(atom, target.clone(), meter)?
-                {
-                    meter.work((2 * size_of::<OriginalMember>() + 4) as u64)?;
-                    return Ok(Some(OriginalMember {
-                        scope: MemberScope::Terminal(value.clone()),
-                    }));
+        };
+        // The same candidates and comparisons, in the same order, as a scan of
+        // every node followed by its opaque/i31 atoms; the scan's traversal
+        // controls were paid once when this immutable order was recorded.
+        for member in members {
+            meter.work(4)?; // candidate read, tag and borrow
+            match *member {
+                FullMember::Node(index) => {
+                    meter.work(3)?; // original Node atom initialization and retirement
+                    if self.atom_matches(&Atom::Node(index), target.clone(), meter)? {
+                        meter.work((2 * size_of::<OriginalMember>() + 4) as u64)?;
+                        return Ok(Some(OriginalMember { scope: MemberScope::Node(index) }));
+                    }
+                }
+                FullMember::Atom(node, slot) => {
+                    let atom = self.node_atoms(node)?.get(slot)
+                        .ok_or_else(|| invalid("Original member atom outside snapshot"))?;
+                    if self.atom_matches(atom, target.clone(), meter)? {
+                        meter.work((2 * size_of::<OriginalMember>() + 4) as u64)?;
+                        return Ok(Some(OriginalMember {
+                            scope: MemberScope::Terminal(value.clone()),
+                        }));
+                    }
                 }
             }
         }
         Ok(None)
+    }
+    fn node_atoms(&self, index: usize) -> Result<&[Atom]> {
+        let contents = self.nodes.get(index)
+            .and_then(|node| node.contents.as_ref())
+            .ok_or_else(|| invalid("Incomplete original snapshot node"))?;
+        Ok(match contents { Contents::Struct(atoms) | Contents::Array(atoms) => atoms })
+    }
+    // Record every reference-capable candidate of the ORIGINAL full-root
+    // closure in scan order. All Node roots are candidates; only original
+    // opaque cuts and i31 values can mint terminal AnyRef membership, so other
+    // atoms are never candidates and unused cut entries are not descended.
+    fn full_member_order(&self, meter: &mut Meter<'_>) -> Result<Vec<FullMember>> {
+        meter.work((2 * size_of::<std::iter::Enumerate<std::slice::Iter<'_, Node>>>() + 4) as u64)?;
+        let mut members = Vec::new();
+        for (index, _) in self.nodes.iter().enumerate() {
+            meter.work(6)?; // next/index/borrow/tag
+            member_room(&mut members, 1, meter)?;
+            members.push(FullMember::Node(index));
+            meter.work(3)?; // complete contents and Struct/Array branch
+            let atoms = self.node_atoms(index)?;
+            meter.work((2 * size_of::<std::slice::Iter<'_, Atom>>() + 4) as u64)?;
+            for (slot, atom) in atoms.iter().enumerate() {
+                meter.work(4)?; // next/tag/borrow
+                if matches!(atom, Atom::I31(_) | Atom::Opaque(_)) {
+                    member_room(&mut members, 1, meter)?;
+                    members.push(FullMember::Atom(index, slot));
+                }
+            }
+        }
+        meter.work(6)?; // final None
+        Ok(members)
     }
     fn same_member_value(meter: &mut Meter<'_>, left: &Val, right: &Val) -> Result<bool> {
         meter.work(2)?;
@@ -272,15 +311,39 @@ mod tests {
         let leaf = session.data_scalar(&Literal::Number(17.0)).unwrap();
         let branch = session.data_array(&[&leaf]).unwrap();
         let root = session.data_array(&[&branch]).unwrap();
-        let snapshot = session.capture_storage(&root).unwrap();
-        let handles = session.stats().external_value_handles;
-        let used = {
+        let measure = |session: &mut Session, snapshot: &StorageSnapshot| {
             let _operation = session.operation_budget_scope().unwrap();
             let before = session.store.get_fuel().unwrap();
-            assert!(snapshot.original_member(&mut session, &leaf, None).unwrap().is_some());
+            assert!(snapshot.original_member(session, &leaf, None).unwrap().is_some());
             before - session.store.get_fuel().unwrap()
         };
-        assert!(used > 2);
+        // The first full-root query also records the immutable candidate
+        // order. Every cut of that cold query fails without installing it.
+        let first = session.capture_storage(&root).unwrap();
+        let cold = measure(&mut session, &first);
+        drop(first);
+        for cut in [0, 1, cold / 2, cold - 1] {
+            let snapshot = session.capture_storage(&root).unwrap();
+            let handles = session.stats().external_value_handles;
+            let operation = session.operation_budget_scope().unwrap();
+            session.store.set_fuel(cut).unwrap();
+            let result = snapshot.original_member(&mut session, &leaf, None);
+            assert!(matches!(result, Err(SessionError::Trap(ref error))
+                if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)),
+                "cold full-root scan must not return a member at cut {cut}");
+            drop(operation);
+            // Only a completed order is published (it is a pure function of
+            // the immutable snapshot); a cut during recording leaves none.
+            let recorded = snapshot.full_members.get().is_some();
+            assert_eq!(session.stats().external_value_handles, handles);
+            let retry = measure(&mut session, &snapshot);
+            if !recorded { assert_eq!(retry, cold, "retry repeats the complete cold query"); }
+        }
+        let snapshot = session.capture_storage(&root).unwrap();
+        let handles = session.stats().external_value_handles;
+        measure(&mut session, &snapshot);
+        let used = measure(&mut session, &snapshot);
+        assert!(used > 2 && used < cold, "warm queries replay the recorded order");
         for cut in [0, 1, used / 2, used - 1] {
             let operation = session.operation_budget_scope().unwrap();
             session.store.set_fuel(cut).unwrap();

@@ -1,3 +1,28 @@
+## PR263 — replayed provenance walks and recorded seed member order
+
+The A13 default-budget constructor control's caller &env transport measured
+61.8M native units (macro Session raised to 1B only for measurement; the
+committed test is unchanged). Exact-semantics reductions, now 33.4M:
+- Factory provenance walks deduplicate visited outputs with a keyed set
+  instead of a linear scan of earlier visits.
+- A sealed domain records, once per original output, the walk's visit
+  sequence (Weak owners and positions only; never a guest reference) and
+  replays it per query with the walk's comparisons and early exits. Walks
+  through an unsealed domain or a strong terminal seed member are not
+  recorded and keep the original walk. A cfg(test) oracle runs the original
+  walk beside every replay and asserts the same domain/node/member result.
+- A storage snapshot records the full-root membership candidate order (node
+  positions and opaque/i31 atom positions) on its first query; later queries
+  compare the same candidates in the same order. No identity hash is retained
+  (Wasmtime's default collector moves objects).
+Results: suss-compile lib write_domain/storage_snapshot/canonical_seeds/
+factory/source_roots/first_use batch 121 PASS/1 FAIL with the oracle active;
+the failure is the unchanged pre-existing source-child fixture exhausting 10M
+at Runtime variant 3 (A15). original_members+factory 37/0 and core_import 17/0
+on the committed source; two identical BOOT generations adopted. A13 still
+fails at 10M; remaining cost is spread across factory walk plan construction,
+class audits, expectation projection/matching and first-use audit.
+
 ## PR263 — structurally shared namespace revisions and hashed global lookup
 
 Root cause of the 17 failing default CORE imports: every analyzer namespace

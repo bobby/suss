@@ -68,6 +68,8 @@ pub(crate) struct StorageSnapshot {
     owner: u64,
     root: Atom,
     nodes: Vec<Node>,
+    // Built on the first full-root membership query; immutable thereafter.
+    full_members: std::sync::OnceLock<Vec<original_members::FullMember>>,
 }
 
 struct Meter<'a> {
@@ -366,6 +368,7 @@ impl<'cuts> Capture<'cuts> {
             owner: self.owner,
             root,
             nodes: self.nodes,
+            full_members: std::sync::OnceLock::new(),
         })
     }
 }

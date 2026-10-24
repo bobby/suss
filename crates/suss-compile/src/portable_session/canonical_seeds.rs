@@ -19,6 +19,7 @@ pub(super) struct SeedMember {
     point: super::storage_snapshot::OriginalMember,
 }
 impl SeedMember {
+    pub(super) fn holds_reference(&self) -> bool { self.point.holds_reference() }
     pub(super) fn retained(&self, session: &mut Session) -> Result<Self> {
         session.charge_host_work((2 * std::mem::size_of::<Self>() + 4) as u64)?;
         let point = self.point.retained(session)?;
