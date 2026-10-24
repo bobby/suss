@@ -1,3 +1,21 @@
+## PR263 — calibrated compile-time allowances for the special fixed-cap controls
+
+User decision of 2026-10-23 (after main was measured at 0.98M versus 25.4M for
+the constructor control's caller &env transport): keep the exact fixes, then
+give these controls measured compile-only allowances; Runtime caps and every
+assertion are unchanged. Restoring the original budgets is tracked by #273.
+- constructor_operation_and_children_fit_default_fuel_in_both_caller_phases:
+  caller Session still asserted at the 10M Runtime default; the expanding
+  CompiledMacros Session gets 40M (measured ~25.6M per expansion). PASS.
+- pinned_map_declaration_executes_without_transport_loss: Runtime harness
+  stays at 200M; the macro Session gets 300M (namespace load measured ~204M,
+  147 expansions, largest deftest 10.9M). Map + identifier controls 2 PASS.
+- source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo:
+  24M (all five variants plus the physical/memo tail measure 15.8M per source
+  phase). PASS.
+Measurement commands raised the relevant macro Session to 1B (or 100B for the
+map) in a temporary local edit only; committed tests use the constants above.
+
 ## PR263 — audited class-list memo and cheaper recorded walks
 
 A13 caller &env transport (measured with the macro Session raised to 1B only

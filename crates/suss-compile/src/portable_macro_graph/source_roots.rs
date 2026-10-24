@@ -1846,6 +1846,7 @@ mod tests {
                 session.options().fuel_per_operation, session.operation_fuel_remaining());
         }
     }
+    const SOURCE_CHILD_FIXTURE_FUEL: u64 = 24_000_000;
     #[test]
     fn source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo() {
         for source_phase in [Phase::Runtime, Phase::Macro] {
@@ -1861,6 +1862,11 @@ mod tests {
             )
             .unwrap();
             let bridge = FormBridge::new(&mut s).unwrap();
+            // Calibrated compile-time allowance (user decision of 2026-10-23
+            // under #252, tracked by #273): all five variants and the
+            // physical/memo tail measure 15.8M units per source phase on PR
+            // #263, above the 10M default; nothing else changes.
+            s.set_operation_fuel(SOURCE_CHILD_FIXTURE_FUEL);
             let _op = s.operation_budget_scope().unwrap();
             source_child_fuel_trace(&s, source_phase, None, "budget-start");
             let mut graph = AnalysisGraph::new(&bridge, &mut s);

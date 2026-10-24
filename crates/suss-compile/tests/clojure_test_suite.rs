@@ -39,6 +39,7 @@ const PORTABILITY_MACRO_NAMES: &[&str] = &["when-var-exists"];
 // Bounded so a runaway assertion becomes a recorded trap, not a hung suite.
 const OPERATION_FUEL: u64 = 200_000_000;
 const DECODE_BUDGET: usize = 10_000_000;
+const PINNED_MAP_COMPILATION_FUEL: u64 = 300_000_000;
 
 fn root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
@@ -803,7 +804,14 @@ fn pinned_map_declaration_executes_without_transport_loss() {
     assert_eq!(std::fs::read(&original).unwrap(), std::fs::read(source_file(&source_root, namespace)).unwrap(),
         "the original map test must not be shortened or rewritten");
     let reference = json!({"namespaces": [namespace], "tests": [test_name]});
-    let observations = Harness::new(&source_root).run(&reference, &source_root);
+    let mut harness = Harness::new(&source_root);
+    // Calibrated compile-time allowance (user decision of 2026-10-23 under
+    // #252, tracked by #273): the complete pinned map namespace load consumes
+    // about 204M macro-Session units on PR #263 (147 expansions, largest
+    // deftest 10.9M), just above the original 200M. Runtime stays at
+    // OPERATION_FUEL.
+    harness.macros.set_operation_fuel(PINNED_MAP_COMPILATION_FUEL);
+    let observations = harness.run(&reference, &source_root);
     if let Some(directory) = std::env::var_os("SUSS_CLOJURE_TEST_SUITE_CAPTURE") {
         let directory = PathBuf::from(directory);
         std::fs::create_dir_all(&directory).unwrap();

@@ -173,12 +173,21 @@ fn constructor_source_nodes_match_pinned_children_tags_and_class_facts_after_gc(
     }
 }
 
+// Calibrated compile-time allowance for this one expansion (user decision of
+// 2026-10-23 under #252). Its caller &env transport measures 25.4M native
+// units on PR #263 (first-use certification), versus 0.98M on main; the whole
+// expansion measures about 25.6M. 40M keeps headroom without approaching the
+// recursive corpus allowance. The caller's Runtime default stays 10M.
+const CONSTRUCTOR_EXPANSION_FUEL: u64 = 40_000_000;
+
 #[test]
 fn constructor_operation_and_children_fit_default_fuel_in_both_caller_phases() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
-        // Exercise production defaults independently of the large recursive corpus.
+        // Exercise production Runtime defaults independently of the large
+        // recursive corpus; only the expanding macro Session is calibrated.
         assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        macros.set_operation_fuel(CONSTRUCTOR_EXPANSION_FUEL);
         macros
             .define(
                 r#"(defmacro constructor-facts [local]
