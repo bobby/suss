@@ -354,7 +354,14 @@ impl ConstructionRecords {
     ) -> Result<bool, SessionError> {
         let _request = session.operation_budget_scope()?;
         let expected = crate::portable_macro_data::source_class_names().len() + 1;
-        let mut valid = self.class_prechecks_valid && self.bridge_classes.len() == expected;
+        if let Some(audit) = audit.as_deref_mut() {
+            if let Some(list_valid) = audit.class_list(session, &self.bridge_classes)? {
+                return Ok(self.class_prechecks_valid && list_valid);
+            }
+        }
+        // The list verdict covers length, coverage and every class schema;
+        // this ledger's own precheck is applied separately.
+        let mut valid = self.bridge_classes.len() == expected;
         let mut seen = Vec::new();
         session.charge_host_work(expected as u64 + 1)?;
         seen.try_reserve_exact(expected).map_err(|_| {
@@ -403,7 +410,10 @@ impl ConstructionRecords {
             session.charge_host_work(1)?;
             valid &= present;
         }
-        Ok(valid)
+        if let Some(audit) = audit {
+            audit.note_class_list(session, &self.bridge_classes, valid)?;
+        }
+        Ok(self.class_prechecks_valid && valid)
     }
     pub(crate) fn matches_prototype_origins(&self, session: &mut Session) -> Result<bool, SessionError> {
         self.check_prototype_origins(session, None)

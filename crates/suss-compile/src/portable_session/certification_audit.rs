@@ -20,6 +20,9 @@ pub(crate) struct CertificationAudit {
     origins: Option<Arc<Authority>>,
     entries: Vec<Entry>,
     heads: TryOrderedMap<u64, usize>,
+    // Whole bridge class lists already audited in this interval, with their
+    // coverage-and-schema verdict (excluding each ledger's own precheck).
+    class_lists: Vec<(Vec<BridgeClassInput>, bool)>,
 }
 fn invalid() -> SessionError {
     SessionError::Host(wasmtime::Error::msg("Invalid certification audit scope"))
@@ -65,7 +68,8 @@ impl CertificationAudit {
     pub(crate) fn new(session: &mut Session) -> Result<Self> {
         session.charge_host_work(3)?;
         Ok(Self { identity: session.identity, methods: session.canonical_methods.clone(),
-            origins: session.prototype_origin.clone(), entries: Vec::new(), heads: TryOrderedMap::default() })
+            origins: session.prototype_origin.clone(), entries: Vec::new(), heads: TryOrderedMap::default(),
+            class_lists: Vec::new() })
     }
     fn query<'a, I: Iterator<Item = &'a SessionValue> + Clone>(
         &mut self, session: &mut Session, name: Option<&'static str>, roots: I,
@@ -140,6 +144,45 @@ impl CertificationAudit {
         self.query(session, Some(input.name),
             input.constructor.iter().chain(std::iter::once(&input.descriptor)), bucket,
             |session| session.initial_source_class_matches(input.name, input.constructor.as_ref(), &input.descriptor))
+    }
+    /// The verdict of an identical list (same names, same constructor and
+    /// descriptor objects, same order) audited earlier in this interval. Each
+    /// of its class queries would return this audit's cached entry anyway.
+    pub(crate) fn class_list(&mut self, session: &mut Session, classes: &[BridgeClassInput]) -> Result<Option<bool>> {
+        session.charge_host_work(3)?;
+        if self.identity != session.identity { return Err(SessionError::ForeignValue); }
+        for (list, valid) in &self.class_lists {
+            session.charge_host_work(2)?;
+            if list.len() != classes.len() { continue; }
+            let mut equal = true;
+            for (stored, input) in list.iter().zip(classes) {
+                session.charge_host_work((stored.name.len() + input.name.len()) as u64 + 3)?;
+                if stored.name != input.name { equal = false; break; }
+                let constructor = match (&stored.constructor, &input.constructor) {
+                    (Some(a), Some(b)) => { session.charge_host_work(3)?; session.values_identical(a, b)? }
+                    (None, None) => true,
+                    _ => false,
+                };
+                session.charge_host_work(3)?;
+                if !constructor || !session.values_identical(&stored.descriptor, &input.descriptor)? {
+                    equal = false;
+                    break;
+                }
+            }
+            if equal { return Ok(Some(*valid)); }
+        }
+        Ok(None)
+    }
+    pub(crate) fn note_class_list(&mut self, session: &mut Session, classes: &[BridgeClassInput], valid: bool) -> Result<()> {
+        let mut owned = Vec::new();
+        reserve(session, &mut owned, classes.len())?;
+        for input in classes {
+            session.charge_host_work((2 * std::mem::size_of::<BridgeClassInput>() + 4) as u64)?;
+            owned.push(BridgeClassInput { name: input.name, constructor: input.constructor.clone(), descriptor: input.descriptor.clone() });
+        }
+        reserve(session, &mut self.class_lists, 1)?;
+        self.class_lists.push((owned, valid));
+        Ok(())
     }
     pub(super) fn prototype(&mut self, session: &mut Session, input: &PrototypeInputs) -> Result<bool> {
         self.query(session, None, input.expectation_fields().iter(), 0, |session| input.matches(session))

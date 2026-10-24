@@ -159,11 +159,15 @@ fn frame(
         .get(id)
         .and_then(Option::as_ref)
         .ok_or_else(|| invalid("Missing or unfinished metadata expectation recipe"))?;
+    let dependencies = dependencies(session, recipe)?;
+    // Every dependency yields exactly one input: reserve it once.
+    let mut inputs = Vec::new();
+    reserve(session, &mut inputs, dependencies.len())?;
     Ok(Frame {
         id,
-        dependencies: dependencies(session, recipe)?,
+        dependencies,
         next: 0,
-        inputs: Vec::new(),
+        inputs,
     })
 }
 fn discard(session: &mut Session, value: Form) -> Result<()> {

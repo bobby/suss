@@ -13,13 +13,14 @@ pub(crate) struct FactoryOrigin {
 pub(super) struct FactoryPoint {
     domain: Weak<WriteDomain>,
     node: usize,
-    member: Option<super::super::canonical_seeds::SeedMember>,
+    // Boxed: most points are exact outputs, and points fill walk scratch.
+    member: Option<Box<super::super::canonical_seeds::SeedMember>>,
 }
 impl FactoryPoint {
     fn retained(&self, session: &mut Session) -> Result<Self> {
         session.charge_host_work((2 * std::mem::size_of::<Self>() + 7) as u64)?;
         let member = match &self.member {
-            Some(member) => Some(member.retained(session)?),
+            Some(member) => Some(Box::new(member.retained(session)?)),
             None => None,
         };
         Ok(Self {
@@ -30,9 +31,60 @@ impl FactoryPoint {
     }
 }
 
+/// Seeds whose ORIGINAL full-root closure is known not to contain the one
+/// value of a single edge query, retained so an address cannot be reused.
+#[derive(Default)]
+struct SeedMisses(Vec<Arc<CanonicalSeed>>);
+impl SeedMisses {
+    fn contains(&self, session: &mut Session, seed: &Arc<CanonicalSeed>) -> Result<bool> {
+        session.charge_host_work(2 * self.0.len() as u64 + 2)?;
+        Ok(self.0.iter().any(|known| Arc::ptr_eq(known, seed)))
+    }
+    fn insert(&mut self, session: &mut Session, seed: Arc<CanonicalSeed>) -> Result<()> {
+        reserve_factory(session, &mut self.0, 1)?;
+        session.charge_host_work(2)?;
+        self.0.push(seed);
+        Ok(())
+    }
+}
+
+enum EdgeOwner {
+    Point(Box<FactoryPoint>),
+    Source(SessionValue),
+}
+// The strict source children of one locked sealed domain, staged once per node.
+fn source_children(state: &State, session: &mut Session) -> Result<Vec<(SessionValue, Arc<WriteDomain>)>> {
+    session.charge_host_work((2 * std::mem::size_of::<Vec<(SessionValue, Arc<WriteDomain>)>>() + 10) as u64)?;
+    let mut source = Vec::new();
+    for child in &state.children {
+        session.charge_host_work(4)?;
+        if let ChildDomain::Source { value, domain } = child {
+            reserve_factory(session, &mut source, 1)?;
+            session.charge_host_work((2 * (std::mem::size_of::<SessionValue>()
+                + std::mem::size_of::<Arc<WriteDomain>>()) + 6) as u64)?;
+            source.push((value.clone(), domain.clone()));
+        }
+    }
+    Ok(source)
+}
+fn source_fallback(
+    session: &mut Session, sources: &[(SessionValue, Arc<WriteDomain>)], value: &SessionValue,
+) -> Result<Option<FactoryPoint>> {
+    for (root, domain) in sources {
+        session.charge_host_work(3)?;
+        if session.values_identical(value, root)? {
+            if let Some(origin) = domain.original_factory_origin(session, root)? {
+                return Ok(Some(origin.point));
+            }
+        }
+    }
+    Ok(None)
+}
+
 /// One visit of a recorded provenance walk. Positions and Weak owners only.
 pub(super) enum PlanStep {
-    Member { domain: Weak<WriteDomain>, node: usize, member: super::super::canonical_seeds::SeedMember },
+    // Restricted members are rare; boxing keeps every recorded step small.
+    Member { domain: Weak<WriteDomain>, node: usize, member: Box<super::super::canonical_seeds::SeedMember> },
     Output { domain: Weak<WriteDomain>, node: usize },
     End,
 }
@@ -239,6 +291,7 @@ impl WriteDomain {
         session: &mut Session,
         origin: &FactoryOrigin,
         value: &SessionValue,
+        misses: &mut SeedMisses,
     ) -> Result<Option<FactoryPoint>> {
         session.charge_host_work((4 * std::mem::size_of::<Vec<FactoryPoint>>() + 10) as u64)?;
         session.check(value)?;
@@ -247,7 +300,7 @@ impl WriteDomain {
         }
         if origin.point.member.is_none() {
             if let Some(plan) = Self::walk_plan(session, &origin.point)? {
-                let replayed = Self::replay(session, &plan, value)?;
+                let replayed = Self::replay(session, &plan, value, misses)?;
                 #[cfg(test)]
                 {
                     // Oracle: the recorded plan answers exactly as the walk.
@@ -291,7 +344,7 @@ impl WriteDomain {
                 let Some(seed) = seed else { return Ok(None); };
                 if let Some(descendant) = seed.original_member(session, value, Some(member))? {
                     let mut selected = point;
-                    selected.member = Some(descendant);
+                    selected.member = Some(Box::new(descendant));
                     return Ok(Some(selected));
                 }
                 continue;
@@ -336,7 +389,7 @@ impl WriteDomain {
                 if let Some(scope) = seed.original_member(session, value, None)? {
                     session.charge_host_work(3)?;
                     let mut selected = point;
-                    selected.member = Some(scope);
+                    selected.member = Some(Box::new(scope));
                     return Ok(Some(selected));
                 }
             }
@@ -428,7 +481,11 @@ impl WriteDomain {
             if !insert_seen(session, &mut seen, key)? {
                 continue;
             }
-            let edges = {
+            // Resolve every edge owner in one locked pass over this sealed
+            // node, with the original local-output then linked-reference
+            // priority; only strict source fallbacks need other domains, so
+            // they are resolved after unlocking, still in edge order.
+            let (resolved, sources) = {
                 session.charge_host_work(8)?; // lock/sealed/index/eligibility reads
                 let state = registry_lock(&domain.state);
                 if !state.sealed { return Ok(None); }
@@ -441,22 +498,31 @@ impl WriteDomain {
                     continue;
                 }
                 steps.push(PlanStep::Output { domain: point.domain.clone(), node: point.node });
-                let mut edges = Vec::new();
                 session.charge_host_work(3)?; // one borrowed edge slice accessor
-                let original_edges = node.edges();
-                reserve_factory(session, &mut edges, original_edges.len())?;
-                for edge in original_edges {
-                    session.charge_host_work((2 * std::mem::size_of::<SessionValue>() + 3) as u64)?;
-                    edges.push(edge.clone());
+                let mut resolved = Vec::new();
+                reserve_factory(session, &mut resolved, node.edges().len())?;
+                let mut fallback = false;
+                for edge in node.edges() {
+                    session.charge_host_work(3)?;
+                    if factory_immediate(session, edge)? {
+                        continue;
+                    }
+                    let owner = domain.locked_edge_owner(&state, session, edge)?;
+                    fallback |= owner.is_none();
+                    resolved.push(match owner {
+                        Some(owner) => EdgeOwner::Point(Box::new(owner)),
+                        None => EdgeOwner::Source(edge.clone()),
+                    });
                 }
-                edges
+                let sources = if fallback { source_children(&state, session)? } else { Vec::new() };
+                (resolved, sources)
             };
-            for edge in edges {
-                session.charge_host_work(3)?;
-                if factory_immediate(session, &edge)? {
-                    continue;
-                }
-                if let Some(owner) = domain.original_edge_owner(session, &edge)? {
+            for owner in resolved {
+                let owner = match owner {
+                    EdgeOwner::Point(owner) => Some(*owner),
+                    EdgeOwner::Source(edge) => source_fallback(session, &sources, &edge)?,
+                };
+                if let Some(owner) = owner {
                     reserve_factory(session, &mut pending, 1)?;
                     session.charge_host_work(2)?;
                     pending.push(owner);
@@ -473,7 +539,7 @@ impl WriteDomain {
     }
     // Same comparisons, in the same order, with the walk's early exits: a hit
     // returns that point, and a dead/unsealed/missing step ends with None.
-    fn replay(session: &mut Session, plan: &[PlanStep], value: &SessionValue) -> Result<Option<FactoryPoint>> {
+    fn replay(session: &mut Session, plan: &[PlanStep], value: &SessionValue, misses: &mut SeedMisses) -> Result<Option<FactoryPoint>> {
         for step in plan {
             session.charge_host_work(6)?; // step read, Weak upgrade/drop and identity controls
             let (weak, index) = match step {
@@ -503,10 +569,45 @@ impl WriteDomain {
                 continue;
             };
             session.charge_host_work((2 * std::mem::size_of::<Arc<CanonicalSeed>>() + 4) as u64)?;
-            let within = match step { PlanStep::Member { member, .. } => Some(member), _ => None };
+            let within = match step { PlanStep::Member { member, .. } => Some(&**member), _ => None };
+            // An original snapshot is immutable: a full-root miss for this
+            // value is permanent, so overlapping recorded walks ask it once.
+            if within.is_none() && misses.contains(session, &seed)? { continue; }
             if let Some(member) = seed.original_member(session, value, within)? {
                 session.charge_host_work(3)?;
-                return Ok(Some(FactoryPoint { domain: weak.clone(), node: index, member: Some(member) }));
+                return Ok(Some(FactoryPoint { domain: weak.clone(), node: index, member: Some(Box::new(member)) }));
+            }
+            if within.is_none() { misses.insert(session, seed)?; }
+        }
+        Ok(None)
+    }
+    // original_edge_owner's local-output and linked-reference searches over an
+    // already locked sealed state; None means only source fallbacks remain.
+    fn locked_edge_owner(
+        self: &Arc<Self>,
+        state: &State,
+        session: &mut Session,
+        value: &SessionValue,
+    ) -> Result<Option<FactoryPoint>> {
+        session.charge_host_work(4)?; // per-edge scan initialization controls
+        for (index, node) in state.nodes.iter().enumerate() {
+            session.charge_host_work(13)?; // iterator/index/eligibility and storage checks
+            if !node.has_original_storage() {
+                continue;
+            }
+            session.charge_host_work(6)?; // exact comparison controls and value accessor
+            if session.values_identical(value, node.value())? {
+                session.charge_host_work((2 * std::mem::size_of::<FactoryPoint>() + 6) as u64)?;
+                return Ok(Some(FactoryPoint { domain: Arc::downgrade(self), node: index, member: None }));
+            }
+        }
+        for child in &state.children {
+            session.charge_host_work(4)?;
+            if let ChildDomain::FactoryReference { value: root, owner, .. } = child {
+                session.charge_host_work(3)?;
+                if session.values_identical(value, root)? {
+                    return Ok(Some(owner.retained(session)?));
+                }
             }
         }
         Ok(None)
@@ -644,9 +745,10 @@ impl WriteDomain {
                 continue;
             }
 
+            let mut misses = SeedMisses::default();
             for origin in &candidates {
                 session.charge_host_work(2)?;
-                if let Some(owner) = Self::origin_contains(session, origin, edge)? {
+                if let Some(owner) = Self::origin_contains(session, origin, edge, &mut misses)? {
                     session
                         .charge_host_work((2 * std::mem::size_of::<SessionValue>() + 4) as u64)?;
                     session.charge_host_work(std::mem::size_of::<ChildDomain>() as u64 + 3)?;
@@ -719,9 +821,10 @@ impl WriteDomain {
             if local {
                 continue;
             }
+            let mut misses = SeedMisses::default();
             for origin in &candidates {
                 session.charge_host_work(2)?;
-                if let Some(owner) = Self::origin_contains(session, origin, edge)? {
+                if let Some(owner) = Self::origin_contains(session, origin, edge, &mut misses)? {
                     session
                         .charge_host_work((2 * std::mem::size_of::<SessionValue>() + 4) as u64)?;
                     session.charge_host_work(std::mem::size_of::<ChildDomain>() as u64 + 3)?;
@@ -1915,16 +2018,16 @@ mod tests {
         let producer = finished(&mut session, recording, value);
         let offered = origin(&mut session, &producer);
         assert!(offered.point.member.is_none());
-        let exact = WriteDomain::origin_contains(&mut session, &offered, &producer.value)
+        let exact = WriteDomain::origin_contains(&mut session, &offered, &producer.value, &mut SeedMisses::default())
             .unwrap().expect("the original scalar root must remain selectable");
         assert!(exact.member.is_none(), "scalar root must not mint a seed member");
-        assert!(WriteDomain::origin_contains(&mut session, &offered, &sibling).unwrap().is_none(),
+        assert!(WriteDomain::origin_contains(&mut session, &offered, &sibling, &mut SeedMisses::default()).unwrap().is_none(),
             "an unrelated same-recording output is not a scalar descendant");
         let other = bridge.recording(&mut session).unwrap();
         let equal_value = other.scalar(&mut session, &Literal::String(units.clone())).unwrap();
         let equal = finished(&mut session, other, equal_value);
         assert!(!session.values_identical(&producer.value, &equal.value).unwrap());
-        assert!(WriteDomain::origin_contains(&mut session, &offered, &equal.value).unwrap().is_none(),
+        assert!(WriteDomain::origin_contains(&mut session, &offered, &equal.value, &mut SeedMisses::default()).unwrap().is_none(),
             "equal raw UTF16 is not the original receiver");
 
         // Actual array/Vector factories consume the original external scalar edge.
@@ -1940,7 +2043,7 @@ mod tests {
         let value = recording.vector_values(&mut session, &[first.value.clone()]).unwrap();
         let second = finished(&mut session, recording, value);
         let scalar_origin = origin(&mut session, &producer);
-        assert!(WriteDomain::origin_contains(&mut session, &scalar_origin, &first.value).unwrap().is_none(),
+        assert!(WriteDomain::origin_contains(&mut session, &scalar_origin, &first.value, &mut SeedMisses::default()).unwrap().is_none(),
             "scalar permission cannot climb into its consumer/ancestor");
         session.collect().unwrap();
         assert!(complete_domain(&mut session, &first));

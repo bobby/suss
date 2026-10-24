@@ -1,3 +1,30 @@
+## PR263 — audited class-list memo and cheaper recorded walks
+
+A13 caller &env transport (measured with the macro Session raised to 1B only
+for measurement) falls from 33.4M to 26.2M native units, results unchanged:
+- CertificationAudit remembers each fully audited bridge class list (same
+  names, same constructor/descriptor objects, same order) with its coverage
+  and schema verdict for the rest of that audit interval; each ledger's own
+  precheck still applies. Every skipped class query would have returned the
+  audit's cached entry.
+- Recorded provenance walks resolve each node's edge owners in one locked
+  pass (local outputs, then linked references); only strict source fallbacks
+  touch other domains after unlocking, still in edge order. Rare restricted
+  members and edge owners are boxed so walk scratch stays small.
+- Within one edge query, a seed whose original full-root closure missed the
+  value is not asked again by overlapping recorded walks (snapshots are
+  immutable).
+- Expectation projection reserves each frame's inputs once.
+Measured and reverted (more expensive here): per-recording identity indexes of
+domain outputs, and hashed key pairing for small logical maps.
+Results on the committed source: suss-compile lib certification batch
+(write_domain/storage_snapshot/canonical_seeds/certification_audit/
+construction_records/factory/source_roots/first_use) 138 PASS/1 FAIL with the
+walk oracle active; the failure is the pre-existing source-child fixture, now
+exhausting 10M later (source_roots.rs:1992 rather than :1940). factory/
+certification_audit/original_members/construction_records 60/0; core_import
+17/0; two identical BOOT generations adopted. A13 still exceeds 10M.
+
 ## PR263 — replayed provenance walks and recorded seed member order
 
 The A13 default-budget constructor control's caller &env transport measured
