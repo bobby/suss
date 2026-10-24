@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 use suss_cli::{portable_macro_data::FormBridge, portable_session::Session};
 use suss_compile::portable::{
     self,
-    hir::{Expression, FunctionScope, LocalBinding, LocalKind},
+    hir::{Expression, FunctionScope, LocalKind, SourceLocals},
 };
 use suss_reader::forms::{Form, Kind};
 
@@ -10,7 +10,7 @@ use suss_reader::forms::{Form, Kind};
 struct Observe {
     calls: Vec<serde_json::Value>,
     scopes: HashMap<String, Vec<Arc<FunctionScope>>>,
-    locals: HashMap<String, HashMap<String, LocalBinding>>,
+    locals: HashMap<String, SourceLocals>,
 }
 fn name(scope: &FunctionScope) -> String {
     let Kind::Symbol(symbol) = &scope.declaration.kind else {

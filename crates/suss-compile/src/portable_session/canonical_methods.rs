@@ -12,6 +12,8 @@ struct Method {
     slot: usize,
     descriptor: SessionValue,
     implementation: SessionValue,
+    table: SessionValue,
+    implementation_index: u32,
     schema: StorageSnapshot,
     closure: StorageSnapshot,
 }
@@ -295,7 +297,16 @@ impl CanonicalMethods {
         );
         let key = binding(session, "suss.internal.protocol-keys", &key_name, &handles)?;
         let key_storage = session.capture_storage_accounted(&key, handles.clone())?;
+        let count = bootstrap::memo_owner_slots().count();
+        let bytes = count.checked_mul(std::mem::size_of::<Method>())
+            .and_then(|bytes| bytes.checked_add(count.checked_mul(2)?))
+            .and_then(|bytes| bytes.checked_add(1))
+            .ok_or_else(|| invalid("Canonical method allocation overflow"))?;
+        session.charge_host_work(u64::try_from(bytes)
+            .map_err(|_| invalid("Canonical method allocation overflow"))?)?;
         let mut methods = Vec::new();
+        methods.try_reserve_exact(count)
+            .map_err(|_| invalid("Canonical method allocation failed"))?;
         for (owner, slot) in bootstrap::memo_owner_slots() {
             session.charge_host_work(1)?;
             let class = binding(session, "suss.core", owner, &handles)?;
@@ -314,6 +325,40 @@ impl CanonicalMethods {
                 &handles,
             )?;
             runtime(session, "closure-environment", &[&implementation], &handles)?;
+            // Bind the first exact key selected by protocol-method-get while
+            // private shipped provisioning still owns the installation.
+            let table = descriptor_field(session, &descriptor, 2, &handles)?;
+            session.charge_host_work(5)?;
+            let implementation_index = {
+                let mut scope = RootScope::new(&mut session.store);
+                let array = table.value.to_rooted(&mut scope).as_array(&scope)?
+                    .ok_or_else(|| invalid("Canonical method table requires array storage"))?;
+                let len = array.len(&scope)?;
+                if len % 2 != 0 { return Err(invalid("Invalid canonical method table length")); }
+                let key_root = key.value.to_rooted(&mut scope);
+                let implementation_root = implementation.value.to_rooted(&mut scope);
+                let mut found = None;
+                for index in (0..len).step_by(2) {
+                    Session::consume_host_work(scope.as_context_mut(), 6, &session.interrupt)?;
+                    let candidate = array.get(&mut scope, index)?;
+                    let Some(candidate) = candidate.anyref().flatten() else { continue; };
+                    if Rooted::<AnyRef>::ref_eq(&scope, candidate, &key_root)? {
+                        let value_index = index.checked_add(1)
+                            .ok_or_else(|| invalid("Canonical method index overflow"))?;
+                        let selected = array.get(&mut scope, value_index)?;
+                        let Some(selected) = selected.anyref().flatten() else {
+                            return Err(invalid("Canonical method implementation is null"));
+                        };
+                        if !Rooted::<AnyRef>::ref_eq(&scope, selected, &implementation_root)? {
+                            return Err(invalid("Canonical method selection changed"));
+                        }
+                        found = Some(value_index);
+                        break;
+                    }
+                }
+                found.ok_or_else(|| invalid("Canonical method key is absent"))?
+            };
+
             let fields = schema(session, &descriptor, slot, &handles)?;
             let schema = session.capture_storage_accounted(&fields, handles.clone())?;
             let closure = session.capture_storage_accounted(&implementation, handles.clone())?;
@@ -322,6 +367,8 @@ impl CanonicalMethods {
                 slot,
                 descriptor,
                 implementation,
+                table,
+                implementation_index,
                 schema,
                 closure,
             });
@@ -493,6 +540,47 @@ impl CanonicalMethods {
         &self, context: InspectionContext<'_>, owner: &str, descriptor: Val,
     ) -> Result<bool> {
         self.inspect_method_in_context(context, owner, descriptor, false)
+    }
+    pub(super) fn fresh_seed_method_slot_matches(
+        &self, context: InspectionContext<'_>, array: Val, index: u32, actual: &Val,
+    ) -> Result<bool> {
+        if context.identity != self.identity { return Err(SessionError::ForeignValue); }
+        let mut scope = RootScope::new(context.store);
+        Session::consume_host_work(scope.as_context_mut(), 3, context.interrupt)?;
+        let Some(array_root) = array.anyref().flatten() else { return Ok(false); };
+        let Some(actual_root) = actual.anyref().flatten() else { return Ok(false); };
+        for method in &self.methods {
+            Session::consume_host_work(scope.as_context_mut(), 4, context.interrupt)?;
+            if index != method.implementation_index { continue; }
+            let initial_table = method.table.value.to_rooted(&mut scope);
+            if !Rooted::<AnyRef>::ref_eq(&scope, array_root, &initial_table)? { continue; }
+            Session::consume_host_work(scope.as_context_mut(), 15, context.interrupt)?;
+            let descriptor = method.descriptor.value.to_rooted(&mut scope);
+            let object = descriptor.as_struct(&scope)?
+                .ok_or_else(|| invalid("Invalid canonical class descriptor"))?;
+            let current_table = object.field(&mut scope, 2)?;
+            let Some(current_table) = current_table.anyref().flatten() else { return Ok(false); };
+            if !Rooted::<AnyRef>::ref_eq(&scope, current_table, &initial_table)? { return Ok(false); }
+            let table = initial_table.as_array(&scope)?
+                .ok_or_else(|| invalid("Invalid canonical method table"))?;
+            let len = table.len(&scope)?;
+            if len % 2 != 0 || index == 0 || index >= len { return Ok(false); }
+            let key = table.get(&mut scope, index - 1)?;
+            let Some(key) = key.anyref().flatten() else { return Ok(false); };
+            let initial_key = self.key.value.to_rooted(&mut scope);
+            if !Rooted::<AnyRef>::ref_eq(&scope, key, &initial_key)? { return Ok(false); }
+            let selected = table.get(&mut scope, index)?;
+            let Some(selected) = selected.anyref().flatten() else { return Ok(false); };
+            if !Rooted::<AnyRef>::ref_eq(&scope, selected, actual_root)? { return Ok(false); }
+            return match self.method_layout_in_context(InspectionContext {
+                store: scope.as_context_mut(), identity: context.identity,
+                runtime: context.runtime, interrupt: context.interrupt,
+            }, method.owner, Val::AnyRef(Some(descriptor))) {
+                Err(SessionError::Language(_)) => Ok(false),
+                result => result,
+            };
+        }
+        Ok(false)
     }
     fn inspect_method_in_context(
         &self, context: InspectionContext<'_>, owner: &str, descriptor: Val,
@@ -856,23 +944,22 @@ mod tests {
                 .descriptor
                 .clone();
             session
-                .eval("(extend-type List ICounted (-count [_] 73))")
+                .eval_with_test_compilation_fuel("(extend-type List ICounted (-count [_] 73))")
                 .unwrap();
             session.collect().unwrap();
             assert!(
                 methods.matches(&mut session, "List", &descriptor).unwrap(),
                 "unrelated protocol stays live"
             );
-            session
-                .eval("(ns suss.core) (def registry-saved-list List) (def List nil)")
+            session.eval_with_test_compilation_fuel("(ns suss.core) (def registry-saved-list List) (def List nil)")
                 .unwrap();
             assert!(
                 methods.matches(&mut session, "List", &descriptor).unwrap(),
                 "rebinding globals does not redirect captured identity"
             );
-            session.eval("(def List registry-saved-list) (def registry-saved-hash hash-ordered-coll) (def hash-ordered-coll (fn [_] 711))").unwrap();
+            session.eval_with_test_compilation_fuel("(def List registry-saved-list) (def registry-saved-hash hash-ordered-coll) (def hash-ordered-coll (fn [_] 711))").unwrap();
             session.enter_namespace("user").unwrap();
-            let hash = session.eval("(hash (list 1))").unwrap();
+            let hash = session.eval_with_test_compilation_fuel("(hash (list 1))").unwrap();
             assert_eq!(
                 crate::portable_repl::display(&mut session, &hash).unwrap(),
                 "711"
@@ -883,7 +970,7 @@ mod tests {
                 "live hash helper remains ordinary dispatch"
             );
             session
-                .eval("(extend-type List IHash (-hash [_] 91))")
+                .eval_with_test_compilation_fuel("(extend-type List IHash (-hash [_] 91))")
                 .unwrap();
             session.collect().unwrap();
             assert!(!methods.matches(&mut session, "List", &descriptor).unwrap());
@@ -895,7 +982,7 @@ mod tests {
                 .is_err(),
                 "late capture must not refresh replaced methods"
             );
-            session.eval("(ns suss.core) (def List nil)").unwrap();
+            session.eval_with_test_compilation_fuel("(ns suss.core) (def List nil)").unwrap();
             assert!(
                 !methods.matches(&mut session, "List", &descriptor).unwrap(),
                 "mutable globals cannot refresh authority"
@@ -1308,8 +1395,8 @@ mod tests {
                     .initial_source_class_matches("List", Some(&impostor), &list.descriptor)
                     .unwrap()
             );
-            session.eval("(ns suss.core) (def List Keyword)").unwrap();
-            let rebound = session.eval("List").unwrap();
+            session.eval_with_test_compilation_fuel("(ns suss.core) (def List Keyword)").unwrap();
+            let rebound = session.eval_with_test_compilation_fuel("List").unwrap();
             let rebound_descriptor = session.data_descriptor(&rebound, true).unwrap();
             assert!(
                 !session
@@ -1441,3 +1528,7 @@ impl CanonicalMethods {
         Ok(valid)
     }
 }
+
+#[cfg(test)]
+#[path = "canonical_methods/fresh_slot_tests.rs"]
+mod fresh_slot_tests;

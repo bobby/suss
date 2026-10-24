@@ -2,6 +2,8 @@
 #![cfg(not(target_family = "wasm"))]
 #[path = "support/portable_decode.rs"]
 mod portable_decode;
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use portable_decode::{Decoder, Observation};
 use suss_compile::portable_session::Session;
 use wasmtime::{AnyRef, I31, Val};
@@ -168,7 +170,7 @@ fn identifier_decoder_retains_canonical_identity_through_gc_and_redefinition() {
             .to_string()
             .contains("Unsupported ABI2 value layout")
     );
-    session.eval("(ns suss.core) (def Keyword nil)").unwrap();
+    semantic_compilation::eval(&mut session, "(ns suss.core) (def Keyword nil)").unwrap();
     session.collect().unwrap();
     assert_eq!(
         decoder.decode_session(&mut session, &retained).unwrap(),
@@ -271,8 +273,7 @@ fn persistent_vectors_decode_tree_boundaries_and_nested_values_without_guest_cal
         ])
     );
     let retained = session.eval("[42]").unwrap();
-    session
-        .eval("(ns suss.core) (def PersistentVector nil) (def VectorNode nil)")
+    semantic_compilation::eval(&mut session, "(ns suss.core) (def PersistentVector nil) (def VectorNode nil)")
         .unwrap();
     session.collect().unwrap();
     assert_eq!(
@@ -577,7 +578,7 @@ fn vector_chunk_sequences_observe_rest_and_cons_tails_across_chunks_after_gc() {
         }
     }
     let retained = session.eval("(rest [0 1 2])").unwrap();
-    session.eval("(ns suss.core) (def ChunkedSeq nil)").unwrap();
+    semantic_compilation::eval(&mut session, "(ns suss.core) (def ChunkedSeq nil)").unwrap();
     session.collect().unwrap();
     assert_eq!(
         decoder.decode_session(&mut session, &retained).unwrap(),

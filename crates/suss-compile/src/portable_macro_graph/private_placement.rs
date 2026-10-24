@@ -96,6 +96,21 @@ impl AnalysisGraph<'_> {
         self.private_metadata_placement_for(root, &aliases)
     }
     fn private_metadata_placement_for(&mut self, root: Value, aliases: &[Value]) -> Result<bool> {
+        self.private_placement_for(root, aliases, false)
+    }
+    pub(super) fn private_source_placement_for(
+        &mut self,
+        root: Value,
+        aliases: &[Value],
+    ) -> Result<bool> {
+        self.private_placement_for(root, aliases, true)
+    }
+    fn private_placement_for(
+        &mut self,
+        root: Value,
+        aliases: &[Value],
+        source_inputs: bool,
+    ) -> Result<bool> {
         let _request = self.session.operation_budget_scope()?;
         let count = self.recipes.len();
         let mut states = Vec::new();
@@ -133,6 +148,13 @@ impl AnalysisGraph<'_> {
                     self.session.charge_host_work(1)?;
                     let child_taint = tainted[child];
                     tainted[id] |= child_taint;
+                }
+                // with_form_metadata inspects its base's class/fields. A raw
+                // source-root placeholder cannot stand in for that base. This
+                // restriction is separate from guest hash/equality exposure.
+                if source_inputs && let Recipe::Metadata { value, .. } = recipe {
+                    self.session.charge_host_work(1)?;
+                    valid &= !tainted[*value];
                 }
                 // FormBridge passes keys to hash/key-test, and set elements to
                 // hash/equality. Exclude their entire transitive argument graph.

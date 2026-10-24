@@ -1,3 +1,5 @@
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use std::collections::BTreeMap;
 use suss_cli::{portable_macro_data::FormBridge, portable_session::Session};
 use suss_compile::portable::{self, AnalysisContext};
@@ -9,6 +11,7 @@ struct Contexts {
     ordered_calls: Vec<(String, String)>,
 }
 impl portable::ExpansionHost for Contexts {
+    fn expansion_work_fuel(&self) -> u64 { compilation_fuel::COMPILATION_FUEL }
     fn expand(
         &mut self,
         form: &Form,

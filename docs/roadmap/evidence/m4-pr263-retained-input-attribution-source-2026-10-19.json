@@ -1,0 +1,54 @@
+{
+  "scope": "Observational diagnostic only; original programs, predicates, fees, exception propagation and acceptance remain unchanged.",
+  "source_freeze": {
+    "head": "1399e389a27a56e803a24fdf40aeeb1cf614b274",
+    "files": {
+      "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data.rs": "8e8f4dd0dee71c4e1e35ec126b59913a9a7d76d90614a3a9cc4433224f6588f9",
+      "crates/suss-compile/src/portable_session/construction_records.rs": "94b4acf710ff2129f61a0b278388c2ce140bdef611907b74b90b73c48d0fa7d8",
+      "crates/suss-compile/src/portable_macro_graph/completed_type_values.rs": "2d2f6bb761596e274161f6b87b522914a256df744901decb454854b2c2a485b4"
+    }
+  },
+  "review": {
+    "verdict": "GO_OBSERVATIONAL_SOURCE_ONLY_CONSOLIDATED_INPUT_ATTRIBUTION",
+    "manifest_sha256": "8a51cf31c2bd9f5ea1d366df4c2d668017e82ddc68f4ca8241ddddc48ee54c81",
+    "patch_sha256": "2f186b00196b6dc2d30ee92c5001f57fd8c09669b8d4d960e936c99f1325fa64",
+    "files": {
+      "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data.rs": "8e8f4dd0dee71c4e1e35ec126b59913a9a7d76d90614a3a9cc4433224f6588f9",
+      "crates/suss-compile/src/portable_session/construction_records.rs": "94b4acf710ff2129f61a0b278388c2ce140bdef611907b74b90b73c48d0fa7d8",
+      "crates/suss-compile/src/portable_macro_graph/completed_type_values.rs": "2d2f6bb761596e274161f6b87b522914a256df744901decb454854b2c2a485b4"
+    },
+    "verification": [
+      "Exact three current source preimages/postimages; private cache applycheck/replay exact.",
+      "Original contains_explicit root and check_selected_edges evaluated exactly once in original order with same arguments/fees; edges? remains exactly once, only result local added. No retry or failure conversion.",
+      "Root snapshot cfg(test) only. All new allocation/false-audit/closure logs cfg(test); fixture labels inherently test-only. No added Session/store/comparison/index/witness/validation/fuel/scope calls.",
+      "Same live Rc pointer links exact allocated recipe ID/kind/record count to failed Native audit; test names and phase/indexed/current-first/metadata-first labels disambiguate attempted cases and expected-poison interleaving.",
+      "Original source programs/loops/assertions/GC/identity/fuel/IRQ/budgets/guards/provenance/cache publication/iterative release unchanged. No descendant admission or manufactured constructor fact."
+    ],
+    "findings": [],
+    "limits": [
+      "No Cargo/rustc/bootstrap/VM/tests/shared-source/ref/index/producer actions by reviewer.",
+      "Diagnostic logging not CPU/fuel/compiler identity equivalence or acceptance credit.",
+      "Pointer links valid for live object lifetime; not persistent identity across cases. Other-kind discriminant is observational only.",
+      "WithMeta cause remains unconfirmed until exact source-bound original fixture runs; preserve failures and later uninstrumented replay."
+    ],
+    "overlap_policy": "Only Carver packet reviewed. Own pr263-two-input-data-edge-attribution-7b56177-v1 preserved unchanged UNAPPLIED; do not combine overlapping diagnostics.",
+    "reviewer_note": "Initial verification naively counted question-mark characters including newly added Debug format strings; corrected to actual call/order and unchanged single edges? propagation. Not source/compiler/test failure."
+  },
+  "typecheck": {
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--no-run"
+    ],
+    "exit_code": 0,
+    "seconds": 29.276570996036753,
+    "log_sha256": "4eea9f86622dffd97ff9e4152a13f967c18ccb72abecfb4b3450fedb747f38f5",
+    "scope": "Exact3-file observational diagnostic; compile/link only"
+  },
+  "typecheck_log": "   Compiling suss-compile v0.1.0 (/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/crates/suss-compile)\n    Finished `test` profile [unoptimized] target(s) in 29.24s\n  Executable unittests src/lib.rs (/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/suss_compile-6640f43d893bc943)\n",
+  "execution_qualification": "No new retained/warm execution. Recipe, phase and root-versus-edge cause still unknown until source-bound serial replay."
+}

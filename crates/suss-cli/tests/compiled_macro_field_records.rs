@@ -1,8 +1,7 @@
-use std::collections::HashMap;
 use suss_cli::portable_session::Session;
 use suss_compile::portable::{
     self,
-    hir::{Expression, FieldBinding, LocalBinding, Nominal},
+    hir::{Expression, Nominal, SourceFields, SourceLocals},
 };
 use suss_reader::forms::{Form, Kind};
 
@@ -10,8 +9,8 @@ use suss_reader::forms::{Form, Kind};
 struct Observe {
     calls: Vec<(
         String,
-        HashMap<String, LocalBinding>,
-        HashMap<String, FieldBinding>,
+        SourceLocals,
+        SourceFields,
     )>,
 }
 impl portable::ExpansionHost for Observe {

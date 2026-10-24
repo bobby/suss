@@ -1,0 +1,2605 @@
+{
+  "schema": 1,
+  "scope": "Fresh unchanged200M map/identifier and10M constructor controls on f3b; preserves failures/unexecuted outcomes. No whole-program fuel gain, closure or readiness claim.",
+  "compiler_source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+  "compiler_fingerprint": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+  "compiler_inputs": 228,
+  "bootstrap_commit": "a3893d8cab2c6f086a3cdabc6b1454cb5e7d6a0e",
+  "pinned_pair": {
+    "fixture_binding_manifest_sha256": "46fa7fad8ae01f7cc13f2f07862a4c4c097c6198c91c06238e51a46957e1f841",
+    "source_freeze_sha256": "cfe87a73fa2d493c560aaaea97daaaf81ffe18bb3421024d3120d6bb1124414e",
+    "head": "f97f67f3c5a62882a280bff690b92103862f830f",
+    "source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+    "predicted_source_fingerprint": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+    "source_input_count": 228,
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--test",
+      "clojure_test_suite",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "pinned_map_declaration_executes_without_transport_loss",
+      "pinned_reader_identifier_names_keep_values"
+    ],
+    "trace_environment": {},
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "scope": "Original unchanged pinned map69 and identifier15 bodies, originalMacro200M/caller200M. Fresh capture directory and independentcomparisonrequired; exactIDs/operand/verdictchecks remain. No source/metadata/observation reduction or quota/ratechange. Optin native diagnostics do not authorize source/memo or performance claims.",
+    "exit_code": 101,
+    "seconds": 345.01974647300085,
+    "raw_sha256": "09add40ddddb5486783ebf1e42c5745190c27595bec22a976e26fdc645229c55"
+  },
+  "fixture_bindings": {
+    "source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+    "file_bindings": {
+      "crates/suss-compile/tests/clojure_test_suite.rs": {
+        "sha256": "1a159e3c97cac9759708374c31b8633ba374a790d17aa8fb75512ebb1269ecd9",
+        "exact_source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true,
+        "byte_exact_to_prior_de61_source": true,
+        "byte_exact_to_prior_3f_source": true,
+        "byte_exact_to_prior_83f_source": true
+      },
+      "crates/suss-compile/tests/support/portable_decode.rs": {
+        "sha256": "5b8c8f5b130ec981c1f2ab49b6f869efef8c70dfcc34548427ca3c520c26bb87",
+        "exact_source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true,
+        "byte_exact_to_prior_de61_source": true,
+        "byte_exact_to_prior_3f_source": true,
+        "byte_exact_to_prior_83f_source": true
+      },
+      "crates/suss-compile/tests/support/compilation_fuel.rs": {
+        "sha256": "1c11af3d2a8fd93dc7b20669a430f3da208f080692cf71e34a6cce2e9363c906",
+        "exact_source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true,
+        "byte_exact_to_prior_de61_source": true,
+        "byte_exact_to_prior_3f_source": true,
+        "byte_exact_to_prior_83f_source": true
+      },
+      "scripts/clojure_test_suite.py": {
+        "sha256": "a4b523a812c58d9aaef0529b7f815f9488e4335dd04f20ff25533498e7707e14",
+        "exact_source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true,
+        "byte_exact_to_prior_de61_source": true,
+        "byte_exact_to_prior_3f_source": true,
+        "byte_exact_to_prior_83f_source": true
+      },
+      "tests/oracle/clojure-test-suite-observations.json": {
+        "sha256": "a71ec10039b93e8ff0bd5f5dd563c212294ae059c415495215ae7062b0974c6a",
+        "exact_source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true,
+        "byte_exact_to_prior_de61_source": true,
+        "byte_exact_to_prior_3f_source": true,
+        "byte_exact_to_prior_83f_source": true
+      },
+      "tests/oracle/clojure-test-suite-known-failures.json": {
+        "sha256": "90ada9910a7529f0f7152247692eabeb47fd4214580575f94d685b9c36a7642c",
+        "exact_source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true,
+        "byte_exact_to_prior_de61_source": true,
+        "byte_exact_to_prior_3f_source": true,
+        "byte_exact_to_prior_83f_source": true
+      },
+      "tests/oracle/src/suss_oracle/clojure_test_suite.cljs": {
+        "sha256": "bd190dcffddff113bf7e1a7e9dd2d69cf39ac4e6a360df7edbc5d58cad818276",
+        "exact_source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true,
+        "byte_exact_to_prior_de61_source": true,
+        "byte_exact_to_prior_3f_source": true,
+        "byte_exact_to_prior_83f_source": true
+      },
+      "tests/oracle/src/suss_oracle/clojure_test_suite_skips.cljs": {
+        "sha256": "7846d135c63178d0602eec38d60c099903f4b515e2ba0541a63b5faa64e10447",
+        "exact_source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true,
+        "byte_exact_to_prior_de61_source": true,
+        "byte_exact_to_prior_3f_source": true,
+        "byte_exact_to_prior_83f_source": true
+      },
+      "vendor/clojure-test-suite/upstream/test/clojure/core_test/map.cljc": {
+        "sha256": "a077bc1d9cc7d4e8e0e83d5fe5f1eb0e55c28eab7887919599b20e42f31b7c1e",
+        "exact_source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true,
+        "byte_exact_to_prior_de61_source": true,
+        "byte_exact_to_prior_3f_source": true,
+        "byte_exact_to_prior_83f_source": true
+      },
+      "vendor/clojure-test-suite/upstream/test/clojure/core_test/name.cljc": {
+        "sha256": "37cfac488528b43d8e492340885b1ed35c89362aa0167ff7ba72bdb0318a06b4",
+        "exact_source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true,
+        "byte_exact_to_prior_de61_source": true,
+        "byte_exact_to_prior_3f_source": true,
+        "byte_exact_to_prior_83f_source": true
+      },
+      "vendor/clojure-test-suite/upstream/test/clojure/core_test/namespace.cljc": {
+        "sha256": "df4f5fafcbc0b443956c964d8c9a59ee33be4f77321e84fd98eaffa8d82c1c3f",
+        "exact_source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true,
+        "byte_exact_to_prior_de61_source": true,
+        "byte_exact_to_prior_3f_source": true,
+        "byte_exact_to_prior_83f_source": true
+      },
+      "runtime/bootstrap/runtime.wasm": {
+        "sha256": "21e9edb35e54c593e16296291fb3127a10721200b49cbb1e68303308b435b46a",
+        "exact_source_commit": "a3893d8cab2c6f086a3cdabc6b1454cb5e7d6a0e",
+        "previous_83f_sha256": "12b3ee8c82b8d969827024a60f200648bae7cb9a822b81918e3cc64721cdd475",
+        "scope": "Reviewed new ABI/emitter BOOT; intentionally not byte-exact to prior83f.",
+        "adoption_review_sha256": "dc95cdab7766018e7e9f910d8af5abbedc30aa940183c5486efd34587018c7c4"
+      },
+      "runtime/bootstrap/runtime.json": {
+        "sha256": "61f93002d5ed3bc6cbf9058b9d67dbcdbbb7de117af821e19df030b49912b664",
+        "exact_source_commit": "a3893d8cab2c6f086a3cdabc6b1454cb5e7d6a0e",
+        "previous_83f_sha256": "82b22356d5cfeceabe0266d8eeb63ec1aed2db3aca4aa10055b141566508aff4",
+        "scope": "Reviewed new ABI/emitter BOOT; intentionally not byte-exact to prior83f.",
+        "adoption_review_sha256": "dc95cdab7766018e7e9f910d8af5abbedc30aa940183c5486efd34587018c7c4"
+      },
+      "runtime/bootstrap/macro.wasm": {
+        "sha256": "4de29dc69c07eb9a4e592d8ad5ddec6619f9b55f822f5fa3ff14575c0c3250a3",
+        "exact_source_commit": "a3893d8cab2c6f086a3cdabc6b1454cb5e7d6a0e",
+        "previous_83f_sha256": "61cd893876cbf79cfaf5e4e3324d304a3a027503bcd48c925e55213028f0f6eb",
+        "scope": "Reviewed new ABI/emitter BOOT; intentionally not byte-exact to prior83f.",
+        "adoption_review_sha256": "dc95cdab7766018e7e9f910d8af5abbedc30aa940183c5486efd34587018c7c4"
+      },
+      "runtime/bootstrap/macro.json": {
+        "sha256": "d7d6462816e67df0febaf88d02773769b5e3baa75ec175e24b81c90ae5ef5253",
+        "exact_source_commit": "a3893d8cab2c6f086a3cdabc6b1454cb5e7d6a0e",
+        "previous_83f_sha256": "a18a3740a42bcd09b895b0fe5ecbbdfdf65e11c40f525fafdb0f4ba5e8d5f0ae",
+        "scope": "Reviewed new ABI/emitter BOOT; intentionally not byte-exact to prior83f.",
+        "adoption_review_sha256": "dc95cdab7766018e7e9f910d8af5abbedc30aa940183c5486efd34587018c7c4"
+      }
+    },
+    "test_body_bindings": {
+      "rust-test-body:pinned_map_declaration_executes_without_transport_loss": {
+        "sha256": "32baf16be6727b8ff9c8c87ae20e34e6f7afdc0883633c4e99eeeb836dc7fe10",
+        "extract": "exact fn header through unindented closing brace",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true,
+        "byte_exact_to_prior_de61_source": true,
+        "byte_exact_to_prior_3f_source": true
+      },
+      "rust-test-body:pinned_reader_identifier_names_keep_values": {
+        "sha256": "3637de65117263f17bc9f27d2b172c479ce986fe2ebb66e33a760a9cdacb9f9e",
+        "extract": "exact fn header through unindented closing brace",
+        "byte_exact_to_previous_source3b1dfbd": true,
+        "byte_exact_to_prior1697_source": true,
+        "byte_exact_to_prior_de61_source": true,
+        "byte_exact_to_prior_3f_source": true
+      }
+    },
+    "budget": "Original Harness::new Macro200M/caller200M; generic suite100B helper is bound but NOT used by these two tests.",
+    "readonly_oracle_source": true,
+    "closed_macro_initialization_scope": "Current production retains v5 private fixed initialization allowance and restores user operation limits. Original pinned Macro/caller200M requests unchanged; prefix work does not alter quotas.",
+    "bootstrap_commit": "51cc2b2343a6be862890471249a5d8fbcb2e9f2e",
+    "prior_packet": "/home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-3f5552e-v1"
+  },
+  "fixture_bindings_hash": {
+    "path": "/home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-f3b641a-v1/fixture-bindings.json",
+    "sha256": "46fa7fad8ae01f7cc13f2f07862a4c4c097c6198c91c06238e51a46957e1f841"
+  },
+  "map_comparison": {
+    "counts": {
+      "pass": 0,
+      "guest-judged": 0,
+      "fail": 0,
+      "not-executed": 69,
+      "skipped": 0,
+      "namespaces-failed": 1
+    },
+    "failures": {
+      "schema": 1,
+      "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+      "namespaces": {
+        "clojure.core-test.map": {
+          "stage": "macro",
+          "diagnostic": "clojure.core-test.map (Some(\"<root>/clojure/core_test/map.cljc\")): Compiled macro expansion failed during expanded result transport: Runtime trap: error while executing at wasm backtrace:\n    0:   0x7b6a - <unknown>!<wasm function 47>\n    1:  0x48f4b - <unknown>!<wasm function 242>\n    2:  0xf5167 - <unknown>!<wasm function 1122>\n    3:  0xee891 - <unknown>!<wasm function 1070>\n    4:   0xe0a4 - <unknown>!<wasm function 185>\n    5:  0x1049d - <unknown>!<wasm function 276>\n    6:  0x104c7 - <unknown>!<wasm function 277>\n    7:    0x218 - <unknown>!<wasm function 6>: wasm trap: all fuel consumed by WebAssembly at bytes 239..5926"
+        }
+      },
+      "tests": {},
+      "assertions": {},
+      "skip-mismatches": []
+    },
+    "ordered_ids_match": false,
+    "expected_count": 69,
+    "actual_count": 0,
+    "observations_sha256": "3484125d6e34962c98262c2a771142baf160a3d0b8edce554c4e2c30d8a46a02",
+    "scope": "Host operand comparisons and guest-judged verdicts are distinct. Complete sequence and no transport failures/skips required.",
+    "accepted": false
+  },
+  "identifier_comparison": {
+    "counts": {
+      "pass": 15,
+      "guest-judged": 0,
+      "fail": 0,
+      "not-executed": 0,
+      "skipped": 0,
+      "namespaces-failed": 0
+    },
+    "failures": {
+      "schema": 1,
+      "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+      "namespaces": {},
+      "tests": {},
+      "assertions": {},
+      "skip-mismatches": []
+    },
+    "ordered_ids_match": true,
+    "expected_count": 15,
+    "actual_count": 15,
+    "observations_sha256": "cde58ece80999df311a450e52a5613ad3fe249dba52d1d9b68eb345d383f4317",
+    "scope": "Original inline Rust Python comparator logic, repeated against retained capture. Host operand decisions only; no fabricated verdict.",
+    "accepted": true
+  },
+  "preflight_rejection": {
+    "command": [
+      "python3",
+      "/home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-f3b641a-v1/run.py"
+    ],
+    "head": "6414859623856761a9eb4d095324bf69548a8c76",
+    "exit_code": 1,
+    "failure": "Assertion before Cargo/start receipt: runtime/bootstrap/runtime.wasm binding still pointed prior83f.",
+    "cargo_or_VM_started": false,
+    "correction": "11unchangedfixture/sourcefiles;4BOOTentriesupdatedonlytoindependentlyreviewednewf3bartifacts. Prior copied manifest retained.",
+    "unchanged_fixture_files": [
+      "crates/suss-compile/tests/clojure_test_suite.rs",
+      "crates/suss-compile/tests/support/portable_decode.rs",
+      "crates/suss-compile/tests/support/compilation_fuel.rs",
+      "scripts/clojure_test_suite.py",
+      "tests/oracle/clojure-test-suite-observations.json",
+      "tests/oracle/clojure-test-suite-known-failures.json",
+      "tests/oracle/src/suss_oracle/clojure_test_suite.cljs",
+      "tests/oracle/src/suss_oracle/clojure_test_suite_skips.cljs",
+      "vendor/clojure-test-suite/upstream/test/clojure/core_test/map.cljc",
+      "vendor/clojure-test-suite/upstream/test/clojure/core_test/name.cljc",
+      "vendor/clojure-test-suite/upstream/test/clojure/core_test/namespace.cljc"
+    ],
+    "reviewed_new_boot_files": [
+      "runtime/bootstrap/runtime.wasm",
+      "runtime/bootstrap/runtime.json",
+      "runtime/bootstrap/macro.wasm",
+      "runtime/bootstrap/macro.json"
+    ]
+  },
+  "default_constructor": {
+    "head": "f97f67f3c5a62882a280bff690b92103862f830f",
+    "source_commit": "a3cc0fe2ad57fd69ddf2ad92ad0a1a13a5ed6ded",
+    "compiler_source_sha256": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+    "input_count": 228,
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-cli",
+      "--locked",
+      "--test",
+      "compiled_macro_constructor_source_asts",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+    ],
+    "selection": {
+      "exact_names": [
+        "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+      ],
+      "test_source_sha256": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+      "scope": "Unchanged explicit production/default10M control, both caller phases and full op/children/value projections; no compilation calibration. Exact CIfailure reason currentlyunavailable."
+    },
+    "scope": "Only these exact complete tests; no broader acceptance credit.",
+    "exit_code": 101,
+    "seconds": 377.9056627869995,
+    "raw_sha256": "d0b1841e6ad74ab290e1d3fbf4edc4ba99afa035194354da0e7d3ee30ccf289c"
+  },
+  "default_failure_boundary": "CompiledMacros initialization and user macro definition succeed; first Runtime caller eval_with_macros at testline192 exhausts during caller &envinput transport83..108. Output assertions and Macrocaller phase unreached.",
+  "frame_lookup": {
+    "offline_generation": {
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "--crate-name",
+        "suss_abi_frame_lookup",
+        "/home/bobby/.cache/suss-m4-work/pr263-map-frame-lookup-f3b-v1/dump-runtime-offline.rs",
+        "--extern",
+        "suss_compile=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/libsuss_compile-c204c5b949caee77.rlib",
+        "-L",
+        "dependency=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps",
+        "-o",
+        "/home/bobby/.cache/suss-m4-work/pr263-map-frame-lookup-f3b-v1/dump-runtime-offline"
+      ],
+      "exit_code": 0,
+      "seconds": 3.4405629409993708,
+      "rlib_sha256": "08c7d1de6820380d288c4ac4b77df1f1536135f3dd7cc872c672c2417317db99",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "scope": "Offline ABI byte generation only, no Engine/Store/test execution, no semantic verdict.",
+      "generation_exit": 0,
+      "compiled_fingerprint_output": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9\n",
+      "stderr": "",
+      "wasm_sha256": "7e3a0f26bb1d96271499460c2b6fc9ce7c35ce1ff3bd81b73da1004750f2aa1a",
+      "wasm_bytes": 189910
+    },
+    "helper_source": "fn main() {\n    let fp = suss_compile::portable::artifact_identity::compiler_source_sha256();\n    assert_eq!(fp, \"f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9\");\n    std::fs::write(std::env::args_os().nth(1).unwrap(), suss_compile::runtime_abi::module()).unwrap();\n    println!(\"{fp}\");\n}\n",
+    "independent_review": {
+      "reviewer": "Carver",
+      "verdict": "CONFIRMED_TOP_MINUS_FIRST_BINDING_READ_AND_MIXED_MODULE_FRAME_REBINDING",
+      "source_fingerprint": "f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9",
+      "inputs": 228,
+      "runtime_abi_sha256": "7e3a0f26bb1d96271499460c2b6fc9ce7c35ce1ff3bd81b73da1004750f2aa1a",
+      "macro_boot_sha256": "4de29dc69c07eb9a4e592d8ad5ddec6619f9b55f822f5fa3ff14575c0c3250a3",
+      "offline_rlib_sha256_verified": true,
+      "frames": [
+        {
+          "frame_index": 47,
+          "offset": "0x7b6a",
+          "module": "Macro core ABI (source-derived ordinal binding)",
+          "classification": "SOURCE_ORDER_VERIFIED_NO_CURRENT_MACRO_BODY_DUMP",
+          "runtime_index": 47,
+          "name": "binding-get"
+        },
+        {
+          "frame_index": 242,
+          "offset": "0x48f4b",
+          "module": "current shipped Macro BOOT",
+          "classification": "EXACT_INDEX_AND_OFFSET",
+          "body": {
+            "index": 242,
+            "defined_ordinal": 144,
+            "start": 298494,
+            "end": 299077
+          },
+          "function_name": "unknown; no name section"
+        },
+        {
+          "frame_index": 1122,
+          "offset": "0xf5167",
+          "module": "current shipped Macro BOOT",
+          "classification": "EXACT_INDEX_AND_OFFSET",
+          "body": {
+            "index": 1122,
+            "defined_ordinal": 1024,
+            "start": 1001328,
+            "end": 1005618
+          },
+          "function_name": "unknown; no name section"
+        },
+        {
+          "frame_index": 1070,
+          "offset": "0xee891",
+          "module": "current shipped Macro BOOT",
+          "classification": "EXACT_INDEX_AND_OFFSET",
+          "body": {
+            "index": 1070,
+            "defined_ordinal": 972,
+            "start": 976301,
+            "end": 977141
+          },
+          "function_name": "unknown; no name section"
+        },
+        {
+          "frame_index": 185,
+          "offset": "0xe0a4",
+          "module": "Macro core ABI (source-derived ordinal binding)",
+          "classification": "SOURCE_ORDER_VERIFIED_NO_CURRENT_MACRO_BODY_DUMP",
+          "runtime_index": 184,
+          "name": "protocol-native-invoke"
+        },
+        {
+          "frame_index": 276,
+          "offset": "0x1049d",
+          "module": "Macro core ABI (source-derived ordinal binding)",
+          "classification": "SOURCE_ORDER_VERIFIED_NO_CURRENT_MACRO_BODY_DUMP",
+          "runtime_index": 275,
+          "name": "object-method-invoke-dispatch"
+        },
+        {
+          "frame_index": 277,
+          "offset": "0x104c7",
+          "module": "Macro core ABI (source-derived ordinal binding)",
+          "classification": "SOURCE_ORDER_VERIFIED_NO_CURRENT_MACRO_BODY_DUMP",
+          "runtime_index": 276,
+          "name": "object-method-invoke"
+        },
+        {
+          "frame_index": 6,
+          "offset": "0x218",
+          "module": "unknown emitted fragment or other module",
+          "classification": "UNMAPPED",
+          "reason": "No matching BOOT function+offset; RuntimeABI numeric-prefix index6 is NOT accepted without offset match."
+        }
+      ],
+      "exact_top_callsite": {
+        "bootstrap_function_index": 242,
+        "offset": "0x48f4b",
+        "instruction_bytes": "23 6f 10 02",
+        "decoded": "global.get111; call2",
+        "imported_global111": [
+          "suss.bindings.macro",
+          "suss.core/-first"
+        ],
+        "imported_function2": [
+          "suss.runtime",
+          "binding-get"
+        ],
+        "fact": "At the failing stack callsite, actual shipped BOOT reads the -first binding via coreABI binding-get. Function242 high-level source name not independently named."
+      },
+      "index_rule": {
+        "runtime_object_field_set": 160,
+        "before_macro_insertion": "Indices below160 unchanged; specifically47binding-get is47 in both variants.",
+        "conditional_insert": "Macro-only raw memo setter occupies160, ordinary object-field-set becomes161; later common helpers use Runtime index=Macroindex-1. Do not applyminus1 to pre-insertion functions or to BOOT/fragment modules.",
+        "later_hooks": "finish appends3after all commonhelpers; other observerbranches alter bodies/types/locals only."
+      },
+      "source_path": [
+        "runtime_abi/dynamic.rs:143 binding_get reads current dynamicframe via lookup, otherwise root cell.",
+        "runtime_abi/object_methods.rs:179 object-method-invoke-dispatch calls protocol-native-invoke;219 wrapper delegates.",
+        "runtime_abi/native_protocols.rs:259 native invocation ultimately calls actual source closure.",
+        "portable_macro_data.rs:2520+ only canonical LazySeq uses captured lazy-sval invocation with same current Store budget. Trace is consistent with source realization but stack does not name the actualsval/thunk source closures."
+      ],
+      "limits": "Trapped helper is not exclusive hotness/total fuel attribution. BOOT bodies1122/1070/242 exactboundaries known, highlevel names unknown. Frame6 unknown. No byte-offset match inferred from RuntimeABI for MacroABI bodies; direct imported binding call grounds top47 independently. No fallbackproject/perf/new VM/Cargo/rustc/helper execution/shared edits."
+    },
+    "limits": "Mixed module indices; ABI identity derives source order with conditional observer insertion, BOOTframes exactindices+offsets. Frame6 unknown; binding-get of -first is exhaustion site, not exclusive hotspot or proof of progress."
+  },
+  "isolation_calibration_review": {
+    "reviewer": "Carver",
+    "verdict": "GO_SOURCE_ONLY_COMPILATION_CALIBRATION_WITH_UNCHANGED_RUNTIME_AND_ORIGINAL_ISOLATION_ASSERTIONS",
+    "base": "1f57091c42796cd6eea59fc6918d72d30eb3fcb1",
+    "commit": "6414859623856761a9eb4d095324bf69548a8c76",
+    "file": "crates/suss-cli/tests/compiled_bootstrap.rs",
+    "postimage_sha256": "8dda485ad2a5c3e4c008805014d02e39907defd1534fa90f15cb6f39e5b80cf7",
+    "patch_sha256": "57bdeeb2569533a241bdfe4d442b1fcc2e38a25c867b662b4f5158be27acfda6",
+    "policy": "State-isolation semantic correctness test has no default compilation-fuel/low-budget requirement. Fresh issue252 and explicit user policy allow100B compilation-only per original input; Runtime and dedicated controls remain separate.",
+    "preservation": {
+      "original_source_strings_and_order_exact": true,
+      "original_isolation_body_matches_after_helper_reversal_and_removing_only_new_default_option_assertions_modulo_formatting": true,
+      "other_three_functions_byte_exact": true,
+      "new_default_Runtime_option_checks_for_both_sessions": true,
+      "phase_loop_freshStores_mutation_atom_secondStore_GC_reset_99then42_assertions_unchanged": true
+    },
+    "host": "Test-localCompilation100B checked_sub work counter, exact NoExpansion expandNone/Someemptydependencies/defaultotherhooks, one host per original input. Nested ExpansionRequest wrappers do not refill bottom host. No actual macro executor or authority/capture feature added.",
+    "runtime": "No Session setter, option mutation or extraMacroSession; original Session eval_prepared and inspection use existing default limits. New assertions check both options retainDEFAULT_OPERATION_FUEL.",
+    "pipeline_qualification": "Existingpublic eval_with_macros reader+CompilationSnapshot.prepare_with_origin vs ordinaryeval modules.prepare_input/parse_source; same staged preparation/execution, not byte-identical entry (initial conditional placement/snapshot clone differs). Original fixed inputs have no reader conditionals and retain all source/assertions. No production parser/API change.",
+    "initial_type_path_followup": "Draft used nonexistent suss_compile::Diagnostic; current commit uses existing suss_compile::portable::Diagnostic everywhere. Resolved without public API change.",
+    "compiler_input_scope": "Only Rust change is CLI integration test, outside compiler227 input list; two accompanying documentation files are outside this source review; no new BOOT required solely for this change.",
+    "findings": [],
+    "execution": "Source-only unexecuted/typecheck not verified here. Read-only Git/cache plus cache-only patch/receipt. No Cargo/VM/shared edits."
+  },
+  "ci_evidence_review": {
+    "reviewer": "Carver",
+    "verdict": "VERIFIED_CI_BOOTSTRAP_ISOLATION_COMPILE_FAILURE_AND_INCOMPLETE_COREENV",
+    "head": "1f57091c42796cd6eea59fc6918d72d30eb3fcb1",
+    "synthetic_checkout": "038023ccc19bd7b12db08ca6194bec56ff38a9b6",
+    "tree": "eb9d7e195c32d2dd955771891e86ef1a443337c2",
+    "synthetic_checkout_tree_exact_head_tree": true,
+    "parents_verified": true,
+    "api_run": 39474603868,
+    "api_current_status": "queued",
+    "api_current_conclusion": null,
+    "api_status_limit": "Current API snapshot may differ from retained completed attempt/job logs; no all-run conclusion inferred.",
+    "logs": {
+      "ci-1f-foundation.log": {
+        "raw_sha256": "0f5d6f04e241070a445dfe41532309a5a783bd7349e28b84ab2dc4de818f8a00",
+        "plain_sha256": "4ecedc977345e060b39d4aea3d0f09295f807470f5658d0f087da061cc04f5a5"
+      },
+      "ci-1f-integration3.log": {
+        "raw_sha256": "15e8ac4c1286774157e5c216cff9e6c747764d77fbfe871e94dbb744381a4d61",
+        "plain_sha256": "3718976e409a630fa1264597b7c337395681dbc65d6d0e30cea4d8507bc3ad5b"
+      }
+    },
+    "foundation_bootstrap": {
+      "passed": 3,
+      "failed": 1,
+      "ignored": 0,
+      "harness_seconds": 42.26,
+      "failure_selector": "compiled_bootstrap_catalog_cache_never_shares_guest_state",
+      "location": "crates/suss-cli/tests/compiled_bootstrap.rs:93:38",
+      "stage": "first Runtime-phase first.eval(\"(ns cljs.core)\") preparation",
+      "variant": "Compile(Diagnostic)",
+      "span": "0..14",
+      "message": "Macro expansion native work fuel exhausted",
+      "unexecuted": "Mutatingidentity/atom-state, secondStore/no-shared-state, reset recovery assertions and Macrophase in this failed test. Other3selectors actually pass."
+    },
+    "integration3": {
+      "completed_passes": 12,
+      "completed_named_failures": 0,
+      "completed_targets": {
+        "compiled_aot": 1,
+        "compiled_macro_analysis_graph": 11
+      },
+      "started_incomplete": "compiled_macro_core_namespace_keeps_complete_declaration_records",
+      "termination": "Runner shutdown signal then143",
+      "cause": "Unknown; no OOM, workflow-timeout, semantic CoreEnv failure or successful full cohort inferred."
+    },
+    "classification": "Isolation test has no default-fuel/low-fuel/performance acceptance assertion; eligible under explicituser/#252 compilation correctness calibration. OrdinaryRuntime/defaultCORE/sourcechild/pinned200M remain unchanged. Original firstfailure retained, not relabeled success.",
+    "actions": "GH API and local read-only; cache receipts only. No Cargo/VM/shared edits."
+  },
+  "other_ci_jobs_review": {
+    "scope": "Bounded terminal cancelled-run triage of jobs other than foundation and integration3; no full baseline/final-head-success inference",
+    "run_id": 39474603868,
+    "run_head": "1f57091c42796cd6eea59fc6918d72d30eb3fcb1",
+    "run_event": "pull_request",
+    "run_status": "completed",
+    "run_conclusion": "cancelled",
+    "metadata_current_pull_request_head_is_not_run_head": "f97f67f3c5a62882a280bff690b92103862f830f",
+    "actual_checkout_sha": "038023ccc19bd7b12db08ca6194bec56ff38a9b6",
+    "actual_checkout_tree": "eb9d7e195c32d2dd955771891e86ef1a443337c2",
+    "run_head_tree": "eb9d7e195c32d2dd955771891e86ef1a443337c2",
+    "tree_equivalence_proved_by_GitHub_git_commit_API": true,
+    "run_metadata_sha256": "5e346847efbcb18e9bede1c8d66fb8b9b0b18cfbdca584c0752df50ed4197716",
+    "jobs_metadata_sha256": "2674885f9fe78756474ecb9af7068ad0e2a016e92200fc0c7434082d703a599b",
+    "checkout_API_receipt_sha256": "31e0e24e8afbe8f0ff5947ee58d3df3fede1e60f9a29ab32991d201281b7ccd3",
+    "source_API_receipt_sha256": "9981078df2c5c4c75cf600695f0614e2266c8592eb89e7d9f678f886bb342bd5",
+    "reviewed_integration_shards": [
+      0,
+      1,
+      2,
+      4
+    ],
+    "observed_named_results_across_these_shards": {
+      "ok": 104,
+      "FAILED": 37
+    },
+    "failure_classification_counts": {
+      "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure": 35,
+      "Named failure observed; diagnostic/panic unavailable because harness interrupted": 2
+    },
+    "jobs": [
+      {
+        "job_id": 118807378248,
+        "name": "integration (0)",
+        "api_status": "completed",
+        "api_conclusion": "cancelled",
+        "head_sha": "1f57091c42796cd6eea59fc6918d72d30eb3fcb1",
+        "log": "/home/bobby/.cache/suss-m4-work/pr263-ci-39474603868-other-jobs-cicero-v1/job-118807378248.raw.log",
+        "raw_sha256": "83c8089f320d8c94fd82e2f85f19a1011bbee66c5c92acbf7d676f594824b7c8",
+        "raw_bytes": 178003,
+        "harnesses": [
+          {
+            "test_target": "aot_source_preparation",
+            "actual_executable": "target/debug/deps/aot_source_preparation-f9a5c9b4b5d7da41",
+            "raw_start_line": 1730,
+            "announced_test_count": 4,
+            "outcomes": [
+              {
+                "name": "source_macro_and_runtime_dependency_feed_the_same_component_pipeline",
+                "result": "ok",
+                "raw_line": 1733
+              },
+              {
+                "name": "compiled_source_macro_executes_through_a_versioned_exported_interface",
+                "result": "ok",
+                "raw_line": 1734
+              },
+              {
+                "name": "source_preparation_deduplicates_diamond_dependencies_and_isolates_macro_state",
+                "result": "FAILED",
+                "raw_line": 1735
+              },
+              {
+                "name": "source_preparation_defers_runtime_throw_until_component_instantiation",
+                "result": "ok",
+                "raw_line": 1736
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 3,
+              "failed": 1,
+              "ignored": 0,
+              "raw_line": 1750
+            },
+            "observed_counts": {
+              "ok": 3,
+              "FAILED": 1
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_aot_project_command",
+            "actual_executable": "target/debug/deps/compiled_aot_project_command-d17f12f9a5807a7c",
+            "raw_start_line": 1753,
+            "announced_test_count": 8,
+            "outcomes": [
+              {
+                "name": "explicitly_selected_core_source_is_not_skipped_as_bootstrap_initialization",
+                "result": "FAILED",
+                "raw_line": 1756
+              },
+              {
+                "name": "project_command_rejects_ignored_main_and_conflicting_configuration_selection",
+                "result": "ok",
+                "raw_line": 1757
+              },
+              {
+                "name": "project_compilation_defers_original_runtime_exception_to_each_fresh_store",
+                "result": "ok",
+                "raw_line": 1759
+              },
+              {
+                "name": "configured_entry_world_and_mappings_execute_compiled_phases_without_partial_output",
+                "result": "ok",
+                "raw_line": 1760
+              },
+              {
+                "name": "project_selection_and_headers_reject_before_macro_effects_and_preserve_output",
+                "result": "ok",
+                "raw_line": 1761
+              },
+              {
+                "name": "retained_world_groups_prepare_shared_roots_once_and_preserve_all_source_effects",
+                "result": "ok",
+                "raw_line": 1762
+              },
+              {
+                "name": "project_compile_fuel_preserves_failed_output_and_executes_explicit_budget",
+                "result": "ok",
+                "raw_line": 1765
+              },
+              {
+                "name": "selected_project_worlds_reject_output_aliases_before_replacing_artifacts",
+                "result": "ok",
+                "raw_line": 1766
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 7,
+              "failed": 1,
+              "ignored": 0,
+              "raw_line": 1781
+            },
+            "observed_counts": {
+              "FAILED": 1,
+              "ok": 7
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_export_metadata",
+            "actual_executable": "target/debug/deps/compiled_export_metadata-cb0b484f484b28a8",
+            "raw_start_line": 1784,
+            "announced_test_count": 5,
+            "outcomes": [
+              {
+                "name": "duplicate_freestanding_markers_require_an_explicit_authoritative_mapping",
+                "result": "ok",
+                "raw_line": 1789
+              },
+              {
+                "name": "export_metadata_maps_freestanding_functions_and_preserves_live_effects",
+                "result": "ok",
+                "raw_line": 1790
+              },
+              {
+                "name": "interface_metadata_requires_explicit_mapping_and_preserves_prior_output",
+                "result": "ok",
+                "raw_line": 1793
+              },
+              {
+                "name": "source_export_metadata_matches_macro_snapshots_in_both_phases",
+                "result": "FAILED",
+                "raw_line": 1794
+              },
+              {
+                "name": "partial_explicit_mapping_overrides_unsupported_metadata",
+                "result": "ok",
+                "raw_line": 1795
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 4,
+              "failed": 1,
+              "ignored": 0,
+              "raw_line": 1809
+            },
+            "observed_counts": {
+              "ok": 4,
+              "FAILED": 1
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_constant_asts",
+            "actual_executable": "target/debug/deps/compiled_macro_constant_asts-05e0c17d8fc42190",
+            "raw_start_line": 1812,
+            "announced_test_count": 3,
+            "outcomes": [
+              {
+                "name": "scalar_ast_values_preserve_binary64_and_utf16_without_physical_value_inference",
+                "result": "FAILED",
+                "raw_line": 1815
+              },
+              {
+                "name": "reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_constants",
+                "result": "FAILED",
+                "raw_line": 1816
+              },
+              {
+                "name": "scalar_initializer_operations_and_values_match_pinned_source_ast_without_execution",
+                "result": "FAILED",
+                "raw_line": 1817
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 0,
+              "failed": 3,
+              "ignored": 0,
+              "raw_line": 1843
+            },
+            "observed_counts": {
+              "FAILED": 3
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_declaration_metadata",
+            "actual_executable": "target/debug/deps/compiled_macro_declaration_metadata-6b4de9f8fcf337e7",
+            "raw_start_line": 1846,
+            "announced_test_count": 3,
+            "outcomes": [
+              {
+                "name": "declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer",
+                "result": "FAILED",
+                "raw_line": 1849
+              },
+              {
+                "name": "compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields",
+                "result": "FAILED",
+                "raw_line": 1850
+              },
+              {
+                "name": "raw_function_metadata_is_preserved_before_completed_callable_overlays",
+                "result": "FAILED",
+                "raw_line": 1851
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 0,
+              "failed": 3,
+              "ignored": 0,
+              "raw_line": 1877
+            },
+            "observed_counts": {
+              "FAILED": 3
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_hamt_lookup",
+            "actual_executable": "target/debug/deps/compiled_macro_hamt_lookup-b5bafe54ff868294",
+            "raw_start_line": 1880,
+            "announced_test_count": 3,
+            "outcomes": [
+              {
+                "name": "compiled_macro_transient_hash_map_omitted_lookup_preserves_undefined",
+                "result": "ok",
+                "raw_line": 1883
+              },
+              {
+                "name": "compiled_macro_transient_hash_map_lookup_matches_pinned_active_observations",
+                "result": "ok",
+                "raw_line": 1884
+              },
+              {
+                "name": "compiled_macro_transient_hash_map_rejects_lookup_after_persistence",
+                "result": "ok",
+                "raw_line": 1885
+              }
+            ],
+            "terminal_summary": {
+              "result": "ok",
+              "passed": 3,
+              "failed": 0,
+              "ignored": 0,
+              "raw_line": 1887
+            },
+            "observed_counts": {
+              "ok": 3
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_maps",
+            "actual_executable": "target/debug/deps/compiled_macro_maps-101cd8ce59b67960",
+            "raw_start_line": 1889,
+            "announced_test_count": 6,
+            "outcomes": [
+              {
+                "name": "compiled_macro_maps_capture_factory_before_ordered_entries_and_stop_on_throw",
+                "result": "ok",
+                "raw_line": 1892
+              },
+              {
+                "name": "compiled_macro_maps_match_fresh_pinned_scalar_observations_in_both_phases",
+                "result": "ok",
+                "raw_line": 1893
+              },
+              {
+                "name": "compiled_macro_map_sequences_count_entry_vectors_in_nesting_bound",
+                "result": "ok",
+                "raw_line": 1894
+              },
+              {
+                "name": "compiled_macro_maps_reject_foreign_and_malformed_storage_and_recover",
+                "result": "FAILED",
+                "raw_line": 1895
+              },
+              {
+                "name": "compiled_macro_maps_transport_actual_entries_and_sequences_after_gc",
+                "result": "ok",
+                "raw_line": 1896
+              },
+              {
+                "name": "compiled_macro_maps_use_canonical_persistent_data_and_preserve_old_values",
+                "result": "ok",
+                "raw_line": 1897
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 5,
+              "failed": 1,
+              "ignored": 0,
+              "raw_line": 1911
+            },
+            "observed_counts": {
+              "ok": 5,
+              "FAILED": 1
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_self_local_methods",
+            "actual_executable": "target/debug/deps/compiled_macro_self_local_methods-2d605c1d2fa85dfe",
+            "raw_start_line": 1914,
+            "announced_test_count": 2,
+            "outcomes": [
+              {
+                "name": "reviewed_self_shadow_and_duplicate_parameters_retain_both_passes_and_body_order",
+                "result": "FAILED",
+                "raw_line": 1917
+              },
+              {
+                "name": "named_self_and_method_argument_fields_match_the_pinned_local_observations",
+                "result": "FAILED",
+                "raw_line": 1918
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 0,
+              "failed": 2,
+              "ignored": 0,
+              "raw_line": 1938
+            },
+            "observed_counts": {
+              "FAILED": 2
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_syntax_quote",
+            "actual_executable": "target/debug/deps/compiled_macro_syntax_quote-b3d10768f829be75",
+            "raw_start_line": 1941,
+            "announced_test_count": 12,
+            "outcomes": [
+              {
+                "name": "compiled_macro_lazy_chunked_concat_output_is_executed_as_source_forms",
+                "result": "ok",
+                "raw_line": 1944
+              },
+              {
+                "name": "compiled_macro_lazy_concat_output_is_executed_as_source_forms",
+                "result": "ok",
+                "raw_line": 1945
+              },
+              {
+                "name": "compiled_macro_lazy_metadata_is_validated_before_thunk_effects",
+                "result": "ok",
+                "raw_line": 1946
+              },
+              {
+                "name": "compiled_macro_lazy_output_rejects_cycles_and_recovers_without_publication",
+                "result": "ok",
+                "raw_line": 1947
+              },
+              {
+                "name": "compiled_macro_lazy_undefined_sequence_tail_is_empty",
+                "result": "ok",
+                "raw_line": 1948
+              },
+              {
+                "name": "compiled_macro_syntax_quote_executes_unquote_and_sequence_splicing",
+                "result": "ok",
+                "raw_line": 1949
+              },
+              {
+                "name": "compiled_macro_reader_provenance_retains_automatic_parent_positions",
+                "result": "ok",
+                "raw_line": 1950
+              },
+              {
+                "name": "compiled_macro_syntax_quote_preserves_collection_data_without_reexecution",
+                "result": "ok",
+                "raw_line": 1951
+              },
+              {
+                "name": "compiled_macro_syntax_quote_reuses_auto_gensyms_and_evaluates_input_once",
+                "result": "ok",
+                "raw_line": 1952
+              },
+              {
+                "name": "compiled_syntax_quote_splices_inside_defn_helpers_of_macro_namespaces",
+                "result": "FAILED",
+                "raw_line": 1953
+              },
+              {
+                "name": "compiled_macro_syntax_quote_matches_actual_pinned_execution_and_reader_form",
+                "result": "ok",
+                "raw_line": 1954
+              },
+              {
+                "name": "syntax_quote_state_survives_fragments_and_failed_input_does_not_advance_it",
+                "result": "ok",
+                "raw_line": 1955
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 11,
+              "failed": 1,
+              "ignored": 0,
+              "raw_line": 1969
+            },
+            "observed_counts": {
+              "ok": 11,
+              "FAILED": 1
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_public_records",
+            "actual_executable": "target/debug/deps/compiled_public_records-710ba4c207fc86cb",
+            "raw_start_line": 1972,
+            "announced_test_count": 7,
+            "outcomes": [
+              {
+                "name": "portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing",
+                "result": "ok",
+                "raw_line": 1975
+              },
+              {
+                "name": "portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout",
+                "result": "ok",
+                "raw_line": 1976
+              },
+              {
+                "name": "portable_decode::adversarial_owner::sparse_array_decoder_rejects_corrupt_mask_cycles_and_range_then_recovers",
+                "result": "ok",
+                "raw_line": 1977
+              },
+              {
+                "name": "public_record_custom_protocols_and_record_input_factory_decode_after_gc",
+                "result": "ok",
+                "raw_line": 1978
+              },
+              {
+                "name": "public_record_field_and_metadata_values_decode_independently_after_gc",
+                "result": "ok",
+                "raw_line": 1979
+              },
+              {
+                "name": "public_record_nominal_equality_and_predicate_decode_after_gc_in_both_phases",
+                "result": "ok",
+                "raw_line": 1980
+              }
+            ],
+            "terminal_summary": null,
+            "observed_counts": {
+              "ok": 6
+            },
+            "announced_tests_without_verdict": 1
+          }
+        ],
+        "observed_named_counts": {
+          "ok": 39,
+          "FAILED": 13
+        },
+        "failure_details": [
+          {
+            "test_target": "aot_source_preparation",
+            "name": "source_preparation_deduplicates_diamond_dependencies_and_isolates_macro_state",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1735,
+            "panic_location": "thread 'source_preparation_deduplicates_diamond_dependencies_and_isolates_macro_state' (3396) panicked at crates/suss-cli/tests/aot_source_preparation.rs:151:77:",
+            "raw_panic_line": 1742,
+            "diagnostic_excerpt": "thread 'source_preparation_deduplicates_diamond_dependencies_and_isolates_macro_state' (3396) panicked at crates/suss-cli/tests/aot_source_preparation.rs:151:77:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..93, message: \"Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion analysis",
+            "source_span": "0..93"
+          },
+          {
+            "test_target": "compiled_aot_project_command",
+            "name": "explicitly_selected_core_source_is_not_skipped_as_bootstrap_initialization",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1756,
+            "panic_location": "thread 'explicitly_selected_core_source_is_not_skipped_as_bootstrap_initialization' (3403) panicked at crates/suss-cli/tests/compiled_aot_project_command.rs:41:5:",
+            "raw_panic_line": 1772,
+            "diagnostic_excerpt": "thread 'explicitly_selected_core_source_is_not_skipped_as_bootstrap_initialization' (3403) panicked at crates/suss-cli/tests/compiled_aot_project_command.rs:41:5:\nCompilation error: Semantic error: While compiling /tmp/.tmpwly6Ek/project/src/suss/core.sus: Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 0..14\n\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion analysis",
+            "source_span": "0..14"
+          },
+          {
+            "test_target": "compiled_export_metadata",
+            "name": "source_export_metadata_matches_macro_snapshots_in_both_phases",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1794,
+            "panic_location": "thread 'source_export_metadata_matches_macro_snapshots_in_both_phases' (3674) panicked at crates/suss-cli/tests/compiled_export_metadata.rs:105:14:",
+            "raw_panic_line": 1801,
+            "diagnostic_excerpt": "thread 'source_export_metadata_matches_macro_snapshots_in_both_phases' (3674) panicked at crates/suss-cli/tests/compiled_export_metadata.rs:105:14:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 21..44, message: \"Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "caller &env input transport",
+            "source_span": "21..44"
+          },
+          {
+            "test_target": "compiled_macro_constant_asts",
+            "name": "scalar_ast_values_preserve_binary64_and_utf16_without_physical_value_inference",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1815,
+            "panic_location": "thread 'scalar_ast_values_preserve_binary64_and_utf16_without_physical_value_inference' (3715) panicked at crates/suss-cli/tests/compiled_macro_constant_asts.rs:121:14:",
+            "raw_panic_line": 1823,
+            "diagnostic_excerpt": "thread 'scalar_ast_values_preserve_binary64_and_utf16_without_physical_value_inference' (3715) panicked at crates/suss-cli/tests/compiled_macro_constant_asts.rs:121:14:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 33..56, message: \"Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n---- reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_constants stdout ----\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "caller &env input transport",
+            "source_span": "33..56"
+          },
+          {
+            "test_target": "compiled_macro_constant_asts",
+            "name": "reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_constants",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1816,
+            "panic_location": "thread 'reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_constants' (3714) panicked at crates/suss-cli/tests/compiled_macro_constant_asts.rs:189:14:",
+            "raw_panic_line": 1829,
+            "diagnostic_excerpt": "thread 'reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_constants' (3714) panicked at crates/suss-cli/tests/compiled_macro_constant_asts.rs:189:14:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 33..58, message: \"Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })\n\n---- scalar_initializer_operations_and_values_match_pinned_source_ast_without_execution stdout ----\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "caller &env input transport",
+            "source_span": "33..58"
+          },
+          {
+            "test_target": "compiled_macro_constant_asts",
+            "name": "scalar_initializer_operations_and_values_match_pinned_source_ast_without_execution",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1817,
+            "panic_location": "thread 'scalar_initializer_operations_and_values_match_pinned_source_ast_without_execution' (3724) panicked at crates/suss-cli/tests/compiled_macro_constant_asts.rs:67:68:",
+            "raw_panic_line": 1834,
+            "diagnostic_excerpt": "thread 'scalar_initializer_operations_and_values_match_pinned_source_ast_without_execution' (3724) panicked at crates/suss-cli/tests/compiled_macro_constant_asts.rs:67:68:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 21..54, message: \"Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "caller &env input transport",
+            "source_span": "21..54"
+          },
+          {
+            "test_target": "compiled_macro_declaration_metadata",
+            "name": "declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1849,
+            "panic_location": "thread 'declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer' (3728) panicked at crates/suss-cli/tests/compiled_macro_declaration_metadata.rs:53:14:",
+            "raw_panic_line": 1857,
+            "diagnostic_excerpt": "thread 'declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer' (3728) panicked at crates/suss-cli/tests/compiled_macro_declaration_metadata.rs:53:14:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n---- compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields stdout ----\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "1632..1745"
+          },
+          {
+            "test_target": "compiled_macro_declaration_metadata",
+            "name": "compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1850,
+            "panic_location": "thread 'compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields' (3727) panicked at crates/suss-cli/tests/compiled_macro_declaration_metadata.rs:452:14:",
+            "raw_panic_line": 1863,
+            "diagnostic_excerpt": "thread 'compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields' (3727) panicked at crates/suss-cli/tests/compiled_macro_declaration_metadata.rs:452:14:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\n\n---- raw_function_metadata_is_preserved_before_completed_callable_overlays stdout ----\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "1632..1745"
+          },
+          {
+            "test_target": "compiled_macro_declaration_metadata",
+            "name": "raw_function_metadata_is_preserved_before_completed_callable_overlays",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1851,
+            "panic_location": "thread 'raw_function_metadata_is_preserved_before_completed_callable_overlays' (3734) panicked at crates/suss-cli/tests/compiled_macro_declaration_metadata.rs:142:14:",
+            "raw_panic_line": 1868,
+            "diagnostic_excerpt": "thread 'raw_function_metadata_is_preserved_before_completed_callable_overlays' (3734) panicked at crates/suss-cli/tests/compiled_macro_declaration_metadata.rs:142:14:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "1632..1745"
+          },
+          {
+            "test_target": "compiled_macro_maps",
+            "name": "compiled_macro_maps_reject_foreign_and_malformed_storage_and_recover",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1895,
+            "panic_location": "thread 'compiled_macro_maps_reject_foreign_and_malformed_storage_and_recover' (3822) panicked at crates/suss-cli/tests/compiled_macro_maps.rs:131:10:",
+            "raw_panic_line": 1903,
+            "diagnostic_excerpt": "thread 'compiled_macro_maps_reject_foreign_and_malformed_storage_and_recover' (3822) panicked at crates/suss-cli/tests/compiled_macro_maps.rs:131:10:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..50, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "0..50"
+          },
+          {
+            "test_target": "compiled_macro_self_local_methods",
+            "name": "reviewed_self_shadow_and_duplicate_parameters_retain_both_passes_and_body_order",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1917,
+            "panic_location": "thread 'reviewed_self_shadow_and_duplicate_parameters_retain_both_passes_and_body_order' (3832) panicked at crates/suss-cli/tests/compiled_macro_self_local_methods.rs:396:14:",
+            "raw_panic_line": 1924,
+            "diagnostic_excerpt": "thread 'reviewed_self_shadow_and_duplicate_parameters_retain_both_passes_and_body_order' (3832) panicked at crates/suss-cli/tests/compiled_macro_self_local_methods.rs:396:14:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n---- named_self_and_method_argument_fields_match_the_pinned_local_observations stdout ----\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "1632..1745"
+          },
+          {
+            "test_target": "compiled_macro_self_local_methods",
+            "name": "named_self_and_method_argument_fields_match_the_pinned_local_observations",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1918,
+            "panic_location": "thread 'named_self_and_method_argument_fields_match_the_pinned_local_observations' (3831) panicked at crates/suss-cli/tests/compiled_macro_self_local_methods.rs:283:14:",
+            "raw_panic_line": 1930,
+            "diagnostic_excerpt": "thread 'named_self_and_method_argument_fields_match_the_pinned_local_observations' (3831) panicked at crates/suss-cli/tests/compiled_macro_self_local_methods.rs:283:14:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "1632..1745"
+          },
+          {
+            "test_target": "compiled_macro_syntax_quote",
+            "name": "compiled_syntax_quote_splices_inside_defn_helpers_of_macro_namespaces",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1953,
+            "panic_location": "thread 'compiled_syntax_quote_splices_inside_defn_helpers_of_macro_namespaces' (3866) panicked at crates/suss-cli/tests/compiled_macro_syntax_quote.rs:373:10:",
+            "raw_panic_line": 1961,
+            "diagnostic_excerpt": "thread 'compiled_syntax_quote_splices_inside_defn_helpers_of_macro_namespaces' (3866) panicked at crates/suss-cli/tests/compiled_macro_syntax_quote.rs:373:10:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "1632..1745"
+          }
+        ],
+        "runner_cancellation_or_shutdown_lines": [
+          {
+            "raw_line": 1982,
+            "text": "##[error]The operation was canceled."
+          }
+        ],
+        "actual_checkout_proofs": [
+          {
+            "command_raw_line": 205,
+            "checkout_raw_line": 206,
+            "sha": "038023ccc19bd7b12db08ca6194bec56ff38a9b6"
+          }
+        ],
+        "tree_equivalent_to_run_head": true
+      },
+      {
+        "job_id": 118807378588,
+        "name": "foundation",
+        "api_status": "completed",
+        "api_conclusion": "failure",
+        "scope": "Not reanalyzed; Carver owns retained foundation/integration3 evidence. API failure is not automatically a named test failure."
+      },
+      {
+        "job_id": 118807378590,
+        "name": "integration (5)",
+        "api_status": "completed",
+        "api_conclusion": "cancelled",
+        "runner_id": 0,
+        "steps": 0,
+        "classification": "Cancelled without assigned runner/steps; no test execution evidenced. No semantic verdict."
+      },
+      {
+        "job_id": 118807378823,
+        "name": "integration (6)",
+        "api_status": "completed",
+        "api_conclusion": "cancelled",
+        "runner_id": 0,
+        "steps": 0,
+        "classification": "Cancelled without assigned runner/steps; no test execution evidenced. No semantic verdict."
+      },
+      {
+        "job_id": 118807378839,
+        "name": "integration (1)",
+        "api_status": "completed",
+        "api_conclusion": "cancelled",
+        "head_sha": "1f57091c42796cd6eea59fc6918d72d30eb3fcb1",
+        "log": "/home/bobby/.cache/suss-m4-work/pr263-ci-39474603868-other-jobs-cicero-v1/job-118807378839.raw.log",
+        "raw_sha256": "cd936d2f788cf58935bc6a1435c2ed6ff06c05ef3817b86ea2ce56ff96c1da7e",
+        "raw_bytes": 152886,
+        "harnesses": [
+          {
+            "test_target": "compiled_artifact_identities",
+            "actual_executable": "target/debug/deps/compiled_artifact_identities-84bc603cca405882",
+            "raw_start_line": 1713,
+            "announced_test_count": 2,
+            "outcomes": [
+              {
+                "name": "source_artifact_identity_keeps_external_macro_provenance_unknown",
+                "result": "ok",
+                "raw_line": 1716
+              },
+              {
+                "name": "source_artifact_identity_records_actual_macro_versions_and_rejects_prior_graph",
+                "result": "ok",
+                "raw_line": 1717
+              }
+            ],
+            "terminal_summary": {
+              "result": "ok",
+              "passed": 2,
+              "failed": 0,
+              "ignored": 0,
+              "raw_line": 1719
+            },
+            "observed_counts": {
+              "ok": 2
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_let_destructuring",
+            "actual_executable": "target/debug/deps/compiled_let_destructuring-32130ba262f1f6f8",
+            "raw_start_line": 1721,
+            "announced_test_count": 5,
+            "outcomes": [
+              {
+                "name": "let_patterns_preserve_outer_initializer_scope_and_tail_recur",
+                "result": "ok",
+                "raw_line": 1724
+              },
+              {
+                "name": "let_patterns_preserve_order_once_defaults_scope_and_hygiene",
+                "result": "ok",
+                "raw_line": 1725
+              },
+              {
+                "name": "portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout",
+                "result": "ok",
+                "raw_line": 1726
+              },
+              {
+                "name": "portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing",
+                "result": "ok",
+                "raw_line": 1727
+              },
+              {
+                "name": "portable_decode::adversarial_owner::sparse_array_decoder_rejects_corrupt_mask_cycles_and_range_then_recovers",
+                "result": "ok",
+                "raw_line": 1728
+              }
+            ],
+            "terminal_summary": {
+              "result": "ok",
+              "passed": 5,
+              "failed": 0,
+              "ignored": 0,
+              "raw_line": 1730
+            },
+            "observed_counts": {
+              "ok": 5
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_constructor_source_asts",
+            "actual_executable": "target/debug/deps/compiled_macro_constructor_source_asts-12b4b9d0b6cc242b",
+            "raw_start_line": 1732,
+            "announced_test_count": 2,
+            "outcomes": [
+              {
+                "name": "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases",
+                "result": "FAILED",
+                "raw_line": 1735
+              }
+            ],
+            "terminal_summary": null,
+            "observed_counts": {
+              "FAILED": 1
+            },
+            "announced_tests_without_verdict": 1
+          }
+        ],
+        "observed_named_counts": {
+          "ok": 7,
+          "FAILED": 1
+        },
+        "failure_details": [
+          {
+            "test_target": "compiled_macro_constructor_source_asts",
+            "name": "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1735,
+            "classification": "Named failure observed; diagnostic/panic unavailable because harness interrupted",
+            "stage": "UNKNOWN",
+            "source_span": "UNKNOWN"
+          }
+        ],
+        "runner_cancellation_or_shutdown_lines": [
+          {
+            "raw_line": 1737,
+            "text": "##[error]The runner has received a shutdown signal. This can happen when the runner service is stopped, or a manually started runner is canceled."
+          },
+          {
+            "raw_line": 1738,
+            "text": "##[error]The operation was canceled."
+          }
+        ],
+        "actual_checkout_proofs": [
+          {
+            "command_raw_line": 205,
+            "checkout_raw_line": 206,
+            "sha": "038023ccc19bd7b12db08ca6194bec56ff38a9b6"
+          }
+        ],
+        "tree_equivalent_to_run_head": true
+      },
+      {
+        "job_id": 118807378845,
+        "name": "integration (7)",
+        "api_status": "completed",
+        "api_conclusion": "cancelled",
+        "runner_id": 0,
+        "steps": 0,
+        "classification": "Cancelled without assigned runner/steps; no test execution evidenced. No semantic verdict."
+      },
+      {
+        "job_id": 118807378939,
+        "name": "integration (3)",
+        "api_status": "completed",
+        "api_conclusion": "failure",
+        "scope": "Not reanalyzed; Carver owns retained foundation/integration3 evidence. API failure is not automatically a named test failure."
+      },
+      {
+        "job_id": 118807378957,
+        "name": "integration (2)",
+        "api_status": "completed",
+        "api_conclusion": "cancelled",
+        "head_sha": "1f57091c42796cd6eea59fc6918d72d30eb3fcb1",
+        "log": "/home/bobby/.cache/suss-m4-work/pr263-ci-39474603868-other-jobs-cicero-v1/job-118807378957.raw.log",
+        "raw_sha256": "797fe1b04bc73e39ac11ab40b6acdb83c2023fab30b1279bccfccd6d0a6305b9",
+        "raw_bytes": 162512,
+        "harnesses": [
+          {
+            "test_target": "compiled_macro_analysis_context",
+            "actual_executable": "target/debug/deps/compiled_macro_analysis_context-fe4c10eb0ec8009c",
+            "raw_start_line": 1580,
+            "announced_test_count": 1,
+            "outcomes": [
+              {
+                "name": "compiler_analysis_context_matches_pinned_facts_without_granting_recur_tail_scope",
+                "result": "FAILED",
+                "raw_line": 1583
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 0,
+              "failed": 1,
+              "ignored": 0,
+              "raw_line": 1597
+            },
+            "observed_counts": {
+              "FAILED": 1
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_control_source_asts",
+            "actual_executable": "target/debug/deps/compiled_macro_control_source_asts-49982344a819c3fd",
+            "raw_start_line": 1600,
+            "announced_test_count": 5,
+            "outcomes": [
+              {
+                "name": "catch_alpha_view_rejects_inconsistent_or_non_private_payload_names",
+                "result": "ok",
+                "raw_line": 1603
+              },
+              {
+                "name": "function_metadata_keeps_wrapper_and_inner_method_edges",
+                "result": "FAILED",
+                "raw_line": 1604
+              },
+              {
+                "name": "function_name_asts_match_primary_identity_presence_and_shadow_after_gc",
+                "result": "FAILED",
+                "raw_line": 1605
+              },
+              {
+                "name": "method_recurrence_flags_survive_gc_in_both_caller_phases",
+                "result": "FAILED",
+                "raw_line": 1606
+              },
+              {
+                "name": "control_source_nodes_match_genuine_primary_children_and_forms_after_gc",
+                "result": "ok",
+                "raw_line": 1608
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 2,
+              "failed": 3,
+              "ignored": 0,
+              "raw_line": 1633
+            },
+            "observed_counts": {
+              "ok": 2,
+              "FAILED": 3
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_field_records",
+            "actual_executable": "target/debug/deps/compiled_macro_field_records-e295f4c9e4b7c7fa",
+            "raw_start_line": 1636,
+            "announced_test_count": 1,
+            "outcomes": [
+              {
+                "name": "compiler_macro_field_records_preserve_declarations_access_and_parameter_shadows",
+                "result": "ok",
+                "raw_line": 1639
+              }
+            ],
+            "terminal_summary": {
+              "result": "ok",
+              "passed": 1,
+              "failed": 0,
+              "ignored": 0,
+              "raw_line": 1641
+            },
+            "observed_counts": {
+              "ok": 1
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_hash_maps",
+            "actual_executable": "target/debug/deps/compiled_macro_hash_maps-dd23e9491b028127",
+            "raw_start_line": 1643,
+            "announced_test_count": 8,
+            "outcomes": [
+              {
+                "name": "compiled_hash_map_deletion_crosses_collision_and_dense_boundaries_in_both_phases",
+                "result": "FAILED",
+                "raw_line": 1646
+              },
+              {
+                "name": "compiled_macro_hash_maps_match_fresh_pinned_observations_in_both_phases",
+                "result": "FAILED",
+                "raw_line": 1647
+              },
+              {
+                "name": "compiled_macro_hash_maps_keep_canonical_roots_after_class_redefinition",
+                "result": "FAILED",
+                "raw_line": 1648
+              },
+              {
+                "name": "compiled_macro_hash_maps_resolve_collision_nodes_and_preserve_earlier_values",
+                "result": "ok",
+                "raw_line": 1649
+              },
+              {
+                "name": "compiled_macro_hash_maps_preserve_old_roots_and_nil_entries_across_growth",
+                "result": "ok",
+                "raw_line": 1650
+              },
+              {
+                "name": "compiled_macro_hash_maps_transients_cross_array_boundary_and_close_after_persistence",
+                "result": "ok",
+                "raw_line": 1651
+              },
+              {
+                "name": "compiled_macro_hash_maps_transport_large_literals_in_both_phases_after_gc",
+                "result": "ok",
+                "raw_line": 1652
+              },
+              {
+                "name": "compiled_macro_hash_maps_validate_counts_flags_nodes_and_cycles",
+                "result": "ok",
+                "raw_line": 1653
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 5,
+              "failed": 3,
+              "ignored": 0,
+              "raw_line": 1679
+            },
+            "observed_counts": {
+              "FAILED": 3,
+              "ok": 5
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_method_roles",
+            "actual_executable": "target/debug/deps/compiled_macro_method_roles-7f1ea613dbca1c51",
+            "raw_start_line": 1682,
+            "announced_test_count": 2,
+            "outcomes": [
+              {
+                "name": "repeated_receiver_names_keep_this_as_role_and_the_actual_argument_shadow",
+                "result": "ok",
+                "raw_line": 1685
+              },
+              {
+                "name": "source_method_roles_match_pinned_arguments_receiver_and_shadow_facts_without_fake_ids",
+                "result": "ok",
+                "raw_line": 1686
+              }
+            ],
+            "terminal_summary": {
+              "result": "ok",
+              "passed": 2,
+              "failed": 0,
+              "ignored": 0,
+              "raw_line": 1688
+            },
+            "observed_counts": {
+              "ok": 2
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_sets",
+            "actual_executable": "target/debug/deps/compiled_macro_sets-9ebbe93949a444c8",
+            "raw_start_line": 1690,
+            "announced_test_count": 8,
+            "outcomes": [
+              {
+                "name": "compiled_large_set_literals_use_the_canonical_hamt_backing_map",
+                "result": "ok",
+                "raw_line": 1693
+              },
+              {
+                "name": "compiled_macro_sets_retain_canonical_roots_and_reject_forged_storage_after_gc",
+                "result": "FAILED",
+                "raw_line": 1694
+              },
+              {
+                "name": "compiled_macro_key_sequences_ignore_values_and_keep_their_own_metadata",
+                "result": "ok",
+                "raw_line": 1695
+              },
+              {
+                "name": "compiled_macro_sets_transport_canonical_small_and_hamt_values_after_gc",
+                "result": "ok",
+                "raw_line": 1696
+              },
+              {
+                "name": "compiled_set_literals_preserve_textual_effect_order_and_stop_at_throw",
+                "result": "ok",
+                "raw_line": 1697
+              },
+              {
+                "name": "compiled_set_transients_reject_all_operations_after_persistence",
+                "result": "ok",
+                "raw_line": 1698
+              },
+              {
+                "name": "compiled_quoted_sets_keep_symbols_nested_syntax_metadata_and_factory_boundaries",
+                "result": "ok",
+                "raw_line": 1699
+              },
+              {
+                "name": "compiled_sets_keep_canonical_lookup_metadata_and_persistent_versions_in_both_phases",
+                "result": "ok",
+                "raw_line": 1700
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 7,
+              "failed": 1,
+              "ignored": 0,
+              "raw_line": 1714
+            },
+            "observed_counts": {
+              "ok": 7,
+              "FAILED": 1
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_module_cache",
+            "actual_executable": "target/debug/deps/compiled_module_cache-fcb05a884d350592",
+            "raw_start_line": 1717,
+            "announced_test_count": 2,
+            "outcomes": [
+              {
+                "name": "compiled_code_reuse_preserves_initializers_store_isolation_and_reset",
+                "result": "ok",
+                "raw_line": 1720
+              },
+              {
+                "name": "identical_macro_output_still_executes_macro_effects_each_time",
+                "result": "ok",
+                "raw_line": 1721
+              }
+            ],
+            "terminal_summary": {
+              "result": "ok",
+              "passed": 2,
+              "failed": 0,
+              "ignored": 0,
+              "raw_line": 1723
+            },
+            "observed_counts": {
+              "ok": 2
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_record_labels",
+            "actual_executable": "target/debug/deps/compiled_record_labels-62530ee1e166bb93",
+            "raw_start_line": 1725,
+            "announced_test_count": 4,
+            "outcomes": [
+              {
+                "name": "portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout",
+                "result": "ok",
+                "raw_line": 1728
+              },
+              {
+                "name": "portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing",
+                "result": "ok",
+                "raw_line": 1729
+              },
+              {
+                "name": "portable_decode::adversarial_owner::sparse_array_decoder_rejects_corrupt_mask_cycles_and_range_then_recovers",
+                "result": "ok",
+                "raw_line": 1730
+              },
+              {
+                "name": "compiled_record_type_labels_follow_complete_scalar_utf16_munging_rules",
+                "result": "ok",
+                "raw_line": 1731
+              }
+            ],
+            "terminal_summary": {
+              "result": "ok",
+              "passed": 4,
+              "failed": 0,
+              "ignored": 0,
+              "raw_line": 1733
+            },
+            "observed_counts": {
+              "ok": 4
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "portable_atoms",
+            "actual_executable": "target/debug/deps/portable_atoms-bc8caa5afeaf46dd",
+            "raw_start_line": 1735,
+            "announced_test_count": 4,
+            "outcomes": [
+              {
+                "name": "persistent_session_atom_operations_preserve_order_and_errors_before_mutation",
+                "result": "ok",
+                "raw_line": 1738
+              },
+              {
+                "name": "persistent_session_atoms_and_old_contents_remain_rooted_across_fragments_and_gc",
+                "result": "ok",
+                "raw_line": 1739
+              },
+              {
+                "name": "session_lifecycle_atom_core_is_reprovisioned_on_reset_and_failed_reset_preserves_state",
+                "result": "ok",
+                "raw_line": 1740
+              },
+              {
+                "name": "persistent_session_atoms_match_independent_pinned_observations",
+                "result": "ok",
+                "raw_line": 1741
+              }
+            ],
+            "terminal_summary": {
+              "result": "ok",
+              "passed": 4,
+              "failed": 0,
+              "ignored": 0,
+              "raw_line": 1743
+            },
+            "observed_counts": {
+              "ok": 4
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "portable_drop",
+            "actual_executable": "target/debug/deps/portable_drop-744509c3bfdbf8d4",
+            "raw_start_line": 1745,
+            "announced_test_count": 1,
+            "outcomes": [
+              {
+                "name": "drop_preserves_idrop_lazy_sequence_and_transducer_contracts",
+                "result": "ok",
+                "raw_line": 1748
+              }
+            ],
+            "terminal_summary": {
+              "result": "ok",
+              "passed": 1,
+              "failed": 0,
+              "ignored": 0,
+              "raw_line": 1750
+            },
+            "observed_counts": {
+              "ok": 1
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "portable_forward_declarations",
+            "actual_executable": "target/debug/deps/portable_forward_declarations-f02991c90363958b",
+            "raw_start_line": 1752,
+            "announced_test_count": 2,
+            "outcomes": [
+              {
+                "name": "declaration_errors_are_atomic_and_unknown_names_still_fail_resolution",
+                "result": "ok",
+                "raw_line": 1755
+              },
+              {
+                "name": "forward_declarations_match_independently_decoded_primary_observations_after_gc",
+                "result": "FAILED",
+                "raw_line": 1756
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 1,
+              "failed": 1,
+              "ignored": 0,
+              "raw_line": 1770
+            },
+            "observed_counts": {
+              "ok": 1,
+              "FAILED": 1
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "portable_indexed_strings",
+            "actual_executable": "target/debug/deps/portable_indexed_strings-2cc2de012f040c2c",
+            "raw_start_line": 1773,
+            "announced_test_count": 2,
+            "outcomes": [
+              {
+                "name": "unsupported_string_operations_are_language_errors_and_session_recovers",
+                "result": "ok",
+                "raw_line": 1776
+              },
+              {
+                "name": "indexed_strings_match_independently_decoded_primary_observations_after_gc",
+                "result": "ok",
+                "raw_line": 1777
+              }
+            ],
+            "terminal_summary": {
+              "result": "ok",
+              "passed": 2,
+              "failed": 0,
+              "ignored": 0,
+              "raw_line": 1779
+            },
+            "observed_counts": {
+              "ok": 2
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "portable_public_hash",
+            "actual_executable": "target/debug/deps/portable_public_hash-2904030af59ae18d",
+            "raw_start_line": 1781,
+            "announced_test_count": 5,
+            "outcomes": [
+              {
+                "name": "numeric_date_storage_executes_without_full_core",
+                "result": "ok",
+                "raw_line": 1784
+              },
+              {
+                "name": "date_hash_normalizes_numeric_milliseconds_and_keeps_protocol_priority",
+                "result": "FAILED",
+                "raw_line": 1785
+              },
+              {
+                "name": "public_hash_matches_independently_decoded_primary_observations",
+                "result": "FAILED",
+                "raw_line": 1786
+              },
+              {
+                "name": "time_clip_rejects_wrong_storage_and_preserves_effects_and_compile_atomicity",
+                "result": "ok",
+                "raw_line": 1787
+              },
+              {
+                "name": "public_hash_retains_scalar_branches_and_captured_callable_after_gc",
+                "result": "FAILED",
+                "raw_line": 1788
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 2,
+              "failed": 3,
+              "ignored": 0,
+              "raw_line": 1814
+            },
+            "observed_counts": {
+              "ok": 2,
+              "FAILED": 3
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "portable_record_helpers",
+            "actual_executable": "target/debug/deps/portable_record_helpers-9d76774ddf752fe4",
+            "raw_start_line": 1817,
+            "announced_test_count": 3,
+            "outcomes": [
+              {
+                "name": "complete_record_helpers_match_closed_pinned_cases_in_both_phases_after_gc",
+                "result": "ok",
+                "raw_line": 1820
+              },
+              {
+                "name": "fnil_sole_host_handle_keeps_callback_captures_and_defaults_across_gc",
+                "result": "ok",
+                "raw_line": 1821
+              },
+              {
+                "name": "record_helper_raw_values_and_traces_match_pinned_bits_in_both_phases_after_gc",
+                "result": "ok",
+                "raw_line": 1822
+              }
+            ],
+            "terminal_summary": {
+              "result": "ok",
+              "passed": 3,
+              "failed": 0,
+              "ignored": 0,
+              "raw_line": 1824
+            },
+            "observed_counts": {
+              "ok": 3
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "portable_repeat_coercion",
+            "actual_executable": "target/debug/deps/portable_repeat_coercion-926cb89e8889a64e",
+            "raw_start_line": 1826,
+            "announced_test_count": 1,
+            "outcomes": [
+              {
+                "name": "repeat_counts_use_nominal_conversion_hooks_and_preserve_source_effects",
+                "result": "ok",
+                "raw_line": 1829
+              }
+            ],
+            "terminal_summary": {
+              "result": "ok",
+              "passed": 1,
+              "failed": 0,
+              "ignored": 0,
+              "raw_line": 1831
+            },
+            "observed_counts": {
+              "ok": 1
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "portable_short_property_observations",
+            "actual_executable": "target/debug/deps/portable_short_property_observations-10cbf33f68512db7",
+            "raw_start_line": 1833,
+            "announced_test_count": 4,
+            "outcomes": [
+              {
+                "name": "portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing",
+                "result": "ok",
+                "raw_line": 1836
+              },
+              {
+                "name": "portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout",
+                "result": "ok",
+                "raw_line": 1837
+              },
+              {
+                "name": "portable_decode::adversarial_owner::sparse_array_decoder_rejects_corrupt_mask_cycles_and_range_then_recovers",
+                "result": "ok",
+                "raw_line": 1838
+              }
+            ],
+            "terminal_summary": null,
+            "observed_counts": {
+              "ok": 3
+            },
+            "announced_tests_without_verdict": 1
+          }
+        ],
+        "observed_named_counts": {
+          "FAILED": 12,
+          "ok": 40
+        },
+        "failure_details": [
+          {
+            "test_target": "compiled_macro_analysis_context",
+            "name": "compiler_analysis_context_matches_pinned_facts_without_granting_recur_tail_scope",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1583,
+            "panic_location": "thread 'compiler_analysis_context_matches_pinned_facts_without_granting_recur_tail_scope' (3332) panicked at crates/suss-cli/tests/compiled_macro_analysis_context.rs:87:54:",
+            "raw_panic_line": 1589,
+            "diagnostic_excerpt": "thread 'compiler_analysis_context_matches_pinned_facts_without_granting_recur_tail_scope' (3332) panicked at crates/suss-cli/tests/compiled_macro_analysis_context.rs:87:54:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 314..424, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "314..424"
+          },
+          {
+            "test_target": "compiled_macro_control_source_asts",
+            "name": "function_metadata_keeps_wrapper_and_inner_method_edges",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1604,
+            "panic_location": "thread 'function_metadata_keeps_wrapper_and_inner_method_edges' (3345) panicked at crates/suss-cli/tests/compiled_macro_control_source_asts.rs:253:14:",
+            "raw_panic_line": 1614,
+            "diagnostic_excerpt": "thread 'function_metadata_keeps_wrapper_and_inner_method_edges' (3345) panicked at crates/suss-cli/tests/compiled_macro_control_source_asts.rs:253:14:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 43..66, message: \"Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })\n\n---- function_name_asts_match_primary_identity_presence_and_shadow_after_gc stdout ----\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "caller &env input transport",
+            "source_span": "43..66"
+          },
+          {
+            "test_target": "compiled_macro_control_source_asts",
+            "name": "function_name_asts_match_primary_identity_presence_and_shadow_after_gc",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1605,
+            "panic_location": "thread 'function_name_asts_match_primary_identity_presence_and_shadow_after_gc' (3353) panicked at crates/suss-cli/tests/compiled_macro_control_source_asts.rs:455:70:",
+            "raw_panic_line": 1619,
+            "diagnostic_excerpt": "thread 'function_name_asts_match_primary_identity_presence_and_shadow_after_gc' (3353) panicked at crates/suss-cli/tests/compiled_macro_control_source_asts.rs:455:70:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 25..49, message: \"Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })\n\n---- method_recurrence_flags_survive_gc_in_both_caller_phases stdout ----\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "caller &env input transport",
+            "source_span": "25..49"
+          },
+          {
+            "test_target": "compiled_macro_control_source_asts",
+            "name": "method_recurrence_flags_survive_gc_in_both_caller_phases",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1606,
+            "panic_location": "thread 'method_recurrence_flags_survive_gc_in_both_caller_phases' (3354) panicked at crates/suss-cli/tests/compiled_macro_control_source_asts.rs:370:72:",
+            "raw_panic_line": 1624,
+            "diagnostic_excerpt": "thread 'method_recurrence_flags_survive_gc_in_both_caller_phases' (3354) panicked at crates/suss-cli/tests/compiled_macro_control_source_asts.rs:370:72:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 25..50, message: \"Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "caller &env input transport",
+            "source_span": "25..50"
+          },
+          {
+            "test_target": "compiled_macro_hash_maps",
+            "name": "compiled_hash_map_deletion_crosses_collision_and_dense_boundaries_in_both_phases",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1646,
+            "panic_location": "thread 'compiled_hash_map_deletion_crosses_collision_and_dense_boundaries_in_both_phases' (3495) panicked at crates/suss-cli/tests/compiled_macro_hash_maps.rs:268:14:",
+            "raw_panic_line": 1659,
+            "diagnostic_excerpt": "thread 'compiled_hash_map_deletion_crosses_collision_and_dense_boundaries_in_both_phases' (3495) panicked at crates/suss-cli/tests/compiled_macro_hash_maps.rs:268:14:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1300..1354, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n---- compiled_macro_hash_maps_match_fresh_pinned_observations_in_both_phases stdout ----\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "1300..1354"
+          },
+          {
+            "test_target": "compiled_macro_hash_maps",
+            "name": "compiled_macro_hash_maps_match_fresh_pinned_observations_in_both_phases",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1647,
+            "panic_location": "thread 'compiled_macro_hash_maps_match_fresh_pinned_observations_in_both_phases' (3503) panicked at crates/suss-cli/tests/compiled_macro_hash_maps.rs:182:14:",
+            "raw_panic_line": 1665,
+            "diagnostic_excerpt": "thread 'compiled_macro_hash_maps_match_fresh_pinned_observations_in_both_phases' (3503) panicked at crates/suss-cli/tests/compiled_macro_hash_maps.rs:182:14:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1300..1354, message: \"Macro expansion native work fuel exhausted\" })\n\n---- compiled_macro_hash_maps_keep_canonical_roots_after_class_redefinition stdout ----\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "1300..1354"
+          },
+          {
+            "test_target": "compiled_macro_hash_maps",
+            "name": "compiled_macro_hash_maps_keep_canonical_roots_after_class_redefinition",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1648,
+            "panic_location": "thread 'compiled_macro_hash_maps_keep_canonical_roots_after_class_redefinition' (3496) panicked at crates/suss-cli/tests/compiled_macro_hash_maps.rs:208:14:",
+            "raw_panic_line": 1670,
+            "diagnostic_excerpt": "thread 'compiled_macro_hash_maps_keep_canonical_roots_after_class_redefinition' (3496) panicked at crates/suss-cli/tests/compiled_macro_hash_maps.rs:208:14:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..67, message: \"Macro expansion native work fuel exhausted\" })\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "0..67"
+          },
+          {
+            "test_target": "compiled_macro_sets",
+            "name": "compiled_macro_sets_retain_canonical_roots_and_reject_forged_storage_after_gc",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1694,
+            "panic_location": "thread 'compiled_macro_sets_retain_canonical_roots_and_reject_forged_storage_after_gc' (3529) panicked at crates/suss-cli/tests/compiled_macro_sets.rs:157:109:",
+            "raw_panic_line": 1706,
+            "diagnostic_excerpt": "thread 'compiled_macro_sets_retain_canonical_roots_and_reject_forged_storage_after_gc' (3529) panicked at crates/suss-cli/tests/compiled_macro_sets.rs:157:109:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..50, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "0..50"
+          },
+          {
+            "test_target": "portable_forward_declarations",
+            "name": "forward_declarations_match_independently_decoded_primary_observations_after_gc",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1756,
+            "panic_location": "thread 'forward_declarations_match_independently_decoded_primary_observations_after_gc' (3655) panicked at crates/suss-cli/tests/portable_forward_declarations.rs:15:10:",
+            "raw_panic_line": 1762,
+            "diagnostic_excerpt": "thread 'forward_declarations_match_independently_decoded_primary_observations_after_gc' (3655) panicked at crates/suss-cli/tests/portable_forward_declarations.rs:15:10:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "1632..1745"
+          },
+          {
+            "test_target": "portable_public_hash",
+            "name": "date_hash_normalizes_numeric_milliseconds_and_keeps_protocol_priority",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1785,
+            "panic_location": "thread 'date_hash_normalizes_numeric_milliseconds_and_keeps_protocol_priority' (3670) panicked at crates/suss-cli/tests/portable_public_hash.rs:63:10:",
+            "raw_panic_line": 1794,
+            "diagnostic_excerpt": "thread 'date_hash_normalizes_numeric_milliseconds_and_keeps_protocol_priority' (3670) panicked at crates/suss-cli/tests/portable_public_hash.rs:63:10:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n---- public_hash_matches_independently_decoded_primary_observations stdout ----\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "1632..1745"
+          },
+          {
+            "test_target": "portable_public_hash",
+            "name": "public_hash_matches_independently_decoded_primary_observations",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1786,
+            "panic_location": "thread 'public_hash_matches_independently_decoded_primary_observations' (3676) panicked at crates/suss-cli/tests/portable_public_hash.rs:128:10:",
+            "raw_panic_line": 1800,
+            "diagnostic_excerpt": "thread 'public_hash_matches_independently_decoded_primary_observations' (3676) panicked at crates/suss-cli/tests/portable_public_hash.rs:128:10:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\n\n---- public_hash_retains_scalar_branches_and_captured_callable_after_gc stdout ----\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "1632..1745"
+          },
+          {
+            "test_target": "portable_public_hash",
+            "name": "public_hash_retains_scalar_branches_and_captured_callable_after_gc",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1788,
+            "panic_location": "thread 'public_hash_retains_scalar_branches_and_captured_callable_after_gc' (3677) panicked at crates/suss-cli/tests/portable_public_hash.rs:22:10:",
+            "raw_panic_line": 1805,
+            "diagnostic_excerpt": "thread 'public_hash_retains_scalar_branches_and_captured_callable_after_gc' (3677) panicked at crates/suss-cli/tests/portable_public_hash.rs:22:10:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "1632..1745"
+          }
+        ],
+        "runner_cancellation_or_shutdown_lines": [
+          {
+            "raw_line": 1839,
+            "text": "##[error]The operation was canceled."
+          }
+        ],
+        "actual_checkout_proofs": [
+          {
+            "command_raw_line": 204,
+            "checkout_raw_line": 205,
+            "sha": "038023ccc19bd7b12db08ca6194bec56ff38a9b6"
+          }
+        ],
+        "tree_equivalent_to_run_head": true
+      },
+      {
+        "job_id": 118807378983,
+        "name": "integration (4)",
+        "api_status": "completed",
+        "api_conclusion": "cancelled",
+        "head_sha": "1f57091c42796cd6eea59fc6918d72d30eb3fcb1",
+        "log": "/home/bobby/.cache/suss-m4-work/pr263-ci-39474603868-other-jobs-cicero-v1/job-118807378983.raw.log",
+        "raw_sha256": "8a0afe903caa3ff56e31cf1a6252847765816477ad25c14e4cf1692eb93573ec",
+        "raw_bytes": 148111,
+        "harnesses": [
+          {
+            "test_target": "compiled_aot_async_command",
+            "actual_executable": "target/debug/deps/compiled_aot_async_command-4a8344fe15fb89b5",
+            "raw_start_line": 1487,
+            "announced_test_count": 2,
+            "outcomes": [
+              {
+                "name": "async_input_validation_precedes_guest_initializers",
+                "result": "ok",
+                "raw_line": 1492
+              },
+              {
+                "name": "native_async_invocation_executes_compiled_macros_and_validates_inputs",
+                "result": "ok",
+                "raw_line": 1493
+              }
+            ],
+            "terminal_summary": {
+              "result": "ok",
+              "passed": 2,
+              "failed": 0,
+              "ignored": 0,
+              "raw_line": 1495
+            },
+            "observed_counts": {
+              "ok": 2
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_analyzer_literal_memos",
+            "actual_executable": "target/debug/deps/compiled_macro_analyzer_literal_memos-772cb3c68c8584a5",
+            "raw_start_line": 1497,
+            "announced_test_count": 2,
+            "outcomes": [
+              {
+                "name": "vector_source_literal_items_children_keys_and_child_keyword_have_initialized_memos",
+                "result": "FAILED",
+                "raw_line": 1500
+              },
+              {
+                "name": "fresh_env_literal_keys_keep_reader_arguments_and_source_metadata_cold_after_gc",
+                "result": "FAILED",
+                "raw_line": 1501
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 0,
+              "failed": 2,
+              "ignored": 0,
+              "raw_line": 1522
+            },
+            "observed_counts": {
+              "FAILED": 2
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_cross_invocation_identity_probe",
+            "actual_executable": "target/debug/deps/compiled_macro_cross_invocation_identity_probe-84140a50cbcf9a5f",
+            "raw_start_line": 1525,
+            "announced_test_count": 2,
+            "outcomes": [
+              {
+                "name": "same_captured_declaration_metadata_across_distinct_macro_invocations",
+                "result": "FAILED",
+                "raw_line": 1528
+              },
+              {
+                "name": "source_metadata_hash_maps_over_eight_entries_retain_identity_after_construction_warming",
+                "result": "FAILED",
+                "raw_line": 1529
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 0,
+              "failed": 2,
+              "ignored": 0,
+              "raw_line": 1549
+            },
+            "observed_counts": {
+              "FAILED": 2
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_form_source_metadata",
+            "actual_executable": "target/debug/deps/compiled_macro_form_source_metadata-6d5d7b75c51e7dbd",
+            "raw_start_line": 1552,
+            "announced_test_count": 10,
+            "outcomes": [
+              {
+                "name": "compiled_source_macro_file_metadata_uses_the_loaded_source_path",
+                "result": "FAILED",
+                "raw_line": 1555
+              },
+              {
+                "name": "compiled_source_macro_form_preserves_explicit_location_overrides",
+                "result": "ok",
+                "raw_line": 1556
+              },
+              {
+                "name": "compiled_source_macro_conditional_and_chained_metadata_match_actual_reader_data",
+                "result": "ok",
+                "raw_line": 1558
+              },
+              {
+                "name": "compiled_source_macro_generated_syntax_does_not_invent_reader_locations",
+                "result": "ok",
+                "raw_line": 1559
+              },
+              {
+                "name": "compiled_source_macro_metadata_is_data_and_never_replays_assignment_syntax",
+                "result": "ok",
+                "raw_line": 1561
+              },
+              {
+                "name": "compiled_source_macro_form_retains_reader_positions_on_nested_syntax",
+                "result": "ok",
+                "raw_line": 1562
+              },
+              {
+                "name": "large_source_metadata_executes_and_exhausted_budget_preserves_bindings_and_recovers",
+                "result": "FAILED",
+                "raw_line": 1563
+              },
+              {
+                "name": "source_metadata_snapshot_rejects_invalid_source_instead_of_erasing_failure",
+                "result": "ok",
+                "raw_line": 1564
+              },
+              {
+                "name": "source_metadata_snapshot_rejects_non_unicode_paths_instead_of_replacement_characters",
+                "result": "ok",
+                "raw_line": 1565
+              },
+              {
+                "name": "compiled_source_macro_tag_values_retain_their_own_reader_metadata",
+                "result": "ok",
+                "raw_line": 1566
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 8,
+              "failed": 2,
+              "ignored": 0,
+              "raw_line": 1586
+            },
+            "observed_counts": {
+              "FAILED": 2,
+              "ok": 8
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_indexed_data",
+            "actual_executable": "target/debug/deps/compiled_macro_indexed_data-b132e242c2bdc2ff",
+            "raw_start_line": 1589,
+            "announced_test_count": 4,
+            "outcomes": [
+              {
+                "name": "compiled_macro_indexed_data_finite_sizes_use_fuel_instead_of_element_limits",
+                "result": "ok",
+                "raw_line": 1592
+              },
+              {
+                "name": "compiled_macro_indexed_data_rejects_bad_storage_indices_metadata_and_cycles",
+                "result": "ok",
+                "raw_line": 1593
+              },
+              {
+                "name": "compiled_macro_indexed_data_returns_actual_variadic_arguments_as_code",
+                "result": "ok",
+                "raw_line": 1594
+              },
+              {
+                "name": "compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc",
+                "result": "FAILED",
+                "raw_line": 1595
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 3,
+              "failed": 1,
+              "ignored": 0,
+              "raw_line": 1609
+            },
+            "observed_counts": {
+              "ok": 3,
+              "FAILED": 1
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_publication_cells",
+            "actual_executable": "target/debug/deps/compiled_macro_publication_cells-c90f0cf5f6f3bfef",
+            "raw_start_line": 1612,
+            "announced_test_count": 2,
+            "outcomes": [
+              {
+                "name": "publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc",
+                "result": "ok",
+                "raw_line": 1615
+              },
+              {
+                "name": "publication_probe_sees_later_class_and_dynamic_overrides_without_replaying",
+                "result": "ok",
+                "raw_line": 1616
+              }
+            ],
+            "terminal_summary": {
+              "result": "ok",
+              "passed": 2,
+              "failed": 0,
+              "ignored": 0,
+              "raw_line": 1618
+            },
+            "observed_counts": {
+              "ok": 2
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_macro_source_environment",
+            "actual_executable": "target/debug/deps/compiled_macro_source_environment-3f43227a39640ed9",
+            "raw_start_line": 1620,
+            "announced_test_count": 3,
+            "outcomes": [
+              {
+                "name": "compiled_source_macro_environment_retains_lexical_initializer_and_shadow_without_reexecution",
+                "result": "FAILED",
+                "raw_line": 1623
+              },
+              {
+                "name": "compiled_source_macro_environment_keeps_snapshot_documents_separate_from_staged_catalog",
+                "result": "FAILED",
+                "raw_line": 1624
+              },
+              {
+                "name": "compiled_source_macro_environment_tracks_function_scopes_and_implicit_arguments_in_all_signatures",
+                "result": "FAILED",
+                "raw_line": 1625
+              }
+            ],
+            "terminal_summary": {
+              "result": "FAILED",
+              "passed": 0,
+              "failed": 3,
+              "ignored": 0,
+              "raw_line": 1651
+            },
+            "observed_counts": {
+              "FAILED": 3
+            },
+            "announced_tests_without_verdict": 0
+          },
+          {
+            "test_target": "compiled_native_entrypoints",
+            "actual_executable": "target/debug/deps/compiled_native_entrypoints-f53f30bb26ed723a",
+            "raw_start_line": 1654,
+            "announced_test_count": 10,
+            "outcomes": [
+              {
+                "name": "canonical_display_ignores_metadata_that_is_not_macro_data",
+                "result": "ok",
+                "raw_line": 1657
+              },
+              {
+                "name": "canonical_display_preserves_gc_data_numeric_spelling_and_utf16_without_growth",
+                "result": "ok",
+                "raw_line": 1658
+              },
+              {
+                "name": "display_traversal_bound_reports_failure_and_recovers",
+                "result": "ok",
+                "raw_line": 1659
+              },
+              {
+                "name": "eval_command_gives_compiled_macros_actual_lexical_environment",
+                "result": "FAILED",
+                "raw_line": 1660
+              }
+            ],
+            "terminal_summary": null,
+            "observed_counts": {
+              "ok": 3,
+              "FAILED": 1
+            },
+            "announced_tests_without_verdict": 6
+          }
+        ],
+        "observed_named_counts": {
+          "ok": 18,
+          "FAILED": 11
+        },
+        "failure_details": [
+          {
+            "test_target": "compiled_macro_analyzer_literal_memos",
+            "name": "vector_source_literal_items_children_keys_and_child_keyword_have_initialized_memos",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1500,
+            "panic_location": "thread 'vector_source_literal_items_children_keys_and_child_keyword_have_initialized_memos' (3503) panicked at crates/suss-cli/tests/compiled_macro_analyzer_literal_memos.rs:62:101:",
+            "raw_panic_line": 1507,
+            "diagnostic_excerpt": "thread 'vector_source_literal_items_children_keys_and_child_keyword_have_initialized_memos' (3503) panicked at crates/suss-cli/tests/compiled_macro_analyzer_literal_memos.rs:62:101:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 14..41, message: \"Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n---- fresh_env_literal_keys_keep_reader_arguments_and_source_metadata_cold_after_gc stdout ----\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "caller &env input transport",
+            "source_span": "14..41"
+          },
+          {
+            "test_target": "compiled_macro_analyzer_literal_memos",
+            "name": "fresh_env_literal_keys_keep_reader_arguments_and_source_metadata_cold_after_gc",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1501,
+            "panic_location": "thread 'fresh_env_literal_keys_keep_reader_arguments_and_source_metadata_cold_after_gc' (3502) panicked at crates/suss-cli/tests/compiled_macro_analyzer_literal_memos.rs:45:5:",
+            "raw_panic_line": 1513,
+            "diagnostic_excerpt": "thread 'fresh_env_literal_keys_keep_reader_arguments_and_source_metadata_cold_after_gc' (3502) panicked at crates/suss-cli/tests/compiled_macro_analyzer_literal_memos.rs:45:5:\nruntime: stage0: Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 26..56\nmacro: stage0: Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 26..56\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "caller &env input transport",
+            "source_span": "26..56"
+          },
+          {
+            "test_target": "compiled_macro_cross_invocation_identity_probe",
+            "name": "same_captured_declaration_metadata_across_distinct_macro_invocations",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1528,
+            "panic_location": "thread 'same_captured_declaration_metadata_across_distinct_macro_invocations' (3514) panicked at crates/suss-cli/tests/compiled_macro_cross_invocation_identity_probe.rs:36:14:",
+            "raw_panic_line": 1535,
+            "diagnostic_excerpt": "thread 'same_captured_declaration_metadata_across_distinct_macro_invocations' (3514) panicked at crates/suss-cli/tests/compiled_macro_cross_invocation_identity_probe.rs:36:14:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 101..123, message: \"Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n---- source_metadata_hash_maps_over_eight_entries_retain_identity_after_construction_warming stdout ----\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "caller &env input transport",
+            "source_span": "101..123"
+          },
+          {
+            "test_target": "compiled_macro_cross_invocation_identity_probe",
+            "name": "source_metadata_hash_maps_over_eight_entries_retain_identity_after_construction_warming",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1529,
+            "panic_location": "thread 'source_metadata_hash_maps_over_eight_entries_retain_identity_after_construction_warming' (3515) panicked at crates/suss-cli/tests/compiled_macro_cross_invocation_identity_probe.rs:128:72:",
+            "raw_panic_line": 1541,
+            "diagnostic_excerpt": "thread 'source_metadata_hash_maps_over_eight_entries_retain_identity_after_construction_warming' (3515) panicked at crates/suss-cli/tests/compiled_macro_cross_invocation_identity_probe.rs:128:72:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..14, message: \"Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "caller &env input transport",
+            "source_span": "0..14"
+          },
+          {
+            "test_target": "compiled_macro_form_source_metadata",
+            "name": "compiled_source_macro_file_metadata_uses_the_loaded_source_path",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1555,
+            "panic_location": "thread 'compiled_source_macro_file_metadata_uses_the_loaded_source_path' (3526) panicked at crates/suss-cli/tests/compiled_macro_form_source_metadata.rs:213:14:",
+            "raw_panic_line": 1572,
+            "diagnostic_excerpt": "thread 'compiled_source_macro_file_metadata_uses_the_loaded_source_path' (3526) panicked at crates/suss-cli/tests/compiled_macro_form_source_metadata.rs:213:14:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1632..1745, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n---- large_source_metadata_executes_and_exhausted_budget_preserves_bindings_and_recovers stdout ----\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "1632..1745"
+          },
+          {
+            "test_target": "compiled_macro_form_source_metadata",
+            "name": "large_source_metadata_executes_and_exhausted_budget_preserves_bindings_and_recovers",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1563,
+            "panic_location": "thread 'large_source_metadata_executes_and_exhausted_budget_preserves_bindings_and_recovers' (3618) panicked at crates/suss-cli/tests/compiled_macro_form_source_metadata.rs:394:14:",
+            "raw_panic_line": 1578,
+            "diagnostic_excerpt": "thread 'large_source_metadata_executes_and_exhausted_budget_preserves_bindings_and_recovers' (3618) panicked at crates/suss-cli/tests/compiled_macro_form_source_metadata.rs:394:14:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..30, message: \"Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion analysis",
+            "source_span": "0..30"
+          },
+          {
+            "test_target": "compiled_macro_indexed_data",
+            "name": "compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1595,
+            "panic_location": "thread 'compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc' (3627) panicked at crates/suss-cli/tests/compiled_macro_indexed_data.rs:74:56:",
+            "raw_panic_line": 1601,
+            "diagnostic_excerpt": "thread 'compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc' (3627) panicked at crates/suss-cli/tests/compiled_macro_indexed_data.rs:74:56:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..14, message: \"Macro expansion native work fuel exhausted\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "Macro expansion native work",
+            "source_span": "0..14"
+          },
+          {
+            "test_target": "compiled_macro_source_environment",
+            "name": "compiled_source_macro_environment_retains_lexical_initializer_and_shadow_without_reexecution",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1623,
+            "panic_location": "thread 'compiled_source_macro_environment_retains_lexical_initializer_and_shadow_without_reexecution' (3657) panicked at crates/suss-cli/tests/compiled_macro_source_environment.rs:78:34:",
+            "raw_panic_line": 1631,
+            "diagnostic_excerpt": "thread 'compiled_source_macro_environment_retains_lexical_initializer_and_shadow_without_reexecution' (3657) panicked at crates/suss-cli/tests/compiled_macro_source_environment.rs:78:34:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 131..148, message: \"Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n\n---- compiled_source_macro_environment_keeps_snapshot_documents_separate_from_staged_catalog stdout ----\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "caller &env input transport",
+            "source_span": "131..148"
+          },
+          {
+            "test_target": "compiled_macro_source_environment",
+            "name": "compiled_source_macro_environment_keeps_snapshot_documents_separate_from_staged_catalog",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1624,
+            "panic_location": "thread 'compiled_source_macro_environment_keeps_snapshot_documents_separate_from_staged_catalog' (3656) panicked at crates/suss-cli/tests/compiled_macro_source_environment.rs:145:103:",
+            "raw_panic_line": 1637,
+            "diagnostic_excerpt": "thread 'compiled_source_macro_environment_keeps_snapshot_documents_separate_from_staged_catalog' (3656) panicked at crates/suss-cli/tests/compiled_macro_source_environment.rs:145:103:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 21..37, message: \"Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })\n\n---- compiled_source_macro_environment_tracks_function_scopes_and_implicit_arguments_in_all_signatures stdout ----\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "caller &env input transport",
+            "source_span": "21..37"
+          },
+          {
+            "test_target": "compiled_macro_source_environment",
+            "name": "compiled_source_macro_environment_tracks_function_scopes_and_implicit_arguments_in_all_signatures",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1625,
+            "panic_location": "thread 'compiled_source_macro_environment_tracks_function_scopes_and_implicit_arguments_in_all_signatures' (3665) panicked at crates/suss-cli/tests/compiled_macro_source_environment.rs:111:114:",
+            "raw_panic_line": 1642,
+            "diagnostic_excerpt": "thread 'compiled_source_macro_environment_tracks_function_scopes_and_implicit_arguments_in_all_signatures' (3665) panicked at crates/suss-cli/tests/compiled_macro_source_environment.rs:111:114:\ncalled `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 22..35, message: \"Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })\n\n",
+            "classification": "Fuel exhaustion reported; not a demonstrated semantic-value/identity assertion failure",
+            "stage": "caller &env input transport",
+            "source_span": "22..35"
+          },
+          {
+            "test_target": "compiled_native_entrypoints",
+            "name": "eval_command_gives_compiled_macros_actual_lexical_environment",
+            "verdict": "FAILED",
+            "raw_verdict_line": 1660,
+            "classification": "Named failure observed; diagnostic/panic unavailable because harness interrupted",
+            "stage": "UNKNOWN",
+            "source_span": "UNKNOWN"
+          }
+        ],
+        "runner_cancellation_or_shutdown_lines": [
+          {
+            "raw_line": 1662,
+            "text": "##[error]The operation was canceled."
+          }
+        ],
+        "actual_checkout_proofs": [
+          {
+            "command_raw_line": 204,
+            "checkout_raw_line": 205,
+            "sha": "038023ccc19bd7b12db08ca6194bec56ff38a9b6"
+          }
+        ],
+        "tree_equivalent_to_run_head": true
+      },
+      {
+        "job_id": 118816613817,
+        "name": "test",
+        "api_status": "completed",
+        "api_conclusion": "failure",
+        "head_sha": "1f57091c42796cd6eea59fc6918d72d30eb3fcb1",
+        "log": "/home/bobby/.cache/suss-m4-work/pr263-ci-39474603868-other-jobs-cicero-v1/job-118816613817.raw.log",
+        "raw_sha256": "2fb7e0ae04aefa9a6c6490a109697ede00f17aacab0108b1edce467450d1f3b0",
+        "raw_bytes": 2423,
+        "harnesses": [],
+        "observed_named_counts": {},
+        "failure_details": [],
+        "runner_cancellation_or_shutdown_lines": [],
+        "classification": "Aggregate gate failure from FOUNDATION_RESULT=failure/INTEGRATION_RESULT=failure; this job runs no Rust tests."
+      }
+    ],
+    "limits": [
+      "Counts include named verdicts emitted in interrupted harnesses, not only completed harness summaries; incomplete harness tests without verdict stay unresolved.",
+      "35 retained fuel diagnostics are not 35 demonstrated semantic assertion failures; two additional named FAILs have no retained panic detail.",
+      "Shards5/6/7 have no assigned runner/steps and no execution proof; do not turn cancellation into a test PASS or FAIL.",
+      "Foundation and shard3 remain separately owned Carver analysis; this packet deliberately does not merge their counts.",
+      "No complete planned-target/unexecuted-target census claimed; later targets in each interrupted shard were not covered here.",
+      "No conclusions about latest f97 from old 1f/tree-equivalent synthetic checkout.",
+      "Remote GitHub API reads and cache-only parsing/writes; no Cargo/VM, shared edits, signals, rerun/cancel or GitHub mutation."
+    ]
+  },
+  "limits": [
+    "Map0observations/69unexecuted, no map verdicts fabricated. Identifier15independenthostcomparisons pass.",
+    "All11propertyfocused+4bootstraptests pass separately; not substituted for fullcontrols or finalbaseline.",
+    "CI35namedfuel diagnostics and2namedfailureswithoutdetails remain; runner cancellation/shutdown is not a test verdict forunfinishedprograms.",
+    "No unchanged200M/10Mcontrol budgets or rates changed."
+  ]
+}

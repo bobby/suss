@@ -1,3 +1,105 @@
+## PR263 — calibrated compile-time allowances for the special fixed-cap controls
+
+User decision of 2026-10-23 (after main was measured at 0.98M versus 25.4M for
+the constructor control's caller &env transport): keep the exact fixes, then
+give these controls measured compile-only allowances; Runtime caps and every
+assertion are unchanged. Restoring the original budgets is tracked by #273.
+- constructor_operation_and_children_fit_default_fuel_in_both_caller_phases:
+  caller Session still asserted at the 10M Runtime default; the expanding
+  CompiledMacros Session gets 40M (measured ~25.6M per expansion). PASS.
+- pinned_map_declaration_executes_without_transport_loss: Runtime harness
+  stays at 200M; the macro Session gets 300M (namespace load measured ~204M,
+  147 expansions, largest deftest 10.9M). Map + identifier controls 2 PASS.
+- source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo:
+  24M (all five variants plus the physical/memo tail measure 15.8M per source
+  phase). PASS.
+Measurement commands raised the relevant macro Session to 1B (or 100B for the
+map) in a temporary local edit only; committed tests use the constants above.
+
+## PR263 — audited class-list memo and cheaper recorded walks
+
+A13 caller &env transport (measured with the macro Session raised to 1B only
+for measurement) falls from 33.4M to 26.2M native units, results unchanged:
+- CertificationAudit remembers each fully audited bridge class list (same
+  names, same constructor/descriptor objects, same order) with its coverage
+  and schema verdict for the rest of that audit interval; each ledger's own
+  precheck still applies. Every skipped class query would have returned the
+  audit's cached entry.
+- Recorded provenance walks resolve each node's edge owners in one locked
+  pass (local outputs, then linked references); only strict source fallbacks
+  touch other domains after unlocking, still in edge order. Rare restricted
+  members and edge owners are boxed so walk scratch stays small.
+- Within one edge query, a seed whose original full-root closure missed the
+  value is not asked again by overlapping recorded walks (snapshots are
+  immutable).
+- Expectation projection reserves each frame's inputs once.
+Measured and reverted (more expensive here): per-recording identity indexes of
+domain outputs, and hashed key pairing for small logical maps.
+Results on the committed source: suss-compile lib certification batch
+(write_domain/storage_snapshot/canonical_seeds/certification_audit/
+construction_records/factory/source_roots/first_use) 138 PASS/1 FAIL with the
+walk oracle active; the failure is the pre-existing source-child fixture, now
+exhausting 10M later (source_roots.rs:1992 rather than :1940). factory/
+certification_audit/original_members/construction_records 60/0; core_import
+17/0; two identical BOOT generations adopted. A13 still exceeds 10M.
+
+## PR263 — replayed provenance walks and recorded seed member order
+
+The A13 default-budget constructor control's caller &env transport measured
+61.8M native units (macro Session raised to 1B only for measurement; the
+committed test is unchanged). Exact-semantics reductions, now 33.4M:
+- Factory provenance walks deduplicate visited outputs with a keyed set
+  instead of a linear scan of earlier visits.
+- A sealed domain records, once per original output, the walk's visit
+  sequence (Weak owners and positions only; never a guest reference) and
+  replays it per query with the walk's comparisons and early exits. Walks
+  through an unsealed domain or a strong terminal seed member are not
+  recorded and keep the original walk. A cfg(test) oracle runs the original
+  walk beside every replay and asserts the same domain/node/member result.
+- A storage snapshot records the full-root membership candidate order (node
+  positions and opaque/i31 atom positions) on its first query; later queries
+  compare the same candidates in the same order. No identity hash is retained
+  (Wasmtime's default collector moves objects).
+Results: suss-compile lib write_domain/storage_snapshot/canonical_seeds/
+factory/source_roots/first_use batch 121 PASS/1 FAIL with the oracle active;
+the failure is the unchanged pre-existing source-child fixture exhausting 10M
+at Runtime variant 3 (A15). original_members+factory 37/0 and core_import 17/0
+on the committed source; two identical BOOT generations adopted. A13 still
+fails at 10M; remaining cost is spread across factory walk plan construction,
+class audits, expectation projection/matching and first-use audit.
+
+## PR263 — structurally shared namespace revisions and hashed global lookup
+
+Root cause of the 17 failing default CORE imports: every analyzer namespace
+capture (per top-level form, function scope and method) rescanned all
+Environment bindings/definitions and copied the namespace's BTreeMaps, now
+charged under #252, so one whole-CORE eval cost 16,118,501,852 native units
+(measured at the root host). Environment now keeps per-(phase, namespace)
+persistent AVL revisions of declarations and visible identities
+(`portable::persistent`, `resolve::namespace_index`), updated on every binding,
+definition and bootstrap mutation with the update work prepaid before
+publication; scope maps are Arc-shared copy-on-write. Capture retains roots, so
+its charges are independent of namespace size. Bindings use a fixed-key hashed
+table; a lookup charges its keyed hash then the actual probed comparisons.
+Whole-CORE compilation now measures 32.7M units: legitimate linear host work, so
+per the 2026-10-23 user decision the CORE-loading `core_import` evals use the
+documented #252 compilation allowance (support/compilation_fuel.rs, 100B);
+Runtime limits and later evaluations keep Session defaults.
+
+Results on the clean source (diagnostics removed, two byte-identical BOOT
+generations adopted, `scripts/verify_bootstrap_identity.py` passes):
+`cargo test -p suss-compile --locked --lib -- --test-threads=4 persistent
+namespace resolve:: hir:: sharing_tests analyzer_literal` 125 PASS/0 FAIL
+(2958s); `--test portable_resolution` 14/0; `-p suss-cli --test core_import`
+17/0. New tests: persistent map/set vs BTreeMap with revision retention, a
+400-step mixed mutation sequence checked after every step against the complete
+legacy rescan, capture cost independent of namespace size, exact singleton
+hashed-lookup charges. Limitations: the explicit default-budget constructor
+control (A13) still fails; its caller &env transport needs 61.8M under the
+first-use certification path (write-domain provenance walks, canonical seed
+member scans, nested expectation re-projection). The pinned map control (A12)
+also still fails. Full baseline and final-head CI not yet run.
+
 ## Independent PR177 review — typed invocation before guest initialization
 
 Reviewed native file/WIT selection and explicit mappings, shared compiled source/
@@ -28864,3 +28966,2576 @@ tests and was corrected through the existing typed AotOptions route.
 These are focused results. Fresh committed-source Java/Node-free reproduction,
 the exact workspace command and final-head CI remain required; no closure,
 promotion, merge or whole-core conformance is claimed.
+
+
+## Source-bound command history from be94031
+
+The following preserved commands and results describe the incoming #263 source
+`be9403182656cf370c708842de2828e869af19e8` and its explicitly named earlier
+variants. They provide historical evidence, not verification of the newly
+composed source or regenerated bootstrap.
+
+## Combined literal provenance and pinned keyword execution — 2026-10-16
+
+Isolated current-a3 integration applies only f1ab36c..be6a219 crates changes,
+plus the ec0eea2..1f034b4 pinned keyword test delta. Independent source review
+confirmed all semantic/route files match be6, keyword gate matches1f, and current
+a3 raw-key/paged canonical entries remain byte-identical. No production
+source mutation occurred during execution. Dedicated analyzer-literal-key-target,
+jobs2, locked Cargo, test-threads2; no RUSTFLAGS. All434 frozen source/bootstrap
+paths match across focused and preservation producers.
+
+- Bootstrap regeneration exit0,32.26s command.
+- Native analyzer_literal:5pass/0fail,68.98s command.
+- Actual CLI analyzer-literal environments:2pass/0fail,100.86s command.
+- Pinned unchanged complete keyword declaration:1test pass,60 ordered assertions
+  independently host-decided,0guest/fail/missing/skips/test/ns failures,63.92s
+  command. Actual observations and comparator output retained.
+- Both unchanged source-tag tests:0pass/2default-fuel failures,66.58s command.
+- Collection source AST target:1pass/2fuel failures,110.14s command.
+- Control source AST target:4pass/1fuel failure,180.19s command.
+- Constructor source AST target:1pass/1fuel failure,73.17s command.
+- Global-reference AST target:1pass/1fuel failure,105.74s command.
+- Core environment target:0pass/1fuel failure,60.49s command.
+- Unchanged complete pinned map transport test:1pass,134.06s command. This first
+  invocation did not configure operand capture; the separately recorded captured
+  replay supplies actual assertion operands and independent comparison. Repeated
+  runs are not additional unique coverage.
+
+The eight named fuel failures are the known six direct preservation gaps plus
+the two source-tag gaps. Their actual assertions are not discharged by keyword
+or map transport success. This cohort does not execute all public-record cases,
+other catalogue/declaration cases or original collection boundary/lifecycle/
+reduction/sharing corpora. Previously passing historical results are not promoted
+to current-head proof. No full workspace baseline or final-head CI was run on
+this exact source. Separately reviewed actual-env custom-IHash regression and
+namespace-origin candidate are not integrated into this frozen snapshot.
+
+Provenance setup attempt is retained: this new worktree had an empty uninitialized
+clojurescript gitlink directory; revision discovery reached parenta3 and rejected
+the reviewed pin. Python tests had15errors and nine further provenance stages
+failed; four unrelated stages passed. No compiler/bootstrap fix was made. A local
+shared clone from the clean pinned checkout was populated at exactc4295f3 with
+clean status, then all checks were rerun. Corrected execution:348Python tests
+pass43.382s; all13inventory/review/import/catalog/sequence/record/transducer/
+bitwise/WASI/numeric/Jank/overlap checks pass. Both initial failure and corrected
+raw logs, commands, dependency setup receipt and unchanged source freeze remain.
+Supporting dependency/fingerprint inputs were captured after tests rather than
+independently frozen before them. No expanded compatibility or acceptance claim.
+
+Captured map replay: exit0,124.70s command, complete69 ordered IDs; independent
+comparison62pass/7guest-judged/0fail/0missing/0skip, no test or namespace failure.
+The seven guest-judged assertions remain separately classified, not independent
+passes. Canonical commands are the archived cargo tests with --locked and
+--test-threads=2 --nocapture: suss-compile --lib analyzer_literal; suss-cli
+--test compiled_macro_analyzer_literal_memos / compiled_macro_source_tags /
+compiled_macro_collection_source_asts / compiled_macro_control_source_asts /
+compiled_macro_constructor_source_asts / compiled_macro_global_reference_asts /
+compiled_macro_core_environment; and suss-compile --test clojure_test_suite with
+pinned_keyword_namespace_keeps_values or
+pinned_map_declaration_executes_without_transport_loss. The exact argv, exits,
+durations and original source bodies are retained in the evidence receipts.
+
+Archive `docs/roadmap/evidence/m4-combined-literal-focused-2026-10-16.tar.gz`
+SHA256 6580853319dd21126235678814e97d29ee744eb2c2ce0b172a6d862845fc0adb
+contains516 manifested payloads, complete434-path snapshots, all raw
+positive/negative results and runners, captured keyword/map operands/comparisons,
+initial provenance setup errors and corrected provenance results. Both phases'
+compiler/core/dependency/Wasm fingerprints recompute true from archived bytes.
+All payload hashes were read back verified. Source-only integration review
+passed; independent final artifact/committed-head review is requested. Next
+implementation remains explicit namespace provenance with pinned observations,
+then integration of the separately executed actual-env effect regression.
+
+
+## Combined nine namespace origins and actual-env effects — 2026-10-16
+
+Current37991e3-based integration applies exact reviewed483f26a namespace source
+and c4bcd64 actual-env test-only changes. Independent source review confirms
+nine-route graph/test hashes match components, effect module/registration match
+c4, all other crate source unchanged, current paged entries/source authority
+retained. Source and bootstrap remain frozen435 paths across all commands.
+Dedicated analyzer-literal-key-target, jobs2, locked Cargo, no RUSTFLAGS:
+
+- `cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap`:
+  exit0,30.16s command.
+- `cargo test -p suss-compile --locked --lib analyzer_literal -- --test-threads=2 --nocapture`:
+  7pass/0fail,107.82s test/131.14s command. Includes actual-env custom/restored
+  stages, both caller phases after GC, plus exact nine namespace callbacks and
+  cold same-text reader/Suss controls.
+- `cargo test -p suss-cli --locked --test compiled_macro_analyzer_literal_memos -- --test-threads=2 --nocapture`:
+  2pass/0fail,102.72s test/125.50s command.
+- `cargo test -p suss-compile --locked --test clojure_test_suite pinned_keyword_namespace_keeps_values -- --test-threads=2 --nocapture`:
+  1pass,49.70s test/89.17s command; unchanged complete pinned body60ordered
+  assertions independently host-decided,0guest/fail/missing/skips/test/ns errors.
+- `cargo test -p suss-cli --locked --test compiled_macro_source_tags -- --test-threads=2 --nocapture`:
+  0pass/2default-fuel failures,41.20s test/62.59s command.
+- `cargo test -p suss-compile --lib --locked scoped_memo_stores -- --test-threads=2 --nocapture`:
+  13pass/0fail,20.80s test/45.19s command, preserving wrong-slot/domain/unregistered
+  ancestor, publication-before-unwind, post-store exhaustion/recovery controls.
+
+Same source/bootstrap invocation-tag replay enables existing
+SUSS_MACRO_FUEL_TRACE=1 and SUSS_METADATA_FUEL_TRACE=1, command as above but
+selects compiled_source_invocation_tags_distinguish_global_aggregate_and_local_methods
+with --exact --nocapture --test-threads=1. Exit101,0pass/1fuel-fail,42.45s test/
+42.96s command. Five invocation starts; four decoded remaining-fuel observations
+[8354757,6639177,4094597,1538479]; fifth starts1538220 and exhausts during caller
+&env transport at the unchanged invocation span. These are inclusive stage
+breadcrumbs, not exclusive callee costs or additive nested charges. No new
+receiver instrumentation/guest hash call, quota increase or tariff cut. No
+single-change savings claim; same failure boundary as untraced execution.
+
+Archive `docs/roadmap/evidence/m4-combined-namespace-focused-2026-10-16.tar.gz`
+SHA2561453dc4c83533d8fc10df0d691a5f2b8fc63b2884c5b1e058dbc50e1083676c1
+contains476 manifested payloads,435 complete frozen snapshots, raw focused/
+scoped/trace logs, trace summary, keyword operands/comparison and runners. Both
+phases' compiler/core/dependency/Wasm fingerprints recompute true; all payloads
+read back verified. Supporting inputs captured after tests, not independently
+pre-frozen. Parent archive65808533...5fc0adb remains separately referenced.
+
+The six direct preservation corpora and map body were NOT rerun on this exact
+source; parent failures/passes are not promoted into current results. Original
+collection boundaries, nominal records, lifecycle, reduction and sharing still
+need current acceptance evidence. Full workspace baseline and final-head CI
+unexecuted here. Source integration review passed; final artifact/committed-head
+review requested. Next measurement: actual memo-ledger enrollment/sweep/store
+work on this source before selecting a further optimization. Preserve local
+method/source obligations and all originally-nil receipt restrictions; do not
+infer broad warming from remaining cold-key cost.
+
+### Primitive String root-write matched execution (2026-10-16)
+
+Exact original root fixture SHA256e4795d3adb7cb5f83fffd563544f29eb0ae291c825dc9c2e82a3e7e48017fd62 on unchanged8fda18a exits101, matching the candidate language exception and subsequent error-display Unexpected structure layout. Supplemental fixture18e7b821f1f5467173d39ebda1212a2e8f0b1b3fc64fa66b30d38c8421952594 is byte-identical before/candidate. Both Runtime and Macro rows are `[66 66 true true false 17 [10 20 30 41]]`: reserved call/apply assignments throw, saved/direct calls return66, ordinary custom root field assignment succeeds. Both supplemental commands exit101 because the custom-field assertion incorrectly expected rejection. These failures are preserved, not relabelled passes.
+
+Commands: `cargo test -p suss-compile --locked --test portable_primitive_string_access primitive_string_member_keeps_selected_body_when_index_mutates_root_properties -- --exact --test-threads=2 --nocapture` on before; supplemental target `portable_primitive_string_root_writes`, exact filter `primitive_string_root_writes_observe_caught_boundaries_in_both_phases`, both worktrees. Jobs2; owned before target and idle candidate analyzer-literal-key-target. All execution freezes unchanged, candidate bootstrap fingerprints match both phases.
+
+Raw source, logs, receipts, freezes, fingerprints and comparison: `evidence/m4-primitive-string-root-matched-2026-10-16.tar.gz`, SHA256a40321c83b0bbd9d3b383cdf19716c6a87562b82dac20db5a9e98d894c811b8b,893 independently verified payloads. This is matched negative evidence only. It does not execute successful root mutation between lookup and invocation: the successful custom-field write is afterward and not read back from the root. It does not establish CLJS mutation compatibility, a passing mutation regression, or complete source-tag acceptance. No production edit was made by these probes.
+
+### Guarded primitive String lookup execution (2026-10-16)
+
+Emittercd8b6ba6bcdf0dd4adaa8dae6182b2e6484435c85b444c24a6d65bc70a2f12eb adds exact-literal charCodeAt lookup guarded by actual STRING, calling the same zero-argument shared-root helper at the original lookup position. Other owners/keys retain generic lookup. No operand replay, quota or tariff change. Regeneration exits0; numeric/effect tests2pass; successful custom-root mutation during index evaluation1pass in both phases; unchanged source-tag target1pass/1fuel failure. Original reserved call/apply mutation fixtures remain failed and retained separately.
+
+Root-success exactguest33fde62f0f7eea4377c1b642afbb2d7370a0fb961b11989a6dacc299c17e6f53 matches pinnedCLJS two0runs and native before/candidate bothphase rows `[66 17 true 66 [1 2 3 4]]`. Oracle archive SHA256f3d3cb48235a393fa66ce8b54d962d5700c713fbcdd308c59a5659e257bfa988; native matched archive SHA25615f8691ee62aecf2743f6000c0ba33f0c3f9957df6ec8bb200177c07030c539d. Both independently reviewed.
+
+Focused commands, raw outcomes and snapshots: `evidence/m4-primitive-string-lookup-focused-2026-10-16.tar.gz`, SHA256a35fac6a932e7808c77f1c6fb1e0b3ded5300a6938b862936835d821e2d1d019 (473payloads,439 frozen paths includingcljs,unchanged; bothphasefingerprints). Existing stage-trace run reproduces inference failure at span382..414:4starts,3decodes withbalances6646406,3477639,307237; fourthstarts306816 andfailscaller&env. Priorf4aftrace same4starts/3decodes/span; gains97608,194420,286606 are inclusive matched progress, not additiveexclusivecost. Earlier interpretation of later-span progress was incorrect. Bothunchangedsource-tagtests must passdefaultfuel beforeacceptance. Sixpreservationcorpora, broaderJank/core acceptance and fullworkspacebaseline were not rerun by this focusedcohort.
+
+### Exploratory String diagnostic classification (2026-10-16)
+
+After independent review, retained the original access test file and supplemental
+root-writes target byte-for-byte under `docs/roadmap/diagnostics/primitive-string-root-writes/`,
+with the third test also extracted verbatim. Removed only these exploratory failing
+checks from Cargo discovery; two access regressions and the separate pinned
+root-success regression remain active. README records original names, source
+hashes, both-version failures and raw archive a40321c...11b8b. Historical filtered
+runs remain 2passed/1filtered; reserved call/apply compatibility remains unresolved.
+No acceptance test was removed and no prior failure reclassified as success.
+Lookup-focused artifact review independently verified 473payloads/439frozenpaths;
+no blockers for bounded evidence, not issue acceptance.
+
+Post-classification focused execution: `CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/analyzer-literal-key-target cargo test -p suss-compile --locked --test portable_primitive_string_access --test portable_primitive_string_root_success -- --test-threads=2 --nocapture` exits0. Access2pass/0fail/0filtered (21.13s); root-success1pass/0fail/0filtered (20.82s), matching Runtime/Macro rows. Raw log retained losslessly as `active-tests-after-classification.log.gz` beside diagnostic README; decompressed SHA256 bacba85610cc048d694282a1e9d88accd5987d7e222f60bdb3876e0490b0f47c. Classification independently verified exact originals and unchanged active regressions. `git diff --check` exits0. Source-tag failure and absent full-baseline/final-CI evidence remain unchanged.
+
+## Private slot-log focused evidence and published String CI — 2026-10-16
+
+Packaging only on7c08c91 plus dirty private-slot-log source; no new builds,
+production edits, commit or push. All producers terminal before packaging.
+Final formatted commands (CARGO_BUILD_JOBS=2, dedicated analyzer-literal-key-target,
+locked Cargo, no RUSTFLAGS assignment):
+
+- `cargo test -p suss-compile --locked --lib portable_macro_graph::reuse::tests:: -- --test-threads=2 --nocapture`:
+  5pass/0fail,18.26s test/37.23s command.
+- `cargo test -p suss-compile --locked --lib portable_session::private_fixups:: -- --test-threads=2 --nocapture`:
+  9pass/0fail,17.21s test/17.46s command; includes both new slot-log tests,
+  not9plus2 distinct tests.
+- `cargo test -p suss-cli --locked --test compiled_macro_source_tags -- --test-threads=2 --nocapture`:
+  1pass/1default-fuel failure,77.32s test/104.61s command; inference fails caller
+  &env transport at382..414. Invocation-tag passes.
+- Same source, exact inference test selected with --exact --nocapture
+  --test-threads=1 and existing SUSS_MACRO_FUEL_TRACE=1/SUSS_METADATA_FUEL_TRACE=1:
+  exit101,0pass/1fuel-fail/1filtered,40.64s test/41.09s command. Four starts,
+  three decodes [6646323,4203570,1761858]; fourth still fails at382..414.
+  Matched prior decoded [6646406,3477639,307237], differences[-83,725931,1454621].
+  Pair-to-fixed inclusive interval debits[0,745105,747685] become[0,722,722].
+  No additional completed observation and no additive/exclusive cost claim.
+
+All436 paths in final tags/trace/focused freezes match each other and archived
+current bytes, including tests/fixtures/primitive_string_root_success.cljs.
+The earlier435-path formatted manifest differs only by omitting that .cljs file.
+Two tracked compiler inputs, portable/stdlib/async.sus and async-macros.sus, are
+absent from supplied freeze manifests: included as post-execution support bytes,
+verified equal7c08c91. Both compiler/core/dependency/Wasm phase fingerprints
+recompute true with them included. Do not claim individual pre/post freezing
+for these two inputs or other supporting Cargo/numeric/WIT inputs.
+
+All initial E0308/E0599/E0716 compilation failures, stale-bootstrap identity
+failure (slot2:0pass/2fail), regenerated slot2pass, initial reuse3pass/1fail,
+route-fix bootstrap/reuse5/private9 passes, formatted regeneration, final logs,
+runners and historical hash manifests remain. Historical preformat snapshots
+are not complete: source-freeze has6 overwritten source/bootstrap paths and
+route-freeze5 with original bytes unavailable. Their hashes are retained and
+listed explicitly, never reconstructed or represented as final-source bytes.
+Final formatted reuse5/private9 reruns close the earlier format-only evidence
+qualification for those14 tests. No full local baseline or dirty-slot-log CI.
+
+Focused archive `evidence/m4-private-slot-log-focused-2026-10-16.tar.gz`
+SHA25615c5a63fd6d9f658b6f50bdf15b952a2b4ee819705b4124eaf562a28b38db443
+contains490 manifested payloads, final snapshots, historical manifests/raw failures,
+current source patch (new untracked slot_log.rs is included in full snapshot),
+trace comparison, fingerprints and exact command receipts. All payload hashes
+read back verified. Historical failures are not replaced by later successes.
+
+Separate CI archive `evidence/m4-primitive-string-ci-2026-10-16.tar.gz`
+SHA2565a2adc9db74d24acdbb79a482a2fdf714b4d3bb1b5a1d45e8bb67a5906ecff8e
+contains481 manifested payloads: run38959090355 terminal logs, all8 shard
+classifications and classifier, foundation log, summary, workflow, GitHub
+synthetic commit receipt and exact published7c08c91 source/bootstrap snapshots.
+Both phase fingerprints recompute true. Checked-out synthetic40f29f2a43654f0a3b2f3e4ec1e5099567c169ae
+has tree979be870fa697c6d718c44d7038d2a98e153006b equal7c08c91; parentsa3/7c.
+The runner image's first Commit line is not the checked-out source identity.
+
+Published7c08c91 CI: foundation400Rust execution passes/0fail/1ignore (includes
+repeated bootstrap verifier executions, not distinct tests); Python348pass in
+26.964s. Integration31/252 targets completed,221unexecuted;122pass/17fail across
+8 shards. Exact17 failed names and all unexecuted targets retained in summary
+and classifications. Run failure is not a full workspace baseline or exhaustive
+failure inventory; this CI says nothing about dirty slot-log changes. Raw unknowns
+remain available. Both archives are ready for independent Carver review before
+main commits/pushes; final-head CI remains a separate requirement.
+
+### Namespace/declaration identity observations (2026-10-16)
+
+Pinned CLJS c4295f303100bbf5afac449242d30bca1126f1a1 namespace-sharing
+probe runs twice, both exit0, five actual macro invocations each. Actual references
+are retained before WeakMap identity projection. Captured ns/defs and unchanged
+raw declarations/callable children share identity; live containers advance after
+unrelated def; resolved outer info is fresh. Captured lexical objects remain
+shared within the same scope and are absent in the final fresh scope. This does
+not authorize equal-content interning or guest storage trust. Selected metadata
+numbers101..109 hash once during reading/analysis, with no later selected-number
+hashes; general counts include observer work, not a complete constructor stream.
+Hash/cache restoration uses finally but is not independently asserted afterward.
+
+Oracle archive `evidence/m4-namespace-sharing-oracle-2026-10-16.tar.gz`,
+SHA2560cf31e4a2f52d5360bf27e3401c8690d04b3dcee7d381d3ea4a7cf550781741a,
+143 independently verified payloads. Probe sourceSHA256
+99086f61ba83d6eb66cd853df2c3a8e2ef4f8175c2fb414cadf238d4cf15d657.
+
+Before native commands on4ab8a76 plus new test: `cargo test -p suss-cli
+--locked --test compiled_macro_namespace_identity FILTER -- --exact
+--test-threads=2 --nocapture`, with jobs2, owned analyzer-literal-key-target,
+default allowances, and SUSS_NAMESPACE_IDENTITY_OUTPUT captured independently.
+FILTER=compiler_namespace_and_declaration_aliases_match_pinned_five_call_observations
+exits101 in84.21s: both phases exhaust caller-env fuel at fourth call post-def-2;
+no complete projection or full semantic mismatch verdict. FILTER=
+resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations
+exits101 in105.63s: all six rows execute/decode; calls2/3 lose saved raw declaration
+and method-params identity in both phases. Fresh outer info, within-call aliases,
+metadata sharing and values remain correct. Native fresh let-initializers replace
+unavailable analyzer re-resolution; this is a disclosed observational relationship
+check, not identical observer operations or a complete schema match.
+
+Native before archive `evidence/m4-native-namespace-identity-before-2026-10-16.tar.gz`,
+SHA2562cb13267f841fe83163740cc32de74be23f40ad4051b4a34883ccf82ac596d09,
+23 independently verified payloads: exact per-run fixtures, both unchanged439-path
+freezes, commands, raw failures and observations. Current testSHA256
+050cc78653c6810651fe0a7568e5109589a750f57986dad63a26b9347568b831.
+No production/bootstrap edits or quota changes produced these before results.
+No passing implementation, broad Jank, full baseline or final-source CI evidence
+is claimed by these observations. Issue264 holds the semantic acceptance criteria.
+
+
+## Analyzer identity CI execution evidence (2026-10-16)
+
+Archive `evidence/m4-analyzer-identity-ci-2026-10-16.tar.gz`, SHA256 `c3fbe6ee56c492cdc27af924dd4f35e968aedc2e9e7667a5aabffb5ee9d06631`;
+174 original cache files verified against the retained cache manifest;
+178 payloads verified against archive MANIFEST.json (plus the manifest).
+Packaging command: `python /home/bobby/.cache/suss-m4-work/package-analyzer-identity-ci.py`.
+Cached read-only watcher/classifier/source-proof scripts, job origins, raw logs,
+plans, terminal metadata and failed-assertion evidence are included. No local
+build/test, source/test/bootstrap edit, commit or push was performed for packaging.
+
+Run38971935949, head4ab8a76a48469b1138bba1dc14ad7deff5afcad6, cancelled:
+integration252 planned =29 completed +1 unfinished +222 unexecuted targets;
+completed summaries116 pass/16 fail/0 ignored. Unfinished compiled_export_metadata
+announced5:3 explicit passes/2 unknown, no suite summary. Cancelled foundation:
+completed summaries31/0/0 across4 harness records; unfinished suss_compile
+announced340:198 explicit passes/142 unknown. Partial outcomes remain separate.
+
+Run38973362610, heade55c0e2bd58a20cf01efa8f82808c981839d2b91, failure:
+integration253 planned =29 completed +0 unfinished +224 unexecuted;
+completed summaries106 pass/14 fail/0 ignored. Successful foundation403 Rust
+execution passes/0 fail/1 ignored includes verifier repeats, not distinct tests.
+An interleaved example/Doc-tests line has unconfirmed per-target summary
+association; current classification retains this qualification. Both runs and
+all jobs are terminal; no unfinished foundation claim follows from that ambiguity.
+
+Checkout/API proofs: synthetic ce45a0143e39f84a0a50ce118fd64d64d52d680d
+tree950f652685246897469b93832ee34fb5dd641977 equals4ab head tree; synthetic
+bb34147f070ba2e49aa861126772bd6a9ad76224
+tree1229f664ad6339a291e8d3be400793cd0aaf7c1b equalse55 head tree.
+Runner-image Commit lines are not checkout proof. No dirty worktree source was
+snapshotted as CI source.
+
+Newly observed constructor_source_nodes_match_pinned_children_tags_and_class_facts_after_gc
+and quote_and_literal_child_records_match_pinned_without_datum_analysis failures
+were previously unexecuted targets. Four absent public_record* failures are
+currently unexecuted, not fixed; the archive lists every exact name and target
+comparison. Plan252->253 changes shard coverage. Cancelled partial test counts
+are not completed-suite passes. Initial parser/retrieval failures and superseded
+classifications remain preserved and identified. No full baseline, complete
+all-target pass, current dirty-source CI coverage or acceptance conclusion is
+claimed. Each published head has independent execution evidence.
+
+
+## Native copy accounting bootstrap diagnostic (2026-10-16)
+
+Archive `evidence/m4-hir-cow-bootstrap-diagnostic-2026-10-16.tar.gz`,
+SHA256 `8ec12646aef142ff1a51e6185fefdafbf918fee47f4bb4f1ac98b30fd898bb43`,
+retains the diagnostic source snapshot, raw log, receipt, before/after freezes,
+exclusive debit summary and original failure log. Reproduce the recorded
+diagnostic from its exact source snapshot with `CARGO_BUILD_JOBS=2
+CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/analyzer-literal-key-target
+SUSS_HIR_COW_TRACE=1 cargo run --profile test -p suss-cli --bin suss-bootstrap
+--locked -- /home/bobby/.cache/suss-m4-work/hir-cow-bootstrap-diagnostic/bootstrap-output`.
+
+One attempt exited1 in20.9567s during Runtime bootstrap generation, before
+Macro generation or Session proof tests. All448 frozen inputs were unchanged.
+The unchanged native-work allowance was10,000,000: accepted debits9,999,826,
+remaining174; the rejected request was192. Innermost-context form-copy debits
+were4,929,269 and HIR-copy debits1,647,187. Together these account for6,576,456
+accepted units; they are debit partitions, not elapsed time or guest instructions.
+Form-copy attribution does not distinguish capture-time from entry-revision
+copies. Diagnostic bookkeeping adds uncharged observer work; explicit production
+debits and allowance are unchanged. This evidence motivates eliminating actual
+immutable payload copies; it establishes neither a successful bootstrap nor
+passing downstream tests, and does not cover later source edits.
+
+## Pinned namespace callback observations (2026-10-16)
+
+Exact probe: /home/bobby/.cache/suss-m4-work/namespace-callback-oracle/src/suss_oracle/namespace_callback.cljs
+Command executed: python /home/bobby/.cache/suss-m4-work/namespace-callback-oracle/runner.py
+Receipt: namespace-callback-oracle/receipt.json; raw compile/run logs, per-command
+receipts, source freeze and run1/run2-observations.json reside beside the probe.
+Independent review verified the source observations, restoration checks and archive hashes.
+
+Clean pinned CLJS c4295f303100bbf5afac449242d30bca1126f1a1; compile0,
+two independent Node executions0, identical rows and ordered events. Per run:
+five isolated compiler states, ten actual macro invocations, five explicit IHash
+callbacks and55 events. Probe/runner/deps/run-script hashes stayed unchanged.
+Initial attempt compile0/run1 exit1 (counter shadowed count) remains under
+first-attempt with original source/generated probe JS/log/receipts. No complete
+observation result is claimed for that attempt.
+
+Output schemas:
+
+- Final JSON: {pin: string, rows: array, events: array, limits: string}.
+- Each live observation line: {observation: case-string, event: string,
+  value: pr-str-string}. It is emitted by record! for ten events per case.
+- Final events contain {case: string, event: string, value: pr-str-string};
+  the directly appended cache-restored event instead has a JSON boolean value
+  and occurs only in the final events array, not as a live observation line.
+- Each row: {case: string, hash-result: number, callback-count: number,
+  fresh-env: boolean, same-ns: boolean, same-owner: boolean,
+  same-storage: boolean, resolved-method-child-shared: boolean,
+  before: pr-str-string, captured-after: pr-str-string,
+  current-after: pr-str-string, compiler-after: pr-str-string}.
+  Hyphenated field names are literal JSON keys. Values rendered by pr-str are
+  strings, including numeric/boolean-looking values in events; do not coerce
+  them into native JSON values when comparing raw observations.
+
+Each case has exactly this ordered final event sequence:
+entry-capture("0"), exit-capture("0"), entry-invalidate("0"), hash-enter("1"),
+captured-during(poison), current-during(poison), compiler-during(poison),
+hash-exit("719"), restored("true"), exit-invalidate("1"), cache-restored(true).
+The callback count is local to each case; it does not count all analyzer hashes.
+The macro body explicitly calls hash on a dedicated reify IHash object once.
+No existing/global hash method is replaced, so this probe has no delegation or
+method-restoration claim. Callback returns719; it does not throw.
+
+Observed poison values (pr-str): namespace name=poisoned.namespace;
+defs watched entry={:poison 702}; raw declaration doc="poisoned-doc";
+nested metadata audit token=704; callable first parameter=poisoned-param.
+Original values: case-specific namespace symbol; complete raw watched map
+(retained verbatim in JSON); "original-doc";41;x, respectively.
+For every case, captured/current/compiler-after and the three during-callback
+views agree on poison. Fresh outer env=true; namespace/owner/storage identity=true.
+Resolved callable method-params identity is compared BEFORE the mutation; this
+is not a post-poison resolved-info reconstruction result. After-callback row
+values are captured before finally restores storage. The callback poison is
+restored explicitly by the probe before that second macro returns. Storage
+restoration checks original slot identity plus original semantic readback through
+captured/current/live compiler paths; cache restoration checks atom contents by
+identity. These are explicit probe cleanup checks, not native cache repair.
+
+Interpretation and native boundary:
+Pinned analyzer get-namespace retrieves actual compiler-state maps; macroexpand-1*
+passes the env directly to the macro. The observed physical storage mutation
+therefore contaminates both captured references and live compiler-owned data.
+This establishes host-object sharing and once-only explicit callback ordering;
+it does not establish immutable-source restoration/reconstruction semantics.
+Native #264 source-child poison tests, as described, check that NEW transport
+reflects independent immutable native facts while OLD guest objects retain
+witnessed mutations. Those are native integrity assertions, not an exact match
+to this CLJS physical compiler-storage poisoning. This oracle neither weakens
+that requirement nor licenses adopting guest poison as source authority.
+Supported unmutated relationships are shared persistent children with fresh
+outer maps; explicit macro hash callbacks must preserve their values/count/order.
+Automatic callbacks during native reconstruction, post-callback certification of
+all affected parents/shared exports, persistent poison across macro return,
+revision advancement, failure publication, GC/reset/foreign-owner and complete
+#264 acceptance remain unproven by this probe. No guest equality/hash/memo can
+be promoted to independent native source authority from these observations.
+
+Archive: `evidence/m4-namespace-callback-oracle-2026-10-16.tar.gz`
+SHA256 28882f11e168fa756b7d8b3933f70d8b012cc62675c7223e9969a65e164c0302
+160 checksum-verified payloads plus MANIFEST.json. The oracle producer changed
+no production/test/bootstrap source and ran no Cargo builds. Main retained this
+archive and interpretation after independent review; no native acceptance or
+issue-closure conclusion follows from these host observations.
+
+
+## Immutable binding payload native evidence (2026-10-16)
+
+Archive `evidence/m4-immutable-payload-native-2026-10-16.tar.gz`, SHA256
+`e24aa5fea11b3c1d8e759210cbcfd5ac341c49c4d39a72451bd181648d3bc98f`,
+retains909 manifested payloads: both exact448-path source snapshots, runner
+scripts, freezes, terminal commands/logs and the same-binary diagnostic receipt.
+The first `cargo test -p suss-compile --locked --lib --no-run` failed on two
+remaining Arc fixture construction mismatches; both were corrected explicitly.
+The second compile passed. Focused commands, with CARGO_BUILD_JOBS=2 and the
+owned analyzer-literal-key-target directory, were:
+
+```sh
+cargo test -p suss-compile --locked --lib portable::hir::local_bindings::ownership_tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib metered_clone_preserves_compound_forms_and_checks_every_allocation_boundary -- --test-threads=2 --nocapture
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+```
+
+Ownership7/7 and Form cloning1/1 passed. Bootstrap exited1 with native-work
+fuel exhaustion at111774..111791; no bootstrap outputs or448 frozen inputs
+changed. Deferred-factory and source-child Session proof stages were not run.
+Independent review found no source blockers for that exact immutable-payload
+snapshot; injected native budget failures do not establish Session IRQ behavior.
+The same compiled bootstrap binary, SHA256
+`ea4fb5ba61baae64a510e9941d31975019e178aba249dcc2b05c1560525b54a0`,
+was executed once with SUSS_HIR_COW_TRACE=1 against a separate output directory.
+It failed at the same location, with unchanged source and binary. Form-copy
+accepted5,404,966 and HIR-copy2,114,766. This later failure reaches different
+work from the previous diagnostic, so bucket differences are not matched-cost
+savings. Neither the eight native passes nor this trace covers subsequent
+initializer-sharing edits or proves a successful bootstrap/Session acceptance.
+
+
+Pinned constructor-triggered namespace invalidation observations (2026-10-16)
+
+Archive `evidence/m4-namespace-constructor-callback-oracle-2026-10-16.tar.gz`,
+SHA256 `ebc16ba4c7d964d461531f9ddd9a12cf9bf353c760ff32838881ad95b102cbe8`;
+163 payloads verified against MANIFEST.json, plus that manifest.
+Command: `python /home/bobby/.cache/suss-m4-work/namespace-constructor-callback-oracle/runner.py`.
+Exact source `src/suss_oracle/namespace_constructor_callback.cljs`; generated JS
+`out/cljs/suss_oracle/namespace_constructor_callback.js`, relative to archive root.
+`receipt.json`, `source-freeze.json`, per-command receipts, raw logs and both
+observation JSON files retain the execution evidence. Initial compilation exits1
+on an unmatched delimiter, with no cases executed; original source/log/full
+compiler report/receipt remain under `first-attempt/`. Delimiter correction did
+not change observation criteria. Corrected compilation exits0; two independent
+Node executions exit0 with identical rows and ordered events. Four frozen inputs
+(probe, runner, shell command and dependency specification) remain unchanged.
+Clean pinned CLJS `c4295f303100bbf5afac449242d30bca1126f1a1` verified by the
+runner and post-run receipt; development uses the existing cached CLI/JRE.
+
+Twelve independent compiler states per run, two actual macro invocations each:
+first captures the actual compiler-owned watched declaration and its nested
+`:meta/:audit` map `{:token 41}`; second executes one later construction route.
+The selected physical IHash receiver is exactly that retained audit map. Its
+PersistentArrayMap prototype method `cljs$core$IHash$_hash$arity$1` is wrapped
+before the second macro handoff. Only that receiver writes the earlier saved
+raw declaration's existing `:doc` slot to `"callback-poison"`; then it delegates
+`original.call(receiver, coll)` and returns the original value. Every selected
+call has physical `this` equal to subject and formal `coll` null, not subject.
+All other receivers delegate unchanged. A separate equal map supplies a canonical
+control through a direct original-method call outside the constructor window.
+There is no explicit `hash` call in the construction route. Each selected
+subject starts with a nil memo; every delegated result/memo is `124169561`.
+
+Source route labels and precise generated/executed construction APIs:
+
+| Raw route label | Source expression / actual route | Selected callbacks | Result count |
+| --- | --- | ---: | ---: |
+| env-only | No construction; later actual macro handoff | 0 | nil |
+| array-map-fromArray | PersistentArrayMap.fromArray([subject,17],true,true) | 0 | 1 |
+| hash-map-fromArray | PersistentHashMap.fromArray([subject,17],true) | 1 | 1 |
+| hash-map-fromArrays | PersistentHashMap.fromArrays([subject],[17]) | 1 | 1 |
+| hash-map-fn | Source `(hash-map subject 17)` macro-expands to PersistentHashMap.fromArrays | 1 | 1 |
+| set-fromArray-small | PersistentHashSet.fromArray([subject],true) | 0 | 1 |
+| set-fromArray-large | PersistentHashSet.fromArray([subject,:a..:h],true) | 1 | 9 |
+| hash-set-fn-large | Source `(hash-set subject :a..:h)` macro-expands to PersistentHashSet.createAsIfByAssoc | 1 | 9 |
+| literal-map-large | Nine-entry literal emits PersistentHashMap.fromArrays | 1 | 9 |
+| literal-set-large | Nine-item literal emits PersistentHashSet.createAsIfByAssoc | 1 | 9 |
+| reader-map-large | tools.reader duplicate-key set construction, then PersistentHashMap.fromArray | 2 | 9 |
+| reader-set-large | tools.reader set construction | 1 | 9 |
+
+The labels containing `-fn` do NOT establish runtime hash_map/hash_set function
+entry: generated JS proves macro expansion instead. Literal routes retain the
+compiler-selected key/item order in the saved JS; they must not be described as
+an independently proved textual callback sequence for all keys. Reader routes
+bind a tagged-reader handler returning the exact retained subject, without
+hashing it in that handler; ordinary source decoding does not recreate this
+host reference automatically. Reader and runtime constructor counts are distinct.
+Constructed collections preserve exact subject identity; result counts above
+are observed. Full arbitrary map-value projections were not recorded.
+
+Per-run total:24 macro entries,10 selected callbacks,126 ordered events. Every
+route reports zero selected callbacks before constructor-enter. Exact order:
+macro-entry-capture -> macro-exit-capture -> macro-entry-construct ->
+constructor-enter -> [selected-hash-enter -> poison-written ->
+selected-hash-return] repeated observed callback count -> constructor-return ->
+post-constructor-observation -> macro-exit-construct -> restoration.
+The live/final event schema is `{route,event,stage,selected-count,saved-doc,details}`;
+live lines wrap it in `{observation: event}`. Values are JSON numbers/booleans,
+not the earlier explicit-hash probe's pr-str event strings. Details retain
+physical/formal receiver facts, memo-before, delegated value/memo-after, result
+count or restoration flag. Final JSON is `{pin,rows,events,limits}`.
+
+All routes retain namespace/raw/subject identity while outer caller env maps
+are fresh. Triggering routes expose `"callback-poison"` through the saved raw
+map, current macro environment and live compiler lookup; controls keep
+`"original-doc"`. Poison remains visible at macro-exit-construct, before the
+probe's outer finally. After the second analyze returns (or throws), cleanup
+restores the exact IHash method descriptor/value, the declaration storage slot,
+subject memo and macro-cache atom contents. Checks compare method descriptor
+fields/value, original doc semantic readback, memo identity and cache contents
+identity; every restoration event is true. Unexpected errors are not swallowed;
+top-level finally emits partial observations. These are explicit probe cleanup
+checks, not evidence of automatic cache repair.
+
+Boundary and application to native transport:
+Pinned analyzer get-namespace retrieves compiler-state maps directly and
+macroexpand-1* passes those references to macro code. Thus physical storage
+poisoning contaminates both captured guest-visible references and live CLJS
+compiler-owned objects. Automatic construction-triggered invalidation is now
+observed without explicit macro-body hashing. Ordinary later macro env handoff,
+however, produces no selected callback in the env-only control; this does not
+establish native-style caller-env reconstruction in CLJS, nor prove absence of
+all possible hash callbacks in every compiler scenario.
+
+Native source-child poisoning checks a distinct integrity requirement: new
+transport reflects independent immutable native facts while old exposed guest
+objects retain witnessed mutations. This CLJS host-poisoning probe is not a
+reference showing clean immutable-source restoration. It neither authorizes
+trusting poisoned guest storage nor weakens that native requirement. The observed
+constructor API must retain its own selected callback values/counts/order;
+retries must not silently duplicate effects. Read-only native audit snapshots
+show Map/ReaderMap and Set/ReaderSet materialization can run later constructors
+after earlier child materialization; pre-callback validation alone therefore
+cannot establish final affected-child/parent/export validity. Those snapshots
+came from concurrently edited source and are audit context, not an executed
+candidate, coherent source freeze or CI source proof. No native post-callback
+certification/publication verdict follows from the oracle.
+
+Unproven here: native reconstruction-triggered callbacks for these exact source
+roots, final affected-parent/shared-export revalidation, unrelated revision
+advancement, fuel/IRQ, GC/reset/foreign-owner and complete issue264 acceptance.
+No quota/tariff/source reduction, production/test/bootstrap edits, Cargo execution,
+commit/push, CI mutation or issue/PR posting produced these observations.
+
+
+## Immutable source copy checkpoints (2026-10-16)
+
+Archive `evidence/m4-immutable-source-copy-series-2026-10-16.tar.gz`, SHA256
+`bad93a99503c32fc673ffdfcac6c3b0b5edadab0214801ffe38165ac5cc167d3`,
+retains496 manifested payloads. SOURCE-SNAPSHOTS.json maps1793 snapshot paths
+from four attempts to463 exact deduplicated source blobs. Raw compile errors,
+commands, stage receipts, freezes, passing native logs and bootstrap failures
+remain distinct; initial helper-test Literal qualification failure is retained.
+
+The final indexed-form-copy-checkpoint snapshot has449 unchanged source inputs.
+`cargo test -p suss-compile --locked --lib --no-run` passed. Focused ownership
+tests9/9 and all `portable::origin::form_metadata::tests::`17/17 passed using
+CARGO_BUILD_JOBS=2, the owned analyzer-literal-key-target directory and
+`-- --test-threads=2 --nocapture`. Indexed clone frames remove reference-child
+and completed-Form scratch buffers; finished children move into precharged
+parent storage. Source/executable initializer HIR shares actual immutable owners;
+this does not deduplicate guest evaluation or intern equal values.
+
+`cargo run --profile test -p suss-cli --bin suss-bootstrap --locked --
+runtime/bootstrap` exited1 at214866..214870, native-work fuel exhausted. No
+bootstrap outputs changed. A same-binary trace reproduced that failure with
+unchanged source and binary. Earlier retained failures reach different work;
+no cross-attempt trace difference is a matched-cost metric. The unchanged
+allowance is10,000,000. No quota/tariff cut, metadata removal or fixture reduction
+was used. Constructor-callback, deferred-factory and source-child Session stages
+were not executed because bootstrap failed. The new callback test compiles but
+has no runtime verdict. No full workspace baseline or current-source Jank
+execution has run. The35-assertion pinned Jank selection is prospective coverage.
+
+The draft source checkpoint is drawn from those exact frozen Rust bytes, with
+later worktree edits excluded. Existing versioned bootstrap artifacts are stale
+for that source; no generated replacement or successful verification is claimed.
+Source-root retention/controller integration is partial and its helpers do not
+establish issue264 acceptance. This checkpoint is for review and continuation;
+readiness requires complete acceptance, independent final-source review and
+passing final-head CI.
+
+
+## Draft source publication input check (2026-10-16)
+
+Archive `evidence/m4-draft263-staged-source-2026-10-16.tar.gz`, SHA256 `0ff20ac7db29b3182bebdcc1ee949fb4c1cc1881fc79c27d1204efa4a7af31e2`,
+retains16 manifested payloads. Before publication, `git checkout-index`
+materialized index tree `22729340b261ec5bb4b7abdce49cdd6ebff4f5c2` in a separate task cache.
+This used the actual staged Rust source and HEAD bootstrap artifacts, rather than
+the dirty worktree's four different stale bootstrap files. Those four differences
+are retained verbatim; the other445 exact source inputs are in the preceding
+source-copy archive. No additional branch or PR was created.
+
+With the same focused commands and exclusive owned Cargo target/jobs2, actual
+staged inputs compiled successfully, ownership9/9 and provenance17/17 passed,
+and default bootstrap generation failed at214866..214870 with native-work
+fuel exhaustion. All449 input hashes stayed unchanged. This confirms the
+26 native passes for the source/artifact tuple intended for the draft checkpoint;
+it does not establish successful bootstrap, Session proofs, Jank or a full
+workspace baseline. Subsequent evidence/handoff additions change only the
+noncompiled part of this pre-commit tree. All later production edits remain
+outside the checkpoint and need their own verification.
+
+
+## Origin owner sharing follow-up execution (2026-10-16)
+
+After source checkpoint d311f70, the uncommitted Origin-owner changes were
+compiled and tested from the449-input freeze at
+`/home/bobby/.cache/suss-m4-work/origin-owner-sharing-checkpoint`. Runner:
+`python /home/bobby/.cache/suss-m4-work/run-origin-owner-sharing-checkpoint.py`.
+With CARGO_BUILD_JOBS=2 and the same owned target, compile0, ownership10/10 and
+all Origin/provenance17/17 passed. The new Origin-owner test covers retained
+immutable owner identity; these27 passes do not change d311f70's26-pass scope.
+Default bootstrap generation exited1 at226631..226818 with native-work fuel
+exhaustion. All449 inputs stayed unchanged. Constructor-callback, deferred
+factory and source-child Session stages were unexecuted. A separate same-binary
+trace failed at the same reported outer location (inner Form failure228215..228257);
+its binary and source hashes stayed unchanged. This is additional uncommitted
+source evidence, not a published bootstrap or acceptance result.
+
+Final-head API inspection for d311f70 found zero Actions runs/checks; there was
+no live CI job to monitor. The workflow trigger and commit message explain no
+missing-event cause. Historical failed e55 CI is not final-head verification.
+Raw API receipts remain in `/home/bobby/.cache/suss-m4-work/pr263-d311-final-head-ci`.
+
+
+## Origin and inferred-tag source publication check (2026-10-16)
+
+Archive `evidence/m4-origin-inference-source-checkpoint-2026-10-16.tar.gz`,
+SHA256 `4ea7b30b21d6f6aaf31a4dfdddf004b4d7999ae31aff09b7b9062f0843a8817f`, retains499 manifested payloads.
+SOURCE-SNAPSHOTS.json maps1797 paths from four attempts to exact
+content-addressed source blobs. Raw commands, initial failures, successful focused
+logs, unchanged-input freezes and the actual staged index entries are retained.
+
+The first inferred-tag attempt compiled and passed ownership10/provenance17,
+but its two new fixtures failed to parse: metadata was incorrectly attached to
+a numeric literal. Those raw errors and original source remain retained. The
+fixtures now annotate `(do 42)` with corresponding analyzed Do HIR, preserving
+all hint/nil/false and error/retry assertions. The isolated corrected snapshot
+passed43 focused tests; its older Graph snapshot is distinguished explicitly.
+
+The publication gate then overlaid the actual staged Rust bytes and HEAD
+bootstrap artifacts in `/home/bobby/.cache/suss-m4-work/frozen-compiler-inputs`.
+Pre-evidence index tree: `e621810fe6083ea5402ee443a0ae429c4fb3257c`.
+All450 input hashes match the staged candidate. With CARGO_BUILD_JOBS=2 and
+the owned analyzer-literal-key-target directory, commands were:
+
+```sh
+cargo test -p suss-compile --locked --lib --no-run
+cargo test -p suss-compile --locked --lib portable::hir::local_bindings::ownership_tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib portable::origin::form_metadata::tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib portable::hir::source_tags::quoted_tag_tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --test portable_collection_source_analysis --test portable_constructor_source_analysis -- --test-threads=2 --nocapture
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+```
+
+Compile passed. Ownership10, provenance17, source-tags7 and collection/constructor
+source-analysis4+5 all passed:43 focused test executions. Bootstrap exited1 at
+226830..226850 with unchanged native-work allowance and no output/input changes.
+Constructor-callback, deferred-factory and source-child Session stages remain
+unexecuted, as do current-source Jank and the full workspace baseline. No native
+Session IRQ or source-certificate publication success follows from these tests.
+
+Shared Origin ownership removes actual immutable value copies. Inferred tags
+refer to an AST's retained tag when applicable; explicit metadata hints remain
+owned and nil/false distinctions are preserved. Factory-ledger projections and
+root-cache scaffolding compile but remain partial: the controller is inactive,
+source-edge-bound imports, target-reachable memo-domain validation, final
+callback revalidation/publication and eviction remain unwired. This is a partial
+draft checkpoint, not issue acceptance or readiness. Later primary worktree edits
+and four stale generated bootstrap files are excluded from the candidate.
+
+
+## Function syntax ownership and metadata-copy execution (2026-10-16)
+
+Archive `evidence/m4-function-form-owner-bootstrap-2026-10-16.tar.gz`, SHA256
+`a21900a0388f46ab6451959db5796146c09f316fbd3faab41345c08b386ad3c0`,
+retains563 manifested payloads and1800 snapshot paths in456 source blobs.
+The actual450 post-bootstrap input hashes match the staged candidate. Later
+unstaged source_roots diagnostics are excluded.
+
+Function scopes retain the actual provisional definition owner for the same
+live initializer input. Borrowed provenance stays on the call stack; expansions,
+rewrites and nested functions use the metered owned fallback. Publishing the
+provisional owner now charges its allocation/header/reference retention without
+a second catalog lookup. Existing deep DefinitionInfo clones remain separate
+unresolved work. Valid metadata maps now expose a borrowed intermediate view;
+final merged keys/values remain owned, metered and complete. Precedence,
+first-key retention, source order and reader filtering are unchanged.
+
+The first compile failed on four new test-only private Global constructions.
+Tests now resolve genuine globals through the existing Environment API; privacy
+and assertions remain intact. That corrected snapshot compiled and passed58
+focused tests but bootstrap still exhausted fuel at205896..205904. Same-binary
+trace recorded298 actual function-owner reuses; it does not establish matched
+before/after performance savings. Raw failures and exact source are archived.
+
+After removing the metadata intermediate copy, commands ran from the frozen
+compiler-input cache with CARGO_BUILD_JOBS=2 and the owned target:
+
+```sh
+cargo test -p suss-compile --locked --lib --no-run
+cargo test -p suss-compile --locked --lib portable::hir::local_bindings::ownership_tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib portable::origin::form_metadata::tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib portable::hir::quotes::metadata_reader_tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib portable::hir::source_tags::quoted_tag_tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --test portable_collection_source_analysis --test portable_constructor_source_analysis -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --test portable_control_source_analysis -- --test-threads=2 --nocapture
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+cargo test -p suss-compile --locked --lib portable_session::constructor_callback_tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib portable_session::deferred_factory::tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib portable_session::construction_records::projection::tests:: -- --test-threads=2 --nocapture
+cargo test -p suss-compile --locked --lib portable_macro_graph::source_roots::tests:: -- --test-threads=2 --nocapture
+sh scripts/verify-bootstrap.sh
+cargo test -p suss-cli --locked --test compiled_macro_source_tags -- --test-threads=2 --nocapture
+cargo test -p suss-cli --locked --test compiled_macro_namespace_identity -- --test-threads=2 --nocapture
+```
+
+Compile and62 source-analysis executions passed. Default bootstrap generation
+passed for both phases; only four allowed artifact files changed. On that tuple,
+constructor callback1, deferred5 and projection6 passed. Source-child tests
+reported1pass/2fail: unexpected finish_bound rejection and a Wasm fuel trap.
+The controller remains inactive; physical closure is not causal source authority,
+and selected projection domains still cover the whole ledger.
+
+The bootstrap verifier passed two byte-identical reproductions, identity checks
+and4 execution tests with Java/Node absent from PATH. Default source tags retain
+1pass/1fuel failure. Namespace identity retains0pass/2fail: the five-call probe
+cannot finish at default fuel, while callable rows2/3 lose declaration/method
+child identity in both phases. All450 final inputs remained unchanged. These
+separate executed cohorts total80pass/5fail, not general acceptance. No quota,
+tariff, fixture or expectation changes were used. Current Jank results, full
+workspace baseline and final-head CI require separate evidence.
+
+Read-only CI diagnosis for preceding9d14186 retained zero runs/checks and missing
+PR263 merge ref/unknown mergeability despite its actual base being an ancestor.
+Actions and the unchanged workflow are enabled. No configuration defect or
+cause for missing trigger processing is established by those API observations.
+
+
+## Frozen817 Jank capture and original source-criteria checks (2026-10-16)
+
+Archive `evidence/m4-jank-acceptance-audit-2026-10-16.tar.gz`, SHA256
+`ba5b2e15368a19f4c4a96bc6b4ff16c48700d30d329f126b2c8540d7119ecd5c`,
+retains1265 manifested payloads. FILES.json maps5020 original paths to1263
+content-addressed blobs; generated fixture Git internals/bytecode are omitted,
+while working inputs, generators, raw failures and receipts remain.
+
+One actual producer used frozen817d48e source and regenerated bootstrap. Commands:
+
+```sh
+python3 scripts/clojure_test_suite.py
+SUSS_CLOJURE_TEST_SUITE_CAPTURE=/home/bobby/.cache/suss-m4-work/function-owner-jank-run/observations cargo test -p suss-compile --locked --test clojure_test_suite clojure_test_suite_matches_reviewed_baseline -- --exact --test-threads=2 --nocapture
+```
+
+Pin check exited0. Capture/baseline gate exited101 after326.469s, with all921
+input hashes unchanged. Actual observations have SHA256
+`ec3e857e869483e456244e486220290a29af2fb5181f1e9b5f06cdc526125626`.
+All450 production inputs match committed817d48e; later diagnostics are excluded.
+The existing200M corpus allowance remains unchanged and does not establish
+10M default macro transport. No known-failure baseline was rewritten.
+
+Strict independent host classification finds248 namespace records:61loaded and
+187failed. Outcomes are1055host passes,25guest judgments and4752unexecuted;
+22 framework failures consist of TWO actual assertion errors and20 missing
+reference-skip units. Do not describe22 as executed failing assertions. The
+actual test-failure/skip arrays are empty; namespace failures are preserved.
+
+The four complete selected #264 bodies have35expected IDs: identical?4,
+hash-map8 and hash-set11 all execute as23host passes; when-let12 remains
+unexecuted behind its explicit missing-macro namespace failure. Complete35-ID
+coverage fails. Original M4 source-audit groups remain incomplete: #17 has
+106host/7guest/165unexecuted and three skip-mismatch units; #18 has
+31host/161unexecuted; #19 has323host/10guest/166unexecuted. Groups overlap and
+must not be summed as distinct assertions. The complete original map/test-map
+sequence1-69 executes in order:62host/7guest, no missing IDs, failures or skips.
+This bounded execution does not fulfill all #241/#252 criteria.
+
+Against the exact retained failure baseline, no previously nonfailing assertion
+becomes failed/unexecuted.124newhost and8newguest results were previously
+failed/unexecuted. Update#48 is a newly executed kind:error after its old
+namespace blocker; partial#2 is unchanged. Both preserve their unsupported ABI2
+layout observations. This is an unmatched baseline comparison, not causal proof
+or a blanket classification of remaining gaps as unrelated.
+
+The archive also retains the original #16-19 source/assertion audit at d311f70
+and the reviewed host helper. Its38 synthetic adversarial tests pass; old failed
+attempts remain. Exact corpus/comparator/selection/group hashes, unexpected
+outcomes and four-field skip multisets are checked. Exit0 is host verification,
+exit2 qualified guest/reference skips, exit1 failed/incomplete. Source mapping
+and host-tool tests are not native collection execution.
+
+Original source/provenance commands at817d48e:
+
+```sh
+python3 -m unittest discover -s scripts -p test_core_import.py
+python3 -m unittest discover -s scripts -p test_cljs_reviews.py
+python3 scripts/core_import.py --check
+python3 scripts/cljs_inventory.py --check
+python3 scripts/cljs_reviews.py
+```
+
+Negative cohorts passed15+10. The first import check failed because this
+worktree's ClojureScript submodule was empty and Git reported the parent HEAD.
+Initialized it using `git submodule update --init --reference
+/home/bobby/Work/code/bobby/suss/clojurescript -- clojurescript`, obtaining exact
+c4295f303100bbf5afac449242d30bca1126f1a1. Import/inventory/review checks then
+passed with1072 inputs unchanged. Initial failure remains; these are source
+checks, not runtime core-import acceptance.
+
+Two separately frozen unpublished source-child diagnostic attempts compiled and
+regenerated bootstrap, then each retained1pass/2fail. Per-record trace narrows
+lineage rejection to11constructor direct facts; children, logical source, input,
+class and prototype predicates pass. No root cause or fix is inferred. Observer
+logging is unmetered diagnostic overhead and not performance evidence. The
+same operation budget/full negative cases remain; actual certificate reuse in
+test setup did not eliminate the fuel failure. Full workspace baseline and
+passing final-head CI remain separate gates. Post-push817 API inspection found
+zero matching Actions runs/checks.
+
+
+## Borrowed inputs, source phases and metadata views (2026-10-16)
+
+Archive `evidence/m4-borrowed-input-and-source-phases-2026-10-16.tar.gz`,
+SHA256 `6390e6ac489e4ef2a270068913c0d3699a5f87e91bd323561613750e77c646f4`,
+retains563 manifested payloads and4586 paths mapped to561 blobs. Exact450
+post-bootstrap inputs match the staged checkpoint. Later declaration-query
+reuse and child-batch edits are excluded.
+
+The original runtime import verifier initially rejected an upstream symlink
+escaping checkout containment. An actual owned pinned checkout repaired setup;
+no guard was relaxed. Provenance checks passed, but all17 unchanged runtime
+tests failed in loaded()->Session.eval(CORE), native fuel126881..126889.
+The fixtures/core.sus match the historically passing #262 baseline. This is
+one blocked setup, not17 witnessed semantic defects.1523 inputs stayed fixed.
+
+Analysis now borrows original selected syntax instead of deep-copying the whole
+input. Namespace effects retain their order; one metered nil analysis head
+preserves original position/span/metadata/context while emission retains the
+untouched namespace directive. Three regressions cover actual input identity,
+error/retry, retained source ownership and cumulative accounting. The first
+borrowed-input snapshot passed65 focused tests and default bootstrap generation,
+but runtime import still failed later and source-child tests reported3pass/1fail.
+
+A field trace established the earlier lineage rejection:11 Runtime Keyword
+hash fields changed from nil to numbers without Macro authentication. Actual
+compiled-macro transport uses a Macro Store for either caller source phase.
+Tests now independently capture actual Runtime/Macro source revisions and prove
+their exact owner Arcs while transporting through Macro stores. The explicit
+Runtime hash operation must succeed, then unreceipted source facts reject.
+Identity/callback/GC/poison assertions and all five invalid-inventory cases stay.
+The full native recipe layout is computed once within immutable planning
+intervals; every current guest certificate and source witness is still checked.
+
+Metadata normalization retains all prefix and arbitrary-key validation,
+structural equality/deduplication, precedence, first-key identity and source
+order. Query lookup clones only the winning value; full-output consumers still
+receive complete owned pairs. One initial regression compared correct retained
+spans with a freshly parsed zero-based expected subtree; only its expectation
+now comes from the independent winning input, preserving full equality.
+The fat-view snapshot passed69 focused tests but regressed default bootstrap
+fuel. It is preserved separately. Thin borrowed-or-boxed terms use smaller actual
+storage, with Box/Vec backing and relocation charged before allocation.
+
+Exact final source commands/outputs are archived from
+`run-thin-metadata-input-check.py` and `run-thin-metadata-bootstrap-verifier.py`.
+With CARGO_BUILD_JOBS=2 and the owned target, compile passed; borrowed-input3,
+ownership13, provenance17, metadata6, source-tags10, source-analysis4+5 and
+control-analysis12 passed:70 executions. Both bootstrap phases regenerated.
+`sh scripts/verify-core-import.sh` then reported0pass/17setupfail at native
+248742..248744; all source/provenance stages passed. Source-child tests reported
+3pass/1Wasmfuel fail under the unchanged single request budget. No diagnostic
+observer was enabled. Later optimizations do not alter these recorded outcomes.
+
+`sh scripts/verify-bootstrap.sh` on the same450-input tuple passed two exact
+reproductions, identity checks and4execution tests with Java/Node absent from
+PATH. Across these separately scoped final cohorts:77pass/18fail. There is no
+workspace-baseline or current-source Jank claim. Existing trace bucket events
+can repeat through nested ExpansionRequests and are not unique work totals or
+matched performance evidence.
+
+One reviewed workflow line adds `portable/**` push coverage, retaining the PR
+trigger, commands, permissions and separate concurrency groups. Actual head
+push CI must be checked after publication; this does not establish why previous
+PR runs were absent or replace merge compatibility checks. No issue acceptance,
+quota/tariff change, metadata stripping or merge is claimed by these commands.
+
+
+## Declaration queries and callback-free certificate batches (2026-10-16)
+
+Archive `evidence/m4-declaration-child-batch-2026-10-16.tar.gz`, SHA256
+`35b895854a753c1f868fb83e819a67b4bd9e4599123075e7e393f2b09ed6a26e`, retains 3658 original paths in 521 content-addressed
+blobs, with 522 manifested payloads. Read PATHS.json to recover
+original names; verify MANIFEST.json and each blob digest. Exact before/after
+450-input snapshots, commands, receipts, raw failures and packaging script are
+included. The final baseline capture can be partial; its receipt records this.
+
+Declaration tag/return calculations lazily retain one normalized immutable
+metadata view per calculation. Truthiness checks borrow terms; selected returned
+tags remain freshly owned and metered. Validation timing, eager fallback queries,
+short-circuit order, nil/false presence and invalid top-fn diagnostics remain.
+Three added regressions cover accounting reuse, invalid metadata, ownership,
+cancellation and retry. The initial fixture lifetime compile failure is retained.
+
+Source certificates share completed intrinsic validation and a certification audit
+only inside callback-free intervals. Each input still checks ownership and its
+independent current expected witness; false does not suppress later errors.
+Completed entries retain Rc roots, with storage and probes charged. All batch
+state ends before ordinary construction; postcallback checks start fresh.
+The new regression covers repeated roots under different expected owners, GC,
+foreign stores, later interrupt/fuel errors and recovery. Existing lineage
+checks exercise shared descendants and mutation between batches. All five
+invalid-inventory variants and the single request budget remain unchanged.
+An initial private-field access in a test failed compilation; the correction
+uses existing remaining-fuel/debit APIs, preserving the trap assertion.
+
+`run-declaration-and-child-batch-check-2.py` compiled successfully and recorded
+73 analysis passes, default both-phase bootstrap generation success, core import
+0pass/17 shared-setup failures, and source-child4pass/1Wasm-fuel failure.
+The core failures still occur in loaded()->Session.eval(CORE), native79593..79610;
+they are not17 reached semantic assertions. Offsets are not cost comparisons.
+`run-declaration-and-child-batch-bootstrap-verifier.py` passed two byte-identical
+reproductions, compiled identity checks and4 execution tests with Java/Node absent
+from PATH. These scoped cohorts total81 passes/18 failures. No budget, tariff,
+metadata, fixture or validation reduction is included.
+
+Actual209eadd push CI exposed stale test-helper types after shared ownership
+changes. Eight test files now use SourceLocals/SourceFields, Arc-owned forms and
+COW fixture mutation; their assertions and guest fixtures remain unchanged.
+Independent review approved production changes and all eight migrations.
+The required `cargo test --workspace --locked -- --test-threads=2` first failed
+compilation in compiled_async_library (raw52-second run retained). That helper
+and an additional field-snapshot helper were corrected; an exact450-input rerun
+was started using `run-declaration-and-child-batch-final-baseline-2.py`.
+At archive capture it was still compiling: no workspace pass is claimed.
+The final snapshot includes all eight migrated helpers; earlier focused snapshots
+retain their original test-helper bytes and the same production/bootstrap inputs.
+
+Next evidence command: inspect the final baseline receipt/log and exact pushed-head
+CI before interpreting unexecuted suites. The remaining source-child fuel failure
+and default core-import setup failure require diagnosis under unchanged budgets.
+No current-source Jank, issue acceptance, complete workspace baseline, passing CI
+or merge-readiness conclusion follows from this checkpoint.
+
+
+## Analyzer literal provenance validation commands
+
+The source integration composes explicit literal-key positions, guarded retained
+declaration keys and native body-origin facts. The accompanying
+[evidence](evidence/m4-pr263-literal-provenance-source-2026-10-19.md) records
+source-only reviews, corrected static findings and qualified development probes.
+Eight changed Rust files parse and whitespace checks pass; no native test result
+is established for this integrated source. The bootstrap files still correspond
+byte-exact to parent66a55ce and must be regenerated normally from this source.
+Type/history and reader shorthand key provenance remain explicit limitations.
+
+Use the existing private writable TMPDIR and bounded worker settings, then run:
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+python3 scripts/verify_bootstrap_identity.py
+cargo test --locked -p suss-compile --lib analyzer_literal -- --test-threads=2 --nocapture
+cargo test --locked -p suss-compile --lib retained_declaration -- --test-threads=2 --nocapture
+cargo test --locked -p suss-cli --test compiled_macro_analyzer_literal_memos --test compiled_macro_source_tags -- --test-threads=2 --nocapture
+sh scripts/verify-bootstrap.sh
+cargo test --workspace --locked -- --test-threads=2
+```
+
+Keep actual failures/unknowns and source/BOOT tuples separate. These commands are
+validation targets here, not results or permission to promote an incomplete issue.
+
+
+## Native declaration-field selection validation
+
+Global-reference overlays now select native keyword recipes across literal and
+source origins while retaining the prior key object and position. See the
+[source evidence](evidence/m4-pr263-reference-field-selection-2026-10-19.md)
+for the independent static review and test correction. Bootstrap artifacts are
+still the parent versions; no new native execution result is established.
+After normal bootstrap generation and identity verification above, run:
+
+```sh
+cargo test --locked -p suss-compile --lib native_reference_field -- --test-threads=2 --nocapture
+cargo test --locked -p suss-compile --lib analyzer_literal_global_references -- --test-threads=2 --nocapture
+cargo test --locked -p suss-cli --test compiled_macro_source_tags -- --test-threads=2 --nocapture
+```
+
+Then run the required full baseline and final-head CI. Reader shorthand and
+prior type-declaration key provenance still need transport integration and
+actual execution; the new field selector does not establish those properties.
+
+
+## Reader metadata construction-fact validation
+
+The native metadata view retains first-key constructor facts for symbol/string
+shorthand. Its owned adapter remains unchanged; Graph/FormBridge wiring and
+native execution are not established. See the
+[source review](evidence/m4-pr263-reader-key-view-2026-10-19.md).
+After normal bootstrap regeneration and identity checks, run:
+
+```sh
+cargo test --locked -p suss-compile --lib metadata_key_origin -- --test-threads=2 --nocapture
+```
+
+This command is a validation target, not a result. Preserve full prefix errors,
+first-key identity, independent occurrences and Runtime limits during wiring.
+
+
+## Native type key-history validation
+
+The nominal analyzer captures five parse-type key-origin facts before rebuilding
+metadata, without retaining previous declaration/initializer chains. Graph does
+not consume them yet. See the
+[source evidence](evidence/m4-pr263-native-type-key-history-2026-10-19.md)
+for bounded independent review, added charges and limitations. No native test
+result or bootstrap validity is established for this source. After normal
+bootstrap regeneration and identity checks, run:
+
+```sh
+cargo test --locked -p suss-compile --lib type_key_history -- --test-threads=2 --nocapture
+```
+
+These native-prepare tests do not replace actual both-phase macro transport,
+custom-hash/GC/restoration, full source-tags programs or final acceptance gates.
+
+
+## Type-key transport validation
+
+The graph now consumes the five native type-key facts after full source guards,
+using a separate policy that leaves other type fields cold. The
+[evidence](evidence/m4-pr263-type-key-transport-2026-10-19.md) describes the
+construction checks and pre-delegation observer. Added native transport assertions
+are unexecuted; bootstrap artifacts still require normal regeneration.
+After normal generation and identity verification, run:
+
+```sh
+cargo test --locked -p suss-compile --lib type_key_history -- --test-threads=2 --nocapture
+cargo test --locked -p suss-cli --test compiled_macro_source_tags -- --test-threads=2 --nocapture
+```
+
+Preserve the original source-tags programs, caller Runtime limits, existing
+poisoning/authority controls and required full baseline/final-head CI.
+
+
+## Reader occurrence transport validation
+
+The origin-preserving carrier is wired through Graph and FormBridge. Original
+Symbol cloning records prefix selectors before enrichment, so a single actual
+retained key supplies outer declaration and inner metadata. See the
+[source evidence](evidence/m4-pr263-reader-occurrence-transport-2026-10-19.md)
+for the rejected content-join correction, added work and remaining eager/expanded
+mapping limits. Added tests are unexecuted; normal bootstrap generation and
+identity verification must precede:
+
+```sh
+cargo test --locked -p suss-compile --lib reader_metadata -- --test-threads=2 --nocapture
+cargo test --locked -p suss-compile --lib reader_shorthand_declaration -- --test-threads=2 --nocapture
+cargo test --locked -p suss-compile --lib type_key_history -- --test-threads=2 --nocapture
+```
+
+Then execute the unchanged source-tags programs and remaining full acceptance
+gates. Partial source checks do not classify unknown mappings as success or
+replace final-head independent review/CI.
+
+
+## Reader task layout compilation check
+
+CI39269589242 reports E0080 in the reader Task queue-layout assertion, before
+bootstrap generation. A boxed, prepaid native ReaderMap payload corrects the
+inline size increase while retaining the assertion and original traversal order.
+See the [failure/model evidence](evidence/m4-pr263-reader-task-layout-2026-10-19.md).
+The std-only ABI model and Rust parsing are not Suss native execution results.
+Normal bootstrap generation followed by the reader-focused tests above and
+final-head CI must establish the actual target layout and runtime behavior.
+
+
+## Retained type-field history validation
+
+The fixed native history now covers five parse-type fields and seventeen other
+existing declaration fields. See the
+[evidence](evidence/m4-pr263-retained-type-field-history-2026-10-19.md) for
+source review, corrected array charges, cold/warm failure trials and remaining
+identity/performance limits. Added tests and stronger meta-memo assertions are
+unexecuted; normal bootstrap generation and identity checks must precede:
+
+```sh
+cargo test --locked -p suss-compile --lib type_key_history -- --test-threads=2 --nocapture
+cargo test --locked -p suss-cli --test compiled_macro_declaration_metadata --test compiled_macro_source_tags -- --test-threads=2 --nocapture
+```
+
+Preserve all original assertion programs, Runtime allowances, deliberate fuel
+controls and final full-baseline/head gates. Source parsing and review do not
+establish observable transport or complete type inner metadata identity.
+
+
+## Inspecting bootstrap mismatches from CI
+
+The normal verifier can retain both complete generated tuples before its unchanged
+comparison/identity/execution gates. CI uploads those diagnostics even if a mismatch
+fails foundation. See the
+[diagnostic interface and test scope](evidence/m4-pr263-bootstrap-ci-diagnostics-2026-10-19.md).
+Local shell syntax and four Python/synthetic-generator tests pass; no actual Cargo
+or Suss execution is credited to those harness tests.
+
+```sh
+python3 -m unittest discover -s scripts -p test_bootstrap_diagnostics.py -v
+SUSS_BOOTSTRAP_DIAGNOSTICS_DIR=/absolute/fresh/diagnostic-directory sh scripts/verify-bootstrap.sh
+```
+
+Use the existing writable private TMPDIR/worker settings for actual verification.
+The receipt alone cannot authorize copying artifacts into the shipped tuple:
+verify source/tree/clean status, every digest and reproduction pair, current
+compiler/bootstrap identities and then normal artifact validation/execution.
+This is CI evidence retention, separate from the compiler-cache issue272.
+
+
+## Canonical bootstrap catalog analysis allowance
+
+Actual cd31fef CI compiled production Rust but normal generation exhausted the
+inherited10M native allowance. The private fixed-SOURCE catalog now has100M for
+both development generation and checked shipped-fact restoration. Ordinary user
+analysis/Session defaults remain10M and Runtime budgets/charges are unchanged.
+See the [source/failure boundary](evidence/m4-pr263-bootstrap-catalog-allowance-2026-10-19.md).
+Source review and parsing pass;100M sufficiency and native acceptance are unproven.
+Run normal Java/Node-free reproduction with diagnostic retention above, verify
+source/identity and then execute the existing complete compiled_bootstrap target
+before treating generated artifacts as usable. No quota/rate reduction or
+nested budget refill was introduced.
+
+
+## Bootstrap outputs from the normal CI generator
+
+The four shipped files now come from two byte-identical normal Java/Node-free CI
+generations on a05cbb1. See the
+[source/tree/hash/review evidence](evidence/m4-pr263-ci-regenerated-bootstrap-2026-10-19.md).
+Current compiled build-script identity verification passes, including checkout
+independence and runtime asset invalidation. No Cargo or VM was run locally for
+that check. Executable section bytes differ from the parent; runtime behavior
+must be established again on this exact source/BOOT tuple.
+
+```sh
+python3 scripts/verify_bootstrap_identity.py
+sh scripts/verify-bootstrap.sh
+cargo test --locked -p suss-cli --test compiled_bootstrap -- --test-threads=2
+```
+
+Only the first command has a new local result here; CI establishes two normal
+complete generation tuples, not the later compiled_bootstrap tests. Fresh-head
+reproduction, actual bootstrap validation/execution and the remaining focused/full
+gates are still required. Preserve the separate parent baseline source and process.
+
+
+## Native bootstrap execution and test compilation diagnostics
+
+CI run39280069179, foundation job118152445923 on ca8c074 completed normal
+bootstrap reproduction and the compiled build-script identity check. The complete
+`compiled_bootstrap` target executed with4PASS/0FAIL (63.30s), including syntax
+quote, isolated guest state, identity/corruption rejection and phase reproduction.
+The later library test compilation failed with3E0425 references to nonexistent
+`portable::prepare` and2E0509 moves from Drop-bearing reader Forms. Test helpers
+now call `portable::hir::prepare` and consume Forms through `into_parts().2`.
+These changes retain the actual preparation, observation and assertion paths.
+They require a refreshed normal bootstrap tuple because source identity includes
+test files, followed by the same CI gates; no new library execution is claimed.
+The separate parent workspace baseline remains live and must not be restarted.
+
+
+## Selected borrowed reader metadata owners
+
+The selected immutable borrowed Symbol reader now supplies its metadata prefix
+extent before cloning, following the existing full source/expansion selection
+guards. This extends occurrence transport to eager and paired reader mappings.
+It uses one normalized owned view for outer/inner keys; it does not infer origin
+from matching output contents. The new controls are prepaid before kind/extent
+inspection; unsupported non-Symbol shapes retain their previous policy.
+
+Focused regression names for the next available native test run:
+`borrowed_metadata_occurrence` and
+`eager_and_paired_reader_declarations_share_retained_key_after_gc_and_live_hash`.
+Source parsing and independent source review pass; native compilation, metering
+failures/retry, collection and live IHash execution remain unverified. Preserve
+the existing ordinary reader metadata cases and refresh/reproduce bootstrap
+outputs after these source edits before interpreting Session results.
+
+
+## Bootstrap tuple for borrowed-reader transport
+
+CI39281448728 generated both normal phases twice, byte-identical, from32ef328.
+After two independent source/integrity reviews the four exact outputs are adopted.
+See [source, hashes and qualification](evidence/m4-pr263-reader-owner-bootstrap-2026-10-19.md).
+Non-custom executable sections match the ca8 tuple, but the native compiler/test
+source changed and must execute again. Run `sh scripts/verify-bootstrap.sh`, then
+the focused borrowed-reader/type-history/body-origin regressions and full baseline
+when the separate parent producer has terminated. No current native test success
+is inferred from this adoption. The original generation job stopped at the expected
+stale-shipped comparison before downstream execution; retain that failure.
+
+
+## Native feedback after reader-owner bootstrap adoption
+
+48de55e CI39281973631 passes normal reproduction/identity and compiled_bootstrap
+4/0 (62.86s); CLI library36/0, compiler library447/13. The
+[raw results and bounded repairs](evidence/m4-pr263-native-feedback-repairs-2026-10-19.md)
+retain all failures and distinguish source fixes from unexecuted native outcomes.
+Five macro-observation fixtures use10B compilation fuel; caller Runtime and
+default/exhaustion controls remain. Pair-only normalization eliminates unused
+provenance storage while retaining tracked-reader fees and semantics. Default
+core-import17 adequacy remains unknown; its source/limits were not changed.
+
+After normal regeneration/adoption, run focused `analyzer_function_and_reference_env_keys`,
+`pair_only_metadata`, `type_key_history`, `source_roots`, and
+`analyzer_literal_collection_keys` before the full baseline. Existing reader macro
+identity and namespace aliases still require a real production repair. Retain
+the separate parent workspace producer until it terminates; no local concurrent
+Cargo/VM execution was performed for these parsing/source reviews.
+
+
+## Regenerated bootstrap after bounded native-feedback repairs
+
+CI39289196572 produced both complete normal tuples twice on4112c7c. Independent
+source/integrity review permits the four exact outputs now adopted; see
+[evidence and limits](evidence/m4-pr263-bounded-repair-bootstrap-2026-10-19.md).
+Their non-custom code matches48de, but the native compiler source changed.
+Run `python3 scripts/verify_bootstrap_identity.py`, normal Java/Node-free
+`scripts/verify-bootstrap.sh` and focused tests listed above, then the full
+baseline when the separate parent producer actually drains. Generation stopped
+at stale shipped comparison; it supplies no new library execution verdict.
+
+
+## Completed type-value source and native feedback
+
+[Source/review archive and exact native limits](evidence/m4-pr263-completed-type-values-2026-10-19.md)
+record320 CI bootstrap4/0, CLI36/0 and compiler456/6, plus shard3 145/31.
+Strict default core17 still exhausts native10M; its source/allowance and complete
+source-child negative fixture remain unchanged. Three AST-family failures now
+reach their observer, which uses an explicit receiver hash witness after saving
+initial memo/events instead of requiring every constructor to hash every key.
+
+New completed type-value source and tests have source review only. Bootstrap
+files still belong to320: regenerate/adopt both normal phases before executing
+this source. Run `sh scripts/verify-bootstrap.sh`, then focused
+`type_value_regression_tests`, `type_key_history`, `analyzer_literal_`,
+`reader_shorthand_declaration_keys`, `source_roots` and the unchanged
+`core_import`/`compiled_macro_source_tags` targets. After focused acceptance,
+run `cargo test --workspace --locked -- --test-threads=2` using private writable
+TMPDIR and bounded workers. Keep the separate parent producer until terminal;
+no local concurrent Cargo/VM was used. Full type input capture costs, actual
+public retained-key identity, focused native results and complete-suite results
+remain unverified for these new sources.
+
+
+## Type-value Rust build feedback and evidence correction
+
+edc2e53 CI39295062658 fails library compilation with E0425/E0277 before
+bootstrap generation or tests. Two reviewed mechanical fixes pass the genuine
+current holder and forward the dynamic meter through a sized closure. A separate
+reviewed COW change avoids copying a shared lexical map for an absent removal;
+its actual default-core benefit is unknown. Source_info query elision was rejected
+because it could hide source errors and is not applied.
+
+[Raw failures, source reviews, authored controls and marker erratum](evidence/m4-pr263-type-value-build-repairs-2026-10-19.md)
+retain the original mislabeled namespace derivative and exact corrected markers.
+Raw320 outcomes/counts are unchanged. Regenerate/adopt normal BOOT before
+`sh scripts/verify-bootstrap.sh` and the focused selections listed in that
+evidence, then the exact full baseline. Keep root66a55ce's live producer intact;
+parsing/source review is not compilation, native acceptance or a budget waiver.
+
+
+## Regenerated bootstrap after completed-value build repairs
+
+CI39296185995 builds sourcef8776e7 and completes two normal generations
+of both bootstrap phases. The independently reviewed exact four outputs are adopted;
+[source, byte hashes, raw comparison failure and limits](evidence/m4-pr263-completed-value-bootstrap-2026-10-19.md)
+retain all receipts. Non-custom executable sections match320 and the actual
+compiled build-script identity probe passes. The generation job stops at old
+shipped comparison before any compiled_bootstrap or library execution.
+
+Fresh normal `sh scripts/verify-bootstrap.sh`, focused source/type-value/literal/
+COW/source_roots controls and unchanged core_import/source-tags acceptance
+remain necessary before the exact full workspace baseline. No default-budget
+or public alias result is inferred. Root66a55ce's same workspace producer
+continues separately; no concurrent local Cargo/VM was used for adoption.
+
+
+## Type-value test compilation after successful bootstrap replay
+
+3c0ed52 CI39297273041 reproduces all four shipped files exactly, passes identity
+and compiled_bootstrap4/0/0 (40.66s). The subsequent library-test build fails
+E0277 at type_value_regression_tests.rs70: source slice iteration yields&&str.
+The independently reviewed one-character dereference fixes that call without
+changing source bytes, assertions or budgets. [Raw log, receipts and scope](evidence/m4-pr263-type-value-test-build-2026-10-19.md)
+retain the failed build; no library test verdict is inferred. Test source is
+part of the compiler fingerprint, so regenerate/adopt both normal phases before
+fresh `sh scripts/verify-bootstrap.sh`, focused tests and the exact full baseline.
+No local concurrent Cargo/VM was used; root66a55ce's producer continues intact.
+
+
+## Normal bootstrap for the corrected type-test source
+
+CI39298297611 completes two normal generations of both phases from19f6211.
+The independently reviewed four exact outputs are adopted; [source, hashes,
+raw old-shipped comparison and limits](evidence/m4-pr263-test-source-bootstrap-2026-10-19.md)
+retain the receipts. Actual compiled build-script identity probe passes;
+non-custom executable sections match3c. The generator job supplies no new
+bootstrap or library execution. Fresh `sh scripts/verify-bootstrap.sh`, focused
+completed-value/literal/COW/source-root/core-import/source-tags tests and the
+exact workspace baseline remain required. Parent66a55ce's same producer
+continues separately; no local concurrent Cargo/VM ran for this adoption.
+
+
+## Reference-qualified tag metadata and expected primitive spans
+
+Current1bea CI passes bootstrap4/0/0 and CLI36/0, then compiler466/5.
+[Raw native failures, retained indexing-reader reference and two reviewed test corrections](evidence/m4-pr263-reference-qualified-controls-2026-10-19.md)
+retain exact tuples, commands, hashes and unexecuted boundaries. The new tag writer
+matches the actual pinned indexing-reader metadata; its legacy test expectation
+gets one precise source-qualified exception, with all other fields/programs still
+fully checked. The type-value fixture corrects only expected primitive spans.
+No production code or fuel limit changes. Corrected native execution is pending;
+regenerate the normal source-fingerprint bootstrap tuple before focused replay and
+the exact workspace baseline. Original strict core/source-child and pinned-map
+exhaustions remain explicit failures. Root66a55ce's existing producer is untouched.
+
+
+## Normal bootstrap for indexed metadata test controls
+
+CI39308835115 completes two normal generations froma1d3c61, then stops against
+the older shipped bytes before test execution. The independently reviewed four
+outputs are adopted exactly; [receipts, raw log, hashes and scope](evidence/m4-pr263-indexing-controls-bootstrap-2026-10-19.md)
+bind204source inputs and both equal phase pairs. Non-custom executable sections
+match the previous tuple, and the actual existing compiled identity probe passes.
+No new native test success is inferred. Run committed-head normal reproduction
+and all focused original acceptance before the exact workspace gate. Root66a55ce's
+existing producer remains untouched; no local concurrent Cargo/Suss VM ran.
+
+
+## Shared reader controller source/build evidence (2026-10-19)
+
+See [source/build evidence](evidence/m4-pr263-shared-reader-controller-source-2026-10-19.md). Exact 34-source freeze 79ec4632c4e5994e9633f7a74cf165a049e16e538f581f050af34be234a8160f; final library no-run PASS24.9537s. Earlier library/CLI no-run PASS20.01s/28.77s and 531 listed library entries are compile-only evidence. Native ownership run 4PASS/2setupFAIL is retained; genuine shipped-env helper repairs are unexecuted. Next: normal bootstrap regeneration and identity, then focused execution. No acceptance/performance/full-baseline/final-CI claim. Archive SHA256 bcca02f7551029926955a317656089aaac4cc100d4beb0e49dcf3bdd1ad5f913.
+
+
+## Shared-reader normal bootstrap generation (2026-10-19)
+
+Source d16198173d94aa58df1c47795121bca88db6e63a: normal two-generation verification ran 25.7853s and exited1 only at stale shipped comparison. Eight hashes/four identical pairs and 219 committed input hashes are retained in [evidence](evidence/m4-pr263-shared-reader-bootstrap-2026-10-19.md). Adoption peer status: Included peer-review.json SHA256 94344c00d6ddcdac7afe9a38110331b8bb983113a4038d4a64814d2143dd98e3. Copy scope is four bootstrap outputs only. Fresh identity and four bootstrap tests are pending; generation gives no execution/acceptance credit. Archive SHA256 a434fc559aee553bd0d3f53b4cb5a23e2e7a29a33b1eae0f1c922349c08bfff8.
+
+
+## Four reader-controller repairs and initial focused evidence (2026-10-19)
+
+[Evidence](evidence/m4-pr263-four-reader-controller-repairs-2026-10-19.md) retains pre-repair558095c seven-filter19PASS17FAIL0ignored, plus prior567c4f7 bootstrap4PASS separately. Four reviewed repair postimages compile/link PASS24.7733s; 534 is library inventory, not PASS count. Current-source test bodies remain unexecuted; fresh generation/identity and focused replay are next. Known indexed metadata-order failure remains unfixed. No full baseline/final CI/readiness/closure claim. Archive SHA256 f7057d55306531bf081a88c55b4d79e3e635624757c9da979bd30e0d0fbdb6e5.
+
+
+## Provisioned reader controller bootstrap source binding
+
+`sh scripts/verify-bootstrap.sh` on901fa9d generated both normal phase pairs
+identically in28.0836s, then exited1 against the older shipped tuple. Independent
+review verified219 Git source inputs/fingerprint498b1286, all8 hashes and unchanged
+noncustom Wasm sections/catalog/ABI/cells. The exact four generated outputs are
+adopted; [raw log, hashes and independent source binding](evidence/m4-pr263-provisioned-controller-bootstrap-2026-10-19.json)
+retain that failed comparison accurately. Fresh identity/reproduction/bootstrap
+execution and repaired-source focused tests remain subsequent checks; no pass is
+inferred. Indexed metadata ordering remains a known separate failure.
+
+
+## Metadata association order and DATA-stage attribution (2026-10-19)
+
+[Small source/evidence receipt](evidence/m4-pr263-metadata-order-and-data-attribution-2026-10-19.json) binds three reviewed source postimages: two semantic metadata association-order files and one failure-only observational DATA attribution file. Metadata generated file/position keys keep first-association order while explicit prefixes replace values/coordinates; two reference-backed unit expectations corrected, original public tag assertions unchanged.
+
+Pure two-source metadata_reader_tests/pair_only_metadata_tests:12PASS0FAIL0ignored,29.0233s command/0.00s Rust test time, no Session/VM/BOOT use. This predates the third diagnostic source file and is not full-three-source execution. Prior4effee1 cohort remains16PASS12FAIL across28 tests; historical558095c remains19PASS17FAIL. All raw logs/results/review/reference bindings are embedded in the JSON receipt; no repeated archive or219-input inventory. Full-three library no-run subsequently passed21.1056s (compile/link only), raw SHA256dbbc5168470c735563dab60c8448e22e57b162d96932c995f09f08729b51d374. Both actual compiled builders returned fingerprintde973d93614143563e47cf1af0df94b1bfeef2ec9621d948c9f4a80c46efeaec. New diagnostic and public tag VM replay remain unexecuted. No whole acceptance/performance/full baseline/final CI/closure claim. Next: normal generation/identity and source-bound diagnosis/replay.
+
+
+## Bootstrap binding for metadata association order
+
+`sh scripts/verify-bootstrap.sh` on e3e875b generated identical normal phase pairs
+in27.7880s, then exited1 against older shipped bytes. Independent review verifies
+219 Git inputs and fingerprint de973d93, all8 outputs and unchanged noncustom sections,
+catalog/ABI/cells. Exact four outputs are adopted; [raw log and source/hash review](evidence/m4-pr263-metadata-order-bootstrap-2026-10-19.json)
+preserve the failed comparison. Next execute the unchanged public tag control
+and a canonical failing DATA control with observational stage labels. No new VM
+pass, complete bootstrap-verification pass, performance or acceptance is inferred.
+
+
+## Metadata-order helper replay and remaining DATA failure (2026-10-19)
+
+[Exact grouped two-test receipt](evidence/m4-pr263-metadata-order-targeted-results-2026-10-19.json) retains argv, terminal receipt and raw log on `65ea6ebb8710bebab067731509419008e140b8e2`: 1PASS1FAIL0ignored, exit101, 69.2529s command/45.25s harness. The unchanged compiled Session / `Graph::declaration` tag control passes all five cases in both Runtime and Macro, including exact metadata order, eligible physical Symbol identity, GC and immutable native source. This is helper-route evidence, not full public macro-frame, namespace or callable acceptance.
+
+The unchanged canonical first-use DATA control still fails with `Host(Fresh first-use source failed complete DATA checks)`. Its root has binding/logical=true but audit=false. The first native record has inputs=1, children/direct/classes/prototypes=true and current_inputs=false; the second has inputs=2, children=false and current_inputs/direct/classes/prototypes=true. All labels are retained verbatim; no repaired behavior is inferred. Next: independently review the bounded Alias/original-evidence repair and replay the unchanged control. No full baseline, final CI, performance or acceptance claim.
+
+
+The next source checkpoint includes the exact reviewed Alias V4 two-file repair. Only an actual Native `Recipe::Alias` forwards its single original input Evidence from the same producer, after unchanged production/recording completion. Generic input-root checks, source-owner handling, callback closure and cache-authority guards are unchanged. The prior Native payload lifecycle debit is conservatively retained; new selection/extraction controls are prepaid. The evidence JSON embeds the V4 manifest, Carver source GO, fee ledger and applied-source binding. One new Runtime/Macro GC/physical-identity regression is unexecuted. Exact applied-source library no-run compile/link passed in26.2434s, exit0, log SHA2569614e353b6c21970d1b985149d90cfe458f90ae0af4f458cc3c91443a199c2de; there is no new VM pass, generated BOOT result, repaired DATA result or acceptance claim.
+
+Both actual build-script builders returned fingerprint `53a2340547aa05a00a6f81eadbef7bfc2aab054a15676e92c06065fdfe39dd1f`; the receipt is embedded in the evidence JSON. This is source fingerprint evidence, not new generated BOOT identity or an Alias VM pass.
+
+
+## Bootstrap binding for transparent Alias evidence
+
+`sh scripts/verify-bootstrap.sh` at `446d4ad` produced identical normal phase
+pairs in 32.9371s, then exited1 at the older shipped comparison. Independent
+review verifies 219 Git inputs and fingerprint `53a23405`, all eight output hashes,
+and unchanged noncustom Wasm/catalog/ABI/cells. Exact four outputs are adopted;
+[raw generation and independent binding](evidence/m4-pr263-alias-evidence-bootstrap-2026-10-19.json) preserve that failed comparison.
+Next run the both-phase Alias regression and unchanged canonical-cold/retained-warm
+DATA controls. No Alias semantic, complete new-head verification or acceptance
+result is inferred from generation/adoption.
+
+
+## Alias targeted replay: two passes and retained/warm DATA failure (2026-10-19)
+
+[Three-test raw result receipt](evidence/m4-pr263-alias-targeted-results-2026-10-19.json) binds `7b56177c8fcf112155e299909ad8bb60efc755d5`, full argv/log and terminal exit101: 2PASS1FAIL0ignored, 225.5490s command/191.54s harness. The new uncaptured-native Alias regression passes in both Runtime and Macro with GC/physical identity and request-only cache checks. The unchanged canonical cold inline-callback poison/restoration control also passes. These are two Rust test passes, not a full DATA-suite result.
+
+The unchanged retained/warm reader-property control still fails at completed_type_values.rs616 with `Host(Fresh first-use source failed complete DATA checks)`. Its last reported Native has inputs=2 and current_inputs=false while children/direct/classes/prototypes=true; the ReaderSource root has binding/logical=true but audit=false (source0, alias14, native13). The failing phase/row is unlogged. Earlier false flags may belong to intentional poison observations in the concurrently passing control; the raw emission order is retained without inventing per-test attribution. A with-meta/evidence explanation remains unproved. This is a discussion/review stopping point, with no claim that all twelve DATA cases, public macro-frame/namespace/callable acceptance, full baseline or final CI pass. Existing assertions and all remaining gates are retained.
+
+
+## Serial retained-reader input attribution
+
+The reviewed three-file diagnostic labels native recipe IDs/kinds, separates
+existing root-membership and edge-closure results, and identifies phase/indexed/
+producer-order attempts. It adds no validation, guest calls, quota changes or
+exception recovery. `cargo test -p suss-compile --locked --lib --no-run` passed
+in 29.2766s; [exact source/review and raw compile log](evidence/m4-pr263-retained-input-attribution-source-2026-10-19.json)
+record compile-only evidence. Next regenerate the matching normal bootstrap and
+run only the unchanged retained/warm test with one test thread. No new execution
+or metadata-copy cause is inferred from the diagnostic source.
+
+
+## Bootstrap binding for serial retained-input attribution
+
+`sh scripts/verify-bootstrap.sh` at `3addbd2` generated identical phase pairs
+in 28.4580s, then exited1 against the older shipped files. The exact four
+outputs are adopted after independent review of 219 inputs, fingerprint
+`0b432794`, all eight hashes and unchanged noncustom Wasm/catalog/ABI/cells.
+[Raw generation and binding](evidence/m4-pr263-retained-input-attribution-bootstrap-2026-10-19.json)
+retain the failed comparison. Execute the unchanged retained/warm fixture
+serially next; generation and diagnostic labels do not establish a semantic pass.
+
+
+## Serial retained-reader failure attribution (2026-10-19)
+
+[Exact serial raw receipt](evidence/m4-pr263-retained-reader-serial-attribution-2026-10-19.json) binds `f950e4e5acd20df22c7292ee040221a6eb135f91` and the unchanged retained/warm selector, one test thread: 0PASS1FAIL0ignored, exit101, 70.3427s command/45.05s harness; raw SHA25608f1e5686e4cf8b4f689e5b8b8714267f793a5c7525d91f649d667b2569627c8. All eight Runtime/indexed=false subcases complete before the first Runtime/indexed=true, current_first=false, metadata_first=true attempt fails. These are subcases of one failing test, not additional test passes.
+
+The live matched node is recipe12 `Metadata`, records1/inputs2. Original input root membership is true but selected edge closure is false; child/direct/class/prototype checks are true and current_inputs=false. ReaderSource0 (alias14/native13) has binding/logical=true and audit=false. The original typed Host error is retained. Later indexed Runtime cases and every Macro case remain unexecuted. A general DATA-only original-descendant repair is separate pending source review/typecheck/execution, not a proved result here; strict authority and all existing guards/assertions/budgets remain required. Publish this evidence alongside that reviewed repair after its actual typecheck, without crediting new runtime passes or all DATA/public acceptance.
+
+
+The next source checkpoint adds the exact five-file peer-reviewed descendant V2 repair, including two new modules. DATA-only missing input-edge closure consults relevant original input Evidence already healthy in the same Audit and bound to the current ledger; output-root membership remains explicit/current. Legacy/strict callers and all source/memo/domain authority guards remain unchanged. No guest-field recapture or callback replay is introduced. New inventory/lookup/allocation/retirement work is prepaid, with no old tariff reduction or performance claim. The JSON retains the V2 source manifest, Carver source GO, fee ledger and explicit221-input freeze. Five authored regressions and repaired-source VM controls remain unexecuted. No-run compile/link returned exit0 in28.4610s (raw SHA256f32c7629a3d2465804736c8aec391ad0fdcc464ce67bd607901b816224c1e721); both actual builders returned `b812d0c6106334ff5e5d96af1ae9d9c4888afa78c28747468198467ed79bf0a4`, matching the retained prediction. This is actual source-fingerprint evidence, not normal generated BOOT identity or a VM result. Matching normal generation/identity and source-bound focused execution remain next.
+
+Next: commit the exact five-file source checkpoint, obtain matching normal BOOT/fresh identity, then execute the five new regressions and unchanged retained/warm control. All six repaired-source tests remain pending; the earlier serial0PASS1FAIL labels and limitations are unchanged.
+
+
+## Bootstrap binding for original DATA descendants
+
+`sh scripts/verify-bootstrap.sh` at `c3476c1` generated identical normal phase
+pairs in 35.5716s, then exited1 against the older shipped tuple. Independent
+review verifies 221 Git inputs, fingerprint `b812d0c6`, all eight hashes and
+unchanged noncustom Wasm/catalog/ABI/cells. Four outputs are adopted exactly;
+[raw generation and binding](evidence/m4-pr263-original-data-descendants-bootstrap-2026-10-19.json)
+preserve the failed comparison and brief package-cache wait. Execute the five
+new rejection/health/meter tests and unchanged retained/warm regression next.
+No repaired-source execution or acceptance is inferred from generation.
+
+
+## DATA descendant targeted six-test results (2026-10-19)
+
+[Exact six-result receipt and raw log](evidence/m4-pr263-data-descendant-targeted-results-2026-10-19.json) binds source `018d0f6d323d5376d358738e9107761a50175c9d`: 6PASS0FAIL0ignored, exit0, 193.8678s command/162.37s harness; raw SHA2566f0d9345ffd506c83daab62a5e0d851bf4279c81f1eff6b3243aa7a706dbb099. Five new original-descendant controls and the unchanged full retained/warm fixture pass. Raw labels verify Runtime/Macro, indexed/nonindexed, both current/prior producer orders and metadata-first sequence true,true,false,true per order:32 completed attempts inside one passing Rust test, not32 extra test passes. Original source-owner/strict-authority negatives, physical identity, GC and warm retention assertions remain. This is Graph/controller helper-route evidence, not full public macro-frame, namespace or callable acceptance.
+
+The prior f950 serial0PASS1FAIL remains separately retained with its first Runtime/indexed=true/current_first=false/metadata_first=true Metadata edge-closure failure and exact raw hash; it is not retroactively relabeled. The14 existing DATA/callback-order/sourceguard follow-up is separate and pending here. All remaining public/literal/source-tag/pinned-body, full baseline and final-head CI gates remain uncredited; no all-DATA, performance or readiness claim.
+
+
+## Remaining DATA/callback-order/sourceguard cohort:12PASS2FAIL (2026-10-19)
+
+The [combined result receipt](evidence/m4-pr263-data-descendant-targeted-results-2026-10-19.json) now also retains the separate14-test follow-up on the same `018d0f6` source:12PASS2FAIL0ignored, exit101,125.3531s command/125.02s harness, raw SHA2567a735792afa7120cb64c2035fbcf99ac70a9f1edd60f47ae72d8d288275b97b7. Exact14 names/argv/raw outcomes, changed[] and owned-group drained receipt are included. The prior six-test6PASS result, its full retained-case coverage, and historical f9500PASS1FAIL remain separately source-bound; this is not one all-pass run.
+
+`active_request_interrupt_leaves_identity_cache_unpublished_and_retry_reuses_original` fails at first_use_data/tests.rs229 on the fresh retry with typed Wasm fuel exhaustion, after the preceding interrupt/cache assertions. `selected_reader_value_poison_after_parent_exposure_preserves_old_cache_and_exact_restore_identity` fails at line263 on its FIRST healthy make with `Host(Fresh first-use source failed complete DATA checks)`, before installing the intended poisoning callback; its subsequent poison/effect/restore/recovery checks are therefore not credited. Causes remain under diagnosis, with no assertion or budget weakening authorized by these results. All remaining public/literal/source-tag/pinned-body, full baseline and final-head CI gates remain required; no all-DATA, performance or readiness claim.
+
+
+## IRQ request-scope replay and remaining Runtime field failure (2026-10-19)
+
+[Compact source/review/result receipt](evidence/m4-pr263-irq-scope-and-runtime-field-results-2026-10-19.json) binds `8e867dca8b748d5834af1b30eba0e01ea8769c94`. Reviewed source2 changes only the cfg(test) helper's outer request scope and adds cfg(test) constructor-mismatch labels; existing fuel allowances, production predicates and authority are unchanged. No-run passed21.8788s. Normal two-generation verification produced four identical pairs in24.5711s, then exited1 at the stale shipped comparison; exact4 adoption was independently reviewed against221 source inputs, fingerprint469e52ebbda1b965c63b9ac5060490907c49c04730a28a7b955dd474da8101e0. Main reports pure identity PASS; that is not a bootstrap-suite result. Full raw logs are linked by cache path/SHA, not embedded.
+
+The original two tests ran serially:1PASS1FAIL0ignored, exit101,63.5807s command/41.04s harness (raw SHA2567f259ee6399bdb69fe62e03546512861e30ea5437f29369fd2e6898e7a402a0b). Active IRQ/cache/retry passes with unchanged fuel. The selected-reader-value test still fails on its FIRST healthy Runtime make before the intended poison callback: ten exact field3 rejection labels report fresh=true, memo_watch=false, authenticated_slot=None; the fresh DATA check remains false. Subsequent poison/restoration/Macro checks are not credited. A Runtime DATA-only proposal remains separate cache work, not an adopted or passing policy here. Earlier six/14 outcomes remain separately source-bound. All public/literal/source-tag/pinned-body, full baseline and final-head CI gates remain uncredited; no final acceptance or performance claim.
+
+
+## Runtime DATA memo eligibility and semantic compilation calibration (2026-10-19)
+
+[Compact source/review/generation receipt](evidence/m4-pr263-runtime-data-and-semantic-calibration-source-2026-10-19.json) binds sourcefa401afe20bfe3e678c2ecc0e9df90bef043af0c and exact matching4BOOT commit46ac985. Runtime2 source paths recognize only captured initially-nil canonical Runtime numeric memo DATA; accepted fresh classification remains strict=false, with no Runtime Watch/receipt/domain/write authority. All original owner/storage/source/current-input/class/prototype/global guards and Macro watch policy remain required. Calibration2 test paths add the shared Macro-only10B allowance at three missing sites affecting six existing semantic tests; caller Runtime/default/exhaustion controls, programs and assertions remain unchanged.
+
+Actual no-run compile/link passes27.3214s (raw SHAd2ea85ee96b150c1e4115c9f8ebb941f21e6a5bd8a134364fb013e18769157f9). Normal two-generation27.5659s exits1 at stale shipped comparison; exact4 adoption has peer GO against221 inputs/fingerprint64e07078cdd94bdb1adb697f3626859fccbc8122f7f983380f998621024f0be8. This is not a full verify/test acceptance pass. The prior25 selection was intentionally stopped with exit-15: actual completed7PASS2FAIL only,16 without verdict (one known started/15 unknown), not a full25 result. Full raw/stop receipts are cache-linked by SHA. The focal five subsequently passed on matching46ac985, and main reports pure identity PASS; their exact scope follows below. Remaining public/literal/source-tag/pinned-body/baseline/final-CI gates remain required, with no final acceptance or performance claim.
+
+
+Focal five actual terminal:5PASS0FAIL0ignored, exit0,121.1026s command/92.62s harness, raw SHA256e0fd83192daa3db8766dedf8b4169c199716dc2a6c1fc71eb097aa7782bf914a. The unchanged original selected-reader poison test now completes both Runtime and Macro: healthy build, real callback/effect and old-value poison, typed Host rejection, entire-cache preservation, exact restoration, GC/recovered physical identity and no strict capability. The original IRQ/retry and three fresh-DATA classification/negative/meter controls also pass. This is focused Graph/controller evidence, not public macro-frame/namespace/callable acceptance or semantic calibration-suite success. Exact names/terminal/raw references are in the compact JSON.
+
+The full25 calibrated literal/effect/authority replay is newly launched on the same46ac985 in pr263-literal-effect-authority-calibrated-fa401af-v1; no result is claimed here. Historical intentional-stop25 remains7PASS2FAIL with16 no verdict, separately source-bound. All remaining preservation/public/source-tag/pinned-body and final baseline/CI gates remain required.
+
+
+## Constructor provenance source/reference audit (2026-10-19)
+
+[Hash-bound constructor provenance evidence](evidence/m4-pr263-constructor-provenance-audit-2026-10-19.json) reconciles eight implemented groups using the existing200-site ledger, pinned CLJS analyzer/compiler ranges and retained executed reference receipts. Source hashes still match fa401af/edc86b9; independent review verifies the anchors, cold/unproved boundaries and six observed literal-test PASS lines. No concrete incorrect promotion was found. This is source/reference evidence assembly, with no new reference execution or whole-issue/public/type acceptance claim.
+
+`python3 scripts/clojure_test_suite.py check --suite suite` exits0:251 vendored files at95d4a9112cfc and26 classified JS references. The full25 calibrated literal/effect/memo/authority process remains live and has no aggregate verdict here; original public source-tag and pinned-body tests, strict controls, full baseline, final review and final-head CI remain separate. Checklist decisions stay in GitHub.
+
+
+## Calibrated literal/effect/authority full25 terminal (2026-10-19)
+
+[Compact exact25 result receipt](evidence/m4-pr263-literal-effect-authority-full25-results-2026-10-19.json) binds tested46ac985/sourcefa401 and matching221-input fingerprint64e07078cdd94bdb1adb697f3626859fccbc8122f7f983380f998621024f0be8:23PASS2FAIL0ignored, exit101,2525.5147s command/2525.14s harness, raw SHA256e6a22595c7325704f744298923df4190293a0171793e0ceb44166f18406232d8. All25 exact names/commands/outcomes and full-log cache references are retained;519 other library tests are filtered, not passed. Main reports original producer/test drained.
+
+Failures are distinct. Retained declaration reaches Runtime/top-fn-overrides/restored stage1 with fourth Boolean(top-ok)false and the other eight true; its exact subkey/component is still unknown.17 earlier rows, including Runtime/top-fn stage0, are all true; Macro/top-fn stages are unexecuted after the panic. Named dispatch exhausts its explicit10B compilation allowance during caller &env transport at106..161 in both caller phases, before transformer/stage0 observations; stage1 observations remain unexecuted. Cleanup restoration calls do not imply restored-stage assertions pass. Neither error is hidden by the23 successes.
+
+A separately peer-reviewed ONE-file cfg(test) candidate is now applied: reached-only top-fn diagnostics preserve the original nine-result witness, while an explicit helper parameter keeps control/quote10B and selects100B only for the named trial. It changes diagnostic allocation/state/GC/fuel and cannot establish transcript noninterference. Separate sourceadc26695 no-run passes28.9539s (raw SHAfcd0a8358ebf211dc590df3ae2feb7d334c075c49e627dac577851961f7c3cd3); normal2gen33.7501s exits1 at stale comparison (raw SHA4c7f1846fce4df48eb9fb44484c4f4f3b94bd5cffc621ca7844841d064bd791b). Newly available Carver exact4 source-adoption GO binds221 inputs/fingerprinta1deb531f225d9c0d8ce79d4e5c2c56d0f47a6a0f59c9bd791da93bfd775aa76. No temporary diagnostic/named100B VM outcome or new identity result is credited here. Caller Runtime/default/pinned200M/strict controls and production rates remain unchanged. The two failures, later original-witness replay and all remaining public/preservation/baseline/final-CI gates remain open; no final acceptance or performance claim.
+
+The full25 control-AST test passed all four logged Runtime/Macro stage0/stage1 checkpoints. All four memo-leaf groups plus the independent compiled-constant test and all seven selected authority tests pass; only retained top-fn semantics and named10B transport fail. These remain exact46ac985 results, not execution of the new diagnostic/100B source.
+
+Exact four generated outputs are now adopted in BOOT commit `d055be256b01cf1278c18a102c2bdea568740df5`, verified against the source-adoption receipt. The separate two-test diagnostic/named100B producer41253 is live and identity82436 is pending as reported by main; neither outcome is incorporated into this historical23PASS2FAIL publication.
+
+
+## Named100B focused completion and retained identity diagnostic (2026-10-19)
+
+[Separate focused2 result receipt](evidence/m4-pr263-retained-diagnostic-and-named-fuel-focused-results-2026-10-19.json) binds sourceadc26695/BOOTd055be2:1PASS1FAIL0ignored, exit101,541.3711s command/510.44s harness, raw SHA2566949f5ec08e1b439ac804233410bade2caca1c1fd65e6658bf8c577fa5ad988d. Full raw remains cache-linked. Named100B passes the original program, required operations/nonvacuous named records, GC/restoration and all four Runtime/Macro stage0/stage1 rows. Exact &env costs in that order are18,831,194,117;18,699,532,989;18,831,186,077;18,699,524,949. These finite measured costs explain old10B exhaustion; approved252 compilation-only calibration does not impose an old10B success gate. Caller Runtime, shipped defaults, control/quote10B, pinned200M, strict/exhaustion tests and rates remain unchanged. These are request-stage costs, not whole compile or performance claims.
+
+Retained temporary diagnosis still FAILS at Runtime/top-fn-overrides/stage1: `:variadic?` is present=true but identity=false; its event predicate and later top-key diagnostics are unreached by short circuit, as is the Macro top-fn tail. The original nine-result vector remains false. Instrumentation adds guest work and gives no retained acceptance credit. Reviewed cleanup effect-filea8b20ba6 is now applied: the entire original retained test function is byte-exactfa401, but unexecuted; a separate production-key repair is pending. Historical46ac985 full25 remains23PASS2FAIL. Batch any reviewed repair+cleanup with new normal matchingBOOT, then replay the original retained witness; no full/public/baseline/final-CI acceptance is implied.
+
+Restored-original test source26c8c10 has a fresh normally generated binding: source fingerprintb51dc17508485916eec1b29b290b03467b1f1c7bfb76556f7f1275a5f5f0383f,221 inputs. `sh scripts/verify-bootstrap.sh` generated both equal phase pairs in27.0366s and exited1 only at the expected old-shipped comparison; exact independent adoption verifies all8hashes, noncustom Wasm, ABI/catalog/flags/cells. Raw log SHA2564ac49979f93865de88e8d30b7a38f00197a87e795937f6fd863ec732b0a943e3; full binding review is appended to the focused-result JSON. This is generation/source binding, not a new bootstrap4 or semantic acceptance result. Original retained predicate instrumentation is removed; named-only100B calibration remains.
+
+
+## Original source-tag programmes: compilation allowance trial (2026-10-19)
+
+`cargo test -p suss-cli --locked --test compiled_macro_source_tags -- --nocapture --test-threads=2` onccd656a exits101:0PASS2FAIL0ignored (356.63s harness/383.8126s command), raw SHA256df373ca0d6e6af48b8cd75cd8d39e0ca3c814e9c58ba820985d418390569b067. Both fail before assertions in caller &env transport: inference10B at217..246, invocation10M at80..105. [Exact receipt and reviewed configuration-only trial](evidence/m4-pr263-source-tags-compilation-calibration-2026-10-19.json) preserve these failures.
+
+Both programmes now select test-local100B Macro compilation under the user-approved#252/#261 policy. Programs, expected values/storage/initializer effects and caller Runtime remain unchanged. Separate default/exhaustion, core17/sourcechild and pinned200M controls are unchanged; no new10M invocation performance gate is imposed on this semantic fixture.100B sufficiency is unproved until replay. All221 compiler source/runtime/WIT input hashes remain exactlyb51dc175…; this CLI-test-only change needs no invented BOOT rebind. Production nested-key repair remains separate and unapplied pending source review.
+
+
+### PR263 nested reader-key focused results and CLI replay (2026-10-19)
+
+Local source8de653bf plus import-only7a9f655 and exact regenerated BOOT89d8149a6ece1ec525fa78a5d4e59bc6a6531159 are bound to actual source fingerprint114a01639ffb17fdd8652ee93c9715f0c299e99fcc277d1c03cb332a6e0e0eb4 /222 inputs. All222 retained hashes match source7a9f655. Initial no-run failed14 missing-import diagnostics; the exact two-import repair has Carver GO and retry31706 TOOL_TERMINAL_EXIT0 (optimized2m41s). Normal two-generation command exits1 only at stale-shipped comparison (101.2057s, raw89d523b56cd32997173fbc29562c60021c4eb08a8dbda5218093b1839d8ccfd4); four pairs match. Carver adoption GO, exact four committed outputs and main pure identity0 remain distinct from bootstrap execution. Hostopt2 retains debug assertions/overflow checks; no fuel/rate/default change or speedup claim.
+
+Focused79534 exited0:6PASS/0FAIL/0ignored,543filtered,457.58s harness/626.965493s command; rawcf467d1cd456a436cc8ef0e11f393e8f212184dcd4dfa04b16610cbefc7db357. All five new nested-reader-key regressions and the original retained-declaration regression pass. The original function is byte-identical tofa401; the actual log contains20 distinct original rows (five cases x Runtime/Macro x stage0/stage1), each nine true. Runtime/Macro top-fn stages0/1 all execute and pass. Exact six names, commands and rows are in the companion evidence JSON; full raw remains cache pr263-nested-reader-key-repair-production-v2.
+
+Historical original full25 remains23PASS/2FAIL; it was not rerun. Earlier named100B1PASS/instrumented-retained1FAIL and original CLI0PASS/2fuelFAIL retain their source scopes. Publishedcc40982's original CLI100B trial was deliberately SIGINTed at exact testPID864816 after3648.8076s/about two CPU-hours (Cargo101/signal2), inference4/32 decoded, NO test verdict; rawd29d05da19163a041c0a2a5c5d33103483484e3309de8bad2cf0766ea0d8b1f5. Its inherited budget description is stale; preserve budget-scope-correction.json proving actual100B both programs.
+
+New original CLI replay71354 is active on89d8149/source114a with both100B, hostopt2/checks retained, Macro trace only and metadata fprintf trace off: cache pr263-source-tags-hostopt2-114a-v1/{run.py,start.json,cli.log}. No verdict yet; live logs are not finalized here. CallerRuntime/default/exhaustion/core17/sourcechild/pinned200M are unchanged. Source/evidence publication is pending; no full baseline, final-head CI, public acceptance, issue closure or promotion is claimed. Main removed only its task-owned detached staging worktree after integration, with no new branch retained.
+
+
+### PR263 field-owner and keyword-admission review repairs (2026-10-19)
+
+Source f77c406 plus exact test-placement repair e703065dba54f005600faa149e6d09ed2f2ef736 integrates peer-reviewed HIR-A1 Arc-owner prepayment, F1 keyword-fqn ambiguity rejection and inference-only compilation100B→1T; invocation remains100B. Original programs/assertions/Runtime/default/exhaustion/strictcore17/sourcechild/pinned200M/rates/refills are unchanged. 1T sufficiency is not established.
+
+Initial no-run placement failure is preserved; CarverGO moves the identical A1 body beside its Observe helper. Retry37390 toolterminal0,opt2 in4m17s. Actual222-input fingerprint e2948af31750e404c643e447672dea7e30fbb6e70ea62608ab515fe697e81940 replaces obsolete auxiliary predictions. Normal generation245.989473s exits1 only at stale shipped comparison, raw9c18272ba4c3793d5f9a0f5fbe0845c4f31d008152b63ad370f19d43ec68f5b3; fourpairs equal. Carver exact adoptionGO; committed BOOT2d340463ed7880a5b24058ba71ac4b92e25b38e6 matches all four reviewed first outputs. Main identity84777exit0 is pure compiled identity/Graph invalidation credit, not bootstrap execution.
+
+Focused59770 terminalexit0 on2d340463ed7880a5b24058ba71ac4b92e25b38e6:10PASS0FAIL0ignored543filtered,175.33s harness/445.744756s total. Raw SHAba7b705dfd8fbdb2c4c869010d85939f86f1fcbde792685d5a751ac6aa7c24f5. Six literal+threeF1+oneA1 exact results/argv/profile are retained in pr263-independent-review-fixes-production-v1/{focused-terminal.json,focused.log}; compact evidence lists all names. Carver current requested owner/type source audit is complete in pr263-historical-owner-type-source-review-e703-v1, no extra source blocker; not test/acceptance credit.
+
+Prior original CLI71354 was deliberately SIGINTed when source fixes ready:1964.441058s,Cargo101/signal2,no test verdict, both100B; raw30348054a3d3fe6acf535b7606909e6170d7fa586759aaf1f590421e214c262c. Historical full25 remains23P2F; named100B separatePASS and old89d/source114a nested6PASS20x9true are not newe294 passes. No publicCLI/fullbaseline/finalCI/issue completion claim. Current10PASS is not combined with old114a sixPASS into16PASS. Next pinned2 unchanged200M is starting, no verdict. Fullbaseline/finalCI and issue reconciliation remain pending. Source-fix publication awaits independent exact publication GO.
+
+Reproduction commands from repository root (same sourcee703/BOOT2d34046):
+
+```sh
+export CARGO_PROFILE_TEST_OPT_LEVEL=2
+export CARGO_PROFILE_TEST_DEBUG_ASSERTIONS=true
+export CARGO_PROFILE_TEST_OVERFLOW_CHECKS=true
+export CARGO_BUILD_JOBS=1 RAYON_NUM_THREADS=1
+cargo test -p suss-compile --locked --lib -- --nocapture --test-threads=2 portable_macro_graph::analyzer_literal_tests:: portable_macro_graph::source_facts::keyword_fqn_admission_tests:: portable::hir::local_bindings::ownership_tests::unshadowed_field_owner_capture_typed_cuts_preserve_prior_lexical_snapshot_and_retry
+sh scripts/verify-bootstrap.sh
+python3 scripts/verify_bootstrap_identity.py
+```
+
+Use a writable private TMPDIR and the main-controlled target after other owned producers drain; do not set RUSTFLAGS. The focused argv/profile above are copied from the actual terminal receipt. Normal-generation command retained its historical stale-comparison exit1 before exact adoption; pure identity is a separate reproduction check, not semantic/bootstrap execution credit. Focused10PASS, historical scopes and pending publicCLI/baseline/finalCI limits above remain unchanged.
+
+
+### PR263 pinned acceptance on sourcee294 (2026-10-19)
+
+Original pinned map and identifier pair at2d340463ed7880a5b24058ba71ac4b92e25b38e6/sourcee2948af31750e404c643e447672dea7e30fbb6e70ea62608ab515fe697e81940 (222 inputs): **1PASS/1FAIL/0ignored**,617.000411s total/292.53s harness, exit101. Raw SHA `b603e391c394ed17fa305bf704e235db9266d86ff61aebdefb1cb9b7aae9ce7d`.
+
+Identifier name/namespace declarations PASS all15 ordered assertion IDs via independent host operand comparison,0guest/failed/skipped/unexecuted. Map fails namespace compilation during **expanded result transport**, typed WasmOutOfFuel239..5926, at the unchanged200M Macro/caller budgets. Captured map has0IDs: **69notexecuted**,0assertionfailures,1namespacefailure; comparator acceptedfalse. This is transport exhaustion, not69 semantic failures or a successful map result.
+
+Commands/profile and capture hashes/IDs are in companion evidence JSON. Cache `/home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-e294-v1/` retains terminal/raw/captures and compare_map.py result. Independent cache review separately recomputes both captures with exact tested-head oracle/comparator. Main next diagnostic is the exact original map at unchanged200M; bounded268 donor audits remain unmeasured hypotheses. No publicCLI/fullbaseline/finalCI/issue acceptance or promotion follows.
+
+```sh
+CARGO_PROFILE_TEST_OPT_LEVEL=2 CARGO_PROFILE_TEST_DEBUG_ASSERTIONS=true CARGO_PROFILE_TEST_OVERFLOW_CHECKS=true cargo test -p suss-compile --locked --test clojure_test_suite -- --nocapture --test-threads=2 --exact pinned_map_declaration_executes_without_transport_loss pinned_reader_identifier_names_keep_values
+```
+
+Set both capture environment variables to a fresh cache directory; run the independent map comparator against that exact capture. Preserve main-owned serial target/privateTMPDIR; no RUSTFLAGS changes.
+
+Diagnostic followup: on a04d46831756764cfb172d2c35b55ac413d69377, same sourcee294/222 and original200M Macro/caller, also completes **0PASS/1FAIL**,134.995847s total/130.44s harness; raw `45057cbf72c905cb2c809fef2b3c650815dcd6284f93f0563fdb8b3a564e9ace`. It records139macro starts, including130 `is` expansions; these are **not assertion execution IDs**. The final transformer reaches `invoked` with122,814fuel remaining, then expanded-result decoding traps. There is no final decoded checkpoint, so complete last-decode cost is unknown. Map still0IDs/69unexecuted, not69 semantic failures.
+
+Completed flat interval totals: provenance5,118,607; provenance→caller-form417; caller-form→environment417; environment→arguments40,133,594; arguments→invoked80,436,360; completed invoked→decoded59,630,937. These exclude missing tail/gaps/other compile work and are not exclusive wholecompile attribution.
+
+Next bounded donor290e exact2file port awaitsCarverGO; no measurement benefit claimed. Evidence may batch with next source fix. Full diagnostic commands/environment remain in companion JSON; actual trace rawhash/cost limits above retained.
+
+
+### PR263 sparse-setter direct ABI validation (2026-10-19)
+
+Source a9fbe933641401aad832f6fb9469f9dafdb1979f ports the exact peer-reviewed sparse290e two-file source/test patch; preexisting tests retained. Actual compiled fingerprint316a04ce95c5cfaa8103854f19c8bc0b53f1fbc39578939ff15312118dd0b8e4, all222 frozen input hashes matchGit.
+
+ABI23 terminal0:23PASS/0FAIL/0ignored,61filtered,66.36s harness/310.248884549s command; raw49a923eeaaee804ce4cd9b92510e41094cdd5dd525be35197d42d3aa71b4abd0. Carver verified exact direct-ABI23 results. These tests instantiate fresh runtime_abi::module directly: no Session/shippedBOOT or public macro success is inferred.
+
+```sh
+CARGO_PROFILE_TEST_OPT_LEVEL=2 CARGO_PROFILE_TEST_DEBUG_ASSERTIONS=true CARGO_PROFILE_TEST_OVERFLOW_CHECKS=true cargo test -p suss-compile --locked --test runtime_abi -- runtime_abi_sparse_ runtime_abi_source_array runtime_abi_native_factory_rejects_source_array_ runtime_abi_array_ sparse_set_repair_tests:: --test-threads=1 --nocapture
+```
+
+NormalBOOT23298 completed207.363298s, exit1 only at expected old-shipped comparison, raw744d975b603bc93fc9b7d516484b1de1ee603708e2e39c9e11fbd7660c299507; all four first/second pairs match. Carver exact-adoptionGO; committed BOOT `9730ab4c4023abcdb98467f72111ccc4e3db5128` independently matches all reviewed outputs. Only source-FP custom section/manifest identity changes; executable/noncustomBOOT is unchanged, while the new ABI module is separate. Main pureidentity15593toolterminal0; not public macro/bootstrap suite credit.
+
+```sh
+CARGO_PROFILE_TEST_OPT_LEVEL=2 CARGO_PROFILE_TEST_DEBUG_ASSERTIONS=true CARGO_PROFILE_TEST_OVERFLOW_CHECKS=true sh scripts/verify-bootstrap.sh
+python3 scripts/verify_bootstrap_identity.py
+```
+
+Original pinned2 replay75178 now terminal1PASS/1FAIL/0ignored on9730ab4/source316a, unchanged200M both Macro/caller:320.794091s command/123.28s harness; raw45d35e276dc657b5ca8893262c24165bd7f3bd8a88926fce5c0f45c96567fd17. Identifier15orderedhostPASS; map still expanded-resultOutOfFuel239..5926,0IDs/69notexecuted,1namespacefailure,0semanticassertionfailures, comparatoracceptedfalse. Both actual captures independently compared against the tested-head oracle. Different raw backtrace function IDs do not establish progress/cost/savings. Cache pr263-pinned-acceptance-sparse-316a-v1 retains argv/profile/terminal/raw/captures. Exact focused source/ABI23 and BOOT facts above remain valid but do not satisfy map gate. Public map benefit remains UNKNOWN; publish ABI/source/BOOTfacts independently of the pending long replay. Sparse-setter public macro/map benefit is UNKNOWN. Historical sourcee294 pinned1P1F/trace0P1F and69UNEXECUTED remain unchanged; no semantic69failures, acceptance/promotion/fullbaseline/finalCI claim. Full cache: pr263-sparse-setter-production-v1/{abi-terminal.json,abi.log,compiled-source-identity.json,builder-output.txt,source-freeze.json,independent-abi-terminal-review.json}; all23 names and exact argv/profile are in companion JSON. Use main's exclusive target/privateTMPDIR and bounded workers, no RUSTFLAGS changes.
+
+Olda04CIintegration3 is separately classified atpr263-ci-a04d468-v1/integration3-terminal-audit.json; it is not a new-source CI verdict.
+
+Separate future work (excluded from sparse validation): missing543 HIR GeneralFunction self-binding-owner cachepacket71555 is source-only/cross-review pending. Defaultcore17+COW probe50681 runs on unchangedsource316a, no verdict. Keep current map gateFAIL and olde294failure separate.
+
+
+### Named-function ownership and compilation test calibration (2026-10-19)
+
+Production commit `215e55d` shares completed named-function self parameters instead of deep-copying them. Six focused native HIR tests pass. The normal two bootstrap generations agree, the exact four outputs were independently reviewed and adopted in `b0c5091`, and compiled source identity verification passes. Compiler fingerprint: `e497f67802dbcec53e673f9f24e7d0164b3964007027a62bfcae7d94170def18` over 222 inputs. These native tests do not establish public macro or core acceptance.
+
+All 17 unchanged `core_import` tests fail during common `Session::eval(CORE)` preparation at the default native 10M allowance (span 161702..161706); their Runtime assertions do not execute. A separate finite-budget diagnostic measures 17,476,366 units for preparation after parsing, excluding parsing and source-byte charges. It does not measure a full Session operation or establish default-budget acceptance.
+
+Test-only commit `b3ea5b6` raises both semantic compilation helpers from 10B to 100B and calibrates the three identity probes' Macro allowance from 10M to 100B. Caller Runtime limits, production defaults, strict core/source-child controls, pinned 200M controls and dedicated exhaustion/recovery controls remain unchanged. Both identity test targets compile. The source-tag tests separately retain inference 1T / invocation 100B allowances; neither has a completed current-source verdict.
+
+The first calibrated shared-environment test failed because its fixture read absent raw declaration `:init`, then indexed an empty vector. Commit `8f1e4cf` changes only that lookup to the existing source-callable method body. It preserves all three independent requests per phase, GC and every count/identity assertion. At this snapshot the two original namespace/callable tests and corrected companion are running; no verdict is claimed.
+
+```sh
+export CARGO_PROFILE_TEST_OPT_LEVEL=2
+export CARGO_PROFILE_TEST_DEBUG_ASSERTIONS=true
+export CARGO_PROFILE_TEST_OVERFLOW_CHECKS=true
+cargo test -p suss-cli --locked --test core_import -- --test-threads=2 --nocapture
+SUSS_MACRO_FUEL_TRACE=1 cargo test -p suss-cli --locked --test compiled_macro_namespace_identity --test compiled_macro_shared_environment_admission -- --nocapture --test-threads=2
+```
+
+Use one producer, a private writable TMPDIR and bounded workers; do not set RUSTFLAGS. The companion evidence records the exact six-test native command, timings, raw hashes and source scopes. Local caches: `pr263-named-self-owner-production-v1`, `pr263-semantic-compilation-calibration-b0c5091-v1`, `pr263-identity-focused-calibrated-e497-v1`. The last contains the active runner and eventual terminal receipt. Earlier pinned map failure remains tied to source316a; no current-source map, full baseline or final-head CI success is claimed.
+
+Partial result from that same identity run: the original callable test has now returned FAILED. All six rows execute. First requests match in both phases; the next two requests in each phase differ only at index5, `(identical? callable-saved-raw raw)`, expected true but observed false. Metadata and method-parameter identities match. The namespace test remains running and the companion has not started; no whole-command verdict is claimed. Exact actual/expected rows are retained in companion JSON.
+
+
+### Global ownership, native work and identity observations (2026-10-20)
+
+Compiler source `370aa34` has actual fingerprint `067bd7378b6a1b6cbac036fa2b633c93d04f3325c652dfab966d0cf90ea0777c` over 222 frozen inputs. It shares immutable Global identities, charges borrowed resolution queries, adds opt-in declaration reuse diagnostics, and corrects a test that reordered raw pinned metadata observations. The original twelve syntax-quote cases and a new two-phase order regression pass. The first build stopped on four Rust type errors; the bounded repair moves original diagnostics instead of cloning them and makes the metered nominal helper mutable. That failed build executed no tests.
+
+All 23 focused native tests pass (0.47s harness /238.388496s total); all14 original direct resolution tests pass (28.95s /331.630287s). The latter execute freshly generated fragments and runtime ABI bytes. Neither suite establishes Session, public macro or default-core acceptance. Exact names, commands, profiles and raw hashes are in [the focused evidence](evidence/m4-pr263-global-ownership-and-native-work-results-2026-10-20.json).
+
+Actual layout shrank from Global56/Hir200 to Global8/Hir160 bytes. However, complete native preparation after parsing now charges46,101,793 units, versus17,476,366 on sourcee497. This is a charged-work regression, not an overall fuel saving or default-budget unblock. The proposal adds metered comparisons to resolution; the measurement is not exclusive cost attribution. Parsing389,921 units, source-byte charges and full Session setup/execution remain separate or excluded. The diagnostic uses a finite1B cap and never instantiates its emitted module. Its first link attempt selected an older cached library and failed; the successful retry uses Cargo-discovered current artifacts and checks their embedded source fingerprint.
+
+Normal bootstrap generation completed twice in361.356628s and stopped with exit1 at the old shipped comparison, raw `229142dacc724ef53c95cabf1e88e0b49b7cad12530be7cff9bc8ec02e1e8ff4`. All four pairs agree. Independent exact adoption produced BOOT commit `5028d03`; only source-identity custom sections and corresponding manifest hashes changed. Source identity/invalidation verification passes with the correct custom target (21.099615s, raw `910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704`). The initial wrong-target invocation failure is retained separately. Pure identity verification is not bootstrap semantic execution.
+
+```sh
+export CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target
+export CARGO_PROFILE_TEST_OPT_LEVEL=2
+export CARGO_PROFILE_TEST_DEBUG_ASSERTIONS=true
+export CARGO_PROFILE_TEST_OVERFLOW_CHECKS=true
+cargo test -p suss-compile --locked --test portable_resolution -- --test-threads=2 --nocapture
+sh scripts/verify-bootstrap.sh
+python3 scripts/verify_bootstrap_identity.py
+cargo test -p suss-cli --locked --test core_import -- --test-threads=2 --nocapture
+```
+
+Use one producer, bounded workers and a private writable TMPDIR; do not set RUSTFLAGS. The subsequent original default-core17 replay completed0PASS17FAIL0ignored (6.92s harness /284.494829s total), raw `a9d2098bfadb35725b6e4d25a0ad61ca2c75e285b250f9b3c958a26d653a2c9c`. Every case failed at common Session::eval(CORE) setup with native-work exhaustion52909..52924; later core behavior assertions did not execute. The current callable trace, full source-child fixture, pinned map, source-tag programs, remaining semantic negatives, full baseline and final-head CI still require evidence. Existing #270 criteria and default allowances are unchanged.
+
+Historical sourcee497 identity evidence is [recorded separately](evidence/m4-pr263-identity-execution-results-2026-10-20.json). The original namespace/callable harness completed0PASS2FAIL, with all ten namespace calls and six callable rows observed. Namespace aliases differ in both phases; later callable rows differ only in saved raw-declaration identity. A separate corrected shared-environment companion passed1/0 with all six rows and four true booleans per row, retaining GC and three independent requests per phase. These e497 outcomes are not current067 results or an identity fix.
+
+Local receipts: `pr263-global-owner-production-v2`, `pr263-native-metered-noexpansion-global-v2`, `pr263-identity-focused-calibrated-e497-v1` and `pr263-shared-env-source-body-e497-v1`. Earlier failures remain source-qualified. No issue closure or promotion follows from this checkpoint.
+
+
+### Ordinary native frontier and constructor callback (2026-10-20)
+
+Commit `c49c187` declines source-identity retention for an ordinary native frontier whose only reachable owner is its ephemeral request envelope. The complete dependency/cycle proof still runs before that decline, and private-slot handling and genuine source-owner guards remain in place. This lets ordinary constructors retain their actual callback result when unrelated declaration metadata exists elsewhere in the graph. Commit `9ba9969` adds opt-in diagnostics for staged physical-binding conflicts, source-alias repeat policy and memo receipt provenance; it changes no authorization checks or cache decisions.
+
+Current compiler fingerprint is `ddcae22741075421ba997e2c7c3ba7332d25124483d1bc122f47994ac129509b` over222 inputs. The same23 focused native tests pass (0.04s harness /146.854875s total). Both normal bootstrap generations agree; the command exits1 at the expected old-shipped comparison (96.321978s). Independent exact-four adoption produced `8e0023f`, with executable sections unchanged. Pure compiled source identity/invalidation verification passes with the custom target (1.359204s). These facts do not establish bootstrap semantic acceptance.
+
+The three selected Session controls complete2PASS1FAIL0ignored (18.92s harness /160.751763s total). The original cold constructor callback test now passes unchanged: returned value17, one callback and no metadata cache publication. The new admission regression passes in both source phases. The original repeated-occurrence/alias/metadata-clone control still fails before its downstream assertions with `Host(Source evidence at non-source alias)` at reuse.rs685. Its trace attributes the rejected cached Source wrapper to a non-source alias at slot68 with repeat policyfalse and no current native capture; it does not authorize stripping source evidence or bypassing the guard.
+
+```sh
+export CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target
+export CARGO_BUILD_JOBS=1
+export RAYON_NUM_THREADS=1
+export CARGO_PROFILE_TEST_OPT_LEVEL=2
+export CARGO_PROFILE_TEST_DEBUG_ASSERTIONS=true
+export CARGO_PROFILE_TEST_OVERFLOW_CHECKS=true
+sh scripts/verify-bootstrap.sh
+python3 scripts/verify_bootstrap_identity.py
+SUSS_POISON_RECEIPT_TRACE=1 cargo test -p suss-compile --locked --lib -- --exact portable_macro_graph::reuse::tests::reuse_frontier_preserves_repeated_occurrences_cached_aliases_and_metadata_clones portable_macro_graph::reuse::tests::reuse_cold_untainted_parent_preserves_special_constructor_callback portable_macro_graph::source_roots::reader_plan::tests::ordinary_frontier_does_not_gain_source_identity_from_an_unreachable_declaration --test-threads=1 --nocapture
+```
+
+Use one producer and a private writable TMPDIR; do not set RUSTFLAGS. [Exact commands, source bindings, generated-file hashes and results](evidence/m4-pr263-native-frontier-callback-results-2026-10-20.json). Raw receipts/logs: cache `pr263-frontier-attribution-production-v1`. The new callable/poison diagnostic paths compile, but their tests have not run on this source. Their previous067 failures and CORE0/17 remain source-qualified; full source-child, source-tag, pinned69 and workspace/final-head CI results are not established by this run.
+
+
+### Transparent aliases and repeated native occurrences (2026-10-20)
+
+Commit `e12d831` preserves cached genuine Source evidence through ordinary Alias edges to the same admitted owner, with full current validation. An unadmitted captured starting boundary is rejected. It also omits scratch bindings only for repeated native occurrences that the existing walker never caches; source-alias and cacheable-native physical checks remain intact. New traversal/policy work is prepaid. Compiler identity is `e0adbb818f3378ee1fed825e4566e4bb935c00e78a26d17390219fa1b8457c77` over222 inputs, with independently reviewed generated BOOT `be9dcde` and passing pure source identity verification. Normal two-generation verification stopped at the expected old-shipped comparison (exit1,82.152135s); it is not a complete verifier pass.
+
+The focused8 cohort completes5PASS3FAIL0ignored (68.44s harness /209.720995s command). The original repeated-occurrence/alias/metadata-clone regression now passes all10 identity/value assertions after GC. Original cold callback and ordinary-frontier admission controls pass, as do the two new repeat-policy/IRQ-retry controls. Three new alias helper tests fail with None unwrap during admission setup, before their positive/negative assertions; their setup and admission path require correction, and their intended negative coverage remains unexecuted. No production admission guard has been relaxed to make those tests pass.
+
+The original callable test separately passes1/0/0 (96.56s harness /261.440817s command). All six observations match their full15-field expectations: three independent requests in each caller phase, including saved raw-declaration identity on later requests. No staged binding conflict appears in that trace. The original program, GC, Macro100B and caller Runtime allowances/assertions are unchanged. This result does not establish the separate namespace five-call test or whole-issue acceptance.
+
+```sh
+python3 scripts/verify_bootstrap_identity.py
+SUSS_MACRO_FUEL_TRACE=1 SUSS_DECLARATION_REUSE_TRACE=suss-oracle.sharing-target/callable cargo test -p suss-cli --locked --test compiled_macro_namespace_identity -- --exact resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations --test-threads=1 --nocapture
+```
+
+Use the custom target, private TMPDIR, one producer and unchanged opt2/debug-assertion/overflow profile documented above; do not set RUSTFLAGS. [Full eight-test command, source/BOOT bindings, before/after observations and raw hashes](evidence/m4-pr263-alias-and-callable-identity-results-2026-10-20.json); raw cache `pr263-alias-repeat-production-v1`. A separate earlier9ba/ddca restoration trace remains0PASS1FAIL: the719 receipt is source_safe=false and authentication correctly rejects it, while DATA identity is retained. That is not unsafe-certificate evidence; retained-DATA eligibility still needs repair. Three helper failures, namespace identity, complete literal/authority/source-tag/pinned69/source-child checks, workspace baseline and final-head CI remain unproven by this checkpoint.
+
+
+### Retained memo eligibility and complete factory fixtures (2026-10-20)
+
+Commit `682c50f` excludes a retained candidate when its original watch has a domain-bound source_safe=false receipt matching the current receiver/storage/slot, exact Number reference and bits. That is a conservative reuse exclusion, not proof of poison or a new certificate. A separate closed pass covers all original Native/Source inputs and rechecks selected old sources after callbacks, before atomic publication. Fresh callback DATA health and strict memo authentication are unchanged; a preconstruction miss takes the existing single fresh path, while postcallback invalidation fails without replay. Added work is prepaid.
+
+The alias helpers now use actual Session declarations and indexed completed metadata captures (`31d773a`). The memo fixture now records the original scalar/count/empty-list/List factory closure and retains its full records (`5de94e9`); its mandatory safe-receipt positive remains unchanged. Earlier eight-control and2PASS1FAIL memo results on a3 retain their scopes. An initial command used the wrong module for three memo selectors, matching only8 tests; the corrected three-test follow-up exposed that fixture failure. The latest command accounts for all11 actual harness names.
+
+Current compiler fingerprint is `36d211367813dcd553aba545f043f338cadc8e3ff7e96551373caa850b6a146e` over222 inputs, matching independently reviewed BOOT `d8991e2`. Two normal generations agree (82.295936s); the verifier initially exits1 at the old-shipped comparison. Exact adoption and pure source identity verification pass (1.125010s); this is not a complete bootstrap-verifier pass.
+
+All11 focused unit controls pass (57.89s harness /195.172036s command), including the original frontier/callback, three alias negatives/positives, repeat/IRQ and three memo-policy tests. The original public poison/restoration test passes both caller phases (65.77s /209.467479s), with four requests and all16 Boolean assertions unchanged. The original callable test separately passes all six15-field observations in both phases (92.09s /96.453233s). Source programs, GC, default poison allowances, existing callable Macro100B and caller Runtime are unchanged.
+
+The separate unchanged six-case authority/fuel replay remains0PASS6FAIL (19.14s /19.344996s). Three mixed-reader cases stop at strict child Certificate::finish None before their parent/poison/fuel assertions. Health and plan cases stop at admission None; the plan trace explicitly declines private-data-value in strict placement mode. The capture-fuel case expects an error but gets Ok1 at an as-yet unidentified sampled cut. These are current failures, not waivers or executed negative coverage.
+
+```sh
+python3 scripts/verify_bootstrap_identity.py
+SUSS_POISON_RECEIPT_TRACE=1 cargo test -p suss-cli --locked --test compiled_macro_cumulative_fuel -- --exact source_metadata_poisoned_at_memo_write_is_not_certified_by_later_restoration --test-threads=1 --nocapture
+SUSS_DECLARATION_REUSE_TRACE=suss-oracle.sharing-target/callable cargo test -p suss-cli --locked --test compiled_macro_namespace_identity -- --exact resolved_callable_info_keeps_raw_declaration_children_across_macro_invocations --test-threads=1 --nocapture
+```
+
+Use the custom target/private TMPDIR, one producer and the opt2/debug-assertion/overflow profile above; do not set RUSTFLAGS. [Exact11/6 commands, current observations, raw hashes and source/BOOT bindings](evidence/m4-pr263-retained-memo-and-authority-results-2026-10-20.json); raw cache `pr263-retained-memo-fixture-production-v1`. Separate namespace, complete literal/authority/source-tag/pinned69/source-child, workspace baseline and final-head CI are not established by this checkpoint. No allowance or production authority guard was relaxed.
+
+
+### Source-role fixtures and capture-cost attribution (2026-10-20)
+
+The plan fixture now explicitly verifies strict rejection of DATA reader values before checking its complete DATA admission topology. On source `24bda9c` / fingerprint `4230408184771ceb0040d8c181405b1be2663de052fb293dcaa385cdc71c3d07`, that test passes; the other five selected cases fail. Three mixed-reader tests obtain a valid strict KEY certificate but correctly fail to certify the second, DATA Value child. Their parent/poison/fuel assertions remain unexecuted. The first health fixture correction fails during key selection; its later correction follows actual SourceSyntax versus ReaderShorthandTag provenance.
+
+Source `5fbd8ed` / fingerprint `01262b972cf7a0aa42a3e73bfee105a05f61a4e4f0e3fe1f2945be4e1f2484b8` over222 inputs has independently reviewed BOOT `90d1a32`. Two normal generations agree; the verifier exits1 comparing old shipped files, followed by exact adoption and passing pure source identity verification. This is not a complete bootstrap verifier pass.
+
+The subsequent exact two-test replay completes1PASS1FAIL0ignored (35.69s harness /171.607986s command). Health passes both mandatory source-origin cases: original explicit-map cold key permits DATA health without strict authority after replacement; the shorthand preinitialized literal rejects fresh certification after replacement. Capture fuel still fails: measurement consumes10228 units, but the10227 trial succeeds using6794 and publishes one capture. The3434 difference occurs inside completed-reader construction (8751 versus5317). Cuts0/1/5114 still trap with no capture. The later IRQ/retry assertions do not execute. Diagnostics only read remaining fuel and preserve existing errors, cut formulas and guards.
+
+Exact commands, source bindings, raw hashes and bootstrap receipts are in [the attribution evidence](evidence/m4-pr263-source-role-and-capture-attribution-results-2026-10-20.json). Logs are in cache `pr263-authority-attribution-production-v1` and `pr263-key-origin-and-capture-work-production-v1`. Use the documented custom target, private TMPDIR, opt2/debug-assertion/overflow profile and one producer; do not set RUSTFLAGS. Other semantic cohorts, complete issue acceptance, workspace baseline and final-head CI are not established by these runs.
+
+
+### Warm capture cuts and complete namespace observations (2026-10-20)
+
+Source `e220789` / fingerprint `63deb5edff8fea42eaea0ee8efc2ce16c6f6008d71434105b713b1cb93e90cdf` over222 inputs has matching independently reviewed BOOT `5eddfc2`. Both normal generations agree (82.215539s); initial old-shipped comparison exits1, followed by exact adoption and passing pure identity verification (1.147567s). This is not a complete bootstrap verifier pass.
+
+Nine exact controls complete6PASS3FAIL0ignored (37.12s harness /172.808207s command). The original capture test now measures the same warm SourceOrigin snapshot state used by its trials. Cold cost10228 remains measured and exceeds warm6794; cuts0/1/3397/6793 all trap with no published capture. Its typed IRQ, empty-capture and normal new-operation retry on the same graph execute and pass. Both existing snapshot metering/cancellation/recovery controls pass, as do health, plan topology and the added healthy DATA Value strict-certificate rejection. No fee, quota or authority rule changes.
+
+The mixed strict fixture checks genuine declaration-field lineage and complete metadata payload before construction. All three tests fail the newly added full Form equality because the compiler literal key span0..0 differs from reader shorthand span6..12; their value Symbol spans and native producer identity match. Original parent/poison/fuel assertions remain unexecuted. Correct the logical comparison while retaining raw source span/metadata and native lineage checks.
+
+The separate original namespace five-call test on prior source `5fbd8ed` / fingerprint0126 completes0PASS1FAIL (402.31s harness /544.906709s command). All five original rows decode in both phases; eight Boolean observations differ: captured namespace versus live catalog before mutation/new top-level call, and saved live versus current live on the second call. All other original observations match. `resolution_catalog` creates a fresh native Arc each invocation; stable native revision ownership remains a repair candidate, not a validated fix. Programs, compilation100B and caller Runtime limits are unchanged.
+
+[Exact commands, full observations, source/BOOT bindings and hashes](evidence/m4-pr263-warm-capture-and-namespace-results-2026-10-20.json). Raw caches: `pr263-strict-mixed-and-warm-capture-production-v1`, `pr263-namespace-five-call-0126-v1`. Use the documented one-producer/custom-target/private-TMPDIR/opt2/assertions/overflow environment; do not set RUSTFLAGS. Broad acceptance, workspace baseline and final-head CI remain unestablished.
+
+
+### Genuine mixed source children and capture recovery (2026-10-20)
+
+Source `493bf10` / fingerprint `c96095ab7637d6b77e2167c7e740b171041848943081873b45d340895b449dbe` over222 inputs has matching independently reviewed BOOT `02aca54`. Two normal generations agree (90.946004s); initial old-shipped comparison exits1, then exact adoption and pure identity verification pass (1.105270s). This does not reclassify the initial verifier as a complete pass.
+
+All nine exact focused controls pass (37.32s harness /173.602331s command), including the formerly failing six-case cohort, added healthy DATA strict rejection and both existing snapshot metering/recovery controls. The mixed helper independently projects the key from its actual normalized constructor origin. Complete metadata equality, original raw Symbol span/metadata and exact native producer lineage remain asserted. No extra guest constructor/hash callback is run for that expectation. Original two-child parent/GC identity, strict certificate, later991 poison/effect1 preservation, early fuel cuts, typed IRQ, no retained publication and retry assertions all execute and pass. The DATA selector remains excluded from strict certification in both source phases. Capture cost remains cold10228/warm6794; all four warm-derived cuts and same-graph normal-operation IRQ retry pass.
+
+[Exact nine names/command, assertions, source/BOOT bindings and raw hashes](evidence/m4-pr263-mixed-source-and-capture-results-2026-10-20.json); raw cache `pr263-mixed-key-projection-production-v1`. Use the documented custom target/private TMPDIR/opt2/assertions/overflow environment and one producer; do not set RUSTFLAGS. The complete literal25 selection runs separately on this source. Namespace/source-tag/pinned/default-core/source-child, whole issue acceptance, workspace baseline and final-head CI remain separate unproven gates.
+
+
+### Complete literal/effect/authority replay (2026-10-20)
+
+The unchanged full25 selection on source `493bf10` / fingerprint `c96095ab7637d6b77e2167c7e740b171041848943081873b45d340895b449dbe`, matching BOOT `02aca54`, completes23PASS2FAIL0ignored (1642.73s harness /1643.140953s command). All25 exact names execute. All six native provenance controls, all seven actual AST/effect cases, compiled constants, both Keyword memo groups and seven receipt/domain controls pass. The older retained-declaration restored-stage failure and named-function10B exhaustion case now pass under the recorded100B compilation allowance; the two failure sets must not be conflated merely because their aggregate counts match. Caller Runtime remains unchanged.
+
+All48 memo-leaf windows decode. Forty match; eight warm Symbol custom/restored rows differ at metadata identity, leaf identity and current memo, in both caller phases and both force-write/nil-aware groups. Old saved memos, callback/write counts, hash results and text still match. Nil-aware warm custom execution makes zero writes, so attribution must include prior canonical warming rather than assuming custom overwrite alone. No unsafe receipt is upgraded and no source guard is relaxed.
+
+[Exact command/names, mismatches and hashes](evidence/m4-pr263-literal-effect-authority-full25-results-2026-10-20.json); [all48 actual/expected rows](evidence/m4-pr263-memo-leaf-observations-2026-10-20.jsonl). Raw cache `pr263-literal-acceptance-c960-v1`, hash `62cc06c6978bf59c6397cfbf56bff41c36b0863c0fded17ef7309ca13d1fb5da`. Existing full Symbol nil-aware group is replayed separately with `SUSS_POISON_RECEIPT_TRACE=1` for canonical/scoped receipt attribution; it is not a replacement25-test acceptance run. The namespace candidate remains unapplied after review found unpaid variable capture work. Source-tag/pinned/namespace/default-core/source-child, workspace baseline and final-head CI acceptance remain unproven. Use one producer and the documented target/private-TMPDIR/opt2/assertions/overflow environment; do not set RUSTFLAGS.
+
+
+### Warm Symbol original-input domain attribution (2026-10-20)
+
+Source `b3d5559` adds opt-in logging of already-evaluated domain predicates and makes retained-node diagnostics opt-in via `SUSS_RETAINED_DATA_TRACE`. Existing predicate order, errors, traversal and charges are preserved; production source authority rules are unchanged. Fingerprint `73a77267bd50462c86bc194ac460e0577dabc2979d579e72bb32e0ab2f68f763` covers222 inputs, with matching reviewed BOOT `12cb83a`. Normal two generations agree (89.079207s), initial stale-shipped comparison exits1, exact adoption and pure identity verification pass (1.147041s). No complete bootstrap-verifier pass is claimed.
+
+The unchanged complete Symbol nil-aware test runs serially with `SUSS_POISON_RECEIPT_TRACE=1 SUSS_MEMO_DOMAIN_TRACE=1` and completes0PASS1FAIL (109.42s harness /246.806033s command). All12 thirteen-field observations are byte-for-value equal to the priorc960 receipt trace. In both warm source phases, target membership, state, classes, prototype, methods and snapshot checks pass. The domain has one constructor node/zero children; three original input edges lack owned membership. This is the first failing stage before the canonical setter. Physical setter publication validates while source_safe correctly staysfalse. Exact input types/ordinals remain unobserved; metadata reconstruction and separate original Native.inputs evidence are the source-audit repair direction. No missing edge is ignored, no DATA health becomes strict authority, and no false receipt is upgraded.
+
+[Commands, exact domain stages, source/BOOT bindings and hashes](evidence/m4-pr263-warm-symbol-domain-attribution-results-2026-10-20.json). Raw cache `pr263-warm-symbol-domain-predicate-production-v1`, hash `48ddb4651302c8c941fdd8eeebabb51027a52316dd7f4e8bfb4f96b1ad1664de`. Preserve original719 poison/restoration, all input/source/storage/class/method/memo checks and originally-nil authority while implementing genuine original factory-input enrollment. NamespaceV2 remains source-reviewed and parked; remaining semantic/native/workspace/CI gates stay unproven. Use the documented one-producer/custom-target/private-TMPDIR/opt2/assertions/overflow environment; do not set RUSTFLAGS.
+
+
+### Original factory-input enrollment checkpoint (2026-10-20)
+
+Source `b87e221`, fingerprint `f502ed62f5a54fd76a13eee5732b1f9084cbf7db3965d66d1377445a0a681522` over223 inputs, records original factory-input provenance through weak domain links and exact original references before live construction callbacks. Normal two-generation outputs match; initial stale-shipped comparison exits1, followed by independent exact-four adoption as BOOT `5d92a24` and passing pure identity verification. This is not a complete bootstrap-verifier pass.
+
+The unchanged original Symbol force-write and nil-aware groups both pass (191.92s harness /192.142259s command); all24 thirteen-field observation rows match across cold/warm, both phases and baseline/custom/restored stages. Seven new factory-input controls complete6PASS1FAIL (19.32s harness /157.146329s command). The unrelated initial-seed negative incorrectly accepts when `offer_seed=false`; its explicit-positive iteration is unreached. Original source-review GO was withdrawn. Source audit finds an interior-reference match can select the enclosing unrelated seed point and widen traversal; the first runtime edge was not separately traced. Independent review rejected a narrow root-only candidate because linked interior owners can still widen across generations. No repair acceptance is claimed.
+
+[Exact commands, complete24 rows, source bindings and raw hashes](evidence/m4-pr263-original-factory-input-results-2026-10-20.json); raw cache `pr263-original-factory-input-production-v1`. Reproduce the exact commands in that receipt using the documented custom target/private TMPDIR/opt2/assertions/overflow environment and one producer. No RUSTFLAGS. No assertion, source program, originally-nil rule, source/storage/owner/domain/method guard, tariff or allowance was relaxed. No full25/current public719/source-tag/pinned/namespace/default-core/source-child/workspace/final-CI acceptance is established.
+
+
+### Original snapshot subroot scope and semantic calibration (2026-10-20)
+
+Source `4911688`, fingerprint `c5e2fc0f4502970403c45c4f10604bcd8edfde20230e52db0ebfee08e46d07bb` over224 inputs, preserves an original snapshot Node subroot or opaque/immediate terminal through every factory link. It cannot climb from an interior to the enclosing seed. Full predecessor validation remains separate; no DATA health becomes strict source authority. The new immutable-member traversal is iterative and conservatively metered. Independently reviewed BOOT `91f0d81` follows matching normal generations (82.009155s), initial old-shipped comparison exit1, exact adoption and pure identity PASS (1.133160s); no complete verifier pass.
+
+All23 focused tests pass (37.88s harness /174.488573s command):19 original snapshot/seed/factory controls plus four new subroot regressions. The unchanged direct seed negative AND explicit-positive loop both execute and pass. Two-generation ancestor rejection and genuine descendant-positive paths, sibling/opaque boundaries, exact identity after GC, measured fuel cuts0/1/half/used-1, typed IRQ/foreign owner, no leaked handles and original-graph retry execute and pass. All seven original factory test bodies remain unchanged. [Exact23 command/names, observations and hashes](evidence/m4-pr263-original-subroot-and-calibration-results-2026-10-20.json); raw cache `pr263-factory-subroot-scope-production-v1`. Use the documented custom target/private TMPDIR/opt2/assertions/overflow environment and one producer; no RUSTFLAGS.
+
+Two earlier unchanged public719 runs on f502 and6037 each exhaust the original10M compilation allowance during the first warm Runtime caller env transport, before assertions (40.92s /188.398189s and42.08s /180.046208s). Paid immediate-edge elimination alone does not establish default-fit. Per the explicit user/#252 semantic-test calibration policy, `d8c625f` gives only this metadata-authority test a100B CompiledMacros compilation allowance, preserving caller Runtime, production defaults, original program/all16 Boolean assertions, dedicated fuel/IRQ tests, #270 default core/source-child and pinned200M. This test is not itself a dedicated exhaustion control. Its calibrated result and current-source Symbol groups are separate pending runs at this checkpoint. Full25/source-tags/pinned/namespace/default-core/source-child/workspace/final-head CI are not established here.
+
+
+### Subroot source: original Symbol, strict authority and public poison controls (2026-10-20)
+
+On the same source4911688 /c5e2fc /224 inputs /reviewed BOOT91f0d81, both complete original Symbol groups pass2/0/0 (201.20s harness /201.422507s command). All24 thirteen-field rows match across cold/warm, Runtime/Macro and baseline/custom/restored-method stages. The nine unchanged strict mixed-child/DATA-health/parent-poison/no-publication/fuel/IRQ/capture and source-metadata metering controls pass9/0/0 (37.67s /37.854865s).
+
+The original public719 poison/restoration program passes1/0/0 (67.54s harness /212.950625s command). All four requests/16 Boolean assertions execute across both caller phases, preserving GC, callback effects, poison-time receipt rejection, old719 memo and fresh nil-memo metadata after restoration. Compilation uses the explicitly calibrated100B CompiledMacros allowance from d8c625f; caller Runtime and all dedicated exhaustion/default/pinned controls remain unchanged. The earlier default10M failures remain recorded as transport exhaustion, not semantic failures.
+
+[Exact commands, complete24 rows, all results/source bindings and hashes](evidence/m4-pr263-original-subroot-and-calibration-results-2026-10-20.json); raw cache `pr263-factory-subroot-scope-production-v1`, labels `symbol-two`, `authority-nine`, `public-poison`. Reproduce using the exact commands in the receipt and the documented custom target/private TMPDIR/opt2/assertions/overflow environment, one producer, no RUSTFLAGS. The separate complete25 literal/effect/authority selection is running; its result is not yet established. The23 focused tests are a different cohort from the earlier23/2 full25 result. Source-tag/pinned/namespace/default-core/source-child/workspace/final-head CI and whole issue/stack acceptance remain unproven.
+
+
+### Complete subroot-source literal/effect/authority acceptance cohort (2026-10-20)
+
+The complete unchanged25 selection now passes25PASS0FAIL0ignored560filtered on source4911688 /fingerprintc5e2fc0f4502970403c45c4f10604bcd8edfde20230e52db0ebfee08e46d07bb /224 inputs /reviewed BOOT91f0d81. Harness2151.54s; command2290.759671s including compilation. Raw SHA41acb11a8dfb947c00b1c0a83395ad1cfd8616bf4f3618488f38f85ad2fd56ff. All25 unique selectors execute. All48 unique memo windows and all13 fields match across Symbol/Keyword, force-write/nil-aware, cold/warm, both phases and baseline/custom/restored methods. No expected/observed window is missing, duplicated or unexpected. This supersedes the source-qualified historicalc96023/2 for this cohort, without rewriting that older failure.
+
+[Exact full25 command/names, rawhash and reconciliation](evidence/m4-pr263-original-subroot-and-calibration-results-2026-10-20.json); [all48 complete actual/expected rows](evidence/m4-pr263-subroot-full25-memo-observations-2026-10-20.jsonl). Raw cache `pr263-factory-subroot-scope-production-v1/literal25.log`. The source hashes remain unchanged through terminal; start headcd8b37a differs from later67ec7a2 only in evidence documentation. Use the recorded custom target/private TMPDIR/opt2/assertions/overflow environment and one producer; no RUSTFLAGS. Semantic compilation allowances remain as recorded, Runtime unchanged.
+
+Exact head67ec7a2 CIintegration(1)/(3) logs and job metadata are retained in cachepr263-ci-67ec7a2-failure-review-v1. Each planned33 integration targets and completed two harnesses, with7 and12 passes respectively. Job1 additionally reports constructor_operation_and_children_fit_default_fuel_in_both_caller_phases FAILED; its detailed diagnostic is absent and constructor-source corpus unfinished. Job3 core-environment remains unfinished. Both execution steps report runner shutdown/cancellation before120-minute limits; underlying cause unknown, noOOM/timeout attribution. The explicit default constructor control remains unchanged10M and is being replayed separately. No unexecuted target receives acceptance credit. Source-tags/pinned/callable/namespace/default-core/source-child/workspace/final-head CI and whole issue/stack acceptance remain unproven.
+
+
+The focused unchanged default constructor replay now classifies the CI failure:0PASS1FAIL0ignored1filtered,41.87s harness /184.428118s command, raw88af8331f3e9c210fe5f48eeecd96e850b87b68ff25db161953b8ee34fffda57. At the first Runtime invocation, span83..108, caller env input transport exhausts the original10M budget before op/children/value result assertions. The Macro phase is unreached. The source and explicit default budget remain unchanged. Reproduction command is recorded in the same receipt under default_constructor_replay; target compiled_macro_constructor_source_asts, exact selector constructor_operation_and_children_fit_default_fuel_in_both_caller_phases, one test thread. A bounded original-factory proof lookup optimization is being prepared; no default-fit improvement or acceptance is yet established.
+
+
+### Borrowed original-factory lookup and completed stage attribution (2026-10-20)
+
+Sourcefa4915a /fingerprint1b2e761fe9b1b375798fa8719c909572c9347ae12d5a7bcd6d56f096f1000d22 /224 inputs removes unused root/link staging and tests a borrowed exact output before copying expansion edges. Existing local-root/linked/strict-source priority, precise subroot/terminal scopes, weak lifetimes, full predecessor checks, methods/source/memo guards and original test bodies remain. Source/fee review GO. Normal generations match (90.734500s), initial old-shipped comparison exits1, exact-four reviewed adoption is BOOT95e60d3 and pureidentity passes1.136326s. No complete bootstrap-verifier pass.
+
+Focused23 passes23/0/0 (37.04s harness /174.760650s command), including every original factory/snapshot/seed and new subroot/multigeneration negative/positive/fuel/IRQ/owner/no-leak/retry. The unchanged10M constructor control remains0/1 (40.83s /174.072767s), first Runtime env input transport span83..108 before result assertions/Macro phase. No default-fit improvement is established.
+
+A temporary appended diagnostic copy keeps the entire original default-control function byte-exact as a prefix, guest programs/all assertions/caller10M unchanged; only its own Macro compilation allowance becomes100B. That diagnostic passes both complete phases (65.30s harness /69.964542s command). Completed adjacent stage counters charge env240082151 units Runtime and240072443 Macro. These include guest+host and do not identify an exclusive culprit. GDB sampling captures an env stack through original_snapshot_member/CanonicalSeed/WriteDomain.record/FormBridge.array/map_node/AnalysisGraph.expansion_catalog. Broad first sample wasJITinitialization; conditional large-charge sampling was interrupted without a qualifying hit. Debugger walltimes are not performance evidence. Every inferior actually exited before the exact original CLI test file was restored; all224 compiler input hashes remain unchanged.
+
+The separately completed oldc5 pinned run at200M is1PASS1FAIL (97.33s /193.074719s): identifier15 ordered host comparisons pass; map namespace fails during expanded-result transport at239..5926 before any assertion ID, so69 remain not-executed with zero semantic verdict failures. Current1b has no pinned execution result. [Commands, complete stage deltas, diagnostic/source/BOOT reviews, raw hashes and limitations](evidence/m4-pr263-borrowed-factory-lookup-results-2026-10-20.json). Raw cachespr263-borrowed-factory-lookup-production-v1, pr263-default-constructor-diagnostic-1b-v1, pr263-default-constructor-profile-1b-v1 andpr263-pinned-acceptance-c5e2fc-v1. Use the recorded custom target/private TMPDIR/opt2/assertions/overflow profile, one producer, noRUSTFLAGS. Full25 on1b, source-tags/pinned/namespace/default-core/source-child/workspace/finalCI and issue/stack acceptance remain separate gates. A root-only linear snapshot lookup is a reviewed-invariant candidate, still unapplied/unexecuted.
+
+
+### Whole-root original snapshot scan checkpoint (2026-10-20)
+
+Source `3b1dfbd`, fingerprint `3d3f6de0bb6f95d02cb5322d2c054cdf2c4b2edcd83e0cff19afe06dce1dc6bb` over224 inputs, scans only the captured full-root inventory without pending/seen graph scratch. Restricted Node scopes, exact opaque/immediate terminals, actual seed Weak binding and full current predecessor validation remain unchanged. Independent source/fee review approves the exact patch; no budget or tariff changes. Normal two generations match (89.320763s); initial stale-shipped comparison exits1, followed by independently reviewed exact-four adoption as BOOT `11bc678` and pure identity PASS (1.177655s). This is not a complete bootstrap-verifier pass.
+
+The focused scope25 selection passes25/0/0,562filtered (37.57s harness /173.462064s total), raw982f50c6cd39ed053bf036f202cf0126673e0346868cb06af4a240aa6c472f1f. Independent reconciliation accounts for every selector. These are the original23 scope controls plus two new whole-root unused-cut/node/opaque/GC and measured fuel/IRQ/foreign/no-leak/retry tests; they are separate from the semantic literal25/48 cohort.
+
+The unchanged explicit10M default constructor remains0/1 (42.29s /176.657965s), raw9573878666ca3e88375402dd30c1df82b096c90660fc00deb9be26db52ed02a9. First Runtime caller env input transport exhausts at83..108 before projection assertions or Macro phase. The fresh pinned200M pair is1PASS1FAIL (98.26s /187.559821s), raw34a7c119342bf75275936dcd89640d99f80e2082f030b03615eda0d2e5029252: all15 identifier assertions pass independent ordered host comparisons; map expanded-result transport exhausts at239..5926 before any ID, leaving69not-executed and zero semantic verdict failures. No default-fit or measured speedup is established.
+
+[Exact commands, source/BOOT bindings, reviews, counts and raw hashes](evidence/m4-pr263-full-root-linear-results-2026-10-20.json). Raw caches `pr263-full-root-linear-production-v1` and `pr263-pinned-acceptance-3d3f6de-v1` under `/home/bobby/.cache/suss-m4-work`. Reproduce the receipt's Cargo commands using CARGO_TARGET_DIR=/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target, CARGO_BUILD_JOBS=1, RAYON_NUM_THREADS=1, TMPDIR=/home/bobby/.cache/suss-m4-work/workspace-tmp-65e9718-ccpsnhdq, CARGO_PROFILE_TEST_OPT_LEVEL=2, CARGO_PROFILE_TEST_DEBUG_ASSERTIONS=true and CARGO_PROFILE_TEST_OVERFLOW_CHECKS=true. One local producer; do not set RUSTFLAGS. Full literal25/48 and source-tag/callable/namespace/default-core/source-child/workspace/final-head CI evidence remains unestablished on this source; prior passes retain their original source bindings.
+
+
+### Namespace revision and compact capture implementation checkpoint (2026-10-20)
+
+`0886fc1` shares one Analyzer's genuine namespace revision between frozen top-level snapshots and lazy live catalog queries. Native capture retains all scope fields/exact declaration owners, with paid variable traversal/copy/retirement, borrowed Environment/phase binding, complete manual/foreign fallback and typed error propagation. `ac1fdd3` adapts the previously missing b846 compact capture ordinals and byte-generation boundary scratch. Full acyclic proof is unchanged; full clears occur before generation reuse, with payment before writes. All four donor capture regressions are byte-exact. Both exact source/fee patches have independent approval. The workspace/all-targets test-profile typecheck passes on ac1fdd3 (120.254858s), raw4950309cfc8cfbe125811dab1ee6e743744830bad4a82100e64936aa93d7b567; this is typechecking, not semantic execution or final baseline.
+
+The first normal generation on ac1/b2fcfa/227 fails native work at5032..5496 (80.883581s), raw8e4101ff89c9964ff8089bd4365bf0b93aa40142de80f80aaca9e34fd698ee4a. No output adoption follows that failure. The newly complete accounting exceeds the fixed embedded catalog's separate100M native-analysis cap. Independently reviewed `5af70db` calibrates ONLY that closed catalog analysis to100B, for development generation and checked shipped-fact restoration. Ordinary caller/default10M limits, Runtime, explicit default constructor/CORE/source-child and pinned200M controls remain unchanged. No rate cut, nested Session refill or source/assertion reduction.
+
+Production5af70db /fingerprint431f69edb030994dac1b5f69aa63c44e39b6c0fe6f3a47c2b1cc3a1c8c8a067c covers227 discovered inputs. Both normal generations then match (83.542948s), rawd39da116db37bb91889cfb1d3375f6485ca3c4edc3a0c1aed3d744e3458f34dc. Initial old-shipped comparison exits1; independent exact-four adoption as BOOT85d97e4 verifies every noncustom section unchanged. Pure identity passes1.148274s. This is not a complete bootstrap-verifier pass. Exact new twelve controls are running on this source; no terminal verdict yet.
+
+The prior complete source-tag pair on source3b/3d was deliberately interrupted after the reviewed production repairs were ready, to execute required final-source acceptance after integration. Wrapper terminal2431.501637s/exit101, rawe558c6d3224f0c40d42c3cd50ee9835ee3788d48e719090bd8af007d7cf9ea43 records SIGINT. Inference started but has no completed semantic verdict; invocation did not start. Neither program receives acceptance credit. All source/assertions and compilation1T inference/100B invocation plus original caller Runtime remain; both complete programs must run on the resulting source.
+
+[Exact commands, reviews, input/build bindings, failed generation, calibration and interruption records](evidence/m4-pr263-namespace-capture-checkpoint-2026-10-20.json). Caches under `/home/bobby/.cache/suss-m4-work`: pr263-namespace-revision-production-v1 (pre-calibration typecheck/failure), pr263-namespace-capture-catalog-production-v2 (current), and pr263-full-root-linear-production-v1 (interrupted source tags). Use the recorded commands with the same custom target/private TMPDIR, CARGO_BUILD_JOBS=1, RAYON_NUM_THREADS=1 and test opt2/assertions/overflow environment; one producer, no RUSTFLAGS. Current-source default constructor, namespace/public and source-tags/literal/pinned/authority/core/source-child/workspace/final-head CI evidence remains unestablished. Old source-qualified passes and failures are retained separately.
+
+
+### Native namespace identity prefilter regression repair (2026-10-20)
+
+Source6c26ea7 /fingerprint1697e6ff0e9880c53951a81bc9c72383cc1ac04edb2bc45892121a6e6f4c29c3 /227 inputs filters actual Cell/bootstrap Global values by phase/namespace before unrelated BTreeSet insertions. Full scans, final filter, sorted/deduplicated output, hidden checks and all native fields/Info owners remain. New predicates are prepaid, including skipped candidates; only absent allocation/search/retain/retirement work loses its fees. No rate, quota, fixture or original assertion changes from source431. Independent exact source/fee GO. The separate fixed-catalog100B calibration from5af70db remains unchanged and disclosed in the earlier checkpoint.
+
+Workspace/all-targets test-profile typecheck passes33.816629s, rawd78caaabfbaec717b2c071a619433e9943384bda371ff2f04b4b901d4ab01698. Both normal generations match91.415590s, raw87660c875a64dabcf922bf4a8408c762a1a49db268c54f83f9da43492ad75e29; initial old-shipped comparison exits1. Independent generated-artifact review approves only four replacements: every noncustom section/other manifest field stays exact. BOOT40f22c6 is adopted; pure identity passes1.270547s. No complete bootstrap-verifier pass is claimed.
+
+The exact new14 selection passes14/0/0,587filtered (25.46s harness /197.558807s total), rawb0b43beebb43d46353108f05482f6246be10d2f5028272d75d69bd16c260fe94. Independent reconciliation accounts for every selector and all source/BOOT hashes. The eight original namespace/error controls and all four byte-exact compact donor tests pass, plus two native prefilter parity/failure/retry tests. Previous source431's8PASS4FAIL remains recorded: all four compact tests exhausted native work in FormBridge::new's16-byte descriptor compilation before graph construction. They now reach and pass their algorithm assertions without fixture calibration.
+
+One current native boundary query with511 roots/2048 padding consumes191924 units versus1752494 for the retained full-clear control; resets3 versus511. Ordered children/dedup match, and measured fuel cuts, same-budget retry, full-cycle and rollover/IRQ controls pass. Both methods use the current compact-index fees. This is not an old-binary comparison, whole-compilation saving, CPU speedup or default-fit claim.
+
+[Exact commands, selector reconciliation, source/BOOT/review bindings, prior failure and bounded measurement](evidence/m4-pr263-identity-prefilter-results-2026-10-20.json); raw cache `/home/bobby/.cache/suss-m4-work/pr263-namespace-identity-prefilter-production-v3`. Use the recorded custom target/private TMPDIR and test opt2/assertions/overflow environment, CARGO_BUILD_JOBS=1 and RAYON_NUM_THREADS=1; one producer, no RUSTFLAGS. Default constructor10M is replaying separately, with no verdict here. Current public namespace/source-tags/literal/pinned/authority/default-core/source-child/workspace/final-head CI gates remain unestablished; no whole issue/stack acceptance claim.
+
+
+### Fixed Macro Store initialization budget boundary (2026-10-20)
+
+On source169/227/BOOT40, default-constructor retry1 completes0PASS1FAIL (117.05s harness /497.884787s command), rawd2c5570c57e30e3d6225687060909f8d2bca07fad53f6c1ac97bf1facef487f4. Exact testline179 is CompiledMacros::new(), not the user macro definition at188. The internal fixed defn bootstrap source is1728bytes with form1..1727 and exhausts analysis fuel. User definition and constructor invocation are unreached. This corrects the earlier shorthand macros.define classification: that call occurs inside fixed initialization. First compile attempt was separately interrupted and has no test verdict.
+
+The unchanged public namespace/callable pair is0PASS2FAIL (56.41s harness /72.522801s command), raw2ea41e82823a082b27b06e09fd77322d8b85a409a6152e74735306ee6ea9a305. Both caller-phase attempts fail macro-store creation at1..1727, before their calibrated user compilation allowance can be set. No namespace/callable observation rows execute; no identity mismatch verdict is inferred.
+
+Commits1bc8043 and050e5d3 give each existing fixed compiler-library initializer operation a separate finite100B allowance instead of10M on owned fresh/new replacement Macro Stores. The configured caller options AND idle Store fuel are restored before publication. The idle setter rejects active operation depth before any mutation. Initializer errors drop the unpublished new Store; prior host state remains untouched. Ordinary caller/default10M, Runtime, explicit constructor/CORE/source-child and pinned200M controls are unchanged. This is not a nested caller budget refill, a whole-library total100B claim or default-fit evidence. The earlier separate fixed catalog100B cap remains unchanged.
+
+Five fixed record-helper sources use the original non-expanding module/source/conditional pipeline with a metered host borrowing the same Store/interrupt and native environment. One operation scope spans each source's parsing, analysis, emission and guest execution. Original host traps survive diagnostic adapters. No extra Environment clone, macro expansion, source/assertion reduction or fee cut is introduced; new host metadata is prepaid. Ordinary prepare_input still uses its original NoExpansion host. Two new execution regressions cover active-request refill rejection, default/custom replacement restoration, low-user-fuel failure/no publication/default retry with an actual macro17, cumulative source work, typed interrupt and compiled recovery23. They are compiling with no terminal result at this checkpoint.
+
+Source050e5d3 /fingerprintde61c41b6605f25051ab3755ca78a1e04126b3c1e72890bb81e819a0d281ffc1 /227 inputs passes the workspace/all-targets test-profile typecheck (163.885109s), raw671dd9e41ffc0142656870dc440bb3c98f94b6a32ffe0650d360c6f283df9d2c. Independent committed source/fee/lifecycle review finds no blocker. Both normal generations match (120.059106s), raw0405090a30e9d3791e5adcfccca243d9ebd98fafd2f77feff08f18cdc1cf0c9e; initial old-shipped comparison exits1. Exact-four reviewed adoption is BOOT3266c6f; pure identity passes1.422396s. All noncustom sections/other manifest fields remain exact. No complete bootstrap-verifier or new initialization/default/public-probe pass is claimed.
+
+[Commands, source/BOOT/review bindings, prior failures and boundary details](evidence/m4-pr263-fixed-macro-initialization-checkpoint-2026-10-20.json); cache `/home/bobby/.cache/suss-m4-work/pr263-fixed-macro-initialization-production-v5`. Use recorded custom target/private TMPDIR/test opt2/assertions/overflow environment, CARGO_BUILD_JOBS=1 and RAYON_NUM_THREADS=1; one Suss producer, no RUSTFLAGS. Run initialization-two before remaining current-source focused/default/public acceptance. Prior source169's14 controls remain source-qualified; full required corpora/workspace/final-head review/CI are still unestablished for this source.
+
+
+The source050/de61/227/BOOT326 initialization pair is now terminal2PASS0FAIL0ignored601filtered (91.28s harness /366.531425s command including compilation), rawf21b6ef4d830142baeaa69cb65ec441dde06e9d1b1fcf9949cb7a0c4855f8851. Both exact selectors execute. The default returned Macro options AND Store fuel are10M; an attempted initialization reset during an active scope is rejected without changing fuel/options. Subsequent1-unit user definitions produce typed OutOfFuel without publication; normal10M retry expands a real macro to17. Replacement preserves configured77777777 in options/Store and retains low-budget failure. The routed fixed source preserves cumulative preconsumed fuel, typed native interruption, no ghost binding, and fresh compiled recovery to23. No guest epoch-delivery claim is made by the native flag control.
+
+The unchanged explicit10M constructor is replaying separately on this source; its verdict is not included here. Public namespace/callable programs still require execution after this initialization repair. Source169's zero-row setup failures and14-control pass remain historical tuples. Commands, start/terminal hashes and completed initialization results are appended to the same fixed-initialization evidence JSON. No broader default/identity/issue/stack completion claim.
+
+
+The unchanged explicit10M constructor replay on source050/de61/227/BOOT326 is terminal: 0PASS1FAIL0ignored1filtered, 93.03s harness /346.027198s command; raw `c937d8b95d18a2cc7baeeb3e46e5d00d352e1c4802f01a477389e7c8c7f6bc0a`. Independent reconciliation confirms initialization and user macro definition return successfully; failure is now at test line192, first Runtime caller `eval_with_macros`, during caller `&env` input transport83..108. Constructor output assertions and Macro caller phase are unreached. This supersedes the earlier pending statement for this replay, and differs from source169's fixed-helper initialization failure at line179. The two initialization regressions remain passing; no default-budget fit is established. Exact command and review are appended to the fixed-initialization evidence JSON. The full unchanged namespace/callable pair is running separately; no terminal verdict is claimed here.
+
+
+Source050/de61/227/BOOT326 now executes both unchanged public namespace/callable programs successfully: 2PASS0FAIL0ignored0filtered, 893.89s harness /909.487965s command; raw `f8d40c2d1756a0b08595b5830dfaaf843f6ab38cb5dc0817baeb575cf6412017`. Exact command, source binding and locally reconciled counts are in [the namespace identity results](evidence/m4-pr263-namespace-identity-results-2026-10-20.json); [complete actual/expected projections](evidence/m4-pr263-namespace-identity-observations-2026-10-20.jsonl) retain all ten namespace rows and all six15-field callable rows. Both caller phases match with no missing rows. This resolves the previous five-call eight-alias mismatch for this bounded program; no full-schema, arbitrary cross-Analyzer interning or source/storage-authority claim. Existing100B Macro compilation allowance and original caller Runtime limits/assertions remain unchanged. The fourteen namespace/capture preservation checks are running separately. Companion, remaining semantic/source-tag/pinned/default controls, full baseline and final-head review/CI are still required.
+
+The fourteen-check replay is now terminal14PASS0FAIL0ignored589filtered (35.80s harness /280.877039s command), raw `4e9219196f76c7f88a571434f578bf10c375b14be322eed1b9ebdf37c8bb8fbc`. Every exact selector matches the recorded selection. This includes all eight namespace/error controls, four unchanged compact-capture controls and two identity-prefilter parity/failure/retry regressions. The source050/de61/227 and BOOT326 tuple matches the public pair; commands and raw hashes are appended to the namespace identity results. No default-fit or broader acceptance claim.
+
+The unchanged shared-environment companion also passes on source050/de61/227/BOOT326:1PASS0FAIL0ignored10filtered,99.00s harness /463.131371s command including6m02s compilation; raw `d26c58d71c3cde42cc02a6274d78c879739af8e840fcf13a8641f130c16d7d68`. Exact command/terminal are appended to the namespace identity results. Its source assertions cover eight query calls per caller phase, all nine visibility/document fields and final executed127. Unlike the public pair, the companion emits no independent raw projection rows. Independent review now verifies the separate public pair and fourteen-control cohort against all227 inputs, matching BOOT and full actual/expected public projections; both completed review records are attached to the same evidence JSON. This is evidence review, not the final-head PR review required before promotion. Next execution: original full pinned map/identifier bodies at unchanged200M Macro/caller limits, using the fresh de61 packet. Default constructor still fails during env transport; other preservation/source-tag/full-workspace/final-CI gates remain unestablished.
+
+
+The fresh unchanged200M pinned pair on source050/de61/227/BOOT326 is terminal1PASS1FAIL0ignored11filtered (252.09s harness /451.058790s command), raw `db85098a7147cff7b93f39587598f148622ef0b24d461344007ea1ddbca07ea2`. Independent retained-capture comparisons confirm all15 identifier IDs/host operand checks pass; the complete map fails during expanded-result transport239..5926 with0observations/69not-executed. No blocked map ID receives pass/fail assertion credit. Original Macro/caller200M and full bodies remain unchanged. [Commands, exact fixture bindings and comparisons](evidence/m4-pr263-pinned-controls-de61-2026-10-20.json). Cache `pr263-pinned-acceptance-de61c41-v1`; both compare_map.py and compare_identifiers.py were run after terminal (exit1 and0 respectively). Producer drained and its executable PID is absent before subsequent source edits. Next bounded implementation: reviewed factory-candidate prefix count/reserve, preserving all scoped predecessor/storage/source checks and paying added count work. It has not yet been applied or executed at this evidence point.
+
+
+Factory-candidate staging now counts the immutable offered prefix before reserving/copying candidate scratch (`d561654`). The same lock spans count/reserve/copy. New count/iterator/tag/increment/slice work is prepaid; old retain/reserve rates and every original edge/local/rooted predecessor/storage/source/Node/terminal/Weak/publication guard remain unchanged. Small cases can cost more. Four new regressions cover real references/zero candidates, typed fuel/IRQ/atomicity/retry, actual old/new full-method charge comparison on the same64-factory suffix in both orders, and genuine checked Source attachment/mixed suffixes. Existing tests and their budgets/assertions are preserved. No numerical saving or default-fit is established yet.
+
+Source `d5616546eb62090bccb8a397f4badcc346dfd981`, fingerprint `3f5552ef16c3786d0b3bfa50d49798d6197188e6f1a247bfb4feec6b48a550b9`,227 inputs passes `cargo check --workspace --all-targets --locked --profile test` in63.151874s (raw2227536eacfdccdde1f6b25bcd3309a345cf402993fd949e03f7c6a500dbedfc). Two normal generations match all four pairs/all eight artifacts in146.131480s; old-shipped comparison exits1 (rawe78950a4b023212f076c69a4ad7074be22fb4f029fccf7417e3ce9aa69a12b05), not a full-verifier pass. Independent source/fee and exact-four artifact reviews approve controlled execution. Adoption `69b6744` preserves all noncustom sections and other manifest fields; actual builder output verifies fingerprint/all227 input paths/hashes. Pure identity passes2.652834s.
+
+[Exact commands, source/fee review, BOOT review and planned29 selectors](evidence/m4-pr263-factory-candidate-prefix-checkpoint-2026-10-20.json). Fresh cache `/home/bobby/.cache/suss-m4-work/pr263-factory-candidate-prefix-production-v1`; use the recorded shared target/private TMPDIR, test opt2/assertions/overflow, CARGO_BUILD_JOBS=1/RAYON_NUM_THREADS=1, no RUSTFLAGS and one producer. Next: exact four new regressions plus25 unchanged rooted factory/snapshot scope controls via prefix-scope29-selection.json, after matching identity. They are unexecuted at this checkpoint. Prior050/de61 passes/failures are historical tuples; all current-source semantic/source-tag/default/pinned controls and full workspace/final-head CI/review remain unestablished.
+
+
+The source d561/3f5552ef/227/BOOT69b6744 exact29 run is terminal25PASS4FAIL0ignored578filtered,63.71s harness /383.055195s command; raw `8c43b5d25298da553a876db2383a55a3e8a860a5ce4e284fd96b672242ab5a2a`. All25 original controls pass. All four new tests fail at final post-hash watch assertions (factory_inputs.rs1473/1528/1616/1687). The two actual same-domain/edge staging comparisons print old49216/new5703 with2candidates/192suffix links in both call orders, but the containing test FAILS; this is not a completed preservation/default-fit result. Source inspection finds the old one-output helper selects the first watched output, while these new fixtures hash the last of3/64 outputs. A test-only exact-output selector is being prepared; all positive post-hash validation assertions and production guards/rates remain required. Commands/terminal and provisional measurements are appended to the prefix checkpoint JSON.
+
+
+Test-only correction `9f0d1b7899e84e22e4220fcaf1b8fe0a5da2adc5` selects the unique recorded Watch by exact Owner.value identity and asserts it differs from the legacy first-output Watch. All four positive post-hash Watch::matches assertions remain; production bytes outside cfg(test), existing fixtures, rates and budgets are exact. Independent review approves controlled replay; no replay pass is inferred. Its source fingerprint is `83f0cb1e57b222ede0d49a2526b74a5a0e992f19750e1608c48e8b24c5335d0b` over227 inputs. Workspace/all-targets typecheck passes166.970595s (raw2b94df1ab1368747161d952f42f5aba77eac0dd721021cbc32b95f7eda76fc01). Two normal generations match164.084761s; old-shipped comparison exits1 (rawa820515b328453edae6fa7de65caf35c1ff6a4e12fd8ce8e4ded93e54407a3ae), not a full-verifier pass. Independently reviewed exact-four adoption `51cc2b2` preserves noncustom sections and other manifest fields; actual compiled build output verifies fingerprint/all227 inputs. Pure identity passes14.620051s.
+
+Exact commands, review/builder/BOOT bindings and replay start are appended as exact_output_fixture_correction in the prefix checkpoint JSON. Cache `/home/bobby/.cache/suss-m4-work/pr263-factory-candidate-prefix-production-v2`; the same original29 selectors are replaying after identity, with no terminal result yet. Old3f25PASS4FAIL and measured49216/5703 intervals remain historical, not upgraded. Use the recorded shared target/private TMPDIR/test opt2/assertions/overflow/CARGO_BUILD_JOBS=1/RAYON_NUM_THREADS=1 environment, one producer and no RUSTFLAGS. Next: reconcile this exact29 replay, then execute a fresh source83f pinned200M packet and unchanged default10M control before remaining full semantic/source-tag/baseline/final-head review/CI gates.
+
+The source9f/83f/227/BOOT51cc exact29 replay is now terminal29PASS0FAIL0ignored578filtered (71.59s harness /330.210377s command), raw `f79c098507d454e7077cfd45925e837c9589f75dfb75e47f1ce89ac396bd1cc6`. Every exact selector executes, including all four final positive post-hash integrity assertions and the25 unchanged snapshot/seed/factory controls. Actual old/new full-method staging debits are49216/5703 for the same2-candidate/192-link suffix/domain/edge in both orders, now inside a fully passing test. This is bounded removed staging work, not whole-compilation, CPU or default-fit evidence. The original3f25PASS4FAIL remains preserved; only the test accessor changed. New terminal, all29 selectors and both measured intervals are appended to exact_output_fixture_correction in the prefix checkpoint. Next execute fresh current83f full pinned200M controls and unchanged10M constructor before remaining semantic/source-tag/full-baseline/final-head review/CI gates.
+
+
+Current source9f/83f/227/BOOT51cc pinned pair is terminal1PASS1FAIL0ignored11filtered (160.39s harness /328.952634s command), raw `b47ee2fb72a29d9992521bf266f1d9e285c821ef76a4b5750c616082e3c61698`. Both independent retained-capture comparisons execute: identifiers15hostPASS with complete ordered IDs; map0observations/69not-executed behind expanded-result transport239..5926. Unchanged Macro/caller200M; no assertion pass/fail credited to unexecuted map IDs. The separate unchanged10M constructor is0PASS1FAIL0ignored1filtered (72.77s harness /328.097378s command), raw `64f7b02637fe5da0bea6fd4264ee7841cd60596a8e2828960f06c37f81dac90a`: initialization/userdefinition succeed; first Runtime caller fails during &env transport83..108, before output assertions/Macrocaller.
+
+A full unchanged-map200M diagnostic using existing SUSS_MACRO_FUEL_TRACE=1 is0PASS1FAIL0ignored12filtered (104.53s harness /108.610741s command), raw `b3c28d2b6c8d3ae1386a8aa604544f3ed9e2ca2a19e86c2a5e13da9f3893f8e5`. All115macro starts/804fuel events include the first inline libtest trace. Disjoint completed deltas: invocation65073109, decode49511045, argument transport36758949, provenance4550563, between-call analysis5187109, implicit form/env690; pretrace38779959 and incomplete final decode138576 account for the rest of200M. The nested lazy-call delta48514225 includes callback native charges, and direct decoder host1117126 also sits INSIDE decode; do not add these subcounters to stage totals. No exclusive CPU or whole-program improvement inference. Independent review verifies these boundaries and the prior29 complete passes. [All commands, fixture bindings, failed outcomes, comparisons and independent attribution review](evidence/m4-pr263-pinned-and-transport-attribution-83f-2026-10-20.json). Next investigate the runtime property-read call path reached during lazy realization, rather than assuming native-source graph optimization fixes the map. Full semantic/source-tag/defaultCORE/source-child/workspace/final-head review/CI gates remain.
+
+
+Checked short-literal property contribution from donor8a110949 is adapted to the current emitter/runtime, targeted at the mapped property-find/fixed-named-property-get/named-property-get path seen during the failed full map's lazy realization. The original complete generic guard remains byte-exact after unused-local normalization (SHA256ec886b0035457d311d74ccd31190a2c86e37f756833920e6a0e4090fa08077b5); the entire existing fixed getter/setter receiver/storage/dispatch body is byte-exact65a92a238cf40c9fbd8fa2bdf7ee81cd0bf69101ccc7ecea8c2d60489682a495. The transplant includes the donor's full checked-validator/typed property-find prerequisites, packed<=4UTF16-unit probe, metered one-adjacent-use emission/fallback and its complete preservation/provenance/oracle fixtures. The emitter borrows the existing meter directly; integer SSA is not transplanted. Added runtime helpers legitimately change noncustom BOOT sections, so prior metadata-only artifact comparisons do not apply; new normal generation and semantic validation are mandatory. No quota/rate increase or default-fit claim.
+
+Focused named-ABI Python tests pass10/0 (0.020s). Full record-provenance cohort passes31/0 (12.407s), and python3 scripts/check_record_macro_provenance.py verifies12completepinnedforms,2factoryadaptations,label/publicidentities. The full checker initially exposed old plain-eval factory/label wiring checks left stale by the prior metered initialization repair. These now require the exact eval_fixed_initialization_source calls; original installation/dependency negatives remain and additional old-route/wrong-source negatives pass. This checker repair changes no shipped initializer behavior. Static Rust syntax/JSON/Python parsing passes; Rust typecheck, generated ABI/module execution and budget acceptance are still unexecuted. Cache packets pr263-short-property-transplant-83f-v1/v2 preserve exact before/after images, donor/preconditions, guard/route proof, patch hashes and Python results; the v2 production bytes are exactv1. Next freeze the new compiler-input union, typecheck, generate two normal BOOTs, independently review actual changes/adopt/verify identity, then execute the new property suites and unchanged target controls. NoRUSTFLAGS; same bounded one-producer environment as prior commands.
+
+The first short-key source0607/55e/228 workspace/all-targets typecheck fails in15.863876s (raw2c1bc56c4c89ff64135f94cc0bcc30abd3c06766a04f1f0e56307ce5986227b1) with7missing-meter errors in emit_options. The donor inherited emitter-meter plumbing from its prior integer work, which current branch lacked. The bounded correction forwards the existing meter through compile_ir_metered/compile_verified_ir and all three cache miss/bypass paths into the emitter. Existing pure standalone compiler/bootstrap APIs use a local DEFAULT_OPERATION_FUEL planning bound; no Session/Store operation is reset and all cache-path planning uses its caller meter. A new pure-IR regression injects failure at the first emission callback after actual verifier callbacks, checks exact Diagnostic/unchanged IR and retries successfully without assuming a tariff value. It is authored but unexecuted; existing two donor planner regressions remain unchanged. Cache packet pr263-short-property-transplant-83f-v3 includes the exact full source plus added plumbing/negative case, preserving the generic guard/fixed dispatch proof. Retry typecheck must pass before normal BOOT/VM tests; earlier Python provenance results are source-qualified, not a Rust execution verdict.
+
+The metered correction a3cc/f3b641ae/228 passes cargo check --workspace --all-targets --locked --profile test in145.825575s (rawa2c7c62c746d0885f7d1b88eb103570633d86fc1154664939ebbb1c89f965e66). Independent source review approves production meter threading/no-refill/lifecycle for controlled validation but found a static provenance gap: the private checked_function instruction emitter lay outside all five closed guard scopes. The unchanged helper is now independently closed at SHA25676c90e88398bb4e49e320877d5bf04c84ab6d667bc3fcc5a0a93be96352918cf in checker constants and manifest; a new negative prepends constant-true/return, proves the other five scopes unchanged, and rejects refreshing either only whole-file hash or both whole-file/helper hashes. No Rust/runtime bytes changed in this follow-up. All32 record-provenance Python tests pass (12.797s), and full macro provenance still verifies12forms/2factories/label/public. The donor README evidence link now binds immutable8a110949 source. V4 packet preserves exact source and provenance deltas; normal BOOT/runtime validation remains unexecuted before the next step.
+
+
+For source a3cc0fe / fingerprint f3b641aebf77a492c305a0f1f0ff826af4b005e500617d013cee45caaadbd4f9 /228 inputs, the normal bootstrap verifier generates matching four artifact pairs in173.531467s (raw50eb9568a3881dcbe14d4ec5df5928b9165c1dce0cee0c1edf85553e0d0269b6), then exits1 comparing the prior shipped runtime. Independent actual code/import/ABI review approves exact-four adoption a3893d8: one expected packed-probe import per phase, preserved existing signatures/cells/source/dependencies and shared ABI layout. This is an actual code change; the old metadata-only comparison does not apply. Pure compiled build-script identity passes11.159013s (raw910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704). No full verifier semantic execution credit is claimed. V4 independent source review closes both meter plumbing and checked-emitter provenance findings.
+
+All three exact planner controls pass,0fail/0ignored/607filtered (0.00s harness /258.402500s including native compilation), raw03cce18ec91920cc5c6e0d3bf0b00198930c1562da4121b969d6817af42be419. They exercise cancellation/retry without IR mutation, escaped/nonadjacent/continuation eligibility, and failure at the first emission callback after actual verifier callbacks using the same caller meter. Full Python scripts cohort passes365 tests in56.319s; separate32 record-provenance controls and complete checker also pass. The three direct runtime tests are running separately, with no terminal result here. The remaining runtime/emission/public getter/pinned observations and fresh unchanged map200M/default10M controls require actual execution. Prior83f map69 unexecuted/default failure remain historical outcomes, not transferred to this source.
+
+[Commands, source/artifact hashes, complete review receipts and bounded results](evidence/m4-pr263-short-property-validation-2026-10-20.json); cache `/home/bobby/.cache/suss-m4-work/pr263-short-property-production-v2`. Reproduce focused cohorts with `python3 /home/bobby/.cache/suss-m4-work/run-frozen-cohort-v1.py CACHE LABEL PACKAGE TARGET SELECTION_JSON` and the recorded exact selections/environment. Maintain one Suss Cargo/VM producer and no RUSTFLAGS. Fresh pinned fixture/comparison packet is `pr263-pinned-acceptance-f3b641a-v1`; the11 fixture/source files remain byte-exact to prior83f; its4 BOOT bindings require the separately reviewed newf3 artifacts, and it is unexecuted.
+
+
+The source a3cc/f3b/228/BOOTa389 short-property suites now complete11PASS0FAIL: runtime3 (9.14s harness /178.576836s command; raw37185a7bc7084014a92323a0234845544f4d4df553b4e6499a535ff8e5f5ee20), emission2 (0.01s /9.643791s; raw35e05efbe507ccb102284812d646e7397dc36c347bd8c5247dd3ccb8d5f971e6), public getter2 (267.45s /555.752137s; raw2234789d2e404a6793fd2afe405f5a9a9496b92e5b9b604492f6bcb8a49bc62e) and pinned observation1 (73.35s /98.316245s; raw619e67f733d06a2088fbb798e9fde123bf31ac37d4af19020416c4b3f209bce8), plus the earlier planner3. Every exact selector ran. Public/pinned cases retain both caller phases, getter replacement/count/order, thrown values, nil/false, key escape and GC. Actual sampled nominal hit537→463 units; fallback samples634→675,643→695,643→695,664→749,634→697 are more expensive. These bounded numbers do not establish whole-map/default fit. Full source-bound terminals and selector reconciliation are appended to the same short-property evidence JSON.
+
+CI run39474603868 foundation reports3PASS1FAIL in compiled_bootstrap; cache-isolation fails at first `(ns cljs.core)` compilation with native-work exhaustion0..14 before isolation assertions. Integration3 completes1+11 tests then receives runner shutdown143 during CoreEnv; the latter has no semantic verdict. Local cache retains completed job logs; checkout/tree correspondence review is pending, so these are not represented as a reconciled final-head CI result. A test-only calibration now routes the cache-isolation program through the existing public no-expansion host interface with one cumulative100B compiler allowance per original input (from default10M), same empty dependency identity and original sources/assertions. Runtime execution/inspection still use original Session defaults; the test checks both final configured Runtime allowances remain DEFAULT_OPERATION_FUEL. No production compiler input or BOOT changes. Full compiled_bootstrap4 replay remains unexecuted at this checkpoint. The unchanged dedicated map200M/default10M controls remain unchanged and next after focused verification.
+
+
+The calibrated compiled_bootstrap cohort completes4PASS0FAIL0ignored0filtered (111.76s harness /125.975084s command), rawa4c2789541e6764ceefbe74fe22929c52965181e022444e54eddf048e6248904, on6414859 with unchanged f3b/228/BOOTa389. All original tests execute, including both-phase cache-isolation/redefinition/reset/GC and final default Runtime option checks. The fresh pinned packet initially rejects stale copied83f BOOT hashes during preflight, before Cargo or VM launch; no test verdict is inferred. The retained preflight record distinguishes11 unchanged fixture/source files from4 independently reviewed regenerated BOOT files. Only those4 binding entries are corrected, preserving200M/200M and complete original map/identifier source and observation requirements.
+
+
+Fresh unchanged pinned200M/200M execution on f97/sourcea3cc/f3b/228/BOOTa389 completes1PASS1FAIL0ignored11filtered (169.65s harness /345.019746s total), raw09add40ddddb5486783ebf1e42c5745190c27595bec22a976e26fdc645229c55. Independent identifier comparison passes15 ordered host assertions; map has0observations/69unexecuted, expanded-result transport239..5926 exhausts Wasm fuel. New mixed stack47/242/1122/1070/185/276/277/6 is rebound independently: BOOT242 reads suss.core/-first through binding-get;242/1122/1070 match actual BOOT byte offsets, ABI indices use source-verified observer insertion, and6 stays unknown. The exhaustion site does not prove cost dominance or improvement. Offline ABI generation asserts compiled f3 fingerprint and uses no Engine/Store/test.
+
+The unchanged default10M constructor also completes0PASS1FAIL0ignored1filtered (87.12s /377.905663s), rawd0b1841e6ad74ab290e1d3fbf4edc4ba99afa035194354da0e7d3ee30ccf289c. Initialization and user definition succeed, first Runtime caller at line192 fails &envinput transport83..108, with constructor outputs/Macrocaller unreached. Neither acceptance blocker is resolved by the11passing short-property tests. [Commands, original fixtures, both comparisons, failures, independent frame/calibration/CI reviews and limitations](evidence/m4-pr263-pinned-and-default-f3b-results-2026-10-20.json). Next implementation candidate is existing integerSSA donors c63dfe4+71ded40, cache-adapted against f3 without authority/runtime-ABI changes; all new planning/import/local/emission work remains metered. No performance prediction or native acceptance is claimed for this unexecuted candidate.
+
+
+The integerSSA contribution from c63dfe4+71ded40 is now adapted on the reviewed f3 source:5files only (emitter, newinteger_bits planner/emitter, cache regressions and2completebitwise test files). Whole donor tests had exact current preimages; existing meter plumbing is reused rather than copied again. Integer producers keep original coercion timing; escaping/multiuse/effect-separated Number boxes remain at their original positions, with immutable i32 bits reused only for same-block integer consumers. Continuation and cross-block cases retain generic representation. New module/import/slot/local/instruction construction work is prepaid; no-integer modules skip the added graph scan. Existing short-key emission, source/storage/domain guards and runtimeABI code remain unchanged. Cache tests distinguish actual hit and miss work and inject typed fuel/IRQ failure across all3miss/bypass routes before full retry.
+
+Cache packet `/home/bobby/.cache/suss-m4-work/pr263-integer-transplant-f3b-v1` retains5before/afterimages, exact donor refs, manifest SHA2567ed5c7d65d8bbfc6e03daafced2e5921d2e6f0251820a67b81ecc0ef9a6ba3b7 and independent source/fee/semantics GO. Rust parser checks pass for all5files; no Rust typecheck, matching BOOT, execution or whole-program benefit is claimed yet. This is a new compiler source and needs dynamic input discovery, typecheck, normal2BOOT/code/importreview, exact4adoption and pureidentity before Session tests. Do not reuse old f3 acceptance passes as new-source results. NoIntegerSSA donor BOOT, unrelated when-let/provenance changes or old result archives are copied.
+
+
+Source ab6fe8c /24ed233c8d5739b8da0db912040b653c1acc0c471585e6b71cd9fdb90f41834d /229inputs passes workspace/all-targets typecheck167.652988s, raw2b94df1ab1368747161d952f42f5aba77eac0dd721021cbc32b95f7eda76fc01. Bitwise and complete record provenance checks pass (stdout only; static identity is not execution). Normal two-generation BOOT reproduction matches all4pairs/all8hashes147.990532s, rawdd5829da318a2ca785770b25c8782aab92f3486ecea00de88c3a755aea033308, then exits1 comparing the old shipped image. Actual code/import review verifies all229source inputs, unchanged recursive/shared ABI/VALUE locals/catalog/phase/dependencies, expected coerce-int32 import and19integer-local bodies. Exact-four adoption is2e0c066; pure compiled build-script identity passes14.094455s, raw910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704. No complete verifier semantic pass is substituted for those separate gates.
+
+All25selected focused tests execute successfully on this source/BOOT: cache12 (3.04s harness /235.169801s including compilation; rawb452cec3445f60c439cd1d7ece4a4f97484a44069bc578e2f5db002f7395fba0), bitwiseIR5 (0.00s /270.946588s; raw6ea9d8ab84d8f6e738e19a1eb6c1c9c7c920ede7c51085f8b7d22d71de9cd37c), short-key planner3 (0.00s /0.356125s; raw05840a3fcd69b0cd07f7df964ad00f887a350eafb58425b315b6be542649e13e), directruntime3 (7.01s /11.168390s; rawcfce2241d4b20f785ace8a1d515b5e00132aec30a37e0b1e0c081cbf061c8f0f), emission2 (0.00s /1.131863s; raw48a86b3d08ae4155fa6efe5d0a2c9e6360ffb15065a61e624e552821b0f86627). Every exact selector is reconciled with harness names/counts, no ignores or shortened bodies. IR/emission checks verify structure, not guest semantic acceptance. The cache tests include typed fuel/IRQ failure and full retry in all3miss/bypass routes, no entry publication and actual hit/miss charging.
+
+[Complete commands, source/artifact/input hashes, source/adoption reviews and focused outcomes](evidence/m4-pr263-integer-ssa-validation-2026-10-20.json); cache `/home/bobby/.cache/suss-m4-work/pr263-integer-production-v1`. Commands use the recorded exact selection JSONs with run-frozen-cohort-v1.py and the same bounded environment/noRUSTFLAGS/oneSussproducer rule. Next:10complete public bitwise tests, current-source public short-key observations/getters and bootstrap4, then unchanged200M map/identifier and10M constructor controls. Fresh pinned packet `pr263-pinned-acceptance-24ed233-v1` has11byte-exactfixture/source files plus4reviewednewBOOTbindings, but remains unexecuted. Priorf3 failures stay historical and are not upgraded by these25passes.
+
+
+The first current24ed/229/BOOT2e public bitwise cohort completes9PASS1FAIL0ignored0filtered (75.96s harness /452.792226s including6m15s native build), rawcc283480e80f05b6bf9c2944d4a7b7522eceb5a1f8a051b513f67ee95218e503. All4newinteger tests pass, including both phases, signed/unsigned/nonfinite boundaries, original valueOf/evaluation/throw order, aliases/captures/recursion/global reload and GC. The primary70pinned corpus fails in its original CORE compilation at testline15/nativework1632..1745 before any observations; all70remainunexecuted, not value mismatches. This failure is retained in the integer evidence JSON; it is not relabeled successful. Independent native25 evidence review separately reconciles all5previous cohorts to25distinctPASS with source/BOOT identity and no public-semantic inference.
+
+A test-only calibration now shares the previously reviewed no-expansion compiler host between bootstrap isolation and primary bitwise semantics. It gives each complete original CORE/program input100B compilation fuel instead10M, with no nested refills or Session/Runtime setters; original Runtime10M is additionally checked. Original CORE source, native namespace entry, all70case sources/IDs/expected values and comparisons remain unchanged. Nine other bitwise test bodies/helpers and all4bootstrap test bodies are byte-exact. Actual decoded primary values are emitted for independent host reconciliation; no expected artifact is rewritten. Dedicated CORE17/defaultconstructor/pinned200M controls remain unchanged. This changes only CLI test sources, so compiler24ed/229/BOOT2e identity is unchanged and no BOOT regeneration is required. The calibrated full10case retry and extracted-helper bootstrap4 regression are not executed yet at this checkpoint. Cache packet pr263-bitwise-corpus-compilation-calibration-v1 preserves exact3before/afterimages and constraints.
+
+
+The calibrated complete bitwise retry now passes10/0/0/0filtered (124.68s harness /149.793448s command), raw6a1a5d580ca49df32dfa2f03e21dc8308e5b4b03a474f2c63607f8d41cac72e1, onf502 with unchangedab6/24ed/229/BOOT2e production. Main and an independent reviewer reconcile all70actual typed Runtime observations in original order against the immutable corpus, including the first row sharing a harness line. [Actual/expected/source-hash observations](evidence/m4-pr263-bitwise-primary70-observations-2026-10-20.jsonl) and source/Runtime-calibration/evidence reviews are bound in the integer evidence JSON. Primary compile allowance is100B per original input (previous10M), Runtime remains10M; the initial9PASS1COREcompileFAIL/70unexecuted result stays separate. The10passing tests do not imply complete bitwise compatibility.
+
+All4bootstrap tests also pass after the helper extraction (119.55s /135.363592s; rawea6be628bd3610c481462d3d79e556ddbcc2f764afe0eaa429dbf62fdb391d5f). Current-source public short-key getters pass2/0 (79.75s /96.524541s; raw81a0902f9c947a610db73806ae47ed78b63108ec1651c1c6b218cd2720977f27); pinned short-property observations pass1/0/3filtered (64.55s /86.631812s; raw898611d5d2d2377d9526d5471a2e99503341efb7ca4dd8f88adcff9df6b3a9f7). Both caller phases retain original values/effects/throws/order/GC/key escape. Combined with native25,42distinctselected tests pass on this source; the earlier failed attempt is retained and not included as a success.
+
+A fresh complete map/identifier replay is now running from pr263-pinned-acceptance-24ed233-v1 with original200M/200M and unchanged11fixture/sourcefiles+4reviewedBOOTbindings. No terminal verdict is claimed here. The unchanged defaultconstructor10M follows. Original#261source/literal/Symbol/namespace/source-tag/full-workspace/final-CI gates remain separate and require actual execution. No source/default-control allowance or rate is changed by the test-only calibration.
+
+
+Fresh24ed/229/BOOT2e pinned control completes1PASS1FAIL0ignored11filtered (176.16s harness /342.442597s command), rawcda37be4700896d72541b5fddd195a54e239a8d1f1b7b0b1b0d5de6a27962cd7. Both post-terminal independent comparators run: identifier15orderedhostassertionsPASS, map0observations/69unexecuted after expanded-result transport239..5926 exhausts Wasm fuel at unchanged200M. New trace228/186/1123/1071/185/276/277/6 is not interpreted as exclusive cost/progress; no current-module rebinding is claimed for it. Commands, complete fixture bindings and both comparison reports are appended to the integer validation JSON. The42selected passes/70primarybitwise observations do not replace this unresolved control. The unchanged explicit10M constructor source hash matches and its fresh current-source replay is running separately; no verdict yet. No Runtime/default-control allowance or metering rate is changed.
+
+
+Fresh unchanged10M constructor on current24ed/229/BOOT2e is terminal0PASS1FAIL0ignored1filtered (99.28s harness /415.969462s command), rawd4b165709786f5b76b52da76c5baabd2f615c7e8abc0de1fa5fe999a46d4d16a. First Runtime caller eval_with_macros at line192 again exhausts during caller &envinput transport83..108; output assertions/Macrocaller remain unreached. This is appended to current integer evidence without upgrading prior/current failure to success. All42focused passes and70Runtimeprimaryobservations remain valid in their bounded scopes.
+
+The read-only NoExpansion projection audit finds live callback catalog capture already lazy; larger namespace snapshots also retain HIR/method/declaration facts needed for later macro introspection and cannot be dropped. It supplies no evidence that skipping the small callback descriptor would fix default compilation. No opt-out architecture or provenance omission is applied. Cache pr263-noexpansion-projection-audit-24ed-v1/REPORT.json binds the current source/limits. The existing36b4d07+e0f73ae snapshot pair instead has a localized two-file adaptation plan in pr263-snapshot-donor-pair-current-audit-v1/REPORT.md and audit.json: preserve all current root/Node/terminal membership, owner/root/unused-cut rejection, reached-only opaque retention, full type/layout/mutable-value checks, and current>=33indexed fallback; do not copy old adaptive-index machinery. Historical passes/adverse costs are not current acceptance. Next implement this bounded existing contribution with its complete regressions before new source/BOOT/focused controls.
+
+
+The existing snapshot pair36b4d07+e0f73ae is adapted in2source files only. Nodes retain exact original objects and all mutable contents; redundant persistent StructType/ArrayType wrappers are removed while capture retains fallible type queries and matching retains actual kind/type-query/count/every-field checks. Current original_members traversal/source authority is unchanged except2Contents arity patterns. No descriptor, source/domain/memo, predecessor or originally-nil guard changes.
+
+Capture borrows<=32supplied cut references only inside its callback/guest-allocation/GC-free interval, validates all owners before RootScope and every root-equal cut before atoms, and owns only reached opaque occurrences under the snapshot counter. Duplicate/immediate/unused supplied entries count toward the threshold. >=33 uses the current byte-exact indexed add_cuts body; donor adaptive-index machinery is excluded. Added slice/control/iteration/search/owned-root work is prepaid; an opaque borrowed hit avoids the hash/index work it no longer performs. This is representation/search work removal, not a rate/quota reduction or source-authority shortcut.
+
+Three complete donor regressions and one new differential exercise external Module/type handle drop, mutation/restoration, separate handle ownership,32/33every-fuel-cut/IRQ/retry/foreign/root rejection, and0/1/31/32/33supplied entries with forced collisions/duplicates/immediates/unused roots, opaque versus strict mutation, GC and cleanup. Existing snapshot tests preserve bodies apart from required Capture field initializers/type imports; all4original-member test bodies are byte-exact. Rust parsing passes. Exact images/manifest and fee/source bounds are in cache pr263-snapshot-pair-transplant-24ed-v1; independent source review, Rust typecheck and all execution remain pending. New source fingerprint/normal2BOOT/exactadoption/pureidentity are required before Session tests; native-only changes should preserve noncustom BOOT code, but actual comparison must verify it. No historical result or cost prediction is transferred.
+
+
+Sourceb03c1e0/411dd662696d26324c48ebbb8bd30bb76232fa08e03c44463e2ca77986baba2b/229inputs normal2BOOT matches4pairs/all8hashes (144.352066s; raw43f5096d81a33c5756019765b7074fa16866bf52ccad6d9eb3a645a3a1c67092), then exits1 comparing prior shipped bytes. Main/independent review verifies every actual build input/rerunpath/FP, allnoncustomWasm sections byte-exact to2e and unchanged ABI/cells/phase/dependencies. Exact-four adoption71a4126 and pure compiled identity pass21.746896s (raw910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704). These separate gates do not claim a full verifier semantic pass.
+
+All24snapshot/originalmember tests pass0fail/0ignored/591filtered (34.21s harness /279.937908s including compilation), raw705dab794445016a294b0c78e9579b20683f196a31ba809f3fc2846ff49707c5. Four new tests plus20current regressions preserve module/type lifetime, exactref/type/count/mutablevalue checks, scoped membership excluding unused cuts/opaque descendants, handle cleanup, every measured fuel cut at32/33 and IRQ/foreign/root recovery. Actual layout printsNode88/Contents32/Snapshot80/Atom48; sizes alone are not a performance claim. Actual selected-versus-forced-current-indexed costs: supplied1 removes510/512units (ordinary/forcedhashcollision),31removes495/337,32removes491/331; empty adds5 and33indexedfallback adds4. All10samples retain full mutation/restoration/GC/accounting checks; no universal or whole-program gain is inferred.
+
+The complete29factory/prefix/source-domain preservation cohort also passes29/0/0/586filtered (64.59s /65.866368s), rawfa85761ff9fde49283b6843d933cf87e5b664f800d5127c10af6184c583f1157. All exact names/counts are reconciled; new snapshots retain original source/member/seed/predecessor/storage guards and source-versus-DATA boundaries. [Commands, exact images/reviews, source/artifact bindings, complete53test outcomes and measured samples](evidence/m4-pr263-snapshot-cut-validation-2026-10-20.json). Cache pr263-snapshot-pair-production-v1.
+
+Fresh original map/identifier200M/200M replay is running in pr263-pinned-acceptance-411dd66-v1; no current terminal verdict. It binds11byte-exactfixture/sourcefiles+4reviewedBOOTentries. Unchanged explicitconstructor10M follows. Prior24ed42passes/primary70 and map/default failures remain source-qualified. No control allowance, metering tariff, observation or metadata is removed.
+
+
+Independent current411dd snapshot/factory evidence review confirms53passing executions with39distinct names and14intentional overlap executions across the two complete cohorts, not53unique cases. All raw hashes/exact selections,229source inputs, reviewedBOOT/identity and10bounded measurements match; no failures/ignored names or whole-program gain are inferred. The integer source24ed42distinct cases/primary70 are a separate tuple. Current snapshot evidence JSON now records exact multiplicities and the independent receipt. The same411dd pinned producer remains live; no restart or source mutation.
+
+
+Fresh controls on compiler `411dd662` (229 inputs), production `b03c1e0`, matching BOOT `71a4126`:
+
+- `cargo test -p suss-compile --locked --test clojure_test_suite -- --exact --test-threads=1 --nocapture pinned_map_declaration_executes_without_transport_loss pinned_reader_identifier_names_keep_values`: 1 pass, 1 fail, 190.41s harness / 349.316s command. Independent identifier comparison matches all 15 ordered host checks. Map produces zero observations; all 69 judgments remain unexecuted after expanded-result transport at bytes 239..5926 exhausts its unchanged 200M allowance. Raw SHA256: `7d7d8fe7557176fe58538c79f68805187bff1ccdfd23344290458fab6276aabb`.
+- `cargo test -p suss-cli --locked --test compiled_macro_constructor_source_asts -- --exact --test-threads=1 --nocapture constructor_operation_and_children_fit_default_fuel_in_both_caller_phases`: 0 passes, 1 failure, 67.16s harness / 344.571s command. The unchanged 10M control fails at line 192 during first Runtime caller `&env` input transport, bytes 83..108. Output assertions and Macro caller are unreached. Raw SHA256: `9ccca39d14c1c9cd7cc3233bec1c519b5e54999ed072ab40bf7123be8212193c`.
+
+[Source-bound commands, fixture/artifact bindings, terminal results and independent comparisons](evidence/m4-pr263-snapshot-cut-validation-2026-10-20.json). Cache directories: `pr263-pinned-acceptance-411dd66-v1` and `pr263-snapshot-pair-production-v1` under `/home/bobby/.cache/suss-m4-work`. Both ran serially with the recorded optimized test profile; no RUSTFLAGS override, allowance/rate change or reduced fixture. The 53 passing focused executions cover 39 distinct names with 14 repeats; they do not establish map/default acceptance. Changed timings or exhaustion stacks alone establish no whole-program improvement. No test producer remains running. Diagnose the remaining transport costs before another production change; do not rerun unchanged controls without a concrete reason.
+
+Independent review verifies the current411dd pinned/default terminal outcomes, actual typed identifier operands and exact source/BOOT bindings. It found stale inherited `fixture-bindings.json.bootstrap_commit` metadata (`51cc2b2`); launch head and all four per-file artifact bindings correctly use `71a4126`. The evidence JSON now records an explicit correction and review receipt while preserving the original launch-bound descriptor/hash. This is a metadata correction, not a rerun or acceptance change.
+
+
+The construction-ledger adaptation of existing commits `14c2ad1` (paging only) and `014e0f0` (large boxed facts) changes five source/test files; it imports no donor HIR/shared-scalar or BOOT changes. Records retain their original ordinal, native inputs and source/domain/memo checks. Logical 32-record pages avoid relocating prior completed pages; the first page grows from four slots. Directory/page allocation, relocation, lookup and publication work is metered; failed appends publish neither a record nor an empty page. Arrays/constructors use separately metered boxed payloads; scalar facts remain inline. Four complete donor regressions cover page boundaries/excess allocator capacity, every append fuel cut/IRQ/retry, differential forced-collision projections with mutation/GC, and boxed-input cleanup.
+
+Initial `39552b3` typecheck failed (8 diagnostics from one incorrectly generalized flat-slice element bound, 14.553s, raw `361ec75a46cbc36fcede3fbebbb7915a169f6f59c5f87e51d2a0b3d471c0088e`). Corrected `1f5c3b6`, compiler `4ba688558226b0a3e5f4c10c2533376649b220b45c6abf5a6d2091a76570f203` / 229 inputs, passes `cargo check --workspace --all-targets --locked --profile test` (152.332s, raw `764728bcfe6dd20b814c87f1789e721a0701db540ab5a8ffe50d2ec7f0de7db1`). Independent source/fee reviews verify the corrected postimages and existing authority checks.
+
+`sh scripts/verify-bootstrap.sh` produces two equal generations/all four pairs (158.935s, raw `1592f46552bb73d9a967e141434753947207451021f5faa7427d1461115528bc`), then exits 1 comparing old shipped bytes. Main and independent artifact reviews verify all 229 actual build inputs/rerun paths, unchanged noncustom Wasm sections and fingerprint-only custom/manifest changes. Exactly four reviewed files are adopted in `5a41e04`; `python3 scripts/verify_bootstrap_identity.py` passes (7.100s). This is not a full verifier semantic pass.
+
+[Commands, exact source/artifact bindings, retained failed attempt and reviews](evidence/m4-pr263-paged-construction-validation-2026-10-20.json); cache `pr263-paged-boxed-production-v2`. The exact 53-name union of all ledger/projection/deferred/canonical/controller regressions and prior factory/source-domain preservation cases is selected for execution with `run-frozen-cohort-v1.py ... ledger-source53 suss-compile lib .../ledger-source53-selection.json`. No current semantic execution or default/map improvement is inferred from typechecking, static review or layout changes. Prior411dd controls remain source-qualified failures; full final-source acceptance and baseline remain required.
+
+The complete selected ledger/source cohort on `1f5c3b6` / compiler4ba68855 / BOOT5a41e04 passes **53 distinct tests**, zero failures/ignored, 566 filtered (70.02s harness / 339.802s including 4m28s compilation). Raw SHA256: `f62c4563816422fccac7fcd2bd87b43a6332fbadaeeffbd09ae816d6e2ab0f49`. All four added regressions execute, with original factory/root/Node/terminal, seed, forged memo, poisoned input, foreign/reset and recovery checks retained. The JSON records every exact started/selected name; this cohort has no duplicate names. The fresh unchanged 200M/200M map/identifier packet is `pr263-pinned-acceptance-4ba68855-v1`, binding 11 unchanged fixture/source files and all four reviewed BOOT5a41 files with a consistent top-level bootstrap label. No map/default acceptance is inferred from the focused pass.
+
+Fresh unchanged controls on compiler4ba68855 / 229 inputs / BOOT5a41e04 complete:
+
+- Pinned map/identifier200M/200M: **1 pass, 1 failure**, 181.81s harness / 348.669s command, raw `89c1c7d2ca820de072fe9da69e59e63bd13656200b93bb650ea6d0bcd55fdb4b`. Independent comparison matches all15 ordered identifier host checks. Map has0 observations/69unexecuted judgments behind expanded-result transport239..5926 OutOfFuel. Its capture bytes and exhaustion stack are unchanged from prior411dd; no map improvement is established.
+- Full explicit constructor10M: **0 passes, 1 failure**, 68.67s / 324.398s, raw `fe1c5a815cbf8e6ab7aede5d373fd1f22dd564c53745c2e4d92bd83e8311cd4a`. Full test source remains byte-exact (`3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2`). First Runtime caller fails at line192 during `&env` input transport83..108; output assertions/Macrocaller remain unreached.
+
+Both commands and bindings are retained in [the paged-construction evidence](evidence/m4-pr263-paged-construction-validation-2026-10-20.json), alongside independent review of all53distinct focused passes. No quota/rate/fixture change, whole-program fuel benefit or final-baseline/CI pass is claimed. No local test producer remains active. The retained typed/shared-scalar adaptation plan (`pr263-typed-shared-scalar-adaptation-1f5c3b6-v1/REPORT.md`) identifies four current paths and requires preserving exact-root/Node/terminal scope, full predecessor validation and all current scalar/type/content/owner/cancellation checks; wholesale donor domain replacement is unsafe. That contribution is not applied or tested here.
+
+
+The typed/shared scalar adaptation of `667f583` plus its Runtime/Macro capability regression correction `6a1d15e` changes four current paths only. Factory-prepared expectations retain exact physical types and scalar contents in one paid Arc owner. Only successful direct validation of the ORIGINAL supplied root admits a scalar domain node; mismatches retain the original value in an invalid Complex node. Complex payloads use a paid Box. Scalar nodes have only their exact root, no reference edges/seed or domain/record/Watch backpointer. Current paged/boxed ledger, staged factory publication, scoped root/Node/terminal traversal, complete predecessor validation, class/prototype/method/storage/memo and retained DATA policy checks remain. New accessor/eligibility dispatch and Arc/Box work is prepaid; scalar owner checks precede rooting current or scanned nodes. No old donor domain graph, ABI, HIR or BOOT is imported.
+
+Six complete donor regressions retain typed physical storage/content/owner/cancellation, wrong supplied root, real Runtime capability absence, mixed lifetimes and publication failure/retry. An additional genuine scalar-root test uses actual factory APIs across two consumer generations, rejecting equal distinct roots, unrelated siblings/ancestors, and testing current producer mutation/GC/restoration. All original test bodies remain apart from mechanical field-to-accessor changes in two test helpers.
+
+Production `17f650c`, compiler `bc66e4bb1fc876c401cbae6793b63dad4ac5bb747b3adc6997df703d276876c3` / 229 inputs, passes `cargo check --workspace --all-targets --locked --profile test` (121.021s, raw `d898019588a4ff8710b4ee7e975542d9d6095705235b1bfa37ed96014834ddd9`). Independent source/fee and factory scope reviews approve the exact four postimages for validation. `sh scripts/verify-bootstrap.sh` produces two matching generations/all four pairs (140.551s, raw `af9638472800755b4a6ba90145ba9034c2b234859732c89b5fc4008d666b5a9b`), then exits1 comparing old shipped bytes. Actual229inputs/rerunpaths/FP, all noncustom Wasm sections and fingerprint-only custom/manifest changes are independently verified; exactly four artifacts are adopted in `2e35e5c`. This is not a full verifier semantic pass.
+
+[Commands, exact adaptation/source/artifact bindings and reviews](evidence/m4-pr263-typed-scalar-validation-2026-10-20.json); cache `pr263-typed-scalar-production-v1`. The exact69-name selection adds all scalar/domain and retained-DATA policy controls plus the genuine scalar-root regression to the prior53ledger/source names. It grants no execution credit until the complete cohort runs. Prior4ba map/default failures remain source-qualified; no whole-program gain, final-source acceptance, baseline or CI pass is inferred.
+
+
+The first complete69-name run on production17f650c / compilerbc66e4bb / BOOT2e35e5c is **66 passes, 3 failures**, no ignores, 557 filtered (141.04s harness / 418.973s command), raw `0ec7e1a1793bf0eceb73e1e1fb3c4a5fd373facfe61c4f0a9c0fb21993721c14`. Independent review verifies every selected/started name: all seven added regressions and all prior53ledger/source cases pass. Failures occur in native compilation of three existing semantic setup inputs: the retained-DATA unsafe receipt test's original `(def hash-ordered-coll (fn [_] 719))` at0..36, and both source-write-domain method tests' original `extend-type PersistentVector IHash` at0..118. Later semantic assertions in those tests remain unexecuted; no historical regression/pass is inferred without a matching old baseline.
+
+Under the user-approved#252 policy, exactly those three full setup inputs now use the previously accepted no-expansion semantic compiler helper: one cumulative100B compilation allowance per input instead10M, checked subtraction/no refill. All source strings, effect order and subsequent assertions stay unchanged. Caller Session/Runtime10M is asserted before/after; no Session fuel setter, dedicated controls, rate change or fixture reduction is introduced. The helper lives only in the existing cfg(test) module. Initial helper-only69ae92b typecheck fails on its old relative constant-module path (43.905s, raw `41fa6a8b821c5a1ad9188d1aa04b3dee56a58556d029eb98f3ef8f4ec3561e0c`); the corrected include resolves to existing tests/support/compilation_fuel.rs.
+
+Corrected source9fa6d99 / compiler `db4a3fd9b78fc9ca351d27932c133a0f016a45c3aa9e5758fd9a127a7e46215a` / 229 inputs passes workspace/all-targets typechecking (96.883s, raw `5db148ffd83170cc578f6d7211460ef06f77af7fe93a8d77bcfe96cbad585d64`). Independent review verifies exact three-image calibration and unchanged production logic. Normal2BOOT reproduction matches all four pairs (160.512s, raw `5b6c9808d9aead9fe859703fcc57fe333b11749cc7b02d1730a43e56173522a2`), then exits1 comparing prior shipped bytes. Actual229build inputs/FP/rerun paths, six-path source composition, noncustom section identity and fingerprint-only custom/manifest changes pass main and independent review; exactly four files are adopted in2eb83ba. This is not a full verifier semantic pass.
+
+[Full commands, failed attempts, exact calibration/postimages and source/artifact reviews](evidence/m4-pr263-typed-scalar-validation-2026-10-20.json). Cache `pr263-typed-scalar-production-v3`; original69 and helper failure remain in v1/v2. The same69exact-name cohort must be rerun on this source/BOOT; no calibrated semantic acceptance or default/map fit is inferred yet.
+
+The same69exact-name cohort on current9fa6d99 / compilerdb4a3fd9 / BOOT2eb83ba now completes **69 distinct passes**, zero failures/ignores, 557 filtered (142.32s harness / 375.262s command including3m52s native build), raw `804c7e23f5f52449880fd902b502489f14f2cf1f9ea5e2d58a38f9cc21afd6a3`. The three previously blocked semantic bodies now execute fully with their source and assertions intact; Runtime10M before/after checks pass. All seven added scalar/storage/owner/root/predecessor/cancellation regressions and prior53ledger/source names pass. Actual layout output is Node16/ComplexNode160/ScalarInputs112/Fact24; this is an observation, not a whole-program gain. [Complete commands/results, original66/3 and helper import failure, exact calibration/postimages and reviews](evidence/m4-pr263-typed-scalar-validation-2026-10-20.json). Fresh unchanged map/identifier200M packet `pr263-pinned-acceptance-db4a3fd9-v1` binds11unchangedfixture/sourcefiles plus4reviewedBOOT2eb83 artifacts; its acceptance is separate from these69passes.
+
+Independent calibrated69 evidence review verifies all69unique full tests, including all three previously blocked semantic bodies and their original source/assertions plus before/after Runtime10M guards. Raw/source/BOOT/identity bindings and original66/3/helper-path failure remain separate. Review SHA256: `96ad403706795616945f82a18f34000de57e762e062f2fdf6ccb67a96918fc59`; included in the typed-scalar evidence JSON. No pinned/default verdict or final-source readiness is inferred.
+
+### Worktree target cleanup (2026-10-20)
+
+At the user’s request, inspected Suss worktree and task-cache Cargo targets,
+checked `/proc` process references (including `CARGO_TARGET_DIR`), and removed
+only inactive generated `debug`/`release`/`tmp` subdirectories using Python
+`shutil.rmtree`. Cleaned 31 target roots; retained the shared
+`/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target` for ongoing validation.
+Preserved all source/worktrees and evidence caches, plus 186 build-output and
+diagnostic files in the local cleanup archive. Available filesystem space rose
+by 26,801,762,304 bytes (about 25.0 GiB), from 191,417,569,280 to
+218,219,331,584 bytes. This is a measured filesystem delta; concurrent activity
+can affect it, and logical target sizes are not a physical reclamation total.
+
+Local audit records: `/home/bobby/.cache/suss-m4-work/target-cleanup-2026-10-20-`
+`{inventory,plan,result}.json`; retained diagnostics are in
+`target-cleanup-2026-10-20-preserved/` beside them. Verified every selected
+generated subdirectory is absent and the protected shared target still exists.
+AGENTS.md now requests this check periodically at task/branch handoffs and after
+abandoned experiments. Documentation-only change; checked with `git diff --check`.
+
+### Typed-scalar source: complete pinned and constructor controls (2026-10-20)
+
+Source9fa6d99/compilerdb4a3fd9/229 inputs/BOOT2eb83ba: the original pinned
+pair ran via `python3 /home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-db4a3fd9-v1/run.py`;
+both `compare_map.py` and `compare_identifiers.py` ran against retained captures.
+Terminal1PASS1FAIL (151.64s harness/310.390482432s total), raw SHA256
+`ccd5de00ac932f62dbd29c2436814a3b5e5693fd584f44c4a89dc17e3a4ef8dd`.
+Identifier15 ordered host comparisons pass; map0observations/69unexecuted behind
+expanded-result239..5926 OutFuel at unchanged Macro200M/caller200M.
+
+Then ran `python3 /home/bobby/.cache/suss-m4-work/run-frozen-cohort-v1.py
+/home/bobby/.cache/suss-m4-work/pr263-typed-scalar-production-v3 default-constructor
+suss-cli compiled_macro_constructor_source_asts
+/home/bobby/.cache/suss-m4-work/pr263-typed-scalar-production-v3/default-constructor-selection.json`.
+The unchanged full10M constructor is terminal0PASS1FAIL (66.31s harness,
+367.682017856s total including native compile), raw SHA256
+`2e8805a52795743371154175013db11e989ca8ad34e641be014d2d2f6213ad41`.
+Line192 fails at first Runtime caller &env transport83..108; output assertions
+and Macro caller are unreached. Current69nativePASS does not establish either
+integration fit. Exact bindings, comparisons and failures are in the typed-scalar
+validation JSON. No quota/rate/fixture change or full baseline/readiness claim.
+
+### Strict constructor schema witnesses: source/artifact checkpoint (2026-10-20)
+
+Adapted retained d21b410 and constructor-only092f8be changes into exactly3paths;
+current paged ledger, shared scalar witnesses, factory graph and prototype buffers
+remain intact. Session-local retention is bounded16; root17evicts rather than
+rejecting construction. Every hit checks exact same-session reference plus full
+strict storage; mutated schema recaptures privately without upgrading old facts.
+Private counters genuinely own witness roots. Replacement backing, retains,
+eviction release and initialized snapshot retirement are prepaid. Final
+publication follows all current fallible direct/Watch/Runtime memo setup.
+
+All6donor regressions retained, Runtime failure seam/positive retry extended,
+private-allocation charge included in cold failure thresholds after independent
+review caught its omission. Existing test lines and guards are unchanged.
+Candidate/reviews: `/home/bobby/.cache/suss-m4-work/pr263-schema-witness-transplant-db4-v1/`.
+Sourcef029b15/compiler40df5a30/229inputs; validation cache
+`/home/bobby/.cache/suss-m4-work/pr263-schema-witness-production-v1`.
+`python3 <cache>/run-typecheck.py` passes workspace/alltargets70.538495413s.
+`python3 <cache>/run-bootstrap.py` generates2matching complete sets181.223669563s,
+exit1 only oldshipped comparison. `python3 <cache>/check-generated.py` and
+independent review verify all229actualbuilder inputs, all4pairs and fingerprint-only
+custom/manifest changes with byte-exact executable sections/ABI/catalog cells.
+Adopted exact4at6379ca7. `python3 <cache>/run-identity.py` PASS2.895553498s.
+Raw hashes and independent bindings are in the schema-witness validation JSON.
+
+Current command: `python3 /home/bobby/.cache/suss-m4-work/run-frozen-cohort-v1.py
+<cache> schema-preservation80 suss-compile lib
+<cache>/schema-preservation-selection.json`. All80distinct complete tests selected
+(prior69plus11constructor tests); running, no outcomes inferred. Fresh source-bound
+pinned40df and original10Mconstructor controls are prepared, unexecuted. Prior
+db4control failure receipts now include independent combined review; they do not
+transfer to40df. No wholeprogram gain, fullbaseline, finalCI or readiness claim.
+
+The complete schema-witness cohort is now terminal: **80distinctPASS/0FAIL/0ignored**,
+552filtered,191.96s harness/512.674716271s total including5m20native compilation.
+Raw SHA256`3e9991608bb72a06b80bf461d74df89c73507a543c4f23ebbfafb967b896eb1a`.
+All6new and5old constructor tests plus allprior69 preserve complete bodies and
+assertions. This does not establish map/default fit. Fresh original200M/200M
+pinned replay on40df is running via
+`python3 /home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-40df5a30-v1/run.py`;
+use both comparison scripts only after terminal and retain all missing/failures.
+Then run unchanged10Mconstructor on this same source. No sharedRust changes
+during either run; fullworkspace/finalheadCI remain unexecuted on this source.
+
+Independent focused-result review verifies all80unique selected outcomes, prior69
+and original5constructor bodies, six new complete regressions and exact source/BOOT
+binding. Review SHA256`b376c47237b6cf4682ade8f3599218a3bc2b3dfd13372ab8d42fc5ab406d2ffa`.
+This is focused execution evidence, not map/default or finalhead acceptance.
+
+### Schema-witness source: pinned integration replay (2026-10-20)
+
+Original200M/200M pinnedpair on sourcef029b15/compiler40df5a30/229inputs/BOOT6379ca7
+is terminal1PASS1FAIL (196.18s harness/387.305391778s total), raw SHA256
+`fe6c8bc79e6f6e68e11e1b352a0654f35cdba90b0e3fad3d9bd9941320b70c6c`.
+Both independent comparison scripts ran in
+`/home/bobby/.cache/suss-m4-work/pr263-pinned-acceptance-40df5a30-v1`.
+Identifier15ordered host comparisons pass; map0observations/69unexecuted after
+expanded-result239..5926 OutFuel. Captures match prior db4; no actual wholeprogram
+gain follows from focused80PASS or timing. Unchanged10M fullconstructor is now
+running via the frozen-cohort helper, labeldefault-constructor in schema-witness
+production-v1. A12 remains open; no completed historical checklist item reopened.
+Next: terminalconstructor, remaining46native semantic/namespace selectors and
+complete existing public/source-tag programs, then actual failing-blocker fixes.
+
+
+### Method inspection validation commands (2026-10-20)
+
+Source `548699669cbafa5ada761595e531308db9ea0acd`, compiler fingerprint
+`d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4`
+(229 inputs), matching bootstrap commit `c163189b714dae06731e8f60ed81759776093f48`.
+The method inspection pass reuses only successful exact-descriptor inspections
+within one Store borrow and retains later source/storage/memo checks. New
+setup/control work is metered. No whole-program fuel-fit result is inferred.
+
+`python3 /home/bobby/.cache/suss-m4-work/pr263-method-inspection-production-v1/run-typecheck.py`
+passed workspace/all-targets locked typechecking in 201.84s. The normal bootstrap
+verifier generated two matching pairs for each phase in 165.34s, then exited 1
+comparing against the stale shipped artifacts. That command is not a full
+verifier pass. All 229 actual builder inputs, noncustom sections and manifest
+deltas were checked, independently reviewed, and the exact four artifacts
+adopted. `run-identity.py` then passed in 10.78s; identity is not semantic execution.
+
+`python3 /home/bobby/.cache/suss-m4-work/run-frozen-cohort-v1.py /home/bobby/.cache/suss-m4-work/pr263-method-inspection-production-v1 method-preservation86 suss-compile lib /home/bobby/.cache/suss-m4-work/pr263-method-inspection-production-v1/method-preservation86-selection.json`
+is running at this checkpoint; no passing execution is claimed. Complete exact
+selectors, source hashes and command receipts are in
+`docs/roadmap/evidence/m4-pr263-method-inspection-validation-2026-10-20.json`.
+
+Two public literal semantic tests now use the existing cumulative 100B compilation
+allowance instead of 10M, with Runtime 10M checked before and after evaluation.
+One native receipt test receives the same calibration solely for its unchanged
+List91 method-replacement setup. All source strings and later assertions remain.
+Dedicated default, map200M, CORE/sourcechild, exhaustion and IRQ controls are
+unchanged. These exact calibrations were independently source-reviewed; their
+new-source execution remains pending.
+
+Historical source40df remaining-native46 finished 45 pass / 1 fail in 3966.40s
+harness time. All 48 rows by 13 fields matched. Its single List91 setup
+compilation failure occurred after the early forge/canonical-warm assertions;
+replacement and recovery assertions were unreached. The original failure is
+retained, and those results do not transfer to source d689. The source40df pinned
+map has zero observations/69 unexecuted judgments; identifier15 passes. The
+unchanged10M constructor fails at first Runtime caller environment transport,
+with later assertions and Macro caller unreached. CI run39509386134 ended without
+a passing final-head result. No PR readiness or issue completion is inferred.
+
+
+### Method-inspection execution and unchanged controls (2026-10-20)
+
+On compiler d689/229 with BOOT c163189, the exact `method-preservation86`
+command above passed86, failed0, ignored0 (168.13s harness/409.03s total), raw
+`d09136e84fea900f9e523d3d58c735a27237edfa4af82868e1fec85f0a2fddc1`.
+Independent execution review confirms the original80, all5 new tests and the full
+List91 replacement/recovery test. This is actual current-source execution.
+
+The unchanged10M constructor control remains0PASS1FAIL at first Runtime caller
+&env83..108, line192 (81.07s harness/342.57s total), raw
+`66f7fa626a2e2be3b78d4929c7c165791a864c81cbca9ef7010abbbace5c28ce`.
+Output assertions and Macro caller are unreached. The d689 pinned200M pair
+(`pr263-pinned-acceptance-d6893703-v1/run.py`) is1PASS1FAIL
+(228.95s harness/413.64s total), raw
+`9a0925956b65f8fdab1c407b7008000204b0c36ce3e1f25b589d4f4e778618c9`.
+Both independent comparison scripts ran: identifier15 ordered host checks pass;
+map0observations/69unexecuted after expanded-result239..5926 OutFuel.
+These results do not establish whole-program fuel improvement.
+
+`python3 /home/bobby/.cache/suss-m4-work/pr263-default-constructor-attribution-d689-v1/run.py --execute`
+replayed only the exact existing default-control binary with existing macro and
+metadata trace hooks, after the pinned producer drained. It retained the same
+failure, changed no input/binary and drained its owned process group (39.50s
+harness/39.88s total), raw
+`fe6cfac137345ab47e26c012366af77f241378357faccc5969a838012e8a00e8`.
+The last completed declaration preparation trace has8654631 fuel remaining;
+the later failing interval is unresolved. Nested trace costs are not additive.
+
+CLI-only commits6ab3a57 and88680bc calibrate exactly2 cross-invocation and6
+constant/source-environment semantic tests from10M to100B cumulative compilation.
+Their original programs/assertions/phases/GC and request order remain intact, with
+Runtime10M checks before and after each evaluated Result. Source229 freeze checks
+pass after each commit; compiler fingerprint and BOOT are unchanged. These tests
+and the earlier2 public literal calibrations await a combined ten-test execution:
+`python3 /home/bobby/.cache/suss-m4-work/pr263-method-inspection-production-v1/run-semantic10.py`.
+It runs all4 complete original integration targets in one Cargo invocation,
+checks exact2+2+3+3 outcomes and binds every source afterimage. No execution or
+acceptance result is inferred from preparation or calibrated allowances.
+
+
+### Literal/environment calibration execution and marker ABI validation (2026-10-20)
+
+On published c40e2bb/compiler d689/229/BOOT c163189,
+`python3 /home/bobby/.cache/suss-m4-work/pr263-method-inspection-production-v1/run-semantic10.py`
+passed all10 tests, zero failed/ignored, exact four full targets2+3+2+3, in1237.39s
+including build. Raw SHA256
+`1358ea3febeb2d1e5042d6b3a4f5aed69d6d2af8434f13caf22d3505bfb49da5`.
+Independent review verifies the literal/cold/GC, constant/binary64/UTF16/effect,
+cross-invocation identity/retention/reset and source-environment programs, exact
+afterimages and identical source/BOOT/head postflight. This result is historical
+once marker ABI source changes; it is not transferred to afd.
+
+Marker source923888/compiler
+`afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5`
+(229 inputs), production edit049fefb, specializes the actual protocol-marker
+lookup path to Boolean without a generic VALUE-return roundtrip. It retains
+key/receiver/table/odd-length guards, exact first-key/sentinel identity, current
+tables and error priority. No source/memo authority, caching or host tariff or
+budget changes. Independent source review proves unchanged general getter and
+setter emission.
+
+The first7-case direct ABI attempt was6PASS1FAIL at a new resource-test
+expectation (raw344a63d3475050b4164b3cb51aaa75cdb46fb316b5465d696cac297c4dc0a2f5).
+A diagnostic-only exact1 rerun confirms cap202 versus measured cost203 returned1
+(rawdd35a898076264a9fdee3a63ac0d86aae218b044ad0f34912f18e6db19878520).
+Locked Wasmtime49.0.1 checks fuel at entry/loops and saves final consumption on
+return; used-minus-one need not trap before finite return. The reviewed test-only
+correction retains all4caps. Its near-boundary successful result must leave0fuel
+and immediately trap on same-input/no-refill reentry; all other low-cut, identity,
+retry and pending-IRQ checks remain. No production limit changed.
+
+`python3 /home/bobby/.cache/suss-m4-work/pr263-protocol-marker-production-v2/run-abi7.py`
+then passed all7 direct ABI tests (3new+4original), zero failed/ignored,20.42s
+harness/52.75s total; raw
+`9cb6a3a0d87fce2a094f8b9b16b712cd1a6dcec25fdd6e351162e7a565293171`.
+These instantiate actual runtime_abi::module bytes without Session/shipped BOOT;
+no Macro/Session acceptance is inferred. Workspace/all-targets locked test-profile
+typecheck passed185.71s, raw
+`4e4e7eb334e68d7941754650b67781a1f7d030efff2724cef74f1b45cb615025`.
+
+The normal bootstrap verifier generated two matching pairs per phase in177.00s
+then exited1 at comparison against stale shipped artifacts, raw
+`38b54d213a105edbffe0a9cb11dc70bd90841513ae90d5e40a1f3bcb7e8c6063`.
+Actual229 builder inputs/FP/paths, all8hashes/4pairs and exact custom/manifest
+deltas were independently reviewed. Both core BOOT noncustom sections are exact;
+the runtime ABI is separately generated and changed by the reviewed emitter.
+Adopted only the exact4approved files at0548d7c. Pure compiled identity passed
+41.62s, raw910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704.
+A cache-directory creation error preceded the first freeze; an identity-wrapper
+receipt-key mismatch preceded identity launch. Both preparatory failures are
+retained separately and are not semantic test failures.
+
+New-source whole-program fuel fit, remaining source/memo/namespace preservation,
+full workspace baseline and final-head review/CI are unproven. Unchanged explicit
+constructor10M and pinned200M controls must execute with complete original
+fixtures. Commands/bindings/limitations are in the linked protocol-marker evidence.
+
+
+The new afd unchanged10M constructor replay is0PASS1FAIL at the same first
+Runtime caller&env83..108, line192 (73.35s harness/331.36s total), raw
+`2c504489ae49f1e851e28d03a19f0dff4d55711b5e1c4a08e554dae9aeab82f5`.
+Its output assertions and Macro caller are unreached. New pinned200M/200M pair
+is1PASS1FAIL (237.17s harness/429.21s total), raw
+`722a0841c5e786e1e27639634347f89ddf05cf23ad3afa168191e7dd1ea1543c`.
+Independent comparators retain identifier15ordered hostPASS and map0observations/
+69unexecuted after expanded-result239..5926 OutFuel. The changed raw backtrace is
+not an acceptance result or a proven cost gain. Original fixtures/quotas remain.
+
+`python3 /home/bobby/.cache/suss-m4-work/pr263-default-constructor-cli-cost-afd27-v1/run.py`
+then executes one existing bound CLI binary with the exact original macro and
+constructor program strings, compile100B/Runtime10M. Exit0 in42.55s and one exact
+display `[[:new [:class :args]] 42]`; stdout SHA
+`2eccb1b9d797bf9edd1d83e0d70dda7ac417b700917d84070136f01faefdcb99`,
+stderr SHA083bf9dc1baf06e178ec13762b2be13e6635f1e24f227bcf9f0518a1ea54820d.
+All7ordered target-macro fuel trace stages complete monotonically. Target Store
+debit61891031 includes caller-environment61761927, arguments8017, invocation120639,
+provenance261, caller-form3 and decoder184. These6intervals are disjoint; nested
+metadata/lazy/callback costs are not added. It excludes startup, defining the
+macro, pretrace analysis and display. CLI SourceOrigin/request splitting and
+Runtime-only coverage differ from native acceptance; no exact native total or
+Macro caller result follows. The original10M control remains a failure.
+
+No compilation policy/production default/issue criterion has been changed by this
+diagnostic. Additional calibration of currently explicit fixed-cap acceptance
+fixtures requires a separate user decision; preserve current criteria meanwhile.
+
+
+## Native semantic compilation calibration — source observations 2026-10-21
+
+CI run39530511823, foundation job118996666368, on94276e7 completes the native
+compiler library harness:605PASS/32FAIL/0ignored/0filtered,2092.29s. The checkout
+merge and94276e7 have identical Git tree7c54a374dd976d0c9a680a003dd953a13d44f333.
+RawSHA25862d82223c1b49880aa387176d238472e6be9e4eaf483e9e09be752f05d5a0.
+This is complete native-suite evidence, not full-workspace or green-CI proof.
+
+cc8125c changes only test setup:20 observed native source-eval sites across22
+cases use the existing cumulative100B compilation helper. Three literal-env
+and two async lifecycle cases set their actual CompiledMacros compilation fuel
+to the same existing semantic allowance. Caller Runtime options and all source
+strings, assertions, GC, effects, negative fuel/IRQ/reset/recovery scopes remain.
+The cfg(test) convenience method introduces no shipped Session API. Helper
+asserts Runtime options unchanged after both successful and failed evaluation.
+
+1e289fc repairs the alias fixture's contradiction with reader-plan admission:
+a request-only graph must decline, then its ordinary fallback must retain the
+same first-three-value identity afterGC. An additional real completed declaration
+metadata boundary exercises positive DATA admission with the same alias/GC
+predicate and checks real persistent owner/non-Request/no strict capability.
+Production source authority/admission guards are unchanged.
+
+Detached preparation checkout:
+`/home/bobby/.cache/suss-m4-work/pr263-native-semantic-calibration-afd-v3/checkout`.
+`git diff --check` and rustfmt parse-only of all17 edited files with actual
+workspace edition2024 pass. The initial parse command mistakenly selected2021;
+its let-chain errors are retained and are not a compiler regression. No Cargo
+or VM producer was started there. These changes have no typecheck, matching
+bootstrap, identity or semantic execution result yet. Source-input edits require
+a fresh fingerprint/bootstrap cycle before Session test acceptance. Preserve
+main57edbd5 while its exact6 metadata batch is live; integrate only after its
+postflight. Exact28 test names are in the linked evidence. Four separate native
+Runtime/materialization fuel failures still need investigation; no Runtime
+increase or dedicated fixed-cap policy change is included.
+
+The prior marker storage command's first attempt failed in rustc with ENOSPC;
+no selected test ran, its original wrapper exit is unknown. The separately bound
+retry at94276e7/afd/229/BOOT0548 executes the complete original test:1PASS/0FAIL/
+0ignored/636filtered,3.04s harness/305.06s total. Command:
+`cargo test -p suss-compile --locked --lib -- --exact --test-threads=1 --nocapture portable_session::storage_snapshot::tests::native_storage_snapshot_covers_schema_and_reports_live_protocol_changes`.
+RawSHA84b8d048f91d5137c8be3a955f82850ce7aa9a867a4bf8e2df40e6667bd1ff61.
+No additional disk recovery was performed or inferred from available free space.
+
+[Exact source bindings, CI failure partition, selectors, parse-only results,
+original build failure and successful storage retry](evidence/m4-pr263-native-semantic-calibration-2026-10-21.json).
+
+
+Failure-only diagnostics now identify phase/width/padding/route for the recorded
+metadata construction, depth for deep DATA, cache sizes for reader-controller
+build and source phase/variant for child checking, each with remaining fuel.
+All original calls, scopes, quotas, order, assertions and typed errors remain.
+Rustfmt parse-only2024 and diff check pass; these are not executed fixes. Saved
+CI construction output proves all Runtime cases and Macro width2 cases finish;
+Macro width128 has no completed construction line before its trap. Do not infer
+an exact internal stage or cost from that absence. Two initial ambiguous text
+selectors stopped before changing the selected lifecycle call; diagnostics were
+then scoped to its original let-root statement. All attempts remain in cache.
+
+
+## CLI positive semantic setup compilation — source observations 2026-10-21
+
+Saved94276e7 integration logs identify28 additional positive semantic test cases
+that stop in native compilation setup, before their asserted behavior. Exactly25
+observed calls across11 integration files now use the existing cumulative100B
+NoExpansion compilation helper. Shared comparator/sorted setup accounts for the
+case/callsite difference. All programs/fixtures/IDs/counts/assertions/GC/effects/
+error/recovery code remain byte-exact outside invocation prefixes and imports.
+Shared helper now checks original caller Runtime options on both success/error;
+existing10M/100M Runtime allowances remain unchanged. CORE17 and the explicitly
+documented default-budget HAMT test are deliberately excluded. The already
+published metadata/self-local calibration is separate and unchanged.
+
+`git diff --check`, exact full-file inverse proofs and rustfmt2024 parse-only
+pass for these12 Rust files. There is no semantic execution/typecheck/identity/
+bootstrap or full-baseline result for this patch. CLI-only files do not add
+compiler inputs, but the preceding native patch still needs fresh artifacts.
+The live metadata6 main checkout and process are unchanged. The actual failed
+source locations, raw messages, numerical calibration, full-file hash/inverse
+proofs and limits are recorded in
+[evidence](evidence/m4-pr263-cli-semantic-calibration-2026-10-21.json).
+
+
+## Explicit native eval and positive Macro/CLI compilation — 2026-10-21
+
+c8449d9 adds `suss -e 'EXPR' --compile-fuel N` through the actual native script
+pipeline. It sets only CompiledMacros operation fuel before source preparation;
+Runtime construction/options remain unchanged, as do omitted-option defaults.
+The same staged logical-request boundaries apply; this is no whole-script
+aggregate guarantee. Parser regressions cover defaults, unchanged expression,
+zero/u64max/repeated values, invalid/overflow/missing/unknown options. A real
+subprocess regression checks default/explicit42 and rejects zero compilation
+before `(throw17)` executes. Syntax parses2024; neither test is executed yet.
+CI discovers the new integration target from Cargo metadata automatically.
+
+Another15 observed positive semantic Macro/CLI failures get the existing100B
+compilation allowance: three exact CompiledMacros instances, the diamond source
+preparation API, exact project/namespace entry tests, actual eval lexical-env
+command, and eight normal async lifecycle cases via their shared fixture.
+All Runtime allowances (including explicit1M async-failure case), original
+programs/assertions/inputs/phase/GC/deadlines/effects/component40M execution and
+realFIFO/FD/reset/cancel/cleanup checks remain. The existing supplied10M REPL
+compile-order/trace test retains its exact cap; normal cases still disable
+traces. Large-source100k recovery and native AOT-list route are excluded.
+
+Source review caught an initial unsupported global flag order before any test
+launch. Project invocation now puts compile first; eval explicitly implements
+its option after the expression instead of assuming it existed. Initial packet
+is retained; final packet is pr263-cli-macro-compilation-calibration-afd-v2.
+All7 fixture files parse2024 and diffcheck passes. There is no typecheck,
+semantic execution, full-baseline or final-head CI result for these edits.
+[Exact selected failures, source hashes, preservation and limitations](evidence/m4-pr263-cli-macro-calibration-2026-10-21.json).
+
+
+## Sourcea705 matching-artifact checks and actual eval regression — 2026-10-21
+
+Compiler sourcebd292e9 fingerprints a705484424b4f040a4b282544d8a0c7a667e98bad78a38361e5c6c64282fc459
+over229 actual builder inputs. All-targets workspace Rust typecheck passes74.50s
+(raw6156bc5b3f91944f001776fd1d309a6c3898e2d24960820f5957f6d0305363f0);
+CLI binary typecheck passes13.72s (raw91750cbb7938e16569925b4eb074712aa48a14660b74dc369961c3b953c9fd17).
+Commands: `cargo check --workspace --all-targets --locked --profile test` and
+`cargo check -p suss-cli --bin suss --locked --profile test`.
+
+`cargo test -p suss-cli --bin suss --locked args::tests:: -- --test-threads=1 --nocapture`
+passes all9 parser tests,0fail/0ignored/29filtered atbd292e9 (244.90s including
+build; rawb45a917a13aad2d5b1f2ca54c09fb85d22e220f34b8847de1bff0c0f6df3dad6).
+These are actual Rust parser tests, not Session/bootstrap semantic execution.
+Cargo metadata confirms the new eval integration target belongs to exactly one
+CI partition; all263 workspace integration targets are discovered automatically.
+
+`nice -n 10 sh scripts/verify-bootstrap.sh` generates both normal pairs in12.04s,
+retains all8 files, then exits1 at stale shipped runtime.wasm comparison. It is
+not a full verifier pass. Read-only main review verifies exact source/Git bytes,
+all229 actual Cargo builder watch paths, identical generation pairs, unchanged
+noncustom executable bytes and only source-fingerprint/Wasm-hash manifest deltas.
+Adoption9db32aa copies exact4 reviewed files. Separate actual compiled
+`python3 scripts/verify_bootstrap_identity.py` passes5.48s at9db32aa. No independent
+subagent/final review is implied by main artifact inspection.
+
+`cargo test -p suss-cli --locked --test compiled_eval_compile_fuel -- --test-threads=1 --nocapture`
+at9db32aa/a705/matchingBOOT passes1/0/0/0filtered,390.66s harness/851.81s including
+build. Raw70c5fd706323c65aa9eba7b606f20dc776c84f68bb14a866a21176e372c034e9.
+Both default and explicit100B eval print42, with empty stderr; zero compilation
+fuel rejects the original `(throw17)` input before Runtime throw. Source/test/
+BOOT/head postflight matches. This is the complete new CLI regression only.
+Commands use the protected shared target, one Cargo job and bounded test profile;
+no RUSTFLAGS override. The frozen main metadata process and source were untouched.
+
+The separate57edbd5/afd metadata6 batch remains live: export1PASS; two declaration
+cases actually fail with configuredcompile100B/Runtime10M. Full corpus namespace
+load fails caller&env960..1000 at scalar-redefinition; metadata merge fails
+caller&env19..46. The raw-function metadata case is now running. No exclusive
+Store debit, completed caller phase, full batch verdict, OOM or sourcea705
+semantic acceptance is inferred. Both partial logs remain retained. Next run
+the exact32 native failures and targeted CLI semantics with matching artifacts;
+additional completed CI2 logs identify17 other setup failures. The attempted
+preparation for those17 stopped at a unique-scope assertion before any source
+writes; no patch was applied. Existing compact capture-index work is already
+present, so do not transplant the older268 branch wholesale.
+
+[Exact commands, source/BOOT/test hashes, terminal scopes and retained failures](evidence/m4-pr263-a705-validation-2026-10-21.json).
+
+
+## Additional completed CI2 setup failures — 2026-10-21
+
+94276e7 integration2 raw28c73f5f8381d1a8ee25a5694c53908c113d1b684b5ec213ff6d6b147c9d99eb
+executes its complete harnesses and identifies17 more setup fuel failures.
+Those17 plus the earlier AOT-list source-identity case now get the existing100B
+compilation allowance through their actual routes. Custom Contexts retains its
+real recording callback,24 ordered observations,15 values and recur-tail errors;
+only its native request allowance changes. Both pinned independent factory source
+loads, three CompiledMacros instances, root/class replacements, CORE setup,
+three decoder setup inputs, public async-file AotOptions and semantic AOT-list
+instantiation preserve all original inputs/assertions/phases/GC/effects and
+Runtime limits. A test-only native integration helper mirrors the existing CLI
+NoExpansion route and asserts unchanged caller Runtime options on success/error.
+
+All11 Rust files parse2024 and exact full-file inverse proofs pass. Initial
+ambiguous preparation stopped before source writes; corrected replacement bounds
+include the next function. No execution/typecheck result yet. All229 actual
+compiler inputs, BOOT4 and the active native32 support dependency are byte-exact;
+a705 identity is unchanged. Do not alter frozen native sources while replay runs.
+[Exact18 cases, hashes, inverse proofs and preservation scope](evidence/m4-pr263-ci2-semantic-calibration-2026-10-21.json).
+
+
+Additional CI2 patch034ffc2 passes the actual all-targets workspace Rust check:
+`cargo check --workspace --all-targets --locked --profile test`, exit0 in191.01s
+including the native32 build-lock wait. RawSHA7a13511f5c02cba1a390d2cb422790194eb0610ebd9537cc40f21cc0a12b98e6.
+Exact HEAD034 pre/post matches. No semantic execution result for its18 cases is
+inferred. All native32 source/BOOT/dependency inputs remain unchanged.
+
+### Bridge/setup compilation checks (2026-10-21)
+
+The complete a705 native32 replay ran all32 previously failed tests:14 pass,18 fail,zero ignored,605 filtered. Raw log SHA256 `5e8e09bfa5d3550e3992faf782950178e8aa3247439813f8b30e7293e5336b8b`; source/BOOT postflight matched. Fourteen failures were native compilation exhaustion,three Macro compiler-data construction exhaustion,and one the unchanged fixed-cap Runtime source-child fixture.
+
+Bridge initialization now accepts an optional cumulative native compilation allowance across the original helper inputs. Positive setup callsites use the existing100B allowance; Runtime options and dedicated exhaustion/recovery controls stay unchanged. The Macro compiler-data helper restores original options on success,error,and unwind. `cargo check --workspace --all-targets --locked --profile test` passes for the exact changed Rust files (79.27s; raw SHA256 `f6160005e803cb36a3b8e9740634bbc9b9d255ca12df3973626b8c01a73de5fa`). Matching bootstrap generation and actual semantic execution are still required. Commands, source hashes, complete prior failure rows and limitations are in `docs/roadmap/evidence/m4-pr263-bridge-setup-validation-2026-10-21.json`.
+
+Bridge source `ff77ce8` / compiler `03b1603e…` (229inputs): independent bounded source review found no actionable defects; no reviewer execution inferred. Two normal BOOT generations match (402.23s including build); verifier exits1 at stale shipped comparison. Exact4 metadata-only artifacts adopted at `3d089e5`; compiled identity check passes (3.63s). Whole-verifier/semantic acceptance remains separate.
+
+Published-head foundation CI failed because the when-let fixture adaptation hash preceded its compilation allowance change. `91197e6` retains the original fixture/oracle and updates only the exact adaptation patch/current hashes. `python3 scripts/check_when_let_provenance.py` and all subsequent six foundation-tail checks pass. Initial local checker attempt failed on missing upstream submodule; initialized exact pinned c4295f3, then reran unchanged checker successfully. Evidence JSON above includes commands, hashes, bounded review and artifact receipts. The new bridge execution regression is running; no verdict claimed here.
+
+Bridge execution regression at `07d8f06` passes: `cargo test -p suss-compile --locked --test compiled_bridge_compilation_fuel -- --test-threads=1 --nocapture`,1pass/0fail/0ignored/0filtered,125.74s including9.40s build. Both Runtime/Macro phases execute zero rejection/no publication/options checks, explicit100B complete recovery, original default constructor,and both captures afterGC reading42. Raw SHA256 `7d198bc31c3bbb04e45ed71749cb648394d999d9f74120b9c2ffd53f97d3b9f2`; all source/test/BOOT bytes match postflight. Initial failed attempt retained: bare session lacked shipped core constructors; corrected test uses normal new_repl/new_macro without assertion removal. Native failure replay and fullbaseline remain separate.
+
+The exact native19 replay at `dcf988c` / compiler03b1603e is terminal:10pass/9fail/0ignored/619filtered;all19 selected execute once,315.12s harness/315.77s total, raw SHA256 `1853ff9f282207512dbdbb5b2c0c36b0117ff8f8a076fb8d3cc3e3d4a5d50efa`. Nine prior failures pass plus the new restoration regression; its intentionally caught native panic is not a failed test. Seven failures are later positive native compilation calls; controller graph preparation traps before the fresh recovery operation; source-child remainsRuntimevariant3OutFuel at unchanged10M. No previous14source-qualified passes are transferred. Exact selectors/failures/receipts in the bridge setup evidence JSON.
+
+At the same source, `python3 -m unittest discover -s scripts -p test_*.py` passes all365 tests, and all foundation inventory/provenance prefix commands pass. Combined with the separately recorded tail6 checks this covers the foundation script step, not bootstrap execution/libraries/fullbaseline or final CI.
+
+Followup source changes calibrate the remaining21positive native compilation calls in seven complete tests; original source/effect/count/identity assertions, Runtime caps and dedicated negative controls remain. The controller test helper now starts one cumulative operation before graph preparation; nested callers retain their remainder and the fresh recovery retains its original10M. Source-child validation reuses its already successful logical witness check only for exact immutable expectation identity after full current certificate validation, within the callback-free batch; addedbranch/identity work is charged2. Independent candidate review found no blocking defects, with execution unverified. The existing batch regression retains its original three outcomes and GC/IRQ/fuel/foreign/recovery tail, adding independent/forged same-key witnesses and paired actual debit checks. Syntax passes; matching artifacts/typecheck/execution still required.
+
+Checked-source witness source `3e7ca26` / compiler `8c883c24…` (229inputs): workspace/all-targets typecheck passes75.26s, raw SHA256 `7947b2c21480e6020c8e886cd7b8bc0b5bb0819657b6034d3d2fec93ee04bda1`. Two normal BOOT generations match192.19s including build; verifier exits1 comparing stale shipped BOOT. Main artifact review verifies allactual229builder inputs/Gitbytes and metadata-only differences; exact4 adopted at `06f21a0`; compiled identity passes2.72s. Independentbounded candidate review found no blocking defect, no execution inferred. Native20 (all19previousselectors plus strengthenedbatchtest) is running against matching artifacts; no cost/fit/semantic verdict yet. Commands, receipts, review scope and limitations are in `docs/roadmap/evidence/m4-pr263-source-expectation-validation-2026-10-21.json`.
+
+Native20 at `97289d9` / compiler8c883c24 is terminal:19pass/1fail/0ignored/618filtered;all20selected once. Harness252.26s,total534.11s including4m41build; raw SHA256 `dc74f7b10035137e61908ae5b421310c73772416ced66fb8572651aff9ed0f10`; source/test/BOOT postflight matches. All seven later native compilation cases and the original10M controller recovery now pass. Only source-childRuntimevariant3 still exhausts its unchanged10M; later variants/Macro/physicalmemo tail remain unexecuted. Strengthened batch regression passes, paired exact/independentdebits48771/51135 (difference2364) with fresh auditstate; no fullfixturefit or wholeworkloadgain inferred. Originalcaughtunwind is a passingtest, not anextra failure. Added opt-in `SUSS_SOURCE_CHILD_FUEL_TRACE` test-only read-only observations to locate actual remaining stage costs; no source fixture, assertion, cap, charge or replenishment change. Matching new artifacts and execution are required after this test-source edit.
+
+Resolver current-namespace hit repair carries the first borrowed binding through the original private-cell filter and final charged clone, eliminating its identical second BTree lookup. Qualified/referred selection, miss/excluded second searches, core fallback and diagnostics remain; comparison/retain rates stay unchanged, with newcontrolwork conservativelycharged4 perresolution. Focused inline regressions cover both phases, identity ownership, one-search debit traces, every charged failure boundary/retry, collisions/exclusions/misses and hidden InternalCell/ReaderCell rejection without core fallback. Source-only implementation/syntax proof; no defaultCORE10M fit or semantic result yet. Source-child logging only reads configured/remaining fuel under opt-in `SUSS_SOURCE_CHILD_FUEL_TRACE`, with no scope/refill/cap/charge changes.
+
+Resolver source `2fb3547` / compiler3e4d9f47 (229inputs): workspace/all-targets typecheck passes90.93s, raw SHA256 `2df83d324eee6386d2309e4aa37b76048c358882fd74fcccf023c93cdefab55c`; independent bounded source review finds no actionable defects, no execution inferred. Both normal BOOT generations match238.27s includingbuild; verifier exits1 at stale shipped comparison. Main source/artifact inspection verifies allactual229inputs/Gitbytes and onlysourceidentity metadata differences; exact4 adopted at `565115d`. Compiled identity check passes5.02s. Resolver11 (all10ownership/metering regressions plus unchanged sourcechild with opt-in readonly stagefuel trace) is building/running; no semantic/fit verdict yet. Source-child diagnosticphase denotes SOURCEphase; its graph executes in a Macro Store, not callerRuntime. Commands/receipts/review/limits: `docs/roadmap/evidence/m4-pr263-resolver-current-hit-validation-2026-10-21.json`. Pending fixed-cap policy question has not authorized changes; caps/rates/programs/assertions stay unchanged.
+
+Resolver11 at `ed75d35` / compiler3e4d9f47 is terminal10pass/1fail/0ignored/628filtered,all11selected;129.33s harness/562.57s total with7m12build. Raw SHA256 `678ed6a8d51680000586593f4a2e708ee44ce8a5893d8bab47f38e69cc5a3c16`;source/test/BOOT postflight matches. All10resolvercontrolsPASS; original10M sourcechildfailsSOURCEphaseRuntimevariant3. Adjacent nonoverlapping recording+parentmaterialization intervals debit2779076/2757900/2758292 (sum8295268);14324remainsbeforevariant3batch. These are jointguest/nativeStoredebits, not exclusiveCPU/guestinstructioncost; unexecutedvariants/Macro/physicalmemo remainunknown.
+
+All17unchanged `core_import` cases run atoriginaldefaultallowances:0pass/17fail/0ignored/0filtered,7.45s harness/7.98s total. EverycasefailsnativeCOREsetup at1632..1745 beforesemanticassertions;raw SHA256 `88837ab2655dcb890cbb510c891797b28d6057b08047b1a1e8d4a8a738225413`. Independentexternalreader diagnostic pays347767reader+42154selection+276925originbytes=666846units. Externalpublicnativeformspipeline diagnostic replicates10Mfailureatsame1632..1745 (used9991983/remaining8017);with100B preparation/emissioncompletes using16300549344units/32264398callbacks. It uses the complete unchangedCORE and DefaultEnvironment/emptyprovided/srcRoots, executes no Session/Runtime, and is not CORE17acceptance. Diagnostic exit0reportsitsrun evenwhenpreparationfails; inspectstatus. Retaineddriver, commands/library/source hashes and exactoutputs are in the resolver evidence JSON; initialdriver&Stringtypeerror/retry retained. Fixedcapcalibrationpolicy remains pending; actualtestcaps/rates/programs/assertions areunchanged.
+
+Staticindependentold57ed/afd metadata budgetpath review identifies the ownedMacroStore100B throughout&env and no hidden10Mstore/reset there; no executed100Bdebit inferred. Graph admission can exhaustfuel on projectedworkoverflow/insufficientremaining, indistinguishablefromactualdebit in genericRuntimeTrap formatting. The new3e4 metadata-merge replay uses existing `SUSS_MACRO_FUEL_TRACE`; live, no wholecase verdict. Originaloldmetadata6handle remainslive/frozen and no results transferacrosssources.
+
+AtCIhead `ed75d35`, integrationpartition4completesall32selectedtargets:155passed/5failed/3existingignored/0filtered executions. Allfive failures are compiled_async_runtime_api common suss.asyncMacrocompilation setup925..931. Fourotherdownloadedpartitions endrunnerShutdown; causeunknown, notcomplete suiteverdicts. The asyncAPI compilation-only calibration at `e19cb79` keepsallsource/assertions/Runtimebudgets and passes targetRustcheck87.57s plus all5complete tests (59.49s harness/205.59s total; raw SHA256 `76b80ced4823ad8aa58e638d64fda627afcb192246a61b55692c8e644c2c7a70`). Scope/inverseproof/receipts in asyncAPI evidenceJSON; no finalCI/fullbaseline inferred.
+
+Metadata-merge replay atsource3e4d9f47 completes0pass/1fail/0ignored/2filtered,1279.14s harness/1290.49s total, raw SHA256 `0aa21df0d7b5f892de53bff219f35c67c674c821c212b0652134a8cde306f9ee`; source/test/BOOT postflight matches. Runtimephaseuserprojection/raw-meta assertionscomplete; fullcoreNamespacecore-fileprobe failscaller&env19..46 (test141) with100Bconfigured. Lastcaller-form fuel99920973270; missingenvexit meansno exclusivefull100Bdebit/admissionreason inferred. Ordinarycore-fileprobe nowuses1Tcompilationunder#252, restoring100Baftercompletedrequest; originalprogram/allassertions/bothphases/Runtime10M retained. Specialfixed-cap policyquestion remainspendingandunchanged.
+
+Ordinaryfull-coremetadata probe calibration `eabe1c3`: onlycore-fileprobe changesMacrocompilation100B→1T, earlierprobes and postrequestconfiguration100B, callerRuntime10M unchanged. Exactinverseproof preservesallguestsource/assertions/order/GC/bothphase loops; no source/BOOTfingerprint change. TargetRusttypecheck passes11.29s,raw SHA256 `0d9a4c13c415626dc21b5032c39cc18855231162b0bac4ae4b671667c088c605`. Fulloriginalsinglecase replaylive with existingMacro-fueltrace; no verdict/sufficiencyclaim. Scope/receipts/previous100Bfailure are in `docs/roadmap/evidence/m4-pr263-core-metadata-compilation-validation-2026-10-21.json`. Specialfixed-capquestionremainsunanswered.

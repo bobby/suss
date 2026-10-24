@@ -76,6 +76,20 @@ fn manifest(phase: Phase, wasm: &[u8], cells: &[super::resolve::Global]) -> Mani
             .collect(),
     }
 }
+// This fixed, embedded compiler catalog has a separate native-analysis cap.
+// It is used for development generation and checked shipped-fact restoration,
+// never for caller source, guest execution, or a nested Session budget refill.
+// Complete metered namespace snapshots are part of this fixed catalog analysis.
+// Keep its finite allowance separate from ordinary caller/default fuel controls.
+const CATALOG_ANALYSIS_FUEL: u64 = 100_000_000_000;
+struct CatalogAnalysis;
+impl super::ExpansionHost for CatalogAnalysis {
+    fn expansion_work_fuel(&self) -> u64 { CATALOG_ANALYSIS_FUEL }
+    fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> { Some(vec![]) }
+    fn expand(&mut self, _: &suss_reader::forms::Form, _: super::ExpansionContext<'_>)
+        -> Result<Option<suss_reader::forms::Form>, Diagnostic>
+    { Ok(None) }
+}
 fn catalog(phase: Phase) -> Result<super::AnalyzedFragment, Diagnostic> {
     let forms = suss_reader::forms::read_forms(SOURCE)
         .and_then(suss_reader::forms::resolve_conditionals)
@@ -84,11 +98,11 @@ fn catalog(phase: Phase) -> Result<super::AnalyzedFragment, Diagnostic> {
             message: failure.message,
         })?;
     super::analyze_selected_fragment(
-        forms,
+        &forms,
         0..SOURCE.len(),
         &Environment::default(),
         phase,
-        &mut super::NoExpansion,
+        &mut CatalogAnalysis,
         Some(&super::SourceOrigin::new(SOURCE, None)),
     )
 }

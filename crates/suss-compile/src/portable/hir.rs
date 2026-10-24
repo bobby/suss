@@ -1,7 +1,8 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
 mod arrays;
 mod local_bindings;
-pub use local_bindings::{FieldBinding, FunctionScope, LocalBinding, LocalKind, SourceRole};
+pub use local_bindings::{FieldBinding, FunctionForm, FunctionScope, LocalBinding, LocalKind, SourceRole, SourceLocals, SourceFields};
+pub(crate) use local_bindings::{CowTraceScope, cow_trace_charge, cow_trace_reset};
 mod function_parameters;
 mod destructuring;
 pub use function_parameters::{SourceFunctionParameters, SourceParameterMethod};
@@ -21,6 +22,8 @@ use super::{
     resolve::{Binding as ResolvedBinding, Environment, Global, Phase},
 };
 pub use quotes::{identifier_hash, reader_metadata_pairs, reader_metadata_pairs_metered};
+pub(crate) use source_tags::inferred as completed_inferred_value_metered;
+pub(crate) use quotes::{MetadataEntry, MetadataForm, MetadataKeyOrigin, ReaderMetadata, reader_metadata_view_metered, reader_metadata_owned_view_metered};
 pub use source_tags::{SourceTags, declaration_tag, local_tag};
 pub(crate) use source_tags::{declaration_tag_metered, local_tag_metered};
 use std::{
@@ -28,6 +31,14 @@ use std::{
     ops::Range,
 };
 use suss_reader::forms::{Form, Kind};
+
+// Call-stack-only provenance. The borrowed input remains alive throughout this
+// invocation; no address is stored in retained compiler facts. Re-expansion and
+// recursive child analysis deliberately start without this token.
+struct DefinitionInitializer<'a> {
+    input: &'a Form,
+    owner: &'a std::sync::Arc<super::resolve::DefinitionInfo>,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Type {
@@ -409,7 +420,8 @@ pub struct Binding {
     pub name: String,
     pub metadata: Vec<Form>,
     pub span: Range<usize>,
-    pub value: Hir,
+    /// Immutable analyzed initializer shared with source binding facts.
+    pub value: std::sync::Arc<Hir>,
 }
 #[derive(Debug, Clone)]
 pub struct Parameter {
@@ -430,17 +442,19 @@ pub struct Method {
 #[derive(Debug, Clone)]
 pub struct SourceNamespace {
     pub namespace: String,
-    pub aliases: BTreeMap<String, String>,
-    pub refers: BTreeMap<String, Global>,
-    pub used_refers: BTreeSet<String>,
-    pub renamed_refers: BTreeSet<String>,
-    pub excluded_core: BTreeSet<String>,
-    pub macro_aliases: BTreeMap<String, String>,
-    pub macro_refers: BTreeMap<String, (String, String)>,
-    pub used_macro_refers: BTreeSet<String>,
-    pub renamed_macro_refers: BTreeSet<String>,
-    pub declarations: BTreeMap<Global, std::sync::Arc<super::resolve::DefinitionInfo>>,
-    pub identities: Vec<Global>,
+    /// Shared with the live scope until that scope is next edited.
+    pub aliases: std::sync::Arc<BTreeMap<String, String>>,
+    pub refers: std::sync::Arc<BTreeMap<String, Global>>,
+    pub used_refers: std::sync::Arc<BTreeSet<String>>,
+    pub renamed_refers: std::sync::Arc<BTreeSet<String>>,
+    pub excluded_core: std::sync::Arc<BTreeSet<String>>,
+    pub macro_aliases: std::sync::Arc<BTreeMap<String, String>>,
+    pub macro_refers: std::sync::Arc<BTreeMap<String, (String, String)>>,
+    pub used_macro_refers: std::sync::Arc<BTreeSet<String>>,
+    pub renamed_macro_refers: std::sync::Arc<BTreeSet<String>>,
+    /// Structurally shared revisions of the live namespace index.
+    pub declarations: super::persistent::PersistentMap<Global, std::sync::Arc<super::resolve::DefinitionInfo>>,
+    pub identities: super::persistent::PersistentSet<Global>,
 }
 impl SourceNamespace {
     pub fn capture(environment: &Environment, phase: Phase) -> Self {
@@ -449,41 +463,7 @@ impl SourceNamespace {
     }
     /// Capture an actual namespace revision without installing it as current.
     pub fn capture_namespace(environment: &Environment, phase: Phase, namespace: &str) -> Option<Self> {
-        let scope = environment.namespace_scope_for(phase, namespace)?;
-        Some(Self {
-            namespace: scope.namespace.into(),
-            aliases: scope.aliases.clone(),
-            refers: scope.refers.clone(),
-            used_refers: scope.used_refers.clone(),
-            renamed_refers: scope.renamed_refers.clone(),
-            excluded_core: scope.excluded_core.clone(),
-            macro_aliases: scope.macro_aliases.clone(),
-            macro_refers: scope.macro_refers.clone(),
-            used_macro_refers: scope.used_macro_refers.clone(),
-            renamed_macro_refers: scope.renamed_macro_refers.clone(),
-            declarations: scope
-                .declarations
-                .into_iter()
-                .map(|(global, _)| {
-                    (
-                        global.clone(),
-                        environment
-                            .shared_definition_info(global)
-                            .expect("captured declaration revision")
-                            .clone(),
-                    )
-                })
-                .collect(),
-            identities: environment
-                .cells()
-                .into_iter()
-                .filter(|global| {
-                    global.phase() == phase
-                        && global.namespace() == scope.namespace
-                        && !environment.is_hidden_cell(phase, global.namespace(), global.name())
-                })
-                .collect(),
-        })
+        environment.source_namespace(phase, namespace)
     }
 }
 #[derive(Debug, Clone)]
@@ -512,8 +492,8 @@ pub struct SourceCallable {
 pub struct SourceMethodEnvironment {
     pub scope: std::sync::Arc<SourceNamespace>,
     pub namespace_snapshot: std::sync::Arc<SourceNamespace>,
-    pub locals: std::sync::Arc<HashMap<String, LocalBinding>>,
-    pub fields: std::sync::Arc<HashMap<String, FieldBinding>>,
+    pub locals: SourceLocals,
+    pub fields: SourceFields,
     pub function_scopes: std::sync::Arc<[std::sync::Arc<FunctionScope>]>,
     pub context: super::AnalysisContext,
 }
@@ -521,7 +501,7 @@ pub struct SourceMethodEnvironment {
 pub struct SourceMethod {
     pub form: Form,
     pub environment: SourceMethodEnvironment,
-    pub declarations: Vec<LocalBinding>,
+    pub declarations: Vec<std::sync::Arc<LocalBinding>>,
     pub parameters: Vec<Parameter>,
     pub variadic: bool,
     /// Whether analysis accepted a recur targeting this method (nil otherwise).
@@ -565,7 +545,7 @@ pub enum SourceNode {
     },
     Bindings {
         is_loop: bool,
-        bindings: std::sync::Arc<[LocalBinding]>,
+        bindings: std::sync::Arc<[std::sync::Arc<LocalBinding>]>,
         body: std::sync::Arc<Hir>,
     },
     Recur(std::sync::Arc<[Hir]>),
@@ -594,10 +574,23 @@ pub enum SourceNode {
         inner: Option<std::sync::Arc<SourceNode>>,
     },
 }
+/// Native origin of an analyzer-generated body. Guest metadata cannot mint it.
+/// Keep extension bodies distinct even when their source node is an ordinary Do.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SourceBodyOrigin {
+    FunctionMethod,
+    Bindings,
+    TryBody,
+    FinallyBody,
+    ThisAsBinding,
+    SussFuture,
+}
 #[derive(Debug, Clone)]
 pub struct SourceAnalysis {
     /// Set only for analyzer-generated body regions, before runtime lowering.
     pub is_body: bool,
+    /// Set at the actual body-construction call site, not inferred from its form.
+    pub body_origin: Option<SourceBodyOrigin>,
     pub tags: SourceTags,
     pub form: Form,
     pub resolved: Option<SourceBinding>,
@@ -608,13 +601,13 @@ pub struct SourceAnalysis {
     pub namespace_snapshot: std::sync::Arc<SourceNamespace>,
     pub callable: Option<std::sync::Arc<SourceCallable>>,
     pub node: Option<std::sync::Arc<SourceNode>>,
-    pub locals: std::sync::Arc<HashMap<String, LocalBinding>>,
-    pub fields: std::sync::Arc<HashMap<String, FieldBinding>>,
+    pub locals: SourceLocals,
+    pub fields: SourceFields,
     pub function_scopes: std::sync::Arc<[std::sync::Arc<FunctionScope>]>,
     pub context: super::AnalysisContext,
     pub phase: Phase,
     pub namespace: String,
-    pub origin: Option<super::SourceOrigin>,
+    pub origin: Option<std::sync::Arc<super::SourceOrigin>>,
 }
 #[derive(Debug)]
 pub struct Hir {
@@ -756,7 +749,7 @@ pub enum Expression {
     GeneralFunction {
         methods: Vec<Method>,
         captures: Vec<BindingId>,
-        self_binding: Option<Parameter>,
+        self_binding: Option<std::sync::Arc<Parameter>>,
         rest_class: Option<Global>,
     },
     Call {
@@ -778,11 +771,11 @@ fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
 struct Analyzer<'a> {
     suspendable: bool,
     expander: &'a mut dyn super::ExpansionHost,
-    origin: Option<super::SourceOrigin>,
+    origin: Option<std::sync::Arc<super::SourceOrigin>>,
     environment: Environment,
     phase: Phase,
-    locals: HashMap<String, LocalBinding>,
-    fields: HashMap<String, FieldBinding>,
+    locals: SourceLocals,
+    fields: SourceFields,
     /// Field declarations in an intrinsic type body, before methods bind a receiver.
     type_body_fields: Vec<(Global, Form, Vec<Form>)>,
     function_scopes: Vec<std::sync::Arc<FunctionScope>>,
@@ -790,7 +783,7 @@ struct Analyzer<'a> {
     next_loop: usize,
     analysis_depth: usize,
     analysis_contexts: Vec<super::AnalysisContext>,
-    source_namespace: Option<(u64, Phase, String, std::sync::Arc<SourceNamespace>)>,
+    source_namespace: super::namespace_revision::NamespaceFactory,
     namespace_snapshot: Option<std::sync::Arc<SourceNamespace>>,
     source_callables: Vec<Option<std::sync::Arc<SourceCallable>>>,
     source_nodes: Vec<Option<std::sync::Arc<SourceNode>>>,
@@ -800,22 +793,9 @@ struct Analyzer<'a> {
     method_recurrence: Vec<(LoopId, bool)>,
 }
 impl Analyzer<'_> {
-    fn capture_source_namespace(&mut self) -> std::sync::Arc<SourceNamespace> {
-        let namespace = self.environment.current_namespace(self.phase).to_owned();
-        let generation = self.environment.source_generation();
-        match &self.source_namespace {
-            Some((version, phase, name, scope))
-                if *version == generation && *phase == self.phase && *name == namespace =>
-            {
-                scope.clone()
-            }
-            _ => {
-                let scope =
-                    std::sync::Arc::new(SourceNamespace::capture(&self.environment, self.phase));
-                self.source_namespace = Some((generation, self.phase, namespace, scope.clone()));
-                scope
-            }
-        }
+    fn capture_source_namespace(&mut self, span: Range<usize>) -> Result<std::sync::Arc<SourceNamespace>, Diagnostic> {
+        self.source_namespace.capture(&self.environment, self.phase,
+            &mut |work| self.expander.charge_expansion_work(work, span.clone()))
     }
     fn body(
         &mut self,
@@ -824,12 +804,23 @@ impl Analyzer<'_> {
         context: super::AnalysisContext,
         tail: bool,
     ) -> Result<Hir, Diagnostic> {
+        self.body_with_first_override(forms, span, context, tail, None)
+    }
+    fn body_with_first_override(
+        &mut self,
+        forms: &[Form],
+        span: Range<usize>,
+        context: super::AnalysisContext,
+        tail: bool,
+        first_override: Option<&Form>,
+    ) -> Result<Hir, Diagnostic> {
         // Intermediate forms discard their result; only the final form inherits
         // its caller context. A fragment itself is a sequence of statements.
         let items = forms
             .iter()
             .enumerate()
             .map(|(index, form)| {
+                let form = if index == 0 { first_override.unwrap_or(form) } else { form };
                 self.form_in(
                     form,
                     if index + 1 < forms.len() {
@@ -861,6 +852,7 @@ impl Analyzer<'_> {
         span: Range<usize>,
         context: super::AnalysisContext,
         tail: bool,
+        origin: SourceBodyOrigin,
     ) -> Result<Hir, Diagnostic> {
         // Analyzer-generated do syntax has genuine source facts and context,
         // while its children retain their ordinary bounded analysis frames.
@@ -881,13 +873,18 @@ impl Analyzer<'_> {
         };
         self.analysis_contexts.push(context);
         let result = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
-            self.expand_or_analyze(&body_form, context, tail, None)
+            self.expand_or_analyze(&body_form, context, tail, None, None)
         });
         self.analysis_contexts.pop();
-        result.map(|mut body| {
+        result.and_then(|mut body| {
+            // Added immutable provenance: role copy, source/tag access and store.
+            // Preserve the existing body/source clone behavior and its effects.
+            self.expander.charge_expansion_work(4, body.span.clone())?;
             let source = body.source.as_mut().expect("analyzed source body");
-            std::sync::Arc::make_mut(source).is_body = true;
-            body
+            let source = std::sync::Arc::make_mut(source);
+            source.is_body = true;
+            source.body_origin = Some(origin);
+            Ok(body)
         })
     }
     fn form_in(
@@ -905,6 +902,16 @@ impl Analyzer<'_> {
         tail: bool,
         name_hint: Option<&Form>,
     ) -> Result<Hir, Diagnostic> {
+        self.form_in_named_with_initializer(form, context, tail, name_hint, None)
+    }
+    fn form_in_named_with_initializer(
+        &mut self,
+        form: &Form,
+        context: super::AnalysisContext,
+        tail: bool,
+        name_hint: Option<&Form>,
+        initializer: Option<&DefinitionInitializer<'_>>,
+    ) -> Result<Hir, Diagnostic> {
         // Recursive re-expansion consumes the enclosing request budget. The
         // growable stack below protects native analysis without imposing a
         // fixed language-level nesting ceiling.
@@ -921,7 +928,7 @@ impl Analyzer<'_> {
                 form,
                 &self.environment,
                 self.phase,
-                self.origin.as_ref(),
+                self.origin.as_deref(),
                 &mut meter,
             )?;
             // Replay the same initial counter against verified indexing data;
@@ -940,12 +947,8 @@ impl Analyzer<'_> {
                 ));
             }
             let lowered = super::syntax_quote::lower_generated_metered(&raw, &mut meter)?;
-            let origin = self
-                .origin
-                .clone()
-                .unwrap_or_else(|| super::SourceOrigin::new("", None));
             let lowered_source = super::clone_form_metered(&lowered, &mut meter)?;
-            self.origin = Some(origin.with_reader_expansion(lowered_source, located));
+            self.origin = Some(local_bindings::derive_reader_origin(self.origin.as_deref(), lowered_source, located, &mut meter)?);
             self.environment.reader_state = reader;
             Some(lowered)
         } else {
@@ -956,12 +959,12 @@ impl Analyzer<'_> {
             // The pinned analyzer refreshes &env's namespace between top-level
             // forms, not after each nested def. Keep resolution's live catalog
             // separate so recursive definitions still resolve provisionally.
-            self.namespace_snapshot = Some(self.capture_source_namespace());
+            self.namespace_snapshot = Some(self.capture_source_namespace(form.span.clone())?);
         }
         self.analysis_depth += 1;
         self.analysis_contexts.push(context);
         let result = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
-            self.expand_or_analyze(form, context, tail, name_hint)
+            self.expand_or_analyze(form, context, tail, name_hint, initializer)
         });
         self.analysis_depth -= 1;
         self.analysis_contexts.pop();
@@ -974,6 +977,7 @@ impl Analyzer<'_> {
         context: super::AnalysisContext,
         tail: bool,
         name_hint: Option<&Form>,
+        initializer: Option<&DefinitionInitializer<'_>>,
     ) -> Result<Hir, Diagnostic> {
         if let Kind::List(items) = &form.kind {
             if let Some(Form {
@@ -985,13 +989,19 @@ impl Analyzer<'_> {
                     && (self.locals.contains_key(&symbol.name)
                         || self.fields.contains_key(&symbol.name));
                 if !shadowed {
+                    // Only prepay the borrowed capability here; live source capture
+                    // stays lazy, after the host selects an actual macro call.
+                    let namespace_revision = self.source_namespace.borrow_revision(
+                        &self.environment, self.phase,
+                        &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
                     let expansion_context = super::ExpansionContext {
                         environment: &self.environment,
+                        namespace_revision: Some(namespace_revision),
                         namespace_snapshot: self
                             .namespace_snapshot
                             .as_ref()
                             .expect("top-level source snapshot"),
-                        origin: self.origin.as_ref(),
+                        origin: self.origin.as_deref(),
                         phase: self.phase,
                         context,
                         locals: &self.locals,
@@ -1008,7 +1018,8 @@ impl Analyzer<'_> {
                     // primitive forms. Analyze that actual expansion before
                     // recording source facts; lexical callees stay untouched.
                     let primitive =
-                        match self.environment.resolve_bootstrap_macro(self.phase, symbol) {
+                        match self.environment.resolve_bootstrap_macro_metered(self.phase, symbol,
+                            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))? {
                             Some(ResolvedBinding::BootstrapLet(_)) => Some("let*"),
                             Some(ResolvedBinding::BootstrapLoop(_)) => Some("loop*"),
                             _ => None,
@@ -1029,7 +1040,7 @@ impl Analyzer<'_> {
                         // The fixed primitive rewrite is analyzed in this
                         // frame; it cannot form a recursive bootstrap chain.
                         return stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
-                            self.expand_or_analyze(&expanded, context, tail, name_hint)
+                            self.expand_or_analyze(&expanded, context, tail, name_hint, None)
                         });
                     }
                 }
@@ -1038,12 +1049,13 @@ impl Analyzer<'_> {
         let coerced = {
             let expander = &mut *self.expander;
             super::syntax_quote::reader_sequence_initializer(
-                form, &self.environment, self.phase, self.origin.as_ref(),
+                form, &self.environment, self.phase, self.origin.as_deref(),
                 &mut |work| expander.charge_expansion_work(work, form.span.clone()),
             )?
         };
         if let Some(coerced) = coerced {
-            let (global, fallback, fresh) = self.environment.reader_sequence_cells(self.phase);
+            let (global, fallback, fresh) = self.environment.reader_sequence_cells_metered(self.phase,
+                &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
             if fresh {
                 let initializer = self.form(&coerced)?;
                 self.callable_keys.insert(
@@ -1086,9 +1098,9 @@ impl Analyzer<'_> {
             });
         }
         let namespace = self.environment.current_namespace(self.phase).to_owned();
-        let scope = self.capture_source_namespace();
-        let locals = std::sync::Arc::new(self.locals.clone());
-        let fields = std::sync::Arc::new(self.fields.clone());
+        let scope = self.capture_source_namespace(form.span.clone())?;
+        let locals = self.locals.clone();
+        let fields = self.fields.clone();
         let function_scopes = self.function_scopes.clone().into();
         let symbol = match &form.kind {
             Kind::Symbol(symbol) => Some(symbol),
@@ -1101,18 +1113,28 @@ impl Analyzer<'_> {
             }),
             _ => None,
         };
+        let mut resolution_meter_error = None;
         let resolved = symbol.and_then(|symbol| {
             if symbol.namespace.is_none() || symbol.namespace.as_deref() == Some("js") {
                 if let Some(binding) = self.locals.get(&symbol.name) {
-                    return Some(SourceBinding::Local(std::sync::Arc::new(binding.clone())));
+                    return Some(SourceBinding::Local(binding.clone()));
                 }
                 if let Some(field) = self.fields.get(&symbol.name) {
-                    return Some(SourceBinding::Field(std::sync::Arc::new(field.clone())));
+                    return Some(SourceBinding::Field(field.clone()));
                 }
             }
-            self.environment
-                .resolve(self.phase, symbol, form.span.clone())
-                .ok()
+            let mut meter_failed = false;
+            let binding = self.environment
+                .resolve_metered(self.phase, symbol, form.span.clone(), &mut |work| {
+                    self.expander.charge_expansion_work(work, form.span.clone())
+                        .inspect_err(|_| meter_failed = true)
+                });
+            match binding {
+                Err(error) if meter_failed => {
+                    resolution_meter_error = Some(error);
+                    None
+                }
+                binding => binding.ok()
                 .map(|binding| {
                     let global = binding.global().clone();
                     if global.namespace() == "js" && matches!(binding, ResolvedBinding::Core { .. })
@@ -1124,13 +1146,15 @@ impl Analyzer<'_> {
                         global,
                         declaration,
                     }
-                })
+                }),
+            }
         });
+        if let Some(error) = resolution_meter_error { return Err(error); }
         // A nested source function gets its own fact slot. Compiler-only
         // wrappers never become the evidence for a source function's methods.
         self.source_callables.push(None);
         self.source_nodes.push(None);
-        let result = self.form_inner(form, context, tail, name_hint);
+        let result = self.form_inner(form, context, tail, name_hint, initializer);
         let callable = self
             .source_callables
             .pop()
@@ -1141,15 +1165,21 @@ impl Analyzer<'_> {
             // analyzed node. Preserve that record instead of attributing the
             // original macro call to the expanded expression.
             if expression.source.is_none() {
-                let tags = source_tags::source_tags_metered(
+                let tags = {
+                    let _trace = CowTraceScope::new("source_tags");
+                    source_tags::source_tags_metered(
                     form,
                     resolved.as_ref(),
                     callable.as_deref(),
                     &expression,
                     &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
-                )?;
+                    )?
+                };
+                // Prepay initialization of the added native provenance fact.
+                self.expander.charge_expansion_work(1, form.span.clone())?;
                 let mut source = SourceAnalysis {
                     is_body: false,
+                    body_origin: None,
                     tags,
                     form: form.clone(),
                     resolved,
@@ -1180,14 +1210,19 @@ impl Analyzer<'_> {
                     // The child uses the original entry snapshot and form,
                     // but the expression context of analyze-wrap-meta.
                     let mut value = value.as_ref().clone();
+                    // Prepay the added immutable body-origin fact copy too.
+                    self.expander.charge_expansion_work(1, form.span.clone())?;
                     let mut child = source.clone();
                     child.context = super::AnalysisContext::Expression;
                     child.node = inner.clone();
                     value.source = Some(std::sync::Arc::new(child));
-                    source.tags = source_tags::metadata_wrapper_tags_metered(
+                    source.tags = {
+                        let _trace = CowTraceScope::new("metadata_tags");
+                        source_tags::metadata_wrapper_tags_metered(
                         form,
                         &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
-                    )?;
+                        )?
+                    };
                     source.node = Some(std::sync::Arc::new(SourceNode::WithMeta {
                         expression: std::sync::Arc::new(value),
                         metadata: metadata.clone(),
@@ -1205,6 +1240,7 @@ impl Analyzer<'_> {
         context: super::AnalysisContext,
         tail: bool,
         name_hint: Option<&Form>,
+        initializer: Option<&DefinitionInitializer<'_>>,
     ) -> Result<Hir, Diagnostic> {
         let kind = match &form.kind {
             Kind::Nil => Expression::Literal(Literal::Nil),
@@ -1273,7 +1309,7 @@ impl Analyzer<'_> {
                 });
             }
             Kind::List(items) if !items.is_empty() => {
-                return self.list(form, items, context, tail, name_hint);
+                return self.list(form, items, context, tail, name_hint, initializer);
             }
             _ => {
                 return Err(fail(
@@ -1299,10 +1335,12 @@ impl Analyzer<'_> {
         symbol: &suss_reader::Symbol,
         span: Range<usize>,
     ) -> Result<(Expression, Type), Diagnostic> {
-        match self.environment.resolve(self.phase, symbol, span.clone())? {
+        match self.environment.resolve_metered(self.phase, symbol, span.clone(),
+            &mut |work| self.expander.charge_expansion_work(work, span.clone()))? {
             ResolvedBinding::Cell(global) => Ok((Expression::Global(global), Type::Value)),
             ResolvedBinding::Arithmetic { global, .. } | ResolvedBinding::Core { global, .. } => {
-                self.environment.materialize_bootstrap(global.clone());
+                self.environment.materialize_bootstrap_metered(global.clone(),
+                    &mut |work| self.expander.charge_expansion_work(work, span.clone()))?;
                 Ok((Expression::Global(global), Type::Value))
             }
             _ => Err(fail(
@@ -1389,7 +1427,8 @@ impl Analyzer<'_> {
         }
         let global = self
             .environment
-            .declare_cell(self.phase, &namespace, &name.name)
+            .declare_cell_metered(self.phase, &namespace, &name.name,
+                &mut |work| self.expander.charge_expansion_work(work, args[0].span.clone()))
             .map_err(|mut error| {
                 error.span = args[0].span.clone();
                 error
@@ -1419,8 +1458,10 @@ impl Analyzer<'_> {
                     if key.namespace.is_none() && key.name == "declared")
                         && !matches!(pair[1].kind, Kind::Nil | Kind::Bool(false))
                 });
+        self.expander.charge_expansion_work(2, form.span.clone())?; // both native owner-field initializations
         let mut definition = super::resolve::DefinitionInfo {
-            definition_form: form.clone(),
+            definition_form: super::resolve::own_definition_form(form,
+                &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?,
             analysis_completed: false,
             declaration: args[0].clone(),
             docstring: if args.len() == 3 {
@@ -1431,24 +1472,41 @@ impl Analyzer<'_> {
             } else {
                 None
             },
-            origin: self.origin.clone(),
+            origin: self.clone_origin_value(form.span.clone())?,
             initializer_form: init.cloned(),
             initializer: None,
             type_fields: None,
             type_is_record: false,
+            type_key_history: None,
+            completed_values: None,
             once,
         };
-        if !preserve_declaration {
-            self.environment
-                .record_definition(global.clone(), definition.clone());
-        }
+        // Publish and retain the actual provisional revision before any
+        // initializer callback. No second environment lookup or completed
+        // initializer graph is involved. Existing owned DefinitionInfo clones
+        // below remain separate work; this charge covers the published owner
+        // allocation/header and reference retention, not those deep copies.
+        let provisional = if !preserve_declaration {
+            let owner_work = std::mem::size_of::<super::resolve::DefinitionInfo>()
+                .checked_add(2 * std::mem::size_of::<usize>())
+                .and_then(|work| work.checked_add(1))
+                .and_then(|work| u64::try_from(work).ok())
+                .ok_or_else(|| fail(form.span.clone(), "Definition owner work overflow"))?;
+            self.expander.charge_expansion_work(owner_work, form.span.clone())?;
+            Some(self.environment.record_definition_shared_metered(global.clone(), definition.clone(),
+                &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?)
+        } else {
+            None
+        };
         let initializer = init
             .map(|init| {
-                self.form_in_named(
+                let provenance = provisional.as_ref().map(|owner| DefinitionInitializer { input: init, owner });
+                self.form_in_named_with_initializer(
                     init,
                     super::AnalysisContext::Expression,
                     false,
                     Some(&args[0]),
+                    provenance.as_ref(),
                 )
                 .map(Box::new)
             })
@@ -1458,8 +1516,10 @@ impl Analyzer<'_> {
         definition.initializer = initializer.as_deref().cloned().map(std::sync::Arc::new);
         definition.analysis_completed = true;
         if !preserve_declaration {
-            self.environment
-                .record_definition(global.clone(), definition);
+            definition.completed_values = super::resolve::CompletedDeclarationSource::capture(
+                &global, &definition, &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
+            self.environment.record_definition_metered(global.clone(), definition,
+                &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
         }
         Ok(Hir {
             source: None,
@@ -1489,6 +1549,7 @@ impl Analyzer<'_> {
         args: &[Form],
         bootstrap_macro: bool,
         name_hint: Option<&Form>,
+        initializer: Option<&DefinitionInitializer<'_>>,
     ) -> Result<Hir, Diagnostic> {
         let expanded;
         let args = if bootstrap_macro {
@@ -1499,7 +1560,7 @@ impl Analyzer<'_> {
         };
         let outer_scope_count = self.function_scopes.len();
         let suspendable = std::mem::replace(&mut self.suspendable, false);
-        let result = self.function_inner(form, args, bootstrap_macro, name_hint);
+        let result = self.function_inner(form, args, bootstrap_macro, name_hint, initializer);
         self.suspendable = suspendable;
         if result.is_ok() {
             let name = self.function_scopes.get(outer_scope_count).cloned();
@@ -1516,13 +1577,14 @@ impl Analyzer<'_> {
         args: &[Form],
         bootstrap_macro: bool,
         name_hint: Option<&Form>,
+        initializer: Option<&DefinitionInitializer<'_>>,
     ) -> Result<Hir, Diagnostic> {
         if args
             .first()
             .is_some_and(|arg| matches!(&arg.kind, Kind::Vector(names)
                 if !names.iter().any(|name| matches!(&name.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "&"))))
         {
-            self.enter_function_scope(form, name_hint, None);
+            self.enter_function_scope(form, name_hint, None, initializer)?;
             let (function, source_method) = self.fixed_function(form, args, bootstrap_macro)?;
             *self.source_callables.last_mut().expect("source function fact slot") = Some(std::sync::Arc::new(SourceCallable {
                 name: None,
@@ -1544,7 +1606,7 @@ impl Analyzer<'_> {
             }
             let id = BindingId(self.next);
             self.next += 1;
-            self.insert_local(&args[0], id, Type::Value, LocalKind::FunctionName, None);
+            self.insert_local(&args[0], id, Type::Value, LocalKind::FunctionName, None)?;
             (
                 Some(Parameter {
                     id,
@@ -1568,7 +1630,7 @@ impl Analyzer<'_> {
             } else {
                 signatures.iter().any(|signature| matches!(&signature.kind, Kind::List(parts) if matches!(parts.first().map(|part| &part.kind), Some(Kind::Vector(names)) if names.iter().any(|name| matches!(&name.kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "&")))))
             };
-            self.locals.get_mut(&parameter.name).unwrap().source_role = SourceRole::FunctionName {
+            self.local_revision_mut(&parameter.name)?.source_role = SourceRole::FunctionName {
                 variadic,
                 methods: None,
             };
@@ -1581,13 +1643,11 @@ impl Analyzer<'_> {
         let local = self_binding
             .as_ref()
             .map(|binding| self.locals[&binding.name].clone());
-        self.enter_function_scope(form, declaration, local);
+        self.enter_function_scope(form, declaration, local, initializer)?;
         if let Some(parameter) = &self_binding {
             let staged = std::sync::Arc::new(self.stage_function_parameters(form, signatures)?);
             let variadic = staged.methods.iter().any(|method| method.variadic);
-            self.locals
-                .get_mut(&parameter.name)
-                .expect("self binding")
+            self.local_revision_mut(&parameter.name)?
                 .source_role = SourceRole::FunctionName {
                 variadic,
                 methods: Some(staged),
@@ -1651,13 +1711,14 @@ impl Analyzer<'_> {
         } else {
             Some(
                 self.environment
-                    .resolve(
+                    .resolve_metered(
                         self.phase,
                         &suss_reader::Symbol {
                             namespace: Some("suss.core".into()),
                             name: "IndexedSeq".into(),
                         },
                         form.span.clone(),
+                        &mut |work| self.expander.charge_expansion_work(work, form.span.clone()),
                     )?
                     .global()
                     .clone(),
@@ -1685,6 +1746,13 @@ impl Analyzer<'_> {
         if let Some(parameter) = &self_binding {
             captures.remove(&parameter.id);
         }
+        // The analysis-local parameter is now complete and immutable. Only
+        // named functions allocate an owner; HIR copies retain that same value.
+        let self_binding = self_binding.map(|parameter| {
+            local_bindings::capture_self_parameter(parameter, &mut |work| {
+                self.expander.charge_expansion_work(work, form.span.clone())
+            })
+        }).transpose()?;
         let function = Hir {
             source: None,
             span: form.span.clone(),
@@ -1844,14 +1912,14 @@ impl Analyzer<'_> {
             }
         }
         let method_environment = SourceMethodEnvironment {
-            scope: self.capture_source_namespace(),
+            scope: self.capture_source_namespace(params.span.clone())?,
             namespace_snapshot: self
                 .namespace_snapshot
                 .as_ref()
                 .expect("top-level source snapshot")
                 .clone(),
-            locals: std::sync::Arc::new(self.locals.clone()),
-            fields: std::sync::Arc::new(self.fields.clone()),
+            locals: self.locals.clone(),
+            fields: self.fields.clone(),
             function_scopes: self.function_scopes.clone().into(),
             context: *self
                 .analysis_contexts
@@ -1871,20 +1939,18 @@ impl Analyzer<'_> {
         for parameter in parameters.iter().skip(usize::from(object_method)) {
             let id = BindingId(self.next);
             self.next += 1;
+            let value = self.capture_local_access(Hir {
+                source: None, span: parameter.span.clone(), metadata: Vec::new(),
+                ty: Type::Value, kind: Expression::Local(parameter.id),
+            })?;
             bindings.push(Binding {
                 id,
                 name: parameter.name.clone(),
                 metadata: parameter.metadata.clone(),
                 span: parameter.span.clone(),
-                value: Hir {
-                    source: None,
-                    span: parameter.span.clone(),
-                    metadata: Vec::new(),
-                    ty: Type::Value,
-                    kind: Expression::Local(parameter.id),
-                },
+                value,
             });
-            self.remap_local(&parameter.name, id, Type::Value);
+            self.remap_local(&parameter.name, id, Type::Value)?;
         }
         if !fields.is_empty() {
             let receiver = parameters
@@ -1909,7 +1975,7 @@ impl Analyzer<'_> {
                     .iter()
                     .any(|parameter| parameter.name == symbol.name);
                 if !parameter {
-                    self.locals.remove(&symbol.name);
+                    self.remove_local(&symbol.name, field.span.clone())?;
                 }
                 let value = if object_method {
                     let key = self
@@ -1926,7 +1992,15 @@ impl Analyzer<'_> {
                         vec![self.local(field, receiver)],
                     )
                 };
-                let record = FieldBinding {
+                // The field map debit below does not acquire this owner. Pay the
+                // Arc payload, two strong/weak header words, and bounded owner
+                // initialization/transfer/retirement controls before allocation.
+                self.expander.charge_expansion_work(
+                    (std::mem::size_of::<FieldBinding>()
+                        + 2 * std::mem::size_of::<usize>() + 8) as u64,
+                    field.span.clone(),
+                )?;
+                let record = std::sync::Arc::new(FieldBinding {
                     identity: std::sync::Arc::new(()),
                     declaration: field.clone(),
                     origin: self.origin.clone(),
@@ -1935,13 +2009,13 @@ impl Analyzer<'_> {
                     index: source_index,
                     mutable: Self::field_mutable(field)?,
                     access: value,
-                };
+                });
                 if parameter {
-                    let binding = self.locals.get_mut(&symbol.name).expect("method parameter");
+                    let binding = self.local_revision_mut(&symbol.name)?;
                     binding.shadow = None;
-                    binding.shadow_field = Some(std::sync::Arc::new(record.clone()));
+                    binding.shadow_field = Some(record.clone());
                 }
-                self.fields.insert(symbol.name.clone(), record);
+                self.insert_field(&symbol.name, record, field.span.clone())?;
             }
         }
         // Retain the visible argument before this-as anchors the receiver.
@@ -1960,7 +2034,7 @@ impl Analyzer<'_> {
                 .ok_or_else(|| fail(form.span.clone(), "Protocol method requires a receiver"))?;
             // The pin anchors a method's physical receiver across recur. The
             // first recur operand still evaluates, but does not replace `this`.
-            self.remap_local(&parameter.name, parameter.id, Type::Value);
+            self.remap_local(&parameter.name, parameter.id, Type::Value)?;
         }
         if let Some(receiver_type) = receiver_type {
             self.record_method_roles(
@@ -1969,7 +2043,8 @@ impl Analyzer<'_> {
                 receiver_type,
                 object_method,
                 receiver_argument,
-            );
+                declarations[0].declaration.clone(),
+            )?;
         }
         // Field reads occur at the original use, including in nested closures;
         // unreferenced fields must not introduce checks or effects before a body.
@@ -1979,6 +2054,7 @@ impl Analyzer<'_> {
             form.span.clone(),
             super::AnalysisContext::Return,
             true,
+            SourceBodyOrigin::FunctionMethod,
         )?;
         let (method_target, recurred) = self
             .method_recurrence
@@ -2065,6 +2141,7 @@ impl Analyzer<'_> {
         context: super::AnalysisContext,
         tail: bool,
         name_hint: Option<&Form>,
+        initializer: Option<&DefinitionInitializer<'_>>,
     ) -> Result<Hir, Diagnostic> {
         let Kind::Symbol(symbol) = &items[0].kind else {
             return self.call(form, items);
@@ -2087,21 +2164,24 @@ impl Analyzer<'_> {
             }
             let outer = self.locals.clone();
             let current = self.nominal(form, Nominal::CurrentThis, Vec::new());
+            let current = self.capture_local_access(current)?;
             let id = BindingId(self.next);
             self.next += 1;
+            let source_initializer = current.clone();
             self.insert_local(
                 &args[0],
                 id,
                 Type::Value,
                 LocalKind::Let,
-                Some(current.clone()),
-            );
+                Some(source_initializer),
+            )?;
             let source_binding = self.locals[&name.name].clone();
             let body = self.analyzed_body(
                 &args[1..],
                 form.span.clone(),
                 context.returning(),
                 tail,
+                SourceBodyOrigin::ThisAsBinding,
             );
             self.locals = outer;
             let body = Box::new(body?);
@@ -2144,6 +2224,7 @@ impl Analyzer<'_> {
                     form.span.clone(),
                     super::AnalysisContext::Return,
                     false,
+                    SourceBodyOrigin::SussFuture,
                 );
                 self.suspendable = suspendable;
                 self.target = target;
@@ -2228,10 +2309,13 @@ impl Analyzer<'_> {
             // A fresh generated type can query a real unbound cell only in the
             // current, already declared namespace; no arbitrary namespace or
             // source declaration facts are fabricated for an existence probe.
-            let global = match self
-                .environment
-                .resolve(self.phase, target, args[0].span.clone())
-            {
+            let mut meter_failed = false;
+            let resolved = self.environment.resolve_metered(self.phase, target, args[0].span.clone(), &mut |work| {
+                self.expander.charge_expansion_work(work, args[0].span.clone())
+                    .inspect_err(|_| meter_failed = true)
+            });
+            let global = match resolved {
+                Err(error) if meter_failed => return Err(error),
                 Ok(ResolvedBinding::Cell(global)) => global,
                 Ok(_) => {
                     return Err(fail(
@@ -2241,7 +2325,8 @@ impl Analyzer<'_> {
                 }
                 Err(_) if namespace == self.environment.current_namespace(self.phase) => self
                     .environment
-                    .declare_cell(self.phase, namespace, &target.name)?,
+                    .declare_cell_metered(self.phase, namespace, &target.name,
+                        &mut |work| self.expander.charge_expansion_work(work, args[0].span.clone()))?,
                 Err(error) => return Err(error),
             };
             if self
@@ -2353,12 +2438,12 @@ impl Analyzer<'_> {
             };
             let key = Self::object_method_name(form, &symbol.name[1..])?;
             let owner_value = self.form(owner)?;
-            let owner_binding = self.fresh_binding(owner, owner_value);
+            let owner_binding = self.fresh_binding(owner, owner_value)?;
             let owner_read = self.local(owner, owner_binding.id);
             let key = self.literal_form(form, Literal::String(key.encode_utf16().collect()));
             let lookup =
                 self.callable_named_get(form, owner_read.clone(), key, &symbol.name[1..])?;
-            let method_binding = self.fresh_binding(form, lookup);
+            let method_binding = self.fresh_binding(form, lookup)?;
             let mut arguments = vec![self.local(form, method_binding.id), owner_read];
             for arg in &args[1..] {
                 arguments.push(self.form(arg)?);
@@ -2399,7 +2484,7 @@ impl Analyzer<'_> {
             // This fixed rewrite cannot recurse through another trailing dot;
             // preserve the existing source-depth bound like let/loop rewrites.
             return stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
-                self.expand_or_analyze(&expanded, context, tail, name_hint)
+                self.expand_or_analyze(&expanded, context, tail, name_hint, None)
             });
         }
         if bare && symbol.name == "new" {
@@ -2450,12 +2535,14 @@ impl Analyzer<'_> {
                 return self.call(form, items);
             }
             Some(
-                if let Some(binding) = self.environment.resolve_bootstrap_macro(self.phase, symbol)
+                if let Some(binding) = self.environment.resolve_bootstrap_macro_metered(self.phase, symbol,
+                            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?
                 {
                     binding
                 } else {
                     self.environment
-                        .resolve(self.phase, symbol, items[0].span.clone())?
+                        .resolve_metered(self.phase, symbol, items[0].span.clone(),
+                            &mut |work| self.expander.charge_expansion_work(work, items[0].span.clone()))?
                 },
             )
         };
@@ -2505,7 +2592,8 @@ impl Analyzer<'_> {
             }
             if let Kind::Symbol(name) = &args[0].kind {
                 if name.namespace.is_none() && !self.locals.contains_key(&name.name) {
-                    if let Some(mut field) = self.fields.get(&name.name).cloned() {
+                    if let Some(field) = self.fields.get(&name.name).cloned() {
+                        let mut access = self.clone_local_hir(&field.access)?;
                         if !field.mutable {
                             return Err(fail(
                                 args[0].span.clone(),
@@ -2515,7 +2603,7 @@ impl Analyzer<'_> {
                         let Expression::Nominal {
                             operation,
                             mut arguments,
-                        } = field.access.take_kind()
+                        } = access.take_kind()
                         else {
                             unreachable!()
                         };
@@ -2635,6 +2723,7 @@ impl Analyzer<'_> {
                 args,
                 matches!(resolved, Some(ResolvedBinding::BootstrapFn(_))),
                 name_hint,
+                initializer,
             )?;
             return self.attach_literal_metadata(form, value);
         }
@@ -2746,6 +2835,8 @@ impl Analyzer<'_> {
                         self.next += 1;
                         id
                     };
+                    let value = self.capture_local_access(value)?;
+                    let source_initializer = value.clone();
                     self.insert_local(
                         &pair[0],
                         id,
@@ -2757,15 +2848,13 @@ impl Analyzer<'_> {
                         } else {
                             LocalKind::Let
                         },
-                        Some(value.clone()),
-                    );
+                        Some(source_initializer),
+                    )?;
                     if let Some(hidden) = &alias {
-                        self.locals
-                            .get_mut(&name.name)
-                            .expect("catch alias")
-                            .source_role = SourceRole::CatchBinding {
-                            hidden: hidden.clone(),
-                            access: self.local(&pair[1], hidden.id),
+                        let source_access = self.local(&pair[1], hidden.id);
+                        let source_access = self.capture_local_access(source_access)?;
+                        self.local_revision_mut(&name.name)?.source_role = SourceRole::CatchBinding {
+                            hidden: hidden.clone(), access: source_access,
                         };
                     }
                     source_bindings.push(self.locals[&name.name].clone());
@@ -2793,6 +2882,7 @@ impl Analyzer<'_> {
                     form.span.clone(),
                     context.returning(),
                     is_loop || tail,
+                    SourceBodyOrigin::Bindings,
                 )?);
                 *self.source_nodes.last_mut().expect("source node fact slot") =
                     Some(std::sync::Arc::new(SourceNode::Bindings {
@@ -3007,21 +3097,38 @@ pub(crate) fn prepare_with_origin(
     expander: &mut dyn super::ExpansionHost,
     origin: Option<&super::SourceOrigin>,
 ) -> Result<(Hir, Environment), Diagnostic> {
+    prepare_with_origin_and_first_override(forms, span, environment, phase, expander, origin, None)
+}
+/// Preserve the original top-level position/context of a consumed namespace
+/// declaration while borrowing every other actual input Form. No borrowed
+/// syntax escapes: HIR and source facts capture their own immutable owners.
+pub(crate) fn prepare_with_origin_and_first_override(
+    forms: &[Form],
+    span: Range<usize>,
+    environment: &Environment,
+    phase: Phase,
+    expander: &mut dyn super::ExpansionHost,
+    origin: Option<&super::SourceOrigin>,
+    first_override: Option<&Form>,
+) -> Result<(Hir, Environment), Diagnostic> {
+    let origin = local_bindings::capture_origin_owner(origin, &mut |work| expander.charge_expansion_work(work, span.clone()))?;
+    let source_namespace = super::namespace_revision::NamespaceFactory::new_metered(
+        &mut |work| expander.charge_expansion_work(work, span.clone()))?;
     let mut analyzer = Analyzer {
         suspendable: false,
         expander,
-        origin: origin.cloned(),
+        origin,
         environment: environment.clone(),
         phase,
-        locals: HashMap::new(),
-        fields: HashMap::new(),
+        locals: SourceLocals::default(),
+        fields: SourceFields::default(),
         type_body_fields: Vec::new(),
         function_scopes: Vec::new(),
         next: 0,
         next_loop: 0,
         analysis_depth: 0,
         analysis_contexts: Vec::new(),
-        source_namespace: None,
+        source_namespace,
         namespace_snapshot: None,
         source_callables: Vec::new(),
         source_nodes: Vec::new(),
@@ -3030,7 +3137,7 @@ pub(crate) fn prepare_with_origin(
         target: None,
         method_recurrence: Vec::new(),
     };
-    let mut hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
+    let mut hir = analyzer.body_with_first_override(forms, span, super::AnalysisContext::Statement, false, first_override)?;
     if !analyzer.callable_keys.is_empty() {
         let mut initializers = analyzer.callable_keys.into_values().collect::<Vec<_>>();
         let ty = hir.ty;

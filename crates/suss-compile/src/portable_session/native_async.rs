@@ -211,9 +211,7 @@ impl Session {
             .map_err(|e| wasmtime::Error::msg(e.to_string()))?;
         self.budget()?;
         let mut environment = self.environment.clone();
-        let cell_identity = environment
-            .declare_cell(self.phase, namespace, &profile.symbol.name)
-            .map_err(SessionError::Compile)?;
+        let cell_identity = self.declare_compiler_cell(&mut environment, namespace, &profile.symbol.name)?;
         let provided = ModuleIdentity::new(self.phase, namespace).map_err(SessionError::Compile)?;
         let closure_new = self
             .runtime

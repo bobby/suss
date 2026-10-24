@@ -1,0 +1,639 @@
+{
+  "scope": "Exact prior native32 replay and current bridge/setup typecheck; semantic execution of current fixes remains unverified.",
+  "native32": {
+    "head": "9d6cbe2a09b31cc5d75686499d6acffb8ea15900",
+    "post_head": "e4da0a1bb9bdc340b8b397760983608f2a1d10be",
+    "compiler_source_sha256": "a705484424b4f040a4b282544d8a0c7a667e98bad78a38361e5c6c64282fc459",
+    "exit_code": 101,
+    "seconds": 2040.0284035389996,
+    "raw_sha256": "5e8e09bfa5d3550e3992faf782950178e8aa3247439813f8b30e7293e5336b8b",
+    "started_names": [
+      "portable_macro_data::identity_tests::shared_bridge_core_preserves_captured_callbacks_recording_isolation_and_owners",
+      "portable_macro_graph::construction::recorded_scratch_comparison::real_recorded_metadata_dense_sparse_preserve_owner_gc_and_nested_poison",
+      "portable_macro_graph::construction::tests::construction_records_preserve_reader_hash_counts_and_authenticate_only_macro_warming",
+      "portable_macro_graph::construction::tests::construction_records_reject_child_poison_during_parent_hash_callback",
+      "portable_macro_graph::metadata_expectations::tests::metadata_expectations_project_metadata_sets_without_callbacks",
+      "portable_macro_graph::recorded_scratch_tests::dense_and_sparse_materialization_preserve_reader_effects_metadata_sharing_and_gc",
+      "portable_macro_graph::recorded_scratch_tests::dense_sparse_reader_callback_failure_is_not_replayed_and_source_stays_live",
+      "portable_macro_graph::reuse::tests::reuse_incomplete_logged_parent_falls_back_to_walker_with_callback_outputs_preserved",
+      "portable_macro_graph::reuse::tests::reuse_later_rebuild_rechecks_earlier_old_and_does_not_retain_poisoned_fresh",
+      "portable_macro_graph::reuse::tests::reuse_logged_parent_rebuild_rechecks_earlier_old_and_poisoned_fresh",
+      "portable_macro_graph::sharing_tests::bottom_up_keys_preserve_metadata_set_repetition_and_quote_alias_barrier",
+      "portable_macro_graph::sharing_tests::compact_diamond_admission_rejects_before_reader_callbacks",
+      "portable_macro_graph::sharing_tests::declaration_metadata_rebuilds_repeat_hash_callbacks_in_source_order",
+      "portable_macro_graph::sharing_tests::duplicate_reader_collections_preserve_effects_and_occurrence_results",
+      "portable_macro_graph::sharing_tests::metadata_set_preserves_canonical_hash_callback_count_and_order",
+      "portable_macro_graph::sharing_tests::reader_occurrence_work_bounds_fail_before_callbacks_and_allow_recovery",
+      "portable_macro_graph::source_facts::tests::source_facts_reject_callback_poison_that_a_fresh_physical_snapshot_accepts",
+      "portable_macro_graph::source_roots::first_use_data::lifecycle_tests::genuine_deep_reader_metadata_retains_original_native_evidence_and_releases_after_owner_drop",
+      "portable_macro_graph::source_roots::first_use_data::tests::uncaptured_native_aliases_preserve_original_factory_evidence_and_exact_object_after_gc",
+      "portable_macro_graph::source_roots::reader_controller::tests::whole_controller_failure_keeps_the_entire_previous_retained_forest_unchanged",
+      "portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo",
+      "portable_macro_graph::source_roots::tests::source_parent_lineage_keeps_selected_identity_and_rechecks_after_real_hash_callback",
+      "portable_macros::body_origin_tests::analyzer_literal_actual_body_transport_distinguishes_future_origin_and_restores_hash",
+      "portable_macros::reader_metadata_tests::reader_shorthand_declaration_keys_preserve_first_origin_and_meta_alias_after_gc",
+      "portable_macros::reference_field_tests::analyzer_literal_global_references_keep_tags_and_resolved_identity_after_gc_and_hash_restore",
+      "portable_session::canonical_methods::tests::canonical_methods_capture_actual_installations_without_external_handles",
+      "portable_session::canonical_methods::tests::initial_source_classes_bind_constructor_reference_and_current_descriptor",
+      "portable_session::dispatch_observer::tests::ihash_dispatch_boundary_live_replacement_helpers_and_rebinding",
+      "portable_session::memo_bridge::receipt_tests::memo_receipts_authenticate_macro_warming_but_not_runtime_stores",
+      "portable_session::memo_bridge::tests::private_memo_bridge_preserves_hash_miss_hit_and_cache_field_after_gc",
+      "portable_session::tests::session_lifecycle_reset_host_hook_once_and_cleanup_catches_cancellation",
+      "portable_session::tests::session_lifecycle_reset_unknown_producer_preserves_store_and_retries_cleanup"
+    ],
+    "summaries": [
+      [
+        "FAILED",
+        "14",
+        "18",
+        "0",
+        "0",
+        "605"
+      ]
+    ],
+    "postflight_error": null,
+    "complete_exact32_scope": true,
+    "all32_pass": false,
+    "scope_limits": "Only native32; no other acceptance, fullbaseline or final-headCI proof. Actualfailures preserved."
+  },
+  "native32_failures": [
+    {
+      "name": "portable_macro_data::identity_tests::shared_bridge_core_preserves_captured_callbacks_recording_isolation_and_owners",
+      "location": "crates/suss-compile/src/portable_macro_data.rs:1600:13",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 11..164, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::construction::recorded_scratch_comparison::real_recorded_metadata_dense_sparse_preserve_owner_gc_and_nested_poison",
+      "location": "crates/suss-compile/src/portable_macro_graph/construction.rs:505:43",
+      "message": "recorded metadata construction phase=Macro width=128 padding=0 production=false remaining=Ok(0): Trap(error while executing at wasm backtrace:\n    0:  0x622ee - <unknown>!<wasm function 441>\n    1:   0xe64d - <unknown>!<wasm function 186>\n    2:  0x59cc9 - <unknown>!<wasm function 392>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)"
+    },
+    {
+      "name": "portable_macro_graph::recorded_scratch_tests::dense_sparse_reader_callback_failure_is_not_replayed_and_source_stays_live",
+      "location": "crates/suss-compile/src/portable_macro_graph/recorded_scratch_tests.rs:270:63",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..37, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::reuse::tests::reuse_incomplete_logged_parent_falls_back_to_walker_with_callback_outputs_preserved",
+      "location": "crates/suss-compile/src/portable_macro_graph/reuse.rs:505:17",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 15..1395, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::reuse::tests::reuse_later_rebuild_rechecks_earlier_old_and_does_not_retain_poisoned_fresh",
+      "location": "crates/suss-compile/src/portable_macro_graph/reuse.rs:505:17",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 15..1395, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::reuse::tests::reuse_logged_parent_rebuild_rechecks_earlier_old_and_poisoned_fresh",
+      "location": "crates/suss-compile/src/portable_macro_graph/reuse.rs:505:17",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 15..1395, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::sharing_tests::bottom_up_keys_preserve_metadata_set_repetition_and_quote_alias_barrier",
+      "location": "crates/suss-compile/src/portable_macro_graph.rs:4099:52",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..16, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::sharing_tests::compact_diamond_admission_rejects_before_reader_callbacks",
+      "location": "crates/suss-compile/src/portable_macro_graph.rs:4327:52",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..16, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::sharing_tests::declaration_metadata_rebuilds_repeat_hash_callbacks_in_source_order",
+      "location": "crates/suss-compile/src/portable_macro_graph.rs:3946:107",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..81, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::sharing_tests::duplicate_reader_collections_preserve_effects_and_occurrence_results",
+      "location": "crates/suss-compile/src/portable_macro_graph.rs:4270:52",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..16, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::sharing_tests::metadata_set_preserves_canonical_hash_callback_count_and_order",
+      "location": "crates/suss-compile/src/portable_macro_graph.rs:4215:52",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..16, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::sharing_tests::reader_occurrence_work_bounds_fail_before_callbacks_and_allow_recovery",
+      "location": "crates/suss-compile/src/portable_macro_graph.rs:4364:52",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..16, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_macro_graph::source_roots::first_use_data::lifecycle_tests::genuine_deep_reader_metadata_retains_original_native_evidence_and_releases_after_owner_drop",
+      "location": "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/lifecycle_tests.rs:194:37",
+      "message": "deep reader DATA build depth=192 remaining=Ok(0): Trap(error while executing at wasm backtrace:\n    0:   0xc558 - <unknown>!<wasm function 155>\n    1:   0xe083 - <unknown>!<wasm function 177>\n    2:  0x2634d - <unknown>!<wasm function 551>\n\nCaused by:\n    wasm trap: all fuel consumed by WebAssembly\n)"
+    },
+    {
+      "name": "portable_macro_graph::source_roots::reader_controller::tests::whole_controller_failure_keeps_the_entire_previous_retained_forest_unchanged",
+      "location": "crates/suss-compile/src/portable_macro_graph/source_roots/reader_controller.rs:401:63",
+      "message": "called `Result::unwrap()` on an `Err` value: Trap(wasm trap: all fuel consumed by WebAssembly)"
+    },
+    {
+      "name": "portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo",
+      "location": "crates/suss-compile/src/portable_macro_graph/source_roots.rs:1892:49",
+      "message": "source child batch phase=Runtime variant=3 remaining=Ok(0): Trap(wasm trap: all fuel consumed by WebAssembly)"
+    },
+    {
+      "name": "portable_session::canonical_methods::tests::canonical_methods_capture_actual_installations_without_external_handles",
+      "location": "crates/suss-compile/src/portable_session/canonical_methods.rs:960:141",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..30, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_session::canonical_methods::tests::initial_source_classes_bind_constructor_reference_and_current_descriptor",
+      "location": "crates/suss-compile/src/portable_session/canonical_methods.rs:1399:48",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..4, message: \"Macro expansion native work fuel exhausted\" })"
+    },
+    {
+      "name": "portable_session::memo_bridge::tests::private_memo_bridge_preserves_hash_miss_hit_and_cache_field_after_gc",
+      "location": "crates/suss-compile/src/portable_session/memo_bridge.rs:533:18",
+      "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..45, message: \"Macro expansion native work fuel exhausted\" })"
+    }
+  ],
+  "bridge_setup_typecheck": {
+    "base_head": "e4da0a1bb9bdc340b8b397760983608f2a1d10be",
+    "command": [
+      "cargo",
+      "check",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--profile",
+      "test"
+    ],
+    "working_source_hashes": {
+      "crates/suss-compile/src/portable_macro_data.rs": "403685a2974ea22d3f462d46ae379069ab4d379a5f5ddd87890a255406e01945",
+      "crates/suss-compile/src/portable_macro_graph.rs": "9e263f6654cece8d68f7a417aac34f6334235d47be7fbcdb67a86cd1b2f669c8",
+      "crates/suss-compile/src/portable_macro_graph/construction.rs": "d4b4c8303f75923ddcbb01b60831d2910a6f342baf102d284de5d360c6a57e8f",
+      "crates/suss-compile/src/portable_macro_graph/recorded_scratch_tests.rs": "4c2cf9019e3c5e98695e2e3f00b95ba45dc066fd76714379b6275aee83b41d0c",
+      "crates/suss-compile/src/portable_macro_graph/reuse.rs": "33cfdfcfa7958e4348c138bad60f622133129faceac6aae005d0b72784828dee",
+      "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/lifecycle_tests.rs": "7bd122939769557ba36a147227fade665598a8ba680387ca263098765a539eb6",
+      "crates/suss-compile/src/portable_macro_graph/source_roots/reader_controller.rs": "31bc2f5c909d1e7aed1c9b244993dce4422624dc57b0ec9ee7c7b21fa9f55a42",
+      "crates/suss-compile/src/portable_session/canonical_methods.rs": "1cd5c722cff04c456340ba7d47dac38b07fa4989fbb5202bdcd41198a03a303d",
+      "crates/suss-compile/src/portable_session/memo_bridge.rs": "6f067d2a15aa5eb6b2fa5ac84805b2d046a39787683aeef8ab057f5875074ccd",
+      "crates/suss-compile/src/portable_session/memo_leaf_test_support.rs": "234f0080594e3953210bad4b619e8b98ee57d2c28328f9119de14bbe749d98f4",
+      "crates/suss-compile/tests/compiled_bridge_compilation_fuel.rs": "9d085dc03f51d6f73b9ddaa6e95e9309858ea7ab717f5beef9937576bd3aebee"
+    },
+    "scope": "Dirty-tree exact afterimage Rust typecheck; no matchingBOOT or semantic execution yet. Frozen old metadata6 source unchanged.",
+    "exit_code": 0,
+    "seconds": 79.27033028900041,
+    "raw_sha256": "f6160005e803cb36a3b8e9740634bbc9b9d255ca12df3973626b8c01a73de5fa",
+    "postflight_error": null
+  },
+  "changes": [
+    "Optional cumulative native compilation allowance across bridge constructor helper inputs; None preserves existing path and defaults.",
+    "Positive semantic setup compilation uses existing100B; original source/order/assertions and Runtime options retained.",
+    "Macro compiler-data setup allowance restores original operation option after success, failure and unwind; dedicated low-fuel and recovery controls unchanged."
+  ],
+  "limits": [
+    "New compiler source needs matching bootstrap artifacts before semantic execution.",
+    "Original fixed-cap Runtime source-child failure remains unresolved.",
+    "No full-workspace, final-head CI, or issue completion proof."
+  ],
+  "independent_source_review": {
+    "agent_id": "01a15d04-82b3-7070-92e4-756cebd7731a",
+    "nickname": "James",
+    "reviewed_commit": "ff77ce8b291f99135d932013a9e8c2a6ab38e2e5",
+    "parent": "e4da0a1bb9bdc340b8b397760983608f2a1d10be",
+    "result": "No actionable defects found in bounded read-only source review.",
+    "findings": [
+      "One mutable bridge native allowance persists across helper compilations; nested work debits without refill. None keeps original Session.eval path.",
+      "Capture expressions, order, live getters, rooting and captured callbacks preserved.",
+      "Test-only helper rejects Runtime Store and active requests before mutation; original option restored after operation guard retirement on success/error/unwind.",
+      "Shipped Runtime and dedicated exhaustion/recovery limits unchanged; diagnostic Macro allowance intentionally changed."
+    ],
+    "coverage_limits": [
+      "New bridge test does not directly show multi-helper exhaustion or live-getter equivalence.",
+      "Restoration test does not explicitly exercise nested-entry rejection.",
+      "No Cargo/semantic execution performed by reviewer; not whole-PR promotion review."
+    ]
+  },
+  "bootstrap_generation": {
+    "head": "ff77ce8b291f99135d932013a9e8c2a6ab38e2e5",
+    "compiler_source_sha256": "03b1603e60fdcf2366a213a9e08f4e1444631c311d9a90da3598d3e4ff16b9f2",
+    "command": [
+      "nice",
+      "-n",
+      "10",
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "shipped_before": {
+      "runtime/bootstrap/macro.json": "e8ce1854fae636c53704d6d683e887ad3900bffd0568bfc079b631cd25ce169b",
+      "runtime/bootstrap/macro.wasm": "05569ce00cb99a73f86a4f767d8394406b431b4096fc5f9e728122e56bc48768",
+      "runtime/bootstrap/runtime.json": "c16fca7468407aa28eda1dfb5fd2b2e7101db160af1510ef529c335afb1b9320",
+      "runtime/bootstrap/runtime.wasm": "ba1392321bbeb3b99812e3e84636eb35280b1a8a02654ea06e773507a40f6181"
+    },
+    "exit_code": 1,
+    "seconds": 402.2250144510035,
+    "raw_sha256": "2d709eac007fa9a8e1a3bc5e486ac13004f993d410eb171968c75311c1437334",
+    "post_head": "91197e65c18e5a74d29a2ebe6ab1b902fa29d869",
+    "scope": "Two matching normal generations; verifier exit1 at stale shipped comparison, not full verifier pass. Only non-compiler provenance files committed during generation; all229 compiler inputs matched frozen hashes at postflight."
+  },
+  "artifact_review_and_adoption": {
+    "source_fingerprint": "03b1603e60fdcf2366a213a9e08f4e1444631c311d9a90da3598d3e4ff16b9f2",
+    "source_input_count": 229,
+    "builders": [
+      "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output"
+    ],
+    "scope": "Main source/artifact inspection; not independent subagent or semantic execution.",
+    "phases": {
+      "runtime": {
+        "matching_generations": true,
+        "noncustom_bytes_unchanged": true,
+        "changed_source_custom_sections": [
+          7
+        ],
+        "manifest_deltas": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ]
+      },
+      "macro": {
+        "matching_generations": true,
+        "noncustom_bytes_unchanged": true,
+        "changed_source_custom_sections": [
+          7
+        ],
+        "manifest_deltas": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ]
+      }
+    },
+    "adoption_candidates": [
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-bridge-setup-production-v1/diagnostics/first/runtime.json",
+        "to": "runtime/bootstrap/runtime.json",
+        "sha256": "42c8d91af73c1c8fe94ec969e3af42e4ae85213247285d395cb058754e2038d2"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-bridge-setup-production-v1/diagnostics/first/runtime.wasm",
+        "to": "runtime/bootstrap/runtime.wasm",
+        "sha256": "63d66c5b77802d68f2567516397f2991685bd8b13317e8d4d2de5cec95aecdf8"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-bridge-setup-production-v1/diagnostics/first/macro.json",
+        "to": "runtime/bootstrap/macro.json",
+        "sha256": "616ce618ea71af5e820a4e3cbbb243bad9d1931fafecbc906a0e67a59eeebc0d"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-bridge-setup-production-v1/diagnostics/first/macro.wasm",
+        "to": "runtime/bootstrap/macro.wasm",
+        "sha256": "feae3ba4ab96ece809f6fac6bddc32ae8ccb4e5a5276a199283877ce477b5439"
+      }
+    ],
+    "adopted_head": "3d089e5cfc517e14829aca4ee188ef9982c6b2f7"
+  },
+  "identity": {
+    "head": "3d089e5cfc517e14829aca4ee188ef9982c6b2f7",
+    "compiler_source_sha256": "03b1603e60fdcf2366a213a9e08f4e1444631c311d9a90da3598d3e4ff16b9f2",
+    "command": [
+      "python3",
+      "scripts/verify_bootstrap_identity.py"
+    ],
+    "scope": "Exact command only; source, full test inputs and shipped BOOT checked before/after. No whole-issue inference.",
+    "exit_code": 0,
+    "seconds": 3.626956334002898,
+    "post_head": "3d089e5cfc517e14829aca4ee188ef9982c6b2f7",
+    "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+    "postflight_error": null,
+    "harness_summaries": []
+  },
+  "foundation_tail_checks": [
+    {
+      "command": [
+        "python3",
+        "scripts/check_when_let_provenance.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.13514863599993987,
+      "raw_sha256": "150d9a7865662baad72b40794b2f39aa6822c6d447fca87f03fb7c2855cbcae4"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/bitwise_provenance.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.1384071889988263,
+      "raw_sha256": "e1fbd6c01dc8516dba88a1d6a73b38b32daac9617034dc459d3eb86cfee46d5c"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/wasi_lock.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.30970793499727733,
+      "raw_sha256": "d2e2fedccd215d0b67c40a6643444bdcfeef5d4a3ab39bd2d5e804b9655f8fc0"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/numeric_runtime.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.19764218800264644,
+      "raw_sha256": "081e403746c9a4758034db7fe4c4f4178a7d5a4ebb56b42b67781814651bdda4"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/clojure_test_suite.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.2560585200044443,
+      "raw_sha256": "86a7a119cba62dbd799ea7220290d6fb18728054ff860d208acd96f4fda52ef3"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/clojure_test_suite.py",
+        "overlap"
+      ],
+      "exit_code": 0,
+      "seconds": 0.22218069900554838,
+      "raw_sha256": "9570d69f8ba9c1b7375a20e14241a0d6a7275d7524d1476e524aed84b00aed4e"
+    }
+  ],
+  "provenance_repair": {
+    "commit": "91197e65c18e5a74d29a2ebe6ab1b902fa29d869",
+    "scope": "Retain captured native fixture and oracle bytes. Exact adaptation patch updated to include existing compilation-only allowance change; original/patch/current hashes verified by original checker. No verifier weakening.",
+    "initial_local_attempt": "Failed before provenance validation because detached checkout lacked initialized upstream submodule. Initialized exact pinned c4295f3 via existing local reference, then original checker passed.",
+    "published_ci_foundation_log_sha256": "06d45b57bc01c5b34b6851fe89736304ede7929848d87400e09d44bdf2487682"
+  },
+  "initial_bridge_regression": {
+    "head": "3d089e5cfc517e14829aca4ee188ef9982c6b2f7",
+    "compiler_source_sha256": "03b1603e60fdcf2366a213a9e08f4e1444631c311d9a90da3598d3e4ff16b9f2",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--test",
+      "compiled_bridge_compilation_fuel",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "scope": "Exact command only; source, full test inputs and shipped BOOT checked before/after. No whole-issue inference.",
+    "exit_code": 101,
+    "seconds": 310.94771406599466,
+    "post_head": "67fd3cd16a6ece433972014060ca6289e4d00e64",
+    "raw_sha256": "d1c54b694ea268689af9c787cd16354164931e3a6bb5f2e7586a2149dc6ab8ca",
+    "postflight_error": null,
+    "harness_summaries": [
+      [
+        "FAILED",
+        "0",
+        "1",
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "failure": "New fixture used bare with_options_in without shipped core, so first positive capture failed on unresolved Runtime suss.core/Symbol. Zero-budget rejection and no-publication/options checks passed before this failure. Corrected fixture uses normal new_repl/new_macro, no assertions removed; fresh replay pending."
+  },
+  "bridge_regression_replay": {
+    "head": "07d8f06e6574802101282b334d9c85ecad0d8af7",
+    "compiler_source_sha256": "03b1603e60fdcf2366a213a9e08f4e1444631c311d9a90da3598d3e4ff16b9f2",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--test",
+      "compiled_bridge_compilation_fuel",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "scope": "Complete one test, both caller phases: zero native compilation rejection before publication; options/resident-fragments/bindings unchanged; explicit100B recovery; original default constructor;42 afterGC read through bothcaptures. No native19/fullbaseline or live-getter/multi-helper-exhaustion proof.",
+    "exit_code": 0,
+    "seconds": 125.7392113629976,
+    "post_head": "07d8f06e6574802101282b334d9c85ecad0d8af7",
+    "raw_sha256": "7d198bc31c3bbb04e45ed71749cb648394d999d9f74120b9c2ffd53f97d3b9f2",
+    "postflight_error": null,
+    "harness_summaries": [
+      [
+        "ok",
+        "1",
+        "0",
+        "0",
+        "0",
+        "0"
+      ]
+    ],
+    "test_source_sha256": "7605b9e1a3717f39cb1e701f6055c1d7b9229d732bd542ecfbcc213eefa7983a"
+  },
+  "native19": {
+    "head": "dcf988c8cfb4cf57f9903418a99bba240d25c2a0",
+    "compiler_source_sha256": "03b1603e60fdcf2366a213a9e08f4e1444631c311d9a90da3598d3e4ff16b9f2",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "portable_macro_data::identity_tests::shared_bridge_core_preserves_captured_callbacks_recording_isolation_and_owners",
+      "portable_macro_graph::construction::recorded_scratch_comparison::real_recorded_metadata_dense_sparse_preserve_owner_gc_and_nested_poison",
+      "portable_macro_graph::recorded_scratch_tests::dense_sparse_reader_callback_failure_is_not_replayed_and_source_stays_live",
+      "portable_macro_graph::reuse::tests::reuse_incomplete_logged_parent_falls_back_to_walker_with_callback_outputs_preserved",
+      "portable_macro_graph::reuse::tests::reuse_later_rebuild_rechecks_earlier_old_and_does_not_retain_poisoned_fresh",
+      "portable_macro_graph::reuse::tests::reuse_logged_parent_rebuild_rechecks_earlier_old_and_poisoned_fresh",
+      "portable_macro_graph::sharing_tests::bottom_up_keys_preserve_metadata_set_repetition_and_quote_alias_barrier",
+      "portable_macro_graph::sharing_tests::compact_diamond_admission_rejects_before_reader_callbacks",
+      "portable_macro_graph::sharing_tests::declaration_metadata_rebuilds_repeat_hash_callbacks_in_source_order",
+      "portable_macro_graph::sharing_tests::duplicate_reader_collections_preserve_effects_and_occurrence_results",
+      "portable_macro_graph::sharing_tests::metadata_set_preserves_canonical_hash_callback_count_and_order",
+      "portable_macro_graph::sharing_tests::reader_occurrence_work_bounds_fail_before_callbacks_and_allow_recovery",
+      "portable_macro_graph::source_roots::first_use_data::lifecycle_tests::genuine_deep_reader_metadata_retains_original_native_evidence_and_releases_after_owner_drop",
+      "portable_macro_graph::source_roots::reader_controller::tests::whole_controller_failure_keeps_the_entire_previous_retained_forest_unchanged",
+      "portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo",
+      "portable_session::canonical_methods::tests::canonical_methods_capture_actual_installations_without_external_handles",
+      "portable_session::canonical_methods::tests::initial_source_classes_bind_constructor_reference_and_current_descriptor",
+      "portable_session::memo_bridge::tests::private_memo_bridge_preserves_hash_miss_hit_and_cache_field_after_gc",
+      "portable_session::memo_leaf_test_support::compiler_data_allowance_restores_runtime_fuel_after_success_error_and_unwind"
+    ],
+    "scope": "Exact command only; source, full test inputs and shipped BOOT checked before/after. No whole-issue inference.",
+    "exit_code": 101,
+    "seconds": 315.77386300599755,
+    "post_head": "dcf988c8cfb4cf57f9903418a99bba240d25c2a0",
+    "raw_sha256": "1853ff9f282207512dbdbb5b2c0c36b0117ff8f8a076fb8d3cc3e3d4a5d50efa",
+    "postflight_error": null,
+    "harness_summaries": [
+      [
+        "FAILED",
+        "10",
+        "9",
+        "0",
+        "0",
+        "619"
+      ]
+    ],
+    "failures": [
+      {
+        "name": "portable_macro_graph::sharing_tests::bottom_up_keys_preserve_metadata_set_repetition_and_quote_alias_barrier",
+        "location": "crates/suss-compile/src/portable_macro_graph.rs:4117:56:",
+        "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..18, message: \"Macro expansion native work fuel exhausted\" })"
+      },
+      {
+        "name": "portable_macro_graph::sharing_tests::compact_diamond_admission_rejects_before_reader_callbacks",
+        "location": "crates/suss-compile/src/portable_macro_graph.rs:4347:62:",
+        "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..22, message: \"Macro expansion native work fuel exhausted\" })"
+      },
+      {
+        "name": "portable_macro_graph::sharing_tests::declaration_metadata_rebuilds_repeat_hash_callbacks_in_source_order",
+        "location": "crates/suss-compile/src/portable_macro_graph.rs:3955:62:",
+        "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..32, message: \"Macro expansion native work fuel exhausted\" })"
+      },
+      {
+        "name": "portable_macro_graph::sharing_tests::duplicate_reader_collections_preserve_effects_and_occurrence_results",
+        "location": "crates/suss-compile/src/portable_macro_graph.rs:4273:14:",
+        "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..44, message: \"Macro expansion native work fuel exhausted\" })"
+      },
+      {
+        "name": "portable_macro_graph::sharing_tests::metadata_set_preserves_canonical_hash_callback_count_and_order",
+        "location": "crates/suss-compile/src/portable_macro_graph.rs:4229:58:",
+        "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..28, message: \"Macro expansion native work fuel exhausted\" })"
+      },
+      {
+        "name": "portable_macro_graph::sharing_tests::reader_occurrence_work_bounds_fail_before_callbacks_and_allow_recovery",
+        "location": "crates/suss-compile/src/portable_macro_graph.rs:4376:57:",
+        "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..19, message: \"Macro expansion native work fuel exhausted\" })"
+      },
+      {
+        "name": "portable_macro_graph::source_roots::reader_controller::tests::whole_controller_failure_keeps_the_entire_previous_retained_forest_unchanged",
+        "location": "crates/suss-compile/src/portable_macro_graph/source_roots/reader_controller.rs:401:63:",
+        "message": "called `Result::unwrap()` on an `Err` value: Trap(wasm trap: all fuel consumed by WebAssembly)"
+      },
+      {
+        "name": "portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo",
+        "location": "crates/suss-compile/src/portable_macro_graph/source_roots.rs:1892:49:",
+        "message": "source child batch phase=Runtime variant=3 remaining=Ok(0): Trap(wasm trap: all fuel consumed by WebAssembly)"
+      },
+      {
+        "name": "portable_session::canonical_methods::tests::canonical_methods_capture_actual_installations_without_external_handles",
+        "location": "crates/suss-compile/src/portable_session/canonical_methods.rs:985:59:",
+        "message": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..14, message: \"Macro expansion native work fuel exhausted\" })"
+      }
+    ],
+    "interpretation": "All19 selected complete:10PASS9FAIL0ignored619filtered;9previouslyfailed pass plus new restoration regressionPASS. Seven remaining fail in later positive native compilation calls, onecontroller declaration work before fresh recovery scope, unchangedRuntime source-childvariant3OutFuel. No old14 passes transferred or wholebaseline inferred. Intentional caughtunwind panic belongs passingrestorationtest and is not a failedverdict."
+  },
+  "foundation_prefix_checks": [
+    {
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts",
+        "-p",
+        "test_*.py"
+      ],
+      "exit_code": 0,
+      "seconds": 48.32932755300135,
+      "raw_sha256": "ea4dceb4c2dba56e2ea3249762a4148bfd38233e8ae248b5faf391547a383ff1"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/cljs_inventory.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.7643769060014165,
+      "raw_sha256": "69fdb2770db81046b95d2b1a8ecdd5fb52225b233dd3bff58758266fadf2236e"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/cljs_reviews.py"
+      ],
+      "exit_code": 0,
+      "seconds": 1.044072122000216,
+      "raw_sha256": "279f7cdc0522831c9dc073020098d2af8e93e86b1b2a5702008752af7340dc92"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/core_import.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 3.5358694230017136,
+      "raw_sha256": "eb7d495f5ec269fcea0c49b8e7efa618eae1c745654c97c2a2221f54a67c6660"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/reader_core_catalog.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 2.5974502930039307,
+      "raw_sha256": "3fb333e1c745e400096788b97d3611b8381fb476ecbf9ee4a2ae799593b4b001"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/apply_bootstrap.py",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.575901732998318,
+      "raw_sha256": "5bdb53d5b984bde01e2214e0e9b386231b60dd5cf1da82a9ae84b3ae6c66153e"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/sequence_provenance.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.7025988539971877,
+      "raw_sha256": "0835b642781cdae893742539f572ae0918efca72494ac216e360c4623c227323"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_transducer_provenance.py"
+      ],
+      "exit_code": 0,
+      "seconds": 1.1702825510001276,
+      "raw_sha256": "0229ff9a4a1ac5ba3bf8c07d16d187b3e0876ffa98b1eb001d7d3ba8c0c2a118"
+    }
+  ],
+  "foundation_prefix_scope": "Prefix commands at dcf988c:365Python script tests and all8inventory/provenance commandsPASS. Separate from bootstrap/VM/fullbaseline; tail6 receipts retained above.",
+  "next_source_changes": {
+    "scope": "Applied source changes, syntax2024 only; not yet typechecked/executed. Matching artifacts required.",
+    "positive_compilation": {
+      "observation_functions": [
+        "bottom_up_keys_preserve_metadata_set_repetition_and_quote_alias_barrier",
+        "compact_diamond_admission_rejects_before_reader_callbacks",
+        "declaration_metadata_rebuilds_repeat_hash_callbacks_in_source_order",
+        "duplicate_reader_collections_preserve_effects_and_occurrence_results",
+        "metadata_set_preserves_canonical_hash_callback_count_and_order",
+        "reader_occurrence_work_bounds_fail_before_callbacks_and_allow_recovery"
+      ],
+      "remaining_positive_eval_calls": 17,
+      "inverse_entire_file_proof": "Normalizing onlyevalhelpernames makes original andafterimage wholefilebyteexact; no source/assertions/budget/Runtime changes.",
+      "reader_controller": "Begin one top-level operation before charged graph preparation. Materializer remains nested without refill; recovery still original10M. ExistingcoldprimingMacro100B outer scope unchanged.",
+      "canonical_method_function": "canonical_methods_capture_actual_installations_without_external_handles",
+      "canonical_remaining_positive_eval_calls": 4
+    },
+    "source_expectation_reuse": "Only full successful current certificate validation plus exact Rc expectation identity reuses the successful logical read inside the callback-free batch. Addedfallible2unitbranch/identity debit. All independent/invalid paths keep originalfallibledecode. Existing storage/source/memo/child/method checks remain.",
+    "independent_candidate_review": {
+      "agent": "Faraday 01a15d18-5f13-7290-9064-aada138141fd",
+      "result": "No blocking findings on prepared exactpatch; source review only, no Cargo/VM.",
+      "qualification": "Optionaldirectwrong-witnessnegativeassert added after review, no productioncode change from reviewedpatch. Paireddebits not workloadfitproof."
+    }
+  }
+}

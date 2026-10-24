@@ -149,17 +149,19 @@ impl Analyzer<'_> {
                 let result = (|| {
                     let mut bindings = Vec::new();
                     let value = self.form(&args[0])?;
-                    let mut binding = self.fresh_binding(&args[1], value);
+                    let mut binding = self.fresh_binding(&args[1], value)?;
                     binding.name = name.clone();
                     binding.metadata = args[1].metadata.clone();
-                    self.insert_local(&args[1], binding.id, binding.value.ty, LocalKind::Let, Some(binding.value.clone()));
+                    let source_initializer = binding.value.clone();
+                    self.insert_local(&args[1], binding.id, binding.value.ty, LocalKind::Let, Some(source_initializer))?;
                     bindings.push(binding);
                     for step in args[2..].iter().take(args.len().saturating_sub(3)) {
                         let value = self.form(step)?;
-                        let mut binding = self.fresh_binding(&args[1], value);
+                        let mut binding = self.fresh_binding(&args[1], value)?;
                         binding.name = name.clone();
                         binding.metadata = args[1].metadata.clone();
-                        self.insert_local(&args[1], binding.id, binding.value.ty, LocalKind::Let, Some(binding.value.clone()));
+                        let source_initializer = binding.value.clone();
+                        self.insert_local(&args[1], binding.id, binding.value.ty, LocalKind::Let, Some(source_initializer))?;
                         bindings.push(binding);
                     }
                     let body = if args.len() == 2 {
@@ -192,7 +194,7 @@ impl Analyzer<'_> {
                 // including internal undefined. The hit branch evaluates neither
                 // hash function nor collection syntax; false and zero are hits.
                 let cached = self.form(&args[2])?;
-                let cached_binding = self.fresh_binding(&args[2], cached);
+                let cached_binding = self.fresh_binding(&args[2], cached)?;
                 let cached = self.local(&args[2], cached_binding.id);
                 let test = Hir {
                     source: None,
@@ -214,7 +216,7 @@ impl Analyzer<'_> {
                         arguments: vec![collection],
                     },
                 };
-                let hash_binding = self.fresh_binding(form, hash);
+                let hash_binding = self.fresh_binding(form, hash)?;
                 let hash = self.local(form, hash_binding.id);
                 let Kind::Symbol(key) = &args[2].kind else {
                     unreachable!()
@@ -223,7 +225,8 @@ impl Analyzer<'_> {
                     && !self.locals.contains_key(&key.name)
                     && self.fields.contains_key(&key.name)
                 {
-                    let mut field = self.fields[&key.name].clone();
+                    let field = self.fields[&key.name].clone();
+                    let mut access = self.clone_local_hir(&field.access)?;
                     if !field.mutable {
                         return Err(fail(
                             args[2].span.clone(),
@@ -233,7 +236,7 @@ impl Analyzer<'_> {
                     let Expression::Nominal {
                         operation,
                         mut arguments,
-                    } = field.access.take_kind()
+                    } = access.take_kind()
                     else {
                         unreachable!()
                     };
@@ -373,13 +376,14 @@ impl Analyzer<'_> {
                 }
                 // The test runs once outside the source binding's scope.
                 let test = self.form(&entries[1])?;
-                let temporary = self.fresh_binding(&entries[1], test);
+                let temporary = self.fresh_binding(&entries[1], test)?;
                 let condition = self.local(form, temporary.id);
-                let mut binding = self.fresh_binding(&entries[0], condition.clone());
+                let mut binding = self.fresh_binding(&entries[0], condition.clone())?;
                 binding.name = name.name.clone();
                 binding.metadata = entries[0].metadata.clone();
                 let outer = self.locals.clone();
-                self.insert_local(&entries[0], binding.id, binding.value.ty, LocalKind::Let, Some(binding.value.clone()));
+                let source_initializer = binding.value.clone();
+                self.insert_local(&entries[0], binding.id, binding.value.ty, LocalKind::Let, Some(source_initializer))?;
                 let consequent = self.form_in(&args[1], context, tail);
                 self.locals = outer;
                 let consequent = consequent?;
@@ -474,6 +478,7 @@ impl Analyzer<'_> {
                 } else {
                     self.control_if(form, local.clone(), local, rest)
                 };
+                let value = self.capture_local_access(value)?;
                 Ok(Hir {
                     source: None,
                     span: form.span.clone(),

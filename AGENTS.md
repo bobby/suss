@@ -17,6 +17,10 @@ Read [the accepted design](docs/design/suss-0.3.1.md), [ROADMAP](ROADMAP.md),
 * Use `cargo test --workspace --locked -- --test-threads=2` for the full baseline.
   Run focused tests first. Shared Wasmtime engines and lean test profiles keep
   local resource use bounded. Do not delete unrelated files to make disk space.
+* Periodically clean inactive Cargo target directories across Suss worktrees and
+  task caches, especially at task or branch handoffs and after abandoned
+  experiments. Check for live users before cleaning; retain active shared build
+  caches, source files, and source-bound logs and validation evidence.
 * Open Draft PRs early to publish meaningful progress before an issue is fully
   addressed. Link them with `Refs #N` while acceptance criteria remain unmet.
   Push subsequent work to the appropriate existing draft until it fully resolves

@@ -50,6 +50,17 @@ fn native_interface_facts(
     }
 }
 
+fn native_interface_facts_metered(environment: &resolve::Environment, phase: resolve::Phase,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Vec<NativeInterfaceFact>, Diagnostic>
+{
+    Ok(match environment.native_binding_metered(phase, "js", "Object", meter)? {
+        Some(resolve::Binding::Core { global, export: "object-constructor" })
+            if global.phase() == phase && global.namespace() == "js" && global.name() == "Object" =>
+            vec![NativeInterfaceFact { global, kind: NativeInterfaceKind::NativeObject, export: "object-constructor" }],
+        _ => Vec::new(),
+    })
+}
+
 impl CompilerNamespaceCatalog {
     pub fn capture(environment: &resolve::Environment, phase: resolve::Phase) -> Self {
         Self {
@@ -68,6 +79,25 @@ impl CompilerNamespaceCatalog {
             native_interfaces: native_interface_facts(environment, phase),
         }
     }
+    pub(crate) fn capture_metered(environment: &resolve::Environment, phase: resolve::Phase,
+        meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Self, Diagnostic> {
+        Ok(Self {
+            phase,
+            current: environment.current_namespace(phase).to_owned(),
+            namespaces: environment
+                .declared_namespaces(phase)
+                .map(|namespace| {
+                    (
+                        namespace.to_owned(),
+                        hir::SourceNamespace::capture_namespace(environment, phase, namespace)
+                            .map(Arc::new),
+                    )
+                })
+                .collect(),
+            native_interfaces: native_interface_facts_metered(environment, phase, meter)?,
+        })
+    }
+
 
     /// Pinned find-ns-starts-with compares the complete needle with the first
     /// namespace segment. It does not perform a prefix or substring match.
@@ -85,20 +115,29 @@ impl ExpansionContext<'_> {
         Arc::new(hir::SourceNamespace::capture(self.environment, self.phase))
     }
 
+    /// Lazy Analyzer-scoped revision. The old infallible method above remains
+    /// a fresh capture for external callers. This method propagates the caller's
+    /// meter error and never converts it into a fresh-capture fallback.
+    pub fn resolution_catalog_metered(
+        &self, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+    ) -> Result<Arc<hir::SourceNamespace>, Diagnostic> {
+        super::namespace_revision::catalog(self, meter)
+    }
+
     /// All lexical entries, including unused locals and field captures. A local
     /// shadows an identically named field, exactly as the existing &env graph.
     pub fn lexical_bindings(&self) -> BTreeMap<String, hir::SourceBinding> {
         let mut bindings = BTreeMap::new();
-        for (name, field) in self.fields {
+        for (name, field) in self.fields.iter() {
             bindings.insert(
                 name.clone(),
-                hir::SourceBinding::Field(Arc::new(field.clone())),
+                hir::SourceBinding::Field(field.clone()),
             );
         }
-        for (name, local) in self.locals {
+        for (name, local) in self.locals.iter() {
             bindings.insert(
                 name.clone(),
-                hir::SourceBinding::Local(Arc::new(local.clone())),
+                hir::SourceBinding::Local(local.clone()),
             );
         }
         bindings
@@ -116,10 +155,10 @@ impl ExpansionContext<'_> {
     ) -> Result<hir::SourceBinding, Diagnostic> {
         if include_locals && symbol.namespace.is_none() {
             if let Some(local) = self.locals.get(&symbol.name) {
-                return Ok(hir::SourceBinding::Local(Arc::new(local.clone())));
+                return Ok(hir::SourceBinding::Local(local.clone()));
             }
             if let Some(field) = self.fields.get(&symbol.name) {
-                return Ok(hir::SourceBinding::Field(Arc::new(field.clone())));
+                return Ok(hir::SourceBinding::Field(field.clone()));
             }
         }
         let binding = self.environment.resolve(self.phase, symbol, span)?;

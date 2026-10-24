@@ -1,0 +1,253 @@
+{
+  "source_commit": "9ba9969987c38da9d37e89e3147449bf9608a2b4",
+  "semantic_commit": "c49c1872bc03b178c5ffb37fa36f38d97857afbc",
+  "diagnostic_commit": "9ba9969987c38da9d37e89e3147449bf9608a2b4",
+  "bootstrap_commit": "8e0023f06dd5d003bff3ac714326caa9dde0826c",
+  "compiler_source_sha256": "ddcae22741075421ba997e2c7c3ba7332d25124483d1bc122f47994ac129509b",
+  "source_input_count": 222,
+  "native": {
+    "terminal": {
+      "source_commit": "9ba9969987c38da9d37e89e3147449bf9608a2b4",
+      "predicted_source_fingerprint": "ddcae22741075421ba997e2c7c3ba7332d25124483d1bc122f47994ac129509b",
+      "source_input_count": 222,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--",
+        "portable::resolve::global_ownership_tests::hir_callers_propagate_every_interruption_and_recover_without_publishing",
+        "portable::resolve::global_ownership_tests::borrowed_queries_aliases_and_bootstrap_selection_allocate_no_identity_owners",
+        "portable::resolve::global_ownership_tests::all_bootstrap_variants_meter_absent_owners_and_restore_without_publishing_fallbacks",
+        "portable::resolve::global_ownership_tests::identity_value_order_debug_and_imports_do_not_depend_on_arc_address",
+        "portable::resolve::global_ownership_tests::creation_and_binding_publication_prepay_all_work_and_retry_without_partial_state",
+        "portable::resolve::global_ownership_tests::reader_pair_staging_and_readonly_checkpoint_identity_do_not_publish_partial_cells",
+        "portable::resolve::global_ownership_tests::redefinition_shares_language_identity_but_preserves_distinct_definition_revisions",
+        "portable::resolve::global_ownership_tests::borrowed_metered_queries_pay_each_comparison_and_never_expose_failed_results",
+        "portable::resolve::global_ownership_tests::native_interface_catalog_uses_actual_binding_and_propagates_current_meter_failure",
+        "portable::hir::local_bindings::ownership_tests::self_parameter_owner_prepays_allocation_and_hir_copies_retain_exact_payload",
+        "portable::hir::destructuring::tests::parameter_binding_patterns_enter_real_hir_and_recur_keeps_raw_arity",
+        "portable::hir::destructuring::tests::parameter_binding_qualified_shorthand_and_hygiene_preserve_local_metadata",
+        "portable::hir::destructuring::tests::parameter_binding_primitive_fn_star_stays_strict_and_bad_rest_fails",
+        "portable::hir::local_bindings::ownership_tests::direct_definition_function_retains_actual_provisional_owner_and_nested_def_restores_parent",
+        "portable::hir::local_bindings::ownership_tests::replaced_equal_function_and_nested_function_use_owned_fallback_defonce_reuses_actual_owner",
+        "portable::resolve::type_key_history::tests::type_key_history_captures_fresh_defaults_before_current_raw_overrides",
+        "portable::resolve::type_key_history::tests::type_key_history_preserves_original_raw_keys_through_repeated_types",
+        "portable::resolve::type_key_history::tests::type_key_history_distinguishes_completed_tag_and_top_fn_source_keys",
+        "portable::resolve::type_key_history::tests::type_key_history_rejects_foreign_binding_and_propagates_every_meter_error",
+        "portable::resolve::type_key_history::tests::type_key_history_retains_all_selected_fields_without_predecessor_chains",
+        "portable::resolve::type_key_history::tests::type_key_history_proof_query_defers_unsupported_paths_but_never_meter_errors",
+        "portable::syntax_quote::tests::pinned_reader_trees_match_with_generated_identity_preserved",
+        "portable::syntax_quote::tests::indexed_syntax_quote_metadata_keeps_pinned_association_order_in_both_phases",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "23 exact native-only HIR/resolution/catalog tests; no public Session/VM/default CORE credit. Actual compiled source identity must be verified separately.",
+      "exit_code": 0,
+      "seconds": 146.8548745070002,
+      "raw_sha256": "320d35ccb8292aa3f23daf0ec8ab83880bb9442afe080ce6486edbdb16d612f6"
+    },
+    "actual_build_source_sha256": "ddcae22741075421ba997e2c7c3ba7332d25124483d1bc122f47994ac129509b",
+    "counts": {
+      "passed": 23,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 542
+    },
+    "harness_seconds": 0.04,
+    "exact_pass_names": [
+      "portable::hir::destructuring::tests::parameter_binding_patterns_enter_real_hir_and_recur_keeps_raw_arity",
+      "portable::hir::destructuring::tests::parameter_binding_primitive_fn_star_stays_strict_and_bad_rest_fails",
+      "portable::hir::destructuring::tests::parameter_binding_qualified_shorthand_and_hygiene_preserve_local_metadata",
+      "portable::hir::local_bindings::ownership_tests::direct_definition_function_retains_actual_provisional_owner_and_nested_def_restores_parent",
+      "portable::hir::local_bindings::ownership_tests::replaced_equal_function_and_nested_function_use_owned_fallback_defonce_reuses_actual_owner",
+      "portable::hir::local_bindings::ownership_tests::self_parameter_owner_prepays_allocation_and_hir_copies_retain_exact_payload",
+      "portable::resolve::global_ownership_tests::all_bootstrap_variants_meter_absent_owners_and_restore_without_publishing_fallbacks",
+      "portable::resolve::global_ownership_tests::borrowed_metered_queries_pay_each_comparison_and_never_expose_failed_results",
+      "portable::resolve::global_ownership_tests::borrowed_queries_aliases_and_bootstrap_selection_allocate_no_identity_owners",
+      "portable::resolve::global_ownership_tests::creation_and_binding_publication_prepay_all_work_and_retry_without_partial_state",
+      "portable::resolve::global_ownership_tests::hir_callers_propagate_every_interruption_and_recover_without_publishing",
+      "portable::resolve::global_ownership_tests::identity_value_order_debug_and_imports_do_not_depend_on_arc_address",
+      "portable::resolve::global_ownership_tests::native_interface_catalog_uses_actual_binding_and_propagates_current_meter_failure",
+      "portable::resolve::global_ownership_tests::reader_pair_staging_and_readonly_checkpoint_identity_do_not_publish_partial_cells",
+      "portable::resolve::global_ownership_tests::redefinition_shares_language_identity_but_preserves_distinct_definition_revisions",
+      "portable::resolve::type_key_history::tests::type_key_history_captures_fresh_defaults_before_current_raw_overrides",
+      "portable::resolve::type_key_history::tests::type_key_history_distinguishes_completed_tag_and_top_fn_source_keys",
+      "portable::resolve::type_key_history::tests::type_key_history_preserves_original_raw_keys_through_repeated_types",
+      "portable::resolve::type_key_history::tests::type_key_history_proof_query_defers_unsupported_paths_but_never_meter_errors",
+      "portable::resolve::type_key_history::tests::type_key_history_rejects_foreign_binding_and_propagates_every_meter_error",
+      "portable::resolve::type_key_history::tests::type_key_history_retains_all_selected_fields_without_predecessor_chains",
+      "portable::syntax_quote::tests::indexed_syntax_quote_metadata_keeps_pinned_association_order_in_both_phases",
+      "portable::syntax_quote::tests::pinned_reader_trees_match_with_generated_identity_preserved"
+    ],
+    "scope": "NativeHIR/global/provenance/reader tests; no Session/BOOT/callbackregression credit. NewSessionadmissiontestcompiledbutnotexecuted."
+  },
+  "normal_generation": {
+    "head": "9ba9969987c38da9d37e89e3147449bf9608a2b4",
+    "compiler_source_sha256": "ddcae22741075421ba997e2c7c3ba7332d25124483d1bc122f47994ac129509b",
+    "inputs": 222,
+    "command": [
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "scope": "Normal2-generation verifier; initialstaleshippedcomparison mayexit1. Inspectactualstage/pairs beforeadoption; not automaticallycommandPASS orbootstrapexecutioncredit.",
+    "exit_code": 1,
+    "seconds": 96.32197839801665,
+    "raw_sha256": "2e251b3cdf99489fbe15a64750b498532bd83cce971c310fd7c2e6ee99c6ef11"
+  },
+  "bootstrap_adoption": {
+    "reviewer": "Carver",
+    "verdict": "GO_ADOPT_EXACT_FOUR_GENERATED_OUTPUTS_SOURCE_BINDING_ONLY",
+    "head": "9ba9969987c38da9d37e89e3147449bf9608a2b4",
+    "tree": "bee154c8c3246a4d5e7051cbb51454ecd24beed5",
+    "clean_head_and_current_git_inputs_verified": true,
+    "terminal_sha256": "80b565ac4e0c2b737fcd85f4eb537d046e09c5bc0e511818f701ed0d9b707d11",
+    "generator_receipt_sha256": "0808485c413152ed5d2407ca7a890c32ae2f4618a93909defea0df02c468bcf0",
+    "source_fingerprint": "ddcae22741075421ba997e2c7c3ba7332d25124483d1bc122f47994ac129509b",
+    "git_source_inputs_verified": 222,
+    "eight_output_hashes_and_sizes_verified": true,
+    "four_first_second_pairs_byte_exact": true,
+    "phase_comparison": {
+      "runtime": {
+        "changed_sections": [
+          {
+            "id": 0,
+            "name": "suss.source-artifact",
+            "old_sha256": "fe1d36cd20629066244ea22373d39cef19810ab353d4ecb8f386598a35140a72",
+            "new_sha256": "1571d6225d941f78aa77a6a439e995c5aa5a8499b3188cf651ff13c2ea276b68"
+          }
+        ],
+        "noncustom_bytes_identical": true,
+        "all_other_custom_sections_identical": true,
+        "manifest_changed_fields": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ],
+        "catalog_ABI_flags_cells_other_fields_identical": true,
+        "new_wasm_sha256": "441f3622721f0c6daf8d60728117c7c371dc6ad706cdc9fbcbcc99412f1fa614",
+        "new_json_sha256": "bc841c0de58819c2a6c92af6e3d516ce0a1e06cd92903215aec7c6d60012e404"
+      },
+      "macro": {
+        "changed_sections": [
+          {
+            "id": 0,
+            "name": "suss.source-artifact",
+            "old_sha256": "89393e4f9ad3b881bfc67406b6d201c175c657af4efc4f1feb27a035e8c7e33b",
+            "new_sha256": "65a92325c7ef8dff3de00f54420fea33a74ac74fdd013f30ccb9378731bc9455"
+          }
+        ],
+        "noncustom_bytes_identical": true,
+        "all_other_custom_sections_identical": true,
+        "manifest_changed_fields": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ],
+        "catalog_ABI_flags_cells_other_fields_identical": true,
+        "new_wasm_sha256": "90de2b767c2a4ceeede0abbb7a035eef15607a5e910fabc5876d758cd03366f7",
+        "new_json_sha256": "8cc5e061491ba465b509fdfe780d9c4ac8bec60eac46527cb0892407fed4fdd1"
+      }
+    },
+    "allowlist": {
+      "runtime/bootstrap/runtime.wasm": {
+        "source": "diagnostics/first/runtime.wasm",
+        "sha256": "441f3622721f0c6daf8d60728117c7c371dc6ad706cdc9fbcbcc99412f1fa614"
+      },
+      "runtime/bootstrap/runtime.json": {
+        "source": "diagnostics/first/runtime.json",
+        "sha256": "bc841c0de58819c2a6c92af6e3d516ce0a1e06cd92903215aec7c6d60012e404"
+      },
+      "runtime/bootstrap/macro.wasm": {
+        "source": "diagnostics/first/macro.wasm",
+        "sha256": "90de2b767c2a4ceeede0abbb7a035eef15607a5e910fabc5876d758cd03366f7"
+      },
+      "runtime/bootstrap/macro.json": {
+        "source": "diagnostics/first/macro.json",
+        "sha256": "8cc5e061491ba465b509fdfe780d9c4ac8bec60eac46527cb0892407fed4fdd1"
+      }
+    },
+    "qualification": "Normal hostopt2 generation96.321978s then expected stale shipped comparison exit1; not relabelled command PASS. No Wasm VM, bootstrap tests, source correctness, frontier/attribution CORE/public-macro semantic or acceptance credit.",
+    "actions": "Git/bytes/hash/JSON/Wasm-section parsing only; no Cargo/VM/shared source/index/refs or remote mutations",
+    "actual_builder_output_copy_verified": true,
+    "actual_builder_output_sha256": "41d3b5a16d1dff39677609bcdf1f84d1ac37cc4b052837e880f003df8820be68"
+  },
+  "pure_identity": {
+    "head": "8e0023f06dd5d003bff3ac714326caa9dde0826c",
+    "command": [
+      "python3",
+      "scripts/verify_bootstrap_identity.py"
+    ],
+    "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+    "source_sha256": "ddcae22741075421ba997e2c7c3ba7332d25124483d1bc122f47994ac129509b",
+    "exit_code": 0,
+    "seconds": 1.3592036709887907,
+    "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+    "scope": "Pure compiled build-script source identity and input invalidation; no semantic acceptance credit."
+  },
+  "controls": {
+    "terminal": {
+      "head": "8e0023f06dd5d003bff3ac714326caa9dde0826c",
+      "source_commit": "9ba9969987c38da9d37e89e3147449bf9608a2b4",
+      "predicted_source_fingerprint": "ddcae22741075421ba997e2c7c3ba7332d25124483d1bc122f47994ac129509b",
+      "source_input_count": 222,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--",
+        "--exact",
+        "portable_macro_graph::reuse::tests::reuse_frontier_preserves_repeated_occurrences_cached_aliases_and_metadata_clones",
+        "portable_macro_graph::reuse::tests::reuse_cold_untainted_parent_preserves_special_constructor_callback",
+        "portable_macro_graph::source_roots::reader_plan::tests::ordinary_frontier_does_not_gain_source_identity_from_an_unreachable_declaration",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "profile_environment": {
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Original2unchangedreuse/callbackcontrols plusnew2sourcephaseordinary-frontieradmissionregression; expected3Rusttests. Originalprograms/defaults/assertions preserved. Optin native diagnostics do not authorize source/memo or performance claims.",
+      "exit_code": 101,
+      "seconds": 160.75176288903458,
+      "raw_sha256": "3ebeb3240f0d21b8d26d494b607db567a4bbaaf3bd8f389999192508d3c7496e"
+    },
+    "counts": {
+      "passed": 2,
+      "failed": 1,
+      "ignored": 0,
+      "filtered": 562
+    },
+    "harness_seconds": 18.92,
+    "result_lines": [
+      "test portable_macro_graph::reuse::tests::reuse_cold_untainted_parent_preserves_special_constructor_callback ... ok",
+      "test portable_macro_graph::reuse::tests::reuse_frontier_preserves_repeated_occurrences_cached_aliases_and_metadata_clones ... RETAINED_DATA_NODE test=Some(\"portable_macro_graph::reuse::tests::reuse_frontier_preserves_repeated_occurrences_cached_aliases_and_metadata_clones\") node=0x72f914003120 recipe=1 kind=\"Form\" inputs=0 records=4",
+      "thread 'portable_macro_graph::reuse::tests::reuse_frontier_preserves_repeated_occurrences_cached_aliases_and_metadata_clones' (1656799) panicked at crates/suss-compile/src/portable_macro_graph/reuse.rs:685:37:",
+      "test portable_macro_graph::source_roots::reader_plan::tests::ordinary_frontier_does_not_gain_source_identity_from_an_unreachable_declaration ... ok",
+      "test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 562 filtered out; finished in 18.92s"
+    ]
+  },
+  "limitations": [
+    "Normal bootstrap verifier exited1 at old shipped comparison, not a full verifier pass. Pure identity is not bootstrap semantic acceptance.",
+    "Only the three selected controls run here; later assertions after any Host error remain unexecuted.",
+    "Callable and poison diagnostics compile; no current ddca execution or fix is claimed for their original failing tests.",
+    "Previous067 default CORE0/17, callable saved raw identity mismatch and poison restoration failure remain separately source-qualified.",
+    "No current full source-child, pinned69, source-tags, workspace baseline, final-head CI or issue completion claim. Runtime, production defaults, pinned200M and strict source-child/core controls are unchanged."
+  ],
+  "cache": "pr263-frontier-attribution-production-v1"
+}

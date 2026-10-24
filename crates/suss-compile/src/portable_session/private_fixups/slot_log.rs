@@ -6,6 +6,25 @@ pub(crate) type SharedSlotLog = Rc<RefCell<PrivateSlotLog>>;
 struct Token {
     id: usize,
     value: SessionValue,
+    factory: super::super::source_array_inputs::SourceArrayInputs,
+}
+// Only this log can mint the handle, after rechecking the original native
+// empty SourceArray factory facts. The log stays owned by the binding context.
+pub(crate) struct PrivateToken {
+    id: usize,
+    value: SessionValue,
+    owner: *const PrivateSlotLog,
+}
+impl PrivateToken {
+    pub(crate) fn value(&self) -> &SessionValue {
+        &self.value
+    }
+    pub(crate) fn id(&self) -> usize {
+        self.id
+    }
+    pub(crate) fn belongs_to(&self, log: &PrivateSlotLog) -> bool {
+        std::ptr::eq(self.owner, log)
+    }
 }
 struct Slot {
     array: SessionValue,
@@ -487,6 +506,33 @@ mod tests {
         drop(op);
     }
 
+    #[test]
+    fn private_token_handle_binds_log_factory_and_rejects_mutation_after_gc() {
+        let mut s = Session::new_macro().unwrap();
+        let op = s.operation_budget_scope().unwrap();
+        let log = PrivateSlotLog::new(&mut s).unwrap();
+        let other = PrivateSlotLog::new(&mut s).unwrap();
+        let token = log.borrow_mut().token(&mut s, 7).unwrap();
+        let handle = log.borrow().token_handle(&mut s, 7).unwrap();
+        assert_eq!(handle.id(), 7);
+        assert!(handle.belongs_to(&log.borrow()));
+        assert!(!handle.belongs_to(&other.borrow()));
+        assert!(same_value(&mut s, handle.value(), &token));
+        assert!(log.borrow().token_handle(&mut s, 8).is_err());
+        let value = number(&mut s, 17.0);
+        let setter = s.eval("(fn [a x] (aset a 0 x))").unwrap();
+        s.invoke(&setter, &[&token, &value]).unwrap();
+        s.collect().unwrap();
+        // Selection still finds this exact token despite mutable payload poison;
+        // minting a NEW factory capability must independently reject it.
+        assert_eq!(log.borrow().inputs(&mut s, &[&token]).unwrap(), vec![(0, 7)]);
+        assert!(log.borrow().token_handle(&mut s, 7).is_err());
+        drop(handle); drop(op);
+        s.reset().unwrap();
+        assert!(log.borrow().binding_owner(&mut s).is_err());
+        assert!(log.borrow().token_handle(&mut s, 7).is_err());
+    }
+
 }
 
 impl PrivateSlotLog {
@@ -509,8 +555,8 @@ impl PrivateSlotLog {
     }
     pub(crate) fn token(&mut self, s: &mut Session, id: usize) -> Result<SessionValue> {
         self.check_session(s)?;
-        let value = s.data_array(&[])?;
-        self.register_created(s, id, &value)?;
+        let (value, factory) = s.data_array_with_inputs(&[])?;
+        self.register_created_with_factory(s, id, &value, factory)?;
         Ok(value)
     }
     fn check_session(&self, s: &mut Session) -> Result<()> {
@@ -529,7 +575,10 @@ impl PrivateSlotLog {
         m.charge(3)?; // intrinsic type query, field-count read and comparison.
         Ok(object.ty(&m.store)?.fields().len() == 4)
     }
-    fn register_created(&mut self, s: &mut Session, id: usize, value: &SessionValue) -> Result<()> {
+    fn register_created_with_factory(
+        &mut self, s: &mut Session, id: usize, value: &SessionValue,
+        factory: super::super::source_array_inputs::SourceArrayInputs,
+    ) -> Result<()> {
         self.check_session(s)?;
         s.check(value)?;
         let irq = s.host_work_interrupt();
@@ -549,13 +598,58 @@ impl PrivateSlotLog {
                 return Err(invalid("Duplicate private slot token"));
             }
         }
+        // Release native roots before the factory's independent read-only proof.
+        // No callback/write can occur between this proof and publication.
+        drop(m);
+        drop(scope);
+        if !factory.matches(s, value)? {
+            return Err(invalid("Private token factory does not bind supplied receiver"));
+        }
+        s.charge_host_work(8)?; // extra interrupt/root/Meter acquisition and cleanup controls.
+        let irq = s.host_work_interrupt();
+        let mut scope = RootScope::new(&mut s.store);
+        let mut m = Meter { store: scope.as_context_mut(), interrupt: &irq };
         m.reserve(&mut self.tokens, 1)?;
-        m.charge(2)?;
+        // Original id/value initialization plus the added factory move.
+        m.charge(3)?;
         self.tokens.push(Token {
             id,
             value: value.clone(),
+            factory,
         });
         Ok(())
+    }
+    // Existing negative registration tests intentionally supply non-factory
+    // receivers. Keep their old API private to tests; mismatched genuine facts
+    // can never publish, because register_created_with_factory binds receiver.
+    #[cfg(test)]
+    fn register_created(&mut self, s: &mut Session, id: usize, value: &SessionValue) -> Result<()> {
+        self.check_session(s)?;
+        s.check(value)?;
+        let (_, factory) = s.data_array_with_inputs(&[])?;
+        self.register_created_with_factory(s, id, value, factory)
+    }
+    pub(crate) fn token_handle(&self, s: &mut Session, id: usize) -> Result<PrivateToken> {
+        self.check_session(s)?;
+        for token in &self.tokens {
+            s.charge_host_work(1)?;
+            if token.id == id {
+                if !token.factory.matches(s, &token.value)? {
+                    return Err(invalid("Private token no longer matches its fresh factory"));
+                }
+                // Native id, rooted-value clone and exact log-address binding.
+                s.charge_host_work(4)?;
+                return Ok(PrivateToken {
+                    id,
+                    value: token.value.clone(),
+                    owner: self as *const Self,
+                });
+            }
+        }
+        Err(invalid("Unknown private token handle"))
+    }
+    pub(crate) fn binding_owner(&self, s: &mut Session) -> Result<()> {
+        self.check_session(s)
     }
     pub(crate) fn inputs(
         &self,

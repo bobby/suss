@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::{
     portable_macro_data::FormBridge,
     portable_macros::CompiledMacros,
@@ -71,7 +73,7 @@ fn compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc() {
         matches!(&bridge.read(&mut macros, &value, 0..1).unwrap().kind, Kind::List(items) if items.is_empty())
     );
     macros.eval("(def saved-seq suss.core/IndexedSeq)").unwrap();
-    macros.eval("(ns suss.core) (def IndexedSeq nil)").unwrap();
+    semantic_compilation::eval(&mut macros, "(ns suss.core) (def IndexedSeq nil)").unwrap();
     macros.enter_namespace("user").unwrap();
     macros.collect().unwrap();
     let value = macros.eval("(new saved-seq (array 42) 0 nil)").unwrap();

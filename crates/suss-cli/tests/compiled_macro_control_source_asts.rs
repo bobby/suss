@@ -234,6 +234,7 @@ fn control_source_nodes_match_genuine_primary_children_and_forms_after_gc() {
 fn function_metadata_keeps_wrapper_and_inner_method_edges() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro inspect-function [binding]
@@ -311,6 +312,7 @@ fn method_recurrence_flags_survive_gc_in_both_caller_phases() {
     assert_eq!(reference.len(), 7);
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro inspect-recurrence [binding]
@@ -402,6 +404,7 @@ fn function_name_asts_match_primary_identity_presence_and_shadow_after_gc() {
     assert_eq!(cases.len(), 7);
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro inspect-name [binding]

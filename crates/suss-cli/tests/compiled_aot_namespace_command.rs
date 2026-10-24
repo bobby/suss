@@ -1,4 +1,6 @@
 //! Execute components compiled from namespace entrypoints through the native CLI.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use std::{
     path::Path,
     process::{Command, Output},
@@ -68,7 +70,7 @@ fn namespace_command_uses_default_root_compiled_macros_and_runtime_dependencies(
     .unwrap();
     std::fs::write(source.join("app/core.cljc"), "#?(:cljs (ns app.core (:require [dep :as d]) (:require-macros [tools :as t])) :clj (ns wrong)) (def seen 0) (def calculate (fn [x] (do (set! seen (+ seen 1)) (t/twice (+ x d/bias))))) (def effects (fn [] (+ seen (* 100 (- d/counter 1))))) (set! seen (+ seen 1))").unwrap();
     wit(root.path());
-    let output = compile(root.path(), "app.core", &[]);
+    let output = compile(root.path(), "app.core", &["--compile-fuel", &compilation_fuel::COMPILATION_FUEL.to_string()]);
     assert!(
         output.status.success(),
         "{}",

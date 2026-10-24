@@ -100,7 +100,7 @@ fn constructor_source_children_share_once_analyzed_callee_and_arguments() {
         // This checks analysis only: it is not a claim about upstream JS emission
         // of a computed constructor, which failed the exploratory Node probe.
         assert!(matches!(&source.tags.tag.as_ref().unwrap().kind, Kind::Nil));
-        assert!(source.tags.inferred.is_none());
+        assert!(source.tags.inferred_ref().is_none());
     }
 }
 
@@ -160,7 +160,7 @@ fn invocation_class_has_no_reference_result_tag() {
         let init = host.initializer.unwrap();
         let source = init.source.as_ref().unwrap();
         assert!(matches!(&source.tags.tag.as_ref().unwrap().kind, Kind::Nil));
-        assert!(source.tags.inferred.is_none());
+        assert!(source.tags.inferred_ref().is_none());
         let hir::SourceNode::Construct { class, .. } = source.node.as_deref().unwrap() else {
             panic!("constructor source record required")
         };

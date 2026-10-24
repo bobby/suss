@@ -1,0 +1,351 @@
+{
+  "scope": "Seven-path source-progress publication: exact five applied descendant V2 source files plus handoff and this JSON. Retained serial failure stays bound to f950 before the repair.",
+  "source_head": "f950e4e5acd20df22c7292ee040221a6eb135f91",
+  "terminal": {
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--",
+      "--nocapture",
+      "--test-threads=1",
+      "--exact",
+      "portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc"
+    ],
+    "head": "f950e4e5acd20df22c7292ee040221a6eb135f91",
+    "exit_code": 101,
+    "seconds": 70.34273495600792,
+    "log_sha256": "08f1e5686e4cf8b4f689e5b8b8714267f793a5c7525d91f649d667b2569627c8",
+    "scope": "One unchanged retained/warm fixture, serial attribution only. No acceptance inference from diagnostic execution."
+  },
+  "raw": {
+    "tests.log": {
+      "sha256": "08f1e5686e4cf8b4f689e5b8b8714267f793a5c7525d91f649d667b2569627c8",
+      "text": "   Compiling suss-reader v0.1.0 (/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/crates/suss-reader)\n   Compiling suss-compile v0.1.0 (/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/crates/suss-compile)\n    Finished `test` profile [unoptimized] target(s) in 25.16s\n     Running unittests src/lib.rs (/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/suss_compile-6640f43d893bc943)\n\nrunning 1 test\ntest portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc ... RETAINED_READER_VARIANT test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") phase=Runtime indexed=false\nRETAINED_READER_CASE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") current_first=false metadata_first=true\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a61f7abe030 recipe=4 kind=\"Identifier\" inputs=0 records=5\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a6441f44850 recipe=1 kind=\"Form\" inputs=0 records=4\nRETAINED_DATA_OTHER recipe=8 discriminant=Discriminant(4)\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a6662ce88a0 recipe=8 kind=\"Other\" inputs=2 records=4\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a6662af94d0 recipe=29 kind=\"Vector\" inputs=3 records=7\nRETAINED_READER_CASE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") current_first=false metadata_first=true\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a644f94ca50 recipe=29 kind=\"Vector\" inputs=3 records=7\nRETAINED_READER_CASE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") current_first=false metadata_first=false\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a644f94ca50 recipe=29 kind=\"Vector\" inputs=3 records=7\nRETAINED_READER_CASE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") current_first=false metadata_first=true\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a644f94ca50 recipe=29 kind=\"Vector\" inputs=3 records=7\nRETAINED_READER_CASE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") current_first=true metadata_first=true\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a6662ce88a0 recipe=4 kind=\"Identifier\" inputs=0 records=5\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a6662af94d0 recipe=1 kind=\"Form\" inputs=0 records=4\nRETAINED_DATA_OTHER recipe=8 discriminant=Discriminant(4)\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a644f94ca50 recipe=8 kind=\"Other\" inputs=2 records=4\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a665ddc72b0 recipe=29 kind=\"Vector\" inputs=3 records=7\nRETAINED_READER_CASE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") current_first=true metadata_first=true\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a644f6ca850 recipe=29 kind=\"Vector\" inputs=3 records=7\nRETAINED_READER_CASE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") current_first=true metadata_first=false\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a665ddc72b0 recipe=29 kind=\"Vector\" inputs=3 records=7\nRETAINED_READER_CASE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") current_first=true metadata_first=true\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a644f6ca850 recipe=29 kind=\"Vector\" inputs=3 records=7\nRETAINED_READER_VARIANT test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") phase=Runtime indexed=true\nRETAINED_READER_CASE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") current_first=false metadata_first=true\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a6662ce88a0 recipe=2 kind=\"Form\" inputs=0 records=4\nRETAINED_DATA_OTHER recipe=3 discriminant=Discriminant(0)\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a6662af94d0 recipe=3 kind=\"Other\" inputs=0 records=1\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a644f94ca50 recipe=4 kind=\"Form\" inputs=0 records=4\nRETAINED_DATA_OTHER recipe=5 discriminant=Discriminant(0)\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a665ddc72b0 recipe=5 kind=\"Other\" inputs=0 records=1\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a644f6ca850 recipe=6 kind=\"Form\" inputs=0 records=4\nRETAINED_DATA_OTHER recipe=28 discriminant=Discriminant(0)\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a66608a3c80 recipe=28 kind=\"Other\" inputs=0 records=1\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a6662af9b40 recipe=8 kind=\"Form\" inputs=0 records=4\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a6662c02d80 recipe=9 kind=\"Form\" inputs=0 records=4\nRETAINED_DATA_OTHER recipe=29 discriminant=Discriminant(0)\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a6662afb420 recipe=29 kind=\"Other\" inputs=0 records=1\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a6662ac7270 recipe=24 kind=\"Identifier\" inputs=0 records=5\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a6662af9cf0 recipe=1 kind=\"Form\" inputs=0 records=4\nRETAINED_DATA_OTHER recipe=7 discriminant=Discriminant(0)\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a6662ac70c0 recipe=7 kind=\"Other\" inputs=0 records=1\nRETAINED_DATA_OTHER recipe=10 discriminant=Discriminant(0)\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a6662ac7420 recipe=10 kind=\"Other\" inputs=0 records=1\nRETAINED_DATA_OTHER recipe=11 discriminant=Discriminant(4)\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a64436a1590 recipe=11 kind=\"Other\" inputs=10 records=4\nRETAINED_DATA_NODE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a644dbb4ff0 recipe=12 kind=\"Metadata\" inputs=2 records=1\nRETAINED_INPUT_CLOSURE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") records=1 children=2 root=true edges=false\nFIRST_USE_DATA_NATIVE test=Some(\"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\") node=0x7a644dbb4ff0 inputs=2 children=true direct=true current_inputs=false classes=true prototypes=true\nFIRST_USE_DATA_ROOT binding=true logical=true audit=false children=0\nFIRST_USE_DATA_FRESH_FAILURE source=0 owner=ReaderSource alias=14 native=13\n\nthread 'portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc' (552153) panicked at crates/suss-compile/src/portable_macro_graph/completed_type_values.rs:618:58:\ncalled `Result::unwrap()` on an `Err` value: Host(Fresh first-use source failed complete DATA checks)\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\nFAILED\n\nfailures:\n\nfailures:\n    portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 536 filtered out; finished in 45.05s\n\nerror: test failed, to rerun pass `-p suss-compile --lib`\n"
+    },
+    "terminal.json": {
+      "sha256": "842f539b9e0162dded9523979af4c4d4b3b2e8e93acf8e16ba5fa03c30419594",
+      "text": "{\n  \"command\": [\n    \"cargo\",\n    \"test\",\n    \"-p\",\n    \"suss-compile\",\n    \"--locked\",\n    \"--lib\",\n    \"--\",\n    \"--nocapture\",\n    \"--test-threads=1\",\n    \"--exact\",\n    \"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\"\n  ],\n  \"head\": \"f950e4e5acd20df22c7292ee040221a6eb135f91\",\n  \"exit_code\": 101,\n  \"seconds\": 70.34273495600792,\n  \"log_sha256\": \"08f1e5686e4cf8b4f689e5b8b8714267f793a5c7525d91f649d667b2569627c8\",\n  \"scope\": \"One unchanged retained/warm fixture, serial attribution only. No acceptance inference from diagnostic execution.\"\n}\n"
+    }
+  },
+  "outcomes": {
+    "passed": 0,
+    "failed": 1,
+    "ignored": 0,
+    "measured": 0,
+    "filtered_out": 536,
+    "command_exit": 101,
+    "command_seconds": 70.34273495600792,
+    "harness_seconds": 45.05,
+    "selector": "portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc"
+  },
+  "completed_subcases": {
+    "phase": "Runtime",
+    "indexed": false,
+    "current_first": [
+      false,
+      true
+    ],
+    "metadata_first_sequence_per_order": [
+      true,
+      true,
+      false,
+      true
+    ],
+    "attempts_completed": 8,
+    "qualification": "All eight prior Runtime/indexed=false attempts reached their existing identity/GC/warm assertions before control advanced to indexed=true. These are subcases inside a failing Rust test, not eight passing tests or full Runtime coverage."
+  },
+  "first_failing_attempt": {
+    "phase": "Runtime",
+    "indexed": true,
+    "current_first": false,
+    "metadata_first": true,
+    "attempt": "First attempt for this variant, before a warm request can complete.",
+    "native_recipe": {
+      "id": 12,
+      "kind": "Metadata",
+      "records": 1,
+      "inputs": 2,
+      "node": "0x7a644dbb4ff0"
+    },
+    "original_input_closure": {
+      "root": true,
+      "edges": false,
+      "records": 1,
+      "children": 2
+    },
+    "native_audit": {
+      "children": true,
+      "direct": true,
+      "current_inputs": false,
+      "classes": true,
+      "prototypes": true
+    },
+    "source_root": {
+      "source": 0,
+      "owner": "ReaderSource",
+      "alias": 14,
+      "native": 13,
+      "binding": true,
+      "logical": true,
+      "audit": false,
+      "children": 0
+    },
+    "error": "Host(Fresh first-use source failed complete DATA checks)",
+    "location": "crates/suss-compile/src/portable_macro_graph/completed_type_values.rs:618:58",
+    "qualification": "The same live native-node address links allocation recipe12 Metadata to the failing audit. Exact pointer identity is limited to this live diagnostic object, not persistent authority. The original root-membership test passed; selected edge closure failed. No generic source/constructor root requirement is weakened or declared unnecessary here."
+  },
+  "unexecuted_or_unproved": [
+    "The remaining indexed=true Runtime attempts and their later warm/producer-order cases.",
+    "All Macro-phase iterations in this test.",
+    "Any new DATA-descendant implementation, regression or final uninstrumented replay.",
+    "Other DATA suite tests and full public macro-frame/namespace/callable acceptance; this run does not replace their gates."
+  ],
+  "review": {
+    "verdict": "VERIFIED_SERIAL_FAILURE_ATTRIBUTION_NO_REPAIR_RESULT",
+    "checks": [
+      "Raw log SHA equals terminal and supplied SHA.",
+      "Serial exact-filter argv, Rust summary and actual command/harness timings retained.",
+      "Phase/indexed and producer/metadata order labels identify the first failed attempt.",
+      "Eight earlier labels plus next-variant progression and source loop establish completed nonindexed Runtime subcases, without converting them into separate test passes.",
+      "Matched allocation and failure live-node addresses; root=true/edges=false retained exactly."
+    ],
+    "test_source": {
+      "path": "crates/suss-compile/src/portable_macro_graph/completed_type_values.rs",
+      "sha256": "2d2f6bb761596e274161f6b87b522914a256df744901decb454854b2c2a485b4"
+    },
+    "limits": [
+      "No Cargo/VM/shared edit or process action by reviewer.",
+      "Main reports terminal/drained; no independent PGID drain proof or run-long mutation detector invented.",
+      "The log narrows failure to Metadata selected-input edge closure; the general DATA-only original-descendant repair remains source-review/typecheck/execution work. No assertion that all DATA cases are fixed."
+    ]
+  },
+  "next": "Commit the exact source checkpoint, generate/adopt matching normal BOOT with fresh identity, then main-controlled five new regressions plus unchanged retained/warm test. All six repaired-source VM tests remain pending; previous serial0PASS1FAIL is unchanged historical evidence.",
+  "descendant_v2_source": {
+    "status": "APPLIED_PEER_SOURCE_GO_NO_VM_RESULT",
+    "manifest": {
+      "status": "FROZEN_CACHE_ONLY_SOURCE_CANDIDATE_UNEXECUTED_PENDING_INDEPENDENT_REVIEW",
+      "base_head": "f950e4e5acd20df22c7292ee040221a6eb135f91",
+      "patch_sha256": "5eab8de189ae8fb915015355ea7acc416ac78b68ea372ce3255a94ded32301f9",
+      "files": [
+        {
+          "path": "crates/suss-compile/src/portable_macro_graph/source_roots.rs",
+          "before_sha256": "28502b31a2f988ad4d047309b9db5967b05460f3d0a438b6d8391cb5d3b5f394",
+          "after_sha256": "53aa09d3b3748685ecc1fb4c0fd29a53d8038b94ea1a6ae717eeb43f04d9b18d",
+          "bytes": 78999,
+          "new": false
+        },
+        {
+          "path": "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data.rs",
+          "before_sha256": "8e8f4dd0dee71c4e1e35ec126b59913a9a7d76d90614a3a9cc4433224f6588f9",
+          "after_sha256": "35730c42cebff1cc8574de7233ca5cc9cb989dacfaac02c1a7cdcad723fce7af",
+          "bytes": 37625,
+          "new": false
+        },
+        {
+          "path": "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/original_inputs.rs",
+          "before_sha256": null,
+          "after_sha256": "60ea95db3c23c99d599071d53582db57f2cb6696ee8ff20cf1bcc5ef79ef9ea8",
+          "bytes": 5538,
+          "new": true
+        },
+        {
+          "path": "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/original_inputs_tests.rs",
+          "before_sha256": null,
+          "after_sha256": "4b13af1086a5a3c436f04720505fdb29e87d3dca9810e9c6f8ee34172e43574c",
+          "bytes": 11422,
+          "new": true
+        },
+        {
+          "path": "crates/suss-compile/src/portable_session/construction_records.rs",
+          "before_sha256": "94b4acf710ff2129f61a0b278388c2ce140bdef611907b74b90b73c48d0fa7d8",
+          "after_sha256": "549ebf3e14489e1781cb05d51abb38693f9b0935def143da8be579c58427b241",
+          "bytes": 43738,
+          "new": false
+        }
+      ],
+      "paths": 5,
+      "new_compiler_source_paths": [
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/original_inputs.rs",
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/original_inputs_tests.rs"
+      ],
+      "source_registry_count": 221,
+      "source_fingerprint_prediction": "b812d0c6106334ff5e5d96af1ae9d9c4888afa78c28747468198467ed79bf0a4",
+      "source_inputs_sha256": "839b6959af8bdf1c12748af16c34bef3691917b21cb4d201742b04f8a826553d",
+      "new_tests": 5,
+      "selection_sha256": "40e64829f5d7b6133b70220b2faf2234c29e3400a138bbb3a18868b31ba01401",
+      "original_retained_regression_sha256": "2d2f6bb761596e274161f6b87b522914a256df744901decb454854b2c2a485b4",
+      "existing_first_use_tests_sha256": "077f4850e4a33969148da86d815caf47e5591de9b2e6c02f617c51ae2f9f6aa1",
+      "raw_diagnosis": {
+        "head": "f950e4e5acd20df22c7292ee040221a6eb135f91",
+        "log_sha256": "08f1e5686e4cf8b4f689e5b8b8714267f793a5c7525d91f649d667b2569627c8",
+        "phase": "Runtime",
+        "indexed": true,
+        "current_first": false,
+        "metadata_first": true,
+        "attempt": "first indexed attempt; all prior indexed=false cases completed",
+        "recipe": 12,
+        "kind": "Metadata",
+        "records": 1,
+        "inputs": 2,
+        "root_present": true,
+        "edges_valid": false,
+        "child_direct_class_prototype_health": true
+      },
+      "syntax": [
+        {
+          "path": "crates/suss-compile/src/portable_macro_graph/source_roots.rs",
+          "exit_code": 0,
+          "scope": "parser only, stdout discarded; no typecheck or file formatting"
+        },
+        {
+          "path": "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data.rs",
+          "exit_code": 0,
+          "scope": "parser only, stdout discarded; no typecheck or file formatting"
+        },
+        {
+          "path": "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/original_inputs.rs",
+          "exit_code": 0,
+          "scope": "parser only, stdout discarded; no typecheck or file formatting"
+        },
+        {
+          "path": "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/original_inputs_tests.rs",
+          "exit_code": 0,
+          "scope": "parser only, stdout discarded; no typecheck or file formatting"
+        },
+        {
+          "path": "crates/suss-compile/src/portable_session/construction_records.rs",
+          "exit_code": 0,
+          "scope": "parser only, stdout discarded; no typecheck or file formatting"
+        }
+      ],
+      "checks": {
+        "cache_applycheck_replay_exact": true,
+        "shared_existing_files_still_preimage": true,
+        "no_cargo_rustc_bootstrap_vm": true,
+        "no_shared_source_ref_index_remote_mutation": true
+      },
+      "limitations": [
+        "Source and rustfmt parser only: no Rust typecheck/runtime proof.",
+        "Original current-source health, output-root membership, generic strict/legacy policies and default budgets retained; generic added optional-mode controls paid, never a fee decrease.",
+        "New lookup closure only relevant original input Evidence, same current Audit true health; no guest field recapture/receipt/domain authority.",
+        "Two new files must be in explicit full freeze before any producer; old219-only freeze insufficient.",
+        "New normal221-input BOOT/identity needed; predicted fingerprint not an actual builder result."
+      ],
+      "REPORT_md_sha256": "7b633f72430a2f02739922343e7fcc54e617cb081216171eb26d34bc2beaa367",
+      "fee-ledger_md_sha256": "6686bac01d68d0465b6b88a6d077f0e031f3ee4892a665d156c5d251ab38d904",
+      "revision": "V2 only test seed-route authenticity/accessor and same-ledger unrecorded-output-root negative; production/fee policy exact V1",
+      "predecessor_notice_sha256": "caefdfe550fdf790cb543ad6f66decd4d89200ad30d758967e2239077e0260de"
+    },
+    "manifest_sha256": "4195597d01fd8e61d6cff311c64ff49e513a1c1e0f329cb0ac03a15d0c652532",
+    "peer_review": {
+      "reviewer": "Carver",
+      "verdict": "GO_SOURCE_ONLY_RELEVANT_ORIGINAL_DATA_DESCENDANT_CLOSURE_V2",
+      "manifest_sha256": "4195597d01fd8e61d6cff311c64ff49e513a1c1e0f329cb0ac03a15d0c652532",
+      "source_freeze_sha256": "26602ad8576cceb34164d4e37257430bb6da0bcf73835a0ff9dba9a1be0df698",
+      "patch_sha256": "5eab8de189ae8fb915015355ea7acc416ac78b68ea372ce3255a94ded32301f9",
+      "fee_ledger_sha256": "6686bac01d68d0465b6b88a6d077f0e031f3ee4892a665d156c5d251ab38d904",
+      "postimages": {
+        "crates/suss-compile/src/portable_macro_graph/source_roots.rs": "53aa09d3b3748685ecc1fb4c0fd29a53d8038b94ea1a6ae717eeb43f04d9b18d",
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data.rs": "35730c42cebff1cc8574de7233ca5cc9cb989dacfaac02c1a7cdcad723fce7af",
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/original_inputs.rs": "60ea95db3c23c99d599071d53582db57f2cb6696ee8ff20cf1bcc5ef79ef9ea8",
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/original_inputs_tests.rs": "4b13af1086a5a3c436f04720505fdb29e87d3dca9810e9c6f8ee34172e43574c",
+        "crates/suss-compile/src/portable_session/construction_records.rs": "549ebf3e14489e1781cb05d51abb38693f9b0935def143da8be579c58427b241"
+      },
+      "checks": [
+        "Output root still only contains_explicit local records; descendant extension affects missing Array/Constructor edges only.",
+        "Production token constructor private to first_use_data; captures exact node.inputs/current records and same live closed Audit map. Exact current-ledger pointer mismatch falls back to old checks.",
+        "Traverses only Native.inputs/Source.actual from that frontier; every visited identity must already be Some(true); globally healthy siblings unavailable unless genuinely reachable.",
+        "Source wrappers were already checked for owner/logical/data health. Dedup exact Rc identity is transient work inventory, not guest authority.",
+        "Only original record.value or CanonicalSeed pristine snapshot membership; existing same-Store/ref_eq and original seed storage membership reused, no guest field recapture.",
+        "Seed original membership does not itself assert current health: same-Audit successful complete child health is required first; no strict seed/memo/receipt/domain policy changes.",
+        "Existing direct checks, source logical binding, class/prototype checks, callbacks, constructors, final audit and atomic cache commit remain. Original false child continues false; errors propagate without replay.",
+        "All legacy/strict callers pass None; no input-root relaxation. Added branches paid even when extension unused.",
+        "New scratch header/buffer growth/relocation/retirement/iterators/index/lookup/physical equality prepaid; borrowed refs only and no new recursive cleanup owners. OriginalDataInputs is scoped before later work/callbacks."
+      ],
+      "tests_review": [
+        "Same-ledger borrowed child root negative reaches correct token binding yet root absent in current records.",
+        "Already-audited unrelated sibling cannot close absent edge; unchecked/false input cannot lend retained reference.",
+        "Empty-map fixture explicitly requires real CanonicalSeed fact and one record, not an assumed seed route.",
+        "Sampled new-work fuel cuts and active IRQ retain typed errors and fresh complete Audit retry; not exhaustive compiler cuts.",
+        "Actual nonmemo mutation invalidates fresh Audit before lending original references."
+      ],
+      "syntax_parse_only_paths": [
+        "crates/suss-compile/src/portable_macro_graph/source_roots.rs",
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data.rs",
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/original_inputs.rs",
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/original_inputs_tests.rs",
+        "crates/suss-compile/src/portable_session/construction_records.rs"
+      ],
+      "findings": [],
+      "limits": [
+        "No typecheck/VM/normal generation; five new tests and original retained regression remain unexecuted on these bytes.",
+        "Two new module files mean full221-source freeze before first producer and normal new BOOT/identity required.",
+        "Prediction is not an actual builder result. No performance/default-fit/public identity/fullbaseline/finalCI/issue-readiness claim.",
+        "Foreign/mutation/callback preservation must be assessed from actual later execution, not source GO."
+      ],
+      "shared_edits_cargo_vm": false
+    },
+    "peer_review_sha256": "239706b99291e28f0d773c241938f1e4ba1024ca17c1b0d8e1de732694d7760c",
+    "fee_ledger": "# New performed-work ledger (source only)\n\nNo rates or old charges lowered. No guest allocation/constructor/callback suppressed. All pre-existing local-record index/root/edge/direct/class/prototype work retained.\n\n| New work | Prepayment |\n|---|---|\n| Per-native ephemeral borrow metadata (original frontier, exact current ledger, same-Audit checked map, lazy ledger Vec header, unavailable state), initialization/move/drop | `2*sizeof(OriginalDataInputs)+8` before `Self` initialization. It holds borrows, no strong roots. |\n| DATA checker exact current-ledger borrow binding |2 before native pointer comparison; mismatch runs full ordinary policy without descendant extension. |\n| Shared optional native edge-policy dispatch |2 before existing child staging. All existing staging fees retained. |\n| Additional per Array/Constructor input-edge missing/optional branch |2 before branch, including direct successes. Legacy/strict callers pass None; no descendant traversal there. Existing scans/fees retained. |\n| Lazy first missing-edge traversal headers and teardown |`2*sizeof(Vec<&Evidence>)+2*sizeof(TryOrderedMap<(u8,usize),bool>)+2*sizeof(Vec<&ConstructionRecords>)+8` before initialization. |\n| Reference scratch extent/growth planning |6 before capacity/extent inspection. |\n| Requested backing allocation/relocation |Existing generic `reserve` tariff, unchanged; checked extents/errors before allocations. |\n| Retirement of each acquired reference-buffer backing |Checked `next_capacity*sizeof(T)` before reserve; previously acquired backing's retirement already prepaid when acquired. No owned children/recursive Drop. |\n| Iterator extent/append controls |4 before count, reserve and checked `3*count+1` before extend. |\n| Per original-evidence pop/identity/branch |4 before work. |\n| Current health lookup and transient dedup/index |Existing metered TryOrderedMap get/insert, exact native `(variant,Rc)` identity; inherited AVL allocation/shift/comparison charges unchanged. It stores trivial identity/bool scratch only, not evidence roots. |\n| Failed/unchecked original descendant |1 before marking local unavailable. Return ordinary false, not Host. Every later attempted membership still polls charged prepare; original remaining record/health validators still execute. |\n| Ledger borrow insertion/read/write/retirement |reserve helper +3 before push. |\n| Publishing complete borrowed inventory |4 before move to Some. No partial inventory published on failure. |\n| Each prepare/reuse/empty/unavailable dispatch |4 before state reads. Entire traversal skipped on direct success; inventory built once per current checker, never persists across callbacks/requests. |\n| Each relevant original-ledger membership attempt |3 before call. |\n| Membership local context/init/retirement |`2*sizeof(InputIndex)+6` before context initialization. No second reference hash table allocated. |\n| Each original record probe/kind/control |3 before scan; existing `InputIndex::same` performs same-Session owner checks and charged physical ref equality. |\n| Private canonical seed membership |1 before variant path, then existing full original storage membership query and charges. Available only through a reachable already-DATA-healthy ledger. No guest-field snapshot or memo authority. |\n\nNew lookup is linear over the deduplicated relevant original ledgers/record values; no all-graph or all-audited-sibling flattening. Worst-case lookup cost is exposed and fully charged, not claimed a speed win. New borrowed buffers and dedup map are request-local, cleanup uses ordinary nonrecursive trivial-reference scratch. Typed fuel/IRQ exceptions propagate; failed scratch acquisition does not change RootCache. Five new tests are authored only, including measured-new-work sampled cuts and active IRQ; no compiler-exhaustive claim.\n",
+    "fee_ledger_sha256": "6686bac01d68d0465b6b88a6d077f0e031f3ee4892a665d156c5d251ab38d904",
+    "applied_typecheck_source_freeze": {
+      "base_head": "f950e4e5acd20df22c7292ee040221a6eb135f91",
+      "files": {
+        "crates/suss-compile/src/portable_macro_graph/source_roots.rs": "53aa09d3b3748685ecc1fb4c0fd29a53d8038b94ea1a6ae717eeb43f04d9b18d",
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data.rs": "35730c42cebff1cc8574de7233ca5cc9cb989dacfaac02c1a7cdcad723fce7af",
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/original_inputs.rs": "60ea95db3c23c99d599071d53582db57f2cb6696ee8ff20cf1bcc5ef79ef9ea8",
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/original_inputs_tests.rs": "4b13af1086a5a3c436f04720505fdb29e87d3dca9810e9c6f8ee34172e43574c",
+        "crates/suss-compile/src/portable_session/construction_records.rs": "549ebf3e14489e1781cb05d51abb38693f9b0935def143da8be579c58427b241"
+      },
+      "compiler_input_count": 221,
+      "component_manifest_sha256": "4195597d01fd8e61d6cff311c64ff49e513a1c1e0f329cb0ac03a15d0c652532"
+    },
+    "compiler_input_inventory": {
+      "count": 221,
+      "sha256": "a9344b3a0397f2ca1c293aef0a2d5ce1542a26e384a705a99371a0e7153a58ac",
+      "cache_path": "/home/bobby/.cache/suss-m4-work/pr263-data-descendant-typecheck-v1/all-221-inputs.json",
+      "verification": "All 221 retained input hashes matched current files at cache packaging; both new modules explicitly included. This is a point-in-time check, not a run-long detector."
+    },
+    "scope": "DATA-only missing Array/Constructor input-edge closure may consult relevant original input Evidence already completely healthy in the same Audit. Traversal follows only that frontier Native.inputs/Source.actual, bound to exact current ledger. Output root must still exist in current explicit records. Strict/legacy callers pass None; no generic root-membership relaxation, guest-field recapture, source certificate, memo receipt, write-domain or callback replay.",
+    "cost": "Original charges/rates retained; new dispatch, borrowed inventory, metered traversal/index/membership, buffer growth and retirement prepaid per included ledger. No speed/default-fit claim.",
+    "new_tests": {
+      "count": 5,
+      "status": "UNEXECUTED"
+    },
+    "no_run_status": "PASS_COMPILE_LINK_ONLY",
+    "builder_fingerprint_status": "BOTH_ACTUAL_BUILDERS_MATCH_RETAINED_PREDICTION; no generation/BOOT or VM result inferred.",
+    "no_run_terminal": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--no-run"
+      ],
+      "exit_code": 0,
+      "seconds": 28.46100579801714,
+      "log_sha256": "f32c7629a3d2465804736c8aec391ad0fdcc464ce67bd607901b816224c1e721",
+      "compiler_inputs": 221,
+      "scope": "Exact5-file descendant closure plus5 regressions compile/link only"
+    },
+    "no_run_log": "   Compiling suss-compile v0.1.0 (/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/crates/suss-compile)\n    Finished `test` profile [unoptimized] target(s) in 28.42s\n  Executable unittests src/lib.rs (/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/suss_compile-6640f43d893bc943)\n",
+    "actual_builder_receipt": [
+      {
+        "builder": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-4e005c49b5658b9d/build-script-build",
+        "fingerprint": "b812d0c6106334ff5e5d96af1ae9d9c4888afa78c28747468198467ed79bf0a4"
+      },
+      {
+        "builder": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-843b103b49464494/build-script-build",
+        "fingerprint": "b812d0c6106334ff5e5d96af1ae9d9c4888afa78c28747468198467ed79bf0a4"
+      }
+    ],
+    "actual_builder_receipt_sha256": "4188904f2b53f2d2df65a343c448c365f5eefc428bdeed84439ae1d4f7f43ab8",
+    "run_freeze_qualification": "Main reports all221 input hashes matched before and after the no-run command. Retained full inventory remains in its original cache; this JSON binds its hash/count without duplicating it. This review does not claim a run-long mutation detector."
+  }
+}

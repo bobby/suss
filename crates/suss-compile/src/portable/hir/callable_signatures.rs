@@ -47,16 +47,18 @@ impl Analyzer<'_> {
             return Ok(function);
         };
         let methods = methods.clone();
-        let self_binding = self_binding.clone();
-        let owner = self.fresh_binding(form, function);
+        let self_binding = self_binding.as_deref().cloned();
+        let owner = self.fresh_binding(form, function)?;
         let mut bindings = vec![owner.clone()];
         if let Some(parameter) = self_binding {
+            let value = self.local(form, owner.id);
+            let value = self.capture_local_access(value)?;
             bindings.push(Binding {
                 id: parameter.id,
                 name: parameter.name,
                 span: parameter.span,
                 metadata: parameter.metadata,
-                value: self.local(form, owner.id),
+                value,
             });
         }
         let mut effects = vec![];
@@ -80,7 +82,7 @@ impl Analyzer<'_> {
                     captures: captures.into_iter().collect(),
                 },
             };
-            let delegate = self.fresh_binding(form, delegate);
+            let delegate = self.fresh_binding(form, delegate)?;
             bindings.push(delegate.clone());
             let key = if method.variadic {
                 "cljs$core$IFn$_invoke$arity$variadic".into()
@@ -122,7 +124,7 @@ impl Analyzer<'_> {
             let mut current = parameter.id;
             for i in 0..fixed {
                 let value = self.signature_core_call(form, "first", self.local(form, current))?;
-                let argument = self.fresh_binding(form, value);
+                let argument = self.fresh_binding(form, value)?;
                 arguments.push(self.local(form, argument.id));
                 prefix.push(argument);
                 let value = self.signature_core_call(
@@ -130,7 +132,7 @@ impl Analyzer<'_> {
                     if i + 1 == fixed { "rest" } else { "next" },
                     self.local(form, current),
                 )?;
-                let next = self.fresh_binding(form, value);
+                let next = self.fresh_binding(form, value)?;
                 current = next.id;
                 prefix.push(next);
             }

@@ -159,11 +159,15 @@ fn frame(
         .get(id)
         .and_then(Option::as_ref)
         .ok_or_else(|| invalid("Missing or unfinished metadata expectation recipe"))?;
+    let dependencies = dependencies(session, recipe)?;
+    // Every dependency yields exactly one input: reserve it once.
+    let mut inputs = Vec::new();
+    reserve(session, &mut inputs, dependencies.len())?;
     Ok(Frame {
         id,
-        dependencies: dependencies(session, recipe)?,
+        dependencies,
         next: 0,
-        inputs: Vec::new(),
+        inputs,
     })
 }
 fn discard(session: &mut Session, value: Form) -> Result<()> {
@@ -286,7 +290,7 @@ fn finish(
     };
     Ok(Some(plain(kind)))
 }
-fn project(session: &mut Session, recipes: &[Option<Recipe>], root: Value) -> Result<Option<Form>> {
+pub(super) fn project(session: &mut Session, recipes: &[Option<Recipe>], root: Value) -> Result<Option<Form>> {
     let mut frames = Vec::new();
     let first = frame(session, recipes, root, &frames)?;
     push(session, &mut frames, first)?;
@@ -529,7 +533,7 @@ mod tests {
                 .eval("(def expectation-events 0) (def expectation-original-hash suss.core/hash)")
                 .unwrap();
             session.enter_namespace("suss.core").unwrap();
-            session.eval("(def hash (fn [key] (do (if (number? key) (set! user/expectation-events (+ user/expectation-events 1)) nil) (user/expectation-original-hash key))))").unwrap();
+            session.eval_with_test_compilation_fuel("(def hash (fn [key] (do (if (number? key) (set! user/expectation-events (+ user/expectation-events 1)) nil) (user/expectation-original-hash key))))").unwrap();
             session.enter_namespace("user").unwrap();
             let bridge = FormBridge::new(&mut session).unwrap();
             let (witness, value) = {

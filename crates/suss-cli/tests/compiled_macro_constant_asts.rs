@@ -4,6 +4,8 @@ use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
 };
 use suss_reader::forms::{Form, Kind};
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 
 fn data(form: &Form) -> Value {
     match &form.kind {
@@ -43,7 +45,9 @@ fn scalar_initializer_operations_and_values_match_pinned_source_ast_without_exec
     ];
     assert_eq!(corpus["cases"].as_array().unwrap().len(), expressions.len());
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro inspect-constant [label name]
@@ -64,7 +68,10 @@ fn scalar_initializer_operations_and_values_match_pinned_source_ast_without_exec
                 .collect::<Vec<_>>()
                 .join("\n")
         );
-        let value = session.eval_with_macros(&source, &mut macros).unwrap();
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let evaluated = session.eval_with_macros(&source, &mut macros);
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let value = evaluated.unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         session.collect().unwrap();
         let actual = data(&bridge.read(&mut session, &value, 0..1).unwrap());
@@ -73,14 +80,16 @@ fn scalar_initializer_operations_and_values_match_pinned_source_ast_without_exec
         let mut expected = corpus["cases"].clone();
         expected[2][2][2] = json!(42.0);
         assert_eq!(actual, expected);
-        let effect = session
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let evaluated = session
             .eval_with_macros(
                 r#"(def effects 0)
           (let [observed (do (set! effects (+ effects 1)) 42)]
             [(inspect-constant "effect" observed) observed effects])"#,
                 &mut macros,
-            )
-            .unwrap();
+            );
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let effect = evaluated.unwrap();
         session.collect().unwrap();
         let effect = data(&bridge.read(&mut session, &effect, 0..1).unwrap());
         assert_eq!(effect[1], json!(42.0));
@@ -100,7 +109,9 @@ fn scalar_initializer_operations_and_values_match_pinned_source_ast_without_exec
 #[test]
 fn scalar_ast_values_preserve_binary64_and_utf16_without_physical_value_inference() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro scalar-value [name]
@@ -108,7 +119,8 @@ fn scalar_ast_values_preserve_binary64_and_utf16_without_physical_value_inferenc
             (list 'quote [(get init :op) (contains? init :val) (get init :val)])))"#,
             )
             .unwrap();
-        let value = session
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let evaluated = session
             .eval_with_macros(
                 r#"[
           (let [observed -0.0] (scalar-value observed))
@@ -117,8 +129,9 @@ fn scalar_ast_values_preserve_binary64_and_utf16_without_physical_value_inferenc
           (let [observed ##NaN] (scalar-value observed))
           (let [observed "\ud800x\udc00"] (scalar-value observed))]"#,
                 &mut macros,
-            )
-            .unwrap();
+            );
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let value = evaluated.unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
@@ -163,7 +176,9 @@ fn scalar_ast_values_preserve_binary64_and_utf16_without_physical_value_inferenc
 #[test]
 fn reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_constants() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro inspect-source [name]
@@ -176,7 +191,8 @@ fn reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_c
                           (get (first (next (get init :args))) :form)])))"#,
             )
             .unwrap();
-        let value = session
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let evaluated = session
             .eval_with_macros(
                 r#"[
           (let [observed true] (inspect-source observed))
@@ -185,8 +201,9 @@ fn reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_c
           (let [observed false copy observed] (inspect-source copy))
           (let [observed 42 copy (+ observed 0)] (inspect-source copy))]"#,
                 &mut macros,
-            )
-            .unwrap();
+            );
+        assert_eq!(session.options().fuel_per_operation, 10_000_000);
+        let value = evaluated.unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &value, 0..1).unwrap();

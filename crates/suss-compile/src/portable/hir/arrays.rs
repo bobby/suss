@@ -49,7 +49,7 @@ impl Analyzer<'_> {
             let mut dimensions = Vec::new();
             for argument in &args[2..] {
                 let value = self.form(argument)?;
-                dimensions.push(self.array_temporary(argument, value));
+                dimensions.push(self.array_temporary(argument, value)?);
             }
             let value = if let Kind::Number(size) = args[1].kind {
                 if !size.is_finite() || size > 1_000_000.0 {
@@ -68,7 +68,7 @@ impl Analyzer<'_> {
             } else {
                 self.form(&args[1])?
             };
-            let size = self.array_temporary(&args[1], value);
+            let size = self.array_temporary(&args[1], value)?;
             let nil = Hir {
                 source: None,
                 span: form.span.clone(),
@@ -115,15 +115,16 @@ impl Analyzer<'_> {
         }
         Ok(node(operation, arguments))
     }
-    fn array_temporary(&mut self, form: &Form, value: Hir) -> Binding {
+    fn array_temporary(&mut self, form: &Form, value: Hir) -> Result<Binding, Diagnostic> {
         let id = BindingId(self.next);
         self.next += 1;
-        Binding {
+        let value = self.capture_local_access(value)?;
+        Ok(Binding {
             id,
             name: String::new(),
             span: form.span.clone(),
             metadata: vec![],
             value,
-        }
+        })
     }
 }

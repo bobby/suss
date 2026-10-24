@@ -104,20 +104,7 @@ fn pinned_reader_trees_match_with_generated_identity_preserved() {
         let result = ReaderState::default()
             .expand(&form, &Environment::default(), Phase::Macro)
             .unwrap();
-        let mut expected = row[1].clone();
-        if label == "metadata" {
-            // Explicit accepted textual metadata order: marker appears before
-            // indexing entries. The pinned reader happens to put it last.
-            let chunks = expected
-                .pointer_mut("/1/2/1/2/1/1/1/1/1")
-                .unwrap()
-                .as_array_mut()
-                .unwrap();
-            assert_eq!(chunks.len(), 11);
-            assert_eq!(chunks[9][1][1], json!(["keyword", ":marker"]));
-            let marker = chunks.split_off(9);
-            chunks.splice(1..1, marker);
-        }
+        let expected = row[1].clone();
         equivalent(&result, expected);
     }
 }
@@ -536,4 +523,41 @@ fn private_reader_sequence_provenance_and_initializer_use_the_caller_meter() {
     }).unwrap_err();
     assert!(error.message.contains("fuel exhausted"));
     assert!(reader_sequence_initializer(&lowered, &env, Phase::Runtime, Some(&origin), &mut |_| Ok(())).unwrap().is_some());
+}
+
+#[test]
+fn indexed_syntax_quote_metadata_keeps_pinned_association_order_in_both_phases() {
+    let corpus: Value = serde_json::from_str(include_str!(
+        "../../../../../tests/oracle/syntax-quote-reader-observations.json"
+    )).unwrap();
+    let row = corpus["cases"].as_array().unwrap().iter()
+        .find(|row| row[0] == "metadata").unwrap();
+    let expected = row[1].clone();
+    let path = "/1/2/1/2/1/1/1/1/1";
+    let chunks = expected.pointer(path).unwrap().as_array().unwrap();
+    assert_eq!(chunks.len(), 11);
+    for (position, key) in [(1, ":line"), (3, ":column"),
+        (5, ":end-line"), (7, ":end-column"), (9, ":marker")] {
+        assert_eq!(chunks[position][1][1], json!(["keyword", key]));
+    }
+    // Keep the old variance observable as a rejected complete tree, rather
+    // than sorting/normalizing metadata pairs in either comparison operand.
+    let mut obsolete_order = expected.clone();
+    let chunks = obsolete_order.pointer_mut(path).unwrap().as_array_mut().unwrap();
+    let marker = chunks.split_off(9);
+    chunks.splice(1..1, marker);
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let form = read_forms_with_source_metadata("`^{:marker true} [~x]", None)
+            .unwrap().remove(0);
+        let original = form.clone();
+        let actual = ReaderState::default()
+            .expand(&form, &Environment::default(), phase).unwrap();
+        equivalent(&actual, expected.clone());
+        let mut actual_tree = project(&actual);
+        let mut wrong_tree = obsolete_order.clone();
+        normalize(&mut actual_tree, &mut BTreeMap::new());
+        normalize(&mut wrong_tree, &mut BTreeMap::new());
+        assert_ne!(actual_tree, wrong_tree, "{phase:?}: old metadata permutation");
+        assert_eq!(form, original, "{phase:?}: reader input changed");
+    }
 }

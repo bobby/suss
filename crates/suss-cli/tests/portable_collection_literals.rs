@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::portable_session::Session;
 
 fn boolean(session: &mut Session, source: &str) -> bool {
@@ -22,8 +24,7 @@ fn boolean(session: &mut Session, source: &str) -> bool {
 #[test]
 fn vector_literal_normalizes_entries_once_before_constructor_invocation() {
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     // Original development-only constructor fixture for the compiler boundary.
     // This is not a production PersistentVector implementation or M4 acceptance.
@@ -46,8 +47,7 @@ fn collection_literals_match_independently_decoded_primary_values() {
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 19);
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.enter_namespace("suss.core").unwrap();
@@ -99,8 +99,7 @@ fn collection_literals_match_independently_decoded_primary_values() {
 #[test]
 fn large_vector_method_is_captured_before_entry_property_mutation() {
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("suss.core").unwrap();
     session.eval("(deftype PersistentVector [meta cnt shift root tail __hash]) (set! (.-fromArray PersistentVector) (fn [xs no-clone] (PersistentVector. nil (alength xs) 5 no-clone xs nil)))").unwrap();
@@ -137,8 +136,7 @@ fn large_vector_method_is_captured_before_entry_property_mutation() {
 #[test]
 fn small_vector_captures_constructor_and_empty_node_before_entry_redefinition() {
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("suss.core").unwrap();
     session.eval("(deftype PersistentVector [meta cnt shift root tail __hash]) (set! (.-EMPTY_NODE PersistentVector) 17)").unwrap();
@@ -182,8 +180,7 @@ fn missing_literal_classes_fail_before_initializer_effects_or_publication() {
 #[test]
 fn thrown_map_and_set_entries_stop_later_effects_and_construction() {
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("suss.core").unwrap();
     session.eval("(deftype PersistentHashMap []) (deftype PersistentHashSet []) (set! (.-fromArrays PersistentHashMap) (fn [_ _] (throw 99))) (set! (.-createAsIfByAssoc PersistentHashSet) (fn [_] (throw 99)))").unwrap();

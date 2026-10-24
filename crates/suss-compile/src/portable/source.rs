@@ -156,6 +156,7 @@ fn apply_requirement(
     env: &mut Environment,
     phase: Phase,
     requirement: &Requirement<'_>,
+    expander: &mut dyn super::ExpansionHost,
 ) -> Result<(), Diagnostic> {
     let namespace = symbol(requirement.namespace)?;
     if !env.has_namespace(phase, namespace) {
@@ -172,7 +173,8 @@ fn apply_requirement(
         let name = symbol(original)?;
         let rename = requirement.renamed.iter().find(|(old, _)| symbol(old).ok() == Some(name));
         let target = rename.map_or(*original, |(_, new)| *new);
-        located(env.refer_with_role(phase, symbol(target)?, namespace, name, rename.is_some()), target)?;
+        located(env.refer_with_role_metered(phase, symbol(target)?, namespace, name, rename.is_some(),
+            &mut |work| expander.charge_expansion_work(work, target.span.clone())), target)?;
     }
     Ok(())
 }
@@ -358,14 +360,15 @@ pub(crate) fn dependencies(
         message: "Source module requires a leading ns declaration".into(),
     })
 }
-/// Consume a leading source declaration using a private compilation snapshot.
+/// Apply a leading source declaration to a private compilation snapshot.
+/// Syntax is retained unchanged for emission; the caller stages its nil analysis head.
 pub(crate) fn namespace(
-    forms: &mut [Form],
+    forms: &[Form],
     env: &mut Environment,
     phase: Phase,
     expander: &mut dyn super::ExpansionHost,
 ) -> Result<Option<Form>, Diagnostic> {
-    let Some(form) = forms.first_mut() else {
+    let Some(form) = forms.first() else {
         return Ok(None);
     };
     let Some(header) = header_with_phases(form, expander.supports_macro_imports())? else {
@@ -380,7 +383,7 @@ pub(crate) fn namespace(
             Clause::World(_) => {}
             Clause::Require(requirements) => {
                 for requirement in requirements {
-                    apply_requirement(env, phase, requirement)?;
+                    apply_requirement(env, phase, requirement, expander)?;
                 }
             }
             Clause::Macros(requirements) => {
@@ -443,7 +446,8 @@ pub(crate) fn namespace(
                                     }
                                 }
                                 located(
-                                    env.refer_with_role(phase, local, "suss.core", original, true),
+                                    env.refer_with_role_metered(phase, local, "suss.core", original, true,
+                                        &mut |work| expander.charge_expansion_work(work, new.span.clone())),
                                     new,
                                 )?;
                             }
@@ -453,9 +457,7 @@ pub(crate) fn namespace(
             }
         }
     }
-    let directive = form.clone();
-    form.kind = Kind::Nil;
-    Ok(Some(directive))
+    Ok(Some(super::clone_form_metered(form, &mut |work| expander.charge_expansion_work(work, form.span.clone()))?))
 }
 
 /// Discover namespace edges without treating a Macro dependency as a Runtime

@@ -1,7 +1,12 @@
 # Reader identifier hash initialization
 
-Reader/analyzer `Symbol` and `Keyword` values built by `FormBridge` start with
-nil `_hash`. The live `IHash` method performs warming. Eagerly inserting the
+Reader/source `Symbol` and `Keyword` leaves built by `FormBridge` start with
+nil `_hash`. Explicit compiler-literal analyzer field keys instead carry the
+pinned ClojureScript initial numeric memo, including collection field keys and
+collection child-name keywords. Equal-text source leaves remain separate and
+cold; source-form contents are not promoted by their enclosing AST. Compiled
+constant lowering is a separate route. The live `IHash` method performs warming
+for cold leaves. Eagerly inserting the
 canonical Number changes user code that reads the memo or computes only when
 it is nil: a custom method returning and storing91 on a cold leaf would instead
 return the prefilled Number and omit its write.

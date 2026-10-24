@@ -17,6 +17,20 @@ pub(crate) fn normalized_reader_metadata(
     }).map_err(SessionError::Compile)
 }
 
+pub(crate) fn normalized_reader_metadata_view(
+    session: &mut Session, form: &Form,
+) -> Result<crate::portable::hir::ReaderMetadata, SessionError> {
+    let mut original = None;
+    let result = crate::portable::hir::reader_metadata_owned_view_metered(form, &mut |units| {
+        session.charge_host_work(units).map_err(|error| {
+            let diagnostic = Diagnostic { span: form.span.clone(), message: error.to_string() };
+            if original.is_none() { original = Some(error); }
+            diagnostic
+        })
+    });
+    match original { Some(error) => Err(error), None => result.map_err(SessionError::Compile) }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum Class {
     Symbol,
@@ -248,8 +262,10 @@ struct BridgeCore {
 }
 pub struct FormBridge {
     core: Arc<BridgeCore>,
-    recording: Option<std::sync::Mutex<crate::portable_session::construction_records::ConstructionRecords>>,
+    recording: Option<Arc<std::sync::Mutex<crate::portable_session::construction_records::ConstructionRecords>>>,
     private_arguments: bool,
+    // Native facts captured before exposure; never enrolled while tokens remain.
+    deferred: Option<std::sync::Mutex<Vec<crate::portable_session::deferred_factory::DeferredFactory>>>,
     private_slots: Option<crate::portable_session::private_fixups::slot_log::SharedSlotLog>,
 }
 // Same pinned identifier mixing as hir::identifier_hash, streamed without its
@@ -304,7 +320,7 @@ impl FormBridge {
         session.charge_host_work(2)?; // Arc increment and pointer copy.
         Ok(Self {
             core: self.core.clone(),
-            recording: None, private_arguments: true, private_slots: None,
+            recording: None, private_arguments: true, deferred: None, private_slots: None,
         })
     }
     pub(crate) fn private_parent_bridge_with_slots(&self,session:&mut Session,log:&crate::portable_session::private_fixups::slot_log::SharedSlotLog)->Result<Self,SessionError>{
@@ -334,15 +350,94 @@ impl FormBridge {
             name: "SourceArray", constructor: None,
             descriptor: self.class_descriptor(session, Class::SourceArray)?.clone(),
         });
+        session.charge_host_work((std::mem::size_of::<std::sync::Mutex<crate::portable_session::construction_records::ConstructionRecords>>() + 2 * std::mem::size_of::<usize>()) as u64)?;
         let mut records = crate::portable_session::construction_records::ConstructionRecords::with_bridge_classes(inputs);
         let valid = records.matches_class_schemas(session)?;
         records.note_class_precheck(valid);
         // Preserve the already-captured factory values and their capture time.
         Ok(Self {
             core: self.core.clone(),
-            recording: Some(std::sync::Mutex::new(records)),
-            private_arguments: false, private_slots: None,
+            recording: Some(Arc::new(std::sync::Mutex::new(records))),
+            private_arguments: false, deferred: None, private_slots: None,
         })
+    }
+    // Install only original origins from THIS recipe's actual input Evidence.
+    // Used field refs are resolved later against actual captured factory inputs.
+    pub(crate) fn bind_original_factory_inputs(
+        &self, session: &mut Session,
+        origins: &[crate::portable_session::write_domain::FactoryOrigin],
+    ) -> Result<(), SessionError> {
+        session.charge_host_work(8)?; // owner/mode/lock, Arc retain/drop and branch
+        self.check(session)?;
+        if self.private_arguments || self.deferred.is_some() {
+            return Err(SessionError::Host(error("Original factory inputs require ordinary recording")));
+        }
+        let records = self.recording.as_ref().ok_or_else(||
+            SessionError::Host(error("Original factory inputs require recording")))?;
+        let domain = records.lock().map_err(|_| SessionError::Host(error("Poisoned construction records")))?
+            .write_domain();
+        domain.prepare_factory_inputs(session, origins)
+    }
+    // Explicit source-controller route. This is NOT a normal recording fork:
+    // constructor/array facts remain private and unenrolled until the controller
+    // has proved source-edge bindings and performed authorized slot substitution.
+    pub(crate) fn deferred_private_bridge(
+        &self,
+        session: &mut Session,
+        log: &crate::portable_session::private_fixups::slot_log::SharedSlotLog,
+    ) -> Result<Self, SessionError> {
+        self.check(session)?;
+        if self.private_arguments {
+            return Err(SessionError::Host(error("Cannot fork a private recording")));
+        }
+        let records = self.recording.as_ref().ok_or_else(||
+            SessionError::Host(error("Deferred fork requires existing source recording")))?;
+        session.charge_host_work(4)?;
+        Ok(Self {
+            core: self.core.clone(), recording: Some(records.clone()),
+            private_arguments: true, private_slots: Some(log.clone()),
+            deferred: Some(std::sync::Mutex::new(Vec::new())),
+        })
+    }
+    pub(crate) fn into_deferred_records(self) -> Result<(
+        crate::portable_session::construction_records::ConstructionRecords,
+        Vec<crate::portable_session::deferred_factory::DeferredFactory>,
+    ), SessionError> {
+        let deferred = self.deferred.ok_or_else(|| SessionError::Host(error("Bridge has no deferred factories")))?
+            .into_inner().map_err(|_| SessionError::Host(error("Poisoned deferred factories")))?;
+        let records = self.recording.ok_or_else(|| SessionError::Host(error("Bridge is not recording")))?;
+        let records = Arc::try_unwrap(records)
+            .map_err(|_| SessionError::Host(error("Source recording still has live factory forks")))?
+            .into_inner().map_err(|_| SessionError::Host(error("Poisoned construction records")))?;
+        Ok((records, deferred))
+    }
+    fn defer_factory(
+        &self,
+        session: &mut Session,
+        fact: crate::portable_session::deferred_factory::DeferredFactory,
+    ) -> Result<(), SessionError> {
+        let pending = self.deferred.as_ref().ok_or_else(||
+            SessionError::Host(error("Missing deferred factory context")))?;
+        let mut pending = pending.lock().map_err(|_|
+            SessionError::Host(error("Poisoned deferred factories")))?;
+        // Pure native reserve only; no runtime adapter while holding this lock.
+        if pending.len() == pending.capacity() {
+            let capacity = pending.capacity().max(4).checked_mul(2)
+                .ok_or_else(|| SessionError::Host(error("Deferred factory capacity overflow")))?;
+            let bytes = capacity.checked_mul(std::mem::size_of::<crate::portable_session::deferred_factory::DeferredFactory>())
+                .filter(|bytes| *bytes <= isize::MAX as usize)
+                .ok_or_else(|| SessionError::Host(error("Deferred factory allocation overflow")))?;
+            let live = pending.len().checked_mul(std::mem::size_of::<crate::portable_session::deferred_factory::DeferredFactory>())
+                .ok_or_else(|| SessionError::Host(error("Deferred factory relocation overflow")))?;
+            session.charge_host_work(bytes as u64)?;
+            session.charge_host_work(live as u64)?;
+            let additional = capacity - pending.len();
+            pending.try_reserve_exact(additional).map_err(|_|
+                SessionError::Host(error("Deferred factory allocation failed")))?;
+        }
+        session.charge_host_work(1)?;
+        pending.push(fact);
+        Ok(())
     }
     fn class_descriptor(&self, session: &mut Session, class: Class) -> Result<&SessionValue, SessionError> {
         session.charge_host_work(self.core.classes.len() as u64 + 1)?;
@@ -392,7 +487,13 @@ impl FormBridge {
         let class = &self.core.roots[self.core.constructors[&class]];
         if self.private_arguments {
             let selected=match &self.private_slots {Some(log)=>Some(log.borrow().inputs(session,arguments)?),None=>None};
-            let value=session.data_construct_without_guest_callbacks(class, arguments)?;
+            let value = if self.deferred.is_some() {
+                let (value, fact) = crate::portable_session::deferred_factory::DeferredFactory::constructor(session, class, arguments)?;
+                self.defer_factory(session, fact)?;
+                value
+            } else {
+                session.data_construct_without_guest_callbacks(class, arguments)?
+            };
             if let (Some(log),Some(selected))=(&self.private_slots,selected) {log.borrow_mut().capture_nominal(session,&value,&selected)?;}
             return Ok(value);
         }
@@ -400,7 +501,7 @@ impl FormBridge {
             let (value, fact) = session.data_construct_with_inputs(class, arguments)?;
             let fact = match fact {
                 Some(fact) => {
-                    crate::portable_session::construction_records::Fact::Constructor(fact)
+                    crate::portable_session::construction_records::Fact::constructor(session, fact)?
                 }
                 None => crate::portable_session::construction_records::Fact::ExternalSeed(
                     "special constructor",
@@ -417,14 +518,22 @@ impl FormBridge {
         session: &mut Session,
         values: &[&SessionValue],
     ) -> Result<SessionValue, SessionError> {
+        if self.deferred.is_some() {
+            self.precheck_class(session, Class::SourceArray)?;
+            let selected = self.private_slots.as_ref().ok_or_else(||
+                SessionError::Host(error("Deferred factory requires slot log")))?
+                .borrow().inputs(session, values)?;
+            let (value, fact) = crate::portable_session::deferred_factory::DeferredFactory::array(session, values)?;
+            self.defer_factory(session, fact)?;
+            self.private_slots.as_ref().unwrap().borrow_mut()
+                .capture_dense(session, &value, values.len(), &selected)?;
+            return Ok(value);
+        }
         if self.recording.is_some() {
             self.precheck_class(session, Class::SourceArray)?;
             let (value, fact) = session.data_array_with_inputs(values)?;
-            self.record(
-                session,
-                &value,
-                crate::portable_session::construction_records::Fact::Array(fact),
-            )?;
+            let fact = crate::portable_session::construction_records::Fact::array(session, fact)?;
+            self.record(session, &value, fact)?;
             Ok(value)
         } else {
             let selected=match &self.private_slots {Some(log)=>Some(log.borrow().inputs(session,values)?),None=>None};
@@ -458,8 +567,13 @@ impl FormBridge {
         self,
     ) -> Result<crate::portable_session::construction_records::ConstructionRecords, SessionError>
     {
-        self.recording
-            .ok_or_else(|| SessionError::Host(error("Bridge is not recording")))?
+        if self.deferred.is_some() {
+            return Err(SessionError::Host(error("Deferred factories require source-bound finalization")));
+        }
+        let records = self.recording
+            .ok_or_else(|| SessionError::Host(error("Bridge is not recording")))?;
+        Arc::try_unwrap(records)
+            .map_err(|_| SessionError::Host(error("Source recording still has live factory forks")))?
             .into_inner()
             .map_err(|_| SessionError::Host(error("Poisoned construction records")))
     }
@@ -489,11 +603,47 @@ impl FormBridge {
         )
     }
     pub fn new(session: &mut Session) -> Result<Self, SessionError> {
+        Self::new_with_compile_fuel(session, None)
+    }
+    /// Initialize through the same live compiled helpers with an explicit
+    /// cumulative native compilation allowance. None retains the original
+    /// per-input compilation defaults; Runtime operation options are unchanged.
+    pub fn new_with_compile_fuel(
+        session: &mut Session,
+        compile_fuel: Option<u64>,
+    ) -> Result<Self, SessionError> {
+        struct Compilation(u64);
+        impl crate::portable::ExpansionHost for Compilation {
+            fn expansion_work_fuel(&self) -> u64 { self.0 }
+            fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> {
+                crate::portable::ExpansionHost::artifact_dependencies(&crate::portable::NoExpansion)
+            }
+            fn charge_expansion_work(&mut self, work: u64, span: Range<usize>) -> Result<(), Diagnostic> {
+                self.0 = self.0.checked_sub(work).ok_or_else(|| Diagnostic {
+                    span,
+                    message: "Macro data bridge initialization compilation fuel exhausted".into(),
+                })?;
+                Ok(())
+            }
+            fn expand(&mut self, _: &Form, _: crate::portable::ExpansionContext<'_>) -> Result<Option<Form>, Diagnostic> {
+                Ok(None)
+            }
+        }
+        let mut compilation = compile_fuel.map(Compilation);
+        Self::capture_with(session, |session, source| match compilation.as_mut() {
+            Some(host) => session.eval_with_macros(source, host),
+            None => session.eval(source),
+        })
+    }
+    fn capture_with(
+        session: &mut Session,
+        mut evaluate: impl FnMut(&mut Session, &str) -> Result<SessionValue, SessionError>,
+    ) -> Result<Self, SessionError> {
         let mut roots = Vec::new();
         let mut classes = BTreeMap::new();
         let mut constructors = BTreeMap::new();
         for (name, class) in SOURCE_CLASSES {
-            let value = session.eval(&format!("suss.core/{name}"))?;
+            let value = evaluate(session, &format!("suss.core/{name}"))?;
             let id = session.inspect(&value, |mut store, value| {
                 let closure = fields(&mut store, &value, 5)?;
                 let owner = fields(&mut store, &closure[0], 4)?;
@@ -518,7 +668,7 @@ impl FormBridge {
         }
         // Source arrays have a private runtime descriptor rather than a public
         // class constructor. Capture its actual identity from one owned sample.
-        let value = session.eval("(suss.core/array)")?;
+        let value = evaluate(session, "(suss.core/array)")?;
         let id = session.inspect(&value, |mut store, value| {
             let owner = fields(&mut store, &value, 4)?;
             let descriptor = fields(&mut store, &owner[0], 5)?;
@@ -546,14 +696,14 @@ impl FormBridge {
             ("empty-list", "(.-EMPTY suss.core/List)"),
             ("lazy-sval", "(fn* [value] (.sval value))"),
         ] {
-            factories.insert(name, session.eval(source)?);
+            factories.insert(name, evaluate(session, source)?);
         }
         session.charge_host_work((std::mem::size_of::<BridgeCore>()
             + 2 * std::mem::size_of::<usize>()) as u64)?;
         Ok(Self {
             core: Arc::new(BridgeCore { roots, classes, constructors, factories }),
             recording: None,
-            private_arguments: false, private_slots: None,
+            private_arguments: false, deferred: None, private_slots: None,
         })
     }
     fn check(&self, session: &mut Session) -> Result<(), SessionError> {
@@ -1001,9 +1151,34 @@ impl FormBridge {
         self.check(session)?;
         session.with_operation_budget(|session| self.form_value(session, &form))
     }
+
+    fn reader_metadata_value(
+        &self, session: &mut Session, form: &Form,
+    ) -> Result<SessionValue, SessionError> {
+        let metadata = normalized_reader_metadata_view(session, form)?;
+        session.charge_host_work(8)?;
+        if metadata.pairs.len() % 2 != 0 || metadata.pairs.len() / 2 != metadata.origins.len()
+            || metadata.key_positions.len() != metadata.origins.len() {
+            return Err(SessionError::Host(error("Reader metadata carrier extent mismatch")));
+        }
+        let map = Form { span: form.span.clone(), metadata: vec![], kind: Kind::Map(metadata.pairs) };
+        self.form_value_with_reader_keys(session, &map, Some(&metadata.origins))
+    }
     fn form_value(&self, session: &mut Session, form: &Form) -> Result<SessionValue, SessionError> {
+        self.form_value_with_reader_keys(session, form, None)
+    }
+    fn form_value_with_reader_keys(
+        &self, session: &mut Session, form: &Form,
+        reader_origins: Option<&[crate::portable::hir::MetadataKeyOrigin]>,
+    ) -> Result<SessionValue, SessionError> {
         use crate::portable::hir::Literal;
+        struct ReaderMap<'a> {
+            form: &'a Form,
+            origins: &'a [crate::portable::hir::MetadataKeyOrigin],
+        }
         enum Task<'a> {
+            ReaderMap(Box<ReaderMap<'a>>),
+            ReaderKey(&'a Form),
             Visit(&'a Form),
             Finish {
                 form: &'a Form,
@@ -1011,16 +1186,65 @@ impl FormBridge {
                 has_metadata: bool,
             },
         }
+        #[allow(dead_code)]
+        enum OriginalTask<'a> {
+            Visit(&'a Form),
+            Finish {
+                form: &'a Form,
+                children: usize,
+                has_metadata: bool,
+            },
+        }
+        const _: () = assert!(std::mem::size_of::<Task<'static>>() == std::mem::size_of::<OriginalTask<'static>>());
+
         let failure = |form: &Form, message: &str| {
             SessionError::Compile(Diagnostic {
                 span: form.span.clone(),
                 message: message.into(),
             })
         };
-        let mut tasks = vec![Task::Visit(form)];
+        // New dispatch/control paid before selecting the root task.
+        session.charge_host_work(2)?;
+        let root = match reader_origins {
+            Some(origins) => {
+                // Keep the original queue slot extent. This three-word payload
+                // has its own allocation, copy/read and retirement prepayment.
+                session.charge_host_work((2 * std::mem::size_of::<ReaderMap<'_>>()
+                    + 2 * std::mem::size_of::<usize>() + 6) as u64)?;
+                Task::ReaderMap(Box::new(ReaderMap { form, origins }))
+            },
+            None => Task::Visit(form),
+        };
+        let mut tasks = vec![root];
         let mut values = Vec::<SessionValue>::new();
         while let Some(task) = tasks.pop() {
             match task {
+                Task::ReaderMap(metadata) => {
+                    let ReaderMap { form, origins } = *metadata;
+                    // The old synthetic-map visit, with only key-task origin
+                    // annotations added. Do not prevalidate later children:
+                    // their errors and any earlier construction effects retain
+                    // the original left-to-right traversal position.
+                    session.charge_host_work(9)?;
+                    let Kind::Map(items) = &form.kind else { return Err(failure(form, "Expected reader metadata map")); };
+                    if items.len() % 2 != 0 || items.len() / 2 != origins.len() || !form.metadata.is_empty() {
+                        return Err(failure(form, "Invalid reader metadata occurrence extent"));
+                    }
+                    tasks.push(Task::Finish { form, children: items.len(), has_metadata: false });
+                    for (index, child) in items.iter().enumerate().rev() {
+                        session.charge_host_work(5)?;
+                        if index % 2 == 0 && origins[index / 2] == crate::portable::hir::MetadataKeyOrigin::ReaderShorthandTag {
+                            tasks.push(Task::ReaderKey(child));
+                        } else { tasks.push(Task::Visit(child)); }
+                    }
+                }
+                Task::ReaderKey(form) => {
+                    session.charge_host_work(12)?; // original tag text visit + new native origin/payload controls
+                    if !matches!(&form.kind,Kind::Keyword(key) if key.namespace.is_none() && key.name == "tag")
+                        || !form.metadata.is_empty() { return Err(failure(form, "Invalid reader shorthand key")); }
+                    values.push(self.analyzer_literal_keyword(session,
+                        crate::portable_macro_graph::AnalyzerLiteralKeyword::reader_shorthand_tag())?);
+                }
                 Task::Visit(form) => {
                     let work = 1u64.saturating_add(match &form.kind {
                         Kind::String(text) => text.len() as u64,
@@ -1139,14 +1363,8 @@ impl FormBridge {
                     if has_metadata {
                         // Preserve quotation order: realize children and the
                         // base collection before evaluating its metadata map.
-                        let pairs = normalized_reader_metadata(session, form)?;
-                        let metadata_form = Form {
-                            span: form.span.clone(),
-                            metadata: vec![],
-                            kind: Kind::Map(pairs),
-                        };
                         let metadata = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
-                            self.form_value(session, &metadata_form)
+                            self.reader_metadata_value(session, form)
                         })?;
                         if matches!(form.kind, Kind::Set(_)) {
                             result = self.set_with_metadata(session, &built, &metadata)?;
@@ -1316,6 +1534,30 @@ mod identity_tests {
     use super::*;
 
     #[test]
+    fn deferred_private_factory_slots_survive_metadata_copy_without_early_publication() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let _request = session.operation_budget_scope().unwrap();
+        let log = crate::portable_session::private_fixups::slot_log::PrivateSlotLog::new(&mut session).unwrap();
+        let token = log.borrow_mut().token(&mut session, 0).unwrap();
+        let recording = bridge.recording(&mut session).unwrap();
+        let private = recording.deferred_private_bridge(&mut session, &log).unwrap();
+        let vector = private.vector_values(&mut session, &[token.clone(), token.clone()]).unwrap();
+        let metadata = bridge.map_values(&mut session, &[]).unwrap();
+        let copied = private.with_form_metadata(
+            &mut session, MetadataShape::Vector, &vector, &metadata, &[],
+        ).unwrap();
+        assert!(!private.deferred.as_ref().unwrap().lock().unwrap().is_empty());
+        // The ordinary publication API cannot discard pending native facts.
+        assert!(private.into_records().is_err());
+        session.collect().unwrap();
+        let target = bridge.scalar(&mut session, &crate::portable::hir::Literal::Number(17.0)).unwrap();
+        log.borrow().apply(&mut session, &copied, &[(&token, &target)]).unwrap();
+        let inspect = session.eval("(fn [v] (and (= 17 (nth v 0)) (= 17 (nth v 1))))").unwrap();
+        let result = session.invoke(&inspect, &[&copied]).unwrap();
+        assert_eq!(crate::portable_repl::display(&mut session, &result).unwrap(), "true");
+    }
+    #[test]
     fn analyzer_literal_stream_hash_matches_constants_and_recovers_after_fuel_irq() {
         let mut session = Session::new_macro().unwrap();
         let initial = session.operation_budget_scope().unwrap();
@@ -1359,7 +1601,7 @@ mod identity_tests {
           (def bridge-original-hash suss.core/hash)
         "#).unwrap();
         session.enter_namespace("suss.core").unwrap();
-        session.eval(r#"
+        session.eval_with_test_compilation_fuel(r#"
           (def hash (fn [key]
             (do (set! user/bridge-old-hash-calls (+ user/bridge-old-hash-calls 1))
                 (user/bridge-original-hash key))))
@@ -1387,7 +1629,7 @@ mod identity_tests {
         // Redefine the PUBLIC binding only after all captures/forks. No fork may
         // recapture it. Counter reset excludes setup/compiler activity explicitly.
         session.enter_namespace("suss.core").unwrap();
-        session.eval(r#"
+        session.eval_with_test_compilation_fuel(r#"
           (def hash (fn [key]
             (do (set! user/bridge-new-hash-calls (+ user/bridge-new-hash-calls 1))
                 (user/bridge-original-hash key))))

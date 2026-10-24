@@ -1,4 +1,6 @@
 //! Native eval and file commands must execute the same portable pipeline as REPL.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use std::process::{Command, Output};
 
 fn success(output: Output, expected: &str) {
@@ -45,7 +47,7 @@ fn eval_command_gives_compiled_macros_actual_lexical_environment() {
     );
     success(
         Command::new(env!("CARGO_BIN_EXE_suss"))
-            .args(["-e", source])
+            .args(["-e", source, "--compile-fuel", &compilation_fuel::COMPILATION_FUEL.to_string()])
             .output()
             .unwrap(),
         "42\n",
@@ -225,6 +227,7 @@ fn review_failed_script_preserves_completed_macro_dependencies_and_effects() {
     })
     .unwrap();
     let mut macros = CompiledMacros::new().unwrap();
+    macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
     assert!(portable_repl::evaluate_script_compiled(&mut session, &mut macros,
         "(ns user (:require-macros [tools :refer [touch count]])) (touch) (ns tools) (defmacro count [] 99) unresolved", None).is_err());
     assert_eq!(macros.current_namespace(), "user");

@@ -1,0 +1,854 @@
+{
+  "status": "EXACT_THREE_APPLIED_SOURCE_PUBLICATION_PROPOSAL",
+  "source_freeze": {
+    "path": "/home/bobby/.cache/suss-m4-work/pr263-metadata-order-data-attribution-composed-v1/applied-source.json",
+    "sha256": "5755886d7b5e1417d5c015571805a8b571c64a891d03963f7434eb972a5a7338",
+    "content": {
+      "base_head": "4effee1ef1c17721122078a297bcaefa456f44da",
+      "files": {
+        "crates/suss-compile/src/portable/hir/quotes.rs": "ee9adfc2482d19c69ddd905873eb8b33d02b0c19d0af57ea8dcd4784ebd14409",
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data.rs": "5a26ed68d4e58568425c560ae1e32e047ea0d4678fe1b34b56312adc3300433d",
+        "crates/suss-reader/src/forms/source_metadata.rs": "b4620d5e29c15e1e939e5b50edaa0ff54771e52882ace329f4561c8060d49879"
+      },
+      "scope": "Reviewedmetadata2semanticfiles plusreviewedV2cfgdiagnostic; metadata12nativePASS predates observational-onlythirdfile; publicSessionVMoutcomespending"
+    }
+  },
+  "semantic_metadata_source_review": {
+    "path": "/home/bobby/.cache/suss-m4-work/pr263-indexed-metadata-association-order-558095c-v1/independent-review.json",
+    "sha256": "5829d904b8992b8d42354500a31541a990c228a2c9841f26f1a753f10c445549",
+    "content": {
+      "verdict": "GO_SOURCE_ONLY_INDEXED_METADATA_ASSOCIATION_ORDER",
+      "manifest_sha256": "67434554602ae4c87e99c094256bf2e87917d2724a66db5d7e38e024fc008f6a",
+      "patch_sha256": "c4caf00d58f2d1a3821626f062d0c1592db9c8d1d6f2b1dee2aced83860c387f",
+      "files": {
+        "crates/suss-reader/src/forms/source_metadata.rs": {
+          "before_sha256": "0faf4a9d5a376c9b6f2bb13d86a2fff1f63d137a4f0d76e2293f4e0c2a0ff2c9",
+          "after_sha256": "b4620d5e29c15e1e939e5b50edaa0ff54771e52882ace329f4561c8060d49879",
+          "before_git_blob": "61edbd85093c3310f8c138b2222ba6dc59efedae"
+        },
+        "crates/suss-compile/src/portable/hir/quotes.rs": {
+          "before_sha256": "70d186bab145ea1e78d1d68fee21de2e190cc152f66fca3eca9bd5a94d908727",
+          "after_sha256": "ee9adfc2482d19c69ddd905873eb8b33d02b0c19d0af57ea8dcd4784ebd14409",
+          "before_git_blob": "f5f486d66a65ae66ae98c0fcd9618154bef09a1e"
+        }
+      },
+      "reference_inputs_hash_verified": true,
+      "verification": [
+        "Complete preimages equal base901fa9d/current shared bytes; postimages exact; private cache applycheck/replay exact.",
+        "Pinned retained reader.js loc_info merges filem then lcm; read_meta merges existing target metadata then explicit prefix. Retained identical reference outputs confirm indexing file/positions before explicit marker, plain marker only.",
+        "File pair moves before unchanged positions; generated prefix remains appended. No prefix index, source span, eligibility/slash rule, or immutable source change.",
+        "Existing reverse-prefix association retains first KEY/origin/coordinate and updates VALUE/winning coordinate; removal of final VALUE-coordinate sort restores first-association order, not content-based identity.",
+        "All prior finalization, allocation/copy/synthesis and comparison debits retained. No fee decrease; no longer claim sorting actually executes. Full invalid-prefix and diagnostic propagation unchanged.",
+        "Two existing expectation groups change only proven order; payload/pointer/span/provenance/cancellation assertions retained. Non-reader filtered output checked explicitly.",
+        "Two authored SourceOrigin tests cover file/no-file and overrides, first-key versus winning-value coordinates, original source unchanged, every observed native meter failure and retry. No Session IRQ claim.",
+        "Public completed-tag control byte-exact; no source/program/assertion edits there; core_file policy and provenance safeguards unchanged."
+      ],
+      "findings": [],
+      "limits": [
+        "No Cargo/rustc/bootstrap/VM/oracle/tests/shared-source/ref/index actions by reviewer.",
+        "Global order change intentional; actual native metadata/unit/public/reader/source-snapshot replay and normal source-bound tuple remain required.",
+        "Current live producer unaffected; no application until main releases frozen source.",
+        "No default-budget/performance/full-acceptance claim."
+      ],
+      "reviewer_note": "Initial verification used absent files/ directory; corrected to actual after/ layout. Failed before source copying/apply; not compiler/test failure."
+    }
+  },
+  "diagnostic_source_review": {
+    "path": "/home/bobby/.cache/suss-m4-work/pr263-first-use-complete-data-attribution-v2/independent-review.json",
+    "sha256": "852b3adb64101e9fac1a5c81f894d358f51d4fd27ad5ccf86445173eacaca984",
+    "content": {
+      "verdict": "GO_OBSERVATIONAL_SOURCE_ONLY_V2",
+      "manifest_sha256": "a6bade734580086b5e532ce5527293dd364493fddf77d0d070f70d70e9ada6ef",
+      "patch_sha256": "3819cf2c3a90b63621c692a36ba4eec6f4fda45fd5e5bd4df781c04bc3d319e3",
+      "files": {
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data.rs": "5a26ed68d4e58568425c560ae1e32e047ea0d4678fe1b34b56312adc3300433d"
+      },
+      "v1_independent_review_sha256": "79bd786057973cd71efcfd1f8273338fbc785a6a45ba2327e36a8f4f994fa110",
+      "checks": [
+        "V2 is exactly V1 plus cfg(test) on the two snapshot-only diagnostic_children/diagnostic_binding declarations; no other source delta.",
+        "Preimage exactly matches current/4eff source; postimage hashes and cache applycheck/replay exact.",
+        "Complete original effectful predicate/meter/owner call inventory and order preserved; each validator exactly once, original arguments and ? propagation unchanged.",
+        "Boolean &= remains non-short-circuit; result locals retain all checks even after false. Snapshot-only declarations omitted in non-test builds; real predicate locals remain evaluated/used in production.",
+        "Failure-only cfg(test) output leaves original false results and Host error intact. No rechecks, guest calls, operation scope, extra debit/refill, success/fallback/guard changes."
+      ],
+      "findings": [],
+      "limits": [
+        "No Cargo/rustc/bootstrap/VM/test/shared-source/ref/index actions by reviewer.",
+        "Diagnostic printing is observation work, not native CPU/fuel/compiler identity equivalence or acceptance evidence.",
+        "Root binding groups key/owner/children; Source-arm audit logical failure remains grouped. No exact fixture phase/order inferred.",
+        "Requires main-controlled source-bound generation and exact failing fixture replay; later uninstrumented acceptance still needed.",
+        "Metadata12 actual PASS reported by main belongs separate two-source run, not evidence for this diagnostic."
+      ]
+    }
+  },
+  "reference_bindings": {
+    "path": "/home/bobby/.cache/suss-m4-work/pr263-indexed-metadata-association-order-558095c-v1/reference-bindings.json",
+    "sha256": "f2b77983eab9399d72aa52a1d666748fb51ed4b527b80f0f045754479e12d6f3",
+    "content": {
+      "pin": "c4295f303100bbf5afac449242d30bca1126f1a1",
+      "inputs": [
+        {
+          "path": "/home/bobby/.cache/suss-m4-work/pr261-scalar-tag-indexing-reference-1bea-v1/attempt1.json",
+          "exists": true,
+          "sha256": "e8301d66d8a82c7f63f8f64c08d9ca2a0cbee774ddec16bfe42397ad47d118e7"
+        },
+        {
+          "path": "/home/bobby/.cache/suss-m4-work/pr261-scalar-tag-indexing-reference-1bea-v1/attempt2.json",
+          "exists": true,
+          "sha256": "e8301d66d8a82c7f63f8f64c08d9ca2a0cbee774ddec16bfe42397ad47d118e7"
+        },
+        {
+          "path": "/home/bobby/.cache/suss-m4-work/pr261-scalar-tag-indexing-reference-1bea-v1/probe.js",
+          "exists": true,
+          "sha256": "292a311dd6ca3d2a0bed7077bbe0a041f2bfc02bb87430f5a801970f45a4cddd"
+        },
+        {
+          "path": "/home/bobby/.cache/suss-m4-work/memo-call-boundary-draft/out/cljs/tools/reader.js",
+          "exists": true,
+          "sha256": "1feab8bb3976aa0b795e3f8101c911c0374cdfb744aea3ca7329742dc71573f9"
+        }
+      ],
+      "new_oracle_execution": false
+    }
+  },
+  "exact_retained_reference_rows": {
+    "path": "/home/bobby/.cache/suss-m4-work/pr263-indexed-metadata-association-order-558095c-v1/exact-retained-reference-rows.json",
+    "sha256": "447de2e753d08cb7299913d81869a0780d96dd3dca8f6c121260ee6cab3c384d",
+    "content": {
+      "source": "/home/bobby/.cache/suss-m4-work/pr261-scalar-tag-indexing-reference-1bea-v1/attempt1.json",
+      "two_output_sha256": "e8301d66d8a82c7f63f8f64c08d9ca2a0cbee774ddec16bfe42397ad47d118e7",
+      "rows": [
+        {
+          "mode": "read_string",
+          "file": null,
+          "label": "explicit-tag-metadata",
+          "source": "(def ^{:tag ^{:marker :kept} number} subject 17)",
+          "readerType": "string_push_back_reader via read_string",
+          "macroEntries": 1,
+          "actualMacroSameDeclaration": true,
+          "macroResult": 17,
+          "before": {
+            "rawDeclaration": {
+              "value": "subject",
+              "metadata": "{:tag number}",
+              "metadataEntries": [
+                [
+                  ":tag",
+                  "number"
+                ]
+              ]
+            },
+            "rawTag": {
+              "value": "number",
+              "metadata": "{:marker :kept}",
+              "metadataEntries": [
+                [
+                  ":marker",
+                  ":kept"
+                ]
+              ]
+            },
+            "rawTagPresent": true
+          },
+          "finalTagPresent": true,
+          "finalTag": {
+            "value": "number",
+            "metadata": "{:marker :kept}",
+            "metadataEntries": [
+              [
+                ":marker",
+                ":kept"
+              ]
+            ]
+          },
+          "retTagPresent": false,
+          "retTag": {
+            "value": "nil",
+            "metadata": "nil",
+            "metadataEntries": []
+          },
+          "fnVar": null,
+          "innerTagPresent": true,
+          "innerTag": {
+            "value": "number",
+            "metadata": "{:marker :kept}",
+            "metadataEntries": [
+              [
+                ":marker",
+                ":kept"
+              ]
+            ]
+          },
+          "metaSameRawDeclarationMetadata": false,
+          "referenceComparable": true,
+          "rawTagSameFinal": true,
+          "rawTagSameInner": true,
+          "finalTagSameInner": true,
+          "rawTagAfterAnalysis": {
+            "value": "number",
+            "metadata": "{:marker :kept}",
+            "metadataEntries": [
+              [
+                ":marker",
+                ":kept"
+              ]
+            ]
+          }
+        },
+        {
+          "mode": "indexing",
+          "file": null,
+          "label": "explicit-tag-metadata",
+          "source": "(def ^{:tag ^{:marker :kept} number} subject 17)",
+          "readerType": "IndexingPushbackReader",
+          "macroEntries": 1,
+          "actualMacroSameDeclaration": true,
+          "macroResult": 17,
+          "before": {
+            "rawDeclaration": {
+              "value": "subject",
+              "metadata": "{:line 1, :column 38, :end-line 1, :end-column 45, :tag number}",
+              "metadataEntries": [
+                [
+                  ":line",
+                  "1"
+                ],
+                [
+                  ":column",
+                  "38"
+                ],
+                [
+                  ":end-line",
+                  "1"
+                ],
+                [
+                  ":end-column",
+                  "45"
+                ],
+                [
+                  ":tag",
+                  "number"
+                ]
+              ]
+            },
+            "rawTag": {
+              "value": "number",
+              "metadata": "{:line 1, :column 30, :end-line 1, :end-column 36, :marker :kept}",
+              "metadataEntries": [
+                [
+                  ":line",
+                  "1"
+                ],
+                [
+                  ":column",
+                  "30"
+                ],
+                [
+                  ":end-line",
+                  "1"
+                ],
+                [
+                  ":end-column",
+                  "36"
+                ],
+                [
+                  ":marker",
+                  ":kept"
+                ]
+              ]
+            },
+            "rawTagPresent": true
+          },
+          "finalTagPresent": true,
+          "finalTag": {
+            "value": "number",
+            "metadata": "{:line 1, :column 30, :end-line 1, :end-column 36, :marker :kept}",
+            "metadataEntries": [
+              [
+                ":line",
+                "1"
+              ],
+              [
+                ":column",
+                "30"
+              ],
+              [
+                ":end-line",
+                "1"
+              ],
+              [
+                ":end-column",
+                "36"
+              ],
+              [
+                ":marker",
+                ":kept"
+              ]
+            ]
+          },
+          "retTagPresent": false,
+          "retTag": {
+            "value": "nil",
+            "metadata": "nil",
+            "metadataEntries": []
+          },
+          "fnVar": null,
+          "innerTagPresent": true,
+          "innerTag": {
+            "value": "number",
+            "metadata": "{:line 1, :column 30, :end-line 1, :end-column 36, :marker :kept}",
+            "metadataEntries": [
+              [
+                ":line",
+                "1"
+              ],
+              [
+                ":column",
+                "30"
+              ],
+              [
+                ":end-line",
+                "1"
+              ],
+              [
+                ":end-column",
+                "36"
+              ],
+              [
+                ":marker",
+                ":kept"
+              ]
+            ]
+          },
+          "metaSameRawDeclarationMetadata": false,
+          "referenceComparable": true,
+          "rawTagSameFinal": true,
+          "rawTagSameInner": true,
+          "finalTagSameInner": true,
+          "rawTagAfterAnalysis": {
+            "value": "number",
+            "metadata": "{:line 1, :column 30, :end-line 1, :end-column 36, :marker :kept}",
+            "metadataEntries": [
+              [
+                ":line",
+                "1"
+              ],
+              [
+                ":column",
+                "30"
+              ],
+              [
+                ":end-line",
+                "1"
+              ],
+              [
+                ":end-column",
+                "36"
+              ],
+              [
+                ":marker",
+                ":kept"
+              ]
+            ]
+          }
+        },
+        {
+          "mode": "indexing-file",
+          "file": "tag-oracle.cljs",
+          "label": "explicit-tag-metadata",
+          "source": "(def ^{:tag ^{:marker :kept} number} subject 17)",
+          "readerType": "IndexingPushbackReader",
+          "macroEntries": 1,
+          "actualMacroSameDeclaration": true,
+          "macroResult": 17,
+          "before": {
+            "rawDeclaration": {
+              "value": "subject",
+              "metadata": "{:file \"tag-oracle.cljs\", :line 1, :column 38, :end-line 1, :end-column 45, :tag number}",
+              "metadataEntries": [
+                [
+                  ":file",
+                  "\"tag-oracle.cljs\""
+                ],
+                [
+                  ":line",
+                  "1"
+                ],
+                [
+                  ":column",
+                  "38"
+                ],
+                [
+                  ":end-line",
+                  "1"
+                ],
+                [
+                  ":end-column",
+                  "45"
+                ],
+                [
+                  ":tag",
+                  "number"
+                ]
+              ]
+            },
+            "rawTag": {
+              "value": "number",
+              "metadata": "{:file \"tag-oracle.cljs\", :line 1, :column 30, :end-line 1, :end-column 36, :marker :kept}",
+              "metadataEntries": [
+                [
+                  ":file",
+                  "\"tag-oracle.cljs\""
+                ],
+                [
+                  ":line",
+                  "1"
+                ],
+                [
+                  ":column",
+                  "30"
+                ],
+                [
+                  ":end-line",
+                  "1"
+                ],
+                [
+                  ":end-column",
+                  "36"
+                ],
+                [
+                  ":marker",
+                  ":kept"
+                ]
+              ]
+            },
+            "rawTagPresent": true
+          },
+          "finalTagPresent": true,
+          "finalTag": {
+            "value": "number",
+            "metadata": "{:file \"tag-oracle.cljs\", :line 1, :column 30, :end-line 1, :end-column 36, :marker :kept}",
+            "metadataEntries": [
+              [
+                ":file",
+                "\"tag-oracle.cljs\""
+              ],
+              [
+                ":line",
+                "1"
+              ],
+              [
+                ":column",
+                "30"
+              ],
+              [
+                ":end-line",
+                "1"
+              ],
+              [
+                ":end-column",
+                "36"
+              ],
+              [
+                ":marker",
+                ":kept"
+              ]
+            ]
+          },
+          "retTagPresent": false,
+          "retTag": {
+            "value": "nil",
+            "metadata": "nil",
+            "metadataEntries": []
+          },
+          "fnVar": null,
+          "innerTagPresent": true,
+          "innerTag": {
+            "value": "number",
+            "metadata": "{:file \"tag-oracle.cljs\", :line 1, :column 30, :end-line 1, :end-column 36, :marker :kept}",
+            "metadataEntries": [
+              [
+                ":file",
+                "\"tag-oracle.cljs\""
+              ],
+              [
+                ":line",
+                "1"
+              ],
+              [
+                ":column",
+                "30"
+              ],
+              [
+                ":end-line",
+                "1"
+              ],
+              [
+                ":end-column",
+                "36"
+              ],
+              [
+                ":marker",
+                ":kept"
+              ]
+            ]
+          },
+          "metaSameRawDeclarationMetadata": true,
+          "referenceComparable": true,
+          "rawTagSameFinal": true,
+          "rawTagSameInner": true,
+          "finalTagSameInner": true,
+          "rawTagAfterAnalysis": {
+            "value": "number",
+            "metadata": "{:file \"tag-oracle.cljs\", :line 1, :column 30, :end-line 1, :end-column 36, :marker :kept}",
+            "metadataEntries": [
+              [
+                ":file",
+                "\"tag-oracle.cljs\""
+              ],
+              [
+                ":line",
+                "1"
+              ],
+              [
+                ":column",
+                "30"
+              ],
+              [
+                ":end-line",
+                "1"
+              ],
+              [
+                ":end-column",
+                "36"
+              ],
+              [
+                ":marker",
+                ":kept"
+              ]
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "historical_failure_excerpt": {
+    "path": "/home/bobby/.cache/suss-m4-work/pr263-indexed-metadata-association-order-558095c-v1/failure-excerpt.txt",
+    "sha256": "e18f033fbac357f98c44f8a5e8416f05c1be8962d1cee7d2d670cbc26e0e18f9",
+    "content": "thread 'portable_macro_graph::completed_value_control::tests::completed_tag_metadata_matches_pinned_reader_modes_without_mutating_native_source' (374562) panicked at crates/suss-compile/src/portable_macro_graph/completed_value_control.rs:783:17:\nassertion `left == right` failed: outer Runtime indexed=true (def ^{:tag ^{:marker :kept} number} subject 17)\n  left: Form { span: 0..0, metadata: [Form { span: 0..0, metadata: [], kind: Map([Form { span: 0..0, metadata: [], kind: Keyword(Keyword { namespace: None, name: \"marker\" }) }, Form { span: 0..0, metadata: [], kind: Keyword(Keyword { namespace: None, name: \"kept\" }) }, Form { span: 0..0, metadata: [], kind: Keyword(Keyword { namespace: None, name: \"line\" }) }, Form { span: 0..0, metadata: [], kind: Number(1.0) }, Form { span: 0..0, metadata: [], kind: Keyword(Keyword { namespace: None, name: \"column\" }) }, Form { span: 0..0, metadata: [], kind: Number(30.0) }, Form { span: 0..0, metadata: [], kind: Keyword(Keyword { namespace: None, name: \"end-line\" }) }, Form { span: 0..0, metadata: [], kind: Number(1.0) }, Form { span: 0..0, metadata: [], kind: Keyword(Keyword { namespace: None, name: \"end-column\" }) }, Form { span: 0..0, metadata: [], kind: Number(36.0) }, Form { span: 0..0, metadata: [], kind: Keyword(Keyword { namespace: None, name: \"file\" }) }, Form { span: 0..0, metadata: [], kind: String([116, 97, 103, 45, 111, 114, 97, 99, 108, 101, 46, 99, 108, 106, 115]) }]) }], kind: Symbol(Symbol { namespace: None, name: \"number\" }) }\n right: Form { span: 0..0, metadata: [Form { span: 0..0, metadata: [], kind: Map([Form { span: 0..0, metadata: [], kind: Keyword(Keyword { namespace: None, name: \"file\" }) }, Form { span: 0..0, metadata: [], kind: String([116, 97, 103, 45, 111, 114, 97, 99, 108, 101, 46, 99, 108, 106, 115]) }, Form { span: 0..0, metadata: [], kind: Keyword(Keyword { namespace: None, name: \"line\" }) }, Form { span: 0..0, metadata: [], kind: Number(1.0) }, Form { span: 0..0, metadata: [], kind: Keyword(Keyword { namespace: None, name: \"column\" }) }, Form { span: 0..0, metadata: [], kind: Number(30.0) }, Form { span: 0..0, metadata: [], kind: Keyword(Keyword { namespace: None, name: \"end-line\" }) }, Form { span: 0..0, metadata: [], kind: Number(1.0) }, Form { span: 0..0, metadata: [], kind: Keyword(Keyword { namespace: None, name: \"end-column\" }) }, Form { span: 0..0, metadata: [], kind: Number(36.0) }, Form { span: 0..0, metadata: [], kind: Keyword(Keyword { namespace: None, name: \"marker\" }) }, Form { span: 0..0, metadata: [], kind: Keyword(Keyword { namespace: None, name: \"kept\" }) }]) }], kind: Symbol(Symbol { namespace: None, name: \"number\" }) }\ntest portable_macro_graph::completed_value_control::tests::completed_tag_metadata_matches_pinned_reader_modes_without_mutating_native_source ... FAILED\n    portable_macro_graph::completed_value_control::tests::completed_tag_metadata_matches_pinned_reader_modes_without_mutating_native_source\ntest result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 528 filtered out; finished in 78.25s\n"
+  },
+  "historical_558095c": {
+    "pass": 19,
+    "fail": 17,
+    "ignored": 0,
+    "scope": "prior seven filters, pre-four-repairs, not rerun here"
+  },
+  "actual_4effee1_28": {
+    "pass": 16,
+    "fail": 12,
+    "ignored": 0,
+    "groups": [
+      {
+        "label": "provisioning",
+        "pass": 1,
+        "fail": 0,
+        "ignored": 0
+      },
+      {
+        "label": "symbol-admission",
+        "pass": 2,
+        "fail": 0,
+        "ignored": 0
+      },
+      {
+        "label": "memo",
+        "pass": 5,
+        "fail": 0,
+        "ignored": 0
+      },
+      {
+        "label": "reader-properties",
+        "pass": 4,
+        "fail": 1,
+        "ignored": 0
+      },
+      {
+        "label": "controller-order",
+        "pass": 1,
+        "fail": 2,
+        "ignored": 0
+      },
+      {
+        "label": "first-use-data",
+        "pass": 3,
+        "fail": 9,
+        "ignored": 0
+      }
+    ],
+    "results": {
+      "path": "/home/bobby/.cache/suss-m4-work/pr263-four-repairs-focused-v1/results.json",
+      "sha256": "47d795a2889597d975799136cbef3d76630898e7b8264c0f99c416245f94af7e",
+      "content": [
+        {
+          "label": "provisioning",
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "suss-compile",
+            "--locked",
+            "--lib",
+            "portable_session::construction_records::controller_provisioning_tests::",
+            "--",
+            "--nocapture",
+            "--test-threads=2"
+          ],
+          "exit_code": 0,
+          "seconds": 77.90582786197774,
+          "source_head": "4effee1ef1c17721122078a297bcaefa456f44da",
+          "log_sha256": "8413ef119dda113f9446f4275630aaa240901df4e3f4dd958fb9564530a0c7c2"
+        },
+        {
+          "label": "symbol-admission",
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "suss-compile",
+            "--locked",
+            "--lib",
+            "portable_macro_graph::source_facts::symbol_map_admission_tests::",
+            "--",
+            "--nocapture",
+            "--test-threads=2"
+          ],
+          "exit_code": 0,
+          "seconds": 53.430008849012665,
+          "source_head": "4effee1ef1c17721122078a297bcaefa456f44da",
+          "log_sha256": "cb2190ede1521cbddf72d818d40002003a900e932c5cf4aebf7f30d9d7f02997"
+        },
+        {
+          "label": "memo",
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "suss-compile",
+            "--locked",
+            "--lib",
+            "portable_macro_graph::completed_bindings::",
+            "--",
+            "--nocapture",
+            "--test-threads=2"
+          ],
+          "exit_code": 0,
+          "seconds": 28.651943630015012,
+          "source_head": "4effee1ef1c17721122078a297bcaefa456f44da",
+          "log_sha256": "a6edd9835b91d1ab45e4f36b84ac549dd432017cd03dcaebd83fe703155a186d"
+        },
+        {
+          "label": "reader-properties",
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "suss-compile",
+            "--locked",
+            "--lib",
+            "portable_macro_graph::completed_type_values::reader_property_value_tests::",
+            "--",
+            "--nocapture",
+            "--test-threads=2"
+          ],
+          "exit_code": 101,
+          "seconds": 56.16319586901227,
+          "source_head": "4effee1ef1c17721122078a297bcaefa456f44da",
+          "log_sha256": "5771492887d653d439c3b415d700cf36aae440ee2d4dc57067e4040b75b5ffbc"
+        },
+        {
+          "label": "controller-order",
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "suss-compile",
+            "--locked",
+            "--lib",
+            "portable_macro_graph::source_roots::reader_controller::source_order_tests::",
+            "--",
+            "--nocapture",
+            "--test-threads=2"
+          ],
+          "exit_code": 101,
+          "seconds": 28.028746376978233,
+          "source_head": "4effee1ef1c17721122078a297bcaefa456f44da",
+          "log_sha256": "d3955ee1d94081652f62408043211424a1f8c4e3340e889c1bd499392c48a3ed"
+        },
+        {
+          "label": "first-use-data",
+          "command": [
+            "cargo",
+            "test",
+            "-p",
+            "suss-compile",
+            "--locked",
+            "--lib",
+            "portable_macro_graph::source_roots::first_use_data::",
+            "--",
+            "--nocapture",
+            "--test-threads=2"
+          ],
+          "exit_code": 101,
+          "seconds": 57.182018725026865,
+          "source_head": "4effee1ef1c17721122078a297bcaefa456f44da",
+          "log_sha256": "12f3bb6b7342870ac6eda7101584639df5e31a988c56af0956714206383d190e"
+        }
+      ]
+    },
+    "raw_logs": {
+      "provisioning": {
+        "path": "/home/bobby/.cache/suss-m4-work/pr263-four-repairs-focused-v1/provisioning.log",
+        "sha256": "8413ef119dda113f9446f4275630aaa240901df4e3f4dd958fb9564530a0c7c2",
+        "content": "   Compiling suss-reader v0.1.0 (/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/crates/suss-reader)\n   Compiling suss-compile v0.1.0 (/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/crates/suss-compile)\n    Finished `test` profile [unoptimized] target(s) in 29.92s\n     Running unittests src/lib.rs (/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/suss_compile-6640f43d893bc943)\n\nrunning 1 test\ntest portable_session::construction_records::controller_provisioning_tests::source_controller_requires_installed_core_and_both_original_private_registries ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 533 filtered out; finished in 47.86s\n\n"
+      },
+      "symbol-admission": {
+        "path": "/home/bobby/.cache/suss-m4-work/pr263-four-repairs-focused-v1/symbol-admission.log",
+        "sha256": "cb2190ede1521cbddf72d818d40002003a900e932c5cf4aebf7f30d9d7f02997",
+        "content": "    Finished `test` profile [unoptimized] target(s) in 0.15s\n     Running unittests src/lib.rs (/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/suss_compile-6640f43d893bc943)\n\nrunning 2 tests\ntest portable_macro_graph::source_facts::symbol_map_admission_tests::symbol_map_duplicate_detection_uses_full_constructor_spelling_without_joining_owners ... ok\ntest portable_macro_graph::source_facts::symbol_map_admission_tests::symbol_map_witness_reads_current_values_and_metadata_in_both_phases_after_gc ... ok\n\ntest result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 532 filtered out; finished in 53.13s\n\n"
+      },
+      "memo": {
+        "path": "/home/bobby/.cache/suss-m4-work/pr263-four-repairs-focused-v1/memo.log",
+        "sha256": "a6edd9835b91d1ab45e4f36b84ac549dd432017cd03dcaebd83fe703155a186d",
+        "content": "    Finished `test` profile [unoptimized] target(s) in 0.20s\n     Running unittests src/lib.rs (/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/suss_compile-6640f43d893bc943)\n\nrunning 5 tests\ncompleted-binding-work full=131504 memo=17654 calls=8 source-bytes=308\ntest portable_macro_graph::completed_bindings::tests::completed_binding_memo_matches_full_validator_and_reports_actual_work ... ok\ntest portable_macro_graph::completed_bindings::tests::completed_binding_memo_exact_revisions_sources_and_foreign_owners ... ok\ntest portable_macro_graph::completed_bindings::tests::completed_binding_memo_retained_type_plan_is_checked_before_first_hit ... ok\ncompleted-binding-many full=16752 cold=57488 warm=2416 entries=24 backing-bytes=2304\ntest portable_macro_graph::completed_bindings::tests::completed_binding_memo_reports_cold_many_revision_overhead ... ok\ntest portable_macro_graph::completed_bindings::tests::completed_binding_memo_zero_boundary_irq_failures_and_retry ... ok\n\ntest result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 529 filtered out; finished in 28.34s\n\n"
+      },
+      "reader-properties": {
+        "path": "/home/bobby/.cache/suss-m4-work/pr263-four-repairs-focused-v1/reader-properties.log",
+        "sha256": "5771492887d653d439c3b415d700cf36aae440ee2d4dc57067e4040b75b5ffbc",
+        "content": "    Finished `test` profile [unoptimized] target(s) in 0.17s\n     Running unittests src/lib.rs (/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/suss_compile-6640f43d893bc943)\n\nrunning 5 tests\n\nthread 'portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc' (436123) panicked at crates/suss-compile/src/portable_macro_graph/completed_type_values.rs:616:58:\ncalled `Result::unwrap()` on an `Err` value: Host(Fresh first-use source failed complete DATA checks)\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\ntest portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc ... FAILED\ntest portable_macro_graph::completed_type_values::reader_property_value_tests::completed_reader_property_occurrences_share_outer_inner_objects_without_symbol_only_rule ... ok\ntest portable_macro_graph::completed_type_values::reader_property_value_tests::completed_reader_values_reject_foreign_equal_owner_changed_source_and_unknown_holder_before_publication ... ok\ntest portable_macro_graph::completed_type_values::reader_property_value_tests::reader_value_coordinate_tracks_winning_writer_independently_from_retained_key ... ok\ntest portable_macro_graph::completed_type_values::reader_property_value_tests::reader_property_empty_and_no_hit_scans_bill_work_and_preserve_typed_failure_irq_and_retry ... ok\n\nfailures:\n\nfailures:\n    portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\n\ntest result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 529 filtered out; finished in 55.83s\n\nerror: test failed, to rerun pass `-p suss-compile --lib`\n"
+      },
+      "controller-order": {
+        "path": "/home/bobby/.cache/suss-m4-work/pr263-four-repairs-focused-v1/controller-order.log",
+        "sha256": "d3955ee1d94081652f62408043211424a1f8c4e3340e889c1bd499392c48a3ed",
+        "content": "    Finished `test` profile [unoptimized] target(s) in 0.13s\n     Running unittests src/lib.rs (/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/suss_compile-6640f43d893bc943)\n\nrunning 3 tests\ntest portable_macro_graph::source_roots::reader_controller::source_order_tests::actual_environment_producer_reuses_same_locals_projection_and_admits_both_records ... ok\n\nthread 'portable_macro_graph::source_roots::reader_controller::source_order_tests::real_completed_metadata_after_inline_map_keeps_nil_aware_callback_order' (438587) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/reader_controller/source_order_tests.rs:169:33:\nwhole controller / Runtime / NilAware: Host error: Fresh first-use source failed complete DATA checks\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\ntest portable_macro_graph::source_roots::reader_controller::source_order_tests::real_completed_metadata_after_inline_map_keeps_nil_aware_callback_order ... FAILED\n\nthread 'portable_macro_graph::source_roots::reader_controller::source_order_tests::real_completed_metadata_after_inline_map_keeps_original_delegate_callback_order' (439489) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/reader_controller/source_order_tests.rs:169:33:\nwhole controller / Runtime / OriginalEveryTime: Host error: Fresh first-use source failed complete DATA checks\ntest portable_macro_graph::source_roots::reader_controller::source_order_tests::real_completed_metadata_after_inline_map_keeps_original_delegate_callback_order ... FAILED\n\nfailures:\n\nfailures:\n    portable_macro_graph::source_roots::reader_controller::source_order_tests::real_completed_metadata_after_inline_map_keeps_nil_aware_callback_order\n    portable_macro_graph::source_roots::reader_controller::source_order_tests::real_completed_metadata_after_inline_map_keeps_original_delegate_callback_order\n\ntest result: FAILED. 1 passed; 2 failed; 0 ignored; 0 measured; 531 filtered out; finished in 27.79s\n\nerror: test failed, to rerun pass `-p suss-compile --lib`\n"
+      },
+      "first-use-data": {
+        "path": "/home/bobby/.cache/suss-m4-work/pr263-four-repairs-focused-v1/first-use-data.log",
+        "sha256": "12f3bb6b7342870ac6eda7101584639df5e31a988c56af0956714206383d190e",
+        "content": "    Finished `test` profile [unoptimized] target(s) in 0.13s\n     Running unittests src/lib.rs (/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/suss_compile-6640f43d893bc943)\n\nrunning 12 tests\n\nthread 'portable_macro_graph::source_roots::first_use_data::lifecycle_tests::deep_source_alias_access_and_cache_eviction_are_constant_stack_and_preserve_survivor' (439585) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/lifecycle_tests.rs:106:87:\ncalled `Result::unwrap()` on an `Err` value: Host(Fresh first-use source failed complete DATA checks)\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\ntest portable_macro_graph::source_roots::first_use_data::lifecycle_tests::deep_source_alias_access_and_cache_eviction_are_constant_stack_and_preserve_survivor ... FAILED\ntest portable_macro_graph::source_roots::first_use_data::lifecycle_tests::deep_native_release_after_fuel_and_interrupt_requires_no_cleanup_budget_and_retries ... ok\n\nthread 'portable_macro_graph::source_roots::first_use_data::lifecycle_tests::failed_partial_build_and_native_unwind_drop_all_owned_evidence_without_recovery_allocation' (440699) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/lifecycle_tests.rs:163:9:\ntest-only unwind after original construction\ntest portable_macro_graph::source_roots::first_use_data::lifecycle_tests::failed_partial_build_and_native_unwind_drop_all_owned_evidence_without_recovery_allocation ... ok\n\nthread 'portable_macro_graph::source_roots::first_use_data::lifecycle_tests::every_new_release_preallocation_fuel_cut_discards_unpublished_owners_and_retries' (440698) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/lifecycle_tests.rs:246:87:\ncalled `Result::unwrap()` on an `Err` value: Host(Fresh first-use source failed complete DATA checks)\ntest portable_macro_graph::source_roots::first_use_data::lifecycle_tests::every_new_release_preallocation_fuel_cut_discards_unpublished_owners_and_retries ... FAILED\ntest portable_macro_graph::source_roots::first_use_data::lifecycle_tests::release_shared_diamond_keeps_external_owner_and_drops_final_owner_once ... ok\n\nthread 'portable_macro_graph::source_roots::first_use_data::lifecycle_tests::genuine_deep_reader_metadata_retains_original_native_evidence_and_releases_after_owner_drop' (440701) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/lifecycle_tests.rs:193:87:\ncalled `Result::unwrap()` on an `Err` value: Trap(wasm trap: all fuel consumed by WebAssembly)\ntest portable_macro_graph::source_roots::first_use_data::lifecycle_tests::genuine_deep_reader_metadata_retains_original_native_evidence_and_releases_after_owner_drop ... FAILED\n\nthread 'portable_macro_graph::source_roots::first_use_data::tests::active_request_interrupt_leaves_identity_cache_unpublished_and_retry_reuses_original' (440703) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/tests.rs:213:81:\ncalled `Result::unwrap()` on an `Err` value: Host(Fresh first-use source failed complete DATA checks)\ntest portable_macro_graph::source_roots::first_use_data::tests::active_request_interrupt_leaves_identity_cache_unpublished_and_retry_reuses_original ... FAILED\n\nthread 'portable_macro_graph::source_roots::first_use_data::tests::earlier_inline_callback_invalidates_old_private_candidate_before_first_use_and_freshens_once' (440704) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/tests.rs:89:82:\ncalled `Result::unwrap()` on an `Err` value: Host(Fresh first-use source failed complete DATA checks)\ntest portable_macro_graph::source_roots::first_use_data::tests::earlier_inline_callback_invalidates_old_private_candidate_before_first_use_and_freshens_once ... FAILED\n\nthread 'portable_macro_graph::source_roots::first_use_data::tests::healthy_nil_aware_method_transition_keeps_warm_data_identity_without_strict_capabilities' (440706) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/tests.rs:167:81:\ncalled `Result::unwrap()` on an `Err` value: Host(Fresh first-use source failed complete DATA checks)\ntest portable_macro_graph::source_roots::first_use_data::tests::healthy_nil_aware_method_transition_keeps_warm_data_identity_without_strict_capabilities ... FAILED\n\nthread 'portable_macro_graph::source_roots::first_use_data::tests::later_callback_key_poison_preserves_effect_and_entire_old_cache_then_exact_restoration_recovers' (440707) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/tests.rs:122:82:\ncalled `Result::unwrap()` on an `Err` value: Host(Fresh first-use source failed complete DATA checks)\ntest portable_macro_graph::source_roots::first_use_data::tests::later_callback_key_poison_preserves_effect_and_entire_old_cache_then_exact_restoration_recovers ... FAILED\n\nthread 'portable_macro_graph::source_roots::first_use_data::tests::source_identity_cache_rejects_foreign_store_without_new_constructor_replay_or_cache_change' (440709) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/tests.rs:188:69:\ncalled `Result::unwrap()` on an `Err` value: Host(Fresh first-use source failed complete DATA checks)\ntest portable_macro_graph::source_roots::first_use_data::tests::source_identity_cache_rejects_foreign_store_without_new_constructor_replay_or_cache_change ... FAILED\n\nthread 'portable_macro_graph::source_roots::first_use_data::tests::selected_reader_value_poison_after_parent_exposure_preserves_old_cache_and_exact_restore_identity' (440708) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/tests.rs:263:53:\ncalled `Result::unwrap()` on an `Err` value: Host(Fresh first-use source failed complete DATA checks)\ntest portable_macro_graph::source_roots::first_use_data::tests::selected_reader_value_poison_after_parent_exposure_preserves_old_cache_and_exact_restore_identity ... FAILED\n\nfailures:\n\nfailures:\n    portable_macro_graph::source_roots::first_use_data::lifecycle_tests::deep_source_alias_access_and_cache_eviction_are_constant_stack_and_preserve_survivor\n    portable_macro_graph::source_roots::first_use_data::lifecycle_tests::every_new_release_preallocation_fuel_cut_discards_unpublished_owners_and_retries\n    portable_macro_graph::source_roots::first_use_data::lifecycle_tests::genuine_deep_reader_metadata_retains_original_native_evidence_and_releases_after_owner_drop\n    portable_macro_graph::source_roots::first_use_data::tests::active_request_interrupt_leaves_identity_cache_unpublished_and_retry_reuses_original\n    portable_macro_graph::source_roots::first_use_data::tests::earlier_inline_callback_invalidates_old_private_candidate_before_first_use_and_freshens_once\n    portable_macro_graph::source_roots::first_use_data::tests::healthy_nil_aware_method_transition_keeps_warm_data_identity_without_strict_capabilities\n    portable_macro_graph::source_roots::first_use_data::tests::later_callback_key_poison_preserves_effect_and_entire_old_cache_then_exact_restoration_recovers\n    portable_macro_graph::source_roots::first_use_data::tests::selected_reader_value_poison_after_parent_exposure_preserves_old_cache_and_exact_restore_identity\n    portable_macro_graph::source_roots::first_use_data::tests::source_identity_cache_rejects_foreign_store_without_new_constructor_replay_or_cache_change\n\ntest result: FAILED. 3 passed; 9 failed; 0 ignored; 0 measured; 522 filtered out; finished in 56.91s\n\nerror: test failed, to rerun pass `-p suss-compile --lib`\n"
+      }
+    },
+    "scope": "before metadata order changes and observational third file; failures not reclassified"
+  },
+  "actual_two_source_metadata12": {
+    "terminal": {
+      "path": "/home/bobby/.cache/suss-m4-work/pr263-metadata-order-native-v1/terminal.json",
+      "sha256": "75d1152065db341eabe89456ed20563908f4034e4b8b0db2e43d6338e8cec944",
+      "content": {
+        "command": [
+          "cargo",
+          "test",
+          "-p",
+          "suss-compile",
+          "--locked",
+          "--lib",
+          "--",
+          "--nocapture",
+          "--test-threads=2",
+          "portable::hir::quotes::metadata_reader_tests::",
+          "portable::hir::quotes::pair_only_metadata_tests::"
+        ],
+        "exit_code": 0,
+        "seconds": 29.0233161309734,
+        "log_sha256": "9e8535bc44268ee0336f4630fdd7205c97d57fa1396d16a7cb6590e515737de9",
+        "scope": "Native reader/HIR metadata only, no Session/VM/shipped BOOT; source2metadata changes and old BOOT deliberately not used"
+      }
+    },
+    "freeze": {
+      "path": "/home/bobby/.cache/suss-m4-work/pr263-metadata-order-native-v1/source-freeze.json",
+      "sha256": "270b210b42f9850ac4eeacb5462592a74f4a21d1a0e802a70ea2ea7af61d5042",
+      "content": {
+        "crates/suss-compile/src/portable/hir/quotes.rs": "ee9adfc2482d19c69ddd905873eb8b33d02b0c19d0af57ea8dcd4784ebd14409",
+        "crates/suss-reader/src/forms/source_metadata.rs": "b4620d5e29c15e1e939e5b50edaa0ff54771e52882ace329f4561c8060d49879"
+      }
+    },
+    "raw": {
+      "path": "/home/bobby/.cache/suss-m4-work/pr263-metadata-order-native-v1/tests.log",
+      "sha256": "9e8535bc44268ee0336f4630fdd7205c97d57fa1396d16a7cb6590e515737de9",
+      "content": "   Compiling suss-compile v0.1.0 (/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/crates/suss-compile)\n   Compiling suss-reader v0.1.0 (/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/crates/suss-reader)\n    Finished `test` profile [unoptimized] target(s) in 28.99s\n     Running unittests src/lib.rs (/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/suss_compile-6640f43d893bc943)\n\nrunning 12 tests\ntest portable::hir::quotes::metadata_reader_tests::borrowed_map_merge_preserves_nested_metadata_collision_key_order_and_retry ... ok\ntest portable::hir::quotes::metadata_reader_tests::deep_metadata_keys_preserve_precedence_and_exhaust_meter_without_a_depth_cap ... ok\ntest portable::hir::quotes::metadata_reader_tests::indexed_nested_symbol_metadata_retains_pinned_file_positions_then_explicit_associations ... ok\ntest portable::hir::quotes::metadata_reader_tests::map_metadata_view_borrows_exact_entries_without_copy_or_charge ... ok\ntest portable::hir::quotes::metadata_reader_tests::indexed_explicit_overrides_keep_first_keys_winning_value_selectors_and_retry ... ok\ntest portable::hir::quotes::metadata_reader_tests::metadata_key_origin_occurrences_are_separate_and_late_invalid_prefix_is_checked ... ok\ntest portable::hir::quotes::metadata_reader_tests::metadata_key_origin_every_meter_error_propagates_without_mutation_and_retries ... ok\ntest portable::hir::quotes::metadata_reader_tests::metadata_key_origin_tracks_first_key_not_last_value_or_tag_spelling ... ok\ntest portable::hir::quotes::metadata_reader_tests::metadata_view_storage_is_thin_and_synthesized_box_work_is_precharged ... ok\ntest portable::hir::quotes::metadata_reader_tests::metadata_reader_keys_compare_canonical_duplicate_map_and_set_data ... ok\ntest portable::hir::quotes::metadata_reader_tests::normalized_metadata_view_retains_borrowed_collision_key_and_winning_value_with_shorthands ... ok\ntest portable::hir::quotes::pair_only_metadata_tests::pair_only_metadata_preserves_both_normalization_modes_without_unused_origin_storage ... ok\n\ntest result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 524 filtered out; finished in 0.00s\n\n"
+    },
+    "scope": "12PASS pure reader/HIR tests, no Session/VM/BOOT; predates third diagnostic file"
+  },
+  "full_three_no_run": {
+    "terminal": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--no-run"
+      ],
+      "exit_code": 0,
+      "seconds": 21.105612204002682,
+      "log_sha256": "dbbc5168470c735563dab60c8448e22e57b162d96932c995f09f08729b51d374",
+      "scope": "Exact3sourceorder+attribution compile/link only"
+    },
+    "raw_log": "   Compiling suss-compile v0.1.0 (/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/crates/suss-compile)\n    Finished `test` profile [unoptimized] target(s) in 21.08s\n  Executable unittests src/lib.rs (/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/suss_compile-6640f43d893bc943)\n",
+    "scope": "Compile/link of exact three files; no DATA/public-tag VM execution"
+  },
+  "diagnostic_execution": "UNEXECUTED",
+  "public_tag_vm_replay": "UNEXECUTED_ON_NEW_SOURCE",
+  "fingerprint": [
+    {
+      "builder": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-4e005c49b5658b9d/build-script-build",
+      "fingerprint": "de973d93614143563e47cf1af0df94b1bfeef2ec9621d948c9f4a80c46efeaec"
+    },
+    {
+      "builder": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-843b103b49464494/build-script-build",
+      "fingerprint": "de973d93614143563e47cf1af0df94b1bfeef2ec9621d948c9f4a80c46efeaec"
+    }
+  ],
+  "prior_source_binding_link": "m4-pr263-four-reader-controller-repairs-2026-10-19.md",
+  "no_new_archive_or_full219_repeat": true,
+  "source_commit": "PENDING",
+  "limitations": [
+    "Existing public tag assertions unchanged; no new public tag pass claimed.",
+    "Metadata ordering fixed by first-association position/last value, reference-backed two existing unit expectations corrected; fees retained.",
+    "Diagnostic only splits existing predicate results and cfg(test) emits failure details; does not bypass checks or establish DATA correctness.",
+    "No performance, whole-baseline, final CI, issue closure or promotion claim."
+  ],
+  "independent_composition_review": {
+    "verdict": "GO_SOURCE_ONLY_EXACT_THREE_PATH_COMPOSITION",
+    "applied_source_sha256": "5755886d7b5e1417d5c015571805a8b571c64a891d03963f7434eb972a5a7338",
+    "files": {
+      "crates/suss-reader/src/forms/source_metadata.rs": "b4620d5e29c15e1e939e5b50edaa0ff54771e52882ace329f4561c8060d49879",
+      "crates/suss-compile/src/portable/hir/quotes.rs": "ee9adfc2482d19c69ddd905873eb8b33d02b0c19d0af57ea8dcd4784ebd14409",
+      "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data.rs": "5a26ed68d4e58568425c560ae1e32e047ea0d4678fe1b34b56312adc3300433d"
+    },
+    "component_reviews": [
+      {
+        "directory": "pr263-indexed-metadata-association-order-558095c-v1",
+        "manifest_sha256": "67434554602ae4c87e99c094256bf2e87917d2724a66db5d7e38e024fc008f6a",
+        "independent_review_sha256": "5829d904b8992b8d42354500a31541a990c228a2c9841f26f1a753f10c445549"
+      },
+      {
+        "directory": "pr263-first-use-complete-data-attribution-v2",
+        "manifest_sha256": "a6bade734580086b5e532ce5527293dd364493fddf77d0d070f70d70e9ada6ef",
+        "independent_review_sha256": "852b3adb64101e9fac1a5c81f894d358f51d4fd27ad5ccf86445173eacaca984"
+      }
+    ],
+    "verification": [
+      "All3 frozen/current postimages exactly equal the two independently reviewed component postimages. File sets disjoint; no new overlapping hunk or source behavior.",
+      "Metadata first-association order retains first KEY/origin and last VALUE selector; optional file before positions with generated prefix still appended, prior debits/guards intact.",
+      "DATA attribution V2 only extracts original predicate results once and prints failed components in cfg(test); original validators, order, fees, ? and Host failure remain. No diagnostic reparsing, refill, check bypass or authority change."
+    ],
+    "findings": [],
+    "limits": [
+      "Source-only composition, no Cargo/rustc/bootstrap/VM/shared edits or producer actions by reviewer.",
+      "Metadata12 native PASS predates third diagnostic path; not full3 execution credit. Current full3 no-run main-owned/pending.",
+      "Previous4eff28 results remain historical; known DATA/semantic failures not reclassified.",
+      "Publication/docs/JSON evidence review is separate when ready; no additional gate/test request."
+    ]
+  }
+}

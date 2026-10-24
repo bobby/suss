@@ -73,6 +73,86 @@ fn copy_array(body: &mut Vec<Instruction<'static>>, source: u32, target: u32) {
     ]);
 }
 
+// Emit a live checked-table read after the caller's descriptor/table/odd-length
+// guards. Private generator parameters are local indices, not guest authority.
+// Both result modes stop at the first exact key. No callbacks or retained facts.
+fn method_read_lookup(
+    body: &mut Vec<Instruction<'static>>, typed_table: u32, key: u32,
+    length: u32, index: u32, marker: bool,
+) {
+    use Instruction::*;
+    fn pair(body: &mut Vec<Instruction<'static>>, table: u32, key: u32, offset: i32, marker: bool) {
+        body.extend([LocalGet(table), I32Const(offset), ArrayGet(ARGS),
+            LocalGet(key), RefEq, If(BlockType::Empty), LocalGet(table),
+            I32Const(offset + 1), ArrayGet(ARGS)]);
+        if marker { body.extend([GlobalGet(SENTINEL_GLOBAL), RefEq]); }
+        body.extend([Return, End]);
+    }
+    fn exhausted(body: &mut Vec<Instruction<'static>>, length: u32, offset: i32, marker: bool) {
+        body.extend([LocalGet(length), I32Const(offset), I32LeU, If(BlockType::Empty),
+            I32Const(0)]);
+        if !marker { body.push(RefI31); }
+        body.extend([Return, End]);
+    }
+    // Preserve the original short-table/early-hit path exactly. Later
+    // complete groups share bounds checks; partial groups still check
+    // each remaining pair in order, without a variable-index loop.
+    for offset in (0..8).step_by(2) {
+        exhausted(body, length, offset, marker);
+        pair(body, typed_table, key, offset, marker);
+    }
+    for group in (8..32).step_by(8) {
+        exhausted(body, length, group, marker);
+        body.extend([LocalGet(length), I32Const(group + 8), I32LtU, If(BlockType::Empty)]);
+        for offset in (group..group + 8).step_by(2) {
+            if offset != group { exhausted(body, length, offset, marker); }
+            pair(body, typed_table, key, offset, marker);
+        }
+        body.push(I32Const(0));
+        if !marker { body.push(RefI31); }
+        body.extend([Return, Else]);
+        for offset in (group..group + 8).step_by(2) {
+            pair(body, typed_table, key, offset, marker);
+        }
+        body.push(End);
+    }
+    body.extend([
+        I32Const(32),
+        LocalSet(index),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(index),
+    ]);
+    // No callback occurs during this table walk. Its GC array length is
+    // immutable even when an existing slot is replaced, so read it once.
+    body.extend([LocalGet(length), I32GeU, BrIf(1)]);
+    body.push(LocalGet(typed_table));
+    body.extend([
+        LocalGet(index),
+        ArrayGet(ARGS),
+        LocalGet(key),
+        RefEq,
+        If(BlockType::Empty),
+    ]);
+    body.push(LocalGet(typed_table));
+    body.extend([LocalGet(index), I32Const(1), I32Add]);
+    body.push(ArrayGet(ARGS));
+    if marker { body.extend([GlobalGet(SENTINEL_GLOBAL), RefEq]); }
+    body.push(Return);
+    body.extend([
+        End,
+        LocalGet(index),
+        I32Const(2),
+        I32Add,
+        LocalSet(index),
+        Br(0),
+        End,
+        End,
+    ]);
+    body.push(I32Const(0));
+    if !marker { body.push(RefI31); }
+}
+
 pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     use Instruction::*;
     let mut body = vec![];
@@ -327,35 +407,13 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         error(&mut body);
         body.push(End);
         if !writing {
-            fn pair(body: &mut Vec<Instruction<'static>>, table: u32, key: u32, offset: i32) {
-                body.extend([LocalGet(table), I32Const(offset), ArrayGet(ARGS),
-                    LocalGet(key), RefEq, If(BlockType::Empty), LocalGet(table),
-                    I32Const(offset + 1), ArrayGet(ARGS), Return, End]);
-            }
-            fn exhausted(body: &mut Vec<Instruction<'static>>, length: u32, offset: i32) {
-                body.extend([LocalGet(length), I32Const(offset), I32LeU, If(BlockType::Empty),
-                    I32Const(0), RefI31, Return, End]);
-            }
-            // Preserve the original short-table/early-hit path exactly. Later
-            // complete groups share bounds checks; partial groups still check
-            // each remaining pair in order, without a variable-index loop.
-            for offset in (0..8).step_by(2) {
-                exhausted(&mut body, length, offset);
-                pair(&mut body, typed_table, 1, offset);
-            }
-            for group in (8..32).step_by(8) {
-                exhausted(&mut body, length, group);
-                body.extend([LocalGet(length), I32Const(group + 8), I32LtU, If(BlockType::Empty)]);
-                for offset in (group..group + 8).step_by(2) {
-                    if offset != group { exhausted(&mut body, length, offset); }
-                    pair(&mut body, typed_table, 1, offset);
-                }
-                body.extend([I32Const(0), RefI31, Return, Else]);
-                for offset in (group..group + 8).step_by(2) {
-                    pair(&mut body, typed_table, 1, offset);
-                }
-                body.push(End);
-            }
+            method_read_lookup(&mut body, typed_table, 1, length, index, false);
+            method_get = b.function_with_locals(
+                "protocol-method-get", &[VALUE, VALUE], &[VALUE],
+                &[(1, ValType::I32), (1, VALUE), (1, ValType::I32), (1, reference(ARGS))],
+                &body,
+            );
+            continue;
         }
         body.extend([
             I32Const(if writing { 0 } else { 32 }),
@@ -644,6 +702,8 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         &body,
     );
     let mut body = vec![];
+    // Preserve key rejection even for a non-object receiver. Descriptor type is
+    // immutable and no callback occurs before lookup, so do not guard it twice.
     guard(&mut body, 0, DESCRIPTOR);
     body.extend([
         LocalGet(1),
@@ -651,19 +711,23 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         If(BlockType::Result(ValType::I32)),
     ]);
     get(&mut body, 1, OBJECT, 0);
-    body.extend([
-        LocalGet(0),
-        Call(method_get),
-        GlobalGet(SENTINEL_GLOBAL),
-        RefEq,
-        Else,
-        I32Const(0),
-        End,
-    ]);
-    b.function(
+    body.push(LocalSet(2));
+    guard(&mut body, 2, DESCRIPTOR);
+    get(&mut body, 2, DESCRIPTOR, 2);
+    body.push(LocalSet(4));
+    guard(&mut body, 4, ARGS);
+    body.extend([LocalGet(4), RefCastNonNull(HeapType::Concrete(ARGS)), LocalSet(6)]);
+    body.extend([LocalGet(6), ArrayLen, LocalTee(5), I32Const(1), I32And, If(BlockType::Empty)]);
+    error(&mut body);
+    body.push(End);
+    method_read_lookup(&mut body, 6, 0, 5, 3, true);
+    body.extend([Else, I32Const(0), End]);
+    b.function_with_locals(
         "protocol-marker-satisfies",
         &[VALUE, VALUE],
         &[ValType::I32],
+        &[(1, VALUE), (1, ValType::I32), (1, VALUE), (1, ValType::I32),
+          (1, reference(ARGS))],
         &body,
     );
     // The source constructor follows the pin's JS constructor convention: all

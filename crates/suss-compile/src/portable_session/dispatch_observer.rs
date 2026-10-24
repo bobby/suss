@@ -445,7 +445,7 @@ mod tests {
             "IFn adaptation does not enter the observer"
         );
         session.enter_namespace("suss.core").unwrap();
-        session.eval("(def -hash (fn [_] 72))").unwrap();
+        session.eval_with_test_compilation_fuel("(def -hash (fn [_] 72))").unwrap();
         session.enter_namespace("user").unwrap();
         reset_trace(&session);
         let value = session.eval("(suss.core/-hash dispatch-x)").unwrap();

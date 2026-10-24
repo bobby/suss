@@ -4,7 +4,7 @@ use std::{collections::HashMap, sync::Arc};
 use suss_compile::portable::{
     compiler_facts::{elide_reader_metadata, CompilerNamespaceCatalog},
     compiler_names::{munge_name, munge_name_with_reserved},
-    hir::{BindingId, LocalBinding, LocalKind, SourceBinding, SourceNamespace, SourceRole, Type},
+    hir::{BindingId, LocalBinding, LocalKind, SourceBinding, SourceNamespace, SourceRole, SourceFields, SourceLocals, Type},
     resolve::{Environment, Phase},
     AnalysisContext, ExpansionContext,
 };
@@ -21,9 +21,10 @@ fn compiler_facts_resolve_actual_phase_aliases_and_declaration_identity() {
         .unwrap();
     env.alias(Phase::Runtime, "own", "record.user").unwrap();
     let snapshot = Arc::new(SourceNamespace::capture(&env, Phase::Runtime));
-    let locals = HashMap::new();
-    let fields = HashMap::new();
+    let locals = SourceLocals::default();
+    let fields = SourceFields::default();
     let context = ExpansionContext {
+            namespace_revision: None,
         environment: &env,
         namespace_snapshot: &snapshot,
         origin: None,
@@ -93,7 +94,7 @@ fn unused_lexical_bindings_keep_declaration_identity_and_shadow_globals() {
         identity: identity.clone(),
         id: BindingId(17),
         ty: Type::Value,
-        declaration: declaration.clone(),
+        declaration: Arc::new(declaration.clone()),
         origin: None,
         kind: LocalKind::Let,
         declaration_context: AnalysisContext::Expression,
@@ -102,10 +103,11 @@ fn unused_lexical_bindings_keep_declaration_identity_and_shadow_globals() {
         shadow: None,
         shadow_field: None,
     };
-    let locals = HashMap::from([("unused".to_string(), local)]);
-    let fields = HashMap::new();
+    let locals: SourceLocals = Arc::new(HashMap::from([("unused".to_string(), Arc::new(local))]));
+    let fields = SourceFields::default();
     let snapshot = Arc::new(SourceNamespace::capture(&env, Phase::Runtime));
     let context = ExpansionContext {
+            namespace_revision: None,
         environment: &env,
         namespace_snapshot: &snapshot,
         origin: None,

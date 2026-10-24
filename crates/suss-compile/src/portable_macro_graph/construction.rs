@@ -189,7 +189,7 @@ mod tests {
             let mut session = session(phase);
             session.eval("(def recorded-events 0) (def recorded-order []) (def recorded-old-hash suss.core/hash) (def ^{:items #{101 102 103 104 105 106 107 108 109}} recording-effects 17)").unwrap();
             session.enter_namespace("suss.core").unwrap();
-            session.eval("(def hash (fn [key] (do (if (number? key) (do (set! user/recorded-events (+ user/recorded-events 1)) (set! user/recorded-order (conj user/recorded-order key))) nil) (user/recorded-old-hash key))))").unwrap();
+            session.eval_with_test_compilation_fuel("(def hash (fn [key] (do (if (number? key) (do (set! user/recorded-events (+ user/recorded-events 1)) (set! user/recorded-order (conj user/recorded-order key))) nil) (user/recorded-old-hash key))))").unwrap();
             session.enter_namespace("user").unwrap();
             let bridge = FormBridge::new(&mut session).unwrap();
             let snapshot = session.compilation_snapshot();
@@ -353,7 +353,7 @@ mod tests {
             let mut session = session(phase);
             session.eval("(def recorded-child-events []) (def recorded-child-hash suss.core/hash) (def ^{:items #{:recording-target :other1 :other2 :other3 :other4 :other5 :other6 :other7 :other8}} recording-child 17)").unwrap();
             session.enter_namespace("suss.core").unwrap();
-            session.eval("(def hash (fn [key] (if (= key :recording-target) (do (set! user/recorded-child-events (conj user/recorded-child-events (.-name key))) (set! (.-name key) \"changed\") 719) (user/recorded-child-hash key))))").unwrap();
+            session.eval_with_test_compilation_fuel("(def hash (fn [key] (if (= key :recording-target) (do (set! user/recorded-child-events (conj user/recorded-child-events (.-name key))) (set! (.-name key) \"changed\") 719) (user/recorded-child-hash key))))").unwrap();
             session.enter_namespace("user").unwrap();
             let bridge = FormBridge::new(&mut session).unwrap();
             let recorded = record(&mut session, &bridge, "recording-child");
@@ -458,11 +458,17 @@ mod recorded_scratch_comparison {
     #[test]
     fn real_recorded_metadata_dense_sparse_preserve_owner_gc_and_nested_poison() {
         for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
-            // Diagnostic cost calibration only: the original dense width128
-            // control exceeds 10M. Both routes and source audits use 200M;
-            // this is not evidence for shipped/default-budget acceptance.
-            session.set_operation_fuel(200_000_000);
-            eprintln!("real-recorded-scratch diagnostic-only allowance=200000000");
+            // Diagnostic calibration only. Preserve the Runtime reference's
+            // 200M limit; Macro constructor/receipt work gets the existing
+            // semantic compilation allowance for BOTH compared routes/audits.
+            // This is not shipped/default-budget or whole-program fuel evidence.
+            let allowance = if session.phase() == crate::portable::resolve::Phase::Macro {
+                crate::portable_session::memo_leaf_test_support::COMPILATION_FUEL
+            } else {
+                200_000_000
+            };
+            session.set_operation_fuel(allowance);
+            eprintln!("real-recorded-scratch diagnostic-only phase={:?} allowance={allowance}", session.phase());
             for width in [2usize, 128] {
             for padding in [0usize, 20_000] {
             let entries = (0..width).map(|n| format!(":key{n} {n}")).collect::<Vec<_>>().join(" ");
@@ -502,7 +508,9 @@ mod recorded_scratch_comparison {
                     eprintln!("real-recorded-scratch width={width} padding={padding} n={n} production=false workspace=dense cost={}",
                         before - graph.session.operation_fuel_remaining()?);
                     Ok(record)
-                }).unwrap();
+                }).unwrap_or_else(|error| panic!(
+                    "recorded metadata construction phase={:?} width={width} padding={padding} production={sparse} remaining={:?}: {error:?}",
+                    session.phase(), session.operation_fuel_remaining()));
                 assert_eq!(record.source().global(), global);
                 assert!(Arc::ptr_eq(record.source().revision(), revision));
                 session.collect().unwrap();

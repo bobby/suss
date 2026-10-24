@@ -1,0 +1,172 @@
+{
+  "scope": "Source2 cfg(test)/helper-request-scope changes plus matching BOOT and exact original two-test serial replay. Partial evidence only, not final acceptance.",
+  "source_head": "8e867dca8b748d5834af1b30eba0e01ea8769c94",
+  "source_review": {
+    "verdict": "GO_SOURCE_ONLY_EXACT_TWO_FILE_CFGTEST_DELTA",
+    "files": {
+      "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/tests.rs": "23cb021b0b5000f61f8c9def3e599f3a7d42d1a62da6c031452905d2c3df219c",
+      "crates/suss-compile/src/portable_session/constructor_inputs.rs": "d1c6b1172b4a4ee4ed4ec8eaf3f887890f991753c9dd10cf47e3565d0512e735"
+    },
+    "combined_peer": {
+      "cache_path": "/home/bobby/.cache/suss-m4-work/pr263-followup-two-failure-source-diagnosis-018d0f6-v1/combinedsource-review.json",
+      "sha256": "05182554106a576e7c489844573080b683ad91456269519f05e0a33cd68146a8",
+      "bytes": 1649
+    },
+    "IRQ_peer": {
+      "cache_path": "/home/bobby/.cache/suss-m4-work/pr263-followup-two-failure-source-diagnosis-018d0f6-v1/IRQ-review.json",
+      "sha256": "14d60272d98e26890aaa5e73d758bbfdcac95ff1e801f0b77067d33bee29d330",
+      "bytes": 1171
+    },
+    "qualification": "Both exact reviewed postimages match committed8e source. One outer helper request scope precedes native work; nested interrupt stays in that request and fresh helper retry uses its own unchanged configured allowance. Added constructor mismatch labels are cfg(test), immediately before existing false return; no new production predicate or authority."
+  },
+  "no_run": {
+    "terminal": {
+      "head": "f7ddc4de4cd611099618e6a3b37e69eb3e2d5584",
+      "mode": "build",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--no-run"
+      ],
+      "exit_code": 0,
+      "seconds": 21.878759458020795,
+      "log_sha256": "00f28190387115ff3ef9f34dd8d1b6a730e513f9ad90ac79deeed2c0fcccd46b"
+    },
+    "raw": {
+      "cache_path": "/home/bobby/.cache/suss-m4-work/pr263-retry-and-runtime-field-trace-v1/build.log",
+      "sha256": "00f28190387115ff3ef9f34dd8d1b6a730e513f9ad90ac79deeed2c0fcccd46b",
+      "bytes": 312
+    },
+    "qualification": "Actual compile/link only on then-dirty reviewed postimages at recorded head; not a VM pass."
+  },
+  "normal_generation": {
+    "terminal": {
+      "head": "727783cc00b1f58aac219c79f0f2b048f4df7db7",
+      "mode": "bootstrap",
+      "command": [
+        "sh",
+        "scripts/verify-bootstrap.sh"
+      ],
+      "exit_code": 1,
+      "seconds": 24.571050193044357,
+      "log_sha256": "f06f4c64b9369caafa6faa22894be2f389c50ba51bb7611f2fac4a81bbba3005"
+    },
+    "raw": {
+      "cache_path": "/home/bobby/.cache/suss-m4-work/pr263-retry-and-runtime-field-trace-v1/bootstrap.log",
+      "sha256": "f06f4c64b9369caafa6faa22894be2f389c50ba51bb7611f2fac4a81bbba3005",
+      "bytes": 975
+    },
+    "receipt": {
+      "cache_path": "/home/bobby/.cache/suss-m4-work/pr263-retry-and-runtime-field-trace-v1/diagnostics/receipt.json",
+      "sha256": "0185688813b5e7aa67ad736f0a9142f26d3f3c7674979e77678dd0f647dfafd2",
+      "bytes": 1477
+    },
+    "qualification": "Two matching normal phase pairs generated; exit1 is retained as actual stale shipped comparison failure, not relabeled PASS."
+  },
+  "source_and_adoption": {
+    "fingerprint": "469e52ebbda1b965c63b9ac5060490907c49c04730a28a7b955dd474da8101e0",
+    "compiler_inputs": 221,
+    "source_inventory": {
+      "cache_path": "/home/bobby/.cache/suss-m4-work/pr263-retry-and-runtime-field-trace-v1/independent-source-inputs.json",
+      "sha256": "f28679a00ba3e016621f7cfdff283e425c77916efab5c1d3fa2797834b6fe555",
+      "bytes": 28837
+    },
+    "adoption_review": {
+      "cache_path": "/home/bobby/.cache/suss-m4-work/pr263-retry-and-runtime-field-trace-v1/independent-adoption-review.json",
+      "sha256": "748bf7d7abe90ffdea456fb7def3355b87a7c65e7431d07d545e1c5cef58fb51",
+      "bytes": 2881
+    },
+    "verdict": "GO_ADOPT_EXACT_FOUR_GENERATED_OUTPUTS_SOURCE_BINDING_ONLY",
+    "adopted_BOOT": {
+      "runtime/bootstrap/runtime.wasm": "8b2a4dce6e7b865f5f4d877181e6f8224c58329928bc9b8a697f37e6ad208482",
+      "runtime/bootstrap/runtime.json": "00205d3212607e1a33afa63eb116698c3df68ed48e11c9ba7aed5bdc0b2efdf7",
+      "runtime/bootstrap/macro.wasm": "8ed4d42361ea6779942f4add58baca10425d6b18e7cd81622c37bea717cf7dcf",
+      "runtime/bootstrap/macro.json": "29cb2b2afa8f99084c3d90458cf657a60854593aa64b2a4b6f58e52748dd7c4f"
+    },
+    "verification": "All221 retained source hashes match committed8e Git blobs; both generated pairs match adopted4 Git blobs. Peer reports unchanged noncustom sections/catalog/ABI/cells; no VM credit from byte checks."
+  },
+  "pure_identity": {
+    "result": "PASS",
+    "attribution": "Main-reported actual pure identity probe; no separate terminal/log for that probe located in this named cache. This review did not rerun it and does not convert it to bootstrap test-suite credit."
+  },
+  "original_serial_two": {
+    "terminal": {
+      "head": "8e867dca8b748d5834af1b30eba0e01ea8769c94",
+      "mode": "tests",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1",
+        "--exact",
+        "portable_macro_graph::source_roots::first_use_data::tests::active_request_interrupt_leaves_identity_cache_unpublished_and_retry_reuses_original",
+        "portable_macro_graph::source_roots::first_use_data::tests::selected_reader_value_poison_after_parent_exposure_preserves_old_cache_and_exact_restore_identity"
+      ],
+      "exit_code": 101,
+      "seconds": 63.58067860896699,
+      "log_sha256": "7f259ee6399bdb69fe62e03546512861e30ea5437f29369fd2e6898e7a402a0b"
+    },
+    "raw": {
+      "cache_path": "/home/bobby/.cache/suss-m4-work/pr263-retry-and-runtime-field-trace-v1/tests.log",
+      "sha256": "7f259ee6399bdb69fe62e03546512861e30ea5437f29369fd2e6898e7a402a0b",
+      "bytes": 31748
+    },
+    "passed": 1,
+    "failed": 1,
+    "ignored": 0,
+    "measured": 0,
+    "filtered_out": 540,
+    "harness_seconds": 41.04,
+    "tests": [
+      {
+        "name": "portable_macro_graph::source_roots::first_use_data::tests::active_request_interrupt_leaves_identity_cache_unpublished_and_retry_reuses_original",
+        "outcome": "PASS",
+        "scope": "Original active IRQ/cache/retry assertion now passes with unchanged fuel allowance and repaired helper request scope; no production default or tariff change."
+      },
+      {
+        "name": "portable_macro_graph::source_roots::first_use_data::tests::selected_reader_value_poison_after_parent_exposure_preserves_old_cache_and_exact_restore_identity",
+        "outcome": "FAIL",
+        "scope": "First healthy Runtime make(), before installing intended poison callback; later poison/restore and Macro checks unexecuted/unproved."
+      }
+    ],
+    "failure_excerpt": "thread 'portable_macro_graph::source_roots::first_use_data::tests::selected_reader_value_poison_after_parent_exposure_preserves_old_cache_and_exact_restore_identity' (630381) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/tests.rs:264:53:\ncalled `Result::unwrap()` on an `Err` value: Host(Fresh first-use source failed complete DATA checks)",
+    "field_labels": {
+      "occurrences": 10,
+      "field": 3,
+      "fresh": true,
+      "memo_watch": false,
+      "authenticated_slot": null,
+      "first_exact_line": "FRESH_CONSTRUCTOR_FIELD_REJECT test=Some(\"portable_macro_graph::source_roots::first_use_data::tests::selected_reader_value_poison_after_parent_exposure_preserves_old_cache_and_exact_restore_identity\") field=3 fresh=true memo_watch=false authenticated_slot=None"
+    },
+    "last_root_labels": {
+      "binding": true,
+      "logical": true,
+      "audit": false,
+      "source": 7,
+      "owner": "Request",
+      "alias": 44,
+      "native": 43
+    },
+    "qualification": "Labels narrow the mismatch; they do not prove a Runtime DATA eligibility policy change is correct or authorize treating freshness as memo authority. Further diagnosis and source review remain separate."
+  },
+  "historical_evidence": {
+    "path": "docs/roadmap/evidence/m4-pr263-data-descendant-targeted-results-2026-10-19.json",
+    "source_head": "018d0f6d323d5376d358738e9107761a50175c9d",
+    "scope": "Earlier six6PASS and followup14 12PASS2FAIL remain historical, separately bound. New IRQ PASS does not retroactively rewrite the previous raw failure."
+  },
+  "review_limits": [
+    "No Cargo/VM/source/index/ref edit by this cache author. Full logs remain at SHA-bound local cache paths, not embedded.",
+    "No public macro-frame/namespace/callable, all-DATA, whole workspace, final CI, default-fit/performance/readiness claim.",
+    "Runtime-DATA proposal is cache-only pending independent review/execution, not part of8e source. Independent literal/effect batch has no result in this receipt."
+  ],
+  "next": "Review a bounded Runtime DATA-only proposal against original authority/callback/physical/source guards, then actual focused replay. Preserve first healthy failure and all original negative/IRQ/poison/restoration assertions."
+}

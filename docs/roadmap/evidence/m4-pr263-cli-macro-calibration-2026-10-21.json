@@ -1,0 +1,221 @@
+{
+  "scope": "15 observed positive Macro/CLI setup cases; not executed.",
+  "base_head": "c8449d951469ebdb59e1e4ed2c08b7336b7349c1",
+  "source_ci_head": "94276e79217342581cc45425ad891ebd2c530682",
+  "ci_url": "https://github.com/bobby/suss/actions/runs/39530511823",
+  "cases": [
+    {
+      "job": "integration-0",
+      "target": "aot_source_preparation",
+      "name": "source_preparation_deduplicates_diamond_dependencies_and_isolates_macro_state",
+      "location": "crates/suss-cli/tests/aot_source_preparation.rs:151:77",
+      "kind": "macro_guest_compilation_fuel",
+      "message_sha256": "6a41b31c5e3fa3758251b5640e91543de8b22ae61564ccf8d96974b53446fd14",
+      "message_excerpt": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 0..93, message: \"Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace"
+    },
+    {
+      "job": "integration-0",
+      "target": "compiled_aot_project_command",
+      "name": "explicitly_selected_core_source_is_not_skipped_as_bootstrap_initialization",
+      "location": "crates/suss-cli/tests/compiled_aot_project_command.rs:41:5",
+      "kind": "macro_guest_compilation_fuel",
+      "message_sha256": "8037788fb5b0fd3fabf08060e83782f595f20dda307a724ba74b53e844433c9b",
+      "message_excerpt": "Compilation error: Semantic error: While compiling /tmp/.tmpXn2x6q/project/src/suss/core.sus: Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 0..14\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace"
+    },
+    {
+      "job": "integration-0",
+      "target": "compiled_when_let",
+      "name": "when_let_preserves_truthiness_once_only_initialization_scope_and_body_order",
+      "location": "crates/suss-cli/tests/compiled_when_let.rs:14:58",
+      "kind": "macro_guest_compilation_fuel",
+      "message_sha256": "bb523636c67b93c441b09498210f4b8594c946f0733207cd3615a68fb01a597b",
+      "message_excerpt": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 691..723, message: \"Compiled macro expansion failed during compiled macro invocation: Runtime trap: error while executing at wasm backtrace:\\n    0:  0x1f2d2 - <unknown>!<wasm function 343>\\n    1:  0x1f618 - <unknown>!<wasm function 350>\\n    2:  0x1f82b - <unknown>!<wasm function 353>\\n    3:  0x217d9 - <unknown>!<wasm function 395>\\n    4:  0x21a50 - <unknown>!<wasm function 398>\\n    5:  0x6e147 - <unknown>!<wasm function 514>\\n    6:  0x6d4fd - <unknown>!<wasm function 502>\\n    7:   0xe64d - <unknown>!<wasm function "
+    },
+    {
+      "job": "integration-0",
+      "target": "native_repl_async_io",
+      "name": "session_lifecycle_cli_public_stream_writer_awaits_real_io_and_reader_distinguishes_nil_data_from_eof",
+      "location": "crates/suss-cli/tests/native_repl_async_io.rs:112:13",
+      "kind": "macro_guest_compilation_fuel",
+      "message_sha256": "1122a27ec5d82ba832ae48b6c307dd5282a8cdfd42f918f9af7e0785b6a313e3",
+      "message_excerpt": "11000 timed out; stdout=7001\nstderr=Error: suss.async (Some(\"<suss-stdlib>/suss/async.sus\")): Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 925..931\nError: Unresolved Runtime name async/stream-pair at bytes 11..28\nError: Unresolved Runtime name future at bytes 15..21\nError: Unresolved Runtime name future at bytes 15..21\nError: Unresolved Runtime name observed at bytes 9..17\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace"
+    },
+    {
+      "job": "integration-0",
+      "target": "native_repl_async_io",
+      "name": "session_lifecycle_cli_reset_waits_for_pending_stream_cleanup_and_late_bytes_cannot_cross_stores",
+      "location": "crates/suss-cli/tests/native_repl_async_io.rs:112:13",
+      "kind": "macro_guest_compilation_fuel",
+      "message_sha256": "2f078104ee4ab623dc3004763e31704b631ab13e2619ef1b44cff76858a73231",
+      "message_excerpt": "13000 timed out; stdout=7001\nstderr=Error: suss.async (Some(\"<suss-stdlib>/suss/async.sus\")): Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 925..931\nError: Unresolved Runtime name async/stream-pair at bytes 11..28\nError: Unresolved Runtime name future at bytes 15..21\nError: Unresolved Runtime name future at bytes 15..21\nError: Unresolved Runtime name cleaned at bytes 9..16"
+    },
+    {
+      "job": "integration-0",
+      "target": "native_repl_async_io",
+      "name": "session_lifecycle_idle_source_io_progresses_with_stdin_open_and_input_stays_responsive",
+      "location": "crates/suss-cli/tests/native_repl_async_io.rs:217:5",
+      "kind": "macro_guest_compilation_fuel",
+      "message_sha256": "6ff4c43271cb03edaeb4f39e33e170ab854edd95b59ff3bc8261a0051ef8d6b1",
+      "message_excerpt": "pending setup failed before byte delivery: Error: suss.async (Some(\"<suss-stdlib>/suss/async.sus\")): Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 925..931\nError: Unresolved Runtime name future at bytes 11..17"
+    },
+    {
+      "job": "integration-0",
+      "target": "native_repl_async_io",
+      "name": "session_lifecycle_cli_sigint_cancels_pending_streams_awaits_finally_and_retires_native_fds",
+      "location": "crates/suss-cli/tests/native_repl_async_io.rs:112:13",
+      "kind": "macro_guest_compilation_fuel",
+      "message_sha256": "aa0e9603c81b4c6994203bec04065c0930f234e6fb9c3b8722c66154d04a1821",
+      "message_excerpt": "12000 timed out; stdout=7001\nstderr=Error: suss.async (Some(\"<suss-stdlib>/suss/async.sus\")): Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 925..931\nError: Unresolved Runtime name async/stream-pair at bytes 11..28\nError: Unresolved Runtime name future at bytes 15..21\nError: Unresolved Runtime name future at bytes 15..21\nError: Unresolved Runtime name cleaned at bytes 9..16"
+    },
+    {
+      "job": "integration-0",
+      "target": "native_repl_async_io",
+      "name": "session_lifecycle_recovered_async_fuel_trap_reports_once_and_keeps_cli_prompt_usable",
+      "location": "crates/suss-cli/tests/native_repl_async_io.rs:112:13",
+      "kind": "macro_guest_compilation_fuel",
+      "message_sha256": "dfb9eb0c702f987425da02b69bb09b723c8e89402dd9e18e9cb2ae5be5072509",
+      "message_excerpt": "#<future failed> timed out; stdout=9001\nstderr=Error: Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 13..14\nError: Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 13..90\nError: Unresolved Runtime name trapped at bytes 0..7"
+    },
+    {
+      "job": "integration-0",
+      "target": "native_repl_async_io",
+      "name": "session_lifecycle_reset_retires_old_io_endpoint_before_new_session_accepts_input",
+      "location": "crates/suss-cli/tests/native_repl_async_io.rs:112:13",
+      "kind": "macro_guest_compilation_fuel",
+      "message_sha256": "bc0552b3178c262acc4047a322e7899ef323f70a8440ee331b1fc4990e6bed4f",
+      "message_excerpt": "fresh consumer owns late byte timed out; stdout=7001\n0\n7800\nnil\n7904\n0\nstderr=Error: suss.async (Some(\"<suss-stdlib>/suss/async.sus\")): Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 925..931\nError: Unresolved Runtime name future at bytes 15..21\nError: suss.async (Some(\"<suss-stdlib>/suss/async.sus\")): Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 925..931\nError: Unresolved Runtime name future at bytes 17..23"
+    },
+    {
+      "job": "integration-0",
+      "target": "native_repl_async_io",
+      "name": "session_lifecycle_sigint_cancels_suspended_source_and_awaited_finally_runs_once",
+      "location": "crates/suss-cli/tests/native_repl_async_io.rs:472:9",
+      "kind": "macro_guest_compilation_fuel",
+      "message_sha256": "c3fd08112780033ae80731dce090e1c42c2c359ecce3d73cee80920755f7ba4e",
+      "message_excerpt": "child did not establish FIFO reader /tmp/.tmp9EZd9f/body: 7001\n0\n7400\nError: suss.async (Some(\"<suss-stdlib>/suss/async.sus\")): Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 925..931\nError: Unresolved Runtime name future at bytes 11..17"
+    },
+    {
+      "job": "integration-0",
+      "target": "native_repl_async_io",
+      "name": "session_lifecycle_source_io_eof_is_nil_and_host_failure_is_catchable_without_losing_prompt",
+      "location": "crates/suss-cli/tests/native_repl_async_io.rs:369:9",
+      "kind": "macro_guest_compilation_fuel",
+      "message_sha256": "a9c25f6c5c3a54cecaf65d60bdff963891c3e3d30b696298e95c3c52fab4e55d",
+      "message_excerpt": "EOF/failure effects missing: 7001\n0\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\nerror: test failed, to rerun pass `-p suss-cli --test native_repl_async_io`\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n8204\n820"
+    },
+    {
+      "job": "integration-4",
+      "target": "compiled_native_entrypoints",
+      "name": "eval_command_gives_compiled_macros_actual_lexical_environment",
+      "location": "crates/suss-cli/tests/compiled_native_entrypoints.rs:5:5",
+      "kind": "macro_guest_compilation_fuel",
+      "message_sha256": "1dfa113967e70512406b9263e1f01f79adbb3d76ac1f3f2fc1e1ad107b938e3c",
+      "message_excerpt": "Output { status: ExitStatus(unix_wait_status(256)), stdout: \"\", stderr: \"Error: Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 89..109\\n\" }\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace"
+    },
+    {
+      "job": "integration-4",
+      "target": "compiled_native_entrypoints",
+      "name": "review_failed_script_preserves_completed_macro_dependencies_and_effects",
+      "location": "crates/suss-cli/tests/compiled_native_entrypoints.rs:238:10",
+      "kind": "macro_guest_compilation_fuel",
+      "message_sha256": "ce1a9e7291d8a055aabcf852edff8a3fb47c4eb6dc6fd9bc9b0860358a7b6a4d",
+      "message_excerpt": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 27..32, message: \"Compiled macro namespace loading failed: Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 232..273\" })"
+    },
+    {
+      "job": "integration-4",
+      "target": "compiled_record_type_boundary",
+      "name": "compiled_macro_catalog_reports_declared_field_count_and_intrinsic_record_kind",
+      "location": "crates/suss-cli/tests/compiled_record_type_boundary.rs:184:11",
+      "kind": "macro_guest_compilation_fuel",
+      "message_sha256": "bbe2b58425a0eb8fcfb44b89544940675a863777a1201bc2ca8061014e9db236",
+      "message_excerpt": "called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 67..103, message: \"Compiled macro expansion failed during caller &env input transport: Runtime trap: wasm trap: all fuel consumed by WebAssembly\" })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace"
+    },
+    {
+      "job": "integration-7",
+      "target": "compiled_aot_namespace_command",
+      "name": "namespace_command_uses_default_root_compiled_macros_and_runtime_dependencies",
+      "location": "crates/suss-cli/tests/compiled_aot_namespace_command.rs:72:5",
+      "kind": "macro_guest_compilation_fuel",
+      "message_sha256": "97563e332642f3cac84b5ce2885306a2538970c4b638a538e66b98097fb3a833",
+      "message_excerpt": "Compilation error: Semantic error: While compiling /tmp/.tmpQWYEFO/src/app/core.cljc: Macro expansion analysis budget exhausted: Runtime trap: wasm trap: all fuel consumed by WebAssembly at bytes 9..77\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace"
+    }
+  ],
+  "files": {
+    "crates/suss-cli/tests/compiled_when_let.rs": {
+      "before_sha256": "3164302cac850756b1a5c2d2449b38331c943f786a2f24837ad8e5928ba08d3d",
+      "after_sha256": "8e4e22b4ab356911e7cf8bbb02a6b1f5fc87908bdf78a30791db6105d3b339aa"
+    },
+    "crates/suss-cli/tests/compiled_native_entrypoints.rs": {
+      "before_sha256": "c3fbff8d34c01393e7fd004635426552b7c4aacfaba1f3ed94a36a3e15d1b750",
+      "after_sha256": "7d4f8ad08a0bff98ad6738d323fe10097e6b2cb55ae62fca97345aea25829d76"
+    },
+    "crates/suss-cli/tests/compiled_record_type_boundary.rs": {
+      "before_sha256": "82e929295269d2eb9145506a6441b6405621331f995299c3dfde169654ff28b4",
+      "after_sha256": "894d23a272815b6c1763c776a83a6e84aa97b4ec56306a192bf64952e25056fc"
+    },
+    "crates/suss-cli/tests/native_repl_async_io.rs": {
+      "before_sha256": "55267eca3b9960afcaddb36e2c20dbfc13cd6d6eb3f40a0ffa8473a7aa1ce01f",
+      "after_sha256": "e2962f94330035855b3777985577b29d3eb16dcd52f4a8de6b073bddc779bd5f"
+    },
+    "crates/suss-cli/tests/aot_source_preparation.rs": {
+      "before_sha256": "c155d6d2bca67595c4738d6c0a55f84069daa3fefcba9e54dfecd348516e0099",
+      "after_sha256": "e66cc29bc0e996aac3dea76ee6f9248d645da46e9f2e54354b79175fc814e8a2"
+    },
+    "crates/suss-cli/tests/compiled_aot_project_command.rs": {
+      "before_sha256": "a19c4508b9976cd0e63b30c888258d7b3be3c8d31c929b7cfa65c7d5ed0f72f2",
+      "after_sha256": "1398cf79cddd4914c012b6a00673a7ac88adbb1b1e762f9520b58785194a10cf"
+    },
+    "crates/suss-cli/tests/compiled_aot_namespace_command.rs": {
+      "before_sha256": "70a4d027b9a9aa639900821b99ffc583bace4f1795657dcaa94d48de9a7beb09",
+      "after_sha256": "bf17879e4f4e6b17460b0b5931e01363a43be2327ea157bd0749e9f7c4bd497a"
+    }
+  },
+  "syntax_only": [
+    {
+      "file": "crates/suss-cli/tests/compiled_when_let.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/compiled_native_entrypoints.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/compiled_record_type_boundary.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/native_repl_async_io.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/aot_source_preparation.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/compiled_aot_project_command.rs",
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "file": "crates/suss-cli/tests/compiled_aot_namespace_command.rs",
+      "exit_code": 0,
+      "stderr": ""
+    }
+  ],
+  "preservation": [
+    "Three exact CompiledMacros instances receive existing100B compilation allowance; no other instance changed.",
+    "AOT source API call and two exact project/namespace tests get explicit100B compilation allowance. Both project commands retain original source paths, output checks, component calls and40M execution Stores.",
+    "Actual eval lexical-environment command receives explicit100B using new-eoption c8449d9, same source/result assertions.",
+    "Eight normal async lifecycle cases now pass explicit compilation100B through shared fixture. Original supplied Runtime caps, including1M async exhaustion, remain. Explicit10M compile-order/trace fixture is unchanged. Default normal trace behavior stays off. All deadlines, actualFIFO/I/O/FD/reset/cancel/cleanup/primary-error-count assertions unchanged.",
+    "Dedicated large-source100k recovery case and native AOT-list default route excluded; do not claim all integration failures fixed.",
+    "All guest programs, fixture files and original assertions unchanged; only budgets/imports changed. No semantic execution/typecheck/fullbaseline/CI success."
+  ],
+  "review_corrections": [
+    "v1 initially placed a project compile flag before its command and assumed-ealready accepted it. Source review found both before execution. Final project ordering uses compile first; c8449d9 explicitly implements-eoption after its expression, with separate parser and subprocess regressions. v1 packet retained; onlyv2 afterimages apply."
+  ]
+}

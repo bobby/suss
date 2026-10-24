@@ -37,6 +37,31 @@ fn array_fields(store: &mut StoreContextMut<'_, ()>, value: &Val, count: usize, 
     }
     Ok(Some(result))
 }
+// Query-local values never escape the caller's live RootScope. Complete all
+// reads, then all original non-null validations, BEFORE comparing any field.
+fn scoped_prototype_fields(mut store: StoreContextMut<'_, ()>, witness: &Val,
+    interrupt: &std::sync::atomic::AtomicBool,
+) -> Result<Option<[Val; 12]>> {
+    Session::consume_host_work(store.as_context_mut(), 13, interrupt)?;
+    let Some(value) = witness.anyref().flatten() else { return Ok(None); };
+    let Some(array) = value.as_array(&store)? else { return Ok(None); };
+    if array.len(&store)? != 12 { return Ok(None); }
+    // Actual stack initialization; no Vec backing or persistent owned roots.
+    Session::consume_host_work(store.as_context_mut(), 12, interrupt)?;
+    let mut fields = std::array::from_fn(|_| Val::null_any_ref());
+    for (index, field) in fields.iter_mut().enumerate() {
+        Session::consume_host_work(store.as_context_mut(), 1, interrupt)?;
+        *field = array.get(&mut store, index as u32)?;
+    }
+    for field in &fields {
+        // Retain the old ownership/validation control charge, without allocating
+        // an OwnedRooted or its SessionValue/handle for this temporary value.
+        Session::consume_host_work(store.as_context_mut(), 1, interrupt)?;
+        field.anyref().flatten()
+            .ok_or_else(|| wasmtime::Error::msg("Expected non-null runtime Value"))?;
+    }
+    Ok(Some(fields))
+}
 impl Session {
     pub(super) fn begin_prototype_origins(&mut self) -> Result<()> {
         if self.bootstrap_core || self.prototype_origin.is_some() { return Err(invalid("Prototype provisioning already finished")); }
@@ -103,18 +128,29 @@ impl PrototypeInputs {
     pub(super) fn matches(&self, session: &mut Session) -> Result<bool> {
         let _request = session.operation_budget_scope()?;
         let Some(authority) = session.prototype_origin.clone() else { return Ok(false); };
-        // Fresh query checks the existing cache and latest bounded private slot.
-        let Some(current) = session.prototype_origin_inputs(&self.fields[0], &self.fields[1], &self.fields[2])? else { return Ok(false); };
+        // Same fresh private query and independent initial-constructor checks.
+        // The nested query operation remains live through full materialization.
+        let query_request = session.operation_budget_scope()?;
+        let Some(query_authority) = session.prototype_origin.clone() else { return Ok(false); };
+        let Some(methods) = session.canonical_methods.clone() else { return Ok(false); };
+        if !methods.source_constructor_matches(session, &self.fields[0], &self.fields[1])? { return Ok(false); }
+        let witness = runtime(session, "prototype-origin-query", &[&self.fields[0], &self.fields[1], &self.fields[2]], &query_authority.handles)?;
         let interrupt = session.host_work_interrupt();
-        session.charge_host_work((24 * std::mem::size_of::<Val>()) as u64)?;
         let mut scope = RootScope::new(&mut session.store);
-        let mut f = Vec::with_capacity(12);
-        for (old, new) in self.fields.iter().zip(&current.fields) {
+        let witness = Val::AnyRef(Some(witness.value.to_rooted(&mut scope)));
+        let Some(current) = scoped_prototype_fields(scope.as_context_mut(), &witness, &interrupt)? else { return Ok(false); };
+        drop(methods);
+        drop(query_authority);
+        drop(query_request);
+        // Remove only the actual 12-Val heap backing. Preserve the other half
+        // of the legacy 24-Val charge conservatively, plus stack-init controls.
+        Session::consume_host_work(scope.as_context_mut(), (12 * std::mem::size_of::<Val>()) as u64 + 12, &interrupt)?;
+        let mut f: [Val; 12] = std::array::from_fn(|_| Val::null_any_ref());
+        for (index, (old, new)) in self.fields.iter().zip(&current).enumerate() {
             Session::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
             let old = Val::AnyRef(Some(old.value.to_rooted(&mut scope)));
-            let new = Val::AnyRef(Some(new.value.to_rooted(&mut scope)));
-            if !same(&scope.as_context_mut(), &old, &new)? { return Ok(false); }
-            f.push(old);
+            if !same(&scope.as_context_mut(), &old, new)? { return Ok(false); }
+            f[index] = old;
         }
         let prototype = f[2].unwrap_anyref().unwrap().as_struct(&scope)?.ok_or_else(|| invalid("Prototype witness needs object"))?;
         Session::consume_host_work(scope.as_context_mut(), 4, &interrupt)?;
@@ -375,5 +411,239 @@ mod certification_audit_tests {
         }).unwrap();
         let mut next = CertificationAudit::new(&mut session).unwrap();
         assert!(!next.prototype(&mut session, &origin).unwrap());
+    }
+}
+
+
+#[cfg(test)]
+mod prototype_buffer_tests {
+    use super::*;
+    use crate::portable::resolve::Phase;
+    fn real_origin(session: &mut Session) -> PrototypeInputs {
+        drop(session.eval("(list 17)").unwrap());
+        let constructor = session.eval("suss.core/List").unwrap();
+        let descriptor = session.data_descriptor(&constructor, true).unwrap();
+        let handles = session.prototype_origin.as_ref().unwrap().handles.clone();
+        let prototype = runtime(session, "owned-descriptor-prototype", &[&descriptor], &handles).unwrap();
+        session.prototype_origin_inputs(&constructor, &descriptor, &prototype).unwrap().unwrap()
+    }
+    fn query_array(session: &mut Session, origin: &PrototypeInputs, malformed_last: bool) -> SessionValue {
+        let _request = session.operation_budget_scope().unwrap();
+        let mut scope = RootScope::new(&mut session.store);
+        let mut result = [Val::null_any_ref()];
+        session.runtime.get_func(&mut scope, "args-new").unwrap()
+            .call(&mut scope, &[Val::I32(12)], &mut result).unwrap();
+        let array = result[0].unwrap_anyref().unwrap().as_array(&scope).unwrap().unwrap();
+        for index in 0..12 {
+            // Index zero intentionally differs from the captured constructor.
+            let value = if malformed_last && index == 11 { Val::null_any_ref() }
+                else { Val::AnyRef(Some(origin.fields[if index == 0 { 2 } else { index }].value.to_rooted(&mut scope))) };
+            array.set(&mut scope, index as u32, value).unwrap();
+        }
+        own(&mut scope, result[0].clone(), session.identity, &session.handles).unwrap()
+    }
+    #[test]
+    fn prototype_buffer_real_origins_survive_gc_and_reject_mutated_key() {
+        for phase in [Phase::Runtime, Phase::Macro] {
+            let mut session = match phase { Phase::Runtime => Session::new_repl().unwrap(), Phase::Macro => Session::new_macro().unwrap() };
+            let origin = real_origin(&mut session);
+            session.collect().unwrap();
+            assert!(origin.matches(&mut session).unwrap());
+            let old = {
+                let mut scope = RootScope::new(&mut session.store);
+                let key = origin.fields[7].value.to_rooted(&mut scope).as_array(&scope).unwrap().unwrap();
+                let old = key.get(&mut scope, 0).unwrap();
+                key.set(&mut scope, 0, Val::I32(100)).unwrap();
+                old
+            };
+            assert!(!origin.matches(&mut session).unwrap());
+            {
+                let mut scope = RootScope::new(&mut session.store);
+                let key = origin.fields[7].value.to_rooted(&mut scope).as_array(&scope).unwrap().unwrap();
+                key.set(&mut scope, 0, old).unwrap();
+            }
+            assert!(origin.matches(&mut session).unwrap());
+        }
+    }
+    #[test]
+    fn prototype_buffer_late_null_precedes_early_reference_mismatch() {
+        let mut session = Session::new_macro().unwrap();
+        let origin = real_origin(&mut session);
+        let malformed = query_array(&mut session, &origin, true);
+        let irq = session.host_work_interrupt();
+        let _request = session.operation_budget_scope().unwrap();
+        let mut scope = RootScope::new(&mut session.store);
+        let expected = Val::AnyRef(Some(origin.fields[0].value.to_rooted(&mut scope)));
+        let witness = Val::AnyRef(Some(malformed.value.to_rooted(&mut scope)));
+        let array = witness.unwrap_anyref().unwrap().as_array(&scope).unwrap().unwrap();
+        let first = array.get(&mut scope, 0).unwrap();
+        assert!(!same(&scope.as_context_mut(), &expected, &first).unwrap());
+        let mut compared = false;
+        let result = (|| -> Result<bool> {
+            let current = scoped_prototype_fields(scope.as_context_mut(), &witness, &irq)?.unwrap();
+            compared = true;
+            Ok(same(&scope.as_context_mut(), &expected, &current[0])?)
+        })();
+        match result.unwrap_err() {
+            SessionError::Host(inner) => assert_eq!(inner.to_string(), "Expected non-null runtime Value"),
+            other => panic!("late null must retain the original host error type: {other}"),
+        }
+        assert!(!compared, "late malformed input must fail before early mismatch comparison");
+    }
+    #[test]
+    fn prototype_buffer_all_charge_boundaries_irq_retry_and_scoped_roots() {
+        let mut session = Session::new_macro().unwrap();
+        let origin = real_origin(&mut session);
+        let witness = query_array(&mut session, &origin, false);
+        let irq = session.host_work_interrupt();
+        let measured = {
+            let _request = session.operation_budget_scope().unwrap();
+            let mut scope = RootScope::new(&mut session.store);
+            let witness = Val::AnyRef(Some(witness.value.to_rooted(&mut scope)));
+            let before = scope.as_context_mut().get_fuel().unwrap();
+            assert!(scoped_prototype_fields(scope.as_context_mut(), &witness, &irq).unwrap().is_some());
+            before - scope.as_context_mut().get_fuel().unwrap()
+        };
+        assert!(measured > 0);
+        for fuel in 0..measured {
+            let _request = session.operation_budget_scope().unwrap();
+            session.store.set_fuel(fuel).unwrap();
+            let mut scope = RootScope::new(&mut session.store);
+            let witness = Val::AnyRef(Some(witness.value.to_rooted(&mut scope)));
+            let error = scoped_prototype_fields(scope.as_context_mut(), &witness, &irq).unwrap_err();
+            assert!(matches!(error, SessionError::Trap(ref e) | SessionError::Host(ref e)
+                if e.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)), "{error}");
+        }
+        {
+            let _request = session.operation_budget_scope().unwrap();
+            let mut scope = RootScope::new(&mut session.store);
+            let witness = Val::AnyRef(Some(witness.value.to_rooted(&mut scope)));
+            irq.store(true, std::sync::atomic::Ordering::SeqCst);
+            assert!(scoped_prototype_fields(scope.as_context_mut(), &witness, &irq).unwrap_err().is_interrupt());
+        }
+        irq.store(false, std::sync::atomic::Ordering::SeqCst);
+        {
+            let _request = session.operation_budget_scope().unwrap();
+            let handles = session.prototype_origin.as_ref().unwrap().handles.clone();
+            let before = handles.load(std::sync::atomic::Ordering::Relaxed);
+            let mut scope = RootScope::new(&mut session.store);
+            let witness = Val::AnyRef(Some(witness.value.to_rooted(&mut scope)));
+            let fields = scoped_prototype_fields(scope.as_context_mut(), &witness, &irq).unwrap().unwrap();
+            scope.as_context_mut().gc(None).unwrap();
+            for (index, field) in fields.iter().enumerate() {
+                let expected = Val::AnyRef(Some(origin.fields[if index == 0 { 2 } else { index }].value.to_rooted(&mut scope)));
+                assert!(same(&scope.as_context_mut(), field, &expected).unwrap());
+            }
+            assert_eq!(handles.load(std::sync::atomic::Ordering::Relaxed), before);
+        }
+        assert!(origin.matches(&mut session).unwrap());
+    }
+}
+
+#[cfg(test)]
+impl PrototypeInputs {
+    fn legacy_owned_matches(&self, session: &mut Session) -> Result<bool> {
+        let _request = session.operation_budget_scope()?;
+        let Some(authority) = session.prototype_origin.clone() else { return Ok(false); };
+        // Fresh query checks the existing cache and latest bounded private slot.
+        let Some(current) = session.prototype_origin_inputs(&self.fields[0], &self.fields[1], &self.fields[2])? else { return Ok(false); };
+        let interrupt = session.host_work_interrupt();
+        session.charge_host_work((24 * std::mem::size_of::<Val>()) as u64)?;
+        let mut scope = RootScope::new(&mut session.store);
+        let mut f = Vec::with_capacity(12);
+        for (old, new) in self.fields.iter().zip(&current.fields) {
+            Session::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
+            let old = Val::AnyRef(Some(old.value.to_rooted(&mut scope)));
+            let new = Val::AnyRef(Some(new.value.to_rooted(&mut scope)));
+            if !same(&scope.as_context_mut(), &old, &new)? { return Ok(false); }
+            f.push(old);
+        }
+        let prototype = f[2].unwrap_anyref().unwrap().as_struct(&scope)?.ok_or_else(|| invalid("Prototype witness needs object"))?;
+        Session::consume_host_work(scope.as_context_mut(), 4, &interrupt)?;
+        let tag = prototype.field(&mut scope, 0)?;
+        let storage = prototype.field(&mut scope, 1)?;
+        let properties = prototype.field(&mut scope, 2)?;
+        let uid = prototype.field(&mut scope, 3)?;
+        if !same(&scope.as_context_mut(), &tag, &f[3])?
+            || !same(&scope.as_context_mut(), &storage, &f[4])?
+            || !nil(&scope.as_context_mut(), &properties)?
+            || !nil(&scope.as_context_mut(), &uid)? { return Ok(false); }
+        let Some(fields) = array_fields(&mut scope.as_context_mut(), &f[4], 2, &interrupt)? else { return Ok(false); };
+        let Some(pairs) = array_fields(&mut scope.as_context_mut(), &f[5], 2, &interrupt)? else { return Ok(false); };
+        let Some(property) = array_fields(&mut scope.as_context_mut(), &f[8], 2, &interrupt)? else { return Ok(false); };
+        if !same(&scope.as_context_mut(), &fields[0], &f[5])? || !same(&scope.as_context_mut(), &fields[1], &f[6])?
+            || !same(&scope.as_context_mut(), &pairs[0], &f[7])? || !same(&scope.as_context_mut(), &pairs[1], &f[8])?
+            || !same(&scope.as_context_mut(), &property[1], &f[0])?
+            || !same(&scope.as_context_mut(), &property[1], &f[10])? { return Ok(false); }
+        Session::consume_host_work(scope.as_context_mut(), 3, &interrupt)?;
+        if !matches!(&property[0], Val::AnyRef(Some(v)) if v.as_i31(&scope)?.is_some_and(|v|v.get_u32()==5))
+            || !nil(&scope.as_context_mut(), &f[11])? { return Ok(false); }
+        // The original STRING reference is not a spelling authority: its UTF16
+        // elements are mutable. Compare against independent factory literal units.
+        let Some(key) = f[7].unwrap_anyref().unwrap().as_array(&scope)? else { return Ok(false); };
+        if key.len(&scope)? != 11 { return Ok(false); }
+        for (index, unit) in "constructor".encode_utf16().enumerate() {
+            Session::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
+            if !matches!(key.get(&mut scope, index as u32)?, Val::I32(found) if found == i32::from(unit)) { return Ok(false); }
+        }
+        let initial_parent = Val::AnyRef(Some(authority.parent.value.to_rooted(&mut scope)));
+        if !same(&scope.as_context_mut(), &f[6], &initial_parent)? { return Ok(false); }
+        drop(scope);
+        // This complete snapshot was made ONLY inside initial provisioning. It
+        // conservatively rejects default Object-prototype mutations, not source
+        // descriptor protocol changes behind the constructor backlink cut above.
+        session.storage_matches(&authority.parent, &authority.parent_storage)
+    }
+}
+
+#[cfg(test)]
+mod prototype_buffer_matched_control {
+    use super::*;
+    use crate::portable::resolve::Phase;
+    fn origin(session: &mut Session) -> PrototypeInputs {
+        drop(session.eval("(list 17)").unwrap());
+        let class = session.eval("suss.core/List").unwrap();
+        let descriptor = session.data_descriptor(&class, true).unwrap();
+        let handles = session.prototype_origin.as_ref().unwrap().handles.clone();
+        let prototype = runtime(session, "owned-descriptor-prototype", &[&descriptor], &handles).unwrap();
+        session.prototype_origin_inputs(&class, &descriptor, &prototype).unwrap().unwrap()
+    }
+    #[test]
+    fn prototype_buffer_complete_check_matches_original_owned_work_and_poison() {
+        for (phase, mut session) in [(Phase::Runtime, Session::new_repl().unwrap()),
+            (Phase::Macro, Session::new_macro().unwrap())] {
+            let source = origin(&mut session);
+            session.collect().unwrap();
+            session.with_operation_budget(|session| {
+                let before = session.operation_fuel_remaining()?;
+                assert!(source.legacy_owned_matches(session)?);
+                let owned = before - session.operation_fuel_remaining()?;
+                let before = session.operation_fuel_remaining()?;
+                assert!(source.matches(session)?);
+                let scoped = before - session.operation_fuel_remaining()?;
+                eprintln!("prototype-buffer-complete phase={phase:?} owned={owned} scoped={scoped}");
+                assert!(scoped < owned, "actual complete validation cost, not hypothetical byte saving");
+                Ok(())
+            }).unwrap();
+            // A same-reference key remains mutable: scoped roots are not a
+            // cached verdict and must preserve the original physical rejection.
+            let old = session.inspect(&source.fields[7], |mut store, value| {
+                let key = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+                let old = key.get(&mut store, 0)?;
+                key.set(&mut store, 0, Val::I32(100))?;
+                Ok(old)
+            }).unwrap();
+            assert!(!source.legacy_owned_matches(&mut session).unwrap());
+            assert!(!source.matches(&mut session).unwrap());
+            session.inspect(&source.fields[7], |mut store, value| {
+                value.unwrap_anyref().unwrap().as_array(&store)?.unwrap().set(&mut store, 0, old)
+            }).unwrap();
+            session.collect().unwrap();
+            assert!(source.legacy_owned_matches(&mut session).unwrap());
+            assert!(source.matches(&mut session).unwrap());
+            let mut foreign = Session::new_macro().unwrap();
+            assert!(matches!(source.legacy_owned_matches(&mut foreign), Err(SessionError::ForeignValue)));
+            assert!(matches!(source.matches(&mut foreign), Err(SessionError::ForeignValue)));
+        }
     }
 }

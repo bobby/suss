@@ -1,14 +1,13 @@
-use std::collections::HashMap;
 use suss_cli::portable_session::Session;
 use suss_compile::portable::{
     self,
-    hir::{Expression, LocalBinding, LocalKind},
+    hir::{Expression, LocalKind, SourceLocals},
 };
 use suss_reader::forms::{Form, Kind};
 
 #[derive(Default)]
 struct Observe {
-    snapshots: Vec<(String, HashMap<String, LocalBinding>)>,
+    snapshots: Vec<(String, SourceLocals)>,
     origins: Vec<(String, Option<portable::SourceOrigin>)>,
     catalogs: Vec<(
         String,
@@ -55,7 +54,7 @@ impl portable::ExpansionHost for Observe {
         Ok(Some(items[2].clone()))
     }
 }
-fn snapshot<'a>(host: &'a Observe, name: &str) -> &'a HashMap<String, LocalBinding> {
+fn snapshot<'a>(host: &'a Observe, name: &str) -> &'a SourceLocals {
     &host
         .snapshots
         .iter()

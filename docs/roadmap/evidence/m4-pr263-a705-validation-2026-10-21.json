@@ -1,0 +1,295 @@
+{
+  "schema": 1,
+  "scope": "Source-qualified completed Rust/CLI/bootstrap checks and separate older partial metadata failures. No full issue, milestone, baseline, final review or CI completion.",
+  "compiler_source_head": "bd292e92904ed2c2c0d15e3c209efb5fd094adec",
+  "source_freeze_sha256": "c01b297ce42881b151e9efe328799312a0c7623f9e032b468c9e6ebd7436ba44",
+  "compiler_source_sha256": "a705484424b4f040a4b282544d8a0c7a667e98bad78a38361e5c6c64282fc459",
+  "compiler_inputs": 229,
+  "binary_typecheck": {
+    "head": "bd292e92904ed2c2c0d15e3c209efb5fd094adec",
+    "post_head": "bd292e92904ed2c2c0d15e3c209efb5fd094adec",
+    "head_unchanged": true,
+    "exit_code": 0,
+    "seconds": 13.720849940000335,
+    "raw_sha256": "91750cbb7938e16569925b4eb074712aa48a14660b74dc369961c3b953c9fd17",
+    "scope": "Only CLI binary Rust typecheck, not integration test compilation or semantic/bootstrap validation."
+  },
+  "workspace_alltargets_typecheck": {
+    "head": "bd292e92904ed2c2c0d15e3c209efb5fd094adec",
+    "post_head": "bd292e92904ed2c2c0d15e3c209efb5fd094adec",
+    "head_unchanged": true,
+    "exit_code": 0,
+    "seconds": 74.49950519999402,
+    "raw_sha256": "6156bc5b3f91944f001776fd1d309a6c3898e2d24960820f5957f6d0305363f0",
+    "scope": "Rust typecheck only; no semantic/bootstrap/fullbaseline proof."
+  },
+  "argument_parser_tests": {
+    "head": "bd292e92904ed2c2c0d15e3c209efb5fd094adec",
+    "post_head": "bd292e92904ed2c2c0d15e3c209efb5fd094adec",
+    "head_unchanged": true,
+    "exit_code": 0,
+    "seconds": 244.89828488999774,
+    "raw_sha256": "b45a917a13aad2d5b1f2ca54c09fb85d22e220f34b8847de1bff0c0f6df3dad6",
+    "expected": [
+      "args::tests::repl_fuel_defaults_and_legacy_aliases_are_unchanged",
+      "args::tests::repl_compile_fuel_is_independent_of_flag_order",
+      "args::tests::repl_repeated_budget_flags_only_replace_their_own_option",
+      "args::tests::repl_budget_values_reject_missing_invalid_negative_and_overflow",
+      "args::tests::repl_budget_values_preserve_unsigned_boundaries",
+      "args::tests::aot_compile_fuel_defaults_and_all_modes_are_explicit",
+      "args::tests::aot_compile_fuel_rejects_invalid_values_and_preserves_u64_boundaries",
+      "args::tests::eval_compile_fuel_preserves_expression_defaults_and_unsigned_boundaries",
+      "args::tests::eval_compile_fuel_rejects_missing_invalid_and_unrecognized_options"
+    ],
+    "passed_names": [
+      "args::tests::aot_compile_fuel_defaults_and_all_modes_are_explicit",
+      "args::tests::aot_compile_fuel_rejects_invalid_values_and_preserves_u64_boundaries",
+      "args::tests::eval_compile_fuel_preserves_expression_defaults_and_unsigned_boundaries",
+      "args::tests::eval_compile_fuel_rejects_missing_invalid_and_unrecognized_options",
+      "args::tests::repl_budget_values_preserve_unsigned_boundaries",
+      "args::tests::repl_budget_values_reject_missing_invalid_negative_and_overflow",
+      "args::tests::repl_compile_fuel_is_independent_of_flag_order",
+      "args::tests::repl_fuel_defaults_and_legacy_aliases_are_unchanged",
+      "args::tests::repl_repeated_budget_flags_only_replace_their_own_option"
+    ],
+    "summary": [
+      "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 29 filtered out; finished in 0.00s"
+    ],
+    "scope": "Only argument parser unit tests; no Runtime/BOOT/fullbaseline acceptance.",
+    "complete_expected_names": true
+  },
+  "new_target_ci_partition_proof": {
+    "head": "bd292e92904ed2c2c0d15e3c209efb5fd094adec",
+    "metadata_raw_sha256": "9869076143814bb174608d8376bf3231b82031bd84b57ee7696bc63b749325ae",
+    "new_target_occurrences": [
+      [
+        0,
+        [
+          "suss-cli",
+          "compiled_eval_compile_fuel"
+        ]
+      ]
+    ],
+    "workspace_integration_targets": 263,
+    "scope": "Cargo metadata and partition planning only, not compilation or test execution."
+  },
+  "bootstrap_generation": {
+    "head": "bd292e92904ed2c2c0d15e3c209efb5fd094adec",
+    "compiler_source_sha256": "a705484424b4f040a4b282544d8a0c7a667e98bad78a38361e5c6c64282fc459",
+    "compiler_inputs": 229,
+    "command": [
+      "nice",
+      "-n",
+      "10",
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "shipped_before": {
+      "runtime/bootstrap/macro.json": "db86c8ca6752ab34f776c118c4954564ab476aeac6d38ff270145de7e171ca2b",
+      "runtime/bootstrap/macro.wasm": "136546e27fc0fc362c1837a4ac3a1da75c4e6c38f4fc34397c74fc6dc6bda749",
+      "runtime/bootstrap/runtime.json": "93348bbd0e70ea03360817e9d738bfc7b8d320916b338bc9b8645c55432a64a3",
+      "runtime/bootstrap/runtime.wasm": "b24c2af8b553ce3e0bc5d2e2d2f8e5c5816a86b779f6cc82c63de6812d9a753a"
+    },
+    "scope": "Two normal sequential generation attempts, retained diagnostics before stale shipped comparison. Actual exit/stage inspected afterward; no automatic artifact adoption or verifier pass. Independent frozen metadata6 process remains unchanged; bounded second VM allowed after checked10GiB memory headroom.",
+    "exit_code": 1,
+    "seconds": 12.037149504998524,
+    "raw_sha256": "c072b77bb1824600f803748093d8e7a441ca2f0937ff4bbfa3325bd44251b666",
+    "postflight_error": null,
+    "diagnostics_present": true
+  },
+  "bootstrap_artifact_review": {
+    "scope": "Main read-only artifact inspection, no subagent review or VM acceptance. Exact generation pairs, all229 actual compiler inputs and builder paths; no automatic adoption.",
+    "head": "bd292e92904ed2c2c0d15e3c209efb5fd094adec",
+    "compiler_source_sha256": "a705484424b4f040a4b282544d8a0c7a667e98bad78a38361e5c6c64282fc459",
+    "input_count": 229,
+    "bootstrap_exit": "Normal2 generations complete; actual exit1 at stale shipped comparison, not verifierPASS.",
+    "bootstrap_log_sha256": "c072b77bb1824600f803748093d8e7a441ca2f0937ff4bbfa3325bd44251b666",
+    "actual_builder_output": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+    "actual_builder_output_sha256": "bf685f39f718409b7e10f1f503f8036afe17c5445c7b54629799675277a454b0",
+    "phases": {
+      "runtime": {
+        "generations_byte_exact": true,
+        "noncustom_byte_exact": true,
+        "manifest_deltas": [
+          "wasm_sha256",
+          "compiler_source_sha256"
+        ],
+        "changed_source_custom_sections": [
+          7
+        ],
+        "old_source_fingerprint": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+        "new_wasm_sha256": "ba1392321bbeb3b99812e3e84636eb35280b1a8a02654ea06e773507a40f6181"
+      },
+      "macro": {
+        "generations_byte_exact": true,
+        "noncustom_byte_exact": true,
+        "manifest_deltas": [
+          "wasm_sha256",
+          "compiler_source_sha256"
+        ],
+        "changed_source_custom_sections": [
+          7
+        ],
+        "old_source_fingerprint": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+        "new_wasm_sha256": "05569ce00cb99a73f86a4f767d8394406b431b4096fc5f9e728122e56bc48768"
+      }
+    },
+    "adoption_candidates": [
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-semantic-test-fixes-a705-production-v1/diagnostics/first/runtime.wasm",
+        "to": "runtime/bootstrap/runtime.wasm",
+        "sha256": "ba1392321bbeb3b99812e3e84636eb35280b1a8a02654ea06e773507a40f6181"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-semantic-test-fixes-a705-production-v1/diagnostics/first/runtime.json",
+        "to": "runtime/bootstrap/runtime.json",
+        "sha256": "c16fca7468407aa28eda1dfb5fd2b2e7101db160af1510ef529c335afb1b9320"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-semantic-test-fixes-a705-production-v1/diagnostics/first/macro.wasm",
+        "to": "runtime/bootstrap/macro.wasm",
+        "sha256": "05569ce00cb99a73f86a4f767d8394406b431b4096fc5f9e728122e56bc48768"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-semantic-test-fixes-a705-production-v1/diagnostics/first/macro.json",
+        "to": "runtime/bootstrap/macro.json",
+        "sha256": "e8ce1854fae636c53704d6d683e887ad3900bffd0568bfc079b631cd25ce169b"
+      }
+    ],
+    "status": "EXACT4_METADATA_ONLY_SOURCE_BOUND_ADOPTION_CANDIDATES"
+  },
+  "bootstrap_adoption": {
+    "head": "9db32aaa9926a5333e6d0e645c4495e451d1df0f",
+    "source_head": "bd292e92904ed2c2c0d15e3c209efb5fd094adec",
+    "compiler_source_sha256": "a705484424b4f040a4b282544d8a0c7a667e98bad78a38361e5c6c64282fc459",
+    "exact_four": [
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-semantic-test-fixes-a705-production-v1/diagnostics/first/runtime.wasm",
+        "to": "runtime/bootstrap/runtime.wasm",
+        "sha256": "ba1392321bbeb3b99812e3e84636eb35280b1a8a02654ea06e773507a40f6181"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-semantic-test-fixes-a705-production-v1/diagnostics/first/runtime.json",
+        "to": "runtime/bootstrap/runtime.json",
+        "sha256": "c16fca7468407aa28eda1dfb5fd2b2e7101db160af1510ef529c335afb1b9320"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-semantic-test-fixes-a705-production-v1/diagnostics/first/macro.wasm",
+        "to": "runtime/bootstrap/macro.wasm",
+        "sha256": "05569ce00cb99a73f86a4f767d8394406b431b4096fc5f9e728122e56bc48768"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-semantic-test-fixes-a705-production-v1/diagnostics/first/macro.json",
+        "to": "runtime/bootstrap/macro.json",
+        "sha256": "e8ce1854fae636c53704d6d683e887ad3900bffd0568bfc079b631cd25ce169b"
+      }
+    ],
+    "review": "Main strict metadata-only inspection; not independent subagent/final-head review. No semantic success inferred."
+  },
+  "bootstrap_identity": {
+    "head": "9db32aaa9926a5333e6d0e645c4495e451d1df0f",
+    "compiler_source_sha256": "a705484424b4f040a4b282544d8a0c7a667e98bad78a38361e5c6c64282fc459",
+    "input_count": 229,
+    "command": [
+      "python3",
+      "scripts/verify_bootstrap_identity.py"
+    ],
+    "scope": "Actual compiled build-script identity; copied checkout independence and embedded asset invalidation. No Session/VM/semantic acceptance.",
+    "exit_code": 0,
+    "seconds": 5.481691683002282,
+    "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704"
+  },
+  "actual_cli_regression": {
+    "head": "9db32aaa9926a5333e6d0e645c4495e451d1df0f",
+    "compiler_source_sha256": "a705484424b4f040a4b282544d8a0c7a667e98bad78a38361e5c6c64282fc459",
+    "input_count": 229,
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-cli",
+      "--locked",
+      "--test",
+      "compiled_eval_compile_fuel",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "test_source": "crates/suss-cli/tests/compiled_eval_compile_fuel.rs",
+    "test_source_sha256": "610368f0c8d61589e62c59ec01e5551b01e86a5157d62644bd3ca1491a629887",
+    "boot": [
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-semantic-test-fixes-a705-production-v1/diagnostics/first/runtime.wasm",
+        "to": "runtime/bootstrap/runtime.wasm",
+        "sha256": "ba1392321bbeb3b99812e3e84636eb35280b1a8a02654ea06e773507a40f6181"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-semantic-test-fixes-a705-production-v1/diagnostics/first/runtime.json",
+        "to": "runtime/bootstrap/runtime.json",
+        "sha256": "c16fca7468407aa28eda1dfb5fd2b2e7101db160af1510ef529c335afb1b9320"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-semantic-test-fixes-a705-production-v1/diagnostics/first/macro.wasm",
+        "to": "runtime/bootstrap/macro.wasm",
+        "sha256": "05569ce00cb99a73f86a4f767d8394406b431b4096fc5f9e728122e56bc48768"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-semantic-test-fixes-a705-production-v1/diagnostics/first/macro.json",
+        "to": "runtime/bootstrap/macro.json",
+        "sha256": "e8ce1854fae636c53704d6d683e887ad3900bffd0568bfc079b631cd25ce169b"
+      }
+    ],
+    "scope": "One complete new actual CLI eval regression: defaults/explicit100B print42 and zero compilation fails before Runtime throw. No broader semantic/fullbaseline proof. Frozen metadata6 old source runs separately.",
+    "exit_code": 0,
+    "seconds": 851.8140622010033,
+    "raw_sha256": "70c5fd706323c65aa9eba7b606f20dc776c84f68bb14a866a21176e372c034e9",
+    "passed_names": [
+      "eval_command_compile_fuel_preserves_default_and_honors_zero"
+    ],
+    "summaries": [
+      "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 390.66s"
+    ],
+    "postflight_error": null,
+    "accepted_complete_one": true
+  },
+  "older_metadata_partial_failure": {
+    "observed_utc": "2026-10-21T04:47:47.634246+00:00",
+    "scope": "Partial frozen57edbd5/afd batch, not terminal or all-harness evidence.",
+    "head": "57edbd5f698d3e9ea4b203ddb277a01633404019",
+    "compiler_source_sha256": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+    "configured_compilation_fuel": 100000000000,
+    "caller_runtime_fuel": 10000000,
+    "complete_export_harness": "1PASS/0FAIL/0ignored/4filtered",
+    "observed_failed_cases": [
+      {
+        "name": "compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields",
+        "location": "compiled_macro_declaration_metadata.rs:519:14",
+        "stage": "namespace caller&env960..1000"
+      },
+      {
+        "name": "declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer",
+        "location": "compiled_macro_declaration_metadata.rs:141:14",
+        "stage": "caller&env19..46"
+      }
+    ],
+    "currently_started_case": "raw_function_metadata_is_preserved_before_completed_callable_overlays",
+    "raw_snapshot_sha256": "c85792c3372c885ae1172333a03a989cba2c601c116347c8f3cc1db205db6f65",
+    "raw_snapshot_bytes": 2249,
+    "process_status": {
+      "VmPeak": "37619324 kB",
+      "VmSize": "19043996 kB",
+      "VmHWM": "9611212 kB",
+      "VmRSS": "1506692 kB",
+      "VmSwap": "247264 kB"
+    },
+    "memory_limits": "Process high-water spans multiple tests and does not attribute allocation to any one stage. No OOM, signal or terminal error is inferred from it.",
+    "cost_limits": "Configured allowance is not an exclusive measured Store debit; completed caller phases unknown. No budget/input/assertion change after failures."
+  },
+  "limits": [
+    "The bootstrap generation command exited1 at stale shipped comparison before identity/compiled_bootstrap4; it is not reported as full verifierPASS. Exact4 artifacts were then reviewed/adopted and the separate pure compiled identity check passes.",
+    "Nine parser tests cover two new eval cases and seven existing REPL/AOT cases, not all binary tests. Actual CLI test passes1/0/0/0filtered; no unrelated semantic tests inferred.",
+    "The frozen57edbd5/afd metadata run has two observed declaration failures; it is still live and lacks full batch verdict. Its configured100B allowance is not an exclusive measured Store debit; completed caller phases are unknown.",
+    "Native32 and CLI43 targeted semantic changes still need matching-artifact execution; additional CI2 failures remain. Fixed default/pinned/CORE/source-child and dedicated negative/recovery policy unchanged.",
+    "Independent final-head subagent review, required full baseline and final-head CI remain unproven."
+  ]
+}

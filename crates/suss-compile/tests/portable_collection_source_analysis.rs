@@ -248,7 +248,7 @@ fn effectful_collection_child_retains_analyzed_operands_without_reexpansion() {
         let assignment = statements[0].source.as_ref().unwrap();
         assert_eq!(assignment.context, portable::AnalysisContext::Statement);
         assert!(assignment.tags.tag.is_none());
-        assert!(assignment.tags.inferred.is_none());
+        assert!(assignment.tags.inferred_ref().is_none());
         let hir::SourceNode::Assign { target, value } = assignment.node.as_deref().unwrap() else {
             panic!("assignment required")
         };
@@ -325,7 +325,7 @@ fn empty_do_return_keeps_the_enclosing_source_context() {
             for tags in [&empty.tags, &nil.tags] {
                 let clj_nil = read_forms("clj-nil").unwrap().remove(0);
                 assert_eq!(tags.tag.as_ref().unwrap().kind, clj_nil.kind);
-                assert_eq!(tags.inferred.as_ref().unwrap().kind, clj_nil.kind);
+                assert_eq!(tags.inferred_ref().unwrap().kind, clj_nil.kind);
             }
             assert!(Arc::ptr_eq(&nil.scope, &empty.scope));
         }

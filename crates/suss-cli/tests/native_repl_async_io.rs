@@ -1,6 +1,8 @@
 //! Real subprocess/frontend lifecycle tests. Command stdin stays open while
 //! separate FIFO endpoints suspend source I/O. No language execution threads.
 #![cfg(unix)]
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use nix::libc;
 use std::{
     ffi::CString,
@@ -31,6 +33,11 @@ impl Repl {
         Self::with_budget_order(fuel, compile_fuel, false)
     }
     fn with_budget_order(fuel: Option<u64>, compile_fuel: Option<u64>, compile_first: bool) -> Self {
+        // Normal lifecycle semantics get compilation headroom independently of
+        // Runtime fuel. Explicit compile-budget controls keep their exact cap
+        // and trace behavior, including the existing10M flag-order fixture.
+        let trace_compilation = compile_fuel.is_some();
+        let compile_fuel = compile_fuel.or(Some(compilation_fuel::COMPILATION_FUEL));
         let mut command = Command::new(env!("CARGO_BIN_EXE_suss"));
         command.arg("repl");
         if compile_first {
@@ -40,7 +47,7 @@ impl Repl {
         if !compile_first {
             if let Some(value) = compile_fuel { command.arg("--compile-fuel").arg(value.to_string()); }
         }
-        if compile_fuel.is_some() {
+        if trace_compilation {
             // Only the new explicit-budget frontend fixture requests traces.
             command.env("SUSS_MACRO_FUEL_TRACE", "1");
         }

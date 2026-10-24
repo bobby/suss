@@ -1,4 +1,6 @@
 //! Source preparation shares the script pipeline without host Runtime execution.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use std::sync::OnceLock;
 use suss_cli::portable_aot::prepare_source;
 use suss_compile::portable;
@@ -148,7 +150,7 @@ fn source_preparation_deduplicates_diamond_dependencies_and_isolates_macro_state
         std::fs::write(root.path().join(format!("{name}.sus")), source).unwrap();
     }
     let source = "(ns app (:require [left :as l] [right :as r] [common :as c]) (:require-macros [tools :as t])) (set! c/calls (+ c/calls 1)) (ns app (:require [left :as l] [right :as r] [common :as c]) (:require-macros [tools :as t])) (def effects (fn [] c/calls)) (def phase-value (fn [] (t/observed))) (def left-value (fn [] l/first)) (def right-value (fn [] r/first))";
-    let fragments = prepare_source(source, None, &[root.path().to_owned()]).unwrap();
+    let fragments = suss_cli::portable_aot::prepare_source_with_compile_fuel(source, None, &[root.path().to_owned()], Some(compilation_fuel::COMPILATION_FUEL)).unwrap();
     let module_paths = fragments
         .iter()
         .filter_map(|fragment| {

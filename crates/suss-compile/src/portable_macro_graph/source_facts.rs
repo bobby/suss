@@ -151,9 +151,74 @@ fn keyword_equal(
     };
     Ok(namespace && text_equal(session, a.name.as_bytes(), b.name.as_bytes())?)
 }
+// Keyword key location follows the constructor fqn, independently of its
+// namespace/name partition. Exact logical values STILL use keyword_equal below.
+fn keyword_key_equal(
+    session: &mut Session,
+    a: &suss_reader::Keyword,
+    b: &suss_reader::Keyword,
+) -> Result<bool> {
+    // Call/option/extent/branch controls precede the spelling comparison. The
+    // partition-sensitive keyword_equal is not the locator (different
+    // partitions can construct one fqn); the paired traversal applies it to
+    // the matched value itself.
+    session.charge_host_work(12)?;
+    let rendered_len = |key: &suss_reader::Keyword| -> Result<usize> {
+        key.namespace.as_ref().map_or(Some(key.name.len()), |ns|
+            ns.len().checked_add(1).and_then(|n| n.checked_add(key.name.len())))
+            .ok_or_else(|| crate::portable_session::SessionError::Host(
+                wasmtime::Error::msg("Keyword key spelling length overflow")))
+    };
+    let a_len = rendered_len(a)?;
+    let b_len = rendered_len(b)?;
+    if a_len != b_len { return Ok(false); }
+    // Prepay both iterator streams and byte/equality controls before iteration.
+    // No temporary String, guest equality call, or source-owner join occurs.
+    let work = a_len.checked_add(b_len).and_then(|n| u64::try_from(n).ok())
+        .and_then(|n| n.checked_mul(3)).ok_or_else(||
+            crate::portable_session::SessionError::Host(wasmtime::Error::msg(
+                "Keyword key comparison work overflow")))?;
+    session.charge_host_work(work)?;
+    let left = a.namespace.iter().flat_map(|ns| ns.bytes().chain(std::iter::once(b'/')))
+        .chain(a.name.bytes());
+    let right = b.namespace.iter().flat_map(|ns| ns.bytes().chain(std::iter::once(b'/')))
+        .chain(b.name.bytes());
+    Ok(left.eq(right))
+}
+// Pinned Symbol IEquiv compares its rendered `str`, not a pair of native
+// namespace/name fields. Compare that exact constructor spelling without a
+// temporary String; full paired validation STILL checks namespace/name/meta.
+// This is only native duplicate detection/key location, never guest authority.
+fn symbol_key_equal(
+    session: &mut Session,
+    a: &suss_reader::Symbol,
+    b: &suss_reader::Symbol,
+) -> Result<bool> {
+    session.charge_host_work(8)?; // namespace options, lengths, dispatch/overflow controls
+    let rendered_len = |v: &suss_reader::Symbol| -> Result<usize> {
+        v.namespace.as_ref().map_or(Some(v.name.len()), |ns|
+            ns.len().checked_add(1).and_then(|n| n.checked_add(v.name.len())))
+            .ok_or_else(|| crate::portable_session::SessionError::Host(
+                wasmtime::Error::msg("Symbol key spelling length overflow")))
+    };
+    if rendered_len(a)? != rendered_len(b)? { return Ok(false); }
+    fn bytes(v: &suss_reader::Symbol) -> impl Iterator<Item = u8> + '_ {
+        v.namespace.iter().flat_map(|ns| ns.bytes().chain(std::iter::once(b'/')))
+            .chain(v.name.bytes())
+    }
+    // Prepay all byte reads/comparisons before traversing their iterators.
+    // No allocation, guest hash/equality call, or retained identity is involved.
+    let work = u64::try_from(rendered_len(a)?).ok()
+        .and_then(|n| n.checked_mul(3)).ok_or_else(||
+            crate::portable_session::SessionError::Host(wasmtime::Error::msg(
+                "Symbol key comparison work overflow")))?;
+    session.charge_host_work(work)?;
+    Ok(bytes(a).eq(bytes(b)))
+}
 fn scalar_key(form: &Form, map: bool) -> bool {
     match form.kind {
         Kind::String(_) | Kind::Keyword(_) => true,
+        Kind::Symbol(_) => map,
         Kind::Nil | Kind::Bool(_) => !map,
         Kind::Number(value) => !map && value.is_finite(),
         _ => false,
@@ -168,7 +233,8 @@ fn key_equal(session: &mut Session, a: &Form, b: &Form) -> Result<bool> {
         // although the logical source value check retains their exact bits.
         (Kind::Number(a), Kind::Number(b)) => a == b,
         (Kind::String(a), Kind::String(b)) => text_equal(session, a, b)?,
-        (Kind::Keyword(a), Kind::Keyword(b)) => keyword_equal(session, a, b)?,
+        (Kind::Keyword(a), Kind::Keyword(b)) => keyword_key_equal(session, a, b)?,
+        (Kind::Symbol(a), Kind::Symbol(b)) => symbol_key_equal(session, a, b)?,
         _ => false,
     })
 }
@@ -568,7 +634,7 @@ mod tests {
                     .unwrap()
             );
             session.enter_namespace("suss.core").unwrap();
-            session.eval("(def hash (fn [key] (do (if (= key 101) (do (aset (.-arr (get user/source-root :audit)) 1 99) (set! user/source-hash-calls (+ user/source-hash-calls 1))) nil) (user/saved-source-hash key))))").unwrap();
+            session.eval_with_test_compilation_fuel("(def hash (fn [key] (do (if (= key 101) (do (aset (.-arr (get user/source-root :audit)) 1 99) (set! user/source-hash-calls (+ user/source-hash-calls 1))) nil) (user/saved-source-hash key))))").unwrap();
             session.enter_namespace("user").unwrap();
             session
                 .eval("(set [101 102 103 104 105 106 107 108 109])")
@@ -1078,4 +1144,155 @@ fn paired_source_comparison_shared_fuel_irq_and_recovery() {
 }
 
 
+}
+
+
+#[cfg(test)]
+mod symbol_map_admission_tests {
+    use super::*;
+    fn symbol(namespace: Option<&str>, name: &str) -> Form {
+        Form { span: 0..0, metadata: vec![], kind: Kind::Symbol(suss_reader::Symbol {
+            namespace: namespace.map(str::to_owned), name: name.to_owned(),
+        }) }
+    }
+    fn nil() -> Form { Form { span: 0..0, metadata: vec![], kind: Kind::Nil } }
+    fn map(keys: Vec<Form>) -> Form {
+        let mut values = Vec::new();
+        for key in keys { values.push(key); values.push(nil()); }
+        Form { span: 0..0, metadata: vec![], kind: Kind::Map(values) }
+    }
+    #[test]
+    fn symbol_map_duplicate_detection_uses_full_constructor_spelling_without_joining_owners() {
+        let mut session = Session::new_macro().unwrap();
+        for keys in [
+            vec![symbol(None, "watched"), symbol(None, "watched")],
+            vec![symbol(Some("space"), "watched"), symbol(None, "space/watched")],
+            vec![symbol(Some(""), "watched"), symbol(None, "/watched")],
+            vec![symbol(Some("a/b"), "c"), symbol(Some("a"), "b/c")],
+            vec![symbol(None, "λ"), symbol(None, "λ")],
+        ] {
+            assert!(LogicalSourceWitness::from_normalized_source(&mut session, map(keys)).unwrap().is_none());
+        }
+        for keys in [
+            vec![symbol(None, "watched"), symbol(Some(""), "watched")],
+            vec![symbol(Some("a"), "watched"), symbol(Some("b"), "watched")],
+            vec![symbol(None, "λ"), symbol(None, "Λ")],
+            vec![symbol(None, "watched"), Form { span: 0..0, metadata: vec![],
+                kind: Kind::Keyword(suss_reader::Keyword {namespace:None, name:"watched".into()}) }],
+        ] {
+            assert!(LogicalSourceWitness::from_normalized_source(&mut session, map(keys)).unwrap().is_some());
+        }
+        let mut first = symbol(None, "watched");
+        first.metadata.push(Form { span: 0..0, metadata: vec![], kind: Kind::Map(vec![]) });
+        assert!(LogicalSourceWitness::from_normalized_source(&mut session,
+            map(vec![first, symbol(None, "watched")])).unwrap().is_none(),
+            "metadata cannot distinguish equal Symbol keys");
+        // A Symbol set is intentionally outside this map-only admission change.
+        let set = Form { span:0..0, metadata:vec![], kind:Kind::Set(vec![symbol(None,"watched")]) };
+        assert!(LogicalSourceWitness::from_normalized_source(&mut session,set).unwrap().is_none());
+    }
+    #[test]
+    fn symbol_map_witness_reads_current_values_and_metadata_in_both_phases_after_gc() {
+        for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+            let forms = suss_reader::forms::read_forms("{watched 17 space/other 23}").unwrap();
+            let source = &forms[0];
+            let witness = LogicalSourceWitness::from_source(&mut session, source).unwrap().unwrap();
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let value = bridge.quote_ref(&mut session, source).unwrap();
+            session.collect().unwrap();
+            assert!(witness.matches_logical_source(&mut session,&bridge,&value).unwrap());
+            let changed = session.eval("(quote {space/other 24 watched 17})").unwrap();
+            assert!(!witness.matches_logical_source(&mut session,&bridge,&changed).unwrap());
+            let reordered = session.eval("(quote {space/other 23 watched 17})").unwrap();
+            assert!(witness.matches_logical_source(&mut session,&bridge,&reordered).unwrap());
+            let with_meta = session.eval("(quote {^:changed watched 17 space/other 23})").unwrap();
+            assert!(!witness.matches_logical_source(&mut session,&bridge,&with_meta).unwrap());
+            assert!(witness.matches_logical_source(&mut session,&bridge,&value).unwrap());
+        }
+    }
+}
+
+
+#[cfg(test)]
+mod keyword_fqn_admission_tests {
+    use super::*;
+    use crate::portable_macro_graph::{AnalysisGraph, reuse::DeclarationValues};
+
+    fn keyword(namespace: Option<&str>, name: &str) -> Form {
+        Form { span: 0..0, metadata: vec![], kind: Kind::Keyword(suss_reader::Keyword {
+            namespace: namespace.map(str::to_owned), name: name.to_owned(),
+        }) }
+    }
+    fn number(value: f64) -> Form {
+        Form { span: 0..0, metadata: vec![], kind: Kind::Number(value) }
+    }
+    fn map(first: Form, second: Form) -> Form {
+        Form { span: 0..0, metadata: vec![], kind: Kind::Map(vec![first, number(17.0), second, number(23.0)]) }
+    }
+
+    #[test]
+    fn equal_fqn_keyword_partitions_decline_before_guest_map_construction() {
+        let mut session = Session::new_macro().unwrap();
+        for (first, second) in [
+            (keyword(None, "a/b"), keyword(Some("a"), "b")),
+            (keyword(Some("a/b"), "c"), keyword(Some("a"), "b/c")),
+        ] {
+            let before = session.stats();
+            assert!(LogicalSourceWitness::from_normalized_source(
+                &mut session, map(first, second)).unwrap().is_none());
+            let after = session.stats();
+            assert_eq!(after.external_value_handles, before.external_value_handles);
+            assert_eq!(after.resident_fragments, before.resident_fragments);
+            assert_eq!(after.binding_cells, before.binding_cells);
+        }
+    }
+
+    #[test]
+    fn unique_keyword_witness_keeps_exact_partition_and_metadata_validation() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let source = map(keyword(Some("a"), "b"), keyword(Some("a"), "c"));
+        let witness = LogicalSourceWitness::from_source(&mut session, &source).unwrap().unwrap();
+        let actual = bridge.quote_ref(&mut session, &source).unwrap();
+        session.collect().unwrap();
+        assert!(witness.matches_logical_source(&mut session, &bridge, &actual).unwrap());
+        // The locator can find this equal-fqn key, but complete paired value
+        // validation must still reject the changed namespace/name partition.
+        let changed = map(keyword(None, "a/b"), keyword(Some("a"), "c"));
+        assert!(!paired_logical_equal(&mut session, &witness.expected, &changed).unwrap());
+        let changed = bridge.quote_ref(&mut session, &changed).unwrap();
+        session.collect().unwrap();
+        assert!(!witness.matches_logical_source(&mut session, &bridge, &changed).unwrap());
+        let mut metadata = source.clone();
+        metadata.metadata.push(Form { span: 0..0, metadata: vec![],
+            kind: Kind::Map(vec![keyword(None, "audit"), number(1.0)]) });
+        let metadata = bridge.quote_ref(&mut session, &metadata).unwrap();
+        session.collect().unwrap();
+        assert!(!witness.matches_logical_source(&mut session, &bridge, &metadata).unwrap());
+        assert!(witness.matches_logical_source(&mut session, &bridge, &actual).unwrap());
+    }
+
+    #[test]
+    fn actual_retained_graph_declines_equal_fqn_map_and_uses_ordinary_merge() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let first = keyword(None, "a/b");
+        let source = map(first.clone(), keyword(Some("a"), "b"));
+        let original = source.clone();
+        let mut retained = DeclarationValues::default();
+        // This is the production retained-Graph constructor, not a fabricated
+        // DefinitionInfo/owner or a checked-child/authority constructor.
+        let actual = {
+            let mut graph = AnalysisGraph::with_declaration_values(&bridge, &mut session, &mut retained);
+            let root = graph.form(&source, 0).unwrap();
+            graph.materialize(root).unwrap()
+        };
+        session.collect().unwrap();
+        let decoded = bridge.read(&mut session, &actual, 0..0).unwrap();
+        let Kind::Map(items) = &decoded.kind else { panic!("expected ordinary merged map") };
+        assert_eq!(items.len(), 2);
+        assert_eq!(items[0].kind, first.kind, "ordinary first KEY survives");
+        assert_eq!(items[1].kind, Kind::Number(23.0), "ordinary last VALUE survives");
+        assert_eq!(source, original);
+    }
 }

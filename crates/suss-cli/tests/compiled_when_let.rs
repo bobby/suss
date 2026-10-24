@@ -2,6 +2,8 @@
 #[path = "../../suss-compile/tests/support/portable_decode.rs"]
 mod portable_decode;
 
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use portable_decode::{Decoder, Observation};
 use suss_cli::{portable_macros::CompiledMacros, portable_session::Session};
 
@@ -20,6 +22,7 @@ fn observe(session: &mut Session, macros: &mut CompiledMacros, source: &str) -> 
 fn when_let_preserves_truthiness_once_only_initialization_scope_and_body_order() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         let actual = observe(&mut session, &mut macros, r#"
           (def when-let-events (atom []))
           [(when-let [x nil] x)

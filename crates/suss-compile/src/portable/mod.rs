@@ -17,6 +17,9 @@ pub mod artifact_cache;
 pub mod artifact_identity;
 pub mod core_bindings;
 pub mod compiler_facts;
+mod namespace_revision;
+pub mod persistent;
+pub use namespace_revision::NamespaceRevision;
 pub mod compiler_names;
 pub mod aot;
 pub mod command;
@@ -51,11 +54,14 @@ pub struct ExpansionContext<'a> {
     /// Immutable namespace at entry to the enclosing top-level source form.
     /// Resolution uses the live environment above, including provisional defs.
     pub namespace_snapshot: &'a std::sync::Arc<hir::SourceNamespace>,
+    /// Analyzer-minted, lazy live revision factory. Manually assembled contexts
+    /// use None and retain the legacy fresh-capture behavior.
+    pub namespace_revision: Option<NamespaceRevision<'a>>,
     pub origin: Option<&'a SourceOrigin>,
     pub phase: resolve::Phase,
     pub context: AnalysisContext,
-    pub locals: &'a std::collections::HashMap<String, hir::LocalBinding>,
-    pub fields: &'a std::collections::HashMap<String, hir::FieldBinding>,
+    pub locals: &'a hir::SourceLocals,
+    pub fields: &'a hir::SourceFields,
     pub function_scopes: &'a [std::sync::Arc<hir::FunctionScope>],
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -168,7 +174,7 @@ pub fn analyze_in(
             span: error.span,
             message: error.message,
         })?;
-    Ok(analyze_selected_fragment(forms, 0..source.len(), environment, phase,
+    Ok(analyze_selected_fragment(&forms, 0..source.len(), environment, phase,
         &mut NoExpansion, Some(&SourceOrigin::new(source, None)))?.hir)
 }
 pub fn compile(source: &str) -> Result<Vec<u8>, Diagnostic> {
@@ -202,10 +208,12 @@ pub(crate) fn compile_ir_metered(
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<Vec<u8>, Diagnostic> {
     ir::verify_metered(function, meter)?;
-    compile_verified_ir(function)
+    compile_verified_ir(function, meter)
 }
-pub(crate) fn compile_verified_ir(function: &ir::Function) -> Result<Vec<u8>, Diagnostic> {
-    let wasm = emit::emit_verified(function)?;
+pub(crate) fn compile_verified_ir(
+    function: &ir::Function, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Vec<u8>, Diagnostic> {
+    let wasm = emit::emit_verified_metered(function, meter)?;
     artifact_identity::annotate_ir(&wasm).map_err(|message| Diagnostic { span: function.span.clone(), message })
 }
 
@@ -294,14 +302,10 @@ pub(crate) fn prepare_selected_fragment_with_origin(
         u64::try_from(forms.len()).unwrap_or(u64::MAX),
         span.clone(),
     )?;
-    let mut analysis_forms = Vec::with_capacity(forms.len());
-    for form in &forms {
-        analysis_forms.push(clone_form_metered(form, &mut |work| {
-            request.charge_expansion_work(work, span.clone())
-        })?);
-    }
+    // Analysis owns its HIR/source facts; retain the actual selected syntax
+    // for both analysis and emission instead of cloning the complete input.
     let analyzed = analyze_selected_fragment(
-        analysis_forms,
+        &forms,
         span.clone(),
         environment,
         phase,
@@ -333,19 +337,25 @@ impl<'a> ExpansionRequest<'a> {
     pub(crate) fn new(host: &'a mut dyn ExpansionHost, span: Range<usize>) -> Result<Self, Diagnostic> {
         host.begin_expansion_request(span)?;
         let remaining = host.expansion_work_fuel();
+        hir::cow_trace_reset(remaining);
         Ok(Self { host, remaining })
     }
 }
 impl ExpansionHost for ExpansionRequest<'_> {
     fn expansion_work_fuel(&self) -> u64 { self.remaining }
     fn charge_expansion_work(&mut self, work: u64, span: Range<usize>) -> Result<(), Diagnostic> {
-        self.host.charge_expansion_work(work, span.clone())?;
-        self.remaining = self.remaining.checked_sub(work).ok_or_else(|| Diagnostic {
-            span,
-            message: "Macro expansion native work fuel exhausted".into(),
-        })?;
-        Ok(())
+        let result = (|| {
+            self.host.charge_expansion_work(work, span.clone())?;
+            self.remaining = self.remaining.checked_sub(work).ok_or_else(|| Diagnostic {
+                span,
+                message: "Macro expansion native work fuel exhausted".into(),
+            })?;
+            Ok(())
+        })();
+        hir::cow_trace_charge(work, &result);
+        result
     }
+
     fn emit_fragment(
         &mut self, function: &ir::Function, phase: resolve::Phase,
         forms: &[suss_reader::forms::Form], origin: Option<&SourceOrigin>,
@@ -373,14 +383,35 @@ impl Drop for ExpansionRequest<'_> {
     }
 }
 pub(crate) fn analyze_selected_fragment(
-    mut forms: Vec<suss_reader::forms::Form>, span: Range<usize>,
+    forms: &[suss_reader::forms::Form], span: Range<usize>,
     environment: &resolve::Environment, phase: resolve::Phase,
     expander: &mut dyn ExpansionHost, origin: Option<&SourceOrigin>,
 ) -> Result<AnalyzedFragment, Diagnostic> {
     let mut request = ExpansionRequest::new(expander, span.clone())?;
     let mut snapshot = environment.clone();
-    let namespace_directive = source::namespace(&mut forms, &mut snapshot, phase, &mut request)?;
-    let (hir, environment) = hir::prepare_with_origin(&forms, span, &snapshot, phase, &mut request, origin)?;
+    let namespace_directive = source::namespace(forms, &mut snapshot, phase, &mut request)?;
+    // The old owned analysis input kept the consumed ns node's metadata and
+    // span while replacing only its kind. Stage exactly that one node, keeping
+    // its position and analysis context; emission still sees the original ns.
+    let analysis_head = namespace_directive.as_ref().map(|directive| {
+        let bytes = directive.metadata.len().checked_mul(std::mem::size_of::<suss_reader::forms::Form>())
+            .and_then(|bytes| u64::try_from(bytes).ok())
+            .ok_or_else(|| Diagnostic { span: directive.span.clone(), message: "Namespace metadata work overflow".into() })?;
+        request.charge_expansion_work(bytes, directive.span.clone())?;
+        let mut metadata = Vec::new();
+        metadata.try_reserve_exact(directive.metadata.len()).map_err(|_| Diagnostic {
+            span: directive.span.clone(), message: "Unable to reserve namespace analysis metadata".into(),
+        })?;
+        for item in &directive.metadata {
+            metadata.push(clone_form_metered(item, &mut |work| request.charge_expansion_work(work, item.span.clone()))?);
+        }
+        Ok::<_, Diagnostic>(suss_reader::forms::Form {
+            span: directive.span.clone(), metadata, kind: suss_reader::forms::Kind::Nil,
+        })
+    }).transpose()?;
+    let (hir, environment) = hir::prepare_with_origin_and_first_override(
+        forms, span, &snapshot, phase, &mut request, origin, analysis_head.as_ref(),
+    )?;
     let cells = environment
         .cells()
         .into_iter()
@@ -389,4 +420,134 @@ pub(crate) fn analyze_selected_fragment(
     Ok(AnalyzedFragment {
         hir, environment, cells, namespace_directive,
     })
+}
+
+
+#[cfg(test)]
+mod borrowed_analysis_tests {
+    use super::*;
+    use suss_reader::forms::{Form, Kind};
+
+    struct ObserveInput {
+        expected: Vec<Form>,
+        // Test-only address observations; never dereferenced or used as authority.
+        addresses: Vec<usize>,
+        seen: Vec<usize>,
+        emitted: bool,
+        fail_on_second: bool,
+        limit: u64,
+        spent: u64,
+    }
+    impl ObserveInput {
+        fn new(forms: &[Form]) -> Self {
+            Self { expected: forms.to_vec(), addresses: forms.iter().map(|form| form as *const Form as usize).collect(),
+                seen: vec![], emitted: false, fail_on_second: false, limit: DEFAULT_OPERATION_FUEL, spent: 0 }
+        }
+    }
+    impl ExpansionHost for ObserveInput {
+        fn expansion_work_fuel(&self) -> u64 { self.limit.saturating_sub(self.spent) }
+        fn charge_expansion_work(&mut self, work: u64, span: Range<usize>) -> Result<(), Diagnostic> {
+            let next = self.spent.checked_add(work).filter(|next| *next <= self.limit)
+                .ok_or_else(|| Diagnostic { span, message: "borrowed-input cumulative budget exhausted".into() })?;
+            self.spent = next;
+            Ok(())
+        }
+        fn expand(&mut self, form: &Form, _: ExpansionContext<'_>) -> Result<Option<Form>, Diagnostic> {
+            if let Some(index) = self.expected.iter().position(|expected| expected.span == form.span) {
+                assert_eq!(form as *const Form as usize, self.addresses[index], "analysis must borrow the actual selected input");
+                assert_eq!(form, &self.expected[index]);
+                self.seen.push(index);
+                if self.fail_on_second && index == 2 {
+                    return Err(Diagnostic { span: form.span.clone(), message: "injected borrowed-input expansion failure".into() });
+                }
+            }
+            Ok(None)
+        }
+        fn emit_fragment(&mut self, _: &ir::Function, _: resolve::Phase, forms: &[Form], _: Option<&SourceOrigin>) -> Result<Vec<u8>, Diagnostic> {
+            assert_eq!(forms, self.expected);
+            assert_eq!(format!("{forms:?}"), format!("{:?}", self.expected));
+            assert_eq!(forms.iter().map(|form| form as *const Form as usize).collect::<Vec<_>>(), self.addresses);
+            self.emitted = true;
+            // Stop at the inspected emission boundary; this focused test does
+            // not claim artifact execution or alter the real emitter's work.
+            Err(Diagnostic { span: 0..0, message: "inspected original emission input".into() })
+        }
+    }
+
+    #[test]
+    fn preparation_borrows_actual_input_and_preserves_emission_header_order_error_and_retry() {
+        let source = "(ns borrowed.input) (def first 1) (def second first)";
+        for phase in [resolve::Phase::Runtime, resolve::Phase::Macro] {
+            let environment = resolve::Environment::default();
+            let old_namespace = environment.current_namespace(phase).to_owned();
+            // Repeat after both expansion and emission errors; no source
+            // rewriting or environment publication escapes either failure.
+            for fail_on_second in [true, false, false] {
+                let forms = read_forms(source).unwrap();
+                let mut host = ObserveInput::new(&forms);
+                host.fail_on_second = fail_on_second;
+                let error = prepare_selected_fragment_with_origin(forms, 0..source.len(), &environment, phase, &mut host, None).err().expect("expected injected preparation error");
+                assert_eq!(host.seen, vec![1, 2]);
+                assert_eq!(host.emitted, !fail_on_second);
+                assert_eq!(error.message, if fail_on_second { "injected borrowed-input expansion failure" } else { "inspected original emission input" });
+                assert_eq!(environment.current_namespace(phase), old_namespace);
+                assert!(matches!(host.expected[0].kind, Kind::List(_)));
+            }
+        }
+    }
+
+    #[test]
+    fn borrowed_analysis_preserves_consumed_namespace_frame_and_owned_source_after_inputs_drop() {
+        let source = "^:kept (ns borrowed.frames) (def first 1) first";
+        for phase in [resolve::Phase::Runtime, resolve::Phase::Macro] {
+            let forms = read_forms(source).unwrap();
+            let original = forms.clone();
+            let environment = resolve::Environment::default();
+            let analyzed = analyze_selected_fragment(&forms, 0..source.len(), &environment, phase, &mut NoExpansion, None).unwrap();
+            assert_eq!(forms, original);
+            assert_eq!(analyzed.namespace_directive.as_ref().unwrap(), &forms[0]);
+            let hir::Expression::Do(items) = &analyzed.hir.kind else { panic!("top-level body") };
+            assert_eq!(items.len(), 3);
+            assert!(matches!(items[0].kind, hir::Expression::Literal(hir::Literal::Nil)));
+            assert_eq!(items[0].span, forms[0].span);
+            assert_eq!(items[0].metadata, forms[0].metadata);
+            let source_head = items[0].source.as_ref().expect("consumed ns source frame");
+            assert!(matches!(source_head.form.kind, Kind::Nil));
+            assert_eq!(source_head.form.span, forms[0].span);
+            assert_eq!(source_head.form.metadata, forms[0].metadata);
+            assert_eq!(source_head.context, AnalysisContext::Statement);
+            assert_eq!(items[2].source.as_ref().unwrap().context, AnalysisContext::Statement);
+            drop(forms);
+            assert_eq!(analyzed.environment.current_namespace(phase), "borrowed.frames");
+            assert_eq!(analyzed.namespace_directive.as_ref().unwrap(), &original[0]);
+            assert_eq!(items[1].source.as_ref().unwrap().form, original[1]);
+        }
+    }
+
+    #[test]
+    fn borrowed_preparation_keeps_cumulative_budget_across_analysis_and_lowering() {
+        let source = "(ns borrowed.budget) (def first 1) (def second first)";
+        for phase in [resolve::Phase::Runtime, resolve::Phase::Macro] {
+            let environment = resolve::Environment::default();
+            let forms = read_forms(source).unwrap();
+            let mut baseline = ObserveInput::new(&forms);
+            let error = prepare_selected_fragment_with_origin(forms, 0..source.len(), &environment, phase, &mut baseline, None).err().expect("expected injected preparation error");
+            assert_eq!(error.message, "inspected original emission input");
+            assert!(baseline.spent > 1 && baseline.emitted);
+            let forms = read_forms(source).unwrap();
+            let original = forms.clone();
+            let mut bounded = ObserveInput::new(&forms);
+            bounded.limit = baseline.spent - 1;
+            let error = prepare_selected_fragment_with_origin(forms, 0..source.len(), &environment, phase, &mut bounded, None).err().expect("expected injected preparation error");
+            assert_eq!(error.message, "borrowed-input cumulative budget exhausted");
+            assert!(!bounded.emitted);
+            assert_eq!(bounded.expected, original);
+            // Retry with the original allowance and independently read input.
+            let forms = read_forms(source).unwrap();
+            let mut retry = ObserveInput::new(&forms);
+            let error = prepare_selected_fragment_with_origin(forms, 0..source.len(), &environment, phase, &mut retry, None).err().expect("expected injected preparation error");
+            assert_eq!(error.message, "inspected original emission input");
+            assert_eq!(retry.spent, baseline.spent);
+        }
+    }
 }

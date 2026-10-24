@@ -1,6 +1,8 @@
 //! Execute resolved WIT lists through owned persistent vector values.
 #![cfg(not(target_family = "wasm"))]
 
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use std::sync::OnceLock;
 use suss_compile::Compiler;
 use wasmtime::{
@@ -61,7 +63,7 @@ fn instantiate(source: &str, exports: &str) -> (Store<BoundaryLimits>, Instance)
         Engine::new(&config).unwrap()
     });
     let wit = format!("package test:lists; world api {{ {exports} }}");
-    let bytes = Compiler::new().compile(source, &wit).unwrap();
+    let bytes = Compiler::new().compile_with_compile_fuel(source, &wit, Some(compilation_fuel::COMPILATION_FUEL)).unwrap();
     let memories = wasmparser::Parser::new(0)
         .parse_all(&bytes)
         .filter_map(|payload| match payload.unwrap() {

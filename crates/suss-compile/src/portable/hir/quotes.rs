@@ -13,6 +13,7 @@
 //! retained core.cljs m3-hash-unencoded-chars/hash-symbol/hash-keyword (EPL-1.0).
 //! This is original Rust lowering; the source-backed core owns the actual types.
 use super::*;
+use std::borrow::Cow;
 
 impl Analyzer<'_> {
     pub(super) fn identifier_literal(
@@ -254,7 +255,7 @@ impl Analyzer<'_> {
             return Ok(value);
         }
         let empty = self.map_values(form, &[], vec![])?;
-        let mut result = self.fresh_binding(form, empty);
+        let mut result = self.fresh_binding(form, empty)?;
         let mut bindings = vec![result.clone()];
         let mut retained = reader_data;
         // Reader-data merging precedes construction. Actual source -assoc
@@ -267,7 +268,7 @@ impl Analyzer<'_> {
             let item = self.quote_data_impl(&pair[1], depth + 2, reader_data)?;
             let previous = self.local(form, result.id);
             let next = self.data_core_call(form, "-assoc", vec![previous, key, item])?;
-            result = self.fresh_binding(form, next);
+            result = self.fresh_binding(form, next)?;
             bindings.push(result.clone());
             retained = true;
         }
@@ -314,47 +315,214 @@ fn merged_metadata_pairs_metered(
     reader_data: bool,
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<Vec<Form>, Diagnostic> {
-    let mut entries: Vec<(Form, Form, (usize, usize))> = Vec::new();
-    for (prefix_index, prefix) in form.metadata.iter().enumerate().rev() {
-        meter(1)?;
-        let pairs = metadata_pairs_metered(prefix, meter)?;
-        for (pair_index, pair) in pairs.chunks_exact(2).enumerate() {
-            if !reader_data && irrelevant_metadata_key(&pair[0]) {
-                continue;
-            }
-            let mut previous = None;
-            for (index, (key, _, _)) in entries.iter().enumerate() {
-                if reader_key_equal_metered(key, &pair[0], 0, meter)? {
-                    previous = Some(index);
-                    break;
-                }
-            }
-            let order = (prefix_index, pair_index);
-            if let Some(index) = previous {
-                // Pinned tools.reader merges inner first. Association keeps
-                // the existing key object and replaces only its value.
-                entries[index].1 = super::super::clone_form_metered(&pair[1], meter)?;
-                entries[index].2 = order;
-            } else {
-                entries.push((
-                    super::super::clone_form_metered(&pair[0], meter)?,
-                    super::super::clone_form_metered(&pair[1], meter)?,
-                    order,
-                ));
+    // Pair-only callers need source keys/values/order, not reader origin facts.
+    // Use a genuinely smaller carrier rather than discounting the tracked view.
+    let entries = merged_metadata_view_metered::<()>(form, reader_data, meter)?;
+    let len = entries.len().checked_mul(2)
+        .ok_or_else(|| fail(form.span.clone(), "Metadata output capacity overflow"))?;
+    let mut output = Vec::new();
+    metadata_reserve(&mut output, len, meter, &form.span)?;
+    for entry in entries {
+        output.push(super::super::clone_form_metered(entry.key.as_ref(), meter)?);
+        output.push(super::super::clone_form_metered(entry.value.as_ref(), meter)?);
+    }
+    Ok(output)
+}
+
+/// Genuine reader syntax remains borrowed. Only shorthand-generated syntax is
+/// owned here; callers explicitly materialize whichever normalized values they
+/// need. Order and the retained first key object are part of normalization.
+pub(crate) enum MetadataForm<'a> {
+    Borrowed(&'a Form),
+    Synthesized(Box<Form>),
+}
+impl MetadataForm<'_> {
+    pub(crate) fn as_ref(&self) -> &Form {
+        match self { Self::Borrowed(form) => form, Self::Synthesized(form) => form }
+    }
+    fn synthesized(form: Form, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Self, Diagnostic> {
+        let bytes = u64::try_from(std::mem::size_of::<Form>())
+            .map_err(|_| fail(form.span.clone(), "Metadata synthesized owner work overflow"))?;
+        meter(bytes)?;
+        Ok(Self::Synthesized(Box::new(form)))
+    }
+}
+/// Native provenance of the retained KEY, not its final value or spelling.
+/// Only the symbol/string desugar branch may mint ReaderShorthandTag.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum MetadataKeyOrigin {
+    SourceSyntax,
+    ReaderShorthandTag,
+}
+pub(crate) struct MetadataOrigins {
+    kind: MetadataKeyOrigin,
+    position: (usize, usize),
+}
+pub(crate) struct MetadataEntry<'a, Origins = MetadataOrigins> {
+    pub key: MetadataForm<'a>,
+    pub value: MetadataForm<'a>,
+    order: (usize, usize),
+    origins: Origins,
+}
+impl MetadataEntry<'_, MetadataOrigins> {
+    /// Caller meters its own selection/read work. No guest or spelling proof.
+    pub(crate) fn key_origin(&self) -> MetadataKeyOrigin { self.origins.kind }
+    pub(crate) fn key_position(&self) -> (usize, usize) { self.origins.position }
+    /// Exact winning VALUE writer; association preserves the original key but
+    /// replaces this coordinate with the selected value's actual source pair.
+    /// Callers prepay their selection/read work, as for key_position.
+    pub(crate) fn value_position(&self) -> (usize, usize) { self.order }
+}
+// Both views use the identical association and ordering algorithm. Only readers
+// requesting provenance allocate/store/move the immutable origin coordinates.
+trait TrackMetadataOrigins: Sized {
+    fn new(kind: MetadataKeyOrigin, position: (usize, usize),
+        meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Self, Diagnostic>;
+    fn sorting(count: usize, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<(), Diagnostic>;
+}
+impl TrackMetadataOrigins for () {
+    fn new(_: MetadataKeyOrigin, _: (usize, usize),
+        _: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Self, Diagnostic> { Ok(()) }
+    fn sorting(_: usize, _: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<(), Diagnostic> { Ok(()) }
+}
+impl TrackMetadataOrigins for MetadataOrigins {
+    fn new(kind: MetadataKeyOrigin, position: (usize, usize),
+        meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Self, Diagnostic> {
+        meter(3)?;
+        Ok(Self { kind, position })
+    }
+    fn sorting(count: usize, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<(), Diagnostic> {
+        meter(((count as u64).saturating_mul(3))
+            .saturating_mul(u64::from(usize::BITS - count.leading_zeros())))
+    }
+}
+
+fn metadata_reserve<T>(
+    values: &mut Vec<T>, additional: usize,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>, span: &Range<usize>,
+) -> Result<(), Diagnostic> {
+    let needed = values.len().checked_add(additional)
+        .ok_or_else(|| fail(span.clone(), "Metadata capacity overflow"))?;
+    if needed <= values.capacity() { return Ok(()) }
+    // Charge the requested new backing and relocation before fallible reserve.
+    let capacity = values.capacity().checked_mul(2).unwrap_or(needed).max(needed);
+    let bytes = capacity.checked_add(values.len())
+        .and_then(|count| count.checked_mul(std::mem::size_of::<T>()))
+        .and_then(|bytes| u64::try_from(bytes).ok())
+        .ok_or_else(|| fail(span.clone(), "Metadata allocation work overflow"))?;
+    meter(bytes)?;
+    values.try_reserve_exact(capacity - values.len())
+        .map_err(|_| fail(span.clone(), "Unable to reserve metadata view"))
+}
+
+pub(crate) fn reader_metadata_view_metered<'a>(
+    form: &'a Form, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Vec<MetadataEntry<'a>>, Diagnostic> {
+    merged_metadata_view_metered(form, true, meter)
+}
+
+/// Owned transport carrier. Its origin vector comes only from the actual view;
+/// the public Vec<Form> adapter intentionally remains independent and unchanged.
+pub(crate) struct ReaderMetadata {
+    pub(crate) pairs: Vec<Form>,
+    pub(crate) origins: Vec<MetadataKeyOrigin>,
+    pub(crate) key_positions: Vec<(usize, usize)>,
+}
+pub(crate) fn reader_metadata_owned_view_metered(
+    form: &Form, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<ReaderMetadata, Diagnostic> {
+    // Header acquisition/move/retirement before either Vec is initialized.
+    meter((std::mem::size_of::<ReaderMetadata>() as u64).saturating_mul(2).saturating_add(4))?;
+    let entries = reader_metadata_view_metered(form, meter)?;
+    let count = entries.len().checked_mul(2)
+        .ok_or_else(|| fail(form.span.clone(), "Metadata output capacity overflow"))?;
+    let mut pairs = Vec::new();
+    let mut origins = Vec::new();
+    let mut key_positions = Vec::new();
+    metadata_reserve(&mut key_positions, entries.len(), meter, &form.span)?;
+    metadata_reserve(&mut pairs, count, meter, &form.span)?;
+    metadata_reserve(&mut origins, entries.len(), meter, &form.span)?;
+    for entry in entries {
+        // Added origin read/write and vector-entry retirement controls prepaid.
+        meter(8)?;
+        key_positions.push(entry.key_position());
+        origins.push(entry.key_origin());
+        pairs.push(super::super::clone_form_metered(entry.key.as_ref(), meter)?);
+        pairs.push(super::super::clone_form_metered(entry.value.as_ref(), meter)?);
+    }
+    Ok(ReaderMetadata { pairs, origins, key_positions })
+}
+
+fn merged_metadata_view_metered<'a, Origins: TrackMetadataOrigins>(
+    form: &'a Form, reader_data: bool,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Vec<MetadataEntry<'a, Origins>>, Diagnostic> {
+    fn associate<'a, Origins: TrackMetadataOrigins>(
+        entries: &mut Vec<MetadataEntry<'a, Origins>>, key: MetadataForm<'a>, value: MetadataForm<'a>,
+        key_origin: MetadataKeyOrigin, order: (usize, usize), reader_data: bool,
+        meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>, span: &Range<usize>,
+    ) -> Result<(), Diagnostic> {
+        // Reader-only origin work is prepaid; Vec backing/relocation below
+        // always uses this instantiation's actual carrier layout.
+        let origins = Origins::new(key_origin, order, meter)?;
+        if !reader_data && irrelevant_metadata_key(key.as_ref()) { return Ok(()) }
+        let mut previous = None;
+        for (index, entry) in entries.iter().enumerate() {
+            if reader_key_equal_metered(entry.key.as_ref(), key.as_ref(), 0, meter)? {
+                previous = Some(index);
+                break;
             }
         }
+        if let Some(index) = previous {
+            // Inner prefix's actual key survives; outer association replaces
+            // only the value and the winning textual position; key_origin stays.
+            entries[index].value = value;
+            entries[index].order = order;
+        } else {
+            metadata_reserve(entries, 1, meter, span)?;
+            entries.push(MetadataEntry { key, value, order, origins });
+        }
+        Ok(())
     }
-    // Use the accepted textual order for surviving metadata entries, even
-    // when the pinned reader's hash iteration incidentally reorders them.
-    meter(
-        (entries.len() as u64)
-            .saturating_mul(u64::from(usize::BITS - entries.len().leading_zeros())),
-    )?;
-    entries.sort_by_key(|(_, _, order)| *order);
-    Ok(entries
-        .into_iter()
-        .flat_map(|(key, value, _)| [key, value])
-        .collect())
+    let mut entries = Vec::new();
+    for (prefix_index, prefix) in form.metadata.iter().enumerate().rev() {
+        meter(1)?;
+        match &prefix.kind {
+            Kind::Map(pairs) if pairs.len() % 2 == 0 => {
+                let Cow::Borrowed(pairs) = metadata_pairs_metered(prefix, meter)? else {
+                    unreachable!("valid map metadata is a borrowed slice")
+                };
+                for (pair_index, pair) in pairs.chunks_exact(2).enumerate() {
+                    associate(&mut entries, MetadataForm::Borrowed(&pair[0]), MetadataForm::Borrowed(&pair[1]),
+                        MetadataKeyOrigin::SourceSyntax, (prefix_index, pair_index), reader_data, meter, &prefix.span)?;
+                }
+            }
+            Kind::Keyword(_) => {
+                let value = Form { span: prefix.span.clone(), metadata: vec![], kind: Kind::Bool(true) };
+                associate(&mut entries, MetadataForm::Borrowed(prefix), MetadataForm::synthesized(value, meter)?,
+                    MetadataKeyOrigin::SourceSyntax, (prefix_index, 0), reader_data, meter, &prefix.span)?;
+            }
+            Kind::Symbol(_) | Kind::String(_) => {
+                meter(3)?; // actual allocated bytes of the synthetic tag name
+                let key = Form { span: prefix.span.clone(), metadata: vec![], kind: Kind::Keyword(suss_reader::Keyword {
+                    namespace: None, name: "tag".into(),
+                }) };
+                associate(&mut entries, MetadataForm::synthesized(key, meter)?, MetadataForm::Borrowed(prefix),
+                    MetadataKeyOrigin::ReaderShorthandTag, (prefix_index, 0), reader_data, meter, &prefix.span)?;
+            }
+            _ => return Err(fail(prefix.span.clone(), "Invalid metadata: expected a map, keyword, symbol or string")),
+        }
+    }
+    meter((entries.len() as u64)
+        .saturating_mul(u64::from(usize::BITS - entries.len().leading_zeros())))?;
+    // Retain the existing conservative finalization debits; this change does
+    // not lower the established work tariff.
+    Origins::sorting(entries.len(), meter)?;
+    // Pinned read-meta associates generated (last) metadata first, then outer
+    // explicit prefixes. Replacing a value keeps the first association/key.
+    // `order` still records the winning VALUE's source coordinate for selectors;
+    // it must not reorder the associations or relocate the first key.
+    Ok(entries)
 }
 
 // Original reader-data normalization. This comparison is deliberately about
@@ -523,24 +691,24 @@ fn irrelevant_metadata_key(form: &Form) -> bool {
         (key.namespace.is_none() && matches!(key.name.as_str(), "file" | "line" | "column" | "end-column" | "end-line" | "source"))
         || (key.namespace.as_deref() == Some("cljs.analyzer") && key.name == "analyzed"))
 }
-fn metadata_pairs_metered(
-    prefix: &Form,
+fn metadata_pairs_metered<'a>(
+    prefix: &'a Form,
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
-) -> Result<Vec<Form>, Diagnostic> {
+) -> Result<Cow<'a, [Form]>, Diagnostic> {
     Ok(match &prefix.kind {
-        Kind::Map(entries) if entries.len() % 2 == 0 => entries
-            .iter()
-            .map(|entry| super::super::clone_form_metered(entry, meter))
-            .collect::<Result<Vec<_>, _>>()?,
-        Kind::Keyword(_) => vec![
+        // This is a view of genuine reader metadata. The merge below owns
+        // and meters each retained key/value clone; an intermediate deep copy
+        // neither contributes source facts nor changes association semantics.
+        Kind::Map(entries) if entries.len() % 2 == 0 => Cow::Borrowed(entries.as_slice()),
+        Kind::Keyword(_) => Cow::Owned(vec![
             super::super::clone_form_metered(prefix, meter)?,
             Form {
                 span: prefix.span.clone(),
                 metadata: vec![],
                 kind: Kind::Bool(true),
             },
-        ],
-        Kind::Symbol(_) | Kind::String(_) => vec![
+        ]),
+        Kind::Symbol(_) | Kind::String(_) => Cow::Owned(vec![
             Form {
                 span: prefix.span.clone(),
                 metadata: vec![],
@@ -550,7 +718,7 @@ fn metadata_pairs_metered(
                 }),
             },
             super::super::clone_form_metered(prefix, meter)?,
-        ],
+        ]),
         _ => {
             return Err(fail(
                 prefix.span.clone(),
@@ -610,6 +778,190 @@ mod metadata_reader_tests {
     use super::*;
 
     #[test]
+    fn metadata_view_storage_is_thin_and_synthesized_box_work_is_precharged() {
+        assert!(std::mem::size_of::<MetadataForm<'_>>() <= 2 * std::mem::size_of::<usize>());
+        assert!(std::mem::size_of::<MetadataEntry<'_>>() <= 9 * std::mem::size_of::<usize>());
+        let form = Form { span: 5..8, metadata: vec![], kind: Kind::Bool(true) };
+        let mut charged = 0;
+        let result = MetadataForm::synthesized(form.clone(), &mut |work| {
+            charged += work;
+            Err(fail(5..8, "synthesized owner cancelled"))
+        });
+        let error = result.err().expect("owner allocation must be gated by the meter");
+        assert_eq!(error.message, "synthesized owner cancelled");
+        assert_eq!(charged, std::mem::size_of::<Form>() as u64);
+        let retry = MetadataForm::synthesized(form.clone(), &mut |_| Ok(())).unwrap();
+        assert_eq!(retry.as_ref(), &form);
+    }
+
+    #[test]
+    fn normalized_metadata_view_retains_borrowed_collision_key_and_winning_value_with_shorthands() {
+        let read = |text| suss_reader::forms::read_forms(text).unwrap().remove(0);
+        let mut form = read("value");
+        form.metadata = vec![read("{:dup [outer] :other 4}"), read(":private"), read("{:dup [inner]}")];
+        let view = reader_metadata_view_metered(&form, &mut |_| Ok(())).unwrap();
+        assert_eq!(view.len(), 3);
+        let Kind::Map(outer) = &form.metadata[0].kind else { unreachable!() };
+        let Kind::Map(inner) = &form.metadata[2].kind else { unreachable!() };
+        assert!(matches!(&view[0].key, MetadataForm::Borrowed(key) if std::ptr::eq(*key, &inner[0])));
+        assert!(matches!(&view[0].value, MetadataForm::Borrowed(value) if std::ptr::eq(*value, &outer[1])));
+        assert!(matches!(&view[2].key, MetadataForm::Borrowed(key) if std::ptr::eq(*key, &outer[2])));
+        assert!(matches!(&view[1].key, MetadataForm::Borrowed(key) if std::ptr::eq(*key, &form.metadata[1])));
+        assert!(matches!(&view[1].value, MetadataForm::Synthesized(value) if matches!(value.kind, Kind::Bool(true))));
+        let output = reader_metadata_pairs_metered(&form, &mut |_| Ok(())).unwrap();
+        assert_eq!(output, vec![inner[0].clone(), outer[1].clone(), form.metadata[1].clone(), Form {
+            kind: Kind::Bool(true), span: form.metadata[1].span.clone(), metadata: vec![],
+        }, outer[2].clone(), outer[3].clone()]);
+        assert!(!std::ptr::eq(&output[1], view[0].value.as_ref()));
+        let mut shorthand = read("value");
+        shorthand.metadata = vec![read("string"), read("\"inner\"")];
+        let view = reader_metadata_view_metered(&shorthand, &mut |_| Ok(())).unwrap();
+        assert_eq!(view.len(), 1);
+        assert!(matches!(&view[0].key, MetadataForm::Synthesized(value) if matches!(&value.kind, Kind::Keyword(key) if key.name == "tag")));
+        assert!(std::ptr::eq(view[0].value.as_ref(), &shorthand.metadata[0]));
+        assert_eq!(view[0].key.as_ref().span, shorthand.metadata[1].span);
+    }
+
+
+    #[test]
+    fn indexed_nested_symbol_metadata_retains_pinned_file_positions_then_explicit_associations() {
+        let source = "(def ^{:tag ^{:marker :kept} number} subject 17)";
+        let original = suss_reader::forms::read_forms(source).unwrap().remove(0);
+        for file in [None, Some("tag-oracle.cljs")] {
+            let origin = crate::portable::SourceOrigin::new(source, file.map(Into::into));
+            let located = origin.macro_form_data_metered(&original, &mut |_| Ok(())).unwrap();
+            let Kind::List(items) = &located.kind else { unreachable!() };
+            let declaration = reader_metadata_view_metered(&items[1], &mut |_| Ok(())).unwrap();
+            let tag = declaration.iter().find(|entry| matches!(&entry.key.as_ref().kind,
+                Kind::Keyword(key) if key.namespace.is_none() && key.name == "tag")).unwrap().value.as_ref();
+            let actual = reader_metadata_pairs_metered(tag, &mut |_| Ok(())).unwrap();
+            let expected_source = if file.is_some() {
+                "{:file \"tag-oracle.cljs\" :line 1 :column 30 :end-line 1 :end-column 36 :marker :kept}"
+            } else {
+                "{:line 1 :column 30 :end-line 1 :end-column 36 :marker :kept}"
+            };
+            let Kind::Map(expected) = suss_reader::forms::read_forms(expected_source).unwrap().remove(0).kind.clone()
+                else { unreachable!() };
+            let kinds = |forms: &[Form]| forms.iter().map(|form| form.kind.clone()).collect::<Vec<_>>();
+            assert_eq!(kinds(&actual), kinds(&expected));
+            let tracked = reader_metadata_view_metered(tag, &mut |_| Ok(())).unwrap();
+            let tracked_pairs: Vec<_> = tracked.iter().flat_map(|entry|
+                [entry.key.as_ref().clone(), entry.value.as_ref().clone()]).collect();
+            assert_eq!(actual, tracked_pairs);
+            assert_eq!(original, suss_reader::forms::read_forms(source).unwrap().remove(0));
+        }
+    }
+
+    #[test]
+    fn indexed_explicit_overrides_keep_first_keys_winning_value_selectors_and_retry() {
+        let source = "^{:line 77 :file \"explicit.cljs\" :marker :kept} number";
+        let original = suss_reader::forms::read_forms(source).unwrap().remove(0);
+        let origin = crate::portable::SourceOrigin::new(source, Some("source.cljs".into()));
+        let located = origin.macro_form_data_metered(&original, &mut |_| Ok(())).unwrap();
+        assert_eq!(original.metadata.len(), 1);
+        assert_eq!(located.metadata.len(), 2);
+        assert_eq!(located.metadata[0].span, original.metadata[0].span);
+        assert_eq!(located.metadata[0].kind, original.metadata[0].kind,
+            "generated metadata remains appended; nested indexing may enrich the original map's own metadata");
+        let Kind::Map(generated) = &located.metadata[1].kind else { unreachable!() };
+        let Kind::Map(explicit) = &located.metadata[0].kind else { unreachable!() };
+        let mut calls = 0;
+        let view = reader_metadata_view_metered(&located, &mut |_| { calls += 1; Ok(()) }).unwrap();
+        let expected_keys = ["file", "line", "column", "end-line", "end-column", "marker"];
+        assert_eq!(view.len(), expected_keys.len());
+        for (entry, expected) in view.iter().zip(expected_keys) {
+            assert!(matches!(&entry.key.as_ref().kind, Kind::Keyword(key)
+                if key.namespace.is_none() && key.name == expected));
+        }
+        assert!(std::ptr::eq(view[0].key.as_ref(), &generated[0]));
+        assert!(std::ptr::eq(view[1].key.as_ref(), &generated[2]));
+        assert!(std::ptr::eq(view[0].value.as_ref(), &explicit[3]));
+        assert!(std::ptr::eq(view[1].value.as_ref(), &explicit[1]));
+        assert_eq!(view[0].key_position(), (1, 0));
+        assert_eq!(view[1].key_position(), (1, 1));
+        assert_eq!(view[0].value_position(), (0, 1));
+        assert_eq!(view[1].value_position(), (0, 0));
+        assert_eq!(view[5].value_position(), (0, 2));
+        let expected: Vec<_> = view.iter().flat_map(|entry|
+            [entry.key.as_ref().clone(), entry.value.as_ref().clone()]).collect();
+        assert_eq!(reader_metadata_pairs_metered(&located, &mut |_| Ok(())).unwrap(), expected);
+        for stop in 0..calls {
+            let mut current = 0;
+            let error = reader_metadata_view_metered(&located, &mut |_| {
+                let hit = current == stop; current += 1;
+                if hit { Err(fail(7..11, "indexed metadata meter stopped")) } else { Ok(()) }
+            }).err().expect("every native meter failure must propagate");
+            assert_eq!(error.span, 7..11);
+            assert_eq!(error.message, "indexed metadata meter stopped");
+            assert_eq!(reader_metadata_pairs_metered(&located, &mut |_| Ok(())).unwrap(), expected);
+            assert_eq!(original, suss_reader::forms::read_forms(source).unwrap().remove(0));
+        }
+    }
+
+    #[test]
+    fn map_metadata_view_borrows_exact_entries_without_copy_or_charge() {
+        let prefix = suss_reader::forms::read_forms("{:tag [a {:nested [b c]}] :private true}").unwrap().remove(0);
+        let Kind::Map(entries) = &prefix.kind else { unreachable!() };
+        let view = metadata_pairs_metered(&prefix, &mut |_| panic!("borrowed view does no copy work")).unwrap();
+        assert!(matches!(&view, Cow::Borrowed(_)));
+        assert!(std::ptr::eq(view.as_ref(), entries.as_slice()));
+        assert!(std::ptr::eq(&view[1], &entries[1]));
+        for shorthand in [":private", "string", "\"custom\""] {
+            let prefix = suss_reader::forms::read_forms(shorthand).unwrap().remove(0);
+            let mut charged = 0;
+            let pairs = metadata_pairs_metered(&prefix, &mut |work| { charged += work; Ok(()) }).unwrap();
+            assert!(matches!(pairs, Cow::Owned(_)));
+            assert_eq!(pairs.len(), 2);
+            assert!(charged > 0, "shorthand's real syntax clone remains metered");
+        }
+        let invalid = Form { kind: Kind::Map(vec![entries[0].clone()]), span: 19..23, metadata: vec![] };
+        let error = metadata_pairs_metered(&invalid, &mut |_| panic!("invalid map does not clone")).unwrap_err();
+        assert_eq!(error.span, 19..23);
+        assert_eq!(error.message, "Invalid metadata: expected a map, keyword, symbol or string");
+    }
+
+    #[test]
+    fn borrowed_map_merge_preserves_nested_metadata_collision_key_order_and_retry() {
+        let read = |text| suss_reader::forms::read_forms(text).unwrap().remove(0);
+        let mut outer_key = read(":same");
+        outer_key.span = 3..8;
+        let mut inner_key = read(":same");
+        inner_key.span = 70..75;
+        inner_key.metadata.push(read(":original-key"));
+        let mut outer_value = Form { kind: Kind::String(vec![65; 2048]), span: 10..2060, metadata: vec![read("{:leaf true}")] };
+        for _ in 0..12 {
+            outer_value = Form { kind: Kind::Vector(vec![outer_value]), span: 10..2060, metadata: vec![read(":nested")] };
+        }
+        let outer = Form { kind: Kind::Map(vec![outer_key, outer_value.clone(), read(":other"), read("17")]), span: 1..2100, metadata: vec![] };
+        let inner = Form { kind: Kind::Map(vec![inner_key.clone(), read("{:discarded [1 2 3]}"), read(":line"), read("91")]), span: 69..100, metadata: vec![] };
+        let mut form = read("value");
+        form.metadata = vec![outer, inner];
+        let original = form.clone();
+        let mut calls = 0;
+        let mut charged = 0;
+        let output = reader_metadata_pairs_metered(&form, &mut |work| { calls += 1; charged += work; Ok(()) }).unwrap();
+        assert!(charged > 2048, "actual retained payload clone remains charged");
+        assert_eq!(output, vec![inner_key.clone(), outer_value.clone(), read(":line"), read("91"), read(":other"), read("17")]);
+        // Reader equality ignores locations/key metadata, but association must
+        // retain the first key object including its complete source metadata.
+        assert_eq!(output[0].span, inner_key.span);
+        assert_eq!(output[0].metadata, inner_key.metadata);
+        assert_eq!(output[1].metadata, outer_value.metadata);
+        assert_eq!(merged_metadata_pairs_metered(&form, false, &mut |_| Ok(())).unwrap(),
+            vec![inner_key.clone(), outer_value.clone(), read(":other"), read("17")]);
+        for stop in [0, calls / 2, calls - 1] {
+            let mut current = 0;
+            let error = reader_metadata_pairs_metered(&form, &mut |_| {
+                let call = current; current += 1;
+                if call == stop { Err(fail(4..9, "metadata merge cancelled")) } else { Ok(()) }
+            }).unwrap_err();
+            assert_eq!(error.message, "metadata merge cancelled");
+            assert_eq!(form, original);
+            assert_eq!(reader_metadata_pairs_metered(&form, &mut |_| Ok(())).unwrap(), output);
+        }
+    }
+
+    #[test]
     fn deep_metadata_keys_preserve_precedence_and_exhaust_meter_without_a_depth_cap() {
         let mut key = Form { span: 0..1, metadata: vec![], kind: Kind::Number(42.0) };
         for _ in 0..128 {
@@ -649,5 +1001,129 @@ mod metadata_reader_tests {
         let value = suss_reader::forms::read_forms("#{1 1}").unwrap().remove(0);
         assert!(reader_key_equal(&value, &value, 0, &mut 1).is_err());
         assert!(reader_key_equal(&value, &value, 64, &mut 1_048_576).unwrap());
+    }
+
+    #[test]
+    fn metadata_key_origin_tracks_first_key_not_last_value_or_tag_spelling() {
+        let read = |text| suss_reader::forms::read_forms(text).unwrap().remove(0);
+        for shorthand in ["TypeName", "\"TypeName\""] {
+            for shorthand_first in [false, true] {
+                let mut form = read("owner");
+                let raw = read("{:tag source-value :other 17}");
+                let generated = read(shorthand);
+                // Native normalization traverses prefixes in reverse order.
+                form.metadata = if shorthand_first { vec![raw, generated] }
+                    else { vec![generated, raw] };
+                let view = reader_metadata_view_metered(&form, &mut |_| Ok(())).unwrap();
+                let entry = view.iter().find(|entry| matches!(&entry.key.as_ref().kind,
+                    Kind::Keyword(key) if key.name == "tag")).unwrap();
+                assert_eq!(entry.key_origin(), if shorthand_first {
+                    MetadataKeyOrigin::ReaderShorthandTag
+                } else { MetadataKeyOrigin::SourceSyntax });
+                if shorthand_first {
+                    assert!(matches!(&entry.key, MetadataForm::Synthesized(_)));
+                    let Kind::Map(pairs) = &form.metadata[0].kind else { unreachable!() };
+                    assert!(std::ptr::eq(entry.value.as_ref(), &pairs[1]));
+                } else {
+                    let Kind::Map(pairs) = &form.metadata[1].kind else { unreachable!() };
+                    assert!(std::ptr::eq(entry.key.as_ref(), &pairs[0]));
+                    assert!(std::ptr::eq(entry.value.as_ref(), &form.metadata[0]));
+                }
+                let expected: Vec<Form> = view.iter().flat_map(|entry|
+                    [entry.key.as_ref().clone(), entry.value.as_ref().clone()]).collect();
+                assert_eq!(reader_metadata_pairs_metered(&form, &mut |_| Ok(())).unwrap(), expected);
+                assert_eq!(merged_metadata_pairs_metered(&form, false, &mut |_| Ok(())).unwrap(), expected);
+            }
+        }
+        let mut keyword = read("owner");
+        keyword.metadata = vec![read(":tag")];
+        let view = reader_metadata_view_metered(&keyword, &mut |_| Ok(())).unwrap();
+        assert_eq!(view[0].key_origin(), MetadataKeyOrigin::SourceSyntax);
+        assert!(matches!(&view[0].value, MetadataForm::Synthesized(_)),
+            "a synthesized value never proves key origin");
+    }
+
+    #[test]
+    fn metadata_key_origin_occurrences_are_separate_and_late_invalid_prefix_is_checked() {
+        let read = |text| suss_reader::forms::read_forms(text).unwrap().remove(0);
+        let mut form = read("owner");
+        form.metadata = vec![read("TypeName")];
+        let a = reader_metadata_view_metered(&form, &mut |_| Ok(())).unwrap();
+        let b = reader_metadata_view_metered(&form, &mut |_| Ok(())).unwrap();
+        assert_eq!(a[0].key_origin(), MetadataKeyOrigin::ReaderShorthandTag);
+        assert!(!std::ptr::eq(a[0].key.as_ref(), b[0].key.as_ref()));
+        drop(a); drop(b);
+        let mut invalid = read("false"); invalid.span = 71..76;
+        form.metadata.insert(0, invalid);
+        let mut work = 0;
+        let error = reader_metadata_view_metered(&form, &mut |units| { work += units; Ok(()) })
+            .err().expect("invalid outer prefix must not be hidden by inner shorthand");
+        assert!(work > 3, "valid inner shorthand was processed before late failure");
+        assert_eq!(error.span, 71..76);
+        assert_eq!(error.message, "Invalid metadata: expected a map, keyword, symbol or string");
+    }
+
+    #[test]
+    fn metadata_key_origin_every_meter_error_propagates_without_mutation_and_retries() {
+        let read = |text| suss_reader::forms::read_forms(text).unwrap().remove(0);
+        let mut form = read("owner");
+        form.metadata = vec![read("{:tag outer :other [1 2]}"), read("TypeName"), read(":private")];
+        let original = form.clone();
+        let mut calls = 0;
+        let baseline = reader_metadata_view_metered(&form, &mut |_| { calls += 1; Ok(()) }).unwrap();
+        let expected: Vec<_> = baseline.iter().map(|entry|
+            (entry.key.as_ref().clone(), entry.value.as_ref().clone(), entry.key_origin())).collect();
+        for stop in 0..calls {
+            let mut current = 0;
+            let error = reader_metadata_view_metered(&form, &mut |_| {
+                let hit = current == stop; current += 1;
+                if hit { Err(fail(81..85, "origin-view injected meter error")) } else { Ok(()) }
+            }).err().expect("every metered boundary must propagate the same error");
+            assert_eq!(error.span, 81..85);
+            assert_eq!(error.message, "origin-view injected meter error");
+            assert_eq!(form, original);
+            let retry = reader_metadata_view_metered(&form, &mut |_| Ok(())).unwrap();
+            let actual: Vec<_> = retry.iter().map(|entry|
+                (entry.key.as_ref().clone(), entry.value.as_ref().clone(), entry.key_origin())).collect();
+            assert_eq!(actual, expected);
+        }
+    }
+
+}
+
+
+#[cfg(test)]
+mod pair_only_metadata_tests {
+    use super::*;
+    #[test]
+    fn pair_only_metadata_preserves_both_normalization_modes_without_unused_origin_storage() {
+        fn tracked_pairs(form: &Form, reader_data: bool,
+            meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Vec<Form> {
+            let entries = merged_metadata_view_metered::<MetadataOrigins>(form, reader_data, meter).unwrap();
+            let mut output = Vec::new();
+            metadata_reserve(&mut output, entries.len() * 2, meter, &form.span).unwrap();
+            for entry in entries {
+                output.push(super::super::super::clone_form_metered(entry.key.as_ref(), meter).unwrap());
+                output.push(super::super::super::clone_form_metered(entry.value.as_ref(), meter).unwrap());
+            }
+            output
+        }
+        assert!(std::mem::size_of::<MetadataEntry<'_, ()>>()
+            < std::mem::size_of::<MetadataEntry<'_, MetadataOrigins>>());
+        for source in ["^:private x", "^number ^{:tag override :doc false} x",
+            "^{:tag first :meta {:leaf x}} ^number x", "^{:line 7 :file \"raw\" :tag hint} x"] {
+            let form = suss_reader::forms::read_forms(source).unwrap().remove(0);
+            for reader_data in [false, true] {
+                let mut compact_work = 0u64;
+                let compact = merged_metadata_pairs_metered(&form, reader_data,
+                    &mut |n| { compact_work += n; Ok(()) }).unwrap();
+                let mut tracked_work = 0u64;
+                let tracked = tracked_pairs(&form, reader_data,
+                    &mut |n| { tracked_work += n; Ok(()) });
+                assert_eq!(compact, tracked, "{source}, reader_data={reader_data}");
+                assert!(compact_work < tracked_work,
+                    "same selected forms, actual smaller carrier and no unused coordinate stores");
+            }
+        }
     }
 }

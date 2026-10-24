@@ -39,6 +39,7 @@ const PORTABILITY_MACRO_NAMES: &[&str] = &["when-var-exists"];
 // Bounded so a runaway assertion becomes a recorded trap, not a hung suite.
 const OPERATION_FUEL: u64 = 200_000_000;
 const DECODE_BUDGET: usize = 10_000_000;
+const PINNED_MAP_COMPILATION_FUEL: u64 = 300_000_000;
 
 fn root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
@@ -803,7 +804,14 @@ fn pinned_map_declaration_executes_without_transport_loss() {
     assert_eq!(std::fs::read(&original).unwrap(), std::fs::read(source_file(&source_root, namespace)).unwrap(),
         "the original map test must not be shortened or rewritten");
     let reference = json!({"namespaces": [namespace], "tests": [test_name]});
-    let observations = Harness::new(&source_root).run(&reference, &source_root);
+    let mut harness = Harness::new(&source_root);
+    // Calibrated compile-time allowance (user decision of 2026-10-23 under
+    // #252, tracked by #273): the complete pinned map namespace load consumes
+    // about 204M macro-Session units on PR #263 (147 expansions, largest
+    // deftest 10.9M), just above the original 200M. Runtime stays at
+    // OPERATION_FUEL.
+    harness.macros.set_operation_fuel(PINNED_MAP_COMPILATION_FUEL);
+    let observations = harness.run(&reference, &source_root);
     if let Some(directory) = std::env::var_os("SUSS_CLOJURE_TEST_SUITE_CAPTURE") {
         let directory = PathBuf::from(directory);
         std::fs::create_dir_all(&directory).unwrap();
@@ -944,4 +952,77 @@ assert counts['fail']==counts['not-executed']==counts['skipped']==0
     eprintln!("PINNED_WHEN_LET {}{}", String::from_utf8_lossy(&compared.stdout),
               String::from_utf8_lossy(&compared.stderr));
     assert!(compared.status.success(), "complete pinned when-let comparison failed");
+}
+
+/// #261 supplemental value conformance: execute the entire unchanged pinned keyword test.
+/// Memo state and callback effects require the separate CLJS/native probes.
+#[test]
+fn pinned_keyword_namespace_keeps_values() {
+    let repository = root();
+    let workspace = tempfile::tempdir().unwrap();
+    let source_root = workspace.path().join("src");
+    let generated = Command::new("python3")
+        .arg(repository.join("scripts/clojure_test_suite.py"))
+        .args(["suss-sources", "--suite", "suite", "--output"])
+        .arg(&source_root).output().unwrap();
+    assert!(generated.status.success(), "{}", String::from_utf8_lossy(&generated.stderr));
+    let names = ["clojure.core-test.keyword"];
+    for namespace in names {
+        let original = repository.join("vendor/clojure-test-suite/upstream/test")
+            .join(namespace.replace('.', "/").replace('-', "_") + ".cljc");
+        assert_eq!(std::fs::read(original).unwrap(),
+            std::fs::read(source_file(&source_root, namespace)).unwrap(),
+            "the complete original keyword declaration must remain intact");
+    }
+    let tests = ["clojure.core-test.keyword/test-keyword"];
+    let selected = json!({"namespaces": names, "tests": tests});
+    let observations = Harness::new(&source_root).run(&selected, &source_root);
+    let captured = workspace.path().join("keyword-observations.json");
+    std::fs::write(&captured, serde_json::to_vec_pretty(&observations).unwrap()).unwrap();
+    if let Some(directory) = std::env::var_os("SUSS_KEYWORD_CONFORMANCE_CAPTURE") {
+        let directory = PathBuf::from(directory);
+        std::fs::create_dir_all(&directory).unwrap();
+        std::fs::write(directory.join("keyword-observations.json"),
+            serde_json::to_vec_pretty(&observations).unwrap()).unwrap();
+    }
+    // Use the same independent operand comparator as the suite. Never accept
+    // guest equality, an executed prefix, or a reviewed failure as a pass here.
+    let compared = Command::new("python3").arg("-c").arg(r#"
+import json,sys
+from pathlib import Path
+root=Path(sys.argv[1]);sys.path.insert(0,str(root/'scripts'))
+import clojure_test_suite as suite
+reference=json.loads((root/'tests/oracle/clojure-test-suite-observations.json').read_text())
+names=['clojure.core-test.keyword']
+tests=['clojure.core-test.keyword/test-keyword']
+reference.update(namespaces=names,tests=tests,
+ assertions=[x for x in reference['assertions'] if x['test'] in tests],
+ skips=[x for x in reference['skips'] if x['namespace'] in names])
+observed=json.loads(Path(sys.argv[2]).read_text())
+expected=[(x['test'],x['ordinal']) for x in reference['assertions']]
+actual=[(x['test'],x['ordinal']) for x in observed['assertions']]
+counts,failures=suite.compare(reference,observed)
+result={'counts':counts,'failures':failures,'expected_ids':expected,'actual_ids':actual,
+        'ordered_ids_match':actual==expected,'test_failures':observed['test-failures'],
+        'skips':observed['skips']}
+print(json.dumps(result),flush=True)
+Path(sys.argv[2]).with_name('keyword-comparison.json').write_text(json.dumps(result,indent=2)+'\n')
+assert not observed['test-failures']
+assert not failures['tests'] and not failures['namespaces']
+assert expected and actual==expected
+assert counts['pass']==len(expected) and counts['guest-judged']==0
+assert counts['fail']==0 and counts['not-executed']==0 and counts['skipped']==0
+"#).arg(&repository).arg(&captured).output().unwrap();
+    if let Some(directory) = std::env::var_os("SUSS_KEYWORD_CONFORMANCE_CAPTURE") {
+        let directory = PathBuf::from(directory);
+        std::fs::write(directory.join("keyword-comparator.stdout"), &compared.stdout).unwrap();
+        std::fs::write(directory.join("keyword-comparator.stderr"), &compared.stderr).unwrap();
+        let comparison = workspace.path().join("keyword-comparison.json");
+        if comparison.exists() {
+            std::fs::copy(comparison, directory.join("keyword-comparison.json")).unwrap();
+        }
+    }
+    assert!(compared.status.success(), "{}\n{}", String::from_utf8_lossy(&compared.stdout),
+        String::from_utf8_lossy(&compared.stderr));
+    println!("PINNED_KEYWORD_CONFORMANCE {}", String::from_utf8_lossy(&compared.stdout));
 }

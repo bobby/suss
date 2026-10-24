@@ -1,6 +1,8 @@
 //! Compare complete private factory forms and metadata with the predecessor.
 //! Upstream semantics remain covered by public record and pinned-oracle cases.
 
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::{portable_macro_data::FormBridge, portable_session::Session};
 use suss_reader::forms::{Form, Kind};
 
@@ -134,11 +136,9 @@ fn old_and_candidate_factory_forms_match_with_recursive_metadata() {
     let mut new_session = Session::new_macro().expect("candidate independent Macro session");
     let old_bridge = FormBridge::new(&mut old_session).expect("old bridge");
     let new_bridge = FormBridge::new(&mut new_session).expect("new bridge");
-    old_session
-        .eval(&old_source)
+    semantic_compilation::eval(&mut old_session, &old_source)
         .expect("load old factory source");
-    new_session
-        .eval(&new_source)
+    semantic_compilation::eval(&mut new_session, &new_source)
         .expect("load candidate factory source");
     old_session
         .enter_namespace("suss.internal.record-factories")

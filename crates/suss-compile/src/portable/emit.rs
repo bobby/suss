@@ -1,5 +1,7 @@
 //! Emit only verified IR. Operands are local value IDs, never source expressions.
 mod r#async;
+mod short_keys;
+mod integer_bits;
 use super::{
     hir::{Arithmetic, Literal, Nominal, Type},
     ir::{self, ClosureBody, Function as IrFunction, GeneralClosureBody, FutureBody, Operation, Terminator},
@@ -9,6 +11,42 @@ use crate::runtime_abi;
 use std::{borrow::Cow, collections::BTreeSet};
 use wasm_encoder::*;
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
+
+// Literal names are SSA values, never expressions to re-evaluate.
+#[derive(Default)]
+struct PrimitiveStringKeys {
+    length: BTreeSet<usize>,
+    char_code_at: BTreeSet<usize>,
+    char_code_at_methods: BTreeSet<(usize, usize)>,
+}
+impl PrimitiveStringKeys {
+    fn new(function: &IrFunction) -> Self {
+        let mut keys = Self::default();
+        for block in &function.blocks {
+            for instruction in &block.instructions {
+                if let Operation::Literal(Literal::String(units)) = &instruction.operation {
+                    match units.as_slice() {
+                        [108, 101, 110, 103, 116, 104] => { keys.length.insert(instruction.result.0); }
+                        [99, 104, 97, 114, 67, 111, 100, 101, 65, 116] => { keys.char_code_at.insert(instruction.result.0); }
+                        _ => {}
+                    }
+                }
+            }
+        }
+        // ObjectInvoke carries [selected method, receiver, arguments...].
+        // Only pair a lookup with the exact same receiver SSA value.
+        for block in &function.blocks {
+            for instruction in &block.instructions {
+                if let Operation::Nominal { operation: Nominal::NamedGet, arguments } = &instruction.operation {
+                    if arguments.len() == 2 && keys.char_code_at.contains(&arguments[1].0) {
+                        keys.char_code_at_methods.insert((instruction.result.0, arguments[0].0));
+                    }
+                }
+            }
+        }
+        keys
+    }
+}
 fn arithmetic_name(
     operator: Arithmetic,
     arguments: &[ir::ValueId],
@@ -72,18 +110,39 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
 }
 /// The caller must verify this exact immutable graph before entry.
 pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
-    emit_options(ir, None)
+    emit_with_plan_budget(ir, None)
+}
+
+pub(super) fn emit_verified_metered(
+    ir: &IrFunction, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Vec<u8>, Diagnostic> {
+    emit_options(ir, None, meter)
+}
+
+// Standalone compiler/bootstrap entrypoints have no caller Store. Session and
+// artifact-cache routes use emit_verified_metered with their existing meter.
+fn emit_with_plan_budget(
+    ir: &IrFunction, memos: Option<&mut super::bootstrap::Emission<'_, '_>>,
+) -> Result<Vec<u8>, Diagnostic> {
+    let mut remaining = super::DEFAULT_OPERATION_FUEL;
+    emit_options(ir, memos, &mut |work| {
+        remaining = remaining.checked_sub(work).ok_or_else(|| Diagnostic {
+            span: ir.span.clone(), message: "Emitter planning fuel exhausted".into(),
+        })?;
+        Ok(())
+    })
 }
 
 pub(super) fn emit_memo_plan(plan: &super::bootstrap::VerifiedMemoPlan<'_>) -> Result<Vec<u8>, Diagnostic> {
     ir::verify(plan.root())?;
     let mut emission = plan.emission();
-    let bytes = emit_options(plan.root(), Some(&mut emission))?;
+    let bytes = emit_with_plan_budget(plan.root(), Some(&mut emission))?;
     emission.finish()?;
     Ok(bytes)
 }
 
-fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emission<'_, '_>>) -> Result<Vec<u8>, Diagnostic> {
+fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emission<'_, '_>>,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Vec<u8>, Diagnostic> {
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -100,10 +159,16 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
     if !futures.is_empty() { names.extend(r#async::IMPORTS.iter().copied()); }
     if futures.iter().any(|body| !body.continuation.backedges.is_empty()) { names.insert("async-task-yield"); }
     let mut globals = BTreeSet::new();
+    let mut module_short_keys = false;
+    let mut module_integer_bits = false;
     for function in all_functions {
+        let primitive_strings = PrimitiveStringKeys::new(function);
         for block in &function.blocks {
             throws |= matches!(&block.terminator, Terminator::Throw(_));
-            for inst in &block.instructions {
+            // Enumerating reuses this import walk; prepay its index bookkeeping
+            // once for the block, with no separate short-key admission traversal.
+            meter(block.instructions.len() as u64)?;
+            for (instruction_index, inst) in block.instructions.iter().enumerate() {
                 match &inst.operation {
                     Operation::Await { .. } | Operation::MakeFuture { .. } => {}
                     Operation::DynamicScope {
@@ -150,6 +215,12 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
                     }
                     Operation::Bitwise { operation, .. } => {
                         names.insert(operation.export());
+                        meter(2)?; // integer eligibility and one module import flag
+                        if integer_bits::integer(*operation) && !module_integer_bits {
+                            meter(1024)?; // at most two new import nodes/backing/control
+                            names.extend(["coerce-int32", "number-box"]);
+                            module_integer_bits = true;
+                        }
                     }
                     Operation::Comparison { operation, .. } => {
                         names.insert(operation.export());
@@ -157,7 +228,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
                     Operation::Array { operation, .. } => {
                         names.insert(operation.export());
                     }
-                    Operation::Nominal { operation, .. } => match operation {
+                    Operation::Nominal { operation, arguments } => match operation {
                         Nominal::IsNumber | Nominal::IsString => {
                             names.insert(if *operation == Nominal::IsNumber { "predicate-number" } else { "predicate-string" });
                             names.insert("invoke");
@@ -188,10 +259,26 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
                         }
                         Nominal::ObjectInvoke => {
                             names.insert("object-method-invoke");
+                            if arguments.len() == 3 && primitive_strings.char_code_at_methods.contains(&(arguments[0].0, arguments[1].0)) {
+                                names.insert("string-char-code-at");
+                            }
                         }
                         Nominal::CallableGet => { names.insert("callable-property-get"); }
                         Nominal::NamedGet => {
+                            // Inspect adjacency only at actual getters. Import
+                            // publication is once per module, never per callee.
+                            meter(2)?; // module flag and preceding-index check
+                            if !module_short_keys && instruction_index > 0 {
+                                meter(1)?; // bounded adjacent-pair inspection
+                                if short_keys::adjacent(&block.instructions[instruction_index - 1..=instruction_index]).is_some() {
+                                    meter(512)?; // actual new import node/backing/control
+                                    names.insert("short-literal-property-probe");
+                                    module_short_keys = true;
+                                }
+                            }
                             names.insert("named-property-get");
+                            if primitive_strings.length.contains(&arguments[1].0) { names.insert("number-box"); }
+                            if primitive_strings.char_code_at.contains(&arguments[1].0) { names.insert("string-char-code-at-method"); }
                         }
                         Nominal::NamedSet => {
                             names.insert("named-property-set");
@@ -318,6 +405,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
             | "comparison-greater-equal"
             | "comparison-strict-equal" => (vec![VALUE, VALUE], vec![VALUE]),
             "object-field-set" | super::bootstrap::MEMO_WRITE_IMPORT_NAME => (vec![VALUE, ValType::I32, VALUE], vec![]),
+            "short-literal-property-probe" => (vec![VALUE, ValType::I64, ValType::I32], vec![ValType::I32, VALUE]),
             "object-field-get" | "protocol-key" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "protocol-marker-set" | "protocol-method-get" => (vec![VALUE, VALUE], vec![VALUE]),
             "protocol-method-set" => (vec![VALUE, VALUE, VALUE], vec![]),
@@ -345,8 +433,9 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
             | "source-array-get-indices"
             | "source-array-set-indices"
             | "source-array-set-or-property" => (vec![VALUE], vec![VALUE]),
-            "predicate-number" | "predicate-string" | "arity-error" | "native-object-factory-function" | "native-object-default-prototype" | "current-this" => (vec![], vec![VALUE]),
+            "predicate-number" | "predicate-string" | "arity-error" | "native-object-factory-function" | "native-object-default-prototype" | "current-this" | "string-char-code-at-method" => (vec![], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
+            "coerce-int32" => (vec![VALUE], vec![ValType::I32]),
             "closure-source-name-initialize" => (vec![VALUE, VALUE], vec![]),
             "closure-source-name" => (vec![VALUE], vec![VALUE]),
             "closure-new" => (
@@ -417,7 +506,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
         &globals,
         &bodies,
         &dispatchers,
-        &futures, None, memos.as_deref_mut(),
+        &futures, None, module_short_keys, module_integer_bits, memos.as_deref_mut(), meter,
     )?);
     for body in &bodies {
         functions.function(runtime_abi::INVOKE);
@@ -428,7 +517,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
             &globals,
             &bodies,
             &dispatchers,
-            &futures, None, memos.as_deref_mut(),
+            &futures, None, module_short_keys, module_integer_bits, memos.as_deref_mut(), meter,
         )?);
     }
     for dispatcher in &dispatchers {
@@ -438,7 +527,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
     for body in &futures {
         functions.function(runtime_abi::INVOKE);
         code.function(&emit_function(&body.continuation.function, Some(0),
-            &names, &globals, &bodies, &dispatchers, &futures, Some(&body.continuation), memos.as_deref_mut())?);
+            &names, &globals, &bodies, &dispatchers, &futures, Some(&body.continuation), module_short_keys, module_integer_bits, memos.as_deref_mut(), meter)?);
     }
     let mut elements = ElementSection::new();
     if !bodies.is_empty() || !dispatchers.is_empty() || !futures.is_empty() {
@@ -665,8 +754,16 @@ fn emit_function(
     dispatchers: &[&GeneralClosureBody],
     futures: &[&FutureBody],
     continuation: Option<&ir::r#async::Continuation>,
+    module_short_keys: bool,
+    module_integer_bits: bool,
     mut memos: Option<&mut super::bootstrap::Emission<'_, '_>>,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<Function, Diagnostic> {
+    let primitive_strings = PrimitiveStringKeys::new(ir);
+    meter(1)?; // module admission/continuation control before optional planning
+    let short_keys = short_keys::Plan::new(ir, module_short_keys && continuation.is_none(), meter)?;
+    meter(1)?; // integer module/continuation admission, no scan when absent
+    let integer_plan = integer_bits::Plan::new(ir, module_integer_bits && continuation.is_none(), meter)?;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -691,7 +788,18 @@ fn emit_function(
     // resumable states and all branch/backedge functions on the dispatcher.
     let straight_line = continuation.is_none() && ir.blocks.len() == 1
         && matches!(&ir.blocks[0].terminator, Terminator::Return(_) | Terminator::Throw(_));
-    let mut function = Function::new([(count + 14, VALUE), (1, ValType::I32)]);
+    meter(1)?; // plan count read; no extra local work for unoptimized functions
+    let (raw_base, temporary, integer_locals) = if integer_plan.count == 0 {
+        (0, 0, 1)
+    } else {
+        meter(16)?; // checked local arithmetic and additional count encoding
+        let raw_base = pc.checked_add(1).ok_or_else(|| fail("Too many integer SSA locals"))?;
+        let temporary = raw_base.checked_add(integer_plan.count).ok_or_else(|| fail("Too many integer SSA locals"))?;
+        let integer_locals = integer_plan.count.checked_add(3).ok_or_else(|| fail("Too many integer SSA locals"))?;
+        pc.checked_add(integer_locals).ok_or_else(|| fail("Too many integer SSA locals"))?;
+        (raw_base, temporary, integer_locals)
+    };
+    let mut function = Function::new([(count + 14, VALUE), (integer_locals, ValType::I32)]);
     use Instruction::*;
     if continuation.is_none() {
     if let Some(capture_count) = capture_count {
@@ -743,6 +851,7 @@ fn emit_function(
                 .instruction(&If(BlockType::Empty));
         }
         if let Some(plan) = continuation { r#async::resume_result(&mut function, plan, state_id, &slots); }
+        let mut pending_short_key = None;
         for inst in instructions {
             match &inst.operation {
                 Operation::RegionPush { handler, cleanup, end, dynamic } => {
@@ -829,7 +938,14 @@ fn emit_function(
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Literal(Literal::String(units)) => {
-                    emit_utf16_literal(&mut function, units, inst.result.0 as u32 + offset, &ir.span)?;
+                    meter(1)?; // checked plan access only for actual string literals
+                    if short_keys.elide(inst.result) {
+                        meter(4 + 4 * units.len() as u64)?; // unit read, widen/shift/or plus packed tuple/control
+                        meter(2)?; // retain original borrowed UTF16 slice (pointer/length), no copy
+                        pending_short_key = Some((inst.result, short_keys::pack(units), units.len() as i32, units.as_slice()));
+                    } else {
+                        emit_utf16_literal(&mut function, units, inst.result.0 as u32 + offset, &ir.span)?;
+                    }
                 }
                 Operation::GlobalCell(global) => {
                     let index_global = globals
@@ -1001,12 +1117,19 @@ fn emit_function(
                     operation,
                     arguments,
                 } => {
-                    for argument in arguments {
-                        function.instruction(&LocalGet(argument.0 as u32 + offset));
+                    meter(4 + 4 * arguments.len() as u64)?; // bounded plan/slot admission reads
+                    if integer_bits::integer(*operation) && (integer_plan.slot(inst.result).is_some()
+                        || arguments.iter().any(|argument| integer_plan.slot(*argument).is_some())) {
+                        integer_bits::emit(&mut function, &integer_plan, *operation, arguments,
+                            inst.result, offset, raw_base, temporary, &index, meter)?;
+                    } else {
+                        for argument in arguments {
+                            function.instruction(&LocalGet(argument.0 as u32 + offset));
+                        }
+                        function
+                            .instruction(&Call(index(operation.export())))
+                            .instruction(&LocalSet(inst.result.0 as u32 + offset));
                     }
-                    function
-                        .instruction(&Call(index(operation.export())))
-                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Comparison {
                     operation,
@@ -1164,7 +1287,74 @@ fn emit_function(
                                     },
                                 )));
                         }
+                        Nominal::NamedGet => {
+                            // Only a proved adjacent literal populates pending;
+                            // no other opcode reads/takes it, and each block
+                            // starts empty. Continuations never populate it.
+                            meter(1)?; // actual pending-key read/take
+                            if let Some((key,bits,len,units)) = pending_short_key.take() {
+                                if arguments.len()==2 && arguments[1]==key {
+                                    meter(16 + 4 * units.len() as u64)?; // probe branch, original literal/fallback emission
+                                    // The key has no other use and ordinary SSA
+                                    // locals are VALUE. Reuse that existing GC
+                                    // slot for the probe value, restoring the
+                                    // original STRING before any miss callback.
+                                    function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                        .instruction(&I64Const(bits)).instruction(&I32Const(len))
+                                        .instruction(&Call(index("short-literal-property-probe")))
+                                        .instruction(&LocalSet(key.0 as u32 + offset))
+                                        .instruction(&If(BlockType::Result(VALUE)))
+                                        .instruction(&LocalGet(key.0 as u32 + offset))
+                                        .instruction(&Else);
+                                    emit_utf16_literal(&mut function, units, key.0 as u32 + offset, &ir.span)?;
+                                    function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                        .instruction(&LocalGet(key.0 as u32 + offset))
+                                        .instruction(&Call(index("named-property-get")))
+                                        .instruction(&End)
+                                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                                    continue;
+                                }
+                            }
+                            let length = primitive_strings.length.contains(&arguments[1].0);
+                            let char_code_at = primitive_strings.char_code_at.contains(&arguments[1].0);
+                            let fast = length || char_code_at;
+                            if fast {
+                                function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                    .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::STRING)))
+                                    .instruction(&If(BlockType::Result(VALUE)));
+                                if length {
+                                    function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                        .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::STRING)))
+                                        .instruction(&ArrayLen)
+                                        .instruction(&F64ConvertI32U)
+                                        .instruction(&Call(index("number-box")));
+                                } else {
+                                    // Use the same lazily initialized shared root
+                                    // as named-property-get, at the lookup position.
+                                    function.instruction(&Call(index("string-char-code-at-method")));
+                                }
+                                function.instruction(&Else);
+                            }
+                            for argument in arguments { function.instruction(&LocalGet(argument.0 as u32 + offset)); }
+                            function.instruction(&Call(index("named-property-get")));
+                            if fast { function.instruction(&End); }
+                        }
                         Nominal::ObjectInvoke => {
+                            // Numeric indices cannot invoke guest coercion. Other
+                            // owners, indices and arities retain member dispatch.
+                            let fast = arguments.len() == 3 && primitive_strings.char_code_at_methods.contains(&(arguments[0].0, arguments[1].0));
+                            if fast {
+                                function.instruction(&LocalGet(arguments[1].0 as u32 + offset))
+                                    .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::STRING)))
+                                    .instruction(&LocalGet(arguments[2].0 as u32 + offset))
+                                    .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::NUMBER)))
+                                    .instruction(&I32And)
+                                    .instruction(&If(BlockType::Result(VALUE)))
+                                    .instruction(&LocalGet(arguments[1].0 as u32 + offset))
+                                    .instruction(&LocalGet(arguments[2].0 as u32 + offset))
+                                    .instruction(&Call(index("string-char-code-at")))
+                                    .instruction(&Else);
+                            }
                             for argument in &arguments[..2] {
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
                             }
@@ -1177,6 +1367,7 @@ fn emit_function(
                                     array_size: arguments.len() as u32 - 2,
                                 })
                                 .instruction(&Call(index("object-method-invoke")));
+                            if fast { function.instruction(&End); }
                         }
                         Nominal::Class
                         | Nominal::BindingDefined
@@ -1200,7 +1391,6 @@ fn emit_function(
                         | Nominal::NativeObjectSet
                         | Nominal::NativeObjectStrictSet
                         | Nominal::ObjectSet
-                        | Nominal::NamedGet
                         | Nominal::CallableGet
                         | Nominal::NamedSet
                         | Nominal::Protocol

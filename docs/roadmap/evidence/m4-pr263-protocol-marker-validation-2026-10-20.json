@@ -1,0 +1,2005 @@
+{
+  "schema": 1,
+  "scope": "Source-bound controlled protocol marker specialization validation; no issue closure, PR readiness, full baseline, final CI or whole-program fuel gain inferred.",
+  "source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+  "compiler_source_sha256": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+  "compiler_inputs": 229,
+  "bootstrap_commit": "0548d7c2f4631b72ed036a960c665537c3b4696b",
+  "implementation": {
+    "status": "CACHE_ONLY_AUTHORED_UNAPPLIED_UNCOMPILED_UNEXECUTED",
+    "base_head": "c40e2bbcb335e7a666235c3fdd55ed5c7483a119",
+    "production_source_commit": "548699669cbafa5ada761595e531308db9ea0acd",
+    "production_fingerprint": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4",
+    "files": [
+      {
+        "path": "crates/suss-compile/src/runtime_abi/nominal.rs",
+        "before_sha256": "de8523dadd32de689da75c0715d25bd93c6b5948754f9d7d870b895e35890475",
+        "after_sha256": "a5ac5490c4e3b458037fce63ee6399b830fab4ca3c32e16c2fa1749cedaad2c2"
+      }
+    ],
+    "patch_sha256": "be75aabefbf0ca3275245151e9f06df91e69e0b2689a5a46755af26d46ea9fad",
+    "source_reversal_byte_exact": true,
+    "function_count_exports_unchanged_by_construction": true,
+    "scope": "Shared read-lookup emitter and inlined boolean marker mode only. Writer original generator text retained byte-for-byte; read branch registers once then continues. No source proof, memo, factory, schema or host fee edits. Existing test bodies unchanged.",
+    "review": "Author proposal; independent source review and real focused execution required; no self-independent GO."
+  },
+  "independent_source_review": {
+    "verdict": "SOURCE_GO_FOR_CONTROLLED_TYPECHECK_AND_FOCUSED_EXECUTION",
+    "base_head": "c40e2bbcb335e7a666235c3fdd55ed5c7483a119",
+    "production_source_fingerprint": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4",
+    "production_file": {
+      "path": "crates/suss-compile/src/runtime_abi/nominal.rs",
+      "before_sha256": "de8523dadd32de689da75c0715d25bd93c6b5948754f9d7d870b895e35890475",
+      "after_sha256": "a5ac5490c4e3b458037fce63ee6399b830fab4ca3c32e16c2fa1749cedaad2c2"
+    },
+    "patch_sha256": "be75aabefbf0ca3275245151e9f06df91e69e0b2689a5a46755af26d46ea9fad",
+    "v1_not_approved_as_final": true,
+    "generic_get_set_equivalence": {
+      "kind": "Static exact Rust instruction-generator equivalence, not compiled bytecode comparison",
+      "getter": {
+        "common_guard_prelude": "byte exact",
+        "pair_and_exhausted_emitters": "exact ordered Instruction elements after marker=false specialization",
+        "lookup": "entire unrolled/partial/fallback/nil result generator equal after flattening push/extend grouping",
+        "registration": "same reader position, parameters/results/local layout; writer follows once due continue"
+      },
+      "setter": "Entire old/new loop specializations with writing=true equal, including validation/errors/table writes/appends and registration.",
+      "source_only": true
+    },
+    "marker_semantics": [
+      "Key descriptor guard stays before receiver OBJECT check; a valid key with nonobject returns false. KeyVALUE0 is already checked; RefEq needs no second key cast/local.",
+      "Object descriptor and current table are reloaded/checked each call. Immutable array length and odd-length rejection precede first pair; no callbacks or source/store observations are introduced.",
+      "Exact key RefEq scans the same first-hit order at early, partial/unrolled and fallback positions; hit compares that one actual value with exact sentinel. First non-sentinel duplicate must return false, not continue.",
+      "Miss nil is an immediate i31 distinct from immutable nonnullable descriptor sentinel, so old nil==sentinel false becomes direct i32false.",
+      "All mutable table values remain live and GC-rooted by locals; no authority/source/memo/retained/factory/health bypass or cache.",
+      "Generic getter/setter signatures/function registration count/order unchanged; marker signature remains (VALUE,VALUE)->i32, with well-indexed locals2VALUE,3i32,4VALUE,5i32,6ARGS."
+    ],
+    "metering": "Actual guest call/duplicate key guard/miss value conversion removed, direct local saves/inlined body added. Engine instruction fuel policy unchanged; no host tariffs/quota/refill edits, no amount/dominance/default or map-fit claim.",
+    "failure_and_error_order": "Same observable key/receiver/table/odd-length priority and language-error payload path. Error backtrace/call frames and fuel boundaries may differ because the removed getter call is intentional.",
+    "tests": {
+      "packet": "/home/bobby/.cache/suss-m4-work/pr263-protocol-marker-direct-regressions-d689-v1",
+      "file": {
+        "path": "crates/suss-compile/tests/runtime_abi.rs",
+        "before_sha256": "50ad27c494be3a68a69307adbb09116f4c157aa16472fe73ca938033148aa3b9",
+        "after_sha256": "87501bf65c616f64c72972cb30b309fb100dd170edaa4c8552ab6cb604f11fb0"
+      },
+      "patch_sha256": "eb4dbc3cd763c301ed0280057166117016cce0916c1562525bf3fa61c1095d87",
+      "old_test_prefix_bytes": 320189,
+      "old_prefix_byte_exact": true,
+      "added_exact_names": [
+        "protocol_marker_direct_tests::marker_checks_key_before_nonobject_and_rejects_bad_tables_before_first_hit",
+        "protocol_marker_direct_tests::marker_uses_first_exact_key_and_live_sentinel_identity_after_gc",
+        "protocol_marker_direct_tests::marker_fuel_and_pending_interrupt_are_typed_and_allow_same_store_retry"
+      ],
+      "scope": [
+        "Actual runtime_abi::module and genuine descriptor/object/marker setter/getter, no mock emitter oracle.",
+        "Key-before-nonobject error, actual language tag recovery, bad/odd live table before early hit, valid misses; malformed object descriptor is only an immutable typed-field host rejection, not an impossible marker branch.",
+        "Equal numeric descriptor IDs do not confer exact key/sentinel identity; nil/bool/closure nonmarkers, GC, first duplicate at0/15/16, same-object whole-table replacement/restoration.",
+        "Measured same-input fuel cuts0/1/half/used-1 require typed OutOfFuel and intact table; explicit independent budget retries. Pending epoch typed Interrupt uses isolated engine; retry resets deadline without fuel refill. This is entry IRQ, not mid-loop cancellation."
+      ],
+      "resource_fixture_risk": "As with any measured used-1 cut, actual Wasmtime block-boundary behavior must be established by execution; no runtime PASS or guaranteed cut outcome inferred. Original negative assertion is retained."
+    },
+    "limitations": [
+      "Uncompiled/unexecuted source review; main must validate ABI module and execute selected direct/unchanged getter controls.",
+      "New guest code requires normal matching BOOT/identity before Session claims; no metadata-only artifact equality assumption.",
+      "No semantic/performance/default/pinned/readiness result inferred."
+    ],
+    "review_execution": "Static parsing/specialization and Git/hash reads only; no Cargo/rustc/VM/shared edits."
+  },
+  "direct_test_proposal": {
+    "status": "AUTHOR_CACHE_ONLY_UNAPPLIED_UNCOMPILED_UNEXECUTED",
+    "base_head": "c40e2bbcb335e7a666235c3fdd55ed5c7483a119",
+    "files": [
+      {
+        "path": "crates/suss-compile/tests/runtime_abi.rs",
+        "before_sha256": "50ad27c494be3a68a69307adbb09116f4c157aa16472fe73ca938033148aa3b9",
+        "after_sha256": "87501bf65c616f64c72972cb30b309fb100dd170edaa4c8552ab6cb604f11fb0"
+      }
+    ],
+    "patch_sha256": "eb4dbc3cd763c301ed0280057166117016cce0916c1562525bf3fa61c1095d87",
+    "original_file_prefix_byte_exact": true,
+    "original_bytes": 320189,
+    "added_exact_names": [
+      "protocol_marker_direct_tests::marker_checks_key_before_nonobject_and_rejects_bad_tables_before_first_hit",
+      "protocol_marker_direct_tests::marker_uses_first_exact_key_and_live_sentinel_identity_after_gc",
+      "protocol_marker_direct_tests::marker_fuel_and_pending_interrupt_are_typed_and_allow_same_store_retry"
+    ],
+    "production_dependency": {
+      "packet": "pr263-protocol-marker-boolean-lookup-d689-v2",
+      "patch_sha256": "be75aabefbf0ca3275245151e9f06df91e69e0b2689a5a46755af26d46ea9fad",
+      "postimage_sha256": "a5ac5490c4e3b458037fce63ee6399b830fab4ca3c32e16c2fa1749cedaad2c2",
+      "separate_disjoint_file": true,
+      "tests_assert_same_contract_before_or_after_optimization": true
+    },
+    "scope": "Three appended integration tests instantiate genuine runtime_abi::module() with existing descriptor/object/closure/forged-equal-ID fixtures. No production cfg(test), shipped BOOT, Session or fixture weakening. All original getter tests remain byte-identical.",
+    "limits": [
+      "No actual compilation or execution",
+      "Malformed object descriptor cannot inhabit exact immutable nonnullable descriptor field; test checks rejection at that API boundary, not a fake dynamic marker branch",
+      "Interrupt is deterministic already-pending epoch at guest entry, not mid-lookup or Session cancellation-stage proof",
+      "Fuel uses measured same-input work solely to choose negative cuts, no baseline speed comparison or tariff change"
+    ],
+    "review": "Author proposal; main/peer review required."
+  },
+  "resource_contract_correction": {
+    "status": "PREPARED_TEST_ONLY_UNAPPLIED_UNCOMPILED_UNEXECUTED",
+    "base_head": "5ac88a508c461d28acde1ad0fe6b3d50a0219531",
+    "production_source_commit": "049fefbde2f29291de696579ac8c2e62a2848438",
+    "compiler_source_sha256": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+    "compiler_inputs": 229,
+    "files": [
+      {
+        "path": "crates/suss-compile/tests/runtime_abi.rs",
+        "before_sha256": "1606c27965c60ba9ce89dd35984fe7d740aece67ede425a8cd78b9462e41c9ce",
+        "after_sha256": "bf9591473048439be81e235ede910efe3762a98ecfcf22794aa580deb582102a"
+      }
+    ],
+    "patch_sha256": "e78734800e257150d842ca863d5e0ed3cb18f69bcd7f6134ad12320509c90cdf",
+    "exact_selector": "protocol_marker_direct_tests::marker_fuel_and_pending_interrupt_are_typed_and_allow_same_store_retry",
+    "preservation": {
+      "single_exact_replacement_reverses_whole_original_file": true,
+      "all_other_functions_byte_unchanged": true,
+      "all_four_caps_unchanged": [
+        0,
+        1,
+        "used/2",
+        "used-1"
+      ],
+      "typed_OutOfFuel_assert_unchanged": true,
+      "pending_exception_identity_restoration_retry_and_IRQ_tail_unchanged": true,
+      "production_and_generators_unchanged": true
+    },
+    "source_reasoning": "Wasmtime49.0.1 fuel checks at entry/loops; return saves final block debit without check. Only boundary used-1 accepts successful correct result with fuel0 and immediately requires typed failure on same-input/no-refill reentry. First three cuts remain strict.",
+    "actual_failing_cap": "UNKNOWN at preparation; main diagnostic69508 owns evidence",
+    "earlier_actual_failure_raw_sha256": "344a63d3475050b4164b3cb51aaa75cdb46fb316b5465d696cac297c4dc0a2f5",
+    "scope": "Resource test contract correction, no production guard/tariff/limit change and no pass inference."
+  },
+  "resource_contract_review": {
+    "verdict": "SOURCE_GO_TEST_ONLY_BOUNDARY_CONTRACT_CORRECTION",
+    "base_head": "5ac88a508c461d28acde1ad0fe6b3d50a0219531",
+    "production_source_commit": "049fefbde2f29291de696579ac8c2e62a2848438",
+    "compiler_fingerprint": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+    "input_count": 229,
+    "file": {
+      "path": "crates/suss-compile/tests/runtime_abi.rs",
+      "before_sha256": "1606c27965c60ba9ce89dd35984fe7d740aece67ede425a8cd78b9462e41c9ce",
+      "after_sha256": "bf9591473048439be81e235ede910efe3762a98ecfcf22794aa580deb582102a"
+    },
+    "patch_sha256": "e78734800e257150d842ca863d5e0ed3cb18f69bcd7f6134ad12320509c90cdf",
+    "preservation": {
+      "exact_single_contiguous_test_replacement": true,
+      "all_other_functions_and_original_resource_tail_byte_exact": true,
+      "all_four_caps_preserved": [
+        "0",
+        "1",
+        "used/2",
+        "used-1"
+      ],
+      "production_or_tariff_or_quota_change": false
+    },
+    "policy": {
+      "first_three_cuts": "Unchanged strict typed OutOfFuel, intact table and same-Store funded retry. Actual prior sequential run reached used-1, so first three completed, but this is not a completed resource-test PASS.",
+      "last_cut": "Only used-1 may return correct1; then remaining fuel must equal0, pending exception must be absent, exact table must remain, and the identical immediate same-Store call without refill must trap typed OutOfFuel. If the first call traps it must also be typed OutOfFuel.",
+      "retained_tail": "Original exception/table checks, explicit funded retry for each cut, isolated already-pending typed Interrupt, no-refill post-IRQ retry and final live-table replacement all remain byte-exact.",
+      "why_appropriate": "Wasmtime49.0.1 entry/loop polls exhaustion, while final return flushes/saves without checking. Finite completed debit is not the minimum successful cap. Correctness, exhaustion and non-refilled next-entry failure are asserted rather than accepting arbitrary Ok."
+    },
+    "prior_actual_evidence": {
+      "abi7": {
+        "raw_sha256": "344a63d3475050b4164b3cb51aaa75cdb46fb316b5465d696cac297c4dc0a2f5",
+        "terminal_sha256": "4384db48d4858c8ad0af727ea8da39152bfba45395003f8455b7d342891d9026",
+        "head": "049fefbde2f29291de696579ac8c2e62a2848438",
+        "compiler_fingerprint": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+        "summary": [
+          "test result: FAILED. 6 passed; 1 failed; 0 ignored; 0 measured; 80 filtered out; finished in 20.38s"
+        ]
+      },
+      "abi-resource-diagnostic": {
+        "raw_sha256": "dd35a898076264a9fdee3a63ac0d86aae218b044ad0f34912f18e6db19878520",
+        "terminal_sha256": "928d3cca8d62b5a0cf0ed6729685c36649e80ae1c7cbf8ec771c55db9728da16",
+        "head": "5ac88a508c461d28acde1ad0fe6b3d50a0219531",
+        "compiler_fingerprint": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+        "summary": [
+          "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 86 filtered out; finished in 2.48s"
+        ]
+      }
+    },
+    "actual_diagnostic": {
+      "used": 203,
+      "failing_cap": 202,
+      "returned": 1,
+      "old_result": "0PASS1FAIL; remaining fuel at successful boundary not logged and must be verified by corrected run",
+      "irq_tail": "Unexecuted at prior failure; no IRQ PASS inferred"
+    },
+    "primary_source_proof": {
+      "sources": [
+        {
+          "path": "/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/Cargo.lock",
+          "sha256": "1a5de553b7e2014ccf5094b60cf9862ceeba44650fc3c2ff99cfc8b21d989c07"
+        },
+        {
+          "path": "/home/bobby/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmtime-49.0.1/src/runtime/store.rs",
+          "sha256": "0fc153b8ec77707258b11a744204a4098524d057c371576bd5fbbd6df2da8530"
+        },
+        {
+          "path": "/home/bobby/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmtime-internal-cranelift-49.0.1/src/func_environ.rs",
+          "sha256": "37af5f2f787ab799430e21d89a364c7018c76ff9a707d6ee2c79a89d8ee54bb8"
+        }
+      ],
+      "anchors": [
+        "func_environ.rs:527-543 entry check / exit save",
+        "func_environ.rs:545-581 Return flush/save",
+        "func_environ.rs:686-706 signed>=0 fuel check",
+        "store.rs:1478-1480 saturating remaining-fuel arithmetic"
+      ],
+      "qualification": "Source mechanism explains why a final suffix may return, but exact zero-remaining/no-refill behavior is still a mandatory execution assertion."
+    },
+    "metadata_correction": "Packet manifest actual_failing_cap=UNKNOWN is stale preparation metadata. This review supersedes it with independently hashed diagnostic cap202/used203; no source expectation depends on guessing the cap.",
+    "limitations": [
+      "Source approval for main controlled execution only; corrected test unexecuted at review.",
+      "ABI7 historical6PASS1FAIL preserved; no aggregate7PASS or fresh production fit claim.",
+      "No Session/BOOT/source authority/default/map/CI/readiness acceptance inferred."
+    ],
+    "review_execution": "Cache-only static source/hash/Git inspection; no Cargo/VM/shared changes."
+  },
+  "stages": {
+    "abi7-terminal": {
+      "head": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+      "source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+      "compiler_source_sha256": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+      "compiler_inputs": 229,
+      "test_source": {
+        "path": "crates/suss-compile/tests/runtime_abi.rs",
+        "before_sha256": "50ad27c494be3a68a69307adbb09116f4c157aa16472fe73ca938033148aa3b9",
+        "after_sha256": "bf9591473048439be81e235ede910efe3762a98ecfcf22794aa580deb582102a"
+      },
+      "exact_names": [
+        "protocol_marker_direct_tests::marker_checks_key_before_nonobject_and_rejects_bad_tables_before_first_hit",
+        "protocol_marker_direct_tests::marker_uses_first_exact_key_and_live_sentinel_identity_after_gc",
+        "protocol_marker_direct_tests::marker_fuel_and_pending_interrupt_are_typed_and_allow_same_store_retry",
+        "runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_gc",
+        "runtime_abi_nominal_bad_inputs_throw_language_errors_before_storage_access",
+        "runtime_abi_method_lookup_preserves_live_values_equal_id_keys_and_first_match_after_gc",
+        "runtime_abi_protocol_lookup_preserves_order_live_tables_and_group_boundaries"
+      ],
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "runtime_abi",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "protocol_marker_direct_tests::marker_checks_key_before_nonobject_and_rejects_bad_tables_before_first_hit",
+        "protocol_marker_direct_tests::marker_uses_first_exact_key_and_live_sentinel_identity_after_gc",
+        "protocol_marker_direct_tests::marker_fuel_and_pending_interrupt_are_typed_and_allow_same_store_retry",
+        "runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_gc",
+        "runtime_abi_nominal_bad_inputs_throw_language_errors_before_storage_access",
+        "runtime_abi_method_lookup_preserves_live_values_equal_id_keys_and_first_match_after_gc",
+        "runtime_abi_protocol_lookup_preserves_order_live_tables_and_group_boundaries"
+      ],
+      "scope": "Seven direct production runtime_abi::module tests only. No Session or shipped BOOT is instantiated; old d689 BOOT is stale for this new source. No Macro/portable/source/factory/default/map acceptance or readiness inferred.",
+      "actual_builder": {
+        "path": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+        "sha256": "1d3233b2f3e4e36023467c0e2340e3a4838519c51aaba6db9c0761a680b0b54b",
+        "all229_input_rerun_paths_verified": true
+      },
+      "exit_code": 0,
+      "seconds": 52.7527484730017,
+      "raw_sha256": "9cb6a3a0d87fce2a094f8b9b16b712cd1a6dcec25fdd6e351162e7a565293171",
+      "started_names": [
+        "protocol_marker_direct_tests::marker_checks_key_before_nonobject_and_rejects_bad_tables_before_first_hit",
+        "protocol_marker_direct_tests::marker_fuel_and_pending_interrupt_are_typed_and_allow_same_store_retry",
+        "protocol_marker_direct_tests::marker_uses_first_exact_key_and_live_sentinel_identity_after_gc",
+        "runtime_abi_method_lookup_preserves_live_values_equal_id_keys_and_first_match_after_gc",
+        "runtime_abi_nominal_bad_inputs_throw_language_errors_before_storage_access",
+        "runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_gc",
+        "runtime_abi_protocol_lookup_preserves_order_live_tables_and_group_boundaries"
+      ],
+      "harness_summaries": [
+        "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 80 filtered out; finished in 20.42s"
+      ],
+      "postflight_error": null,
+      "accepted_complete_seven": true
+    },
+    "independent-abi7-review-cicero": {
+      "verdict": "VERIFIED_COMPLETE_DIRECT_ABI7_PASS",
+      "head": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+      "production_source_origin": "049fefbde2f29291de696579ac8c2e62a2848438",
+      "compiler_fingerprint": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+      "input_count": 229,
+      "source_freeze_sha256": "b0f289dd382b6b93c9be13c7dcd44250cf8f6192256d5a304d6fd0ff57b3ba11",
+      "binding": "229 frozen current inputs reproduce actual builder fingerprint; all builder rerun paths verified. Production input map equals initial049 freeze; nominal Git923 postimage equals reviewed v2. Corrected integration-test Git923 bytes match frozen packet and runtime tree.",
+      "actual_builder": {
+        "path": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+        "sha256": "1d3233b2f3e4e36023467c0e2340e3a4838519c51aaba6db9c0761a680b0b54b",
+        "all229_input_rerun_paths_verified": true
+      },
+      "test_source": {
+        "path": "crates/suss-compile/tests/runtime_abi.rs",
+        "before_sha256": "50ad27c494be3a68a69307adbb09116f4c157aa16472fe73ca938033148aa3b9",
+        "after_sha256": "bf9591473048439be81e235ede910efe3762a98ecfcf22794aa580deb582102a"
+      },
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "runtime_abi",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "protocol_marker_direct_tests::marker_checks_key_before_nonobject_and_rejects_bad_tables_before_first_hit",
+        "protocol_marker_direct_tests::marker_uses_first_exact_key_and_live_sentinel_identity_after_gc",
+        "protocol_marker_direct_tests::marker_fuel_and_pending_interrupt_are_typed_and_allow_same_store_retry",
+        "runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_gc",
+        "runtime_abi_nominal_bad_inputs_throw_language_errors_before_storage_access",
+        "runtime_abi_method_lookup_preserves_live_values_equal_id_keys_and_first_match_after_gc",
+        "runtime_abi_protocol_lookup_preserves_order_live_tables_and_group_boundaries"
+      ],
+      "raw_sha256": "9cb6a3a0d87fce2a094f8b9b16b712cd1a6dcec25fdd6e351162e7a565293171",
+      "terminal_sha256": "77c5510020f79f4dbd6537d0ecddbcbeac6c09860075afbfb9a8878a41c6c2dd",
+      "result": {
+        "passed": 7,
+        "failed": 0,
+        "ignored": 0,
+        "filtered": 80,
+        "harness_seconds": 20.42,
+        "total_seconds": 52.7527484730017,
+        "outcomes": [
+          {
+            "name": "protocol_marker_direct_tests::marker_checks_key_before_nonobject_and_rejects_bad_tables_before_first_hit",
+            "result": "PASS"
+          },
+          {
+            "name": "protocol_marker_direct_tests::marker_fuel_and_pending_interrupt_are_typed_and_allow_same_store_retry",
+            "result": "PASS"
+          },
+          {
+            "name": "protocol_marker_direct_tests::marker_uses_first_exact_key_and_live_sentinel_identity_after_gc",
+            "result": "PASS"
+          },
+          {
+            "name": "runtime_abi_method_lookup_preserves_live_values_equal_id_keys_and_first_match_after_gc",
+            "result": "PASS"
+          },
+          {
+            "name": "runtime_abi_nominal_bad_inputs_throw_language_errors_before_storage_access",
+            "result": "PASS"
+          },
+          {
+            "name": "runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_gc",
+            "result": "PASS"
+          },
+          {
+            "name": "runtime_abi_protocol_lookup_preserves_order_live_tables_and_group_boundaries",
+            "result": "PASS"
+          }
+        ]
+      },
+      "new_three_scope": [
+        "Key-before-nonobject language-tag rejection, actual malformed/odd table failure before first hit, valid misses and same-Store recovery; immutable object descriptor is a host type-boundary check only.",
+        "Exact key/sentinel reference identity, equal-ID wrong refs, live nonmarker/marker changes with GC, first-duplicate priorities across early/unrolled/fallback positions, replacement/restoration of table on same object.",
+        "All four original fuel cap iterations complete: first three require typed OutOfFuel; used-1 requires typed OutOfFuel or correct1+remaining0+immediate identical no-refill typed OutOfFuel. Every iteration checks intact table/no pending exception/funded same-Store retry. Pending isolated epoch Interrupt and subsequent same-Store no-refill retry execute, followed by live-table replacement false."
+      ],
+      "boundary_evidence_limit": "P2 raw does not separately log which used-1 branch was taken or its measured cost. Complete PASS proves the conditional contract and IRQ tail executed; cap202/used203 successful boundary is the separate preserved diagnostic, not a newly printed P2 measurement.",
+      "unchanged_four_old_controls": "All four selected original tests PASS on this source; original320189-byte integration-file prefix remains exact. No pass transfer from P1.",
+      "historical_failures_preserved": {
+        "abi7": {
+          "head": "049fefbde2f29291de696579ac8c2e62a2848438",
+          "raw_sha256": "344a63d3475050b4164b3cb51aaa75cdb46fb316b5465d696cac297c4dc0a2f5",
+          "terminal_sha256": "4384db48d4858c8ad0af727ea8da39152bfba45395003f8455b7d342891d9026",
+          "summaries": [
+            "test result: FAILED. 6 passed; 1 failed; 0 ignored; 0 measured; 80 filtered out; finished in 20.38s"
+          ]
+        },
+        "abi-resource-diagnostic": {
+          "head": "5ac88a508c461d28acde1ad0fe6b3d50a0219531",
+          "raw_sha256": "dd35a898076264a9fdee3a63ac0d86aae218b044ad0f34912f18e6db19878520",
+          "terminal_sha256": "928d3cca8d62b5a0cf0ed6729685c36649e80ae1c7cbf8ec771c55db9728da16",
+          "summaries": [
+            "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 86 filtered out; finished in 2.48s"
+          ]
+        }
+      },
+      "historical_interpretation": "P1 six semantic/control passes plus one new resource-assumption failure remain6P1F. Diagnostic remains0P1F at cap202/used203; neither is rewritten as success. Corrected P2 is a distinct complete seven-test run.",
+      "scope_limits": [
+        "Direct runtime_abi::module only; no Session or shipped BOOT dependency/semantic acceptance.",
+        "Workspace/all-target typecheck, normal matching BOOT and identity are subsequent main-owned work, not inferred here.",
+        "No default10M/map200M fit, performance/dominance, full baseline/CI/readiness inference.",
+        "Postflight source consistency is controller receipt plus static input checks; no run-long detector/process-drain instrumentation claim invented."
+      ],
+      "review_execution": "Cache-only static parsing/hashing/Git reads. No Cargo/VM/shared edits."
+    },
+    "typecheck-terminal": {
+      "head": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+      "compiler_source_sha256": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+      "source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+      "input_count": 229,
+      "freeze_sha256": "b0f289dd382b6b93c9be13c7dcd44250cf8f6192256d5a304d6fd0ff57b3ba11",
+      "command": [
+        "cargo",
+        "check",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--profile",
+        "test"
+      ],
+      "profile_environment": {
+        "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+        "CARGO_BUILD_JOBS": "1",
+        "RAYON_NUM_THREADS": "1",
+        "TMPDIR": "/home/bobby/.cache/suss-m4-work/workspace-tmp-65e9718-ccpsnhdq",
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Full workspace/all-targets test-profile typecheck only; no VM or shipped BOOT semantic credit.",
+      "wrapper_pid": 1470873,
+      "started_unix": 1792545647.108661,
+      "exit_code": 0,
+      "seconds": 185.71288107500004,
+      "raw_sha256": "4e4e7eb334e68d7941754650b67781a1f7d030efff2724cef74f1b45cb615025",
+      "postflight_error": null
+    },
+    "bootstrap-terminal": {
+      "head": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+      "compiler_source_sha256": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+      "source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+      "input_count": 229,
+      "freeze_sha256": "b0f289dd382b6b93c9be13c7dcd44250cf8f6192256d5a304d6fd0ff57b3ba11",
+      "command": [
+        "sh",
+        "scripts/verify-bootstrap.sh"
+      ],
+      "profile_environment": {
+        "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+        "CARGO_BUILD_JOBS": "1",
+        "RAYON_NUM_THREADS": "1",
+        "TMPDIR": "/home/bobby/.cache/suss-m4-work/workspace-tmp-65e9718-ccpsnhdq",
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Normal two-generation verifier. Actual exit/stage must be inspected; neither stale comparison nor generation success is assumed. New guest emitter may change executable sections. No automatic adoption or full-verifier PASS.",
+      "wrapper_pid": 1479121,
+      "started_unix": 1792545851.1188238,
+      "exit_code": 1,
+      "seconds": 176.9963357259985,
+      "raw_sha256": "38b54d213a105edbffe0a9cb11dc70bd90841513ae90d5e40a1f3bcb7e8c6063",
+      "postflight_error": null
+    },
+    "main-build-input-check": {
+      "fp": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+      "inputs": 229,
+      "actual_build_output": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+      "sha256": "1d3233b2f3e4e36023467c0e2340e3a4838519c51aaba6db9c0761a680b0b54b",
+      "all_input_hashes_and_rerun_paths_verified": true
+    },
+    "main-generation-pair-check": {
+      "status": "STRICT_PAIRS_SOURCE_METADATA_CHECKS_PASS_PENDING_INDEPENDENT_ADOPTION_REVIEW",
+      "independent_review_still_required": true,
+      "adoption_performed": false,
+      "strict_noncustom_equality_not_relaxed": true,
+      "source_binding": {
+        "head": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+        "compiler_source_sha256": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+        "source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+        "input_count": 229,
+        "freeze_sha256": "b0f289dd382b6b93c9be13c7dcd44250cf8f6192256d5a304d6fd0ff57b3ba11"
+      },
+      "bootstrap_terminal": {
+        "head": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+        "compiler_source_sha256": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+        "source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+        "input_count": 229,
+        "freeze_sha256": "b0f289dd382b6b93c9be13c7dcd44250cf8f6192256d5a304d6fd0ff57b3ba11",
+        "command": [
+          "sh",
+          "scripts/verify-bootstrap.sh"
+        ],
+        "profile_environment": {
+          "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+          "CARGO_BUILD_JOBS": "1",
+          "RAYON_NUM_THREADS": "1",
+          "TMPDIR": "/home/bobby/.cache/suss-m4-work/workspace-tmp-65e9718-ccpsnhdq",
+          "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+          "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+          "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+        },
+        "scope": "Normal two-generation verifier. Actual exit/stage must be inspected; neither stale comparison nor generation success is assumed. New guest emitter may change executable sections. No automatic adoption or full-verifier PASS.",
+        "wrapper_pid": 1479121,
+        "started_unix": 1792545851.1188238,
+        "exit_code": 1,
+        "seconds": 176.9963357259985,
+        "raw_sha256": "38b54d213a105edbffe0a9cb11dc70bd90841513ae90d5e40a1f3bcb7e8c6063",
+        "postflight_error": null
+      },
+      "log_tail": [
+        "   Compiling suss-reader v0.1.0 (/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/crates/suss-reader)",
+        "   Compiling suss-compile v0.1.0 (/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/crates/suss-compile)",
+        "   Compiling suss-cli v0.1.0 (/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/crates/suss-cli)",
+        "    Finished `test` profile [optimized] target(s) in 2m 44s",
+        "     Running `/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/suss-bootstrap /home/bobby/.cache/suss-m4-work/workspace-tmp-65e9718-ccpsnhdq/tmp.9XVf95Nc9L/first`",
+        "    Finished `test` profile [optimized] target(s) in 0.84s",
+        "     Running `/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/suss-bootstrap /home/bobby/.cache/suss-m4-work/workspace-tmp-65e9718-ccpsnhdq/tmp.9XVf95Nc9L/second`",
+        "/home/bobby/.cache/suss-m4-work/workspace-tmp-65e9718-ccpsnhdq/tmp.9XVf95Nc9L/first/runtime.wasm runtime/bootstrap/runtime.wasm differ: byte 2120822, line 8424"
+      ],
+      "exit_interpretation": "Two retained generations; actual terminal stops at stale shipped runtime.wasm comparison, not verifier PASS.",
+      "actual_builder": {
+        "path": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+        "sha256": "1d3233b2f3e4e36023467c0e2340e3a4838519c51aaba6db9c0761a680b0b54b"
+      },
+      "generated_files": {
+        "first/runtime.wasm": {
+          "sha256": "b24c2af8b553ce3e0bc5d2e2d2f8e5c5816a86b779f6cc82c63de6812d9a753a",
+          "bytes": 2121342
+        },
+        "second/runtime.wasm": {
+          "sha256": "b24c2af8b553ce3e0bc5d2e2d2f8e5c5816a86b779f6cc82c63de6812d9a753a",
+          "bytes": 2121342
+        },
+        "first/runtime.json": {
+          "sha256": "93348bbd0e70ea03360817e9d738bfc7b8d320916b338bc9b8645c55432a64a3",
+          "bytes": 47413
+        },
+        "second/runtime.json": {
+          "sha256": "93348bbd0e70ea03360817e9d738bfc7b8d320916b338bc9b8645c55432a64a3",
+          "bytes": 47413
+        },
+        "first/macro.wasm": {
+          "sha256": "136546e27fc0fc362c1837a4ac3a1da75c4e6c38f4fc34397c74fc6dc6bda749",
+          "bytes": 2119863
+        },
+        "second/macro.wasm": {
+          "sha256": "136546e27fc0fc362c1837a4ac3a1da75c4e6c38f4fc34397c74fc6dc6bda749",
+          "bytes": 2119863
+        },
+        "first/macro.json": {
+          "sha256": "db86c8ca6752ab34f776c118c4954564ab476aeac6d38ff270145de7e171ca2b",
+          "bytes": 45875
+        },
+        "second/macro.json": {
+          "sha256": "db86c8ca6752ab34f776c118c4954564ab476aeac6d38ff270145de7e171ca2b",
+          "bytes": 45875
+        }
+      },
+      "phases": {
+        "runtime": {
+          "four_pair_phase_verified": true,
+          "manifest_deltas": {
+            "compiler_source_sha256": {
+              "old": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4",
+              "new": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5"
+            },
+            "wasm_sha256": {
+              "old": "159859b7aab22261d5188bff06a9133e0bba2f6c26cf87ce241fbad2aa2172da",
+              "new": "b24c2af8b553ce3e0bc5d2e2d2f8e5c5816a86b779f6cc82c63de6812d9a753a"
+            }
+          },
+          "manifest_ABI_flags_catalog_cells_other_fields_unchanged": true,
+          "noncustom_equal": true,
+          "old_noncustom_sha256": "5364bb37ff32b28d6926e953723bae5afd3834cd9b5a09fd62b8e1cc1efe372d",
+          "new_noncustom_sha256": "5364bb37ff32b28d6926e953723bae5afd3834cd9b5a09fd62b8e1cc1efe372d",
+          "section_changes": [
+            {
+              "ordinal": 7,
+              "old": {
+                "id": 0,
+                "name": "suss.source-artifact",
+                "sha256": "5a8c5b15e2dfa06b68cfd2245af4c9fc2b196b98d12182c5ee61ca789ab0491f",
+                "bytes": 591
+              },
+              "new": {
+                "id": 0,
+                "name": "suss.source-artifact",
+                "sha256": "d4e1339ba90582ea79afc82eaeb1719acca8a24708a7a2f8553f5367b5a9068f",
+                "bytes": 591
+              }
+            }
+          ]
+        },
+        "macro": {
+          "four_pair_phase_verified": true,
+          "manifest_deltas": {
+            "compiler_source_sha256": {
+              "old": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4",
+              "new": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5"
+            },
+            "wasm_sha256": {
+              "old": "c1f5875c417831595b92fbbe6aa9b258b4ed6881c7dc3deaafebaa131ad8ab02",
+              "new": "136546e27fc0fc362c1837a4ac3a1da75c4e6c38f4fc34397c74fc6dc6bda749"
+            }
+          },
+          "manifest_ABI_flags_catalog_cells_other_fields_unchanged": true,
+          "noncustom_equal": true,
+          "old_noncustom_sha256": "1ef602fed06cbd946cdf3ed2b980e999c1dcf9d7dfdd1b5fbd8702553669fca8",
+          "new_noncustom_sha256": "1ef602fed06cbd946cdf3ed2b980e999c1dcf9d7dfdd1b5fbd8702553669fca8",
+          "section_changes": [
+            {
+              "ordinal": 7,
+              "old": {
+                "id": 0,
+                "name": "suss.source-artifact",
+                "sha256": "ff93b9422ce19066e3e7a2404a94eff96016ab1a89dac1c6e667285c19104790",
+                "bytes": 589
+              },
+              "new": {
+                "id": 0,
+                "name": "suss.source-artifact",
+                "sha256": "70c1f9df58d98bc00220aeb6c6e6b9283ab1a44c227b49106b60a6f35d964584",
+                "bytes": 589
+              }
+            }
+          ]
+        }
+      },
+      "proposed_four_generated_paths": [
+        {
+          "from": "/home/bobby/.cache/suss-m4-work/pr263-protocol-marker-production-v2/diagnostics/first/runtime.wasm",
+          "to": "runtime/bootstrap/runtime.wasm",
+          "sha256": "b24c2af8b553ce3e0bc5d2e2d2f8e5c5816a86b779f6cc82c63de6812d9a753a"
+        },
+        {
+          "from": "/home/bobby/.cache/suss-m4-work/pr263-protocol-marker-production-v2/diagnostics/first/runtime.json",
+          "to": "runtime/bootstrap/runtime.json",
+          "sha256": "93348bbd0e70ea03360817e9d738bfc7b8d320916b338bc9b8645c55432a64a3"
+        },
+        {
+          "from": "/home/bobby/.cache/suss-m4-work/pr263-protocol-marker-production-v2/diagnostics/first/macro.wasm",
+          "to": "runtime/bootstrap/macro.wasm",
+          "sha256": "136546e27fc0fc362c1837a4ac3a1da75c4e6c38f4fc34397c74fc6dc6bda749"
+        },
+        {
+          "from": "/home/bobby/.cache/suss-m4-work/pr263-protocol-marker-production-v2/diagnostics/first/macro.json",
+          "to": "runtime/bootstrap/macro.json",
+          "sha256": "db86c8ca6752ab34f776c118c4954564ab476aeac6d38ff270145de7e171ca2b"
+        }
+      ],
+      "strict_differences": [],
+      "failure": null
+    },
+    "independent-adoption-review-cicero": {
+      "verdict": "GO_EXACT_FOUR_GENERATED_BOOT_ARTIFACTS_ONLY",
+      "scope": "Artifact integrity/adoption review only. No reviewer generation/Cargo/VM/shared source writes or adoption. No new Session semantic, performance, default/pinned fit, full baseline/CI/readiness claim.",
+      "head": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+      "compiler_fingerprint": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+      "compiler_inputs": 229,
+      "old_shipped_commit": "c163189b714dae06731e8f60ed81759776093f48",
+      "source_freeze_sha256": "b0f289dd382b6b93c9be13c7dcd44250cf8f6192256d5a304d6fd0ff57b3ba11",
+      "source_binding": "All229 actual current and Git source input hashes, fingerprint recomputation, actual compiled builder output and rerun paths verified by independent static inspection. Clean head before and after inspection.",
+      "builder": {
+        "path": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+        "sha256": "1d3233b2f3e4e36023467c0e2340e3a4838519c51aaba6db9c0761a680b0b54b",
+        "all229_inputs_and_paths_verified": true
+      },
+      "generation_receipt_sha256": "904ca71011705ec0654f8e438bb405a354b15c6a69406f6823481c6015c1ad6c",
+      "terminal_sha256": "ec27bfa3ef13413b47606d085cc04e2fded02f20bd9a4d90a890fffc2360b135",
+      "generator_command": [
+        "sh",
+        "scripts/verify-bootstrap.sh"
+      ],
+      "profile_environment": {
+        "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+        "CARGO_BUILD_JOBS": "1",
+        "RAYON_NUM_THREADS": "1",
+        "TMPDIR": "/home/bobby/.cache/suss-m4-work/workspace-tmp-65e9718-ccpsnhdq",
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "generator_total_seconds": 176.9963357259985,
+      "generator_exit_code": 1,
+      "raw_sha256": "38b54d213a105edbffe0a9cb11dc70bd90841513ae90d5e40a1f3bcb7e8c6063",
+      "actual_exit_stage": "Both normal generations emitted and pairs match. Final raw line identifies first/runtime.wasm versus runtime/bootstrap/runtime.wasm differ, byte2120822. This is a stale shipped comparison, not full verifier PASS.",
+      "all_eight_hashes_verified": true,
+      "four_pairs_byte_equal": true,
+      "eight_generated_files": {
+        "first/runtime.wasm": {
+          "sha256": "b24c2af8b553ce3e0bc5d2e2d2f8e5c5816a86b779f6cc82c63de6812d9a753a",
+          "bytes": 2121342
+        },
+        "second/runtime.wasm": {
+          "sha256": "b24c2af8b553ce3e0bc5d2e2d2f8e5c5816a86b779f6cc82c63de6812d9a753a",
+          "bytes": 2121342
+        },
+        "first/runtime.json": {
+          "sha256": "93348bbd0e70ea03360817e9d738bfc7b8d320916b338bc9b8645c55432a64a3",
+          "bytes": 47413
+        },
+        "second/runtime.json": {
+          "sha256": "93348bbd0e70ea03360817e9d738bfc7b8d320916b338bc9b8645c55432a64a3",
+          "bytes": 47413
+        },
+        "first/macro.wasm": {
+          "sha256": "136546e27fc0fc362c1837a4ac3a1da75c4e6c38f4fc34397c74fc6dc6bda749",
+          "bytes": 2119863
+        },
+        "second/macro.wasm": {
+          "sha256": "136546e27fc0fc362c1837a4ac3a1da75c4e6c38f4fc34397c74fc6dc6bda749",
+          "bytes": 2119863
+        },
+        "first/macro.json": {
+          "sha256": "db86c8ca6752ab34f776c118c4954564ab476aeac6d38ff270145de7e171ca2b",
+          "bytes": 45875
+        },
+        "second/macro.json": {
+          "sha256": "db86c8ca6752ab34f776c118c4954564ab476aeac6d38ff270145de7e171ca2b",
+          "bytes": 45875
+        }
+      },
+      "phase_checks": {
+        "runtime": {
+          "complete_manifest_deltas": {
+            "compiler_source_sha256": {
+              "old": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4",
+              "new": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5"
+            },
+            "wasm_sha256": {
+              "old": "159859b7aab22261d5188bff06a9133e0bba2f6c26cf87ce241fbad2aa2172da",
+              "new": "b24c2af8b553ce3e0bc5d2e2d2f8e5c5816a86b779f6cc82c63de6812d9a753a"
+            }
+          },
+          "all_other_manifest_bytes_exact": true,
+          "section_identity_order_exact": true,
+          "section_differences": [
+            {
+              "ordinal": 7,
+              "section_id": 0,
+              "name": "suss.source-artifact",
+              "old_sha256": "5a8c5b15e2dfa06b68cfd2245af4c9fc2b196b98d12182c5ee61ca789ab0491f",
+              "new_sha256": "d4e1339ba90582ea79afc82eaeb1719acca8a24708a7a2f8553f5367b5a9068f",
+              "old_bytes": 591,
+              "new_bytes": 591,
+              "exact_fingerprint_substitution": true
+            }
+          ],
+          "changed_function_bodies": [],
+          "noncustom_equal": true,
+          "all_section_hashes": [
+            {
+              "ordinal": 0,
+              "id": 0,
+              "name": "suss.runtime-abi",
+              "old": "2d006759409bd7a7da3c0222de4b4999c8f4eaca87f03b3bf61a4b1c4a96478d",
+              "new": "2d006759409bd7a7da3c0222de4b4999c8f4eaca87f03b3bf61a4b1c4a96478d"
+            },
+            {
+              "ordinal": 1,
+              "id": 1,
+              "name": "",
+              "old": "f58caed666c11ec7b18635ba336c10279d53f888e8ed0bad935b68ab503c8cca",
+              "new": "f58caed666c11ec7b18635ba336c10279d53f888e8ed0bad935b68ab503c8cca"
+            },
+            {
+              "ordinal": 2,
+              "id": 2,
+              "name": "",
+              "old": "978a456862d70bc3d9c4de8ad8ebdd6396c52fb97d6661498ec43b4fb7580d52",
+              "new": "978a456862d70bc3d9c4de8ad8ebdd6396c52fb97d6661498ec43b4fb7580d52"
+            },
+            {
+              "ordinal": 3,
+              "id": 3,
+              "name": "",
+              "old": "cedc21d939f9fca241233a3547c38c68de813222ca66c8f2965a32fff61b4e0f",
+              "new": "cedc21d939f9fca241233a3547c38c68de813222ca66c8f2965a32fff61b4e0f"
+            },
+            {
+              "ordinal": 4,
+              "id": 7,
+              "name": "",
+              "old": "23050278d0e83bf8058fd2647aacc4abfd7520561b88adeee0d8c0d2c5bf01fb",
+              "new": "23050278d0e83bf8058fd2647aacc4abfd7520561b88adeee0d8c0d2c5bf01fb"
+            },
+            {
+              "ordinal": 5,
+              "id": 9,
+              "name": "",
+              "old": "30fa5492636f737233d5a070349ef1ca6b3e6aa8be593ee05a0750e209f76608",
+              "new": "30fa5492636f737233d5a070349ef1ca6b3e6aa8be593ee05a0750e209f76608"
+            },
+            {
+              "ordinal": 6,
+              "id": 10,
+              "name": "",
+              "old": "496fafdedecdb7384b5a0a2aaaf646ad6f02af90c0dd5d50ee4f8541dd455d74",
+              "new": "496fafdedecdb7384b5a0a2aaaf646ad6f02af90c0dd5d50ee4f8541dd455d74"
+            },
+            {
+              "ordinal": 7,
+              "id": 0,
+              "name": "suss.source-artifact",
+              "old": "5a8c5b15e2dfa06b68cfd2245af4c9fc2b196b98d12182c5ee61ca789ab0491f",
+              "new": "d4e1339ba90582ea79afc82eaeb1719acca8a24708a7a2f8553f5367b5a9068f"
+            }
+          ],
+          "runtime_abi": 2,
+          "catalog_cell_count": 768,
+          "cells_order_and_all_fields_exact": true
+        },
+        "macro": {
+          "complete_manifest_deltas": {
+            "compiler_source_sha256": {
+              "old": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4",
+              "new": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5"
+            },
+            "wasm_sha256": {
+              "old": "c1f5875c417831595b92fbbe6aa9b258b4ed6881c7dc3deaafebaa131ad8ab02",
+              "new": "136546e27fc0fc362c1837a4ac3a1da75c4e6c38f4fc34397c74fc6dc6bda749"
+            }
+          },
+          "all_other_manifest_bytes_exact": true,
+          "section_identity_order_exact": true,
+          "section_differences": [
+            {
+              "ordinal": 7,
+              "section_id": 0,
+              "name": "suss.source-artifact",
+              "old_sha256": "ff93b9422ce19066e3e7a2404a94eff96016ab1a89dac1c6e667285c19104790",
+              "new_sha256": "70c1f9df58d98bc00220aeb6c6e6b9283ab1a44c227b49106b60a6f35d964584",
+              "old_bytes": 589,
+              "new_bytes": 589,
+              "exact_fingerprint_substitution": true
+            }
+          ],
+          "changed_function_bodies": [],
+          "noncustom_equal": true,
+          "all_section_hashes": [
+            {
+              "ordinal": 0,
+              "id": 0,
+              "name": "suss.runtime-abi",
+              "old": "2d006759409bd7a7da3c0222de4b4999c8f4eaca87f03b3bf61a4b1c4a96478d",
+              "new": "2d006759409bd7a7da3c0222de4b4999c8f4eaca87f03b3bf61a4b1c4a96478d"
+            },
+            {
+              "ordinal": 1,
+              "id": 1,
+              "name": "",
+              "old": "224188a8946366310fda87f8f0ce9dbd69771e5501626f1db118328e931a0c12",
+              "new": "224188a8946366310fda87f8f0ce9dbd69771e5501626f1db118328e931a0c12"
+            },
+            {
+              "ordinal": 2,
+              "id": 2,
+              "name": "",
+              "old": "00d235d34dfa601b0d9306739a0dca1ecca699af081511a587f2aac6f00aafb6",
+              "new": "00d235d34dfa601b0d9306739a0dca1ecca699af081511a587f2aac6f00aafb6"
+            },
+            {
+              "ordinal": 3,
+              "id": 3,
+              "name": "",
+              "old": "ba537dac6fd6299e2b77c28e6a1d9c25ef883266a3e911242d315ee94ae75291",
+              "new": "ba537dac6fd6299e2b77c28e6a1d9c25ef883266a3e911242d315ee94ae75291"
+            },
+            {
+              "ordinal": 4,
+              "id": 7,
+              "name": "",
+              "old": "218aa9b42daa0b133c6e9c0f5dbc4c8e95e90caf37ae660daa9dcfc0904ec747",
+              "new": "218aa9b42daa0b133c6e9c0f5dbc4c8e95e90caf37ae660daa9dcfc0904ec747"
+            },
+            {
+              "ordinal": 5,
+              "id": 9,
+              "name": "",
+              "old": "1bf8b86f3dad6ef4621fa57b4f33d565fd604854187e14964c1d407d1b4cc143",
+              "new": "1bf8b86f3dad6ef4621fa57b4f33d565fd604854187e14964c1d407d1b4cc143"
+            },
+            {
+              "ordinal": 6,
+              "id": 10,
+              "name": "",
+              "old": "7ac63a1e83255c8a2f9a86ea07fb7c2eb2ce2d0f4a415d0eb2fda134eb830741",
+              "new": "7ac63a1e83255c8a2f9a86ea07fb7c2eb2ce2d0f4a415d0eb2fda134eb830741"
+            },
+            {
+              "ordinal": 7,
+              "id": 0,
+              "name": "suss.source-artifact",
+              "old": "ff93b9422ce19066e3e7a2404a94eff96016ab1a89dac1c6e667285c19104790",
+              "new": "70c1f9df58d98bc00220aeb6c6e6b9283ab1a44c227b49106b60a6f35d964584"
+            }
+          ],
+          "runtime_abi": 2,
+          "catalog_cell_count": 768,
+          "cells_order_and_all_fields_exact": true
+        }
+      },
+      "code_delta_conclusion": "Noncustom sections (including type/import/function/code/data/export layout) and all non-source custom sections are actually byte-identical for Runtime and Macro; only source-artifact fingerprint changes. This was measured, not assumed from the emitter source change. Direct runtime ABI emitter behavior is separately exercised by ABI7; BOOT equality does not reclassify it as unexecuted or a semantic no-op.",
+      "source_review": {
+        "path": "/home/bobby/.cache/suss-m4-work/pr263-protocol-marker-boolean-lookup-d689-v2/independent-source-review-cicero.json",
+        "sha256": "175f2b1b95df0499b8d4fbc24aa6fab8a5d47536248f2896f9b7caeb6090e427",
+        "manifest_sha256": "33e13bc8923f4e138e555451bba46d25890cd4ea5d616b82051f0a6ff99d039f",
+        "patch_sha256": "be75aabefbf0ca3275245151e9f06df91e69e0b2689a5a46755af26d46ea9fad",
+        "postimages_verified": [
+          {
+            "path": "crates/suss-compile/src/runtime_abi/nominal.rs",
+            "before_sha256": "de8523dadd32de689da75c0715d25bd93c6b5948754f9d7d870b895e35890475",
+            "after_sha256": "a5ac5490c4e3b458037fce63ee6399b830fab4ca3c32e16c2fa1749cedaad2c2"
+          }
+        ]
+      },
+      "prior_validation_scope": {
+        "direct_abi7_review_sha256": "8a4461b279ae67db73bf9a0c79979346aa54d46502d5851fbf104ff09babcb7a",
+        "direct_abi7": "Seven direct ABI tests PASS, no Session/BOOT credit. Historical6P1F and diagnostic202/203 retained.",
+        "workspace_typecheck_receipt_sha256": "aa5c2fbca180e3c18ea4d0ca3845f000355db1c5dd59cc62e9e88665aa75d6bd",
+        "workspace_typecheck_raw_sha256": "4e4e7eb334e68d7941754650b67781a1f7d030efff2724cef74f1b45cb615025",
+        "workspace_typecheck_exit": 0,
+        "workspace_typecheck_seconds": 185.71288107500004
+      },
+      "approved_adoptions": [
+        {
+          "from": "/home/bobby/.cache/suss-m4-work/pr263-protocol-marker-production-v2/diagnostics/first/runtime.wasm",
+          "to": "runtime/bootstrap/runtime.wasm",
+          "sha256": "b24c2af8b553ce3e0bc5d2e2d2f8e5c5816a86b779f6cc82c63de6812d9a753a"
+        },
+        {
+          "from": "/home/bobby/.cache/suss-m4-work/pr263-protocol-marker-production-v2/diagnostics/first/runtime.json",
+          "to": "runtime/bootstrap/runtime.json",
+          "sha256": "93348bbd0e70ea03360817e9d738bfc7b8d320916b338bc9b8645c55432a64a3"
+        },
+        {
+          "from": "/home/bobby/.cache/suss-m4-work/pr263-protocol-marker-production-v2/diagnostics/first/macro.wasm",
+          "to": "runtime/bootstrap/macro.wasm",
+          "sha256": "136546e27fc0fc362c1837a4ac3a1da75c4e6c38f4fc34397c74fc6dc6bda749"
+        },
+        {
+          "from": "/home/bobby/.cache/suss-m4-work/pr263-protocol-marker-production-v2/diagnostics/first/macro.json",
+          "to": "runtime/bootstrap/macro.json",
+          "sha256": "db86c8ca6752ab34f776c118c4954564ab476aeac6d38ff270145de7e171ca2b"
+        }
+      ],
+      "inspection_sha256": "bc45be0d3c2dd86b794ac8956beb57f48c4dc50f5745300cbefa0422be111961",
+      "adoption_performed": false,
+      "identity_or_session_after_adoption": "Pending main action; no result inferred."
+    },
+    "identity-terminal": {
+      "head": "0548d7c2f4631b72ed036a960c665537c3b4696b",
+      "compiler_source_sha256": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+      "source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+      "input_count": 229,
+      "freeze_sha256": "b0f289dd382b6b93c9be13c7dcd44250cf8f6192256d5a304d6fd0ff57b3ba11",
+      "command": [
+        "python3",
+        "scripts/verify_bootstrap_identity.py"
+      ],
+      "profile_environment": {
+        "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+        "CARGO_BUILD_JOBS": "1",
+        "RAYON_NUM_THREADS": "1",
+        "TMPDIR": "/home/bobby/.cache/suss-m4-work/workspace-tmp-65e9718-ccpsnhdq",
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "scope": "Pure compiled build-script identity after exact reviewed BOOT4. No VM/bootstrap test/default/map acceptance credit.",
+      "wrapper_pid": 1496962,
+      "started_unix": 1792546283.3496156,
+      "exit_code": 0,
+      "seconds": 41.622593497006164,
+      "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+      "postflight_error": null
+    },
+    "identity-adoption-binding": {
+      "review_path": "/home/bobby/.cache/suss-m4-work/pr263-protocol-marker-production-v2/independent-adoption-review-cicero.json",
+      "review_sha256": "52cf1320c32fa68cfba73da646e25dd7d1aac91071a71c4de2569e93dcfb0e85",
+      "generation_inspection_sha256": "e8aa8e3450891001080d9f8ab78a40ce19e0c1e59050cfbae89c55df31c53449",
+      "adopted_four": {
+        "runtime/bootstrap/runtime.wasm": "b24c2af8b553ce3e0bc5d2e2d2f8e5c5816a86b779f6cc82c63de6812d9a753a",
+        "runtime/bootstrap/runtime.json": "93348bbd0e70ea03360817e9d738bfc7b8d320916b338bc9b8645c55432a64a3",
+        "runtime/bootstrap/macro.wasm": "136546e27fc0fc362c1837a4ac3a1da75c4e6c38f4fc34397c74fc6dc6bda749",
+        "runtime/bootstrap/macro.json": "db86c8ca6752ab34f776c118c4954564ab476aeac6d38ff270145de7e171ca2b"
+      },
+      "identity_terminal_sha256": "cfdb751236039d7e49b957b712b7421d46e954af460dee1bc9ca4c54a850343c",
+      "driver_adoption_performed": false
+    },
+    "identity-preflight-failure": {
+      "stage": "before identity command launch",
+      "failure": "Wrapper expected source_fingerprint/compiler_source_sha256; independent receipt uses compiler_fingerprint. Exact actual fingerprint is correct. Added that receipt key without weakening equality/approved-four guards.",
+      "review_compiler_fingerprint": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+      "adoption_commit": "0548d7c",
+      "identity_execution_in_failed_attempt": false
+    }
+  },
+  "cohorts": {
+    "default-constructor": {
+      "head": "0548d7c2f4631b72ed036a960c665537c3b4696b",
+      "source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+      "compiler_source_sha256": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+      "input_count": 229,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "compiled_macro_constructor_source_asts",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+      ],
+      "selection": {
+        "exact_names": [
+          "constructor_operation_and_children_fit_default_fuel_in_both_caller_phases"
+        ],
+        "test_source_sha256": "3a53abdae25b2a357174a614851743f94588bd5a92a80a6195812e891be121d2",
+        "scope": "Exact unchanged explicit default10M constructor control, full original program/assertions/both caller phases. Only after new BOOT adoption and identity; no historical result credited.",
+        "test_source": "crates/suss-cli/tests/compiled_macro_constructor_source_asts.rs",
+        "prepared_for_compiler_source": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5"
+      },
+      "scope": "Only these exact complete tests; no broader acceptance credit.",
+      "exit_code": 101,
+      "seconds": 331.3602577339989,
+      "raw_sha256": "2c504489ae49f1e851e28d03a19f0dff4d55711b5e1c4a08e554dae9aeab82f5",
+      "harness_summaries": [
+        "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 73.35s"
+      ]
+    }
+  },
+  "limitations": [
+    "Only a callback-free live protocol marker read is specialized. Key/receiver/table guards, odd length rejection, exact first-key and sentinel identities, live replacement and original error priority remain. No method/source-health cache, source or originally-nil receipt authority, numeric tariff, default or caller budget changes.",
+    "General method getter/setter emitted sequences are independently source-reviewed as unchanged. Actual new direct-ABI tests execute runtime_abi::module; matching core BOOT noncustom bytes do not imply the separately generated runtime ABI code is unchanged.",
+    "Direct marker tests cover Runtime ABI, not all Macro/Session source/storage/memo preservation. Matching artifact identity is separate from semantic/default/pinned acceptance.",
+    "The original resource-test assumption that used-minus-one must trap before returning was false for locked Wasmtime49.0.1. All four cuts remain. Only that boundary may return correct1 if remaining fuel is0 and immediate same-input/no-refill reentry traps. Original failure and diagnostic are retained.",
+    "d689 native86 and complete semantic10 passes remain historical after the afd source change; no pass transfers. Constructor10M, CORE17/sourcechild defaults, pinned200M, low-fuel, IRQ, recovery and original full fixtures remain required unchanged."
+  ],
+  "earlier_actual_failures": {
+    "abi7": {
+      "head": "049fefbde2f29291de696579ac8c2e62a2848438",
+      "source_commit": "049fefbde2f29291de696579ac8c2e62a2848438",
+      "compiler_source_sha256": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+      "compiler_inputs": 229,
+      "test_source": {
+        "path": "crates/suss-compile/tests/runtime_abi.rs",
+        "before_sha256": "50ad27c494be3a68a69307adbb09116f4c157aa16472fe73ca938033148aa3b9",
+        "after_sha256": "87501bf65c616f64c72972cb30b309fb100dd170edaa4c8552ab6cb604f11fb0"
+      },
+      "exact_names": [
+        "protocol_marker_direct_tests::marker_checks_key_before_nonobject_and_rejects_bad_tables_before_first_hit",
+        "protocol_marker_direct_tests::marker_uses_first_exact_key_and_live_sentinel_identity_after_gc",
+        "protocol_marker_direct_tests::marker_fuel_and_pending_interrupt_are_typed_and_allow_same_store_retry",
+        "runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_gc",
+        "runtime_abi_nominal_bad_inputs_throw_language_errors_before_storage_access",
+        "runtime_abi_method_lookup_preserves_live_values_equal_id_keys_and_first_match_after_gc",
+        "runtime_abi_protocol_lookup_preserves_order_live_tables_and_group_boundaries"
+      ],
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "runtime_abi",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "protocol_marker_direct_tests::marker_checks_key_before_nonobject_and_rejects_bad_tables_before_first_hit",
+        "protocol_marker_direct_tests::marker_uses_first_exact_key_and_live_sentinel_identity_after_gc",
+        "protocol_marker_direct_tests::marker_fuel_and_pending_interrupt_are_typed_and_allow_same_store_retry",
+        "runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_gc",
+        "runtime_abi_nominal_bad_inputs_throw_language_errors_before_storage_access",
+        "runtime_abi_method_lookup_preserves_live_values_equal_id_keys_and_first_match_after_gc",
+        "runtime_abi_protocol_lookup_preserves_order_live_tables_and_group_boundaries"
+      ],
+      "scope": "Seven direct production runtime_abi::module tests only. No Session or shipped BOOT is instantiated; old d689 BOOT is stale for this new source. No Macro/portable/source/factory/default/map acceptance or readiness inferred.",
+      "actual_builder": {
+        "path": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+        "sha256": "1d3233b2f3e4e36023467c0e2340e3a4838519c51aaba6db9c0761a680b0b54b",
+        "all229_input_rerun_paths_verified": true
+      },
+      "exit_code": 101,
+      "seconds": 201.4206381499971,
+      "raw_sha256": "344a63d3475050b4164b3cb51aaa75cdb46fb316b5465d696cac297c4dc0a2f5",
+      "started_names": [
+        "protocol_marker_direct_tests::marker_checks_key_before_nonobject_and_rejects_bad_tables_before_first_hit",
+        "protocol_marker_direct_tests::marker_fuel_and_pending_interrupt_are_typed_and_allow_same_store_retry",
+        "protocol_marker_direct_tests::marker_uses_first_exact_key_and_live_sentinel_identity_after_gc",
+        "runtime_abi_method_lookup_preserves_live_values_equal_id_keys_and_first_match_after_gc",
+        "runtime_abi_nominal_bad_inputs_throw_language_errors_before_storage_access",
+        "runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_gc",
+        "runtime_abi_protocol_lookup_preserves_order_live_tables_and_group_boundaries"
+      ],
+      "harness_summaries": [
+        "test result: FAILED. 6 passed; 1 failed; 0 ignored; 0 measured; 80 filtered out; finished in 20.38s"
+      ],
+      "postflight_error": null,
+      "accepted_complete_seven": false
+    },
+    "abi-resource-diagnostic": {
+      "head": "5ac88a508c461d28acde1ad0fe6b3d50a0219531",
+      "source_commit": "049fefbde2f29291de696579ac8c2e62a2848438",
+      "compiler_source_sha256": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+      "compiler_inputs": 229,
+      "test_source": {
+        "path": "crates/suss-compile/tests/runtime_abi.rs",
+        "before_sha256": "50ad27c494be3a68a69307adbb09116f4c157aa16472fe73ca938033148aa3b9",
+        "after_sha256": "1606c27965c60ba9ce89dd35984fe7d740aece67ede425a8cd78b9462e41c9ce"
+      },
+      "exact_names": [
+        "protocol_marker_direct_tests::marker_fuel_and_pending_interrupt_are_typed_and_allow_same_store_retry"
+      ],
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "runtime_abi",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "protocol_marker_direct_tests::marker_fuel_and_pending_interrupt_are_typed_and_allow_same_store_retry"
+      ],
+      "scope": "Seven direct production runtime_abi::module tests only. No Session or shipped BOOT is instantiated; old d689 BOOT is stale for this new source. No Macro/portable/source/factory/default/map acceptance or readiness inferred.",
+      "actual_builder": {
+        "path": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output",
+        "sha256": "1d3233b2f3e4e36023467c0e2340e3a4838519c51aaba6db9c0761a680b0b54b",
+        "all229_input_rerun_paths_verified": true
+      },
+      "exit_code": 101,
+      "seconds": 39.018401597000775,
+      "raw_sha256": "dd35a898076264a9fdee3a63ac0d86aae218b044ad0f34912f18e6db19878520",
+      "started_names": [
+        "protocol_marker_direct_tests::marker_fuel_and_pending_interrupt_are_typed_and_allow_same_store_retry"
+      ],
+      "harness_summaries": [
+        "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 86 filtered out; finished in 2.48s"
+      ],
+      "postflight_error": null,
+      "accepted_complete_one": false
+    },
+    "diagnostic_identified_cut": {
+      "cap": 202,
+      "measured_successful_cost": 203,
+      "observed_result": 1,
+      "scope": "Failed original assertion; later IRQ/recovery tail not completed by this attempt."
+    }
+  },
+  "historical_d689_semantic10": {
+    "terminal": {
+      "exit_code": 0,
+      "seconds": 1237.3928632759998,
+      "start_sha256": "45bbfffd1ab0fb3deafa4fa76b9fb0a12424cd8449b196da51c81a36b4ea05f3",
+      "raw_sha256": "1358ea3febeb2d1e5042d6b3a4f5aed69d6d2af8434f13caf22d3505bfb49da5",
+      "postflight": {
+        "head": "c40e2bbcb335e7a666235c3fdd55ed5c7483a119",
+        "compiler_source_sha256": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4",
+        "compiler_input_count": 229,
+        "source_git_and_worktree_hashes_verified": true,
+        "four_test_afterimages_and_policy_verified": true,
+        "boot": {
+          "runtime/bootstrap/runtime.wasm": "159859b7aab22261d5188bff06a9133e0bba2f6c26cf87ce241fbad2aa2172da",
+          "runtime/bootstrap/runtime.json": "4c57ea42a752eade14ba098a2514c06d9380281e9106348e514ab73260561de1",
+          "runtime/bootstrap/macro.wasm": "c1f5875c417831595b92fbbe6aa9b258b4ed6881c7dc3deaafebaa131ad8ab02",
+          "runtime/bootstrap/macro.json": "9b7a82a5cc19816b0155930c48119d7237832d82dc92f03ce66321a8e8f50097"
+        },
+        "builder_output_sha256": "8231875bbffdab98732cf428c913da1027027d41937ff77db02007b24d8dc438",
+        "identity_receipt_sha256": "79bf3a798899380e232eb3b91928fc68bcd0a9c19f23d73cd8a0ca0135d270f5"
+      },
+      "execution_or_binding_error": null,
+      "process_completion_observed": true,
+      "scope": "No PASS inference until separate four-harness reconciliation."
+    },
+    "complete_results": {
+      "complete_exact_four_harnesses": true,
+      "passed": 10,
+      "failed": 0,
+      "harnesses": [
+        {
+          "target": "compiled_macro_analyzer_literal_memos",
+          "outcomes": [
+            {
+              "name": "fresh_env_literal_keys_keep_reader_arguments_and_source_metadata_cold_after_gc",
+              "status": "ok"
+            },
+            {
+              "name": "vector_source_literal_items_children_keys_and_child_keyword_have_initialized_memos",
+              "status": "ok"
+            }
+          ],
+          "summary": {
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0,
+            "status": "ok"
+          },
+          "binding_errors": []
+        },
+        {
+          "target": "compiled_macro_constant_asts",
+          "outcomes": [
+            {
+              "name": "reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_constants",
+              "status": "ok"
+            },
+            {
+              "name": "scalar_ast_values_preserve_binary64_and_utf16_without_physical_value_inference",
+              "status": "ok"
+            },
+            {
+              "name": "scalar_initializer_operations_and_values_match_pinned_source_ast_without_execution",
+              "status": "ok"
+            }
+          ],
+          "summary": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0,
+            "status": "ok"
+          },
+          "binding_errors": []
+        },
+        {
+          "target": "compiled_macro_cross_invocation_identity_probe",
+          "outcomes": [
+            {
+              "name": "same_captured_declaration_metadata_across_distinct_macro_invocations",
+              "status": "ok"
+            },
+            {
+              "name": "source_metadata_hash_maps_over_eight_entries_retain_identity_after_construction_warming",
+              "status": "ok"
+            }
+          ],
+          "summary": {
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0,
+            "status": "ok"
+          },
+          "binding_errors": []
+        },
+        {
+          "target": "compiled_macro_source_environment",
+          "outcomes": [
+            {
+              "name": "compiled_source_macro_environment_keeps_snapshot_documents_separate_from_staged_catalog",
+              "status": "ok"
+            },
+            {
+              "name": "compiled_source_macro_environment_retains_lexical_initializer_and_shadow_without_reexecution",
+              "status": "ok"
+            },
+            {
+              "name": "compiled_source_macro_environment_tracks_function_scopes_and_implicit_arguments_in_all_signatures",
+              "status": "ok"
+            }
+          ],
+          "summary": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0,
+            "status": "ok"
+          },
+          "binding_errors": []
+        }
+      ],
+      "errors": [],
+      "all_ten_pass": true,
+      "raw_sha256": "1358ea3febeb2d1e5042d6b3a4f5aed69d6d2af8434f13caf22d3505bfb49da5",
+      "exit_code": 0,
+      "start_sha256": "45bbfffd1ab0fb3deafa4fa76b9fb0a12424cd8449b196da51c81a36b4ea05f3",
+      "selection_sha256": "88c031e67e4fcf239f99ac21bb0a09bc7f1b37f645fdde3cdfc9c8afcb24a39c",
+      "source_binding": {
+        "head": "c40e2bbcb335e7a666235c3fdd55ed5c7483a119",
+        "compiler_source_sha256": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4",
+        "compiler_input_count": 229,
+        "source_git_and_worktree_hashes_verified": true,
+        "four_test_afterimages_and_policy_verified": true,
+        "boot": {
+          "runtime/bootstrap/runtime.wasm": "159859b7aab22261d5188bff06a9133e0bba2f6c26cf87ce241fbad2aa2172da",
+          "runtime/bootstrap/runtime.json": "4c57ea42a752eade14ba098a2514c06d9380281e9106348e514ab73260561de1",
+          "runtime/bootstrap/macro.wasm": "c1f5875c417831595b92fbbe6aa9b258b4ed6881c7dc3deaafebaa131ad8ab02",
+          "runtime/bootstrap/macro.json": "9b7a82a5cc19816b0155930c48119d7237832d82dc92f03ce66321a8e8f50097"
+        },
+        "builder_output_sha256": "8231875bbffdab98732cf428c913da1027027d41937ff77db02007b24d8dc438",
+        "identity_receipt_sha256": "79bf3a798899380e232eb3b91928fc68bcd0a9c19f23d73cd8a0ca0135d270f5"
+      },
+      "postflight": {
+        "head": "c40e2bbcb335e7a666235c3fdd55ed5c7483a119",
+        "compiler_source_sha256": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4",
+        "compiler_input_count": 229,
+        "source_git_and_worktree_hashes_verified": true,
+        "four_test_afterimages_and_policy_verified": true,
+        "boot": {
+          "runtime/bootstrap/runtime.wasm": "159859b7aab22261d5188bff06a9133e0bba2f6c26cf87ce241fbad2aa2172da",
+          "runtime/bootstrap/runtime.json": "4c57ea42a752eade14ba098a2514c06d9380281e9106348e514ab73260561de1",
+          "runtime/bootstrap/macro.wasm": "c1f5875c417831595b92fbbe6aa9b258b4ed6881c7dc3deaafebaa131ad8ab02",
+          "runtime/bootstrap/macro.json": "9b7a82a5cc19816b0155930c48119d7237832d82dc92f03ce66321a8e8f50097"
+        },
+        "builder_output_sha256": "8231875bbffdab98732cf428c913da1027027d41937ff77db02007b24d8dc438",
+        "identity_receipt_sha256": "79bf3a798899380e232eb3b91928fc68bcd0a9c19f23d73cd8a0ca0135d270f5"
+      },
+      "execution_or_binding_error": null,
+      "accepted_complete_semantic10": true
+    },
+    "independent_review": {
+      "verdict": "VERIFIED_COMPLETE_SEMANTIC10_PASS",
+      "source_binding": {
+        "head": "c40e2bbcb335e7a666235c3fdd55ed5c7483a119",
+        "compiler_source_sha256": "d689370320ebdc4d807df5efb3bb0234b02fcd23c566e8e3086b4942b3e63fc4",
+        "compiler_input_count": 229,
+        "source_git_and_worktree_hashes_verified": true,
+        "four_test_afterimages_and_policy_verified": true,
+        "boot": {
+          "runtime/bootstrap/runtime.wasm": "159859b7aab22261d5188bff06a9133e0bba2f6c26cf87ce241fbad2aa2172da",
+          "runtime/bootstrap/runtime.json": "4c57ea42a752eade14ba098a2514c06d9380281e9106348e514ab73260561de1",
+          "runtime/bootstrap/macro.wasm": "c1f5875c417831595b92fbbe6aa9b258b4ed6881c7dc3deaafebaa131ad8ab02",
+          "runtime/bootstrap/macro.json": "9b7a82a5cc19816b0155930c48119d7237832d82dc92f03ce66321a8e8f50097"
+        },
+        "builder_output_sha256": "8231875bbffdab98732cf428c913da1027027d41937ff77db02007b24d8dc438",
+        "identity_receipt_sha256": "79bf3a798899380e232eb3b91928fc68bcd0a9c19f23d73cd8a0ca0135d270f5"
+      },
+      "production_source_commit": "548699669cbafa5ada761595e531308db9ea0acd",
+      "bootstrap_commit": "c163189b714dae06731e8f60ed81759776093f48",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--no-fail-fast",
+        "--test",
+        "compiled_macro_analyzer_literal_memos",
+        "--test",
+        "compiled_macro_cross_invocation_identity_probe",
+        "--test",
+        "compiled_macro_constant_asts",
+        "--test",
+        "compiled_macro_source_environment",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "profile_environment": {
+        "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+        "CARGO_BUILD_JOBS": "1",
+        "RAYON_NUM_THREADS": "1",
+        "TMPDIR": "/home/bobby/.cache/suss-m4-work/workspace-tmp-65e9718-ccpsnhdq",
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "raw_sha256": "1358ea3febeb2d1e5042d6b3a4f5aed69d6d2af8434f13caf22d3505bfb49da5",
+      "terminal_sha256": "07969ef75e2a4f2ecc710d7151ef1de735f9e4d3314265136a5d41987f79ffe5",
+      "seconds": 1237.3928632759998,
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "harnesses": [
+        {
+          "target": "compiled_macro_analyzer_literal_memos",
+          "executable": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/compiled_macro_analyzer_literal_memos-c5a3f5aa39cfda9d",
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "harness_seconds": 193.69,
+          "outcomes": [
+            {
+              "name": "fresh_env_literal_keys_keep_reader_arguments_and_source_metadata_cold_after_gc",
+              "status": "PASS"
+            },
+            {
+              "name": "vector_source_literal_items_children_keys_and_child_keyword_have_initialized_memos",
+              "status": "PASS"
+            }
+          ]
+        },
+        {
+          "target": "compiled_macro_constant_asts",
+          "executable": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/compiled_macro_constant_asts-408287816e7c38aa",
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "harness_seconds": 258.02,
+          "outcomes": [
+            {
+              "name": "reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_constants",
+              "status": "PASS"
+            },
+            {
+              "name": "scalar_ast_values_preserve_binary64_and_utf16_without_physical_value_inference",
+              "status": "PASS"
+            },
+            {
+              "name": "scalar_initializer_operations_and_values_match_pinned_source_ast_without_execution",
+              "status": "PASS"
+            }
+          ]
+        },
+        {
+          "target": "compiled_macro_cross_invocation_identity_probe",
+          "executable": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/compiled_macro_cross_invocation_identity_probe-6faf57368607e1a7",
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "harness_seconds": 235.31,
+          "outcomes": [
+            {
+              "name": "same_captured_declaration_metadata_across_distinct_macro_invocations",
+              "status": "PASS"
+            },
+            {
+              "name": "source_metadata_hash_maps_over_eight_entries_retain_identity_after_construction_warming",
+              "status": "PASS"
+            }
+          ]
+        },
+        {
+          "target": "compiled_macro_source_environment",
+          "executable": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/compiled_macro_source_environment-60c51fb09749bd49",
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "harness_seconds": 259.83,
+          "outcomes": [
+            {
+              "name": "compiled_source_macro_environment_keeps_snapshot_documents_separate_from_staged_catalog",
+              "status": "PASS"
+            },
+            {
+              "name": "compiled_source_macro_environment_retains_lexical_initializer_and_shadow_without_reexecution",
+              "status": "PASS"
+            },
+            {
+              "name": "compiled_source_macro_environment_tracks_function_scopes_and_implicit_arguments_in_all_signatures",
+              "status": "PASS"
+            }
+          ]
+        }
+      ],
+      "four_afterimages": [
+        {
+          "path": "crates/suss-cli/tests/compiled_macro_analyzer_literal_memos.rs",
+          "sha256": "52bfc8f5c619d138a93adf9d7782fc6bb487d0f242e7d2b38ab78ce33df8a087",
+          "packet_manifest_sha256": "843d90adf0e74a80b413c6e1d2d41b8b71190d7c9b2eb5457f46f048571cffc4",
+          "afterimage": "/home/bobby/.cache/suss-m4-work/pr263-public-literal-compilation-calibration-40df-v1/after/crates/suss-cli/tests/compiled_macro_analyzer_literal_memos.rs"
+        },
+        {
+          "path": "crates/suss-cli/tests/compiled_macro_cross_invocation_identity_probe.rs",
+          "sha256": "075fb32fe76ddf51e4aa26daf03529d152be2e797255593ca12a9c4730dbdc54",
+          "packet_manifest_sha256": "daec00c0a74830bb6f9af544297bbd2f6a8fd02842b0b4fdccbb34c41fc7aa71",
+          "afterimage": "/home/bobby/.cache/suss-m4-work/pr263-cross-invocation-semantic-compilation-calibration-90e1d3b-v1/after/crates/suss-cli/tests/compiled_macro_cross_invocation_identity_probe.rs"
+        },
+        {
+          "path": "crates/suss-cli/tests/compiled_macro_constant_asts.rs",
+          "sha256": "1d8e462e7950bdd978f1cb0ce85cd44b3eb1d6088c02685a0ca02660ee92567b",
+          "packet_manifest_sha256": "c8c6abaeb444583208cc668df6566dd85cec1615abad23ef6fe9d1e61abe2d54",
+          "afterimage": "/home/bobby/.cache/suss-m4-work/pr263-constant-and-source-environment-calibration-90e1d3b-v1/after/crates/suss-cli/tests/compiled_macro_constant_asts.rs"
+        },
+        {
+          "path": "crates/suss-cli/tests/compiled_macro_source_environment.rs",
+          "sha256": "d84c939241d72879fbd796ea20a7e69334dad26cba7c7d39e2c070a841899a40",
+          "packet_manifest_sha256": "c8c6abaeb444583208cc668df6566dd85cec1615abad23ef6fe9d1e61abe2d54",
+          "afterimage": "/home/bobby/.cache/suss-m4-work/pr263-constant-and-source-environment-calibration-90e1d3b-v1/after/crates/suss-cli/tests/compiled_macro_source_environment.rs"
+        }
+      ],
+      "support_policy": {
+        "path": "crates/suss-cli/tests/support/compilation_fuel.rs",
+        "sha256": "1c11af3d2a8fd93dc7b20669a430f3da208f080692cf71e34a6cce2e9363c906"
+      },
+      "bindings": "Start/terminal/source manifest, four packet postimages and Git c40 blobs, support policy, four BOOT Git blobs, actual builder output and prior identity receipt agree. Reused prior independent adoption review; no repeated compiler census or claim of a run-long mutation detector.",
+      "public_literal_observed_rows": [
+        {
+          "phase": "runtime",
+          "stage": 0,
+          "booleans": 10,
+          "all_true": true
+        },
+        {
+          "phase": "runtime",
+          "stage": 1,
+          "booleans": 10,
+          "all_true": true
+        },
+        {
+          "phase": "macro",
+          "stage": 0,
+          "booleans": 10,
+          "all_true": true
+        },
+        {
+          "phase": "macro",
+          "stage": 1,
+          "booleans": 10,
+          "all_true": true
+        }
+      ],
+      "vector_observed_rows": {
+        "count": 2,
+        "booleans_per_row": 5,
+        "all_true": true,
+        "phase_mapping": "Runtime/Macro from original source loop; raw vector labels themselves omit phase."
+      },
+      "original_assertion_scopes": {
+        "literal": "Both caller phases and stages0/1, GC, initialized analyzer key memos vs cold original reader arguments/metadata, original text/value17; vector initialized items/children/child-keyword and value17.",
+        "constants": "Both phases execute pinned five-scalar AST comparisons; effects execute once (value42/effects1), local read does not acquire a constant value; binary64 bit patterns and unpaired UTF16 units; reviewed scalar/source facts and child/symbol presence controls after GC.",
+        "cross_invocation": "Both phases, original independent requests: same-revision identity, changed revision/doc observations and retained projection, real reset and recovery, GC; wide source metadata over eight entries survives three independently compiled invocation shapes. Full original assertions reached; no separately printed cross rows inferred.",
+        "source_environment": "Both phases: exact pinned lexical/function/variadic forms, shadow init9, side effect count1, implicit arguments and rest/form counts; three snapshot/staged catalog requests retain old/current docs and provisional/completed distinctions."
+      },
+      "pinned_reference_hashes": [
+        {
+          "path": "tests/oracle/constant-ast-observations.json",
+          "git_head_sha256": "c36eef4f099cf480e71857469bed72f69e62e191db082305238e8a9a317f1c9d"
+        },
+        {
+          "path": "tests/oracle/source-environment-observations.json",
+          "git_head_sha256": "c170b1ed58909d360a2074f9f8b0f41f41b0b7f22296395f67bb8a6bc66054c2"
+        }
+      ],
+      "budget_scope": "Semantic Macro compilation allowance100B only; original Runtime10M guards and fixture bodies remain. These passing targets do not establish strict default fit.",
+      "limitations": [
+        "Four integration targets only; no full baseline/final CI or readiness verdict.",
+        "No transfer from native86/older tuples; no public namespace/callable/public719/default/pinned/CORE/sourcechild acceptance inferred.",
+        "Assertions without printed observations are evidenced by complete PASS plus exact source, not independently reconstructed raw rows."
+      ],
+      "review_execution": "Static parsing/hashing/Git reads only; no Cargo/VM, source mutations, or producer interference."
+    },
+    "source_qualification": "Actual c40/d689/229/BOOTc163 complete10PASS only; not currentafd execution."
+  },
+  "pinned_controls": {
+    "terminal": {
+      "fixture_binding_manifest_sha256": "1860709ff9a5255825dd16dcd8dd9188915ec51714e16ce01c27cc9aedcd85be",
+      "source_freeze_sha256": "b0f289dd382b6b93c9be13c7dcd44250cf8f6192256d5a304d6fd0ff57b3ba11",
+      "head": "0548d7c2f4631b72ed036a960c665537c3b4696b",
+      "source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+      "bootstrap_commit": "0548d7c2f4631b72ed036a960c665537c3b4696b",
+      "predicted_source_fingerprint": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+      "source_input_count": 229,
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "clojure_test_suite",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture",
+        "pinned_map_declaration_executes_without_transport_loss",
+        "pinned_reader_identifier_names_keep_values"
+      ],
+      "trace_environment": {},
+      "profile_environment": {
+        "CARGO_TARGET_DIR": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target",
+        "CARGO_BUILD_JOBS": "1",
+        "RAYON_NUM_THREADS": "1",
+        "TMPDIR": "/home/bobby/.cache/suss-m4-work/workspace-tmp-65e9718-ccpsnhdq",
+        "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+        "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+        "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+      },
+      "default_predecessor_terminal_sha256": "c2e6c6776abfd2aea5027919df6c416c9e328619d3ba581be16948e76afc6686",
+      "default_predecessor_exit_code": 101,
+      "wrapper_pid": 1516185,
+      "started_unix": 1792546822.2405515,
+      "scope": "Complete original map69/identifier15 with originalMacro200M/caller200M and same bodies/assertions. No quota/fixture/metadata reduction. Fresh capture and independent comparisons required; no acceptance or default fit inferred.",
+      "exit_code": 101,
+      "seconds": 429.2070989089989,
+      "raw_sha256": "722a0841c5e786e1e27639634347f89ddf05cf23ad3afa168191e7dd1ea1543c",
+      "postflight_error": null
+    },
+    "fixture_bindings": {
+      "source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+      "compiler_source_sha256": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+      "bootstrap_commit": "0548d7c2f4631b72ed036a960c665537c3b4696b",
+      "file_bindings": {
+        "crates/suss-compile/tests/clojure_test_suite.rs": {
+          "sha256": "1a159e3c97cac9759708374c31b8633ba374a790d17aa8fb75512ebb1269ecd9",
+          "exact_source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+          "scope": "Whole original pinned fixture/support/reference bytes unchanged from d689 template"
+        },
+        "crates/suss-compile/tests/support/portable_decode.rs": {
+          "sha256": "5b8c8f5b130ec981c1f2ab49b6f869efef8c70dfcc34548427ca3c520c26bb87",
+          "exact_source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+          "scope": "Whole original pinned fixture/support/reference bytes unchanged from d689 template"
+        },
+        "crates/suss-compile/tests/support/compilation_fuel.rs": {
+          "sha256": "1c11af3d2a8fd93dc7b20669a430f3da208f080692cf71e34a6cce2e9363c906",
+          "exact_source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+          "scope": "Whole original pinned fixture/support/reference bytes unchanged from d689 template"
+        },
+        "scripts/clojure_test_suite.py": {
+          "sha256": "a4b523a812c58d9aaef0529b7f815f9488e4335dd04f20ff25533498e7707e14",
+          "exact_source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+          "scope": "Whole original pinned fixture/support/reference bytes unchanged from d689 template"
+        },
+        "tests/oracle/clojure-test-suite-observations.json": {
+          "sha256": "a71ec10039b93e8ff0bd5f5dd563c212294ae059c415495215ae7062b0974c6a",
+          "exact_source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+          "scope": "Whole original pinned fixture/support/reference bytes unchanged from d689 template"
+        },
+        "tests/oracle/clojure-test-suite-known-failures.json": {
+          "sha256": "90ada9910a7529f0f7152247692eabeb47fd4214580575f94d685b9c36a7642c",
+          "exact_source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+          "scope": "Whole original pinned fixture/support/reference bytes unchanged from d689 template"
+        },
+        "tests/oracle/src/suss_oracle/clojure_test_suite.cljs": {
+          "sha256": "bd190dcffddff113bf7e1a7e9dd2d69cf39ac4e6a360df7edbc5d58cad818276",
+          "exact_source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+          "scope": "Whole original pinned fixture/support/reference bytes unchanged from d689 template"
+        },
+        "tests/oracle/src/suss_oracle/clojure_test_suite_skips.cljs": {
+          "sha256": "7846d135c63178d0602eec38d60c099903f4b515e2ba0541a63b5faa64e10447",
+          "exact_source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+          "scope": "Whole original pinned fixture/support/reference bytes unchanged from d689 template"
+        },
+        "vendor/clojure-test-suite/upstream/test/clojure/core_test/map.cljc": {
+          "sha256": "a077bc1d9cc7d4e8e0e83d5fe5f1eb0e55c28eab7887919599b20e42f31b7c1e",
+          "exact_source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+          "scope": "Whole original pinned fixture/support/reference bytes unchanged from d689 template"
+        },
+        "vendor/clojure-test-suite/upstream/test/clojure/core_test/name.cljc": {
+          "sha256": "37cfac488528b43d8e492340885b1ed35c89362aa0167ff7ba72bdb0318a06b4",
+          "exact_source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+          "scope": "Whole original pinned fixture/support/reference bytes unchanged from d689 template"
+        },
+        "vendor/clojure-test-suite/upstream/test/clojure/core_test/namespace.cljc": {
+          "sha256": "df4f5fafcbc0b443956c964d8c9a59ee33be4f77321e84fd98eaffa8d82c1c3f",
+          "exact_source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+          "scope": "Whole original pinned fixture/support/reference bytes unchanged from d689 template"
+        },
+        "runtime/bootstrap/runtime.wasm": {
+          "sha256": "b24c2af8b553ce3e0bc5d2e2d2f8e5c5816a86b779f6cc82c63de6812d9a753a",
+          "exact_source_commit": "0548d7c2f4631b72ed036a960c665537c3b4696b",
+          "scope": "Exact new reviewed matching BOOT0548 artifact"
+        },
+        "runtime/bootstrap/runtime.json": {
+          "sha256": "93348bbd0e70ea03360817e9d738bfc7b8d320916b338bc9b8645c55432a64a3",
+          "exact_source_commit": "0548d7c2f4631b72ed036a960c665537c3b4696b",
+          "scope": "Exact new reviewed matching BOOT0548 artifact"
+        },
+        "runtime/bootstrap/macro.wasm": {
+          "sha256": "136546e27fc0fc362c1837a4ac3a1da75c4e6c38f4fc34397c74fc6dc6bda749",
+          "exact_source_commit": "0548d7c2f4631b72ed036a960c665537c3b4696b",
+          "scope": "Exact new reviewed matching BOOT0548 artifact"
+        },
+        "runtime/bootstrap/macro.json": {
+          "sha256": "db86c8ca6752ab34f776c118c4954564ab476aeac6d38ff270145de7e171ca2b",
+          "exact_source_commit": "0548d7c2f4631b72ed036a960c665537c3b4696b",
+          "scope": "Exact new reviewed matching BOOT0548 artifact"
+        }
+      },
+      "scope": "11 unchanged full fixture/source/reference files plus4 BOOT0548 artifacts; source923888/afd27/229. Original Macro200M/caller200M pinned controls are not semantic calibrations.",
+      "test_body_bindings": {
+        "clojure_test_suite:pinned_map_declaration_executes_without_transport_loss": {
+          "sha256": "32baf16be6727b8ff9c8c87ae20e34e6f7afdc0883633c4e99eeeb836dc7fe10"
+        },
+        "clojure_test_suite:pinned_reader_identifier_names_keep_values": {
+          "sha256": "3637de65117263f17bc9f27d2b172c479ce986fe2ebb66e33a760a9cdacb9f9e"
+        }
+      },
+      "source_freeze_binding": {
+        "path": "/home/bobby/.cache/suss-m4-work/pr263-protocol-marker-production-v2/source-freeze.json",
+        "sha256": "b0f289dd382b6b93c9be13c7dcd44250cf8f6192256d5a304d6fd0ff57b3ba11",
+        "input_count": 229
+      },
+      "quotas": {
+        "Macro": 200000000,
+        "caller": 200000000,
+        "decode_budget": 10000000
+      },
+      "comparison_requirements": {
+        "map": {
+          "full_ordered_ids": 69,
+          "host": 62,
+          "guest_judged": 7
+        },
+        "identifiers": {
+          "full_ordered_ids": 15,
+          "host": 15
+        },
+        "skips_allowed": 0
+      },
+      "identity_binding": {
+        "path": "/home/bobby/.cache/suss-m4-work/pr263-protocol-marker-production-v2/identity-terminal.json",
+        "sha256": "cfdb751236039d7e49b957b712b7421d46e954af460dee1bc9ca4c54a850343c",
+        "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704"
+      },
+      "artifact_review_reference": {
+        "path": "/home/bobby/.cache/suss-m4-work/pr263-protocol-marker-production-v2/independent-adoption-review-cicero.json",
+        "sha256": "52cf1320c32fa68cfba73da646e25dd7d1aac91071a71c4de2569e93dcfb0e85",
+        "identity_adoption_binding_sha256": "c986a83f0ddca891c0d5631fc1a9012a4d8be1ff969d7fb0e5d095d26cc0e536"
+      }
+    },
+    "map_comparison": {
+      "counts": {
+        "pass": 0,
+        "guest-judged": 0,
+        "fail": 0,
+        "not-executed": 69,
+        "skipped": 0,
+        "namespaces-failed": 1
+      },
+      "failures": {
+        "schema": 1,
+        "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+        "namespaces": {
+          "clojure.core-test.map": {
+            "stage": "macro",
+            "diagnostic": "clojure.core-test.map (Some(\"<root>/clojure/core_test/map.cljc\")): Compiled macro expansion failed during expanded result transport: Runtime trap: error while executing at wasm backtrace:\n    0:  0x204b2 - <unknown>!<wasm function 366>\n    1:  0xee9fa - <unknown>!<wasm function 1071>\n    2:   0xe5a4 - <unknown>!<wasm function 185>\n    3:  0x1099d - <unknown>!<wasm function 276>\n    4:  0x109c7 - <unknown>!<wasm function 277>\n    5:    0x218 - <unknown>!<wasm function 6>: wasm trap: all fuel consumed by WebAssembly at bytes 239..5926"
+          }
+        },
+        "tests": {},
+        "assertions": {},
+        "skip-mismatches": []
+      },
+      "ordered_ids_match": false,
+      "expected_count": 69,
+      "actual_count": 0,
+      "observations_sha256": "5a6e6946007f4ae4da8f23e3d3e6894f4e26598b6edd7b9a577cacc2e93cf112",
+      "scope": "Host operand comparisons and guest-judged verdicts are distinct. Complete sequence and no transport failures/skips required.",
+      "accepted": false
+    },
+    "identifier_comparison": {
+      "counts": {
+        "pass": 15,
+        "guest-judged": 0,
+        "fail": 0,
+        "not-executed": 0,
+        "skipped": 0,
+        "namespaces-failed": 0
+      },
+      "failures": {
+        "schema": 1,
+        "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
+        "namespaces": {},
+        "tests": {},
+        "assertions": {},
+        "skip-mismatches": []
+      },
+      "ordered_ids_match": true,
+      "expected_count": 15,
+      "actual_count": 15,
+      "observations_sha256": "cde58ece80999df311a450e52a5613ad3fe249dba52d1d9b68eb345d383f4317",
+      "scope": "Original inline Rust Python comparator logic, repeated against retained capture. Host operand decisions only; no fabricated verdict.",
+      "accepted": true
+    }
+  },
+  "constructor_cli_cost_diagnostic": {
+    "terminal": {
+      "head": "0548d7c2f4631b72ed036a960c665537c3b4696b",
+      "source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+      "compiler_source_sha256": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+      "inputs": 229,
+      "bootstrap_commit": "0548d7c2f4631b72ed036a960c665537c3b4696b",
+      "manifest_sha256": "04a88b644bf17179542026a5d928fd2ab974b5054966ace46f7aa29a64320ad9",
+      "binary_sha256": "a996d0e727d5521cec2822ca10b9a58ab0cb1d46ab4fb591210b3bb9b0f853e5",
+      "stdin_sha256": "e7d8311f165e9130bbcb389b90db5c76aa4450372ce2b79da688a9289521322b",
+      "command": [
+        "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/suss",
+        "repl",
+        "--fuel",
+        "10000000",
+        "--compile-fuel",
+        "100000000000"
+      ],
+      "trace_environment": {
+        "SUSS_MACRO_FUEL_TRACE": "1",
+        "SUSS_METADATA_FUEL_TRACE": "1"
+      },
+      "pinned_predecessor_terminal_sha256": "d26f9ddae0f61d333def27d48b427376a6b3c7bd24daa715d5ff057eec474ba6",
+      "pinned_predecessor_exit_code": 101,
+      "wrapper_pid": 1542314,
+      "started_unix": 1792547604.3110933,
+      "scope": "DIAGNOSTIC public CLI Runtime-only route, original macro/program strings, compilation100B/Runtime10M. Not default/native acceptance or both-phase coverage.",
+      "exit_code": 0,
+      "seconds": 42.545336041002884,
+      "stdout_sha256": "2eccb1b9d797bf9edd1d83e0d70dda7ac417b700917d84070136f01faefdcb99",
+      "stderr_sha256": "083bf9dc1baf06e178ec13762b2be13e6635f1e24f227bcf9f0518a1ea54820d",
+      "postflight_error": null
+    },
+    "results": {
+      "status": "DIAGNOSTIC_ONLY",
+      "exit_code": 0,
+      "head": "0548d7c2f4631b72ed036a960c665537c3b4696b",
+      "source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+      "compiler_source_sha256": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+      "bootstrap_commit": "0548d7c2f4631b72ed036a960c665537c3b4696b",
+      "binary_sha256": "a996d0e727d5521cec2822ca10b9a58ab0cb1d46ab4fb591210b3bb9b0f853e5",
+      "stdin_sha256": "e7d8311f165e9130bbcb389b90db5c76aa4450372ce2b79da688a9289521322b",
+      "stdout_sha256": "2eccb1b9d797bf9edd1d83e0d70dda7ac417b700917d84070136f01faefdcb99",
+      "stderr_sha256": "083bf9dc1baf06e178ec13762b2be13e6635f1e24f227bcf9f0518a1ea54820d",
+      "expected_display": "[[:new [:class :args]] 42]",
+      "matching_display_lines": [
+        "[[:new [:class :args]] 42]"
+      ],
+      "observed_error_lines": [],
+      "constructor_macro_trace": [
+        {
+          "target": "user/constructor-facts",
+          "stage": "start",
+          "remaining": 99998699145
+        },
+        {
+          "target": "user/constructor-facts",
+          "stage": "provenance",
+          "remaining": 99998698884
+        },
+        {
+          "target": "user/constructor-facts",
+          "stage": "caller-form",
+          "remaining": 99998698881
+        },
+        {
+          "target": "user/constructor-facts",
+          "stage": "caller-environment",
+          "remaining": 99936936954
+        },
+        {
+          "target": "user/constructor-facts",
+          "stage": "arguments",
+          "remaining": 99936928937
+        },
+        {
+          "target": "user/constructor-facts",
+          "stage": "invoked",
+          "remaining": 99936808298
+        },
+        {
+          "target": "user/constructor-facts",
+          "stage": "decoded",
+          "remaining": 99936808114
+        }
+      ],
+      "complete_monotone_single_target_stage_trace": true,
+      "disjoint_target_stage_intervals": [
+        {
+          "from": "start",
+          "to": "provenance",
+          "Store_debit": 261
+        },
+        {
+          "from": "provenance",
+          "to": "caller-form",
+          "Store_debit": 3
+        },
+        {
+          "from": "caller-form",
+          "to": "caller-environment",
+          "Store_debit": 61761927
+        },
+        {
+          "from": "caller-environment",
+          "to": "arguments",
+          "Store_debit": 8017
+        },
+        {
+          "from": "arguments",
+          "to": "invoked",
+          "Store_debit": 120639
+        },
+        {
+          "from": "invoked",
+          "to": "decoded",
+          "Store_debit": 184
+        }
+      ],
+      "complete_target_macro_Store_debit": 61891031,
+      "metadata_trace_enabled": "SUSS_METADATA_FUEL_TRACE=1; full nested events retained in stderr, not added to outer stage intervals",
+      "complete_diagnostic": true,
+      "scope": "Runtime-only public CLI request/SourceOrigin/display differs from native default control and Macro caller phase. Store debit includes guest plus native charges inside stages, not exclusive guest/CPU time. Excludes startup, definition, parse/analysis before target start and final display. No default/CORE/map gate or budget-policy inference."
+    },
+    "scope": "Explicitly funded100B compilation, unchangedRuntime10M, Runtime-only CLI route. Original native default control still fails. This is not native both-phase acceptance or a new budget-policy decision.",
+    "independent_review": {
+      "reviewer": "Carver",
+      "verdict": "VERIFIED_COMPLETED_RUNTIME_CLI_DIAGNOSTIC_ONLY",
+      "source_commit": "923888aa2f83a0bd7c1a480bfa1ba7e801e0165c",
+      "compiler_source_sha256": "afd27c8a41bd6dd00d9c640d8d0ea06815756953d957bc60c9f0afa8deea1ee5",
+      "inputs": 229,
+      "bootstrap_commit": "0548d7c2f4631b72ed036a960c665537c3b4696b",
+      "binary_sha256": "a996d0e727d5521cec2822ca10b9a58ab0cb1d46ab4fb591210b3bb9b0f853e5",
+      "terminal_sha256": "93d55d8b3986b39e1584aab1a99f7e3f524f82f2c4080ca00e9f6d8ac4f2c5fb",
+      "stdout_sha256": "2eccb1b9d797bf9edd1d83e0d70dda7ac417b700917d84070136f01faefdcb99",
+      "stderr_sha256": "083bf9dc1baf06e178ec13762b2be13e6635f1e24f227bcf9f0518a1ea54820d",
+      "exit_code": 0,
+      "seconds": 42.545336041002884,
+      "complete_seven_stages": true,
+      "ordered_target_stages": [
+        [
+          "user/constructor-facts",
+          "start",
+          99998699145
+        ],
+        [
+          "user/constructor-facts",
+          "provenance",
+          99998698884
+        ],
+        [
+          "user/constructor-facts",
+          "caller-form",
+          99998698881
+        ],
+        [
+          "user/constructor-facts",
+          "caller-environment",
+          99936936954
+        ],
+        [
+          "user/constructor-facts",
+          "arguments",
+          99936928937
+        ],
+        [
+          "user/constructor-facts",
+          "invoked",
+          99936808298
+        ],
+        [
+          "user/constructor-facts",
+          "decoded",
+          99936808114
+        ]
+      ],
+      "disjoint_intervals": [
+        {
+          "from": "start",
+          "to": "provenance",
+          "Store_debit": 261
+        },
+        {
+          "from": "provenance",
+          "to": "caller-form",
+          "Store_debit": 3
+        },
+        {
+          "from": "caller-form",
+          "to": "caller-environment",
+          "Store_debit": 61761927
+        },
+        {
+          "from": "caller-environment",
+          "to": "arguments",
+          "Store_debit": 8017
+        },
+        {
+          "from": "arguments",
+          "to": "invoked",
+          "Store_debit": 120639
+        },
+        {
+          "from": "invoked",
+          "to": "decoded",
+          "Store_debit": 184
+        }
+      ],
+      "target_start_to_decoded_Store_debit": 61891031,
+      "exact_expected_display_lines": 1,
+      "observed_error_lines": [],
+      "native_acceptance_transfer": false,
+      "default_or_pinned_fit_claim": false,
+      "measurement_scope": "One actual public CLI Runtime-only macro transaction after explicit compile100B/eval10M. Includes guest+host within each Store interval, metadata nested traces not added. Excludes setup/definition/pre-start parse-analysis/final display. Does not reproduce native SourceOrigin/request route or Macro caller phase, native collection/readback or default10M control.",
+      "review_execution": "Reads/caches only; no VM/Cargo/probe launched."
+    }
+  }
+}

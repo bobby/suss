@@ -55,7 +55,10 @@ impl ExpansionHost for Inspect {
         }
         let mut locals = context.locals.clone();
         if let Some(metadata) = &self.declaration_metadata {
-            locals.get_mut("x").unwrap().declaration.metadata = vec![metadata.clone()];
+            let binding = std::sync::Arc::make_mut(
+                std::sync::Arc::make_mut(&mut locals).get_mut("x").unwrap(),
+            );
+            std::sync::Arc::make_mut(&mut binding.declaration).metadata = vec![metadata.clone()];
         }
         let context = ExpansionContext {
             locals: &locals,

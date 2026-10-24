@@ -1,4 +1,6 @@
 //! Original chunk-demand/Reduced/retry fixture; native execution pending.
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use serde_json::{Value, json};
 use suss_cli::{portable_macro_data::FormBridge, portable_session::Session};
 use suss_reader::forms::{Form, Kind};
@@ -58,7 +60,7 @@ fn chunk_effects_match_complete_pinned_observations_in_both_phases_after_gc() {
         // Finite existing sequence stress policy; max input is 65 elements.
         // This allowance is authored, not measured/proven sufficient yet.
         session.set_operation_fuel(100_000_000);
-        session.eval(FIXTURE).unwrap();
+        semantic_compilation::eval(&mut session, FIXTURE).unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         for (case, id) in cases.iter().zip(IDS) {
             assert_eq!(case["id"], id);
@@ -77,7 +79,7 @@ fn chunk_effects_match_complete_pinned_observations_in_both_phases_after_gc() {
 fn chunk_demand_cache_and_retry_survive_gc_between_source_fragments() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.set_operation_fuel(100_000_000);
-        session.eval(FIXTURE).unwrap();
+        semantic_compilation::eval(&mut session, FIXTURE).unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         session.eval("(chunk-effect-reset) (def retained-chunks (chunk-effect-producer (chunk-effect-input 65)))").unwrap();
         session.collect().unwrap();

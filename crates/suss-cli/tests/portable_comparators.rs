@@ -1,5 +1,7 @@
 //! Complete comparator source draft: both phases and independent scalar decoding.
 //! Authored only; bootstrap regeneration and all native execution remain pending.
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
 use suss_compile::portable::resolve::Phase;
 use wasmtime::Val;
@@ -59,7 +61,7 @@ const IDS: &[&str] = &[
 fn setup(phase: Phase) -> Session {
     let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
     session.set_operation_fuel(100_000_000);
-    session.eval(CORE).unwrap();
+    semantic_compilation::eval(&mut session, CORE).unwrap();
     session.enter_namespace("user").unwrap();
     session.eval(PROBE).unwrap();
     session.collect().unwrap();

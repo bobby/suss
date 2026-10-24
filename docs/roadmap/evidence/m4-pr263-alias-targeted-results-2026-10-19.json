@@ -1,0 +1,126 @@
+{
+  "scope": "Stopping-point grouped three-test results only. No source change, generated artifact, archive, full DATA-suite pass or acceptance claim.",
+  "source_head": "7b56177c8fcf112155e299909ad8bb60efc755d5",
+  "terminal": {
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--",
+      "--nocapture",
+      "--test-threads=2",
+      "portable_macro_graph::source_roots::first_use_data::tests::uncaptured_native_aliases_preserve_original_factory_evidence_and_exact_object_after_gc",
+      "portable_macro_graph::source_roots::first_use_data::tests::earlier_inline_callback_invalidates_old_private_candidate_before_first_use_and_freshens_once",
+      "portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc"
+    ],
+    "head": "7b56177c8fcf112155e299909ad8bb60efc755d5",
+    "exit_code": 101,
+    "seconds": 225.54896010097582,
+    "log_sha256": "9932906c06372f533bf3e29cf9a0ec6dcb7e24215e91750a94c27cb5a2e63790",
+    "scope": "Alias regression plus unchanged canonical-cold and retained/warm source controls; inspect all three results. Diagnostic instrumentation is not final acceptance."
+  },
+  "raw": {
+    "tests.log": {
+      "sha256": "9932906c06372f533bf3e29cf9a0ec6dcb7e24215e91750a94c27cb5a2e63790",
+      "text": "   Compiling suss-reader v0.1.0 (/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/crates/suss-reader)\n   Compiling suss-compile v0.1.0 (/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/crates/suss-compile)\n    Finished `test` profile [unoptimized] target(s) in 33.83s\n     Running unittests src/lib.rs (/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/suss_compile-6640f43d893bc943)\n\nrunning 3 tests\ntest portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc has been running for over 60 seconds\ntest portable_macro_graph::source_roots::first_use_data::tests::earlier_inline_callback_invalidates_old_private_candidate_before_first_use_and_freshens_once has been running for over 60 seconds\nFIRST_USE_DATA_NATIVE inputs=0 children=true direct=false current_inputs=true classes=true prototypes=true\nFIRST_USE_DATA_NATIVE inputs=20 children=false direct=true current_inputs=true classes=true prototypes=true\nFIRST_USE_DATA_ROOT binding=true logical=false audit=false children=10\nFIRST_USE_DATA_NATIVE inputs=0 children=true direct=false current_inputs=true classes=true prototypes=true\nFIRST_USE_DATA_ROOT binding=true logical=false audit=false children=0\nFIRST_USE_DATA_NATIVE inputs=2 children=true direct=true current_inputs=false classes=true prototypes=true\nFIRST_USE_DATA_ROOT binding=true logical=true audit=false children=0\nFIRST_USE_DATA_FRESH_FAILURE source=0 owner=ReaderSource alias=14 native=13\n\nthread 'portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc' (513186) panicked at crates/suss-compile/src/portable_macro_graph/completed_type_values.rs:616:58:\ncalled `Result::unwrap()` on an `Err` value: Host(Fresh first-use source failed complete DATA checks)\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\ntest portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc ... FAILED\ntest portable_macro_graph::source_roots::first_use_data::tests::earlier_inline_callback_invalidates_old_private_candidate_before_first_use_and_freshens_once ... ok\ntest portable_macro_graph::source_roots::first_use_data::tests::uncaptured_native_aliases_preserve_original_factory_evidence_and_exact_object_after_gc ... ok\n\nfailures:\n\nfailures:\n    portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\n\ntest result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 534 filtered out; finished in 191.54s\n\nerror: test failed, to rerun pass `-p suss-compile --lib`\n"
+    },
+    "terminal.json": {
+      "sha256": "668d64751139e5dee55a0b6fb88362ea0abcdcc949a6fd5d1cbf6c1bfbd9a5e3",
+      "text": "{\n  \"command\": [\n    \"cargo\",\n    \"test\",\n    \"-p\",\n    \"suss-compile\",\n    \"--locked\",\n    \"--lib\",\n    \"--\",\n    \"--nocapture\",\n    \"--test-threads=2\",\n    \"portable_macro_graph::source_roots::first_use_data::tests::uncaptured_native_aliases_preserve_original_factory_evidence_and_exact_object_after_gc\",\n    \"portable_macro_graph::source_roots::first_use_data::tests::earlier_inline_callback_invalidates_old_private_candidate_before_first_use_and_freshens_once\",\n    \"portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc\"\n  ],\n  \"head\": \"7b56177c8fcf112155e299909ad8bb60efc755d5\",\n  \"exit_code\": 101,\n  \"seconds\": 225.54896010097582,\n  \"log_sha256\": \"9932906c06372f533bf3e29cf9a0ec6dcb7e24215e91750a94c27cb5a2e63790\",\n  \"scope\": \"Alias regression plus unchanged canonical-cold and retained/warm source controls; inspect all three results. Diagnostic instrumentation is not final acceptance.\"\n}\n"
+    }
+  },
+  "outcomes": {
+    "passed": 2,
+    "failed": 1,
+    "ignored": 0,
+    "measured": 0,
+    "filtered_out": 534,
+    "command_exit": 101,
+    "command_seconds": 225.54896010097582,
+    "harness_seconds": 191.54,
+    "tests": [
+      {
+        "name": "portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc",
+        "outcome": "FAILED"
+      },
+      {
+        "name": "portable_macro_graph::source_roots::first_use_data::tests::earlier_inline_callback_invalidates_old_private_candidate_before_first_use_and_freshens_once",
+        "outcome": "ok"
+      },
+      {
+        "name": "portable_macro_graph::source_roots::first_use_data::tests::uncaptured_native_aliases_preserve_original_factory_evidence_and_exact_object_after_gc",
+        "outcome": "ok"
+      }
+    ]
+  },
+  "passing_scopes": [
+    {
+      "selector": "portable_macro_graph::source_roots::first_use_data::tests::uncaptured_native_aliases_preserve_original_factory_evidence_and_exact_object_after_gc",
+      "scope": "New Alias regression passed in both Runtime and Macro sessions: original native Symbol plus two uncaptured Alias nodes preserve exact object identity after GC, with no persistent DATA authority for a request-only owner. One Rust test, not two separate passes.",
+      "source_path": "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/tests.rs",
+      "source_sha256": "077f4850e4a33969148da86d815caf47e5591de9b2e6c02f617c51ae2f9f6aa1"
+    },
+    {
+      "selector": "portable_macro_graph::source_roots::first_use_data::tests::earlier_inline_callback_invalidates_old_private_candidate_before_first_use_and_freshens_once",
+      "scope": "Unchanged canonical cold inline-callback poison/restoration control passed. Does not establish retained/warm or all DATA cases."
+    }
+  ],
+  "remaining_failure": {
+    "selector": "portable_macro_graph::completed_type_values::reader_property_value_tests::completed_property_data_slots_preserve_cold_warm_current_prior_and_retained_parent_cuts_after_gc",
+    "location": "crates/suss-compile/src/portable_macro_graph/completed_type_values.rs:616:58",
+    "error": "Host(Fresh first-use source failed complete DATA checks)",
+    "phase": "UNLOGGED; not inferred",
+    "case_or_row": "UNLOGGED; not inferred",
+    "last_reported_native": {
+      "inputs": 2,
+      "children": true,
+      "direct": true,
+      "current_inputs": false,
+      "classes": true,
+      "prototypes": true
+    },
+    "reported_root": {
+      "binding": true,
+      "logical": true,
+      "audit": false,
+      "children": 0
+    },
+    "reported_fresh_failure": {
+      "source": 0,
+      "owner": "ReaderSource",
+      "alias": 14,
+      "native": 13
+    },
+    "all_observational_lines_in_emission_order": [
+      "FIRST_USE_DATA_NATIVE inputs=0 children=true direct=false current_inputs=true classes=true prototypes=true",
+      "FIRST_USE_DATA_NATIVE inputs=20 children=false direct=true current_inputs=true classes=true prototypes=true",
+      "FIRST_USE_DATA_ROOT binding=true logical=false audit=false children=10",
+      "FIRST_USE_DATA_NATIVE inputs=0 children=true direct=false current_inputs=true classes=true prototypes=true",
+      "FIRST_USE_DATA_ROOT binding=true logical=false audit=false children=0",
+      "FIRST_USE_DATA_NATIVE inputs=2 children=true direct=true current_inputs=false classes=true prototypes=true",
+      "FIRST_USE_DATA_ROOT binding=true logical=true audit=false children=0",
+      "FIRST_USE_DATA_FRESH_FAILURE source=0 owner=ReaderSource alias=14 native=13"
+    ],
+    "attribution_limit": "Two tests execute concurrently (--test-threads=2). Earlier direct=false/logical=false/children=false observations may be intentional poison cases in the passing control. There are no per-line test/phase/row identifiers, so they must not all be attributed to the retained/warm failure.",
+    "hypothesis": "A with-meta/evidence relationship is under investigation by the main reviewers; not proved by this receipt."
+  },
+  "review": {
+    "verdict": "VERIFIED_TERMINAL_2_PASS_1_FAIL_SCOPE_PRESERVED",
+    "checks": [
+      "Actual raw SHA matches terminal and supplied SHA.",
+      "All three full test names match the terminal argv and Rust result lines.",
+      "Actual counts/times and failing location retained.",
+      "Read committed new Alias test to confirm actual both-phase loop, GC identity assertions and request-only cache-authority assertion."
+    ],
+    "limits": [
+      "No Cargo, VM or shared-source mutation by this cache review.",
+      "Main reports all VM producers drained and source clean; this packet does not invent a run-long freeze or independent PGID-drain proof.",
+      "Earlier helper tag/metadata 5-case Runtime/Macro PASS remains separately bound to 65ea6eb; it is not rerun or counted in these three tests.",
+      "All other DATA tests and full public macro-frame/namespace/callable gates remain required and uncredited. No claim that all twelve DATA tests are fixed."
+    ]
+  },
+  "next": "Discussion/review stopping point. Diagnose the retained/warm failure with phase/row attribution before a bounded source repair; preserve existing positive, mutation, callback-order, owner, GC and budget assertions."
+}

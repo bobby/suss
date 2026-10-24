@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::portable_session::{Session, SessionValue};
 use wasmtime::Val;
 
@@ -17,8 +19,7 @@ fn number(session: &mut Session, value: &SessionValue) -> u64 {
 #[test]
 fn public_hash_retains_scalar_branches_and_captured_callable_after_gc() {
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def captured-hash hash)").unwrap();
@@ -58,8 +59,7 @@ fn numeric_date_storage_executes_without_full_core() {
 fn date_hash_normalizes_numeric_milliseconds_and_keeps_protocol_priority() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     for (milliseconds, stored, hash) in [
@@ -123,8 +123,7 @@ fn public_hash_matches_independently_decoded_primary_observations() {
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 47);
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session

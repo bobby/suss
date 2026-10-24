@@ -156,3 +156,26 @@ throws and left-to-right operand effects, and ordered normal callback traces.
 This bounded lane does not invoke the broader reduction suite or establish
 complete `reduce-kv` compatibility. The implementation PR links #244 and records
 partial roadmap progress with `Refs #19` and `Refs #242`.
+
+## Short literal property lookup
+
+`short-property-cases.json` retains four fresh pinned CLJS observations, with
+exact source expressions, nil/boolean/binary64/vector tags and ordered getter
+and owner effects. `src/suss_oracle/short_property.cljs` is the original reference
+producer. The source/pin/output bindings and both reference attempts are retained
+in [the donor-source probe evidence](https://github.com/bobby/suss/blob/8a110949f1c558ade6c38999e61aeeaffade6c2d/docs/roadmap/evidence/m4-short-literal-key-probe-2026-10-17.md).
+From this directory, reproduce with the pinned dependencies in `deps.edn`:
+
+```sh
+CLJ_CONFIG=/tmp/suss-oracle-clojure-config CLJ_CACHE=/tmp/suss-oracle-clojure-cache \
+clojure -J-Xmx1g -J-XX:ActiveProcessorCount=2 -Srepro -M -m cljs.main \
+  -co '{:target :nodejs :output-to "out/short-property.js" :output-dir "out/short-property-cljs" :optimizations :none :source-map false :cache-analysis false}' \
+  -c suss-oracle.short-property
+node out/short-property.js
+```
+
+The independent native check is
+`cargo test --locked -p suss-cli --test portable_short_property_observations short_property_values_and_getter_effects_match_pinned_cljs_after_gc_in_both_phases -- --exact --test-threads=1`.
+It compares the shared expressions in Runtime and Macro sessions after GC and
+rejects unsupported observations; it does not use guest printing or equality.
+Its execution evidence must be recorded separately from the reference run.

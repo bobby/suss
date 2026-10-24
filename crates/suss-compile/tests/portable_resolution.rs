@@ -834,8 +834,8 @@ fn source_requires_retain_library_identity_without_aliases_in_each_phase() {
         assert_eq!(scope.macro_aliases.get("other-tools").map(String::as_str), Some("other-tools"));
         assert_eq!(scope.macro_aliases.get("t").map(String::as_str), Some("other-tools"));
         let snapshot = portable::hir::SourceNamespace::capture(&prepared.environment, phase);
-        assert_eq!(snapshot.aliases, *scope.aliases);
-        assert_eq!(snapshot.macro_aliases, *scope.macro_aliases);
+        assert_eq!(*snapshot.aliases, *scope.aliases);
+        assert_eq!(*snapshot.macro_aliases, *scope.macro_aliases);
         assert!(environment.namespace_scope(phase).aliases.is_empty());
         let other = if phase == Phase::Runtime { Phase::Macro } else { Phase::Runtime };
         assert!(prepared.environment.namespace_scope(other).aliases.is_empty());

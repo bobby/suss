@@ -4,11 +4,27 @@ use super::{
     Session, SessionError, SessionValue, canonical_methods, storage_snapshot::StorageSnapshot,
 };
 use crate::portable::{bootstrap, hir::Literal};
-use std::sync::{Arc, atomic::AtomicUsize};
+use std::sync::{Arc, Weak, atomic::AtomicUsize};
+use wasmtime::{RootScope, Val, AsContextMut};
 
 type Result<T> = std::result::Result<T, SessionError>;
 pub(crate) struct CanonicalSeed {
     storage: StorageSnapshot,
+}
+// Downward original membership, tied to the ACTUAL immutable seed allocation.
+// Weak ownership keeps retirement fail-closed without adding a domain DAG.
+// It carries neither whole-seed permission nor current validity.
+pub(super) struct SeedMember {
+    seed: Weak<CanonicalSeed>,
+    point: super::storage_snapshot::OriginalMember,
+}
+impl SeedMember {
+    pub(super) fn holds_reference(&self) -> bool { self.point.holds_reference() }
+    pub(super) fn retained(&self, session: &mut Session) -> Result<Self> {
+        session.charge_host_work((2 * std::mem::size_of::<Self>() + 4) as u64)?;
+        let point = self.point.retained(session)?;
+        Ok(Self { seed: self.seed.clone(), point })
+    }
 }
 pub(super) struct CanonicalSeeds {
     seeds: Vec<(&'static str, Arc<CanonicalSeed>)>,
@@ -78,6 +94,22 @@ impl CanonicalSeeds {
     }
 }
 impl CanonicalSeed {
+    pub(super) fn original_member(
+        self: &Arc<Self>, session: &mut Session, value: &SessionValue,
+        within: Option<&SeedMember>,
+    ) -> Result<Option<SeedMember>> {
+        session.check(value)?;
+        session.charge_host_work(6)?; // scope/Weak upgrade, Arc identity/drop
+        if let Some(within) = within {
+            let Some(owner) = within.seed.upgrade() else { return Ok(None); };
+            if !Arc::ptr_eq(&owner, self) { return Ok(None); }
+        }
+        let point = self.storage.original_member(session, value,
+            within.map(|member| &member.point))?;
+        let Some(point) = point else { return Ok(None); };
+        session.charge_host_work((2 * std::mem::size_of::<SeedMember>() + 4) as u64)?;
+        Ok(Some(SeedMember { seed: Arc::downgrade(self), point }))
+    }
     pub(super) fn contains_initial_reference(
         &self,
         session: &mut Session,
@@ -87,6 +119,31 @@ impl CanonicalSeed {
     }
     pub(crate) fn matches(&self, session: &mut Session, value: &SessionValue) -> Result<bool> {
         session.storage_matches(value, &self.storage)
+    }
+    pub(crate) fn fresh_direct_status(&self, session: &mut Session, value: &SessionValue)
+        -> Result<(bool, bool)> {
+        session.check(value)?;
+        let _request = session.operation_budget_scope()?;
+        session.charge_host_work(2)?; // optional authority retain and exception flag
+        let methods = session.canonical_methods.clone();
+        let runtime = session.runtime;
+        let identity = session.identity;
+        let interrupt = session.host_work_interrupt();
+        let mut used_method_data = false;
+        let mut scope = RootScope::new(&mut session.store);
+        let root = Val::AnyRef(Some(value.value.to_rooted(&mut scope)));
+        let healthy = self.storage.matches_in_context_with_slots(scope.as_context_mut(), root,
+            identity, &interrupt, |mut store, array, index, actual| {
+                Session::consume_host_work(store.as_context_mut(), 2, &interrupt)?;
+                let Some(methods) = &methods else { return Ok(false); };
+                let valid = methods.fresh_seed_method_slot_matches(
+                    canonical_methods::InspectionContext { store, identity, runtime, interrupt: &interrupt },
+                    array, index, actual)?;
+                if valid { used_method_data = true; }
+                Ok(valid)
+            })?;
+        Session::consume_host_work(scope.as_context_mut(), 2, &interrupt)?;
+        Ok((healthy, healthy && !used_method_data))
     }
 }
 impl Session {
@@ -155,7 +212,7 @@ mod tests {
             );
             let (parent, fact) = session.data_array_with_inputs(&[child]).unwrap();
             records
-                .push(&mut session, parent.clone(), Fact::Array(fact))
+                .push(&mut session, parent.clone(), Fact::Array(Box::new(fact)))
                 .unwrap();
             assert!(
                 records
@@ -171,7 +228,7 @@ mod tests {
             );
             let (other, fact) = session.data_array_with_inputs(&[&replacement]).unwrap();
             records
-                .push(&mut session, other.clone(), Fact::Array(fact))
+                .push(&mut session, other.clone(), Fact::Array(Box::new(fact)))
                 .unwrap();
             assert!(
                 !records
@@ -335,3 +392,7 @@ mod tests {
 impl CanonicalSeed {
     pub(super) fn write_storage(&self)->&StorageSnapshot {&self.storage}
 }
+
+#[cfg(test)]
+#[path = "canonical_seeds/fresh_seed_tests.rs"]
+mod fresh_seed_tests;

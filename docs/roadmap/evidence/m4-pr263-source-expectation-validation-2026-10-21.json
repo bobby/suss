@@ -1,0 +1,221 @@
+{
+  "source_commit": "3e7ca2630e04d89e8bb2b3be9e2d4560726274ca",
+  "compiler_source_sha256": "8c883c24cac8ad45b7489f4f160c511a619f89b4a72b2594443fa7fd3d33a383",
+  "compiler_input_count": 229,
+  "changes": {
+    "observation_functions": [
+      "bottom_up_keys_preserve_metadata_set_repetition_and_quote_alias_barrier",
+      "compact_diamond_admission_rejects_before_reader_callbacks",
+      "declaration_metadata_rebuilds_repeat_hash_callbacks_in_source_order",
+      "duplicate_reader_collections_preserve_effects_and_occurrence_results",
+      "metadata_set_preserves_canonical_hash_callback_count_and_order",
+      "reader_occurrence_work_bounds_fail_before_callbacks_and_allow_recovery"
+    ],
+    "remaining_positive_eval_calls": 17,
+    "inverse_entire_file_proof": "Normalizing onlyevalhelpernames makes original andafterimage wholefilebyteexact; no source/assertions/budget/Runtime changes.",
+    "reader_controller": "Begin one top-level operation before charged graph preparation. Materializer remains nested without refill; recovery still original10M. ExistingcoldprimingMacro100B outer scope unchanged.",
+    "canonical_method_function": "canonical_methods_capture_actual_installations_without_external_handles",
+    "canonical_remaining_positive_eval_calls": 4
+  },
+  "source_expectation_reuse": "Full current validate_into success plus exact Rc expectation identity reuses its successful logical read within the existing callback-free batch. Distinct expectations/invalid certificates preserve original fallible read. Newbranch/identity charged2; storage/source/child/class/prototype/method/memo checks preserved.",
+  "focused_regression": "Originalbatch0..2results and IRQ/fuel/foreign/GC/recovery tail preserved. Added independent correct same-key expectation, directlyproved false forged same-key witness and batchrejection; paired actualdebits with freshaudit state. Execution pending.",
+  "independent_source_review": {
+    "reviewer": "Faraday",
+    "agent_id": "01a15d18-5f13-7290-9064-aada138141fd",
+    "review_scope": "Exactprepared productionpatch plusfocusedregression againstdcf988c. Readonly;noCargo/VM/finalpromotion review.",
+    "result": "No blocking findings",
+    "verified": [
+      "Full currentvalidation precedesexact Rc expectationidentity reuse; invalid/distinctpathsretain originalfalliblewitness read.",
+      "Ownership/child/logical/direct/recordedinputs/class/prototype/original-nil/memo checks preserved. New2unitdebit fallible.",
+      "Finite decoding disablescallbacks; laternativevalidators do notmutatesourcepayload; auditedintervalcallbackfree.",
+      "Freshbatchstatepairedmeasurements; originalindices0..2,IRQ/fuel/foreign/GCtail retained."
+    ],
+    "after_review_change": "Addeddirect wrong-same-key witness rejection assertion as reviewerrecommended; no productiondelta.",
+    "limits": "Unexecutedsource review; paireddebitsnotwhole10M fit or wholeworkload savings proof."
+  },
+  "typecheck": {
+    "source_commit": "3e7ca2630e04d89e8bb2b3be9e2d4560726274ca",
+    "predicted_fingerprint": "8c883c24cac8ad45b7489f4f160c511a619f89b4a72b2594443fa7fd3d33a383",
+    "source_input_count": 229,
+    "command": [
+      "cargo",
+      "check",
+      "--workspace",
+      "--all-targets",
+      "--locked",
+      "--profile",
+      "test"
+    ],
+    "scope": "Rusttypecheck only; shipped BOOT still preceding03b source. No semantic execution.",
+    "exit_code": 0,
+    "seconds": 75.26314558299782,
+    "post_head": "3e7ca2630e04d89e8bb2b3be9e2d4560726274ca",
+    "raw_sha256": "7947b2c21480e6020c8e886cd7b8bc0b5bb0819657b6034d3d2fec93ee04bda1"
+  },
+  "bootstrap_generation": {
+    "head": "3e7ca2630e04d89e8bb2b3be9e2d4560726274ca",
+    "compiler_source_sha256": "8c883c24cac8ad45b7489f4f160c511a619f89b4a72b2594443fa7fd3d33a383",
+    "command": [
+      "nice",
+      "-n",
+      "10",
+      "sh",
+      "scripts/verify-bootstrap.sh"
+    ],
+    "shipped_before": {
+      "runtime/bootstrap/macro.json": "616ce618ea71af5e820a4e3cbbb243bad9d1931fafecbc906a0e67a59eeebc0d",
+      "runtime/bootstrap/macro.wasm": "feae3ba4ab96ece809f6fac6bddc32ae8ccb4e5a5276a199283877ce477b5439",
+      "runtime/bootstrap/runtime.json": "42c8d91af73c1c8fe94ec969e3af42e4ae85213247285d395cb058754e2038d2",
+      "runtime/bootstrap/runtime.wasm": "63d66c5b77802d68f2567516397f2991685bd8b13317e8d4d2de5cec95aecdf8"
+    },
+    "scope": "Two normal generations, retained diagnostics before stale shipped comparison. No automatic adoption/full-verifier claim.",
+    "exit_code": 1,
+    "seconds": 192.19309621499997,
+    "post_head": "3e7ca2630e04d89e8bb2b3be9e2d4560726274ca",
+    "raw_sha256": "9cbed36a1a9646458dc6fe7efbd91d27ed77b434d7ba04f4948a0387aa96b7ef"
+  },
+  "artifact_review_and_adoption": {
+    "source_fingerprint": "8c883c24cac8ad45b7489f4f160c511a619f89b4a72b2594443fa7fd3d33a383",
+    "source_input_count": 229,
+    "builders": [
+      "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-ac18e647c3909890/output"
+    ],
+    "scope": "Main source/artifact inspection; not independent subagent or semantic execution.",
+    "phases": {
+      "runtime": {
+        "matching_generations": true,
+        "noncustom_bytes_unchanged": true,
+        "changed_source_custom_sections": [
+          7
+        ],
+        "manifest_deltas": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ]
+      },
+      "macro": {
+        "matching_generations": true,
+        "noncustom_bytes_unchanged": true,
+        "changed_source_custom_sections": [
+          7
+        ],
+        "manifest_deltas": [
+          "compiler_source_sha256",
+          "wasm_sha256"
+        ]
+      }
+    },
+    "adoption_candidates": [
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-source-expectation-production-v1/diagnostics/first/runtime.json",
+        "to": "runtime/bootstrap/runtime.json",
+        "sha256": "1838d6e9918e96a94959561219e025f15258581a19c94b7ca91277b10b373610"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-source-expectation-production-v1/diagnostics/first/runtime.wasm",
+        "to": "runtime/bootstrap/runtime.wasm",
+        "sha256": "6fbba7431fa199ca9060b87b826a66631f34f83fe60aefeace416efe8c5be34f"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-source-expectation-production-v1/diagnostics/first/macro.json",
+        "to": "runtime/bootstrap/macro.json",
+        "sha256": "bbadf18e681dc5a198ab841a5e8b7edbc65d5c87817c24fd98df9ad102233dab"
+      },
+      {
+        "from": "/home/bobby/.cache/suss-m4-work/pr263-source-expectation-production-v1/diagnostics/first/macro.wasm",
+        "to": "runtime/bootstrap/macro.wasm",
+        "sha256": "9160d3cfaa6fc4e31a3dd5a684f18e6a86f6f0a08ceb6183dfa309584185bd8d"
+      }
+    ],
+    "adopted_head": "06f21a0025c65a4d80ce6c9ed590e0b5d1706882"
+  },
+  "identity": {
+    "head": "06f21a0025c65a4d80ce6c9ed590e0b5d1706882",
+    "compiler_source_sha256": "8c883c24cac8ad45b7489f4f160c511a619f89b4a72b2594443fa7fd3d33a383",
+    "command": [
+      "python3",
+      "scripts/verify_bootstrap_identity.py"
+    ],
+    "scope": "Exact command only; source, full test inputs and shipped BOOT checked before/after. No whole-issue inference.",
+    "exit_code": 0,
+    "seconds": 2.7169875020044856,
+    "post_head": "06f21a0025c65a4d80ce6c9ed590e0b5d1706882",
+    "raw_sha256": "910267f7ed87443dfda244b7ee622dd8d30afade5f5b524573e92edd4d9f1704",
+    "postflight_error": null,
+    "harness_summaries": []
+  },
+  "native20": {
+    "head": "06f21a0025c65a4d80ce6c9ed590e0b5d1706882",
+    "compiler_source_sha256": "8c883c24cac8ad45b7489f4f160c511a619f89b4a72b2594443fa7fd3d33a383",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture",
+      "portable_macro_data::identity_tests::shared_bridge_core_preserves_captured_callbacks_recording_isolation_and_owners",
+      "portable_macro_graph::construction::recorded_scratch_comparison::real_recorded_metadata_dense_sparse_preserve_owner_gc_and_nested_poison",
+      "portable_macro_graph::recorded_scratch_tests::dense_sparse_reader_callback_failure_is_not_replayed_and_source_stays_live",
+      "portable_macro_graph::reuse::tests::reuse_incomplete_logged_parent_falls_back_to_walker_with_callback_outputs_preserved",
+      "portable_macro_graph::reuse::tests::reuse_later_rebuild_rechecks_earlier_old_and_does_not_retain_poisoned_fresh",
+      "portable_macro_graph::reuse::tests::reuse_logged_parent_rebuild_rechecks_earlier_old_and_poisoned_fresh",
+      "portable_macro_graph::sharing_tests::bottom_up_keys_preserve_metadata_set_repetition_and_quote_alias_barrier",
+      "portable_macro_graph::sharing_tests::compact_diamond_admission_rejects_before_reader_callbacks",
+      "portable_macro_graph::sharing_tests::declaration_metadata_rebuilds_repeat_hash_callbacks_in_source_order",
+      "portable_macro_graph::sharing_tests::duplicate_reader_collections_preserve_effects_and_occurrence_results",
+      "portable_macro_graph::sharing_tests::metadata_set_preserves_canonical_hash_callback_count_and_order",
+      "portable_macro_graph::sharing_tests::reader_occurrence_work_bounds_fail_before_callbacks_and_allow_recovery",
+      "portable_macro_graph::source_roots::first_use_data::lifecycle_tests::genuine_deep_reader_metadata_retains_original_native_evidence_and_releases_after_owner_drop",
+      "portable_macro_graph::source_roots::reader_controller::tests::whole_controller_failure_keeps_the_entire_previous_retained_forest_unchanged",
+      "portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo",
+      "portable_session::canonical_methods::tests::canonical_methods_capture_actual_installations_without_external_handles",
+      "portable_session::canonical_methods::tests::initial_source_classes_bind_constructor_reference_and_current_descriptor",
+      "portable_session::memo_bridge::tests::private_memo_bridge_preserves_hash_miss_hit_and_cache_field_after_gc",
+      "portable_session::memo_leaf_test_support::compiler_data_allowance_restores_runtime_fuel_after_success_error_and_unwind",
+      "portable_macro_graph::source_roots::tests::checked_batch_rechecks_expected_source_and_releases_state_after_errors"
+    ],
+    "scope": "Exact command only; source, full test inputs and shipped BOOT checked before/after. No whole-issue inference.",
+    "exit_code": 101,
+    "seconds": 534.1112461569937,
+    "post_head": "97289d9446eb24eb5c00aed07940e523c684cfb2",
+    "raw_sha256": "dc74f7b10035137e61908ae5b421310c73772416ced66fb8572651aff9ed0f10",
+    "postflight_error": null,
+    "harness_summaries": [
+      [
+        "FAILED",
+        "19",
+        "1",
+        "0",
+        "0",
+        "618"
+      ]
+    ],
+    "failures": [
+      {
+        "name": "portable_macro_graph::source_roots::tests::source_child_certificates_reject_wrong_owner_equal_doc_and_forged_parent_memo",
+        "location": "crates/suss-compile/src/portable_macro_graph/source_roots.rs:1927:49:",
+        "message": "source child batch phase=Runtime variant=3 remaining=Ok(0): Trap(wasm trap: all fuel consumed by WebAssembly)"
+      }
+    ],
+    "complete_exact20_scope": true,
+    "interpretation": "All20 execute once:19PASS1FAIL0ignored618filtered. Allseven laternativecompilationcases andwholecontrollerrecovery pass. Only unchangedfixed10M sourcechildRuntimevariant3 fails; all5variants/bothphases/physicalmemo tail notcompleted. Caughtintentionalunwind belongs passingrestorationtest."
+  },
+  "limits": [
+    "Typecheck/identity/generation do not prove semantic acceptance.",
+    "Verifier exited1 at stale shipped comparison; not a full verifier pass.",
+    "No measured source-witness saving,10M source-child fit or whole-workload gain yet.",
+    "OriginalRuntime/defaultconstructor10M, CORE17, source-childfixedcap,pinned200M and dedicatednegative/recovery budgets unchanged.",
+    "No fullbaseline/final-head CI/wholeissue completion proof."
+  ],
+  "source_expectation_bounded_measurement": {
+    "exact_current_expectation_debit": 48771,
+    "independent_matching_expectation_debit": 51135,
+    "observed_difference": 2364,
+    "scope": "Actual paired complete checks with fresh completion/audit state;samecertificate/nativesource; independent/forgedwitness/GC/IRQ/fuel/foreign/recovery assertionsPASS. Notwholeworkloadgain, no10Mfit: complete sourcechildstillfailsRuntimevariant3."
+  }
+}

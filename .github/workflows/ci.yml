@@ -40,7 +40,18 @@ jobs:
           python3 scripts/clojure_test_suite.py
           python3 scripts/clojure_test_suite.py overlap
       - name: Reproduce and execute versioned bootstrap without Java
+        env:
+          SUSS_BOOTSTRAP_DIAGNOSTICS_DIR: ${{ runner.temp }}/suss-bootstrap-reproduction
         run: scripts/verify-bootstrap.sh
+      - name: Retain generated bootstrap diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: bootstrap-reproduction-${{ github.sha }}
+          path: ${{ runner.temp }}/suss-bootstrap-reproduction
+          if-no-files-found: ignore
+          retention-days: 7
+          compression-level: 1
       - name: Test libraries, binaries, examples and documentation
         run: |
           cargo test --workspace --locked --lib --bins --examples -- --test-threads=2

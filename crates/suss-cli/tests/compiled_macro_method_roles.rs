@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, HashMap};
 use suss_cli::portable_session::Session;
 use suss_compile::portable::{
     self,
-    hir::{Expression, FieldBinding, LocalBinding, LocalKind, SourceRole},
+    hir::{Expression, FieldBinding, LocalBinding, LocalKind, SourceLocals, SourceRole},
 };
 use suss_reader::forms::{Form, Kind};
 
@@ -37,7 +37,7 @@ fn shadow(binding: &LocalBinding) -> serde_json::Value {
 #[derive(Default)]
 struct Observe {
     calls: Vec<serde_json::Value>,
-    locals: HashMap<String, HashMap<String, LocalBinding>>,
+    locals: HashMap<String, SourceLocals>,
 }
 impl portable::ExpansionHost for Observe {
     fn expand(
@@ -65,7 +65,7 @@ impl portable::ExpansionHost for Observe {
                 )
             })
             .collect();
-        for (name, binding) in context.locals {
+        for (name, binding) in context.locals.iter() {
             bindings.insert(
                 name.clone(),
                 serde_json::json!([name, local_role(binding), shadow(binding)]),

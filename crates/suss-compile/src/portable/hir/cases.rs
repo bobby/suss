@@ -107,7 +107,7 @@ impl Analyzer<'_> {
         // the already analyzed arms. Selector effects happen exactly once even
         // with no clauses.
         let value = self.form(&args[0])?;
-        let binding = self.fresh_binding(&args[0], value);
+        let binding = self.fresh_binding(&args[0], value)?;
         let mut selected = self.local(&args[0], binding.id);
         let mut bindings = vec![binding];
         if keywords {
@@ -133,7 +133,7 @@ impl Analyzer<'_> {
             let name = self.callable_named_get(form, selected, key, "fqn")?;
             let fallback = self.literal_form(form, Literal::Nil);
             let projected = self.control_if(form, condition, name, fallback);
-            let binding = self.fresh_binding(&args[0], projected);
+            let binding = self.fresh_binding(&args[0], projected)?;
             selected = self.local(&args[0], binding.id);
             bindings.push(binding);
         }

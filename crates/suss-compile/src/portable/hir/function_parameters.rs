@@ -15,7 +15,7 @@ use super::*;
 
 #[derive(Debug, Clone)]
 pub struct SourceParameterMethod {
-    pub parameters: Vec<LocalBinding>,
+    pub parameters: Vec<std::sync::Arc<LocalBinding>>,
     pub variadic: bool,
 }
 
@@ -70,7 +70,7 @@ impl Analyzer<'_> {
         names: &[Form],
         rest_parameter: Option<usize>,
         expression_context: bool,
-    ) -> Result<(Vec<Parameter>, Vec<LocalBinding>), Diagnostic> {
+    ) -> Result<(Vec<Parameter>, Vec<std::sync::Arc<LocalBinding>>), Diagnostic> {
         let mut parameters = Vec::new();
         let mut records = Vec::new();
         for (index, name) in names.iter().enumerate() {
@@ -97,15 +97,12 @@ impl Analyzer<'_> {
                     rest: rest_parameter == Some(index),
                 },
                 None,
-            );
-            let binding = self
-                .locals
-                .get_mut(&symbol.name)
-                .expect("allocated parameter");
+            )?;
             if expression_context {
-                binding.declaration_context = super::super::AnalysisContext::Expression;
+                self.local_revision_mut(&symbol.name)?.declaration_context =
+                    super::super::AnalysisContext::Expression;
             }
-            records.push(binding.clone());
+            records.push(self.locals[&symbol.name].clone());
             parameters.push(Parameter {
                 id,
                 name: symbol.name.clone(),

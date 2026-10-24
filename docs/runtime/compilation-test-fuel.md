@@ -5,20 +5,42 @@ limits and shipped defaults. Issue #252 permits calibration so correctness tests
 can execute their complete programs. Explicit exhaustion, cancellation, recovery
 and default-budget tests keep their own limits.
 
-The initial common allowance is **10,000,000,000 units per outer compilation
+The current shared allowance is **100,000,000,000 units per outer compilation
 operation**, supplied through `CompiledMacros::set_operation_fuel` or the public
-Compiler's explicit compilation-fuel variants. Nested work
-continues to consume that same cumulative budget; there is no retry/escalation.
-The completed core-environment measurement on source `19defbf` used at most
-2,630,830,814 units for one traced expansion. The 10B allowance gives that
-representative workload headroom; it is not a measured maximum for all programs.
+Compiler's explicit compilation-fuel variants. Nested work consumes the same
+cumulative budget; no test helper adds a refill or automatic retry/escalation.
+
+The initial 10B calibration covered the source `19defbf` core-environment
+measurement of at most 2,630,830,814 units for one traced expansion. Later
+source-qualified measurements reached 14,565,794,779 units for a first caller
+`&env` interval and 18,831,194,117 for a named-function `&env` interval. These
+finite observations motivate 100B headroom, not a bound or proof that every
+program, repeated request or complete fragment fits.
+
+Both integration support helpers use this shared allowance; cfg(test) effect and
+memo-leaf positives that import the compile-side helper follow it too. The two
+namespace/callable probes and shared-multi-AST identity companion now explicitly
+set Macro compilation to 100B, under #252/#264, while preserving caller Runtime,
+complete programs and identity assertions. An old diagnostic label saying
+"default-budget" is historical description, not a separate acceptance cap.
+
+The strict default `core_import` 17 cases and complete one-scope source-child
+fixture remain unchanged, as do the dedicated pinned map/identifier 200M harness,
+compiled-constant/default controls and explicit exhaustion/IRQ/recovery cases.
+Explicit source-tag inference 1T and invocation 100B settings are separate from
+this shared-helper change. Public compiler options tests retain their original
+None/zero/default branches; only explicit calibrated positive options change.
 
 Increasing the allowance does not accelerate compilation or bound total host/JIT
 time or memory. Semantic failures must still be reported. Historical low-budget
 failures and the source-bound measurements remain in the existing evidence files.
 
-The following settings replace the earlier compilation allowances. Caller Session
-settings, sources, metadata, expected values/effects and assertions are retained.
+## Historical initial 10B calibration and observed results
+
+The table and source-qualified observations below retain the earlier 10B settings
+and execution evidence. They are not new 100B execution claims or a current
+allowance table. Caller Session settings, sources, metadata, expected values,
+effects and assertions were retained; current helper settings are stated above.
 
 | Test | Previous compilation allowance | New allowance |
 | --- | ---: | ---: |

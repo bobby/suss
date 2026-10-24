@@ -1,9 +1,16 @@
 //! Execute the versioned bootstrap in real, separate phase Stores.
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
+
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
 };
 use suss_compile::portable::{bootstrap, resolve::Phase};
 use suss_reader::forms::Kind;
+
+// Cache isolation uses the shared compilation-only test allowance. Its original
+// source, Runtime default, assertions, separate Stores and GC/reset remain.
+use semantic_compilation::eval as eval_isolation;
 
 #[test]
 fn compiled_bootstrap_images_are_reproducible_and_phase_specific() {
@@ -90,21 +97,23 @@ fn compiled_bootstrap_catalog_cache_never_shares_guest_state() {
             Phase::Macro => Session::new_macro().unwrap(),
         };
         let mut first = new_session();
-        first.eval("(ns cljs.core)").unwrap();
-        first.eval("(def identity (fn [x] 99))").unwrap();
-        first.eval("(ns user)").unwrap();
-        let value = first.eval("(identity 42)").unwrap();
+        eval_isolation(&mut first, "(ns cljs.core)").unwrap();
+        eval_isolation(&mut first, "(def identity (fn [x] 99))").unwrap();
+        eval_isolation(&mut first, "(ns user)").unwrap();
+        let value = eval_isolation(&mut first, "(identity 42)").unwrap();
         let bridge = FormBridge::new(&mut first).unwrap();
         assert_eq!(
             bridge.read(&mut first, &value, 0..1).unwrap().kind,
             Kind::Number(99.0)
         );
-        first
-            .eval("(def bootstrap-owned (atom 41)) (swap! bootstrap-owned inc)")
-            .unwrap();
+        eval_isolation(
+            &mut first,
+            "(def bootstrap-owned (atom 41)) (swap! bootstrap-owned inc)",
+        )
+        .unwrap();
         let mut second = new_session();
-        assert!(second.eval("@bootstrap-owned").is_err());
-        let value = second.eval("(identity 42)").unwrap();
+        assert!(eval_isolation(&mut second, "@bootstrap-owned").is_err());
+        let value = eval_isolation(&mut second, "(identity 42)").unwrap();
         let bridge = FormBridge::new(&mut second).unwrap();
         second.collect().unwrap();
         assert_eq!(
@@ -112,20 +121,26 @@ fn compiled_bootstrap_catalog_cache_never_shares_guest_state() {
             Kind::Number(42.0)
         );
         first.reset().unwrap();
-        assert!(first.eval("@bootstrap-owned").is_err());
-        let value = first.eval("(identity 42)").unwrap();
+        assert!(eval_isolation(&mut first, "@bootstrap-owned").is_err());
+        let value = eval_isolation(&mut first, "(identity 42)").unwrap();
         let bridge = FormBridge::new(&mut first).unwrap();
         first.collect().unwrap();
         assert_eq!(
             bridge.read(&mut first, &value, 0..1).unwrap().kind,
             Kind::Number(42.0)
         );
-        let value = second.eval("(get (hash-map :answer 42) :answer)").unwrap();
+        let value = eval_isolation(&mut second, "(get (hash-map :answer 42) :answer)").unwrap();
         let bridge = FormBridge::new(&mut second).unwrap();
         second.collect().unwrap();
         assert_eq!(
             bridge.read(&mut second, &value, 0..1).unwrap().kind,
             Kind::Number(42.0)
         );
+        for session in [&first, &second] {
+            assert_eq!(
+                session.options().fuel_per_operation,
+                suss_compile::portable::DEFAULT_OPERATION_FUEL
+            );
+        }
     }
 }

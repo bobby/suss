@@ -663,7 +663,17 @@ pub fn prepare_input<P: AsRef<Path>>(
     provided: &BTreeSet<ModuleIdentity>,
 ) -> Result<PreparedInput, InputDiagnostic> {
     let mut host = super::NoExpansion;
-    let mut request = super::ExpansionRequest::new(&mut host, 0..source_text.len())
+    prepare_input_with_expander(source_text, roots, environment, phase, provided, &mut host)
+}
+pub(crate) fn prepare_input_with_expander<P: AsRef<Path>>(
+    source_text: &str,
+    roots: &[P],
+    environment: &Environment,
+    phase: Phase,
+    provided: &BTreeSet<ModuleIdentity>,
+    host: &mut dyn super::ExpansionHost,
+) -> Result<PreparedInput, InputDiagnostic> {
+    let mut request = super::ExpansionRequest::new(host, 0..source_text.len())
         .map_err(InputDiagnostic::Compile)?;
     let forms = {
         let mut meter = |work| request.charge_expansion_work(work, 0..0);

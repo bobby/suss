@@ -30,6 +30,9 @@ impl Context<Key> for Meter<'_> {
 }
 #[derive(Default)]
 pub(crate) struct DeclarationValues {
+    // The source controller is staged separately from legacy metadata reuse;
+    // it must wholly own metadata exports when activated, never interleave them.
+    pub(super) roots: super::source_roots::RootCache,
     metadata: TryOrderedMap<Key, Option<Rc<RecordedMetadata>>>,
 }
 pub(super) fn reserve<T>(session: &mut Session, values: &mut Vec<T>, extra: usize) -> Result<()> {
@@ -335,6 +338,19 @@ impl AnalysisGraph<'_> {
         cache: &mut DeclarationValues,
     ) -> Result<SessionValue> {
         trace_graph(self, "start")?;
+        self.session.charge_host_work(1)?;
+        if self.direct_reader_roots {
+            match self.materialize_reader_controller(root, &mut cache.roots)? {
+                Some(value) => return Ok(value),
+                None => {
+                    // No construction callbacks occurred in the declined path.
+                    // One ordinary whole-build context preserves reader aliases.
+                    let value = self.materialize_using(root, self.bridge)?;
+                    cache.roots.retire_obsolete(self.session)?;
+                    return Ok(value);
+                }
+            }
+        }
         self.finish_recipes()?;
         trace_graph(self, "recipes")?;
         let placed = !self.metadata_sources.is_empty() && self.private_metadata_placement(root)?;
@@ -442,7 +458,7 @@ mod tests {
             } else {
                 "(def rebuild-poison-prototype false)"
             }).unwrap();
-            session.eval(r#"
+            session.eval_with_test_compilation_fuel(r#"
               (def ^{:doc "A" :items #{301 302 303 304 305 306 307 308 309}} rebuild-a 17)
               (def ^{:items #{101 102 103 104 105 106 107 108 109}} rebuild-b 18)
               (def ^{:doc "C"} rebuild-c 19)
@@ -458,7 +474,7 @@ mod tests {
             // Install before bridge capture: B's real ReaderSet construction invokes
             // this captured hash function. Initial priming/production runs unarmed.
             session.enter_namespace("suss.core").unwrap();
-            session.eval(r#"
+            session.eval_with_test_compilation_fuel(r#"
               (def hash
                 (fn [key]
                   (do

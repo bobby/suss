@@ -1,0 +1,232 @@
+{
+  "scope": "Four-path source-progress publication: two exact applied Alias V4 source postimages plus two docs. Earlier two-test outcomes stay bound to 65ea6eb, before this repair.",
+  "source_head": "65ea6ebb8710bebab067731509419008e140b8e2",
+  "terminal": {
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--",
+      "--nocapture",
+      "--test-threads=2",
+      "portable_macro_graph::completed_value_control::tests::completed_tag_metadata_matches_pinned_reader_modes_without_mutating_native_source",
+      "portable_macro_graph::source_roots::first_use_data::tests::earlier_inline_callback_invalidates_old_private_candidate_before_first_use_and_freshens_once"
+    ],
+    "head": "65ea6ebb8710bebab067731509419008e140b8e2",
+    "exit_code": 101,
+    "seconds": 69.25290232698899,
+    "log_sha256": "4ecd5fdcb65cc31baeed8e1862ebcd8aadd36bab41d080e078261d715fc9e38f",
+    "scope": "Two unchanged original controls; DATA instrumentation is diagnosis, not acceptance. Inspect individual results."
+  },
+  "raw": {
+    "tests.log": {
+      "sha256": "4ecd5fdcb65cc31baeed8e1862ebcd8aadd36bab41d080e078261d715fc9e38f",
+      "text": "   Compiling suss-reader v0.1.0 (/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/crates/suss-reader)\n   Compiling suss-compile v0.1.0 (/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/crates/suss-compile)\n    Finished `test` profile [unoptimized] target(s) in 23.89s\n     Running unittests src/lib.rs (/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/suss_compile-6640f43d893bc943)\n\nrunning 2 tests\nFIRST_USE_DATA_NATIVE inputs=1 children=true direct=true current_inputs=false classes=true prototypes=true\nFIRST_USE_DATA_NATIVE inputs=2 children=false direct=true current_inputs=true classes=true prototypes=true\nFIRST_USE_DATA_ROOT binding=true logical=true audit=false children=1\nFIRST_USE_DATA_FRESH_FAILURE source=11 owner=Request alias=46 native=45\n\nthread 'portable_macro_graph::source_roots::first_use_data::tests::earlier_inline_callback_invalidates_old_private_candidate_before_first_use_and_freshens_once' (462818) panicked at crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/tests.rs:89:82:\ncalled `Result::unwrap()` on an `Err` value: Host(Fresh first-use source failed complete DATA checks)\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\ntest portable_macro_graph::source_roots::first_use_data::tests::earlier_inline_callback_invalidates_old_private_candidate_before_first_use_and_freshens_once ... FAILED\ntest portable_macro_graph::completed_value_control::tests::completed_tag_metadata_matches_pinned_reader_modes_without_mutating_native_source ... ok\n\nfailures:\n\nfailures:\n    portable_macro_graph::source_roots::first_use_data::tests::earlier_inline_callback_invalidates_old_private_candidate_before_first_use_and_freshens_once\n\ntest result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 534 filtered out; finished in 45.25s\n\nerror: test failed, to rerun pass `-p suss-compile --lib`\n"
+    },
+    "terminal.json": {
+      "sha256": "bdfd408998629803226ee99b8b264e83f1cb72a2467152c19de1a258edbe0ab6",
+      "text": "{\n  \"command\": [\n    \"cargo\",\n    \"test\",\n    \"-p\",\n    \"suss-compile\",\n    \"--locked\",\n    \"--lib\",\n    \"--\",\n    \"--nocapture\",\n    \"--test-threads=2\",\n    \"portable_macro_graph::completed_value_control::tests::completed_tag_metadata_matches_pinned_reader_modes_without_mutating_native_source\",\n    \"portable_macro_graph::source_roots::first_use_data::tests::earlier_inline_callback_invalidates_old_private_candidate_before_first_use_and_freshens_once\"\n  ],\n  \"head\": \"65ea6ebb8710bebab067731509419008e140b8e2\",\n  \"exit_code\": 101,\n  \"seconds\": 69.25290232698899,\n  \"log_sha256\": \"4ecd5fdcb65cc31baeed8e1862ebcd8aadd36bab41d080e078261d715fc9e38f\",\n  \"scope\": \"Two unchanged original controls; DATA instrumentation is diagnosis, not acceptance. Inspect individual results.\"\n}\n"
+    }
+  },
+  "outcomes": {
+    "passed": 1,
+    "failed": 1,
+    "ignored": 0,
+    "measured": 0,
+    "filtered_out": 534,
+    "tests": [
+      {
+        "name": "portable_macro_graph::source_roots::first_use_data::tests::earlier_inline_callback_invalidates_old_private_candidate_before_first_use_and_freshens_once",
+        "outcome": "FAILED"
+      },
+      {
+        "name": "portable_macro_graph::completed_value_control::tests::completed_tag_metadata_matches_pinned_reader_modes_without_mutating_native_source",
+        "outcome": "ok"
+      }
+    ],
+    "harness_seconds": 45.25,
+    "command_seconds": 69.25290232698899,
+    "command_exit": 101
+  },
+  "passing_helper_control": {
+    "name": "portable_macro_graph::completed_value_control::tests::completed_tag_metadata_matches_pinned_reader_modes_without_mutating_native_source",
+    "phase_coverage": [
+      "Runtime",
+      "Macro"
+    ],
+    "cases_per_phase": 5,
+    "cases": [
+      "plain Symbol tag",
+      "indexing Symbol tag",
+      "indexing string tag",
+      "indexing plus file and explicit nested Symbol metadata",
+      "indexing function return tag"
+    ],
+    "assertions": "Exact outer/inner values and metadata order; ret-tag where present; actual outer/inner physical Symbol identity for eligible Symbol cases; GC and immutable native declaration source.",
+    "source_path": "crates/suss-compile/src/portable_macro_graph/completed_value_control.rs",
+    "source_git_blob": "add1eea47bf73bbf26f687b7b623b0cac951e82a",
+    "source_sha256": "f8ea97d152cc5e141cff60dac210b655fda87899013c85259ca44164d57ff5bc",
+    "qualification": "One Rust test executes five cases in each phase. These ten case/phase observations are not ten additional tests. This directly constructs Graph::declaration in a provisioned compiled Session; it is not the full public macro invocation/frame route."
+  },
+  "failing_data_control": {
+    "name": "portable_macro_graph::source_roots::first_use_data::tests::earlier_inline_callback_invalidates_old_private_candidate_before_first_use_and_freshens_once",
+    "observations": [
+      "FIRST_USE_DATA_NATIVE inputs=1 children=true direct=true current_inputs=false classes=true prototypes=true",
+      "FIRST_USE_DATA_NATIVE inputs=2 children=false direct=true current_inputs=true classes=true prototypes=true",
+      "FIRST_USE_DATA_ROOT binding=true logical=true audit=false children=1",
+      "FIRST_USE_DATA_FRESH_FAILURE source=11 owner=Request alias=46 native=45"
+    ],
+    "root": {
+      "binding": true,
+      "logical": true,
+      "audit": false,
+      "children": 1
+    },
+    "first_native": {
+      "inputs": 1,
+      "children": true,
+      "direct": true,
+      "current_inputs": false,
+      "classes": true,
+      "prototypes": true
+    },
+    "second_native": {
+      "inputs": 2,
+      "children": false,
+      "direct": true,
+      "current_inputs": true,
+      "classes": true,
+      "prototypes": true
+    },
+    "error": "Host(Fresh first-use source failed complete DATA checks)",
+    "location": "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/tests.rs:89:82",
+    "qualification": "Actual failing canonical control, not an accepted negative. Alias/original-evidence repair is pending separate source review and execution. These observational flags do not establish a complete causal partition or corrected behavior."
+  },
+  "independent_cache_review": {
+    "verdict": "VERIFIED_TERMINAL_1_PASS_1_FAIL_HELPER_SCOPE_ONLY",
+    "checks": [
+      "Raw log SHA matches terminal receipt and supplied SHA.",
+      "Individual names and actual Rust summary agree: 1 PASS, 1 FAIL, 0 ignored.",
+      "Read committed passing test body: all five cases loop through Runtime and Macro, retaining exact metadata, physical Symbol, GC and source immutability assertions.",
+      "Both native-stage lines and failing root audit are retained verbatim, including the second native children=false."
+    ],
+    "limits": [
+      "No new execution or source mutation performed for this review.",
+      "Terminal receipt records head/argv and command return; it is not a run-long input mutation detector or independent process-group drain receipt.",
+      "No full macro-frame/namespace/callable, full baseline, final CI, performance or acceptance claim."
+    ]
+  },
+  "next": "Normal source/BOOT binding and main-controlled focused Alias/canonical DATA replay; compile/link PASS is not a VM result or acceptance.",
+  "alias_v4_source": {
+    "status": "APPLIED_SOURCE_REVIEW_GO_NO_NEW_VM_RESULT",
+    "manifest": {
+      "status": "FROZEN_CACHE_AUTHOR_SOURCE_PENDING_INDEPENDENT_REVIEW_UNEXECUTED",
+      "base_head": "65ea6ebb8710bebab067731509419008e140b8e2",
+      "patch_sha256": "5b9650dbb6514ddf64f5c16fc1c17878cc1ba80d4e069e7a9fbc2e986d603ca9",
+      "files": {
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data.rs": {
+          "before_sha256": "5a26ed68d4e58568425c560ae1e32e047ea0d4678fe1b34b56312adc3300433d",
+          "after_sha256": "3289bef3c1051d2268c6bf58e4c8e487d0e802668a10169ddaeb11911026735c"
+        },
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/tests.rs": {
+          "before_sha256": "aa3ec7a118030fda6a97368609027850ddb671106f94be5761ae2a18e879bcc4",
+          "after_sha256": "077f4850e4a33969148da86d815caf47e5591de9b2e6c02f617c51ae2f9f6aa1"
+        }
+      },
+      "fee_ledger_sha256": "62226dab0ef29155f11849d3f7ed9ff02f431de287d5a21f7d54e8f7bf1e7812",
+      "report_sha256": "f3c36371475ae63679e2757b8f400a1a8b61fe9ffa6295027cf841ac561c18c5",
+      "actual_attribution_log_sha256": "4ecd5fdcb65cc31baeed8e1862ebcd8aadd36bab41d080e078261d715fc9e38f",
+      "predecessor_directory": "/home/bobby/.cache/suss-m4-work/pr263-first-use-transparent-alias-evidence-65ea6eb-v3",
+      "predecessor_manifest_sha256": "26adade754d2df00914d5aed2ef6165637e5bc271427ccc7d88bab4660cc8f1e",
+      "original_tests_exact_prefix": true,
+      "diagnostic_v2_exact_except_native_alias_hunk": true,
+      "new_tests": 1,
+      "production_scope": "Native Alias only original child evidence forwarding, exact original dispatch/recording/preflight kept; generic input root-membership validator unchanged",
+      "retirement_policy": "Retain original full Native payload lifecycle debit on Alias, conservatively, plus paid new controls/move",
+      "checks": {
+        "private_cache_applycheck_replay_exact": true,
+        "no_cargo_rustc_bootstrap_vm": true,
+        "no_shared_source_ref_index_edits": true
+      },
+      "revision": "V4 only fully qualifies Kind in appended cfg(test) assertion; production and fee ledger byte-exact V3.",
+      "carver_v3_review_sha256": "6e226b4aac3d1fc04893f418cd33f316918fec9eeba13eb22c9951775814fb54"
+    },
+    "manifest_sha256": "21a22ad38b295ccce07c70481828960016958c0297bd0960b97bb957d3301131",
+    "peer_review": {
+      "reviewer": "Carver",
+      "verdict": "GO_SOURCE_ONLY_V4_TEST_IMPORT_FIXED",
+      "manifest_sha256": "21a22ad38b295ccce07c70481828960016958c0297bd0960b97bb957d3301131",
+      "patch_sha256": "5b9650dbb6514ddf64f5c16fc1c17878cc1ba80d4e069e7a9fbc2e986d603ca9",
+      "source_freeze_sha256": "59d5942e11c195aab6a2c6b549dec4676a0b7e5b9047cb9566c1d676e07612d7",
+      "changed_from_v3": [
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/tests.rs"
+      ],
+      "exact_delta": "Only new test Kind::Bool(true) qualified as suss_reader::forms::Kind::Bool(true)",
+      "production_byte_exact_v3": true,
+      "fee_ledger_byte_exact_v3": true,
+      "prior_production_and_retirement_GO_retained": true,
+      "B1_resolved": true,
+      "findings": [],
+      "execution": "UNEXECUTED; actual Cargo no-run/focused results remain main work",
+      "shared_edit_cargo_vm": false
+    },
+    "peer_review_sha256": "217bbd67ce68de00cd0c16243b8e5375d08a3534ee5756ee7bd5ebb8c3ba19c0",
+    "fee_ledger": "# Explicit fee and retirement ledger \u2014 V3\n\nThis is a SEMANTIC evidence-shape correction, not a performance claim or fee discount. All old rates unchanged. Previous V1/V2 cache packets retained unapplied. V3 retains the old Native payload lifecycle tariff on Alias conservatively, rather than claiming those dropped ownership fields are free.\n\n| Work | Payment/order |\n|---|---|\n| Existing Scope::Native recording acquisition, genuine class input Vec, descriptor/constructor retains, Mutex/Arc and complete class preflight | UNCHANGED FormBridge::recording331-362; original call in enter remains. No lazy suppression or bypass. |\n| Existing actual input-value Vec reserve/retain and producer staging | UNCHANGED Build::construct before match scope. Alias uses exactly one input from validated dependency walk. |\n| Original Alias dispatcher | UNCHANGED exactly one produce_native_recipe call, with original recording and input order; Alias inputs[0].clone, no constructor. Original graph/walk debits retained. |\n| Original recording completion / Arc Mutex extraction | UNCHANGED recording.into_records before new selection. Poison/fork/other errors still propagate. No second recording or preflight. |\n| New Native recipe selection/arity/zero-factory checks | charge6 BEFORE matches!/len checks. All Native recipes pay; no uncharged nonAlias branch. |\n| Alias recording/payload retirement | EXACT old Native::allocate payload lifecycle formula `(4*sizeof(Native)+2*sizeof(usize)+8)` charged BEFORE early-return extraction/drop. This conservatively retains prior payload/move/retirement debit including owned ConstructionRecords headers; no false claim this debit now allocates a Native. Existing recording nested class-buffer acquisition/preflight payments are unchanged; no new class snapshots/roots acquired here. |\n| Single child evidence move / temporary input retirement | charge3 BEFORE into_iter/next/move. Child Evidence is moved, not cloned or dropped; same actual Rc graph survives with existing prepaid release frames. Existing staging values Vec remains original and its prior fees retained. |\n| Empty-record aliases | Require actual immutable recipe Alias, exactly1 input and records.len()==0; otherwise original typed Host error path, no invented proof. Generic input closure remains unmodified. |\n| Omitted actual childvec/Native/Rc/releaseframe acquisition | Not performed on Alias. Native payload lifecycle tariff above deliberately RETAINED; omitted releaseframe/childvec allocations are not charged as performed. Their records/evidence owners are not acquired at all. No new recursive or heap cleanup structure. |\n| NonAlias | Original Native allocation/children/releaseframe path unchanged, plus new charge6. |\n| Final health/current source/data/inputs/class/prototype and callback closure | UNCHANGED actual child evidence revalidated by original auditors; Source-owner wrapper and its own releaseframe preserved. No current-state verdict cached or source receipts minted. |\n\nErrors during acquisition/staging/producer/completion/branch payment propagate unchanged. Failed payment publishes neither Alias observation nor root/cache update. V3 does not purport to redesign any pre-existing generic FormBridge metering; it retains its performed work and the prior native payload retirement tariff. No new fuel/IRQ sweep or adequacy claim. Carver independent source/retirement review required before main application. Actual focused native execution still required.\n",
+    "fee_ledger_sha256": "62226dab0ef29155f11849d3f7ed9ff02f431de287d5a21f7d54e8f7bf1e7812",
+    "applied_source_receipt": {
+      "base_head": "65ea6ebb8710bebab067731509419008e140b8e2",
+      "files": {
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data.rs": "3289bef3c1051d2268c6bf58e4c8e487d0e802668a10169ddaeb11911026735c",
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/tests.rs": "077f4850e4a33969148da86d815caf47e5591de9b2e6c02f617c51ae2f9f6aa1"
+      },
+      "scope": "NativeAlias exactinputEvidence only; genericinputrootrequirementunchanged; sourceownerbranchunchanged; retainsoldNativepayloadretirementtariff;1unexecutedbothphase regression"
+    },
+    "applied_source_receipt_sha256": "28d271abc18dc23c61cafb3ab5cca6b105cf262f2aa8775f60ac21539030ec8a",
+    "scope": "Only Scope::Native handling of actual Recipe::Alias forwards the single original input Evidence from the same producer after the original produce_native_recipe and recording completion. No generic input-root validator or source-owner branch change. All non-Alias original allocation/audit paths remain, plus the prepaid selection debit.",
+    "cost_qualification": "Retains the previous full Native payload lifecycle debit conservatively, plus prepaid selection/extraction controls; no fuel-rate/default cut and no performance claim.",
+    "regression": "uncaptured_native_aliases_preserve_original_factory_evidence_and_exact_object_after_gc",
+    "regression_status": "UNEXECUTED; authored Runtime/Macro and GC physical-identity/cache-authority assertions are not test passes.",
+    "no_run_status": "COMPILE_LINK_PASS_EXIT_0_NO_VM_EXECUTION",
+    "source_snapshot_check": "Both cached V4 postimages equal applied-source.json and current applied files at packaging; not a run-long mutation detector.",
+    "no_run_terminal": {
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--lib",
+        "--no-run"
+      ],
+      "exit_code": 0,
+      "seconds": 26.243389830982778,
+      "log_sha256": "9614e353b6c21970d1b985149d90cfe458f90ae0af4f458cc3c91443a199c2de",
+      "scope": "Exact2AliasV4 source compile/link only; no newVMpass"
+    },
+    "no_run_log": "   Compiling suss-compile v0.1.0 (/home/bobby/Work/code/bobby/suss-m4-primitive-string-access/crates/suss-compile)\n    Finished `test` profile [unoptimized] target(s) in 26.20s\n  Executable unittests src/lib.rs (/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/deps/suss_compile-6640f43d893bc943)\n",
+    "no_run_source_freeze": {
+      "base_head": "65ea6ebb8710bebab067731509419008e140b8e2",
+      "files": {
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data.rs": "3289bef3c1051d2268c6bf58e4c8e487d0e802668a10169ddaeb11911026735c",
+        "crates/suss-compile/src/portable_macro_graph/source_roots/first_use_data/tests.rs": "077f4850e4a33969148da86d815caf47e5591de9b2e6c02f617c51ae2f9f6aa1"
+      },
+      "scope": "NativeAlias exactinputEvidence only; genericinputrootrequirementunchanged; sourceownerbranchunchanged; retainsoldNativepayloadretirementtariff;1unexecutedbothphase regression"
+    },
+    "actual_build_script_fingerprint_receipt": [
+      {
+        "builder": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-4e005c49b5658b9d/build-script-build",
+        "fingerprint": "53a2340547aa05a00a6f81eadbef7bfc2aab054a15676e92c06065fdfe39dd1f"
+      },
+      {
+        "builder": "/home/bobby/.cache/suss-m4-work/m4-cost-diagnostic-target/debug/build/suss-compile-843b103b49464494/build-script-build",
+        "fingerprint": "53a2340547aa05a00a6f81eadbef7bfc2aab054a15676e92c06065fdfe39dd1f"
+      }
+    ],
+    "actual_build_script_fingerprint_receipt_sha256": "19146eb43ed4c4f86a0dcc9e74a533ad2d5a873d736204acf4cf121573fdecfd",
+    "fingerprint_scope": "Two actual builder results retained from main receipt; no builder rerun by this cache review and no generated BOOT/VM identity inferred.",
+    "drain_report": "Main reports session18855 terminal/drained; compile exit/log independently verified from retained receipt. No independent process inspection asserted."
+  }
+}

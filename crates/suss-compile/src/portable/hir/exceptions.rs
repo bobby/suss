@@ -134,6 +134,7 @@ impl Analyzer<'_> {
                 cleanup.span.clone(),
                 super::super::AnalysisContext::Statement,
                 false,
+                super::SourceBodyOrigin::FinallyBody,
             )?)
         } else {
             None
@@ -163,20 +164,17 @@ impl Analyzer<'_> {
                 metadata: vec![],
                 kind: Kind::Symbol(suss_reader::Symbol::new(&hidden_name)),
             };
-            self.insert_local(&declaration, id, Type::Value, LocalKind::Catch, None);
-            self.locals.get_mut(&hidden_name).unwrap().source_role = SourceRole::PrivateCatch {
+            self.insert_local(&declaration, id, Type::Value, LocalKind::Catch, None)?;
+            self.local_revision_mut(&hidden_name)?.source_role = SourceRole::PrivateCatch {
                 anchor: form.span.clone(),
             };
-            Some(std::sync::Arc::new(self.locals[&hidden_name].clone()))
+            Some(self.locals[&hidden_name].clone())
         };
-        let exception = payload.as_ref().map_or_else(
-            || Form {
-                kind: Kind::Nil,
-                span: form.span.clone(),
-                metadata: vec![],
-            },
-            |payload| payload.declaration.clone(),
-        );
+        let exception = if let Some(payload) = &payload {
+            self.clone_local_form(&payload.declaration)?
+        } else {
+            Form { kind: Kind::Nil, span: form.span.clone(), metadata: vec![] }
+        };
         let mut handler_form = call("throw", vec![exception.clone()], form.span.clone());
         for (catch, items, default) in catches.into_iter().rev() {
             let hidden = payload.as_ref().expect("catch payload").clone();
@@ -205,7 +203,7 @@ impl Analyzer<'_> {
             let Kind::Symbol(name) = &payload.declaration.kind else {
                 unreachable!()
             };
-            self.locals.remove(&name.name);
+            self.remove_local(&name.name, payload.declaration.span.clone())?;
             let parameter = Parameter {
                 id: payload.id,
                 name: name.name.clone(),
@@ -217,7 +215,10 @@ impl Analyzer<'_> {
             self.literal_form(form, Literal::Nil)
         };
         let source_body =
-            self.analyzed_body(&args[..body_end], form.span.clone(), context, false)?;
+            self.analyzed_body(
+                &args[..body_end], form.span.clone(), context, false,
+                super::SourceBodyOrigin::TryBody,
+            )?;
         let body = self.exception_region(form, vec![], source_body.clone());
         let kind = if self.suspendable {
             Expression::AsyncTry {

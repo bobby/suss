@@ -1,0 +1,340 @@
+{
+  "scope": "Original complete25 literal/effect/memo/authority selection. Full execution, not whole issue261 acceptance.",
+  "terminal": {
+    "head": "02aca5402846303dd1c3df9ab873fa67740f4b29",
+    "source_commit": "493bf105a926be605ff635a92cb4feac49647bd7",
+    "predicted_source_fingerprint": "c96095ab7637d6b77e2167c7e740b171041848943081873b45d340895b449dbe",
+    "source_input_count": 222,
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "suss-compile",
+      "--locked",
+      "--lib",
+      "--",
+      "--exact",
+      "--test-threads=2",
+      "--nocapture",
+      "portable_macro_graph::analyzer_literal_tests::analyzer_literals_keep_cold_same_text_reader_symbols_and_live_hash_order_after_gc",
+      "portable_macro_graph::analyzer_literal_tests::analyzer_literal_recorded_numeric_memo_cannot_gain_nil_transition_authority",
+      "portable_macro_graph::analyzer_literal_tests::analyzer_literal_binding_route_guard_does_not_promote_adapted_or_self_roles",
+      "portable_macro_graph::analyzer_literal_tests::analyzer_literal_parameter_record_keeps_genuine_reader_form_and_metadata_value_cold",
+      "portable_macro_graph::analyzer_literal_tests::analyzer_literal_namespace_routes_keep_source_controls_cold_and_live_dispatch",
+      "portable_macro_graph::analyzer_literal_tests::analyzer_function_and_reference_env_keys_preserve_literal_entry_memos_and_cold_controls",
+      "portable_macros::analyzer_literal_effect_tests::analyzer_literal_actual_env_pre_dispatch_memo_effects_survive_gc_and_restoration",
+      "portable_macros::analyzer_literal_effect_tests::analyzer_literal_collection_keys_observe_initial_memos_under_nil_aware_hash",
+      "portable_macros::analyzer_literal_effect_tests::analyzer_literal_control_ast_keys_keep_initial_memos_and_cold_extensions",
+      "portable_macros::analyzer_literal_effect_tests::analyzer_literal_quote_metadata_ast_keys_keep_source_payload_cold",
+      "portable_macros::analyzer_literal_effect_tests::analyzer_literal_dispatch_and_named_fn_keys_preserve_live_hash_restoration",
+      "portable_macros::analyzer_literal_effect_tests::analyzer_literal_declaration_retained_keys_match_pinned_merge_boundaries",
+      "portable_macros::analyzer_literal_effect_tests::analyzer_literal_local_reference_select_keys_are_independent_of_binding_role",
+      "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_forcewrite",
+      "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware",
+      "portable_macros::memo_leaf_tests::native_memo_leaf_keyword_forcewrite",
+      "portable_macros::memo_leaf_tests::native_memo_leaf_keyword_nil_aware",
+      "portable_macros::memo_leaf_tests::compiled_identifier_constants_keep_pinned_warmed_memos",
+      "portable_session::memo_bridge::receipt_tests::memo_receipts_initial_non_nil_watch_cannot_certify_after_clearing",
+      "portable_session::memo_bridge::receipt_tests::memo_receipts_reject_generic_writes_but_preserve_past_valid_hashes",
+      "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_other_child_replacement_cannot_be_restored_into_authority",
+      "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_poison_at_child_write_cannot_be_upgraded_after_restore",
+      "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_unregistered_and_foreign_domain_ancestors_grant_no_layout",
+      "portable_session::write_domain::tests::source_write_domain_checks_approved_child_method_during_parent_write",
+      "portable_session::write_domain::tests::source_write_domain_checks_method_replaced_before_child_construction"
+    ],
+    "trace_environment": {},
+    "profile_environment": {
+      "CARGO_PROFILE_TEST_OPT_LEVEL": "2",
+      "CARGO_PROFILE_TEST_DEBUG_ASSERTIONS": "true",
+      "CARGO_PROFILE_TEST_OVERFLOW_CHECKS": "true"
+    },
+    "scope": "Original complete25literal/provenance/canonical/custom/nil-aware/callback/effect/GC/restoration/compiledconstant/domainauthorityselection; fulloriginalprograms/assertions andcalibratedcompilationhelper100B, callerRuntimeunchanged. No narrowerselector or rates/default/authoritychanges. Optin native diagnostics do not authorize source/memo or performance claims.",
+    "exit_code": 101,
+    "seconds": 1643.1409526540083,
+    "raw_sha256": "62cc06c6978bf59c6397cfbf56bff41c36b0863c0fded17ef7309ca13d1fb5da"
+  },
+  "harness_seconds": 1642.73,
+  "counts": {
+    "passed": 23,
+    "failed": 2,
+    "ignored": 0,
+    "filtered": 549
+  },
+  "exact_results": {
+    "portable_macro_graph::analyzer_literal_tests::analyzer_literal_binding_route_guard_does_not_promote_adapted_or_self_roles": "ok",
+    "portable_macro_graph::analyzer_literal_tests::analyzer_literal_namespace_routes_keep_source_controls_cold_and_live_dispatch": "ok",
+    "portable_macro_graph::analyzer_literal_tests::analyzer_function_and_reference_env_keys_preserve_literal_entry_memos_and_cold_controls": "ok",
+    "portable_macro_graph::analyzer_literal_tests::analyzer_literal_parameter_record_keeps_genuine_reader_form_and_metadata_value_cold": "ok",
+    "portable_macro_graph::analyzer_literal_tests::analyzer_literal_recorded_numeric_memo_cannot_gain_nil_transition_authority": "ok",
+    "portable_macro_graph::analyzer_literal_tests::analyzer_literals_keep_cold_same_text_reader_symbols_and_live_hash_order_after_gc": "ok",
+    "portable_macros::analyzer_literal_effect_tests::analyzer_literal_actual_env_pre_dispatch_memo_effects_survive_gc_and_restoration": "ok",
+    "portable_macros::analyzer_literal_effect_tests::analyzer_literal_collection_keys_observe_initial_memos_under_nil_aware_hash": "ok",
+    "portable_macros::analyzer_literal_effect_tests::analyzer_literal_declaration_retained_keys_match_pinned_merge_boundaries": "ok",
+    "portable_macros::analyzer_literal_effect_tests::analyzer_literal_dispatch_and_named_fn_keys_preserve_live_hash_restoration": "ok",
+    "portable_macros::analyzer_literal_effect_tests::analyzer_literal_local_reference_select_keys_are_independent_of_binding_role": "ok",
+    "portable_macros::analyzer_literal_effect_tests::analyzer_literal_quote_metadata_ast_keys_keep_source_payload_cold": "ok",
+    "portable_macros::memo_leaf_tests::compiled_identifier_constants_keep_pinned_warmed_memos": "ok",
+    "portable_macros::memo_leaf_tests::native_memo_leaf_keyword_forcewrite": "ok",
+    "portable_macros::memo_leaf_tests::native_memo_leaf_keyword_nil_aware": "ok",
+    "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_forcewrite": "FAILED",
+    "portable_macros::analyzer_literal_effect_tests::analyzer_literal_control_ast_keys_keep_initial_memos_and_cold_extensions": "ok",
+    "portable_session::memo_bridge::receipt_tests::memo_receipts_initial_non_nil_watch_cannot_certify_after_clearing": "ok",
+    "portable_session::memo_bridge::receipt_tests::memo_receipts_reject_generic_writes_but_preserve_past_valid_hashes": "ok",
+    "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_other_child_replacement_cannot_be_restored_into_authority": "ok",
+    "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_poison_at_child_write_cannot_be_upgraded_after_restore": "ok",
+    "portable_session::memo_bridge::scoped_tests::scoped_memo_stores_unregistered_and_foreign_domain_ancestors_grant_no_layout": "ok",
+    "portable_session::write_domain::tests::source_write_domain_checks_approved_child_method_during_parent_write": "ok",
+    "portable_session::write_domain::tests::source_write_domain_checks_method_replaced_before_child_construction": "ok",
+    "portable_macros::memo_leaf_tests::native_memo_leaf_symbol_nil_aware": "FAILED"
+  },
+  "memo_leaf": {
+    "groups": [
+      {
+        "kind": "keyword",
+        "nil-aware": false,
+        "rows": 12,
+        "mismatched_rows": 0
+      },
+      {
+        "kind": "keyword",
+        "nil-aware": true,
+        "rows": 12,
+        "mismatched_rows": 0
+      },
+      {
+        "kind": "symbol",
+        "nil-aware": false,
+        "rows": 12,
+        "mismatched_rows": 4
+      },
+      {
+        "kind": "symbol",
+        "nil-aware": true,
+        "rows": 12,
+        "mismatched_rows": 4
+      }
+    ],
+    "total_rows": 48,
+    "matching_rows": 40,
+    "mismatched_rows": 8,
+    "differences": [
+      {
+        "case": "symbol/nil-aware=false/warm=true/Runtime",
+        "stage": "custom-write",
+        "differences": [
+          {
+            "index": 3,
+            "field": "env-meta-identity",
+            "actual": false,
+            "expected": true
+          },
+          {
+            "index": 4,
+            "field": "env-leaf-identity",
+            "actual": false,
+            "expected": true
+          },
+          {
+            "index": 6,
+            "field": "current-memo",
+            "actual": null,
+            "expected": 91
+          }
+        ]
+      },
+      {
+        "case": "symbol/nil-aware=false/warm=true/Runtime",
+        "stage": "restored-method",
+        "differences": [
+          {
+            "index": 3,
+            "field": "env-meta-identity",
+            "actual": false,
+            "expected": true
+          },
+          {
+            "index": 4,
+            "field": "env-leaf-identity",
+            "actual": false,
+            "expected": true
+          },
+          {
+            "index": 6,
+            "field": "current-memo",
+            "actual": null,
+            "expected": 91
+          }
+        ]
+      },
+      {
+        "case": "symbol/nil-aware=false/warm=true/Macro",
+        "stage": "custom-write",
+        "differences": [
+          {
+            "index": 3,
+            "field": "env-meta-identity",
+            "actual": false,
+            "expected": true
+          },
+          {
+            "index": 4,
+            "field": "env-leaf-identity",
+            "actual": false,
+            "expected": true
+          },
+          {
+            "index": 6,
+            "field": "current-memo",
+            "actual": null,
+            "expected": 91
+          }
+        ]
+      },
+      {
+        "case": "symbol/nil-aware=false/warm=true/Macro",
+        "stage": "restored-method",
+        "differences": [
+          {
+            "index": 3,
+            "field": "env-meta-identity",
+            "actual": false,
+            "expected": true
+          },
+          {
+            "index": 4,
+            "field": "env-leaf-identity",
+            "actual": false,
+            "expected": true
+          },
+          {
+            "index": 6,
+            "field": "current-memo",
+            "actual": null,
+            "expected": 91
+          }
+        ]
+      },
+      {
+        "case": "symbol/nil-aware=true/warm=true/Runtime",
+        "stage": "custom-write",
+        "differences": [
+          {
+            "index": 3,
+            "field": "env-meta-identity",
+            "actual": false,
+            "expected": true
+          },
+          {
+            "index": 4,
+            "field": "env-leaf-identity",
+            "actual": false,
+            "expected": true
+          },
+          {
+            "index": 6,
+            "field": "current-memo",
+            "actual": null,
+            "expected": 94864730
+          }
+        ]
+      },
+      {
+        "case": "symbol/nil-aware=true/warm=true/Runtime",
+        "stage": "restored-method",
+        "differences": [
+          {
+            "index": 3,
+            "field": "env-meta-identity",
+            "actual": false,
+            "expected": true
+          },
+          {
+            "index": 4,
+            "field": "env-leaf-identity",
+            "actual": false,
+            "expected": true
+          },
+          {
+            "index": 6,
+            "field": "current-memo",
+            "actual": null,
+            "expected": 94864730
+          }
+        ]
+      },
+      {
+        "case": "symbol/nil-aware=true/warm=true/Macro",
+        "stage": "custom-write",
+        "differences": [
+          {
+            "index": 3,
+            "field": "env-meta-identity",
+            "actual": false,
+            "expected": true
+          },
+          {
+            "index": 4,
+            "field": "env-leaf-identity",
+            "actual": false,
+            "expected": true
+          },
+          {
+            "index": 6,
+            "field": "current-memo",
+            "actual": null,
+            "expected": 94864730
+          }
+        ]
+      },
+      {
+        "case": "symbol/nil-aware=true/warm=true/Macro",
+        "stage": "restored-method",
+        "differences": [
+          {
+            "index": 3,
+            "field": "env-meta-identity",
+            "actual": false,
+            "expected": true
+          },
+          {
+            "index": 4,
+            "field": "env-leaf-identity",
+            "actual": false,
+            "expected": true
+          },
+          {
+            "index": 6,
+            "field": "current-memo",
+            "actual": null,
+            "expected": 94864730
+          }
+        ]
+      }
+    ],
+    "complete_observations": {
+      "path": "docs/roadmap/evidence/m4-pr263-memo-leaf-observations-2026-10-20.jsonl",
+      "sha256": "48b9713007f474389eb18e89481997fc71e851ef779565444d706206f374623e",
+      "format": "48 JSONL rows, all13 field names and actual/expected values, original case/stage labels."
+    }
+  },
+  "failure_classification": "Both warm Symbol groups lose metadata and leaf identity and return a cold current memo after baseline canonical warming, in custom/restored windows across both phases. The nil-aware warm custom method performs zero writes. Old saved memo, callback counts/writes/results and text observations remain as expected. This prioritizes canonical warming/retained proof attribution; no cause or unsafe receipt promotion is established by this result alone.",
+  "historical_comparison": {
+    "reference": "m4-pr263-literal-effect-authority-full25-results-2026-10-19.json",
+    "previous_failing_tests_now_pass": [
+      "portable_macros::analyzer_literal_effect_tests::analyzer_literal_declaration_retained_keys_match_pinned_merge_boundaries",
+      "portable_macros::analyzer_literal_effect_tests::analyzer_literal_dispatch_and_named_fn_keys_preserve_live_hash_restoration"
+    ],
+    "qualification": "Earlier23/2 is not the same failure set. Preserve both source-qualified outcomes; no causal attribution of current Symbol failures is inferred."
+  },
+  "constructor_peer_source_audit": {
+    "path": "/home/bobby/.cache/suss-m4-work/pr261-c1-c4-constructor-peer-78aa8e5-v1/review.json",
+    "sha256": "dbf0b12a99419fd8bdbfc881b02edca57080f6d982db02c31d1d8514452067de",
+    "scope": "Read-only C1-C4 construction-site/reference audit; no concrete incorrect promotion found, but static inspection does not discharge actual current C3 failures."
+  },
+  "budgets": {
+    "shared_compilation_helper": 100000000000,
+    "named_function_compilation": 100000000000,
+    "caller_runtime": "unchanged"
+  },
+  "remaining": "Fix both Symbol groups without weakening authority/719 poison controls; source-tags2, pinned full bodies/comparisons, namespace eight mismatches, other strict native/source-child gates, required workspace baseline and final-head CI remain separate. Current existing Symbol nil-aware full group is being replayed with opt-in receipt traces."
+}

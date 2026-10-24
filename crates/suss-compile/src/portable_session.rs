@@ -33,9 +33,10 @@ mod canonical_methods;
 mod canonical_seeds;
 mod memo_bridge;
 mod dispatch_observer;
-mod write_domain;
+pub(crate) mod write_domain;
 mod prototype_origin;
 pub(crate) mod private_fixups;
+pub(crate) mod deferred_factory;
 mod constructor_inputs;
 pub(crate) use constructor_inputs::ConstructorInputs;
 mod source_array_inputs;
@@ -222,6 +223,7 @@ pub struct Session {
     dispatch_observer: Option<Arc<dispatch_observer::Observer>>,
     canonical_seeds: Option<Arc<canonical_seeds::CanonicalSeeds>>,
     prototype_origin: Option<Arc<prototype_origin::Authority>>,
+    schema_witness_cache: constructor_inputs::SchemaWitnessCache,
     pending_host_futures: SharedPendingRegistry,
     native_factories: Vec<native_async::FactoryProfile>,
     last_async_recovered_owner: Option<OwnedRooted<AnyRef>>,
@@ -673,6 +675,7 @@ impl Session {
             dispatch_observer,
             canonical_seeds: None,
             prototype_origin: None,
+            schema_witness_cache: constructor_inputs::SchemaWitnessCache::default(),
             pending_host_futures: Arc::new(Mutex::new(Vec::new())),
             native_factories: Vec::new(),
             last_async_recovered_owner: None,
@@ -686,6 +689,18 @@ impl Session {
     }
     pub fn set_operation_fuel(&mut self, fuel: u64) {
         self.options.fuel_per_operation = fuel;
+    }
+    /// Set the allowance for fixed initialization of an owned fresh Store, or
+    /// restore its caller allowance before publication. Never refill a request.
+    pub(crate) fn set_initialization_fuel(&mut self, fuel: u64) -> Result<(), SessionError> {
+        if self.operation_budget_depth.load(Ordering::SeqCst) != 0 {
+            return Err(SessionError::Host(wasmtime::Error::msg(
+                "Cannot change initialization fuel during an active operation",
+            )));
+        }
+        self.store.set_fuel(fuel)?;
+        self.options.fuel_per_operation = fuel;
+        Ok(())
     }
     pub(crate) fn operation_fuel_remaining(&self) -> Result<u64, SessionError> {
         self.store.get_fuel().map_err(Into::into)
@@ -1082,6 +1097,12 @@ impl Session {
         self.environment
             .resolves_bootstrap_name(self.phase, symbol, "defmacro")
     }
+    /// Read-only Store-owner identity check for native graph transport.
+    /// This forwards the existing ForeignValue check exactly: no inspection,
+    /// guest call, fuel refill, source proof or memo/domain authority is added.
+    pub(crate) fn check_value_owner(&self, value: &SessionValue) -> Result<(), SessionError> {
+        self.check(value)
+    }
     fn check(&self, value: &SessionValue) -> Result<(), SessionError> {
         if value.identity == self.identity {
             Ok(())
@@ -1213,6 +1234,20 @@ impl Session {
     pub(crate) fn charge_host_work(&mut self, units: u64) -> Result<(), SessionError> {
         Self::consume_host_work(self.store.as_context_mut(), units, &self.interrupt)
             .map_err(Into::into)
+    }
+    /// Declare compiler-owned setup/import cells against THIS Session's active
+    /// operation. Keep original host traps instead of normalizing them through
+    /// the resolver's Diagnostic-only callback interface.
+    pub(crate) fn declare_compiler_cell(&mut self, environment: &mut Environment, namespace: &str, name: &str) -> Result<CellIdentity, SessionError> {
+        let mut host_error = None;
+        let result = environment.declare_cell_metered(self.phase, namespace, name, &mut |work| {
+            self.charge_host_work(work).map_err(|error| {
+                host_error = Some(error);
+                Diagnostic { span: 0..0, message: "Compiler binding ownership budget exhausted".into() }
+            })
+        });
+        if let Some(error) = host_error { return Err(error); }
+        result.map_err(SessionError::Compile)
     }
     /// Store-context counterpart for decoders. Callers must pass the cancellation
     /// flag captured from this same Session, not another Store's flag.
@@ -1358,6 +1393,63 @@ impl Session {
             &self.provided,
         )
         .map_err(|error| match error {
+            portable::modules::InputDiagnostic::Compile(error) => SessionError::Compile(error),
+            portable::modules::InputDiagnostic::Dependency(error) => SessionError::Module(error),
+        })?;
+        self.eval_prepared(prepared)
+    }
+    /// Install a fixed compiler-library source without macro expansion. Analysis
+    /// and execution debit this same initialization operation and Store.
+    pub(crate) fn eval_fixed_initialization_source(
+        &mut self,
+        source: &'static str,
+    ) -> Result<SessionValue, SessionError> {
+        struct InitializationHost<'a> {
+            store: StoreContextMut<'a, ()>,
+            interrupt: &'a AtomicBool,
+            fuel: u64,
+            error: Option<SessionError>,
+        }
+        impl portable::ExpansionHost for InitializationHost<'_> {
+            fn expansion_work_fuel(&self) -> u64 { self.fuel }
+            fn artifact_dependencies(&self) -> Option<Vec<(String, String)>> { Some(vec![]) }
+            fn expand(
+                &mut self,
+                _: &suss_reader::forms::Form,
+                _: portable::ExpansionContext<'_>,
+            ) -> Result<Option<suss_reader::forms::Form>, Diagnostic> { Ok(None) }
+            fn charge_expansion_work(
+                &mut self,
+                work: u64,
+                span: std::ops::Range<usize>,
+            ) -> Result<(), Diagnostic> {
+                Session::consume_host_work(self.store.as_context_mut(), work, self.interrupt)
+                    .map_err(|error| {
+                        let diagnostic = Diagnostic {
+                            span,
+                            message: format!("Fixed compiler-library analysis failed: {error}"),
+                        };
+                        if self.error.is_none() { self.error = Some(error.into()); }
+                        diagnostic
+                    })
+            }
+        }
+        let _operation = self.operation_budget_scope()?;
+        self.charge_host_work((2 * std::mem::size_of::<InitializationHost<'_>>() + 8) as u64)?;
+        let mut host = InitializationHost {
+            store: self.store.as_context_mut(),
+            interrupt: &self.interrupt,
+            fuel: self.options.fuel_per_operation,
+            error: None,
+        };
+        let prepared = portable::modules::prepare_input_with_expander(
+            source, &self.options.source_paths, &self.environment,
+            self.phase, &self.provided, &mut host,
+        );
+        let error = host.error.take();
+        drop(host);
+        if let Some(error) = error { return Err(error); }
+        let prepared = prepared.map_err(|error| match error {
             portable::modules::InputDiagnostic::Compile(error) => SessionError::Compile(error),
             portable::modules::InputDiagnostic::Dependency(error) => SessionError::Module(error),
         })?;
@@ -2880,6 +2972,7 @@ mod tests {
     fn session_lifecycle_reset_unknown_producer_preserves_store_and_retries_cleanup() {
         let mut session = Session::new_repl().unwrap();
         let mut macros = crate::portable_macros::CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(memo_leaf_test_support::COMPILATION_FUEL);
         session.eval_with_macros(
             "(ns reset-callback-test (:require [suss.async]) (:require-macros [suss.async :refer [future]]))",
             &mut macros,
@@ -3009,6 +3102,7 @@ mod tests {
         let drops = Arc::new(AtomicUsize::new(0));
         let mut session = Session::new_repl().unwrap();
         let mut macros = crate::portable_macros::CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(memo_leaf_test_support::COMPILATION_FUEL);
         session.eval_with_macros(
             "(ns hooked-reset (:require [suss.async]) (:require-macros [suss.async :refer [future]]))",
             &mut macros,
@@ -3742,3 +3836,5 @@ mod tests {
 
 #[cfg(test)]
 pub(crate) mod memo_leaf_test_support;
+#[cfg(test)]
+mod constructor_callback_tests;

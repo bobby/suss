@@ -1,6 +1,7 @@
 //! Acceptance regressions for one cumulative Macro-phase fuel budget across a
-//! complete source-fragment expansion. These use public Session APIs and small
-//! test-only fuel limits; production defaults are not changed.
+//! complete source-fragment expansion. Dedicated accounting cases use small
+//! test-only fuel limits. The metadata-authority semantic regression uses a
+//! separate compilation allowance; production defaults and Runtime are unchanged.
 use std::{
     sync::{
         OnceLock,
@@ -22,6 +23,9 @@ use wasmtime::{
 };
 
 const SMALL_OPERATION_FUEL: u64 = 100_000;
+// Semantic compilation calibration authorized by #252; this is not an
+// exhaustion/default-budget control. Keep caller Runtime limits unchanged.
+const METADATA_AUTHORITY_COMPILATION_FUEL: u64 = 100_000_000_000;
 
 fn fuel_failure(error: SessionError) {
     let message = error.to_string().to_lowercase();
@@ -587,6 +591,7 @@ fn source_metadata_poisoned_at_memo_write_is_not_certified_by_later_restoration(
     for mut caller in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         caller.eval("(def ^{:audit {:x 17}} write-state-target 0)").unwrap();
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(METADATA_AUTHORITY_COMPILATION_FUEL);
         macros.define(OBSERVE).unwrap();
         let first = caller.eval_with_macros("(inspect-write-state true)", &mut macros).unwrap();
         assert_eq!(observed(&mut caller, &first), [true,true,true,true],
