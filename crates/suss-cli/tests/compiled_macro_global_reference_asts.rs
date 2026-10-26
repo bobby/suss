@@ -155,6 +155,8 @@ fn captured_global_declarations_supply_var_ast_fields_without_catalog_mutation()
 fn resolved_info_copies_identity_fields_and_shares_captured_nested_metadata() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        // Expansion is compilation of the caller; Runtime keeps its own limits.
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         session.enter_namespace("review-global").unwrap();
         macros.enter_namespace("review-global").unwrap();
         macros

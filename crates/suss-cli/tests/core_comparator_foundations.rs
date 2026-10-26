@@ -1,4 +1,6 @@
 //! Authored scalar comparator prerequisites; full compare is deliberately absent.
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
 use suss_compile::portable::resolve::Phase;
 use wasmtime::Val;
@@ -79,8 +81,7 @@ fn expect_language_error(
 fn private_predicates_and_scalar_comparison_preserve_live_publics_in_both_phases() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
-        session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("user").unwrap();
         session
@@ -199,8 +200,7 @@ fn staged_type_returns_retained_nominal_constructors_in_both_phases() {
     .unwrap();
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
-        session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("suss.core").unwrap();
         session
@@ -404,8 +404,7 @@ fn primitive_constructor_values_are_canonical_callable_and_rooted_in_both_phases
     .unwrap();
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
-        session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("suss.core").unwrap();
         session

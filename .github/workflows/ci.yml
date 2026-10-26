@@ -52,10 +52,29 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
           compression-level: 1
-      - name: Test libraries, binaries, examples and documentation
+      - name: Test examples and documentation
         run: |
-          cargo test --workspace --locked --lib --bins --examples -- --test-threads=2
+          cargo test --workspace --locked --examples -- --test-threads=2
           cargo test --workspace --locked --doc -- --test-threads=2
+
+  # Library/binary unit tests by exact name, every test in exactly one shard.
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: workspace-tests
+      - name: Execute this partition of every library and binary unit test
+        run: python3 scripts/ci_test_shards.py --unit --count 4 --index ${{ matrix.shard }}
 
   integration:
     runs-on: ubuntu-latest
@@ -79,14 +98,16 @@ jobs:
   # Preserve the required check name; skipped/cancelled partitions cannot pass it.
   test:
     if: always()
-    needs: [foundation, integration]
+    needs: [foundation, unit, integration]
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
       - name: Require every verification job to succeed
         env:
           FOUNDATION_RESULT: ${{ needs.foundation.result }}
+          UNIT_RESULT: ${{ needs.unit.result }}
           INTEGRATION_RESULT: ${{ needs.integration.result }}
         run: |
           test "$FOUNDATION_RESULT" = success
+          test "$UNIT_RESULT" = success
           test "$INTEGRATION_RESULT" = success

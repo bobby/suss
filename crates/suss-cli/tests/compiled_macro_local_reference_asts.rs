@@ -1,4 +1,6 @@
 //! Executed source-local AST projections; runtime results cannot classify ASTs.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use serde_json::{Value, json};
 use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
@@ -37,6 +39,8 @@ fn retained_local_declarations_supply_reference_ast_fields_without_reexecution()
     assert_eq!(corpus["cases"].as_array().unwrap().len(), 6);
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        // Expansion is compilation of the caller; Runtime keeps its own limits.
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro observe-reference [label binding]
@@ -155,6 +159,8 @@ fn retained_local_declarations_supply_reference_ast_fields_without_reexecution()
 fn reference_asts_keep_initializer_scope_metadata_and_variadic_self_identity() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        // Expansion is compilation of the caller; Runtime keeps its own limits.
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro inspect-reference [binding]

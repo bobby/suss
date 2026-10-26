@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::portable_session::{Session, SessionValue};
 use wasmtime::Val;
 
@@ -19,8 +21,7 @@ fn eval_number(session: &mut Session, source: &str) -> u64 {
 }
 fn session() -> Session {
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session

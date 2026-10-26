@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::portable_session::{Session, SessionValue};
 use wasmtime::Val;
 
@@ -73,8 +75,7 @@ fn identity_hash_contract_matches_pinned_owned_value_relations() {
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 34);
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def uid (fn [x] (suss.bootstrap/identity-uid x))) (def error (fn [message] (suss.bootstrap/error message)))").unwrap();
@@ -199,8 +200,7 @@ fn identity_uid_errors_preserve_effects_and_compile_atomicity() {
 #[test]
 fn explicit_ifn_receiver_preserves_operand_effects_and_unrelated_protocols() {
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session

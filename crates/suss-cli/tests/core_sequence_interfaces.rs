@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::portable_session::{Session, SessionError, SessionValue};
 use wasmtime::Val;
 
@@ -41,7 +43,7 @@ const CORE: &str = include_str!("../../../runtime/core-import/suss/core.sus");
 #[test]
 fn imported_sequence_interfaces_execute_direct_methods_after_gc() {
     let mut session = Session::new().unwrap();
-    session.eval(CORE).unwrap();
+    semantic_compilation::eval(&mut session, CORE).unwrap();
     session.enter_namespace("user").unwrap();
     assert!(!eval_bool(
         &mut session,
@@ -130,7 +132,7 @@ fn imported_interfaces_match_independently_encoded_primary_adapter_observations(
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 65);
     let mut session = Session::new().unwrap();
-    session.eval(CORE).unwrap();
+    semantic_compilation::eval(&mut session, CORE).unwrap();
     session.enter_namespace("user").unwrap();
     let mut ids = std::collections::BTreeSet::new();
     for case in cases {
@@ -152,11 +154,11 @@ fn imported_interfaces_match_independently_encoded_primary_adapter_observations(
 #[test]
 fn canonical_core_aliases_and_retained_methods_survive_source_reload() {
     let mut session = Session::new().unwrap();
-    session.eval(CORE).unwrap();
+    semantic_compilation::eval(&mut session, CORE).unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(deftype ReloadIndexed [value] cljs.core/IIndexed (-nth [this n] (+ value n)) (-nth [this n missing] (+ value n missing))) (def retained-indexed (ReloadIndexed. 10)) (def retained-nth cljs.core/-nth)").unwrap();
     session.collect().unwrap();
-    session.eval(CORE).unwrap();
+    semantic_compilation::eval(&mut session, CORE).unwrap();
     session.enter_namespace("user").unwrap();
     session.collect().unwrap();
     for source in [
@@ -197,11 +199,11 @@ fn canonical_core_aliases_and_retained_methods_survive_source_reload() {
 #[test]
 fn imported_operation_methods_survive_reload_gc_and_invalid_arity_recovery() {
     let mut session = Session::new().unwrap();
-    session.eval(CORE).unwrap();
+    semantic_compilation::eval(&mut session, CORE).unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(deftype ReloadOperations [value] cljs.core/IReduce (-reduce [this f] (f value value)) (-reduce [this f start] (f start value)) cljs.core/IStack (-peek [this] value) (-pop [this] this) cljs.core/IDrop (-drop [this n] this) cljs.core/IIterable (-iterator [this] this) cljs.core/IReversible (-rseq [this] this)) (def reload-operation (ReloadOperations. 7)) (def saved-reduce cljs.core/-reduce)").unwrap();
     session.collect().unwrap();
-    session.eval(CORE).unwrap();
+    semantic_compilation::eval(&mut session, CORE).unwrap();
     session.enter_namespace("user").unwrap();
     session.collect().unwrap();
     for source in [
@@ -243,7 +245,7 @@ fn imported_operation_methods_survive_reload_gc_and_invalid_arity_recovery() {
 #[test]
 fn malformed_operation_declarations_and_extensions_preserve_loaded_core() {
     let mut session = Session::new().unwrap();
-    session.eval(CORE).unwrap();
+    semantic_compilation::eval(&mut session, CORE).unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(deftype ReviewStable [value] cljs.core/IReduce (-reduce [this f] (f value 2)) (-reduce [this f start] (f start value)) cljs.core/IStack (-peek [this] value) (-pop [this] this)) (def review-stable (ReviewStable. 9)) (def review-saved-reduce cljs.core/-reduce)").unwrap();
     for source in [

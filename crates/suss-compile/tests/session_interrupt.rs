@@ -61,8 +61,11 @@ fn number(session: &mut Session, source: &str) -> f64 {
 fn interrupt_stops_running_code_without_rolling_back_effects() {
     let mut session = Session::new_repl_with_options(unbounded()).unwrap();
     session.eval("(def progress (atom 0))").unwrap();
+    // Compile the loop beforehand so the interrupt lands in running code even
+    // when compiling an input takes longer than one interrupt period.
+    session.eval("(def spin-progress (fn [] (loop [] (swap! progress inc) (recur))))").unwrap();
     let result = interrupted(session.interrupt_handle(), || {
-        session.eval("(loop [] (swap! progress inc) (recur))")
+        session.eval("(spin-progress)")
     });
     assert!(is_interrupt(&result), "{:?}", result.map(|_| ()));
     // Effects before the interrupt remain; the session accepts the next input.

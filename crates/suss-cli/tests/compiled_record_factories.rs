@@ -41,6 +41,7 @@ fn compiled_positional_factories_use_declared_arity_and_internal_nil_fields() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut decoder = Decoder::capture(&mut session, 4096).unwrap();
         let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(COMPILATION_FUEL);
         factory_tools(&mut macros);
         session.eval_with_macros("(defrecord* FactoryRecord [left right] nil nil) (record-positional FactoryRecord [left right]) (deftype* FactoryType [value] nil nil) (plain-positional FactoryType [value])", &mut macros).unwrap();
         assert_eq!(

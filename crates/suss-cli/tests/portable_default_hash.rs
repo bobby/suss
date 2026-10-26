@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::portable_session::Session;
 
 fn eval_bool(session: &mut Session, source: &str) -> bool {
@@ -28,8 +30,7 @@ fn default_hash_matches_pinned_identity_and_root_relations() {
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 28);
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def rootobj (fn [] (suss.core/root-obj))) (def uid (fn [x] (suss.bootstrap/identity-uid x))) (def error (fn [message] (suss.bootstrap/error message)))").unwrap();
@@ -48,8 +49,7 @@ fn default_hash_matches_pinned_identity_and_root_relations() {
 fn default_hash_errors_preserve_effects_and_private_adapter_is_checked() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session
@@ -113,8 +113,7 @@ fn default_hash_errors_preserve_effects_and_private_adapter_is_checked() {
 #[test]
 fn captured_default_dispatch_observes_root_redefinition_across_gc_fragments() {
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def review-root-provider suss.core/root-obj) (def review-root (review-root-provider)) (def review-hash -hash) (def review-owner ((let [factory js-obj] factory))) (def review-owner-id (review-hash review-owner))").unwrap();

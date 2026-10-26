@@ -1,5 +1,6 @@
 import unittest
-from ci_test_shards import partitions, commands
+from ci_test_shards import (partitions, commands, unit_packages, listed_tests,
+                            unit_partitions, unit_commands)
 
 
 class ShardTests(unittest.TestCase):
@@ -51,3 +52,33 @@ class ShardTests(unittest.TestCase):
         duplicate["packages"][0]["targets"].append(duplicate["packages"][0]["targets"][0])
         with self.assertRaises(ValueError):
             partitions(duplicate, 8)
+
+
+class UnitShardTests(unittest.TestCase):
+    def test_unit_packages_are_workspace_members_with_lib_or_bin_tests(self):
+        metadata = ShardTests().metadata()
+        metadata["packages"][1]["targets"].append({"kind": ["bin"], "name": "tool", "test": True})
+        self.assertEqual(unit_packages(metadata), ["first", "second"])
+
+    def test_listing_keeps_only_tests(self):
+        output = "a::one: test\na::bench: benchmark\nb::two: test\n\n3 tests, 0 benchmarks\n"
+        self.assertEqual(listed_tests(output), ["a::one", "b::two"])
+
+    def test_every_unit_test_runs_exactly_once(self):
+        tests = [("first", f"m::t{i}") for i in range(11)] + [("second", "x")]
+        shards = unit_partitions(tests, 4)
+        flattened = [test for shard in shards for test in shard]
+        self.assertEqual(sorted(flattened), sorted(tests))
+        self.assertLessEqual(max(map(len, shards)) - min(map(len, shards)), 1)
+        with self.assertRaises(ValueError):
+            unit_partitions(tests + [tests[0]], 4)
+        with self.assertRaises(ValueError):
+            unit_partitions([], 4)
+
+    def test_unit_commands_select_exact_names_per_package(self):
+        result = list(unit_commands([("second", "x"), ("first", "b"), ("first", "a")]))
+        self.assertEqual(result, [
+            ["cargo", "test", "--locked", "-p", "first", "--lib", "--bins", "--",
+             "--exact", "--test-threads=2", "a", "b"],
+            ["cargo", "test", "--locked", "-p", "second", "--lib", "--bins", "--",
+             "--exact", "--test-threads=2", "x"]])

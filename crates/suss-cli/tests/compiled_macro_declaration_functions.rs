@@ -1,4 +1,6 @@
 //! Execute the selected function declaration projection from the pinned oracle.
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 #[path = "support/compilation_fuel.rs"]
 mod compilation_fuel;
 use suss_cli::{
@@ -121,10 +123,11 @@ fn compiled_argument_lists_preserve_quoted_data_and_actual_file_positions() {
             phase,
         )
         .unwrap();
-        session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         let mut macros = CompiledMacros::new().unwrap();
+        // Expansion is compilation of the caller; Runtime keeps its own limits.
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros.define(DEFINITION).unwrap();
         session
             .load_namespace_with_macros("app", &mut macros)

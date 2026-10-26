@@ -1,4 +1,6 @@
 //! Retained sorted protocols on original nominal probes; no tree implementation.
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
 use suss_compile::portable::resolve::Phase;
 use wasmtime::Val;
@@ -75,7 +77,7 @@ fn expect_language_error(
 
 fn setup(phase: Phase) -> Session {
     let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
-    session.eval(CORE).unwrap();
+    semantic_compilation::eval(&mut session, CORE).unwrap();
     session.enter_namespace("user").unwrap();
     session.eval(FIXTURE).unwrap();
     session.collect().unwrap();
@@ -127,7 +129,7 @@ fn sorted_protocol_aliases_retained_values_reload_and_method_arities() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = setup(phase);
         // Reload the actual retained source, preserving old nominal instances and callees.
-        session.eval(CORE).unwrap();
+        semantic_compilation::eval(&mut session, CORE).unwrap();
         session.enter_namespace("user").unwrap();
         session.collect().unwrap();
         for (protocol, saved) in [

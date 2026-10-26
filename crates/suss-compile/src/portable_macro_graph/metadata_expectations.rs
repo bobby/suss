@@ -290,13 +290,27 @@ fn finish(
     };
     Ok(Some(plain(kind)))
 }
+// A projection expands the recipe DAG into a tree. Analyzer environments
+// share deeply (each local's :init AST carries an :env holding the locals
+// again), so the tree can grow exponentially in nesting depth while the DAG
+// stays small. Past this many frames the source has no expectation:
+// certification declines and ordinary materialization runs, as for every
+// other unsupported source. Measured on PR #263: the pinned five-call
+// namespace identity probe's largest projection is ~250k frames; the
+// compiler-catalog runaways reach 4.9M-19.8M frames and then exhaust memory.
+const PROJECTION_FRAMES_MAX: usize = 1 << 20;
 pub(super) fn project(session: &mut Session, recipes: &[Option<Recipe>], root: Value) -> Result<Option<Form>> {
+    let mut frames_visited = 0usize;
     let mut frames = Vec::new();
     let first = frame(session, recipes, root, &frames)?;
     push(session, &mut frames, first)?;
     while let Some(current) = frames.last_mut() {
         session.charge_host_work(1)?;
         if current.next < current.dependencies.len() {
+            frames_visited += 1;
+            if frames_visited > PROJECTION_FRAMES_MAX {
+                return Ok(None);
+            }
             let id = current.dependencies[current.next];
             current.next += 1;
             let next = frame(session, recipes, id, &frames)?;

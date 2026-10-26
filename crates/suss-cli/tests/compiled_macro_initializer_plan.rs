@@ -1,4 +1,6 @@
 //! Authored execution of immutable definition/initializer transport sharing.
+#[path = "support/compilation_fuel.rs"]
+mod compilation_fuel;
 use suss_cli::{portable_macros::CompiledMacros, portable_session::Session};
 
 #[test]
@@ -23,6 +25,8 @@ fn definition_initializer_plan_preserves_metadata_quote_barriers_and_source_valu
                         (= (first (nth initializer 1)) 'unresolved-plan-name)])))"#;
     for mut caller in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        // Expansion is compilation of the caller; its Runtime keeps defaults.
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros.define(OBSERVE).unwrap();
         macros.define(QUOTED).unwrap();
         caller.eval("(def plan-effects 0) (def plan-effect-target (do (set! plan-effects (inc plan-effects)) 23)) (def ^{:doc \"plan fixture\"} plan-target ^{:inner 7} [17 {:a 1}]) (def plan-quoted '(unresolved-plan-name 19))").unwrap();

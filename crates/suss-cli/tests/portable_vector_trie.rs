@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::portable_session::Session;
 fn boolean(session: &mut Session, source: &str) -> bool {
     let value = session.eval(source).unwrap();
@@ -20,8 +22,7 @@ fn boolean(session: &mut Session, source: &str) -> bool {
 #[test]
 fn vector_node_clone_owns_outer_array_and_preserves_edit_and_child() {
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def trie-edit (js-obj)) (def trie-child (js-obj)) (def trie-node (suss.core/pv-fresh-node trie-edit)) (suss.core/pv-aset trie-node 0 trie-child) (def trie-copy (suss.core/pv-clone-node trie-node))").unwrap();
@@ -40,8 +41,7 @@ fn vector_trie_matches_independently_decoded_primary_values() {
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 29);
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(deftype VectorFixture [cnt])").unwrap();
@@ -86,8 +86,7 @@ fn vector_trie_matches_independently_decoded_primary_values() {
 #[test]
 fn association_copies_only_selected_path_across_fragments_and_gc() {
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def trie-left (suss.core/pv-fresh-node nil)) (def trie-leaf (suss.core/pv-fresh-node nil)) (suss.core/pv-aset trie-leaf 31 17) (def trie-root (suss.core/pv-fresh-node nil)) (suss.core/pv-aset trie-root 0 trie-left) (suss.core/pv-aset trie-root 1 trie-leaf) (def trie-associated (suss.core/do-assoc nil 5 trie-root 63 19))").unwrap();
@@ -105,8 +104,7 @@ fn throwing_live_clone_prevents_source_parent_mutation_and_recovers() {
     use suss_cli::portable_session::SessionError;
     use wasmtime::Val;
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def trie-guarded (suss.core/pv-fresh-node nil)) (suss.core/pv-aset trie-guarded 31 17) (def trie-effects 0)").unwrap();
@@ -131,8 +129,7 @@ fn throwing_outer_pop_clone_preserves_original_recursive_path_after_gc() {
     use suss_cli::portable_session::SessionError;
     use wasmtime::Val;
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(deftype VectorFixture [cnt]) (def pop-child (suss.core/pv-fresh-node 1)) (def pop-root (suss.core/pv-fresh-node 2)) (suss.core/pv-aset pop-child 1 17) (suss.core/pv-aset pop-root 0 pop-child) (def pop-trace 0) (def pop-clone suss.core/pv-clone-node)").unwrap();

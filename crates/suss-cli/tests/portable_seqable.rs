@@ -1,5 +1,7 @@
 //! Portable `seqable?` source contract; JavaScript-only iterable interop is
 //! explicitly outside the accepted portable host profile.
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::portable_session::{Session, SessionOptions};
 use suss_compile::portable::resolve::Phase;
 use wasmtime::Val;
@@ -25,8 +27,7 @@ fn seqable_predicate_covers_portable_values_in_both_phases_after_gc() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
         session.set_operation_fuel(100_000_000);
-        session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("user").unwrap();
         session

@@ -989,11 +989,25 @@ mod initialization_budget_tests {
 
     #[test]
     fn fixed_source_initialization_preserves_cumulative_fuel_interrupts_and_recovery() {
+        // Measure the cumulative cost in identical fresh Sessions, then leave
+        // half of it, so exhaustion happens well inside the initialization,
+        // independent of the compiler's current costs. The second probe sees
+        // the warm process artifact cache, as does the Session under test.
+        let measure = || {
+            let mut probe = Session::new_macro().unwrap();
+            let _operation = probe.operation_budget_scope().unwrap();
+            let before = probe.operation_fuel_remaining().unwrap();
+            probe.eval_fixed_initialization_source("(def initialization-unpublished 23)").unwrap();
+            before - probe.operation_fuel_remaining().unwrap()
+        };
+        measure();
+        let needed = measure();
+        assert!(needed > 1);
         let mut session = Session::new_macro().unwrap();
         {
             let _operation = session.operation_budget_scope().unwrap();
             let remaining = session.operation_fuel_remaining().unwrap();
-            session.charge_host_work(remaining - 10_000).unwrap();
+            session.charge_host_work(remaining - needed / 2).unwrap();
             let error = session.eval_fixed_initialization_source(
                 "(def initialization-unpublished 23)",
             ).unwrap_err();

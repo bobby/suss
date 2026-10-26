@@ -334,6 +334,8 @@ fn unordered_literal_ast_edges_and_runtime_effects_preserve_textual_order() {
 fn empty_do_source_return_retains_context_and_nil_after_gc() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
+        // Expansion is compilation of the caller; Runtime keeps its own limits.
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
         macros
             .define(
                 r#"(defmacro empty-source [binding]

@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::portable_session::Session;
 use wasmtime::Val;
 
@@ -10,8 +12,7 @@ fn type_method_scopes_match_independently_decoded_primary_observations_after_gc(
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 14);
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session
         .enter_namespace("suss-oracle.type-method-scope-cases")

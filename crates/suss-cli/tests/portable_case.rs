@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::portable_session::{Session, SessionValue};
 use wasmtime::Val;
 
@@ -32,8 +34,7 @@ fn scalar_case_matches_independently_decoded_pinned_observations() {
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 40);
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     for case in cases {
@@ -77,8 +78,7 @@ fn empty_case_group_has_exact_located_boundary_without_publication() {
 fn case_errors_and_namespace_guards_keep_effects_and_recover_after_gc() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def case-effects 0)").unwrap();
@@ -144,8 +144,7 @@ fn case_errors_and_namespace_guards_keep_effects_and_recover_after_gc() {
 fn generic_case_throw_restores_equality_and_bounds_are_located() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def case-review-effects 0)").unwrap();

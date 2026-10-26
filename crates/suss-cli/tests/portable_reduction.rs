@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::portable_session::{Session, SessionValue};
 use wasmtime::Val;
 
@@ -46,8 +48,7 @@ fn reduction_contract_match_independently_encoded_primary_observations() {
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 65);
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     let mut identities = std::collections::BTreeSet::new();
@@ -71,8 +72,7 @@ fn reduction_contract_match_independently_encoded_primary_observations() {
 fn reduced_values_and_saved_reducers_survive_gc_and_language_errors() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def retained-reduced (reduced (list 17 19))) (def retained-reducer reduce) (def reduction-error-trace 0)").unwrap();
@@ -142,8 +142,7 @@ fn reduced_stops_vector_callbacks_at_chunk_boundaries_in_both_phases() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
         session.set_operation_fuel(100_000_000);
-        session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("user").unwrap();
         session

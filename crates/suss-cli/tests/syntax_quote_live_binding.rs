@@ -1,4 +1,6 @@
 //! Reader constructors must obey the same live cells as ordinary calls.
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::{portable_macro_data::FormBridge, portable_session::Session};
 use suss_reader::forms::Kind;
 
@@ -36,7 +38,7 @@ fn install_fallback_core(session: &mut Session) {
             }
         }
     }
-    session.eval(std::str::from_utf8(&bytes).unwrap()).unwrap();
+    semantic_compilation::eval(session, std::str::from_utf8(&bytes).unwrap()).unwrap();
     session.enter_namespace("user").unwrap();
     let value = session.eval("(nil? sequence)").unwrap();
     let bridge = FormBridge::new(session).unwrap();

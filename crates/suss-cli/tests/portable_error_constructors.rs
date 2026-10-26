@@ -1,4 +1,6 @@
 //! Genuine Error prerequisite authoring; UNCOMPILED/UNEXECUTED, bootstrap stale.
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 #[path = "../../suss-compile/tests/support/portable_decode.rs"]
 mod portable_decode;
 use portable_decode::{Decoder, Observation};
@@ -37,8 +39,7 @@ fn owned_error_ancestry_retains_actual_constructor_and_instance_prototype_refere
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
         session.set_operation_fuel(100_000_000);
-        session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("user").unwrap();
         let error = session.eval("(.-prototype js/Error)").unwrap();
@@ -279,8 +280,7 @@ fn raw_error_constructors_ancestry_original_throws_and_effects_match_pinned_afte
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
         session.set_operation_fuel(100_000_000);
-        session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("user").unwrap();
         session.eval("(def error-effects 0) (def error-step (fn [n] (set! error-effects (+ (* error-effects 10) n))))").unwrap();
@@ -335,8 +335,7 @@ fn owned_error_mutation_retains_backing_and_rejects_invalid_presence_masks_after
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
         session.set_operation_fuel(100_000_000);
-        session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("user").unwrap();
         let anchors = classes(&mut session);

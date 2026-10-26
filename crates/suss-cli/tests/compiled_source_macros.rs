@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 #[path = "support/compilation_fuel.rs"]
 mod compilation_fuel;
 
@@ -27,6 +29,8 @@ fn number(session: &mut Session, source: &str, macros: &mut CompiledMacros) -> u
 #[test]
 fn compiled_source_macros_expand_nested_calls_in_actual_lexical_analysis() {
     let mut macros = CompiledMacros::new().unwrap();
+    // Expansion is compilation of the caller; Runtime keeps its own limits.
+    macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
     macros.define("(defmacro add1 [x] (list '+ x 1))").unwrap();
     macros
         .define("(defmacro pair [& xs] (list '+ (first xs) (first (next xs))))")
@@ -56,6 +60,8 @@ fn compiled_source_macros_expand_nested_calls_in_actual_lexical_analysis() {
 #[test]
 fn compiled_source_macros_pass_real_form_and_preserve_quote_and_failures() {
     let mut macros = CompiledMacros::new().unwrap();
+    // Expansion is compilation of the caller; Runtime keeps its own limits.
+    macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
     macros
         .define("(defmacro form-name [] (list 'quote (first &form)))")
         .unwrap();
@@ -121,6 +127,8 @@ fn compiled_source_macros_expand_dependency_artifacts_before_publication() {
     )
     .unwrap();
     let mut macros = CompiledMacros::new().unwrap();
+    // Expansion is compilation of the caller; Runtime keeps its own limits.
+    macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
     macros.define("(defmacro add1 [x] (list '+ x 1))").unwrap();
     let mut runtime = Session::with_options(SessionOptions {
         source_paths: vec![root.path().to_owned()],
@@ -155,6 +163,8 @@ fn compiled_source_macros_expand_dependency_artifacts_before_publication() {
 #[test]
 fn compiled_source_macros_preserve_true_loop_special_form_priority() {
     let mut macros = CompiledMacros::new().unwrap();
+    // Expansion is compilation of the caller; Runtime keeps its own limits.
+    macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
     macros.define("(defmacro loop* [& xs] 99)").unwrap();
     let mut runtime = Session::new_repl().unwrap();
     assert_eq!(
@@ -235,8 +245,7 @@ fn compiled_source_macros_pass_env_through_renamed_and_rewritten_helper_expansio
         },
     )
     .unwrap();
-    runtime
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut runtime, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     runtime
         .eval_with_macros("(ns user (:require-macros [tools :as t]))", &mut macros)

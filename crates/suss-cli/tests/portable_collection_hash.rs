@@ -1,3 +1,5 @@
+#[path = "support/eval_with_compilation_fuel.rs"]
+mod semantic_compilation;
 use suss_cli::portable_session::Session;
 
 fn boolean(session: &mut Session, source: &str) -> bool {
@@ -22,8 +24,7 @@ fn boolean(session: &mut Session, source: &str) -> bool {
 #[test]
 fn sequential_hash_agrees_across_retained_types_after_gc() {
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def hash-list (list 1 2)) (def hash-cons (cons 1 (list 2))) (def hash-indexed (array-seq (array 1 2)))").unwrap();
@@ -41,8 +42,7 @@ fn sequential_hash_agrees_across_retained_types_after_gc() {
 #[test]
 fn unordered_helper_hash_is_independent_of_input_order() {
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     assert!(boolean(
@@ -61,8 +61,7 @@ fn collection_hash_matches_independently_decoded_primary_values() {
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 55);
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     for case in cases {
@@ -107,8 +106,7 @@ fn collection_hash_matches_independently_decoded_primary_values() {
 fn cached_hash_suppresses_effects_and_recovers_after_a_throw() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session
@@ -165,8 +163,7 @@ fn element_throw_stops_next_and_cons_cache_survives_gc() {
     use suss_cli::portable_session::SessionError;
     use wasmtime::Val;
     let mut session = Session::new().unwrap();
-    session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+    semantic_compilation::eval(&mut session, include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session
