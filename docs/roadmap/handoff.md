@@ -28928,3 +28928,40 @@ default-budget constructor control 2/2 at the unchanged 10M; cumulative fuel
 8/8; sealed 5/5; closed 5/5; compiled bootstrap 4/4; two bootstrap generations
 identical. The workspace baseline and final-head CI have not yet run on this
 source.
+
+## CI-driven sealing refinements and CLJS-only test cleanup (2026-10-26, #274/#275/#276)
+
+CI on 6a17b39 (foundation pass; integration shards 0, 1, 3, 4, 5 and 7 failed,
+2 passed) exposed tests asserting ClojureScript-only behavior and two rule
+refinements:
+
+- Named access now uses separate get and set guards. Built-in instance fields
+  stay private and methods public; built-in classes allow static reads such as
+  `(.-EMPTY PersistentVector)` and `(.fromArray PersistentVector arr true)` but
+  not `prototype`, and reject all writes.
+- `PUBLIC_FIELD_TYPES` keeps the documented `high`/`low` words of
+  `WitSigned64`/`WitUnsigned64` open: they hold only scalars, and WIT exact
+  integer programs read them.
+
+Removed or rewritten to Clojure semantics: core class factory patching
+(`fromArray`, `createAsIfByAssoc`), metadata cycles via `set!` of `.-meta`, core
+protocol extension onto `number` (one indexing, two reduction and the empty
+fallback cases; a later reduction case depended on that extension), chunk
+backing-array mutation (three lazy cases and their oracle ID list), an Atom
+`set!` field test (now a `^:mutable` user field) and identifier hash-cache reads
+(now `hash`). Core-internal structural probes (vector trie, subvector sharing,
+chunk storage, decoder robustness, reduction anchors, atom validator state) use
+`Session::eval_privileged`. The named-property provenance whole-file hash is
+refreshed; its pinned guard region is unchanged.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap   # twice; identical
+python3 scripts/verify_bootstrap_identity.py
+python3 -m unittest discover -s scripts -p 'test_*.py'
+cargo test --locked --no-fail-fast -p suss-cli --test <each edited suite> -p suss-compile --test <each edited suite> -- --test-threads=2
+```
+
+Every edited suite passes locally, including compile_expr 302 (14 existing
+ignores), component 30, AOT lists 10, value decoder 25, vectors 8, metadata 10,
+lazy transformations 4 and quoted identifiers 3; script tests 349 OK. The
+workspace baseline and final-head CI remain to run.

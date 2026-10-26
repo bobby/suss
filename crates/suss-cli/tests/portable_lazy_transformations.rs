@@ -5,7 +5,7 @@ use suss_reader::forms::{Form, Kind};
 
 const FIXTURE: &str = include_str!("../../../tests/oracle/fixtures/lazy-transformations-probe.sus");
 const CASES: &str = include_str!("../../../tests/oracle/lazy-transformation-cases.json");
-const IDS: [&str; 41] = [
+const IDS: [&str; 38] = [
     "map-demand-0",
     "map-demand-1",
     "map-demand-31",
@@ -33,17 +33,14 @@ const IDS: [&str; 41] = [
     "map-ordered-2-inputs",
     "map-ordered-3-inputs",
     "map-ordered-4-inputs",
-    "chunk-buffer-sharing-finalization",
     "map-transducer-reduced-identity",
     "filter-transducer-reduced-identity",
     "map-transducer-callback-throw-order",
     "filter-transducer-reducer-throw-order",
     "map-live-first-helper",
     "filter-live-first-helper",
-    "map-chunk-read-mutation",
     "map-live-recursive-helper",
     "map-live-chunk-helper",
-    "filter-chunk-read-mutation",
     "filter-live-recursive-helper",
     "filter-live-chunk-helper",
     "map-transducer-live-variadic-apply",
@@ -190,7 +187,8 @@ fn unforced_transformations_survive_with_only_host_handles() {
 fn handed_chunk_preserves_actual_backing_array_identity_after_gc() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.set_operation_fuel(100_000_000);
-        let storage = session.eval("(let [buffer (cljs.core/chunk-buffer 2) backing (.-buf buffer)] (cljs.core/chunk-append buffer nil) (cljs.core/chunk-append buffer false) (array backing (cljs.core/chunk buffer)))").unwrap();
+        // Chunk storage is private to suss.core; this host probe is privileged.
+        let storage = session.eval_privileged("(let [buffer (cljs.core/chunk-buffer 2) backing (.-buf buffer)] (cljs.core/chunk-append buffer nil) (cljs.core/chunk-append buffer false) (array backing (cljs.core/chunk buffer)))").unwrap();
         session.collect().unwrap();
         session
             .inspect(&storage, |mut store, value| {

@@ -275,14 +275,6 @@
       }
     },
     {
-      "id": "nth-native-number",
-      "source": "(do (extend-type number IIndexed (-nth ([x n] (+ x n)) ([x n nf] (+ x n)))) (nth 41 1))",
-      "expected": {
-        "tag": "f64",
-        "bits": "4045000000000000"
-      }
-    },
-    {
       "id": "nth-nil",
       "source": "(nil? (nth nil 0))",
       "expected": {

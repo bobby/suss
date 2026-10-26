@@ -459,22 +459,6 @@
       }
     },
     {
-      "id": "reduce-native-number-dispatch",
-      "source": "(do (extend-type number IReduce (-reduce ([x f] x) ([x f init] (+ x init)))) (reduce + 41))",
-      "expected": {
-        "tag": "f64",
-        "bits": "4044800000000000"
-      }
-    },
-    {
-      "id": "reduce-native-number-start",
-      "source": "(reduce + 17 41)",
-      "expected": {
-        "tag": "f64",
-        "bits": "404d000000000000"
-      }
-    },
-    {
       "id": "reduce-iterator-hasnext-stops",
       "source": "(do (def review-iter-trace 0) (deftype ReviewIterator [^:mutable n] Object (hasNext [_] (set! review-iter-trace (+ (* review-iter-trace 10) 1)) (< n 3)) (next [_] (set! review-iter-trace (+ (* review-iter-trace 10) 2)) (let [v n] (set! n (inc n)) v))) (deftype ReviewIterable [] IIterable (-iterator [_] (ReviewIterator. 0))) (reduce (fn [a b] (reduced b)) 0 (ReviewIterable.)) review-iter-trace)",
       "expected": {

@@ -413,7 +413,8 @@ fn public_command_initializer_failure_preserves_the_actual_language_payload() {
 #[test]
 fn shipped_bootstrap_keeps_native_integrity_import_out_of_portable_runtime() {
     use portable::resolve::Phase;
-    for (phase, expected) in [(Phase::Runtime, 0), (Phase::Macro, 1)] {
+    // Neither phase carries a compiler-integrity import (design decision 2026-10-25).
+    for (phase, expected) in [(Phase::Runtime, 0), (Phase::Macro, 0)] {
         let bootstrap = portable::bootstrap::shipped(phase).unwrap();
         let mut private = 0;
         for payload in wasmparser::Parser::new(0).parse_all(&bootstrap.wasm) {

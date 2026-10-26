@@ -59,9 +59,11 @@ fn canonical_from_value(
     }
 }
 
+// Host-side anchors read core class properties, which are private to
+// suss.core; this probe uses the host's privileged evaluation.
 fn canonical(session: &mut Session, source: &str, label: &str) -> CanonicalClass {
     let anchor = session
-        .eval(source)
+        .eval_privileged(source)
         .unwrap_or_else(|error| panic!("{label} anchor {source}: {error:?}"));
     canonical_from_value(session, anchor, label)
 }

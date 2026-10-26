@@ -220,22 +220,12 @@ fn empty_retains_direct_and_native_fallback_and_live_dispatch() {
             &mut session,
             "(do (set! empty-trace 0) (def empty-direct (EmptyDirectProbe. {:marker 37})) (let [v (empty (do (set! empty-trace 1) empty-direct))] (and (= empty-trace 12) (= (count v) 0) (= (:marker (meta v)) 37))))",
         );
-        session.eval("(extend-type number cljs.core/IEmptyableCollection (-empty [n] (do (set! empty-trace (+ (* empty-trace 10) 4)) (with-meta [] {:marker n}))))").unwrap();
-        truth(
-            &mut session,
-            "(and (not (implements? cljs.core/IEmptyableCollection 17)) (satisfies? cljs.core/IEmptyableCollection 17))",
-        );
-        truth(
-            &mut session,
-            "(do (set! empty-trace 0) (let [v (empty (do (set! empty-trace 1) 17))] (and (= empty-trace 14) (= (count v) 0) (= (:marker (meta v)) 17))))",
-        );
+        // Core protocols of host types are closed to user code (design
+        // decision 2026-10-25), so a non-collection has no empty value.
+        truth(&mut session, "(nil? (empty 17))");
         truth(
             &mut session,
             "(with-redefs [cljs.core/-empty (fn [v] (do (set! empty-trace 56) []))] (do (set! empty-trace 0) (empty empty-direct) (= empty-trace 56)))",
-        );
-        truth(
-            &mut session,
-            "(with-redefs [cljs.core/-empty (fn [v] (do (set! empty-trace 78) []))] (do (set! empty-trace 0) (empty 17) (= empty-trace 78)))",
         );
         truth(
             &mut session,

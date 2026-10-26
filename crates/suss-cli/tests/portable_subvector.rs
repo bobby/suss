@@ -19,8 +19,10 @@ fn number(session: &mut Session, source: &str) -> u64 {
         })
         .unwrap()
 }
+// Probes also inspect subvector sharing through fields private to suss.core;
+// these core-internal checks use the host's privileged evaluation.
 fn truth(session: &mut Session, source: &str) {
-    let value = session.eval(source).unwrap();
+    let value = session.eval_privileged(source).unwrap();
     let raw = session
         .inspect(&value, |store, value| {
             Ok(value

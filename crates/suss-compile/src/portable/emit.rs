@@ -178,11 +178,11 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         }
                         Nominal::CallableGet => { names.insert("callable-property-get"); }
                         Nominal::NamedGet => {
-                            names.insert("builtin-internal-guard");
+                            names.insert("builtin-internal-get-guard");
                             names.insert("named-property-get");
                         }
                         Nominal::NamedSet => {
-                            names.insert("builtin-internal-guard");
+                            names.insert("builtin-internal-set-guard");
                             names.insert("named-property-set");
                         }
                         Nominal::CoreNamedGet => {
@@ -1216,7 +1216,11 @@ fn emit_function(
                                 // fields: guard(owner, name) leaves the owner.
                                 if position == 1 && matches!(operation, Nominal::NamedGet | Nominal::NamedSet) {
                                     function
-                                        .instruction(&Call(index("builtin-internal-guard")))
+                                        .instruction(&Call(index(if *operation == Nominal::NamedSet {
+                                            "builtin-internal-set-guard"
+                                        } else {
+                                            "builtin-internal-get-guard"
+                                        })))
                                         .instruction(&LocalGet(argument.0 as u32 + offset));
                                 }
                             }

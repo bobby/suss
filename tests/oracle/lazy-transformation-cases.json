@@ -871,54 +871,6 @@
       }
     },
     {
-      "id": "chunk-buffer-sharing-finalization",
-      "source": "(let [buffer (cljs.core/chunk-buffer 2) backing (.-buf buffer)] (cljs.core/chunk-append buffer nil) (cljs.core/chunk-append buffer false) (let [handed (cljs.core/chunk buffer) repeated (cljs.core/chunk buffer)] [(identical? backing (.-arr handed)) (nil? (.-buf buffer)) (count buffer) (count handed) (count repeated) (try (cljs.core/chunk-append buffer 99) false (catch :default payload true)) (count buffer) (nth handed 0) (nth handed 1) (try (nth repeated 0) false (catch :default payload true))]))",
-      "expected": {
-        "tag": "vector",
-        "items": [
-          {
-            "tag": "bool",
-            "value": true
-          },
-          {
-            "tag": "bool",
-            "value": true
-          },
-          {
-            "tag": "f64",
-            "bits": "4000000000000000"
-          },
-          {
-            "tag": "f64",
-            "bits": "4000000000000000"
-          },
-          {
-            "tag": "f64",
-            "bits": "4000000000000000"
-          },
-          {
-            "tag": "bool",
-            "value": true
-          },
-          {
-            "tag": "f64",
-            "bits": "4000000000000000"
-          },
-          {
-            "tag": "nil"
-          },
-          {
-            "tag": "bool",
-            "value": false
-          },
-          {
-            "tag": "bool",
-            "value": true
-          }
-        ]
-      }
-    },
-    {
       "id": "map-transducer-reduced-identity",
       "source": "(do (set! lazy-transform-trace []) (let [sentinel (reduced 7) rf (fn [acc input] (set! lazy-transform-trace (conj lazy-transform-trace 2)) sentinel) transformed ((map (fn [x] (set! lazy-transform-trace (conj lazy-transform-trace 1)) x)) rf) actual (transformed 0 3)] [(identical? sentinel actual) (reduced? actual) (deref actual) lazy-transform-trace]))",
       "expected": {
@@ -1060,36 +1012,6 @@
       }
     },
     {
-      "id": "map-chunk-read-mutation",
-      "source": "(do (set! lazy-transform-trace []) (let [buffer (cljs.core/chunk-buffer 2) backing (.-buf buffer)] (cljs.core/chunk-append buffer 1) (cljs.core/chunk-append buffer 2) (let [input (cljs.core/chunk-cons (cljs.core/chunk buffer) nil) transformed (map (fn [x] (set! lazy-transform-trace (conj lazy-transform-trace x)) (if (= x 1) (aset backing 0 99) nil) x) input)] [(first transformed) (nth transformed 1) lazy-transform-trace])))",
-      "expected": {
-        "tag": "vector",
-        "items": [
-          {
-            "tag": "f64",
-            "bits": "3ff0000000000000"
-          },
-          {
-            "tag": "f64",
-            "bits": "4000000000000000"
-          },
-          {
-            "tag": "vector",
-            "items": [
-              {
-                "tag": "f64",
-                "bits": "3ff0000000000000"
-              },
-              {
-                "tag": "f64",
-                "bits": "4000000000000000"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
       "id": "map-live-recursive-helper",
       "source": "(let [original cljs.core/map transformed (map identity (list 1 2))] (try (set! cljs.core/map (fn ([callback] (list 88)) ([callback coll] (list 77)))) [(first transformed) (first (rest transformed))] (finally (set! cljs.core/map original))))",
       "expected": {
@@ -1122,36 +1044,6 @@
               {
                 "tag": "f64",
                 "bits": "4022000000000000"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "id": "filter-chunk-read-mutation",
-      "source": "(do (set! lazy-transform-trace []) (let [buffer (cljs.core/chunk-buffer 2) backing (.-buf buffer)] (cljs.core/chunk-append buffer 1) (cljs.core/chunk-append buffer 2) (let [input (cljs.core/chunk-cons (cljs.core/chunk buffer) nil) transformed (filter (fn [x] (set! lazy-transform-trace (conj lazy-transform-trace x)) (if (= x 1) (aset backing 0 99) nil) true) input)] [(first transformed) (nth transformed 1) lazy-transform-trace])))",
-      "expected": {
-        "tag": "vector",
-        "items": [
-          {
-            "tag": "f64",
-            "bits": "4058c00000000000"
-          },
-          {
-            "tag": "f64",
-            "bits": "4000000000000000"
-          },
-          {
-            "tag": "vector",
-            "items": [
-              {
-                "tag": "f64",
-                "bits": "3ff0000000000000"
-              },
-              {
-                "tag": "f64",
-                "bits": "4000000000000000"
               }
             ]
           }

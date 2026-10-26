@@ -2,6 +2,16 @@
 use super::*;
 use crate::portable::resolve::{NominalForm, ProtocolMethod};
 
+/// Core value types whose fields are their documented public API. They hold
+/// only scalars, with no storage arrays or hash caches, so reading them exposes
+/// nothing private (design decision 2026-10-25). Their fields are immutable;
+/// rejecting named writes to immutable fields is #278.
+const PUBLIC_FIELD_TYPES: &[&str] = &[
+    // Exact WIT 64-bit integers: high and low unsigned 32-bit words.
+    "WitSigned64",
+    "WitUnsigned64",
+];
+
 impl Analyzer<'_> {
     pub(super) fn nominal(&self, form: &Form, operation: Nominal, arguments: Vec<Hir>) -> Hir {
         let operation = match operation {
@@ -20,9 +30,11 @@ impl Analyzer<'_> {
             },
         }
     }
-    /// Core bootstrap types get descriptors whose internals are private.
-    fn type_descriptor(&self, form: &Form, schema: Vec<Hir>) -> Hir {
-        let operation = if self.privileged { Nominal::CoreDescriptor } else { Nominal::Descriptor };
+    /// Core bootstrap types get descriptors whose internals are private,
+    /// except the few value types whose fields are their public API.
+    fn type_descriptor(&self, form: &Form, name: Option<&str>, schema: Vec<Hir>) -> Hir {
+        let public = name.is_some_and(|name| PUBLIC_FIELD_TYPES.contains(&name));
+        let operation = if self.privileged && !public { Nominal::CoreDescriptor } else { Nominal::Descriptor };
         self.nominal(form, operation, schema)
     }
     pub(super) fn local(&self, form: &Form, id: BindingId) -> Hir {
@@ -568,7 +580,7 @@ impl Analyzer<'_> {
         }
         let schema = self.type_schema(&fields)?;
         let (declaration, global) = self.type_declaration(form, &args[0], declared.len(), record)?;
-        let descriptor = self.type_descriptor(form, schema);
+        let descriptor = self.type_descriptor(form, Some(global.name()), schema);
         let class = self.nominal(form, Nominal::Class, vec![descriptor]);
         let class = self.fresh_binding(form, class);
         let class_value = self.local(form, class.id);
@@ -619,7 +631,7 @@ impl Analyzer<'_> {
         };
         // Own generated constructor references are available during method analysis.
         self.definition(form, &[arrow_name.clone()], false)?;
-        let descriptor = self.type_descriptor(form, schema);
+        let descriptor = self.type_descriptor(form, Some(&symbol.name), schema);
         let class = self.nominal(form, Nominal::Class, vec![descriptor]);
         let binding = self.fresh_binding(form, class);
         let class_value = self.local(form, binding.id);
@@ -833,7 +845,7 @@ impl Analyzer<'_> {
             .environment
             .reify_class_key(self.phase, generation, site);
         let type_declaration = symbol(cell.name(), Some("suss.internal.reify"));
-        let descriptor = self.type_descriptor(form, schema);
+        let descriptor = self.type_descriptor(form, None, schema);
         let class = self.nominal(form, Nominal::Class, vec![descriptor]);
         let binding = self.fresh_binding(form, class);
         let class_value = self.local(form, binding.id);

@@ -2141,8 +2141,9 @@ fn test_debug_lazy_seq_simple() {
 
 #[test]
 fn test_debug_set_mutable() {
-    // Test mutable field set! on the pinned four-field Atom (state meta validator watches)
-    let result = run_expr_i32("(let [a (->Atom 10 nil nil nil)] (set! (.-state a) 20) (.-state a))");
+    // Mutable field set! on a user type; built-in fields such as Atom state are
+    // private to suss.core (design decision 2026-10-25).
+    let result = run_expr_i32("(do (deftype DebugMutableBox [^:mutable state]) (let [a (DebugMutableBox. 10)] (set! (.-state a) 20) (.-state a)))");
     assert_eq!(result, 20);
 }
 

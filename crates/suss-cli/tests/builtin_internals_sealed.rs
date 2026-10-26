@@ -1,7 +1,8 @@
 //! Built-in `suss.core` type internals are private to core (design decision
-//! 2026-10-25, #274). User code cannot read or write implementation fields or
-//! class properties of built-in types, while user deftype/defrecord fields keep
-//! ordinary access.
+//! 2026-10-25, #274). User code cannot read or write implementation fields of
+//! built-in instances, read built-in prototypes, or write built-in class
+//! properties. Methods and static reads stay public, and user deftype/defrecord
+//! fields keep ordinary access.
 #[path = "../../suss-compile/tests/support/portable_decode.rs"]
 mod portable_decode;
 
@@ -27,7 +28,7 @@ const SEALED: &[(&str, &str)] = &[
     ("map entry key read", "(.-key (first {:a 1}))"),
     ("sorted map tree read", "(.-tree (sorted-map 1 2))"),
     ("lazy seq function read", "(.-fn (map inc [1]))"),
-    ("class property read", "(.-EMPTY PersistentVector)"),
+    ("class prototype read", "(.-prototype PersistentVector)"),
     ("class property write", "(set! (.-EMPTY PersistentVector) nil)"),
 ];
 
@@ -82,6 +83,9 @@ fn user_code_cannot_reach_builtin_internals_in_either_phase() {
         assert_eq!(observe(&mut session, "(get {:a 1} :a)"), Observation::Number(1f64.to_bits()));
         assert_eq!(observe(&mut session, "(= (hash :k) (hash :k))"), Observation::Bool(true));
         assert_eq!(observe(&mut session, "(name 'sym)"), text("sym"));
+        // Static reads of built-in classes stay public, as in Clojure.
+        assert_eq!(observe(&mut session, "(count (.-EMPTY PersistentVector))"), Observation::Number(0f64.to_bits()));
+        assert_eq!(observe(&mut session, "(count (.fromArray PersistentVector (array 1 2) true))"), Observation::Number(2f64.to_bits()));
         // Methods of built-in instances stay public, as in Clojure.
         assert_eq!(observe(&mut session, "(.indexOf [1 2 3] 2)"), Observation::Number(1f64.to_bits()));
     }
