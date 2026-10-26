@@ -76,13 +76,11 @@ fuel; materialization bills that work when performed. Guest constructor and
 callback execution consume additional fuel. This avoids expanding every logical
 occurrence merely to preflight it and does not move or omit callbacks.
 
-Immutable native source ownership does not make the transported guest object's
-reachable arrays immutable. Sharing across expansions must preserve both the
-pinned captured-declaration metadata identity and the original source facts,
-without trusting guest-mutated storage or suppressing live construction callbacks.
-Fresh construction alone prevents mutation leakage but does not satisfy that
-cross-invocation identity contract. Compiler record/revision sharing and
-intentional quote aliases within one graph build remain separate requirements.
+Transported compiler data is immutable Clojure data (design decision
+2026-10-25): built-in internals are private to `suss.core`, so a macro cannot
+mutate a transported object's storage. Sharing within one graph build follows
+compiler records and intentional quote aliases; identity across expansions is
+unspecified beyond Clojure's guarantees.
 
 IR dominance intersections use dense bitsets and charge word operations. Runtime
 field-name validation reads an immutable string length once per call. Prototype
@@ -101,23 +99,9 @@ are charged in full before hashing can stop; successful hash framing remains
 unchanged. This cache admission policy does not reject large source forms or
 change their metadata, execution effects or operation allowance.
 
-Native Session installation reserves `suss.compiler-integrity` for future
-authenticated compiler operations. Ordinary artifacts cannot inherit that
-namespace from a populated linker or claim it through source provenance.
-Import checks debit the active Store budget and poll cancellation. All artifacts
-are checked before allocating binding cells, executing module start functions,
-or publishing staged environments.
-Only the embedded bootstrap, checked against its manifest and artifact identity,
-receives a private Rust authority token. Installation checks each module against
-that token using its verified executable-body digest and phase; authority does
-not extend to other batch members. Public artifact restoration and ordinary
-evaluation receive no token. The Macro bootstrap's reserved memo hook now stages
-provisional receipts only for explicitly recorded constructor watches; Runtime
-bootstrap keeps ordinary setters. Weak-list scans, capacity growth/relocation,
-receipt staging and validation debit the active budget and poll cancellation.
-No lock spans guest execution. A store followed by exhaustion publishes no new
-receipt. Complete source validation and checked metadata reuse remain separate
-requirements; a protected write alone grants no retained-root authority.
+Native Session installation checks every artifact, debiting the active Store
+budget and polling cancellation, before allocating binding cells, executing
+module start functions, or publishing staged environments.
 
 Nominal construction likewise reads schema length and each outer field-name
 length once during its callback-free duplicate-name normalization. It still
@@ -192,45 +176,6 @@ Session invocation uses the same per-argument owner scan and per-reference
 copy charging as the compiler data builders. These charges debit the existing
 operation rather than establishing helper-local allowances.
 
-Initial class/schema witnesses are staged with the private post-provision method
-registry, before caller exposure. They bind all bridge constructor/descriptor
-references and the private SourceArray descriptor to their original schema
-storage. They exclude protocol tables: unrelated live protocol changes do not
-invalidate this class/schema check. Recording checks the used class before
-native construction and audits the full captured set again after callbacks;
-failed checks decline recorded-source eligibility without substituting pristine
-constructors into ordinary transport. Missing bootstrap authority declines.
-This does not establish pristine prototype authority, descendants, authenticated
-UID/memo transitions, or retained-root publication. Existing full seed snapshots
-can still conservatively decline unrelated descriptor changes independently.
-
-
-Prototype-origin witnesses are optional private Runtime-Wasm state. AOT and
-minimal Sessions leave it off. Provisioning begins collection before shipped
-core runs and seals once to the same initial 23 constructor references used by
-class/schema authority. Guest artifacts cannot import the lifecycle controls.
-Only inline execution of the genuine owned-prototype creation branch can issue
-an entry; there is no exported registration function. The query returns a fresh
-flat copy and checks the existing cache without invoking its allocating getter.
-
-Creation stages a new entry/state before one private reference publication, then
-performs the ordinary cache setter. A fuel trap can leave an orphan origin, but
-querying requires the matching cached prototype and creator descriptor. If the
-cache setter publishes before trapping, that prototype already has its real
-factory origin. Retrying can replace the bounded constructor slot. Sealing copies
-selected entries without collection links, releasing the transient head and all
-unselected entries. A failed provisioning call does not expose a Session; retry
-requires a fresh Session rather than reconfiguring the once-sealed registry.
-
-The audit checks original own-storage/parent/backlink references, independent
-"constructor" spelling, flags and nil UID. The default Object-prototype graph is
-captured only in the private initial interval and conservatively must remain
-unchanged. Constructor/descriptor backlinks use initial class/schema authority,
-so unrelated source ICounted changes are not recursively frozen. Additional own
-properties, changed default Object state, authenticated UID transitions, special
-Error prototypes and user/custom constructors are outside this eligibility
-policy. Generic direct constructor facts still work for unregistered types.
-These prototype facts alone do not authorize memo writes or retained-root reuse.
 All Wasm work and explicit native validation retain the existing fuel defaults.
 
 Native form imports still validate the complete form and plan its exact raw key.

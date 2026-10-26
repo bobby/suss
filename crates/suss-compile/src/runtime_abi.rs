@@ -38,8 +38,6 @@ mod numeric_hash;
 mod object_descriptors;
 mod object_methods;
 mod owned_prototypes;
-mod prototype_origins;
-mod dispatch_observer;
 mod predicates;
 mod primitive_constructors;
 mod range_errors;
@@ -267,7 +265,6 @@ fn expected_prelude() -> &'static Vec<wasmparser::SubType> {
 }
 
 struct Builder {
-    dispatch_observer: Option<dispatch_observer::Hooks>,
     types: TypeSection,
     functions: FunctionSection,
     exports: ExportSection,
@@ -320,19 +317,13 @@ impl Builder {
 /// Target adapters and compiler lowering remain separate.
 pub fn module() -> Vec<u8> {
     static BYTES: std::sync::OnceLock<Vec<u8>> = std::sync::OnceLock::new();
-    BYTES.get_or_init(|| build_module(false)).clone()
+    BYTES.get_or_init(build_module).clone()
 }
-// Host-only Macro variant. Ordinary Runtime/AOT bytes retain no observation hooks.
-pub(crate) fn macro_module() -> Vec<u8> {
-    static BYTES: std::sync::OnceLock<Vec<u8>> = std::sync::OnceLock::new();
-    BYTES.get_or_init(|| build_module(true)).clone()
-}
-fn build_module(observe_dispatch: bool) -> Vec<u8> {
+fn build_module() -> Vec<u8> {
     use Instruction::*;
     let helper = numeric::helper();
     let numeric_info = helper.info();
     let mut b = Builder {
-        dispatch_observer: None,
         types: helper.types,
         functions: helper.functions,
         exports: ExportSection::new(),
@@ -341,7 +332,6 @@ fn build_module(observe_dispatch: bool) -> Vec<u8> {
         next_type: helper.type_count,
         names: std::collections::BTreeMap::new(),
     };
-    if observe_dispatch { dispatch_observer::prepare(&mut b); }
     let number = HeapType::Concrete(NUMBER);
     let string = HeapType::Concrete(STRING);
     for (name, sentinel) in [("nil", 0), ("false", 2), ("true", 4)] {
@@ -773,7 +763,6 @@ fn build_module(observe_dispatch: bool) -> Vec<u8> {
     arithmetic_functions.extend(object_descriptor_functions);
     arithmetic_functions.extend(exception_info::functions(&mut b));
     type_values::functions(&mut b);
-    prototype_origins::functions(&mut b);
     let prototype_functions = owned_prototypes::functions(&mut b);
     arithmetic_functions.extend(prototype_functions);
     let coercion_functions = coercions::functions(&mut b);
@@ -1112,8 +1101,6 @@ fn build_module(observe_dispatch: bool) -> Vec<u8> {
         },
         &ConstExpr::extended([GlobalGet(object_methods::DEFAULT_THIS)]),
     );
-    prototype_origins::append_global(&mut globals);
-    dispatch_observer::finish(&mut b, &mut globals);
     b.exports.export("array-join-active", ExportKind::Global, array_join::ACTIVE);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

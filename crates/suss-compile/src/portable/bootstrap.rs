@@ -1,7 +1,5 @@
 //! Versioned portable bootstrap artifacts. Source analysis restores compiler facts;
 //! guest initializers execute from shipped Wasm, never from a host evaluator.
-mod memo_sites;
-pub(in crate::portable) use memo_sites::{Emission, VerifiedMemoPlan};
 use super::{
     Diagnostic, PreparedFragment,
     resolve::{Environment, Phase},
@@ -11,13 +9,6 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::sync::OnceLock;
 
-// Reserved for host-private compiler integrity capabilities. Ordinary artifacts
-// cannot inherit these imports from an otherwise populated Session linker.
-pub(crate) const COMPILER_INTEGRITY_IMPORT_MODULE: &str = "suss.compiler-integrity";
-pub(crate) const MEMO_WRITE_IMPORT_NAME: &str = "memo-field-set";
-pub(crate) fn memo_owner_slots() -> impl Iterator<Item = (&'static str, usize)> {
-    memo_sites::owner_slots()
-}
 pub const FORMAT_VERSION: u32 = 1;
 pub const SOURCE: &str = include_str!("../../../../runtime/core-import/suss/core.sus");
 const DEPENDENCIES: &[u8] = include_bytes!("../../../../runtime/core-import/manifest.json");
@@ -96,15 +87,7 @@ fn catalog(phase: Phase) -> Result<super::AnalyzedFragment, Diagnostic> {
 pub fn generate(phase: Phase) -> Result<(Vec<u8>, Manifest), Diagnostic> {
     let analyzed = catalog(phase)?;
     let ir = super::ir::lower(&analyzed.hir)?;
-    let memo_plan = memo_sites::verified_plan(SOURCE, &ir, phase)?;
-    let wasm = match phase {
-        // Portable Runtime providers must remain self-contained for AOT/WASI.
-        Phase::Runtime => super::compile_ir(memo_plan.root())?,
-        Phase::Macro => {
-            let wasm = super::emit::emit_memo_plan(&memo_plan)?;
-            super::artifact_identity::annotate_ir(&wasm).map_err(error)?
-        }
-    };
+    let wasm = super::compile_ir(&ir)?;
     let dependencies = vec![("core-import-manifest".into(), sha256(DEPENDENCIES))];
     let wasm = super::artifact_identity::annotate_source(
         &wasm, phase, Some(&super::SourceOrigin::new(SOURCE, None)), Some(&dependencies),
@@ -156,25 +139,8 @@ pub fn shipped(phase: Phase) -> Result<&'static PreparedFragment, Diagnostic> {
     shipped_bundle(phase).map(|bundle| &bundle.fragment)
 }
 
-/// Constructed only from the checked, embedded bootstrap, never from caller
-/// provenance or public restore. The digest identifies verified executable bytes.
-pub(crate) struct IntegrityAuthority {
-    phase: Phase,
-    body_sha256: String,
-}
-impl IntegrityAuthority {
-    pub(crate) fn permits(&self, phase: Phase, identity: &super::artifact_identity::Manifest) -> bool {
-        self.phase == phase
-            && identity.phase.as_deref() == Some(phase_name(phase))
-            && self.body_sha256 == identity.wasm_sha256
-    }
-}
 struct ShippedBootstrap {
     fragment: PreparedFragment,
-    authority: IntegrityAuthority,
-}
-pub(crate) fn shipped_authority(phase: Phase) -> Result<&'static IntegrityAuthority, Diagnostic> {
-    shipped_bundle(phase).map(|bundle| &bundle.authority)
 }
 fn shipped_bundle(phase: Phase) -> Result<&'static ShippedBootstrap, Diagnostic> {
     static RUNTIME: OnceLock<Result<ShippedBootstrap, String>> = OnceLock::new();
@@ -192,10 +158,8 @@ fn shipped_bundle(phase: Phase) -> Result<&'static ShippedBootstrap, Diagnostic>
         ),
     };
     cache
-        .get_or_init(|| restore_checked(phase, wasm, json).map(|(fragment, identity)| ShippedBootstrap {
-            fragment,
-            authority: IntegrityAuthority { phase, body_sha256: identity.wasm_sha256 },
-        }).map_err(|failure| failure.message))
+        .get_or_init(|| restore(phase, wasm, json).map(|fragment| ShippedBootstrap { fragment })
+            .map_err(|failure| failure.message))
         .as_ref()
         .map_err(|message| error(message.clone()))
 }

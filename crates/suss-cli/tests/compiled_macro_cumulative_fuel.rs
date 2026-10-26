@@ -68,216 +68,9 @@ fn boolean(session: &mut Session, value: &suss_compile::portable_session::Sessio
         .unwrap()
 }
 
-#[test]
-fn source_metadata_keeps_identity_after_witnessed_hash_memo_warming() {
-    fn booleans(caller: &mut Session, value: &suss_compile::portable_session::SessionValue) -> Vec<bool> {
-        caller.collect().unwrap();
-        let bridge = suss_compile::portable_macro_data::FormBridge::new(caller).unwrap();
-        let form = bridge.read(caller, value, 0..1).unwrap();
-        let Kind::Vector(items) = &form.kind else { panic!("Boolean observation vector") };
-        items.iter().map(|item| {
-            let Kind::Bool(value) = &item.kind else { panic!("actual Boolean observation") };
-            *value
-        }).collect()
-    }
-    const OBSERVE: &str = r#"(defmacro inspect-memo [warm]
-      (let [info (get (get (get &env :ns) :defs) 'review-memo-target)
-            metadata (get info :meta)]
-        (defonce saved-memo-metadata metadata)
-        (if warm
-          (let [before (.-__hash metadata)
-                result (hash metadata)
-                after (.-__hash metadata)]
-            (list 'quote [(identical? saved-memo-metadata metadata)
-                          (nil? before) (number? after) (= result after)]))
-          (list 'quote [(identical? saved-memo-metadata metadata)
-                        (number? (.-__hash metadata))]))))"#;
-    for mut caller in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
-        caller.eval("(def ^{:doc \"memo identity\"} review-memo-target 0)").unwrap();
-        let mut macros = CompiledMacros::new().unwrap();
-        macros.define(OBSERVE).unwrap();
-        let warm = caller.eval_with_macros("(inspect-memo true)", &mut macros).unwrap();
-        assert_eq!(booleans(&mut caller, &warm), [true, true, true, true],
-            "witness the nil-to-number memo transition, not just a hash call");
-        let again = caller.eval_with_macros("(do (inspect-memo false))", &mut macros).unwrap();
-        assert_eq!(booleans(&mut caller, &again), [true, true],
-            "ordinary hash warming must preserve the captured declaration's metadata identity and memo");
-    }
-}
 
 
-// Pinned reference: tests/oracle/metadata-custom-hash-observations.json.
-// This supplemental boundary uses an equivalent user IHash implementation;
-// CLJS delegates its original method, while Suss executes the public core body.
-#[test]
-fn source_metadata_keeps_identity_with_a_replaced_hash_method() {
-    const OBSERVE: &str = r#"(defmacro inspect-custom-hash [warm]
-      (let [metadata (get (get (get (get &env :ns) :defs) 'custom-hash-target) :meta)
-            audit (get metadata :audit)]
-        (defonce saved-custom-metadata metadata)
-        (defonce saved-custom-audit audit)
-        (let [before (.-__hash audit)
-              result (if warm (hash audit) nil)]
-          (list 'quote [(identical? saved-custom-metadata metadata)
-                        (identical? saved-custom-audit audit)
-                        (= 17 (get audit :x))
-                        (if warm (nil? before) true)
-                        (if warm (number? (.-__hash audit)) true)
-                        (if warm (= result (.-__hash audit)) true)]))))"#;
-    let mut after_observations = Vec::new();
-    for mut caller in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
-        caller.eval("(def ^{:audit {:x 17}} custom-hash-target 17)").unwrap();
-        let mut macros = CompiledMacros::new().unwrap();
-        macros.define(OBSERVE).unwrap();
-        let first = caller.eval_with_macros("(inspect-custom-hash false)", &mut macros).unwrap();
-        assert_eq!(suss_cli::portable_repl::display(&mut caller, &first).unwrap(),
-                   "[true true true true true true]");
-        macros.define(r#"(defmacro install-custom-hash []
-          (extend-type PersistentArrayMap IHash
-          (-hash [self]
-            (let [memo (.-__hash self)]
-              (if (nil? memo)
-                (let [value (hash-unordered-coll self)]
-                  (set! (.-__hash self) value) value)
-                memo)))) nil)"#).unwrap();
-        caller.eval_with_macros("(install-custom-hash)", &mut macros).unwrap();
-        let before = caller.eval_with_macros("(do (inspect-custom-hash false))", &mut macros).unwrap();
-        assert_eq!(suss_cli::portable_repl::display(&mut caller, &before).unwrap(),
-                   "[true true true true true true]", "identity before custom memo warming");
-        caller.collect().unwrap();
-        let warm = caller.eval_with_macros("(inspect-custom-hash true)", &mut macros).unwrap();
-        assert_eq!(suss_cli::portable_repl::display(&mut caller, &warm).unwrap(),
-                   "[true true true true true true]", "custom memo miss must preserve identity");
-        caller.collect().unwrap();
-        let after = caller.eval_with_macros("(let [] (inspect-custom-hash false))", &mut macros).unwrap();
-        after_observations.push(suss_cli::portable_repl::display(&mut caller, &after).unwrap());
-    }
-    assert_eq!(after_observations, vec!["[true true true true true true]"; 2],
-               "identity after custom memo warming in Runtime and Macro callers");
-}
 
-// Reference: tests/oracle/metadata-custom-hash-order-observations.json.
-#[test]
-fn source_metadata_keeps_canonically_warmed_identity_after_hash_replacement() {
-    const OBSERVE: &str = r#"
-      (defmacro prime-before-replacement []
-        (def warm-before-dispatches 0)
-        (let [m (:meta (get (:defs (:ns &env)) 'warm-before-target))
-              a (:audit m)
-              before (.-__hash a)
-              h (hash a)
-              after (.-__hash a)]
-          (def saved-warm-before-metadata m)
-          (def saved-warm-before-audit a)
-          (def saved-warm-before-memo after)
-          (list 'quote [(nil? before) (number? after)
-                        (= h after) (= 17 (:x a))])))
-      (defmacro inspect-warm-before [hit expected-hash]
-        (let [m (:meta (get (:defs (:ns &env)) 'warm-before-target))
-              a (:audit m)
-              old-before (.-__hash saved-warm-before-audit)
-              actual-before (.-__hash a)
-              calls-before warm-before-dispatches
-              h (if hit (hash a) nil)
-              calls-after warm-before-dispatches
-              old-after (.-__hash saved-warm-before-audit)
-              actual-after (.-__hash a)]
-          (list 'quote
-            [(identical? saved-warm-before-metadata m)
-             (identical? saved-warm-before-audit a)
-             (number? old-before)
-             (number? actual-before)
-             (identical? old-before saved-warm-before-memo)
-             (identical? actual-before saved-warm-before-memo)
-             (= 17 (:x saved-warm-before-audit))
-             (= 17 (:x a))
-             (if hit (= h (if (nil? expected-hash) saved-warm-before-memo expected-hash)) true)
-             (identical? old-after old-before)
-             (identical? actual-after actual-before)
-             (= calls-after (if hit (inc calls-before) calls-before))
-             (if hit (if (nil? expected-hash) (identical? h actual-before) (= h expected-hash)) true)])))
-    "#;
-    const INSTALL: &str = r#"
-      (defmacro install-warm-before [constant]
-        (extend-type PersistentArrayMap IHash
-          (-hash [self]
-            (do
-              (if (identical? self saved-warm-before-audit)
-                (set! warm-before-dispatches (inc warm-before-dispatches)) nil)
-              (if constant 91
-                (let [memo (.-__hash self)]
-                  (if (nil? memo)
-                    (let [h (hash-unordered-coll self)]
-                      (set! (.-__hash self) h) h)
-                    memo)))))) nil)
-    "#;
-    let all_true = |n| format!("[{}]", vec!["true"; n].join(" "));
-    // Preserve completed rows even if a later setup/evaluation stage errors.
-    let mut observations: Vec<(String, String, String, String)> = Vec::new();
-    let mut errors = Vec::new();
-    for constant in [false, true] {
-      for macro_caller in [false, true] {
-        let phase = format!("{} / {}",
-            if macro_caller { "Macro" } else { "Runtime" },
-            if constant { "constant91" } else { "manual-warm-hit" });
-        let mut stage = "create";
-        let run = (|| -> Result<(), String> {
-            let mut caller = if macro_caller { Session::new_macro() }
-                             else { Session::new_repl() }
-                .map_err(|e| e.to_string())?;
-            stage = "declare";
-            caller.eval("(def ^{:audit {:x 17}} warm-before-target 17)")
-                .map_err(|e| e.to_string())?;
-            let mut macros = CompiledMacros::new().map_err(|e| e.to_string())?;
-            let observer_start = OBSERVE.find("(defmacro inspect-warm-before").unwrap();
-            stage = "define-prime";
-            macros.define(&OBSERVE[..observer_start]).map_err(|e| e.to_string())?;
-            let expected_hash = if constant { "91" } else { "nil" };
-            let before = format!("(do (inspect-warm-before false {expected_hash}))");
-            let hit = format!("(inspect-warm-before true {expected_hash})");
-            let after = format!("(let [] (inspect-warm-before false {expected_hash}))");
-            for (label, source, count) in [
-                ("canonical-warm", "(prime-before-replacement)", 4),
-                ("canonical-next-call", "(inspect-warm-before false nil)", 13),
-                ("custom-before-hit", before.as_str(), 13),
-                ("custom-hit", hit.as_str(), 13),
-                ("custom-after-hit", after.as_str(), 13),
-            ] {
-                stage = label;
-                if label == "canonical-next-call" {
-                    stage = "define-observer";
-                    macros.define(&OBSERVE[observer_start..]).map_err(|e| e.to_string())?;
-                    stage = label;
-                }
-                if label == "custom-before-hit" {
-                    stage = "install";
-                    macros.define(INSTALL).map_err(|e| e.to_string())?;
-                    caller.eval_with_macros(
-                        if constant { "(install-warm-before true)" }
-                        else { "(install-warm-before false)" }, &mut macros)
-                        .map_err(|e| e.to_string())?;
-                    stage = label;
-                }
-                caller.collect().map_err(|e| e.to_string())?;
-                let value = caller.eval_with_macros(source, &mut macros)
-                    .map_err(|e| e.to_string())?;
-                let actual = suss_cli::portable_repl::display(&mut caller, &value)
-                    .map_err(|e| e.to_string())?;
-                observations.push((phase.clone(), label.into(), actual, all_true(count)));
-            }
-            Ok(())
-        })();
-        if let Err(error) = run { errors.push(format!("{phase} {stage}: {error}")); }
-      }
-    }
-    // No identity assertion stops remaining observations or the other phase.
-    for (phase, stage, actual, expected) in &observations {
-        if actual != expected {
-            errors.push(format!("{phase} {stage}: {actual}; expected {expected}"));
-        }
-    }
-    assert!(errors.is_empty(), "observations={observations:?}\n{}", errors.join("\n"));
-}
 
 // Interpretation:
 // canonical-next-call isolates preexisting canonical receipt retention before
@@ -296,7 +89,10 @@ fn source_metadata_keeps_canonically_warmed_identity_after_hash_replacement() {
 
 
 #[test]
-fn source_metadata_is_fresh_after_a_macro_mutates_nested_guest_storage() {
+fn macros_cannot_mutate_transported_metadata_storage() {
+    // Built-in internals are private to suss.core (design decision 2026-10-25),
+    // so transported compiler data is immutable: the write fails and later
+    // invocations still observe the source metadata.
     const OBSERVE: &str = r#"(defmacro inspect-audit [replacement]
       (let [info (get (get (get &env :ns) :defs) 'review-metadata-target)
             audit (get (get info :meta) :audit)]
@@ -308,22 +104,13 @@ fn source_metadata_is_fresh_after_a_macro_mutates_nested_guest_storage() {
         macros.define(OBSERVE).unwrap();
         let first = caller.eval_with_macros("(inspect-audit nil)", &mut macros).unwrap();
         assert_eq!(number(&mut caller, &first), 17.0f64.to_bits());
-        let mutated = caller.eval_with_macros("(inspect-audit 99)", &mut macros).unwrap();
-        assert_eq!(number(&mut caller, &mutated), 99.0f64.to_bits(),
-            "the macro must actually mutate the nested guest backing array");
+        assert!(caller.eval_with_macros("(inspect-audit 99)", &mut macros).is_err(),
+            "a macro must not reach the backing storage of transported metadata");
         caller.collect().unwrap();
-        // Fresh-host control uses the unchanged caller definition. Different
-        // source fragments also prevent an identical-input artifact cache hit
-        // from substituting for a new macro invocation in this regression.
-        let mut fresh = CompiledMacros::new().unwrap();
-        fresh.define(OBSERVE).unwrap();
-        let control = caller.eval_with_macros("(+ 0 (inspect-audit nil))", &mut fresh).unwrap();
-        assert_eq!(number(&mut caller, &control), 17.0f64.to_bits());
         let target = caller.eval("review-metadata-target").unwrap();
         assert_eq!(number(&mut caller, &target), 0.0f64.to_bits());
         let again = caller.eval_with_macros("(do (inspect-audit nil))", &mut macros).unwrap();
-        assert_eq!(number(&mut caller, &again), 17.0f64.to_bits(),
-            "a previous macro's mutation must not replace source-derived metadata");
+        assert_eq!(number(&mut caller, &again), 17.0f64.to_bits());
     }
 }
 
@@ -556,46 +343,6 @@ fn exhausted_expansion_preserves_effects_already_executed_in_the_macro_store() {
     assert_eq!(number(&mut repl, &recovered), 42.0f64.to_bits());
 }
 
-#[test]
-fn source_metadata_poisoned_at_memo_write_is_not_certified_by_later_restoration() {
-    fn observed(caller: &mut Session, value: &suss_compile::portable_session::SessionValue) -> Vec<bool> {
-        caller.collect().unwrap();
-        let bridge = suss_compile::portable_macro_data::FormBridge::new(caller).unwrap();
-        let form = bridge.read(caller, value, 0..1).unwrap();
-        let Kind::Vector(items) = &form.kind else { panic!("Boolean observation vector") };
-        items.iter().map(|item| match &item.kind { Kind::Bool(value) => *value, _ => panic!("Boolean observation") }).collect()
-    }
-    const OBSERVE: &str = r#"(defmacro inspect-write-state [warm]
-      (let [metadata (:meta (get (get (get &env :ns) :defs) 'write-state-target))
-            audit (:audit metadata)
-            original (aget (.-arr audit) 1)]
-        (defonce saved-write-state metadata)
-        (if warm
-          (do
-            (def write-state-calls 0)
-            (set! suss.core/hash-unordered-coll
-              (fn [m] (do (set! write-state-calls (+ write-state-calls 1))
-                           (aset (.-arr (:audit m)) 1 99) 719)))
-            (hash metadata)
-            (let [poisoned (= 99 (:x audit))]
-              (aset (.-arr audit) 1 original)
-              (list 'quote [(= write-state-calls 1) poisoned
-                            (= 719 (.-__hash metadata)) (= 17 (:x audit))])))
-          (list 'quote [(not (identical? saved-write-state metadata))
-                        (= 719 (.-__hash saved-write-state))
-                        (nil? (.-__hash metadata)) (= 17 (:x audit))]))))"#;
-    for mut caller in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
-        caller.eval("(def ^{:audit {:x 17}} write-state-target 0)").unwrap();
-        let mut macros = CompiledMacros::new().unwrap();
-        macros.define(OBSERVE).unwrap();
-        let first = caller.eval_with_macros("(inspect-write-state true)", &mut macros).unwrap();
-        assert_eq!(observed(&mut caller, &first), [true,true,true,true],
-            "witness poison during the hash callback, the actual memo, and later source restoration");
-        let again = caller.eval_with_macros("(do (inspect-write-state false))", &mut macros).unwrap();
-        assert_eq!(observed(&mut caller, &again), [true,true,true,true],
-            "restored data cannot retroactively authorize a memo written while poisoned");
-    }
-}
 
 
 #[test]

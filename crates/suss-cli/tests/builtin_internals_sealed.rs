@@ -82,6 +82,8 @@ fn user_code_cannot_reach_builtin_internals_in_either_phase() {
         assert_eq!(observe(&mut session, "(get {:a 1} :a)"), Observation::Number(1f64.to_bits()));
         assert_eq!(observe(&mut session, "(= (hash :k) (hash :k))"), Observation::Bool(true));
         assert_eq!(observe(&mut session, "(name 'sym)"), text("sym"));
+        // Methods of built-in instances stay public, as in Clojure.
+        assert_eq!(observe(&mut session, "(.indexOf [1 2 3] 2)"), Observation::Number(1f64.to_bits()));
     }
 }
 

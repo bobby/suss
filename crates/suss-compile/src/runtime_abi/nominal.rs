@@ -14,7 +14,7 @@ pub(super) const CORE_PRIVATE_BIT: i64 = 1 << 62;
 pub(super) fn error(body: &mut Vec<Instruction<'static>>) {
     message_error(body, "Invalid nominal operation");
 }
-fn message_error(body: &mut Vec<Instruction<'static>>, text: &str) {
+pub(super) fn message_error(body: &mut Vec<Instruction<'static>>, text: &str) {
     use Instruction::*;
     let message: Vec<_> = text.encode_utf16().collect();
     body.push(GlobalGet(ERROR_GLOBAL));
@@ -124,28 +124,6 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     b.function_with_locals("descriptor-new-core", &[VALUE], &[VALUE], &[(1, VALUE)], &core);
 
     // Unprivileged named access: reject built-in instances and class values.
-    // Class values are closures over their descriptor (via the property wrapper).
-    let mut body = vec![];
-    for owner in [OBJECT, CLOSURE] {
-        body.extend([LocalGet(0), RefTestNonNull(HeapType::Concrete(owner)), If(BlockType::Empty)]);
-        if owner == OBJECT {
-            get(&mut body, 0, OBJECT, 0);
-        } else {
-            body.extend([LocalGet(0), Call(b.names["closure-environment"])]);
-        }
-        body.extend([
-            LocalSet(1),
-            LocalGet(1),
-            RefTestNonNull(HeapType::Concrete(DESCRIPTOR)),
-            If(BlockType::Empty),
-        ]);
-        get(&mut body, 1, DESCRIPTOR, 0);
-        body.extend([I64Const(CORE_PRIVATE_BIT), I64And, I64Const(0), I64Ne, If(BlockType::Empty)]);
-        message_error(&mut body, "Built-in type internals are private to suss.core");
-        body.extend([End, End, End]);
-    }
-    body.push(LocalGet(0));
-    b.function_with_locals("builtin-internal-guard", &[VALUE], &[VALUE], &[(1, VALUE)], &body);
 
     let mut body = vec![];
     guard(&mut body, 0, DESCRIPTOR);
@@ -297,13 +275,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         array(&mut body, if writing { 3 } else { 2 });
         body.push(LocalGet(1));
         if writing {
-            body.push(LocalGet(2));
-            if b.dispatch_observer.is_some() {
-                let mut raw = body.clone();
-                raw.push(ArraySet(ARGS));
-                b.function_with_locals("macro-memo-field-set", &[VALUE, ValType::I32, VALUE], &[], &[(1, VALUE)], &raw);
-            }
-            dispatch_observer::store(b, &mut body);
+            body.extend([LocalGet(2), ArraySet(ARGS)]);
         } else {
             body.push(ArrayGet(ARGS));
         }
@@ -520,9 +492,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         LocalSet(2),
     ];
     guard(&mut dispatch_body, 2, 4);
-    dispatch_body.extend([LocalGet(2), LocalGet(1)]);
-    dispatch_observer::emit(b, &mut dispatch_body, 0,
-        &[LocalGet(1), I32Const(0), ArrayGet(ARGS)], 2, generic_invoke);
+    dispatch_body.extend([LocalGet(2), LocalGet(1), Call(generic_invoke)]);
     let dispatcher = invoke_body_with_locals(b, &[(1, VALUE)], &dispatch_body);
     for (name, callback, minimum) in [
         ("constructor-new", constructor, 0),

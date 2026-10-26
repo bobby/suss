@@ -43,13 +43,13 @@ impl AnalysisGraph<'_> {
     // representation are paid here, plus actual new builder controls. T can be
     // Value or the existing borrowed-HIR grouping payload; no payload copies.
     fn field_entry_extra<T>() -> usize {
-        std::mem::size_of::<(FieldKey<'_>, T)>()
+        std::mem::size_of::<(&str, T)>()
             .checked_sub(std::mem::size_of::<(&str, T)>())
             .expect("Literal key entry unexpectedly smaller than baseline")
     }
     pub(super) fn new_field_entries<'k, T>(
         &mut self, count: usize,
-    ) -> Result<Vec<(FieldKey<'k>, T)>> {
+    ) -> Result<Vec<(&'k str, T)>> {
         // Type extents, checked byte arithmetic, init/reserve metadata/control.
         // This payment occurs BEFORE constructing the Vec or evaluating entries.
         self.charge(10)?;
@@ -57,12 +57,12 @@ impl AnalysisGraph<'_> {
             .expect("Literal entry extent overflow");
         // Per entry: added tag initialization and the explicit capacity
         // check, length read/update and write-address controls of builder push.
-        // FieldKey is Copy: no invented per-element destructor charge.
+        // Keys are Copy: no invented per-element destructor charge.
         self.charge(bytes.saturating_add(count.saturating_mul(5)))?;
         Ok(Vec::with_capacity(count))
     }
     pub(super) fn reserve_field_entries<'k, T>(
-        &mut self, entries: &mut Vec<(FieldKey<'k>, T)>, additional: usize,
+        &mut self, entries: &mut Vec<(&'k str, T)>, additional: usize,
     ) -> Result<()> {
         // Prepay length/capacity reads, checked length, branch and size controls.
         self.charge(12)?;
@@ -95,16 +95,16 @@ mod tests {
     fn build_traced(graph: &mut AnalysisGraph<'_>, input: &Form, costs: &mut Vec<u64>) -> Result<Value> {
         let start = graph.session.operation_fuel_remaining()?;
         let mut fields = field_entries!(graph; [
-            (FieldKey::Literal(AnalyzerLiteralKeyword("op")), graph.form(input, 0)?),
+            ("op", graph.form(input, 0)?),
         ]);
         costs.push(start - graph.session.operation_fuel_remaining()?);
         // Force growth from capacity1, preserving the original expression order.
         field_push!(graph, fields;
-            (FieldKey::Cold("suss/early-retry"), graph.flag(true)?));
+            ("suss/early-retry", graph.flag(true)?));
         costs.push(start - graph.session.operation_fuel_remaining()?);
         field_extend!(graph, fields; [
-            (FieldKey::Cold("suss/second"), graph.flag(false)?),
-            (FieldKey::Cold("suss/third"), graph.number(19)?),
+            ("suss/second", graph.flag(false)?),
+            ("suss/third", graph.number(19)?),
         ]);
         costs.push(start - graph.session.operation_fuel_remaining()?);
         let value = graph.map(fields)?;
@@ -145,7 +145,7 @@ mod tests {
                     if allowance < 10 {
                         // No recipe/key cache publication before acquisition fee.
                         assert!(graph.recipes.is_empty());
-                        assert!(graph.keys.iter().all(BTreeMap::is_empty));
+                        assert!(graph.keys.is_empty());
                         assert!(graph.maps.is_empty());
                     }
                 }
@@ -169,7 +169,7 @@ mod tests {
         graph.session.interrupt_handle().interrupt();
         assert!(build(&mut graph, &source).unwrap_err().is_interrupt());
         assert!(graph.recipes.is_empty());
-        assert!(graph.keys.iter().all(BTreeMap::is_empty));
+        assert!(graph.keys.is_empty());
         drop(graph); drop(request);
         assert_eq!(source, original);
         let request = session.operation_budget_scope().unwrap();
@@ -192,7 +192,7 @@ mod tests {
         assert!(!error.is_interrupt());
         assert!(matches!(error, SessionError::Host(_)), "{error:?}");
         assert!(graph.recipes.is_empty());
-        assert!(graph.keys.iter().all(BTreeMap::is_empty));
+        assert!(graph.keys.is_empty());
         drop(graph); drop(request);
         assert_eq!(bad, old);
         let good = suss_reader::forms::read_forms("[17]").unwrap().remove(0);

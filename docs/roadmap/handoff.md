@@ -28894,3 +28894,37 @@ privileged probes. Core import 17/17, named properties 4/4, collection literals
 listed field read/write reachable in both phases. The workspace baseline and CI
 have not run on this source; tests that inspect built-in internals elsewhere are
 expected to need privileged probes or public assertions.
+
+## Memo authority, certification and retention removed (2026-10-26, #275/#276)
+
+The named-access guard now takes `(owner, name)`: it rejects fields of
+built-in instances and every property of built-in class values, while methods
+of built-in instances stay reachable. The first sealing commit also rejected
+method calls such as `(.sval lazy-seq)` used by expanded-result transport; CI's
+`compiled_bootstrap` caught it, and `(.indexOf [1 2 3] 2)` is now a regression.
+
+With internals private and core protocols of built-in types closed, these were
+deleted (about 17k lines): memo sites, memo bridge and receipts, write domains,
+canonical method/seed/prototype-origin registries, dispatch observers, storage
+snapshots, construction records and inputs, certification audits, private
+fixups, validated cross-invocation metadata reuse, analyzer-literal memo
+provenance keys, the sparse materialization index and its metered map, and the
+bootstrap integrity authority. Both bootstrap phases now emit through plain
+`compile_ir`; identifiers are constructed with an empty private hash cache.
+Tests, oracle fixtures, probe scripts and runtime docs that asserted pinned
+ClojureScript memo, poisoning or cross-call identity observations were removed;
+the guest-storage mutation test now asserts the write is rejected.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap   # twice; identical
+python3 scripts/verify_bootstrap_identity.py
+cargo test --locked --no-fail-fast -p suss-compile --lib -- --test-threads=2
+cargo test --locked --no-fail-fast -p suss-cli --test compiled_macro_cumulative_fuel --test compiled_macro_constructor_source_asts --test builtin_internals_sealed --test builtin_protocols_closed --test compiled_bootstrap -p suss-compile --test clojure_test_suite -- --test-threads=2
+```
+
+Compiler unit tests 188/188 after deleting one obsolete poisoning test; jank
+clojure-test-suite harness 12/12 with the known-failure baseline unchanged;
+default-budget constructor control 2/2 at the unchanged 10M; cumulative fuel
+8/8; sealed 5/5; closed 5/5; compiled bootstrap 4/4; two bootstrap generations
+identical. The workspace baseline and final-head CI have not yet run on this
+source.
