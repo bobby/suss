@@ -29011,3 +29011,42 @@ quoted identifiers), symbol conversion, CORE import 17/17 and the jank harness
 12/12 passed with direct linking. Script tests 349 OK. CI on 9d03031 passed all
 but integration shard 6 (queue and symbol tests fixed here); the full local
 baseline on 9d03031 failed only the same queue test.
+
+## Follow-up review fixes: primitive links, recursion links, closed bit, helper privacy (2026-10-26)
+
+A second independent review of ec833fc confirmed node-class statics and
+alias/local/expression extension were closed for core-private classes, and found
+two remaining direct-linking gaps plus extension-guard coverage gaps, now fixed:
+
+- Core's calls to runtime-provided bootstrap bindings (`aclone`, `nil?`,
+  `identical?`, ...) read redefinable public cells. The core bindings module now
+  initializes an internal `suss.internal.bootstrap-link` cell beside each, and
+  privileged references read it.
+- The core link was registered after analyzing the initializer, so
+  self-recursive helpers (`push-tail`, `do-assoc`, ...) called their public cells.
+  It is now registered first. `^:redef`, like `^:dynamic`, is exempt, and a var
+  first defined dynamic never gets a link.
+- The core import drops upstream `defn-` privacy. The 38 upstream `defn-`
+  helpers that take, return or edit collection storage or nodes, plus core's
+  string hash cache, are now private to suss.core. Enforcing all 87 `defn-`
+  names broke `defrecord` expansions that refer to `pr-writer`, so printing,
+  comparison and reduction helpers stay reachable, as in ClojureScript.
+- The extension guard uses a separate closed bit set on every privileged
+  descriptor (including the public-field WIT integer types) and also rejects
+  runtime-built descriptors (fixed identities below the first counted one), and
+  the static check treats runtime-bound classes such as ExceptionInfo as built-in.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap   # twice; identical
+python3 scripts/verify_bootstrap_identity.py
+python3 -m unittest discover -s scripts -p 'test_*.py'
+cargo test --locked --no-fail-fast -p suss-cli --test builtin_internals_sealed --test builtin_protocols_closed --test compiled_bootstrap --test core_import --test portable_case --test compiled_record_factories --test compiled_public_records --test portable_reduction_dispatch --test portable_vector_trie --test portable_empty --test portable_queues -p suss-compile --lib --test clojure_test_suite --test component -- --test-threads=2
+```
+
+Sealed 8/8 (new regressions for the reviewed primitive, recursion, privacy and
+closed-class routes), closed 5/5, bootstrap 4/4, CORE import 17/17, case 8/8,
+record factories 5/5, public records 7/7, reduction dispatch 4/4, vector trie 5/5,
+empty 3/3, queues 3/3, compiler unit tests 188/188, component 30/30 and the jank
+harness 12/12 with its reviewed baseline unchanged. The first attempt with all
+87 `defn-` names private failed records, reduction dispatch and one jank
+namespace diagnostic; those results are superseded by the narrowed list.

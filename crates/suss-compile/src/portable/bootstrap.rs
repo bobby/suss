@@ -38,6 +38,25 @@ fn error(message: impl Into<String>) -> Diagnostic {
         message: message.into(),
     }
 }
+/// Shipped core helpers private to `suss.core` (design decision 2026-10-25):
+/// the upstream `defn-` helpers that take, return or edit collection storage
+/// or nodes, plus core's shared string hash cache. Other upstream `defn-`
+/// helpers (printing, comparison, reduction drivers) stay reachable because
+/// core macro expansions refer to them from user code, as in ClojureScript;
+/// direct linking already keeps their internal arguments out of user hands.
+const CORE_PRIVATE: &[&str] = &[
+    "array-for", "unchecked-array-for", "unchecked-editable-array-for", "first-array-for-longvec",
+    "pv-fresh-node", "pv-aget", "pv-aset", "pv-clone-node", "new-path", "push-tail", "pop-tail", "do-assoc",
+    "tv-ensure-editable", "tv-editable-root", "tv-editable-tail", "tv-push-tail", "tv-pop-tail",
+    "clone-and-set", "edit-and-set", "remove-pair", "create-node", "create-inode-seq", "create-array-node-seq",
+    "inode-kv-reduce", "pack-array-node", "hash-collision-node-find-index", "bitmap-indexed-node-index",
+    "balance-left", "balance-left-del", "balance-right", "balance-right-del", "tree-map-add", "tree-map-append",
+    "tree-map-remove", "tree-map-replace", "tree-map-kv-reduce", "tree-map-seq-push", "create-tree-map-seq",
+    "string-hash-cache", "string-hash-cache-count",
+];
+pub(crate) fn is_core_private(name: &str) -> bool {
+    CORE_PRIVATE.contains(&name)
+}
 pub fn sha256(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }

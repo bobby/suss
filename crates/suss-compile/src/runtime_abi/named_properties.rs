@@ -644,7 +644,12 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     // core protocols and Object methods.
     let mut body = vec![LocalGet(0), RefTestNonNull(HeapType::Concrete(CLOSURE)), If(BlockType::Empty),
         LocalGet(0), Call(b.names["closure-environment"]), LocalSet(1)];
-    private(&mut body, 1);
+    flag(&mut body, 1, nominal::CORE_CLOSED_BIT);
+    body.extend([LocalGet(1), RefTestNonNull(HeapType::Concrete(DESCRIPTOR)), If(BlockType::Result(ValType::I32)),
+        LocalGet(1), RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
+        StructGet { struct_type_index: DESCRIPTOR, field_index: 0 },
+        I64Const(nominal::CORE_CLOSED_BIT - 1), I64And, I64Const(nominal::FIRST_COUNTED_IDENTITY), I64LtS,
+        Else, I32Const(0), End, I32Or]);
     body.extend([If(BlockType::Empty)]);
     nominal::message_error(&mut body, "Core protocols of built-in types cannot be extended outside suss.core");
     body.extend([End, End, LocalGet(0)]);

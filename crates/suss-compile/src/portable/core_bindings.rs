@@ -92,9 +92,12 @@ pub fn compile_with_cells(
     types.ty().function([], []);
     let mut globals = GlobalSection::new();
     let mut exports = ExportSection::new();
+    // Each bootstrap binding also gets its direct-link cell, written with the
+    // same value, which shipped core reads (design decision 2026-10-25).
     let mut cells = bindings
         .iter()
         .map(|(cell, _)| cell.clone())
+        .chain(bindings.iter().map(|(cell, _)| Environment::bootstrap_link_global(cell)))
         .collect::<Vec<_>>();
     let base_cells = cells
         .iter()
@@ -123,7 +126,7 @@ pub fn compile_with_cells(
         );
         exports.export(&cell.import_name(), ExportKind::Global, index as u32);
     }
-    let mut start = Function::new([]);
+    let mut start = Function::new([(1, VALUE)]);
     for index in order {
         let export = &bindings[index].1;
         if self_cell(export) {
@@ -143,6 +146,10 @@ pub fn compile_with_cells(
         }
         start
             .instruction(&Instruction::Call(factory_indices[index]))
+            .instruction(&Instruction::LocalTee(0))
+            .instruction(&Instruction::Call(0))
+            .instruction(&Instruction::GlobalGet((bindings.len() + index) as u32))
+            .instruction(&Instruction::LocalGet(0))
             .instruction(&Instruction::Call(0));
     }
     start.instruction(&Instruction::End);

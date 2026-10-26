@@ -860,6 +860,24 @@ impl Environment {
         }
         link
     }
+    /// The direct-link cell of a runtime-provided bootstrap binding (`nil?`,
+    /// `aclone`, ...), initialized with the public cell by the core bindings
+    /// module so shipped core never calls a user redefinition.
+    pub(crate) fn bootstrap_link_global(global: &Global) -> Global {
+        Global {
+            phase: global.phase,
+            namespace: "suss.internal.bootstrap-link".into(),
+            name: global.name.clone(),
+        }
+    }
+    pub(crate) fn bootstrap_link(&mut self, global: &Global) -> Global {
+        let link = Self::bootstrap_link_global(global);
+        if !self.bindings.contains_key(&link) {
+            self.bindings.insert(link.clone(), Binding::InternalCell(link.clone()));
+            self.source_changed();
+        }
+        link
+    }
     /// The direct-link cell, only if that definition registered one.
     pub(crate) fn existing_core_link(&self, global: &Global) -> Option<Global> {
         let link = Global {

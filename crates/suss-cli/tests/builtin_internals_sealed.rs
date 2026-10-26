@@ -157,3 +157,26 @@ fn builtin_classes_resist_aliased_extension_and_node_singletons_stay_private() {
         }
     }
 }
+
+#[test]
+fn core_primitives_and_recursion_are_direct_linked_and_private_helpers_hidden() {
+    for (phase, mut session) in sessions() {
+        // Bootstrap primitives that core calls with internal storage.
+        session.eval("(def seen (atom [])) (def original-aclone aclone) (def original-nil? nil?)").unwrap();
+        let captured = "(with-redefs [suss.core/aclone (fn [a] (swap! seen conj a) (original-aclone a)) suss.core/nil? (fn [x] (swap! seen conj x) (original-nil? x))] (count (persistent! (conj! (transient {:a 1}) [:b 2]))))";
+        assert_eq!(observe(&mut session, captured), Observation::Number(2f64.to_bits()), "{phase}");
+        assert_eq!(observe(&mut session, "(empty? @seen)"), Observation::Bool(true), "{phase}");
+        // Upstream defn- helpers are private to suss.core.
+        for source in ["(suss.core/do-assoc [1] 5 nil 0 nil)", "(suss.core/pv-aset (array) 0 1)", "(suss.core/push-tail [1] 5 nil nil)", "suss.core/string-hash-cache"] {
+            let error = session.eval(source).map(|_| ()).expect_err(source).to_string();
+            assert!(error.contains("is private to suss.core"), "{phase} {source}: {error}");
+        }
+        // Exact WIT integers and runtime-built classes are closed to core protocol extension too.
+        for source in [
+            "(do (def aliased-wit WitSigned64) (extend-type aliased-wit IHash (-hash [_] 0)))",
+            "(extend-type ExceptionInfo IEquiv (-equiv [_ _] true))",
+        ] {
+            assert!(session.eval(source).is_err(), "{phase}: {source}");
+        }
+    }
+}

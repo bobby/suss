@@ -322,6 +322,8 @@ pub enum Nominal {
     CoreDescriptor,
     /// A core collection class whose whitelisted statics user code may read.
     CoreStaticsDescriptor,
+    /// A core type with public fields that is still closed to extension.
+    CoreClosedDescriptor,
     CoreNamedGet,
     CoreNamedSet,
     /// Rejects a built-in core class before user code extends a core protocol
@@ -397,7 +399,7 @@ impl Nominal {
                 Self::LiveDispatcher | Self::NativeSet(_) => count == 2,
                 Self::IFnLiveDispatcher => count == 3,
                 Self::NativeMarker(_) => count == 1,
-                Self::Descriptor | Self::CoreDescriptor | Self::CoreStaticsDescriptor => arguments.iter().all(|ty| *ty == Type::String),
+                Self::Descriptor | Self::CoreDescriptor | Self::CoreStaticsDescriptor | Self::CoreClosedDescriptor => arguments.iter().all(|ty| *ty == Type::String),
                 Self::Construct => count >= 1,
                 Self::Instance | Self::SameNominalType | Self::Satisfies | Self::NativeSatisfies | Self::Marker => {
                     count == 2
@@ -434,14 +436,6 @@ pub struct Method {
     pub parameters: Vec<Parameter>,
     pub body: Box<Hir>,
 }
-/// Core helpers that hand out built-in storage arrays are private to
-/// `suss.core`, like the fields they read (design decision 2026-10-25).
-const CORE_PRIVATE: &[&str] = &[
-    "array-for",
-    "unchecked-array-for",
-    "first-array-for-longvec",
-    "unchecked-editable-array-for",
-];
 /// Reader/expansion syntax actually analyzed for this expression. Compiler-only
 /// lowering nodes have no source record; their syntax must never be fabricated.
 /// Immutable namespace facts at the actual source analysis boundary.
@@ -1328,7 +1322,7 @@ impl Analyzer<'_> {
     ) -> Result<(Expression, Type), Diagnostic> {
         let binding = self.environment.resolve(self.phase, symbol, span.clone())?;
         let global = binding.global();
-        if !self.privileged && CORE_PRIVATE.contains(&global.name()) && self.privileged_definition(global) {
+        if !self.privileged && super::bootstrap::is_core_private(global.name()) && self.privileged_definition(global) {
             return Err(fail(span, format!("{} is private to suss.core", global.name())));
         }
         match binding {
@@ -1337,6 +1331,11 @@ impl Analyzer<'_> {
                 Ok((Expression::Global(global), Type::Value))
             }
             ResolvedBinding::Arithmetic { global, .. } | ResolvedBinding::Core { global, .. } => {
+                if self.privileged {
+                    // Shipped core reads its own copy, never a user redefinition.
+                    let link = self.environment.bootstrap_link(&global);
+                    return Ok((Expression::Global(link), Type::Value));
+                }
                 self.environment.materialize_bootstrap(global.clone());
                 Ok((Expression::Global(global), Type::Value))
             }
@@ -1349,16 +1348,19 @@ impl Analyzer<'_> {
     fn dynamic_metadata(name: &Form) -> bool {
         name.metadata.iter().any(|metadata| match &metadata.kind {
             Kind::Map(entries) => entries.chunks(2).any(|pair| {
-                matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "dynamic")
+                matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none() && matches!(key.name.as_str(), "dynamic" | "redef"))
                     && !matches!(pair.get(1).map(|value| &value.kind), Some(Kind::Nil | Kind::Bool(false)) | None)
             }),
-            Kind::Keyword(key) => key.namespace.is_none() && key.name == "dynamic",
+            Kind::Keyword(key) => key.namespace.is_none() && matches!(key.name.as_str(), "dynamic" | "redef"),
             _ => false,
         })
     }
-    /// Shipped core's own non-dynamic definitions are direct-linked.
+    /// Shipped core's own definitions are direct-linked, except dynamic and
+    /// `^:redef` vars (as in Clojure), including ones a later form redeclares.
     fn core_link(&mut self, global: &Global, dynamic: bool) -> Option<Global> {
-        (self.privileged && !dynamic && global.namespace() == "suss.core")
+        let prior_dynamic = self.environment.definition_info(global)
+            .is_some_and(|info| Self::dynamic_metadata(&info.declaration));
+        (self.privileged && !dynamic && !prior_dynamic && global.namespace() == "suss.core")
             .then(|| self.environment.core_link_cell(global))
     }
     /// A privileged reference to a direct-linked core definition: only when
@@ -1508,6 +1510,14 @@ impl Analyzer<'_> {
             self.environment
                 .record_definition(global.clone(), definition.clone());
         }
+        // Register shipped core's direct link before analyzing the initializer,
+        // so a self-recursive core function also calls its own definition.
+        let dynamic = Self::dynamic_metadata(&args[0]);
+        if dynamic && self.privileged && self.environment.existing_core_link(&global).is_some() {
+            // Earlier core references were direct-linked; a dynamic var must be live.
+            return Err(fail(args[0].span.clone(), "A dynamic core var cannot be declared before its definition"));
+        }
+        let linked = self.core_link(&global, dynamic);
         let initializer = init
             .map(|init| {
                 self.form_in_named(
@@ -1527,12 +1537,6 @@ impl Analyzer<'_> {
             self.environment
                 .record_definition(global.clone(), definition);
         }
-        let dynamic = Self::dynamic_metadata(&args[0]);
-        if dynamic && self.privileged && self.environment.existing_core_link(&global).is_some() {
-            // Earlier core references were direct-linked; a dynamic var must be live.
-            return Err(fail(args[0].span.clone(), "A dynamic core var cannot be declared before its definition"));
-        }
-        let linked = self.core_link(&global, dynamic);
         Ok(Hir {
             source: None,
             span: form.span.clone(),

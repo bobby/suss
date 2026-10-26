@@ -216,6 +216,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::CoreStaticsDescriptor => {
                             names.insert("descriptor-new-core-statics");
                         }
+                        Nominal::CoreClosedDescriptor => {
+                            names.insert("descriptor-new-core-closed");
+                        }
                         Nominal::BuiltinClassGuard => {
                             names.insert("builtin-extension-guard");
                         }
@@ -328,6 +331,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "descriptor-new"
             | "descriptor-new-core"
             | "descriptor-new-core-statics"
+            | "descriptor-new-core-closed"
             | "builtin-extension-guard"
             | "class-value-new"
             | "protocol-value-new"
@@ -1098,7 +1102,7 @@ fn emit_function(
                                 },
                             )));
                         }
-                        Nominal::Array | Nominal::Descriptor | Nominal::CoreDescriptor | Nominal::CoreStaticsDescriptor => {
+                        Nominal::Array | Nominal::Descriptor | Nominal::CoreDescriptor | Nominal::CoreStaticsDescriptor | Nominal::CoreClosedDescriptor => {
                             for argument in arguments {
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
                             }
@@ -1112,6 +1116,8 @@ fn emit_function(
                                 function.instruction(&Call(index("descriptor-new-core")));
                             } else if *operation == Nominal::CoreStaticsDescriptor {
                                 function.instruction(&Call(index("descriptor-new-core-statics")));
+                            } else if *operation == Nominal::CoreClosedDescriptor {
+                                function.instruction(&Call(index("descriptor-new-core-closed")));
                             }
                         }
                         Nominal::Construct => {

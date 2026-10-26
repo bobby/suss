@@ -41,8 +41,10 @@ impl Analyzer<'_> {
     /// except the few value types whose fields are their public API.
     fn type_descriptor(&self, form: &Form, name: Option<&str>, schema: Vec<Hir>) -> Hir {
         let listed = |list: &[&str]| name.is_some_and(|name| list.contains(&name));
-        let operation = if !self.privileged || listed(PUBLIC_FIELD_TYPES) {
+        let operation = if !self.privileged {
             Nominal::Descriptor
+        } else if listed(PUBLIC_FIELD_TYPES) {
+            Nominal::CoreClosedDescriptor
         } else if listed(PUBLIC_STATIC_TYPES) {
             Nominal::CoreStaticsDescriptor
         } else {
@@ -415,9 +417,12 @@ impl Analyzer<'_> {
         }
         // Identity, not spelling: user code that redefines core names (for
         // example by evaluating core source) defines ordinary user types.
+        let runtime_class = |analyzer: &Self| matches!(&class.kind, Kind::Symbol(symbol)
+            if analyzer.environment.resolve(analyzer.phase, symbol, class.span.clone())
+                .is_ok_and(|binding| matches!(binding, ResolvedBinding::Core { .. })));
         let builtin = NativeKind::from_form(class).is_some()
             || matches!(&class.kind, Kind::Symbol(symbol) if symbol.namespace.is_some() || !self.locals.contains_key(&symbol.name))
-                && self.named_global(class).is_ok_and(|global| self.privileged_definition(&global));
+                && (self.named_global(class).is_ok_and(|global| self.privileged_definition(&global)) || runtime_class(self));
         if !builtin {
             return Ok(());
         }

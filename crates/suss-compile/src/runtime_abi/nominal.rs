@@ -13,6 +13,12 @@ pub(super) const CORE_PRIVATE_BIT: i64 = 1 << 62;
 /// With CORE_PRIVATE_BIT: user-facing collection classes whose whitelisted
 /// static members (EMPTY, fromArray, ...) user code may read.
 pub(super) const CORE_PUBLIC_STATICS_BIT: i64 = 1 << 61;
+/// Every descriptor created by privileged source: its core protocols and Object
+/// methods are closed to user extension, even where its fields are public.
+pub(super) const CORE_CLOSED_BIT: i64 = 1 << 60;
+/// Runtime-built descriptors (errors, ExceptionInfo, ...) have fixed identities
+/// below the first counter-assigned one; they are closed to extension too.
+pub(super) const FIRST_COUNTED_IDENTITY: i64 = numeric::ERROR_GLOBALS as i64 + 5;
 
 pub(super) fn error(body: &mut Vec<Instruction<'static>>) {
     message_error(body, "Invalid nominal operation");
@@ -123,9 +129,12 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         .map(|(index, _)| index)
         .expect("descriptor identity read");
     let mut statics = core.clone();
-    core.splice(identity + 1..identity + 1, [I64Const(CORE_PRIVATE_BIT), I64Or]);
-    statics.splice(identity + 1..identity + 1, [I64Const(CORE_PRIVATE_BIT | CORE_PUBLIC_STATICS_BIT), I64Or]);
+    let mut closed = core.clone();
+    core.splice(identity + 1..identity + 1, [I64Const(CORE_PRIVATE_BIT | CORE_CLOSED_BIT), I64Or]);
+    statics.splice(identity + 1..identity + 1, [I64Const(CORE_PRIVATE_BIT | CORE_PUBLIC_STATICS_BIT | CORE_CLOSED_BIT), I64Or]);
+    closed.splice(identity + 1..identity + 1, [I64Const(CORE_CLOSED_BIT), I64Or]);
     b.function_with_locals("descriptor-new-core-statics", &[VALUE], &[VALUE], &[(1, VALUE)], &statics);
+    b.function_with_locals("descriptor-new-core-closed", &[VALUE], &[VALUE], &[(1, VALUE)], &closed);
     b.function_with_locals("descriptor-new", &[VALUE], &[VALUE], &[(1, VALUE)], &body);
     b.function_with_locals("descriptor-new-core", &[VALUE], &[VALUE], &[(1, VALUE)], &core);
 
