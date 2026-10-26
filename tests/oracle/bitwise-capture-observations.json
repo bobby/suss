@@ -97,7 +97,7 @@
         "tag": "f64",
         "bits": "401c000000000000"
       },
-      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
+      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument is direct-linked core, so redefining the var does not reach it. Development-only js* probes independently inspect that body, not public-source equivalence."
     },
     {
       "id": "public-and",
@@ -195,7 +195,7 @@
         "tag": "f64",
         "bits": "0000000000000000"
       },
-      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
+      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument is direct-linked core, so redefining the var does not reach it. Development-only js* probes independently inspect that body, not public-source equivalence."
     },
     {
       "id": "public-xor",
@@ -293,7 +293,7 @@
         "tag": "f64",
         "bits": "401c000000000000"
       },
-      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
+      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument is direct-linked core, so redefining the var does not reach it. Development-only js* probes independently inspect that body, not public-source equivalence."
     },
     {
       "id": "public-and-not",
@@ -395,7 +395,7 @@
         "tag": "f64",
         "bits": "3ff0000000000000"
       },
-      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
+      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument is direct-linked core, so redefining the var does not reach it. Development-only js* probes independently inspect that body, not public-source equivalence."
     },
     {
       "id": "body-or",
@@ -409,7 +409,7 @@
         "tag": "f64",
         "bits": "401c000000000000"
       },
-      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
+      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument is direct-linked core, so redefining the var does not reach it. Development-only js* probes independently inspect that body, not public-source equivalence."
     },
     {
       "id": "body-and",
@@ -423,7 +423,7 @@
         "tag": "f64",
         "bits": "0000000000000000"
       },
-      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
+      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument is direct-linked core, so redefining the var does not reach it. Development-only js* probes independently inspect that body, not public-source equivalence."
     },
     {
       "id": "body-xor",
@@ -437,7 +437,7 @@
         "tag": "f64",
         "bits": "401c000000000000"
       },
-      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
+      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument is direct-linked core, so redefining the var does not reach it. Development-only js* probes independently inspect that body, not public-source equivalence."
     },
     {
       "id": "body-and-not",
@@ -451,7 +451,7 @@
         "tag": "f64",
         "bits": "3ff0000000000000"
       },
-      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
+      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument is direct-linked core, so redefining the var does not reach it. Development-only js* probes independently inspect that body, not public-source equivalence."
     },
     {
       "id": "body-reducer-selected-once",
@@ -465,7 +465,7 @@
         "tag": "f64",
         "bits": "402e000000000000"
       },
-      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
+      "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument is direct-linked core, so redefining the var does not reach it. Development-only js* probes independently inspect that body, not public-source equivalence."
     }
   ]
 }

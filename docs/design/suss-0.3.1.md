@@ -419,7 +419,8 @@ evidence where they agree with Clojure semantics. Consequences:
 * Shipped core is direct-linked, as Clojure core has been since 1.8: core's own
   references to its non-dynamic definitions are fixed when core defines them.
   Redefining or `with-redefs` of a public core var affects user call sites
-  only. Dynamic and `^:redef` vars stay live.
+  only. Dynamic and `^:redef` vars stay live; a core var first defined dynamic
+  stays live even if later redefined without `:dynamic`.
 * These guarantees cover ordinary Clojure use. Deliberate circumvention of core
   implementation details is undefined behavior, as reflection on Clojure's
   internals is on the JVM: for example aliasing a core protocol's method var into
