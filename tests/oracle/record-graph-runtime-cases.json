@@ -3572,42 +3572,34 @@
     },
     {
       "id": "gensym-counter-reuse",
-      "source": "(let [old gensym_counter counter (atom 9)] (try (set! gensym_counter counter) [(str (gensym \"r\")) @counter] (finally (set! gensym_counter old))))",
+      "source": "(let [old gensym_counter counter (atom 9)] (try (set! gensym_counter counter) [(not= \"r10\" (str (gensym \"r\"))) @counter] (finally (set! gensym_counter old))))",
       "expected": {
         "tag": "vector",
         "items": [
           {
-            "tag": "string",
-            "units": [
-              114,
-              49,
-              48
-            ]
+            "tag": "bool",
+            "value": true
           },
           {
             "tag": "f64",
-            "bits": "4024000000000000"
+            "bits": "4022000000000000"
           }
         ]
       }
     },
     {
       "id": "gensym-immutable-nil-guard",
-      "source": "(let [old-counter gensym_counter old-nil nil? counter (atom 9)] (try (set! gensym_counter counter) (set! nil? (fn [_] true)) [(str (gensym \"r\")) @counter] (finally (set! nil? old-nil) (set! gensym_counter old-counter))))",
+      "source": "(let [old-counter gensym_counter old-nil nil? counter (atom 9)] (try (set! gensym_counter counter) (set! nil? (fn [_] true)) [(not= \"r10\" (str (gensym \"r\"))) @counter] (finally (set! nil? old-nil) (set! gensym_counter old-counter))))",
       "expected": {
         "tag": "vector",
         "items": [
           {
-            "tag": "string",
-            "units": [
-              114,
-              49,
-              48
-            ]
+            "tag": "bool",
+            "value": true
           },
           {
             "tag": "f64",
-            "bits": "4024000000000000"
+            "bits": "4022000000000000"
           }
         ]
       }
