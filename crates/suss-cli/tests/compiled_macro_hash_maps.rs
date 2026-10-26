@@ -5,9 +5,11 @@ use suss_cli::{
 use suss_reader::forms::{Kind, read_forms};
 use wasmtime::Val;
 
+// Probes also inspect HAMT node structure, which is private to suss.core;
+// these core-internal checks use the host's privileged evaluation.
 fn number(session: &mut Session, source: &str) -> f64 {
     let value = session
-        .eval(source)
+        .eval_privileged(source)
         .unwrap_or_else(|error| panic!("{source}: {error:?}"));
     session
         .inspect(&value, |mut store, value| {

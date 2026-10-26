@@ -541,9 +541,11 @@ impl FormBridge {
         for (name, source) in [
             ("hash", "suss.core/hash"),
             ("key-test", "suss.core/key-test"),
-            ("empty-map", "(.-EMPTY suss.core/PersistentArrayMap)"),
-            ("empty-set", "(.-EMPTY suss.core/PersistentHashSet)"),
-            ("empty-list", "(.-EMPTY suss.core/List)"),
+            // Empty literals lower to core's own EMPTY values; class
+            // properties of built-in types are private to suss.core.
+            ("empty-map", "{}"),
+            ("empty-set", "#{}"),
+            ("empty-list", "()"),
             ("lazy-sval", "(fn* [value] (.sval value))"),
         ] {
             factories.insert(name, session.eval(source)?);

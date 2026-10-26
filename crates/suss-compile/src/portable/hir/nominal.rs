@@ -4,6 +4,11 @@ use crate::portable::resolve::{NominalForm, ProtocolMethod};
 
 impl Analyzer<'_> {
     pub(super) fn nominal(&self, form: &Form, operation: Nominal, arguments: Vec<Hir>) -> Hir {
+        let operation = match operation {
+            Nominal::NamedGet if self.privileged => Nominal::CoreNamedGet,
+            Nominal::NamedSet if self.privileged => Nominal::CoreNamedSet,
+            operation => operation,
+        };
         Hir {
             source: None,
             span: form.span.clone(),
@@ -14,6 +19,11 @@ impl Analyzer<'_> {
                 arguments,
             },
         }
+    }
+    /// Core bootstrap types get descriptors whose internals are private.
+    fn type_descriptor(&self, form: &Form, schema: Vec<Hir>) -> Hir {
+        let operation = if self.privileged { Nominal::CoreDescriptor } else { Nominal::Descriptor };
+        self.nominal(form, operation, schema)
     }
     pub(super) fn local(&self, form: &Form, id: BindingId) -> Hir {
         Hir {
@@ -310,6 +320,7 @@ impl Analyzer<'_> {
                 let Some(class) = args.first() else {
                     return Err(fail(form.span.clone(), "extend-type requires a type"));
                 };
+                self.check_builtin_extension(class, &args[1..])?;
                 if let Some(kind) = NativeKind::from_form(class) {
                     let mut effects = self.native_protocol_extensions(form, &args[1..], kind)?;
                     if effects.is_empty() {
@@ -355,6 +366,36 @@ impl Analyzer<'_> {
                 })
             }
         }
+    }
+    /// Core abstractions of built-in and host types are closed to user code, as
+    /// Clojure's interfaces on its built-in classes are (design decision
+    /// 2026-10-25). User protocols may still extend them, and user types may
+    /// implement core protocols. This keeps built-in hashing and equality native.
+    fn check_builtin_extension(&self, class: &Form, args: &[Form]) -> Result<(), Diagnostic> {
+        if self.privileged {
+            return Ok(());
+        }
+        // Identity, not spelling: user code that redefines core names (for
+        // example by evaluating core source) defines ordinary user types.
+        let builtin = NativeKind::from_form(class).is_some()
+            || matches!(&class.kind, Kind::Symbol(symbol) if symbol.namespace.is_some() || !self.locals.contains_key(&symbol.name))
+                && self.named_global(class).is_ok_and(|global| self.privileged_definition(&global));
+        if !builtin {
+            return Ok(());
+        }
+        let native = NativeKind::from_form(class).is_some();
+        for protocol in args.iter().filter(|arg| matches!(arg.kind, Kind::Symbol(_))) {
+            let object = matches!(&protocol.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "Object");
+            let core = (object && !native)
+                || self.named_global(protocol).is_ok_and(|global| self.privileged_definition(&global));
+            if core {
+                return Err(fail(
+                    protocol.span.clone(),
+                    "Core protocols of built-in types cannot be extended outside suss.core",
+                ));
+            }
+        }
+        Ok(())
     }
     // Pinned analyzer retains these three field flags; type hints do not impose
     // a runtime guard. Other field attributes remain outside this bounded port.
@@ -527,7 +568,7 @@ impl Analyzer<'_> {
         }
         let schema = self.type_schema(&fields)?;
         let (declaration, global) = self.type_declaration(form, &args[0], declared.len(), record)?;
-        let descriptor = self.nominal(form, Nominal::Descriptor, schema);
+        let descriptor = self.type_descriptor(form, schema);
         let class = self.nominal(form, Nominal::Class, vec![descriptor]);
         let class = self.fresh_binding(form, class);
         let class_value = self.local(form, class.id);
@@ -578,7 +619,7 @@ impl Analyzer<'_> {
         };
         // Own generated constructor references are available during method analysis.
         self.definition(form, &[arrow_name.clone()], false)?;
-        let descriptor = self.nominal(form, Nominal::Descriptor, schema);
+        let descriptor = self.type_descriptor(form, schema);
         let class = self.nominal(form, Nominal::Class, vec![descriptor]);
         let binding = self.fresh_binding(form, class);
         let class_value = self.local(form, binding.id);
@@ -792,7 +833,7 @@ impl Analyzer<'_> {
             .environment
             .reify_class_key(self.phase, generation, site);
         let type_declaration = symbol(cell.name(), Some("suss.internal.reify"));
-        let descriptor = self.nominal(form, Nominal::Descriptor, schema);
+        let descriptor = self.type_descriptor(form, schema);
         let class = self.nominal(form, Nominal::Class, vec![descriptor]);
         let binding = self.fresh_binding(form, class);
         let class_value = self.local(form, binding.id);

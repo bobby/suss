@@ -241,6 +241,7 @@ impl Analyzer<'_> {
                     let setter = match operation {
                         Nominal::Field(index) => Nominal::FieldSet(index),
                         Nominal::NamedGet => Nominal::NamedSet,
+                        Nominal::CoreNamedGet => Nominal::CoreNamedSet,
                         _ => unreachable!(),
                     };
                     self.nominal(form, setter, arguments)

@@ -45,6 +45,13 @@ pub(crate) use scalar_inputs::ScalarInputs;
 pub(crate) mod construction_records;
 pub(crate) mod certification_audit;
 
+fn input_error(error: portable::modules::InputDiagnostic) -> SessionError {
+    match error {
+        portable::modules::InputDiagnostic::Compile(error) => SessionError::Compile(error),
+        portable::modules::InputDiagnostic::Dependency(error) => SessionError::Module(error),
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct SessionOptions {
     pub source_paths: Vec<PathBuf>,
@@ -1357,10 +1364,21 @@ impl Session {
             self.phase,
             &self.provided,
         )
-        .map_err(|error| match error {
-            portable::modules::InputDiagnostic::Compile(error) => SessionError::Compile(error),
-            portable::modules::InputDiagnostic::Dependency(error) => SessionError::Module(error),
-        })?;
+        .map_err(input_error)?;
+        self.eval_prepared(prepared)
+    }
+    /// Evaluate host-authored source with access to built-in type internals,
+    /// for core-internal structural tests. User input must use [`Self::eval`].
+    #[doc(hidden)]
+    pub fn eval_privileged(&mut self, source: &str) -> Result<SessionValue, SessionError> {
+        let prepared = portable::modules::prepare_privileged_input(
+            source,
+            &self.options.source_paths,
+            &self.environment,
+            self.phase,
+            &self.provided,
+        )
+        .map_err(input_error)?;
         self.eval_prepared(prepared)
     }
     /// Publish only actual compiled macro roots owned by this phase Store.

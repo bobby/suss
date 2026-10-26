@@ -191,9 +191,17 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
                         }
                         Nominal::CallableGet => { names.insert("callable-property-get"); }
                         Nominal::NamedGet => {
+                            names.insert("builtin-internal-guard");
                             names.insert("named-property-get");
                         }
                         Nominal::NamedSet => {
+                            names.insert("builtin-internal-guard");
+                            names.insert("named-property-set");
+                        }
+                        Nominal::CoreNamedGet => {
+                            names.insert("named-property-get");
+                        }
+                        Nominal::CoreNamedSet => {
                             names.insert("named-property-set");
                         }
                         Nominal::IsClosure => {}
@@ -214,6 +222,9 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
                         }
                         Nominal::Descriptor => {
                             names.insert("descriptor-new");
+                        }
+                        Nominal::CoreDescriptor => {
+                            names.insert("descriptor-new-core");
                         }
                         Nominal::Protocol => {
                             names.insert("protocol-value-new");
@@ -322,6 +333,8 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
             "protocol-marker-set" | "protocol-method-get" => (vec![VALUE, VALUE], vec![VALUE]),
             "protocol-method-set" => (vec![VALUE, VALUE, VALUE], vec![]),
             "descriptor-new"
+            | "descriptor-new-core"
+            | "builtin-internal-guard"
             | "class-value-new"
             | "protocol-value-new"
             | "constructor-new"
@@ -1092,7 +1105,7 @@ fn emit_function(
                                 },
                             )));
                         }
-                        Nominal::Array | Nominal::Descriptor => {
+                        Nominal::Array | Nominal::Descriptor | Nominal::CoreDescriptor => {
                             for argument in arguments {
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
                             }
@@ -1102,6 +1115,8 @@ fn emit_function(
                             });
                             if *operation == Nominal::Descriptor {
                                 function.instruction(&Call(index("descriptor-new")));
+                            } else if *operation == Nominal::CoreDescriptor {
+                                function.instruction(&Call(index("descriptor-new-core")));
                             }
                         }
                         Nominal::Construct => {
@@ -1203,14 +1218,20 @@ fn emit_function(
                         | Nominal::NamedGet
                         | Nominal::CallableGet
                         | Nominal::NamedSet
+                        | Nominal::CoreNamedGet
+                        | Nominal::CoreNamedSet
                         | Nominal::Protocol
                         | Nominal::Dispatcher
                         | Nominal::ObjectDescriptor
                         | Nominal::MethodGet
                         | Nominal::Satisfies
                         | Nominal::NativeSatisfies => {
-                            for argument in arguments {
+                            for (position, argument) in arguments.iter().enumerate() {
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
+                                // Unprivileged named access first rejects built-in owners.
+                                if position == 0 && matches!(operation, Nominal::NamedGet | Nominal::NamedSet) {
+                                    function.instruction(&Call(index("builtin-internal-guard")));
+                                }
                             }
                             function.instruction(&Call(index(match operation {
                                 Nominal::Class => "class-value-new",
@@ -1235,9 +1256,9 @@ fn emit_function(
                                 Nominal::NativeObjectSet => "native-object-property-set",
                                 Nominal::NativeObjectStrictSet => "native-object-property-set-strict",
                                 Nominal::ObjectSet => "object-method-set",
-                                Nominal::NamedGet => "named-property-get",
+                                Nominal::NamedGet | Nominal::CoreNamedGet => "named-property-get",
                             Nominal::CallableGet => "callable-property-get",
-                                Nominal::NamedSet => "named-property-set",
+                                Nominal::NamedSet | Nominal::CoreNamedSet => "named-property-set",
                                 Nominal::Protocol => "protocol-value-new",
                                 Nominal::Dispatcher => "protocol-dispatcher-new",
                                 Nominal::ObjectDescriptor => "object-descriptor",

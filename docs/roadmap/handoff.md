@@ -28864,3 +28864,33 @@ tests and was corrected through the existing typed AotOptions route.
 These are focused results. Fresh committed-source Java/Node-free reproduction,
 the exact workspace command and final-head CI remain required; no closure,
 promotion, merge or whole-core conformance is claimed.
+
+## Built-in internals sealed and core protocols closed (2026-10-26, #274/#275)
+
+Under the 2026-10-25 design decision, descriptors created by privileged
+compiler-authored source (the shipped core, the AOT boundary schemas) carry a
+core-private identity bit. Unprivileged named field and class-property reads and
+writes on those owners now throw `Built-in type internals are private to
+suss.core`. Compiler lowerings of user syntax (empty and collection literals,
+`case` keyword projection, IFn arity properties) use privileged access. The four
+storage-returning `array-for` helpers are private when their binding comes from
+privileged source. Unprivileged `extend-type` of a privileged core protocol, or
+of `Object` methods, onto a privileged core type or a host type now fails at
+compile time. Both checks follow definition identity, not spelling, so tests
+that evaluate core source as user code still define ordinary user types.
+`Session::eval_privileged` (doc-hidden, host-authored source only) serves
+core-internal structural tests.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap   # twice; identical
+python3 scripts/verify_bootstrap_identity.py
+cargo test --locked --no-fail-fast -p suss-cli --test builtin_internals_sealed --test builtin_protocols_closed --test compiled_macro_hash_maps -- --test-threads=2
+cargo test --locked --no-fail-fast -p suss-cli --test core_import --test portable_named_properties --test portable_collection_literals --test portable_vector_trie --test portable_case -- --test-threads=2
+```
+
+New suites: sealed 5/5 and closed 5/5 pass; hash-map structure 8/8 passes with
+privileged probes. Core import 17/17, named properties 4/4, collection literals
+6/6, vector trie 5/5 and case 8/8 pass. On unmodified main the probe showed every
+listed field read/write reachable in both phases. The workspace baseline and CI
+have not run on this source; tests that inspect built-in internals elsewhere are
+expected to need privileged probes or public assertions.

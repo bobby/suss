@@ -89,7 +89,7 @@ fn catalog(phase: Phase) -> Result<super::AnalyzedFragment, Diagnostic> {
         &Environment::default(),
         phase,
         &mut super::NoExpansion,
-        Some(&super::SourceOrigin::new(SOURCE, None)),
+        Some(&super::SourceOrigin::privileged(SOURCE)),
     )
 }
 /// Development generator; it does not execute source or invoke Java/Node.

@@ -317,6 +317,11 @@ pub enum Nominal {
     NamedGet,
     CallableGet,
     NamedSet,
+    /// Privileged forms emitted only for the shipped `suss.core` bootstrap: core
+    /// type descriptors whose internals are private, and named access to them.
+    CoreDescriptor,
+    CoreNamedGet,
+    CoreNamedSet,
     NativeObjectFactory,
     IsNativeObject,
     IsTypeConstructor,
@@ -380,14 +385,14 @@ impl Nominal {
                 Self::BindCallable | Self::MethodGet => count == 2,
                 Self::NativeObjectGet => count == 2,
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
-                Self::NamedGet => count == 2 && arguments[1] == Type::String,
+                Self::NamedGet | Self::CoreNamedGet => count == 2 && arguments[1] == Type::String,
                 Self::CallableGet => count == 3 && arguments[1] == Type::String,
-                Self::NamedSet | Self::ObjectSet => count == 3 && arguments[1] == Type::String,
+                Self::NamedSet | Self::CoreNamedSet | Self::ObjectSet => count == 3 && arguments[1] == Type::String,
                 Self::ObjectInvoke => count >= 2,
                 Self::LiveDispatcher | Self::NativeSet(_) => count == 2,
                 Self::IFnLiveDispatcher => count == 3,
                 Self::NativeMarker(_) => count == 1,
-                Self::Descriptor => arguments.iter().all(|ty| *ty == Type::String),
+                Self::Descriptor | Self::CoreDescriptor => arguments.iter().all(|ty| *ty == Type::String),
                 Self::Construct => count >= 1,
                 Self::Instance | Self::SameNominalType | Self::Satisfies | Self::NativeSatisfies | Self::Marker => {
                     count == 2
@@ -424,6 +429,14 @@ pub struct Method {
     pub parameters: Vec<Parameter>,
     pub body: Box<Hir>,
 }
+/// Core helpers that hand out built-in storage arrays are private to
+/// `suss.core`, like the fields they read (design decision 2026-10-25).
+const CORE_PRIVATE: &[&str] = &[
+    "array-for",
+    "unchecked-array-for",
+    "first-array-for-longvec",
+    "unchecked-editable-array-for",
+];
 /// Reader/expansion syntax actually analyzed for this expression. Compiler-only
 /// lowering nodes have no source record; their syntax must never be fabricated.
 /// Immutable namespace facts at the actual source analysis boundary.
@@ -777,6 +790,9 @@ fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
 }
 struct Analyzer<'a> {
     suspendable: bool,
+    /// Analyzing compiler-authored source, which may access built-in type
+    /// internals (design decision 2026-10-25).
+    privileged: bool,
     expander: &'a mut dyn super::ExpansionHost,
     origin: Option<super::SourceOrigin>,
     environment: Environment,
@@ -1248,7 +1264,8 @@ impl Analyzer<'_> {
                 };
                 let key =
                     self.literal_form(form, Literal::String("EMPTY".encode_utf16().collect()));
-                let value = self.nominal(form, Nominal::NamedGet, vec![owner, key]);
+                // Compiler lowering, not user field access: core's own List.EMPTY.
+                let value = self.nominal(form, Nominal::CoreNamedGet, vec![owner, key]);
                 return self.attach_constant_metadata(form, value);
             }
             Kind::Symbol(symbol) => {
@@ -1299,7 +1316,12 @@ impl Analyzer<'_> {
         symbol: &suss_reader::Symbol,
         span: Range<usize>,
     ) -> Result<(Expression, Type), Diagnostic> {
-        match self.environment.resolve(self.phase, symbol, span.clone())? {
+        let binding = self.environment.resolve(self.phase, symbol, span.clone())?;
+        let global = binding.global();
+        if !self.privileged && CORE_PRIVATE.contains(&global.name()) && self.privileged_definition(global) {
+            return Err(fail(span, format!("{} is private to suss.core", global.name())));
+        }
+        match binding {
             ResolvedBinding::Cell(global) => Ok((Expression::Global(global), Type::Value)),
             ResolvedBinding::Arithmetic { global, .. } | ResolvedBinding::Core { global, .. } => {
                 self.environment.materialize_bootstrap(global.clone());
@@ -1310,6 +1332,14 @@ impl Analyzer<'_> {
                 "Bootstrap core function/macro values are not materialized yet",
             )),
         }
+    }
+    /// The current binding was defined by compiler-authored source, such as
+    /// the shipped core, rather than by user code reusing a core name.
+    pub(super) fn privileged_definition(&self, global: &Global) -> bool {
+        self.environment
+            .definition_info(global)
+            .and_then(|info| info.origin.as_ref())
+            .is_some_and(|origin| origin.is_privileged())
     }
     fn call(&mut self, form: &Form, items: &[Form]) -> Result<Hir, Diagnostic> {
         let callee = Box::new(self.form(&items[0])?);
@@ -2523,6 +2553,7 @@ impl Analyzer<'_> {
                         let setter = match operation {
                             Nominal::Field(index) => Nominal::FieldSet(index),
                             Nominal::NamedGet => Nominal::NamedSet,
+                            Nominal::CoreNamedGet => Nominal::CoreNamedSet,
                             _ => unreachable!(),
                         };
                         return Ok(self.nominal(form, setter, arguments));
@@ -3009,6 +3040,7 @@ pub(crate) fn prepare_with_origin(
 ) -> Result<(Hir, Environment), Diagnostic> {
     let mut analyzer = Analyzer {
         suspendable: false,
+        privileged: origin.is_some_and(|origin| origin.is_privileged()),
         expander,
         origin: origin.cloned(),
         environment: environment.clone(),

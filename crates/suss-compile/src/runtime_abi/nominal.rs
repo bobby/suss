@@ -7,9 +7,16 @@ pub(super) const ERROR_GLOBAL: u32 = ID_GLOBAL + 1;
 pub(super) const SENTINEL_GLOBAL: u32 = ERROR_GLOBAL + 1;
 const OBJECT: u32 = 7;
 
+/// Set in the identity of descriptors created by the shipped core bootstrap:
+/// their instance fields and class properties are private to core.
+pub(super) const CORE_PRIVATE_BIT: i64 = 1 << 62;
+
 pub(super) fn error(body: &mut Vec<Instruction<'static>>) {
+    message_error(body, "Invalid nominal operation");
+}
+fn message_error(body: &mut Vec<Instruction<'static>>, text: &str) {
     use Instruction::*;
-    let message: Vec<_> = "Invalid nominal operation".encode_utf16().collect();
+    let message: Vec<_> = text.encode_utf16().collect();
     body.push(GlobalGet(ERROR_GLOBAL));
     body.extend(message.iter().map(|unit| I32Const(*unit as i32)));
     body.extend([
@@ -101,7 +108,44 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         I64Add,
         GlobalSet(ID_GLOBAL),
     ]);
+    // The same constructor for core types. Only the stored identity carries the
+    // bit (the second counter read; the first is the overflow check), so
+    // identities stay unique and the counter advances as usual.
+    let mut core = body.clone();
+    let identity = core
+        .iter()
+        .enumerate()
+        .filter(|(_, instruction)| matches!(instruction, GlobalGet(ID_GLOBAL)))
+        .nth(1)
+        .map(|(index, _)| index)
+        .expect("descriptor identity read");
+    core.splice(identity + 1..identity + 1, [I64Const(CORE_PRIVATE_BIT), I64Or]);
     b.function_with_locals("descriptor-new", &[VALUE], &[VALUE], &[(1, VALUE)], &body);
+    b.function_with_locals("descriptor-new-core", &[VALUE], &[VALUE], &[(1, VALUE)], &core);
+
+    // Unprivileged named access: reject built-in instances and class values.
+    // Class values are closures over their descriptor (via the property wrapper).
+    let mut body = vec![];
+    for owner in [OBJECT, CLOSURE] {
+        body.extend([LocalGet(0), RefTestNonNull(HeapType::Concrete(owner)), If(BlockType::Empty)]);
+        if owner == OBJECT {
+            get(&mut body, 0, OBJECT, 0);
+        } else {
+            body.extend([LocalGet(0), Call(b.names["closure-environment"])]);
+        }
+        body.extend([
+            LocalSet(1),
+            LocalGet(1),
+            RefTestNonNull(HeapType::Concrete(DESCRIPTOR)),
+            If(BlockType::Empty),
+        ]);
+        get(&mut body, 1, DESCRIPTOR, 0);
+        body.extend([I64Const(CORE_PRIVATE_BIT), I64And, I64Const(0), I64Ne, If(BlockType::Empty)]);
+        message_error(&mut body, "Built-in type internals are private to suss.core");
+        body.extend([End, End, End]);
+    }
+    body.push(LocalGet(0));
+    b.function_with_locals("builtin-internal-guard", &[VALUE], &[VALUE], &[(1, VALUE)], &body);
 
     let mut body = vec![];
     guard(&mut body, 0, DESCRIPTOR);

@@ -230,6 +230,18 @@ pub fn prepare_fragment(
     })?;
     prepare_fragment_forms_with_origin(forms, 0..source.len(), environment, phase, &mut NoExpansion, Some(&SourceOrigin::new(source, None)))
 }
+/// Compile compiler-authored source with access to built-in type internals.
+pub(crate) fn prepare_privileged_fragment(
+    source: &str,
+    environment: &resolve::Environment,
+    phase: resolve::Phase,
+) -> Result<PreparedFragment, Diagnostic> {
+    let forms = read_forms(source).map_err(|error| Diagnostic {
+        span: error.span,
+        message: error.message,
+    })?;
+    prepare_fragment_forms_with_origin(forms, 0..source.len(), environment, phase, &mut NoExpansion, Some(&SourceOrigin::privileged(source)))
+}
 /// Compile owned reader/expanded forms without printing or rereading them.
 /// Conditional selection and namespace preparation preserve original form spans
 /// and metadata. The caller supplies the enclosing source/call-site span.
