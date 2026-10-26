@@ -101,8 +101,9 @@ The [source and license policy](PROVENANCE.md) applies before importing core for
 ## jank clojure-test-suite corpus
 
 The vendored [jank-lang/clojure-test-suite](clojure-test-suite.md) is the
-function-level conformance corpus: 248 namespaces and 5,834 assertions recorded
-from the pinned ClojureScript oracle, judged host-side against Suss with an exact
+behavior conformance oracle: 248 namespaces and 5,834 assertions, with expected
+observations recorded by running the suite on pinned ClojureScript, judged
+host-side against Suss with an exact
 known-failure baseline. The [2026-10-19 full raw capture](../roadmap/evidence/m4-pr256-suite-calibration-2026-10-19.md)
 records 1,144 host-decided passes, 25 guest-judged observations, two assertion
 errors and 4,663 unexecuted assertions behind 185 namespace failures. The
