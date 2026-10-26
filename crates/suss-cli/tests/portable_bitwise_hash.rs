@@ -197,7 +197,10 @@ fn bitwise_alias_exclusion_and_both_compilation_phases_are_explicit() {
 }
 
 #[test]
-fn captured_variadic_bitwise_body_reads_the_current_tail_reducer_once() {
+fn captured_variadic_bitwise_body_keeps_core_reducer_under_user_redefinition() {
+    // Shipped core is direct-linked (design decision 2026-10-25): the variadic
+    // body reduces with core's own operator, unlike ClojureScript's live var read,
+    // which the pinned expected-primary observations still record.
     let mut session = Session::new().unwrap();
     let corpus: serde_json::Value = serde_json::from_str(include_str!(
         "../../../tests/oracle/bitwise-capture-observations.json"
@@ -220,8 +223,7 @@ fn captured_variadic_bitwise_body_reads_the_current_tail_reducer_once() {
 }
 
 #[test]
-fn variadic_bitwise_reducers_preserve_gc_errors_and_dynamic_recovery() {
-    use suss_cli::portable_session::SessionError;
+fn variadic_bitwise_reducers_ignore_user_redefinition_and_recover_after_gc() {
     let mut session = Session::new().unwrap();
     session.eval("(def bitwise_saved bit-or)").unwrap();
     session.collect().unwrap();
@@ -233,13 +235,12 @@ fn variadic_bitwise_reducers_preserve_gc_errors_and_dynamic_recovery() {
         ),
         3.0
     );
+    // Direct linking: redefinition or binding of the public var does not reach
+    // the variadic body's reducer.
     for replacement in ["nil", "(fn [x] x)", "(fn [x y] (throw 29))"] {
         let source =
             format!("(with-redefs [cljs.core/bit-or {replacement}] (bitwise_saved 1 2 4))");
-        assert!(
-            matches!(session.eval(&source), Err(SessionError::Language(_))),
-            "{source}"
-        );
+        assert_eq!(bitwise_number(&mut session, &source), 7.0, "{source}");
         session.collect().unwrap();
         assert_eq!(bitwise_number(&mut session, "(bitwise_saved 1 2 4)"), 7.0);
     }
@@ -248,7 +249,7 @@ fn variadic_bitwise_reducers_preserve_gc_errors_and_dynamic_recovery() {
             &mut session,
             "(binding [cljs.core/bit-or (fn [x y] (+ x y 100))] (bitwise_saved 1 2 4))"
         ),
-        107.0
+        7.0
     );
     session.collect().unwrap();
     assert_eq!(bitwise_number(&mut session, "(bitwise_saved 1 2 4)"), 7.0);

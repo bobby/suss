@@ -1087,6 +1087,8 @@ impl Analyzer<'_> {
             let Kind::List(items) = &form.kind else {
                 unreachable!()
             };
+            // Shipped core's own syntax quotes read its direct-linked sequence.
+            let global = self.core_reference_link(&global).unwrap_or(global);
             let argument = self.form(&items[1])?;
             return Ok(Hir {
                 source: None,
@@ -1358,9 +1360,7 @@ impl Analyzer<'_> {
     /// Shipped core's own definitions are direct-linked, except dynamic and
     /// `^:redef` vars (as in Clojure), including ones a later form redeclares.
     fn core_link(&mut self, global: &Global, dynamic: bool) -> Option<Global> {
-        let prior_dynamic = self.environment.definition_info(global)
-            .is_some_and(|info| Self::dynamic_metadata(&info.declaration));
-        (self.privileged && !dynamic && !prior_dynamic && global.namespace() == "suss.core")
+        (self.privileged && !dynamic && global.namespace() == "suss.core")
             .then(|| self.environment.core_link_cell(global))
     }
     /// A privileged reference to a direct-linked core definition: only when
@@ -1506,13 +1506,16 @@ impl Analyzer<'_> {
             type_is_record: false,
             once,
         };
+        // A var first defined dynamic (or ^:redef) stays live when redefined.
+        let prior_dynamic = self.environment.definition_info(&global)
+            .is_some_and(|info| Self::dynamic_metadata(&info.declaration));
         if !preserve_declaration {
             self.environment
                 .record_definition(global.clone(), definition.clone());
         }
         // Register shipped core's direct link before analyzing the initializer,
         // so a self-recursive core function also calls its own definition.
-        let dynamic = Self::dynamic_metadata(&args[0]);
+        let dynamic = Self::dynamic_metadata(&args[0]) || prior_dynamic;
         if dynamic && self.privileged && self.environment.existing_core_link(&global).is_some() {
             // Earlier core references were direct-linked; a dynamic var must be live.
             return Err(fail(args[0].span.clone(), "A dynamic core var cannot be declared before its definition"));

@@ -29050,3 +29050,36 @@ empty 3/3, queues 3/3, compiler unit tests 188/188, component 30/30 and the jank
 harness 12/12 with its reviewed baseline unchanged. The first attempt with all
 87 `defn-` names private failed records, reduction dispatch and one jank
 namespace diagnostic; those results are superseded by the narrowed list.
+
+## Third review: remaining direct-linking gaps and the undefined-behavior boundary (2026-10-26)
+
+A third independent review of cc0e999 found remaining direct-linking gaps, now
+fixed: bootstrap factories that capture their own cell (`ex-info`, variadic bit
+operations) or the ExceptionInfo class cell now capture link cells; shipped
+core's syntax quotes read the direct-linked `sequence`; and a var first defined
+dynamic or `^:redef` stays live when redefined (the prior declaration is read
+before the new one is recorded).
+
+It also found deliberate circumvention routes: aliasing a core protocol's method
+var into a user protocol before native extension, and constructing built-in types
+with forged fields or hash caches. With the user's agreement these are declared
+undefined behavior for ordinary-use guarantees, as reflection on Clojure
+internals is on the JVM (design decision text updated, #274 comment), and are
+tracked for a stricter guarantee in #279.
+
+Tests that asserted ClojureScript live redefinition of the variadic bit
+operations' reducer now assert the direct-linked result; the pinned CLJS
+`expected-primary` observations are retained. The resident bootstrap cell count is
+148: each of the 74 bootstrap bindings has a link cell.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap   # twice; identical
+python3 scripts/verify_bootstrap_identity.py
+python3 -m unittest discover -s scripts -p 'test_*.py'
+cargo test --locked --no-fail-fast -p suss-cli --test persistent_session --test builtin_internals_sealed --test compiled_bootstrap --test portable_error_constructors --test portable_bitwise_hash --test core_import --test compiled_macro_syntax_quote --test compiled_public_records -p suss-compile --test clojure_test_suite --test component -- --test-threads=2
+```
+
+Persistent session 33/33, sealed 8/8, bootstrap 4/4, error constructors 6/6,
+bitwise hash 6/6 (after the rewrite; 4/6 before), CORE import 17/17, syntax quote
+12/12, public records 7/7, jank harness 12/12 with its reviewed baseline, component
+30/30; script tests 349 OK. CI on cc0e999 failed only the resident cell count.

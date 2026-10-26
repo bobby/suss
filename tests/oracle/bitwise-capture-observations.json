@@ -95,7 +95,7 @@
       "native-source": "(let [f bit-or] (with-redefs [cljs.core/bit-or (fn [x y] (+ x y 100))] (f 1 2 4)))",
       "expected-native": {
         "tag": "f64",
-        "bits": "405ac00000000000"
+        "bits": "401c000000000000"
       },
       "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
     },
@@ -193,7 +193,7 @@
       "native-source": "(let [f bit-and] (with-redefs [cljs.core/bit-and (fn [x y] (+ x y 100))] (f 1 2 4)))",
       "expected-native": {
         "tag": "f64",
-        "bits": "405a000000000000"
+        "bits": "0000000000000000"
       },
       "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
     },
@@ -291,7 +291,7 @@
       "native-source": "(let [f bit-xor] (with-redefs [cljs.core/bit-xor (fn [x y] (+ x y 100))] (f 1 2 4)))",
       "expected-native": {
         "tag": "f64",
-        "bits": "405ac00000000000"
+        "bits": "401c000000000000"
       },
       "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
     },
@@ -393,7 +393,7 @@
       "native-source": "(let [f bit-and-not] (with-redefs [cljs.core/bit-and-not (fn [x y] (+ x y 100))] (f 1 2 4)))",
       "expected-native": {
         "tag": "f64",
-        "bits": "405a400000000000"
+        "bits": "3ff0000000000000"
       },
       "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
     },
@@ -407,7 +407,7 @@
       "native-source": "(let [f bit-or] (with-redefs [cljs.core/bit-or (fn [x y] (+ x y 100))] (f 1 2 4)))",
       "expected-native": {
         "tag": "f64",
-        "bits": "405ac00000000000"
+        "bits": "401c000000000000"
       },
       "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
     },
@@ -421,7 +421,7 @@
       "native-source": "(let [f bit-and] (with-redefs [cljs.core/bit-and (fn [x y] (+ x y 100))] (f 1 2 4)))",
       "expected-native": {
         "tag": "f64",
-        "bits": "405a000000000000"
+        "bits": "0000000000000000"
       },
       "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
     },
@@ -435,7 +435,7 @@
       "native-source": "(let [f bit-xor] (with-redefs [cljs.core/bit-xor (fn [x y] (+ x y 100))] (f 1 2 4)))",
       "expected-native": {
         "tag": "f64",
-        "bits": "405ac00000000000"
+        "bits": "401c000000000000"
       },
       "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
     },
@@ -449,7 +449,7 @@
       "native-source": "(let [f bit-and-not] (with-redefs [cljs.core/bit-and-not (fn [x y] (+ x y 100))] (f 1 2 4)))",
       "expected-native": {
         "tag": "f64",
-        "bits": "405a400000000000"
+        "bits": "3ff0000000000000"
       },
       "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
     },
@@ -463,7 +463,7 @@
       "native-source": "(let [f bit-or] (with-redefs [cljs.core/bit-or (fn [x y] (set! cljs.core/bit-or (fn [x y] 999)) (+ x y 100))] (f 1 2 4 8)))",
       "expected-native": {
         "tag": "f64",
-        "bits": "406ae00000000000"
+        "bits": "402e000000000000"
       },
       "rationale": "Pinned generated public wrapper dispatch reads a replacement global arity property and throws. The accepted captured-function contract keeps the original portable body; its reduce argument reads the current var once. Development-only js* probes independently inspect that body, not public-source equivalence."
     }

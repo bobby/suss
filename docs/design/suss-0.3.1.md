@@ -419,7 +419,13 @@ evidence where they agree with Clojure semantics. Consequences:
 * Shipped core is direct-linked, as Clojure core has been since 1.8: core's own
   references to its non-dynamic definitions are fixed when core defines them.
   Redefining or `with-redefs` of a public core var affects user call sites
-  only. Dynamic vars stay live.
+  only. Dynamic and `^:redef` vars stay live.
+* These guarantees cover ordinary Clojure use. Deliberate circumvention of core
+  implementation details is undefined behavior, as reflection on Clojure's
+  internals is on the JVM: for example aliasing a core protocol's method var into
+  another protocol, or calling built-in constructors with forged fields or hash
+  caches. Such programs stay memory safe and cannot corrupt compiler state,
+  which the host keeps authoritatively and transports afresh on each macro call.
 * Compiler-produced macro data is immutable Clojure data: `&form`, `&env`,
   analyzer ASTs and captured namespace/declaration data. The compiler may share
   or cache it and needs no defense against guest mutation. Object identity of

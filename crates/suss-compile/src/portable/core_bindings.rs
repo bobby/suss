@@ -129,20 +129,24 @@ pub fn compile_with_cells(
     let mut start = Function::new([(1, VALUE)]);
     for index in order {
         let export = &bindings[index].1;
+        // Factories that capture a cell (their own or the exception class)
+        // capture its direct-link cell, so later redefinition of the public var
+        // never reaches core.
+        let link = |cell: usize| (bindings.len() + cell) as u32;
         if self_cell(export) {
             // The native bootstrap exposes a bound nil cell to these constructors.
             start
-                .instruction(&Instruction::GlobalGet(index as u32))
+                .instruction(&Instruction::GlobalGet(link(index)))
                 .instruction(&Instruction::I32Const(0))
                 .instruction(&Instruction::RefI31)
                 .instruction(&Instruction::Call(0));
         }
         start.instruction(&Instruction::GlobalGet(index as u32));
         if export.starts_with("core-") && export != "core-exception-info-class" {
-            start.instruction(&Instruction::GlobalGet(class as u32));
+            start.instruction(&Instruction::GlobalGet(link(class)));
         }
         if self_cell(export) {
-            start.instruction(&Instruction::GlobalGet(index as u32));
+            start.instruction(&Instruction::GlobalGet(link(index)));
         }
         start
             .instruction(&Instruction::Call(factory_indices[index]))
