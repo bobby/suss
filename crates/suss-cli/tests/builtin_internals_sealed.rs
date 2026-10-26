@@ -106,3 +106,54 @@ fn user_type_fields_keep_ordinary_access() {
         }
     }
 }
+
+#[test]
+fn core_internal_calls_are_direct_linked_against_user_redefinition() {
+    // Core's own calls bind to its definitions (Clojure direct linking), so
+    // redefining or with-redefs of a public core var cannot reach core storage.
+    for (phase, mut session) in sessions() {
+        session.eval("(def stolen (atom nil)) (def original-chunked-seq suss.core/chunked-seq)").unwrap();
+        let rest = "(with-redefs [suss.core/chunked-seq (fn [v n i o] (reset! stolen n) (original-chunked-seq v n i o))] (count (rest (seq (vec (range 40))))))";
+        assert_eq!(observe(&mut session, rest), Observation::Number(39f64.to_bits()), "{phase}");
+        assert_eq!(observe(&mut session, "(nil? @stolen)"), Observation::Bool(true), "{phase}");
+        // Hashing of built-ins does not follow a redefined protocol method var.
+        let before = observe(&mut session, "(hash :k)");
+        assert_eq!(observe(&mut session, "(with-redefs [suss.core/-hash (fn [_] 0)] (hash :k))"), before, "{phase}");
+        // User call sites still see redefinition, as in Clojure.
+        assert_eq!(observe(&mut session, "(with-redefs [suss.core/identity (fn [_] 0)] (identity 5))"), Observation::Number(0f64.to_bits()), "{phase}");
+    }
+}
+
+#[test]
+fn builtin_classes_resist_aliased_extension_and_node_singletons_stay_private() {
+    for (phase, mut session) in sessions() {
+        // Extension through an alias, a local or an expression is rejected at run time.
+        for source in [
+            "(do (def aliased-vector PersistentVector) (extend-type aliased-vector IHash (-hash [_] 7)))",
+            "(let [t Keyword] (extend-type t IEquiv (-equiv [_ _] true)))",
+            "(extend-type (identity PersistentArrayMap) IHash (-hash [_] 7))",
+        ] {
+            assert_eq!(caught(&mut session, source), text("Core protocols of built-in types cannot be extended outside suss.core"), "{phase}: {source}");
+        }
+        assert_eq!(observe(&mut session, "(= (hash [1]) (hash [1]))"), Observation::Bool(true), "{phase}");
+        // Node classes and non-whitelisted statics are private.
+        for source in [
+            "(.-EMPTY BitmapIndexedNode)",
+            "(.-EMPTY_NODE PersistentVector)",
+            "(.-createAsIfByAssocComplexPath PersistentArrayMap)",
+        ] {
+            assert_eq!(caught(&mut session, source), text(PRIVATE), "{phase}: {source}");
+        }
+        // Remaining node and transient categories keep private fields.
+        for source in [
+            "(.-root (hash-map 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18))",
+            "(.-arr (chunk-first (seq (vec (range 40)))))",
+            "(.-node (seq (vec (range 40))))",
+            "(.-first (cons 1 nil))",
+            "(.-root (transient [1 2 3]))",
+            "(.-tail (transient [1 2 3]))",
+        ] {
+            assert_eq!(caught(&mut session, source), text(PRIVATE), "{phase}: {source}");
+        }
+    }
+}

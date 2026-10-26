@@ -223,9 +223,11 @@ fn empty_retains_direct_and_native_fallback_and_live_dispatch() {
         // Core protocols of host types are closed to user code (design
         // decision 2026-10-25), so a non-collection has no empty value.
         truth(&mut session, "(nil? (empty 17))");
+        // Shipped core is direct-linked (design decision 2026-10-25): core's
+        // empty keeps its own -empty while user call sites see redefinition.
         truth(
             &mut session,
-            "(with-redefs [cljs.core/-empty (fn [v] (do (set! empty-trace 56) []))] (do (set! empty-trace 0) (empty empty-direct) (= empty-trace 56)))",
+            "(with-redefs [cljs.core/-empty (fn [v] (do (set! empty-trace 56) []))] (do (set! empty-trace 0) (empty empty-direct) (not= empty-trace 56)))",
         );
         truth(
             &mut session,

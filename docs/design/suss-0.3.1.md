@@ -411,6 +411,15 @@ evidence where they agree with Clojure semantics. Consequences:
 * Built-in type internals are not accessible to user code: collection backing
   storage, identifier hash caches and other implementation fields. Field access
   and mutation remain available for user `deftype` and `defrecord` fields.
+  Methods of built-in instances stay public. Built-in classes accept no writes
+  and expose only whitelisted statics of user-facing collections, such as
+  `EMPTY` and `fromArray`; node classes and prototypes stay private, like
+  Clojure's package-private implementation classes. The exact WIT integer
+  wrappers keep their documented scalar words public.
+* Shipped core is direct-linked, as Clojure core has been since 1.8: core's own
+  references to its non-dynamic definitions are fixed when core defines them.
+  Redefining or `with-redefs` of a public core var affects user call sites
+  only. Dynamic vars stay live.
 * Compiler-produced macro data is immutable Clojure data: `&form`, `&env`,
   analyzer ASTs and captured namespace/declaration data. The compiler may share
   or cache it and needs no defense against guest mutation. Object identity of

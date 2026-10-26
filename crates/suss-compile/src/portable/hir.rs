@@ -320,8 +320,13 @@ pub enum Nominal {
     /// Privileged forms emitted only for the shipped `suss.core` bootstrap: core
     /// type descriptors whose internals are private, and named access to them.
     CoreDescriptor,
+    /// A core collection class whose whitelisted statics user code may read.
+    CoreStaticsDescriptor,
     CoreNamedGet,
     CoreNamedSet,
+    /// Rejects a built-in core class before user code extends a core protocol
+    /// or Object methods onto it, whatever form produced the class value.
+    BuiltinClassGuard,
     NativeObjectFactory,
     IsNativeObject,
     IsTypeConstructor,
@@ -392,7 +397,7 @@ impl Nominal {
                 Self::LiveDispatcher | Self::NativeSet(_) => count == 2,
                 Self::IFnLiveDispatcher => count == 3,
                 Self::NativeMarker(_) => count == 1,
-                Self::Descriptor | Self::CoreDescriptor => arguments.iter().all(|ty| *ty == Type::String),
+                Self::Descriptor | Self::CoreDescriptor | Self::CoreStaticsDescriptor => arguments.iter().all(|ty| *ty == Type::String),
                 Self::Construct => count >= 1,
                 Self::Instance | Self::SameNominalType | Self::Satisfies | Self::NativeSatisfies | Self::Marker => {
                     count == 2
@@ -400,7 +405,7 @@ impl Nominal {
                 Self::Set => count == 3,
                 Self::Field(index) | Self::Key(index) => count == 1 && index <= i32::MAX as usize,
                 Self::FieldSet(index) => count == 2 && index <= i32::MAX as usize,
-                Self::Class | Self::Protocol | Self::Dispatcher => count == 1,
+                Self::Class | Self::Protocol | Self::Dispatcher | Self::BuiltinClassGuard => count == 1,
             }
     }
 }
@@ -712,6 +717,8 @@ pub enum Expression {
     Assign {
         global: Global,
         value: Box<Hir>,
+        /// Shipped core's direct-link cell, written with the same value.
+        linked: Option<Global>,
     },
     /// A terminal language throw of an evaluated portable value.
     Throw(Box<Hir>),
@@ -741,6 +748,8 @@ pub enum Expression {
         docstring: Option<Vec<u16>>,
         initializer: Option<Box<Hir>>,
         once: bool,
+        /// Shipped core's direct-link cell, written with the same value.
+        linked: Option<Global>,
     },
     Let {
         bindings: Vec<Binding>,
@@ -1076,6 +1085,7 @@ impl Analyzer<'_> {
                             docstring: None,
                             initializer: Some(Box::new(initializer)),
                             once: true,
+                            linked: None,
                         },
                     },
                 );
@@ -1322,7 +1332,10 @@ impl Analyzer<'_> {
             return Err(fail(span, format!("{} is private to suss.core", global.name())));
         }
         match binding {
-            ResolvedBinding::Cell(global) => Ok((Expression::Global(global), Type::Value)),
+            ResolvedBinding::Cell(global) => {
+                let global = self.core_reference_link(&global).unwrap_or(global);
+                Ok((Expression::Global(global), Type::Value))
+            }
             ResolvedBinding::Arithmetic { global, .. } | ResolvedBinding::Core { global, .. } => {
                 self.environment.materialize_bootstrap(global.clone());
                 Ok((Expression::Global(global), Type::Value))
@@ -1332,6 +1345,29 @@ impl Analyzer<'_> {
                 "Bootstrap core function/macro values are not materialized yet",
             )),
         }
+    }
+    fn dynamic_metadata(name: &Form) -> bool {
+        name.metadata.iter().any(|metadata| match &metadata.kind {
+            Kind::Map(entries) => entries.chunks(2).any(|pair| {
+                matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "dynamic")
+                    && !matches!(pair.get(1).map(|value| &value.kind), Some(Kind::Nil | Kind::Bool(false)) | None)
+            }),
+            Kind::Keyword(key) => key.namespace.is_none() && key.name == "dynamic",
+            _ => false,
+        })
+    }
+    /// Shipped core's own non-dynamic definitions are direct-linked.
+    fn core_link(&mut self, global: &Global, dynamic: bool) -> Option<Global> {
+        (self.privileged && !dynamic && global.namespace() == "suss.core")
+            .then(|| self.environment.core_link_cell(global))
+    }
+    /// A privileged reference to a direct-linked core definition: only when
+    /// that definition (or its declaration) registered a link cell.
+    fn core_reference_link(&mut self, global: &Global) -> Option<Global> {
+        if !self.privileged || global.namespace() != "suss.core" {
+            return None;
+        }
+        self.environment.existing_core_link(global)
     }
     /// The current binding was defined by compiler-authored source, such as
     /// the shipped core, rather than by user code reusing a core name.
@@ -1491,6 +1527,12 @@ impl Analyzer<'_> {
             self.environment
                 .record_definition(global.clone(), definition);
         }
+        let dynamic = Self::dynamic_metadata(&args[0]);
+        if dynamic && self.privileged && self.environment.existing_core_link(&global).is_some() {
+            // Earlier core references were direct-linked; a dynamic var must be live.
+            return Err(fail(args[0].span.clone(), "A dynamic core var cannot be declared before its definition"));
+        }
+        let linked = self.core_link(&global, dynamic);
         Ok(Hir {
             source: None,
             span: form.span.clone(),
@@ -1510,6 +1552,7 @@ impl Analyzer<'_> {
                 },
                 initializer,
                 once,
+                linked,
             },
         })
     }
@@ -2568,6 +2611,7 @@ impl Analyzer<'_> {
                     target: std::sync::Arc::new(target),
                     value: std::sync::Arc::new(value.clone()),
                 }));
+            let linked = self.core_reference_link(&global);
             return Ok(Hir {
                 source: None,
                 span: form.span.clone(),
@@ -2576,6 +2620,7 @@ impl Analyzer<'_> {
                 kind: Expression::Assign {
                     global,
                     value: Box::new(value),
+                    linked,
                 },
             });
         }

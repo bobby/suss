@@ -395,9 +395,9 @@ enum Task {
 }
 
 /// Memo tables own their source identities as well as the resulting GC roots.
-/// Recipe memo tables live for one build. Captured declaration metadata may be
-/// reused only through checked source/representation records after callbacks.
-/// An owned revision pointer is not an artifact cache key.
+/// Recipe memo tables live for one build; transported data is immutable
+/// Clojure data (design decision 2026-10-25). An owned revision pointer is not
+/// an artifact cache key.
 pub struct AnalysisGraph<'a> {
     bridge: &'a FormBridge,
     session: &'a mut Session,
@@ -1983,8 +1983,8 @@ impl<'a> AnalysisGraph<'a> {
         }
         // Share the final metadata value of this captured declaration revision,
         // including a top-fn overlay. Reader occurrences remain independently
-        // constructed elsewhere; resolved var copies reuse this catalog value only
-        // within this build. Cross-build roots require the checked reuse path.
+        // constructed elsewhere; resolved var copies reuse this catalog value
+        // within this build.
         if let Some((_, meta)) = fields.iter_mut().find(|(name, _)| *name == "meta") {
             self.charge(0)?;
             *meta = self.recipe(Recipe::Alias(*meta))?;
@@ -2380,24 +2380,7 @@ impl<'a> AnalysisGraph<'a> {
             depth + 1,
         )?;
         let lowering = self.lowering(hir, depth + 1)?;
-        // Only proved retained source-node routes authorize this literal key.
-        // Unknown routes, including Suss-only Future/Await, stay cold.
-        let env_key = match source.node.as_deref() {
-            Some(hir::SourceNode::Vector(_) | hir::SourceNode::Map(_) | hir::SourceNode::Set(_)
-                | hir::SourceNode::Do { .. } | hir::SourceNode::If { .. }
-                | hir::SourceNode::Bindings { .. } | hir::SourceNode::Recur(_)
-                | hir::SourceNode::Throw(_) | hir::SourceNode::Try { .. }
-                | hir::SourceNode::Assign { .. } | hir::SourceNode::Invoke { .. }
-                | hir::SourceNode::Construct { .. } | hir::SourceNode::WithMeta { .. }) =>
-                "env",
-            None if source.form.metadata.is_empty()
-                && matches!(&source.form.kind, Kind::Nil | Kind::Bool(_) | Kind::Number(_)
-                    | Kind::String(_) | Kind::Keyword(_)) =>
-                "env",
-            None if quoted_datum.is_some() => "env",
-            _ => "env",
-        };
-        let mut fields = field_entries!(self; [("form", form), (env_key, env), ("suss/lowering", lowering)]);
+        let mut fields = field_entries!(self; [("form", form), ("env", env), ("suss/lowering", lowering)]);
         if source.is_body {
             field_push!(self, fields; ("body?", self.flag(true)?));
         }
@@ -2459,11 +2442,7 @@ impl<'a> AnalysisGraph<'a> {
             }
             // c4295f3 analyzer.cljc4392: vector keys AND [:items] are literals.
             // Map/set routes are outside this correction and retain Cold.
-            let children_key = match collection.as_ref() {
-                hir::SourceNode::Vector(_) => "children",
-                _ => "children",
-            };
-            field_push!(self, fields; (children_key, self.vector(&names)?));
+            field_push!(self, fields; ("children", self.vector(&names)?));
         }
         if let Some(node) = &source.node
             && let hir::SourceNode::Bindings {

@@ -220,8 +220,9 @@ fn queue_iterator_preserves_mutation_exhaustion_and_returned_error_contract() {
             ))
             .unwrap();
         session.eval("(def qi (-iterator q3))").unwrap();
+        // Queue storage is private to suss.core; this structural probe is privileged.
         let first_identity = session
-            .eval("(identical? (.hasNext qi) (.-front q3))")
+            .eval_privileged("(identical? (.hasNext qi) (.-front q3))")
             .unwrap();
         session.collect().unwrap();
         assert_eq!(

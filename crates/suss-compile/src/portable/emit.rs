@@ -213,6 +213,12 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::CoreDescriptor => {
                             names.insert("descriptor-new-core");
                         }
+                        Nominal::CoreStaticsDescriptor => {
+                            names.insert("descriptor-new-core-statics");
+                        }
+                        Nominal::BuiltinClassGuard => {
+                            names.insert("builtin-extension-guard");
+                        }
                         Nominal::Protocol => {
                             names.insert("protocol-value-new");
                         }
@@ -321,6 +327,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "protocol-method-set" => (vec![VALUE, VALUE, VALUE], vec![]),
             "descriptor-new"
             | "descriptor-new-core"
+            | "descriptor-new-core-statics"
+            | "builtin-extension-guard"
             | "class-value-new"
             | "protocol-value-new"
             | "constructor-new"
@@ -1090,7 +1098,7 @@ fn emit_function(
                                 },
                             )));
                         }
-                        Nominal::Array | Nominal::Descriptor | Nominal::CoreDescriptor => {
+                        Nominal::Array | Nominal::Descriptor | Nominal::CoreDescriptor | Nominal::CoreStaticsDescriptor => {
                             for argument in arguments {
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
                             }
@@ -1102,6 +1110,8 @@ fn emit_function(
                                 function.instruction(&Call(index("descriptor-new")));
                             } else if *operation == Nominal::CoreDescriptor {
                                 function.instruction(&Call(index("descriptor-new-core")));
+                            } else if *operation == Nominal::CoreStaticsDescriptor {
+                                function.instruction(&Call(index("descriptor-new-core-statics")));
                             }
                         }
                         Nominal::Construct => {
@@ -1204,6 +1214,7 @@ fn emit_function(
                         | Nominal::NamedSet
                         | Nominal::CoreNamedGet
                         | Nominal::CoreNamedSet
+                        | Nominal::BuiltinClassGuard
                         | Nominal::Protocol
                         | Nominal::Dispatcher
                         | Nominal::ObjectDescriptor
@@ -1248,6 +1259,7 @@ fn emit_function(
                                 Nominal::NativeObjectStrictSet => "native-object-property-set-strict",
                                 Nominal::ObjectSet => "object-method-set",
                                 Nominal::NamedGet | Nominal::CoreNamedGet => "named-property-get",
+                                Nominal::BuiltinClassGuard => "builtin-extension-guard",
                             Nominal::CallableGet => "callable-property-get",
                                 Nominal::NamedSet | Nominal::CoreNamedSet => "named-property-set",
                                 Nominal::Protocol => "protocol-value-new",

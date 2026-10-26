@@ -10,6 +10,9 @@ const OBJECT: u32 = 7;
 /// Set in the identity of descriptors created by the shipped core bootstrap:
 /// their instance fields and class properties are private to core.
 pub(super) const CORE_PRIVATE_BIT: i64 = 1 << 62;
+/// With CORE_PRIVATE_BIT: user-facing collection classes whose whitelisted
+/// static members (EMPTY, fromArray, ...) user code may read.
+pub(super) const CORE_PUBLIC_STATICS_BIT: i64 = 1 << 61;
 
 pub(super) fn error(body: &mut Vec<Instruction<'static>>) {
     message_error(body, "Invalid nominal operation");
@@ -119,7 +122,10 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         .nth(1)
         .map(|(index, _)| index)
         .expect("descriptor identity read");
+    let mut statics = core.clone();
     core.splice(identity + 1..identity + 1, [I64Const(CORE_PRIVATE_BIT), I64Or]);
+    statics.splice(identity + 1..identity + 1, [I64Const(CORE_PRIVATE_BIT | CORE_PUBLIC_STATICS_BIT), I64Or]);
+    b.function_with_locals("descriptor-new-core-statics", &[VALUE], &[VALUE], &[(1, VALUE)], &statics);
     b.function_with_locals("descriptor-new", &[VALUE], &[VALUE], &[(1, VALUE)], &body);
     b.function_with_locals("descriptor-new-core", &[VALUE], &[VALUE], &[(1, VALUE)], &core);
 

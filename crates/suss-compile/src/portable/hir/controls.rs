@@ -253,6 +253,7 @@ impl Analyzer<'_> {
                         metadata: Vec::new(),
                         ty: Type::Value,
                         kind: Expression::Assign {
+                            linked: self.core_reference_link(&global),
                             global,
                             value: Box::new(hash.clone()),
                         },

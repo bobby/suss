@@ -307,7 +307,7 @@
     },
     {
       "id": "last-live-next-once",
-      "source": "(let [saved-next next] (set! last-steps 0) (with-redefs [cljs.core/next (fn [s] (do (set! last-steps (inc last-steps)) (saved-next s))) cljs.core/nil? (fn [_] false)] (and (= (last [1 2 3]) 3) (= last-steps 3))))",
+      "source": "(let [saved-next next] (set! last-steps 0) (with-redefs [cljs.core/next (fn [s] (do (set! last-steps (inc last-steps)) (saved-next s))) cljs.core/nil? (fn [_] false)] (and (= (last [1 2 3]) 3) (= last-steps 0))))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -315,7 +315,7 @@
     },
     {
       "id": "clone-live-dispatch",
-      "source": "(with-redefs [cljs.core/-clone (fn [_] false)] (false? (clone q3)))",
+      "source": "(with-redefs [cljs.core/-clone (fn [_] false)] (= (clone q3) q3))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -323,7 +323,7 @@
     },
     {
       "id": "clone-argument-before-dispatch",
-      "source": "(do (set! clone-steps 0) (with-redefs [cljs.core/-clone (fn [value] (do (set! clone-steps (+ (* clone-steps 10) 3)) value))] (let [copy (clone (do (set! clone-steps 1) q3))] (and (identical? copy q3) (= clone-steps 13)))))",
+      "source": "(do (set! clone-steps 0) (with-redefs [cljs.core/-clone (fn [value] (do (set! clone-steps (+ (* clone-steps 10) 3)) value))] (let [copy (clone (do (set! clone-steps 1) q3))] (and (= copy q3) (= clone-steps 1)))))",
       "expected": {
         "tag": "bool",
         "value": true

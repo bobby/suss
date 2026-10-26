@@ -591,18 +591,23 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &body,
     );
 
+    // Static members of user-facing collections that user code may read.
+    const PUBLIC_STATICS: &[&str] = &[
+        "EMPTY", "fromArray", "fromArrays", "createWithCheck", "createAsIfByAssoc", "HASHMAP_THRESHOLD",
+    ];
     // Unprivileged named access (owner, name) -> owner (design decision
     // 2026-10-25). Fields of built-in instances are private to suss.core while
-    // their methods stay public, as in Clojure. Built-in classes expose static
-    // reads such as EMPTY or fromArray, but not their prototype, and accept no
-    // writes, so user code cannot patch core behavior.
-    let private = |body: &mut Vec<Instruction<'static>>, descriptor: u32| {
+    // their methods stay public, as in Clojure. Only user-facing collection
+    // classes expose whitelisted static reads; node classes, prototypes and
+    // other statics stay private, and no built-in class accepts writes.
+    let flag = |body: &mut Vec<Instruction<'static>>, descriptor: u32, bit: i64| {
         body.extend([LocalGet(descriptor), RefTestNonNull(HeapType::Concrete(DESCRIPTOR)), If(BlockType::Result(ValType::I32)),
             LocalGet(descriptor), RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
             StructGet { struct_type_index: DESCRIPTOR, field_index: 0 },
-            I64Const(nominal::CORE_PRIVATE_BIT), I64And, I64Const(0), I64Ne,
+            I64Const(bit), I64And, I64Const(0), I64Ne,
             Else, I32Const(0), End]);
     };
+    let private = |body: &mut Vec<Instruction<'static>>, descriptor: u32| flag(body, descriptor, nominal::CORE_PRIVATE_BIT);
     for writing in [false, true] {
         let mut body = vec![LocalGet(0), RefTestNonNull(HeapType::Concrete(7)), If(BlockType::Empty)];
         structure(&mut body, 0, 7, 0);
@@ -617,9 +622,15 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             LocalGet(0), Call(b.names["closure-environment"]), LocalSet(2)]);
         private(&mut body, 2);
         if !writing {
-            body.push(LocalGet(1));
-            name(&mut body, "prototype");
-            body.extend([Call(equal), I32And]);
+            // Allowed only for whitelisted statics of user-facing collections.
+            flag(&mut body, 2, nominal::CORE_PUBLIC_STATICS_BIT);
+            body.push(I32Const(0));
+            for public in PUBLIC_STATICS {
+                body.push(LocalGet(1));
+                name(&mut body, public);
+                body.extend([Call(equal), I32Or]);
+            }
+            body.extend([I32And, I32Eqz, I32And]);
         }
         body.extend([If(BlockType::Empty)]);
         nominal::message_error(&mut body, "Built-in type internals are private to suss.core");
@@ -629,6 +640,15 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             &[VALUE, VALUE], &[VALUE], &[(1, VALUE)], &body,
         );
     }
+    // Class value -> class value; built-in classes reject user extension of
+    // core protocols and Object methods.
+    let mut body = vec![LocalGet(0), RefTestNonNull(HeapType::Concrete(CLOSURE)), If(BlockType::Empty),
+        LocalGet(0), Call(b.names["closure-environment"]), LocalSet(1)];
+    private(&mut body, 1);
+    body.extend([If(BlockType::Empty)]);
+    nominal::message_error(&mut body, "Core protocols of built-in types cannot be extended outside suss.core");
+    body.extend([End, End, LocalGet(0)]);
+    b.function_with_locals("builtin-extension-guard", &[VALUE], &[VALUE], &[(1, VALUE)], &body);
 
     for writing in [false, true] {
         // owner/name/(assigned value); payload/schema/index/fresh follow.

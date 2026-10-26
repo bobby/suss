@@ -59,23 +59,23 @@ fn retained_symbol_conversion_preserves_all_branches_and_utf16_in_both_phases() 
             (r#"(symbol "plain")"#, "plain"),
             (r#"(symbol "/")"#, "/"),
             (
-                r#"(let [s (symbol "c/d/e")] [(.-ns s) (.-name s)])"#,
+                r#"(let [s (symbol "c/d/e")] [(namespace s) (name s)])"#,
                 r#"["c" "d/e"]"#,
             ),
             (
-                r#"[(.-ns (symbol "")) (.-name (symbol ""))]"#,
+                r#"[(namespace (symbol "")) (name (symbol ""))]"#,
                 r#"[nil ""]"#,
             ),
             (
-                r#"[(.-ns (symbol "c/")) (.-name (symbol "c/"))]"#,
+                r#"[(namespace (symbol "c/")) (name (symbol "c/"))]"#,
                 r#"["c" ""]"#,
             ),
             (
-                r#"[(.-ns (symbol "/name")) (.-name (symbol "/name"))]"#,
+                r#"[(namespace (symbol "/name")) (name (symbol "/name"))]"#,
                 r#"[nil "/name"]"#,
             ),
             (
-                r#"[(.-ns (symbol "😀/\uD800x\uDC00")) (.-name (symbol "😀/\uD800x\uDC00"))]"#,
+                r#"[(namespace (symbol "😀/\uD800x\uDC00")) (name (symbol "😀/\uD800x\uDC00"))]"#,
                 r#"["😀" "\uD800x\uDC00"]"#,
             ),
             ("(symbol :a/b)", "a/b"),

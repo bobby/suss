@@ -20,6 +20,7 @@ const REJECTED: &[&str] = &[
     "(extend-type string IEquiv (-equiv [_ _] true))",
     "(extend-type default IHash (-hash [_] 91))",
     "(extend-type nil ICounted (-count [_] 7))",
+    "(extend-type string Object (toString [_] \"s\"))",
 ];
 
 fn sessions() -> [(&'static str, Session); 2] {

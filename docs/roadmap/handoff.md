@@ -28965,3 +28965,49 @@ Every edited suite passes locally, including compile_expr 302 (14 existing
 ignores), component 30, AOT lists 10, value decoder 25, vectors 8, metadata 10,
 lazy transformations 4 and quoted identifiers 3; script tests 349 OK. The
 workspace baseline and final-head CI remain to run.
+
+## Independent review fixes: direct linking, static whitelist, run-time extension guard (2026-10-26)
+
+An independent read-only review of 9d03031 found three sealing blockers, now
+fixed with the user's choices:
+
+- Core-protocol and Object extension checked only the spelled class. User code
+  extending a core protocol or Object now passes the class value through a
+  run-time `builtin-extension-guard`, so aliases, locals and expressions are
+  rejected; Object extension onto host types is rejected too.
+- Core called its own helpers through redefinable vars, so `with-redefs` could
+  capture internal storage. Shipped core is now direct-linked (Clojure 1.8
+  semantics): each non-dynamic core definition, declaration or core `set!` also
+  writes an internal `suss.internal.core-link` cell, and privileged references
+  read it. User redefinition and `with-redefs` affect user call sites only;
+  dynamic vars stay live; a dynamic var declared before definition fails the
+  bootstrap compile.
+- Every static read except `prototype` exposed node singletons. Static reads are
+  now whitelisted (`EMPTY`, `fromArray`, `fromArrays`, `createWithCheck`,
+  `createAsIfByAssoc`, `HASHMAP_THRESHOLD`) on user-facing collection classes
+  marked by a second descriptor bit; node classes and other statics are private.
+
+Also: docs corrected; sealing regressions extended (hash-map roots, chunks,
+chunked seqs, lists, transients, alias/local/expression extension, direct
+linking); the cyclic-metadata bridge check restored as a privileged probe; dead
+branches and stale comments removed. Tests that asserted ClojureScript live
+redefinition of core internals (`-empty`, `next`, `-clone`) now assert the
+direct-linked result. Left as review nits: `Session::eval_privileged` remains a
+doc-hidden host API used only by tests; runtime-native `ExceptionInfo` keeps its
+documented interop fields; the `case` keyword lowering's privileged `fqn` read is
+documented as unable to reach other built-in storage.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap   # twice; identical
+python3 scripts/verify_bootstrap_identity.py
+python3 -m unittest discover -s scripts -p 'test_*.py'
+cargo test --locked --no-fail-fast -p suss-cli --test builtin_internals_sealed --test builtin_protocols_closed --test portable_empty --test portable_queues --test compiled_bootstrap --test portable_case --test compiled_macro_vectors -p suss-compile --lib -- --test-threads=2
+```
+
+Sealed 7/7, closed 5/5, empty 3/3, queues 3/3, compiled bootstrap 4/4, case 8/8,
+vectors 8/8, compiler unit tests 188/188; earlier in this round the with-redefs
+corpora (bitwise, default and murmur hash, vector trie, collection literals,
+quoted identifiers), symbol conversion, CORE import 17/17 and the jank harness
+12/12 passed with direct linking. Script tests 349 OK. CI on 9d03031 passed all
+but integration shard 6 (queue and symbol tests fixed here); the full local
+baseline on 9d03031 failed only the same queue test.

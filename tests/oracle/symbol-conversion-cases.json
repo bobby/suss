@@ -4,7 +4,7 @@
   "cases": [
     {
       "id": "symbol-empty",
-      "source": "(let [s (symbol \"\")] [(.-ns s) (.-name s)])",
+      "source": "(let [s (symbol \"\")] [(namespace s) (name s)])",
       "expected": {
         "tag": "vector",
         "items": [
@@ -20,7 +20,7 @@
     },
     {
       "id": "symbol-plain",
-      "source": "(let [s (symbol \"plain\")] [(.-ns s) (.-name s)])",
+      "source": "(let [s (symbol \"plain\")] [(namespace s) (name s)])",
       "expected": {
         "tag": "vector",
         "items": [
@@ -42,7 +42,7 @@
     },
     {
       "id": "symbol-slash",
-      "source": "(let [s (symbol \"/\")] [(.-ns s) (.-name s)])",
+      "source": "(let [s (symbol \"/\")] [(namespace s) (name s)])",
       "expected": {
         "tag": "vector",
         "items": [
@@ -60,7 +60,7 @@
     },
     {
       "id": "symbol-leading-slash",
-      "source": "(let [s (symbol \"/name\")] [(.-ns s) (.-name s)])",
+      "source": "(let [s (symbol \"/name\")] [(namespace s) (name s)])",
       "expected": {
         "tag": "vector",
         "items": [
@@ -82,7 +82,7 @@
     },
     {
       "id": "symbol-trailing-slash",
-      "source": "(let [s (symbol \"c/\")] [(.-ns s) (.-name s)])",
+      "source": "(let [s (symbol \"c/\")] [(namespace s) (name s)])",
       "expected": {
         "tag": "vector",
         "items": [
@@ -101,7 +101,7 @@
     },
     {
       "id": "symbol-multiple-slash",
-      "source": "(let [s (symbol \"c/d/e\")] [(.-ns s) (.-name s)])",
+      "source": "(let [s (symbol \"c/d/e\")] [(namespace s) (name s)])",
       "expected": {
         "tag": "vector",
         "items": [
@@ -124,7 +124,7 @@
     },
     {
       "id": "symbol-surrogates",
-      "source": "(let [s (symbol \"\ud83d\ude00/\\uD800x\\uDC00\")] [(.-ns s) (.-name s)])",
+      "source": "(let [s (symbol \"\ud83d\ude00/\\uD800x\\uDC00\")] [(namespace s) (name s)])",
       "expected": {
         "tag": "vector",
         "items": [
@@ -148,7 +148,7 @@
     },
     {
       "id": "symbol-keyword",
-      "source": "(let [s (symbol :a/b)] [(.-ns s) (.-name s)])",
+      "source": "(let [s (symbol :a/b)] [(namespace s) (name s)])",
       "expected": {
         "tag": "vector",
         "items": [
@@ -169,7 +169,7 @@
     },
     {
       "id": "symbol-keyword-plain",
-      "source": "(let [s (symbol :plain)] [(.-ns s) (.-name s)])",
+      "source": "(let [s (symbol :plain)] [(namespace s) (name s)])",
       "expected": {
         "tag": "vector",
         "items": [
@@ -199,7 +199,7 @@
     },
     {
       "id": "symbol-two-arity",
-      "source": "(let [s (symbol \"a\" \"b\")] [(.-ns s) (.-name s)])",
+      "source": "(let [s (symbol \"a\" \"b\")] [(namespace s) (name s)])",
       "expected": {
         "tag": "vector",
         "items": [
@@ -220,7 +220,7 @@
     },
     {
       "id": "symbol-nil-namespace",
-      "source": "(let [s (symbol nil \"b\")] [(.-ns s) (.-name s)])",
+      "source": "(let [s (symbol nil \"b\")] [(namespace s) (name s)])",
       "expected": {
         "tag": "vector",
         "items": [
@@ -238,7 +238,7 @@
     },
     {
       "id": "symbol-var-conversion",
-      "source": "(let [s (symbol (new cljs.core/Var (fn [] 42) 'a/b nil))] [(.-ns s) (.-name s)])",
+      "source": "(let [s (symbol (new cljs.core/Var (fn [] 42) 'a/b nil))] [(namespace s) (name s)])",
       "expected": {
         "tag": "vector",
         "items": [

@@ -257,6 +257,14 @@ impl<'a> Lowerer<'a> {
         )?;
         Ok(global.clone())
     }
+    /// Also store a shipped core definition in its direct-link cell.
+    fn write_link(&mut self, linked: &Option<Global>, value: ValueId, span: &Range<usize>) -> Result<(), Diagnostic> {
+        if let Some(linked) = linked {
+            let global = self.clone_global(linked, span)?;
+            self.emit(Operation::GlobalWrite { global, value }, Type::Value, span.clone())?;
+        }
+        Ok(())
+    }
     fn display_name(&mut self, hir: &Hir) -> Result<Option<Vec<u16>>, Diagnostic> {
         if let Some(scope) = hir
             .source
@@ -355,17 +363,19 @@ impl<'a> Lowerer<'a> {
                 return Err(Diagnostic { span: hir.span.clone(),
                     message: "Async continuation lowering is not implemented".into() });
             }
-            Expression::Assign { global, value } => {
+            Expression::Assign { global, value, linked } => {
                 let value = operand!(value);
                 let global = self.clone_global(global, &hir.span)?;
-                self.emit(
+                let written = self.emit(
                     Operation::GlobalWrite {
                         global,
                         value,
                     },
                     Type::Value,
                     hir.span.clone(),
-                )?
+                )?;
+                self.write_link(linked, written, &hir.span)?;
+                written
             }
             Expression::DynamicScope { bindings, body } => {
                 let globals = bindings
@@ -452,6 +462,7 @@ impl<'a> Lowerer<'a> {
                 global,
                 initializer,
                 once,
+                linked,
                 ..
             } => {
                 if let Some(initializer) = initializer {
@@ -488,6 +499,7 @@ impl<'a> Lowerer<'a> {
                                 Type::Value,
                                 hir.span.clone(),
                             )?;
+                            self.write_link(linked, value, &hir.span)?;
                             self.function.blocks[self.current].terminator = Terminator::Jump {
                                 target: join,
                                 arguments: vec![value],
@@ -498,14 +510,16 @@ impl<'a> Lowerer<'a> {
                     } else {
                         let value = operand!(initializer);
                         let global = self.clone_global(global, &hir.span)?;
-                        self.emit(
+                        let written = self.emit(
                             Operation::GlobalWrite {
                                 global,
                                 value,
                             },
                             Type::Value,
                             hir.span.clone(),
-                        )?
+                        )?;
+                        self.write_link(linked, written, &hir.span)?;
+                        written
                     }
                 } else {
                     // A declaration does not reset an existing cell or bind an unbound one.

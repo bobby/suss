@@ -55,6 +55,13 @@ fn compiled_macro_metadata_keeps_maps_on_returned_sequence_kinds_and_rejects_inv
             "{source}"
         );
     }
+    // The bridge must still reject cyclic metadata. User code cannot build
+    // such a cycle once built-in fields are private, so the host plants it.
+    session
+        .eval_privileged("(def cyclic-metadata {:tag 1}) (set! (.-meta cyclic-metadata) cyclic-metadata)")
+        .unwrap();
+    let value = session.eval("(with-meta [1] cyclic-metadata)").unwrap();
+    assert!(bridge.read(&mut session, &value, 520..530).is_err());
     let value = session.eval("[1]").unwrap();
     assert!(bridge.read(&mut session, &value, 530..540).is_ok());
 }
