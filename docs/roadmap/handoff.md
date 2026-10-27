@@ -29127,3 +29127,32 @@ Focused: builtin_internals_sealed 8/8, builtin_protocols_closed 5/5,
 portable_exception_info 12/12, persistent_session 33/33, portable_command 7/7
 and compiled_bootstrap 4/4. The full baseline and CI results for this head are
 in the PR's final comment.
+
+## PR 277 merged; final-head baseline and acceptance audit (2026-10-27)
+
+PR #277 was merged as efced21 from head 48f54ba; the two trees are identical
+(`git diff --stat 48f54ba efced21` is empty). CI at 48f54ba: foundation,
+integration 0-7 and test all pass. Full baseline on efced21 in a
+memory-capped unit (MemoryMax=10G, MemorySwapMax=1G), 2026-10-27
+02:17-06:48: exit 0, 265 test results, 1981 passed, 0 failed, 78 ignored (the
+same `#[ignore]` set as main).
+
+An independent read-only audit of efced21 checked each criterion of #274,
+#275 and #276 and found all of them met. Its per-criterion table is in the
+PR #277 thread. It confirmed built-in hash values against 30f4787 in three
+ways: no hash `expected` value changed in any oracle fixture, live probes
+match the old fixtures, and an independent Murmur3 recomputation matches.
+It found no unsealed route to built-in internals and no leftover memo,
+certification, retention or recording machinery in source. Findings:
+
+- A stale comment block in `compiled_macro_cumulative_fuel.rs` described the
+  deleted receipt-retention and memo-box tests; removed here.
+- `(set! (.-meta 'sym) ...)`, `js-delete` on a built-in, `(.-__proto__ [])`
+  and `(.toArray [1 2 3])` are rejected, but with the generic "Invalid nominal
+  operation" message rather than "private to suss.core". Recorded for #279.
+- Compiled quoted identifier literals still embed a precomputed hash, while
+  bridge-built identifiers start uncached. Sealing makes this unobservable.
+
+```sh
+CARGO_BUILD_JOBS=4 cargo test --workspace --locked --no-fail-fast -- --test-threads=2
+```
