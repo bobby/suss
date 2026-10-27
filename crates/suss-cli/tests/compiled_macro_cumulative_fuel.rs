@@ -68,26 +68,6 @@ fn boolean(session: &mut Session, value: &suss_compile::portable_session::Sessio
         .unwrap()
 }
 
-
-
-
-
-// Interpretation:
-// canonical-next-call isolates preexisting canonical receipt retention before
-// any replacement. custom-before-hit isolates invalidation by installation alone.
-// custom-hit hashes the CURRENT audit: rebuilt roots cannot fake saved-receiver
-// counter increments, and a miss cannot masquerade as preserving the old memo.
-// The miss branch remains legitimate executable user behavior but the intended
-// successful path is exclusively an already-warm hit, avoiding new custom-write
-// authorization as a prerequisite for this separate regression.
-// Counter differences bracket only explicit hash inside macro execution; do not
-// infer a zero-transport-callback policy. Both phases use independent macrohosts.
-
-// Constant91 checks current hash result91 without treating the old memo as the
-// hash result. The saved and current memo boxes must remain identical throughout.
-// Each (variant, caller phase) creates a fresh Session and CompiledMacros host.
-
-
 #[test]
 fn macros_cannot_mutate_transported_metadata_storage() {
     // Built-in internals are private to suss.core (design decision 2026-10-25),
