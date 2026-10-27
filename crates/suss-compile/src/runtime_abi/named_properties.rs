@@ -608,9 +608,10 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             Else, I32Const(0), End]);
     };
     let private = |body: &mut Vec<Instruction<'static>>, descriptor: u32| flag(body, descriptor, nominal::CORE_PRIVATE_BIT);
-    // Runtime-built descriptors (errors, ExceptionInfo) have identities below
-    // the first counted one; their fields are public reads but never writable,
-    // like Clojure's public final exception fields.
+    // Instances of runtime-built descriptors (ExceptionInfo) have identities
+    // below the first counted one; their fields are public reads but never
+    // writable, like Clojure's public final exception fields. Their classes
+    // keep the host's read-only property semantics.
     let runtime_built = |body: &mut Vec<Instruction<'static>>, descriptor: u32| {
         body.extend([LocalGet(descriptor), RefTestNonNull(HeapType::Concrete(DESCRIPTOR)), If(BlockType::Result(ValType::I32)),
             LocalGet(descriptor), RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
@@ -635,10 +636,6 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         body.extend([LocalGet(0), RefTestNonNull(HeapType::Concrete(CLOSURE)), If(BlockType::Empty),
             LocalGet(0), Call(b.names["closure-environment"]), LocalSet(2)]);
         private(&mut body, 2);
-        if writing {
-            runtime_built(&mut body, 2);
-            body.push(I32Or);
-        }
         if !writing {
             // Allowed only for whitelisted statics of user-facing collections.
             flag(&mut body, 2, nominal::CORE_PUBLIC_STATICS_BIT);

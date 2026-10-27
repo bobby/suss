@@ -29115,8 +29115,8 @@ An independent read-only audit of 2c605a0 against every criterion of #274,
 fields were writable from user code. It confirmed that no built-in hash value
 changed: the changed `expected-native` bitwise values are bit-operation
 results under `with-redefs`, and core.sus and the hash code are unchanged
-versus main. The named-property set guard now also rejects writes on runtime-
-built descriptors (errors, ExceptionInfo), which stay readable, like Clojure's
+versus main. The named-property set guard now also rejects instance writes on runtime-
+built descriptors (ExceptionInfo), which stay readable, like Clojure's
 public final exception fields. The sealing suite adds sorted-map nodes, sorted
 sets, queues and ExceptionInfo writes. The compiler-integrity import test
 asserts the import is absent, and a stale `Cold` comment is removed.
