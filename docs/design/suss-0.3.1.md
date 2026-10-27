@@ -437,7 +437,8 @@ evidence where they agree with Clojure semantics. Consequences:
   source positions, and the work is charged to the macro call's compilation
   allowance. A macro whose definition cannot reference `&form` or `&env` (no
   lexical mention and no source macro expanded while compiling its body)
-  receives `nil` for it, which it cannot observe.
+  receives `nil` for it, which it cannot observe. Compiler-catalog macros
+  always receive a materialized `&env`.
 
 Tests that assert pinned ClojureScript observations of these details are removed
 or rewritten to Clojure semantics: memo initialization or provenance, writes

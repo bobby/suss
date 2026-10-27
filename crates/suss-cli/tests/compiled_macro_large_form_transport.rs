@@ -100,7 +100,8 @@ fn large_macro_calls_transport_form_arguments_and_results_at_default_allowance()
         let facts = items(&facts);
         assert_eq!(number(&facts[0]), 17.0, "{phase} &form metadata");
         assert_eq!(number(&facts[1]), 1.0, "{phase} &form :line");
-        assert!(number(&facts[2]) >= 1.0, "{phase} &form :column");
+        // As in Clojure's MetaReader, the position is that of the leading `^`.
+        assert_eq!(number(&facts[2]), 1.0, "{phase} &form :column");
         assert_eq!(number(&facts[3]), WIDTH as f64);
         assert_eq!(number(&facts[4]), 23.0);
         assert_eq!(number(&facts[5]), 91.0);
