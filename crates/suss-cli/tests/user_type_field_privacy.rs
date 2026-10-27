@@ -113,6 +113,16 @@ fn mutable_fields_are_private_outside_their_type() {
         ] {
             assert!(matches!(caught(&mut session, source), Observation::String(_)), "{phase}: {source}");
         }
+        // Callable-property reads of a field named like a call method.
+        session.eval("(deftype CallCell [^:mutable call ^:mutable apply])").unwrap();
+        for source in ["(.-call (CallCell. 42 1))", "(.-apply (CallCell. 42 1))"] {
+            assert_eq!(caught(&mut session, source), text(PRIVATE), "{phase}: {source}");
+        }
+        // An inline extension extends the type being defined, even when the
+        // body rebinds its name to another type first.
+        session.eval("(defprotocol IForge (forged [o]))").unwrap();
+        let _ = session.eval("(deftype* Forger [] nil (do (def Forger Cell) (extend-type Forger IForge (forged [o] (.-v o)))))");
+        assert_ne!(caught(&mut session, "(forged (Cell. 1 2))"), number(1.0), "{phase}");
         // A rejected write changes nothing.
         assert_eq!(
             observe(&mut session, "(let [c (Cell. 1 2)] (try (set! (.-v c) 3) (catch :default _ nil)) (cell-get c))"),

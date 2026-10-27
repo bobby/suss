@@ -30,12 +30,13 @@ impl Analyzer<'_> {
         // value, or nil, for the run-time field privacy guard (#278). Accesses
         // that already carry it (a lexical field read turned into a set!) keep it.
         let mut arguments = arguments;
-        if matches!((operation, arguments.len()), (Nominal::NamedGet, 2) | (Nominal::NamedSet, 3)) {
+        let callable = matches!((operation, arguments.len()), (Nominal::CallableGet, 3)) && !self.privileged;
+        if callable || matches!((operation, arguments.len()), (Nominal::NamedGet, 2) | (Nominal::NamedSet, 3)) {
             let caller = match self.field_owner {
                 Some(owner) => self.local(form, owner),
                 None => self.literal_form(form, Literal::Nil),
             };
-            arguments.insert(2, caller);
+            if callable { arguments.push(caller) } else { arguments.insert(2, caller) }
         }
         Hir {
             source: None,
@@ -377,7 +378,21 @@ impl Analyzer<'_> {
                         "Native symbol/bigint values are not lowered yet",
                     ));
                 }
-                let mut value = self.form(class)?;
+                let inline_fields = match &class.kind {
+                    Kind::Symbol(symbol) if symbol.namespace.is_some() || !self.locals.contains_key(&symbol.name) => {
+                        let target = self.named_global(class)?;
+                        self.type_body_fields.iter().rev()
+                            .find(|(global, _, _, _)| *global == target)
+                            .map(|(_, declaration, fields, class)| (declaration.clone(), fields.clone(), *class))
+                    }
+                    _ => None,
+                };
+                // Inline methods extend the class being defined, not whatever
+                // its global names when the body runs: they own its fields.
+                let mut value = match &inline_fields {
+                    Some((_, _, own)) => self.local(class, *own),
+                    None => self.form(class)?,
+                };
                 if !self.privileged && self.extends_core_protocol(&args[1..]) {
                     // The class may be an alias, local or expression; check its
                     // run-time identity, not only its spelling.
@@ -385,16 +400,9 @@ impl Analyzer<'_> {
                 }
                 let binding = self.fresh_binding(class, value);
                 let class_value = self.local(class, binding.id);
-                let inline_fields = match &class.kind {
-                    Kind::Symbol(symbol) if symbol.namespace.is_some() || !self.locals.contains_key(&symbol.name) => {
-                        let target = self.named_global(class)?;
-                        self.type_body_fields.iter().rev()
-                            .find(|(global, _, _)| *global == target)
-                            .map(|(_, declaration, fields)| (declaration.clone(), fields.clone()))
-                    }
-                    _ => None,
-                };
-                let (type_declaration, fields) = inline_fields.unwrap_or_else(|| (class.clone(), Vec::new()));
+                let (type_declaration, fields) = inline_fields
+                    .map(|(declaration, fields, _)| (declaration, fields))
+                    .unwrap_or_else(|| (class.clone(), Vec::new()));
                 let mut effects = self.protocol_extensions(form, &args[1..], class_value,
                     &fields, false, &type_declaration)?;
                 if effects.is_empty() {
@@ -640,7 +648,7 @@ impl Analyzer<'_> {
         // fails. Nested intrinsic declarations keep their own field contexts.
         let outer_locals = std::mem::take(&mut self.locals);
         let outer_fields = std::mem::take(&mut self.fields);
-        self.type_body_fields.push((global, args[0].clone(), fields));
+        self.type_body_fields.push((global, args[0].clone(), fields, class.id));
         let body = self.form_in(&args[3], super::super::AnalysisContext::Statement, false);
         self.type_body_fields.pop();
         self.locals = outer_locals;

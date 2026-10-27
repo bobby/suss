@@ -399,7 +399,8 @@ impl Nominal {
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
                 Self::NamedGet => count == 3 && arguments[1] == Type::String,
                 Self::CoreNamedGet => count == 2 && arguments[1] == Type::String,
-                Self::CallableGet => count == 3 && arguments[1] == Type::String,
+                // Unprivileged callable reads also carry the caller (#278).
+                Self::CallableGet => matches!(count, 3 | 4) && arguments[1] == Type::String,
                 Self::NamedSet => count == 4 && arguments[1] == Type::String,
                 Self::CoreNamedSet | Self::ObjectSet => count == 3 && arguments[1] == Type::String,
                 Self::ObjectInvoke => count >= 2,
@@ -811,7 +812,7 @@ struct Analyzer<'a> {
     locals: HashMap<String, LocalBinding>,
     fields: HashMap<String, FieldBinding>,
     /// Field declarations in an intrinsic type body, before methods bind a receiver.
-    type_body_fields: Vec<(Global, Form, Vec<Form>)>,
+    type_body_fields: Vec<(Global, Form, Vec<Form>, BindingId)>,
     /// The class value of the type whose inline method bodies (and closures
     /// created in them) are being analyzed: only those may access its mutable
     /// fields by name.

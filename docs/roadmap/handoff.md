@@ -29174,12 +29174,19 @@ value, or nil outside a type body, to `user-field-get-guard` /
   `extend-type`/`extend-protocol` outside the definition do not qualify;
 - immutable fields, record keyword access, `assoc` and `hash` are unchanged.
 
-Privileged `suss.core` analysis keeps the unguarded core operations. Probed
+Unprivileged callable-property reads (`.-call`, `.-apply`, `.call`, `.apply`
+and IFn arity names) carry the caller too and run the same two guards before
+`callable-property-get`. An `extend-type` of the type inside its own intrinsic
+body extends the class being defined (its binding), not the value its global
+names when the body runs, so rebinding the name cannot hand another type's
+fields to the inline methods (independent review). Privileged `suss.core` analysis keeps the unguarded core operations. Probed
 and pinned as regressions: `unchecked-get`, `unchecked-set`, `aget` and
 `aset` already reject user objects, so no dynamic route reaches the fields.
 
 Host readers and tests that assumed a five-field descriptor now expect six
-(`portable_macro_data.rs`, the decoder and descriptor-shape assertions). A
+(`portable_macro_data.rs`, the decoder, descriptor-shape assertions, and the
+`runtime_abi`/`runtime_async_future` callers of `descriptor-new`, which now pass
+the mutable-names operand). A
 record's `__hash` cache is mutable and therefore private:
 `compiled_public_records` now asserts the privacy error for
 `(.-__hash copied)`, and `compiled_record_factories` no longer reads it from
@@ -29195,3 +29202,5 @@ cargo test --locked -p suss-cli --test user_type_field_privacy --test builtin_in
 cargo test --locked -p suss-cli --test compiled_public_records --test compiled_record_factories --test compiled_record_type_boundary -- --test-threads=2
 scripts/verify-bootstrap.sh
 ```
+
+Limitation: the privacy error names neither the field nor the type.

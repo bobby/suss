@@ -176,7 +176,11 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ObjectInvoke => {
                             names.insert("object-method-invoke");
                         }
-                        Nominal::CallableGet => { names.insert("callable-property-get"); }
+                        Nominal::CallableGet => {
+                            names.insert("builtin-internal-get-guard");
+                            names.insert("user-field-get-guard");
+                            names.insert("callable-property-get");
+                        }
                         Nominal::NamedGet => {
                             names.insert("builtin-internal-get-guard");
                             names.insert("user-field-get-guard");
@@ -1245,7 +1249,20 @@ fn emit_function(
                         | Nominal::Satisfies
                         | Nominal::NativeSatisfies => {
                             let named = matches!(operation, Nominal::NamedGet | Nominal::NamedSet);
+                            // An unprivileged callable read (owner, name, keys,
+                            // caller) runs the same guards on owner and name.
+                            let guarded_callable = *operation == Nominal::CallableGet && arguments.len() == 4;
+                            if guarded_callable {
+                                let [owner, name, _, caller] = [0, 1, 2, 3].map(|i| LocalGet(arguments[i].0 as u32 + offset));
+                                for instruction in [owner, name.clone(), Call(index("builtin-internal-get-guard")), name, caller,
+                                    Call(index("user-field-get-guard"))] {
+                                    function.instruction(&instruction);
+                                }
+                            }
                             for (position, argument) in arguments.iter().enumerate() {
+                                if guarded_callable && (position == 0 || position == 3) {
+                                    continue;
+                                }
                                 let local = LocalGet(argument.0 as u32 + offset);
                                 // Unprivileged named access first rejects built-in
                                 // fields, then user field mutability and type
