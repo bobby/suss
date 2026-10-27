@@ -14,11 +14,11 @@ fn number(session: &mut Session, value: &SessionValue) -> u64 {
         .unwrap()
 }
 fn eval_number(session: &mut Session, source: &str) -> u64 {
-    let value = session.eval(source).unwrap();
+    let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error}"));
     number(session, &value)
 }
 fn eval_bool(session: &mut Session, source: &str) -> bool {
-    let value = session.eval(source).unwrap();
+    let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error}"));
     boolean(session, &value)
 }
 fn boolean(session: &mut Session, value: &SessionValue) -> bool {
@@ -44,7 +44,7 @@ fn reduction_contract_match_independently_encoded_primary_observations() {
     let corpus: serde_json::Value =
         serde_json::from_str(include_str!("../../../tests/oracle/reduction-cases.json")).unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 65);
+    assert_eq!(cases.len(), 63);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))

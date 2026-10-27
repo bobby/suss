@@ -2,8 +2,30 @@
 use super::*;
 use crate::portable::resolve::{NominalForm, ProtocolMethod};
 
+/// Core value types whose fields are their documented public API. They hold
+/// only scalars, with no storage arrays or hash caches, so reading them exposes
+/// nothing private (design decision 2026-10-25). Their fields are immutable;
+/// rejecting named writes to immutable fields is #278.
+const PUBLIC_FIELD_TYPES: &[&str] = &[
+    // Exact WIT 64-bit integers: high and low unsigned 32-bit words.
+    "WitSigned64",
+    "WitUnsigned64",
+];
+/// User-facing collection classes whose whitelisted statics (EMPTY, fromArray
+/// and similar) user code may read; their fields and other statics stay
+/// private, like Clojure's package-private node classes.
+const PUBLIC_STATIC_TYPES: &[&str] = &[
+    "PersistentVector", "PersistentArrayMap", "PersistentHashMap", "PersistentHashSet",
+    "PersistentTreeMap", "PersistentTreeSet", "PersistentQueue", "List",
+];
+
 impl Analyzer<'_> {
     pub(super) fn nominal(&self, form: &Form, operation: Nominal, arguments: Vec<Hir>) -> Hir {
+        let operation = match operation {
+            Nominal::NamedGet if self.privileged => Nominal::CoreNamedGet,
+            Nominal::NamedSet if self.privileged => Nominal::CoreNamedSet,
+            operation => operation,
+        };
         Hir {
             source: None,
             span: form.span.clone(),
@@ -14,6 +36,21 @@ impl Analyzer<'_> {
                 arguments,
             },
         }
+    }
+    /// Core bootstrap types get descriptors whose internals are private,
+    /// except the few value types whose fields are their public API.
+    fn type_descriptor(&self, form: &Form, name: Option<&str>, schema: Vec<Hir>) -> Hir {
+        let listed = |list: &[&str]| name.is_some_and(|name| list.contains(&name));
+        let operation = if !self.privileged {
+            Nominal::Descriptor
+        } else if listed(PUBLIC_FIELD_TYPES) {
+            Nominal::CoreClosedDescriptor
+        } else if listed(PUBLIC_STATIC_TYPES) {
+            Nominal::CoreStaticsDescriptor
+        } else {
+            Nominal::CoreDescriptor
+        };
+        self.nominal(form, operation, schema)
     }
     pub(super) fn local(&self, form: &Form, id: BindingId) -> Hir {
         Hir {
@@ -83,6 +120,7 @@ impl Analyzer<'_> {
                 docstring: None,
                 initializer: Some(Box::new(descriptor)),
                 once: true,
+                linked: None,
             },
         };
         let read = Hir {
@@ -174,7 +212,7 @@ impl Analyzer<'_> {
             let keys = self.nominal(form, Nominal::Array, keys);
             let definition = Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value,
                 kind: Expression::Definition { global: table.clone(), name_metadata: vec![], name_span: form.span.clone(), docstring: None,
-                    initializer: Some(Box::new(keys)), once: true } };
+                    initializer: Some(Box::new(keys)), once: true , linked: None } };
             self.callable_keys.insert(table.clone(), definition);
         }
         let keys = Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value, kind: Expression::Global(table) };
@@ -310,6 +348,7 @@ impl Analyzer<'_> {
                 let Some(class) = args.first() else {
                     return Err(fail(form.span.clone(), "extend-type requires a type"));
                 };
+                self.check_builtin_extension(class, &args[1..])?;
                 if let Some(kind) = NativeKind::from_form(class) {
                     let mut effects = self.native_protocol_extensions(form, &args[1..], kind)?;
                     if effects.is_empty() {
@@ -324,7 +363,12 @@ impl Analyzer<'_> {
                         "Native symbol/bigint values are not lowered yet",
                     ));
                 }
-                let value = self.form(class)?;
+                let mut value = self.form(class)?;
+                if !self.privileged && self.extends_core_protocol(&args[1..]) {
+                    // The class may be an alias, local or expression; check its
+                    // run-time identity, not only its spelling.
+                    value = self.nominal(class, Nominal::BuiltinClassGuard, vec![value]);
+                }
                 let binding = self.fresh_binding(class, value);
                 let class_value = self.local(class, binding.id);
                 let inline_fields = match &class.kind {
@@ -355,6 +399,45 @@ impl Analyzer<'_> {
                 })
             }
         }
+    }
+    /// Core abstractions of built-in and host types are closed to user code, as
+    /// Clojure's interfaces on its built-in classes are (design decision
+    /// 2026-10-25). User protocols may still extend them, and user types may
+    /// implement core protocols. This keeps built-in hashing and equality native.
+    /// Extension of a privileged core protocol or of Object methods.
+    fn extends_core_protocol(&self, args: &[Form]) -> bool {
+        args.iter().filter(|arg| matches!(arg.kind, Kind::Symbol(_))).any(|protocol| {
+            matches!(&protocol.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "Object")
+                || self.named_global(protocol).is_ok_and(|global| self.privileged_definition(&global))
+        })
+    }
+    fn check_builtin_extension(&self, class: &Form, args: &[Form]) -> Result<(), Diagnostic> {
+        if self.privileged {
+            return Ok(());
+        }
+        // Identity, not spelling: user code that redefines core names (for
+        // example by evaluating core source) defines ordinary user types.
+        let runtime_class = |analyzer: &Self| matches!(&class.kind, Kind::Symbol(symbol)
+            if analyzer.environment.resolve(analyzer.phase, symbol, class.span.clone())
+                .is_ok_and(|binding| matches!(binding, ResolvedBinding::Core { .. })));
+        let builtin = NativeKind::from_form(class).is_some()
+            || matches!(&class.kind, Kind::Symbol(symbol) if symbol.namespace.is_some() || !self.locals.contains_key(&symbol.name))
+                && (self.named_global(class).is_ok_and(|global| self.privileged_definition(&global)) || runtime_class(self));
+        if !builtin {
+            return Ok(());
+        }
+        for protocol in args.iter().filter(|arg| matches!(arg.kind, Kind::Symbol(_))) {
+            let object = matches!(&protocol.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == "Object");
+            let core = object
+                || self.named_global(protocol).is_ok_and(|global| self.privileged_definition(&global));
+            if core {
+                return Err(fail(
+                    protocol.span.clone(),
+                    "Core protocols of built-in types cannot be extended outside suss.core",
+                ));
+            }
+        }
+        Ok(())
     }
     // Pinned analyzer retains these three field flags; type hints do not impose
     // a runtime guard. Other field attributes remain outside this bounded port.
@@ -527,7 +610,7 @@ impl Analyzer<'_> {
         }
         let schema = self.type_schema(&fields)?;
         let (declaration, global) = self.type_declaration(form, &args[0], declared.len(), record)?;
-        let descriptor = self.nominal(form, Nominal::Descriptor, schema);
+        let descriptor = self.type_descriptor(form, Some(global.name()), schema);
         let class = self.nominal(form, Nominal::Class, vec![descriptor]);
         let class = self.fresh_binding(form, class);
         let class_value = self.local(form, class.id);
@@ -578,7 +661,7 @@ impl Analyzer<'_> {
         };
         // Own generated constructor references are available during method analysis.
         self.definition(form, &[arrow_name.clone()], false)?;
-        let descriptor = self.nominal(form, Nominal::Descriptor, schema);
+        let descriptor = self.type_descriptor(form, Some(&symbol.name), schema);
         let class = self.nominal(form, Nominal::Class, vec![descriptor]);
         let binding = self.fresh_binding(form, class);
         let class_value = self.local(form, binding.id);
@@ -792,7 +875,7 @@ impl Analyzer<'_> {
             .environment
             .reify_class_key(self.phase, generation, site);
         let type_declaration = symbol(cell.name(), Some("suss.internal.reify"));
-        let descriptor = self.nominal(form, Nominal::Descriptor, schema);
+        let descriptor = self.type_descriptor(form, None, schema);
         let class = self.nominal(form, Nominal::Class, vec![descriptor]);
         let binding = self.fresh_binding(form, class);
         let class_value = self.local(form, binding.id);
@@ -830,6 +913,8 @@ impl Analyzer<'_> {
                 docstring: None,
                 initializer: Some(Box::new(initialization)),
                 once: true,
+                // An internal reify publication cell, not a core definition.
+                linked: None,
             },
         };
         // The macro transfers this form's own reader metadata to the created

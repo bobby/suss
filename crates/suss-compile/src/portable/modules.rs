@@ -662,6 +662,27 @@ pub fn prepare_input<P: AsRef<Path>>(
     phase: Phase,
     provided: &BTreeSet<ModuleIdentity>,
 ) -> Result<PreparedInput, InputDiagnostic> {
+    prepare_input_with_origin(source_text, roots, environment, phase, provided, super::SourceOrigin::new(source_text, None))
+}
+/// As [`prepare_input`], for compiler- or host-authored source that may access
+/// built-in type internals (design decision 2026-10-25). Never for user input.
+pub(crate) fn prepare_privileged_input<P: AsRef<Path>>(
+    source_text: &str,
+    roots: &[P],
+    environment: &Environment,
+    phase: Phase,
+    provided: &BTreeSet<ModuleIdentity>,
+) -> Result<PreparedInput, InputDiagnostic> {
+    prepare_input_with_origin(source_text, roots, environment, phase, provided, super::SourceOrigin::privileged(source_text))
+}
+fn prepare_input_with_origin<P: AsRef<Path>>(
+    source_text: &str,
+    roots: &[P],
+    environment: &Environment,
+    phase: Phase,
+    provided: &BTreeSet<ModuleIdentity>,
+    origin: super::SourceOrigin,
+) -> Result<PreparedInput, InputDiagnostic> {
     let mut host = super::NoExpansion;
     let mut request = super::ExpansionRequest::new(&mut host, 0..source_text.len())
         .map_err(InputDiagnostic::Compile)?;
@@ -680,7 +701,7 @@ pub fn prepare_input<P: AsRef<Path>>(
         phase,
         provided,
         &mut request,
-        Some(&super::SourceOrigin::new(source_text, None)),
+        Some(&origin),
     )
 }
 /// Prepare source or macro-expanded reader forms through the same staged module

@@ -5,7 +5,12 @@ Read [the accepted design](docs/design/suss-0.3.1.md), [ROADMAP](ROADMAP.md),
 [compatibility inventory](docs/compatibility/README.md) and
 [handoff](docs/roadmap/handoff.md) before changing architecture.
 
-* Implement the ClojureScript portable contract, not JVM Clojure semantics.
+* Suss is a well-behaved Clojure. Clojure semantics and the vendored jank
+  clojure-test-suite are the behavior oracle. Pinned ClojureScript is an
+  implementation reference for porting core and for the design's platform
+  choices (binary64 numbers, UTF-16 strings), not an oracle for its
+  implementation details such as hash caching, built-in internals or object
+  identity of compiler data. See the 2026-10-25 design decision.
 * The current compiler is a prototype. Do not infer support from old comments or
   an encoding-only test; validate and execute the relevant artifact.
 * Keep behavior, tests, inventory and evidence aligned. Never replace unknown

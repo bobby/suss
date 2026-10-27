@@ -327,16 +327,6 @@ impl Interner {
     ) -> Result<usize, E> {
         self.plan_with_order(form, plan, false, charge)
     }
-    // Logical source comparison only: unlike raw reader occurrence identity,
-    // map entries and set elements have no specified iteration order.
-    pub(super) fn unordered_plan<E>(
-        &mut self,
-        form: &Form,
-        plan: &mut Plan,
-        charge: &mut impl FnMut(u64) -> Result<(), E>,
-    ) -> Result<usize, E> {
-        self.plan_with_order(form, plan, true, charge)
-    }
     fn plan_with_order<E>(
         &mut self,
         form: &Form,

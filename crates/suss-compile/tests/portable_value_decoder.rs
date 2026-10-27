@@ -629,7 +629,8 @@ fn vector_decoder_rejects_count_exceeding_trie_capacity() {
     // A genuine 1025-element vector has a shift-5 root containing 1024
     // entries. Raising count without growing that root wraps branch selection
     // at index1024 and must not turn malformed storage into observed values.
-    let value = session.eval("(let [v (loop [i 0 v []] (if (= i 1025) v (recur (inc i) (conj v i))))] (new suss.core/PersistentVector nil 1057 5 (.-root v) (array 7) nil))").unwrap();
+    // Forging malformed storage needs core internals; the probe is privileged.
+    let value = session.eval_privileged("(let [v (loop [i 0 v []] (if (= i 1025) v (recur (inc i) (conj v i))))] (new suss.core/PersistentVector nil 1057 5 (.-root v) (array 7) nil))").unwrap();
     session.collect().unwrap();
     let Err(error) = decoder.decode_session(&mut session, &value) else {
         panic!("decoder accepted a vector count exceeding its trie capacity");

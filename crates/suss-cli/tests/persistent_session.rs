@@ -254,8 +254,8 @@ fn session_lifecycle_reset_rejects_old_values_and_distinguishes_code_from_roots(
     assert!(base_code > 0);
     let bootstrap_cells = session.stats().binding_cells;
     assert_eq!(
-        bootstrap_cells, 74,
-        "canonical arithmetic, ExceptionInfo, predicate, array, comparison, bitwise, M4 core collection/type imports, six private async adapters and sixteen private stream adapter cells are resident"
+        bootstrap_cells, 148,
+        "canonical arithmetic, ExceptionInfo, predicate, array, comparison, bitwise, M4 core collection/type imports, six private async adapters and sixteen private stream adapter cells are resident, each with its direct-link cell"
     );
     let value = session.eval("(def old 7) old").unwrap();
     let clone = value.clone();

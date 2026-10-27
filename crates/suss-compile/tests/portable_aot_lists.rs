@@ -373,7 +373,7 @@ fn malformed_list_shapes_and_elements_raise_decoded_language_errors() {
         ("[42]", "string"),
         (r#"["ok" "\uD800"]"#, "string"),
         (
-            r#"(new suss.core/PersistentVector nil 1 5 (.-EMPTY_NODE suss.core/PersistentVector) "x" nil)"#,
+            r#"(new suss.core/PersistentVector nil 1 5 (new suss.core/VectorNode nil (make-array 32)) "x" nil)"#,
             "string",
         ),
         (

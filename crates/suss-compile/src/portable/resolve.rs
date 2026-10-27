@@ -844,6 +844,49 @@ impl Environment {
         }
         global
     }
+    /// The direct-link cell of a shipped core definition (design decision
+    /// 2026-10-25): core's own references read it, so user redefinition or
+    /// with-redefs of the public var changes only user call sites, as with
+    /// Clojure's direct linking. It is internal and unresolvable by user code.
+    pub(crate) fn core_link_cell(&mut self, global: &Global) -> Global {
+        let link = Global {
+            phase: global.phase,
+            namespace: "suss.internal.core-link".into(),
+            name: global.name.clone(),
+        };
+        if !self.bindings.contains_key(&link) {
+            self.bindings.insert(link.clone(), Binding::InternalCell(link.clone()));
+            self.source_changed();
+        }
+        link
+    }
+    /// The direct-link cell of a runtime-provided bootstrap binding (`nil?`,
+    /// `aclone`, ...), initialized with the public cell by the core bindings
+    /// module so shipped core never calls a user redefinition.
+    pub(crate) fn bootstrap_link_global(global: &Global) -> Global {
+        Global {
+            phase: global.phase,
+            namespace: "suss.internal.bootstrap-link".into(),
+            name: global.name.clone(),
+        }
+    }
+    pub(crate) fn bootstrap_link(&mut self, global: &Global) -> Global {
+        let link = Self::bootstrap_link_global(global);
+        if !self.bindings.contains_key(&link) {
+            self.bindings.insert(link.clone(), Binding::InternalCell(link.clone()));
+            self.source_changed();
+        }
+        link
+    }
+    /// The direct-link cell, only if that definition registered one.
+    pub(crate) fn existing_core_link(&self, global: &Global) -> Option<Global> {
+        let link = Global {
+            phase: global.phase,
+            namespace: "suss.internal.core-link".into(),
+            name: global.name.clone(),
+        };
+        matches!(self.bindings.get(&link), Some(Binding::InternalCell(_))).then_some(link)
+    }
     pub(crate) fn protocol_key(&mut self, protocol: &Global, method: &str, arity: usize) -> Global {
         let identity = format!(
             "{}/{}/{}/{}",

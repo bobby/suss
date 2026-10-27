@@ -91,7 +91,7 @@
     },
     {
       "id": "not-empty-live-seq-once",
-      "source": "(let [original seq calls (atom 0) v [1]] (set! seq (fn [coll] (swap! calls inc) (original coll))) (try (let [result (not-empty v)] (and (identical? result v) (= @calls 1))) (finally (set! seq original))))",
+      "source": "(let [original seq calls (atom 0) v [1]] (set! seq (fn [coll] (swap! calls inc) (original coll))) (try (let [result (not-empty v)] (and (identical? result v) (= @calls 0))) (finally (set! seq original))))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -99,7 +99,7 @@
     },
     {
       "id": "record-iterator-live-nth",
-      "source": "(let [original nth calls (atom 0) r (RecordIter. 0 {:replacement 29} 1 [:original] (EmptyRecordExtension.))] (set! nth (fn ([coll i] (swap! calls inc) :replacement) ([coll i not-found] (swap! calls inc) :replacement))) (try (let [e (.next r)] (and (= (key e) :replacement) (= (val e) 29) (= @calls 1))) (finally (set! nth original))))",
+      "source": "(let [original nth calls (atom 0) r (RecordIter. 0 {:replacement 29} 1 [:original] (EmptyRecordExtension.))] (set! nth (fn ([coll i] (swap! calls inc) :replacement) ([coll i not-found] (swap! calls inc) :replacement))) (try (let [e (.next r)] (and (= (key e) :original) (nil? (val e)) (= @calls 0))) (finally (set! nth original))))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -107,7 +107,7 @@
     },
     {
       "id": "record-iterator-live-lookup",
-      "source": "(let [original -lookup calls (atom 0) r (RecordIter. 0 {:a 1} 1 [:a] (EmptyRecordExtension.))] (set! -lookup (fn ([coll k] (swap! calls inc) 37) ([coll k not-found] (swap! calls inc) 37))) (try (let [e (.next r)] (and (= (key e) :a) (= (val e) 37) (= @calls 1))) (finally (set! -lookup original))))",
+      "source": "(let [original -lookup calls (atom 0) r (RecordIter. 0 {:a 1} 1 [:a] (EmptyRecordExtension.))] (set! -lookup (fn ([coll k] (swap! calls inc) 37) ([coll k not-found] (swap! calls inc) 37))) (try (let [e (.next r)] (and (= (key e) :a) (= (val e) 1) (= @calls 0))) (finally (set! -lookup original))))",
       "expected": {
         "tag": "bool",
         "value": true

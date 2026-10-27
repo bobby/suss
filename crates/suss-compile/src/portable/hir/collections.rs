@@ -27,7 +27,8 @@ impl Analyzer<'_> {
     ) -> Result<Hir, Diagnostic> {
         let owner = self.collection_class(form, class)?;
         let key = self.literal_form(form, Literal::String(property.encode_utf16().collect()));
-        Ok(self.nominal(form, Nominal::NamedGet, vec![owner, key]))
+        // Literal lowering reads core class properties on the user's behalf.
+        Ok(self.nominal(form, Nominal::CoreNamedGet, vec![owner, key]))
     }
 
     fn collection_array(&self, form: &Form, arguments: Vec<Hir>) -> Hir {
@@ -66,7 +67,7 @@ impl Analyzer<'_> {
         let owner_binding = self.fresh_binding(form, owner);
         let owner_read = self.local(form, owner_binding.id);
         let key = self.literal_form(form, Literal::String(property.encode_utf16().collect()));
-        let lookup = self.nominal(form, Nominal::NamedGet, vec![owner_read.clone(), key]);
+        let lookup = self.nominal(form, Nominal::CoreNamedGet, vec![owner_read.clone(), key]);
         let method_binding = self.fresh_binding(form, lookup);
         let mut operands = vec![self.local(form, method_binding.id), owner_read];
         operands.extend(arguments);

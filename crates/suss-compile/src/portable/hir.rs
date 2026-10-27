@@ -317,6 +317,18 @@ pub enum Nominal {
     NamedGet,
     CallableGet,
     NamedSet,
+    /// Privileged forms emitted only for the shipped `suss.core` bootstrap: core
+    /// type descriptors whose internals are private, and named access to them.
+    CoreDescriptor,
+    /// A core collection class whose whitelisted statics user code may read.
+    CoreStaticsDescriptor,
+    /// A core type with public fields that is still closed to extension.
+    CoreClosedDescriptor,
+    CoreNamedGet,
+    CoreNamedSet,
+    /// Rejects a built-in core class before user code extends a core protocol
+    /// or Object methods onto it, whatever form produced the class value.
+    BuiltinClassGuard,
     NativeObjectFactory,
     IsNativeObject,
     IsTypeConstructor,
@@ -380,14 +392,14 @@ impl Nominal {
                 Self::BindCallable | Self::MethodGet => count == 2,
                 Self::NativeObjectGet => count == 2,
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
-                Self::NamedGet => count == 2 && arguments[1] == Type::String,
+                Self::NamedGet | Self::CoreNamedGet => count == 2 && arguments[1] == Type::String,
                 Self::CallableGet => count == 3 && arguments[1] == Type::String,
-                Self::NamedSet | Self::ObjectSet => count == 3 && arguments[1] == Type::String,
+                Self::NamedSet | Self::CoreNamedSet | Self::ObjectSet => count == 3 && arguments[1] == Type::String,
                 Self::ObjectInvoke => count >= 2,
                 Self::LiveDispatcher | Self::NativeSet(_) => count == 2,
                 Self::IFnLiveDispatcher => count == 3,
                 Self::NativeMarker(_) => count == 1,
-                Self::Descriptor => arguments.iter().all(|ty| *ty == Type::String),
+                Self::Descriptor | Self::CoreDescriptor | Self::CoreStaticsDescriptor | Self::CoreClosedDescriptor => arguments.iter().all(|ty| *ty == Type::String),
                 Self::Construct => count >= 1,
                 Self::Instance | Self::SameNominalType | Self::Satisfies | Self::NativeSatisfies | Self::Marker => {
                     count == 2
@@ -395,7 +407,7 @@ impl Nominal {
                 Self::Set => count == 3,
                 Self::Field(index) | Self::Key(index) => count == 1 && index <= i32::MAX as usize,
                 Self::FieldSet(index) => count == 2 && index <= i32::MAX as usize,
-                Self::Class | Self::Protocol | Self::Dispatcher => count == 1,
+                Self::Class | Self::Protocol | Self::Dispatcher | Self::BuiltinClassGuard => count == 1,
             }
     }
 }
@@ -699,6 +711,8 @@ pub enum Expression {
     Assign {
         global: Global,
         value: Box<Hir>,
+        /// Shipped core's direct-link cell, written with the same value.
+        linked: Option<Global>,
     },
     /// A terminal language throw of an evaluated portable value.
     Throw(Box<Hir>),
@@ -728,6 +742,8 @@ pub enum Expression {
         docstring: Option<Vec<u16>>,
         initializer: Option<Box<Hir>>,
         once: bool,
+        /// Shipped core's direct-link cell, written with the same value.
+        linked: Option<Global>,
     },
     Let {
         bindings: Vec<Binding>,
@@ -777,6 +793,9 @@ fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
 }
 struct Analyzer<'a> {
     suspendable: bool,
+    /// Analyzing compiler-authored source, which may access built-in type
+    /// internals (design decision 2026-10-25).
+    privileged: bool,
     expander: &'a mut dyn super::ExpansionHost,
     origin: Option<super::SourceOrigin>,
     environment: Environment,
@@ -1060,6 +1079,7 @@ impl Analyzer<'_> {
                             docstring: None,
                             initializer: Some(Box::new(initializer)),
                             once: true,
+                            linked: None,
                         },
                     },
                 );
@@ -1067,6 +1087,8 @@ impl Analyzer<'_> {
             let Kind::List(items) = &form.kind else {
                 unreachable!()
             };
+            // Shipped core's own syntax quotes read its direct-linked sequence.
+            let global = self.core_reference_link(&global).unwrap_or(global);
             let argument = self.form(&items[1])?;
             return Ok(Hir {
                 source: None,
@@ -1248,7 +1270,8 @@ impl Analyzer<'_> {
                 };
                 let key =
                     self.literal_form(form, Literal::String("EMPTY".encode_utf16().collect()));
-                let value = self.nominal(form, Nominal::NamedGet, vec![owner, key]);
+                // Compiler lowering, not user field access: core's own List.EMPTY.
+                let value = self.nominal(form, Nominal::CoreNamedGet, vec![owner, key]);
                 return self.attach_constant_metadata(form, value);
             }
             Kind::Symbol(symbol) => {
@@ -1299,9 +1322,22 @@ impl Analyzer<'_> {
         symbol: &suss_reader::Symbol,
         span: Range<usize>,
     ) -> Result<(Expression, Type), Diagnostic> {
-        match self.environment.resolve(self.phase, symbol, span.clone())? {
-            ResolvedBinding::Cell(global) => Ok((Expression::Global(global), Type::Value)),
+        let binding = self.environment.resolve(self.phase, symbol, span.clone())?;
+        let global = binding.global();
+        if !self.privileged && super::bootstrap::is_core_private(global.name()) && self.privileged_definition(global) {
+            return Err(fail(span, format!("{} is private to suss.core", global.name())));
+        }
+        match binding {
+            ResolvedBinding::Cell(global) => {
+                let global = self.core_reference_link(&global).unwrap_or(global);
+                Ok((Expression::Global(global), Type::Value))
+            }
             ResolvedBinding::Arithmetic { global, .. } | ResolvedBinding::Core { global, .. } => {
+                if self.privileged {
+                    // Shipped core reads its own copy, never a user redefinition.
+                    let link = self.environment.bootstrap_link(&global);
+                    return Ok((Expression::Global(link), Type::Value));
+                }
                 self.environment.materialize_bootstrap(global.clone());
                 Ok((Expression::Global(global), Type::Value))
             }
@@ -1310,6 +1346,38 @@ impl Analyzer<'_> {
                 "Bootstrap core function/macro values are not materialized yet",
             )),
         }
+    }
+    fn dynamic_metadata(name: &Form) -> bool {
+        name.metadata.iter().any(|metadata| match &metadata.kind {
+            Kind::Map(entries) => entries.chunks(2).any(|pair| {
+                matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none() && matches!(key.name.as_str(), "dynamic" | "redef"))
+                    && !matches!(pair.get(1).map(|value| &value.kind), Some(Kind::Nil | Kind::Bool(false)) | None)
+            }),
+            Kind::Keyword(key) => key.namespace.is_none() && matches!(key.name.as_str(), "dynamic" | "redef"),
+            _ => false,
+        })
+    }
+    /// Shipped core's own definitions are direct-linked, except dynamic and
+    /// `^:redef` vars (as in Clojure), including ones a later form redeclares.
+    fn core_link(&mut self, global: &Global, dynamic: bool) -> Option<Global> {
+        (self.privileged && !dynamic && global.namespace() == "suss.core")
+            .then(|| self.environment.core_link_cell(global))
+    }
+    /// A privileged reference to a direct-linked core definition: only when
+    /// that definition (or its declaration) registered a link cell.
+    fn core_reference_link(&mut self, global: &Global) -> Option<Global> {
+        if !self.privileged || global.namespace() != "suss.core" {
+            return None;
+        }
+        self.environment.existing_core_link(global)
+    }
+    /// The current binding was defined by compiler-authored source, such as
+    /// the shipped core, rather than by user code reusing a core name.
+    pub(super) fn privileged_definition(&self, global: &Global) -> bool {
+        self.environment
+            .definition_info(global)
+            .and_then(|info| info.origin.as_ref())
+            .is_some_and(|origin| origin.is_privileged())
     }
     fn call(&mut self, form: &Form, items: &[Form]) -> Result<Hir, Diagnostic> {
         let callee = Box::new(self.form(&items[0])?);
@@ -1438,10 +1506,21 @@ impl Analyzer<'_> {
             type_is_record: false,
             once,
         };
+        // A var first defined dynamic (or ^:redef) stays live when redefined.
+        let prior_dynamic = self.environment.definition_info(&global)
+            .is_some_and(|info| Self::dynamic_metadata(&info.declaration));
         if !preserve_declaration {
             self.environment
                 .record_definition(global.clone(), definition.clone());
         }
+        // Register shipped core's direct link before analyzing the initializer,
+        // so a self-recursive core function also calls its own definition.
+        let dynamic = Self::dynamic_metadata(&args[0]) || prior_dynamic;
+        if dynamic && self.privileged && self.environment.existing_core_link(&global).is_some() {
+            // Earlier core references were direct-linked; a dynamic var must be live.
+            return Err(fail(args[0].span.clone(), "A dynamic core var cannot be declared before its definition"));
+        }
+        let linked = self.core_link(&global, dynamic);
         let initializer = init
             .map(|init| {
                 self.form_in_named(
@@ -1480,6 +1559,7 @@ impl Analyzer<'_> {
                 },
                 initializer,
                 once,
+                linked,
             },
         })
     }
@@ -2523,6 +2603,7 @@ impl Analyzer<'_> {
                         let setter = match operation {
                             Nominal::Field(index) => Nominal::FieldSet(index),
                             Nominal::NamedGet => Nominal::NamedSet,
+                            Nominal::CoreNamedGet => Nominal::CoreNamedSet,
                             _ => unreachable!(),
                         };
                         return Ok(self.nominal(form, setter, arguments));
@@ -2537,6 +2618,7 @@ impl Analyzer<'_> {
                     target: std::sync::Arc::new(target),
                     value: std::sync::Arc::new(value.clone()),
                 }));
+            let linked = self.core_reference_link(&global);
             return Ok(Hir {
                 source: None,
                 span: form.span.clone(),
@@ -2545,6 +2627,7 @@ impl Analyzer<'_> {
                 kind: Expression::Assign {
                     global,
                     value: Box::new(value),
+                    linked,
                 },
             });
         }
@@ -3009,6 +3092,7 @@ pub(crate) fn prepare_with_origin(
 ) -> Result<(Hir, Environment), Diagnostic> {
     let mut analyzer = Analyzer {
         suspendable: false,
+        privileged: origin.is_some_and(|origin| origin.is_privileged()),
         expander,
         origin: origin.cloned(),
         environment: environment.clone(),

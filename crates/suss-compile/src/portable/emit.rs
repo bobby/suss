@@ -72,18 +72,6 @@ pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
 }
 /// The caller must verify this exact immutable graph before entry.
 pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
-    emit_options(ir, None)
-}
-
-pub(super) fn emit_memo_plan(plan: &super::bootstrap::VerifiedMemoPlan<'_>) -> Result<Vec<u8>, Diagnostic> {
-    ir::verify(plan.root())?;
-    let mut emission = plan.emission();
-    let bytes = emit_options(plan.root(), Some(&mut emission))?;
-    emission.finish()?;
-    Ok(bytes)
-}
-
-fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emission<'_, '_>>) -> Result<Vec<u8>, Diagnostic> {
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -95,7 +83,6 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
     let all_functions = std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
         .chain(futures.iter().map(|body| &body.continuation.function));
     let mut names = BTreeSet::new();
-    if memos.is_some() { names.insert(super::bootstrap::MEMO_WRITE_IMPORT_NAME); }
     let mut throws = !futures.is_empty();
     if !futures.is_empty() { names.extend(r#async::IMPORTS.iter().copied()); }
     if futures.iter().any(|body| !body.continuation.backedges.is_empty()) { names.insert("async-task-yield"); }
@@ -191,9 +178,17 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
                         }
                         Nominal::CallableGet => { names.insert("callable-property-get"); }
                         Nominal::NamedGet => {
+                            names.insert("builtin-internal-get-guard");
                             names.insert("named-property-get");
                         }
                         Nominal::NamedSet => {
+                            names.insert("builtin-internal-set-guard");
+                            names.insert("named-property-set");
+                        }
+                        Nominal::CoreNamedGet => {
+                            names.insert("named-property-get");
+                        }
+                        Nominal::CoreNamedSet => {
                             names.insert("named-property-set");
                         }
                         Nominal::IsClosure => {}
@@ -214,6 +209,18 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
                         }
                         Nominal::Descriptor => {
                             names.insert("descriptor-new");
+                        }
+                        Nominal::CoreDescriptor => {
+                            names.insert("descriptor-new-core");
+                        }
+                        Nominal::CoreStaticsDescriptor => {
+                            names.insert("descriptor-new-core-statics");
+                        }
+                        Nominal::CoreClosedDescriptor => {
+                            names.insert("descriptor-new-core-closed");
+                        }
+                        Nominal::BuiltinClassGuard => {
+                            names.insert("builtin-extension-guard");
                         }
                         Nominal::Protocol => {
                             names.insert("protocol-value-new");
@@ -317,11 +324,15 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
             | "comparison-greater"
             | "comparison-greater-equal"
             | "comparison-strict-equal" => (vec![VALUE, VALUE], vec![VALUE]),
-            "object-field-set" | super::bootstrap::MEMO_WRITE_IMPORT_NAME => (vec![VALUE, ValType::I32, VALUE], vec![]),
+            "object-field-set" => (vec![VALUE, ValType::I32, VALUE], vec![]),
             "object-field-get" | "protocol-key" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "protocol-marker-set" | "protocol-method-get" => (vec![VALUE, VALUE], vec![VALUE]),
             "protocol-method-set" => (vec![VALUE, VALUE, VALUE], vec![]),
             "descriptor-new"
+            | "descriptor-new-core"
+            | "descriptor-new-core-statics"
+            | "descriptor-new-core-closed"
+            | "builtin-extension-guard"
             | "class-value-new"
             | "protocol-value-new"
             | "constructor-new"
@@ -376,7 +387,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
         };
         types.ty().function(params, results);
         imports.import(
-            if *name == super::bootstrap::MEMO_WRITE_IMPORT_NAME { super::bootstrap::COMPILER_INTEGRITY_IMPORT_MODULE } else { "suss.runtime" },
+            "suss.runtime",
             name,
             EntityType::Function(type_count + i as u32),
         );
@@ -417,7 +428,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
         &globals,
         &bodies,
         &dispatchers,
-        &futures, None, memos.as_deref_mut(),
+        &futures, None,
     )?);
     for body in &bodies {
         functions.function(runtime_abi::INVOKE);
@@ -428,7 +439,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
             &globals,
             &bodies,
             &dispatchers,
-            &futures, None, memos.as_deref_mut(),
+            &futures, None,
         )?);
     }
     for dispatcher in &dispatchers {
@@ -438,7 +449,7 @@ fn emit_options(ir: &IrFunction, mut memos: Option<&mut super::bootstrap::Emissi
     for body in &futures {
         functions.function(runtime_abi::INVOKE);
         code.function(&emit_function(&body.continuation.function, Some(0),
-            &names, &globals, &bodies, &dispatchers, &futures, Some(&body.continuation), memos.as_deref_mut())?);
+            &names, &globals, &bodies, &dispatchers, &futures, Some(&body.continuation))?);
     }
     let mut elements = ElementSection::new();
     if !bodies.is_empty() || !dispatchers.is_empty() || !futures.is_empty() {
@@ -665,7 +676,6 @@ fn emit_function(
     dispatchers: &[&GeneralClosureBody],
     futures: &[&FutureBody],
     continuation: Option<&ir::r#async::Continuation>,
-    mut memos: Option<&mut super::bootstrap::Emission<'_, '_>>,
 ) -> Result<Function, Diagnostic> {
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
@@ -1092,7 +1102,7 @@ fn emit_function(
                                 },
                             )));
                         }
-                        Nominal::Array | Nominal::Descriptor => {
+                        Nominal::Array | Nominal::Descriptor | Nominal::CoreDescriptor | Nominal::CoreStaticsDescriptor | Nominal::CoreClosedDescriptor => {
                             for argument in arguments {
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
                             }
@@ -1102,6 +1112,12 @@ fn emit_function(
                             });
                             if *operation == Nominal::Descriptor {
                                 function.instruction(&Call(index("descriptor-new")));
+                            } else if *operation == Nominal::CoreDescriptor {
+                                function.instruction(&Call(index("descriptor-new-core")));
+                            } else if *operation == Nominal::CoreStaticsDescriptor {
+                                function.instruction(&Call(index("descriptor-new-core-statics")));
+                            } else if *operation == Nominal::CoreClosedDescriptor {
+                                function.instruction(&Call(index("descriptor-new-core-closed")));
                             }
                         }
                         Nominal::Construct => {
@@ -1144,12 +1160,11 @@ fn emit_function(
                             }
                         }
                         Nominal::FieldSet(field) => {
-                            let selected = if let Some(memos) = memos.as_deref_mut() { memos.select(ir, inst)? } else { None };
                             function
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
-                                .instruction(&I32Const(selected.as_ref().map_or(*field as i32, |site| site.index as i32)))
+                                .instruction(&I32Const(*field as i32))
                                 .instruction(&LocalGet(arguments[1].0 as u32 + offset))
-                                .instruction(&Call(index(if selected.is_some() { super::bootstrap::MEMO_WRITE_IMPORT_NAME } else { "object-field-set" })))
+                                .instruction(&Call(index("object-field-set")))
                                 .instruction(&LocalGet(arguments[1].0 as u32 + offset));
                         }
                         Nominal::Field(field) | Nominal::Key(field) => {
@@ -1203,14 +1218,28 @@ fn emit_function(
                         | Nominal::NamedGet
                         | Nominal::CallableGet
                         | Nominal::NamedSet
+                        | Nominal::CoreNamedGet
+                        | Nominal::CoreNamedSet
+                        | Nominal::BuiltinClassGuard
                         | Nominal::Protocol
                         | Nominal::Dispatcher
                         | Nominal::ObjectDescriptor
                         | Nominal::MethodGet
                         | Nominal::Satisfies
                         | Nominal::NativeSatisfies => {
-                            for argument in arguments {
+                            for (position, argument) in arguments.iter().enumerate() {
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
+                                // Unprivileged named access first rejects built-in
+                                // fields: guard(owner, name) leaves the owner.
+                                if position == 1 && matches!(operation, Nominal::NamedGet | Nominal::NamedSet) {
+                                    function
+                                        .instruction(&Call(index(if *operation == Nominal::NamedSet {
+                                            "builtin-internal-set-guard"
+                                        } else {
+                                            "builtin-internal-get-guard"
+                                        })))
+                                        .instruction(&LocalGet(argument.0 as u32 + offset));
+                                }
                             }
                             function.instruction(&Call(index(match operation {
                                 Nominal::Class => "class-value-new",
@@ -1235,9 +1264,10 @@ fn emit_function(
                                 Nominal::NativeObjectSet => "native-object-property-set",
                                 Nominal::NativeObjectStrictSet => "native-object-property-set-strict",
                                 Nominal::ObjectSet => "object-method-set",
-                                Nominal::NamedGet => "named-property-get",
+                                Nominal::NamedGet | Nominal::CoreNamedGet => "named-property-get",
+                                Nominal::BuiltinClassGuard => "builtin-extension-guard",
                             Nominal::CallableGet => "callable-property-get",
-                                Nominal::NamedSet => "named-property-set",
+                                Nominal::NamedSet | Nominal::CoreNamedSet => "named-property-set",
                                 Nominal::Protocol => "protocol-value-new",
                                 Nominal::Dispatcher => "protocol-dispatcher-new",
                                 Nominal::ObjectDescriptor => "object-descriptor",

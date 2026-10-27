@@ -14,7 +14,7 @@ METADATA_DESIGN. Changes to this contract require a dated decision entry below.
 
 ## 1. Product and release contract
 
-Suss compiles a ClojureScript-compatible portable language to WebAssembly GC.
+Suss compiles a portable Clojure to WebAssembly GC.
 It supports three artifacts: a WASI command, a component implementing a selected
 WIT world, and a browser ES module with typed host bindings. Wasmtime is the
 reference server host. Portability means hosts implementing the declared feature
@@ -22,9 +22,15 @@ profile and required imports; it does not mean every historical WASI runtime.
 The compiler, macro runtime and shipped REPL must not require Java or JavaScript.
 A JVM ClojureScript compiler and Node may be development-only test oracles.
 
-The compatibility reference is the `clojurescript/` submodule at
-`c4295f303100bbf5afac449242d30bca1126f1a1` (1.12.134). The contract is portable
-ClojureScript behavior, not JVM Clojure's numeric tower or Java interfaces.
+The behavior contract is Clojure: Clojure's language semantics, exercised by
+the vendored jank clojure-test-suite as the behavior conformance suite. The
+implementation reference is the `clojurescript/` submodule at
+`c4295f303100bbf5afac449242d30bca1126f1a1` (1.12.134). Its portable core source
+is imported and adapted, and its host choices define platform-level behavior:
+binary64 numbers rather than JVM Clojure's numeric tower, UTF-16 strings, and no
+Java interfaces. ClojureScript implementation details that Clojure leaves
+unspecified, such as hash caching, internal fields and protocol implementations
+of built-in types, or object identity of compiler data, are not requirements.
 JS, npm and Closure interoperability are not source compatibility promises.
 Portable public core definitions, their arities, macros and persistent types
 are the eventual compatibility target. Exceptions must be individually recorded
@@ -53,7 +59,7 @@ The audit found repeated condition evaluation, unvalidated component output,
 hidden `suss/print-str` imports, incomplete WIT types, bump-only canonical memory,
 UTF-8 strings and integer semantics, source-replaying REPL state, and conformance
 tests that accepted any GC struct and did not fail on errors. Existing test counts
-are not evidence of ClojureScript or WASI compatibility.
+are not evidence of Clojure or WASI compatibility.
 
 ## 3. Compatibility inventory and core import
 
@@ -303,8 +309,10 @@ an unexpected pass requires updating the baseline.
 
 Required suites:
 
-* Differential ClojureScript values/effects, every public portable arity, condition
-  effects exactly once, left-to-right calls, reduce/map/transducer edge cases.
+* The jank clojure-test-suite conformance corpus; differential values/effects,
+  using pinned ClojureScript recordings where they agree with Clojure semantics;
+  every public portable arity, condition effects exactly once, left-to-right
+  calls, reduce/map/transducer edge cases.
 * Numeric and UTF-16 boundaries, metadata, collision nodes, equality/hash,
   persistent sharing, transient invalidation, lazy/chunked effects.
 * Session persistence, redefinition, defonce, old closures/new types, macro phases,
@@ -385,6 +393,52 @@ assigns the frame parameters and emits `continue`. The existing tail-position an
 arity diagnostics remain required. General optimization of ordinary recursive
 calls is not added by this clarification. Executing evidence and validation gates
 belong in the runtime docs and handoff; this entry does not claim M3 complete.
+
+2026-10-25 behavior oracle and immutable macro data decision: Suss is a
+well-behaved Clojure. Clojure semantics and the vendored jank clojure-test-suite
+are the behavior oracle; pinned ClojureScript is an implementation reference, not
+an oracle for its implementation details. This supersedes the 2026-09-29
+"ClojureScript contract" while keeping its platform choices: binary64 numbers,
+UTF-16 strings, the `cljs.core` alias, the `:cljs` reader feature and porting
+core from pinned source. Pinned ClojureScript recordings remain usable test
+evidence where they agree with Clojure semantics. Consequences:
+
+* Core `hash` and `=` handle built-in types natively, as ClojureScript's own core
+  functions special-case built-ins before protocol dispatch: nil, booleans,
+  numbers, strings, keywords, symbols and persistent collections. IHash and
+  IEquiv dispatch applies to user types. Built-in hash caches are private, so
+  their initialization and warming are unobservable.
+* Built-in type internals are not accessible to user code: collection backing
+  storage, identifier hash caches and other implementation fields. Field access
+  and mutation remain available for user `deftype` and `defrecord` fields.
+  Methods of built-in instances stay public. Built-in classes accept no writes
+  and expose only whitelisted statics of user-facing collections, such as
+  `EMPTY` and `fromArray`; node classes and prototypes stay private, like
+  Clojure's package-private implementation classes. The exact WIT integer
+  wrappers keep their documented scalar words public.
+* Shipped core is direct-linked, as Clojure core has been since 1.8: core's own
+  references to its non-dynamic definitions are fixed when core defines them.
+  Redefining or `with-redefs` of a public core var affects user call sites
+  only. Dynamic and `^:redef` vars stay live; a core var first defined dynamic
+  stays live even if later redefined without `:dynamic`.
+* These guarantees cover ordinary Clojure use. Deliberate circumvention of core
+  implementation details is undefined behavior, as reflection on Clojure's
+  internals is on the JVM: for example aliasing a core protocol's method var into
+  another protocol, or calling built-in constructors with forged fields or hash
+  caches. Such programs stay memory safe and cannot corrupt compiler state,
+  which the host keeps authoritatively and transports afresh on each macro call.
+* Compiler-produced macro data is immutable Clojure data: `&form`, `&env`,
+  analyzer ASTs and captured namespace/declaration data. The compiler may share
+  or cache it and needs no defense against guest mutation. Object identity of
+  this data across macro invocations is unspecified beyond Clojure's guarantees;
+  tests compare it with `=`.
+
+Tests that assert pinned ClojureScript observations of these details are removed
+or rewritten to Clojure semantics: memo initialization or provenance, writes
+through custom hash methods on built-in types, poisoning of retained guest
+storage, and cross-invocation identity. The first-use certification and memo
+provenance work for #257, #261 and #264 is retired with them. The 2026-10-01
+identity-hashing UID slot remains the identity hash for user objects.
 
 ## Primary references
 

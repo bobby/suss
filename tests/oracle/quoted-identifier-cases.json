@@ -52,7 +52,7 @@
     },
     {
       "id": "symbol-cached-0",
-      "source": "(.-_hash 'hello)",
+      "source": "(hash 'hello)",
       "expected": {
         "tag": "f64",
         "bits": "41d4cb6ef4800000"
@@ -68,7 +68,7 @@
     },
     {
       "id": "keyword-cached-0",
-      "source": "(.-_hash :hello)",
+      "source": "(hash :hello)",
       "expected": {
         "tag": "f64",
         "bits": "c1ad3594ea000000"
@@ -132,7 +132,7 @@
     },
     {
       "id": "symbol-cached-6",
-      "source": "(.-_hash 'app/name)",
+      "source": "(hash 'app/name)",
       "expected": {
         "tag": "f64",
         "bits": "c1c828dfb4800000"
@@ -148,7 +148,7 @@
     },
     {
       "id": "keyword-cached-6",
-      "source": "(.-_hash :app/name)",
+      "source": "(hash :app/name)",
       "expected": {
         "tag": "f64",
         "bits": "41db796e94000000"
@@ -200,7 +200,7 @@
     },
     {
       "id": "symbol-cached-12",
-      "source": "(.-_hash '\u00e9\ud83d\ude00)",
+      "source": "(hash '\u00e9\ud83d\ude00)",
       "expected": {
         "tag": "f64",
         "bits": "c1b985d685000000"
@@ -216,7 +216,7 @@
     },
     {
       "id": "keyword-cached-12",
-      "source": "(.-_hash :\u00e9\ud83d\ude00)",
+      "source": "(hash :\u00e9\ud83d\ude00)",
       "expected": {
         "tag": "f64",
         "bits": "c1ded39733000000"
@@ -272,7 +272,7 @@
     },
     {
       "id": "symbol-cached-18",
-      "source": "(.-_hash '\ud83d\ude00/\u00e9)",
+      "source": "(hash '\ud83d\ude00/\u00e9)",
       "expected": {
         "tag": "f64",
         "bits": "41da3ed669000000"
@@ -288,7 +288,7 @@
     },
     {
       "id": "keyword-cached-18",
-      "source": "(.-_hash :\ud83d\ude00/\u00e9)",
+      "source": "(hash :\ud83d\ude00/\u00e9)",
       "expected": {
         "tag": "f64",
         "bits": "419ccb4d74000000"

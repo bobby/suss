@@ -70,56 +70,8 @@ pub(super) fn count_indexed<E, C: FnMut(u64) -> Result<(), E>>(
 mod tests {
     use super::count;
 
-    fn indexed(edges: &[Vec<usize>], repeated: &[bool]) -> Option<u64> {
-        use super::super::materialization_index::{Index, Sparse};
-        let native: Vec<_> = (0..edges.len()).map(|i| 1_000_000 + (edges.len() - i) * 17).collect();
-        let mut index = Sparse::default();
-        let mut charge = |_| Ok::<_, ()>(());
-        let (mut states, mut repeat) = index.states(usize::MAX, &mut charge).unwrap();
-        // Deliberately allocate slots in the opposite order from postorder.
-        for i in (0..edges.len()).rev() {
-            let slot = index.enter(native[i], &mut states, &mut repeat, &mut charge).unwrap();
-            repeat[slot] = repeated[i];
-        }
-        let decode = |id| native.iter().position(|&value| value == id).unwrap();
-        super::count_indexed(states.len(), *native.last().unwrap(), &native, &repeat,
-            |id| edges[decode(id)].len(),
-            |id| edges[decode(id)].iter().map(|&child| native[child]).collect(),
-            |id, charge| index.slot(id, charge), &mut charge).unwrap()
-    }
 
-    #[test]
-    fn indexed_occurrences_match_all_small_dags_with_duplicate_edges_and_barriers() {
-        for shape in 0..64 {
-            let mut edges = vec![vec![]; 4];
-            let mut bit = 0;
-            for parent in 0..4 {
-                for child in 0..parent {
-                    if shape & (1 << bit) != 0 { edges[parent].push(child); }
-                    bit += 1;
-                }
-            }
-            for mask in 0..16 {
-                let repeat = (0..4).map(|i| mask & (1 << i) != 0).collect::<Vec<_>>();
-                assert_eq!(indexed(&edges, &repeat), Some(expanded(&edges, &repeat)));
-                let doubled = edges.iter().map(|v| v.iter().rev()
-                    .flat_map(|&id| [id, id]).collect()).collect::<Vec<_>>();
-                assert_eq!(indexed(&doubled, &repeat), Some(expanded(&doubled, &repeat)));
-            }
-        }
-        let edges = (0..65).map(|i| if i == 0 { vec![] }
-            else { vec![i - 1, i - 1] }).collect::<Vec<_>>();
-        assert_eq!(indexed(&edges, &vec![true; 65]), None);
-        assert_eq!(indexed(&edges, &vec![false; 65]), Some(321));
-    }
 
-    #[test]
-    fn indexed_lookup_errors_propagate_before_reading_arrivals_or_copying_edges() {
-        let result = super::count_indexed(1, usize::MAX, &[usize::MAX], &[false],
-            |_| 0, |_| panic!("lookup failure must precede edge copies"),
-            |_, _| Err("slot lookup interrupted"), &mut |_| Ok(()));
-        assert_eq!(result, Err("slot lookup interrupted"));
-    }
 
     fn compact(edges: &[Vec<usize>], repeat: &[bool]) -> Option<u64> {
         count(

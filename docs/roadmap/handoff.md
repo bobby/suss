@@ -28864,3 +28864,266 @@ tests and was corrected through the existing typed AotOptions route.
 These are focused results. Fresh committed-source Java/Node-free reproduction,
 the exact workspace command and final-head CI remain required; no closure,
 promotion, merge or whole-core conformance is claimed.
+
+## Built-in internals sealed and core protocols closed (2026-10-26, #274/#275)
+
+Under the 2026-10-25 design decision, descriptors created by privileged
+compiler-authored source (the shipped core, the AOT boundary schemas) carry a
+core-private identity bit. Unprivileged named field and class-property reads and
+writes on those owners now throw `Built-in type internals are private to
+suss.core`. Compiler lowerings of user syntax (empty and collection literals,
+`case` keyword projection, IFn arity properties) use privileged access. The four
+storage-returning `array-for` helpers are private when their binding comes from
+privileged source. Unprivileged `extend-type` of a privileged core protocol, or
+of `Object` methods, onto a privileged core type or a host type now fails at
+compile time. Both checks follow definition identity, not spelling, so tests
+that evaluate core source as user code still define ordinary user types.
+`Session::eval_privileged` (doc-hidden, host-authored source only) serves
+core-internal structural tests.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap   # twice; identical
+python3 scripts/verify_bootstrap_identity.py
+cargo test --locked --no-fail-fast -p suss-cli --test builtin_internals_sealed --test builtin_protocols_closed --test compiled_macro_hash_maps -- --test-threads=2
+cargo test --locked --no-fail-fast -p suss-cli --test core_import --test portable_named_properties --test portable_collection_literals --test portable_vector_trie --test portable_case -- --test-threads=2
+```
+
+New suites: sealed 5/5 and closed 5/5 pass; hash-map structure 8/8 passes with
+privileged probes. Core import 17/17, named properties 4/4, collection literals
+6/6, vector trie 5/5 and case 8/8 pass. On unmodified main the probe showed every
+listed field read/write reachable in both phases. The workspace baseline and CI
+have not run on this source; tests that inspect built-in internals elsewhere are
+expected to need privileged probes or public assertions.
+
+## Memo authority, certification and retention removed (2026-10-26, #275/#276)
+
+The named-access guard now takes `(owner, name)`: it rejects fields of
+built-in instances and every property of built-in class values, while methods
+of built-in instances stay reachable. The first sealing commit also rejected
+method calls such as `(.sval lazy-seq)` used by expanded-result transport; CI's
+`compiled_bootstrap` caught it, and `(.indexOf [1 2 3] 2)` is now a regression.
+
+With internals private and core protocols of built-in types closed, these were
+deleted (about 17k lines): memo sites, memo bridge and receipts, write domains,
+canonical method/seed/prototype-origin registries, dispatch observers, storage
+snapshots, construction records and inputs, certification audits, private
+fixups, validated cross-invocation metadata reuse, analyzer-literal memo
+provenance keys, the sparse materialization index and its metered map, and the
+bootstrap integrity authority. Both bootstrap phases now emit through plain
+`compile_ir`; identifiers are constructed with an empty private hash cache.
+Tests, oracle fixtures, probe scripts and runtime docs that asserted pinned
+ClojureScript memo, poisoning or cross-call identity observations were removed;
+the guest-storage mutation test now asserts the write is rejected.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap   # twice; identical
+python3 scripts/verify_bootstrap_identity.py
+cargo test --locked --no-fail-fast -p suss-compile --lib -- --test-threads=2
+cargo test --locked --no-fail-fast -p suss-cli --test compiled_macro_cumulative_fuel --test compiled_macro_constructor_source_asts --test builtin_internals_sealed --test builtin_protocols_closed --test compiled_bootstrap -p suss-compile --test clojure_test_suite -- --test-threads=2
+```
+
+Compiler unit tests 188/188 after deleting one obsolete poisoning test; jank
+clojure-test-suite harness 12/12 with the known-failure baseline unchanged;
+default-budget constructor control 2/2 at the unchanged 10M; cumulative fuel
+8/8; sealed 5/5; closed 5/5; compiled bootstrap 4/4; two bootstrap generations
+identical. The workspace baseline and final-head CI have not yet run on this
+source.
+
+## CI-driven sealing refinements and CLJS-only test cleanup (2026-10-26, #274/#275/#276)
+
+CI on 6a17b39 (foundation pass; integration shards 0, 1, 3, 4, 5 and 7 failed,
+2 passed) exposed tests asserting ClojureScript-only behavior and two rule
+refinements:
+
+- Named access now uses separate get and set guards. Built-in instance fields
+  stay private and methods public; built-in classes allow static reads such as
+  `(.-EMPTY PersistentVector)` and `(.fromArray PersistentVector arr true)` but
+  not `prototype`, and reject all writes.
+- `PUBLIC_FIELD_TYPES` keeps the documented `high`/`low` words of
+  `WitSigned64`/`WitUnsigned64` open: they hold only scalars, and WIT exact
+  integer programs read them.
+
+Removed or rewritten to Clojure semantics: core class factory patching
+(`fromArray`, `createAsIfByAssoc`), metadata cycles via `set!` of `.-meta`, core
+protocol extension onto `number` (one indexing, two reduction and the empty
+fallback cases; a later reduction case depended on that extension), chunk
+backing-array mutation (three lazy cases and their oracle ID list), an Atom
+`set!` field test (now a `^:mutable` user field) and identifier hash-cache reads
+(now `hash`). Core-internal structural probes (vector trie, subvector sharing,
+chunk storage, decoder robustness, reduction anchors, atom validator state) use
+`Session::eval_privileged`. The named-property provenance whole-file hash is
+refreshed; its pinned guard region is unchanged.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap   # twice; identical
+python3 scripts/verify_bootstrap_identity.py
+python3 -m unittest discover -s scripts -p 'test_*.py'
+cargo test --locked --no-fail-fast -p suss-cli --test <each edited suite> -p suss-compile --test <each edited suite> -- --test-threads=2
+```
+
+Every edited suite passes locally, including compile_expr 302 (14 existing
+ignores), component 30, AOT lists 10, value decoder 25, vectors 8, metadata 10,
+lazy transformations 4 and quoted identifiers 3; script tests 349 OK. The
+workspace baseline and final-head CI remain to run.
+
+## Independent review fixes: direct linking, static whitelist, run-time extension guard (2026-10-26)
+
+An independent read-only review of 9d03031 found three sealing blockers, now
+fixed with the user's choices:
+
+- Core-protocol and Object extension checked only the spelled class. User code
+  extending a core protocol or Object now passes the class value through a
+  run-time `builtin-extension-guard`, so aliases, locals and expressions are
+  rejected; Object extension onto host types is rejected too.
+- Core called its own helpers through redefinable vars, so `with-redefs` could
+  capture internal storage. Shipped core is now direct-linked (Clojure 1.8
+  semantics): each non-dynamic core definition, declaration or core `set!` also
+  writes an internal `suss.internal.core-link` cell, and privileged references
+  read it. User redefinition and `with-redefs` affect user call sites only;
+  dynamic vars stay live; a dynamic var declared before definition fails the
+  bootstrap compile.
+- Every static read except `prototype` exposed node singletons. Static reads are
+  now whitelisted (`EMPTY`, `fromArray`, `fromArrays`, `createWithCheck`,
+  `createAsIfByAssoc`, `HASHMAP_THRESHOLD`) on user-facing collection classes
+  marked by a second descriptor bit; node classes and other statics are private.
+
+Also: docs corrected; sealing regressions extended (hash-map roots, chunks,
+chunked seqs, lists, transients, alias/local/expression extension, direct
+linking); the cyclic-metadata bridge check restored as a privileged probe; dead
+branches and stale comments removed. Tests that asserted ClojureScript live
+redefinition of core internals (`-empty`, `next`, `-clone`) now assert the
+direct-linked result. Left as review nits: `Session::eval_privileged` remains a
+doc-hidden host API used only by tests; runtime-native `ExceptionInfo` keeps its
+documented interop fields; the `case` keyword lowering's privileged `fqn` read is
+documented as unable to reach other built-in storage.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap   # twice; identical
+python3 scripts/verify_bootstrap_identity.py
+python3 -m unittest discover -s scripts -p 'test_*.py'
+cargo test --locked --no-fail-fast -p suss-cli --test builtin_internals_sealed --test builtin_protocols_closed --test portable_empty --test portable_queues --test compiled_bootstrap --test portable_case --test compiled_macro_vectors -p suss-compile --lib -- --test-threads=2
+```
+
+Sealed 7/7, closed 5/5, empty 3/3, queues 3/3, compiled bootstrap 4/4, case 8/8,
+vectors 8/8, compiler unit tests 188/188; earlier in this round the with-redefs
+corpora (bitwise, default and murmur hash, vector trie, collection literals,
+quoted identifiers), symbol conversion, CORE import 17/17 and the jank harness
+12/12 passed with direct linking. Script tests 349 OK. CI on 9d03031 passed all
+but integration shard 6 (queue and symbol tests fixed here); the full local
+baseline on 9d03031 failed only the same queue test.
+
+## Follow-up review fixes: primitive links, recursion links, closed bit, helper privacy (2026-10-26)
+
+A second independent review of ec833fc confirmed node-class statics and
+alias/local/expression extension were closed for core-private classes, and found
+two remaining direct-linking gaps plus extension-guard coverage gaps, now fixed:
+
+- Core's calls to runtime-provided bootstrap bindings (`aclone`, `nil?`,
+  `identical?`, ...) read redefinable public cells. The core bindings module now
+  initializes an internal `suss.internal.bootstrap-link` cell beside each, and
+  privileged references read it.
+- The core link was registered after analyzing the initializer, so
+  self-recursive helpers (`push-tail`, `do-assoc`, ...) called their public cells.
+  It is now registered first. `^:redef`, like `^:dynamic`, is exempt, and a var
+  first defined dynamic never gets a link.
+- The core import drops upstream `defn-` privacy. The 38 upstream `defn-`
+  helpers that take, return or edit collection storage or nodes, plus core's
+  string hash cache, are now private to suss.core. Enforcing all 87 `defn-`
+  names broke `defrecord` expansions that refer to `pr-writer`, so printing,
+  comparison and reduction helpers stay reachable, as in ClojureScript.
+- The extension guard uses a separate closed bit set on every privileged
+  descriptor (including the public-field WIT integer types) and also rejects
+  runtime-built descriptors (fixed identities below the first counted one), and
+  the static check treats runtime-bound classes such as ExceptionInfo as built-in.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap   # twice; identical
+python3 scripts/verify_bootstrap_identity.py
+python3 -m unittest discover -s scripts -p 'test_*.py'
+cargo test --locked --no-fail-fast -p suss-cli --test builtin_internals_sealed --test builtin_protocols_closed --test compiled_bootstrap --test core_import --test portable_case --test compiled_record_factories --test compiled_public_records --test portable_reduction_dispatch --test portable_vector_trie --test portable_empty --test portable_queues -p suss-compile --lib --test clojure_test_suite --test component -- --test-threads=2
+```
+
+Sealed 8/8 (new regressions for the reviewed primitive, recursion, privacy and
+closed-class routes), closed 5/5, bootstrap 4/4, CORE import 17/17, case 8/8,
+record factories 5/5, public records 7/7, reduction dispatch 4/4, vector trie 5/5,
+empty 3/3, queues 3/3, compiler unit tests 188/188, component 30/30 and the jank
+harness 12/12 with its reviewed baseline unchanged. The first attempt with all
+87 `defn-` names private failed records, reduction dispatch and one jank
+namespace diagnostic; those results are superseded by the narrowed list.
+
+## Third review: remaining direct-linking gaps and the undefined-behavior boundary (2026-10-26)
+
+A third independent review of cc0e999 found remaining direct-linking gaps, now
+fixed: bootstrap factories that capture their own cell (`ex-info`, variadic bit
+operations) or the ExceptionInfo class cell now capture link cells; shipped
+core's syntax quotes read the direct-linked `sequence`; and a var first defined
+dynamic or `^:redef` stays live when redefined (the prior declaration is read
+before the new one is recorded).
+
+It also found deliberate circumvention routes: aliasing a core protocol's method
+var into a user protocol before native extension, and constructing built-in types
+with forged fields or hash caches. With the user's agreement these are declared
+undefined behavior for ordinary-use guarantees, as reflection on Clojure
+internals is on the JVM (design decision text updated, #274 comment), and are
+tracked for a stricter guarantee in #279.
+
+Tests that asserted ClojureScript live redefinition of the variadic bit
+operations' reducer now assert the direct-linked result; the pinned CLJS
+`expected-primary` observations are retained. The resident bootstrap cell count is
+148: each of the 74 bootstrap bindings has a link cell.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap   # twice; identical
+python3 scripts/verify_bootstrap_identity.py
+python3 -m unittest discover -s scripts -p 'test_*.py'
+cargo test --locked --no-fail-fast -p suss-cli --test persistent_session --test builtin_internals_sealed --test compiled_bootstrap --test portable_error_constructors --test portable_bitwise_hash --test core_import --test compiled_macro_syntax_quote --test compiled_public_records -p suss-compile --test clojure_test_suite --test component -- --test-threads=2
+```
+
+Persistent session 33/33, sealed 8/8, bootstrap 4/4, error constructors 6/6,
+bitwise hash 6/6 (after the rewrite; 4/6 before), CORE import 17/17, syntax quote
+12/12, public records 7/7, jank harness 12/12 with its reviewed baseline, component
+30/30; script tests 349 OK. CI on cc0e999 failed only the resident cell count.
+
+## Final round: CI fixes, review of 414901f and full baseline (2026-10-26)
+
+CI at 414901f failed in integration shards 3, 4 and 7: tests that asserted
+ClojureScript live redefinition of core internals (lazy map/filter helpers,
+`str`, `gensym`'s counter, ExceptionInfo's class and constructor arities,
+`not-empty`, `RecordIter`). 6497af1 rewrites them to the direct-linked
+results, each checked against the built CLI. The full baseline at 414901f had
+stopped at the first failing binary (no `--no-fail-fast`) and is superseded.
+
+A fourth independent read-only review of 414901f found no correctness bugs and
+two documentation nits, fixed in ec8bfa8: the bitwise capture rationale now
+says the reducer is direct-linked, and the design records that a core var first
+defined dynamic stays live.
+
+Full baseline at 6497af1 in a memory-capped unit (MemoryMax=10G,
+MemorySwapMax=1G), 2026-10-26 14:53-20:33: exit 0, 265 test results, 1981
+passed, 0 failed, 78 ignored (the same 17 `#[ignore]` attributes as main).
+ec8bfa8 differs only in the design doc and one test rationale string. CI at
+ec8bfa8: foundation, integration 0-7 and test all pass.
+
+```sh
+CARGO_BUILD_JOBS=4 cargo test --workspace --locked --no-fail-fast -- --test-threads=2
+```
+
+## Independent acceptance audit and runtime-built field writes (2026-10-27)
+
+An independent read-only audit of 2c605a0 against every criterion of #274,
+#275 and #276 found all of them satisfied, except that ExceptionInfo instance
+fields were writable from user code. It confirmed that no built-in hash value
+changed: the changed `expected-native` bitwise values are bit-operation
+results under `with-redefs`, and core.sus and the hash code are unchanged
+versus main. The named-property set guard now also rejects instance writes on runtime-
+built descriptors (ExceptionInfo), which stay readable, like Clojure's
+public final exception fields. The sealing suite adds sorted-map nodes, sorted
+sets, queues and ExceptionInfo writes. The compiler-integrity import test
+asserts the import is absent, and a stale `Cold` comment is removed.
+
+Bootstrap regenerated twice byte-identical; `verify_bootstrap_identity.py`,
+`check_record_macro_provenance.py` and `test_record_abi_provenance.py` pass.
+Focused: builtin_internals_sealed 8/8, builtin_protocols_closed 5/5,
+portable_exception_info 12/12, persistent_session 33/33, portable_command 7/7
+and compiled_bootstrap 4/4. The full baseline and CI results for this head are
+in the PR's final comment.

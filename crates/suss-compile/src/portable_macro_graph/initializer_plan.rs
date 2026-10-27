@@ -1,8 +1,27 @@
 //! Invocation-local correspondence, never an identity inferred from spans alone.
-use super::{Result, reuse};
-use crate::portable_session::Session;
+use super::Result;
+use crate::portable_session::{Session, SessionError};
 use suss_reader::forms::{Form, Kind};
 
+/// Grow a work stack with its allocation charged before it happens.
+fn reserve<T>(session: &mut Session, values: &mut Vec<T>, extra: usize) -> Result<()> {
+    session.charge_host_work(1)?;
+    if extra > values.capacity() - values.len() {
+        let needed = values.len().checked_add(extra).ok_or_else(|| invalid("Initializer plan allocation overflow"))?;
+        let cap = values.capacity().checked_mul(2).unwrap_or(needed).max(needed);
+        let bytes = cap
+            .checked_add(values.len())
+            .and_then(|n| n.checked_mul(std::mem::size_of::<T>()))
+            .and_then(|n| u64::try_from(n).ok())
+            .ok_or_else(|| invalid("Initializer plan allocation overflow"))?;
+        session.charge_host_work(bytes)?;
+        values.try_reserve_exact(cap - values.len()).map_err(|_| invalid("Initializer plan allocation failed"))?;
+    }
+    Ok(())
+}
+fn invalid(message: &'static str) -> SessionError {
+    wasmtime::Error::msg(message).into()
+}
 fn text<T: PartialEq>(session: &mut Session, a: &[T], b: &[T]) -> Result<bool> {
     session.charge_host_work(1)?;
     if a.len() != b.len() { return Ok(false); }
@@ -25,7 +44,7 @@ fn namespace(session: &mut Session, a: &Option<String>, b: &Option<String>) -> R
 pub(super) fn same(session: &mut Session, a: &Form, b: &Form) -> Result<bool> {
     fn push<'a, 'b>(session: &mut Session, pending: &mut Vec<(&'a Form, &'b Form)>,
         a: &'a Form, b: &'b Form) -> Result<()> {
-        reuse::reserve(session, pending, 1)?;
+        reserve(session, pending, 1)?;
         session.charge_host_work(3)?;
         pending.push((a, b));
         Ok(())

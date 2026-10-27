@@ -3,9 +3,13 @@
 The vendored [jank-lang/clojure-test-suite](../../vendor/clojure-test-suite/README.md)
 is the function-level basis of the conformance corpus (issue #211). Its 248 test
 namespaces cover about 220 `cljs.core`, `clojure.string` and `clojure.edn` vars,
-one file per function, with arity, edge-case and exception assertions. The
-pinned ClojureScript oracle decides what each assertion observes; Suss is judged
-host-side against those observations. The suite's own `clojure.test` verdicts
+one file per function, with arity, edge-case and exception assertions. This suite
+is the behavior conformance oracle (design decision 2026-10-25): its assertions,
+read as Clojure semantics, define the expected behavior. Running it on pinned
+ClojureScript records what each assertion observes, and every recorded assertion
+passes there; Suss is judged host-side against those observations. If a recorded
+ClojureScript observation ever disagrees with the suite's assertion or Clojure
+semantics, Clojure governs and the recording is corrected. The suite's own `clojure.test` verdicts
 are never evidence for Suss. The targeted differential corpora (effects order,
 binary64 bits, UTF-16, reader) remain the precision layer.
 

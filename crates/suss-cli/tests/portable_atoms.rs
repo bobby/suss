@@ -106,8 +106,10 @@ fn persistent_session_atom_operations_preserve_order_and_errors_before_mutation(
     assert_eq!(number(&mut session, &thrown), 31f64.to_bits());
     assert_eq!(eval_number(&mut session, "@a"), 22f64.to_bits());
     assert_eq!(eval_number(&mut session, "trace"), 9f64.to_bits());
+    // Atom fields are private to suss.core and set-validator! is not yet
+    // implemented, so this host probe plants the unsupported state directly.
     session
-        .eval("(set! (.-validator a) (fn [_] true))")
+        .eval_privileged("(set! (.-validator a) (fn [_] true))")
         .unwrap();
     assert_language_error(
         &mut session,
@@ -116,7 +118,7 @@ fn persistent_session_atom_operations_preserve_order_and_errors_before_mutation(
     );
     assert_eq!(eval_number(&mut session, "@a"), 22f64.to_bits());
     session
-        .eval("(set! (.-validator a) nil) (set! (.-watches a) (array))")
+        .eval_privileged("(set! (.-validator a) nil) (set! (.-watches a) (array))")
         .unwrap();
     assert_language_error(
         &mut session,

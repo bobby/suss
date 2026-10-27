@@ -191,10 +191,12 @@ fn compiled_macro_maps_match_fresh_pinned_scalar_observations_in_both_phases() {
 }
 
 #[test]
-fn compiled_macro_maps_capture_factory_before_ordered_entries_and_stop_on_throw() {
+fn compiled_macro_maps_evaluate_ordered_entries_and_stop_on_throw() {
+    // The core map factory is private (design decision 2026-10-25); entry
+    // effects still run once each, key then value, in source order.
     let mut session = Session::new_macro().unwrap();
-    session.eval("(def trace 0) (def original-factory (.-createAsIfByAssoc suss.core/PersistentArrayMap))").unwrap();
-    session.eval("(def result {(do (set! trace (+ (* trace 10) 1)) (set! (.-createAsIfByAssoc suss.core/PersistentArrayMap) (fn [_] (throw 77))) :a) (do (set! trace (+ (* trace 10) 2)) 11) (do (set! trace (+ (* trace 10) 3)) :b) (do (set! trace (+ (* trace 10) 4)) 12)})").unwrap();
+    session.eval("(def trace 0)").unwrap();
+    session.eval("(def result {(do (set! trace (+ (* trace 10) 1)) :a) (do (set! trace (+ (* trace 10) 2)) 11) (do (set! trace (+ (* trace 10) 3)) :b) (do (set! trace (+ (* trace 10) 4)) 12)})").unwrap();
     let value = session
         .eval("(and (== trace 1234) (== (get result :a) 11) (== (get result :b) 12))")
         .unwrap();
@@ -209,8 +211,7 @@ fn compiled_macro_maps_capture_factory_before_ordered_entries_and_stop_on_throw(
                 == 4))
             .unwrap()
     );
-    assert!(session.eval("{:a 1}").is_err());
-    session.eval("(set! (.-createAsIfByAssoc suss.core/PersistentArrayMap) original-factory) (set! trace 0)").unwrap();
+    session.eval("(set! trace 0)").unwrap();
     assert!(
         session
             .eval("{(do (set! trace 1) :a) (throw 19) (do (set! trace 3) :b) 12}")

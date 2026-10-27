@@ -15,6 +15,9 @@ pub struct SourceOrigin {
     // Private, immutable correspondence installed only by verified reader
     // expansion/lowering. It never mutates the original cached source snapshot.
     reader_forms: Option<Arc<(suss_reader::forms::Form, suss_reader::forms::Form)>>,
+    // Compiler-authored source (the shipped core bootstrap and internal AOT
+    // boundary schemas) may touch built-in type internals; user source may not.
+    privileged: bool,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SourcePosition {
@@ -73,7 +76,16 @@ impl SourceOrigin {
             line_starts: starts.into(),
             metadata_forms: Arc::new(OnceLock::new()),
             reader_forms: None,
+            privileged: false,
         }
+    }
+    /// Compiler-authored source whose code may access built-in type internals
+    /// (design decision 2026-10-25). Never constructed from user input.
+    pub(crate) fn privileged(text: impl Into<Arc<str>>) -> Self {
+        Self { privileged: true, ..Self::new(text, None) }
+    }
+    pub(crate) fn is_privileged(&self) -> bool {
+        self.privileged
     }
     pub fn text(&self) -> &str {
         &self.text

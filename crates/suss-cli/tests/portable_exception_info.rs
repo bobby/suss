@@ -145,7 +145,9 @@ fn exception_info_distinguishes_false_nil_and_missing_constructor_fields() {
 }
 
 #[test]
-fn exception_info_constructor_and_predicates_follow_the_current_class_cell() {
+fn exception_info_constructor_and_predicates_are_direct_linked_to_the_core_class() {
+    // Core's own references to ExceptionInfo are direct-linked, as in Clojure:
+    // redefining the public class var changes user call sites only.
     let mut s = Session::new().unwrap();
     s.eval("(deftype Alternate [message data cause]) (def original (ex-info \"original\" 7))")
         .unwrap();
@@ -154,7 +156,7 @@ fn exception_info_constructor_and_predicates_follow_the_current_class_cell() {
             &mut s,
             "(with-redefs [ExceptionInfo Alternate] (if (ex-data original) 1 0))"
         ),
-        0.0f64.to_bits()
+        1.0f64.to_bits()
     );
     assert_eq!(
         eval(
@@ -167,22 +169,16 @@ fn exception_info_constructor_and_predicates_follow_the_current_class_cell() {
 }
 
 #[test]
-fn exception_info_getters_use_field_names_when_the_class_is_redefined() {
+fn exception_info_getters_ignore_user_types_when_the_class_var_is_redefined() {
     let mut s = Session::new().unwrap();
     s.eval("(deftype Reordered [data message cause]) (deftype Missing [message data])")
         .unwrap();
-    assert_eq!(
-        eval(
-            &mut s,
-            "(with-redefs [ExceptionInfo Reordered] (ex-data (Reordered. 42 \"message\" 9)))"
-        ),
-        42.0f64.to_bits()
-    );
-    let bits = eval(
-        &mut s,
-        "(with-redefs [ExceptionInfo Missing] (+ (ex-cause (Missing. \"message\" 7)) 1))",
-    );
-    assert!(f64::from_bits(bits).is_nan());
+    for source in [
+        "(with-redefs [ExceptionInfo Reordered] (if (ex-data (Reordered. 42 \"message\" 9)) 1 0))",
+        "(with-redefs [ExceptionInfo Missing] (if (ex-cause (Missing. \"message\" 7)) 1 0))",
+    ] {
+        assert_eq!(eval(&mut s, source), 0.0f64.to_bits(), "{source}");
+    }
 }
 
 #[test]
@@ -220,7 +216,7 @@ fn ordinary_exception_info_calls_return_a_truthy_non_exception_realm_value() {
 }
 
 #[test]
-fn selected_two_argument_ex_info_calls_the_live_three_argument_binding() {
+fn two_argument_ex_info_is_direct_linked_to_its_three_argument_arity() {
     let mut s = Session::new().unwrap();
     let saved = s.eval("ex-info").unwrap();
     let message = s.eval("\"message\"").unwrap();
@@ -229,13 +225,14 @@ fn selected_two_argument_ex_info_calls_the_live_three_argument_binding() {
     s.eval("(ns suss.core) (def ex-info (fn [message data cause] (if cause 99 42)))")
         .unwrap();
     s.collect().unwrap();
-    // Invoke selects the original arity implementation, like pinned apply.
-    let result = s.invoke(&saved, &[&message, &data]).unwrap();
-    assert_eq!(number(&mut s, &result), 42.0f64.to_bits());
-    let error = s.invoke(&saved, &[&message, &data, &cause]).unwrap();
+    // Core's recursion is direct-linked, as in Clojure, so redefining the
+    // var does not change either arity of the original function.
     let getter = s.eval("ex-data").unwrap();
-    let result = s.invoke(&getter, &[&error]).unwrap();
-    assert_eq!(number(&mut s, &result), 7.0f64.to_bits());
+    for args in [&[&message, &data][..], &[&message, &data, &cause][..]] {
+        let error = s.invoke(&saved, args).unwrap();
+        let result = s.invoke(&getter, &[&error]).unwrap();
+        assert_eq!(number(&mut s, &result), 7.0f64.to_bits());
+    }
 }
 
 #[test]

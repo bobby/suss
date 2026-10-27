@@ -3,7 +3,6 @@
 //! Supports scalars, resolved cells, fixed closures/universal calls and numeric bootstrap.
 mod emit;
 mod function_names;
-pub(crate) mod metered_map;
 pub mod hir;
 pub mod ir;
 pub mod modules;
@@ -229,6 +228,18 @@ pub fn prepare_fragment(
         message: error.message,
     })?;
     prepare_fragment_forms_with_origin(forms, 0..source.len(), environment, phase, &mut NoExpansion, Some(&SourceOrigin::new(source, None)))
+}
+/// Compile compiler-authored source with access to built-in type internals.
+pub(crate) fn prepare_privileged_fragment(
+    source: &str,
+    environment: &resolve::Environment,
+    phase: resolve::Phase,
+) -> Result<PreparedFragment, Diagnostic> {
+    let forms = read_forms(source).map_err(|error| Diagnostic {
+        span: error.span,
+        message: error.message,
+    })?;
+    prepare_fragment_forms_with_origin(forms, 0..source.len(), environment, phase, &mut NoExpansion, Some(&SourceOrigin::privileged(source)))
 }
 /// Compile owned reader/expanded forms without printing or rereading them.
 /// Conditional selection and namespace preparation preserve original form spans

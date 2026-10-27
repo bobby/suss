@@ -7,9 +7,25 @@ pub(super) const ERROR_GLOBAL: u32 = ID_GLOBAL + 1;
 pub(super) const SENTINEL_GLOBAL: u32 = ERROR_GLOBAL + 1;
 const OBJECT: u32 = 7;
 
+/// Set in the identity of descriptors created by the shipped core bootstrap:
+/// their instance fields and class properties are private to core.
+pub(super) const CORE_PRIVATE_BIT: i64 = 1 << 62;
+/// With CORE_PRIVATE_BIT: user-facing collection classes whose whitelisted
+/// static members (EMPTY, fromArray, ...) user code may read.
+pub(super) const CORE_PUBLIC_STATICS_BIT: i64 = 1 << 61;
+/// Every descriptor created by privileged source: its core protocols and Object
+/// methods are closed to user extension, even where its fields are public.
+pub(super) const CORE_CLOSED_BIT: i64 = 1 << 60;
+/// Runtime-built descriptors (errors, ExceptionInfo, ...) have fixed identities
+/// below the first counter-assigned one; they are closed to extension too.
+pub(super) const FIRST_COUNTED_IDENTITY: i64 = numeric::ERROR_GLOBALS as i64 + 5;
+
 pub(super) fn error(body: &mut Vec<Instruction<'static>>) {
+    message_error(body, "Invalid nominal operation");
+}
+pub(super) fn message_error(body: &mut Vec<Instruction<'static>>, text: &str) {
     use Instruction::*;
-    let message: Vec<_> = "Invalid nominal operation".encode_utf16().collect();
+    let message: Vec<_> = text.encode_utf16().collect();
     body.push(GlobalGet(ERROR_GLOBAL));
     body.extend(message.iter().map(|unit| I32Const(*unit as i32)));
     body.extend([
@@ -101,7 +117,28 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         I64Add,
         GlobalSet(ID_GLOBAL),
     ]);
+    // The same constructor for core types. Only the stored identity carries the
+    // bit (the second counter read; the first is the overflow check), so
+    // identities stay unique and the counter advances as usual.
+    let mut core = body.clone();
+    let identity = core
+        .iter()
+        .enumerate()
+        .filter(|(_, instruction)| matches!(instruction, GlobalGet(ID_GLOBAL)))
+        .nth(1)
+        .map(|(index, _)| index)
+        .expect("descriptor identity read");
+    let mut statics = core.clone();
+    let mut closed = core.clone();
+    core.splice(identity + 1..identity + 1, [I64Const(CORE_PRIVATE_BIT | CORE_CLOSED_BIT), I64Or]);
+    statics.splice(identity + 1..identity + 1, [I64Const(CORE_PRIVATE_BIT | CORE_PUBLIC_STATICS_BIT | CORE_CLOSED_BIT), I64Or]);
+    closed.splice(identity + 1..identity + 1, [I64Const(CORE_CLOSED_BIT), I64Or]);
+    b.function_with_locals("descriptor-new-core-statics", &[VALUE], &[VALUE], &[(1, VALUE)], &statics);
+    b.function_with_locals("descriptor-new-core-closed", &[VALUE], &[VALUE], &[(1, VALUE)], &closed);
     b.function_with_locals("descriptor-new", &[VALUE], &[VALUE], &[(1, VALUE)], &body);
+    b.function_with_locals("descriptor-new-core", &[VALUE], &[VALUE], &[(1, VALUE)], &core);
+
+    // Unprivileged named access: reject built-in instances and class values.
 
     let mut body = vec![];
     guard(&mut body, 0, DESCRIPTOR);
@@ -253,13 +290,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         array(&mut body, if writing { 3 } else { 2 });
         body.push(LocalGet(1));
         if writing {
-            body.push(LocalGet(2));
-            if b.dispatch_observer.is_some() {
-                let mut raw = body.clone();
-                raw.push(ArraySet(ARGS));
-                b.function_with_locals("macro-memo-field-set", &[VALUE, ValType::I32, VALUE], &[], &[(1, VALUE)], &raw);
-            }
-            dispatch_observer::store(b, &mut body);
+            body.extend([LocalGet(2), ArraySet(ARGS)]);
         } else {
             body.push(ArrayGet(ARGS));
         }
@@ -476,9 +507,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         LocalSet(2),
     ];
     guard(&mut dispatch_body, 2, 4);
-    dispatch_body.extend([LocalGet(2), LocalGet(1)]);
-    dispatch_observer::emit(b, &mut dispatch_body, 0,
-        &[LocalGet(1), I32Const(0), ArrayGet(ARGS)], 2, generic_invoke);
+    dispatch_body.extend([LocalGet(2), LocalGet(1), Call(generic_invoke)]);
     let dispatcher = invoke_body_with_locals(b, &[(1, VALUE)], &dispatch_body);
     for (name, callback, minimum) in [
         ("constructor-new", constructor, 0),

@@ -8,6 +8,17 @@ i31 dispatch slots0–7; other UTF-16 names use content equality. Known instance
 fields resolve through their UTF-16 schema and retain existing field storage.
 Callback environments remain intact; no owner registry retains replaced values.
 
+Named access in user code reaches user `deftype`/`defrecord` fields and the
+methods of any instance. Under the 2026-10-25 design decision, fields of
+built-in `suss.core` instances are private: unprivileged reads and writes throw
+`Built-in type internals are private to suss.core`. Built-in classes accept no
+writes; user code may read only whitelisted statics (`EMPTY`, `fromArray`,
+`fromArrays`, `createWithCheck`, `createAsIfByAssoc`, `HASHMAP_THRESHOLD`) of
+the user-facing collection classes, never node classes, other statics or
+`prototype`. `WitSigned64`/`WitUnsigned64` keep their `high`/`low` words public.
+Compiler-authored source and compiler lowerings of user syntax keep privileged
+access.
+
 Sixty-four fresh pinned ClojureScript observations at
 c4295f303100bbf5afac449242d30bca1126f1a1 match independently decoded actual Wasm.
 The original22 observations remain unchanged. Additions cover native/name storage,

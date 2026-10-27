@@ -136,9 +136,9 @@ fn compiled_macro_vectors_quote_nested_data_and_reject_malformed_storage() {
     };
     assert_eq!(n.to_bits(), (-0f64).to_bits());
     for source in [
-        "(PersistentVector. nil 2 5 (.-EMPTY_NODE PersistentVector) (array 1) nil)",
-        "(PersistentVector. nil 1 6 (.-EMPTY_NODE PersistentVector) (array 1) nil)",
-        "(PersistentVector. 1 0 5 (.-EMPTY_NODE PersistentVector) (array) nil)",
+        "(PersistentVector. nil 2 5 (VectorNode. nil (make-array 32)) (array 1) nil)",
+        "(PersistentVector. nil 1 6 (VectorNode. nil (make-array 32)) (array 1) nil)",
+        "(PersistentVector. 1 0 5 (VectorNode. nil (make-array 32)) (array) nil)",
         "(PersistentVector. nil 0 5 (VectorNode. (js-obj) (make-array 32)) (array) nil)",
         "(PersistentVector. nil 0 5 (VectorNode. nil (make-array 31)) (array) nil)",
         "(deftype ForeignVector [meta cnt shift root tail hash]) (ForeignVector. nil 0 5 nil (array) nil)",
@@ -408,7 +408,8 @@ fn compiled_vectors_collapse_and_regrow_at_1057_preserving_contents_metadata_and
             "(identical? (.-root boundary-associated) (suss.core/pv-aget (.-root boundary-regrown) 0))",
             "(not (identical? (.-tail boundary-collapsed) (.-tail boundary-associated)))",
         ] {
-            let value = session.eval(source).unwrap();
+            // Trie structure is private to suss.core; host probes are privileged.
+            let value = session.eval_privileged(source).unwrap();
             session.collect().unwrap();
             session
                 .inspect(&value, |store, value| {

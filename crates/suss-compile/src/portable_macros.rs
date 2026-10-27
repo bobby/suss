@@ -30,7 +30,6 @@ pub struct CompiledMacros {
     loaded_sources: BTreeMap<String, String>,
     incomplete_sources: BTreeSet<String>,
     artifact_cache: crate::portable::artifact_cache::ArtifactCache,
-    declaration_values: crate::portable_macro_graph::DeclarationValues,
 }
 // Hash the identical legacy Debug/source/path stream without retaining a copy of
 // that stream. The meter error must survive fmt::Error's intentionally tiny API.
@@ -280,7 +279,6 @@ impl CompiledMacros {
             loaded_sources: BTreeMap::new(),
             incomplete_sources: BTreeSet::new(),
             artifact_cache: Default::default(),
-            declaration_values: Default::default(),
         };
         macros.enter_namespace("suss.core")?;
         macros.define(crate::portable_defn::SOURCE)?;
@@ -916,7 +914,7 @@ impl ExpansionHost for CompiledMacros {
                 )?
             } else {
                 self.environment_materializations += 1;
-                let mut graph = AnalysisGraph::with_declaration_values(&self.bridge, session, &mut self.declaration_values);
+                let mut graph = AnalysisGraph::new(&self.bridge, session);
                 match self.compiler_catalog_macros.get(&target) {
                     Some(CompilerCatalogMode::Full) => {
                         graph.expansion_with_compiler_catalog(context)?
@@ -953,8 +951,6 @@ impl ExpansionHost for CompiledMacros {
     }
 }
 
-#[cfg(test)]
-mod memo_leaf_tests;
 
 
 #[cfg(test)]

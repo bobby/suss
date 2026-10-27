@@ -92,9 +92,12 @@ pub fn compile_with_cells(
     types.ty().function([], []);
     let mut globals = GlobalSection::new();
     let mut exports = ExportSection::new();
+    // Each bootstrap binding also gets its direct-link cell, written with the
+    // same value, which shipped core reads (design decision 2026-10-25).
     let mut cells = bindings
         .iter()
         .map(|(cell, _)| cell.clone())
+        .chain(bindings.iter().map(|(cell, _)| Environment::bootstrap_link_global(cell)))
         .collect::<Vec<_>>();
     let base_cells = cells
         .iter()
@@ -123,26 +126,34 @@ pub fn compile_with_cells(
         );
         exports.export(&cell.import_name(), ExportKind::Global, index as u32);
     }
-    let mut start = Function::new([]);
+    let mut start = Function::new([(1, VALUE)]);
     for index in order {
         let export = &bindings[index].1;
+        // Factories that capture a cell (their own or the exception class)
+        // capture its direct-link cell, so later redefinition of the public var
+        // never reaches core.
+        let link = |cell: usize| (bindings.len() + cell) as u32;
         if self_cell(export) {
             // The native bootstrap exposes a bound nil cell to these constructors.
             start
-                .instruction(&Instruction::GlobalGet(index as u32))
+                .instruction(&Instruction::GlobalGet(link(index)))
                 .instruction(&Instruction::I32Const(0))
                 .instruction(&Instruction::RefI31)
                 .instruction(&Instruction::Call(0));
         }
         start.instruction(&Instruction::GlobalGet(index as u32));
         if export.starts_with("core-") && export != "core-exception-info-class" {
-            start.instruction(&Instruction::GlobalGet(class as u32));
+            start.instruction(&Instruction::GlobalGet(link(class)));
         }
         if self_cell(export) {
-            start.instruction(&Instruction::GlobalGet(index as u32));
+            start.instruction(&Instruction::GlobalGet(link(index)));
         }
         start
             .instruction(&Instruction::Call(factory_indices[index]))
+            .instruction(&Instruction::LocalTee(0))
+            .instruction(&Instruction::Call(0))
+            .instruction(&Instruction::GlobalGet((bindings.len() + index) as u32))
+            .instruction(&Instruction::LocalGet(0))
             .instruction(&Instruction::Call(0));
     }
     start.instruction(&Instruction::End);

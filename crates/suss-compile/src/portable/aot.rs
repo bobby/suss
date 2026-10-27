@@ -642,7 +642,7 @@ pub fn component(
     });
     let mut fragments = fragments.to_vec();
     if option_schema {
-        fragments.push(super::prepare_fragment(
+        fragments.push(super::prepare_privileged_fragment(
             r#"(let [identical suss.core/identical?
                         make-array suss.core/array get-array suss.core/aget
                         vector-class suss.core/PersistentVector
@@ -676,14 +676,14 @@ pub fn component(
         )?);
     }
     if list_schema {
-        fragments.push(super::prepare_fragment(
+        fragments.push(super::prepare_privileged_fragment(
             list_schema::SOURCE,
             &fragments[0].environment,
             Phase::Runtime,
         )?);
     }
     if exact_schema {
-        fragments.push(super::prepare_fragment(
+        fragments.push(super::prepare_privileged_fragment(
             exact_schema::SOURCE,
             &fragments[0].environment,
             Phase::Runtime,

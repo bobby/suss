@@ -130,7 +130,10 @@ impl Analyzer<'_> {
                 },
             };
             let key = self.literal_form(form, Literal::String("fqn".encode_utf16().collect()));
-            let name = self.callable_named_get(form, selected, key, "fqn")?;
+            // The pinned case lowering projects a keyword's private fqn field.
+            // Even if keyword? is redefined, this read cannot reach other built-in
+            // storage: only Keyword has an fqn field, and a user object yields its own.
+            let name = self.nominal(form, Nominal::CoreNamedGet, vec![selected, key]);
             let fallback = self.literal_form(form, Literal::Nil);
             let projected = self.control_if(form, condition, name, fallback);
             let binding = self.fresh_binding(&args[0], projected);

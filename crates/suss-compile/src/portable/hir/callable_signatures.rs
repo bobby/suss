@@ -90,7 +90,7 @@ impl Analyzer<'_> {
             let key = self.literal_form(form, Literal::String(key.encode_utf16().collect()));
             effects.push(self.nominal(
                 form,
-                Nominal::NamedSet,
+                Nominal::CoreNamedSet,
                 vec![
                     self.local(form, owner.id),
                     key,
@@ -107,7 +107,7 @@ impl Analyzer<'_> {
             let count = self.literal_form(form, Literal::Number(fixed as f64));
             effects.push(self.nominal(
                 form,
-                Nominal::NamedSet,
+                Nominal::CoreNamedSet,
                 vec![self.local(form, owner.id), key, count],
             ));
             let parameter = Parameter {
@@ -179,7 +179,7 @@ impl Analyzer<'_> {
             );
             effects.push(self.nominal(
                 form,
-                Nominal::NamedSet,
+                Nominal::CoreNamedSet,
                 vec![self.local(form, owner.id), key, callback],
             ));
         }
