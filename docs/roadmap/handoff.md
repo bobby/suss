@@ -29083,3 +29083,27 @@ Persistent session 33/33, sealed 8/8, bootstrap 4/4, error constructors 6/6,
 bitwise hash 6/6 (after the rewrite; 4/6 before), CORE import 17/17, syntax quote
 12/12, public records 7/7, jank harness 12/12 with its reviewed baseline, component
 30/30; script tests 349 OK. CI on cc0e999 failed only the resident cell count.
+
+## Final round: CI fixes, review of 414901f and full baseline (2026-10-26)
+
+CI at 414901f failed in integration shards 3, 4 and 7: tests that asserted
+ClojureScript live redefinition of core internals (lazy map/filter helpers,
+`str`, `gensym`'s counter, ExceptionInfo's class and constructor arities,
+`not-empty`, `RecordIter`). 6497af1 rewrites them to the direct-linked
+results, each checked against the built CLI. The full baseline at 414901f had
+stopped at the first failing binary (no `--no-fail-fast`) and is superseded.
+
+A fourth independent read-only review of 414901f found no correctness bugs and
+two documentation nits, fixed in ec8bfa8: the bitwise capture rationale now
+says the reducer is direct-linked, and the design records that a core var first
+defined dynamic stays live.
+
+Full baseline at 6497af1 in a memory-capped unit (MemoryMax=10G,
+MemorySwapMax=1G), 2026-10-26 14:53-20:33: exit 0, 265 test results, 1981
+passed, 0 failed, 78 ignored (the same 17 `#[ignore]` attributes as main).
+ec8bfa8 differs only in the design doc and one test rationale string. CI at
+ec8bfa8: foundation, integration 0-7 and test all pass.
+
+```sh
+CARGO_BUILD_JOBS=4 cargo test --workspace --locked --no-fail-fast -- --test-threads=2
+```
