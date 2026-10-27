@@ -29156,3 +29156,42 @@ certification, retention or recording machinery in source. Findings:
 ```sh
 CARGO_BUILD_JOBS=4 cargo test --workspace --locked --no-fail-fast -- --test-threads=2
 ```
+
+## #278: deftype field mutability and type-private mutable fields (2026-10-27)
+
+Descriptors gain a sixth field, the munged names of their `^:mutable` fields
+(i31 0 when none; core and built-in descriptors always i31 0).
+`descriptor-new` takes the schema and that table. Unprivileged named field
+access (`.-x`, `(set! (.-x o) v)`, `.x`) passes the enclosing type's class
+value, or nil outside a type body, to `user-field-get-guard` /
+`user-field-set-guard`:
+
+- writes to a schema field that is not mutable raise "Cannot assign an
+  immutable field", inside the type body too;
+- named reads and writes of a mutable field raise "Mutable fields are private
+  to their type" unless the caller is the receiver's own class (inline method
+  bodies of that `deftype`/`defrecord`, including closures created in them).
+  `extend-type`/`extend-protocol` outside the definition do not qualify;
+- immutable fields, record keyword access, `assoc` and `hash` are unchanged.
+
+Privileged `suss.core` analysis keeps the unguarded core operations. Probed
+and pinned as regressions: `unchecked-get`, `unchecked-set`, `aget` and
+`aset` already reject user objects, so no dynamic route reaches the fields.
+
+Host readers and tests that assumed a five-field descriptor now expect six
+(`portable_macro_data.rs`, the decoder and descriptor-shape assertions). A
+record's `__hash` cache is mutable and therefore private:
+`compiled_public_records` now asserts the privacy error for
+`(.-__hash copied)`, and `compiled_record_factories` no longer reads it from
+outside (`compiled_record_type_boundary` still reads and writes it from a
+method). The named-property ABI file hash in
+`docs/compatibility/record-macro-foundations/abi-adaptations.json` is refreshed;
+its pinned guard region is unchanged. Bootstrap regenerated; the CI script
+checks and `scripts/verify-bootstrap.sh` pass.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+cargo test --locked -p suss-cli --test user_type_field_privacy --test builtin_internals_sealed -- --test-threads=2
+cargo test --locked -p suss-cli --test compiled_public_records --test compiled_record_factories --test compiled_record_type_boundary -- --test-threads=2
+scripts/verify-bootstrap.sh
+```
