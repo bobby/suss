@@ -48,12 +48,11 @@ fn compiled_positional_factories_use_declared_arity_and_internal_nil_fields() {
                 &mut session,
                 &mut macros,
                 &mut decoder,
-                "(let [r (->FactoryRecord 7 false)] [(.-left r) (.-right r) (.-__meta r) (.-__extmap r) (.-__hash r)])"
+                "(let [r (->FactoryRecord 7 false)] [(.-left r) (.-right r) (.-__meta r) (.-__extmap r)])"
             ),
             Observation::Vector(vec![
                 number(7.0),
                 Observation::Bool(false),
-                Observation::Nil,
                 Observation::Nil,
                 Observation::Nil
             ])
@@ -102,7 +101,7 @@ fn compiled_map_factory_preserves_missing_nil_false_values_and_extension_entries
                 &mut session,
                 &mut macros,
                 &mut decoder,
-                "(let [r (map->MapFactoryRecord {:left 7 :right false :extra nil})] [(.-left r) (.-right r) (.-__meta r) (.-__extmap r) (.-__hash r)])"
+                "(let [r (map->MapFactoryRecord {:left 7 :right false :extra nil})] [(.-left r) (.-right r) (.-__meta r) (.-__extmap r)])"
             ),
             Observation::Vector(vec![
                 number(7.0),
@@ -111,8 +110,7 @@ fn compiled_map_factory_preserves_missing_nil_false_values_and_extension_entries
                 Observation::Map(vec![(
                     Observation::Keyword(None, "extra".encode_utf16().collect()),
                     Observation::Nil
-                )]),
-                Observation::Nil
+                )])
             ])
         );
         assert_eq!(
@@ -129,9 +127,9 @@ fn compiled_map_factory_preserves_missing_nil_false_values_and_extension_entries
                 &mut session,
                 &mut macros,
                 &mut decoder,
-                "(let [r (map->EmptyFactoryRecord {})] [(.-__meta r) (.-__extmap r) (.-__hash r)])"
+                "(let [r (map->EmptyFactoryRecord {})] [(.-__meta r) (.-__extmap r)])"
             ),
-            Observation::Vector(vec![Observation::Nil, Observation::Nil, Observation::Nil])
+            Observation::Vector(vec![Observation::Nil, Observation::Nil])
         );
         assert_eq!(
             observe(

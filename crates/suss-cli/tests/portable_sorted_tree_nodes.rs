@@ -174,7 +174,7 @@ macro_rules! source_field {
             .unwrap()
             .as_struct(&$store)?
             .unwrap();
-        assert_eq!(descriptor.fields(&mut $store)?.count(), 5);
+        assert_eq!(descriptor.fields(&mut $store)?.count(), 6);
         let schema = descriptor
             .field(&mut $store, 1)?
             .unwrap_anyref()
@@ -723,7 +723,7 @@ fn raw_tree_decode(
         if class.name == "Error" {
             assert_eq!(count, 5);
             let descriptor = descriptor_ref.as_struct(&*store)?.unwrap();
-            assert_eq!(descriptor.fields(&mut *store)?.count(), 5);
+            assert_eq!(descriptor.fields(&mut *store)?.count(), 6);
             assert_eq!(descriptor.field(&mut *store, 0)?.unwrap_i64(), 7);
             let message = owner.field(&mut *store, 1)?;
             let array = message.unwrap_anyref().unwrap().as_array(&*store)?.unwrap();
@@ -755,7 +755,7 @@ fn raw_tree_decode(
         }
         assert_eq!(count, 4);
         let descriptor_storage = descriptor_ref.as_struct(&*store)?.unwrap();
-        assert_eq!(descriptor_storage.fields(&mut *store)?.count(), 5);
+        assert_eq!(descriptor_storage.fields(&mut *store)?.count(), 6);
         let schema_value = descriptor_storage.field(&mut *store, 1)?;
         let schema = schema_value
             .unwrap_anyref()

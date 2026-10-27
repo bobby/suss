@@ -655,6 +655,36 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             &[VALUE, VALUE], &[VALUE], &[(1, VALUE)], &body,
         );
     }
+    // Unprivileged named access (owner, name, caller class or nil) -> owner, as
+    // in Clojure (#278): fields are public and final unless declared mutable,
+    // and mutable fields are private to their type. The caller is the class
+    // value of the type whose inline method body contains the access.
+    for writing in [false, true] {
+        let mut body = vec![LocalGet(0), RefTestNonNull(HeapType::Concrete(7)), If(BlockType::Empty)];
+        structure(&mut body, 0, 7, 0);
+        body.push(LocalSet(3));
+        body.extend([LocalGet(3), RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
+            StructGet { struct_type_index: DESCRIPTOR, field_index: 5 }, LocalSet(4),
+            LocalGet(4), RefTestNonNull(HeapType::Concrete(ARGS)), If(BlockType::Empty),
+            LocalGet(4), LocalGet(1), I32Const(1), Call(find), I32Const(0), I32GeS, If(BlockType::Empty),
+            LocalGet(2), RefTestNonNull(HeapType::Concrete(CLOSURE)), If(BlockType::Result(ValType::I32)),
+            LocalGet(2), Call(b.names["closure-environment"]), LocalGet(3), RefEq,
+            Else, I32Const(0), End, I32Eqz, If(BlockType::Empty)]);
+        nominal::message_error(&mut body, "Mutable fields are private to their type");
+        body.extend([End, LocalGet(0), Return, End, End]);
+        if writing {
+            body.extend([LocalGet(3), RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
+                StructGet { struct_type_index: DESCRIPTOR, field_index: 1 },
+                LocalGet(1), I32Const(1), Call(find), I32Const(0), I32GeS, If(BlockType::Empty)]);
+            nominal::message_error(&mut body, "Cannot assign an immutable field");
+            body.push(End);
+        }
+        body.extend([End, LocalGet(0)]);
+        b.function_with_locals(
+            if writing { "user-field-set-guard" } else { "user-field-get-guard" },
+            &[VALUE, VALUE, VALUE], &[VALUE], &[(2, VALUE)], &body,
+        );
+    }
     // Class value -> class value; built-in classes reject user extension of
     // core protocols and Object methods.
     let mut body = vec![LocalGet(0), RefTestNonNull(HeapType::Concrete(CLOSURE)), If(BlockType::Empty),

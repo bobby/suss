@@ -272,7 +272,7 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
         I32Const(0),
         ArrayNewDefault(ARGS),
         GlobalGet(TAG_GLOBAL),
-        I32Const(0), RefI31, StructNew(DESCRIPTOR),
+        I32Const(0), RefI31, I32Const(0), RefI31, StructNew(DESCRIPTOR),
         LocalSet(4),
         End,
         GlobalGet(TAG_GLOBAL),

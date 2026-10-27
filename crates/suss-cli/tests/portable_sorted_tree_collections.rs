@@ -48,7 +48,7 @@ fn error_json(
                 actual_descriptor
             )?);
             let schema = actual_descriptor.as_struct(&store)?.unwrap();
-            assert_eq!(schema.fields(&mut store)?.count(), 5);
+            assert_eq!(schema.fields(&mut store)?.count(), 6);
             assert_eq!(schema.field(&mut store, 0)?.unwrap_i64(), 7);
             let message = owner.field(&mut store, 1)?;
             let message = message.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
@@ -166,7 +166,7 @@ fn field(
                     .unwrap()
                     .as_struct(&store)?
                     .unwrap();
-                assert_eq!(descriptor.fields(&mut store)?.count(), 5);
+                assert_eq!(descriptor.fields(&mut store)?.count(), 6);
                 let schema = descriptor
                     .field(&mut store, 1)?
                     .unwrap_anyref()

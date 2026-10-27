@@ -47,7 +47,7 @@ fn checked_fields(
         return Err(wasmtime::Error::msg("HAMT owner has noncanonical descriptor"));
     }
     let descriptor = descriptor_ref.as_struct(&*store)?.unwrap();
-    if descriptor.fields(&mut *store)?.count() != 5 {
+    if descriptor.fields(&mut *store)?.count() != 6 {
         return Err(wasmtime::Error::msg("malformed class descriptor"));
     }
     let schema_value = descriptor.field(&mut *store, 1)?;

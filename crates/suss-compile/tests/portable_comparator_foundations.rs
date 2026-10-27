@@ -42,12 +42,13 @@ fn constructor_cache_preserves_shared_recursive_abi_type_count_and_descriptor_la
             let CompositeInnerType::Struct(descriptor) = &types[6].composite_type.inner else {
                 panic!("descriptor shape")
             };
-            assert_eq!(descriptor.fields.len(), 5);
+            assert_eq!(descriptor.fields.len(), 6);
             assert!(!descriptor.fields[0].mutable);
             assert!(!descriptor.fields[1].mutable);
             assert!(descriptor.fields[2].mutable);
             assert!(descriptor.fields[3].mutable);
             assert!(descriptor.fields[4].mutable);
+            assert!(!descriptor.fields[5].mutable);
             return;
         }
     }

@@ -161,7 +161,7 @@ fn public_record_custom_protocols_and_record_input_factory_decode_after_gc() {
              (def copied (map->Custom original))
              [(count copied) (:value copied) (contains? copied :extra)
               (:extra copied) (meta copied) (:tag (meta original))
-              (.-__hash copied) (-probe copied)]",
+              (try (.-__hash copied) (catch :default e (.-message e))) (-probe copied)]",
             )
             .unwrap();
         session.collect().unwrap();
@@ -176,7 +176,8 @@ fn public_record_custom_protocols_and_record_input_factory_decode_after_gc() {
                 Observation::Nil,
                 Observation::Nil,
                 Observation::Keyword(None, "old".encode_utf16().collect()),
-                Observation::Nil,
+                // The record hash cache is a mutable field, private to its type (#278).
+                Observation::String("Mutable fields are private to their type".encode_utf16().collect()),
                 Observation::Number(73.0_f64.to_bits()),
             ])
         );
