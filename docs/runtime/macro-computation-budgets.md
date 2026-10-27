@@ -153,11 +153,8 @@ in GitHub.
 
 The native source-constructor argument-buffer copy charges one host-work unit
 and polls cancellation for each supplied reference, including extra arguments
-that the ordinary constructor subsequently ignores. The opt-in constructor-input
-witness additionally charges its native schema copies, expected-field references,
-UTF-16 comparisons and storage inspection to the same operation. It does not
-refill the budget around preparation, construction or matching. This preparation
-is not enabled for ordinary transport or retained-root reuse.
+that the ordinary constructor subsequently ignores. It does not refill the
+budget around preparation or construction.
 
 Native array and constructor builders now check input owners in argument order
 within the active operation budget. Each reached valid input costs one host-work
@@ -193,14 +190,6 @@ complete definition/declaration transport guards and separately exposed body
 fields remain intact. Cold whole-source snapshot parsing/indexing is still
 charged to the caller's operation; this projection does not move it elsewhere.
 
-Native ordered-cache insertion stops height propagation when an AVL subtree's
-height stabilizes. Before mutation, a read-only pass determines the affected
-ancestors and charges32primitive operations per inspected node. The existing
-64operation prepayment applies to each ancestor actually rebalanced, plus the
-unchanged fixed insertion charge. Allocation prepayments and fallible key
-comparisons still finish before publication. Retain uses a separate full rebuild.
-This avoids actual redundant updates rather than reducing their unit charge.
-
 Raw reader keys use a native hash index with immutable exact-byte collision
 chains. Hashes select buckets only; a hit still compares every byte required to
 prove equality. Key IDs follow insertion order independently of bucket order.
@@ -210,53 +199,6 @@ work finishes before publishing either a new bucket or a collision-chain entry.
 Cancellation may retain reserved capacity, but cannot consume an ID or publish a
 partial key. This index does not authorize guest-object or metadata reuse.
 
-A final metadata-reuse pass that performs no rebuild has validated every retained
-old record after the last construction callback. Certification reuses that
-invocation-local result and still polls fuel/cancellation for each entry. Fresh
-records receive full validation; any rebuild requires another complete pass.
-No cross-operation validation result gains authority from this optimization.
-
-Class coverage audits first compare each input with the next canonical name.
-A positional mismatch falls back to the full name search, preserving reordered
-input handling. Duplicate and complete-coverage checks and every class-schema
-authority query still run, including after an earlier false audit.
-
-Final source expectations are cached per captured source in one analysis graph,
-after deferred recipes finish. Successful declines are distinct from uncomputed
-slots; fuel or cancellation errors never populate the cache. Expectation
-allocation, storage, lookup and publication remain charged. A fresh recording
-and its pending entry can share the exact immutable expectation allocation.
-Certification then performs the complete recorded-source validation once and
-checks that identity before omitting a duplicate logical decode. Different
-allocations still require both logical comparisons, even for the same global
-and declaration revision. This identity proves equality of native predicates;
-it does not certify guest data or replace live storage and authority checks.
-
-Fresh final certification shares authority query results only in its callback-free
-interval after the complete no-rebuild pass. A Session/registry-bound audit owns
-all query roots and uses metered exact reference comparisons, preserving identity
-across GC. Class keys include name contents, constructor presence/reference and
-descriptor reference; prototype keys include every field of the native witness.
-Per-record coverage, duplicate names, source/storage/input facts and ownership
-checks remain independent. Completed false queries may be reused; errors and
-incomplete entries are never published. The audit is dropped before fixups and
-publication, and is never carried through construction or rebuild callbacks.
-
-Authority-query lookup indexes immutable class-name hashes in a metered native
-ordered map. Exact names/tags and rooted references still decide collision-chain
-hits; prototype queries share bucket zero and retain full witness comparison.
-Name hashing bills byte reads and arithmetic, and bucket operations, chain walks,
-allocation and link publication remain charged. No GC reference hash is retained
-across allocating calls. All fallible staging completes before index publication.
-
-Recording and private-parent bridge forks share an immutable, privately owned
-native core containing captured roots, class tables, constructor indices and
-factory bindings. Referents remain live Wasm values and retain all existing
-owner, class and authority checks. Each recording has separate mutable facts,
-mutex and write domain; mode flags remain wrapper-local. Capture order/time
-is unchanged. The core allocation is charged once; a fork charges the constant
-Arc increment/copy work instead of allocating and copying the four containers.
-
 Native form planning borrows immutable body nodes instead of copying an entire
 composite before finding cached child recipes. Generated normalized metadata
 still owns its forms and moves children through the existing work stack.
@@ -265,35 +207,6 @@ another copy. Full validation, exact raw-key planning, metadata normalization,
 textual body order, recipe publication and reader-occurrence rules are unchanged.
 The work stack remains the existing allocation; its backing accounting is not
 improved by this ownership change.
-
-
-Construction-input validation builds a fresh native open-addressed identity index
-for each check. Capacity is a checked power of two at least twice the record
-count; allocation bytes and each initialized slot are charged. Every probe,
-full-hash comparison, wrap, selected-head read and head replacement is charged.
-Equal hashes retain a separate record collision chain whose membership uses
-exact rooted reference equality. The index performs no guest hashing, equality,
-adapter calls or guest allocation, and never survives the validation call.
-Canonical-seed membership and direct storage validation remain separate checks.
-Fuel and cancellation errors discard the temporary index; they never publish a
-partial certification. Optional `SUSS_INPUT_INDEX_TRACE` reports reservation,
-index completion and root/edge stages. Reservation includes table initialization;
-a missing completion line is partial execution, not a zero-cost stage.
-
-
-Logical-source comparison decodes and validates the complete finite guest value
-before comparing native forms. Small unordered maps/sets use an iterative paired
-comparison with charged scalar-key scans and exact key/value comparison, including
-numeric bits and metadata. Admission limits this path to expected maps/sets of at
-most sixteen entries anywhere in the tree; wider inputs retain the existing
-unordered key-plan comparison. This is an algorithm choice, not a rejection or
-language-size limit. Unique expected keys and equal entry counts establish a
-bijection; actual duplicate or missing keys cannot satisfy every expected key.
-The fixed abstract tariffs are eight units per pair visit, three per pair push
-plus reserve's unit, and four per eligibility visit. Text/namespace comparisons,
-key scans, child pushes, allocation and relocation are charged separately. These
-are conservative work units, not measurements of native machine instructions.
-
 
 Raw-key bucket heads use a native growing open-addressed table over full u64
 hashes. Immutable exact bytes and the existing insertion-ordered collision chains
