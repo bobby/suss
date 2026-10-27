@@ -27,6 +27,10 @@ const SEALED: &[(&str, &str)] = &[
     ("hash set storage read", "(.-hash-map #{1})"),
     ("map entry key read", "(.-key (first {:a 1}))"),
     ("sorted map tree read", "(.-tree (sorted-map 1 2))"),
+    ("sorted map node read", "(.-left (first (sorted-map 1 2)))"),
+    ("sorted set storage read", "(.-tree-map (sorted-set 1))"),
+    ("queue storage read", "(.-front (conj (.-EMPTY PersistentQueue) 1))"),
+    ("exception info field write", "(set! (.-data (ex-info \"x\" 7)) 8)"),
     ("lazy seq function read", "(.-fn (map inc [1]))"),
     ("class prototype read", "(.-prototype PersistentVector)"),
     ("class property write", "(set! (.-EMPTY PersistentVector) nil)"),
@@ -88,6 +92,9 @@ fn user_code_cannot_reach_builtin_internals_in_either_phase() {
         assert_eq!(observe(&mut session, "(count (.fromArray PersistentVector (array 1 2) true))"), Observation::Number(2f64.to_bits()));
         // Methods of built-in instances stay public, as in Clojure.
         assert_eq!(observe(&mut session, "(.indexOf [1 2 3] 2)"), Observation::Number(1f64.to_bits()));
+        // ExceptionInfo fields are public reads but not writable, like
+        // Clojure's public final exception fields.
+        assert_eq!(observe(&mut session, "(.-data (ex-info \"x\" 7))"), Observation::Number(7f64.to_bits()));
     }
 }
 

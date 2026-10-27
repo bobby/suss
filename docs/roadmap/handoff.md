@@ -29107,3 +29107,23 @@ ec8bfa8: foundation, integration 0-7 and test all pass.
 ```sh
 CARGO_BUILD_JOBS=4 cargo test --workspace --locked --no-fail-fast -- --test-threads=2
 ```
+
+## Independent acceptance audit and runtime-built field writes (2026-10-27)
+
+An independent read-only audit of 2c605a0 against every criterion of #274,
+#275 and #276 found all of them satisfied, except that ExceptionInfo instance
+fields were writable from user code. It confirmed that no built-in hash value
+changed: the changed `expected-native` bitwise values are bit-operation
+results under `with-redefs`, and core.sus and the hash code are unchanged
+versus main. The named-property set guard now also rejects writes on runtime-
+built descriptors (errors, ExceptionInfo), which stay readable, like Clojure's
+public final exception fields. The sealing suite adds sorted-map nodes, sorted
+sets, queues and ExceptionInfo writes. The compiler-integrity import test
+asserts the import is absent, and a stale `Cold` comment is removed.
+
+Bootstrap regenerated twice byte-identical; `verify_bootstrap_identity.py`,
+`check_record_macro_provenance.py` and `test_record_abi_provenance.py` pass.
+Focused: builtin_internals_sealed 8/8, builtin_protocols_closed 5/5,
+portable_exception_info 12/12, persistent_session 33/33, portable_command 7/7
+and compiled_bootstrap 4/4. The full baseline and CI results for this head are
+in the PR's final comment.

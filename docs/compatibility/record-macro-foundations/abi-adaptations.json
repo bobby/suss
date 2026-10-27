@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "source": "crates/suss-compile/src/runtime_abi/named_properties.rs",
-  "source-file-sha256": "c5975bba6735c5da0f250c7281b9aafd834cf7a43d111be3c6474e91f90408e1",
+  "source-file-sha256": "1d9e0425015626396d4f6e995f425c40fa7af091fdc9a0d90d9701ee1aa7b0a6",
   "license": "MIT OR Apache-2.0",
   "scope": "named-property ASCII field guard and reserved spelling dispatch",
   "adaptation": "Accept exactly ASCII letters, digits, underscore and dollar via two u64 masks, with an equivalent wrapping-subtraction lowercase fast path. Reject non-ASCII UTF-16 units before modulo-64 shifts. Validate every unit before rejecting pinned reserved spellings through length/first-unit dispatch; empty names remain accepted. After the matching reserved-length bucket is exhausted, return accepted without testing disjoint lengths. This original checked guard rejects unsupported munging rather than porting upstream code; provenance does not establish execution.",

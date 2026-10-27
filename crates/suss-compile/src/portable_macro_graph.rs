@@ -2441,7 +2441,7 @@ impl<'a> AnalysisGraph<'a> {
                 field_push!(self, fields; (name, self.vector(&records)?));
             }
             // c4295f3 analyzer.cljc4392: vector keys AND [:items] are literals.
-            // Map/set routes are outside this correction and retain Cold.
+            // Map/set routes are outside this correction.
             field_push!(self, fields; ("children", self.vector(&names)?));
         }
         if let Some(node) = &source.node

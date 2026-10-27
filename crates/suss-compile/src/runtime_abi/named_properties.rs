@@ -608,11 +608,25 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             Else, I32Const(0), End]);
     };
     let private = |body: &mut Vec<Instruction<'static>>, descriptor: u32| flag(body, descriptor, nominal::CORE_PRIVATE_BIT);
+    // Runtime-built descriptors (errors, ExceptionInfo) have identities below
+    // the first counted one; their fields are public reads but never writable,
+    // like Clojure's public final exception fields.
+    let runtime_built = |body: &mut Vec<Instruction<'static>>, descriptor: u32| {
+        body.extend([LocalGet(descriptor), RefTestNonNull(HeapType::Concrete(DESCRIPTOR)), If(BlockType::Result(ValType::I32)),
+            LocalGet(descriptor), RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
+            StructGet { struct_type_index: DESCRIPTOR, field_index: 0 },
+            I64Const(nominal::CORE_CLOSED_BIT - 1), I64And, I64Const(nominal::FIRST_COUNTED_IDENTITY), I64LtS,
+            Else, I32Const(0), End]);
+    };
     for writing in [false, true] {
         let mut body = vec![LocalGet(0), RefTestNonNull(HeapType::Concrete(7)), If(BlockType::Empty)];
         structure(&mut body, 0, 7, 0);
         body.push(LocalSet(2));
         private(&mut body, 2);
+        if writing {
+            runtime_built(&mut body, 2);
+            body.push(I32Or);
+        }
         body.extend([If(BlockType::Empty)]);
         body.extend([LocalGet(2), RefCastNonNull(HeapType::Concrete(DESCRIPTOR)), StructGet { struct_type_index: DESCRIPTOR, field_index: 1 }]);
         body.extend([LocalGet(1), I32Const(1), Call(find), I32Const(0), I32GeS, If(BlockType::Empty)]);
@@ -621,6 +635,10 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         body.extend([LocalGet(0), RefTestNonNull(HeapType::Concrete(CLOSURE)), If(BlockType::Empty),
             LocalGet(0), Call(b.names["closure-environment"]), LocalSet(2)]);
         private(&mut body, 2);
+        if writing {
+            runtime_built(&mut body, 2);
+            body.push(I32Or);
+        }
         if !writing {
             // Allowed only for whitelisted statics of user-facing collections.
             flag(&mut body, 2, nominal::CORE_PUBLIC_STATICS_BIT);
