@@ -29157,6 +29157,44 @@ certification, retention or recording machinery in source. Findings:
 CARGO_BUILD_JOBS=4 cargo test --workspace --locked --no-fail-fast -- --test-threads=2
 ```
 
+## #241: large-form macro transport at the default allowance (2026-10-27)
+
+The historical blocker was caller `&form` input transport, which stopped at a
+fixed 4096-node limit (bytes 239..5926 of `map.cljc`) before any map assertion
+ran. That limit no longer exists: transport is charged to the per-call
+compilation allowance, and a macro that cannot reference `&form` or `&env`
+receives `nil` for it (design section on macro data).
+
+The unchanged pinned `clojure.core-test.map/test-map` declaration loads and
+executes all 69 ordered assertion IDs with no test failures or skips. The
+allowance is 200M for both Runtime and Macro before and after (unchanged);
+it previously failed at 200M during caller `&form` transport, and in later
+attempts during macro invocation. Actual run: 1/1 pass, 39.8s; all 69
+guest-recorded verdicts are `pass`, and the focused test now compares each
+ID's verdict with the pinned one.
+
+`compiled_macro_large_form_transport` covers a 5000-element call (over 5000
+nodes, past the old 4096) at the default 10M macro allowance in both phases:
+a macro reading `&form` metadata, exact `:line`/`:column` (the leading `^`, as in
+Clojure's MetaReader) and children; one returning `&form` whole; one
+reaching `&form` only through a source macro expanded in its body (must not be
+elided); and one that cannot read `&form`. Each also exercises explicit
+argument and expanded-result transport. The caller gets a 100M execution
+allowance: evaluating the quoted 5000-element result with no macro at all
+exhausts 20M and completes at 50M, a Runtime cost outside transport.
+
+```sh
+SUSS_CLOJURE_TEST_SUITE_CAPTURE=<dir> cargo test --locked -p suss-compile --test clojure_test_suite pinned_map_declaration -- --test-threads=2
+cargo test --locked -p suss-cli --test compiled_macro_large_form_transport -- --test-threads=2
+```
+
+Full baseline at 582f8d2 (`cargo test --workspace --locked --no-fail-fast --
+--test-threads=2`, 10G memory cap, 4 build jobs, 4h41m): 266 result lines,
+1981 passed, 1 failed, 78 ignored. The one failure,
+`native_repl_async_pty` (child REPL exited mid-session after 23.9s under
+load), passed 3/3 when rerun alone (38.2s, 47.0s, 34.6s); no other test
+failed.
+
 ## #278: deftype field mutability and type-private mutable fields (2026-10-27)
 
 Descriptors gain a sixth field, the munged names of their `^:mutable` fields
