@@ -56,12 +56,26 @@ const IDS: &[&str] = &[
     "str-nonprimitive-both-throw",
     "format-live-str-results-convert-after-calls",
 ];
+/// Pinned ClojureScript observations that rebinding a core var changes core's
+/// own behaviour. Shipped core is direct-linked, as Clojure core is since 1.8,
+/// so Suss does not execute these; the reference corpus keeps them (#278).
+const LIVE_CORE_REBINDING: &[&str] = &[
+    "live-type-mixed",
+    "live-array-predicate",
+    "wrapper-live-compare",
+    "wrapper-equality-changes-compare",
+    "indexed-stops-first-difference",
+    "indexed-live-compare",
+    "format-live-str",
+    "format-live-str-results-convert-after-calls",
+];
 fn setup(phase: Phase) -> Session {
     let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
     session.set_operation_fuel(100_000_000);
-    session.eval(CORE).unwrap();
+    // Ported core reads other types' private fields, so it runs as core (#278).
+    session.eval_privileged(CORE).unwrap();
     session.enter_namespace("user").unwrap();
-    session.eval(PROBE).unwrap();
+    session.eval_privileged(PROBE).unwrap();
     session.collect().unwrap();
     session
 }
@@ -105,9 +119,13 @@ fn complete_comparator_source_candidates_and_policy_in_both_phases_after_gc() {
     assert_eq!(policy["cases"].as_array().unwrap().len(), 2);
     assert_eq!(policy["cases"][0]["id"], "compare-wrong-arity");
     assert_eq!(policy["cases"][1]["id"], "wrapper-wrong-arity");
+    assert!(LIVE_CORE_REBINDING.iter().all(|id| IDS.contains(id)));
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = setup(phase);
         for case in cases.iter().chain(policy["cases"].as_array().unwrap()) {
+            if LIVE_CORE_REBINDING.contains(&case["id"].as_str().unwrap()) {
+                continue;
+            }
             let source = case["source"].as_str().unwrap();
             let value = session
                 .eval(source)

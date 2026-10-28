@@ -10,8 +10,9 @@ fn named_properties_match_independently_decoded_primary_observations_after_gc() 
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 64);
     let mut session = Session::new().unwrap();
+    // Ported core reads other types' private fields, so it runs as core (#278).
     session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session
         .enter_namespace("suss-oracle.named-property-cases")
@@ -231,7 +232,6 @@ fn named_access_uses_canonical_storage_without_changing_raw_lexical_names() {
     for (source, expected) in [
         ("(.-null$ named-review-reserved)", 7.0f64),
         ("(.-some_field named-review-hyphen)", 9.0f64),
-        ("(set! (.-null$ named-review-reserved) 11)", 11.0f64),
     ] {
         let value = session.eval(source).unwrap();
         session.collect().unwrap();
@@ -242,6 +242,10 @@ fn named_access_uses_canonical_storage_without_changing_raw_lexical_names() {
             Ok(())
         }).unwrap();
     }
+    // Fields not declared mutable are final, under their munged name too (#278).
+    assert!(matches!(session.eval("(set! (.-null$ named-review-reserved) 11)"),
+        Err(SessionError::Language(_))), "immutable field write");
+    session.collect().unwrap();
     let value = session
         .eval("(named-review-read named-review-reserved)")
         .unwrap();
@@ -254,7 +258,7 @@ fn named_access_uses_canonical_storage_without_changing_raw_lexical_names() {
                 .unwrap()
                 .fields(&mut store)?
                 .collect::<Vec<_>>();
-            assert!(matches!(fields.as_slice(), [Val::F64(bits)] if *bits == 11.0f64.to_bits()));
+            assert!(matches!(fields.as_slice(), [Val::F64(bits)] if *bits == 7.0f64.to_bits()));
             Ok(())
         })
         .unwrap();
@@ -294,7 +298,7 @@ fn constructor_prototype_is_stable_and_callable_attributes_remain_explicit_error
         session.collect().unwrap();
     }
     // Declared own fields still take precedence over an inherited method name.
-    session.eval("(deftype NamedOwnHostSpelling [toString]) (def named-own-host-spelling (NamedOwnHostSpelling. 19)) (set! (.-toString named-own-host-spelling) 23)").unwrap();
+    session.eval("(deftype NamedOwnHostSpelling [toString]) (def named-own-host-spelling (NamedOwnHostSpelling. 23))").unwrap();
     let value = session
         .eval("(.-toString named-own-host-spelling)")
         .unwrap();

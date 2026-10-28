@@ -7,11 +7,28 @@ use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionV
 use suss_compile::portable::resolve::Phase;
 use wasmtime::{AnyRef, OwnedRooted, Val};
 
+/// Pinned ClojureScript observations that rebinding a core var changes core's
+/// own behaviour. Shipped core is direct-linked, as Clojure core is since 1.8,
+/// so Suss does not execute these; the reference corpus keeps them (#278).
+const LIVE_CORE_REBINDING: &[&str] = &[
+    "map-live-hash-once-cache",
+    "map-hash-throw-no-cache",
+    "set-live-hash-once-cache",
+    "set-hash-throw-no-cache",
+    "cursor-live-hash-once-cache",
+    "cursor-hash-throw-no-cache",
+    "set-equivalence-error-caught",
+    "set-equivalence-scalar-rethrown",
+    "set-equivalence-ExceptionInfo-caught",
+    "range-no-prefix-rebound-test",
+    "range-mk-bound-live-comparator",
+];
 fn setup(phase: Phase) -> Session {
     let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
     session.set_operation_fuel(100_000_000);
+    // Ported core reads other types' private fields, so it runs as core (#278).
     session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def sorted-effects 0)").unwrap();
@@ -87,6 +104,7 @@ fn complete_sorted_values_iterator_returns_and_range_arities_match_pinned_raw_va
     );
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), 142);
+    assert!(LIVE_CORE_REBINDING.iter().all(|id| cases.iter().any(|case| case["id"] == *id)));
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = setup(phase);
         let error_anchor = session.eval("(suss.bootstrap/error \"anchor\")").unwrap();
@@ -102,6 +120,9 @@ fn complete_sorted_values_iterator_returns_and_range_arities_match_pinned_raw_va
             })
             .unwrap();
         for case in cases {
+            if LIVE_CORE_REBINDING.contains(&case["id"].as_str().unwrap()) {
+                continue;
+            }
             session.eval("(set! sorted-effects 0)").unwrap();
             let actual = match (
                 case["mode"].as_str().unwrap(),

@@ -29204,3 +29204,44 @@ scripts/verify-bootstrap.sh
 ```
 
 Limitation: the privacy error names neither the field nor the type.
+
+### #278 CI: tests that touched fields from outside their type (2026-10-27)
+
+Final-head CI at 7a4e1a7 failed in seven shards. Every failure was a test or
+fixture reading or assigning a deftype field from outside the type, which
+Clojure forbids and #278 now enforces. Fixed as follows:
+
+- Ported core evaluated as user code: ClojureScript core reads and writes
+  other types' mutable fields from free functions (Box `val`, Atom `state`,
+  transient node `arr`/`cnt`/`bitmap`, ...), so `core.sus` runs only as core.
+  `portable_comparators`, `portable_sorted_tree_collections`,
+  `portable_named_properties` and `compiled_macro_self_local_methods` load it
+  with `eval_privileged` and keep cases unprivileged;
+  `portable_sorted_tree_nodes` and `portable_sorted_comparator_prerequisites`
+  evaluate everything privileged, since their cases probe core node internals.
+- Privileged `suss.core` is direct-linked, so 19 pinned cases that observe a
+  rebound core var inside core (8 comparator, 11 sorted tree: `array?`,
+  `type`, `compare`, `=`, `nth`, `str_`, `hash-unordered-coll`,
+  `hash-ordered-coll`, `contains?`, `>`, `-comparator`) are ClojureScript-only.
+  The user chose to drop them. They stay in the reference corpora, whose
+  ClojureScript evidence receipts pin those files, and each Rust test skips a
+  closed `LIVE_CORE_REBINDING` list instead.
+- Fixture cases rewritten through methods with unchanged expectations:
+  caching hash (3), object methods (2), string fields (4: munged-name
+  collisions now observed via the type's methods or a second instance), named
+  properties (`PropertyProbe` accessors, and construction instead of an
+  immutable write), map mutation helpers (`traceValue`).
+- Iteration: two cases read the private iterator index. Checked against
+  Clojure 1.12 (`ASeq.iterator()` returns `SeqIterator`, whose `next()` throws
+  `NoSuchElementException` when exhausted) and the `java.util.Iterator`
+  contract: `iterator-position-field` now takes the second `.next` (2) and
+  `iterator-exhaustion-advances-offset` checks `.hasNext` is false after the
+  last element, without calling `.next` past the end. Pre-existing cases still
+  assert ClojureScript-only iterator behaviour (`iterator-exhausted-next-nil`,
+  extra `.hasNext` operand, JS array growth); left for a follow-up.
+- `named_access_uses_canonical_storage_...` now asserts that assigning the
+  immutable `null$` field fails and the method still reads 7.
+- `portable_quoted_identifiers` expected the five-field descriptor.
+
+All twelve affected suites pass locally; the CI script checks pass.
+

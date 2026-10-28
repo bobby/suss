@@ -131,7 +131,7 @@
     },
     {
       "id": "protocol-field-cache-miss",
-      "source": "(do (deftype HashProbe [^:mutable value ^:mutable cached] IHash (-hash [this] (cljs.core/caching-hash this (fn [x] (* (.-value x) 3)) cached))) (def hash-probe (HashProbe. 7 nil)) (-hash hash-probe))",
+      "source": "(do (deftype HashProbe [^:mutable value ^:mutable cached] IHash (-hash [this] (cljs.core/caching-hash this (fn [x] (* (.-value x) 3)) cached)) Object (setValue [this v] (set! value v)) (clearCache [this] (set! cached nil))) (def hash-probe (HashProbe. 7 nil)) (-hash hash-probe))",
       "expected": {
         "tag": "f64",
         "bits": "4035000000000000"
@@ -139,7 +139,7 @@
     },
     {
       "id": "protocol-field-cache-hit",
-      "source": "(do (set! (.-value hash-probe) 11) (-hash hash-probe))",
+      "source": "(do (.setValue hash-probe 11) (-hash hash-probe))",
       "expected": {
         "tag": "f64",
         "bits": "4035000000000000"
@@ -147,7 +147,7 @@
     },
     {
       "id": "protocol-cache-invalidation",
-      "source": "(do (set! (.-cached hash-probe) nil) (-hash hash-probe))",
+      "source": "(do (.clearCache hash-probe) (-hash hash-probe))",
       "expected": {
         "tag": "f64",
         "bits": "4040800000000000"
@@ -163,7 +163,7 @@
     },
     {
       "id": "object-method-cache",
-      "source": "(do (deftype HashObject [value ^:mutable cached] Object (hash [this] (cljs.core/caching-hash this (fn [x] (* (.-value x) 7)) cached))) (def hash-object (HashObject. 7 nil)) (.hash hash-object))",
+      "source": "(do (deftype HashObject [value ^:mutable cached] Object (hash [this] (cljs.core/caching-hash this (fn [x] (* (.-value x) 7)) cached)) (cachedValue [this] cached)) (def hash-object (HashObject. 7 nil)) (.hash hash-object))",
       "expected": {
         "tag": "f64",
         "bits": "4048800000000000"
@@ -171,7 +171,7 @@
     },
     {
       "id": "object-field-cache-published",
-      "source": "(.-cached hash-object)",
+      "source": "(.cachedValue hash-object)",
       "expected": {
         "tag": "f64",
         "bits": "4048800000000000"

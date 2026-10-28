@@ -315,7 +315,7 @@
     },
     {
       "id": "field-collision-constructor-read-write",
-      "source": "(do (deftype Collision [^:mutable x-y ^:mutable x_y] Object (readBoth [this] [x-y x_y]) (writeFirst [this v] (set! x-y v) [x-y x_y])) (let [t (atom []) a (Collision. (do (swap! t conj 1) 7) (do (swap! t conj 2) 9)) before [(.readBoth a) (.-x_y a)] via-method (.writeFirst a 17)] (set! (.-x_y a) 23) [before via-method (.readBoth a) (.-x_y a) @t]))",
+      "source": "(do (deftype Collision [^:mutable x-y ^:mutable x_y] Object (readBoth [this] [x-y x_y]) (writeFirst [this v] (set! x-y v) [x-y x_y]) (writeSecond [this v] (set! x_y v) [x-y x_y])) (let [t (atom []) a (Collision. (do (swap! t conj 1) 7) (do (swap! t conj 2) 9)) before [(.readBoth a) (second (.readBoth a))] via-method (.writeFirst a 17)] (.writeSecond a 23) [before via-method (.readBoth a) (second (.readBoth a)) @t]))",
       "expected": {
         "tag": "vector",
         "items": [
@@ -389,7 +389,7 @@
     },
     {
       "id": "field-hyphen-callback",
-      "source": "(do (deftype Hyphen [^:mutable some-field] Object (read [this] some-field) (write [this v] (set! some-field v))) (let [a (Hyphen. 7)] (set! (.-some-field a) 11) [(.read a) (.-some_field a)]))",
+      "source": "(do (deftype Hyphen [^:mutable some-field] Object (read [this] some-field) (write [this v] (set! some-field v))) (let [a (Hyphen. 7)] (.write a 11) [(.read a) (.read a)]))",
       "expected": {
         "tag": "vector",
         "items": [
@@ -477,7 +477,7 @@
     },
     {
       "id": "field-collision-protocol-read-write",
-      "source": "(do (defprotocol CollisionProtocol (collision-read [this]) (collision-write [this v])) (deftype ProtocolCollision [^:mutable x-y ^:mutable x_y] CollisionProtocol (collision-read [this] [x-y x_y]) (collision-write [this v] (set! x_y v))) (let [a (ProtocolCollision. 7 9) before (collision-read a)] (collision-write a 17) [before (collision-read a) (.-x_y a)]))",
+      "source": "(do (defprotocol CollisionProtocol (collision-read [this]) (collision-write [this v])) (deftype ProtocolCollision [^:mutable x-y ^:mutable x_y] CollisionProtocol (collision-read [this] [x-y x_y]) (collision-write [this v] (set! x_y v))) (let [a (ProtocolCollision. 7 9) before (collision-read a)] (collision-write a 17) [before (collision-read a) (second (collision-read a))]))",
       "expected": {
         "tag": "vector",
         "items": [
@@ -533,7 +533,7 @@
     },
     {
       "id": "reserved-field-storage",
-      "source": "(do (deftype Reserved [null]) (deftype Punctuation [some-field]) (let [a (Reserved. 7) b (Punctuation. 9) absent (undefined? (.-null a)) old (.-null$ a)] (set! (.-null$ a) 11) [absent old (.-null$ a) (.-null$ a) (.-some_field b)]))",
+      "source": "(do (deftype Reserved [null]) (deftype Punctuation [some-field]) (let [a (Reserved. 7) b (Punctuation. 9) absent (undefined? (.-null a)) old (.-null$ a) c (Reserved. 11)] [absent old (.-null$ c) (.-null$ c) (.-some_field b)]))",
       "expected": {
         "tag": "vector",
         "items": [

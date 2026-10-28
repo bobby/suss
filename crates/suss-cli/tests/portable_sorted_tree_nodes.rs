@@ -1,4 +1,6 @@
 //! Execute complete tree nodes, raw values/effects and physical child sharing.
+//! Ported core and its internal probes read other types' private fields, so
+//! all source here is evaluated privileged, as core (#278).
 use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
 use suss_compile::portable::resolve::Phase;
 use wasmtime::{AsContextMut, Val};
@@ -94,11 +96,11 @@ fn setup(phase: Phase) -> Session {
     let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
     session.set_operation_fuel(100_000_000);
     session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session
-        .eval(include_str!(
+        .eval_privileged(include_str!(
             "../../../tests/oracle/fixtures/tree-node-probe.sus"
         ))
         .unwrap();
@@ -143,7 +145,7 @@ fn complete_tree_nodes_match_ordered_pinned_value_and_effect_cases_after_gc() {
         for case in cases {
             let source = case["source"].as_str().unwrap();
             let value = session
-                .eval(source)
+                .eval_privileged(source)
                 .unwrap_or_else(|e| panic!("{}: {source}: {e}", case["id"]));
             session.collect().unwrap();
             session
@@ -223,14 +225,14 @@ const NODE_FIELDS: &[&str] = &["key", "val", "left", "right", "__hash"];
 fn nodes_preserve_canonical_classes_child_sharing_and_cache_boundaries_after_gc() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut s = setup(phase);
-        s.eval(
+        s.eval_privileged(
             "(def native-left (BlackNode. 1 11 nil nil 41))
                 (def native-right (BlackNode. 9 99 nil nil 43))
                 (def native-parent (BlackNode. 6 66 native-left native-right 47))
                 (def native-red-anchor (RedNode. 0 0 nil nil nil))",
         )
         .unwrap();
-        let anchor = s.eval("native-parent").unwrap();
+        let anchor = s.eval_privileged("native-parent").unwrap();
         let black_descriptor = s
             .inspect(&anchor, |mut store, value| {
                 value
@@ -244,7 +246,7 @@ fn nodes_preserve_canonical_classes_child_sharing_and_cache_boundaries_after_gc(
                     .to_owned_rooted(&mut store)
             })
             .unwrap();
-        let anchor = s.eval("native-red-anchor").unwrap();
+        let anchor = s.eval_privileged("native-red-anchor").unwrap();
         let red_descriptor = s
             .inspect(&anchor, |mut store, value| {
                 value
@@ -267,19 +269,19 @@ fn nodes_preserve_canonical_classes_child_sharing_and_cache_boundaries_after_gc(
             Ok(())
         })
         .unwrap();
-        let left = s.eval("native-left").unwrap();
+        let left = s.eval_privileged("native-left").unwrap();
         let left_root = s
             .inspect(&left, |mut store, v| {
                 v.unwrap_anyref().unwrap().to_owned_rooted(&mut store)
             })
             .unwrap();
-        let right = s.eval("native-right").unwrap();
+        let right = s.eval_privileged("native-right").unwrap();
         let right_root = s
             .inspect(&right, |mut store, v| {
                 v.unwrap_anyref().unwrap().to_owned_rooted(&mut store)
             })
             .unwrap();
-        let original = s.eval("native-parent").unwrap();
+        let original = s.eval_privileged("native-parent").unwrap();
         let original_root = s
             .inspect(&original, |mut store, v| {
                 v.unwrap_anyref().unwrap().to_owned_rooted(&mut store)
@@ -307,7 +309,7 @@ fn nodes_preserve_canonical_classes_child_sharing_and_cache_boundaries_after_gc(
                 None,
             ),
         ] {
-            let value = s.eval(source).unwrap();
+            let value = s.eval_privileged(source).unwrap();
             s.collect().unwrap();
             s.inspect(&value, |mut store, value| {
                 let owner = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
@@ -373,13 +375,13 @@ fn nodes_preserve_canonical_classes_child_sharing_and_cache_boundaries_after_gc(
             })
             .unwrap();
         }
-        s.eval(
+        s.eval_privileged(
             "(def native-insertion (RedNode. 4 44
                   (RedNode. 2 22 native-left native-right 53) native-right 59))",
         )
         .unwrap();
         let rotated = s
-            .eval("(balance-left 6 66 native-insertion native-right)")
+            .eval_privileged("(balance-left 6 66 native-insertion native-right)")
             .unwrap();
         s.collect().unwrap();
         s.inspect(&rotated, |mut store, value| {
@@ -442,7 +444,7 @@ fn nodes_preserve_canonical_classes_child_sharing_and_cache_boundaries_after_gc(
             ("(.-__hash native-insertion)", 59.0_f64),
             ("(.-__hash (.-left native-insertion))", 53.0_f64),
         ] {
-            let value = s.eval(source).unwrap();
+            let value = s.eval_privileged(source).unwrap();
             s.collect().unwrap();
             assert_eq!(number_bits(&mut s, &value), n.to_bits());
         }
@@ -453,16 +455,16 @@ fn nodes_preserve_canonical_classes_child_sharing_and_cache_boundaries_after_gc(
 fn tree_reduction_preserves_wrapper_identity_original_throw_and_effect_order() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut s = setup(phase);
-        s.eval("(def tree-effects 0) (def tree-stop (reduced false))
+        s.eval_privileged("(def tree-effects 0) (def tree-stop (reduced false))
                 (def native-tree (BlackNode. 2 20 (BlackNode. 1 10 nil nil nil) (BlackNode. 3 30 nil nil nil) nil))").unwrap();
-        let stop = s.eval("tree-stop").unwrap();
+        let stop = s.eval_privileged("tree-stop").unwrap();
         let stop_root = s
             .inspect(&stop, |mut store, v| {
                 v.unwrap_anyref().unwrap().to_owned_rooted(&mut store)
             })
             .unwrap();
         let value = s
-            .eval(
+            .eval_privileged(
                 "(tree-map-kv-reduce native-tree
                 (fn [acc k v] (set! tree-effects (+ (* tree-effects 10) k))
                    (if (= k 2) tree-stop acc)) 0)",
@@ -488,11 +490,11 @@ fn tree_reduction_preserves_wrapper_identity_original_throw_and_effect_order() {
             Ok(())
         })
         .unwrap();
-        let effects = s.eval("tree-effects").unwrap();
+        let effects = s.eval_privileged("tree-effects").unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &effects), 12.0_f64.to_bits());
-        s.eval("(set! tree-effects 0)").unwrap();
-        let Err(SessionError::Language(payload)) = s.eval(
+        s.eval_privileged("(set! tree-effects 0)").unwrap();
+        let Err(SessionError::Language(payload)) = s.eval_privileged(
             "(tree-map-kv-reduce native-tree
             (fn [acc k v] (set! tree-effects (+ (* tree-effects 10) k)) (throw 73)) 0)",
         ) else {
@@ -500,11 +502,11 @@ fn tree_reduction_preserves_wrapper_identity_original_throw_and_effect_order() {
         };
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &payload), 73.0_f64.to_bits());
-        let effects = s.eval("tree-effects").unwrap();
+        let effects = s.eval_privileged("tree-effects").unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &effects), 1.0_f64.to_bits());
         let recovered = s
-            .eval("(tree-map-kv-reduce native-tree (fn [acc k v] (+ acc v)) 0)")
+            .eval_privileged("(tree-map-kv-reduce native-tree (fn [acc k v] (+ acc v)) 0)")
             .unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &recovered), 60.0_f64.to_bits());
@@ -515,7 +517,7 @@ fn tree_reduction_preserves_wrapper_identity_original_throw_and_effect_order() {
 fn hyphenated_object_methods_preserve_receiver_lookup_and_argument_order() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut s = setup(phase);
-        s.eval(
+        s.eval_privileged(
             "(def method-effects 0)
             (deftype TreeMethodProbe [x] Object
               (read-value [this] x)
@@ -523,23 +525,23 @@ fn hyphenated_object_methods_preserve_receiver_lookup_and_argument_order() {
         )
         .unwrap();
         let result = s
-            .eval(
+            .eval_privileged(
                 "(.read-value (do (set! method-effects 1) (TreeMethodProbe. 7))
                 (do (set! method-effects (+ (* method-effects 10) 2)) 9))",
             )
             .unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &result), 16.0_f64.to_bits());
-        let effects = s.eval("method-effects").unwrap();
+        let effects = s.eval_privileged("method-effects").unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &effects), 12.0_f64.to_bits());
-        let result = s.eval("(.read-value (TreeMethodProbe. 7))").unwrap();
+        let result = s.eval_privileged("(.read-value (TreeMethodProbe. 7))").unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &result), 7.0_f64.to_bits());
         // ClojureScript munges the source property spelling consistently; an
         // absent field reads nil rather than becoming a compile-time error.
         let missing = s
-            .eval("(nil? (.-bad-name (TreeMethodProbe. 7)))")
+            .eval_privileged("(nil? (.-bad-name (TreeMethodProbe. 7)))")
             .unwrap();
         assert_eq!(
             s.inspect(&missing, |store, value| {
@@ -548,8 +550,8 @@ fn hyphenated_object_methods_preserve_receiver_lookup_and_argument_order() {
             .unwrap(),
             4
         );
-        s.eval("(set! method-effects 0)").unwrap();
-        let Err(SessionError::Language(payload)) = s.eval(
+        s.eval_privileged("(set! method-effects 0)").unwrap();
+        let Err(SessionError::Language(payload)) = s.eval_privileged(
             "(.read-value
             (do (set! method-effects 1) (throw 73))
             (do (set! method-effects 2) 9))",
@@ -558,7 +560,7 @@ fn hyphenated_object_methods_preserve_receiver_lookup_and_argument_order() {
         };
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &payload), 73.0_f64.to_bits());
-        let effects = s.eval("method-effects").unwrap();
+        let effects = s.eval_privileged("method-effects").unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &effects), 1.0_f64.to_bits());
     }
@@ -568,7 +570,7 @@ fn hyphenated_object_methods_preserve_receiver_lookup_and_argument_order() {
 fn this_as_restores_the_enclosing_receiver_after_nested_calls_and_language_throws() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut s = setup(phase);
-        s.eval(
+        s.eval_privileged(
             "(deftype ThisReceiverProbe [tag] Object
                (is-self [this] (this-as receiver (identical? receiver this)))
                (nested [this other]
@@ -587,7 +589,7 @@ fn this_as_restores_the_enclosing_receiver_after_nested_calls_and_language_throw
             "(.catches-inner (ThisReceiverProbe. 1) (ThisReceiverProbe. 2))",
         ] {
             let result = s
-                .eval(&format!("(if {expression} 1 0)"))
+                .eval_privileged(&format!("(if {expression} 1 0)"))
                 .unwrap();
             s.collect().unwrap();
             assert_eq!(number_bits(&mut s, &result), 1.0_f64.to_bits(), "{expression}");
@@ -599,7 +601,7 @@ fn this_as_restores_the_enclosing_receiver_after_nested_calls_and_language_throw
 fn direct_nominal_protocol_call_captures_live_method_before_argument_effects() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut s = setup(phase);
-        s.eval(
+        s.eval_privileged(
             "(def direct-effects 0)
              (deftype TreeIndexedProbe [x] IIndexed
                (-nth [this n] x)
@@ -607,7 +609,7 @@ fn direct_nominal_protocol_call_captures_live_method_before_argument_effects() {
         )
         .unwrap();
         let value = s
-            .eval(
+            .eval_privileged(
                 "(suss.bootstrap/direct-protocol-call IIndexed -nth
                 (do (set! direct-effects 1) (TreeIndexedProbe. 7))
                 (do (set! direct-effects (+ (* direct-effects 10) 2))
@@ -618,11 +620,11 @@ fn direct_nominal_protocol_call_captures_live_method_before_argument_effects() {
             .unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &value), 7.0_f64.to_bits());
-        let effects = s.eval("direct-effects").unwrap();
+        let effects = s.eval_privileged("direct-effects").unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &effects), 12.0_f64.to_bits());
         let value = s
-            .eval("(suss.bootstrap/direct-protocol-call IIndexed -nth (TreeIndexedProbe. 7) 0)")
+            .eval_privileged("(suss.bootstrap/direct-protocol-call IIndexed -nth (TreeIndexedProbe. 7) 0)")
             .unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &value), 9.0_f64.to_bits());
@@ -634,10 +636,10 @@ fn direct_nominal_protocol_call_captures_live_method_before_argument_effects() {
             "(suss.bootstrap/direct-protocol-call NotAProtocol -nth (TreeIndexedProbe. 7) 0)",
             "(suss.bootstrap/direct-protocol-call cljs.core/IIndexed -nth (TreeIndexedProbe. 7) 0)",
         ] {
-            assert!(s.eval(source).is_err(), "{source}");
+            assert!(s.eval_privileged(source).is_err(), "{source}");
         }
-        s.eval("(set! direct-effects 0)").unwrap();
-        let Err(SessionError::Language(payload)) = s.eval(
+        s.eval_privileged("(set! direct-effects 0)").unwrap();
+        let Err(SessionError::Language(payload)) = s.eval_privileged(
             "(suss.bootstrap/direct-protocol-call IIndexed -nth
             (do (set! direct-effects 1) (throw 73))
             (do (set! direct-effects 2) 0))",
@@ -646,7 +648,7 @@ fn direct_nominal_protocol_call_captures_live_method_before_argument_effects() {
         };
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &payload), 73.0_f64.to_bits());
-        let effects = s.eval("direct-effects").unwrap();
+        let effects = s.eval_privileged("direct-effects").unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &effects), 1.0_f64.to_bits());
     }
@@ -822,7 +824,7 @@ fn raw_tree_shapes_comparison_bits_errors_and_traces_match_fresh_pinned_observat
     assert_eq!(cases.len(), 52);
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut s = setup(phase);
-        s.eval("(def raw-tree-trace 0)").unwrap();
+        s.eval_privileged("(def raw-tree-trace 0)").unwrap();
         let mut classes = Vec::new();
         for (name, source) in [
             ("BlackNode", "(BlackNode. 0 0 nil nil nil)"),
@@ -830,7 +832,7 @@ fn raw_tree_shapes_comparison_bits_errors_and_traces_match_fresh_pinned_observat
             ("Reduced", "(reduced nil)"),
             ("Error", "(suss.bootstrap/error \"anchor\")"),
         ] {
-            let anchor = s.eval(source).unwrap();
+            let anchor = s.eval_privileged(source).unwrap();
             let (descriptor, owner_type) = s
                 .inspect(&anchor, |mut store, value| {
                     let owner = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
@@ -850,7 +852,7 @@ fn raw_tree_shapes_comparison_bits_errors_and_traces_match_fresh_pinned_observat
             });
         }
         // Decoder rejection controls are authored, not yet executed natively.
-        let unknown = s.eval("(js-obj)").unwrap();
+        let unknown = s.eval_privileged("(js-obj)").unwrap();
         assert!(
             s.inspect(&unknown, |mut store, value| raw_tree_decode(
                 &mut store,
@@ -861,8 +863,8 @@ fn raw_tree_shapes_comparison_bits_errors_and_traces_match_fresh_pinned_observat
             ))
             .is_err()
         );
-        let cycle = s.eval("(BlackNode. 1 10 nil nil nil)").unwrap();
-        let non_tree_child = s.eval("false").unwrap();
+        let cycle = s.eval_privileged("(BlackNode. 1 10 nil nil nil)").unwrap();
+        let non_tree_child = s.eval_privileged("false").unwrap();
         let false_root = s
             .inspect(&non_tree_child, |mut store, value| {
                 value.unwrap_anyref().unwrap().to_owned_rooted(&mut store)
@@ -896,10 +898,10 @@ fn raw_tree_shapes_comparison_bits_errors_and_traces_match_fresh_pinned_observat
         })
         .unwrap();
         for case in cases {
-            s.eval("(set! raw-tree-trace 0)").unwrap();
+            s.eval_privileged("(set! raw-tree-trace 0)").unwrap();
             let value = match (
                 case["mode"].as_str().unwrap(),
-                s.eval(case["source"].as_str().unwrap()),
+                s.eval_privileged(case["source"].as_str().unwrap()),
             ) {
                 ("return", Ok(v)) | ("throw", Err(SessionError::Language(v))) => v,
                 (_, result) => panic!("{}: unexpected return/throw: {result:?}", case["id"]),
@@ -911,7 +913,7 @@ fn raw_tree_shapes_comparison_bits_errors_and_traces_match_fresh_pinned_observat
                 })
                 .unwrap();
             assert_eq!(actual, case["expected"]["value"], "{}", case["id"]);
-            let trace = s.eval("raw-tree-trace").unwrap();
+            let trace = s.eval_privileged("raw-tree-trace").unwrap();
             s.collect().unwrap();
             assert_eq!(
                 format!("{:016x}", number_bits(&mut s, &trace)),
@@ -920,7 +922,7 @@ fn raw_tree_shapes_comparison_bits_errors_and_traces_match_fresh_pinned_observat
                 case["id"]
             );
             // Recovery is observed directly even after an original thrown value.
-            let recovery = s.eval("(+ 17 43)").unwrap();
+            let recovery = s.eval_privileged("(+ 17 43)").unwrap();
             assert_eq!(number_bits(&mut s, &recovery), 60.0_f64.to_bits());
         }
     }

@@ -4,7 +4,7 @@
   "cases": [
     {
       "id": "fresh-class-static-is-undefined",
-      "source": "(do (deftype PropertyProbe [^:mutable value]) (undefined? (.-EMPTY PropertyProbe)))",
+      "source": "(do (deftype PropertyProbe [^:mutable value] Object (getValue [this] value) (setValue [this v] (set! value v))) (undefined? (.-EMPTY PropertyProbe)))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -20,7 +20,7 @@
     },
     {
       "id": "read-instance-field",
-      "source": "(.-value (.-EMPTY PropertyProbe))",
+      "source": "(.getValue (.-EMPTY PropertyProbe))",
       "expected": {
         "tag": "f64",
         "bits": "401c000000000000"
@@ -28,7 +28,7 @@
     },
     {
       "id": "aliased-class-owner",
-      "source": "(do (def property-class-alias PropertyProbe) (set! (.-EMPTY property-class-alias) (PropertyProbe. 9)) (.-value (.-EMPTY PropertyProbe)))",
+      "source": "(do (def property-class-alias PropertyProbe) (set! (.-EMPTY property-class-alias) (PropertyProbe. 9)) (.getValue (.-EMPTY PropertyProbe)))",
       "expected": {
         "tag": "f64",
         "bits": "4022000000000000"
@@ -44,7 +44,7 @@
     },
     {
       "id": "instance-mutable-property-write",
-      "source": "(do (set! (.-value property-object) 11) (.-value property-object))",
+      "source": "(do (.setValue property-object 11) (.getValue property-object))",
       "expected": {
         "tag": "f64",
         "bits": "4026000000000000"
@@ -52,7 +52,7 @@
     },
     {
       "id": "instance-read-reflects-static-alias",
-      "source": "(.-value (.-EMPTY property-class-alias))",
+      "source": "(.getValue (.-EMPTY property-class-alias))",
       "expected": {
         "tag": "f64",
         "bits": "4026000000000000"
@@ -172,7 +172,7 @@
     },
     {
       "id": "retained-class-static-after-redefinition",
-      "source": "(.-value (.-EMPTY property-old-class))",
+      "source": "(.getValue (.-EMPTY property-old-class))",
       "expected": {
         "tag": "f64",
         "bits": "4026000000000000"
@@ -228,7 +228,7 @@
     },
     {
       "id": "nested-property-value-remains-rooted",
-      "source": "(do (set! (.-nested property-captured) property-old-class) (.-value (.-EMPTY (.-nested property-captured))))",
+      "source": "(do (set! (.-nested property-captured) property-old-class) (.getValue (.-EMPTY (.-nested property-captured))))",
       "expected": {
         "tag": "f64",
         "bits": "4026000000000000"
@@ -452,7 +452,7 @@
     },
     {
       "id": "review-instance-native-names-are-fields",
-      "source": "(do (deftype PropertyReviewFields [number _]) (def property-review-fields (PropertyReviewFields. 2 5)) (set! (.-number property-review-fields) 7) (+ (.-number property-review-fields) (.-_ property-review-fields)))",
+      "source": "(do (deftype PropertyReviewFields [number _]) (def property-review-fields (PropertyReviewFields. 7 5)) (+ (.-number property-review-fields) (.-_ property-review-fields)))",
       "expected": {
         "tag": "f64",
         "bits": "4028000000000000"
