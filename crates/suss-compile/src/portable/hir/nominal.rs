@@ -113,6 +113,42 @@ impl Analyzer<'_> {
         *target = Some(Box::new(initializer));
         Ok(definition)
     }
+    /// Republish a protocol's value or method wrapper in its hidden native
+    /// global; each defprotocol replaces it, as it replaces the public var.
+    fn protocol_native_definition(
+        &mut self,
+        form: &Form,
+        protocol: &Global,
+        method: Option<&str>,
+        value: Hir,
+    ) -> Hir {
+        let global = self.environment.protocol_native(protocol, method);
+        Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: Vec::new(),
+            ty: Type::Value,
+            kind: Expression::Definition {
+                global,
+                name_metadata: Vec::new(),
+                name_span: form.span.clone(),
+                docstring: None,
+                initializer: Some(Box::new(value)),
+                once: false,
+                linked: None,
+            },
+        }
+    }
+    fn protocol_native_value(&mut self, form: &Form, protocol: &Global, method: Option<&str>) -> Hir {
+        let global = self.environment.protocol_native(protocol, method);
+        Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: Type::Value,
+            kind: Expression::Global(global),
+        }
+    }
     fn stable_key(
         &mut self,
         form: &Form,
@@ -1170,15 +1206,18 @@ impl Analyzer<'_> {
                 let key_value = self.local(params, key.id);
                 bindings.push(key);
                 let namespace = self.environment.current_namespace(self.phase).to_owned();
-                let method_global =
-                    self.environment
-                        .declare_cell(self.phase, &namespace, &symbol.name)?;
+                self.environment
+                    .declare_cell(self.phase, &namespace, &symbol.name)?;
+                // The dispatcher's native table is the method's original
+                // wrapper, not the public var's current value (#279).
                 let cell = Hir {
                     source: None,
                     span: method_name.span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Value,
-                    kind: Expression::GlobalCell(method_global),
+                    kind: Expression::GlobalCell(
+                        self.environment.protocol_native(protocol, Some(&symbol.name)),
+                    ),
                 };
                 // IFn's emitted JS methods omit the physical receiver formal.
                 // Explicit -invoke still passes the target in its argument list,
@@ -1277,13 +1316,29 @@ impl Analyzer<'_> {
                 .collect(),
         );
         let protocol_value = self.nominal(form, Nominal::Protocol, vec![bundle]);
-        let mut effects = vec![self.nominal_definition(form, name, protocol_value)?];
+        let protocol_binding = self.fresh_binding(form, protocol_value);
+        let protocol_value = self.local(form, protocol_binding.id);
+        bindings.push(protocol_binding);
+        let protocol = protocol.clone();
+        let mut effects = vec![
+            self.protocol_native_definition(form, &protocol, None, protocol_value.clone()),
+            self.nominal_definition(form, name, protocol_value)?,
+        ];
         // Only the last entry for each method is the complete wrapper; preceding
         // entries are the captured dispatcher bindings, initialized in order.
         for (method_name, binding) in definitions {
             if matches!(binding.value.kind, Expression::GeneralFunction { .. }) {
                 let value = self.local(&method_name, binding.id);
                 bindings.push(binding);
+                let Kind::Symbol(symbol) = &method_name.kind else {
+                    unreachable!()
+                };
+                effects.push(self.protocol_native_definition(
+                    form,
+                    &protocol,
+                    Some(&symbol.name),
+                    value.clone(),
+                ));
                 effects.push(self.nominal_definition(form, &method_name, value)?);
             } else {
                 bindings.push(binding);
@@ -1327,13 +1382,7 @@ impl Analyzer<'_> {
                         "Extension requires a declared protocol",
                     )
                 })?;
-            let protocol = Hir {
-                source: None,
-                span: protocol_name.span.clone(),
-                metadata: protocol_name.metadata.clone(),
-                ty: Type::Value,
-                kind: Expression::Global(global.clone()),
-            };
+            let protocol = self.protocol_native_value(protocol_name, &global, None);
             effects.push(self.nominal(protocol_name, Nominal::NativeMarker(kind), vec![protocol]));
             while index < args.len() && matches!(args[index].kind, Kind::List(_)) {
                 let method_form = &args[index];
@@ -1424,19 +1473,8 @@ impl Analyzer<'_> {
                     kind: Kind::List(function_items),
                 };
                 let implementation = self.form(&function_form)?;
-                let method_symbol = suss_reader::Symbol {
-                    namespace: Some(global.namespace().into()),
-                    name: method.name.clone(),
-                };
-                let (method_value, ty) =
-                    self.global_value(&method_symbol, method_name.span.clone())?;
-                let method_value = Hir {
-                    source: None,
-                    span: method_name.span.clone(),
-                    metadata: Vec::new(),
-                    ty,
-                    kind: method_value,
-                };
+                let method_value =
+                    self.protocol_native_value(method_name, &global, Some(&method.name));
                 effects.push(self.nominal(
                     form,
                     Nominal::NativeSet(kind),

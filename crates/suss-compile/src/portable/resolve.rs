@@ -887,6 +887,34 @@ impl Environment {
         };
         matches!(self.bindings.get(&link), Some(Binding::InternalCell(_))).then_some(link)
     }
+    /// The protocol's own value (`method` None) or a method's original wrapper,
+    /// as defined by its defprotocol. Native extension tables and markers live
+    /// on these values, so rebinding or aliasing the public vars cannot redirect
+    /// another protocol's dispatch (#279). Internal and unresolvable by users.
+    pub(crate) fn protocol_native(&mut self, protocol: &Global, method: Option<&str>) -> Global {
+        let identity = format!(
+            "{}/{}/{}",
+            protocol.namespace,
+            protocol.name,
+            method.unwrap_or("")
+        );
+        let name = identity
+            .as_bytes()
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>();
+        let global = Global {
+            phase: protocol.phase,
+            namespace: "suss.internal.protocol-natives".into(),
+            name: format!("native-{name}"),
+        };
+        if !self.bindings.contains_key(&global) {
+            self.bindings
+                .insert(global.clone(), Binding::InternalCell(global.clone()));
+            self.source_changed();
+        }
+        global
+    }
     pub(crate) fn protocol_key(&mut self, protocol: &Global, method: &str, arity: usize) -> Global {
         let identity = format!(
             "{}/{}/{}/{}",
