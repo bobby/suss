@@ -29304,3 +29304,55 @@ mutable one read inside its own type.
 
 All affected suites pass locally; the CI script checks pass.
 
+
+## #279: remaining circumvention routes to built-in internals (2026-10-28)
+
+PR #283, stacked on #282 (retarget to `main` once #282 merges). The design
+document's 2026-10-25 decision now records all three outcomes.
+
+- Native protocol extension. Each `defprotocol` republishes its protocol value
+  and method wrappers in hidden globals (`resolve.rs` `protocol_native`):
+  `suss.internal.core-protocol-natives` for shipped core, and
+  `suss.internal.protocol-natives` for user definitions.
+  `Environment::core_protocols` records which protocols core currently defines.
+  Native markers, method tables and dispatchers use these cells, so aliasing a
+  core protocol or method var into a user protocol, or redefining a core
+  protocol name in `suss.core`, cannot reach core dispatch. `satisfies?` still
+  reads the public protocol var (Clojure semantics).
+  - Behaviour change: a captured method wrapper keeps dispatching after its var
+    is redefined, as Clojure protocol fns do. Before, it threw, as the pinned
+    ClojureScript did. The `captured-live-method-table` corpus case and two
+    tests in `portable_native_protocols.rs` now assert the Clojure result.
+  - Known divergence: Clojure's `extend` also rebinds the public method vars
+    (`-reset-methods`); Suss leaves a redefined public var alone.
+- Construction. Unprivileged `new` wraps the instance in
+  `Nominal::BuiltinConstructGuard` (`builtin-construct-guard`), which:
+  - rejects core-private descriptors unless they are core-constructible;
+  - rejects a non-nil `__hash` on any core type.
+  - Core's generated `->Type` factories carry the same guard. Core never calls
+    them.
+  - Constructible core types (`CONSTRUCTIBLE_TYPES`, new descriptor bit 59):
+    `MapEntry`, `RecordIter`, `LazySeq`, `StringBufferWriter`,
+    `BootstrapStringBuffer`. Their fields stay private. User code can still
+    pass nonsense to `LazySeq`'s other fields, which only fails dynamically.
+  - Source tags look through the guard, so parse-new's `:tag` is unchanged.
+  - The record macro implementation sources (`portable_macros.rs`) are now
+    evaluated privileged, because they build forms from core's `Cons`. Three
+    provenance scripts were updated to match the new installation text.
+  - Tests that build canonical storage use `eval_probe`
+    (`crates/suss-compile/tests/support/probe_eval.rs`). It evaluates privileged
+    only when a source constructs a type directly, so the user path stays
+    covered.
+- Caller-owned arrays.
+  - `array-map` copies its rest-argument array (patch
+    `syntax-quote-array-map.json`), as Clojure's does through `to-array`.
+  - `vec` of an array, `fromArray` with no-clone and `createAsIfByAssoc` adopt
+    the array, as Clojure's `vec` and `createAsIfByAssoc` do.
+- Review notes:
+  - An independent review found the lost `:tag`, the core-protocol
+    redefinition route and over-broad privileged test evaluation. All are
+    fixed.
+  - Left as is: `named_properties.rs` masks runtime-built identities with
+    `CORE_CLOSED_BIT - 1`, which now includes the constructible bit. The result
+    is still correct because that bit only makes the identity larger, and the
+    file is hash-pinned in `abi-adaptations.json`.

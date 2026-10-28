@@ -16,7 +16,7 @@ const PRIVATE: &str = "Built-in type internals are private to suss.core";
 const HASH: &str = "Built-in hash caches are private to suss.core";
 
 const REJECTED: &[(&str, &str)] = &[
-    ("(PersistentVector. nil 1 5 (.-EMPTY_NODE PersistentVector) (array 1) 42)", PRIVATE),
+    ("(PersistentVector. nil 1 5 nil (array 1) 42)", PRIVATE),
     ("(new suss.core/PersistentVector nil 0 5 nil (array) nil)", PRIVATE),
     ("(let [c PersistentVector] (new c nil 0 5 nil (array) nil))", PRIVATE),
     ("(VectorNode. nil (array))", PRIVATE),
@@ -89,6 +89,11 @@ fn public_constructions_keep_working() {
             observe(&mut session, "[[[:a 1] [:b 2]] [:a 1] [:b 2] false 2]"),
             "{phase}"
         );
+        assert_eq!(
+            observe(&mut session, "(vec (LazySeq. nil (fn [] (list 1 2)) nil nil))"),
+            observe(&mut session, "[1 2]"),
+            "{phase}"
+        );
         // User types still construct, with or without new.
         assert_eq!(
             observe(&mut session, "(do (deftype Mine [x]) [(.-x (Mine. 1)) (.-x (new Mine 2)) (.-x (->Mine 3))])"),
@@ -98,16 +103,12 @@ fn public_constructions_keep_working() {
     }
 }
 
-/// Clojure's `vec` adopts an array (its docstring says the array must not be
-/// modified afterwards), while `array-map` copies its arguments (#279).
+/// `array-map` copies its arguments, as Clojure's does through to-array, so
+/// `(apply array-map (array-seq a))` does not share `a` (#279). `vec` of an
+/// array adopts it, but Clojure leaves modifying it afterwards undefined.
 #[test]
 fn caller_owned_arrays_follow_clojure() {
     for (phase, mut session) in sessions() {
-        assert_eq!(
-            observe(&mut session, "(let [a (array 1 2) v (vec a)] (aset a 0 9) (first v))"),
-            Observation::Number(9.0_f64.to_bits()),
-            "{phase}"
-        );
         assert_eq!(
             observe(&mut session, "(let [a (array :a 1) m (apply array-map (array-seq a))] (aset a 1 2) [(get m :a) (array-map :b 3)])"),
             observe(&mut session, "[1 {:b 3}]"),

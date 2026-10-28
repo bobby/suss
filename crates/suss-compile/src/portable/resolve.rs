@@ -284,6 +284,8 @@ pub struct Environment {
     macro_exports: BTreeSet<(Phase, String, String)>,
     macro_namespaces: BTreeSet<(Phase, String)>,
     pub(crate) protocols: BTreeMap<Global, Vec<ProtocolMethod>>,
+    /// Protocols whose current definition is shipped core's (#279).
+    pub(crate) core_protocols: BTreeSet<Global>,
 }
 /// Namespace of a qualified symbol, as the pinned analyzer's resolve-var and
 /// resolve-macro-var resolve it: `clojure.core` names `cljs.core` (`suss.core`)
@@ -356,6 +358,7 @@ impl Environment {
             macro_exports: BTreeSet::new(),
             macro_namespaces: BTreeSet::new(),
             protocols: BTreeMap::new(),
+            core_protocols: BTreeSet::new(),
         };
         for phase in [Phase::Runtime, Phase::Macro] {
             env.scopes.insert(
@@ -890,8 +893,15 @@ impl Environment {
     /// The protocol's own value (`method` None) or a method's original wrapper,
     /// as defined by its defprotocol. Native extension tables and markers live
     /// on these values, so rebinding or aliasing the public vars cannot redirect
-    /// another protocol's dispatch (#279). Internal and unresolvable by users.
-    pub(crate) fn protocol_native(&mut self, protocol: &Global, method: Option<&str>) -> Global {
+    /// another protocol's dispatch (#279). Shipped core's protocols keep cells
+    /// apart from user definitions reusing their names, so a user defprotocol
+    /// in suss.core cannot replace core's tables. Internal and unresolvable.
+    pub(crate) fn protocol_native(
+        &mut self,
+        protocol: &Global,
+        method: Option<&str>,
+        privileged: bool,
+    ) -> Global {
         let identity = format!(
             "{}/{}/{}",
             protocol.namespace,
@@ -905,7 +915,11 @@ impl Environment {
             .collect::<String>();
         let global = Global {
             phase: protocol.phase,
-            namespace: "suss.internal.protocol-natives".into(),
+            namespace: if privileged {
+                "suss.internal.core-protocol-natives".into()
+            } else {
+                "suss.internal.protocol-natives".into()
+            },
             name: format!("native-{name}"),
         };
         if !self.bindings.contains_key(&global) {

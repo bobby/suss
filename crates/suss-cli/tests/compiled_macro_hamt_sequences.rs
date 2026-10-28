@@ -1,3 +1,6 @@
+#[path = "../../suss-compile/tests/support/probe_eval.rs"]
+mod probe_eval;
+use probe_eval::ProbeEval;
 use suss_cli::{portable_macro_data::FormBridge, portable_session::Session};
 use suss_reader::forms::{Form, Kind};
 
@@ -45,7 +48,7 @@ fn compiled_macro_hamt_sequences_match_exact_pinned_order_in_both_phases_after_g
         let bridge = FormBridge::new(&mut session).unwrap();
         for case in corpus["cases"].as_array().unwrap() {
             let source = case["source"].as_str().unwrap();
-            let value = match session.eval_privileged(source) {
+            let value = match session.eval_probe(source) {
                 Ok(value) => value,
                 Err(error) => {
                     failures.push(format!("{phase} {} execution: {error:?}", case["id"]));

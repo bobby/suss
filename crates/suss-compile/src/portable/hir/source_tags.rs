@@ -749,6 +749,14 @@ pub(super) fn source_tags_metered(
     meter: &mut WorkMeter<'_>,
 ) -> Result<SourceTags, Diagnostic> {
     charge(meter, 1, &form.span)?;
+    // A user `new` keeps parse-new's tag through its built-in guard (#279).
+    let hir = match &hir.kind {
+        Expression::Nominal {
+            operation: Nominal::BuiltinConstructGuard,
+            arguments,
+        } => &arguments[0],
+        _ => hir,
+    };
     let quoted_const_tag = if let Kind::List(items) = &form.kind
         && items.len() == 2
         && matches!(&items[0].kind, Kind::Symbol(head)

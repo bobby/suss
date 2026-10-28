@@ -85,3 +85,21 @@ fn native_extensions_follow_protocol_redefinition() {
         assert_eq!(observe(&mut session, "(-again \"s\")"), Observation::Number(2.0_f64.to_bits()), "{phase}");
     }
 }
+
+/// A user defprotocol reusing a core protocol's name gets its own native
+/// tables; shipped core keeps dispatching through its own (#279).
+#[test]
+fn user_redefinition_of_a_core_protocol_does_not_replace_core_tables() {
+    for (phase, mut session) in sessions() {
+        session.eval("(def f (fn []))").unwrap();
+        let before = observe(&mut session, "[(hash f) (= f f) (count nil)]");
+        session.enter_namespace("suss.core").unwrap();
+        session.eval("(defprotocol IHash (-hash [o]))").unwrap();
+        session.eval("(extend-type default IHash (-hash [_] 91))").unwrap();
+        session.enter_namespace("user").unwrap();
+        // The user definition dispatches through its own tables.
+        assert_eq!(observe(&mut session, "(suss.core/-hash f)"), Observation::Number(91.0_f64.to_bits()), "{phase}");
+        // Core's hash still uses core's default IHash implementation.
+        assert_eq!(observe(&mut session, "[(hash f) (= f f) (count nil)]"), before, "{phase}");
+    }
+}

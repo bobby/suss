@@ -132,7 +132,7 @@ impl Analyzer<'_> {
         method: Option<&str>,
         value: Hir,
     ) -> Hir {
-        let global = self.environment.protocol_native(protocol, method);
+        let global = self.environment.protocol_native(protocol, method, self.privileged);
         Hir {
             source: None,
             span: form.span.clone(),
@@ -149,8 +149,11 @@ impl Analyzer<'_> {
             },
         }
     }
+    /// The native cell of the protocol's current definition: core's own for a
+    /// protocol shipped core defined, otherwise the user definition's.
     fn protocol_native_value(&mut self, form: &Form, protocol: &Global, method: Option<&str>) -> Hir {
-        let global = self.environment.protocol_native(protocol, method);
+        let privileged = self.environment.core_protocols.contains(protocol);
+        let global = self.environment.protocol_native(protocol, method, privileged);
         Hir {
             source: None,
             span: form.span.clone(),
@@ -1232,7 +1235,8 @@ impl Analyzer<'_> {
                     metadata: Vec::new(),
                     ty: Type::Value,
                     kind: Expression::GlobalCell(
-                        self.environment.protocol_native(protocol, Some(&symbol.name)),
+                        self.environment
+                            .protocol_native(protocol, Some(&symbol.name), self.privileged),
                     ),
                 };
                 // IFn's emitted JS methods omit the physical receiver formal.
@@ -1323,6 +1327,11 @@ impl Analyzer<'_> {
             ));
         }
         self.environment.protocols.insert(protocol.clone(), methods);
+        if self.privileged {
+            self.environment.core_protocols.insert(protocol.clone());
+        } else {
+            self.environment.core_protocols.remove(protocol);
+        }
         let bundle = self.nominal(
             form,
             Nominal::Array,

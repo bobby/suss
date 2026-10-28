@@ -1,3 +1,6 @@
+#[path = "../../suss-compile/tests/support/probe_eval.rs"]
+mod probe_eval;
+use probe_eval::ProbeEval;
 use suss_cli::portable_session::Session;
 
 #[test]
@@ -94,7 +97,7 @@ fn compiled_macro_transient_hash_map_lookup_matches_pinned_active_observations()
         session.set_operation_fuel(100_000_000);
         let bridge = suss_cli::portable_macro_data::FormBridge::new(&mut session).unwrap();
         for case in corpus["cases"].as_array().unwrap() {
-            let value = session.eval_privileged(case["source"].as_str().unwrap()).unwrap();
+            let value = session.eval_probe(case["source"].as_str().unwrap()).unwrap();
             session.collect().unwrap();
             let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
             let actual = match decoded.into_parts().2 {
