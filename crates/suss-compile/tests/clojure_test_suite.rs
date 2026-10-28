@@ -796,7 +796,7 @@ fn pinned_map_declaration_executes_without_transport_loss() {
     assert_eq!(pinned["suite"], SUITE_COMMIT);
     let expected_ids: Vec<_> = pinned["assertions"].as_array().unwrap().iter()
         .filter(|entry| entry["test"] == test_name)
-        .map(|entry| (entry["test"].clone(), entry["ordinal"].clone()))
+        .map(|entry| (entry["test"].clone(), entry["ordinal"].clone(), entry["verdict"].clone()))
         .collect();
     assert!(!expected_ids.is_empty(), "pinned test-map assertion catalog is missing");
     let original = repository.join("vendor/clojure-test-suite/upstream/test/clojure/core_test/map.cljc");
@@ -816,10 +816,10 @@ fn pinned_map_declaration_executes_without_transport_loss() {
         "the original test-map must not stop at a test-level failure: {observations}");
     let actual_ids: Vec<_> = observations["assertions"].as_array().unwrap().iter()
         .filter(|entry| entry["test"] == test_name)
-        .map(|entry| (entry["test"].clone(), entry["ordinal"].clone()))
+        .map(|entry| (entry["test"].clone(), entry["ordinal"].clone(), entry["verdict"].clone()))
         .collect();
     assert_eq!(actual_ids, expected_ids,
-        "the complete pinned test-map assertion sequence must execute: {observations}");
+        "the complete pinned test-map assertion sequence must execute with its pinned verdicts: {observations}");
     assert!(observations["skips"].as_array().unwrap().is_empty(),
         "transport acceptance must not skip source: {observations}");
 }
