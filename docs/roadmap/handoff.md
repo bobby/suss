@@ -29293,6 +29293,8 @@ Clojure forbids and #278 now enforces. Fixed as follows:
 - `named_access_uses_canonical_storage_...` now asserts that assigning the
   immutable `null$` field fails and the method still reads 7.
 - `portable_quoted_identifiers` expected the five-field descriptor.
+- `compile_expr` `test_debug_set_mutable` (the #277 Atom rewrite) now writes
+  and reads its `^:mutable` field through the type's own methods.
 
 A second independent review found nothing blocking. Its should-fix items are
 applied: the narrower privilege scope above, the item-3 regression now asserts

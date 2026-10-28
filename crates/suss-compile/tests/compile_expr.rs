@@ -2141,9 +2141,10 @@ fn test_debug_lazy_seq_simple() {
 
 #[test]
 fn test_debug_set_mutable() {
-    // Mutable field set! on a user type; built-in fields such as Atom state are
+    // Mutable field set! on a user type, from its own methods: mutable fields are
+    // private to their type (#278), and built-in fields such as Atom state are
     // private to suss.core (design decision 2026-10-25).
-    let result = run_expr_i32("(do (deftype DebugMutableBox [^:mutable state]) (let [a (DebugMutableBox. 10)] (set! (.-state a) 20) (.-state a)))");
+    let result = run_expr_i32("(do (deftype DebugMutableBox [^:mutable state] Object (write [this v] (set! (.-state this) v)) (read [this] (.-state this))) (let [a (DebugMutableBox. 10)] (.write a 20) (.read a)))");
     assert_eq!(result, 20);
 }
 
