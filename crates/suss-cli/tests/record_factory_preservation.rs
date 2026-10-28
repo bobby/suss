@@ -135,10 +135,10 @@ fn old_and_candidate_factory_forms_match_with_recursive_metadata() {
     let old_bridge = FormBridge::new(&mut old_session).expect("old bridge");
     let new_bridge = FormBridge::new(&mut new_session).expect("new bridge");
     old_session
-        .eval(&old_source)
+        .eval_privileged(&old_source)
         .expect("load old factory source");
     new_session
-        .eval(&new_source)
+        .eval_privileged(&new_source)
         .expect("load candidate factory source");
     old_session
         .enter_namespace("suss.internal.record-factories")

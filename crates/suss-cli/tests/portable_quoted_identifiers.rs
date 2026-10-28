@@ -1,3 +1,6 @@
+#[path = "../../suss-compile/tests/support/probe_eval.rs"]
+mod probe_eval;
+use probe_eval::ProbeEval;
 use suss_cli::portable_session::{Session, SessionValue};
 
 fn units(session: &mut Session, value: &SessionValue) -> Vec<u16> {
@@ -192,7 +195,7 @@ fn compiled_macro_prerequisite_quotes_match_lossless_primary_observations() {
         assert!(ids.insert(case["id"].as_str().unwrap()));
         let source = case["source"].as_str().unwrap();
         let value = session
-            .eval(source)
+            .eval_probe(source)
             .unwrap_or_else(|error| panic!("{source}: {error}"));
         session.collect().unwrap();
         let actual = session

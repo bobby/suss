@@ -284,17 +284,19 @@ impl CompiledMacros {
         macros.define(crate::portable_defn::SOURCE)?;
         macros.define(crate::portable_when_let::SOURCE)?;
         macros.define(crate::portable_lazy_seq::SOURCE)?;
+        // Shipped record macro implementations build forms from core's Cons
+        // directly, so they are evaluated as core (#279).
         macros
             .session
-            .eval(crate::portable_record_factories::SOURCE)?;
-        macros.session.eval(crate::portable_record_label::SOURCE)?;
+            .eval_privileged(crate::portable_record_factories::SOURCE)?;
+        macros.session.eval_privileged(crate::portable_record_label::SOURCE)?;
         macros
             .session
-            .eval(crate::portable_record_protocol_facts::SOURCE)?;
+            .eval_privileged(crate::portable_record_protocol_facts::SOURCE)?;
         macros
             .session
-            .eval(crate::portable_record_emitter::SOURCE)?;
-        macros.session.eval(crate::portable_record_public::SOURCE)?;
+            .eval_privileged(crate::portable_record_emitter::SOURCE)?;
+        macros.session.eval_privileged(crate::portable_record_public::SOURCE)?;
         macros.enter_namespace("suss.core")?;
         macros.define(crate::portable_record_public::MACRO_SOURCE)?;
         macros.enter_namespace("user")?;

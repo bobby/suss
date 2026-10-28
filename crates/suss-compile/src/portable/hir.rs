@@ -329,11 +329,17 @@ pub enum Nominal {
     CoreStaticsDescriptor,
     /// A core type with public fields that is still closed to extension.
     CoreClosedDescriptor,
+    /// A core type with private internals whose constructor user code may call
+    /// (MapEntry, LazySeq, ...), as in Clojure; hash caches stay unforgeable.
+    CoreConstructibleDescriptor,
     CoreNamedGet,
     CoreNamedSet,
     /// Rejects a built-in core class before user code extends a core protocol
     /// or Object methods onto it, whatever form produced the class value.
     BuiltinClassGuard,
+    /// Instance -> instance after unprivileged construction: rejects core types
+    /// with private internals and forged hash caches of public-field core types.
+    BuiltinConstructGuard,
     NativeObjectFactory,
     IsNativeObject,
     IsTypeConstructor,
@@ -408,7 +414,7 @@ impl Nominal {
                 Self::IFnLiveDispatcher => count == 3,
                 Self::NativeMarker(_) => count == 1,
                 Self::Descriptor(mutable) => mutable <= count && arguments.iter().all(|ty| *ty == Type::String),
-                Self::CoreDescriptor | Self::CoreStaticsDescriptor | Self::CoreClosedDescriptor => arguments.iter().all(|ty| *ty == Type::String),
+                Self::CoreDescriptor | Self::CoreStaticsDescriptor | Self::CoreClosedDescriptor | Self::CoreConstructibleDescriptor => arguments.iter().all(|ty| *ty == Type::String),
                 Self::Construct => count >= 1,
                 Self::Instance | Self::SameNominalType | Self::Satisfies | Self::NativeSatisfies | Self::Marker => {
                     count == 2
@@ -416,7 +422,7 @@ impl Nominal {
                 Self::Set => count == 3,
                 Self::Field(index) | Self::Key(index) => count == 1 && index <= i32::MAX as usize,
                 Self::FieldSet(index) => count == 2 && index <= i32::MAX as usize,
-                Self::Class | Self::Protocol | Self::Dispatcher | Self::BuiltinClassGuard => count == 1,
+                Self::Class | Self::Protocol | Self::Dispatcher | Self::BuiltinClassGuard | Self::BuiltinConstructGuard => count == 1,
             }
     }
 }
@@ -2508,7 +2514,11 @@ impl Analyzer<'_> {
                     class: std::sync::Arc::new(arguments[0].clone()),
                     arguments: arguments[1..].to_vec().into(),
                 }));
-            return Ok(self.nominal(form, Nominal::Construct, arguments));
+            let construction = self.nominal(form, Nominal::Construct, arguments);
+            if self.privileged {
+                return Ok(construction);
+            }
+            return Ok(self.nominal(form, Nominal::BuiltinConstructGuard, vec![construction]));
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") && symbol.name == "quote-form" {
             if args.len() != 1 {

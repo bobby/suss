@@ -41,7 +41,7 @@ fn compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc() {
         "(new suss.core/IndexedSeq (array 'ignored '+ 20 22) 1 nil)",
         "(cons '+ (next (seq (array 0 20 22))))",
     ] {
-        let value = macros.eval(source).unwrap();
+        let value = macros.eval_privileged(source).unwrap();
         macros.collect().unwrap();
         let form = bridge.read(&mut macros, &value, 101..110).unwrap();
         assert_eq!(form.span, 101..110);
@@ -65,7 +65,7 @@ fn compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc() {
         .collect::<Vec<_>>();
     assert_eq!(actual, vec![vec![0x61], vec![0xd83d], vec![0xde00]]);
     let value = macros
-        .eval("(new suss.core/IndexedSeq (array) 0 nil)")
+        .eval_privileged("(new suss.core/IndexedSeq (array) 0 nil)")
         .unwrap();
     assert!(
         matches!(&bridge.read(&mut macros, &value, 0..1).unwrap().kind, Kind::List(items) if items.is_empty())
@@ -74,7 +74,7 @@ fn compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc() {
     macros.eval("(ns suss.core) (def IndexedSeq nil)").unwrap();
     macros.enter_namespace("user").unwrap();
     macros.collect().unwrap();
-    let value = macros.eval("(new saved-seq (array 42) 0 nil)").unwrap();
+    let value = macros.eval_privileged("(new saved-seq (array 42) 0 nil)").unwrap();
     assert!(
         matches!(&bridge.read(&mut macros, &value, 0..1).unwrap().kind, Kind::List(items) if items.len()==1)
     );
@@ -93,7 +93,7 @@ fn compiled_macro_indexed_data_rejects_bad_storage_indices_metadata_and_cycles()
         "(new suss.core/IndexedSeq (array 1) 0 42)",
         "(let [a (array nil)] (let [s (new suss.core/IndexedSeq a 0 nil)] (aset a 0 s) s))",
     ] {
-        let value = macros.eval(source).unwrap();
+        let value = macros.eval_privileged(source).unwrap();
         let Err(SessionError::Compile(error)) = bridge.read(&mut macros, &value, 91..99) else {
             panic!("Reject {source}")
         };
@@ -126,7 +126,7 @@ fn compiled_macro_indexed_data_finite_sizes_use_fuel_instead_of_element_limits()
     let mut large = None;
     for length in [4094, 4095, 4096, 8192] {
         let value = macros
-            .eval(&format!("(new suss.core/IndexedSeq (make-array {length}) 0 nil)"))
+            .eval_privileged(&format!("(new suss.core/IndexedSeq (make-array {length}) 0 nil)"))
             .unwrap();
         macros.collect().unwrap();
         let form = bridge.read(&mut macros, &value, 91..99).unwrap();
@@ -145,7 +145,7 @@ fn compiled_macro_indexed_data_finite_sizes_use_fuel_instead_of_element_limits()
     assert_eq!(macros.options().fuel_per_operation, 10_000_000);
     // Construct both roots before reducing fuel: this tests decoding alone.
     let small = macros
-        .eval("(new suss.core/IndexedSeq (array nil) 0 nil)")
+        .eval_privileged("(new suss.core/IndexedSeq (array nil) 0 nil)")
         .unwrap();
     macros.collect().unwrap();
     macros.set_operation_fuel(1_000);

@@ -133,14 +133,15 @@ fn missing_native_method_preserves_argument_effects_and_language_recovery() {
     assert_eq!(eval_number(&mut session, "(read 3 4)"), 7.0f64.to_bits());
 }
 
+/// Native tables belong to the method wrapper its defprotocol created, not to
+/// the public var's current value (#279). As with Clojure protocol fns, which
+/// dispatch through their protocol, a captured method keeps dispatching after
+/// the var is redefined; the pinned ClojureScript observation errored instead.
 #[test]
 fn captured_native_dispatcher_reads_current_method_table_after_replacement() {
     let mut session = Session::new().unwrap();
     session.eval("(defprotocol P (read [x])) (extend-type number P (read [x] 1)) (def old read) (def read (fn [x] 9))").unwrap();
-    assert!(matches!(
-        session.eval("(old 7)"),
-        Err(SessionError::Language(_))
-    ));
+    assert_eq!(eval_number(&mut session, "(old 7)"), 1.0f64.to_bits());
     assert_eq!(eval_number(&mut session, "(read 7)"), 9.0f64.to_bits());
     session
         .eval("(defprotocol P (read [x])) (extend-type number P (read [x] 2))")
@@ -184,6 +185,12 @@ fn native_protocols_match_independently_encoded_primary_corpus() {
     for case in corpus["cases"].as_array().unwrap() {
         assert!(ids.insert(case["id"].as_str().unwrap()));
         let source = case["source"].as_str().unwrap();
+        if case["id"] == "captured-live-method-table" {
+            // The pinned ClojureScript dispatcher read the redefined public
+            // var and threw; Suss keeps the protocol's own table (#279).
+            assert_eq!(eval_number(&mut session, source), 1.0f64.to_bits());
+            continue;
+        }
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "bool" => serde_json::json!({"tag":"bool", "value":eval_bool(&mut session, source)}),
             "f64" => {
@@ -271,10 +278,8 @@ fn qualified_native_extension_updates_captured_dispatcher_across_namespaces_and_
     session.enter_namespace("protocol.owner").unwrap();
     session.eval("(def read (fn [x] 9))").unwrap();
     session.enter_namespace("protocol.client").unwrap();
-    assert!(matches!(
-        session.eval("(captured 7)"),
-        Err(SessionError::Language(_))
-    ));
+    // The captured wrapper keeps the protocol's own table (#279).
+    assert_eq!(eval_number(&mut session, "(captured 7)"), 2.0f64.to_bits());
     session
         .eval("(extend-type number protocol.owner/P (read [x] 3))")
         .unwrap();

@@ -2,7 +2,7 @@
 #![cfg(not(target_family = "wasm"))]
 #[path = "support/portable_decode.rs"]
 mod portable_decode;
-use portable_decode::{Decoder, Observation};
+use portable_decode::{Decoder, Observation, ProbeEval};
 use suss_compile::portable_session::Session;
 use suss_reader::forms::{Form, Kind, read_forms};
 
@@ -38,7 +38,7 @@ fn check(session: &mut Session, decoder: &mut Decoder, source: &str, expectation
     assert_eq!(forms.len(), 1);
     let expectation = expected(&forms[0]);
     let value = session
-        .eval(source)
+        .eval_probe(source)
         .unwrap_or_else(|e| panic!("{source}: {e}"));
     session.collect().unwrap();
     let actual = decoder.decode_session(session, &value).unwrap();
@@ -238,7 +238,7 @@ fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases() 
         let mut decoder = Decoder::capture(&mut session, 100_000).unwrap();
         for case in cases {
             let value = session
-                .eval(case["source"].as_str().unwrap())
+                .eval_probe(case["source"].as_str().unwrap())
                 .unwrap_or_else(|e| panic!("phase={macro_phase} {}: {e}", case["id"]));
             session.collect().unwrap();
             let actual = decoder.decode_session(&mut session, &value).unwrap();

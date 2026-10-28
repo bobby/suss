@@ -65,7 +65,7 @@ class RecordLabelProvenance(unittest.TestCase):
             verify_label_adaptations(data, source_bytes=mutated)
 
     def test_bootstrap_and_cache_identity_required(self):
-        for old in ['macros.session.eval(crate::portable_record_label::SOURCE)?;',
+        for old in ['macros.session.eval_privileged(crate::portable_record_label::SOURCE)?;',
                     'dependencies.push(("record-label-source".into(), crate::portable::bootstrap::sha256(crate::portable_record_label::SOURCE.as_bytes())));']:
             with self.subTest(old=old):
                 old = re.sub(r'\s+', '', old)

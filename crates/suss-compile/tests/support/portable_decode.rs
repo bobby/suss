@@ -3,6 +3,11 @@
 use suss_compile::portable_session::{Session, SessionError, SessionValue};
 use wasmtime::{AnyRef, OwnedRooted, Rooted, StorageType, StoreContextMut, Val};
 
+#[path = "probe_eval.rs"]
+mod probe_eval;
+#[allow(unused_imports)]
+pub use probe_eval::ProbeEval;
+
 #[derive(Debug, PartialEq)]
 pub enum Observation {
     Nil,
@@ -209,7 +214,7 @@ impl Decoder {
         source: &str,
         class: Class,
     ) -> Result<(), SessionError> {
-        let anchor = session.eval(source)?;
+        let anchor = session.eval_probe(source)?;
         let (descriptor, owner_type) = session.inspect(&anchor, |mut store, value| {
             let owner_type = non_null_ref(&value)?
                 .as_struct(&store)?
@@ -1563,7 +1568,7 @@ mod adversarial_owner {
         let mut session = Session::new_repl().unwrap();
         let mut decoder = Decoder::capture(&mut session, 4096).unwrap();
         let anchor = session
-            .eval("(new suss.core/IndexedSeq \"A\" 0 nil)")
+            .eval_probe("(new suss.core/IndexedSeq \"A\" 0 nil)")
             .unwrap();
         session
             .inspect(&anchor, |mut store, canonical| {

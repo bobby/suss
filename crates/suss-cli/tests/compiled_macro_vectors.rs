@@ -143,7 +143,7 @@ fn compiled_macro_vectors_quote_nested_data_and_reject_malformed_storage() {
         "(PersistentVector. nil 0 5 (VectorNode. nil (make-array 31)) (array) nil)",
         "(deftype ForeignVector [meta cnt shift root tail hash]) (ForeignVector. nil 0 5 nil (array) nil)",
     ] {
-        let value = session.eval(source).unwrap();
+        let value = session.eval_privileged(source).unwrap();
         assert!(
             bridge.read(&mut session, &value, 200..210).is_err(),
             "{source}"

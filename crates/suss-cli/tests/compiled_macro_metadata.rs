@@ -202,7 +202,7 @@ fn compiled_macro_metadata_transports_real_vector_chunk_sequences_across_trie_bo
             "(suss.core/ChunkedSeq. (js-obj) (array 1) 0 0 nil nil)",
             "(suss.core/ChunkedSeq. (suss.core/PersistentVector. nil 1 5 nil (array 1) nil) (array 1) 0 0 nil nil)",
         ] {
-            let value = session.eval(source).unwrap();
+            let value = session.eval_privileged(source).unwrap();
             assert!(
                 bridge.read(&mut session, &value, 710..720).is_err(),
                 "{source}"

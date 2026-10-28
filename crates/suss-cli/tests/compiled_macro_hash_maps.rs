@@ -235,7 +235,7 @@ fn compiled_macro_hash_maps_validate_counts_flags_nodes_and_cycles() {
             "(let [a (array nil nil) node (BitmapIndexedNode. nil 1 a)] (aset a 1 node) (PersistentHashMap. nil 1 node false nil nil))",
             "(let [a (array nil nil) node (BitmapIndexedNode. nil 1 a)] (aset a 1 node) node)",
         ] {
-            let value = session.eval(source).unwrap();
+            let value = session.eval_privileged(source).unwrap();
             session.collect().unwrap();
             let error = bridge.read(&mut session, &value, 70..80).unwrap_err();
             assert!(
@@ -245,7 +245,7 @@ fn compiled_macro_hash_maps_validate_counts_flags_nodes_and_cycles() {
         }
         // Bit 31 is a signed JS bitmap. Nil is stored outside the trie and
         // precedes entries in the actual pinned hash-map sequence.
-        let value = session.eval("(PersistentHashMap. nil 2 (BitmapIndexedNode. nil -2147483648 (array 7 8)) true 9 nil)").unwrap();
+        let value = session.eval_privileged("(PersistentHashMap. nil 2 (BitmapIndexedNode. nil -2147483648 (array 7 8)) true 9 nil)").unwrap();
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &value, 70..80).unwrap();
         let Kind::Map(entries) = decoded.into_parts().2 else {

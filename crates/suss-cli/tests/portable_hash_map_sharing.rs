@@ -16,7 +16,7 @@ struct Canonical {
 }
 
 fn canonical(session: &mut Session, source: &str, fields: &'static [&'static str]) -> Canonical {
-    let anchor = session.eval(source).unwrap_or_else(|e| panic!("{source}: {e:?}"));
+    let anchor = session.eval_privileged(source).unwrap_or_else(|e| panic!("{source}: {e:?}"));
     let (descriptor, ty) = session
         .inspect(&anchor, |mut store, value| {
             let owner = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();

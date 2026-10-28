@@ -78,10 +78,18 @@ fn constructor_source_children_share_once_analyzed_callee_and_arguments() {
         else {
             panic!("genuine constructor source record required")
         };
+        // User constructions are wrapped in the built-in construction guard (#279).
+        let hir::Expression::Nominal {
+            operation: hir::Nominal::BuiltinConstructGuard,
+            arguments: guarded,
+        } = &init.kind
+        else {
+            panic!("user construction must be guarded")
+        };
         let hir::Expression::Nominal {
             operation: hir::Nominal::Construct,
             arguments: lowered,
-        } = &init.kind
+        } = &guarded[0].kind
         else {
             panic!("existing nominal lowering must remain intact")
         };
