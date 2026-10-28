@@ -148,7 +148,7 @@ fn future_storage_has_nominal_identity_and_distinct_terminal_states() {
     let fields = h.fields(&pending);
     assert_eq!(fields.len(), 4, "existing ABI2 object shape");
     let descriptor_fields = h.fields(&fields[0]);
-    assert_eq!(descriptor_fields.len(), 5, "existing ABI2 descriptor shape");
+    assert_eq!(descriptor_fields.len(), 6, "existing ABI2 descriptor shape");
     let schema = descriptor_fields[1]
         .unwrap_anyref()
         .unwrap()
@@ -349,7 +349,8 @@ fn ordinary_copied_and_foreign_descriptors_are_not_futures_after_gc() {
     fields[0] = h.forge(&descriptor, &descriptor_fields);
     let copied = h.forge(&exemplar, &fields);
     let schema = h.value("args-new", &[Val::I32(1)]);
-    let ordinary_descriptor = h.value("descriptor-new", &[schema]);
+    let no_mutable = h.value("nil", &[]);
+    let ordinary_descriptor = h.value("descriptor-new", &[schema, no_mutable]);
     fields[0] = ordinary_descriptor;
     let ordinary = h.forge(&exemplar, &fields);
     let module = Module::new(h.store.engine(), runtime_abi::module()).unwrap();

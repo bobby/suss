@@ -51,11 +51,16 @@ const IDS: &[&str] = &[
     "keyword-namespace-tie-conversion-before-name",
     "ci-immutable-macro-paths",
 ];
+/// Pinned ClojureScript observations that rebinding a core var changes core's
+/// own behaviour. Shipped core is direct-linked, as Clojure core is since 1.8,
+/// so Suss does not execute these; the reference corpus keeps them (#278).
+const LIVE_CORE_REBINDING: &[&str] = &["ci-live-reduced-predicate", "ci-live-deref"];
 fn setup(phase: Phase) -> Session {
     let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
     session.set_operation_fuel(100_000_000);
+    // Ported core reads other types' private fields, so it runs as core (#278).
     session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session
@@ -101,9 +106,13 @@ fn complete_sorted_prerequisites_match_ordered_pinned_value_and_effect_cases_aft
             serde_json::json!({"tag":"bool","value":true})
         );
     }
+    assert!(LIVE_CORE_REBINDING.iter().all(|id| IDS.contains(id)));
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = setup(phase);
         for case in cases {
+            if LIVE_CORE_REBINDING.contains(&case["id"].as_str().unwrap()) {
+                continue;
+            }
             let source = case["source"].as_str().unwrap();
             let value = session
                 .eval(source)

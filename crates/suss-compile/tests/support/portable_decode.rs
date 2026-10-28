@@ -217,7 +217,7 @@ impl Decoder {
                 .ty(&store)?;
             let object = fields(&mut store, &value, 4)?;
             let descriptor = &object[0];
-            let storage = fields(&mut store, descriptor, 5)?;
+            let storage = fields(&mut store, descriptor, 6)?;
             if !matches!(storage[0], Val::I64(_)) {
                 return Err(wasmtime::Error::msg(
                     "Invalid canonical descriptor identity",

@@ -299,11 +299,11 @@
       }
     },
     {
-      "id": "iterator-position-field",
-      "source": "(let [it (-iterator (seq (array 1 2)))] (.next it) (.-i it))",
+      "id": "iterator-second-next",
+      "source": "(let [it (-iterator (seq (array 1 2)))] (.next it) (.next it))",
       "expected": {
         "tag": "f64",
-        "bits": "3ff0000000000000"
+        "bits": "4000000000000000"
       }
     },
     {
@@ -427,11 +427,11 @@
       }
     },
     {
-      "id": "iterator-exhaustion-advances-offset",
-      "source": "(let [it (IndexedSeqIterator. (array 1) 0)] (.next it) (.next it) (.-i it))",
+      "id": "iterator-has-next-after-last",
+      "source": "(let [it (IndexedSeqIterator. (array 1) 0)] (.next it) (.hasNext it))",
       "expected": {
-        "tag": "f64",
-        "bits": "4000000000000000"
+        "tag": "bool",
+        "value": false
       }
     },
     {

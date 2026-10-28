@@ -598,7 +598,7 @@ pub(super) fn append_globals(
                 RefI31,
                 I32Const(0),
                 RefI31,
-                StructNew(DESCRIPTOR),
+                I32Const(0), RefI31, StructNew(DESCRIPTOR),
             ]),
         );
     }

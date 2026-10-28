@@ -299,7 +299,7 @@ impl FormBridge {
                 if storage.len() != 3 {
                     return Err(error("Invalid class property owner"));
                 }
-                let descriptor = fields(&mut store, &storage[0], 5)?;
+                let descriptor = fields(&mut store, &storage[0], 6)?;
                 match descriptor[0] {
                     Val::I64(id) => Ok(id),
                     _ => Err(error("Invalid class descriptor identity")),
@@ -319,7 +319,7 @@ impl FormBridge {
         let value = session.eval("(suss.core/array)")?;
         let id = session.inspect(&value, |mut store, value| {
             let owner = fields(&mut store, &value, 4)?;
-            let descriptor = fields(&mut store, &owner[0], 5)?;
+            let descriptor = fields(&mut store, &owner[0], 6)?;
             match descriptor[0] {
                 Val::I64(id) => Ok(id),
                 _ => Err(error("Invalid source array descriptor identity")),
@@ -504,7 +504,7 @@ impl FormBridge {
             if storage.len() != 4 {
                 return Ok(None);
             }
-            let descriptor = fields(&mut store, &storage[0], 5)?;
+            let descriptor = fields(&mut store, &storage[0], 6)?;
             let Val::I64(id) = descriptor[0] else {
                 return Ok(None);
             };
@@ -1160,7 +1160,7 @@ fn object(
     classes: &BTreeMap<i64, (Class, SessionValue)>,
 ) -> wasmtime::Result<(Class, Vec<Val>)> {
     let storage = fields(store, value, 4)?;
-    let descriptor = fields(store, &storage[0], 5)?;
+    let descriptor = fields(store, &storage[0], 6)?;
     let Val::I64(id) = descriptor[0] else {
         return Err(error("Invalid nominal descriptor identity"));
     };

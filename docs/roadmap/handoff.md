@@ -29194,3 +29194,113 @@ Full baseline at 582f8d2 (`cargo test --workspace --locked --no-fail-fast --
 `native_repl_async_pty` (child REPL exited mid-session after 23.9s under
 load), passed 3/3 when rerun alone (38.2s, 47.0s, 34.6s); no other test
 failed.
+
+## #278: deftype field mutability and type-private mutable fields (2026-10-27)
+
+Descriptors gain a sixth field, the munged names of their `^:mutable` fields
+(i31 0 when none; core and built-in descriptors always i31 0).
+`descriptor-new` takes the schema and that table. Unprivileged named field
+access (`.-x`, `(set! (.-x o) v)`, `.x`) passes the enclosing type's class
+value, or nil outside a type body, to `user-field-get-guard` /
+`user-field-set-guard`:
+
+- writes to a schema field that is not mutable raise "Cannot assign an
+  immutable field", inside the type body too;
+- named reads and writes of a mutable field raise "Mutable fields are private
+  to their type" unless the caller is the receiver's own class (inline method
+  bodies of that `deftype`/`defrecord`, including closures created in them).
+  `extend-type`/`extend-protocol` outside the definition do not qualify;
+- immutable fields, record keyword access, `assoc` and `hash` are unchanged.
+
+Unprivileged callable-property reads (`.-call`, `.-apply`, `.call`, `.apply`
+and IFn arity names) carry the caller too and run the same two guards before
+`callable-property-get`. An `extend-type` of the type inside its own intrinsic
+body extends the class being defined (its binding), not the value its global
+names when the body runs, so rebinding the name cannot hand another type's
+fields to the inline methods (independent review). Privileged `suss.core` analysis keeps the unguarded core operations. Probed
+and pinned as regressions: `unchecked-get`, `unchecked-set`, `aget` and
+`aset` already reject user objects, so no dynamic route reaches the fields.
+
+Host readers and tests that assumed a five-field descriptor now expect six
+(`portable_macro_data.rs`, the decoder, descriptor-shape assertions, and the
+`runtime_abi`/`runtime_async_future` callers of `descriptor-new`, which now pass
+the mutable-names operand). A
+record's `__hash` cache is mutable and therefore private:
+`compiled_public_records` now asserts the privacy error for
+`(.-__hash copied)`, and `compiled_record_factories` no longer reads it from
+outside (`compiled_record_type_boundary` still reads and writes it from a
+method). The named-property ABI file hash in
+`docs/compatibility/record-macro-foundations/abi-adaptations.json` is refreshed;
+its pinned guard region is unchanged. Bootstrap regenerated; the CI script
+checks and `scripts/verify-bootstrap.sh` pass.
+
+```sh
+cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+cargo test --locked -p suss-cli --test user_type_field_privacy --test builtin_internals_sealed -- --test-threads=2
+cargo test --locked -p suss-cli --test compiled_public_records --test compiled_record_factories --test compiled_record_type_boundary -- --test-threads=2
+scripts/verify-bootstrap.sh
+```
+
+Limitation: the privacy error names neither the field nor the type.
+
+### #278 CI: tests that touched fields from outside their type (2026-10-27)
+
+Final-head CI at 7a4e1a7 failed in seven shards. Every failure was a test or
+fixture reading or assigning a deftype field from outside the type, which
+Clojure forbids and #278 now enforces. Fixed as follows:
+
+- Ported core evaluated as user code: ClojureScript core reads and writes
+  other types' mutable fields from free functions (Box `val`, Atom `state`,
+  transient node `arr`/`cnt`/`bitmap`, ...), so `core.sus` runs only as core.
+  `portable_comparators`, `portable_sorted_tree_collections`,
+  `portable_named_properties`, `portable_sorted_comparator_prerequisites` and
+  `compiled_macro_self_local_methods` load it (and only it) with
+  `eval_privileged`; probes and cases stay user code. In
+  `portable_sorted_tree_nodes`, core, the node probe (it reads `BlackNode`
+  fields) and the four core-internal structural tests (they call core-private
+  `balance-left`/`tree-map-kv-reduce` and read node `__hash`) run privileged;
+  the user probe-type tests (`TreeMethodProbe`, `this-as`,
+  `direct-protocol-call` on `TreeIndexedProbe`) stay user code.
+- Privileged `suss.core` is direct-linked, so 40 pinned cases that observe a
+  rebound core var inside core are ClojureScript-only (8 comparator, 11 sorted
+  tree, 10 tree node, 9 raw tree node, 2 sorted prerequisite: `array?`,
+  `type`, `compare`, `=`, `nth`, `str_`, `compare-indexed`,
+  `hash-unordered-coll`, `hash-ordered-coll`, `contains?`, `>`, `-comparator`,
+  `reduced?`, `deref`). The user chose to drop them. They stay in the
+  reference corpora, whose ClojureScript evidence receipts pin those files,
+  and each Rust test skips a closed, membership-checked `LIVE_CORE_REBINDING`
+  list. Cases asserting that a rebinding is ignored (`*-ignores-public-rebind`,
+  `*-no-public-comparator`, `ci-immutable-macro-paths`,
+  `public-primitive-predicate-rebind`, `str-nil-single-variadic-rebind`) still
+  run, as they hold under direct linking. Running a rebinding case privileged
+  would instead pass through core's internal link write (independent review).
+- Fixture cases rewritten through methods with unchanged expectations:
+  caching hash (3), object methods (2), string fields (4: munged-name
+  collisions now observed via the type's methods, a second instance, or a
+  munged read of an immutable field), named
+  properties (`PropertyProbe` accessors, and construction instead of an
+  immutable write), map mutation helpers (`traceValue`).
+- Iteration: two cases read the private iterator index. Checked against
+  Clojure 1.12 (`ASeq.iterator()` returns `SeqIterator`, whose `next()` throws
+  `NoSuchElementException` when exhausted) and the `java.util.Iterator`
+  contract: `iterator-position-field` now takes the second `.next` (2) and
+  `iterator-exhaustion-advances-offset` checks `.hasNext` is false after the
+  last element, without calling `.next` past the end (renamed
+  `iterator-second-next` and `iterator-has-next-after-last`; checked by hand,
+  not by a fresh ClojureScript oracle run, as no JVM is installed). Pre-existing cases still
+  assert ClojureScript-only iterator behaviour (`iterator-exhausted-next-nil`,
+  extra `.hasNext` operand, JS array growth); left for a follow-up.
+- `named_access_uses_canonical_storage_...` now asserts that assigning the
+  immutable `null$` field fails and the method still reads 7.
+- `portable_quoted_identifiers` expected the five-field descriptor.
+- `compile_expr` `test_debug_set_mutable` (the #277 Atom rewrite) now writes
+  and reads its `^:mutable` field through the type's own methods.
+
+A second independent review found nothing blocking. Its should-fix items are
+applied: the narrower privilege scope above, the item-3 regression now asserts
+that a captured `Forger` instance satisfies the protocol and `Cell` does not,
+and `.-call` coverage includes an immutable `call` read from outside and a
+mutable one read inside its own type.
+
+All affected suites pass locally; the CI script checks pass.
+

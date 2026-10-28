@@ -409,8 +409,16 @@ evidence where they agree with Clojure semantics. Consequences:
   IEquiv dispatch applies to user types. Built-in hash caches are private, so
   their initialization and warming are unobservable.
 * Built-in type internals are not accessible to user code: collection backing
-  storage, identifier hash caches and other implementation fields. Field access
-  and mutation remain available for user `deftype` and `defrecord` fields.
+  storage, identifier hash caches and other implementation fields. User
+  `deftype` and `defrecord` fields follow Clojure: fields are public and final
+  unless declared `^:mutable`, and assigning an immutable field fails. Mutable
+  fields, including a record's hash cache, are private to their type: only the
+  type's own inline method bodies, and closures created in them, can read or
+  `set!` them, on any instance of that type. `extend-type` and
+  `extend-protocol` bodies outside the definition are not part of the type.
+  Each descriptor carries its mutable field names, and named access checks the
+  caller's type at run time. Dynamic property access (`unchecked-get`, `aget`)
+  never reaches user type fields.
   Methods of built-in instances stay public. Built-in classes accept no writes
   and expose only whitelisted statics of user-facing collections, such as
   `EMPTY` and `fromArray`; node classes and prototypes stay private, like

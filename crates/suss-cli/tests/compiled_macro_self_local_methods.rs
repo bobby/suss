@@ -279,7 +279,7 @@ fn named_self_and_method_argument_fields_match_the_pinned_local_observations() {
         // construction in the caller as well as the native macro helper.
         session.set_operation_fuel(100_000_000);
         session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         let mut macros = CompiledMacros::new().unwrap();
         macros.set_operation_fuel(100_000_000);
@@ -392,7 +392,7 @@ fn reviewed_self_shadow_and_duplicate_parameters_retain_both_passes_and_body_ord
         .unwrap();
         session.set_operation_fuel(100_000_000);
         session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         let mut macros = CompiledMacros::new().unwrap();
         macros.set_operation_fuel(100_000_000);

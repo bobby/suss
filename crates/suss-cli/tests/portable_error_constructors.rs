@@ -217,7 +217,7 @@ fn error_json(session: &mut Session, value: &SessionValue, classes: &[ErrorClass
         let class = classes.iter().find(|class| wasmtime::Rooted::ref_eq(&store, &class.descriptor, descriptor).unwrap()).expect("canonical Error/RangeError descriptor");
         assert!(wasmtime::StructType::eq(&owner.ty(&store)?, &class.owner_type));
         let schema = descriptor.as_struct(&store)?.unwrap();
-        assert_eq!(schema.fields(&mut store)?.count(), 5);
+        assert_eq!(schema.fields(&mut store)?.count(), 6);
         assert_eq!(schema.field(&mut store, 0)?.unwrap_i64(), match class.name { "Error" => 7, "RangeError" => 10, "TypeError" => 12, _ => unreachable!() }, "{} descriptor identity", class.name);
         let message = owner.field(&mut store, 1)?;
         let Observation::String(units) = Decoder::new(4097).decode(&mut store, &message)? else { panic!("raw UTF16 message") };

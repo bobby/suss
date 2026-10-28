@@ -295,7 +295,7 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             RefI31,
             I32Const(0),
             RefI31,
-            StructNew(DESCRIPTOR),
+            I32Const(0), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
     assert_eq!(globals.len(), REGISTRATION_GLOBAL);
@@ -315,7 +315,7 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             RefI31,
             I32Const(0),
             RefI31,
-            StructNew(DESCRIPTOR),
+            I32Const(0), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
     assert_eq!(globals.len(), SCHEDULER_GLOBAL);
@@ -359,7 +359,7 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             RefI31,
             I32Const(0),
             RefI31,
-            StructNew(DESCRIPTOR),
+            I32Const(0), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
     assert_eq!(globals.len(), TRAP_DESCRIPTOR_GLOBAL);
@@ -379,7 +379,7 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             RefI31,
             I32Const(0),
             RefI31,
-            StructNew(DESCRIPTOR),
+            I32Const(0), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
     assert_eq!(globals.len(), TRAP_VALUE_GLOBAL);

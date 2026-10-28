@@ -306,7 +306,9 @@ pub enum Nominal {
     NativeMarker(NativeKind),
     NativeSet(NativeKind),
     Array,
-    Descriptor,
+    /// A user type descriptor: field names, then the given number of trailing
+    /// names of its `^:mutable` fields.
+    Descriptor(usize),
     Class,
     Protocol,
     Construct,
@@ -314,8 +316,11 @@ pub enum Nominal {
     SameNominalType,
     Field(usize),
     FieldSet(usize),
+    /// Unprivileged named access: owner, name, then the class value of the
+    /// type whose inline method body contains the access, or nil.
     NamedGet,
     CallableGet,
+    /// Owner, name, enclosing class value or nil, assigned value.
     NamedSet,
     /// Privileged forms emitted only for the shipped `suss.core` bootstrap: core
     /// type descriptors whose internals are private, and named access to them.
@@ -392,14 +397,18 @@ impl Nominal {
                 Self::BindCallable | Self::MethodGet => count == 2,
                 Self::NativeObjectGet => count == 2,
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
-                Self::NamedGet | Self::CoreNamedGet => count == 2 && arguments[1] == Type::String,
-                Self::CallableGet => count == 3 && arguments[1] == Type::String,
-                Self::NamedSet | Self::CoreNamedSet | Self::ObjectSet => count == 3 && arguments[1] == Type::String,
+                Self::NamedGet => count == 3 && arguments[1] == Type::String,
+                Self::CoreNamedGet => count == 2 && arguments[1] == Type::String,
+                // Unprivileged callable reads also carry the caller (#278).
+                Self::CallableGet => matches!(count, 3 | 4) && arguments[1] == Type::String,
+                Self::NamedSet => count == 4 && arguments[1] == Type::String,
+                Self::CoreNamedSet | Self::ObjectSet => count == 3 && arguments[1] == Type::String,
                 Self::ObjectInvoke => count >= 2,
                 Self::LiveDispatcher | Self::NativeSet(_) => count == 2,
                 Self::IFnLiveDispatcher => count == 3,
                 Self::NativeMarker(_) => count == 1,
-                Self::Descriptor | Self::CoreDescriptor | Self::CoreStaticsDescriptor | Self::CoreClosedDescriptor => arguments.iter().all(|ty| *ty == Type::String),
+                Self::Descriptor(mutable) => mutable <= count && arguments.iter().all(|ty| *ty == Type::String),
+                Self::CoreDescriptor | Self::CoreStaticsDescriptor | Self::CoreClosedDescriptor => arguments.iter().all(|ty| *ty == Type::String),
                 Self::Construct => count >= 1,
                 Self::Instance | Self::SameNominalType | Self::Satisfies | Self::NativeSatisfies | Self::Marker => {
                     count == 2
@@ -803,7 +812,11 @@ struct Analyzer<'a> {
     locals: HashMap<String, LocalBinding>,
     fields: HashMap<String, FieldBinding>,
     /// Field declarations in an intrinsic type body, before methods bind a receiver.
-    type_body_fields: Vec<(Global, Form, Vec<Form>)>,
+    type_body_fields: Vec<(Global, Form, Vec<Form>, BindingId)>,
+    /// The class value of the type whose inline method bodies (and closures
+    /// created in them) are being analyzed: only those may access its mutable
+    /// fields by name.
+    field_owner: Option<BindingId>,
     function_scopes: Vec<std::sync::Arc<FunctionScope>>,
     next: usize,
     next_loop: usize,
@@ -3100,6 +3113,7 @@ pub(crate) fn prepare_with_origin(
         locals: HashMap::new(),
         fields: HashMap::new(),
         type_body_fields: Vec::new(),
+        field_owner: None,
         function_scopes: Vec::new(),
         next: 0,
         next_loop: 0,

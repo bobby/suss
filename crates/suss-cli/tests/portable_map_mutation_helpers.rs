@@ -63,7 +63,7 @@ fn retained_map_mutation_helpers_preserve_transient_vector_protocol_dispatch_and
 #[test]
 fn retained_map_mutation_helpers_dissoc_bang_dispatches_each_key_once_and_returns_receiver() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
-        session.eval("(deftype MutationMapProbe [^:mutable trace] ITransientMap (-dissoc! [this key] (do (set! trace (+ (* trace 10) key)) this))) (def probe (MutationMapProbe. 0))").unwrap();
+        session.eval("(deftype MutationMapProbe [^:mutable trace] ITransientMap (-dissoc! [this key] (do (set! trace (+ (* trace 10) key)) this)) Object (traceValue [this] trace)) (def probe (MutationMapProbe. 0))").unwrap();
         assert_eq!(
             number(
                 &mut session,
@@ -79,7 +79,7 @@ fn retained_map_mutation_helpers_dissoc_bang_dispatches_each_key_once_and_return
             ),
             1.0
         );
-        assert_eq!(number(&mut session, "(.-trace probe)"), 357.0);
+        assert_eq!(number(&mut session, "(.traceValue probe)"), 357.0);
     }
 }
 

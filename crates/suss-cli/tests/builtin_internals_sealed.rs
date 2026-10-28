@@ -2,7 +2,7 @@
 //! 2026-10-25, #274). User code cannot read or write implementation fields of
 //! built-in instances, read built-in prototypes, or write built-in class
 //! properties. Methods and static reads stay public, and user deftype/defrecord
-//! fields keep ordinary access.
+//! fields keep ordinary Clojure access (mutable ones private to their type, #278).
 #[path = "../../suss-compile/tests/support/portable_decode.rs"]
 mod portable_decode;
 
@@ -103,11 +103,14 @@ fn user_type_fields_keep_ordinary_access() {
     for (phase, mut session) in sessions() {
         session.eval("(deftype OpenPoint [x])").unwrap();
         session.eval("(defrecord* OpenRecord [x] nil nil)").unwrap();
-        session.eval("(deftype OpenCell [^:mutable v])").unwrap();
+        // Mutable fields are private to their type (#278); use them through
+        // the type's own methods.
+        session.eval("(defprotocol IOpenCell (open-set! [c x]))").unwrap();
+        session.eval("(deftype OpenCell [^:mutable v] IOpenCell (open-set! [this x] (set! (.-v this) x) (.-v this)))").unwrap();
         for (source, expected) in [
             ("(.-x (OpenPoint. 1))", 1.0),
             ("(.-x (OpenRecord. 2))", 2.0),
-            ("(let [c (OpenCell. 1)] (set! (.-v c) 3) (.-v c))", 3.0),
+            ("(open-set! (OpenCell. 1) 3)", 3.0),
         ] {
             assert_eq!(observe(&mut session, source), Observation::Number(f64::to_bits(expected)), "{phase}: {source}");
         }

@@ -101,16 +101,19 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     ]);
     error(&mut body);
     body.push(End);
-    copy_array(&mut body, 0, 1);
+    copy_array(&mut body, 0, 2);
+    // The mutable-name table (ARGS or i31 0) comes only from compiled
+    // descriptor operations, never from guest data; it is stored as given.
     body.extend([
         GlobalGet(ID_GLOBAL),
-        LocalGet(1),
+        LocalGet(2),
         I32Const(0),
         ArrayNewDefault(ARGS),
         I32Const(0),
         RefI31,
         I32Const(0),
         RefI31,
+        LocalGet(1),
         StructNew(DESCRIPTOR),
         GlobalGet(ID_GLOBAL),
         I64Const(1),
@@ -133,10 +136,10 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     core.splice(identity + 1..identity + 1, [I64Const(CORE_PRIVATE_BIT | CORE_CLOSED_BIT), I64Or]);
     statics.splice(identity + 1..identity + 1, [I64Const(CORE_PRIVATE_BIT | CORE_PUBLIC_STATICS_BIT | CORE_CLOSED_BIT), I64Or]);
     closed.splice(identity + 1..identity + 1, [I64Const(CORE_CLOSED_BIT), I64Or]);
-    b.function_with_locals("descriptor-new-core-statics", &[VALUE], &[VALUE], &[(1, VALUE)], &statics);
-    b.function_with_locals("descriptor-new-core-closed", &[VALUE], &[VALUE], &[(1, VALUE)], &closed);
-    b.function_with_locals("descriptor-new", &[VALUE], &[VALUE], &[(1, VALUE)], &body);
-    b.function_with_locals("descriptor-new-core", &[VALUE], &[VALUE], &[(1, VALUE)], &core);
+    b.function_with_locals("descriptor-new-core-statics", &[VALUE, VALUE], &[VALUE], &[(1, VALUE)], &statics);
+    b.function_with_locals("descriptor-new-core-closed", &[VALUE, VALUE], &[VALUE], &[(1, VALUE)], &closed);
+    b.function_with_locals("descriptor-new", &[VALUE, VALUE], &[VALUE], &[(1, VALUE)], &body);
+    b.function_with_locals("descriptor-new-core", &[VALUE, VALUE], &[VALUE], &[(1, VALUE)], &core);
 
     // Unprivileged named access: reject built-in instances and class values.
 

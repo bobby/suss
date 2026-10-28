@@ -53,7 +53,7 @@ fn nominal_public_hir_and_ir_reject_bad_shapes_before_emission() {
         metadata: vec![],
         ty: Type::Value,
         kind: Expression::Nominal {
-            operation: Nominal::Descriptor,
+            operation: Nominal::Descriptor(0),
             arguments: vec![value.clone()],
         },
     };
@@ -71,7 +71,7 @@ fn nominal_public_hir_and_ir_reject_bad_shapes_before_emission() {
     let graph = ir::lower(&valid).unwrap();
     ir::verify(&graph).unwrap();
     for operation in [
-        Nominal::Descriptor,
+        Nominal::Descriptor(0),
         Nominal::Field(usize::MAX),
         Nominal::FieldSet(usize::MAX),
         Nominal::Set,

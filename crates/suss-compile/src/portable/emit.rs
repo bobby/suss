@@ -176,13 +176,19 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ObjectInvoke => {
                             names.insert("object-method-invoke");
                         }
-                        Nominal::CallableGet => { names.insert("callable-property-get"); }
+                        Nominal::CallableGet => {
+                            names.insert("builtin-internal-get-guard");
+                            names.insert("user-field-get-guard");
+                            names.insert("callable-property-get");
+                        }
                         Nominal::NamedGet => {
                             names.insert("builtin-internal-get-guard");
+                            names.insert("user-field-get-guard");
                             names.insert("named-property-get");
                         }
                         Nominal::NamedSet => {
                             names.insert("builtin-internal-set-guard");
+                            names.insert("user-field-set-guard");
                             names.insert("named-property-set");
                         }
                         Nominal::CoreNamedGet => {
@@ -207,7 +213,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::NativeSet(_) => {
                             names.insert("protocol-native-method-set");
                         }
-                        Nominal::Descriptor => {
+                        Nominal::Descriptor(_) => {
                             names.insert("descriptor-new");
                         }
                         Nominal::CoreDescriptor => {
@@ -328,11 +334,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "object-field-get" | "protocol-key" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "protocol-marker-set" | "protocol-method-get" => (vec![VALUE, VALUE], vec![VALUE]),
             "protocol-method-set" => (vec![VALUE, VALUE, VALUE], vec![]),
-            "descriptor-new"
-            | "descriptor-new-core"
-            | "descriptor-new-core-statics"
-            | "descriptor-new-core-closed"
-            | "builtin-extension-guard"
+            "builtin-extension-guard"
             | "class-value-new"
             | "protocol-value-new"
             | "constructor-new"
@@ -378,7 +380,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
-            "string-slice" | "callable-property-get" | "named-property-set" | "object-method-set" | "object-method-invoke" | "native-object-property-set" | "native-object-property-set-strict" => {
+            "string-slice" | "callable-property-get" | "named-property-set" | "user-field-get-guard" | "user-field-set-guard" | "object-method-set" | "object-method-invoke" | "native-object-property-set" | "native-object-property-set-strict" => {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])
             }
             "string-new" => (vec![ValType::I32], vec![VALUE]),
@@ -1102,15 +1104,34 @@ fn emit_function(
                                 },
                             )));
                         }
-                        Nominal::Array | Nominal::Descriptor | Nominal::CoreDescriptor | Nominal::CoreStaticsDescriptor | Nominal::CoreClosedDescriptor => {
-                            for argument in arguments {
+                        Nominal::Array | Nominal::Descriptor(_) | Nominal::CoreDescriptor | Nominal::CoreStaticsDescriptor | Nominal::CoreClosedDescriptor => {
+                            let mutable = match operation {
+                                Nominal::Descriptor(mutable) => *mutable,
+                                _ => 0,
+                            };
+                            let fields = arguments.len() - mutable;
+                            for argument in &arguments[..fields] {
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
                             }
                             function.instruction(&ArrayNewFixed {
                                 array_type_index: runtime_abi::ARGS,
-                                array_size: arguments.len() as u32,
+                                array_size: fields as u32,
                             });
-                            if *operation == Nominal::Descriptor {
+                            // Descriptors also take their mutable field names.
+                            if *operation != Nominal::Array {
+                                if mutable == 0 {
+                                    function.instruction(&I32Const(0)).instruction(&RefI31);
+                                } else {
+                                    for argument in &arguments[fields..] {
+                                        function.instruction(&LocalGet(argument.0 as u32 + offset));
+                                    }
+                                    function.instruction(&ArrayNewFixed {
+                                        array_type_index: runtime_abi::ARGS,
+                                        array_size: mutable as u32,
+                                    });
+                                }
+                            }
+                            if matches!(operation, Nominal::Descriptor(_)) {
                                 function.instruction(&Call(index("descriptor-new")));
                             } else if *operation == Nominal::CoreDescriptor {
                                 function.instruction(&Call(index("descriptor-new-core")));
@@ -1227,18 +1248,41 @@ fn emit_function(
                         | Nominal::MethodGet
                         | Nominal::Satisfies
                         | Nominal::NativeSatisfies => {
+                            let named = matches!(operation, Nominal::NamedGet | Nominal::NamedSet);
+                            // An unprivileged callable read (owner, name, keys,
+                            // caller) runs the same guards on owner and name.
+                            let guarded_callable = *operation == Nominal::CallableGet && arguments.len() == 4;
+                            if guarded_callable {
+                                let [owner, name, _, caller] = [0, 1, 2, 3].map(|i| LocalGet(arguments[i].0 as u32 + offset));
+                                for instruction in [owner, name.clone(), Call(index("builtin-internal-get-guard")), name, caller,
+                                    Call(index("user-field-get-guard"))] {
+                                    function.instruction(&instruction);
+                                }
+                            }
                             for (position, argument) in arguments.iter().enumerate() {
-                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                                if guarded_callable && (position == 0 || position == 3) {
+                                    continue;
+                                }
+                                let local = LocalGet(argument.0 as u32 + offset);
                                 // Unprivileged named access first rejects built-in
-                                // fields: guard(owner, name) leaves the owner.
-                                if position == 1 && matches!(operation, Nominal::NamedGet | Nominal::NamedSet) {
+                                // fields, then user field mutability and type
+                                // privacy: guard(owner, name[, caller]) leaves
+                                // the owner. The caller operand is not passed on.
+                                if named && position == 2 {
+                                    function.instruction(&local).instruction(&Call(index(
+                                        if *operation == Nominal::NamedSet { "user-field-set-guard" } else { "user-field-get-guard" })));
+                                    function.instruction(&LocalGet(arguments[1].0 as u32 + offset));
+                                    continue;
+                                }
+                                function.instruction(&local);
+                                if named && position == 1 {
                                     function
                                         .instruction(&Call(index(if *operation == Nominal::NamedSet {
                                             "builtin-internal-set-guard"
                                         } else {
                                             "builtin-internal-get-guard"
                                         })))
-                                        .instruction(&LocalGet(argument.0 as u32 + offset));
+                                        .instruction(&local);
                                 }
                             }
                             function.instruction(&Call(index(match operation {

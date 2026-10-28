@@ -4,7 +4,7 @@
   "cases": [
     {
       "id": "source-object-method-call",
-      "source": "(do (deftype ObjectProbe [^:mutable value] Object (score [this delta] (+ value delta)) (label [this] \"probe\")) (def object-probe (ObjectProbe. 7)) (.score object-probe 3))",
+      "source": "(do (deftype ObjectProbe [^:mutable value] Object (score [this delta] (+ value delta)) (label [this] \"probe\") (setValue [this v] (set! value v))) (def object-probe (ObjectProbe. 7)) (.score object-probe 3))",
       "expected": {
         "tag": "f64",
         "bits": "4024000000000000"
@@ -58,7 +58,7 @@
     },
     {
       "id": "object-method-reads-current-field",
-      "source": "(do (set! (.-value object-probe) 13) (.score object-probe 3))",
+      "source": "(do (.setValue object-probe 13) (.score object-probe 3))",
       "expected": {
         "tag": "f64",
         "bits": "4030000000000000"
@@ -154,7 +154,7 @@
     },
     {
       "id": "object-method-mutation",
-      "source": "(do (deftype ObjectMutable [^:mutable value] Object (bump [this n] (set! value (+ value n)))) (def object-mutable (ObjectMutable. 29)) (.bump object-mutable 2) (.-value object-mutable))",
+      "source": "(do (deftype ObjectMutable [^:mutable value] Object (bump [this n] (set! value (+ value n))) (current [this] value)) (def object-mutable (ObjectMutable. 29)) (.bump object-mutable 2) (.current object-mutable))",
       "expected": {
         "tag": "f64",
         "bits": "403f000000000000"

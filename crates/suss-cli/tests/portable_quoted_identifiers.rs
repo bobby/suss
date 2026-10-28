@@ -91,7 +91,7 @@ fn class_id(session: &mut Session, name: &str) -> i64 {
                 .unwrap();
             assert_eq!(
                 descriptor.fields(&mut store)?.count(),
-                5,
+                6,
                 "Descriptor layout"
             );
             Ok(descriptor.field(&mut store, 0)?.unwrap_i64())

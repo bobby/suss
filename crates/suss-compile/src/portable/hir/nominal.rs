@@ -4,8 +4,8 @@ use crate::portable::resolve::{NominalForm, ProtocolMethod};
 
 /// Core value types whose fields are their documented public API. They hold
 /// only scalars, with no storage arrays or hash caches, so reading them exposes
-/// nothing private (design decision 2026-10-25). Their fields are immutable;
-/// rejecting named writes to immutable fields is #278.
+/// nothing private (design decision 2026-10-25). Their fields are immutable,
+/// so named writes are rejected like those to any immutable field (#278).
 const PUBLIC_FIELD_TYPES: &[&str] = &[
     // Exact WIT 64-bit integers: high and low unsigned 32-bit words.
     "WitSigned64",
@@ -26,6 +26,18 @@ impl Analyzer<'_> {
             Nominal::NamedSet if self.privileged => Nominal::CoreNamedSet,
             operation => operation,
         };
+        // Unprivileged named access also passes the enclosing type's class
+        // value, or nil, for the run-time field privacy guard (#278). Accesses
+        // that already carry it (a lexical field read turned into a set!) keep it.
+        let mut arguments = arguments;
+        let callable = matches!((operation, arguments.len()), (Nominal::CallableGet, 3)) && !self.privileged;
+        if callable || matches!((operation, arguments.len()), (Nominal::NamedGet, 2) | (Nominal::NamedSet, 3)) {
+            let caller = match self.field_owner {
+                Some(owner) => self.local(form, owner),
+                None => self.literal_form(form, Literal::Nil),
+            };
+            if callable { arguments.push(caller) } else { arguments.insert(2, caller) }
+        }
         Hir {
             source: None,
             span: form.span.clone(),
@@ -39,10 +51,13 @@ impl Analyzer<'_> {
     }
     /// Core bootstrap types get descriptors whose internals are private,
     /// except the few value types whose fields are their public API.
-    fn type_descriptor(&self, form: &Form, name: Option<&str>, schema: Vec<Hir>) -> Hir {
+    /// User descriptors also carry their mutable field names (#278).
+    fn type_descriptor(&self, form: &Form, name: Option<&str>, mut schema: Vec<Hir>, mutable: Vec<Hir>) -> Hir {
         let listed = |list: &[&str]| name.is_some_and(|name| list.contains(&name));
         let operation = if !self.privileged {
-            Nominal::Descriptor
+            let count = mutable.len();
+            schema.extend(mutable);
+            Nominal::Descriptor(count)
         } else if listed(PUBLIC_FIELD_TYPES) {
             Nominal::CoreClosedDescriptor
         } else if listed(PUBLIC_STATIC_TYPES) {
@@ -107,7 +122,7 @@ impl Analyzer<'_> {
         schema: Vec<Hir>,
     ) -> Hir {
         let global = self.environment.protocol_key(protocol, method, arity);
-        let descriptor = self.nominal(form, Nominal::Descriptor, schema);
+        let descriptor = self.nominal(form, Nominal::Descriptor(0), schema);
         let initialize = Hir {
             source: None,
             span: form.span.clone(),
@@ -363,7 +378,21 @@ impl Analyzer<'_> {
                         "Native symbol/bigint values are not lowered yet",
                     ));
                 }
-                let mut value = self.form(class)?;
+                let inline_fields = match &class.kind {
+                    Kind::Symbol(symbol) if symbol.namespace.is_some() || !self.locals.contains_key(&symbol.name) => {
+                        let target = self.named_global(class)?;
+                        self.type_body_fields.iter().rev()
+                            .find(|(global, _, _, _)| *global == target)
+                            .map(|(_, declaration, fields, class)| (declaration.clone(), fields.clone(), *class))
+                    }
+                    _ => None,
+                };
+                // Inline methods extend the class being defined, not whatever
+                // its global names when the body runs: they own its fields.
+                let mut value = match &inline_fields {
+                    Some((_, _, own)) => self.local(class, *own),
+                    None => self.form(class)?,
+                };
                 if !self.privileged && self.extends_core_protocol(&args[1..]) {
                     // The class may be an alias, local or expression; check its
                     // run-time identity, not only its spelling.
@@ -371,16 +400,9 @@ impl Analyzer<'_> {
                 }
                 let binding = self.fresh_binding(class, value);
                 let class_value = self.local(class, binding.id);
-                let inline_fields = match &class.kind {
-                    Kind::Symbol(symbol) if symbol.namespace.is_some() || !self.locals.contains_key(&symbol.name) => {
-                        let target = self.named_global(class)?;
-                        self.type_body_fields.iter().rev()
-                            .find(|(global, _, _)| *global == target)
-                            .map(|(_, declaration, fields)| (declaration.clone(), fields.clone()))
-                    }
-                    _ => None,
-                };
-                let (type_declaration, fields) = inline_fields.unwrap_or_else(|| (class.clone(), Vec::new()));
+                let (type_declaration, fields) = inline_fields
+                    .map(|(declaration, fields, _)| (declaration, fields))
+                    .unwrap_or_else(|| (class.clone(), Vec::new()));
                 let mut effects = self.protocol_extensions(form, &args[1..], class_value,
                     &fields, false, &type_declaration)?;
                 if effects.is_empty() {
@@ -495,9 +517,11 @@ impl Analyzer<'_> {
         }
         Ok(flags.into_iter().any(|flag| flag))
     }
-    fn type_schema(&self, fields: &[Form]) -> Result<Vec<Hir>, Diagnostic> {
+    /// Field name literals, and the names of the `^:mutable` ones.
+    fn type_schema(&self, fields: &[Form]) -> Result<(Vec<Hir>, Vec<Hir>), Diagnostic> {
         let mut seen = BTreeSet::new();
         let mut schema = Vec::new();
+        let mut mutable = Vec::new();
         for field in fields {
             let Kind::Symbol(symbol) = &field.kind else {
                 return Err(fail(
@@ -521,12 +545,13 @@ impl Analyzer<'_> {
                     "Type field names must be unqualified and distinct",
                 ));
             }
-            Self::field_mutable(field)?;
-            schema.push(
-                self.literal_form(field, Literal::String(crate::portable::compiler_names::munge_name(&symbol.name.encode_utf16().collect::<Vec<_>>()))),
-            );
+            let name = self.literal_form(field, Literal::String(crate::portable::compiler_names::munge_name(&symbol.name.encode_utf16().collect::<Vec<_>>())));
+            if Self::field_mutable(field)? {
+                mutable.push(name.clone());
+            }
+            schema.push(name);
         }
-        Ok(schema)
+        Ok((schema, mutable))
     }
     fn type_declaration(&mut self, form: &Form, name: &Form, declared_fields: usize, record: bool) -> Result<(Hir, Global), Diagnostic> {
         // parse-type preserves prior declaration fields independently of the
@@ -608,9 +633,9 @@ impl Analyzer<'_> {
                 });
             }
         }
-        let schema = self.type_schema(&fields)?;
+        let (schema, mutable) = self.type_schema(&fields)?;
         let (declaration, global) = self.type_declaration(form, &args[0], declared.len(), record)?;
-        let descriptor = self.type_descriptor(form, Some(global.name()), schema);
+        let descriptor = self.type_descriptor(form, Some(global.name()), schema, mutable);
         let class = self.nominal(form, Nominal::Class, vec![descriptor]);
         let class = self.fresh_binding(form, class);
         let class_value = self.local(form, class.id);
@@ -623,7 +648,7 @@ impl Analyzer<'_> {
         // fails. Nested intrinsic declarations keep their own field contexts.
         let outer_locals = std::mem::take(&mut self.locals);
         let outer_fields = std::mem::take(&mut self.fields);
-        self.type_body_fields.push((global, args[0].clone(), fields));
+        self.type_body_fields.push((global, args[0].clone(), fields, class.id));
         let body = self.form_in(&args[3], super::super::AnalysisContext::Statement, false);
         self.type_body_fields.pop();
         self.locals = outer_locals;
@@ -646,7 +671,7 @@ impl Analyzer<'_> {
                 "deftype requires a field vector",
             ));
         };
-        let schema = self.type_schema(fields)?;
+        let (schema, mutable) = self.type_schema(fields)?;
         let (declaration, class_global) = self.type_declaration(form, &args[0], fields.len(), false)?;
         let Kind::Symbol(symbol) = &args[0].kind else {
             unreachable!()
@@ -661,7 +686,7 @@ impl Analyzer<'_> {
         };
         // Own generated constructor references are available during method analysis.
         self.definition(form, &[arrow_name.clone()], false)?;
-        let descriptor = self.type_descriptor(form, Some(&symbol.name), schema);
+        let descriptor = self.type_descriptor(form, Some(&symbol.name), schema, mutable);
         let class = self.nominal(form, Nominal::Class, vec![descriptor]);
         let binding = self.fresh_binding(form, class);
         let class_value = self.local(form, binding.id);
@@ -875,7 +900,7 @@ impl Analyzer<'_> {
             .environment
             .reify_class_key(self.phase, generation, site);
         let type_declaration = symbol(cell.name(), Some("suss.internal.reify"));
-        let descriptor = self.type_descriptor(form, None, schema);
+        let descriptor = self.type_descriptor(form, None, schema, Vec::new());
         let class = self.nominal(form, Nominal::Class, vec![descriptor]);
         let binding = self.fresh_binding(form, class);
         let class_value = self.local(form, binding.id);
@@ -1422,6 +1447,28 @@ impl Analyzer<'_> {
         Ok(effects)
     }
     fn protocol_extensions(
+        &mut self,
+        form: &Form,
+        args: &[Form],
+        class: Hir,
+        fields: &[Form],
+        in_deftype: bool,
+        type_declaration: &Form,
+    ) -> Result<Vec<Hir>, Diagnostic> {
+        // Inline methods of a type (deftype, or extend-type of the type inside
+        // its own intrinsic body) own its mutable fields. Other extensions keep
+        // the enclosing owner, so closures created in method bodies keep it.
+        let outer = self.field_owner;
+        if in_deftype || !fields.is_empty() {
+            if let Expression::Local(owner) = class.kind {
+                self.field_owner = Some(owner);
+            }
+        }
+        let effects = self.protocol_extension_effects(form, args, class, fields, in_deftype, type_declaration);
+        self.field_owner = outer;
+        effects
+    }
+    fn protocol_extension_effects(
         &mut self,
         form: &Form,
         args: &[Form],

@@ -113,6 +113,8 @@ pub fn prelude() -> TypeSection {
             field(VALUE, true),
             field(VALUE, true),
             field(VALUE, true), // Identity UID, separate from metadata.
+            // Munged names of `^:mutable` fields (ARGS of strings), or i31 0.
+            field(VALUE, false),
         ]),
         // User object: descriptor, fields, per-object metadata.
         structure(vec![
@@ -796,7 +798,7 @@ fn build_module() -> Vec<u8> {
                 RefI31,
                 I32Const(0),
                 RefI31,
-                StructNew(DESCRIPTOR),
+                I32Const(0), RefI31, StructNew(DESCRIPTOR),
             ]),
         );
     }
@@ -833,7 +835,7 @@ fn build_module() -> Vec<u8> {
             RefI31,
             I32Const(0),
             RefI31,
-            StructNew(DESCRIPTOR),
+            I32Const(0), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
     // A rooted opaque protocol marker, distinct from booleans and callables.
@@ -853,7 +855,7 @@ fn build_module() -> Vec<u8> {
             RefI31,
             I32Const(0),
             RefI31,
-            StructNew(DESCRIPTOR),
+            I32Const(0), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
     globals.global(
@@ -884,7 +886,7 @@ fn build_module() -> Vec<u8> {
         RefI31,
         I32Const(0),
         RefI31,
-        StructNew(DESCRIPTOR),
+        I32Const(0), RefI31, StructNew(DESCRIPTOR),
     ]);
     globals.global(
         GlobalType {
@@ -914,7 +916,7 @@ fn build_module() -> Vec<u8> {
         RefI31,
         I32Const(0),
         RefI31,
-        StructNew(DESCRIPTOR),
+        I32Const(0), RefI31, StructNew(DESCRIPTOR),
         I32Const(UNDEFINED),
         RefI31,
         I32Const(3),
@@ -950,7 +952,7 @@ fn build_module() -> Vec<u8> {
             RefI31,
             I32Const(0),
             RefI31,
-            StructNew(DESCRIPTOR),
+            I32Const(0), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
     // Private source-array identity; appended without changing old global indices.
@@ -970,7 +972,7 @@ fn build_module() -> Vec<u8> {
             RefI31,
             I32Const(0),
             RefI31,
-            StructNew(DESCRIPTOR),
+            I32Const(0), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
     // Appended private Object method tag and portable implicit-this realm.
@@ -990,7 +992,7 @@ fn build_module() -> Vec<u8> {
             RefI31,
             I32Const(0),
             RefI31,
-            StructNew(DESCRIPTOR),
+            I32Const(0), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
     globals.global(
@@ -1009,7 +1011,7 @@ fn build_module() -> Vec<u8> {
             RefI31,
             I32Const(0),
             RefI31,
-            StructNew(DESCRIPTOR),
+            I32Const(0), RefI31, StructNew(DESCRIPTOR),
             I32Const(0),
             ArrayNewDefault(ARGS),
             I32Const(0),
@@ -1045,7 +1047,7 @@ fn build_module() -> Vec<u8> {
             RefI31,
             I32Const(0),
             RefI31,
-            StructNew(DESCRIPTOR),
+            I32Const(0), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
     // Lazy shared default Object prototype, owned by the runtime GC root.
