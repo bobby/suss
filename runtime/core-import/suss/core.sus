@@ -4789,7 +4789,7 @@
   Returns a new array map with supplied mappings."
   (fn [& keyvals]
   (let [arr (if (and (instance? IndexedSeq keyvals) (zero? (.-i keyvals)))
-              (.-arr keyvals)
+              (aclone (.-arr keyvals))
               (into-array keyvals))]
     (if (== 1 (bit-and (alength arr) 1))
       (throw (suss.bootstrap/error (str_ "No value supplied for key: " (aget arr (- (alength arr) 1)))))

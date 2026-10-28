@@ -209,7 +209,8 @@ impl Decoder {
         source: &str,
         class: Class,
     ) -> Result<(), SessionError> {
-        let anchor = session.eval(source)?;
+        // Anchors construct built-in types directly, which only core may do (#279).
+        let anchor = session.eval_privileged(source)?;
         let (descriptor, owner_type) = session.inspect(&anchor, |mut store, value| {
             let owner_type = non_null_ref(&value)?
                 .as_struct(&store)?
@@ -1563,7 +1564,7 @@ mod adversarial_owner {
         let mut session = Session::new_repl().unwrap();
         let mut decoder = Decoder::capture(&mut session, 4096).unwrap();
         let anchor = session
-            .eval("(new suss.core/IndexedSeq \"A\" 0 nil)")
+            .eval_privileged("(new suss.core/IndexedSeq \"A\" 0 nil)")
             .unwrap();
         session
             .inspect(&anchor, |mut store, canonical| {

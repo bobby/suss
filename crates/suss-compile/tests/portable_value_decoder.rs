@@ -1,4 +1,6 @@
 //! Executing foundations for migrating the complete expression corpus to ABI2.
+//! Probes construct built-in storage directly, which only core may do, so
+//! their sources are evaluated privileged (#279).
 #![cfg(not(target_family = "wasm"))]
 #[path = "support/portable_decode.rs"]
 mod portable_decode;
@@ -19,7 +21,7 @@ fn scalar_decoder_preserves_bits_and_language_sentinels_after_gc() {
         ("##Inf", Observation::Number(f64::INFINITY.to_bits())),
         ("##-Inf", Observation::Number(f64::NEG_INFINITY.to_bits())),
     ] {
-        let value = session.eval(source).unwrap();
+        let value = session.eval_privileged(source).unwrap();
         session.collect().unwrap();
         let observed = session
             .inspect(&value, |mut store, value| {
@@ -33,7 +35,7 @@ fn scalar_decoder_preserves_bits_and_language_sentinels_after_gc() {
 #[test]
 fn string_decoder_preserves_utf16_including_astral_and_lone_surrogates() {
     let mut session = Session::new_repl().unwrap();
-    let value = session.eval(r#""A😀\uD800x\uDC00λ""#).unwrap();
+    let value = session.eval_privileged(r#""A😀\uD800x\uDC00λ""#).unwrap();
     session.collect().unwrap();
     let observed = session
         .inspect(&value, |mut store, value| {
@@ -49,7 +51,7 @@ fn string_decoder_preserves_utf16_including_astral_and_lone_surrogates() {
 #[test]
 fn decoder_rejects_unknown_sentinels_nulls_and_unboxed_values() {
     let mut session = Session::new_repl().unwrap();
-    let value = session.eval("nil").unwrap();
+    let value = session.eval_privileged("nil").unwrap();
     session
         .inspect(&value, |mut store, _| {
             for tag in [1, 6, 99] {
@@ -90,7 +92,7 @@ fn unknown_nominal_objects_and_raw_argument_arrays_are_decode_errors() {
         "(deftype DecoderUnknown [x]) (new DecoderUnknown 42)",
         "(array 1 2)",
     ] {
-        let value = session.eval(source).unwrap();
+        let value = session.eval_privileged(source).unwrap();
         session
             .inspect(&value, |mut store, value| {
                 assert!(Decoder::new(32).decode(&mut store, &value).is_err());
@@ -103,7 +105,7 @@ fn unknown_nominal_objects_and_raw_argument_arrays_are_decode_errors() {
 #[test]
 fn decoder_bounds_are_checked_before_string_traversal() {
     let mut session = Session::new_repl().unwrap();
-    let value = session.eval(r#""abcdef""#).unwrap();
+    let value = session.eval_privileged(r#""abcdef""#).unwrap();
     session
         .inspect(&value, |mut store, value| {
             assert!(
@@ -150,14 +152,14 @@ fn identifier_decoder_retains_canonical_identity_through_gc_and_redefinition() {
             ),
         ),
     ] {
-        let value = session.eval(source).unwrap();
+        let value = session.eval_privileged(source).unwrap();
         session.collect().unwrap();
         assert_eq!(
             decoder.decode_session(&mut session, &value).unwrap(),
             expected
         );
     }
-    let retained = session.eval(":ready").unwrap();
+    let retained = session.eval_privileged(":ready").unwrap();
     let impostor = session
         .eval(r#"(deftype Keyword [ns name fqn hash]) (new Keyword nil "ready" "ready" nil)"#)
         .unwrap();
@@ -168,7 +170,7 @@ fn identifier_decoder_retains_canonical_identity_through_gc_and_redefinition() {
             .to_string()
             .contains("Unsupported ABI2 value layout")
     );
-    session.eval("(ns suss.core) (def Keyword nil)").unwrap();
+    session.eval_privileged("(ns suss.core) (def Keyword nil)").unwrap();
     session.collect().unwrap();
     assert_eq!(
         decoder.decode_session(&mut session, &retained).unwrap(),
@@ -187,7 +189,7 @@ fn captured_decoder_rejects_foreign_and_reset_sessions_before_descriptor_access(
         decoder.decode_session(&mut other, &foreign),
         Err(SessionError::ForeignValue)
     ));
-    let old = session.eval(":ready").unwrap();
+    let old = session.eval_privileged(":ready").unwrap();
     session.reset().unwrap();
     assert!(matches!(
         decoder.decode_session(&mut session, &old),
@@ -213,7 +215,7 @@ fn canonical_identifiers_reject_malformed_namespaces_names_and_excessive_nesting
             "ABI2 decoder nesting limit",
         ),
     ] {
-        let value = session.eval(source).unwrap();
+        let value = session.eval_privileged(source).unwrap();
         assert!(
             decoder
                 .decode_session(&mut session, &value)
@@ -233,7 +235,7 @@ fn persistent_vectors_decode_tree_boundaries_and_nested_values_without_guest_cal
     let mut decoder = Decoder::capture(&mut session, 100_000).unwrap();
     for count in [0, 1, 31, 32, 33, 1024, 1025, 1057] {
         let value = session
-            .eval(&format!(
+            .eval_privileged(&format!(
                 "(loop [i 0 xs []] (if (= i {count}) xs (recur (inc i) (conj xs i))))"
             ))
             .unwrap();
@@ -270,7 +272,7 @@ fn persistent_vectors_decode_tree_boundaries_and_nested_values_without_guest_cal
             Observation::Vector(vec![Observation::Number(42.0_f64.to_bits())]),
         ])
     );
-    let retained = session.eval("[42]").unwrap();
+    let retained = session.eval_privileged("[42]").unwrap();
     session
         .eval("(ns suss.core) (def PersistentVector nil) (def VectorNode nil)")
         .unwrap();
@@ -322,7 +324,7 @@ fn persistent_lists_and_cons_decode_empty_nested_and_gc_retained_values() {
             ]),
         ),
     ] {
-        let value = session.eval(source).unwrap();
+        let value = session.eval_privileged(source).unwrap();
         session.collect().unwrap();
         assert_eq!(
             decoder.decode_session(&mut session, &value).unwrap(),
@@ -346,7 +348,7 @@ fn collection_decoder_rejects_nominal_impostors_malformed_counts_and_missing_bac
         "(new suss.core/List nil 1 nil -1 nil)",
         "(new suss.core/Cons nil 1 42 nil)",
     ] {
-        let value = session.eval(source).unwrap();
+        let value = session.eval_privileged(source).unwrap();
         session.collect().unwrap();
         assert!(
             decoder.decode_session(&mut session, &value).is_err(),
@@ -389,7 +391,7 @@ fn indexed_sequences_and_map_entries_decode_actual_storage_after_gc() {
             ),
         ),
     ] {
-        let value = session.eval(source).unwrap();
+        let value = session.eval_privileged(source).unwrap();
         session.collect().unwrap();
         assert_eq!(
             decoder.decode_session(&mut session, &value).unwrap(),
@@ -410,7 +412,7 @@ fn indexed_sequences_reject_invalid_offsets_and_storage() {
         "(new suss.core/IndexedSeq nil 0 nil)",
         "(new suss.core/IndexedSeq [] 0 nil)",
     ] {
-        let value = session.eval(source).unwrap();
+        let value = session.eval_privileged(source).unwrap();
         session.collect().unwrap();
         assert!(
             decoder.decode_session(&mut session, &value).is_err(),
@@ -439,14 +441,14 @@ fn map_decoder_observes_array_and_hash_storage_nil_keys_and_large_tries() {
     session.set_operation_fuel(1_000_000_000);
     let mut decoder = Decoder::capture(&mut session, 100_000).unwrap();
     for source in ["{}", "(hash-map)"] {
-        let value = session.eval(source).unwrap();
+        let value = session.eval_privileged(source).unwrap();
         session.collect().unwrap();
         assert_eq!(
             decoder.decode_session(&mut session, &value).unwrap(),
             Observation::Map(vec![])
         );
     }
-    let value = session.eval("{nil [42] :ready false}").unwrap();
+    let value = session.eval_privileged("{nil [42] :ready false}").unwrap();
     session.collect().unwrap();
     let Observation::Map(pairs) = decoder.decode_session(&mut session, &value).unwrap() else {
         panic!("expected map")
@@ -465,7 +467,7 @@ fn map_decoder_observes_array_and_hash_storage_nil_keys_and_large_tries() {
         ],
     );
     for count in [9, 33, 80] {
-        let value = session.eval(&format!("(loop [i 0 xs {{}}] (if (= i {count}) (assoc xs nil true) (recur (inc i) (assoc xs i (- 0 i)))))")).unwrap();
+        let value = session.eval_privileged(&format!("(loop [i 0 xs {{}}] (if (= i {count}) (assoc xs nil true) (recur (inc i) (assoc xs i (- 0 i)))))")).unwrap();
         session.collect().unwrap();
         let Observation::Map(pairs) = decoder.decode_session(&mut session, &value).unwrap() else {
             panic!("expected map")
@@ -481,7 +483,7 @@ fn map_decoder_observes_array_and_hash_storage_nil_keys_and_large_tries() {
         expected.push((Observation::Nil, Observation::Bool(true)));
         unordered_exact(pairs, expected);
     }
-    let value = session.eval(r#"(hash-map "Aa" 1 "BB" 2)"#).unwrap();
+    let value = session.eval_privileged(r#"(hash-map "Aa" 1 "BB" 2)"#).unwrap();
     session.collect().unwrap();
     let Observation::Map(pairs) = decoder.decode_session(&mut session, &value).unwrap() else {
         panic!("expected map")
@@ -509,7 +511,7 @@ fn set_decoder_preserves_nested_elements_and_nil_through_gc() {
     session.set_operation_fuel(1_000_000_000);
     let mut decoder = Decoder::capture(&mut session, 100_000).unwrap();
     for count in [0, 1, 33, 80] {
-        let value = session.eval(&format!("(loop [i 0 xs #{{}}] (if (= i {count}) (conj xs nil [42]) (recur (inc i) (conj xs i))))")).unwrap();
+        let value = session.eval_privileged(&format!("(loop [i 0 xs #{{}}] (if (= i {count}) (conj xs nil [42]) (recur (inc i) (conj xs i))))")).unwrap();
         session.collect().unwrap();
         let Observation::Set(elements) = decoder.decode_session(&mut session, &value).unwrap()
         else {
@@ -539,7 +541,7 @@ fn map_set_decoder_rejects_invalid_counts_flags_and_node_storage() {
         "(new suss.core/PersistentHashMap nil 1 (new suss.core/HashCollisionNode nil 42 1 (array)) false nil nil)",
         "(new suss.core/PersistentHashSet nil [1] nil)",
     ] {
-        let value = session.eval(source).unwrap();
+        let value = session.eval_privileged(source).unwrap();
         session.collect().unwrap();
         assert!(
             decoder.decode_session(&mut session, &value).is_err(),
@@ -562,7 +564,7 @@ fn vector_chunk_sequences_observe_rest_and_cons_tails_across_chunks_after_gc() {
             } else {
                 format!("(rest {vector})")
             };
-            let value = session.eval(&source).unwrap();
+            let value = session.eval_privileged(&source).unwrap();
             session.collect().unwrap();
             let mut expected = Vec::new();
             if prepend {
@@ -576,8 +578,8 @@ fn vector_chunk_sequences_observe_rest_and_cons_tails_across_chunks_after_gc() {
             );
         }
     }
-    let retained = session.eval("(rest [0 1 2])").unwrap();
-    session.eval("(ns suss.core) (def ChunkedSeq nil)").unwrap();
+    let retained = session.eval_privileged("(rest [0 1 2])").unwrap();
+    session.eval_privileged("(ns suss.core) (def ChunkedSeq nil)").unwrap();
     session.collect().unwrap();
     assert_eq!(
         decoder.decode_session(&mut session, &retained).unwrap(),
@@ -599,7 +601,7 @@ fn chunk_sequences_reject_malformed_storage_and_ignore_unobserved_prefix_values(
         "(new suss.core/ChunkedSeq '(1 2) (array 1 2) 0 0 nil nil)",
         "(new suss.core/ChunkedSeq [1 2] nil 0 0 nil nil)",
     ] {
-        let value = session.eval(source).unwrap();
+        let value = session.eval_privileged(source).unwrap();
         session.collect().unwrap();
         assert!(
             decoder.decode_session(&mut session, &value).is_err(),
@@ -609,11 +611,11 @@ fn chunk_sequences_reject_malformed_storage_and_ignore_unobserved_prefix_values(
     // The raw chunk's first value and backing vector's first chunk are not
     // observed by this cursor. Decoding those unrelated values would reject
     // a perfectly observable suffix containing ordinary scalar values.
-    let value = session.eval("(let [opaque (fn [] 42) v (loop [i 0 v []] (if (= i 33) v (recur (inc i) (conj v (if (< i 32) opaque 7)))))] (new suss.core/ChunkedSeq v (array opaque 7) 32 1 nil nil))");
+    let value = session.eval_privileged("(let [opaque (fn [] 42) v (loop [i 0 v []] (if (= i 33) v (recur (inc i) (conj v (if (< i 32) opaque 7)))))] (new suss.core/ChunkedSeq v (array opaque 7) 32 1 nil nil))");
     // This deliberately inconsistent final chunk must still fail its bounds.
     let value = value.unwrap();
     assert!(decoder.decode_session(&mut session, &value).is_err());
-    let value = session.eval("(let [opaque (fn [] 42) v (loop [i 0 v []] (if (= i 34) v (recur (inc i) (conj v (if (< i 32) opaque 7)))))] (new suss.core/ChunkedSeq v (array opaque 7) 32 1 nil nil))").unwrap();
+    let value = session.eval_privileged("(let [opaque (fn [] 42) v (loop [i 0 v []] (if (= i 34) v (recur (inc i) (conj v (if (< i 32) opaque 7)))))] (new suss.core/ChunkedSeq v (array opaque 7) 32 1 nil nil))").unwrap();
     session.collect().unwrap();
     assert_eq!(
         decoder.decode_session(&mut session, &value).unwrap(),
@@ -646,7 +648,7 @@ fn vector_decoder_rejects_count_exceeding_trie_capacity() {
 #[test]
 fn scalar_decoder_rejects_mutable_number_impostor() {
     let mut session = Session::new_repl().unwrap();
-    let anchor = session.eval("42").unwrap();
+    let anchor = session.eval_privileged("42").unwrap();
     session
         .inspect(&anchor, |mut store, canonical| {
             let canonical_type = canonical
@@ -682,7 +684,7 @@ fn scalar_decoder_rejects_mutable_number_impostor() {
 #[test]
 fn string_decoder_rejects_immutable_utf16_array_impostor() {
     let mut session = Session::new_repl().unwrap();
-    let anchor = session.eval("\"A\"").unwrap();
+    let anchor = session.eval_privileged("\"A\"").unwrap();
     session
         .inspect(&anchor, |mut store, canonical| {
             let canonical_type = canonical
@@ -719,7 +721,7 @@ fn sparse_array_backed_sequences_preserve_present_values_and_reject_observed_hol
             "(new suss.core/IndexedSeq (array 7 nil false) 0 nil)",
             "(let [a (array)] (aset a 0 7) (aset a 1 nil) (aset a 2 false) (aset a 4294967295 99) (new suss.core/IndexedSeq a 0 nil))",
         ] {
-            let value = session.eval(source).unwrap();
+            let value = session.eval_privileged(source).unwrap();
             session.collect().unwrap();
             assert_eq!(
                 decoder.decode_session(&mut session, &value).unwrap(),
@@ -732,7 +734,7 @@ fn sparse_array_backed_sequences_preserve_present_values_and_reject_observed_hol
             );
         }
         let tail = session
-            .eval("(let [a (array)] (aset a 2 7) (new suss.core/IndexedSeq a 2 nil))")
+            .eval_privileged("(let [a (array)] (aset a 2 7) (new suss.core/IndexedSeq a 2 nil))")
             .unwrap();
         session.collect().unwrap();
         assert_eq!(
@@ -740,7 +742,7 @@ fn sparse_array_backed_sequences_preserve_present_values_and_reject_observed_hol
             Observation::List(vec![Observation::Number(7.0_f64.to_bits())])
         );
         let hole = session
-            .eval("(let [a (array)] (aset a 2 7) (new suss.core/IndexedSeq a 1 nil))")
+            .eval_privileged("(let [a (array)] (aset a 2 7) (new suss.core/IndexedSeq a 1 nil))")
             .unwrap();
         session.collect().unwrap();
         assert!(
@@ -751,7 +753,7 @@ fn sparse_array_backed_sequences_preserve_present_values_and_reject_observed_hol
                 .contains("sentinel")
         );
         let oversized = session
-            .eval("(let [a (array)] (set! (.-length a) 4294967295) (new suss.core/IndexedSeq a 0 nil))")
+            .eval_privileged("(let [a (array)] (set! (.-length a) 4294967295) (new suss.core/IndexedSeq a 0 nil))")
             .unwrap();
         session.collect().unwrap();
         assert!(

@@ -45,7 +45,7 @@ fn compiled_macro_hamt_sequences_match_exact_pinned_order_in_both_phases_after_g
         let bridge = FormBridge::new(&mut session).unwrap();
         for case in corpus["cases"].as_array().unwrap() {
             let source = case["source"].as_str().unwrap();
-            let value = match session.eval(source) {
+            let value = match session.eval_privileged(source) {
                 Ok(value) => value,
                 Err(error) => {
                     failures.push(format!("{phase} {} execution: {error:?}", case["id"]));
@@ -121,7 +121,7 @@ fn compiled_macro_hamt_sequences_retain_metadata_old_descriptors_and_reject_fore
 }
 
 fn number(session: &mut Session, source: &str) -> f64 {
-    let value = session.eval(source).unwrap();
+    let value = session.eval_privileged(source).unwrap();
     session
         .inspect(&value, |mut store, value| {
             let fields = value
@@ -144,11 +144,11 @@ fn compiled_macro_hamt_sequences_grow_persistent_array_maps_with_symbol_collisio
         session.set_operation_fuel(100_000_000);
         session.eval("(def grown {})").unwrap();
         for i in 0..8 {
-            session.eval(&format!("(def grown (assoc grown (cljs.core/Symbol. nil \"key{i}\" \"key{i}\" 7 nil) {}))", i + 100)).unwrap();
+            session.eval_privileged(&format!("(def grown (assoc grown (cljs.core/Symbol. nil \"key{i}\" \"key{i}\" 7 nil) {}))", i + 100)).unwrap();
         }
         session.eval("(def old grown)").unwrap();
         for i in 8..20 {
-            session.eval(&format!("(def grown (assoc grown (cljs.core/Symbol. nil \"key{i}\" \"key{i}\" 7 nil) {}))", i + 100)).unwrap();
+            session.eval_privileged(&format!("(def grown (assoc grown (cljs.core/Symbol. nil \"key{i}\" \"key{i}\" 7 nil) {}))", i + 100)).unwrap();
         }
         session.collect().unwrap();
         for (source, expected) in [
@@ -187,7 +187,7 @@ fn compiled_macro_hamt_sequences_reject_corrupt_cursors_and_cycles_with_location
             "(ArrayNodeSeq. nil (array nil) 0 nil nil)",
             "(ArrayNodeSeq. nil (make-array 32) 33 nil nil)",
         ] {
-            let value = session.eval(source).unwrap();
+            let value = session.eval_privileged(source).unwrap();
             session.collect().unwrap();
             let failure = bridge.read(&mut session, &value, 70..80).unwrap_err();
             assert!(
@@ -196,7 +196,7 @@ fn compiled_macro_hamt_sequences_reject_corrupt_cursors_and_cycles_with_location
             );
         }
         let cycle = session
-            .eval("(NodeSeq. nil (array 7 8) 0 nil nil)")
+            .eval_privileged("(NodeSeq. nil (array 7 8) 0 nil nil)")
             .unwrap();
         session
             .inspect(&cycle, |mut store, value| {
@@ -224,13 +224,13 @@ fn compiled_macro_hamt_sequences_reject_corrupt_cursors_and_cycles_with_location
         );
         // Shared acyclic aliases remain valid within one decode, even though
         // a recursive alias of the same cursor must be rejected above.
-        let shared = session.eval("(let [s (NodeSeq. nil (array 7 8) 0 nil nil)] [s s])").unwrap();
+        let shared = session.eval_privileged("(let [s (NodeSeq. nil (array 7 8) 0 nil nil)] [s s])").unwrap();
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &shared, 70..80).unwrap();
         let entry = serde_json::json!({"tag":"seq", "items":[{"tag":"vector", "items":[{"tag":"f64", "bits":"401c000000000000"}, {"tag":"f64", "bits":"4020000000000000"}]}]});
         assert_eq!(tagged(&decoded), serde_json::json!({"tag":"vector", "items":[entry.clone(), entry]}));
         let sparse = session
-            .eval("(NodeSeq. nil (array 7 8 nil (aget (array) 0)) 0 nil nil)")
+            .eval_privileged("(NodeSeq. nil (array 7 8 nil (aget (array) 0)) 0 nil nil)")
             .unwrap();
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &sparse, 70..80).unwrap();

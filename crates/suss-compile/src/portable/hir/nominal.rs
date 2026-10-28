@@ -11,6 +11,14 @@ const PUBLIC_FIELD_TYPES: &[&str] = &[
     "WitSigned64",
     "WitUnsigned64",
 ];
+/// Core types whose constructors user code may call, while their fields stay
+/// private (#279): those core macro expansions construct in user code
+/// (defrecord's seq and iterator, lazy-seq), as Clojure's MapEntry and LazySeq
+/// constructors are public, and the string writer and its buffer, the
+/// counterparts of Clojure's public java.io.StringWriter.
+const CONSTRUCTIBLE_TYPES: &[&str] = &[
+    "MapEntry", "RecordIter", "LazySeq", "StringBufferWriter", "BootstrapStringBuffer",
+];
 /// User-facing collection classes whose whitelisted statics (EMPTY, fromArray
 /// and similar) user code may read; their fields and other statics stay
 /// private, like Clojure's package-private node classes.
@@ -62,6 +70,8 @@ impl Analyzer<'_> {
             Nominal::CoreClosedDescriptor
         } else if listed(PUBLIC_STATIC_TYPES) {
             Nominal::CoreStaticsDescriptor
+        } else if listed(CONSTRUCTIBLE_TYPES) {
+            Nominal::CoreConstructibleDescriptor
         } else {
             Nominal::CoreDescriptor
         };
@@ -781,6 +791,12 @@ impl Analyzer<'_> {
             });
             arguments.push(self.local(field, id));
         }
+        // Core never calls the generated factories of its own types, so they
+        // keep the user construction guard (#279).
+        let mut construction = self.nominal(form, Nominal::Construct, arguments);
+        if self.privileged {
+            construction = self.nominal(form, Nominal::BuiltinConstructGuard, vec![construction]);
+        }
         let arrow = Hir {
             source: None,
             span: form.span.clone(),
@@ -789,7 +805,7 @@ impl Analyzer<'_> {
             kind: Expression::Function {
                 parameters,
                 captures: vec![],
-                body: Box::new(self.nominal(form, Nominal::Construct, arguments)),
+                body: Box::new(construction),
             },
         };
         let arrow = self.nominal_definition(form, &arrow_name, arrow)?;

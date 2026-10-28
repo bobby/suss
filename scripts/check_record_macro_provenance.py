@@ -54,7 +54,7 @@ def verify_factory_adaptations(provenance=None, host_source=None):
     if host_source is None:
         host_source = (ROOT / 'crates/suss-compile/src/portable_macros.rs').read_text()
     host_source = re.sub(r'\s+', '', host_source)
-    if not re.search(r'macros\.session\.eval\(crate::portable_record_factories::SOURCE\)\?', host_source):
+    if not re.search(r'macros\.session\.eval_privileged\(crate::portable_record_factories::SOURCE\)\?', host_source):
         raise ValueError('compiled factory bootstrap installation missing')
     if not re.search(r'"record-factory-source".*?sha256\(crate::portable_record_factories::SOURCE\.as_bytes\(\)\)', host_source, re.S):
         raise ValueError('compiled factory artifact dependency missing')
@@ -109,7 +109,7 @@ def verify_label_adaptations(provenance=None, host_source=None, source_bytes=Non
     if host_source is None:
         host_source = (ROOT / 'crates/suss-compile/src/portable_macros.rs').read_text()
     host_source = re.sub(r'\s+', '', host_source)
-    if 'macros.session.eval(crate::portable_record_label::SOURCE)?;' not in host_source:
+    if 'macros.session.eval_privileged(crate::portable_record_label::SOURCE)?;' not in host_source:
         raise ValueError('record label bootstrap installation missing')
     if not re.search(r'"record-label-source".*?sha256\(crate::portable_record_label::SOURCE\.as_bytes\(\)\)', host_source, re.S):
         raise ValueError('record label artifact dependency missing')

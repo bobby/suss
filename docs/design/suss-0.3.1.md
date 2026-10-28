@@ -429,12 +429,31 @@ evidence where they agree with Clojure semantics. Consequences:
   Redefining or `with-redefs` of a public core var affects user call sites
   only. Dynamic and `^:redef` vars stay live; a core var first defined dynamic
   stays live even if later redefined without `:dynamic`.
+* Native protocol extension (`extend-type` of `default`, `nil`, `string`,
+  `array` and the other native kinds) installs on the protocol value and method
+  functions its `defprotocol` created, never on whatever the public vars hold
+  now (#279). Aliasing a core protocol or method var into a user protocol
+  therefore cannot change core dispatch. As with Clojure protocol fns, a
+  captured method keeps dispatching after its var is redefined, and
+  `satisfies?` reads the protocol var's current value.
+* User code cannot construct built-in types with private internals: their
+  constructors and generated `->Type` factories are private to suss.core, as
+  the persistent collection, node, keyword and symbol constructors of Clojure
+  are not public. `MapEntry`, `LazySeq` and `RecordIter` constructors stay
+  callable, since Clojure's are public and core macro expansions use them, but
+  no built-in can be constructed with a preset hash cache.
+* Persistent values built from a caller's array follow Clojure. `vec` of an
+  array, `PersistentVector/fromArray` with no-clone and
+  `PersistentArrayMap/createAsIfByAssoc` adopt the array, as Clojure's `vec`
+  and `createAsIfByAssoc` do; `vec`'s contract is that the array must not be
+  modified afterwards. `array-map` copies its arguments, so
+  `(apply array-map (array-seq a))` does not share `a`, as in Clojure.
 * These guarantees cover ordinary Clojure use. Deliberate circumvention of core
   implementation details is undefined behavior, as reflection on Clojure's
-  internals is on the JVM: for example aliasing a core protocol's method var into
-  another protocol, or calling built-in constructors with forged fields or hash
-  caches. Such programs stay memory safe and cannot corrupt compiler state,
-  which the host keeps authoritatively and transports afresh on each macro call.
+  internals is on the JVM: for example modifying an array after adopting it as
+  vector storage. Such programs stay memory safe and cannot corrupt compiler
+  state, which the host keeps authoritatively and transports afresh on each
+  macro call.
 * Compiler-produced macro data is immutable Clojure data: `&form`, `&env`,
   analyzer ASTs and captured namespace/declaration data. The compiler may share
   or cache it and needs no defense against guest mutation. Object identity of

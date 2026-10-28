@@ -531,6 +531,54 @@ pub(super) fn functions(b: &mut Builder) {
             &code,
         );
     }
+    // Instance -> instance after unprivileged `new` (#279). Core types with
+    // private internals cannot be constructed outside suss.core unless their
+    // constructor is public (MapEntry, LazySeq, ...); no core type can start
+    // with a forged hash cache.
+    let identity = |code: &mut Vec<Instruction<'static>>, bit: i64| {
+        code.extend([
+            LocalGet(1),
+            RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
+            StructGet { struct_type_index: DESCRIPTOR, field_index: 0 },
+            I64Const(bit),
+            I64And,
+            I64Const(0),
+            I64Ne,
+        ]);
+    };
+    let mut code = vec![
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(7)),
+        If(BlockType::Empty),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(7)),
+        StructGet { struct_type_index: 7, field_index: 0 },
+        LocalSet(1),
+        LocalGet(1),
+        RefTestNonNull(HeapType::Concrete(DESCRIPTOR)),
+        If(BlockType::Empty),
+    ];
+    identity(&mut code, nominal::CORE_PRIVATE_BIT);
+    identity(&mut code, nominal::CORE_CONSTRUCTIBLE_BIT);
+    code.extend([I32Eqz, I32And, If(BlockType::Empty)]);
+    nominal::message_error(&mut code, "Built-in type internals are private to suss.core");
+    code.push(End);
+    identity(&mut code, nominal::CORE_CLOSED_BIT);
+    code.extend([If(BlockType::Empty), LocalGet(0)]);
+    let units: Vec<_> = "__hash".encode_utf16().collect();
+    code.extend(units.iter().map(|unit| I32Const(*unit as i32)));
+    code.extend([
+        ArrayNewFixed { array_type_index: STRING, array_size: units.len() as u32 },
+        Call(b.names["named-property-get"]),
+        LocalSet(1),
+    ]);
+    for sentinel in [0, UNDEFINED] {
+        code.extend([LocalGet(1), I32Const(sentinel), RefI31, RefEq]);
+    }
+    code.extend([I32Or, I32Eqz, If(BlockType::Empty)]);
+    nominal::message_error(&mut code, "Built-in hash caches are private to suss.core");
+    code.extend([End, End, End, End, LocalGet(0)]);
+    b.function_with_locals("builtin-construct-guard", &[VALUE], &[VALUE], &[(1, VALUE)], &code);
 }
 
 // Original bounded legacy accessor operations over owned objects and scalar keys.

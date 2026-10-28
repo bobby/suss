@@ -55,7 +55,7 @@ class RecordFactoryProvenance(unittest.TestCase):
                     verify_factory_adaptations(data)
 
     def test_bootstrap_installation_and_artifact_dependency_required(self):
-        for old in ['macros.session.eval(crate::portable_record_factories::SOURCE)?;',
+        for old in ['macros.session.eval_privileged(crate::portable_record_factories::SOURCE)?;',
                     'dependencies.push(("record-factory-source".into(), crate::portable::bootstrap::sha256(crate::portable_record_factories::SOURCE.as_bytes())));']:
             with self.subTest(old=old):
                 old = re.sub(r'\s+', '', old)

@@ -192,7 +192,7 @@ fn compiled_macro_prerequisite_quotes_match_lossless_primary_observations() {
         assert!(ids.insert(case["id"].as_str().unwrap()));
         let source = case["source"].as_str().unwrap();
         let value = session
-            .eval(source)
+            .eval_privileged(source)
             .unwrap_or_else(|error| panic!("{source}: {error}"));
         session.collect().unwrap();
         let actual = session

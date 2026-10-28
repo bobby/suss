@@ -4,7 +4,7 @@ use suss_cli::portable_session::Session;
 fn compiled_macro_transient_hash_map_omitted_lookup_preserves_undefined() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.set_operation_fuel(100_000_000);
-        session.eval("(def lookup-map (transient (assoc (PersistentHashMap. nil 0 nil false nil nil) 1 101)))").unwrap();
+        session.eval_privileged("(def lookup-map (transient (assoc (PersistentHashMap. nil 0 nil false nil nil) 1 101)))").unwrap();
         let present = session.eval("(get lookup-map 1)").unwrap();
         session
             .inspect(&present, |mut store, value| {
@@ -48,7 +48,7 @@ fn compiled_macro_transient_hash_map_omitted_lookup_preserves_undefined() {
 fn compiled_macro_transient_hash_map_rejects_lookup_after_persistence() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.set_operation_fuel(100_000_000);
-        session.eval("(def lookup-map (transient (assoc (PersistentHashMap. nil 0 nil false nil nil) 1 101))) (def captured-lookup (fn [k] (get lookup-map k))) (def saved-map (persistent! lookup-map)) (def seen (array))").unwrap();
+        session.eval_privileged("(def lookup-map (transient (assoc (PersistentHashMap. nil 0 nil false nil nil) 1 101))) (def captured-lookup (fn [k] (get lookup-map k))) (def saved-map (persistent! lookup-map)) (def seen (array))").unwrap();
         session.collect().unwrap();
         for source in [
             "(get lookup-map 1)",
@@ -94,7 +94,7 @@ fn compiled_macro_transient_hash_map_lookup_matches_pinned_active_observations()
         session.set_operation_fuel(100_000_000);
         let bridge = suss_cli::portable_macro_data::FormBridge::new(&mut session).unwrap();
         for case in corpus["cases"].as_array().unwrap() {
-            let value = session.eval(case["source"].as_str().unwrap()).unwrap();
+            let value = session.eval_privileged(case["source"].as_str().unwrap()).unwrap();
             session.collect().unwrap();
             let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
             let actual = match decoded.into_parts().2 {
