@@ -263,7 +263,7 @@ fn incoming_lists_build_real_vector_tries_and_retain_owned_values_after_gc() {
 #[test]
 fn list_results_accept_persistent_vectors_and_subvector_views() {
     let (mut store, instance) = instantiate(
-        "(defn ^:export values [] [1 2 3]) (defn ^:export nested [] (new suss.core/Subvec nil (new suss.core/Subvec nil [0 1 2 3] 1 4 nil) 1 2 nil)) (defn ^:export view [xs start end] (subvec xs start end))",
+        "(defn ^:export values [] [1 2 3]) (defn ^:export nested [] (subvec (subvec [0 1 2 3] 1 4) 1 2)) (defn ^:export view [xs start end] (subvec xs start end))",
         "export values: func() -> list<s32>; export nested: func() -> list<s32>; export view: func(xs: list<s32>, start: s32, end: s32) -> list<s32>;",
     );
     let values = instance
@@ -426,7 +426,10 @@ fn malformed_list_shapes_and_elements_raise_decoded_language_errors() {
             .collect::<Vec<_>>();
         let message = String::from_utf16(&units).unwrap();
         assert!(
-            message.contains("WIT") || message.contains("list"),
+            // Forged core storage is rejected at construction (#279).
+            message.contains("WIT")
+                || message.contains("list")
+                || message == "Built-in type internals are private to suss.core",
             "{message}"
         );
     }

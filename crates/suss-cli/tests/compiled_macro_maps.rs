@@ -89,7 +89,7 @@ fn compiled_macro_maps_reject_foreign_and_malformed_storage_and_recover() {
         "(suss.core/PersistentArrayMapSeq. (array :a 1) 0.5 nil)",
         "(suss.core/PersistentArrayMapSeq. (array :a 1) 0 true)",
     ] {
-        let value = session.eval(source).unwrap();
+        let value = session.eval_privileged(source).unwrap();
         session.collect().unwrap();
         assert!(bridge.read(&mut session, &value, 0..1).is_err(), "{source}");
     }
@@ -99,7 +99,7 @@ fn compiled_macro_maps_reject_foreign_and_malformed_storage_and_recover() {
         ("(suss.core/PersistentArrayMap. nil 2049 (make-array 4098) nil)", true),
         ("(suss.core/PersistentArrayMapSeq. (make-array 4098) 0 nil)", false),
     ] {
-        let value = session.eval(source).unwrap();
+        let value = session.eval_privileged(source).unwrap();
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &value, 0..1).unwrap();
         assert_eq!(decoded.span, 0..1);

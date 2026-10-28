@@ -196,7 +196,7 @@ fn compiled_macro_forms_reject_unknown_malformed_metadata_and_bounded_data() {
             "surrogate",
         ),
     ] {
-        let value = macros.eval(source).unwrap();
+        let value = macros.eval_privileged(source).unwrap();
         let before = macros.stats();
         let Err(SessionError::Compile(error)) = bridge.read(&mut macros, &value, 901..922) else {
             panic!("Must reject {source}");

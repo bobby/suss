@@ -119,7 +119,7 @@ fn stored_map_sequences_and_sorted_views_decode_without_guest_projection() {
             "(new suss.core/PersistentArrayMapSeq (array 7 8) 2 nil)",
             "(new suss.core/PersistentTreeMapSeq nil nil true 0 nil)",
         ] {
-            let value = session.eval(source).unwrap();
+            let value = session.eval_privileged(source).unwrap();
             assert!(
                 decoder.decode_session(&mut session, &value).is_err(),
                 "{source}"

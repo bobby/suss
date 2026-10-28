@@ -149,7 +149,7 @@ fn compiled_macro_sets_retain_canonical_roots_and_reject_forged_storage_after_gc
             "(PersistentHashSet. nil [] nil)",
             "(KeySeq. nil (fn [] nil) nil)",
         ] {
-            let malformed = session.eval(source).unwrap();
+            let malformed = session.eval_privileged(source).unwrap();
             session.collect().unwrap();
             assert!(bridge.read(&mut session, &malformed, 10..20).is_err(), "{source}");
         }

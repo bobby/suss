@@ -286,7 +286,7 @@ fn tree_map_update_sharing_comparator_identity_and_old_tree_survive_gc() {
             ("BlackNode", "(BlackNode. 0 0 nil nil nil)"),
             ("RedNode", "(RedNode. 0 0 nil nil nil)"),
         ] {
-            let anchor = s.eval(source).unwrap();
+            let anchor = s.eval_privileged(source).unwrap();
             let (descriptor, ty) = s
                 .inspect(&anchor, |mut store, value| {
                     let owner = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
