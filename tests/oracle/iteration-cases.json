@@ -299,7 +299,7 @@
       }
     },
     {
-      "id": "iterator-position-field",
+      "id": "iterator-second-next",
       "source": "(let [it (-iterator (seq (array 1 2)))] (.next it) (.next it))",
       "expected": {
         "tag": "f64",
@@ -427,7 +427,7 @@
       }
     },
     {
-      "id": "iterator-exhaustion-advances-offset",
+      "id": "iterator-has-next-after-last",
       "source": "(let [it (IndexedSeqIterator. (array 1) 0)] (.next it) (.hasNext it))",
       "expected": {
         "tag": "bool",

@@ -72,10 +72,11 @@ const LIVE_CORE_REBINDING: &[&str] = &[
 fn setup(phase: Phase) -> Session {
     let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
     session.set_operation_fuel(100_000_000);
-    // Ported core reads other types' private fields, so it runs as core (#278).
+    // Ported core reads other types' private fields, so it runs as core (#278);
+    // the probe's types stay user types.
     session.eval_privileged(CORE).unwrap();
     session.enter_namespace("user").unwrap();
-    session.eval_privileged(PROBE).unwrap();
+    session.eval(PROBE).unwrap();
     session.collect().unwrap();
     session
 }

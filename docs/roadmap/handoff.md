@@ -29215,20 +29215,31 @@ Clojure forbids and #278 now enforces. Fixed as follows:
   other types' mutable fields from free functions (Box `val`, Atom `state`,
   transient node `arr`/`cnt`/`bitmap`, ...), so `core.sus` runs only as core.
   `portable_comparators`, `portable_sorted_tree_collections`,
-  `portable_named_properties` and `compiled_macro_self_local_methods` load it
-  with `eval_privileged` and keep cases unprivileged;
-  `portable_sorted_tree_nodes` and `portable_sorted_comparator_prerequisites`
-  evaluate everything privileged, since their cases probe core node internals.
-- Privileged `suss.core` is direct-linked, so 19 pinned cases that observe a
-  rebound core var inside core (8 comparator, 11 sorted tree: `array?`,
-  `type`, `compare`, `=`, `nth`, `str_`, `hash-unordered-coll`,
-  `hash-ordered-coll`, `contains?`, `>`, `-comparator`) are ClojureScript-only.
-  The user chose to drop them. They stay in the reference corpora, whose
-  ClojureScript evidence receipts pin those files, and each Rust test skips a
-  closed `LIVE_CORE_REBINDING` list instead.
+  `portable_named_properties`, `portable_sorted_comparator_prerequisites` and
+  `compiled_macro_self_local_methods` load it (and only it) with
+  `eval_privileged`; probes and cases stay user code. In
+  `portable_sorted_tree_nodes`, core, the node probe (it reads `BlackNode`
+  fields) and the four core-internal structural tests (they call core-private
+  `balance-left`/`tree-map-kv-reduce` and read node `__hash`) run privileged;
+  the user probe-type tests (`TreeMethodProbe`, `this-as`,
+  `direct-protocol-call` on `TreeIndexedProbe`) stay user code.
+- Privileged `suss.core` is direct-linked, so 40 pinned cases that observe a
+  rebound core var inside core are ClojureScript-only (8 comparator, 11 sorted
+  tree, 10 tree node, 9 raw tree node, 2 sorted prerequisite: `array?`,
+  `type`, `compare`, `=`, `nth`, `str_`, `compare-indexed`,
+  `hash-unordered-coll`, `hash-ordered-coll`, `contains?`, `>`, `-comparator`,
+  `reduced?`, `deref`). The user chose to drop them. They stay in the
+  reference corpora, whose ClojureScript evidence receipts pin those files,
+  and each Rust test skips a closed, membership-checked `LIVE_CORE_REBINDING`
+  list. Cases asserting that a rebinding is ignored (`*-ignores-public-rebind`,
+  `*-no-public-comparator`, `ci-immutable-macro-paths`,
+  `public-primitive-predicate-rebind`, `str-nil-single-variadic-rebind`) still
+  run, as they hold under direct linking. Running a rebinding case privileged
+  would instead pass through core's internal link write (independent review).
 - Fixture cases rewritten through methods with unchanged expectations:
   caching hash (3), object methods (2), string fields (4: munged-name
-  collisions now observed via the type's methods or a second instance), named
+  collisions now observed via the type's methods, a second instance, or a
+  munged read of an immutable field), named
   properties (`PropertyProbe` accessors, and construction instead of an
   immutable write), map mutation helpers (`traceValue`).
 - Iteration: two cases read the private iterator index. Checked against
@@ -29236,12 +29247,20 @@ Clojure forbids and #278 now enforces. Fixed as follows:
   `NoSuchElementException` when exhausted) and the `java.util.Iterator`
   contract: `iterator-position-field` now takes the second `.next` (2) and
   `iterator-exhaustion-advances-offset` checks `.hasNext` is false after the
-  last element, without calling `.next` past the end. Pre-existing cases still
+  last element, without calling `.next` past the end (renamed
+  `iterator-second-next` and `iterator-has-next-after-last`; checked by hand,
+  not by a fresh ClojureScript oracle run, as no JVM is installed). Pre-existing cases still
   assert ClojureScript-only iterator behaviour (`iterator-exhausted-next-nil`,
   extra `.hasNext` operand, JS array growth); left for a follow-up.
 - `named_access_uses_canonical_storage_...` now asserts that assigning the
   immutable `null$` field fails and the method still reads 7.
 - `portable_quoted_identifiers` expected the five-field descriptor.
 
-All twelve affected suites pass locally; the CI script checks pass.
+A second independent review found nothing blocking. Its should-fix items are
+applied: the narrower privilege scope above, the item-3 regression now asserts
+that a captured `Forger` instance satisfies the protocol and `Cell` does not,
+and `.-call` coverage includes an immutable `call` read from outside and a
+mutable one read inside its own type.
+
+All affected suites pass locally; the CI script checks pass.
 

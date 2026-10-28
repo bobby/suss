@@ -389,7 +389,7 @@
     },
     {
       "id": "field-hyphen-callback",
-      "source": "(do (deftype Hyphen [^:mutable some-field] Object (read [this] some-field) (write [this v] (set! some-field v))) (let [a (Hyphen. 7)] (.write a 11) [(.read a) (.read a)]))",
+      "source": "(do (deftype Hyphen [some-field] Object (read [this] some-field)) (let [a (Hyphen. 11)] [(.read a) (.-some_field a)]))",
       "expected": {
         "tag": "vector",
         "items": [

@@ -1,6 +1,7 @@
 //! Execute complete tree nodes, raw values/effects and physical child sharing.
-//! Ported core and its internal probes read other types' private fields, so
-//! all source here is evaluated privileged, as core (#278).
+//! Ported core, its node probe and the core-internal structural tests read
+//! other types' private fields and core-private helpers, so they run as core
+//! (#278). Tests of user probe types stay user code.
 use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
 use suss_compile::portable::resolve::Phase;
 use wasmtime::{AsContextMut, Val};
@@ -92,9 +93,37 @@ const IDS: &[&str] = &[
     "rednode-comparable-live-delegate",
     "rednode-comparable-rejection-format-order",
 ];
+/// Pinned ClojureScript observations that rebinding a core var changes core's
+/// own behaviour. Shipped core is direct-linked, as Clojure core is since 1.8,
+/// so Suss does not execute these; the reference corpora keep them (#278).
+const LIVE_CORE_REBINDING: &[&str] = &[
+    "blacknode-hash-cache-zero",
+    "blacknode-hash-cache-success",
+    "blacknode-hash-cache-throw",
+    "rednode-hash-cache-zero",
+    "rednode-hash-cache-success",
+    "rednode-hash-cache-throw",
+    "blacknode-comparable-live-delegate",
+    "rednode-comparable-live-delegate",
+    "blacknode-comparable-rejection-format-order",
+    "rednode-comparable-rejection-format-order",
+];
+const RAW_LIVE_CORE_REBINDING: &[&str] = &[
+    "Symbol-rejection-order",
+    "Keyword-rejection-order",
+    "Subvec-rejection-order",
+    "PersistentVector-rejection-order",
+    "MapEntry-rejection-order",
+    "BlackNode-rejection-order",
+    "RedNode-rejection-order",
+    "BlackNode-live-delegate",
+    "RedNode-live-delegate",
+];
 fn setup(phase: Phase) -> Session {
     let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
     session.set_operation_fuel(100_000_000);
+    // Ported core and its node probe read other types' private fields, so they
+    // run as core (#278). Cases and user probe types stay user code.
     session
         .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
@@ -140,9 +169,13 @@ fn complete_tree_nodes_match_ordered_pinned_value_and_effect_cases_after_gc() {
             serde_json::json!({"tag":"bool","value":true})
         );
     }
+    assert!(LIVE_CORE_REBINDING.iter().all(|id| IDS.contains(id)));
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = setup(phase);
         for case in cases {
+            if LIVE_CORE_REBINDING.contains(&case["id"].as_str().unwrap()) {
+                continue;
+            }
             let source = case["source"].as_str().unwrap();
             let value = session
                 .eval_privileged(source)
@@ -517,7 +550,7 @@ fn tree_reduction_preserves_wrapper_identity_original_throw_and_effect_order() {
 fn hyphenated_object_methods_preserve_receiver_lookup_and_argument_order() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut s = setup(phase);
-        s.eval_privileged(
+        s.eval(
             "(def method-effects 0)
             (deftype TreeMethodProbe [x] Object
               (read-value [this] x)
@@ -525,23 +558,23 @@ fn hyphenated_object_methods_preserve_receiver_lookup_and_argument_order() {
         )
         .unwrap();
         let result = s
-            .eval_privileged(
+            .eval(
                 "(.read-value (do (set! method-effects 1) (TreeMethodProbe. 7))
                 (do (set! method-effects (+ (* method-effects 10) 2)) 9))",
             )
             .unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &result), 16.0_f64.to_bits());
-        let effects = s.eval_privileged("method-effects").unwrap();
+        let effects = s.eval("method-effects").unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &effects), 12.0_f64.to_bits());
-        let result = s.eval_privileged("(.read-value (TreeMethodProbe. 7))").unwrap();
+        let result = s.eval("(.read-value (TreeMethodProbe. 7))").unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &result), 7.0_f64.to_bits());
         // ClojureScript munges the source property spelling consistently; an
         // absent field reads nil rather than becoming a compile-time error.
         let missing = s
-            .eval_privileged("(nil? (.-bad-name (TreeMethodProbe. 7)))")
+            .eval("(nil? (.-bad-name (TreeMethodProbe. 7)))")
             .unwrap();
         assert_eq!(
             s.inspect(&missing, |store, value| {
@@ -550,8 +583,8 @@ fn hyphenated_object_methods_preserve_receiver_lookup_and_argument_order() {
             .unwrap(),
             4
         );
-        s.eval_privileged("(set! method-effects 0)").unwrap();
-        let Err(SessionError::Language(payload)) = s.eval_privileged(
+        s.eval("(set! method-effects 0)").unwrap();
+        let Err(SessionError::Language(payload)) = s.eval(
             "(.read-value
             (do (set! method-effects 1) (throw 73))
             (do (set! method-effects 2) 9))",
@@ -560,7 +593,7 @@ fn hyphenated_object_methods_preserve_receiver_lookup_and_argument_order() {
         };
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &payload), 73.0_f64.to_bits());
-        let effects = s.eval_privileged("method-effects").unwrap();
+        let effects = s.eval("method-effects").unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &effects), 1.0_f64.to_bits());
     }
@@ -570,7 +603,7 @@ fn hyphenated_object_methods_preserve_receiver_lookup_and_argument_order() {
 fn this_as_restores_the_enclosing_receiver_after_nested_calls_and_language_throws() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut s = setup(phase);
-        s.eval_privileged(
+        s.eval(
             "(deftype ThisReceiverProbe [tag] Object
                (is-self [this] (this-as receiver (identical? receiver this)))
                (nested [this other]
@@ -589,7 +622,7 @@ fn this_as_restores_the_enclosing_receiver_after_nested_calls_and_language_throw
             "(.catches-inner (ThisReceiverProbe. 1) (ThisReceiverProbe. 2))",
         ] {
             let result = s
-                .eval_privileged(&format!("(if {expression} 1 0)"))
+                .eval(&format!("(if {expression} 1 0)"))
                 .unwrap();
             s.collect().unwrap();
             assert_eq!(number_bits(&mut s, &result), 1.0_f64.to_bits(), "{expression}");
@@ -601,7 +634,7 @@ fn this_as_restores_the_enclosing_receiver_after_nested_calls_and_language_throw
 fn direct_nominal_protocol_call_captures_live_method_before_argument_effects() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut s = setup(phase);
-        s.eval_privileged(
+        s.eval(
             "(def direct-effects 0)
              (deftype TreeIndexedProbe [x] IIndexed
                (-nth [this n] x)
@@ -609,7 +642,7 @@ fn direct_nominal_protocol_call_captures_live_method_before_argument_effects() {
         )
         .unwrap();
         let value = s
-            .eval_privileged(
+            .eval(
                 "(suss.bootstrap/direct-protocol-call IIndexed -nth
                 (do (set! direct-effects 1) (TreeIndexedProbe. 7))
                 (do (set! direct-effects (+ (* direct-effects 10) 2))
@@ -620,11 +653,11 @@ fn direct_nominal_protocol_call_captures_live_method_before_argument_effects() {
             .unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &value), 7.0_f64.to_bits());
-        let effects = s.eval_privileged("direct-effects").unwrap();
+        let effects = s.eval("direct-effects").unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &effects), 12.0_f64.to_bits());
         let value = s
-            .eval_privileged("(suss.bootstrap/direct-protocol-call IIndexed -nth (TreeIndexedProbe. 7) 0)")
+            .eval("(suss.bootstrap/direct-protocol-call IIndexed -nth (TreeIndexedProbe. 7) 0)")
             .unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &value), 9.0_f64.to_bits());
@@ -636,10 +669,10 @@ fn direct_nominal_protocol_call_captures_live_method_before_argument_effects() {
             "(suss.bootstrap/direct-protocol-call NotAProtocol -nth (TreeIndexedProbe. 7) 0)",
             "(suss.bootstrap/direct-protocol-call cljs.core/IIndexed -nth (TreeIndexedProbe. 7) 0)",
         ] {
-            assert!(s.eval_privileged(source).is_err(), "{source}");
+            assert!(s.eval(source).is_err(), "{source}");
         }
-        s.eval_privileged("(set! direct-effects 0)").unwrap();
-        let Err(SessionError::Language(payload)) = s.eval_privileged(
+        s.eval("(set! direct-effects 0)").unwrap();
+        let Err(SessionError::Language(payload)) = s.eval(
             "(suss.bootstrap/direct-protocol-call IIndexed -nth
             (do (set! direct-effects 1) (throw 73))
             (do (set! direct-effects 2) 0))",
@@ -648,7 +681,7 @@ fn direct_nominal_protocol_call_captures_live_method_before_argument_effects() {
         };
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &payload), 73.0_f64.to_bits());
-        let effects = s.eval_privileged("direct-effects").unwrap();
+        let effects = s.eval("direct-effects").unwrap();
         s.collect().unwrap();
         assert_eq!(number_bits(&mut s, &effects), 1.0_f64.to_bits());
     }
@@ -897,7 +930,11 @@ fn raw_tree_shapes_comparison_bits_errors_and_traces_match_fresh_pinned_observat
             raw_tree_decode(&mut store, &value, &classes, &mut Vec::new(), &mut 4096)
         })
         .unwrap();
+        assert!(RAW_LIVE_CORE_REBINDING.iter().all(|id| cases.iter().any(|case| case["id"] == *id)));
         for case in cases {
+            if RAW_LIVE_CORE_REBINDING.contains(&case["id"].as_str().unwrap()) {
+                continue;
+            }
             s.eval_privileged("(set! raw-tree-trace 0)").unwrap();
             let value = match (
                 case["mode"].as_str().unwrap(),

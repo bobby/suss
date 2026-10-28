@@ -1,6 +1,4 @@
 //! Whole sorted prerequisites; authored only, bootstrap/native execution pending.
-//! Ported core and its internal probes read other types' private fields, so
-//! all source here is evaluated privileged, as core (#278).
 use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
 use suss_compile::portable::resolve::Phase;
 use wasmtime::Val;
@@ -53,15 +51,20 @@ const IDS: &[&str] = &[
     "keyword-namespace-tie-conversion-before-name",
     "ci-immutable-macro-paths",
 ];
+/// Pinned ClojureScript observations that rebinding a core var changes core's
+/// own behaviour. Shipped core is direct-linked, as Clojure core is since 1.8,
+/// so Suss does not execute these; the reference corpus keeps them (#278).
+const LIVE_CORE_REBINDING: &[&str] = &["ci-live-reduced-predicate", "ci-live-deref"];
 fn setup(phase: Phase) -> Session {
     let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
     session.set_operation_fuel(100_000_000);
+    // Ported core reads other types' private fields, so it runs as core (#278).
     session
         .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session
-        .eval_privileged(include_str!(
+        .eval(include_str!(
             "../../../tests/oracle/fixtures/sorted-prerequisite-probe.sus"
         ))
         .unwrap();
@@ -103,12 +106,16 @@ fn complete_sorted_prerequisites_match_ordered_pinned_value_and_effect_cases_aft
             serde_json::json!({"tag":"bool","value":true})
         );
     }
+    assert!(LIVE_CORE_REBINDING.iter().all(|id| IDS.contains(id)));
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = setup(phase);
         for case in cases {
+            if LIVE_CORE_REBINDING.contains(&case["id"].as_str().unwrap()) {
+                continue;
+            }
             let source = case["source"].as_str().unwrap();
             let value = session
-                .eval_privileged(source)
+                .eval(source)
                 .unwrap_or_else(|e| panic!("{}: {source}: {e}", case["id"]));
             session.collect().unwrap();
             session
@@ -153,27 +160,27 @@ fn sorted_prerequisite_returns_and_original_throw_payload_are_independently_deco
                 1.0_f64.to_bits(),
             ),
         ] {
-            let value = session.eval_privileged(source).unwrap();
+            let value = session.eval(source).unwrap();
             session.collect().unwrap();
             assert_eq!(number_bits(&mut session, &value), expected, "{source}");
         }
         let value = session
-            .eval_privileged("(ci-reduce [1] (fn [_ _] (reduced ##NaN)) 0)")
+            .eval("(ci-reduce [1] (fn [_ _] (reduced ##NaN)) 0)")
             .unwrap();
         session.collect().unwrap();
         assert!(f64::from_bits(number_bits(&mut session, &value)).is_nan());
-        session.eval_privileged("(def sorted-effect 0)").unwrap();
-        let Err(SessionError::Language(payload)) = session.eval_privileged(
+        session.eval("(def sorted-effect 0)").unwrap();
+        let Err(SessionError::Language(payload)) = session.eval(
             "(ci-reduce [1 2] (fn [_ _] (set! sorted-effect (+ sorted-effect 1)) (throw 73)) 0)",
         ) else {
             panic!("original reducer throw required")
         };
         session.collect().unwrap();
         assert_eq!(number_bits(&mut session, &payload), 73.0_f64.to_bits());
-        let trace = session.eval_privileged("sorted-effect").unwrap();
+        let trace = session.eval("sorted-effect").unwrap();
         session.collect().unwrap();
         assert_eq!(number_bits(&mut session, &trace), 1.0_f64.to_bits());
-        let recovery = session.eval_privileged("(ci-reduce [17 23] + 0)").unwrap();
+        let recovery = session.eval("(ci-reduce [17 23] + 0)").unwrap();
         session.collect().unwrap();
         assert_eq!(number_bits(&mut session, &recovery), 40.0_f64.to_bits());
     }
