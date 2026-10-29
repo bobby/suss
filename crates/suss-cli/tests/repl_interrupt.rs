@@ -13,8 +13,9 @@ use nix::unistd::Pid;
 #[test]
 fn sigint_interrupts_running_evaluation_and_the_repl_continues() {
     let mut child = Command::new(env!("CARGO_BIN_EXE_suss"))
-        // An unbounded budget: only an interrupt can end the loop below.
-        .args(["repl", "--fuel", &u64::MAX.to_string()])
+        // The REPL's default budget is unbounded (#289): only an interrupt can
+        // end the loop below.
+        .arg("repl")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

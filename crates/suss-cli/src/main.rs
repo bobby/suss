@@ -677,20 +677,24 @@ mod repl_interrupt {
 }
 
 /// Preserve legacy --fuel for both operation budgets, then apply the explicit
-/// compilation/Macro override independently of flag order. Defaults are unchanged.
+/// compilation/Macro override independently of flag order. An interactive REPL
+/// has no default bound, as in Clojure: Ctrl-C interrupts through epochs, not
+/// fuel. Unattended paths (AOT, -e, embedded sessions) keep finite defaults.
 fn apply_repl_fuel_limits(
     session: &mut suss_cli::portable_session::Session,
     macros: &mut suss_cli::portable_macros::CompiledMacros,
     fuel: Option<u64>,
     compile_fuel: Option<u64>,
 ) {
-    if let Some(fuel) = fuel {
-        session.set_operation_fuel(fuel);
-        macros.set_operation_fuel(fuel);
-    }
-    if let Some(compile_fuel) = compile_fuel {
-        macros.set_operation_fuel(compile_fuel);
-    }
+    let (evaluation, compilation) = repl_fuel_limits(fuel, compile_fuel);
+    session.set_operation_fuel(evaluation);
+    macros.set_operation_fuel(compilation);
+}
+
+/// Evaluation and compilation/Macro budgets for one REPL input.
+fn repl_fuel_limits(fuel: Option<u64>, compile_fuel: Option<u64>) -> (u64, u64) {
+    let evaluation = fuel.unwrap_or(u64::MAX);
+    (evaluation, compile_fuel.unwrap_or(evaluation))
 }
 
 /// Run each input in the same Store using independently compiled fragments.
@@ -861,7 +865,7 @@ fn run_repl(fuel: Option<u64>, compile_fuel: Option<u64>) {
             Ok(text) => println!("{text}"),
             Err(error) => eprintln!(
                 "Error: {}",
-                portable_repl::error_display(&mut session, &error)
+                portable_repl::repl_error_display(&mut session, &macros, &error)
             ),
         }
         input.clear();
@@ -871,7 +875,7 @@ fn run_repl(fuel: Option<u64>, compile_fuel: Option<u64>) {
         if let Err(error) = portable_repl::evaluate_compiled_with_display(&mut session, &mut macros, &input, &mut display) {
             eprintln!(
                 "Error: {}",
-                portable_repl::error_display(&mut session, &error)
+                portable_repl::repl_error_display(&mut session, &macros, &error)
             );
         }
     }
@@ -885,15 +889,16 @@ mod repl_fuel_tests {
     use suss_compile::portable::{ExpansionHost, DEFAULT_OPERATION_FUEL};
 
     #[test]
-    fn repl_limits_preserve_defaults_legacy_and_independent_compile_options() {
+    fn repl_limits_default_to_unbounded_with_legacy_and_independent_compile_options() {
         let mut runtime = Session::new_repl().unwrap();
         let mut macros = CompiledMacros::new().unwrap();
+        // Embedded sessions keep the finite default; only the REPL lifts it (#289).
         assert_eq!(runtime.options().fuel_per_operation, 10_000_000);
         assert_eq!(ExpansionHost::expansion_work_fuel(&macros), 10_000_000);
         for (eval, compile, expected_eval, expected_compile) in [
-            (None, None, 10_000_000, 10_000_000),
+            (None, None, u64::MAX, u64::MAX),
             (Some(37), None, 37, 37),
-            (None, Some(59), 10_000_000, 59),
+            (None, Some(59), u64::MAX, 59),
             (Some(37), Some(59), 37, 59),
             (Some(0), None, 0, 0),
             (Some(37), Some(0), 37, 0),

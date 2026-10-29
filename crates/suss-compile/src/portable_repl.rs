@@ -257,6 +257,34 @@ pub fn error_display(session: &mut Session, error: &SessionError) -> String {
     }
 }
 
+/// REPL error text: an exhausted per-input budget names itself and the flag
+/// that raises it instead of a Wasm backtrace (#289). Runtime traps spend the
+/// evaluation budget; macro expansion and compilation fail as diagnostics.
+pub fn repl_error_display(
+    runtime: &mut Session,
+    macros: &crate::portable_macros::CompiledMacros,
+    error: &SessionError,
+) -> String {
+    let exhausted = |budget: &str, limit: u64, flag: &str| {
+        format!("{budget} fuel exhausted (limit {limit} per input); raise it with {flag}, or omit it for no limit")
+    };
+    match error {
+        SessionError::Trap(trap)
+            if trap.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel) =>
+        {
+            exhausted("Evaluation", runtime.options().fuel_per_operation, "--fuel")
+        }
+        SessionError::Compile(diagnostic)
+            if diagnostic.message.contains("all fuel consumed")
+                || diagnostic.message.contains("fuel exhausted") =>
+        {
+            let limit = crate::portable::ExpansionHost::expansion_work_fuel(macros);
+            exhausted("Compilation", limit, "--compile-fuel")
+        }
+        _ => error_display(runtime, error),
+    }
+}
+
 /// Evaluate actual parsed forms once, retaining a separate compiled macro Store.
 /// A standalone source definition returns its actual compile-time function value.
 pub fn evaluate_compiled(
