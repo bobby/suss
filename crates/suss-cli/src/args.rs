@@ -364,10 +364,10 @@ USAGE:
 
 OPTIONS:
     -r, repl        Start the REPL (default if no arguments)
-        --fuel <N>      Set evaluation and compilation fuel (default 10000000 each)
+        --fuel <N>      Limit evaluation and compilation fuel per input (default: no limit)
         --compile-fuel <N>
                         Override compilation and macro-expansion fuel; evaluation fuel is unchanged
-                        Ctrl-C interrupts a running input
+                        Ctrl-C interrupts a running input; fuel does not bound memory
     -e <EXPR>       Evaluate an expression and print the result
     -h, --help      Print this help message
     -V, --version   Print version information

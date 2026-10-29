@@ -257,6 +257,61 @@ pub fn error_display(session: &mut Session, error: &SessionError) -> String {
     }
 }
 
+/// REPL error text: an exhausted per-input budget names itself and the flag
+/// that raises it instead of a Wasm backtrace (#289). Runtime traps spend the
+/// evaluation budget; macro definitions retag theirs as diagnostics
+/// ([`macro_definition_error`]). Only diagnostics that wrap the per-input
+/// compilation budget qualify, never the compiler's fixed internal counters.
+pub fn repl_error_display(
+    runtime: &mut Session,
+    macros: &crate::portable_macros::CompiledMacros,
+    error: &SessionError,
+) -> String {
+    let evaluation = runtime.options().fuel_per_operation;
+    let compilation = crate::portable::ExpansionHost::expansion_work_fuel(macros);
+    let exhausted = |budget: &str, limit: u64, flag: &str| {
+        format!("{budget} fuel exhausted (limit {limit} per input); raise it with {flag}, or omit it for no limit")
+    };
+    match error {
+        SessionError::Trap(trap)
+            if evaluation != u64::MAX
+                && trap.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel) =>
+        {
+            exhausted("Evaluation", evaluation, "--fuel")
+        }
+        SessionError::Compile(diagnostic)
+            if compilation != u64::MAX && compilation_budget_spent(&diagnostic.message) =>
+        {
+            exhausted("Compilation", compilation, "--compile-fuel")
+        }
+        _ => error_display(runtime, error),
+    }
+}
+
+fn compilation_budget_spent(message: &str) -> bool {
+    !message.contains("Interrupted")
+        && (message.contains("all fuel consumed by WebAssembly")
+            || message.contains("budget exhausted")
+            || message.contains("Macro expansion native work fuel exhausted")
+            || message.contains("IR verification fuel exhausted"))
+}
+
+/// A macro definition runs in the macro session: its fuel trap spent the
+/// compilation budget, so report it as a compilation diagnostic.
+fn macro_definition_error(error: SessionError, span: std::ops::Range<usize>) -> SessionError {
+    match error {
+        SessionError::Trap(trap)
+            if trap.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel) =>
+        {
+            SessionError::Compile(crate::portable::Diagnostic {
+                span,
+                message: format!("Macro definition budget exhausted: {trap:#}"),
+            })
+        }
+        error => error,
+    }
+}
+
 /// Evaluate actual parsed forms once, retaining a separate compiled macro Store.
 /// A standalone source definition returns its actual compile-time function value.
 pub fn evaluate_compiled(
@@ -416,11 +471,11 @@ pub(crate) fn prepare_script_compiled_batch(
                     staged_macros.push((macros.binding_checkpoint()?, global));
                 }
                 macros.enter_namespace(namespace)?;
-                prepared.push(PreparedScript::Macro(macros.define_form_display(
-                    form,
-                    0..source_len,
-                    Some(origin),
-                )?));
+                prepared.push(PreparedScript::Macro(
+                    macros
+                        .define_form_display(form, 0..source_len, Some(origin))
+                        .map_err(|error| macro_definition_error(error, 0..source_len))?,
+                ));
             } else {
                 let input = snapshot.prepare_with_origin(
                     vec![form],
@@ -482,7 +537,8 @@ fn evaluate_forms_compiled(
                             0..source_len,
                             Some(origin),
                         )
-                        .map(CompiledValue::Macro);
+                        .map(CompiledValue::Macro)
+                        .map_err(|error| macro_definition_error(error, 0..source_len));
                 }
             }
         }
