@@ -858,13 +858,13 @@ impl<Out: Write, Err: Write> FrontendHost for NativeReplHost<Out, Err> {
                 Err(error) => writeln!(
                     self.errors,
                     "Error: {}",
-                    portable_repl::error_display(&mut self.session, &error)
+                    portable_repl::repl_error_display(&mut self.session, &self.macros, &error)
                 ),
             },
             HostReport::Error(error) => writeln!(
                 self.errors,
                 "Error: {}",
-                portable_repl::error_display(&mut self.session, &error)
+                portable_repl::repl_error_display(&mut self.session, &self.macros, &error)
             ),
             HostReport::Interrupted => writeln!(self.output, "^C"),
             HostReport::Reset => writeln!(self.output, "nil"),

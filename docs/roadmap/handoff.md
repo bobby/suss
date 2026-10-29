@@ -29357,6 +29357,28 @@ document's 2026-10-25 decision now records all three outcomes.
     is still correct because that bit only makes the identity larger, and the
     file is hash-pinned in `abi-adaptations.json`.
 
+## #289: default REPL fuel (2026-10-28)
+
+- `suss repl` now defaults to no per-input fuel limit, for evaluation and for
+  compilation/macro expansion (`repl_fuel_limits` in `crates/suss-cli/src/main.rs`).
+  - Ctrl-C uses epoch interruption, so it is unaffected; `repl_interrupt.rs`
+    now runs with the default budget.
+  - `--fuel N` and `--compile-fuel N` keep their meaning as opt-in limits.
+  - AOT `compile`, `-e` and embedded `Session`/`CompiledMacros` keep the 10M
+    default.
+- When an explicit limit runs out, the REPL prints `Evaluation fuel exhausted
+  (limit N per input); raise it with --fuel, ...` or the `Compilation`/
+  `--compile-fuel` equivalent (`portable_repl::repl_error_display`), instead of
+  a Wasm backtrace.
+- Measurement: `defrecord` costs about 29-35M compilation fuel on every
+  definition, not just the first (#290).
+- A failed `def` already publishes nothing (`persistent_repl.rs`). The "Unknown
+  language sentinel" leak is display of an unbound value inside a collection;
+  it moved to #288.
+- Tests: `repl_default_budgets.rs` (new), plus the `main.rs` unit test,
+  `repl_interrupt.rs` and `native_repl_async_io.rs`, updated for the new
+  defaults and messages.
+
 ## #286: non-number arithmetic and comparison operands (2026-10-29)
 
 - Source arithmetic (`+ - * /`, inline `inc`/`dec`) and numeric comparison

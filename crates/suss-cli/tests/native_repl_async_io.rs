@@ -417,7 +417,7 @@ fn session_lifecycle_recovered_async_fuel_trap_reports_once_and_keeps_cli_prompt
     assert_eq!(
         repl.err
             .lines()
-            .filter(|line| line.starts_with("Error: Runtime trap:"))
+            .filter(|line| line.starts_with("Error: Evaluation fuel exhausted (limit 1000000 per input)"))
             .count(),
         1,
         "{}",
@@ -673,7 +673,7 @@ fn session_lifecycle_compile_budget_override_preserves_runtime_in_both_flag_orde
         repl.send("(loop [] (recur))");
         repl.wait("Runtime retains its own typed fuel trap", |child| {
             let error = &child.err[errors..];
-            error.contains("Runtime trap:") && error.contains("all fuel consumed by WebAssembly")
+            error.contains("Evaluation fuel exhausted (limit 50000 per input); raise it with --fuel")
         });
         let forty_threes = repl.out.lines().filter(|line| *line == "43").count();
         repl.send("(+ 40 3)");

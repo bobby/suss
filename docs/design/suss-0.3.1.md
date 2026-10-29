@@ -189,7 +189,11 @@ Never rebuild session state by replaying source. Initializers and `defonce` run
 once. A compile error changes no session bindings. A failed definition initializer
 leaves its previous binding; arbitrary effects performed before a runtime error
 are not rolled back. Runtime exceptions return control to the prompt. Define
-explicit reset and cancellation behavior. Track resident generated code separately
+explicit reset and cancellation behavior. The interactive REPL bounds no input
+by default, as Clojure's does: interruption uses engine epochs, not fuel, and
+`--fuel`/`--compile-fuel` set opt-in per-input limits whose exhaustion names the
+budget and its flag. Unattended compilation and embedded sessions keep finite
+default budgets. Fuel bounds computation, not memory. Track resident generated code separately
 from live GC memory; first release may retain fragment code until session reset.
 
 Macros run as compiled Suss in an isolated compile-time session with separate
