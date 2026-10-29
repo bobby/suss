@@ -29431,3 +29431,21 @@ document's 2026-10-25 decision now records all three outcomes.
   - Inline variadic comparisons evaluate middle operands twice (pinned macro
     shape): `(< 1 (do (set! n (inc n)) 2) 3)` increments `n` twice, against
     section 4's exactly-once rule. Not yet filed.
+
+## #293 and #294: comparison operand evaluation (2026-10-29)
+
+- Inline `< <= > >= ==` (`comparison_form` in
+  `crates/suss-compile/src/portable/hir/comparisons.rs`) now evaluate every
+  operand exactly once, left to right, as Clojure's function calls do.
+  - Unary forms evaluate their operand, then return true unchecked (#294). The
+    pinned macro erased the operand, including a throw.
+  - Variadic forms bind each operand to a fresh local and compare the pairs
+    over those locals (#293). The pinned expansion evaluated middle operands
+    twice and skipped operands after a false pair. The IR lowers the bindings
+    to SSA values, and each local keeps its operand's type.
+  - This applies in `suss.core` source too; the bootstrap is regenerated.
+- `portable_comparisons.rs` corrects 12 recorded macro cases to match their
+  first-class call twins (`clojure_evaluates`): five unary, five chains,
+  `false-chain-macro` and `macro-false-skips-throw`.
+- Tests: `comparison_operand_evaluation.rs` (new) covers every operator with 1-4
+  operands, effect order, throws and unchecked operands after a false pair.
