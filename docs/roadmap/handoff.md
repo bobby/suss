@@ -29356,3 +29356,40 @@ document's 2026-10-25 decision now records all three outcomes.
     `CORE_CLOSED_BIT - 1`, which now includes the constructible bit. The result
     is still correct because that bit only makes the identity larger, and the
     file is hash-pinned in `abi-adaptations.json`.
+
+## #286: non-number arithmetic and comparison operands (2026-10-29)
+
+- Source arithmetic (`+ - * /`, inline `inc`/`dec`) and numeric comparison
+  (`< <= > >= ==`, inline `zero?`/`pos?`/`neg?`) reject non-numbers with a
+  catchable language error naming the operation, such as
+  `"+ requires number operands"`.
+  - New runtime helpers live in `runtime_abi/numeric_operands.rs`:
+    `checked-*`, `checked-identity-add`/`-multiply` (unary + and *) and
+    `comparison-number-*`. First-class `+ - * / < <= > >= ==` use them too.
+  - Shipped core (privileged analysis) keeps the coercing `value-*` and
+    `comparison-*` helpers. Its pinned printer, `contains?` and comparators
+    rely on JavaScript coercion internally, such as `(dec nil)` for a missing
+    print length.
+  - HIR/IR `Arithmetic` carries `coercing` (privileged only), and
+    `Comparison` gained `Number*` variants, including `NumberZero`,
+    `NumberPositive` and `NumberNegative` for the inline predicates.
+  - Core's public `inc`, `dec`, `zero?`, `pos?`, `neg?`, `min`, `max`, `quot`,
+    `rem`, `mod` and `repeat` check their operands explicitly (patches).
+- Conformance corrections ("Clojure governs"):
+  - jank suite: patch `0003` adds `:suss` branches selecting the Clojure
+    assertions for `zero?`, `pos?`, `neg?` and `repeat`.
+    `tests/oracle/clojure-test-suite-corrections.json` replaces the 14
+    matching recorded observations at comparison time only.
+  - `portable-cases.json` (142 cases) and `core-import-cases.json` (15) are
+    corrected in their tests: the original source must throw, and conversion
+    cases keep their recorded value through `suss.bootstrap/value-add` or
+    `f64-coerce`.
+  - `compiled_macro_source_tags.rs` no longer observes the analyzer rows of
+    its two `(+ "a" 1)` probes, which now throw before the probe records them.
+    Re-recording a non-throwing replacement needs the JVM oracle.
+- Tests that load forged core source now use `eval_privileged`.
+- Known gaps, outside #286:
+  - `abs`, `min-key` and `max-key` still coerce.
+  - Inline variadic comparisons evaluate middle operands twice (pinned macro
+    shape): `(< 1 (do (set! n (inc n)) 2) 3)` increments `n` twice, against
+    section 4's exactly-once rule. Not yet filed.

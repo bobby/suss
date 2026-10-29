@@ -1,6 +1,6 @@
 {
   "schema": 1,
   "source-sha256": "0d2ecbb308a71cdf6807f46f7ced7208e05edb9fa4932820a77dabaf4f7b7c56",
-  "replacement": "(def ^{:doc \"remainder of dividing numerator by denominator.\" :arglists '([n d])} rem\n  (fn [n d]\n  (let [q (quot n d)]\n    (- n (* d q)))))",
-  "rationale": "Retain the complete pinned remainder operation; expand only defn to def/fn and use its original quotient/fix arithmetic."
+  "replacement": "(def ^{:doc \"remainder of dividing numerator by denominator.\" :arglists '([n d])} rem\n  (fn [n d]\n  (if (and (suss.bootstrap/number? n) (suss.bootstrap/number? d))\n    (let [q (quot n d)]\n      (- n (* d q)))\n    (throw (suss.bootstrap/error \"rem requires number operands\")))))",
+  "rationale": "Retain the complete pinned remainder operation; expand only defn to def/fn and use its original quotient/fix arithmetic. Clojure numeric functions reject non-number operands (#286): the operands are checked first, and a non-number throws a language error naming the function instead of coercing."
 }

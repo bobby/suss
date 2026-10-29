@@ -586,6 +586,7 @@ mod tests {
                         operation: Operation::Arithmetic {
                             operator: crate::portable::hir::Arithmetic::Add,
                             arguments: vec![ValueId(2), ValueId(0)],
+                            coercing: false,
                         },
                         span: 0..1,
                     }],

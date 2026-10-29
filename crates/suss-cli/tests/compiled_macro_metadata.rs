@@ -70,7 +70,7 @@ fn compiled_macro_metadata_keeps_maps_on_returned_sequence_kinds_and_rejects_inv
 fn compiled_macro_metadata_desugars_and_merges_prefixes_with_outer_precedence() {
     let mut session = Session::new_macro().unwrap();
     for source in [
-        "(== (get (meta '^:private x) :private) true)",
+        "(true? (get (meta '^:private x) :private))",
         "(= (get (meta '^Item x) :tag) 'Item)",
         "(= (get (meta '^\"Item\" x) :tag) \"Item\")",
         "(== (get (meta '^{:answer 1} ^{:answer 2 :other 3} x) :answer) 1)",

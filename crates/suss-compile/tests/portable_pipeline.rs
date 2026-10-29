@@ -3,19 +3,30 @@ use suss_compile::{portable, runtime_abi};
 use wasmtime::{Instance, Linker, Module, Store, Val};
 
 fn execute(source: &str) -> (Store<()>, Val) {
+    try_execute(source).unwrap_or_else(|error| panic!("{source}: {error:?}"))
+}
+
+/// Execute a source fragment, returning a thrown language exception as an error.
+fn try_execute(source: &str) -> wasmtime::Result<(Store<()>, Val)> {
     let fragment = portable::prepare_fragment(
         source,
         &portable::resolve::Environment::default(),
         portable::resolve::Phase::Runtime,
     )
     .unwrap();
-    execute_fragment(fragment.wasm, fragment.cells)
+    try_execute_fragment(fragment.wasm, fragment.cells)
 }
 
 fn execute_bytes(bytes: Vec<u8>) -> (Store<()>, Val) {
     execute_fragment(bytes, Vec::new())
 }
 fn execute_fragment(bytes: Vec<u8>, cells: Vec<portable::resolve::Global>) -> (Store<()>, Val) {
+    try_execute_fragment(bytes, cells).unwrap()
+}
+fn try_execute_fragment(
+    bytes: Vec<u8>,
+    cells: Vec<portable::resolve::Global>,
+) -> wasmtime::Result<(Store<()>, Val)> {
     runtime_abi::verify_artifact(&bytes, &runtime_abi::Manifest::default()).unwrap();
     let engine = support::engine();
     let mut store = Store::new(&engine, ());
@@ -190,10 +201,9 @@ fn execute_fragment(bytes: Vec<u8>, cells: Vec<portable::resolve::Global>) -> (S
     fragment
         .get_func(&mut store, "eval")
         .unwrap()
-        .call(&mut store, &[], &mut result)
-        .unwrap();
+        .call(&mut store, &[], &mut result)?;
     store.gc(None).unwrap();
-    (store, result[0].clone())
+    Ok((store, result[0].clone()))
 }
 
 #[test]
@@ -297,36 +307,35 @@ fn numeric_calls_and_truthiness_execute_with_portable_bits() {
     assert_eq!(number("(/ 1 0)"), f64::INFINITY);
 }
 #[test]
-fn unary_sum_and_product_preserve_operand_types_and_closure_arity() {
+fn unary_sum_and_product_check_operands_and_return_numbers_unchanged() {
     use portable::hir::Type;
-    for (source, expected) in [
-        ("(+ nil)", Type::Nil),
-        ("(* false)", Type::Bool),
-        ("(+ \"\\uD800\")", Type::String),
-        ("(* (fn [x] x))", Type::Closure(1)),
-        ("(+ (if true 1 nil))", Type::Value),
+    // Clojure (#286): unary + and * are Numbers. A Number operand is returned
+    // with its exact bits; any other operand throws instead of passing through.
+    for source in [
+        "(+ nil)",
+        "(* false)",
+        "(+ \"\\uD800\")",
+        "(* (fn [x] x))",
+        "(+ (if false 1 nil))",
+        "(+ (+ \"x\") 1)",
+        "(- (+ (fn [] 1)))",
     ] {
         let forms = suss_reader::forms::read_forms(source).unwrap();
         let hir = portable::hir::analyze(&forms, 0..source.len()).unwrap();
-        assert_eq!(hir.ty, expected, "{source}");
-        // Validate and execute the fragment; the shared corpus independently
-        // checks the scalar results and calls identity-returned closures.
-        execute(source);
+        assert_eq!(hir.ty, Type::Number, "{source}");
+        assert!(try_execute(source).is_err(), "{source} must throw");
     }
-    let source = "((+ (fn [x] x)))";
-    let error = portable::compile(source).unwrap_err();
-    assert_eq!(error.span, 0..source.len());
-    assert!(error.message.contains("Wrong arity"));
-    // Identity must retain String information when a later addition concatenates.
-    let source = "(+ (+ \"x\") 1)";
-    assert_eq!(portable::analyze(source).unwrap().ty, Type::String);
-    let (mut store, value) = execute(source);
-    assert_eq!(
-        tagged(&mut store, &value),
-        serde_json::json!({"tag":"string","units":[120,49]})
-    );
-    let error = portable::compile("(- (+ (fn [] 1)))").unwrap_err();
-    assert!(error.message.contains("object coercions"));
+    for (source, bits) in [
+        ("(+ -0.0)", (-0.0f64).to_bits()),
+        ("(* -0.0)", (-0.0f64).to_bits()),
+        ("(+ (if true 7 nil))", 7.0f64.to_bits()),
+        ("(* (if true ##Inf nil))", f64::INFINITY.to_bits()),
+    ] {
+        let (mut store, value) = execute(source);
+        let expected = serde_json::json!({"tag": "f64", "bits": format!("{bits:016x}")});
+        assert_eq!(tagged(&mut store, &value), expected, "{source}");
+    }
+    assert!(number("(* ##NaN)").is_nan());
 }
 #[test]
 fn arithmetic_import_trace_observes_once_only_source_order_and_short_circuit() {
@@ -417,7 +426,6 @@ fn hir_retains_binding_identity_metadata_and_located_diagnostics() {
     assert_eq!(&source[items[1].span.clone()], "^:last x");
     for (source, needle) in [
         ("(let [x missing] x)", "missing"),
-        ("(+ 1 (fn [] 2))", "(fn [] 2)"),
         ("(let [+ (fn [x] x)] (+ 2 3))", "(+ 2 3)"),
         ("(other.core/+ 1 2)", "other.core/+"),
     ] {
@@ -482,8 +490,8 @@ fn verifier_rejects_undefined_non_dominating_wrong_type_and_arity_values() {
     );
     assert!(portable::compile_ir(&bad).is_err());
 
-    // A forged Number result would let a subsequent intrinsic use an unchecked
-    // Number cast even though addition can produce a string or dynamic value.
+    // Checked arithmetic always yields a Number (#286); a forged non-Number
+    // result type must be rejected rather than trusted by later intrinsics.
     for source in ["(+ \"1\" 2)", "(+ (if true 1 nil) 2)"] {
         let mut bad = ir::lower(&portable::analyze(source).unwrap()).unwrap();
         ir::verify(&bad).unwrap();
@@ -494,8 +502,8 @@ fn verifier_rejects_undefined_non_dominating_wrong_type_and_arity_values() {
             .find(|instruction| matches!(instruction.operation, Operation::Arithmetic { .. }))
             .unwrap()
             .result;
-        assert_ne!(bad.values[result.0].ty, Type::Number);
-        bad.values[result.0].ty = Type::Number;
+        assert_eq!(bad.values[result.0].ty, Type::Number);
+        bad.values[result.0].ty = Type::String;
         assert!(
             ir::verify(&bad)
                 .unwrap_err()
@@ -585,6 +593,7 @@ fn edge_parameter_replacements_are_parallel_in_executed_ir() {
                     operation: Operation::Arithmetic {
                         operator: Arithmetic::Subtract,
                         arguments: vec![ValueId(3), ValueId(4)],
+                        coercing: false,
                     },
                     span: 0..1,
                 }],
@@ -648,13 +657,100 @@ fn compiled_source_cases_match_the_pinned_compiler_observations() {
         "c4295f303100bbf5afac449242d30bca1126f1a1"
     );
     let mut ids = std::collections::HashSet::new();
+    let mut corrected = 0;
+    let mut failing = Vec::new();
     for case in corpus["cases"].as_array().unwrap() {
-        assert!(ids.insert(case["id"].as_str().unwrap()));
+        let id = case["id"].as_str().unwrap();
+        assert!(ids.insert(id));
         let source = case["source"].as_str().unwrap();
-        let (mut store, value) = execute(source);
-        assert_eq!(tagged(&mut store, &value), case["expected"], "{source}");
+        let source = match clojure_correction(id, source) {
+            None => source.to_owned(),
+            Some(retarget) => {
+                corrected += 1;
+                assert!(try_execute(source).is_err(), "{id}: {source} must throw");
+                let Some(retarget) = retarget else { continue };
+                retarget
+            }
+        };
+        let observed = try_execute(&source)
+            .map(|(mut store, value)| tagged(&mut store, &value))
+            .map_err(|error| format!("{error:?}"));
+        if observed.as_ref() != Ok(&case["expected"]) {
+            failing.push(format!("{id}: {source}: {observed:?}"));
+        }
     }
+    assert!(failing.is_empty(), "{failing:#?}");
     assert_eq!(ids.len(), 397);
+    assert_eq!(corrected, 142);
+}
+
+/// Clojure governs (#286): pinned ClojureScript coerces these non-number
+/// arithmetic operands, and Suss throws. Where the case measures conversion,
+/// the same JavaScript conversion is retargeted to the coercing intrinsics
+/// (`value-add` for +, `f64-coerce` for ToNumber), keeping its recorded value.
+fn clojure_correction(id: &str, source: &str) -> Option<Option<String>> {
+    let add = |operands: &str| Some(Some(format!("(suss.bootstrap/value-add {operands})")));
+    let number = |operand: &str| format!("(suss.bootstrap/f64-coerce {operand})");
+    if id.starts_with("number-to-string-") {
+        return add(source.strip_prefix("(+ ")?.strip_suffix(')')?);
+    }
+    if id.starts_with("string-to-number-") {
+        return Some(Some(number(source.strip_prefix("(* ")?.strip_suffix(" 1)")?)));
+    }
+    match id {
+        "unary-plus-nil" | "unary-product-false" | "unary-plus-true"
+        | "unary-product-surrogate" | "unary-plus-closure" | "unary-product-closure"
+        | "unary-plus-branch" | "unary-product-nested" | "unary-plus-parameter"
+        | "unary-product-parameter" | "unary-plus-global" | "unary-product-global"
+        | "primitive-coercion-12" | "primitive-coercion-13" | "primitive-concat-dynamic-fold"
+        | "function-add-identity-nil" | "function-multiply-identity-string"
+        | "function-subtract-negative-zero" | "function-divide-unary" | "function-add-coercion"
+        | "function-add-string-fold" | "function-multiply-fold" | "function-subtract-fold"
+        | "function-divide-fold" | "function-qualified-alias" | "function-higher-order"
+        | "function-computed-callee" | "function-returned-callee" | "function-closure-identity"
+        | "function-invalid-numeric-string" | "function-negative-zero-string"
+        | "loop-changing-type-arithmetic" => Some(None),
+        // Number formatting and undefined field values, through the final +.
+        "primitive-format-infinity" | "primitive-format-neg-infinity" | "primitive-format-nan"
+        | "nominal-undefined-number" | "nominal-ordinary-undefined-number"
+        | "nominal-undefined-string" | "nominal-defprotocol-number-coercion"
+        | "nominal-defprotocol-string-coercion" => {
+            let at = source.rfind("(+ ")?;
+            Some(Some(format!("{}(suss.bootstrap/value-add {}", &source[..at], &source[at + 3..])))
+        }
+        "primitive-coercion-1" => add("nil 1"),
+        "primitive-coercion-2" => add("false 2"),
+        "primitive-coercion-3" => add("true 2"),
+        "primitive-coercion-4" => add("\"\" 2"),
+        "primitive-coercion-5" => add("2 \"x\""),
+        "primitive-coercion-6" => Some(Some(format!("(- {})", number("nil")))),
+        "primitive-coercion-7" => Some(Some(format!("(- {} 1)", number("\" 2 \"")))),
+        "primitive-coercion-8" => Some(Some(format!("(* {} 3)", number("\"2\"")))),
+        "primitive-coercion-9" => Some(Some(format!("(* {} 3)", number("false")))),
+        "primitive-coercion-10" => Some(Some(format!("(/ {})", number("nil")))),
+        "primitive-coercion-11" => Some(Some(format!("(- {} 1)", number("\"bogus\"")))),
+        "primitive-concat-surrogates" => add("\"\\uD800\" \"😀\""),
+        "primitive-concat-null" => add("nil \"x\""),
+        "primitive-concat-bools" => add("(suss.bootstrap/value-add \"\" false) true"),
+        "primitive-concat-left-fold" => {
+            add("(suss.bootstrap/value-add (suss.bootstrap/value-add 1 2) \"s\") 4")
+        }
+        "primitive-concat-branch" => add("(if true \"x\" 1) 2"),
+        "primitive-arithmetic-branch" => add("(if false 1 nil) 2"),
+        "exception-info-missing-constructor-cause" => {
+            add("(ex-cause (ExceptionInfo. \"message\" 7)) 1")
+        }
+        "exception-info-missing-constructor-data" => {
+            add("(ex-data (ExceptionInfo. \"message\")) 1")
+        }
+        "predicate-identical-strings" => Some(Some(
+            "(identical? \"same\" (suss.bootstrap/value-add \"sa\" \"me\"))".into(),
+        )),
+        "predicate-identical-utf16" => Some(Some(
+            "(identical? \"\\uD800😀\" (suss.bootstrap/value-add \"\\uD800\" \"😀\"))".into(),
+        )),
+        _ => None,
+    }
 }
 #[test]
 fn independently_compiled_fragment_values_remain_live_across_gc() {
@@ -748,6 +844,7 @@ fn public_hir_negation_executes_and_malformed_arithmetic_is_rejected() {
                     kind: Expression::Literal(Literal::Number(0.0)),
                 })
                 .collect(),
+            coercing: false,
         },
     };
     let ir = portable::ir::lower(&make(Arithmetic::Negate, 1)).unwrap();

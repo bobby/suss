@@ -1,5 +1,6 @@
 //! Original primitive comparison helpers and universal runtime function values.
 //! No upstream forms are copied; object coercion remains explicitly unsupported.
+//! Public function values use the checked numeric helpers of `numeric_operands`.
 use super::*;
 
 fn boolean(body: &mut Vec<Instruction<'static>>) {
@@ -130,7 +131,11 @@ pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Ve
     );
     helpers.push(("strict-equal", helper));
     let mut declared = Vec::new();
-    for (name, helper) in helpers {
+    // First-class values are public Clojure functions: check numeric operands
+    // (#286). The coercing helpers above remain for shipped core's direct use.
+    for (name, _) in helpers {
+        let numeric = if name == "strict-equal" { "equal" } else { name };
+        let helper = b.names[&format!("comparison-number-{numeric}")];
         let body = vec![
             LocalGet(1),
             ArrayLen,

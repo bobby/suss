@@ -9,7 +9,13 @@ read as Clojure semantics, define the expected behavior. Running it on pinned
 ClojureScript records what each assertion observes, and every recorded assertion
 passes there; Suss is judged host-side against those observations. If a recorded
 ClojureScript observation ever disagrees with the suite's assertion or Clojure
-semantics, Clojure governs and the recording is corrected. The suite's own `clojure.test` verdicts
+semantics, Clojure governs and the recording is corrected: a Suss-only patch
+adds `:suss` branches that select the suite's Clojure assertions, and
+`tests/oracle/clojure-test-suite-corrections.json` replaces the matching
+recorded observations, each with its issue and rationale, for comparison only.
+The raw ClojureScript recording itself stays unchanged. The first corrections
+(#286) cover non-number operands to `zero?`, `pos?`, `neg?` and `repeat`, which
+Clojure rejects and ClojureScript coerces. The suite's own `clojure.test` verdicts
 are never evidence for Suss. The targeted differential corpora (effects order,
 binary64 bits, UTF-16, reader) remain the precision layer.
 

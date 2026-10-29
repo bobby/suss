@@ -1,6 +1,6 @@
 {
   "schema": 1,
   "source-sha256": "788ed81afdee829b502192198cce828c3084664f3267605307e56d23f0a8dfd5",
-  "replacement": "(def dec (fn [x] (- x 1)))",
-  "rationale": "Explicit single fixed-arity defn bootstrap adaptation preserving the original body. Fresh captured-function observations and pinned emitted core.js establish primitive - behavior independent of public arithmetic var redefinitions. Original form/docstring/copyright and EPL packaging remain retained. Object conversion, source metadata and compiled upstream dec/defn macros remain incomplete."
+  "replacement": "(def dec (fn [x]\n  (if (suss.bootstrap/number? x)\n    (- x 1)\n    (throw (suss.bootstrap/error \"dec requires number operands\")))))",
+  "rationale": "Explicit single fixed-arity defn bootstrap adaptation preserving the original body. Fresh captured-function observations and pinned emitted core.js establish primitive - behavior independent of public arithmetic var redefinitions. Original form/docstring/copyright and EPL packaging remain retained. Object conversion, source metadata and compiled upstream dec/defn macros remain incomplete. Clojure numeric functions reject non-number operands (#286): the operands are checked first, and a non-number throws a language error naming the function instead of coercing."
 }

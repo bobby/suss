@@ -95,7 +95,15 @@ resolved consistently in AOT, macros and REPL.
 ## 4. Observable language semantics
 
 Ordinary numbers have IEEE-754 binary64 behavior, including NaN, infinity, signed
-zero and ClojureScript bitwise coercions. An i31 optimization is permitted only
+zero and ClojureScript bitwise coercions. Arithmetic (`+ - * /`, `inc`, `dec`,
+`quot`, `rem`, `mod`), numeric comparison (`< > <= >= ==`, `min`, `max`) and
+`zero?`, `pos?` and `neg?` accept only numbers, as in Clojure: nil, strings,
+keywords, collections and other objects throw a catchable language error naming
+the operation, never JavaScript coercion. As in Clojure, a unary comparison is
+true without checking, and a variadic comparison stops at its first false pair.
+Shipped core keeps the pinned coercing operators internally (for example,
+`compare` orders strings and arrays), while its public numeric functions check
+their operands. Bitwise operations keep the ClojureScript coercions. An i31 optimization is permitted only
 if indistinguishable from that contract. Ratios and arbitrary precision integers
 are not silently inherited from the current reader. Unsupported numeric forms
 must produce diagnostics. Exact WIT 64-bit integers use separate wrapper values.
