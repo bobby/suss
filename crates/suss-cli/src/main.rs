@@ -845,7 +845,7 @@ fn run_repl(fuel: Option<u64>, compile_fuel: Option<u64>) {
                     Ok(()) => println!("nil"),
                     Err(error) => eprintln!(
                         "Error: {}",
-                        portable_repl::error_display(&mut session, &error)
+                        portable_repl::repl_error_display(&mut session, &macros, &error)
                     ),
                 }
                 continue;

@@ -54,4 +54,27 @@ fn explicit_repl_budgets_name_the_exhausted_budget_and_its_flag() {
     ));
     assert_eq!(out, "3\n");
     assert!(errors.contains("Compilation fuel exhausted (limit 1000000 per input); raise it with --compile-fuel"), "{errors}");
+    // A runtime trap after a failed compilation is still evaluation fuel.
+    let (out, errors) = repl(&["--fuel", "1000000"], concat!(
+        "(defrecord Point [x y])\n",
+        "(count (vec (range 100000)))\n",
+        "(+ 1 2)\n",
+    ));
+    assert_eq!(out, "3\n");
+    let errors = errors.lines().collect::<Vec<_>>();
+    assert!(errors[0].starts_with("Error: Compilation fuel exhausted (limit 1000000 per input)"), "{errors:?}");
+    assert!(errors[1].starts_with("Error: Evaluation fuel exhausted (limit 1000000 per input)"), "{errors:?}");
+    // A macro definition traps in the macro session: compilation fuel, not
+    // the (ample) evaluation budget.
+    let (_, errors) = repl(&["--fuel", "100000000000", "--compile-fuel", "3000"], "(defmacro m [] 1)\n");
+    assert!(errors.starts_with("Error: Compilation fuel exhausted (limit 3000 per input); raise it with --compile-fuel"), "{errors}");
+}
+
+/// Unbounded budgets never claim exhaustion, and a compiler-internal fixed
+/// counter is not reported as a budget the flags could raise.
+#[test]
+fn unbounded_budgets_report_real_errors() {
+    let (out, errors) = repl(&[], "(throw (ex-info \"fuel exhausted\" {}))\n(+ 1 2)\n");
+    assert_eq!(out, "3\n");
+    assert!(!errors.contains("raise it with"), "{errors}");
 }
