@@ -1,6 +1,14 @@
 use suss_cli::portable_session::{Session, SessionValue};
 use wasmtime::Val;
 
+#[path = "support/clojure_corrections.rs"]
+mod clojure_corrections;
+
+/// Recorded observations that coerced a non-number operand; Clojure rejects them.
+const CORRECTIONS: &[clojure_corrections::Correction] = &[
+    ("reduce-string-units", "", "+ requires number operands"),
+];
+
 fn number(session: &mut Session, value: &SessionValue) -> u64 {
     session
         .inspect(value, |mut store, value| {
@@ -51,9 +59,11 @@ fn reduction_contract_match_independently_encoded_primary_observations() {
         .unwrap();
     session.enter_namespace("user").unwrap();
     let mut identities = std::collections::BTreeSet::new();
+    let mut corrected = 0;
     for case in cases {
+        let case = &clojure_corrections::corrected(case, CORRECTIONS, &mut corrected);
         let id = case["id"].as_str().unwrap();
-        assert!(identities.insert(id));
+        assert!(identities.insert(id.to_owned()));
         let source = case["source"].as_str().unwrap();
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "bool" => serde_json::json!({"tag":"bool", "value":eval_bool(&mut session, source)}),
@@ -65,6 +75,7 @@ fn reduction_contract_match_independently_encoded_primary_observations() {
         assert_eq!(actual, case["expected"], "{id}: {source}");
         session.collect().unwrap();
     }
+    assert_eq!(corrected, CORRECTIONS.len());
 }
 
 #[test]

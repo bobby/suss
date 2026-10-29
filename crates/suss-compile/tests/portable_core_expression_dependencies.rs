@@ -45,8 +45,14 @@ fn retained_numeric_and_stack_definitions_preserve_scalar_edges_in_both_phases()
             ("(min -0.0 0.0)", "0.0"),
             ("(max ##NaN 1)", "##NaN"),
             ("(min 1 ##NaN)", "##NaN"),
-            ("(max \"2\" 1)", "\"2\""),
-            ("(min \"2\" 3)", "\"2\""),
+            (
+                "(try (max \"2\" 1) (catch :default e (ex-message e)))",
+                "\"max requires number operands\"",
+            ),
+            (
+                "(try (min \"2\" 3) (catch :default e (ex-message e)))",
+                "\"min requires number operands\"",
+            ),
             ("(even? 1e20)", "true"),
             ("(even? -2)", "true"),
             ("(odd? -3)", "true"),

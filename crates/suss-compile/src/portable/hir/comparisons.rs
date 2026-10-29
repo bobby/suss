@@ -18,9 +18,9 @@ impl Analyzer<'_> {
             // The pin erases unary operand syntax entirely, including throws.
             return Ok(self.literal_form(form, Literal::Bool(true)));
         }
-        // Source comparisons are Clojure's numeric ones; shipped core keeps the
-        // coercing primitives its pinned string/array comparators rely on.
-        let operation = if self.privileged { operation } else { operation.numeric() };
+        // Source comparisons are Clojure's numeric ones; core keeps the coercing
+        // primitives its pinned string/array comparators rely on.
+        let operation = if self.coercing_operands() { operation } else { operation.numeric() };
         let comparison = Hir {
             source: None,
             span: form.span.clone(),

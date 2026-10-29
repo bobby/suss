@@ -28,9 +28,30 @@ fn units(session: &mut Session, value: &SessionValue) -> Vec<u16> {
         })
         .unwrap()
 }
+/// The message of the language error `source` throws; the session has no
+/// core, so the error is caught and its message read from the error struct.
+fn thrown(session: &mut Session, source: &str) -> String {
+    let error = session
+        .eval(&format!("(try {source} (catch :default e e))"))
+        .unwrap();
+    session
+        .inspect(&error, |mut store, value| {
+            let error = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let message = error.field(&mut store, 1)?;
+            let message = message.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+            Ok(String::from_utf16(
+                &message
+                    .elems(&mut store)?
+                    .map(|unit| unit.unwrap_i32() as u16)
+                    .collect::<Vec<_>>(),
+            )
+            .unwrap())
+        })
+        .unwrap()
+}
 
 #[test]
-fn persistent_session_arithmetic_coerces_live_cells_and_evaluates_operands_once() {
+fn persistent_session_arithmetic_checks_live_cells_and_evaluates_operands_once() {
     let mut session = Session::new().unwrap();
     session
         .eval("(def counter 0) (def next (fn [] (def counter (+ counter 1))))")
@@ -45,20 +66,18 @@ fn persistent_session_arithmetic_coerces_live_cells_and_evaluates_operands_once(
         .unwrap();
     assert_eq!(eval_number(&mut session, "(read)"), 4.0f64.to_bits());
     session.eval("(def value \"4\")").unwrap();
-    let text = session.eval("(read)").unwrap();
-    session.collect().unwrap();
-    assert_eq!(units(&mut session, &text), [52, 49]);
+    assert_eq!(thrown(&mut session, "(read)"), "+ requires number operands");
     assert_eq!(
-        eval_number(&mut session, "((fn [x] (* x 3)) \"2\")"),
-        6.0f64.to_bits()
+        thrown(&mut session, "((fn [x] (* x 3)) \"2\")"),
+        "* requires number operands"
     );
-    assert_eq!(eval_number(&mut session, "(- nil)"), (-0.0f64).to_bits());
+    assert_eq!(thrown(&mut session, "(- nil)"), "- requires number operands");
     session.eval("(def old 7) (def object (fn [] 1))").unwrap();
     let error = session
         .eval("(def old (do (next) (+ object 1)))")
         .unwrap_err();
     let SessionError::Language(payload) = error else {
-        panic!("expected explicit unsupported object coercion")
+        panic!("expected a language exception for a function operand")
     };
     let message = session
         .inspect(&payload, |mut store, value| {
@@ -70,7 +89,8 @@ fn persistent_session_arithmetic_coerces_live_cells_and_evaluates_operands_once(
                 .unwrap()
                 .as_struct(&store)?
                 .unwrap();
-            assert_eq!(descriptor.field(&mut store, 0)?.unwrap_i64(), 5);
+            // Operand rejections are plain language Errors (#286).
+            assert_eq!(descriptor.field(&mut store, 0)?.unwrap_i64(), 7);
             let message = fields[1]
                 .unwrap_anyref()
                 .unwrap()
@@ -84,7 +104,7 @@ fn persistent_session_arithmetic_coerces_live_cells_and_evaluates_operands_once(
         .unwrap();
     assert_eq!(
         String::from_utf16(&message).unwrap(),
-        "Unsupported arithmetic object coercion"
+        "+ requires number operands"
     );
     assert_eq!(eval_number(&mut session, "old"), 7.0f64.to_bits());
     assert_eq!(eval_number(&mut session, "counter"), 4.0f64.to_bits());
@@ -96,11 +116,11 @@ fn session_lifecycle_numeric_memory_has_bounded_high_water_capacity_and_reset() 
     let initial = session.stats().numeric_memory_capacity;
     let text = format!("0.{}1", "0".repeat(40000));
     session.eval(&format!("(def text {text:?})")).unwrap();
-    assert_eq!(eval_number(&mut session, "(* text 1)"), 0.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(suss.bootstrap/f64-coerce text)"), 0.0f64.to_bits());
     let capacity = session.stats().numeric_memory_capacity;
     assert!(capacity > initial);
     for _ in 0..20 {
-        assert_eq!(eval_number(&mut session, "(* text 1)"), 0.0f64.to_bits());
+        assert_eq!(eval_number(&mut session, "(suss.bootstrap/f64-coerce text)"), 0.0f64.to_bits());
     }
     session.collect().unwrap();
     assert_eq!(session.stats().numeric_memory_capacity, capacity);
@@ -111,11 +131,11 @@ fn session_lifecycle_numeric_memory_has_bounded_high_water_capacity_and_reset() 
     );
     session.set_operation_fuel(500);
     assert!(matches!(
-        session.eval("(* text 1)"),
+        session.eval("(suss.bootstrap/f64-coerce text)"),
         Err(SessionError::Trap(_))
     ));
     session.set_operation_fuel(100000);
-    let output = session.eval("(+ 42 \"\")").unwrap();
+    let output = session.eval("(suss.bootstrap/value-add 42 \"\")").unwrap();
     assert_eq!(units(&mut session, &output), [52, 50]);
     session.reset().unwrap();
     assert_eq!(session.stats().numeric_memory_capacity, initial);
@@ -123,49 +143,29 @@ fn session_lifecycle_numeric_memory_has_bounded_high_water_capacity_and_reset() 
 }
 
 #[test]
-fn persistent_session_unary_arithmetic_retains_dynamic_values_and_old_closures() {
+fn persistent_session_unary_arithmetic_returns_numbers_and_rejects_other_operands() {
     let mut session = Session::new().unwrap();
     session
         .eval("(def effect 0) (def f (let [x 7] (fn [] x))) (def identity (fn [x] (* (+ x))))")
         .unwrap();
-    let old = session.eval("(+ (do (def effect 1) (* f)))").unwrap();
-    session.eval("(def f (fn [] 9))").unwrap();
-    session.collect().unwrap();
-    let returned = session.invoke(&old, &[]).unwrap();
-    assert_eq!(number(&mut session, &returned), 7.0f64.to_bits());
+    assert_eq!(
+        thrown(&mut session, "(+ (do (def effect 1) (* f)))"),
+        "* requires number operands"
+    );
     assert_eq!(eval_number(&mut session, "effect"), 1.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "((* f))"), 9.0f64.to_bits());
-    for (source, sentinel) in [
-        ("(identity nil)", 0),
-        ("(identity false)", 2),
-        ("(identity true)", 4),
-    ] {
-        let value = session.eval(source).unwrap();
-        session.collect().unwrap();
-        let actual = session
-            .inspect(&value, |store, value| {
-                Ok(value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32())
-            })
-            .unwrap();
-        assert_eq!(actual, sentinel);
-    }
-    let value = session.eval("(identity \"\\uD800😀\")").unwrap();
     session.collect().unwrap();
-    let units = session
-        .inspect(&value, |mut store, value| {
-            let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
-            Ok(array
-                .elems(&mut store)?
-                .map(|v| v.unwrap_i32() as u16)
-                .collect::<Vec<_>>())
-        })
-        .unwrap();
-    assert_eq!(units, [0xd800, 0xd83d, 0xde00]);
+    assert_eq!(eval_number(&mut session, "(f)"), 7.0f64.to_bits());
+    for (source, expected) in [("(identity 7)", 7.0), ("(identity -0.0)", -0.0)] {
+        assert_eq!(eval_number(&mut session, source), f64::to_bits(expected), "{source}");
+    }
+    for source in [
+        "(identity nil)",
+        "(identity false)",
+        "(identity true)",
+        "(identity \"\\uD800😀\")",
+    ] {
+        assert_eq!(thrown(&mut session, source), "+ requires number operands", "{source}");
+    }
 }
 #[test]
 fn persistent_session_initializers_execute_once_and_defonce_skips_effects() {
@@ -488,11 +488,10 @@ fn persistent_session_arithmetic_function_values_use_universal_invocation() {
         ("(let [f +] (f))", 0.0),
         ("(let [f *] (f))", 1.0),
         ("(let [f +] (f 1 2))", 3.0),
-        ("(let [f *] (f \"2\" 3 4))", 24.0),
-        ("(let [f -] (f nil))", -0.0),
-        ("(let [f /] (f \"4\"))", 0.25),
-        ("((if false + *) \"2\" 3)", 6.0),
-        ("((let [f +] (f (fn [] 42))))", 42.0),
+        ("(let [f *] (f 2 3 4))", 24.0),
+        ("(let [f -] (f 0))", -0.0),
+        ("(let [f /] (f 4))", 0.25),
+        ("((if false + *) 2 3)", 6.0),
     ] {
         assert_eq!(
             eval_number(&mut session, source),
@@ -500,8 +499,16 @@ fn persistent_session_arithmetic_function_values_use_universal_invocation() {
             "{source}"
         );
     }
-    let value = session.eval("((fn [f x] (f x 3)) + \"2\")").unwrap();
-    assert_eq!(units(&mut session, &value), vec![50, 51]);
+    for (source, message) in [
+        ("(let [f *] (f \"2\" 3 4))", "* requires number operands"),
+        ("(let [f -] (f nil))", "- requires number operands"),
+        ("(let [f /] (f \"4\"))", "/ requires number operands"),
+        ("((if false + *) \"2\" 3)", "* requires number operands"),
+        ("((let [f +] (f (fn [] 42))))", "+ requires number operands"),
+        ("((fn [f x] (f x 3)) + \"2\")", "+ requires number operands"),
+    ] {
+        assert_eq!(thrown(&mut session, source), message, "{source}");
+    }
     let subtract = session.eval("-").unwrap();
     assert!(matches!(
         session.invoke(&subtract, &[]),
@@ -519,7 +526,7 @@ fn persistent_session_arithmetic_values_share_cells_and_keep_old_functions() {
             value.unwrap_anyref().unwrap().to_owned_rooted(&mut store)
         })
         .unwrap();
-    for source in ["+", "cljs.core/+", "suss.core/+", "(let [f +] (f +))"] {
+    for source in ["+", "cljs.core/+", "suss.core/+"] {
         let alias = session.eval(source).unwrap();
         assert!(
             session
@@ -641,11 +648,13 @@ fn recurrence_preserves_old_iteration_captures_effect_order_and_dynamic_types() 
         ),
         3.0f64.to_bits()
     );
-    let text = session
-        .eval("(loop [flag true x 100] (if flag (recur false \"2\") (+ x 1)))")
-        .unwrap();
-    session.collect().unwrap();
-    assert_eq!(units(&mut session, &text), [50, 49]);
+    assert_eq!(
+        thrown(
+            &mut session,
+            "(loop [flag true x 100] (if flag (recur false \"2\") (+ x 1)))"
+        ),
+        "+ requires number operands"
+    );
     session
         .eval("(def counter 0) (def next (fn [] (def counter (+ counter 1))))")
         .unwrap();
@@ -1194,58 +1203,32 @@ fn nominal_empty_extensions_return_the_shared_non_boolean_protocol_marker() {
 }
 
 #[test]
-fn nominal_undefined_constructor_results_preserve_truthiness_numeric_and_string_coercion() {
+fn nominal_undefined_constructor_results_preserve_truthiness_and_reject_arithmetic() {
     let mut session = Session::new().unwrap();
     session.eval("(defprotocol UndefinedReader (undefined-field [this])) (deftype UndefinedType [value] UndefinedReader (undefined-field [this] value))").unwrap();
     for source in [
         "(+ (undefined-field (UndefinedType.)) 1)",
         "(+ (UndefinedType 7) 1)",
+        r#"(+ (undefined-field (UndefinedType.)) "x")"#,
     ] {
-        // Both values decode nil-like but retain undefined numeric behavior.
-        assert!(
-            f64::from_bits(eval_number(&mut session, &source)).is_nan(),
-            "{source}"
-        );
+        // Both values decode nil-like and, like nil, are not number operands.
+        assert_eq!(thrown(&mut session, source), "+ requires number operands", "{source}");
     }
     assert_eq!(
         eval_number(&mut session, "(if (undefined-field (UndefinedType.)) 7 9)"),
         9.0f64.to_bits()
     );
-    let text = session
-        .eval(r#"(+ (undefined-field (UndefinedType.)) "x")"#)
-        .unwrap();
-    let units = session
-        .inspect(&text, |mut store, value| {
-            Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_array(&store)?
-                .unwrap()
-                .elems(&mut store)?
-                .map(|unit| unit.unwrap_i32() as u16)
-                .collect::<Vec<_>>())
-        })
-        .unwrap();
-    assert_eq!(String::from_utf16(&units).unwrap(), "undefinedx");
 }
 
 #[test]
-fn nominal_review_grouped_extension_and_protocol_expression_coercions() {
+fn nominal_review_grouped_extension_and_protocol_expression_operands() {
     let mut session = Session::new().unwrap();
-    assert!(
-        f64::from_bits(eval_number(
-            &mut session,
-            "(+ (defprotocol ReviewNumberProtocol) 1)"
-        ))
-        .is_nan()
-    );
-    let value = session
-        .eval("(+ (defprotocol ReviewStringProtocol) \"x\")")
-        .unwrap();
-    assert_eq!(
-        units(&mut session, &value),
-        "undefinedx".encode_utf16().collect::<Vec<_>>()
-    );
+    for source in [
+        "(+ (defprotocol ReviewNumberProtocol) 1)",
+        "(+ (defprotocol ReviewStringProtocol) \"x\")",
+    ] {
+        assert_eq!(thrown(&mut session, source), "+ requires number operands", "{source}");
+    }
     session.eval("(defprotocol ReviewGroupedProtocol (review-grouped [this] [this x])) (deftype ReviewGrouped []) (def review-object (ReviewGrouped.)) (extend-type ReviewGrouped ReviewGroupedProtocol (review-grouped ([this] 7) ([this x] (+ x 7))))").unwrap();
     session.collect().unwrap();
     assert_eq!(

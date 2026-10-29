@@ -1,6 +1,18 @@
 use suss_cli::portable_session::Session;
 use wasmtime::Val;
 
+#[path = "support/clojure_corrections.rs"]
+mod clojure_corrections;
+
+/// Recorded observations that coerced a non-number operand; Clojure rejects them.
+const CORRECTIONS: &[clojure_corrections::Correction] = &[
+    ("zero-nil", "", "zero? requires number operands"),
+    ("zero-string", "", "zero? requires number operands"),
+    ("zero-false", "", "zero? requires number operands"),
+    ("review-zero-undefined", "", "zero? requires number operands"),
+    ("review-firstclass-zero-string", "", "zero? requires number operands"),
+];
+
 #[test]
 fn murmur_hash_match_independently_decoded_primary_observations_after_gc() {
     let corpus: serde_json::Value =
@@ -16,9 +28,11 @@ fn murmur_hash_match_independently_decoded_primary_observations_after_gc() {
         .unwrap();
     let mut ids = std::collections::BTreeSet::new();
     let mut failures = Vec::new();
+    let mut corrected = 0;
     for case in cases {
+        let case = &clojure_corrections::corrected(case, CORRECTIONS, &mut corrected);
         let id = case["id"].as_str().unwrap();
-        assert!(ids.insert(id));
+        assert!(ids.insert(id.to_owned()));
         let source = case["source"].as_str().unwrap();
         let value = match session.eval(source) {
             Ok(value) => value,
@@ -98,6 +112,7 @@ fn murmur_hash_match_independently_decoded_primary_observations_after_gc() {
         }
         session.collect().unwrap();
     }
+    assert_eq!(corrected, CORRECTIONS.len());
     assert!(
         failures.is_empty(),
         "{} failing observations:\n{}",

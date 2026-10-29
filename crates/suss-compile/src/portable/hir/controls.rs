@@ -61,14 +61,14 @@ impl Analyzer<'_> {
                     Arithmetic::Add
                 } else { Arithmetic::Subtract };
                 let arguments = vec![value, self.literal_form(form, Literal::Number(1.0))];
-                let ty = arithmetic_type(operator, &arguments.iter().map(|arg| arg.ty).collect::<Vec<_>>(), self.privileged)
+                let ty = arithmetic_type(operator, &arguments.iter().map(|arg| arg.ty).collect::<Vec<_>>(), self.coercing_operands())
                     .ok_or_else(|| fail(args[0].span.clone(), "Arithmetic object coercions are not lowered yet"))?;
                 Ok(Hir {
                     source: None,
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty,
-                    kind: Expression::Arithmetic { operator, arguments, coercing: self.privileged },
+                    kind: Expression::Arithmetic { operator, arguments, coercing: self.coercing_operands() },
                 })
             }
             ControlForm::Zero | ControlForm::Positive | ControlForm::Negative => {
@@ -85,9 +85,9 @@ impl Analyzer<'_> {
                     metadata: form.metadata.clone(),
                     ty: Type::Bool,
                     kind: Expression::Comparison {
-                        // Clojure's predicates reject non-numbers (#286); shipped
-                        // core keeps its pinned coercing internal uses.
-                        operation: match (operation, self.privileged) {
+                        // Clojure's predicates reject non-numbers (#286); core
+                        // keeps its pinned coercing internal uses.
+                        operation: match (operation, self.coercing_operands()) {
                             (ControlForm::Zero, true) => Comparison::StrictEqual,
                             (ControlForm::Negative, true) => Comparison::Less,
                             (_, true) => Comparison::Greater,

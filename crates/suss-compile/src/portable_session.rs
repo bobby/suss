@@ -3127,7 +3127,7 @@ mod tests {
             "must actually interrupt a Rust helper frame, not just its GC copy loop"
         );
         session.set_operation_fuel(100000);
-        let output = session.eval("(+ 42 \"\")").unwrap();
+        let output = session.eval("(suss.bootstrap/value-add 42 \"\")").unwrap();
         let units = session
             .inspect(&output, |mut scope, value| {
                 let array = value.unwrap_anyref().unwrap().as_array(&scope)?.unwrap();

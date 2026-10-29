@@ -42,9 +42,22 @@ fn comparisons_match_independently_encoded_primary_corpus() {
         serde_json::from_str(include_str!("../../../tests/oracle/comparison-cases.json")).unwrap();
     let mut session = Session::new().unwrap();
     let mut ids = std::collections::BTreeSet::new();
+    let mut corrected = 0;
     for case in corpus["cases"].as_array().unwrap() {
-        assert!(ids.insert(case["id"].as_str().unwrap()));
+        let id = case["id"].as_str().unwrap();
+        assert!(ids.insert(id));
         let source = case["source"].as_str().unwrap();
+        // Clojure governs: the recorded primary coerced non-number operands.
+        if let Some(operator) = clojure_rejects(id) {
+            corrected += 1;
+            assert_eq!(
+                thrown(&mut session, source),
+                format!("{operator} requires number operands"),
+                "{source}"
+            );
+            session.collect().unwrap();
+            continue;
+        }
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "bool" => serde_json::json!({"tag":"bool", "value":eval_bool(&mut session, source)}),
             "f64" => {
@@ -56,6 +69,63 @@ fn comparisons_match_independently_encoded_primary_corpus() {
         session.collect().unwrap();
     }
     assert_eq!(ids.len(), 123);
+    assert_eq!(corrected, 49);
+}
+
+/// Cases whose recorded primary result coerced a non-number operand, with
+/// the operator Clojure rejects it in.
+fn clojure_rejects(id: &str) -> Option<&'static str> {
+    const NON_NUMBERS: [&str; 10] = [
+        "nil",
+        "false",
+        "true",
+        "strings",
+        "mixed-string",
+        "bad-string",
+        "empty-string",
+        "astral-order",
+        "surrogate-order",
+        "undefined",
+    ];
+    for (prefix, operator) in [("lt-", "<"), ("le-", "<="), ("gt-", ">"), ("ge-", ">=")] {
+        if id.strip_prefix(prefix).is_some_and(|rest| NON_NUMBERS.contains(&rest)) {
+            return Some(operator);
+        }
+    }
+    [
+        "macro-eq-strings",
+        "macro-eq-mixed",
+        "macro-eq-boolean-number",
+        "macro-eq-false-number",
+        "macro-eq-nil-false",
+        "macro-eq-nil-undefined",
+        "macro-eq-nil-nil",
+        "strict-object-identity",
+        "strict-object-distinct",
+    ]
+    .contains(&id)
+    .then_some("==")
+}
+/// The message of the language error `source` throws; the session has no
+/// core, so the error is caught and its message read from the error struct.
+fn thrown(session: &mut Session, source: &str) -> String {
+    let error = session
+        .eval(&format!("(try {source} (catch :default e e))"))
+        .unwrap();
+    session
+        .inspect(&error, |mut store, value| {
+            let error = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+            let message = error.field(&mut store, 1)?;
+            let message = message.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+            Ok(String::from_utf16(
+                &message
+                    .elems(&mut store)?
+                    .map(|unit| unit.unwrap_i32() as u16)
+                    .collect::<Vec<_>>(),
+            )
+            .unwrap())
+        })
+        .unwrap()
 }
 
 #[test]
@@ -161,7 +231,12 @@ fn comparison_macro_and_runtime_names_preserve_aliases_user_shadowing_and_gc() {
 #[test]
 fn comparison_utf16_prefix_loop_has_fuel_recovery_and_typed_coercion_errors() {
     let mut session = Session::new().unwrap();
-    let function = session.eval("<").unwrap();
+    assert_eq!(
+        thrown(&mut session, "(< \"a\" \"b\")"),
+        "< requires number operands"
+    );
+    // Shipped core keeps the coercing comparison that owns the UTF-16 loop.
+    let function = session.eval_privileged("(fn [a b] (< a b))").unwrap();
     let text = "😀".repeat(4096);
     let left = session.eval(&format!("\"{text}\"")).unwrap();
     let right = session.eval(&format!("\"{text}x\"")).unwrap();

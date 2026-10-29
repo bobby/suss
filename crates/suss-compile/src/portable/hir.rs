@@ -1434,6 +1434,13 @@ impl Analyzer<'_> {
     }
     /// The current binding was defined by compiler-authored source, such as
     /// the shipped core, rather than by user code reusing a core name.
+    /// Whether arithmetic and comparisons keep the coercing primitives that
+    /// core's pinned source relies on (#286). Source in `suss.core` keeps
+    /// them, whether shipped or loaded directly, so core behaves the same
+    /// either way; every other namespace gets Clojure's number-only operands.
+    pub(super) fn coercing_operands(&self) -> bool {
+        self.privileged || self.environment.current_namespace(self.phase) == "suss.core"
+    }
     pub(super) fn privileged_definition(&self, global: &Global) -> bool {
         self.environment
             .definition_info(global)
@@ -2986,7 +2993,7 @@ impl Analyzer<'_> {
                         arguments: arguments.clone().into(),
                     }));
                 let types = arguments.iter().map(|arg| arg.ty).collect::<Vec<_>>();
-                let ty = arithmetic_type(operator, &types, self.privileged).ok_or_else(|| {
+                let ty = arithmetic_type(operator, &types, self.coercing_operands()).ok_or_else(|| {
                     let operand = arguments
                         .iter()
                         .find(|arg| matches!(arg.ty, Type::Closure(_)))
@@ -3000,7 +3007,7 @@ impl Analyzer<'_> {
                     Expression::Arithmetic {
                         operator,
                         arguments,
-                        coercing: self.privileged,
+                        coercing: self.coercing_operands(),
                     },
                     ty,
                 )

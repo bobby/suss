@@ -150,3 +150,26 @@ fn numeric_operands_keep_clojure_results() {
         }
     }
 }
+
+#[test]
+fn core_namespace_source_keeps_its_coercing_primitives() {
+    // Core's pinned source relies on JavaScript coercion internally, so source
+    // in `suss.core` keeps it whether shipped or loaded directly. Every other
+    // namespace gets Clojure's number-only operands.
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
+        session.enter_namespace("suss.core").unwrap();
+        for source in [
+            "(= \"41\" (+ \"4\" 1))",
+            "(== nil nil)",
+            "(< \"a\" \"b\")",
+            "(false? (zero? false))",
+            "(= 0 (dec true))",
+        ] {
+            truthy(&mut session, source);
+        }
+        session.enter_namespace("user").unwrap();
+        throws(&mut session, "(+ \"4\" 1)", "+");
+        throws(&mut session, "(== nil nil)", "==");
+    }
+}

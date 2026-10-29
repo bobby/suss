@@ -385,7 +385,7 @@ fn namespace_cell_imports_reject_missing_or_incompatible_objects_before_eval() {
         .unwrap_err()
         .message
         .contains("dynamic Value"));
-    // Mutable bindings carry no stale scalar facts into unchecked arithmetic.
+    // Mutable bindings carry no stale scalar facts into unchecked Number arithmetic.
     let fragment = portable::compile_in("(+ value 1)", &env, Phase::Runtime).unwrap();
     let mut arithmetic_imports = Vec::new();
     for payload in wasmparser::Parser::new(0).parse_all(&fragment) {
@@ -398,7 +398,7 @@ fn namespace_cell_imports_reject_missing_or_incompatible_objects_before_eval() {
             }
         }
     }
-    assert_eq!(arithmetic_imports, ["value-add"]);
+    assert_eq!(arithmetic_imports, ["checked-add"]);
 }
 
 #[test]
