@@ -19,6 +19,11 @@ fn arithmetic_name(
         .iter()
         .all(|arg| function.values[arg.0].ty == Type::Number);
     match (operator, numeric) {
+        // Checked unary + and * only check their operand, even a typed Number.
+        (Arithmetic::Add, _) if arguments.len() == 1 && !coercing => "checked-identity-add",
+        (Arithmetic::Multiply, _) if arguments.len() == 1 && !coercing => {
+            "checked-identity-multiply"
+        }
         (Arithmetic::Add, true) => "number-add",
         (Arithmetic::Subtract, true) => "number-subtract",
         (Arithmetic::Multiply, true) => "number-multiply",
@@ -29,9 +34,7 @@ fn arithmetic_name(
         (Arithmetic::Multiply, false) if coercing => "value-multiply",
         (Arithmetic::Divide, false) if coercing => "value-divide",
         (Arithmetic::Negate, false) if coercing => "value-negate",
-        // Clojure operand checks (#286); unary + and * only check their operand.
-        (Arithmetic::Add, false) if arguments.len() == 1 => "checked-identity-add",
-        (Arithmetic::Multiply, false) if arguments.len() == 1 => "checked-identity-multiply",
+        // Clojure operand checks (#286).
         (Arithmetic::Add, false) => "checked-add",
         (Arithmetic::Subtract, false) => "checked-subtract",
         (Arithmetic::Multiply, false) => "checked-multiply",

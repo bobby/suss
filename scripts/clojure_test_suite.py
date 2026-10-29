@@ -420,11 +420,14 @@ def corrected(reference):
             raise ValueError(f'correction needs an issue and rationale: {identity}')
         if not correction['replace'] or set(correction['replace']) - CORRECTABLE:
             raise ValueError(f'unexpected corrected fields: {identity}')
-        corrections[identity] = correction['replace']
+        corrections[identity] = correction
     assertions = []
     for entry in reference['assertions']:
-        replace = corrections.pop(entry['id'], None)
-        if replace is not None:
+        correction = corrections.pop(entry['id'], None)
+        if correction is not None:
+            replace = correction['replace']
+            if entry['form'] != correction.get('original-form'):
+                raise ValueError(f"correction no longer matches its recorded form: {entry['id']}")
             if not entry['deterministic'] or entry['verdict'] != 'pass':
                 raise ValueError(f"only deterministic passing records are corrected: {entry['id']}")
             entry = {key: value for key, value in entry.items()

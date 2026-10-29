@@ -6,6 +6,17 @@ fn execute(source: &str) -> (Store<()>, Val) {
     try_execute(source).unwrap_or_else(|error| panic!("{source}: {error:?}"))
 }
 
+/// True when the source throws a language exception, not a trap or other failure.
+fn throws_language_exception(source: &str) -> bool {
+    match try_execute(source) {
+        Ok(_) => false,
+        Err(error) => {
+            error.downcast_ref::<wasmtime::Trap>().is_none()
+                && format!("{error:?}").contains("thrown Wasm exception")
+        }
+    }
+}
+
 /// Execute a source fragment, returning a thrown language exception as an error.
 fn try_execute(source: &str) -> wasmtime::Result<(Store<()>, Val)> {
     let fragment = portable::prepare_fragment(
@@ -323,7 +334,7 @@ fn unary_sum_and_product_check_operands_and_return_numbers_unchanged() {
         let forms = suss_reader::forms::read_forms(source).unwrap();
         let hir = portable::hir::analyze(&forms, 0..source.len()).unwrap();
         assert_eq!(hir.ty, Type::Number, "{source}");
-        assert!(try_execute(source).is_err(), "{source} must throw");
+        assert!(throws_language_exception(source), "{source} must throw");
     }
     for (source, bits) in [
         ("(+ -0.0)", (-0.0f64).to_bits()),
@@ -667,7 +678,7 @@ fn compiled_source_cases_match_the_pinned_compiler_observations() {
             None => source.to_owned(),
             Some(retarget) => {
                 corrected += 1;
-                assert!(try_execute(source).is_err(), "{id}: {source} must throw");
+                assert!(throws_language_exception(source), "{id}: {source} must throw");
                 let Some(retarget) = retarget else { continue };
                 retarget
             }

@@ -5,6 +5,7 @@
   {
    "id": "clojure.core-test.zero-qmark/test-zero?#21",
    "issue": 286,
+   "original-form": "(= false (zero? nil))",
    "rationale": "Clojure rejects a non-number operand; the suite's Clojure branch asserts the throw, and pinned ClojureScript coerces it instead. Patch 0003 selects the Clojure assertion.",
    "replace": {
     "kind": "thrown",
@@ -15,6 +16,7 @@
   {
    "id": "clojure.core-test.zero-qmark/test-zero?#22",
    "issue": 286,
+   "original-form": "(= false (zero? false))",
    "rationale": "Clojure rejects a non-number operand; the suite's Clojure branch asserts the throw, and pinned ClojureScript coerces it instead. Patch 0003 selects the Clojure assertion.",
    "replace": {
     "kind": "thrown",
@@ -25,6 +27,7 @@
   {
    "id": "clojure.core-test.zero-qmark/test-zero?#23",
    "issue": 286,
+   "original-form": "(= false (zero? true))",
    "rationale": "Clojure rejects a non-number operand; the suite's Clojure branch asserts the throw, and pinned ClojureScript coerces it instead. Patch 0003 selects the Clojure assertion.",
    "replace": {
     "kind": "thrown",
@@ -35,6 +38,7 @@
   {
    "id": "clojure.core-test.pos-qmark/test-pos?#20",
    "issue": 286,
+   "original-form": "(not (pos? nil))",
    "rationale": "Clojure rejects a non-number operand; the suite's Clojure branch asserts the throw, and pinned ClojureScript coerces it instead. Patch 0003 selects the Clojure assertion.",
    "replace": {
     "kind": "thrown",
@@ -45,6 +49,7 @@
   {
    "id": "clojure.core-test.pos-qmark/test-pos?#21",
    "issue": 286,
+   "original-form": "(not (pos? false))",
    "rationale": "Clojure rejects a non-number operand; the suite's Clojure branch asserts the throw, and pinned ClojureScript coerces it instead. Patch 0003 selects the Clojure assertion.",
    "replace": {
     "kind": "thrown",
@@ -55,6 +60,7 @@
   {
    "id": "clojure.core-test.pos-qmark/test-pos?#22",
    "issue": 286,
+   "original-form": "(pos? true)",
    "rationale": "Clojure rejects a non-number operand; the suite's Clojure branch asserts the throw, and pinned ClojureScript coerces it instead. Patch 0003 selects the Clojure assertion.",
    "replace": {
     "kind": "thrown",
@@ -65,6 +71,7 @@
   {
    "id": "clojure.core-test.neg-qmark/test-neg?#20",
    "issue": 286,
+   "original-form": "(not (neg? nil))",
    "rationale": "Clojure rejects a non-number operand; the suite's Clojure branch asserts the throw, and pinned ClojureScript coerces it instead. Patch 0003 selects the Clojure assertion.",
    "replace": {
     "kind": "thrown",
@@ -75,6 +82,7 @@
   {
    "id": "clojure.core-test.neg-qmark/test-neg?#21",
    "issue": 286,
+   "original-form": "(not (neg? false))",
    "rationale": "Clojure rejects a non-number operand; the suite's Clojure branch asserts the throw, and pinned ClojureScript coerces it instead. Patch 0003 selects the Clojure assertion.",
    "replace": {
     "kind": "thrown",
@@ -85,6 +93,7 @@
   {
    "id": "clojure.core-test.neg-qmark/test-neg?#22",
    "issue": 286,
+   "original-form": "(not (neg? true))",
    "rationale": "Clojure rejects a non-number operand; the suite's Clojure branch asserts the throw, and pinned ClojureScript coerces it instead. Patch 0003 selects the Clojure assertion.",
    "replace": {
     "kind": "thrown",
@@ -95,6 +104,7 @@
   {
    "id": "clojure.core-test.repeat/test-repeat#13",
    "issue": 286,
+   "original-form": "(= [] (repeat nil nil))",
    "rationale": "Clojure rejects a non-number operand; the suite's Clojure branch asserts the throw, and pinned ClojureScript coerces it instead. Patch 0003 selects the Clojure assertion.",
    "replace": {
     "kind": "thrown",
@@ -105,6 +115,7 @@
   {
    "id": "clojure.core-test.repeat/test-repeat#14",
    "issue": 286,
+   "original-form": "(= [] (repeat \"a\" :a))",
    "rationale": "Clojure rejects a non-number operand; the suite's Clojure branch asserts the throw, and pinned ClojureScript coerces it instead. Patch 0003 selects the Clojure assertion.",
    "replace": {
     "kind": "thrown",
@@ -115,6 +126,7 @@
   {
    "id": "clojure.core-test.repeat/test-repeat#15",
    "issue": 286,
+   "original-form": "(= [] (repeat :a :a))",
    "rationale": "Clojure rejects a non-number operand; the suite's Clojure branch asserts the throw, and pinned ClojureScript coerces it instead. Patch 0003 selects the Clojure assertion.",
    "replace": {
     "kind": "thrown",
@@ -125,6 +137,7 @@
   {
    "id": "clojure.core-test.repeat/test-repeat#16",
    "issue": 286,
+   "original-form": "(= [:a] (repeat true :a))",
    "rationale": "Clojure rejects a non-number operand; the suite's Clojure branch asserts the throw, and pinned ClojureScript coerces it instead. Patch 0003 selects the Clojure assertion.",
    "replace": {
     "kind": "thrown",
@@ -135,6 +148,7 @@
   {
    "id": "clojure.core-test.repeat/test-repeat#17",
    "issue": 286,
+   "original-form": "(= [] (repeat false :a))",
    "rationale": "Clojure rejects a non-number operand; the suite's Clojure branch asserts the throw, and pinned ClojureScript coerces it instead. Patch 0003 selects the Clojure assertion.",
    "replace": {
     "kind": "thrown",

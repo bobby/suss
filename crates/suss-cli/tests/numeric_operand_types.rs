@@ -132,6 +132,14 @@ fn numeric_operands_keep_clojure_results() {
         "(= :b (get (sorted-map-by > 1 :a 2 :b) 2))",
         "(= [3 2 1] (keys (sorted-map-by > 1 :a 3 :c 2 :b)))",
         "(= [:a :b] (vals (sorted-map :y :b :x :a)))",
+        // First-class callee shapes whose pinned corpus cases now throw.
+        "(= 3 (let [f cljs.core/+] (f 1 2)))",
+        "(= 5 ((fn [f x] (f x 3)) + 2))",
+        "(= 6 ((if false + *) 2 3))",
+        "(= 1 (((fn [] +)) 1 0))",
+        "(= 2 (let [f /] (f 24 3 4)))",
+        "(= 5 (let [f -] (f 10 2 3)))",
+        "(= -0.25 (let [f /] (f -4)))",
         // Bitwise operations keep the ClojureScript coercions of section 4.
         "(= 1 (bit-or nil 1))",
     ];
