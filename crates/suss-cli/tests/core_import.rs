@@ -10,7 +10,7 @@ fn loaded() -> Session {
         session.eval("(identity 7)"),
         Err(SessionError::Compile(_))
     ));
-    session.eval(CORE).unwrap();
+    session.eval_privileged(CORE).unwrap();
     session.enter_namespace("user").unwrap();
     session
 }
@@ -134,9 +134,25 @@ fn imported_core_matches_independently_decoded_pinned_scalar_corpus() {
         serde_json::from_str(include_str!("../../../tests/oracle/core-import-cases.json")).unwrap();
     let mut session = loaded();
     let mut ids = std::collections::BTreeSet::new();
+    // Clojure governs (#286): inc and dec reject non-number operands, which the
+    // pinned ClojureScript observations coerce.
+    let throwing = [
+        "inc-nil", "inc-false", "inc-true", "inc-numeric-string", "inc-empty-string",
+        "inc-utf16-string", "inc-undefined", "inc-nonnumeric-string", "dec-nil", "dec-false",
+        "dec-true", "dec-numeric-string", "dec-empty-string", "dec-undefined",
+        "dec-nonnumeric-string",
+    ];
     for case in corpus["cases"].as_array().unwrap() {
-        assert!(ids.insert(case["id"].as_str().unwrap()));
+        let id = case["id"].as_str().unwrap();
+        assert!(ids.insert(id));
         let source = case["source"].as_str().unwrap();
+        if throwing.contains(&id) {
+            assert!(
+                matches!(session.eval(source), Err(SessionError::Language(_))),
+                "{id}: {source}"
+            );
+            continue;
+        }
         let value = session.eval(source).unwrap();
         session.collect().unwrap();
         let actual = match case["expected"]["tag"].as_str().unwrap() {
@@ -322,7 +338,7 @@ fn imported_boolean_callee_is_captured_before_argument_rebinding_and_core_reload
     let value = session.eval("(core/not nil)").unwrap();
     assert!(!boolean(&mut session, &value));
     session.collect().unwrap();
-    session.eval(CORE).unwrap();
+    session.eval_privileged(CORE).unwrap();
     session.enter_namespace("app").unwrap();
     session.collect().unwrap();
     for source in [
@@ -519,31 +535,12 @@ fn imported_inc_dec_evaluate_arguments_before_typed_arity_failure_and_recover() 
 }
 
 #[test]
-fn imported_inc_dec_array_conversion_and_unsupported_objects_recover() {
+fn imported_inc_dec_reject_objects_and_recover() {
     let mut session = loaded();
     session.eval("(deftype O [])").unwrap();
     for name in ["inc", "dec"] {
-        let value = session
-            .eval(&format!("(let [f {name}] (f (array 1)))"))
-            .unwrap();
-        session.collect().unwrap();
-        if name == "inc" {
-            // Default-hint Array conversion yields "1"; addition concatenates.
-            session
-                .inspect(&value, |mut store, value| {
-                    let text = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
-                    let units = text
-                        .elems(&mut store)?
-                        .map(|unit| unit.unwrap_i32() as u16)
-                        .collect::<Vec<_>>();
-                    assert_eq!(units, vec![49, 49]);
-                    Ok(())
-                })
-                .unwrap();
-        } else {
-            assert_eq!(number(&mut session, &value), 0.0f64.to_bits());
-        }
-        for argument in ["(O.)", "(fn [] 1)"] {
+        // Clojure (#286): arrays, nominal objects and functions are not numbers.
+        for argument in ["(array 1)", "(O.)", "(fn [] 1)"] {
             assert!(
                 matches!(
                     session.eval(&format!("(let [f {name}] (f {argument}))")),

@@ -1,0 +1,75 @@
+# This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+# If a copy of the MPL was not distributed with this file, You can obtain one at
+# https://mozilla.org/MPL/2.0/. Adapts jank-lang/clojure-test-suite for the Suss harness:
+# :suss branches select the Clojure assertions where non-number operands throw
+# (#286); pinned ClojureScript coerces them instead. Clojure governs, and the
+# recorded observations are corrected in tests/oracle/clojure-test-suite-corrections.json.
+--- a/test/clojure/core_test/neg_qmark.cljc
++++ b/test/clojure/core_test/neg_qmark.cljc
+@@ -37,6 +37,11 @@
+          (is (not (neg? false)))
+          (is (not (neg? true)))]
+ 
++        :suss
++        [(is (p/thrown? (neg? nil)))
++         (is (p/thrown? (neg? false)))
++         (is (p/thrown? (neg? true)))]
++
+         :cljs
+         [(is (not (neg? nil)))
+          (is (not (neg? false))) ; Prints warning
+--- a/test/clojure/core_test/pos_qmark.cljc
++++ b/test/clojure/core_test/pos_qmark.cljc
+@@ -36,7 +36,11 @@
+            true  1/2
+            false -1/2]))
+ 
+-    #?@(:cljs
++    #?@(:suss
++        [(is (p/thrown? (pos? nil)))
++         (is (p/thrown? (pos? false)))
++         (is (p/thrown? (pos? true)))]
++        :cljs
+         [(is (not (pos? nil)))
+          (is (not (pos? false))) ; Prints warning
+          (is (pos? true))] ; Prints warning
+--- a/test/clojure/core_test/repeat.cljc
++++ b/test/clojure/core_test/repeat.cljc
+@@ -30,14 +30,17 @@
+     (testing "bad shape"
+ 
+       (testing "n not being a number"
+-        (are [n x] #?(:cljs    (= [] (repeat n x))
++        (are [n x] #?(:suss    (p/thrown? (repeat n x))
++                      :cljs    (= [] (repeat n x))
+                       :default (p/thrown? (repeat n x)))
+                    nil nil
+                    "a" :a
+                    :a :a)
+ 
+         (testing "n being a boolean"
+-          (is #?(:clj     (p/thrown? (repeat true :a))
++          (is #?(:suss    (p/thrown? (repeat true :a))
++                 :clj     (p/thrown? (repeat true :a))
+                  :default (= [:a] (repeat true :a))))
+-          (is #?(:clj     (p/thrown? (repeat false :a))
++          (is #?(:suss    (p/thrown? (repeat false :a))
++                 :clj     (p/thrown? (repeat false :a))
+                  :default (= [] (repeat false :a)))))))))
+--- a/test/clojure/core_test/zero_qmark.cljc
++++ b/test/clojure/core_test/zero_qmark.cljc
+@@ -35,11 +35,14 @@
+            false -1/2]))
+ 
+     (is #?@(:lpy [(= false (zero? nil))]
++            :suss [(p/thrown? (zero? nil))]
+             :cljs [(= false (zero? nil))]
+             :default [(p/thrown? (zero? nil))]))
+     (is #?@(:lpy [(= false (zero? false))]
++            :suss [(p/thrown? (zero? false))]
+             :cljs [(= false (zero? false))]
+             :default [(p/thrown? (zero? false))]))
+     (is #?@(:lpy [(= false (zero? true))]
++            :suss [(p/thrown? (zero? true))]
+             :cljs [(= false (zero? true))]
+             :default [(p/thrown? (zero? true))]))))

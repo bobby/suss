@@ -47,7 +47,12 @@ SUITES = {
                 'baseline': ORACLE / 'clojure-test-suite-fixture-known-failures.json'},
 }
 ORACLE_PATCHES = ('0001-when-var-exists-macro-phase.patch',)
-SUSS_PATCHES = ('0002-number-range-suss-branches.patch',)
+SUSS_PATCHES = ('0002-number-range-suss-branches.patch',
+                '0003-clojure-numeric-operand-suss-branches.patch')
+# Where a recorded ClojureScript observation disagrees with Clojure, Clojure
+# governs: these reviewed records replace the oracle's for comparison only.
+CORRECTIONS = ORACLE / 'clojure-test-suite-corrections.json'
+CORRECTABLE = {'kind', 'form', 'threw', 'operands', 'value'}
 PORTABILITY = 'clojure.core-test.portability'
 # Math.random is seeded per run; assertions whose observations differ across
 # these seeds are nondeterministic and keep only their kind and verdict.
@@ -401,6 +406,38 @@ def decide(expected, actual):
     return None, judged
 
 
+def corrected(reference):
+    """Apply the reviewed Clojure corrections to the recorded oracle assertions."""
+    document = json.loads(CORRECTIONS.read_text(), object_pairs_hook=unique)
+    if document['schema'] != 1 or document['suite'] != COMMIT:
+        raise ValueError('unexpected clojure-test-suite correction identity')
+    corrections = {}
+    for correction in document['corrections']:
+        identity = correction['id']
+        if identity in corrections:
+            raise ValueError(f'duplicate correction: {identity}')
+        if not correction.get('issue') or not correction.get('rationale'):
+            raise ValueError(f'correction needs an issue and rationale: {identity}')
+        if not correction['replace'] or set(correction['replace']) - CORRECTABLE:
+            raise ValueError(f'unexpected corrected fields: {identity}')
+        corrections[identity] = correction
+    assertions = []
+    for entry in reference['assertions']:
+        correction = corrections.pop(entry['id'], None)
+        if correction is not None:
+            replace = correction['replace']
+            if entry['form'] != correction.get('original-form'):
+                raise ValueError(f"correction no longer matches its recorded form: {entry['id']}")
+            if not entry['deterministic'] or entry['verdict'] != 'pass':
+                raise ValueError(f"only deterministic passing records are corrected: {entry['id']}")
+            entry = {key: value for key, value in entry.items()
+                     if key not in ('threw', 'operands', 'value')} | replace
+        assertions.append(entry)
+    if corrections:
+        raise ValueError(f'corrections for unknown assertions: {sorted(corrections)}')
+    return dict(reference, assertions=assertions)
+
+
 def compare(reference, observed):
     """Decide every oracle assertion from Suss observations; return counts and failures.
 
@@ -527,6 +564,8 @@ def main():
             raise SystemExit(f"fresh oracle observations differ from {suite['reference'].relative_to(ROOT)}; review the diff")
         return
     reference = json.loads(suite['reference'].read_text(), object_pairs_hook=unique)
+    if args.suite == 'suite':
+        reference = corrected(reference)
     observed = json.loads(args.observations.read_text(), object_pairs_hook=unique)
     counts, failures = compare(reference, observed)
     print(f'clojure-test-suite {args.suite}:', counts_line(counts))

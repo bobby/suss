@@ -12,22 +12,34 @@ const VALUE: ValType = ValType::Ref(RefType::EQREF);
 fn arithmetic_name(
     operator: Arithmetic,
     arguments: &[ir::ValueId],
+    coercing: bool,
     function: &IrFunction,
 ) -> &'static str {
     let numeric = arguments
         .iter()
         .all(|arg| function.values[arg.0].ty == Type::Number);
     match (operator, numeric) {
+        // Checked unary + and * only check their operand, even a typed Number.
+        (Arithmetic::Add, _) if arguments.len() == 1 && !coercing => "checked-identity-add",
+        (Arithmetic::Multiply, _) if arguments.len() == 1 && !coercing => {
+            "checked-identity-multiply"
+        }
         (Arithmetic::Add, true) => "number-add",
         (Arithmetic::Subtract, true) => "number-subtract",
         (Arithmetic::Multiply, true) => "number-multiply",
         (Arithmetic::Divide, true) => "number-divide",
         (Arithmetic::Negate, true) => "number-negate",
-        (Arithmetic::Add, false) => "value-add",
-        (Arithmetic::Subtract, false) => "value-subtract",
-        (Arithmetic::Multiply, false) => "value-multiply",
-        (Arithmetic::Divide, false) => "value-divide",
-        (Arithmetic::Negate, false) => "value-negate",
+        (Arithmetic::Add, false) if coercing => "value-add",
+        (Arithmetic::Subtract, false) if coercing => "value-subtract",
+        (Arithmetic::Multiply, false) if coercing => "value-multiply",
+        (Arithmetic::Divide, false) if coercing => "value-divide",
+        (Arithmetic::Negate, false) if coercing => "value-negate",
+        // Clojure operand checks (#286).
+        (Arithmetic::Add, false) => "checked-add",
+        (Arithmetic::Subtract, false) => "checked-subtract",
+        (Arithmetic::Multiply, false) => "checked-multiply",
+        (Arithmetic::Divide, false) => "checked-divide",
+        (Arithmetic::Negate, false) => "checked-negate",
     }
 }
 // Literal units and indices are compiler-checked, unlike public mutable string
@@ -145,11 +157,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert(operation.export());
                     }
                     Operation::Nominal { operation, .. } => match operation {
-                        Nominal::IsNumber | Nominal::IsString => {
-                            names.insert(if *operation == Nominal::IsNumber { "predicate-number" } else { "predicate-string" });
-                            names.insert("invoke");
-                        }
-                        Nominal::Array => {}
+                        Nominal::IsNumber | Nominal::IsString | Nominal::Array => {}
                         Nominal::CoerceString => { names.insert("coerce-string"); }
                         Nominal::ObjectCoerceString => { names.insert("object-coerce-string"); }
                         Nominal::ConcatString => { names.insert("string-concat"); }
@@ -288,8 +296,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     Operation::Arithmetic {
                         operator,
                         arguments,
+                        coercing,
                     } => {
-                        names.insert(arithmetic_name(*operator, arguments, function));
+                        names.insert(arithmetic_name(*operator, arguments, *coercing, function));
                     }
                     _ => {}
                 }
@@ -335,7 +344,15 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "comparison-less-equal"
             | "comparison-greater"
             | "comparison-greater-equal"
-            | "comparison-strict-equal" => (vec![VALUE, VALUE], vec![VALUE]),
+            | "comparison-strict-equal"
+            | "comparison-number-less"
+            | "comparison-number-less-equal"
+            | "comparison-number-greater"
+            | "comparison-number-greater-equal"
+            | "comparison-number-equal"
+            | "comparison-number-zero"
+            | "comparison-number-positive"
+            | "comparison-number-negative" => (vec![VALUE, VALUE], vec![VALUE]),
             "object-field-set" => (vec![VALUE, ValType::I32, VALUE], vec![]),
             "object-field-get" | "protocol-key" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "protocol-marker-set" | "protocol-method-get" => (vec![VALUE, VALUE], vec![VALUE]),
@@ -382,6 +399,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 vec![VALUE],
             ),
             "binding-get" | "binding-bound" | "number-negate" | "value-negate"
+            | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
             | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" => {
                 (vec![VALUE], vec![VALUE])
@@ -1067,17 +1085,13 @@ fn emit_function(
                             function.instruction(&I32Or);
                         }
                         Nominal::IsNumber | Nominal::IsString => {
-                            // Reuse the runtime factory, never a mutable public cell.
+                            // The runtime predicates' own test, inline: never a mutable
+                            // public cell, and no closure call on core's hot paths (#286).
                             // Arguments are already evaluated once in source order.
+                            let ty = if *operation == Nominal::IsNumber { runtime_abi::NUMBER } else { runtime_abi::STRING };
                             function
-                                .instruction(&Call(index(if *operation == Nominal::IsNumber { "predicate-number" } else { "predicate-string" })))
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
-                                .instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: 1 })
-                                .instruction(&Call(index("invoke")))
-                                .instruction(&RefCastNonNull(HeapType::I31))
-                                .instruction(&I31GetU)
-                                .instruction(&I32Const(4))
-                                .instruction(&I32Eq);
+                                .instruction(&RefTestNonNull(HeapType::Concrete(ty)));
                         }
                         Nominal::IsClosure => {
                             function
@@ -1346,12 +1360,13 @@ fn emit_function(
                 Operation::Arithmetic {
                     operator,
                     arguments,
+                    coercing,
                 } => {
                     for argument in arguments {
                         function.instruction(&LocalGet(argument.0 as u32 + offset));
                     }
                     function
-                        .instruction(&Call(index(arithmetic_name(*operator, arguments, ir))))
+                        .instruction(&Call(index(arithmetic_name(*operator, arguments, *coercing, ir))))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
             }

@@ -1,6 +1,15 @@
 use suss_cli::portable_session::Session;
 use wasmtime::Val;
 
+#[path = "support/clojure_corrections.rs"]
+mod clojure_corrections;
+
+/// Recorded observations that coerced a non-number operand; Clojure rejects them.
+const CORRECTIONS: &[clojure_corrections::Correction] = &[
+    ("object-method-detached-loses-receiver", "((.-score object-probe) 3)", "+ requires number operands"),
+    ("object-method-missing-argument", "", "+ requires number operands"),
+];
+
 #[test]
 fn object_methods_match_independently_decoded_primary_observations_after_gc() {
     let corpus: serde_json::Value = serde_json::from_str(include_str!(
@@ -17,9 +26,11 @@ fn object_methods_match_independently_decoded_primary_observations_after_gc() {
         .enter_namespace("suss-oracle.object-method-cases")
         .unwrap();
     let mut ids = std::collections::BTreeSet::new();
+    let mut corrected = 0;
     for case in cases {
+        let case = &clojure_corrections::corrected(case, CORRECTIONS, &mut corrected);
         let id = case["id"].as_str().unwrap();
-        assert!(ids.insert(id));
+        assert!(ids.insert(id.to_owned()));
         let source = case["source"].as_str().unwrap();
         let value = session
             .eval(source)
@@ -90,6 +101,7 @@ fn object_methods_match_independently_decoded_primary_observations_after_gc() {
         assert_eq!(actual, case["expected"], "{id}: {source}");
         session.collect().unwrap();
     }
+    assert_eq!(corrected, CORRECTIONS.len());
 }
 
 #[test]

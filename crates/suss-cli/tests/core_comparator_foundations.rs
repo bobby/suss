@@ -80,7 +80,7 @@ fn private_predicates_and_scalar_comparison_preserve_live_publics_in_both_phases
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
         session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("user").unwrap();
         session
@@ -89,7 +89,7 @@ fn private_predicates_and_scalar_comparison_preserve_live_publics_in_both_phases
         session.enter_namespace("suss.core").unwrap();
         session.eval("(def number? (fn [x] false)) (def string? (fn [x] false)) (def > (fn [a b] false)) (def < (fn [a b] false))").unwrap();
         session
-            .eval(include_str!("../../../runtime/comparator-foundations.sus"))
+            .eval_privileged(include_str!("../../../runtime/comparator-foundations.sus"))
             .unwrap();
         session.enter_namespace("user").unwrap();
         session.eval("(def retained-number? (fn [x] (suss.bootstrap/number? x))) (def retained-string? (fn [x] (suss.bootstrap/string? x))) (def retained-scalar suss.core/default-compare-scalar) (def comparator-trace 0)").unwrap();
@@ -200,11 +200,11 @@ fn staged_type_returns_retained_nominal_constructors_in_both_phases() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
         session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("suss.core").unwrap();
         session
-            .eval(patch["replacement"].as_str().unwrap())
+            .eval_privileged(patch["replacement"].as_str().unwrap())
             .unwrap();
         session.enter_namespace("user").unwrap();
         session.eval("(deftype ComparatorTypeProbe [value m] cljs.core/IMeta (-meta [this] m) cljs.core/IWithMeta (-with-meta [this metadata] (ComparatorTypeProbe. value metadata)) cljs.core/IComparable (-compare [this other] value)) (deftype OtherComparatorTypeProbe [value m]) (def retained-class ComparatorTypeProbe) (def retained-instance (ComparatorTypeProbe. 17 nil)) (def retained-metadata-instance (with-meta retained-instance 29)) (def retained-type cljs.core/type) (def type-trace 0)").unwrap();
@@ -405,11 +405,11 @@ fn primitive_constructor_values_are_canonical_callable_and_rooted_in_both_phases
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
         session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("suss.core").unwrap();
         session
-            .eval(patch["replacement"].as_str().unwrap())
+            .eval_privileged(patch["replacement"].as_str().unwrap())
             .unwrap();
         session.enter_namespace("user").unwrap();
         session.eval("(def retained-type cljs.core/type) (def scalar-number-constructor (retained-type 7)) (def scalar-string-constructor (retained-type \"x\")) (def scalar-boolean-constructor (retained-type false)) (deftype ScalarTypeUndefinedProbe []) (def primitive-constructor-trace 0)").unwrap();

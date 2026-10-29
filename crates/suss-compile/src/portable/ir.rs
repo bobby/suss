@@ -83,6 +83,8 @@ pub enum Operation {
     Arithmetic {
         operator: Arithmetic,
         arguments: Vec<ValueId>,
+        /// JavaScript coercion for shipped core; checked Numbers otherwise.
+        coercing: bool,
     },
 }
 #[derive(Debug, Clone)]
@@ -912,6 +914,7 @@ impl<'a> Lowerer<'a> {
             Expression::Arithmetic {
                 operator,
                 arguments,
+                coercing,
             } => {
                 // Public HIR can represent Negate directly or malformed call arities.
                 if (*operator == Arithmetic::Negate && arguments.len() != 1)
@@ -939,12 +942,27 @@ impl<'a> Lowerer<'a> {
                     )?));
                 }
                 let mut result = values[0];
+                if values.len() == 1 && !coercing && self.function.values[result.0].ty != Type::Number {
+                    if matches!(operator, Arithmetic::Add | Arithmetic::Multiply) {
+                        // Unary + and * return their operand once it is checked.
+                        return Ok(Some(self.emit(
+                            Operation::Arithmetic {
+                                operator: *operator,
+                                arguments: values,
+                                coercing: false,
+                            },
+                            Type::Number,
+                            hir.span.clone(),
+                        )?));
+                    }
+                }
                 if values.len() == 1 {
                     if matches!(operator, Arithmetic::Subtract | Arithmetic::Negate) {
                         return Ok(Some(self.emit(
                             Operation::Arithmetic {
                                 operator: Arithmetic::Negate,
                                 arguments: values,
+                                coercing: *coercing,
                             },
                             Type::Number,
                             hir.span.clone(),
@@ -956,6 +974,7 @@ impl<'a> Lowerer<'a> {
                             Operation::Arithmetic {
                                 operator: *operator,
                                 arguments: vec![one, result],
+                                coercing: *coercing,
                             },
                             Type::Number,
                             hir.span.clone(),
@@ -969,6 +988,7 @@ impl<'a> Lowerer<'a> {
                             self.function.values[result.0].ty,
                             self.function.values[value.0].ty,
                         ],
+                        *coercing,
                     )
                     .ok_or_else(|| Diagnostic {
                         span: hir.span.clone(),
@@ -978,6 +998,7 @@ impl<'a> Lowerer<'a> {
                         Operation::Arithmetic {
                             operator: *operator,
                             arguments: vec![result, *value],
+                            coercing: *coercing,
                         },
                         ty,
                         hir.span.clone(),
@@ -1682,20 +1703,22 @@ fn verify_function_inner(
                 Operation::Arithmetic {
                     operator,
                     arguments,
+                    coercing,
                 } => {
-                    let arity = if *operator == Arithmetic::Negate {
-                        1
-                    } else {
-                        2
+                    let arity = match operator {
+                        Arithmetic::Negate => 1..=1,
+                        // Unary + and * check a non-Number operand.
+                        Arithmetic::Add | Arithmetic::Multiply if !coercing => 1..=2,
+                        _ => 2..=2,
                     };
-                    if arguments.len() != arity {
+                    if !arity.contains(&arguments.len()) {
                         return Err(fail("IR intrinsic arity mismatch"));
                     }
                     let operand_types = arguments
                         .iter()
                         .map(|arg| ty(*arg))
                         .collect::<Result<Vec<_>, _>>()?;
-                    if arithmetic_type(*operator, &operand_types) != Some(result_ty) {
+                    if arithmetic_type(*operator, &operand_types, *coercing) != Some(result_ty) {
                         return Err(fail("IR arithmetic operand/result type mismatch"));
                     }
                 }

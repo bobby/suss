@@ -29378,3 +29378,56 @@ document's 2026-10-25 decision now records all three outcomes.
 - Tests: `repl_default_budgets.rs` (new), plus the `main.rs` unit test,
   `repl_interrupt.rs` and `native_repl_async_io.rs`, updated for the new
   defaults and messages.
+
+## #286: non-number arithmetic and comparison operands (2026-10-29)
+
+- Source arithmetic (`+ - * /`, inline `inc`/`dec`) and numeric comparison
+  (`< <= > >= ==`, inline `zero?`/`pos?`/`neg?`) reject non-numbers with a
+  catchable language error naming the operation, such as
+  `"+ requires number operands"`.
+  - New runtime helpers live in `runtime_abi/numeric_operands.rs`:
+    `checked-*`, `checked-identity-add`/`-multiply` (unary + and *) and
+    `comparison-number-*`. First-class `+ - * / < <= > >= ==` use them too.
+  - Source in `suss.core` (privileged, or analyzed with `suss.core` as the
+    current namespace) keeps the coercing `value-*` and `comparison-*`
+    helpers. Core's pinned printer, `contains?`, `=`, `case` and comparators
+    rely on JavaScript coercion internally, such as `(dec nil)` for a missing
+    print length and `==` as `===`. Keying on the namespace, not only on
+    privilege, keeps core loaded directly from `core.sus` identical to shipped
+    core, without privileged direct linking or private internals.
+  - HIR/IR `Arithmetic` carries `coercing` (`Analyzer::coercing_operands`), and
+    `Comparison` gained `Number*` variants, including `NumberZero`,
+    `NumberPositive` and `NumberNegative` for the inline predicates.
+  - Core's public `inc`, `dec`, `zero?`, `pos?`, `neg?`, `min`, `max`, `quot`,
+    `rem`, `mod` and `repeat` check their operands explicitly (patches).
+- Conformance corrections ("Clojure governs"):
+  - jank suite: patch `0003` adds `:suss` branches selecting the Clojure
+    assertions for `zero?`, `pos?`, `neg?` and `repeat`.
+    `tests/oracle/clojure-test-suite-corrections.json` replaces the 14
+    matching recorded observations at comparison time only.
+  - `portable-cases.json` (142 cases) and `core-import-cases.json` (15) are
+    corrected in their tests: the original source must throw, and conversion
+    cases keep their recorded value through `suss.bootstrap/value-add` or
+    `f64-coerce`.
+  - `compiled_macro_source_tags.rs` no longer observes the analyzer rows of
+    its two `(+ "a" 1)` probes, which now throw before the probe records them.
+    Re-recording a non-throwing replacement needs the JVM oracle.
+- Corpus tests that load `core.sus` directly keep plain `eval`: the namespace
+  rule preserves core's coercion, while privileged loading would change live
+  linking and hide internals those corpora observe. Their user-code
+  observations that coerced a non-number are corrected through
+  `crates/suss-cli/tests/support/clojure_corrections.rs` (indexing, Murmur,
+  object methods, reduction, sequences) or explicit tables (comparisons: 49
+  cases). `persistent_session.rs`, `portable_closures.rs`,
+  `portable_core_expression_dependencies.rs` and `portable_resolution.rs`
+  assert the rejections; coercion-machinery checks (numeric memory, the
+  UTF-16 comparison fuel loop) go through `suss.bootstrap/f64-coerce`,
+  `value-add` or a privileged `<`.
+- The first full baseline on 4b3fbc1 failed 34 tests in 22 binaries (CI run
+  40862823168 matched); targeted runs before it had missed them. All are
+  fixed above.
+- Known gaps, outside #286:
+  - `abs`, `min-key` and `max-key` still coerce.
+  - Inline variadic comparisons evaluate middle operands twice (pinned macro
+    shape): `(< 1 (do (set! n (inc n)) 2) 3)` increments `n` twice, against
+    section 4's exactly-once rule. Not yet filed.

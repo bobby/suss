@@ -1,8 +1,9 @@
 //! Original universal arithmetic closures, matching pinned core.cljs arities.
 //! Public source argument evaluation happens in the caller, before invocation.
+//! Operands are checked Numbers, as in Clojure, even for unary + and * (#286).
 use super::*;
 
-pub(super) fn functions(b: &mut Builder, primitives: [u32; 5]) -> Vec<u32> {
+pub(super) fn functions(b: &mut Builder, primitives: [u32; 7]) -> Vec<u32> {
     use Instruction::*;
     let mut declared = Vec::new();
     for (operator, name, primitive, minimum) in [
@@ -61,7 +62,8 @@ pub(super) fn functions(b: &mut Builder, primitives: [u32; 5]) -> Vec<u32> {
                 LocalGet(4),
                 Call(primitive),
             ]),
-            _ => body.push(LocalGet(4)),
+            0 => body.extend([LocalGet(4), Call(primitives[5])]),
+            _ => body.extend([LocalGet(4), Call(primitives[6])]),
         }
         body.extend([
             Return,

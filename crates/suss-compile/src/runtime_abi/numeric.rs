@@ -219,7 +219,7 @@ fn helper_from(bytes: &[u8]) -> Helper {
     result
 }
 
-fn error(message: &str, global: u32) -> Vec<Instruction<'static>> {
+pub(super) fn error(message: &str, global: u32) -> Vec<Instruction<'static>> {
     use Instruction::*;
     let units = message.encode_utf16().collect::<Vec<_>>();
     let mut code = vec![GlobalGet(global)];

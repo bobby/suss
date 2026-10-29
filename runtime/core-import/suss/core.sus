@@ -111,9 +111,15 @@
 
 (def some? (fn [x] (if (suss.bootstrap/nil? x) false true)))
 
-(def inc (fn [x] (cljs.core/+ x 1)))
+(def inc (fn [x]
+  (if (suss.bootstrap/number? x)
+    (cljs.core/+ x 1)
+    (throw (suss.bootstrap/error "inc requires number operands")))))
 
-(def dec (fn [x] (- x 1)))
+(def dec (fn [x]
+  (if (suss.bootstrap/number? x)
+    (- x 1)
+    (throw (suss.bootstrap/error "dec requires number operands")))))
 
 (defprotocol ICloneable
   "Protocol for cloning a value."
@@ -253,7 +259,9 @@
 (def ^boolean zero?
   "Returns true if num is zero, else false"
   (fn [x]
-  (cljs.core/zero? x)))
+  (if (suss.bootstrap/number? x)
+    (cljs.core/zero? x)
+    (throw (suss.bootstrap/error "zero? requires number operands")))))
 
 (def m3-seed 0)
 
@@ -300,7 +308,10 @@
 
 (def ^boolean pos?
   "Returns true if num is greater than zero, else false"
-  (fn [x] (cljs.core/pos? x)))
+  (fn [x]
+    (if (suss.bootstrap/number? x)
+      (cljs.core/pos? x)
+      (throw (suss.bootstrap/error "pos? requires number operands")))))
 
 (def ^number m3-hash-unencoded-chars (fn [in]
   (let [h1 (loop [i 1 h1 m3-seed]
@@ -1074,7 +1085,10 @@
 
 (def ^boolean neg?
   "Returns true if num is less than zero, else false"
-  (fn [x] (cljs.core/neg? x)))
+  (fn [x]
+    (if (suss.bootstrap/number? x)
+      (cljs.core/neg? x)
+      (throw (suss.bootstrap/error "neg? requires number operands")))))
 
 (def linear-traversal-nth
   (fn ([coll n]
@@ -3140,8 +3154,10 @@
 (def quot
   "quot[ient] of dividing numerator by denominator."
   (fn [n d]
-  (let [rem (js-mod n d)]
-    (fix (/ (- n rem) d)))))
+  (if (and (suss.bootstrap/number? n) (suss.bootstrap/number? d))
+    (let [rem (js-mod n d)]
+      (fix (/ (- n rem) d)))
+    (throw (suss.bootstrap/error "quot requires number operands")))))
 
 (def ^:private array-copy-downward (fn
   ([from i to j len]
@@ -4962,7 +4978,9 @@
 (def mod
   "Modulus of num and div. Truncates toward negative infinity."
   (fn [n d]
-    (suss.bootstrap/f64-remainder (+ (suss.bootstrap/f64-remainder n d) d) d)))
+    (if (and (suss.bootstrap/number? n) (suss.bootstrap/number? d))
+      (suss.bootstrap/f64-remainder (+ (suss.bootstrap/f64-remainder n d) d) d)
+      (throw (suss.bootstrap/error "mod requires number operands")))))
 
 (def ^{:doc "Returns the absolute value of a."
    :added "1.11.10"} ^number abs
@@ -4981,11 +4999,13 @@
 "Returns the greatest of the nums."
 (fn ([x] x)
   ([x y]
-   (cond
-     (NaN? x) x
-     (NaN? y) y
-     (> x y) x
-     :else y))
+   (if (and (suss.bootstrap/number? x) (suss.bootstrap/number? y))
+     (cond
+       (NaN? x) x
+       (NaN? y) y
+       (> x y) x
+       :else y)
+     (throw (suss.bootstrap/error "max requires number operands"))))
   ([x y & more]
    (reduce max (cljs.core/max x y) more))))
 
@@ -4993,11 +5013,13 @@
 "Returns the least of the nums."
 (fn ([x] x)
   ([x y]
-   (cond
-     (NaN? x) x
-     (NaN? y) y
-     (< x y) x
-     :else y))
+   (if (and (suss.bootstrap/number? x) (suss.bootstrap/number? y))
+     (cond
+       (NaN? x) x
+       (NaN? y) y
+       (< x y) x
+       :else y)
+     (throw (suss.bootstrap/error "min requires number operands"))))
   ([x y & more]
    (reduce min (cljs.core/min x y) more))))
 
@@ -7596,7 +7618,7 @@ reduces them without incurring seq initialization"
 
 (def ^{:doc "Returns a lazy (infinite!, or length n if supplied) sequence of xs." :arglists '([x] [n x])} repeat
   (fn ([x] (Repeat. nil -1 x nil nil))
-    ([n x] (if (pos? n)
+    ([n x] (if (pos? (if (suss.bootstrap/number? n) n (throw (suss.bootstrap/error "repeat requires number operands"))))
              (Repeat. nil n x nil nil)
              (.-EMPTY List)))))
 
@@ -7955,8 +7977,10 @@ reduces them without incurring seq initialization"
 
 (def ^{:doc "remainder of dividing numerator by denominator." :arglists '([n d])} rem
   (fn [n d]
-  (let [q (quot n d)]
-    (- n (* d q)))))
+  (if (and (suss.bootstrap/number? n) (suss.bootstrap/number? d))
+    (let [q (quot n d)]
+      (- n (* d q)))
+    (throw (suss.bootstrap/error "rem requires number operands")))))
 
 (def ^{:doc "Returns a lazy seq of every nth item in coll.  Returns a stateful
   transducer when no collection is provided." :arglists '([n] [n coll])} take-nth

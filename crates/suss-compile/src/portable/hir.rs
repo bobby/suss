@@ -71,9 +71,18 @@ pub enum Arithmetic {
     Divide,
     Negate,
 }
-/// Primitive result information. Dynamic operands are checked/coerced at runtime;
-/// object conversions remain an explicit unsupported boundary, not Number casts.
-pub(crate) fn arithmetic_type(operator: Arithmetic, arguments: &[Type]) -> Option<Type> {
+/// Primitive result information. Checked operands throw unless they are
+/// Numbers, as in Clojure (#286), so every checked result is a Number. Shipped
+/// core's coercing arithmetic keeps JavaScript results; object conversions
+/// remain an explicit unsupported boundary there, not Number casts.
+pub(crate) fn arithmetic_type(
+    operator: Arithmetic,
+    arguments: &[Type],
+    coercing: bool,
+) -> Option<Type> {
+    if !coercing {
+        return Some(Type::Number);
+    }
     if arguments.len() == 1 && matches!(operator, Arithmetic::Add | Arithmetic::Multiply) {
         return Some(arguments[0]);
     }
@@ -169,6 +178,17 @@ pub enum Comparison {
     Greater,
     GreaterEqual,
     StrictEqual,
+    /// Clojure numeric comparison: non-Number operands throw (#286). Shipped
+    /// core and compiler-generated tests keep the coercing variants above.
+    NumberLess,
+    NumberLessEqual,
+    NumberGreater,
+    NumberGreaterEqual,
+    NumberEqual,
+    /// Inline `zero?`, `pos?` and `neg?` against literal 0, named in errors.
+    NumberZero,
+    NumberPositive,
+    NumberNegative,
 }
 impl Comparison {
     pub(crate) fn export(self) -> &'static str {
@@ -178,6 +198,25 @@ impl Comparison {
             Self::Greater => "comparison-greater",
             Self::GreaterEqual => "comparison-greater-equal",
             Self::StrictEqual => "comparison-strict-equal",
+            Self::NumberLess => "comparison-number-less",
+            Self::NumberLessEqual => "comparison-number-less-equal",
+            Self::NumberGreater => "comparison-number-greater",
+            Self::NumberGreaterEqual => "comparison-number-greater-equal",
+            Self::NumberEqual => "comparison-number-equal",
+            Self::NumberZero => "comparison-number-zero",
+            Self::NumberPositive => "comparison-number-positive",
+            Self::NumberNegative => "comparison-number-negative",
+        }
+    }
+    /// The checked public variant of a source comparison.
+    pub(crate) fn numeric(self) -> Self {
+        match self {
+            Self::Less | Self::NumberLess => Self::NumberLess,
+            Self::LessEqual | Self::NumberLessEqual => Self::NumberLessEqual,
+            Self::Greater | Self::NumberGreater => Self::NumberGreater,
+            Self::GreaterEqual | Self::NumberGreaterEqual => Self::NumberGreaterEqual,
+            Self::StrictEqual | Self::NumberEqual => Self::NumberEqual,
+            Self::NumberZero | Self::NumberPositive | Self::NumberNegative => self,
         }
     }
 }
@@ -798,6 +837,9 @@ pub enum Expression {
     Arithmetic {
         operator: Arithmetic,
         arguments: Vec<Hir>,
+        /// Shipped core keeps JavaScript coercion internally; source arithmetic
+        /// rejects non-numbers as Clojure does (#286).
+        coercing: bool,
     },
 }
 fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
@@ -1392,6 +1434,13 @@ impl Analyzer<'_> {
     }
     /// The current binding was defined by compiler-authored source, such as
     /// the shipped core, rather than by user code reusing a core name.
+    /// Whether arithmetic and comparisons keep the coercing primitives that
+    /// core's pinned source relies on (#286). Source in `suss.core` keeps
+    /// them, whether shipped or loaded directly, so core behaves the same
+    /// either way; every other namespace gets Clojure's number-only operands.
+    pub(super) fn coercing_operands(&self) -> bool {
+        self.privileged || self.environment.current_namespace(self.phase) == "suss.core"
+    }
     pub(super) fn privileged_definition(&self, global: &Global) -> bool {
         self.environment
             .definition_info(global)
@@ -2944,7 +2993,7 @@ impl Analyzer<'_> {
                         arguments: arguments.clone().into(),
                     }));
                 let types = arguments.iter().map(|arg| arg.ty).collect::<Vec<_>>();
-                let ty = arithmetic_type(operator, &types).ok_or_else(|| {
+                let ty = arithmetic_type(operator, &types, self.coercing_operands()).ok_or_else(|| {
                     let operand = arguments
                         .iter()
                         .find(|arg| matches!(arg.ty, Type::Closure(_)))
@@ -2958,6 +3007,7 @@ impl Analyzer<'_> {
                     Expression::Arithmetic {
                         operator,
                         arguments,
+                        coercing: self.coercing_operands(),
                     },
                     ty,
                 )

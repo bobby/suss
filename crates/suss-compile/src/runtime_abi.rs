@@ -35,6 +35,7 @@ mod native_protocols;
 mod nominal;
 mod numeric;
 mod numeric_hash;
+mod numeric_operands;
 mod object_descriptors;
 mod object_methods;
 mod owned_prototypes;
@@ -708,7 +709,8 @@ fn build_module() -> Vec<u8> {
     let coercion_types = coercions::declare(&mut b);
     let prototype_types = owned_prototypes::declare(&mut b);
     error_constructors::canonical_test_function(&mut b);
-    let primitives = numeric::intrinsics(&mut b, numeric_info, coercion_types);
+    numeric::intrinsics(&mut b, numeric_info, coercion_types);
+    let primitives = numeric_operands::intrinsics(&mut b);
     bitwise::intrinsics(&mut b);
     numeric_hash::intrinsics(&mut b);
     identity_hash::intrinsics(&mut b);

@@ -94,11 +94,16 @@ fn compiled_source_inference_matches_pinned_tags_without_changing_executed_stora
         corpus["upstream"],
         "c4295f303100bbf5afac449242d30bca1126f1a1"
     );
+    // Clojure governs (#286): the pinned ClojureScript evaluates these to "a1",
+    // while Suss throws for a non-number + operand before the probe records the
+    // local, so only their execution is checked here, not their analyzer row.
+    let throwing = ["arithmetic-string-storage", "invoke-inferred-number-with-string-storage"];
     let cases = corpus["cases"].as_array().unwrap();
     assert_eq!(cases.len(), expressions.len());
     let expected = cases
         .iter()
         .zip(expressions)
+        .filter(|(_, (label, _))| !throwing.contains(label))
         .map(|(case, (label, _))| {
             assert_eq!(case[0], label);
             let fields = case[1].as_array().unwrap();
@@ -113,7 +118,13 @@ fn compiled_source_inference_matches_pinned_tags_without_changing_executed_stora
     let observed = expressions
         .iter()
         .map(|(label, expression)| {
-            format!("(let [observed {expression}] (observe-tags \"{label}\" observed))")
+            let observation =
+                format!("(let [observed {expression}] (observe-tags \"{label}\" observed))");
+            if throwing.contains(label) {
+                format!("(try {observation} (catch :default e (ex-message e)))")
+            } else {
+                observation
+            }
         })
         .collect::<Vec<_>>()
         .join("\n");
@@ -151,7 +162,8 @@ fn compiled_source_inference_matches_pinned_tags_without_changing_executed_stora
             expected.len(),
             "every source inference observation is required"
         );
-        for ((actual, expected), (label, _)) in rows.iter().zip(&expected).zip(expressions) {
+        let observed_labels = expressions.iter().filter(|(label, _)| !throwing.contains(label));
+        for ((actual, expected), (label, _)) in rows.iter().zip(&expected).zip(observed_labels) {
             assert_eq!(actual, expected, "native source tags after GC: {label}");
         }
         let runtime = session
@@ -166,15 +178,19 @@ fn compiled_source_inference_matches_pinned_tags_without_changing_executed_stora
             .unwrap();
         session.collect().unwrap();
         let runtime = bridge.read(&mut session, &runtime, 0..1).unwrap();
+        let mut result = corpus["result"].as_array().unwrap().clone();
+        assert_eq!((&result[1], &result[2]), (&json!("a1"), &json!("a1")));
+        result[1] = json!("+ requires number operands");
+        result[2] = json!("+ requires number operands");
         assert_eq!(
             data(&runtime),
-            canonical(json!(["vector", corpus["result"]])),
+            canonical(json!(["vector", result])),
             "actual runtime projections retain storage semantics"
         );
         let count = session.eval("(count facts)").unwrap();
         assert!(matches!(
             bridge.read(&mut session, &count, 0..1).unwrap().kind,
-            Kind::Number(32.0)
+            Kind::Number(30.0)
         ));
         macros
             .define(
@@ -186,7 +202,7 @@ fn compiled_source_inference_matches_pinned_tags_without_changing_executed_stora
         let effect = session
             .eval_with_macros(
                 r#"(def effects 0)
-          (let [observed (do (set! effects (+ effects 1)) (+ "a" 1))]
+          (let [observed (do (set! effects (+ effects 1)) (+ 2 1))]
             (effect-tag observed))"#,
                 &mut macros,
             )
@@ -195,8 +211,24 @@ fn compiled_source_inference_matches_pinned_tags_without_changing_executed_stora
         let effect = bridge.read(&mut session, &effect, 0..1).unwrap();
         assert_eq!(
             data(&effect),
-            canonical(json!(["vector", [["symbol", "number"], "a1", 1]])),
-            "inferred number and executed string stay distinct; initializer effects run once"
+            canonical(json!(["vector", [["symbol", "number"], 3, 1]])),
+            "inferred number; initializer effects run once"
+        );
+        let thrown = session
+            .eval_with_macros(
+                r#"[(try (let [observed (do (set! effects (+ effects 1)) (+ "a" 1))]
+                   (effect-tag observed))
+                 (catch :default e (ex-message e)))
+               effects]"#,
+                &mut macros,
+            )
+            .unwrap();
+        session.collect().unwrap();
+        let thrown = bridge.read(&mut session, &thrown, 0..1).unwrap();
+        assert_eq!(
+            data(&thrown),
+            canonical(json!(["vector", ["+ requires number operands", 2]])),
+            "a non-number + operand throws after its initializer effects run once"
         );
     }
 }
