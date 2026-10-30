@@ -1,7 +1,8 @@
-//! The `#queue [...]` literal (#287) reads as a persistent queue, as in
-//! ClojureScript, so printed queues read back. Clojure has no queue literal;
-//! Suss adds ClojureScript's. Checked in both compiled phases, through macros,
-//! in the REPL and in source files.
+//! The `#queue [...]` literal (#287) reads as a persistent queue, so printed
+//! queues read back. Clojure has no queue literal; Suss adds ClojureScript's,
+//! with Clojure's tagged-literal model: the queue is a constant, its elements
+//! unevaluated. Checked in both compiled phases, through macros, in the REPL
+//! and in source files.
 #[path = "support/compilation_fuel.rs"]
 mod compilation_fuel;
 
@@ -73,10 +74,13 @@ fn printed_queues_read_back_as_equal_queues() {
 }
 
 #[test]
-fn queue_literals_evaluate_elements_and_behave_as_queues() {
+fn queue_literals_are_constants_and_behave_as_queues() {
     for mut session in sessions() {
         for source in [
-            "(= [1 2] (vec #queue [1 (inc 1)]))",
+            // As a tagged literal's value in Clojure, nothing inside is evaluated.
+            "(= '[1 (inc 1) x] (vec #queue [1 (inc 1) x]))",
+            "(= '#queue [(inc 1)] #queue [(inc 1)])",
+            "(= #queue [1 2] [1 2] '(1 2))",
             "(= 1 (peek #queue [1 2]))",
             "(= #queue [2] (pop #queue [1 2]))",
             "(= #queue [] (empty #queue [1]))",
@@ -84,7 +88,7 @@ fn queue_literals_evaluate_elements_and_behave_as_queues() {
             "(= 3 (count #queue [1 2 3]))",
             "(= (list 1 2) (seq #queue [1 2]))",
             "(not= #queue [1 2] #queue [2 1])",
-            "(= {:m 2} (meta ^{:m (inc 1)} #queue []))",
+            "(= '{:m (inc 1)} (meta ^{:m (inc 1)} #queue []))",
             "(= {:m 1} (meta ^{:m 1} #queue [1]))",
         ] {
             truthy(&mut session, source);
@@ -131,8 +135,8 @@ fn macros_receive_and_return_queues() {
             "(= {:k true} (qmeta ^:k #queue []))",
             "(= \"#queue [a (b)]\" (pr-str (qquote #queue [a (b)])))",
             "(= 'a (peek (qquote #queue [a])))",
-            // A returned queue is a literal: its elements are evaluated.
-            "(= #queue [3 :k] (qmake))",
+            // A returned queue is a constant, as in Clojure: `(+ 1 2)` is not run.
+            "(= '#queue [(+ 1 2) :k] (qmake))",
         ] {
             let value = session
                 .eval_with_macros(source, &mut macros)
@@ -169,6 +173,12 @@ fn malformed_tagged_literals_are_reader_diagnostics_with_spans() {
             assert_eq!(diagnostic.message, message, "{source}");
             assert_eq!(diagnostic.span, span, "{source}");
         }
+        // Queues in destructuring keys hash and compare as their elements.
+        truthy(&mut session, "(= 2 (let [{a [1] b 2 c 3 d 4 e 5 f 6 g 7 h 8 i #queue [9]} {[1] 2 [9] 10}] a))");
+        truthy(&mut session, "(= 10 (let [{a [1] b 2 c 3 d 4 e 5 f 6 g 7 h 8 i #queue [9]} {[1] 2 [9] 10}] i))");
+        let Err(SessionError::Compile(_)) = session.eval("(let [{:keys #{a #queue []}} {}] a)") else {
+            panic!("a queue in :keys did not fail to compile");
+        };
         // The session stays usable.
         truthy(&mut session, "(= 1 (peek #queue [1]))");
     }
@@ -207,7 +217,7 @@ fn source_files_read_queue_literals() {
     };
     let output = run(concat!(
         "(ns app)\n",
-        "(def q (conj #queue [1 (inc 1)] 3))\n",
+        "(def q (conj #queue [1 2] 3))\n",
         "(when-not (and (= \"#queue [1 2 3]\" (pr-str q)) (= q #queue [1 2 3]) (= 1 (peek q)))\n",
         "  (throw (ex-info \"queue literal\" {})))\n",
     ));

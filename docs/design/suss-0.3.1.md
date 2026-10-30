@@ -93,10 +93,13 @@ The reader reads tagged literals, `#tag form`, as Clojure's does. Its one built-
 tag is ClojureScript's `#queue [...]`, a deliberate addition: Clojure has no queue
 literal and prints queues as unreadable objects. It reads as a persistent queue
 in source, the REPL, quoted data and macro data, so printed queues read back.
-Unquoted, its elements evaluate as a vector's do. Any other tag, and `#queue`
-with anything but a vector, fails with a reader diagnostic ("No reader function
-for tag ..."), checked after conditional selection. Unselected branches are not
-checked, as in Clojure; unlike Clojure, neither are discarded (`#_`) forms.
+As with any tagged literal in Clojure, the queue is a constant: its elements and
+metadata are not evaluated (unlike ClojureScript), and neither are those of a
+queue a macro returns. Any other tag, and `#queue` with anything but a vector,
+fails with a reader diagnostic ("No reader function for tag ..."), checked after
+conditional selection. Unselected branches are not checked, as in Clojure. A
+discarded (`#_`) tag is checked only when its target needs conditional
+selection; Clojure always checks it.
 Namespace aliases, refers, exclusions, phase imports and qualified symbols are
 resolved consistently in AOT, macros and REPL.
 

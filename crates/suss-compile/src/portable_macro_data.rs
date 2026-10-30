@@ -857,9 +857,9 @@ impl FormBridge {
                         Kind::List(items) | Kind::Vector(items) | Kind::Set(items) => {
                             items.iter().collect()
                         }
-                        Kind::Tagged { form: target, .. } => match &target.kind {
-                            Kind::Vector(items) => items.iter().collect(),
-                            _ => return Err(failure(form, "Queue literal expects a vector")),
+                        Kind::Tagged { .. } => match form.queue_items() {
+                            Some(items) => items.iter().collect(),
+                            None => return Err(failure(form, "Unsupported tagged macro data")),
                         },
                         Kind::Map(items) => {
                             if items.len() % 2 != 0 {
@@ -945,6 +945,8 @@ impl FormBridge {
                         }
                         Kind::Set(_) if has_metadata => self.scalar(session, &Literal::Nil)?,
                         Kind::Set(_) => self.set_values(session, &built)?,
+                        // Built once, below, with its metadata.
+                        Kind::Tagged { .. } if has_metadata => self.scalar(session, &Literal::Nil)?,
                         Kind::Tagged { .. } => self.queue_values(session, &built, None)?,
                         _ => {
                             return Err(failure(

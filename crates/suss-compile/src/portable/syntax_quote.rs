@@ -374,11 +374,11 @@ impl<M: FnMut(u64) -> Result<(), Diagnostic>> Pass<'_, M> {
                         vec![symbol(span, constructor), sequence],
                     )
                 }
-                Kind::Tagged { tag, form: target } => {
-                    // ClojureScript's queue reader form, with its elements
-                    // syntax-quoted as a vector's are.
-                    let Kind::Vector(items) = &target.kind else {
-                        return Err(error(form, "Queue literal expects a vector"));
+                Kind::Tagged { tag, .. } => {
+                    // A queue template's elements are syntax-quoted as a
+                    // vector's are. (Clojure's has no queue templates.)
+                    let Some(items) = form.queue_items() else {
+                        return Err(error(form, "Unsupported tagged syntax quote data"));
                     };
                     let empty = data(
                         span,

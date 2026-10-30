@@ -39,6 +39,18 @@ impl Form {
             self.take_kind(),
         )
     }
+    /// The elements of a `#queue [...]` literal, the one built-in tag.
+    pub fn queue_items(&self) -> Option<&[Form]> {
+        match &self.kind {
+            Kind::Tagged { tag, form } if tag.namespace.is_none() && tag.name == "queue" => {
+                match &form.kind {
+                    Kind::Vector(items) => Some(items),
+                    _ => None,
+                }
+            }
+            _ => None,
+        }
+    }
     pub fn clone_metered(&self, meter: &mut WorkMeter<'_>) -> Result<Self, ParseError> {
         let text = match &self.kind {
             Kind::String(x) => x.len() as u64,

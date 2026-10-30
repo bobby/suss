@@ -53,6 +53,7 @@ fn collect_names(form: &Form, names: &mut BTreeSet<String>) {
             collect_names(operator, names);
             collect_names(target, names);
         }
+        Kind::Tagged { form, .. } => collect_names(form, names),
         _ => {}
     }
     for metadata in &form.metadata {
@@ -69,6 +70,9 @@ struct BindingMap {
 }
 fn equal(a: &Form, b: &Form) -> bool {
     match (&a.kind, &b.kind) {
+        // A queue equals a list or vector with equal elements.
+        (Kind::Tagged { form: a, .. }, _) => equal(a, b),
+        (_, Kind::Tagged { form: b, .. }) => equal(a, b),
         (Kind::List(a) | Kind::Vector(a), Kind::List(b) | Kind::Vector(b)) => {
             a.len() == b.len() && a.iter().zip(b).all(|(a, b)| equal(a, b))
         }
@@ -167,6 +171,8 @@ fn syntax_hash(form: &Form) -> u32 {
                 .wrapping_add(syntax_hash(target)),
             2,
         ),
+        // A queue hashes as an ordered collection, like its vector.
+        Kind::Tagged { form, .. } => syntax_hash(form),
         _ => unreachable!("Reader conditionals/discards must be resolved before analysis"),
     }
 }

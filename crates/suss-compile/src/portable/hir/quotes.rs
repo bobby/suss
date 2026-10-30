@@ -174,9 +174,9 @@ impl Analyzer<'_> {
                     },
                 })
             }
-            Kind::Tagged { form: target, .. } => {
-                let Kind::Vector(items) = &target.kind else {
-                    return Err(fail(form.span.clone(), "Queue literal expects a vector"));
+            Kind::Tagged { tag, form: target } => {
+                let Some(items) = form.queue_items() else {
+                    return Err(fail(form.span.clone(), format!("No reader function for tag {tag}")));
                 };
                 let entries = items
                     .iter()
@@ -222,7 +222,7 @@ impl Analyzer<'_> {
     }
     /// The queue a `#queue` literal reads as: ClojureScript's
     /// `(into PersistentQueue.EMPTY elements)`.
-    pub(super) fn queue_value(
+    fn queue_value(
         &mut self,
         form: &Form,
         elements: Hir,
@@ -439,6 +439,9 @@ fn reader_key_equal_inner(
         (Kind::String(a), Kind::String(b)) => a == b,
         (Kind::Symbol(a), Kind::Symbol(b)) => a == b,
         (Kind::Keyword(a), Kind::Keyword(b)) => a == b,
+        // A queue equals a list or vector with equal elements.
+        (Kind::Tagged { form: a, .. }, _) => reader_key_equal_metered(a, b, depth + 1, work)?,
+        (_, Kind::Tagged { form: b, .. }) => reader_key_equal_metered(a, b, depth + 1, work)?,
         (Kind::List(a) | Kind::Vector(a), Kind::List(b) | Kind::Vector(b)) => {
             if a.len() != b.len() {
                 return Ok(false);

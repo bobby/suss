@@ -1314,16 +1314,9 @@ impl Analyzer<'_> {
                 let value = self.set_literal(form, items)?;
                 return self.attach_literal_metadata(form, value);
             }
-            Kind::Tagged { form: target, .. } => {
-                // The reader admits only `#queue` with a vector. Its elements
-                // are evaluated, as a vector literal's are.
-                let Kind::Vector(items) = &target.kind else {
-                    return Err(fail(form.span.clone(), "Queue literal expects a vector"));
-                };
-                let elements = self.form(target)?;
-                let value = self.queue_value(form, elements, items.is_empty())?;
-                return self.attach_literal_metadata(form, value);
-            }
+            // A tagged literal is the constant it reads as, as in Clojure:
+            // `#queue [(f)]` holds the list `(f)`, and its metadata is data.
+            Kind::Tagged { .. } => return self.quote_data(form, 0),
             Kind::List(items) if items.is_empty() => {
                 // The pinned emitter reads List.EMPTY for each empty-list literal.
                 // Resolve the canonical core binding, never a lexical/user List.
