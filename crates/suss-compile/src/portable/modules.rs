@@ -397,6 +397,7 @@ impl<P: AsRef<Path>> Discovery<'_, '_, '_, P> {
                             )?;
                             bytes.extend_from_slice(&buffer[..count]);
                         }
+                        crate::build_cache::inputs::file(&path, &bytes);
                         let text = String::from_utf8(bytes).map_err(|_| {
                             io_error(std::io::Error::new(
                                 std::io::ErrorKind::InvalidData,

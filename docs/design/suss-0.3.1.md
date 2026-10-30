@@ -203,7 +203,11 @@ phase namespaces, `&form`, `&env`, syntax quote, unquote/splicing and determinis
 gensyms. Use a bounded bootstrap expander and reproducible, versioned bootstrap
 artifacts to break the compiler/core cycle. Remove the tree-walking macro evaluator
 when compiled bootstrap tests pass. Cache keys include source, compiler/runtime
-ABI, macro dependency graph, target profile and flags. No JVM in the shipped path.
+ABI, macro dependency graph, target profile and flags. Persistent caches live in
+a build directory (`docs/runtime/build-cache.md`): validated native code, emitted
+fragments and whole builds keyed by every observed input. Analysis and macro
+expansion are always recomputed, never restored, so their effects and gensym
+order are preserved. No JVM in the shipped path.
 
 M0 must first prove cross-module recursive GC type sharing, roots across GC,
 closures called across fragments and new nominal types. If the selected engine

@@ -42,6 +42,7 @@ pub fn compile_file_with_options(
         let source = std::fs::read_to_string(source_path).map_err(|error| {
             CompileError::Io(format!("Failed to read {}: {error}", source_path.display()))
         })?;
+        crate::build_cache::inputs::file(source_path, source.as_bytes());
         let forms = read_script_forms(&source)
             .map_err(|error| CompileError::Parse(format!("{}: {error}", source_path.display())))?;
         compile_inputs_with_options(
@@ -126,6 +127,7 @@ pub fn compile_main_with_compile_fuel(
 ) -> Result<Vec<u8>, String> {
     let source = std::fs::read_to_string(source_path)
         .map_err(|error| format!("Failed to read {}: {error}", source_path.display()))?;
+    crate::build_cache::inputs::file(source_path, source.as_bytes());
     compile_main_source_with_compile_fuel(
         &source, Some(source_path.to_owned()), namespace, source_paths, compile_fuel,
     )
@@ -233,6 +235,7 @@ fn compile_input_with_options(
     let source = std::fs::read_to_string(source_path).map_err(|error| {
         CompileError::Io(format!("Failed to read {}: {error}", source_path.display()))
     })?;
+    crate::build_cache::inputs::file(source_path, source.as_bytes());
     let forms = read_script_forms(&source)
         .map_err(|error| CompileError::Parse(format!("{}: {error}", source_path.display())))?;
     if let Some(namespace) = namespace {
@@ -282,6 +285,8 @@ pub(crate) fn compile_inputs_with_options(
     options: &AotOptions,
 ) -> CompileResult<Vec<u8>> {
     let mut resolve = portable::aot::Resolve::new();
+    // The WIT package, its deps/ directory and every file wit-parser may read.
+    crate::build_cache::inputs::tree(wit_path);
     let (package, _) = resolve.push_path(wit_path).map_err(|error| {
         let message = format!("Failed to resolve WIT {}: {error:#}", wit_path.display());
         if error.downcast_ref::<std::io::Error>().is_some() {

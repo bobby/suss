@@ -36,6 +36,7 @@
 //! let wasm = compiler.compile(source, wit)?;
 //! ```
 
+pub mod build_cache;
 mod config;
 mod error;
 pub mod portable;

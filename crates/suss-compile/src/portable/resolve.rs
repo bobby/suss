@@ -1659,6 +1659,7 @@ pub(crate) fn locate_source_if_present(
     for root in roots {
         for extension in ["sus", "cljs", "cljc"] {
             let path = root.as_ref().join(format!("{relative}.{extension}"));
+            crate::build_cache::inputs::probe(&path);
             match path.canonicalize() {
                 Ok(path) if path.is_file() => {
                     matches.insert(path);

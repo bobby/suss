@@ -15,7 +15,7 @@ use rustyline::{error::ReadlineError, DefaultEditor};
 
 fn main() {
     match args::parse_args() {
-        Ok(cmd) => run_command(cmd),
+        Ok((flags, cmd)) => run_command(flags, cmd),
         Err(e) => {
             eprintln!("Error: {}", e);
             std::process::exit(1);
@@ -23,7 +23,66 @@ fn main() {
     }
 }
 
-fn run_command(cmd: args::Command) {
+use suss_compile::build_cache;
+
+/// Select the build directory by the documented precedence. Project
+/// compilation calls this again once deps.sus supplies `:build-dir`.
+fn configure_cache(
+    flags: &args::CacheFlags,
+    project_build_dir: Option<std::path::PathBuf>,
+    start: &std::path::Path,
+) {
+    let flag = if flags.no_cache {
+        Some(build_cache::Settings::Disabled)
+    } else {
+        flags
+            .build_dir
+            .as_ref()
+            .map(|directory| build_cache::Settings::Directory(directory.into()))
+    };
+    build_cache::configure(build_cache::cli_settings(flag, project_build_dir, start));
+}
+
+/// The semantic request of a compile, for whole-build reuse: every argument
+/// that can change its outputs, plus the directory relative paths resolve in.
+fn compile_request(fields: &[(&'static str, String)]) -> Vec<(&'static str, String)> {
+    let mut request = vec![(
+        "cwd",
+        std::env::current_dir()
+            .map(|directory| directory.display().to_string())
+            .unwrap_or_default(),
+    )];
+    request.extend(fields.iter().cloned());
+    request
+}
+
+fn cache_command(action: args::CacheAction) {
+    let Some(directory) = build_cache::current() else {
+        println!("Build cache disabled");
+        return;
+    };
+    match action {
+        args::CacheAction::Info => {
+            println!("Build directory: {}", directory.root().display());
+            println!("Cached bytes: {}", directory.size());
+        }
+        args::CacheAction::Clean => match directory.clean() {
+            Ok(removed) => println!(
+                "Removed {removed} cached bytes from {}",
+                directory.root().display()
+            ),
+            Err(error) => {
+                eprintln!("Error: {error}");
+                std::process::exit(1);
+            }
+        },
+    }
+}
+
+fn run_command(flags: args::CacheFlags, cmd: args::Command) {
+    if !matches!(cmd, args::Command::CompileProject { .. }) {
+        configure_cache(&flags, None, std::path::Path::new("."));
+    }
     match cmd {
         args::Command::Repl { fuel, compile_fuel } => {
             run_repl(fuel, compile_fuel);
@@ -51,8 +110,9 @@ fn run_command(cmd: args::Command) {
             compile_source(None, Some(&namespace), &world_wit, wit_world.as_deref(), &src_paths, &exports, &output, optimize, compile_fuel);
         }
         args::Command::CompileProject { world, config_path, optimize, compile_fuel } => {
-            compile_project(world.as_deref(), config_path.as_deref(), optimize, compile_fuel);
+            compile_project(&flags, world.as_deref(), config_path.as_deref(), optimize, compile_fuel);
         }
+        args::Command::Cache { action } => cache_command(action),
         args::Command::Run { component_path, invoke, command_mode, args } => {
             run_component(&component_path, &invoke, command_mode, &args);
         }
@@ -105,11 +165,26 @@ fn run_wasm_opt(path: &str) -> Result<(), String> {
     let original_size = std::fs::metadata(path).map(|m| m.len())
         .map_err(|e| format!("{}", e))?;
 
+    // Optimize into a sibling and rename it over the output, so a failed or
+    // interrupted wasm-opt leaves the unoptimized output intact.
+    let optimized = format!("{path}.wasm-opt-{}", std::process::id());
     let status = std::process::Command::new("wasm-opt")
         .args(["-O3", "--enable-gc", "--enable-reference-types",
                "--enable-multivalue", "--enable-bulk-memory",
-               "--enable-tail-call", "-o", path, path])
+               "--enable-tail-call", "-o", &optimized, path])
         .status();
+    let status = match status {
+        Ok(s) if s.success() => std::fs::rename(&optimized, path)
+            .map(|()| s)
+            .map_err(|error| {
+                let _ = std::fs::remove_file(&optimized);
+                error
+            }),
+        other => {
+            let _ = std::fs::remove_file(&optimized);
+            other
+        }
+    };
 
     match status {
         Ok(s) if s.success() => {
@@ -165,30 +240,56 @@ fn compile_source(
                 Ok((path.to_owned(), Symbol::parse(var)))
             })
             .collect::<Result<Vec<_>, String>>()?;
+        let request = compile_request(&[
+            ("mode", if namespace.is_some() { "namespace" } else { "file" }.into()),
+            ("source", source_path.unwrap_or_default().into()),
+            ("namespace", namespace.unwrap_or_default().into()),
+            ("wit", wit_path.into()),
+            ("wit-world", format!("{wit_world:?}")),
+            ("src", format!("{source_paths:?}")),
+            ("exports", format!("{exports:?}")),
+            ("compile-fuel", format!("{compile_fuel:?}")),
+        ]);
         let source_paths = source_paths.iter().map(PathBuf::from).collect::<Vec<_>>();
         let options = suss_cli::portable_aot::AotOptions {
             exports: mappings,
             compile_fuel,
             ..Default::default()
         };
+        let (mut outputs, _) = build_cache::builds::reuse_or_build(&request, || {
+            compile_one(namespace, source_path, wit_path, wit_world, &source_paths, &options)
+                .map(|wasm| std::collections::BTreeMap::from([("component".to_owned(), wasm)]))
+        })?;
+        outputs.remove("component").ok_or_else(|| "Cached build lacks its component".to_owned())
+    })();
+    #[cfg(not(target_family = "wasm"))]
+    fn compile_one(
+        namespace: Option<&str>,
+        source_path: Option<&str>,
+        wit_path: &str,
+        wit_world: Option<&str>,
+        source_paths: &[std::path::PathBuf],
+        options: &suss_cli::portable_aot::AotOptions,
+    ) -> Result<Vec<u8>, String> {
+        use std::path::Path;
         if let Some(namespace) = namespace {
             suss_cli::portable_aot::compile_namespace_with_options(
                 namespace,
                 Path::new(wit_path),
                 wit_world,
-                &source_paths,
-                &options,
+                source_paths,
+                options,
             )
         } else {
             suss_cli::portable_aot::compile_file_with_options(
                 Path::new(source_path.expect("file input")),
                 Path::new(wit_path),
                 wit_world,
-                &source_paths,
-                &options,
+                source_paths,
+                options,
             )
         }
-    })();
+    }
     #[cfg(target_family = "wasm")]
     let result: Result<Vec<u8>, String> = Err(
         "Portable file/namespace compilation in the component-host target remains unimplemented"
@@ -196,7 +297,7 @@ fn compile_source(
     );
     match result {
         Ok(wasm) => {
-            if let Err(error) = std::fs::write(output_path, &wasm) {
+            if let Err(error) = build_cache::write_output(std::path::Path::new(output_path), &wasm) {
                 eprintln!("Error writing output file '{output_path}': {error}");
                 std::process::exit(1);
             }
@@ -229,15 +330,28 @@ fn compile_main(
     compile_fuel: Option<u64>,
 ) {
     #[cfg(not(target_family = "wasm"))]
-    let result = suss_cli::portable_aot::compile_main_with_compile_fuel(
-        std::path::Path::new(source_path),
-        namespace,
-        &source_paths
-            .iter()
-            .map(std::path::PathBuf::from)
-            .collect::<Vec<_>>(),
-        compile_fuel,
-    );
+    let result = (|| -> Result<Vec<u8>, String> {
+        let request = compile_request(&[
+            ("mode", "main".into()),
+            ("source", source_path.into()),
+            ("namespace", namespace.into()),
+            ("src", format!("{source_paths:?}")),
+            ("compile-fuel", format!("{compile_fuel:?}")),
+        ]);
+        let (mut outputs, _) = build_cache::builds::reuse_or_build(&request, || {
+            suss_cli::portable_aot::compile_main_with_compile_fuel(
+                std::path::Path::new(source_path),
+                namespace,
+                &source_paths
+                    .iter()
+                    .map(std::path::PathBuf::from)
+                    .collect::<Vec<_>>(),
+                compile_fuel,
+            )
+            .map(|wasm| std::collections::BTreeMap::from([("component".to_owned(), wasm)]))
+        })?;
+        outputs.remove("component").ok_or_else(|| "Cached build lacks its component".to_owned())
+    })();
     #[cfg(target_family = "wasm")]
     let result: Result<Vec<u8>, String> = Err(
         "Portable official command compilation in the component-host target remains unimplemented"
@@ -245,7 +359,7 @@ fn compile_main(
     );
     match result {
         Ok(wasm) => {
-            if let Err(e) = std::fs::write(output_path, &wasm) {
+            if let Err(e) = build_cache::write_output(std::path::Path::new(output_path), &wasm) {
                 eprintln!("Error writing output file '{}': {}", output_path, e);
                 std::process::exit(1);
             }
@@ -271,7 +385,13 @@ fn compile_main(
 }
 
 /// Compile a project from deps.sus configuration
-fn compile_project(world: Option<&str>, config_path: Option<&str>, optimize: bool, compile_fuel: Option<u64>) {
+fn compile_project(
+    flags: &args::CacheFlags,
+    world: Option<&str>,
+    config_path: Option<&str>,
+    optimize: bool,
+    compile_fuel: Option<u64>,
+) {
     use std::path::Path;
 
     let config_path = config_path.unwrap_or("deps.sus");
@@ -285,8 +405,24 @@ fn compile_project(world: Option<&str>, config_path: Option<&str>, optimize: boo
         }
     };
 
+    configure_cache(flags, config.build_dir.clone(), &config.base_dir);
     #[cfg(not(target_family = "wasm"))]
-    let result = suss_cli::portable_project::compile_project_with_compile_fuel(&config, world, compile_fuel);
+    let result = {
+        let request = compile_request(&[
+            ("mode", "project".into()),
+            ("config", config_path.into()),
+            ("world", format!("{world:?}")),
+            ("compile-fuel", format!("{compile_fuel:?}")),
+        ]);
+        build_cache::builds::reuse_or_build(&request, || {
+            // The configuration was loaded above; record it for revalidation.
+            if let Ok(content) = std::fs::read(config_path) {
+                build_cache::inputs::file(Path::new(config_path), &content);
+            }
+            suss_cli::portable_project::compile_project_with_compile_fuel(&config, world, compile_fuel)
+        })
+        .map(|(outputs, _)| outputs)
+    };
     #[cfg(target_family = "wasm")]
     let result: Result<std::collections::BTreeMap<String, Vec<u8>>, String> = Err(
         "Portable project compilation in the component-host target remains unimplemented".into(),
@@ -307,7 +443,7 @@ fn compile_project(world: Option<&str>, config_path: Option<&str>, optimize: boo
                             }
                         }
 
-                        if let Err(e) = std::fs::write(&output_path, wasm) {
+                        if let Err(e) = build_cache::write_output(&output_path, wasm) {
                             eprintln!("Error writing '{}': {}", output_path.display(), e);
                             std::process::exit(1);
                         }
@@ -389,7 +525,9 @@ fn run_component_impl(
     let engine = Engine::new(&config).map_err(|e| format!("Failed to create engine: {}", e))?;
 
     // Load component from file
-    let component = Component::from_file(&engine, path)
+    let bytes = std::fs::read(path)
+        .map_err(|e| format!("Failed to load component '{}': {}", path, e))?;
+    let component = build_cache::component(&engine, &bytes)
         .map_err(|e| format!("Failed to load component '{}': {}", path, e))?;
 
     let official_command = component

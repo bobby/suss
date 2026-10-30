@@ -35,6 +35,8 @@ pub struct SussConfig {
     pub deps: HashMap<String, String>,
     /// Base directory (where deps.sus is located)
     pub base_dir: PathBuf,
+    /// Persistent build directory (`:build-dir`), resolved like source roots.
+    pub build_dir: Option<PathBuf>,
 }
 
 /// Configuration for a single world
@@ -57,6 +59,7 @@ impl SussConfig {
     pub fn load(path: &Path) -> CompileResult<Self> {
         let content = std::fs::read_to_string(path)
             .map_err(|e| CompileError::Io(format!("Failed to read {}: {}", path.display(), e)))?;
+        crate::build_cache::inputs::file(path, content.as_bytes());
 
         let base_dir = path
             .parent()
@@ -85,6 +88,7 @@ impl SussConfig {
         let mut worlds = HashMap::new();
         let mut src_paths = vec![base_dir.join("src")]; // Default src path
         let mut deps = HashMap::new();
+        let mut build_dir = None;
 
         for (key, value) in map {
             match key {
@@ -98,6 +102,14 @@ impl SussConfig {
                     "deps" => {
                         deps = Self::parse_deps(value)?;
                     }
+                    "build-dir" => match value {
+                        Edn::String(path) => build_dir = Some(base_dir.join(path)),
+                        _ => {
+                            return Err(CompileError::Config(
+                                ":build-dir must be a string path".into(),
+                            ))
+                        }
+                    },
                     other => {
                         // Ignore unknown keys for forward compatibility
                         eprintln!("Warning: Unknown key in deps.sus: {}", other);
@@ -116,6 +128,7 @@ impl SussConfig {
             src_paths,
             deps,
             base_dir,
+            build_dir,
         })
     }
 
