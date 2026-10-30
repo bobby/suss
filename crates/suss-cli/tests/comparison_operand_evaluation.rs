@@ -1,7 +1,7 @@
 //! Clojure comparisons are functions (#293, #294): inline `< <= > >= ==`
 //! evaluate every operand exactly once, left to right, before comparing, in
 //! both compiled phases.
-use suss_cli::portable_session::Session;
+use suss_cli::portable_session::{Session, SessionError};
 
 fn truthy(session: &mut Session, source: &str) {
     let value = session
@@ -112,5 +112,25 @@ fn operand_effects_and_throws_happen_regardless_of_the_result() {
             "(= \"< requires number operands\" \
              (try (< 1 2 :a) :returned (catch :default e (ex-message e))))",
         );
+    }
+}
+
+#[test]
+fn unary_operands_are_analyzed_like_any_other_expression() {
+    // The pinned macro erased a unary operand, so a non-tail recur or an
+    // unresolved symbol there compiled to true; Clojure rejects both.
+    for mut session in sessions() {
+        for (operation, _) in OPERATIONS {
+            for source in [
+                format!("(loop [] ({operation} (recur)))"),
+                format!("({operation} comparison-operand-unresolved)"),
+                format!("(loop [] ({operation} 1 (recur) 2))"),
+            ] {
+                assert!(
+                    matches!(session.eval(&source), Err(SessionError::Compile(_))),
+                    "{source} compiled"
+                );
+            }
+        }
     }
 }

@@ -29430,7 +29430,7 @@ document's 2026-10-25 decision now records all three outcomes.
   - `abs`, `min-key` and `max-key` still coerce.
   - Inline variadic comparisons evaluate middle operands twice (pinned macro
     shape): `(< 1 (do (set! n (inc n)) 2) 3)` increments `n` twice, against
-    section 4's exactly-once rule. Not yet filed.
+    section 4's exactly-once rule. Filed as #293 and fixed with #294 below.
 
 ## #293 and #294: comparison operand evaluation (2026-10-29)
 
