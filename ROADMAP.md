@@ -26,9 +26,13 @@ The proposal has not changed this roadmap's accepted semantics or release gates.
 | [M7: Portable compatibility beta](https://github.com/bobby/suss/milestone/8) | M6 | All M7 acceptance criteria pass |
 | [M8: Browser beta](https://github.com/bobby/suss/milestone/9) | M6 | All M8 acceptance criteria pass |
 | [M9: CSP extension](https://github.com/bobby/suss/milestone/10) | M6, M7 | All M9 acceptance criteria pass |
+| [M10: Reader, printer and analyzer as data](https://github.com/bobby/suss/milestone/12) | M4 | All M10 acceptance criteria pass |
 
 M4 and M5 can overlap after their foundations; M8 feasibility happens in M0,
 with browser product delivery after the WASI alpha. CSP is deliberately last.
+M10 can proceed alongside M5–M7. It makes tooling data (cache and bootstrap
+manifests, analyzer output) canonical EDN in the tools.analyzer model, and adds
+`read-string` and `suss.edn` so Suss programs can read it.
 
 ## Work packages
 
