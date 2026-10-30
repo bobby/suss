@@ -79,7 +79,8 @@ pub(crate) const SOURCE: &str = r####"
 (def ^:private template-constant-19 (suss.core/Cons. nil (quote -kv-reduce) (suss.core/Cons. nil [(quote this__45__auto__) (quote f__47__auto__) (quote init__49__auto__)] (suss.core/Cons. nil (suss.core/Cons. nil (quote cljs.core/reduce) (suss.core/Cons. nil (suss.core/Cons. nil (quote cljs.core/fn) (suss.core/Cons. nil [(quote ret__51__auto__) [(quote k__53__auto__) (quote v__55__auto__)]] (suss.core/Cons. nil (suss.core/Cons. nil (quote f__47__auto__) (suss.core/Cons. nil (quote ret__51__auto__) (suss.core/Cons. nil (quote k__53__auto__) (suss.core/Cons. nil (quote v__55__auto__) (quote ()) nil) nil) nil) nil) (quote ()) nil) nil) nil) (suss.core/Cons. nil (quote init__49__auto__) (suss.core/Cons. nil (quote this__45__auto__) (quote ()) nil) nil) nil) nil) (quote ()) nil) nil) nil))
 (def ^:private with-default-to-string
   ;; Records inherit Object/toString in Clojure; generate it unless the user's
-  ;; Object implementation defines toString, which then takes precedence.
+  ;; Object implementation defines toString, which then takes precedence. It
+  ;; joins the first Object section, so a repeated section gets no duplicate.
   (fn [impls label]
     (let [this (gensym "\u0074\u0068\u0069\u0073")
           method (list (quote toString) [this] (list (quote cljs.core/object-string) label this))
@@ -97,7 +98,7 @@ pub(crate) const SOURCE: &str = r####"
         (loop [remaining (seq impls) out [] object? false]
           (if remaining
             (let [x (first remaining) out (conj out x)]
-              (if (= x (quote Object))
+              (if (and (= x (quote Object)) (not object?))
                 (recur (next remaining) (conj out method) true)
                 (recur (next remaining) out object?)))
             (if object? out (conj out (quote Object) method))))))))

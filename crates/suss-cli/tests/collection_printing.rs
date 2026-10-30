@@ -1,6 +1,6 @@
 //! Every shipped collection, seq and record type prints with `pr-str`,
 //! `prn-str`, `print-str` and `str` as Clojure does (#285), in both compiled
-//! phases. Expected text is Clojure's.
+//! phases. Expected text is Clojure's; host arrays seq as ClojureScript's do.
 #[path = "support/compilation_fuel.rs"]
 mod compilation_fuel;
 
@@ -31,7 +31,8 @@ fn sessions() -> [Session; 2] {
         session.set_operation_fuel(1_000_000_000);
         session
             .eval_with_macros(
-                "(do (defrecord R [a]) (defrecord Q [a] Object (toString [_] \"custom\")))",
+                "(do (defrecord R [a]) (defrecord Q [a] Object (toString [_] \"custom\")) \
+                     (defrecord S [a] Object (equals [_ o] false) Object (hashCode [_] 1)))",
                 &mut macros,
             )
             .unwrap();
@@ -136,5 +137,7 @@ fn str_of_a_record_is_its_label_and_hash_as_clojure_records_inherit() {
         );
         // A record's own Object toString takes precedence.
         truthy(&mut session, "(= \"custom\" (str (->Q 1)))");
+        // Repeated Object sections get the default toString once.
+        truthy(&mut session, "(= \"user.S@\" (apply str (take 7 (str (->S 1)))))");
     }
 }
