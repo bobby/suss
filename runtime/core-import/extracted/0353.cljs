@@ -6,19 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn --destructure-map [gmap]
-  (if ^boolean LITE_MODE
-    (if (implements? ISeq gmap)
-      (if (next gmap)
-        (.createAsIfByAssoc ObjMap (to-array gmap))
-        (if (seq gmap)
-          (first gmap)
-          (.-EMPTY ObjMap)))
-      gmap)
-    (if (implements? ISeq gmap)
-      (if (next gmap)
-        (.createAsIfByAssoc PersistentArrayMap (to-array gmap))
-        (if (seq gmap)
-          (first gmap)
-          (.-EMPTY PersistentArrayMap)))
-      gmap)))
+(def
+  ^{:jsdoc ["@type {*}"]}
+  gensym_counter nil)

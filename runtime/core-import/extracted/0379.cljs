@@ -6,9 +6,4 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn nil-iter []
-  (reify
-    Object
-    (hasNext [_] false)
-    (next [_] (js/Error. "No such element"))
-    (remove [_] (js/Error. "Unsupported operation"))))
+(def INIT #js {})

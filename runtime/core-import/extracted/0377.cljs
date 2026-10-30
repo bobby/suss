@@ -6,20 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype SeqIter [^:mutable _seq ^:mutable _next]
+(deftype ArrayIter [arr ^:mutable i]
   Object
-  (hasNext [_]
-    (if (identical? _seq INIT)
-      (do
-        (set! _seq START)
-        (set! _next (seq _next)))
-      (if (identical? _seq _next)
-        (set! _next (next _seq))))
-    (not (nil? _next)))
-  (next [this]
-    (if-not ^boolean (.hasNext this)
-      (throw (js/Error. "No such element"))
-      (do
-        (set! _seq _next)
-        (first _next))))
+  (hasNext [_] (< i (alength arr)))
+  (next [_]
+    (let [ret (aget arr i)]
+      (set! i (inc i))
+      ret))
   (remove [_] (js/Error. "Unsupported operation")))

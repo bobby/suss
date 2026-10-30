@@ -6,39 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype TransformerIterator [^:mutable buffer ^:mutable _next ^:mutable completed ^:mutable xf sourceIter multi]
+(deftype Empty []
   Object
-  (step [this]
-    (if-not (identical? _next NONE)
-      true
-      (loop []
-        (if (identical? _next NONE)
-          (if ^boolean (.isEmpty buffer)
-            (if ^boolean completed
-              false
-              (if ^boolean (.hasNext sourceIter)
-                (let [iter (if ^boolean multi
-                             (apply xf (cons nil (.next sourceIter)))
-                             (xf nil (.next sourceIter)))]
-                  (when (reduced? iter)
-                    (xf nil)
-                    (set! completed true))
-                  (recur))
-                (do
-                  (xf nil)
-                  (set! completed true)
-                  (recur))))
-            (do
-              (set! _next (.remove buffer))
-              (recur)))
-          true))))
-  (hasNext [this]
-    (.step this))
-  (next [this]
-    (if ^boolean (.hasNext this)
-      (let [ret _next]
-        (set! _next NONE)
-        ret)
-      (throw (js/Error. "No such element"))))
-  (remove [_]
-    (js/Error. "Unsupported operation")))
+  (add [this o]
+    (Single. o))
+  (remove [this]
+    (throw (js/Error. (str_ "Removing object from empty buffer"))))
+  (isEmpty [this]
+    true)
+  (toString [this]
+    "Empty"))

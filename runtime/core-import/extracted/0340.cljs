@@ -6,14 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn group-by
-  "Returns a map of the elements of coll keyed by the result of
-  f on each element. The value at each key will be a vector of the
-  corresponding elements, in the order they appeared in coll."
-  [f coll]
-  (persistent!
-    (reduce
-      (fn [ret x]
-        (let [k (f x)]
-          (assoc! ret k (conj (get ret k []) x))))
-      (transient {}) coll)))
+(deftype RecordIter [^:mutable i record base-count fields ext-map-iter]
+  Object
+  (hasNext [_]
+    (or (< i base-count) (.hasNext ext-map-iter)))
+  (next [_]
+    (if (< i base-count)
+      (let [k (nth fields i)]
+        (set! i (inc i))
+        (MapEntry. k (-lookup record k) nil))
+      (.next ext-map-iter)))
+  (remove [_] (js/Error. "Unsupported operation")))

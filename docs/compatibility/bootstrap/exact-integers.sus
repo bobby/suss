@@ -98,6 +98,20 @@
 ;; Original Suss adaptation: read the source closure's owned UTF16 label.
 (def ^:private pr-function-name (fn [function] (suss.bootstrap/function-name function)))
 
+;; Original Suss adaptation of java.lang.Object/toString, which records inherit
+;; in Clojure: the class label, "@" and the unsigned 32-bit hash in lower-case
+;; hexadecimal. Suss's hash replaces the JVM hashCode (#285).
+(def ^:private object-string
+  (fn [label value]
+    (loop [n (unsigned-bit-shift-right (hash value) 0) digits ""]
+      (let [low (- n (* 16 (quot n 16)))
+            digits (suss.bootstrap/concat-string
+                     (suss.bootstrap/string-slice "0123456789abcdef" low (inc low)) digits)
+            n (quot n 16)]
+        (if (zero? n)
+          (suss.bootstrap/concat-string label (suss.bootstrap/concat-string "@" digits))
+          (recur n digits))))))
+
 ;; Copyright The Closure Library Authors.
 ;; SPDX-License-Identifier: Apache-2.0
 ;; Adapted from the complete goog/string/stringbuffer.js retained beside this

@@ -6,68 +6,21 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype ValSeq [^not-native mseq _meta]
-  Object
-  (toString [coll]
-    (pr-str* coll))
-  (equiv [this other]
-    (-equiv this other))
-  (indexOf [coll x]
-    (-indexOf coll x 0))
-  (indexOf [coll x start]
-    (-indexOf coll x start))
-  (lastIndexOf [coll x]
-    (-lastIndexOf coll x (count coll)))
-  (lastIndexOf [coll x start]
-    (-lastIndexOf coll x start))
+(defn- tree-map-add [comp tree k v found]
+  (if (nil? tree)
+    (RedNode. k v nil nil nil)
+    (let [c (comp k (.-key tree))]
+      (cond
+        (zero? c)
+        (do (aset found 0 tree)
+            nil)
 
-  IMeta
-  (-meta [coll] _meta)
+        (neg? c)
+        (let [ins (tree-map-add comp (.-left tree) k v found)]
+          (if-not (nil? ins)
+            (.add-left tree ins)))
 
-  IWithMeta
-  (-with-meta [coll new-meta]
-    (if (identical? new-meta _meta)
-      coll
-      (ValSeq. mseq new-meta)))
-
-  ISeqable
-  (-seq [coll] coll)
-
-  ISequential
-  IEquiv
-  (-equiv [coll other] (equiv-sequential coll other))
-
-  ICollection
-  (-conj [coll o]
-    (cons o coll))
-
-  IEmptyableCollection
-  (-empty [coll] (.-EMPTY List))
-
-  IHash
-  (-hash [coll] (hash-ordered-coll coll))
-
-  ISeq
-  (-first [coll]
-    (let [^not-native me (-first mseq)]
-      (-val me)))
-
-  (-rest [coll]
-    (let [nseq (if (satisfies? INext mseq)
-                 (-next mseq)
-                 (next mseq))]
-      (if-not (nil? nseq)
-        (ValSeq. nseq nil)
-        ())))
-
-  INext
-  (-next [coll]
-    (let [nseq (if (satisfies? INext mseq)
-                 (-next mseq)
-                 (next mseq))]
-      (when-not (nil? nseq)
-        (ValSeq. nseq nil))))
-
-  IReduce
-  (-reduce [coll f] (seq-reduce f coll))
-  (-reduce [coll f start] (seq-reduce f start coll)))
+        :else
+        (let [ins (tree-map-add comp (.-right tree) k v found)]
+          (if-not (nil? ins)
+            (.add-right tree ins)))))))

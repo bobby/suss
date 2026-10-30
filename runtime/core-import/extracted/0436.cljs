@@ -6,10 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn butlast
-  "Return a seq of all but the last item in coll, in linear time"
-  [s]
-  (loop [ret [] s s]
-    (if (next s)
-      (recur (conj ret (first s)) (next s))
-      (seq ret))))
+(defn cat
+  "A transducer which concatenates the contents of each input, which must be a
+  collection, into the reduction."
+  {:added "1.7"}
+  [rf]
+  (let [rf1 (preserving-reduced rf)]
+    (fn
+      ([] (rf))
+      ([result] (rf result))
+      ([result input]
+         (reduce rf1 result input)))))

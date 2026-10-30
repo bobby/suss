@@ -29481,3 +29481,20 @@ document's 2026-10-25 decision now records all three outcomes.
   Previous baselines took about 4 h; the comparison is uncontrolled, starting at
   load 11–15 with a mostly cold `target/suss` (2.2 GB afterwards). CI run
   41026281905 passed.
+
+## #285: printing every shipped type (2026-10-30)
+
+- Root causes:
+  - The printer stanzas for most shipped types were never loaded.
+  - The record pair printer depended on JavaScript ignoring extra arguments.
+  - Records had no `toString`.
+  - `prn-str`, `print-str` and `println-str` were not imported.
+- Fixes:
+  - The upstream stanzas are loaded from `sequence-initializers.sus` and checked by `sequence_provenance.py`.
+  - The pair printer takes three arguments.
+  - Records get a default `toString` of `ns.R@<hex hash>`, as Clojure's `Object.toString` produces. The record emitter adds it to the first `Object` section unless the user defines one.
+- `pr-str` of a record is `#user.R{:a 1}`. It reads back only once #300 lands.
+- Deferred:
+  - `#object[...]` forms, type names, and Clojure's munged record labels: #304.
+  - Cycle, ES6IteratorSeq and Volatile stanzas: they wait on those types shipping.
+- PR #305 was independently reviewed. Full baseline on d34418b: 2028 passed, 0 failed, 274 binaries, 10626 s. CI passed on d34418b.

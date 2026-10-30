@@ -6,23 +6,33 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn take-nth
-  "Returns a lazy seq of every nth item in coll.  Returns a stateful
-  transducer when no collection is provided."
+(defn drop
+  "Returns a laziness-preserving sequence of all but the first n items in coll.
+  Returns a stateful transducer when no collection is provided."
   ([n]
    {:pre [(number? n)]}
      (fn [rf]
-       (let [ia (volatile! -1)]
+       (let [na (volatile! n)]
          (fn
            ([] (rf))
            ([result] (rf result))
            ([result input]
-              (let [i (vswap! ia inc)]
-                (if (zero? (rem i n))
-                  (rf result input)
-                  result)))))))
+              (let [n @na]
+                (vswap! na dec)
+                (if (pos? n)
+                  result
+                  (rf result input))))))))
   ([n coll]
    {:pre [(number? n)]}
-     (lazy-seq
-       (when-let [s (seq coll)]
-         (cons (first s) (take-nth n (drop n s)))))))
+     (if (implements? IDrop coll)
+       (or
+         (if (pos? n)
+           (-drop coll (Math/ceil n))
+           (seq coll))
+         ())
+       (let [step (fn [n coll]
+                    (let [s (seq coll)]
+                      (if (and (pos? n) s)
+                        (recur (dec n) (rest s))
+                        s)))]
+         (lazy-seq (step n coll))))))

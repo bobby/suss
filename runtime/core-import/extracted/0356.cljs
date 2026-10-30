@@ -6,11 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn some
-  "Returns the first logical true value of (pred x) for any x in coll,
-  else nil.  One common idiom is to use a set as pred, for example
-  this will return :fred if :fred is in the sequence, otherwise nil:
-  (some #{:fred} coll)"
-  [pred coll]
-  (when-let [s (seq coll)]
-    (or (pred (first s)) (recur pred (next s)))))
+(defn to-array
+  "Returns an array containing the contents of coll."
+  [coll]
+  (let [ary (array)]
+    (loop [s (seq coll)]
+      (if-not (nil? s)
+        (do (. ary push (first s))
+            (recur (next s)))
+        ary))))

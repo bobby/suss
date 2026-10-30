@@ -445,6 +445,50 @@
    :adaptation-path "docs/compatibility/patches/printing-pr-str.json"
    :alternative nil
    :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:prn-str-with-opts:10574"
+  {:source-sha256 "9dcd645de9355f9e23081c1581a8d7506360f7c1bb34ccf7c9dcc603e186c2c5"
+   :visibility :public
+   :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["empty?/str_/pr-sb-with-opts"]
+   :classification :adapted
+   :rationale "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain the empty case, the shared buffer, the appended newline and the string conversion order. Upstream source bytes, copyright and EPL license are retained by the import workflow (#285)."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-prn-str-with-opts.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/collection_printing.rs"]}
+  "runtime:prn-str:10602"
+  {:source-sha256 "76668cf2acedee6b40d439a2e5049d57e0f3836b090e8323015d86cca6d353e4"
+   :visibility :public
+   :arities {:fixed [] :variadic-min 0}
+   :dependencies ["prn-str-with-opts"]
+   :classification :adapted
+   :rationale "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain the nil options, so the dynamic printer variables govern output. Upstream source bytes, copyright and EPL license are retained by the import workflow (#285)."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-prn-str.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/collection_printing.rs"]}
+  "runtime:print-str:10623"
+  {:source-sha256 "81fa56ebe01a07725553a3b067bad79e6e4b55d0247f736d31d324d74a4ae243"
+   :visibility :public
+   :arities {:fixed [] :variadic-min 0}
+   :dependencies ["binding/*print-readably*/pr-str-with-opts"]
+   :classification :adapted
+   :rationale "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain the dynamic *print-readably* binding around the shared printer. Upstream source bytes, copyright and EPL license are retained by the import workflow (#285)."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-print-str.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/collection_printing.rs"]}
+  "runtime:println-str:10637"
+  {:source-sha256 "e736c8da311c9e181fc2ae9e2eda59c62ea96f2fe8023a5f383de60df2f644e6"
+   :visibility :public
+   :arities {:fixed [] :variadic-min 0}
+   :dependencies ["binding/*print-readably*/prn-str-with-opts"]
+   :classification :adapted
+   :rationale "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain the dynamic *print-readably* binding around the shared newline printer. Upstream source bytes, copyright and EPL license are retained by the import workflow (#285)."
+   :status :in-progress
+   :adaptation-path "docs/compatibility/patches/printing-println-str.json"
+   :alternative nil
+   :tests ["crates/suss-cli/tests/collection_printing.rs"]}
   "runtime:pr-sequential-writer:10381"
   {:source-sha256 "e4bb91cf7a10dbb1274889019e822e998d37d22fd40a4ae3c83b4c306b015369"
    :visibility :public

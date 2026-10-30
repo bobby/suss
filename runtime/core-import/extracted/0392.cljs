@@ -6,24 +6,71 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- tree-map-remove [comp tree k found]
-  (if-not (nil? tree)
-    (let [c (comp k (.-key tree))]
-      (cond
-        (zero? c)
-        (do (aset found 0 tree)
-            (tree-map-append (.-left tree) (.-right tree)))
+(deftype PersistentTreeMapSeq [meta stack ^boolean ascending? cnt ^:mutable __hash]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
 
-        (neg? c)
-        (let [del (tree-map-remove comp (.-left tree) k found)]
-          (if (or (not (nil? del)) (not (nil? (aget found 0))))
-            (if (instance? BlackNode (.-left tree))
-              (balance-left-del (.-key tree) (.-val tree) del (.-right tree))
-              (RedNode. (.-key tree) (.-val tree) del (.-right tree) nil))))
+  ISeqable
+  (-seq [this] this)
 
-        :else
-        (let [del (tree-map-remove comp (.-right tree) k found)]
-          (if (or (not (nil? del)) (not (nil? (aget found 0))))
-            (if (instance? BlackNode (.-right tree))
-              (balance-right-del (.-key tree) (.-val tree) (.-left tree) del)
-              (RedNode. (.-key tree) (.-val tree) (.-left tree) del nil))))))))
+  ISequential
+  ISeq
+  (-first [this] (peek stack))
+  (-rest [this]
+    (let [t (first stack)
+          next-stack (tree-map-seq-push (if ascending? (.-right t) (.-left t))
+                                        (next stack)
+                                        ascending?)]
+      (if-not (nil? next-stack)
+        (PersistentTreeMapSeq. nil next-stack ascending? (dec cnt) nil)
+        ())))
+  INext
+  (-next [this]
+    (let [t (first stack)
+          next-stack (tree-map-seq-push (if ascending? (.-right t) (.-left t))
+                                        (next stack)
+                                        ascending?)]
+      (when-not (nil? next-stack)
+        (PersistentTreeMapSeq. nil next-stack ascending? (dec cnt) nil))))
+
+  ICounted
+  (-count [coll]
+    (if (neg? cnt)
+      (inc (count (next coll)))
+      cnt))
+
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  ICollection
+  (-conj [coll o] (cons o coll))
+
+  IEmptyableCollection
+  (-empty [coll] (.-EMPTY List))
+
+  IHash
+  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
+
+  IMeta
+  (-meta [coll] meta)
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (PersistentTreeMapSeq. new-meta stack ascending? cnt __hash)))
+
+  IReduce
+  (-reduce [coll f] (seq-reduce f coll))
+  (-reduce [coll f start] (seq-reduce f start coll)))

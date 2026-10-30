@@ -1565,6 +1565,26 @@
       "patch": "docs/compatibility/patches/printing-pr-str.json"
     },
     {
+      "id": "runtime:prn-str-with-opts:10574",
+      "source-sha256": "9dcd645de9355f9e23081c1581a8d7506360f7c1bb34ccf7c9dcc603e186c2c5",
+      "patch": "docs/compatibility/patches/printing-prn-str-with-opts.json"
+    },
+    {
+      "id": "runtime:prn-str:10602",
+      "source-sha256": "76668cf2acedee6b40d439a2e5049d57e0f3836b090e8323015d86cca6d353e4",
+      "patch": "docs/compatibility/patches/printing-prn-str.json"
+    },
+    {
+      "id": "runtime:print-str:10623",
+      "source-sha256": "81fa56ebe01a07725553a3b067bad79e6e4b55d0247f736d31d324d74a4ae243",
+      "patch": "docs/compatibility/patches/printing-print-str.json"
+    },
+    {
+      "id": "runtime:println-str:10637",
+      "source-sha256": "e736c8da311c9e181fc2ae9e2eda59c62ea96f2fe8023a5f383de60df2f644e6",
+      "patch": "docs/compatibility/patches/printing-println-str.json"
+    },
+    {
       "id": "runtime:object?:300",
       "source-sha256": "acab7c2acbe084165c99e7acb72e58dfa754981c2eaa98a37ef64b7265caf43b",
       "patch": "docs/compatibility/patches/printing-object-predicate.json"
@@ -2277,11 +2297,11 @@
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "5e1e074616431bc3b74fef875ca00fcb6815761457427d3120994373d31355a2"
+      "sha256": "ebe20ba6120963aa7564b161c6522a893bf2c76435b47a580705a4e65376c14f"
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "9a6eff337e8aed20e8f11272638112900f479ab1d74749e70c97f1fa424a3c5a"
+      "sha256": "d047db90dca55248af6f2bdecf46b451f37a594b72cf69770a8b61cd0fb0f8a0"
     }
   }
 }
