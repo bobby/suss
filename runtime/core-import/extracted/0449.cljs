@@ -6,6 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn constantly
-  "Returns a function that takes any number of arguments and returns x."
-  [x] (fn [& args] x))
+(defn transformer-iterator
+  [xform sourceIter multi]
+  (let [iterator (TransformerIterator. EMPTY NONE false nil sourceIter multi)]
+    (set! (.-xf iterator)
+      (xform (fn
+               ([] nil)
+               ([acc] acc)
+               ([acc o]
+                (set! (.-buffer iterator) (.add (.-buffer iterator) o))
+                acc))))
+    iterator))

@@ -6,8 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- strip-ns
-  [named]
-  (if (symbol? named)
-    (symbol nil (name named))
-    (keyword nil (name named))))
+(defn println-str
+  "println to a string, returning it"
+  [& objs]
+  (binding [*print-readably* false]
+    (prn-str-with-opts objs nil)))

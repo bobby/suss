@@ -6,12 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn mapcat
-  "Returns the result of applying concat to the result of applying map
-  to f and colls.  Thus function f should return a collection. Returns
-  a transducer when no collections are provided"
-  {:added "1.0"
-   :static true}
-  ([f] (comp (map f) cat))
-  ([f & colls]
-     (apply concat (apply map f colls))))
+(defn complement
+  "Takes a fn f and returns a fn that takes the same arguments as f,
+  has the same effects, if any, and returns the opposite truth value."
+  [f]
+  (fn
+    ([] (not (f)))
+    ([x] (not (f x)))
+    ([x y] (not (f x y)))
+    ([x y & zs] (not (apply f x y zs)))))

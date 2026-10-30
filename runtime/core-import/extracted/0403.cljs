@@ -6,8 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn mk-bound-fn
-  [sc test key]
-  (fn [e]
-    (let [comp (-comparator sc)]
-      (test (comp (-entry-key sc e) key) 0))))
+(defn sorted-map-by
+  "keyval => key val
+  Returns a new sorted map with supplied mappings, using the supplied comparator."
+  ([comparator & keyvals]
+     (loop [in (seq keyvals)
+            out (PersistentTreeMap. (fn->comparator comparator) nil 0 nil 0)]
+       (if in
+         (recur (nnext in) (assoc out (first in) (second in)))
+         out))))

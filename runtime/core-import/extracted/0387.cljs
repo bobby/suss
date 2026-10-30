@@ -6,9 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- tree-map-seq-push [node stack ^boolean ascending?]
-  (loop [t node stack stack]
-    (if-not (nil? t)
-      (recur (if ascending? (.-left t) (.-right t))
-             (conj stack t))
-      stack)))
+(deftype ES6EntriesIterator [^:mutable s]
+  Object
+  (next [_]
+    (if-not (nil? s)
+      (let [[k v] (first s)]
+        (set! s (next s))
+        #js {:value #js [k v] :done false})
+      #js {:value nil :done true})))

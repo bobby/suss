@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "76668cf2acedee6b40d439a2e5049d57e0f3836b090e8323015d86cca6d353e4",
+  "replacement": "(def prn-str\n  \"Same as pr-str followed by (newline)\"\n  (fn [& objs]\n  (prn-str-with-opts objs nil)))",
+  "rationale": "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain the nil options, so the dynamic printer variables govern output. Upstream source bytes, copyright and EPL license are retained by the import workflow (#285)."
+}

@@ -6,31 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn comp
-  "Takes a set of functions and returns a fn that is the composition
-  of those fns.  The returned fn takes a variable number of args,
-  applies the rightmost of fns to the args, the next
-  fn (right-to-left) to the result, etc."
-  ([] identity)
-  ([f] f)
-  ([f g]
-     (fn
-       ([] (f (g)))
-       ([x] (f (g x)))
-       ([x y] (f (g x y)))
-       ([x y z] (f (g x y z)))
-       ([x y z & args] (f (apply g x y z args)))))
-  ([f g h]
-     (fn
-       ([] (f (g (h))))
-       ([x] (f (g (h x))))
-       ([x y] (f (g (h x y))))
-       ([x y z] (f (g (h x y z))))
-       ([x y z & args] (f (g (apply h x y z args))))))
-  ([f1 f2 f3 & fs]
-    (let [fs (reverse (list* f1 f2 f3 fs))]
-      (fn [& args]
-        (loop [ret (apply (first fs) args) fs (next fs)]
-          (if fs
-            (recur ((first fs) ret) (next fs))
-            ret))))))
+(defn vary-meta
+ "Returns an object of the same type and value as obj, with
+  (apply f (meta obj) args) as its metadata."
+  ([obj f]
+   (with-meta obj (f (meta obj))))
+  ([obj f a]
+   (with-meta obj (f (meta obj) a)))
+  ([obj f a b]
+   (with-meta obj (f (meta obj) a b)))
+  ([obj f a b c]
+   (with-meta obj (f (meta obj) a b c)))
+  ([obj f a b c d]
+   (with-meta obj (f (meta obj) a b c d)))
+  ([obj f a b c d & args]
+   (with-meta obj (apply f (meta obj) a b c d args))))

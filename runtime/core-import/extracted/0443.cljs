@@ -6,13 +6,21 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- chunkIteratorSeq [iter]
-  (lazy-seq
-    (when ^boolean (.hasNext iter)
-      (let [arr (array)]
-        (loop [n 0]
-          (if (and (.hasNext iter) (< n 32))
-            (do
-              (aset arr n (.next iter))
-              (recur (inc n)))
-            (chunk-cons (array-chunk arr 0 n) (chunkIteratorSeq iter))))))))
+(deftype Single [^:mutable val]
+  Object
+  (add [this o]
+    (if (identical? val NONE)
+      (do
+        (set! val o)
+        this)
+      (Many. #js [val o])))
+  (remove [this]
+    (if (identical? val NONE)
+      (throw (js/Error. (str_ "Removing object from empty buffer")))
+      (let [ret val]
+        (set! val NONE)
+        ret)))
+  (isEmpty [this]
+    (identical? val NONE))
+  (toString [this]
+    (str_ "Single: " val)))

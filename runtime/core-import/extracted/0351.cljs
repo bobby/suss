@@ -6,7 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(goog-define
-  ^{:doc "Boolean flag for LITE_MODE"
-    :jsdoc ["@type {boolean}"]}
-  LITE_MODE false)
+(defn select-keys
+  "Returns a map containing only those entries in map whose key is in keys"
+  [map keyseq]
+    (loop [ret {} keys (seq keyseq)]
+      (if keys
+        (let [key   (first keys)
+              entry (get map key ::not-found)]
+          (recur
+           (if (not= entry ::not-found)
+             (assoc ret key entry)
+             ret)
+           (next keys)))
+        (-with-meta ret (meta map)))))

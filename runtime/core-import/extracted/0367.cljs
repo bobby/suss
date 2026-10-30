@@ -6,21 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- balance-right-del [key val left del]
+(defn- compare-keywords [a b]
   (cond
-    (instance? RedNode del)
-    (RedNode. key val left (.blacken del) nil)
-
-    (instance? BlackNode left)
-    (balance-left key val (.redden left) del)
-
-    (and (instance? RedNode left) (instance? BlackNode (.-right left)))
-    (RedNode. (.. left -right -key) (.. left -right -val)
-              (balance-left (.-key left) (.-val left)
-                            (.redden (.-left left))
-                            (.. left -right -left))
-              (BlackNode. key val (.. left -right -right) del nil)
-              nil)
-
-    :else
-    (throw (js/Error. "red-black tree invariant violation"))))
+   (identical? (.-fqn a) (.-fqn b)) 0
+   (and (not (.-ns a)) (.-ns b)) -1
+   (.-ns a) (if-not (.-ns b)
+              1
+              (let [nsc (garray/defaultCompare (.-ns a) (.-ns b))]
+                (if (== 0 nsc)
+                  (garray/defaultCompare (.-name a) (.-name b))
+                  nsc)))
+   :default (garray/defaultCompare (.-name a) (.-name b))))

@@ -6,23 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype IntegerRangeChunk [start step count]
-  ICounted
-  (-count [coll] count)
-
-  ISeq
-  (-first [coll] start)
-
-  IIndexed
-  (-nth [coll i]
-    (+ start (* i step)))
-  (-nth [coll i not-found]
-    (if (and (>= i 0) (< i count))
-      (+ start (* i step))
-      not-found))
-
-  IChunk
-  (-drop-first [coll]
-    (if (<= count 1)
-      (throw (js/Error. "-drop-first of empty chunk"))
-      (IntegerRangeChunk. (+ start step) step (dec count)))))
+(defn find
+  "Returns the map entry for key, or nil if key not present."
+  [coll k]
+  (if (ifind? coll)
+    (-find coll k)
+    (when (and (not (nil? coll))
+            (associative? coll)
+            (contains? coll k))
+      (MapEntry. k (get coll k) nil))))

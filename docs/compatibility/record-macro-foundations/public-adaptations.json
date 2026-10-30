@@ -12,9 +12,9 @@
     },
     {
       "path": "crates/suss-compile/src/portable_record_emitter.rs",
-      "sha256": "80599ac21befc78b3dac5ee9925fdfb592b8ef25a2cb113d9ffa02bb5e6d2c5f",
+      "sha256": "c1f8c42675720ddd8e36602f5b3f04694ecff75c87c94a9b2aa58d935be8e0ee",
       "compiled-sources": {
-        "SOURCE": "91c36b57c128d9a73b351ba583922bcd167c42a3f66a137fdc0751b19b7066e7"
+        "SOURCE": "71e42b34b2dd2b61f1acd0547bdd5307ec9712de16845dc5ca9028843ab70d2f"
       }
     },
     {
@@ -65,7 +65,9 @@
     "Keyword case support implements grouped generated membership without repeated selector evaluation or live equality for all-keyword cases.",
     "After all symbols resolve in original order, reuse pure default mask data only when the entire resolved default suffix matches; generically process every user protocol, including duplicates. Changed defaults retain full generic preparation.",
     "Build generated protocol-fact input with into over one explicit vector of user implementations followed by defaults, preserving the same ordered fact-resolution input while avoiding lazy concat traversal.",
-    "Construct public getBasis directly from the already validated fields vector; preserve its vector value and all public metadata/type/factory outputs."
+    "Construct public getBasis directly from the already validated fields vector; preserve its vector value and all public metadata/type/factory outputs.",
+    "The generated printer pair function accepts the printer's (value writer opts) call and ignores the trailing writer and opts, as the pinned JavaScript call does implicitly; its body is unchanged (#285).",
+    "Generate Object toString as Clojure records inherit it (label@unsigned hash in hex, with Suss hash) unless the user's Object implementation defines toString, which takes precedence (#285)."
   ],
   "tests": [
     "crates/suss-cli/tests/compiled_public_records.rs",
