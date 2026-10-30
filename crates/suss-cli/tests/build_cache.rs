@@ -45,7 +45,13 @@ fn count(output: &Output, event: &str) -> usize {
 }
 
 fn copy_tree(from: &Path, to: &Path) {
-    std::fs::create_dir_all(to).unwrap();
+    // Owner-only-writable regardless of umask, as the cache itself creates
+    // them, so seeded native entries pass the trust policy.
+    let mut builder = std::fs::DirBuilder::new();
+    builder.recursive(true);
+    #[cfg(unix)]
+    std::os::unix::fs::DirBuilderExt::mode(&mut builder, 0o755);
+    builder.create(to).unwrap();
     for entry in std::fs::read_dir(from).unwrap().flatten() {
         let target = to.join(entry.file_name());
         if entry.file_type().unwrap().is_dir() {
@@ -55,17 +61,18 @@ fn copy_tree(from: &Path, to: &Path) {
         }
     }
 }
-/// A build directory holding native code for the shipped sessions.
+/// A build directory holding native code for the shipped sessions. The seed
+/// persists in Cargo's per-target scratch directory, so later runs reuse it.
 fn seeded(root: &Path) -> PathBuf {
-    static SEED: OnceLock<tempfile::TempDir> = OnceLock::new();
+    static SEED: OnceLock<PathBuf> = OnceLock::new();
     let seed = SEED.get_or_init(|| {
-        let seed = tempfile::tempdir().unwrap();
-        let output = suss(seed.path(), Some(&seed.path().join("build")), &["-e", "(+ 1 2)"]);
+        let seed = Path::new(env!("CARGO_TARGET_TMPDIR")).join("build-cache-seed");
+        let output = suss(&std::env::temp_dir(), Some(&seed), &["-e", "(+ 1 2)"]);
         success(&output);
         seed
     });
     let build = root.join("build");
-    copy_tree(&seed.path().join("build"), &build);
+    copy_tree(seed, &build);
     build
 }
 
@@ -318,6 +325,7 @@ fn build_directory_precedence_and_clean() {
     // The environment, then the flag, override it; --no-cache disables.
     let environment = Command::new(env!("CARGO_BIN_EXE_suss"))
         .current_dir(&nested)
+        .env_remove("SUSS_NO_CACHE")
         .env("SUSS_BUILD_DIR", root.path().join("from-env"))
         .args(["cache", "info"])
         .output()
@@ -325,6 +333,7 @@ fn build_directory_precedence_and_clean() {
     assert!(String::from_utf8_lossy(&environment.stdout).contains("from-env"));
     let flag = Command::new(env!("CARGO_BIN_EXE_suss"))
         .current_dir(&nested)
+        .env_remove("SUSS_NO_CACHE")
         .env("SUSS_BUILD_DIR", root.path().join("from-env"))
         .args(["--build-dir", "from-flag", "cache", "info"])
         .output()

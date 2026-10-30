@@ -42,6 +42,9 @@ fn collect(
     directories: &mut BTreeSet<PathBuf>,
     files: &mut BTreeSet<PathBuf>,
 ) -> CompileResult<()> {
+    if crate::build_cache::inputs::skipped(path) {
+        return Ok(());
+    }
     crate::build_cache::inputs::probe(path);
     let path = std::fs::canonicalize(path).map_err(|error| {
         CompileError::Io(format!(

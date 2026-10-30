@@ -73,14 +73,26 @@ pub fn probe(path: &Path) {
         recorded.probes.insert(absolute(path), state(path));
     });
 }
-/// The build listed `path`'s entries.
+/// The build listed `path`'s entries. Listings inside the active build
+/// directory are not recorded: the build's own entries would change them.
 pub fn directory(path: &Path) {
     with(|recorded| {
-        recorded.directories.insert(absolute(path), listing(path));
+        if !super::inside_build_dir(path) {
+            recorded.directories.insert(absolute(path), listing(path));
+        }
     });
 }
-/// Record a directory tree completely: every listing and every file.
+/// Record a directory tree completely: every listing and every file. Each
+/// real directory is visited once, so symlink cycles terminate, and the
+/// active build directory is skipped.
 pub fn tree(path: &Path) {
+    let mut visited = std::collections::BTreeSet::new();
+    tree_from(path, &mut visited);
+}
+fn tree_from(path: &Path, visited: &mut std::collections::BTreeSet<PathBuf>) {
+    if super::inside_build_dir(path) {
+        return;
+    }
     probe(path);
     if !path.is_dir() {
         if let Ok(contents) = std::fs::read(path) {
@@ -88,14 +100,21 @@ pub fn tree(path: &Path) {
         }
         return;
     }
+    if !visited.insert(path.canonicalize().unwrap_or_else(|_| absolute(path))) {
+        return;
+    }
     directory(path);
     if let Ok(entries) = std::fs::read_dir(path) {
         let mut entries: Vec<_> = entries.flatten().map(|entry| entry.path()).collect();
         entries.sort();
         for entry in entries {
-            tree(&entry);
+            tree_from(&entry, visited);
         }
     }
+}
+/// Whether the build should skip `path` entirely (it is build-directory state).
+pub fn skipped(path: &Path) -> bool {
+    super::inside_build_dir(path)
 }
 
 /// What a probe distinguishes: absence, the canonical target of a file or
@@ -176,5 +195,18 @@ mod tests {
         std::fs::remove_file(&missing).unwrap();
         std::fs::write(root.path().join("c.sus"), "").unwrap();
         assert!(recorded.changed().unwrap().contains("gained or lost"));
+    }
+    #[cfg(unix)]
+    #[test]
+    fn tree_records_each_directory_once_through_symlink_cycles() {
+        let root = tempfile::tempdir().unwrap();
+        let wit = root.path().join("wit");
+        std::fs::create_dir_all(wit.join("deps")).unwrap();
+        std::fs::write(wit.join("api.wit"), "package a:b;").unwrap();
+        std::os::unix::fs::symlink(&wit, wit.join("deps/loop")).unwrap();
+        let ((), recorded) = record(|| tree(&wit));
+        assert_eq!(recorded.files.len(), 1);
+        assert_eq!(recorded.directories.len(), 2);
+        assert_eq!(recorded.changed(), None);
     }
 }

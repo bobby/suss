@@ -21,13 +21,26 @@ struct Manifest {
     outputs: BTreeMap<String, String>,
 }
 
-/// The manifest key: the compiler and runtime ABI identities, the portable
-/// target and profile, and the request's semantic fields in order.
+/// The compiler's identity: its source digest, the embedded core and
+/// bootstrap digest, and the runtime ABI.
+fn compiler_identity() -> Vec<String> {
+    vec![
+        crate::portable::artifact_identity::compiler_source_sha256().into(),
+        crate::portable::bootstrap::embedded_sha256().into(),
+        format!("{:?}", crate::runtime_abi::Manifest::default()),
+    ]
+}
+/// The manifest key: the compiler identity, the portable target and profile,
+/// and the request's semantic fields in order.
 fn key(request: &[(&str, String)]) -> [u8; 32] {
+    key_for(&compiler_identity(), request)
+}
+fn key_for(identity: &[String], request: &[(&str, String)]) -> [u8; 32] {
     let mut key = Key::new(Layer::BuildManifest);
-    key.field(crate::portable::artifact_identity::compiler_source_sha256().as_bytes())
-        .field(format!("{:?}", crate::runtime_abi::Manifest::default()).as_bytes())
-        .field(b"portable-wasm-gc-shared-abi;default-profile");
+    for part in identity {
+        key.field(part.as_bytes());
+    }
+    key.field(b"portable-wasm-gc-shared-abi;default-profile");
     for (name, value) in request {
         key.field(name.as_bytes()).field(value.as_bytes());
     }
@@ -92,4 +105,33 @@ fn reuse(directory: &super::BuildDir, key: &[u8; 32]) -> Option<BTreeMap<String,
     }
     trace(Layer::BuildManifest, "hit", key, "");
     Some(outputs)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn every_compiler_identity_and_request_field_changes_the_key() {
+        let identity = compiler_identity();
+        assert_eq!(identity.len(), 3);
+        let request = [("mode", "file".to_owned()), ("compile-fuel", "None".to_owned())];
+        let base = key_for(&identity, &request);
+        assert_eq!(base, key(&request));
+        // Compiler source, embedded core/bootstrap and runtime ABI each count.
+        for index in 0..identity.len() {
+            let mut changed = identity.clone();
+            changed[index].push('x');
+            assert_ne!(key_for(&changed, &request), base, "identity part {index}");
+        }
+        for index in 0..request.len() {
+            let mut changed = request.clone();
+            changed[index].1.push('x');
+            assert_ne!(key_for(&identity, &changed), base, "request field {index}");
+        }
+        // Fields cannot run together.
+        assert_ne!(
+            key_for(&identity, &[("a", "bc".into())]),
+            key_for(&identity, &[("ab", "c".into())])
+        );
+    }
 }

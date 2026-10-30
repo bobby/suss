@@ -407,6 +407,8 @@ fn compile_project(
 
     configure_cache(flags, config.build_dir.clone(), &config.base_dir);
     #[cfg(not(target_family = "wasm"))]
+    let mut config = config;
+    #[cfg(not(target_family = "wasm"))]
     let result = {
         let request = compile_request(&[
             ("mode", "project".into()),
@@ -415,10 +417,10 @@ fn compile_project(
             ("compile-fuel", format!("{compile_fuel:?}")),
         ]);
         build_cache::builds::reuse_or_build(&request, || {
-            // The configuration was loaded above; record it for revalidation.
-            if let Ok(content) = std::fs::read(config_path) {
-                build_cache::inputs::file(Path::new(config_path), &content);
-            }
+            // Reload under recording, so the manifest holds exactly the
+            // configuration this build used; outputs follow the same one.
+            config = suss_compile::SussConfig::load(Path::new(config_path))
+                .map_err(|error| format!("Error loading config '{config_path}': {error}"))?;
             suss_cli::portable_project::compile_project_with_compile_fuel(&config, world, compile_fuel)
         })
         .map(|(outputs, _)| outputs)

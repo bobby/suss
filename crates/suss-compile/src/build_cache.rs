@@ -31,6 +31,10 @@ const TAG: &str = "Signature: 8a477f597d28d172789f06886806bc55\n\
 const DEFAULT_MAX_BYTES: u64 = 4 * 1024 * 1024 * 1024;
 /// Temporary files older than this belong to a cancelled or crashed writer.
 const STALE_TEMPORARY: Duration = Duration::from_secs(3600);
+const PRUNE_INTERVAL: Duration = Duration::from_secs(600);
+/// Larger files are rejected unread; native code for the whole shipped
+/// bootstrap is far smaller.
+const MAX_ENTRY_BYTES: u64 = 1024 * 1024 * 1024;
 
 /// The cache layers, which are also the entry directories.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -165,6 +169,16 @@ pub(crate) fn trace(layer: Layer, event: &str, key: &[u8; 32], detail: &str) {
     }
 }
 
+/// Whether `path` lies inside the active build directory. Builds never record
+/// observations there, since publishing their own entries would change them.
+pub fn inside_build_dir(path: &Path) -> bool {
+    current().is_some_and(|directory| {
+        let path = std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf());
+        let path = path.canonicalize().unwrap_or(path);
+        path.starts_with(directory.root())
+    })
+}
+
 pub fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|byte| format!("{byte:02x}")).collect()
 }
@@ -201,8 +215,10 @@ pub struct BuildDir {
 }
 impl BuildDir {
     fn new(root: PathBuf) -> Self {
-        // Relative settings resolve once, against the starting directory.
+        // Relative settings resolve once, against the starting directory, and
+        // symlinks resolve now, so the trust walk sees real directories.
         let root = std::path::absolute(&root).unwrap_or(root);
+        let root = root.canonicalize().unwrap_or(root);
         Self {
             root,
             owner: OnceLock::new(),
@@ -231,6 +247,10 @@ impl BuildDir {
     /// The payload of a valid entry, or None after recording why not.
     pub(crate) fn read(&self, layer: Layer, key: &[u8; 32]) -> Option<Vec<u8>> {
         let path = self.entry(layer, key);
+        if fs::metadata(&path).is_ok_and(|metadata| metadata.len() > MAX_ENTRY_BYTES) {
+            trace(layer, "reject", key, "entry exceeds the read bound");
+            return None;
+        }
         let bytes = match fs::read(&path) {
             Ok(bytes) => bytes,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
@@ -281,9 +301,23 @@ impl BuildDir {
             Ok(()) => trace(layer, "store", key, ""),
             Err(error) => trace(layer, "reject", key, &format!("not stored: {error}")),
         }
-        if !self.pruned.swap(true, Ordering::Relaxed) {
+        if !self.pruned.swap(true, Ordering::Relaxed) && self.prune_due() {
             let _ = self.prune(max_bytes());
         }
+    }
+    /// Pruning walks the whole cache, so processes sharing one directory
+    /// (such as a test suite) do it at most once per interval between them.
+    fn prune_due(&self) -> bool {
+        let marker = self.root.join(".last-prune");
+        let due = fs::metadata(&marker)
+            .and_then(|metadata| metadata.modified())
+            .ok()
+            .and_then(|modified| modified.elapsed().ok())
+            .is_none_or(|age| age > PRUNE_INTERVAL);
+        if due {
+            let _ = fs::write(&marker, b"");
+        }
+        due
     }
 
     /// The trust policy for loading native code (see the module docs): the
@@ -308,6 +342,19 @@ impl BuildDir {
                 return Err(format!("{} is writable by other users", path.display()));
             }
             if path == self.root {
+                // Another user able to rename the root away could swap in a
+                // tree of their own between this check and the read, unless
+                // its parent is sticky (as /tmp is) or theirs to write only.
+                if let Some(parent) = path.parent() {
+                    let metadata = fs::metadata(parent).map_err(|error| error.to_string())?;
+                    let sticky = metadata.mode() & 0o1000 != 0;
+                    if !sticky && metadata.mode() & 0o022 != 0 {
+                        return Err(format!("{} is writable by other users", parent.display()));
+                    }
+                    if metadata.uid() != owner && metadata.uid() != 0 && !sticky {
+                        return Err(format!("{} belongs to another user", parent.display()));
+                    }
+                }
                 return Ok(());
             }
             current = path.parent();
@@ -533,8 +580,8 @@ fn publish_with_mode(temporaries: &Path, target: &Path, bytes: &[u8], mode: u32)
     let temporary = tempfile_in(temporaries, mode)?;
     {
         let mut file = fs::File::options().write(true).truncate(true).open(&temporary.0)?;
+        // No fsync: after a crash a torn entry fails its digest and is a miss.
         file.write_all(bytes)?;
-        file.sync_data()?;
     }
     fs::rename(&temporary.0, target)?;
     std::mem::forget(temporary);
@@ -544,12 +591,36 @@ fn publish_with_mode(temporaries: &Path, target: &Path, bytes: &[u8], mode: u32)
 /// Atomically replace a final output: a temporary in the output's own
 /// directory is renamed over it, so a failed or interrupted write leaves the
 /// previous output intact and never exposes a partial file.
+///
+/// A symlinked output is written through to its target, an existing file
+/// keeps its permissions, and a non-regular target (such as `/dev/stdout`) is
+/// written directly, as before.
 pub fn write_output(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
-    let directory = match path.parent() {
+    let target = match fs::canonicalize(path) {
+        Ok(target) => target,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => path.to_path_buf(),
+        Err(error) => return Err(error),
+    };
+    let existing = fs::metadata(&target).ok();
+    if existing.as_ref().is_some_and(|metadata| !metadata.is_file()) {
+        return fs::write(&target, bytes);
+    }
+    let directory = match target.parent() {
         Some(parent) if !parent.as_os_str().is_empty() => parent.to_path_buf(),
         _ => PathBuf::from("."),
     };
-    publish_with_mode(&directory, path, bytes, 0o666)
+    let temporary = tempfile_in(&directory, 0o666)?;
+    fs::File::options()
+        .write(true)
+        .truncate(true)
+        .open(&temporary.0)?
+        .write_all(bytes)?;
+    if let Some(metadata) = existing {
+        fs::set_permissions(&temporary.0, metadata.permissions())?;
+    }
+    fs::rename(&temporary.0, &target)?;
+    std::mem::forget(temporary);
+    Ok(())
 }
 
 #[cfg(not(target_family = "wasm"))]
@@ -722,6 +793,28 @@ mod tests {
         fs::set_permissions(parent, fs::Permissions::from_mode(mode(parent) & !0o020)).unwrap();
         fs::set_permissions(&path, fs::Permissions::from_mode(0o666)).unwrap();
         assert_eq!(directory.read_trusted(Layer::NativeModule, &key), None);
+    }
+    #[cfg(unix)]
+    #[test]
+    fn outputs_write_through_symlinks_and_keep_permissions() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = tempfile::tempdir().unwrap();
+        let dist = root.path().join("dist");
+        fs::create_dir_all(&dist).unwrap();
+        fs::write(dist.join("app.wasm"), b"old").unwrap();
+        fs::set_permissions(dist.join("app.wasm"), fs::Permissions::from_mode(0o750)).unwrap();
+        let link = root.path().join("app.wasm");
+        std::os::unix::fs::symlink(dist.join("app.wasm"), &link).unwrap();
+        write_output(&link, b"new").unwrap();
+        assert!(fs::symlink_metadata(&link).unwrap().file_type().is_symlink());
+        assert_eq!(fs::read(dist.join("app.wasm")).unwrap(), b"new");
+        assert_eq!(fs::metadata(dist.join("app.wasm")).unwrap().permissions().mode() & 0o777, 0o750);
+        // Non-regular targets are written directly.
+        write_output(Path::new("/dev/null"), b"discarded").unwrap();
+        // A new output appears whole.
+        write_output(&root.path().join("fresh.wasm"), b"fresh").unwrap();
+        assert_eq!(fs::read(root.path().join("fresh.wasm")).unwrap(), b"fresh");
+        assert_eq!(fs::read_dir(&dist).unwrap().count(), 1, "no temporaries remain");
     }
     #[test]
     fn clean_removes_only_cache_state_of_a_tagged_directory() {
