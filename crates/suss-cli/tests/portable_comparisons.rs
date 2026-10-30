@@ -43,10 +43,28 @@ fn comparisons_match_independently_encoded_primary_corpus() {
     let mut session = Session::new().unwrap();
     let mut ids = std::collections::BTreeSet::new();
     let mut corrected = 0;
-    for case in corpus["cases"].as_array().unwrap() {
+    let mut evaluated = 0;
+    let cases = corpus["cases"].as_array().unwrap();
+    let recorded = |id: &str| {
+        &cases
+            .iter()
+            .find(|case| case["id"] == id)
+            .unwrap_or_else(|| panic!("no case {id}"))["expected"]
+    };
+    for case in cases {
         let id = case["id"].as_str().unwrap();
         assert!(ids.insert(id));
         let source = case["source"].as_str().unwrap();
+        // Clojure governs (#293, #294): an inline comparison evaluates each
+        // operand once, as its first-class call does, so the recorded macro
+        // erasure and repeated middle operands give way to the call's result.
+        let expected = match clojure_evaluates(id) {
+            Some(call) => {
+                evaluated += 1;
+                recorded(call)
+            }
+            None => &case["expected"],
+        };
         // Clojure governs: the recorded primary coerced non-number operands.
         if let Some(operator) = clojure_rejects(id) {
             corrected += 1;
@@ -65,11 +83,33 @@ fn comparisons_match_independently_encoded_primary_corpus() {
             }
             tag => panic!("unexpected tag {tag}"),
         };
-        assert_eq!(actual, case["expected"], "{source}");
+        assert_eq!(&actual, expected, "{source}");
         session.collect().unwrap();
     }
     assert_eq!(ids.len(), 123);
     assert_eq!(corrected, 49);
+    assert_eq!(evaluated, 12);
+}
+
+/// The first-class call case whose recorded result an inline comparison case
+/// must match: unary operands are evaluated, middle operands once, and
+/// operands after a false pair still run.
+fn clojure_evaluates(id: &str) -> Option<&'static str> {
+    Some(match id {
+        "lt-macro-unary" => "lt-runtime-unary",
+        "le-macro-unary" => "le-runtime-unary",
+        "gt-macro-unary" => "gt-runtime-unary",
+        "ge-macro-unary" => "ge-runtime-unary",
+        "eq-unary-macro-erases" => "eq-unary-runtime-effects",
+        "lt-macro-chain" => "lt-runtime-chain",
+        "le-macro-chain" => "le-runtime-chain",
+        "gt-macro-chain" => "gt-runtime-chain",
+        "ge-macro-chain" => "ge-runtime-chain",
+        "eq-chain-macro" => "eq-chain-runtime",
+        "false-chain-macro" => "false-chain-runtime",
+        "macro-false-skips-throw" => "runtime-false-evaluates-throw",
+        _ => return None,
+    })
 }
 
 /// Cases whose recorded primary result coerced a non-number operand, with
@@ -146,10 +186,15 @@ fn retained_comparison_captures_follow_accepted_design_with_explicit_primary_div
 }
 
 #[test]
-fn comparison_macro_arity_erasure_and_lexical_shadowing_remain_distinct_from_values() {
+fn comparison_macro_arity_unary_evaluation_and_lexical_shadowing_remain_distinct_from_values() {
     let mut session = Session::new().unwrap();
     for name in ["<", "<=", ">", ">=", "=="] {
-        assert!(eval_bool(&mut session, &format!("({name} (throw 7))")));
+        // A unary comparison evaluates its operand, so its throw escapes (#294).
+        assert!(matches!(
+            session.eval(&format!("({name} (throw 7))")),
+            Err(SessionError::Language(_))
+        ));
+        assert!(eval_bool(&mut session, &format!("({name} 7)")));
         assert!(matches!(
             session.eval(&format!("({name})")),
             Err(SessionError::Compile(_))
