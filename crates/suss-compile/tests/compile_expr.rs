@@ -2479,19 +2479,19 @@ fn reduce_without_initial_value() {
 }
 
 #[test]
-fn comparison_arguments_follow_pinned_variadic_macro_expansion() {
-    // The pinned cljs.core `<` macro expands (< a b c) to (and (< a b) (< b c)),
-    // evaluating the middle argument twice and short-circuiting on false.
-    // Fresh pinned ClojureScript observations: 4 and 2 (not JVM Clojure's 3).
+fn comparison_arguments_are_evaluated_once_as_in_clojure() {
+    // Clojure's `<` is a function: every argument is evaluated once, in order,
+    // before comparing, even after a false pair (#293). The pinned cljs.core
+    // macro repeated middle arguments and skipped later ones (4 and 2).
     assert_eq!(
         run_expr_i32("(let [a (atom 0)] (< (swap! a inc) (swap! a inc) (swap! a inc)) (deref a))"),
-        4
+        3
     );
     assert_eq!(
         run_expr_i32(
             "(let [a (atom 0)] (< (do (swap! a inc) 9) (do (swap! a inc) 2) (do (swap! a inc) 3)) (deref a))"
         ),
-        2
+        3
     );
 }
 

@@ -99,8 +99,10 @@ zero and ClojureScript bitwise coercions. Arithmetic (`+ - * /`, `inc`, `dec`,
 `quot`, `rem`, `mod`), numeric comparison (`< > <= >= ==`, `min`, `max`) and
 `zero?`, `pos?` and `neg?` accept only numbers, as in Clojure: nil, strings,
 keywords, collections and other objects throw a catchable language error naming
-the operation, never JavaScript coercion. As in Clojure, a unary comparison is
-true without checking, and a variadic comparison stops at its first false pair.
+the operation, never JavaScript coercion. As in Clojure, a comparison evaluates
+every operand exactly once, left to right, before comparing, whether inline or
+called as a value; a unary comparison is then true without checking, and a
+variadic comparison stops comparing at its first false pair.
 Source in the `suss.core` namespace keeps the pinned coercing operators
 internally (for example, `compare` orders strings and arrays), while core's
 public numeric functions check their operands. Bitwise operations keep the ClojureScript coercions. An i31 optimization is permitted only
