@@ -29475,3 +29475,9 @@ document's 2026-10-25 decision now records all three outcomes.
   warm. Most of the remaining warm time is `bootstrap::restore` reanalyzing
   `core.sus` per phase per process. Persisting it needs a serializable
   `Environment`, including HIR and forms; that is follow-up work.
+- PR #298 (draft, then ready; not merged). It was independently reviewed and
+  every finding was fixed in d420462. Full baseline on d420462: 2025 passed,
+  0 failed, 78 ignored, 273 binaries, 9169 s including the workspace compile.
+  Previous baselines took about 4 h; the comparison is uncontrolled, starting at
+  load 11–15 with a mostly cold `target/suss` (2.2 GB afterwards). CI run
+  41026281905 passed.
