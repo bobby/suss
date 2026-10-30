@@ -29449,3 +29449,35 @@ document's 2026-10-25 decision now records all three outcomes.
   `false-chain-macro` and `macro-false-skips-throw`.
 - Tests: `comparison_operand_evaluation.rs` (new) covers every operator with 1-4
   operands, effect order, throws and unchecked operands after a false pair.
+
+## #272: persistent build directory and compilation caches (2026-10-30)
+
+- `crates/suss-compile/src/build_cache.rs` (+ `inputs`, `builds`); interface and
+  policies in `docs/runtime/build-cache.md`.
+  - Directory precedence: `--build-dir`/`--no-cache` (global, before the
+    command), `SUSS_NO_CACHE`/`SUSS_BUILD_DIR`, `:build-dir` in `deps.sus`,
+    `target/suss` beside the nearest `deps.sus`, then the user cache directory.
+    Library sessions use none unless configured or `SUSS_BUILD_DIR` is set.
+  - `suss cache info|clean`; clean requires the Suss `CACHEDIR.TAG` and removes
+    only `cache/` and `tmp/`.
+- Layers: native code (`portable_module_cache` and `suss run`), emitted
+  fragments (`ArtifactCache` disk tier, same key and validation), whole
+  `suss compile` builds (manifest of observed file contents, path probes and
+  directory listings; instrumented in modules.rs, resolve.rs, portable_aot.rs,
+  portable_project.rs, config.rs and the WIT tree).
+- Entries: header with layer, key, length and SHA-256; temp file + rename;
+  corrupt, stale or incompatible entries are misses. Native code loads only
+  from owner-only-writable paths (directories 0755 and files 0644 regardless of
+  umask). Final outputs and `wasm-opt` results are written atomically.
+- `.cargo/config.toml` sets `SUSS_BUILD_DIR=target/suss` for every test and
+  `cargo run` process in this workspace.
+- Measured: `suss -e '(+ 1 2)'`, test profile, loaded machine: 47 s cold, 13 s
+  warm. Most of the remaining warm time is `bootstrap::restore` reanalyzing
+  `core.sus` per phase per process. Persisting it needs a serializable
+  `Environment`, including HIR and forms; that is follow-up work.
+- PR #298 (draft, then ready; not merged). It was independently reviewed and
+  every finding was fixed in d420462. Full baseline on d420462: 2025 passed,
+  0 failed, 78 ignored, 273 binaries, 9169 s including the workspace compile.
+  Previous baselines took about 4 h; the comparison is uncontrolled, starting at
+  load 11–15 with a mostly cold `target/suss` (2.2 GB afterwards). CI run
+  41026281905 passed.

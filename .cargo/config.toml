@@ -1,0 +1,6 @@
+# Every test binary and `cargo run` process in this workspace shares one
+# persistent Suss build directory, so compiled bootstrap and runtime modules
+# are reused across processes and runs (#272). Remove target/suss, or run
+# `suss cache clean`, to start cold; set SUSS_NO_CACHE=1 to bypass it.
+[env]
+SUSS_BUILD_DIR = { value = "target/suss", relative = true }

@@ -679,6 +679,33 @@ fn artifact_key(
     numbers(&mut hash, function, meter)?;
     Ok(hash.finalize().into())
 }
+/// The build-directory key for an in-memory key, which already covers the
+/// compiler, ABI, target, phase, source, forms, dependencies and IR.
+fn persisted_key(key: &[u8; 32]) -> [u8; 32] {
+    let mut persisted = crate::build_cache::Key::new(crate::build_cache::Layer::Fragment);
+    persisted.field(key);
+    persisted.finish()
+}
+/// A validated fragment from the build directory: the same checks as an
+/// in-memory hit, but any failure is a miss that recompiles (#272).
+fn persisted(key: &[u8; 32]) -> Option<Vec<u8>> {
+    use crate::build_cache::{Layer, trace};
+    let directory = crate::build_cache::current()?;
+    let key = persisted_key(key);
+    let wasm = directory.read(Layer::Fragment, &key)?;
+    let verified = crate::runtime_abi::verify_artifact(&wasm, &crate::runtime_abi::Manifest::default())
+        .and_then(|_| super::artifact_identity::verify(&wasm, Default::default()).map(|_| ()));
+    match verified {
+        Ok(()) => {
+            trace(Layer::Fragment, "hit", &key, "");
+            Some(wasm)
+        }
+        Err(message) => {
+            trace(Layer::Fragment, "reject", &key, &message);
+            None
+        }
+    }
+}
 impl ArtifactCache {
     pub fn stats(&self) -> CacheStats {
         self.stats
@@ -759,7 +786,16 @@ impl ArtifactCache {
             return Ok(wasm);
         }
         self.stats.misses += 1;
-        let wasm = super::compile_verified_ir(function)?;
+        let wasm = match persisted(&key) {
+            Some(wasm) => wasm,
+            None => {
+                let wasm = super::compile_verified_ir(function)?;
+                if let Some(directory) = crate::build_cache::current() {
+                    directory.publish(crate::build_cache::Layer::Fragment, &persisted_key(&key), &wasm);
+                }
+                wasm
+            }
+        };
         if wasm.len() <= MAX_BYTES {
             while self.entries.len() >= MAX_ENTRIES || self.stats.bytes + wasm.len() > MAX_BYTES {
                 let old = self.entries.pop_front().unwrap();

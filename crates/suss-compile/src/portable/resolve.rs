@@ -1659,6 +1659,7 @@ pub(crate) fn locate_source_if_present(
     for root in roots {
         for extension in ["sus", "cljs", "cljc"] {
             let path = root.as_ref().join(format!("{relative}.{extension}"));
+            crate::build_cache::inputs::probe(&path);
             match path.canonicalize() {
                 Ok(path) if path.is_file() => {
                     matches.insert(path);
@@ -1677,6 +1678,7 @@ pub(crate) fn locate_source_if_present(
                             for ancestor in path.ancestors().skip(1) {
                                 if let Ok(metadata) = std::fs::symlink_metadata(ancestor) {
                                     if metadata.file_type().is_symlink() {
+                                        crate::build_cache::inputs::probe(ancestor);
                                         if let Err(error) = ancestor.canonicalize() {
                                             return Err(Diagnostic {
                                                 span,

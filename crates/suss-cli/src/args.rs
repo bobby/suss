@@ -70,45 +70,70 @@ pub enum Command {
         /// Arguments to pass to the function
         args: Vec<String>,
     },
+    /// Inspect or clean the persistent build directory
+    Cache { action: CacheAction },
     /// Print help message
     Help,
     /// Print version
     Version,
 }
 
-/// Parse command-line arguments into a Command
-pub fn parse_args() -> Result<Command, lexopt::Error> {
-    parse_command(lexopt::Parser::from_env())
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CacheAction {
+    /// Print the selected build directory and its cached size
+    Info,
+    /// Remove cached state from the selected build directory
+    Clean,
 }
 
-fn parse_command(mut parser: lexopt::Parser) -> Result<Command, lexopt::Error> {
-    // Check for subcommand or flags first
-    match parser.next()? {
-        None => Ok(Command::Repl { fuel: None, compile_fuel: None }),
+/// Global options, accepted before the command: they select the persistent
+/// build directory for every command (#272).
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct CacheFlags {
+    pub build_dir: Option<String>,
+    pub no_cache: bool,
+}
 
-        Some(Short('h')) | Some(Long("help")) => Ok(Command::Help),
+/// Parse command-line arguments into global options and a Command
+pub fn parse_args() -> Result<(CacheFlags, Command), lexopt::Error> {
+    parse_invocation(lexopt::Parser::from_env())
+}
 
-        Some(Short('V')) | Some(Long("version")) => Ok(Command::Version),
+#[cfg(test)]
+fn parse_command(parser: lexopt::Parser) -> Result<Command, lexopt::Error> {
+    parse_invocation(parser).map(|(_, command)| command)
+}
 
-        Some(Short('r')) => parse_repl(&mut parser),
-
-        Some(Short('e')) => {
-            let expr = parser.value()?.string()?;
-            Ok(Command::Eval { expr })
-        }
-
-        Some(Value(val)) => {
-            let val_str = val.string()?;
-            match val_str.as_str() {
-                "repl" => parse_repl(&mut parser),
-                "compile" => parse_compile(&mut parser),
-                "run" => parse_run(&mut parser),
-                _ => Ok(Command::RunFile { path: val_str }),
+fn parse_invocation(mut parser: lexopt::Parser) -> Result<(CacheFlags, Command), lexopt::Error> {
+    let mut flags = CacheFlags::default();
+    // Global options precede the command, so command arguments (such as `-e`
+    // expressions or `run` arguments) are never mistaken for them.
+    let command = loop {
+        match parser.next()? {
+            Some(Long("build-dir")) => flags.build_dir = Some(parser.value()?.string()?),
+            Some(Long("no-cache")) => flags.no_cache = true,
+            None => break Command::Repl { fuel: None, compile_fuel: None },
+            Some(Short('h')) | Some(Long("help")) => break Command::Help,
+            Some(Short('V')) | Some(Long("version")) => break Command::Version,
+            Some(Short('r')) => break parse_repl(&mut parser)?,
+            Some(Short('e')) => {
+                let expr = parser.value()?.string()?;
+                break Command::Eval { expr };
             }
+            Some(Value(val)) => {
+                let val_str = val.string()?;
+                break match val_str.as_str() {
+                    "repl" => parse_repl(&mut parser)?,
+                    "compile" => parse_compile(&mut parser)?,
+                    "run" => parse_run(&mut parser)?,
+                    "cache" => parse_cache(&mut parser)?,
+                    _ => Command::RunFile { path: val_str },
+                };
+            }
+            Some(arg) => return Err(arg.unexpected()),
         }
-
-        Some(arg) => Err(arg.unexpected()),
-    }
+    };
+    Ok((flags, command))
 }
 
 /// Parse the compile subcommand arguments
@@ -312,6 +337,26 @@ fn parse_repl(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
     Ok(Command::Repl { fuel, compile_fuel })
 }
 
+fn parse_cache(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
+    let action = match parser.next()? {
+        None => CacheAction::Info,
+        Some(Value(value)) => match value.string()?.as_str() {
+            "info" => CacheAction::Info,
+            "clean" => CacheAction::Clean,
+            other => {
+                return Err(lexopt::Error::from(format!(
+                    "unknown cache action {other:?}; expected info or clean"
+                )))
+            }
+        },
+        Some(arg) => return Err(arg.unexpected()),
+    };
+    if let Some(arg) = parser.next()? {
+        return Err(arg.unexpected());
+    }
+    Ok(Command::Cache { action })
+}
+
 fn parse_run(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
     let mut component_path: Option<String> = None;
     let mut invoke: Option<String> = None;
@@ -355,7 +400,7 @@ pub fn print_help() {
 Suss - A Clojure dialect for WASM
 
 USAGE:
-    suss [OPTIONS] [FILE]
+    suss [GLOBAL OPTIONS] [OPTIONS] [FILE]
     suss compile [OPTIONS]                              (project mode)
     suss compile <FILE> -w <WIT> --export <PATH=VAR> -o <OUTPUT.wasm>
     suss compile -n <NS> -w <WORLD.wit> [--src <DIR>]   (namespace mode)
@@ -372,9 +417,16 @@ OPTIONS:
     -h, --help      Print this help message
     -V, --version   Print version information
 
+GLOBAL OPTIONS (before the command):
+    --build-dir <DIR>   Persistent build directory (default: SUSS_BUILD_DIR, then a
+                        project's :build-dir, then target/suss beside the nearest
+                        deps.sus, then the user cache directory)
+    --no-cache          Neither read nor write the build directory (also SUSS_NO_CACHE=1)
+
 COMMANDS:
     compile         Compile Suss source to WASM components
     run             Run a compiled WASM component
+    cache [info|clean]  Show the build directory and its size, or remove its cached state
 
     compile - Project mode (reads deps.sus):
         --world <NAME>       Compile specific world (e.g., :my-app/v1)

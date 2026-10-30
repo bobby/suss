@@ -39,7 +39,7 @@ impl Cache {
             return Ok(module);
         }
         // A failed compilation must not replace a valid cache entry.
-        let module = Module::new(engine, bytes)?;
+        let module = crate::build_cache::module(engine, bytes)?;
         if self.max_entries == 0 || bytes.len() > self.max_bytes {
             return Ok(module);
         }

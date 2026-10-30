@@ -14,6 +14,35 @@ pub const SOURCE: &str = include_str!("../../../../runtime/core-import/suss/core
 const DEPENDENCIES: &[u8] = include_bytes!("../../../../runtime/core-import/manifest.json");
 const TARGET: &str = "portable-wasm-gc-shared-abi";
 const MAX_ARTIFACT_BYTES: usize = 32 * 1024 * 1024;
+const RUNTIME_WASM: &[u8] = include_bytes!("../../../../runtime/bootstrap/runtime.wasm");
+const RUNTIME_JSON: &[u8] = include_bytes!("../../../../runtime/bootstrap/runtime.json");
+const MACRO_WASM: &[u8] = include_bytes!("../../../../runtime/bootstrap/macro.wasm");
+const MACRO_JSON: &[u8] = include_bytes!("../../../../runtime/bootstrap/macro.json");
+
+/// Digest of the embedded inputs that `SUSS_COMPILER_SOURCE_SHA256` cannot
+/// cover: core source, its import manifest and the versioned bootstrap
+/// artifacts (which themselves record the compiler digest), plus the
+/// compatibility lazy-seq source. Regenerating core changes this without any
+/// Rust change, so persistent caches must key on it too (#272).
+pub fn embedded_sha256() -> &'static str {
+    static DIGEST: OnceLock<String> = OnceLock::new();
+    DIGEST.get_or_init(|| {
+        let mut hash = Sha256::new();
+        for part in [
+            SOURCE.as_bytes(),
+            DEPENDENCIES,
+            RUNTIME_WASM,
+            RUNTIME_JSON,
+            MACRO_WASM,
+            MACRO_JSON,
+            crate::portable_lazy_seq::SOURCE.as_bytes(),
+        ] {
+            hash.update((part.len() as u64).to_le_bytes());
+            hash.update(part);
+        }
+        format!("{:x}", hash.finalize())
+    })
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -165,16 +194,8 @@ fn shipped_bundle(phase: Phase) -> Result<&'static ShippedBootstrap, Diagnostic>
     static RUNTIME: OnceLock<Result<ShippedBootstrap, String>> = OnceLock::new();
     static MACRO: OnceLock<Result<ShippedBootstrap, String>> = OnceLock::new();
     let (cache, wasm, json): (_, &[u8], &[u8]) = match phase {
-        Phase::Runtime => (
-            &RUNTIME,
-            include_bytes!("../../../../runtime/bootstrap/runtime.wasm"),
-            include_bytes!("../../../../runtime/bootstrap/runtime.json"),
-        ),
-        Phase::Macro => (
-            &MACRO,
-            include_bytes!("../../../../runtime/bootstrap/macro.wasm"),
-            include_bytes!("../../../../runtime/bootstrap/macro.json"),
-        ),
+        Phase::Runtime => (&RUNTIME, RUNTIME_WASM, RUNTIME_JSON),
+        Phase::Macro => (&MACRO, MACRO_WASM, MACRO_JSON),
     };
     cache
         .get_or_init(|| restore(phase, wasm, json).map(|fragment| ShippedBootstrap { fragment })

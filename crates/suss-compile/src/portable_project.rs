@@ -19,6 +19,7 @@ use std::{
 fn source(path: PathBuf) -> CompileResult<(SourceInput, Option<String>)> {
     let text = std::fs::read_to_string(&path)
         .map_err(|error| CompileError::Io(format!("Failed to read {}: {error}", path.display())))?;
+    crate::build_cache::inputs::file(&path, text.as_bytes());
     let forms = read_script_forms(&text)
         .map_err(|error| CompileError::Parse(format!("{}: {error}", path.display())))?;
     let declaration = modules::project_namespace_source(&forms)
@@ -41,6 +42,10 @@ fn collect(
     directories: &mut BTreeSet<PathBuf>,
     files: &mut BTreeSet<PathBuf>,
 ) -> CompileResult<()> {
+    if crate::build_cache::inputs::skipped(path) {
+        return Ok(());
+    }
+    crate::build_cache::inputs::probe(path);
     let path = std::fs::canonicalize(path).map_err(|error| {
         CompileError::Io(format!(
             "Failed to resolve source path {}: {error}",
@@ -51,6 +56,7 @@ fn collect(
         if !directories.insert(path.clone()) {
             return Ok(());
         }
+        crate::build_cache::inputs::directory(&path);
         let mut entries = std::fs::read_dir(&path)
             .map_err(|error| {
                 CompileError::Io(format!("Failed to read {}: {error}", path.display()))
