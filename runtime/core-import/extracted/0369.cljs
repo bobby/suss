@@ -6,125 +6,24 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype BlackNode [key val left right ^:mutable __hash]
-  Object
-  (add-left [node ins]
-    (.balance-left ins node))
+(defn- balance-right [key val left ins]
+  (if (instance? RedNode ins)
+    (cond
+      (instance? RedNode (.-right ins))
+      (RedNode. (.-key ins) (.-val ins)
+                (BlackNode. key val left (.-left ins) nil)
+                (.blacken (.-right ins))
+                nil)
 
-  (add-right [node ins]
-    (.balance-right ins node))
+      (instance? RedNode (.-left ins))
+      (RedNode. (.. ins -left -key) (.. ins -left -val)
+                (BlackNode. key val left (.. ins -left -left) nil)
+                (BlackNode. (.-key ins) (.-val ins)
+                            (.. ins -left -right)
+                            (.-right ins)
+                            nil)
+                nil)
 
-  (remove-left [node del]
-    (balance-left-del key val del right))
-
-  (remove-right [node del]
-    (balance-right-del key val left del))
-
-  (blacken [node] node)
-
-  (redden [node] (RedNode. key val left right nil))
-
-  (balance-left [node parent]
-    (BlackNode. (.-key parent) (.-val parent) node (.-right parent) nil))
-
-  (balance-right [node parent]
-    (BlackNode. (.-key parent) (.-val parent) (.-left parent) node nil))
-
-  (replace [node key val left right]
-    (BlackNode. key val left right nil))
-
-  (kv-reduce [node f init]
-    (tree-map-kv-reduce node f init))
-
-  (indexOf [coll x]
-    (-indexOf coll x 0))
-  (indexOf [coll x start]
-    (-indexOf coll x start))
-  (lastIndexOf [coll x]
-    (-lastIndexOf coll x (count coll)))
-  (lastIndexOf [coll x start]
-    (-lastIndexOf coll x start))
-
-  IMapEntry
-  (-key [node] key)
-  (-val [node] val)
-
-  IHash
-  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
-
-  IEquiv
-  (-equiv [coll other] (equiv-sequential coll other))
-
-  IMeta
-  (-meta [node] nil)
-
-  IWithMeta
-  (-with-meta [node meta]
-    (-with-meta [key val] meta))
-
-  IStack
-  (-peek [node] val)
-
-  (-pop [node] [key])
-
-  ICollection
-  (-conj [node o] [key val o])
-
-  IEmptyableCollection
-  (-empty [node] nil)
-
-  ISequential
-  ISeqable
-  (-seq [node] (IndexedSeq. #js [key val] 0 nil))
-
-  IReversible
-  (-rseq [node] (IndexedSeq. #js [val key] 0 nil))
-
-  ICounted
-  (-count [node] 2)
-
-  IIndexed
-  (-nth [node n]
-    (cond (== n 0) key
-          (== n 1) val
-          :else    (throw (js/Error. "Index out of bounds"))))
-
-  (-nth [node n not-found]
-    (cond (== n 0) key
-          (== n 1) val
-          :else    not-found))
-
-  ILookup
-  (-lookup [node k] (-nth node k nil))
-  (-lookup [node k not-found] (-nth node k not-found))
-
-  IAssociative
-  (-assoc [node k v]
-    (assoc [key val] k v))
-  (-contains-key? [node k]
-    (or (== k 0) (== k 1)))
-
-  IFind
-  (-find [node k]
-    (case k
-      0 (MapEntry. 0 key nil)
-      1 (MapEntry. 1 val nil)
-      nil))
-
-  IVector
-  (-assoc-n [node n v]
-    (-assoc-n [key val] n v))
-
-  IReduce
-  (-reduce [node f]
-    (ci-reduce node f))
-
-  (-reduce [node f start]
-    (ci-reduce node f start))
-
-  IFn
-  (-invoke [node k]
-    (-nth node k))
-
-  (-invoke [node k not-found]
-    (-nth node k not-found)))
+      :else
+      (BlackNode. key val left ins nil))
+    (BlackNode. key val left ins nil)))

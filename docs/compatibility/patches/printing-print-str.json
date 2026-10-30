@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "81fa56ebe01a07725553a3b067bad79e6e4b55d0247f736d31d324d74a4ae243",
+  "replacement": "(def print-str\n  \"print to a string, returning it\"\n  (fn [& objs]\n  (binding [*print-readably* false]\n    (pr-str-with-opts objs nil))))",
+  "rationale": "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain the dynamic *print-readably* binding around the shared printer. Upstream source bytes, copyright and EPL license are retained by the import workflow (#285)."
+}

@@ -6,14 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- compare-keywords [a b]
-  (cond
-   (identical? (.-fqn a) (.-fqn b)) 0
-   (and (not (.-ns a)) (.-ns b)) -1
-   (.-ns a) (if-not (.-ns b)
-              1
-              (let [nsc (garray/defaultCompare (.-ns a) (.-ns b))]
-                (if (== 0 nsc)
-                  (garray/defaultCompare (.-name a) (.-name b))
-                  nsc)))
-   :default (garray/defaultCompare (.-name a) (.-name b))))
+(defn ^:private compare-indexed
+  "Compare indexed collection."
+  ([xs ys]
+     (let [xl (count xs)
+           yl (count ys)]
+       (cond
+        (< xl yl) -1
+        (> xl yl) 1
+        (== xl 0) 0
+        :else (compare-indexed xs ys xl 0))))
+  ([xs ys len n]
+     (let [d (compare (nth xs n) (nth ys n))]
+       (if (and (zero? d) (< (+ n 1) len))
+         (recur xs ys len (inc n))
+         d))))

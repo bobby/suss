@@ -6,14 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Many [vals]
-  Object
-  (add [this o]
-    (.push vals o)
-    this)
-  (remove [this]
-    (.shift vals))
-  (isEmpty [this]
-    (zero? (.-length vals)))
-  (toString [this]
-    (str_ "Many: " vals)))
+(defn mapcat
+  "Returns the result of applying concat to the result of applying map
+  to f and colls.  Thus function f should return a collection. Returns
+  a transducer when no collections are provided"
+  {:added "1.0"
+   :static true}
+  ([f] (comp (map f) cat))
+  ([f & colls]
+     (apply concat (apply map f colls))))

@@ -6,21 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn take-while
-  "Returns a lazy sequence of successive items from coll while
-  (pred item) returns logical true. pred must be free of side-effects.
-  Returns a transducer when no collection is provided."
-  ([pred]
-     (fn [rf]
-       (fn
-         ([] (rf))
-         ([result] (rf result))
-         ([result input]
-            (if (pred input)
-              (rf result input)
-              (reduced result))))))
-  ([pred coll]
-     (lazy-seq
-       (when-let [s (seq coll)]
-         (when (pred (first s))
-           (cons (first s) (take-while pred (rest s))))))))
+(defn sorted-map
+  "keyval => key val
+  Returns a new sorted map with supplied mappings."
+  ([& keyvals]
+     (loop [in (seq keyvals) out (.-EMPTY PersistentTreeMap)]
+       (if in
+         (recur (nnext in) (assoc out (first in) (second in)))
+         out))))

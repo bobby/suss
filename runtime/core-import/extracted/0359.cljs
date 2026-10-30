@@ -6,18 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^:private compare-indexed
-  "Compare indexed collection."
-  ([xs ys]
-     (let [xl (count xs)
-           yl (count ys)]
-       (cond
-        (< xl yl) -1
-        (> xl yl) 1
-        (== xl 0) 0
-        :else (compare-indexed xs ys xl 0))))
-  ([xs ys len n]
-     (let [d (compare (nth xs n) (nth ys n))]
-       (if (and (zero? d) (< (+ n 1) len))
-         (recur xs ys len (inc n))
-         d))))
+(defn vector
+  "Creates a new vector containing the args."
+  [& args]
+  (if (and (instance? IndexedSeq args) (zero? (.-i args)))
+    (.fromArray PersistentVector (.-arr args) (not (array? (.-arr args))))
+    (vec args)))

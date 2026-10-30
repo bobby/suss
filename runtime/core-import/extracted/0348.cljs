@@ -6,14 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn zipmap
-  "Returns a map with the keys mapped to the corresponding vals."
-  [keys vals]
-    (loop [map (transient {})
-           ks (seq keys)
-           vs (seq vals)]
-      (if (and ks vs)
-        (recur (assoc! map (first ks) (first vs))
-               (next ks)
-               (next vs))
-        (persistent! map))))
+(defn merge
+  "Returns a map that consists of the rest of the maps conj-ed onto
+  the first.  If a key occurs in more than one map, the mapping from
+  the latter (left-to-right) will be the mapping in the result."
+  [& maps]
+  (when (some identity maps)
+    (reduce #(conj (or %1 {}) %2) maps)))

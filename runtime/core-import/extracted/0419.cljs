@@ -6,33 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn drop
-  "Returns a laziness-preserving sequence of all but the first n items in coll.
-  Returns a stateful transducer when no collection is provided."
-  ([n]
-   {:pre [(number? n)]}
-     (fn [rf]
-       (let [na (volatile! n)]
-         (fn
-           ([] (rf))
-           ([result] (rf result))
-           ([result input]
-              (let [n @na]
-                (vswap! na dec)
-                (if (pos? n)
-                  result
-                  (rf result input))))))))
-  ([n coll]
-   {:pre [(number? n)]}
-     (if (implements? IDrop coll)
-       (or
-         (if (pos? n)
-           (-drop coll (Math/ceil n))
-           (seq coll))
-         ())
-       (let [step (fn [n coll]
-                    (let [s (seq coll)]
-                      (if (and (pos? n) s)
-                        (recur (dec n) (rest s))
-                        s)))]
-         (lazy-seq (step n coll))))))
+(defn- range-count
+  "Returns exact size of remaining items in an IntegerRange."
+  [start end step]
+  (Math/ceil (/ (- end start) step)))

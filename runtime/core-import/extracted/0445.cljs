@@ -6,14 +6,4 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn transformer-iterator
-  [xform sourceIter multi]
-  (let [iterator (TransformerIterator. EMPTY NONE false nil sourceIter multi)]
-    (set! (.-xf iterator)
-      (xform (fn
-               ([] nil)
-               ([acc] acc)
-               ([acc o]
-                (set! (.-buffer iterator) (.add (.-buffer iterator) o))
-                acc))))
-    iterator))
+(def ^:private EMPTY (Empty.))

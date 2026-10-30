@@ -450,18 +450,6 @@
    "stage": "read",
    "diagnostic": "clojure.core-test.pos-qmark (Some(\"<root>/clojure/core_test/pos_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 547..549"
   },
-  "clojure.core-test.print-str": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.print-str (Some(\"<root>/clojure/core_test/print_str.cljc\")): Unresolved Runtime name print-str at bytes 227..609"
-  },
-  "clojure.core-test.println-str": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.println-str (Some(\"<root>/clojure/core_test/println_str.cljc\")): Unresolved Runtime name println-str at bytes 229..947"
-  },
-  "clojure.core-test.prn-str": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.prn-str (Some(\"<root>/clojure/core_test/prn_str.cljc\")): Unresolved Runtime name prn-str at bytes 225..1159"
-  },
   "clojure.core-test.qualified-ident-qmark": {
    "stage": "read",
    "diagnostic": "clojure.core-test.qualified-ident-qmark (Some(\"<root>/clojure/core_test/qualified_ident_qmark.cljc\")): Auto-resolved keywords require namespace resolution at bytes 567..578"

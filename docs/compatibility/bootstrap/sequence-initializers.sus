@@ -173,6 +173,9 @@
 (extend-type LazySeq IPrintWithWriter
   (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
 
+(extend-type TransformerIterator IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
 (extend-type IndexedSeq IPrintWithWriter
   (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
 
@@ -183,6 +186,9 @@
   (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "#queue [" " " "]" opts (seq coll))))
 
 (extend-type PersistentQueueSeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type PersistentTreeMapSeq IPrintWithWriter
   (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
 
 (extend-type NodeSeq IPrintWithWriter
@@ -212,10 +218,19 @@
 (extend-type Subvec IPrintWithWriter
   (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "[" " " "]" opts coll)))
 
+(extend-type BlackNode IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "[" " " "]" opts coll)))
+
+(extend-type RedNode IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "[" " " "]" opts coll)))
+
 (extend-type MapEntry IPrintWithWriter
   (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "[" " " "]" opts coll)))
 
 (extend-type KeySeq IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type ValSeq IPrintWithWriter
   (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
 
 (extend-type PersistentArrayMapSeq IPrintWithWriter
@@ -229,8 +244,27 @@
   (-pr-writer [coll writer opts]
     (print-map coll pr-writer writer opts)))
 
+(extend-type PersistentTreeMap IPrintWithWriter
+  (-pr-writer [coll writer opts]
+    (print-map coll pr-writer writer opts)))
+
 (extend-type PersistentHashSet IPrintWithWriter
   (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "#{" " " "}" opts coll)))
+
+(extend-type PersistentTreeSet IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "#{" " " "}" opts coll)))
+
+(extend-type Range IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type IntegerRange IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type Repeat IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
+(extend-type Iterate IPrintWithWriter
+  (-pr-writer [coll writer opts] (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
 
 (extend-type Atom IPrintWithWriter
   (-pr-writer [a writer opts]

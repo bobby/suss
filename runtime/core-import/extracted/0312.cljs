@@ -6,9 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn object?
-  "Returns true if x's constructor is Object"
-  [x]
-  (if-not (nil? x)
-    (identical? (.-constructor x) js/Object)
-    false))
+(defn prn-str-with-opts
+  "Same as pr-str-with-opts followed by (newline)"
+  [objs opts]
+  (if (empty? objs)
+    "\n"
+    (let [sb (pr-sb-with-opts objs opts)]
+      (.append sb \newline)
+      (str_ sb))))

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "9dcd645de9355f9e23081c1581a8d7506360f7c1bb34ccf7c9dcc603e186c2c5",
+  "replacement": "(def prn-str-with-opts\n  \"Same as pr-str-with-opts followed by (newline)\"\n  (fn [objs opts]\n  (if (empty? objs)\n    \"\\n\"\n    (let [sb (pr-sb-with-opts objs opts)]\n      (.append sb \\newline)\n      (str_ sb)))))",
+  "rationale": "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain the empty case, the shared buffer, the appended newline and the string conversion order. Upstream source bytes, copyright and EPL license are retained by the import workflow (#285)."
+}
