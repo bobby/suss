@@ -376,7 +376,7 @@ impl Interner {
                                     push(&mut pending, Work::Enter(child, Some(id)), charge)?;
                                 }
                             }
-                            Kind::Discard(child) => {
+                            Kind::Discard(child) | Kind::Tagged { form: child, .. } => {
                                 push(&mut pending, Work::Enter(child, Some(id)), charge)?
                             }
                             Kind::Prefix { operator, target } => {
@@ -413,6 +413,7 @@ impl Interner {
                             Kind::Discard(_) => 11,
                             Kind::Prefix { .. } => 12,
                             Kind::SplicingConditional(_) => 13,
+                            Kind::Tagged { .. } => 14,
                         };
                         append(&mut key, &[tag], charge)?;
                         match &form.kind {
@@ -429,7 +430,7 @@ impl Interner {
                                     append(&mut key, &unit.to_le_bytes(), charge)?;
                                 }
                             }
-                            Kind::Symbol(v) => {
+                            Kind::Symbol(v) | Kind::Tagged { tag: v, .. } => {
                                 append(&mut key, &[u8::from(v.namespace.is_some())], charge)?;
                                 if let Some(ns) = &v.namespace {
                                     text(&mut key, ns, charge)?;

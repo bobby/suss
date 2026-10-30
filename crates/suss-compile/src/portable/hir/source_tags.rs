@@ -95,7 +95,7 @@ fn same(a: Option<&Form>, b: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result
                         | Kind::Set(xs)
                         | Kind::Conditional(xs)
                         | Kind::SplicingConditional(xs) => xs.len(),
-                        Kind::Discard(_) => 1,
+                        Kind::Discard(_) | Kind::Tagged { .. } => 1,
                         Kind::Prefix { .. } => 2,
                         _ => 0,
                     };
@@ -111,6 +111,7 @@ fn same(a: Option<&Form>, b: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result
                             xs.iter().map(|x| (x, Mode::Derived)).collect()
                         }
                         (Kind::Discard(x), Mode::Bare) => vec![(x, Mode::Derived)],
+                        (Kind::Tagged { form, .. }, Mode::Bare) => vec![(form, Mode::Bare)],
                         (Kind::Prefix { operator, target }, Mode::Bare) => {
                             vec![(operator, Mode::Derived), (target, Mode::Derived)]
                         }
@@ -123,7 +124,9 @@ fn same(a: Option<&Form>, b: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result
                             | Kind::SplicingConditional(xs),
                             Mode::Derived,
                         ) => xs.iter().map(|x| (x, Mode::Derived)).collect(),
-                        (Kind::Discard(x), Mode::Derived) => vec![(x, Mode::Derived)],
+                        (Kind::Discard(x) | Kind::Tagged { form: x, .. }, Mode::Derived) => {
+                            vec![(x, Mode::Derived)]
+                        }
                         (Kind::Prefix { operator, target }, Mode::Derived) => {
                             vec![(operator, Mode::Derived), (target, Mode::Derived)]
                         }
@@ -158,6 +161,7 @@ fn same(a: Option<&Form>, b: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result
                     }
                     let own = match &node.kind {
                         Kind::Nil | Kind::Discard(_) | Kind::Prefix { .. } => 1,
+                        Kind::Tagged { tag, .. } => identifier_size(tag.namespace.as_deref(), &tag.name),
                         Kind::Bool(_) => 2,
                         Kind::Number(_) => 9,
                         Kind::String(v) => 9usize.saturating_add(v.len().saturating_mul(2)),
@@ -244,6 +248,10 @@ fn same(a: Option<&Form>, b: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result
                         }
                         Kind::Discard(_) => out.push(12),
                         Kind::Prefix { .. } => out.push(13),
+                        Kind::Tagged { tag, .. } => {
+                            out.push(14);
+                            append_identifier(&mut out, tag.namespace.as_deref(), &tag.name, meter, &node.span)?;
+                        }
                     }
                     append_parts(&mut out, parts, meter, &node.span)?;
                     done.push(out);

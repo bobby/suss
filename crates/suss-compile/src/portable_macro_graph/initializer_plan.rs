@@ -77,6 +77,11 @@ pub(super) fn same(session: &mut Session, a: &Form, b: &Form) -> Result<bool> {
                 for (a, b) in a.iter().zip(b).rev() { push(session, &mut pending, a, b)?; }
             }
             (Kind::Discard(a), Kind::Discard(b)) => push(session, &mut pending, a, b)?,
+            (Kind::Tagged { tag: at, form: a }, Kind::Tagged { tag: bt, form: b }) => {
+                if !namespace(session, &at.namespace, &bt.namespace)?
+                    || !text(session, at.name.as_bytes(), bt.name.as_bytes())? { return Ok(false); }
+                push(session, &mut pending, a, b)?;
+            }
             (Kind::Prefix { operator: ao, target: at }, Kind::Prefix { operator: bo, target: bt }) => {
                 push(session, &mut pending, at, bt)?;
                 push(session, &mut pending, ao, bo)?;

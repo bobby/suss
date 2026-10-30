@@ -339,6 +339,64 @@ fn javascript_object_literals_lower_to_ordered_js_obj_calls() {
     assert!(read_forms("#js {1 :value}").is_err());
 }
 
+fn resolved(source: &str) -> Result<Vec<suss_reader::forms::Form>, suss_reader::ParseError> {
+    resolve_conditionals(read_forms(source)?)
+}
+
+#[test]
+fn queue_literals_read_as_tagged_vectors_after_selection() {
+    let source = "#queue [1 2] #queue  []";
+    let forms = resolved(source).unwrap();
+    assert_eq!(forms.len(), 2);
+    let Kind::Tagged { tag, form } = &forms[0].kind else {
+        panic!("expected a tagged literal")
+    };
+    assert_eq!((tag.namespace.as_deref(), tag.name.as_str()), (None, "queue"));
+    assert!(matches!(&form.kind, Kind::Vector(items) if items.len() == 2));
+    assert_eq!(&source[forms[0].span.clone()], "#queue [1 2]");
+    assert_eq!(&source[forms[1].span.clone()], "#queue  []");
+    // The target is the next retained form, after discards and selection.
+    for source in ["#queue #_x [1]", "#queue #?(:clj 0 :suss [1])", "#queue ^:m [1]"] {
+        let forms = resolved(source).unwrap();
+        let Kind::Tagged { form, .. } = &forms[0].kind else {
+            panic!("{source}")
+        };
+        assert!(matches!(&form.kind, Kind::Vector(items) if items.len() == 1), "{source}");
+    }
+    // Metadata applies to the tagged literal; it nests in collections.
+    let forms = resolved("^:m #queue [] [#queue [#queue []]]").unwrap();
+    assert!(matches!(forms[0].kind, Kind::Tagged { .. }));
+    assert_eq!(forms[0].metadata.len(), 1);
+    let Kind::Vector(items) = &forms[1].kind else { panic!() };
+    assert!(matches!(items[0].kind, Kind::Tagged { .. }));
+    // `#js` keeps its own dispatch.
+    assert!(matches!(&resolved("#js {}").unwrap()[0].kind, Kind::List(_)));
+}
+
+#[test]
+fn tagged_literals_fail_as_clojure_does_without_a_reader() {
+    for (source, message, span) in [
+        ("#queue 1", "Queue literal expects a vector for its elements.", "#queue 1"),
+        ("#queue (1)", "Queue literal expects a vector for its elements.", "#queue (1)"),
+        ("[#queue {}]", "Queue literal expects a vector for its elements.", "#queue {}"),
+        ("#unknown 1", "No reader function for tag unknown", "#unknown 1"),
+        ("#my/tag [1]", "No reader function for tag my/tag", "#my/tag [1]"),
+        ("#inst \"2020\"", "No reader function for tag inst", "#inst \"2020\""),
+        ("#jsx {}", "No reader function for tag jsx", "#jsx {}"),
+        ("#object[Foo 0x1 \"x\"]", "No reader function for tag object", "#object[Foo 0x1 \"x\"]"),
+    ] {
+        let error = resolved(source).unwrap_err();
+        assert_eq!(error.message, message, "{source}");
+        assert_eq!(&source[error.span.clone()], span, "{source}");
+    }
+    let error = read_forms("#queue").unwrap_err();
+    assert_eq!(error.expected, vec!["more input".to_owned()]);
+    assert!(read_forms("#queue)").is_err());
+    // Unselected branches are not checked, as Clojure suppresses their tags.
+    assert!(resolved("#?(:clj #unknown 1 :suss 2)").is_ok());
+    assert!(resolved("#?(:clj #queue 1)").is_ok());
+}
+
 #[test]
 fn malformed_forms_fail_with_located_diagnostics_and_bounded_nesting() {
     for source in [
@@ -351,7 +409,6 @@ fn malformed_forms_fail_with_located_diagnostics_and_bounded_nesting() {
         "\"\\18\"",
         "\"\\1z\"",
         "\"\\400\"",
-        "#unknown 1",
         "::alias/x",
         "a/",
         "a/1",

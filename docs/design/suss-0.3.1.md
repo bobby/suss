@@ -89,6 +89,14 @@ source provenance, not textual deletion of JS-looking lines.
 `suss.core` is canonical; `cljs.core` aliases the same bindings. Accept `.sus`,
 `.cljs` and `.cljc`; reject ambiguous namespace resolutions. Reader conditional
 features are `:suss` and `:cljs`, taking the first matching branch in source order.
+The reader reads tagged literals, `#tag form`, as Clojure's does. Its one built-in
+tag is ClojureScript's `#queue [...]`, a deliberate addition: Clojure has no queue
+literal and prints queues as unreadable objects. It reads as a persistent queue
+in source, the REPL, quoted data and macro data, so printed queues read back.
+Unquoted, its elements evaluate as a vector's do. Any other tag, and `#queue`
+with anything but a vector, fails with a reader diagnostic ("No reader function
+for tag ..."), checked after conditional selection. Unselected branches are not
+checked, as in Clojure; unlike Clojure, neither are discarded (`#_`) forms.
 Namespace aliases, refers, exclusions, phase imports and qualified symbols are
 resolved consistently in AOT, macros and REPL.
 

@@ -190,6 +190,9 @@ fn list_prefixes_inner(
             Kind::List(items) | Kind::Vector(items) | Kind::Map(items) | Kind::Set(items) => {
                 list_prefixes_metered(items, carets, meter)?
             }
+            Kind::Tagged { form, .. } => {
+                list_prefixes_metered(std::slice::from_mut(form.as_mut()), carets, meter)?
+            }
             _ => (),
         }
     }

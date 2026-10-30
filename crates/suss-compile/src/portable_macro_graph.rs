@@ -169,6 +169,7 @@ fn validate_form_data(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -
                 }
                 pending.extend(items.iter().rev());
             }
+            Kind::Tagged { form: target, .. } => pending.push(target),
             Kind::Conditional(_)
             | Kind::SplicingConditional(_)
             | Kind::Discard(_)
@@ -182,7 +183,12 @@ fn validate_form_data(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -
         if !form.metadata.is_empty() {
             if !matches!(
                 form.kind,
-                Kind::Symbol(_) | Kind::List(_) | Kind::Vector(_) | Kind::Map(_) | Kind::Set(_)
+                Kind::Symbol(_)
+                    | Kind::List(_)
+                    | Kind::Vector(_)
+                    | Kind::Map(_)
+                    | Kind::Set(_)
+                    | Kind::Tagged { .. }
             ) {
                 return Err(SessionError::Host(wasmtime::Error::msg(
                     "Metadata requires a symbol or collection",
@@ -227,6 +233,7 @@ fn validate_form_data(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -
                     Kind::List(items) | Kind::Vector(items) | Kind::Set(items) => {
                         metadata_pending.extend(items.iter().rev())
                     }
+                    Kind::Tagged { form: target, .. } => metadata_pending.push(target),
                     Kind::Conditional(_)
                     | Kind::SplicingConditional(_)
                     | Kind::Discard(_)
@@ -354,6 +361,11 @@ fn form_key_metered(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -> 
                     append(&mut key, &[12], charge)?;
                     pending.push(Task::Form(target));
                     pending.push(Task::Form(operator));
+                }
+                Kind::Tagged { tag, form } => {
+                    append(&mut key, &[14], charge)?;
+                    write_identifier(&mut key, tag.namespace.as_deref(), &tag.name, charge)?;
+                    pending.push(Task::Form(form));
                 }
             },
         }
@@ -896,6 +908,17 @@ impl<'a> AnalysisGraph<'a> {
             }
             fn leaf(self, session: &mut Session) -> Result<Form> {
                 match self {
+                    // A queue literal is transported whole, with its metadata.
+                    Self::Owned(form) if matches!(form.kind, Kind::Tagged { .. }) => Ok(form),
+                    Self::Borrowed(form) if matches!(form.kind, Kind::Tagged { .. }) => {
+                        crate::portable::clone_form_metered(form, &mut |units| {
+                            session.charge_host_work(units).map_err(|error| portable::Diagnostic {
+                                span: form.span.clone(),
+                                message: error.to_string(),
+                            })
+                        })
+                        .map_err(SessionError::Compile)
+                    }
                     Self::Owned(mut form) => {
                         let kind = form.take_kind();
                         Ok(Form { span: form.span.clone(), metadata: vec![], kind })
@@ -1043,7 +1066,8 @@ impl<'a> AnalysisGraph<'a> {
                 values.push(value);
                 continue;
             }
-            let metadata_shape = if form.metadata.is_empty() { None } else {
+            let metadata_shape = if form.metadata.is_empty()
+                || matches!(form.kind, Kind::Tagged { .. }) { None } else {
                 Some(match &form.kind {
                     Kind::Symbol(_) => MetadataShape::Symbol,
                     Kind::List(items) => MetadataShape::List { empty: items.is_empty() },

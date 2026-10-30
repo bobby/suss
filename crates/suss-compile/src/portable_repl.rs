@@ -146,6 +146,7 @@ fn render_display_datum(
                 DisplayCollection::Vector => ("[", "]"),
                 DisplayCollection::Map => ("{", "}"),
                 DisplayCollection::Set => ("#{", "}"),
+                DisplayCollection::Queue => ("#queue [", "]"),
             };
             text.push_str(open);
             for (index, item) in items.iter().enumerate() {
@@ -232,6 +233,12 @@ fn render_data(
                 render_data(session, item, text)?;
             }
             text.push_str(close);
+        }
+        Kind::Tagged { tag, form } => {
+            text.push('#');
+            text.push_str(&tag.name);
+            text.push(' ');
+            render_data(session, form, text)?;
         }
         _ => {
             return Err(SessionError::Host(wasmtime::Error::msg(

@@ -43,28 +43,28 @@
    "diagnostic": "clojure.core-test.binding (Some(\"<root>/clojure/core_test/binding.cljc\")): Unresolved Runtime name delay at bytes 225..2775"
   },
   "clojure.core-test.bit-and": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Unsupported reader dispatch at bytes 205..207"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.bit-and-not": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Unsupported reader dispatch at bytes 205..207"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.bit-or": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Unsupported reader dispatch at bytes 205..207"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.bit-xor": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Unsupported reader dispatch at bytes 205..207"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.boolean": {
    "stage": "read",
    "diagnostic": "clojure.core-test.boolean (Some(\"<root>/clojure/core_test/boolean.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 716..718"
   },
   "clojure.core-test.boolean-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Unsupported reader dispatch at bytes 205..207"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.bound-fn": {
    "stage": "namespace",
@@ -163,8 +163,8 @@
    "diagnostic": "clojure.core-test.drop-last (Some(\"<root>/clojure/core_test/drop_last.cljc\")): Unresolved Runtime name drop-last at bytes 245..3362"
   },
   "clojure.core-test.empty": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Unsupported reader dispatch at bytes 205..207"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.empty-qmark": {
    "stage": "namespace",
@@ -232,7 +232,7 @@
   },
   "clojure.core-test.identity": {
    "stage": "read",
-   "diagnostic": "clojure.core-test.identity (Some(\"<root>/clojure/core_test/identity.cljc\")): Unsupported reader dispatch at bytes 627..629"
+   "diagnostic": "clojure.core-test.identity (Some(\"<root>/clojure/core_test/identity.cljc\")): No reader function for tag uuid at bytes 627..671"
   },
   "clojure.core-test.ifn-qmark": {
    "stage": "namespace",
@@ -391,8 +391,8 @@
    "diagnostic": "clojure.core-test.number-qmark (Some(\"<root>/clojure/core_test/number_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 578..580"
   },
   "clojure.core-test.number-range": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Unsupported reader dispatch at bytes 205..207"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 42..57"
   },
   "clojure.core-test.numerator": {
    "stage": "read",
@@ -424,7 +424,7 @@
   },
   "clojure.core-test.parse-uuid": {
    "stage": "read",
-   "diagnostic": "clojure.core-test.parse-uuid (Some(\"<root>/clojure/core_test/parse_uuid.cljc\")): Unsupported reader dispatch at bytes 1114..1116"
+   "diagnostic": "clojure.core-test.parse-uuid (Some(\"<root>/clojure/core_test/parse_uuid.cljc\")): No reader function for tag uuid at bytes 1114..1158"
   },
   "clojure.core-test.partition": {
    "stage": "read",
@@ -668,7 +668,7 @@
   },
   "clojure.core-test.uuid-qmark": {
    "stage": "read",
-   "diagnostic": "clojure.core-test.uuid-qmark (Some(\"<root>/clojure/core_test/uuid_qmark.cljc\")): Unsupported reader dispatch at bytes 345..347"
+   "diagnostic": "clojure.core-test.uuid-qmark (Some(\"<root>/clojure/core_test/uuid_qmark.cljc\")): No reader function for tag uuid at bytes 345..389"
   },
   "clojure.core-test.var-qmark": {
    "stage": "read",

@@ -61,6 +61,10 @@ impl Form {
                     operator: Box::new(operator.clone_metered(meter)?),
                     target: Box::new(target.clone_metered(meter)?),
                 },
+                Kind::Tagged { tag, form } => Kind::Tagged {
+                    tag: tag.clone(),
+                    form: Box::new(form.clone_metered(meter)?),
+                },
                 other => other.clone(),
             };
             Ok(Self {
@@ -97,7 +101,7 @@ impl Drop for Form {
                 | Kind::Map(x)
                 | Kind::Conditional(x)
                 | Kind::SplicingConditional(x) => pending.extend(x),
-                Kind::Discard(x) => pending.push(*x),
+                Kind::Discard(x) | Kind::Tagged { form: x, .. } => pending.push(*x),
                 Kind::Prefix { operator, target } => {
                     pending.push(*operator);
                     pending.push(*target);
@@ -159,6 +163,12 @@ pub enum Kind {
     Prefix {
         operator: Box<Form>,
         target: Box<Form>,
+    },
+    /// Tagged literal `#tag form`. Before selection its target may still be
+    /// pending; selection checks the tag and its retained target.
+    Tagged {
+        tag: Symbol,
+        form: Box<Form>,
     },
 }
 
@@ -318,7 +328,9 @@ fn pending_prefix(
             Kind::Conditional(_) | Kind::SplicingConditional(_) | Kind::Discard(_) => {
                 return Ok(true);
             }
-            Kind::Prefix { target, .. } => kind = &target.kind,
+            Kind::Prefix { target, .. } | Kind::Tagged { form: target, .. } => {
+                kind = &target.kind
+            }
             _ => return Ok(false),
         }
     }
@@ -362,7 +374,7 @@ fn skip_target_inner(
     meter: &mut WorkMeter<'_>,
 ) -> Result<bool, ParseError> {
     let present = match form.take_kind() {
-        Kind::Prefix { target, .. } => {
+        Kind::Prefix { target, .. } | Kind::Tagged { form: target, .. } => {
             if !skip_target(*target, following, depth + 1, meter)? {
                 skip_required(following, depth + 1, form.span.clone(), meter)?;
             }
@@ -386,8 +398,23 @@ fn skip_target_inner(
 fn metadata_target(kind: &Kind) -> bool {
     matches!(
         kind,
-        Kind::Symbol(_) | Kind::List(_) | Kind::Vector(_) | Kind::Map(_) | Kind::Set(_)
+        Kind::Symbol(_)
+            | Kind::List(_)
+            | Kind::Vector(_)
+            | Kind::Map(_)
+            | Kind::Set(_)
+            | Kind::Tagged { .. }
     )
+}
+
+/// The value a built-in tag reads as. `#queue` follows ClojureScript; Clojure
+/// itself has none. Other tags fail as Clojure's reader does without a reader.
+fn check_tagged(tag: &Symbol, target: &Form, span: Range<usize>) -> Result<(), ParseError> {
+    match (tag.namespace.as_deref(), tag.name.as_str()) {
+        (None, "queue") if matches!(target.kind, Kind::Vector(_)) => Ok(()),
+        (None, "queue") => Err(error(span, "Queue literal expects a vector for its elements.")),
+        _ => Err(error(span, format!("No reader function for tag {tag}"))),
+    }
 }
 
 fn select(
@@ -474,6 +501,16 @@ fn select_inner(
             };
             form.span.end = target.span.end;
             form.kind = Kind::List(vec![*operator, target]);
+            Some(form)
+        }
+        Kind::Tagged { tag, form: target } => {
+            let target = match select(*target, following, depth + 1, meter)? {
+                Some(target) => target,
+                None => required_selected(following, depth + 1, span.clone(), meter)?,
+            };
+            form.span.end = target.span.end;
+            check_tagged(&tag, &target, form.span.clone())?;
+            form.kind = Kind::Tagged { tag, form: Box::new(target) };
             Some(form)
         }
         kind => {
@@ -820,6 +857,7 @@ impl Reader<'_, '_, '_> {
                             Kind::Conditional(_)
                                 | Kind::SplicingConditional(_)
                                 | Kind::Prefix { .. }
+                                | Kind::Tagged { .. }
                                 | Kind::Discard(_)
                         )
                     })
@@ -868,6 +906,7 @@ impl Reader<'_, '_, '_> {
                         | Kind::SplicingConditional(_)
                         | Kind::Discard(_)
                         | Kind::Prefix { .. }
+                        | Kind::Tagged { .. }
                 ) {
                     return Err(error(
                         target.span.clone(),
@@ -946,6 +985,7 @@ impl Reader<'_, '_, '_> {
                             Kind::Conditional(_)
                                 | Kind::SplicingConditional(_)
                                 | Kind::Prefix { .. }
+                                | Kind::Tagged { .. }
                                 | Kind::Discard(_)
                         )
                     }) {
@@ -978,10 +1018,24 @@ impl Reader<'_, '_, '_> {
                         _ => return Err(self.fail(start, "Unknown symbolic numeric literal")),
                     })
                 }
-                Some('j') => {
-                    if self.take() != Some('s') {
-                        return Err(self.fail(start, "Unsupported reader dispatch"));
+                Some(c) if c.is_alphabetic() && !self.js_dispatch(start) => {
+                    // Clojure's reader: a letter after `#` starts a tag symbol.
+                    self.offset = start + 1;
+                    let token = self.token();
+                    if !valid_symbol(token) {
+                        return Err(self.fail(start, "Invalid tag"));
                     }
+                    let tag = Symbol::parse(token);
+                    if let Some(capture) = &mut self.capture {
+                        capture.unsupported();
+                    }
+                    Kind::Tagged {
+                        tag,
+                        form: Box::new(self.required()?),
+                    }
+                }
+                Some('j') => {
+                    self.take();
                     self.padding();
                     if self.take() != Some('{') {
                         return Err(self.fail(start, "#js requires a map literal"));
@@ -1076,6 +1130,11 @@ impl Reader<'_, '_, '_> {
         }
         if let Some(capture)=&mut self.capture {capture.finish(capture_slot,&form,self.meter)?;}
         Ok(Some(form))
+    }
+    /// Whether `#` at `start` begins the `#js` map dispatch rather than a tag.
+    fn js_dispatch(&self, start: usize) -> bool {
+        let rest = &self.source[start + 1..];
+        rest.starts_with("js") && rest[2..].chars().next().is_none_or(delimiter)
     }
     fn wrapper(&mut self, start: usize, name: &str) -> Result<Kind, ParseError> {
         let prefix = Form {
