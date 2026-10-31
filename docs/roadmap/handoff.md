@@ -29506,3 +29506,11 @@ document's 2026-10-25 decision now records all three outcomes.
 - Every Form traversal handles Tagged. This includes HIR quoting, syntax-quote, destructuring keys (`syntax_hash`/`equal`), raw keys and source tags (tag 14), and the macro data bridge (`Class::PersistentQueue`, `queue_values`, decoding back to `#queue [...]`).
 - Not done here: `read-string` of printed queues (#300). The `#_` tag check runs only when the target needs selection.
 - PR #306 was independently reviewed. Full baseline on ee3302b: 2037 passed, 0 failed, 78 ignored, 275 binaries, 10649 s. CI run 41146788562 passed on ee3302b.
+
+## Test profile optimization (2026-10-31)
+
+- Workspace crates now build at opt-level 1 in the test profile, and dependencies stay at opt-level 2. This supersedes the earlier note that workspace code stays unoptimized. Debug assertions and overflow checks remain on, and Cranelift stays at `OptLevel::None`.
+- Opt-level 2 for the workspace was also measured. Tests ran faster (full baseline 6163 s), but a workspace rebuild after an edit took 703 s instead of 97 s, which made CI cost more overall (176 job-minutes).
+- Opt-level 1: full baseline 8780 s, down from 10344 s; workspace rebuild 341 s; CI 36 min and 118 job-minutes, down from 48 min and 164 job-minutes (runs 41179925609 and 41215999890).
+- The root `Cargo.toml` is part of the compiler fingerprint, so a profile edit requires regenerating the bootstrap. Only the identity hashes change.
+- PR #308 was independently reviewed, with no findings. Full baseline on 4bd6b99: 2037 passed, 0 failed, 78 ignored.
