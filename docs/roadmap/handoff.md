@@ -29498,3 +29498,11 @@ document's 2026-10-25 decision now records all three outcomes.
   - `#object[...]` forms, type names, and Clojure's munged record labels: #304.
   - Cycle, ES6IteratorSeq and Volatile stanzas: they wait on those types shipping.
 - PR #305 was independently reviewed. Full baseline on d34418b: 2028 passed, 0 failed, 274 binaries, 10626 s. CI passed on d34418b.
+
+## #287: `#queue` and tagged literals (2026-10-30)
+
+- The reader produces `Kind::Tagged { tag, form }` for `#tag form` and checks it after conditional selection. Only `queue` with a vector is accepted. Other tags fail with Clojure's "No reader function for tag …", and a non-vector fails with ClojureScript's "Queue literal expects a vector for its elements.".
+- A `#queue` literal is a constant, as Clojure treats tagged-literal values: its elements and metadata are not evaluated. This is the user's decision from review, and it differs from ClojureScript.
+- Every Form traversal handles Tagged. This includes HIR quoting, syntax-quote, destructuring keys (`syntax_hash`/`equal`), raw keys and source tags (tag 14), and the macro data bridge (`Class::PersistentQueue`, `queue_values`, decoding back to `#queue [...]`).
+- Not done here: `read-string` of printed queues (#300). The `#_` tag check runs only when the target needs selection.
+- PR #306 was independently reviewed. Full baseline on ee3302b: 2037 passed, 0 failed, 78 ignored, 275 binaries, 10649 s. CI run 41146788562 passed on ee3302b.
