@@ -229,6 +229,8 @@
 (def ^{:dynamic true
        :doc "A suss.core.Namespace object representing the current namespace."}
   *ns* (intern-namespace 'suss.core))
+;; Clojure's runtime always has a user namespace.
+(intern-namespace 'user)
 ;; The macro host sets *ns*'s root to the namespace being compiled before it
 ;; calls a macro, as Clojure's compiler binds *ns* while it loads (#309). It
 ;; keeps the namespace objects intern-namespace returns.
@@ -248,9 +250,12 @@
   (fn [ns] (.-name (the-ns ns))))
 (def all-ns
   (fn [] (seq (aclone namespace-registry))))
+;; The compiler also records each required namespace under its own name;
+;; Clojure lists only the aliases a namespace declares.
 (def ns-aliases
   (fn [ns]
-    (reduce-kv (fn [m alias target] (assoc m alias (intern-namespace target)))
+    (reduce-kv (fn [m alias target]
+                 (if (= (.-str alias) (.-str target)) m (assoc m alias (intern-namespace target))))
                {} (.aliasMap (the-ns ns)))))
 ;; Clojure maps each referred symbol to its Var. Suss has no runtime Vars, so
 ;; the value is the fully qualified symbol the name refers to.

@@ -516,7 +516,12 @@ impl Session {
     /// Isolated compiled execution for macro bodies. This owns a separate Store
     /// and phase-qualified cells; it does not yet expand source defmacro forms.
     pub fn new_macro() -> Result<Self, SessionError> {
-        let mut session = Self::with_options_in(SessionOptions::default(), Phase::Macro)?;
+        Self::new_macro_with_options(SessionOptions::default())
+    }
+    /// The shipped compiled core in the Macro phase, with caller-supplied
+    /// source roots and fuel.
+    pub fn new_macro_with_options(options: SessionOptions) -> Result<Self, SessionError> {
+        let mut session = Self::with_options_in(options, Phase::Macro)?;
         session.provision_core()?;
         Ok(session)
     }
