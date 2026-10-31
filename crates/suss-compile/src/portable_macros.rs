@@ -199,7 +199,9 @@ fn mentions_parameter(
             | Kind::Map(items)
             | Kind::Conditional(items)
             | Kind::SplicingConditional(items) => append(&mut pending, items, charge)?,
-            Kind::Discard(target) => append(&mut pending, std::slice::from_ref(target.as_ref()), charge)?,
+            Kind::Discard(target) | Kind::Tagged { form: target, .. } => {
+                append(&mut pending, std::slice::from_ref(target.as_ref()), charge)?
+            }
             Kind::Prefix { operator, target } => {
                 append(&mut pending, std::slice::from_ref(operator.as_ref()), charge)?;
                 append(&mut pending, std::slice::from_ref(target.as_ref()), charge)?;

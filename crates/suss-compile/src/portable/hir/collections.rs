@@ -19,7 +19,7 @@ impl Analyzer<'_> {
         })
     }
 
-    fn collection_property(
+    pub(super) fn collection_property(
         &mut self,
         form: &Form,
         class: &str,

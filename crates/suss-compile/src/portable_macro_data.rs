@@ -43,9 +43,10 @@ enum Class {
     LazySeq,
     ChunkedCons,
     ArrayChunk,
+    PersistentQueue,
 }
 // One enumeration for bridge construction and initial bootstrap authority.
-const SOURCE_CLASSES: [(&str, Class); 23] = [
+const SOURCE_CLASSES: [(&str, Class); 24] = [
     ("Symbol", Class::Symbol),
     ("Keyword", Class::Keyword),
     ("List", Class::List),
@@ -69,6 +70,7 @@ const SOURCE_CLASSES: [(&str, Class); 23] = [
     ("LazySeq", Class::LazySeq),
     ("ChunkedCons", Class::ChunkedCons),
     ("ArrayChunk", Class::ArrayChunk),
+    ("PersistentQueue", Class::PersistentQueue),
 ];
 
 #[derive(Clone, Copy)]
@@ -92,6 +94,7 @@ pub(crate) enum DisplayCollection {
     Vector,
     Map,
     Set,
+    Queue,
 }
 #[derive(Clone, Copy)]
 pub(crate) enum DisplayLeaf {
@@ -186,13 +189,22 @@ impl DatumTarget for Form {
         metadata: Vec<Form>,
     ) -> Self {
         Self {
-            span,
+            span: span.clone(),
             metadata,
             kind: match kind {
                 DisplayCollection::List => Kind::List(items),
                 DisplayCollection::Vector => Kind::Vector(items),
                 DisplayCollection::Map => Kind::Map(items),
                 DisplayCollection::Set => Kind::Set(items),
+                // A queue is the `#queue [...]` literal it reads from.
+                DisplayCollection::Queue => Kind::Tagged {
+                    tag: suss_reader::Symbol::new("queue"),
+                    form: Box::new(Self {
+                        span,
+                        metadata: vec![],
+                        kind: Kind::Vector(items),
+                    }),
+                },
             },
         }
     }
@@ -222,6 +234,7 @@ enum DecodedKind<T> {
     Vector(Vec<T>),
     Map(Vec<T>),
     Set(Vec<T>),
+    Queue(Vec<T>),
 }
 
 /// Captured canonical class roots remain valid through redefinition and GC.
@@ -344,6 +357,9 @@ impl FormBridge {
             ("empty-map", "{}"),
             ("empty-set", "#{}"),
             ("empty-list", "()"),
+            ("empty-queue", "#queue []"),
+            ("into", "suss.core/into"),
+            ("with-meta", "suss.core/with-meta"),
             ("lazy-sval", "(fn* [value] (.sval value))"),
         ] {
             factories.insert(name, session.eval(source)?);
@@ -628,6 +644,26 @@ impl FormBridge {
             &[metadata, &map, &nil],
         )
     }
+    /// The queue `#queue [items...]` reads as, with `metadata` unless nil.
+    pub fn queue_values(
+        &self,
+        session: &mut Session,
+        items: &[SessionValue],
+        metadata: Option<&SessionValue>,
+    ) -> Result<SessionValue, SessionError> {
+        self.check(session)?;
+        let empty = self.seed(session, "empty-queue")?;
+        let mut queue = if items.is_empty() {
+            empty
+        } else {
+            let elements = self.vector_values(session, items)?;
+            session.invoke(&self.core.factories["into"], &[&empty, &elements])?
+        };
+        if let Some(metadata) = metadata {
+            queue = session.invoke(&self.core.factories["with-meta"], &[&queue, metadata])?;
+        }
+        Ok(queue)
+    }
     pub fn vector_values(
         &self,
         session: &mut Session,
@@ -821,6 +857,10 @@ impl FormBridge {
                         Kind::List(items) | Kind::Vector(items) | Kind::Set(items) => {
                             items.iter().collect()
                         }
+                        Kind::Tagged { .. } => match form.queue_items() {
+                            Some(items) => items.iter().collect(),
+                            None => return Err(failure(form, "Unsupported tagged macro data")),
+                        },
                         Kind::Map(items) => {
                             if items.len() % 2 != 0 {
                                 return Err(failure(
@@ -848,6 +888,7 @@ impl FormBridge {
                             | Kind::Vector(_)
                             | Kind::Map(_)
                             | Kind::Set(_)
+                            | Kind::Tagged { .. }
                     );
                     if has_metadata && !is_collection {
                         return Err(failure(form, "Metadata requires a symbol or collection"));
@@ -904,6 +945,9 @@ impl FormBridge {
                         }
                         Kind::Set(_) if has_metadata => self.scalar(session, &Literal::Nil)?,
                         Kind::Set(_) => self.set_values(session, &built)?,
+                        // Built once, below, with its metadata.
+                        Kind::Tagged { .. } if has_metadata => self.scalar(session, &Literal::Nil)?,
+                        Kind::Tagged { .. } => self.queue_values(session, &built, None)?,
                         _ => {
                             return Err(failure(
                                 form,
@@ -925,6 +969,8 @@ impl FormBridge {
                         })?;
                         if matches!(form.kind, Kind::Set(_)) {
                             result = self.set_with_metadata(session, &built, &metadata)?;
+                        } else if matches!(form.kind, Kind::Tagged { .. }) {
+                            result = self.queue_values(session, &built, Some(&metadata))?;
                         } else {
                             let class = match form.kind {
                                 Kind::Symbol(_) => Class::Symbol,
@@ -1338,6 +1384,7 @@ fn decode_datum_inner<T: DatumTarget>(
                 Class::IndexedSeq | Class::PersistentArrayMapSeq => Some(2),
                 Class::ChunkedSeq => Some(4),
                 Class::KeySeq => Some(1),
+                Class::PersistentQueue => Some(0),
                 _ => None,
             };
             if let Some(value) = slot.and_then(|index| data.get(index)) {
@@ -1493,6 +1540,27 @@ fn decode_datum_inner<T: DatumTarget>(
                 Class::List | Class::Cons | Class::EmptyList | Class::IndexedSeq => {
                     DecodedKind::List(sequence(store, value, classes, span, depth, budget)?)
                 }
+                Class::PersistentQueue => {
+                    // Fields: meta, count, front (a seq or nil), rear (a vector).
+                    if data.len() != 5 {
+                        return Err(error("Invalid persistent queue field layout"));
+                    }
+                    budget.source_valid = budget.source_valid.map(|_| false);
+                    let mut items = if nil(store, &data[2])? {
+                        vec![]
+                    } else {
+                        sequence(store, &data[2], classes, span, depth, budget)?
+                    };
+                    let (rear_class, rear) = object(store, &data[3], classes)?;
+                    if rear_class != Class::PersistentVector {
+                        return Err(error("Queue needs a persistent vector rear"));
+                    }
+                    items.extend(vector(store, &rear, classes, span, depth, budget)?);
+                    if integer(store, &data[1])? != items.len() {
+                        return Err(error("Queue count disagrees with its elements"));
+                    }
+                    DecodedKind::Queue(items)
+                }
             }
         }
     };
@@ -1519,6 +1587,9 @@ fn decode_datum_inner<T: DatumTarget>(
         }
         DecodedKind::Set(items) => {
             T::collection(DisplayCollection::Set, items, span.clone(), reader_metadata)
+        }
+        DecodedKind::Queue(items) => {
+            T::collection(DisplayCollection::Queue, items, span.clone(), reader_metadata)
         }
     })
 }

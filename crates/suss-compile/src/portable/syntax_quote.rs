@@ -209,6 +209,12 @@ impl<M: FnMut(u64) -> Result<(), Diagnostic>> Pass<'_, M> {
                     _ => Kind::Set(items),
                 };
             }
+            Kind::Tagged { tag, form: target } => {
+                result.kind = Kind::Tagged {
+                    tag: tag.clone(),
+                    form: Box::new(self.read(target, depth + 1)?),
+                };
+            }
             Kind::Conditional(_)
             | Kind::SplicingConditional(_)
             | Kind::Discard(_)
@@ -368,6 +374,26 @@ impl<M: FnMut(u64) -> Result<(), Diagnostic>> Pass<'_, M> {
                         vec![symbol(span, constructor), sequence],
                     )
                 }
+                Kind::Tagged { tag, .. } => {
+                    // A queue template's elements are syntax-quoted as a
+                    // vector's are. (Clojure's has no queue templates.)
+                    let Some(items) = form.queue_items() else {
+                        return Err(error(form, "Unsupported tagged syntax quote data"));
+                    };
+                    let empty = data(
+                        span,
+                        Kind::Tagged {
+                            tag: tag.clone(),
+                            form: Box::new(data(span, Kind::Vector(vec![]))),
+                        },
+                    );
+                    let sequence = self.collection(form, items, gensyms, depth + 1)?;
+                    call(
+                        span,
+                        "clojure.core/into",
+                        vec![call(span, "quote", vec![empty]), sequence],
+                    )
+                }
                 Kind::Nil
                 | Kind::Bool(_)
                 | Kind::Number(_)
@@ -463,6 +489,7 @@ pub(crate) fn has_template_metered(
             Kind::List(items) | Kind::Vector(items) | Kind::Map(items) | Kind::Set(items) => {
                 pending.extend(items)
             }
+            Kind::Tagged { form, .. } => pending.push(form),
             _ => (),
         }
     }
@@ -530,6 +557,10 @@ pub(crate) fn lower_generated_metered(
                     _ => Kind::Set(items),
                 }
             }
+            Kind::Tagged { tag, form } => Kind::Tagged {
+                tag: tag.clone(),
+                form: Box::new(lower(form, meter)?),
+            },
             Kind::Symbol(s) if s.namespace.as_deref() == Some("clojure.core") => {
                 Kind::Symbol(Symbol::namespaced("cljs.core", &s.name))
             }
@@ -578,6 +609,9 @@ fn charge_metadata_tree<M: FnMut(u64) -> Result<(), Diagnostic>>(
             &item.kind
         {
             pending.extend(items);
+        }
+        if let Kind::Tagged { form, .. } = &item.kind {
+            pending.push(form);
         }
     }
     Ok(())

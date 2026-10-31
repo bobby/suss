@@ -1314,6 +1314,9 @@ impl Analyzer<'_> {
                 let value = self.set_literal(form, items)?;
                 return self.attach_literal_metadata(form, value);
             }
+            // A tagged literal is the constant it reads as, as in Clojure:
+            // `#queue [(f)]` holds the list `(f)`, and its metadata is data.
+            Kind::Tagged { .. } => return self.quote_data(form, 0),
             Kind::List(items) if items.is_empty() => {
                 // The pinned emitter reads List.EMPTY for each empty-list literal.
                 // Resolve the canonical core binding, never a lexical/user List.

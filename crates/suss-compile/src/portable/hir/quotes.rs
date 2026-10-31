@@ -87,7 +87,12 @@ impl Analyzer<'_> {
         if !form.metadata.is_empty() {
             if !matches!(
                 form.kind,
-                Kind::Symbol(_) | Kind::List(_) | Kind::Vector(_) | Kind::Map(_) | Kind::Set(_)
+                Kind::Symbol(_)
+                    | Kind::List(_)
+                    | Kind::Vector(_)
+                    | Kind::Map(_)
+                    | Kind::Set(_)
+                    | Kind::Tagged { .. }
             ) {
                 return Err(fail(
                     form.span.clone(),
@@ -169,13 +174,24 @@ impl Analyzer<'_> {
                     },
                 })
             }
+            Kind::Tagged { tag, form: target } => {
+                let Some(items) = form.queue_items() else {
+                    return Err(fail(form.span.clone(), format!("No reader function for tag {tag}")));
+                };
+                let entries = items
+                    .iter()
+                    .map(|item| self.quote_data_impl(item, depth + 1, reader_data))
+                    .collect::<Result<Vec<_>, _>>()?;
+                let elements = self.vector_values(target, entries)?;
+                self.queue_value(form, elements, items.is_empty())
+            }
             _ => Err(fail(
                 form.span.clone(),
                 "Unresolved reader dispatch or prefix data cannot be quoted",
             )),
         }
     }
-    fn data_core_call(
+    pub(super) fn data_core_call(
         &mut self,
         form: &Form,
         name: &str,
@@ -203,6 +219,20 @@ impl Analyzer<'_> {
                 arguments,
             },
         })
+    }
+    /// The queue a `#queue` literal reads as: ClojureScript's
+    /// `(into PersistentQueue.EMPTY elements)`.
+    fn queue_value(
+        &mut self,
+        form: &Form,
+        elements: Hir,
+        empty: bool,
+    ) -> Result<Hir, Diagnostic> {
+        let queue = self.collection_property(form, "PersistentQueue", "EMPTY")?;
+        if empty {
+            return Ok(queue);
+        }
+        self.data_core_call(form, "into", vec![queue, elements])
     }
     pub(super) fn attach_literal_metadata(
         &mut self,
@@ -409,6 +439,9 @@ fn reader_key_equal_inner(
         (Kind::String(a), Kind::String(b)) => a == b,
         (Kind::Symbol(a), Kind::Symbol(b)) => a == b,
         (Kind::Keyword(a), Kind::Keyword(b)) => a == b,
+        // A queue equals a list or vector with equal elements.
+        (Kind::Tagged { form: a, .. }, _) => reader_key_equal_metered(a, b, depth + 1, work)?,
+        (_, Kind::Tagged { form: b, .. }) => reader_key_equal_metered(a, b, depth + 1, work)?,
         (Kind::List(a) | Kind::Vector(a), Kind::List(b) | Kind::Vector(b)) => {
             if a.len() != b.len() {
                 return Ok(false);

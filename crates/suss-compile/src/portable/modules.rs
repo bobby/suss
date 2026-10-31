@@ -186,6 +186,7 @@ fn charge_header(
             | Kind::Set(x)
             | Kind::Conditional(x)
             | Kind::SplicingConditional(x) => x.as_slice(),
+            Kind::Tagged { form, .. } => std::slice::from_ref(form.as_ref()),
             _ => &[],
         };
         let text = match &form.kind {

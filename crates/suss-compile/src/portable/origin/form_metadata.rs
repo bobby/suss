@@ -44,7 +44,7 @@ fn all_children(form: &Form) -> Vec<&Form> {
         | Kind::Set(items)
         | Kind::Conditional(items)
         | Kind::SplicingConditional(items) => result.extend(items),
-        Kind::Discard(item) => result.push(item),
+        Kind::Discard(item) | Kind::Tagged { form: item, .. } => result.push(item),
         Kind::Prefix { operator, target } => result.extend([operator.as_ref(), target.as_ref()]),
         _ => {}
     }
@@ -152,6 +152,11 @@ fn same_metered(
                 pending.push((x, y, CompareMode::Derived));
                 true
             }
+            (Kind::Tagged { tag: xt, form: x }, Kind::Tagged { tag: yt, form: y }) => {
+                charge(meter, xt.name.len().max(yt.name.len()), &a.span)?;
+                pending.push((x, y, mode));
+                xt == yt
+            }
             (
                 Kind::Prefix {
                     operator: xo,
@@ -211,6 +216,10 @@ fn rebuild_form(node: &Form, children: Vec<Form>) -> Form {
         Kind::Conditional(_) => Kind::Conditional(values),
         Kind::SplicingConditional(_) => Kind::SplicingConditional(values),
         Kind::Discard(_) => Kind::Discard(Box::new(values.into_iter().next().unwrap())),
+        Kind::Tagged { tag, .. } => Kind::Tagged {
+            tag: tag.clone(),
+            form: Box::new(values.into_iter().next().unwrap()),
+        },
         Kind::Prefix { .. } => {
             let mut values = values.into_iter();
             Kind::Prefix {

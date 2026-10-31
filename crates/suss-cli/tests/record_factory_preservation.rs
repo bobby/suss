@@ -91,7 +91,7 @@ fn erase_spans(form: &mut Form) {
                 erase_spans(item);
             }
         }
-        Kind::Discard(target) => erase_spans(target),
+        Kind::Discard(target) | Kind::Tagged { form: target, .. } => erase_spans(target),
         Kind::Prefix { operator, target } => {
             erase_spans(operator);
             erase_spans(target);
