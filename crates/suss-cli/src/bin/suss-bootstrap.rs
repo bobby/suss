@@ -12,9 +12,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let (wasm, manifest) = bootstrap::generate(phase)?;
         let name = bootstrap::phase_name(phase);
         fs::write(output.join(format!("{name}.wasm")), wasm)?;
-        let mut json = serde_json::to_vec_pretty(&manifest)?;
-        json.push(b'\n');
-        fs::write(output.join(format!("{name}.json")), json)?;
+        let mut edn = suss_reader::edn::to_string_pretty(&manifest)?;
+        edn.push('\n');
+        fs::write(output.join(format!("{name}.edn")), edn)?;
     }
     Ok(())
 }

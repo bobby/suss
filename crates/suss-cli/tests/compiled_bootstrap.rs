@@ -3,7 +3,10 @@ use suss_cli::{
     portable_macro_data::FormBridge, portable_macros::CompiledMacros, portable_session::Session,
 };
 use suss_compile::portable::{bootstrap, resolve::Phase};
-use suss_reader::forms::Kind;
+use suss_reader::{
+    edn::{self, Value},
+    forms::Kind,
+};
 
 #[test]
 fn compiled_bootstrap_images_are_reproducible_and_phase_specific() {
@@ -12,7 +15,7 @@ fn compiled_bootstrap_images_are_reproducible_and_phase_specific() {
         assert!(std::ptr::eq(shipped, bootstrap::shipped(phase).unwrap()));
         let (generated, manifest) = bootstrap::generate(phase).unwrap();
         assert_eq!(generated, shipped.wasm);
-        let encoded = serde_json::to_vec(&manifest).unwrap();
+        let encoded = edn::to_string(&manifest).unwrap().into_bytes();
         let restored = bootstrap::restore(phase, &generated, &encoded).unwrap();
         assert_eq!(restored.cells, shipped.cells);
         let other = match phase {
@@ -27,40 +30,45 @@ fn compiled_bootstrap_images_are_reproducible_and_phase_specific() {
 fn compiled_bootstrap_rejects_changed_identity_and_corruption() {
     let phase = Phase::Macro;
     let (wasm, manifest) = bootstrap::generate(phase).unwrap();
-    let base = serde_json::to_value(&manifest).unwrap();
+    let Value::Map(base) = edn::to_value(&manifest).unwrap() else { panic!() };
+    let encode = |map: &std::collections::BTreeMap<Value, Value>| {
+        edn::print(&Value::Map(map.clone())).unwrap().into_bytes()
+    };
+    // The canonical text restores; the test edits below are what fail it.
+    assert!(bootstrap::restore(phase, &wasm, &encode(&base)).is_ok());
     for key in [
-        "format_version",
+        "format-version",
         "phase",
-        "source_sha256",
-        "compiler_source_sha256",
-        "dependency_graph_sha256",
-        "runtime_abi",
+        "source-sha256",
+        "compiler-source-sha256",
+        "dependency-graph-sha256",
+        "runtime-abi",
         "compiler",
-        "wasm_tools",
+        "wasm-tools",
         "target",
         "flags",
-        "wasm_sha256",
+        "wasm-sha256",
         "cells",
     ] {
         let mut changed = base.clone();
-        changed[key] = match &base[key] {
-            serde_json::Value::Number(number) => serde_json::json!(number.as_u64().unwrap() + 1),
-            serde_json::Value::Array(_) => serde_json::json!(["changed"]),
-            _ => serde_json::json!("changed"),
+        let value = changed.get_mut(&Value::keyword(key)).unwrap_or_else(|| panic!("{key}"));
+        *value = match value {
+            Value::Number(number) => Value::Number(*number + 1.0),
+            Value::Vector(_) => Value::Vector(vec![Value::String("changed".into())]),
+            _ => Value::String("changed".into()),
         };
-        assert!(
-            bootstrap::restore(phase, &wasm, &serde_json::to_vec(&changed).unwrap()).is_err(),
-            "{key}"
-        );
+        assert!(bootstrap::restore(phase, &wasm, &encode(&changed)).is_err(), "{key}");
     }
-    let encoded = serde_json::to_vec(&manifest).unwrap();
+    let encoded = encode(&base);
     let mut corrupt = wasm.clone();
     corrupt[0] ^= 1;
     assert!(bootstrap::restore(phase, &corrupt, &encoded).is_err());
     assert!(bootstrap::restore(phase, &wasm, b"{}").is_err());
+    // JSON manifests from before #299 are rejected.
+    assert!(bootstrap::restore(phase, &wasm, br#"{"format_version": 1}"#).is_err());
     let mut unknown = base;
-    unknown["unexpected"] = serde_json::json!(true);
-    assert!(bootstrap::restore(phase, &wasm, &serde_json::to_vec(&unknown).unwrap()).is_err());
+    unknown.insert(Value::keyword("unexpected"), Value::Bool(true));
+    assert!(bootstrap::restore(phase, &wasm, &encode(&unknown)).is_err());
 }
 
 #[test]
