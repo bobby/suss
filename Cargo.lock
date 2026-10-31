@@ -1875,6 +1875,7 @@ dependencies = [
  "num-bigint",
  "num-rational",
  "pretty_assertions",
+ "serde",
  "stacker",
  "suss-core",
  "wit-bindgen 0.61.1",

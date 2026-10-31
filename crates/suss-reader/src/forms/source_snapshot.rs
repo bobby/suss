@@ -218,7 +218,7 @@ impl SourceMetadata {
         meter: &mut WorkMeter<'_>,
     ) -> Result<Self, ParseError> {
         let (forms, _, mut sites, raw_carets) =
-            super::read_forms_internal(&source, None, true, meter)?;
+            super::read_forms_internal(&source, None, true, false, meter)?;
         let forms = super::resolve_conditionals_metered(forms, meter)?;
         sites.seal(meter)?;
         let mut carets = source_metadata::Carets::new();

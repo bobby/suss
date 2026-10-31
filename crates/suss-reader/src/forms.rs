@@ -146,7 +146,7 @@ fn charge(meter: &mut WorkMeter<'_>, units: u64, span: Range<usize>) -> Result<(
         failure
     })
 }
-fn allowance(remaining: &mut u64, units: u64) -> Result<(), ParseError> {
+pub(crate) fn allowance(remaining: &mut u64, units: u64) -> Result<(), ParseError> {
     *remaining = remaining
         .checked_sub(units)
         .ok_or_else(|| error(0..0, "Reader work budget exhausted"))?;
@@ -200,7 +200,15 @@ pub fn read_forms_metered(
     source: &str,
     meter: &mut WorkMeter<'_>,
 ) -> Result<Vec<Form>, ParseError> {
-    read_forms_internal(source, None, false, meter).map(|(forms, _, _, _)| forms)
+    read_forms_internal(source, None, false, false, meter).map(|(forms, _, _, _)| forms)
+}
+/// Raw forms in the `suss.edn` subset: code-only reader syntax is rejected
+/// where it is read. Tags, discards and metadata are left to `crate::edn`.
+pub(crate) fn read_edn_forms(
+    source: &str,
+    meter: &mut WorkMeter<'_>,
+) -> Result<Vec<Form>, ParseError> {
+    read_forms_internal(source, None, false, true, meter).map(|(forms, _, _, _)| forms)
 }
 
 /// Indexing-reader data with the complete ordinary source metadata retained.
@@ -216,7 +224,7 @@ pub fn read_forms_with_source_metadata_metered(
     file: Option<&str>,
     meter: &mut WorkMeter<'_>,
 ) -> Result<Vec<Form>, ParseError> {
-    let (forms, carets, _, _) = read_forms_internal(source, Some(file), false, meter)?;
+    let (forms, carets, _, _) = read_forms_internal(source, Some(file), false, false, meter)?;
     let mut forms = resolve_conditionals_metered(forms, meter)?;
     source_metadata::list_prefixes_metered(&mut forms, &carets, meter)?;
     Ok(forms)
@@ -230,6 +238,7 @@ fn read_forms_internal(
     source: &str,
     locations: Option<Option<&str>>,
     capture_sites: bool,
+    edn: bool,
     meter: &mut WorkMeter<'_>,
 ) -> Result<(Vec<Form>, source_metadata::Carets, source_snapshot::Capture, Vec<((usize,usize),usize)>), ParseError> {
     let source_positions = if locations.is_some() {
@@ -251,6 +260,8 @@ fn read_forms_internal(
         source_positions,
         meter,
         work_failure: None,
+        edn,
+        edn_discards: Vec::new(),
     };
     let result = (|| {
         let mut forms = Vec::new();
@@ -267,6 +278,18 @@ fn read_forms_internal(
     if let Some(failure) = reader.work_failure {
         return Err(failure);
     }
+    // EDN discards follow as top-level discard forms, in source order.
+    let result = result.map(|mut forms| {
+        for target in reader.edn_discards.drain(..) {
+            forms.push(Form {
+                span: target.span.clone(),
+                metadata: Vec::new(),
+                kind: Kind::Discard(Box::new(target)),
+            });
+        }
+        forms.sort_by_key(|form| form.span.start);
+        forms
+    });
     result.map(|forms| (forms, reader.carets, reader.capture.unwrap_or_default(), reader.raw_carets))
 }
 
@@ -569,7 +592,7 @@ fn error(span: Range<usize>, message: impl Into<String>) -> ParseError {
         expected: Vec::new(),
     }
 }
-fn delimiter(c: char) -> bool {
+pub(crate) fn delimiter(c: char) -> bool {
     c.is_whitespace()
         || matches!(
             c,
@@ -590,6 +613,9 @@ struct Reader<'a, 'm, 'f> {
     source_positions: Option<source_metadata::Positions>,
     meter: &'m mut WorkMeter<'f>,
     work_failure: Option<ParseError>,
+    /// Reading the `suss.edn` subset, which has no code-only syntax.
+    edn: bool,
+    edn_discards: Vec<Form>,
 }
 impl Reader<'_, '_, '_> {
     fn anonymous_symbol(&mut self, index: i32) -> Symbol {
@@ -932,6 +958,9 @@ impl Reader<'_, '_, '_> {
                 }
                 return Ok(Some(target));
             }
+            '\'' | '`' | '~' | '@' if self.edn => {
+                return Err(self.fail(start, "Quote, syntax-quote, unquote and deref syntax are not EDN"));
+            }
             '\'' | '`' | '~' | '@' => {
                 let name = match c {
                     '\'' => "quote",
@@ -953,6 +982,14 @@ impl Reader<'_, '_, '_> {
                     kind: Kind::Symbol(symbol),
                 }));
             }
+            '#' if self.edn && matches!(self.peek(), Some('(' | '\'' | '?')) => {
+                let message = match self.take() {
+                    Some('(') => "Anonymous function syntax is not EDN",
+                    Some('\'') => "Var syntax is not EDN",
+                    _ => "Reader conditionals are not EDN",
+                };
+                return Err(self.fail(start, message));
+            }
             '#' => match self.take() {
                 Some('(') => {
                     let kind = self.anonymous_function(start)?;
@@ -965,6 +1002,11 @@ impl Reader<'_, '_, '_> {
                 Some('{') => Kind::Set(self.items(start, '}')?),
                 Some('_') => {
                     let target = self.required()?;
+                    if self.edn {
+                        // Kept aside so `crate::edn` still checks its tags.
+                        self.edn_discards.push(target);
+                        return Ok(None);
+                    }
                     if pending_prefix(&target.kind, self.meter, target.span.clone())? {
                         Kind::Discard(Box::new(target))
                     } else {
@@ -1030,7 +1072,7 @@ impl Reader<'_, '_, '_> {
                         _ => return Err(self.fail(start, "Unknown symbolic numeric literal")),
                     })
                 }
-                Some(c) if c.is_alphabetic() && !self.js_dispatch(start) => {
+                Some(c) if c.is_alphabetic() && (self.edn || !self.js_dispatch(start)) => {
                     // Clojure's reader: a letter after `#` starts a tag symbol.
                     self.offset = start + 1;
                     let token = self.token();
@@ -1298,7 +1340,7 @@ impl Reader<'_, '_, '_> {
     }
 }
 
-fn numeric_start(token: &str) -> bool {
+pub(crate) fn numeric_start(token: &str) -> bool {
     let mut chars = token.chars();
     match chars.next() {
         Some('0'..='9') => true,
@@ -1363,7 +1405,7 @@ fn number(token: &str) -> Result<f64, &'static str> {
         Ok(value)
     }
 }
-fn valid_symbol(token: &str) -> bool {
+pub(crate) fn valid_symbol(token: &str) -> bool {
     if token.is_empty() || token.ends_with(':') || token.starts_with(':') {
         return false;
     }

@@ -12,7 +12,8 @@ callable, namespace and position facts needed by compiled macro environments.
 The existing bounded bootstrap forms break the compiler/core cycle. This is the
 selected imported profile, not complete public core compatibility.
 
-Each manifest records format and phase, core source SHA256, compiler/reader/core
+Each manifest (`runtime/bootstrap/<phase>.edn`, canonical EDN as described in
+`docs/runtime/tooling-edn.md`) records format and phase, core source SHA256, compiler/reader/core
 implementation SHA256, locked compiler/runtime ABI, Wasm tooling, dependency graph
 SHA256, target, compiler flags, artifact SHA256 and canonical binding identities.
 The current bounded bootstrap has no configurable compiler options, so its flags

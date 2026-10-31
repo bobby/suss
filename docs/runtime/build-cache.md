@@ -89,6 +89,9 @@ Used for `suss compile` in every mode.
   any Rust change. These are the mode,
   source/namespace, WIT path and world, source roots, export mappings,
   configuration path, selected world and `--compile-fuel`.
+- **Manifest format:** canonical EDN (`docs/runtime/tooling-edn.md`) with
+  `:format-version 2`. The version is also part of the key, so JSON manifests
+  from version 1 are misses, as is any entry that does not parse.
 - **Manifest contents:** every filesystem observation the build made, and the
   SHA-256 of each output:
   - the contents of each file read: inputs, discovered modules, macro
