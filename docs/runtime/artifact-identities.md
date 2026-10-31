@@ -12,8 +12,9 @@ Bare IR emission explicitly leaves source, phase and graph unknown.
 
 The verifier rejects missing/duplicate/malformed records, incompatible compiler
 builds even with the same package version, ABI/profile/flag mismatches, body
-integrity changes and mismatched expected source/phase/macro versions. JSON is
-bounded to 1 MiB. Unknown provenance cannot satisfy an explicitly requested source
+integrity changes and mismatched expected source/phase/macro versions. The record
+is canonical EDN with `:format-version 2` (`docs/runtime/tooling-edn.md`); version 1
+was JSON and no longer verifies. It is bounded to 1 MiB. Unknown provenance cannot satisfy an explicitly requested source
 or dependency identity. Metadata does not replace Wasm validation and linking.
 
 Native Session installation verifies every artifact's compiler identity and

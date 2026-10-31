@@ -6,12 +6,13 @@ use std::borrow::Cow;
 use wasm_encoder::{Encode, Section};
 
 const SECTION: &str = "suss.source-artifact";
-const FORMAT: u32 = 1;
+/// 2: canonical EDN (#299); 1 was JSON.
+const FORMAT: u32 = 2;
 const TARGET: &str = "portable-wasm-gc-shared-abi";
 const MAX_MANIFEST: usize = 1024 * 1024;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct Manifest {
     pub format_version: u32,
     pub compiler_source_sha256: String,
@@ -97,10 +98,7 @@ fn split(bytes: &[u8]) -> Result<(Vec<u8>, Option<Manifest>), String> {
                 if section.data().len() > MAX_MANIFEST {
                     return Err("Source artifact identity exceeds bounds".into());
                 }
-                manifest = Some(
-                    serde_json::from_slice(section.data())
-                        .map_err(|error| format!("Malformed source artifact identity: {error}"))?,
-                );
+                manifest = Some(decode(section.data())?);
             } else {
                 body.extend_from_slice(
                     bytes
@@ -116,10 +114,22 @@ fn split(bytes: &[u8]) -> Result<(Vec<u8>, Option<Manifest>), String> {
     }
     Ok((body, manifest))
 }
+/// The identity section's canonical EDN.
+fn encode(manifest: &Manifest) -> Result<Vec<u8>, String> {
+    suss_reader::edn::to_string(manifest)
+        .map(String::into_bytes)
+        .map_err(|error| error.to_string())
+}
+fn decode(data: &[u8]) -> Result<Manifest, String> {
+    std::str::from_utf8(data)
+        .map_err(|error| error.to_string())
+        .and_then(|text| suss_reader::edn::from_str(text).map_err(|error| error.to_string()))
+        .map_err(|error| format!("Malformed source artifact identity: {error}"))
+}
 fn seal(bytes: &[u8], mut manifest: Manifest) -> Result<Vec<u8>, String> {
     let (mut body, _) = split(bytes)?;
     manifest.wasm_sha256 = bootstrap::sha256(&body);
-    let data = serde_json::to_vec(&manifest).map_err(|error| error.to_string())?;
+    let data = encode(&manifest)?;
     if data.len() > MAX_MANIFEST {
         return Err("Source artifact identity exceeds bounds".into());
     }
@@ -416,7 +426,7 @@ mod tests {
         let mut duplicate = wasm.clone();
         let section = wasm_encoder::CustomSection {
             name: Cow::Borrowed(SECTION),
-            data: Cow::Owned(serde_json::to_vec(&read(&wasm).unwrap()).unwrap()),
+            data: Cow::Owned(encode(&read(&wasm).unwrap()).unwrap()),
         };
         duplicate.push(section.id());
         section.encode(&mut duplicate);
