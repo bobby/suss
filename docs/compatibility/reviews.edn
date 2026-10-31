@@ -5318,4 +5318,34 @@
    :rationale "Expand the complete pinned defn to def/fn, retaining the Boolean var tag, documentation, one operand and exact IPending method call. Status inspection does not force a value or coerce arbitrary data. Existing supported pending implementations retain their protocol behavior. Original source and EPL attribution remain packaged. Focused native tests cover both phases, actual AOT, nonforcing lazy/empty/metadata behavior, GC, existing Repeat/Iterate and user-defined protocol dispatch. The shared fixture compares 25 pinned ClojureScript value/effect observations; a separate test executes the unchanged pinned Jank lazy-sequence block. This does not certify unsupported deferred types or the full Jank map namespace."
    :adaptation-path "docs/compatibility/patches/realized.json" :alternative nil
    :tests ["crates/suss-cli/tests/portable_realized.rs" "tests/oracle/realized-fixture.sus" "tests/oracle/realized-observations.json" "scripts/test-realized-oracle.sh"]}
+  "runtime:*ns*:61"
+  {:source-sha256 "c9f406e30b4aaece21dccfeebc4892aa39dc5e4d6461500d9827a730d70c2657"
+   :visibility :public
+   :arities nil
+   :dependencies []
+   :classification :host-specific
+   :rationale "Upstream binds *ns* to nil and relies on the ClojureScript compiler's goog namespace objects. Suss keeps a dynamic *ns* holding a suss.core.Namespace, rooted at suss.core as Clojure's is at clojure.core; the compiler binds it while each fragment loads and the macro host sets it to the namespace being compiled."
+   :status :excluded :adaptation-path nil
+   :alternative "Suss-original runtime namespaces (#309): docs/compatibility/bootstrap/exact-integers.sus, compiler publication in crates/suss-compile/src/portable/hir/namespaces.rs; docs/runtime/runtime-namespaces.md"
+   :tests ["crates/suss-cli/tests/runtime_namespaces.rs"]}
+  "runtime:find-ns:12180"
+  {:source-sha256 "348c4fd57cffe0e1eb24997c60991726d1aa54bfb01c84477377481175d49a15"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:*ns*:61"]
+   :classification :host-specific
+   :rationale "Upstream looks up goog namespace objects through find-ns-obj, a JavaScript host facility. Suss looks the symbol up in the registry the compiler publishes to and returns a suss.core.Namespace or nil, as Clojure does."
+   :status :excluded :adaptation-path nil
+   :alternative "Suss-original runtime namespaces (#309): docs/compatibility/bootstrap/exact-integers.sus, compiler publication in crates/suss-compile/src/portable/hir/namespaces.rs; docs/runtime/runtime-namespaces.md"
+   :tests ["crates/suss-cli/tests/runtime_namespaces.rs"]}
+  "runtime:ns-name:12214"
+  {:source-sha256 "f83108e8a55431cf467b6c7b8c41ce9bb6bb4629c5119c1ff80cf74febbddadc"
+   :visibility :public
+   :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:find-ns:12180"]
+   :classification :host-specific
+   :rationale "Upstream reads the name of a ClojureScript Namespace object. Suss accepts a namespace or a symbol, as Clojure's ns-name does through the-ns, and returns the namespace's symbol."
+   :status :excluded :adaptation-path nil
+   :alternative "Suss-original runtime namespaces (#309): docs/compatibility/bootstrap/exact-integers.sus, compiler publication in crates/suss-compile/src/portable/hir/namespaces.rs; docs/runtime/runtime-namespaces.md"
+   :tests ["crates/suss-cli/tests/runtime_namespaces.rs"]}
 }}
