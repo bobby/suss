@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Exercise the actual compiled Cargo build script's bootstrap identity inputs."""
-import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import tempfile
@@ -50,7 +50,12 @@ def main():
     target = Path(os.environ.get("CARGO_TARGET_DIR", ROOT / "target"))
     if not target.is_absolute():
         target = ROOT / target
-    expected = json.loads((ROOT / "runtime/bootstrap/runtime.json").read_text())["compiler_source_sha256"]
+    manifest = (ROOT / "runtime/bootstrap/runtime.edn").read_text()
+    # The canonical EDN manifest (#299) has one quoted digest for this key.
+    found = re.findall(r':compiler-source-sha256 "([0-9a-f]{64})"', manifest)
+    if len(found) != 1:
+        raise RuntimeError("runtime.edn does not record exactly one compiler identity")
+    expected = found[0]
     # The generator has already built this executable. Match its emitted identity
     # to avoid accidentally exercising an unrelated stale Cargo build directory.
     builders = [path for path in sorted(target.glob("debug/build/suss-compile-*/build-script-build"))

@@ -3292,25 +3292,25 @@ mod tests {
             offset = end;
         }
         let abi = runtime_abi::Manifest::default();
-        let manifest = serde_json::json!({
-            "format_version": 1,
-            "compiler_source_sha256": "0".repeat(64),
-            "runtime_abi": abi.runtime_abi,
-            "compiler": abi.compiler,
-            "wasm_tools": abi.wasm_tools,
-            "target": "portable-wasm-gc-shared-abi",
-            "profile": "default",
-            "flags": [],
-            "phase": "runtime",
-            "source_sha256": portable::bootstrap::sha256(b"(def ghost 7)"),
-            "source_path": null,
-            "macro_dependencies": null,
-            "wasm_sha256": portable::bootstrap::sha256(&wasm)
-        });
+        let manifest = portable::artifact_identity::Manifest {
+            format_version: 2,
+            compiler_source_sha256: "0".repeat(64),
+            runtime_abi: abi.runtime_abi,
+            compiler: abi.compiler,
+            wasm_tools: abi.wasm_tools,
+            target: "portable-wasm-gc-shared-abi".into(),
+            profile: "default".into(),
+            flags: vec![],
+            phase: Some("runtime".into()),
+            source_sha256: Some(portable::bootstrap::sha256(b"(def ghost 7)")),
+            source_path: None,
+            macro_dependencies: None,
+            wasm_sha256: portable::bootstrap::sha256(&wasm),
+        };
         let mut data = Vec::new();
         write_uleb(b"suss.source-artifact".len(), &mut data);
         data.extend_from_slice(b"suss.source-artifact");
-        data.extend_from_slice(&serde_json::to_vec(&manifest).unwrap());
+        data.extend_from_slice(suss_reader::edn::to_string(&manifest).unwrap().as_bytes());
         wasm.push(0);
         write_uleb(data.len(), &mut wasm);
         wasm.extend_from_slice(&data);

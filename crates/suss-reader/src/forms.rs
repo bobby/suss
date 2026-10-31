@@ -569,7 +569,7 @@ fn error(span: Range<usize>, message: impl Into<String>) -> ParseError {
         expected: Vec::new(),
     }
 }
-fn delimiter(c: char) -> bool {
+pub(crate) fn delimiter(c: char) -> bool {
     c.is_whitespace()
         || matches!(
             c,
@@ -1298,7 +1298,7 @@ impl Reader<'_, '_, '_> {
     }
 }
 
-fn numeric_start(token: &str) -> bool {
+pub(crate) fn numeric_start(token: &str) -> bool {
     let mut chars = token.chars();
     match chars.next() {
         Some('0'..='9') => true,
@@ -1306,7 +1306,7 @@ fn numeric_start(token: &str) -> bool {
         _ => false,
     }
 }
-fn number(token: &str) -> Result<f64, &'static str> {
+pub(crate) fn number(token: &str) -> Result<f64, &'static str> {
     if token.contains('/') || token.ends_with(['N', 'M']) {
         return Err(
             "Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers",
@@ -1363,7 +1363,7 @@ fn number(token: &str) -> Result<f64, &'static str> {
         Ok(value)
     }
 }
-fn valid_symbol(token: &str) -> bool {
+pub(crate) fn valid_symbol(token: &str) -> bool {
     if token.is_empty() || token.ends_with(':') || token.starts_with(':') {
         return false;
     }

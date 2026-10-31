@@ -9,15 +9,16 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::sync::OnceLock;
 
-pub const FORMAT_VERSION: u32 = 1;
+/// 2: canonical EDN manifests (#299); 1 was JSON.
+pub const FORMAT_VERSION: u32 = 2;
 pub const SOURCE: &str = include_str!("../../../../runtime/core-import/suss/core.sus");
 const DEPENDENCIES: &[u8] = include_bytes!("../../../../runtime/core-import/manifest.json");
 const TARGET: &str = "portable-wasm-gc-shared-abi";
 const MAX_ARTIFACT_BYTES: usize = 32 * 1024 * 1024;
 const RUNTIME_WASM: &[u8] = include_bytes!("../../../../runtime/bootstrap/runtime.wasm");
-const RUNTIME_JSON: &[u8] = include_bytes!("../../../../runtime/bootstrap/runtime.json");
+const RUNTIME_EDN: &[u8] = include_bytes!("../../../../runtime/bootstrap/runtime.edn");
 const MACRO_WASM: &[u8] = include_bytes!("../../../../runtime/bootstrap/macro.wasm");
-const MACRO_JSON: &[u8] = include_bytes!("../../../../runtime/bootstrap/macro.json");
+const MACRO_EDN: &[u8] = include_bytes!("../../../../runtime/bootstrap/macro.edn");
 
 /// Digest of the embedded inputs that `SUSS_COMPILER_SOURCE_SHA256` cannot
 /// cover: core source, its import manifest and the versioned bootstrap
@@ -32,9 +33,9 @@ pub fn embedded_sha256() -> &'static str {
             SOURCE.as_bytes(),
             DEPENDENCIES,
             RUNTIME_WASM,
-            RUNTIME_JSON,
+            RUNTIME_EDN,
             MACRO_WASM,
-            MACRO_JSON,
+            MACRO_EDN,
             crate::portable_lazy_seq::SOURCE.as_bytes(),
         ] {
             hash.update((part.len() as u64).to_le_bytes());
@@ -45,7 +46,7 @@ pub fn embedded_sha256() -> &'static str {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub struct Manifest {
     pub format_version: u32,
     pub phase: String,
@@ -145,14 +146,16 @@ pub fn generate(phase: Phase) -> Result<(Vec<u8>, Manifest), Diagnostic> {
 }
 /// Validate all identity inputs before a host can install or initialize the artifact.
 /// Wasm validation/linking remains mandatory in the consuming host.
-pub fn restore(phase: Phase, wasm: &[u8], json: &[u8]) -> Result<PreparedFragment, Diagnostic> {
-    restore_checked(phase, wasm, json).map(|(fragment, _)| fragment)
+pub fn restore(phase: Phase, wasm: &[u8], edn: &[u8]) -> Result<PreparedFragment, Diagnostic> {
+    restore_checked(phase, wasm, edn).map(|(fragment, _)| fragment)
 }
-fn restore_checked(phase: Phase, wasm: &[u8], json: &[u8]) -> Result<(PreparedFragment, super::artifact_identity::Manifest), Diagnostic> {
-    if wasm.len() > MAX_ARTIFACT_BYTES || json.len() > 1024 * 1024 {
+fn restore_checked(phase: Phase, wasm: &[u8], edn: &[u8]) -> Result<(PreparedFragment, super::artifact_identity::Manifest), Diagnostic> {
+    if wasm.len() > MAX_ARTIFACT_BYTES || edn.len() > 1024 * 1024 {
         return Err(error("Bootstrap artifact exceeds bounded size"));
     }
-    let found: Manifest = serde_json::from_slice(json)
+    let found: Manifest = std::str::from_utf8(edn)
+        .map_err(|failure| failure.to_string())
+        .and_then(|text| suss_reader::edn::from_str(text).map_err(|failure| failure.to_string()))
         .map_err(|failure| error(format!("Invalid bootstrap manifest: {failure}")))?;
     let mut expected = manifest(phase, wasm, &[]);
     expected.cells = found.cells.clone();
@@ -193,12 +196,12 @@ struct ShippedBootstrap {
 fn shipped_bundle(phase: Phase) -> Result<&'static ShippedBootstrap, Diagnostic> {
     static RUNTIME: OnceLock<Result<ShippedBootstrap, String>> = OnceLock::new();
     static MACRO: OnceLock<Result<ShippedBootstrap, String>> = OnceLock::new();
-    let (cache, wasm, json): (_, &[u8], &[u8]) = match phase {
-        Phase::Runtime => (&RUNTIME, RUNTIME_WASM, RUNTIME_JSON),
-        Phase::Macro => (&MACRO, MACRO_WASM, MACRO_JSON),
+    let (cache, wasm, edn): (_, &[u8], &[u8]) = match phase {
+        Phase::Runtime => (&RUNTIME, RUNTIME_WASM, RUNTIME_EDN),
+        Phase::Macro => (&MACRO, MACRO_WASM, MACRO_EDN),
     };
     cache
-        .get_or_init(|| restore(phase, wasm, json).map(|fragment| ShippedBootstrap { fragment })
+        .get_or_init(|| restore(phase, wasm, edn).map(|fragment| ShippedBootstrap { fragment })
             .map_err(|failure| failure.message))
         .as_ref()
         .map_err(|message| error(message.clone()))

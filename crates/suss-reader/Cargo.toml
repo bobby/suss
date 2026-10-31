@@ -14,10 +14,12 @@ ariadne = { workspace = true }
 num-bigint = { workspace = true }
 num-rational = { workspace = true }
 stacker = "=0.1.22"
+serde = "1"
 wit-bindgen = { workspace = true, optional = true }
 
 [dev-dependencies]
 pretty_assertions = { workspace = true }
+serde = { version = "1", features = ["derive"] }
 
 [features]
 default = []

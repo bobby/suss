@@ -20,7 +20,7 @@ cd "$bootstrap_root"
 CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}" cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- "$bootstrap_tmp/first"
 CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}" cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- "$bootstrap_tmp/second"
 for bootstrap_phase in runtime macro; do
-    for bootstrap_suffix in wasm json; do
+    for bootstrap_suffix in wasm edn; do
         cmp "$bootstrap_tmp/first/$bootstrap_phase.$bootstrap_suffix" "$bootstrap_tmp/second/$bootstrap_phase.$bootstrap_suffix"
         cmp "$bootstrap_tmp/first/$bootstrap_phase.$bootstrap_suffix" "runtime/bootstrap/$bootstrap_phase.$bootstrap_suffix"
     done

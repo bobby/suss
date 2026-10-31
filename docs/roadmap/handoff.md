@@ -29507,6 +29507,14 @@ document's 2026-10-25 decision now records all three outcomes.
 - Not done here: `read-string` of printed queues (#300). The `#_` tag check runs only when the target needs selection.
 - PR #306 was independently reviewed. Full baseline on ee3302b: 2037 passed, 0 failed, 78 ignored, 275 binaries, 10649 s. CI run 41146788562 passed on ee3302b.
 
+## #299 step 1: tooling data as EDN (2026-10-31)
+
+- `suss_reader::edn` holds a structural `Value` with a total order, a canonical printer (one-line and pretty), and a direct `suss.edn` parser that follows `clojure.edn`. The parser shares number, symbol and delimiter rules with the forms reader, and a conformance test keeps their messages and spans equal. A serde bridge sits on top. The contract is in `docs/runtime/tooling-edn.md`.
+- Build-cache manifests, the bootstrap manifests (`runtime/bootstrap/*.edn`) and the `suss.source-artifact` Wasm section are EDN with `:format-version 2`. Old JSON entries become misses or identity mismatches.
+- Reader throughput on a 13 MB analyzer-shaped document (`edn_bench` example): about 8 MB/s in the test profile and 41–45 MB/s in release. The 10% target can only be checked at step 3.
+- Not done here: steps 2 (`suss analyze`) and 3 (persisted core analysis); `read-string`/`suss.edn` at the language level (#300).
+- PR #307 was independently reviewed. Full baseline on d9844d0: 2050 passed, 0 failed, 78 ignored, 276 binaries, 10344 s.
+
 ## Test profile optimization (2026-10-31)
 
 - Workspace crates now build at opt-level 1 in the test profile, and dependencies stay at opt-level 2. This supersedes the earlier note that workspace code stays unoptimized. Debug assertions and overflow checks remain on, and Cranelift stays at `OptLevel::None`.

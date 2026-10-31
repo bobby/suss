@@ -12,10 +12,15 @@ use super::{Key, Layer, current, inputs, trace};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
+use suss_reader::edn;
+
+/// 2: canonical EDN (#299); 1 was JSON.
+const FORMAT_VERSION: u32 = 2;
 
 #[derive(Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 struct Manifest {
+    format_version: u32,
     inputs: inputs::Recorded,
     /// Output name to the SHA-256 (hex) of its contents.
     outputs: BTreeMap<String, String>,
@@ -41,6 +46,7 @@ fn key_for(identity: &[String], request: &[(&str, String)]) -> [u8; 32] {
         key.field(part.as_bytes());
     }
     key.field(b"portable-wasm-gc-shared-abi;default-profile");
+    key.field(&FORMAT_VERSION.to_le_bytes());
     for (name, value) in request {
         key.field(name.as_bytes()).field(value.as_bytes());
     }
@@ -75,16 +81,29 @@ pub fn reuse_or_build<E>(
     }
     // The manifest is the checkpoint: it is published last and refers only
     // to outputs already stored, so a reader never sees a partial build.
-    let manifest = Manifest { inputs: recorded, outputs: digests };
-    if let Ok(bytes) = serde_json::to_vec(&manifest) {
-        directory.publish(Layer::BuildManifest, &key, &bytes);
+    let manifest = Manifest {
+        format_version: FORMAT_VERSION,
+        inputs: recorded,
+        outputs: digests,
+    };
+    match edn::to_string(&manifest) {
+        Ok(text) => directory.publish(Layer::BuildManifest, &key, text.as_bytes()),
+        Err(error) => trace(Layer::BuildManifest, "skip", &key, &error.to_string()),
     }
     Ok((outputs, false))
 }
 
 fn reuse(directory: &super::BuildDir, key: &[u8; 32]) -> Option<BTreeMap<String, Vec<u8>>> {
     let bytes = directory.read(Layer::BuildManifest, key)?;
-    let Ok(manifest) = serde_json::from_slice::<Manifest>(&bytes) else {
+    let manifest = std::str::from_utf8(&bytes)
+        .ok()
+        .and_then(|text| {
+            // Entry size is already bounded when read, so reading is unmetered.
+            let options = edn::Options { work_allowance: u64::MAX, ..edn::Options::default() };
+            edn::read_one(text, &options).and_then(edn::from_value::<Manifest>).ok()
+        })
+        .filter(|manifest| manifest.format_version == FORMAT_VERSION);
+    let Some(manifest) = manifest else {
         trace(Layer::BuildManifest, "reject", key, "malformed manifest");
         return None;
     };
