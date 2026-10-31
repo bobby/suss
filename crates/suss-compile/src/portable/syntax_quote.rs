@@ -24,7 +24,7 @@ use suss_reader::{
     Symbol,
     forms::{Form, Kind},
 };
-mod core_names;
+pub(crate) mod core_names;
 
 /// Deterministic state to carry across successful reader inputs. Failed expansion
 /// does not advance it. Each nested backquote has its own gensym map.

@@ -343,6 +343,64 @@ impl Default for Environment {
         Self::new("user").expect("valid bootstrap namespace")
     }
 }
+/// Core macros the bootstrap expander provides before core source loads.
+pub(crate) const BOOTSTRAP_MACROS: &[&str] = &[
+    "let",
+    "loop",
+    "fn",
+    "defonce",
+    "binding",
+    "with-redefs",
+    "deftype",
+    "deftype*",
+    "defrecord*",
+    "defprotocol",
+    "extend-type",
+    "instance?",
+    "satisfies?",
+    "implements?",
+    "array",
+    "make-array",
+    "alength",
+    "aget",
+    "aset",
+    "<",
+    "<=",
+    ">",
+    ">=",
+    "==",
+    "when",
+    "when-not",
+    "if-not",
+    "if-let",
+    "and",
+    "or",
+    "cond",
+    "case",
+    "declare",
+    "caching-hash",
+    "->",
+    "as->",
+    "zero?",
+    "pos?",
+    "neg?",
+    "inc",
+    "dec",
+    "int",
+    "bit-and",
+    "bit-or",
+    "bit-xor",
+    "bit-and-not",
+    "bit-not",
+    "bit-clear",
+    "bit-flip",
+    "bit-set",
+    "bit-test",
+    "bit-shift-left",
+    "bit-shift-right",
+    "unsigned-bit-shift-right",
+    "bit-shift-right-zero-fill",
+];
 impl Environment {
     pub fn new(namespace: &str) -> Result<Self, Diagnostic> {
         valid_namespace(namespace)?;
@@ -830,6 +888,21 @@ impl Environment {
         }
         (global, fallback, fresh)
     }
+    /// The internal cell holding `namespace`'s runtime namespace object (#309),
+    /// and whether this call registered it.
+    pub(crate) fn namespace_cell(&mut self, phase: Phase, namespace: &str) -> (Global, bool) {
+        let global = Global {
+            phase,
+            namespace: "suss.internal.namespaces".into(),
+            name: canonical(namespace).into(),
+        };
+        let fresh = !self.bindings.contains_key(&global);
+        if fresh {
+            self.bindings.insert(global.clone(), Binding::InternalCell(global.clone()));
+            self.source_changed();
+        }
+        (global, fresh)
+    }
     /// Per-analysis anonymous reify site class publication cell. The pinned
     /// macro gensyms one internal type per macro expansion and publishes it
     /// behind an exists? guard; analysis identity takes the expansion's place.
@@ -1217,6 +1290,19 @@ impl Environment {
             && !scope.excluded_core.contains(name)
             && !self.bindings.contains_key(&own)
     }
+    /// Names `resolve` finds as `namespace`'s own bindings in `phase`, the
+    /// declarations runtime namespaces publish (#309).
+    pub(crate) fn declared_names(&self, phase: Phase, namespace: &str) -> BTreeSet<String> {
+        self.bindings
+            .iter()
+            .filter(|(global, binding)| {
+                global.phase == phase
+                    && global.namespace == namespace
+                    && !matches!(binding, Binding::InternalCell(_) | Binding::ReaderCell(_))
+            })
+            .map(|(global, _)| global.name.clone())
+            .collect()
+    }
     /// The bounded bootstrap macro lookup is separate from ordinary var lookup:
     /// lexical locals (handled by HIR) hide macros. User runtime definitions also
     /// hide automatic core bootstrap macros, as observed in the pinned compiler.
@@ -1225,247 +1311,19 @@ impl Environment {
         let scope = self.scope(phase);
         let name = if let Some(namespace) = &symbol.namespace {
             (symbol_namespace(scope.aliases.get(namespace), namespace) == "suss.core"
-                && matches!(
-                    symbol.name.as_str(),
-                    "let"
-                        | "loop"
-                        | "fn"
-                        | "defonce"
-                        | "binding"
-                        | "with-redefs"
-                        | "deftype"
-                    | "deftype*"
-                    | "defrecord*"
-                        | "defprotocol"
-                        | "extend-type"
-                        | "instance?"
-                        | "satisfies?"
-                        | "implements?"
-                        | "array"
-                        | "make-array"
-                        | "alength"
-                        | "aget"
-                        | "aset"
-                        | "<"
-                        | "<="
-                        | ">"
-                        | ">="
-                        | "=="
-                        | "when"
-                        | "when-not"
-                        | "if-not"
-                        | "if-let"
-                        | "and"
-                        | "or"
-                        | "cond"
-                        | "case"
-                        | "declare"
-                        | "caching-hash"
-                        | "->"
-                        | "as->"
-                        | "zero?"
-                        | "pos?"
-                        | "neg?"
-                        | "inc"
-                        | "dec"
-                        | "int"
-                        | "bit-and"
-                        | "bit-or"
-                        | "bit-xor"
-                        | "bit-and-not"
-                        | "bit-not"
-                        | "bit-clear"
-                        | "bit-flip"
-                        | "bit-set"
-                        | "bit-test"
-                        | "bit-shift-left"
-                        | "bit-shift-right"
-                        | "unsigned-bit-shift-right"
-                        | "bit-shift-right-zero-fill"
-                ))
+                && BOOTSTRAP_MACROS.contains(&symbol.name.as_str()))
             .then_some(symbol.name.as_str())
         } else if let Some(global) = scope.refers.get(&symbol.name) {
             if global.namespace == "suss.core"
-                && matches!(
-                    global.name.as_str(),
-                    "let"
-                        | "loop"
-                        | "fn"
-                        | "defonce"
-                        | "binding"
-                        | "with-redefs"
-                        | "deftype"
-                    | "deftype*"
-                    | "defrecord*"
-                        | "defprotocol"
-                        | "extend-type"
-                        | "instance?"
-                        | "satisfies?"
-                        | "implements?"
-                        | "array"
-                        | "make-array"
-                        | "alength"
-                        | "aget"
-                        | "aset"
-                        | "<"
-                        | "<="
-                        | ">"
-                        | ">="
-                        | "=="
-                        | "when"
-                        | "when-not"
-                        | "if-not"
-                        | "if-let"
-                        | "and"
-                        | "or"
-                        | "cond"
-                        | "case"
-                        | "declare"
-                        | "caching-hash"
-                        | "->"
-                        | "as->"
-                        | "zero?"
-                        | "pos?"
-                        | "neg?"
-                        | "inc"
-                        | "dec"
-                        | "int"
-                        | "bit-and"
-                        | "bit-or"
-                        | "bit-xor"
-                        | "bit-and-not"
-                        | "bit-not"
-                        | "bit-clear"
-                        | "bit-flip"
-                        | "bit-set"
-                        | "bit-test"
-                        | "bit-shift-left"
-                        | "bit-shift-right"
-                        | "unsigned-bit-shift-right"
-                        | "bit-shift-right-zero-fill"
-                )
+                && BOOTSTRAP_MACROS.contains(&global.name.as_str())
             {
                 Some(global.name.as_str())
             } else {
-                (matches!(
-                    symbol.name.as_str(),
-                    "let"
-                        | "loop"
-                        | "fn"
-                        | "defonce"
-                        | "binding"
-                        | "with-redefs"
-                        | "deftype"
-                    | "deftype*"
-                    | "defrecord*"
-                        | "defprotocol"
-                        | "extend-type"
-                        | "instance?"
-                        | "satisfies?"
-                        | "implements?"
-                        | "array"
-                        | "make-array"
-                        | "alength"
-                        | "aget"
-                        | "aset"
-                        | "<"
-                        | "<="
-                        | ">"
-                        | ">="
-                        | "=="
-                        | "when"
-                        | "when-not"
-                        | "if-not"
-                        | "if-let"
-                        | "and"
-                        | "or"
-                        | "cond"
-                        | "case"
-                        | "declare"
-                        | "caching-hash"
-                        | "->"
-                        | "as->"
-                        | "zero?"
-                        | "pos?"
-                        | "neg?"
-                        | "inc"
-                        | "dec"
-                        | "int"
-                        | "bit-and"
-                        | "bit-or"
-                        | "bit-xor"
-                        | "bit-and-not"
-                        | "bit-not"
-                        | "bit-clear"
-                        | "bit-flip"
-                        | "bit-set"
-                        | "bit-test"
-                        | "bit-shift-left"
-                        | "bit-shift-right"
-                        | "unsigned-bit-shift-right"
-                        | "bit-shift-right-zero-fill"
-                ) && !scope.excluded_core.contains(&symbol.name))
+                (BOOTSTRAP_MACROS.contains(&symbol.name.as_str()) && !scope.excluded_core.contains(&symbol.name))
                 .then_some(symbol.name.as_str())
             }
         } else {
-            (matches!(
-                symbol.name.as_str(),
-                "let"
-                    | "loop"
-                    | "fn"
-                    | "defonce"
-                    | "binding"
-                    | "with-redefs"
-                    | "deftype"
-                    | "deftype*"
-                    | "defrecord*"
-                    | "defprotocol"
-                    | "extend-type"
-                    | "instance?"
-                    | "satisfies?"
-                    | "implements?"
-                    | "array"
-                    | "make-array"
-                    | "alength"
-                    | "aget"
-                    | "aset"
-                    | "<"
-                    | "<="
-                    | ">"
-                    | ">="
-                    | "=="
-                    | "when"
-                    | "when-not"
-                    | "if-not"
-                    | "if-let"
-                    | "and"
-                    | "or"
-                    | "cond"
-                    | "case"
-                    | "declare"
-                    | "caching-hash"
-                    | "->"
-                    | "as->"
-                    | "zero?"
-                    | "pos?"
-                    | "neg?"
-                    | "inc"
-                    | "dec"
-                    | "int"
-                    | "bit-and"
-                    | "bit-or"
-                    | "bit-xor"
-                    | "bit-and-not"
-                    | "bit-not"
-                    | "bit-clear"
-                    | "bit-flip"
-                    | "bit-set"
-                    | "bit-test"
-                    | "bit-shift-left"
-                    | "bit-shift-right"
-                    | "unsigned-bit-shift-right"
-                    | "bit-shift-right-zero-fill"
-            ) && !scope.excluded_core.contains(&symbol.name))
+            (BOOTSTRAP_MACROS.contains(&symbol.name.as_str()) && !scope.excluded_core.contains(&symbol.name))
             .then_some(symbol.name.as_str())
         }?;
         // A new runtime definition hides these automatic core bootstrap macros;

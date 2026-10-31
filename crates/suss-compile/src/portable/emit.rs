@@ -42,11 +42,29 @@ fn arithmetic_name(
         (Arithmetic::Negate, false) => "checked-negate",
     }
 }
+/// Passive data segments holding long string literals, one per distinct value.
+#[derive(Default)]
+struct LiteralData {
+    segments: Vec<Vec<u8>>,
+    indices: std::collections::BTreeMap<Vec<u16>, u32>,
+}
+impl LiteralData {
+    fn segment(&mut self, units: &[u16]) -> u32 {
+        if let Some(index) = self.indices.get(units) {
+            return *index;
+        }
+        let index = self.segments.len() as u32;
+        self.segments.push(units.iter().flat_map(|unit| unit.to_le_bytes()).collect());
+        self.indices.insert(units.to_vec(), index);
+        index
+    }
+}
 // Literal units and indices are compiler-checked, unlike public mutable string
 // storage calls. Keep small literals on a bounded operand stack; larger values
-// use one fresh array and local writes. Each evaluation allocates its own array.
+// come from a passive data segment. Each evaluation allocates its own array.
 fn emit_utf16_literal(
     function: &mut Function,
+    data: &mut LiteralData,
     units: &[u16],
     local: u32,
     span: &std::ops::Range<usize>,
@@ -65,16 +83,13 @@ fn emit_utf16_literal(
             array_size: length as u32,
         }).instruction(&LocalSet(local));
     } else {
-        function.instruction(&I32Const(length))
-            .instruction(&ArrayNewDefault(runtime_abi::STRING))
+        function.instruction(&I32Const(0))
+            .instruction(&I32Const(length))
+            .instruction(&ArrayNewData {
+                array_type_index: runtime_abi::STRING,
+                array_data_index: data.segment(units),
+            })
             .instruction(&LocalSet(local));
-        for (index, unit) in units.iter().enumerate() {
-            function.instruction(&LocalGet(local))
-                .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::STRING)))
-                .instruction(&I32Const(index as i32))
-                .instruction(&I32Const(i32::from(*unit)))
-                .instruction(&ArraySet(runtime_abi::STRING));
-        }
     }
     Ok(())
 }
@@ -448,6 +463,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let mut exports = ExportSection::new();
     exports.export("eval", ExportKind::Func, names.len() as u32);
     let mut code = CodeSection::new();
+    let mut data = LiteralData::default();
     code.function(&emit_function(
         ir,
         None,
@@ -455,7 +471,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         &globals,
         &bodies,
         &dispatchers,
-        &futures, None,
+        &futures, None, &mut data,
     )?);
     for body in &bodies {
         functions.function(runtime_abi::INVOKE);
@@ -466,7 +482,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             &globals,
             &bodies,
             &dispatchers,
-            &futures, None,
+            &futures, None, &mut data,
         )?);
     }
     for dispatcher in &dispatchers {
@@ -476,7 +492,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     for body in &futures {
         functions.function(runtime_abi::INVOKE);
         code.function(&emit_function(&body.continuation.function, Some(0),
-            &names, &globals, &bodies, &dispatchers, &futures, Some(&body.continuation))?);
+            &names, &globals, &bodies, &dispatchers, &futures, Some(&body.continuation), &mut data)?);
     }
     let mut elements = ElementSection::new();
     if !bodies.is_empty() || !dispatchers.is_empty() || !futures.is_empty() {
@@ -495,7 +511,17 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     if !bodies.is_empty() || !dispatchers.is_empty() || !futures.is_empty() {
         module.section(&elements);
     }
+    if !data.segments.is_empty() {
+        module.section(&DataCountSection { count: data.segments.len() as u32 });
+    }
     module.section(&code);
+    if !data.segments.is_empty() {
+        let mut segments = DataSection::new();
+        for segment in &data.segments {
+            segments.passive(segment.iter().copied());
+        }
+        module.section(&segments);
+    }
     let bytes = module.finish();
     runtime_abi::verify_artifact(&bytes, &runtime_abi::Manifest::default()).map_err(|message| {
         Diagnostic {
@@ -703,6 +729,7 @@ fn emit_function(
     dispatchers: &[&GeneralClosureBody],
     futures: &[&FutureBody],
     continuation: Option<&ir::r#async::Continuation>,
+    data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
@@ -866,7 +893,7 @@ fn emit_function(
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Literal(Literal::String(units)) => {
-                    emit_utf16_literal(&mut function, units, inst.result.0 as u32 + offset, &ir.span)?;
+                    emit_utf16_literal(&mut function, data, units, inst.result.0 as u32 + offset, &ir.span)?;
                 }
                 Operation::GlobalCell(global) => {
                     let index_global = globals
@@ -961,7 +988,7 @@ fn emit_function(
                         .instruction(&Call(index("closure-new")))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                     if let Some(name) = &body.display_name {
-                        emit_utf16_literal(&mut function, name, scratch, &ir.span)?;
+                        emit_utf16_literal(&mut function, data, name, scratch, &ir.span)?;
                         function.instruction(&LocalGet(inst.result.0 as u32 + offset))
                             .instruction(&LocalGet(scratch))
                             .instruction(&Call(index("closure-source-name-initialize")));
@@ -1010,7 +1037,7 @@ fn emit_function(
                             .instruction(&ArraySet(runtime_abi::ARGS));
                     }
                     if let Some(name) = &body.display_name {
-                        emit_utf16_literal(&mut function, name, scratch, &ir.span)?;
+                        emit_utf16_literal(&mut function, data, name, scratch, &ir.span)?;
                         function.instruction(&LocalGet(inst.result.0 as u32 + offset))
                             .instruction(&LocalGet(scratch))
                             .instruction(&Call(index("closure-source-name-initialize")));

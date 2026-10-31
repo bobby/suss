@@ -8941,3 +8941,136 @@ reduces them without incurring seq initialization"
         nil
         (.apply (.-append sb) sb args))
       sb)))
+
+;; Original Suss implementation of runtime namespaces (#309), following
+;; clojure.lang.Namespace and clojure.core's namespace functions. The compiler
+;; publishes each namespace's scope here: aliases, refers, excluded core names
+;; and declarations, per phase. Values are data, not Vars. Name sets are kept
+;; as space-padded strings (symbol names contain no spaces) and searched for
+;; " name ", so publishing a definition appends text instead of building sets.
+(def ^:private padded-names
+  (fn [text] (suss.bootstrap/concat-string " " (suss.bootstrap/concat-string text " "))))
+(def ^:private names-contain?
+  (fn [names name] (<= 0 (suss.bootstrap/string-index-of names (padded-names name)))))
+(deftype Namespace [name ^:mutable aliases ^:mutable macro-aliases ^:mutable refers
+                    ^:mutable macro-refers ^:mutable excluded ^:mutable bootstrap-macros
+                    ^:mutable reader-names ^:mutable declared]
+  Object
+  (toString [_] (str name))
+  (publish [this scope text]
+    (if (nil? scope)
+      nil
+      (do (set! aliases (:aliases scope))
+          (set! macro-aliases (:macro-aliases scope))
+          (set! refers (:refers scope))
+          (set! macro-refers (:macro-refers scope))
+          (set! excluded (padded-names (:excluded scope)))
+          (set! bootstrap-macros (padded-names (get scope :bootstrap-macros "")))
+          (set! reader-names (padded-names (get scope :reader-names "")))))
+    (if (nil? text)
+      nil
+      (set! declared (suss.bootstrap/concat-string declared (suss.bootstrap/concat-string text " "))))
+    this)
+  (aliasTarget [_ alias]
+    (let [target (get aliases alias)] (if (nil? target) (get macro-aliases alias) target)))
+  (aliasMap [_] aliases)
+  (referMap [_] refers)
+  (referred [_ sym] (get refers sym))
+  (macroReferred [_ sym] (get macro-refers sym))
+  (declares [_ text] (names-contain? declared text))
+  (excludes [_ text] (names-contain? excluded text))
+  (coreMacro [_ text]
+    (if (names-contain? bootstrap-macros text) true (names-contain? reader-names text)))
+  IEquiv
+  (-equiv [this other] (identical? this other))
+  IHash
+  (-hash [this] (suss.bootstrap/identity-uid this))
+  IPrintWithWriter
+  (-pr-writer [this writer opts]
+    (let [label (object-string "" this)]
+      (-write writer (str "#object[suss.core.Namespace 0x"
+                          (suss.bootstrap/string-slice label 1 (.-length label))
+                          " \"" name "\"]")))))
+;; Programs have few namespaces, and a scan comparing name strings costs far
+;; less than hashing a symbol, so every fragment can afford to publish.
+(def ^:private namespace-registry (array))
+(def ^:private registered-namespace
+  (fn [name]
+    (let [text (.-str name) length (alength namespace-registry)]
+      (loop [index 0]
+        (if (< index length)
+          (let [ns (aget namespace-registry index)]
+            (if (= text (.-str (.-name ns))) ns (recur (inc index))))
+          nil)))))
+(def ^:private intern-namespace
+  (fn [name]
+    (if (symbol? name)
+      (let [found (registered-namespace name)]
+        (if (nil? found)
+          (let [created (Namespace. name {} {} {} {} " " " " " " " ")]
+            (.push namespace-registry created)
+            created)
+          found))
+      (throw (suss.bootstrap/error "Namespace name must be a symbol")))))
+;; Called by compiled fragments: replace the namespace's scope when given and
+;; add newly declared names. Returns the namespace.
+(def ^:private publish-namespace!
+  (fn [name scope declared] (.publish (intern-namespace name) scope declared)))
+(def ^{:dynamic true
+       :doc "A suss.core.Namespace object representing the current namespace."}
+  *ns* (intern-namespace 'suss.core))
+;; The macro host sets *ns*'s root to the namespace being compiled before it
+;; calls a macro, as Clojure's compiler binds *ns* while it loads (#309). It
+;; keeps the namespace objects intern-namespace returns.
+(def ^:private enter-macro-namespace!
+  (fn [ns] (set! *ns* ns) nil))
+(def find-ns
+  (fn [sym] (if (symbol? sym) (registered-namespace sym) nil)))
+(def the-ns
+  (fn [x]
+    (if (instance? Namespace x)
+      x
+      (let [found (find-ns x)]
+        (if (nil? found)
+          (throw (ex-info (str "No namespace: " x " found") {}))
+          found)))))
+(def ns-name
+  (fn [ns] (.-name (the-ns ns))))
+(def all-ns
+  (fn [] (seq (aclone namespace-registry))))
+(def ns-aliases
+  (fn [ns]
+    (reduce-kv (fn [m alias target] (assoc m alias (intern-namespace target)))
+               {} (.aliasMap (the-ns ns)))))
+;; Clojure maps each referred symbol to its Var. Suss has no runtime Vars, so
+;; the value is the fully qualified symbol the name refers to.
+(def ns-refers
+  (fn [ns] (.referMap (the-ns ns))))
+;; The compiler's syntax-quote symbol resolution (syntax_quote.rs `resolve`),
+;; against *ns*. suss.core resolves to cljs.core, as the compiler writes it.
+(def ^:private reader-core-namespace
+  (fn [namespace] (if (if (= namespace "suss.core") true (= namespace "clojure.core")) "cljs.core" namespace)))
+(def ^:private reader-resolve-symbol
+  (fn [sym]
+    (let [ns *ns*
+          name (.-name sym)
+          namespace (.-ns sym)]
+      (if (nil? namespace)
+        (if (<= 0 (suss.bootstrap/string-index-of name "."))
+          sym
+          (let [excluded (.excludes ns name)
+                referred (.referred ns sym)]
+            (if (some? referred)
+              (symbol (reader-core-namespace (.-ns referred)) (.-name referred))
+              (if (.declares ns name)
+                (symbol (str (.-name ns)) name)
+                (if (if excluded false (.declares (intern-namespace 'suss.core) name))
+                  (symbol "cljs.core" name)
+                  (let [macro-referred (.macroReferred ns sym)]
+                    (if (some? macro-referred)
+                      (symbol (reader-core-namespace (.-ns macro-referred)) (.-name macro-referred))
+                      (if (if excluded false (.coreMacro (intern-namespace 'suss.core) name))
+                        (symbol "cljs.core" name)
+                        (symbol (str (.-name ns)) name)))))))))
+        (let [target (.aliasTarget ns (symbol namespace))]
+          (symbol (reader-core-namespace (if (nil? target) namespace (str target))) name))))))

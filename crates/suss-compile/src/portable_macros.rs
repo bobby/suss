@@ -30,6 +30,12 @@ pub struct CompiledMacros {
     loaded_sources: BTreeMap<String, String>,
     incomplete_sources: BTreeSet<String>,
     artifact_cache: crate::portable::artifact_cache::ArtifactCache,
+    // Core's namespace interner and *ns* root setter, the namespace objects
+    // interned so far, and the namespace last set (#309).
+    namespace_interner: SessionValue,
+    namespace_setter: SessionValue,
+    namespace_objects: BTreeMap<String, SessionValue>,
+    macro_namespace: Option<String>,
 }
 // Hash the identical legacy Debug/source/path stream without retaining a copy of
 // that stream. The meter error must survive fmt::Error's intentionally tiny API.
@@ -268,6 +274,18 @@ impl CompiledMacros {
     }
     fn with_bootstrap(mut session: Session) -> Result<Self, SessionError> {
         let bridge = FormBridge::new(&mut session)?;
+        let namespace_interner = session.eval("suss.core/intern-namespace")?;
+        let namespace_setter = session.eval("suss.core/enter-macro-namespace!")?;
+        // Intern the namespaces most expansions run in before any request
+        // budget applies, so a macro's budget covers the macro's own work.
+        let mut namespace_objects = BTreeMap::new();
+        for namespace in ["suss.core", "user"] {
+            let name = bridge.quote(
+                &mut session,
+                Form { span: 0..0, metadata: vec![], kind: Kind::Symbol(suss_reader::Symbol::new(namespace)) },
+            )?;
+            namespace_objects.insert(namespace.to_owned(), session.invoke(&namespace_interner, &[&name])?);
+        }
         let mut macros = Self {
             session,
             bridge,
@@ -281,6 +299,10 @@ impl CompiledMacros {
             loaded_sources: BTreeMap::new(),
             incomplete_sources: BTreeSet::new(),
             artifact_cache: Default::default(),
+            namespace_interner,
+            namespace_setter,
+            namespace_objects,
+            macro_namespace: None,
         };
         macros.enter_namespace("suss.core")?;
         macros.define(crate::portable_defn::SOURCE)?;
@@ -881,6 +903,7 @@ impl ExpansionHost for CompiledMacros {
         };
         self.source_expansions += 1;
         let mut stage = String::from("caller form provenance");
+        let caller_namespace = context.environment.current_namespace(context.phase).to_owned();
         let result = self.session.with_operation_budget(|session| -> Result<Form, SessionError> {
             trace_fuel(session, &target, "start")?;
             let mut meter = |work| {
@@ -940,6 +963,24 @@ impl ExpansionHost for CompiledMacros {
             }
             trace_fuel(session, &target, "arguments")?;
             let arguments = arguments.iter().collect::<Vec<_>>();
+            stage = "caller namespace".into();
+            let namespace = caller_namespace.as_str();
+            if self.macro_namespace.as_deref() != Some(namespace) {
+                if !self.namespace_objects.contains_key(namespace) {
+                    let name = self.bridge.quote(
+                        session,
+                        Form {
+                            span: form.span.clone(),
+                            metadata: vec![],
+                            kind: Kind::Symbol(suss_reader::Symbol::new(namespace)),
+                        },
+                    )?;
+                    let object = session.invoke(&self.namespace_interner, &[&name])?;
+                    self.namespace_objects.insert(namespace.to_owned(), object);
+                }
+                session.invoke(&self.namespace_setter, &[&self.namespace_objects[namespace]])?;
+                self.macro_namespace = Some(namespace.to_owned());
+            }
             stage = "compiled macro invocation".into();
             let result = session.invoke(&function, &arguments)?;
             trace_fuel(session, &target, "invoked")?;

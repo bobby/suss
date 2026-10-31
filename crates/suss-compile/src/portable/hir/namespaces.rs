@@ -1,0 +1,189 @@
+//! Original Suss runtime namespace publication (#309). Each fragment publishes
+//! its namespace's changed scope and new declarations to suss.core's registry,
+//! and runs with *ns* bound to that namespace, as Clojure's load binds it.
+use super::*;
+use super::super::resolve;
+use std::collections::{BTreeMap, BTreeSet};
+use suss_reader::{Keyword, Symbol};
+
+/// The resolution facts syntax quote reads, in a comparable form.
+#[derive(PartialEq)]
+struct Scope {
+    aliases: BTreeMap<String, String>,
+    macro_aliases: BTreeMap<String, String>,
+    refers: BTreeMap<String, (String, String)>,
+    macro_refers: BTreeMap<String, (String, String)>,
+    excluded: BTreeSet<String>,
+}
+impl Scope {
+    fn of(scope: resolve::NamespaceScope<'_>) -> Self {
+        Self {
+            aliases: scope.aliases.clone(),
+            macro_aliases: scope.macro_aliases.clone(),
+            refers: scope
+                .refers
+                .iter()
+                .map(|(name, global)| (name.clone(), (global.namespace().to_owned(), global.name().to_owned())))
+                .collect(),
+            macro_refers: scope.macro_refers.clone(),
+            excluded: scope.excluded_core.clone(),
+        }
+    }
+}
+
+fn synthetic(span: &Range<usize>, kind: Kind) -> Form {
+    Form { span: span.clone(), metadata: Vec::new(), kind }
+}
+fn symbol(span: &Range<usize>, symbol: Symbol) -> Form {
+    synthetic(span, Kind::Symbol(symbol))
+}
+/// A name set as one space-separated string: symbol names contain no spaces,
+/// and one string constant is far smaller than a constant per symbol.
+fn names(span: &Range<usize>, names: impl IntoIterator<Item = String>) -> Form {
+    let text = names.into_iter().collect::<Vec<_>>().join(" ");
+    synthetic(span, Kind::String(text.encode_utf16().collect()))
+}
+fn aliases(span: &Range<usize>, aliases: &BTreeMap<String, String>) -> Form {
+    synthetic(
+        span,
+        Kind::Map(
+            aliases
+                .iter()
+                .flat_map(|(alias, target)| [symbol(span, Symbol::new(alias)), symbol(span, Symbol::new(target))])
+                .collect(),
+        ),
+    )
+}
+fn refers(span: &Range<usize>, refers: &BTreeMap<String, (String, String)>) -> Form {
+    synthetic(
+        span,
+        Kind::Map(
+            refers
+                .iter()
+                .flat_map(|(local, (namespace, name))| {
+                    [symbol(span, Symbol::new(local)), symbol(span, Symbol::namespaced(namespace, name))]
+                })
+                .collect(),
+        ),
+    )
+}
+fn quoted(span: &Range<usize>, form: Form) -> Form {
+    synthetic(span, Kind::List(vec![symbol(span, Symbol::new("quote")), form]))
+}
+fn entry(span: &Range<usize>, key: &str, value: Form) -> [Form; 2] {
+    [synthetic(span, Kind::Keyword(Keyword::new(key))), value]
+}
+
+impl Analyzer<'_> {
+    /// Wrap a fragment's body so that it publishes its namespace when needed
+    /// and binds *ns*. `before` is the environment before the fragment's ns
+    /// directive. The namespace object lives in an internal cell, so a
+    /// fragment that publishes nothing only reads that cell. Sessions without
+    /// core have no runtime namespaces and are unchanged.
+    pub(super) fn namespace_frame(&mut self, before: &Environment, body: Hir) -> Result<Hir, Diagnostic> {
+        let span = body.span.clone();
+        let publish = Symbol::namespaced("suss.core", "publish-namespace!");
+        if self.environment.resolve(self.phase, &publish, span.clone()).is_err() {
+            return Ok(body);
+        }
+        let namespace = self.environment.current_namespace(self.phase).to_owned();
+        let (cell, fresh) = self.environment.namespace_cell(self.phase, &namespace);
+        let scope = Scope::of(self.environment.namespace_scope(self.phase));
+        let changed = fresh
+            || before
+                .namespace_scope_for(self.phase, &namespace)
+                .is_none_or(|previous| Scope::of(previous) != scope);
+        let declared = self.environment.declared_names(self.phase, &namespace);
+        let previous = before.declared_names(self.phase, &namespace);
+        let added: Vec<_> = declared.difference(&previous).cloned().collect();
+        let core = namespace == "suss.core";
+        let read = |span: &Range<usize>| Hir {
+            source: None,
+            span: span.clone(),
+            metadata: Vec::new(),
+            ty: Type::Value,
+            kind: Expression::Global(cell.clone()),
+        };
+        let mut effects = Vec::new();
+        if changed || !added.is_empty() {
+            let scope_form = if changed {
+                let mut entries = Vec::new();
+                entries.extend(entry(&span, "aliases", aliases(&span, &scope.aliases)));
+                entries.extend(entry(&span, "macro-aliases", aliases(&span, &scope.macro_aliases)));
+                entries.extend(entry(&span, "refers", refers(&span, &scope.refers)));
+                entries.extend(entry(&span, "macro-refers", refers(&span, &scope.macro_refers)));
+                entries.extend(entry(&span, "excluded", names(&span, scope.excluded.iter().cloned())));
+                if core {
+                    // Syntax quote's fallbacks after ordinary resolution.
+                    entries.extend(entry(
+                        &span,
+                        "bootstrap-macros",
+                        names(&span, resolve::BOOTSTRAP_MACROS.iter().map(|name| (*name).to_owned())),
+                    ));
+                    entries.extend(entry(
+                        &span,
+                        "reader-names",
+                        names(
+                            &span,
+                            super::super::syntax_quote::core_names::CORE_READER_NAMES
+                                .iter()
+                                .map(|name| (*name).to_owned()),
+                        ),
+                    ));
+                }
+                quoted(&span, synthetic(&span, Kind::Map(entries)))
+            } else {
+                synthetic(&span, Kind::Nil)
+            };
+            let added = if added.is_empty() {
+                synthetic(&span, Kind::Nil)
+            } else {
+                names(&span, added)
+            };
+            let call = synthetic(
+                &span,
+                Kind::List(vec![
+                    symbol(&span, publish.clone()),
+                    quoted(&span, symbol(&span, Symbol::new(namespace))),
+                    scope_form,
+                    added,
+                ]),
+            );
+            let call = self.form(&call)?;
+            effects.push(Hir {
+                source: None,
+                span: span.clone(),
+                metadata: Vec::new(),
+                ty: Type::Value,
+                kind: Expression::Definition {
+                    global: cell.clone(),
+                    name_metadata: Vec::new(),
+                    name_span: span.clone(),
+                    docstring: None,
+                    initializer: Some(Box::new(call)),
+                    once: false,
+                    // An internal namespace cell, not a core definition.
+                    linked: None,
+                },
+            });
+        }
+        if before.resolve(self.phase, &publish, span.clone()).is_err() {
+            // The fragment that defines the registry and *ns* (core's
+            // bootstrap) publishes after its body and loads under *ns*'s root.
+            let mut items = vec![body];
+            items.extend(effects);
+            return Ok(Hir { source: None, span, metadata: Vec::new(), ty: Type::Value, kind: Expression::Do(items) });
+        }
+        let target = symbol(&span, Symbol::namespaced("suss.core", "*ns*"));
+        let global = self.assignment_target(&target)?;
+        let body = self.exception_region(&target, vec![], body);
+        effects.push(Hir {
+            source: None,
+            span: span.clone(),
+            metadata: Vec::new(),
+            ty: Type::Value,
+            kind: Expression::DynamicScope { bindings: vec![(global, read(&span))], body: Box::new(body) },
+        });
+        Ok(Hir { source: None, span, metadata: Vec::new(), ty: Type::Value, kind: Expression::Do(effects) })
+    }
+}
