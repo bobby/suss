@@ -15,10 +15,11 @@ symbol, collection or tagged value with metadata.
 - Strings are Unicode. A lone surrogate escape (`"\ud800"`), which Suss
   language strings allow, is an error here.
 - Equality and order are structural and total.
-  - Numbers compare by `f64::total_cmp`, so `##NaN` equals itself and `-0.0`
-    differs from `0`.
+  - Numbers compare by `f64::total_cmp`, so `-0.0` differs from `0`. Every NaN
+    is one value, the `##NaN` that prints and reads.
   - Lists and vectors are different values.
-  - Metadata is ignored, as Clojure's `=` ignores it.
+  - Metadata is ignored, as Clojure's `=` ignores it, however deeply it is
+    nested.
   - Values are ordered by kind: nil, boolean, number, string, keyword, symbol,
     list, vector, map, set, tagged. Within a kind they are ordered by content,
     with names compared as (namespace, name).
@@ -27,7 +28,8 @@ symbol, collection or tagged value with metadata.
 
 `edn::print` writes one line. `edn::print_pretty` breaks any collection wider
 than 80 columns into one entry per line. Both layouts depend only on the value,
-so equal values print byte-identically in every process.
+so values that are equal, including their metadata, print byte-identically in
+every process.
 
 - **Map and set entries** appear in the value order above. Map entries are
   separated by `, `, as Clojure's `pr` separates them.
@@ -42,8 +44,8 @@ so equal values print byte-identically in every process.
 - **Metadata** prints as a full map: `^{:k true} x`.
 - **Unreadable values** are refused rather than misprinted. These are symbols or
   keywords that no reader token spells (such as `nil`, `1a` or a name with a
-  space), tags that do not start with a letter, and metadata on a value that
-  cannot carry it.
+  space), tags that do not start with a letter, `#queue` around anything but a
+  vector, and metadata on a value that cannot carry it.
 
 Printing a value and reading it back gives an equal value, with equal metadata,
 and printing that value again gives the same bytes. A generated property test
@@ -51,8 +53,11 @@ checks this, and also checks that output is identical across processes.
 
 ## Reading: the `suss.edn` contract
 
-`edn::read_all` and `edn::read_one` follow `clojure.edn`. Reading uses the forms
-reader in an EDN mode, so spans and messages match the compiler's reader.
+`edn::read_all` and `edn::read_one` follow `clojure.edn`. They parse EDN
+directly, without intermediate forms. Number, symbol and delimiter rules are
+shared with the compiler's forms reader, and a conformance test checks that both
+readers read a shared corpus to equal data. It also checks that they reject
+malformed text with the same message and span.
 
 - **No code:**
   - quote, syntax quote, unquote and deref sugar (`'`, `` ` ``, `~`, `@`) are
@@ -77,16 +82,30 @@ reader in an EDN mode, so spans and messages match the compiler's reader.
   - a map with an odd number of forms fails.
 - **Metadata** follows Clojure's shorthand: `^:k` becomes `{:k true}`, and
   `^T` or `^"T"` becomes `{:tag T}`. When prefixes repeat, the outermost wins.
+  Metadata on the metadata map itself is dropped.
 - **Numbers** follow the compiler's reader, which supports decimal, hex, octal,
   radix and `##` forms. Ratios and `N`/`M` suffixes fail.
 - **Bounds:**
-  - input size is charged to `Options::work_allowance`, about one unit per
-    character and per form;
+  - input size is charged to `Options::work_allowance`, one unit per byte up
+    front and one per form;
   - nesting is bounded by `Options::max_depth` (default 1024);
   - the reader grows its stack, so deep input fails with a diagnostic and never
     overflows the host stack.
 
   Every error carries a byte span.
+
+### Differences from `clojure.edn`
+
+- `#queue` is a Suss addition, matching the language reader's built-in tag.
+  `#inst` and `#uuid` are not built in, because Suss has no instant or UUID
+  types yet. A caller can supply readers for them.
+- Namespaced maps (`#:ns{...}`) are not supported, as in the compiler's reader.
+- Duplicate keys are found by the structural order above, not by Clojure's `=`:
+  - `#{1 1.0}` is a duplicate, because every number is a binary64;
+  - `#{0.0 -0.0}` and `{[1] :a (1) :b}` are accepted, though Clojure rejects
+    both.
+- Keyword and symbol tokens follow the compiler's reader. For example, `:a/1`
+  is rejected.
 
 `read_one` requires exactly one value. The language-level `read-string` and
 `suss.edn/read-string`, with their `:eof` behaviour, belong to #300.
@@ -105,7 +124,9 @@ bridge serde types to EDN:
 - integers must be exact in binary64, so magnitudes above 2^53 are an error.
 
 Persisted types use `#[serde(rename_all = "kebab-case")]` and
-`deny_unknown_fields`.
+`deny_unknown_fields`. As in serde_json, `Some(None)` and `None` both print as
+nil. When deserializing, keywords, symbols and strings are interchangeable
+wherever Rust expects a string, a map key or a variant name.
 
 ## Converted formats
 

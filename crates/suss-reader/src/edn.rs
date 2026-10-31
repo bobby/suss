@@ -1,20 +1,21 @@
 //! Canonical EDN for tooling data (#299): a value model, a deterministic
 //! printer and the `suss.edn` reading contract, following `clojure.edn`.
 //!
-//! Reading uses the forms reader in its EDN mode, so code-only syntax (quote
-//! sugar, syntax quote, `#()`, `#'`, reader conditionals) is an error at its
-//! span. Tags are an error unless built in (`#queue`) or handled by
-//! [`Options::readers`] or [`Options::default`]. Input size is bounded by the
-//! reader's work allowance and nesting by [`Options::max_depth`].
+//! Reading parses EDN directly, with the forms reader's lexical rules and
+//! messages. Code-only syntax (quote sugar, syntax quote, `#()`, `#'`, reader
+//! conditionals) is an error at its span. Tags are an error unless built in
+//! (`#queue`) or handled by [`Options::readers`] or [`Options::default`].
+//! Input size is bounded by [`Options::work_allowance`] and nesting by
+//! [`Options::max_depth`].
 //!
 //! Printing is canonical: map and set entries in [`Value`]'s total order,
 //! shortest round-trip numbers and one string escaping, so equal values print
 //! byte-identically in every process.
-use crate::forms::{self, Form, Kind};
+use crate::forms;
 use crate::{Keyword, ParseError, Symbol};
 use std::{
     cmp::Ordering,
-    collections::{BTreeMap, BTreeSet, HashMap},
+    collections::{BTreeMap, BTreeSet, HashMap, btree_map},
     ops::Range,
 };
 
@@ -50,10 +51,11 @@ impl Value {
     }
     /// This value without its metadata.
     pub fn unmeta(&self) -> &Value {
-        match self {
-            Value::Meta(value, _) => value,
-            value => value,
+        let mut value = self;
+        while let Value::Meta(inner, _) = value {
+            value = inner;
         }
+        value
     }
     fn rank(&self) -> u8 {
         match self {
@@ -79,9 +81,22 @@ fn symbol_cmp(a: &Symbol, b: &Symbol) -> Ordering {
 
 impl Ord for Value {
     fn cmp(&self, other: &Self) -> Ordering {
-        stacker::maybe_grow(64 * 1024, 1024 * 1024, || match (self.unmeta(), other.unmeta()) {
+        match (self.unmeta(), other.unmeta()) {
+            (Value::Keyword(a), Value::Keyword(b)) => {
+                (&a.namespace, &a.name).cmp(&(&b.namespace, &b.name))
+            }
+            (Value::String(a), Value::String(b)) => a.cmp(b),
+            (Value::Number(a), Value::Number(b)) => number_cmp(*a, *b),
+            // Only collections recurse, so only they need a growable stack.
+            (a, b) => stacker::maybe_grow(64 * 1024, 1024 * 1024, || a.cmp_slow(b)),
+        }
+    }
+}
+impl Value {
+    fn cmp_slow(&self, other: &Self) -> Ordering {
+        match (self, other) {
             (Value::Bool(a), Value::Bool(b)) => a.cmp(b),
-            (Value::Number(a), Value::Number(b)) => a.total_cmp(b),
+            (Value::Number(a), Value::Number(b)) => number_cmp(*a, *b),
             (Value::String(a), Value::String(b)) => a.cmp(b),
             (Value::Keyword(a), Value::Keyword(b)) => {
                 (&a.namespace, &a.name).cmp(&(&b.namespace, &b.name))
@@ -94,7 +109,14 @@ impl Ord for Value {
                 symbol_cmp(t, u).then_with(|| a.cmp(b))
             }
             (a, b) => a.rank().cmp(&b.rank()),
-        })
+        }
+    }
+}
+/// Every NaN is one value, as `##NaN` prints and reads; otherwise total order.
+fn number_cmp(a: f64, b: f64) -> Ordering {
+    match (a.is_nan(), b.is_nan()) {
+        (true, true) => Ordering::Equal,
+        _ => a.total_cmp(&b),
     }
 }
 impl PartialOrd for Value {
@@ -191,7 +213,7 @@ fn write(out: &mut String, value: &Value) -> Result<(), Error> {
             }
             Value::Tagged(tag, value) => {
                 out.push('#');
-                out.push_str(&tag_text(tag)?);
+                out.push_str(&tag_text(tag, value)?);
                 out.push(' ');
                 write(out, value)?;
             }
@@ -262,7 +284,7 @@ fn pretty(out: &mut String, value: &Value, column: usize) -> Result<(), Error> {
                 Ok(())
             }
             Value::Tagged(tag, value) => {
-                let tag = tag_text(tag)?;
+                let tag = tag_text(tag, value)?;
                 out.push('#');
                 out.push_str(&tag);
                 out.push(' ');
@@ -372,13 +394,16 @@ fn keyword_text(keyword: &Keyword) -> Result<String, Error> {
         Err(Error::new(format!("Keyword {text:?} cannot be printed readably")))
     }
 }
-fn tag_text(tag: &Symbol) -> Result<String, Error> {
+fn tag_text(tag: &Symbol, value: &Value) -> Result<String, Error> {
     let text = symbol_text(tag)?;
-    if text.starts_with(char::is_alphabetic) {
-        Ok(text)
-    } else {
-        Err(Error::new(format!("Tag {text:?} must start with a letter")))
+    if !text.starts_with(char::is_alphabetic) {
+        return Err(Error::new(format!("Tag {text:?} must start with a letter")));
     }
+    // The built-in tag reads only a vector back.
+    if text == "queue" && !matches!(value.unmeta(), Value::Vector(_)) {
+        return Err(Error::new("Queue literal expects a vector for its elements."));
+    }
+    Ok(text)
 }
 
 // ---------------------------------------------------------------------------
@@ -391,7 +416,7 @@ pub type DefaultReader = dyn Fn(&Symbol, Value) -> Result<Value, String>;
 
 /// Reading options, following `clojure.edn`'s `:readers` and `:default`.
 pub struct Options {
-    /// Reader work units, about one per source character and one per form.
+    /// Reader work units: one per source byte and one per form.
     pub work_allowance: u64,
     /// Deepest collection, tag or metadata nesting accepted.
     pub max_depth: usize,
@@ -422,15 +447,17 @@ impl Options {
 
 /// Read every EDN value in `source`, in order.
 pub fn read_all(source: &str, options: &Options) -> Result<Vec<Value>, Error> {
-    let mut work = options.work_allowance;
-    let meter = &mut |units| forms::allowance(&mut work, units);
-    let forms = forms::read_edn_forms(source, meter)?;
-    let converter = Converter { options };
+    let mut parser = Parser::new(source, options)?;
     let mut values = Vec::new();
-    for (value, _) in converter.items(forms, 0)? {
-        values.push(value);
+    loop {
+        parser.padding();
+        if parser.pos == source.len() {
+            return Ok(values);
+        }
+        if let Some((value, _)) = parser.form(0)? {
+            values.push(value);
+        }
     }
-    Ok(values)
 }
 
 /// Read exactly one EDN value; nothing but whitespace and comments may follow.
@@ -438,129 +465,425 @@ pub fn read_one(source: &str, options: &Options) -> Result<Value, Error> {
     let mut values = read_all(source, options)?;
     match values.len() {
         1 => Ok(values.pop().unwrap()),
-        0 => Err(Error {
-            message: "Expected an EDN value".into(),
-            span: Some(source.len()..source.len()),
-        }),
-        _ => Err(Error {
-            message: "Expected exactly one EDN value".into(),
-            span: Some(0..source.len()),
-        }),
+        0 => Err(failure(source.len()..source.len(), "Expected an EDN value")),
+        _ => Err(failure(0..source.len(), "Expected exactly one EDN value")),
     }
 }
 
-struct Converter<'o> {
-    options: &'o Options,
-}
 fn failure(span: Range<usize>, message: impl Into<String>) -> Error {
     Error {
         message: message.into(),
         span: Some(span),
     }
 }
-impl Converter<'_> {
-    fn value(&self, form: Form, depth: usize) -> Result<Value, Error> {
-        if depth > self.options.max_depth {
-            return Err(failure(form.span.clone(), "EDN nesting exceeds the depth limit"));
-        }
-        stacker::maybe_grow(64 * 1024, 1024 * 1024, || self.value_inner(form, depth))
+fn duplicate(span: Range<usize>, key: &Value) -> Error {
+    let printed = print(key).unwrap_or_else(|_| format!("{key:?}"));
+    failure(span, format!("Duplicate key: {printed}"))
+}
+
+/// A direct EDN parser over the source bytes. Its lexical rules, messages and
+/// spans are the forms reader's (`crate::forms`), whose number, symbol and
+/// delimiter functions it shares; it builds values without intermediate forms.
+struct Parser<'s, 'o> {
+    source: &'s str,
+    bytes: &'s [u8],
+    pos: usize,
+    options: &'o Options,
+    work: u64,
+}
+type Item = (Value, Range<usize>);
+
+impl<'s> Parser<'s, '_> {
+    fn new<'o>(source: &'s str, options: &'o Options) -> Result<Parser<'s, 'o>, Error> {
+        // One unit per byte, charged up front so size is bounded before reading.
+        let work = options
+            .work_allowance
+            .checked_sub(source.len() as u64)
+            .ok_or_else(|| failure(0..source.len(), "Reader work budget exhausted"))?;
+        Ok(Parser {
+            source,
+            bytes: source.as_bytes(),
+            pos: 0,
+            options,
+            work,
+        })
     }
-    fn value_inner(&self, mut form: Form, depth: usize) -> Result<Value, Error> {
-        let span = form.span.clone();
-        let metadata = std::mem::take(&mut form.metadata);
-        let value = match form.take_kind() {
-            Kind::Nil => Value::Nil,
-            Kind::Bool(b) => Value::Bool(b),
-            Kind::Number(x) => Value::Number(x),
-            Kind::String(units) => Value::String(
-                String::from_utf16(&units)
-                    .map_err(|_| failure(span.clone(), "EDN strings must be valid Unicode"))?,
-            ),
-            Kind::Symbol(symbol) => Value::Symbol(symbol),
-            Kind::Keyword(keyword) => Value::Keyword(keyword),
-            Kind::List(items) => Value::List(self.plain(items, depth)?),
-            Kind::Vector(items) => Value::Vector(self.plain(items, depth)?),
-            Kind::Set(items) => {
-                let mut set = BTreeSet::new();
-                for (item, item_span) in self.items(items, depth + 1)? {
-                    if let Some(item) = set.replace(item) {
-                        return Err(duplicate(item_span, &item));
+    fn peek_char(&self) -> Option<char> {
+        self.source[self.pos..].chars().next()
+    }
+    fn take_char(&mut self) -> Option<char> {
+        let c = self.peek_char()?;
+        self.pos += c.len_utf8();
+        Some(c)
+    }
+    fn padding(&mut self) {
+        while let Some(&b) = self.bytes.get(self.pos) {
+            if b == b',' || (b < 0x80 && (b as char).is_whitespace()) {
+                self.pos += 1;
+            } else if b == b';' {
+                while let Some(c) = self.take_char() {
+                    if c == '\n' {
+                        break;
                     }
                 }
-                Value::Set(set)
+            } else if b >= 0x80 && self.peek_char().is_some_and(char::is_whitespace) {
+                self.take_char();
+            } else {
+                return;
             }
-            Kind::Map(items) => {
-                let items = self.items(items, depth + 1)?;
+        }
+    }
+    fn token(&mut self) -> &'s str {
+        let source = self.source;
+        let start = self.pos;
+        while let Some(&b) = self.bytes.get(self.pos) {
+            if b < 0x80 {
+                if forms::delimiter(b as char) {
+                    break;
+                }
+                self.pos += 1;
+            } else {
+                let c = self.peek_char().unwrap();
+                if forms::delimiter(c) {
+                    break;
+                }
+                self.pos += c.len_utf8();
+            }
+        }
+        &source[start..self.pos]
+    }
+    /// The next value that is not discarded.
+    fn required(&mut self, depth: usize) -> Result<Item, Error> {
+        loop {
+            self.padding();
+            if self.pos == self.source.len() {
+                return Err(failure(self.pos..self.pos, "Expected a form before end of input"));
+            }
+            if let Some(item) = self.form(depth)? {
+                return Ok(item);
+            }
+        }
+    }
+    /// Collection items, with their spans only when `spans` is given.
+    fn items(
+        &mut self,
+        start: usize,
+        close: u8,
+        depth: usize,
+        mut spans: Option<&mut Vec<Range<usize>>>,
+    ) -> Result<Vec<Value>, Error> {
+        let mut items = Vec::new();
+        loop {
+            self.padding();
+            match self.bytes.get(self.pos) {
+                None => {
+                    return Err(failure(
+                        start..self.pos,
+                        format!("Unclosed collection; expected {}", close as char),
+                    ));
+                }
+                Some(&b) if b == close => {
+                    self.pos += 1;
+                    return Ok(items);
+                }
+                _ => {
+                    if let Some((item, span)) = self.form(depth)? {
+                        items.push(item);
+                        if let Some(spans) = spans.as_mut() {
+                            spans.push(span);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /// One form at the current, non-padding position; `None` for a discard.
+    fn form(&mut self, depth: usize) -> Result<Option<Item>, Error> {
+        let start = self.pos;
+        self.work = self
+            .work
+            .checked_sub(1)
+            .ok_or_else(|| failure(start..start, "Reader work budget exhausted"))?;
+        if depth > self.options.max_depth {
+            return Err(failure(start..start + 1, "EDN nesting exceeds the depth limit"));
+        }
+        let value = stacker::maybe_grow(64 * 1024, 1024 * 1024, || self.form_inner(start, depth))?;
+        Ok(value.map(|value| (value, start..self.pos)))
+    }
+    fn form_inner(&mut self, start: usize, depth: usize) -> Result<Option<Value>, Error> {
+        let fail = |parser: &Self, message: &str| Err(failure(start..parser.pos, message));
+        let b = self.bytes[start];
+        if b < 0x80 && !matches!(b, b'(' | b'[' | b'{' | b')' | b']' | b'}' | b'"' | b'\\' | b'^' | b'\'' | b'`' | b'~' | b'@' | b'#') {
+            return self.atom(start).map(Some);
+        }
+        if b >= 0x80 {
+            return self.atom(start).map(Some);
+        }
+        self.pos += 1;
+        Ok(Some(match b {
+            b'(' => Value::List(self.items(start, b')', depth + 1, None)?),
+            b'[' => Value::Vector(self.items(start, b']', depth + 1, None)?),
+            b'{' => {
+                let mut spans = Vec::new();
+                let items = self.items(start, b'}', depth + 1, Some(&mut spans))?;
                 if items.len() % 2 != 0 {
-                    return Err(failure(span, "Map requires an even number of forms"));
+                    return fail(self, "Map requires an even number of forms");
                 }
                 let mut map = BTreeMap::new();
                 let mut items = items.into_iter();
-                while let (Some((key, key_span)), Some((value, _))) = (items.next(), items.next()) {
-                    if map.contains_key(&key) {
-                        return Err(duplicate(key_span, &key));
+                let mut spans = spans.into_iter().step_by(2);
+                while let (Some(key), Some(value), Some(key_span)) = (items.next(), items.next(), spans.next()) {
+                    match map.entry(key) {
+                        btree_map::Entry::Vacant(entry) => {
+                            entry.insert(value);
+                        }
+                        btree_map::Entry::Occupied(entry) => {
+                            return Err(duplicate(key_span, entry.key()));
+                        }
                     }
-                    map.insert(key, value);
                 }
                 Value::Map(map)
             }
-            Kind::Tagged { tag, form } => {
-                let value = self.value(*form, depth + 1)?;
-                self.tagged(&tag, value).map_err(|message| failure(span.clone(), message))?
-            }
-            Kind::Discard(_)
-            | Kind::Prefix { .. }
-            | Kind::Conditional(_)
-            | Kind::SplicingConditional(_) => {
-                return Err(failure(span, "Unsupported EDN syntax"));
-            }
-        };
-        if metadata.is_empty() {
-            return Ok(value);
-        }
-        // The outermost `^` is first and wins, as Clojure's reader merges it last.
-        let mut meta = BTreeMap::new();
-        for form in metadata.into_iter().rev() {
-            let meta_span = form.span.clone();
-            match self.value(form, depth + 1)? {
-                Value::Map(entries) => meta.extend(entries),
-                Value::Keyword(keyword) => {
-                    meta.insert(Value::Keyword(keyword), Value::Bool(true));
+            b')' | b']' | b'}' => return fail(self, "Unexpected closing delimiter"),
+            b'"' => Value::String(self.string(start)?),
+            b'\\' => Value::String(self.character(start)?),
+            b'^' => self.metadata(depth)?,
+            b'#' => return self.dispatch(start, depth),
+            _ => return fail(self, "Quote, syntax-quote, unquote and deref syntax are not EDN"),
+        }))
+    }
+    fn atom(&mut self, start: usize) -> Result<Value, Error> {
+        let token = self.token();
+        let fail = |parser: &Self, message: &str| failure(start..parser.pos, message);
+        Ok(match token {
+            "nil" => Value::Nil,
+            "true" => Value::Bool(true),
+            "false" => Value::Bool(false),
+            token if token.starts_with(':') => {
+                if token.starts_with("::") {
+                    return Err(fail(self, "Auto-resolved keywords require namespace resolution"));
                 }
-                tag @ (Value::Symbol(_) | Value::String(_)) => {
-                    meta.insert(Value::keyword("tag"), tag);
+                if !forms::valid_symbol(&token[1..]) {
+                    return Err(fail(self, "Invalid keyword"));
                 }
-                _ => {
-                    return Err(failure(
-                        meta_span,
-                        "Metadata must be a keyword, symbol, string or map",
-                    ));
-                }
+                Value::Keyword(Keyword::parse(&token[1..]))
             }
-        }
-        Ok(if meta.is_empty() {
-            value
-        } else {
-            Value::Meta(Box::new(value), meta)
+            token if forms::numeric_start(token) => {
+                Value::Number(forms::number(token).map_err(|message| fail(self, message))?)
+            }
+            token => {
+                if !forms::valid_symbol(token) {
+                    return Err(fail(self, "Invalid symbol"));
+                }
+                Value::Symbol(Symbol::parse(token))
+            }
         })
     }
-    fn plain(&self, items: Vec<Form>, depth: usize) -> Result<Vec<Value>, Error> {
-        Ok(self.items(items, depth + 1)?.into_iter().map(|(value, _)| value).collect())
-    }
-    /// Items with their spans. A discarded form is still read, so its tags
-    /// are checked, as `clojure.edn` does.
-    fn items(&self, items: Vec<Form>, depth: usize) -> Result<Vec<(Value, Range<usize>)>, Error> {
-        let mut values = Vec::with_capacity(items.len());
-        for mut item in items {
-            let span = item.span.clone();
-            if matches!(item.kind, Kind::Discard(_)) {
-                let Kind::Discard(target) = item.take_kind() else { unreachable!() };
-                self.value(*target, depth)?;
-                continue;
+    fn dispatch(&mut self, start: usize, depth: usize) -> Result<Option<Value>, Error> {
+        let fail = |parser: &Self, message: &str| Err(failure(start..parser.pos, message));
+        match self.peek_char() {
+            Some('{') => {
+                self.pos += 1;
+                let mut set = BTreeSet::new();
+                let mut spans = Vec::new();
+                let items = self.items(start, b'}', depth + 1, Some(&mut spans))?;
+                for (item, span) in items.into_iter().zip(spans) {
+                    if let Some(item) = set.replace(item) {
+                        return Err(duplicate(span, &item));
+                    }
+                }
+                Ok(Some(Value::Set(set)))
             }
-            values.push((self.value(item, depth)?, span));
+            Some('_') => {
+                // Still read, so its tags are checked, as `clojure.edn` does.
+                self.pos += 1;
+                self.required(depth + 1)?;
+                Ok(None)
+            }
+            Some('#') => {
+                self.pos += 1;
+                Ok(Some(Value::Number(match self.token() {
+                    "Inf" => f64::INFINITY,
+                    "-Inf" => f64::NEG_INFINITY,
+                    "NaN" => f64::NAN,
+                    _ => return fail(self, "Unknown symbolic numeric literal"),
+                })))
+            }
+            Some(c @ ('(' | '\'' | '?')) => {
+                self.pos += 1;
+                fail(self, match c {
+                    '(' => "Anonymous function syntax is not EDN",
+                    '\'' => "Var syntax is not EDN",
+                    _ => "Reader conditionals are not EDN",
+                })
+            }
+            Some(c) if c.is_alphabetic() => {
+                let token = self.token();
+                if matches!(token, "nil" | "true" | "false") {
+                    return fail(self, "Reader tag must be a symbol");
+                }
+                if !forms::valid_symbol(token) {
+                    return fail(self, "Invalid tag");
+                }
+                let tag = Symbol::parse(token);
+                let (value, _) = self.required(depth + 1)?;
+                let value = self.tagged(&tag, value).map_err(|message| failure(start..self.pos, message))?;
+                Ok(Some(value))
+            }
+            _ => {
+                self.take_char();
+                fail(self, "Unsupported reader dispatch")
+            }
         }
-        Ok(values)
+    }
+    fn metadata(&mut self, depth: usize) -> Result<Value, Error> {
+        let (meta, meta_span) = self.required(depth + 1)?;
+        let entries = match meta {
+            // Metadata on the metadata map is dropped, as Clojure's reader does.
+            Value::Map(entries) => entries,
+            Value::Meta(map, _) if matches!(*map, Value::Map(_)) => {
+                let Value::Map(entries) = *map else { unreachable!() };
+                entries
+            }
+            Value::Keyword(keyword) => BTreeMap::from([(Value::Keyword(keyword), Value::Bool(true))]),
+            tag @ (Value::Symbol(_) | Value::String(_)) => BTreeMap::from([(Value::keyword("tag"), tag)]),
+            _ => return Err(failure(meta_span, "Metadata must be a keyword, symbol, string or map")),
+        };
+        let (target, target_span) = self.required(depth + 1)?;
+        if check_meta_target(target.unmeta()).is_err() {
+            return Err(failure(target_span, "Metadata requires a symbol or collection"));
+        }
+        // This, the outer `^`, wins over the target's own metadata, as
+        // Clojure's reader merges it last.
+        Ok(match target {
+            Value::Meta(value, mut existing) => {
+                existing.extend(entries);
+                Value::Meta(value, existing)
+            }
+            target if entries.is_empty() => target,
+            target => Value::Meta(Box::new(target), entries),
+        })
+    }
+    fn string(&mut self, start: usize) -> Result<String, Error> {
+        let mut out = String::new();
+        let mut high: Option<u16> = None;
+        let mut valid = true;
+        loop {
+            let run = self.pos;
+            while let Some(&b) = self.bytes.get(self.pos) {
+                if b == b'"' || b == b'\\' {
+                    break;
+                }
+                self.pos += 1;
+            }
+            if self.pos > run {
+                valid &= high.take().is_none();
+                out.push_str(&self.source[run..self.pos]);
+            }
+            match self.bytes.get(self.pos) {
+                None => return Err(failure(start..self.pos, "Unclosed string")),
+                Some(b'"') => {
+                    self.pos += 1;
+                    if !valid || high.is_some() {
+                        return Err(failure(start..self.pos, "EDN strings must be valid Unicode"));
+                    }
+                    return Ok(out);
+                }
+                Some(_) => {
+                    let unit = self.escape()?;
+                    match (high.take(), unit) {
+                        (None, 0xd800..=0xdbff) => high = Some(unit),
+                        (Some(first), 0xdc00..=0xdfff) => {
+                            let scalar = 0x10000 + ((u32::from(first) - 0xd800) << 10) + (u32::from(unit) - 0xdc00);
+                            out.push(char::from_u32(scalar).unwrap());
+                        }
+                        (Some(_), _) | (None, 0xdc00..=0xdfff) => valid = false,
+                        (None, unit) => out.push(char::from_u32(unit.into()).unwrap()),
+                    }
+                }
+            }
+        }
+    }
+    /// One escape after its backslash, as the forms reader decodes it.
+    fn escape(&mut self) -> Result<u16, Error> {
+        let escape_start = self.pos;
+        self.pos += 1;
+        let fail = |parser: &Self, message: &str| failure(escape_start..parser.pos, message);
+        Ok(match self.take_char() {
+            Some('n') => 10,
+            Some('r') => 13,
+            Some('t') => 9,
+            Some('b') => 8,
+            Some('f') => 12,
+            Some('"') => 34,
+            Some('\\') => 92,
+            Some('u') => {
+                let mut unit = 0;
+                for _ in 0..4 {
+                    let digit = self
+                        .take_char()
+                        .and_then(|c| c.to_digit(16))
+                        .ok_or_else(|| fail(self, "Unicode escape requires four hexadecimal digits"))?;
+                    unit = unit * 16 + digit as u16;
+                }
+                unit
+            }
+            Some(c @ '0'..='7') => {
+                let mut unit = c as u16 - '0' as u16;
+                for _ in 0..2 {
+                    match self.peek_char() {
+                        Some(c @ '0'..='7') => {
+                            self.pos += 1;
+                            unit = unit * 8 + c as u16 - '0' as u16;
+                        }
+                        Some(c) if !forms::delimiter(c) && !matches!(c, '#' | '\'') => {
+                            self.take_char();
+                            return Err(fail(self, "Invalid octal escape digit"));
+                        }
+                        _ => break,
+                    }
+                }
+                if unit > 255 {
+                    return Err(fail(self, "Octal escape exceeds one byte"));
+                }
+                unit
+            }
+            _ => return Err(fail(self, "Invalid string escape")),
+        })
+    }
+    fn character(&mut self, start: usize) -> Result<String, Error> {
+        let fail = |parser: &Self, message: &str| failure(start..parser.pos, message);
+        let first = self.take_char().ok_or_else(|| fail(self, "Missing character literal"))?;
+        if forms::delimiter(first) {
+            return Ok(first.into());
+        }
+        let token_start = self.pos - first.len_utf8();
+        self.token();
+        let token = &self.source[token_start..self.pos];
+        let unit = match token {
+            "newline" => 10,
+            "return" => 13,
+            "tab" => 9,
+            "space" => 32,
+            "backspace" => 8,
+            "formfeed" => 12,
+            _ if token.starts_with('u') && token.len() == 5 => u16::from_str_radix(&token[1..], 16)
+                .map_err(|_| fail(self, "Invalid Unicode character literal"))?,
+            _ if token.starts_with('o') && (2..=4).contains(&token.len()) => {
+                let unit = u16::from_str_radix(&token[1..], 8)
+                    .map_err(|_| fail(self, "Invalid octal character literal"))?;
+                if unit > 255 {
+                    return Err(fail(self, "Octal character exceeds one byte"));
+                }
+                unit
+            }
+            _ if token.encode_utf16().count() == 1 => token.encode_utf16().next().unwrap(),
+            _ => return Err(fail(self, "Character literal requires one UTF-16 unit")),
+        };
+        match char::from_u32(unit.into()) {
+            Some(c) => Ok(c.into()),
+            None => Err(fail(self, "Surrogate character literal is unsupported; use a string")),
+        }
     }
     fn tagged(&self, tag: &Symbol, value: Value) -> Result<Value, String> {
         if let Some(reader) = self.options.readers.get(tag) {
@@ -577,8 +900,4 @@ impl Converter<'_> {
             None => Err(format!("No reader function for tag {tag}")),
         }
     }
-}
-fn duplicate(span: Range<usize>, key: &Value) -> Error {
-    let printed = print(key).unwrap_or_else(|_| format!("{key:?}"));
-    failure(span, format!("Duplicate key: {printed}"))
 }

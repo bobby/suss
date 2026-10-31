@@ -48,6 +48,8 @@ fn main() {
     let options = Options { work_allowance: u64::MAX, ..Options::preserving_tags() };
     let (read_time, back) = best(3, || edn::read_one(&text, &options).unwrap());
     assert!(back == document);
+    let (forms_time, _) = best(3, || suss_reader::forms::read_forms_with_work_allowance(&text.replace("#suss/binding ", ""), u64::MAX).unwrap());
+    println!("forms reader alone (code mode, tags removed): {forms_time:.3} s");
     let megabytes = text.len() as f64 / 1e6;
     println!(
         "{roots} roots, {:.2} MB: print {:.3} s ({:.1} MB/s), read {:.3} s ({:.1} MB/s)",

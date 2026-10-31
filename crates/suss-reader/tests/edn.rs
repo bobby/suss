@@ -348,3 +348,102 @@ fn integers_must_be_exact_in_binary64() {
     assert_eq!(edn::to_string(&u64::MAX).unwrap_err().message, "Integer 18446744073709551615 is not exact in binary64");
     assert_eq!(edn::to_string(&(-(1i64 << 53) - 1)).unwrap_err().message, "Integer -9007199254740993 is not exact in binary64");
 }
+
+/// The compiler's reader's data, as EDN values, for comparison.
+fn form_value(form: &suss_reader::forms::Form) -> Value {
+    use suss_reader::forms::Kind;
+    let all = |items: &[suss_reader::forms::Form]| items.iter().map(form_value).collect::<Vec<_>>();
+    let value = match &form.kind {
+        Kind::Nil => Value::Nil,
+        Kind::Bool(b) => Value::Bool(*b),
+        Kind::Number(x) => Value::Number(*x),
+        Kind::String(units) => Value::String(String::from_utf16(units).unwrap()),
+        Kind::Symbol(s) => Value::Symbol(s.clone()),
+        Kind::Keyword(k) => Value::Keyword(k.clone()),
+        Kind::List(x) => Value::List(all(x)),
+        Kind::Vector(x) => Value::Vector(all(x)),
+        Kind::Set(x) => Value::Set(all(x).into_iter().collect()),
+        Kind::Map(x) => Value::Map(all(x).chunks(2).map(|pair| (pair[0].clone(), pair[1].clone())).collect()),
+        Kind::Tagged { tag, form } => Value::Tagged(tag.clone(), Box::new(form_value(form))),
+        other => panic!("not data: {other:?}"),
+    };
+    let mut meta = BTreeMap::new();
+    for form in form.metadata.iter().rev() {
+        match form_value(form) {
+            Value::Map(entries) => meta.extend(entries),
+            Value::Keyword(k) => {
+                meta.insert(Value::Keyword(k), Value::Bool(true));
+            }
+            tag => {
+                meta.insert(Value::keyword("tag"), tag);
+            }
+        }
+    }
+    if meta.is_empty() { value } else { Value::Meta(Box::new(value), meta) }
+}
+
+/// Both readers lex the same text to equal data, metadata included, and
+/// fail the same malformed text with the same message and span.
+#[test]
+fn the_edn_parser_agrees_with_the_compilers_reader() {
+    let corpus = [
+        "nil true false", "0 -0 +1 -1.5 1e3 1E-3 -0.0 0x1F -0x10 017 2r1010 36rZZ 9007199254740993 ##Inf ##-Inf ##NaN",
+        "\"\" \"plain\" \"\\n\\r\\t\\b\\f\\\"\\\\\" \"\\u00e9\\u2603\" \"\\ud83d\\ude00\" \"\\0\\12\\377\" \"é☃😀\" \"multi\nline\"",
+        "\\a \\Z \\é \\newline \\return \\tab \\space \\backspace \\formfeed \\u0041 \\o101 \\( \\; \\\"",
+        "a ab/cd a.b/c.d + - -> <=> *x* a' a# a% .. / clojure.core// ns/a:b a:b",
+        ":a :a/b :1 :+ :a.b/c",
+        "() [] {} #{} (1 [2 {3 #{4}}]) {:a 1, :b [2 3]} #{:a \"b\" 3}",
+        "^:k [x] ^{:a 1} {} ^T sym ^\"S\" (x) ^:a ^:b ^{:a 2} [y] #queue [1 2] #queue ^:m []",
+        "[1 #_ 2 3] [#_ #_ 4 5 6] (a ; comment\n b) {:a #_ :x 1}",
+        "  ,, \u{a0}\u{2003} x\u{2028}y",
+    ];
+    for source in corpus {
+        let forms = suss_reader::forms::read_forms(source)
+            .and_then(suss_reader::forms::resolve_conditionals)
+            .unwrap_or_else(|error| panic!("{source}: {error:?}"));
+        let expected: Vec<Value> = forms.iter().map(form_value).collect();
+        let found = edn::read_all(source, &Options::default()).unwrap_or_else(|error| panic!("{source}: {error}"));
+        assert_eq!(found.len(), expected.len(), "{source}");
+        for (found, expected) in found.iter().zip(&expected) {
+            assert!(same(found, expected), "{source}\n{found:?}\n{expected:?}");
+        }
+    }
+    for source in [
+        "\"abc", "\"\\x\"", "\"\\u12\"", "\"\\19\"", "\"\\400\"", "\\", "\\ab", "\\ud800", "\\o400", "\\uZZZZ",
+        "1/2", "1N", "1.5M", "0x", "08", "1e", "2r2", "40r1", "1a", "##Foo", ":", "::a", "a/", "/a", "a/1", "ns/",
+        "(", "[1", "{:a 1", ")", "]", "}", "{:a}", "^1 x", "^:a 1", "#queue 1", "#unknown 1", "#_", "#", "#!", "#1 x",
+    ] {
+        let expected = suss_reader::forms::read_forms(source).and_then(suss_reader::forms::resolve_conditionals);
+        let found = edn::read_all(source, &Options::default());
+        match (expected, found) {
+            (Err(expected), Err(found)) => {
+                assert_eq!((found.message.as_str(), found.span), (expected.message.as_str(), Some(expected.span)), "{source}");
+            }
+            (expected, found) => panic!("{source}: compiler {expected:?}, edn {found:?}"),
+        }
+    }
+}
+
+#[test]
+fn review_edge_cases_round_trip_or_fail_clearly() {
+    // Every NaN is the one value `##NaN` prints and reads.
+    let negative_nan = Value::Number(-f64::NAN);
+    assert_eq!(read(&edn::print(&negative_nan).unwrap()), negative_nan);
+    let set = Value::Set(BTreeSet::from([Value::Number(f64::NAN), negative_nan.clone()]));
+    assert_eq!(edn::print(&set).unwrap(), "#{##NaN}");
+    // Nested metadata compares as its value.
+    let nested = Value::Meta(
+        Box::new(Value::Meta(Box::new(Value::Vector(vec![])), BTreeMap::from([(Value::keyword("a"), Value::Nil)]))),
+        BTreeMap::from([(Value::keyword("b"), Value::Nil)]),
+    );
+    assert_eq!(nested, Value::Vector(vec![]));
+    assert_ne!(nested, Value::Number(1.0));
+    // A queue tag prints only a vector, which is all it reads.
+    let list_queue = Value::Tagged(Symbol::new("queue"), Box::new(Value::List(vec![])));
+    assert_eq!(edn::print(&list_queue).unwrap_err().message, "Queue literal expects a vector for its elements.");
+    // Clojure: a tag must be a symbol.
+    let error = edn::read_one("#nil 1", &Options::preserving_tags()).unwrap_err();
+    assert_eq!((error.message.as_str(), error.span), ("Reader tag must be a symbol", Some(0..4)));
+    // Metadata on a metadata map is accepted, and only the map applies.
+    assert_eq!(printed("^^:x {:a 1} y"), "^{:a 1} y");
+}
