@@ -231,7 +231,7 @@ fn runtime_resolution_agrees_with_syntax_quote() {
 }
 
 #[test]
-fn the_repl_starts_in_user_and_follows_ns() {
+fn the_repl_starts_in_user_and_follows_ns_and_in_ns() {
     let mut child = Command::new(env!("CARGO_BIN_EXE_suss"))
         .arg("repl")
         .stdin(Stdio::piped())
@@ -243,13 +243,13 @@ fn the_repl_starts_in_user_and_follows_ns() {
         .stdin
         .take()
         .unwrap()
-        .write_all(b"(ns-name *ns*)\n(ns other)\n(ns-name *ns*)\n(str *ns*)\n((fn [] (ns-name *ns*)))\n")
+        .write_all(b"(ns-name *ns*)\n(ns other)\n(ns-name *ns*)\n(str *ns*)\n((fn [] (ns-name *ns*)))\n:in-ns third\n(ns-name *ns*)\n")
         .unwrap();
     let output = child.wait_with_output().unwrap();
     let out = String::from_utf8(output.stdout).unwrap();
     let errors = String::from_utf8(output.stderr).unwrap();
     let lines = out.lines().filter(|line| *line != "...").collect::<Vec<_>>();
-    assert_eq!(lines, ["user", "nil", "other", "\"other\"", "other"], "{out}\n{errors}");
+    assert_eq!(lines, ["user", "nil", "other", "\"other\"", "other", "nil", "third"], "{out}\n{errors}");
 }
 
 #[test]

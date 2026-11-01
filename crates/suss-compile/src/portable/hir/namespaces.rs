@@ -126,7 +126,12 @@ impl Analyzer<'_> {
                 .is_none_or(|previous| Scope::of(previous) != scope);
         let declared = self.environment.declared_names(self.phase, &namespace);
         let previous = before.declared_names(self.phase, &namespace);
-        let added: Vec<_> = declared.difference(&previous).cloned().collect();
+        // A fresh cell means the runtime has nothing for this namespace yet.
+        let added: Vec<_> = if fresh {
+            declared.iter().cloned().collect()
+        } else {
+            declared.difference(&previous).cloned().collect()
+        };
         let core = namespace == "suss.core";
         let read = |span: &Range<usize>| Hir {
             source: None,
@@ -135,6 +140,7 @@ impl Analyzer<'_> {
             ty: Type::Value,
             kind: Expression::Global(cell.clone()),
         };
+        let defining = before.resolve(self.phase, &publish, span.clone()).is_err();
         let mut effects = Vec::new();
         if changed || !added.is_empty() {
             let scope_form = if changed {
@@ -146,20 +152,20 @@ impl Analyzer<'_> {
                 entries.extend(entry(&span, "excluded", names(&span, scope.excluded.iter().cloned())));
                 if core {
                     // Syntax quote's fallbacks after ordinary resolution.
-                    entries.extend(entry(
-                        &span,
-                        "bootstrap-macros",
-                        names(&span, resolve::BOOTSTRAP_MACROS.iter().map(|name| (*name).to_owned())),
-                    ));
+                    // Core's own declarations are checked first with the
+                    // same answer, so these lists omit them.
+                    let undeclared = |names: &[&str]| {
+                        names
+                            .iter()
+                            .filter(|name| !declared.contains(**name))
+                            .map(|name| (*name).to_owned())
+                            .collect::<Vec<_>>()
+                    };
+                    entries.extend(entry(&span, "bootstrap-macros", names(&span, undeclared(resolve::BOOTSTRAP_MACROS))));
                     entries.extend(entry(
                         &span,
                         "reader-names",
-                        names(
-                            &span,
-                            super::super::syntax_quote::core_names::CORE_READER_NAMES
-                                .iter()
-                                .map(|name| (*name).to_owned()),
-                        ),
+                        names(&span, undeclared(super::super::syntax_quote::core_names::CORE_READER_NAMES)),
                     ));
                 }
                 quoted(&span, synthetic(&span, Kind::Map(entries)))
@@ -171,15 +177,43 @@ impl Analyzer<'_> {
             } else {
                 names(&span, added)
             };
+            let name = quoted(&span, symbol(&span, Symbol::new(namespace)));
             let call = synthetic(
                 &span,
-                Kind::List(vec![
-                    symbol(&span, publish.clone()),
-                    quoted(&span, symbol(&span, Symbol::new(namespace))),
-                    scope_form,
-                    added,
-                ]),
+                Kind::List(vec![symbol(&span, publish.clone()), name.clone(), scope_form, added]),
             );
+            let call = if defining {
+                // Core's own name lists are large and only syntax-quote
+                // resolution reads them, so core defers building them until
+                // its first resolution instead of paying at every startup.
+                synthetic(
+                    &span,
+                    Kind::List(vec![
+                        symbol(&span, Symbol::new("do")),
+                        synthetic(
+                            &span,
+                            Kind::List(vec![
+                                symbol(&span, Symbol::new("set!")),
+                                symbol(&span, Symbol::namespaced("suss.core", "pending-publication")),
+                                synthetic(
+                                    &span,
+                                    Kind::List(vec![
+                                        symbol(&span, Symbol::new("fn")),
+                                        synthetic(&span, Kind::Vector(Vec::new())),
+                                        call,
+                                    ]),
+                                ),
+                            ]),
+                        ),
+                        synthetic(
+                            &span,
+                            Kind::List(vec![symbol(&span, Symbol::namespaced("suss.core", "intern-namespace")), name]),
+                        ),
+                    ]),
+                )
+            } else {
+                call
+            };
             let call = self.form(&call)?;
             effects.push(Hir {
                 source: None,
@@ -198,7 +232,7 @@ impl Analyzer<'_> {
                 },
             });
         }
-        if before.resolve(self.phase, &publish, span.clone()).is_err() {
+        if defining {
             // The fragment that defines the registry and *ns* (core's
             // bootstrap) publishes after its body and loads under *ns*'s root.
             let mut items = vec![body];

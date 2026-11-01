@@ -504,6 +504,7 @@
          "suss.bindings.macro:suss.core/pam-new-size"
          "suss.bindings.macro:suss.core/partial"
          "suss.bindings.macro:suss.core/peek"
+         "suss.bindings.macro:suss.core/pending-publication"
          "suss.bindings.macro:suss.core/persistent!"
          "suss.bindings.macro:suss.core/persistent-array-map-seq"
          "suss.bindings.macro:suss.core/pop"
@@ -573,6 +574,7 @@
          "suss.bindings.macro:suss.core/root-obj"
          "suss.bindings.macro:suss.core/rseq"
          "suss.bindings.macro:suss.core/rsubseq"
+         "suss.bindings.macro:suss.core/run-pending-publication!"
          "suss.bindings.macro:suss.core/second"
          "suss.bindings.macro:suss.core/select-keys"
          "suss.bindings.macro:suss.core/seq"
@@ -1172,6 +1174,7 @@
          "suss.bindings.macro:suss.internal.core-link/pam-new-size"
          "suss.bindings.macro:suss.internal.core-link/partial"
          "suss.bindings.macro:suss.internal.core-link/peek"
+         "suss.bindings.macro:suss.internal.core-link/pending-publication"
          "suss.bindings.macro:suss.internal.core-link/persistent!"
          "suss.bindings.macro:suss.internal.core-link/persistent-array-map-seq"
          "suss.bindings.macro:suss.internal.core-link/pop"
@@ -1241,6 +1244,7 @@
          "suss.bindings.macro:suss.internal.core-link/root-obj"
          "suss.bindings.macro:suss.internal.core-link/rseq"
          "suss.bindings.macro:suss.internal.core-link/rsubseq"
+         "suss.bindings.macro:suss.internal.core-link/run-pending-publication!"
          "suss.bindings.macro:suss.internal.core-link/second"
          "suss.bindings.macro:suss.internal.core-link/select-keys"
          "suss.bindings.macro:suss.internal.core-link/seq"
@@ -1554,13 +1558,13 @@
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
          "suss.bindings.macro:suss.internal.reify/t-reify-3274-10489"],
  :compiler "0.1.0+portable.2",
- :compiler-source-sha256 "badf065d454462fa28b3b2e2e348d34b9c1dc45dea7587ba436bc69efad1630b",
- :dependency-graph-sha256 "512a4ce8faba3f5a5e060d4d6f53d0fe1d0668d1788abed84b2080e603862718",
+ :compiler-source-sha256 "f76f7c83fe210b9a2fb74e4a5467a838fab52c334bda16929bf6c92f2d417792",
+ :dependency-graph-sha256 "4242dd6f4237bb946ef0376e9010ec2039e9f55da3ae835e5819574ff605f4c1",
  :flags [],
  :format-version 2,
  :phase "macro",
  :runtime-abi 2,
- :source-sha256 "090afbff118e71ffd530374d4c7ffbd9ec01a0c6a9c1941af82769f62686273e",
+ :source-sha256 "fda85035005ec726bb9914df149ca7dee8d7ea00c223f1c13bb9c43dd367ccc7",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "471a8e08ae368652646a5edddbe7dd5b722429fbf484c80cffb92279da8c8e43",
+ :wasm-sha256 "a917d348c68af49d5153c5b51df17684f2a5ccab261f423a9a5b1189e106dbbc",
  :wasm-tools "0.258.0"}
