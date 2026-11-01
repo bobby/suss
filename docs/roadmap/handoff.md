@@ -29522,3 +29522,15 @@ document's 2026-10-25 decision now records all three outcomes.
 - Opt-level 1: full baseline 8780 s, down from 10344 s; workspace rebuild 341 s; CI 36 min and 118 job-minutes, down from 48 min and 164 job-minutes (runs 41179925609 and 41215999890).
 - The root `Cargo.toml` is part of the compiler fingerprint, so a profile edit requires regenerating the bootstrap. Only the identity hashes change.
 - PR #308 was independently reviewed, with no findings. Full baseline on 4bd6b99: 2037 passed, 0 failed, 78 ignored.
+
+## #309: runtime namespaces (2026-11-01)
+
+- `*ns*`, `suss.core.Namespace`, `find-ns`, `the-ns`, `ns-name`, `all-ns`, `ns-aliases` and `ns-refers` exist at runtime, together with a private `reader-resolve-symbol` that agrees with the compiler's syntax quote. #300's reader builds on these for `::k` and syntax quote. The contract is in `docs/runtime/runtime-namespaces.md`.
+- Every compiled fragment runs inside a `*ns*` binding and publishes its namespace's scope when it changes (`hir/namespaces.rs`). Core's own large lists are published lazily, at the first resolution.
+- Constraints found on the way:
+  - Core evaluated as plain source cannot build vectors longer than 32, so the published data uses arrays.
+  - A quoted map literal costs about 135,000 fuel to build.
+  - The fragment cache declines keys above 64K of work, so frames must stay small and must not record the whole source's span.
+  - Long string literals now come from data segments.
+- Not done here: `intern`, `ns-publics`, `ns-interns`, `ns-resolve`, `resolve`, `remove-ns`, `create-ns`, and an `in-ns` function.
+- PR #310 was independently reviewed twice; both rounds' findings are fixed. Full baseline on 071c9af (before merging #308): 2059 passed, 0 failed, 78 ignored, 275 binaries, 11989 s.
