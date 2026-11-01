@@ -108,6 +108,14 @@ namespace, or, in a macro, to the namespace being compiled; its root value is
 `ns-refers` read namespaces the compiler publishes in each phase. Suss has no
 runtime Vars, so `ns-refers` maps names to qualified symbols. A runtime
 resolution agrees with syntax quote's (`docs/runtime/runtime-namespaces.md`).
+Running programs read data with `read-string` and `suss.edn/read-string`,
+following `clojure.core/read-string` and `clojure.edn/read-string`, in both
+phases and every target, from a reader written in Suss in core. `read-string`
+reads code as Clojure's reader does: syntax quote and `::k` resolve against
+`*ns*`, record literals construct records while `*read-eval*` is true, and
+reader conditionals need `:read-cond`. Neither evaluates code. Their lexical
+rules, messages and positions are the compiler reader's; one corpus checks
+every reader (`docs/runtime/read-string.md`).
 
 ## 4. Observable language semantics
 
@@ -165,7 +173,8 @@ source -> reader forms + spans + metadata -> phase/namespace resolution
        -> closure and async lowering -> WasmGC -> target bindings -> validation
 ```
 
-Keep reader metadata separate from runtime metadata. HIR retains binding identity,
+Keep reader metadata separate from runtime metadata; the runtime `read-string`
+attaches no position metadata, as Clojure's does not. HIR retains binding identity,
 source location, inferred information and resolved globals. Normalize every effectful
 operand to a temporary before lowering branching, dispatch and ABI conversions.
 No backend instruction emitter may re-emit an operand to inspect its type.
