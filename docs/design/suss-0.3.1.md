@@ -101,7 +101,13 @@ conditional selection. Unselected branches are not checked, as in Clojure. A
 discarded (`#_`) tag is checked only when its target needs conditional
 selection; Clojure always checks it.
 Namespace aliases, refers, exclusions, phase imports and qualified symbols are
-resolved consistently in AOT, macros and REPL.
+resolved consistently in AOT, macros and REPL. Running programs see namespaces as
+Clojure's do. `*ns*` is bound to the namespace being loaded, to the REPL's
+namespace, or, in a macro, to the namespace being compiled; its root value is
+`suss.core`. `find-ns`, `the-ns`, `ns-name`, `all-ns`, `ns-aliases` and
+`ns-refers` read namespaces the compiler publishes in each phase. Suss has no
+runtime Vars, so `ns-refers` maps names to qualified symbols. A runtime
+resolution agrees with syntax quote's (`docs/runtime/runtime-namespaces.md`).
 
 ## 4. Observable language semantics
 

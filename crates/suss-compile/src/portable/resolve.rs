@@ -1293,15 +1293,20 @@ impl Environment {
     /// Names `resolve` finds as `namespace`'s own bindings in `phase`, the
     /// declarations runtime namespaces publish (#309).
     pub(crate) fn declared_names(&self, phase: Phase, namespace: &str) -> BTreeSet<String> {
+        let start = Global { phase, namespace: namespace.into(), name: String::new() };
         self.bindings
-            .iter()
-            .filter(|(global, binding)| {
-                global.phase == phase
-                    && global.namespace == namespace
-                    && !matches!(binding, Binding::InternalCell(_) | Binding::ReaderCell(_))
-            })
+            .range(start..)
+            .take_while(|(global, _)| global.phase == phase && global.namespace == namespace)
+            .filter(|(_, binding)| !matches!(binding, Binding::InternalCell(_) | Binding::ReaderCell(_)))
             .map(|(global, _)| global.name.clone())
             .collect()
+    }
+    /// Whether `resolve` finds `name` as one of `namespace`'s own bindings.
+    pub(crate) fn declares(&self, phase: Phase, namespace: &str, name: &str) -> bool {
+        let global = Global { phase, namespace: namespace.into(), name: name.into() };
+        self.bindings
+            .get(&global)
+            .is_some_and(|binding| !matches!(binding, Binding::InternalCell(_) | Binding::ReaderCell(_)))
     }
     /// The bounded bootstrap macro lookup is separate from ordinary var lookup:
     /// lexical locals (handled by HIR) hide macros. User runtime definitions also

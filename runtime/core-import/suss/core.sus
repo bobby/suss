@@ -9030,7 +9030,9 @@ reduces them without incurring seq initialization"
           found))
       (throw (suss.bootstrap/error "Namespace name must be a symbol")))))
 ;; Called by compiled fragments: replace the namespace's scope when given and
-;; add newly declared names. Returns the namespace.
+;; add declared names. The compiler sends only declarations that change
+;; resolution: those of names core, its bootstrap macros, the reader catalog or
+;; a macro refer would otherwise resolve. Returns the namespace.
 (def ^:private publish-namespace!
   (fn [name scope declared]
     (let [ns (intern-namespace name) state (.-state ns)]
@@ -9042,7 +9044,11 @@ reduces them without incurring seq initialization"
             (aset state ns-macro-refers-slot (:macro-refers scope))
             (aset state ns-excluded-slot (name-list (:excluded scope)))
             (aset state ns-bootstrap-macros-slot (name-list (get scope :bootstrap-macros "")))
-            (aset state ns-reader-names-slot (name-list (get scope :reader-names "")))))
+            (aset state ns-reader-names-slot (name-list (get scope :reader-names "")))
+            ;; A published scope comes with the namespace's full list of
+            ;; declarations, which replaces the previous one.
+            (aset state ns-declared-slot #{})
+            (aset state ns-declared-tables-slot [])))
       (if (nil? declared)
         nil
         (if (string? declared)

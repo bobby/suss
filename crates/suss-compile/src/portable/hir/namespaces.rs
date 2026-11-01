@@ -125,14 +125,25 @@ impl Analyzer<'_> {
                 .namespace_scope_for(self.phase, &namespace)
                 .is_none_or(|previous| Scope::of(previous) != scope);
         let declared = self.environment.declared_names(self.phase, &namespace);
-        let previous = before.declared_names(self.phase, &namespace);
-        // A fresh cell means the runtime has nothing for this namespace yet.
-        let added: Vec<_> = if fresh {
-            declared.iter().cloned().collect()
-        } else {
-            declared.difference(&previous).cloned().collect()
-        };
         let core = namespace == "suss.core";
+        // A namespace's own declaration changes resolution only when the name
+        // would otherwise resolve elsewhere, so other namespaces publish only
+        // those; an ordinary def publishes nothing. Core publishes everything.
+        let reader_names = super::super::syntax_quote::core_names::CORE_READER_NAMES;
+        let relevant = |name: &String| {
+            core || self.environment.declares(self.phase, "suss.core", name)
+                || resolve::BOOTSTRAP_MACROS.contains(&name.as_str())
+                || reader_names.binary_search(&name.as_str()).is_ok()
+                || scope.macro_refers.contains_key(name)
+        };
+        // With a changed scope or a namespace new to the runtime, the list
+        // replaces what the runtime has; otherwise it adds new names.
+        let added: Vec<_> = if changed {
+            declared.iter().filter(|name| relevant(name)).cloned().collect()
+        } else {
+            let previous = before.declared_names(self.phase, &namespace);
+            declared.difference(&previous).filter(|name| relevant(name)).cloned().collect()
+        };
         let read = |span: &Range<usize>| Hir {
             source: None,
             span: span.clone(),
