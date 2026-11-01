@@ -136,14 +136,9 @@ impl Analyzer<'_> {
                 || reader_names.binary_search(&name.as_str()).is_ok()
                 || scope.macro_refers.contains_key(name)
         };
-        // With a changed scope or a namespace new to the runtime, the list
-        // replaces what the runtime has; otherwise it adds new names.
-        let added: Vec<_> = if changed {
-            declared.iter().filter(|name| relevant(name)).cloned().collect()
-        } else {
-            let previous = before.declared_names(self.phase, &namespace);
-            declared.difference(&previous).filter(|name| relevant(name)).cloned().collect()
-        };
+        let full: Vec<_> = declared.iter().filter(|name| relevant(name)).cloned().collect();
+        let previous = before.declared_names(self.phase, &namespace);
+        let added: Vec<_> = declared.difference(&previous).filter(|name| relevant(name)).cloned().collect();
         let read = |span: &Range<usize>| Hir {
             source: None,
             span: span.clone(),
@@ -152,95 +147,119 @@ impl Analyzer<'_> {
             kind: Expression::Global(cell.clone()),
         };
         let defining = before.resolve(self.phase, &publish, span.clone()).is_err();
-        let mut effects = Vec::new();
-        if changed || !added.is_empty() {
-            let scope_form = if changed {
-                let mut entries = Vec::new();
-                entries.extend(entry(&span, "aliases", aliases(&span, &scope.aliases)));
-                entries.extend(entry(&span, "macro-aliases", aliases(&span, &scope.macro_aliases)));
-                entries.extend(entry(&span, "refers", refers(&span, &scope.refers)));
-                entries.extend(entry(&span, "macro-refers", refers(&span, &scope.macro_refers)));
-                entries.extend(entry(&span, "excluded", names(&span, scope.excluded.iter().cloned())));
-                if core {
-                    // Syntax quote's fallbacks after ordinary resolution.
-                    // Core's own declarations are checked first with the
-                    // same answer, so these lists omit them.
-                    let undeclared = |names: &[&str]| {
-                        names
-                            .iter()
-                            .filter(|name| !declared.contains(**name))
-                            .map(|name| (*name).to_owned())
-                            .collect::<Vec<_>>()
-                    };
-                    entries.extend(entry(&span, "bootstrap-macros", names(&span, undeclared(resolve::BOOTSTRAP_MACROS))));
-                    entries.extend(entry(
-                        &span,
-                        "reader-names",
-                        names(&span, undeclared(super::super::syntax_quote::core_names::CORE_READER_NAMES)),
-                    ));
-                }
-                quoted(&span, synthetic(&span, Kind::Map(entries)))
-            } else {
-                synthetic(&span, Kind::Nil)
-            };
-            let added = if added.is_empty() {
-                synthetic(&span, Kind::Nil)
-            } else {
-                names(&span, added)
-            };
-            let name = quoted(&span, symbol(&span, Symbol::new(namespace)));
-            let call = synthetic(
-                &span,
-                Kind::List(vec![symbol(&span, publish.clone()), name.clone(), scope_form, added]),
-            );
-            let call = if defining {
-                // Core's own name lists are large and only syntax-quote
-                // resolution reads them, so core defers building them until
-                // its first resolution instead of paying at every startup.
-                synthetic(
+        let name = quoted(&span, symbol(&span, Symbol::new(namespace)));
+        let nil = || synthetic(&span, Kind::Nil);
+        let scope_form = {
+            let mut entries = Vec::new();
+            entries.extend(entry(&span, "aliases", aliases(&span, &scope.aliases)));
+            entries.extend(entry(&span, "macro-aliases", aliases(&span, &scope.macro_aliases)));
+            entries.extend(entry(&span, "refers", refers(&span, &scope.refers)));
+            entries.extend(entry(&span, "macro-refers", refers(&span, &scope.macro_refers)));
+            entries.extend(entry(&span, "excluded", names(&span, scope.excluded.iter().cloned())));
+            if core {
+                // Syntax quote's fallbacks after ordinary resolution. Core's
+                // own declarations are checked first with the same answer, so
+                // these lists omit them.
+                let undeclared = |names: &[&str]| {
+                    names
+                        .iter()
+                        .filter(|name| !declared.contains(**name))
+                        .map(|name| (*name).to_owned())
+                        .collect::<Vec<_>>()
+                };
+                entries.extend(entry(&span, "bootstrap-macros", names(&span, undeclared(resolve::BOOTSTRAP_MACROS))));
+                entries.extend(entry(
                     &span,
-                    Kind::List(vec![
-                        symbol(&span, Symbol::new("do")),
-                        synthetic(
-                            &span,
-                            Kind::List(vec![
-                                symbol(&span, Symbol::new("set!")),
-                                symbol(&span, Symbol::namespaced("suss.core", "pending-publication")),
-                                synthetic(
-                                    &span,
-                                    Kind::List(vec![
-                                        symbol(&span, Symbol::new("fn")),
-                                        synthetic(&span, Kind::Vector(Vec::new())),
-                                        call,
-                                    ]),
-                                ),
-                            ]),
-                        ),
-                        synthetic(
-                            &span,
-                            Kind::List(vec![symbol(&span, Symbol::namespaced("suss.core", "intern-namespace")), name]),
-                        ),
-                    ]),
-                )
+                    "reader-names",
+                    names(&span, undeclared(super::super::syntax_quote::core_names::CORE_READER_NAMES)),
+                ));
+            }
+            quoted(&span, synthetic(&span, Kind::Map(entries)))
+        };
+        let list = |names_list: Vec<String>| if names_list.is_empty() { nil() } else { names(&span, names_list) };
+        let call = |scope: Form, declared: Form| {
+            synthetic(&span, Kind::List(vec![symbol(&span, publish.clone()), name.clone(), scope, declared]))
+        };
+        // A published scope comes with the full list of relevant declarations,
+        // which replaces what the runtime had.
+        let full_call = call(scope_form, list(full));
+        let definition = |initializer: Hir| Hir {
+            source: None,
+            span: span.clone(),
+            metadata: Vec::new(),
+            ty: Type::Value,
+            kind: Expression::Definition {
+                global: cell.clone(),
+                name_metadata: Vec::new(),
+                name_span: span.clone(),
+                docstring: None,
+                initializer: Some(Box::new(initializer)),
+                once: false,
+                // An internal namespace cell, not a core definition.
+                linked: None,
+            },
+        };
+        let mut effects = Vec::new();
+        if defining {
+            // Core's own name lists are large and only syntax-quote resolution
+            // reads them, so core defers building them until its first
+            // resolution instead of paying at every startup.
+            let deferred = synthetic(
+                &span,
+                Kind::List(vec![
+                    symbol(&span, Symbol::new("do")),
+                    synthetic(
+                        &span,
+                        Kind::List(vec![
+                            symbol(&span, Symbol::new("set!")),
+                            symbol(&span, Symbol::namespaced("suss.core", "pending-publication")),
+                            synthetic(
+                                &span,
+                                Kind::List(vec![
+                                    symbol(&span, Symbol::new("fn")),
+                                    synthetic(&span, Kind::Vector(Vec::new())),
+                                    full_call,
+                                ]),
+                            ),
+                        ]),
+                    ),
+                    synthetic(
+                        &span,
+                        Kind::List(vec![symbol(&span, Symbol::namespaced("suss.core", "intern-namespace")), name.clone()]),
+                    ),
+                ]),
+            );
+            effects.push(definition(self.form(&deferred)?));
+        } else if changed {
+            effects.push(definition(self.form(&full_call)?));
+        } else {
+            // Whether the runtime has this namespace is decided when the
+            // fragment runs: an earlier fragment may have been compiled but
+            // never run, for example when a dependency failed to load.
+            let full = definition(self.form(&full_call)?);
+            let target = symbol(&span, Symbol::namespaced("suss.core", "*ns*"));
+            let bound = self.nominal(
+                &target,
+                Nominal::BindingDefined,
+                vec![Hir {
+                    source: None,
+                    span: span.clone(),
+                    metadata: Vec::new(),
+                    ty: Type::Value,
+                    kind: Expression::GlobalCell(cell.clone()),
+                }],
+            );
+            let additions = if added.is_empty() {
+                self.form(&nil())?
             } else {
-                call
+                definition(self.form(&call(nil(), list(added)))?)
             };
-            let call = self.form(&call)?;
             effects.push(Hir {
                 source: None,
                 span: span.clone(),
                 metadata: Vec::new(),
                 ty: Type::Value,
-                kind: Expression::Definition {
-                    global: cell.clone(),
-                    name_metadata: Vec::new(),
-                    name_span: span.clone(),
-                    docstring: None,
-                    initializer: Some(Box::new(call)),
-                    once: false,
-                    // An internal namespace cell, not a core definition.
-                    linked: None,
-                },
+                kind: Expression::If { condition: Box::new(bound), consequent: Box::new(additions), alternative: Box::new(full) },
             });
         }
         if defining {

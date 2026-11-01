@@ -243,8 +243,18 @@
 ;; add declared names. The compiler sends only declarations that change
 ;; resolution: those of names core, its bootstrap macros, the reader catalog or
 ;; a macro refer would otherwise resolve. Returns the namespace.
+;; Core's bootstrap sets this to a function that publishes core's own large
+;; name lists; the first resolution or later publication runs it.
+(def ^:private pending-publication nil)
+(def ^:private run-pending-publication!
+  (fn []
+    (let [publish pending-publication]
+      (if (nil? publish) nil (do (set! pending-publication nil) (publish) nil)))))
 (def ^:private publish-namespace!
   (fn [name scope declared]
+    ;; Core's deferred publication replaces its lists, so it runs before any
+    ;; later publication adds to them.
+    (run-pending-publication!)
     (let [ns (intern-namespace name) state (.-state ns)]
       (if (nil? scope)
         nil
@@ -276,13 +286,7 @@
   *ns* (intern-namespace 'suss.core))
 ;; Clojure's runtime always has a user namespace.
 (intern-namespace 'user)
-;; Core's bootstrap sets this to a function that publishes core's own large
-;; name lists; the first resolution runs it.
-(def ^:private pending-publication nil)
-(def ^:private run-pending-publication!
-  (fn []
-    (let [publish pending-publication]
-      (if (nil? publish) nil (do (set! pending-publication nil) (publish) nil)))))
+
 ;; The macro host sets *ns*'s root to the namespace being compiled before it
 ;; calls a macro, as Clojure's compiler binds *ns* while it loads (#309). It
 ;; keeps the namespace objects intern-namespace returns.

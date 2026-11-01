@@ -305,3 +305,36 @@ fn component_exports_see_the_root_namespace() {
         assert_eq!(out.trim().trim_matches('"'), expected, "{export}");
     }
 }
+
+#[test]
+fn a_namespace_whose_dependency_failed_to_load_recovers() {
+    let root = project();
+    let broken = root.path().join("demo/broken.sus");
+    for (mut session, mut macros) in sessions(root.path()) {
+        std::fs::write(&broken, "(ns demo.broken)\n(throw (ex-info \"boom\" {}))\n").unwrap();
+        // The ns form compiles, but its fragment never runs: loading its
+        // dependency throws first.
+        assert!(session.eval_with_macros("(ns demo.g (:require [demo.broken]))", &mut macros).is_err());
+        std::fs::write(&broken, "(ns demo.broken)\n(def ok 1)\n").unwrap();
+        session.eval_with_macros("(ns demo.g (:require [demo.broken]))", &mut macros).unwrap();
+        truthy(&mut session, &mut macros, "(= 'demo.g (ns-name *ns*))");
+        truthy(&mut session, &mut macros, "(= 1 demo.broken/ok)");
+    }
+}
+
+#[test]
+fn core_names_added_before_the_first_resolution_resolve_to_core() {
+    let root = project();
+    for (mut session, mut macros) in sessions(root.path()) {
+        // Core publishes its own large name lists lazily; definitions added to
+        // suss.core before the first resolution must survive that.
+        session.eval_with_macros("(ns suss.core)", &mut macros).unwrap();
+        session.eval_with_macros("(def later-core-name 1)", &mut macros).unwrap();
+        session.eval_with_macros("(ns user)", &mut macros).unwrap();
+        truthy(
+            &mut session,
+            &mut macros,
+            "(= `later-core-name (suss.core/reader-resolve-symbol 'later-core-name) 'cljs.core/later-core-name)",
+        );
+    }
+}

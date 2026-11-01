@@ -85,13 +85,17 @@ from `hir/namespaces.rs`, without a host import:
     core, a bootstrap macro, the reader catalog or a macro refer. Other
     namespaces publish only those, so an ordinary `def` publishes nothing. Core
     publishes all of its own.
-  - When the scope changed or the namespace is new to the runtime, the list
-    replaces what the runtime had, including bindings the compiler provided
-    before the namespace's first fragment. Otherwise it adds to it.
+  - When the scope changed, the list replaces what the runtime had, including
+    bindings the compiler provided before the namespace's first fragment.
+    Otherwise it adds to it.
+  - Whether the runtime has the namespace at all is decided when a fragment
+    runs, not when it compiles. A fragment whose namespace cell is unbound
+    publishes in full. An earlier fragment may have compiled and never run,
+    for example when a dependency failed to load.
 - **Where the object lives.** The namespace object is held in an internal cell,
   `suss.internal.namespaces/<ns>`. Every fragment runs inside
-  `(binding [*ns* <cell>] ...)`, so a fragment that publishes nothing costs one
-  cell read and a binding, about 600 fuel.
+  `(binding [*ns* <cell>] ...)`, so a fragment that publishes nothing costs a
+  check that the cell is bound, a cell read and a binding, about 700 fuel.
 - **Macros.** The macro host sets `*ns*`'s root in the macro store to the
   namespace being compiled before it calls a macro. It interns namespace objects
   once and caches them; `suss.core` and `user` are interned when the macro
@@ -106,7 +110,9 @@ from `hir/namespaces.rs`, without a host import:
   - Refers are keyed by name string, which is cheaper to look up than a symbol.
 - **Core's own lists.** Core's declarations, its bootstrap macros and the reader
   catalog are large, and only resolution reads them. So core's bootstrap
-  defers publishing them until the first resolution. The bootstrap-macro and
+  defers publishing them until the first resolution or the next publication,
+  whichever comes first, so names added to core later are kept. The
+  bootstrap-macro and
   reader-name lists omit names core declares, because the declarations are
   checked first and give the same answer.
 
@@ -127,12 +133,12 @@ Measured on 2026-10-31 against `main` (00f700d), test profile:
 
 | Per operation | `main` | With runtime namespaces |
 | --- | --- | --- |
-| Evaluate `x` | 15 | 592 |
-| `(def y 2)` | 28 | 606 |
+| Evaluate `x` | 15 | 708 |
+| `(def y 2)` | 28 | 722 |
 | First resolution in a session (core's deferred publication) | — | about 1.1 million, once |
 | Each later resolution of an unqualified symbol | — | 100,000–150,000 |
 
-The fixed cost per fragment, about 580 fuel, is the `*ns*` binding.
+The fixed cost per fragment, about 700 fuel, is the check that the namespace is published and the `*ns*` binding.
 
 ### Known limitation
 
