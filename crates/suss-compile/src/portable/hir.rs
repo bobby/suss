@@ -3193,8 +3193,14 @@ pub(crate) fn prepare_with_origin(
         target: None,
         method_recurrence: Vec::new(),
     };
+    // The frame's own forms take the fragment's extent, not the source's, so
+    // a fragment's IR and cache key do not change with the rest of its file.
+    let extent = match (forms.first(), forms.last()) {
+        (Some(first), Some(last)) => first.span.start..last.span.end,
+        _ => span.clone(),
+    };
     let hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
-    let mut hir = analyzer.namespace_frame(before, hir)?;
+    let mut hir = analyzer.namespace_frame(before, extent, hir)?;
     if !analyzer.callable_keys.is_empty() {
         let mut initializers = analyzer.callable_keys.into_values().collect::<Vec<_>>();
         let ty = hir.ty;

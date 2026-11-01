@@ -8950,7 +8950,7 @@ reduces them without incurring seq initialization"
 ;; Name lists arrive from the compiler in one of two forms. A short list is
 ;; one string of names separated by single spaces (symbol names contain no
 ;; spaces) and becomes a set. A long one, such as core's own declarations, is
-;; a vector of name-table-buckets strings, each " a b c " with every name
+;; an array of name-table-buckets strings, each " a b c " with every name
 ;; placed by name-table-bucket. A lookup searches one bucket with the runtime's
 ;; string search, so a long list is never split or copied. The compiler's
 ;; bucket function must match name-table-bucket.
@@ -8971,7 +8971,7 @@ reduces them without incurring seq initialization"
           (persistent!
            (if (< start length) (conj! names (suss.bootstrap/string-slice text start length)) names)))))))
 (def ^:private name-list
-  (fn [names] (if (string? names) (split-names names) names)))
+  (fn [names] (if (nil? names) #{} (if (string? names) (split-names names) names))))
 (def ^:private name-list-contains?
   (fn [names name]
     (if (set? names)
@@ -8979,7 +8979,7 @@ reduces them without incurring seq initialization"
       (if (zero? (.-length name))
         false
         (<= 0 (suss.bootstrap/string-index-of
-               (nth names (name-table-bucket name))
+               (aget names (name-table-bucket name))
                (suss.bootstrap/concat-string " " (suss.bootstrap/concat-string name " "))))))))
 (deftype Namespace [name state]
   Object
@@ -9034,7 +9034,7 @@ reduces them without incurring seq initialization"
 ;; resolution: those of names core, its bootstrap macros, the reader catalog or
 ;; a macro refer would otherwise resolve. Returns the namespace.
 ;; Core's bootstrap sets this to a function that publishes core's own large
-;; name lists; the first resolution or later publication runs it.
+;; name lists; the first resolution or later publication to core runs it.
 (def ^:private pending-publication nil)
 (def ^:private run-pending-publication!
   (fn []
@@ -9043,22 +9043,28 @@ reduces them without incurring seq initialization"
 (def ^:private publish-namespace!
   (fn [name scope declared]
     ;; Core's deferred publication replaces its lists, so it runs before any
-    ;; later publication adds to them.
-    (run-pending-publication!)
+    ;; later publication to core adds to them. Other namespaces leave it for
+    ;; the first resolution, so an ordinary program never pays for it.
+    (if (= (.-str name) "suss.core") (run-pending-publication!) nil)
     (let [ns (intern-namespace name) state (.-state ns)]
       (if (nil? scope)
         nil
-        (do (aset state ns-aliases-slot (:aliases scope))
-            (aset state ns-macro-aliases-slot (:macro-aliases scope))
-            (aset state ns-refers-slot (:refers scope))
-            (aset state ns-macro-refers-slot (:macro-refers scope))
-            (aset state ns-excluded-slot (name-list (:excluded scope)))
-            (aset state ns-bootstrap-macros-slot (name-list (get scope :bootstrap-macros "")))
-            (aset state ns-reader-names-slot (name-list (get scope :reader-names "")))
-            ;; A published scope comes with the namespace's full list of
-            ;; declarations, which replaces the previous one.
-            (aset state ns-declared-slot #{})
-            (aset state ns-declared-tables-slot [])))
+        ;; The scope is an array in slot order: aliases, macro aliases,
+        ;; refers, macro refers, excluded names and, for core only, bootstrap
+        ;; macros and reader names. Empty parts are nil.
+        (let [part (fn [slot] (if (< slot (alength scope)) (aget scope slot) nil))
+              table (fn [slot] (let [value (part slot)] (if (nil? value) {} value)))]
+          (aset state ns-aliases-slot (table ns-aliases-slot))
+          (aset state ns-macro-aliases-slot (table ns-macro-aliases-slot))
+          (aset state ns-refers-slot (table ns-refers-slot))
+          (aset state ns-macro-refers-slot (table ns-macro-refers-slot))
+          (aset state ns-excluded-slot (name-list (part ns-excluded-slot)))
+          (aset state ns-bootstrap-macros-slot (name-list (part ns-bootstrap-macros-slot)))
+          (aset state ns-reader-names-slot (name-list (part ns-reader-names-slot)))
+          ;; A published scope comes with the namespace's full list of
+          ;; declarations, which replaces the previous one.
+          (aset state ns-declared-slot #{})
+          (aset state ns-declared-tables-slot [])))
       (if (nil? declared)
         nil
         (if (string? declared)

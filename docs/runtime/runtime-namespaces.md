@@ -110,8 +110,10 @@ from `hir/namespaces.rs`, without a host import:
   - Refers are keyed by name string, which is cheaper to look up than a symbol.
 - **Core's own lists.** Core's declarations, its bootstrap macros and the reader
   catalog are large, and only resolution reads them. So core's bootstrap
-  defers publishing them until the first resolution or the next publication,
-  whichever comes first, so names added to core later are kept. The
+  defers publishing them until the first resolution or the next publication
+  to `suss.core`, whichever comes first, so names added to core later are kept.
+  Publishing other namespaces does not run it, so a program that never resolves
+  a symbol at runtime never pays for it. The
   bootstrap-macro and
   reader-name lists omit names core declares, because the declarations are
   checked first and give the same answer.
