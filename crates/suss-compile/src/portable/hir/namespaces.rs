@@ -37,11 +37,38 @@ fn synthetic(span: &Range<usize>, kind: Kind) -> Form {
 fn symbol(span: &Range<usize>, symbol: Symbol) -> Form {
     synthetic(span, Kind::Symbol(symbol))
 }
-/// A name set as one space-separated string: symbol names contain no spaces,
-/// and one string constant is far smaller than a constant per symbol.
+/// Lists longer than this travel as bucketed name tables.
+const SHORT_NAME_LIST: usize = 32;
+/// Core's `name-table-buckets` and `name-table-bucket`: lookups search only
+/// the bucket a name's length and first and last code units select.
+const NAME_TABLE_BUCKETS: usize = 61;
+fn name_table_bucket(name: &[u16]) -> usize {
+    (31 * name.len() + usize::from(name[0]) + 7 * usize::from(name[name.len() - 1])) % NAME_TABLE_BUCKETS
+}
+/// A name list for core's namespace registry. A short list is one string of
+/// names separated by spaces (symbol names contain no spaces). A long one is a
+/// vector of " a b c " bucket strings, which core searches with the runtime's
+/// string search instead of splitting; one string constant per bucket is far
+/// smaller than a constant per symbol.
 fn names(span: &Range<usize>, names: impl IntoIterator<Item = String>) -> Form {
-    let text = names.into_iter().collect::<Vec<_>>().join(" ");
-    synthetic(span, Kind::String(text.encode_utf16().collect()))
+    let mut names: Vec<Vec<u16>> = names
+        .into_iter()
+        .filter(|name| !name.is_empty())
+        .map(|name| name.encode_utf16().collect())
+        .collect();
+    names.sort();
+    names.dedup();
+    if names.len() <= SHORT_NAME_LIST {
+        return synthetic(span, Kind::String(names.join(&[32u16][..])));
+    }
+    let mut buckets = vec![vec![32u16]; NAME_TABLE_BUCKETS];
+    for name in names {
+        let bucket = &mut buckets[name_table_bucket(&name)];
+        bucket.extend(name);
+        bucket.push(32);
+    }
+    let buckets = buckets.into_iter().map(|units| synthetic(span, Kind::String(units))).collect();
+    synthetic(span, Kind::Vector(buckets))
 }
 fn aliases(span: &Range<usize>, aliases: &BTreeMap<String, String>) -> Form {
     synthetic(
@@ -54,6 +81,7 @@ fn aliases(span: &Range<usize>, aliases: &BTreeMap<String, String>) -> Form {
         ),
     )
 }
+/// Refers keyed by name string, which core looks up more cheaply than a symbol.
 fn refers(span: &Range<usize>, refers: &BTreeMap<String, (String, String)>) -> Form {
     synthetic(
         span,
@@ -61,7 +89,10 @@ fn refers(span: &Range<usize>, refers: &BTreeMap<String, (String, String)>) -> F
             refers
                 .iter()
                 .flat_map(|(local, (namespace, name))| {
-                    [symbol(span, Symbol::new(local)), symbol(span, Symbol::namespaced(namespace, name))]
+                    [
+                        synthetic(span, Kind::String(local.encode_utf16().collect())),
+                        symbol(span, Symbol::namespaced(namespace, name)),
+                    ]
                 })
                 .collect(),
         ),
