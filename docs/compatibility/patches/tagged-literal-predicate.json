@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "90f104dd732a9bb8591e35135277d2d321a2c6f7bc19ddf4a5f16e96a87e972c",
+  "replacement": "(def tagged-literal?\n  \"Return true if the value is the data representation of a tagged literal\"\n  (fn [value]\n  (instance? TaggedLiteral value)))",
+  "rationale": "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility and the instance test. Upstream source bytes, copyright and EPL license are retained by the import workflow (#300)."
+}

@@ -303,4 +303,50 @@ fn storage_functions(b: &mut Builder) {
         &[(3, ValType::I32), (1, ValType::F64), (1, VALUE)],
         &body,
     );
+
+    // The one-unit string for an integral Number in 0..=65535, as
+    // String.fromCharCode does for one exact unit. The runtime reader (#300)
+    // decodes escapes with it; any other operand is a language error.
+    let mut body = vec![
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        If(BlockType::Empty),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(NUMBER)),
+        StructGet {
+            struct_type_index: NUMBER,
+            field_index: 0,
+        },
+        LocalTee(1),
+        LocalGet(1),
+        F64Trunc,
+        F64Eq,
+        LocalGet(1),
+        F64Const(0.0.into()),
+        F64Ge,
+        I32And,
+        LocalGet(1),
+        F64Const(65535.0.into()),
+        F64Le,
+        I32And,
+        If(BlockType::Empty),
+        LocalGet(1),
+        I32TruncF64U,
+        ArrayNewFixed {
+            array_type_index: STRING,
+            array_size: 1,
+        },
+        Return,
+        End,
+        End,
+    ];
+    nominal::message_error(&mut body, "Expected a UTF-16 code unit");
+    body.push(Unreachable);
+    b.function_with_locals(
+        "string-from-unit",
+        &[VALUE],
+        &[VALUE],
+        &[(1, ValType::F64)],
+        &body,
+    );
 }

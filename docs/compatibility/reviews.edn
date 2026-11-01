@@ -5348,4 +5348,25 @@
    :status :excluded :adaptation-path nil
    :alternative "Suss-original runtime namespaces (#309): docs/compatibility/bootstrap/exact-integers.sus, compiler publication in crates/suss-compile/src/portable/hir/namespaces.rs; docs/runtime/runtime-namespaces.md"
    :tests ["crates/suss-cli/tests/runtime_namespaces.rs"]}
+  "runtime:TaggedLiteral:11893"
+  {:source-sha256 "dd872b6f497f2a0848a6ba7c04b47c0fdc2ba7c1f228f21edd763e6db2d90396" :visibility :public :arities nil
+   :dependencies ["macro:deftype" "IEquiv/IHash/ILookup/IPrintWithWriter" "pr-str*/str_/pr-writer"]
+   :classification :portable :status :in-progress
+   :rationale "Retain the complete pinned TaggedLiteral declaration: its tag and form fields, equality, hash, keyword lookup and #tag printing. The runtime reader (#300) returns it for tags it does not resolve, as Clojure does with :read-cond :preserve and in unselected conditional branches."
+   :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/read_string.rs"]}
+  "runtime:tagged-literal?:11923"
+  {:source-sha256 "90f104dd732a9bb8591e35135277d2d321a2c6f7bc19ddf4a5f16e96a87e972c" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:TaggedLiteral:11893"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining documentation and the instance test."
+   :adaptation-path "docs/compatibility/patches/tagged-literal-predicate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/read_string.rs"]}
+  "runtime:tagged-literal:11928"
+  {:source-sha256 "f671ceffe005f1611e84e29a667875fa5404b600dd81f674cd3821fe885f86e2" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:TaggedLiteral:11893" "symbol?"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining documentation and the constructor call; the :pre symbol check throws the assertion message explicitly."
+   :adaptation-path "docs/compatibility/patches/tagged-literal.json" :alternative nil
+   :tests ["crates/suss-cli/tests/read_string.rs"]}
 }}

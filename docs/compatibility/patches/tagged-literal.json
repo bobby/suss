@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "f671ceffe005f1611e84e29a667875fa5404b600dd81f674cd3821fe885f86e2",
+  "replacement": "(def tagged-literal\n  \"Construct a data representation of a tagged literal from a\n  tag symbol and a form.\"\n  (fn [tag form]\n  (when-not (symbol? tag)\n    (throw (suss.bootstrap/error \"Assert failed: (symbol? tag)\")))\n  (TaggedLiteral. tag form)))",
+  "rationale": "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility and the constructor call. The :pre condition becomes an explicit symbol check that throws the assertion message, as in other imported :pre adaptations. Upstream source bytes, copyright and EPL license are retained by the import workflow (#300)."
+}

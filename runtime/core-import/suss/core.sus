@@ -8429,6 +8429,49 @@ reduces them without incurring seq initialization"
            a))))))
 
 (def ^boolean realized? "Returns true if a value has been produced for a delay or lazy sequence." (fn [x] (-realized? x)))
+
+(deftype TaggedLiteral [tag form]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+
+  IEquiv
+  (-equiv [this other]
+    (and (instance? TaggedLiteral other)
+         (= tag (.-tag other))
+         (= form (.-form other))))
+
+  IHash
+  (-hash [this]
+    (+ (* 31 (hash tag))
+       (hash form)))
+
+  ILookup
+  (-lookup [this v]
+    (-lookup this v nil))
+  (-lookup [this v not-found]
+    (case v
+      :tag tag
+      :form form
+      not-found))
+
+  IPrintWithWriter
+  (-pr-writer [o writer opts]
+    (-write writer (str_ "#" tag " "))
+    (pr-writer form writer opts)))
+
+(def tagged-literal?
+  "Return true if the value is the data representation of a tagged literal"
+  (fn [value]
+  (instance? TaggedLiteral value)))
+
+(def tagged-literal
+  "Construct a data representation of a tagged literal from a
+  tag symbol and a form."
+  (fn [tag form]
+  (when-not (symbol? tag)
+    (throw (suss.bootstrap/error "Assert failed: (symbol? tag)")))
+  (TaggedLiteral. tag form)))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
@@ -9153,3 +9196,1096 @@ reduces them without incurring seq initialization"
               target (get aliases alias)
               target (if (nil? target) (get (namespace-slot ns ns-macro-aliases-slot) alias) target)]
           (symbol (reader-core-namespace (if (nil? target) namespace (str target))) name))))))
+
+;; Original Suss runtime reader (#300): clojure.core/read-string and
+;; clojure.edn/read-string, written in Suss so that every target can read data
+;; without a compiler or host reader. Lexical rules, messages and error
+;; positions follow the compiler's reader (suss-reader forms.rs) and its EDN
+;; parser (edn.rs); a shared corpus checks that they agree. In code mode,
+;; Clojure's LispReader decides what the compiler's reader leaves to the
+;; analyzer: syntax quote, ::k, #() and record literals are resolved at read
+;; time against *ns*, and reader conditionals need opts.
+;;
+;; The reader works on UTF-16 units with a class table and builds values with
+;; transients. Its state is one array passed to every helper:
+;;   0 source, 1 position, 2 length, 3 EDN mode, 4 conditional mode (nil,
+;;   :allow or :preserve), 5 features, 6 EDN :readers, 7 EDN :default,
+;;   8 the open #() literal's [id arguments] or nil, 9 nesting depth,
+;;   10 depth of unselected conditional branches, 11 queued spliced forms,
+;;   12 depth of delimited collections, 13 the start of the last item read.
+;; A helper returns a value, reader-nothing for a discarded form, or a
+;; ReaderSplice for #?@ items, which the enclosing collection queues.
+(def ^{:dynamic true
+       :doc "When false, reading a record literal fails, as Clojure's *read-eval*
+  does. Suss never evaluates #= forms, whatever its value."}
+  *read-eval* true)
+(def ^{:dynamic true
+       :doc "Map from tag symbols to reader functions, consulted by read-string."}
+  *data-readers* {})
+(def ^{:dynamic true
+       :doc "When no data reader is found for a tag, read-string calls this function,
+  if non-nil, with the tag and the value."}
+  *default-data-reader-fn* nil)
+
+;; Clojure's clojure.lang.ReaderConditional, which read-string returns for a
+;; conditional when :read-cond is :preserve.
+(deftype ReaderConditional [form splicing]
+  IEquiv
+  (-equiv [this other]
+    (if (instance? ReaderConditional other)
+      (if (= form (.-form other)) (= splicing (.-splicing other)) false)
+      false))
+  IHash
+  (-hash [this] (+ (* 31 (hash form)) (hash splicing)))
+  ILookup
+  (-lookup [this k] (-lookup this k nil))
+  (-lookup [this k not-found]
+    (if (keyword-identical? k :form)
+      form
+      (if (keyword-identical? k :splicing?) splicing not-found)))
+  IPrintWithWriter
+  (-pr-writer [this writer opts]
+    (-write writer (if splicing "#?@" "#?"))
+    (pr-writer form writer opts)))
+(def reader-conditional
+  "Construct a data representation of a reader conditional."
+  (fn [form splicing?] (ReaderConditional. form splicing?)))
+(def reader-conditional?
+  "Return true if the value is the data representation of a reader conditional."
+  (fn [value] (instance? ReaderConditional value)))
+
+(deftype ReaderSplice [items])
+(def ^:private reader-nothing (array))
+;; What a collection's item loop sees at its closing delimiter.
+(def ^:private reader-close (array))
+(def ^:private reader-max-depth 128)
+;; Each #() literal's argument names and each auto-gensym share this counter.
+(def ^:private reader-id 0)
+(def ^:private reader-next-id
+  (fn [] (set! reader-id (inc reader-id)) reader-id))
+
+;; Unit classes, built at the first read: 0 a token constituent, 1 whitespace
+;; or a comma, 2 another delimiter.
+(def ^:private reader-classes nil)
+(def ^:private reader-classes!
+  (fn []
+    (let [classes (make-array 128)]
+      (loop [i 0]
+        (if (< i 128) (do (aset classes i 0) (recur (inc i))) nil))
+      (let [spaces (array 9 10 11 12 13 32 44)]
+        (loop [i 0]
+          (if (< i (alength spaces)) (do (aset classes (aget spaces i) 1) (recur (inc i))) nil)))
+      (let [delimiters (array 40 41 91 93 123 125 34 59 96 126 64 94 92)]
+        (loop [i 0]
+          (if (< i (alength delimiters)) (do (aset classes (aget delimiters i) 2) (recur (inc i))) nil)))
+      (set! reader-classes classes))))
+;; Unicode White_Space outside ASCII, as Rust's char::is_whitespace.
+(def ^:private reader-wide-space?
+  (fn [c]
+    (if (< c 8192)
+      (if (== c 133) true (if (== c 160) true (== c 5760)))
+      (if (<= c 8202)
+        true
+        (if (== c 8232) true
+          (if (== c 8233) true
+            (if (== c 8239) true (if (== c 8287) true (== c 12288)))))))))
+(def ^:private reader-delimiter?
+  (fn [c] (if (< c 128) (< 0 (aget reader-classes c)) (reader-wide-space? c))))
+;; The first index at or after i that is not whitespace, a comma or a comment.
+(def ^:private reader-skip
+  (fn [s n i]
+    (let [classes reader-classes]
+      (loop [i i]
+        (if (< i n)
+          (let [c (.charCodeAt s i)]
+            (if (< c 128)
+              (if (== (aget classes c) 1)
+                (recur (inc i))
+                (if (== c 59)
+                  (recur (loop [j (inc i)]
+                           (if (< j n) (if (== (.charCodeAt s j) 10) (inc j) (recur (inc j))) j)))
+                  i))
+              (if (reader-wide-space? c) (recur (inc i)) i)))
+          i)))))
+;; The end of the token that starts at i.
+(def ^:private reader-token-end
+  (fn [s n i]
+    (let [classes reader-classes]
+      (loop [i i]
+        (if (< i n)
+          (let [c (.charCodeAt s i)]
+            (if (< c 128)
+              (if (== (aget classes c) 0) (recur (inc i)) i)
+              (if (reader-wide-space? c) i (recur (inc i)))))
+          i)))))
+(def ^:private reader-index-of
+  (fn [s unit from to]
+    (loop [i from]
+      (if (< i to) (if (== (.charCodeAt s i) unit) i (recur (inc i))) -1))))
+;; The value of an ASCII digit or letter, or 99.
+(def ^:private reader-digit
+  (fn [c]
+    (if (< c 48) 99
+      (if (<= c 57) (- c 48)
+        (if (< c 65) 99
+          (if (<= c 90) (- c 55)
+            (if (< c 97) 99 (if (<= c 122) (- c 87) 99))))))))
+
+;; A reader error: ex-info with Clojure's :reader-exception data and the
+;; 0-based UTF-16 offset, 1-based line and 1-based column of the failing
+;; form or escape. :ex-kind :eof marks input that ended too early.
+(def ^:private reader-fail
+  (fn [st start message eof]
+    (let [s (aget st 0)
+          position (loop [i 0 line 1 column 1]
+                     (if (< i start)
+                       (if (== (.charCodeAt s i) 10)
+                         (recur (inc i) (inc line) 1)
+                         (recur (inc i) line (inc column)))
+                       (array line column)))]
+      (throw (ex-info message {:type :reader-exception
+                               :ex-kind (if eof :eof :reader-error)
+                               :offset start
+                               :line (aget position 0)
+                               :col (aget position 1)})))))
+
+;; The compiler reader's valid_symbol, for s[from, to).
+(def ^:private reader-valid-name?
+  (fn [s from to]
+    (if (< from to)
+      (let [first (.charCodeAt s from)]
+        (if (if (== first 58) true (== (.charCodeAt s (dec to)) 58))
+          false
+          (if (if (== (- to from) 1) (== first 47) false)
+            true
+            (let [slash (reader-index-of s 47 from to)]
+              (if (< slash 0)
+                true
+                (if (if (== slash from) true (== (.charCodeAt s (dec slash)) 58))
+                  false
+                  (let [name (inc slash)]
+                    (if (== name to)
+                      false
+                      (let [c (.charCodeAt s name)]
+                        (if (if (<= 48 c) (<= c 57) false)
+                          false
+                          (if (if (== (- to name) 1) (== c 47) false)
+                            true
+                            (< (reader-index-of s 47 name to) 0))))))))))))
+      false)))
+;; The slash separating namespace and name in a valid s[from, to), or -1.
+(def ^:private reader-name-slash
+  (fn [s from to] (if (== (- to from) 1) -1 (reader-index-of s 47 from to))))
+(def ^:private reader-make-symbol
+  (fn [s from to]
+    (let [text (suss.bootstrap/string-slice s from to) slash (reader-name-slash s from to)]
+      (if (< slash 0)
+        (Symbol. nil text text nil nil)
+        (Symbol. (suss.bootstrap/string-slice s from slash) (suss.bootstrap/string-slice s (inc slash) to)
+                 text nil nil)))))
+(def ^:private reader-make-keyword
+  (fn [s from to]
+    (let [text (suss.bootstrap/string-slice s from to) slash (reader-name-slash s from to)]
+      (if (< slash 0)
+        (Keyword. nil text text nil)
+        (Keyword. (suss.bootstrap/string-slice s from slash) (suss.bootstrap/string-slice s (inc slash) to)
+                  text nil)))))
+;; ::k and ::alias/k, resolved against *ns* as Clojure's reader resolves
+;; them: an alias, or else a loaded namespace of that name.
+(def ^:private reader-auto-keyword
+  (fn [st s start end]
+    (let [from (+ start 2)]
+      (if (reader-valid-name? s from end) nil (reader-fail st start "Invalid keyword" false))
+      (let [slash (reader-name-slash s from end) ns *ns*]
+        (if (< slash 0)
+          (let [namespace (str (.-name ns)) name (suss.bootstrap/string-slice s from end)]
+            (Keyword. namespace name (str namespace "/" name) nil))
+          (let [alias (symbol (suss.bootstrap/string-slice s from slash))
+                target (get (namespace-slot ns ns-aliases-slot) alias)
+                target (if (nil? target)
+                         (let [found (find-ns alias)] (if (nil? found) nil (.-name found)))
+                         target)]
+            (if (nil? target)
+              (reader-fail st start (str "Invalid token: " (suss.bootstrap/string-slice s start end)) false)
+              (let [namespace (str target) name (suss.bootstrap/string-slice s (inc slash) end)]
+                (Keyword. namespace name (str namespace "/" name) nil)))))))))
+
+;; Numbers, as the compiler reader's number: decimal through the runtime's
+;; correctly rounded parser, other radixes exactly.
+(def ^:private reader-hex-digits "0123456789abcdef")
+;; Digits beyond 2^53 in a radix that is not a power of two: convert them
+;; exactly to hexadecimal, which the runtime parser rounds once.
+(def ^:private reader-big-radix
+  (fn [s from to base]
+    (let [limbs (make-array (inc (* 2 (- to from))))]
+      (aset limbs 0 0)
+      (let [used (loop [i from used 1]
+                   (if (< i to)
+                     (recur (inc i)
+                            (loop [j 0 carry (reader-digit (.charCodeAt s i))]
+                              (if (< j used)
+                                (let [x (+ (* (aget limbs j) base) carry)
+                                      high (suss.bootstrap/f64-floor (/ x 16))]
+                                  (aset limbs j (- x (* high 16)))
+                                  (recur (inc j) high))
+                                (loop [used used carry carry]
+                                  (if (< 0 carry)
+                                    (let [high (suss.bootstrap/f64-floor (/ carry 16))]
+                                      (aset limbs used (- carry (* high 16)))
+                                      (recur (inc used) high))
+                                    used)))))
+                     used))]
+        (suss.bootstrap/f64-coerce
+         (loop [j (dec used) text "0x"]
+           (if (< j 0)
+             text
+             (let [digit (aget limbs j)]
+               (recur (dec j) (suss.bootstrap/concat-string
+                               text (suss.bootstrap/string-slice reader-hex-digits digit (inc digit))))))))))))
+(def ^:private reader-radix-number
+  (fn [st start s from to base negative]
+    (if (< from to) nil (reader-fail st start "Invalid numeric digits" false))
+    (loop [i from]
+      (if (< i to)
+        (if (< (reader-digit (.charCodeAt s i)) base)
+          (recur (inc i))
+          (reader-fail st start "Invalid numeric digits" false))
+        nil))
+    (let [value (if (== base 16)
+                  (suss.bootstrap/f64-coerce (suss.bootstrap/concat-string "0x" (suss.bootstrap/string-slice s from to)))
+                  (if (== base 8)
+                    (suss.bootstrap/f64-coerce (suss.bootstrap/concat-string "0o" (suss.bootstrap/string-slice s from to)))
+                    (if (== base 2)
+                      (suss.bootstrap/f64-coerce (suss.bootstrap/concat-string "0b" (suss.bootstrap/string-slice s from to)))
+                      ;; Exact while below 2^47, where value * 36 + 35 stays exact.
+                      (loop [i from value 0]
+                        (if (< i to)
+                          (if (< value 140737488355328)
+                            (recur (inc i) (+ (* value base) (reader-digit (.charCodeAt s i))))
+                            (reader-big-radix s from to base))
+                          value)))))]
+      (if negative (* -1 value) value))))
+(def ^:private reader-number
+  (fn [st start s end]
+    (let [last (.charCodeAt s (dec end))]
+      (if (if (<= 0 (reader-index-of s 47 start end)) true (if (== last 78) true (== last 77)))
+        (reader-fail st start "Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers" false)
+        (let [c (.charCodeAt s start)
+              negative (== c 45)
+              d (if (if negative true (== c 43)) (inc start) start)
+              x (if (< (inc d) end) (.charCodeAt s (inc d)) 0)]
+          (if (if (== (.charCodeAt s d) 48) (if (== x 120) true (== x 88)) false)
+            (reader-radix-number st start s (+ d 2) end 16 negative)
+            (let [r (loop [i d]
+                      (if (< i end)
+                        (let [u (.charCodeAt s i)] (if (if (== u 114) true (== u 82)) i (recur (inc i))))
+                        -1))]
+              (if (<= 0 r)
+                ;; Rust's u32 parse of the radix: decimal digits only.
+                (let [base (loop [i d base 0]
+                             (if (< i r)
+                               (let [digit (reader-digit (.charCodeAt s i))]
+                                 (if (if (< digit 10) (< base 4294967296) false)
+                                   (recur (inc i) (+ (* base 10) digit))
+                                   -1))
+                               (if (if (< d r) (< base 4294967296) false) base -1)))]
+                  (if (< base 0)
+                    (reader-fail st start "Invalid numeric radix" false)
+                    (if (if (<= 2 base) (<= base 36) false)
+                      (reader-radix-number st start s (inc r) end base negative)
+                      (reader-fail st start "Numeric radix must be between 2 and 36" false))))
+                (let [digits (loop [i d] (if (< i end) (if (< (reader-digit (.charCodeAt s i)) 10) (recur (inc i)) false) true))]
+                  (if (if digits (if (< 1 (- end d)) (== (.charCodeAt s d) 48) false) false)
+                    (reader-radix-number st start s (inc d) end 8 negative)
+                    (let [plain (loop [i d dotted false]
+                                  (if (< i end)
+                                    (let [u (.charCodeAt s i)]
+                                      (if (if (<= 48 u) (<= u 57) false)
+                                        (recur (inc i) dotted)
+                                        (if (if (== u 46) true (if (== u 101) true (== u 69)))
+                                          (recur (inc i) true)
+                                          (if (if (== u 43) true (== u 45)) (recur (inc i) dotted) -1))))
+                                    (if dotted 1 0)))]
+                      (if (< plain 0)
+                        (reader-fail st start "Invalid ordinary numeric literal" false)
+                        (let [value (suss.bootstrap/f64-coerce (suss.bootstrap/string-slice s start end))]
+                          (if (== value value)
+                            ;; The pinned ClojureScript reader spells either signed
+                            ;; integer zero as +0; floating syntax keeps the sign.
+                            (if (if (== value 0) (== plain 0) false) 0 value)
+                            (reader-fail st start "Invalid ordinary numeric literal" false)))))))))))))))
+
+;; Strings and characters, decoded as the compiler's reader decodes them.
+(def ^:private reader-radix-unit
+  ;; Rust's u16::from_str_radix, which accepts a leading +.
+  (fn [st start s from to radix message]
+    (let [from (if (if (< from to) (== (.charCodeAt s from) 43) false) (inc from) from)]
+      (if (< from to) nil (reader-fail st start message false))
+      (loop [i from value 0]
+        (if (< i to)
+          (let [digit (reader-digit (.charCodeAt s i))]
+            (if (< digit radix)
+              (let [value (+ (* value radix) digit)]
+                (if (< 65535 value) (reader-fail st start message false) (recur (inc i) value)))
+              (reader-fail st start message false)))
+          value)))))
+;; The unit of the escape whose backslash is at i; slot 1 is left after it.
+(def ^:private reader-escape
+  (fn [st s n i]
+    (let [j (inc i)]
+      (if (< j n)
+        (let [e (.charCodeAt s j)]
+          (aset st 1 (inc j))
+          (cond
+            (== e 110) 10
+            (== e 116) 9
+            (== e 34) 34
+            (== e 92) 92
+            (== e 114) 13
+            (== e 98) 8
+            (== e 102) 12
+            (== e 117)
+            (loop [k (inc j) unit 0]
+              (if (< k (+ j 5))
+                (let [digit (if (< k n) (reader-digit (.charCodeAt s k)) 99)]
+                  (aset st 1 (if (< k n) (inc k) n))
+                  (if (< digit 16)
+                    (recur (inc k) (+ (* unit 16) digit))
+                    (reader-fail st i "Unicode escape requires four hexadecimal digits" false)))
+                unit))
+            (if (<= 48 e) (<= e 55) false)
+            (loop [k (inc j) unit (- e 48) count 1]
+              (let [c (if (< k n) (.charCodeAt s k) -1)]
+                (if (if (< count 3) (if (<= 48 c) (<= c 55) false) false)
+                  (do (aset st 1 (inc k)) (recur (inc k) (+ (* unit 8) (- c 48)) (inc count)))
+                  ;; Octal escapes stop at every reader macro, including the
+                  ;; non-terminating quote and dispatch.
+                  (if (if (< count 3)
+                        (if (<= 0 c) (if (reader-delimiter? c) false (if (== c 35) false (if (== c 39) false true))) false)
+                        false)
+                    (do (aset st 1 (inc k)) (reader-fail st i "Invalid octal escape digit" false))
+                    (if (< 255 unit) (reader-fail st i "Octal escape exceeds one byte" false) unit)))))
+            :else (reader-fail st i "Invalid string escape" false)))
+        (do (aset st 1 j) (reader-fail st i "Invalid string escape" false))))))
+(def ^:private reader-string
+  (fn [st s n start]
+    (let [first (inc start)]
+      (loop [i first text "" segment first]
+        (if (< i n)
+          (let [c (.charCodeAt s i)]
+            (if (== c 34)
+              (do (aset st 1 (inc i))
+                  (if (== segment first)
+                    (suss.bootstrap/string-slice s first i)
+                    (suss.bootstrap/concat-string text (suss.bootstrap/string-slice s segment i))))
+              (if (== c 92)
+                (let [unit (reader-escape st s n i) next (aget st 1)]
+                  (recur next
+                         (suss.bootstrap/concat-string
+                          (suss.bootstrap/concat-string text (suss.bootstrap/string-slice s segment i))
+                          (suss.bootstrap/string-from-unit unit))
+                         next))
+                (recur (inc i) text segment))))
+          (reader-fail st start "Unclosed string" true))))))
+(def ^:private reader-character
+  (fn [st s n start]
+    (let [i (inc start)]
+      (if (< i n) nil (do (aset st 1 i) (reader-fail st start "Missing character literal" false)))
+      (let [c (.charCodeAt s i)]
+        (if (reader-delimiter? c)
+          (do (aset st 1 (inc i)) (suss.bootstrap/string-slice s i (inc i)))
+          (let [end (reader-token-end s n i)
+                length (- end i)
+                token (suss.bootstrap/string-slice s i end)]
+            (aset st 1 end)
+            (let [unit (cond
+                         (= token "newline") 10
+                         (= token "return") 13
+                         (= token "tab") 9
+                         (= token "space") 32
+                         (= token "backspace") 8
+                         (= token "formfeed") 12
+                         (if (== c 117) (== length 5) false)
+                         (reader-radix-unit st start s (inc i) end 16 "Invalid Unicode character literal")
+                         (if (== c 111) (if (<= 2 length) (<= length 4) false) false)
+                         (let [unit (reader-radix-unit st start s (inc i) end 8 "Invalid octal character literal")]
+                           (if (< 255 unit) (reader-fail st start "Octal character exceeds one byte" false) unit))
+                         (== length 1) c
+                         :else (reader-fail st start "Character literal requires one UTF-16 unit" false))]
+              (if (if (<= 55296 unit) (<= unit 57343) false)
+                (reader-fail st start "Surrogate character literal is unsupported; use a string" false)
+                (suss.bootstrap/string-from-unit unit)))))))))
+
+;; Symbols the reader builds forms with.
+(def ^:private reader-quote-symbol 'quote)
+(def ^:private reader-var-symbol 'var)
+(def ^:private reader-fn-symbol 'fn*)
+(def ^:private reader-amp-symbol '&)
+(def ^:private reader-js-obj-symbol 'js-obj)
+(def ^:private reader-deref-symbol 'clojure.core/deref)
+(def ^:private reader-unquote-symbol 'clojure.core/unquote)
+(def ^:private reader-unquote-splicing-symbol 'clojure.core/unquote-splicing)
+(def ^:private reader-list-symbol 'clojure.core/list)
+(def ^:private reader-vec-symbol 'clojure.core/vec)
+(def ^:private reader-apply-symbol 'clojure.core/apply)
+(def ^:private reader-array-map-symbol 'clojure.core/array-map)
+(def ^:private reader-hash-map-symbol 'clojure.core/hash-map)
+(def ^:private reader-hash-set-symbol 'clojure.core/hash-set)
+(def ^:private reader-into-symbol 'clojure.core/into)
+(def ^:private reader-with-meta-symbol 'clojure.core/with-meta)
+(def ^:private reader-concat-symbol 'clojure.core/concat)
+(def ^:private reader-seq-symbol 'clojure.core/seq)
+(def ^:private reader-sequence-symbol 'clojure.core/sequence)
+
+(def ^:private read-form nil)
+;; The next form that is not discarded, taking queued spliced forms first.
+(def ^:private reader-required
+  (fn [st]
+    (let [s (aget st 0) n (aget st 2)]
+      (loop []
+        (let [pending (aget st 11)]
+          (if (nil? pending)
+            (let [i (reader-skip s n (aget st 1))]
+              (aset st 1 i)
+              (if (< i n)
+                (let [value (read-form st)]
+                  (if (identical? value reader-nothing)
+                    (recur)
+                    (if (instance? ReaderSplice value)
+                      (do (aset st 11 (seq (.-items value))) (recur))
+                      value)))
+                (reader-fail st i "Expected a form before end of input" true)))
+            (do (aset st 11 (next pending)) (first pending))))))))
+(def ^:private reader-list
+  (fn [items]
+    (loop [i (dec (count items)) list ()]
+      (if (< i 0) list (recur (dec i) (-conj list (nth items i)))))))
+;; Items up to the closing unit, added to the transient items: kind 0 adds
+;; each, kind 1 rejects duplicates, as a set literal does.
+;; Collections. read-form and reader-items are the two frames of every
+;; nesting level, so both keep few values: a Wasm frame holds a slot for
+;; each value its function keeps across a call.
+(def ^:private reader-unclosed
+  (fn [st start close]
+    (reader-fail st start (str "Unclosed collection; expected " (suss.bootstrap/string-from-unit close)) true)))
+(def ^:private reader-duplicate
+  (fn [st at key] (reader-fail st at (str "Duplicate key: " (pr-str key)) false)))
+(def ^:private reader-add-unique
+  (fn [st items value]
+    (let [size (count items) items (conj! items value)]
+      (if (== size (count items)) (reader-duplicate st (aget st 13) value) items))))
+;; The next item of a collection, or reader-close at its closing unit:
+;; queued spliced forms first, then forms that are not discarded. Slot 13
+;; is left at the item's start.
+(def ^:private reader-item
+  (fn [st start close]
+    (loop []
+      (let [pending (aget st 11)]
+        (if (nil? pending)
+          (let [s (aget st 0) i (reader-skip s (aget st 2) (aget st 1))]
+            (aset st 1 i)
+            (aset st 13 i)
+            (if (< i (aget st 2))
+              (if (== (.charCodeAt s i) close)
+                (do (aset st 1 (inc i)) reader-close)
+                (let [value (read-form st)]
+                  (if (identical? value reader-nothing)
+                    (recur)
+                    (if (instance? ReaderSplice value) (do (aset st 11 (seq (.-items value))) (recur)) value))))
+              (reader-unclosed st start close)))
+          (do (aset st 11 (next pending)) (first pending)))))))
+;; Items up to the closing unit, added to the transient items: kind 0 adds
+;; each, kind 1 rejects duplicates, as a set literal does. Fetching inline
+;; keeps this and read-form the only frames of a nesting level.
+(def ^:private reader-items
+  (fn [st start close kind items]
+    (aset st 12 (inc (aget st 12)))
+    (loop [items items]
+      (let [pending (aget st 11)
+            i (if (nil? pending) (reader-skip (aget st 0) (aget st 2) (aget st 1)) -1)
+            value (if (nil? pending)
+                    (if (< i (aget st 2))
+                      (if (== (.charCodeAt (aget st 0) i) close)
+                        reader-close
+                        (do (aset st 1 i) (aset st 13 i) (read-form st)))
+                      (reader-unclosed st start close))
+                    (do (aset st 11 (next pending)) (first pending)))]
+        (cond
+          (identical? value reader-close) (do (aset st 1 (inc i)) (aset st 12 (dec (aget st 12))) items)
+          (identical? value reader-nothing) (recur items)
+          (instance? ReaderSplice value) (do (aset st 11 (seq (.-items value))) (recur items))
+          (== kind 0) (recur (conj! items value))
+          :else (recur (reader-add-unique st items value)))))))
+(def ^:private reader-map
+  (fn [st start]
+    (aset st 12 (inc (aget st 12)))
+    (loop [entries (transient {}) key reader-nothing at start]
+      (let [value (reader-item st start 125)]
+        (cond
+          (identical? value reader-close)
+          (do (aset st 12 (dec (aget st 12)))
+              (if (identical? key reader-nothing)
+                (persistent! entries)
+                (reader-fail st start "Map requires an even number of forms" false)))
+          (identical? key reader-nothing) (recur entries value (aget st 13))
+          :else (let [size (count entries) entries (assoc! entries key value)]
+                  (if (== size (count entries))
+                    (reader-duplicate st at key)
+                    (recur entries reader-nothing at))))))))
+
+;; ^metadata target: the outer metadata wins over the target's own, as
+;; Clojure's reader merges it last; metadata on the metadata map is dropped.
+(def ^:private reader-metadata
+  (fn [st start]
+    (aset st 1 (inc start))
+    (let [at (reader-skip (aget st 0) (aget st 2) (inc start))
+          metadata (reader-required st)
+          entries (cond
+                    (map? metadata) metadata
+                    (keyword? metadata) {metadata true}
+                    (if (symbol? metadata) true (string? metadata)) {:tag metadata}
+                    :else (reader-fail st at "Metadata must be a keyword, symbol, string or map" false))
+          target-at (reader-skip (aget st 0) (aget st 2) (aget st 1))
+          target (reader-required st)]
+      (if (implements? IWithMeta target)
+        nil
+        (reader-fail st target-at "Metadata requires a symbol or collection" false))
+      (if (zero? (count entries))
+        target
+        (let [existing (meta target)]
+          (with-meta target (reduce-kv assoc (if (nil? existing) {} existing) entries)))))))
+
+;; Tags. A tag whose name contains a dot is a record literal in code mode,
+;; as in Clojure. defrecord registers each record's factories under the
+;; name the printer writes.
+(def ^:private record-readers {})
+(def ^:private register-record-reader!
+  (fn [name positional fields from-map]
+    (set! record-readers (assoc record-readers name (array positional fields from-map)))
+    nil))
+(def ^:private reader-record
+  (fn [st start tag value]
+    (if *read-eval*
+      nil
+      (reader-fail st start "Record construction syntax can only be used when *read-eval* == true" false))
+    (let [name (str tag) entry (get record-readers name)]
+      (if (nil? entry) (reader-fail st start (str "No record type for tag " name) false) nil)
+      (cond
+        (vector? value)
+        (if (== (count value) (aget entry 1))
+          (apply (aget entry 0) value)
+          (reader-fail st start (str "Unexpected number of constructor arguments to " name ": got " (count value)) false))
+        (map? value)
+        (do (reduce-kv (fn [checked key item]
+                         (if (keyword? key)
+                           checked
+                           (reader-fail st start (str "Unreadable defrecord form: key must be a keyword, got " (pr-str key)) false)))
+                       nil value)
+            ((aget entry 2) value))
+        :else (reader-fail st start (str "Unreadable constructor form starting with \"#" name "\"") false)))))
+(def ^:private reader-queue
+  (fn [st start value]
+    (if (vector? value)
+      (into (.-EMPTY PersistentQueue) value)
+      (reader-fail st start "Queue literal expects a vector for its elements." false))))
+(def ^:private reader-queue-tag?
+  (fn [tag] (if (nil? (.-ns tag)) (= (.-name tag) "queue") false)))
+(def ^:private reader-tagged
+  (fn [st s n start]
+    (let [end (reader-token-end s n (inc start)) edn (aget st 3)]
+      (aset st 1 end)
+      (if (if edn
+            (let [text (suss.bootstrap/string-slice s (inc start) end)]
+              (if (= text "nil") true (if (= text "true") true (= text "false"))))
+            false)
+        (reader-fail st start "Reader tag must be a symbol" false)
+        nil)
+      (if (reader-valid-name? s (inc start) end) nil (reader-fail st start "Invalid tag" false))
+      (let [tag (reader-make-symbol s (inc start) end)
+            value (reader-required st)]
+        (if edn
+          (let [reader (get (aget st 6) tag)]
+            (cond
+              (some? reader) (reader value)
+              (reader-queue-tag? tag) (reader-queue st start value)
+              (some? (aget st 7)) ((aget st 7) tag value)
+              :else (reader-fail st start (str "No reader function for tag " tag) false)))
+          (if (if (< 0 (aget st 10)) true (keyword-identical? (aget st 4) :preserve))
+            (tagged-literal tag value)
+            (if (<= 0 (suss.bootstrap/string-index-of (.-name tag) "."))
+              (reader-record st start tag value)
+              (let [reader (get *data-readers* tag)]
+                (cond
+                  (some? reader) (reader value)
+                  (reader-queue-tag? tag) (reader-queue st start value)
+                  (some? *default-data-reader-fn*) (*default-data-reader-fn* tag value)
+                  :else (reader-fail st start (str "No reader function for tag " tag) false))))))))))
+;; #js {...} reads as the compiler's reader reads it: a js-obj call.
+(def ^:private reader-js
+  (fn [st s n start]
+    (let [i (reader-skip s n (+ start 3))]
+      (if (if (< i n) (== (.charCodeAt s i) 123) false)
+        nil
+        (do (aset st 1 (if (< i n) (inc i) n)) (reader-fail st start "#js requires a map literal" false)))
+      (aset st 1 (inc i))
+      (let [entries (persistent! (reader-items st start 125 0 (transient [])))
+            size (count entries)]
+        (if (odd? size) (reader-fail st start "#js map requires an even number of forms" false) nil)
+        (loop [k 0 call (transient [reader-js-obj-symbol])]
+          (if (< k size)
+            (let [key (nth entries k)
+                  key (cond
+                        (keyword? key) (if (nil? (namespace key)) (name key) (str (namespace key) "/" (name key)))
+                        (symbol? key) (str key)
+                        (string? key) key
+                        :else (reader-fail st start "#js keys must be keywords, symbols, or strings" false))]
+              (recur (+ k 2) (conj! (conj! call key) (nth entries (inc k)))))
+            (reader-list (persistent! call))))))))
+
+;; Reader conditionals, as Clojure reads them with :read-cond. :allow reads
+;; the first clause whose feature is enabled, or nothing; the other clauses
+;; are read with their tags left unresolved. :preserve returns a
+;; ReaderConditional.
+(def ^:private reader-select
+  (fn [st s n start]
+    (let [features (aget st 5)]
+      (loop [selected reader-nothing]
+        (let [pending (aget st 11)
+              i (if (nil? pending) (reader-skip s n (aget st 1)) (aget st 1))
+              feature (if (nil? pending)
+                        (if (< i n)
+                          (if (== (.charCodeAt s i) 41)
+                            (do (aset st 1 (inc i)) reader-close)
+                            (do (aset st 1 i) (read-form st)))
+                          (reader-fail st start "Unclosed collection; expected )" true))
+                        (do (aset st 11 (next pending)) (first pending)))]
+          (cond
+            (identical? feature reader-close) selected
+            (identical? feature reader-nothing) (recur selected)
+            (instance? ReaderSplice feature) (do (aset st 11 (seq (.-items feature))) (recur selected))
+            (not (keyword? feature)) (reader-fail st i "Reader feature must be a keyword" false)
+            :else
+            (let [j (if (nil? (aget st 11)) (reader-skip s n (aget st 1)) -1)]
+              (cond
+                (<= n j) (reader-fail st start "Unclosed collection; expected )" true)
+                (if (<= 0 j) (== (.charCodeAt s j) 41) false)
+                (reader-fail st start "Reader conditional requires feature/form pairs" false)
+                (if (identical? selected reader-nothing) (contains? features feature) false)
+                (recur (reader-required st))
+                :else (do (aset st 10 (inc (aget st 10)))
+                          (reader-required st)
+                          (aset st 10 (dec (aget st 10)))
+                          (recur selected))))))))))
+(def ^:private reader-conditional-form
+  (fn [st s n start]
+    (let [mode (aget st 4)]
+      (if (nil? mode)
+        (do (aset st 1 (+ start 2)) (reader-fail st start "Conditional read not allowed" false))
+        nil)
+      (let [at (+ start 2)
+            splicing (if (< at n) (== (.charCodeAt s at) 64) false)
+            at (if splicing (inc at) at)]
+        (if (if splicing (== (aget st 12) 0) false)
+          (do (aset st 1 at) (reader-fail st start "Splicing conditional requires a delimited collection" false))
+          nil)
+        (let [open (reader-skip s n at)]
+          (if (if (< open n) (== (.charCodeAt s open) 40) false)
+            nil
+            (do (aset st 1 (if (< open n) (inc open) n))
+                (reader-fail st start "Reader conditional requires a list" false)))
+          (aset st 1 (inc open))
+          (if (keyword-identical? mode :preserve)
+            (reader-conditional (reader-list (persistent! (reader-items st start 41 0 (transient [])))) splicing)
+            (let [selected (reader-select st s n start)]
+              (if (if splicing (not (identical? selected reader-nothing)) false)
+                (if (sequential? selected)
+                  (ReaderSplice. selected)
+                  (reader-fail st start "Splicing conditional requires a sequential value" false))
+                selected))))))))
+
+;; #() literals, as the compiler's reader expands them: p1__ID#, ...,
+;; rest__ID#, with one ID per literal.
+(def ^:private reader-argument-symbol
+  (fn [literal index]
+    (let [arguments (aget literal 1) existing (get arguments index)]
+      (if (some? existing)
+        existing
+        (let [generated (symbol (str (if (== index -1) "rest" (str "p" index)) "__" (aget literal 0) "#"))]
+          (aset literal 1 (assoc arguments index generated))
+          generated)))))
+(def ^:private reader-anonymous
+  (fn [st s n start]
+    (aset st 1 (+ start 2))
+    (if (some? (aget st 8))
+      (reader-fail st start "Nested anonymous function literals are not allowed" false)
+      nil)
+    (let [literal (array (reader-next-id) {})]
+      (aset st 8 literal)
+      (let [body (persistent! (reader-items st start 41 0 (transient [])))]
+        (aset st 8 nil)
+        (let [highest (reduce-kv (fn [highest index symbol] (if (< highest index) index highest)) 0 (aget literal 1))
+              parameters (loop [index 1 parameters (transient [])]
+                           (if (<= index highest)
+                             (recur (inc index) (conj! parameters (reader-argument-symbol literal index)))
+                             parameters))
+              parameters (if (contains? (aget literal 1) -1)
+                           (conj! (conj! parameters reader-amp-symbol) (reader-argument-symbol literal -1))
+                           parameters)]
+          (list reader-fn-symbol (persistent! parameters) (reader-list body)))))))
+;; The compiler reader's anonymous_index_value for s[from, to).
+(def ^:private reader-anonymous-index
+  (fn [st s from to start]
+    (let [invalid (fn [] (reader-fail st start "Invalid anonymous argument index" false))
+          to (if (if (< from to) (== (.charCodeAt s (dec to)) 78) false) (dec to) to)
+          c (if (< from to) (.charCodeAt s from) -1)
+          negative (== c 45)
+          from (if (if negative true (== c 43)) (inc from) from)
+          x (if (< (inc from) to) (.charCodeAt s (inc from)) -1)
+          hex (if (if (< from to) (== (.charCodeAt s from) 48) false) (if (== x 120) true (== x 88)) false)
+          r (if hex
+              -1
+              (loop [k from]
+                (if (< k to)
+                  (let [u (.charCodeAt s k)] (if (if (== u 114) true (== u 82)) k (recur (inc k))))
+                  -1)))
+          radix (cond
+                  hex 16
+                  (<= 0 r) (loop [k from value 0]
+                             (if (< k r)
+                               (let [digit (reader-digit (.charCodeAt s k))]
+                                 (if (if (< digit 10) (< value 4294967296) false)
+                                   (recur (inc k) (+ (* value 10) digit))
+                                   0))
+                               (if (< from r) value 0)))
+                  (if (< 1 (- to from)) (== (.charCodeAt s from) 48) false) 8
+                  :else 10)
+          from (cond hex (+ from 2) (<= 0 r) (inc r) (== radix 8) (inc from) :else from)]
+      (if (if (<= 2 radix) (<= radix 36) false) nil (invalid))
+      (if (< from to) nil (invalid))
+      (let [value (loop [k from value 0]
+                    (if (< k to)
+                      (let [digit (reader-digit (.charCodeAt s k))]
+                        (if (< digit radix) (recur (inc k) (+ (* value radix) digit)) (invalid)))
+                      value))]
+        (if (< 9223372036854775807 value) (invalid) nil)
+        (let [value (if negative (* -1 value) value)]
+          (if (if (<= -2147483648 value) (<= value 2147483647) false)
+            value
+            (reader-fail st start "Anonymous argument index is not representable as i32" false)))))))
+(def ^:private reader-argument
+  (fn [st s n start]
+    (let [i (inc start)
+          c (if (< i n) (.charCodeAt s i) -1)
+          index (cond
+                  (if (< c 0) true (if (reader-delimiter? c) true (== c 39))) (do (aset st 1 i) 1)
+                  (== c 38) (do (aset st 1 (inc i)) -1)
+                  (== c 35)
+                  (do (aset st 1 i)
+                      (let [value (reader-required st)]
+                        (if (number? value)
+                          (if (if (== value (suss.bootstrap/f64-floor value))
+                                (if (<= -2147483648 value) (<= value 2147483647) false)
+                                false)
+                            value
+                            (reader-fail st start "Invalid anonymous argument index" false))
+                          (reader-fail st start "Anonymous argument index requires an integer" false))))
+                  :else (let [end (reader-token-end s n i)]
+                          (aset st 1 end)
+                          (reader-anonymous-index st s i end start)))]
+      (reader-argument-symbol (aget st 8) index))))
+
+;; Syntax quote, expanded at read time as the compiler's syntax quote
+;; (syntax_quote.rs, after tools.reader) expands it, against *ns*.
+(def ^:private reader-specials
+  " if let* letfn* do fn* quote var def loop* recur throw try catch finally new set! . monitor-enter monitor-exit & ")
+(def ^:private reader-position-keys " line column end-line end-column file source ")
+(def ^:private reader-syntax-quote nil)
+;; x from (clojure.core/unquote x), or, when splicing, from
+;; (clojure.core/unquote-splicing x); otherwise reader-nothing.
+(def ^:private reader-unquoted
+  (fn [form splicing]
+    (if (seq? form)
+      (let [head (first form) more (next form)]
+        (if (if (symbol? head) (if (some? more) (nil? (next more)) false) false)
+          (if (if (= (.-ns head) "clojure.core")
+                (= (.-name head) (if splicing "unquote-splicing" "unquote"))
+                false)
+            (first more)
+            reader-nothing)
+          reader-nothing))
+      reader-nothing)))
+(def ^:private reader-quote-name
+  (fn [form gensyms]
+    (let [name (.-name form) length (.-length name)]
+      (if (nil? (.-ns form))
+        (cond
+          (<= 0 (suss.bootstrap/string-index-of reader-specials (str " " name " "))) form
+          (if (< 0 length) (== (.charCodeAt name (dec length)) 35) false)
+          (let [existing (get (aget gensyms 0) name)]
+            (if (some? existing)
+              existing
+              (let [generated (symbol (str (suss.bootstrap/string-slice name 0 (dec length))
+                                           "__" (reader-next-id) "__auto__"))]
+                (aset gensyms 0 (assoc (aget gensyms 0) name generated))
+                generated)))
+          (if (< 0 length) (== (.charCodeAt name 0) 46) false) form
+          :else (reader-resolve-symbol form))
+        (reader-resolve-symbol form)))))
+(def ^:private reader-quote-items
+  (fn [st start items gensyms]
+    (loop [items (seq items) chunks (transient [reader-concat-symbol])]
+      (if items
+        (let [item (first items)
+              spliced (reader-unquoted item true)
+              chunk (if (identical? spliced reader-nothing)
+                      (let [unquoted (reader-unquoted item false)]
+                        (list reader-list-symbol
+                              (if (identical? unquoted reader-nothing)
+                                (reader-syntax-quote st start item gensyms)
+                                unquoted)))
+                      spliced)]
+          (recur (next items) (conj! chunks chunk)))
+        (list reader-sequence-symbol (list reader-seq-symbol (reader-list (persistent! chunks))))))))
+(def ^:private reader-meaningful-meta?
+  (fn [metadata]
+    (reduce-kv (fn [found key value]
+                 (if found
+                   true
+                   (if (if (keyword? key) (nil? (namespace key)) false)
+                     (< (suss.bootstrap/string-index-of reader-position-keys (str " " (name key) " ")) 0)
+                     true)))
+               false metadata)))
+(set! reader-syntax-quote
+  (fn [st start form gensyms]
+    (let [unquoted (reader-unquoted form false)
+          result
+          (cond
+            (not (identical? unquoted reader-nothing)) unquoted
+            (not (identical? (reader-unquoted form true) reader-nothing))
+            (reader-fail st start "Unquote splicing requires a collection element" false)
+            (symbol? form) (list reader-quote-symbol (reader-quote-name form gensyms))
+            (instance? PersistentQueue form)
+            (list reader-into-symbol (list reader-quote-symbol (.-EMPTY PersistentQueue))
+                  (reader-quote-items st start form gensyms))
+            (record? form) form
+            (seq? form) (if (empty? form) (list reader-list-symbol) (reader-quote-items st start form gensyms))
+            (vector? form) (list reader-vec-symbol (reader-quote-items st start form gensyms))
+            (map? form)
+            (list reader-apply-symbol
+                  (if (<= 16 (count form)) reader-hash-map-symbol reader-array-map-symbol)
+                  (reader-quote-items st start
+                                      (persistent! (reduce-kv (fn [forms key value] (conj! (conj! forms key) value))
+                                                              (transient []) form))
+                                      gensyms))
+            (set? form) (list reader-apply-symbol reader-hash-set-symbol (reader-quote-items st start form gensyms))
+            (if (nil? form) true (if (identical? form true) true (if (identical? form false) true (if (number? form) true (if (string? form) true (keyword? form))))))
+            form
+            (tagged-literal? form) (reader-fail st start "Unsupported tagged syntax quote data" false)
+            :else (reader-fail st start "Unsupported unresolved syntax quote data" false))
+          metadata (meta form)]
+      (if (if (some? metadata) (reader-meaningful-meta? metadata) false)
+        (list reader-with-meta-symbol result (reader-syntax-quote st start metadata gensyms))
+        result))))
+
+;; Forms. read-form is on the path of every nested form, so it stays small:
+;; a Wasm frame holds a local for every value its function computes, and the
+;; reader's depth bound depends on the frames of each nesting level. It and
+;; # dispatch select a handler (fn [st start]) from a table indexed by the
+;; next unit; index 128 stands for every unit outside ASCII.
+(def ^:private reader-letter?
+  (fn [c]
+    (if (< c 128)
+      (if (if (<= 65 c) (<= c 90) false) true (if (<= 97 c) (<= c 122) false))
+      (not (reader-wide-space? c)))))
+(def ^:private reader-not-edn
+  (fn [st start width message]
+    (aset st 1 (+ start width))
+    (reader-fail st start message false)))
+(def ^:private reader-symbolic
+  (fn [st start]
+    (let [s (aget st 0) end (reader-token-end s (aget st 2) (+ start 2))
+          token (suss.bootstrap/string-slice s (+ start 2) end)]
+      (aset st 1 end)
+      (cond
+        (= token "Inf") ##Inf
+        (= token "-Inf") ##-Inf
+        (= token "NaN") ##NaN
+        :else (reader-fail st start "Unknown symbolic numeric literal" false)))))
+(def ^:private reader-tag-or-js
+  (fn [st start]
+    (let [s (aget st 0) n (aget st 2)]
+      (if (if (aget st 3)
+            false
+            (if (== (.charCodeAt s (inc start)) 106)
+              (if (< (+ start 2) n)
+                (if (== (.charCodeAt s (+ start 2)) 115)
+                  (if (< (+ start 3) n) (reader-delimiter? (.charCodeAt s (+ start 3))) true)
+                  false)
+                false)
+              false))
+        (reader-js st s n start)
+        (reader-tagged st s n start)))))
+(def ^:private reader-token
+  (fn [st start]
+    (let [s (aget st 0) n (aget st 2) c (.charCodeAt s start) end (reader-token-end s n start) length (- end start)]
+      (aset st 1 end)
+      (cond
+        (== c 58)
+        (if (if (< 1 length) (== (.charCodeAt s (inc start)) 58) false)
+          (if (aget st 3)
+            (reader-fail st start "Auto-resolved keywords require namespace resolution" false)
+            (reader-auto-keyword st s start end))
+          (if (reader-valid-name? s (inc start) end)
+            (reader-make-keyword s (inc start) end)
+            (reader-fail st start "Invalid keyword" false)))
+        (if (if (<= 48 c) (<= c 57) false)
+          true
+          (if (if (== c 43) true (== c 45))
+            (if (< 1 length) (let [d (.charCodeAt s (inc start))] (if (<= 48 d) (<= d 57) false)) false)
+            false))
+        (reader-number st start s end)
+        (if (== length 3) (= (suss.bootstrap/string-slice s start end) "nil") false) nil
+        (if (== length 4) (= (suss.bootstrap/string-slice s start end) "true") false) true
+        (if (== length 5) (= (suss.bootstrap/string-slice s start end) "false") false) false
+        (reader-valid-name? s start end) (reader-make-symbol s start end)
+        :else (reader-fail st start "Invalid symbol" false)))))
+;; ' ` ~ ~@ @, which EDN does not have.
+(def ^:private reader-prefix
+  (fn [st start]
+    (if (aget st 3)
+      (reader-not-edn st start 1 "Quote, syntax-quote, unquote and deref syntax are not EDN")
+      (let [s (aget st 0) c (.charCodeAt s start)]
+        (aset st 1 (inc start))
+        (cond
+          (== c 39) (list reader-quote-symbol (reader-required st))
+          (== c 96) (reader-syntax-quote st start (reader-required st) (array {}))
+          (== c 64) (list reader-deref-symbol (reader-required st))
+          (if (< (inc start) (aget st 2)) (== (.charCodeAt s (inc start)) 64) false)
+          (do (aset st 1 (+ start 2)) (list reader-unquote-splicing-symbol (reader-required st)))
+          :else (list reader-unquote-symbol (reader-required st)))))))
+(def ^:private reader-leads nil)
+(def ^:private reader-dispatches nil)
+(def ^:private reader-tables!
+  (fn []
+    (reader-classes!)
+    (let [leads (make-array 129)
+          dispatches (make-array 129)
+          set-all! (fn [table handler] (loop [i 0] (if (< i 129) (do (aset table i handler) (recur (inc i))) nil)))
+          set-units! (fn [table units handler]
+                       (loop [i 0] (if (< i (alength units)) (do (aset table (aget units i) handler) (recur (inc i))) nil)))
+          unsupported (fn [st start]
+                        (aset st 1 (if (< (inc start) (aget st 2)) (+ start 2) (inc start)))
+                        (reader-fail st start "Unsupported reader dispatch" false))]
+      (set-all! leads reader-token)
+      (aset leads 40 (fn [st start]
+                       (aset st 1 (inc start))
+                       (reader-list (persistent! (reader-items st start 41 0 (transient []))))))
+      (aset leads 91 (fn [st start]
+                       (aset st 1 (inc start))
+                       (persistent! (reader-items st start 93 0 (transient [])))))
+      (aset leads 123 (fn [st start] (aset st 1 (inc start)) (reader-map st start)))
+      (set-units! leads (array 41 93 125)
+                  (fn [st start]
+                    (aset st 1 (inc start))
+                    (reader-fail st start "Unexpected closing delimiter" false)))
+      (aset leads 34 (fn [st start] (reader-string st (aget st 0) (aget st 2) start)))
+      (aset leads 92 (fn [st start] (reader-character st (aget st 0) (aget st 2) start)))
+      (aset leads 94 reader-metadata)
+      (set-units! leads (array 39 96 126 64) reader-prefix)
+      (aset leads 37 (fn [st start]
+                       (if (if (aget st 3) false (some? (aget st 8)))
+                         (reader-argument st (aget st 0) (aget st 2) start)
+                         (reader-token st start))))
+      (aset leads 35 (fn [st start]
+                       (let [i (inc start) d (if (< i (aget st 2)) (.charCodeAt (aget st 0) i) -1)]
+                         ((aget reader-dispatches (if (< d 0) 0 (if (< d 128) d (if (reader-wide-space? d) 0 128))))
+                          st start))))
+      (set-all! dispatches unsupported)
+      (loop [c 65]
+        (if (<= c 122)
+          (do (if (reader-letter? c) (aset dispatches c reader-tag-or-js) nil) (recur (inc c)))
+          nil))
+      (aset dispatches 128 reader-tag-or-js)
+      (aset dispatches 123 (fn [st start]
+                             (aset st 1 (+ start 2))
+                             (persistent! (reader-items st start 125 1 (transient #{})))))
+      (aset dispatches 95 (fn [st start] (aset st 1 (+ start 2)) (reader-required st) reader-nothing))
+      (aset dispatches 35 reader-symbolic)
+      (aset dispatches 40 (fn [st start]
+                            (if (aget st 3)
+                              (reader-not-edn st start 2 "Anonymous function syntax is not EDN")
+                              (reader-anonymous st (aget st 0) (aget st 2) start))))
+      (aset dispatches 39 (fn [st start]
+                            (if (aget st 3)
+                              (reader-not-edn st start 2 "Var syntax is not EDN")
+                              (do (aset st 1 (+ start 2)) (list reader-var-symbol (reader-required st))))))
+      (aset dispatches 63 (fn [st start]
+                            (if (aget st 3)
+                              (reader-not-edn st start 2 "Reader conditionals are not EDN")
+                              (reader-conditional-form st (aget st 0) (aget st 2) start))))
+      (set! reader-dispatches dispatches)
+      (set! reader-leads leads))))
+(def ^:private reader-too-deep
+  (fn [st start]
+    (reader-fail st start
+                 (if (aget st 3) "EDN nesting exceeds the depth limit" "Reader nesting exceeds the depth limit")
+                 false)))
+(set! read-form
+  (fn [st]
+    (let [start (aget st 1) depth (inc (aget st 9))]
+      (if (< reader-max-depth depth) (reader-too-deep st start) nil)
+      (aset st 9 depth)
+      (let [c (.charCodeAt (aget st 0) start)
+            value (if (== c 91)
+                    (do (aset st 1 (inc start)) (persistent! (reader-items st start 93 0 (transient []))))
+                    (if (== c 40)
+                      (do (aset st 1 (inc start)) (reader-list (persistent! (reader-items st start 41 0 (transient [])))))
+                      ((aget reader-leads (if (< c 128) c 128)) st start)))]
+        (aset st 9 (dec depth))
+        value))))
+
+(def ^:private reader-state
+  (fn [s edn mode features readers default]
+    (if (nil? reader-leads) (reader-tables!) nil)
+    (array s 0 (.-length s) edn mode features readers default nil 0 0 nil 0 0)))
+;; One form, or opts' :eof when the input has none and opts has :eof.
+(def ^:private reader-read
+  (fn [st opts]
+    (let [s (aget st 0) n (aget st 2)]
+      (loop []
+        (let [i (reader-skip s n (aget st 1))]
+          (aset st 1 i)
+          (if (< i n)
+            (let [value (read-form st)]
+              (if (identical? value reader-nothing) (recur) value))
+            (if (contains? opts :eof) (get opts :eof) (reader-fail st i "EOF while reading" true))))))))
+(def read-string
+  "Reads one object from the string s and ignores the rest. Optionally include
+  reader options: :eof, the value for input with no form (otherwise reading
+  it fails); :read-cond, :allow or :preserve, without which a reader
+  conditional fails; and :features, a set of keywords enabled besides :suss,
+  :cljs and :default.
+
+  Reads code forms as Clojure's reader does: ::k and syntax quote resolve
+  against *ns*, tags use *data-readers* and *default-data-reader-fn*, and a
+  record literal constructs its record while *read-eval* is true. It never
+  evaluates code. For data from untrusted sources, use suss.edn/read-string."
+  (fn
+    ([s] (read-string nil s))
+    ([opts s]
+     (if (string? s) nil (throw (ex-info "read-string requires a string" {:type :reader-exception})))
+     (let [read-cond (get opts :read-cond)
+           mode (if (keyword-identical? read-cond :allow)
+                  :allow
+                  (if (keyword-identical? read-cond :preserve) :preserve nil))
+           features (if (keyword-identical? mode :allow)
+                      (into #{:suss :cljs :default} (get opts :features))
+                      nil)]
+       (reader-read (reader-state s false mode features nil nil) opts)))))
+;; suss.edn/read-string: clojure.edn's data-only reader.
+(def ^:private read-edn-string
+  (fn [opts s]
+    (if (nil? s)
+      nil
+      (do (if (string? s) nil (throw (ex-info "suss.edn/read-string requires a string" {:type :reader-exception})))
+          (reader-read (reader-state s true nil nil (get opts :readers) (get opts :default)) opts)))))

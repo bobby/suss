@@ -180,6 +180,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::IsBoolean => {}
                         Nominal::StringIndexOf => { names.insert("string-index-of"); }
                         Nominal::StringSlice => { names.insert("string-slice"); }
+                        Nominal::StringFromUnit => { names.insert("string-from-unit"); }
                         Nominal::BindingDefined => { names.insert("binding-defined"); }
                         Nominal::LanguageError => { names.insert("language-error-new"); }
                         Nominal::IsLanguageError => { names.insert("language-error-is"); }
@@ -416,7 +417,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "binding-get" | "binding-bound" | "number-negate" | "value-negate"
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
-            | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" => {
+            | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit" => {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
@@ -1271,6 +1272,7 @@ fn emit_function(
                         | Nominal::ValueAdd
                         | Nominal::StringIndexOf
                         | Nominal::StringSlice
+                        | Nominal::StringFromUnit
                         | Nominal::LanguageError
                         | Nominal::IsLanguageError
                         | Nominal::IsNativeObject
@@ -1345,6 +1347,7 @@ fn emit_function(
                                 Nominal::ValueAdd => "value-add",
                                 Nominal::StringIndexOf => "string-index-of",
                                 Nominal::StringSlice => "string-slice",
+                                Nominal::StringFromUnit => "string-from-unit",
                                 Nominal::LanguageError => "language-error-new",
                                 Nominal::IsLanguageError => "language-error-is",
                                 Nominal::NativeObjectFactory => "native-object-factory-function",
