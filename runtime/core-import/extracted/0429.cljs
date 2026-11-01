@@ -6,4 +6,29 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(def ^:private UNREALIZED-SEED #js {})
+(defn take
+  "Returns a lazy sequence of the first n items in coll, or all items if
+  there are fewer than n.  Returns a stateful transducer when
+  no collection is provided."
+  ([n]
+   {:pre [(number? n)]}
+     (fn [rf]
+       (let [na (volatile! n)]
+         (fn
+           ([] (rf))
+           ([result] (rf result))
+           ([result input]
+              (let [n @na
+                    nn (vswap! na dec)
+                    result (if (pos? n)
+                             (rf result input)
+                             result)]
+                (if (not (pos? nn))
+                  (ensure-reduced result)
+                  result)))))))
+  ([n coll]
+   {:pre [(number? n)]}
+     (lazy-seq
+       (when (pos? n)
+         (when-let [s (seq coll)]
+           (cons (first s) (take (dec n) (rest s))))))))

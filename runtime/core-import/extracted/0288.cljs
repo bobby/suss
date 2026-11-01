@@ -8,8 +8,7 @@
 
 (def
   ^{:dynamic true
-    :doc "When set to logical false, strings and characters will be printed with
-  non-alphanumeric characters converted to the appropriate escape sequences.
+    :doc "When set to true, output will be flushed whenever a newline is printed.
 
-  Defaults to true"}
-  *print-readably* true)
+  Defaults to true."}
+  *flush-on-newline* true)

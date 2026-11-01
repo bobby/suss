@@ -6,5 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn chunk-append [b x]
-  (.add b x))
+(defn chunk-buffer [capacity]
+  (ChunkBuffer. (make-array capacity) 0))

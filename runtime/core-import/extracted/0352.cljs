@@ -6,14 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn zipmap
-  "Returns a map with the keys mapped to the corresponding vals."
-  [keys vals]
-    (loop [map (transient {})
-           ks (seq keys)
-           vs (seq vals)]
-      (if (and ks vs)
-        (recur (assoc! map (first ks) (first vs))
-               (next ks)
-               (next vs))
-        (persistent! map))))
+(defn select-keys
+  "Returns a map containing only those entries in map whose key is in keys"
+  [map keyseq]
+    (loop [ret {} keys (seq keyseq)]
+      (if keys
+        (let [key   (first keys)
+              entry (get map key ::not-found)]
+          (recur
+           (if (not= entry ::not-found)
+             (assoc ret key entry)
+             ret)
+           (next keys)))
+        (-with-meta ret (meta map)))))

@@ -6,6 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn not-empty
-  "If coll is empty, returns nil, else coll"
-  [coll] (when (seq coll) coll))
+(defn type
+  "Return x's constructor."
+  [x]
+  (when-not (nil? x)
+    (.-constructor x)))

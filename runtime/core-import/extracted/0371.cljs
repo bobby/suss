@@ -6,20 +6,20 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- balance-right-del [key val left del]
+(defn- balance-left-del [key val del right]
   (cond
     (instance? RedNode del)
-    (RedNode. key val left (.blacken del) nil)
+    (RedNode. key val (.blacken del) right nil)
 
-    (instance? BlackNode left)
-    (balance-left key val (.redden left) del)
+    (instance? BlackNode right)
+    (balance-right key val del (.redden right))
 
-    (and (instance? RedNode left) (instance? BlackNode (.-right left)))
-    (RedNode. (.. left -right -key) (.. left -right -val)
-              (balance-left (.-key left) (.-val left)
-                            (.redden (.-left left))
-                            (.. left -right -left))
-              (BlackNode. key val (.. left -right -right) del nil)
+    (and (instance? RedNode right) (instance? BlackNode (.-left right)))
+    (RedNode. (.. right -left -key) (.. right -left -val)
+              (BlackNode. key val del (.. right -left -left) nil)
+              (balance-right (.-key right) (.-val right)
+                             (.. right -left -right)
+                             (.redden (.-right right)))
               nil)
 
     :else

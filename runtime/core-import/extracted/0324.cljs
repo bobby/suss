@@ -6,17 +6,15 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype PersistentQueueIter [^:mutable fseq riter]
-  Object
-  (hasNext [_]
-    (or (and (some? fseq) (seq fseq)) (and (some? riter) (.hasNext riter))))
-  (next [_]
+(defn empty
+  "Returns an empty collection of the same category as coll, or nil"
+  [coll]
+  (when-not (nil? coll)
     (cond
-      (some? fseq)
-      (let [ret (first fseq)]
-        (set! fseq (next fseq))
-        ret)
-      (and (some? riter) ^boolean (.hasNext riter))
-      (.next riter)
-      :else (throw (js/Error. "No such element"))))
-  (remove [_] (js/Error. "Unsupported operation")))
+      (implements? IEmptyableCollection coll)
+      (-empty coll)
+
+      (satisfies? IEmptyableCollection coll)
+      (-empty coll)
+
+      :else nil)))

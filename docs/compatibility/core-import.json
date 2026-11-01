@@ -1445,6 +1445,11 @@
       "patch": null
     },
     {
+      "id": "runtime:*flush-on-newline*:107",
+      "source-sha256": "7cbc02e6deb39e2b90480e522c0b812350ffdd7e2a02cf7b39a14acf34c6ded0",
+      "patch": null
+    },
+    {
       "id": "runtime:*print-readably*:121",
       "source-sha256": "564ca4ebe618bb3e8c380bb134fa5cd55b65306469dc0c9c4c9e22bfb2e50d51",
       "patch": null
@@ -2316,7 +2321,7 @@
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "a4404fc8afac65d0bffae578e04fc8d2f78f369e57d90d74acb057299f13feed"
+      "sha256": "abe387e89e0a54119295e0f3b212d9bdf3096579f7060199f55190185cd56eb2"
     }
   }
 }

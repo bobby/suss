@@ -6,10 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn remove
-  "Returns a lazy sequence of the items in coll for which
-  (pred item) returns logical false. pred must be free of side-effects.
-  Returns a transducer when no collection is provided."
-  ([pred] (filter (complement pred)))
-  ([pred coll]
-     (filter (complement pred) coll)))
+(defn complement
+  "Takes a fn f and returns a fn that takes the same arguments as f,
+  has the same effects, if any, and returns the opposite truth value."
+  [f]
+  (fn
+    ([] (not (f)))
+    ([x] (not (f x)))
+    ([x y] (not (f x y)))
+    ([x y & zs] (not (apply f x y zs)))))

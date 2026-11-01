@@ -6,10 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn butlast
-  "Return a seq of all but the last item in coll, in linear time"
-  [s]
-  (loop [ret [] s s]
-    (if (next s)
-      (recur (conj ret (first s)) (next s))
-      (seq ret))))
+(defn completing
+  "Takes a reducing function f of 2 args and returns a fn suitable for
+  transduce by adding an arity-1 signature that calls cf (default -
+  identity) on the result argument."
+  ([f] (completing f identity))
+  ([f cf]
+    (fn
+      ([] (f))
+      ([x] (cf x))
+      ([x y] (f x y)))))

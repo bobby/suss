@@ -6,13 +6,23 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype RangeIterator [^:mutable i end step]
-  Object
-  (hasNext [_]
-    (if (pos? step)
-      (< i end)
-      (> i end)))
-  (next [_]
-    (let [ret i]
-      (set! i (+ i step))
-      ret)))
+(deftype IntegerRangeChunk [start step count]
+  ICounted
+  (-count [coll] count)
+
+  ISeq
+  (-first [coll] start)
+
+  IIndexed
+  (-nth [coll i]
+    (+ start (* i step)))
+  (-nth [coll i not-found]
+    (if (and (>= i 0) (< i count))
+      (+ start (* i step))
+      not-found))
+
+  IChunk
+  (-drop-first [coll]
+    (if (<= count 1)
+      (throw (js/Error. "-drop-first of empty chunk"))
+      (IntegerRangeChunk. (+ start step) step (dec count)))))

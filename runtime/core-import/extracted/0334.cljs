@@ -6,20 +6,23 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn filter
-  "Returns a lazy sequence of the items in coll for which
-  (pred item) returns logical true. pred must be free of side-effects.
-  Returns a transducer when no collection is provided."
-  ([pred]
+(defn map
+  "Returns a lazy sequence consisting of the result of applying f to
+  the set of first items of each coll, followed by applying f to the
+  set of second items in each coll, until any one of the colls is
+  exhausted.  Any remaining items in other colls are ignored. Function
+  f should accept number-of-colls arguments. Returns a transducer when
+  no collection is provided."
+  ([f]
     (fn [rf]
       (fn
         ([] (rf))
         ([result] (rf result))
         ([result input]
-           (if (pred input)
-             (rf result input)
-             result)))))
-  ([pred coll]
+           (rf result (f input)))
+        ([result input & inputs]
+           (rf result (apply f input inputs))))))
+  ([f coll]
    (lazy-seq
     (when-let [s (seq coll)]
       (if (chunked-seq? s)
@@ -27,10 +30,25 @@
               size (count c)
               b (chunk-buffer size)]
           (dotimes [i size]
-              (when (pred (-nth c i))
-                (chunk-append b (-nth c i))))
-          (chunk-cons (chunk b) (filter pred (chunk-rest s))))
-        (let [f (first s) r (rest s)]
-          (if (pred f)
-            (cons f (filter pred r))
-            (filter pred r))))))))
+              (chunk-append b (f (-nth c i))))
+          (chunk-cons (chunk b) (map f (chunk-rest s))))
+        (cons (f (first s)) (map f (rest s)))))))
+  ([f c1 c2]
+   (lazy-seq
+    (let [s1 (seq c1) s2 (seq c2)]
+      (when (and s1 s2)
+        (cons (f (first s1) (first s2))
+              (map f (rest s1) (rest s2)))))))
+  ([f c1 c2 c3]
+   (lazy-seq
+    (let [s1 (seq c1) s2 (seq c2) s3 (seq c3)]
+      (when (and  s1 s2 s3)
+        (cons (f (first s1) (first s2) (first s3))
+              (map f (rest s1) (rest s2) (rest s3)))))))
+  ([f c1 c2 c3 & colls]
+   (let [step (fn step [cs]
+                 (lazy-seq
+                  (let [ss (map seq cs)]
+                    (when (every? identity ss)
+                      (cons (map first ss) (step (map rest ss)))))))]
+     (map #(apply f %) (step (conj colls c3 c2 c1))))))

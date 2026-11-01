@@ -12,9 +12,9 @@
     },
     {
       "path": "crates/suss-compile/src/portable_record_emitter.rs",
-      "sha256": "d89d4353e307fac045925f7c9312157cbd16d4616954442e4e3bc7636c14a114",
+      "sha256": "11a151d89234cc009372fb655a3589ea993178a953915eea4679885921829b44",
       "compiled-sources": {
-        "SOURCE": "788c890049c88e530e5f1f08546edb73e747a0784349904f125db76e00926be1"
+        "SOURCE": "da004538e8b9174d3524bc1b6821d863c8e85921f6dbb3da1516bb173fb1d58b"
       }
     },
     {
@@ -66,7 +66,7 @@
     "After all symbols resolve in original order, reuse pure default mask data only when the entire resolved default suffix matches; generically process every user protocol, including duplicates. Changed defaults retain full generic preparation.",
     "Build generated protocol-fact input with into over one explicit vector of user implementations followed by defaults, preserving the same ordered fact-resolution input while avoiding lazy concat traversal.",
     "Construct public getBasis directly from the already validated fields vector; preserve its vector value and all public metadata/type/factory outputs.",
-    "The generated printer pair function accepts the printer's (value writer opts) call and ignores the trailing writer and opts, as the pinned JavaScript call does implicitly; its body is unchanged (#285).",
+    "The generated printer calls suss.core's pr-record-writer with the record's printed name instead of pr-sequential-writer over [key value] pairs, so records print as Clojure's print-method and print-dup for IRecord do: entries are not levels or counted items of their own, and *print-dup* prints the values positionally (#302).",
     "Generate Object toString as Clojure records inherit it (label@unsigned hash in hex, with Suss hash) unless the user's Object implementation defines toString, which takes precedence (#285)."
   ],
   "tests": [

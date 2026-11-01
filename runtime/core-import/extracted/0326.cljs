@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype PersistentQueue [meta count front rear ^:mutable __hash]
+(deftype PersistentQueueSeq [meta front rear ^:mutable __hash]
   Object
   (toString [coll]
     (pr-str* coll))
@@ -21,43 +21,36 @@
   (lastIndexOf [coll x start]
     (-lastIndexOf coll x start))
 
-  ICloneable
-  (-clone [coll] (PersistentQueue. meta count front rear __hash))
-
-  IIterable
-  (-iterator [coll]
-    (PersistentQueueIter. front (-iterator rear)))
-
   IWithMeta
   (-with-meta [coll new-meta]
     (if (identical? new-meta meta)
       coll
-      (PersistentQueue. new-meta count front rear __hash)))
+      (PersistentQueueSeq. new-meta front rear __hash)))
 
   IMeta
   (-meta [coll] meta)
 
   ISeq
   (-first [coll] (first front))
-  (-rest [coll] (rest (seq coll)))
+  (-rest  [coll]
+    (if-let [f1 (next front)]
+      (PersistentQueueSeq. meta f1 rear nil)
+      (if (nil? rear)
+        (-empty coll)
+        (PersistentQueueSeq. meta rear nil nil))))
 
-  IStack
-  (-peek [coll] (first front))
-  (-pop [coll]
-    (if front
-      (if-let [f1 (next front)]
-        (PersistentQueue. meta (dec count) f1 rear nil)
-        (PersistentQueue. meta (dec count) (seq rear) [] nil))
-      coll))
+  INext
+  (-next [coll]
+    (if-let [f1 (next front)]
+      (PersistentQueueSeq. meta f1 rear nil)
+      (when (some? rear)
+        (PersistentQueueSeq. meta rear nil nil))))
 
   ICollection
-  (-conj [coll o]
-    (if front
-      (PersistentQueue. meta (inc count) front (conj (or rear []) o) nil)
-      (PersistentQueue. meta (inc count) (conj front o) [] nil)))
+  (-conj [coll o] (cons o coll))
 
   IEmptyableCollection
-  (-empty [coll] (-with-meta (.-EMPTY PersistentQueue) meta))
+  (-empty [coll] (-with-meta (.-EMPTY List) meta))
 
   ISequential
   IEquiv
@@ -67,10 +60,4 @@
   (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
 
   ISeqable
-  (-seq [coll]
-    (let [rear (seq rear)]
-      (if (or front rear)
-        (PersistentQueueSeq. nil front (seq rear) nil))))
-
-  ICounted
-  (-count [coll] count))
+  (-seq [coll] coll))

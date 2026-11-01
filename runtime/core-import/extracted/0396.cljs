@@ -6,24 +6,59 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- tree-map-remove [comp tree k found]
-  (if-not (nil? tree)
-    (let [c (comp k (.-key tree))]
-      (cond
-        (zero? c)
-        (do (aset found 0 tree)
-            (tree-map-append (.-left tree) (.-right tree)))
+(defn- tree-map-append [left right]
+  (cond
+    (nil? left)
+    right
 
-        (neg? c)
-        (let [del (tree-map-remove comp (.-left tree) k found)]
-          (if (or (not (nil? del)) (not (nil? (aget found 0))))
-            (if (instance? BlackNode (.-left tree))
-              (balance-left-del (.-key tree) (.-val tree) del (.-right tree))
-              (RedNode. (.-key tree) (.-val tree) del (.-right tree) nil))))
+    (nil? right)
+    left
 
-        :else
-        (let [del (tree-map-remove comp (.-right tree) k found)]
-          (if (or (not (nil? del)) (not (nil? (aget found 0))))
-            (if (instance? BlackNode (.-right tree))
-              (balance-right-del (.-key tree) (.-val tree) (.-left tree) del)
-              (RedNode. (.-key tree) (.-val tree) (.-left tree) del nil))))))))
+    (instance? RedNode left)
+    (if (instance? RedNode right)
+      (let [app (tree-map-append (.-right left) (.-left right))]
+        (if (instance? RedNode app)
+          (RedNode. (.-key app) (.-val app)
+                    (RedNode. (.-key left) (.-val left)
+                              (.-left left)
+                              (.-left app)
+                              nil)
+                    (RedNode. (.-key right) (.-val right)
+                              (.-right app)
+                              (.-right right)
+                              nil)
+                    nil)
+          (RedNode. (.-key left) (.-val left)
+                    (.-left left)
+                    (RedNode. (.-key right) (.-val right) app (.-right right) nil)
+                    nil)))
+      (RedNode. (.-key left) (.-val left)
+                (.-left left)
+                (tree-map-append (.-right left) right)
+                nil))
+
+    (instance? RedNode right)
+    (RedNode. (.-key right) (.-val right)
+              (tree-map-append left (.-left right))
+              (.-right right)
+              nil)
+
+    :else
+    (let [app (tree-map-append (.-right left) (.-left right))]
+      (if (instance? RedNode app)
+        (RedNode. (.-key app) (.-val app)
+                  (BlackNode. (.-key left) (.-val left)
+                              (.-left left)
+                              (.-left app)
+                              nil)
+                  (BlackNode. (.-key right) (.-val right)
+                              (.-right app)
+                              (.-right right)
+                              nil)
+                  nil)
+        (balance-left-del (.-key left) (.-val left)
+                          (.-left left)
+                          (BlackNode. (.-key right) (.-val right)
+                                      app
+                                      (.-right right)
+                                      nil))))))

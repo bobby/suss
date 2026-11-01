@@ -374,11 +374,11 @@
    :arities {:fixed [3] :variadic-min nil}
    :dependencies ["IWriter/IPrintWithWriter", "print-meta?/meta", "numeric/string/boolean predicates and coercions", "pr-constructor-writer (unfinished)", "object?/js-keys/pr-object-map/pr-object-keyword?/keyword/print-map (unfinished object path)", "pr-function-name (unfinished)", "pr-date?/regexp?/js-symbol? (unfinished representations)", "pr-object-constructor-string/pr-constructor-display-name/pr-object-constructor-name/pr-object-constructor (unfinished fallback)"]
    :classification :adapted
-   :rationale "Retain the entire pinned default printer and branch order, metadata prefix, protocol precedence, numeric exceptional spelling, readable strings, function printing, object/array, Date, regex/symbol and fallback behavior. Expand defn to def/fn. Replace primitive NaN/infinity/empty-string operations with their portable equivalents and constructor storage inspection with the owned descriptor guard. Host storage/regex/constructor/name operations are explicit private dependencies, currently declared but uninitialized; unavailable paths must fail visibly, never fabricate output or return constant false predicates. This is staged source retention, not complete printing compatibility. Date/regexp/JS symbol representations, eager object-key mapping/identifier matching, function and constructor names, generic object properties, constructor printer and collection print-map still need real implementations and individual evidence; no host branch is silently deleted or claimed excluded. The one cond-> application is expanded to an if over the bound key with one predicate evaluation."
+   :rationale "Retain the entire pinned default printer and branch order, metadata prefix, protocol precedence, numeric exceptional spelling, readable strings, function printing, object/array, Date, regex/symbol and fallback behavior. Expand defn to def/fn. Replace primitive NaN/infinity/empty-string operations with their portable equivalents and constructor storage inspection with the owned descriptor guard. Host storage/regex/constructor/name operations are explicit private dependencies, currently declared but uninitialized; unavailable paths must fail visibly, never fabricate output or return constant false predicates. This is staged source retention, not complete printing compatibility. Date/regexp/JS symbol representations, eager object-key mapping/identifier matching, function and constructor names, generic object properties, constructor printer and collection print-map still need real implementations and individual evidence; no host branch is silently deleted or claimed excluded. Expand the single cond-> application to an if over the already-bound key, preserving one predicate evaluation and keyword conversion only on the selected branch. Subsequent source increments implement print-map/keyword and owned source-function display names with fresh two-phase GC evidence. Unknown kernel/synthetic/foreign names still fail visibly; constructor, host storage/regex and function-body printing remain unfinished. The earlier staging description is superseded for these implemented dependencies, not a full printer compatibility claim. Metadata follows Clojure's print-meta (#302): empty metadata and a keyword :type are not printed, a lone :tag prints as ^tag, and strings print readably under *print-dup*."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/printing-pr-writer-impl.json"
    :alternative nil
-   :tests ["crates/suss-compile/tests/compiled_printing.rs" "tests/oracle/printing-cases.json" "tests/oracle/object-predicate-cases.json"]}
+   :tests ["crates/suss-compile/tests/compiled_printing.rs" "tests/oracle/printing-cases.json" "tests/oracle/object-predicate-cases.json" "crates/suss-cli/tests/printer_options.rs"]}
   "runtime:empty?:2210"
   {:source-sha256 "4c72ac8a5d69d042a99a6ca275728e2dd705145de71eb9881888fea962ba7213"
    :visibility :public
@@ -407,11 +407,11 @@
    :arities {:fixed [1] :variadic-min nil}
    :dependencies ["StringBufferWriter/BootstrapStringBuffer", "-pr-writer/-flush", "buffer toString"]
    :classification :adapted
-   :rationale "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain empty handling, protocol printing, alternate implementation/fallback options and buffer flush/return order. Replace Closure StringBuffer construction only with the original GC-owned UTF-16 buffer; no host import is introduced. The complete default pr-writer-impl is retained, but its remaining host/storage dependencies are unfinished; calls to unfinished dependencies must fail visibly, never return fabricated output. This is partial source porting, not printing compatibility."
+   :rationale "Expand the complete pinned defn declaration to def/fn, preserving documentation, visibility, every signature and branch. Retain empty handling, protocol printing, alternate implementation/fallback options and buffer flush/return order. Replace Closure StringBuffer construction only with the original GC-owned UTF-16 buffer; no host import is introduced. The complete default pr-writer-impl is retained, but its remaining host/storage dependencies are unfinished; calls to unfinished dependencies must fail visibly, never return fabricated output. This is partial source porting, not printing compatibility. Collections print through pr-writer, so str prints metadata under *print-meta* as Clojure's toString does (#302)."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/printing-pr-str-one.json"
    :alternative nil
-   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+   :tests ["crates/suss-compile/tests/compiled_printing.rs" "crates/suss-cli/tests/printer_options.rs"]}
   "runtime:pr-sb-with-opts:10559"
   {:source-sha256 "d2673c3e67e74bc8ce8dcd3de9da1f404c40ecca601acfa16f33b05e1440e926"
    :visibility :private
@@ -495,22 +495,22 @@
    :arities {:fixed [7] :variadic-min nil}
    :dependencies ["IWriter/-write", "pr-opts-len", "*print-level*", "binding/loop/recur", "seq/first/next/dec/zero?/neg?"]
    :classification :adapted
-   :rationale "Expand only defn to def/fn for bootstrap compilation; retain the whole pinned signature and body. Preserve dynamic print-level nesting, print-length control, marker output, source traversal order and protocol writer calls. This source dependency remains in progress until the full printer and associated acceptance gates execute."
+   :rationale "Expand defn to def/fn and follow Clojure's print-sequential (#302), keeping the signature, opts and :more-marker. *print-level* and *print-length* are off when logical false or under *print-dup*, as in Clojure. Each step takes the next element before printing, as Clojure's [x & xs] destructuring does, so an unchunked lazy seq is realized exactly as far as Clojure realizes it, and a hidden level realizes none of it."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/printing-pr-sequential-writer.json"
    :alternative nil
-   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+   :tests ["crates/suss-compile/tests/compiled_printing.rs" "crates/suss-cli/tests/printer_options.rs"]}
   "runtime:print-meta?:10438"
   {:source-sha256 "3fa3405bddbfd801c7daf7339ea5096a92831dca060583883df53ecb43d7f2a6"
    :visibility :public
    :arities {:fixed [2] :variadic-min nil}
    :dependencies ["pr-opts-meta", "boolean", "IMeta/implements?/meta"]
    :classification :adapted
-   :rationale "Expand only defn to def/fn for bootstrap compilation; retain the whole pinned signature and body. Preserve dynamic print-level nesting, print-length control, marker output, source traversal order and protocol writer calls. This source dependency remains in progress until the full printer and associated acceptance gates execute."
+   :rationale "Expand defn to def/fn and follow Clojure's print-meta condition (#302): metadata prints under *print-dup*, or under *print-meta* when printing readably, so print and print-str omit it."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/printing-print-meta-predicate.json"
    :alternative nil
-   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+   :tests ["crates/suss-compile/tests/compiled_printing.rs" "crates/suss-cli/tests/printer_options.rs"]}
   "runtime:pr-seq-writer:10551"
   {:source-sha256 "3ab03e99f5b760ef04435923d59b46e45d37fc83543f73bf6203b48211ee0f64"
    :visibility :public
@@ -566,6 +566,17 @@
    :adaptation-path nil
    :alternative nil
    :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:*flush-on-newline*:107"
+  {:source-sha256 "7cbc02e6deb39e2b90480e522c0b812350ffdd7e2a02cf7b39a14acf34c6ded0"
+   :visibility :public
+   :arities nil
+   :dependencies []
+   :classification :portable
+   :rationale "Retain the complete pinned declaration, including metadata and documentation: Clojure's *flush-on-newline* option, true at the root (#302). Suss has no output stream yet, so nothing flushes; the string printers do not observe it, as Clojure's do not."
+   :status :in-progress
+   :adaptation-path nil
+   :alternative nil
+   :tests ["crates/suss-cli/tests/printer_options.rs"]}
   "runtime:*print-readably*:121"
   {:source-sha256 "564ca4ebe618bb3e8c380bb134fa5cd55b65306469dc0c9c4c9e22bfb2e50d51"
    :visibility :public

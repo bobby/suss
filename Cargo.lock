@@ -1827,6 +1827,7 @@ dependencies = [
  "suss-reader",
  "tempfile",
  "tokio",
+ "wasmparser",
  "wasmtime",
  "wasmtime-wasi",
 ]

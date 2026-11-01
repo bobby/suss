@@ -6,9 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- compare-keywords [a b]
+(defn- compare-symbols [a b]
   (cond
-   (identical? (.-fqn a) (.-fqn b)) 0
+   (identical? (.-str a) (.-str b)) 0
    (and (not (.-ns a)) (.-ns b)) -1
    (.-ns a) (if-not (.-ns b)
               1

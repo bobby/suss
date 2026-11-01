@@ -6,11 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- pr-writer
-  "Prefer this to pr-seq, because it makes the printing function
-   configurable, allowing efficient implementations such as appending
-   to a StringBuffer."
-  [obj writer opts]
-  (if-let [alt-impl (:alt-impl opts)]
-    (alt-impl obj writer (-assoc opts :fallback-impl pr-writer-impl))
-    (pr-writer-impl obj writer opts)))
+(defn empty?
+  "Returns true if coll has no items. To check the emptiness of a seq,
+  please use the idiom (seq x) rather than (not (empty? x))"
+  [coll]
+  (cond
+    (nil? coll)
+    true
+
+    (satisfies? ICounted coll)
+    (zero? (-count coll))
+
+    :else
+    (not (seq coll))))

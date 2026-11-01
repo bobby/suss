@@ -6,5 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn es6-entries-iterator [coll]
-  (ES6EntriesIterator. (seq coll)))
+(deftype ES6EntriesIterator [^:mutable s]
+  Object
+  (next [_]
+    (if-not (nil? s)
+      (let [[k v] (first s)]
+        (set! s (next s))
+        #js {:value #js [k v] :done false})
+      #js {:value nil :done true})))

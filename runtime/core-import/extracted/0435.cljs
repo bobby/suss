@@ -6,9 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- preserving-reduced
-  [rf]
-  #(let [ret (rf %1 %2)]
-     (if (reduced? ret)
-       (reduced ret)
-       ret)))
+(defn remove
+  "Returns a lazy sequence of the items in coll for which
+  (pred item) returns logical false. pred must be free of side-effects.
+  Returns a transducer when no collection is provided."
+  ([pred] (filter (complement pred)))
+  ([pred coll]
+     (filter (complement pred) coll)))

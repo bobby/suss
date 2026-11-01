@@ -6,8 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn write-all [writer & ss]
-  (loop [ss (seq ss)]
-    (when-not (nil? ss)
-      (-write writer (first ss))
-      (recur (next ss)))))
+(defn- pr-opts-len [opts]
+  (if-not (nil? opts)
+    (:print-length opts)
+    *print-length*))

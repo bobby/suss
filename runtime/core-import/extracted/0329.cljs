@@ -6,16 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype ChunkBuffer [^:mutable buf ^:mutable end]
-  Object
-  (add [_ o]
-    (aset buf end o)
-    (set! end (inc end)))
-
-  (chunk [_]
-    (let [ret (ArrayChunk. buf 0 end)]
-      (set! buf nil)
-      ret))
-
-  ICounted
-  (-count [_] end))
+(defn last
+  "Return the last item in coll, in linear time"
+  [s]
+  (let [sn (next s)]
+    (if-not (nil? sn)
+      (recur sn)
+      (first s))))

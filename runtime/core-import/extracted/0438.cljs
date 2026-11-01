@@ -6,27 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn drop-while
-  "Returns a lazy sequence of the items in coll starting from the
-  first item for which (pred item) returns logical false.  Returns a
-  stateful transducer when no collection is provided."
-  ([pred]
-     (fn [rf]
-       (let [da (volatile! true)]
-         (fn
-           ([] (rf))
-           ([result] (rf result))
-           ([result input]
-              (let [drop? @da]
-                (if (and drop? (pred input))
-                  result
-                  (do
-                    (vreset! da nil)
-                    (rf result input)))))))))
-  ([pred coll]
-     (let [step (fn [pred coll]
-                  (let [s (seq coll)]
-                    (if (and s (pred (first s)))
-                      (recur pred (rest s))
-                      s)))]
-       (lazy-seq (step pred coll)))))
+(defn mapcat
+  "Returns the result of applying concat to the result of applying map
+  to f and colls.  Thus function f should return a collection. Returns
+  a transducer when no collections are provided"
+  {:added "1.0"
+   :static true}
+  ([f] (comp (map f) cat))
+  ([f & colls]
+     (apply concat (apply map f colls))))

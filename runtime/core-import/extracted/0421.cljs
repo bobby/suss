@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Range [meta start end step ^:mutable chunk ^:mutable chunk-next ^:mutable __hash]
+(deftype IntegerRange [meta start end step cnt ^:mutable __hash]
   Object
   (toString [coll]
     (pr-str* coll))
@@ -20,32 +20,15 @@
     (-lastIndexOf coll x (count coll)))
   (lastIndexOf [coll x start]
     (-lastIndexOf coll x start))
-  (forceChunk [coll]
-    (when (nil? chunk)
-      (let [arr (make-array 32)
-            val (loop [n 0 val start]
-                  (if (< n 32)
-                    (do
-                      (aset arr n val)
-                      (let [n (inc n)
-                            val (+ val step)]
-                        (if (if (pos? step) (< val end) (> val end))
-                          (recur n val)
-                          (set! chunk (array-chunk arr 0 n)))))
-                    val))]
-        (when (nil? chunk)
-          (set! chunk (array-chunk arr 0 32))
-          (when (if (pos? step) (< val end) (> val end))
-            (set! chunk-next (Range. nil val end step nil nil nil)))))))
 
   ICloneable
-  (-clone [_] (Range. meta start end step chunk chunk-next __hash))
+  (-clone [_] (IntegerRange. meta start end step cnt __hash))
 
   IWithMeta
   (-with-meta [rng new-meta]
     (if (identical? new-meta meta)
       rng
-      (Range. new-meta start end step chunk chunk-next __hash)))
+      (IntegerRange. new-meta start end step cnt __hash)))
 
   IMeta
   (-meta [rng] meta)
@@ -69,19 +52,40 @@
   (-next [rng]
     (if (pos? step)
       (when (< (+ start step) end)
-        (Range. nil (+ start step) end step nil nil nil))
+        (IntegerRange. nil (+ start step) end step (range-count (+ start step) end step) nil))
       (when (> (+ start step) end)
-        (Range. nil (+ start step) end step nil nil nil))))
+        (IntegerRange. nil (+ start step) end step (range-count (+ start step) end step) nil))))
+
+  IDrop
+  (-drop [rng n]
+    (if (pos? n)
+      (if (< n cnt)
+        (IntegerRange. nil (+ start (* step n)) end step (- cnt n) nil)
+        nil)
+      rng))
 
   IChunkedSeq
   (-chunked-first [rng]
-    (.forceChunk rng)
-    chunk)
+    (IntegerRangeChunk. start step (unchecked-min cnt 32)))
   (-chunked-rest [rng]
-    (.forceChunk rng)
-    (if (nil? chunk-next)
+    (if (<= cnt 32)
       ()
-      chunk-next))
+      (let [start (+ start (* step 32))]
+        (cond
+          (pos? step)
+          (if (<= end start)
+            ()
+            (IntegerRange. nil start end step (range-count start end step) nil))
+
+          (neg? step)
+          (if (>= end start)
+            ()
+            (IntegerRange. nil start end step (range-count start end step) nil))
+
+          :else
+          (if (== end start)
+            ()
+            (repeat start))))))
 
   IChunkedNext
   (-chunked-next [rng]
@@ -100,8 +104,26 @@
   IHash
   (-hash [rng] (caching-hash rng hash-ordered-coll __hash))
 
+  ICounted
+  (-count [rng]
+    cnt)
+
+  IIndexed
+  (-nth [rng n]
+    (if (and (<= 0 n) (< n (-count rng)))
+      (+ start (* n step))
+      (if (and (<= 0 n) (> start end) (zero? step))
+        start
+        (throw (js/Error. "Index out of bounds")))))
+  (-nth [rng n not-found]
+    (if (and (<= 0 n) (< n (-count rng)))
+      (+ start (* n step))
+      (if (and (<= 0 n) (> start end) (zero? step))
+        start
+        not-found)))
+
   IReduce
-  (-reduce [rng f] (seq-reduce f rng))
+  (-reduce [rng f] (ci-reduce rng f))
   (-reduce [rng f init]
     (loop [i start ret init]
       (if (if (pos? step) (< i end) (> i end))
