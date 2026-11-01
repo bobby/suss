@@ -208,12 +208,16 @@ fn read_string_follows_clojure() {
             // Auto-resolved keywords resolve against *ns*.
             "(= :user.reading/k (read-string \"::k\"))",
             "(= :suss.edn/k (read-string \"::edn/k\"))",
-            "(= :suss.core/k (read-string \"::suss.core/k\"))",
+            // Only a declared alias resolves, as in Clojure's reader.
+            "(= \"Invalid token: ::suss.core/k\" (try (read-string \"::suss.core/k\") (catch :default e (ex-message e))))",
             "(= :user/k (binding [*ns* (the-ns 'user)] (read-string \"::k\")))",
             "(= \"Invalid token: ::nope/k\" (try (read-string \"::nope/k\") (catch :default e (ex-message e))))",
             // Duplicate keys and set elements, as Clojure's reader rejects them.
             "(= \"Duplicate key: :a\" (try (read-string \"{:a 1 :a 2}\") (catch :default e (ex-message e))))",
             "(= \"Duplicate key: 1\" (try (read-string \"#{1 1.0}\") (catch :default e (ex-message e))))",
+            // The position is the duplicate's start, also for a collection.
+            "(= 6 (:offset (try (read-string \"#{[1] [1]}\") (catch :default e (ex-data e)))))",
+            "(= 7 (:offset (try (edn/read-string \"{[1] 1 [1] 2}\") (catch :default e (ex-data e)))))",
             // Characters are one-unit strings; numbers have the spec's diagnostics.
             "(= \"a\" (read-string \"\\\\a\"))",
             "(= \"Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers\" (try (read-string \"1/2\") (catch :default e (ex-message e))))",
@@ -281,6 +285,9 @@ fn reader_conditionals_need_opts_as_in_clojure() {
                 (try (read-string {:read-cond :allow} \"#?(clj 1)\") (catch :default e (ex-message e))))",
             "(= \"Reader conditional requires feature/form pairs\"
                 (try (read-string {:read-cond :allow} \"#?(:clj)\") (catch :default e (ex-message e))))",
+            "(= \"Reader conditional requires feature/form pairs\"
+                (try (read-string {:read-cond :allow} \"#?(:default #_1)\") (catch :default e (ex-message e))))",
+            "(= (reader-conditional '(:clj [1]) true) (read-string {:read-cond :preserve} \"#?@(:clj [1])\"))",
             // :preserve keeps conditionals and tags as data.
             "(= (reader-conditional '(:clj 1 :cljs 2) false) (read-string {:read-cond :preserve} \"#?(:clj 1 :cljs 2)\"))",
             "(let [c (first (read-string {:read-cond :preserve} \"[#?@(:clj [1])]\"))]
@@ -384,6 +391,14 @@ fn nesting_depth_is_bounded_and_catchable() {
                 );
             }
         }
+        // Each nested syntax quote expands about four times deeper; the
+        // expansion counts against the bound.
+        truthy(&mut session, &mut macros, "(seq? (read-string \"```x\"))");
+        truthy(
+            &mut session,
+            &mut macros,
+            "(= \"Reader nesting exceeds the depth limit\" (try (read-string \"```````x\") (catch :default e (ex-message e))))",
+        );
         // Prefixes nest as deeply as collections do.
         truthy(
             &mut session,

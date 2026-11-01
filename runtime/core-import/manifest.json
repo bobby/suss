@@ -8,7 +8,7 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "4801511c7a4c676cc18054f5c0b465e0792b375eaaf5ba359e7f816352fdd4d4",
+  "recipe-sha256": "eb0108fd20340c7cd8d4b87bfd578524340bc1c3c0339c86b1952da3b0c71b5d",
   "reviews-sha256": "a3042c153c8fe8df554340d82ce17e69b59b06939114db3cf0e727628e98fbdc",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
@@ -14344,7 +14344,7 @@
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "e2d0bbf47ef7cf4332e5e0088d7fb05b9e561a5ba2d84bbe37c14360be506345"
+      "sha256": "a4404fc8afac65d0bffae578e04fc8d2f78f369e57d90d74acb057299f13feed"
     }
   },
   "files": {
@@ -14810,6 +14810,6 @@
     "extracted/0457.cljs": "40c590576047dd941454f37b8fb7cd4e1ae39252d3bc0e075fea78aec194a973",
     "extracted/0458.cljs": "9de70770e21df7e6c69f10d1e50faa0a1bdceab85847720fa309169f29b2806c",
     "extracted/0459.cljs": "8b7158e9b74477ffc8ed064b52cf4d87377995fc401bffb7f656542577d849c9",
-    "suss/core.sus": "952f02b3176756d4e4f4afcd5f3a84b746bf1b4623395ece464b77d604ca89ce"
+    "suss/core.sus": "cccb943a34841a9642b2639ca1cac83a4c2266099c823d50fb9307f4f6f6faf7"
   }
 }

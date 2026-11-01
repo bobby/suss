@@ -577,6 +577,7 @@
          "suss.bindings.macro:suss.core/reader-character"
          "suss.bindings.macro:suss.core/reader-classes"
          "suss.bindings.macro:suss.core/reader-classes!"
+         "suss.bindings.macro:suss.core/reader-clause-form"
          "suss.bindings.macro:suss.core/reader-close"
          "suss.bindings.macro:suss.core/reader-concat-symbol"
          "suss.bindings.macro:suss.core/reader-conditional"
@@ -638,6 +639,7 @@
          "suss.bindings.macro:suss.core/reader-string"
          "suss.bindings.macro:suss.core/reader-symbolic"
          "suss.bindings.macro:suss.core/reader-syntax-quote"
+         "suss.bindings.macro:suss.core/reader-syntax-quote-form"
          "suss.bindings.macro:suss.core/reader-tables!"
          "suss.bindings.macro:suss.core/reader-tag-or-js"
          "suss.bindings.macro:suss.core/reader-tagged"
@@ -1347,6 +1349,7 @@
          "suss.bindings.macro:suss.internal.core-link/reader-character"
          "suss.bindings.macro:suss.internal.core-link/reader-classes"
          "suss.bindings.macro:suss.internal.core-link/reader-classes!"
+         "suss.bindings.macro:suss.internal.core-link/reader-clause-form"
          "suss.bindings.macro:suss.internal.core-link/reader-close"
          "suss.bindings.macro:suss.internal.core-link/reader-concat-symbol"
          "suss.bindings.macro:suss.internal.core-link/reader-conditional"
@@ -1408,6 +1411,7 @@
          "suss.bindings.macro:suss.internal.core-link/reader-string"
          "suss.bindings.macro:suss.internal.core-link/reader-symbolic"
          "suss.bindings.macro:suss.internal.core-link/reader-syntax-quote"
+         "suss.bindings.macro:suss.internal.core-link/reader-syntax-quote-form"
          "suss.bindings.macro:suss.internal.core-link/reader-tables!"
          "suss.bindings.macro:suss.internal.core-link/reader-tag-or-js"
          "suss.bindings.macro:suss.internal.core-link/reader-tagged"
@@ -1762,12 +1766,12 @@
          "suss.bindings.macro:suss.internal.reify/t-reify-3274-10489"],
  :compiler "0.1.0+portable.2",
  :compiler-source-sha256 "88aa9fcfdb2c1a178b1500bd6fa0c4bff9452844c30aeeb4077ade0802cf71f3",
- :dependency-graph-sha256 "5d61fc39d4258d60590729654429e65571971c8477032d615410d27b025ae782",
+ :dependency-graph-sha256 "7706bf8519da5b5a4d176b943c3da579a740f2b6da7b4603efe23633314e937c",
  :flags [],
  :format-version 2,
  :phase "macro",
  :runtime-abi 2,
- :source-sha256 "952f02b3176756d4e4f4afcd5f3a84b746bf1b4623395ece464b77d604ca89ce",
+ :source-sha256 "cccb943a34841a9642b2639ca1cac83a4c2266099c823d50fb9307f4f6f6faf7",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "5d69b86ad2d575531f47dea11c72badb1c6249f5fde8fafc7d0e4c17e4e92114",
+ :wasm-sha256 "329b8b724eb3600a18be362fe609a4dada3357f5ef1b20d7b02effc27602cba2",
  :wasm-tools "0.258.0"}

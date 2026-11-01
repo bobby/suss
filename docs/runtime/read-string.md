@@ -27,8 +27,8 @@ Code forms read as Clojure's reader reads them:
   `docs/runtime/runtime-namespaces.md` describes), and `x#` auto-gensyms. The
   only difference is that the compiler also quotes source positions in a
   template's metadata, and `read-string` has none.
-- `::k` and `::alias/k` resolve against `*ns*`: an alias, or else a loaded
-  namespace of that name. An export called by the host runs with `*ns*` at its
+- `::k` and `::alias/k` resolve against `*ns*`, through its declared aliases
+  only, as in Clojure. An export called by the host runs with `*ns*` at its
   root, `suss.core`.
 - `#(...)` expands as the compiler expands it, to `(fn* [p1__N# ...] ...)`.
 - `#js {...}` reads as the compiler reads it, as a `js-obj` call.
@@ -73,8 +73,10 @@ message, or the EDN parser's in `suss.edn`, with this data:
   more input.
 
 Reading is charged to the caller's fuel like any Suss code, so the size of the
-input is bounded by the caller's budget. Nesting is bounded at 128 levels of
-collections, prefixes, tags and metadata. Deeper input fails with "Reader
+input is bounded by the caller's budget. Nesting is bounded at 128 levels: a
+form inside 127 collections, prefixes, tags or metadata. A syntax quote's
+expansion counts too, and each nested syntax quote expands about four times
+deeper: three nested syntax quotes read, four exceed the bound. Deeper input fails with "Reader
 nesting exceeds the depth limit" ("EDN nesting exceeds the depth limit" in
 `suss.edn`), a catchable error and never a stack overflow. The bound is
 `serde_json`'s default; each level uses about 2 KB of Wasm stack (see #313),
@@ -111,7 +113,20 @@ reader with the same message at the same position, except `::a`, which
   `ReaderException`s, and a non-string argument fails with "read-string
   requires a string".
 - **Depth:** nesting is bounded, as above; Clojure reads until the JVM stack
-  overflows.
+  overflows. The tooling EDN parser in Rust allows 1,024 levels, so tooling
+  data nested more than 128 deep cannot be read by `suss.edn`.
+- **Duplicate keys** in `suss.edn` are found by `=`, as in `clojure.edn`, while
+  the tooling EDN parser compares by its total order: Suss rejects
+  `{[1] 1 (1) 2}`, which the Rust parser accepts, and accepts `#{##NaN ##NaN}`,
+  which it rejects.
+- **Syntax quote** of a value no reader produces as code, such as a
+  `tagged-literal` or a data reader's result, fails as in the compiler's
+  syntax quote; Clojure quotes it. The reserved features `:else` and `:none`
+  are not rejected.
+- **Non-ASCII edge cases:** a `\u` or `\o` character literal is measured in
+  UTF-16 units, not bytes, and every non-ASCII unit after `#` other than
+  whitespace starts a tag, so a few malformed inputs fail with a different
+  message than the compiler's reader gives.
 - **Lone surrogates:** `suss.edn` accepts a lone surrogate escape such as
   `"\ud800"`, because Suss strings may hold one, as Clojure's may. The tooling
   EDN parser in Rust rejects it.
@@ -142,12 +157,12 @@ Measured on 2026-11-01 against `main` (bdbdbee), test profile.
 
 | | `main` | With the reader |
 | --- | --- | --- |
-| Bootstrap `runtime.wasm` | 2,284,678 B | 2,568,855 B (+284 KB, +12.4%) |
-| Bootstrap `macro.wasm` | 2,281,594 B | 2,565,365 B (+284 KB, +12.4%) |
-| AOT component, one small namespace | 2,571,207 B | 2,865,705 B (+294 KB, +11.5%) |
-| AOT component, public records fixture | 2,727,964 B | 3,023,609 B (+296 KB, +10.8%) |
+| Bootstrap `runtime.wasm` | 2,284,678 B | 2,573,264 B (+289 KB, +12.6%) |
+| Bootstrap `macro.wasm` | 2,281,594 B | 2,569,766 B (+288 KB, +12.6%) |
+| AOT component, one small namespace | 2,571,207 B | 2,870,338 B (+299 KB, +11.6%) |
+| AOT component, public records fixture | 2,727,964 B | 3,028,250 B (+300 KB, +11.0%) |
 
-| Core initialization fuel | 1,728,197 | 1,776,048 (+2.8%) |
+| Core initialization fuel | 1,728,197 | 1,776,444 (+2.8%) |
 
 The reader is about 1,000 lines. Its size is dominated by call sites, each of
 which compiles to about 280 bytes (#313).

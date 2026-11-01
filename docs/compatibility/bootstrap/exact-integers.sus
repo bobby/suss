@@ -558,7 +558,7 @@
         (Keyword. (suss.bootstrap/string-slice s from slash) (suss.bootstrap/string-slice s (inc slash) to)
                   text nil)))))
 ;; ::k and ::alias/k, resolved against *ns* as Clojure's reader resolves
-;; them: an alias, or else a loaded namespace of that name.
+;; them, through the namespace's aliases.
 (def ^:private reader-auto-keyword
   (fn [st s start end]
     (let [from (+ start 2)]
@@ -569,9 +569,9 @@
             (Keyword. namespace name (str namespace "/" name) nil))
           (let [alias (symbol (suss.bootstrap/string-slice s from slash))
                 target (get (namespace-slot ns ns-aliases-slot) alias)
-                target (if (nil? target)
-                         (let [found (find-ns alias)] (if (nil? found) nil (.-name found)))
-                         target)]
+                ;; The compiler also records each required namespace under its
+                ;; own name; only a declared alias resolves, as in Clojure.
+                target (if (nil? target) nil (if (= (str alias) (str target)) nil target))]
             (if (nil? target)
               (reader-fail st start (str "Invalid token: " (suss.bootstrap/string-slice s start end)) false)
               (let [namespace (str target) name (suss.bootstrap/string-slice s (inc slash) end)]
@@ -838,9 +838,9 @@
 (def ^:private reader-duplicate
   (fn [st at key] (reader-fail st at (str "Duplicate key: " (pr-str key)) false)))
 (def ^:private reader-add-unique
-  (fn [st items value]
+  (fn [st items value at]
     (let [size (count items) items (conj! items value)]
-      (if (== size (count items)) (reader-duplicate st (aget st 13) value) items))))
+      (if (== size (count items)) (reader-duplicate st at value) items))))
 ;; The next item of a collection, or reader-close at its closing unit:
 ;; queued spliced forms first, then forms that are not discarded. Slot 13
 ;; is left at the item's start.
@@ -856,6 +856,8 @@
               (if (== (.charCodeAt s i) close)
                 (do (aset st 1 (inc i)) reader-close)
                 (let [value (read-form st)]
+                  ;; Reading a nested form moves slot 13 inside it.
+                  (aset st 13 i)
                   (if (identical? value reader-nothing)
                     (recur)
                     (if (instance? ReaderSplice value) (do (aset st 11 (seq (.-items value))) (recur)) value))))
@@ -882,7 +884,7 @@
           (identical? value reader-nothing) (recur items)
           (instance? ReaderSplice value) (do (aset st 11 (seq (.-items value))) (recur items))
           (== kind 0) (recur (conj! items value))
-          :else (recur (reader-add-unique st items value)))))))
+          :else (recur (reader-add-unique st items value (if (< i 0) (aget st 13) i))))))))
 (def ^:private reader-map
   (fn [st start]
     (aset st 12 (inc (aget st 12)))
@@ -1013,6 +1015,13 @@
 ;; the first clause whose feature is enabled, or nothing; the other clauses
 ;; are read with their tags left unresolved. :preserve returns a
 ;; ReaderConditional.
+;; A clause's form; a closing parenthesis instead fails as a missing form.
+(def ^:private reader-clause-form
+  (fn [st start]
+    (let [form (reader-item st start 41)]
+      (if (identical? form reader-close)
+        (reader-fail st start "Reader conditional requires feature/form pairs" false)
+        form))))
 (def ^:private reader-select
   (fn [st s n start]
     (let [features (aget st 5)]
@@ -1038,9 +1047,9 @@
                 (if (<= 0 j) (== (.charCodeAt s j) 41) false)
                 (reader-fail st start "Reader conditional requires feature/form pairs" false)
                 (if (identical? selected reader-nothing) (contains? features feature) false)
-                (recur (reader-required st))
+                (recur (reader-clause-form st start))
                 :else (do (aset st 10 (inc (aget st 10)))
-                          (reader-required st)
+                          (reader-clause-form st start)
                           (aset st 10 (dec (aget st 10)))
                           (recur selected))))))))))
 (def ^:private reader-conditional-form
@@ -1052,7 +1061,8 @@
       (let [at (+ start 2)
             splicing (if (< at n) (== (.charCodeAt s at) 64) false)
             at (if splicing (inc at) at)]
-        (if (if splicing (== (aget st 12) 0) false)
+        ;; :preserve returns any conditional as data, as Clojure's does.
+        (if (if splicing (if (== (aget st 12) 0) (not (keyword-identical? mode :preserve)) false) false)
           (do (aset st 1 at) (reader-fail st start "Splicing conditional requires a delimited collection" false))
           nil)
         (let [open (reader-skip s n at)]
@@ -1134,7 +1144,7 @@
                       (let [digit (reader-digit (.charCodeAt s k))]
                         (if (< digit radix) (recur (inc k) (+ (* value radix) digit)) (invalid)))
                       value))]
-        (if (< 9223372036854775807 value) (invalid) nil)
+        (if (<= 9223372036854775808 value) (invalid) nil)
         (let [value (if negative (* -1 value) value)]
           (if (if (<= -2147483648 value) (<= value 2147483647) false)
             value
@@ -1222,7 +1232,7 @@
                      (< (suss.bootstrap/string-index-of reader-position-keys (str " " (name key) " ")) 0)
                      true)))
                false metadata)))
-(set! reader-syntax-quote
+(def ^:private reader-syntax-quote-form
   (fn [st start form gensyms]
     (let [unquoted (reader-unquoted form false)
           result
@@ -1253,6 +1263,17 @@
       (if (if (some? metadata) (reader-meaningful-meta? metadata) false)
         (list reader-with-meta-symbol result (reader-syntax-quote st start metadata gensyms))
         result))))
+
+(set! reader-syntax-quote
+  ;; Each nested syntax quote makes its expansion about four times deeper, so
+  ;; the expansion counts against the nesting bound too.
+  (fn [st start form gensyms]
+    (let [depth (inc (aget st 9))]
+      (if (< reader-max-depth depth) (reader-fail st start "Reader nesting exceeds the depth limit" false) nil)
+      (aset st 9 depth)
+      (let [expansion (reader-syntax-quote-form st start form gensyms)]
+        (aset st 9 (dec depth))
+        expansion))))
 
 ;; Forms. read-form is on the path of every nested form, so it stays small:
 ;; a Wasm frame holds a local for every value its function computes, and the
