@@ -54,11 +54,14 @@ incremental = false
 [profile.test]
 debug = 0
 incremental = false
-
-# These dependencies execute the Wasm compiler inside every semantic test.
-# Optimize their Rust implementation; workspace code and debug assertions keep
-# the ordinary test profile. This does not change Cranelift's Wasm opt level.
-[profile.test.package."*"]
-opt-level = 2
+# Tests run the Suss compiler and Wasmtime for every semantic case. Workspace
+# crates use opt-level 1, which is most of the speed of opt-level 2 at a
+# fraction of the compile time after an edit. Debug assertions and overflow
+# checks stay on. This does not change Cranelift's Wasm opt level.
+opt-level = 1
 debug-assertions = true
 overflow-checks = true
+
+# Dependencies rarely rebuild, so they are optimized fully.
+[profile.test.package."*"]
+opt-level = 2
