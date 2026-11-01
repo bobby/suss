@@ -3,7 +3,7 @@
 // Pinned ClojureScript c4295f303100bbf5afac449242d30bca1126f1a1.
 // src/main/cljs/cljs/core.cljs SHA256 d59e4703d36788b0ec562a778ec2e41188358aa964dee23a9b91e91fee26a80b
 // src/main/clojure/cljs/core.cljc SHA256 46d23d8934ca57c7a1b318f500ca2fd962ed673cb664b15651eaf277b67b53d9
-pub(super) static CORE_READER_NAMES: &[&str] = &[
+pub(crate) static CORE_READER_NAMES: &[&str] = &[
     "*",
     "*1",
     "*2",

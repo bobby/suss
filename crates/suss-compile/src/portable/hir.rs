@@ -12,6 +12,7 @@ mod collections;
 mod comparisons;
 mod controls;
 mod dynamic;
+mod namespaces;
 mod exceptions;
 mod nominal;
 mod quotes;
@@ -3156,11 +3157,12 @@ pub(crate) fn prepare_with_expander(
     phase: Phase,
     expander: &mut dyn super::ExpansionHost,
 ) -> Result<(Hir, Environment), Diagnostic> {
-    prepare_with_origin(forms, span, environment, phase, expander, None)
+    prepare_with_origin(forms, span, environment, environment, phase, expander, None)
 }
 pub(crate) fn prepare_with_origin(
     forms: &[Form],
     span: Range<usize>,
+    before: &Environment,
     environment: &Environment,
     phase: Phase,
     expander: &mut dyn super::ExpansionHost,
@@ -3191,7 +3193,14 @@ pub(crate) fn prepare_with_origin(
         target: None,
         method_recurrence: Vec::new(),
     };
-    let mut hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
+    // The frame's own forms take the fragment's extent, not the source's, so
+    // a fragment's IR and cache key do not change with the rest of its file.
+    let extent = match (forms.first(), forms.last()) {
+        (Some(first), Some(last)) => first.span.start..last.span.end,
+        _ => span.clone(),
+    };
+    let hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
+    let mut hir = analyzer.namespace_frame(before, extent, hir)?;
     if !analyzer.callable_keys.is_empty() {
         let mut initializers = analyzer.callable_keys.into_values().collect::<Vec<_>>();
         let ty = hir.ty;

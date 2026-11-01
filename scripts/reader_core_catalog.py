@@ -48,7 +48,7 @@ def generate():
         '// membership does not establish source loading or implementation.',
         '// Pinned ClojureScript ' + PIN + '.',
         *provenance,
-        'pub(super) static CORE_READER_NAMES: &[&str] = &[',
+        'pub(crate) static CORE_READER_NAMES: &[&str] = &[',
         *('    ' + json.dumps(name, ensure_ascii=False) + ',' for name in sorted(names)),
         '];', '',
     ])

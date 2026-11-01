@@ -151,3 +151,215 @@
         nil
         (.apply (.-append sb) sb args))
       sb)))
+
+;; Original Suss implementation of runtime namespaces (#309), following
+;; clojure.lang.Namespace and clojure.core's namespace functions. The compiler
+;; publishes each namespace's scope here: aliases, refers, excluded core names
+;; and declarations, per phase. Values are data, not Vars.
+;;
+;; Name lists arrive from the compiler in one of two forms. A short list is
+;; one string of names separated by single spaces (symbol names contain no
+;; spaces) and becomes a set. A long one, such as core's own declarations, is
+;; an array of name-table-buckets strings, each " a b c " with every name
+;; placed by name-table-bucket. A lookup searches one bucket with the runtime's
+;; string search, so a long list is never split or copied. The compiler's
+;; bucket function must match name-table-bucket.
+(def ^:private name-table-buckets 61)
+(def ^:private name-table-bucket
+  (fn [name]
+    (let [length (.-length name)]
+      (rem (+ (* 31 length) (.charCodeAt name 0) (* 7 (.charCodeAt name (dec length))))
+           name-table-buckets))))
+(def ^:private split-names
+  (fn [text]
+    (let [length (.-length text)]
+      (loop [index 0 start 0 names (transient #{})]
+        (if (< index length)
+          (if (== (.charCodeAt text index) 32)
+            (recur (inc index) (inc index) (conj! names (suss.bootstrap/string-slice text start index)))
+            (recur (inc index) start names))
+          (persistent!
+           (if (< start length) (conj! names (suss.bootstrap/string-slice text start length)) names)))))))
+(def ^:private name-list
+  (fn [names] (if (nil? names) #{} (if (string? names) (split-names names) names))))
+(def ^:private name-list-contains?
+  (fn [names name]
+    (if (set? names)
+      (contains? names name)
+      (if (zero? (.-length name))
+        false
+        (<= 0 (suss.bootstrap/string-index-of
+               (aget names (name-table-bucket name))
+               (suss.bootstrap/concat-string " " (suss.bootstrap/concat-string name " "))))))))
+(deftype Namespace [name state]
+  Object
+  (toString [_] (str name))
+  IEquiv
+  (-equiv [this other] (identical? this other))
+  IHash
+  (-hash [this] (suss.bootstrap/identity-uid this))
+  IPrintWithWriter
+  (-pr-writer [this writer opts]
+    (let [label (object-string "" this)]
+      (-write writer (str "#object[suss.core.Namespace 0x"
+                          (suss.bootstrap/string-slice label 1 (.-length label))
+                          " \"" name "\"]")))))
+;; A namespace's state is an array of these slots, read and replaced by plain
+;; functions; a method call would cost more than the lookups themselves.
+(def ^:private ns-aliases-slot 0)
+(def ^:private ns-macro-aliases-slot 1)
+(def ^:private ns-refers-slot 2)
+(def ^:private ns-macro-refers-slot 3)
+(def ^:private ns-excluded-slot 4)
+(def ^:private ns-bootstrap-macros-slot 5)
+(def ^:private ns-reader-names-slot 6)
+(def ^:private ns-declared-slot 7)
+(def ^:private ns-declared-tables-slot 8)
+(def ^:private namespace-slot (fn [ns slot] (aget (.-state ns) slot)))
+(def ^:private new-namespace
+  (fn [name] (Namespace. name (array {} {} {} {} #{} #{} #{} #{} []))))
+;; Programs have few namespaces, and a scan comparing name strings costs far
+;; less than hashing a symbol, so every fragment can afford to publish.
+(def ^:private namespace-registry (array))
+(def ^:private registered-namespace
+  (fn [name]
+    (let [text (.-str name) length (alength namespace-registry)]
+      (loop [index 0]
+        (if (< index length)
+          (let [ns (aget namespace-registry index)]
+            (if (= text (.-str (.-name ns))) ns (recur (inc index))))
+          nil)))))
+(def ^:private intern-namespace
+  (fn [name]
+    (if (symbol? name)
+      (let [found (registered-namespace name)]
+        (if (nil? found)
+          (let [created (new-namespace name)]
+            (.push namespace-registry created)
+            created)
+          found))
+      (throw (suss.bootstrap/error "Namespace name must be a symbol")))))
+;; Called by compiled fragments: replace the namespace's scope when given and
+;; add declared names. The compiler sends only declarations that change
+;; resolution: those of names core, its bootstrap macros, the reader catalog or
+;; a macro refer would otherwise resolve. Returns the namespace.
+;; Core's bootstrap sets this to a function that publishes core's own large
+;; name lists; the first resolution or later publication to core runs it.
+(def ^:private pending-publication nil)
+(def ^:private run-pending-publication!
+  (fn []
+    (let [publish pending-publication]
+      (if (nil? publish) nil (do (set! pending-publication nil) (publish) nil)))))
+(def ^:private publish-namespace!
+  (fn [name scope declared]
+    ;; Core's deferred publication replaces its lists, so it runs before any
+    ;; later publication to core adds to them. Other namespaces leave it for
+    ;; the first resolution, so an ordinary program never pays for it.
+    (if (= (.-str name) "suss.core") (run-pending-publication!) nil)
+    (let [ns (intern-namespace name) state (.-state ns)]
+      (if (nil? scope)
+        nil
+        ;; The scope is an array in slot order: aliases, macro aliases,
+        ;; refers, macro refers, excluded names and, for core only, bootstrap
+        ;; macros and reader names. Empty parts are nil.
+        (let [part (fn [slot] (if (< slot (alength scope)) (aget scope slot) nil))
+              table (fn [slot] (let [value (part slot)] (if (nil? value) {} value)))]
+          (aset state ns-aliases-slot (table ns-aliases-slot))
+          (aset state ns-macro-aliases-slot (table ns-macro-aliases-slot))
+          (aset state ns-refers-slot (table ns-refers-slot))
+          (aset state ns-macro-refers-slot (table ns-macro-refers-slot))
+          (aset state ns-excluded-slot (name-list (part ns-excluded-slot)))
+          (aset state ns-bootstrap-macros-slot (name-list (part ns-bootstrap-macros-slot)))
+          (aset state ns-reader-names-slot (name-list (part ns-reader-names-slot)))
+          ;; A published scope comes with the namespace's full list of
+          ;; declarations, which replaces the previous one.
+          (aset state ns-declared-slot #{})
+          (aset state ns-declared-tables-slot [])))
+      (if (nil? declared)
+        nil
+        (if (string? declared)
+          (aset state ns-declared-slot (into (aget state ns-declared-slot) (split-names declared)))
+          (aset state ns-declared-tables-slot (conj (aget state ns-declared-tables-slot) declared))))
+      ns)))
+(def ^:private namespace-declares?
+  (fn [ns text]
+    (if (contains? (namespace-slot ns ns-declared-slot) text)
+      true
+      (loop [tables (seq (namespace-slot ns ns-declared-tables-slot))]
+        (if tables (if (name-list-contains? (first tables) text) true (recur (next tables))) false)))))
+(def ^{:dynamic true
+       :doc "A suss.core.Namespace object representing the current namespace."}
+  *ns* (intern-namespace 'suss.core))
+;; Clojure's runtime always has a user namespace.
+(intern-namespace 'user)
+
+;; The macro host sets *ns*'s root to the namespace being compiled before it
+;; calls a macro, as Clojure's compiler binds *ns* while it loads (#309). It
+;; keeps the namespace objects intern-namespace returns.
+(def ^:private enter-macro-namespace!
+  (fn [ns] (set! *ns* ns) nil))
+(def find-ns
+  (fn [sym] (if (symbol? sym) (registered-namespace sym) nil)))
+(def the-ns
+  (fn [x]
+    (if (instance? Namespace x)
+      x
+      (let [found (find-ns x)]
+        (if (nil? found)
+          (throw (ex-info (str "No namespace: " x " found") {}))
+          found)))))
+(def ns-name
+  (fn [ns] (.-name (the-ns ns))))
+(def all-ns
+  (fn [] (seq (aclone namespace-registry))))
+;; The compiler also records each required namespace under its own name;
+;; Clojure lists only the aliases a namespace declares.
+(def ns-aliases
+  (fn [ns]
+    (reduce-kv (fn [m alias target]
+                 (if (= (.-str alias) (.-str target)) m (assoc m alias (intern-namespace target))))
+               {} (namespace-slot (the-ns ns) ns-aliases-slot))))
+;; Clojure maps each referred symbol to its Var. Suss has no runtime Vars, so
+;; the value is the fully qualified symbol the name refers to. Refers are kept
+;; by name string, which is cheaper to look up than a symbol.
+(def ns-refers
+  (fn [ns]
+    (reduce-kv (fn [m name target] (assoc m (symbol name) target))
+               {} (namespace-slot (the-ns ns) ns-refers-slot))))
+;; The compiler's syntax-quote symbol resolution (syntax_quote.rs `resolve`),
+;; against *ns*. suss.core resolves to cljs.core, as the compiler writes it.
+(def ^:private reader-core-namespace
+  (fn [namespace] (if (if (= namespace "suss.core") true (= namespace "clojure.core")) "cljs.core" namespace)))
+(def ^:private reader-resolve-symbol
+  (fn [sym]
+    (run-pending-publication!)
+    (let [ns *ns*
+          core (intern-namespace 'suss.core)
+          name (.-name sym)
+          namespace (.-ns sym)]
+      (if (nil? namespace)
+        (if (<= 0 (suss.bootstrap/string-index-of name "."))
+          sym
+          (let [excluded (name-list-contains? (namespace-slot ns ns-excluded-slot) name)
+                referred (get (namespace-slot ns ns-refers-slot) name)]
+            (if (some? referred)
+              (symbol (reader-core-namespace (.-ns referred)) (.-name referred))
+              (if (namespace-declares? ns name)
+                (symbol (str (.-name ns)) name)
+                (if (if excluded false (namespace-declares? core name))
+                  (symbol "cljs.core" name)
+                  (let [macro-referred (get (namespace-slot ns ns-macro-refers-slot) name)]
+                    (if (some? macro-referred)
+                      (symbol (reader-core-namespace (.-ns macro-referred)) (.-name macro-referred))
+                      (if (if excluded
+                            false
+                            (if (name-list-contains? (namespace-slot core ns-bootstrap-macros-slot) name)
+                              true
+                              (name-list-contains? (namespace-slot core ns-reader-names-slot) name)))
+                        (symbol "cljs.core" name)
+                        (symbol (str (.-name ns)) name)))))))))
+        (let [alias (symbol namespace)
+              aliases (namespace-slot ns ns-aliases-slot)
+              target (get aliases alias)
+              target (if (nil? target) (get (namespace-slot ns ns-macro-aliases-slot) alias) target)]
+          (symbol (reader-core-namespace (if (nil? target) namespace (str target))) name))))))
