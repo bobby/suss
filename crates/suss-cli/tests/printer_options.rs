@@ -184,8 +184,36 @@ fn every_printer_and_str_observe_the_options() {
         ("(binding [*print-meta* true] (str (with-meta [1] {:k 1})))", "^{:k 1} [1]"),
         ("(binding [*print-meta* true] (str [(with-meta 'x {:k 1})]))", "[^{:k 1} x]"),
         ("(binding [*print-readably* false] (str [\"a\"]))", "[a]"),
+        ("(binding [*print-readably* false] (prn-str [\"a\"]))", "[a]\n"),
+        ("(binding [*print-namespace-maps* true] (str {:a/b 1}))", "#:a{:b 1}"),
+        ("(binding [*print-namespace-maps* true] (println-str {:a/b 1}))", "#:a{:b 1}\n"),
+        ("(binding [*print-dup* true *print-length* 0] (prn-str (->R 1 [2])))", "#user.printing.R[1, [2]]\n"),
+        ("(binding [*print-dup* true *print-length* 0] (str [[1]]))", "[[1]]"),
         ("(str [\"a\"])", "[\"a\"]"),
     ]);
+}
+
+#[test]
+fn user_printers_observe_the_options() {
+    for (mut session, mut macros) in sessions() {
+        for source in [
+            "(deftype Pair [a b] IPrintWithWriter (-pr-writer [_ w opts] (pr-sequential-writer w pr-writer \"#pair[\" \" \" \"]\" opts [a b])))",
+            "(defrecord Box [v])",
+            "(extend-type Box IPrintWithWriter (-pr-writer [this w opts] (-write w \"#box \") (pr-writer (:v this) w opts)))",
+        ] {
+            session.eval_with_macros(source, &mut macros).unwrap_or_else(|error| panic!("{source}: {error:?}"));
+        }
+        for (source, expected) in [
+            ("(pr-str (Pair. 1 [2 3]))", "#pair[1 [2 3]]"),
+            ("(binding [*print-length* 1] (pr-str (Pair. 1 [2 3])))", "#pair[1 ...]"),
+            ("(binding [*print-level* 1] (pr-str (Pair. 1 [2 3])))", "#pair[1 #]"),
+            ("(binding [*print-level* 1] (pr-str [(Pair. 1 2)]))", "[#]"),
+            ("(binding [*print-length* 1] (pr-str (->Box [1 2])))", "#box [1 ...]"),
+            ("(binding [*print-meta* true] (pr-str (with-meta (->Box 1) {:m 1})))", "^{:m 1} #box 1"),
+        ] {
+            assert_eq!(text(&mut session, &mut macros, source), expected, "{source}");
+        }
+    }
 }
 
 #[test]
@@ -208,7 +236,8 @@ fn print_readably_and_namespace_maps_follow_clojure() {
 #[test]
 fn print_dup_prints_everything_and_records_positionally() {
     check(&[
-        // No length or level limit, and metadata always prints.
+        // No length or level limit, and metadata always prints. Clojure prints
+        // the metadata map as a #=(...) form; Suss prints it as print-method.
         ("(binding [*print-dup* true *print-length* 1 *print-level* 0] (pr-str [1 [2]]))", "[1 [2]]"),
         ("(binding [*print-dup* true] (pr-str (with-meta [1] {:k 1})))", "^{:k 1} [1]"),
         ("(binding [*print-dup* true *print-readably* false] (pr-str (with-meta [\"a\"] {:k 1})))", "^{:k 1} [\"a\"]"),
@@ -217,8 +246,9 @@ fn print_dup_prints_everything_and_records_positionally() {
         ("(binding [*print-dup* true] (pr-str (assoc (->R 1 2) :c 3)))", "#user.printing.R[1, 2, 3]"),
         ("(binding [*print-dup* true *verbose-defrecords* true] (pr-str (->R 1 \"x\")))", "#user.printing.R{:a 1, :b \"x\"}"),
         ("(binding [*print-dup* true] (pr-str (read-string (binding [*print-dup* true] (pr-str (->R 1 [2]))))))", "#user.printing.R[1, [2]]"),
-        // Values Clojure prints as #=(...) constructor calls print as print-method
-        // prints them, because Suss never evaluates while reading.
+        // Clojure prints the array map as a #=(...) constructor call; Suss
+        // prints it as print-method does, because it never evaluates while
+        // reading. Lists and hash sets print as print-method in Clojure too.
         ("(binding [*print-dup* true] (pr-str [{:a 1} '(1) #{2}]))", "[{:a 1} (1) #{2}]"),
     ]);
 }

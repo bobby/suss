@@ -9,7 +9,7 @@
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
   "recipe-sha256": "66895a1634218c3546381db8dc6a45d1e5d4ee4df87186c367336a846e635501",
-  "reviews-sha256": "a63e19296e50a6667cbd2781398e1f8ef5aec105500215e88069ce10d0e0025a",
+  "reviews-sha256": "73d9e131ccdfe4b1aa09d4ff8698320cbc51e75fdd04385d5145fb8ea85b78bf",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -9056,7 +9056,8 @@
       "review-status": ":in-progress",
       "dependencies": [],
       "semantic-tests": [
-        "crates/suss-compile/tests/compiled_printing.rs"
+        "crates/suss-compile/tests/compiled_printing.rs",
+        "crates/suss-cli/tests/printer_options.rs"
       ]
     },
     {

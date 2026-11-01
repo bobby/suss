@@ -566,6 +566,36 @@
    :adaptation-path nil
    :alternative nil
    :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+  "runtime:flush:10416"
+  {:source-sha256 "391cfb3aabc9ac927cb454aa55f30ecd8eeba656fbd2c5bbf69badb5b3411060" :visibility :public :arities {:fixed [0] :variadic-min nil} :dependencies ["an output stream (*out*)"]
+   :classification :host-specific :status :unimplemented :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/printer_options.rs"]
+   :rationale "Not imported: it writes to an output stream, which Suss does not have yet. The stream belongs to the WASI command world and must not add an import to pure components (spec 8), so it waits for #27 (decision on #302). The string printers observe every print option meanwhile (docs/runtime/printing.md)."}
+  "runtime:newline:10589"
+  {:source-sha256 "1b7245c0a0b4c9c11d07f8b685b67364705b74a6b944da84d64c2cee22de891c" :visibility :public :arities {:fixed [0 1] :variadic-min nil} :dependencies ["an output stream (*out*)"]
+   :classification :host-specific :status :unimplemented :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/printer_options.rs"]
+   :rationale "Not imported: it writes to an output stream, which Suss does not have yet. The stream belongs to the WASI command world and must not add an import to pure components (spec 8), so it waits for #27 (decision on #302). The string printers observe every print option meanwhile (docs/runtime/printing.md)."}
+  "runtime:pr:10607"
+  {:source-sha256 "b70655e87947361d2da6dacfbffe8bf55bae2726507e044c43deb8fb4adf1ece" :visibility :public :arities {:fixed [] :variadic-min 0} :dependencies ["an output stream (*out*)"]
+   :classification :host-specific :status :unimplemented :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/printer_options.rs"]
+   :rationale "Not imported: it writes to an output stream, which Suss does not have yet. The stream belongs to the WASI command world and must not add an import to pure components (spec 8), so it waits for #27 (decision on #302). The string printers observe every print option meanwhile (docs/runtime/printing.md)."}
+  "runtime:print:10615"
+  {:source-sha256 "2660336a98ab7fc4c1fec59942a6c03a468763db5ea3898e18a625f4497411ae" :visibility :public :arities nil :dependencies ["an output stream (*out*)"]
+   :classification :host-specific :status :unimplemented :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/printer_options.rs"]
+   :rationale "Not imported: it writes to an output stream, which Suss does not have yet. The stream belongs to the WASI command world and must not add an import to pure components (spec 8), so it waits for #27 (decision on #302). The string printers observe every print option meanwhile (docs/runtime/printing.md)."}
+  "runtime:println:10629"
+  {:source-sha256 "8d188e031dbacbc7dcf1223cfbd3d20974e3a8cfeae77eca07753907ad16f9e9" :visibility :public :arities {:fixed [] :variadic-min 0} :dependencies ["an output stream (*out*)"]
+   :classification :host-specific :status :unimplemented :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/printer_options.rs"]
+   :rationale "Not imported: it writes to an output stream, which Suss does not have yet. The stream belongs to the WASI command world and must not add an import to pure components (spec 8), so it waits for #27 (decision on #302). The string printers observe every print option meanwhile (docs/runtime/printing.md)."}
+  "runtime:prn:10643"
+  {:source-sha256 "1062146a664c054d128d5ef171b16b822bcee10f478fb233ea5803e4c11cf107" :visibility :public :arities {:fixed [] :variadic-min 0} :dependencies ["an output stream (*out*)"]
+   :classification :host-specific :status :unimplemented :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/printer_options.rs"]
+   :rationale "Not imported: it writes to an output stream, which Suss does not have yet. The stream belongs to the WASI command world and must not add an import to pure components (spec 8), so it waits for #27 (decision on #302). The string printers observe every print option meanwhile (docs/runtime/printing.md)."}
   "runtime:*flush-on-newline*:107"
   {:source-sha256 "7cbc02e6deb39e2b90480e522c0b812350ffdd7e2a02cf7b39a14acf34c6ded0"
    :visibility :public
@@ -605,11 +635,11 @@
    :arities nil
    :dependencies []
    :classification :portable
-   :rationale "Retain the complete pinned declaration, including metadata and documentation, as a compiled printer dependency. Focused writer and dynamic-binding execution is partial evidence; this does not certify the complete printer or public printing compatibility."
+   :rationale "Retain the complete pinned declaration, including metadata and documentation. Its behaviour follows Clojure (#302): no length or level limits, all metadata, readable strings, records by their values. Intentional differences (docs/runtime/printing.md): Suss never prints #=(...) constructor forms, because it never evaluates while reading, so array maps, sorted collections, functions and metadata maps print as print-method prints them; and a keyword :type is removed from printed metadata, which Clojure keeps for records and the types it prints as #= forms."
    :status :in-progress
    :adaptation-path nil
    :alternative nil
-   :tests ["crates/suss-compile/tests/compiled_printing.rs"]}
+   :tests ["crates/suss-compile/tests/compiled_printing.rs" "crates/suss-cli/tests/printer_options.rs"]}
   "runtime:*print-namespace-maps*:145"
   {:source-sha256 "08d935a5cd887cf2da3d590db823b314700e7bc5369480f758fa772899eea109"
    :visibility :public

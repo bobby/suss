@@ -2,8 +2,10 @@
 
 The printer's dynamic options follow Clojure's `clojure/core_print.clj`
 (#302). They apply to `pr-str`, `prn-str`, `print-str`, `println-str` and to
-`str` of a collection, which prints as Clojure's `toString` does, in both
-phases and in AOT components. Printing adds no import to a component (spec
+`str` of a collection, in both phases and in AOT components. `str` of a
+vector, list, map or set prints it as Clojure's `toString` does, under the
+current options. `str` of a lazy seq or a queue also prints its items, where
+Clojure gives the object's class and hash. Printing adds no import to a component (spec
 §8).
 
 | Option | Root | Behaviour |
@@ -53,26 +55,36 @@ readably, so `print-str` and `println-str` never print it.
 
 ## `*print-dup*`
 
-`*print-dup*` prints every value without length or level limits, prints all
+`*print-dup*` prints every value without length or level limits, prints
 metadata, and prints strings readably, as Clojure does.
 
 - A record prints by its values, as `#user.R[1, 2]`, which `read-string`
   constructs with the record's positional factory. With
   `*verbose-defrecords*`, it prints as a map, `#user.R{:a 1, :b 2}`.
-- Clojure prints some values as `#=(...)` constructor calls: array maps,
-  sorted collections, functions and boxed number types other than `Long` and
-  `Double`. Suss never evaluates while reading, so it prints these as
-  `print-method` would. Their output reads back to an equal value, but not
-  necessarily of the same concrete type.
+- Clojure prints some values as `#=(...)` constructor calls: array maps
+  (including metadata maps, so Clojure prints `^#=(...) [1]`), sorted
+  collections, functions and some boxed numbers. Suss never evaluates while
+  reading, so it prints these as `print-method` would. Their output reads
+  back to an equal value, but not necessarily of the same concrete type.
+- A keyword `:type` is removed from printed metadata, as `print-method` does.
+  Clojure's `print-dup` keeps it for records and for the values it prints as
+  `#=(...)` forms.
 
 ## Not yet supported
 
 - **`print-method`**, Clojure's extension point for user types, needs
-  multimethods (#30). Until then, `deftype` and `defrecord` customize printing
-  with `IPrintWithWriter`.
+  multimethods (#30). Until then, a `deftype` customizes printing by
+  implementing `IPrintWithWriter`, and a record by `extend-type` after its
+  `defrecord`. A record's inline `IPrintWithWriter` is replaced by the
+  generated printer. Custom printers that call `pr-sequential-writer` or
+  `pr-writer` observe the options.
+- **Non-numeric limits:** binding `*print-length*` or `*print-level*` to a
+  non-number other than nil or false does not throw, as it does in Clojure.
 - **`pr`, `prn`, `print`, `println`, `newline`, `flush` and `*out*`** need an
   output stream. Suss has no stream yet: its I/O belongs to the WASI command
-  world (#27), and printing must not add an import to every component.
+  world (#27), and printing must not add an import to every component. They
+  wait for #27 (decision on #302) and are recorded as unimplemented in
+  `docs/compatibility/reviews.edn`.
   `*flush-on-newline*` exists so code that binds it compiles, and it has no
   effect until these functions do.
 
