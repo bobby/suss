@@ -91,7 +91,18 @@ from `hir/namespaces.rs`, without a host import:
   - Whether the runtime has the namespace at all is decided when a fragment
     runs, not when it compiles. A fragment whose namespace cell is unbound
     publishes in full. An earlier fragment may have compiled and never run,
-    for example when a dependency failed to load.
+    for example when a dependency failed to load. Core's bootstrap always
+    publishes `suss.core` first, so a later core fragment, such as a core
+    macro compiled from source, only adds its own declarations and does not
+    carry core's full lists.
+  - The scope travels as an array in slot order, with nil for an empty part,
+    and a long name list as an array of bucket strings. A quoted map would
+    cost far more to build than the publication itself, and a vector longer
+    than 32 needs core's privileged constructors, which core evaluated as
+    ordinary source lacks.
+  - The frame's forms carry the fragment's own source extent, so a fragment's
+    IR, and its cache key, do not change when another form in its file
+    changes.
 - **Where the object lives.** The namespace object is held in an internal cell,
   `suss.internal.namespaces/<ns>`. Every fragment runs inside
   `(binding [*ns* <cell>] ...)`, so a fragment that publishes nothing costs a
@@ -123,13 +134,14 @@ code, so they restore the same data.
 
 ## Costs
 
-Measured on 2026-10-31 against `main` (00f700d), test profile:
+Measured on 2026-10-31 against `main` (00f700d), test profile. Fuel figures
+are for a REPL session (`Session::new_repl`).
 
 | | `main` | With runtime namespaces |
 | --- | --- | --- |
-| Bootstrap module (`runtime.wasm`) | 2,205,349 B | 2,287,480 B (+82 KB, +3.7%) |
-| AOT component, one small namespace | 2,482,496 B | 2,574,551 B (+92 KB, +3.7%) |
-| AOT component, public records fixture | 2,632,502 B | 2,730,485 B (+98 KB, +3.7%) |
+| Bootstrap module (`runtime.wasm`) | 2,205,349 B | 2,284,678 B (+79 KB, +3.6%) |
+| AOT component, one small namespace | 2,482,496 B | 2,571,207 B (+89 KB, +3.6%) |
+| AOT component, public records fixture | 2,632,502 B | 2,727,964 B (+95 KB, +3.6%) |
 | Core initialization fuel | 1,662,312 | 1,728,197 (+4%) |
 | `suss run` of a component (median, interleaved runs) | about 70 ms | about 3 ms more (noisy) |
 
@@ -137,8 +149,9 @@ Measured on 2026-10-31 against `main` (00f700d), test profile:
 | --- | --- | --- |
 | Evaluate `x` | 15 | 708 |
 | `(def y 2)` | 28 | 722 |
-| First resolution in a session (core's deferred publication) | — | about 1.1 million, once |
-| Each later resolution of an unqualified symbol | — | 100,000–150,000 |
+| A namespace's first fragment (publishes its scope) | — | about 40,000, once per namespace |
+| First resolution in a session (core's deferred publication) | — | 200,000–250,000, once |
+| Each later resolution of an unqualified symbol | — | 85,000–130,000 |
 
 The fixed cost per fragment, about 700 fuel, is the check that the namespace is published and the `*ns*` binding.
 
