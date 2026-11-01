@@ -11,6 +11,10 @@ pub(super) fn source(namespace: &str, phase: Phase) -> Option<(&'static str, &'s
             "<suss-stdlib>/suss/async-macros.sus",
             include_str!("stdlib/async-macros.sus"),
         )),
+        ("suss.edn", Phase::Runtime | Phase::Macro) => Some((
+            "<suss-stdlib>/suss/edn.sus",
+            include_str!("stdlib/edn.sus"),
+        )),
         _ => None,
     }
 }

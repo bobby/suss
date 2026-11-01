@@ -29534,3 +29534,14 @@ document's 2026-10-25 decision now records all three outcomes.
   - Long string literals now come from data segments.
 - Not done here: `intern`, `ns-publics`, `ns-interns`, `ns-resolve`, `resolve`, `remove-ns`, `create-ns`, and an `in-ns` function.
 - PR #310 was independently reviewed twice; both rounds' findings are fixed. Full baseline on 071c9af (before merging #308): 2059 passed, 0 failed, 78 ignored, 275 binaries, 11989 s.
+
+## #300: `read-string` and `suss.edn` (2026-11-01)
+
+- `read-string` and `suss.edn/read-string` follow Clojure's `clojure.core` and `clojure.edn` readers. The reader is about 1,000 lines of original Suss code in core's appendix (`docs/compatibility/bootstrap/exact-integers.sus`), so components link no host reader. The contract is in `docs/runtime/read-string.md`.
+- Reader rules and messages follow `forms.rs` and `edn.rs`. One corpus, `crates/suss-reader/tests/reader-conformance.edn`, drives the Rust conformance test and the runtime test (`crates/suss-cli/tests/read_string.rs`); when either reader changes, add the case there.
+- `defrecord` registers each record's factories with `register-record-reader!` under the printed name, for `#ns.R{...}` literals.
+- Constraints found on the way:
+  - Each Suss call site compiles to about 280–450 bytes (#313). The reader adds about 290 KB to every component, and large Wasm frames limit recursion. Nesting is therefore bounded at 128, and each nesting level goes through only two small functions, `read-form` and `reader-items`.
+  - Throughput is about 0.185 M UTF-16 units/s in release, linear in the input. `pr-str` is quadratic (#315).
+- Not done here: `#inst`/`#uuid` (no types yet), `#"..."`, `#:ns{}`, and `#=`.
+- PR #314 was independently reviewed, and the findings are fixed. Full baseline on 1b91319: 2073 passed, 0 failed, 78 ignored, 278 binaries, 6302 s. CI run 41321000454 passed on 1b91319.

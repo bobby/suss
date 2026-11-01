@@ -2288,6 +2288,21 @@
       "id": "runtime:realized?:10948",
       "source-sha256": "f583583061c1d18fb2c3c60fecccd2f1a1d8b3870a368b36e7c60985c6751d64",
       "patch": "docs/compatibility/patches/realized.json"
+    },
+    {
+      "id": "runtime:TaggedLiteral:11893",
+      "source-sha256": "dd872b6f497f2a0848a6ba7c04b47c0fdc2ba7c1f228f21edd763e6db2d90396",
+      "patch": null
+    },
+    {
+      "id": "runtime:tagged-literal?:11923",
+      "source-sha256": "90f104dd732a9bb8591e35135277d2d321a2c6f7bc19ddf4a5f16e96a87e972c",
+      "patch": "docs/compatibility/patches/tagged-literal-predicate.json"
+    },
+    {
+      "id": "runtime:tagged-literal:11928",
+      "source-sha256": "f671ceffe005f1611e84e29a667875fa5404b600dd81f674cd3821fe885f86e2",
+      "patch": "docs/compatibility/patches/tagged-literal.json"
     }
   ],
   "loader": {
@@ -2301,7 +2316,7 @@
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "49788c850529ca41d4e4120d137a9dc301946e6cce4d2d9e68344de83e41e115"
+      "sha256": "a4404fc8afac65d0bffae578e04fc8d2f78f369e57d90d74acb057299f13feed"
     }
   }
 }

@@ -107,8 +107,10 @@ malformed text with the same message and span.
 - Keyword and symbol tokens follow the compiler's reader. For example, `:a/1`
   is rejected.
 
-`read_one` requires exactly one value. The language-level `read-string` and
-`suss.edn/read-string`, with their `:eof` behaviour, belong to #300.
+`read_one` requires exactly one value. Suss programs read the same format with
+`suss.edn/read-string` (#300, `docs/runtime/read-string.md`), which reads one
+value and follows `clojure.edn`'s `:eof`. It accepts a lone surrogate escape,
+which Suss strings can hold.
 
 ## Rust types
 

@@ -397,6 +397,7 @@ pub enum Nominal {
     ValueAdd,
     StringIndexOf,
     StringSlice,
+    StringFromUnit,
     LanguageError,
     IsLanguageError,
     ObjectSet,
@@ -411,7 +412,7 @@ pub enum Nominal {
 impl Nominal {
     pub fn result(self) -> Type {
         match self {
-            Self::CoerceString | Self::ObjectCoerceString | Self::ConcatString | Self::StringSlice => Type::String,
+            Self::CoerceString | Self::ObjectCoerceString | Self::ConcatString | Self::StringSlice | Self::StringFromUnit => Type::String,
             Self::StringIndexOf => Type::Number,
             Self::BindingDefined
             | Self::IsNumber
@@ -437,7 +438,7 @@ impl Nominal {
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::CurrentThis => count == 0,
                 Self::IsNumber | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::SourceFunctionName => count == 1,
-                Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor => count == 1,
+                Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable | Self::MethodGet => count == 2,
@@ -2432,6 +2433,7 @@ impl Analyzer<'_> {
                 "concat-string" => Some(Nominal::ConcatString),
                 "string-index-of" => Some(Nominal::StringIndexOf),
                 "string-slice" => Some(Nominal::StringSlice),
+                "string-from-unit" => Some(Nominal::StringFromUnit),
                 "error" => Some(Nominal::LanguageError),
                 "error?" => Some(Nominal::IsLanguageError),
                 "object-get" => Some(Nominal::NativeObjectGet),

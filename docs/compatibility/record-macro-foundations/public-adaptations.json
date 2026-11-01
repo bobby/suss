@@ -19,9 +19,9 @@
     },
     {
       "path": "crates/suss-compile/src/portable_record_public.rs",
-      "sha256": "17d521e96a9f86e58a40223cfa7e58787b44dfd96f6a8c81d88575ef6936962d",
+      "sha256": "46d7a7246204cc4f54060402e5840be03544aeb2758b75758ea5eb29f9932562",
       "compiled-sources": {
-        "SOURCE": "073930a770f75250f60ffc4f0e007f20e5eed38f984c6522f2fab2abeff1d9bc",
+        "SOURCE": "3f59cf2f6c1863e2f2dd58806fd634794943e307a486f0a2e401e608ec63d872",
         "MACRO_SOURCE": "0a9163f09996c826000c89b9c00b1f57a6bbd4a465490c4f168231cdde737088"
       }
     }

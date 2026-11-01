@@ -382,22 +382,27 @@ fn form_value(form: &suss_reader::forms::Form) -> Value {
     if meta.is_empty() { value } else { Value::Meta(Box::new(value), meta) }
 }
 
+/// The shared reader corpus (`reader-conformance.edn`), which the runtime
+/// reader's tests also read (#300).
+fn corpus(key: &str) -> Vec<String> {
+    let corpus = read(include_str!("reader-conformance.edn"));
+    let Value::Map(entries) = corpus else { panic!("corpus is a map") };
+    let Some(Value::Vector(items)) = entries.get(&Value::keyword(key)) else { panic!("corpus has {key}") };
+    items
+        .iter()
+        .map(|item| match item {
+            Value::String(text) => text.clone(),
+            other => panic!("corpus entry {other:?}"),
+        })
+        .collect()
+}
+
 /// Both readers lex the same text to equal data, metadata included, and
 /// fail the same malformed text with the same message and span.
 #[test]
-fn the_edn_parser_agrees_with_the_compilers_reader() {
-    let corpus = [
-        "nil true false", "0 -0 +1 -1.5 1e3 1E-3 -0.0 0x1F -0x10 017 2r1010 36rZZ 9007199254740993 ##Inf ##-Inf ##NaN",
-        "\"\" \"plain\" \"\\n\\r\\t\\b\\f\\\"\\\\\" \"\\u00e9\\u2603\" \"\\ud83d\\ude00\" \"\\0\\12\\377\" \"é☃😀\" \"multi\nline\"",
-        "\\a \\Z \\é \\newline \\return \\tab \\space \\backspace \\formfeed \\u0041 \\o101 \\( \\; \\\"",
-        "a ab/cd a.b/c.d + - -> <=> *x* a' a# a% .. / clojure.core// ns/a:b a:b",
-        ":a :a/b :1 :+ :a.b/c",
-        "() [] {} #{} (1 [2 {3 #{4}}]) {:a 1, :b [2 3]} #{:a \"b\" 3}",
-        "^:k [x] ^{:a 1} {} ^T sym ^\"S\" (x) ^:a ^:b ^{:a 2} [y] #queue [1 2] #queue ^:m []",
-        "[1 #_ 2 3] [#_ #_ 4 5 6] (a ; comment\n b) {:a #_ :x 1}",
-        "  ,, \u{a0}\u{2003} x\u{2028}y",
-    ];
-    for source in corpus {
+fn edn_conformance_with_the_compilers_reader() {
+    for source in corpus("valid") {
+        let source = source.as_str();
         let forms = suss_reader::forms::read_forms(source)
             .and_then(suss_reader::forms::resolve_conditionals)
             .unwrap_or_else(|error| panic!("{source}: {error:?}"));
@@ -408,11 +413,8 @@ fn the_edn_parser_agrees_with_the_compilers_reader() {
             assert!(same(found, expected), "{source}\n{found:?}\n{expected:?}");
         }
     }
-    for source in [
-        "\"abc", "\"\\x\"", "\"\\u12\"", "\"\\19\"", "\"\\400\"", "\\", "\\ab", "\\ud800", "\\o400", "\\uZZZZ",
-        "1/2", "1N", "1.5M", "0x", "08", "1e", "2r2", "40r1", "1a", "##Foo", ":", "::a", "a/", "/a", "a/1", "ns/",
-        "(", "[1", "{:a 1", ")", "]", "}", "{:a}", "^1 x", "^:a 1", "#queue 1", "#unknown 1", "#_", "#", "#!", "#1 x",
-    ] {
+    for source in corpus("malformed") {
+        let source = source.as_str();
         let expected = suss_reader::forms::read_forms(source).and_then(suss_reader::forms::resolve_conditionals);
         let found = edn::read_all(source, &Options::default());
         match (expected, found) {

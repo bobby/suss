@@ -1,0 +1,20 @@
+;; Original Suss data reader, following clojure.edn (#300). Reading uses
+;; suss.core's runtime reader in its EDN mode, in both phases.
+(ns suss.edn)
+
+(def read-string
+  "Reads one object from the string s. Returns nil when s is nil or empty.
+
+  Reads data in the edn format (https://github.com/edn-format/edn), a data-only
+  subset of Suss syntax: no quote or syntax-quote sugar, #(), #', reader
+  conditionals, ::k or record literals, and nothing is evaluated.
+
+  opts is a map that can include the following keys:
+  :eof - value to return on end-of-file. When not supplied, eof throws an exception.
+  :readers  - a map of tag symbols to data-reader functions to be considered
+              before the built-in #queue.
+  :default - A function of two args, that will, if present and no reader is found
+             for a tag, be called with the tag and the value."
+  (fn
+    ([s] (read-string {:eof nil} s))
+    ([opts s] (suss.core/read-edn-string opts s))))
