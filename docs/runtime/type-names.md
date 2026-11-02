@@ -19,10 +19,14 @@ Clojure's `Compiler/munge` does.
 | `(reify)` in `my-ns.core` | `my_ns.core$reify__N` |
 
 Core types are named in `suss.core`, where Clojure's are in `clojure.lang`. A
-`reify` name includes its analysis site `N`, which, unlike Clojure's, is not
-unique across compilation units. Values whose type has no descriptor, such as
-numbers, strings and functions, have no name; where one is needed it is
-`Object`.
+`reify` name includes its analysis site `N` within one top-level form, so,
+unlike Clojure's, two `reify` forms evaluated separately can share a name.
+
+Types without a descriptor are not named yet: numbers, strings, booleans,
+functions and errors raised by the runtime. Their types print as before, such
+as `#object[Number]` for `(type 1)`, where Clojure prints `java.lang.Long`, and
+`str` of such a type fails. A runtime error's own name is `Object`, so it prints
+as `#object[Object ...]` rather than Clojure's `#error {...}`.
 
 ## Runtime representation
 

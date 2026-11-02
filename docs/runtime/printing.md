@@ -86,9 +86,10 @@ Values that are not data print as Clojure's default `print-method` prints them
   hexadecimal, then `pr` of the object's `str`. A type's own `toString` gives
   the string, otherwise it is `Name@hex` with the object's `hash`, as Clojure's
   `Object/toString`.
-- **References** print their state as Clojure's `deref-as-map` does: a
-  pending reference has status `:pending` and a failing one `:failed`. The
-  state is a map, so `*print-length*` and `*print-level*` apply to it.
+- **References** print their state as Clojure's `deref-as-map` does. The
+  state is a map, so `*print-length*` and `*print-level*` apply to it. The
+  printer also reports `:pending` and `:failed` states, but no Suss reference
+  can be in either yet: `delay`, `future` and `volatile!` do not exist.
 - **Errors:** an `ex-info` prints as Clojure's `print-throwable`: the root
   cause's message and data, then one `:via` entry per cause.
 - **Metadata** prints before the object under `*print-meta*`, as in Clojure.
@@ -104,8 +105,13 @@ Differences from Clojure:
   keeps no stack traces. Errors other than `ex-info` print as objects.
 - Functions still print as `#object[name]`, and `#js` objects and their
   printer helpers are not yet supported.
-- Under `*print-dup*`, Clojure prints a type value as `#=name`; Suss prints its
-  name.
+- Under `*print-dup*`, Clojure prints a type value as `#=name` and has no
+  `print-dup` method for other objects, references or errors, so printing them
+  throws. Suss prints them as `pr-str` does.
+- `str` of an `ex-info` is `Error: x`, as in ClojureScript, where Clojure's is
+  `clojure.lang.ExceptionInfo: x {}`.
+- Types of numbers, strings, functions and runtime errors are not named yet
+  ([type names](type-names.md)), so they print as before.
 
 ## Not yet supported
 

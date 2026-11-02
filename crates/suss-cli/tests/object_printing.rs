@@ -43,6 +43,7 @@ fn sessions() -> Vec<(Session, CompiledMacros)> {
                 "(deftype U [] Object (toString [_] \"u\"))",
                 "(deftype M [m] IMeta (-meta [_] m))",
                 "(deftype a-b? [])",
+                "(deftype V [a] Object (equals [_ o] false))",
                 "(defrecord R [a b])",
             ] {
                 session.eval_with_macros(source, &mut macros).unwrap_or_else(|error| panic!("{source}: {error:?}"));
@@ -124,6 +125,10 @@ fn objects_print_as_tagged_objects() {
         ("(pr-str (U.))", "#object[my_ns.printing.U 0xH \"u\"]"),
         ("(str (U.))", "u"),
         ("(pr-str (a-b?.))", "#object[my_ns.printing.a_b_QMARK_ 0xH \"my_ns.printing.a_b_QMARK_@H\"]"),
+        // An Object section without toString still gets the default.
+        ("(str (V. 1))", "my_ns.printing.V@H"),
+        ("(pr-str (reify))", "#object[my_ns.printing$reify__0 0xH \"my_ns.printing$reify__0@H\"]"),
+        ("(pr-str (reify Object (toString [_] \"r\")))", "#object[my_ns.printing$reify__0 0xH \"r\"]"),
         ("(pr-str (transient []))", "#object[suss.core.TransientVector 0xH \"suss.core.TransientVector@H\"]"),
         ("(pr-str (transient {}))", "#object[suss.core.TransientArrayMap 0xH \"suss.core.TransientArrayMap@H\"]"),
         // Metadata prints first, as print-tagged-object prints it.

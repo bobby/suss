@@ -1069,7 +1069,7 @@ fn nominal_fragment() -> Vec<u8> {
     use wasm_encoder::*;
     let value = ValType::Ref(RefType::EQREF);
     let signatures = [
-        ("descriptor-new", vec![value, value], vec![value]),
+        ("descriptor-new", vec![value, value, value], vec![value]),
         ("constructor-new", vec![value], vec![value]),
         ("constructor-descriptor", vec![value], vec![value]),
         ("protocol-dispatcher-new", vec![value], vec![value]),
@@ -1139,9 +1139,10 @@ fn nominal_fragment() -> Vec<u8> {
 
 fn nominal_value(store: &mut Store<()>, instance: Instance, name: &str, args: &[Val]) -> Val {
     let mut result = [Val::null_any_ref()];
-    // Descriptors built here declare no mutable field names (#278).
+    // Descriptors built here declare no mutable field names (#278) and no
+    // type name (#304).
     let mut args = args.to_vec();
-    if name == "descriptor-new" && args.len() == 1 {
+    while name == "descriptor-new" && args.len() < 3 {
         args.push(Val::AnyRef(Some(wasmtime::AnyRef::from_i31(&mut *store, wasmtime::I31::wrapping_u32(0)))));
     }
     instance
@@ -1528,7 +1529,7 @@ fn runtime_abi_nominal_bad_inputs_throw_language_errors_before_storage_access() 
             true,
         ),
         ("constructor-descriptor", vec![dispatcher], true),
-        ("descriptor-new", vec![nil.clone(), nil.clone()], true),
+        ("descriptor-new", vec![nil.clone(), nil.clone(), nil.clone()], true),
         ("object-new", vec![invalid_schema, schema.clone()], true),
         (
             "protocol-method-get",
@@ -1540,7 +1541,7 @@ fn runtime_abi_nominal_bad_inputs_throw_language_errors_before_storage_access() 
             vec![odd_table, descriptor.clone()],
             true,
         ),
-        ("descriptor-new", vec![Val::null_any_ref(), nil.clone()], true),
+        ("descriptor-new", vec![Val::null_any_ref(), nil.clone(), nil.clone()], true),
         ("constructor-new", vec![nil.clone()], true),
         ("constructor-descriptor", vec![nil.clone()], true),
         ("protocol-dispatcher-new", vec![nil.clone()], true),
