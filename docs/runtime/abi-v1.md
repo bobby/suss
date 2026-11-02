@@ -136,8 +136,9 @@ old-capture behavior after rebinding. No recursive layout change is introduced.
 
 The recursive prelude remains version1 with nominal source support. Compiler artifact
 format2 (`0.1.0+portable.2`) adds internal undefined sentinel6, preserving falsey
-branching and NaN/`undefined` coercion separately from nil0. Older compiler manifests
-reject before initializer effects. Nominal counter/error/protocol sentinel globals
+branching and NaN/`undefined` coercion separately from nil0. Format3 (`+portable.3`)
+adds the type name to descriptor construction; see [type names](type-names.md).
+Older compiler manifests reject before initializer effects. Nominal counter/error/protocol sentinel globals
 append after numeric stack global6; [nominal evidence](nominal.md) describes the
 current source/runtime subset and unfinished acceptance work.
 

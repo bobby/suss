@@ -195,7 +195,8 @@ call paths can be introduced later with equivalent tests.
 
 A user-defined object carries a stable type descriptor and a field array rather
 than introducing a new cross-fragment Wasm struct layout for each `deftype`.
-Descriptors hold nominal identity, fields, protocol implementations and metadata.
+Descriptors hold nominal identity, fields, protocol implementations and the
+type's name.
 Closures, binding cells, exception values and dynamic binding frames have stable
 layouts. Published compiled artifacts record compiler, runtime ABI and dependency
 versions and fail early on mismatch. Generated module type indices are never
@@ -517,6 +518,18 @@ through custom hash methods on built-in types, poisoning of retained guest
 storage, and cross-invocation identity. The first-use certification and memo
 provenance work for #257, #261 and #264 is retired with them. The 2026-10-01
 identity-hashing UID slot remains the identity hash for user objects.
+
+2026-11-01 type-name decision (#304): every type descriptor carries its type's
+name, so values that are not data print as Clojure prints them without a host
+import. The name goes in the descriptor's existing slot 3, which type
+descriptors never used; the recursive type group and runtime ABI version 2 are
+unchanged. The descriptor constructors take the name as a third argument, and
+compiled artifacts move to format 3 (`+portable.3`), so older artifacts fail
+before initialization. A name is Clojure's class name: `namespace-munge` of the
+namespace and `munge` of the type name, so `my-ns/T` is `my_ns.T`. The same
+name prints type values, `#object[...]` forms, `Name@hex` strings and record
+literals, so `#my_ns.R{...}` reads back and `#my-ns.R{...}` does not, as in
+Clojure. Details are in docs/runtime/type-names.md.
 
 ## Primary references
 

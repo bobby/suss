@@ -70,6 +70,43 @@ metadata, and prints strings readably, as Clojure does.
   Clojure's `print-dup` keeps it for records and for the values it prints as
   `#=(...)` forms.
 
+## Values that are not data
+
+Values that are not data print as Clojure's default `print-method` prints them
+(#304), with the type names of [type names](type-names.md).
+
+| Value | Prints as |
+| --- | --- |
+| A type value, such as `(type [])` | `suss.core.PersistentVector` |
+| A `deftype` value, a transient, a `reify` | `#object[my_ns.T 0x1f "my_ns.T@1f"]` |
+| A reference: an atom or `reduced` value | `#object[suss.core.Atom 0x2 {:status :ready, :val 1}]` |
+| An `ex-info` | `#error {:cause "x" :data {} :via [...] :trace []}`, on several lines |
+
+- **Objects:** `#object[`, the type's name, `0x` and the identity hash in
+  hexadecimal, then `pr` of the object's `str`. A type's own `toString` gives
+  the string, otherwise it is `Name@hex` with the object's `hash`, as Clojure's
+  `Object/toString`.
+- **References** print their state as Clojure's `deref-as-map` does: a
+  pending reference has status `:pending` and a failing one `:failed`. The
+  state is a map, so `*print-length*` and `*print-level*` apply to it.
+- **Errors:** an `ex-info` prints as Clojure's `print-throwable`: the root
+  cause's message and data, then one `:via` entry per cause.
+- **Metadata** prints before the object under `*print-meta*`, as in Clojure.
+- **Reading back:** `read-string` rejects these forms with "No reader
+  function for tag object" (or `error`), as Clojure's reader does.
+
+Differences from Clojure:
+
+- The hash after `0x` is Suss's identity hash, a small number assigned in
+  order, not the JVM's `identityHashCode`.
+- Core types are named `suss.core.X`, not `clojure.lang.X`.
+- `#error` has no `:at` entries and `:trace` is always `[]`, because Suss
+  keeps no stack traces. Errors other than `ex-info` print as objects.
+- Functions still print as `#object[name]`, and `#js` objects and their
+  printer helpers are not yet supported.
+- Under `*print-dup*`, Clojure prints a type value as `#=name`; Suss prints its
+  name.
+
 ## Not yet supported
 
 - **`print-method`**, Clojure's extension point for user types, needs
@@ -95,7 +132,10 @@ imported from the pinned ClojureScript source with patches that follow
 Clojure's printer (`docs/compatibility/patches/printing-*.json`). Records
 print through `pr-record-writer` in core's appendix
 (`docs/compatibility/bootstrap/exact-integers.sus`), which the generated
-`defrecord` printer calls with the record's name. `*flush-on-newline*` is
+`defrecord` printer calls; it takes the record's name from its type. The
+printers of values that are not data (`pr-tagged-object`, `deref-as-map` and
+`pr-throwable`) are there too. `*flush-on-newline*` is
 imported unchanged.
 
-The tests are in `crates/suss-cli/tests/printer_options.rs`.
+The tests are in `crates/suss-cli/tests/printer_options.rs` and
+`crates/suss-cli/tests/object_printing.rs`.

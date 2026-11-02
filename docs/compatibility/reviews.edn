@@ -372,13 +372,13 @@
   {:source-sha256 "31496dfe26493383aa9bd1ac4c8147dc8ce517ce59a7775ed393327d8ac485cf"
    :visibility :private
    :arities {:fixed [3] :variadic-min nil}
-   :dependencies ["IWriter/IPrintWithWriter", "print-meta?/meta", "numeric/string/boolean predicates and coercions", "pr-constructor-writer (unfinished)", "object?/js-keys/pr-object-map/pr-object-keyword?/keyword/print-map (unfinished object path)", "pr-function-name (unfinished)", "pr-date?/regexp?/js-symbol? (unfinished representations)", "pr-object-constructor-string/pr-constructor-display-name/pr-object-constructor-name/pr-object-constructor (unfinished fallback)"]
+   :dependencies ["IWriter/IPrintWithWriter", "print-meta?/meta", "numeric/string/boolean predicates and coercions", "pr-constructor-writer, pr-tagged-object, deref-as-map and pr-throwable (core appendix, #304)", "suss.bootstrap/type-name", "object?/js-keys/pr-object-map/pr-object-keyword?/keyword/print-map (unfinished object path)", "pr-function-name"]
    :classification :adapted
-   :rationale "Retain the entire pinned default printer and branch order, metadata prefix, protocol precedence, numeric exceptional spelling, readable strings, function printing, object/array, Date, regex/symbol and fallback behavior. Expand defn to def/fn. Replace primitive NaN/infinity/empty-string operations with their portable equivalents and constructor storage inspection with the owned descriptor guard. Host storage/regex/constructor/name operations are explicit private dependencies, currently declared but uninitialized; unavailable paths must fail visibly, never fabricate output or return constant false predicates. This is staged source retention, not complete printing compatibility. Date/regexp/JS symbol representations, eager object-key mapping/identifier matching, function and constructor names, generic object properties, constructor printer and collection print-map still need real implementations and individual evidence; no host branch is silently deleted or claimed excluded. Expand the single cond-> application to an if over the already-bound key, preserving one predicate evaluation and keyword conversion only on the selected branch. Subsequent source increments implement print-map/keyword and owned source-function display names with fresh two-phase GC evidence. Unknown kernel/synthetic/foreign names still fail visibly; constructor, host storage/regex and function-body printing remain unfinished. The earlier staging description is superseded for these implemented dependencies, not a full printer compatibility claim. Metadata follows Clojure's print-meta (#302): empty metadata and a keyword :type are not printed, a lone :tag prints as ^tag, and strings print readably under *print-dup*."
+   :rationale "Retain the pinned default printer's branch order, metadata prefix, protocol precedence, numeric exceptional spelling, readable strings, function printing and object/array branches. Expand defn to def/fn. Replace primitive NaN/infinity/empty-string operations with their portable equivalents and constructor storage inspection with the owned descriptor guard. Expand the single cond-> application to an if over the already-bound key, preserving one predicate evaluation and keyword conversion only on the selected branch. The #js object helpers (pr-object-map, pr-object-keyword?) remain declared but undefined, so that path fails visibly. Metadata follows Clojure's print-meta (#302): empty metadata and a keyword :type are not printed, a lone :tag prints as ^tag, and strings print readably under *print-dup*. Values that are not data follow Clojure's default print-method (#304), replacing the host Date, RegExp, JS symbol and constructor-name branches, which name host values Suss does not have: a type value prints its name (print-method Class), an ExceptionInfo prints as print-throwable without stack frames, an IDeref prints as print-tagged-object of deref-as-map, and any other object as print-tagged-object of its str. The helpers are original Suss in core's appendix."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/printing-pr-writer-impl.json"
    :alternative nil
-   :tests ["crates/suss-compile/tests/compiled_printing.rs" "tests/oracle/printing-cases.json" "tests/oracle/object-predicate-cases.json" "crates/suss-cli/tests/printer_options.rs"]}
+   :tests ["crates/suss-cli/tests/object_printing.rs" "crates/suss-compile/tests/compiled_printing.rs" "tests/oracle/printing-cases.json" "tests/oracle/object-predicate-cases.json" "crates/suss-cli/tests/printer_options.rs"]}
   "runtime:empty?:2210"
   {:source-sha256 "4c72ac8a5d69d042a99a6ca275728e2dd705145de71eb9881888fea962ba7213"
    :visibility :public
@@ -2043,17 +2043,17 @@
    :arities {:fixed [3] :variadic-min nil}
    :dependencies ["runtime:pr-writer-ex-info:11756" "runtime:IPrintWithWriter:806" "shared ABI descriptor/UserObject"]
    :classification :adapted
-   :rationale "Original descriptor-backed core closures preserve constructor/getter payloads, live class/cell identity, field-name lookup and source order on the shared GC runtime. Fixed arities, false/nil/undefined, typed catches and retained closures execute. Full core import, persistent map data, printing/stack and full ordinary-object coercion/field adaptation remain unfinished. No upstream form is copied."
+   :rationale "Original descriptor-backed core closures preserve constructor/getter payloads, live class/cell identity, field-name lookup and source order on the shared GC runtime. Fixed arities, false/nil/undefined, typed catches and retained closures execute. Printing follows Clojure's print-throwable without stack frames (#304). Full core import, persistent map data, stack traces and full ordinary-object coercion/field adaptation remain unfinished. No upstream form is copied."
    :status :in-progress
    :adaptation-path "docs/runtime/exception-info.md"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_exception_info.rs" "crates/suss-compile/tests/portable_pipeline.rs" "tests/oracle/portable-cases.json"]}
+   :tests ["crates/suss-cli/tests/portable_exception_info.rs" "crates/suss-cli/tests/object_printing.rs" "crates/suss-compile/tests/portable_pipeline.rs" "tests/oracle/portable-cases.json"]}
   "runtime:ex-info:11796"
   {:source-sha256 "6adac249468e989f760ef2e59abfe32b972a8f88c4190a0266b93b244704d79a" :visibility :public
    :arities {:fixed [2 3] :variadic-min nil}
    :dependencies ["runtime:ExceptionInfo:11767"]
    :classification :adapted
-   :rationale "Original descriptor-backed core closures preserve constructor/getter payloads, live class/cell identity, field-name lookup and source order on the shared GC runtime. Fixed arities, false/nil/undefined, typed catches and retained closures execute. Full core import, persistent map data, printing/stack and full ordinary-object coercion/field adaptation remain unfinished. No upstream form is copied."
+   :rationale "Original descriptor-backed core closures preserve constructor/getter payloads, live class/cell identity, field-name lookup and source order on the shared GC runtime. Fixed arities, false/nil/undefined, typed catches and retained closures execute. Printing follows Clojure's print-throwable without stack frames (#304). Full core import, persistent map data, stack traces and full ordinary-object coercion/field adaptation remain unfinished. No upstream form is copied."
    :status :in-progress
    :adaptation-path "docs/runtime/exception-info.md"
    :alternative nil
@@ -2063,7 +2063,7 @@
    :arities {:fixed [1] :variadic-min nil}
    :dependencies ["runtime:ExceptionInfo:11767" "macro:instance?:1025"]
    :classification :adapted
-   :rationale "Original descriptor-backed core closures preserve constructor/getter payloads, live class/cell identity, field-name lookup and source order on the shared GC runtime. Fixed arities, false/nil/undefined, typed catches and retained closures execute. Full core import, persistent map data, printing/stack and full ordinary-object coercion/field adaptation remain unfinished. No upstream form is copied."
+   :rationale "Original descriptor-backed core closures preserve constructor/getter payloads, live class/cell identity, field-name lookup and source order on the shared GC runtime. Fixed arities, false/nil/undefined, typed catches and retained closures execute. Printing follows Clojure's print-throwable without stack frames (#304). Full core import, persistent map data, stack traces and full ordinary-object coercion/field adaptation remain unfinished. No upstream form is copied."
    :status :in-progress
    :adaptation-path "docs/runtime/exception-info.md"
    :alternative nil
@@ -2073,7 +2073,7 @@
    :arities {:fixed [1] :variadic-min nil}
    :dependencies ["runtime:ExceptionInfo:11767" "shared ABI Error adaptation"]
    :classification :adapted
-   :rationale "Original descriptor-backed core closures preserve constructor/getter payloads, live class/cell identity, field-name lookup and source order on the shared GC runtime. Fixed arities, false/nil/undefined, typed catches and retained closures execute. Full core import, persistent map data, printing/stack and full ordinary-object coercion/field adaptation remain unfinished. No upstream form is copied."
+   :rationale "Original descriptor-backed core closures preserve constructor/getter payloads, live class/cell identity, field-name lookup and source order on the shared GC runtime. Fixed arities, false/nil/undefined, typed catches and retained closures execute. Printing follows Clojure's print-throwable without stack frames (#304). Full core import, persistent map data, stack traces and full ordinary-object coercion/field adaptation remain unfinished. No upstream form is copied."
    :status :in-progress
    :adaptation-path "docs/runtime/exception-info.md"
    :alternative nil
@@ -2083,7 +2083,7 @@
    :arities {:fixed [1] :variadic-min nil}
    :dependencies ["runtime:ExceptionInfo:11767" "macro:instance?:1025"]
    :classification :adapted
-   :rationale "Original descriptor-backed core closures preserve constructor/getter payloads, live class/cell identity, field-name lookup and source order on the shared GC runtime. Fixed arities, false/nil/undefined, typed catches and retained closures execute. Full core import, persistent map data, printing/stack and full ordinary-object coercion/field adaptation remain unfinished. No upstream form is copied."
+   :rationale "Original descriptor-backed core closures preserve constructor/getter payloads, live class/cell identity, field-name lookup and source order on the shared GC runtime. Fixed arities, false/nil/undefined, typed catches and retained closures execute. Printing follows Clojure's print-throwable without stack frames (#304). Full core import, persistent map data, stack traces and full ordinary-object coercion/field adaptation remain unfinished. No upstream form is copied."
    :status :in-progress
    :adaptation-path "docs/runtime/exception-info.md"
    :alternative nil
@@ -4511,7 +4511,7 @@
    :status :in-progress :adaptation-path "docs/compatibility/patches/record-iteration-RecordIter.json" :alternative nil
    :tests ["crates/suss-cli/tests/portable_record_iteration.rs (3 tests pass in both phases after GC; 0 failed/ignored/filtered)" "tests/oracle/record-iteration-cases.json (14 fresh pinned cases pass)"]}
 
-  "runtime:str:3129" {:source-sha256 "1772f1a9586effdbe7928132f99ef62ff2b687287718bc9f25c3096a3fffa208" :visibility :public :arities {:fixed [0 1] :variadic-min 1} :alternative nil :classification :adapted :status :in-progress :adaptation-path "docs/compatibility/patches/record-public-str.json" :dependencies ["runtime:to-array:3819" "runtime:IndexedSeq:1653"] :tests ["crates/suss-cli/tests/portable_string_fields.rs (2 tests pass in both phases after GC; 0 failed/ignored/filtered)" "tests/oracle/string-field-cases.json (29 pinned raw cases consumed by the passing native regression)"] :rationale "Complete source arities and live loop retained with licensed full StringBuffer adapter; the authored native regression executes and passes at the integrated head; complete host-object coercion and the separate compiler str_ macro adaptation remain unfinished."}
+  "runtime:str:3129" {:source-sha256 "1772f1a9586effdbe7928132f99ef62ff2b687287718bc9f25c3096a3fffa208" :visibility :public :arities {:fixed [0 1] :variadic-min 1} :alternative nil :classification :adapted :status :in-progress :adaptation-path "docs/compatibility/patches/record-public-str.json" :dependencies ["runtime:to-array:3819" "runtime:IndexedSeq:1653"] :tests ["crates/suss-cli/tests/object_printing.rs" "crates/suss-cli/tests/portable_string_fields.rs (2 tests pass in both phases after GC; 0 failed/ignored/filtered)" "tests/oracle/string-field-cases.json (29 pinned raw cases consumed by the passing native regression)"] :rationale "Complete source arities and live loop retained with licensed full StringBuffer adapter; the authored native regression executes and passes at the integrated head; complete host-object coercion and the separate compiler str_ macro adaptation remain unfinished. A type value's str is Clojure's Class toString, \"class \" and its name, and types without their own toString inherit Clojure's Name@hex (#304)."}
 
   "macro:str_:852" {:source-sha256 "9712f7cd8d63a1b94c84e344b4f067ba7a3948807da99c14e1ae1f0c7b3c1ff9" :visibility :public :arities {:fixed [0 1] :variadic-min 1} :dependencies ["macro:typed-expr?:844" "macro:string-expr:849" "macro:compile-time-constant?:869" "runtime:str:3129" "runtime:str_:3106" "compiler js* string expressions" "analysis environment type facts"] :classification :adapted :status :unimplemented :adaptation-path "docs/compatibility/string-buffer/str-macros.cljc" :alternative nil :tests ["docs/compatibility/string-buffer/evidence/initial-cases.json" "tests/oracle/string-field-cases.json"] :rationale "Whole pinned source retained as a provenance witness only, not an executable adaptation. Direct-call string-context optimization differs from lexical alias raw runtime return; initial observations retain this difference. Genuine compiled macro/helper graph and emitted expression semantics remain required; no source subset or runtime-only completion claim."}
 
