@@ -113,11 +113,47 @@ fn run_command(flags: args::CacheFlags, cmd: args::Command) {
             compile_project(&flags, world.as_deref(), config_path.as_deref(), optimize, compile_fuel);
         }
         args::Command::Cache { action } => cache_command(action),
+        args::Command::Analyze { file, namespace, src_paths, emit, pretty, compile_fuel } => {
+            analyze_command(file.as_deref(), namespace.as_deref(), &src_paths, emit, pretty, compile_fuel);
+        }
         args::Command::Run { component_path, invoke, command_mode, args } => {
             run_component(&component_path, &invoke, command_mode, &args);
         }
         args::Command::Help => args::print_help(),
         args::Command::Version => println!("suss {}", env!("CARGO_PKG_VERSION")),
+    }
+}
+
+/// Print a file's forms or analysis as EDN (#299).
+fn analyze_command(
+    file: Option<&str>,
+    namespace: Option<&str>,
+    src_paths: &[String],
+    emit: args::AnalyzeEmit,
+    pretty: bool,
+    compile_fuel: Option<u64>,
+) {
+    use std::path::{Path, PathBuf};
+    use suss_compile::portable_analyze::{Emit, analyze};
+    let emit = match emit {
+        args::AnalyzeEmit::Forms => Emit::Forms,
+        args::AnalyzeEmit::Hir => Emit::Hir,
+    };
+    let paths: Vec<PathBuf> = src_paths.iter().map(PathBuf::from).collect();
+    let document = analyze(file.map(Path::new), namespace, &paths, emit, compile_fuel).and_then(|value| {
+        let printed = if pretty {
+            suss_reader::edn::print_pretty(&value)
+        } else {
+            suss_reader::edn::print(&value)
+        };
+        printed.map_err(|error| error.message)
+    });
+    match document {
+        Ok(text) => println!("{text}"),
+        Err(error) => {
+            eprintln!("Error: {error}");
+            std::process::exit(1);
+        }
     }
 }
 

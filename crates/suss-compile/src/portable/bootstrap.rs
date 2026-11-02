@@ -132,6 +132,31 @@ fn catalog(phase: Phase) -> Result<super::AnalyzedFragment, Diagnostic> {
         Some(&super::SourceOrigin::privileged(SOURCE)),
     )
 }
+/// The shipped core source.
+pub fn core_source() -> &'static str {
+    SOURCE
+}
+/// Analyze `source` as the shipped core is analyzed, recording its forms for
+/// tooling (#299): privileged, with no macro expansion and no execution.
+pub fn analyze_core_source(
+    source: &str,
+    phase: Phase,
+) -> Result<Vec<super::analysis_record::RecordedFragment>, Diagnostic> {
+    let forms = suss_reader::forms::read_forms(source)
+        .and_then(suss_reader::forms::resolve_conditionals)
+        .map_err(|failure| Diagnostic { span: failure.span, message: failure.message })?;
+    let (result, fragments) = super::analysis_record::record(Box::new(|_| true), || {
+        super::analyze_selected_fragment(
+            forms,
+            0..source.len(),
+            &Environment::default(),
+            phase,
+            &mut super::NoExpansion,
+            Some(&super::SourceOrigin::privileged(source)),
+        )
+    });
+    result.map(|_| fragments)
+}
 /// Development generator; it does not execute source or invoke Java/Node.
 pub fn generate(phase: Phase) -> Result<(Vec<u8>, Manifest), Diagnostic> {
     let analyzed = catalog(phase)?;
