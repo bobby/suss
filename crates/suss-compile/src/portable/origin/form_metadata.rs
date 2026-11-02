@@ -716,6 +716,19 @@ impl SourceOrigin {
         self.original_form_ref_metered(form, meter)
     }
 
+    /// Whether the source metadata snapshot has been built (#299 step 3).
+    pub(crate) fn metadata_initialized(&self) -> bool {
+        self.metadata_forms.get().is_some()
+    }
+    pub(crate) fn reader_forms(&self) -> Option<&std::sync::Arc<(Form, Form)>> {
+        self.reader_forms.as_ref()
+    }
+    /// This origin with an existing reader correspondence, shared.
+    pub(crate) fn with_shared_reader_forms(&self, pair: std::sync::Arc<(Form, Form)>) -> Self {
+        let mut result = self.clone();
+        result.reader_forms = Some(pair);
+        result
+    }
     pub(crate) fn with_reader_expansion(&self, lowered: Form, reader: Form) -> Self {
         let mut result = self.clone();
         result.reader_forms = Some(std::sync::Arc::new((lowered, reader)));

@@ -34,6 +34,12 @@ pub struct ReaderState {
 }
 
 impl ReaderState {
+    pub(crate) fn next_gensym(&self) -> u64 {
+        self.next_gensym
+    }
+    pub(crate) fn with_next_gensym(next_gensym: u64) -> Self {
+        Self { next_gensym }
+    }
     /// Expand resolved reader forms, including templates inside quoted data.
     /// The caller must supply original reader spans, not synthetic macro spans.
     pub fn expand(

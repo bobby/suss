@@ -116,7 +116,7 @@ fn manifest(phase: Phase, wasm: &[u8], cells: &[super::resolve::Global]) -> Mani
             .collect(),
     }
 }
-fn catalog(phase: Phase) -> Result<super::AnalyzedFragment, Diagnostic> {
+pub(crate) fn catalog(phase: Phase) -> Result<super::AnalyzedFragment, Diagnostic> {
     let forms = suss_reader::forms::read_forms(SOURCE)
         .and_then(suss_reader::forms::resolve_conditionals)
         .map_err(|failure| Diagnostic {

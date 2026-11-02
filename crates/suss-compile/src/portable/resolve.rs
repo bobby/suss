@@ -16,6 +16,8 @@ pub enum Phase {
     Macro,
 }
 
+mod persist;
+
 /// A stable language identity; Wasm import indices are deliberately absent.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Global {
@@ -719,6 +721,10 @@ impl Environment {
     pub fn declared_namespaces(&self, phase: Phase) -> impl Iterator<Item = &str> {
         self.namespaces.iter().filter_map(move |(entry_phase, namespace)|
             (*entry_phase == phase).then_some(namespace.as_str()))
+    }
+    #[cfg(test)]
+    pub(crate) fn probe_definitions(&self) -> impl Iterator<Item = &std::sync::Arc<DefinitionInfo>> {
+        self.definitions.values()
     }
     pub fn definition_info(&self, global: &Global) -> Option<&DefinitionInfo> {
         self.definitions.get(global).map(std::sync::Arc::as_ref)

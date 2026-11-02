@@ -12,6 +12,9 @@ mod stdlib;
 mod origin;
 pub mod syntax_quote;
 pub mod bootstrap;
+pub(crate) mod core_analysis;
+#[cfg(test)]
+mod persist_probe;
 pub mod artifact_cache;
 pub mod artifact_identity;
 pub mod core_bindings;
