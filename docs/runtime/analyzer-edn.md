@@ -64,26 +64,31 @@ suss analyze [--emit forms|hir] [--pretty] -n <NS> [--src <DIR>]...
 ```
 
 `:asts` has one node per top-level form, in order. `:global-env` is the state
-of each namespace the file entered, after its last form, as tools.analyzer
-keeps namespaces in a separate global environment. Definitions made by
+of the namespace current at the end of each top-level form, after the file's
+last form, as tools.analyzer keeps namespaces in a separate global
+environment. Definitions made by
 `defmacro` belong to the macro phase, under `:macro-namespaces`.
 
 ### Nodes
 
-Every node has:
+Every node has `:op`, a keyword, and `:children`, the keys of its child nodes
+in evaluation order, each holding a node or a vector of nodes. An expression
+node also has:
 
-- `:op`, a keyword;
 - `:form`, the form analyzed, after macro expansion;
 - `:env`, `{:ns ns, :phase :runtime|:macro, :context :ctx/statement|:ctx/expr|:ctx/return, :locals {name id}}`;
-- `:children`, the keys of its child nodes in evaluation order, each holding a
-  node or a vector of nodes;
-- `:suss/source`, its position (below);
-- `:tag`, when the analyzer infers one.
+- `:suss/source`, its position (below), unless the form has none;
+- `:tag`, when the analyzer infers one. Tags are the inferred tags of the
+  pinned ClojureScript analyzer that Suss's analyzer follows, such as
+  `number`, `any`, `clj-nil` and `ignore`, not Clojure's classes.
+
+`:binding`, `:fn-method` and `:catch` nodes have `:form` and `:suss/source`;
+only `:fn-method` has `:env`. A `:suss/ns` node's `:env` holds only `:phase`.
 
 | `:op` | Keys | Form |
 | --- | --- | --- |
-| `:const` | `:val`, `:type` (`:nil`, `:bool`, `:number`, `:string`, `:keyword`) | `1`, `"s"`, `:k` |
-| `:quote` | `:expr`, a `:const` with `:literal? true` | `(quote x)` |
+| `:const` | `:val`, `:type` (`:nil`, `:bool`, `:number`, `:string`, `:keyword`, or `:class` for a catch's class) | `1`, `"s"`, `:k` |
+| `:quote` | `:expr`, a `:const` with `:val` and `:literal? true`; `:literal? true` | `(quote x)` |
 | `:vector`, `:set` | `:items` | `[a b]`, `#{a}` |
 | `:map` | `:keys`, `:vals` | `{k v}` |
 | `:with-meta` | `:meta`, `:expr` | `^{:m 1} [x]` |
@@ -92,10 +97,11 @@ Every node has:
 | `:js-var` | `:var` | `js/Error` |
 | `:do` | `:statements`, `:ret`, and `:body? true` for a body the analyzer made | `(do a b)` |
 | `:if` | `:test`, `:then`, `:else` | `(if a b c)` |
-| `:let`, `:loop` | `:bindings` (`:binding` nodes with `:init`), `:body`; a loop also has `:loop-id` | `(let* [x 1] x)` |
+| `:binding` | `:name`, `:id`, `:local`, `:arg-id`, and `:init` for a `let` or `loop` binding | `x` in `[x 1]` |
+| `:let`, `:loop` | `:bindings`, `:body`; a loop also has `:loop-id` | `(let* [x 1] x)` |
 | `:recur` | `:exprs`, `:loop-id` of its target | `(recur x)` |
 | `:fn` | `:methods` (`:fn-method` nodes with `:params`, `:body`, `:variadic?`, `:fixed-arity`, `:loop-id`), `:local` for a named fn, `:variadic?`, `:max-fixed-arity` | `(fn* f ([x] x))` |
-| `:def` | `:var`, `:name`, `:meta`, `:doc`, `:init`, `:suss/once` | `(def x 1)` |
+| `:def` | `:var`, `:name`, `:meta` (a map, not a node), `:doc`, `:init`, `:suss/once` | `(def x 1)` |
 | `:set!` | `:target`, `:val` | `(set! x 1)` |
 | `:invoke` | `:fn`, `:args` | `(f x)` |
 | `:new` | `:class`, `:args` | `(new T x)` |
@@ -105,18 +111,27 @@ Every node has:
 | `:suss/future`, `:suss/await` | `:body`, `:value` | `(future* ...)`, `(await* x)` |
 | `:suss/ns` | `:name` | `(ns app ...)` |
 | `:suss/intrinsic` | `:intrinsic`, the head symbol; `:args` | `(when a b)`, `(inc x)` |
+| `:suss/lowered` | `:lowering`, `:args` | an expression the analyzer made with no source form |
 
 - **Locals and loops** are numbered from 0 in walk order, per document, so the
   numbers do not depend on the compiler's counters. `:env :locals` maps each
   visible name to its number, and a `:local` refers to its `:binding` by
-  `:id`. A `:recur`'s `:loop-id` is the innermost `:loop` or `:fn-method`.
+  `:id`. Locals that an intrinsic binds, such as `if-let`'s, have numbers
+  but no `:binding` node. A `:recur`'s `:loop-id` is the innermost `:loop` or
+  `:fn-method`.
 - **Intrinsics.** Suss analyzes some macros itself instead of expanding them
   to special forms: `when`, `and`, `or`, `cond`, `case`, `inc`, `<`,
   `binding`, `deftype`, `defrecord`, `reify`, `extend-type`, `instance?`,
   interop such as `(.-x o)`, and others. They are `:suss/intrinsic` nodes. Their
   `:args` are the analyzed forms found inside them, in order.
 - **Syntax quote** expands to calls of `sequence`, `seq`, `concat` and
-  `list`, which are ordinary `:invoke` nodes.
+  `list`, which are ordinary `:invoke` nodes. The compiled `sequence` call
+  reads a private cell, so that core's own syntax quotes work before
+  `sequence` is defined; its node has `:suss/lowering :reader-sequence`. In
+  core, before `sequence` is declared, the call has no source facts, so its
+  node has no `:form` or `:env`.
+- **`:suss/lowered`** nodes stand for expressions with no source form. No
+  file or core form produces one today; the tests check core has none.
 
 ### Positions
 
@@ -136,19 +151,29 @@ can edit nodes and emit the result.
   qualified. A body `do` contributes its forms to its parent.
 - A macro-phase `def` of a function of `&form`, `&env` and parameters is
   emitted as the `defmacro` that made it.
-- An intrinsic whose `:args` are its operands in order, such as `(inc x)`, is
-  emitted from them. Other intrinsics are emitted as their `:form`, so a pass
-  cannot yet change what is inside them.
+- An intrinsic is emitted as its `:form` with each argument node emitted in
+  place of the operand it was analyzed from: the first unused argument whose
+  `:form` equals the operand. So edits to argument nodes apply, and a map
+  literal that is an argument keeps its order. Operands that no argument
+  matches, such as a binding vector's names, are emitted as written; a map
+  among them is in canonical order.
+- A syntax quote's `sequence` call is emitted as a call of the public
+  `suss.core/sequence`, so emitted core forms read `sequence` where the
+  compiled core reads its private cell.
 
 Analyzing the emitted forms in the same environment gives the same nodes,
-apart from `:form`, positions, generated names (`G__12`, `x__3__auto__`) and
-the order of map and set entries, which `:form` data does not keep. The tests
-check this for the shipped core in both phases, the compiler's conformance
-corpus (`reference/cljs-tests`) and the samples.
+apart from `:form`, positions, lowering notes and generated names (`G__12`,
+`x__3__auto__`), which are renumbered. The tests check this for the shipped
+core in both phases, the expressions of the conformance corpus
+(`reference/cljs-tests/{core,collections,benchmarks}.sus`), four samples,
+and a file with the forms those lack (`defonce`, `defmacro`, catches,
+`deftype`, `case`, `future*`, `await*`). They also check that edited nodes are emitted as edited,
+and that swapping an `if`'s branches is seen as a difference.
 
 ## Differences from tools.analyzer
 
 - Intrinsics, above, stand for forms that Clojure expands to special forms.
+- `:tag` holds ClojureScript-style inferred tags, as above.
 - `:env` holds names and numbers, not binding nodes, and no `:file` or
   `:line`; positions are on the node.
 - A var is a symbol, not a Var. A `:catch`'s `:class` is a `:const` of

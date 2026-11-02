@@ -145,7 +145,7 @@ pub fn analyze_core_source(
     let forms = suss_reader::forms::read_forms(source)
         .and_then(suss_reader::forms::resolve_conditionals)
         .map_err(|failure| Diagnostic { span: failure.span, message: failure.message })?;
-    let (result, fragments) = super::analysis_record::record(|| {
+    let (result, fragments) = super::analysis_record::record(Box::new(|_| true), || {
         super::analyze_selected_fragment(
             forms,
             0..source.len(),

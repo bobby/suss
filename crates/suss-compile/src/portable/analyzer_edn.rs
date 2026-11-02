@@ -192,6 +192,9 @@ impl<'o> Projector<'o> {
         if let Some(tag) = &source.tags.tag {
             node.set("tag", self.form(tag)?);
         }
+        if reader_sequence(hir) {
+            node.set("suss/lowering", kw("reader-sequence"));
+        }
         self.form_located(&mut node, form);
         Ok(node.finish())
     }
@@ -544,7 +547,8 @@ impl<'o> Projector<'o> {
     /// A node the analyzer built without source facts. A syntax-quote
     /// expansion calls `seq`, `concat` and `list` this way.
     fn lowered(&mut self, hir: &Hir) -> Result<Value, String> {
-        if let Expression::Call { callee, arguments } = &hir.kind
+        if reader_sequence(hir)
+            && let Expression::Call { callee, arguments } = &hir.kind
             && let Expression::GlobalOrFallback { global, .. } = &callee.kind
         {
             let mut var = Node::new("var");
@@ -564,6 +568,14 @@ impl<'o> Projector<'o> {
         node.child("args", self.nodes(found)?);
         Ok(node.finish())
     }
+}
+
+/// A syntax quote's call of `sequence`, which reads it through a private
+/// fallback cell, so that core's own syntax quotes work before `sequence` is
+/// defined. An emitted form calls the public `sequence`.
+fn reader_sequence(hir: &Hir) -> bool {
+    matches!(&hir.kind, Expression::Call { callee, .. }
+        if matches!(callee.kind, Expression::GlobalOrFallback { .. }))
 }
 
 fn lowering_name(kind: &Expression) -> &'static str {
@@ -927,68 +939,70 @@ fn emit_inner(node: &Value) -> Result<Form, String> {
             list(forms)
         }
         (Some("suss"), "await") => list(vec![value_to_form(&sym(Some("suss.async"), "await*")), emitted("value")?]),
-        (Some("suss"), "intrinsic") => {
-            // A call-shaped intrinsic, such as (inc x) or (< a b), has one
-            // argument node per operand: emit those, so edits to them apply.
-            // Others are emitted as they were written.
-            let form = field(node, "form")?;
-            let args = items(node, "args")?;
-            match form.unmeta() {
-                Value::List(operands)
-                    if operands.len() == args.len() + 1
-                        && args.iter().zip(&operands[1..]).all(|(arg, operand)| get(arg, "form") == Some(operand)) =>
-                {
-                    let mut forms = vec![value_to_form(&operands[0])];
-                    forms.extend(args.iter().map(emit_form).collect::<Result<Vec<_>, _>>()?);
-                    let mut emitted = list(forms);
-                    emitted.metadata = value_to_form(form).metadata.clone();
-                    emitted
-                }
-                _ => value_to_form(form),
-            }
-        }
+        (Some("suss"), "intrinsic") => emit_intrinsic(node)?,
         (Some("suss"), "ns") => value_to_form(field(node, "form")?),
         _ => return Err(format!("Cannot emit a form for op {op:?}")),
     })
 }
 
-/// A node for comparison: without `:form`, source positions or lowering
-/// notes, with generated names (`G__12`, `x__3__auto__`, `$exception4`)
-/// renumbered in order of appearance, and with the entries of map and set
-/// nodes sorted, since `:form` data does not keep their order.
-pub fn comparable(node: &Value) -> Value {
-    let mut names = HashMap::new();
-    let stripped = strip(node, &mut names);
-    sort_entries(&stripped)
+/// An intrinsic's form with each of its argument nodes emitted in place of
+/// the operand it was analyzed from, so edits to them apply, and map and set
+/// literals that are arguments keep their order. An operand matches the first
+/// unused argument whose `:form` equals it; operands that match none are
+/// emitted as written.
+fn emit_intrinsic(node: &Value) -> Result<Form, String> {
+    let form = field(node, "form")?;
+    let args = items(node, "args")?;
+    let mut by_form: BTreeMap<&Value, Vec<usize>> = BTreeMap::new();
+    for (index, arg) in args.iter().enumerate().rev() {
+        if let Some(form) = get(arg, "form") {
+            by_form.entry(form).or_default().push(index);
+        }
+    }
+    fn rebuild(value: &Value, root: bool, args: &[Value], by_form: &mut BTreeMap<&Value, Vec<usize>>) -> Result<Form, String> {
+        stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
+            let metadata = match value {
+                Value::Meta(_, meta) => vec![value_to_form(&Value::Map(meta.clone()))],
+                _ => Vec::new(),
+            };
+            if !root && let Some(index) = by_form.get_mut(value).and_then(Vec::pop) {
+                let mut emitted = emit_form(&args[index])?;
+                if emitted.metadata.is_empty() {
+                    emitted.metadata = metadata;
+                }
+                return Ok(emitted);
+            }
+            let children = |items: &[Value], by_form: &mut BTreeMap<&Value, Vec<usize>>| {
+                items.iter().map(|item| rebuild(item, false, args, by_form)).collect::<Result<Vec<_>, String>>()
+            };
+            let kind = match value.unmeta() {
+                Value::List(items) => Kind::List(children(items, by_form)?),
+                Value::Vector(items) => Kind::Vector(children(items, by_form)?),
+                Value::Set(items) => Kind::Set(children(&items.iter().cloned().collect::<Vec<_>>(), by_form)?),
+                Value::Map(map) => {
+                    let mut entries = Vec::new();
+                    for (k, v) in map {
+                        entries.push(rebuild(k, false, args, by_form)?);
+                        entries.push(rebuild(v, false, args, by_form)?);
+                    }
+                    Kind::Map(entries)
+                }
+                _ => return Ok(value_to_form(value)),
+            };
+            Ok(Form { span: 0..0, metadata, kind })
+        })
+    }
+    rebuild(form, true, args, &mut by_form)
 }
 
-fn sort_entries(value: &Value) -> Value {
-    stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || match value {
-        Value::Map(map) => {
-            let mut map: BTreeMap<Value, Value> = map.iter().map(|(k, v)| (k.clone(), sort_entries(v))).collect();
-            let printed = |v: &Value| suss_reader::edn::print(v).unwrap_or_default();
-            if map.get(&kw("op")) == Some(&kw("map"))
-                && let (Some(Value::Vector(keys)), Some(Value::Vector(vals))) = (map.get(&kw("keys")), map.get(&kw("vals")))
-            {
-                let mut pairs: Vec<_> = keys.iter().cloned().zip(vals.iter().cloned()).collect();
-                pairs.sort_by_key(|(k, _)| printed(k));
-                let (keys, vals): (Vec<_>, Vec<_>) = pairs.into_iter().unzip();
-                map.insert(kw("keys"), Value::Vector(keys));
-                map.insert(kw("vals"), Value::Vector(vals));
-            }
-            if map.get(&kw("op")) == Some(&kw("set"))
-                && let Some(Value::Vector(items)) = map.get(&kw("items"))
-            {
-                let mut items = items.clone();
-                items.sort_by_key(|v| printed(v));
-                map.insert(kw("items"), Value::Vector(items));
-            }
-            Value::Map(map)
-        }
-        Value::Vector(items) => Value::Vector(items.iter().map(sort_entries).collect()),
-        other => other.clone(),
-    })
+/// A node for comparison: without `:form`, source positions or lowering
+/// notes, and with generated names (`G__12`, `x__3__auto__`, `$exception4`)
+/// renumbered in order of appearance.
+pub fn comparable(node: &Value) -> Value {
+    let mut names = HashMap::new();
+    strip(node, &mut names)
 }
+
 
 fn strip(value: &Value, names: &mut HashMap<String, String>) -> Value {
     stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || match value {

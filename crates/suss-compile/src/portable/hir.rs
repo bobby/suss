@@ -1274,8 +1274,11 @@ impl Analyzer<'_> {
         let argument = self.form(&items[1])?;
         // The call has the source facts of an ordinary call of sequence,
         // so tooling and macro environments see an invocation (#299). In
-        // core, sequence may not be defined yet: the call then has none.
-        if let Ok(callee) = self.form(&items[0]) {
+        // core, sequence may not be declared yet: the call then has none.
+        let declared = matches!(&items[0].kind, Kind::Symbol(symbol)
+            if self.environment.resolve(self.phase, symbol, items[0].span.clone()).is_ok());
+        if declared {
+            let callee = self.form(&items[0])?;
             *self.source_nodes.last_mut().expect("source node fact slot") =
                 Some(std::sync::Arc::new(SourceNode::Invoke {
                     callee: std::sync::Arc::new(callee),
@@ -3218,7 +3221,7 @@ pub(crate) fn prepare_with_origin(
     };
     let hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
     if let Expression::Do(items) = &hir.kind {
-        super::analysis_record::analyzed_forms(items);
+        super::analysis_record::analyzed_forms(origin, items);
     }
     let mut hir = analyzer.namespace_frame(before, extent, hir)?;
     if !analyzer.callable_keys.is_empty() {

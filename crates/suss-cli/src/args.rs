@@ -403,8 +403,8 @@ fn parse_analyze(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> 
             _ => return Err(arg.unexpected()),
         }
     }
-    if file.is_none() && namespace.is_none() {
-        return Err(lexopt::Error::from("analyze needs a FILE or -n NAMESPACE"));
+    if file.is_none() == namespace.is_none() {
+        return Err(lexopt::Error::from("analyze takes a FILE or -n NAMESPACE"));
     }
     if namespace.is_some() && src_paths.is_empty() {
         src_paths.push("src".to_string());

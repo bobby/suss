@@ -14,22 +14,30 @@ pub struct RecordedFragment {
     pub environment: resolve::Environment,
 }
 
+/// Which fragments to record, by the source they were analyzed from.
+pub type Filter = Box<dyn Fn(Option<&SourceOrigin>) -> bool>;
+
 thread_local! {
     static RECORDING: RefCell<Option<Vec<RecordedFragment>>> = const { RefCell::new(None) };
+    static FILTER: RefCell<Option<Filter>> = const { RefCell::new(None) };
     static PENDING: RefCell<Option<Vec<Hir>>> = const { RefCell::new(None) };
 }
 
 /// Run `f`, returning what it returns and the fragments analyzed meanwhile on
-/// this thread. Nested recordings are not supported.
-pub fn record<T>(f: impl FnOnce() -> T) -> (T, Vec<RecordedFragment>) {
+/// this thread from a source that `filter` accepts. Others, such as the core
+/// a session restores, are not copied. Recordings do not nest.
+pub fn record<T>(filter: Filter, f: impl FnOnce() -> T) -> (T, Vec<RecordedFragment>) {
     struct Reset;
     impl Drop for Reset {
         fn drop(&mut self) {
             RECORDING.with(|r| r.borrow_mut().take());
+            FILTER.with(|r| r.borrow_mut().take());
             PENDING.with(|p| p.borrow_mut().take());
         }
     }
+    assert!(!recording(), "analysis recordings do not nest");
     RECORDING.with(|r| *r.borrow_mut() = Some(Vec::new()));
+    FILTER.with(|r| *r.borrow_mut() = Some(filter));
     let reset = Reset;
     let value = f();
     let fragments = RECORDING.with(|r| r.borrow_mut().take()).unwrap_or_default();
@@ -41,9 +49,13 @@ fn recording() -> bool {
     RECORDING.with(|r| r.borrow().is_some())
 }
 
+fn wanted(origin: Option<&SourceOrigin>) -> bool {
+    recording() && FILTER.with(|f| f.borrow().as_ref().is_none_or(|filter| filter(origin)))
+}
+
 /// Called by the analyzer with a fragment's analyzed top-level forms.
-pub(super) fn analyzed_forms(forms: &[Hir]) {
-    if recording() {
+pub(super) fn analyzed_forms(origin: Option<&SourceOrigin>, forms: &[Hir]) {
+    if wanted(origin) {
         PENDING.with(|p| *p.borrow_mut() = Some(forms.to_vec()));
     }
 }
@@ -55,7 +67,7 @@ pub(super) fn fragment(
     namespace_directive: Option<&suss_reader::forms::Form>,
     environment: &resolve::Environment,
 ) {
-    if !recording() {
+    if !wanted(origin) {
         return;
     }
     let forms = PENDING.with(|p| p.borrow_mut().take()).unwrap_or_default();

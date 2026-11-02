@@ -51,7 +51,7 @@ fn samples_round_trip() {
 fn conformance_corpus_round_trips() {
     let mut source = String::new();
     let mut count = 0;
-    for file in ["core", "collections"] {
+    for file in ["core", "collections", "benchmarks"] {
         let text = std::fs::read_to_string(root().join(format!("reference/cljs-tests/{file}.sus"))).unwrap();
         let cases = suss_reader::edn::read_one(&text, &suss_reader::edn::Options::default()).unwrap();
         let suss_reader::edn::Value::Vector(cases) = cases else { panic!("{file}: not a vector") };
@@ -62,7 +62,11 @@ fn conformance_corpus_round_trips() {
                 continue;
             }
             if let Some(suss_reader::edn::Value::String(expr)) = get("expr") {
-                source.push_str(expr);
+                // A benchmark's expression reads its setup as coll.
+                match get("setup") {
+                    Some(suss_reader::edn::Value::String(setup)) => source.push_str(&format!("(let [coll {setup}] {expr})")),
+                    _ => source.push_str(expr),
+                }
                 source.push('\n');
                 count += 1;
             }
@@ -258,4 +262,115 @@ fn namespace_mode_prints_only_the_selected_namespace() {
     let document = read_one(&text, &Options::default()).unwrap();
     assert_eq!(asts(&document).len(), 2, "{text}");
     assert!(text.contains(":var demo.c/helper") && !text.contains(":var demo.c/helper, :name helper"), "{text}");
+}
+
+/// Forms the corpora do not have: defonce, defmacro and its use, typed and
+/// default catches, recur in a fn in a loop and inside an intrinsic, map and
+/// set literals inside intrinsics, quoted data, metadata and named fns.
+const USER_FORMS: &str = r#"(ns round.trip)
+(defonce counter (atom 0))
+(defmacro unless "Like when-not." ([test] nil) ([test & body] `(if ~test nil (do ~@body))))
+(defmacro twice [x] `(let [v# ~x] [v# v#]))
+(defn f [n] (unless (pos? n) (twice n)))
+(defn g [xs]
+  (loop [i 0 acc []]
+    (when (< i 3)
+      (if (= i 2)
+        ((fn step [k] (if (pos? k) (recur (dec k)) acc)) i)
+        (recur (inc i) (conj acc ^{:i i} [i]))))))
+(defn h [x]
+  (try (if-let [y x] {:b (str "b" y) :a (str "a" y)} #{:z (str x)})
+       (catch js/Error e (.-message e))
+       (catch :default e '{:q [1 2]})))
+(def named (fn self ([] (self 1)) ([n] n)))
+(deftype Box [v] Object (toString [_] (str "box " v)))
+(defn k [x] (case x 1 :one (2 3) :few (cond (string? x) x :else :many)))
+(def later (suss.async/future* (+ 1 2)))
+(def chained (suss.async/future* (inc (suss.async/await* later))))
+"#;
+
+#[test]
+fn user_forms_round_trip() {
+    let path = root().join("scratch/round_trip.sus");
+    assert_round_trip(USER_FORMS, &path, &[]);
+    let document = hir_document(&analyze_source(USER_FORMS, &path, &[], None, None).unwrap(), &path).unwrap();
+    let emitted = emitted_source(&document).unwrap();
+    // A map literal inside an intrinsic keeps its order, so its values are
+    // still evaluated in source order.
+    let b = emitted.find("\"b\"").unwrap();
+    let a = emitted.find("\"a\"").unwrap();
+    assert!(b < a, "{emitted}");
+    assert!(emitted.contains("(suss.core/defonce counter"), "{emitted}");
+    assert!(emitted.contains("(suss.async/future* (inc (suss.async/await* round.trip/later)))"), "{emitted}");
+    assert!(emitted.contains("(suss.core/defmacro unless \"Like when-not.\" ([test] nil) ([test & body]"), "{emitted}");
+}
+
+/// A recur targets the innermost loop or fn method, also inside an
+/// intrinsic.
+#[test]
+fn recur_targets_the_innermost_loop() {
+    use suss_reader::edn::Value;
+    let path = root().join("scratch/recur.sus");
+    let source = "(defn g [] (loop [i 0] (when (< i 3) ((fn [k] (if (pos? k) (recur (dec k)) k)) i) (recur (inc i)))))";
+    let document = hir_document(&analyze_source(source, &path, &[], None, None).unwrap(), &path).unwrap();
+    let mut found = Vec::new();
+    fn walk(node: &Value, loops: &mut Vec<f64>, found: &mut Vec<(Vec<f64>, f64)>) {
+        let Value::Map(map) = node else { return };
+        let id = |key| match map.get(&Value::keyword(key)) { Some(Value::Number(n)) => Some(*n), _ => None };
+        let op = map.get(&Value::keyword("op")).cloned();
+        let pushed = matches!(&op, Some(Value::Keyword(k)) if k.name == "loop" || k.name == "fn-method");
+        if pushed { loops.push(id("loop-id").unwrap()); }
+        if matches!(&op, Some(Value::Keyword(k)) if k.name == "recur") {
+            found.push((loops.clone(), id("loop-id").unwrap()));
+        }
+        if let Some(Value::Vector(children)) = map.get(&Value::keyword("children")) {
+            for key in children {
+                match map.get(key) {
+                    Some(Value::Vector(items)) => items.iter().for_each(|item| walk(item, loops, found)),
+                    Some(child) => walk(child, loops, found),
+                    None => {}
+                }
+            }
+        }
+        if pushed { loops.pop(); }
+    }
+    for ast in asts(&document) {
+        walk(ast, &mut Vec::new(), &mut found);
+    }
+    assert_eq!(found.len(), 2, "{found:?}");
+    for (loops, target) in &found {
+        assert_eq!(loops.last(), Some(target), "{found:?}");
+    }
+    assert_ne!(found[0].1, found[1].1);
+}
+
+/// Swapping an if's branches gives a different analysis, which the emitted
+/// forms reproduce: the comparison is not vacuous.
+#[test]
+fn swapped_branches_compare_unequal() {
+    use suss_reader::edn::Value;
+    fn swap(value: &Value, done: &mut bool) -> Value {
+        match value {
+            Value::Map(map) if !*done && map.get(&Value::keyword("op")) == Some(&Value::keyword("if")) => {
+                *done = true;
+                let mut map = map.clone();
+                let then = map[&Value::keyword("then")].clone();
+                let other = map[&Value::keyword("else")].clone();
+                map.insert(Value::keyword("then"), other);
+                map.insert(Value::keyword("else"), then);
+                Value::Map(map)
+            }
+            Value::Map(map) => Value::Map(map.iter().map(|(k, v)| (k.clone(), swap(v, done))).collect()),
+            Value::Vector(items) => Value::Vector(items.iter().map(|v| swap(v, done)).collect()),
+            other => other.clone(),
+        }
+    }
+    let path = root().join("scratch/swap.sus");
+    let source = "(defn sign [n] (if (neg? n) :negative :positive))";
+    let document = hir_document(&analyze_source(source, &path, &[], None, None).unwrap(), &path).unwrap();
+    let swapped = swap(&document, &mut false);
+    let emitted = emitted_source(&swapped).unwrap();
+    let second = hir_document(&analyze_source(&emitted, &path, &[], None, None).unwrap(), &path).unwrap();
+    assert_ne!(print(&comparable_asts(&document)).unwrap(), print(&comparable_asts(&second)).unwrap());
+    assert_eq!(print(&comparable_asts(&swapped)).unwrap(), print(&comparable_asts(&second)).unwrap());
 }

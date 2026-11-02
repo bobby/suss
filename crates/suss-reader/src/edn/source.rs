@@ -196,9 +196,13 @@ pub struct LineIndex<'a> {
 }
 
 impl<'a> LineIndex<'a> {
+    /// Lines end at `\n`, `\r\n` or `\r`, as tools.reader reads them.
     pub fn new(text: &'a str) -> Self {
+        let bytes = text.as_bytes();
         let starts = std::iter::once(0)
-            .chain(text.match_indices('\n').map(|(i, _)| i + 1))
+            .chain(bytes.iter().enumerate().filter_map(|(i, &b)| {
+                (b == b'\n' || (b == b'\r' && bytes.get(i + 1) != Some(&b'\n'))).then_some(i + 1)
+            }))
             .collect();
         LineIndex { text, starts }
     }
@@ -317,6 +321,14 @@ mod tests {
             assert_eq!(print_form(&again).unwrap(), printed, "{source}");
         }
         assert_eq!(print_form(&read("{:b 1 :a 2}")).unwrap(), "{:b 1 :a 2}");
+    }
+
+    #[test]
+    fn lines_end_at_any_line_terminator() {
+        let lines = LineIndex::new("a\r\nb\rc\nd");
+        assert_eq!(lines.position(3), (2, 1));
+        assert_eq!(lines.position(5), (3, 1));
+        assert_eq!(lines.position(7), (4, 1));
     }
 
     #[test]

@@ -72,18 +72,17 @@ pub fn analyze_source(
         forms,
         namespace: namespace.map(str::to_owned),
     }];
-    let (result, fragments) = analysis_record::record(|| {
+    let selected = {
+        let (source, path) = (source.to_owned(), path.to_owned());
+        move |origin: Option<&crate::portable::SourceOrigin>| {
+            origin.is_some_and(|origin| origin.text() == source && origin.path() == Some(path.as_path()))
+        }
+    };
+    let (result, fragments) = analysis_record::record(Box::new(selected), || {
         prepare_inputs_with_command(&inputs, source_paths, false, compile_fuel)
     });
     result.map_err(|error| error.to_string())?;
-    Ok(fragments
-        .into_iter()
-        .filter(|fragment| {
-            fragment.origin.as_ref().is_some_and(|origin| {
-                origin.text() == source && origin.path() == Some(path)
-            })
-        })
-        .collect())
+    Ok(fragments)
 }
 
 /// The analysis document of a file's fragments: `:asts`, one node per
@@ -144,7 +143,8 @@ pub fn analyze(
     compile_fuel: Option<u64>,
 ) -> Result<Value, String> {
     let path = match (file, namespace) {
-        (Some(file), _) => file.to_owned(),
+        (Some(_), Some(_)) => return Err("analyze takes a file or a namespace, not both".into()),
+        (Some(file), None) => file.to_owned(),
         (None, Some(namespace)) => crate::portable::resolve::locate_source(namespace, source_paths, 0..0)
             .map_err(|error| error.to_string())?,
         (None, None) => return Err("analyze needs a file or a namespace".into()),
@@ -153,7 +153,6 @@ pub fn analyze(
     match emit {
         Emit::Forms => forms_document(&source, &path),
         Emit::Hir => {
-            let namespace = if file.is_none() { namespace } else { None };
             let fragments = analyze_source(&source, &path, source_paths, namespace, compile_fuel)?;
             hir_document(&fragments, &path)
         }
