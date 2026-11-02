@@ -126,6 +126,17 @@
       (class-name value)
       (suss.bootstrap/concat-string "@" (hex-string (hash value))))))
 
+;; Original Suss: the default toString of types and records defined outside
+;; core. It is object-string unless the program has set the prototype's parent
+;; to one other than Object's, as JS interop may; then the parent's toString
+;; applies, as it would to a type with no toString of its own (#304).
+(def ^:private source-object-string
+  (fn [value]
+    (let [parent (.-__proto__ (.-prototype (type value)))]
+      (if (identical? parent (.-prototype js/Object))
+        (object-string value)
+        (.call (.-toString parent) value)))))
+
 ;; Copyright The Closure Library Authors.
 ;; SPDX-License-Identifier: Apache-2.0
 ;; Adapted from the complete goog/string/stringbuffer.js retained beside this

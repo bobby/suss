@@ -12,9 +12,9 @@
     },
     {
       "path": "crates/suss-compile/src/portable_record_emitter.rs",
-      "sha256": "1d30ad7d0f805e36f11ea6f783819e751fe26f39ef6bcfb9b2c02e7a42c9cce6",
+      "sha256": "bfb06bad72067e20d7051476675d0813fab2ed81c9b7087793742c54c56b18bf",
       "compiled-sources": {
-        "SOURCE": "86e94d5b4960c63a668ddcbbc713f29028d774844fcaa85b0c586e5c761927f0"
+        "SOURCE": "a776837daf78361b814d95db898b25481e806b2b086b5f128ce6c72c2e81a0c8"
       }
     },
     {

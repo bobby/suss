@@ -696,6 +696,7 @@
          "suss.bindings.macro:suss.core/sorted-map-by"
          "suss.bindings.macro:suss.core/sorted-set"
          "suss.bindings.macro:suss.core/sorted-set-by"
+         "suss.bindings.macro:suss.core/source-object-string"
          "suss.bindings.macro:suss.core/split-names"
          "suss.bindings.macro:suss.core/spread"
          "suss.bindings.macro:suss.core/str"
@@ -769,6 +770,7 @@
          "suss.bindings.macro:suss.internal.bootstrap-link/>="
          "suss.bindings.macro:suss.internal.bootstrap-link/Error"
          "suss.bindings.macro:suss.internal.bootstrap-link/ExceptionInfo"
+         "suss.bindings.macro:suss.internal.bootstrap-link/Object"
          "suss.bindings.macro:suss.internal.bootstrap-link/aclone"
          "suss.bindings.macro:suss.internal.bootstrap-link/aget"
          "suss.bindings.macro:suss.internal.bootstrap-link/array?"
@@ -1470,6 +1472,7 @@
          "suss.bindings.macro:suss.internal.core-link/sorted-map-by"
          "suss.bindings.macro:suss.internal.core-link/sorted-set"
          "suss.bindings.macro:suss.internal.core-link/sorted-set-by"
+         "suss.bindings.macro:suss.internal.core-link/source-object-string"
          "suss.bindings.macro:suss.internal.core-link/split-names"
          "suss.bindings.macro:suss.internal.core-link/spread"
          "suss.bindings.macro:suss.internal.core-link/str"
@@ -1768,13 +1771,13 @@
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
          "suss.bindings.macro:suss.internal.reify/t-reify-3266-10523"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "d5f0f7d0238e3488f26bda7245f2386513238b45834c2da025bca039c9924fa9",
- :dependency-graph-sha256 "8b3466de88e5875f7ec2aef52bd662adbc49bc2d2feb1db99c15e33363b6799d",
+ :compiler-source-sha256 "66a7bc7022ccd9c0c9cdd1768590b63f924c067a6efe7aef4cf0445fa827e250",
+ :dependency-graph-sha256 "9f2da9a0c34f082f25f3d5c1ac69ace4d72cf4a06e103219df0a75b26eec5a08",
  :flags [],
  :format-version 2,
  :phase "macro",
  :runtime-abi 2,
- :source-sha256 "d8366d296419c0be5debce621a899b04b741f330d39b01fe56c251a06d95bc3c",
+ :source-sha256 "08fc84c688f039d3e8bc1b014ceb48e2cd94b3b587eec9569cf1e74c47e9a83a",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "4aa943916894ac139e0e4c882b498a9e3db9c5fb9fc9c98671ccfa98ac6dff43",
+ :wasm-sha256 "eb427cefa9eb07ac709680a2c456ae9d9ff8eddf19a04379b1648ba15806f42a",
  :wasm-tools "0.258.0"}

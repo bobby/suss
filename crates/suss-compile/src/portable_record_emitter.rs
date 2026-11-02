@@ -81,7 +81,7 @@ pub(crate) const SOURCE: &str = r####"
   ;; joins the first Object section, so a repeated section gets no duplicate.
   (fn [impls]
     (let [this (gensym "\u0074\u0068\u0069\u0073")
-          method (list (quote toString) [this] (list (quote cljs.core/object-string) this))
+          method (list (quote toString) [this] (list (quote cljs.core/source-object-string) this))
           defined? (loop [remaining (seq impls) object? false]
                      (if remaining
                        (let [x (first remaining)]

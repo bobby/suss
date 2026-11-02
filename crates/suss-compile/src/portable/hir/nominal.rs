@@ -73,9 +73,10 @@ pub(crate) fn class_name(namespace: &str, name: &str) -> String {
 }
 
 /// Clojure's types inherit `Object/toString`, `Name@hex` (#304). Unless an
-/// `Object` section defines `toString`, add one that calls core's
-/// `object-string`, in the first `Object` section, as records do.
-fn default_to_string(impls: &[Form]) -> Vec<Form> {
+/// `Object` section defines `toString`, add one that calls core's `helper`
+/// (`object-string`, or `source-object-string` outside core), in the first
+/// `Object` section, as records do.
+fn default_to_string(impls: &[Form], helper: &str) -> Vec<Form> {
     let is_symbol = |form: &Form, name: &str| {
         matches!(&form.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == name)
     };
@@ -97,7 +98,7 @@ fn default_to_string(impls: &[Form]) -> Vec<Form> {
     let method = synthetic(Kind::List(vec![
         symbol("toString", None),
         synthetic(Kind::Vector(vec![symbol(this, None)])),
-        synthetic(Kind::List(vec![symbol("object-string", Some("suss.core")), symbol(this, None)])),
+        synthetic(Kind::List(vec![symbol(helper, Some("suss.core")), symbol(this, None)])),
     ]));
     let mut out = impls.to_vec();
     match out.iter().position(|form| is_symbol(form, "Object")) {
@@ -141,10 +142,15 @@ impl Analyzer<'_> {
     /// except the few value types whose fields are their public API.
     /// User descriptors also carry their mutable field names (#278).
     /// Inline methods with the default toString, when core defines it: a
-    /// session without core keeps types without one.
+    /// session without core keeps types without one. Core's own types have no
+    /// prototype to reparent, so they call `object-string` directly.
     fn with_default_to_string(&self, impls: &[Form]) -> Vec<Form> {
-        if self.environment.declares(self.phase, "suss.core", "object-string") {
-            default_to_string(impls)
+        let helper = match self.environment.current_namespace(self.phase) {
+            "suss.core" | "cljs.core" => "object-string",
+            _ => "source-object-string",
+        };
+        if self.environment.declares(self.phase, "suss.core", helper) {
+            default_to_string(impls, helper)
         } else {
             impls.to_vec()
         }

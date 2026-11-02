@@ -51,7 +51,10 @@ any initializer runs, and an old fragment would also fail to link.
   `Class` does.
 - A `deftype` or `reify` without its own `toString` gets one that returns
   `Name@hex`, as Clojure's `Object/toString`, with Suss's `hash`. Records
-  already had one (#285); they now take the name from their type.
+  already had one (#285); they now take the name from their type. If a
+  program sets the parent of such a type's prototype to one other than
+  Object's, with JS interop, the parent's `toString` applies instead, as it
+  does in ClojureScript: a type reparented to `js/Error` gives `Error: msg`.
 - Objects print as `#object[Name 0xhex ...]`
   ([printing](printing.md#values-that-are-not-data)).
 - A record prints as `#Name{...}`, and `defrecord` registers the record's
