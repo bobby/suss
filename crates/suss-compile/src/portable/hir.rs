@@ -509,8 +509,8 @@ pub struct SourceNamespace {
     pub macro_refers: BTreeMap<String, (String, String)>,
     pub used_macro_refers: BTreeSet<String>,
     pub renamed_macro_refers: BTreeSet<String>,
-    pub declarations: BTreeMap<Global, std::sync::Arc<super::resolve::DefinitionInfo>>,
-    pub identities: Vec<Global>,
+    pub declarations: super::persistent::PersistentMap<Global, std::sync::Arc<super::resolve::DefinitionInfo>>,
+    pub identities: super::persistent::PersistentSet<Global>,
 }
 impl SourceNamespace {
     pub fn capture(environment: &Environment, phase: Phase) -> Self {
