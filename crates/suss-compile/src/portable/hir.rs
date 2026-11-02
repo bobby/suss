@@ -1124,52 +1124,6 @@ impl Analyzer<'_> {
                 &mut |work| expander.charge_expansion_work(work, form.span.clone()),
             )?
         };
-        if let Some(coerced) = coerced {
-            let (global, fallback, fresh) = self.environment.reader_sequence_cells(self.phase);
-            if fresh {
-                let initializer = self.form(&coerced)?;
-                self.callable_keys.insert(
-                    fallback.clone(),
-                    Hir {
-                        source: None,
-                        span: form.span.clone(),
-                        metadata: Vec::new(),
-                        ty: Type::Value,
-                        kind: Expression::Definition {
-                            global: fallback.clone(),
-                            name_metadata: Vec::new(),
-                            name_span: form.span.clone(),
-                            docstring: None,
-                            initializer: Some(Box::new(initializer)),
-                            once: true,
-                            linked: None,
-                        },
-                    },
-                );
-            }
-            let Kind::List(items) = &form.kind else {
-                unreachable!()
-            };
-            // Shipped core's own syntax quotes read its direct-linked sequence.
-            let global = self.core_reference_link(&global).unwrap_or(global);
-            let argument = self.form(&items[1])?;
-            return Ok(Hir {
-                source: None,
-                span: form.span.clone(),
-                metadata: form.metadata.clone(),
-                ty: Type::Value,
-                kind: Expression::Call {
-                    callee: Box::new(Hir {
-                        source: None,
-                        span: items[0].span.clone(),
-                        metadata: Vec::new(),
-                        ty: Type::Value,
-                        kind: Expression::GlobalOrFallback { global, fallback },
-                    }),
-                    arguments: vec![argument],
-                },
-            });
-        }
         let namespace = self.environment.current_namespace(self.phase).to_owned();
         let scope = self.capture_source_namespace();
         let locals = std::sync::Arc::new(self.locals.clone());
@@ -1215,7 +1169,10 @@ impl Analyzer<'_> {
         // wrappers never become the evidence for a source function's methods.
         self.source_callables.push(None);
         self.source_nodes.push(None);
-        let result = self.form_inner(form, context, tail, name_hint);
+        let result = match coerced {
+            Some(coerced) => self.reader_sequence_call(form, coerced),
+            None => self.form_inner(form, context, tail, name_hint),
+        };
         let callable = self
             .source_callables
             .pop()
@@ -1282,6 +1239,64 @@ impl Analyzer<'_> {
                 expression.source = Some(std::sync::Arc::new(source));
             }
             Ok(expression)
+        })
+    }
+    /// A syntax quote's `(sequence ...)` call, which reads core's sequence
+    /// through a private fallback cell.
+    fn reader_sequence_call(&mut self, form: &Form, coerced: Form) -> Result<Hir, Diagnostic> {
+        let (global, fallback, fresh) = self.environment.reader_sequence_cells(self.phase);
+        if fresh {
+            let initializer = self.form(&coerced)?;
+            self.callable_keys.insert(
+                fallback.clone(),
+                Hir {
+                    source: None,
+                    span: form.span.clone(),
+                    metadata: Vec::new(),
+                    ty: Type::Value,
+                    kind: Expression::Definition {
+                        global: fallback.clone(),
+                        name_metadata: Vec::new(),
+                        name_span: form.span.clone(),
+                        docstring: None,
+                        initializer: Some(Box::new(initializer)),
+                        once: true,
+                        linked: None,
+                    },
+                },
+            );
+        }
+        let Kind::List(items) = &form.kind else {
+            unreachable!()
+        };
+        // Shipped core's own syntax quotes read its direct-linked sequence.
+        let global = self.core_reference_link(&global).unwrap_or(global);
+        let argument = self.form(&items[1])?;
+        // The call has the source facts of an ordinary call of sequence,
+        // so tooling and macro environments see an invocation (#299). In
+        // core, sequence may not be defined yet: the call then has none.
+        if let Ok(callee) = self.form(&items[0]) {
+            *self.source_nodes.last_mut().expect("source node fact slot") =
+                Some(std::sync::Arc::new(SourceNode::Invoke {
+                    callee: std::sync::Arc::new(callee),
+                    arguments: vec![argument.clone()].into(),
+                }));
+        }
+        Ok(Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: Type::Value,
+            kind: Expression::Call {
+                callee: Box::new(Hir {
+                    source: None,
+                    span: items[0].span.clone(),
+                    metadata: Vec::new(),
+                    ty: Type::Value,
+                    kind: Expression::GlobalOrFallback { global, fallback },
+                }),
+                arguments: vec![argument],
+            },
         })
     }
     fn form_inner(
@@ -3202,6 +3217,9 @@ pub(crate) fn prepare_with_origin(
         _ => span.clone(),
     };
     let hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
+    if let Expression::Do(items) = &hir.kind {
+        super::analysis_record::analyzed_forms(items);
+    }
     let mut hir = analyzer.namespace_frame(before, extent, hir)?;
     if !analyzer.callable_keys.is_empty() {
         let mut initializers = analyzer.callable_keys.into_values().collect::<Vec<_>>();

@@ -72,6 +72,15 @@ pub enum Command {
     },
     /// Inspect or clean the persistent build directory
     Cache { action: CacheAction },
+    /// Print a file's forms or analysis as EDN
+    Analyze {
+        file: Option<String>,
+        namespace: Option<String>,
+        src_paths: Vec<String>,
+        emit: AnalyzeEmit,
+        pretty: bool,
+        compile_fuel: Option<u64>,
+    },
     /// Print help message
     Help,
     /// Print version
@@ -84,6 +93,14 @@ pub enum CacheAction {
     Info,
     /// Remove cached state from the selected build directory
     Clean,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AnalyzeEmit {
+    /// The forms as read, with their source positions
+    Forms,
+    /// The analyzer's nodes
+    Hir,
 }
 
 /// Global options, accepted before the command: they select the persistent
@@ -127,6 +144,7 @@ fn parse_invocation(mut parser: lexopt::Parser) -> Result<(CacheFlags, Command),
                     "compile" => parse_compile(&mut parser)?,
                     "run" => parse_run(&mut parser)?,
                     "cache" => parse_cache(&mut parser)?,
+                    "analyze" => parse_analyze(&mut parser)?,
                     _ => Command::RunFile { path: val_str },
                 };
             }
@@ -357,6 +375,43 @@ fn parse_cache(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
     Ok(Command::Cache { action })
 }
 
+fn parse_analyze(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
+    let mut file = None;
+    let mut namespace = None;
+    let mut src_paths = Vec::new();
+    let mut emit = AnalyzeEmit::Hir;
+    let mut pretty = false;
+    let mut compile_fuel = None;
+    while let Some(arg) = parser.next()? {
+        match arg {
+            Short('n') | Long("namespace") => namespace = Some(parser.value()?.string()?),
+            Long("src") | Long("src-path") => src_paths.push(parser.value()?.string()?),
+            Long("emit") => {
+                emit = match parser.value()?.string()?.as_str() {
+                    "forms" => AnalyzeEmit::Forms,
+                    "hir" => AnalyzeEmit::Hir,
+                    other => {
+                        return Err(lexopt::Error::from(format!(
+                            "unknown --emit {other:?}; expected forms or hir"
+                        )))
+                    }
+                }
+            }
+            Long("pretty") => pretty = true,
+            Long("compile-fuel") => compile_fuel = Some(parser.value()?.parse()?),
+            Value(value) if file.is_none() => file = Some(value.string()?),
+            _ => return Err(arg.unexpected()),
+        }
+    }
+    if file.is_none() && namespace.is_none() {
+        return Err(lexopt::Error::from("analyze needs a FILE or -n NAMESPACE"));
+    }
+    if namespace.is_some() && src_paths.is_empty() {
+        src_paths.push("src".to_string());
+    }
+    Ok(Command::Analyze { file, namespace, src_paths, emit, pretty, compile_fuel })
+}
+
 fn parse_run(parser: &mut lexopt::Parser) -> Result<Command, lexopt::Error> {
     let mut component_path: Option<String> = None;
     let mut invoke: Option<String> = None;
@@ -406,6 +461,7 @@ USAGE:
     suss compile -n <NS> -w <WORLD.wit> [--src <DIR>]   (namespace mode)
     suss run <COMPONENT.wasm> [ARGS...]                  (run CLI command)
     suss run <COMPONENT.wasm> --invoke <FUNC> [ARGS...]  (run specific function)
+    suss analyze [--emit forms|hir] (<FILE> | -n <NS> [--src <DIR>])
 
 OPTIONS:
     -r, repl        Start the REPL (default if no arguments)
@@ -427,6 +483,14 @@ COMMANDS:
     compile         Compile Suss source to WASM components
     run             Run a compiled WASM component
     cache [info|clean]  Show the build directory and its size, or remove its cached state
+    analyze         Print a file's forms or analysis as EDN (unstable shape)
+
+    analyze - Options:
+        --emit forms|hir     The forms as read, or the analyzer's nodes (default hir)
+        -n, --namespace <NS> Analyze a namespace found on the source paths
+        --src <DIR>          Source directory (default: src, repeatable)
+        --pretty             Print on several lines
+        --compile-fuel <N>   Set compilation and macro-expansion fuel
 
     compile - Project mode (reads deps.sus):
         --world <NAME>       Compile specific world (e.g., :my-app/v1)
