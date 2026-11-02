@@ -29573,3 +29573,11 @@ document's 2026-10-25 decision now records all three outcomes.
 - Round trip (analyze, emit, analyze, compare) is tested on core in both phases, the conformance corpus, four samples and a file of forms they lack. Run one file with `SUSS_ANALYZE_FILE=path cargo test -p suss-cli --test analyzer_edn -- samples_round_trip`.
 - Core's analysis is 672 top-level nodes, 13 MB of EDN, mostly `:env :locals`. Step 3 (persisting it as a build-cache layer) decides on a compact form.
 - PR #318 was independently reviewed, and the findings are fixed. Full baseline on ce12861: 2102 passed, 0 failed, 78 ignored, 281 binaries, 6396 s.
+
+## #319: shared analysis state (2026-11-02)
+
+- PR #320 is #319's first step. The analyzer's locals, fields and function scopes are `Arc`s changed by copy on write (`Arc::make_mut`), so each node's source facts share them instead of copying them. `Global` names are `Arc<str>`. `Environment::source_namespace` builds a namespace snapshot from that namespace's ranges of the ordered maps instead of scanning every namespace.
+- The macro graph caches by `Arc::as_ptr` for definitions, namespace snapshots, analyses, callables, function scopes, binding identities and function parameters. Keep each of those as its own allocation. Maps of locals and fields are not compared by pointer.
+- Analysing core (`bootstrap::catalog`) went from 1.14 s to 0.63 s per phase and from 9.5 M to 3.1 M allocations. The compiled bootstrap is unchanged except for the compiler identity.
+- Still to do in #319: share forms (each node deep-copies its form), share `SourceNode` HIR, and share namespace declarations through a persistent map (about 175 ms). Then remeasure #299 step 3. Its parked prototype is on branch `tooling/core-analysis-cache`.
+- The full baseline passed on f4d641b: 2084 passed, 0 failed, 78 ignored, 279 binaries, 124 min. After merging main (#317), the bootstrap was regenerated, and the macro-graph suites, `object_printing` and the compiler's library tests passed.

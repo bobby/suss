@@ -20,8 +20,9 @@ pub enum Phase {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Global {
     phase: Phase,
-    namespace: String,
-    name: String,
+    // Shared, since snapshots of a namespace copy every global in it (#319).
+    namespace: std::sync::Arc<str>,
+    name: std::sync::Arc<str>,
 }
 impl Global {
     pub fn phase(&self) -> Phase {
@@ -681,7 +682,7 @@ impl Environment {
                     self.definitions.remove(global);
                 }
             }
-            let export = (phase, global.namespace.clone(), global.name.clone());
+            let export = (phase, global.namespace.to_string(), global.name.to_string());
             if before.macro_exports.contains(&export) {
                 self.macro_exports.insert(export);
             } else {
@@ -713,6 +714,54 @@ impl Environment {
             declarations: self.definitions.iter().filter(|(global, _)|
                 global.phase() == phase && global.namespace() == scope.namespace)
                 .map(|(global, info)| (global, info.as_ref())).collect(),
+        })
+    }
+    /// A snapshot of one namespace for source facts. Its definitions,
+    /// bindings and bootstrap cells are each a range of maps ordered by
+    /// phase and namespace, so a snapshot reads only that namespace (#319).
+    pub(crate) fn source_namespace(&self, phase: Phase, namespace: &str) -> Option<super::hir::SourceNamespace> {
+        let scope = self.scopes.get(&(phase, canonical(namespace).into()))?;
+        let start = Global { phase, namespace: scope.namespace.as_str().into(), name: "".into() };
+        let within = |global: &Global| global.phase == phase && *global.namespace == *scope.namespace;
+        let declarations = self
+            .definitions
+            .range(start.clone()..)
+            .take_while(|(global, _)| within(global))
+            .map(|(global, info)| (global.clone(), info.clone()))
+            .collect();
+        // Cells other code can see: hidden reader and internal cells are not
+        // identities of the namespace, even when bootstrap materialized them.
+        let hidden = |global: &Global| {
+            matches!(self.bindings.get(global), Some(Binding::ReaderCell(_) | Binding::InternalCell(_)))
+        };
+        let identities = self
+            .bindings
+            .range(start.clone()..)
+            .take_while(|(global, _)| within(global))
+            .filter_map(|(global, binding)| matches!(binding, Binding::Cell(_)).then_some(global))
+            .chain(
+                self.materialized_bootstrap
+                    .range(start..)
+                    .take_while(|global| within(global))
+                    .filter(|global| !hidden(global)),
+            )
+            .cloned()
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .collect();
+        Some(super::hir::SourceNamespace {
+            namespace: scope.namespace.clone(),
+            aliases: scope.aliases.clone(),
+            refers: scope.refers.clone(),
+            used_refers: scope.used_refers.clone(),
+            renamed_refers: scope.renamed_refers.clone(),
+            excluded_core: scope.excluded_core.clone(),
+            macro_aliases: scope.macro_aliases.clone(),
+            macro_refers: scope.macro_refers.clone(),
+            used_macro_refers: scope.used_macro_refers.clone(),
+            renamed_macro_refers: scope.renamed_macro_refers.clone(),
+            declarations,
+            identities,
         })
     }
     /// Phase-specific declared namespaces; declaration does not certify loading.
@@ -836,7 +885,7 @@ impl Environment {
         };
         if self
             .scopes
-            .get(&(phase, global.namespace.clone()))
+            .get(&(phase, global.namespace.to_string()))
             .is_some_and(|scope| {
                 scope
                     .refers
@@ -912,7 +961,7 @@ impl Environment {
         let global = Global {
             phase,
             namespace: "suss.internal.reify".into(),
-            name: format!("t-reify-{generation}-{site}"),
+            name: format!("t-reify-{generation}-{site}").into(),
         };
         if !self.bindings.contains_key(&global) {
             self.bindings.insert(global.clone(), Binding::InternalCell(global.clone()));
@@ -993,7 +1042,7 @@ impl Environment {
             } else {
                 "suss.internal.protocol-natives".into()
             },
-            name: format!("native-{name}"),
+            name: format!("native-{name}").into(),
         };
         if !self.bindings.contains_key(&global) {
             self.bindings
@@ -1015,7 +1064,7 @@ impl Environment {
         let global = Global {
             phase: protocol.phase,
             namespace: "suss.internal.protocol-keys".into(),
-            name: format!("key-{name}"),
+            name: format!("key-{name}").into(),
         };
         self.bindings
             .insert(global.clone(), Binding::InternalCell(global.clone()));
@@ -1120,7 +1169,7 @@ impl Environment {
         let scope = self.scope(phase);
         let own = Global {
             phase,
-            namespace: scope.namespace.clone(),
+            namespace: scope.namespace.as_str().into(),
             name: local.into(),
         };
         if scope
@@ -1261,7 +1310,7 @@ impl Environment {
         {
             // Ordinary dependencies of compiled macro source live in this same
             // phase. Only a real registered macro export can pass the check below.
-            (target.namespace.clone(), target.name.clone())
+            (target.namespace.to_string(), target.name.to_string())
         } else {
             (scope.namespace.clone(), symbol.name.clone())
         };
@@ -1279,12 +1328,12 @@ impl Environment {
                 && symbol.name == name;
         }
         if let Some(target) = scope.refers.get(&symbol.name) {
-            return target.namespace == "suss.core" && target.name == name;
+            return &*target.namespace == "suss.core" && &*target.name == name;
         }
         let own = Global {
             phase,
-            namespace: scope.namespace.clone(),
-            name: symbol.name.clone(),
+            namespace: scope.namespace.as_str().into(),
+            name: symbol.name.as_str().into(),
         };
         symbol.name == name
             && !scope.excluded_core.contains(name)
@@ -1293,12 +1342,12 @@ impl Environment {
     /// Names `resolve` finds as `namespace`'s own bindings in `phase`, the
     /// declarations runtime namespaces publish (#309).
     pub(crate) fn declared_names(&self, phase: Phase, namespace: &str) -> BTreeSet<String> {
-        let start = Global { phase, namespace: namespace.into(), name: String::new() };
+        let start = Global { phase, namespace: namespace.into(), name: "".into() };
         self.bindings
             .range(start..)
-            .take_while(|(global, _)| global.phase == phase && global.namespace == namespace)
+            .take_while(|(global, _)| global.phase == phase && &*global.namespace == namespace)
             .filter(|(_, binding)| !matches!(binding, Binding::InternalCell(_) | Binding::ReaderCell(_)))
-            .map(|(global, _)| global.name.clone())
+            .map(|(global, _)| global.name.to_string())
             .collect()
     }
     /// Whether `resolve` finds `name` as one of `namespace`'s own bindings.
@@ -1319,10 +1368,10 @@ impl Environment {
                 && BOOTSTRAP_MACROS.contains(&symbol.name.as_str()))
             .then_some(symbol.name.as_str())
         } else if let Some(global) = scope.refers.get(&symbol.name) {
-            if global.namespace == "suss.core"
-                && BOOTSTRAP_MACROS.contains(&global.name.as_str())
+            if &*global.namespace == "suss.core"
+                && BOOTSTRAP_MACROS.contains(&&*global.name)
             {
-                Some(global.name.as_str())
+                Some(&*global.name)
             } else {
                 (BOOTSTRAP_MACROS.contains(&symbol.name.as_str()) && !scope.excluded_core.contains(&symbol.name))
                 .then_some(symbol.name.as_str())
@@ -1382,8 +1431,8 @@ impl Environment {
             )
             && self.bindings.contains_key(&Global {
                 phase,
-                namespace: scope.namespace.clone(),
-                name: symbol.name.clone(),
+                namespace: scope.namespace.as_str().into(),
+                name: symbol.name.as_str().into(),
             })
         {
             return None;
@@ -1459,15 +1508,15 @@ impl Environment {
             Global {
                 phase,
                 namespace: namespace.into(),
-                name: symbol.name.clone(),
+                name: symbol.name.as_str().into(),
             }
         } else if let Some(global) = scope.refers.get(&symbol.name) {
             global.clone()
         } else {
             let own = Global {
                 phase,
-                namespace: scope.namespace.clone(),
-                name: symbol.name.clone(),
+                namespace: scope.namespace.as_str().into(),
+                name: symbol.name.as_str().into(),
             };
             if self.bindings.contains_key(&own) {
                 own
@@ -1475,7 +1524,7 @@ impl Environment {
                 Global {
                     phase,
                     namespace: "suss.core".into(),
-                    name: symbol.name.clone(),
+                    name: symbol.name.as_str().into(),
                 }
             } else {
                 own
