@@ -29564,6 +29564,16 @@ document's 2026-10-25 decision now records all three outcomes.
 - Intentional differences: no `#=(...)` forms under `*print-dup*`, and a keyword `:type` is always stripped from printed metadata.
 - PR #316 was independently reviewed, and the findings are fixed. Full baseline on f82651f: 2084 passed, 0 failed, 78 ignored, 279 binaries, 7296 s. CI run 41353154521 passed on f82651f.
 
+## #299 step 2: analyzer output as EDN (2026-11-02)
+
+- `suss analyze [--emit forms|hir] FILE` (or `-n NS`) prints a file's forms, or its analysis in tools.analyzer's node shape, as EDN that `suss.edn/read-string` reads. The contract, marked unstable and versioned `:suss.analyzer/version 1`, is in `docs/runtime/analyzer-edn.md`.
+- Nodes are projected from the analyzer's pre-lowering source facts (`SourceAnalysis`/`SourceNode` in `hir.rs`), not from the lowered `Expression`. A new special form or intrinsic that records no source facts appears as `:suss/lowered`; `analyzer_edn_core` fails if core produces one.
+- Macros Suss analyzes itself (`when`, `cond`, `case`, `deftype`, interop, ...) are `:suss/intrinsic` nodes. `emit_form` rebuilds them by substituting emitted args into `:form`, so passes can edit inside them.
+- A syntax quote's `(sequence ...)` call now records an ordinary call's source facts. This changed macro `&env` graphs for such calls, from a lowering record to an `:invoke` record.
+- Round trip (analyze, emit, analyze, compare) is tested on core in both phases, the conformance corpus, four samples and a file of forms they lack. Run one file with `SUSS_ANALYZE_FILE=path cargo test -p suss-cli --test analyzer_edn -- samples_round_trip`.
+- Core's analysis is 672 top-level nodes, 13 MB of EDN, mostly `:env :locals`. Step 3 (persisting it as a build-cache layer) decides on a compact form.
+- PR #318 was independently reviewed, and the findings are fixed. Full baseline on ce12861: 2102 passed, 0 failed, 78 ignored, 281 binaries, 6396 s.
+
 ## #319: shared analysis state (2026-11-02)
 
 - PR #320 is #319's first step. The analyzer's locals, fields and function scopes are `Arc`s changed by copy on write (`Arc::make_mut`), so each node's source facts share them instead of copying them. `Global` names are `Arc<str>`. `Environment::source_namespace` builds a namespace snapshot from that namespace's ranges of the ordered maps instead of scanning every namespace.
