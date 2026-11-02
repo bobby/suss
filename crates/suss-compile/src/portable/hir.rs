@@ -384,6 +384,8 @@ pub enum Nominal {
     IsNativeObject,
     IsTypeConstructor,
     ValueConstructor,
+    /// Type value -> its name string, or nil (#304).
+    TypeName,
     SourceFunctionName,
     NativeObjectDefaultPrototype,
     /// Dynamically scoped JavaScript receiver for the original `this-as` form.
@@ -437,7 +439,7 @@ impl Nominal {
                 Self::Array => true,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::CurrentThis => count == 0,
-                Self::IsNumber | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::SourceFunctionName => count == 1,
+                Self::IsNumber | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
@@ -454,8 +456,8 @@ impl Nominal {
                 Self::LiveDispatcher | Self::NativeSet(_) => count == 2,
                 Self::IFnLiveDispatcher => count == 3,
                 Self::NativeMarker(_) => count == 1,
-                Self::Descriptor(mutable) => mutable <= count && arguments.iter().all(|ty| *ty == Type::String),
-                Self::CoreDescriptor | Self::CoreStaticsDescriptor | Self::CoreClosedDescriptor | Self::CoreConstructibleDescriptor => arguments.iter().all(|ty| *ty == Type::String),
+                Self::Descriptor(mutable) => mutable < count && arguments.iter().all(|ty| *ty == Type::String),
+                Self::CoreDescriptor | Self::CoreStaticsDescriptor | Self::CoreClosedDescriptor | Self::CoreConstructibleDescriptor => count >= 1 && arguments.iter().all(|ty| *ty == Type::String),
                 Self::Construct => count >= 1,
                 Self::Instance | Self::SameNominalType | Self::Satisfies | Self::NativeSatisfies | Self::Marker => {
                     count == 2
@@ -2426,6 +2428,7 @@ impl Analyzer<'_> {
                 "same-nominal-type?" => Some(Nominal::SameNominalType),
                 "type-constructor?" => Some(Nominal::IsTypeConstructor),
                 "value-constructor" => Some(Nominal::ValueConstructor),
+                "type-name" => Some(Nominal::TypeName),
                 "function-name" => Some(Nominal::SourceFunctionName),
                 "object-default-prototype" => Some(Nominal::NativeObjectDefaultPrototype),
                 "coerce-string" => Some(Nominal::CoerceString),

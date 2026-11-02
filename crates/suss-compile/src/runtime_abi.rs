@@ -51,7 +51,7 @@ mod type_values;
 pub const VERSION: u32 = 2;
 // Internal constructor/ordinary-type-call undefined, distinct from source nil.
 pub(crate) const UNDEFINED: i32 = 6;
-const PORTABLE_FORMAT_VERSION: u32 = 2;
+const PORTABLE_FORMAT_VERSION: u32 = 3;
 const MANIFEST: &str = "suss.runtime-abi";
 pub(crate) const NUMBER: u32 = 0;
 pub(crate) const STRING: u32 = 1;
@@ -884,8 +884,15 @@ fn build_module() -> Vec<u8> {
         },
         I32Const(0),
         ArrayNewDefault(ARGS),
-        I32Const(0),
-        RefI31,
+    ]);
+    // The type's name, as compiled descriptors carry theirs (#304).
+    let name: Vec<_> = "suss.core.ExceptionInfo".encode_utf16().collect();
+    info_descriptor.extend(name.iter().map(|x| I32Const(*x as i32)));
+    info_descriptor.extend([
+        ArrayNewFixed {
+            array_type_index: STRING,
+            array_size: name.len() as u32,
+        },
         I32Const(0),
         RefI31,
         I32Const(0), RefI31, StructNew(DESCRIPTOR),

@@ -29,8 +29,8 @@ nil still coerces to zero/`null`. Ordinary protocol-object calls also return
 undefined. A `defprotocol` expression also returns undefined; downstream numeric
 and string coercions distinguish it from nil. The scalar development transport categorizes undefined as nil-like,
 like the pinned encoder, but downstream arithmetic/string/truthiness regressions
-retain its different behavior. Compiler manifests now identify `0.1.0+portable.2`;
-pre-format2 artifacts reject before initialization. The recursive ABI/version1,
+retain its different behavior. Compiler manifests then moved to `0.1.0+portable.2`
+(now format 3, [type names](type-names.md)); earlier artifacts reject before initialization. The recursive ABI/version1,
 pinned numeric helper bytes/dependencies and numeric stack global6 are unchanged.
 New runtime globals append after that stack: identity counter, nominal error and
 a rooted opaque protocol sentinel (diagnostic identity0).

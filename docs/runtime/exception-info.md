@@ -54,9 +54,11 @@ collision assertion as reserved descriptors grow.
 
 ## Remaining contracts
 
-Persistent map data, complete Error class source surfaces/inheritance, printing and
-stack/name/file adaptations, compiled core import and source field mutation remain
-unfinished. Ordinary ExceptionInfo invocation in the pinned JS host can return a
+An `ExceptionInfo` prints as Clojure's `#error {...}` and its type is named
+`suss.core.ExceptionInfo` (#304; see [printing](printing.md) and
+[type names](type-names.md)). Persistent map data, complete Error class source
+surfaces/inheritance, stack/name/file adaptations, compiled core import and source
+field mutation remain unfinished. Ordinary ExceptionInfo invocation in the pinned JS host can return a
 host-global object; the bootstrap now returns a rooted per-runtime realm object, with distinct
 identity and mutable raw fields, preserving truthiness/non-ExceptionInfo membership.
 Three ordinary-call source cases passed fresh comparison; the full baseline remains required.
