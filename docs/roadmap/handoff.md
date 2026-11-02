@@ -29546,6 +29546,15 @@ document's 2026-10-25 decision now records all three outcomes.
 - Not done here: `#inst`/`#uuid` (no types yet), `#"..."`, `#:ns{}`, and `#=`.
 - PR #314 was independently reviewed, and the findings are fixed. Full baseline on 1b91319: 2073 passed, 0 failed, 78 ignored, 278 binaries, 6302 s. CI run 41321000454 passed on 1b91319.
 
+## #304: default printer and runtime type names (2026-11-02)
+
+- Values that are not data print as Clojure's default `print-method` prints them: type values as their names, objects as `#object[Name 0xhash "str"]`, atoms and `reduced` values with their `deref-as-map` state, and `ex-info` as `#error {...}`. The contract is in `docs/runtime/printing.md` and `docs/runtime/type-names.md`.
+- Type descriptors carry their Clojure class name in slot 3, so `descriptor-new` takes the name and compiled artifacts move to format 3 (`+portable.3`). Runtime ABI version 2 is unchanged.
+- `deftype` and `reify` get a default `toString` (`Name@hex`) unless they define one. Outside core it is `source-object-string`, which uses a reparented prototype's `toString`, as the pinned error-constructor corpus records.
+- Records print, register for `read-string` and name themselves from their type, so `my-ns.x/R` prints `#my_ns.x.R{...}`, as in Clojure.
+- Not covered: names for host values without descriptors (`(type 1)`, functions, runtime errors), `print-method` (#30) and `#js` objects. `reify` names are not unique across separate forms.
+- PR #317 was independently reviewed, and the findings are fixed or documented. Full baseline on 56d9125: 2091 passed, 0 failed, 78 ignored, 280 binaries, 8606 s.
+
 ## #302: printer options (2026-11-01)
 
 - `*print-length*`, `*print-level*`, `*print-meta*`, `*print-readably*`, `*print-namespace-maps*`, `*print-dup*` and `*verbose-defrecords*` follow Clojure's `core_print.clj` in `pr-str`, `prn-str`, `print-str`, `println-str` and `str` of a collection. The contract is in `docs/runtime/printing.md`.

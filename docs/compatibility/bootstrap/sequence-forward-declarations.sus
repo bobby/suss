@@ -1,5 +1,7 @@
 ;; Original loader declarations for retained source's mutual references.
 ;; Pending helpers remain uninitialized and fail if invoked; no fake implementations.
+;; Every deftype's default toString calls this (#304).
+(declare ^:private object-string)
 (declare List EmptyList Cons IndexedSeq seq first rest next prim-seq array-seq cons count
   counted? list? sequential? seqable? accumulating-seq-count empty-ordered-hash
   Reduced reduced reduced? ensure-reduced unreduced deref iterable? iter-reduce reduce
@@ -60,13 +62,13 @@
 ;; Full default printer dependency still pending; no fabricated fallback.
 (declare pr-writer-impl)
 
-;; Staged default printer dependencies. No placeholder implementation: calls to
-;; unfinished host/storage operations must raise a visible language exception.
+;; Default printer dependencies, defined in core's appendix (#304). The #js
+;; object printer's own helpers are still pending: calls to them raise a
+;; visible language exception, never a placeholder result.
 (declare ^:private pr-constructor-writer ^:private pr-object-map
          ^:private pr-object-keyword? ^:private pr-function-name
-         ^:private pr-date? ^:private pr-object-constructor-string
-         ^:private pr-constructor-display-name ^:private pr-object-constructor-name
-         ^:private pr-object-constructor js-keys print-map regexp? js-symbol? keyword)
+         ^:private pr-tagged-object ^:private deref-as-map ^:private pr-throwable
+         js-keys print-map keyword)
 
 (declare ^:private keyword-name-parts)
 

@@ -188,6 +188,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::IsNativeObject => { names.insert("native-object?"); }
                         Nominal::IsTypeConstructor => { names.insert("class-value-is"); }
                         Nominal::ValueConstructor => { names.insert("value-constructor"); }
+                        Nominal::TypeName => { names.insert("class-value-name"); }
                         Nominal::SourceFunctionName => { names.insert("closure-source-name"); }
                         Nominal::NativeObjectDefaultPrototype => { names.insert("native-object-default-prototype"); }
                         Nominal::CurrentThis => { names.insert("current-this"); }
@@ -335,6 +336,11 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "async-registration-new" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
             "async-task-complete" => (vec![VALUE, ValType::I32, VALUE], vec![ValType::I32]),
             "protocol-live-dispatcher-new" => (vec![VALUE, VALUE], vec![VALUE]),
+            "descriptor-new"
+            | "descriptor-new-core"
+            | "descriptor-new-core-statics"
+            | "descriptor-new-core-closed"
+            | "descriptor-new-core-constructible" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
             "ifn-live-dispatcher-new" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
             "protocol-native-marker-set" => (vec![VALUE, ValType::I32], vec![ValType::I32]),
             "protocol-native-method-set" => (vec![VALUE, ValType::I32, VALUE], vec![VALUE]),
@@ -381,6 +387,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "source-constructor-new"
             | "source-constructor-plan"
             | "value-constructor"
+            | "class-value-name"
             | "constructor-descriptor"
             | "object-descriptor"
             | "protocol-dispatcher-new" => (vec![VALUE], vec![VALUE]),
@@ -1158,7 +1165,9 @@ fn emit_function(
                                 Nominal::Descriptor(mutable) => *mutable,
                                 _ => 0,
                             };
-                            let fields = arguments.len() - mutable;
+                            // Descriptors take the type's name last (#304).
+                            let named = usize::from(*operation != Nominal::Array);
+                            let fields = arguments.len() - mutable - named;
                             for argument in &arguments[..fields] {
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
                             }
@@ -1171,7 +1180,7 @@ fn emit_function(
                                 if mutable == 0 {
                                     function.instruction(&I32Const(0)).instruction(&RefI31);
                                 } else {
-                                    for argument in &arguments[fields..] {
+                                    for argument in &arguments[fields..fields + mutable] {
                                         function.instruction(&LocalGet(argument.0 as u32 + offset));
                                     }
                                     function.instruction(&ArrayNewFixed {
@@ -1179,6 +1188,10 @@ fn emit_function(
                                         array_size: mutable as u32,
                                     });
                                 }
+                            }
+                            if *operation != Nominal::Array {
+                                let name = arguments.last().expect("descriptor name");
+                                function.instruction(&LocalGet(name.0 as u32 + offset));
                             }
                             if matches!(operation, Nominal::Descriptor(_)) {
                                 function.instruction(&Call(index("descriptor-new")));
@@ -1278,6 +1291,7 @@ fn emit_function(
                         | Nominal::IsNativeObject
                         | Nominal::IsTypeConstructor
                         | Nominal::ValueConstructor
+                        | Nominal::TypeName
                         | Nominal::SourceFunctionName
                         | Nominal::SameNominalType
                         | Nominal::NativeObjectFactory
@@ -1354,6 +1368,7 @@ fn emit_function(
                                 Nominal::IsNativeObject => "native-object?",
                                 Nominal::IsTypeConstructor => "class-value-is",
                                 Nominal::ValueConstructor => "value-constructor",
+                                Nominal::TypeName => "class-value-name",
                                 Nominal::SourceFunctionName => "closure-source-name",
                                 Nominal::SameNominalType => "object-same-descriptor",
                                 Nominal::NativeObjectDefaultPrototype => "native-object-default-prototype",

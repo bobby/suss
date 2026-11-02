@@ -243,14 +243,20 @@ fn staged_type_returns_retained_nominal_constructors_in_both_phases() {
                     .unwrap()
                     .as_struct(&store)?
                     .unwrap();
-                let metadata = descriptor
+                let name = descriptor
                     .field(&mut store, 3)?
                     .unwrap_anyref()
                     .unwrap()
-                    .as_i31(&store)?
+                    .as_array(&store)?
                     .unwrap()
-                    .get_u32();
-                assert_eq!(metadata, 0, "cache leaves descriptor metadata intact");
+                    .elems(&mut store)?
+                    .map(|unit| unit.unwrap_i32() as u16)
+                    .collect::<Vec<_>>();
+                assert_eq!(
+                    name,
+                    "user.ComparatorTypeProbe".encode_utf16().collect::<Vec<_>>(),
+                    "cache leaves the descriptor's type name intact"
+                );
                 let protocols = descriptor
                     .field(&mut store, 2)?
                     .unwrap_anyref()
