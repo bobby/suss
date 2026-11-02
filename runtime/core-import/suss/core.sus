@@ -11,6 +11,8 @@
 
 ;; Original loader declarations for retained source's mutual references.
 ;; Pending helpers remain uninitialized and fail if invoked; no fake implementations.
+;; Every deftype's default toString calls this (#304).
+(declare ^:private object-string)
 (declare List EmptyList Cons IndexedSeq seq first rest next prim-seq array-seq cons count
   counted? list? sequential? seqable? accumulating-seq-count empty-ordered-hash
   Reduced reduced reduced? ensure-reduced unreduced deref iterable? iter-reduce reduce
@@ -71,13 +73,13 @@
 ;; Full default printer dependency still pending; no fabricated fallback.
 (declare pr-writer-impl)
 
-;; Staged default printer dependencies. No placeholder implementation: calls to
-;; unfinished host/storage operations must raise a visible language exception.
+;; Default printer dependencies, defined in core's appendix (#304). The #js
+;; object printer's own helpers are still pending: calls to them raise a
+;; visible language exception, never a placeholder result.
 (declare ^:private pr-constructor-writer ^:private pr-object-map
          ^:private pr-object-keyword? ^:private pr-function-name
-         ^:private pr-date? ^:private pr-object-constructor-string
-         ^:private pr-constructor-display-name ^:private pr-object-constructor-name
-         ^:private pr-object-constructor js-keys print-map regexp? js-symbol? keyword)
+         ^:private pr-tagged-object ^:private deref-as-map ^:private pr-throwable
+         js-keys print-map keyword)
 
 (declare ^:private keyword-name-parts)
 
@@ -5485,38 +5487,15 @@
               "")
             "]"))
 
-        (pr-date? obj)
-        (let [normalize (fn [n len]
-                          (loop [ns (str_ n)]
-                            (if (< (count ns) len)
-                              (recur (str_ "0" ns))
-                              ns)))]
-          (write-all writer
-            "#inst \""
-            (normalize (.getUTCFullYear obj) 4)     "-"
-            (normalize (inc (.getUTCMonth obj)) 2)  "-"
-            (normalize (.getUTCDate obj) 2)         "T"
-            (normalize (.getUTCHours obj) 2)        ":"
-            (normalize (.getUTCMinutes obj) 2)      ":"
-            (normalize (.getUTCSeconds obj) 2)      "."
-            (normalize (.getUTCMilliseconds obj) 3) "-"
-            "00:00\""))
+        ;; Clojure's print-method for Throwable, IDeref and Object (#304).
+        (instance? ExceptionInfo obj)
+        (pr-throwable obj writer opts)
 
-        (regexp? obj) (write-all writer "#\"" (.-source obj) "\"")
-
-        (js-symbol? obj) (write-all writer "#object[" (.toString obj) "]" )
+        (satisfies? IDeref obj)
+        (pr-tagged-object obj (deref-as-map obj) writer opts)
 
         :else
-        (if (pr-object-constructor-string obj)
-          (write-all writer
-            "#object[" (pr-constructor-display-name (pr-object-constructor-string obj)) "]")
-          (let [name (pr-object-constructor-name obj)
-                name (if (or (nil? name) (= "" name))
-                       "Object"
-                       name)]
-            (if (nil? (pr-object-constructor obj))
-              (write-all writer "#object[" name "]")
-              (write-all writer "#object[" name " " (str_ obj) "]")))))))))
+        (pr-tagged-object obj (str obj) writer opts))))))
 
 (def keyword
   "Returns a Keyword with the given namespace and name.  Do not use :
@@ -6219,7 +6198,13 @@
   ([] "")
   ([x] (if (suss.bootstrap/nil? x)
          ""
-         (if (or (suss.bootstrap/number? x) (suss.bootstrap/string? x) (suss.bootstrap/boolean? x)) (suss.bootstrap/coerce-string x) (.toString x))))
+         (if (or (suss.bootstrap/number? x) (suss.bootstrap/string? x) (suss.bootstrap/boolean? x))
+           (suss.bootstrap/coerce-string x)
+           ;; A type value is Clojure's Class, whose toString is "class Name" (#304).
+           (if (suss.bootstrap/type-constructor? x)
+             (let [name (suss.bootstrap/type-name x)]
+               (suss.bootstrap/concat-string "class " (if (suss.bootstrap/nil? name) "Object" name)))
+             (.toString x)))))
   ([x & ys]
    (loop [sb (bootstrap-string-buffer (str x)) more ys]
      (if more
@@ -8941,19 +8926,33 @@ reduces them without incurring seq initialization"
 ;; Original Suss adaptation: read the source closure's owned UTF16 label.
 (def ^:private pr-function-name (fn [function] (suss.bootstrap/function-name function)))
 
-;; Original Suss adaptation of java.lang.Object/toString, which records inherit
-;; in Clojure: the class label, "@" and the unsigned 32-bit hash in lower-case
-;; hexadecimal. Suss's hash replaces the JVM hashCode (#285).
-(def ^:private object-string
-  (fn [label value]
-    (loop [n (unsigned-bit-shift-right (hash value) 0) digits ""]
+;; Original Suss: a number as an unsigned 32-bit integer in lower-case
+;; hexadecimal, as java.lang.Integer/toHexString writes it.
+(def ^:private hex-string
+  (fn [n]
+    (loop [n (unsigned-bit-shift-right n 0) digits ""]
       (let [low (- n (* 16 (quot n 16)))
             digits (suss.bootstrap/concat-string
                      (suss.bootstrap/string-slice "0123456789abcdef" low (inc low)) digits)
             n (quot n 16)]
-        (if (zero? n)
-          (suss.bootstrap/concat-string label (suss.bootstrap/concat-string "@" digits))
-          (recur n digits))))))
+        (if (zero? n) digits (recur n digits))))))
+
+;; Original Suss: the name of a value's type, as Clojure's
+;; (.getName (class x)) (#304). The compiler stores each type's name when it
+;; defines the type; values of other types are "Object".
+(def ^:private class-name
+  (fn [value]
+    (let [name (suss.bootstrap/type-name (type value))]
+      (if (nil? name) "Object" name))))
+
+;; Original Suss adaptation of java.lang.Object/toString, which types and
+;; records inherit in Clojure: the class name, "@" and the hash in hexadecimal.
+;; Suss's hash replaces the JVM hashCode (#285, #304).
+(def ^:private object-string
+  (fn [value]
+    (suss.bootstrap/concat-string
+      (class-name value)
+      (suss.bootstrap/concat-string "@" (hex-string (hash value))))))
 
 ;; Copyright The Closure Library Authors.
 ;; SPDX-License-Identifier: Apache-2.0
@@ -9043,10 +9042,8 @@ reduces them without incurring seq initialization"
   (-hash [this] (suss.bootstrap/identity-uid this))
   IPrintWithWriter
   (-pr-writer [this writer opts]
-    (let [label (object-string "" this)]
-      (-write writer (str "#object[suss.core.Namespace 0x"
-                          (suss.bootstrap/string-slice label 1 (.-length label))
-                          " \"" name "\"]")))))
+    (-write writer (str "#object[suss.core.Namespace 0x" (hex-string (hash this))
+                        " \"" name "\"]"))))
 ;; A namespace's state is an array of these slots, read and replaced by plain
 ;; functions; a method call would cost more than the lookups themselves.
 (def ^:private ns-aliases-slot 0)
@@ -9772,8 +9769,9 @@ reduces them without incurring seq initialization"
 ;; name the printer writes.
 (def ^:private record-readers {})
 (def ^:private register-record-reader!
-  (fn [name positional fields from-map]
-    (set! record-readers (assoc record-readers name (array positional fields from-map)))
+  (fn [type positional fields from-map]
+    (set! record-readers
+          (assoc record-readers (suss.bootstrap/type-name type) (array positional fields from-map)))
     nil))
 (def ^:private reader-record
   (fn [st start tag value]
@@ -10331,9 +10329,9 @@ reduces them without incurring seq initialization"
   values, as Clojure's *verbose-defrecords* does."}
   *verbose-defrecords* false)
 (def ^:private pr-record-writer
-  (fn [record name writer opts]
+  (fn [record writer opts]
     (-write writer "#")
-    (-write writer name)
+    (-write writer (class-name record))
     (if (and (pr-opts-dup opts) (not *verbose-defrecords*))
       (pr-sequential-writer writer pr-writer "[" ", " "]" opts (vals record))
       (pr-sequential-writer
@@ -10343,3 +10341,61 @@ reduces them without incurring seq initialization"
           (-write w " ")
           (pr-writer (val entry) w opts))
         "{" ", " "}" opts (seq record)))))
+;; Printing values that are not data (#304), as Clojure's default
+;; print-method does (core_print.clj): a type value prints its name, as
+;; print-method for Class; a reference prints its state, as deref-as-map; an
+;; ExceptionInfo prints as print-throwable; any other object prints as
+;; print-tagged-object, with Suss's identity hash for identityHashCode.
+(def ^:private pr-constructor-writer
+  (fn [ty writer opts]
+    (let [name (suss.bootstrap/type-name ty)]
+      (-write writer (if (nil? name) "Object" name)))))
+(def ^:private pr-tagged-object
+  (fn [obj rep writer opts]
+    (-write writer "#object[")
+    (-write writer (class-name obj))
+    (-write writer " 0x")
+    (-write writer (hex-string (suss.bootstrap/identity-uid obj)))
+    (-write writer " ")
+    (pr-writer rep writer opts)
+    (-write writer "]")))
+(def ^:private deref-as-map
+  (fn [o]
+    (let [pending (and (satisfies? IPending o) (not (-realized? o)))
+          result (if pending
+                   nil
+                   (try [false (deref o)] (catch :default e [true e])))]
+      {:status (cond (nth result 0 false) :failed pending :pending :else :ready)
+       :val (nth result 1 nil)})))
+;; Suss keeps no stack traces, so :via has no :at and :trace is empty.
+(def ^:private pr-throwable
+  (fn [o writer opts]
+    (let [via (loop [via [] t o] (if (nil? t) via (recur (conj via t) (ex-cause t))))
+          root (peek via)
+          pr-data (fn [t indent]
+                    (let [data (ex-data t)]
+                      (if (nil? data)
+                        nil
+                        (do (-write writer indent) (pr-writer data writer opts)))))
+          pr-via (fn [t]
+                   (-write writer "{:type ")
+                   (-write writer (class-name t))
+                   (-write writer "\n   :message ")
+                   (pr-writer (ex-message t) writer opts)
+                   (pr-data t "\n   :data ")
+                   (-write writer "}"))]
+      (-write writer "#error {\n :cause ")
+      (pr-writer (ex-message root) writer opts)
+      (pr-data root "\n :data ")
+      (-write writer "\n :via\n [")
+      (pr-via (first via))
+      (loop [more (next via)]
+        (if more
+          (do (-write writer "\n  ") (pr-via (first more)) (recur (next more)))
+          nil))
+      (-write writer "]\n :trace\n []}"))))
+;; An atom prints as Clojure's print-method for IDeref does, replacing the
+;; pinned ClojureScript printer installed with the sequence setup forms.
+(extend-type Atom IPrintWithWriter
+  (-pr-writer [a writer opts]
+    (pr-tagged-object a (deref-as-map a) writer opts)))

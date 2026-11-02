@@ -119,8 +119,8 @@ old backend only when replacement acceptance passes.
 
 Bounded nominal source operations now retain descriptor identities and ordered
 constructor/predicate/field/protocol operands in verified HIR/IR. The current
-compiler manifest format is `0.1.0+portable.2`, rejecting earlier artifact formats
-before effects; ABI prelude/version1 stays unchanged. Internal undefined sentinel6
+compiler manifest format is `0.1.0+portable.3` ([type names](type-names.md), #304),
+rejecting earlier artifact formats before effects; ABI prelude/version1 stays unchanged. Internal undefined sentinel6
 is distinct from nil0, including falsey branching and NaN/string coercion. See
 [nominal evidence and remaining work](nominal.md); general exceptions/dynamic scope,
 builtin/native dispatch and complete core/macros remain unfinished.

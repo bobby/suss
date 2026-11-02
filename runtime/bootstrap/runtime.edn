@@ -342,6 +342,7 @@
          "suss.bindings.runtime:suss.core/chunked-seq"
          "suss.bindings.runtime:suss.core/chunked-seq?"
          "suss.bindings.runtime:suss.core/ci-reduce"
+         "suss.bindings.runtime:suss.core/class-name"
          "suss.bindings.runtime:suss.core/clone"
          "suss.bindings.runtime:suss.core/clone-and-set"
          "suss.bindings.runtime:suss.core/comp"
@@ -366,6 +367,7 @@
          "suss.bindings.runtime:suss.core/date-from-ms"
          "suss.bindings.runtime:suss.core/dec"
          "suss.bindings.runtime:suss.core/deref"
+         "suss.bindings.runtime:suss.core/deref-as-map"
          "suss.bindings.runtime:suss.core/disj"
          "suss.bindings.runtime:suss.core/disj!"
          "suss.bindings.runtime:suss.core/dissoc"
@@ -416,6 +418,7 @@
          "suss.bindings.runtime:suss.core/hash-string*"
          "suss.bindings.runtime:suss.core/hash-symbol"
          "suss.bindings.runtime:suss.core/hash-unordered-coll"
+         "suss.bindings.runtime:suss.core/hex-string"
          "suss.bindings.runtime:suss.core/identity"
          "suss.bindings.runtime:suss.core/ifind?"
          "suss.bindings.runtime:suss.core/inc"
@@ -434,7 +437,6 @@
          "suss.bindings.runtime:suss.core/js-keys"
          "suss.bindings.runtime:suss.core/js-mod"
          "suss.bindings.runtime:suss.core/js-obj"
-         "suss.bindings.runtime:suss.core/js-symbol?"
          "suss.bindings.runtime:suss.core/juxt"
          "suss.bindings.runtime:suss.core/key"
          "suss.bindings.runtime:suss.core/key-test"
@@ -521,13 +523,8 @@
          "suss.bindings.runtime:suss.core/pop"
          "suss.bindings.runtime:suss.core/pop-tail"
          "suss.bindings.runtime:suss.core/pos?"
-         "suss.bindings.runtime:suss.core/pr-constructor-display-name"
          "suss.bindings.runtime:suss.core/pr-constructor-writer"
-         "suss.bindings.runtime:suss.core/pr-date?"
          "suss.bindings.runtime:suss.core/pr-function-name"
-         "suss.bindings.runtime:suss.core/pr-object-constructor"
-         "suss.bindings.runtime:suss.core/pr-object-constructor-name"
-         "suss.bindings.runtime:suss.core/pr-object-constructor-string"
          "suss.bindings.runtime:suss.core/pr-object-keyword?"
          "suss.bindings.runtime:suss.core/pr-object-map"
          "suss.bindings.runtime:suss.core/pr-opts-dup"
@@ -541,6 +538,8 @@
          "suss.bindings.runtime:suss.core/pr-str"
          "suss.bindings.runtime:suss.core/pr-str*"
          "suss.bindings.runtime:suss.core/pr-str-with-opts"
+         "suss.bindings.runtime:suss.core/pr-tagged-object"
+         "suss.bindings.runtime:suss.core/pr-throwable"
          "suss.bindings.runtime:suss.core/pr-writer"
          "suss.bindings.runtime:suss.core/pr-writer-impl"
          "suss.bindings.runtime:suss.core/preserving-reduced"
@@ -665,7 +664,6 @@
          "suss.bindings.runtime:suss.core/reduce-kv"
          "suss.bindings.runtime:suss.core/reduced"
          "suss.bindings.runtime:suss.core/reduced?"
-         "suss.bindings.runtime:suss.core/regexp?"
          "suss.bindings.runtime:suss.core/register-record-reader!"
          "suss.bindings.runtime:suss.core/registered-namespace"
          "suss.bindings.runtime:suss.core/rem"
@@ -774,7 +772,10 @@
          "suss.bindings.runtime:suss.internal.bootstrap-link/aclone"
          "suss.bindings.runtime:suss.internal.bootstrap-link/aget"
          "suss.bindings.runtime:suss.internal.bootstrap-link/array?"
+         "suss.bindings.runtime:suss.internal.bootstrap-link/ex-cause"
+         "suss.bindings.runtime:suss.internal.bootstrap-link/ex-data"
          "suss.bindings.runtime:suss.internal.bootstrap-link/ex-info"
+         "suss.bindings.runtime:suss.internal.bootstrap-link/ex-message"
          "suss.bindings.runtime:suss.internal.bootstrap-link/false?"
          "suss.bindings.runtime:suss.internal.bootstrap-link/identical?"
          "suss.bindings.runtime:suss.internal.bootstrap-link/imul"
@@ -1115,6 +1116,7 @@
          "suss.bindings.runtime:suss.internal.core-link/chunked-seq"
          "suss.bindings.runtime:suss.internal.core-link/chunked-seq?"
          "suss.bindings.runtime:suss.internal.core-link/ci-reduce"
+         "suss.bindings.runtime:suss.internal.core-link/class-name"
          "suss.bindings.runtime:suss.internal.core-link/clone"
          "suss.bindings.runtime:suss.internal.core-link/clone-and-set"
          "suss.bindings.runtime:suss.internal.core-link/comp"
@@ -1139,6 +1141,7 @@
          "suss.bindings.runtime:suss.internal.core-link/date-from-ms"
          "suss.bindings.runtime:suss.internal.core-link/dec"
          "suss.bindings.runtime:suss.internal.core-link/deref"
+         "suss.bindings.runtime:suss.internal.core-link/deref-as-map"
          "suss.bindings.runtime:suss.internal.core-link/disj"
          "suss.bindings.runtime:suss.internal.core-link/disj!"
          "suss.bindings.runtime:suss.internal.core-link/dissoc"
@@ -1189,6 +1192,7 @@
          "suss.bindings.runtime:suss.internal.core-link/hash-string*"
          "suss.bindings.runtime:suss.internal.core-link/hash-symbol"
          "suss.bindings.runtime:suss.internal.core-link/hash-unordered-coll"
+         "suss.bindings.runtime:suss.internal.core-link/hex-string"
          "suss.bindings.runtime:suss.internal.core-link/identity"
          "suss.bindings.runtime:suss.internal.core-link/ifind?"
          "suss.bindings.runtime:suss.internal.core-link/inc"
@@ -1207,7 +1211,6 @@
          "suss.bindings.runtime:suss.internal.core-link/js-keys"
          "suss.bindings.runtime:suss.internal.core-link/js-mod"
          "suss.bindings.runtime:suss.internal.core-link/js-obj"
-         "suss.bindings.runtime:suss.internal.core-link/js-symbol?"
          "suss.bindings.runtime:suss.internal.core-link/juxt"
          "suss.bindings.runtime:suss.internal.core-link/key"
          "suss.bindings.runtime:suss.internal.core-link/key-test"
@@ -1294,13 +1297,8 @@
          "suss.bindings.runtime:suss.internal.core-link/pop"
          "suss.bindings.runtime:suss.internal.core-link/pop-tail"
          "suss.bindings.runtime:suss.internal.core-link/pos?"
-         "suss.bindings.runtime:suss.internal.core-link/pr-constructor-display-name"
          "suss.bindings.runtime:suss.internal.core-link/pr-constructor-writer"
-         "suss.bindings.runtime:suss.internal.core-link/pr-date?"
          "suss.bindings.runtime:suss.internal.core-link/pr-function-name"
-         "suss.bindings.runtime:suss.internal.core-link/pr-object-constructor"
-         "suss.bindings.runtime:suss.internal.core-link/pr-object-constructor-name"
-         "suss.bindings.runtime:suss.internal.core-link/pr-object-constructor-string"
          "suss.bindings.runtime:suss.internal.core-link/pr-object-keyword?"
          "suss.bindings.runtime:suss.internal.core-link/pr-object-map"
          "suss.bindings.runtime:suss.internal.core-link/pr-opts-dup"
@@ -1314,6 +1312,8 @@
          "suss.bindings.runtime:suss.internal.core-link/pr-str"
          "suss.bindings.runtime:suss.internal.core-link/pr-str*"
          "suss.bindings.runtime:suss.internal.core-link/pr-str-with-opts"
+         "suss.bindings.runtime:suss.internal.core-link/pr-tagged-object"
+         "suss.bindings.runtime:suss.internal.core-link/pr-throwable"
          "suss.bindings.runtime:suss.internal.core-link/pr-writer"
          "suss.bindings.runtime:suss.internal.core-link/pr-writer-impl"
          "suss.bindings.runtime:suss.internal.core-link/preserving-reduced"
@@ -1438,7 +1438,6 @@
          "suss.bindings.runtime:suss.internal.core-link/reduce-kv"
          "suss.bindings.runtime:suss.internal.core-link/reduced"
          "suss.bindings.runtime:suss.internal.core-link/reduced?"
-         "suss.bindings.runtime:suss.internal.core-link/regexp?"
          "suss.bindings.runtime:suss.internal.core-link/register-record-reader!"
          "suss.bindings.runtime:suss.internal.core-link/registered-namespace"
          "suss.bindings.runtime:suss.internal.core-link/rem"
@@ -1767,15 +1766,15 @@
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d666c7573682f31"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d77726974652f32"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
-         "suss.bindings.runtime:suss.internal.reify/t-reify-3277-10501"],
- :compiler "0.1.0+portable.2",
- :compiler-source-sha256 "6dafe20f74d52b6bf35f660d28bb97bab9e4866bf5f0e6a3ae598e22e2bbe5ac",
- :dependency-graph-sha256 "a668c3f266005296e2f2712cb0a2e3930807a2180707ae73dc6c47090e8fbd86",
+         "suss.bindings.runtime:suss.internal.reify/t-reify-3266-10523"],
+ :compiler "0.1.0+portable.3",
+ :compiler-source-sha256 "d5f0f7d0238e3488f26bda7245f2386513238b45834c2da025bca039c9924fa9",
+ :dependency-graph-sha256 "8b3466de88e5875f7ec2aef52bd662adbc49bc2d2feb1db99c15e33363b6799d",
  :flags [],
  :format-version 2,
  :phase "runtime",
  :runtime-abi 2,
- :source-sha256 "7ab3a009435abaf0d8bab67f0a6ef3a8dfa109fd677a431b64c2f656a9ceacf5",
+ :source-sha256 "d8366d296419c0be5debce621a899b04b741f330d39b01fe56c251a06d95bc3c",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "e611f66f86874909aa62adddc39e424408e0e7fe908addb62ba8b30bc92d8ce6",
+ :wasm-sha256 "fb1042142f89bcc6d048ff0a97f89d3238e8077bce7eea94070982457ed5d9e7",
  :wasm-tools "0.258.0"}

@@ -104,16 +104,16 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     ]);
     error(&mut body);
     body.push(End);
-    copy_array(&mut body, 0, 2);
-    // The mutable-name table (ARGS or i31 0) comes only from compiled
-    // descriptor operations, never from guest data; it is stored as given.
+    copy_array(&mut body, 0, 3);
+    // The mutable-name table (ARGS or i31 0) and the type name (a string, #304)
+    // come only from compiled descriptor operations, never from guest data;
+    // they are stored as given. Nothing writes the name afterwards.
     body.extend([
         GlobalGet(ID_GLOBAL),
-        LocalGet(2),
+        LocalGet(3),
         I32Const(0),
         ArrayNewDefault(ARGS),
-        I32Const(0),
-        RefI31,
+        LocalGet(2),
         I32Const(0),
         RefI31,
         LocalGet(1),
@@ -141,11 +141,11 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     core.splice(identity + 1..identity + 1, [I64Const(CORE_PRIVATE_BIT | CORE_CLOSED_BIT), I64Or]);
     statics.splice(identity + 1..identity + 1, [I64Const(CORE_PRIVATE_BIT | CORE_PUBLIC_STATICS_BIT | CORE_CLOSED_BIT), I64Or]);
     closed.splice(identity + 1..identity + 1, [I64Const(CORE_CLOSED_BIT), I64Or]);
-    b.function_with_locals("descriptor-new-core-statics", &[VALUE, VALUE], &[VALUE], &[(1, VALUE)], &statics);
-    b.function_with_locals("descriptor-new-core-closed", &[VALUE, VALUE], &[VALUE], &[(1, VALUE)], &closed);
-    b.function_with_locals("descriptor-new-core-constructible", &[VALUE, VALUE], &[VALUE], &[(1, VALUE)], &constructible);
-    b.function_with_locals("descriptor-new", &[VALUE, VALUE], &[VALUE], &[(1, VALUE)], &body);
-    b.function_with_locals("descriptor-new-core", &[VALUE, VALUE], &[VALUE], &[(1, VALUE)], &core);
+    b.function_with_locals("descriptor-new-core-statics", &[VALUE, VALUE, VALUE], &[VALUE], &[(1, VALUE)], &statics);
+    b.function_with_locals("descriptor-new-core-closed", &[VALUE, VALUE, VALUE], &[VALUE], &[(1, VALUE)], &closed);
+    b.function_with_locals("descriptor-new-core-constructible", &[VALUE, VALUE, VALUE], &[VALUE], &[(1, VALUE)], &constructible);
+    b.function_with_locals("descriptor-new", &[VALUE, VALUE, VALUE], &[VALUE], &[(1, VALUE)], &body);
+    b.function_with_locals("descriptor-new-core", &[VALUE, VALUE, VALUE], &[VALUE], &[(1, VALUE)], &core);
 
     // Unprivileged named access: reject built-in instances and class values.
 
@@ -621,6 +621,36 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
             Else,
             I32Const(0),
             End,
+        ],
+    );
+    // A type value's name (#304), or nil for any other value and for types
+    // without one. Only descriptor construction stores a name, so the printer
+    // cannot be handed a forged one.
+    b.function_with_locals(
+        "class-value-name",
+        &[VALUE],
+        &[VALUE],
+        &[(1, VALUE)],
+        &[
+            LocalGet(0),
+            Call(b.names["class-value-is"]),
+            If(BlockType::Empty),
+            LocalGet(0),
+            Call(b.names["closure-environment"]),
+            RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
+            StructGet {
+                struct_type_index: DESCRIPTOR,
+                field_index: 3,
+            },
+            LocalTee(1),
+            RefTestNonNull(HeapType::Concrete(STRING)),
+            If(BlockType::Empty),
+            LocalGet(1),
+            Return,
+            End,
+            End,
+            I32Const(0),
+            RefI31,
         ],
     );
     let mut body = vec![];

@@ -27,6 +27,86 @@ const PUBLIC_STATIC_TYPES: &[&str] = &[
     "PersistentTreeMap", "PersistentTreeSet", "PersistentQueue", "List",
 ];
 
+
+/// Clojure's `Compiler.munge` of a type name (#304): the class name Clojure
+/// gives a `deftype` or `defrecord`, which printing and record literals use.
+pub(crate) fn munge_class_part(name: &str) -> String {
+    let mut out = String::new();
+    for c in name.chars() {
+        out.push_str(match c {
+            '-' => "_",
+            ':' => "_COLON_",
+            '+' => "_PLUS_",
+            '>' => "_GT_",
+            '<' => "_LT_",
+            '=' => "_EQ_",
+            '~' => "_TILDE_",
+            '!' => "_BANG_",
+            '@' => "_CIRCA_",
+            '#' => "_SHARP_",
+            '\'' => "_SINGLEQUOTE_",
+            '"' => "_DOUBLEQUOTE_",
+            '%' => "_PERCENT_",
+            '^' => "_CARET_",
+            '&' => "_AMPERSAND_",
+            '*' => "_STAR_",
+            '|' => "_BAR_",
+            '{' => "_LBRACE_",
+            '}' => "_RBRACE_",
+            '[' => "_LBRACK_",
+            ']' => "_RBRACK_",
+            '/' => "_SLASH_",
+            '\\' => "_BSLASH_",
+            '?' => "_QMARK_",
+            c => {
+                out.push(c);
+                continue;
+            }
+        });
+    }
+    out
+}
+/// A type's class name, `namespace-munge` of its namespace and its munged
+/// name: `my-ns/T` is `my_ns.T`, as in Clojure.
+pub(crate) fn class_name(namespace: &str, name: &str) -> String {
+    format!("{}.{}", namespace.replace('-', "_"), munge_class_part(name))
+}
+
+/// Clojure's types inherit `Object/toString`, `Name@hex` (#304). Unless an
+/// `Object` section defines `toString`, add one that calls core's
+/// `object-string`, in the first `Object` section, as records do.
+fn default_to_string(impls: &[Form]) -> Vec<Form> {
+    let is_symbol = |form: &Form, name: &str| {
+        matches!(&form.kind, Kind::Symbol(symbol) if symbol.namespace.is_none() && symbol.name == name)
+    };
+    let mut object = false;
+    for form in impls {
+        if let Kind::Symbol(_) = &form.kind {
+            object = is_symbol(form, "Object");
+        } else if let Kind::List(items) = &form.kind {
+            if object && items.first().is_some_and(|head| is_symbol(head, "toString")) {
+                return impls.to_vec();
+            }
+        }
+    }
+    let synthetic = |kind: Kind| Form { span: 0..0, metadata: Vec::new(), kind };
+    let symbol = |name: &str, namespace: Option<&str>| {
+        synthetic(Kind::Symbol(suss_reader::Symbol { namespace: namespace.map(str::to_owned), name: name.to_owned() }))
+    };
+    let this = "this__object_string";
+    let method = synthetic(Kind::List(vec![
+        symbol("toString", None),
+        synthetic(Kind::Vector(vec![symbol(this, None)])),
+        synthetic(Kind::List(vec![symbol("object-string", Some("suss.core")), symbol(this, None)])),
+    ]));
+    let mut out = impls.to_vec();
+    match out.iter().position(|form| is_symbol(form, "Object")) {
+        Some(index) => out.insert(index + 1, method),
+        None => out.extend([symbol("Object", None), method]),
+    }
+    out
+}
+
 impl Analyzer<'_> {
     pub(super) fn nominal(&self, form: &Form, operation: Nominal, arguments: Vec<Hir>) -> Hir {
         let operation = match operation {
@@ -60,7 +140,17 @@ impl Analyzer<'_> {
     /// Core bootstrap types get descriptors whose internals are private,
     /// except the few value types whose fields are their public API.
     /// User descriptors also carry their mutable field names (#278).
-    fn type_descriptor(&self, form: &Form, name: Option<&str>, mut schema: Vec<Hir>, mutable: Vec<Hir>) -> Hir {
+    /// Inline methods with the default toString, when core defines it: a
+    /// session without core keeps types without one.
+    fn with_default_to_string(&self, impls: &[Form]) -> Vec<Form> {
+        if self.environment.declares(self.phase, "suss.core", "object-string") {
+            default_to_string(impls)
+        } else {
+            impls.to_vec()
+        }
+    }
+    /// Every descriptor also carries the type's printed name, last (#304).
+    fn type_descriptor(&self, form: &Form, name: Option<&str>, printed: String, mut schema: Vec<Hir>, mutable: Vec<Hir>) -> Hir {
         let listed = |list: &[&str]| name.is_some_and(|name| list.contains(&name));
         let operation = if !self.privileged {
             let count = mutable.len();
@@ -75,6 +165,7 @@ impl Analyzer<'_> {
         } else {
             Nominal::CoreDescriptor
         };
+        schema.push(self.literal_form(form, Literal::String(printed.encode_utf16().collect())));
         self.nominal(form, operation, schema)
     }
     pub(super) fn local(&self, form: &Form, id: BindingId) -> Hir {
@@ -171,6 +262,9 @@ impl Analyzer<'_> {
         schema: Vec<Hir>,
     ) -> Hir {
         let global = self.environment.protocol_key(protocol, method, arity);
+        // A key is never a type value, so its name is never printed.
+        let mut schema = schema;
+        schema.push(self.literal_form(form, Literal::String(Vec::new())));
         let descriptor = self.nominal(form, Nominal::Descriptor(0), schema);
         let initialize = Hir {
             source: None,
@@ -684,7 +778,8 @@ impl Analyzer<'_> {
         }
         let (schema, mutable) = self.type_schema(&fields)?;
         let (declaration, global) = self.type_declaration(form, &args[0], declared.len(), record)?;
-        let descriptor = self.type_descriptor(form, Some(global.name()), schema, mutable);
+        let printed = class_name(global.namespace(), global.name());
+        let descriptor = self.type_descriptor(form, Some(global.name()), printed, schema, mutable);
         let class = self.nominal(form, Nominal::Class, vec![descriptor]);
         let class = self.fresh_binding(form, class);
         let class_value = self.local(form, class.id);
@@ -735,7 +830,8 @@ impl Analyzer<'_> {
         };
         // Own generated constructor references are available during method analysis.
         self.definition(form, &[arrow_name.clone()], false)?;
-        let descriptor = self.type_descriptor(form, Some(&symbol.name), schema, mutable);
+        let printed = class_name(class_global.namespace(), class_global.name());
+        let descriptor = self.type_descriptor(form, Some(&symbol.name), printed, schema, mutable);
         let class = self.nominal(form, Nominal::Class, vec![descriptor]);
         let binding = self.fresh_binding(form, class);
         let class_value = self.local(form, binding.id);
@@ -744,8 +840,9 @@ impl Analyzer<'_> {
         // extend-type is a runtime expression and keeps its enclosing captures.
         let outer_locals = std::mem::take(&mut self.locals);
         let outer_fields = std::mem::take(&mut self.fields);
+        let impls = self.with_default_to_string(&args[2..]);
         let extensions =
-            self.protocol_extensions(form, &args[2..], class_value.clone(), fields, true, &args[0]);
+            self.protocol_extensions(form, &impls, class_value.clone(), fields, true, &args[0]);
         self.locals = outer_locals;
         self.fields = outer_fields;
         let mut effects = extensions?;
@@ -945,6 +1042,7 @@ impl Analyzer<'_> {
             ]),
         ];
         impls.extend_from_slice(args);
+        let impls = self.with_default_to_string(&impls);
         // Analysis identity for this site: the analyzer binding counter at the
         // form plus the current source generation. Both are deterministic for
         // one compilation, and a fresh registration advances the generation so
@@ -955,7 +1053,13 @@ impl Analyzer<'_> {
             .environment
             .reify_class_key(self.phase, generation, site);
         let type_declaration = symbol(cell.name(), Some("suss.internal.reify"));
-        let descriptor = self.type_descriptor(form, None, schema, Vec::new());
+        // Clojure names a reify class after its enclosing scope; Suss uses the
+        // namespace and the analysis site.
+        let printed = format!(
+            "{}$reify__{site}",
+            self.environment.current_namespace(self.phase).replace('-', "_")
+        );
+        let descriptor = self.type_descriptor(form, None, printed, schema, Vec::new());
         let class = self.nominal(form, Nominal::Class, vec![descriptor]);
         let binding = self.fresh_binding(form, class);
         let class_value = self.local(form, binding.id);

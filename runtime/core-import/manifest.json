@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "66895a1634218c3546381db8dc6a45d1e5d4ee4df87186c367336a846e635501",
-  "reviews-sha256": "73d9e131ccdfe4b1aa09d4ff8698320cbc51e75fdd04385d5145fb8ea85b78bf",
+  "recipe-sha256": "c3241b25abff9e08dd927c14290ad3ceffa07d6e95d6a148d47d0cd0d893626d",
+  "reviews-sha256": "3342071f0fe537ff5ef60550b757f7aa257ec481984e7ac2f42fd6edcd192611",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -9831,8 +9831,8 @@
       "extracted": "extracted/0318.cljs",
       "extracted-sha256": "9c31188d2bbda454642894a5c10e757633ce175a9899245df6638c40a9a064cd",
       "patch": "docs/compatibility/patches/printing-pr-writer-impl.json",
-      "patch-sha256": "8ab54b2556fbdfa8abfb899a641dbbf12ce7b65e28accaacf758a6bafa7f746f",
-      "adapted-form-sha256": "1e5b99ea58167dd51d76055441d2bd6fbe89e69e87dc7d398c6327ea5547d465",
+      "patch-sha256": "232da9aae82cd5001f5d9e21adb0bdac8a715b67df93043c623b66761379b1ac",
+      "adapted-form-sha256": "14b87ee8b5172be7c5ae6eb1a0ed480c41d06a217a39ac5693a223eb5e371a8d",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -9840,13 +9840,13 @@
         "IWriter/IPrintWithWriter",
         "print-meta?/meta",
         "numeric/string/boolean predicates and coercions",
-        "pr-constructor-writer (unfinished)",
+        "pr-constructor-writer, pr-tagged-object, deref-as-map and pr-throwable (core appendix, #304)",
+        "suss.bootstrap/type-name",
         "object?/js-keys/pr-object-map/pr-object-keyword?/keyword/print-map (unfinished object path)",
-        "pr-function-name (unfinished)",
-        "pr-date?/regexp?/js-symbol? (unfinished representations)",
-        "pr-object-constructor-string/pr-constructor-display-name/pr-object-constructor-name/pr-object-constructor (unfinished fallback)"
+        "pr-function-name"
       ],
       "semantic-tests": [
+        "crates/suss-cli/tests/object_printing.rs",
         "crates/suss-compile/tests/compiled_printing.rs",
         "tests/oracle/printing-cases.json",
         "tests/oracle/object-predicate-cases.json",
@@ -11269,8 +11269,8 @@
       "extracted": "extracted/0362.cljs",
       "extracted-sha256": "575cab19d08f2a144dea3ecf5abf8d917afcb3fda13f3dea4ee8a4be02b2a1db",
       "patch": "docs/compatibility/patches/record-public-str.json",
-      "patch-sha256": "b7baa8d77b1d4058235ae720a5f1848ef11424d64a6e896ecf5346aedf6d2fe1",
-      "adapted-form-sha256": "d55ebc4ddd45e27020de34106e3640db60e336c3d0b1eefcbc5885f3e88b7830",
+      "patch-sha256": "2b97683036e38e8f2c9dd95f3b58456b6e45a93a69b513889a2e8c85f95c55bb",
+      "adapted-form-sha256": "5228ac07ad04006b477d8d26b42c42d17083798bb1aecf5ee47f031798e78a1a",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -11279,6 +11279,7 @@
         "runtime:IndexedSeq:1653"
       ],
       "semantic-tests": [
+        "crates/suss-cli/tests/object_printing.rs",
         "crates/suss-cli/tests/portable_string_fields.rs (2 tests pass in both phases after GC; 0 failed/ignored/filtered)",
         "tests/oracle/string-field-cases.json (29 pinned raw cases consumed by the passing native regression)"
       ]
@@ -14367,7 +14368,7 @@
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "2c497fb9225061663903979cce3ef54f381c5d46b5b61f9dd1b83a9f4f13bf09"
+      "sha256": "f04fb98fa20cd8251c0b3f850b3b2c832d69c0f4b7e59ea7ee5b425906191160"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -14375,7 +14376,7 @@
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "abe387e89e0a54119295e0f3b212d9bdf3096579f7060199f55190185cd56eb2"
+      "sha256": "51da59b26e7218ad91c358207e1493b5fabebd0aae32a8a26c79ad83e365183d"
     }
   },
   "files": {
@@ -14842,6 +14843,6 @@
     "extracted/0458.cljs": "40c590576047dd941454f37b8fb7cd4e1ae39252d3bc0e075fea78aec194a973",
     "extracted/0459.cljs": "9de70770e21df7e6c69f10d1e50faa0a1bdceab85847720fa309169f29b2806c",
     "extracted/0460.cljs": "8b7158e9b74477ffc8ed064b52cf4d87377995fc401bffb7f656542577d849c9",
-    "suss/core.sus": "7ab3a009435abaf0d8bab67f0a6ef3a8dfa109fd677a431b64c2f656a9ceacf5"
+    "suss/core.sus": "d8366d296419c0be5debce621a899b04b741f330d39b01fe56c251a06d95bc3c"
   }
 }
