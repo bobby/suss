@@ -164,7 +164,7 @@ impl Analyzer<'_> {
                 kind: Kind::Symbol(suss_reader::Symbol::new(&hidden_name)),
             };
             self.insert_local(&declaration, id, Type::Value, LocalKind::Catch, None);
-            self.locals.get_mut(&hidden_name).unwrap().source_role = SourceRole::PrivateCatch {
+            std::sync::Arc::make_mut(&mut self.locals).get_mut(&hidden_name).unwrap().source_role = SourceRole::PrivateCatch {
                 anchor: form.span.clone(),
             };
             Some(std::sync::Arc::new(self.locals[&hidden_name].clone()))
@@ -205,7 +205,7 @@ impl Analyzer<'_> {
             let Kind::Symbol(name) = &payload.declaration.kind else {
                 unreachable!()
             };
-            self.locals.remove(&name.name);
+            std::sync::Arc::make_mut(&mut self.locals).remove(&name.name);
             let parameter = Parameter {
                 id: payload.id,
                 name: name.name.clone(),

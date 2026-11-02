@@ -517,41 +517,7 @@ impl SourceNamespace {
     }
     /// Capture an actual namespace revision without installing it as current.
     pub fn capture_namespace(environment: &Environment, phase: Phase, namespace: &str) -> Option<Self> {
-        let scope = environment.namespace_scope_for(phase, namespace)?;
-        Some(Self {
-            namespace: scope.namespace.into(),
-            aliases: scope.aliases.clone(),
-            refers: scope.refers.clone(),
-            used_refers: scope.used_refers.clone(),
-            renamed_refers: scope.renamed_refers.clone(),
-            excluded_core: scope.excluded_core.clone(),
-            macro_aliases: scope.macro_aliases.clone(),
-            macro_refers: scope.macro_refers.clone(),
-            used_macro_refers: scope.used_macro_refers.clone(),
-            renamed_macro_refers: scope.renamed_macro_refers.clone(),
-            declarations: scope
-                .declarations
-                .into_iter()
-                .map(|(global, _)| {
-                    (
-                        global.clone(),
-                        environment
-                            .shared_definition_info(global)
-                            .expect("captured declaration revision")
-                            .clone(),
-                    )
-                })
-                .collect(),
-            identities: environment
-                .cells()
-                .into_iter()
-                .filter(|global| {
-                    global.phase() == phase
-                        && global.namespace() == scope.namespace
-                        && !environment.is_hidden_cell(phase, global.namespace(), global.name())
-                })
-                .collect(),
-        })
+        environment.source_namespace(phase, namespace)
     }
 }
 #[derive(Debug, Clone)]
@@ -859,15 +825,17 @@ struct Analyzer<'a> {
     origin: Option<super::SourceOrigin>,
     environment: Environment,
     phase: Phase,
-    locals: HashMap<String, LocalBinding>,
-    fields: HashMap<String, FieldBinding>,
+    /// Shared with the source facts captured at each node; changed by copy
+    /// on write (#319).
+    locals: std::sync::Arc<HashMap<String, LocalBinding>>,
+    fields: std::sync::Arc<HashMap<String, FieldBinding>>,
     /// Field declarations in an intrinsic type body, before methods bind a receiver.
     type_body_fields: Vec<(Global, Form, Vec<Form>, BindingId)>,
     /// The class value of the type whose inline method bodies (and closures
     /// created in them) are being analyzed: only those may access its mutable
     /// fields by name.
     field_owner: Option<BindingId>,
-    function_scopes: Vec<std::sync::Arc<FunctionScope>>,
+    function_scopes: std::sync::Arc<[std::sync::Arc<FunctionScope>]>,
     next: usize,
     next_loop: usize,
     analysis_depth: usize,
@@ -1172,9 +1140,9 @@ impl Analyzer<'_> {
         }
         let namespace = self.environment.current_namespace(self.phase).to_owned();
         let scope = self.capture_source_namespace();
-        let locals = std::sync::Arc::new(self.locals.clone());
-        let fields = std::sync::Arc::new(self.fields.clone());
-        let function_scopes = self.function_scopes.clone().into();
+        let locals = self.locals.clone();
+        let fields = self.fields.clone();
+        let function_scopes = self.function_scopes.clone();
         let symbol = match &form.kind {
             Kind::Symbol(symbol) => Some(symbol),
             Kind::List(items) => items.first().and_then(|head| {
@@ -1660,7 +1628,9 @@ impl Analyzer<'_> {
                 std::sync::Arc::make_mut(callable).name = name;
             }
         }
-        self.function_scopes.truncate(outer_scope_count);
+        if self.function_scopes.len() > outer_scope_count {
+            self.function_scopes = self.function_scopes[..outer_scope_count].into();
+        }
         result
     }
     fn function_inner(
@@ -1721,7 +1691,7 @@ impl Analyzer<'_> {
             } else {
                 signatures.iter().any(|signature| matches!(&signature.kind, Kind::List(parts) if matches!(parts.first().map(|part| &part.kind), Some(Kind::Vector(names)) if names.iter().any(|name| matches!(&name.kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "&")))))
             };
-            self.locals.get_mut(&parameter.name).unwrap().source_role = SourceRole::FunctionName {
+            std::sync::Arc::make_mut(&mut self.locals).get_mut(&parameter.name).unwrap().source_role = SourceRole::FunctionName {
                 variadic,
                 methods: None,
             };
@@ -1738,7 +1708,7 @@ impl Analyzer<'_> {
         if let Some(parameter) = &self_binding {
             let staged = std::sync::Arc::new(self.stage_function_parameters(form, signatures)?);
             let variadic = staged.methods.iter().any(|method| method.variadic);
-            self.locals
+            std::sync::Arc::make_mut(&mut self.locals)
                 .get_mut(&parameter.name)
                 .expect("self binding")
                 .source_role = SourceRole::FunctionName {
@@ -2003,9 +1973,9 @@ impl Analyzer<'_> {
                 .as_ref()
                 .expect("top-level source snapshot")
                 .clone(),
-            locals: std::sync::Arc::new(self.locals.clone()),
-            fields: std::sync::Arc::new(self.fields.clone()),
-            function_scopes: self.function_scopes.clone().into(),
+            locals: self.locals.clone(),
+            fields: self.fields.clone(),
+            function_scopes: self.function_scopes.clone(),
             context: *self
                 .analysis_contexts
                 .last()
@@ -2062,7 +2032,7 @@ impl Analyzer<'_> {
                     .iter()
                     .any(|parameter| parameter.name == symbol.name);
                 if !parameter {
-                    self.locals.remove(&symbol.name);
+                    std::sync::Arc::make_mut(&mut self.locals).remove(&symbol.name);
                 }
                 let value = if object_method {
                     let key = self
@@ -2090,11 +2060,11 @@ impl Analyzer<'_> {
                     access: value,
                 };
                 if parameter {
-                    let binding = self.locals.get_mut(&symbol.name).expect("method parameter");
+                    let binding = std::sync::Arc::make_mut(&mut self.locals).get_mut(&symbol.name).expect("method parameter");
                     binding.shadow = None;
                     binding.shadow_field = Some(std::sync::Arc::new(record.clone()));
                 }
-                self.fields.insert(symbol.name.clone(), record);
+                std::sync::Arc::make_mut(&mut self.fields).insert(symbol.name.clone(), record);
             }
         }
         // Retain the visible argument before this-as anchors the receiver.
@@ -2921,7 +2891,7 @@ impl Analyzer<'_> {
                         Some(value.clone()),
                     );
                     if let Some(hidden) = &alias {
-                        self.locals
+                        std::sync::Arc::make_mut(&mut self.locals)
                             .get_mut(&name.name)
                             .expect("catch alias")
                             .source_role = SourceRole::CatchBinding {
@@ -3177,11 +3147,11 @@ pub(crate) fn prepare_with_origin(
         origin: origin.cloned(),
         environment: environment.clone(),
         phase,
-        locals: HashMap::new(),
-        fields: HashMap::new(),
+        locals: Default::default(),
+        fields: Default::default(),
         type_body_fields: Vec::new(),
         field_owner: None,
-        function_scopes: Vec::new(),
+        function_scopes: Vec::new().into(),
         next: 0,
         next_loop: 0,
         analysis_depth: 0,

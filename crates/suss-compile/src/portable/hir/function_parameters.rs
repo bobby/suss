@@ -98,8 +98,7 @@ impl Analyzer<'_> {
                 },
                 None,
             );
-            let binding = self
-                .locals
+            let binding = std::sync::Arc::make_mut(&mut self.locals)
                 .get_mut(&symbol.name)
                 .expect("allocated parameter");
             if expression_context {
