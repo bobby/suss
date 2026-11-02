@@ -6,12 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(def ^:private char-escapes
-  (js-obj
-    "\"" "\\\""
-    "\\" "\\\\"
-    "\b" "\\b"
-    "\f" "\\f"
-    "\n" "\\n"
-    "\r" "\\r"
-    "\t" "\\t"))
+(deftype StringBufferWriter [sb]
+  IWriter
+  (-write [_ s] (.append sb s))
+  (-flush [_] nil))

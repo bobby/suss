@@ -1477,3 +1477,26 @@
       nil
       (do (if (string? s) nil (throw (ex-info "suss.edn/read-string requires a string" {:type :reader-exception})))
           (reader-read (reader-state s true nil nil (get opts :readers) (get opts :default)) opts)))))
+
+;; Printing records (#302), as Clojure's print-method and print-dup for
+;; IRecord do: "#" and the record's name, then its entries as a map's, or
+;; under *print-dup* its values in order, unless *verbose-defrecords*. The
+;; name is written before the level check, as in Clojure, so a record below
+;; *print-level* prints as #ns.R#.
+(def ^{:dynamic true
+       :doc "When true, *print-dup* prints records as maps instead of by their
+  values, as Clojure's *verbose-defrecords* does."}
+  *verbose-defrecords* false)
+(def ^:private pr-record-writer
+  (fn [record name writer opts]
+    (-write writer "#")
+    (-write writer name)
+    (if (and (pr-opts-dup opts) (not *verbose-defrecords*))
+      (pr-sequential-writer writer pr-writer "[" ", " "]" opts (vals record))
+      (pr-sequential-writer
+        writer
+        (fn [entry w opts]
+          (pr-writer (key entry) w opts)
+          (-write w " ")
+          (pr-writer (val entry) w opts))
+        "{" ", " "}" opts (seq record)))))

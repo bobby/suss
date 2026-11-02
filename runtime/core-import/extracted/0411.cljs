@@ -6,6 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn associative?
- "Returns true if coll implements IAssociative"
-  [x] (satisfies? IAssociative x))
+(defn seqable?
+  "Return true if the seq function is supported for s"
+  [s]
+  (or
+    (nil? s)
+    (satisfies? ISeqable s)
+    (js-iterable? s)
+    (array? s)
+    (string? s)))

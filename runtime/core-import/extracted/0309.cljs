@@ -6,9 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- pr-sb-with-opts [objs opts]
+(defn pr-str*
+  "Support so that collections can implement toString without
+   loading all the printing machinery."
+  [^not-native obj]
   (let [sb (StringBuffer.)
         writer (StringBufferWriter. sb)]
-    (pr-seq-writer objs writer opts)
+    (-pr-writer obj writer nil)
     (-flush writer)
-    sb))
+    (.toString sb)))

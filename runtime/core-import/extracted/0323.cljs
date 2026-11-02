@@ -6,15 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn empty
-  "Returns an empty collection of the same category as coll, or nil"
-  [coll]
-  (when-not (nil? coll)
-    (cond
-      (implements? IEmptyableCollection coll)
-      (-empty coll)
-
-      (satisfies? IEmptyableCollection coll)
-      (-empty coll)
-
-      :else nil)))
+(defn print-map [m print-one writer opts]
+  (let [ns&lift-map (when (map? m)
+                      (lift-ns m))
+        ns (some-> ns&lift-map (aget 0))]
+    (if ns
+      (print-prefix-map (str_ "#:" ns) (aget ns&lift-map 1) print-one writer opts)
+      (print-prefix-map nil m print-one writer opts))))

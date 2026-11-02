@@ -6,10 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn pr-seq-writer [objs writer opts]
-  (pr-writer (first objs) writer opts)
-  (loop [objs (next objs)]
-    (when-not (nil? objs)
-      (-write writer " ")
-      (pr-writer (first objs) writer opts)
-      (recur (next objs)))))
+(defn print-meta? [opts obj]
+  (and (boolean (pr-opts-meta opts))
+       (implements? IMeta obj)
+       (not (nil? (meta obj)))))

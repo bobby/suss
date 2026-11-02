@@ -8,13 +8,12 @@
 
 (def
   ^{:dynamic true
-    :doc "*print-level* controls how many levels deep the printer will
-  print nested objects. If it is bound to logical false, there is no
+    :doc "*print-length* controls how many items of each collection the
+  printer will print. If it is bound to logical false, there is no
   limit. Otherwise, it must be bound to an integer indicating the maximum
-  level to print. Each argument to print is at level 0; if an argument is a
-  collection, its items are at level 1; and so on. If an object is a
-  collection and is at a level greater than or equal to the value bound to
-  *print-level*, the printer prints '#' to represent it. The root binding
-  is nil indicating no limit."
+  number of items of each collection to print. If a collection contains
+  more items, the printer will print items up to the limit followed by
+  '...' to represent the remaining items. The root binding is nil
+  indicating no limit."
     :jsdoc ["@type {null|number}"]}
-  *print-level* nil)
+  *print-length* nil)

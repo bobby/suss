@@ -6,16 +6,15 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn doall
+(defn dorun
   "When lazy sequences are produced via functions that have side
   effects, any effects other than those needed to produce the first
-  element in the seq do not occur until the seq is consumed. doall can
+  element in the seq do not occur until the seq is consumed. dorun can
   be used to force any effects. Walks through the successive nexts of
-  the seq, retains the head and returns it, thus causing the entire
-  seq to reside in memory at one time."
+  the seq, does not retain the head and returns nil."
   ([coll]
-   (dorun coll)
-   coll)
+   (when-let [s (seq coll)]
+     (recur (next s))))
   ([n coll]
-   (dorun n coll)
-   coll))
+   (when (and (seq coll) (pos? n))
+     (recur (dec n) (next coll)))))

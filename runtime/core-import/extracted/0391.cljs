@@ -6,9 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- tree-map-seq-push [node stack ^boolean ascending?]
-  (loop [t node stack stack]
-    (if-not (nil? t)
-      (recur (if ascending? (.-left t) (.-right t))
-             (conj stack t))
-      stack)))
+(defn es6-set-entries-iterator [coll]
+  (ES6SetEntriesIterator. (seq coll)))

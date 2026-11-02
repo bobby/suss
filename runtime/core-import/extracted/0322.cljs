@@ -6,10 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn print-map [m print-one writer opts]
-  (let [ns&lift-map (when (map? m)
-                      (lift-ns m))
-        ns (some-> ns&lift-map (aget 0))]
-    (if ns
-      (print-prefix-map (str_ "#:" ns) (aget ns&lift-map 1) print-one writer opts)
-      (print-prefix-map nil m print-one writer opts))))
+(defn print-prefix-map [prefix m print-one writer opts]
+  (pr-sequential-writer
+    writer
+    (fn [e w opts]
+      (do (print-one (key e) w opts)
+          (-write w \space)
+          (print-one (val e) w opts)))
+    (str_ prefix "{") ", " "}"
+    opts (seq m)))

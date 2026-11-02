@@ -27,6 +27,7 @@ nix = { version = "0.28", default-features = false, features = ["signal"] }
 
 [dev-dependencies]
 tempfile = { workspace = true }
+wasmparser = { workspace = true }
 
 [features]
 default = []

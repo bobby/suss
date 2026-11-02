@@ -6,16 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn str
-  "With no args, returns the empty string. With one arg x, returns
-  x.toString().  (str nil) returns the empty string. With more than
-  one arg, returns the concatenation of the str values of the args."
-  ([] "")
-  ([x] (if (nil? x)
-         ""
-         (.toString x)))
-  ([x & ys]
-   (loop [sb (StringBuffer. (str x)) more ys]
-     (if more
-       (recur (. sb  (append (str (first more)))) (next more))
-       (.toString sb)))))
+(defn some
+  "Returns the first logical true value of (pred x) for any x in coll,
+  else nil.  One common idiom is to use a set as pred, for example
+  this will return :fred if :fred is in the sequence, otherwise nil:
+  (some #{:fred} coll)"
+  [pred coll]
+  (when-let [s (seq coll)]
+    (or (pred (first s)) (recur pred (next s)))))

@@ -6,12 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn mapcat
-  "Returns the result of applying concat to the result of applying map
-  to f and colls.  Thus function f should return a collection. Returns
-  a transducer when no collections are provided"
-  {:added "1.0"
-   :static true}
-  ([f] (comp (map f) cat))
-  ([f & colls]
-     (apply concat (apply map f colls))))
+(defn cat
+  "A transducer which concatenates the contents of each input, which must be a
+  collection, into the reduction."
+  {:added "1.7"}
+  [rf]
+  (let [rf1 (preserving-reduced rf)]
+    (fn
+      ([] (rf))
+      ([result] (rf result))
+      ([result input]
+         (reduce rf1 result input)))))

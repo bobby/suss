@@ -6,12 +6,20 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn print-prefix-map [prefix m print-one writer opts]
-  (pr-sequential-writer
-    writer
-    (fn [e w opts]
-      (do (print-one (key e) w opts)
-          (-write w \space)
-          (print-one (val e) w opts)))
-    (str_ prefix "{") ", " "}"
-    opts (seq m)))
+(defn- lift-ns
+  "Returns #js [lifted-ns lifted-map] or nil if m can't be lifted."
+  [m]
+  (when *print-namespace-maps*
+    (let [lm #js []]
+      (loop [ns nil
+             [[k v :as entry] & entries] (seq m)]
+        (if entry
+          (when (or (keyword? k) (symbol? k))
+            (if ns
+              (when (= ns (namespace k))
+                (.push lm (MapEntry. (strip-ns k) v nil))
+                (recur ns entries))
+              (when-let [new-ns (namespace k)]
+                (.push lm (MapEntry. (strip-ns k) v nil))
+                (recur new-ns entries))))
+          #js [ns lm])))))

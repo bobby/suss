@@ -29545,3 +29545,12 @@ document's 2026-10-25 decision now records all three outcomes.
   - Throughput is about 0.185 M UTF-16 units/s in release, linear in the input. `pr-str` is quadratic (#315).
 - Not done here: `#inst`/`#uuid` (no types yet), `#"..."`, `#:ns{}`, and `#=`.
 - PR #314 was independently reviewed, and the findings are fixed. Full baseline on 1b91319: 2073 passed, 0 failed, 78 ignored, 278 binaries, 6302 s. CI run 41321000454 passed on 1b91319.
+
+## #302: printer options (2026-11-01)
+
+- `*print-length*`, `*print-level*`, `*print-meta*`, `*print-readably*`, `*print-namespace-maps*`, `*print-dup*` and `*verbose-defrecords*` follow Clojure's `core_print.clj` in `pr-str`, `prn-str`, `print-str`, `println-str` and `str` of a collection. The contract is in `docs/runtime/printing.md`.
+- The printer is still the imported ClojureScript printer, with four patches (`docs/compatibility/patches/printing-*.json`) that follow Clojure. Lazy seqs are realized as Clojure's `[x & xs]` printer realizes them. Metadata under `*print-dup*` or `*print-meta*` reads back with `read-string`.
+- Records print through `pr-record-writer` in core's appendix, which the generated `defrecord` printer calls. A record below the level prints `#user.R#`, and under `*print-dup*` it prints positionally, `#user.R[1, 2]`.
+- Decision (on #302): `pr`, `prn`, `print`, `println`, `newline`, `flush` and `*out*` wait for the WASI output stream (#27). They are recorded as unimplemented in `reviews.edn`. `print-method` waits for multimethods (#30), so #302 stays open.
+- Intentional differences: no `#=(...)` forms under `*print-dup*`, and a keyword `:type` is always stripped from printed metadata.
+- PR #316 was independently reviewed, and the findings are fixed. Full baseline on f82651f: 2084 passed, 0 failed, 78 ignored, 279 binaries, 7296 s. CI run 41353154521 passed on f82651f.

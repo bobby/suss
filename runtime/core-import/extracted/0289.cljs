@@ -8,8 +8,8 @@
 
 (def
   ^{:dynamic true
-    :doc "If set to logical true, when printing an object, its metadata will also
-  be printed in a form that can be read back by the reader.
+    :doc "When set to logical false, strings and characters will be printed with
+  non-alphanumeric characters converted to the appropriate escape sequences.
 
-  Defaults to false."}
-  *print-meta* false)
+  Defaults to true"}
+  *print-readably* true)

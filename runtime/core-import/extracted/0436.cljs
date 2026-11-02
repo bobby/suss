@@ -6,14 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn cat
-  "A transducer which concatenates the contents of each input, which must be a
-  collection, into the reduction."
-  {:added "1.7"}
+(defn- preserving-reduced
   [rf]
-  (let [rf1 (preserving-reduced rf)]
-    (fn
-      ([] (rf))
-      ([result] (rf result))
-      ([result input]
-         (reduce rf1 result input)))))
+  #(let [ret (rf %1 %2)]
+     (if (reduced? ret)
+       (reduced ret)
+       ret)))

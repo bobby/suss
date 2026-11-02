@@ -5166,6 +5166,13 @@
 
 (def
   ^{:dynamic true
+    :doc "When set to true, output will be flushed whenever a newline is printed.
+
+  Defaults to true."}
+  *flush-on-newline* true)
+
+(def
+  ^{:dynamic true
     :doc "When set to logical false, strings and characters will be printed with
   non-alphanumeric characters converted to the appropriate escape sequences.
 
@@ -5285,31 +5292,28 @@
 
 (def pr-sequential-writer
   (fn [writer print-one begin sep end opts coll]
-  (binding [*print-level* (when-not (nil? *print-level*) (dec *print-level*))]
-    (if (and (not (nil? *print-level*)) (neg? *print-level*))
+  (let [dup (pr-opts-dup opts)]
+  (binding [*print-level* (and (not dup) *print-level* (dec *print-level*))]
+    (if (and *print-level* (neg? *print-level*))
       (-write writer "#")
       (do
         (-write writer begin)
-        (if (zero? (pr-opts-len opts))
-          (when (seq coll)
-            (-write writer (or (:more-marker opts) "...")))
-          (do
-            (when (seq coll)
-              (print-one (first coll) writer opts))
-            (loop [coll (next coll) n (dec (pr-opts-len opts))]
-              (if (and coll (or (nil? n) (not (zero? n))))
+        (let [xs (seq coll)]
+          (when xs
+            (loop [x (first xs) xs (next xs) n (and (not dup) (pr-opts-len opts))]
+              (if (and n (zero? n))
+                (-write writer (or (:more-marker opts) "..."))
                 (do
-                  (-write writer sep)
-                  (print-one (first coll) writer opts)
-                  (recur (next coll) (dec n)))
-                (when (and (seq coll) (zero? n))
-                  (-write writer sep)
-                  (-write writer (or (:more-marker opts) "...")))))))
-        (-write writer end))))))
+                  (print-one x writer opts)
+                  (when xs
+                    (-write writer sep)
+                    (recur (first xs) (next xs) (and n (dec n)))))))))
+        (-write writer end)))))))
 
 (def print-meta?
   (fn [opts obj]
-  (and (boolean (pr-opts-meta opts))
+  (and (boolean (or (pr-opts-dup opts)
+                    (and (pr-opts-meta opts) (pr-opts-readably opts))))
        (implements? IMeta obj)
        (not (nil? (meta obj))))))
 
@@ -5351,7 +5355,7 @@
   (fn [^not-native obj]
   (let [sb (BootstrapStringBuffer. "")
         writer (StringBufferWriter. sb)]
-    (-pr-writer obj writer nil)
+    (pr-writer obj writer nil)
     (-flush writer)
     (.toString sb))))
 
@@ -5418,10 +5422,16 @@
     (nil? obj) (-write writer "nil")
     :else
     (do
-      (when (print-meta? opts obj)
-        (-write writer "^")
-        (pr-writer (meta obj) writer opts)
-        (-write writer " "))
+      (let [m (when (print-meta? opts obj) (meta obj))
+            ;; A keyword :type is print-method's dispatch value, which
+            ;; Clojure's default method removes before printing.
+            m (if (keyword? (get m :type)) (dissoc m :type) m)]
+        (when (pos? (count m))
+          (-write writer "^")
+          (if (and (== 1 (count m)) (get m :tag))
+            (pr-writer (get m :tag) writer opts)
+            (pr-writer m writer opts))
+          (-write writer " ")))
       (cond
         ;; FIXME: can we figure out something better here?
         ;; handle CLJS ctors
@@ -5460,7 +5470,7 @@
         (pr-sequential-writer writer pr-writer "#js [" " " "]" opts obj)
 
         (string? obj)
-        (if (pr-opts-readably opts)
+        (if (or (pr-opts-dup opts) (pr-opts-readably opts))
           (-write writer (quote-string obj))
           (-write writer obj))
 
@@ -10310,3 +10320,26 @@ reduces them without incurring seq initialization"
       nil
       (do (if (string? s) nil (throw (ex-info "suss.edn/read-string requires a string" {:type :reader-exception})))
           (reader-read (reader-state s true nil nil (get opts :readers) (get opts :default)) opts)))))
+
+;; Printing records (#302), as Clojure's print-method and print-dup for
+;; IRecord do: "#" and the record's name, then its entries as a map's, or
+;; under *print-dup* its values in order, unless *verbose-defrecords*. The
+;; name is written before the level check, as in Clojure, so a record below
+;; *print-level* prints as #ns.R#.
+(def ^{:dynamic true
+       :doc "When true, *print-dup* prints records as maps instead of by their
+  values, as Clojure's *verbose-defrecords* does."}
+  *verbose-defrecords* false)
+(def ^:private pr-record-writer
+  (fn [record name writer opts]
+    (-write writer "#")
+    (-write writer name)
+    (if (and (pr-opts-dup opts) (not *verbose-defrecords*))
+      (pr-sequential-writer writer pr-writer "[" ", " "]" opts (vals record))
+      (pr-sequential-writer
+        writer
+        (fn [entry w opts]
+          (pr-writer (key entry) w opts)
+          (-write w " ")
+          (pr-writer (val entry) w opts))
+        "{" ", " "}" opts (seq record)))))

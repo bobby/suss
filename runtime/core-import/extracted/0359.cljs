@@ -6,9 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn vector
-  "Creates a new vector containing the args."
-  [& args]
-  (if (and (instance? IndexedSeq args) (zero? (.-i args)))
-    (.fromArray PersistentVector (.-arr args) (not (array? (.-arr args))))
-    (vec args)))
+(defn reverse
+  "Returns a seq of the items in coll in reverse order. Not lazy."
+  [coll]
+  (if (reversible? coll)
+    (or (rseq coll) ())
+    (reduce conj () coll)))

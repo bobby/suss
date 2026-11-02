@@ -6,15 +6,33 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn dorun
-  "When lazy sequences are produced via functions that have side
-  effects, any effects other than those needed to produce the first
-  element in the seq do not occur until the seq is consumed. dorun can
-  be used to force any effects. Walks through the successive nexts of
-  the seq, does not retain the head and returns nil."
-  ([coll]
-   (when-let [s (seq coll)]
-     (recur (next s))))
+(defn drop
+  "Returns a laziness-preserving sequence of all but the first n items in coll.
+  Returns a stateful transducer when no collection is provided."
+  ([n]
+   {:pre [(number? n)]}
+     (fn [rf]
+       (let [na (volatile! n)]
+         (fn
+           ([] (rf))
+           ([result] (rf result))
+           ([result input]
+              (let [n @na]
+                (vswap! na dec)
+                (if (pos? n)
+                  result
+                  (rf result input))))))))
   ([n coll]
-   (when (and (seq coll) (pos? n))
-     (recur (dec n) (next coll)))))
+   {:pre [(number? n)]}
+     (if (implements? IDrop coll)
+       (or
+         (if (pos? n)
+           (-drop coll (Math/ceil n))
+           (seq coll))
+         ())
+       (let [step (fn [n coll]
+                    (let [s (seq coll)]
+                      (if (and (pos? n) s)
+                        (recur (dec n) (rest s))
+                        s)))]
+         (lazy-seq (step n coll))))))

@@ -1,5 +1,6 @@
 {:cells ["suss.bindings.runtime:suss.core/*data-readers*"
          "suss.bindings.runtime:suss.core/*default-data-reader-fn*"
+         "suss.bindings.runtime:suss.core/*flush-on-newline*"
          "suss.bindings.runtime:suss.core/*ns*"
          "suss.bindings.runtime:suss.core/*print-dup*"
          "suss.bindings.runtime:suss.core/*print-fn-bodies*"
@@ -9,6 +10,7 @@
          "suss.bindings.runtime:suss.core/*print-namespace-maps*"
          "suss.bindings.runtime:suss.core/*print-readably*"
          "suss.bindings.runtime:suss.core/*read-eval*"
+         "suss.bindings.runtime:suss.core/*verbose-defrecords*"
          "suss.bindings.runtime:suss.core/--destructure-map"
          "suss.bindings.runtime:suss.core/->ArrayChunk"
          "suss.bindings.runtime:suss.core/->ArrayIter"
@@ -532,6 +534,7 @@
          "suss.bindings.runtime:suss.core/pr-opts-len"
          "suss.bindings.runtime:suss.core/pr-opts-meta"
          "suss.bindings.runtime:suss.core/pr-opts-readably"
+         "suss.bindings.runtime:suss.core/pr-record-writer"
          "suss.bindings.runtime:suss.core/pr-sb-with-opts"
          "suss.bindings.runtime:suss.core/pr-seq-writer"
          "suss.bindings.runtime:suss.core/pr-sequential-writer"
@@ -1304,6 +1307,7 @@
          "suss.bindings.runtime:suss.internal.core-link/pr-opts-len"
          "suss.bindings.runtime:suss.internal.core-link/pr-opts-meta"
          "suss.bindings.runtime:suss.internal.core-link/pr-opts-readably"
+         "suss.bindings.runtime:suss.internal.core-link/pr-record-writer"
          "suss.bindings.runtime:suss.internal.core-link/pr-sb-with-opts"
          "suss.bindings.runtime:suss.internal.core-link/pr-seq-writer"
          "suss.bindings.runtime:suss.internal.core-link/pr-sequential-writer"
@@ -1763,15 +1767,15 @@
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d666c7573682f31"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d77726974652f32"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
-         "suss.bindings.runtime:suss.internal.reify/t-reify-3274-10489"],
+         "suss.bindings.runtime:suss.internal.reify/t-reify-3277-10501"],
  :compiler "0.1.0+portable.2",
- :compiler-source-sha256 "88aa9fcfdb2c1a178b1500bd6fa0c4bff9452844c30aeeb4077ade0802cf71f3",
- :dependency-graph-sha256 "7706bf8519da5b5a4d176b943c3da579a740f2b6da7b4603efe23633314e937c",
+ :compiler-source-sha256 "6dafe20f74d52b6bf35f660d28bb97bab9e4866bf5f0e6a3ae598e22e2bbe5ac",
+ :dependency-graph-sha256 "a668c3f266005296e2f2712cb0a2e3930807a2180707ae73dc6c47090e8fbd86",
  :flags [],
  :format-version 2,
  :phase "runtime",
  :runtime-abi 2,
- :source-sha256 "cccb943a34841a9642b2639ca1cac83a4c2266099c823d50fb9307f4f6f6faf7",
+ :source-sha256 "7ab3a009435abaf0d8bab67f0a6ef3a8dfa109fd677a431b64c2f656a9ceacf5",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "7086bed99b56fec5adc66f060f41631ff882b99fe624fefe9ac0e04d4cc91d55",
+ :wasm-sha256 "e611f66f86874909aa62adddc39e424408e0e7fe908addb62ba8b30bc92d8ce6",
  :wasm-tools "0.258.0"}

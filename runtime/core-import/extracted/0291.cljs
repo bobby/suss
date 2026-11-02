@@ -8,8 +8,8 @@
 
 (def
   ^{:dynamic true
-    :doc "*print-namespace-maps* controls whether the printer will print
-  namespace map literal syntax.
+    :doc "When set to logical true, objects will be printed in a way that preserves
+  their type when read in later.
 
-  Defaults to false, but the REPL binds it to true."}
-  *print-namespace-maps* false)
+  Defaults to false."}
+  *print-dup* false)

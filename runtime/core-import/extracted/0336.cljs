@@ -6,19 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol ISorted
-  "Protocol for a collection which can represent their items
-  in a sorted manner. "
-  (^clj -sorted-seq [coll ascending?]
-    "Returns a sorted seq from coll in either ascending or descending order.")
-  (^clj -sorted-seq-from [coll k ascending?]
-    "Returns a sorted seq from coll in either ascending or descending order.
-     If ascending is true, the result should contain all items which are > or >=
-     than k. If ascending is false, the result should contain all items which
-     are < or <= than k, e.g.
-     (-sorted-seq-from (sorted-set 1 2 3 4 5) 3 true) => (3 4 5)
-     (-sorted-seq-from (sorted-set 1 2 3 4 5) 3 false) => (3 2 1)")
-  (-entry-key [coll entry]
-    "Returns the key for entry.")
-  (-comparator [coll]
-    "Returns the comparator for coll."))
+(defn mapv
+  "Returns a vector consisting of the result of applying f to the
+  set of first items of each coll, followed by applying f to the set
+  of second items in each coll, until any one of the colls is
+  exhausted.  Any remaining items in other colls are ignored. Function
+  f should accept number-of-colls arguments."
+  ([f coll]
+     (-> (reduce (fn [v o] (conj! v (f o))) (transient []) coll)
+         persistent!))
+  ([f c1 c2]
+     (into [] (map f c1 c2)))
+  ([f c1 c2 c3]
+     (into [] (map f c1 c2 c3)))
+  ([f c1 c2 c3 & colls]
+     (into [] (apply map f c1 c2 c3 colls))))
