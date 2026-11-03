@@ -2041,17 +2041,16 @@ fn test_atom_swap() {
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name set-validator!; see prototype_cases_awaiting_compiled_support"]
 fn test_atom_validator_accepts() {
-    // Validator accepts value → reset! succeeds
+    // Validator accepts value → reset! succeeds. The atom starts at 1 because
+    // set-validator! checks the current state first, as Clojure's does (#30).
     let result = run_expr_i32(
-        "(let [a (atom 0)] (set-validator! a pos?) (reset! a 42) @a)"
+        "(let [a (atom 1)] (set-validator! a pos?) (reset! a 42) @a)"
     );
     assert_eq!(result, 42);
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name set-validator!; see prototype_cases_awaiting_compiled_support"]
 fn test_atom_validator_rejects() {
     // Validator rejects value → throw caught by try/catch
     let result = run_expr_i32(
@@ -2061,7 +2060,6 @@ fn test_atom_validator_rejects() {
 }
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name set-validator!; see prototype_cases_awaiting_compiled_support"]
 fn test_atom_validator_swap_rejects() {
     // Validator rejects swap! result → throw caught
     let result = run_expr_i32(
@@ -2562,9 +2560,6 @@ fn legacy_hash_inspects_each_evaluated_operand_once() {
 /// diagnostic. When a feature lands the diagnostic changes and this test fails:
 /// re-enable the named test and remove its row. Rows never count as passes.
 const AWAITING_COMPILED_SUPPORT: &[(&str, &str, &str)] = &[
-    ("test_atom_validator_accepts", "(let [a (atom 0)] (set-validator! a pos?) (reset! a 42) @a)", "Unresolved Runtime name set-validator! at bytes 19..33"),
-    ("test_atom_validator_rejects", "(let [a (atom 1)] (set-validator! a pos?) (try (reset! a -1) (catch :default e 99)))", "Unresolved Runtime name set-validator! at bytes 19..33"),
-    ("test_atom_validator_swap_rejects", "(let [a (atom 5)] (set-validator! a pos?) (try (swap! a (fn [x] (- 0 x))) (catch :default e 99)))", "Unresolved Runtime name set-validator! at bytes 19..33"),
     ("test_cond_thread_first", "(cond-> 1 true inc true inc)", "Unresolved Runtime name cond-> at bytes 1..7"),
     ("test_cond_thread_first_false", "(cond-> 1 true inc false inc)", "Unresolved Runtime name cond-> at bytes 1..7"),
     ("test_doseq_basic", "(let [a (atom 0)] (doseq [x [1 2 3]] (swap! a (fn [v] (+ v x)))) @a)", "Unresolved Runtime name doseq at bytes 19..24"),
