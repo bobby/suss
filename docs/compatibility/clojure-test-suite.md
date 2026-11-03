@@ -151,6 +151,15 @@ Python unit tests cover the remaining failure paths.
 
 ## Current suite result
 
+After #30's atoms, volatiles and delays (2026-11-03), the reviewed baseline
+records 1,387 host-decided passes, 47 guest-judged observations, 23 failures and
+4,397 assertions not executed because 168 namespaces fail to load. Newly loading
+namespaces include `atom`, `add-watch`, `remove-watch`, `and`, `or`, `binding` and
+`cycle`. Requiring `clojure.core` now names core, as in Clojure, which also lets
+`empty?`, `find`, `fn?`, `last`, `not-empty`, `select-keys` and `set` load. The
+one new failure is `atom/test-atom#6`, a sorted map the test decoder cannot read
+yet. Patch 0004 selects the suite's Clojure assertions for atom options.
+
 The [2026-10-19 raw capture and independent delta review](../roadmap/evidence/m4-pr256-suite-calibration-2026-10-19.md)
 records 1,144 host-decided passes, 25 guest-judged observations, two assertion
 errors and 4,663 assertions not executed because 185 namespaces fail to load.

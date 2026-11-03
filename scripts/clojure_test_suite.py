@@ -48,7 +48,8 @@ SUITES = {
 }
 ORACLE_PATCHES = ('0001-when-var-exists-macro-phase.patch',)
 SUSS_PATCHES = ('0002-number-range-suss-branches.patch',
-                '0003-clojure-numeric-operand-suss-branches.patch')
+                '0003-clojure-numeric-operand-suss-branches.patch',
+                '0004-atom-clojure-references-suss-branches.patch')
 # Where a recorded ClojureScript observation disagrees with Clojure, Clojure
 # governs: these reviewed records replace the oracle's for comparison only.
 CORRECTIONS = ORACLE / 'clojure-test-suite-corrections.json'

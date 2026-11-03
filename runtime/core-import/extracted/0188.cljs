@@ -6,9 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IChunkedSeq
-  "Protocol for accessing a collection as sequential chunks."
-  (-chunked-first [coll]
-    "Returns the first chunk in coll.")
-  (-chunked-rest [coll]
-    "Return a new collection of coll with the first chunk removed."))
+(defn array-index-of [arr k]
+  (cond
+    (keyword? k) (array-index-of-keyword? arr k)
+
+    (or (string? k) (number? k))
+    (array-index-of-identical? arr k)
+
+    (symbol? k) (array-index-of-symbol? arr k)
+
+    (nil? k)
+    (array-index-of-nil? arr)
+
+    :else (array-index-of-equiv? arr k)))

@@ -304,6 +304,12 @@ fn symbol_namespace<'a>(alias: Option<&'a String>, namespace: &'a str) -> &'a st
     }
     alias.map_or_else(|| canonical(namespace), |alias| canonical(alias))
 }
+/// The namespace a require of `namespace` names: requiring clojure.core names
+/// core, which is always loaded, as in Clojure; ClojureScript also resolves it
+/// to cljs.core (#30).
+pub(crate) fn required(namespace: &str) -> &str {
+    if namespace == "clojure.core" { "suss.core" } else { canonical(namespace) }
+}
 pub(crate) fn canonical(namespace: &str) -> &str {
     if namespace == "cljs.core" {
         "suss.core"

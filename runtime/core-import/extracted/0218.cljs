@@ -6,5 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- mask [hash shift]
-  (bit-and (bit-shift-right-zero-fill hash shift) 0x01f))
+(defn nnext
+  "Same as (next (next x))"
+  [coll]
+  (next (next coll)))

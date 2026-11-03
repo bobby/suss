@@ -6,12 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn print-prefix-map [prefix m print-one writer opts]
-  (pr-sequential-writer
-    writer
-    (fn [e w opts]
-      (do (print-one (key e) w opts)
-          (-write w \space)
-          (print-one (val e) w opts)))
-    (str_ prefix "{") ", " "}"
-    opts (seq m)))
+(defn empty?
+  "Returns true if coll has no items. To check the emptiness of a seq,
+  please use the idiom (seq x) rather than (not (empty? x))"
+  [coll]
+  (cond
+    (nil? coll)
+    true
+
+    (satisfies? ICounted coll)
+    (zero? (-count coll))
+
+    :else
+    (not (seq coll))))

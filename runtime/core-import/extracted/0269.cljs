@@ -6,9 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn seq?
-  "Return true if s satisfies ISeq"
-  [s]
-  (if (nil? s)
-    false
-    (satisfies? ISeq s)))
+(defn hash-set
+  "Returns a new hash set with supplied keys.  Any equal keys are
+  handled as if by repeated uses of conj."
+  ([] #{})
+  ([& keys] (set keys)))

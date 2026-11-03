@@ -6,13 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- array-extend-kv [arr k v]
-  (let [l (alength arr)
-        narr (make-array (+ l 2))]
-    (loop [i 0]
-      (when (< i l)
-        (aset narr i (aget arr i))
-        (recur (inc i))))
-    (aset narr l k)
-    (aset narr (inc l) v)
-    narr))
+(defn map?
+  "Return true if x satisfies IMap"
+  [x]
+  (if (nil? x)
+    false
+    (satisfies? IMap x)))

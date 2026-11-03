@@ -6,15 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn empty
-  "Returns an empty collection of the same category as coll, or nil"
-  [coll]
-  (when-not (nil? coll)
-    (cond
-      (implements? IEmptyableCollection coll)
-      (-empty coll)
-
-      (satisfies? IEmptyableCollection coll)
-      (-empty coll)
-
-      :else nil)))
+(defn pr-str*
+  "Support so that collections can implement toString without
+   loading all the printing machinery."
+  [^not-native obj]
+  (let [sb (StringBuffer.)
+        writer (StringBufferWriter. sb)]
+    (-pr-writer obj writer nil)
+    (-flush writer)
+    (.toString sb)))

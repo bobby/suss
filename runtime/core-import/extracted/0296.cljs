@@ -6,7 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- pr-opts-readably [opts]
-  (if-not (nil? opts)
-    (:readably opts)
-    *print-readably*))
+(defn peek
+  "For a list or queue, same as first, for a vector, same as, but much
+  more efficient than, last. If the collection is empty, returns nil."
+  [coll]
+  (when-not (nil? coll)
+    (-peek coll)))

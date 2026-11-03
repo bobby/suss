@@ -6,7 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn iterate
-  "Returns a lazy sequence of x, (f x), (f (f x)) etc. f must be free of side-effects"
-  {:added "1.0"}
-  [f x] (Iterate. nil f nil x nil))
+(defn cycle
+  "Returns a lazy (infinite!) sequence of repetitions of the items in coll."
+  [coll] (if-let [vals (seq coll)]
+           (Cycle. nil vals nil vals nil)
+           (.-EMPTY List)))

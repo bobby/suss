@@ -94,3 +94,6 @@
 
 ;; Complete transducer graph mutual references; implementations follow as reviewed imports.
 (declare completing butlast Many NONE Single Empty EMPTY MultiIterator chunkIteratorSeq TransformerIterator transformer-iterator sequence Eduction eduction ITER_SYMBOL)
+
+;; Atom functions use these before their definitions (#30).
+(declare dissoc hash-map set-validator! keyword? keyword-identical?)

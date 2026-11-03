@@ -6,9 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IMapEntry
-  "Protocol for examining a map entry."
-  (-key [coll]
-    "Returns the key of the map entry.")
-  (-val [coll]
-    "Returns the value of the map entry."))
+(defprotocol ITransientCollection
+  "Protocol for adding basic functionality to transient collections."
+  (^clj -conj! [tcoll val]
+    "Adds value val to tcoll and returns tcoll.")
+  (^clj -persistent! [tcoll]
+    "Creates a persistent data structure from tcoll and returns it."))

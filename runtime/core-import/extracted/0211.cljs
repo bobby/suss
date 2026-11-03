@@ -6,21 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn equiv-map
-  "Test map equivalence. Returns true if x equals y, otherwise returns false."
-  [x y]
-  (boolean
-    (when (and (map? y) (not (record? y)))
-      ; assume all maps are counted
-      (when (== (count x) (count y))
-        (if (satisfies? IKVReduce x)
-          (reduce-kv
-            (fn [_ k v]
-              (if (= (get y k never-equiv) v)
-                true
-                (reduced false)))
-            true x)
-          (every?
-            (fn [xkv]
-              (= (get y (first xkv) never-equiv) (second xkv)))
-            x))))))
+(defn spread
+  [arglist]
+  (when-not (nil? arglist)
+    (let [n (next arglist)]
+      (if (nil? n)
+        (seq (first arglist))
+        (cons (first arglist)
+              (spread n))))))

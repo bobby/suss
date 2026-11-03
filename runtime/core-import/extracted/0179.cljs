@@ -6,70 +6,22 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype PersistentArrayMapSeq [arr i _meta]
-  Object
-  (toString [coll]
-    (pr-str* coll))
-  (equiv [this other]
-    (-equiv this other))
-  (indexOf [coll x]
-    (-indexOf coll x 0))
-  (indexOf [coll x start]
-    (-indexOf coll x start))
-  (lastIndexOf [coll x]
-    (-lastIndexOf coll x (count coll)))
-  (lastIndexOf [coll x start]
-    (-lastIndexOf coll x start))
+(defn ^boolean contains?
+  "Returns true if key is present in the given collection, otherwise
+  returns false.  Note that for numerically indexed collections like
+  vectors and arrays, this tests if the numeric key is within the
+  range of indexes. 'contains?' operates constant or logarithmic time;
+  it will not perform a linear search for a value.  See also 'some'."
+  [coll v]
+  (cond
+    (implements? IAssociative coll)
+    (-contains-key? coll v)
 
-  IMeta
-  (-meta [coll] _meta)
+    (native-satisfies? IAssociative coll)
+    (-contains-key? coll v)
 
-  IWithMeta
-  (-with-meta [coll new-meta]
-    (if (identical? new-meta _meta)
-      coll
-      (PersistentArrayMapSeq. arr i new-meta)))
+    (identical? (get coll v lookup-sentinel) lookup-sentinel)
+    false
 
-  ICounted
-  (-count [coll]
-    (/ (- (alength arr) i) 2))
-
-  ISeqable
-  (-seq [coll] coll)
-
-  ISequential
-  IEquiv
-  (-equiv [coll other] (equiv-sequential coll other))
-
-  ICollection
-  (-conj [coll o]
-    (cons o coll))
-
-  IEmptyableCollection
-  (-empty [coll] (.-EMPTY List))
-
-  IHash
-  (-hash [coll] (hash-ordered-coll coll))
-
-  ISeq
-  (-first [coll]
-    (MapEntry. (aget arr i) (aget arr (inc i)) nil))
-
-  (-rest [coll]
-    (if (< i (- (alength arr) 2))
-      (PersistentArrayMapSeq. arr (+ i 2) nil)
-      ()))
-
-  INext
-  (-next [coll]
-    (when (< i (- (alength arr) 2))
-      (PersistentArrayMapSeq. arr (+ i 2) nil)))
-
-  IDrop
-  (-drop [coll n]
-    (when (< n (-count coll))
-      (PersistentArrayMapSeq. arr (+ i (* 2 n)) nil)))
-
-  IReduce
-  (-reduce [coll f] (seq-reduce f coll))
-  (-reduce [coll f start] (seq-reduce f start coll)))
+    :else
+    true))

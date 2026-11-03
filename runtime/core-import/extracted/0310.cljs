@@ -6,9 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- pr-sb-with-opts [objs opts]
-  (let [sb (StringBuffer.)
-        writer (StringBufferWriter. sb)]
-    (pr-seq-writer objs writer opts)
-    (-flush writer)
-    sb))
+(def
+  ^{:dynamic true
+    :doc "*print-fns-bodies* controls whether functions print their source or
+    only their names."}
+  *print-fn-bodies* false)

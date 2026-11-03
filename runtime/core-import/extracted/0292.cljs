@@ -6,10 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(def
-  ^{:dynamic true
-    :doc "*print-namespace-maps* controls whether the printer will print
-  namespace map literal syntax.
-
-  Defaults to false, but the REPL binds it to true."}
-  *print-namespace-maps* false)
+(defn ^number max
+  "Returns the greatest of the nums."
+  ([x] x)
+  ([x y]
+   (cond
+     (NaN? x) x
+     (NaN? y) y
+     (> x y) x
+     :else y))
+  ([x y & more]
+   (reduce max (cljs.core/max x y) more)))

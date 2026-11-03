@@ -6,8 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(def
-  ^{:dynamic true
-    :doc "*print-fns-bodies* controls whether functions print their source or
-    only their names."}
-  *print-fn-bodies* false)
+(defn odd?
+  "Returns true if n is odd, throws an exception if n is not an integer"
+  [n] (not (even? n)))

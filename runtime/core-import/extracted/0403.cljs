@@ -6,11 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn sorted-map
-  "keyval => key val
-  Returns a new sorted map with supplied mappings."
-  ([& keyvals]
-     (loop [in (seq keyvals) out (.-EMPTY PersistentTreeMap)]
-       (if in
-         (recur (nnext in) (assoc out (first in) (second in)))
-         out))))
+(deftype ES6EntriesIterator [^:mutable s]
+  Object
+  (next [_]
+    (if-not (nil? s)
+      (let [[k v] (first s)]
+        (set! s (next s))
+        #js {:value #js [k v] :done false})
+      #js {:value nil :done true})))

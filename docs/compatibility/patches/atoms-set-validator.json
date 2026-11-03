@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "d409b5a7048f230732f9a0db3825b7e6e18e018a04f4606b8ecfb55f8a931451",
+  "replacement": "(def set-validator!\n  \"Sets the validator-fn for an atom. validator-fn must be nil or a\n  side-effect-free fn of one argument, which will be passed the intended\n  new state on any state change. If the new state is unacceptable, the\n  validator-fn should return false or throw an Error. If the current state\n  is not acceptable to the new validator, an Error will be thrown and the\n  validator will not be changed.\"\n  (fn [iref val]\n    (when (and (some? val)\n               (not (val (-deref iref))))\n      (throw (suss.bootstrap/error \"Invalid reference state\")))\n    (set! (.-validator iref) val)\n    nil))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation. Rejects with Clojure's \"Invalid reference state\" and returns nil, as Clojure's set-validator! does."
+}

@@ -560,6 +560,26 @@
       "patch": "docs/compatibility/patches/vector-pop-tail.json"
     },
     {
+      "id": "runtime:IWatchable:820",
+      "source-sha256": "129155e71344259109a0af4de48172ebb927e3074241b5c73462fd36b5bd5c08",
+      "patch": null
+    },
+    {
+      "id": "runtime:IReset:898",
+      "source-sha256": "40dbb461cedbaf792e0e4c79b299c531daa02747df96a9b3da1f5d67dcaaeacb",
+      "patch": null
+    },
+    {
+      "id": "runtime:ISwap:903",
+      "source-sha256": "c06bc375b34f2914b6aa3f6ccebef3b73d79af55a20e12df3ac2a941bdb71ed6",
+      "patch": null
+    },
+    {
+      "id": "runtime:IVolatile:908",
+      "source-sha256": "8aab7f29fc0d21246ad8f6845a07b1b3ff4ed2854d7e319fea569b22aa8935fc",
+      "patch": null
+    },
+    {
       "id": "runtime:IAtom:895",
       "source-sha256": "c02346e6ea4f47875fa0cdca709e77a0aa9accbaab297880904502ac8df0fd1f",
       "patch": null
@@ -580,9 +600,64 @@
       "patch": "docs/compatibility/patches/atoms-reset.json"
     },
     {
+      "id": "runtime:reset-vals!:4677",
+      "source-sha256": "223d660fa0bf5b38e78ba86b3a11f3d4e385c3d54ea2bcf63a735c186c7f43d7",
+      "patch": "docs/compatibility/patches/atoms-reset-vals.json"
+    },
+    {
       "id": "runtime:swap!:4694",
       "source-sha256": "4081090780e8ca6ad14373f69ecafc6002c1113ea2de51254e3c0a14f8bec207",
       "patch": "docs/compatibility/patches/atoms-swap.json"
+    },
+    {
+      "id": "runtime:swap-vals!:4716",
+      "source-sha256": "0b88c9eb5c5aa4390eb5b7583aafac19a0da5b3bb301d58659ce875a2eeeb0bc",
+      "patch": "docs/compatibility/patches/atoms-swap-vals.json"
+    },
+    {
+      "id": "runtime:compare-and-set!:4739",
+      "source-sha256": "bd7e6f5c9b84e6f8444851e0895d8477534c7102f79022862e06453459f8e0bb",
+      "patch": "docs/compatibility/patches/atoms-compare-and-set.json"
+    },
+    {
+      "id": "runtime:set-validator!:4748",
+      "source-sha256": "d409b5a7048f230732f9a0db3825b7e6e18e018a04f4606b8ecfb55f8a931451",
+      "patch": "docs/compatibility/patches/atoms-set-validator.json"
+    },
+    {
+      "id": "runtime:get-validator:4761",
+      "source-sha256": "2b09e09720f25103ae495a027f5ff335b4b871244ed401aa0707330721867234",
+      "patch": "docs/compatibility/patches/atoms-get-validator.json"
+    },
+    {
+      "id": "runtime:add-watch:10872",
+      "source-sha256": "f2610796d2f057028d007b1109973718943b8ad8488b750d344ab14ea9cd25af",
+      "patch": "docs/compatibility/patches/atoms-add-watch.json"
+    },
+    {
+      "id": "runtime:remove-watch:10895",
+      "source-sha256": "8e95df4ed13b4e81008dad90a8a4ee83becee780c433e11de6e5eb12cdb0e6b5",
+      "patch": "docs/compatibility/patches/atoms-remove-watch.json"
+    },
+    {
+      "id": "runtime:Volatile:4766",
+      "source-sha256": "3eb1afc8e98963a7441bc014e020fcced3288d3ca7e7cbf04bcc94f79595ffa3",
+      "patch": null
+    },
+    {
+      "id": "runtime:volatile!:4774",
+      "source-sha256": "bf8d96001723c7dde526ea7dbd4bb49205b3a55a73cf3497b0e2c622ef997d39",
+      "patch": "docs/compatibility/patches/volatile-new.json"
+    },
+    {
+      "id": "runtime:volatile?:4779",
+      "source-sha256": "6d80da1be7ba97440dc307ff2937fbab3931b2035834fb3012321cf7a2550f1d",
+      "patch": "docs/compatibility/patches/volatile-predicate.json"
+    },
+    {
+      "id": "runtime:vreset!:4783",
+      "source-sha256": "b74d9afc993860bcb3218e2591fc7ee7bd08c2b53100606719e5907b367104d1",
+      "patch": "docs/compatibility/patches/volatile-reset.json"
     },
     {
       "id": "runtime:INamed:888",
@@ -2085,6 +2160,16 @@
       "patch": "docs/compatibility/patches/type-to-str.json"
     },
     {
+      "id": "runtime:Cycle:5046",
+      "source-sha256": "5729eb6e257341d68cf59f1cb3c6010dfa5327ed3d0892de421953dbab7c9c10",
+      "patch": null
+    },
+    {
+      "id": "runtime:cycle:5107",
+      "source-sha256": "5aa73446244e86373b99c93d1e0ef531c9c5792a74c37a8810c64662441ac066",
+      "patch": "docs/compatibility/patches/cycle.json"
+    },
+    {
       "id": "runtime:Repeat:5118",
       "source-sha256": "95cd7293814ed735d7793ba020128f60913f8d5d661ddc6b64cc8f5d7c83f921",
       "patch": null
@@ -2290,6 +2375,21 @@
       "patch": "docs/compatibility/transducers/dependency-3906-object-array-patch.json"
     },
     {
+      "id": "runtime:Delay:10919",
+      "source-sha256": "58ee6002ede6c0476c66ec5b1df21903759611be13404d6b6d8b2e1a4c52b69c",
+      "patch": "docs/compatibility/patches/delay-type.json"
+    },
+    {
+      "id": "runtime:delay?:10937",
+      "source-sha256": "2c77b860cc60b12362342ca8de47e73859bd8ffbee199ecf623c6c6058d196fb",
+      "patch": "docs/compatibility/patches/delay-predicate.json"
+    },
+    {
+      "id": "runtime:force:10941",
+      "source-sha256": "c62eb66a053ff4980982d0de311d16505cd2db9110fa972b96ed6e5b4fb5a9b7",
+      "patch": "docs/compatibility/patches/delay-force.json"
+    },
+    {
       "id": "runtime:realized?:10948",
       "source-sha256": "f583583061c1d18fb2c3c60fecccd2f1a1d8b3870a368b36e7c60985c6751d64",
       "patch": "docs/compatibility/patches/realized.json"
@@ -2313,7 +2413,7 @@
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "f04fb98fa20cd8251c0b3f850b3b2c832d69c0f4b7e59ea7ee5b425906191160"
+      "sha256": "6c4ffc999b24488b5df8a071e8f4a8e532a5d8681fc49f8a146595a2bdfa3881"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",

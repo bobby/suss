@@ -6,11 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- clone-and-set
-  ([arr i a]
-     (doto (aclone arr)
-       (aset i a)))
-  ([arr i a j b]
-     (doto (aclone arr)
-       (aset i a)
-       (aset j b))))
+(defn dissoc
+  "dissoc[iate]. Returns a new map of the same (hashed/sorted) type,
+  that does not contain a mapping for key(s)."
+  ([coll] coll)
+  ([coll k]
+    (when-not (nil? coll)
+      (-dissoc coll k)))
+  ([coll k & ks]
+    (when-not (nil? coll)
+      (let [ret (dissoc coll k)]
+        (if ks
+          (recur ret (first ks) (next ks))
+          ret)))))

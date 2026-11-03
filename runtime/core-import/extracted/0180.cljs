@@ -6,6 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn persistent-array-map-seq [arr i _meta]
-  (when (<= i (- (alength arr) 2))
-    (PersistentArrayMapSeq. arr i _meta)))
+(defn key
+  "Returns the key of the map entry."
+  [map-entry]
+  (-key map-entry))

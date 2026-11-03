@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "8e95df4ed13b4e81008dad90a8a4ee83becee780c433e11de6e5eb12cdb0e6b5",
+  "replacement": "(def remove-watch\n  \"Removes a watch (set by add-watch) from a reference\"\n  (fn [iref key]\n    (-remove-watch iref key)\n    iref))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation; returns the reference."
+}

@@ -6,9 +6,22 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn peek
-  "For a list or queue, same as first, for a vector, same as, but much
-  more efficient than, last. If the collection is empty, returns nil."
+(defn vec
+  "Creates a new vector containing the contents of coll. JavaScript arrays
+  will be aliased and should not be modified."
   [coll]
-  (when-not (nil? coll)
-    (-peek coll)))
+  (cond
+    (map-entry? coll)
+    [(key coll) (val coll)]
+
+    (vector? coll)
+    (with-meta coll nil)
+
+    (array? coll)
+    (.fromArray PersistentVector coll true)
+
+    :else
+    (-persistent!
+      (reduce -conj!
+        (-as-transient (.-EMPTY PersistentVector))
+        coll))))

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "6d80da1be7ba97440dc307ff2937fbab3931b2035834fb3012321cf7a2550f1d",
+  "replacement": "(def volatile?\n  \"Returns true if x is a volatile.\"\n  (fn [x] (instance? Volatile x)))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation."
+}

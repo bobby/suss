@@ -27,8 +27,8 @@ fn assert_language_error(session: &mut Session, source: &str, message: &str) {
         .inspect(&payload, |mut store, value| {
             let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
             let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let text_value = if message == "Wrong arity" {
-                assert_eq!(fields.len(), 5, "ABI2 Error layout");
+            // A language error (ABI2 Error layout) or an ExceptionInfo object.
+            let text_value = if fields.len() == 5 {
                 fields[1]
             } else {
                 assert_eq!(fields.len(), 4, "ABI2 Object layout");
@@ -106,38 +106,17 @@ fn persistent_session_atom_operations_preserve_order_and_errors_before_mutation(
     assert_eq!(number(&mut session, &thrown), 31f64.to_bits());
     assert_eq!(eval_number(&mut session, "@a"), 22f64.to_bits());
     assert_eq!(eval_number(&mut session, "trace"), 9f64.to_bits());
-    // Atom fields are private to suss.core and set-validator! is not yet
-    // implemented, so this host probe plants the unsupported state directly.
-    session
-        .eval_privileged("(set! (.-validator a) (fn [_] true))")
-        .unwrap();
-    assert_language_error(
-        &mut session,
-        "(reset! a 99)",
-        "Bootstrap atom validators/watches are not implemented",
-    );
+    // Validators and watches are implemented (#30); see suss-compile's
+    // core_state tests. A rejected value leaves the state unchanged.
+    session.eval("(set-validator! a (fn [v] (< v 50)))").unwrap();
+    assert_language_error(&mut session, "(reset! a 99)", "Invalid reference state");
     assert_eq!(eval_number(&mut session, "@a"), 22f64.to_bits());
-    session
-        .eval_privileged("(set! (.-validator a) nil) (set! (.-watches a) (array))")
-        .unwrap();
-    assert_language_error(
-        &mut session,
-        "(reset! a 99)",
-        "Bootstrap atom validators/watches are not implemented",
-    );
-    assert_eq!(eval_number(&mut session, "@a"), 22f64.to_bits());
+    session.eval("(set-validator! a nil)").unwrap();
     assert_language_error(&mut session, "(swap! a (fn [x] x) 1 2 3)", "Wrong arity");
-    assert_language_error(&mut session, "(atom 1 2)", "Wrong arity");
-    assert_language_error(
-        &mut session,
-        "(reset! nil 99)",
-        "Bootstrap reset! requires an Atom",
-    );
-    assert_language_error(
-        &mut session,
-        "(swap! nil (fn [x] x))",
-        "Bootstrap swap! requires an Atom",
-    );
+    assert_language_error(&mut session, "(atom 1 2)", "No value supplied for key: 2");
+    // Non-atom references go through IReset and ISwap, which nil lacks.
+    assert_language_error(&mut session, "(reset! nil 99)", "Invalid nominal operation");
+    assert_language_error(&mut session, "(swap! nil (fn [x] x))", "Invalid nominal operation");
     assert_eq!(eval_number(&mut session, "@a"), 22f64.to_bits());
 }
 

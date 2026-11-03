@@ -6,4 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(def INIT #js {})
+(defn ^:private fn->comparator
+  "Given a fn that might be boolean valued or a comparator,
+   return a fn that is a comparator."
+  [f]
+  (if (= f compare)
+    compare
+    (fn [x y]
+      (let [r (f x y)]
+        (if (number? r)
+          r
+          (if r
+            -1
+            (if (f y x) 1 0)))))))

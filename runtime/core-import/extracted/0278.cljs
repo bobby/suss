@@ -6,14 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^number min
-  "Returns the least of the nums."
-  ([x] x)
-  ([x y]
-   (cond
-     (NaN? x) x
-     (NaN? y) y
-     (< x y) x
-     :else y))
-  ([x y & more]
-   (reduce min (cljs.core/min x y) more)))
+(defn chunked-seq?
+  "Return true if x satisfies IChunkedSeq."
+  [x]
+  (if-not ^boolean LITE_MODE
+    (implements? IChunkedSeq x)
+    false))

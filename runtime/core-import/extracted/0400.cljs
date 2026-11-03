@@ -6,8 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn vals
-  "Returns a sequence of the map's values, in the same order as (seq map)."
-  [map]
-  (when-let [mseq (seq map)]
-    (ValSeq. mseq nil)))
+(defn iter [coll]
+  (cond
+    (iterable? coll) (-iterator coll)
+    (nil? coll) (nil-iter)
+    (string? coll) (string-iter coll)
+    (array? coll) (array-iter coll)
+    (seqable? coll) (seq-iter coll)
+    :else (throw (js/Error. (str_ "Cannot create iterator from " coll)))))

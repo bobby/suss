@@ -6,10 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(def
-  ^{:dynamic true
-    :doc "When set to logical false, strings and characters will be printed with
-  non-alphanumeric characters converted to the appropriate escape sequences.
-
-  Defaults to true"}
-  *print-readably* true)
+(defn ^number abs
+  {:doc "Returns the absolute value of a."
+   :added "1.11.10"}
+  [a] (Math/abs a))

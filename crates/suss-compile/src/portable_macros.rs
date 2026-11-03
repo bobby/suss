@@ -308,6 +308,8 @@ impl CompiledMacros {
         macros.define(crate::portable_defn::SOURCE)?;
         macros.define(crate::portable_when_let::SOURCE)?;
         macros.define(crate::portable_lazy_seq::SOURCE)?;
+        macros.define(crate::portable_state_macros::DELAY)?;
+        macros.define(crate::portable_state_macros::VSWAP)?;
         // Shipped record macro implementations build forms from core's Cons
         // directly, so they are evaluated as core (#279).
         macros
@@ -880,7 +882,7 @@ impl ExpansionHost for CompiledMacros {
                 (name.namespace.is_none() && self.definitions.contains_key(&own)).then_some(own)
             })
             .or_else(|| {
-                ["defn", "defrecord", "lazy-seq", "when-let"]
+                ["defn", "defrecord", "delay", "lazy-seq", "vswap!", "when-let"]
                     .into_iter()
                     .find_map(|core_name| {
                         context

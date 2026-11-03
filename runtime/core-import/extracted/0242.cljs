@@ -6,19 +6,15 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn conj
-  "conj[oin]. Returns a new collection with the xs
-  'added'. (conj nil item) returns (item).
-  (conj coll) returns coll. (conj) returns [].
-  The 'addition' may happen at different 'places' depending
-  on the concrete type."
-  ([] [])
-  ([coll] coll)
-  ([coll x]
-    (if-not (nil? coll)
-      (-conj coll x)
-      (list x)))
-  ([coll x & xs]
-    (if xs
-      (recur (conj coll x) (first xs) (next xs))
-      (conj coll x))))
+(defn- pack-array-node [array-node edit idx]
+  (let [arr     (.-arr array-node)
+        len     (alength arr)
+        new-arr (make-array (* 2 (dec (.-cnt array-node))))]
+    (loop [i 0 j 1 bitmap 0]
+      (if (< i len)
+        (if (and (not (== i idx))
+                 (not (nil? (aget arr i))))
+          (do (aset new-arr j (aget arr i))
+              (recur (inc i) (+ j 2) (bit-or bitmap (bit-shift-left 1 i))))
+          (recur (inc i) j bitmap))
+        (BitmapIndexedNode. edit bitmap new-arr)))))

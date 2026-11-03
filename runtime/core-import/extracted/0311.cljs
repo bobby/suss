@@ -6,10 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn pr-str-with-opts
-  "Prints a sequence of objects to a string, observing all the
-  options given in opts"
-  [objs opts]
-  (if (empty? objs)
-    ""
-    (str_ (pr-sb-with-opts objs opts))))
+(defn- pr-opts-readably [opts]
+  (if-not (nil? opts)
+    (:readably opts)
+    *print-readably*))

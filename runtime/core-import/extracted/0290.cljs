@@ -6,10 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(def
-  ^{:dynamic true
-    :doc "If set to logical true, when printing an object, its metadata will also
-  be printed in a form that can be read back by the reader.
-
-  Defaults to false."}
-  *print-meta* false)
+(defn NaN?
+  "Returns true if num is NaN, else false"
+  [val]
+  (js/isNaN val))

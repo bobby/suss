@@ -6,73 +6,22 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype ChunkedCons [chunk more meta ^:mutable __hash]
-  Object
-  (toString [coll]
-    (pr-str* coll))
-  (equiv [this other]
-    (-equiv this other))
-  (indexOf [coll x]
-    (-indexOf coll x 0))
-  (indexOf [coll x start]
-    (-indexOf coll x start))
-  (lastIndexOf [coll x]
-    (-lastIndexOf coll x (count coll)))
-  (lastIndexOf [coll x start]
-    (-lastIndexOf coll x start))
-
-  IWithMeta
-  (-with-meta [coll new-meta]
-    (if (identical? new-meta meta)
-      coll
-      (ChunkedCons. chunk more new-meta __hash)))
-
-  IMeta
-  (-meta [coll] meta)
-
-  ISequential
-  IEquiv
-  (-equiv [coll other] (equiv-sequential coll other))
-
-  ISeqable
-  (-seq [coll] coll)
-
-  ASeq
-  ISeq
-  (-first [coll] (-nth chunk 0))
-  (-rest [coll]
-    (if (> (-count chunk) 1)
-      (ChunkedCons. (-drop-first chunk) more nil nil)
-      (if (nil? more)
-        ()
-        more)))
-
-  INext
-  (-next [coll]
-    (if (> (-count chunk) 1)
-      (ChunkedCons. (-drop-first chunk) more nil nil)
-      (when-not (nil? more)
-        (-seq more))))
-
-  IChunkedSeq
-  (-chunked-first [coll] chunk)
-  (-chunked-rest [coll]
-    (if (nil? more)
-      ()
-      more))
-
-  IChunkedNext
-  (-chunked-next [coll]
-    (if (nil? more)
-      nil
-      more))
-
-  ICollection
-  (-conj [this o]
-    (cons o this))
-
-  IEmptyableCollection
-  (-empty [coll] (.-EMPTY List))
-
-  IHash
-  (-hash [coll] (caching-hash coll hash-ordered-coll __hash)))
+(defn into
+  "Returns a new coll consisting of to-coll with all of the items of
+  from-coll conjoined. A transducer may be supplied."
+  ([] [])
+  ([to] to)
+  ([to from]
+     (if-not (nil? to)
+       (if (implements? IEditableCollection to)
+         (-with-meta (persistent! (reduce -conj! (transient to) from)) (meta to))
+         (reduce -conj to from))
+       (reduce conj to from)))
+  ([to xform from]
+     (if (implements? IEditableCollection to)
+       (let [tm (meta to)
+             rf (fn
+                  ([coll] (-> (persistent! coll) (-with-meta tm)))
+                  ([coll v] (conj! coll v)))]
+         (transduce xform rf (transient to) from))
+       (transduce xform conj to from))))

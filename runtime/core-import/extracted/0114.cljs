@@ -6,18 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn reset!
-  "Sets the value of atom to newval without regard for the
-  current value. Returns new-value."
-  [a new-value]
-  (if (instance? Atom a)
-    (let [validate (.-validator a)]
-      (when-not (nil? validate)
-        (when-not (validate new-value)
-          (throw (js/Error. "Validator rejected reference state"))))
-      (let [old-value (.-state a)]
-        (set! (.-state a) new-value)
-        (when-not (nil? (.-watches a))
-          (-notify-watches a old-value new-value))
-        new-value))
-    (-reset! a new-value)))
+(defprotocol IVolatile
+  "Protocol for adding volatile functionality."
+  (-vreset! [o new-value]
+    "Sets the value of volatile o to new-value without regard for the
+     current value. Returns new-value."))

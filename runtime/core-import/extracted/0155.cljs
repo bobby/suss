@@ -6,9 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn persistent!
-  "Returns a new, persistent version of the transient collection, in
-  constant time. The transient collection cannot be used after this
-  call, any such use will throw an exception."
-  [tcoll]
-  (-persistent! tcoll))
+(defn ranged-iterator [v start end]
+  (let [i start]
+    (RangedIterator. i (- i (js-mod i 32))
+      (when (< start (count v))
+        (unchecked-array-for v i))
+      v start end)))

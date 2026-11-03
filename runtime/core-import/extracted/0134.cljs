@@ -6,5 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol APersistentVector
-  "Marker protocol")
+(defn hash-keyword [k]
+  (int (+ (hash-symbol k) 0x9e3779b9)))

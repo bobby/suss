@@ -6,5 +6,19 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn hash-keyword [k]
-  (int (+ (hash-symbol k) 0x9e3779b9)))
+(defn reset-vals!
+  "Sets the value of atom to newval. Returns [old new], the value of the
+   atom before and after the reset."
+  {:added "1.9"}
+  [a new-value]
+  (if (instance? Atom a)
+    (let [validate (.-validator a)]
+      (when-not (nil? validate)
+        (when-not (validate new-value)
+          (throw (js/Error. "Validator rejected reference state"))))
+      (let [old-value (.-state a)]
+        (set! (.-state a) new-value)
+        (when-not (nil? (.-watches a))
+          (-notify-watches a old-value new-value))
+        [old-value new-value]))
+    [(-deref a) (-reset! a new-value)]))

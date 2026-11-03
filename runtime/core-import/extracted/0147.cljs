@@ -6,7 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- tv-ensure-editable [edit node]
-  (if (identical? edit (.-edit node))
-    node
-    (VectorNode. edit (aclone (.-arr node)))))
+(defprotocol IKVReduce
+  "Protocol for associative types that can reduce themselves
+  via a function of key and val. Called by cljs.core/reduce-kv."
+  (-kv-reduce [coll f init]
+    "Reduces an associative collection and returns the result. f should be
+     a function that takes three arguments."))

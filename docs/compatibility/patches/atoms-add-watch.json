@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "f2610796d2f057028d007b1109973718943b8ad8488b750d344ab14ea9cd25af",
+  "replacement": "(def add-watch\n  \"Adds a watch function to an atom reference. The watch fn must be a\n  fn of 4 args: a key, the reference, its old-state, its\n  new-state. Whenever the reference's state might have been changed,\n  any registered watches will have their functions called. The watch\n  fn will be called synchronously. Note that an atom's state\n  may have changed again prior to the fn call, so use old/new-state\n  rather than derefing the reference. Keys must be unique per\n  reference, and can be used to remove the watch with remove-watch,\n  but are otherwise considered opaque by the watch mechanism.  Bear in\n  mind that regardless of the result or action of the watch fns the\n  atom's value will change.  Example:\n\n      (def a (atom 0))\n      (add-watch a :inc (fn [k r o n] (assert (== 0 n))))\n      (swap! a inc)\n      ;; Assertion Error\n      (deref a)\n      ;=> 1\"\n  (fn [iref key f]\n    (-add-watch iref key f)\n    iref))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation; returns the reference."
+}

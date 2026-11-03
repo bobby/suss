@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "0b88c9eb5c5aa4390eb5b7583aafac19a0da5b3bb301d58659ce875a2eeeb0bc",
+  "replacement": "(def swap-vals!\n  \"Atomically swaps the value of atom to be:\n  (apply f current-value-of-atom args). Note that f may be called\n  multiple times, and thus should be free of side effects.\n  Returns [old new], the value of the atom before and after the swap.\"\n  (fn\n    ([a f]\n     (if (instance? Atom a)\n       (reset-vals! a (f (.-state a)))\n       [(-deref a) (-swap! a f)]))\n    ([a f x]\n     (if (instance? Atom a)\n       (reset-vals! a (f (.-state a) x))\n       [(-deref a) (-swap! a f x)]))\n    ([a f x y]\n     (if (instance? Atom a)\n       (reset-vals! a (f (.-state a) x y))\n       [(-deref a) (-swap! a f x y)]))\n    ([a f x y & more]\n     (if (instance? Atom a)\n       (reset-vals! a (apply f (.-state a) x y more))\n       [(-deref a) (-swap! a f x y more)]))))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation, all four arities. Goes through reset-vals!, so it validates and notifies. Returns [old new]."
+}

@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- range-count
-  "Returns exact size of remaining items in an IntegerRange."
-  [start end step]
-  (Math/ceil (/ (- end start) step)))
+(defn sorted-set
+  "Returns a new sorted set with supplied keys."
+  ([& keys]
+   (reduce -conj (.-EMPTY PersistentTreeSet) keys)))

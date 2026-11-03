@@ -23,7 +23,7 @@ const MACRO_EDN: &[u8] = include_bytes!("../../../../runtime/bootstrap/macro.edn
 /// Digest of the embedded inputs that `SUSS_COMPILER_SOURCE_SHA256` cannot
 /// cover: core source, its import manifest and the versioned bootstrap
 /// artifacts (which themselves record the compiler digest), plus the
-/// compatibility lazy-seq source. Regenerating core changes this without any
+/// compatibility lazy-seq, delay and vswap! sources. Regenerating core changes this without any
 /// Rust change, so persistent caches must key on it too (#272).
 pub fn embedded_sha256() -> &'static str {
     static DIGEST: OnceLock<String> = OnceLock::new();
@@ -37,6 +37,8 @@ pub fn embedded_sha256() -> &'static str {
             MACRO_WASM,
             MACRO_EDN,
             crate::portable_lazy_seq::SOURCE.as_bytes(),
+            crate::portable_state_macros::DELAY.as_bytes(),
+            crate::portable_state_macros::VSWAP.as_bytes(),
         ] {
             hash.update((part.len() as u64).to_le_bytes());
             hash.update(part);

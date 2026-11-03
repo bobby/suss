@@ -6,8 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn write-all [writer & ss]
-  (loop [ss (seq ss)]
-    (when-not (nil? ss)
-      (-write writer (first ss))
-      (recur (next ss)))))
+(defn var?
+  "Returns true if v is of type cljs.core.Var"
+  [v]
+  (instance? cljs.core.Var v))

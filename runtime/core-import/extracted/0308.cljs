@@ -6,11 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- pr-writer
-  "Prefer this to pr-seq, because it makes the printing function
-   configurable, allowing efficient implementations such as appending
-   to a StringBuffer."
-  [obj writer opts]
-  (if-let [alt-impl (:alt-impl opts)]
-    (alt-impl obj writer (-assoc opts :fallback-impl pr-writer-impl))
-    (pr-writer-impl obj writer opts)))
+(def
+  ^{:dynamic true
+    :doc "*print-length* controls how many items of each collection the
+  printer will print. If it is bound to logical false, there is no
+  limit. Otherwise, it must be bound to an integer indicating the maximum
+  number of items of each collection to print. If a collection contains
+  more items, the printer will print items up to the limit followed by
+  '...' to represent the remaining items. The root binding is nil
+  indicating no limit."
+    :jsdoc ["@type {null|number}"]}
+  *print-length* nil)

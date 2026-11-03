@@ -6,9 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^:private quote-string
-  [s]
-  (str_ \"
-       (.replace s (js/RegExp "[\\\\\"\b\f\n\r\t]" "g")
-         (fn [match] (unchecked-get char-escapes match)))
-       \"))
+(def
+  ^{:dynamic true
+    :doc "When set to true, output will be flushed whenever a newline is printed.
+
+  Defaults to true."}
+  *flush-on-newline* true)

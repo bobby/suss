@@ -6,22 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype ArrayNodeIterator [arr ^:mutable i ^:mutable next-iter]
-  Object
-  (hasNext [this]
-    (let [len (alength arr)]
-      (loop []
-        (if-not (and  (some? next-iter) ^boolean (.hasNext next-iter))
-          (if (< i len)
-            (let [node (aget arr i)]
-              (set! i (inc i))
-              (when (some? node)
-                (set! next-iter (-iterator node)))
-              (recur))
-            false)
-          true))))
-  (next [this]
-    (if ^boolean (.hasNext this)
-      (.next next-iter)
-      (throw (js/Error. "No such element"))))
-  (remove [_] (js/Error. "Unsupported operation")))
+(defn quot
+  "quot[ient] of dividing numerator by denominator."
+  [n d]
+  (let [rem (js-mod n d)]
+    (fix (/ (- n rem) d))))

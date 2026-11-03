@@ -6,7 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn print-meta? [opts obj]
-  (and (boolean (pr-opts-meta opts))
-       (implements? IMeta obj)
-       (not (nil? (meta obj)))))
+(def
+  ^{:dynamic true
+    :doc "If set to logical true, when printing an object, its metadata will also
+  be printed in a form that can be read back by the reader.
+
+  Defaults to false."}
+  *print-meta* false)

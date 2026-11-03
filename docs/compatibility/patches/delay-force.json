@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c62eb66a053ff4980982d0de311d16505cd2db9110fa972b96ed6e5b4fb5a9b7",
+  "replacement": "(def force\n  \"If x is a Delay, returns the (possibly cached) value of its expression, else returns x\"\n  (fn [x]\n    (if (delay? x)\n      (deref x)\n      x)))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation."
+}

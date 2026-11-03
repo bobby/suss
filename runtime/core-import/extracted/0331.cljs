@@ -6,5 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn chunk-buffer [capacity]
-  (ChunkBuffer. (make-array capacity) 0))
+(defn println-str
+  "println to a string, returning it"
+  [& objs]
+  (binding [*print-readably* false]
+    (prn-str-with-opts objs nil)))

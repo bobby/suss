@@ -6,15 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn conj!
-  "Adds val to the transient collection, and return tcoll. The 'addition'
-  may happen at different 'places' depending on the concrete type."
-  ([] (transient []))
-  ([tcoll] tcoll)
-  ([tcoll val]
-    (-conj! tcoll val))
-  ([tcoll val & vals]
-    (let [ntcoll (-conj! tcoll val)]
-      (if vals
-        (recur ntcoll (first vals) (next vals))
-        ntcoll))))
+(defn- pv-reduce
+  ([pv f start end]
+   (if (< start end)
+     (pv-reduce pv f (nth pv start) (inc start) end)
+     (f)))
+  ([pv f init start end]
+   (loop [acc init i start arr (unchecked-array-for pv start)]
+     (if (< i end)
+       (let [j (bit-and i 0x01f)
+             arr (if (zero? j) (unchecked-array-for pv i) arr)
+             nacc (f acc (aget arr j))]
+         (if (reduced? nacc)
+           @nacc
+           (recur nacc (inc i) arr)))
+       acc))))

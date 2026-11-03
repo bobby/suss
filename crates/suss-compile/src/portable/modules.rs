@@ -22,7 +22,7 @@ impl ModuleIdentity {
         resolve::valid_namespace(namespace)?;
         Ok(Self {
             phase,
-            namespace: resolve::canonical(namespace).into(),
+            namespace: resolve::required(namespace).into(),
         })
     }
     pub fn phase(&self) -> Phase {

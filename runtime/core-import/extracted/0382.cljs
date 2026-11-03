@@ -6,20 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype SeqIter [^:mutable _seq ^:mutable _next]
-  Object
-  (hasNext [_]
-    (if (identical? _seq INIT)
-      (do
-        (set! _seq START)
-        (set! _next (seq _next)))
-      (if (identical? _seq _next)
-        (set! _next (next _seq))))
-    (not (nil? _next)))
-  (next [this]
-    (if-not ^boolean (.hasNext this)
-      (throw (js/Error. "No such element"))
-      (do
-        (set! _seq _next)
-        (first _next))))
-  (remove [_] (js/Error. "Unsupported operation")))
+(defn- compare-symbols [a b]
+  (cond
+   (identical? (.-str a) (.-str b)) 0
+   (and (not (.-ns a)) (.-ns b)) -1
+   (.-ns a) (if-not (.-ns b)
+              1
+              (let [nsc (garray/defaultCompare (.-ns a) (.-ns b))]
+                (if (== 0 nsc)
+                  (garray/defaultCompare (.-name a) (.-name b))
+                  nsc)))
+   :default (garray/defaultCompare (.-name a) (.-name b))))

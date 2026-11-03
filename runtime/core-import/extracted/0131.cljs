@@ -6,7 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IVector
-  "Protocol for adding vector functionality to collections."
-  (^clj -assoc-n [coll n val]
-    "Returns a new vector with value val added at position n."))
+(defprotocol INamed
+  "Protocol for adding a name."
+  (^string -name [x]
+    "Returns the name String of x.")
+  ( ^{:tag #{string clj-nil}}-namespace [x]
+    "Returns the namespace String of x."))

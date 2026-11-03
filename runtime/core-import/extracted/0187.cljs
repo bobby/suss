@@ -6,7 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IChunk
-  "Protocol for accessing the items of a chunk."
-  (-drop-first [coll]
-    "Return a new chunk of coll with the first item removed."))
+(defn- array-index-of-equiv? [arr k]
+  (let [len (alength arr)]
+    (loop [i 0]
+      (cond
+        (<= len i) -1
+        (= k (aget arr i)) i
+        :else (recur (+ i 2))))))

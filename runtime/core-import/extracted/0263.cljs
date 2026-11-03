@@ -6,9 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn chunked-seq?
-  "Return true if x satisfies IChunkedSeq."
-  [x]
-  (if-not ^boolean LITE_MODE
-    (implements? IChunkedSeq x)
-    false))
+(defn keys
+  "Returns a sequence of the map's keys, in the same order as (seq map)."
+  [map]
+  (when-let [mseq (seq map)]
+    (KeySeq. mseq nil)))

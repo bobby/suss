@@ -6,11 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn spread
-  [arglist]
-  (when-not (nil? arglist)
-    (let [n (next arglist)]
-      (if (nil? n)
-        (seq (first arglist))
-        (cons (first arglist)
-              (spread n))))))
+(deftype PersistentArrayMapIterator [arr ^:mutable i cnt]
+  Object
+  (hasNext [_]
+    (< i cnt))
+  (next [_]
+    (let [ret (MapEntry. (aget arr i) (aget arr (inc i)) nil)]
+      (set! i (+ i 2))
+      ret)))

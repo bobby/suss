@@ -6,8 +6,19 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IPending
-  "Protocol for types which can have a deferred realization. Currently only
-  implemented by Delay and LazySeq."
-  (^boolean -realized? [x]
-    "Returns true if a value for x has been produced, false otherwise."))
+(defn conj
+  "conj[oin]. Returns a new collection with the xs
+  'added'. (conj nil item) returns (item).
+  (conj coll) returns coll. (conj) returns [].
+  The 'addition' may happen at different 'places' depending
+  on the concrete type."
+  ([] [])
+  ([coll] coll)
+  ([coll x]
+    (if-not (nil? coll)
+      (-conj coll x)
+      (list x)))
+  ([coll x & xs]
+    (if xs
+      (recur (conj coll x) (first xs) (next xs))
+      (conj coll x))))

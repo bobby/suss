@@ -6,24 +6,27 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn object-array
-  "Creates an array of objects. Does not coerce array, provided for compatibility
-  with Clojure."
-  ([size-or-seq]
-     (if (number? size-or-seq)
-       (object-array size-or-seq nil)
-       (into-array size-or-seq)))
-  ([size init-val-or-seq]
-     (let [a (make-array size)]
-       (if (seq? init-val-or-seq)
-         (let [s (seq init-val-or-seq)]
-           (loop [i 0 s s]
-             (if (and s (< i size))
-               (do
-                 (aset a i (first s))
-                 (recur (inc i) (next s)))
-               a)))
-         (do
-           (dotimes [i size]
-             (aset a i init-val-or-seq))
-           a)))))
+(defn drop-while
+  "Returns a lazy sequence of the items in coll starting from the
+  first item for which (pred item) returns logical false.  Returns a
+  stateful transducer when no collection is provided."
+  ([pred]
+     (fn [rf]
+       (let [da (volatile! true)]
+         (fn
+           ([] (rf))
+           ([result] (rf result))
+           ([result input]
+              (let [drop? @da]
+                (if (and drop? (pred input))
+                  result
+                  (do
+                    (vreset! da nil)
+                    (rf result input)))))))))
+  ([pred coll]
+     (let [step (fn [pred coll]
+                  (let [s (seq coll)]
+                    (if (and s (pred (first s)))
+                      (recur pred (rest s))
+                      s)))]
+       (lazy-seq (step pred coll)))))

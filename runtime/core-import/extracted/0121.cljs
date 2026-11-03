@@ -6,30 +6,25 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Keyword [ns name fqn ^:mutable _hash]
-  Object
-  (toString [_] (str_ ":" fqn))
-  (equiv [this other]
-    (-equiv this other))
-
-  IEquiv
-  (-equiv [_ other]
-    (if (instance? Keyword other)
-      (identical? fqn (.-fqn other))
-      false))
-  IFn
-  (-invoke [kw coll]
-    (get coll kw))
-  (-invoke [kw coll not-found]
-    (get coll kw not-found))
-
-  IHash
-  (-hash [this]
-    (caching-hash this hash-keyword _hash))
-
-  INamed
-  (-name [_] name)
-  (-namespace [_] ns)
-
-  IPrintWithWriter
-  (-pr-writer [o writer _] (-write writer (str_ ":" fqn))))
+(defn swap-vals!
+  "Atomically swaps the value of atom to be:
+  (apply f current-value-of-atom args). Note that f may be called
+  multiple times, and thus should be free of side effects.
+  Returns [old new], the value of the atom before and after the swap."
+  {:added "1.9"}
+  ([a f]
+   (if (instance? Atom a)
+     (reset-vals! a (f (.-state a)))
+     [(-deref a) (-swap! a f)]))
+  ([a f x]
+   (if (instance? Atom a)
+     (reset-vals! a (f (.-state a) x))
+     [(-deref a) (-swap! a f x)]))
+  ([a f x y]
+   (if (instance? Atom a)
+     (reset-vals! a (f (.-state a) x y))
+     [(-deref a) (-swap! a f x y)]))
+  ([a f x y & more]
+   (if (instance? Atom a)
+     (reset-vals! a (apply f (.-state a) x y more))
+     [(-deref a) (-swap! a f x y more)])))
