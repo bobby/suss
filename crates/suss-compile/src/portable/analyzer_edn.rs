@@ -261,7 +261,7 @@ impl<'o> Projector<'o> {
         if let Some(callable) = &source.callable {
             return self.function(callable, source.phase);
         }
-        if let Expression::Definition { global, name_metadata, docstring, initializer, once, .. } = &hir.kind {
+        if let Expression::Definition { global, name_metadata, docstring, initializer, once, .. } = &*hir.kind {
             let mut node = Node::new("def");
             node.set("var", global_symbol(global));
             node.set("name", sym(None, global.name()));
@@ -317,7 +317,7 @@ impl<'o> Projector<'o> {
         if let Some(init) = &binding.initializer
             && !matches!(binding.source_role, SourceRole::CatchBinding { .. })
             && !(init.source.is_none()
-                && matches!(init.kind, Expression::Nominal { operation: hir::Nominal::CurrentThis, .. }))
+                && matches!(*init.kind, Expression::Nominal { operation: hir::Nominal::CurrentThis, .. }))
         {
             node.child("init", self.node(init)?);
         }
@@ -397,7 +397,7 @@ impl<'o> Projector<'o> {
                 if bindings.len() == 1
                     && bindings[0].initializer.as_ref().is_some_and(|init| {
                         init.source.is_none()
-                            && matches!(init.kind, Expression::Nominal { operation: hir::Nominal::CurrentThis, .. })
+                            && matches!(*init.kind, Expression::Nominal { operation: hir::Nominal::CurrentThis, .. })
                     }) =>
             {
                 // (this-as name body...) binds the current this.
@@ -548,8 +548,8 @@ impl<'o> Projector<'o> {
     /// expansion calls `seq`, `concat` and `list` this way.
     fn lowered(&mut self, hir: &Hir) -> Result<Value, String> {
         if reader_sequence(hir)
-            && let Expression::Call { callee, arguments } = &hir.kind
-            && let Expression::GlobalOrFallback { global, .. } = &callee.kind
+            && let Expression::Call { callee, arguments } = &*hir.kind
+            && let Expression::GlobalOrFallback { global, .. } = &*callee.kind
         {
             let mut var = Node::new("var");
             var.set("var", global_symbol(global));
@@ -574,8 +574,8 @@ impl<'o> Projector<'o> {
 /// fallback cell, so that core's own syntax quotes work before `sequence` is
 /// defined. An emitted form calls the public `sequence`.
 fn reader_sequence(hir: &Hir) -> bool {
-    matches!(&hir.kind, Expression::Call { callee, .. }
-        if matches!(callee.kind, Expression::GlobalOrFallback { .. }))
+    matches!(&*hir.kind, Expression::Call { callee, .. }
+        if matches!(*callee.kind, Expression::GlobalOrFallback { .. }))
 }
 
 fn lowering_name(kind: &Expression) -> &'static str {

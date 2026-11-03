@@ -10,7 +10,7 @@ fn array_hir_ir_reject_bad_arity_type_and_non_dominating_operands() {
         span: 2..3,
         metadata: vec![],
         ty: Type::Nil,
-        kind: Expression::Literal(Literal::Nil),
+        kind: std::sync::Arc::new(Expression::Literal(Literal::Nil)),
     };
     for operation in [
         ArrayOperation::Make,
@@ -24,10 +24,10 @@ fn array_hir_ir_reject_bad_arity_type_and_non_dominating_operands() {
             span: 0..7,
             metadata: vec![],
             ty: Type::Value,
-            kind: Expression::Array {
+            kind: std::sync::Arc::new(Expression::Array {
                 operation,
                 arguments: vec![],
-            },
+            }),
         };
         assert!(ir::lower(&invalid).is_err(), "{operation:?}");
     }
@@ -36,10 +36,10 @@ fn array_hir_ir_reject_bad_arity_type_and_non_dominating_operands() {
         span: 0..7,
         metadata: vec![],
         ty: Type::Bool,
-        kind: Expression::Array {
+        kind: std::sync::Arc::new(Expression::Array {
             operation: ArrayOperation::Literal,
             arguments: vec![value],
-        },
+        }),
     };
     assert!(ir::lower(&hir).is_err());
     hir.ty = Type::Value;

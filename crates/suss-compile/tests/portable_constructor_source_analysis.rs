@@ -82,14 +82,14 @@ fn constructor_source_children_share_once_analyzed_callee_and_arguments() {
         let hir::Expression::Nominal {
             operation: hir::Nominal::BuiltinConstructGuard,
             arguments: guarded,
-        } = &init.kind
+        } = &*init.kind
         else {
             panic!("user construction must be guarded")
         };
         let hir::Expression::Nominal {
             operation: hir::Nominal::Construct,
             arguments: lowered,
-        } = &guarded[0].kind
+        } = &*guarded[0].kind
         else {
             panic!("existing nominal lowering must remain intact")
         };
@@ -172,7 +172,7 @@ fn invocation_class_has_no_reference_result_tag() {
         let hir::SourceNode::Construct { class, .. } = source.node.as_deref().unwrap() else {
             panic!("constructor source record required")
         };
-        assert!(matches!(class.kind, hir::Expression::Call { .. }));
+        assert!(matches!(*class.kind, hir::Expression::Call { .. }));
     }
 }
 

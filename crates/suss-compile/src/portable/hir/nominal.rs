@@ -132,10 +132,10 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: operation.result(),
-            kind: Expression::Nominal {
+            kind: std::sync::Arc::new(Expression::Nominal {
                 operation,
                 arguments,
-            },
+            }),
         }
     }
     /// Core bootstrap types get descriptors whose internals are private,
@@ -180,7 +180,7 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: Expression::Local(id),
+            kind: std::sync::Arc::new(Expression::Local(id)),
         }
     }
     pub(super) fn literal_form(&self, form: &Form, literal: Literal) -> Hir {
@@ -189,7 +189,7 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: literal.ty(),
-            kind: Expression::Literal(literal),
+            kind: std::sync::Arc::new(Expression::Literal(literal)),
         }
     }
     pub(super) fn fresh_binding(&mut self, form: &Form, value: Hir) -> Binding {
@@ -213,7 +213,7 @@ impl Analyzer<'_> {
         let Expression::Definition {
             initializer: target,
             ..
-        } = &mut definition.kind
+        } = definition.kind_mut()
         else {
             unreachable!()
         };
@@ -235,7 +235,7 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: Expression::Definition {
+            kind: std::sync::Arc::new(Expression::Definition {
                 global,
                 name_metadata: Vec::new(),
                 name_span: form.span.clone(),
@@ -243,7 +243,7 @@ impl Analyzer<'_> {
                 initializer: Some(Box::new(value)),
                 once: false,
                 linked: None,
-            },
+            }),
         }
     }
     /// The native cell of the protocol's current definition: core's own for a
@@ -256,7 +256,7 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
-            kind: Expression::Global(global),
+            kind: std::sync::Arc::new(Expression::Global(global)),
         }
     }
     fn stable_key(
@@ -277,7 +277,7 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: Expression::Definition {
+            kind: std::sync::Arc::new(Expression::Definition {
                 global: global.clone(),
                 name_metadata: Vec::new(),
                 name_span: form.span.clone(),
@@ -285,14 +285,14 @@ impl Analyzer<'_> {
                 initializer: Some(Box::new(descriptor)),
                 once: true,
                 linked: None,
-            },
+            }),
         };
         let read = Hir {
             source: None,
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: Expression::Global(global),
+            kind: std::sync::Arc::new(Expression::Global(global)),
         };
         self.do_hir(form, vec![initialize, read])
     }
@@ -344,21 +344,21 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: vec![],
             ty: Type::Value,
-            kind: Expression::If {
+            kind: std::sync::Arc::new(Expression::If {
                 condition: Box::new(test),
                 consequent: Box::new(self.local(form, callee.id)),
                 alternative: Box::new(bound),
-            },
+            }),
         };
         Ok(Hir {
             source: None,
             span: form.span.clone(),
             metadata: vec![],
             ty: Type::Value,
-            kind: Expression::Let {
+            kind: std::sync::Arc::new(Expression::Let {
                 bindings: vec![callee],
                 body: Box::new(body),
-            },
+            }),
         })
     }
     pub(super) fn callable_named_get(&mut self, form: &Form, owner: Hir, name: Hir, spelling: &str) -> Result<Hir, Diagnostic> {
@@ -375,11 +375,11 @@ impl Analyzer<'_> {
             }).collect();
             let keys = self.nominal(form, Nominal::Array, keys);
             let definition = Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value,
-                kind: Expression::Definition { global: table.clone(), name_metadata: vec![], name_span: form.span.clone(), docstring: None,
-                    initializer: Some(Box::new(keys)), once: true , linked: None } };
+                kind: std::sync::Arc::new(Expression::Definition { global: table.clone(), name_metadata: vec![], name_span: form.span.clone(), docstring: None,
+                    initializer: Some(Box::new(keys)), once: true , linked: None }) };
             self.callable_keys.insert(table.clone(), definition);
         }
-        let keys = Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value, kind: Expression::Global(table) };
+        let keys = Hir { source: None, span: form.span.clone(), metadata: vec![], ty: Type::Value, kind: std::sync::Arc::new(Expression::Global(table)) };
         Ok(self.nominal(form, Nominal::CallableGet, vec![owner, name, keys]))
     }
     fn named_global(&self, name: &Form) -> Result<Global, Diagnostic> {
@@ -401,7 +401,7 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: items.last().map_or(Type::Nil, |item| item.ty),
-            kind: Expression::Do(items),
+            kind: std::sync::Arc::new(Expression::Do(items)),
         }
     }
     pub(super) fn nominal_form(
@@ -458,7 +458,7 @@ impl Analyzer<'_> {
                     span: args[0].span.clone(),
                     metadata: args[0].metadata.clone(),
                     ty: Type::Value,
-                    kind: Expression::Global(protocol),
+                    kind: std::sync::Arc::new(Expression::Global(protocol)),
                 };
                 let symbol = suss_reader::Symbol {
                     namespace: Some("suss.core".into()),
@@ -470,37 +470,37 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Value,
-                    kind: Expression::Call {
+                    kind: std::sync::Arc::new(Expression::Call {
                         callee: Box::new(Hir {
                             source: None,
                             span: form.span.clone(),
                             metadata: Vec::new(),
                             ty,
-                            kind: callee,
+                            kind: std::sync::Arc::new(callee),
                         }),
                         arguments: vec![protocol_value, value],
-                    },
+                    }),
                 };
                 let body = Hir {
                     source: None,
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: Type::Value,
-                    kind: Expression::If {
+                    kind: std::sync::Arc::new(Expression::If {
                         condition: Box::new(condition),
                         consequent: Box::new(self.literal_form(form, Literal::Bool(true))),
                         alternative: Box::new(alternative),
-                    },
+                    }),
                 };
                 Ok(Hir {
                     source: None,
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: Type::Value,
-                    kind: Expression::Let {
+                    kind: std::sync::Arc::new(Expression::Let {
                         bindings: vec![binding],
                         body: Box::new(body),
-                    },
+                    }),
                 })
             }
             NominalForm::Deftype => self.type_definition(form, args),
@@ -563,10 +563,10 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: body.ty,
-                    kind: Expression::Let {
+                    kind: std::sync::Arc::new(Expression::Let {
                         bindings: vec![binding],
                         body: Box::new(body),
-                    },
+                    }),
                 })
             }
         }
@@ -716,7 +716,7 @@ impl Analyzer<'_> {
         let Expression::Definition {
             global: class_global,
             ..
-        } = &declaration.kind
+        } = &*declaration.kind
         else {
             unreachable!()
         };
@@ -790,7 +790,7 @@ impl Analyzer<'_> {
         let class = self.fresh_binding(form, class);
         let class_value = self.local(form, class.id);
         let mut definition = declaration;
-        let Expression::Definition { initializer, .. } = &mut definition.kind else { unreachable!() };
+        let Expression::Definition { initializer, .. } = definition.kind_mut() else { unreachable!() };
         *initializer = Some(Box::new(class_value.clone()));
 
         // The constructor is published before the body executes. Analysis
@@ -805,7 +805,7 @@ impl Analyzer<'_> {
         self.fields = outer_fields;
         let body = self.do_hir(form, vec![definition, body?, class_value]);
         Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
-            ty: Type::Value, kind: Expression::Let { bindings: vec![class], body: Box::new(body) } })
+            ty: Type::Value, kind: std::sync::Arc::new(Expression::Let { bindings: vec![class], body: Box::new(body) }) })
     }
 
     fn type_definition(&mut self, form: &Form, args: &[Form]) -> Result<Hir, Diagnostic> {
@@ -859,10 +859,10 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: Expression::Let {
+            kind: std::sync::Arc::new(Expression::Let {
                 bindings: vec![binding],
                 body: Box::new(body),
-            },
+            }),
         };
         let class_binding = self.fresh_binding(form, initialization);
         let class_value = self.local(form, class_binding.id);
@@ -870,7 +870,7 @@ impl Analyzer<'_> {
         let Expression::Definition {
             initializer: target,
             ..
-        } = &mut definition.kind
+        } = definition.kind_mut()
         else {
             unreachable!()
         };
@@ -881,7 +881,7 @@ impl Analyzer<'_> {
             span: args[0].span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: Expression::Global(class_global),
+            kind: std::sync::Arc::new(Expression::Global(class_global)),
         }];
         for field in fields {
             let Kind::Symbol(symbol) = &field.kind else {
@@ -908,11 +908,11 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Closure(parameters.len()),
-            kind: Expression::Function {
+            kind: std::sync::Arc::new(Expression::Function {
                 parameters,
                 captures: vec![],
                 body: Box::new(construction),
-            },
+            }),
         };
         let arrow = self.nominal_definition(form, &arrow_name, arrow)?;
         let body = self.do_hir(form, vec![definition, arrow, class_value]);
@@ -921,10 +921,10 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
-            kind: Expression::Let {
+            kind: std::sync::Arc::new(Expression::Let {
                 bindings: vec![class_binding],
                 body: Box::new(body),
-            },
+            }),
         })
     }
     /// Pinned reify (core.cljc1355–1418) lowers to a per-site anonymous type:
@@ -944,7 +944,7 @@ impl Analyzer<'_> {
                 (name.clone(), field.access.clone())
             })
             .collect::<Vec<_>>();
-        fields.sort_by_key(|(_, access)| match &access.kind {
+        fields.sort_by_key(|(_, access)| match &*access.kind {
             Expression::Nominal {
                 operation: Nominal::Field(index),
                 ..
@@ -1086,17 +1086,17 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: Expression::Let {
+            kind: std::sync::Arc::new(Expression::Let {
                 bindings: vec![binding],
                 body: Box::new(self.do_hir(form, effects)),
-            },
+            }),
         };
         let publication = Hir {
             source: None,
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: Expression::Definition {
+            kind: std::sync::Arc::new(Expression::Definition {
                 global: cell.clone(),
                 name_metadata: Vec::new(),
                 name_span: form.span.clone(),
@@ -1105,7 +1105,7 @@ impl Analyzer<'_> {
                 once: true,
                 // An internal reify publication cell, not a core definition.
                 linked: None,
-            },
+            }),
         };
         // The macro transfers this form's own reader metadata to the created
         // object, emitting nil when the elided metadata is empty.
@@ -1122,7 +1122,7 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: Expression::Global(cell),
+            kind: std::sync::Arc::new(Expression::Global(cell)),
         }];
         for (_, read) in &captured {
             arguments.push(read.clone());
@@ -1220,20 +1220,20 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
-            kind: Expression::Call {
+            kind: std::sync::Arc::new(Expression::Call {
                 callee: Box::new(self.local(method_name, method.id)),
                 arguments,
-            },
+            }),
         };
         Ok(Hir {
             source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
-            kind: Expression::Let {
+            kind: std::sync::Arc::new(Expression::Let {
                 bindings: vec![owner_binding, method],
                 body: Box::new(body),
-            },
+            }),
         })
     }
     fn protocol_definition(&mut self, form: &Form, args: &[Form]) -> Result<Hir, Diagnostic> {
@@ -1243,7 +1243,7 @@ impl Analyzer<'_> {
         let declaration = self.definition(form, &[name.clone()], false)?;
         let Expression::Definition {
             global: protocol, ..
-        } = &declaration.kind
+        } = &*declaration.kind
         else {
             unreachable!()
         };
@@ -1344,10 +1344,10 @@ impl Analyzer<'_> {
                     span: method_name.span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Value,
-                    kind: Expression::GlobalCell(
+                    kind: std::sync::Arc::new(Expression::GlobalCell(
                         self.environment
                             .protocol_native(protocol, Some(&symbol.name), self.privileged),
-                    ),
+                    )),
                 };
                 // IFn's emitted JS methods omit the physical receiver formal.
                 // Explicit -invoke still passes the target in its argument list,
@@ -1399,10 +1399,10 @@ impl Analyzer<'_> {
                         span: declaration.span.clone(),
                         metadata: Vec::new(),
                         ty: Type::Value,
-                        kind: Expression::Call {
+                        kind: std::sync::Arc::new(Expression::Call {
                             callee: Box::new(callee),
                             arguments,
-                        },
+                        }),
                     }),
                 });
                 definitions.push((method_name.clone(), dispatcher));
@@ -1419,12 +1419,12 @@ impl Analyzer<'_> {
                 span: declaration.span.clone(),
                 metadata: declaration.metadata.clone(),
                 ty: Type::Value,
-                kind: Expression::GeneralFunction {
+                kind: std::sync::Arc::new(Expression::GeneralFunction {
                     methods: wrappers,
                     captures,
                     self_binding: None,
                 rest_class: None,
-                },
+                }),
             };
             methods.push(ProtocolMethod {
                 name: symbol.name.clone(),
@@ -1462,7 +1462,7 @@ impl Analyzer<'_> {
         // Only the last entry for each method is the complete wrapper; preceding
         // entries are the captured dispatcher bindings, initialized in order.
         for (method_name, binding) in definitions {
-            if matches!(binding.value.kind, Expression::GeneralFunction { .. }) {
+            if matches!(*binding.value.kind, Expression::GeneralFunction { .. }) {
                 let value = self.local(&method_name, binding.id);
                 bindings.push(binding);
                 let Kind::Symbol(symbol) = &method_name.kind else {
@@ -1488,10 +1488,10 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
-            kind: Expression::Let {
+            kind: std::sync::Arc::new(Expression::Let {
                 bindings,
                 body: Box::new(body),
-            },
+            }),
         })
     }
     fn native_protocol_extensions(
@@ -1633,7 +1633,7 @@ impl Analyzer<'_> {
         // the enclosing owner, so closures created in method bodies keep it.
         let outer = self.field_owner;
         if in_deftype || !fields.is_empty() {
-            if let Expression::Local(owner) = class.kind {
+            if let Expression::Local(owner) = *class.kind {
                 self.field_owner = Some(owner);
             }
         }
@@ -1798,7 +1798,7 @@ impl Analyzer<'_> {
                         span: method_name.span.clone(),
                         metadata: method_name.metadata.clone(),
                         ty: Type::Value,
-                        kind,
+                        kind: std::sync::Arc::new(kind),
                     };
                     let key = self
                         .literal_form(&method_name, Literal::String(name.encode_utf16().collect()));
@@ -1827,7 +1827,7 @@ impl Analyzer<'_> {
                 span: protocol_name.span.clone(),
                 metadata: protocol_name.metadata.clone(),
                 ty: Type::Value,
-                kind: Expression::Global(global),
+                kind: std::sync::Arc::new(Expression::Global(global)),
             };
             let marker = self.nominal(protocol_name, Nominal::Key(0), vec![protocol.clone()]);
             effects.push(self.nominal(protocol_name, Nominal::Marker, vec![class.clone(), marker]));
@@ -1943,7 +1943,7 @@ mod object_callback_tests {
             let forms = resolve_conditionals(read_forms(source).unwrap()).unwrap();
             let (hir, _) = prepare(&forms, 0..source.len(), &environment, phase).unwrap();
             fn callback(hir: &Hir) -> Option<&Hir> {
-                match &hir.kind {
+                match &*hir.kind {
                     Expression::Nominal {
                         operation: Nominal::ObjectSet,
                         arguments,
@@ -1960,7 +1960,7 @@ mod object_callback_tests {
                 methods,
                 rest_class,
                 ..
-            } = &callback(&hir).expect("actual ObjectSet callback").kind
+            } = &*callback(&hir).expect("actual ObjectSet callback").kind
             else {
                 panic!("variadic callback must use general dispatch")
             };

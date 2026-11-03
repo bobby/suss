@@ -17,7 +17,7 @@ fn nominal_public_hir_and_ir_reject_bad_shapes_before_emission() {
         span: 2..5,
         metadata: vec![],
         ty: Type::Nil,
-        kind: Expression::Literal(Literal::Nil),
+        kind: std::sync::Arc::new(Expression::Literal(Literal::Nil)),
     };
     for operation in [
         Nominal::Class,
@@ -40,10 +40,10 @@ fn nominal_public_hir_and_ir_reject_bad_shapes_before_emission() {
             span: 1..9,
             metadata: vec![],
             ty: operation.result(),
-            kind: Expression::Nominal {
+            kind: std::sync::Arc::new(Expression::Nominal {
                 operation,
                 arguments: vec![],
-            },
+            }),
         };
         assert!(ir::lower(&invalid).is_err(), "{operation:?}");
     }
@@ -52,10 +52,10 @@ fn nominal_public_hir_and_ir_reject_bad_shapes_before_emission() {
         span: 1..9,
         metadata: vec![],
         ty: Type::Value,
-        kind: Expression::Nominal {
+        kind: std::sync::Arc::new(Expression::Nominal {
             operation: Nominal::Descriptor(0),
             arguments: vec![value.clone()],
-        },
+        }),
     };
     assert!(ir::lower(&invalid_descriptor).is_err());
     let valid = Hir {
@@ -63,10 +63,10 @@ fn nominal_public_hir_and_ir_reject_bad_shapes_before_emission() {
         span: 1..9,
         metadata: vec![],
         ty: Type::Value,
-        kind: Expression::Nominal {
+        kind: std::sync::Arc::new(Expression::Nominal {
             operation: Nominal::Array,
             arguments: vec![value],
-        },
+        }),
     };
     let graph = ir::lower(&valid).unwrap();
     ir::verify(&graph).unwrap();
@@ -145,7 +145,7 @@ fn live_protocol_cell_reference_rejects_forged_hir_and_ir_result_types() {
         span: 1..4,
         metadata: vec![],
         ty: Type::Number,
-        kind: Expression::GlobalCell(global),
+        kind: std::sync::Arc::new(Expression::GlobalCell(global)),
     };
     assert!(
         ir::lower(&hir)

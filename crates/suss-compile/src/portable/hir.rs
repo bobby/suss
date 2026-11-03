@@ -658,31 +658,42 @@ pub struct Hir {
     pub span: Range<usize>,
     pub metadata: Vec<Form>,
     pub ty: Type,
-    pub kind: Expression,
+    /// Shared, so source facts and copies of a subtree don't copy it (#319).
+    /// Change it through `kind_mut`, which copies one level when shared.
+    pub kind: std::sync::Arc<Expression>,
 }
 impl Clone for Hir {
     fn clone(&self) -> Self {
-        // Cloning analyzed subtrees also recurses through Expression; protecting
-        // analysis entry alone does not protect these later native stack frames.
-        stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || Self {
+        Self {
             source: self.source.clone(),
             span: self.span.clone(),
             metadata: self.metadata.clone(),
             ty: self.ty,
             kind: self.kind.clone(),
-        })
+        }
     }
 }
 impl Hir {
     /// Extract an owned expression without bypassing stack-safe cleanup of the
-    /// remaining source facts and metadata.
+    /// remaining source facts and metadata. A shared expression is copied
+    /// one level.
     pub fn take_kind(&mut self) -> Expression {
-        std::mem::replace(&mut self.kind, Expression::Literal(Literal::Nil))
+        let kind = std::mem::replace(&mut self.kind, std::sync::Arc::new(Expression::Literal(Literal::Nil)));
+        std::sync::Arc::try_unwrap(kind).unwrap_or_else(|shared| {
+            // The copy shares its child HIR; only its own fields are copied.
+            stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || (*shared).clone())
+        })
+    }
+    /// The expression, for changing in place; a shared one is copied first.
+    pub fn kind_mut(&mut self) -> &mut Expression {
+        std::sync::Arc::make_mut(&mut self.kind)
     }
 }
 impl Drop for Hir {
     fn drop(&mut self) {
-        let kind = self.take_kind();
+        // Only the last owner of the expression takes it apart.
+        let kind = std::sync::Arc::get_mut(&mut self.kind)
+            .map(|kind| std::mem::replace(kind, Expression::Literal(Literal::Nil)));
         let metadata = std::mem::take(&mut self.metadata);
         let source = self.source.take();
         // Every boxed HIR child enters this guard, including partial trees
@@ -901,7 +912,7 @@ impl Analyzer<'_> {
             span,
             metadata: Vec::new(),
             ty,
-            kind: Expression::Do(items),
+            kind: std::sync::Arc::new(Expression::Do(items)),
         })
     }
     fn form(&mut self, form: &Form) -> Result<Hir, Diagnostic> {
@@ -1224,7 +1235,7 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Value,
-                    kind: Expression::Definition {
+                    kind: std::sync::Arc::new(Expression::Definition {
                         global: fallback.clone(),
                         name_metadata: Vec::new(),
                         name_span: form.span.clone(),
@@ -1232,7 +1243,7 @@ impl Analyzer<'_> {
                         initializer: Some(Box::new(initializer)),
                         once: true,
                         linked: None,
-                    },
+                    }),
                 },
             );
         }
@@ -1260,16 +1271,16 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
-            kind: Expression::Call {
+            kind: std::sync::Arc::new(Expression::Call {
                 callee: Box::new(Hir {
                     source: None,
                     span: items[0].span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Value,
-                    kind: Expression::GlobalOrFallback { global, fallback },
+                    kind: std::sync::Arc::new(Expression::GlobalOrFallback { global, fallback }),
                 }),
                 arguments: vec![argument],
-            },
+            }),
         })
     }
     fn form_inner(
@@ -1320,7 +1331,7 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: Vec::new(),
                     ty,
-                    kind,
+                    kind: std::sync::Arc::new(kind),
                 };
                 let key =
                     self.literal_form(form, Literal::String("EMPTY".encode_utf16().collect()));
@@ -1334,7 +1345,7 @@ impl Analyzer<'_> {
                         if let Some(binding) = self.locals.get(&symbol.name) {
                             (Expression::Local(binding.id), binding.ty)
                         } else if let Some(field) = self.fields.get(&symbol.name) {
-                            (field.access.kind.clone(), field.access.ty)
+                            (Expression::clone(&field.access.kind), field.access.ty)
                         } else {
                             self.global_value(symbol, form.span.clone())?
                         }
@@ -1346,7 +1357,7 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty,
-                    kind,
+                    kind: kind.into(),
                 });
             }
             Kind::List(items) if !items.is_empty() => {
@@ -1368,7 +1379,7 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty,
-            kind,
+            kind: std::sync::Arc::new(kind),
         })
     }
     fn global_value(
@@ -1467,10 +1478,10 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
-            kind: Expression::Call {
+            kind: std::sync::Arc::new(Expression::Call {
                 callee: Box::new(self.prepare_source_callee(form, *callee, arguments.len())?),
                 arguments,
-            },
+            }),
         })
     }
     fn definition(&mut self, form: &Form, args: &[Form], once: bool) -> Result<Hir, Diagnostic> {
@@ -1606,7 +1617,7 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
-            kind: Expression::Definition {
+            kind: std::sync::Arc::new(Expression::Definition {
                 global,
                 name_metadata: args[0].metadata.clone(),
                 name_span: args[0].span.clone(),
@@ -1621,7 +1632,7 @@ impl Analyzer<'_> {
                 initializer,
                 once,
                 linked,
-            },
+            }),
         })
     }
     fn function(
@@ -1833,12 +1844,12 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
-            kind: Expression::GeneralFunction {
+            kind: std::sync::Arc::new(Expression::GeneralFunction {
                 methods,
                 captures: captures.into_iter().collect(),
                 self_binding,
                 rest_class,
-            },
+            }),
         };
         let function = self.attach_callable_signatures(form, function)?;
         *self
@@ -2024,7 +2035,7 @@ impl Analyzer<'_> {
                     span: parameter.span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Value,
-                    kind: Expression::Local(parameter.id),
+                    kind: std::sync::Arc::new(Expression::Local(parameter.id)),
                 },
             });
             self.remap_local(&parameter.name, id, Type::Value);
@@ -2147,11 +2158,11 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: inner_body.ty,
-            kind: Expression::Loop {
+            kind: std::sync::Arc::new(Expression::Loop {
                 target,
                 bindings,
                 body: Box::new(inner_body),
-            },
+            }),
         });
         self.locals = outer;
         self.fields = outer_fields;
@@ -2164,11 +2175,11 @@ impl Analyzer<'_> {
                 span: form.span.clone(),
                 metadata: form.metadata.clone(),
                 ty: Type::Closure(parameters.len()),
-                kind: Expression::Function {
+                kind: std::sync::Arc::new(Expression::Function {
                     parameters,
                     captures: captures.into_iter().collect(),
                     body,
-                },
+                }),
             },
             source_method,
         ))
@@ -2260,7 +2271,7 @@ impl Analyzer<'_> {
                 span: form.span.clone(),
                 metadata: form.metadata.clone(),
                 ty: body.ty,
-                kind: Expression::Let {
+                kind: std::sync::Arc::new(Expression::Let {
                     bindings: vec![Binding {
                         id,
                         name: name.name.clone(),
@@ -2269,7 +2280,7 @@ impl Analyzer<'_> {
                         value: current,
                     }],
                     body,
-                },
+                }),
             });
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap")
@@ -2302,10 +2313,10 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: Type::Value,
-                    kind: Expression::Future {
+                    kind: std::sync::Arc::new(Expression::Future {
                         captures: captures.into_iter().collect(),
                         body: Box::new(body),
-                    },
+                    }),
                 });
             }
             if symbol.name == "await*" {
@@ -2330,9 +2341,9 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: Type::Value,
-                    kind: Expression::Await {
+                    kind: std::sync::Arc::new(Expression::Await {
                         value: Box::new(value),
-                    },
+                    }),
                 });
             }
         }
@@ -2401,7 +2412,7 @@ impl Analyzer<'_> {
                 span: args[0].span.clone(),
                 metadata: Vec::new(),
                 ty: Type::Value,
-                kind: Expression::GlobalCell(global),
+                kind: std::sync::Arc::new(Expression::GlobalCell(global)),
             };
             return Ok(self.nominal(form, Nominal::BindingDefined, vec![cell]));
         }
@@ -2477,7 +2488,7 @@ impl Analyzer<'_> {
                 span: form.span.clone(),
                 metadata: form.metadata.clone(),
                 ty: Type::Bool,
-                kind: Expression::NilTest(Box::new(self.form(&args[0])?)),
+                kind: std::sync::Arc::new(Expression::NilTest(Box::new(self.form(&args[0])?))),
             });
         }
         if bare && symbol.name.starts_with(".-") {
@@ -2514,10 +2525,10 @@ impl Analyzer<'_> {
                 span: form.span.clone(),
                 metadata: form.metadata.clone(),
                 ty: Type::Value,
-                kind: Expression::Let {
+                kind: std::sync::Arc::new(Expression::Let {
                     bindings: vec![owner_binding, method_binding],
                     body: Box::new(body),
-                },
+                }),
             });
         }
         if symbol.name.ends_with('.') && symbol.name.len() > 1 {
@@ -2693,11 +2704,11 @@ impl Analyzer<'_> {
                 span: form.span.clone(),
                 metadata: form.metadata.clone(),
                 ty: Type::Value,
-                kind: Expression::Assign {
+                kind: std::sync::Arc::new(Expression::Assign {
                     global,
                     value: Box::new(value),
                     linked,
-                },
+                }),
             });
         }
         if matches!(resolved, Some(ResolvedBinding::BootstrapBinding(_))) {
@@ -2719,7 +2730,7 @@ impl Analyzer<'_> {
                 span: form.span.clone(),
                 metadata: form.metadata.clone(),
                 ty: Type::Value,
-                kind: Expression::Throw(Box::new(exception)),
+                kind: std::sync::Arc::new(Expression::Throw(Box::new(exception))),
             });
         }
         if bare && symbol.name == "try" {
@@ -2764,7 +2775,7 @@ impl Analyzer<'_> {
                 span: form.span.clone(),
                 metadata: form.metadata.clone(),
                 ty: Type::Value,
-                kind: Expression::Recur { target, arguments },
+                kind: std::sync::Arc::new(Expression::Recur { target, arguments }),
             });
         }
         if bare && symbol.name == "def" {
@@ -2793,7 +2804,7 @@ impl Analyzer<'_> {
         let (kind, ty) = match (bare, symbol.name.as_str()) {
             (true, "do") => {
                 let mut body = self.body(args, form.span.clone(), context, tail)?;
-                let Expression::Do(children) = &body.kind else {
+                let Expression::Do(children) = &*body.kind else {
                     unreachable!()
                 };
                 let (statements, result) = if let Some((result, statements)) = children.split_last()
@@ -3015,12 +3026,12 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty,
-            kind,
+            kind: std::sync::Arc::new(kind),
         })
     }
 }
 fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<BindingId>) {
-    match &hir.kind {
+    match &*hir.kind {
         Expression::Assign { value, .. } => free_bindings(value, bound, free),
         Expression::DynamicScope { bindings, body }
         | Expression::AsyncDynamicScope { bindings, body } => {
@@ -3193,7 +3204,7 @@ pub(crate) fn prepare_with_origin(
         _ => span.clone(),
     };
     let hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
-    if let Expression::Do(items) = &hir.kind {
+    if let Expression::Do(items) = &*hir.kind {
         super::analysis_record::analyzed_forms(origin, items);
     }
     let mut hir = analyzer.namespace_frame(before, extent, hir)?;
@@ -3208,7 +3219,7 @@ pub(crate) fn prepare_with_origin(
             span,
             metadata,
             ty,
-            kind: Expression::Do(initializers),
+            kind: std::sync::Arc::new(Expression::Do(initializers)),
         };
     }
     Ok((hir, analyzer.environment))

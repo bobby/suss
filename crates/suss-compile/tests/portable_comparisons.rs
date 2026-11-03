@@ -10,7 +10,7 @@ fn comparison_hir_ir_guards_require_binary_boolean_and_dominating_operands() {
         span: 2..3,
         metadata: vec![],
         ty: Type::Number,
-        kind: Expression::Literal(Literal::Number(1.0)),
+        kind: std::sync::Arc::new(Expression::Literal(Literal::Number(1.0))),
     };
     for operation in [
         Comparison::Less,
@@ -30,10 +30,10 @@ fn comparison_hir_ir_guards_require_binary_boolean_and_dominating_operands() {
                 span: 0..7,
                 metadata: vec![],
                 ty,
-                kind: Expression::Comparison {
+                kind: std::sync::Arc::new(Expression::Comparison {
                     operation,
                     arguments: vec![value.clone(); arity],
-                },
+                }),
             };
             assert!(ir::lower(&hir).is_err());
         }
@@ -42,10 +42,10 @@ fn comparison_hir_ir_guards_require_binary_boolean_and_dominating_operands() {
             span: 0..7,
             metadata: vec![],
             ty: Type::Bool,
-            kind: Expression::Comparison {
+            kind: std::sync::Arc::new(Expression::Comparison {
                 operation,
                 arguments: vec![value.clone(), value.clone()],
-            },
+            }),
         };
         let graph = ir::lower(&hir).unwrap();
         portable::compile_ir(&graph).unwrap();

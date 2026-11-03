@@ -106,7 +106,7 @@ fn compiler_catch_records_keep_private_payload_and_immutable_source_declarations
         assert_ne!(hidden.id, caught["$exception2"].id);
         assert_eq!(hidden.kind, LocalKind::Catch);
         assert!(hidden.initializer.is_none());
-        assert!(matches!(access.kind, Expression::Local(id) if id == hidden.id));
+        assert!(matches!(*access.kind, Expression::Local(id) if id == hidden.id));
         assert!(access.source.is_none());
         let SourceRole::PrivateCatch { anchor } = &hidden.source_role else { panic!("private payload role") };
         assert!(source[anchor.clone()].starts_with("(try "));
@@ -121,9 +121,9 @@ fn compiler_catch_records_keep_private_payload_and_immutable_source_declarations
         assert!(!original.locals.contains_key(&name.name));
         let Some(SourceBinding::Global { global, declaration: Some(info) }) = &original.resolved else { panic!("actual resolved declaration") };
         assert_eq!(global.name(), "prior");
-        assert!(matches!(info.initializer.as_ref().unwrap().kind, Expression::Literal(portable::hir::Literal::Number(40.0))));
+        assert!(matches!(*info.initializer.as_ref().unwrap().kind, Expression::Literal(portable::hir::Literal::Number(40.0))));
         let catalog = &original.scope.declarations[global];
-        assert!(matches!(catalog.initializer.as_ref().unwrap().kind, Expression::Literal(portable::hir::Literal::Number(40.0))));
+        assert!(matches!(*catalog.initializer.as_ref().unwrap().kind, Expression::Literal(portable::hir::Literal::Number(40.0))));
         assert_eq!(original.origin.as_ref().unwrap().text(), source);
     }
 }
@@ -158,7 +158,7 @@ fn compiler_macro_binding_records_preserve_initializer_shadow_scope_and_once_onl
         assert!(outer.shadow.is_none());
         assert_eq!(outer.declaration.metadata.len(), 1);
         assert!(matches!(
-            outer.initializer.as_ref().unwrap().kind,
+            *outer.initializer.as_ref().unwrap().kind,
             Expression::Do(_)
         ));
         assert_eq!(inner.shadow.as_ref().unwrap().id, outer.id);
@@ -174,11 +174,11 @@ fn compiler_macro_binding_records_preserve_initializer_shadow_scope_and_once_onl
         assert_eq!(&source[analyzed.form.span.clone()], "(do (.push effects 1) 41)");
         let Kind::List(parts) = &analyzed.form.kind else { panic!("actual do syntax") };
         assert!(matches!(&parts[0].kind, Kind::Symbol(name) if name.name == "do"));
-        let Expression::Do(children) = &outer.initializer.as_ref().unwrap().kind else { unreachable!() };
+        let Expression::Do(children) = &*outer.initializer.as_ref().unwrap().kind else { unreachable!() };
         assert!(children.iter().all(|child| child.source.is_some()));
         let inner_source = inner.initializer.as_ref().unwrap().source.as_ref().unwrap();
         assert_eq!(&source[inner_source.form.span.clone()], "(+ x 1)");
-        assert!(matches!(inner.initializer.as_ref().unwrap().kind, Expression::Arithmetic { .. }));
+        assert!(matches!(*inner.initializer.as_ref().unwrap().kind, Expression::Arithmetic { .. }));
     }
 }
 
@@ -223,7 +223,7 @@ fn compiler_macro_binding_records_preserve_parameter_roles_catches_and_lowered_l
         };
         assert!(std::sync::Arc::ptr_eq(&payload.identity, &hidden.identity));
         assert_eq!(payload.id, caught.id);
-        assert!(matches!(initializer.kind, Expression::Local(id) if id == hidden.id));
+        assert!(matches!(*initializer.kind, Expression::Local(id) if id == hidden.id));
         assert_eq!(source.context, portable::AnalysisContext::Expression);
         assert_eq!(
             caught.shadow.as_ref().unwrap().id,
@@ -259,7 +259,7 @@ fn compiler_macro_namespace_facts_are_phase_scoped_staged_and_distinct_from_runt
         );
         assert_eq!(tracked.1.origin.as_ref().unwrap().text(), source);
         assert!(matches!(
-            tracked.1.initializer.as_ref().unwrap().kind,
+            *tracked.1.initializer.as_ref().unwrap().kind,
             Expression::Literal(_)
         ));
         let pending = inside
@@ -312,7 +312,7 @@ fn compiler_macro_namespace_facts_are_phase_scoped_staged_and_distinct_from_runt
             .unwrap()
             .1;
         assert!(matches!(
-            declared.initializer.as_ref().unwrap().kind,
+            *declared.initializer.as_ref().unwrap().kind,
             Expression::Throw(_)
         ));
         session.reset().unwrap();
@@ -426,7 +426,7 @@ fn compiler_macro_nested_definitions_keep_each_declaration_and_initializer_toget
         assert!(inner.docstring.is_none());
         assert!(inner.initializer.is_none());
         assert!(matches!(
-            declared("outer-body").initializer.as_ref().unwrap().kind,
+            *declared("outer-body").initializer.as_ref().unwrap().kind,
             Expression::Literal(_)
         ));
         let outer = declared("after-nesting");
@@ -437,7 +437,7 @@ fn compiler_macro_nested_definitions_keep_each_declaration_and_initializer_toget
             "outer doc"
         );
         assert!(matches!(
-            outer.initializer.as_ref().unwrap().kind,
+            *outer.initializer.as_ref().unwrap().kind,
             Expression::Do(_)
         ));
         assert_eq!(&source[outer.declaration.span.clone()], "tracked");
@@ -461,7 +461,7 @@ fn compiler_source_analysis_keeps_actual_expansion_instead_of_relabeling_the_mac
         assert_eq!(analyzed.context, portable::AnalysisContext::Expression);
         assert_eq!(analyzed.phase, session.phase());
         assert_eq!(analyzed.origin.as_ref().unwrap().text(), source);
-        assert!(matches!(init.kind, Expression::Literal(portable::hir::Literal::Number(41.0))));
+        assert!(matches!(*init.kind, Expression::Literal(portable::hir::Literal::Number(41.0))));
     }
     let source = r#"(let [x 41] (checkpoint "owned" x))"#;
     for phase in [portable::resolve::Phase::Runtime, portable::resolve::Phase::Macro] {

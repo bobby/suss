@@ -18,7 +18,7 @@ impl Analyzer<'_> {
             source: None,
             span: form.span.clone(),
             metadata: vec![],
-            kind,
+            kind: std::sync::Arc::new(kind),
             ty,
         };
         Ok(Hir {
@@ -26,10 +26,10 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: vec![],
             ty: Type::Value,
-            kind: Expression::Call {
+            kind: std::sync::Arc::new(Expression::Call {
                 callee: Box::new(self.prepare_source_callee(form, callee, 1)?),
                 arguments: vec![argument],
-            },
+            }),
         })
     }
 
@@ -42,7 +42,7 @@ impl Analyzer<'_> {
             methods,
             self_binding,
             ..
-        } = &function.kind
+        } = &*function.kind
         else {
             return Ok(function);
         };
@@ -74,11 +74,11 @@ impl Analyzer<'_> {
                 span: form.span.clone(),
                 metadata: vec![],
                 ty: Type::Closure(method.parameters.len()),
-                kind: Expression::Function {
+                kind: std::sync::Arc::new(Expression::Function {
                     parameters: method.parameters,
                     body: method.body,
                     captures: captures.into_iter().collect(),
-                },
+                }),
             };
             let delegate = self.fresh_binding(form, delegate);
             bindings.push(delegate.clone());
@@ -145,20 +145,20 @@ impl Analyzer<'_> {
                 span: form.span.clone(),
                 metadata: vec![],
                 ty: Type::Value,
-                kind: Expression::Call {
+                kind: std::sync::Arc::new(Expression::Call {
                     callee: Box::new(self.local(form, delegate.id)),
                     arguments,
-                },
+                }),
             };
             let body = Box::new(Hir {
                 source: None,
                 span: form.span.clone(),
                 metadata: vec![],
                 ty: Type::Value,
-                kind: Expression::Let {
+                kind: std::sync::Arc::new(Expression::Let {
                     bindings: prefix,
                     body: Box::new(call),
-                },
+                }),
             });
             let mut captures = BTreeSet::new();
             free_bindings(&body, &BTreeSet::from([parameter.id]), &mut captures);
@@ -167,11 +167,11 @@ impl Analyzer<'_> {
                 span: form.span.clone(),
                 metadata: vec![],
                 ty: Type::Closure(1),
-                kind: Expression::Function {
+                kind: std::sync::Arc::new(Expression::Function {
                     parameters: vec![parameter],
                     body,
                     captures: captures.into_iter().collect(),
-                },
+                }),
             };
             let key = self.literal_form(
                 form,
@@ -189,17 +189,17 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: vec![],
             ty: Type::Value,
-            kind: Expression::Do(effects),
+            kind: std::sync::Arc::new(Expression::Do(effects)),
         };
         Ok(Hir {
             source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
-            kind: Expression::Let {
+            kind: std::sync::Arc::new(Expression::Let {
                 bindings,
                 body: Box::new(body),
-            },
+            }),
         })
     }
 }

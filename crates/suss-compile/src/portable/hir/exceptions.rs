@@ -16,11 +16,11 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Closure(parameters.len()),
-            kind: Expression::Function {
+            kind: std::sync::Arc::new(Expression::Function {
                 parameters,
                 captures: free.into_iter().collect(),
                 body: Box::new(body),
-            },
+            }),
         }
     }
     pub(super) fn try_form(
@@ -245,7 +245,7 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
-            kind,
+            kind: std::sync::Arc::new(kind),
         })
     }
 }

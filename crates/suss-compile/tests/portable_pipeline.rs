@@ -414,25 +414,25 @@ fn hir_retains_binding_identity_metadata_and_located_diagnostics() {
     use portable::hir::Expression;
     let source = "(let [^:first x 1] (let [x 2] x) ^:last x)";
     let hir = portable::analyze(source).unwrap();
-    let Expression::Do(top) = &hir.kind else {
+    let Expression::Do(top) = &*hir.kind else {
         panic!()
     };
-    let Expression::Let { bindings, body } = &top[0].kind else {
+    let Expression::Let { bindings, body } = &*top[0].kind else {
         panic!()
     };
     assert_eq!(bindings[0].metadata.len(), 1);
     let outer = bindings[0].id;
-    let Expression::Do(items) = &body.kind else {
+    let Expression::Do(items) = &*body.kind else {
         panic!()
     };
     let Expression::Let {
         bindings: inner, ..
-    } = &items[0].kind
+    } = &*items[0].kind
     else {
         panic!()
     };
     assert_ne!(outer, inner[0].id);
-    assert!(matches!(items[1].kind,Expression::Local(id) if id==outer));
+    assert!(matches!(*items[1].kind,Expression::Local(id) if id==outer));
     assert_eq!(items[1].metadata.len(), 1);
     assert_eq!(&source[items[1].span.clone()], "^:last x");
     for (source, needle) in [
@@ -534,7 +534,7 @@ fn malformed_hir_returns_a_located_lowering_diagnostic() {
         span: 3..9,
         metadata: Vec::new(),
         ty: Type::Number,
-        kind: Expression::Local(BindingId(99)),
+        kind: std::sync::Arc::new(Expression::Local(BindingId(99))),
     };
     let error = portable::ir::lower(&hir).unwrap_err();
     assert_eq!(error.span, 3..9);
@@ -844,7 +844,7 @@ fn public_hir_negation_executes_and_malformed_arithmetic_is_rejected() {
         span: 4..12,
         metadata: Vec::new(),
         ty: Type::Number,
-        kind: Expression::Arithmetic {
+        kind: std::sync::Arc::new(Expression::Arithmetic {
             operator,
             arguments: (0..count)
                 .map(|_| Hir {
@@ -852,11 +852,11 @@ fn public_hir_negation_executes_and_malformed_arithmetic_is_rejected() {
                     span: 7..8,
                     metadata: Vec::new(),
                     ty: Type::Number,
-                    kind: Expression::Literal(Literal::Number(0.0)),
+                    kind: Expression::Literal(Literal::Number(0.0)).into(),
                 })
                 .collect(),
             coercing: false,
-        },
+        }),
     };
     let ir = portable::ir::lower(&make(Arithmetic::Negate, 1)).unwrap();
     let (mut store, value) = execute_bytes(portable::compile_ir(&ir).unwrap());
@@ -912,31 +912,31 @@ fn malformed_public_hir_cannot_recur_from_operands_or_to_outer_targets() {
         span: 8..15,
         metadata: vec![],
         ty: Type::Value,
-        kind: Expression::Recur {
+        kind: std::sync::Arc::new(Expression::Recur {
             target: LoopId(0),
             arguments: vec![],
-        },
+        }),
     };
     let mut root = Hir {
         source: None,
         span: 0..20,
         metadata: vec![],
         ty: Type::Value,
-        kind: Expression::Loop {
+        kind: std::sync::Arc::new(Expression::Loop {
             target: LoopId(0),
             bindings: vec![],
             body: Box::new(recur.clone()),
-        },
+        }),
     };
     let graph = portable::ir::lower(&root).unwrap();
     portable::ir::verify(&graph).unwrap();
-    if let Expression::Loop { body, .. } = &mut root.kind {
+    if let Expression::Loop { body, .. } = root.kind_mut() {
         *body = Box::new(Hir {
             source: None,
             span: 8..18,
             metadata: vec![],
             ty: Type::Value,
-            kind: Expression::Do(vec![recur.clone(), recur.clone()]),
+            kind: std::sync::Arc::new(Expression::Do(vec![recur.clone(), recur.clone()])),
         });
     }
     assert!(
@@ -945,17 +945,17 @@ fn malformed_public_hir_cannot_recur_from_operands_or_to_outer_targets() {
             .message
             .contains("tail position")
     );
-    if let Expression::Loop { body, .. } = &mut root.kind {
+    if let Expression::Loop { body, .. } = root.kind_mut() {
         *body = Box::new(Hir {
             source: None,
             span: 8..18,
             metadata: vec![],
             ty: Type::Value,
-            kind: Expression::Loop {
+            kind: std::sync::Arc::new(Expression::Loop {
                 target: LoopId(1),
                 bindings: vec![],
                 body: Box::new(recur),
-            },
+            }),
         });
     }
     assert!(
@@ -1013,7 +1013,7 @@ fn nil_test_verifier_checks_result_type_and_operand_definition() {
             .contains("does not dominate")
     );
     let mut bad_hir = hir;
-    let portable::hir::Expression::Do(items) = &mut bad_hir.kind else {
+    let portable::hir::Expression::Do(items) = bad_hir.kind_mut() else {
         panic!("top-level forms")
     };
     items[0].ty = Type::Number;

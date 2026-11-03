@@ -124,10 +124,10 @@ impl Analyzer<'_> {
                 span: form.span.clone(),
                 metadata: vec![],
                 ty: Type::Value,
-                kind: Expression::Call {
+                kind: std::sync::Arc::new(Expression::Call {
                     callee: Box::new(callee),
                     arguments: vec![selected.clone()],
-                },
+                }),
             };
             let key = self.literal_form(form, Literal::String("fqn".encode_utf16().collect()));
             // The pinned case lowering projects a keyword's private fqn field.
@@ -162,10 +162,10 @@ impl Analyzer<'_> {
                         span: syntax.span.clone(),
                         metadata: syntax.metadata.clone(),
                         ty: Type::Bool,
-                        kind: Expression::Comparison {
+                        kind: std::sync::Arc::new(Expression::Comparison {
                             operation: Comparison::StrictEqual,
                             arguments: vec![selected.clone(), self.literal_form(syntax, value)],
-                        },
+                        }),
                     }
                 } else {
                     // Pin's generic branch uses live qualified core =, with the
@@ -188,10 +188,10 @@ impl Analyzer<'_> {
                         span: syntax.span.clone(),
                         metadata: syntax.metadata.clone(),
                         ty: Type::Value,
-                        kind: Expression::Call {
+                        kind: std::sync::Arc::new(Expression::Call {
                             callee: Box::new(callee),
                             arguments: vec![constant, selected.clone()],
-                        },
+                        }),
                     }
                 };
                 condition = self.control_if(
@@ -208,10 +208,10 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: body.ty,
-            kind: Expression::Let {
+            kind: std::sync::Arc::new(Expression::Let {
                 bindings,
                 body: Box::new(body),
-            },
+            }),
         })
     }
 }

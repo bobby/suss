@@ -15,10 +15,10 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
-            kind: Expression::Array {
+            kind: std::sync::Arc::new(Expression::Array {
                 operation,
                 arguments,
-            },
+            }),
         };
         if operation == ArrayOperation::Get || operation == ArrayOperation::Set {
             let mut current = self.form(&args[0])?;
@@ -63,7 +63,7 @@ impl Analyzer<'_> {
                     span: args[1].span.clone(),
                     metadata: vec![],
                     ty: Type::Number,
-                    kind: Expression::Literal(Literal::Number(size.ceil().max(0.0))),
+                    kind: std::sync::Arc::new(Expression::Literal(Literal::Number(size.ceil().max(0.0)))),
                 }
             } else {
                 self.form(&args[1])?
@@ -74,7 +74,7 @@ impl Analyzer<'_> {
                 span: form.span.clone(),
                 metadata: vec![],
                 ty: Type::Nil,
-                kind: Expression::Literal(Literal::Nil),
+                kind: std::sync::Arc::new(Expression::Literal(Literal::Nil)),
             };
             let mut operands = vec![nil, self.local(form, size.id)];
             operands.extend(
@@ -85,7 +85,7 @@ impl Analyzer<'_> {
             let body = node(operation, operands);
             dimensions.push(size);
             let mut result = node(operation, vec![]);
-            result.kind = Expression::Let { bindings: dimensions, body: Box::new(body) };
+            result.kind = std::sync::Arc::new(Expression::Let { bindings: dimensions, body: Box::new(body) });
             return Ok(result);
         }
         let mut arguments = Vec::new();
@@ -103,7 +103,7 @@ impl Analyzer<'_> {
                     span: args[0].span.clone(),
                     metadata: vec![],
                     ty: Type::Number,
-                    kind: Expression::Literal(Literal::Number(size.ceil().max(0.0))),
+                    kind: std::sync::Arc::new(Expression::Literal(Literal::Number(size.ceil().max(0.0)))),
                 });
             }
         }

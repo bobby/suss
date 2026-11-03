@@ -25,10 +25,10 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: operation.result(),
-            kind: Expression::Bitwise {
+            kind: std::sync::Arc::new(Expression::Bitwise {
                 operation,
                 arguments,
-            },
+            }),
         };
         for arg in &args[operation.arity()..] {
             let right = self.form(arg)?;
@@ -37,10 +37,10 @@ impl Analyzer<'_> {
                 span: form.span.clone(),
                 metadata: form.metadata.clone(),
                 ty: operation.result(),
-                kind: Expression::Bitwise {
+                kind: std::sync::Arc::new(Expression::Bitwise {
                     operation,
                     arguments: vec![result, right],
-                },
+                }),
             };
         }
         Ok(result)

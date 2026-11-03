@@ -29589,3 +29589,10 @@ document's 2026-10-25 decision now records all three outcomes.
 - Analysing core went from ~515 ms to ~410 ms per phase, and from 885 MB to 586 MB allocated. The compiled bootstrap is unchanged except for its identity.
 - Still to do in #319: share forms (each node deep-copies its form; making `Form` shareable touches the reader and about 150 files) and `SourceNode` HIR, then remeasure #299 step 3 (prototype on branch `tooling/core-analysis-cache`).
 - Full baseline on d195490: 2112 passed, 0 failed, 78 ignored, 282 binaries, 98 min.
+
+## #319: shared HIR expressions (2026-11-03)
+
+- PR #323. `Hir::kind` is an `Arc<Expression>`, so cloning HIR shares the subtree. Change an expression in place only through `Hir::kind_mut` (`Arc::make_mut`, which copies one level when shared); `take_kind` moves it out, or copies one level if it's shared. Only an expression's last owner takes it apart on drop. Match on `&*hir.kind`.
+- Analysing core went from ~385 ms to ~285 ms per phase, and from 586 MB to 381 MB allocated. The compiled bootstrap is unchanged except for its identity.
+- #319 is done apart from forms, which source facts still deep-copy (about 43 ms per phase). The user decided not to change the reader's `Form` type for that. #299 step 3 was dropped, because restoring the analysis is no faster than redoing it.
+- Full baseline on 34fc5e5: 2112 passed, 0 failed, 78 ignored, 282 binaries, 107 min.

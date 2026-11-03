@@ -355,7 +355,7 @@ fn definitions_inside_functions_capture_lexicals_and_preserve_name_metadata() {
     let value = session.eval("(let [local 3] ((fn [] (def captured-value local)))) captured-value");
     assert_eq!(session.bits(&value), 3.0f64.to_bits());
     let hir = portable::analyze("(def ^:retained value \"doc\" 7)").unwrap();
-    let portable::hir::Expression::Do(body) = &hir.kind else {
+    let portable::hir::Expression::Do(body) = &*hir.kind else {
         panic!()
     };
     let portable::hir::Expression::Definition {
@@ -363,7 +363,7 @@ fn definitions_inside_functions_capture_lexicals_and_preserve_name_metadata() {
         name_span,
         docstring,
         ..
-    } = &body[0].kind
+    } = &*body[0].kind
     else {
         panic!()
     };
@@ -611,10 +611,10 @@ fn reviewed_declaration_preserves_source_metadata_and_phase_identity() {
         let environment = Environment::new("review.declaration").unwrap();
         let source = "(declare ^:retained first second first)";
         let hir = portable::analyze_in(source, &environment, phase).unwrap();
-        let portable::hir::Expression::Do(body) = &hir.kind else {
+        let portable::hir::Expression::Do(body) = &*hir.kind else {
             panic!()
         };
-        let portable::hir::Expression::Do(definitions) = &body[0].kind else {
+        let portable::hir::Expression::Do(definitions) = &*body[0].kind else {
             panic!()
         };
         assert_eq!(definitions.len(), 3);
@@ -625,7 +625,7 @@ fn reviewed_declaration_preserves_source_metadata_and_phase_identity() {
                 name_span,
                 initializer,
                 ..
-            } = &definitions[index].kind
+            } = &*definitions[index].kind
             else {
                 panic!()
             };

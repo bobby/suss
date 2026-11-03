@@ -23,7 +23,7 @@ impl Analyzer<'_> {
                 span: form.span.clone(),
                 metadata: form.metadata.clone(),
                 ty: Type::Bool,
-                kind: Expression::Do(vec![operand, self.literal_form(form, Literal::Bool(true))]),
+                kind: std::sync::Arc::new(Expression::Do(vec![operand, self.literal_form(form, Literal::Bool(true))])),
             });
         }
         // Source comparisons are Clojure's numeric ones; core keeps the coercing
@@ -34,10 +34,10 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Bool,
-            kind: Expression::Comparison {
+            kind: std::sync::Arc::new(Expression::Comparison {
                 operation,
                 arguments: vec![left, right],
-            },
+            }),
         };
         if args.len() == 2 {
             return Ok(comparison(self.form(&args[0])?, self.form(&args[1])?));
@@ -65,11 +65,11 @@ impl Analyzer<'_> {
                 span: form.span.clone(),
                 metadata: form.metadata.clone(),
                 ty: Type::Bool,
-                kind: Expression::If {
+                kind: std::sync::Arc::new(Expression::If {
                     condition: Box::new(comparison(operand(&pair[0]), operand(&pair[1]))),
                     consequent: Box::new(chain),
                     alternative: Box::new(self.literal_form(form, Literal::Bool(false))),
-                },
+                }),
             };
         }
         Ok(Hir {
@@ -77,10 +77,10 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Bool,
-            kind: Expression::Let {
+            kind: std::sync::Arc::new(Expression::Let {
                 bindings,
                 body: Box::new(chain),
-            },
+            }),
         })
     }
 }

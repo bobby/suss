@@ -130,7 +130,7 @@ fn source_method_roles_match_pinned_arguments_receiver_and_shadow_facts_without_
             assert_eq!(receiver.source_kind(), LocalKind::Let);
             assert_eq!(&source[type_declaration.span.clone()], expected_type);
             assert_eq!(receiver.origin.as_ref().unwrap().text(), source);
-            assert!(matches!(access.kind, Expression::Local(id) if id == receiver.id));
+            assert!(matches!(*access.kind, Expression::Local(id) if id == receiver.id));
             assert_eq!(argument.is_some(), protocol);
             assert_eq!(*protocol_receiver, protocol);
             if let Some(argument) = argument {
@@ -269,7 +269,7 @@ fn repeated_receiver_names_keep_this_as_role_and_the_actual_argument_shadow() {
                 assert_ne!(previous.id, argument.id);
                 assert_ne!(previous.id, receiver.id);
             }
-            assert!(matches!(access.kind, Expression::Local(id) if id == receiver.id));
+            assert!(matches!(*access.kind, Expression::Local(id) if id == receiver.id));
             assert_eq!(&source[receiver.declaration.span.clone()], "arbitrary");
             assert!(receiver_declaration.span.start < argument.declaration.span.start);
             assert_eq!(receiver.declaration.span, argument.declaration.span);

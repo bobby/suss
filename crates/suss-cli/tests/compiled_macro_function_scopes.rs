@@ -125,7 +125,7 @@ fn genuine_function_scopes_match_pinned_names_and_do_not_invent_hint_bindings() 
         let shadow = shadowed.shadow.as_ref().unwrap();
         assert_eq!(shadow.kind, LocalKind::Let);
         assert!(matches!(
-            shadow.initializer.as_ref().unwrap().kind,
+            *shadow.initializer.as_ref().unwrap().kind,
             Expression::Literal(_)
         ));
         assert_ne!(shadow.id, shadowed.self_binding.as_ref().unwrap().id);

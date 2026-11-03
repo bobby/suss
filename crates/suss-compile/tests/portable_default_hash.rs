@@ -10,7 +10,7 @@ fn default_prototype_adapter_rejects_invalid_public_hir_and_ir() {
         span: 3..23,
         metadata: vec![],
         ty,
-        kind: Expression::Nominal {
+        kind: std::sync::Arc::new(Expression::Nominal {
             operation: Nominal::NativeObjectDefaultPrototype,
             arguments: (0..count)
                 .map(|_| Hir {
@@ -18,10 +18,10 @@ fn default_prototype_adapter_rejects_invalid_public_hir_and_ir() {
                     span: 5..6,
                     metadata: vec![],
                     ty: Type::Number,
-                    kind: Expression::Literal(Literal::Number(1.0)),
+                    kind: std::sync::Arc::new(Expression::Literal(Literal::Number(1.0))),
                 })
                 .collect(),
-        },
+        }),
     };
     for (count, ty) in [(1, Type::Value), (0, Type::Bool)] {
         assert_eq!(portable::ir::lower(&make(count, ty)).unwrap_err().span, 3..23);

@@ -322,7 +322,7 @@ impl<'a> Lowerer<'a> {
             };
         }
 
-        Ok(Some(match &hir.kind {
+        Ok(Some(match &*hir.kind {
             Expression::Await { value } if self.suspendable => {
                 let future = operand!(value);
                 self.emit(Operation::Await { future }, Type::Value, hir.span.clone())?
@@ -743,7 +743,7 @@ impl<'a> Lowerer<'a> {
                     // those facts to synthetic delegates or adding lexical IDs.
                     if index == 0
                         && binding.value.source.is_none()
-                        && matches!(binding.value.kind, Expression::GeneralFunction { .. })
+                        && matches!(*binding.value.kind, Expression::GeneralFunction { .. })
                         && let Some(name) = self.display_name(hir)?
                     {
                         let instruction = self.function.blocks[self.current].instructions.last_mut()
@@ -1031,7 +1031,7 @@ fn verify_recurrence_inner(
         span: hir.span.clone(),
         message: message.into(),
     };
-    match &hir.kind {
+    match &*hir.kind {
         Expression::Future { body, .. } => {
             verify_recurrence(body, &mut Vec::new(), false, meter)?;
         }
@@ -1050,7 +1050,7 @@ fn verify_recurrence_inner(
         Expression::Assign { value, .. } => verify_recurrence(value, targets, false, meter)?,
         Expression::DynamicScope { bindings, body } => {
             if hir.ty != Type::Value
-                || !matches!(&body.kind, Expression::Function { parameters, .. } if parameters.is_empty())
+                || !matches!(&*body.kind, Expression::Function { parameters, .. } if parameters.is_empty())
             {
                 return Err(error("HIR dynamic scope shape mismatch"));
             }
@@ -1066,8 +1066,8 @@ fn verify_recurrence_inner(
             }
             for (index, region) in regions.iter().enumerate() {
                 let arity = usize::from(index == 1);
-                if !matches!(&region.kind, Expression::Function { parameters, .. } if parameters.len() == arity)
-                    && !(index > 0 && matches!(&region.kind, Expression::Literal(Literal::Nil)))
+                if !matches!(&*region.kind, Expression::Function { parameters, .. } if parameters.len() == arity)
+                    && !(index > 0 && matches!(&*region.kind, Expression::Literal(Literal::Nil)))
                 {
                     return Err(error("HIR handler region shape mismatch"));
                 }
@@ -1203,7 +1203,7 @@ fn expression_preallocation_work(hir: &Hir) -> usize {
     // are charged by Lowerer helpers; this covers HIR-sized temporary vectors,
     // parallel copies, and CFG terminator argument buffers before they exist.
     let base = 1usize;
-    let sized = match &hir.kind {
+    let sized = match &*hir.kind {
         Future { captures, .. } => captures.len().saturating_mul(3),
         Literal(super::hir::Literal::String(text)) => text.len(),
         AsyncTry { handler, cleanup, .. } => 8usize
@@ -1269,7 +1269,7 @@ mod metering_tests {
             span: 3..4,
             metadata: Vec::new(),
             ty: Type::Nil,
-            kind: Expression::Literal(Literal::Nil),
+            kind: std::sync::Arc::new(Expression::Literal(Literal::Nil)),
         }
     }
 
@@ -1279,9 +1279,9 @@ mod metering_tests {
         for id in 0..64 {
             hir = Hir {
                 source: None, span: 3..4, metadata: Vec::new(), ty: Type::Nil,
-                kind: Expression::Loop {
+                kind: std::sync::Arc::new(Expression::Loop {
                     target: LoopId(id), bindings: Vec::new(), body: Box::new(hir),
-                },
+                }),
             };
         }
         let mut remaining = 1000u64;
