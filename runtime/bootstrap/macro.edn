@@ -342,6 +342,7 @@
          "suss.bindings.macro:suss.core/chunked-seq"
          "suss.bindings.macro:suss.core/chunked-seq?"
          "suss.bindings.macro:suss.core/ci-reduce"
+         "suss.bindings.macro:suss.core/class-name"
          "suss.bindings.macro:suss.core/clone"
          "suss.bindings.macro:suss.core/clone-and-set"
          "suss.bindings.macro:suss.core/comp"
@@ -366,6 +367,7 @@
          "suss.bindings.macro:suss.core/date-from-ms"
          "suss.bindings.macro:suss.core/dec"
          "suss.bindings.macro:suss.core/deref"
+         "suss.bindings.macro:suss.core/deref-as-map"
          "suss.bindings.macro:suss.core/disj"
          "suss.bindings.macro:suss.core/disj!"
          "suss.bindings.macro:suss.core/dissoc"
@@ -416,6 +418,7 @@
          "suss.bindings.macro:suss.core/hash-string*"
          "suss.bindings.macro:suss.core/hash-symbol"
          "suss.bindings.macro:suss.core/hash-unordered-coll"
+         "suss.bindings.macro:suss.core/hex-string"
          "suss.bindings.macro:suss.core/identity"
          "suss.bindings.macro:suss.core/ifind?"
          "suss.bindings.macro:suss.core/inc"
@@ -434,7 +437,6 @@
          "suss.bindings.macro:suss.core/js-keys"
          "suss.bindings.macro:suss.core/js-mod"
          "suss.bindings.macro:suss.core/js-obj"
-         "suss.bindings.macro:suss.core/js-symbol?"
          "suss.bindings.macro:suss.core/juxt"
          "suss.bindings.macro:suss.core/key"
          "suss.bindings.macro:suss.core/key-test"
@@ -521,13 +523,8 @@
          "suss.bindings.macro:suss.core/pop"
          "suss.bindings.macro:suss.core/pop-tail"
          "suss.bindings.macro:suss.core/pos?"
-         "suss.bindings.macro:suss.core/pr-constructor-display-name"
          "suss.bindings.macro:suss.core/pr-constructor-writer"
-         "suss.bindings.macro:suss.core/pr-date?"
          "suss.bindings.macro:suss.core/pr-function-name"
-         "suss.bindings.macro:suss.core/pr-object-constructor"
-         "suss.bindings.macro:suss.core/pr-object-constructor-name"
-         "suss.bindings.macro:suss.core/pr-object-constructor-string"
          "suss.bindings.macro:suss.core/pr-object-keyword?"
          "suss.bindings.macro:suss.core/pr-object-map"
          "suss.bindings.macro:suss.core/pr-opts-dup"
@@ -541,6 +538,8 @@
          "suss.bindings.macro:suss.core/pr-str"
          "suss.bindings.macro:suss.core/pr-str*"
          "suss.bindings.macro:suss.core/pr-str-with-opts"
+         "suss.bindings.macro:suss.core/pr-tagged-object"
+         "suss.bindings.macro:suss.core/pr-throwable"
          "suss.bindings.macro:suss.core/pr-writer"
          "suss.bindings.macro:suss.core/pr-writer-impl"
          "suss.bindings.macro:suss.core/preserving-reduced"
@@ -665,7 +664,6 @@
          "suss.bindings.macro:suss.core/reduce-kv"
          "suss.bindings.macro:suss.core/reduced"
          "suss.bindings.macro:suss.core/reduced?"
-         "suss.bindings.macro:suss.core/regexp?"
          "suss.bindings.macro:suss.core/register-record-reader!"
          "suss.bindings.macro:suss.core/registered-namespace"
          "suss.bindings.macro:suss.core/rem"
@@ -698,6 +696,7 @@
          "suss.bindings.macro:suss.core/sorted-map-by"
          "suss.bindings.macro:suss.core/sorted-set"
          "suss.bindings.macro:suss.core/sorted-set-by"
+         "suss.bindings.macro:suss.core/source-object-string"
          "suss.bindings.macro:suss.core/split-names"
          "suss.bindings.macro:suss.core/spread"
          "suss.bindings.macro:suss.core/str"
@@ -771,10 +770,14 @@
          "suss.bindings.macro:suss.internal.bootstrap-link/>="
          "suss.bindings.macro:suss.internal.bootstrap-link/Error"
          "suss.bindings.macro:suss.internal.bootstrap-link/ExceptionInfo"
+         "suss.bindings.macro:suss.internal.bootstrap-link/Object"
          "suss.bindings.macro:suss.internal.bootstrap-link/aclone"
          "suss.bindings.macro:suss.internal.bootstrap-link/aget"
          "suss.bindings.macro:suss.internal.bootstrap-link/array?"
+         "suss.bindings.macro:suss.internal.bootstrap-link/ex-cause"
+         "suss.bindings.macro:suss.internal.bootstrap-link/ex-data"
          "suss.bindings.macro:suss.internal.bootstrap-link/ex-info"
+         "suss.bindings.macro:suss.internal.bootstrap-link/ex-message"
          "suss.bindings.macro:suss.internal.bootstrap-link/false?"
          "suss.bindings.macro:suss.internal.bootstrap-link/identical?"
          "suss.bindings.macro:suss.internal.bootstrap-link/imul"
@@ -1115,6 +1118,7 @@
          "suss.bindings.macro:suss.internal.core-link/chunked-seq"
          "suss.bindings.macro:suss.internal.core-link/chunked-seq?"
          "suss.bindings.macro:suss.internal.core-link/ci-reduce"
+         "suss.bindings.macro:suss.internal.core-link/class-name"
          "suss.bindings.macro:suss.internal.core-link/clone"
          "suss.bindings.macro:suss.internal.core-link/clone-and-set"
          "suss.bindings.macro:suss.internal.core-link/comp"
@@ -1139,6 +1143,7 @@
          "suss.bindings.macro:suss.internal.core-link/date-from-ms"
          "suss.bindings.macro:suss.internal.core-link/dec"
          "suss.bindings.macro:suss.internal.core-link/deref"
+         "suss.bindings.macro:suss.internal.core-link/deref-as-map"
          "suss.bindings.macro:suss.internal.core-link/disj"
          "suss.bindings.macro:suss.internal.core-link/disj!"
          "suss.bindings.macro:suss.internal.core-link/dissoc"
@@ -1189,6 +1194,7 @@
          "suss.bindings.macro:suss.internal.core-link/hash-string*"
          "suss.bindings.macro:suss.internal.core-link/hash-symbol"
          "suss.bindings.macro:suss.internal.core-link/hash-unordered-coll"
+         "suss.bindings.macro:suss.internal.core-link/hex-string"
          "suss.bindings.macro:suss.internal.core-link/identity"
          "suss.bindings.macro:suss.internal.core-link/ifind?"
          "suss.bindings.macro:suss.internal.core-link/inc"
@@ -1207,7 +1213,6 @@
          "suss.bindings.macro:suss.internal.core-link/js-keys"
          "suss.bindings.macro:suss.internal.core-link/js-mod"
          "suss.bindings.macro:suss.internal.core-link/js-obj"
-         "suss.bindings.macro:suss.internal.core-link/js-symbol?"
          "suss.bindings.macro:suss.internal.core-link/juxt"
          "suss.bindings.macro:suss.internal.core-link/key"
          "suss.bindings.macro:suss.internal.core-link/key-test"
@@ -1294,13 +1299,8 @@
          "suss.bindings.macro:suss.internal.core-link/pop"
          "suss.bindings.macro:suss.internal.core-link/pop-tail"
          "suss.bindings.macro:suss.internal.core-link/pos?"
-         "suss.bindings.macro:suss.internal.core-link/pr-constructor-display-name"
          "suss.bindings.macro:suss.internal.core-link/pr-constructor-writer"
-         "suss.bindings.macro:suss.internal.core-link/pr-date?"
          "suss.bindings.macro:suss.internal.core-link/pr-function-name"
-         "suss.bindings.macro:suss.internal.core-link/pr-object-constructor"
-         "suss.bindings.macro:suss.internal.core-link/pr-object-constructor-name"
-         "suss.bindings.macro:suss.internal.core-link/pr-object-constructor-string"
          "suss.bindings.macro:suss.internal.core-link/pr-object-keyword?"
          "suss.bindings.macro:suss.internal.core-link/pr-object-map"
          "suss.bindings.macro:suss.internal.core-link/pr-opts-dup"
@@ -1314,6 +1314,8 @@
          "suss.bindings.macro:suss.internal.core-link/pr-str"
          "suss.bindings.macro:suss.internal.core-link/pr-str*"
          "suss.bindings.macro:suss.internal.core-link/pr-str-with-opts"
+         "suss.bindings.macro:suss.internal.core-link/pr-tagged-object"
+         "suss.bindings.macro:suss.internal.core-link/pr-throwable"
          "suss.bindings.macro:suss.internal.core-link/pr-writer"
          "suss.bindings.macro:suss.internal.core-link/pr-writer-impl"
          "suss.bindings.macro:suss.internal.core-link/preserving-reduced"
@@ -1438,7 +1440,6 @@
          "suss.bindings.macro:suss.internal.core-link/reduce-kv"
          "suss.bindings.macro:suss.internal.core-link/reduced"
          "suss.bindings.macro:suss.internal.core-link/reduced?"
-         "suss.bindings.macro:suss.internal.core-link/regexp?"
          "suss.bindings.macro:suss.internal.core-link/register-record-reader!"
          "suss.bindings.macro:suss.internal.core-link/registered-namespace"
          "suss.bindings.macro:suss.internal.core-link/rem"
@@ -1471,6 +1472,7 @@
          "suss.bindings.macro:suss.internal.core-link/sorted-map-by"
          "suss.bindings.macro:suss.internal.core-link/sorted-set"
          "suss.bindings.macro:suss.internal.core-link/sorted-set-by"
+         "suss.bindings.macro:suss.internal.core-link/source-object-string"
          "suss.bindings.macro:suss.internal.core-link/split-names"
          "suss.bindings.macro:suss.internal.core-link/spread"
          "suss.bindings.macro:suss.internal.core-link/str"
@@ -1767,15 +1769,15 @@
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d666c7573682f31"
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d77726974652f32"
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
-         "suss.bindings.macro:suss.internal.reify/t-reify-3277-10501"],
- :compiler "0.1.0+portable.2",
- :compiler-source-sha256 "6dafe20f74d52b6bf35f660d28bb97bab9e4866bf5f0e6a3ae598e22e2bbe5ac",
- :dependency-graph-sha256 "a668c3f266005296e2f2712cb0a2e3930807a2180707ae73dc6c47090e8fbd86",
+         "suss.bindings.macro:suss.internal.reify/t-reify-3266-10523"],
+ :compiler "0.1.0+portable.3",
+ :compiler-source-sha256 "10117be06baa8074faea07f45ed9fcac8b7fdd1cc0bdf22f4ec8b933dc327434",
+ :dependency-graph-sha256 "9f2da9a0c34f082f25f3d5c1ac69ace4d72cf4a06e103219df0a75b26eec5a08",
  :flags [],
  :format-version 2,
  :phase "macro",
  :runtime-abi 2,
- :source-sha256 "7ab3a009435abaf0d8bab67f0a6ef3a8dfa109fd677a431b64c2f656a9ceacf5",
+ :source-sha256 "08fc84c688f039d3e8bc1b014ceb48e2cd94b3b587eec9569cf1e74c47e9a83a",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "3436cd8f49063ad12dd7e9c03df3334caf675ffbe412e18864926b18abd6ba45",
+ :wasm-sha256 "723a862a22c78664bfb5633fb23d5865859cfd02915f4d36d1730716068bc39a",
  :wasm-tools "0.258.0"}

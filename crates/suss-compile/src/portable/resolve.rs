@@ -8,6 +8,7 @@ use std::{
     ops::Range,
     path::{Path, PathBuf},
 };
+use super::persistent::{PersistentMap, PersistentSet};
 use suss_reader::Symbol;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -22,8 +23,9 @@ mod persist;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Global {
     phase: Phase,
-    namespace: String,
-    name: String,
+    // Shared, since snapshots of a namespace copy every global in it (#319).
+    namespace: std::sync::Arc<str>,
+    name: std::sync::Arc<str>,
 }
 impl Global {
     pub fn phase(&self) -> Phase {
@@ -278,11 +280,16 @@ pub struct Environment {
     pub(crate) reader_state: super::syntax_quote::ReaderState,
     namespaces: BTreeSet<(Phase, String)>,
     bindings: BTreeMap<Global, Binding>,
-    definitions: BTreeMap<Global, std::sync::Arc<DefinitionInfo>>,
+    /// Per namespace, persistent so a snapshot shares it (#319).
+    definitions: BTreeMap<(Phase, std::sync::Arc<str>), PersistentMap<Global, std::sync::Arc<DefinitionInfo>>>,
     source_generation: u64,
     scopes: BTreeMap<(Phase, String), Scope>,
     current: BTreeMap<Phase, String>,
     materialized_bootstrap: BTreeSet<Global>,
+    /// Per namespace, the cells other code can see: `Cell` bindings, and
+    /// materialized bootstrap cells other than reader and internal cells.
+    /// `bind`, `unbind` and `materialize_bootstrap` keep it (#319).
+    identities: BTreeMap<(Phase, std::sync::Arc<str>), PersistentSet<Global>>,
     macro_exports: BTreeSet<(Phase, String, String)>,
     macro_namespaces: BTreeSet<(Phase, String)>,
     pub(crate) protocols: BTreeMap<Global, Vec<ProtocolMethod>>,
@@ -415,6 +422,7 @@ impl Environment {
             scopes: BTreeMap::new(),
             current: BTreeMap::new(),
             materialized_bootstrap: BTreeSet::new(),
+            identities: BTreeMap::new(),
             macro_exports: BTreeSet::new(),
             macro_namespaces: BTreeSet::new(),
             protocols: BTreeMap::new(),
@@ -439,8 +447,7 @@ impl Environment {
                     namespace: "suss.core".into(),
                     name: name.into(),
                 };
-                env.bindings
-                    .insert(global.clone(), Binding::Arithmetic { global, operator });
+                env.bind(global.clone(), Binding::Arithmetic { global, operator });
             }
             for (name, export) in [
                 ("int", "primitive-int-function"),
@@ -497,8 +504,7 @@ impl Environment {
                     namespace: "suss.core".into(),
                     name: name.into(),
                 };
-                env.bindings
-                    .insert(global.clone(), Binding::Core { global, export });
+                env.bind(global.clone(), Binding::Core { global, export });
             }
             // Explicit owned host bindings, not declarations of a loaded JS namespace.
             for (name, export) in [
@@ -514,8 +520,7 @@ impl Environment {
                     namespace: "js".into(),
                     name: name.into(),
                 };
-                env.bindings
-                    .insert(global.clone(), Binding::Core { global, export });
+                env.bind(global.clone(), Binding::Core { global, export });
             }
             // Private callable adapters used by the bundled compiled async library.
             for (name, export) in [
@@ -574,8 +579,7 @@ impl Environment {
                     namespace: "suss.internal.async".into(),
                     name: name.into(),
                 };
-                env.bindings
-                    .insert(global.clone(), Binding::Core { global, export });
+                env.bind(global.clone(), Binding::Core { global, export });
             }
             for (name, form) in [
                 ("deftype", NominalForm::Deftype),
@@ -593,8 +597,7 @@ impl Environment {
                     namespace: "suss.core".into(),
                     name: name.into(),
                 };
-                env.bindings
-                    .insert(global.clone(), Binding::Nominal { global, form });
+                env.bind(global.clone(), Binding::Nominal { global, form });
             }
             for name in [
                 "when",
@@ -615,7 +618,7 @@ impl Environment {
                     namespace: "suss.core".into(),
                     name: name.into(),
                 };
-                env.bindings.insert(
+                env.bind(
                     global.clone(),
                     Binding::BootstrapControl {
                         global,
@@ -640,7 +643,7 @@ impl Environment {
                 } else {
                     Binding::BootstrapDefonce(global.clone())
                 };
-                env.bindings.insert(global, binding);
+                env.bind(global, binding);
             }
         }
         Ok(env)
@@ -668,22 +671,17 @@ impl Environment {
     pub fn restore_declarations(&mut self, before: &Self, globals: &[Global], phase: Phase) {
         for global in globals {
             match before.bindings.get(global) {
-                Some(value) => {
-                    self.bindings.insert(global.clone(), value.clone());
-                }
+                Some(value) => self.bind(global.clone(), value.clone()),
+                None => self.unbind(global),
+            }
+            let definitions = self.definitions.entry((global.phase, global.namespace.clone())).or_default();
+            match before.shared_definition_info(global) {
+                Some(value) => definitions.insert(global.clone(), value.clone()),
                 None => {
-                    self.bindings.remove(global);
+                    definitions.remove(global);
                 }
             }
-            match before.definitions.get(global) {
-                Some(value) => {
-                    self.definitions.insert(global.clone(), value.clone());
-                }
-                None => {
-                    self.definitions.remove(global);
-                }
-            }
-            let export = (phase, global.namespace.clone(), global.name.clone());
+            let export = (phase, global.namespace.to_string(), global.name.to_string());
             if before.macro_exports.contains(&export) {
                 self.macro_exports.insert(export);
             } else {
@@ -712,9 +710,31 @@ impl Environment {
             used_refers: &scope.used_refers, renamed_refers: &scope.renamed_refers,
             macro_aliases: &scope.macro_aliases, macro_refers: &scope.macro_refers,
             used_macro_refers: &scope.used_macro_refers, renamed_macro_refers: &scope.renamed_macro_refers,
-            declarations: self.definitions.iter().filter(|(global, _)|
-                global.phase() == phase && global.namespace() == scope.namespace)
-                .map(|(global, info)| (global, info.as_ref())).collect(),
+            declarations: self.definitions.get(&(phase, scope.namespace.as_str().into())).into_iter()
+                .flat_map(PersistentMap::iter).map(|(global, info)| (global, info.as_ref())).collect(),
+        })
+    }
+    /// A snapshot of one namespace for source facts. Its declarations and
+    /// identities are that namespace's persistent maps, shared rather than
+    /// copied (#319).
+    pub(crate) fn source_namespace(&self, phase: Phase, namespace: &str) -> Option<super::hir::SourceNamespace> {
+        let scope = self.scopes.get(&(phase, canonical(namespace).into()))?;
+        let key = (phase, std::sync::Arc::<str>::from(scope.namespace.as_str()));
+        let declarations = self.definitions.get(&key).cloned().unwrap_or_default();
+        let identities = self.identities.get(&key).cloned().unwrap_or_default();
+        Some(super::hir::SourceNamespace {
+            namespace: scope.namespace.clone(),
+            aliases: scope.aliases.clone(),
+            refers: scope.refers.clone(),
+            used_refers: scope.used_refers.clone(),
+            renamed_refers: scope.renamed_refers.clone(),
+            excluded_core: scope.excluded_core.clone(),
+            macro_aliases: scope.macro_aliases.clone(),
+            macro_refers: scope.macro_refers.clone(),
+            used_macro_refers: scope.used_macro_refers.clone(),
+            renamed_macro_refers: scope.renamed_macro_refers.clone(),
+            declarations,
+            identities,
         })
     }
     /// Phase-specific declared namespaces; declaration does not certify loading.
@@ -727,7 +747,7 @@ impl Environment {
         self.definitions.values()
     }
     pub fn definition_info(&self, global: &Global) -> Option<&DefinitionInfo> {
-        self.definitions.get(global).map(std::sync::Arc::as_ref)
+        self.shared_definition_info(global).map(std::sync::Arc::as_ref)
     }
     /// Immutable declaration revisions retain identity through Environment clones
     /// and source snapshots. Reanalysis installs a fresh revision instead.
@@ -735,11 +755,14 @@ impl Environment {
         &self,
         global: &Global,
     ) -> Option<&std::sync::Arc<DefinitionInfo>> {
-        self.definitions.get(global)
+        self.definitions.get(&(global.phase, global.namespace.clone()))?.get(global)
     }
     pub(crate) fn record_definition(&mut self, global: Global, info: DefinitionInfo) {
         self.source_changed();
-        self.definitions.insert(global, std::sync::Arc::new(info));
+        self.definitions
+            .entry((global.phase, global.namespace.clone()))
+            .or_default()
+            .insert(global, std::sync::Arc::new(info));
     }
     /// Explicit declarations, not evidence that any source file has loaded.
     pub fn has_namespace(&self, phase: Phase, namespace: &str) -> bool {
@@ -761,8 +784,54 @@ impl Environment {
             .collect()
     }
     pub(crate) fn materialize_bootstrap(&mut self, global: Global) {
-        if self.materialized_bootstrap.insert(global) {
+        if self.materialized_bootstrap.insert(global.clone()) {
+            self.refresh_identity(&global);
             self.source_changed();
+        }
+    }
+    /// Panics unless every namespace's identities equal a full recomputation
+    /// from the bindings and materialized bootstrap cells.
+    #[cfg(test)]
+    pub(crate) fn check_identities(&self) {
+        let mut expected = BTreeMap::<(Phase, std::sync::Arc<str>), Vec<Global>>::new();
+        let visible = self
+            .bindings
+            .iter()
+            .filter_map(|(global, binding)| matches!(binding, Binding::Cell(_)).then_some(global))
+            .chain(self.materialized_bootstrap.iter().filter(|global| {
+                !matches!(self.bindings.get(global), Some(Binding::ReaderCell(_) | Binding::InternalCell(_)))
+            }))
+            .collect::<BTreeSet<_>>();
+        for global in visible {
+            expected.entry((global.phase, global.namespace.clone())).or_default().push(global.clone());
+        }
+        let actual = self
+            .identities
+            .iter()
+            .filter(|(_, identities)| !identities.is_empty())
+            .map(|(key, identities)| (key.clone(), identities.iter().cloned().collect::<Vec<_>>()))
+            .collect::<BTreeMap<_, _>>();
+        assert_eq!(actual, expected);
+    }
+    fn bind(&mut self, global: Global, binding: Binding) {
+        self.bindings.insert(global.clone(), binding);
+        self.refresh_identity(&global);
+    }
+    fn unbind(&mut self, global: &Global) {
+        self.bindings.remove(global);
+        self.refresh_identity(global);
+    }
+    fn refresh_identity(&mut self, global: &Global) {
+        let visible = match self.bindings.get(global) {
+            Some(Binding::Cell(_)) => true,
+            Some(Binding::ReaderCell(_) | Binding::InternalCell(_)) => false,
+            _ => self.materialized_bootstrap.contains(global),
+        };
+        let key = (global.phase, global.namespace.clone());
+        if visible {
+            self.identities.entry(key).or_default().insert(global.clone());
+        } else if let Some(identities) = self.identities.get_mut(&key) {
+            identities.remove(global);
         }
     }
     /// Bootstrap cell initializers for native hosts; source values share these
@@ -842,7 +911,7 @@ impl Environment {
         };
         if self
             .scopes
-            .get(&(phase, global.namespace.clone()))
+            .get(&(phase, global.namespace.to_string()))
             .is_some_and(|scope| {
                 scope
                     .refers
@@ -856,8 +925,7 @@ impl Environment {
             return Err(error("Cannot redefine a compiler-owned binding"));
         }
         self.declare_namespace(phase, &global.namespace)?;
-        self.bindings
-            .insert(global.clone(), Binding::Cell(global.clone()));
+        self.bind(global.clone(), Binding::Cell(global.clone()));
         self.source_changed();
         Ok(global)
     }
@@ -883,13 +951,12 @@ impl Environment {
             namespace: "suss.internal.reader".into(),
             name: "sequence".into(),
         };
-        self.bindings
-            .entry(global.clone())
-            .or_insert_with(|| Binding::ReaderCell(global.clone()));
+        if !self.bindings.contains_key(&global) {
+            self.bind(global.clone(), Binding::ReaderCell(global.clone()));
+        }
         let fresh = !self.bindings.contains_key(&fallback);
         if fresh {
-            self.bindings
-                .insert(fallback.clone(), Binding::InternalCell(fallback.clone()));
+            self.bind(fallback.clone(), Binding::InternalCell(fallback.clone()));
             self.source_changed();
         }
         (global, fallback, fresh)
@@ -904,7 +971,7 @@ impl Environment {
         };
         let fresh = !self.bindings.contains_key(&global);
         if fresh {
-            self.bindings.insert(global.clone(), Binding::InternalCell(global.clone()));
+            self.bind(global.clone(), Binding::InternalCell(global.clone()));
             self.source_changed();
         }
         (global, fresh)
@@ -918,10 +985,10 @@ impl Environment {
         let global = Global {
             phase,
             namespace: "suss.internal.reify".into(),
-            name: format!("t-reify-{generation}-{site}"),
+            name: format!("t-reify-{generation}-{site}").into(),
         };
         if !self.bindings.contains_key(&global) {
-            self.bindings.insert(global.clone(), Binding::InternalCell(global.clone()));
+            self.bind(global.clone(), Binding::InternalCell(global.clone()));
             self.source_changed();
         }
         global
@@ -937,7 +1004,7 @@ impl Environment {
             name: global.name.clone(),
         };
         if !self.bindings.contains_key(&link) {
-            self.bindings.insert(link.clone(), Binding::InternalCell(link.clone()));
+            self.bind(link.clone(), Binding::InternalCell(link.clone()));
             self.source_changed();
         }
         link
@@ -955,7 +1022,7 @@ impl Environment {
     pub(crate) fn bootstrap_link(&mut self, global: &Global) -> Global {
         let link = Self::bootstrap_link_global(global);
         if !self.bindings.contains_key(&link) {
-            self.bindings.insert(link.clone(), Binding::InternalCell(link.clone()));
+            self.bind(link.clone(), Binding::InternalCell(link.clone()));
             self.source_changed();
         }
         link
@@ -999,11 +1066,10 @@ impl Environment {
             } else {
                 "suss.internal.protocol-natives".into()
             },
-            name: format!("native-{name}"),
+            name: format!("native-{name}").into(),
         };
         if !self.bindings.contains_key(&global) {
-            self.bindings
-                .insert(global.clone(), Binding::InternalCell(global.clone()));
+            self.bind(global.clone(), Binding::InternalCell(global.clone()));
             self.source_changed();
         }
         global
@@ -1021,10 +1087,9 @@ impl Environment {
         let global = Global {
             phase: protocol.phase,
             namespace: "suss.internal.protocol-keys".into(),
-            name: format!("key-{name}"),
+            name: format!("key-{name}").into(),
         };
-        self.bindings
-            .insert(global.clone(), Binding::InternalCell(global.clone()));
+        self.bind(global.clone(), Binding::InternalCell(global.clone()));
         global
     }
     /// Retain the explicit source require edge, including imports without aliases.
@@ -1126,7 +1191,7 @@ impl Environment {
         let scope = self.scope(phase);
         let own = Global {
             phase,
-            namespace: scope.namespace.clone(),
+            namespace: scope.namespace.as_str().into(),
             name: local.into(),
         };
         if scope
@@ -1267,7 +1332,7 @@ impl Environment {
         {
             // Ordinary dependencies of compiled macro source live in this same
             // phase. Only a real registered macro export can pass the check below.
-            (target.namespace.clone(), target.name.clone())
+            (target.namespace.to_string(), target.name.to_string())
         } else {
             (scope.namespace.clone(), symbol.name.clone())
         };
@@ -1285,12 +1350,12 @@ impl Environment {
                 && symbol.name == name;
         }
         if let Some(target) = scope.refers.get(&symbol.name) {
-            return target.namespace == "suss.core" && target.name == name;
+            return &*target.namespace == "suss.core" && &*target.name == name;
         }
         let own = Global {
             phase,
-            namespace: scope.namespace.clone(),
-            name: symbol.name.clone(),
+            namespace: scope.namespace.as_str().into(),
+            name: symbol.name.as_str().into(),
         };
         symbol.name == name
             && !scope.excluded_core.contains(name)
@@ -1299,12 +1364,12 @@ impl Environment {
     /// Names `resolve` finds as `namespace`'s own bindings in `phase`, the
     /// declarations runtime namespaces publish (#309).
     pub(crate) fn declared_names(&self, phase: Phase, namespace: &str) -> BTreeSet<String> {
-        let start = Global { phase, namespace: namespace.into(), name: String::new() };
+        let start = Global { phase, namespace: namespace.into(), name: "".into() };
         self.bindings
             .range(start..)
-            .take_while(|(global, _)| global.phase == phase && global.namespace == namespace)
+            .take_while(|(global, _)| global.phase == phase && &*global.namespace == namespace)
             .filter(|(_, binding)| !matches!(binding, Binding::InternalCell(_) | Binding::ReaderCell(_)))
-            .map(|(global, _)| global.name.clone())
+            .map(|(global, _)| global.name.to_string())
             .collect()
     }
     /// Whether `resolve` finds `name` as one of `namespace`'s own bindings.
@@ -1325,10 +1390,10 @@ impl Environment {
                 && BOOTSTRAP_MACROS.contains(&symbol.name.as_str()))
             .then_some(symbol.name.as_str())
         } else if let Some(global) = scope.refers.get(&symbol.name) {
-            if global.namespace == "suss.core"
-                && BOOTSTRAP_MACROS.contains(&global.name.as_str())
+            if &*global.namespace == "suss.core"
+                && BOOTSTRAP_MACROS.contains(&&*global.name)
             {
-                Some(global.name.as_str())
+                Some(&*global.name)
             } else {
                 (BOOTSTRAP_MACROS.contains(&symbol.name.as_str()) && !scope.excluded_core.contains(&symbol.name))
                 .then_some(symbol.name.as_str())
@@ -1388,8 +1453,8 @@ impl Environment {
             )
             && self.bindings.contains_key(&Global {
                 phase,
-                namespace: scope.namespace.clone(),
-                name: symbol.name.clone(),
+                namespace: scope.namespace.as_str().into(),
+                name: symbol.name.as_str().into(),
             })
         {
             return None;
@@ -1465,15 +1530,15 @@ impl Environment {
             Global {
                 phase,
                 namespace: namespace.into(),
-                name: symbol.name.clone(),
+                name: symbol.name.as_str().into(),
             }
         } else if let Some(global) = scope.refers.get(&symbol.name) {
             global.clone()
         } else {
             let own = Global {
                 phase,
-                namespace: scope.namespace.clone(),
-                name: symbol.name.clone(),
+                namespace: scope.namespace.as_str().into(),
+                name: symbol.name.as_str().into(),
             };
             if self.bindings.contains_key(&own) {
                 own
@@ -1481,7 +1546,7 @@ impl Environment {
                 Global {
                     phase,
                     namespace: "suss.core".into(),
-                    name: symbol.name.clone(),
+                    name: symbol.name.as_str().into(),
                 }
             } else {
                 own

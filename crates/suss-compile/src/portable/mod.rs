@@ -3,10 +3,13 @@
 //! Supports scalars, resolved cells, fixed closures/universal calls and numeric bootstrap.
 mod emit;
 mod function_names;
+pub mod analysis_record;
+pub mod analyzer_edn;
 pub mod hir;
 pub mod ir;
 pub mod modules;
 pub mod resolve;
+pub mod persistent;
 mod source;
 mod stdlib;
 mod origin;
@@ -394,7 +397,9 @@ pub(crate) fn analyze_selected_fragment(
     let mut request = ExpansionRequest::new(expander, span.clone())?;
     let mut snapshot = environment.clone();
     let namespace_directive = source::namespace(&mut forms, &mut snapshot, phase, &mut request)?;
+    analysis_record::clear_pending();
     let (hir, environment) = hir::prepare_with_origin(&forms, span, environment, &snapshot, phase, &mut request, origin)?;
+    analysis_record::fragment(phase, origin, namespace_directive.as_ref(), &environment);
     let cells = environment
         .cells()
         .into_iter()

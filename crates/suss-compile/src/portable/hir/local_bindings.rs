@@ -146,8 +146,7 @@ impl Analyzer<'_> {
         // Last same-named user parameter wins, then source this-as binds the
         // receiver outside the body. Do not overwrite that let with an arg role.
         for (index, parameter) in parameters.iter().enumerate().skip(1) {
-            let binding = self
-                .locals
+            let binding = Arc::make_mut(&mut self.locals)
                 .get_mut(&parameter.name)
                 .expect("method parameter");
             binding.source_role = SourceRole::MethodArgument {
@@ -192,7 +191,7 @@ impl Analyzer<'_> {
             argument,
             access: self.local(&declarations[0], receiver.id),
         };
-        self.locals
+        Arc::make_mut(&mut self.locals)
             .get_mut(&receiver.name)
             .expect("method receiver")
             .source_role = role;
@@ -221,7 +220,7 @@ impl Analyzer<'_> {
             };
             (shadow, field)
         };
-        let mut locals = self.locals.clone();
+        let mut locals = HashMap::clone(&self.locals);
         if let Some(binding) = &self_binding {
             if let Some(shadow) = &binding.shadow {
                 locals.insert(name.name.clone(), (**shadow).clone());
@@ -230,7 +229,7 @@ impl Analyzer<'_> {
             }
         }
         let scope = self.capture_source_namespace();
-        self.function_scopes.push(Arc::new(FunctionScope {
+        let pushed = Arc::new(FunctionScope {
             function_form: function_form.clone(),
             declaration: declaration.clone(),
             origin: self.origin.clone(),
@@ -243,13 +242,14 @@ impl Analyzer<'_> {
             scope,
             namespace_snapshot: self.namespace_snapshot.as_ref().expect("top-level source snapshot").clone(),
             locals: Arc::new(locals),
-            fields: Arc::new(self.fields.clone()),
+            fields: self.fields.clone(),
             phase: self.phase,
-            parents: self.function_scopes.clone().into(),
+            parents: self.function_scopes.clone(),
             self_binding,
             shadow,
             shadow_field,
-        }));
+        });
+        self.function_scopes = self.function_scopes.iter().cloned().chain([pushed]).collect();
     }
 
     pub(super) fn insert_local(
@@ -269,7 +269,7 @@ impl Analyzer<'_> {
         } else {
             None
         };
-        self.locals.insert(
+        Arc::make_mut(&mut self.locals).insert(
             name.name.clone(),
             LocalBinding {
                 identity: Arc::new(()),
@@ -291,8 +291,7 @@ impl Analyzer<'_> {
         )
     }
     pub(super) fn remap_local(&mut self, name: &str, id: BindingId, ty: Type) {
-        let record = self
-            .locals
+        let record = Arc::make_mut(&mut self.locals)
             .get_mut(name)
             .expect("existing parameter binding");
         record.id = id;

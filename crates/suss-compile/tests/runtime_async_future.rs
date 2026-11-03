@@ -350,7 +350,8 @@ fn ordinary_copied_and_foreign_descriptors_are_not_futures_after_gc() {
     let copied = h.forge(&exemplar, &fields);
     let schema = h.value("args-new", &[Val::I32(1)]);
     let no_mutable = h.value("nil", &[]);
-    let ordinary_descriptor = h.value("descriptor-new", &[schema, no_mutable]);
+    let no_name = h.value("nil", &[]);
+    let ordinary_descriptor = h.value("descriptor-new", &[schema, no_mutable, no_name]);
     fields[0] = ordinary_descriptor;
     let ordinary = h.forge(&exemplar, &fields);
     let module = Module::new(h.store.engine(), runtime_abi::module()).unwrap();

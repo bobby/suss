@@ -384,6 +384,8 @@ pub enum Nominal {
     IsNativeObject,
     IsTypeConstructor,
     ValueConstructor,
+    /// Type value -> its name string, or nil (#304).
+    TypeName,
     SourceFunctionName,
     NativeObjectDefaultPrototype,
     /// Dynamically scoped JavaScript receiver for the original `this-as` form.
@@ -437,7 +439,7 @@ impl Nominal {
                 Self::Array => true,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::CurrentThis => count == 0,
-                Self::IsNumber | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::SourceFunctionName => count == 1,
+                Self::IsNumber | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
@@ -454,8 +456,8 @@ impl Nominal {
                 Self::LiveDispatcher | Self::NativeSet(_) => count == 2,
                 Self::IFnLiveDispatcher => count == 3,
                 Self::NativeMarker(_) => count == 1,
-                Self::Descriptor(mutable) => mutable <= count && arguments.iter().all(|ty| *ty == Type::String),
-                Self::CoreDescriptor | Self::CoreStaticsDescriptor | Self::CoreClosedDescriptor | Self::CoreConstructibleDescriptor => arguments.iter().all(|ty| *ty == Type::String),
+                Self::Descriptor(mutable) => mutable < count && arguments.iter().all(|ty| *ty == Type::String),
+                Self::CoreDescriptor | Self::CoreStaticsDescriptor | Self::CoreClosedDescriptor | Self::CoreConstructibleDescriptor => count >= 1 && arguments.iter().all(|ty| *ty == Type::String),
                 Self::Construct => count >= 1,
                 Self::Instance | Self::SameNominalType | Self::Satisfies | Self::NativeSatisfies | Self::Marker => {
                     count == 2
@@ -507,8 +509,8 @@ pub struct SourceNamespace {
     pub macro_refers: BTreeMap<String, (String, String)>,
     pub used_macro_refers: BTreeSet<String>,
     pub renamed_macro_refers: BTreeSet<String>,
-    pub declarations: BTreeMap<Global, std::sync::Arc<super::resolve::DefinitionInfo>>,
-    pub identities: Vec<Global>,
+    pub declarations: super::persistent::PersistentMap<Global, std::sync::Arc<super::resolve::DefinitionInfo>>,
+    pub identities: super::persistent::PersistentSet<Global>,
 }
 impl SourceNamespace {
     pub fn capture(environment: &Environment, phase: Phase) -> Self {
@@ -517,41 +519,7 @@ impl SourceNamespace {
     }
     /// Capture an actual namespace revision without installing it as current.
     pub fn capture_namespace(environment: &Environment, phase: Phase, namespace: &str) -> Option<Self> {
-        let scope = environment.namespace_scope_for(phase, namespace)?;
-        Some(Self {
-            namespace: scope.namespace.into(),
-            aliases: scope.aliases.clone(),
-            refers: scope.refers.clone(),
-            used_refers: scope.used_refers.clone(),
-            renamed_refers: scope.renamed_refers.clone(),
-            excluded_core: scope.excluded_core.clone(),
-            macro_aliases: scope.macro_aliases.clone(),
-            macro_refers: scope.macro_refers.clone(),
-            used_macro_refers: scope.used_macro_refers.clone(),
-            renamed_macro_refers: scope.renamed_macro_refers.clone(),
-            declarations: scope
-                .declarations
-                .into_iter()
-                .map(|(global, _)| {
-                    (
-                        global.clone(),
-                        environment
-                            .shared_definition_info(global)
-                            .expect("captured declaration revision")
-                            .clone(),
-                    )
-                })
-                .collect(),
-            identities: environment
-                .cells()
-                .into_iter()
-                .filter(|global| {
-                    global.phase() == phase
-                        && global.namespace() == scope.namespace
-                        && !environment.is_hidden_cell(phase, global.namespace(), global.name())
-                })
-                .collect(),
-        })
+        environment.source_namespace(phase, namespace)
     }
 }
 #[derive(Debug, Clone)]
@@ -859,15 +827,17 @@ struct Analyzer<'a> {
     origin: Option<super::SourceOrigin>,
     environment: Environment,
     phase: Phase,
-    locals: HashMap<String, LocalBinding>,
-    fields: HashMap<String, FieldBinding>,
+    /// Shared with the source facts captured at each node; changed by copy
+    /// on write (#319).
+    locals: std::sync::Arc<HashMap<String, LocalBinding>>,
+    fields: std::sync::Arc<HashMap<String, FieldBinding>>,
     /// Field declarations in an intrinsic type body, before methods bind a receiver.
     type_body_fields: Vec<(Global, Form, Vec<Form>, BindingId)>,
     /// The class value of the type whose inline method bodies (and closures
     /// created in them) are being analyzed: only those may access its mutable
     /// fields by name.
     field_owner: Option<BindingId>,
-    function_scopes: Vec<std::sync::Arc<FunctionScope>>,
+    function_scopes: std::sync::Arc<[std::sync::Arc<FunctionScope>]>,
     next: usize,
     next_loop: usize,
     analysis_depth: usize,
@@ -1124,57 +1094,11 @@ impl Analyzer<'_> {
                 &mut |work| expander.charge_expansion_work(work, form.span.clone()),
             )?
         };
-        if let Some(coerced) = coerced {
-            let (global, fallback, fresh) = self.environment.reader_sequence_cells(self.phase);
-            if fresh {
-                let initializer = self.form(&coerced)?;
-                self.callable_keys.insert(
-                    fallback.clone(),
-                    Hir {
-                        source: None,
-                        span: form.span.clone(),
-                        metadata: Vec::new(),
-                        ty: Type::Value,
-                        kind: Expression::Definition {
-                            global: fallback.clone(),
-                            name_metadata: Vec::new(),
-                            name_span: form.span.clone(),
-                            docstring: None,
-                            initializer: Some(Box::new(initializer)),
-                            once: true,
-                            linked: None,
-                        },
-                    },
-                );
-            }
-            let Kind::List(items) = &form.kind else {
-                unreachable!()
-            };
-            // Shipped core's own syntax quotes read its direct-linked sequence.
-            let global = self.core_reference_link(&global).unwrap_or(global);
-            let argument = self.form(&items[1])?;
-            return Ok(Hir {
-                source: None,
-                span: form.span.clone(),
-                metadata: form.metadata.clone(),
-                ty: Type::Value,
-                kind: Expression::Call {
-                    callee: Box::new(Hir {
-                        source: None,
-                        span: items[0].span.clone(),
-                        metadata: Vec::new(),
-                        ty: Type::Value,
-                        kind: Expression::GlobalOrFallback { global, fallback },
-                    }),
-                    arguments: vec![argument],
-                },
-            });
-        }
         let namespace = self.environment.current_namespace(self.phase).to_owned();
         let scope = self.capture_source_namespace();
-        let locals = std::sync::Arc::new(self.locals.clone());
-        let fields = std::sync::Arc::new(self.fields.clone());
-        let function_scopes = self.function_scopes.clone().into();
+        let locals = self.locals.clone();
+        let fields = self.fields.clone();
+        let function_scopes = self.function_scopes.clone();
         let symbol = match &form.kind {
             Kind::Symbol(symbol) => Some(symbol),
             Kind::List(items) => items.first().and_then(|head| {
@@ -1215,7 +1139,10 @@ impl Analyzer<'_> {
         // wrappers never become the evidence for a source function's methods.
         self.source_callables.push(None);
         self.source_nodes.push(None);
-        let result = self.form_inner(form, context, tail, name_hint);
+        let result = match coerced {
+            Some(coerced) => self.reader_sequence_call(form, coerced),
+            None => self.form_inner(form, context, tail, name_hint),
+        };
         let callable = self
             .source_callables
             .pop()
@@ -1282,6 +1209,67 @@ impl Analyzer<'_> {
                 expression.source = Some(std::sync::Arc::new(source));
             }
             Ok(expression)
+        })
+    }
+    /// A syntax quote's `(sequence ...)` call, which reads core's sequence
+    /// through a private fallback cell.
+    fn reader_sequence_call(&mut self, form: &Form, coerced: Form) -> Result<Hir, Diagnostic> {
+        let (global, fallback, fresh) = self.environment.reader_sequence_cells(self.phase);
+        if fresh {
+            let initializer = self.form(&coerced)?;
+            self.callable_keys.insert(
+                fallback.clone(),
+                Hir {
+                    source: None,
+                    span: form.span.clone(),
+                    metadata: Vec::new(),
+                    ty: Type::Value,
+                    kind: Expression::Definition {
+                        global: fallback.clone(),
+                        name_metadata: Vec::new(),
+                        name_span: form.span.clone(),
+                        docstring: None,
+                        initializer: Some(Box::new(initializer)),
+                        once: true,
+                        linked: None,
+                    },
+                },
+            );
+        }
+        let Kind::List(items) = &form.kind else {
+            unreachable!()
+        };
+        // Shipped core's own syntax quotes read its direct-linked sequence.
+        let global = self.core_reference_link(&global).unwrap_or(global);
+        let argument = self.form(&items[1])?;
+        // The call has the source facts of an ordinary call of sequence,
+        // so tooling and macro environments see an invocation (#299). In
+        // core, sequence may not be declared yet: the call then has none.
+        let declared = matches!(&items[0].kind, Kind::Symbol(symbol)
+            if self.environment.resolve(self.phase, symbol, items[0].span.clone()).is_ok());
+        if declared {
+            let callee = self.form(&items[0])?;
+            *self.source_nodes.last_mut().expect("source node fact slot") =
+                Some(std::sync::Arc::new(SourceNode::Invoke {
+                    callee: std::sync::Arc::new(callee),
+                    arguments: vec![argument.clone()].into(),
+                }));
+        }
+        Ok(Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: Type::Value,
+            kind: Expression::Call {
+                callee: Box::new(Hir {
+                    source: None,
+                    span: items[0].span.clone(),
+                    metadata: Vec::new(),
+                    ty: Type::Value,
+                    kind: Expression::GlobalOrFallback { global, fallback },
+                }),
+                arguments: vec![argument],
+            },
         })
     }
     fn form_inner(
@@ -1660,7 +1648,9 @@ impl Analyzer<'_> {
                 std::sync::Arc::make_mut(callable).name = name;
             }
         }
-        self.function_scopes.truncate(outer_scope_count);
+        if self.function_scopes.len() > outer_scope_count {
+            self.function_scopes = self.function_scopes[..outer_scope_count].into();
+        }
         result
     }
     fn function_inner(
@@ -1721,7 +1711,7 @@ impl Analyzer<'_> {
             } else {
                 signatures.iter().any(|signature| matches!(&signature.kind, Kind::List(parts) if matches!(parts.first().map(|part| &part.kind), Some(Kind::Vector(names)) if names.iter().any(|name| matches!(&name.kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "&")))))
             };
-            self.locals.get_mut(&parameter.name).unwrap().source_role = SourceRole::FunctionName {
+            std::sync::Arc::make_mut(&mut self.locals).get_mut(&parameter.name).unwrap().source_role = SourceRole::FunctionName {
                 variadic,
                 methods: None,
             };
@@ -1738,7 +1728,7 @@ impl Analyzer<'_> {
         if let Some(parameter) = &self_binding {
             let staged = std::sync::Arc::new(self.stage_function_parameters(form, signatures)?);
             let variadic = staged.methods.iter().any(|method| method.variadic);
-            self.locals
+            std::sync::Arc::make_mut(&mut self.locals)
                 .get_mut(&parameter.name)
                 .expect("self binding")
                 .source_role = SourceRole::FunctionName {
@@ -2003,9 +1993,9 @@ impl Analyzer<'_> {
                 .as_ref()
                 .expect("top-level source snapshot")
                 .clone(),
-            locals: std::sync::Arc::new(self.locals.clone()),
-            fields: std::sync::Arc::new(self.fields.clone()),
-            function_scopes: self.function_scopes.clone().into(),
+            locals: self.locals.clone(),
+            fields: self.fields.clone(),
+            function_scopes: self.function_scopes.clone(),
             context: *self
                 .analysis_contexts
                 .last()
@@ -2062,7 +2052,7 @@ impl Analyzer<'_> {
                     .iter()
                     .any(|parameter| parameter.name == symbol.name);
                 if !parameter {
-                    self.locals.remove(&symbol.name);
+                    std::sync::Arc::make_mut(&mut self.locals).remove(&symbol.name);
                 }
                 let value = if object_method {
                     let key = self
@@ -2090,11 +2080,11 @@ impl Analyzer<'_> {
                     access: value,
                 };
                 if parameter {
-                    let binding = self.locals.get_mut(&symbol.name).expect("method parameter");
+                    let binding = std::sync::Arc::make_mut(&mut self.locals).get_mut(&symbol.name).expect("method parameter");
                     binding.shadow = None;
                     binding.shadow_field = Some(std::sync::Arc::new(record.clone()));
                 }
-                self.fields.insert(symbol.name.clone(), record);
+                std::sync::Arc::make_mut(&mut self.fields).insert(symbol.name.clone(), record);
             }
         }
         // Retain the visible argument before this-as anchors the receiver.
@@ -2426,6 +2416,7 @@ impl Analyzer<'_> {
                 "same-nominal-type?" => Some(Nominal::SameNominalType),
                 "type-constructor?" => Some(Nominal::IsTypeConstructor),
                 "value-constructor" => Some(Nominal::ValueConstructor),
+                "type-name" => Some(Nominal::TypeName),
                 "function-name" => Some(Nominal::SourceFunctionName),
                 "object-default-prototype" => Some(Nominal::NativeObjectDefaultPrototype),
                 "coerce-string" => Some(Nominal::CoerceString),
@@ -2921,7 +2912,7 @@ impl Analyzer<'_> {
                         Some(value.clone()),
                     );
                     if let Some(hidden) = &alias {
-                        self.locals
+                        std::sync::Arc::make_mut(&mut self.locals)
                             .get_mut(&name.name)
                             .expect("catch alias")
                             .source_role = SourceRole::CatchBinding {
@@ -3177,11 +3168,11 @@ pub(crate) fn prepare_with_origin(
         origin: origin.cloned(),
         environment: environment.clone(),
         phase,
-        locals: HashMap::new(),
-        fields: HashMap::new(),
+        locals: Default::default(),
+        fields: Default::default(),
         type_body_fields: Vec::new(),
         field_owner: None,
-        function_scopes: Vec::new(),
+        function_scopes: Vec::new().into(),
         next: 0,
         next_loop: 0,
         analysis_depth: 0,
@@ -3202,6 +3193,9 @@ pub(crate) fn prepare_with_origin(
         _ => span.clone(),
     };
     let hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
+    if let Expression::Do(items) = &hir.kind {
+        super::analysis_record::analyzed_forms(origin, items);
+    }
     let mut hir = analyzer.namespace_frame(before, extent, hir)?;
     if !analyzer.callable_keys.is_empty() {
         let mut initializers = analyzer.callable_keys.into_values().collect::<Vec<_>>();

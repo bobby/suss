@@ -29546,6 +29546,15 @@ document's 2026-10-25 decision now records all three outcomes.
 - Not done here: `#inst`/`#uuid` (no types yet), `#"..."`, `#:ns{}`, and `#=`.
 - PR #314 was independently reviewed, and the findings are fixed. Full baseline on 1b91319: 2073 passed, 0 failed, 78 ignored, 278 binaries, 6302 s. CI run 41321000454 passed on 1b91319.
 
+## #304: default printer and runtime type names (2026-11-02)
+
+- Values that are not data print as Clojure's default `print-method` prints them: type values as their names, objects as `#object[Name 0xhash "str"]`, atoms and `reduced` values with their `deref-as-map` state, and `ex-info` as `#error {...}`. The contract is in `docs/runtime/printing.md` and `docs/runtime/type-names.md`.
+- Type descriptors carry their Clojure class name in slot 3, so `descriptor-new` takes the name and compiled artifacts move to format 3 (`+portable.3`). Runtime ABI version 2 is unchanged.
+- `deftype` and `reify` get a default `toString` (`Name@hex`) unless they define one. Outside core it is `source-object-string`, which uses a reparented prototype's `toString`, as the pinned error-constructor corpus records.
+- Records print, register for `read-string` and name themselves from their type, so `my-ns.x/R` prints `#my_ns.x.R{...}`, as in Clojure.
+- Not covered: names for host values without descriptors (`(type 1)`, functions, runtime errors), `print-method` (#30) and `#js` objects. `reify` names are not unique across separate forms.
+- PR #317 was independently reviewed, and the findings are fixed or documented. Full baseline on 56d9125: 2091 passed, 0 failed, 78 ignored, 280 binaries, 8606 s.
+
 ## #302: printer options (2026-11-01)
 
 - `*print-length*`, `*print-level*`, `*print-meta*`, `*print-readably*`, `*print-namespace-maps*`, `*print-dup*` and `*verbose-defrecords*` follow Clojure's `core_print.clj` in `pr-str`, `prn-str`, `print-str`, `println-str` and `str` of a collection. The contract is in `docs/runtime/printing.md`.
@@ -29554,3 +29563,29 @@ document's 2026-10-25 decision now records all three outcomes.
 - Decision (on #302): `pr`, `prn`, `print`, `println`, `newline`, `flush` and `*out*` wait for the WASI output stream (#27). They are recorded as unimplemented in `reviews.edn`. `print-method` waits for multimethods (#30), so #302 stays open.
 - Intentional differences: no `#=(...)` forms under `*print-dup*`, and a keyword `:type` is always stripped from printed metadata.
 - PR #316 was independently reviewed, and the findings are fixed. Full baseline on f82651f: 2084 passed, 0 failed, 78 ignored, 279 binaries, 7296 s. CI run 41353154521 passed on f82651f.
+
+## #299 step 2: analyzer output as EDN (2026-11-02)
+
+- `suss analyze [--emit forms|hir] FILE` (or `-n NS`) prints a file's forms, or its analysis in tools.analyzer's node shape, as EDN that `suss.edn/read-string` reads. The contract, marked unstable and versioned `:suss.analyzer/version 1`, is in `docs/runtime/analyzer-edn.md`.
+- Nodes are projected from the analyzer's pre-lowering source facts (`SourceAnalysis`/`SourceNode` in `hir.rs`), not from the lowered `Expression`. A new special form or intrinsic that records no source facts appears as `:suss/lowered`; `analyzer_edn_core` fails if core produces one.
+- Macros Suss analyzes itself (`when`, `cond`, `case`, `deftype`, interop, ...) are `:suss/intrinsic` nodes. `emit_form` rebuilds them by substituting emitted args into `:form`, so passes can edit inside them.
+- A syntax quote's `(sequence ...)` call now records an ordinary call's source facts. This changed macro `&env` graphs for such calls, from a lowering record to an `:invoke` record.
+- Round trip (analyze, emit, analyze, compare) is tested on core in both phases, the conformance corpus, four samples and a file of forms they lack. Run one file with `SUSS_ANALYZE_FILE=path cargo test -p suss-cli --test analyzer_edn -- samples_round_trip`.
+- Core's analysis is 672 top-level nodes, 13 MB of EDN, mostly `:env :locals`. Step 3 (persisting it as a build-cache layer) decides on a compact form.
+- PR #318 was independently reviewed, and the findings are fixed. Full baseline on ce12861: 2102 passed, 0 failed, 78 ignored, 281 binaries, 6396 s.
+
+## #319: shared analysis state (2026-11-02)
+
+- PR #320 is #319's first step. The analyzer's locals, fields and function scopes are `Arc`s changed by copy on write (`Arc::make_mut`), so each node's source facts share them instead of copying them. `Global` names are `Arc<str>`. `Environment::source_namespace` builds a namespace snapshot from that namespace's ranges of the ordered maps instead of scanning every namespace.
+- The macro graph caches by `Arc::as_ptr` for definitions, namespace snapshots, analyses, callables, function scopes, binding identities and function parameters. Keep each of those as its own allocation. Maps of locals and fields are not compared by pointer.
+- Analysing core (`bootstrap::catalog`) went from 1.14 s to 0.63 s per phase and from 9.5 M to 3.1 M allocations. The compiled bootstrap is unchanged except for the compiler identity.
+- Still to do in #319: share forms (each node deep-copies its form), share `SourceNode` HIR, and share namespace declarations through a persistent map (about 175 ms). Then remeasure #299 step 3. Its parked prototype is on branch `tooling/core-analysis-cache`.
+- The full baseline passed on f4d641b: 2084 passed, 0 failed, 78 ignored, 279 binaries, 124 min. After merging main (#317), the bootstrap was regenerated, and the macro-graph suites, `object_printing` and the compiler's library tests passed.
+
+## #319 step 2: persistent namespace snapshots (2026-11-02)
+
+- PR #321. `Environment` keeps definitions, and a new identity set, per (phase, namespace) as persistent maps (`portable/persistent.rs`, a path-copying AVL tree of `Arc` nodes). `SourceNamespace::declarations` and `identities` are those types, so a snapshot is an O(1) clone instead of a copy per definition.
+- Identities are the visible cells: `Cell` bindings, and materialized bootstrap cells that aren't reader or internal cells. Every write to `Environment::bindings` must go through `bind`/`unbind`, which keep the set current. `check_identities` (test-only) compares it with a full recomputation; `bootstrap::tests` runs it on core and after each kind of binding change.
+- Analysing core went from ~515 ms to ~410 ms per phase, and from 885 MB to 586 MB allocated. The compiled bootstrap is unchanged except for its identity.
+- Still to do in #319: share forms (each node deep-copies its form; making `Form` shareable touches the reader and about 150 files) and `SourceNode` HIR, then remeasure #299 step 3 (prototype on branch `tooling/core-analysis-cache`).
+- Full baseline on d195490: 2112 passed, 0 failed, 78 ignored, 282 binaries, 98 min.
