@@ -1049,9 +1049,9 @@
    :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
   "runtime:swap!:4694"
   {:source-sha256 "4081090780e8ca6ad14373f69ecafc6002c1113ea2de51254e3c0a14f8bec207" :visibility :public :arities {:fixed [2 3 4] :variadic-min 4}
-   :dependencies ["runtime:reset!:4661" "runtime:ISwap:903" "apply"]
+   :dependencies ["runtime:Atom:4613" "runtime:ISwap:903" "atom-unchanged?" "apply"]
    :classification :adapted :status :in-progress
-   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation, all four arities including the variadic one. The new value goes through reset!, so it is validated and watches are notified. Single-threaded, so no compare-and-set retry loop is needed."
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation, all four arities including the variadic one. Follows Clojure's Atom.swap: f is applied to the value read, the result validated, and set only if the atom is unchanged (atom-unchanged?); if f itself changed the atom, f runs again, as Clojure's compare-and-set loop does even on one thread. Watches are notified with the value read and the new value. The arities with arguments close over them."
    :adaptation-path "docs/compatibility/patches/atoms-swap.json" :alternative nil
    :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
   "runtime:VectorNode:5575"
@@ -5431,16 +5431,16 @@
    :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
   "runtime:swap-vals!:4716"
   {:source-sha256 "0b88c9eb5c5aa4390eb5b7583aafac19a0da5b3bb301d58659ce875a2eeeb0bc" :visibility :public :arities {:fixed [2 3 4] :variadic-min 4}
-   :dependencies ["runtime:reset-vals!:4677" "runtime:ISwap:903" "apply"]
+   :dependencies ["runtime:Atom:4613" "runtime:ISwap:903" "atom-unchanged?" "apply"]
    :classification :adapted :status :in-progress
-   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation, all four arities. Goes through reset-vals!, so it validates and notifies. Returns [old new]."
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation, all four arities, with swap!'s compare-and-set loop. Returns [old new]."
    :adaptation-path "docs/compatibility/patches/atoms-swap-vals.json" :alternative nil
    :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
   "runtime:compare-and-set!:4739"
   {:source-sha256 "bd7e6f5c9b84e6f8444851e0895d8477534c7102f79022862e06453459f8e0bb" :visibility :public :arities {:fixed [3] :variadic-min nil}
    :dependencies ["runtime:Atom:4613" "runtime:IReset:898"]
    :classification :adapted :status :in-progress
-   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation. Follows Clojure's Atom.compareAndSet: validates newval first, compares the current state with oldval by identity (identical?, as AtomicReference does; ClojureScript uses =), with equal keywords identical since Clojure interns them, and notifies watches only when it sets. Non-Atom references keep the upstream IDeref/= /IReset fallback."
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation. Follows Clojure's Atom.compareAndSet: validates newval first, compares the current state with oldval as atom-unchanged? does (identical?, as AtomicReference compares references; ClojureScript uses =), and notifies watches only when it sets. Non-Atom references keep the upstream IDeref/= /IReset fallback."
    :adaptation-path "docs/compatibility/patches/atoms-compare-and-set.json" :alternative nil
    :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
   "runtime:set-validator!:4748"

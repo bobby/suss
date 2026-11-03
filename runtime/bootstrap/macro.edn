@@ -334,6 +334,7 @@
          "suss.bindings.macro:suss.core/assoc!"
          "suss.bindings.macro:suss.core/associative?"
          "suss.bindings.macro:suss.core/atom"
+         "suss.bindings.macro:suss.core/atom-unchanged?"
          "suss.bindings.macro:suss.core/balance-left"
          "suss.bindings.macro:suss.core/balance-left-del"
          "suss.bindings.macro:suss.core/balance-right"
@@ -1139,6 +1140,7 @@
          "suss.bindings.macro:suss.internal.core-link/assoc!"
          "suss.bindings.macro:suss.internal.core-link/associative?"
          "suss.bindings.macro:suss.internal.core-link/atom"
+         "suss.bindings.macro:suss.internal.core-link/atom-unchanged?"
          "suss.bindings.macro:suss.internal.core-link/balance-left"
          "suss.bindings.macro:suss.internal.core-link/balance-left-del"
          "suss.bindings.macro:suss.internal.core-link/balance-right"
@@ -1850,15 +1852,15 @@
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d666c7573682f31"
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d77726974652f32"
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
-         "suss.bindings.macro:suss.internal.reify/t-reify-3403-10799"],
+         "suss.bindings.macro:suss.internal.reify/t-reify-3407-10823"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "1c16ebafc7d3c9c4a4c242c931e29eef9d64e1a1b8642dd3ee97a0a5bdc2c523",
- :dependency-graph-sha256 "1089a327f4eacd113d1590936794c7011f5abec89c80700c851e34f0f5d0dc0c",
+ :compiler-source-sha256 "32743078b033f1687b49dcaa9e02daf522fd9e026f41f27015605050e9f3df22",
+ :dependency-graph-sha256 "e203507cc93a0835e5f460dd292f45b3002f4db3b06285478329a09559c2f501",
  :flags [],
  :format-version 2,
  :phase "macro",
  :runtime-abi 2,
- :source-sha256 "f56513f0227d432f796cd38385ee5caf3d0bd2cc51f46e52b3def692ef80819a",
+ :source-sha256 "c2fbca7b06fc7ea621620876e18bb4ac1a54898f4f0afa487a4c877be6ced7d5",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "9c5a71aec6e849e6c62c919c758a840877a4afd51dc2aa45a99b03ce5199779c",
+ :wasm-sha256 "581d46af3b9d138cceadd1ec27ed2e290679053222ce2f8839c6a6dc721af0a5",
  :wasm-tools "0.258.0"}

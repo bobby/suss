@@ -25,14 +25,20 @@ variadic), `swap-vals!`, `compare-and-set!`, `set-validator!`, `get-validator`,
 
 Each change validates the new value, then sets it, then calls each watch as
 `(f key ref old new)`. A rejected value changes nothing and notifies no one. A watch
-whose function is nil is skipped, as in `ARef.notifyWatches`. Suss is
-single-threaded, so `swap!` needs no retry loop: the function runs once.
+whose function is nil is skipped, as in `ARef.notifyWatches`.
 
-`compare-and-set!` compares by identity, like Clojure's `AtomicReference`, and
-treats equal keywords as identical because Clojure interns keywords. It validates
-the new value before comparing, and notifies watches only when it sets. Clojure on
-the JVM boxes numbers, so its result for two equal large numbers can depend on
-boxing; Suss compares numbers by value.
+`swap!` and `swap-vals!` follow `Atom.swap`: they apply the function to the value
+read, validate the result, and set it only if the atom still holds that value. If
+the function itself changed the atom, it runs again on the new value, as Clojure's
+compare-and-set loop does even on one thread.
+
+`compare-and-set!` compares with `identical?`, as Clojure's `AtomicReference`
+compares references. Equal keywords count as identical because Clojure interns
+them, and NaN counts as unchanged (Clojure compares the same boxed NaN by
+reference). Suss's `identical?` compares numbers and strings by value, where
+Clojure compares boxed numbers and string objects by reference, so a fresh equal
+string or large number can succeed in Suss where Clojure would fail. It validates
+the new value before comparing, and notifies watches only when it sets.
 
 Watches live in a `PersistentHashMap` from the first `add-watch`, as Clojure's
 `ARef` starts from `PersistentHashMap.EMPTY`. Suss hashes keywords and lays out

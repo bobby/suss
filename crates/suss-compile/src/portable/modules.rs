@@ -57,7 +57,7 @@ fn validate_declared_namespace(
     declared: &str,
     span: Range<usize>,
 ) -> Result<(), Diagnostic> {
-    if resolve::canonical(declared) != identity.namespace {
+    if resolve::required(declared) != identity.namespace {
         return Err(Diagnostic {
             span,
             message: format!(

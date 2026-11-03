@@ -72,6 +72,8 @@ fn watches_run_in_hash_order_with_each_change() {
         "true",
     );
     check(&mut session, "(every? #(= (rest %) [true 0 1]) @calls)", "true");
+    // The keys were added in reverse, and hash order is neither that nor ks.
+    check(&mut session, "[(= (map first @calls) (reverse ks)) (= (map first @calls) ks)]", "[false false]");
     check(&mut session, "(count (set (map first @calls)))", "12");
     // Each change notifies with its own old and new value.
     check(
@@ -158,6 +160,31 @@ fn compare_and_set_compares_identity_and_validates_first() {
 }
 
 #[test]
+fn swap_retries_when_its_function_changes_the_atom() {
+    let mut session = Repl::new();
+    session.setup(
+        "(def calls (atom []))
+         (def a (atom 0))
+         (add-watch a :w (fn [_ _ old new] (swap! calls conj [old new])))",
+    );
+    // Clojure's Atom.swap compare-and-sets against the value it read, so an
+    // update made by f itself makes f run again on the new value.
+    check(
+        &mut session,
+        "[(swap! a (fn [x] (when (zero? x) (reset! a 10)) (inc x))) @a @calls]",
+        "[11 11 [[0 10] [10 11]]]",
+    );
+    check(
+        &mut session,
+        "[(swap-vals! a (fn [x] (when (= x 11) (reset! a 20)) (* 2 x))) @a]",
+        "[[20 40] 40]",
+    );
+    // NaN is never identical? to itself in Suss, but an atom holding it is
+    // unchanged, as Clojure's reference comparison sees it.
+    check(&mut session, "(let [b (atom ##NaN)] [(swap! b inc) (compare-and-set! b @b 1) @b])", "[##NaN true 1]");
+}
+
+#[test]
 fn swap_and_reset_variants_return_clojure_values() {
     let mut session = Repl::new();
     session.setup("(def a (atom 1))");
@@ -192,6 +219,8 @@ fn volatiles_are_unwatched_mutable_references() {
     let mut session = Repl::new();
     session.setup("(def v (volatile! 1))");
     check(&mut session, "[(vswap! v + 10) (vreset! v :x) @v (volatile? v) (volatile? (atom 1))]", "[11 :x :x true false]");
+    // A volatile has no watches or validator, as Clojure's Volatile is no IRef.
+    assert_eq!(thrown(&mut session, "(add-watch v :w (fn [& _]))"), "\"Invalid nominal operation\"");
     // Clojure's vswap! evaluates its volatile expression twice, to deref and
     // to reset, and each argument once.
     check(

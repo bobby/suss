@@ -97,3 +97,13 @@
 
 ;; Atom functions use these before their definitions (#30).
 (declare dissoc hash-map set-validator! keyword? keyword-identical?)
+
+;; Whether an atom's state is still `read`, for swap! and compare-and-set!
+;; (#30). Clojure compares references; Suss compares numbers and strings by
+;; value, so NaN, never identical? to itself, counts as unchanged, and equal
+;; keywords are identical because Clojure interns them.
+(def ^:private atom-unchanged?
+  (fn [current read]
+    (or (identical? current read)
+        (if (identical? current current) false (if (identical? read read) false true))
+        (and (keyword? current) (keyword-identical? current read)))))

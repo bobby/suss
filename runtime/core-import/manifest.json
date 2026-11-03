@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "849d969b983eb0704a4c5cb1f413761cb5ba8bcce442e6b2e31969e7a336921b",
-  "reviews-sha256": "d2156c2b2ad31e18aeab2f3e69f31a73c2751c014336673c52cb45dcf2eb494f",
+  "recipe-sha256": "fa7fd1ce93f33f9ca6cd2ac102554c5b7af8b54935bf2a79a2b7de17cc5803dd",
+  "reviews-sha256": "a57349f4095fbaef8ef20fd95f4801aceb656a17c516e4757f8ca82bca815165",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -3925,14 +3925,15 @@
       "extracted": "extracted/0120.cljs",
       "extracted-sha256": "a9840a3d22cc1dd1a217de519fc334a2f03240f0a0fb5cb7c55e6353aea24cf1",
       "patch": "docs/compatibility/patches/atoms-swap.json",
-      "patch-sha256": "8916315de4a3c6f2259a201b6fbe35a68b18b10af8a05f9f3e095d5db4a1ce0b",
-      "adapted-form-sha256": "4b34d154c6a68c7950199c4549ca2bb0347ff416afcb1ae40cce77a8ff3f1729",
+      "patch-sha256": "11449f7ae82825b993f1d450f88e7840ada73bf42d7d5365d92f1c75e38454b4",
+      "adapted-form-sha256": "ace87aa72572fe4c10247e46c61970fc79bcb519213599e37acaaa89a5ca8072",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
       "dependencies": [
-        "runtime:reset!:4661",
+        "runtime:Atom:4613",
         "runtime:ISwap:903",
+        "atom-unchanged?",
         "apply"
       ],
       "semantic-tests": [
@@ -3956,14 +3957,15 @@
       "extracted": "extracted/0121.cljs",
       "extracted-sha256": "abf4a68295728accdd65002b5e32d9156a92c4cfab5dc822b3168371fa7c28a7",
       "patch": "docs/compatibility/patches/atoms-swap-vals.json",
-      "patch-sha256": "9906ee1b24f3fc4d7372e68107252f87d2ba0f0556afeec502f12b604dad02d2",
-      "adapted-form-sha256": "f4fe443eeb67c1c7feb64d180733f3b644bb4740e9e44a1bbd4417154eb73eb2",
+      "patch-sha256": "75ad8e5296be25a4533b338c6b707cf6ad9bb2d872f050d99264fc22cc416b7e",
+      "adapted-form-sha256": "0761145cfbf4d35afed050dc25a93c18b6e1e1e67180e17ae8c4fe086259f182",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
       "dependencies": [
-        "runtime:reset-vals!:4677",
+        "runtime:Atom:4613",
         "runtime:ISwap:903",
+        "atom-unchanged?",
         "apply"
       ],
       "semantic-tests": [
@@ -3987,8 +3989,8 @@
       "extracted": "extracted/0122.cljs",
       "extracted-sha256": "4ecb9ea52ac5744f5be3c6f19daef8884547877e63cafdbebbbc795b75bb7dd3",
       "patch": "docs/compatibility/patches/atoms-compare-and-set.json",
-      "patch-sha256": "49d5504781b4e7471d06b72901cd7bff749f6f1599fb5df9ac02eef3c6b5bcf2",
-      "adapted-form-sha256": "e53dbf26246645d2a455faf8339d14b288c25c33fb6c04390d30218744b0caef",
+      "patch-sha256": "3030d55607c1ad47514a594d3e60aa2ab623fb19149837ef9039ec3c2b56a4c9",
+      "adapted-form-sha256": "8fcfcdc404062f66048ec91efccb37037fedfd4d359ecf10296218c2fb52086a",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -14938,7 +14940,7 @@
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "6c4ffc999b24488b5df8a071e8f4a8e532a5d8681fc49f8a146595a2bdfa3881"
+      "sha256": "84ec709497567400faf37b686fe810ed768d6f80e84a3f07afac24fc463c1bea"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -15433,6 +15435,6 @@
     "extracted/0478.cljs": "40c590576047dd941454f37b8fb7cd4e1ae39252d3bc0e075fea78aec194a973",
     "extracted/0479.cljs": "9de70770e21df7e6c69f10d1e50faa0a1bdceab85847720fa309169f29b2806c",
     "extracted/0480.cljs": "8b7158e9b74477ffc8ed064b52cf4d87377995fc401bffb7f656542577d849c9",
-    "suss/core.sus": "f56513f0227d432f796cd38385ee5caf3d0bd2cc51f46e52b3def692ef80819a"
+    "suss/core.sus": "c2fbca7b06fc7ea621620876e18bb4ac1a54898f4f0afa487a4c877be6ced7d5"
   }
 }
