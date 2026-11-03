@@ -166,7 +166,9 @@ fn same(a: Option<&Form>, b: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result
                         Kind::Number(_) => 9,
                         Kind::String(v) => 9usize.saturating_add(v.len().saturating_mul(2)),
                         Kind::Symbol(v) => identifier_size(v.namespace.as_deref(), &v.name),
-                        Kind::Keyword(v) => identifier_size(v.namespace.as_deref(), &v.name),
+                        Kind::Keyword(v) | Kind::AutoKeyword(v) => {
+                            identifier_size(v.namespace.as_deref(), &v.name)
+                        }
                         Kind::List(_)
                         | Kind::Vector(_)
                         | Kind::Map(_)
@@ -251,6 +253,10 @@ fn same(a: Option<&Form>, b: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result
                         Kind::Tagged { tag, .. } => {
                             out.push(14);
                             append_identifier(&mut out, tag.namespace.as_deref(), &tag.name, meter, &node.span)?;
+                        }
+                        Kind::AutoKeyword(v) => {
+                            out.push(15);
+                            append_identifier(&mut out, v.namespace.as_deref(), &v.name, meter, &node.span)?;
                         }
                     }
                     append_parts(&mut out, parts, meter, &node.span)?;

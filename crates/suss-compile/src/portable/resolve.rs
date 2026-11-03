@@ -655,6 +655,10 @@ impl Environment {
     fn scope(&self, phase: Phase) -> &Scope {
         &self.scopes[&(phase, self.current[&phase].clone())]
     }
+    /// The namespace `alias` names in the current namespace, for `::alias/name`.
+    pub(crate) fn aliased_namespace(&self, phase: Phase, alias: &str) -> Option<&str> {
+        self.scope(phase).aliases.get(alias).map(String::as_str)
+    }
     fn source_changed(&mut self) {
         self.source_generation = self
             .source_generation

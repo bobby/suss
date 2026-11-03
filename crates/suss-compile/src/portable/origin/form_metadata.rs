@@ -209,6 +209,7 @@ fn rebuild_form(node: &Form, children: Vec<Form>) -> Form {
         Kind::String(value) => Kind::String(value.clone()),
         Kind::Symbol(value) => Kind::Symbol(value.clone()),
         Kind::Keyword(value) => Kind::Keyword(value.clone()),
+        Kind::AutoKeyword(value) => Kind::AutoKeyword(value.clone()),
         Kind::List(_) => Kind::List(values),
         Kind::Vector(_) => Kind::Vector(values),
         Kind::Map(_) => Kind::Map(values),

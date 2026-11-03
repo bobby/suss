@@ -334,6 +334,10 @@ fn form_key_metered(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -> 
                     append(&mut key, &[5], charge)?;
                     write_identifier(&mut key, value.namespace.as_deref(), &value.name, charge)?;
                 }
+                Kind::AutoKeyword(value) => {
+                    append(&mut key, &[15], charge)?;
+                    write_identifier(&mut key, value.namespace.as_deref(), &value.name, charge)?;
+                }
                 Kind::List(items)
                 | Kind::Vector(items)
                 | Kind::Set(items)

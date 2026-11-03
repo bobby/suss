@@ -314,7 +314,9 @@ impl<'a> SourceMetadataNode<'a> {
             let text = match &self.form.kind {
                 Kind::String(v) => v.len().saturating_mul(2),
                 Kind::Symbol(v) => v.name.len() + v.namespace.as_ref().map_or(0, String::len),
-                Kind::Keyword(v) => v.name.len() + v.namespace.as_ref().map_or(0, String::len),
+                Kind::Keyword(v) | Kind::AutoKeyword(v) => {
+                    v.name.len() + v.namespace.as_ref().map_or(0, String::len)
+                }
                 _ => 0,
             };
             charge(

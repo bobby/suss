@@ -1,7 +1,11 @@
 //! Atoms, volatiles and delays follow Clojure's ARef, Atom, Volatile and
 //! Delay (#30). Expected values cite Clojure's behaviour where it differs
 //! from ClojureScript's.
-use suss_compile::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
+use suss_compile::{
+    portable_macros::CompiledMacros,
+    portable_repl,
+    portable_session::{Session, SessionOptions},
+};
 
 /// A runtime with the compiled macro phase, as the CLI evaluates source.
 struct Repl {
@@ -11,6 +15,11 @@ struct Repl {
 impl Repl {
     fn new() -> Self {
         Self { runtime: Session::new_repl().unwrap(), macros: CompiledMacros::new().unwrap() }
+    }
+    /// A runtime that loads required namespaces from `root`.
+    fn with_sources(root: &std::path::Path) -> Self {
+        let options = SessionOptions { source_paths: vec![root.to_owned()], ..SessionOptions::default() };
+        Self { runtime: Session::new_repl_with_options(options).unwrap(), macros: CompiledMacros::new().unwrap() }
     }
     /// Evaluate setup forms. The REPL cannot yet display references (#288),
     /// so the script ends in nil.
@@ -259,4 +268,27 @@ fn delays_run_once_and_cache_exceptions() {
     assert!(failed.contains("{:status :failed, :val #error {"), "{failed}");
     let ready = printed(&mut session, "ok");
     assert!(ready.contains("{:status :ready, :val :ok}"), "{ready}");
+}
+
+#[test]
+fn auto_resolved_keywords_use_the_current_namespace_and_its_aliases() {
+    let root = std::path::Path::new(env!("CARGO_TARGET_TMPDIR")).join("core_state_auto_keywords");
+    std::fs::create_dir_all(root.join("lib")).unwrap();
+    std::fs::write(root.join("lib/kw.sus"), "(ns lib.kw) (def x 1)").unwrap();
+    let mut session = Repl::with_sources(&root);
+    check(&mut session, "[::a (namespace ::a) (= ::a :user/a)]", "[:user/a \"user\" true]");
+    session.setup("(ns app.kw (:require [lib.kw :as lib]))");
+    check(&mut session, "[::a ::lib/b '::c {::d [::e]} (meta ^{::f 1} [])]",
+        "[:app.kw/a :lib.kw/b :app.kw/c {:app.kw/d [:app.kw/e]} {:app.kw/f 1}]");
+    // Clojure resolves `::alias/name` only through an alias of the current namespace.
+    assert!(thrown_reading(&mut session, "::nope/x").contains("Invalid token: ::nope/x"));
+    assert!(thrown_reading(&mut session, "::app.kw/x").contains("Invalid token: ::app.kw/x"));
+}
+
+/// The error evaluating `source` reports.
+fn thrown_reading(session: &mut Repl, source: &str) -> String {
+    match portable_repl::evaluate_script_compiled(&mut session.runtime, &mut session.macros, source, None) {
+        Ok(value) => panic!("{source} returned {value}"),
+        Err(error) => portable_repl::error_display(&mut session.runtime, &error),
+    }
 }

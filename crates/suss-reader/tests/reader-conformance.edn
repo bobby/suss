@@ -1,7 +1,9 @@
 ;; One corpus for every Suss reader (#299, #300): the compiler's forms reader,
 ;; the suss.edn Rust parser, and the runtime read-string and suss.edn/read-string.
 ;; Each :valid entry is read to equal data by all of them. Each :malformed entry
-;; fails in every reader with the same message at the same position.
+;; fails in every reader with the same message at the same position. Each
+;; :edn-malformed entry fails in the EDN readers only: the compiler's reader and
+;; read-string resolve auto-resolved keywords against the current namespace (#30).
 {:valid
  ["nil true false"
   "0 -0 +1 -1.5 1e3 1E-3 -0.0 0x1F -0x10 017 2r1010 36rZZ 9007199254740993 ##Inf ##-Inf ##NaN"
@@ -37,7 +39,6 @@
   "1a"
   "##Foo"
   ":"
-  "::a"
   "a/"
   "/a"
   "a/1"
@@ -73,4 +74,6 @@
   "\"a\\"
   "#{1 2"
   "^"
-  "#queue"]}
+  "#queue"]
+ :edn-malformed
+ ["::a"]}

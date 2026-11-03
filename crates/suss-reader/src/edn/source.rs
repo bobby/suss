@@ -45,6 +45,9 @@ pub fn form_to_value(form: &Form) -> Result<Value, Error> {
             Kind::Conditional(_) | Kind::SplicingConditional(_) | Kind::Discard(_) | Kind::Prefix { .. } => {
                 return Err(Error::new("Reader syntax must be selected before conversion to data"));
             }
+            Kind::AutoKeyword(_) => {
+                return Err(Error::new("Auto-resolved keywords must be resolved before conversion to data"));
+            }
         };
         let meta = metadata(form)?;
         Ok(if meta.is_empty() { value } else { Value::Meta(Box::new(value), meta) })

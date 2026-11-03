@@ -414,6 +414,7 @@ impl Interner {
                             Kind::Prefix { .. } => 12,
                             Kind::SplicingConditional(_) => 13,
                             Kind::Tagged { .. } => 14,
+                            Kind::AutoKeyword(_) => 15,
                         };
                         append(&mut key, &[tag], charge)?;
                         match &form.kind {
@@ -437,7 +438,7 @@ impl Interner {
                                 }
                                 text(&mut key, &v.name, charge)?;
                             }
-                            Kind::Keyword(v) => {
+                            Kind::Keyword(v) | Kind::AutoKeyword(v) => {
                                 append(&mut key, &[u8::from(v.namespace.is_some())], charge)?;
                                 if let Some(ns) = &v.namespace {
                                     text(&mut key, ns, charge)?;

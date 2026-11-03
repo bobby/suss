@@ -101,7 +101,8 @@ fn erase_spans(form: &mut Form) {
         | Kind::Number(_)
         | Kind::String(_)
         | Kind::Symbol(_)
-        | Kind::Keyword(_) => {}
+        | Kind::Keyword(_)
+        | Kind::AutoKeyword(_) => {}
     }
 }
 
