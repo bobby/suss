@@ -485,7 +485,7 @@ fn prepare_inputs(
     prepare_inputs_with_command(inputs, source_paths, false, None)
 }
 
-fn prepare_inputs_with_command(
+pub(crate) fn prepare_inputs_with_command(
     inputs: &[SourceInput],
     source_paths: &[PathBuf],
     command: bool,

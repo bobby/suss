@@ -1,8 +1,8 @@
 # Tooling data as canonical EDN
 
 What the compiler writes about a program is EDN that Suss itself can read
-(#299). The format is the model for later tooling output (`suss analyze`, the
-persisted core analysis). There is no second encoding such as Transit or JSON.
+(#299). The format is the model for later tooling output: `suss analyze`
+([analyzer output](analyzer-edn.md)) and the persisted core analysis. There is no second encoding such as Transit or JSON.
 The implementation is `crates/suss-reader/src/edn.rs`.
 
 ## Data model

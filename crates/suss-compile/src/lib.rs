@@ -46,6 +46,8 @@ pub mod worlds;
 // Native compiled phase/session host for compiler embedding and CLI paths.
 // Wasm target assembly remains in portable; these modules require Wasmtime.
 #[cfg(not(target_family = "wasm"))]
+pub mod portable_analyze;
+#[cfg(not(target_family = "wasm"))]
 pub mod portable_aot;
 #[cfg(not(target_family = "wasm"))]
 mod portable_defn;

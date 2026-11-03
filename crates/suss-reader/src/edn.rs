@@ -19,6 +19,7 @@ use std::{
     ops::Range,
 };
 
+pub mod source;
 pub mod serde;
 pub use self::serde::{from_str, from_value, to_string, to_string_pretty, to_value};
 
