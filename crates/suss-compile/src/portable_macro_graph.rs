@@ -88,8 +88,8 @@ impl NamespaceKey {
         Self(namespace.clone())
     }
     fn compare_declarations(
-        left: &BTreeMap<portable::resolve::Global, Arc<portable::resolve::DefinitionInfo>>,
-        right: &BTreeMap<portable::resolve::Global, Arc<portable::resolve::DefinitionInfo>>,
+        left: &portable::persistent::PersistentMap<portable::resolve::Global, Arc<portable::resolve::DefinitionInfo>>,
+        right: &portable::persistent::PersistentMap<portable::resolve::Global, Arc<portable::resolve::DefinitionInfo>>,
     ) -> Ordering {
         let mut left = left.iter();
         let mut right = right.iter();
@@ -3258,7 +3258,9 @@ mod sharing_tests {
                     changed.renamed_macro_refers.insert("probe".into());
                 }
                 10 => {
-                    changed.identities.push(target.clone());
+                    if !changed.identities.remove(&target) {
+                        changed.identities.insert(target.clone());
+                    }
                 }
                 _ => unreachable!(),
             }

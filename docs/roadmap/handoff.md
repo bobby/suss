@@ -29581,3 +29581,11 @@ document's 2026-10-25 decision now records all three outcomes.
 - Analysing core (`bootstrap::catalog`) went from 1.14 s to 0.63 s per phase and from 9.5 M to 3.1 M allocations. The compiled bootstrap is unchanged except for the compiler identity.
 - Still to do in #319: share forms (each node deep-copies its form), share `SourceNode` HIR, and share namespace declarations through a persistent map (about 175 ms). Then remeasure #299 step 3. Its parked prototype is on branch `tooling/core-analysis-cache`.
 - The full baseline passed on f4d641b: 2084 passed, 0 failed, 78 ignored, 279 binaries, 124 min. After merging main (#317), the bootstrap was regenerated, and the macro-graph suites, `object_printing` and the compiler's library tests passed.
+
+## #319 step 2: persistent namespace snapshots (2026-11-02)
+
+- PR #321. `Environment` keeps definitions, and a new identity set, per (phase, namespace) as persistent maps (`portable/persistent.rs`, a path-copying AVL tree of `Arc` nodes). `SourceNamespace::declarations` and `identities` are those types, so a snapshot is an O(1) clone instead of a copy per definition.
+- Identities are the visible cells: `Cell` bindings, and materialized bootstrap cells that aren't reader or internal cells. Every write to `Environment::bindings` must go through `bind`/`unbind`, which keep the set current. `check_identities` (test-only) compares it with a full recomputation; `bootstrap::tests` runs it on core and after each kind of binding change.
+- Analysing core went from ~515 ms to ~410 ms per phase, and from 885 MB to 586 MB allocated. The compiled bootstrap is unchanged except for its identity.
+- Still to do in #319: share forms (each node deep-copies its form; making `Form` shareable touches the reader and about 150 files) and `SourceNode` HIR, then remeasure #299 step 3 (prototype on branch `tooling/core-analysis-cache`).
+- Full baseline on d195490: 2112 passed, 0 failed, 78 ignored, 282 binaries, 98 min.

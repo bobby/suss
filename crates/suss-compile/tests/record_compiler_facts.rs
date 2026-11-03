@@ -156,7 +156,7 @@ fn compiler_namespace_catalog_preserves_missing_scopes_phases_and_revisions() {
     assert!(catalog.namespaces["declared.only"].is_none());
     assert!(!catalog.namespaces.contains_key("macro.only"));
     let live = catalog.namespaces["other.live"].as_ref().unwrap();
-    assert_eq!(live.identities, vec![value]);
+    assert!(live.identities.iter().eq([&value]));
     assert!(
         live.declarations.is_empty(),
         "cell is not invented source syntax"

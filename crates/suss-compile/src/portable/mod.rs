@@ -9,6 +9,7 @@ pub mod hir;
 pub mod ir;
 pub mod modules;
 pub mod resolve;
+pub mod persistent;
 mod source;
 mod stdlib;
 mod origin;

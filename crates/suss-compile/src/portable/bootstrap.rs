@@ -231,3 +231,39 @@ fn shipped_bundle(phase: Phase) -> Result<&'static ShippedBootstrap, Diagnostic>
         .as_ref()
         .map_err(|message| error(message.clone()))
 }
+
+#[cfg(test)]
+mod tests {
+    /// Core's analysis keeps each namespace's identities in step with its
+    /// bindings (#319).
+    #[test]
+    fn catalog_identities_match_bindings() {
+        for phase in [super::Phase::Runtime, super::Phase::Macro] {
+            super::catalog(phase).unwrap().environment.check_identities();
+        }
+    }
+
+    /// Identities follow each kind of binding change: a compiler-owned cell
+    /// replacing a source one, a reader cell promoted by `def`, and a rollback.
+    #[test]
+    fn identities_follow_binding_changes() {
+        let phase = super::Phase::Runtime;
+        let mut environment = super::Environment::new("user").unwrap();
+        let protocol = environment.declare_cell(phase, "user", "P").unwrap();
+        let key = environment.clone().protocol_key(&protocol, "m", 1);
+        environment.declare_cell(phase, key.namespace(), key.name()).unwrap();
+        environment.check_identities();
+        environment.protocol_key(&protocol, "m", 1);
+        environment.check_identities();
+        environment.reader_sequence_cells(phase);
+        environment.check_identities();
+        environment.declare_cell(phase, "suss.core", "sequence").unwrap();
+        environment.check_identities();
+        let before = environment.clone();
+        let added = environment.declare_cell(phase, "user", "x").unwrap();
+        environment.check_identities();
+        environment.restore_declarations(&before, &[added], phase);
+        environment.check_identities();
+        assert!(environment.source_namespace(phase, "user").unwrap().identities.iter().eq([&protocol]));
+    }
+}
