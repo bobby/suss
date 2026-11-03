@@ -388,22 +388,22 @@ fn callable_before_dispatch(hir: &Hir) -> Option<&SourceCallable> {
         return Some(methods);
     }
     if hir.source.is_none() {
-        if let Expression::Let { bindings, body } = &hir.kind {
+        if let Expression::Let { bindings, body } = &*hir.kind {
             if bindings.len() == 1 {
                 if let Expression::If {
                     condition,
                     alternative,
                     ..
-                } = &body.kind
+                } = &*body.kind
                 {
                     if matches!(
-                        condition.kind,
+                        *condition.kind,
                         Expression::Nominal {
                             operation: Nominal::IsClosure,
                             ..
                         }
                     ) && matches!(
-                        alternative.kind,
+                        *alternative.kind,
                         Expression::Nominal {
                             operation: Nominal::BindCallable,
                             ..
@@ -715,7 +715,7 @@ fn inferred(hir: &Hir, meter: &mut WorkMeter<'_>) -> Result<Option<Form>, Diagno
                 .map(|tag| crate::portable::clone_form_metered(tag, meter))
                 .transpose();
         }
-        match &current.kind {
+        match &*current.kind {
             Expression::Literal(value) => {
                 return Ok(Some(named(match value {
                     Literal::Nil | Literal::Undefined => "clj-nil",
@@ -758,7 +758,7 @@ pub(super) fn source_tags_metered(
 ) -> Result<SourceTags, Diagnostic> {
     charge(meter, 1, &form.span)?;
     // A user `new` keeps parse-new's tag through its built-in guard (#279).
-    let hir = match &hir.kind {
+    let hir = match &*hir.kind {
         Expression::Nominal {
             operation: Nominal::BuiltinConstructGuard,
             arguments,
@@ -801,7 +801,7 @@ pub(super) fn source_tags_metered(
                     None => None,
                 }
             }
-            _ => match &hir.kind {
+            _ => match &*hir.kind {
                 Expression::Arithmetic { .. } | Expression::Bitwise { .. } => Some(named("number")),
                 Expression::Comparison { .. } | Expression::NilTest(_) => Some(named("boolean")),
                 Expression::Throw(_) | Expression::Recur { .. } => Some(named("ignore")),
@@ -965,7 +965,7 @@ mod quoted_tag_tests {
             span: 0..1,
             metadata: vec![],
             ty: Type::Value,
-            kind,
+            kind: kind.into(),
         }
     }
 
@@ -1078,11 +1078,11 @@ mod quoted_tag_tests {
             ] {
                 let hir =
                     crate::portable::analyze_in(source, &Environment::default(), phase).unwrap();
-                let Expression::Do(forms) = &hir.kind else {
+                let Expression::Do(forms) = &*hir.kind else {
                     panic!("fragment source forms")
                 };
                 assert_eq!(forms.len(), 1);
-                assert!(matches!(&forms[0].kind, Expression::Literal(_)));
+                assert!(matches!(&*forms[0].kind, Expression::Literal(_)));
                 let retained = forms[0]
                     .source
                     .as_ref()

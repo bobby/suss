@@ -37,16 +37,16 @@ fn handler_regions_require_fixed_shapes_and_throw_edges_require_defined_values()
         span: 1..5,
         metadata: vec![],
         ty: Type::Nil,
-        kind: Expression::Literal(Literal::Nil),
+        kind: std::sync::Arc::new(Expression::Literal(Literal::Nil)),
     };
     let malformed = Hir {
         source: None,
         span: 0..9,
         metadata: vec![],
         ty: Type::Value,
-        kind: Expression::Try {
+        kind: std::sync::Arc::new(Expression::Try {
             regions: [Box::new(nil.clone()), Box::new(nil.clone()), Box::new(nil)],
-        },
+        }),
     };
     assert!(ir::lower(&malformed).is_err());
 }
@@ -54,20 +54,20 @@ fn handler_regions_require_fixed_shapes_and_throw_edges_require_defined_values()
 #[test]
 fn public_hir_cannot_recur_across_a_handler_region() {
     let mut hir = portable::analyze("(loop [x 0] (try 42 (finally 7)))").unwrap();
-    let Expression::Do(items) = &mut hir.kind else {
+    let Expression::Do(items) = hir.kind_mut() else {
         panic!("source fragment")
     };
-    let Expression::Loop { target, body, .. } = &mut items[0].kind else {
+    let Expression::Loop { target, body, .. } = items[0].kind_mut() else {
         panic!("loop")
     };
     let target = *target;
-    let Expression::Do(items) = &mut body.kind else {
+    let Expression::Do(items) = body.kind_mut() else {
         panic!("loop body")
     };
-    let Expression::Try { regions } = &mut items[0].kind else {
+    let Expression::Try { regions } = items[0].kind_mut() else {
         panic!("try")
     };
-    let Expression::Function { body, .. } = &mut regions[2].kind else {
+    let Expression::Function { body, .. } = regions[2].kind_mut() else {
         panic!("cleanup")
     };
     body.kind = Expression::Recur {
@@ -77,9 +77,9 @@ fn public_hir_cannot_recur_across_a_handler_region() {
             span: 1..5,
             metadata: vec![],
             ty: Type::Number,
-            kind: Expression::Literal(Literal::Number(1.0)),
+            kind: std::sync::Arc::new(Expression::Literal(Literal::Number(1.0))),
         }],
-    };
+    }.into();
     body.ty = hir::Type::Value;
     assert!(ir::lower(&hir).is_err());
 }

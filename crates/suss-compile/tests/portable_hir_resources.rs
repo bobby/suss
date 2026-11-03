@@ -7,7 +7,7 @@ fn deep_tree() -> Hir {
         span: 0..1,
         metadata: vec![],
         ty: Type::Number,
-        kind: Expression::Literal(Literal::Number(42.0)),
+        kind: std::sync::Arc::new(Expression::Literal(Literal::Number(42.0))),
     };
     for _ in 0..10_000 {
         tree = Hir {
@@ -15,7 +15,7 @@ fn deep_tree() -> Hir {
             span: 0..1,
             metadata: vec![],
             ty: Type::Number,
-            kind: Expression::Do(vec![tree]),
+            kind: std::sync::Arc::new(Expression::Do(vec![tree])),
         };
     }
     tree

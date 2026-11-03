@@ -304,7 +304,7 @@ fn empty_do_return_keeps_the_enclosing_source_context() {
                 }
                 Return => {
                     let callable = source.callable.as_ref().unwrap();
-                    let hir::Expression::Do(items) = &callable.methods[0].body.kind else {
+                    let hir::Expression::Do(items) = &*callable.methods[0].body.kind else {
                         panic!("method body required")
                     };
                     items[0].source.clone().unwrap()

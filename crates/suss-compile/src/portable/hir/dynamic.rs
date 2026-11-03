@@ -69,7 +69,7 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty: Type::Value,
-            kind,
+            kind: std::sync::Arc::new(kind),
         })
     }
 }

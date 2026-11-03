@@ -10,7 +10,7 @@ fn analyze(source: &str) -> Hir {
     portable::analyze(source).unwrap()
 }
 fn single(mut hir: &Hir) -> &Hir {
-    while let Expression::Do(items) = &hir.kind {
+    while let Expression::Do(items) = &*hir.kind {
         assert_eq!(items.len(), 1);
         hir = &items[0];
     }
@@ -18,14 +18,14 @@ fn single(mut hir: &Hir) -> &Hir {
 }
 fn number(hir: &Hir, expected: f64) {
     assert!(
-        matches!(&hir.kind, Expression::Literal(Literal::Number(n)) if n.to_bits() == expected.to_bits())
+        matches!(&*hir.kind, Expression::Literal(Literal::Number(n)) if n.to_bits() == expected.to_bits())
     );
 }
 fn await_local(hir: &Hir, expected: BindingId) {
-    let Expression::Await { value } = &single(hir).kind else {
+    let Expression::Await { value } = &*single(hir).kind else {
         panic!("await")
     };
-    assert!(matches!(&value.kind, Expression::Local(id) if *id == expected));
+    assert!(matches!(&*value.kind, Expression::Local(id) if *id == expected));
 }
 
 #[test]
@@ -33,14 +33,14 @@ fn future_captures_outer_locals_but_not_its_sequential_bindings() {
     let hir = analyze(
         "(let [x 10 y 20] (suss.async/future* (let [a (suss.async/await* x) b (suss.async/await* a)] y b)))",
     );
-    let Expression::Let { bindings, body } = &single(&hir).kind else {
+    let Expression::Let { bindings, body } = &*single(&hir).kind else {
         panic!("outer let")
     };
     let x = bindings[0].id;
     let y = bindings[1].id;
     let future = single(body);
     assert_eq!(future.ty, Type::Value);
-    let Expression::Future { captures, body } = &future.kind else {
+    let Expression::Future { captures, body } = &*future.kind else {
         panic!("future")
     };
     assert_eq!(captures, &[x, y]);
@@ -48,16 +48,16 @@ fn future_captures_outer_locals_but_not_its_sequential_bindings() {
         future.source.as_ref().unwrap().node.as_deref(),
         Some(SourceNode::Future(_))
     ));
-    let Expression::Let { bindings, body } = &single(body).kind else {
+    let Expression::Let { bindings, body } = &*single(body).kind else {
         panic!("inner let")
     };
     await_local(&bindings[0].value, x);
     await_local(&bindings[1].value, bindings[0].id);
-    let Expression::Do(items) = &body.kind else {
+    let Expression::Do(items) = &*body.kind else {
         panic!("body")
     };
-    assert!(matches!(&items[0].kind, Expression::Local(id) if *id == y));
-    assert!(matches!(&items[1].kind, Expression::Local(id) if *id == bindings[1].id));
+    assert!(matches!(&*items[0].kind, Expression::Local(id) if *id == y));
+    assert!(matches!(&*items[1].kind, Expression::Local(id) if *id == bindings[1].id));
     assert!(!captures.contains(&bindings[0].id));
     assert!(!captures.contains(&bindings[1].id));
 }
@@ -67,14 +67,14 @@ fn async_try_and_dynamic_regions_retain_executable_bodies_and_handler_scope() {
     let hir = analyze(
         "(def ^:dynamic *v* 0) (let [x 7] (suss.async/future* (try (binding [*v* (suss.async/await* x)] (suss.async/await* x)) (catch :default e (suss.async/await* e)) (finally (suss.async/await* x)))))",
     );
-    let Expression::Do(top) = &hir.kind else {
+    let Expression::Do(top) = &*hir.kind else {
         panic!("top")
     };
-    let Expression::Let { bindings, body } = &top[1].kind else {
+    let Expression::Let { bindings, body } = &*top[1].kind else {
         panic!("let")
     };
     let x = bindings[0].id;
-    let Expression::Future { captures, body } = &single(body).kind else {
+    let Expression::Future { captures, body } = &*single(body).kind else {
         panic!("future")
     };
     assert_eq!(captures, &[x]);
@@ -84,7 +84,7 @@ fn async_try_and_dynamic_regions_retain_executable_bodies_and_handler_scope() {
         handler,
         cleanup,
         payload,
-    } = &region.kind
+    } = &*region.kind
     else {
         panic!("async try")
     };
@@ -92,7 +92,7 @@ fn async_try_and_dynamic_regions_retain_executable_bodies_and_handler_scope() {
         region.source.as_ref().unwrap().node.as_deref(),
         Some(SourceNode::Try { .. })
     ));
-    let Expression::AsyncDynamicScope { bindings, body } = &single(body).kind else {
+    let Expression::AsyncDynamicScope { bindings, body } = &*single(body).kind else {
         panic!("async dynamic")
     };
     await_local(&bindings[0].1, x);
@@ -101,7 +101,7 @@ fn async_try_and_dynamic_regions_retain_executable_bodies_and_handler_scope() {
     let Expression::Let {
         bindings,
         body: handler_body,
-    } = &handler.as_ref().unwrap().kind
+    } = &*handler.as_ref().unwrap().kind
     else {
         panic!("catch alias let")
     };
@@ -158,19 +158,19 @@ fn async_body_order_and_provisional_global_identity_are_retained_without_publica
     let hir = analyze(
         "(suss.async/future* 17 (suss.async/await* (do 41 42)) 99 (def deferred 3) deferred)",
     );
-    let Expression::Future { captures, body } = &single(&hir).kind else {
+    let Expression::Future { captures, body } = &*single(&hir).kind else {
         panic!("future")
     };
     assert!(captures.is_empty());
-    let Expression::Do(items) = &body.kind else {
+    let Expression::Do(items) = &*body.kind else {
         panic!("body")
     };
     assert_eq!(items.len(), 5);
     number(&items[0], 17.0);
-    let Expression::Await { value } = &items[1].kind else {
+    let Expression::Await { value } = &*items[1].kind else {
         panic!("await")
     };
-    let Expression::Do(operands) = &value.kind else {
+    let Expression::Do(operands) = &*value.kind else {
         panic!("operand do")
     };
     assert_eq!(operands.len(), 2);
@@ -182,12 +182,12 @@ fn async_body_order_and_provisional_global_identity_are_retained_without_publica
         global,
         initializer,
         ..
-    } = &items[3].kind
+    } = &*items[3].kind
     else {
         panic!("def")
     };
     number(initializer.as_ref().unwrap(), 3.0);
-    assert!(matches!(&items[4].kind, Expression::Global(reference) if reference == global));
+    assert!(matches!(&*items[4].kind, Expression::Global(reference) if reference == global));
     for pair in items.windows(2) {
         assert!(pair[0].span.start < pair[1].span.start);
     }
@@ -205,23 +205,23 @@ fn async_body_order_and_provisional_global_identity_are_retained_without_publica
 #[test]
 fn synchronous_regions_keep_existing_closure_shapes_and_plain_async_lowering_is_explicit() {
     let hir = analyze("(try 1 (catch :default e e) (finally 2))");
-    let Expression::Try { regions } = &single(&hir).kind else {
+    let Expression::Try { regions } = &*single(&hir).kind else {
         panic!("sync try")
     };
     for (region, arity) in regions.iter().zip([0, 1, 0]) {
         assert!(
-            matches!(&region.kind, Expression::Function { parameters, .. } if parameters.len() == arity)
+            matches!(&*region.kind, Expression::Function { parameters, .. } if parameters.len() == arity)
         );
     }
     ir::lower(&hir).unwrap();
     let hir = analyze("(def ^:dynamic *v* 1) (binding [*v* 2] *v*)");
-    let Expression::Do(top) = &hir.kind else {
+    let Expression::Do(top) = &*hir.kind else {
         panic!("top")
     };
-    let Expression::DynamicScope { body, .. } = &top[1].kind else {
+    let Expression::DynamicScope { body, .. } = &*top[1].kind else {
         panic!("sync dynamic")
     };
-    assert!(matches!(&body.kind, Expression::Function { parameters, .. } if parameters.is_empty()));
+    assert!(matches!(&*body.kind, Expression::Function { parameters, .. } if parameters.is_empty()));
     ir::lower(&hir).unwrap();
     for source in [
         "(suss.async/future*)",
@@ -287,10 +287,10 @@ fn synchronous_regions_keep_existing_closure_shapes_and_plain_async_lowering_is_
     }
     // The private markers are qualified compiler forms, not bare-name rewrites.
     let hir = analyze("(let [future* (fn* [x] x) await* (fn* [x] x)] (future* (await* 42)))");
-    let Expression::Let { body, .. } = &single(&hir).kind else {
+    let Expression::Let { body, .. } = &*single(&hir).kind else {
         panic!("let")
     };
-    assert!(matches!(&single(body).kind, Expression::Call { .. }));
+    assert!(matches!(&*single(body).kind, Expression::Call { .. }));
 }
 
 #[test]
@@ -298,31 +298,31 @@ fn future_cannot_recur_to_enclosing_loop_but_can_contain_its_own_loop() {
     let error = portable::analyze("(loop* [x 1] (suss.async/future* (recur x)))").unwrap_err();
     assert!(error.message.contains("recur requires an enclosing"));
     let hir = analyze("(loop* [x 1] (suss.async/future* (loop* [y x] (recur y))) (recur x))");
-    let Expression::Loop { body, .. } = &single(&hir).kind else {
+    let Expression::Loop { body, .. } = &*single(&hir).kind else {
         panic!("outer loop")
     };
-    let Expression::Do(items) = &body.kind else {
+    let Expression::Do(items) = &*body.kind else {
         panic!("body")
     };
-    assert!(matches!(&items[0].kind, Expression::Future { .. }));
-    assert!(matches!(&items[1].kind, Expression::Recur { .. }));
+    assert!(matches!(&*items[0].kind, Expression::Future { .. }));
+    assert!(matches!(&*items[1].kind, Expression::Recur { .. }));
 }
 
 #[test]
 fn enclosing_closure_captures_values_needed_only_by_its_nested_future() {
     let hir = analyze("(let [x 1] (fn* [] (suss.async/future* (suss.async/await* x))))");
-    let Expression::Let { bindings, body } = &single(&hir).kind else {
+    let Expression::Let { bindings, body } = &*single(&hir).kind else {
         panic!("let")
     };
     let x = bindings[0].id;
-    let Expression::Function { captures, body, .. } = &single(body).kind else {
+    let Expression::Function { captures, body, .. } = &*single(body).kind else {
         panic!("fn")
     };
     assert_eq!(captures, &[x]);
-    let Expression::Loop { body, .. } = &body.kind else {
+    let Expression::Loop { body, .. } = &*body.kind else {
         panic!("function recurrence wrapper")
     };
-    let Expression::Future { captures, body } = &single(body).kind else {
+    let Expression::Future { captures, body } = &*single(body).kind else {
         panic!("future")
     };
     assert_eq!(captures, &[x]);

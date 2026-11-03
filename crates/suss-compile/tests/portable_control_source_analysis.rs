@@ -730,7 +730,7 @@ fn method_entry_environment_precedes_parameters_and_body_markers_are_explicit() 
                 phase,
             )
             .unwrap();
-            let hir::Expression::Do(items) = &analyzed.kind else {
+            let hir::Expression::Do(items) = &*analyzed.kind else {
                 panic!("fragment body")
             };
             let callable = items
@@ -814,13 +814,13 @@ fn function_name_facts_share_actual_scopes_without_inheriting_anonymous_parent()
             phase,
         )
         .unwrap();
-        let hir::Expression::Do(items) = &analyzed.kind else {
+        let hir::Expression::Do(items) = &*analyzed.kind else {
             panic!("fragment")
         };
         let hir::Expression::Definition {
             initializer: Some(initializer),
             ..
-        } = &items[0].kind
+        } = &*items[0].kind
         else {
             panic!("definition")
         };
@@ -849,7 +849,7 @@ fn function_name_facts_share_actual_scopes_without_inheriting_anonymous_parent()
             phase,
         )
         .unwrap();
-        let hir::Expression::Do(items) = &analyzed.kind else {
+        let hir::Expression::Do(items) = &*analyzed.kind else {
             panic!("fragment")
         };
         let outer = items[0].source.as_ref().unwrap().callable.as_ref().unwrap();

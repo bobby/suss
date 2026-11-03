@@ -2860,7 +2860,7 @@ impl<'a> AnalysisGraph<'a> {
     }
     fn lowering_record(&mut self, slot: Value, hir: &Hir, depth: usize) -> Result<Value> {
         Self::depth(depth)?;
-        let (operation, children): (&str, Vec<&Hir>) = match &hir.kind {
+        let (operation, children): (&str, Vec<&Hir>) = match &*hir.kind {
             Expression::Future { body, .. } => ("future", vec![body]),
             Expression::Await { value } => ("await", vec![value]),
             Expression::AsyncTry {
@@ -2951,7 +2951,7 @@ impl<'a> AnalysisGraph<'a> {
         };
         let operation = self.keyword(operation)?;
         let mut entries = vec![("suss/operation", operation)];
-        match &hir.kind {
+        match &*hir.kind {
             Expression::Literal(value) if !matches!(value, Literal::Undefined) => {
                 entries.push(("suss/value", self.scalar(value.clone())?))
             }

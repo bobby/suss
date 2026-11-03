@@ -38,7 +38,7 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: vec![],
             ty,
-            kind,
+            kind: std::sync::Arc::new(kind),
         };
         let ns = self.literal_form(
             form,
@@ -157,7 +157,7 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: vec![],
                     ty,
-                    kind,
+                    kind: std::sync::Arc::new(kind),
                 };
                 let arguments = items
                     .iter()
@@ -168,10 +168,10 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: vec![],
                     ty: Type::Value,
-                    kind: Expression::Call {
+                    kind: std::sync::Arc::new(Expression::Call {
                         callee: Box::new(callee),
                         arguments,
-                    },
+                    }),
                 })
             }
             Kind::Tagged { tag, form: target } => {
@@ -206,7 +206,7 @@ impl Analyzer<'_> {
             source: None,
             span: form.span.clone(),
             metadata: vec![],
-            kind,
+            kind: std::sync::Arc::new(kind),
             ty,
         };
         Ok(Hir {
@@ -214,10 +214,10 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: vec![],
             ty: Type::Value,
-            kind: Expression::Call {
+            kind: std::sync::Arc::new(Expression::Call {
                 callee: Box::new(callee),
                 arguments,
-            },
+            }),
         })
     }
     /// The queue a `#queue` literal reads as: ClojureScript's
@@ -309,10 +309,10 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: vec![],
             ty: Type::Value,
-            kind: Expression::Let {
+            kind: std::sync::Arc::new(Expression::Let {
                 bindings,
                 body: Box::new(self.local(form, result.id)),
-            },
+            }),
         };
         self.data_core_call(form, "with-meta", vec![value, result])
     }

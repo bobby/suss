@@ -146,7 +146,7 @@ impl Analyzer<'_> {
             span: span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: Expression::Global(cell.clone()),
+            kind: std::sync::Arc::new(Expression::Global(cell.clone())),
         };
         let defining = before.resolve(self.phase, &publish, span.clone()).is_err();
         let name = quoted(&span, symbol(&span, Symbol::new(namespace)));
@@ -192,7 +192,7 @@ impl Analyzer<'_> {
             span: span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: Expression::Definition {
+            kind: std::sync::Arc::new(Expression::Definition {
                 global: cell.clone(),
                 name_metadata: Vec::new(),
                 name_span: span.clone(),
@@ -201,7 +201,7 @@ impl Analyzer<'_> {
                 once: false,
                 // An internal namespace cell, not a core definition.
                 linked: None,
-            },
+            }),
         };
         let mut effects = Vec::new();
         if defining {
@@ -258,7 +258,7 @@ impl Analyzer<'_> {
                     span: span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Value,
-                    kind: Expression::GlobalCell(cell.clone()),
+                    kind: std::sync::Arc::new(Expression::GlobalCell(cell.clone())),
                 }],
             );
             let additions = if added.is_empty() {
@@ -271,7 +271,7 @@ impl Analyzer<'_> {
                 span: span.clone(),
                 metadata: Vec::new(),
                 ty: Type::Value,
-                kind: Expression::If { condition: Box::new(bound), consequent: Box::new(additions), alternative: Box::new(full) },
+                kind: std::sync::Arc::new(Expression::If { condition: Box::new(bound), consequent: Box::new(additions), alternative: Box::new(full) }),
             });
         }
         if defining {
@@ -279,7 +279,7 @@ impl Analyzer<'_> {
             // bootstrap) publishes after its body and loads under *ns*'s root.
             let mut items = vec![body];
             items.extend(effects);
-            return Ok(Hir { source: None, span, metadata: Vec::new(), ty: Type::Value, kind: Expression::Do(items) });
+            return Ok(Hir { source: None, span, metadata: Vec::new(), ty: Type::Value, kind: std::sync::Arc::new(Expression::Do(items)) });
         }
         let target = symbol(&span, Symbol::namespaced("suss.core", "*ns*"));
         let global = self.assignment_target(&target)?;
@@ -289,8 +289,8 @@ impl Analyzer<'_> {
             span: span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: Expression::DynamicScope { bindings: vec![(global, read(&span))], body: Box::new(body) },
+            kind: std::sync::Arc::new(Expression::DynamicScope { bindings: vec![(global, read(&span))], body: Box::new(body) }),
         });
-        Ok(Hir { source: None, span, metadata: Vec::new(), ty: Type::Value, kind: Expression::Do(effects) })
+        Ok(Hir { source: None, span, metadata: Vec::new(), ty: Type::Value, kind: std::sync::Arc::new(Expression::Do(effects)) })
     }
 }

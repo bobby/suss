@@ -69,7 +69,7 @@ fn compiler_macro_field_records_preserve_declarations_access_and_parameter_shado
         assert_eq!(&source[field.declaration.span.clone()], "^:mutable x");
         assert_eq!(field.declaration.metadata.len(), 1);
         assert!(matches!(
-            field.access.kind,
+            *field.access.kind,
             Expression::Nominal {
                 operation: Nominal::Field(0),
                 ..
@@ -107,7 +107,7 @@ fn compiler_macro_field_records_preserve_declarations_access_and_parameter_shado
         assert_eq!(direct_field.declaration, fields["x"].declaration);
         assert!(direct_field.mutable);
         assert!(matches!(
-            direct_field.access.kind,
+            *direct_field.access.kind,
             Expression::Nominal {
                 operation: Nominal::Field(0),
                 ..

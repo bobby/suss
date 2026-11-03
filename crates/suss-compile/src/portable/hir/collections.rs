@@ -15,7 +15,7 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: vec![],
             ty,
-            kind,
+            kind: std::sync::Arc::new(kind),
         })
     }
 
@@ -37,10 +37,10 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: vec![],
             ty: Type::Value,
-            kind: Expression::Array {
+            kind: std::sync::Arc::new(Expression::Array {
                 operation: ArrayOperation::Literal,
                 arguments,
-            },
+            }),
         }
     }
 
@@ -75,7 +75,7 @@ impl Analyzer<'_> {
         let mut bindings = vec![owner_binding, method_binding];
         bindings.extend(entries);
         let mut result = self.nominal(form, Nominal::ObjectInvoke, vec![]);
-        result.kind = Expression::Let { bindings, body: Box::new(body) };
+        result.kind = std::sync::Arc::new(Expression::Let { bindings, body: Box::new(body) });
         Ok(result)
     }
 

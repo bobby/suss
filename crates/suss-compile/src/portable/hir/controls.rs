@@ -14,11 +14,11 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: form.metadata.clone(),
             ty,
-            kind: Expression::If {
+            kind: std::sync::Arc::new(Expression::If {
                 condition: Box::new(condition),
                 consequent: Box::new(consequent),
                 alternative: Box::new(alternative),
-            },
+            }),
         }
     }
     fn control_test(&mut self, form: &Form) -> Result<Hir, Diagnostic> {
@@ -68,7 +68,7 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty,
-                    kind: Expression::Arithmetic { operator, arguments, coercing: self.coercing_operands() },
+                    kind: std::sync::Arc::new(Expression::Arithmetic { operator, arguments, coercing: self.coercing_operands() }),
                 })
             }
             ControlForm::Zero | ControlForm::Positive | ControlForm::Negative => {
@@ -84,7 +84,7 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: Type::Bool,
-                    kind: Expression::Comparison {
+                    kind: std::sync::Arc::new(Expression::Comparison {
                         // Clojure's predicates reject non-numbers (#286); core
                         // keeps its pinned coercing internal uses.
                         operation: match (operation, self.coercing_operands()) {
@@ -96,7 +96,7 @@ impl Analyzer<'_> {
                             (_, false) => Comparison::NumberPositive,
                         },
                         arguments: vec![value, self.literal_form(form, Literal::Number(0.0))],
-                    },
+                    }),
                 })
             }
             ControlForm::ThreadFirst => {
@@ -175,10 +175,10 @@ impl Analyzer<'_> {
                         span: form.span.clone(),
                         metadata: form.metadata.clone(),
                         ty: body.ty,
-                        kind: Expression::Let {
+                        kind: std::sync::Arc::new(Expression::Let {
                             bindings,
                             body: Box::new(body),
-                        },
+                        }),
                     })
                 })();
                 self.locals = outer;
@@ -202,7 +202,7 @@ impl Analyzer<'_> {
                     span: args[2].span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Bool,
-                    kind: Expression::NilTest(Box::new(cached.clone())),
+                    kind: std::sync::Arc::new(Expression::NilTest(Box::new(cached.clone()))),
                 };
                 let callee = self.form(&args[1])?;
                 let callee = self.prepare_source_callee(form, callee, 1)?;
@@ -212,10 +212,10 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Value,
-                    kind: Expression::Call {
+                    kind: std::sync::Arc::new(Expression::Call {
                         callee: Box::new(callee),
                         arguments: vec![collection],
-                    },
+                    }),
                 };
                 let hash_binding = self.fresh_binding(form, hash);
                 let hash = self.local(form, hash_binding.id);
@@ -255,11 +255,11 @@ impl Analyzer<'_> {
                         span: form.span.clone(),
                         metadata: Vec::new(),
                         ty: Type::Value,
-                        kind: Expression::Assign {
+                        kind: std::sync::Arc::new(Expression::Assign {
                             linked: self.core_reference_link(&global),
                             global,
                             value: Box::new(hash.clone()),
-                        },
+                        }),
                     }
                 };
                 let miss_body = Hir {
@@ -267,17 +267,17 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Value,
-                    kind: Expression::Do(vec![assignment, hash]),
+                    kind: std::sync::Arc::new(Expression::Do(vec![assignment, hash])),
                 };
                 let miss = Hir {
                     source: None,
                     span: form.span.clone(),
                     metadata: Vec::new(),
                     ty: Type::Value,
-                    kind: Expression::Let {
+                    kind: std::sync::Arc::new(Expression::Let {
                         bindings: vec![hash_binding],
                         body: Box::new(miss_body),
-                    },
+                    }),
                 };
                 let body = self.control_if(form, test, miss, cached);
                 Ok(Hir {
@@ -285,10 +285,10 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: body.ty,
-                    kind: Expression::Let {
+                    kind: std::sync::Arc::new(Expression::Let {
                         bindings: vec![cached_binding],
                         body: Box::new(body),
-                    },
+                    }),
                 })
             }
             ControlForm::Declare => {
@@ -329,7 +329,7 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: Type::Nil,
-                    kind: Expression::Do(definitions),
+                    kind: std::sync::Arc::new(Expression::Do(definitions)),
                 })
             }
             ControlForm::When | ControlForm::WhenNot => {
@@ -393,10 +393,10 @@ impl Analyzer<'_> {
                     span: args[1].span.clone(),
                     metadata: args[1].metadata.clone(),
                     ty: consequent.ty,
-                    kind: Expression::Let {
+                    kind: std::sync::Arc::new(Expression::Let {
                         bindings: vec![binding],
                         body: Box::new(consequent),
-                    },
+                    }),
                 };
                 let alternative = if args.len() == 3 {
                     self.form_in(&args[2], context, tail)?
@@ -409,10 +409,10 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: body.ty,
-                    kind: Expression::Let {
+                    kind: std::sync::Arc::new(Expression::Let {
                         bindings: vec![temporary],
                         body: Box::new(body),
-                    },
+                    }),
                 })
             }
             ControlForm::IfNot => {
@@ -469,7 +469,7 @@ impl Analyzer<'_> {
                     span: args[0].span.clone(),
                     metadata: Vec::new(),
                     ty: value.ty,
-                    kind: Expression::Local(id),
+                    kind: std::sync::Arc::new(Expression::Local(id)),
                 };
                 let rest = stacker::maybe_grow(256 * 1024, 4 * 1024 * 1024, || {
                     self.control_form(form, &args[1..], operation, context.returning(), tail)
@@ -484,7 +484,7 @@ impl Analyzer<'_> {
                     span: form.span.clone(),
                     metadata: form.metadata.clone(),
                     ty: body.ty,
-                    kind: Expression::Let {
+                    kind: std::sync::Arc::new(Expression::Let {
                         bindings: vec![Binding {
                             id,
                             name: "bootstrap control temporary".into(),
@@ -493,7 +493,7 @@ impl Analyzer<'_> {
                             value,
                         }],
                         body: Box::new(body),
-                    },
+                    }),
                 })
             }
         }

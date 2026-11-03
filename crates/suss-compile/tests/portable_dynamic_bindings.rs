@@ -32,10 +32,10 @@ fn dynamic_scope_requires_a_fixed_body_and_complete_snapshot_value_pairs() {
     assert!(ir::verify(&malformed).is_err());
     assert!(portable::compile_ir(&malformed).is_err());
     let mut malformed = hir.clone();
-    let Expression::Do(items) = &mut malformed.kind else {
+    let Expression::Do(items) = malformed.kind_mut() else {
         panic!("fragment")
     };
-    let Expression::DynamicScope { body, .. } = &mut items[0].kind else {
+    let Expression::DynamicScope { body, .. } = items[0].kind_mut() else {
         panic!("scope")
     };
     **body = Hir {
@@ -43,7 +43,7 @@ fn dynamic_scope_requires_a_fixed_body_and_complete_snapshot_value_pairs() {
         span: 1..5,
         metadata: vec![],
         ty: Type::Nil,
-        kind: Expression::Literal(Literal::Nil),
+        kind: std::sync::Arc::new(Expression::Literal(Literal::Nil)),
     };
     assert!(ir::lower(&malformed).is_err());
 }

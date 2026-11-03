@@ -684,7 +684,7 @@ mod tests {
             let source = "(declare nth seq first next get --destructure-map Keyword PersistentVector PersistentArrayMap) (fn again [[n total] {:keys [step]}] (if (< n 3) (recur [(inc n) (+ total step)] {:step step}) total))";
             let forms = resolve_conditionals(read_forms(source).unwrap()).unwrap();
             let (hir, _) = prepare(&forms, 0..source.len(), &environment, phase).unwrap();
-            let Expression::Do(items) = &hir.kind else {
+            let Expression::Do(items) = &*hir.kind else {
                 panic!("top-level")
             };
             // Named functions publish their genuine owner/delegates through
@@ -693,7 +693,7 @@ mod tests {
             let Expression::Let {
                 bindings: callable_bindings,
                 ..
-            } = &items.last().unwrap().kind
+            } = &*items.last().unwrap().kind
             else {
                 panic!("callable signature publication")
             };
@@ -701,7 +701,7 @@ mod tests {
                 methods,
                 self_binding,
                 ..
-            } = &callable_bindings[0].value.kind
+            } = &*callable_bindings[0].value.kind
             else {
                 panic!("named callable owner")
             };
@@ -712,14 +712,14 @@ mod tests {
                 2,
                 "patterns are not extra arguments"
             );
-            let Expression::Loop { body, .. } = &methods[0].body.kind else {
+            let Expression::Loop { body, .. } = &*methods[0].body.kind else {
                 panic!("method recurrence")
             };
-            let Expression::Do(statements) = &body.kind else {
+            let Expression::Do(statements) = &*body.kind else {
                 panic!("method body source do")
             };
             assert!(
-                matches!(statements.last().unwrap().kind, Expression::Let { .. }),
+                matches!(*statements.last().unwrap().kind, Expression::Let { .. }),
                 "extraction belongs inside recurrence loop"
             );
         }
