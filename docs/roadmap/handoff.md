@@ -29588,4 +29588,4 @@ document's 2026-10-25 decision now records all three outcomes.
 - Identities are the visible cells: `Cell` bindings, and materialized bootstrap cells that aren't reader or internal cells. Every write to `Environment::bindings` must go through `bind`/`unbind`, which keep the set current. `check_identities` (test-only) compares it with a full recomputation; `bootstrap::tests` runs it on core and after each kind of binding change.
 - Analysing core went from ~515 ms to ~410 ms per phase, and from 885 MB to 586 MB allocated. The compiled bootstrap is unchanged except for its identity.
 - Still to do in #319: share forms (each node deep-copies its form; making `Form` shareable touches the reader and about 150 files) and `SourceNode` HIR, then remeasure #299 step 3 (prototype on branch `tooling/core-analysis-cache`).
-- Full baseline on the merged head: BASELINE.
+- Full baseline on d195490: 2112 passed, 0 failed, 78 ignored, 282 binaries, 98 min.
