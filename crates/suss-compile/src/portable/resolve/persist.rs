@@ -66,10 +66,10 @@ impl Environment {
     pub(crate) fn encode(&self, encoder: &mut Encoder<'_>) -> R<Value> {
         let Self {
             reader_state, namespaces, bindings, definitions, source_generation, scopes, current,
-            materialized_bootstrap, macro_exports, macro_namespaces, protocols, core_protocols,
+            materialized_bootstrap, identities: _, macro_exports, macro_namespaces, protocols, core_protocols,
         } = self;
         let mut definition_rows = Vec::new();
-        for (global, info) in definitions {
+        for (global, info) in definitions.values().flat_map(|definitions| definitions.iter()) {
             definition_rows.push(encoder.global(global));
             definition_rows.push(encoder.definition(info)?);
         }
@@ -209,10 +209,14 @@ impl Environment {
             };
             binding_map.insert(global, binding);
         }
-        let mut definition_map = BTreeMap::new();
+        let mut definition_map = BTreeMap::<_, super::PersistentMap<_, _>>::new();
         for pair in items(definitions)?.chunks(2) {
             let [global, info] = pair else { return Err("Odd definitions".into()) };
-            definition_map.insert(decoder.global(global)?, decoder.definition(info)?);
+            let global = decoder.global(global)?;
+            definition_map
+                .entry((global.phase, global.namespace.clone()))
+                .or_default()
+                .insert(global, decoder.definition(info)?);
         }
         let mut scope_map = BTreeMap::new();
         for row in items(scopes)? {
@@ -277,7 +281,7 @@ impl Environment {
                 _ => Err("Odd macro exports".to_owned()),
             })
             .collect::<R<_>>()?;
-        Ok(Self {
+        let mut environment = Self {
             reader_state: crate::portable::syntax_quote::ReaderState::with_next_gensym(index(next_gensym)? as u64),
             namespaces: decode_phase_names(decoder, namespaces)?,
             bindings: binding_map,
@@ -289,7 +293,10 @@ impl Environment {
             macro_exports,
             macro_namespaces: decode_phase_names(decoder, macro_namespaces)?,
             protocols: protocol_map,
+            identities: BTreeMap::new(),
             core_protocols: decode_globals(decoder, core_protocols)?,
-        })
+        };
+        environment.rebuild_identities();
+        Ok(environment)
     }
 }

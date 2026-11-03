@@ -744,7 +744,7 @@ impl Environment {
     }
     #[cfg(test)]
     pub(crate) fn probe_definitions(&self) -> impl Iterator<Item = &std::sync::Arc<DefinitionInfo>> {
-        self.definitions.values()
+        self.definitions.values().flat_map(|definitions| definitions.values())
     }
     pub fn definition_info(&self, global: &Global) -> Option<&DefinitionInfo> {
         self.shared_definition_info(global).map(std::sync::Arc::as_ref)
@@ -820,6 +820,14 @@ impl Environment {
     fn unbind(&mut self, global: &Global) {
         self.bindings.remove(global);
         self.refresh_identity(global);
+    }
+    /// Recompute every namespace's identities, as after decoding.
+    fn rebuild_identities(&mut self) {
+        self.identities.clear();
+        let globals = self.bindings.keys().chain(&self.materialized_bootstrap).cloned().collect::<Vec<_>>();
+        for global in globals {
+            self.refresh_identity(&global);
+        }
     }
     fn refresh_identity(&mut self, global: &Global) {
         let visible = match self.bindings.get(global) {

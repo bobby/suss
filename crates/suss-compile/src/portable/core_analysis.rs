@@ -142,7 +142,7 @@ nominal! {
     CurrentThis, NativeObjectGet, NativeObjectSet, NativeObjectStrictSet, CoerceString,
     ObjectCoerceString, ConcatString, ValueAdd, StringIndexOf, StringSlice, StringFromUnit,
     LanguageError, IsLanguageError, ObjectSet, ObjectInvoke, Dispatcher, Set, Marker, Satisfies,
-    NativeSatisfies,
+    NativeSatisfies, TypeName,
 }
 
 pub(crate) fn number(n: usize) -> Value {
@@ -595,10 +595,10 @@ impl<'a> Encoder<'a> {
         // Declarations and identities as changes from the namespace's
         // previous snapshot, since each top-level form adds a few.
         let base = self.namespaces.get(name).cloned();
-        let empty = BTreeMap::new();
+        let (empty, no_identities) = Default::default();
         let (base_declarations, base_identities, base_row) = match &base {
-            Some((base, row)) => (&base.declarations, &base.identities[..], number(*row)),
-            None => (&empty, &[][..], Value::Nil),
+            Some((base, row)) => (&base.declarations, &base.identities, number(*row)),
+            None => (&empty, &no_identities, Value::Nil),
         };
         let removed = base_declarations
             .keys()
@@ -612,7 +612,16 @@ impl<'a> Encoder<'a> {
                 changed.push(self.definition(info)?);
             }
         }
-        let kept = base_identities.iter().zip(identities).take_while(|(a, b)| a == b).count();
+        let removed_identities = base_identities
+            .iter()
+            .filter(|global| !identities.contains(*global))
+            .map(|global| self.global(global))
+            .collect();
+        let added_identities = identities
+            .iter()
+            .filter(|global| !base_identities.contains(*global))
+            .map(|global| self.global(global))
+            .collect();
         let row = vec![
             base_row,
             self.string(name),
@@ -629,8 +638,8 @@ impl<'a> Encoder<'a> {
             self.string_set(renamed_macro_refers),
             Value::Vector(removed.iter().map(|g| self.global(g)).collect()),
             Value::Vector(changed),
-            number(kept),
-            Value::Vector(identities[kept..].iter().map(|g| self.global(g)).collect()),
+            Value::Vector(removed_identities),
+            Value::Vector(added_identities),
         ];
         let i = self.shared(Table::Namespace, Arc::as_ptr(namespace), row);
         self.namespaces.insert(name.clone(), (namespace.clone(), index(&i)?));
@@ -1483,7 +1492,7 @@ impl Decoder {
     }
     fn decode_namespace(&self, fields: &[Value]) -> R<SourceNamespace> {
         let [base, name, aliases, refers, used_refers, renamed_refers, excluded_core, macro_aliases,
-            macro_refers, used_macro_refers, renamed_macro_refers, removed, changed, kept, added] = fields
+            macro_refers, used_macro_refers, renamed_macro_refers, removed, changed, removed_identities, added] = fields
         else {
             return Err("Bad namespace row".into());
         };
@@ -1496,14 +1505,12 @@ impl Decoder {
             let [global, info] = pair else { return Err("Odd declarations".into()) };
             declarations.insert(self.global(global)?, self.definition(info)?);
         }
-        let kept = index(kept)?;
-        let mut identities = match &base {
-            Some(base) if kept <= base.identities.len() => base.identities[..kept].to_vec(),
-            None if kept == 0 => Vec::new(),
-            _ => return Err("Bad identity prefix".into()),
-        };
+        let mut identities = base.as_ref().map(|b| b.identities.clone()).unwrap_or_default();
+        for global in items(removed_identities)? {
+            identities.remove(&self.global(global)?);
+        }
         for global in items(added)? {
-            identities.push(self.global(global)?);
+            identities.insert(self.global(global)?);
         }
         Ok(SourceNamespace {
             namespace: self.string(name)?,
