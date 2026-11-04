@@ -11319,19 +11319,6 @@ reduces them without incurring seq initialization"
 ;; (docs/runtime/type-names.md), so they dispatch to :default.
 (def ^:private untyped-printable?
   (fn [x] (or (js-fn? x) (suss.bootstrap/type-constructor? x) (object? x))))
-(def print-method
-  (new MultiFn "print-method"
-    (fn [x writer]
-      (let [t (get (meta x) :type)]
-        (cond
-          (keyword? t) t
-          (untyped-printable? x) :default
-          :else (type x))))
-    :default (get-global-hierarchy) (hash-map) (hash-map) (hash-map) nil))
-(def print-dup
-  (new MultiFn "print-dup"
-    (fn [x writer] (if (untyped-printable? x) :default (type x)))
-    :default (get-global-hierarchy) (hash-map) (hash-map) (hash-map) nil))
 (def print-simple
   (fn [o w]
     (let [m (meta o)]
@@ -11341,6 +11328,7 @@ reduces them without incurring seq initialization"
             (-write w " "))
         nil))
     (-write w (str o))))
+(declare print-method)
 ;; Clojure's :default method: a value whose keyword :type has no method prints
 ;; without its :type. Every other value reaching it prints as built in.
 (def ^:private print-method-default
@@ -11349,11 +11337,28 @@ reduces them without incurring seq initialization"
       (not (keyword? (get (meta o) :type))) (pr-writer-impl o w nil)
       (implements? IWithMeta o) (print-method (vary-meta o dissoc :type) w)
       :else (print-simple o w))))
-(-add-method print-method :default print-method-default)
 ;; Clojure's print-dup methods for its own types; print-dup has no :default
 ;; in Clojure.
 (def ^:private print-dup-default (fn [o w] (pr-writer-impl o w nil)))
-(-add-method print-dup :default print-dup-default)
+;; Each table starts with its :default method as a literal array map, which
+;; becomes a hash map past eight methods: adding to a hash map while core
+;; loads would write another type's mutable fields, which only privileged
+;; core may do.
+(def print-method
+  (let [table {:default print-method-default}]
+    (new MultiFn "print-method"
+      (fn [x writer]
+        (let [t (get (meta x) :type)]
+          (cond
+            (keyword? t) t
+            (untyped-printable? x) :default
+            :else (type x))))
+      :default (get-global-hierarchy) table (hash-map) table (deref (get-global-hierarchy)))))
+(def print-dup
+  (let [table {:default print-dup-default}]
+    (new MultiFn "print-dup"
+      (fn [x writer] (if (untyped-printable? x) :default (type x)))
+      :default (get-global-hierarchy) table (hash-map) table (deref (get-global-hierarchy)))))
 ;; mf's method for obj, given obj's :type t, or nil when the built-in printer
 ;; prints obj with the caller's options. A type's value never reaches a
 ;; :default method, as in Clojure, where Object's method catches every class.

@@ -167,7 +167,10 @@ methods for its own types and `Object` do. Differences from Clojure:
 - Suss's types have no supertypes, so a method applies only to its own type,
   never to a subtype or an interface. Core types have no methods of their
   own in either table: `(methods print-method)` and `(methods print-dup)`
-  each hold only a built-in `:default` until a program adds a method.
+  each hold only a built-in `:default` until a program adds a method. Their
+  tables are array maps until they hold more than eight methods, where
+  Clojure's are hash maps, so `methods` lists a few methods in the order they
+  were added.
 - A type's value reaches a user's `:default` method only when a method calls
   `print-method` for it directly; the printers use the built-in printer, as
   Clojure's `Object` method does.
