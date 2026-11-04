@@ -2523,6 +2523,66 @@
       "id": "runtime:underive:11384",
       "source-sha256": "78acc3468a245850d6c1f209aa04e7a9734b5b75ebe821b6c09a4dda917d296f",
       "patch": "docs/compatibility/patches/hierarchy-underive.json"
+    },
+    {
+      "id": "runtime:IMultiFn:11460",
+      "source-sha256": "b8d01df32f4a96966b38cbbef68e64fdbed78d2e578a7a2f05b1d49f59c58761",
+      "patch": null
+    },
+    {
+      "id": "runtime:prefers*:11410",
+      "source-sha256": "fda2f7d4843f007a71dcfe91cd9fe4dc9cd1f45b628c1818f6f4698b2081c4ad",
+      "patch": "docs/compatibility/patches/multimethod-prefers.json"
+    },
+    {
+      "id": "runtime:dominates:11428",
+      "source-sha256": "b62ce3b4f95e59b2a26762110c9b038cc5c87ca2fa4e0651484c5826055c3932",
+      "patch": "docs/compatibility/patches/multimethod-dominates.json"
+    },
+    {
+      "id": "runtime:find-and-cache-best-method:11432",
+      "source-sha256": "a1cbdc5a78f98a41b11c420d6452a7f88952135c26778482960afb4b6db8de55",
+      "patch": "docs/compatibility/patches/multimethod-find-best.json"
+    },
+    {
+      "id": "runtime:throw-no-method-error:11471",
+      "source-sha256": "2e06d3f66449ce11df85be310355413a04d514525ca1ef379a84a979d9adea3b",
+      "patch": "docs/compatibility/patches/multimethod-no-method.json"
+    },
+    {
+      "id": "runtime:MultiFn:11474",
+      "source-sha256": "6bd38a11b90f314fd59eb1385d6990c7e846a272cf7748292955732e478c1456",
+      "patch": "docs/compatibility/patches/multimethod-type.json"
+    },
+    {
+      "id": "runtime:remove-all-methods:11659",
+      "source-sha256": "85f115f70188b9bc8ac22315585e6b2d269f543d851f34e9e68933d5fc48a31d",
+      "patch": "docs/compatibility/patches/multimethod-remove-all.json"
+    },
+    {
+      "id": "runtime:remove-method:11664",
+      "source-sha256": "085657e1bfe147cd67bf05896c98be9aa8c2dcad073e653ce1ef218f4c50819b",
+      "patch": "docs/compatibility/patches/multimethod-remove.json"
+    },
+    {
+      "id": "runtime:prefer-method:11669",
+      "source-sha256": "968a465f405d39ef11d7e0ce6de65520c7c79ef700c54e96cfc2dec111e34915",
+      "patch": "docs/compatibility/patches/multimethod-prefer.json"
+    },
+    {
+      "id": "runtime:methods:11675",
+      "source-sha256": "b3623f40c88040087a57a5c0db0c7aa8dd2a964cc13c610ffcb48779c27d60eb",
+      "patch": "docs/compatibility/patches/multimethod-methods.json"
+    },
+    {
+      "id": "runtime:get-method:11679",
+      "source-sha256": "94148d4b618074b0b4f1365cfa9d95a63fa6a72071335284ffb288903aac51ad",
+      "patch": "docs/compatibility/patches/multimethod-get.json"
+    },
+    {
+      "id": "runtime:prefers:11684",
+      "source-sha256": "381a7e7e23e20080d9c8bad331ec7ff89f5d21aea8c18ee45d24fd26a08cc896",
+      "patch": "docs/compatibility/patches/multimethod-prefers-fn.json"
     }
   ],
   "loader": {

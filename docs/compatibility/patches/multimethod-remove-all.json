@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "85f115f70188b9bc8ac22315585e6b2d269f543d851f34e9e68933d5fc48a31d",
+  "replacement": "(def remove-all-methods\n  \"Removes all of the methods of multimethod.\"\n  (fn [multifn] (-reset multifn)))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+}

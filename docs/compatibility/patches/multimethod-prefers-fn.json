@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "381a7e7e23e20080d9c8bad331ec7ff89f5d21aea8c18ee45d24fd26a08cc896",
+  "replacement": "(def prefers\n  \"Given a multimethod, returns a map of preferred value -> set of other values\"\n  (fn [multifn] (-prefers multifn)))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+}

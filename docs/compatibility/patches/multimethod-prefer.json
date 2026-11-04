@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "968a465f405d39ef11d7e0ce6de65520c7c79ef700c54e96cfc2dec111e34915",
+  "replacement": "(def prefer-method\n  \"Causes the multimethod to prefer matches of dispatch-val-x over dispatch-val-y\n   when there is a conflict\"\n  (fn [multifn dispatch-val-x dispatch-val-y] (-prefer-method multifn dispatch-val-x dispatch-val-y)))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+}

@@ -29615,3 +29615,12 @@ document's 2026-10-25 decision now records all three outcomes.
 - clojure-test-suite: patch 0005 names a core type where the hierarchy tests name a host class. Baseline is now 1,630 passes.
 - Still to do in #30: multimethods, then `print-method` (#302).
 - Full baseline on 27771aa: 2134 passed, 0 failed, 74 ignored, 283 binaries, 119 min.
+
+## #30 part 3: multimethods (2026-11-04)
+
+- PR #327. `MultiFn` is imported from the pinned ClojureScript with patches that follow Clojure 1.12's `MultiFn.java`: preferences walk the multimethod's hierarchy and are inherited, nil and false can be preferred, the cache is checked by hierarchy identity, `prefer-method` returns the multimethod and messages name the var. `defmulti` and `defmethod` are Clojure's macros in `portable_core_macros.rs`; a second `defmulti` keeps the methods, checked through the qualified var so a local of the same name doesn't redefine it. `docs/runtime/multimethods.md` lists the differences.
+- Expectations were checked against JVM Clojure 1.12.6, installed with mise for local checks only (`mise exec -- clojure -M script.clj`).
+- Error messages format dispatch values with `str`, falling back to `pr-str` because `str` of a host type throws; `(type 1)` shows as `#object[Number]`. That gap belongs to #302.
+- `(defrecord R [])` traps in the `core_state` harness ("caller &env input transport: Runtime trap"), as it did before this PR; the type-dispatch test uses `deftype`.
+- Still to do in #30: `print-method` (#302).
+- Full baseline on 0e9e0ba: 2140 passed, 0 failed, 74 ignored, 283 binaries, 147 min.

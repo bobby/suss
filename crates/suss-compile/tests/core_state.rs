@@ -413,3 +413,153 @@ fn thread_last_inserts_each_form_last() {
     check(&mut session, "[(->> [1 2 3] (map inc) (filter odd?) vec) (->> 5) (->> 2 (- 10)) (->> [1] first)]",
         "[[3] 5 8 1]");
 }
+
+#[test]
+fn multimethods_dispatch_through_hierarchies_and_defaults() {
+    let mut session = Repl::new();
+    session.setup("(defmulti area :shape)
+                   (defmethod area :square [{:keys [s]}] (* s s))
+                   (defmethod area :default [x] [:unknown x])");
+    check(&mut session, "[(area {:shape :square :s 3}) (area {:shape :circle})]",
+        "[9 [:unknown {:shape :circle}]]");
+    session.setup("(derive ::rect ::shape)
+                   (derive ::sq ::rect)
+                   (defmulti kind identity)
+                   (defmethod kind ::shape [_] :shape)");
+    check(&mut session, "(kind ::sq)", ":shape");
+    // Adding a method resets the cache, and the closer ancestor dominates.
+    session.setup("(defmethod kind ::rect [_] :rect)");
+    check(&mut session, "[(kind ::sq) (map kind [::sq ::rect ::shape]) (apply kind [::sq])]",
+        "[:rect (:rect :rect :shape) :rect]");
+    check(&mut session, "[(= #{::rect ::shape} (set (keys (methods kind)))) (= (get-method kind ::sq) (get-method kind ::rect)) (get-method kind 5)]",
+        "[true true nil]");
+    // Vectors dispatch element-wise through isa?.
+    session.setup("(defmulti pair identity) (defmethod pair [::shape ::shape] [_] :pair)");
+    check(&mut session, "[(pair [::sq ::rect]) (get-method pair [::sq 1])]", "[:pair nil]");
+    // Variadic dispatch, past the fixed arities.
+    session.setup("(defmulti va (fn [& xs] (count xs))) (defmethod va 22 [& xs] (reduce + xs))");
+    check(&mut session, "(apply va (range 22))", "231");
+    // A named, multi-arity method.
+    session.setup("(defmulti two (fn [x & _] x)) (defmethod two :a named ([_] 1) ([_ y] (if (= y 0) (named :a) y)))");
+    check(&mut session, "[(two :a) (two :a 5) (two :a 0)]", "[1 5 1]");
+    check(&mut session, "[(fn? kind) (= kind kind) (= kind pair)]", "[false true false]");
+    check(&mut session, "(apply str (take 28 (pr-str kind)))", "\"#object[suss.core.MultiFn 0x\"");
+}
+
+#[test]
+fn multimethod_errors_are_clojures() {
+    let mut session = Repl::new();
+    session.setup("(derive ::c ::a)
+                   (derive ::c ::b)
+                   (defmulti amb identity)
+                   (defmethod amb ::a [_] :a)
+                   (defmethod amb ::b [_] :b)
+                   (defmulti nilly identity)");
+    for (source, message) in [
+        ("(nilly 5)", "No method in multimethod 'nilly' for dispatch value: 5"),
+        ("(nilly nil)", "No method in multimethod 'nilly' for dispatch value: null"),
+        ("(nilly \"s\")", "No method in multimethod 'nilly' for dispatch value: s"),
+        ("(nilly [\"s\" nil])", "No method in multimethod 'nilly' for dispatch value: [\"s\" nil]"),
+        // The method table is a hash map, walked in its seq order, as in Clojure.
+        ("(amb ::c)", "Multiple methods in multimethod 'amb' match dispatch value: :user/c -> :user/b and :user/a, and neither is preferred"),
+    ] {
+        assert_eq!(printed(&mut session, &format!("(try {source} :returned (catch :default e (ex-message e)))")),
+            format!("{message:?}"), "{source}");
+    }
+    check(&mut session, "[(= amb (prefer-method amb ::a ::b)) (amb ::c) (prefers amb)]",
+        "[true :a {:user/a #{:user/b}}]");
+    check(&mut session, "(try (prefer-method amb ::b ::a) (catch :default e (ex-message e)))",
+        "\"Preference conflict in multimethod 'amb': :user/a is already preferred to :user/b\"");
+}
+
+#[test]
+fn multimethod_preferences_and_hierarchies_follow_clojures_multifn() {
+    let mut session = Repl::new();
+    // A preference for a parent is inherited, as in Clojure's MultiFn.prefers;
+    // ClojureScript's loops drop the inner result and report an ambiguity.
+    session.setup("(derive ::x ::xp)
+                   (derive ::k ::x)
+                   (derive ::k ::y)
+                   (defmulti inh identity)
+                   (defmethod inh ::x [_] :x)
+                   (defmethod inh ::y [_] :y)
+                   (prefer-method inh ::xp ::y)");
+    check(&mut session, "(inh ::k)", ":x");
+    // nil and false can be preferred.
+    session.setup("(defmulti nf identity)
+                   (defmethod nf nil [_] :nil)
+                   (defmethod nf false [_] :false)
+                   (prefer-method nf nil false)");
+    check(&mut session, "[(prefers nf) (nf nil) (nf false)]", "[{nil #{false}} :nil :false]");
+    check(&mut session, "(try (prefer-method nf false nil) (catch :default e (ex-message e)))",
+        "\"Preference conflict in multimethod 'nf': null is already preferred to false\"");
+    // A multimethod's own hierarchy, checked again whenever it changes.
+    session.setup("(def h (atom (make-hierarchy)))
+                   (defmulti local identity :hierarchy h :default ::none)
+                   (defmethod local ::p [_] :p)
+                   (defmethod local ::none [x] [:none x])");
+    check(&mut session, "(local ::c)", "[:none :user/c]");
+    session.setup("(swap! h derive ::c ::p)");
+    check(&mut session, "[(local ::c) (isa? ::c ::p)]", "[:p false]");
+    session.setup("(swap! h underive ::c ::p)");
+    check(&mut session, "(local ::c)", "[:none :user/c]");
+    // Preferences in a multimethod's hierarchy use that hierarchy's parents.
+    session.setup("(def h2 (atom (-> (make-hierarchy) (derive ::m ::mp) (derive ::m ::n))))
+                   (defmulti own identity :hierarchy h2)
+                   (defmethod own ::mp [_] :mp)
+                   (defmethod own ::n [_] :n)
+                   (prefer-method own ::mp ::n)");
+    check(&mut session, "(own ::m)", ":mp");
+}
+
+#[test]
+fn defmulti_defines_once_and_methods_can_be_removed() {
+    let mut session = Repl::new();
+    session.setup("(defmulti area :shape)
+                   (defmethod area :square [{:keys [s]}] (* s s))
+                   (defmethod area :default [_] :unknown)
+                   (defmulti area :other)");
+    // An existing multimethod is kept, with its dispatch function and methods.
+    check(&mut session, "(area {:shape :square :s 4})", "16");
+    check(&mut session, "[(= area (remove-method area :square)) (area {:shape :square :s 4})]", "[true :unknown]");
+    check(&mut session, "[(= area (remove-all-methods area)) (methods area) (prefers area)]", "[true {} {}]");
+    // Any other value is replaced.
+    session.setup("(def plain 1) (defmulti plain identity) (defmethod plain 1 [_] :one)");
+    check(&mut session, "(plain 1)", ":one");
+    check(&mut session, "(defmulti plain identity)", "nil");
+}
+
+#[test]
+fn defmulti_options_and_type_dispatch_follow_clojure() {
+    let mut session = Repl::new();
+    session.setup("(defmulti d \"doc\" {:added \"1\"} identity :default ::dd)
+                   (defmethod d ::dd [x] [:dd x])
+                   (defmulti dn identity :default nil)
+                   (defmethod dn nil [x] [:nil x])");
+    check(&mut session, "[(d 5) (dn 5) (dn nil)]", "[[:dd 5] [:nil 5] [:nil nil]]");
+    check(&mut session, "(= d (defmethod d 1 [_] 1))", "true");
+    // The global hierarchy is checked again after a derive.
+    session.setup("(defmulti g identity) (defmethod g ::gp [_] :gp)");
+    check(&mut session, "(try (g ::gc) (catch :default e (ex-message e)))",
+        "\"No method in multimethod 'g' for dispatch value: :user/gc\"");
+    session.setup("(derive ::gc ::gp)");
+    check(&mut session, "(g ::gc)", ":gp");
+    // A local of the same name does not hide the existing multimethod.
+    session.setup("(let [g 1] (defmulti g :other))");
+    check(&mut session, "(g ::gc)", ":gp");
+    // Types dispatch by identity, as Clojure's classes do.
+    session.setup("(deftype T [])
+                   (defmulti ty type)
+                   (defmethod ty (type \"\") [_] :string)
+                   (defmethod ty T [_] :t)");
+    check(&mut session, "[(ty \"s\") (ty (T.))]", "[:string :t]");
+    for (source, message) in [
+        ("(ty :k)", "No method in multimethod 'ty' for dispatch value: class suss.core.Keyword"),
+        // A host type has no class name yet, so it is printed (#302).
+        ("(ty 1)", "No method in multimethod 'ty' for dispatch value: #object[Number]"),
+    ] {
+        assert_eq!(printed(&mut session, &format!("(try {source} :returned (catch :default e (ex-message e)))")),
+            format!("{message:?}"), "{source}");
+    }
+}
+

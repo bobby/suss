@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "fda2f7d4843f007a71dcfe91cd9fe4dc9cd1f45b628c1818f6f4698b2081c4ad",
+  "replacement": "(def ^:private prefers*\n  (fn [h x y prefer-table]\n    (let [xprefs (get prefer-table x)]\n      (cond\n        (and (some? xprefs) (contains? xprefs y)) true\n        (loop [ps (seq (parents h y))]\n          (if ps\n            (if (prefers* h x (first ps) prefer-table) true (recur (next ps)))\n            false)) true\n        :else (loop [ps (seq (parents h x))]\n                (if ps\n                  (if (prefers* h (first ps) y prefer-table) true (recur (next ps)))\n                  false))))))",
+  "rationale": "Expand the complete pinned defn- to a private def/fn (#30). Follows Clojure's MultiFn.prefers: it walks the parents of y and then of x in the multimethod's hierarchy, which it takes as an argument (ClojureScript uses the global hierarchy), returns true as soon as a preference is found (ClojureScript's loops discard the inner result, so an inherited preference is never found), and checks membership with contains?, so nil and false can be preferred. It takes the prefer table's value, not an atom."
+}
