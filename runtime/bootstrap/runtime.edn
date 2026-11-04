@@ -607,6 +607,7 @@
          "suss.bindings.runtime:suss.core/print-method"
          "suss.bindings.runtime:suss.core/print-method-default"
          "suss.bindings.runtime:suss.core/print-method-for"
+         "suss.bindings.runtime:suss.core/print-method-of"
          "suss.bindings.runtime:suss.core/print-prefix-map"
          "suss.bindings.runtime:suss.core/print-simple"
          "suss.bindings.runtime:suss.core/print-str"
@@ -816,6 +817,7 @@
          "suss.bindings.runtime:suss.core/unchecked-editable-array-for"
          "suss.bindings.runtime:suss.core/underive"
          "suss.bindings.runtime:suss.core/unreduced"
+         "suss.bindings.runtime:suss.core/untyped-printable?"
          "suss.bindings.runtime:suss.core/update"
          "suss.bindings.runtime:suss.core/update-in"
          "suss.bindings.runtime:suss.core/val"
@@ -1464,6 +1466,7 @@
          "suss.bindings.runtime:suss.internal.core-link/print-method"
          "suss.bindings.runtime:suss.internal.core-link/print-method-default"
          "suss.bindings.runtime:suss.internal.core-link/print-method-for"
+         "suss.bindings.runtime:suss.internal.core-link/print-method-of"
          "suss.bindings.runtime:suss.internal.core-link/print-prefix-map"
          "suss.bindings.runtime:suss.internal.core-link/print-simple"
          "suss.bindings.runtime:suss.internal.core-link/print-str"
@@ -1673,6 +1676,7 @@
          "suss.bindings.runtime:suss.internal.core-link/unchecked-editable-array-for"
          "suss.bindings.runtime:suss.internal.core-link/underive"
          "suss.bindings.runtime:suss.internal.core-link/unreduced"
+         "suss.bindings.runtime:suss.internal.core-link/untyped-printable?"
          "suss.bindings.runtime:suss.internal.core-link/update"
          "suss.bindings.runtime:suss.internal.core-link/update-in"
          "suss.bindings.runtime:suss.internal.core-link/val"
@@ -1977,12 +1981,12 @@
          "suss.bindings.runtime:suss.internal.reify/t-reify-3439-10883"],
  :compiler "0.1.0+portable.3",
  :compiler-source-sha256 "d4f2afb3378ff1c3ea0b8b84eb3f89c32f625f331d155015596ce8f5ba097c43",
- :dependency-graph-sha256 "bb68ae1c27774d97f217a43fc180f317cb7ef74547ac80a5d70bc74ddc3b4142",
+ :dependency-graph-sha256 "861e55e8930217e1fae83af9988a8368aceee2eec41394ab47b1f64afa874c9d",
  :flags [],
  :format-version 2,
  :phase "runtime",
  :runtime-abi 2,
- :source-sha256 "71671835a5403213260b6a07134b9fe8c9fa09bbc5d28d8b9bb04dd2f629159d",
+ :source-sha256 "9d7cbed02f0168401382e60382ff662676f46cf18dd3113240891691bccb02c6",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "f92968a1f989bbcf0c7a4ae581c59d7246c50233d01790e09a8203802605e802",
+ :wasm-sha256 "a508a13017e45d6ab9a7bc9ea7535e61a94f667ea71b0e044104fec33d6a54a7",
  :wasm-tools "0.258.0"}

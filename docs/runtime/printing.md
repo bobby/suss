@@ -132,15 +132,19 @@ the value's metadata, or else on its `type`.
 
 - **Methods** take the value and a writer, and write with `.write`, as with
   a `java.io.Writer`; the writer also has `.append` and `.flush`. `.write`
-  takes a string (Suss's characters are strings), not a code point or a
-  character array.
+  takes a string (Suss's characters are strings), not a code point, a
+  character array, or an offset and length, which are ignored.
 - **Options:** a method reads the options from the dynamic vars, as in
   Clojure. A collection it prints with `print-method` is one level deeper
   and limited by `*print-length*`. A method prints no metadata unless it
   does so itself, for example with `print-simple`.
 - **Records and types:** a method for a record's or a `deftype`'s type
-  replaces its printer, including under `*print-meta*`. Under `*print-dup*`
-  records still print by their values, as Clojure's `print-dup` for records.
+  replaces its printer, including under `*print-meta*`.
+- **Under `*print-dup*`,** a value prints with its type's `print-dup` method.
+  Without one, it prints with `print-method`, as Clojure's `print-dup`
+  methods for vectors, maps, sets, seqs, symbols, strings, keywords, numbers,
+  booleans and `nil` do. A record without one prints by its values, as
+  Clojure's `print-dup` for records does.
 - **A keyword `:type`** with no method of its own goes to the `:default`
   method, which, as in Clojure, prints the value without its `:type`. With no
   `:default` method either, printing throws "No method in multimethod
@@ -168,11 +172,16 @@ methods for its own types and `Object` do. Differences from Clojure:
   `print-method` for it directly; the printers use the built-in printer, as
   Clojure's `Object` method does.
 - Clojure's `print-dup` has no `:default` and methods only for its own types,
-  so a type with no `print-dup` method throws under `*print-dup*`. Suss
-  prints it as `pr-str` does, and a `print-dup` method can call `print-dup`
-  for any value. Clojure's `print-dup` methods for strings,
-  keywords, numbers and `nil` call `print-method`, so a `print-method` for
-  those types applies under `*print-dup*` in Clojure but not in Suss.
+  so a `deftype` with no `print-dup` method throws under `*print-dup*`. Suss
+  prints it with `print-method`, and a `print-dup` method can call
+  `print-dup` for any value. A user's `print-dup` `:default` method is used
+  only by direct calls, as for `print-method`.
+- Suss can't take the type of a function, a type or a `#js` object yet
+  ([type names](type-names.md)), so they dispatch to `:default` and the
+  printers print them as built in. Clojure dispatches on their classes.
+- Removing `:default` leaves core types without a method for direct calls,
+  so a method that calls `print-method` for a number then throws "No method";
+  in Clojure, its own types keep their methods.
 - The REPL displays a result without the printer (#288), so methods affect
   `pr-str` and the other string printers but not the REPL's display.
 

@@ -293,8 +293,39 @@ fn print_dup_methods_print_under_print_dup() {
         &[
             ("(binding [*print-dup* true] (pr-str [(T. \"a\")]))", "[#=(T. \"a\")]"),
             ("(pr-str [(T. \"a\")])", "[#t \"a\"]"),
-            // print-method is not used under *print-dup*: records print by their values.
+            // Records print by their values under *print-dup*, not with print-method.
             ("(binding [*print-dup* true] (pr-str (->R 1 2)))", "#user.printing.R[1, 2]"),
+        ],
+    );
+}
+
+#[test]
+fn print_dup_falls_back_to_print_method_for_core_types() {
+    // Clojure's print-dup methods for vectors, maps, sets, seqs, symbols,
+    // strings, keywords and the like call print-method.
+    check_after(
+        &[
+            PRINT_METHODS[4],
+            "(do (defmethod print-method (type :a) [k w] (.write w \"KW\")) nil)",
+        ],
+        &[
+            ("(binding [*print-dup* true] (pr-str (with-meta [1] {:type ::k})))", "K:[1]"),
+            ("(binding [*print-dup* true] (pr-str [:a #{:b} '(:c) 'x true \"s\" 1 nil]))", "[KW #{KW} (KW) x true \"s\" 1 nil]"),
+            ("(binding [*print-dup* true] (pr-str (->R :d 2)))", "#user.printing.R[KW, 2]"),
+        ],
+    );
+}
+
+#[test]
+fn functions_and_types_print_while_methods_exist() {
+    // Suss can't take the type of a function or a type yet, so they print with
+    // the built-in printer, as Clojure's methods for Fn and Class do.
+    check_after(
+        &[PRINT_METHODS[0], PRINT_METHODS[2], PRINT_METHODS[4]],
+        &[
+            ("(pr-str [(type 1) (type []) T])", "[#object[Number] suss.core.PersistentVector user.printing.T]"),
+            ("(apply str (take 11 (pr-str [(T. inc)])))", "[#t #object"),
+            ("(do (remove-method print-method :default) (pr-str [inc]))", "[#object[cljs$core$inc]]"),
         ],
     );
 }

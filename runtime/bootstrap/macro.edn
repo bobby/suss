@@ -607,6 +607,7 @@
          "suss.bindings.macro:suss.core/print-method"
          "suss.bindings.macro:suss.core/print-method-default"
          "suss.bindings.macro:suss.core/print-method-for"
+         "suss.bindings.macro:suss.core/print-method-of"
          "suss.bindings.macro:suss.core/print-prefix-map"
          "suss.bindings.macro:suss.core/print-simple"
          "suss.bindings.macro:suss.core/print-str"
@@ -816,6 +817,7 @@
          "suss.bindings.macro:suss.core/unchecked-editable-array-for"
          "suss.bindings.macro:suss.core/underive"
          "suss.bindings.macro:suss.core/unreduced"
+         "suss.bindings.macro:suss.core/untyped-printable?"
          "suss.bindings.macro:suss.core/update"
          "suss.bindings.macro:suss.core/update-in"
          "suss.bindings.macro:suss.core/val"
@@ -1464,6 +1466,7 @@
          "suss.bindings.macro:suss.internal.core-link/print-method"
          "suss.bindings.macro:suss.internal.core-link/print-method-default"
          "suss.bindings.macro:suss.internal.core-link/print-method-for"
+         "suss.bindings.macro:suss.internal.core-link/print-method-of"
          "suss.bindings.macro:suss.internal.core-link/print-prefix-map"
          "suss.bindings.macro:suss.internal.core-link/print-simple"
          "suss.bindings.macro:suss.internal.core-link/print-str"
@@ -1673,6 +1676,7 @@
          "suss.bindings.macro:suss.internal.core-link/unchecked-editable-array-for"
          "suss.bindings.macro:suss.internal.core-link/underive"
          "suss.bindings.macro:suss.internal.core-link/unreduced"
+         "suss.bindings.macro:suss.internal.core-link/untyped-printable?"
          "suss.bindings.macro:suss.internal.core-link/update"
          "suss.bindings.macro:suss.internal.core-link/update-in"
          "suss.bindings.macro:suss.internal.core-link/val"
@@ -1977,12 +1981,12 @@
          "suss.bindings.macro:suss.internal.reify/t-reify-3439-10883"],
  :compiler "0.1.0+portable.3",
  :compiler-source-sha256 "d4f2afb3378ff1c3ea0b8b84eb3f89c32f625f331d155015596ce8f5ba097c43",
- :dependency-graph-sha256 "bb68ae1c27774d97f217a43fc180f317cb7ef74547ac80a5d70bc74ddc3b4142",
+ :dependency-graph-sha256 "861e55e8930217e1fae83af9988a8368aceee2eec41394ab47b1f64afa874c9d",
  :flags [],
  :format-version 2,
  :phase "macro",
  :runtime-abi 2,
- :source-sha256 "71671835a5403213260b6a07134b9fe8c9fa09bbc5d28d8b9bb04dd2f629159d",
+ :source-sha256 "9d7cbed02f0168401382e60382ff662676f46cf18dd3113240891691bccb02c6",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "84ff077f515ce597863377773409838e720838f1922f077e879e03e94774d79b",
+ :wasm-sha256 "4bb84be677ae2082cd63729719a8fcba218843ba23128fa8d4b13dfb069f1641",
  :wasm-tools "0.258.0"}
