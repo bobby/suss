@@ -6,7 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(goog-define
-  ^{:doc "Boolean flag for LITE_MODE"
-    :jsdoc ["@type {boolean}"]}
-  LITE_MODE false)
+(defn merge
+  "Returns a map that consists of the rest of the maps conj-ed onto
+  the first.  If a key occurs in more than one map, the mapping from
+  the latter (left-to-right) will be the mapping in the result."
+  [& maps]
+  (when (some identity maps)
+    (reduce #(conj (or %1 {}) %2) maps)))

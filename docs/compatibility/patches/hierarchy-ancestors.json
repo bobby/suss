@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "b1f235def2f23bb259ade032c25e7e14fe71159122abaebac7cec496c45c7551",
+  "replacement": "(def ancestors\n  \"Returns the immediate and indirect parents of tag through a relationship\n  established via derive. h must be a hierarchy obtained from make-hierarchy,\n  if not supplied defaults to the global hierarchy\"\n  (fn\n    ([tag] (ancestors @(get-global-hierarchy) tag))\n    ([h tag] (not-empty (get (:ancestors h) tag)))))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30). Suss types have no supertypes, so the type-inheritance branches of Clojure's and ClojureScript's versions (bases, supers, isAssignableFrom) contribute nothing and are removed (#30)."
+}

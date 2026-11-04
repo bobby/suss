@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "c317b9f3a48d94400d17d09fe8510d1e44b2abdfff55df9c7fd087b86b665ff7",
+  "replacement": "(def make-hierarchy\n  \"Creates a hierarchy object for use with derive, isa? etc.\"\n  (fn [] {:parents {} :descendants {} :ancestors {}}))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+}

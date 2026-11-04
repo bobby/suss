@@ -6,6 +6,4 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn delay?
-  "returns true if x is a Delay created with delay"
-  [x] (instance? Delay x))
+(def ^:private EMPTY (Empty.))

@@ -6,7 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^boolean realized?
-  "Returns true if a value has been produced for a delay or lazy sequence."
-  [x]
-  (-realized? x))
+(defn- chunkIteratorSeq [iter]
+  (lazy-seq
+    (when ^boolean (.hasNext iter)
+      (let [arr (array)]
+        (loop [n 0]
+          (if (and (.hasNext iter) (< n 32))
+            (do
+              (aset arr n (.next iter))
+              (recur (inc n)))
+            (chunk-cons (array-chunk arr 0 n) (chunkIteratorSeq iter))))))))

@@ -6,8 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn type
-  "Return x's constructor."
-  [x]
-  (when-not (nil? x)
-    (.-constructor x)))
+(defn chunk-append [b x]
+  (.add b x))

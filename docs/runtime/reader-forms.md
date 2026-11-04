@@ -37,8 +37,11 @@ its containing sequence; it never crosses a collection or enclosing conditional
 boundary.
 Both raw syntax and synthesized prefix nesting are bounded to 64 forms for
 ordinary thread-stack safety.
-Unsupported dispatch, splicing conditionals, auto-resolved keywords and numeric
-precision/ratio forms return located errors. This is a bounded syntax foundation;
+Unsupported dispatch, splicing conditionals and numeric precision/ratio forms
+return located errors. An auto-resolved keyword, `::name` or `::alias/name`, is
+read as an `AutoKeyword` form; the compiler resolves it in the current namespace
+or through that namespace's aliases before macros see it, as Clojure's reader
+does, and an unknown alias is Clojure's "Invalid token" error (#30). This is a bounded syntax foundation;
 it does not promise all upstream reader syntax or numeric spellings.
 
 The implementation is original Rust code. Observable scalar behavior was checked

@@ -6,7 +6,4 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn es6-iterator
-  "Return a ES2015+ compatible iterator for coll."
-  [coll]
-  (ES6Iterator. (seq coll)))
+(def INIT #js {})

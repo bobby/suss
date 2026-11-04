@@ -6,9 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn reverse
-  "Returns a seq of the items in coll in reverse order. Not lazy."
-  [coll]
-  (if (reversible? coll)
-    (or (rseq coll) ())
-    (reduce conj () coll)))
+(defn select-keys
+  "Returns a map containing only those entries in map whose key is in keys"
+  [map keyseq]
+    (loop [ret {} keys (seq keyseq)]
+      (if keys
+        (let [key   (first keys)
+              entry (get map key ::not-found)]
+          (recur
+           (if (not= entry ::not-found)
+             (assoc ret key entry)
+             ret)
+           (next keys)))
+        (-with-meta ret (meta map)))))

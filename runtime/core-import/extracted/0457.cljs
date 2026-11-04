@@ -6,13 +6,19 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn completing
-  "Takes a reducing function f of 2 args and returns a fn suitable for
-  transduce by adding an arity-1 signature that calls cf (default -
-  identity) on the result argument."
-  ([f] (completing f identity))
-  ([f cf]
-    (fn
-      ([] (f))
-      ([x] (cf x))
-      ([x y] (f x y)))))
+(defn replace
+  "Given a map of replacement pairs and a vector/collection, returns a
+  vector/seq with any elements = a key in smap replaced with the
+  corresponding val in smap.  Returns a transducer when no collection
+  is provided."
+  ([smap]
+     (map #(if-let [e (find smap %)] (val e) %)))
+  ([smap coll]
+     (if (vector? coll)
+       (let [n (count coll)]
+         (reduce (fn [v i]
+                   (if-let [e (find smap (nth v i))]
+                     (assoc v i (second e))
+                     v))
+           coll (take n (iterate inc 0))))
+       (map #(if-let [e (find smap %)] (second e) %) coll))))

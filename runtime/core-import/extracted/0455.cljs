@@ -6,12 +6,61 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn mapcat
-  "Returns the result of applying concat to the result of applying map
-  to f and colls.  Thus function f should return a collection. Returns
-  a transducer when no collections are provided"
-  {:added "1.0"
-   :static true}
-  ([f] (comp (map f) cat))
-  ([f & colls]
-     (apply concat (apply map f colls))))
+(deftype Iterate [meta f prev-seed ^:mutable seed ^:mutable next]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+
+  IPending
+  (-realized? [coll]
+    (not (identical? seed UNREALIZED-SEED)))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (Iterate. new-meta f prev-seed seed next)))
+
+  IMeta
+  (-meta [coll] meta)
+
+  ISeq
+  (-first [coll]
+    (when (identical? UNREALIZED-SEED seed)
+      (set! seed (f prev-seed)))
+    seed)
+  (-rest [coll]
+    (when (nil? next)
+      (set! next (Iterate. nil f (-first coll) UNREALIZED-SEED nil)))
+    next)
+
+  INext
+  (-next [coll]
+    (-rest coll))
+
+  ICollection
+  (-conj [coll o] (cons o coll))
+
+  IEmptyableCollection
+  (-empty [coll] (.-EMPTY List))
+
+  ISequential
+  ISeqable
+  (-seq [coll] coll)
+
+  IReduce
+  (-reduce [coll rf]
+    (let [first (-first coll)
+          v     (f first)]
+      (loop [ret (rf first v) v v]
+        (if (reduced? ret)
+          @ret
+          (let [v (f v)]
+            (recur (rf ret v) v))))))
+  (-reduce [coll rf start]
+    (let [v (-first coll)]
+      (loop [ret (rf start v) v v]
+        (if (reduced? ret)
+          @ret
+          (let [v (f v)]
+            (recur (rf ret v) v)))))))

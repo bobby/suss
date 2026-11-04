@@ -6,14 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Many [vals]
-  Object
-  (add [this o]
-    (.push vals o)
-    this)
-  (remove [this]
-    (.shift vals))
-  (isEmpty [this]
-    (zero? (.-length vals)))
-  (toString [this]
-    (str_ "Many: " vals)))
+(defn remove
+  "Returns a lazy sequence of the items in coll for which
+  (pred item) returns logical false. pred must be free of side-effects.
+  Returns a transducer when no collection is provided."
+  ([pred] (filter (complement pred)))
+  ([pred coll]
+     (filter (complement pred) coll)))

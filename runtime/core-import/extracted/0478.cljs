@@ -6,32 +6,39 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype TaggedLiteral [tag form]
+(deftype TransformerIterator [^:mutable buffer ^:mutable _next ^:mutable completed ^:mutable xf sourceIter multi]
   Object
-  (toString [coll]
-    (pr-str* coll))
-
-  IEquiv
-  (-equiv [this other]
-    (and (instance? TaggedLiteral other)
-         (= tag (.-tag other))
-         (= form (.-form other))))
-
-  IHash
-  (-hash [this]
-    (+ (* 31 (hash tag))
-       (hash form)))
-
-  ILookup
-  (-lookup [this v]
-    (-lookup this v nil))
-  (-lookup [this v not-found]
-    (case v
-      :tag tag
-      :form form
-      not-found))
-
-  IPrintWithWriter
-  (-pr-writer [o writer opts]
-    (-write writer (str_ "#" tag " "))
-    (pr-writer form writer opts)))
+  (step [this]
+    (if-not (identical? _next NONE)
+      true
+      (loop []
+        (if (identical? _next NONE)
+          (if ^boolean (.isEmpty buffer)
+            (if ^boolean completed
+              false
+              (if ^boolean (.hasNext sourceIter)
+                (let [iter (if ^boolean multi
+                             (apply xf (cons nil (.next sourceIter)))
+                             (xf nil (.next sourceIter)))]
+                  (when (reduced? iter)
+                    (xf nil)
+                    (set! completed true))
+                  (recur))
+                (do
+                  (xf nil)
+                  (set! completed true)
+                  (recur))))
+            (do
+              (set! _next (.remove buffer))
+              (recur)))
+          true))))
+  (hasNext [this]
+    (.step this))
+  (next [this]
+    (if ^boolean (.hasNext this)
+      (let [ret _next]
+        (set! _next NONE)
+        ret)
+      (throw (js/Error. "No such element"))))
+  (remove [_]
+    (js/Error. "Unsupported operation")))

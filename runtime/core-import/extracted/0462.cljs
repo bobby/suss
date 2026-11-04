@@ -6,13 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Empty []
-  Object
-  (add [this o]
-    (Single. o))
-  (remove [this]
-    (throw (js/Error. (str_ "Removing object from empty buffer"))))
-  (isEmpty [this]
-    true)
-  (toString [this]
-    "Empty"))
+(defn mapcat
+  "Returns the result of applying concat to the result of applying map
+  to f and colls.  Thus function f should return a collection. Returns
+  a transducer when no collections are provided"
+  {:added "1.0"
+   :static true}
+  ([f] (comp (map f) cat))
+  ([f & colls]
+     (apply concat (apply map f colls))))

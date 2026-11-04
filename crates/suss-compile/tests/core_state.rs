@@ -292,3 +292,112 @@ fn thrown_reading(session: &mut Repl, source: &str) -> String {
         Err(error) => portable_repl::error_display(&mut session.runtime, &error),
     }
 }
+
+#[test]
+fn derive_builds_clojure_hierarchies() {
+    let mut session = Repl::new();
+    check(&mut session, "(make-hierarchy)", "{:parents {}, :descendants {}, :ancestors {}}");
+    session.setup(
+        "(def h (-> (make-hierarchy) (derive ::rect ::shape) (derive ::square ::rect)))
+         (def diamond (-> (make-hierarchy) (derive ::b ::a) (derive ::c ::a) (derive ::d ::b) (derive ::d ::c)))",
+    );
+    check(&mut session, "h",
+        "{:parents {:user/rect #{:user/shape}, :user/square #{:user/rect}}, \
+         :ancestors {:user/rect #{:user/shape}, :user/square #{:user/rect :user/shape}}, \
+         :descendants {:user/shape #{:user/rect :user/square}, :user/rect #{:user/square}}}");
+    check(&mut session, "[(isa? h ::square ::shape) (isa? h ::shape ::square) (isa? h [::square ::rect] [::shape ::shape])
+                          (isa? h [::square] [::shape ::shape])]", "[true false true false]");
+    check(&mut session, "[(parents h ::square) (ancestors h ::square) (descendants h ::shape) (parents h ::shape)]",
+        "[#{:user/rect} #{:user/rect :user/shape} #{:user/rect :user/square} nil]");
+    // Deriving an existing relationship returns the same hierarchy.
+    check(&mut session, "(identical? h (derive h ::rect ::shape))", "true");
+    check(&mut session, "(= (underive diamond ::d ::b)
+                            {:parents {::b #{::a}, ::c #{::a}, ::d #{::c}}
+                             :descendants {::a #{::d ::b ::c}, ::c #{::d}}
+                             :ancestors {::b #{::a}, ::c #{::a}, ::d #{::a ::c}}})", "true");
+    check(&mut session, "(identical? diamond (underive diamond ::b ::d))", "true");
+}
+
+#[test]
+fn derive_errors_are_clojures() {
+    let mut session = Repl::new();
+    session.setup("(def chain (-> (make-hierarchy) (derive ::a ::b) (derive ::b ::c)))");
+    for (source, message) in [
+        ("(derive ::a ::a)", "Assert failed: (not= tag parent)"),
+        ("(derive ::a :b)", "Assert failed: (namespace parent)"),
+        ("(derive :a ::b)", "Assert failed: (or (class? tag) (and (instance? clojure.lang.Named tag) (namespace tag)))"),
+        ("(derive (make-hierarchy) 42 ::b)", "Assert failed: (or (class? tag) (instance? clojure.lang.Named tag))"),
+        ("(derive (make-hierarchy) ::a \"b\")", "Assert failed: (instance? clojure.lang.Named parent)"),
+        ("(derive chain ::c ::a)", "Cyclic derivation: :user/a has :user/c as ancestor"),
+        ("(derive chain ::a ::c)", ":user/a already has :user/c as ancestor"),
+    ] {
+        assert_eq!(printed(&mut session, &format!("(try {source} :returned (catch :default e (ex-message e)))")),
+            format!("{message:?}"), "{source}");
+    }
+}
+
+#[test]
+fn the_global_hierarchy_backs_the_two_argument_forms() {
+    let mut session = Repl::new();
+    check(&mut session, "[(derive ::t ::p) (derive 'n/t ::p) (isa? ::t ::p) (parents ::t) (descendants ::p)]",
+        "[nil nil true #{:user/p} #{:user/t n/t}]");
+    check(&mut session, "[(underive ::t ::p) (isa? ::t ::p) (parents ::t) (underive ::t ::p) (descendants ::p)]",
+        "[nil false nil nil #{n/t}]");
+    // Types are Clojure's classes: valid tags, without supertypes.
+    session.setup("(deftype T [])");
+    check(&mut session, "[(derive T ::thing) (isa? T ::thing) (parents T) (ancestors T)]",
+        "[nil true #{:user/thing} #{:user/thing}]");
+    check(&mut session, "(try (descendants T) (catch :default e (ex-message e)))", "\"Can't get descendants of classes\"");
+    check(&mut session, "(map (fn [x] (parents x)) [nil \"x\" 42 [] {}])", "(nil nil nil nil nil)");
+}
+
+#[test]
+fn sequence_helpers_and_ident_predicates_follow_clojure() {
+    let mut session = Repl::new();
+    check(&mut session, "[(interleave [1 2 3] [:a :b]) (interleave) (interleave [1 2]) (interleave [1 2] [3 4] [5 6])]",
+        "[(1 :a 2 :b) () (1 2) (1 3 5 2 4 6)]");
+    check(&mut session, "[(interpose :x [1 2 3]) (interpose :x []) (into [] (interpose :x) [1 2 3])]",
+        "[(1 :x 2 :x 3) () [1 :x 2 :x 3]]");
+    check(&mut session, "[(flatten [1 [2 '(3 [4])] 5]) (flatten nil) (flatten {:a 1}) (tree-seq vector? seq [1 [2]])]",
+        "[(1 2 3 4 5) () () ([1 [2]] 1 [2] 2)]");
+    check(&mut session, "[(partition 2 [1 2 3 4 5]) (partition 2 1 [1 2 3]) (partition 2 2 [:p] [1 2 3]) (partition 3 3 [] [1 2 3 4])]",
+        "[((1 2) (3 4)) ((1 2) (2 3)) ((1 2) (3 :p)) ((1 2 3) (4))]");
+    check(&mut session, "(map (juxt ident? simple-ident? qualified-ident? simple-keyword? qualified-keyword? simple-symbol? qualified-symbol?)
+                            [:a ::a 'a 'n/a \"a\" nil])",
+        "([true true false true false false false] [true false true false true false false] \
+         [true true false false false true false] [true false true false false false true] \
+         [false false false false false false false] [false false false false false false false])");
+}
+
+#[test]
+fn doseq_follows_clojures_bindings_and_chunking() {
+    let mut session = Repl::new();
+    session.setup("(def log (atom []))");
+    let run = |session: &mut Repl, source: &str| printed(session, &format!("(do (reset! log []) [{source} @log])"));
+    assert_eq!(run(&mut session, "(doseq [x [1 2 3] y [:a :b] :when (odd? x)] (swap! log conj [x y]))"),
+        "[nil [[1 :a] [1 :b] [3 :a] [3 :b]]]");
+    assert_eq!(run(&mut session, "(doseq [x [1 2 3] y [1 2 3] :while (<= y x)] (swap! log conj [x y]))"),
+        "[nil [[1 1] [2 1] [2 2] [3 1] [3 2] [3 3]]]");
+    assert_eq!(run(&mut session, "(doseq [x (range 10) :while (< x 3) :let [y (* 10 x)]] (swap! log conj y))"),
+        "[nil [0 10 20]]");
+    assert_eq!(run(&mut session, "(doseq [[k v] (sorted-map :a 1 :b 2)] (swap! log conj k v))"),
+        "[nil [:a 1 :b 2]]");
+    assert_eq!(run(&mut session, "(doseq [x nil] (swap! log conj x))"), "[nil []]");
+    // A chunked seq is realized a chunk at a time, before the body sees it.
+    assert_eq!(run(&mut session, "(doseq [x (map (fn [i] (swap! log conj [:realize i]) i) (range 3))] (swap! log conj [:body x]))"),
+        "[nil [[:realize 0] [:realize 1] [:realize 2] [:body 0] [:body 1] [:body 2]]]");
+    assert_eq!(run(&mut session, "(doseq [x (map (fn [i] (swap! log conj [:realize i]) i) (list 0 1))] (swap! log conj [:body x]))"),
+        "[nil [[:realize 0] [:body 0] [:realize 1] [:body 1]]]");
+    // The messages are checked by portable_macros' doseq_validation_tests.
+    for source in ["(doseq (x [1]) x)", "(doseq [x] x)"] {
+        let shown = thrown_reading(&mut session, source);
+        assert!(shown.contains("Compiled macro expansion failed"), "{source}: {shown}");
+    }
+}
+
+#[test]
+fn thread_last_inserts_each_form_last() {
+    let mut session = Repl::new();
+    check(&mut session, "[(->> [1 2 3] (map inc) (filter odd?) vec) (->> 5) (->> 2 (- 10)) (->> [1] first)]",
+        "[[3] 5 8 1]");
+}

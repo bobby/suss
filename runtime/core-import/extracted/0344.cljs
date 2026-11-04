@@ -6,10 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn last
-  "Return the last item in coll, in linear time"
-  [s]
-  (let [sn (next s)]
-    (if-not (nil? sn)
-      (recur sn)
-      (first s))))
+(defn print-prefix-map [prefix m print-one writer opts]
+  (pr-sequential-writer
+    writer
+    (fn [e w opts]
+      (do (print-one (key e) w opts)
+          (-write w \space)
+          (print-one (val e) w opts)))
+    (str_ prefix "{") ", " "}"
+    opts (seq m)))

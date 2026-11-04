@@ -6,18 +6,22 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype MultiIterator [iters]
-  Object
-  (hasNext [_]
-    (loop [iters (seq iters)]
-      (if-not (nil? iters)
-        (let [iter (first iters)]
-          (if-not ^boolean (.hasNext iter)
-            false
-            (recur (next iters))))
-        true)))
-  (next [_]
-    (let [nexts (array)]
-      (dotimes [i (alength iters)]
-        (aset nexts i (.next (aget iters i))))
-      (prim-seq nexts 0))))
+(defn interpose
+  "Returns a lazy seq of the elements of coll separated by sep.
+  Returns a stateful transducer when no collection is provided."
+  ([sep]
+    (fn [rf]
+      (let [started (volatile! false)]
+        (fn
+          ([] (rf))
+          ([result] (rf result))
+          ([result input]
+            (if @started
+              (let [sepr (rf result sep)]
+                (if (reduced? sepr)
+                  sepr
+                  (rf sepr input)))
+              (do
+                (vreset! started true)
+                (rf result input))))))))
+  ([sep coll] (drop 1 (interleave (repeat sep) coll))))

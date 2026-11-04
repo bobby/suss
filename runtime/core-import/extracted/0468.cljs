@@ -6,24 +6,27 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn sequence
-  "Coerces coll to a (possibly empty) sequence, if it is not already
-  one. Will not force a lazy seq. (sequence nil) yields (), When a
-  transducer is supplied, returns a lazy sequence of applications of
-  the transform to the items in coll(s), i.e. to the set of first
-  items of each coll, followed by the set of second
-  items in each coll, until any one of the colls is exhausted.  Any
-  remaining items in other colls are ignored. The transform should accept
-  number-of-colls arguments"
-  ([coll]
-     (if (seq? coll)
-       coll
-       (or (seq coll) ())))
-  ([xform coll]
-   (or (chunkIteratorSeq
-         (.create TransformerIterator xform (iter coll)))
-       ()))
-  ([xform coll & colls]
-   (or (chunkIteratorSeq
-         (.createMulti TransformerIterator xform (map iter (cons coll colls))))
-       ())))
+(defn drop-while
+  "Returns a lazy sequence of the items in coll starting from the
+  first item for which (pred item) returns logical false.  Returns a
+  stateful transducer when no collection is provided."
+  ([pred]
+     (fn [rf]
+       (let [da (volatile! true)]
+         (fn
+           ([] (rf))
+           ([result] (rf result))
+           ([result input]
+              (let [drop? @da]
+                (if (and drop? (pred input))
+                  result
+                  (do
+                    (vreset! da nil)
+                    (rf result input)))))))))
+  ([pred coll]
+     (let [step (fn [pred coll]
+                  (let [s (seq coll)]
+                    (if (and s (pred (first s)))
+                      (recur pred (rest s))
+                      s)))]
+       (lazy-seq (step pred coll)))))

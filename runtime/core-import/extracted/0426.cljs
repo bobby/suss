@@ -6,12 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn seqable?
-  "Return true if the seq function is supported for s"
-  [s]
-  (or
-    (nil? s)
-    (satisfies? ISeqable s)
-    (js-iterable? s)
-    (array? s)
-    (string? s)))
+(defn sorted-map-by
+  "keyval => key val
+  Returns a new sorted map with supplied mappings, using the supplied comparator."
+  ([comparator & keyvals]
+     (loop [in (seq keyvals)
+            out (PersistentTreeMap. (fn->comparator comparator) nil 0 nil 0)]
+       (if in
+         (recur (nnext in) (assoc out (first in) (second in)))
+         out))))

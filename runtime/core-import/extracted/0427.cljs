@@ -6,6 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn associative?
- "Returns true if coll implements IAssociative"
-  [x] (satisfies? IAssociative x))
+(defn sorted-set
+  "Returns a new sorted set with supplied keys."
+  ([& keys]
+   (reduce -conj (.-EMPTY PersistentTreeSet) keys)))

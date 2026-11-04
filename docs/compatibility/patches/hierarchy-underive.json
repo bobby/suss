@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "78acc3468a245850d6c1f209aa04e7a9734b5b75ebe821b6c09a4dda917d296f",
+  "replacement": "(def underive\n  \"Removes a parent/child relationship between parent and\n  tag. h must be a hierarchy obtained from make-hierarchy, if not\n  supplied defaults to, and modifies, the global hierarchy.\"\n  (fn\n    ([tag parent]\n     (swap-global-hierarchy! underive tag parent)\n     nil)\n    ([h tag parent]\n     (let [parentMap (:parents h)\n           childsParents (if (parentMap tag)\n                           (disj (parentMap tag) parent) #{})\n           newParents (if (not-empty childsParents)\n                        (assoc parentMap tag childsParents)\n                        (dissoc parentMap tag))\n           deriv-seq (flatten (map (fn [e] (cons (key e) (interpose (key e) (val e))))\n                                   (seq newParents)))]\n       (if (contains? (parentMap tag) parent)\n         (reduce (fn [h pair] (apply derive h pair)) (make-hierarchy)\n                 (partition 2 deriv-seq))\n         h)))))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30). Follows Clojure, which reads each parents entry with key and val."
+}

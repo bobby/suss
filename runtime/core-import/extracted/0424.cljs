@@ -6,17 +6,102 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn subseq
-  "sc must be a sorted collection, test(s) one of <, <=, > or
-  >=. Returns a seq of those entries with keys ek for
-  which (test (.. sc comparator (compare ek key)) 0) is true"
-  ([sc test key]
-     (let [include (mk-bound-fn sc test key)]
-       (if (#{> >=} test)
-         (when-let [[e :as s] (-sorted-seq-from sc key true)]
-           (if (include e) s (next s)))
-         (take-while include (-sorted-seq sc true)))))
-  ([sc start-test start-key end-test end-key]
-     (when-let [[e :as s] (-sorted-seq-from sc start-key true)]
-       (take-while (mk-bound-fn sc end-test end-key)
-                   (if ((mk-bound-fn sc start-test start-key) e) s (next s))))))
+(deftype PersistentTreeSet [meta tree-map ^:mutable __hash]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (keys [coll]
+    (es6-iterator (seq coll)))
+  (entries [coll]
+    (es6-set-entries-iterator (seq coll)))
+  (values [coll]
+    (es6-iterator (seq coll)))
+  (has [coll k]
+    (contains? coll k))
+  (forEach [coll f]
+    (doseq [[k v] coll]
+      (f v k)))
+
+  ICloneable
+  (-clone [_] (PersistentTreeSet. meta tree-map __hash))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (PersistentTreeSet. new-meta tree-map __hash)))
+
+  IMeta
+  (-meta [coll] meta)
+
+  ICollection
+  (-conj [coll o]
+    (let [m (-assoc tree-map o nil)]
+      (if (identical? m tree-map)
+        coll
+        (PersistentTreeSet. meta m nil))))
+
+  IEmptyableCollection
+  (-empty [coll] (PersistentTreeSet. meta (-empty tree-map) 0))
+
+  IEquiv
+  (-equiv [coll other]
+    (and
+     (set? other)
+     (== (count coll) (count other))
+     ^boolean
+     (try
+       (reduce-kv
+         #(or (contains? other %2) (reduced false))
+         true tree-map)
+       (catch js/Error ex
+         false))))
+
+  IHash
+  (-hash [coll] (caching-hash coll hash-unordered-coll __hash))
+
+  ISeqable
+  (-seq [coll] (keys tree-map))
+
+  ISorted
+  (-sorted-seq [coll ascending?]
+    (map key (-sorted-seq tree-map ascending?)))
+
+  (-sorted-seq-from [coll k ascending?]
+    (map key (-sorted-seq-from tree-map k ascending?)))
+
+  (-entry-key [coll entry] entry)
+
+  (-comparator [coll] (-comparator tree-map))
+
+  IReversible
+  (-rseq [coll]
+    (if (pos? (count tree-map))
+      (map key (rseq tree-map))))
+
+  ICounted
+  (-count [coll] (count tree-map))
+
+  ILookup
+  (-lookup [coll v]
+    (-lookup coll v nil))
+  (-lookup [coll v not-found]
+    (let [n (.entry-at tree-map v)]
+      (if-not (nil? n)
+        (.-key n)
+        not-found)))
+
+  ISet
+  (-disjoin [coll v]
+    (let [m (-dissoc tree-map v)]
+      (if (identical? m tree-map)
+        coll
+        (PersistentTreeSet. meta m nil))))
+
+  IFn
+  (-invoke [coll k]
+    (-lookup coll k))
+  (-invoke [coll k not-found]
+    (-lookup coll k not-found)))

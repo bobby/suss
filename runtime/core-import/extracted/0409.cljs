@@ -6,5 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- create-tree-map-seq [tree ascending? cnt]
-  (PersistentTreeMapSeq. nil (tree-map-seq-push tree nil ascending?) ascending? cnt nil))
+(defn es6-iterator
+  "Return a ES2015+ compatible iterator for coll."
+  [coll]
+  (ES6Iterator. (seq coll)))

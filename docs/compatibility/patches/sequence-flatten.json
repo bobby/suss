@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "5a54d93cbeb0f6125122ceb5866794cc307337d2dea61ff4b8b34bbdcfc56065",
+  "replacement": "(def flatten\n  \"Takes any nested combination of sequential things (lists, vectors,\n  etc.) and returns their contents as a single, flat sequence.\n  (flatten nil) returns an empty sequence.\"\n  (fn [x]\n    (filter (complement sequential?)\n            (rest (tree-seq sequential? seq x)))))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30). Clojure filters with (complement sequential?); its docstring says (flatten nil) returns an empty sequence, which both versions return."
+}

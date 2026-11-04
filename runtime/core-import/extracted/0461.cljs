@@ -6,21 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Single [^:mutable val]
-  Object
-  (add [this o]
-    (if (identical? val NONE)
-      (do
-        (set! val o)
-        this)
-      (Many. #js [val o])))
-  (remove [this]
-    (if (identical? val NONE)
-      (throw (js/Error. (str_ "Removing object from empty buffer")))
-      (let [ret val]
-        (set! val NONE)
-        ret)))
-  (isEmpty [this]
-    (identical? val NONE))
-  (toString [this]
-    (str_ "Single: " val)))
+(defn cat
+  "A transducer which concatenates the contents of each input, which must be a
+  collection, into the reduction."
+  {:added "1.7"}
+  [rf]
+  (let [rf1 (preserving-reduced rf)]
+    (fn
+      ([] (rf))
+      ([result] (rf result))
+      ([result input]
+         (reduce rf1 result input)))))

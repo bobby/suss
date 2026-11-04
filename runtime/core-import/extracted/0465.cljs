@@ -6,13 +6,17 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- chunkIteratorSeq [iter]
-  (lazy-seq
-    (when ^boolean (.hasNext iter)
-      (let [arr (array)]
-        (loop [n 0]
-          (if (and (.hasNext iter) (< n 32))
-            (do
-              (aset arr n (.next iter))
-              (recur (inc n)))
-            (chunk-cons (array-chunk arr 0 n) (chunkIteratorSeq iter))))))))
+(defn tree-seq
+  "Returns a lazy sequence of the nodes in a tree, via a depth-first walk.
+  branch? must be a fn of one arg that returns true if passed a node
+  that can have children (but may not).  children must be a fn of one
+  arg that returns a sequence of the children. Will only be called on
+  nodes for which branch? returns true. Root is the root node of the
+  tree."
+   [branch? children root]
+   (let [walk (fn walk [node]
+                (lazy-seq
+                 (cons node
+                  (when (branch? node)
+                    (mapcat walk (children node))))))]
+     (walk root)))

@@ -6,12 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn print-prefix-map [prefix m print-one writer opts]
-  (pr-sequential-writer
-    writer
-    (fn [e w opts]
-      (do (print-one (key e) w opts)
-          (-write w \space)
-          (print-one (val e) w opts)))
-    (str_ prefix "{") ", " "}"
-    opts (seq m)))
+(defn qualified-ident?
+  "Return true if x is a symbol or keyword with a namespace"
+  [x] (boolean (and (ident? x) (namespace x) true)))

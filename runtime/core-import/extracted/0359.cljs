@@ -6,29 +6,19 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn update-in
-  "'Updates' a value in a nested associative structure, where ks is a
-  sequence of keys and f is a function that will take the old value
-  and any supplied args and return the new value, and returns a new
-  nested structure.  If any levels do not exist, hash-maps will be
-  created."
-  ([m [k & ks] f]
-   (if ks
-     (assoc m k (update-in (get m k) ks f))
-     (assoc m k (f (get m k)))))
-  ([m [k & ks] f a]
-   (if ks
-     (assoc m k (update-in (get m k) ks f a))
-     (assoc m k (f (get m k) a))))
-  ([m [k & ks] f a b]
-   (if ks
-     (assoc m k (update-in (get m k) ks f a b))
-     (assoc m k (f (get m k) a b))))
-  ([m [k & ks] f a b c]
-   (if ks
-     (assoc m k (update-in (get m k) ks f a b c))
-     (assoc m k (f (get m k) a b c))))
-  ([m [k & ks] f a b c & args]
-   (if ks
-     (assoc m k (apply update-in (get m k) ks f a b c args))
-     (assoc m k (apply f (get m k) a b c args)))))
+(defprotocol ISorted
+  "Protocol for a collection which can represent their items
+  in a sorted manner. "
+  (^clj -sorted-seq [coll ascending?]
+    "Returns a sorted seq from coll in either ascending or descending order.")
+  (^clj -sorted-seq-from [coll k ascending?]
+    "Returns a sorted seq from coll in either ascending or descending order.
+     If ascending is true, the result should contain all items which are > or >=
+     than k. If ascending is false, the result should contain all items which
+     are < or <= than k, e.g.
+     (-sorted-seq-from (sorted-set 1 2 3 4 5) 3 true) => (3 4 5)
+     (-sorted-seq-from (sorted-set 1 2 3 4 5) 3 false) => (3 2 1)")
+  (-entry-key [coll entry]
+    "Returns the key for entry.")
+  (-comparator [coll]
+    "Returns the comparator for coll."))

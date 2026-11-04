@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "4fdadf904f0bfd3302b253ef85bd30c0ac0d42a4922d0bbf44d523bd652c775f",
+  "replacement": "(def ^:private get-global-hierarchy\n  (fn []\n    (when (nil? -global-hierarchy)\n      (set! -global-hierarchy (atom (make-hierarchy))))\n    -global-hierarchy))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+}

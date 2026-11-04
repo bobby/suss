@@ -1680,6 +1680,41 @@
       "patch": "docs/compatibility/patches/printing-keyword.json"
     },
     {
+      "id": "runtime:ident?:3532",
+      "source-sha256": "321a555dba26f03a3c1347fdd6596e2b554ff0e334cb1fd9cf0ae5688a76b9f1",
+      "patch": "docs/compatibility/patches/ident-ident.json"
+    },
+    {
+      "id": "runtime:simple-ident?:3536",
+      "source-sha256": "2b80845f6f25ee9998421120fa4249a60b7be5ecf8c6f7c776cda46db84dee0d",
+      "patch": "docs/compatibility/patches/ident-simple-ident.json"
+    },
+    {
+      "id": "runtime:qualified-ident?:3540",
+      "source-sha256": "3eb3b62c6c9bc4c3f33c733fe1d3a1d8791d13304b1ddea7521e35e6ca141599",
+      "patch": "docs/compatibility/patches/ident-qualified-ident.json"
+    },
+    {
+      "id": "runtime:simple-symbol?:3544",
+      "source-sha256": "cc1e880ec66eb4e3f6a914533947afbd00d13e986c6198b49c6d4fcafedb3a3f",
+      "patch": "docs/compatibility/patches/ident-simple-symbol.json"
+    },
+    {
+      "id": "runtime:qualified-symbol?:3548",
+      "source-sha256": "a58af12a3df37a59bbb8d0d7b99a86f2df639cebc2d1b889195756252f7069b3",
+      "patch": "docs/compatibility/patches/ident-qualified-symbol.json"
+    },
+    {
+      "id": "runtime:simple-keyword?:3552",
+      "source-sha256": "c481741a2c5788fe88741498cc2f4f7f0af65308105fa3742d61e12816edcbe2",
+      "patch": "docs/compatibility/patches/ident-simple-keyword.json"
+    },
+    {
+      "id": "runtime:qualified-keyword?:3556",
+      "source-sha256": "0b4fb23b8803e574b7791eb449c0e73b251ed9f42d1d7ecc6db5fd57f34f91db",
+      "patch": "docs/compatibility/patches/ident-qualified-keyword.json"
+    },
+    {
       "id": "runtime:strip-ns:10650",
       "source-sha256": "3e0be6a3918cbcd41b831688408ed9bf5753533189248825d245fc90c36c0da3",
       "patch": "docs/compatibility/patches/printing-strip-ns.json"
@@ -2285,6 +2320,31 @@
       "patch": "docs/compatibility/patches/record-emitter-mapcat.json"
     },
     {
+      "id": "runtime:interleave:5308",
+      "source-sha256": "da0606969c20abd9930251830de143e833ed81187b0a5190c289f0b3995e7fec",
+      "patch": "docs/compatibility/patches/sequence-interleave.json"
+    },
+    {
+      "id": "runtime:interpose:5324",
+      "source-sha256": "7b6c48a57c862ce83c5d4130bd54c54f31ba4d7a76f919a9070ef48d40d6332c",
+      "patch": "docs/compatibility/patches/sequence-interpose.json"
+    },
+    {
+      "id": "runtime:tree-seq:5407",
+      "source-sha256": "a31d1e548a5fc6862c02e736db4faf65cc668e13fe59b41e46bc30269a4461ed",
+      "patch": "docs/compatibility/patches/sequence-tree-seq.json"
+    },
+    {
+      "id": "runtime:flatten:5422",
+      "source-sha256": "5a54d93cbeb0f6125122ceb5866794cc307337d2dea61ff4b8b34bbdcfc56065",
+      "patch": "docs/compatibility/patches/sequence-flatten.json"
+    },
+    {
+      "id": "runtime:partition:5475",
+      "source-sha256": "ffe8b667365634206b08fda558ba16c0360f89aa774dd171b1f9c9960d0388b5",
+      "patch": "docs/compatibility/patches/sequence-partition.json"
+    },
+    {
       "id": "runtime:drop-while:5021",
       "source-sha256": "ad9bc5b391f6294287f09ed72c7c89724d630285f9205255e4314d9854a8d6c0",
       "patch": "docs/compatibility/patches/record-emitter-drop-while.json"
@@ -2408,6 +2468,56 @@
       "id": "runtime:tagged-literal:11928",
       "source-sha256": "f671ceffe005f1611e84e29a667875fa5404b600dd81f674cd3821fe885f86e2",
       "patch": "docs/compatibility/patches/tagged-literal.json"
+    },
+    {
+      "id": "runtime:make-hierarchy:11256",
+      "source-sha256": "c317b9f3a48d94400d17d09fe8510d1e44b2abdfff55df9c7fd087b86b665ff7",
+      "patch": "docs/compatibility/patches/hierarchy-make.json"
+    },
+    {
+      "id": "runtime:-global-hierarchy:11260",
+      "source-sha256": "fe27724d5a251e528a912778ba9c7fb174ec8720f4921159ab2295f2795de124",
+      "patch": "docs/compatibility/patches/hierarchy-global.json"
+    },
+    {
+      "id": "runtime:get-global-hierarchy:11265",
+      "source-sha256": "4fdadf904f0bfd3302b253ef85bd30c0ac0d42a4922d0bbf44d523bd652c775f",
+      "patch": "docs/compatibility/patches/hierarchy-get-global.json"
+    },
+    {
+      "id": "runtime:swap-global-hierarchy!:11270",
+      "source-sha256": "f4eba47b27cd145f8bc008eccb918feef909b1ff3457b9b73d6609119c4c6057",
+      "patch": "docs/compatibility/patches/hierarchy-swap-global.json"
+    },
+    {
+      "id": "runtime:isa?:11290",
+      "source-sha256": "eb0f346a68f980e33aeb1cc26d017b5ceb71f34eb529bc04341c8265d319c563",
+      "patch": "docs/compatibility/patches/hierarchy-isa.json"
+    },
+    {
+      "id": "runtime:parents:11310",
+      "source-sha256": "6fa88a7946b71e5cdf3fc0f0d123fedbfbbd774119bb5efdecd1d77ca14dd86c",
+      "patch": "docs/compatibility/patches/hierarchy-parents.json"
+    },
+    {
+      "id": "runtime:ancestors:11323",
+      "source-sha256": "b1f235def2f23bb259ade032c25e7e14fe71159122abaebac7cec496c45c7551",
+      "patch": "docs/compatibility/patches/hierarchy-ancestors.json"
+    },
+    {
+      "id": "runtime:descendants:11339",
+      "source-sha256": "f7571cbfed8e919cfc1f2d0bf9bac8631d356938da3bdbb195dbdc1bc493464a",
+      "patch": "docs/compatibility/patches/hierarchy-descendants.json"
+    },
+    {
+      "id": "runtime:derive:11351",
+      "source-sha256": "6b911b2d6f7a746cd4ddc22cd8c516a6544a78c297bf30f921f3d8053aa8a08e",
+      "patch": "docs/compatibility/patches/hierarchy-derive.json"
+    },
+    {
+      "id": "runtime:underive:11384",
+      "source-sha256": "78acc3468a245850d6c1f209aa04e7a9734b5b75ebe821b6c09a4dda917d296f",
+      "patch": "docs/compatibility/patches/hierarchy-underive.json"
     }
   ],
   "loader": {

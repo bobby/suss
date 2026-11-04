@@ -6,19 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn replace
-  "Given a map of replacement pairs and a vector/collection, returns a
-  vector/seq with any elements = a key in smap replaced with the
-  corresponding val in smap.  Returns a transducer when no collection
-  is provided."
-  ([smap]
-     (map #(if-let [e (find smap %)] (val e) %)))
-  ([smap coll]
-     (if (vector? coll)
-       (let [n (count coll)]
-         (reduce (fn [v i]
-                   (if-let [e (find smap (nth v i))]
-                     (assoc v i (second e))
-                     v))
-           coll (take n (iterate inc 0))))
-       (map #(if-let [e (find smap %)] (second e) %) coll))))
+(defn doall
+  "When lazy sequences are produced via functions that have side
+  effects, any effects other than those needed to produce the first
+  element in the seq do not occur until the seq is consumed. doall can
+  be used to force any effects. Walks through the successive nexts of
+  the seq, retains the head and returns it, thus causing the entire
+  seq to reside in memory at one time."
+  ([coll]
+   (dorun coll)
+   coll)
+  ([n coll]
+   (dorun n coll)
+   coll))

@@ -6,16 +6,19 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^:private fn->comparator
-  "Given a fn that might be boolean valued or a comparator,
-   return a fn that is a comparator."
-  [f]
-  (if (= f compare)
-    compare
-    (fn [x y]
-      (let [r (f x y)]
-        (if (number? r)
-          r
-          (if r
-            -1
-            (if (f y x) 1 0)))))))
+(defn --destructure-map [gmap]
+  (if ^boolean LITE_MODE
+    (if (implements? ISeq gmap)
+      (if (next gmap)
+        (.createAsIfByAssoc ObjMap (to-array gmap))
+        (if (seq gmap)
+          (first gmap)
+          (.-EMPTY ObjMap)))
+      gmap)
+    (if (implements? ISeq gmap)
+      (if (next gmap)
+        (.createAsIfByAssoc PersistentArrayMap (to-array gmap))
+        (if (seq gmap)
+          (first gmap)
+          (.-EMPTY PersistentArrayMap)))
+      gmap)))

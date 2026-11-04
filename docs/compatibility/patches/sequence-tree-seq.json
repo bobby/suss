@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "a31d1e548a5fc6862c02e736db4faf65cc668e13fe59b41e46bc30269a4461ed",
+  "replacement": "(def tree-seq\n  \"Returns a lazy sequence of the nodes in a tree, via a depth-first walk.\n  branch? must be a fn of one arg that returns true if passed a node\n  that can have children (but may not).  children must be a fn of one\n  arg that returns a sequence of the children. Will only be called on\n  nodes for which branch? returns true. Root is the root node of the\n  tree.\"\n  (fn [branch? children root]\n    (let [walk (fn walk [node]\n                 (new LazySeq nil (fn* []\n                  (cons node\n                   (when (branch? node)\n                     (mapcat walk (children node))))) nil nil))]\n      (walk root))))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30). lazy-seq is written as its expansion, a LazySeq of a thunk, since core is compiled before the macro."
+}
