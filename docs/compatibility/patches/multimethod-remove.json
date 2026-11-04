@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "085657e1bfe147cd67bf05896c98be9aa8c2dcad073e653ce1ef218f4c50819b",
+  "replacement": "(def remove-method\n  \"Removes the method of multimethod associated with dispatch-value.\"\n  (fn [multifn dispatch-val] (-remove-method multifn dispatch-val)))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+}

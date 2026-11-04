@@ -5695,4 +5695,88 @@
    :rationale "Expand the complete pinned defn to def/fn, retaining its documentation (#30). Clojure 1.12 also drops through IDrop; its if-let is written as let and if, returning the remaining coll when the walk stops, and Math/ceil is the native binary64 ceiling."
    :adaptation-path "docs/compatibility/patches/sequence-nthrest.json" :alternative nil
    :tests ["crates/suss-compile/tests/core_state.rs"]}
+  "runtime:IMultiFn:11460"
+  {:source-sha256 "b8d01df32f4a96966b38cbbef68e64fdbed78d2e578a7a2f05b1d49f59c58761" :visibility :public :arities nil
+   :dependencies []
+   :classification :portable :status :in-progress
+   :rationale "The protocol MultiFn implements; Clojure's MultiFn has the same operations as methods (#30)."
+   :adaptation-path nil :alternative nil
+   :tests ["crates/suss-compile/tests/core_state.rs"]}
+  "runtime:prefers*:11410"
+  {:source-sha256 "fda2f7d4843f007a71dcfe91cd9fe4dc9cd1f45b628c1818f6f4698b2081c4ad" :visibility :private :arities {:fixed [4] :variadic-min nil}
+   :dependencies ["runtime:parents:11310" "runtime:contains?:2451"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation (#30). Follows Clojure's MultiFn.prefers: it walks the parents of y and then of x in the multimethod's hierarchy, which it takes as an argument (ClojureScript uses the global hierarchy), returns true as soon as a preference is found (ClojureScript's loops discard the inner result, so an inherited preference is never found), and checks membership with contains?, so nil and false can be preferred. It takes the prefer table's value, not an atom."
+   :adaptation-path "docs/compatibility/patches/multimethod-prefers.json" :alternative nil
+   :tests ["crates/suss-compile/tests/core_state.rs"]}
+  "runtime:dominates:11428"
+  {:source-sha256 "b62ce3b4f95e59b2a26762110c9b038cc5c87ca2fa4e0651484c5826055c3932" :visibility :private :arities {:fixed [4] :variadic-min nil}
+   :dependencies ["runtime:prefers*:11410" "runtime:isa?:11290"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation (#30). Follows Clojure's MultiFn.dominates, passing the hierarchy to prefers*."
+   :adaptation-path "docs/compatibility/patches/multimethod-dominates.json" :alternative nil
+   :tests ["crates/suss-compile/tests/core_state.rs"]}
+  "runtime:find-and-cache-best-method:11432"
+  {:source-sha256 "a1cbdc5a78f98a41b11c420d6452a7f88952135c26778482960afb4b6db8de55" :visibility :private :arities {:fixed [6] :variadic-min nil}
+   :dependencies ["runtime:dominates:11428" "runtime:str:3129"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation (#30). Follows Clojure's MultiFn.findAndCacheBestMethod: it walks the method table in its seq order (a hash map, as in Clojure), keeps the dominating entry and throws when neither dominates, and falls back to the default method. It takes the tables' values and returns the method; -get-method writes the cache, since the tables are MultiFn's mutable fields. Messages are Clojure's, with each dispatch value formatted as String.format's %s formats it: with str, and \"null\" for nil."
+   :adaptation-path "docs/compatibility/patches/multimethod-find-best.json" :alternative nil
+   :tests ["crates/suss-compile/tests/core_state.rs"]}
+  "runtime:throw-no-method-error:11471"
+  {:source-sha256 "2e06d3f66449ce11df85be310355413a04d514525ca1ef379a84a979d9adea3b" :visibility :private :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:str:3129"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation (#30). Messages are Clojure's, with each dispatch value formatted as String.format's %s formats it: with str, and \"null\" for nil."
+   :adaptation-path "docs/compatibility/patches/multimethod-no-method.json" :alternative nil
+   :tests ["crates/suss-compile/tests/core_state.rs"]}
+  "runtime:MultiFn:11474"
+  {:source-sha256 "6bd38a11b90f314fd59eb1385d6990c7e846a272cf7748292955732e478c1456" :visibility :public :arities nil
+   :dependencies ["runtime:IMultiFn:11460" "runtime:IFn:586" "runtime:find-and-cache-best-method:11432" "runtime:throw-no-method-error:11471" "runtime:PersistentHashMap:8024" "runtime:PersistentHashSet:9317"]
+   :classification :adapted :status :in-progress
+   :rationale "Follows Clojure's MultiFn.java (#30). The tables are mutable fields, as Clojure's are volatile fields, not atoms, and start as empty hash maps, so methods and prefers return hash maps as Clojure's do. -get-method resets the cache when the hierarchy is no longer identical to the one cached (ClojureScript compares with =), and caches a found method only if the tables and hierarchy are unchanged, else it redoes the search. -prefer-method checks for a conflict in the multimethod's hierarchy and returns the multimethod (ClojureScript returns the reset hierarchy). The IFn stanza is unchanged. INamed is dropped, as Clojure's MultiFn is not Named; identity hashing is kept. Messages are Clojure's, with each dispatch value formatted as String.format's %s formats it: with str, and \"null\" for nil."
+   :adaptation-path "docs/compatibility/patches/multimethod-type.json" :alternative nil
+   :tests ["crates/suss-compile/tests/core_state.rs"]}
+  "runtime:remove-all-methods:11659"
+  {:source-sha256 "85f115f70188b9bc8ac22315585e6b2d269f543d851f34e9e68933d5fc48a31d" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:MultiFn:11474"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+   :adaptation-path "docs/compatibility/patches/multimethod-remove-all.json" :alternative nil
+   :tests ["crates/suss-compile/tests/core_state.rs"]}
+  "runtime:remove-method:11664"
+  {:source-sha256 "085657e1bfe147cd67bf05896c98be9aa8c2dcad073e653ce1ef218f4c50819b" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:MultiFn:11474"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+   :adaptation-path "docs/compatibility/patches/multimethod-remove.json" :alternative nil
+   :tests ["crates/suss-compile/tests/core_state.rs"]}
+  "runtime:prefer-method:11669"
+  {:source-sha256 "968a465f405d39ef11d7e0ce6de65520c7c79ef700c54e96cfc2dec111e34915" :visibility :public :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["runtime:MultiFn:11474"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+   :adaptation-path "docs/compatibility/patches/multimethod-prefer.json" :alternative nil
+   :tests ["crates/suss-compile/tests/core_state.rs"]}
+  "runtime:methods:11675"
+  {:source-sha256 "b3623f40c88040087a57a5c0db0c7aa8dd2a964cc13c610ffcb48779c27d60eb" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:MultiFn:11474"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+   :adaptation-path "docs/compatibility/patches/multimethod-methods.json" :alternative nil
+   :tests ["crates/suss-compile/tests/core_state.rs"]}
+  "runtime:get-method:11679"
+  {:source-sha256 "94148d4b618074b0b4f1365cfa9d95a63fa6a72071335284ffb288903aac51ad" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:MultiFn:11474"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+   :adaptation-path "docs/compatibility/patches/multimethod-get.json" :alternative nil
+   :tests ["crates/suss-compile/tests/core_state.rs"]}
+  "runtime:prefers:11684"
+  {:source-sha256 "381a7e7e23e20080d9c8bad331ec7ff89f5d21aea8c18ee45d24fd26a08cc896" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:MultiFn:11474"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+   :adaptation-path "docs/compatibility/patches/multimethod-prefers-fn.json" :alternative nil
+   :tests ["crates/suss-compile/tests/core_state.rs"]}
 }}

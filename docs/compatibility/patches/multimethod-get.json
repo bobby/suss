@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "94148d4b618074b0b4f1365cfa9d95a63fa6a72071335284ffb288903aac51ad",
+  "replacement": "(def get-method\n  \"Given a multimethod and a dispatch value, returns the dispatch fn\n  that would apply to that value, or nil if none apply and no default\"\n  (fn [multifn dispatch-val] (-get-method multifn dispatch-val)))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+}

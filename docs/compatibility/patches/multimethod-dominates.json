@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "b62ce3b4f95e59b2a26762110c9b038cc5c87ca2fa4e0651484c5826055c3932",
+  "replacement": "(def ^:private dominates\n  (fn [h x y prefer-table]\n    (or (prefers* h x y prefer-table) (isa? h x y))))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30). Follows Clojure's MultiFn.dominates, passing the hierarchy to prefers*."
+}

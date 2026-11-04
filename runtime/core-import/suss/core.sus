@@ -9071,6 +9071,289 @@ reduces them without incurring seq initialization"
          (reduce (fn [h pair] (apply derive h pair)) (make-hierarchy)
                  (partition 2 deriv-seq))
          h)))))
+
+(defprotocol IMultiFn
+  (-reset [mf])
+  (-add-method [mf dispatch-val method])
+  (-remove-method [mf dispatch-val])
+  (-prefer-method [mf dispatch-val dispatch-val-y])
+  (-get-method [mf dispatch-val])
+  (-methods [mf])
+  (-prefers [mf])
+  (-default-dispatch-val [mf])
+  (-dispatch-fn [mf]))
+
+(def ^:private prefers*
+  (fn [h x y prefer-table]
+    (let [xprefs (get prefer-table x)]
+      (cond
+        (and (some? xprefs) (contains? xprefs y)) true
+        (loop [ps (seq (parents h y))]
+          (if ps
+            (if (prefers* h x (first ps) prefer-table) true (recur (next ps)))
+            false)) true
+        :else (loop [ps (seq (parents h x))]
+                (if ps
+                  (if (prefers* h (first ps) y prefer-table) true (recur (next ps)))
+                  false))))))
+
+(def ^:private dominates
+  (fn [h x y prefer-table]
+    (or (prefers* h x y prefer-table) (isa? h x y))))
+
+(def ^:private find-and-cache-best-method
+  (fn [name dispatch-val h method-table prefer-table default-dispatch-val]
+    (let [fmt (fn [v] (if (nil? v) "null" (str v)))
+          best-entry (loop [entries (seq method-table) be nil]
+                       (if entries
+                         (let [e (first entries)
+                               k (key e)]
+                           (if (isa? h dispatch-val k)
+                             (let [be (if (or (nil? be) (dominates h k (key be) prefer-table)) e be)]
+                               (when-not (dominates h (key be) k prefer-table)
+                                 (throw (suss.bootstrap/error
+                                          (str "Multiple methods in multimethod '" name
+                                               "' match dispatch value: " (fmt dispatch-val) " -> " (fmt k)
+                                               " and " (fmt (key be)) ", and neither is preferred"))))
+                               (recur (next entries) be))
+                             (recur (next entries) be)))
+                         be))]
+      (if (nil? best-entry)
+        (get method-table default-dispatch-val)
+        (val best-entry)))))
+
+(def ^:private throw-no-method-error
+  (fn [name dispatch-val]
+    (throw (suss.bootstrap/error
+             (str "No method in multimethod '" name "' for dispatch value: "
+                  ((fn [v] (if (nil? v) "null" (str v))) dispatch-val))))))
+
+(deftype MultiFn [name dispatch-fn default-dispatch-val hierarchy
+                  ^:mutable method-table ^:mutable prefer-table
+                  ^:mutable method-cache ^:mutable cached-hierarchy]
+  IFn
+  (-invoke [mf]
+    (let [dispatch-val (dispatch-fn)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn)))
+  (-invoke [mf a]
+    (let [dispatch-val (dispatch-fn a)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a)))
+  (-invoke [mf a b]
+    (let [dispatch-val (dispatch-fn a b)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b)))
+  (-invoke [mf a b c]
+    (let [dispatch-val (dispatch-fn a b c)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c)))
+  (-invoke [mf a b c d]
+    (let [dispatch-val (dispatch-fn a b c d)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c d)))
+  (-invoke [mf a b c d e]
+    (let [dispatch-val (dispatch-fn a b c d e)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c d e)))
+  (-invoke [mf a b c d e f]
+    (let [dispatch-val (dispatch-fn a b c d e f)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c d e f)))
+  (-invoke [mf a b c d e f g]
+    (let [dispatch-val (dispatch-fn a b c d e f g)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c d e f g)))
+  (-invoke [mf a b c d e f g h]
+    (let [dispatch-val (dispatch-fn a b c d e f g h)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c d e f g h)))
+  (-invoke [mf a b c d e f g h i]
+    (let [dispatch-val (dispatch-fn a b c d e f g h i)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c d e f g h i)))
+  (-invoke [mf a b c d e f g h i j]
+    (let [dispatch-val (dispatch-fn a b c d e f g h i j)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c d e f g h i j)))
+  (-invoke [mf a b c d e f g h i j k]
+    (let [dispatch-val (dispatch-fn a b c d e f g h i j k)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c d e f g h i j k)))
+  (-invoke [mf a b c d e f g h i j k l]
+    (let [dispatch-val (dispatch-fn a b c d e f g h i j k l)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c d e f g h i j k l)))
+  (-invoke [mf a b c d e f g h i j k l m]
+    (let [dispatch-val (dispatch-fn a b c d e f g h i j k l m)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c d e f g h i j k l m)))
+  (-invoke [mf a b c d e f g h i j k l m n]
+    (let [dispatch-val (dispatch-fn a b c d e f g h i j k l m n)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c d e f g h i j k l m n)))
+  (-invoke [mf a b c d e f g h i j k l m n o]
+    (let [dispatch-val (dispatch-fn a b c d e f g h i j k l m n o)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c d e f g h i j k l m n o)))
+  (-invoke [mf a b c d e f g h i j k l m n o p]
+    (let [dispatch-val (dispatch-fn a b c d e f g h i j k l m n o p)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c d e f g h i j k l m n o p)))
+  (-invoke [mf a b c d e f g h i j k l m n o p q]
+    (let [dispatch-val (dispatch-fn a b c d e f g h i j k l m n o p q)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c d e f g h i j k l m n o p q)))
+  (-invoke [mf a b c d e f g h i j k l m n o p q r]
+    (let [dispatch-val (dispatch-fn a b c d e f g h i j k l m n o p q r)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c d e f g h i j k l m n o p q r)))
+  (-invoke [mf a b c d e f g h i j k l m n o p q r s]
+    (let [dispatch-val (dispatch-fn a b c d e f g h i j k l m n o p q r s)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c d e f g h i j k l m n o p q r s)))
+  (-invoke [mf a b c d e f g h i j k l m n o p q r s t]
+    (let [dispatch-val (dispatch-fn a b c d e f g h i j k l m n o p q r s t)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (target-fn a b c d e f g h i j k l m n o p q r s t)))
+  (-invoke [mf a b c d e f g h i j k l m n o p q r s t rest]
+    (let [dispatch-val (apply dispatch-fn a b c d e f g h i j k l m n o p q r s t rest)
+          target-fn (-get-method mf dispatch-val)]
+      (when-not target-fn
+        (throw-no-method-error name dispatch-val))
+      (apply target-fn a b c d e f g h i j k l m n o p q r s t rest)))
+
+  IMultiFn
+  (-reset [mf]
+    (set! method-table (.-EMPTY PersistentHashMap))
+    (set! method-cache method-table)
+    (set! prefer-table (.-EMPTY PersistentHashMap))
+    (set! cached-hierarchy nil)
+    mf)
+
+  (-add-method [mf dispatch-val method]
+    (set! method-table (assoc method-table dispatch-val method))
+    (set! method-cache method-table)
+    (set! cached-hierarchy @hierarchy)
+    mf)
+
+  (-remove-method [mf dispatch-val]
+    (set! method-table (dissoc method-table dispatch-val))
+    (set! method-cache method-table)
+    (set! cached-hierarchy @hierarchy)
+    mf)
+
+  (-get-method [mf dispatch-val]
+    (when-not (identical? cached-hierarchy @hierarchy)
+      (set! method-cache method-table)
+      (set! cached-hierarchy @hierarchy))
+    (let [target-fn (get method-cache dispatch-val)]
+      (if (nil? target-fn)
+        (loop []
+          (let [mt method-table
+                pt prefer-table
+                ch cached-hierarchy
+                best (find-and-cache-best-method name dispatch-val ch mt pt default-dispatch-val)]
+            (cond
+              (nil? best) nil
+              (and (identical? mt method-table) (identical? pt prefer-table)
+                   (identical? ch cached-hierarchy) (identical? cached-hierarchy @hierarchy))
+              (do (set! method-cache (assoc method-cache dispatch-val best))
+                  best)
+              :else (do (set! method-cache method-table)
+                        (set! cached-hierarchy @hierarchy)
+                        (recur)))))
+        target-fn)))
+
+  (-prefer-method [mf dispatch-val-x dispatch-val-y]
+    (when (prefers* @hierarchy dispatch-val-y dispatch-val-x prefer-table)
+      (let [fmt (fn [v] (if (nil? v) "null" (str v)))]
+        (throw (suss.bootstrap/error
+                 (str "Preference conflict in multimethod '" name "': " (fmt dispatch-val-y)
+                      " is already preferred to " (fmt dispatch-val-x))))))
+    (set! prefer-table
+          (assoc prefer-table dispatch-val-x
+                 (conj (get prefer-table dispatch-val-x (.-EMPTY PersistentHashSet))
+                       dispatch-val-y)))
+    (set! method-cache method-table)
+    (set! cached-hierarchy @hierarchy)
+    mf)
+
+  (-methods [mf] method-table)
+  (-prefers [mf] prefer-table)
+  (-default-dispatch-val [mf] default-dispatch-val)
+  (-dispatch-fn [mf] dispatch-fn)
+
+  IHash
+  (-hash [this] (suss.bootstrap/identity-uid this)))
+
+(def remove-all-methods
+  "Removes all of the methods of multimethod."
+  (fn [multifn] (-reset multifn)))
+
+(def remove-method
+  "Removes the method of multimethod associated with dispatch-value."
+  (fn [multifn dispatch-val] (-remove-method multifn dispatch-val)))
+
+(def prefer-method
+  "Causes the multimethod to prefer matches of dispatch-val-x over dispatch-val-y
+   when there is a conflict"
+  (fn [multifn dispatch-val-x dispatch-val-y] (-prefer-method multifn dispatch-val-x dispatch-val-y)))
+
+(def methods
+  "Given a multimethod, returns a map of dispatch values -> dispatch fns"
+  (fn [multifn] (-methods multifn)))
+
+(def get-method
+  "Given a multimethod and a dispatch value, returns the dispatch fn
+  that would apply to that value, or nil if none apply and no default"
+  (fn [multifn dispatch-val] (-get-method multifn dispatch-val)))
+
+(def prefers
+  "Given a multimethod, returns a map of preferred value -> set of other values"
+  (fn [multifn] (-prefers multifn)))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

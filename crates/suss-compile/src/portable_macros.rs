@@ -312,6 +312,8 @@ impl CompiledMacros {
         macros.define(crate::portable_state_macros::VSWAP)?;
         macros.define(crate::portable_core_macros::DOSEQ)?;
         macros.define(crate::portable_core_macros::THREAD_LAST)?;
+        macros.define(crate::portable_core_macros::DEFMULTI)?;
+        macros.define(crate::portable_core_macros::DEFMETHOD)?;
         // Shipped record macro implementations build forms from core's Cons
         // directly, so they are evaluated as core (#279).
         macros
@@ -884,7 +886,7 @@ impl ExpansionHost for CompiledMacros {
                 (name.namespace.is_none() && self.definitions.contains_key(&own)).then_some(own)
             })
             .or_else(|| {
-                ["->>", "defn", "defrecord", "delay", "doseq", "lazy-seq", "vswap!", "when-let"]
+                ["->>", "defmethod", "defmulti", "defn", "defrecord", "delay", "doseq", "lazy-seq", "vswap!", "when-let"]
                     .into_iter()
                     .find_map(|core_name| {
                         context
@@ -1075,6 +1077,38 @@ mod doseq_validation_tests {
             assert_eq!(String::from_utf16(found).unwrap(), message, "{source}");
             assert!(matches!(&fields[1].kind, Kind::Keyword(key)
                 if key.namespace.is_none() && key.name == "macro-syntax-check"));
+        }
+    }
+}
+
+#[cfg(test)]
+mod defmulti_validation_tests {
+    use super::*;
+
+    /// defmulti's syntax checks throw Clojure's messages (#30).
+    #[test]
+    fn defmulti_validation_matches_clojures_messages() {
+        let mut macros = CompiledMacros::new().unwrap();
+        let function = macros.definitions[&("suss.core".to_owned(), "defmulti".to_owned())].clone();
+        let capture = macros.session.eval(r#"
+          (fn [expand form args]
+            (try (apply expand form nil args)
+              (catch :default problem (ex-message problem))))
+        "#).unwrap();
+        for (source, message) in [
+            ("(defmulti f identity :default)",
+             "The syntax for defmulti has changed. Example: (defmulti name dispatch-fn :default dispatch-value)"),
+            ("(defmulti f identity :hierarchy h :other 1)", "Only these options are valid: :default, :hierarchy"),
+        ] {
+            let form = read_forms(source).unwrap().remove(0);
+            let Kind::List(items) = &form.kind else { panic!("defmulti call") };
+            let args = Form { span: form.span.clone(), metadata: Vec::new(), kind: Kind::List(items[1..].to_vec()) };
+            let args = macros.bridge.quote(&mut macros.session, args).unwrap();
+            let form = macros.bridge.quote(&mut macros.session, form).unwrap();
+            let value = macros.session.invoke(&capture, &[&function, &form, &args]).unwrap();
+            let observed = macros.bridge.read(&mut macros.session, &value, 0..source.len()).unwrap();
+            let Kind::String(found) = &observed.kind else { panic!("exception message for {source}") };
+            assert_eq!(String::from_utf16(found).unwrap(), message, "{source}");
         }
     }
 }

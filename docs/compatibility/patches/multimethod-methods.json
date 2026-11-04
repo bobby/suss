@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "b3623f40c88040087a57a5c0db0c7aa8dd2a964cc13c610ffcb48779c27d60eb",
+  "replacement": "(def methods\n  \"Given a multimethod, returns a map of dispatch values -> dispatch fns\"\n  (fn [multifn] (-methods multifn)))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+}
