@@ -29624,3 +29624,12 @@ document's 2026-10-25 decision now records all three outcomes.
 - `(defrecord R [])` traps in the `core_state` harness ("caller &env input transport: Runtime trap"), as it did before this PR; the type-dispatch test uses `deftype`.
 - Still to do in #30: `print-method` (#302).
 - Full baseline on 0e9e0ba: 2140 passed, 0 failed, 74 ignored, 283 binaries, 147 min.
+
+## #302: print-method and print-dup (2026-11-04)
+
+- PR #328, stacked on #327 (`runtime/multimethods`); retarget it to main once #327 merges. `print-method` and `print-dup` are multimethods defined in core's appendix (`exact-integers.sus`), with `print-method-for` declared in `sequence-forward-declarations.sus`. The `printing-pr-writer` patch calls a user method `(f obj writer)` or falls back to `pr-writer-impl`; `StringBufferWriter` gained Object `write`, `append` and `flush` (`printing-string-buffer-writer`) so methods can call `.write`. `docs/runtime/printing.md` lists the differences from Clojure.
+- Dispatch follows Clojure: a keyword `:type` in metadata, else the type. Under `*print-dup*`, a print-dup method is used, else print-method (records print positionally). A user `:default` is reached only by direct calls; the printers never send a type's value there.
+- `type` throws for functions, type values and `#js` objects, so `untyped-printable?` sends them to `:default` and the built-in printer.
+- Core loaded with plain `eval` (not `eval_privileged`) can't `assoc` onto a `PersistentHashMap` at load time ("Mutable fields are private to their type"), since that writes a `Box` field. The method tables start as array-map literals holding `:default`, so `(methods print-method)` is an array map until it has more than 8 methods.
+- Expectations were checked against JVM Clojure 1.12.6 (local only). With this, M10 is done once #327 and #328 merge.
+- Full baseline on 67734a4: 2147 passed, 0 failed, 74 ignored, 283 binaries, 102 min.
