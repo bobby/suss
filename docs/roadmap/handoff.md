@@ -29606,3 +29606,12 @@ document's 2026-10-25 decision now records all three outcomes.
 - Core initialization is now about 2.0M fuel. The async bridge tests give instantiation its own 3M allowance (`INITIALIZATION_FUEL`).
 - Still to do in #30: `::kw` and hierarchies, then multimethods, then `print-method` (#302).
 - Full baseline on 04e8826: 2124 passed, 0 failed, 75 ignored, 283 binaries, 112 min.
+
+## #30 part 2: auto-resolved keywords, hierarchies, doseq and ->> (2026-11-03)
+
+- PR #325. The reader keeps `::name` and `::alias/name` as `Kind::AutoKeyword`; `portable::source::resolve_auto_keywords` resolves them after the fragment's `ns` form and before macros run, and the REPL's `defmacro` path resolves them against the runtime namespace. Cache keys encode them with tag 15. The EDN readers reject them. Unknown aliases throw Clojure's "Invalid token: ::alias/name".
+- Hierarchies (`make-hierarchy`, `derive`, `underive`, `isa?`, `parents`, `ancestors`, `descendants`) are imported with Clojure's assert texts and `print-str` messages; types made by `deftype`, `defrecord` or core may be tags. `interleave`, `interpose`, `tree-seq`, `flatten`, `nthrest` (1.12, with `IDrop`), Clojure's `partition` and the ident predicates came with them. `docs/runtime/hierarchies.md` lists the differences.
+- `doseq` and `->>` are Clojure's macros, as Rust raw strings in `portable_core_macros.rs`. `doseq` leaves out the chunk branch: with it, two bindings ran past the 10M macro fuel.
+- clojure-test-suite: patch 0005 names a core type where the hierarchy tests name a host class. Baseline is now 1,630 passes.
+- Still to do in #30: multimethods, then `print-method` (#302).
+- Full baseline on 27771aa: 2134 passed, 0 failed, 74 ignored, 283 binaries, 119 min.

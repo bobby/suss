@@ -232,6 +232,21 @@
     "form": "(p/thrown? (atom #{} :validator (fn [v] (some string? v))))",
     "threw": true
    }
+  },
+  {
+   "id": "clojure.core-test.descendants/test-descendants#6",
+   "issue": 30,
+   "original-form": "(p/thrown? (descendants TestDescendantsProtocol))",
+   "rationale": "A protocol is not a class, so Clojure's descendants returns nil for it; pinned ClojureScript throws because its protocols are functions (js-fn?). Patch 0005 selects the Clojure assertion.",
+   "replace": {
+    "kind": "predicate",
+    "form": "(nil? (descendants TestDescendantsProtocol))",
+    "operands": [
+     {
+      "tag": "nil"
+     }
+    ]
+   }
   }
  ]
 }

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "fe27724d5a251e528a912778ba9c7fb174ec8720f4921159ab2295f2795de124",
+  "replacement": "(def ^:private -global-hierarchy nil)",
+  "rationale": "The global hierarchy is created on first use, as in ClojureScript; Clojure keeps it in a private var changed with alter-var-root, which is not observable separately (#30)."
+}

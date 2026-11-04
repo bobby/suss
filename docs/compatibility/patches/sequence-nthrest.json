@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "272d61bcb3a91a0bc48da823b3fba55ad05c0b24f979cac6636b08e9fa21dc55",
+  "replacement": "(def nthrest\n  \"Returns the nth rest of coll, coll when n is 0.\"\n  (fn [coll n]\n    (if (implements? IDrop coll)\n      (if (pos? n)\n        (or (-drop coll (suss.bootstrap/f64-ceil n)) ())\n        coll)\n      (loop [n n xs coll]\n        (let [s (and (pos? n) (seq xs))]\n          (if s\n            (recur (dec n) (rest s))\n            xs))))))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30). Clojure 1.12 also drops through IDrop; its if-let is written as let and if, returning the remaining coll when the walk stops, and Math/ceil is the native binary64 ceiling."
+}

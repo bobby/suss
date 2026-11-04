@@ -6,7 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^boolean realized?
-  "Returns true if a value has been produced for a delay or lazy sequence."
-  [x]
-  (-realized? x))
+(deftype MultiIterator [iters]
+  Object
+  (hasNext [_]
+    (loop [iters (seq iters)]
+      (if-not (nil? iters)
+        (let [iter (first iters)]
+          (if-not ^boolean (.hasNext iter)
+            false
+            (recur (next iters))))
+        true)))
+  (next [_]
+    (let [nexts (array)]
+      (dotimes [i (alength iters)]
+        (aset nexts i (.next (aget iters i))))
+      (prim-seq nexts 0))))

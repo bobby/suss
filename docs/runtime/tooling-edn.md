@@ -63,7 +63,7 @@ malformed text with the same message and span.
   - quote, syntax quote, unquote and deref sugar (`'`, `` ` ``, `~`, `@`) are
     errors;
   - so are `#()`, `#'` and reader conditionals, each at its span;
-  - auto-resolved keywords (`::k`) fail as they do in source;
+  - auto-resolved keywords (`::k`) are errors, as in Clojure's EDN reader;
   - nothing is evaluated.
 
   Clojure's EDN reader reads a leading `'` or `@` as part of a symbol. Suss

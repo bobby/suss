@@ -166,7 +166,7 @@ fn list_prefixes_inner(
                                 entries.push(item.clone_metered(meter)?);
                             }
                         }
-                        Kind::Keyword(_) => entries.extend([
+                        Kind::Keyword(_) | Kind::AutoKeyword(_) => entries.extend([
                             prefix.clone_metered(meter)?,
                             data(&prefix.span, Kind::Bool(true)),
                         ]),

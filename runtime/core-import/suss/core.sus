@@ -5781,6 +5781,34 @@
                 :else name)]
      (Keyword. ns name (suss.bootstrap/concat-string (str_ (when ns (suss.bootstrap/concat-string (str_ ns) (str_ "/")))) (str_ name)) nil)))))
 
+(def ident?
+  "Return true if x is a symbol or keyword"
+  (fn [x] (or (keyword? x) (symbol? x))))
+
+(def simple-ident?
+  "Return true if x is a symbol or keyword without a namespace"
+  (fn [x] (and (ident? x) (nil? (namespace x)))))
+
+(def qualified-ident?
+  "Return true if x is a symbol or keyword with a namespace"
+  (fn [x] (boolean (and (ident? x) (namespace x) true))))
+
+(def simple-symbol?
+  "Return true if x is a symbol without a namespace"
+  (fn [x] (and (symbol? x) (nil? (namespace x)))))
+
+(def qualified-symbol?
+  "Return true if x is a symbol with a namespace"
+  (fn [x] (boolean (and (symbol? x) (namespace x) true))))
+
+(def simple-keyword?
+  "Return true if x is a keyword without a namespace"
+  (fn [x] (and (keyword? x) (nil? (namespace x)))))
+
+(def qualified-keyword?
+  "Return true if x is a keyword with a namespace"
+  (fn [x] (boolean (and (keyword? x) (namespace x) true))))
+
 (def ^:private strip-ns
   (fn [named]
   (if (symbol? named)
@@ -8488,6 +8516,105 @@ reduces them without incurring seq initialization"
   a transducer when no collections are provided" :added "1.0" :static true :arglists '([f] [f & colls])} mapcat
   (fn ([f] (comp (map f) cat)) ([f & colls] (apply concat (apply map f colls)))))
 
+(def interleave
+  "Returns a lazy seq of the first item in each coll, then the second etc."
+  (fn
+    ([] ())
+    ([c1] (new LazySeq nil (fn* [] c1) nil nil))
+    ([c1 c2]
+     (new LazySeq nil (fn* []
+      (let [s1 (seq c1) s2 (seq c2)]
+        (when (and s1 s2)
+          (cons (first s1) (cons (first s2)
+                                 (interleave (rest s1) (rest s2))))))) nil nil))
+    ([c1 c2 & colls]
+     (new LazySeq nil (fn* []
+      (let [ss (map seq (conj colls c2 c1))]
+        (when (every? identity ss)
+          (concat (map first ss) (apply interleave (map rest ss)))))) nil nil))))
+
+(def interpose
+  "Returns a lazy seq of the elements of coll separated by sep.
+  Returns a stateful transducer when no collection is provided."
+  (fn
+    ([sep]
+     (fn [rf]
+       (let [started (volatile! false)]
+         (fn
+           ([] (rf))
+           ([result] (rf result))
+           ([result input]
+            (if @started
+              (let [sepr (rf result sep)]
+                (if (reduced? sepr)
+                  sepr
+                  (rf sepr input)))
+              (do
+                (vreset! started true)
+                (rf result input))))))))
+    ([sep coll] (drop 1 (interleave (repeat sep) coll)))))
+
+(def tree-seq
+  "Returns a lazy sequence of the nodes in a tree, via a depth-first walk.
+  branch? must be a fn of one arg that returns true if passed a node
+  that can have children (but may not).  children must be a fn of one
+  arg that returns a sequence of the children. Will only be called on
+  nodes for which branch? returns true. Root is the root node of the
+  tree."
+  (fn [branch? children root]
+    (let [walk (fn walk [node]
+                 (new LazySeq nil (fn* []
+                  (cons node
+                   (when (branch? node)
+                     (mapcat walk (children node))))) nil nil))]
+      (walk root))))
+
+(def flatten
+  "Takes any nested combination of sequential things (lists, vectors,
+  etc.) and returns their contents as a single, flat sequence.
+  (flatten nil) returns an empty sequence."
+  (fn [x]
+    (filter (complement sequential?)
+            (rest (tree-seq sequential? seq x)))))
+
+(def nthrest
+  "Returns the nth rest of coll, coll when n is 0."
+  (fn [coll n]
+    (if (implements? IDrop coll)
+      (if (pos? n)
+        (or (-drop coll (suss.bootstrap/f64-ceil n)) ())
+        coll)
+      (loop [n n xs coll]
+        (let [s (and (pos? n) (seq xs))]
+          (if s
+            (recur (dec n) (rest s))
+            xs))))))
+
+(def partition
+  "Returns a lazy sequence of lists of n items each, at offsets step
+  apart. If step is not supplied, defaults to n, i.e. the partitions
+  do not overlap. If a pad collection is supplied, use its elements as
+  necessary to complete last partition up to n items. In case there are
+  not enough padding elements, return a partition with less than n items."
+  (fn
+    ([n coll]
+     (partition n n coll))
+    ([n step coll]
+     (new LazySeq nil (fn* []
+      (let [s (seq coll)]
+        (when s
+          (let [p (doall (take n s))]
+            (when (= n (count p))
+              (cons p (partition n step (nthrest s step)))))))) nil nil))
+    ([n step pad coll]
+     (new LazySeq nil (fn* []
+      (let [s (seq coll)]
+        (when s
+          (let [p (doall (take n s))]
+            (if (= n (count p))
+              (cons p (partition n step pad (nthrest s step)))
+              (list (take n (concat p pad)))))))) nil nil))))
+
 (def ^{:doc "Returns a lazy sequence of the items in coll starting from the
   first item for which (pred item) returns logical false. Returns a
   stateful transducer when no collection is provided." :arglists '([pred] [pred coll])} drop-while
@@ -8822,6 +8949,128 @@ reduces them without incurring seq initialization"
   (when-not (symbol? tag)
     (throw (suss.bootstrap/error "Assert failed: (symbol? tag)")))
   (TaggedLiteral. tag form)))
+
+(def make-hierarchy
+  "Creates a hierarchy object for use with derive, isa? etc."
+  (fn [] {:parents {} :descendants {} :ancestors {}}))
+
+(def ^:private -global-hierarchy nil)
+
+(def ^:private get-global-hierarchy
+  (fn []
+    (when (nil? -global-hierarchy)
+      (set! -global-hierarchy (atom (make-hierarchy))))
+    -global-hierarchy))
+
+(def ^:private swap-global-hierarchy!
+  (fn [f & args]
+    (apply swap! (get-global-hierarchy) f args)))
+
+(def isa?
+  "Returns true if (= child parent), or child is directly or indirectly derived from
+  parent through a relationship established via derive. h must be a hierarchy
+  obtained from make-hierarchy, if not supplied defaults to the global
+  hierarchy"
+  (fn
+    ([child parent] (isa? @(get-global-hierarchy) child parent))
+    ([h child parent]
+     (or (= child parent)
+         (contains? ((:ancestors h) child) parent)
+         (and (vector? parent) (vector? child)
+              (= (count parent) (count child))
+              (loop [ret true i 0]
+                (if (or (not ret) (= i (count parent)))
+                  ret
+                  (recur (isa? h (child i) (parent i)) (inc i)))))))))
+
+(def parents
+  "Returns the immediate parents of tag through a relationship established
+  via derive. h must be a hierarchy obtained from make-hierarchy, if not
+  supplied defaults to the global hierarchy"
+  (fn
+    ([tag] (parents @(get-global-hierarchy) tag))
+    ([h tag] (not-empty (get (:parents h) tag)))))
+
+(def ancestors
+  "Returns the immediate and indirect parents of tag through a relationship
+  established via derive. h must be a hierarchy obtained from make-hierarchy,
+  if not supplied defaults to the global hierarchy"
+  (fn
+    ([tag] (ancestors @(get-global-hierarchy) tag))
+    ([h tag] (not-empty (get (:ancestors h) tag)))))
+
+(def descendants
+  "Returns the immediate and indirect children of tag, through a
+  relationship established via derive. h must be a hierarchy obtained
+  from make-hierarchy, if not supplied defaults to the global
+  hierarchy. Note: does not work on type inheritance relationships."
+  (fn
+    ([tag] (descendants @(get-global-hierarchy) tag))
+    ([h tag]
+     (if (suss.bootstrap/type-constructor? tag)
+       (throw (suss.bootstrap/error "Can't get descendants of classes"))
+       (not-empty (get (:descendants h) tag))))))
+
+(def derive
+  "Establishes a parent/child relationship between parent and
+  tag. Parent must be a namespace-qualified symbol or keyword and
+  child can be either a namespace-qualified symbol or keyword or a
+  type. h must be a hierarchy obtained from make-hierarchy, if not
+  supplied defaults to, and modifies, the global hierarchy."
+  (fn
+    ([tag parent]
+     (when-not (namespace parent)
+       (throw (suss.bootstrap/error "Assert failed: (namespace parent)")))
+     (when-not (or (suss.bootstrap/type-constructor? tag) (and (implements? INamed tag) (namespace tag)))
+       (throw (suss.bootstrap/error "Assert failed: (or (class? tag) (and (instance? clojure.lang.Named tag) (namespace tag)))")))
+     (swap-global-hierarchy! derive tag parent) nil)
+    ([h tag parent]
+     (when-not (not= tag parent)
+       (throw (suss.bootstrap/error "Assert failed: (not= tag parent)")))
+     (when-not (or (suss.bootstrap/type-constructor? tag) (implements? INamed tag))
+       (throw (suss.bootstrap/error "Assert failed: (or (class? tag) (instance? clojure.lang.Named tag))")))
+     (when-not (implements? INamed parent)
+       (throw (suss.bootstrap/error "Assert failed: (instance? clojure.lang.Named parent)")))
+     (let [tp (:parents h)
+           td (:descendants h)
+           ta (:ancestors h)
+           tf (fn [m source sources target targets]
+                (reduce (fn [ret k]
+                          (assoc ret k
+                                 (reduce conj (get targets k #{}) (cons target (targets target)))))
+                        m (cons source (sources source))))]
+       (or
+        (when-not (contains? (tp tag) parent)
+          (when (contains? (ta tag) parent)
+            (throw (suss.bootstrap/error (print-str tag "already has" parent "as ancestor"))))
+          (when (contains? (ta parent) tag)
+            (throw (suss.bootstrap/error (print-str "Cyclic derivation:" parent "has" tag "as ancestor"))))
+          {:parents (assoc (:parents h) tag (conj (get tp tag #{}) parent))
+           :ancestors (tf (:ancestors h) tag td parent ta)
+           :descendants (tf (:descendants h) parent ta tag td)})
+        h)))))
+
+(def underive
+  "Removes a parent/child relationship between parent and
+  tag. h must be a hierarchy obtained from make-hierarchy, if not
+  supplied defaults to, and modifies, the global hierarchy."
+  (fn
+    ([tag parent]
+     (swap-global-hierarchy! underive tag parent)
+     nil)
+    ([h tag parent]
+     (let [parentMap (:parents h)
+           childsParents (if (parentMap tag)
+                           (disj (parentMap tag) parent) #{})
+           newParents (if (not-empty childsParents)
+                        (assoc parentMap tag childsParents)
+                        (dissoc parentMap tag))
+           deriv-seq (flatten (map (fn [e] (cons (key e) (interpose (key e) (val e))))
+                                   (seq newParents)))]
+       (if (contains? (parentMap tag) parent)
+         (reduce (fn [h pair] (apply derive h pair)) (make-hierarchy)
+                 (partition 2 deriv-seq))
+         h)))))
 ;   Copyright (c) Rich Hickey. All rights reserved.
 ;   The use and distribution terms for this software are covered by the
 ;   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)

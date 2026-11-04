@@ -6,18 +6,31 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn vary-meta
- "Returns an object of the same type and value as obj, with
-  (apply f (meta obj) args) as its metadata."
-  ([obj f]
-   (with-meta obj (f (meta obj))))
-  ([obj f a]
-   (with-meta obj (f (meta obj) a)))
-  ([obj f a b]
-   (with-meta obj (f (meta obj) a b)))
-  ([obj f a b c]
-   (with-meta obj (f (meta obj) a b c)))
-  ([obj f a b c d]
-   (with-meta obj (f (meta obj) a b c d)))
-  ([obj f a b c d & args]
-   (with-meta obj (apply f (meta obj) a b c d args))))
+(defn filter
+  "Returns a lazy sequence of the items in coll for which
+  (pred item) returns logical true. pred must be free of side-effects.
+  Returns a transducer when no collection is provided."
+  ([pred]
+    (fn [rf]
+      (fn
+        ([] (rf))
+        ([result] (rf result))
+        ([result input]
+           (if (pred input)
+             (rf result input)
+             result)))))
+  ([pred coll]
+   (lazy-seq
+    (when-let [s (seq coll)]
+      (if (chunked-seq? s)
+        (let [c (chunk-first s)
+              size (count c)
+              b (chunk-buffer size)]
+          (dotimes [i size]
+              (when (pred (-nth c i))
+                (chunk-append b (-nth c i))))
+          (chunk-cons (chunk b) (filter pred (chunk-rest s))))
+        (let [f (first s) r (rest s)]
+          (if (pred f)
+            (cons f (filter pred r))
+            (filter pred r))))))))

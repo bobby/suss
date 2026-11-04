@@ -6,8 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- strip-ns
-  [named]
-  (if (symbol? named)
-    (symbol nil (name named))
-    (keyword nil (name named))))
+(defn ident?
+  "Return true if x is a symbol or keyword"
+  [x] (or (keyword? x) (symbol? x)))

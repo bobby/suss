@@ -52,6 +52,7 @@ pub mod portable_aot;
 #[cfg(not(target_family = "wasm"))]
 mod portable_defn;
 mod portable_lazy_seq;
+mod portable_core_macros;
 mod portable_state_macros;
 mod portable_when_let;
 #[cfg(not(target_family = "wasm"))]

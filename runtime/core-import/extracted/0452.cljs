@@ -6,10 +6,23 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn remove
-  "Returns a lazy sequence of the items in coll for which
-  (pred item) returns logical false. pred must be free of side-effects.
-  Returns a transducer when no collection is provided."
-  ([pred] (filter (complement pred)))
-  ([pred coll]
-     (filter (complement pred) coll)))
+(defn take-nth
+  "Returns a lazy seq of every nth item in coll.  Returns a stateful
+  transducer when no collection is provided."
+  ([n]
+   {:pre [(number? n)]}
+     (fn [rf]
+       (let [ia (volatile! -1)]
+         (fn
+           ([] (rf))
+           ([result] (rf result))
+           ([result input]
+              (let [i (vswap! ia inc)]
+                (if (zero? (rem i n))
+                  (rf result input)
+                  result)))))))
+  ([n coll]
+   {:pre [(number? n)]}
+     (lazy-seq
+       (when-let [s (seq coll)]
+         (cons (first s) (take-nth n (drop n s)))))))

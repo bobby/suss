@@ -6,6 +6,55 @@ use super::{
 };
 use suss_reader::forms::{Form, Kind};
 
+/// Resolve `::name` in the current namespace and `::alias/name` through its
+/// aliases, as Clojure's reader does when it reads each top-level form. An
+/// unknown alias is Clojure's "Invalid token" error (#30).
+pub(crate) fn resolve_auto_keywords(
+    forms: &mut [Form],
+    env: &Environment,
+    phase: Phase,
+) -> Result<(), Diagnostic> {
+    let current = env.current_namespace(phase);
+    let mut pending = forms.iter_mut().collect::<Vec<_>>();
+    while let Some(form) = pending.pop() {
+        let Form { span, metadata, kind } = form;
+        pending.extend(metadata.iter_mut());
+        match kind {
+            Kind::AutoKeyword(keyword) => {
+                let namespace = match &keyword.namespace {
+                    None => current,
+                    Some(alias) => env.aliased_namespace(phase, alias).ok_or_else(|| Diagnostic {
+                        span: span.clone(),
+                        message: format!("Invalid token: ::{alias}/{}", keyword.name),
+                    })?,
+                };
+                *kind = Kind::Keyword(suss_reader::Keyword {
+                    namespace: Some(namespace.into()),
+                    name: std::mem::take(&mut keyword.name),
+                });
+            }
+            Kind::List(items)
+            | Kind::Vector(items)
+            | Kind::Set(items)
+            | Kind::Map(items)
+            | Kind::Conditional(items)
+            | Kind::SplicingConditional(items) => pending.extend(items.iter_mut()),
+            Kind::Discard(target) | Kind::Tagged { form: target, .. } => pending.push(target),
+            Kind::Prefix { operator, target } => {
+                pending.push(operator);
+                pending.push(target);
+            }
+            Kind::Nil
+            | Kind::Bool(_)
+            | Kind::Number(_)
+            | Kind::String(_)
+            | Kind::Symbol(_)
+            | Kind::Keyword(_) => {}
+        }
+    }
+    Ok(())
+}
+
 fn error(form: &Form, message: &str) -> Diagnostic {
     Diagnostic {
         span: form.span.clone(),

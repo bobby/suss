@@ -1,7 +1,11 @@
 //! Atoms, volatiles and delays follow Clojure's ARef, Atom, Volatile and
 //! Delay (#30). Expected values cite Clojure's behaviour where it differs
 //! from ClojureScript's.
-use suss_compile::{portable_macros::CompiledMacros, portable_repl, portable_session::Session};
+use suss_compile::{
+    portable_macros::CompiledMacros,
+    portable_repl,
+    portable_session::{Session, SessionOptions},
+};
 
 /// A runtime with the compiled macro phase, as the CLI evaluates source.
 struct Repl {
@@ -11,6 +15,11 @@ struct Repl {
 impl Repl {
     fn new() -> Self {
         Self { runtime: Session::new_repl().unwrap(), macros: CompiledMacros::new().unwrap() }
+    }
+    /// A runtime that loads required namespaces from `root`.
+    fn with_sources(root: &std::path::Path) -> Self {
+        let options = SessionOptions { source_paths: vec![root.to_owned()], ..SessionOptions::default() };
+        Self { runtime: Session::new_repl_with_options(options).unwrap(), macros: CompiledMacros::new().unwrap() }
     }
     /// Evaluate setup forms. The REPL cannot yet display references (#288),
     /// so the script ends in nil.
@@ -259,4 +268,148 @@ fn delays_run_once_and_cache_exceptions() {
     assert!(failed.contains("{:status :failed, :val #error {"), "{failed}");
     let ready = printed(&mut session, "ok");
     assert!(ready.contains("{:status :ready, :val :ok}"), "{ready}");
+}
+
+#[test]
+fn auto_resolved_keywords_use_the_current_namespace_and_its_aliases() {
+    let root = std::path::Path::new(env!("CARGO_TARGET_TMPDIR")).join("core_state_auto_keywords");
+    std::fs::create_dir_all(root.join("lib")).unwrap();
+    std::fs::write(root.join("lib/kw.sus"), "(ns lib.kw) (def x 1)").unwrap();
+    let mut session = Repl::with_sources(&root);
+    check(&mut session, "[::a (namespace ::a) (= ::a :user/a)]", "[:user/a \"user\" true]");
+    session.setup("(ns app.kw (:require [lib.kw :as lib]))");
+    check(&mut session, "[::a ::lib/b '::c {::d [::e]} (meta ^{::f 1} [])]",
+        "[:app.kw/a :lib.kw/b :app.kw/c {:app.kw/d [:app.kw/e]} {:app.kw/f 1}]");
+    // Shorthand metadata and macro bodies resolve them too; the macro session
+    // reads the runtime namespace's aliases, as Clojure's reader has one table.
+    check(&mut session, "[(meta ^::t []) (meta ^::lib/t [])]", "[{:app.kw/t true} {:lib.kw/t true}]");
+    session.setup("(defmacro kws [] [::k ::lib/k '::q])");
+    check(&mut session, "(kws)", "[:app.kw/k :lib.kw/k :app.kw/q]");
+    // Clojure resolves `::alias/name` only through an alias of the current namespace.
+    assert!(thrown_reading(&mut session, "::nope/x").contains("Invalid token: ::nope/x"));
+    assert!(thrown_reading(&mut session, "::app.kw/x").contains("Invalid token: ::app.kw/x"));
+}
+
+/// The error evaluating `source` reports.
+fn thrown_reading(session: &mut Repl, source: &str) -> String {
+    match portable_repl::evaluate_script_compiled(&mut session.runtime, &mut session.macros, source, None) {
+        Ok(value) => panic!("{source} returned {value}"),
+        Err(error) => portable_repl::error_display(&mut session.runtime, &error),
+    }
+}
+
+#[test]
+fn derive_builds_clojure_hierarchies() {
+    let mut session = Repl::new();
+    check(&mut session, "(make-hierarchy)", "{:parents {}, :descendants {}, :ancestors {}}");
+    session.setup(
+        "(def h (-> (make-hierarchy) (derive ::rect ::shape) (derive ::square ::rect)))
+         (def diamond (-> (make-hierarchy) (derive ::b ::a) (derive ::c ::a) (derive ::d ::b) (derive ::d ::c)))",
+    );
+    check(&mut session, "h",
+        "{:parents {:user/rect #{:user/shape}, :user/square #{:user/rect}}, \
+         :ancestors {:user/rect #{:user/shape}, :user/square #{:user/rect :user/shape}}, \
+         :descendants {:user/shape #{:user/rect :user/square}, :user/rect #{:user/square}}}");
+    check(&mut session, "[(isa? h ::square ::shape) (isa? h ::shape ::square) (isa? h [::square ::rect] [::shape ::shape])
+                          (isa? h [::square] [::shape ::shape])]", "[true false true false]");
+    check(&mut session, "[(parents h ::square) (ancestors h ::square) (descendants h ::shape) (parents h ::shape)]",
+        "[#{:user/rect} #{:user/rect :user/shape} #{:user/rect :user/square} nil]");
+    // Deriving an existing relationship returns the same hierarchy.
+    check(&mut session, "(identical? h (derive h ::rect ::shape))", "true");
+    check(&mut session, "(= (underive diamond ::d ::b)
+                            {:parents {::b #{::a}, ::c #{::a}, ::d #{::c}}
+                             :descendants {::a #{::d ::b ::c}, ::c #{::d}}
+                             :ancestors {::b #{::a}, ::c #{::a}, ::d #{::a ::c}}})", "true");
+    check(&mut session, "(identical? diamond (underive diamond ::b ::d))", "true");
+}
+
+#[test]
+fn derive_errors_are_clojures() {
+    let mut session = Repl::new();
+    session.setup("(def chain (-> (make-hierarchy) (derive ::a ::b) (derive ::b ::c)))");
+    for (source, message) in [
+        ("(derive ::a ::a)", "Assert failed: (not= tag parent)"),
+        ("(derive ::a :b)", "Assert failed: (namespace parent)"),
+        ("(derive :a ::b)", "Assert failed: (or (class? tag) (and (instance? clojure.lang.Named tag) (namespace tag)))"),
+        ("(derive (make-hierarchy) 42 ::b)", "Assert failed: (or (class? tag) (instance? clojure.lang.Named tag))"),
+        ("(derive (make-hierarchy) ::a \"b\")", "Assert failed: (instance? clojure.lang.Named parent)"),
+        ("(derive chain ::c ::a)", "Cyclic derivation: :user/a has :user/c as ancestor"),
+        ("(derive chain ::a ::c)", ":user/a already has :user/c as ancestor"),
+    ] {
+        assert_eq!(printed(&mut session, &format!("(try {source} :returned (catch :default e (ex-message e)))")),
+            format!("{message:?}"), "{source}");
+    }
+}
+
+#[test]
+fn the_global_hierarchy_backs_the_two_argument_forms() {
+    let mut session = Repl::new();
+    check(&mut session, "[(derive ::t ::p) (derive 'n/t ::p) (isa? ::t ::p) (parents ::t) (descendants ::p)]",
+        "[nil nil true #{:user/p} #{:user/t n/t}]");
+    check(&mut session, "[(underive ::t ::p) (isa? ::t ::p) (parents ::t) (underive ::t ::p) (descendants ::p)]",
+        "[nil false nil nil #{n/t}]");
+    // Types are Clojure's classes: valid tags, without supertypes.
+    session.setup("(deftype T [])");
+    check(&mut session, "[(derive T ::thing) (isa? T ::thing) (parents T) (ancestors T)]",
+        "[nil true #{:user/thing} #{:user/thing}]");
+    check(&mut session, "(try (descendants T) (catch :default e (ex-message e)))", "\"Can't get descendants of classes\"");
+    check(&mut session, "(map (fn [x] (parents x)) [nil \"x\" 42 [] {}])", "(nil nil nil nil nil)");
+}
+
+#[test]
+fn sequence_helpers_and_ident_predicates_follow_clojure() {
+    let mut session = Repl::new();
+    check(&mut session, "[(interleave [1 2 3] [:a :b]) (interleave) (interleave [1 2]) (interleave [1 2] [3 4] [5 6])]",
+        "[(1 :a 2 :b) () (1 2) (1 3 5 2 4 6)]");
+    check(&mut session, "[(interpose :x [1 2 3]) (interpose :x []) (into [] (interpose :x) [1 2 3])]",
+        "[(1 :x 2 :x 3) () [1 :x 2 :x 3]]");
+    check(&mut session, "[(flatten [1 [2 '(3 [4])] 5]) (flatten nil) (flatten {:a 1}) (tree-seq vector? seq [1 [2]])]",
+        "[(1 2 3 4 5) () () ([1 [2]] 1 [2] 2)]");
+    // partition steps with the eager nthrest, as Clojure's does, so a skipped
+    // element is realized with the partition before it.
+    check(&mut session, "(let [log (atom [])]
+                           (first (partition 1 3 (map (fn [i] (swap! log conj i) i) (list 0 1 2 3 4 5))))
+                           @log)", "[0 1 2]");
+    check(&mut session, "[(nthrest [1 2 3] 2) (nthrest [1 2] 0) (nthrest [1 2 3] 5) (nthrest nil 2) (nthrest (range 10) 8)]",
+        "[(3) [1 2] () nil (8 9)]");
+    check(&mut session, "[(partition 2 [1 2 3 4 5]) (partition 2 1 [1 2 3]) (partition 2 2 [:p] [1 2 3]) (partition 3 3 [] [1 2 3 4])]",
+        "[((1 2) (3 4)) ((1 2) (2 3)) ((1 2) (3 :p)) ((1 2 3) (4))]");
+    check(&mut session, "(map (juxt ident? simple-ident? qualified-ident? simple-keyword? qualified-keyword? simple-symbol? qualified-symbol?)
+                            [:a ::a 'a 'n/a \"a\" nil])",
+        "([true true false true false false false] [true false true false true false false] \
+         [true true false false false true false] [true false true false false false true] \
+         [false false false false false false false] [false false false false false false false])");
+}
+
+#[test]
+fn doseq_follows_clojures_bindings_and_chunking() {
+    let mut session = Repl::new();
+    session.setup("(def log (atom []))");
+    let run = |session: &mut Repl, source: &str| printed(session, &format!("(do (reset! log []) [{source} @log])"));
+    assert_eq!(run(&mut session, "(doseq [x [1 2 3] y [:a :b] :when (odd? x)] (swap! log conj [x y]))"),
+        "[nil [[1 :a] [1 :b] [3 :a] [3 :b]]]");
+    assert_eq!(run(&mut session, "(doseq [x [1 2 3] y [1 2 3] :while (<= y x)] (swap! log conj [x y]))"),
+        "[nil [[1 1] [2 1] [2 2] [3 1] [3 2] [3 3]]]");
+    assert_eq!(run(&mut session, "(doseq [x (range 10) :while (< x 3) :let [y (* 10 x)]] (swap! log conj y))"),
+        "[nil [0 10 20]]");
+    assert_eq!(run(&mut session, "(doseq [[k v] (sorted-map :a 1 :b 2)] (swap! log conj k v))"),
+        "[nil [:a 1 :b 2]]");
+    assert_eq!(run(&mut session, "(doseq [x nil] (swap! log conj x))"), "[nil []]");
+    // A chunked seq is realized a chunk at a time, before the body sees it.
+    assert_eq!(run(&mut session, "(doseq [x (map (fn [i] (swap! log conj [:realize i]) i) (range 3))] (swap! log conj [:body x]))"),
+        "[nil [[:realize 0] [:realize 1] [:realize 2] [:body 0] [:body 1] [:body 2]]]");
+    assert_eq!(run(&mut session, "(doseq [x (map (fn [i] (swap! log conj [:realize i]) i) (list 0 1))] (swap! log conj [:body x]))"),
+        "[nil [[:realize 0] [:body 0] [:realize 1] [:body 1]]]");
+    // The messages are checked by portable_macros' doseq_validation_tests.
+    for source in ["(doseq (x [1]) x)", "(doseq [x] x)"] {
+        let shown = thrown_reading(&mut session, source);
+        assert!(shown.contains("Compiled macro expansion failed"), "{source}: {shown}");
+    }
+}
+
+#[test]
+fn thread_last_inserts_each_form_last() {
+    let mut session = Repl::new();
+    check(&mut session, "[(->> [1 2 3] (map inc) (filter odd?) vec) (->> 5) (->> 2 (- 10)) (->> [1] first)]",
+        "[[3] 5 8 1]");
 }

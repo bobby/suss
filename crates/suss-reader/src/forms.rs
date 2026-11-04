@@ -55,7 +55,9 @@ impl Form {
         let text = match &self.kind {
             Kind::String(x) => x.len() as u64,
             Kind::Symbol(x) => (x.name.len() + x.namespace.as_ref().map_or(0, String::len)) as u64,
-            Kind::Keyword(x) => (x.name.len() + x.namespace.as_ref().map_or(0, String::len)) as u64,
+            Kind::Keyword(x) | Kind::AutoKeyword(x) => {
+                (x.name.len() + x.namespace.as_ref().map_or(0, String::len)) as u64
+            }
             _ => 0,
         };
         charge(meter, 1 + text, self.span.clone())?;
@@ -161,6 +163,10 @@ pub enum Kind {
     String(Vec<u16>),
     Symbol(Symbol),
     Keyword(Keyword),
+    /// Auto-resolved keyword `::name` or `::alias/name`, awaiting the current
+    /// namespace and its aliases. The compiler resolves it to a `Keyword`
+    /// before analysis, as Clojure's reader does at read time.
+    AutoKeyword(Keyword),
     List(Vec<Form>),
     Vector(Vec<Form>),
     Set(Vec<Form>),
@@ -899,7 +905,11 @@ impl Reader<'_, '_, '_> {
                 }
                 if !matches!(
                     metadata.kind,
-                    Kind::Keyword(_) | Kind::Symbol(_) | Kind::String(_) | Kind::Map(_)
+                    Kind::Keyword(_)
+                        | Kind::AutoKeyword(_)
+                        | Kind::Symbol(_)
+                        | Kind::String(_)
+                        | Kind::Map(_)
                 ) {
                     return Err(error(
                         metadata.span.clone(),
@@ -1103,16 +1113,17 @@ impl Reader<'_, '_, '_> {
                     "true" => Kind::Bool(true),
                     "false" => Kind::Bool(false),
                     token if token.starts_with(':') => {
-                        if token.starts_with("::") {
-                            return Err(self.fail(
-                                start,
-                                "Auto-resolved keywords require namespace resolution",
-                            ));
-                        }
+                        if let Some(spelling) = token.strip_prefix("::") {
+                            if !valid_symbol(spelling) || spelling == "/" {
+                                return Err(self.fail(start, "Invalid keyword"));
+                            }
+                            Kind::AutoKeyword(Keyword::parse(spelling))
+                        } else {
                         if !valid_symbol(&token[1..]) {
                             return Err(self.fail(start, "Invalid keyword"));
                         }
                         Kind::Keyword(Keyword::parse(&token[1..]))
+                        }
                     }
                     token if numeric_start(token) => {
                         Kind::Number(number(token).map_err(|message| self.fail(start, message))?)

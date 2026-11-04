@@ -6,9 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- tree-map-seq-push [node stack ^boolean ascending?]
-  (loop [t node stack stack]
-    (if-not (nil? t)
-      (recur (if ascending? (.-left t) (.-right t))
-             (conj stack t))
-      stack)))
+(defn iter [coll]
+  (cond
+    (iterable? coll) (-iterator coll)
+    (nil? coll) (nil-iter)
+    (string? coll) (string-iter coll)
+    (array? coll) (array-iter coll)
+    (seqable? coll) (seq-iter coll)
+    :else (throw (js/Error. (str_ "Cannot create iterator from " coll)))))

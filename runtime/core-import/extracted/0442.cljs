@@ -6,15 +6,23 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn dorun
-  "When lazy sequences are produced via functions that have side
-  effects, any effects other than those needed to produce the first
-  element in the seq do not occur until the seq is consumed. dorun can
-  be used to force any effects. Walks through the successive nexts of
-  the seq, does not retain the head and returns nil."
-  ([coll]
-   (when-let [s (seq coll)]
-     (recur (next s))))
-  ([n coll]
-   (when (and (seq coll) (pos? n))
-     (recur (dec n) (next coll)))))
+(deftype IntegerRangeChunk [start step count]
+  ICounted
+  (-count [coll] count)
+
+  ISeq
+  (-first [coll] start)
+
+  IIndexed
+  (-nth [coll i]
+    (+ start (* i step)))
+  (-nth [coll i not-found]
+    (if (and (>= i 0) (< i count))
+      (+ start (* i step))
+      not-found))
+
+  IChunk
+  (-drop-first [coll]
+    (if (<= count 1)
+      (throw (js/Error. "-drop-first of empty chunk"))
+      (IntegerRangeChunk. (+ start step) step (dec count)))))

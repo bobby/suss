@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "321a555dba26f03a3c1347fdd6596e2b554ff0e334cb1fd9cf0ae5688a76b9f1",
+  "replacement": "(def ident?\n  \"Return true if x is a symbol or keyword\"\n  (fn [x] (or (keyword? x) (symbol? x))))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+}

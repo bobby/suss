@@ -6,129 +6,63 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype IntegerRange [meta start end step cnt ^:mutable __hash]
+(deftype Cycle [meta all prev ^:mutable current ^:mutable _next]
   Object
   (toString [coll]
     (pr-str* coll))
-  (equiv [this other]
-    (-equiv this other))
-  (indexOf [coll x]
-    (-indexOf coll x 0))
-  (indexOf [coll x start]
-    (-indexOf coll x start))
-  (lastIndexOf [coll x]
-    (-lastIndexOf coll x (count coll)))
-  (lastIndexOf [coll x start]
-    (-lastIndexOf coll x start))
+  (currentval [coll]
+    (when-not ^seq current
+      (if-let [c (next prev)]
+        (set! current c)
+        (set! current all)))
+    current)
 
-  ICloneable
-  (-clone [_] (IntegerRange. meta start end step cnt __hash))
+  IPending
+  (-realized? [coll]
+    (some? current))
 
   IWithMeta
-  (-with-meta [rng new-meta]
+  (-with-meta [coll new-meta]
     (if (identical? new-meta meta)
-      rng
-      (IntegerRange. new-meta start end step cnt __hash)))
+      coll
+      (Cycle. new-meta all prev current _next)))
 
   IMeta
-  (-meta [rng] meta)
-
-  ISeqable
-  (-seq [rng] rng)
+  (-meta [coll] meta)
 
   ISeq
-  (-first [rng] start)
-  (-rest [rng]
-    (let [s (-next rng)]
-      (if (nil? s)
-        ()
-        s)))
-
-  IIterable
-  (-iterator [_]
-    (RangeIterator. start end step))
+  (-first [coll]
+    (first (.currentval coll)))
+  (-rest [coll]
+    (when (nil? _next)
+      (set! _next (Cycle. nil all (.currentval coll) nil nil)))
+    _next)
 
   INext
-  (-next [rng]
-    (if (pos? step)
-      (when (< (+ start step) end)
-        (IntegerRange. nil (+ start step) end step (range-count (+ start step) end step) nil))
-      (when (> (+ start step) end)
-        (IntegerRange. nil (+ start step) end step (range-count (+ start step) end step) nil))))
-
-  IDrop
-  (-drop [rng n]
-    (if (pos? n)
-      (if (< n cnt)
-        (IntegerRange. nil (+ start (* step n)) end step (- cnt n) nil)
-        nil)
-      rng))
-
-  IChunkedSeq
-  (-chunked-first [rng]
-    (IntegerRangeChunk. start step (unchecked-min cnt 32)))
-  (-chunked-rest [rng]
-    (if (<= cnt 32)
-      ()
-      (let [start (+ start (* step 32))]
-        (cond
-          (pos? step)
-          (if (<= end start)
-            ()
-            (IntegerRange. nil start end step (range-count start end step) nil))
-
-          (neg? step)
-          (if (>= end start)
-            ()
-            (IntegerRange. nil start end step (range-count start end step) nil))
-
-          :else
-          (if (== end start)
-            ()
-            (repeat start))))))
-
-  IChunkedNext
-  (-chunked-next [rng]
-    (seq (-chunked-rest rng)))
+  (-next [coll]
+    (-rest coll))
 
   ICollection
-  (-conj [rng o] (cons o rng))
+  (-conj [coll o] (cons o coll))
 
   IEmptyableCollection
-  (-empty [rng] (.-EMPTY List))
+  (-empty [coll] (.-EMPTY List))
 
   ISequential
-  IEquiv
-  (-equiv [rng other] (equiv-sequential rng other))
-
-  IHash
-  (-hash [rng] (caching-hash rng hash-ordered-coll __hash))
-
-  ICounted
-  (-count [rng]
-    cnt)
-
-  IIndexed
-  (-nth [rng n]
-    (if (and (<= 0 n) (< n (-count rng)))
-      (+ start (* n step))
-      (if (and (<= 0 n) (> start end) (zero? step))
-        start
-        (throw (js/Error. "Index out of bounds")))))
-  (-nth [rng n not-found]
-    (if (and (<= 0 n) (< n (-count rng)))
-      (+ start (* n step))
-      (if (and (<= 0 n) (> start end) (zero? step))
-        start
-        not-found)))
+  ISeqable
+  (-seq [coll] coll)
 
   IReduce
-  (-reduce [rng f] (ci-reduce rng f))
-  (-reduce [rng f init]
-    (loop [i start ret init]
-      (if (if (pos? step) (< i end) (> i end))
-        (let [ret (f ret i)]
-          (if (reduced? ret)
-            @ret
-            (recur (+ i step) ret)))
-        ret))))
+  (-reduce [coll f]
+    (loop [s (.currentval coll) ret (first s)]
+      (let [s   (or (next s) all)
+            ret (f ret (first s))]
+        (if (reduced? ret)
+          @ret
+          (recur s ret)))))
+  (-reduce [coll f start]
+    (loop [s (.currentval coll) ret start]
+      (let [ret (f ret (first s))]
+        (if (reduced? ret)
+          @ret
+          (recur (or (next s) all) ret))))))

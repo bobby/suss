@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "f4eba47b27cd145f8bc008eccb918feef909b1ff3457b9b73d6609119c4c6057",
+  "replacement": "(def ^:private swap-global-hierarchy!\n  (fn [f & args]\n    (apply swap! (get-global-hierarchy) f args)))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+}

@@ -6,63 +6,17 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Cycle [meta all prev ^:mutable current ^:mutable _next]
-  Object
-  (toString [coll]
-    (pr-str* coll))
-  (currentval [coll]
-    (when-not ^seq current
-      (if-let [c (next prev)]
-        (set! current c)
-        (set! current all)))
-    current)
-
-  IPending
-  (-realized? [coll]
-    (some? current))
-
-  IWithMeta
-  (-with-meta [coll new-meta]
-    (if (identical? new-meta meta)
-      coll
-      (Cycle. new-meta all prev current _next)))
-
-  IMeta
-  (-meta [coll] meta)
-
-  ISeq
-  (-first [coll]
-    (first (.currentval coll)))
-  (-rest [coll]
-    (when (nil? _next)
-      (set! _next (Cycle. nil all (.currentval coll) nil nil)))
-    _next)
-
-  INext
-  (-next [coll]
-    (-rest coll))
-
-  ICollection
-  (-conj [coll o] (cons o coll))
-
-  IEmptyableCollection
-  (-empty [coll] (.-EMPTY List))
-
-  ISequential
-  ISeqable
-  (-seq [coll] coll)
-
-  IReduce
-  (-reduce [coll f]
-    (loop [s (.currentval coll) ret (first s)]
-      (let [s   (or (next s) all)
-            ret (f ret (first s))]
-        (if (reduced? ret)
-          @ret
-          (recur s ret)))))
-  (-reduce [coll f start]
-    (loop [s (.currentval coll) ret start]
-      (let [ret (f ret (first s))]
-        (if (reduced? ret)
-          @ret
-          (recur (or (next s) all) ret))))))
+(defn subseq
+  "sc must be a sorted collection, test(s) one of <, <=, > or
+  >=. Returns a seq of those entries with keys ek for
+  which (test (.. sc comparator (compare ek key)) 0) is true"
+  ([sc test key]
+     (let [include (mk-bound-fn sc test key)]
+       (if (#{> >=} test)
+         (when-let [[e :as s] (-sorted-seq-from sc key true)]
+           (if (include e) s (next s)))
+         (take-while include (-sorted-seq sc true)))))
+  ([sc start-test start-key end-test end-key]
+     (when-let [[e :as s] (-sorted-seq-from sc start-key true)]
+       (take-while (mk-bound-fn sc end-test end-key)
+                   (if ((mk-bound-fn sc start-test start-key) e) s (next s))))))

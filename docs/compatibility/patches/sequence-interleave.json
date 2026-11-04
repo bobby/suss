@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "da0606969c20abd9930251830de143e833ed81187b0a5190c289f0b3995e7fec",
+  "replacement": "(def interleave\n  \"Returns a lazy seq of the first item in each coll, then the second etc.\"\n  (fn\n    ([] ())\n    ([c1] (new LazySeq nil (fn* [] c1) nil nil))\n    ([c1 c2]\n     (new LazySeq nil (fn* []\n      (let [s1 (seq c1) s2 (seq c2)]\n        (when (and s1 s2)\n          (cons (first s1) (cons (first s2)\n                                 (interleave (rest s1) (rest s2))))))) nil nil))\n    ([c1 c2 & colls]\n     (new LazySeq nil (fn* []\n      (let [ss (map seq (conj colls c2 c1))]\n        (when (every? identity ss)\n          (concat (map first ss) (apply interleave (map rest ss)))))) nil nil))))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30). lazy-seq is written as its expansion, a LazySeq of a thunk, since core is compiled before the macro. Clojure's interleave has the same arities and laziness."
+}

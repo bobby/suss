@@ -424,6 +424,10 @@ fn edn_conformance_with_the_compilers_reader() {
             (expected, found) => panic!("{source}: compiler {expected:?}, edn {found:?}"),
         }
     }
+    for source in corpus("edn-malformed") {
+        assert!(suss_reader::forms::read_forms(&source).is_ok(), "{source}");
+        assert!(edn::read_all(&source, &Options::default()).is_err(), "{source}");
+    }
 }
 
 #[test]

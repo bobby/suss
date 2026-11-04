@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "2b80845f6f25ee9998421120fa4249a60b7be5ecf8c6f7c776cda46db84dee0d",
+  "replacement": "(def simple-ident?\n  \"Return true if x is a symbol or keyword without a namespace\"\n  (fn [x] (and (ident? x) (nil? (namespace x)))))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+}

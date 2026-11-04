@@ -6,49 +6,71 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn map
-  "Returns a lazy sequence consisting of the result of applying f to
-  the set of first items of each coll, followed by applying f to the
-  set of second items in each coll, until any one of the colls is
-  exhausted.  Any remaining items in other colls are ignored. Function
-  f should accept number-of-colls arguments. Returns a transducer when
-  no collection is provided."
-  ([f]
-    (fn [rf]
-      (fn
-        ([] (rf))
-        ([result] (rf result))
-        ([result input]
-           (rf result (f input)))
-        ([result input & inputs]
-           (rf result (apply f input inputs))))))
-  ([f coll]
-   (lazy-seq
-    (when-let [s (seq coll)]
-      (if (chunked-seq? s)
-        (let [c (chunk-first s)
-              size (count c)
-              b (chunk-buffer size)]
-          (dotimes [i size]
-              (chunk-append b (f (-nth c i))))
-          (chunk-cons (chunk b) (map f (chunk-rest s))))
-        (cons (f (first s)) (map f (rest s)))))))
-  ([f c1 c2]
-   (lazy-seq
-    (let [s1 (seq c1) s2 (seq c2)]
-      (when (and s1 s2)
-        (cons (f (first s1) (first s2))
-              (map f (rest s1) (rest s2)))))))
-  ([f c1 c2 c3]
-   (lazy-seq
-    (let [s1 (seq c1) s2 (seq c2) s3 (seq c3)]
-      (when (and  s1 s2 s3)
-        (cons (f (first s1) (first s2) (first s3))
-              (map f (rest s1) (rest s2) (rest s3)))))))
-  ([f c1 c2 c3 & colls]
-   (let [step (fn step [cs]
-                 (lazy-seq
-                  (let [ss (map seq cs)]
-                    (when (every? identity ss)
-                      (cons (map first ss) (step (map rest ss)))))))]
-     (map #(apply f %) (step (conj colls c3 c2 c1))))))
+(deftype PersistentQueue [meta count front rear ^:mutable __hash]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  ICloneable
+  (-clone [coll] (PersistentQueue. meta count front rear __hash))
+
+  IIterable
+  (-iterator [coll]
+    (PersistentQueueIter. front (-iterator rear)))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (PersistentQueue. new-meta count front rear __hash)))
+
+  IMeta
+  (-meta [coll] meta)
+
+  ISeq
+  (-first [coll] (first front))
+  (-rest [coll] (rest (seq coll)))
+
+  IStack
+  (-peek [coll] (first front))
+  (-pop [coll]
+    (if front
+      (if-let [f1 (next front)]
+        (PersistentQueue. meta (dec count) f1 rear nil)
+        (PersistentQueue. meta (dec count) (seq rear) [] nil))
+      coll))
+
+  ICollection
+  (-conj [coll o]
+    (if front
+      (PersistentQueue. meta (inc count) front (conj (or rear []) o) nil)
+      (PersistentQueue. meta (inc count) (conj front o) [] nil)))
+
+  IEmptyableCollection
+  (-empty [coll] (-with-meta (.-EMPTY PersistentQueue) meta))
+
+  ISequential
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  IHash
+  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
+
+  ISeqable
+  (-seq [coll]
+    (let [rear (seq rear)]
+      (if (or front rear)
+        (PersistentQueueSeq. nil front (seq rear) nil))))
+
+  ICounted
+  (-count [coll] count))

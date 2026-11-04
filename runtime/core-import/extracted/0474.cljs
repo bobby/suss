@@ -6,20 +6,21 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Delay [^:mutable f ^:mutable value]
-  IDeref
-  (-deref [_]
-    (when f
-      (set! value (f))
-      (set! f nil))
-    value)
-
-  IPending
-  (-realized? [x]
-    (not f))
-
-  IPrintWithWriter
-  (-pr-writer [x writer opts]
-    (-write writer "#object[cljs.core.Delay ")
-    (pr-writer {:status (if (nil? f) :ready :pending), :val value} writer opts)
-    (-write writer "]")))
+(deftype Single [^:mutable val]
+  Object
+  (add [this o]
+    (if (identical? val NONE)
+      (do
+        (set! val o)
+        this)
+      (Many. #js [val o])))
+  (remove [this]
+    (if (identical? val NONE)
+      (throw (js/Error. (str_ "Removing object from empty buffer")))
+      (let [ret val]
+        (set! val NONE)
+        ret)))
+  (isEmpty [this]
+    (identical? val NONE))
+  (toString [this]
+    (str_ "Single: " val)))

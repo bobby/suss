@@ -6,13 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype RangeIterator [^:mutable i end step]
-  Object
-  (hasNext [_]
-    (if (pos? step)
-      (< i end)
-      (> i end)))
-  (next [_]
-    (let [ret i]
-      (set! i (+ i step))
-      ret)))
+(defn find
+  "Returns the map entry for key, or nil if key not present."
+  [coll k]
+  (if (ifind? coll)
+    (-find coll k)
+    (when (and (not (nil? coll))
+            (associative? coll)
+            (contains? coll k))
+      (MapEntry. k (get coll k) nil))))

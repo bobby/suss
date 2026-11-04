@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "cc1e880ec66eb4e3f6a914533947afbd00d13e986c6198b49c6d4fcafedb3a3f",
+  "replacement": "(def simple-symbol?\n  \"Return true if x is a symbol without a namespace\"\n  (fn [x] (and (symbol? x) (nil? (namespace x)))))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+}

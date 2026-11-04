@@ -6,25 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn fnil
-  "Takes a function f, and returns a function that calls f, replacing
-  a nil first argument to f with the supplied value x. Higher arity
-  versions can replace arguments in the second and third
-  positions (y, z). Note that the function f can take any number of
-  arguments, not just the one(s) being nil-patched."
-  ([f x]
-   (fn
-     ([a] (f (if (nil? a) x a)))
-     ([a b] (f (if (nil? a) x a) b))
-     ([a b c] (f (if (nil? a) x a) b c))
-     ([a b c & ds] (apply f (if (nil? a) x a) b c ds))))
-  ([f x y]
-   (fn
-     ([a b] (f (if (nil? a) x a) (if (nil? b) y b)))
-     ([a b c] (f (if (nil? a) x a) (if (nil? b) y b) c))
-     ([a b c & ds] (apply f (if (nil? a) x a) (if (nil? b) y b) c ds))))
-  ([f x y z]
-   (fn
-     ([a b] (f (if (nil? a) x a) (if (nil? b) y b)))
-     ([a b c] (f (if (nil? a) x a) (if (nil? b) y b) (if (nil? c) z c)))
-     ([a b c & ds] (apply f (if (nil? a) x a) (if (nil? b) y b) (if (nil? c) z c) ds)))))
+(defn mapv
+  "Returns a vector consisting of the result of applying f to the
+  set of first items of each coll, followed by applying f to the set
+  of second items in each coll, until any one of the colls is
+  exhausted.  Any remaining items in other colls are ignored. Function
+  f should accept number-of-colls arguments."
+  ([f coll]
+     (-> (reduce (fn [v o] (conj! v (f o))) (transient []) coll)
+         persistent!))
+  ([f c1 c2]
+     (into [] (map f c1 c2)))
+  ([f c1 c2 c3]
+     (into [] (map f c1 c2 c3)))
+  ([f c1 c2 c3 & colls]
+     (into [] (apply map f c1 c2 c3 colls))))

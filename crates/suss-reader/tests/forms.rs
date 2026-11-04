@@ -409,7 +409,7 @@ fn malformed_forms_fail_with_located_diagnostics_and_bounded_nesting() {
         "\"\\18\"",
         "\"\\1z\"",
         "\"\\400\"",
-        "::alias/x",
+        "::alias/",
         "a/",
         "a/1",
         ")",
@@ -578,4 +578,19 @@ fn source_metadata_meter_preserves_locations_and_checks_work() {
     })
     .unwrap_err();
     assert_eq!(error.message, "metadata cancelled");
+}
+
+#[test]
+fn auto_resolved_keywords_await_namespace_resolution() {
+    // The compiler resolves these against the current namespace (#30).
+    for (source, namespace, name) in [("::a", None, "a"), ("::str/join", Some("str"), "join")] {
+        let form = read_forms(source).unwrap().remove(0);
+        let Kind::AutoKeyword(keyword) = &form.kind else {
+            panic!("{source}: {form:?}");
+        };
+        assert_eq!((keyword.namespace.as_deref(), keyword.name.as_str()), (namespace, name));
+    }
+    for source in ["::", ":::a", "::a/", "::/"] {
+        assert!(read_forms(source).is_err(), "{source}");
+    }
 }

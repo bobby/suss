@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "a58af12a3df37a59bbb8d0d7b99a86f2df639cebc2d1b889195756252f7069b3",
+  "replacement": "(def qualified-symbol?\n  \"Return true if x is a symbol with a namespace\"\n  (fn [x] (boolean (and (symbol? x) (namespace x) true))))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30)."
+}

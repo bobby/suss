@@ -6,11 +6,21 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype ArrayIter [arr ^:mutable i]
-  Object
-  (hasNext [_] (< i (alength arr)))
-  (next [_]
-    (let [ret (aget arr i)]
-      (set! i (inc i))
-      ret))
-  (remove [_] (js/Error. "Unsupported operation")))
+(defn- balance-left-del [key val del right]
+  (cond
+    (instance? RedNode del)
+    (RedNode. key val (.blacken del) right nil)
+
+    (instance? BlackNode right)
+    (balance-right key val del (.redden right))
+
+    (and (instance? RedNode right) (instance? BlackNode (.-left right)))
+    (RedNode. (.. right -left -key) (.. right -left -val)
+              (BlackNode. key val del (.. right -left -left) nil)
+              (balance-right (.-key right) (.-val right)
+                             (.. right -left -right)
+                             (.redden (.-right right)))
+              nil)
+
+    :else
+    (throw (js/Error. "red-black tree invariant violation"))))

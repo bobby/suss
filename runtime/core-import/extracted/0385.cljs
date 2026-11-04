@@ -6,24 +6,28 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- balance-right [key val left ins]
-  (if (instance? RedNode ins)
-    (cond
-      (instance? RedNode (.-right ins))
-      (RedNode. (.-key ins) (.-val ins)
-                (BlackNode. key val left (.-left ins) nil)
-                (.blacken (.-right ins))
-                nil)
+(defn ^number compare
+  "Comparator. Returns a negative number, zero, or a positive number
+  when x is logically 'less than', 'equal to', or 'greater than'
+  y. Uses IComparable if available and google.array.defaultCompare for objects
+ of the same type and special-cases nil to be less than any other object."
+  [x y]
+  (cond
+   (identical? x y) 0
 
-      (instance? RedNode (.-left ins))
-      (RedNode. (.. ins -left -key) (.. ins -left -val)
-                (BlackNode. key val left (.. ins -left -left) nil)
-                (BlackNode. (.-key ins) (.-val ins)
-                            (.. ins -left -right)
-                            (.-right ins)
-                            nil)
-                nil)
+   (nil? x) -1
 
-      :else
-      (BlackNode. key val left ins nil))
-    (BlackNode. key val left ins nil)))
+   (nil? y) 1
+
+   (number? x) (if (number? y)
+                 (garray/defaultCompare x y)
+                 (throw (js/Error. (str_ "Cannot compare " x " to " y))))
+
+   (satisfies? IComparable x)
+   (-compare x y)
+
+   :else
+   (if (and (or (string? x) (array? x) (true? x) (false? x))
+            (identical? (type x) (type y)))
+     (garray/defaultCompare x y)
+     (throw (js/Error. (str_ "Cannot compare " x " to " y))))))

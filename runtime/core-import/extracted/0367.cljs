@@ -6,16 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn select-keys
-  "Returns a map containing only those entries in map whose key is in keys"
-  [map keyseq]
-    (loop [ret {} keys (seq keyseq)]
-      (if keys
-        (let [key   (first keys)
-              entry (get map key ::not-found)]
-          (recur
-           (if (not= entry ::not-found)
-             (assoc ret key entry)
-             ret)
-           (next keys)))
-        (-with-meta ret (meta map)))))
+(defn group-by
+  "Returns a map of the elements of coll keyed by the result of
+  f on each element. The value at each key will be a vector of the
+  corresponding elements, in the order they appeared in coll."
+  [f coll]
+  (persistent!
+    (reduce
+      (fn [ret x]
+        (let [k (f x)]
+          (assoc! ret k (conj (get ret k []) x))))
+      (transient {}) coll)))

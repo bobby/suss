@@ -6,14 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn transformer-iterator
-  [xform sourceIter multi]
-  (let [iterator (TransformerIterator. EMPTY NONE false nil sourceIter multi)]
-    (set! (.-xf iterator)
-      (xform (fn
-               ([] nil)
-               ([acc] acc)
-               ([acc o]
-                (set! (.-buffer iterator) (.add (.-buffer iterator) o))
-                acc))))
-    iterator))
+(defn nthrest
+  "Returns the nth rest of coll, coll when n is 0."
+  [coll n]
+    (if (implements? IDrop coll)
+      (if (pos? n)
+        (or (-drop coll (Math/ceil n)) ())
+        coll)
+      (loop [n n xs coll]
+        (if-let [xs (and (pos? n) (seq xs))]
+          (recur (dec n) (rest xs))
+          xs))))

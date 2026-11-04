@@ -159,10 +159,10 @@ fn runtime_errors(session: &mut Session, macros: &mut CompiledMacros, reader: &s
 
 #[test]
 fn malformed_input_fails_with_the_compilers_message_and_position() {
-    // read-string resolves ::k against *ns*, as Clojure does, where the
-    // compiler's reader leaves it to the analyzer.
-    let code: Vec<String> = corpus("malformed").into_iter().filter(|source| source != "::a").collect();
-    let data = corpus("malformed");
+    // read-string resolves ::k against *ns*, as Clojure does, so only the EDN
+    // reader rejects the :edn-malformed entries.
+    let code = corpus("malformed");
+    let data = [corpus("malformed"), corpus("edn-malformed")].concat();
     for (mut session, mut macros) in sessions() {
         for (reader, sources) in [("read-string", &code), ("edn/read-string", &data)] {
             let found = runtime_errors(&mut session, &mut macros, reader, sources);

@@ -2196,9 +2196,7 @@ fn test_comp() {
 // ============================================================
 
 #[test]
-#[ignore = "compiled pipeline: Unresolved Runtime name doseq; see prototype_cases_awaiting_compiled_support"]
 fn test_doseq_basic() {
-    // doseq should return nil (0 as i31ref sentinel)
     let result = run_expr_i32("(let [a (atom 0)] (doseq [x [1 2 3]] (swap! a (fn [v] (+ v x)))) @a)");
     assert_eq!(result, 6);
 }
@@ -2562,7 +2560,6 @@ fn legacy_hash_inspects_each_evaluated_operand_once() {
 const AWAITING_COMPILED_SUPPORT: &[(&str, &str, &str)] = &[
     ("test_cond_thread_first", "(cond-> 1 true inc true inc)", "Unresolved Runtime name cond-> at bytes 1..7"),
     ("test_cond_thread_first_false", "(cond-> 1 true inc false inc)", "Unresolved Runtime name cond-> at bytes 1..7"),
-    ("test_doseq_basic", "(let [a (atom 0)] (doseq [x [1 2 3]] (swap! a (fn [v] (+ v x)))) @a)", "Unresolved Runtime name doseq at bytes 19..24"),
     ("test_print_no_newline", "(print \"hello\")", "Unresolved Runtime name print at bytes 1..6"),
     ("test_println_basic", "(println \"hello\")", "Unresolved Runtime name println at bytes 1..8"),
     ("test_println_multiple_args", "(println \"hello\" \"world\")", "Unresolved Runtime name println at bytes 1..8"),

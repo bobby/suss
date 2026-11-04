@@ -6,11 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn eduction
-  "Returns a reducible/iterable application of the transducers
-  to the items in coll. Transducers are applied in order as if
-  combined with comp. Note that these applications will be
-  performed every time reduce/iterator is called."
-  {:arglists '([xform* coll])}
-  [& xforms]
-  (Eduction. (apply comp (butlast xforms)) (last xforms)))
+(defn completing
+  "Takes a reducing function f of 2 args and returns a fn suitable for
+  transduce by adding an arity-1 signature that calls cf (default -
+  identity) on the result argument."
+  ([f] (completing f identity))
+  ([f cf]
+    (fn
+      ([] (f))
+      ([x] (cf x))
+      ([x y] (f x y)))))

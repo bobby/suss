@@ -6,6 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ifind?
- "Returns true if coll implements IFind"
-  [x] (satisfies? IFind x))
+(defn sorted-set-by
+  "Returns a new sorted set with supplied keys, using the supplied comparator."
+  ([comparator & keys]
+   (reduce -conj
+           (PersistentTreeSet. nil (sorted-map-by comparator) 0)
+           keys)))

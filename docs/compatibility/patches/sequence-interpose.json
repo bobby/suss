@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "7b6c48a57c862ce83c5d4130bd54c54f31ba4d7a76f919a9070ef48d40d6332c",
+  "replacement": "(def interpose\n  \"Returns a lazy seq of the elements of coll separated by sep.\n  Returns a stateful transducer when no collection is provided.\"\n  (fn\n    ([sep]\n     (fn [rf]\n       (let [started (volatile! false)]\n         (fn\n           ([] (rf))\n           ([result] (rf result))\n           ([result input]\n            (if @started\n              (let [sepr (rf result sep)]\n                (if (reduced? sepr)\n                  sepr\n                  (rf sepr input)))\n              (do\n                (vreset! started true)\n                (rf result input))))))))\n    ([sep coll] (drop 1 (interleave (repeat sep) coll)))))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30). Clojure's interpose has the same transducer and sequence arities."
+}

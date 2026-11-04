@@ -6,5 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn es6-set-entries-iterator [coll]
-  (ES6SetEntriesIterator. (seq coll)))
+(defn nil-iter []
+  (reify
+    Object
+    (hasNext [_] false)
+    (next [_] (js/Error. "No such element"))
+    (remove [_] (js/Error. "Unsupported operation"))))

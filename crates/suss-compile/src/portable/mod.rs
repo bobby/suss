@@ -10,7 +10,7 @@ pub mod ir;
 pub mod modules;
 pub mod resolve;
 pub mod persistent;
-mod source;
+pub(crate) mod source;
 mod stdlib;
 mod origin;
 pub mod syntax_quote;
@@ -394,6 +394,7 @@ pub(crate) fn analyze_selected_fragment(
     let mut request = ExpansionRequest::new(expander, span.clone())?;
     let mut snapshot = environment.clone();
     let namespace_directive = source::namespace(&mut forms, &mut snapshot, phase, &mut request)?;
+    source::resolve_auto_keywords(&mut forms, &snapshot, phase)?;
     analysis_record::clear_pending();
     let (hir, environment) = hir::prepare_with_origin(&forms, span, environment, &snapshot, phase, &mut request, origin)?;
     analysis_record::fragment(phase, origin, namespace_directive.as_ref(), &environment);

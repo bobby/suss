@@ -93,8 +93,9 @@ collections, metadata, comments, discard and `#queue`. Both the compiler's
 reader and the EDN parser read them to equal data, and both runtime readers
 read them to data equal to the compiler's, metadata included
 (`edn_conformance`, `read_string`). Every malformed entry fails in every
-reader with the same message at the same position, except `::a`, which
-`read-string` resolves against `*ns*`.
+reader with the same message at the same position. The `:edn-malformed`
+entries, such as `::a`, fail only in the EDN readers: `read-string` resolves
+them against `*ns*`, and the compiler against the current namespace (#30).
 
 ## Differences from Clojure
 

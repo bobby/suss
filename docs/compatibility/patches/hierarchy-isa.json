@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "eb0f346a68f980e33aeb1cc26d017b5ceb71f34eb529bc04341c8265d319c563",
+  "replacement": "(def isa?\n  \"Returns true if (= child parent), or child is directly or indirectly derived from\n  parent through a relationship established via derive. h must be a hierarchy\n  obtained from make-hierarchy, if not supplied defaults to the global\n  hierarchy\"\n  (fn\n    ([child parent] (isa? @(get-global-hierarchy) child parent))\n    ([h child parent]\n     (or (= child parent)\n         (contains? ((:ancestors h) child) parent)\n         (and (vector? parent) (vector? child)\n              (= (count parent) (count child))\n              (loop [ret true i 0]\n                (if (or (not ret) (= i (count parent)))\n                  ret\n                  (recur (isa? h (child i) (parent i)) (inc i)))))))))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30). Suss types have no supertypes, so the type-inheritance branches of Clojure's and ClojureScript's versions (bases, supers, isAssignableFrom) contribute nothing and are removed (#30). Vectors compare element counts with =, as Clojure does."
+}

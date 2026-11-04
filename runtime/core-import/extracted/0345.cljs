@@ -6,16 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype ChunkBuffer [^:mutable buf ^:mutable end]
-  Object
-  (add [_ o]
-    (aset buf end o)
-    (set! end (inc end)))
-
-  (chunk [_]
-    (let [ret (ArrayChunk. buf 0 end)]
-      (set! buf nil)
-      ret))
-
-  ICounted
-  (-count [_] end))
+(defn print-map [m print-one writer opts]
+  (let [ns&lift-map (when (map? m)
+                      (lift-ns m))
+        ns (some-> ns&lift-map (aget 0))]
+    (if ns
+      (print-prefix-map (str_ "#:" ns) (aget ns&lift-map 1) print-one writer opts)
+      (print-prefix-map nil m print-one writer opts))))

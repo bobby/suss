@@ -310,6 +310,8 @@ impl CompiledMacros {
         macros.define(crate::portable_lazy_seq::SOURCE)?;
         macros.define(crate::portable_state_macros::DELAY)?;
         macros.define(crate::portable_state_macros::VSWAP)?;
+        macros.define(crate::portable_core_macros::DOSEQ)?;
+        macros.define(crate::portable_core_macros::THREAD_LAST)?;
         // Shipped record macro implementations build forms from core's Cons
         // directly, so they are evaluated as core (#279).
         macros
@@ -882,7 +884,7 @@ impl ExpansionHost for CompiledMacros {
                 (name.namespace.is_none() && self.definitions.contains_key(&own)).then_some(own)
             })
             .or_else(|| {
-                ["defn", "defrecord", "delay", "lazy-seq", "vswap!", "when-let"]
+                ["->>", "defn", "defrecord", "delay", "doseq", "lazy-seq", "vswap!", "when-let"]
                     .into_iter()
                     .find_map(|core_name| {
                         context
@@ -1039,6 +1041,40 @@ mod when_let_validation_tests {
             let recovered = macros.session.eval("(+ 20 22)").unwrap();
             let recovered = macros.bridge.read(&mut macros.session, &recovered, 0..1).unwrap();
             assert!(matches!(recovered.kind, Kind::Number(n) if n == 42.0));
+        }
+    }
+}
+
+#[cfg(test)]
+mod doseq_validation_tests {
+    use super::*;
+
+    /// doseq checks its bindings as Clojure's assert-args does (#30).
+    #[test]
+    fn doseq_validation_matches_clojures_messages_and_phase() {
+        let mut macros = CompiledMacros::new().unwrap();
+        let function = macros.definitions[&("suss.core".to_owned(), "doseq".to_owned())].clone();
+        let capture = macros.session.eval(r#"
+          (fn [expand form bindings]
+            (try (expand form nil bindings 1)
+              (catch :default problem
+                [(ex-message problem) (get (ex-data problem) :clojure.error/phase)])))
+        "#).unwrap();
+        for (source, message) in [
+            ("(doseq (x [1]) 1)", "doseq requires a vector for its binding"),
+            ("(doseq [x] 1)", "doseq requires an even number of forms in binding vector"),
+        ] {
+            let form = read_forms(source).unwrap().remove(0);
+            let Kind::List(items) = &form.kind else { panic!("doseq call") };
+            let bindings = macros.bridge.quote(&mut macros.session, items[1].clone()).unwrap();
+            let form = macros.bridge.quote(&mut macros.session, form).unwrap();
+            let value = macros.session.invoke(&capture, &[&function, &form, &bindings]).unwrap();
+            let observed = macros.bridge.read(&mut macros.session, &value, 0..source.len()).unwrap();
+            let Kind::Vector(fields) = &observed.kind else { panic!("validation result") };
+            let Kind::String(found) = &fields[0].kind else { panic!("exception message") };
+            assert_eq!(String::from_utf16(found).unwrap(), message, "{source}");
+            assert!(matches!(&fields[1].kind, Kind::Keyword(key)
+                if key.namespace.is_none() && key.name == "macro-syntax-check"));
         }
     }
 }
