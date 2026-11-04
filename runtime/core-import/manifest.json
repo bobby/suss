@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "ebf4575ddb822aaae6d7686f7d46b7723340c59bef9b6e6aba1a84a780ed5158",
-  "reviews-sha256": "210edebe5749ef7e9456abd1d59401a1c18d0b948d2b785934bc596bd24690f2",
+  "recipe-sha256": "ecbabbae19bd42f5e0df0459a235b63e4ebd552da53b9a00a5bb43310e9cd0b6",
+  "reviews-sha256": "0690b911940398d71c35d43384ac555855eefca51f29f55be1c38ff9fa4eee8b",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -9754,18 +9754,19 @@
       "source-sha256": "fe3c8f40f5ffe0b4d4cf82fb794dd3ed559ba6cbe3bc4abfddca032499b04834",
       "extracted": "extracted/0316.cljs",
       "extracted-sha256": "cae31dbc6a391d7d98f6e02fcce395d9aeae3de33c119ee7f1a48dd4b0f53ce1",
-      "patch": null,
-      "patch-sha256": null,
-      "adapted-form-sha256": "fe3c8f40f5ffe0b4d4cf82fb794dd3ed559ba6cbe3bc4abfddca032499b04834",
+      "patch": "docs/compatibility/patches/printing-string-buffer-writer.json",
+      "patch-sha256": "e9bc860b7cda064177a9f1f3e3c60897b1fa1177a8bb173306d84ccb83a87926",
+      "adapted-form-sha256": "6b161faeda8ef06cdf29e2567ddfc33b0780045d5d9156381603831ca57b7028",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
-      "review-classification": ":portable",
+      "review-classification": ":adapted",
       "review-status": ":in-progress",
       "dependencies": [
         "IWriter/-write/-flush",
         "buffer append method"
       ],
       "semantic-tests": [
-        "crates/suss-compile/tests/compiled_printing.rs"
+        "crates/suss-compile/tests/compiled_printing.rs",
+        "crates/suss-cli/tests/printer_options.rs"
       ]
     },
     {
@@ -9966,8 +9967,8 @@
       "extracted": "extracted/0323.cljs",
       "extracted-sha256": "49c540e20fb1e0b2f0797468ad95686c802f734131bafe3ff26322337d400de0",
       "patch": "docs/compatibility/patches/printing-pr-writer.json",
-      "patch-sha256": "4246e5540abd1808ac9e4a04490b21df11b1277c99e52497bf1b3279245f7c7c",
-      "adapted-form-sha256": "eb925e384079173e51da4284ed55ee77cdae134181c641c6f5c255fe79b83a46",
+      "patch-sha256": "23463dab57217632da873aa9ab7e6017b708e6a82979c886203666e136ddda4d",
+      "adapted-form-sha256": "6490b058b7bfd4a22cad6d29300d5f0e674ff1bdaeff24809810c0255f2a0f0e",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -9977,7 +9978,8 @@
         "pr-writer-impl (retained; storage dependencies unfinished)"
       ],
       "semantic-tests": [
-        "crates/suss-compile/tests/compiled_printing.rs"
+        "crates/suss-compile/tests/compiled_printing.rs",
+        "crates/suss-cli/tests/printer_options.rs"
       ]
     },
     {
@@ -15949,7 +15951,7 @@
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "84ec709497567400faf37b686fe810ed768d6f80e84a3f07afac24fc463c1bea"
+      "sha256": "dd1de8862b9e57e054195fb8416c762f61455073fee42c7b770c4c0562734e4f"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -15957,7 +15959,7 @@
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "e0f36424c10412a65b768e7a09675f9b1a2bbbbd860a0fed50b2b722b90984c9"
+      "sha256": "89805a21d2dc4229a547637a4cc4b445c5c338398992769cadbd33f9c66345fe"
     }
   },
   "files": {
@@ -16479,6 +16481,6 @@
     "extracted/0513.cljs": "02b4047a3496243c5528041564a9f8ded2f3aae951be387e8779ab0e956464c3",
     "extracted/0514.cljs": "d42068d54f1844f88abb73548a3a554a3cc1f5af315fd590533b4fd80de350ec",
     "extracted/0515.cljs": "072c8a681fd905767f56c48e6c3529b99e9d5f537def64cb299f5bac29c7c59b",
-    "suss/core.sus": "da686b99a8670a768c67cb4e0a1697d8c03661045c8b63bd0a45b54be81134b1"
+    "suss/core.sus": "c0725c6d3a2180b9e5e23902328151304e6a70451509731e1660a7428566deb7"
   }
 }

@@ -1,7 +1,8 @@
 //! The printer's dynamic options (#302): `*print-length*`, `*print-level*`,
 //! `*print-meta*`, `*print-readably*`, `*print-namespace-maps*`,
 //! `*print-dup*`, `*verbose-defrecords*` and `*flush-on-newline*`, through
-//! every string printer and `str`, in both compiled phases and in components.
+//! every string printer and `str`, in both compiled phases and in components,
+//! and the `print-method` and `print-dup` extension points.
 //! Expected text is Clojure's (`clojure/core_print.clj`).
 #[path = "support/compilation_fuel.rs"]
 mod compilation_fuel;
@@ -216,6 +217,140 @@ fn user_printers_observe_the_options() {
     }
 }
 
+/// Evaluates each definition, then checks each expression's string, in both phases.
+fn check_after(definitions: &[&str], cases: &[(&str, &str)]) {
+    for (mut session, mut macros) in sessions() {
+        for source in definitions {
+            session.eval_with_macros(source, &mut macros).unwrap_or_else(|error| panic!("{source}: {error:?}"));
+        }
+        for (source, expected) in cases {
+            assert_eq!(text(&mut session, &mut macros, source), *expected, "{source}");
+        }
+    }
+}
+
+// Each expected string below is Clojure 1.12.6's for the same definitions.
+const PRINT_METHODS: &[&str] = &[
+    "(deftype T [a])",
+    "(deftype S [a])",
+    "(do (defmethod print-method T [t w] (.write w \"#t \") (print-method (.-a t) w)) nil)",
+    "(do (defmethod print-method R [r w] (.write w \"#r\") (print-method (into {} r) w)) nil)",
+    "(do (defmethod print-method ::k [x w] (.write w \"K:\") (print-method (vec x) w)) nil)",
+    "(do (defmethod print-method S [s w] (print-simple (.-a s) w)) nil)",
+];
+
+#[test]
+fn print_method_prints_user_types_and_records() {
+    check_after(PRINT_METHODS, &[
+        ("(pr-str [1 (T. [2 3]) \"x\"])", "[1 #t [2 3] \"x\"]"),
+        ("(pr-str (T. [1 (T. 2)]))", "#t [1 #t 2]"),
+        ("(pr-str (->R 1 [2]))", "#r{:a 1, :b [2]}"),
+        // Every printer, and str of a collection, prints through print-method.
+        ("(print-str (T. \"s\"))", "#t s"),
+        ("(prn-str (T. 1))", "#t 1\n"),
+        ("(str [(T. 5)])", "[#t 5]"),
+        // A method replaces the type's built-in printer, so it prints no metadata.
+        ("(binding [*print-meta* true] (pr-str (with-meta (->R 1 2) {:m 1})))", "#r{:a 1, :b 2}"),
+        ("(binding [*print-meta* true] (pr-str (T. (with-meta [1] {:m 1}))))", "#t ^{:m 1} [1]"),
+        // print-simple prints metadata and then str, which prints it again.
+        ("(pr-str (S. [1]))", "[1]"),
+        ("(binding [*print-meta* true] (pr-str (S. (with-meta [1] {:tag 'x}))))", "^x ^x [1]"),
+        ("(binding [*print-meta* true] (pr-str (S. (with-meta [1] {:a 1 :type ::z}))))", "^{:a 1, :type :user.printing/z} ^{:a 1} [1]"),
+    ]);
+}
+
+#[test]
+fn print_method_observes_length_and_level() {
+    check_after(PRINT_METHODS, &[
+        ("(binding [*print-length* 1] (pr-str (T. [2 3])))", "#t [2 ...]"),
+        ("(binding [*print-level* 1] (pr-str [(T. [2 3])]))", "[#t #]"),
+        ("(binding [*print-level* 0] (pr-str (T. [2 3])))", "#t #"),
+        ("(binding [*print-length* 1] (pr-str (->R 1 [2 3])))", "#r{:a 1, ...}"),
+        ("(binding [*print-level* 1] (pr-str [(->R 1 [2])]))", "[#r#]"),
+    ]);
+}
+
+#[test]
+fn print_method_dispatches_on_a_keyword_type() {
+    check_after(PRINT_METHODS, &[
+        ("(pr-str (with-meta [1 2] {:type ::k}))", "K:[1 2]"),
+        ("(binding [*print-meta* true] (pr-str (with-meta [1 2] {:type ::k :a 1})))", "K:[1 2]"),
+        // A :type with no method prints without it, through the type's method.
+        ("(pr-str (with-meta [1] {:type ::other :a 1}))", "[1]"),
+        ("(binding [*print-meta* true] (pr-str (with-meta [1] {:type ::other :a 1})))", "^{:a 1} [1]"),
+        ("(pr-str (with-meta (->R 1 2) {:type ::other}))", "#r{:a 1, :b 2}"),
+    ]);
+}
+
+#[test]
+fn print_dup_methods_print_under_print_dup() {
+    check_after(
+        &[
+            PRINT_METHODS[0],
+            PRINT_METHODS[2],
+            "(do (defmethod print-dup T [t w] (.write w \"#=(T. \") (print-dup (.-a t) w) (.write w \")\")) nil)",
+        ],
+        &[
+            ("(binding [*print-dup* true] (pr-str [(T. \"a\")]))", "[#=(T. \"a\")]"),
+            ("(pr-str [(T. \"a\")])", "[#t \"a\"]"),
+            // Records print by their values under *print-dup*, not with print-method.
+            ("(binding [*print-dup* true] (pr-str (->R 1 2)))", "#user.printing.R[1, 2]"),
+        ],
+    );
+}
+
+#[test]
+fn print_dup_falls_back_to_print_method_for_core_types() {
+    // Clojure's print-dup methods for vectors, maps, sets, seqs, symbols,
+    // strings, keywords and the like call print-method.
+    check_after(
+        &[
+            PRINT_METHODS[4],
+            "(do (defmethod print-method (type :a) [k w] (.write w \"KW\")) nil)",
+        ],
+        &[
+            ("(binding [*print-dup* true] (pr-str (with-meta [1] {:type ::k})))", "K:[1]"),
+            ("(binding [*print-dup* true] (pr-str [:a #{:b} '(:c) 'x true \"s\" 1 nil]))", "[KW #{KW} (KW) x true \"s\" 1 nil]"),
+            ("(binding [*print-dup* true] (pr-str (->R :d 2)))", "#user.printing.R[KW, 2]"),
+        ],
+    );
+}
+
+#[test]
+fn functions_and_types_print_while_methods_exist() {
+    // Suss can't take the type of a function or a type yet, so they print with
+    // the built-in printer, as Clojure's methods for Fn and Class do.
+    check_after(
+        &[PRINT_METHODS[0], PRINT_METHODS[2], PRINT_METHODS[4]],
+        &[
+            ("(pr-str [(type 1) (type []) T])", "[#object[Number] suss.core.PersistentVector user.printing.T]"),
+            ("(apply str (take 11 (pr-str [(T. inc)])))", "[#t #object"),
+            ("(do (remove-method print-method :default) (pr-str [inc]))", "[#object[cljs$core$inc]]"),
+        ],
+    );
+}
+
+#[test]
+fn print_method_defaults_and_removal_follow_clojure() {
+    check_after(
+        &[
+            PRINT_METHODS[0],
+            PRINT_METHODS[2],
+            "(do (remove-method print-method T) nil)",
+            "(do (defmethod print-method :default [x w] (.write w \"DEF\")) nil)",
+        ],
+        &[
+            ("(apply str (take 23 (pr-str (T. 1))))", "#object[user.printing.T"),
+            // A :default method prints a :type without a method, but no type's value.
+            ("(pr-str (with-meta [1] {:type ::nope}))", "DEF"),
+            ("(apply str (take 26 (pr-str [1 (T. 1)])))", "[1 #object[user.printing.T"),
+            ("(do (remove-method print-method :default) (try (pr-str (with-meta [1] {:type ::nope})) (catch :default e (ex-message e))))",
+             "No method in multimethod 'print-method' for dispatch value: :user.printing/nope"),
+            ("(pr-str [1 :a])", "[1 :a]"),
+        ],
+    );
+}
+
 #[test]
 fn print_readably_and_namespace_maps_follow_clojure() {
     check(&[
@@ -274,12 +409,16 @@ fn components_print_with_options_and_no_hidden_imports() {
             "(defn limited [] (binding [*print-length* 1 *print-meta* true] (pr-str [(with-meta [1 2] {:k 1})])))\n",
             "(defn levels [] (binding [*print-level* 1] (pr-str (->P [1] 2))))\n",
             "(defn dup [] (binding [*print-dup* true] (pr-str (->P 1 2))))\n",
+            "(deftype T [a])\n",
+            "(defmethod print-method T [t w] (.write w \"#t \") (print-method (.-a t) w))\n",
+            "(defmethod print-method ::k [x w] (.write w \"K\"))\n",
+            "(defn custom [] (binding [*print-length* 1] (pr-str [(T. [1 2]) (with-meta [] {:type ::k})])))\n",
         ),
     )
     .unwrap();
     std::fs::write(
         root.path().join("printing.wit"),
-        "package test:printing;\nworld printing {\n export limited: func() -> string;\n export levels: func() -> string;\n export dup: func() -> string;\n}\n",
+        "package test:printing;\nworld printing {\n export limited: func() -> string;\n export levels: func() -> string;\n export dup: func() -> string;\n export custom: func() -> string;\n}\n",
     )
     .unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_suss"))
@@ -287,7 +426,7 @@ fn components_print_with_options_and_no_hidden_imports() {
         .args(["compile", "-n", "app.printing", "--src", "src", "-w", "printing.wit", "--wit-world", "printing", "-o", "printing.wasm"])
         .arg("--compile-fuel")
         .arg(compilation_fuel::COMPILATION_FUEL.to_string())
-        .args(["--export", "limited=app.printing/limited", "--export", "levels=app.printing/levels", "--export", "dup=app.printing/dup"])
+        .args(["--export", "limited=app.printing/limited", "--export", "levels=app.printing/levels", "--export", "dup=app.printing/dup", "--export", "custom=app.printing/custom"])
         .output()
         .unwrap();
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
@@ -304,6 +443,7 @@ fn components_print_with_options_and_no_hidden_imports() {
         ("limited", "[^{:k 1} [1 ...]]"),
         ("levels", "#app.printing.P{:x #, :y 2}"),
         ("dup", "#app.printing.P[1, 2]"),
+        ("custom", "[#t [1 ...] ...]"),
     ] {
         let output = Command::new(env!("CARGO_BIN_EXE_suss"))
             .current_dir(root.path())

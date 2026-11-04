@@ -600,9 +600,16 @@
          "suss.bindings.macro:suss.core/prefers*"
          "suss.bindings.macro:suss.core/preserving-reduced"
          "suss.bindings.macro:suss.core/prim-seq"
+         "suss.bindings.macro:suss.core/print-dup"
+         "suss.bindings.macro:suss.core/print-dup-default"
          "suss.bindings.macro:suss.core/print-map"
          "suss.bindings.macro:suss.core/print-meta?"
+         "suss.bindings.macro:suss.core/print-method"
+         "suss.bindings.macro:suss.core/print-method-default"
+         "suss.bindings.macro:suss.core/print-method-for"
+         "suss.bindings.macro:suss.core/print-method-of"
          "suss.bindings.macro:suss.core/print-prefix-map"
+         "suss.bindings.macro:suss.core/print-simple"
          "suss.bindings.macro:suss.core/print-str"
          "suss.bindings.macro:suss.core/println-str"
          "suss.bindings.macro:suss.core/prn-str"
@@ -810,6 +817,7 @@
          "suss.bindings.macro:suss.core/unchecked-editable-array-for"
          "suss.bindings.macro:suss.core/underive"
          "suss.bindings.macro:suss.core/unreduced"
+         "suss.bindings.macro:suss.core/untyped-printable?"
          "suss.bindings.macro:suss.core/update"
          "suss.bindings.macro:suss.core/update-in"
          "suss.bindings.macro:suss.core/val"
@@ -1451,9 +1459,16 @@
          "suss.bindings.macro:suss.internal.core-link/prefers*"
          "suss.bindings.macro:suss.internal.core-link/preserving-reduced"
          "suss.bindings.macro:suss.internal.core-link/prim-seq"
+         "suss.bindings.macro:suss.internal.core-link/print-dup"
+         "suss.bindings.macro:suss.internal.core-link/print-dup-default"
          "suss.bindings.macro:suss.internal.core-link/print-map"
          "suss.bindings.macro:suss.internal.core-link/print-meta?"
+         "suss.bindings.macro:suss.internal.core-link/print-method"
+         "suss.bindings.macro:suss.internal.core-link/print-method-default"
+         "suss.bindings.macro:suss.internal.core-link/print-method-for"
+         "suss.bindings.macro:suss.internal.core-link/print-method-of"
          "suss.bindings.macro:suss.internal.core-link/print-prefix-map"
+         "suss.bindings.macro:suss.internal.core-link/print-simple"
          "suss.bindings.macro:suss.internal.core-link/print-str"
          "suss.bindings.macro:suss.internal.core-link/println-str"
          "suss.bindings.macro:suss.internal.core-link/prn-str"
@@ -1661,6 +1676,7 @@
          "suss.bindings.macro:suss.internal.core-link/unchecked-editable-array-for"
          "suss.bindings.macro:suss.internal.core-link/underive"
          "suss.bindings.macro:suss.internal.core-link/unreduced"
+         "suss.bindings.macro:suss.internal.core-link/untyped-printable?"
          "suss.bindings.macro:suss.internal.core-link/update"
          "suss.bindings.macro:suss.internal.core-link/update-in"
          "suss.bindings.macro:suss.internal.core-link/val"
@@ -1962,15 +1978,15 @@
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d666c7573682f31"
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d77726974652f32"
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
-         "suss.bindings.macro:suss.internal.reify/t-reify-3435-10867"],
+         "suss.bindings.macro:suss.internal.reify/t-reify-3439-10883"],
  :compiler "0.1.0+portable.3",
  :compiler-source-sha256 "d4f2afb3378ff1c3ea0b8b84eb3f89c32f625f331d155015596ce8f5ba097c43",
- :dependency-graph-sha256 "8fbd618c272171767a57b07f363d6d6864a0c7662fae0a7aa28a2704dee3705b",
+ :dependency-graph-sha256 "4b169ba358b1cda8c614a658947f6033bb1ee5dca6f5685c52c33ce7f1381c6f",
  :flags [],
  :format-version 2,
  :phase "macro",
  :runtime-abi 2,
- :source-sha256 "da686b99a8670a768c67cb4e0a1697d8c03661045c8b63bd0a45b54be81134b1",
+ :source-sha256 "c0725c6d3a2180b9e5e23902328151304e6a70451509731e1660a7428566deb7",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "03a71a5485f46896eba5836b01d3d9b81c70628e489cdf9afeabeb05a2bbf2b4",
+ :wasm-sha256 "10b447880883c482ea0d621f0b627ec486f18fa6d168e70deb0b91040c23d90a",
  :wasm-tools "0.258.0"}

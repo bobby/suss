@@ -65,7 +65,8 @@ nil, which is Clojure's `toString` except where `toString` gives an identity
 string, such as `clojure.lang.LazySeq@…` for a lazy sequence or a record
 without its own `toString`. A value `str` can't format yet is printed instead:
 `(type 1)` appears as `#object[Number]` where Clojure says `class
-java.lang.Long`, since Suss's host types have no class names (#302).
+java.lang.Long`, since Suss's host types have no names yet
+([type names](type-names.md)).
 
 | Case | Message |
 | --- | --- |
