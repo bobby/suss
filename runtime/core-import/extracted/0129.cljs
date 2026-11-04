@@ -6,11 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IAssociative
-  "Protocol for adding associativity to collections."
-  (^boolean -contains-key? [coll k]
-    "Returns true if k is a key in coll.")
-  #_(-entry-at [coll k])
-  (^clj -assoc [coll k v]
-    "Returns a new collection of coll with a mapping from key k to
-     value v added to it."))
+(defn volatile?
+  "Returns true if x is a volatile."
+  [x] (instance? Volatile x))

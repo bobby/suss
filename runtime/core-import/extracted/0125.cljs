@@ -6,9 +6,25 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn namespace
-  "Returns the namespace String of a symbol or keyword, or nil if not present."
-  [x]
-  (if (implements? INamed x)
-    (-namespace x)
-    (throw (js/Error. (str_ "Doesn't support namespace: " x)))))
+(defn add-watch
+  "Adds a watch function to an atom reference. The watch fn must be a
+  fn of 4 args: a key, the reference, its old-state, its
+  new-state. Whenever the reference's state might have been changed,
+  any registered watches will have their functions called. The watch
+  fn will be called synchronously. Note that an atom's state
+  may have changed again prior to the fn call, so use old/new-state
+  rather than derefing the reference. Keys must be unique per
+  reference, and can be used to remove the watch with remove-watch,
+  but are otherwise considered opaque by the watch mechanism.  Bear in
+  mind that regardless of the result or action of the watch fns the
+  atom's value will change.  Example:
+
+      (def a (atom 0))
+      (add-watch a :inc (fn [k r o n] (assert (== 0 n))))
+      (swap! a inc)
+      ;; Assertion Error
+      (deref a)
+      ;=> 1"
+  [iref key f]
+  (-add-watch iref key f)
+  iref)

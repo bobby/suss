@@ -6,6 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn constantly
-  "Returns a function that takes any number of arguments and returns x."
-  [x] (fn [& args] x))
+(defn cat
+  "A transducer which concatenates the contents of each input, which must be a
+  collection, into the reduction."
+  {:added "1.7"}
+  [rf]
+  (let [rf1 (preserving-reduced rf)]
+    (fn
+      ([] (rf))
+      ([result] (rf result))
+      ([result input]
+         (reduce rf1 result input)))))

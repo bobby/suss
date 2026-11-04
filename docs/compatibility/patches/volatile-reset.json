@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "b74d9afc993860bcb3218e2591fc7ee7bd08c2b53100606719e5907b367104d1",
+  "replacement": "(def vreset!\n  \"Sets the value of volatile to newval without regard for the\n   current value. Returns newval.\"\n  (fn [vol newval] (-vreset! vol newval)))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation."
+}

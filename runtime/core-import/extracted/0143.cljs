@@ -6,9 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol ITransientCollection
-  "Protocol for adding basic functionality to transient collections."
-  (^clj -conj! [tcoll val]
-    "Adds value val to tcoll and returns tcoll.")
-  (^clj -persistent! [tcoll]
-    "Creates a persistent data structure from tcoll and returns it."))
+(defprotocol ILookup
+  "Protocol for looking up a value in a data structure."
+  (-lookup [o k] [o k not-found]
+    "Use k to look up a value in o. If not-found is supplied and k is not
+     a valid value that can be used for look up, not-found is returned."))

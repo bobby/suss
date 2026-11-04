@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "223d660fa0bf5b38e78ba86b3a11f3d4e385c3d54ea2bcf63a735c186c7f43d7",
+  "replacement": "(def reset-vals!\n  \"Sets the value of atom to newval. Returns [old new], the value of the\n   atom before and after the reset.\"\n  (fn [a new-value]\n    (if (instance? Atom a)\n      (let [validate (.-validator a)]\n        (when-not (suss.bootstrap/nil? validate)\n          (when-not (validate new-value)\n            (throw (suss.bootstrap/error \"Invalid reference state\"))))\n        (let [old-value (.-state a)]\n          (set! (.-state a) new-value)\n          (when-not (suss.bootstrap/nil? (.-watches a))\n            (-notify-watches a old-value new-value))\n          [old-value new-value]))\n      [(-deref a) (-reset! a new-value)])))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation. Validation follows Clojure's ARef: a falsy validator result throws \"Invalid reference state\" (ClojureScript says \"Validator rejected reference state\"), an exception from the validator propagates, and state is validated, then set, then watches are notified. Returns [old new]. Non-Atom references use IDeref and IReset, as upstream."
+}

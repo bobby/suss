@@ -22,7 +22,7 @@ impl ModuleIdentity {
         resolve::valid_namespace(namespace)?;
         Ok(Self {
             phase,
-            namespace: resolve::canonical(namespace).into(),
+            namespace: resolve::canonical(resolve::required(namespace)).into(),
         })
     }
     pub fn phase(&self) -> Phase {
@@ -57,7 +57,7 @@ fn validate_declared_namespace(
     declared: &str,
     span: Range<usize>,
 ) -> Result<(), Diagnostic> {
-    if resolve::canonical(declared) != identity.namespace {
+    if resolve::canonical(resolve::required(declared)) != identity.namespace {
         return Err(Diagnostic {
             span,
             message: format!(

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "58ee6002ede6c0476c66ec5b1df21903759611be13404d6b6d8b2e1a4c52b69c",
+  "replacement": "(deftype Delay [^:mutable f ^:mutable value ^:mutable exception]\n  IDeref\n  (-deref [_]\n    (when f\n      (try\n        (set! value (f))\n        (catch :default e\n          (set! exception e)))\n      (set! f nil))\n    (if (suss.bootstrap/nil? exception)\n      value\n      (throw exception)))\n\n  IPending\n  (-realized? [x]\n    (not f)))",
+  "rationale": "Follows Clojure's Delay: an exception from the body is cached, the body is released, realized? becomes true and every deref rethrows the same exception (ClojureScript leaves f set and reruns the body). The added exception field is why the delay macro passes three constructor arguments. The IPrintWithWriter stanza is dropped, so a delay prints through the default reference printer as Clojure does, including :failed."
+}

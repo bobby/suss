@@ -6,8 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol ILookup
-  "Protocol for looking up a value in a data structure."
-  (-lookup [o k] [o k not-found]
-    "Use k to look up a value in o. If not-found is supplied and k is not
-     a valid value that can be used for look up, not-found is returned."))
+(defn volatile!
+  "Creates and returns a Volatile with an initial value of val."
+  [val]
+  (Volatile. val))

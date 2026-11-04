@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "2c77b860cc60b12362342ca8de47e73859bd8ffbee199ecf623c6c6058d196fb",
+  "replacement": "(def delay?\n  \"returns true if x is a Delay created with delay\"\n  (fn [x] (instance? Delay x)))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation."
+}

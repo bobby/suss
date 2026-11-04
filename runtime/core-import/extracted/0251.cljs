@@ -6,92 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype PersistentHashSet [meta hash-map ^:mutable __hash]
-  Object
-  (toString [coll]
-    (pr-str* coll))
-  (equiv [this other]
-    (-equiv this other))
-  (keys [coll]
-    (es6-iterator (seq coll)))
-  (entries [coll]
-    (es6-set-entries-iterator (seq coll)))
-  (values [coll]
-    (es6-iterator (seq coll)))
-  (has [coll k]
-    (contains? coll k))
-  (forEach [coll f]
-    (doseq [[k v] coll]
-      (f v k)))
-
-  ICloneable
-  (-clone [_] (PersistentHashSet. meta hash-map __hash))
-
-  IIterable
-  (-iterator [coll]
-    (HashSetIter. (-iterator hash-map)))
-
-  IWithMeta
-  (-with-meta [coll new-meta]
-    (if (identical? new-meta meta)
-      coll
-      (PersistentHashSet. new-meta hash-map __hash)))
-
-  IMeta
-  (-meta [coll] meta)
-
-  ICollection
-  (-conj [coll o]
-    (let [m (-assoc hash-map o nil)]
-      (if (identical? m hash-map)
-        coll
-        (PersistentHashSet. meta m nil))))
-
-  IEmptyableCollection
-  (-empty [coll] (-with-meta (.-EMPTY PersistentHashSet) meta))
-
-  IEquiv
-  (-equiv [coll other]
-    (and
-     (set? other)
-     (== (count coll) (count other))
-     ^boolean
-     (try
-       (reduce-kv
-         #(or (contains? other %2) (reduced false))
-         true hash-map)
-       (catch js/Error ex
-         false))))
-
-  IHash
-  (-hash [coll] (caching-hash coll hash-unordered-coll __hash))
-
-  ISeqable
-  (-seq [coll] (keys hash-map))
-
-  ICounted
-  (-count [coll] (-count hash-map))
-
-  ILookup
-  (-lookup [coll v]
-    (-lookup coll v nil))
-  (-lookup [coll v not-found]
-    (if-let [entry (-find hash-map v)]
-      (key entry)
-      not-found))
-
-  ISet
-  (-disjoin [coll v]
-    (let [m (-dissoc hash-map v)]
-      (if (identical? m hash-map)
-        coll
-        (PersistentHashSet. meta m nil))))
-
-  IFn
-  (-invoke [coll k]
-    (-lookup coll k))
-  (-invoke [coll k not-found]
-    (-lookup coll k not-found))
-
-  IEditableCollection
-  (-as-transient [coll] (TransientHashSet. (-as-transient hash-map))))
+(defn- create-array-node-seq
+  ([nodes] (create-array-node-seq nodes 0 nil))
+  ([nodes i s]
+     (if (nil? s)
+       (let [len (alength nodes)]
+         (loop [j i]
+           (if (< j len)
+             (if-let [nj (aget nodes j)]
+               (if-let [ns (.inode-seq nj)]
+                 (ArrayNodeSeq. nil nodes (inc j) ns nil)
+                 (recur (inc j)))
+               (recur (inc j))))))
+       (ArrayNodeSeq. nil nodes i s nil))))

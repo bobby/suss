@@ -6,11 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype PersistentArrayMapIterator [arr ^:mutable i cnt]
-  Object
-  (hasNext [_]
-    (< i cnt))
-  (next [_]
-    (let [ret (MapEntry. (aget arr i) (aget arr (inc i)) nil)]
-      (set! i (+ i 2))
-      ret)))
+(defn val
+  "Returns the value in the map entry."
+  [map-entry]
+  (-val map-entry))

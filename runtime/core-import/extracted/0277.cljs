@@ -6,14 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^number max
-  "Returns the greatest of the nums."
-  ([x] x)
-  ([x y]
-   (cond
-     (NaN? x) x
-     (NaN? y) y
-     (> x y) x
-     :else y))
-  ([x y & more]
-   (reduce max (cljs.core/max x y) more)))
+(defn chunk-rest [s]
+  (-chunked-rest s))

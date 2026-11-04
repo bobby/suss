@@ -6,33 +6,37 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Iterate [meta f prev-seed ^:mutable seed ^:mutable next]
+(deftype Cycle [meta all prev ^:mutable current ^:mutable _next]
   Object
   (toString [coll]
     (pr-str* coll))
+  (currentval [coll]
+    (when-not ^seq current
+      (if-let [c (next prev)]
+        (set! current c)
+        (set! current all)))
+    current)
 
   IPending
   (-realized? [coll]
-    (not (identical? seed UNREALIZED-SEED)))
+    (some? current))
 
   IWithMeta
   (-with-meta [coll new-meta]
     (if (identical? new-meta meta)
       coll
-      (Iterate. new-meta f prev-seed seed next)))
+      (Cycle. new-meta all prev current _next)))
 
   IMeta
   (-meta [coll] meta)
 
   ISeq
   (-first [coll]
-    (when (identical? UNREALIZED-SEED seed)
-      (set! seed (f prev-seed)))
-    seed)
+    (first (.currentval coll)))
   (-rest [coll]
-    (when (nil? next)
-      (set! next (Iterate. nil f (-first coll) UNREALIZED-SEED nil)))
-    next)
+    (when (nil? _next)
+      (set! _next (Cycle. nil all (.currentval coll) nil nil)))
+    _next)
 
   INext
   (-next [coll]
@@ -49,18 +53,16 @@
   (-seq [coll] coll)
 
   IReduce
-  (-reduce [coll rf]
-    (let [first (-first coll)
-          v     (f first)]
-      (loop [ret (rf first v) v v]
+  (-reduce [coll f]
+    (loop [s (.currentval coll) ret (first s)]
+      (let [s   (or (next s) all)
+            ret (f ret (first s))]
         (if (reduced? ret)
           @ret
-          (let [v (f v)]
-            (recur (rf ret v) v))))))
-  (-reduce [coll rf start]
-    (let [v (-first coll)]
-      (loop [ret (rf start v) v v]
+          (recur s ret)))))
+  (-reduce [coll f start]
+    (loop [s (.currentval coll) ret start]
+      (let [ret (f ret (first s))]
         (if (reduced? ret)
           @ret
-          (let [v (f v)]
-            (recur (rf ret v) v)))))))
+          (recur (or (next s) all) ret))))))

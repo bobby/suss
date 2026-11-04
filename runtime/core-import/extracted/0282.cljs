@@ -6,10 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn pop
-  "For a list or queue, returns a new list/queue without the first
-  item, for a vector, returns a new vector without the last item.
-  Note - not the same as next/butlast."
-  [coll]
-  (when-not (nil? coll)
-    (-pop coll)))
+(defn hash-map
+  "keyval => key val
+  Returns a new hash map with supplied mappings."
+  [& keyvals]
+  (loop [in (seq keyvals), out (transient (.-EMPTY PersistentHashMap))]
+    (if in
+      (let [in' (next in)]
+        (if (nil? in')
+          (throw (js/Error. (str_ "No value supplied for key: " (first in))))
+          (recur (next in') (assoc! out (first in) (first in')) )))
+      (persistent! out))))

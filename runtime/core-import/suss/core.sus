@@ -105,6 +105,19 @@
 
 ;; Complete transducer graph mutual references; implementations follow as reviewed imports.
 (declare completing butlast Many NONE Single Empty EMPTY MultiIterator chunkIteratorSeq TransformerIterator transformer-iterator sequence Eduction eduction ITER_SYMBOL)
+
+;; Atom functions use these before their definitions (#30).
+(declare dissoc hash-map set-validator! keyword? keyword-identical?)
+
+;; Whether an atom's state is still `read`, for swap! and compare-and-set!
+;; (#30). Clojure compares references; Suss compares numbers and strings by
+;; value, so NaN, never identical? to itself, counts as unchanged, and equal
+;; keywords are identical because Clojure interns them.
+(def ^:private atom-unchanged?
+  (fn [current read]
+    (or (identical? current read)
+        (if (identical? current current) false (if (identical? read read) false true))
+        (and (keyword? current) (keyword-identical? current read)))))
 (def identity "Returns its argument." (fn [x] x))
 
 (def not (fn [x] (if x false true)))
@@ -1457,6 +1470,32 @@
              (pv-aset ret subidx nil)
              ret)))))
 
+(defprotocol IWatchable
+  "Protocol for types that can be watched. Currently only implemented by Atom."
+  (-notify-watches [this oldval newval]
+    "Calls all watchers with this, oldval and newval.")
+  (-add-watch [this key f]
+    "Adds a watcher function f to this. Keys must be unique per reference,
+     and can be used to remove the watch with -remove-watch.")
+  (-remove-watch [this key]
+    "Removes watcher that corresponds to key from this."))
+
+(defprotocol IReset
+  "Protocol for adding resetting functionality."
+  (-reset! [o new-value]
+    "Sets the value of o to new-value."))
+
+(defprotocol ISwap
+  "Protocol for adding swapping functionality."
+  (-swap! [o f] [o f a] [o f a b] [o f a b xs]
+    "Swaps the value of o to be (apply f current-value-of-atom args)."))
+
+(defprotocol IVolatile
+  "Protocol for adding volatile functionality."
+  (-vreset! [o new-value]
+    "Sets the value of volatile o to new-value without regard for the
+     current value. Returns new-value."))
+
 (defprotocol IAtom
   "Marker protocol indicating an atom.")
 
@@ -1470,28 +1509,249 @@
   (-deref [_] state)
   IMeta
   (-meta [_] meta)
+  IWatchable
+  (-notify-watches [this oldval newval]
+    (loop [entries (seq watches)]
+      (when entries
+        (let [entry (first entries)
+              f (val entry)]
+          (when-not (suss.bootstrap/nil? f)
+            (f (key entry) this oldval newval)))
+        (recur (next entries)))))
+  (-add-watch [this key f]
+    (set! watches (assoc (if (suss.bootstrap/nil? watches) (.-EMPTY PersistentHashMap) watches) key f))
+    this)
+  (-remove-watch [this key]
+    (when-not (suss.bootstrap/nil? watches)
+      (set! watches (dissoc watches key)))
+    this)
   IHash
   (-hash [this] (suss.bootstrap/identity-uid this)))
 
-(def atom (fn [x] (Atom. x nil nil nil)))
+(def atom
+  "Creates and returns an Atom with an initial value of x and zero or
+  more options (in any order):
+
+  :meta metadata-map
+
+  :validator validate-fn
+
+  If metadata-map is supplied, it will become the metadata on the
+  atom. validate-fn must be nil or a side-effect-free fn of one
+  argument, which will be passed the intended new state on any state
+  change. If the new state is unacceptable, the validate-fn should
+  return false or throw an Error.  If either of these error conditions
+  occur, then the value of the atom will not change."
+  (fn
+    ([x] (Atom. x nil nil nil))
+    ([x & options]
+     (let [a (Atom. x nil nil nil)
+           opts (apply hash-map options)
+           metadata (get opts :meta)
+           validator (get opts :validator)]
+       (when metadata
+         (if (map? metadata)
+           (set! (.-meta a) metadata)
+           (throw (suss.bootstrap/error "Atom metadata must be a map"))))
+       (when validator
+         (set-validator! a validator))
+       a))))
 
 (def reset!
+  "Sets the value of atom to newval without regard for the
+  current value. Returns new-value."
   (fn [a new-value]
     (if (instance? Atom a)
-      (if (and (suss.bootstrap/nil? (.-validator a))
-               (suss.bootstrap/nil? (.-watches a)))
-        (do (set! (.-state a) new-value) new-value)
-        (throw (ex-info "Bootstrap atom validators/watches are not implemented" nil)))
-      (throw (ex-info "Bootstrap reset! requires an Atom" nil)))))
+      (let [validate (.-validator a)]
+        (when-not (suss.bootstrap/nil? validate)
+          (when-not (validate new-value)
+            (throw (suss.bootstrap/error "Invalid reference state"))))
+        (let [old-value (.-state a)]
+          (set! (.-state a) new-value)
+          (when-not (suss.bootstrap/nil? (.-watches a))
+            (-notify-watches a old-value new-value))
+          new-value))
+      (-reset! a new-value))))
+
+(def reset-vals!
+  "Sets the value of atom to newval. Returns [old new], the value of the
+   atom before and after the reset."
+  (fn [a new-value]
+    (if (instance? Atom a)
+      (let [validate (.-validator a)]
+        (when-not (suss.bootstrap/nil? validate)
+          (when-not (validate new-value)
+            (throw (suss.bootstrap/error "Invalid reference state"))))
+        (let [old-value (.-state a)]
+          (set! (.-state a) new-value)
+          (when-not (suss.bootstrap/nil? (.-watches a))
+            (-notify-watches a old-value new-value))
+          [old-value new-value]))
+      [(-deref a) (-reset! a new-value)])))
 
 (def swap!
+  "Atomically swaps the value of atom to be:
+  (apply f current-value-of-atom args). Note that f may be called
+  multiple times, and thus should be free of side effects.  Returns
+  the value that was swapped in."
   (fn
-    ([a f] (if (instance? Atom a) (reset! a (f (.-state a)))
-             (throw (ex-info "Bootstrap swap! requires an Atom" nil))))
-    ([a f x] (if (instance? Atom a) (reset! a (f (.-state a) x))
-               (throw (ex-info "Bootstrap swap! requires an Atom" nil))))
-    ([a f x y] (if (instance? Atom a) (reset! a (f (.-state a) x y))
-                 (throw (ex-info "Bootstrap swap! requires an Atom" nil))))))
+    ([a f]
+     (if (instance? Atom a)
+       ;; As Clojure's Atom.swap: apply f to the value read, validate, and set
+       ;; only if the atom is unchanged; if f changed it, run f again.
+       (loop []
+         (let [v (.-state a)
+               newv (f v)
+               validate (.-validator a)]
+           (when-not (suss.bootstrap/nil? validate)
+             (when-not (validate newv)
+               (throw (suss.bootstrap/error "Invalid reference state"))))
+           (if (atom-unchanged? (.-state a) v)
+             (do (set! (.-state a) newv)
+                 (when-not (suss.bootstrap/nil? (.-watches a))
+                   (-notify-watches a v newv))
+                 newv)
+             (recur))))
+       (-swap! a f)))
+    ([a f x]
+     (if (instance? Atom a)
+       (swap! a (fn [v] (f v x)))
+       (-swap! a f x)))
+    ([a f x y]
+     (if (instance? Atom a)
+       (swap! a (fn [v] (f v x y)))
+       (-swap! a f x y)))
+    ([a f x y & more]
+     (if (instance? Atom a)
+       (swap! a (fn [v] (apply f v x y more)))
+       (-swap! a f x y more)))))
+
+(def swap-vals!
+  "Atomically swaps the value of atom to be:
+  (apply f current-value-of-atom args). Note that f may be called
+  multiple times, and thus should be free of side effects.
+  Returns [old new], the value of the atom before and after the swap."
+  (fn
+    ([a f]
+     (if (instance? Atom a)
+       ;; As Clojure's Atom.swap: apply f to the value read, validate, and set
+       ;; only if the atom is unchanged; if f changed it, run f again.
+       (loop []
+         (let [v (.-state a)
+               newv (f v)
+               validate (.-validator a)]
+           (when-not (suss.bootstrap/nil? validate)
+             (when-not (validate newv)
+               (throw (suss.bootstrap/error "Invalid reference state"))))
+           (if (atom-unchanged? (.-state a) v)
+             (do (set! (.-state a) newv)
+                 (when-not (suss.bootstrap/nil? (.-watches a))
+                   (-notify-watches a v newv))
+                 [v newv])
+             (recur))))
+       [(-deref a) (-swap! a f)]))
+    ([a f x]
+     (if (instance? Atom a)
+       (swap-vals! a (fn [v] (f v x)))
+       [(-deref a) (-swap! a f x)]))
+    ([a f x y]
+     (if (instance? Atom a)
+       (swap-vals! a (fn [v] (f v x y)))
+       [(-deref a) (-swap! a f x y)]))
+    ([a f x y & more]
+     (if (instance? Atom a)
+       (swap-vals! a (fn [v] (apply f v x y more)))
+       [(-deref a) (-swap! a f x y more)]))))
+
+(def compare-and-set!
+  "Atomically sets the value of atom to newval if and only if the
+  current value of the atom is identical to oldval. Returns true if
+  set happened, else false."
+  (fn [a oldval newval]
+    (if (instance? Atom a)
+      (let [validate (.-validator a)]
+        (when-not (suss.bootstrap/nil? validate)
+          (when-not (validate newval)
+            (throw (suss.bootstrap/error "Invalid reference state"))))
+        (if (atom-unchanged? (.-state a) oldval)
+          (do (set! (.-state a) newval)
+              (when-not (suss.bootstrap/nil? (.-watches a))
+                (-notify-watches a oldval newval))
+              true)
+          false))
+      (if (= (-deref a) oldval)
+        (do (-reset! a newval) true)
+        false))))
+
+(def set-validator!
+  "Sets the validator-fn for an atom. validator-fn must be nil or a
+  side-effect-free fn of one argument, which will be passed the intended
+  new state on any state change. If the new state is unacceptable, the
+  validator-fn should return false or throw an Error. If the current state
+  is not acceptable to the new validator, an Error will be thrown and the
+  validator will not be changed."
+  (fn [iref val]
+    (when (and (some? val)
+               (not (val (-deref iref))))
+      (throw (suss.bootstrap/error "Invalid reference state")))
+    (set! (.-validator iref) val)
+    nil))
+
+(def get-validator
+  "Gets the validator-fn for a var/ref/agent/atom."
+  (fn [iref]
+    (.-validator iref)))
+
+(def add-watch
+  "Adds a watch function to an atom reference. The watch fn must be a
+  fn of 4 args: a key, the reference, its old-state, its
+  new-state. Whenever the reference's state might have been changed,
+  any registered watches will have their functions called. The watch
+  fn will be called synchronously. Note that an atom's state
+  may have changed again prior to the fn call, so use old/new-state
+  rather than derefing the reference. Keys must be unique per
+  reference, and can be used to remove the watch with remove-watch,
+  but are otherwise considered opaque by the watch mechanism.  Bear in
+  mind that regardless of the result or action of the watch fns the
+  atom's value will change.  Example:
+
+      (def a (atom 0))
+      (add-watch a :inc (fn [k r o n] (assert (== 0 n))))
+      (swap! a inc)
+      ;; Assertion Error
+      (deref a)
+      ;=> 1"
+  (fn [iref key f]
+    (-add-watch iref key f)
+    iref))
+
+(def remove-watch
+  "Removes a watch (set by add-watch) from a reference"
+  (fn [iref key]
+    (-remove-watch iref key)
+    iref))
+
+(deftype Volatile [^:mutable state]
+  IVolatile
+  (-vreset! [_ new-state]
+    (set! state new-state))
+
+  IDeref
+  (-deref [_] state))
+
+(def volatile!
+  "Creates and returns a Volatile with an initial value of val."
+  (fn [val]
+    (Volatile. val)))
+
+(def volatile?
+  "Returns true if x is a volatile."
+  (fn [x] (instance? Volatile x)))
+
+(def vreset!
+  "Sets the value of volatile to newval without regard for the
+   current value. Returns newval."
+  (fn [vol newval] (-vreset! vol newval)))
 
 (defprotocol INamed
   "Protocol for adding a name."
@@ -7532,6 +7792,73 @@ reduces them without incurring seq initialization"
                 "function Array() { [native code] }"
                 (str_ ty)))))))))
 
+(deftype Cycle [meta all prev ^:mutable current ^:mutable _next]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (currentval [coll]
+    (when-not ^seq current
+      (if-let [c (next prev)]
+        (set! current c)
+        (set! current all)))
+    current)
+
+  IPending
+  (-realized? [coll]
+    (some? current))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (Cycle. new-meta all prev current _next)))
+
+  IMeta
+  (-meta [coll] meta)
+
+  ISeq
+  (-first [coll]
+    (first (.currentval coll)))
+  (-rest [coll]
+    (when (nil? _next)
+      (set! _next (Cycle. nil all (.currentval coll) nil nil)))
+    _next)
+
+  INext
+  (-next [coll]
+    (-rest coll))
+
+  ICollection
+  (-conj [coll o] (cons o coll))
+
+  IEmptyableCollection
+  (-empty [coll] (.-EMPTY List))
+
+  ISequential
+  ISeqable
+  (-seq [coll] coll)
+
+  IReduce
+  (-reduce [coll f]
+    (loop [s (.currentval coll) ret (first s)]
+      (let [s   (or (next s) all)
+            ret (f ret (first s))]
+        (if (reduced? ret)
+          @ret
+          (recur s ret)))))
+  (-reduce [coll f start]
+    (loop [s (.currentval coll) ret start]
+      (let [ret (f ret (first s))]
+        (if (reduced? ret)
+          @ret
+          (recur (or (next s) all) ret))))))
+
+(def cycle
+  "Returns a lazy (infinite!) sequence of repetitions of the items in coll."
+  (fn [coll] (if-let [vals (seq coll)]
+           (Cycle. nil vals nil vals nil)
+           (.-EMPTY List))))
+
 (deftype Repeat [meta count val ^:mutable next ^:mutable __hash]
   Object
   (toString [coll]
@@ -8422,6 +8749,34 @@ reduces them without incurring seq initialization"
                  (aset a array-index__ init-val-or-seq)
                  (recur (inc array-index__)))))
            a))))))
+
+(deftype Delay [^:mutable f ^:mutable value ^:mutable exception]
+  IDeref
+  (-deref [_]
+    (when f
+      (try
+        (set! value (f))
+        (catch :default e
+          (set! exception e)))
+      (set! f nil))
+    (if (suss.bootstrap/nil? exception)
+      value
+      (throw exception)))
+
+  IPending
+  (-realized? [x]
+    (not f)))
+
+(def delay?
+  "returns true if x is a Delay created with delay"
+  (fn [x] (instance? Delay x)))
+
+(def force
+  "If x is a Delay, returns the (possibly cached) value of its expression, else returns x"
+  (fn [x]
+    (if (delay? x)
+      (deref x)
+      x)))
 
 (def ^boolean realized? "Returns true if a value has been produced for a delay or lazy sequence." (fn [x] (-realized? x)))
 

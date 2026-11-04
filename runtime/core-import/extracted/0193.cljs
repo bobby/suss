@@ -6,8 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn chunked-seq
-  ([vec i off] (ChunkedSeq. vec (array-for vec i) i off nil nil))
-  ([vec node i off] (ChunkedSeq. vec node i off nil nil))
-  ([vec node i off meta]
-     (ChunkedSeq. vec node i off meta nil)))
+(defn map-entry?
+  "Returns true if x satisfies IMapEntry"
+  [x]
+  (implements? IMapEntry x))

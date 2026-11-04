@@ -6,14 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- compare-symbols [a b]
-  (cond
-   (identical? (.-str a) (.-str b)) 0
-   (and (not (.-ns a)) (.-ns b)) -1
-   (.-ns a) (if-not (.-ns b)
-              1
-              (let [nsc (garray/defaultCompare (.-ns a) (.-ns b))]
-                (if (== 0 nsc)
-                  (garray/defaultCompare (.-name a) (.-name b))
-                  nsc)))
-   :default (garray/defaultCompare (.-name a) (.-name b))))
+(defn select-keys
+  "Returns a map containing only those entries in map whose key is in keys"
+  [map keyseq]
+    (loop [ret {} keys (seq keyseq)]
+      (if keys
+        (let [key   (first keys)
+              entry (get map key ::not-found)]
+          (recur
+           (if (not= entry ::not-found)
+             (assoc ret key entry)
+             ret)
+           (next keys)))
+        (-with-meta ret (meta map)))))

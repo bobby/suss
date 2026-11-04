@@ -6,9 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn object?
-  "Returns true if x's constructor is Object"
-  [x]
-  (if-not (nil? x)
-    (identical? (.-constructor x) js/Object)
-    false))
+(def ^:private char-escapes
+  (js-obj
+    "\"" "\\\""
+    "\\" "\\\\"
+    "\b" "\\b"
+    "\f" "\\f"
+    "\n" "\\n"
+    "\r" "\\r"
+    "\t" "\\t"))

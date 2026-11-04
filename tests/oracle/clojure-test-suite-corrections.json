@@ -155,6 +155,83 @@
     "form": "(p/thrown? (repeat false :a))",
     "threw": true
    }
+  },
+  {
+   "id": "clojure.core-test.atom/test-atom#9",
+   "issue": 30,
+   "original-form": "(= 5 (meta (atom nil :meta 5)))",
+   "rationale": "Clojure's setup-reference installs :meta with resetMeta, which requires a map; pinned ClojureScript stores any value. Patch 0004 selects the Clojure assertion.",
+   "replace": {
+    "kind": "thrown",
+    "form": "(p/thrown? (atom nil :meta 5))",
+    "threw": true
+   }
+  },
+  {
+   "id": "clojure.core-test.atom/test-atom#10",
+   "issue": 30,
+   "original-form": "(= #{} (meta (atom nil :meta #{})))",
+   "rationale": "Clojure's setup-reference installs :meta with resetMeta, which requires a map; pinned ClojureScript stores any value. Patch 0004 selects the Clojure assertion.",
+   "replace": {
+    "kind": "thrown",
+    "form": "(p/thrown? (atom nil :meta #{}))",
+    "threw": true
+   }
+  },
+  {
+   "id": "clojure.core-test.atom/test-atom#11",
+   "issue": 30,
+   "original-form": "(= [] (meta (atom nil :meta (vector))))",
+   "rationale": "Clojure's setup-reference installs :meta with resetMeta, which requires a map; pinned ClojureScript stores any value. Patch 0004 selects the Clojure assertion.",
+   "replace": {
+    "kind": "thrown",
+    "form": "(p/thrown? (atom nil :meta (vector)))",
+    "threw": true
+   }
+  },
+  {
+   "id": "clojure.core-test.atom/test-atom#35",
+   "issue": 30,
+   "original-form": "(= {} (deref (atom {} :validator (constantly nil))))",
+   "rationale": "Clojure validates an atom's initial value when a :validator is given (CLJS-3447); pinned ClojureScript stores it unchecked. Patch 0004 selects the Clojure assertion.",
+   "replace": {
+    "kind": "thrown",
+    "form": "(p/thrown? (atom {} :validator (constantly nil)))",
+    "threw": true
+   }
+  },
+  {
+   "id": "clojure.core-test.atom/test-atom#36",
+   "issue": 30,
+   "original-form": "(= {} (deref (atom {} :validator (constantly false))))",
+   "rationale": "Clojure validates an atom's initial value when a :validator is given (CLJS-3447); pinned ClojureScript stores it unchecked. Patch 0004 selects the Clojure assertion.",
+   "replace": {
+    "kind": "thrown",
+    "form": "(p/thrown? (atom {} :validator (constantly false)))",
+    "threw": true
+   }
+  },
+  {
+   "id": "clojure.core-test.atom/test-atom#37",
+   "issue": 30,
+   "original-form": "(= {} (deref (atom {} :validator (fn* [] (when true (throw (ex-info \"boom\" {})))))))",
+   "rationale": "Clojure validates an atom's initial value when a :validator is given (CLJS-3447); pinned ClojureScript stores it unchecked. Patch 0004 selects the Clojure assertion.",
+   "replace": {
+    "kind": "thrown",
+    "form": "(p/thrown? (atom {} :validator (fn* [] (when true (throw (ex-info \"boom\" {}))))))",
+    "threw": true
+   }
+  },
+  {
+   "id": "clojure.core-test.atom/test-atom#38",
+   "issue": 30,
+   "original-form": "(= #{} (deref (atom #{} :validator (fn [v] (some string? v)))))",
+   "rationale": "Clojure validates an atom's initial value when a :validator is given (CLJS-3447); pinned ClojureScript stores it unchecked. Patch 0004 selects the Clojure assertion.",
+   "replace": {
+    "kind": "thrown",
+    "form": "(p/thrown? (atom #{} :validator (fn [v] (some string? v))))",
+    "threw": true
+   }
   }
  ]
 }

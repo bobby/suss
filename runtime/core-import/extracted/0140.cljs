@@ -6,9 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ranged-iterator [v start end]
-  (let [i start]
-    (RangedIterator. i (- i (js-mod i 32))
-      (when (< start (count v))
-        (unchecked-array-for v i))
-      v start end)))
+(defn namespace
+  "Returns the namespace String of a symbol or keyword, or nil if not present."
+  [x]
+  (if (implements? INamed x)
+    (-namespace x)
+    (throw (js/Error. (str_ "Doesn't support namespace: " x)))))

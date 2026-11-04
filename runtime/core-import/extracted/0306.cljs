@@ -6,10 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn pr-seq-writer [objs writer opts]
-  (pr-writer (first objs) writer opts)
-  (loop [objs (next objs)]
-    (when-not (nil? objs)
-      (-write writer " ")
-      (pr-writer (first objs) writer opts)
-      (recur (next objs)))))
+(def
+  ^{:dynamic true
+    :doc "When set to logical true, objects will be printed in a way that preserves
+  their type when read in later.
+
+  Defaults to false."}
+  *print-dup* false)

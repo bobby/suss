@@ -6,12 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- array-index-of-keyword? [arr k]
-  (let [len  (alength arr)
-        kstr (.-fqn k)]
-    (loop [i 0]
-      (cond
-        (<= len i) -1
-        (and (keyword? (aget arr i))
-             (identical? kstr (.-fqn (aget arr i)))) i
-        :else (recur (+ i 2))))))
+(defn transient
+  "Returns a new, transient version of the collection, in constant time."
+  [coll]
+  (-as-transient coll))

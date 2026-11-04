@@ -6,49 +6,26 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn map
-  "Returns a lazy sequence consisting of the result of applying f to
-  the set of first items of each coll, followed by applying f to the
-  set of second items in each coll, until any one of the colls is
-  exhausted.  Any remaining items in other colls are ignored. Function
-  f should accept number-of-colls arguments. Returns a transducer when
-  no collection is provided."
-  ([f]
-    (fn [rf]
-      (fn
-        ([] (rf))
-        ([result] (rf result))
-        ([result input]
-           (rf result (f input)))
-        ([result input & inputs]
-           (rf result (apply f input inputs))))))
-  ([f coll]
-   (lazy-seq
-    (when-let [s (seq coll)]
-      (if (chunked-seq? s)
-        (let [c (chunk-first s)
-              size (count c)
-              b (chunk-buffer size)]
-          (dotimes [i size]
-              (chunk-append b (f (-nth c i))))
-          (chunk-cons (chunk b) (map f (chunk-rest s))))
-        (cons (f (first s)) (map f (rest s)))))))
-  ([f c1 c2]
-   (lazy-seq
-    (let [s1 (seq c1) s2 (seq c2)]
-      (when (and s1 s2)
-        (cons (f (first s1) (first s2))
-              (map f (rest s1) (rest s2)))))))
-  ([f c1 c2 c3]
-   (lazy-seq
-    (let [s1 (seq c1) s2 (seq c2) s3 (seq c3)]
-      (when (and  s1 s2 s3)
-        (cons (f (first s1) (first s2) (first s3))
-              (map f (rest s1) (rest s2) (rest s3)))))))
-  ([f c1 c2 c3 & colls]
-   (let [step (fn step [cs]
-                 (lazy-seq
-                  (let [ss (map seq cs)]
-                    (when (every? identity ss)
-                      (cons (map first ss) (step (map rest ss)))))))]
-     (map #(apply f %) (step (conj colls c3 c2 c1))))))
+(defn keyword
+  "Returns a Keyword with the given namespace and name.  Do not use :
+  in the keyword strings, it will be added automatically."
+  ([name] (cond
+            (keyword? name) name
+            (symbol? name) (Keyword.
+                             (cljs.core/namespace name)
+                             (cljs.core/name name) (.-str name) nil)
+            (= "/" name) (Keyword. nil name name nil)
+            (string? name) (let [parts (.split name "/")]
+                             (if (== (alength parts) 2)
+                               (Keyword. (aget parts 0) (aget parts 1) name nil)
+                               (Keyword. nil (aget parts 0) name nil)))))
+  ([ns name]
+   (let [ns   (cond
+                (keyword? ns) (cljs.core/name ns)
+                (symbol? ns)  (cljs.core/name ns)
+                :else ns)
+         name (cond
+                (keyword? name) (cljs.core/name name)
+                (symbol? name) (cljs.core/name name)
+                :else name)]
+     (Keyword. ns name (str_ (when ns (str_ ns "/")) name) nil))))

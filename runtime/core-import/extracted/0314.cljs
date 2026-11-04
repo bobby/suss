@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn prn-str
-  "Same as pr-str followed by (newline)"
-  [& objs]
-  (prn-str-with-opts objs nil))
+(defn- pr-opts-len [opts]
+  (if-not (nil? opts)
+    (:print-length opts)
+    *print-length*))

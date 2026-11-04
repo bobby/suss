@@ -6,7 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn nnext
-  "Same as (next (next x))"
-  [coll]
-  (next (next coll)))
+(defprotocol IChunkedSeq
+  "Protocol for accessing a collection as sequential chunks."
+  (-chunked-first [coll]
+    "Returns the first chunk in coll.")
+  (-chunked-rest [coll]
+    "Return a new collection of coll with the first chunk removed."))

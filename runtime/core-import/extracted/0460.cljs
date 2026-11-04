@@ -6,9 +6,4 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn tagged-literal
-  "Construct a data representation of a tagged literal from a
-  tag symbol and a form."
-  [tag form]
-  {:pre [(symbol? tag)]}
-  (TaggedLiteral. tag form))
+(def ^:private NONE #js {})

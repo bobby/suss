@@ -6,7 +6,15 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol ITransientMap
-  "Protocol for adding mapping functionality to transient collections."
-  (^clj -dissoc! [tcoll key]
-    "Returns a new transient collection of tcoll without the mapping for key."))
+(defn- pam-grow-seed-array [seed trailing]
+  (let [seed-cnt  (dec (alength seed))
+        extra-kvs (seq trailing)
+        ret       (make-array (+ seed-cnt (* 2 (count extra-kvs))))
+        ret       (array-copy seed 0 ret 0 seed-cnt)]
+    (loop [i seed-cnt extra-kvs extra-kvs]
+      (if extra-kvs
+        (let [kv (first extra-kvs)]
+          (aset ret i (-key kv))
+          (aset ret (inc i) (-val kv))
+          (recur (+ 2 i) (next extra-kvs)))
+        ret))))

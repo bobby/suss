@@ -6,16 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn dissoc
-  "dissoc[iate]. Returns a new map of the same (hashed/sorted) type,
-  that does not contain a mapping for key(s)."
-  ([coll] coll)
-  ([coll k]
-    (when-not (nil? coll)
-      (-dissoc coll k)))
-  ([coll k & ks]
-    (when-not (nil? coll)
-      (let [ret (dissoc coll k)]
-        (if ks
-          (recur ret (first ks) (next ks))
-          ret)))))
+(defprotocol IChunkedNext
+  "Protocol for accessing the chunks of a collection."
+  (-chunked-next [coll]
+    "Returns a new collection of coll without the first chunk."))

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "2b09e09720f25103ae495a027f5ff335b4b871244ed401aa0707330721867234",
+  "replacement": "(def get-validator\n  \"Gets the validator-fn for a var/ref/agent/atom.\"\n  (fn [iref]\n    (.-validator iref)))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation."
+}

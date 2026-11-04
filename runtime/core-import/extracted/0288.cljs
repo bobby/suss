@@ -6,9 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(def
-  ^{:dynamic true
-    :doc "When set to true, output will be flushed whenever a newline is printed.
-
-  Defaults to true."}
-  *flush-on-newline* true)
+(defn mod
+  "Modulus of num and div. Truncates toward negative infinity."
+  [n d]
+  (js-mod (+ (js-mod n d) d) d))

@@ -6,9 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol ITransientVector
-  "Protocol for adding vector functionality to transient collections."
-  (^clj -assoc-n! [tcoll n val]
-    "Returns tcoll with value val added at position n.")
-  (^clj -pop! [tcoll]
-    "Returns tcoll with the last item removed from it."))
+(defprotocol IFind
+  "Protocol for implementing entry finding in collections."
+  (-find [coll k] "Returns the map entry for key, or nil if key not present."))

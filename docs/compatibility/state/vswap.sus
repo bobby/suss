@@ -1,0 +1,6 @@
+(defmacro vswap!
+  "Non-atomically swaps the value of the volatile as if:
+   (apply f current-value-of-vol args). Returns the value that
+   was swapped in."
+  [vol f & args]
+  `(-vreset! ~vol (~f (-deref ~vol) ~@args)))

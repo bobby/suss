@@ -6,9 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- preserving-reduced
-  [rf]
-  #(let [ret (rf %1 %2)]
-     (if (reduced? ret)
-       (reduced ret)
-       ret)))
+(deftype RangeIterator [^:mutable i end step]
+  Object
+  (hasNext [_]
+    (if (pos? step)
+      (< i end)
+      (> i end)))
+  (next [_]
+    (let [ret i]
+      (set! i (+ i step))
+      ret)))

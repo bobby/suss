@@ -6,5 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- array-map-extend-kv [m k v]
-  (array-extend-kv (.-arr m) k v))
+(defn record?
+  "Return true if x satisfies IRecord"
+  [x]
+  (satisfies? IRecord x))

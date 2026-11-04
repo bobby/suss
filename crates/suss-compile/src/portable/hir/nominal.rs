@@ -13,11 +13,11 @@ const PUBLIC_FIELD_TYPES: &[&str] = &[
 ];
 /// Core types whose constructors user code may call, while their fields stay
 /// private (#279): those core macro expansions construct in user code
-/// (defrecord's seq and iterator, lazy-seq), as Clojure's MapEntry and LazySeq
-/// constructors are public, and the string writer and its buffer, the
-/// counterparts of Clojure's public java.io.StringWriter.
+/// (defrecord's seq and iterator, lazy-seq, delay), as Clojure's MapEntry,
+/// LazySeq and Delay constructors are public, and the string writer and its
+/// buffer, the counterparts of Clojure's public java.io.StringWriter.
 const CONSTRUCTIBLE_TYPES: &[&str] = &[
-    "MapEntry", "RecordIter", "LazySeq", "StringBufferWriter", "BootstrapStringBuffer",
+    "MapEntry", "RecordIter", "LazySeq", "Delay", "StringBufferWriter", "BootstrapStringBuffer",
 ];
 /// User-facing collection classes whose whitelisted statics (EMPTY, fromArray
 /// and similar) user code may read; their fields and other statics stay

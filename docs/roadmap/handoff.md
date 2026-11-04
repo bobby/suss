@@ -29596,3 +29596,13 @@ document's 2026-10-25 decision now records all three outcomes.
 - Analysing core went from ~385 ms to ~285 ms per phase, and from 586 MB to 381 MB allocated. The compiled bootstrap is unchanged except for its identity.
 - #319 is done apart from forms, which source facts still deep-copy (about 43 ms per phase). The user decided not to change the reader's `Form` type for that. #299 step 3 was dropped, because restoring the analysis is no faster than redoing it.
 - Full baseline on 34fc5e5: 2112 passed, 0 failed, 78 ignored, 282 binaries, 107 min.
+
+## #30 part 1: atoms, volatiles and delays (2026-11-03)
+
+- PR #324. Atoms follow Clojure's `ARef`/`Atom`: validators (falsy result throws "Invalid reference state"), watches in a `PersistentHashMap`, `set-validator!` checking the current state, `atom` options through `(apply hash-map options)`, the `-vals!` variants, and `compare-and-set!` by identity. `docs/runtime/atoms.md` lists each Clojure-vs-CLJS difference.
+- `swap!` loops like `Atom.swap`: it sets only if the state is still the value it read, so a function that changes the atom runs again. Identity is `atom-unchanged?` in `sequence-forward-declarations.sus`: `identical?`, plus equal keywords (Suss doesn't intern them) and NaN. Suss's `identical?` compares strings and numbers by value, so CAS on a fresh equal string succeeds where Clojure's would fail.
+- `delay` and `vswap!` are source macros (`docs/compatibility/state/`), each in its own file because a source file may hold only one `defmacro`. They're registered in `portable_macros.rs` and hashed in `bootstrap::embedded_sha256`. `Delay` caches a thrown exception as Clojure's does, and is in `CONSTRUCTIBLE_TYPES`.
+- `(:require clojure.core)` now names core (`resolve::required`), which the clojure-test-suite needs. `cycle` was imported for the atom suite namespace.
+- Core initialization is now about 2.0M fuel. The async bridge tests give instantiation its own 3M allowance (`INITIALIZATION_FUEL`).
+- Still to do in #30: `::kw` and hierarchies, then multimethods, then `print-method` (#302).
+- Full baseline on 04e8826: 2124 passed, 0 failed, 75 ignored, 283 binaries, 112 min.

@@ -6,18 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- unchecked-editable-array-for [tv i]
-  ;; invariant: i is a valid index of tv.
-  (if (>= i (tail-off tv))
-    (.-tail tv)
-    (let [root (.-root tv)]
-      (loop [node  root
-             level (.-shift tv)]
+(defn- unchecked-array-for [pv i]
+  ;; invariant: i is a valid index of pv (use array-for if unknown).
+  (if (>= i (tail-off pv))
+      (.-tail pv)
+      (loop [node (.-root pv)
+             level (.-shift pv)]
         (if (pos? level)
-          (recur (tv-ensure-editable
-                   (.-edit root)
-                   (pv-aget node
-                            (bit-and (bit-shift-right-zero-fill i level)
-                                     0x01f)))
+          (recur (pv-aget node (bit-and (bit-shift-right-zero-fill i level) 0x01f))
                  (- level 5))
-          (.-arr node))))))
+          (.-arr node)))))

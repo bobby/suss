@@ -6,24 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn int-array
-  "Creates an array of ints. Does not coerce array, provided for compatibility
-  with Clojure."
-  ([size-or-seq]
-     (if (number? size-or-seq)
-       (int-array size-or-seq nil)
-       (into-array size-or-seq)))
-  ([size init-val-or-seq]
-     (let [a (make-array size)]
-       (if (seq? init-val-or-seq)
-         (let [s (seq init-val-or-seq)]
-           (loop [i 0 s s]
-             (if (and s (< i size))
-               (do
-                 (aset a i (first s))
-                 (recur (inc i) (next s)))
-               a)))
-         (do
-           (dotimes [i size]
-             (aset a i init-val-or-seq))
-           a)))))
+(defn mapcat
+  "Returns the result of applying concat to the result of applying map
+  to f and colls.  Thus function f should return a collection. Returns
+  a transducer when no collections are provided"
+  {:added "1.0"
+   :static true}
+  ([f] (comp (map f) cat))
+  ([f & colls]
+     (apply concat (apply map f colls))))

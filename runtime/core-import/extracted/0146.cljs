@@ -6,10 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- array-copy
-  ([from i to j len]
-    (loop [i i j j len len]
-       (if (zero? len)
-         to
-         (do (aset to j (aget from i))
-             (recur (inc i) (inc j) (dec len)))))))
+(defprotocol IVector
+  "Protocol for adding vector functionality to collections."
+  (^clj -assoc-n [coll n val]
+    "Returns a new vector with value val added at position n."))

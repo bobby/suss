@@ -6,14 +6,39 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn hash-map
-  "keyval => key val
-  Returns a new hash map with supplied mappings."
-  [& keyvals]
-  (loop [in (seq keyvals), out (transient (.-EMPTY PersistentHashMap))]
-    (if in
-      (let [in' (next in)]
-        (if (nil? in')
-          (throw (js/Error. (str_ "No value supplied for key: " (first in))))
-          (recur (next in') (assoc! out (first in) (first in')) )))
-      (persistent! out))))
+(deftype TransientHashSet [^:mutable transient-map]
+  ITransientCollection
+  (-conj! [tcoll o]
+    (set! transient-map (assoc! transient-map o nil))
+    tcoll)
+
+  (-persistent! [tcoll]
+    (PersistentHashSet. nil (persistent! transient-map) nil))
+
+  ITransientSet
+  (-disjoin! [tcoll v]
+    (set! transient-map (dissoc! transient-map v))
+    tcoll)
+
+  ICounted
+  (-count [tcoll] (count transient-map))
+
+  ILookup
+  (-lookup [tcoll v]
+    (-lookup tcoll v nil))
+
+  (-lookup [tcoll v not-found]
+    (if (identical? (-lookup transient-map v lookup-sentinel) lookup-sentinel)
+      not-found
+      v))
+
+  IFn
+  (-invoke [tcoll k]
+    (if (identical? (-lookup transient-map k lookup-sentinel) lookup-sentinel)
+      nil
+      k))
+
+  (-invoke [tcoll k not-found]
+    (if (identical? (-lookup transient-map k lookup-sentinel) lookup-sentinel)
+      not-found
+      k)))

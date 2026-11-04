@@ -6,9 +6,40 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^boolean not=
-  "Same as (not (= obj1 obj2))"
-  ([x] false)
-  ([x y] (not (= x y)))
-  ([x y & more]
-   (not (apply = x y more))))
+(deftype NodeIterator [arr ^:mutable i ^:mutable next-entry ^:mutable next-iter]
+  Object
+  (advance [this]
+    (let [len (alength arr)]
+      (loop []
+        (if (< i len)
+          (let [key (aget arr i)
+                node-or-val (aget arr (inc i))
+                ^boolean found
+                (cond (some? key)
+                      (set! next-entry (MapEntry. key node-or-val nil))
+                      (some? node-or-val)
+                      (let [new-iter (-iterator node-or-val)]
+                        (if ^boolean (.hasNext new-iter)
+                          (set! next-iter new-iter)
+                          false))
+                      :else false)]
+            (set! i (+ i 2))
+            (if found true (recur)))
+          false))))
+  (hasNext [this]
+    (or (some? next-entry) (some? next-iter) (.advance this)))
+  (next [this]
+    (cond
+      (some? next-entry)
+      (let [ret next-entry]
+        (set! next-entry nil)
+        ret)
+      (some? next-iter)
+      (let [ret (.next next-iter)]
+        (when-not ^boolean (.hasNext next-iter)
+          (set! next-iter nil))
+        ret)
+      ^boolean (.advance this)
+      (.next this)
+      :else (throw (js/Error. "No such element"))))
+  (remove [_] (js/Error. "Unsupported operation")))

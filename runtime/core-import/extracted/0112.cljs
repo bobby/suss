@@ -6,31 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Atom [state meta validator watches]
-  Object
-  (equiv [this other]
-    (-equiv this other))
-
-  IAtom
-
-  IEquiv
-  (-equiv [o other] (identical? o other))
-
-  IDeref
-  (-deref [_] state)
-
-  IMeta
-  (-meta [_] meta)
-
-  IWatchable
-  (-notify-watches [this oldval newval]
-    (doseq [[key f] watches]
-      (f key this oldval newval)))
-  (-add-watch [this key f]
-    (set! (.-watches this) (assoc watches key f))
-    this)
-  (-remove-watch [this key]
-    (set! (.-watches this) (dissoc watches key)))
-
-  IHash
-  (-hash [this] (goog/getUid this)))
+(defprotocol IReset
+  "Protocol for adding resetting functionality."
+  (-reset! [o new-value]
+    "Sets the value of o to new-value."))

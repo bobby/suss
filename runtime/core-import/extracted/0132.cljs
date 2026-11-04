@@ -6,9 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IKVReduce
-  "Protocol for associative types that can reduce themselves
-  via a function of key and val. Called by cljs.core/reduce-kv."
-  (-kv-reduce [coll f init]
-    "Reduces an associative collection and returns the result. f should be
-     a function that takes three arguments."))
+(defprotocol IPrintWithWriter
+  "The old IPrintable protocol's implementation consisted of building a giant
+   list of strings to concatenate.  This involved lots of concat calls,
+   intermediate vectors, and lazy-seqs, and was very slow in some older JS
+   engines.  IPrintWithWriter implements printing via the IWriter protocol, so it
+   be implemented efficiently in terms of e.g. a StringBuffer append."
+  (-pr-writer [o writer opts]))

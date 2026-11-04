@@ -101,6 +101,10 @@ fn generated_fragments(sources: &[&str]) -> Vec<u8> {
     )
     .unwrap()
 }
+/// Fuel for instantiation, which runs the whole shipped core initializer
+/// (about 2.0M with atoms, volatiles and delays, #30) before the app fragments.
+const INITIALIZATION_FUEL: u64 = 3_000_000;
+
 #[test]
 fn generated_scalar_import_resumes_actual_source_future_and_releases_each_transfer() {
     let bytes = generated_component(
@@ -148,7 +152,7 @@ fn generated_scalar_import_resumes_actual_source_future_and_releases_each_transf
         })
         .unwrap();
     let mut store = Store::new(&engine, ());
-    store.set_fuel(2_000_000).unwrap();
+    store.set_fuel(INITIALIZATION_FUEL).unwrap();
     let instance = drive(linker.instantiate_async(&mut store, &component)).unwrap();
     // Bound bootstrap initialization separately from the cumulative four-call
     // scenario: the shipped core initializer also consumes Wasmtime fuel.
@@ -220,7 +224,7 @@ fn source_completion_cancel_drains_canonical_host_operation_before_return() {
         })
         .unwrap();
     let mut store = Store::new(&engine, ());
-    store.set_fuel(2_000_000).unwrap();
+    store.set_fuel(INITIALIZATION_FUEL).unwrap();
     let instance = drive(linker.instantiate_async(&mut store, &component)).unwrap();
     // Initialization executes the entire shipped core plus async/app fragments.
     // Keep its finite allowance separate from the shared three-call exercise: a
@@ -516,7 +520,7 @@ fn public_component_host_quarantines_import_error_and_preserves_primary_error() 
         })
         .unwrap();
     let mut store = Store::new(&engine, ());
-    store.set_fuel(2_000_000).unwrap();
+    store.set_fuel(INITIALIZATION_FUEL).unwrap();
     let instance = drive(linker.instantiate_async(&mut store, &component)).unwrap();
     let mut host = async_component::ScalarHost::new(store, instance, "run").unwrap();
     let error = drive(host.call(7)).unwrap_err();
@@ -570,7 +574,7 @@ fn public_component_host_abandoned_pending_call_retains_quarantine() {
         })
         .unwrap();
     let mut store = Store::new(&engine, ());
-    store.set_fuel(2_000_000).unwrap();
+    store.set_fuel(INITIALIZATION_FUEL).unwrap();
     let instance = drive(linker.instantiate_async(&mut store, &component)).unwrap();
     let mut host = async_component::ScalarHost::new(store, instance, "run").unwrap();
     {

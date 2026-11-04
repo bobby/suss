@@ -6,9 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn map?
-  "Return true if x satisfies IMap"
-  [x]
-  (if (nil? x)
-    false
-    (satisfies? IMap x)))
+(defprotocol ITransientVector
+  "Protocol for adding vector functionality to transient collections."
+  (^clj -assoc-n! [tcoll n val]
+    "Returns tcoll with value val added at position n.")
+  (^clj -pop! [tcoll]
+    "Returns tcoll with the last item removed from it."))

@@ -6,7 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn type->str [ty]
-  (if-let [s (.-cljs$lang$ctorStr ty)]
-    s
-    (str_ ty)))
+(defn vals
+  "Returns a sequence of the map's values, in the same order as (seq map)."
+  [map]
+  (when-let [mseq (seq map)]
+    (ValSeq. mseq nil)))

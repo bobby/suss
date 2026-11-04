@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- array-for [pv i]
-  (if (and (<= 0 i) (< i (.-cnt pv)))
-    (unchecked-array-for pv i)
-    (vector-index-out-of-bounds i (.-cnt pv))))
+(defn keyword?
+  "Return true if x is a Keyword"
+  [x]
+  (instance? Keyword x))

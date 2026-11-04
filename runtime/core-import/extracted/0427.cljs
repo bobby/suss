@@ -6,8 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn rem
-  "remainder of dividing numerator by denominator."
-  [n d]
-  (let [q (quot n d)]
-    (- n (* d q))))
+(defn associative?
+ "Returns true if coll implements IAssociative"
+  [x] (satisfies? IAssociative x))

@@ -6,8 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IComparable
-  "Protocol for values that can be compared."
-  (^number -compare [x y]
-    "Returns a negative number, zero, or a positive number when x is logically
-     'less than', 'equal to', or 'greater than' y."))
+(defn print-map [m print-one writer opts]
+  (let [ns&lift-map (when (map? m)
+                      (lift-ns m))
+        ns (some-> ns&lift-map (aget 0))]
+    (if ns
+      (print-prefix-map (str_ "#:" ns) (aget ns&lift-map 1) print-one writer opts)
+      (print-prefix-map nil m print-one writer opts))))

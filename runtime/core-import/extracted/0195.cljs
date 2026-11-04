@@ -6,14 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn bounded-count
-  "If coll is counted? returns its count, else will count at most the first n
-   elements of coll using its seq"
-  {:added "1.9"}
-  [n coll]
-  (if (counted? coll)
-    (count coll)
-    (loop [i 0 s (seq coll)]
-      (if (and (not (nil? s)) (< i n))
-        (recur (inc i) (next s))
-        i))))
+(defn persistent-array-map-seq [arr i _meta]
+  (when (<= i (- (alength arr) 2))
+    (PersistentArrayMapSeq. arr i _meta)))

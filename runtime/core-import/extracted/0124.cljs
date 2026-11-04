@@ -6,11 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn name
-  "Returns the name String of a string, symbol or keyword."
-  [x]
-  (if (implements? INamed x)
-    (-name x)
-    (if (string? x)
-      x
-      (throw (js/Error. (str_ "Doesn't support name: " x))))))
+(defn get-validator
+  "Gets the validator-fn for a var/ref/agent/atom."
+  [iref]
+  (.-validator iref))

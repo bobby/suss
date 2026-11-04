@@ -6,11 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn keyword-identical?
-  "Efficient test to determine that two keywords are identical."
-  [x y]
-  (if (identical? x y)
-    true
-    (if (and (keyword? x) (keyword? y))
-      (identical? (.-fqn x) (.-fqn y))
-      false)))
+(defn remove-watch
+  "Removes a watch (set by add-watch) from a reference"
+  [iref key]
+  (-remove-watch iref key)
+  iref)

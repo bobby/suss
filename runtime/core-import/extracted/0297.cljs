@@ -6,7 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- pr-opts-meta [opts]
-  (if-not (nil? opts)
-    (:meta opts)
-    *print-meta*))
+(defn pop
+  "For a list or queue, returns a new list/queue without the first
+  item, for a vector, returns a new vector without the last item.
+  Note - not the same as next/butlast."
+  [coll]
+  (when-not (nil? coll)
+    (-pop coll)))

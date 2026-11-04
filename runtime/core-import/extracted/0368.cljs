@@ -6,14 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- compare-keywords [a b]
-  (cond
-   (identical? (.-fqn a) (.-fqn b)) 0
-   (and (not (.-ns a)) (.-ns b)) -1
-   (.-ns a) (if-not (.-ns b)
-              1
-              (let [nsc (garray/defaultCompare (.-ns a) (.-ns b))]
-                (if (== 0 nsc)
-                  (garray/defaultCompare (.-name a) (.-name b))
-                  nsc)))
-   :default (garray/defaultCompare (.-name a) (.-name b))))
+(defn zipmap
+  "Returns a map with the keys mapped to the corresponding vals."
+  [keys vals]
+    (loop [map (transient {})
+           ks (seq keys)
+           vs (seq vals)]
+      (if (and ks vs)
+        (recur (assoc! map (first ks) (first vs))
+               (next ks)
+               (next vs))
+        (persistent! map))))

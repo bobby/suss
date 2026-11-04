@@ -6,16 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn empty?
-  "Returns true if coll has no items. To check the emptiness of a seq,
-  please use the idiom (seq x) rather than (not (empty? x))"
-  [coll]
-  (cond
-    (nil? coll)
-    true
+(def
+  ^{:dynamic true
+    :doc "*print-namespace-maps* controls whether the printer will print
+  namespace map literal syntax.
 
-    (satisfies? ICounted coll)
-    (zero? (-count coll))
-
-    :else
-    (not (seq coll))))
+  Defaults to false, but the REPL binds it to true."}
+  *print-namespace-maps* false)

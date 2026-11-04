@@ -6,14 +6,26 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn assoc!
-  "When applied to a transient map, adds mapping of key(s) to
-  val(s). When applied to a transient vector, sets the val at index.
-  Note - index must be <= (count vector). Returns coll."
-  ([tcoll key val]
-    (-assoc! tcoll key val))
-  ([tcoll key val & kvs]
-    (let [ntcoll (-assoc! tcoll key val)]
-      (if kvs
-        (recur ntcoll (first kvs) (second kvs) (nnext kvs))
-        ntcoll))))
+(deftype ArrayChunk [arr off end]
+  ICounted
+  (-count [_] (- end off))
+
+  IIndexed
+  (-nth [coll i]
+    (aget arr (+ off i)))
+  (-nth [coll i not-found]
+    (if (and (>= i 0) (< i (- end off)))
+      (aget arr (+ off i))
+      not-found))
+
+  IChunk
+  (-drop-first [coll]
+    (if (== off end)
+      (throw (js/Error. "-drop-first of empty chunk"))
+      (ArrayChunk. arr (inc off) end)))
+
+  IReduce
+  (-reduce [coll f]
+    (array-reduce arr f (aget arr off) (inc off)))
+  (-reduce [coll f start]
+    (array-reduce arr f start off)))

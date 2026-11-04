@@ -6,14 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- ^boolean pam-dupes? [arr]
-  (loop [i 0]
-    (if (< i (alength arr))
-      (let [dupe? (loop [j 0]
-                    (if (< j i)
-                      (or
-                        (key-test (aget arr i) (aget arr j))
-                        (recur (+ 2 j)))
-                      false))]
-        (or dupe? (recur (+ 2 i))))
-      false)))
+(defn- array-index-of-keyword? [arr k]
+  (let [len  (alength arr)
+        kstr (.-fqn k)]
+    (loop [i 0]
+      (cond
+        (<= len i) -1
+        (and (keyword? (aget arr i))
+             (identical? kstr (.-fqn (aget arr i)))) i
+        :else (recur (+ i 2))))))

@@ -1027,49 +1027,33 @@
    :alternative nil
    :tests ["crates/suss-cli/tests/persistent_repl.rs" "crates/suss-cli/tests/portable_atoms.rs" "tests/oracle/atom-cases.json" "docs/runtime/atoms.md"]}
   "runtime:Atom:4613"
-  {:source-sha256 "a915088d1555e30b568ed1cbb29d18f26f1a7ef57a728f7c6c8bc15dc282a48b"
-   :visibility :public
-   :arities nil
-   :dependencies ["IDeref/IMeta/IEquiv/IHash" "shared object storage and identity-uid" "Atom/instance?/reset!/ex-info"]
-   :classification :adapted
-   :rationale "Bounded M3 GC-owned atom storage foundation. Preserve shared descriptor identity and state/meta/validator/watches fields, direct dereference, identity equality/hash and fixed mutation call order. Full IWatchable, atom options, validators, protocol fallback and variadic swap remain unimplemented for M7; unsupported bootstrap validator/watch state raises an explicit error before mutation, never a no-op or compatibility success."
-   :status :in-progress
-   :adaptation-path "docs/compatibility/patches/atoms-type.json"
-   :alternative nil
-   :tests ["crates/suss-cli/tests/persistent_repl.rs" "crates/suss-cli/tests/portable_atoms.rs" "tests/oracle/atom-cases.json" "docs/runtime/atoms.md"]}
+  {:source-sha256 "a915088d1555e30b568ed1cbb29d18f26f1a7ef57a728f7c6c8bc15dc282a48b" :visibility :public :arities nil
+   :dependencies ["runtime:IWatchable:820" "assoc" "dissoc" "PersistentHashMap"]
+   :classification :adapted :status :in-progress
+   :rationale "Mutable fields as the M3 storage foundation, with IWatchable added (#30). As in Clojure's ARef, watches are a hash map (first watch starts from an empty PersistentHashMap, so iteration follows hash order, not insertion order) and each non-nil function is called as (f key ref old new) in seq order; remove-watch returns the reference. loop/seq replaces doseq, which is not a bootstrap macro. Identity equality/hash unchanged."
+   :adaptation-path "docs/compatibility/patches/atoms-type.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
   "runtime:atom:4642"
-  {:source-sha256 "701c04c97059f656292eeb7ef36105e216e41127212328185090824a664a8cba"
-   :visibility :public
-   :arities {:fixed [1] :variadic-min 1}
-   :dependencies ["IDeref/IMeta/IEquiv/IHash" "shared object storage and identity-uid" "Atom/instance?/reset!/ex-info"]
-   :classification :adapted
-   :rationale "Bounded M3 GC-owned atom storage foundation. Preserve shared descriptor identity and state/meta/validator/watches fields, direct dereference, identity equality/hash and fixed mutation call order. Full IWatchable, atom options, validators, protocol fallback and variadic swap remain unimplemented for M7; unsupported bootstrap validator/watch state raises an explicit error before mutation, never a no-op or compatibility success."
-   :status :in-progress
-   :adaptation-path "docs/compatibility/patches/atoms-new.json"
-   :alternative nil
-   :tests ["crates/suss-cli/tests/persistent_repl.rs" "crates/suss-cli/tests/portable_atoms.rs" "tests/oracle/atom-cases.json" "docs/runtime/atoms.md"]}
+  {:source-sha256 "701c04c97059f656292eeb7ef36105e216e41127212328185090824a664a8cba" :visibility :public :arities {:fixed [1] :variadic-min 1}
+   :dependencies ["runtime:Atom:4613" "hash-map" "set-validator!"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation. Options follow Clojure's setup-reference: (apply hash-map options), so an odd option count throws \"No value supplied for key\"; a truthy :meta must be a map; a truthy :validator is installed with set-validator!, which validates the initial value (ClojureScript stores it without checking)."
+   :adaptation-path "docs/compatibility/patches/atoms-new.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
   "runtime:reset!:4661"
-  {:source-sha256 "b13352f91b0996d80f117b28b9df67f9173d038ce015c0f94afa74a12b1f4289"
-   :visibility :public
-   :arities {:fixed [2] :variadic-min nil}
-   :dependencies ["IDeref/IMeta/IEquiv/IHash" "shared object storage and identity-uid" "Atom/instance?/reset!/ex-info"]
-   :classification :adapted
-   :rationale "Bounded M3 GC-owned atom storage foundation. Preserve shared descriptor identity and state/meta/validator/watches fields, direct dereference, identity equality/hash and fixed mutation call order. Full IWatchable, atom options, validators, protocol fallback and variadic swap remain unimplemented for M7; unsupported bootstrap validator/watch state raises an explicit error before mutation, never a no-op or compatibility success."
-   :status :in-progress
-   :adaptation-path "docs/compatibility/patches/atoms-reset.json"
-   :alternative nil
-   :tests ["crates/suss-cli/tests/persistent_repl.rs" "crates/suss-cli/tests/portable_atoms.rs" "tests/oracle/atom-cases.json" "docs/runtime/atoms.md"]}
+  {:source-sha256 "b13352f91b0996d80f117b28b9df67f9173d038ce015c0f94afa74a12b1f4289" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:Atom:4613" "runtime:IReset:898" "runtime:IWatchable:820"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation. Validation follows Clojure's ARef: a falsy validator result throws \"Invalid reference state\" (ClojureScript says \"Validator rejected reference state\"), an exception from the validator propagates, and state is validated, then set, then watches are notified. Non-Atom references use IReset, as upstream."
+   :adaptation-path "docs/compatibility/patches/atoms-reset.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
   "runtime:swap!:4694"
-  {:source-sha256 "4081090780e8ca6ad14373f69ecafc6002c1113ea2de51254e3c0a14f8bec207"
-   :visibility :public
-   :arities {:fixed [2 3 4] :variadic-min 5}
-   :dependencies ["IDeref/IMeta/IEquiv/IHash" "shared object storage and identity-uid" "Atom/instance?/reset!/ex-info"]
-   :classification :adapted
-   :rationale "Bounded M3 GC-owned atom storage foundation. Preserve shared descriptor identity and state/meta/validator/watches fields, direct dereference, identity equality/hash and fixed mutation call order. Full IWatchable, atom options, validators, protocol fallback and variadic swap remain unimplemented for M7; unsupported bootstrap validator/watch state raises an explicit error before mutation, never a no-op or compatibility success."
-   :status :in-progress
-   :adaptation-path "docs/compatibility/patches/atoms-swap.json"
-   :alternative nil
-   :tests ["crates/suss-cli/tests/persistent_repl.rs" "crates/suss-cli/tests/portable_atoms.rs" "tests/oracle/atom-cases.json" "docs/runtime/atoms.md"]}
+  {:source-sha256 "4081090780e8ca6ad14373f69ecafc6002c1113ea2de51254e3c0a14f8bec207" :visibility :public :arities {:fixed [2 3 4] :variadic-min 4}
+   :dependencies ["runtime:Atom:4613" "runtime:ISwap:903" "atom-unchanged?" "apply"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation, all four arities including the variadic one. Follows Clojure's Atom.swap: f is applied to the value read, the result validated, and set only if the atom is unchanged (atom-unchanged?); if f itself changed the atom, f runs again, as Clojure's compare-and-set loop does even on one thread. Watches are notified with the value read and the new value. The arities with arguments close over them."
+   :adaptation-path "docs/compatibility/patches/atoms-swap.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
   "runtime:VectorNode:5575"
   {:source-sha256 "2a8adf3c73a45552f9b9cf903b17a45d1565b5d0b792b5aa16aa0620bb8a3e33"
    :visibility :public
@@ -5410,4 +5394,144 @@
    :rationale "Expand the complete pinned defn to def/fn, retaining documentation and the constructor call; the :pre symbol check throws the assertion message explicitly."
    :adaptation-path "docs/compatibility/patches/tagged-literal.json" :alternative nil
    :tests ["crates/suss-cli/tests/read_string.rs"]}
+  "runtime:IWatchable:820"
+  {:source-sha256 "129155e71344259109a0af4de48172ebb927e3074241b5c73462fd36b5bd5c08" :visibility :public :arities nil
+   :dependencies []
+   :classification :portable :status :in-progress
+   :rationale "Complete pinned protocol, imported unchanged; Atom implements it (#30)."
+   :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:IReset:898"
+  {:source-sha256 "40dbb461cedbaf792e0e4c79b299c531daa02747df96a9b3da1f5d67dcaaeacb" :visibility :public :arities nil
+   :dependencies []
+   :classification :portable :status :in-progress
+   :rationale "Complete pinned protocol, imported unchanged; reset! and reset-vals! fall back to it for non-Atom references (#30)."
+   :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:ISwap:903"
+  {:source-sha256 "c06bc375b34f2914b6aa3f6ccebef3b73d79af55a20e12df3ac2a941bdb71ed6" :visibility :public :arities nil
+   :dependencies []
+   :classification :portable :status :in-progress
+   :rationale "Complete pinned protocol, imported unchanged; swap! and swap-vals! fall back to it for non-Atom references (#30)."
+   :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:IVolatile:908"
+  {:source-sha256 "8aab7f29fc0d21246ad8f6845a07b1b3ff4ed2854d7e319fea569b22aa8935fc" :visibility :public :arities nil
+   :dependencies []
+   :classification :portable :status :in-progress
+   :rationale "Complete pinned protocol, imported unchanged; Volatile implements it (#30)."
+   :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:reset-vals!:4677"
+  {:source-sha256 "223d660fa0bf5b38e78ba86b3a11f3d4e385c3d54ea2bcf63a735c186c7f43d7" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:Atom:4613" "runtime:IReset:898"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation. Validation follows Clojure's ARef: a falsy validator result throws \"Invalid reference state\" (ClojureScript says \"Validator rejected reference state\"), an exception from the validator propagates, and state is validated, then set, then watches are notified. Returns [old new]. Non-Atom references use IDeref and IReset, as upstream."
+   :adaptation-path "docs/compatibility/patches/atoms-reset-vals.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:swap-vals!:4716"
+  {:source-sha256 "0b88c9eb5c5aa4390eb5b7583aafac19a0da5b3bb301d58659ce875a2eeeb0bc" :visibility :public :arities {:fixed [2 3 4] :variadic-min 4}
+   :dependencies ["runtime:Atom:4613" "runtime:ISwap:903" "atom-unchanged?" "apply"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation, all four arities, with swap!'s compare-and-set loop. Returns [old new]."
+   :adaptation-path "docs/compatibility/patches/atoms-swap-vals.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:compare-and-set!:4739"
+  {:source-sha256 "bd7e6f5c9b84e6f8444851e0895d8477534c7102f79022862e06453459f8e0bb" :visibility :public :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["runtime:Atom:4613" "runtime:IReset:898"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation. Follows Clojure's Atom.compareAndSet: validates newval first, compares the current state with oldval as atom-unchanged? does (identical?, as AtomicReference compares references; ClojureScript uses =), and notifies watches only when it sets. Non-Atom references keep the upstream IDeref/= /IReset fallback."
+   :adaptation-path "docs/compatibility/patches/atoms-compare-and-set.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:set-validator!:4748"
+  {:source-sha256 "d409b5a7048f230732f9a0db3825b7e6e18e018a04f4606b8ecfb55f8a931451" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:IDeref:720"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation. Rejects with Clojure's \"Invalid reference state\" and returns nil, as Clojure's set-validator! does."
+   :adaptation-path "docs/compatibility/patches/atoms-set-validator.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:get-validator:4761"
+  {:source-sha256 "2b09e09720f25103ae495a027f5ff335b4b871244ed401aa0707330721867234" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies []
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation."
+   :adaptation-path "docs/compatibility/patches/atoms-get-validator.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:add-watch:10872"
+  {:source-sha256 "f2610796d2f057028d007b1109973718943b8ad8488b750d344ab14ea9cd25af" :visibility :public :arities {:fixed [3] :variadic-min nil}
+   :dependencies ["runtime:IWatchable:820"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation; returns the reference."
+   :adaptation-path "docs/compatibility/patches/atoms-add-watch.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:remove-watch:10895"
+  {:source-sha256 "8e95df4ed13b4e81008dad90a8a4ee83becee780c433e11de6e5eb12cdb0e6b5" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:IWatchable:820"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation; returns the reference."
+   :adaptation-path "docs/compatibility/patches/atoms-remove-watch.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:Volatile:4766"
+  {:source-sha256 "3eb1afc8e98963a7441bc014e020fcced3288d3ca7e7cbf04bcc94f79595ffa3" :visibility :public :arities nil
+   :dependencies ["runtime:IVolatile:908" "runtime:IDeref:720"]
+   :classification :portable :status :in-progress
+   :rationale "Complete pinned deftype, imported unchanged: a mutable state field, IVolatile and IDeref (#30). Prints through the default reference printer, as Clojure prints a Volatile."
+   :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:volatile!:4774"
+  {:source-sha256 "bf8d96001723c7dde526ea7dbd4bb49205b3a55a73cf3497b0e2c622ef997d39" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:Volatile:4766"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation."
+   :adaptation-path "docs/compatibility/patches/volatile-new.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:volatile?:4779"
+  {:source-sha256 "6d80da1be7ba97440dc307ff2937fbab3931b2035834fb3012321cf7a2550f1d" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:Volatile:4766"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation."
+   :adaptation-path "docs/compatibility/patches/volatile-predicate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:vreset!:4783"
+  {:source-sha256 "b74d9afc993860bcb3218e2591fc7ee7bd08c2b53100606719e5907b367104d1" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:IVolatile:908"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation."
+   :adaptation-path "docs/compatibility/patches/volatile-reset.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:Delay:10919"
+  {:source-sha256 "58ee6002ede6c0476c66ec5b1df21903759611be13404d6b6d8b2e1a4c52b69c" :visibility :public :arities nil
+   :dependencies ["runtime:IDeref:720" "runtime:IPending:814"]
+   :classification :adapted :status :in-progress
+   :rationale "Follows Clojure's Delay: an exception from the body is cached, the body is released, realized? becomes true and every deref rethrows the same exception (ClojureScript leaves f set and reruns the body). The added exception field is why the delay macro passes three constructor arguments. The IPrintWithWriter stanza is dropped, so a delay prints through the default reference printer as Clojure does, including :failed."
+   :adaptation-path "docs/compatibility/patches/delay-type.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:delay?:10937"
+  {:source-sha256 "2c77b860cc60b12362342ca8de47e73859bd8ffbee199ecf623c6c6058d196fb" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:Delay:10919"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation."
+   :adaptation-path "docs/compatibility/patches/delay-predicate.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:force:10941"
+  {:source-sha256 "c62eb66a053ff4980982d0de311d16505cd2db9110fa972b96ed6e5b4fb5a9b7" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:delay?:10937"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation."
+   :adaptation-path "docs/compatibility/patches/delay-force.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:Cycle:5046"
+  {:source-sha256 "5729eb6e257341d68cf59f1cb3c6010dfa5327ed3d0892de421953dbab7c9c10" :visibility :public :arities nil
+   :dependencies ["runtime:IPending:814" "runtime:List:3209"]
+   :classification :portable :status :in-progress
+   :rationale "Complete pinned deftype, imported unchanged like Repeat; the clojure-test-suite atom namespace cycles symbols (#30)."
+   :adaptation-path nil :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
+  "runtime:cycle:5107"
+  {:source-sha256 "5aa73446244e86373b99c93d1e0ef531c9c5792a74c37a8810c64662441ac066" :visibility :public :arities {:fixed [1] :variadic-min nil}
+   :dependencies ["runtime:Cycle:5046"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation."
+   :adaptation-path "docs/compatibility/patches/cycle.json" :alternative nil
+   :tests ["crates/suss-cli/tests/portable_atoms.rs" "crates/suss-compile/tests/core_state.rs"]}
 }}

@@ -6,10 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn array-chunk
-  ([arr]
-     (ArrayChunk. arr 0 (alength arr)))
-  ([arr off]
-     (ArrayChunk. arr off (alength arr)))
-  ([arr off end]
-     (ArrayChunk. arr off end)))
+(defn- array-map-extend-kv [m k v]
+  (array-extend-kv (.-arr m) k v))

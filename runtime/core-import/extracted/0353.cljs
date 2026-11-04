@@ -6,14 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn zipmap
-  "Returns a map with the keys mapped to the corresponding vals."
-  [keys vals]
-    (loop [map (transient {})
-           ks (seq keys)
-           vs (seq vals)]
-      (if (and ks vs)
-        (recur (assoc! map (first ks) (first vs))
-               (next ks)
-               (next vs))
-        (persistent! map))))
+(defprotocol IComparable
+  "Protocol for values that can be compared."
+  (^number -compare [x y]
+    "Returns a negative number, zero, or a positive number when x is logically
+     'less than', 'equal to', or 'greater than' y."))

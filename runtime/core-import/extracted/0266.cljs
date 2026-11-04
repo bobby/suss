@@ -6,22 +6,92 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn vec
-  "Creates a new vector containing the contents of coll. JavaScript arrays
-  will be aliased and should not be modified."
-  [coll]
-  (cond
-    (map-entry? coll)
-    [(key coll) (val coll)]
+(deftype PersistentHashSet [meta hash-map ^:mutable __hash]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (keys [coll]
+    (es6-iterator (seq coll)))
+  (entries [coll]
+    (es6-set-entries-iterator (seq coll)))
+  (values [coll]
+    (es6-iterator (seq coll)))
+  (has [coll k]
+    (contains? coll k))
+  (forEach [coll f]
+    (doseq [[k v] coll]
+      (f v k)))
 
-    (vector? coll)
-    (with-meta coll nil)
+  ICloneable
+  (-clone [_] (PersistentHashSet. meta hash-map __hash))
 
-    (array? coll)
-    (.fromArray PersistentVector coll true)
+  IIterable
+  (-iterator [coll]
+    (HashSetIter. (-iterator hash-map)))
 
-    :else
-    (-persistent!
-      (reduce -conj!
-        (-as-transient (.-EMPTY PersistentVector))
-        coll))))
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta)
+      coll
+      (PersistentHashSet. new-meta hash-map __hash)))
+
+  IMeta
+  (-meta [coll] meta)
+
+  ICollection
+  (-conj [coll o]
+    (let [m (-assoc hash-map o nil)]
+      (if (identical? m hash-map)
+        coll
+        (PersistentHashSet. meta m nil))))
+
+  IEmptyableCollection
+  (-empty [coll] (-with-meta (.-EMPTY PersistentHashSet) meta))
+
+  IEquiv
+  (-equiv [coll other]
+    (and
+     (set? other)
+     (== (count coll) (count other))
+     ^boolean
+     (try
+       (reduce-kv
+         #(or (contains? other %2) (reduced false))
+         true hash-map)
+       (catch js/Error ex
+         false))))
+
+  IHash
+  (-hash [coll] (caching-hash coll hash-unordered-coll __hash))
+
+  ISeqable
+  (-seq [coll] (keys hash-map))
+
+  ICounted
+  (-count [coll] (-count hash-map))
+
+  ILookup
+  (-lookup [coll v]
+    (-lookup coll v nil))
+  (-lookup [coll v not-found]
+    (if-let [entry (-find hash-map v)]
+      (key entry)
+      not-found))
+
+  ISet
+  (-disjoin [coll v]
+    (let [m (-dissoc hash-map v)]
+      (if (identical? m hash-map)
+        coll
+        (PersistentHashSet. meta m nil))))
+
+  IFn
+  (-invoke [coll k]
+    (-lookup coll k))
+  (-invoke [coll k not-found]
+    (-lookup coll k not-found))
+
+  IEditableCollection
+  (-as-transient [coll] (TransientHashSet. (-as-transient hash-map))))

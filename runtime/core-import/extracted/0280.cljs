@@ -6,6 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn odd?
-  "Returns true if n is odd, throws an exception if n is not an integer"
-  [n] (not (even? n)))
+(defn ^array into-array
+  "Returns an array with components set to the values in aseq. Optional type
+  argument accepted for compatibility with Clojure."
+  ([aseq]
+     (into-array nil aseq))
+  ([type aseq]
+     (reduce (fn [a x] (.push a x) a) (array) aseq)))

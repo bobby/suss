@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn NaN?
-  "Returns true if num is NaN, else false"
-  [val]
-  (js/isNaN val))
+(defn chunk-cons [chunk rest]
+  (if (zero? (-count chunk))
+    rest
+    (ChunkedCons. chunk rest nil nil)))

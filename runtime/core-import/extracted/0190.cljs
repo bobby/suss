@@ -6,26 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype ArrayChunk [arr off end]
-  ICounted
-  (-count [_] (- end off))
-
-  IIndexed
-  (-nth [coll i]
-    (aget arr (+ off i)))
-  (-nth [coll i not-found]
-    (if (and (>= i 0) (< i (- end off)))
-      (aget arr (+ off i))
-      not-found))
-
-  IChunk
-  (-drop-first [coll]
-    (if (== off end)
-      (throw (js/Error. "-drop-first of empty chunk"))
-      (ArrayChunk. arr (inc off) end)))
-
-  IReduce
-  (-reduce [coll f]
-    (array-reduce arr f (aget arr off) (inc off)))
-  (-reduce [coll f start]
-    (array-reduce arr f start off)))
+(defn- array-extend-kv [arr k v]
+  (let [l (alength arr)
+        narr (make-array (+ l 2))]
+    (loop [i 0]
+      (when (< i l)
+        (aset narr i (aget arr i))
+        (recur (inc i))))
+    (aset narr l k)
+    (aset narr (inc l) v)
+    narr))

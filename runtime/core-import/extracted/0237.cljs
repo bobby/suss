@@ -6,14 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype HashMapIter [nil-val root-iter ^:mutable seen]
-  Object
-  (hasNext [_]
-    (or (not ^boolean seen) ^boolean (.hasNext root-iter)))
-  (next [_]
-    (if-not ^boolean seen
-      (do
-        (set! seen true)
-        (MapEntry. nil nil-val nil))
-      (.next root-iter)))
-  (remove [_] (js/Error. "Unsupported operation")))
+(defn- bitpos [hash shift]
+  (bit-shift-left 1 (mask hash shift)))

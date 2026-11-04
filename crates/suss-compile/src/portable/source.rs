@@ -157,7 +157,7 @@ fn apply_requirement(
     phase: Phase,
     requirement: &Requirement<'_>,
 ) -> Result<(), Diagnostic> {
-    let namespace = symbol(requirement.namespace)?;
+    let namespace = super::resolve::required(symbol(requirement.namespace)?);
     if !env.has_namespace(phase, namespace) {
         return Err(error(
             requirement.namespace,
@@ -385,7 +385,7 @@ pub(crate) fn namespace(
             }
             Clause::Macros(requirements) => {
                 for requirement in requirements {
-                    let namespace = symbol(requirement.namespace)?;
+                    let namespace = super::resolve::required(symbol(requirement.namespace)?);
                     let exports = expander.load_macro_namespace_with_policy(
                         namespace,
                         requirement.reload,

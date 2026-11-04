@@ -6,10 +6,23 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn remove
-  "Returns a lazy sequence of the items in coll for which
-  (pred item) returns logical false. pred must be free of side-effects.
-  Returns a transducer when no collection is provided."
-  ([pred] (filter (complement pred)))
-  ([pred coll]
-     (filter (complement pred) coll)))
+(deftype IntegerRangeChunk [start step count]
+  ICounted
+  (-count [coll] count)
+
+  ISeq
+  (-first [coll] start)
+
+  IIndexed
+  (-nth [coll i]
+    (+ start (* i step)))
+  (-nth [coll i not-found]
+    (if (and (>= i 0) (< i count))
+      (+ start (* i step))
+      not-found))
+
+  IChunk
+  (-drop-first [coll]
+    (if (<= count 1)
+      (throw (js/Error. "-drop-first of empty chunk"))
+      (IntegerRangeChunk. (+ start step) step (dec count)))))

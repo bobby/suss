@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "5aa73446244e86373b99c93d1e0ef531c9c5792a74c37a8810c64662441ac066",
+  "replacement": "(def cycle\n  \"Returns a lazy (infinite!) sequence of repetitions of the items in coll.\"\n  (fn [coll] (if-let [vals (seq coll)]\n           (Cycle. nil vals nil vals nil)\n           (.-EMPTY List))))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation."
+}

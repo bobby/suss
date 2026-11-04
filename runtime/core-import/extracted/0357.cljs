@@ -6,12 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn to-array
-  "Returns an array containing the contents of coll."
-  [coll]
-  (let [ary (array)]
-    (loop [s (seq coll)]
-      (if-not (nil? s)
-        (do (. ary push (first s))
-            (recur (next s)))
-        ary))))
+(defn vary-meta
+ "Returns an object of the same type and value as obj, with
+  (apply f (meta obj) args) as its metadata."
+  ([obj f]
+   (with-meta obj (f (meta obj))))
+  ([obj f a]
+   (with-meta obj (f (meta obj) a)))
+  ([obj f a b]
+   (with-meta obj (f (meta obj) a b)))
+  ([obj f a b c]
+   (with-meta obj (f (meta obj) a b c)))
+  ([obj f a b c d]
+   (with-meta obj (f (meta obj) a b c d)))
+  ([obj f a b c d & args]
+   (with-meta obj (apply f (meta obj) a b c d args))))

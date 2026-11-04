@@ -6,8 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn quot
-  "quot[ient] of dividing numerator by denominator."
-  [n d]
-  (let [rem (js-mod n d)]
-    (fix (/ (- n rem) d))))
+(defn- ^seq next*
+  "Internal. DO NOT USE! Next without the nil? check."
+  [coll]
+  (if (implements? INext coll)
+    (-next ^not-native coll)
+    (seq (rest coll))))

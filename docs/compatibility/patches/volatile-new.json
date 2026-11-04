@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "bf8d96001723c7dde526ea7dbd4bb49205b3a55a73cf3497b0e2c622ef997d39",
+  "replacement": "(def volatile!\n  \"Creates and returns a Volatile with an initial value of val.\"\n  (fn [val]\n    (Volatile. val)))",
+  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation."
+}

@@ -6,10 +6,33 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn butlast
-  "Return a seq of all but the last item in coll, in linear time"
-  [s]
-  (loop [ret [] s s]
-    (if (next s)
-      (recur (conj ret (first s)) (next s))
-      (seq ret))))
+(defn drop
+  "Returns a laziness-preserving sequence of all but the first n items in coll.
+  Returns a stateful transducer when no collection is provided."
+  ([n]
+   {:pre [(number? n)]}
+     (fn [rf]
+       (let [na (volatile! n)]
+         (fn
+           ([] (rf))
+           ([result] (rf result))
+           ([result input]
+              (let [n @na]
+                (vswap! na dec)
+                (if (pos? n)
+                  result
+                  (rf result input))))))))
+  ([n coll]
+   {:pre [(number? n)]}
+     (if (implements? IDrop coll)
+       (or
+         (if (pos? n)
+           (-drop coll (Math/ceil n))
+           (seq coll))
+         ())
+       (let [step (fn [n coll]
+                    (let [s (seq coll)]
+                      (if (and (pos? n) s)
+                        (recur (dec n) (rest s))
+                        s)))]
+         (lazy-seq (step n coll))))))

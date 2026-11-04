@@ -6,9 +6,31 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol INamed
-  "Protocol for adding a name."
-  (^string -name [x]
-    "Returns the name String of x.")
-  ( ^{:tag #{string clj-nil}}-namespace [x]
-    "Returns the namespace String of x."))
+(deftype Atom [state meta validator watches]
+  Object
+  (equiv [this other]
+    (-equiv this other))
+
+  IAtom
+
+  IEquiv
+  (-equiv [o other] (identical? o other))
+
+  IDeref
+  (-deref [_] state)
+
+  IMeta
+  (-meta [_] meta)
+
+  IWatchable
+  (-notify-watches [this oldval newval]
+    (doseq [[key f] watches]
+      (f key this oldval newval)))
+  (-add-watch [this key f]
+    (set! (.-watches this) (assoc watches key f))
+    this)
+  (-remove-watch [this key]
+    (set! (.-watches this) (dissoc watches key)))
+
+  IHash
+  (-hash [this] (goog/getUid this)))

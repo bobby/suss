@@ -6,19 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn atom
-  "Creates and returns an Atom with an initial value of x and zero or
-  more options (in any order):
-
-  :meta metadata-map
-
-  :validator validate-fn
-
-  If metadata-map is supplied, it will become the metadata on the
-  atom. validate-fn must be nil or a side-effect-free fn of one
-  argument, which will be passed the intended new state on any state
-  change. If the new state is unacceptable, the validate-fn should
-  return false or throw an Error.  If either of these error conditions
-  occur, then the value of the atom will not change."
-  ([x] (Atom. x nil nil nil))
-  ([x & {:keys [meta validator]}] (Atom. x meta validator nil)))
+(defprotocol ISwap
+  "Protocol for adding swapping functionality."
+  (-swap! [o f] [o f a] [o f a b] [o f a b xs]
+    "Swaps the value of o to be (apply f current-value-of-atom args)."))

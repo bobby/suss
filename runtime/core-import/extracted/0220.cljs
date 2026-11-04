@@ -6,8 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- remove-pair [arr i]
-  (let [new-arr (make-array (- (alength arr) 2))]
-    (array-copy arr 0 new-arr 0 (* 2 i))
-    (array-copy arr (* 2 (inc i)) new-arr (* 2 i) (- (alength new-arr) (* 2 i)))
-    new-arr))
+(defn assoc!
+  "When applied to a transient map, adds mapping of key(s) to
+  val(s). When applied to a transient vector, sets the val at index.
+  Note - index must be <= (count vector). Returns coll."
+  ([tcoll key val]
+    (-assoc! tcoll key val))
+  ([tcoll key val & kvs]
+    (let [ntcoll (-assoc! tcoll key val)]
+      (if kvs
+        (recur ntcoll (first kvs) (second kvs) (nnext kvs))
+        ntcoll))))

@@ -6,6 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IFind
-  "Protocol for implementing entry finding in collections."
-  (-find [coll k] "Returns the map entry for key, or nil if key not present."))
+(defn vreset!
+  "Sets the value of volatile to newval without regard for the
+   current value. Returns newval."
+  [vol newval]  (-vreset! vol newval))

@@ -6,10 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(def
-  ^{:dynamic true
-    :doc "When set to logical true, objects will be printed in a way that preserves
-  their type when read in later.
-
-  Defaults to false."}
-  *print-dup* false)
+(defn integer?
+  "Returns true if n is a JavaScript number with no decimal part."
+  [n]
+  (and (number? n)
+       (not (js/isNaN n))
+       (not (identical? n js/Infinity))
+       (== (js/parseFloat n) (js/parseInt n 10))))

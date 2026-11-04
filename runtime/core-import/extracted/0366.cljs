@@ -6,26 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- ci-reduce
-  "Accepts any collection which satisfies the ICount and IIndexed protocols and
-reduces them without incurring seq initialization"
-  ([^not-native cicoll f]
-     (let [cnt (-count cicoll)]
-       (if (zero? cnt)
-         (f)
-         (loop [val (-nth cicoll 0), n 1]
-           (if (< n cnt)
-             (let [nval (f val (-nth cicoll n))]
-               (if (reduced? nval)
-                 @nval
-                 (recur nval (inc n))))
-             val)))))
-  ([^not-native cicoll f val]
-     (let [cnt (-count cicoll)]
-       (loop [val val, n 0]
-         (if (< n cnt)
-           (let [nval (f val (-nth cicoll n))]
-             (if (reduced? nval)
-               @nval
-               (recur nval (inc n))))
-           val)))))
+(defn update
+  "'Updates' a value in an associative structure, where k is a
+  key and f is a function that will take the old value
+  and any supplied args and return the new value, and returns a new
+  structure.  If the key does not exist, nil is passed as the old value."
+  ([m k f]
+   (assoc m k (f (get m k))))
+  ([m k f x]
+   (assoc m k (f (get m k) x)))
+  ([m k f x y]
+   (assoc m k (f (get m k) x y)))
+  ([m k f x y z]
+   (assoc m k (f (get m k) x y z)))
+  ([m k f x y z & more]
+   (assoc m k (apply f (get m k) x y z more))))

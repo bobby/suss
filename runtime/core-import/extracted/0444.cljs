@@ -6,21 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Single [^:mutable val]
-  Object
-  (add [this o]
-    (if (identical? val NONE)
-      (do
-        (set! val o)
-        this)
-      (Many. #js [val o])))
-  (remove [this]
-    (if (identical? val NONE)
-      (throw (js/Error. (str_ "Removing object from empty buffer")))
-      (let [ret val]
-        (set! val NONE)
-        ret)))
-  (isEmpty [this]
-    (identical? val NONE))
-  (toString [this]
-    (str_ "Single: " val)))
+(defn rem
+  "remainder of dividing numerator by denominator."
+  [n d]
+  (let [q (quot n d)]
+    (- n (* d q))))

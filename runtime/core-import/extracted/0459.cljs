@@ -6,7 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn tagged-literal?
-  "Return true if the value is the data representation of a tagged literal"
-  [value]
-  (instance? TaggedLiteral value))
+(deftype Many [vals]
+  Object
+  (add [this o]
+    (.push vals o)
+    this)
+  (remove [this]
+    (.shift vals))
+  (isEmpty [this]
+    (zero? (.-length vals)))
+  (toString [this]
+    (str_ "Many: " vals)))

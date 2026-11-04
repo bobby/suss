@@ -1,0 +1,71 @@
+# This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+# If a copy of the MPL was not distributed with this file, You can obtain one at
+# https://mozilla.org/MPL/2.0/. Adapts jank-lang/clojure-test-suite for the Suss harness:
+# :suss branches select the Clojure assertions for atom options (#30). Clojure
+# rejects non-map :meta and validates the initial value (CLJS-3447); pinned
+# ClojureScript accepts both. The ratio 111/7 in an unselected branch is replaced
+# by the ClojureScript branch's string, since the Suss reader has no ratios. Clojure
+# governs, and the recorded observations are corrected in
+# tests/oracle/clojure-test-suite-corrections.json.
+--- a/test/clojure/core_test/atom.cljc
++++ b/test/clojure/core_test/atom.cljc
+@@ -27,13 +27,16 @@
+         (is (= {:a "a"} (meta (atom nil :meta (array-map :a "a"))))))
+       (when-var-exists clojure.core/hash-map
+         (is (= {:a "a"} (meta (atom nil :meta (hash-map :a "a"))))))
+-      #?(:lpy (is (= 5 (meta (atom nil :meta 5))))
++      #?(:suss (is (p/thrown? (atom nil :meta 5)))
++         :lpy (is (= 5 (meta (atom nil :meta 5))))
+          :cljs (is (= 5 (meta (atom nil :meta 5))))
+          :default (is (p/thrown? (atom nil :meta 5))))
+-      #?(:lpy (is (= #{} (meta (atom nil :meta #{}))))
++      #?(:suss (is (p/thrown? (atom nil :meta #{})))
++         :lpy (is (= #{} (meta (atom nil :meta #{}))))
+          :cljs (is (= #{} (meta (atom nil :meta #{}))))
+          :default (is (p/thrown? (atom nil :meta #{}))))
+-      #?(:lpy (is (= [] (meta (atom nil :meta (vector)))))
++      #?(:suss (is (p/thrown? (atom nil :meta (vector))))
++         :lpy (is (= [] (meta (atom nil :meta (vector)))))
+          :cljs (is (= [] (meta (atom nil :meta (vector)))))
+          :default (is (p/thrown? (atom nil :meta (vector))))))
+ 
+@@ -73,21 +76,25 @@
+           (is (= 3 (deref atm)))))
+ 
+       (testing "always-falsey validator can't initialize atom"
+-        #?(:cljs (testing "Broken but current behavior due to CLJS-3447"
++        #?(:suss (is (p/thrown? (atom {} :validator (constantly nil))))
++           :cljs (testing "Broken but current behavior due to CLJS-3447"
+                    ;; FIXME when https://clojure.atlassian.net/browse/CLJS-3447 is fixed
+                    (is (= {} (deref (atom {} :validator (constantly nil))))))
+            :default (is (p/thrown? (atom {} :validator (constantly nil)))))
+-        #?(:cljs (testing "Broken but current behavior due to CLJS-3447"
++        #?(:suss (is (p/thrown? (atom {} :validator (constantly false))))
++           :cljs (testing "Broken but current behavior due to CLJS-3447"
+                    ;; FIXME when https://clojure.atlassian.net/browse/CLJS-3447 is fixed
+                    (is (= {} (deref (atom {} :validator (constantly false))))))
+            :default (is (p/thrown? (atom {} :validator (constantly false)))))
+-        #?(:cljs (testing "Broken but current behavior due to CLJS-3447"
++        #?(:suss (is (p/thrown? (atom {} :validator #(when true (throw (ex-info "boom" {}))))))
++           :cljs (testing "Broken but current behavior due to CLJS-3447"
+                    ;; FIXME when https://clojure.atlassian.net/browse/CLJS-3447 is fixed
+                    (is (= {} (deref (atom {} :validator #(when true (throw (ex-info "boom" {}))))))))
+            :default (is (p/thrown? (atom {} :validator #(when true (throw (ex-info "boom" {}))))))))
+ 
+       (testing "conditional validators are obeyed at creation, swap! and reset!"
+-        #?(:cljs (testing "Broken but current behavior due to CLJS-3447"
++        #?(:suss (is (p/thrown? (atom #{} :validator (fn [v] (some string? v)))))
++           :cljs (testing "Broken but current behavior due to CLJS-3447"
+                    ;; FIXME when https://clojure.atlassian.net/browse/CLJS-3447 is fixed
+                    (is (= #{} (deref (atom #{} :validator (fn [v] (some string? v)))))))
+            :default (is (p/thrown? (atom #{} :validator (fn [v] (some string? v))))))
+@@ -129,8 +136,7 @@
+         "string"
+         1
+         1.0
+-        #?(:cljs "cljs is the only (?) Clojure dialect that doesn't support ratios"
+-           :default 111/7)
++        "cljs is the only (?) Clojure dialect that doesn't support ratios"
+         \newline
+         nil
+         true

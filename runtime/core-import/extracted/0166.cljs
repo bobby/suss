@@ -6,7 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn val
-  "Returns the value in the map entry."
-  [map-entry]
-  (-val map-entry))
+(defn- tv-pop-tail [tv level node]
+  (let [node   (tv-ensure-editable (.. tv -root -edit) node)
+        subidx (bit-and (bit-shift-right-zero-fill (- (.-cnt tv) 2) level) 0x01f)]
+    (cond
+      (> level 5) (let [new-child (tv-pop-tail
+                                   tv (- level 5) (pv-aget node subidx))]
+                    (if (and (nil? new-child) (zero? subidx))
+                      nil
+                      (do (pv-aset node subidx new-child)
+                          node)))
+      (zero? subidx) nil
+      :else (do (pv-aset node subidx nil)
+                node))))

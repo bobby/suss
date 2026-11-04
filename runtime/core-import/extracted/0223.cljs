@@ -6,13 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- edit-and-set
-  ([inode edit i a]
-     (let [editable (.ensure-editable inode edit)]
-       (aset (.-arr editable) i a)
-       editable))
-  ([inode edit i a j b]
-     (let [editable (.ensure-editable inode edit)]
-       (aset (.-arr editable) i a)
-       (aset (.-arr editable) j b)
-       editable)))
+(defn every?
+  "Returns true if (pred x) is logical true for every x in coll, else
+  false."
+  [pred coll]
+  (cond
+   (nil? (seq coll)) true
+   (pred (first coll)) (recur pred (next coll))
+   :else false))

@@ -6,11 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn symbol-identical?
-  "Efficient test to determine that two symbols are identical."
-  [x y]
-  (if (identical? x y)
-    true
-    (if (and (symbol? x) (symbol? y))
-      (identical? (.-str x) (.-str y))
-      false)))
+(deftype Volatile [^:mutable state]
+  IVolatile
+  (-vreset! [_ new-state]
+    (set! state new-state))
+
+  IDeref
+  (-deref [_] state))

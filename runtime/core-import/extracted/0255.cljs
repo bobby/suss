@@ -6,16 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn disj
-  "disj[oin]. Returns a new set of the same (hashed/sorted) type, that
-  does not contain key(s)."
-  ([coll] coll)
-  ([coll k]
-    (when-not (nil? coll)
-      (-disjoin coll k)))
-  ([coll k & ks]
-    (when-not (nil? coll)
-      (let [ret (disj coll k)]
-        (if ks
-          (recur ret (first ks) (next ks))
-          ret)))))
+(defn ^boolean not=
+  "Same as (not (= obj1 obj2))"
+  ([x] false)
+  ([x y] (not (= x y)))
+  ([x y & more]
+   (not (apply = x y more))))

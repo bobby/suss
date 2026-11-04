@@ -6,10 +6,15 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- array-index-of-identical? [arr k]
-  (let [len (alength arr)]
-    (loop [i 0]
-      (cond
-        (<= len i) -1
-        (identical? k (aget arr i)) i
-        :else (recur (+ i 2))))))
+(defn conj!
+  "Adds val to the transient collection, and return tcoll. The 'addition'
+  may happen at different 'places' depending on the concrete type."
+  ([] (transient []))
+  ([tcoll] tcoll)
+  ([tcoll val]
+    (-conj! tcoll val))
+  ([tcoll val & vals]
+    (let [ntcoll (-conj! tcoll val)]
+      (if vals
+        (recur ntcoll (first vals) (next vals))
+        ntcoll))))

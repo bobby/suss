@@ -6,14 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn group-by
-  "Returns a map of the elements of coll keyed by the result of
-  f on each element. The value at each key will be a vector of the
-  corresponding elements, in the order they appeared in coll."
-  [f coll]
-  (persistent!
-    (reduce
-      (fn [ret x]
-        (let [k (f x)]
-          (assoc! ret k (conj (get ret k []) x))))
-      (transient {}) coll)))
+(deftype ChunkBuffer [^:mutable buf ^:mutable end]
+  Object
+  (add [_ o]
+    (aset buf end o)
+    (set! end (inc end)))
+
+  (chunk [_]
+    (let [ret (ArrayChunk. buf 0 end)]
+      (set! buf nil)
+      ret))
+
+  ICounted
+  (-count [_] end))
