@@ -10,8 +10,9 @@ ClojureScript source with patches where Clojure differs; each patch is listed in
 namespace that `alias` names in the current namespace. The reader keeps them as
 `AutoKeyword` forms. After a fragment's `ns` form is applied, and before macros
 see the forms, the compiler resolves them, as Clojure's reader does when it reads
-each top-level form. They resolve inside quoted forms, metadata and macro
-arguments too.
+each top-level form. They resolve inside quoted forms, metadata (including
+`^::k`), macro arguments and `defmacro` bodies, which use the runtime
+namespace's aliases since Clojure's reader has one alias table.
 
 | Case | Result |
 | --- | --- |
@@ -27,6 +28,12 @@ Two differences from Clojure remain:
   fails.
 - Aliases come from the fragment's `ns` form. A top-level `require` later in the
   same fragment does not add aliases for the forms before the next fragment.
+- Forms removed by `#_` or an unselected reader-conditional branch are not
+  resolved, so an unknown alias there is not an error. Clojure's reader reads a
+  discarded form, and throws "Invalid token" for it.
+- Literal maps and sets are not checked for duplicate keys, so
+  `{::a 1 :user/a 2}` keeps the last entry where Clojure throws "Duplicate key".
+  That is true of every literal, not only resolved keywords.
 
 The EDN readers (`suss.edn`, `clojure.edn/read-string`) reject auto-resolved
 keywords, as Clojure's EDN reader does; `read-string` resolves them against
@@ -55,9 +62,10 @@ and interfaces; that part of the suite is skipped, as it is for ClojureScript
 (CLJS-3464).
 
 `underive` uses `interleave`, `interpose`, `flatten` (with `tree-seq`) and
-`partition`, imported with this work. `partition` follows Clojure: each
-partition is realized with `doall`. It steps with `drop` where Clojure uses
-`nthrest`, which Suss lacks; the elements are the same.
+`partition`, imported with this work with `nthrest`. `partition` follows
+Clojure: each partition is realized with `doall`, and it steps with the eager
+`nthrest`, so skipped elements are realized with the partition before them.
+`nthrest` is Clojure 1.12's, including its `IDrop` path.
 
 `ident?`, `simple-ident?`, `qualified-ident?`, `simple-symbol?`,
 `qualified-symbol?`, `simple-keyword?` and `qualified-keyword?` are imported too.

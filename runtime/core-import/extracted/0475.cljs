@@ -6,4 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(def ^:private EMPTY (Empty.))
+(deftype Empty []
+  Object
+  (add [this o]
+    (Single. o))
+  (remove [this]
+    (throw (js/Error. (str_ "Removing object from empty buffer"))))
+  (isEmpty [this]
+    true)
+  (toString [this]
+    "Empty"))

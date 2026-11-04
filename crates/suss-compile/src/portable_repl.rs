@@ -477,6 +477,14 @@ pub(crate) fn prepare_script_compiled_batch(
                         .map_err(SessionError::Compile)?;
                     staged_macros.push((macros.binding_checkpoint()?, global));
                 }
+                // Auto-resolved keywords use the runtime namespace's aliases,
+                // which the macro session does not see (#30).
+                crate::portable::source::resolve_auto_keywords(
+                    std::slice::from_mut(&mut form),
+                    &snapshot.environment,
+                    snapshot.phase(),
+                )
+                .map_err(SessionError::Compile)?;
                 macros.enter_namespace(namespace)?;
                 prepared.push(PreparedScript::Macro(
                     macros

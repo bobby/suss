@@ -6,7 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(def
-  ^{:private true
-    :jsdoc ["@type {*}"]}
-  -global-hierarchy nil)
+(defn make-hierarchy
+  "Creates a hierarchy object for use with derive, isa? etc."
+  [] {:parents {} :descendants {} :ancestors {}})

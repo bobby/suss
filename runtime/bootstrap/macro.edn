@@ -541,6 +541,7 @@
          "suss.bindings.macro:suss.core/ns-refers"
          "suss.bindings.macro:suss.core/ns-refers-slot"
          "suss.bindings.macro:suss.core/nth"
+         "suss.bindings.macro:suss.core/nthrest"
          "suss.bindings.macro:suss.core/object-array"
          "suss.bindings.macro:suss.core/object-string"
          "suss.bindings.macro:suss.core/object?"
@@ -1369,6 +1370,7 @@
          "suss.bindings.macro:suss.internal.core-link/ns-refers"
          "suss.bindings.macro:suss.internal.core-link/ns-refers-slot"
          "suss.bindings.macro:suss.internal.core-link/nth"
+         "suss.bindings.macro:suss.internal.core-link/nthrest"
          "suss.bindings.macro:suss.internal.core-link/object-array"
          "suss.bindings.macro:suss.internal.core-link/object-string"
          "suss.bindings.macro:suss.internal.core-link/object?"
@@ -1898,13 +1900,13 @@
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
          "suss.bindings.macro:suss.internal.reify/t-reify-3435-10867"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "e13023d850f92985ae97005b2d3fc606a88a054a23398d6ba7f5301357d09547",
- :dependency-graph-sha256 "5022c79e0c6bf95e00f61997c96ebece24ced7f87bc13057c5dfb1d0c9089361",
+ :compiler-source-sha256 "2da854b42b1c71e81e19eadec7b172587d17affeaee36d54dd61539ef64f558e",
+ :dependency-graph-sha256 "0641647b8aa19bb560cd72dcb35018c890ebb7d1e5b2fb4d60b1ef7d53eac389",
  :flags [],
  :format-version 2,
  :phase "macro",
  :runtime-abi 2,
- :source-sha256 "eebc7c5bcfed20e41f79dac5ea1b6ecdeb44526af401d202bd5534902e8b98b0",
+ :source-sha256 "56ef3758f6504a51717a9ebaed250fe62c82bdfed988adf5696e97ab86d5f94d",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "a56c34b46871e2f6e22e3f02131c00a782a41f703bfb47189f3106c9aa267af2",
+ :wasm-sha256 "c16c108641c87017e76f7a1c2b0aedcebe6492fb5ed8a2a51c7f5b06fcb8c86b",
  :wasm-tools "0.258.0"}

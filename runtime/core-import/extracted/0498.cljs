@@ -6,15 +6,22 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn parents
-  "Returns the immediate parents of tag, either via a JavaScript type
-  inheritance relationship or a relationship established via derive. h
-  must be a hierarchy obtained from make-hierarchy, if not supplied
-  defaults to the global hierarchy"
-  ([tag] (parents @(get-global-hierarchy) tag))
-  ([h tag]
-   (not-empty
-     (let [tp (get (:parents h) tag)]
-       (if (js-fn? tag)
-         (into (set (bases tag)) tp)
-         tp)))))
+(defn ^boolean isa?
+  "Returns true if (= child parent), or child is directly or indirectly derived from
+  parent, either via a JavaScript type inheritance relationship or a
+  relationship established via derive. h must be a hierarchy obtained
+  from make-hierarchy, if not supplied defaults to the global
+  hierarchy"
+  ([child parent] (isa? @(get-global-hierarchy) child parent))
+  ([h child parent]
+   (or (= child parent)
+       (and (js-fn? parent) (js-fn? child)
+            (instance? parent child))
+       (contains? ((:ancestors h) child) parent)
+       (and (js-fn? child) (some #(contains? ((:ancestors h) %) parent) (supers child)))
+       (and (vector? parent) (vector? child)
+            (== (count parent) (count child))
+            (loop [ret true i 0]
+              (if (or (not ret) (== i (count parent)))
+                ret
+                (recur (isa? h (child i) (parent i)) (inc i))))))))

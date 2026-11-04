@@ -10,7 +10,7 @@ pub mod ir;
 pub mod modules;
 pub mod resolve;
 pub mod persistent;
-mod source;
+pub(crate) mod source;
 mod stdlib;
 mod origin;
 pub mod syntax_quote;

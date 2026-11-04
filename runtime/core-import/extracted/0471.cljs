@@ -6,14 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Many [vals]
-  Object
-  (add [this o]
-    (.push vals o)
-    this)
-  (remove [this]
-    (.shift vals))
-  (isEmpty [this]
-    (zero? (.-length vals)))
-  (toString [this]
-    (str_ "Many: " vals)))
+(defn butlast
+  "Return a seq of all but the last item in coll, in linear time"
+  [s]
+  (loop [ret [] s s]
+    (if (next s)
+      (recur (conj ret (first s)) (next s))
+      (seq ret))))

@@ -280,6 +280,11 @@ fn auto_resolved_keywords_use_the_current_namespace_and_its_aliases() {
     session.setup("(ns app.kw (:require [lib.kw :as lib]))");
     check(&mut session, "[::a ::lib/b '::c {::d [::e]} (meta ^{::f 1} [])]",
         "[:app.kw/a :lib.kw/b :app.kw/c {:app.kw/d [:app.kw/e]} {:app.kw/f 1}]");
+    // Shorthand metadata and macro bodies resolve them too; the macro session
+    // reads the runtime namespace's aliases, as Clojure's reader has one table.
+    check(&mut session, "[(meta ^::t []) (meta ^::lib/t [])]", "[{:app.kw/t true} {:lib.kw/t true}]");
+    session.setup("(defmacro kws [] [::k ::lib/k '::q])");
+    check(&mut session, "(kws)", "[:app.kw/k :lib.kw/k :app.kw/q]");
     // Clojure resolves `::alias/name` only through an alias of the current namespace.
     assert!(thrown_reading(&mut session, "::nope/x").contains("Invalid token: ::nope/x"));
     assert!(thrown_reading(&mut session, "::app.kw/x").contains("Invalid token: ::app.kw/x"));
@@ -360,6 +365,13 @@ fn sequence_helpers_and_ident_predicates_follow_clojure() {
         "[(1 :x 2 :x 3) () [1 :x 2 :x 3]]");
     check(&mut session, "[(flatten [1 [2 '(3 [4])] 5]) (flatten nil) (flatten {:a 1}) (tree-seq vector? seq [1 [2]])]",
         "[(1 2 3 4 5) () () ([1 [2]] 1 [2] 2)]");
+    // partition steps with the eager nthrest, as Clojure's does, so a skipped
+    // element is realized with the partition before it.
+    check(&mut session, "(let [log (atom [])]
+                           (first (partition 1 3 (map (fn [i] (swap! log conj i) i) (list 0 1 2 3 4 5))))
+                           @log)", "[0 1 2]");
+    check(&mut session, "[(nthrest [1 2 3] 2) (nthrest [1 2] 0) (nthrest [1 2 3] 5) (nthrest nil 2) (nthrest (range 10) 8)]",
+        "[(3) [1 2] () nil (8 9)]");
     check(&mut session, "[(partition 2 [1 2 3 4 5]) (partition 2 1 [1 2 3]) (partition 2 2 [:p] [1 2 3]) (partition 3 3 [] [1 2 3 4])]",
         "[((1 2) (3 4)) ((1 2) (2 3)) ((1 2) (3 :p)) ((1 2 3) (4))]");
     check(&mut session, "(map (juxt ident? simple-ident? qualified-ident? simple-keyword? qualified-keyword? simple-symbol? qualified-symbol?)

@@ -6,39 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype TransformerIterator [^:mutable buffer ^:mutable _next ^:mutable completed ^:mutable xf sourceIter multi]
-  Object
-  (step [this]
-    (if-not (identical? _next NONE)
-      true
-      (loop []
-        (if (identical? _next NONE)
-          (if ^boolean (.isEmpty buffer)
-            (if ^boolean completed
-              false
-              (if ^boolean (.hasNext sourceIter)
-                (let [iter (if ^boolean multi
-                             (apply xf (cons nil (.next sourceIter)))
-                             (xf nil (.next sourceIter)))]
-                  (when (reduced? iter)
-                    (xf nil)
-                    (set! completed true))
-                  (recur))
-                (do
-                  (xf nil)
-                  (set! completed true)
-                  (recur))))
+(defn- chunkIteratorSeq [iter]
+  (lazy-seq
+    (when ^boolean (.hasNext iter)
+      (let [arr (array)]
+        (loop [n 0]
+          (if (and (.hasNext iter) (< n 32))
             (do
-              (set! _next (.remove buffer))
-              (recur)))
-          true))))
-  (hasNext [this]
-    (.step this))
-  (next [this]
-    (if ^boolean (.hasNext this)
-      (let [ret _next]
-        (set! _next NONE)
-        ret)
-      (throw (js/Error. "No such element"))))
-  (remove [_]
-    (js/Error. "Unsupported operation")))
+              (aset arr n (.next iter))
+              (recur (inc n)))
+            (chunk-cons (array-chunk arr 0 n) (chunkIteratorSeq iter))))))))

@@ -6,6 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn make-hierarchy
-  "Creates a hierarchy object for use with derive, isa? etc."
-  [] {:parents {} :descendants {} :ancestors {}})
+(defn tagged-literal
+  "Construct a data representation of a tagged literal from a
+  tag symbol and a form."
+  [tag form]
+  {:pre [(symbol? tag)]}
+  (TaggedLiteral. tag form))

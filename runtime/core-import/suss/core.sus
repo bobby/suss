@@ -8577,6 +8577,19 @@ reduces them without incurring seq initialization"
     (filter (complement sequential?)
             (rest (tree-seq sequential? seq x)))))
 
+(def nthrest
+  "Returns the nth rest of coll, coll when n is 0."
+  (fn [coll n]
+    (if (implements? IDrop coll)
+      (if (pos? n)
+        (or (-drop coll (suss.bootstrap/f64-ceil n)) ())
+        coll)
+      (loop [n n xs coll]
+        (let [s (and (pos? n) (seq xs))]
+          (if s
+            (recur (dec n) (rest s))
+            xs))))))
+
 (def partition
   "Returns a lazy sequence of lists of n items each, at offsets step
   apart. If step is not supplied, defaults to n, i.e. the partitions
@@ -8592,14 +8605,14 @@ reduces them without incurring seq initialization"
         (when s
           (let [p (doall (take n s))]
             (when (= n (count p))
-              (cons p (partition n step (drop step s)))))))) nil nil))
+              (cons p (partition n step (nthrest s step)))))))) nil nil))
     ([n step pad coll]
      (new LazySeq nil (fn* []
       (let [s (seq coll)]
         (when s
           (let [p (doall (take n s))]
             (if (= n (count p))
-              (cons p (partition n step pad (drop step s)))
+              (cons p (partition n step pad (nthrest s step)))
               (list (take n (concat p pad)))))))) nil nil))))
 
 (def ^{:doc "Returns a lazy sequence of the items in coll starting from the

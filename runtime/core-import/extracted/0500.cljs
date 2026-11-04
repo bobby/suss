@@ -6,14 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn descendants
-  "Returns the immediate and indirect children of tag, through a
-  relationship established via derive. h must be a hierarchy obtained
-  from make-hierarchy, if not supplied defaults to the global
-  hierarchy. Note: does not work on JavaScript type inheritance
-  relationships."
-  ([tag] (descendants @(get-global-hierarchy) tag))
+(defn ancestors
+  "Returns the immediate and indirect parents of tag, either via a JavaScript type
+  inheritance relationship or a relationship established via derive. h
+  must be a hierarchy obtained from make-hierarchy, if not supplied
+  defaults to the global hierarchy"
+  ([tag] (ancestors @(get-global-hierarchy) tag))
   ([h tag]
-   (if (js-fn? tag)
-     (throw (js/Error. "Can't get descendants of constructors"))
-     (not-empty (get (:descendants h) tag)))))
+   (not-empty
+     (let [ta (get (:ancestors h) tag)]
+       (if (js-fn? tag)
+         (let [superclasses (set (supers tag))]
+           (reduce into superclasses
+             (cons ta
+               (map #(get (:ancestors h) %) superclasses))))
+         ta)))))

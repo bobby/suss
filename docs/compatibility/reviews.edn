@@ -5613,9 +5613,9 @@
    :tests ["crates/suss-compile/tests/core_state.rs"]}
   "runtime:partition:5475"
   {:source-sha256 "ffe8b667365634206b08fda558ba16c0360f89aa774dd171b1f9c9960d0388b5" :visibility :public :arities {:fixed [2 3 4] :variadic-min nil}
-   :dependencies ["runtime:doall:10300"]
+   :dependencies ["runtime:doall:10300" "runtime:nthrest:2019"]
    :classification :adapted :status :in-progress
-   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation (#30). lazy-seq is written as its expansion, a LazySeq of a thunk, since core is compiled before the macro. Follows Clojure: each partition is realized with doall and compared with =, not ==. Clojure steps with nthrest, which Suss lacks; drop yields the same elements lazily."
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation (#30). lazy-seq is written as its expansion, a LazySeq of a thunk, since core is compiled before the macro. Follows Clojure: each partition is realized with doall, compared with =, not ==, and steps with the eager nthrest, not drop, so skipped elements are realized with each partition."
    :adaptation-path "docs/compatibility/patches/sequence-partition.json" :alternative nil
    :tests ["crates/suss-compile/tests/core_state.rs"]}
   "runtime:make-hierarchy:11256"
@@ -5687,5 +5687,12 @@
    :classification :adapted :status :in-progress
    :rationale "Expand the complete pinned defn to def/fn, retaining its documentation (#30). Follows Clojure, which reads each parents entry with key and val."
    :adaptation-path "docs/compatibility/patches/hierarchy-underive.json" :alternative nil
+   :tests ["crates/suss-compile/tests/core_state.rs"]}
+  "runtime:nthrest:2019"
+  {:source-sha256 "272d61bcb3a91a0bc48da823b3fba55ad05c0b24f979cac6636b08e9fa21dc55" :visibility :public :arities {:fixed [2] :variadic-min nil}
+   :dependencies ["runtime:IDrop:919"]
+   :classification :adapted :status :in-progress
+   :rationale "Expand the complete pinned defn to def/fn, retaining its documentation (#30). Clojure 1.12 also drops through IDrop; its if-let is written as let and if, returning the remaining coll when the walk stops, and Math/ceil is the native binary64 ceiling."
+   :adaptation-path "docs/compatibility/patches/sequence-nthrest.json" :alternative nil
    :tests ["crates/suss-compile/tests/core_state.rs"]}
 }}

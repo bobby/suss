@@ -2340,6 +2340,11 @@
       "patch": "docs/compatibility/patches/sequence-flatten.json"
     },
     {
+      "id": "runtime:nthrest:2019",
+      "source-sha256": "272d61bcb3a91a0bc48da823b3fba55ad05c0b24f979cac6636b08e9fa21dc55",
+      "patch": "docs/compatibility/patches/sequence-nthrest.json"
+    },
+    {
       "id": "runtime:partition:5475",
       "source-sha256": "ffe8b667365634206b08fda558ba16c0360f89aa774dd171b1f9c9960d0388b5",
       "patch": "docs/compatibility/patches/sequence-partition.json"

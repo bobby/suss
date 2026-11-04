@@ -6,7 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^boolean realized?
-  "Returns true if a value has been produced for a delay or lazy sequence."
+(defn force
+  "If x is a Delay, returns the (possibly cached) value of its expression, else returns x"
   [x]
-  (-realized? x))
+  (if (delay? x)
+    (deref x)
+    x))

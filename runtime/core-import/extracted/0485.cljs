@@ -6,12 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn object-array
-  "Creates an array of objects. Does not coerce array, provided for compatibility
+(defn int-array
+  "Creates an array of ints. Does not coerce array, provided for compatibility
   with Clojure."
   ([size-or-seq]
      (if (number? size-or-seq)
-       (object-array size-or-seq nil)
+       (int-array size-or-seq nil)
        (into-array size-or-seq)))
   ([size init-val-or-seq]
      (let [a (make-array size)]

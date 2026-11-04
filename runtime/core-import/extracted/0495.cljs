@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- get-global-hierarchy []
-  (when (nil? -global-hierarchy)
-    (set! -global-hierarchy (atom (make-hierarchy))))
-  -global-hierarchy)
+(def
+  ^{:private true
+    :jsdoc ["@type {*}"]}
+  -global-hierarchy nil)

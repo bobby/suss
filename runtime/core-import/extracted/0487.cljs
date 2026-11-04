@@ -6,6 +6,20 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn delay?
-  "returns true if x is a Delay created with delay"
-  [x] (instance? Delay x))
+(deftype Delay [^:mutable f ^:mutable value]
+  IDeref
+  (-deref [_]
+    (when f
+      (set! value (f))
+      (set! f nil))
+    value)
+
+  IPending
+  (-realized? [x]
+    (not f))
+
+  IPrintWithWriter
+  (-pr-writer [x writer opts]
+    (-write writer "#object[cljs.core.Delay ")
+    (pr-writer {:status (if (nil? f) :ready :pending), :val value} writer opts)
+    (-write writer "]")))

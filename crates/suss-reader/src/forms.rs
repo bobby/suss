@@ -905,7 +905,11 @@ impl Reader<'_, '_, '_> {
                 }
                 if !matches!(
                     metadata.kind,
-                    Kind::Keyword(_) | Kind::Symbol(_) | Kind::String(_) | Kind::Map(_)
+                    Kind::Keyword(_)
+                        | Kind::AutoKeyword(_)
+                        | Kind::Symbol(_)
+                        | Kind::String(_)
+                        | Kind::Map(_)
                 ) {
                     return Err(error(
                         metadata.span.clone(),

@@ -6,35 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn derive
-  "Establishes a parent/child relationship between parent and
-  tag. Parent must be a namespace-qualified symbol or keyword and
-  child can be either a namespace-qualified symbol or keyword or a
-  class. h must be a hierarchy obtained from make-hierarchy, if not
-  supplied defaults to, and modifies, the global hierarchy."
-  ([tag parent]
-   (assert (namespace parent))
-   (assert (or (js-fn? tag) (and (implements? INamed tag) (namespace tag))))
-   (swap-global-hierarchy! derive tag parent) nil)
-  ([h tag parent]
-   (assert (not= tag parent))
-   (assert (or (js-fn? tag) (implements? INamed tag)))
-   (assert (implements? INamed parent))
-   (let [tp (:parents h)
-         td (:descendants h)
-         ta (:ancestors h)
-         tf (fn [m source sources target targets]
-              (reduce (fn [ret k]
-                        (assoc ret k
-                               (reduce conj (get targets k #{}) (cons target (targets target)))))
-                      m (cons source (sources source))))]
-     (or
-      (when-not (contains? (tp tag) parent)
-        (when (contains? (ta tag) parent)
-          (throw (js/Error. (str_ tag "already has" parent "as ancestor"))))
-        (when (contains? (ta parent) tag)
-          (throw (js/Error. (str_ "Cyclic derivation:" parent "has" tag "as ancestor"))))
-        {:parents (assoc (:parents h) tag (conj (get tp tag #{}) parent))
-         :ancestors (tf (:ancestors h) tag td parent ta)
-         :descendants (tf (:descendants h) parent ta tag td)})
-      h))))
+(defn descendants
+  "Returns the immediate and indirect children of tag, through a
+  relationship established via derive. h must be a hierarchy obtained
+  from make-hierarchy, if not supplied defaults to the global
+  hierarchy. Note: does not work on JavaScript type inheritance
+  relationships."
+  ([tag] (descendants @(get-global-hierarchy) tag))
+  ([h tag]
+   (if (js-fn? tag)
+     (throw (js/Error. "Can't get descendants of constructors"))
+     (not-empty (get (:descendants h) tag)))))
