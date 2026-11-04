@@ -306,10 +306,6 @@
    "stage": "namespace",
    "diagnostic": "clojure.core-test.nthnext (Some(\"<root>/clojure/core_test/nthnext.cljc\")): Unresolved Runtime name nthnext at bytes 231..1069"
   },
-  "clojure.core-test.nthrest": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.nthrest (Some(\"<root>/clojure/core_test/nthrest.cljc\")): Unresolved Runtime name nthrest at bytes 231..1517"
-  },
   "clojure.core-test.num": {
    "stage": "read",
    "diagnostic": "clojure.core-test.num (Some(\"<root>/clojure/core_test/num.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 844..847"

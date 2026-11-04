@@ -92,7 +92,7 @@ double the expansion for each binding.
 - `cargo test -p suss-compile --lib doseq_validation` checks `doseq`'s messages
   and their `:macro-syntax-check` phase.
 - jank's clojure-test-suite: `derive`, `underive`, `parents`, `ancestors`,
-  `descendants`, `make-hierarchy`, `interleave`, `interpose`, `doseq` and
-  `mapcat` run and match the reviewed observations. Patch 0005 names a core type
+  `descendants`, `make-hierarchy`, `interleave`, `interpose`, `nthrest`, `doseq`
+  and `mapcat` run and match the reviewed observations. Patch 0005 names a core type
   where the hierarchy tests name a host class; one correction records Clojure's
   nil for the descendants of a protocol.

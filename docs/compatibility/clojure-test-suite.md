@@ -161,10 +161,11 @@ one new failure is `atom/test-atom#6`, a sorted map the test decoder cannot read
 yet. Patch 0004 selects the suite's Clojure assertions for atom options.
 
 After #30's auto-resolved keywords, hierarchies, `doseq` and `->>` (2026-11-03),
-the baseline records 1,616 host-decided passes, 53 guest-judged observations, 26
-failures and 4,159 assertions not executed because 158 namespaces fail to load.
+the baseline records 1,630 host-decided passes, 53 guest-judged observations, 26
+failures and 4,145 assertions not executed because 157 namespaces fail to load.
 Newly loading namespaces include `derive`, `underive`, `parents`, `ancestors`,
-`descendants`, `make-hierarchy`, `interleave`, `interpose`, `doseq` and `mapcat`.
+`descendants`, `make-hierarchy`, `interleave`, `interpose`, `nthrest`, `doseq` and
+`mapcat`.
 The three new failures, `interpose#4` and `mapcat#3` and `#12`, are values the
 test decoder cannot read yet; Suss judges each one a pass. Patch 0005 names a
 core type where the hierarchy tests name a host class. The keyword predicate
