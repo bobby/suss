@@ -528,3 +528,38 @@ fn defmulti_defines_once_and_methods_can_be_removed() {
     check(&mut session, "(plain 1)", ":one");
     check(&mut session, "(defmulti plain identity)", "nil");
 }
+
+#[test]
+fn defmulti_options_and_type_dispatch_follow_clojure() {
+    let mut session = Repl::new();
+    session.setup("(defmulti d \"doc\" {:added \"1\"} identity :default ::dd)
+                   (defmethod d ::dd [x] [:dd x])
+                   (defmulti dn identity :default nil)
+                   (defmethod dn nil [x] [:nil x])");
+    check(&mut session, "[(d 5) (dn 5) (dn nil)]", "[[:dd 5] [:nil 5] [:nil nil]]");
+    check(&mut session, "(= d (defmethod d 1 [_] 1))", "true");
+    // The global hierarchy is checked again after a derive.
+    session.setup("(defmulti g identity) (defmethod g ::gp [_] :gp)");
+    check(&mut session, "(try (g ::gc) (catch :default e (ex-message e)))",
+        "\"No method in multimethod 'g' for dispatch value: :user/gc\"");
+    session.setup("(derive ::gc ::gp)");
+    check(&mut session, "(g ::gc)", ":gp");
+    // A local of the same name does not hide the existing multimethod.
+    session.setup("(let [g 1] (defmulti g :other))");
+    check(&mut session, "(g ::gc)", ":gp");
+    // Types dispatch by identity, as Clojure's classes do.
+    session.setup("(deftype T [])
+                   (defmulti ty type)
+                   (defmethod ty (type \"\") [_] :string)
+                   (defmethod ty T [_] :t)");
+    check(&mut session, "[(ty \"s\") (ty (T.))]", "[:string :t]");
+    for (source, message) in [
+        ("(ty :k)", "No method in multimethod 'ty' for dispatch value: class suss.core.Keyword"),
+        // A host type has no class name yet, so it is printed (#302).
+        ("(ty 1)", "No method in multimethod 'ty' for dispatch value: #object[Number]"),
+    ] {
+        assert_eq!(printed(&mut session, &format!("(try {source} :returned (catch :default e (ex-message e)))")),
+            format!("{message:?}"), "{source}");
+    }
+}
+

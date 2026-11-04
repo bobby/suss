@@ -1099,6 +1099,7 @@ mod defmulti_validation_tests {
             ("(defmulti f identity :default)",
              "The syntax for defmulti has changed. Example: (defmulti name dispatch-fn :default dispatch-value)"),
             ("(defmulti f identity :hierarchy h :other 1)", "Only these options are valid: :default, :hierarchy"),
+            ("(defmulti f identity :default 1 :b)", "No value supplied for key: :b"),
         ] {
             let form = read_forms(source).unwrap().remove(0);
             let Kind::List(items) = &form.kind else { panic!("defmulti call") };

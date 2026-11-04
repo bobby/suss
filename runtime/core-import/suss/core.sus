@@ -9103,7 +9103,7 @@ reduces them without incurring seq initialization"
 
 (def ^:private find-and-cache-best-method
   (fn [name dispatch-val h method-table prefer-table default-dispatch-val]
-    (let [fmt (fn [v] (if (nil? v) "null" (str v)))
+    (let [fmt (fn [v] (if (nil? v) "null" (try (str v) (catch :default _ (pr-str v)))))
           best-entry (loop [entries (seq method-table) be nil]
                        (if entries
                          (let [e (first entries)
@@ -9126,7 +9126,7 @@ reduces them without incurring seq initialization"
   (fn [name dispatch-val]
     (throw (suss.bootstrap/error
              (str "No method in multimethod '" name "' for dispatch value: "
-                  ((fn [v] (if (nil? v) "null" (str v))) dispatch-val))))))
+                  ((fn [v] (if (nil? v) "null" (try (str v) (catch :default _ (pr-str v))))) dispatch-val))))))
 
 (deftype MultiFn [name dispatch-fn default-dispatch-val hierarchy
                   ^:mutable method-table ^:mutable prefer-table
@@ -9309,7 +9309,7 @@ reduces them without incurring seq initialization"
 
   (-prefer-method [mf dispatch-val-x dispatch-val-y]
     (when (prefers* @hierarchy dispatch-val-y dispatch-val-x prefer-table)
-      (let [fmt (fn [v] (if (nil? v) "null" (str v)))]
+      (let [fmt (fn [v] (if (nil? v) "null" (try (str v) (catch :default _ (pr-str v)))))]
         (throw (suss.bootstrap/error
                  (str "Preference conflict in multimethod '" name "': " (fmt dispatch-val-y)
                       " is already preferred to " (fmt dispatch-val-x))))))

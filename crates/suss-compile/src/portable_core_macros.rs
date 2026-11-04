@@ -80,8 +80,9 @@ pub(crate) const THREAD_LAST: &str = r#"
 // exceptions, as Clojure's Exception and IllegalArgumentException are. The
 // default hierarchy is the global hierarchy's reference, as #'global-hierarchy
 // is Clojure's. Clojure defines the multimethod only when its var has no root
-// or holds something else; `defonce` binds an unbound var first, so the
-// check is the same.
+// or holds something else; `defonce` binds an unbound var first, and the
+// check reads the var through its qualified name, so a local of the same
+// name is not seen.
 pub(crate) const DEFMULTI: &str = r##"
 (defmacro defmulti
   "Creates a new multimethod with the associated dispatch function.
@@ -139,7 +140,7 @@ pub(crate) const DEFMULTI: &str = r##"
         nil)
       `(do
          (defonce ~(with-meta mm-name nil) nil)
-         (when-not (instance? MultiFn ~mm-name)
+         (when-not (instance? MultiFn ~(symbol (str *ns*) (name mm-name)))
            (def ~mm-name
                 (new MultiFn ~(name mm-name) ~dispatch-fn ~default ~hierarchy
                      (hash-map) (hash-map) (hash-map) nil)))))))

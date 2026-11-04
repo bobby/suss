@@ -26,15 +26,25 @@ the dispatch value, as `MultiFn.getMethod` does:
 
 The method table and preferences are hash maps, as in Clojure, so `methods`
 and `prefers` return hash maps and candidates are visited in hash order. That
-order names the two dispatch values in the "Multiple methods" error. Suss lays
-out hash maps as Clojure does, so the order should be Clojure's; that is by
-construction, as no JVM was run to compare it.
+order names the two dispatch values in the "Multiple methods" error; Suss lays
+out hash maps as Clojure does, and the message matches Clojure 1.12.6's.
 
 `defmulti` takes Clojure's docstring, attribute map and `:default` and
 `:hierarchy` options. The default hierarchy is the global one; a `:hierarchy`
 must be a reference, such as an atom, which is dereferenced on each call. A
 second `defmulti` for a var that holds a multimethod does nothing, so its
-methods are kept; a var holding anything else is redefined.
+methods are kept, even inside a local of the same name; a var holding anything
+else is redefined.
+
+Two differences from Clojure remain:
+
+- A `:hierarchy` that is not a reference, such as a plain map, is accepted by
+  `defmulti` and fails at the first `defmethod` or call. Clojure's constructor
+  throws a `ClassCastException`.
+- Suss types have no supertypes (`docs/runtime/hierarchies.md`), so a method
+  for a type is chosen only for that type, never for a subclass or interface
+  as Clojure's `Object` or `Number` methods are. Suss has no `#'`, so a
+  `:hierarchy` var is written as an atom.
 
 | | Clojure (followed) | Pinned ClojureScript |
 | --- | --- | --- |
@@ -49,8 +59,13 @@ methods are kept; a var holding anything else is redefined.
 
 ## Errors
 
-Messages are Clojure's. Each dispatch value is formatted as Java's
-`String.format` `%s` formats it: with `str`, and `null` for nil.
+Messages are Clojure's. Clojure formats each dispatch value with
+`String.format`'s `%s`, which calls `toString`. Suss uses `str`, with `null` for
+nil, which is Clojure's `toString` except where `toString` gives an identity
+string, such as `clojure.lang.LazySeq@…` for a lazy sequence or a record
+without its own `toString`. A value `str` can't format yet is printed instead:
+`(type 1)` appears as `#object[Number]` where Clojure says `class
+java.lang.Long`, since Suss's host types have no class names (#302).
 
 | Case | Message |
 | --- | --- |
@@ -71,9 +86,14 @@ the REPL can't yet display one directly as a result (#288). `pr-str` prints it.
 - `cargo test -p suss-compile --test core_state multimethod defmulti` covers
   dispatch through hierarchies, vectors and defaults, variadic dispatch, named
   methods, the cache after hierarchy and method changes, inherited and nil or
-  false preferences, a `:hierarchy` atom, redefinition, method removal and the
-  error messages.
+  false preferences, a `:hierarchy` atom, the global hierarchy after `derive`,
+  `defmulti`'s docstring, attribute map and `:default` (including nil),
+  redefinition (including under a local of the same name), method removal,
+  dispatch on `type` and the error messages.
 - `cargo test -p suss-compile --lib defmulti_validation` checks `defmulti`'s
-  syntax errors.
+  syntax errors, including an odd number of options.
+- Each result and message in those tests was compared with Clojure 1.12.6 on
+  the JVM, apart from the host type name and Clojure's REPL printing a
+  namespaced map as `#:user{…}`.
 - jank's clojure-test-suite has no multimethod namespace. The three that use
   `defmulti` still stop earlier, at `ifn?` or a ratio.

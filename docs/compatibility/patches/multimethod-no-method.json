@@ -1,6 +1,6 @@
 {
   "schema": 1,
   "source-sha256": "2e06d3f66449ce11df85be310355413a04d514525ca1ef379a84a979d9adea3b",
-  "replacement": "(def ^:private throw-no-method-error\n  (fn [name dispatch-val]\n    (throw (suss.bootstrap/error\n             (str \"No method in multimethod '\" name \"' for dispatch value: \"\n                  ((fn [v] (if (nil? v) \"null\" (str v))) dispatch-val))))))",
-  "rationale": "Expand the complete pinned defn to def/fn, retaining its documentation (#30). Messages are Clojure's, with each dispatch value formatted as String.format's %s formats it: with str, and \"null\" for nil."
+  "replacement": "(def ^:private throw-no-method-error\n  (fn [name dispatch-val]\n    (throw (suss.bootstrap/error\n             (str \"No method in multimethod '\" name \"' for dispatch value: \"\n                  ((fn [v] (if (nil? v) \"null\" (try (str v) (catch :default _ (pr-str v))))) dispatch-val))))))",
+  "rationale": "Expand the complete pinned defn- to a private def/fn (#30). Messages are Clojure's. Clojure formats each dispatch value with String.format's %s, which calls toString; Suss uses str, with \"null\" for nil, and pr-str for a value str cannot format, such as a host type."
 }
