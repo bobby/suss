@@ -21,7 +21,7 @@ namespace's aliases since Clojure's reader has one alias table.
 | `::nope/a`, with no alias `nope` | Clojure's "Invalid token: ::nope/a" |
 | `::`, `:::a`, `::a/` | "Invalid keyword" |
 
-Two differences from Clojure remain:
+Four differences from Clojure remain:
 
 - A require without `:as` also records the namespace's own name as an alias,
   so `::lib.str/a` resolves in Suss where Clojure, which looks only at aliases,
