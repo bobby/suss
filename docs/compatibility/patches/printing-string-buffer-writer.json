@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "fe3c8f40f5ffe0b4d4cf82fb794dd3ed559ba6cbe3bc4abfddca032499b04834",
+  "replacement": "(deftype StringBufferWriter [sb]\n  IWriter\n  (-write [_ s] (.append sb s))\n  (-flush [_] nil)\n  ;; java.io.Writer's methods, which print-method methods call (#302).\n  Object\n  (write [_ s] (.append sb s) nil)\n  (append [this s] (.append sb s) this)\n  (flush [_] nil))",
+  "rationale": "Retain the entire pinned writer type and both IWriter methods. Add java.io.Writer's write, append and flush as Object methods, so print-method and print-dup methods write as Clojure's do, with (.write w s) (#302). They take strings; Suss's characters are strings. Writer's write of an int code point or a char array is not supported."
+}

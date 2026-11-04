@@ -113,14 +113,71 @@ Differences from Clojure:
 - Types of numbers, strings, functions and runtime errors are not named yet
   ([type names](type-names.md)), so they print as before.
 
+## `print-method` and `print-dup`
+
+`print-method` and `print-dup` are Clojure's multimethods (#302), built on
+Suss's multimethods ([multimethods](multimethods.md)). Each printer prints
+each value as Clojure's `pr-on` does: with `print-dup` under `*print-dup*`,
+and otherwise with `print-method`, which dispatches on a keyword `:type` in
+the value's metadata, or else on its `type`.
+
+```clojure
+(deftype Point [x y])
+(defmethod print-method Point [p w]
+  (.write w "#point ")
+  (print-method [(.-x p) (.-y p)] w))
+(pr-str [(Point. 1 2)])                           ;=> "[#point [1 2]]"
+(binding [*print-length* 1] (pr-str (Point. 1 2))) ;=> "#point [1 ...]"
+```
+
+- **Methods** take the value and a writer, and write with `.write`, as with
+  a `java.io.Writer`; the writer also has `.append` and `.flush`. `.write`
+  takes a string (Suss's characters are strings), not a code point or a
+  character array.
+- **Options:** a method reads the options from the dynamic vars, as in
+  Clojure. A collection it prints with `print-method` is one level deeper
+  and limited by `*print-length*`. A method prints no metadata unless it
+  does so itself, for example with `print-simple`.
+- **Records and types:** a method for a record's or a `deftype`'s type
+  replaces its printer, including under `*print-meta*`. Under `*print-dup*`
+  records still print by their values, as Clojure's `print-dup` for records.
+- **A keyword `:type`** with no method of its own goes to the `:default`
+  method, which, as in Clojure, prints the value without its `:type`. With no
+  `:default` method either, printing throws "No method in multimethod
+  'print-method' for dispatch value: :t".
+- **`print-simple`** prints the value's metadata, as the printer does, and
+  then its `str`.
+- **`remove-method`** of a type's method restores its built-in printer.
+- **`IPrintWithWriter`**, ClojureScript's printing protocol, still works: a
+  `deftype` that implements it, or a record extended with it after its
+  `defrecord`, prints with it when its type has no `print-method` method. A
+  record's inline `IPrintWithWriter` is replaced by the generated printer.
+  Printers that call `pr-sequential-writer` or `pr-writer` observe the
+  options.
+- **Every phase and target:** methods apply in the Runtime and Macro phases
+  and in AOT components, and add no import (spec §8).
+
+The built-in printer prints every value that has no method, as Clojure's
+methods for its own types and `Object` do. Differences from Clojure:
+
+- Suss's types have no supertypes, so a method applies only to its own type,
+  never to a subtype or an interface. Core types have no methods of their
+  own in either table: `(methods print-method)` and `(methods print-dup)`
+  each hold only a built-in `:default` until a program adds a method.
+- A type's value reaches a user's `:default` method only when a method calls
+  `print-method` for it directly; the printers use the built-in printer, as
+  Clojure's `Object` method does.
+- Clojure's `print-dup` has no `:default` and methods only for its own types,
+  so a type with no `print-dup` method throws under `*print-dup*`. Suss
+  prints it as `pr-str` does, and a `print-dup` method can call `print-dup`
+  for any value. Clojure's `print-dup` methods for strings,
+  keywords, numbers and `nil` call `print-method`, so a `print-method` for
+  those types applies under `*print-dup*` in Clojure but not in Suss.
+- The REPL displays a result without the printer (#288), so methods affect
+  `pr-str` and the other string printers but not the REPL's display.
+
 ## Not yet supported
 
-- **`print-method`**, Clojure's extension point for user types, needs
-  multimethods (#30). Until then, a `deftype` customizes printing by
-  implementing `IPrintWithWriter`, and a record by `extend-type` after its
-  `defrecord`. A record's inline `IPrintWithWriter` is replaced by the
-  generated printer. Custom printers that call `pr-sequential-writer` or
-  `pr-writer` observe the options.
 - **Non-numeric limits:** binding `*print-length*` or `*print-level*` to a
   non-number other than nil or false does not throw, as it does in Clojure.
 - **`pr`, `prn`, `print`, `println`, `newline`, `flush` and `*out*`** need an
@@ -133,15 +190,17 @@ Differences from Clojure:
 
 ## Implementation
 
-`pr-sequential-writer`, `print-meta?`, `pr-writer-impl` and `pr-str*` are
-imported from the pinned ClojureScript source with patches that follow
-Clojure's printer (`docs/compatibility/patches/printing-*.json`). Records
-print through `pr-record-writer` in core's appendix
+`pr-sequential-writer`, `print-meta?`, `pr-writer`, `pr-writer-impl`,
+`pr-str*` and `StringBufferWriter` are imported from the pinned
+ClojureScript source with patches that follow Clojure's printer
+(`docs/compatibility/patches/printing-*.json`). Records print through
+`pr-record-writer` in core's appendix
 (`docs/compatibility/bootstrap/exact-integers.sus`), which the generated
 `defrecord` printer calls; it takes the record's name from its type. The
 printers of values that are not data (`pr-tagged-object`, `deref-as-map` and
-`pr-throwable`) are there too. `*flush-on-newline*` is
-imported unchanged.
+`pr-throwable`) are there too, with `print-method`, `print-dup`,
+`print-simple` and `print-method-for`, which chooses the method `pr-writer`
+calls. `*flush-on-newline*` is imported unchanged.
 
 The tests are in `crates/suss-cli/tests/printer_options.rs` and
 `crates/suss-cli/tests/object_printing.rs`.

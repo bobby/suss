@@ -81,6 +81,10 @@
          ^:private pr-tagged-object ^:private deref-as-map ^:private pr-throwable
          js-keys print-map keyword)
 
+;; pr-writer prints through print-method and print-dup, which need MultiFn and
+;; are defined in core's appendix (#302).
+(declare ^:private print-method-for)
+
 (declare ^:private keyword-name-parts)
 
 ;; Full parameter map-normalization mutual references. ObjMap is pending, not a stub.
@@ -5530,7 +5534,12 @@
 (deftype StringBufferWriter [sb]
   IWriter
   (-write [_ s] (.append sb s))
-  (-flush [_] nil))
+  (-flush [_] nil)
+  ;; java.io.Writer's methods, which print-method methods call (#302).
+  Object
+  (write [_ s] (.append sb s) nil)
+  (append [this s] (.append sb s) this)
+  (flush [_] nil))
 
 (def ^:private char-escapes
   {
@@ -5609,7 +5618,10 @@
   (fn [obj writer opts]
   (if-let [alt-impl (:alt-impl opts)]
     (alt-impl obj writer (-assoc opts :fallback-impl pr-writer-impl))
-    (pr-writer-impl obj writer opts))))
+    ;; Clojure's pr-on: a print-method or print-dup method prints obj (#302).
+    (if-let [method (print-method-for obj (pr-opts-dup opts))]
+      (method obj writer)
+      (pr-writer-impl obj writer opts)))))
 
 (def pr-str*
   "Support so that collections can implement toString without
@@ -11297,3 +11309,61 @@ reduces them without incurring seq initialization"
 (extend-type Atom IPrintWithWriter
   (-pr-writer [a writer opts]
     (pr-tagged-object a (deref-as-map a) writer opts)))
+;; Original Suss adaptation of Clojure's print-method and print-dup
+;; multimethods (clojure/core.clj, core_print.clj) (#302). pr-writer prints
+;; each value as Clojure's pr-on does: under *print-dup* with print-dup, else
+;; with print-method. Suss's types have no supertypes, so the built-in printer
+;; takes the part of Clojure's methods for its own types and Object, and
+;; prints a value whose type has no method.
+(def print-method
+  (new MultiFn "print-method"
+    (fn [x writer]
+      (let [t (get (meta x) :type)]
+        (if (keyword? t) t (type x))))
+    :default (get-global-hierarchy) (hash-map) (hash-map) (hash-map) nil))
+(def print-dup
+  (new MultiFn "print-dup" (fn [x writer] (type x))
+    :default (get-global-hierarchy) (hash-map) (hash-map) (hash-map) nil))
+(def print-simple
+  (fn [o w]
+    (let [m (meta o)]
+      (if (and (pos? (count m)) (or *print-dup* (and *print-meta* *print-readably*)))
+        (do (-write w "^")
+            (pr-writer (if (and (== 1 (count m)) (get m :tag)) (get m :tag) m) w nil)
+            (-write w " "))
+        nil))
+    (-write w (str o))))
+;; Clojure's :default method: a value whose keyword :type has no method prints
+;; without its :type. Every other value reaching it prints as built in.
+(def ^:private print-method-default
+  (fn [o w]
+    (cond
+      (not (keyword? (get (meta o) :type))) (pr-writer-impl o w nil)
+      (implements? IWithMeta o) (print-method (vary-meta o dissoc :type) w)
+      :else (print-simple o w))))
+(-add-method print-method :default print-method-default)
+;; Clojure's print-dup methods for its own types; print-dup has no :default
+;; in Clojure.
+(def ^:private print-dup-default (fn [o w] (pr-writer-impl o w nil)))
+(-add-method print-dup :default print-dup-default)
+;; The method that prints obj, or nil when the built-in printer does with the
+;; caller's options. A type's value never reaches a :default method, as in
+;; Clojure, where Object's method catches every class. A keyword :type with
+;; no method and no default returns print-method itself, so the call throws
+;; Clojure's "No method" error.
+(def ^:private print-method-for
+  (fn [obj dup]
+    (let [mf (if dup print-dup print-method)
+          table (-methods mf)]
+      (if (and (== 1 (count table))
+               (identical? (if dup print-dup-default print-method-default) (get table :default)))
+        nil
+        (let [t (if dup nil (get (meta obj) :type))
+              ty (type obj)
+              dispatch-val (if (keyword? t) t ty)
+              f (-get-method mf dispatch-val)]
+          (cond
+            (keyword? t) (if (nil? f) mf f)
+            (nil? f) nil
+            (and (identical? f (get table :default)) (not (identical? f (get table ty)))) nil
+            :else f))))))

@@ -70,6 +70,10 @@
          ^:private pr-tagged-object ^:private deref-as-map ^:private pr-throwable
          js-keys print-map keyword)
 
+;; pr-writer prints through print-method and print-dup, which need MultiFn and
+;; are defined in core's appendix (#302).
+(declare ^:private print-method-for)
+
 (declare ^:private keyword-name-parts)
 
 ;; Full parameter map-normalization mutual references. ObjMap is pending, not a stub.

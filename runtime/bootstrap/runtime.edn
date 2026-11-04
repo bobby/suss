@@ -600,9 +600,15 @@
          "suss.bindings.runtime:suss.core/prefers*"
          "suss.bindings.runtime:suss.core/preserving-reduced"
          "suss.bindings.runtime:suss.core/prim-seq"
+         "suss.bindings.runtime:suss.core/print-dup"
+         "suss.bindings.runtime:suss.core/print-dup-default"
          "suss.bindings.runtime:suss.core/print-map"
          "suss.bindings.runtime:suss.core/print-meta?"
+         "suss.bindings.runtime:suss.core/print-method"
+         "suss.bindings.runtime:suss.core/print-method-default"
+         "suss.bindings.runtime:suss.core/print-method-for"
          "suss.bindings.runtime:suss.core/print-prefix-map"
+         "suss.bindings.runtime:suss.core/print-simple"
          "suss.bindings.runtime:suss.core/print-str"
          "suss.bindings.runtime:suss.core/println-str"
          "suss.bindings.runtime:suss.core/prn-str"
@@ -1451,9 +1457,15 @@
          "suss.bindings.runtime:suss.internal.core-link/prefers*"
          "suss.bindings.runtime:suss.internal.core-link/preserving-reduced"
          "suss.bindings.runtime:suss.internal.core-link/prim-seq"
+         "suss.bindings.runtime:suss.internal.core-link/print-dup"
+         "suss.bindings.runtime:suss.internal.core-link/print-dup-default"
          "suss.bindings.runtime:suss.internal.core-link/print-map"
          "suss.bindings.runtime:suss.internal.core-link/print-meta?"
+         "suss.bindings.runtime:suss.internal.core-link/print-method"
+         "suss.bindings.runtime:suss.internal.core-link/print-method-default"
+         "suss.bindings.runtime:suss.internal.core-link/print-method-for"
          "suss.bindings.runtime:suss.internal.core-link/print-prefix-map"
+         "suss.bindings.runtime:suss.internal.core-link/print-simple"
          "suss.bindings.runtime:suss.internal.core-link/print-str"
          "suss.bindings.runtime:suss.internal.core-link/println-str"
          "suss.bindings.runtime:suss.internal.core-link/prn-str"
@@ -1962,15 +1974,15 @@
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d666c7573682f31"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d77726974652f32"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
-         "suss.bindings.runtime:suss.internal.reify/t-reify-3435-10867"],
+         "suss.bindings.runtime:suss.internal.reify/t-reify-3439-10883"],
  :compiler "0.1.0+portable.3",
  :compiler-source-sha256 "d4f2afb3378ff1c3ea0b8b84eb3f89c32f625f331d155015596ce8f5ba097c43",
- :dependency-graph-sha256 "8fbd618c272171767a57b07f363d6d6864a0c7662fae0a7aa28a2704dee3705b",
+ :dependency-graph-sha256 "bb68ae1c27774d97f217a43fc180f317cb7ef74547ac80a5d70bc74ddc3b4142",
  :flags [],
  :format-version 2,
  :phase "runtime",
  :runtime-abi 2,
- :source-sha256 "da686b99a8670a768c67cb4e0a1697d8c03661045c8b63bd0a45b54be81134b1",
+ :source-sha256 "71671835a5403213260b6a07134b9fe8c9fa09bbc5d28d8b9bb04dd2f629159d",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "2919b26d5821ab19e8acc40511471101b7c822225a47ee150b7ef04e57562dfa",
+ :wasm-sha256 "f92968a1f989bbcf0c7a4ae581c59d7246c50233d01790e09a8203802605e802",
  :wasm-tools "0.258.0"}
