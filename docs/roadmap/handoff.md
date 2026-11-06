@@ -325,7 +325,7 @@ status, evidence and the next unblocked task live only in
 [GitHub milestones and issues](https://github.com/bobby/suss/milestones); dated
 entries in this handoff are historical session notes, not status.
 
-The language resurrection itself is **not complete**. The current work establishes
+The language itself is **not complete**. The current work establishes
 an executable, measurable prototype baseline and feasibility evidence. WASI 0.3.1,
 persistent compiled REPL, ABI v1, upstream core import and browser delivery remain
 open. Do not claim those features based on these repairs or narrow CLI probes.

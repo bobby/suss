@@ -1,7 +1,7 @@
 # Suss
 
 Suss is an experimental Clojure dialect compiling to WebAssembly, named after
-Julie and Gerald Jay Sussman. Its resurrection targets portable **ClojureScript**
+Julie and Gerald Jay Sussman. It targets portable **ClojureScript**
 semantics, WASI 0.3.1 commands and WIT libraries, and browser ES modules.
 
 The current compiler is a prototype. It does not yet implement that target:
