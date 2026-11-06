@@ -70,7 +70,8 @@ fn native_display_keeps_nested_streams_and_futures_opaque_without_macro_placehol
         display.display(&mut session, &writer).unwrap(),
         "#<stream writer>"
     );
-    let expected = "{:pair [#<stream reader> #<stream writer>] :future [#<future pending>]}";
+    // Maps print with Clojure's ", " between entries.
+    let expected = "{:pair [#<stream reader> #<stream writer>], :future [#<future pending>]}";
     assert_eq!(display.display(&mut session, &nested).unwrap(), expected);
     let handles = session.stats().external_value_handles;
     let counts = session.async_task_counts().unwrap();

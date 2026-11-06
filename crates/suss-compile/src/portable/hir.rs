@@ -3142,17 +3142,19 @@ fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<Bin
 #[derive(Debug, Clone)]
 pub struct ResultDefinition {
     pub global: Global,
-    /// The `def` is one branch of an `if` whose other branch is nil, as in
-    /// `defmulti`'s expansion, so a nil value means it did not run.
+    /// The `def` is a `defonce`, or one branch of an `if` whose other branch
+    /// is nil, as in `defmulti`'s expansion, so a nil value means it did not
+    /// run.
     pub conditional: bool,
 }
 /// Find it through `do`, `let` and `binding` bodies, such as the scope each
 /// input runs in.
 pub(crate) fn result_definition(hir: &Hir) -> Option<ResultDefinition> {
     match &*hir.kind {
-        Expression::Definition { global, .. } => Some(ResultDefinition {
+        // A repeated defonce returns nil without defining, as Clojure's does.
+        Expression::Definition { global, once, .. } => Some(ResultDefinition {
             global: global.clone(),
-            conditional: false,
+            conditional: *once,
         }),
         Expression::Do(items) => items.last().and_then(result_definition),
         Expression::Let { body, .. } => result_definition(body),

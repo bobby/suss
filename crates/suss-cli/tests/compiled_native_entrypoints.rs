@@ -166,9 +166,19 @@ fn display_traversal_bound_reports_failure_and_recovers() {
     session.set_operation_fuel(fuel);
     session.collect().unwrap();
     let mut display = NativeDisplay::default();
+    // Display runs core's printer under the evaluation allowance (#288), which
+    // 4097 elements exceed at the default.
+    let error = display.display(&mut session, &value).unwrap_err();
+    assert!(
+        matches!(&error, suss_cli::portable_session::SessionError::Trap(trap)
+            if trap.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::OutOfFuel)),
+        "{error}"
+    );
+    session.set_operation_fuel(1_000_000_000);
     let actual = display.display(&mut session, &value).unwrap();
     // Compare every element and delimiter, not a prefix or reported count.
     assert_eq!(actual, source);
+    session.set_operation_fuel(fuel);
     assert_eq!(session.options().fuel_per_operation, fuel);
     let value = session.eval("[42]").unwrap();
     assert_eq!(display.display(&mut session, &value).unwrap(), "[42]");

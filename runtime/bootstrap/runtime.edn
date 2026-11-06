@@ -602,12 +602,14 @@
          "suss.bindings.runtime:suss.core/prim-seq"
          "suss.bindings.runtime:suss.core/print-dup"
          "suss.bindings.runtime:suss.core/print-dup-default"
+         "suss.bindings.runtime:suss.core/print-dup-table"
          "suss.bindings.runtime:suss.core/print-map"
          "suss.bindings.runtime:suss.core/print-meta?"
          "suss.bindings.runtime:suss.core/print-method"
          "suss.bindings.runtime:suss.core/print-method-default"
          "suss.bindings.runtime:suss.core/print-method-for"
          "suss.bindings.runtime:suss.core/print-method-of"
+         "suss.bindings.runtime:suss.core/print-method-table"
          "suss.bindings.runtime:suss.core/print-prefix-map"
          "suss.bindings.runtime:suss.core/print-simple"
          "suss.bindings.runtime:suss.core/print-str"
@@ -1461,12 +1463,14 @@
          "suss.bindings.runtime:suss.internal.core-link/prim-seq"
          "suss.bindings.runtime:suss.internal.core-link/print-dup"
          "suss.bindings.runtime:suss.internal.core-link/print-dup-default"
+         "suss.bindings.runtime:suss.internal.core-link/print-dup-table"
          "suss.bindings.runtime:suss.internal.core-link/print-map"
          "suss.bindings.runtime:suss.internal.core-link/print-meta?"
          "suss.bindings.runtime:suss.internal.core-link/print-method"
          "suss.bindings.runtime:suss.internal.core-link/print-method-default"
          "suss.bindings.runtime:suss.internal.core-link/print-method-for"
          "suss.bindings.runtime:suss.internal.core-link/print-method-of"
+         "suss.bindings.runtime:suss.internal.core-link/print-method-table"
          "suss.bindings.runtime:suss.internal.core-link/print-prefix-map"
          "suss.bindings.runtime:suss.internal.core-link/print-simple"
          "suss.bindings.runtime:suss.internal.core-link/print-str"
@@ -1980,13 +1984,13 @@
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
          "suss.bindings.runtime:suss.internal.reify/t-reify-3439-10885"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "9e08481b1ffc97e1aa8a7218cf60a2b17d68ab22bd19aae35082d6743cb10572",
- :dependency-graph-sha256 "65df97cef22b821b4927001ea6a71d300ec68dd08e880eb7dda9a5028e6184a0",
+ :compiler-source-sha256 "bdea15645efb232c1de44ea9d2c4a63b98fa83107e92b5a634651c152b43dfae",
+ :dependency-graph-sha256 "9e1bcb522eac1f04089f5c1e54ab7c016768b18fda5ff68f53a171696d8488b5",
  :flags [],
  :format-version 2,
  :phase "runtime",
  :runtime-abi 2,
- :source-sha256 "6c7b560207018d2bcf8e21247d0ca414e8fb195e93ac58ec0c3c4ed233679c94",
+ :source-sha256 "3e025005ea0176fd80f7d8118f588e14ff6959b5a48014af49baf4659bbbcb78",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "4ccd74bb9fc61494dcad168a37f478a142b01eda0accc09818d415eb9dbd5c95",
+ :wasm-sha256 "8d6f0026008402ff89792cc0a900048dfb3d5500542639cd7cb2c68a36267b2f",
  :wasm-tools "0.258.0"}

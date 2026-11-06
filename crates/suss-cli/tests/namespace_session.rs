@@ -42,10 +42,10 @@ fn namespace_session_command_loads_once_and_keeps_live_globals_and_old_captures(
     let output = child.wait_with_output().unwrap();
     assert!(output.status.success(), "{output:?}");
     assert_eq!(String::from_utf8(output.stderr).unwrap(), "");
-    // Loading preserves user scope; definition values are callable labels.
+    // Loading preserves user scope; a definition displays its var.
     assert_eq!(
         String::from_utf8(output.stdout).unwrap(),
-        "nil\n1\n0\nnil\n1\nnil\n#<function>\nnil\n17\n23\nnil\n2\n17\n17\n"
+        "nil\n1\n0\nnil\n1\nnil\n#'counter/f\nnil\n17\n23\nnil\n2\n17\n17\n"
     );
 }
 

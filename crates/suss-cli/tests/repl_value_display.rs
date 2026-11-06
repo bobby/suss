@@ -43,6 +43,7 @@ fn collections_seqs_records_types_and_arrays_display_as_pr_str_prints_them() {
         "(defprotocol Pr (m [x]))\n",
         "(atom 1)\n",
         "\"a\\nb\"\n",
+        "\"\\b\"\n",
     ));
     assert_eq!(err, "");
     assert_eq!(
@@ -62,6 +63,7 @@ fn collections_seqs_records_types_and_arrays_display_as_pr_str_prints_them() {
             "Pr\n",
             "#object[suss.core.Atom 0x1 {:status :ready, :val 1}]\n",
             "\"a\\nb\"\n",
+            "\"\\b\"\n",
         )
     );
 }
@@ -75,6 +77,8 @@ fn definitions_display_their_var_without_printing_the_value() {
         "(defmacro mac [] 1)\n",
         "(defmulti mm identity)\n",
         "(defmulti mm identity)\n",
+        "(defonce o 1)\n",
+        "(defonce o 2)\n",
         "(let [] (def z 1))\n",
         "(do (def y 1) 2)\n",
         // Displaying the var doesn't realize the sequence.
@@ -90,6 +94,8 @@ fn definitions_display_their_var_without_printing_the_value() {
             "#'user/d\n",
             "#'user/mac\n",
             "#'user/mm\n",
+            "nil\n",
+            "#'user/o\n",
             "nil\n",
             "#'user/z\n",
             "2\n",

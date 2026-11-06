@@ -3,6 +3,7 @@ use crate::portable_session::{Session, SessionError, SessionValue};
 use wasmtime::Val;
 
 enum Output {
+    Literal(&'static str),
     Text(String),
     Number,
     Printed,
@@ -28,29 +29,47 @@ impl NativeDisplay {
         if let Some(leaf) = crate::portable_macro_data::display_leaf(session, value)? {
             return Ok(leaf.text().into());
         }
-        match inspect_display(session, value)? {
-            Output::Text(text) => Ok(text),
-            Output::Number => session.number_text(value),
-            Output::Printed => {
-                if self.printer.is_none() {
-                    self.printer = Some(session.eval("suss.core/pr-str")?);
+        let host = match inspect_display(session, value)? {
+            Output::Literal(text) => return Ok(text.into()),
+            host => host,
+        };
+        if self.printer.is_none() {
+            match session.eval("suss.core/pr-str") {
+                Ok(printer) => self.printer = Some(printer),
+                // Without core, the host formats strings and numbers alone.
+                Err(error) => {
+                    return match host {
+                        Output::Text(text) => Ok(text),
+                        Output::Number => session.number_text(value),
+                        Output::Literal(_) | Output::Printed => Err(error),
+                    };
                 }
-                let printer = self.printer.as_ref().unwrap();
-                let text = session.invoke(printer, &[value])?;
-                string_text(session, &text)
             }
         }
+        let printer = self.printer.as_ref().unwrap();
+        let text = session.invoke(printer, &[value])?;
+        string_text(session, &text)?
+            .ok_or_else(|| SessionError::Host(wasmtime::Error::msg("pr-str must return a string")))
     }
 }
 pub fn display(session: &mut Session, value: &SessionValue) -> Result<String, SessionError> {
     NativeDisplay::default().display(session, value)
 }
-fn string_text(session: &mut Session, value: &SessionValue) -> Result<String, SessionError> {
+/// A string's text, with lone surrogates escaped, or None for another value.
+fn string_text(
+    session: &mut Session,
+    value: &SessionValue,
+) -> Result<Option<String>, SessionError> {
     session.inspect(value, |mut store, value| {
-        let array = value
+        let Some(array) = value
             .unwrap_anyref()
             .and_then(|reference| reference.as_array(&store).ok().flatten())
-            .ok_or_else(|| wasmtime::Error::msg("pr-str must return a string"))?;
+        else {
+            return Ok(None);
+        };
+        if !matches!(array.ty(&store)?.element_type(), wasmtime::StorageType::I16) {
+            return Ok(None);
+        }
         if array.len(&store)? > 8_388_608 {
             return Err(wasmtime::Error::msg("Value display exceeds output bound"));
         }
@@ -58,7 +77,14 @@ fn string_text(session: &mut Session, value: &SessionValue) -> Result<String, Se
             .elems(&mut store)?
             .map(|unit| unit.unwrap_i32() as u16)
             .collect::<Vec<_>>();
-        Ok(String::from_utf16_lossy(&units))
+        let mut text = String::new();
+        for unit in char::decode_utf16(units) {
+            match unit {
+                Ok(c) => text.push(c),
+                Err(error) => text.push_str(&format!("\\u{:04x}", error.unpaired_surrogate())),
+            }
+        }
+        Ok(Some(text))
     })
 }
 fn inspect_display(session: &mut Session, value: &SessionValue) -> Result<Output, SessionError> {
@@ -67,16 +93,13 @@ fn inspect_display(session: &mut Session, value: &SessionValue) -> Result<Output
             .unwrap_anyref()
             .ok_or_else(|| wasmtime::Error::msg("Null language value"))?;
         if let Some(bits) = reference.as_i31(&store)? {
-            return Ok(Output::Text(
-                match bits.get_u32() {
-                    0 => "nil",
-                    2 => "false",
-                    4 => "true",
-                    6 => "#<undefined>",
-                    _ => return Err(wasmtime::Error::msg("Unknown language sentinel")),
-                }
-                .into(),
-            ));
+            return Ok(Output::Literal(match bits.get_u32() {
+                0 => "nil",
+                2 => "false",
+                4 => "true",
+                6 => "#<undefined>",
+                _ => return Err(wasmtime::Error::msg("Unknown language sentinel")),
+            }));
         }
         if let Some(array) = reference.as_array(&store)? {
             if !matches!(array.ty(&store)?.element_type(), wasmtime::StorageType::I16) {
@@ -142,7 +165,7 @@ pub fn error_display(session: &mut Session, error: &SessionError) -> String {
 fn exception_text(session: &mut Session, value: &SessionValue) -> Result<String, SessionError> {
     if let Ok(ex_message) = session.eval("suss.core/ex-message") {
         let message = session.invoke(&ex_message, &[value])?;
-        if let Ok(text) = string_text(session, &message) {
+        if let Some(text) = string_text(session, &message)? {
             return Ok(text);
         }
     }
@@ -242,10 +265,14 @@ fn result_var(
     let Some(definition) = definition else {
         return Ok(None);
     };
-    if definition.conditional && matches!(inspect_display(session, value)?, Output::Text(text) if text == "nil") {
+    if definition.conditional && matches!(inspect_display(session, value)?, Output::Literal("nil"))
+    {
         return Ok(None);
     }
-    Ok(Some(var_text(definition.global.namespace(), definition.global.name())))
+    Ok(Some(var_text(
+        definition.global.namespace(),
+        definition.global.name(),
+    )))
 }
 pub fn display_compiled_value(
     runtime: &mut Session,
@@ -459,8 +486,8 @@ fn evaluate_forms_compiled(
                     });
                     macros.enter_namespace(runtime.current_namespace())?;
                     let form = forms.into_iter().next().unwrap();
-                    let var = defined_name(&form)
-                        .map(|name| var_text(runtime.current_namespace(), name));
+                    let var =
+                        defined_name(&form).map(|name| var_text(runtime.current_namespace(), name));
                     let value = macros
                         .define_form_with_origin(form, 0..source_len, Some(origin))
                         .map_err(|error| macro_definition_error(error, 0..source_len))?;

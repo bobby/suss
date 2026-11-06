@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "91322bf1af412b11a48a95b3e0427de4fce59e4a28f11b407fc849cd4d3607b4",
-  "reviews-sha256": "0690b911940398d71c35d43384ac555855eefca51f29f55be1c38ff9fa4eee8b",
+  "recipe-sha256": "fc2481e0e24ca98b9d5dc1402433dc4a4eb5a43e74d7212fa78bdd797f01f60e",
+  "reviews-sha256": "bee1f83599cca54a2bcef9f708200e83072af79cef895212c5ee28daa0b1c879",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -10269,6 +10269,7 @@
         "numeric/string/boolean predicates and coercions",
         "pr-constructor-writer, pr-tagged-object, deref-as-map and pr-throwable (core appendix, #304)",
         "suss.bootstrap/type-name",
+        "suss.bootstrap/display-leaf (#288)",
         "object?/js-keys/pr-object-map/pr-object-keyword?/keyword/print-map (unfinished object path)",
         "pr-function-name"
       ],
@@ -10277,7 +10278,9 @@
         "crates/suss-compile/tests/compiled_printing.rs",
         "tests/oracle/printing-cases.json",
         "tests/oracle/object-predicate-cases.json",
-        "crates/suss-cli/tests/printer_options.rs"
+        "crates/suss-cli/tests/printer_options.rs",
+        "crates/suss-cli/tests/repl_value_display.rs",
+        "crates/suss-compile/tests/session_future_display.rs"
       ]
     },
     {
@@ -15959,7 +15962,7 @@
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "c6bccf4ac12e04c36880ddaefc1d00788312c6b8504e00e62e673fed8dafd202"
+      "sha256": "03db67ad8f52d40d1784d6baad5d924f60d015e0c83108c19da9899091cd7e7f"
     }
   },
   "files": {
@@ -16481,6 +16484,6 @@
     "extracted/0513.cljs": "02b4047a3496243c5528041564a9f8ded2f3aae951be387e8779ab0e956464c3",
     "extracted/0514.cljs": "d42068d54f1844f88abb73548a3a554a3cc1f5af315fd590533b4fd80de350ec",
     "extracted/0515.cljs": "072c8a681fd905767f56c48e6c3529b99e9d5f537def64cb299f5bac29c7c59b",
-    "suss/core.sus": "6c7b560207018d2bcf8e21247d0ca414e8fb195e93ac58ec0c3c4ed233679c94"
+    "suss/core.sus": "3e025005ea0176fd80f7d8118f588e14ff6959b5a48014af49baf4659bbbcb78"
   }
 }

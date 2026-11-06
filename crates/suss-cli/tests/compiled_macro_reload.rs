@@ -294,7 +294,7 @@ fn namespace_session_command_reloads_macro_source_from_libspec_metadata() {
     assert_eq!(String::from_utf8(output.stderr).unwrap(), "");
     assert_eq!(
         String::from_utf8(output.stdout).unwrap(),
-        "nil\n1\n#<function>\nnil\n1\nnil\n2\n1\nnil\n3\n1\n"
+        "nil\n1\n#'user/old\nnil\n1\nnil\n2\n1\nnil\n3\n1\n"
     );
 }
 

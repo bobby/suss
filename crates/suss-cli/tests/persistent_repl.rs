@@ -36,7 +36,7 @@ fn persistent_session_command_repl_keeps_effects_and_captured_functions() {
     assert_eq!(String::from_utf8(output.stderr).unwrap(), "");
     assert_eq!(
         String::from_utf8(output.stdout).unwrap(),
-        "0\n1\n9\n9\n0\n0\n1\n42\nnil\n9\n"
+        "#'user/counter\n#'user/stamp\n9\n9\n0\n0\n1\n42\nnil\n9\n"
     );
 }
 
@@ -54,7 +54,7 @@ fn persistent_session_command_repl_recovers_without_publishing_failed_definition
     assert!(output.status.success(), "{output:?}");
     assert_eq!(
         String::from_utf8(output.stdout).unwrap(),
-        "17\n17\n17\n23\n42\n"
+        "#'user/keep\n17\n17\n23\n42\n"
     );
     let errors = String::from_utf8(output.stderr).unwrap();
     assert_eq!(errors.lines().count(), 2, "{errors}");
@@ -78,7 +78,7 @@ fn persistent_session_command_repl_displays_utf16_and_binary64_without_reexecuti
     assert_eq!(String::from_utf8(output.stderr).unwrap(), "");
     assert_eq!(
         String::from_utf8(output.stdout).unwrap(),
-        "0\n1e+21\n1\n\"\\ud800😀\\n\\\"\\\\\"\n##NaN\n##Inf\n##-Inf\nfalse\ntrue\nnil\n"
+        "#'user/calls\n1e+21\n1\n\"\\ud800😀\\n\\\"\\\\\"\n##NaN\n##Inf\n##-Inf\nfalse\ntrue\nnil\n"
     );
 }
 
@@ -86,7 +86,7 @@ fn persistent_session_command_repl_displays_utf16_and_binary64_without_reexecuti
 fn session_lifecycle_command_repl_reset_discards_bindings_and_allows_new_inputs() {
     let output = repl("(def keep 17)\n:reset\nkeep\n(+ 20 22)\n:quit\n99\n");
     assert!(output.status.success(), "{output:?}");
-    assert_eq!(String::from_utf8(output.stdout).unwrap(), "17\nnil\n42\n");
+    assert_eq!(String::from_utf8(output.stdout).unwrap(), "#'user/keep\nnil\n42\n");
     let errors = String::from_utf8(output.stderr).unwrap();
     assert_eq!(errors.lines().count(), 1, "{errors}");
     assert!(errors.contains("keep"), "{errors}");
@@ -100,7 +100,7 @@ fn persistent_session_command_repl_reads_multiline_inputs_before_executing() {
     assert!(output.status.success(), "{output:?}");
     assert_eq!(
         String::from_utf8(output.stdout).unwrap(),
-        "0\n42\n1\n42\n42\n"
+        "#'user/calls\n#'user/answer\n1\n42\n42\n"
     );
     assert_eq!(
         String::from_utf8(output.stderr).unwrap(),
@@ -121,15 +121,14 @@ fn persistent_session_command_repl_reports_malformed_and_incomplete_input() {
 }
 
 #[test]
-fn persistent_session_command_repl_reports_unsupported_objects_without_fabricating_strings() {
-    let output = repl("(array)\n42\n");
+fn persistent_session_command_repl_displays_arrays_as_pr_str_prints_them() {
+    // Displayed with core's printer since #288, as `#js [...]`.
+    let output = repl("(array)\n(array 1 \"a\")\n42\n");
     assert!(output.status.success(), "{output:?}");
-    assert_eq!(String::from_utf8(output.stdout).unwrap(), "42\n");
-    let errors = String::from_utf8(output.stderr).unwrap();
-    assert_eq!(errors.lines().count(), 1, "{errors}");
-    assert!(
-        errors.contains("Value display does not yet support"),
-        "{errors}"
+    assert_eq!(String::from_utf8(output.stderr).unwrap(), "");
+    assert_eq!(
+        String::from_utf8(output.stdout).unwrap(),
+        "#js []\n#js [1 \"a\"]\n42\n"
     );
 }
 

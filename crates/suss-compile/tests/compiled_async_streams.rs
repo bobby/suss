@@ -21,6 +21,15 @@ impl Harness {
             display: NativeDisplay::default(),
         }
     }
+    /// Printing 256 elements with core's printer takes more than the default
+    /// evaluation allowance (#288).
+    fn display_large(&mut self, value: &SessionValue) -> String {
+        let fuel = self.session.options().fuel_per_operation;
+        self.session.set_operation_fuel(100_000_000);
+        let text = self.display.display(&mut self.session, value).unwrap();
+        self.session.set_operation_fuel(fuel);
+        text
+    }
     fn eval(&mut self, source: &str) -> SessionValue {
         self.eval_at("compiled source evaluation", source)
     }
@@ -285,7 +294,7 @@ fn stream_public_bounds_validate_before_endpoint_work_and_endpoints_remain_usabl
     let Some(FutureState::Ready(chunk)) = h.session.future_state(&read).unwrap() else {
         panic!("256-element read did not complete");
     };
-    assert_eq!(h.display.display(&mut h.session, &chunk).unwrap(), boundary);
+    assert_eq!(h.display_large(&chunk), boundary);
 }
 
 #[test]
@@ -473,7 +482,7 @@ fn stream_maximum_chunk_calls_use_prepared_vector_under_default_operation_budget
     let Some(FutureState::Ready(chunk)) = h.session.future_state(&read).unwrap() else {
         panic!("prepared-vector read did not complete");
     };
-    assert_eq!(h.display.display(&mut h.session, &chunk).unwrap(), boundary);
+    assert_eq!(h.display_large(&chunk), boundary);
     h.eval("(a/close! writer)");
 }
 
