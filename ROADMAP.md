@@ -27,6 +27,7 @@ The proposal has not changed this roadmap's accepted semantics or release gates.
 | [M8: Browser beta](https://github.com/bobby/suss/milestone/9) | M6 | All M8 acceptance criteria pass |
 | [M9: CSP extension](https://github.com/bobby/suss/milestone/10) | M6, M7 | All M9 acceptance criteria pass |
 | [M10: Reader, printer and analyzer as data](https://github.com/bobby/suss/milestone/12) | M4 | All M10 acceptance criteria pass |
+| [M11: Compile cost and code size](https://github.com/bobby/suss/milestone/13) | M4 | All M11 acceptance criteria pass |
 
 M4 and M5 can overlap after their foundations; M8 feasibility happens in M0,
 with browser product delivery after the WASI alpha. CSP is deliberately last.
@@ -36,6 +37,9 @@ manifests, analyzer output) canonical EDN in the tools.analyzer model, and adds
 It also holds the printer and read-back packages [M7-05] and [M7-07]; their IDs
 are stable and keep the M7 prefix.
 Only the `print-method` criterion of [M10-03] waits for multimethods in [M7-03].
+M11 can also proceed alongside M5–M7. It makes ordinary programs cheap to
+compile and small to ship: `defrecord` within the default budgets, AOT components
+that don't grow per top-level form or call site, and linear-time printing.
 
 ## Work packages
 

@@ -1,4 +1,4 @@
-> Historical design: superseded by [the resurrection specification](docs/design/suss-0.3.1.md). Retained as implementation reference only.
+> Historical design: superseded by [the current specification](docs/design/suss-0.3.1.md). Retained as implementation reference only.
 
 # Suss Metadata Design Document
 
