@@ -122,7 +122,7 @@ fn unbound_names_and_errors_are_language_errors() {
         err,
         concat!(
             "Error: Uncaught language exception: boom\n",
-            "Error: Uncaught language exception: Not callable\n",
+            "Error: Uncaught language exception: Attempting to call unbound fn\n",
             "Error: Uncaught language exception: \"s\"\n",
             "Error: Uncaught language exception: 31\n",
         )

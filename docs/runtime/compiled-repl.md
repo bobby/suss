@@ -89,8 +89,9 @@ Differences from Clojure remain:
 
 - Suss has no var objects. After `(declare d)` or a failed `def`, `d`
   displays `#<undefined>` and prints as nil inside a collection, where Clojure
-  prints an `Unbound` object. Calling it throws "Not callable", where Clojure
-  throws "Attempting to call unbound fn: #'user/d".
+  prints an `Unbound` object. Calling it throws "Attempting to call unbound
+  fn", where Clojure's message also names the var: "Attempting to call unbound
+  fn: #'user/d".
 - Only a `def` reached through `do`, `let` and `binding` bodies, or one branch
   of an `if` whose other branch is nil, displays as a var. `(when c (def x
   nil))` and a first `(defonce x nil)` display nil, where Clojure displays the

@@ -473,6 +473,13 @@ fn invocation_checks_non_callable_and_malformed_arrays_without_wasm_traps() {
         let error = call(&mut store, catch, "call", &[non_callable, args.clone()]);
         exception(&mut store, &error, 3, "Not callable");
     }
+    // A name left unbound holds the undefined sentinel (#288).
+    let undefined = Val::AnyRef(Some(wasmtime::AnyRef::from_i31(
+        &mut store,
+        wasmtime::I31::wrapping_u32(6),
+    )));
+    let error = call(&mut store, catch, "call", &[undefined, args.clone()]);
+    exception(&mut store, &error, 3, "Attempting to call unbound fn");
     let function = fragment(
         &mut store,
         &linker,

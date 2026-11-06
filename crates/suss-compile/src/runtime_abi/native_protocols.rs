@@ -592,7 +592,11 @@ pub(super) fn functions(
     let mut code = vec![LocalGet(1), RefTestNonNull(HeapType::Concrete(DESCRIPTOR)), I32Eqz, If(BlockType::Empty)];
     error(&mut code);
     code.extend([End, LocalGet(0), RefTestNonNull(HeapType::Concrete(7)), If(BlockType::Result(VALUE)),
-        LocalGet(0), Call(descriptor), LocalGet(1), Call(method_get), Else, I32Const(0), RefI31, End, LocalSet(2),
+        LocalGet(0), Call(descriptor), LocalGet(1), Call(method_get), Else,
+        // An unbound name stays undefined, so invoke reports Clojure's unbound-fn
+        // error (#288); any other non-object has no method.
+        LocalGet(0), I32Const(UNDEFINED), RefI31, RefEq, If(BlockType::Result(VALUE)), LocalGet(0), Else,
+        I32Const(0), RefI31, End, End, LocalSet(2),
         LocalGet(0), LocalGet(2), ArrayNewFixed { array_type_index: ARGS, array_size: 2 },
         RefFunc(bound), I32Const(0), I32Const(-1), Call(b.names["closure-new"])]);
     b.function_with_locals("callable-bind", &[VALUE, VALUE], &[VALUE], &[(1, VALUE)], &code);
