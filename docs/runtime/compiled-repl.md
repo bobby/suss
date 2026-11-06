@@ -3,8 +3,8 @@
 The native `suss repl` command now owns one `portable_session::Session`, including
 one long-lived Store/runtime and incremental fragment instances. It evaluates
 each complete input once. Definition sources are not accumulated or replayed,
-and printing inspects the already-rooted result instead of compiling a `pr-str`
-wrapper around the input. The former source-replay frontend modules remain only
+and display calls core's `pr-str` on the already-rooted result instead of
+compiling a `pr-str` wrapper around the input (see [Display](#display)). The former source-replay frontend modules remain only
 as development regression fixtures, not compiled into the shipped native command.
 
 Interactive input uses the namespace prompt; redirected input prints results
@@ -47,13 +47,45 @@ contract. Language exceptions and source failures leave the REPL usable. A faile
 initializer preserves its previous binding, while preceding arbitrary effects
 remain. Captured function values retain their old behavior after global rebinding.
 
-Display currently supports nil/booleans, binary64 numbers, UTF-16 strings and
-descriptive function/type labels. Finite numbers use the shared runtime formatter;
-lone surrogates are escaped without replacement. Unsupported objects produce a
-display error after successful evaluation; no fabricated collection/string value
-is substituted. This is a bounded native frontend, not full portable printing or
-an independent compatibility decoder. Tests assert actual process outputs and
-use the separate existing native artifact tests for runtime ownership/layout.
+## Display
+
+The REPL displays a result as Clojure's REPL prints one (#288):
+
+- A value prints as core's `pr-str` prints it, so collections, seqs, records,
+  types, arrays and references print as in [printing](printing.md), and
+  `print-method` methods apply. Display calls the session's compiled `pr-str`
+  once per result; it doesn't compile anything. nil, booleans, numbers and
+  strings are formatted by the host, with the same text, so a session without
+  core can still display them.
+- A future or stream prints its state, such as `#<future pending>`, alone or
+  inside a collection. Printing never awaits it.
+- An input whose value is a `def`'s, such as `(def x 1)`, `defn`, `declare`,
+  `defmacro` or `(let [] (def z 1))`, displays the var, `#'user/x`, without
+  printing or realizing the value. `defmulti` displays its var when it defines
+  the multimethod and nil when the multimethod already exists, as in Clojure.
+  `defprotocol` displays the protocol's name, and `deftype` and `defrecord`
+  the type.
+- A thrown error with a message reports the message, such as `Error: Uncaught
+  language exception: boom` for `(throw (ex-info "boom" {}))`. Any other thrown
+  value is printed, such as `"s"` for `(throw "s")`.
+
+Differences from Clojure remain:
+
+- Suss has no var objects. After `(declare d)` or a failed `def`, `d`
+  displays `#<undefined>` and prints as nil inside a collection, where Clojure
+  prints an `Unbound` object. Calling it throws "Not callable", where Clojure
+  throws "Attempting to call unbound fn: #'user/d".
+- Only a `def` reached through `do`, `let` and `binding` bodies, or one branch
+  of an `if` whose other branch is nil, displays as a var. `(when c (def x
+  nil))` displays nil when it runs, where Clojure displays the var.
+- `(type 1)` displays `#object[Number]`, since host types have no names yet
+  ([type names](type-names.md)).
+- An infinite seq prints until interrupted with Ctrl-C, as in Clojure without
+  `*print-length*`.
+
+Evidence: `cargo test -p suss-cli --locked --test repl_value_display` drives
+`suss repl` through piped input. Each expected value was compared with Clojure
+1.12.6's REPL, apart from the differences above.
 
 Evidence: `cargo test -p suss-cli --locked --test persistent_repl -- --test-threads=2`
 passes eight executing command tests, including persistent atom state and old

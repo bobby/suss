@@ -82,12 +82,6 @@ pub(crate) enum MetadataShape {
     Set,
 }
 
-/// Display-only data, never fabricated reader/macro syntax.
-pub(crate) enum DisplayDatum {
-    Plain(Form),
-    Collection(DisplayCollection, Vec<DisplayDatum>),
-    Opaque(DisplayLeaf),
-}
 #[derive(Clone, Copy)]
 pub(crate) enum DisplayCollection {
     List,
@@ -210,22 +204,6 @@ impl DatumTarget for Form {
     }
     fn opaque(_: DisplayLeaf) -> wasmtime::Result<Self> {
         Err(error("Opaque runtime values are not macro syntax"))
-    }
-}
-impl DatumTarget for DisplayDatum {
-    fn plain(form: Form) -> Self {
-        Self::Plain(form)
-    }
-    fn collection(
-        kind: DisplayCollection,
-        items: Vec<Self>,
-        _: Range<usize>,
-        _: Vec<Form>,
-    ) -> Self {
-        Self::Collection(kind, items)
-    }
-    fn opaque(leaf: DisplayLeaf) -> wasmtime::Result<Self> {
-        Ok(Self::Opaque(leaf))
     }
 }
 enum DecodedKind<T> {
@@ -1009,46 +987,6 @@ impl FormBridge {
         span: Range<usize>,
     ) -> Result<Form, SessionError> {
         self.read_with_metadata(session, value, span, true)
-    }
-    pub(crate) fn read_for_display(
-        &self,
-        session: &mut Session,
-        value: &SessionValue,
-    ) -> Result<DisplayDatum, SessionError> {
-        self.check(session)?;
-        session.with_operation_budget(|session| {
-            let display = display_calls(session)?;
-            let interrupt = session.host_work_interrupt();
-            session.data_inspect_calls(
-                value,
-                &self.core.factories["lazy-sval"],
-                |mut store, value, args_new, invoke, function| {
-                    let mut budget = Budget {
-                        include_metadata: false,
-                        display: Some(display),
-                        source_valid: None,
-                        interrupt,
-                        active: Vec::new(),
-                        profile: std::env::var_os("SUSS_MACRO_FUEL_TRACE").is_some(),
-                        host_fuel: std::cell::Cell::new(0),
-                        lazy_calls: std::cell::Cell::new(0),
-                        calls: Some(ReadCalls {
-                            args_new,
-                            invoke,
-                            function,
-                        }),
-                    };
-                    decode_datum::<DisplayDatum>(
-                        &mut store,
-                        &value,
-                        &self.core.classes,
-                        &(0..0),
-                        0,
-                        &mut budget,
-                    )
-                },
-            )
-        })
     }
     fn read_with_metadata(
         &self,

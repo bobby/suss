@@ -1588,10 +1588,11 @@
 ;; with print-method. Suss's types have no supertypes, so the built-in printer
 ;; takes the part of Clojure's methods for its own types and Object, and
 ;; prints a value whose type has no method.
-;; Suss can't take the type of a function, a type or a #js object yet
-;; (docs/runtime/type-names.md), so they dispatch to :default.
+;; Suss can't take the type of a function, a type, a #js object, a future or
+;; a stream yet (docs/runtime/type-names.md), so they dispatch to :default.
 (def ^:private untyped-printable?
-  (fn [x] (or (js-fn? x) (suss.bootstrap/type-constructor? x) (object? x))))
+  (fn [x] (or (js-fn? x) (suss.bootstrap/type-constructor? x) (object? x)
+              (some? (suss.bootstrap/display-leaf x)))))
 (def print-simple
   (fn [o w]
     (let [m (meta o)]

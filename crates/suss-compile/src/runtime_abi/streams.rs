@@ -1473,6 +1473,56 @@ fn boxed_exports(b: &mut Builder, base: u32) {
     }
     v.push(I32Const(0));
     b.function("stream-value-kind", &[VALUE], &[ValType::I32], &v);
+    // A future's or stream's display text, or nil (#288). The printer writes
+    // it without awaiting, as the REPL displays these values.
+    let mut v = vec![
+        LocalGet(0),
+        Call(b.names["future-is"]),
+        If(BlockType::Empty),
+        LocalGet(0),
+        Call(b.names["future-status"]),
+        LocalSet(1),
+        End,
+        LocalGet(0),
+        Call(b.names["future-is"]),
+        I32Eqz,
+        If(BlockType::Empty),
+        LocalGet(0),
+        Call(b.names["stream-value-kind"]),
+        I32Const(4),
+        I32Add,
+        LocalSet(1),
+        End,
+    ];
+    for (code, text) in [
+        (0, "#<future pending>"),
+        (1, "#<future ready>"),
+        (2, "#<future failed>"),
+        (3, "#<future cancelled>"),
+        (5, "#<stream reader>"),
+        (6, "#<stream writer>"),
+        (7, "#<stream eof>"),
+    ] {
+        let units: Vec<_> = text.encode_utf16().collect();
+        v.extend([LocalGet(1), I32Const(code), I32Eq, If(BlockType::Empty)]);
+        v.extend(units.iter().map(|unit| I32Const(*unit as i32)));
+        v.extend([
+            ArrayNewFixed {
+                array_type_index: STRING,
+                array_size: units.len() as u32,
+            },
+            Return,
+            End,
+        ]);
+    }
+    v.extend([I32Const(0), RefI31]);
+    b.function_with_locals(
+        "value-display-text",
+        &[VALUE],
+        &[VALUE],
+        &[(1, ValType::I32)],
+        &v,
+    );
     // Pending operation futures are source-inaccessible completion capabilities.
     // Guards must refuse host/source settlement while their journal is rooted.
     let mut v = vec![

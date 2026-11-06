@@ -541,15 +541,6 @@ impl CompiledMacros {
     pub(crate) fn display_value(&mut self, value: &SessionValue) -> Result<String, SessionError> {
         crate::portable_repl::display(&mut self.session, value)
     }
-    pub(crate) fn define_form_display(
-        &mut self,
-        form: Form,
-        span: std::ops::Range<usize>,
-        origin: Option<&crate::portable::SourceOrigin>,
-    ) -> Result<String, SessionError> {
-        let value = self.define_form_with_origin(form, span, origin)?;
-        crate::portable_repl::display(&mut self.session, &value)
-    }
     pub(crate) fn define_form_with_origin(
         &mut self,
         form: Form,

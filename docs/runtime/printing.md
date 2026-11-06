@@ -185,8 +185,9 @@ methods for its own types and `Object` do. Differences from Clojure:
 - Removing `:default` leaves core types without a method for direct calls,
   so a method that calls `print-method` for a number then throws "No method";
   in Clojure, its own types keep their methods.
-- The REPL displays a result without the printer (#288), so methods affect
-  `pr-str` and the other string printers but not the REPL's display.
+- Futures and streams have no type either. They print their state, such as
+  `#<future pending>`, as the [REPL](compiled-repl.md#display) displays them
+  (#288); Clojure prints a future as an object with its status and value.
 
 ## Not yet supported
 

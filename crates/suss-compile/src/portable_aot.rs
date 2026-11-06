@@ -622,6 +622,7 @@ fn prepare_inputs_with_imports(
                     environment: input.fragment.environment.clone(),
                     cells: input.fragment.cells.clone(),
                     namespace_directive: None,
+                    definition: None,
                 });
             }
             fragments.push(input.fragment);

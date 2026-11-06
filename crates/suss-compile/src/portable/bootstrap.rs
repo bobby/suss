@@ -209,6 +209,7 @@ fn restore_checked(phase: Phase, wasm: &[u8], edn: &[u8]) -> Result<(PreparedFra
         environment: analyzed.environment,
         cells: analyzed.cells,
         namespace_directive: analyzed.namespace_directive,
+        definition: None,
     }, identity))
 }
 /// Cache immutable compiler facts and bytes, never guest roots or initialized state.

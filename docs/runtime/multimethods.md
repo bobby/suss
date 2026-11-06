@@ -79,8 +79,9 @@ java.lang.Long`, since Suss's host types have no names yet
 ## Printing
 
 A multimethod prints as Clojure prints one:
-`#object[suss.core.MultiFn 0x… "suss.core.MultiFn@…"]`. Like other references,
-the REPL can't yet display one directly as a result (#288). `pr-str` prints it.
+`#object[suss.core.MultiFn 0x… "suss.core.MultiFn@…"]`. `defmulti` displays
+its var in the REPL, or nil when the multimethod already exists, as in Clojure
+([display](compiled-repl.md#display)).
 
 ## Evidence
 
