@@ -95,6 +95,9 @@ Differences from Clojure remain:
   of an `if` whose other branch is nil, displays as a var. `(when c (def x
   nil))` and a first `(defonce x nil)` display nil, where Clojure displays the
   var.
+- `extend-type` returns its last method, as the pinned ClojureScript does,
+  which displays as `#object[Function]`; Clojure's returns nil. A function
+  the compiler made has no name, so it prints as `Function`.
 - `(type 1)` displays `#object[Number]`, since host types have no names yet
   ([type names](type-names.md)), and a `#js` object can't print yet, so
   `(js-obj)` reports a language error ([printing](printing.md)).

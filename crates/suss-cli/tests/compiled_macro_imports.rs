@@ -123,7 +123,7 @@ fn namespace_session_compiled_macro_imports_preserve_caller_and_runtime_on_failu
     assert!(output.status.success(), "{output:?}");
     assert_eq!(
         String::from_utf8(output.stdout).unwrap(),
-        "17\n17\nnil\n42\n42\nnil\n42\n"
+        "#'user/keep\n17\nnil\n42\n42\nnil\n42\n"
     );
     let errors = String::from_utf8(output.stderr).unwrap();
     assert_eq!(errors.lines().count(), 6, "{errors}");

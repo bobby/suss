@@ -9827,7 +9827,10 @@ reduces them without incurring seq initialization"
           (do (.push parts (suss.bootstrap/string-slice text start length)) parts))))))
 
 ;; Original Suss adaptation: read the source closure's owned UTF16 label.
-(def ^:private pr-function-name (fn [function] (suss.bootstrap/function-name function)))
+;; A function the compiler made, such as a protocol method, has no name and
+;; prints as Function (#288).
+(def ^:private pr-function-name
+  (fn [function] (try (suss.bootstrap/function-name function) (catch :default _ nil))))
 
 ;; Original Suss: a number as an unsigned 32-bit integer in lower-case
 ;; hexadecimal, as java.lang.Integer/toHexString writes it.
