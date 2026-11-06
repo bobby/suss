@@ -20,15 +20,16 @@ WIT world, and a browser ES module with typed host bindings. Wasmtime is the
 reference server host. Portability means hosts implementing the declared feature
 profile and required imports; it does not mean every historical WASI runtime.
 The compiler, macro runtime and shipped REPL must not require Java or JavaScript.
-A JVM ClojureScript compiler and Node may be development-only test oracles.
+JVM Clojure, a JVM ClojureScript compiler and Node may be development-only test
+tools; JVM Clojure is the reference for expected behavior.
 
 The behavior contract is Clojure: Clojure's language semantics, exercised by
 the vendored jank clojure-test-suite as the behavior conformance suite. The
 implementation reference is the `clojurescript/` submodule at
 `c4295f303100bbf5afac449242d30bca1126f1a1` (1.12.134). Its portable core source
-is imported and adapted, and its host choices define platform-level behavior:
-binary64 numbers rather than JVM Clojure's numeric tower, UTF-16 strings, and no
-Java interfaces. ClojureScript implementation details that Clojure leaves
+is imported and adapted, and its host choices define platform-level behavior
+where Clojure leaves them to the host: UTF-16 strings and no Java interfaces.
+Numbers follow Clojure, not ClojureScript (section 4). ClojureScript implementation details that Clojure leaves
 unspecified, such as hash caching, internal fields and protocol implementations
 of built-in types, or object identity of compiler data, are not requirements.
 JS, npm and Closure interoperability are not source compatibility promises.
@@ -119,8 +120,14 @@ every reader (`docs/runtime/read-string.md`).
 
 ## 4. Observable language semantics
 
-Ordinary numbers have IEEE-754 binary64 behavior, including NaN, infinity, signed
-zero and ClojureScript bitwise coercions. Arithmetic (`+ - * /`, `inc`, `dec`,
+Numbers follow Clojure 1.12: longs, doubles, BigInts, ratios and BigDecimals,
+with Clojure's overflow and promotion, contagion, `=` and `==`, hashing,
+printing, reader literals and 64-bit bitwise operations. The jank suite's
+`:default` expectations and JVM Clojure are the oracle.
+[ADR-0003](../adr/0003-clojure-numeric-tower.md) proposes the representation
+and staging. Until it is implemented, every number is an IEEE-754 binary64 value
+with ClojureScript's 32-bit bitwise coercions, and the reader rejects ratios and
+the `N` and `M` suffixes; these are known gaps, not the contract. Arithmetic (`+ - * /`, `inc`, `dec`,
 `quot`, `rem`, `mod`), numeric comparison (`< > <= >= ==`, `min`, `max`) and
 `zero?`, `pos?` and `neg?` accept only numbers, as in Clojure: nil, strings,
 keywords, collections and other objects throw a catchable language error naming
@@ -130,10 +137,9 @@ called as a value; a unary comparison is then true without checking, and a
 variadic comparison stops comparing at its first false pair.
 Source in the `suss.core` namespace keeps the pinned coercing operators
 internally (for example, `compare` orders strings and arrays), while core's
-public numeric functions check their operands. Bitwise operations keep the ClojureScript coercions. An i31 optimization is permitted only
-if indistinguishable from that contract. Ratios and arbitrary precision integers
-are not silently inherited from the current reader. Unsupported numeric forms
-must produce diagnostics. Exact WIT 64-bit integers use separate wrapper values.
+public numeric functions check their operands. Unsupported numeric forms must
+produce diagnostics. Until ADR-0003 is implemented, exact WIT 64-bit integers
+use separate wrapper values.
 
 Strings are sequences of UTF-16 code units. Character literals are one-unit
 strings where ClojureScript treats them that way. Test astral characters, lone
@@ -188,7 +194,8 @@ imports. Optimization must preserve effect ordering and exceptions.
 ## 6. Shared GC runtime ABI (version 2)
 
 Use a small stable, versioned recursive type group imported by every compiled
-fragment. `Value` is an eqref, with nil/booleans as i31 sentinels, boxed f64,
+fragment. `Value` is an eqref, with nil/booleans as i31 sentinels, boxed f64 (ADR-0003
+proposes version 3 with Clojure's numeric types),
 UTF-16 arrays, and typed runtime objects. Initially use a universal closure
 `(environment, argument-array) -> Value`; arity checks are centralized. Specialized
 call paths can be introduced later with equivalent tests.
@@ -250,10 +257,16 @@ all scalar and composite types, maps, adopted `implements`/external-id semantics
 async functions, futures and streams. Compile-time unsupported-feature errors are
 acceptable during development; release claims require interoperability tests.
 
+The table is the target. Until ADR-0003 is implemented, integers cross as checked
+binary64 numbers and `s64`/`u64` as exact wrapper values
+([exact integers](../runtime/portable-exact-integers.md)).
+
 | WIT type | Suss boundary value |
 | --- | --- |
-| bool; small integer types; f32/f64 | Boolean or checked ordinary number; f32 rounds at boundary |
-| s64/u64 | Exact signed/unsigned wrapper, decimal-string constructors; checked `to-number` |
+| bool | Boolean |
+| s8–s64, u8–u32 | Long, range-checked when leaving Suss |
+| u64 | Long up to 2^63 − 1, BigInt above |
+| f32/f64 | Double; f32 rounds when leaving Suss |
 | string | UTF-16 string; reject lone surrogates when producing Unicode WIT strings |
 | char | One Unicode scalar, distinct validation from ordinary character indexing |
 | list, tuple | Persistent vector, with tuple length checked |
@@ -530,6 +543,18 @@ namespace and `munge` of the type name, so `my-ns/T` is `my_ns.T`. The same
 name prints type values, `#object[...]` forms, `Name@hex` strings and record
 literals, so `#my_ns.R{...}` reads back and `#my-ns.R{...}` does not, as in
 Clojure. Details are in docs/runtime/type-names.md.
+
+2026-11-06 numeric semantics decision (#295): numbers follow Clojure, not
+ClojureScript. Suss adopts Clojure 1.12's longs, doubles, BigInts, ratios and
+BigDecimals with Clojure's arithmetic, equality, hashing, printing, reader and
+bitwise behavior, as section 4 states, guided by WIT's numeric types and
+WasmGC's native `i64`, `f64` and i31 values. This supersedes the binary64 platform
+choice kept by the 2026-10-25 decision; its other platform choices are unchanged.
+The jank suite's `:default` expectations and JVM Clojure are the numeric oracle,
+and ClojureScript recordings that contain numbers are not evidence for it.
+[ADR-0003](../adr/0003-clojure-numeric-tower.md) proposes the representation,
+WIT mapping and staging; until it is accepted and implemented, the binary64
+implementation is a known gap.
 
 ## Primary references
 

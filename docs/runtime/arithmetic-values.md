@@ -1,5 +1,8 @@
 # Arithmetic function values
 
+> Describes the binary64 implementation that predates the 2026-11-06 numeric
+> decision: numbers follow Clojure ([ADR-0003](../adr/0003-clojure-numeric-tower.md)).
+
 The portable pipeline now supports +, -, * and / as values, including higher-order,
 computed and returned callees. They read canonical live binding cells; suss.core
 and cljs.core share the same runtime identity. Repeated reads return the same

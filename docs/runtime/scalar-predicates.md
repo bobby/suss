@@ -1,5 +1,8 @@
 # Portable scalar predicate bindings
 
+> Describes the binary64 implementation that predates the 2026-11-06 numeric
+> decision: numbers follow Clojure ([ADR-0003](../adr/0003-clojure-numeric-tower.md)).
+
 The shared runtime now supplies first-class `nil?`, `false?`, `true?`, `undefined?`,
 `number?`, `string?` and `identical?` values in canonical `suss.core` live cells.
 `cljs.core` aliases those cells. Calls use universal closure invocation and central

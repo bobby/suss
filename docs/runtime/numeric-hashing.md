@@ -1,5 +1,8 @@
 # Retained scalar numeric hashing
 
+> Describes the binary64 implementation that predates the 2026-11-06 numeric
+> decision: numbers follow Clojure ([ADR-0003](../adr/0003-clojure-numeric-tower.md)).
+
 This slice retains pinned `hash-double` and `hash-combine` with fixed defn patches,
 original composition and EPL provenance. It does not select public `hash`, nor
 claim complete numeric/collection hashing or JavaScript typed-buffer support.

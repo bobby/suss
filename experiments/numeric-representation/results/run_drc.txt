@@ -1,0 +1,11 @@
+wasmtime 49.0.1 collector=drc n=50000000 reps=5
+d_i64_plain            0.276 ns/iter  (best of 5, 0.014s)
+d_i64_checked          2.121 ns/iter  (best of 5, 0.106s)
+a_f64box             116.580 ns/iter  (best of 5, 5.829s)
+b_i64box             113.772 ns/iter  (best of 5, 5.689s)
+c_i31                  2.086 ns/iter  (best of 5, 0.104s)
+c_i31_boxedrange     117.453 ns/iter  (best of 5, 5.873s)
+e_call_f64only       152.320 ns/iter  (best of 5, 7.616s)
+e_poly_i31             3.228 ns/iter  (best of 5, 0.161s)
+e_poly_i64box        142.461 ns/iter  (best of 5, 7.123s)
+e_poly_f64box        153.096 ns/iter  (best of 5, 7.655s)

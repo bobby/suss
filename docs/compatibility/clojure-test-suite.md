@@ -60,8 +60,10 @@ and 134 contain an opaque node. The 20 oracle skips are the suite's
 `bound-fn`, `bound-fn*`, `decimal?`, `denominator`, `format`, `intern`, `num`,
 `numerator`, `+'`, `*'`, `ratio?`, `rational?`, `rationalize` and
 `with-precision` at load time, and inside tests `future` twice and `promise`
-once (`realized?`) plus `promise` once (`ifn?`). All are JVM-only APIs outside
-the portable contract.
+once (`realized?`) plus `promise` once (`ifn?`). ClojureScript lacks all of
+them. The numeric ones are now in Suss's contract (2026-11-06 numeric decision,
+[ADR-0003](../adr/0003-clojure-numeric-tower.md)), and the suite's ClojureScript
+recordings aren't evidence for numeric behavior.
 
 ## Suss harness
 

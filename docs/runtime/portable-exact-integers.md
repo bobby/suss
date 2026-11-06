@@ -1,5 +1,8 @@
 # Exact WIT integer adapter prerequisite
 
+> Describes the binary64 implementation that predates the 2026-11-06 numeric
+> decision: numbers follow Clojure ([ADR-0003](../adr/0003-clojure-numeric-tower.md)).
+
 The accepted design requires separate signed and unsigned wrapper values for
 WIT `s64`/`u64`. Ordinary Suss numbers retain binary64 semantics. This preparation
 adds freestanding exported scalar `s64`/`u64` boundaries and resolved aliases,

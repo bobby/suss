@@ -8,9 +8,14 @@ Read [the accepted design](docs/design/suss-0.3.1.md), [ROADMAP](ROADMAP.md),
 * Suss is a well-behaved Clojure. Clojure semantics and the vendored jank
   clojure-test-suite are the behavior oracle. Pinned ClojureScript is an
   implementation reference for porting core and for the design's platform
-  choices (binary64 numbers, UTF-16 strings), not an oracle for its
-  implementation details such as hash caching, built-in internals or object
-  identity of compiler data. See the 2026-10-25 design decision.
+  choices (UTF-16 strings), not an oracle for its implementation details such
+  as hash caching, built-in internals or object identity of compiler data. See
+  the 2026-10-25 design decision.
+* Numbers follow Clojure, not ClojureScript: longs, doubles, BigInts, ratios and
+  BigDecimals (2026-11-06 design decision,
+  [ADR-0003](docs/adr/0003-clojure-numeric-tower.md)). The binary64
+  implementation is a known gap; don't cite ClojureScript recordings of numeric
+  behavior as expected values.
 * The current compiler is a prototype. Do not infer support from old comments or
   an encoding-only test; validate and execute the relevant artifact.
 * Keep behavior, tests, inventory and evidence aligned. Never replace unknown

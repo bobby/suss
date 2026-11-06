@@ -1,5 +1,8 @@
 # Comparison primitives and bounded macros
 
+> Describes the binary64 implementation that predates the 2026-11-06 numeric
+> decision: numbers follow Clojure ([ADR-0003](../adr/0003-clojure-numeric-tower.md)).
+
 Original checked comparison primitives now implement separate runtime and bounded
 macro behavior through verified HIR/IR and the shared ten-type GC ABI. Runtime <, <=, >,
 >= and numeric == are first-class functions with one/two/variadic signatures;
