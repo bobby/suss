@@ -61,7 +61,7 @@ which wasmtime selects when no collector is configured, as in Suss today):
 | --- | --- |
 | Unboxed `i64` local, no overflow check (lower bound) | 0.3 |
 | Unboxed `i64` with Clojure's overflow check | 1.2 |
-| i31 small integer, boxed `i64` fallback, inline | 1.9 |
+| i31 small integer, boxed `i64` fallback, inline (untagged; see below) | 1.9 |
 | Boxed `i64` struct with overflow check | 3.2 |
 | Boxed `f64` struct (today) | 3.8–4.1 |
 | Out-of-line polymorphic `+`, i31 operands | 2.6 |
@@ -69,9 +69,12 @@ which wasmtime selects when no collector is configured, as in Suss today):
 
 So a boxed long with overflow checking costs no more than today's boxed double;
 small integers in i31 halve that and allocate nothing; and unboxed locals, which
-type inference or `^long` hints would allow, are another 3–10× faster. The
+type inference or `^long` hints would allow, are 1.6–6× faster again (2.7–11×
+faster than a boxed long). The i31 kernel treats every i31 as a number; the
+tagged encoding proposed below adds a parity test and a shift, which wasn't
+measured. The
 collector matters more than the representation: under wasmtime's
-deferred-reference-counting collector every box costs about 113 ns, 30× the
+deferred-reference-counting collector every box costs about 110–150 ns, 30× the
 copying collector, because each `struct.new` calls into the host.
 
 ## Decision
@@ -79,7 +82,9 @@ copying collector, because each `struct.new` calls into the host.
 Adopt Clojure 1.12's numeric semantics and types, with the jank suite's
 `:default` expectations and JVM Clojure as the oracle. Represent them with
 WasmGC's native integer and float types, and map WIT's numeric types onto them
-directly. The sections below are the proposed contract; the
+directly. The semantics below (arithmetic, equality, bitwise, reader and
+printer) record the 2026-11-06 decision. The narrow types, WIT boundary,
+representation and oracle sections are proposed, and the
 [open questions](#open-questions) need answers before acceptance.
 
 ### Types
@@ -100,10 +105,11 @@ result prints as a double. `class` and `type` name the five types above.
 
 ### Arithmetic
 
-- `+`, `-`, `*`, `inc`, `dec`, `negate` and `abs` on longs throw
-  `ArithmeticException`-equivalent language errors ("long overflow") on
-  overflow. `+'`, `-'`, `*'`, `inc'` and `dec'` promote to BigInt.
-  `unchecked-*` wraps. `(quot Long/MIN_VALUE -1)` wraps, as in Clojure.
+- `+`, `-` (including unary), `*`, `inc` and `dec` on longs throw a language
+  error, "long overflow", on overflow. `+'`, `-'`, `*'`, `inc'` and `dec'`
+  promote to BigInt. `unchecked-negate` and the other `unchecked-*` functions
+  wrap. As in Clojure, `(abs Long/MIN_VALUE)` returns it unchanged and
+  `(quot Long/MIN_VALUE -1)` wraps.
 - Contagion follows Clojure's categories: long → BigInt → Ratio → BigDecimal →
   double, with double contagious over every other type. A BigInt result that fits
   in a long stays a BigInt (`(+ 1N 1)` is `2N`); a Ratio that normalises to an
@@ -138,7 +144,8 @@ coercions, `coerce-int32` and `imul`, leave the public contract.
 - The reader accepts Clojure's numeric literals: decimal, hexadecimal, octal
   (`017` is 15), radix (`36rZ`), `N` and `M` suffixes, ratios, and doubles.
   An integer literal beyond the long range reads as a BigInt. Literals in
-  unselected reader-conditional branches are read, not rejected.
+  unselected reader-conditional branches are read as Clojure reads them, so
+  only a malformed literal, such as `1/0`, fails there.
 - The printer prints as Clojure: `1`, `1.0`, `1N`, `1M`, `1.50M`, `1/2`, and
   doubles in Java's `Double.toString` format (`1.0E21`, `1.0E-4`, `1234567.0`),
   with `##NaN`, `##Inf` and `##-Inf`. `str` drops the `N` and `M` suffixes.
@@ -197,6 +204,10 @@ retired.
   differ.
 - Arbitrary-precision arithmetic needs its own implementation in WasmGC or the
   numeric helper; there is no host library to call.
+- About 75 runtime sites test or cast i31 values on the assumption that an i31
+  is nil, a boolean or undefined, and some runtime state (stream and async
+  status, named-property kinds) stores odd i31 values. Each test must also check
+  the tag bit, and those state slots must never be observable as values.
 
 ## Alternatives considered
 
@@ -208,7 +219,8 @@ retired.
   `with-precision` remain unsupported. It could be a first stage of this decision,
   not an end state.
 - **jank's fixed-precision decimal.** `cpp_dec_float<100>` has no scale, so
-  `1.50M`, `(= 1.0M 1.00M)`'s semantics and `with-precision` couldn't follow
+  printing `1.50M`, scale-dependent results (`(* 1.5M 2)` is `3.0M`), the
+  non-terminating `/` error and `with-precision` rounding couldn't follow
   Clojure.
 - **Boxed longs without the i31 fast path.** Simpler, and costs no more than
   today, but gives up the 2× for small integers and allocates on every operation.

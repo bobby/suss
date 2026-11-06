@@ -257,8 +257,8 @@ all scalar and composite types, maps, adopted `implements`/external-id semantics
 async functions, futures and streams. Compile-time unsupported-feature errors are
 acceptable during development; release claims require interoperability tests.
 
-The table is the target. Until ADR-0003 is implemented, integers cross as checked
-binary64 numbers and `s64`/`u64` as exact wrapper values
+This table follows ADR-0003's proposed mapping, which is not yet accepted. Until
+it is accepted and implemented, integers cross as checked binary64 numbers and `s64`/`u64` as exact wrapper values
 ([exact integers](../runtime/portable-exact-integers.md)).
 
 | WIT type | Suss boundary value |
