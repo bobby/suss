@@ -96,7 +96,10 @@
           (do (.push parts (suss.bootstrap/string-slice text start length)) parts))))))
 
 ;; Original Suss adaptation: read the source closure's owned UTF16 label.
-(def ^:private pr-function-name (fn [function] (suss.bootstrap/function-name function)))
+;; A function the compiler made, such as a protocol method, has no name and
+;; prints as Function (#288).
+(def ^:private pr-function-name
+  (fn [function] (try (suss.bootstrap/function-name function) (catch :default _ nil))))
 
 ;; Original Suss: a number as an unsigned 32-bit integer in lower-case
 ;; hexadecimal, as java.lang.Integer/toHexString writes it.
@@ -1588,10 +1591,11 @@
 ;; with print-method. Suss's types have no supertypes, so the built-in printer
 ;; takes the part of Clojure's methods for its own types and Object, and
 ;; prints a value whose type has no method.
-;; Suss can't take the type of a function, a type or a #js object yet
-;; (docs/runtime/type-names.md), so they dispatch to :default.
+;; Suss can't take the type of a function, a type, a #js object, a future or
+;; a stream yet (docs/runtime/type-names.md), so they dispatch to :default.
 (def ^:private untyped-printable?
-  (fn [x] (or (js-fn? x) (suss.bootstrap/type-constructor? x) (object? x))))
+  (fn [x] (or (js-fn? x) (suss.bootstrap/type-constructor? x) (object? x)
+              (some? (suss.bootstrap/display-leaf x)))))
 (def print-simple
   (fn [o w]
     (let [m (meta o)]
@@ -1617,23 +1621,26 @@
 ;; becomes a hash map past eight methods: adding to a hash map while core
 ;; loads would write another type's mutable fields, which only privileged
 ;; core may do.
+;; While a multimethod still has its first table, printing needs no dispatch.
+(def ^:private print-method-table {:default print-method-default})
+(def ^:private print-dup-table {:default print-dup-default})
 (def print-method
-  (let [table {:default print-method-default}]
-    (new MultiFn "print-method"
-      (fn [x writer]
-        (let [t (get (meta x) :type)]
-          (cond
-            (keyword? t) t
-            (untyped-printable? x) :default
-            :else (type x))))
-      :default (get-global-hierarchy) table (hash-map) table (deref (get-global-hierarchy)))))
+  (new MultiFn "print-method"
+    (fn [x writer]
+      (let [t (get (meta x) :type)]
+        (cond
+          (keyword? t) t
+          (untyped-printable? x) :default
+          :else (type x))))
+    :default (get-global-hierarchy) print-method-table (hash-map) print-method-table
+    (deref (get-global-hierarchy))))
 (def print-dup
-  (let [table {:default print-dup-default}]
-    (new MultiFn "print-dup"
-      (fn [x writer] (if (untyped-printable? x) :default (type x)))
-      :default (get-global-hierarchy) table (hash-map) table (deref (get-global-hierarchy)))))
+  (new MultiFn "print-dup"
+    (fn [x writer] (if (untyped-printable? x) :default (type x)))
+    :default (get-global-hierarchy) print-dup-table (hash-map) print-dup-table
+    (deref (get-global-hierarchy))))
 ;; mf's method for obj, given obj's :type t, or nil when the built-in printer
-;; prints obj with the caller's options. A type's value never reaches a
+;; prints obj with the caller's options. builtin is mf's first table. A type's value never reaches a
 ;; :default method, as in Clojure, where Object's method catches every class.
 ;; A keyword :type with no method and no default returns mf itself, so the
 ;; call throws Clojure's "No method" error.
@@ -1641,7 +1648,7 @@
   (fn [mf builtin obj t]
     (let [table (-methods mf)]
       (cond
-        (and (== 1 (count table)) (identical? builtin (get table :default))) nil
+        (identical? table builtin) nil
         (keyword? t) (let [f (-get-method mf t)] (if (nil? f) mf f))
         (untyped-printable? obj) nil
         :else
@@ -1657,8 +1664,8 @@
 ;; record, which prints by its values as Clojure's print-dup for IRecord does.
 (def ^:private print-method-for
   (fn [obj dup]
-    (let [f (if dup (print-method-of print-dup print-dup-default obj nil) nil)]
+    (let [f (if dup (print-method-of print-dup print-dup-table obj nil) nil)]
       (cond
         f f
         (and dup (record? obj)) nil
-        :else (print-method-of print-method print-method-default obj (get (meta obj) :type))))))
+        :else (print-method-of print-method print-method-table obj (get (meta obj) :type))))))

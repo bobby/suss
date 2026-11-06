@@ -602,12 +602,14 @@
          "suss.bindings.macro:suss.core/prim-seq"
          "suss.bindings.macro:suss.core/print-dup"
          "suss.bindings.macro:suss.core/print-dup-default"
+         "suss.bindings.macro:suss.core/print-dup-table"
          "suss.bindings.macro:suss.core/print-map"
          "suss.bindings.macro:suss.core/print-meta?"
          "suss.bindings.macro:suss.core/print-method"
          "suss.bindings.macro:suss.core/print-method-default"
          "suss.bindings.macro:suss.core/print-method-for"
          "suss.bindings.macro:suss.core/print-method-of"
+         "suss.bindings.macro:suss.core/print-method-table"
          "suss.bindings.macro:suss.core/print-prefix-map"
          "suss.bindings.macro:suss.core/print-simple"
          "suss.bindings.macro:suss.core/print-str"
@@ -1461,12 +1463,14 @@
          "suss.bindings.macro:suss.internal.core-link/prim-seq"
          "suss.bindings.macro:suss.internal.core-link/print-dup"
          "suss.bindings.macro:suss.internal.core-link/print-dup-default"
+         "suss.bindings.macro:suss.internal.core-link/print-dup-table"
          "suss.bindings.macro:suss.internal.core-link/print-map"
          "suss.bindings.macro:suss.internal.core-link/print-meta?"
          "suss.bindings.macro:suss.internal.core-link/print-method"
          "suss.bindings.macro:suss.internal.core-link/print-method-default"
          "suss.bindings.macro:suss.internal.core-link/print-method-for"
          "suss.bindings.macro:suss.internal.core-link/print-method-of"
+         "suss.bindings.macro:suss.internal.core-link/print-method-table"
          "suss.bindings.macro:suss.internal.core-link/print-prefix-map"
          "suss.bindings.macro:suss.internal.core-link/print-simple"
          "suss.bindings.macro:suss.internal.core-link/print-str"
@@ -1978,15 +1982,15 @@
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d666c7573682f31"
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d77726974652f32"
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
-         "suss.bindings.macro:suss.internal.reify/t-reify-3439-10883"],
+         "suss.bindings.macro:suss.internal.reify/t-reify-3439-10885"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "d4f2afb3378ff1c3ea0b8b84eb3f89c32f625f331d155015596ce8f5ba097c43",
- :dependency-graph-sha256 "4b169ba358b1cda8c614a658947f6033bb1ee5dca6f5685c52c33ce7f1381c6f",
+ :compiler-source-sha256 "3ed3a527ba9feb933c6fd95954128f04048aca92126903508aeaab6b44d5e666",
+ :dependency-graph-sha256 "70bd7856112850db03f852ddc7e26df1686a46314236e0e8e272c2271e037646",
  :flags [],
  :format-version 2,
  :phase "macro",
  :runtime-abi 2,
- :source-sha256 "c0725c6d3a2180b9e5e23902328151304e6a70451509731e1660a7428566deb7",
+ :source-sha256 "d43a805406beb971bf154f309f9444e1c94f81d060b6d5bd644eaeb903f7a0fa",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "10b447880883c482ea0d621f0b627ec486f18fa6d168e70deb0b91040c23d90a",
+ :wasm-sha256 "bc5f576e8c3c5642c09521d73200308ad36399c7911ba616a7b3815cc4fdb595",
  :wasm-tools "0.258.0"}

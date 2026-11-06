@@ -189,6 +189,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::IsTypeConstructor => { names.insert("class-value-is"); }
                         Nominal::ValueConstructor => { names.insert("value-constructor"); }
                         Nominal::TypeName => { names.insert("class-value-name"); }
+                        Nominal::DisplayLeaf => { names.insert("value-display-text"); }
                         Nominal::SourceFunctionName => { names.insert("closure-source-name"); }
                         Nominal::NativeObjectDefaultPrototype => { names.insert("native-object-default-prototype"); }
                         Nominal::CurrentThis => { names.insert("current-this"); }
@@ -388,6 +389,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "source-constructor-plan"
             | "value-constructor"
             | "class-value-name"
+            | "value-display-text"
             | "constructor-descriptor"
             | "object-descriptor"
             | "protocol-dispatcher-new" => (vec![VALUE], vec![VALUE]),
@@ -1292,6 +1294,7 @@ fn emit_function(
                         | Nominal::IsTypeConstructor
                         | Nominal::ValueConstructor
                         | Nominal::TypeName
+                        | Nominal::DisplayLeaf
                         | Nominal::SourceFunctionName
                         | Nominal::SameNominalType
                         | Nominal::NativeObjectFactory
@@ -1369,6 +1372,7 @@ fn emit_function(
                                 Nominal::IsTypeConstructor => "class-value-is",
                                 Nominal::ValueConstructor => "value-constructor",
                                 Nominal::TypeName => "class-value-name",
+                                Nominal::DisplayLeaf => "value-display-text",
                                 Nominal::SourceFunctionName => "closure-source-name",
                                 Nominal::SameNominalType => "object-same-descriptor",
                                 Nominal::NativeObjectDefaultPrototype => "native-object-default-prototype",

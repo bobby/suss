@@ -1479,9 +1479,30 @@ impl Analyzer<'_> {
                 bindings.push(binding);
             }
         }
-        // The pin's trailing compiler-only unchecked-if set! emits undefined,
-        // which is nil-like to the encoder but has distinct coercions.
-        effects.push(self.literal_form(form, Literal::Undefined));
+        // Clojure's defprotocol returns the protocol's name, where the pin's
+        // trailing unchecked-if set! returns undefined (#288). Core keeps
+        // undefined: its first protocols are defined before symbols exist, as
+        // does a session without core.
+        let symbols = suss_reader::Symbol {
+            namespace: Some("suss.core".into()),
+            name: "Symbol".into(),
+        };
+        let result = if self.environment.current_namespace(self.phase) == "suss.core"
+            || self.environment.resolve(self.phase, &symbols, name.span.clone()).is_err()
+        {
+            self.literal_form(form, Literal::Undefined)
+        } else {
+            let part = |kind| Form {
+                span: name.span.clone(),
+                metadata: Vec::new(),
+                kind,
+            };
+            self.form(&part(Kind::List(vec![
+                part(Kind::Symbol(suss_reader::Symbol::new("quote"))),
+                part(name.kind.clone()),
+            ])))?
+        };
+        effects.push(result);
         let body = self.do_hir(form, effects);
         Ok(Hir {
             source: None,

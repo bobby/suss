@@ -220,6 +220,8 @@ pub struct PreparedFragment {
     pub environment: resolve::Environment,
     pub cells: Vec<resolve::Global>,
     pub namespace_directive: Option<suss_reader::forms::Form>,
+    /// The var a REPL displays as `#'ns/name`: the input's value is a `def`'s.
+    pub definition: Option<hir::ResultDefinition>,
 }
 pub fn prepare_fragment(
     source: &str,
@@ -330,7 +332,8 @@ pub(crate) fn prepare_selected_fragment_with_origin(
     let wasm = artifact_identity::annotate_source(&wasm, phase, origin, dependencies.as_deref())
         .map_err(|message| Diagnostic { span: function.span.clone(), message })?;
     Ok(PreparedFragment { wasm, environment: analyzed.environment,
-        cells: analyzed.cells, namespace_directive: analyzed.namespace_directive })
+        cells: analyzed.cells, namespace_directive: analyzed.namespace_directive,
+        definition: hir::result_definition(&analyzed.hir) })
 }
 
 pub(crate) struct AnalyzedFragment {

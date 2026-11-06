@@ -67,8 +67,7 @@ reruns the body instead.
 Atoms, volatiles and delays print as Clojure prints a reference:
 `#object[suss.core.Atom 0x… {:status :ready, :val …}]`, with `:pending` for an
 unforced delay and `:failed` (and the exception) for a delay whose body threw. The
-REPL can't yet display these objects directly as a result (#288); `pr-str` prints
-them.
+REPL displays them with `pr-str` ([display](compiled-repl.md#display)).
 
 ## Evidence
 

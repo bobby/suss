@@ -386,6 +386,8 @@ pub enum Nominal {
     ValueConstructor,
     /// Type value -> its name string, or nil (#304).
     TypeName,
+    /// Future or stream -> its display text, or nil (#288).
+    DisplayLeaf,
     SourceFunctionName,
     NativeObjectDefaultPrototype,
     /// Dynamically scoped JavaScript receiver for the original `this-as` form.
@@ -439,7 +441,7 @@ impl Nominal {
                 Self::Array => true,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::CurrentThis => count == 0,
-                Self::IsNumber | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::SourceFunctionName => count == 1,
+                Self::IsNumber | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
@@ -2428,6 +2430,7 @@ impl Analyzer<'_> {
                 "type-constructor?" => Some(Nominal::IsTypeConstructor),
                 "value-constructor" => Some(Nominal::ValueConstructor),
                 "type-name" => Some(Nominal::TypeName),
+                "display-leaf" => Some(Nominal::DisplayLeaf),
                 "function-name" => Some(Nominal::SourceFunctionName),
                 "object-default-prototype" => Some(Nominal::NativeObjectDefaultPrototype),
                 "coerce-string" => Some(Nominal::CoerceString),
@@ -3134,6 +3137,55 @@ fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<Bin
     }
 }
 /// Analyze selected forms using an explicit phase-specific namespace environment.
+/// The var a REPL displays for an input whose value is a `def`'s, as Clojure's
+/// `def` returns its var (#288).
+#[derive(Debug, Clone)]
+pub struct ResultDefinition {
+    pub global: Global,
+    /// The `def` is a `defonce`, or one branch of an `if` whose other branch
+    /// is nil, as in `defmulti`'s expansion, so a nil value means it did not
+    /// run.
+    pub conditional: bool,
+}
+/// Find it through `do`, `let` and `binding` bodies, such as the scope each
+/// input runs in.
+pub(crate) fn result_definition(hir: &Hir) -> Option<ResultDefinition> {
+    match &*hir.kind {
+        // A repeated defonce returns nil without defining, as Clojure's does.
+        Expression::Definition { global, once, .. } => Some(ResultDefinition {
+            global: global.clone(),
+            conditional: *once,
+        }),
+        Expression::Do(items) => items.last().and_then(result_definition),
+        Expression::Let { body, .. } => result_definition(body),
+        // A `binding` body is a thunk the scope calls.
+        Expression::DynamicScope { body, .. } => match &*body.kind {
+            Expression::Function { parameters, body, .. } if parameters.is_empty() => {
+                result_definition(body)
+            }
+            _ => result_definition(body),
+        },
+        Expression::If {
+            consequent,
+            alternative,
+            ..
+        } => {
+            let nil = |hir: &Hir| matches!(&*hir.kind, Expression::Literal(Literal::Nil));
+            let branch = if nil(alternative) {
+                consequent
+            } else if nil(consequent) {
+                alternative
+            } else {
+                return None;
+            };
+            result_definition(branch).map(|definition| ResultDefinition {
+                conditional: true,
+                ..definition
+            })
+        }
+        _ => None,
+    }
+}
 pub fn analyze(forms: &[Form], span: Range<usize>) -> Result<Hir, Diagnostic> {
     analyze_in(forms, span, &Environment::default(), Phase::Runtime)
 }

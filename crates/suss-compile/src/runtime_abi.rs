@@ -476,7 +476,33 @@ fn build_module() -> Vec<u8> {
     );
     let closure = HeapType::Concrete(4);
     let args = HeapType::Concrete(ARGS);
-    let mut invoke = Vec::new();
+    // Calling a name a failed `def` or `declare` left unbound is Clojure's
+    // unbound-fn error, not a non-function's (#288).
+    let mut invoke = vec![
+        LocalGet(0),
+        I32Const(UNDEFINED),
+        RefI31,
+        RefEq,
+        If(BlockType::Empty),
+        GlobalGet(2),
+    ];
+    let units: Vec<_> = "Attempting to call unbound fn".encode_utf16().collect();
+    invoke.extend(units.iter().map(|unit| I32Const(*unit as i32)));
+    invoke.extend([
+        ArrayNewFixed {
+            array_type_index: STRING,
+            array_size: units.len() as u32,
+        },
+        I32Const(0),
+        RefI31,
+        I32Const(0),
+        RefI31,
+        I32Const(0),
+        RefI31,
+        StructNew(8),
+        Throw(0),
+        End,
+    ]);
     for (local, kind, descriptor, message) in [
         (0, closure, 2, "Not callable"),
         (1, args, 3, "Invalid argument array"),

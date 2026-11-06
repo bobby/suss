@@ -34,7 +34,7 @@ fn persistent_session_command_compiled_macros_keep_effects_and_old_expansions() 
     assert_eq!(String::from_utf8(output.stderr).unwrap(), "");
     assert_eq!(
         String::from_utf8(output.stdout).unwrap(),
-        "0\n#<function>\n#<function>\n42\n1\n#<function>\n42\n42\n#<function>\n42\n"
+        "#'user/counter\n#'user/add-two\n#'user/f\n42\n1\n#'user/add-two\n42\n42\n#'user/invoke\n42\n"
     );
 }
 #[test]
@@ -57,7 +57,7 @@ fn persistent_session_command_compiled_macros_namespace_errors_and_reset() {
     assert!(output.status.success(), "{output:?}");
     assert_eq!(
         String::from_utf8(output.stdout).unwrap(),
-        "#<function>\nnil\n#<function>\n42\n42\n42\n#<function>\nnil\n42\n"
+        "#'user/answer\nnil\n#'other/answer\n42\n42\n42\n#'other/bad\nnil\n42\n"
     );
     let errors = String::from_utf8(output.stderr).unwrap();
     assert_eq!(errors.lines().count(), 4, "{errors}");
@@ -105,7 +105,7 @@ fn namespace_session_command_compiled_macros_expand_load_and_reload() {
     assert_eq!(String::from_utf8(output.stderr).unwrap(), "");
     assert_eq!(
         String::from_utf8(output.stdout).unwrap(),
-        "#<function>\nnil\n42\n#<function>\n42\nnil\n43\n"
+        "#'user/add-two\nnil\n42\n#'user/add-two\n42\nnil\n43\n"
     );
 }
 #[test]
@@ -148,7 +148,7 @@ fn persistent_session_command_compiled_macro_core_aliases_conditionals_and_shado
     assert_eq!(String::from_utf8(output.stderr).unwrap(), "");
     assert_eq!(
         String::from_utf8(output.stdout).unwrap(),
-        "#<function>\n42\n#<function>\n42\n#<function>\n42\n"
+        "#'user/a\n42\n#'user/b\n42\n#'user/defmacro\n42\n"
     );
 }
 
@@ -164,7 +164,7 @@ fn namespace_session_command_compiled_macro_definitions_respect_exclusions_and_a
     assert!(output.status.success(), "{output:?}");
     assert_eq!(
         String::from_utf8(output.stdout).unwrap(),
-        "nil\n#<function>\n42\n"
+        "nil\n#'other/allowed\n42\n"
     );
     let errors = String::from_utf8(output.stderr).unwrap();
     assert_eq!(errors.lines().count(), 2, "{errors}");
