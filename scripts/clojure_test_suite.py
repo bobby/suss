@@ -52,7 +52,8 @@ SUITES = {
 }
 SUSS_PATCHES = ('0003-clojure-numeric-operand-suss-branches.patch',
                 '0004-atom-clojure-references-suss-branches.patch',
-                '0005-hierarchy-type-tags-suss-branches.patch')
+                '0005-hierarchy-type-tags-suss-branches.patch',
+                '0006-clojure-jvm-rules-suss-branches.patch')
 PORTABILITY = 'clojure.core-test.portability'
 # The oracle runs the suite this many times; assertions whose observations
 # differ between runs are nondeterministic and keep only their kind and verdict.
@@ -73,11 +74,12 @@ RANDOMIZED = {
 # These source assertions intentionally test only truthiness/absence of a throw.
 # The portable contract does not promise hash-set traversal order, so comparing
 # the concrete sequence produced by `drop` would overstate what they assert.
+# Each entry names its recorded form, so a shifted ordinal can't silently
+# judge a different assertion by verdict.
 VERDICT_ONLY = {
-    'clojure.core-test.drop/test-drop#12':
-        'upstream comment says map/set order is unknown; assertion checks doall truthiness only',
-    'clojure.core-test.nil-qmark/test-nil?#13':
-        'host-interop inventory classifies js/undefined as host-specific with no portable counterpart',
+    'clojure.core-test.drop/test-drop#12': (
+        '(doall (drop 1 #{:c :b :a}))',
+        'upstream comment says map/set order is unknown; assertion checks doall truthiness only'),
 }
 
 
@@ -300,7 +302,7 @@ def canonical_assertion(assertion):
 
 
 def normalize(*runs, suite='suite'):
-    """Merge seeded runs into the reviewed reference, flagging nondeterministic assertions."""
+    """Merge the oracle's runs into the reviewed reference, flagging nondeterministic assertions."""
     runs = [dict(run, assertions=[canonical_assertion(a) for a in run['assertions']]) for run in runs]
     first = runs[0]
     for run in runs:
@@ -314,6 +316,8 @@ def normalize(*runs, suite='suite'):
             raise ValueError(f'oracle run is incomplete: {summary}')
         if summary['fail'] or summary['error']:
             raise ValueError(f'the oracle must pass every assertion it records: {summary}')
+        if run.get('jvm') != first.get('jvm'):
+            raise ValueError('oracle runs used different JVMs')
         if [run[k] for k in ('namespaces', 'tests', 'skips')] != [first[k] for k in ('namespaces', 'tests', 'skips')]:
             raise ValueError('oracle runs disagree on namespaces, tests or skips')
         if [(a['test'], a['ordinal'], a['kind'], canonical_form(a['form'])) for a in run['assertions']] != \
@@ -342,7 +346,7 @@ def normalize(*runs, suite='suite'):
     unused = set(RANDOMIZED) - seen - {a['test'] for a in assertions}
     if suite == 'suite' and unused:
         raise ValueError(f'stale randomized entries: {sorted(unused)}')
-    return {'schema': 2, 'suite': COMMIT, 'upstream': ORACLE_ID,
+    return {'schema': 2, 'suite': COMMIT, 'upstream': ORACLE_ID, 'jvm': first.get('jvm'),
             'namespaces': first['namespaces'], 'tests': first['tests'], 'skips': first['skips'],
             'assertions': assertions, 'summary': first['summary']}
 
@@ -369,7 +373,7 @@ def opaque(node):
 def decide(expected, actual):
     """Return (reason or None, guest_judged) for one oracle assertion and its Suss observation."""
     if expected['kind'] == 'value' and actual['kind'] == 'predicate':
-        # cljs.test reports a call through a local or non-function var by its
+        # clojure.test reports a call through a local or non-function var by its
         # result; the harness evaluates the same call and keeps that result.
         actual = dict(actual, kind='value', value=actual['result'])
     if actual['kind'] != expected['kind']:
@@ -379,6 +383,8 @@ def decide(expected, actual):
     if actual['verdict'] != expected['verdict']:
         return f"verdict:{actual['verdict']}", False
     if expected['id'] in VERDICT_ONLY:
+        if VERDICT_ONLY[expected['id']][0] != expected['form']:
+            raise ValueError(f"VERDICT_ONLY entry no longer names its assertion: {expected['id']}")
         return None, True
     if not expected['deterministic']:
         return None, True
@@ -405,9 +411,9 @@ def decide(expected, actual):
 
 def suite_matches(oracle, suss):
     """oracle_compare.matches, with the JVM oracle's numbers. Until #335 Suss
-    numbers are binary64, so a long the oracle records matches a Suss f64
-    holding exactly that integer, and nothing matches a BigInt, ratio or
-    BigDecimal yet."""
+    numbers are binary64, so a long the oracle records within ±2^53 matches
+    a Suss f64 holding exactly that integer, and nothing matches a larger
+    long, a BigInt, a ratio or a BigDecimal yet."""
     tag = oracle['tag']
     if tag == 'long':
         value = int(oracle['value'])

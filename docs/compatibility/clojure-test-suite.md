@@ -19,8 +19,24 @@ Suss reads the suite as it reads any source: it selects the first `:suss` or
 branches state Clojure's behavior; `:cljs`, `:cljr`, `:lpy` and the others mark
 where other platforms differ. JVM Clojure selects `:clj` branches, so at the
 suite's 33 `:clj` sites the two run different assertions. About half of those
-check JVM classes; where one states a rule Suss follows, a Suss-only patch adds
-a `:suss` branch with it.
+check JVM classes, such as `(instance? java.lang.Long (long 0))`, and stay
+host-specific. Where one states a rule Suss follows, patch `0006` (and `0003` and
+`0004` for operand checks and atoms) adds a `:suss` branch with the same assertion.
+These are worth offering upstream as `:default` branches:
+
+| File | Rule |
+| --- | --- |
+| `abs.cljc` | `(abs Long/MIN_VALUE)` is `Long/MIN_VALUE` |
+| `empty.cljc` | `empty` of a record throws |
+| `juxt.cljc` | `((juxt nil))` throws |
+| `merge.cljc` | merging a vector of more than two items throws |
+| `not_eq.cljc` | `(not= ##NaN ##NaN)` is false, through identity |
+| `edn_test/read_string.cljc` | `foo/bar/baz` reads leniently; an integer beyond the long range reads as a BigInt |
+| `repeat.cljc` | a boolean count throws (`0003`) |
+
+`add_watch.cljc`'s `catch` clauses have no `:default`, so `0006` gives them Suss's
+`:default`, and `atom.cljc` checks atoms with `(type (atom nil))` where it names
+`clojure.lang.Atom` (`0004`).
 
 ## Oracle
 
@@ -111,7 +127,7 @@ operand is opaque on its own. Guest equality never decides a result.
 `scripts/clojure_test_suite.py compare` decides each oracle assertion:
 
 * Pass: same kind, same head symbol and a passing verdict, and every deterministic oracle operand
-  matches the Suss operand with `oracle_compare.matches` (exact binary64 bits
+  matches the Suss operand with `suite_matches` (exact binary64 bits
   apart from the canonical NaN sign, distinct collection kinds, unordered maps and
   sets). A predicate the oracle reports by value is compared by its result.
 * Verdict only (`guest-judged`, counted separately from `pass`): randomized
@@ -157,21 +173,25 @@ Python unit tests cover the remaining failure paths.
 ## Current suite result
 
 Against the JVM Clojure oracle, with `:suss`/`:default` reader features
-(#334, 2026-11-07), the reviewed baseline records 2,078 host-decided passes, 32
-guest-judged observations, 335 failures and 4,494 assertions not executed
+(#334, 2026-11-07), the reviewed baseline records 2,148 host-decided passes, 54
+guest-judged observations, 243 failures and 4,494 assertions not executed
 because 132 namespaces fail to load, out of 6,939 recorded assertions. The
 ClojureScript-era figures below aren't comparable: those recordings were
 5,834 assertions of `:cljs` branches, and Suss ran the same branches.
 
 - Namespaces now stop where a `:default` branch needs what Suss lacks: most
-  at `^:const` definitions (35), others at `clojure.string` requires, `letfn`,
-  `macroexpand` or vars such as `any?`, `sorted?` and `bigdec`.
+  at `^:const` definitions (35); others at `clojure.string` requires (9),
+  reader dispatch Suss doesn't support yet (8), `#uuid` (4), `letfn`,
+  `macroexpand`, `future`, `alter-var-root` (#28), or vars such as `int?`,
+  `sorted?`, `any?` and `bigdec`.
 - 161 failures are assertions that throw in Suss, many on exact numeric
-  literals (#333) that the oracle records as Clojure values.
+  literals (#333) that the oracle records as Clojure values (#335).
 - 63 are verdict differences, where Suss's binary64 numbers or one-unit-string
-  characters behave differently from Clojure's (#335).
+  characters behave differently from Clojure's (#335, #336).
 - `test-map#68` is one of them: `(map identity \a)` throws in Clojure, but `\a`
   is a one-unit string, and so a seq, in Suss.
+- 10 are values the test decoder can't read yet, and `test-seq` fails on one
+  outside an assertion.
 
 After #333's numeric literals (2026-11-07), the reviewed baseline records
 2,327 host-decided passes, 54 guest-judged observations, 232 failures and 3,241

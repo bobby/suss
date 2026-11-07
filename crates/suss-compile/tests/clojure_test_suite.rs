@@ -38,6 +38,9 @@ const TEST_MACRO_NAMES: &[&str] = &["deftest", "is", "are", "testing", "use-fixt
 const PORTABILITY_MACRO_NAMES: &[&str] = &["when-var-exists"];
 // Bounded so a runaway assertion becomes a recorded trap, not a hung suite.
 const OPERATION_FUEL: u64 = 200_000_000;
+/// test-map's complete source with :default branches selected (#334): it
+/// exhausted 200 million units and compiles within 300 million (2026-11-07).
+const MAP_COMPILATION_FUEL: u64 = 300_000_000;
 const DECODE_BUDGET: usize = 10_000_000;
 
 fn root() -> PathBuf {
@@ -574,8 +577,8 @@ fn check(suite: &str) {
     );
     let mut harness = Harness::new(&source_root);
     if suite == "suite" {
-        // The corpus tests semantics; keep Runtime and the pinned-map control
-        // at OPERATION_FUEL while allowing compilation to finish independently.
+        // The corpus tests semantics; keep Runtime at OPERATION_FUEL while
+        // allowing compilation to finish independently.
         harness
             .macros
             .set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
@@ -803,11 +806,9 @@ fn pinned_map_declaration_executes_without_transport_loss() {
     assert_eq!(std::fs::read(&original).unwrap(), std::fs::read(source_file(&source_root, namespace)).unwrap(),
         "the original map test must not be shortened or rewritten");
     let reference = json!({"namespaces": [namespace], "tests": [test_name]});
-    // With :default branches selected (#334), test-map's complete source
-    // needs more than the 200-million-unit compilation allowance; Runtime
-    // keeps OPERATION_FUEL.
+    // Runtime keeps OPERATION_FUEL; compilation gets MAP_COMPILATION_FUEL.
     let mut harness = Harness::new(&source_root);
-    harness.macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
+    harness.macros.set_operation_fuel(MAP_COMPILATION_FUEL);
     let observations = harness.run(&reference, &source_root);
     if let Some(directory) = std::env::var_os("SUSS_CLOJURE_TEST_SUITE_CAPTURE") {
         let directory = PathBuf::from(directory);
@@ -819,14 +820,18 @@ fn pinned_map_declaration_executes_without_transport_loss() {
         "complete pinned map declaration did not compile: {observations}");
     assert!(observations["test-failures"].as_array().unwrap().is_empty(),
         "the original test-map must not stop at a test-level failure: {observations}");
-    // A reviewed known failure keeps its place in the sequence but not its
-    // verdict: test-map#68 maps over \a, which is a seq in Suss, where
-    // characters are one-unit strings, and not in Clojure.
+    // test-map#68 keeps its place in the sequence but not its verdict: it maps
+    // over \a, which is a seq in Suss, where characters are one-unit strings,
+    // and not in Clojure. It must be test-map's only reviewed known failure.
     let known: Value = serde_json::from_str(&std::fs::read_to_string(
         repository.join("tests/oracle/clojure-test-suite-known-failures.json")
     ).unwrap()).unwrap();
+    let masked = format!("{test_name}#68");
+    let known_in_test: Vec<_> = known["assertions"].as_object().unwrap().keys()
+        .filter(|id| id.starts_with(&format!("{test_name}#"))).cloned().collect();
+    assert_eq!(known_in_test, vec![masked.clone()], "test-map's known failures changed");
     let known_failure = |entry: &Value| {
-        known["assertions"].get(format!("{}#{}", entry["test"].as_str().unwrap(), entry["ordinal"])).is_some()
+        format!("{}#{}", entry["test"].as_str().unwrap(), entry["ordinal"]) == masked
     };
     let expected_ids: Vec<_> = pinned["assertions"].as_array().unwrap().iter()
         .filter(|entry| entry["test"] == test_name)

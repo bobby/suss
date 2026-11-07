@@ -32,7 +32,7 @@
              ["slash" (slurp "form-source-metadata-slash.sus") nil]
              ["tag" (slurp "form-source-metadata-tag.sus") nil]]]
       (let [input (readers/indexing-push-back-reader source 1 filename)
-            parsed (reader/read {:read-cond :allow :features #{:cljs}} input)
+            parsed (reader/read {:read-cond :allow :features #{:suss}} input)
             form (if (= 'do (first parsed)) (nth parsed 2) parsed)
             form (if (= label "generated") (ana/macroexpand-1 e form) form)
             expansion (ana/macroexpand-1 e form)]

@@ -124,7 +124,7 @@
     },
     {
       "id": "core-qualified",
-      "source": "#?(:jvm 1 :cljs (cljs.core/+ 1 (cljs.core/* 2 3)))",
+      "source": "#?(:jvm 1 :suss (cljs.core/+ 1 (cljs.core/* 2 3)) :cljs (cljs.core/+ 1 (cljs.core/* 2 3)))",
       "expected": {
         "tag": "f64",
         "bits": "401c000000000000"

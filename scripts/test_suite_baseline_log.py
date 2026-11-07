@@ -11,7 +11,9 @@ EVIDENCE = ROOT / 'docs/compatibility/upstream-suite-baseline/evidence'
 class SuiteLogProjectionTests(unittest.TestCase):
     def setUp(self):
         self.original = json.loads((EVIDENCE / 'original-known-failures.json').read_text())
-        self.reference = json.loads((ROOT / 'tests/oracle/clojure-test-suite-observations.json').read_text())
+        # The log was compared with the ClojureScript recording, which the JVM
+        # Clojure oracle replaced (#334); it is kept here as evidence.
+        self.reference = json.loads((EVIDENCE / 'clojurescript-suite-observations.json').read_text())
         self.log = (EVIDENCE / 'pr231-integrated-head-suite.log').read_text()
 
     def test_exact_baseline_and_all_assertion_classifications(self):

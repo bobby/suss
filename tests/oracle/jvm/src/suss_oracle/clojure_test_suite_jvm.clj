@@ -86,6 +86,8 @@
         (opaque value (str "encode-error: " (ex-message error)))))))
 
 ;; A small JSON writer, so the oracle needs nothing beyond Clojure itself.
+;; Everything outside printable ASCII is a \uXXXX escape of its UTF-16 unit,
+;; so a lone surrogate in a form survives.
 (defn- json-string [^String s]
   (let [out (StringBuilder. "\"")]
     (doseq [c s]
@@ -95,7 +97,7 @@
         \newline (.append out "\\n")
         \return (.append out "\\r")
         \tab (.append out "\\t")
-        (if (< (int c) 32)
+        (if (or (< (int c) 32) (< 126 (int c)))
           (.append out (format "\\u%04x" (int c)))
           (.append out c))))
     (str (.append out "\""))))
@@ -150,7 +152,7 @@
            (merge {"test" test "ordinal" ordinal "kind" kind
                    "verdict" (name (:type m))
                    "form" (binding [*print-namespace-maps* false] (pr-str form))
-                   "line" (:line m) "column" (:column m)
+                   "line" (:line (meta form)) "column" (:column (meta form))
                    "contexts" (vec (reverse t/*testing-contexts*))}
                   observation))))
 
@@ -169,31 +171,42 @@
     nil))
 
 ;; when-var-exists prints `SKIP - sym` for a var the platform lacks. Each
-;; line is attributed to the running test, or to the namespace being loaded.
+;; line is attributed to the running test, or to the namespace being loaded;
+;; other output passes through.
 (defn- skip-capturing-writer [^java.io.Writer delegate]
-  (let [line (StringBuilder.)]
+  (let [line (StringBuilder.)
+        end-line! (fn []
+                    (let [text (str line)]
+                      (.setLength line 0)
+                      (if-let [[_ symbol] (re-matches #"SKIP - (\S+)\s*" text)]
+                        (let [test (current-test)]
+                          (swap! state update :skips conj
+                                 {"symbol" symbol
+                                  "phase" (if test "run" "load")
+                                  "namespace" (or (some-> test (str/split #"/") first) (:loading @state))
+                                  "test" test}))
+                        (.write delegate (str text "\n")))))
+        write-text! (fn [^String text]
+                      (locking line
+                        (doseq [c text]
+                          (if (= c \newline) (end-line!) (.append line c)))))]
     (proxy [java.io.Writer] []
       (write
         ([x]
-         (if (integer? x)
-           (.write this (str (char x)))
-           (doseq [c (str x)]
-             (if (= c \newline)
-               (let [text (str line)]
-                 (.setLength line 0)
-                 (if-let [[_ symbol] (re-matches #"SKIP - (\S+)\s*" text)]
-                   (let [test (current-test)]
-                     (swap! state update :skips conj
-                            {"symbol" symbol
-                             "phase" (if test "run" "load")
-                             "namespace" (or (some-> test (str/split #"/") first) (:loading @state))
-                             "test" test}))
-                   (.write delegate (str text "\n"))))
-               (.append line c)))))
-        ([buffer offset length]
-         (.write this (String. ^chars buffer (int offset) (int length)))))
-      (flush [] (.flush delegate))
-      (close [] (.close delegate)))))
+         (write-text! (cond (string? x) x
+                            (integer? x) (str (char x))
+                            :else (String. ^chars x))))
+        ([x offset length]
+         (write-text! (if (string? x)
+                        (subs x offset (+ offset length))
+                        (String. ^chars x (int offset) (int length))))))
+      (flush []
+        (locking line
+          (when (pos? (.length line))
+            (.write delegate (str line))
+            (.setLength line 0)))
+        (.flush delegate))
+      (close [] (.flush ^java.io.Writer this) (.close delegate)))))
 
 (defn -main [output commit & namespaces]
   (reset! state {:assertions [] :tests [] :ordinals {} :reporter-errors [] :skips [] :loading nil})
@@ -210,6 +223,8 @@
           (json {"schema" 2
                  "suite" commit
                  "upstream" (str "clojure-" (clojure-version))
+                 "jvm" {"version" (System/getProperty "java.version")
+                        "vendor" (System/getProperty "java.vendor")}
                  "namespaces" (vec namespaces)
                  "tests" tests
                  "skips" skips

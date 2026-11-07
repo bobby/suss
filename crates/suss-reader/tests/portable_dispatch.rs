@@ -58,7 +58,7 @@ fn pinned_reader_shapes_match() {
             false,
         ),
         (
-            "#(vector #?(:default %2 :default %9) %)",
+            "#(vector #?(:suss %2 :default %9) %)",
             "(fn* [arg-1 arg-2 arg-3 arg-4 arg-5 arg-6 arg-7 arg-8 arg-9] (vector arg-2 arg-1))",
             false,
         ),
@@ -90,7 +90,7 @@ fn pinned_reader_shapes_match() {
         ("[#?@(:default []) 4]", "[4]", false),
         ("[#?@(:default nil)]", "", true),
         ("#?@(:default [1])", "", true),
-        ("[#?@(:default [1] :default [2])]", "[1]", false),
+        ("[#?@(:suss [1] :default [2])]", "[1]", false),
         ("['#?@(:default [x y]) z]", "[(quote x) y z]", false),
     ];
     for (source, expected, read_error) in cases {
