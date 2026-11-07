@@ -196,11 +196,13 @@ before code generation. Runtime tests use descriptor identity; Wasm structural
 `ref.test` alone is not a nominal type test. Reachability may remove unused host
 imports. Optimization must preserve effect ordering and exceptions.
 
-## 6. Shared GC runtime ABI (version 2)
+## 6. Shared GC runtime ABI (version 3)
 
 Use a small stable, versioned recursive type group imported by every compiled
-fragment. `Value` is an eqref, with nil/booleans as i31 sentinels, boxed f64 (ADR-0003
-replaces it with version 3: Clojure's numeric types and i31 small longs),
+fragment. `Value` is a nullable eqref: nil is null, false, true and undefined
+are singleton sentinel structs, and i31 is reserved for small longs
+([ABI v3](../runtime/abi-v3.md), ADR-0003); numbers are still boxed f64 until
+#335 adds Clojure's longs and doubles,
 UTF-16 arrays, and typed runtime objects. Initially use a universal closure
 `(environment, argument-array) -> Value`; arity checks are centralized. Specialized
 call paths can be introduced later with equivalent tests.

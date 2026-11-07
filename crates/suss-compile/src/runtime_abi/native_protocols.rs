@@ -35,7 +35,7 @@ pub(super) fn functions(
 ) -> Vec<u32> {
     use Instruction::*;
     let mut body = vec![];
-    for sentinel in [NIL, UNDEFINED] { // ABI3 sentinel-read: native kind; any i31 other than these four sentinels falls to object kind 5
+    for sentinel in [NIL, UNDEFINED] {
         body.extend([
             LocalGet(0),
             sentinel_value(sentinel),
@@ -80,7 +80,7 @@ pub(super) fn functions(
     // native-satisfies? is defined under *unchecked-if*: its property tests use
     // JS truthiness, while ordinary portable if keeps ClojureScript truthiness.
     let mut body = vec![];
-    for sentinel in [NIL, FALSE, UNDEFINED] { // ABI3 sentinel-read: JS truthiness treats every other non-number, non-string i31 as true
+    for sentinel in [NIL, FALSE, UNDEFINED] {
         body.extend([
             LocalGet(0),
             sentinel_value(sentinel),

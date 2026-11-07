@@ -101,7 +101,6 @@ pub(super) fn append_globals(globals: &mut GlobalSection, base: u32) {
                 mutable: false,
                 shared: false,
             },
-            // ABI3 const-expr
             &ConstExpr::extended([
                 I64Const(0),
                 I32Const(0),
@@ -129,7 +128,6 @@ pub(super) fn append_globals(globals: &mut GlobalSection, base: u32) {
             mutable: false,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([
             GlobalGet(base + EOF),
             I32Const(0),

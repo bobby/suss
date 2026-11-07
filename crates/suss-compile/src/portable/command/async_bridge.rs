@@ -948,7 +948,7 @@ fn field_set(
     });
 }
 fn fail(body: &mut Vec<Instruction<'static>>) {
-    // ABI3 check: thrown language-exception payload is a general Value.
+    // thrown language-exception payload is a general Value.
     body.extend([
         runtime_abi::sentinel_value(runtime_abi::NIL),
         Instruction::Throw(0),

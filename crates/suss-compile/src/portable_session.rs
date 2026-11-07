@@ -2031,7 +2031,7 @@ mod tests {
                 .inspect(&buffer, |mut store, value| {
                     let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
                     for (index, argument) in arguments.iter().enumerate() {
-                        let argument = argument.value.to_rooted(&mut store);
+                        let argument = argument.object().unwrap().to_rooted(&mut store);
                         array.set(&mut store, index as u32, Val::AnyRef(Some(argument)))?;
                     }
                     Ok(())
@@ -2067,7 +2067,7 @@ mod tests {
                 assert!(
                     session
                         .inspect(field, |mut store, value| {
-                            let expected = expected.value.to_rooted(&mut store);
+                            let expected = expected.object().unwrap().to_rooted(&mut store);
                             wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
                                 &store,
                                 value.unwrap_anyref().unwrap(),
@@ -2083,7 +2083,7 @@ mod tests {
                     assert_eq!(array.len(&store)?, 3);
                     for (index, argument) in arguments.iter().enumerate() {
                         let actual = array.get(&mut store, index as u32)?;
-                        let expected = argument.value.to_rooted(&mut store);
+                        let expected = argument.object().unwrap().to_rooted(&mut store);
                         assert!(wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
                             &store,
                             actual.unwrap_anyref().unwrap(),
@@ -2161,7 +2161,7 @@ mod tests {
                         assert!(
                             session
                                 .inspect(left, |mut store, value| {
-                                    let right = right.value.to_rooted(&mut store);
+                                    let right = right.object().unwrap().to_rooted(&mut store);
                                     wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
                                         &store,
                                         value.unwrap_anyref().unwrap(),
@@ -2200,7 +2200,7 @@ mod tests {
                     assert!(
                         session
                             .inspect(field, |mut store, value| {
-                                let expected = expected.value.to_rooted(&mut store);
+                                let expected = expected.object().unwrap().to_rooted(&mut store);
                                 wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
                                     &store,
                                     value.unwrap_anyref().unwrap(),
@@ -2245,7 +2245,7 @@ mod tests {
                         .inspect(&value, |mut store, value| {
                             let error = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
                             let found = error.field(&mut store, 0)?;
-                            let expected = descriptor.value.to_rooted(&mut store);
+                            let expected = descriptor.object().unwrap().to_rooted(&mut store);
                             assert!(wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
                                 &store,
                                 found.unwrap_anyref().unwrap(),
@@ -2278,7 +2278,7 @@ mod tests {
                                 .unwrap()
                                 .as_array(&store)?
                                 .unwrap();
-                            let original = class.value.to_rooted(&mut store);
+                            let original = class.object().unwrap().to_rooted(&mut store);
                             let mut replaced = false;
                             for index in (1..cache.len(&store)?).step_by(2) {
                                 let entry = cache.get(&mut store, index)?;
@@ -2286,7 +2286,7 @@ mod tests {
                                     if wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
                                         &store, entry, &original,
                                     )? {
-                                        let replacement = replacement.value.to_rooted(&mut store);
+                                        let replacement = replacement.object().unwrap().to_rooted(&mut store);
                                         cache.set(
                                             &mut store,
                                             index,
@@ -2323,7 +2323,7 @@ mod tests {
                                 .unwrap()
                                 .as_array(&store)?
                                 .unwrap();
-                            let replaced = replacement.value.to_rooted(&mut store);
+                            let replaced = replacement.object().unwrap().to_rooted(&mut store);
                             let mut restored = false;
                             for index in (1..cache.len(&store)?).step_by(2) {
                                 let entry = cache.get(&mut store, index)?;
@@ -2331,7 +2331,7 @@ mod tests {
                                     if wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
                                         &store, entry, &replaced,
                                     )? {
-                                        let original = class.value.to_rooted(&mut store);
+                                        let original = class.object().unwrap().to_rooted(&mut store);
                                         cache.set(
                                             &mut store,
                                             index,
@@ -2363,7 +2363,7 @@ mod tests {
                 assert!(
                     session
                         .inspect(&value, |mut store, value| {
-                            let input = input.value.to_rooted(&mut store);
+                            let input = input.object().unwrap().to_rooted(&mut store);
                             wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
                                 &store,
                                 value.unwrap_anyref().unwrap(),
@@ -2390,7 +2390,8 @@ mod tests {
             let bad_class = {
                 let mut scope = RootScope::new(&mut session.store);
                 let original = descriptor
-                    .value
+                    .object()
+                    .unwrap()
                     .to_rooted(&mut scope)
                     .as_struct(&scope)
                     .unwrap()
@@ -2403,7 +2404,8 @@ mod tests {
                     .unwrap()
                     .to_anyref();
                 let original = class
-                    .value
+                    .object()
+                    .unwrap()
                     .to_rooted(&mut scope)
                     .as_struct(&scope)
                     .unwrap()
@@ -2526,7 +2528,7 @@ mod tests {
                     assert!(
                         session
                             .inspect(field, |mut store, value| {
-                                let expected = expected.value.to_rooted(&mut store);
+                                let expected = expected.object().unwrap().to_rooted(&mut store);
                                 wasmtime::Rooted::<wasmtime::AnyRef>::ref_eq(
                                     &store,
                                     value.unwrap_anyref().unwrap(),
@@ -2803,12 +2805,20 @@ mod tests {
         {
             let mut scope = RootScope::new(&mut session.store);
             let current = dynamic_checkpoint(&mut scope, runtime).unwrap();
-            let current_join = current.array_join.to_rooted(&mut scope);
-            let caller_join = caller.array_join.to_rooted(&mut scope);
-            assert!(wasmtime::Rooted::ref_eq(&scope, &current_join, &caller_join).unwrap());
-            let current = current.frame.to_rooted(&mut scope);
-            let caller = caller.frame.to_rooted(&mut scope);
-            assert!(wasmtime::Rooted::ref_eq(&scope, &current, &caller).unwrap());
+            // Either root may be nil; two nils are the same root.
+            for (current, caller) in [
+                (&current.array_join, &caller.array_join),
+                (&current.frame, &caller.frame),
+            ] {
+                let current = current.as_ref().map(|root| root.to_rooted(&mut scope));
+                let caller = caller.as_ref().map(|root| root.to_rooted(&mut scope));
+                match (current, caller) {
+                    (Some(current), Some(caller)) => {
+                        assert!(wasmtime::Rooted::ref_eq(&scope, &current, &caller).unwrap())
+                    }
+                    (current, caller) => assert!(current.is_none() && caller.is_none()),
+                }
+            }
         }
         session.set_operation_fuel(1_000_000);
         assert!(

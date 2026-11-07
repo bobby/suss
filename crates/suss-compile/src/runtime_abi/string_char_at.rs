@@ -11,7 +11,6 @@ pub(super) fn append_globals(globals: &mut GlobalSection) {
             mutable: true,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([sentinel_value(NIL)]),
     );
 }

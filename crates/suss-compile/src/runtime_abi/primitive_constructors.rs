@@ -17,7 +17,7 @@ pub(super) fn append_globals(globals: &mut GlobalSection) {
                 mutable: true,
                 shared: false,
             },
-            // ABI3 const-expr: unset constructor roots hold nil until installed.
+            // unset constructor roots hold nil until installed.
             &ConstExpr::extended([sentinel_value(NIL)]),
         );
     }

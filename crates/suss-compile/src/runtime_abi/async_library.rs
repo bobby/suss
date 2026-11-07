@@ -56,7 +56,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                     .instruction(&ArrayGet(ARGS))
                     .instruction(&Call(b.names[guard]))
                     .instruction(&If(BlockType::Empty))
-                    // ABI3 check: thrown payload is a general Value a catch can observe.
+                    // thrown payload is a general Value a catch can observe.
                     .instruction(&sentinel_value(NIL))
                     .instruction(&Throw(0))
                     .instruction(&End);

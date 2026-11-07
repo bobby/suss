@@ -412,7 +412,7 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
             mutable: true,
             shared: false,
         },
-        // ABI3 const-expr: the root future slot starts as nil.
+        // the root future slot starts as nil.
         &ConstExpr::extended([runtime_abi::sentinel_value(runtime_abi::NIL)]),
     );
     globals.global(

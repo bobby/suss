@@ -583,7 +583,7 @@ pub(super) fn append_globals(
                 ArrayNewDefault(ARGS),
                 I32Const(0),
                 ArrayNewDefault(ARGS),
-                sentinel_value(NIL), // ABI3 const-expr
+                sentinel_value(NIL),
                 I32Const(0), // Identity UID, unassigned.
                 RefI31,
                 sentinel_value(NIL), StructNew(DESCRIPTOR),
@@ -596,7 +596,7 @@ pub(super) fn append_globals(
             mutable: true,
             shared: false,
         },
-        &ConstExpr::extended([sentinel_value(NIL)]), // ABI3 const-expr
+        &ConstExpr::extended([sentinel_value(NIL)]),
     );
     globals.global(
         GlobalType {

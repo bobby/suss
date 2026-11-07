@@ -339,3 +339,25 @@ fn nested_exception_regions_capture_nominal_fields_and_loop_bindings() {
     assert_eq!(number(&mut session, &value), 42.0f64.to_bits());
     assert_eq!(eval_number(&mut session, "(loop [again true value 7] (if again (recur false (try (throw (+ value 35)) (catch :default error error) (finally 9))) value))"), 42.0f64.to_bits());
 }
+
+#[test]
+fn runtime_errors_read_options_without_a_presence_mask() {
+    // A runtime-thrown error keeps nil in the field that holds an
+    // Error-constructor presence mask; reading `cause` or wrapping it must
+    // treat that as "no options" rather than trap (#335).
+    let mut session = Session::new().unwrap();
+    session.eval("(def arity (fn [a] a))").unwrap();
+    let cause = session
+        .eval("(try (arity 1 2) (catch :default e (.-cause e)))")
+        .unwrap();
+    session.collect().unwrap();
+    let tag = session
+        .inspect(&cause, |mut store, value| {
+            suss_cli::portable_session::sentinel_tag(&mut store, &value)
+        })
+        .unwrap();
+    assert_eq!(tag, Some(6), "undefined");
+    session
+        .eval("(try (arity 1 2) (catch :default e (js/Error. \"wrapped\" e)))")
+        .unwrap();
+}

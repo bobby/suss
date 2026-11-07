@@ -351,8 +351,8 @@ mod tests {
                     .unwrap()
                     .as_array(&store)?
                     .unwrap();
-                let payload = payload.to_rooted(&mut store);
-                snapshot.set(&mut store, 1, Val::AnyRef(Some(payload)))?;
+                let payload = payload.as_ref().map(|payload| payload.to_rooted(&mut store));
+                snapshot.set(&mut store, 1, Val::AnyRef(payload))?;
                 let ready =
                     wasmtime::AnyRef::from_i31(&mut store, wasmtime::I31::new_u32(1).unwrap());
                 snapshot.set(&mut store, 0, Val::AnyRef(Some(ready)))?;

@@ -281,7 +281,6 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             mutable: false,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
             I32Const(1),
@@ -301,7 +300,6 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             mutable: false,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
             I32Const(5),
@@ -324,7 +322,6 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             mutable: true,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([
             I32Const(0),
             ArrayNewDefault(ARGS),
@@ -346,7 +343,6 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             mutable: false,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
             I32Const(1),
@@ -366,7 +362,6 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             mutable: false,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
             I32Const(0),
@@ -386,7 +381,6 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             mutable: false,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([
             GlobalGet(TRAP_DESCRIPTOR_GLOBAL),
             I32Const(0),
@@ -404,7 +398,6 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             mutable: false,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([
             GlobalGet(TRAP_DESCRIPTOR_GLOBAL),
             I32Const(0),

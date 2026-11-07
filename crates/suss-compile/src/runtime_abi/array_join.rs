@@ -35,7 +35,7 @@ pub(super) fn append_globals(globals: &mut GlobalSection) {
                 mutable: true,
                 shared: false,
             },
-            // ABI3 const-expr: empty join stack and lazy method roots start NIL.
+            // empty join stack and lazy method roots start NIL.
             &ConstExpr::extended([sentinel_value(NIL)]),
         );
     }

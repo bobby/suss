@@ -238,14 +238,26 @@ pub(super) fn callback(b: &mut Builder) -> u32 {
     nominal::error(&mut code);
     code.extend([
         End,
+        // A kernel error's field 2 is nil: no options are present.
+        Block(BlockType::Result(ValType::I32)),
+        Block(BlockType::Result(VALUE)),
         LocalGet(3),
         RefCastNonNull(HeapType::Concrete(8)),
         StructGet {
             struct_type_index: 8,
             field_index: 2,
         },
-        RefCastNonNull(HeapType::I31),
+        BrOnCastFail {
+            relative_depth: 0,
+            from_ref_type: RefType::EQREF,
+            to_ref_type: RefType { nullable: false, heap_type: HeapType::I31 },
+        },
         I31GetU,
+        Br(1),
+        End,
+        Drop,
+        I32Const(0),
+        End,
         I32Const(1),
         I32And,
         If(BlockType::Empty),

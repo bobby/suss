@@ -49,7 +49,7 @@ fn changed(b: &Builder, code: &mut Vec<Instruction<'static>>) {
 }
 pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
     let mut code = vec![];
-    for sentinel in [NIL, FALSE, UNDEFINED] { // ABI3 sentinel-read: JS ToBoolean treats every other non-number, non-string i31 as true
+    for sentinel in [NIL, FALSE, UNDEFINED] {
         code.extend([
             LocalGet(0),
             sentinel_value(sentinel),

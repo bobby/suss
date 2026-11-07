@@ -1,8 +1,9 @@
 # Shared GC runtime ABI v1 history
 
-The current [ABI2 identity extension](identity-hashing.md) appends owner-held UID
-slots and rejects ABI1 artifacts before initialization. This document records the
-original layout and evidence; current shared-runtime validation executes ABI2.
+The [ABI2 identity extension](identity-hashing.md) appended owner-held UID
+slots and rejected ABI1 artifacts before initialization; [ABI v3](abi-v3.md)
+moved the sentinels out of i31. This document records the original layout and
+evidence.
 
 `suss_compile::runtime_abi` originally emitted the new core runtime with wasm-encoder 0.258.0.
 This is production runtime implementation, not a second source compiler or the

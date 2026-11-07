@@ -117,7 +117,7 @@ pub fn compile_with_cells(
                 mutable: false,
                 shared: false,
             },
-            // ABI3 const-expr: an unbound binding cell starts holding nil.
+            // an unbound binding cell starts holding nil.
             &ConstExpr::extended([
                 runtime_abi::sentinel_value(runtime_abi::NIL),
                 Instruction::I32Const(0),

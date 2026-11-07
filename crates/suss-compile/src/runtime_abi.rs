@@ -166,7 +166,7 @@ pub fn prelude() -> TypeSection {
             field(VALUE, true),
             field(VALUE, true),
             field(VALUE, true), // Identity UID, separate from metadata.
-            // Munged names of `^:mutable` fields (ARGS of strings), or i31 0.
+            // Munged names of `^:mutable` fields (ARGS of strings), or nil.
             field(VALUE, false),
         ]),
         // User object: descriptor, fields, per-object metadata.
@@ -853,7 +853,6 @@ fn build_module() -> Vec<u8> {
                 mutable: false,
                 shared: false,
             },
-            // ABI3 const-expr
             &ConstExpr::extended([
                 I64Const(identity.into()),
                 sentinel_value(NIL),
@@ -900,7 +899,6 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(i64::from(numeric::ERROR_GLOBALS) + 1),
             I32Const(0),
@@ -920,7 +918,6 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
             sentinel_value(NIL),
@@ -937,7 +934,6 @@ fn build_module() -> Vec<u8> {
             mutable: true,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([sentinel_value(NIL)]),
     );
     let mut info_descriptor = vec![I64Const(i64::from(numeric::ERROR_GLOBALS) + 2)];
@@ -975,7 +971,6 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended(info_descriptor),
     );
     let mut ordinary_root = vec![I64Const(i64::from(numeric::ERROR_GLOBALS) + 3)];
@@ -1012,7 +1007,6 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended(ordinary_root),
     );
     // Owner tag for closure environments/properties; identity is reference based.
@@ -1022,7 +1016,6 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
             I32Const(0),
@@ -1042,7 +1035,6 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
             I32Const(0),
@@ -1062,7 +1054,6 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
             I32Const(0),
@@ -1081,7 +1072,6 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
             I32Const(0),
@@ -1107,8 +1097,7 @@ fn build_module() -> Vec<u8> {
             mutable: true,
             shared: false,
         },
-        // ABI3 const-expr
-        // ABI3 check: lazy-root absent marker, compared with i31 0 on first use.
+        // lazy-root absent marker, compared with nil on first use.
         &ConstExpr::extended([sentinel_value(NIL)]),
     );
     // Original owned dynamic data-property storage tag, appended privately.
@@ -1118,7 +1107,6 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
             I32Const(0),
@@ -1138,8 +1126,7 @@ fn build_module() -> Vec<u8> {
             mutable: true,
             shared: false,
         },
-        // ABI3 const-expr
-        // ABI3 check: lazy-root absent marker, compared with i31 0 on first use.
+        // lazy-root absent marker, compared with nil on first use.
         &ConstExpr::extended([sentinel_value(NIL)]),
     );
     // Shared Array.slice function root; no receiver retained.
@@ -1149,8 +1136,7 @@ fn build_module() -> Vec<u8> {
             mutable: true,
             shared: false,
         },
-        // ABI3 const-expr
-        // ABI3 check: lazy-root absent marker, compared with i31 0 on first use.
+        // lazy-root absent marker, compared with nil on first use.
         &ConstExpr::extended([sentinel_value(NIL)]),
     );
     // Scalar-only UID allocator; no global reference table retains owners.

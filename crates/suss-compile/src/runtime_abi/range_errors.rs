@@ -11,7 +11,6 @@ pub(super) fn append_globals(globals: &mut GlobalSection) {
             mutable: false,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(i64::from(numeric::ERROR_GLOBALS) + 4),
             I32Const(0),
@@ -30,7 +29,6 @@ pub(super) fn append_globals(globals: &mut GlobalSection) {
             mutable: true,
             shared: false,
         },
-        // ABI3 const-expr
         &ConstExpr::extended([sentinel_value(NIL)]),
     );
 }
