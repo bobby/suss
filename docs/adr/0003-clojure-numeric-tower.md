@@ -1,8 +1,7 @@
 # ADR-0003: Clojure's numeric tower
 
-Status: **Proposed**. The direction, Clojure's numeric semantics, was decided on
-2026-11-06 (design decision log); the representation, WIT mapping, staging and
-[open questions](#open-questions) await acceptance.
+Status: **Accepted** on 2026-11-06, with the answers in
+[resolved questions](#resolved-questions).
 Date: 2026-11-06.
 Issue: [#295](https://github.com/bobby/suss/issues/295).
 
@@ -61,7 +60,8 @@ which wasmtime selects when no collector is configured, as in Suss today):
 | --- | --- |
 | Unboxed `i64` local, no overflow check (lower bound) | 0.3 |
 | Unboxed `i64` with Clojure's overflow check | 1.2 |
-| i31 small integer, boxed `i64` fallback, inline (untagged; see below) | 1.9 |
+| i31 small integer, boxed `i64` fallback, inline (untagged) | 1.9 |
+| i31 small integer with the low-bit tag chosen below (second set of runs) | 2.2–2.4 |
 | Boxed `i64` struct with overflow check | 3.2 |
 | Boxed `f64` struct (today) | 3.8–4.1 |
 | Out-of-line polymorphic `+`, i31 operands | 2.6 |
@@ -70,22 +70,25 @@ which wasmtime selects when no collector is configured, as in Suss today):
 So a boxed long with overflow checking costs no more than today's boxed double;
 small integers in i31 halve that and allocate nothing; and unboxed locals, which
 type inference or `^long` hints would allow, are 1.6–6× faster again (2.7–11×
-faster than a boxed long). The i31 kernel treats every i31 as a number; the
-tagged encoding proposed below adds a parity test and a shift, which wasn't
-measured. The
-collector matters more than the representation: under wasmtime's
-deferred-reference-counting collector every box costs about 110–150 ns, 30× the
-copying collector, because each `struct.new` calls into the host.
+faster than a boxed long). Under the copying collector, the tag test of the
+encoding chosen below costs 0.3–0.4 ns per addition, measured in a second set
+of runs (`run_copying_live*`) on a busier machine.
+
+A live heap changes the picture for boxes only. With 10⁶ live objects, a boxed
+addition under the copying collector costs 21–22 ns instead of 3–4.5, and each
+collection pauses for about 25 ms; at 4·10⁶ live objects, 22–24.5 ns and 67 ms.
+Unboxed and i31 arithmetic allocate nothing and keep their speed. wasmtime's
+deferred-reference-counting collector calls into the host for every
+`struct.new`. With a small heap a box costs about 110–150 ns; with 10⁶ live
+objects, about 22 ns, as under copying. Why the cost falls wasn't
+investigated.
 
 ## Decision
 
 Adopt Clojure 1.12's numeric semantics and types, with the jank suite's
 `:default` expectations and JVM Clojure as the oracle. Represent them with
-WasmGC's native integer and float types, and map WIT's numeric types onto them
-directly. The semantics below (arithmetic, equality, bitwise, reader and
-printer) record the 2026-11-06 decision. The narrow types, WIT boundary,
-representation and oracle sections are proposed, and the
-[open questions](#open-questions) need answers before acceptance.
+WasmGC's native integer and float types, unboxed wherever the compiler can, and
+map WIT's numeric types onto them directly.
 
 ### Types
 
@@ -97,11 +100,28 @@ representation and oracle sections are proposed, and the
 | `Ratio` | ratio | Normalised fraction of integers, denominator > 1 |
 | `BigDecimal` | decimal | Arbitrary-precision unscaled integer and 32-bit scale, as Java's `BigDecimal` |
 
-`Integer`, `Short` and `Byte` have no separate types: `int`, `short` and `byte`
-check the range, as Clojure does, and return a long, which Clojure's `=`, `==`
-and `hash` already treat as the same value. `float` rounds to binary32 precision
-and returns a double, so `(= (float 0.1) 0.1)` is false as in Clojure, but the
-result prints as a double. `class` and `type` name the five types above.
+`Integer`, `Short`, `Byte` and `Float` have no separate value types, as in
+jank, which has only 64-bit integers and doubles:
+
+- `int`, `short` and `byte` check the range and return a long, which Clojure's
+  `=`, `==` and `hash` already treat as the same value. `(int 1e10)` throws
+  "Value out of range for int", as in Clojure. `unchecked-int`, `unchecked-short`
+  and `unchecked-byte` wrap instead.
+- `float` rounds to binary32 precision and returns a double, so
+  `(= (float 0.1) 0.1)` is false as in Clojure, but the result prints as a
+  double.
+- `class` and `type` name the five types above, so `(instance? Integer (int 1))`
+  and the suite's few `:clj` class checks have no Suss equivalent.
+
+Narrow types are storage types instead. `byte-array`, `short-array`,
+`int-array` and `float-array` are packed WasmGC arrays of `i8`, `i16`, `i32` and
+`f32`, and `long-array` and `double-array` arrays of `i64` and `f64`. Elements
+are signed, as in Clojure. `aget` returns an element as a long or double.
+`aset` on a narrow integer array checks the range and throws "Value out of
+range for byte: 200", as `(byte 200)` does, and `aset` on a `float-array`
+rounds. This differs from Clojure, where `aget` returns a boxed `Byte` or
+`Float`, `(aset (int-array 1) 0 10000000000)` throws "integer overflow", and
+`aset` on a `byte-array` with a long fails reflection.
 
 ### Arithmetic
 
@@ -158,35 +178,99 @@ coercions, `coerce-int32` and `imul`, leave the public contract.
 | `s8`–`s64`, `u8`–`u32` | Long, range-checked when leaving Suss |
 | `u64` | Long up to 2^63 − 1, BigInt above; range-checked when leaving Suss |
 | `f32`, `f64` | Double; `f32` rounds when leaving Suss |
+| `list<T>` of a numeric `T` | A persistent vector, as for any list; when leaving Suss, a packed array is also accepted and copied without boxing (see below) |
+
+A list leaving Suss accepts these arrays as well as vectors:
+
+| WIT list | Array | Element rule |
+| --- | --- | --- |
+| `list<s8>`, `list<s16>`, `list<s32>`, `list<s64>` | `byte-array`, `short-array`, `int-array`, `long-array` | Copied as is |
+| `list<u8>` | `byte-array` | Each byte's bits, so `-1` sends 255, as Java's byte I/O does |
+| `list<f32>`, `list<f64>` | `float-array`, `double-array` | Copied as is |
+
+`list<u16>`, `list<u32>` and `list<u64>` take vectors only.
 
 `WitSigned64`, `WitUnsigned64`, `wit-s64`, `wit-u64` and `wit-to-number` are
 retired.
 
 ### Representation
 
-- Shared GC runtime ABI version 3 adds the new types to the shared recursive group.
-- A long whose value fits 30 bits is an i31 reference with its low bit set
+Numbers are unboxed wherever possible:
+
+- **Unboxed locals.** The compiler keeps a long or double as a raw `i64` or
+  `f64` Wasm value whenever it knows the type: from literals, arithmetic
+  results, `loop` bindings, Clojure's `^long` and `^double` hints, and calls to
+  core functions with known result types. A value is boxed only where it
+  escapes: stored in a collection or a closure, passed to a function the
+  compiler can't see, or returned from one called through `IFn`. A function
+  with `^long` or `^double` parameters or result gets a direct unboxed entry
+  point beside its generic one, as Clojure's primitive interfaces do, and
+  callers the compiler can resolve use it.
+- **Inline small longs.** A long held as a `Value` reference whose value fits in
+  30 signed bits (−2²⁹ to 2²⁹ − 1) is an i31 reference with its low bit set
   (`(v << 1) | 1`), so the even i31 values keep their meaning as the nil, false,
-  true and undefined sentinels. Other longs are a boxed `i64` struct. Each long
-  has exactly one representation, so equality and hashing never compare a box
-  with an i31.
-- A double stays a boxed `f64` struct.
+  true and undefined sentinels. Other longs are a boxed `i64` struct. Each long has
+  exactly one representation, so equality and hashing never compare a box with
+  an i31. This is part of the first ABI change, not a later stage. The same work
+  package measures the alternative of moving the sentinels out of i31 (to
+  singleton structs, or nil to `ref.null`), which would make every i31 a 31-bit
+  long with no tag test; it is chosen if it measures faster without slowing
+  truthiness tests.
+- A boxed double is an `f64` struct.
+- Shared GC runtime ABI version 3 adds the new types to the shared recursive group.
 - A BigInt holds a sign and a magnitude array; a Ratio two integers; a BigDecimal
   an integer and an `i32` scale. Which operations live in generated runtime code
   and which in the no_std numeric helper is decided by measurement in the first
   work package.
-- Suss configures wasmtime's collector explicitly, rather than relying on
-  `Collector::Auto`, and records the choice with its measurement.
-- Compiled code keeps the generic boxed path. Unboxed `i64` and `f64` locals,
-  from inference and Clojure's `^long` and `^double` hints, are a later
-  optimisation under [M11](https://github.com/bobby/suss/milestone/13).
+
+### Collector
+
+The collector is a choice only on the native wasmtime host; in a browser or
+Node, the JavaScript engine's collector manages WasmGC objects.
+
+- Suss configures `Collector::Copying` explicitly instead of relying on
+  `Collector::Auto`, which selects it in wasmtime 49.0.1 but "may change over
+  time". Copying allocates in compiled code without calling the host, collects cycles and has good throughput,
+  but stops the program for each collection, for time proportional to the live
+  heap (about 25 ms at 10⁶ live objects), and uses half of the GC heap at a
+  time.
+- The null collector, which never frees and traps when the heap is full, is an
+  opt-in for short-lived runs, such as one-shot scripts or a component instance
+  per request.
+- The deferred-reference-counting collector is not offered: per wasmtime's
+  documentation it "cannot currently collect cycles", which self-referencing
+  functions (a named `fn`, `letfn`) and atoms whose value refers back to the
+  atom create. It also costs about 110–150 ns per allocation with a small
+  heap.
+- wasmtime's own documentation of `Collector::Copying` still says it "is still
+  under construction and is not yet functional", in the 49.0.1, 50.0.0 and
+  51.0.0-rc.1 crates published on crates.io, although `Auto` selects it (with
+  the default `gc-copying` feature) and Suss's tests and these benchmarks run
+  on it today. Each wasmtime upgrade rechecks its status and release notes.
+- Unboxed math reduces allocation, and so collector pressure, whichever
+  collector runs: with 10⁶ live objects, a boxed addition costs about ten
+  times an i31 one.
 
 ### Oracle and reader features
 
+- Suss's reader features are `:suss` and `:default`, taking the first matching
+  branch in source order, for user code, libraries and the suite alike. The
+  `:cljs` feature is dropped: a `:cljs` branch assumes JavaScript numbers and
+  host interop.
+- Suss doesn't claim `:clj` either. A `.cljc` file treats `:clj` as the JVM.
+  About half of the suite's 33 `:clj` branches check JVM classes or use
+  interop (`java.lang.Long`, `clojure.lang.Atom`, `Long/MAX_VALUE`,
+  `(Object.)`, `Thread/sleep`); the rest state JVM-specific behaviour, some of
+  which Suss follows (next item).
+- The suite's `:default` branches (571, against 545 `:cljs`) already state
+  Clojure's behaviour; `:cljs`, `:cljr` and `:lpy` mark where other platforms
+  differ. Where only a `:clj` branch states a rule Suss follows, such as
+  `(abs Long/MIN_VALUE)` or `read-string` promoting to BigInt, a `:suss`
+  branch is added to the suite, as jank added `:jank` branches, and offered
+  upstream.
 - The suite's expected values come from JVM Clojure 1.12.6, a development-only
   dependency like Node is today, instead of ClojureScript recordings and a
   corrections file.
-- The suite runs with Suss selecting `:default` branches, not `:cljs`.
 
 ## Consequences
 
@@ -202,12 +286,22 @@ retired.
 - Programs written for ClojureScript's numbers change behaviour: `(= 1 1.0)`,
   `(/ 1 3)`, division by zero, 32-bit bit operations and number printing all
   differ.
+- A `.cljc` library whose reader conditionals have only `:clj` and `:cljs`
+  branches, and no `:default`, reads as if those forms were absent, as it does
+  on any platform whose feature isn't listed. Such libraries need `:suss` or
+  `:default` branches.
+- Unboxed locals and primitive entry points, which the earlier draft of this
+  ADR deferred to M11, are part of this work: the compiler needs local type
+  inference for numbers, and each `^long`/`^double` function has two entry
+  points.
 - Arbitrary-precision arithmetic needs its own implementation in WasmGC or the
   numeric helper; there is no host library to call.
 - About 75 runtime sites test or cast i31 values on the assumption that an i31
   is nil, a boolean or undefined, and some runtime state (stream and async
-  status, named-property kinds) stores odd i31 values. Each test must also check
-  the tag bit, and those state slots must never be observable as values.
+  status, named-property kinds) stores odd i31 values. With the tagged
+  encoding each test must also check the tag bit; with the sentinel
+  alternative each must test for the new sentinels instead. Either way, those
+  state slots must never be observable as values.
 
 ## Alternatives considered
 
@@ -222,33 +316,56 @@ retired.
   printing `1.50M`, scale-dependent results (`(* 1.5M 2)` is `3.0M`), the
   non-terminating `/` error and `with-precision` rounding couldn't follow
   Clojure.
-- **Boxed longs without the i31 fast path.** Simpler, and costs no more than
-  today, but gives up the 2× for small integers and allocates on every operation.
+- **Boxed longs without the i31 fast path, or a boxed-only first stage.**
+  Simpler, and costs no more than today, but gives up the 2× for small
+  integers and allocates on every operation.
+- **Unboxed locals later, under M11.** Smaller first stages, but every
+  arithmetic operation would allocate or tag until then, and the ABI and
+  compiler would change twice.
+- **Narrow boxed `Integer`, `Short`, `Byte` and `Float` values.** Would let
+  `class` and `instance?` match the JVM, but Clojure widens them on almost
+  every operation, and they add categories to equality, hashing and contagion
+  for little observable benefit.
+- **Claiming `:clj`, or keeping `:cljs`.** Either selects branches written
+  for another host: JVM classes, or JavaScript numbers and interop.
+- **Deferred reference counting.** Leaks cycles and costs about 30× copying
+  per allocation with a small heap.
 
 ## Staging
 
-A dedicated milestone, created if this proposal is accepted, could hold:
+[M12: Clojure numeric tower](https://github.com/bobby/suss/milestone/14) holds
+one work package per stage:
 
 1. Reader: read every Clojure numeric literal, including in unselected branches;
    this can land first, keeping binary64 values and reporting unsupported
    literals only when they are evaluated.
-2. Runtime ABI v3: long and double types, i31 longs, collector choice, overflow
-   checks, and the reader, printer, EDN and macro data for longs and doubles.
-3. Equality, hashing, comparison, bitwise operations and coercions for longs and
-   doubles; WIT integer mapping and retiring the wrappers.
-4. BigInt and Ratio, `+'`-style promotion, `numerator`, `denominator`,
+2. Reader features `:suss` and `:default` only, with the suite's `:suss`
+   branches; JVM Clojure recordings as the suite oracle.
+3. Runtime ABI v3: long and double types, i31 small longs (tagged, unless the
+   sentinel alternative measures faster), the explicit collector, overflow checks, and the
+   reader, printer, EDN and macro data for longs and doubles.
+4. Equality, hashing, comparison, bitwise operations and coercions for longs and
+   doubles; packed primitive arrays; WIT integer and list mapping, retiring the
+   wrappers.
+5. Unboxed locals: numeric type inference, `^long` and `^double` hints, and
+   primitive entry points.
+6. BigInt and Ratio, `+'`-style promotion, `numerator`, `denominator`,
    `rationalize` and the predicates.
-5. BigDecimal and `with-precision`.
-6. Oracle: JVM Clojure recordings for the suite and `:default` branch selection.
+7. BigDecimal and `with-precision`.
 
-## Open questions
+## Resolved questions
 
-1. Should Suss drop the `:cljs` reader feature for user code too, not only for
-   the suite? With Clojure numerics, a `.cljc` library's `:cljs` branch would
-   assume JavaScript numbers.
-2. Is i31 encoding of small longs wanted from the start, or after a boxed-only
-   first stage?
-3. Should `int`, `short`, `byte` and `float` keep returning longs and doubles,
-   or should Suss add Clojure's narrow boxed types?
-4. Which collector: copying (fast allocation, stop-the-world, no generations in
-   wasmtime 49) or another?
+Answered on 2026-11-06 before acceptance:
+
+1. **Reader features.** Suss uses `:suss` and `:default`, drops `:cljs` and
+   doesn't claim `:clj`, in user code and the suite alike.
+2. **Unboxed math.** Wherever possible: i31 small longs from the first ABI
+   change (tagged, unless the sentinel alternative measures faster), and
+   unboxed locals and primitive entry points in this milestone rather than
+   later.
+3. **Narrow types.** No narrow boxed values; `int`, `short`, `byte` and `float`
+   return longs and doubles, and narrow types exist as packed array elements
+   and at the WIT boundary.
+4. **Collector.** Copying, configured explicitly, with null as an opt-in for
+   short-lived runs and no reference counting; rechecked at each wasmtime
+   upgrade.

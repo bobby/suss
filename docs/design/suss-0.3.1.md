@@ -89,7 +89,11 @@ source provenance, not textual deletion of JS-looking lines.
 
 `suss.core` is canonical; `cljs.core` aliases the same bindings. Accept `.sus`,
 `.cljs` and `.cljc`; reject ambiguous namespace resolutions. Reader conditional
-features are `:suss` and `:cljs`, taking the first matching branch in source order.
+features are `:suss` and `:default`, taking the first matching branch in source
+order; Suss claims neither `:cljs` nor `:clj` (2026-11-06 decision,
+[ADR-0003](../adr/0003-clojure-numeric-tower.md)), whatever the file's extension,
+so a `.cljs` file is read with the same features. Until that is implemented the
+reader also matches `:cljs`.
 The reader reads tagged literals, `#tag form`, as Clojure's does. Its one built-in
 tag is ClojureScript's `#queue [...]`, a deliberate addition: Clojure has no queue
 literal and prints queues as unreadable objects. It reads as a persistent queue
@@ -124,8 +128,9 @@ Numbers follow Clojure 1.12: longs, doubles, BigInts, ratios and BigDecimals,
 with Clojure's overflow and promotion, contagion, `=` and `==`, hashing,
 printing, reader literals and 64-bit bitwise operations. The jank suite's
 `:default` expectations and JVM Clojure are the oracle.
-[ADR-0003](../adr/0003-clojure-numeric-tower.md) proposes the representation
-and staging. Until it is implemented, every number is an IEEE-754 binary64 value
+[ADR-0003](../adr/0003-clojure-numeric-tower.md) gives the representation, which
+keeps numbers unboxed wherever the compiler can, and the staging. Until it is
+implemented, every number is an IEEE-754 binary64 value
 with ClojureScript's 32-bit bitwise coercions, and the reader rejects ratios and
 the `N` and `M` suffixes; these are known gaps, not the contract. Arithmetic (`+ - * /`, `inc`, `dec`,
 `quot`, `rem`, `mod`), numeric comparison (`< > <= >= ==`, `min`, `max`) and
@@ -195,7 +200,7 @@ imports. Optimization must preserve effect ordering and exceptions.
 
 Use a small stable, versioned recursive type group imported by every compiled
 fragment. `Value` is an eqref, with nil/booleans as i31 sentinels, boxed f64 (ADR-0003
-proposes version 3 with Clojure's numeric types),
+replaces it with version 3: Clojure's numeric types and i31 small longs),
 UTF-16 arrays, and typed runtime objects. Initially use a universal closure
 `(environment, argument-array) -> Value`; arity checks are centralized. Specialized
 call paths can be introduced later with equivalent tests.
@@ -257,19 +262,18 @@ all scalar and composite types, maps, adopted `implements`/external-id semantics
 async functions, futures and streams. Compile-time unsupported-feature errors are
 acceptable during development; release claims require interoperability tests.
 
-This table follows ADR-0003's proposed mapping, which is not yet accepted. Until
-it is accepted and implemented, integers cross as checked binary64 numbers and `s64`/`u64` as exact wrapper values
+This table follows ADR-0003's mapping. Until it is implemented, integers cross as checked binary64 numbers and `s64`/`u64` as exact wrapper values
 ([exact integers](../runtime/portable-exact-integers.md)).
 
 | WIT type | Suss boundary value |
 | --- | --- |
 | bool | Boolean |
 | s8–s64, u8–u32 | Long, range-checked when leaving Suss |
-| u64 | Long up to 2^63 − 1, BigInt above |
+| u64 | Long up to 2^63 − 1, BigInt above; range-checked when leaving Suss |
 | f32/f64 | Double; f32 rounds when leaving Suss |
 | string | UTF-16 string; reject lone surrogates when producing Unicode WIT strings |
 | char | One Unicode scalar, distinct validation from ordinary character indexing |
-| list, tuple | Persistent vector, with tuple length checked |
+| list, tuple | Persistent vector, with tuple length checked; a numeric list leaving Suss also accepts a packed array of its element type |
 | record | Keyword-keyed map with generated field schema |
 | enum; flags | Keyword; keyword set |
 | variant | Tagged vector `[:case]` or `[:case payload]` |
@@ -544,16 +548,19 @@ name prints type values, `#object[...]` forms, `Name@hex` strings and record
 literals, so `#my_ns.R{...}` reads back and `#my-ns.R{...}` does not, as in
 Clojure. Details are in docs/runtime/type-names.md.
 
-2026-11-06 numeric semantics decision (#295): numbers follow Clojure, not
+2026-11-06 numeric semantics and reader features decision (#295): numbers follow Clojure, not
 ClojureScript. Suss adopts Clojure 1.12's longs, doubles, BigInts, ratios and
 BigDecimals with Clojure's arithmetic, equality, hashing, printing, reader and
 bitwise behavior, as section 4 states, guided by WIT's numeric types and
-WasmGC's native `i64`, `f64` and i31 values. This supersedes the binary64 platform
-choice kept by the 2026-10-25 decision; its other platform choices are unchanged.
+WasmGC's native `i64`, `f64` and i31 values. This supersedes the binary64 number and
+`:cljs` reader-feature platform choices kept by the 2026-10-25 decision; its other
+platform choices are unchanged.
 The jank suite's `:default` expectations and JVM Clojure are the numeric oracle,
 and ClojureScript recordings that contain numbers are not evidence for it.
-[ADR-0003](../adr/0003-clojure-numeric-tower.md) proposes the representation,
-WIT mapping and staging; until it is accepted and implemented, the binary64
+[ADR-0003](../adr/0003-clojure-numeric-tower.md), accepted the same day, sets the
+representation (unboxed wherever possible, i31 small longs, no narrow boxed
+types), the WIT mapping, the `:suss`/`:default` reader features, the explicit
+copying collector and the staging; until it is implemented, the binary64
 implementation is a known gap.
 
 ## Primary references

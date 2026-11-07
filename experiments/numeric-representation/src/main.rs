@@ -3,9 +3,10 @@ use wasmtime::*;
 
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
-    let collector = args.get(1).map(String::as_str).unwrap_or("drc");
+    let collector = args.get(1).map(String::as_str).unwrap_or("auto");
     let n: i64 = args.get(2).map(|s| s.parse().unwrap()).unwrap_or(50_000_000);
     let reps: usize = args.get(3).map(|s| s.parse().unwrap()).unwrap_or(5);
+    let live: i32 = args.get(4).map(|s| s.parse().unwrap()).unwrap_or(0);
     let mut config = Config::new();
     config.wasm_gc(true).wasm_function_references(true).wasm_tail_call(true).wasm_exceptions(true);
     config.collector(match collector { "null" => Collector::Null, "drc" => Collector::DeferredReferenceCounting, "copying" => Collector::Copying, _ => Collector::Auto });
@@ -15,11 +16,12 @@ fn main() -> Result<()> {
     let mut store = Store::new(&engine, ());
     let inst = Instance::new(&mut store, &module, &[])?;
     inst.get_typed_func::<(), ()>(&mut store, "setup")?.call(&mut store, ())?;
-    println!("wasmtime 49.0.1 collector={collector} n={n} reps={reps}");
+    inst.get_typed_func::<i32, ()>(&mut store, "retain")?.call(&mut store, live)?;
+    println!("wasmtime 49.0.1 collector={collector} n={n} reps={reps} live={live}");
     let cases: &[(&str, i64)] = &[
         ("d_i64_plain", 0), ("d_i64_checked", 0),
         ("a_f64box", 0), ("b_i64box", 0),
-        ("c_i31", 0), ("c_i31_boxedrange", 1 << 40),
+        ("c_i31", 0), ("c_i31_tagged", 0), ("c_i31_boxedrange", 1 << 40),
         ("e_call_f64only", 0), ("e_poly_i31", 0), ("e_poly_i64box", 1 << 40), ("e_poly_f64box", 0),
     ];
     for &(name, start) in cases {
@@ -37,5 +39,19 @@ fn main() -> Result<()> {
         let hwm = std::fs::read_to_string("/proc/self/status").unwrap().lines().find(|l| l.starts_with("VmHWM")).unwrap_or("").split_whitespace().nth(1).unwrap_or("0").parse::<u64>().unwrap_or(0);
         println!("{name:20} {:7.3} ns/iter  (best of {reps}, {:.3}s)  peakRSS {} MiB", best * 1e9 / n as f64, best, hwm / 1024);
     }
+    // Pauses: time a_f64box in chunks of 10^5 additions; a chunk that includes
+    // a collection takes longer than the median.
+    let f = inst.get_typed_func::<(i64, i64), i64>(&mut store, "a_f64box")?;
+    let chunk = 100_000i64;
+    let mut times: Vec<f64> = (0..(n / chunk).max(1))
+        .map(|_| {
+            let t = Instant::now();
+            f.call(&mut store, (chunk, 0)).unwrap();
+            t.elapsed().as_secs_f64() * 1e6
+        })
+        .collect();
+    times.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    println!("chunks of {chunk} a_f64box: median {:.0} us, p99 {:.0} us, max {:.0} us ({} chunks)",
+        times[times.len() / 2], times[times.len() * 99 / 100], times[times.len() - 1], times.len());
     Ok(())
 }

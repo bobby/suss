@@ -4,11 +4,27 @@
   (global $sf (mut eqref) (ref.null eq))
   (global $si (mut eqref) (ref.null eq))
   (global $s31 (mut eqref) (ref.null eq))
+  (global $s31t (mut eqref) (ref.null eq))
+
+  ;; live heap: an array of k boxed longs, kept reachable for the whole run
+  (type $arr (array (mut eqref)))
+  (global $live (mut (ref null $arr)) (ref.null $arr))
+  (func (export "retain") (param $k i32)
+    (local $a (ref $arr))
+    (local.set $a (array.new $arr (ref.null eq) (local.get $k)))
+    (block $done (loop $l
+      (br_if $done (i32.eqz (local.get $k)))
+      (local.set $k (i32.sub (local.get $k) (i32.const 1)))
+      (array.set $arr (local.get $a) (local.get $k)
+        (struct.new $i (i64.extend_i32_u (local.get $k))))
+      (br $l)))
+    (global.set $live (local.get $a)))
 
   (func (export "setup")
     (global.set $sf (struct.new $f (f64.const 1)))
     (global.set $si (struct.new $i (i64.const 1)))
-    (global.set $s31 (ref.i31 (i32.const 1))))
+    (global.set $s31 (ref.i31 (i32.const 1)))
+    (global.set $s31t (ref.i31 (i32.const 3))))
 
   ;; to-i64 for checking results
   (func $to_i64 (param $x eqref) (result i64)
@@ -162,4 +178,28 @@
       (local.set $n (i64.sub (local.get $n) (i64.const 1)))
       (br $l)))
     (call $to_i64 (local.get $acc)))
+  ;; c'. tagged i31 (ADR-0003): a long v in 30 bits is i31 (v << 1) | 1; even
+  ;; i31 values are sentinels. Leaving that range (not reached here) traps.
+  (func (export "c_i31_tagged") (param $n i64) (param $start i64) (result i64)
+    (local $acc eqref) (local $b eqref) (local $x i32) (local $y i32) (local $r i32)
+    (local.set $acc (ref.i31 (i32.or (i32.shl (i32.wrap_i64 (local.get $start)) (i32.const 1))
+                                     (i32.const 1))))
+    (block $done (loop $l
+      (br_if $done (i64.eqz (local.get $n)))
+      (local.set $b (global.get $s31t))
+      (block $slow
+        (br_if $slow (i32.eqz (ref.test (ref i31) (local.get $acc))))
+        (br_if $slow (i32.eqz (ref.test (ref i31) (local.get $b))))
+        (local.set $x (i31.get_s (ref.cast (ref i31) (local.get $acc))))
+        (local.set $y (i31.get_s (ref.cast (ref i31) (local.get $b))))
+        (br_if $slow (i32.eqz (i32.and (i32.and (local.get $x) (local.get $y)) (i32.const 1))))
+        ;; (2a+1) + (2b+1) - 1 = 2(a+b) + 1
+        (local.set $r (i32.sub (i32.add (local.get $x) (local.get $y)) (i32.const 1)))
+        (br_if $slow (i32.ne (local.get $r)
+                       (i32.shr_s (i32.shl (local.get $r) (i32.const 1)) (i32.const 1))))
+        (local.set $acc (ref.i31 (local.get $r)))
+        (local.set $n (i64.sub (local.get $n) (i64.const 1)))
+        (br $l))
+      unreachable))
+    (i64.extend_i32_s (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $acc))) (i32.const 1))))
 )

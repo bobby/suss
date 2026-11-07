@@ -28,6 +28,7 @@ The proposal has not changed this roadmap's accepted semantics or release gates.
 | [M9: CSP extension](https://github.com/bobby/suss/milestone/10) | M6, M7 | All M9 acceptance criteria pass |
 | [M10: Reader, printer and analyzer as data](https://github.com/bobby/suss/milestone/12) | M4 | All M10 acceptance criteria pass |
 | [M11: Compile cost and code size](https://github.com/bobby/suss/milestone/13) | M4 | All M11 acceptance criteria pass |
+| [M12: Clojure numeric tower](https://github.com/bobby/suss/milestone/14) | M4 | All M12 acceptance criteria pass |
 
 M4 and M5 can overlap after their foundations; M8 feasibility happens in M0,
 with browser product delivery after the WASI alpha. CSP is deliberately last.
@@ -40,6 +41,12 @@ Only the `print-method` criterion of [M10-03] waits for multimethods in [M7-03].
 M11 can also proceed alongside M5–M7. It makes ordinary programs cheap to
 compile and small to ship: `defrecord` within the default budgets, AOT components
 that don't grow per top-level form or call site, and linear-time printing.
+M12 replaces ClojureScript's binary64 numbers with Clojure's numeric tower, per
+[ADR-0003](docs/adr/0003-clojure-numeric-tower.md): longs, doubles, BigInts,
+ratios and BigDecimals, unboxed wherever the compiler can, `:suss`/`:default`
+reader features, and JVM Clojure as the suite oracle. It can proceed alongside
+M5–M7; its reader package can land first, and M7's numeric compatibility
+depends on it.
 
 ## Work packages
 
