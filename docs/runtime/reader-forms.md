@@ -21,8 +21,10 @@ It is separate from the prototype `Edn` runtime/evaluator representation.
 - Conditional feature/body forms remain a flat ordered syntax sequence; pairing
   waits for prefixes/discards to find their retained targets within that sequence.
   `resolve_conditionals` selects the
-  first `:suss`, `:cljs` or `:default` clause where encountered, recursively, and
+  first `:suss` or `:default` clause where encountered, recursively, and
   skips unselected bodies as syntax without selecting their nested conditionals.
+  Suss claims neither `:cljs` nor `:clj`, in any file, as ADR-0003 decides (#334):
+  a `:cljs` branch assumes JavaScript numbers and interop, and `:clj` the JVM.
   It removes unmatched forms. Selection happens before map entry pairing and before
   reader prefixes find their retained targets. Metadata applies to the selected
   target, or the next retained target after an unmatched conditional; scalar

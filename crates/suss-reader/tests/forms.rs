@@ -25,7 +25,7 @@ fn apostrophes_continue_tokens_but_quote_at_form_start() {
 
 #[test]
 fn metadata_targets_are_checked_after_conditional_selection() {
-    let source = "^:export #?(:suss ^:private f :cljs 1)";
+    let source = "^:export #?(:suss ^:private f :default 1)";
     let forms = resolve_conditionals(read_forms(source).unwrap()).unwrap();
     assert!(matches!(&forms[0].kind, Kind::Symbol(symbol) if symbol.name == "f"));
     assert_eq!(forms[0].metadata.len(), 2);
@@ -130,8 +130,8 @@ fn reader_prefixes_continue_after_unmatched_conditionals_with_bounded_depth() {
 #[test]
 fn conditional_clause_pairing_follows_deferred_prefix_selection() {
     for source in [
-        "#?(:suss #_ 1 2 :cljs 3)",
-        "#?(:suss #_ #?(:jvm ignored) discarded 2 :cljs 3)",
+        "#?(:suss #_ 1 2 :default 3)",
+        "#?(:suss #_ #?(:jvm ignored) discarded 2 :default 3)",
         "#?(:jvm #?(:jvm 1) :suss 2)",
         "#?(:jvm '#?(:jvm 1) :suss 2)",
     ] {
@@ -139,13 +139,13 @@ fn conditional_clause_pairing_follows_deferred_prefix_selection() {
         assert_eq!(forms[0].kind, Kind::Number(2.0));
     }
     let forms = resolve_conditionals(
-        read_forms("#?(:suss '#?(:jvm ignored) :cljs alternative) retained").unwrap(),
+        read_forms("#?(:suss '#?(:jvm ignored) :default alternative) retained").unwrap(),
     )
     .unwrap();
     let Kind::List(items) = &forms[0].kind else {
         panic!()
     };
-    assert!(matches!(&items[1].kind, Kind::Keyword(key) if key.name == "cljs"));
+    assert!(matches!(&items[1].kind, Kind::Keyword(key) if key.name == "default"));
     assert!(matches!(&forms[1].kind, Kind::Symbol(symbol) if symbol.name == "retained"));
 }
 
@@ -249,7 +249,7 @@ fn metadata_is_retained_on_target_with_order_and_original_spans() {
 
 #[test]
 fn conditional_resolution_uses_first_portable_feature_in_source_order() {
-    let forms = read_forms("[#?(:cljs 1 :suss 2) #?(:suss 3 :cljs 4) #?(:jvm 5) #?(:jvm 6 :default 7) #?(:default 8 :suss 9)]").unwrap();
+    let forms = read_forms("[#?(:default 1 :suss 2) #?(:suss 3 :default 4) #?(:jvm 5) #?(:jvm 6 :default 7) #?(:default 8 :suss 9)]").unwrap();
     let Kind::Vector(raw) = &forms[0].kind else {
         panic!()
     };
@@ -673,4 +673,17 @@ fn unselected_branches_check_numeric_syntax() {
         let error = read_forms(source).and_then(resolve_conditionals).expect_err(source);
         assert_eq!(error.message, message, "{source}");
     }
+}
+
+/// Suss's reader features are :suss and :default; it claims neither :cljs
+/// nor :clj (ADR-0003, #334).
+#[test]
+fn reader_features_are_suss_and_default() {
+    let forms = resolve_conditionals(
+        read_forms("[#?(:cljs 1 :clj 2 :default 3) #?(:cljs 4) #?(:clj 5) #?(:clj 6 :suss 7 :default 8)]").unwrap(),
+    )
+    .unwrap();
+    let Kind::Vector(items) = &forms[0].kind else { panic!("vector") };
+    let values: Vec<_> = items.iter().map(|item| item.kind.clone()).collect();
+    assert_eq!(values, vec![Kind::Number(3.0), Kind::Number(7.0)]);
 }

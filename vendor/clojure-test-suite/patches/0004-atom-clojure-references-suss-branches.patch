@@ -1,15 +1,25 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 # If a copy of the MPL was not distributed with this file, You can obtain one at
 # https://mozilla.org/MPL/2.0/. Adapts jank-lang/clojure-test-suite for the Suss harness:
-# :suss branches select the Clojure assertions for atom options (#30). Clojure
-# rejects non-map :meta and validates the initial value (CLJS-3447); pinned
-# ClojureScript accepts both. The ratio 111/7 in an unselected branch is replaced
-# by the ClojureScript branch's string, since the Suss reader has no ratios. Clojure
-# governs, and the recorded observations are corrected in
-# tests/oracle/clojure-test-suite-corrections.json.
+# :suss branches select Clojure's assertions for atom options (#30), which reject
+# a non-map :meta and validate the initial value, and check atoms with Suss's
+# atom type, (type (atom nil)), where the suite names clojure.lang.Atom (#334).
+# Until #335 the row holding the ratio 111/7 uses the string from the :cljs
+# branch: evaluating the ratio throws before the row's inner assertion runs,
+# which would misalign every assertion in test-atom.
 --- a/test/clojure/core_test/atom.cljc
 +++ b/test/clojure/core_test/atom.cljc
-@@ -27,13 +27,16 @@
+@@ -9,7 +9,8 @@
+       (let [nil-atm  (atom nil)
+             nil-atm2 (atom nil nil nil)
+             nil-atm3 (apply atom (take 11 (repeat nil)))]
+-        #?(:cljs (is (every? #(satisfies? cljs.core/IAtom %) [nil-atm nil-atm2 nil-atm3]))
++        #?(:suss (is (every? #(instance? (type (atom nil)) %) [nil-atm nil-atm2 nil-atm3]))
++           :cljs (is (every? #(satisfies? cljs.core/IAtom %) [nil-atm nil-atm2 nil-atm3]))
+            :clj (is (every? (partial instance? clojure.lang.Atom) [nil-atm nil-atm2 nil-atm3])))
+         (is (every? nil? (map deref [nil-atm nil-atm2 nil-atm3])))))
+ 
+@@ -27,13 +28,16 @@
          (is (= {:a "a"} (meta (atom nil :meta (array-map :a "a"))))))
        (when-var-exists clojure.core/hash-map
          (is (= {:a "a"} (meta (atom nil :meta (hash-map :a "a"))))))
@@ -29,7 +39,7 @@
           :cljs (is (= [] (meta (atom nil :meta (vector)))))
           :default (is (p/thrown? (atom nil :meta (vector))))))
  
-@@ -73,21 +76,25 @@
+@@ -73,21 +77,25 @@
            (is (= 3 (deref atm)))))
  
        (testing "always-falsey validator can't initialize atom"
@@ -59,7 +69,16 @@
                     ;; FIXME when https://clojure.atlassian.net/browse/CLJS-3447 is fixed
                     (is (= #{} (deref (atom #{} :validator (fn [v] (some string? v)))))))
             :default (is (p/thrown? (atom #{} :validator (fn [v] (some string? v))))))
-@@ -129,8 +136,7 @@
+@@ -122,15 +130,15 @@
+     (testing "atom accepts all values"
+       (are [v] (let [the-atom (atom v)]
+                  (and (= v (deref the-atom))
+-                      #?(:cljs (is (satisfies? cljs.core/IAtom the-atom))
++                      #?(:suss (is (instance? (type (atom nil)) the-atom))
++                         :cljs (is (satisfies? cljs.core/IAtom the-atom))
+                          :clj (is (instance? clojure.lang.Atom the-atom)))))
+         'sym
+         `sym
          "string"
          1
          1.0

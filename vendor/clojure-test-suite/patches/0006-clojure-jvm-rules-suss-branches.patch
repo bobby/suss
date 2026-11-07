@@ -1,0 +1,118 @@
+# This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+# If a copy of the MPL was not distributed with this file, You can obtain one at
+# https://mozilla.org/MPL/2.0/. Adapts jank-lang/clojure-test-suite for the Suss harness:
+# :suss branches for rules the suite states only in :clj branches and Suss follows
+# (#334): (abs Long/MIN_VALUE) is itself, (empty record) and ((juxt nil)) throw,
+# merging a vector of more than two items throws, ##NaN equals itself through
+# identity, and clojure.edn reads foo/bar/baz leniently and promotes an integer
+# beyond the long range to a BigInt. add-watch's catch clauses get Suss's :default.
+--- a/test/clojure/core_test/abs.cljc
++++ b/test/clojure/core_test/abs.cljc
+@@ -22,6 +22,7 @@
+ 
+        #?@(:cljr []
+            :lpy []
++           :suss [r/min-int r/min-int]
+            :clj [r/min-int r/min-int] ; fixed int 2's complement oddity, see below for :cljr
+            :default [r/min-int (* -1 r/min-int)])
+        #?@(:cljs []
+--- a/test/clojure/core_test/add_watch.cljc
++++ b/test/clojure/core_test/add_watch.cljc
+@@ -20,6 +20,7 @@
+                                           (catch #?(:cljr clojure.lang.ExceptionInfo
+                                                     :lpy basilisp.lang.exception/ExceptionInfo
+                                                     :phel Phel.Lang.ExceptionInfo
++                                                    :suss :default
+                                                     :cljs :default
+                                                     :clj clojure.lang.ExceptionInfo) e
+                                             (let [data (ex-data e)]
+@@ -90,7 +91,8 @@
+                            (let [do-update (fn [x]
+                                              (try
+                                                (alter-var-root x inc)
+-                                               (catch #?(:cljs :default
++                                               (catch #?(:suss :default
++                                                         :cljs :default
+                                                          :clj clojure.lang.ExceptionInfo
+                                                          :cljr clojure.lang.ExceptionInfo
+                                                          :lpy basilisp.lang.exception/ExceptionInfo) e
+@@ -159,7 +161,8 @@
+                update! (fn []
+                          (try
+                            (dosync (ref-set r (inc @r)))
+-                           (catch #?(:cljs :default
++                           (catch #?(:suss :default
++                                     :cljs :default
+                                      :clj clojure.lang.ExceptionInfo
+                                      :cljr clojure.lang.ExceptionInfo) e
+                              (let [{:keys [_old] :as data} (ex-data e)]
+--- a/test/clojure/core_test/empty.cljc
++++ b/test/clojure/core_test/empty.cljc
+@@ -34,7 +34,8 @@
+     (when-var-exists defrecord
+       (testing "record"
+         (defrecord Record [field])
+-        #?@(:cljr  [(is (p/thrown? (empty (->Record ""))))]
++        #?@(:suss  [(is (p/thrown? (empty (->Record ""))))]
++            :cljr  [(is (p/thrown? (empty (->Record ""))))]
+             :cljs [(is (= nil (empty (->Record ""))))]
+             :clj  [(is (p/thrown? (empty (->Record ""))))])))
+ 
+--- a/test/clojure/core_test/juxt.cljc
++++ b/test/clojure/core_test/juxt.cljc
+@@ -34,7 +34,8 @@
+               :k))))
+ 
+     (testing "wrong-shape input is mostly accepted (and throws when invoked)"
+-      #?(:cljr (is (p/thrown? ((juxt nil))))
++      #?(:suss (is (p/thrown? ((juxt nil))))
++         :cljr (is (p/thrown? ((juxt nil))))
+          :cljs (is (p/thrown? ((juxt nil))))
+          :clj  (is (p/thrown? ((juxt nil)))))
+       #?@(:cljs    [(is (p/thrown? ((juxt (range)))))
+--- a/test/clojure/core_test/merge.cljc
++++ b/test/clojure/core_test/merge.cljc
+@@ -51,7 +51,8 @@
+         (is (= {"x" 1} (merge {} ["x" 1])))
+         (is (= {'x 10, 'y 10} (merge {'x 10} ['y 10])))
+         (testing "In CLJS (unlike other dialects) vectors with >2 arguments are treated as map-entries (where the latter values are ignored)"
+-          #?(:cljr (is (p/thrown? (merge {} [:foo :bar :baz])))
++          #?(:suss (is (p/thrown? (merge {} [:foo :bar :baz])))
++             :cljr (is (p/thrown? (merge {} [:foo :bar :baz])))
+              :cljs (is (= {:foo :bar} (merge {} [:foo :bar :baz])))
+              :clj  (is (p/thrown? (merge {} [:foo :bar :baz])))))
+ 
+--- a/test/clojure/core_test/not_eq.cljc
++++ b/test/clojure/core_test/not_eq.cljc
+@@ -10,7 +10,8 @@
+     ;; There is some arguably buggy behavior in JVM Clojure with not=
+     ;; https://ask.clojure.org/index.php/14298/incorrect-result-when-evaluating-not-on-nans
+     (testing "If ##NaNs are ="
+-      #?(:bb      (is (not= ##NaN ##NaN))
++      #?(:suss    (is (not (not= ##NaN ##NaN)))
++         :bb      (is (not= ##NaN ##NaN))
+          :cljr    (is (not (not= ##NaN ##NaN)))
+          :clj     (is (not (not= ##NaN ##NaN)))
+          :default (is (not= ##NaN ##NaN))))))
+--- a/test/clojure/edn_test/read_string.cljc
++++ b/test/clojure/edn_test/read_string.cljc
+@@ -167,6 +167,9 @@
+                       (is (keyword? result))
+                       (is (= ["foo/bar" "baz"] (part-named result)))))
+          ;; JVM is lenient in these cases
++         :suss    (are-read-as
++                    (symbol "foo/bar/baz") "foo/bar/baz"
++                    (keyword "foo/bar/baz") ":foo/bar/baz")
+          :clj     (are-read-as
+                     (symbol "foo/bar/baz") "foo/bar/baz"
+                     (keyword "foo/bar/baz") ":foo/bar/baz")
+@@ -204,7 +207,8 @@
+ 
+       (testing "Overflow"
+         (let [result (edn/read-string "9223372036854775808")]
+-          #?(:cljr (is (= 9223372036854775808N result))     ;; CLR promotes to BigInt
++          #?(:suss (is (= 9223372036854775808N result))
++             :cljr (is (= 9223372036854775808N result))     ;; CLR promotes to BigInt
+              :lpy  (is (= 9223372036854775808 result))      ;; basilisp integers use arbitrary precision
+              :cljs (is (= 9223372036854776000 result))      ;; cljs is lossy
+              :clj  (is (= 9223372036854775808N result)))))) ;; JVM promotes to BigInt

@@ -63,7 +63,7 @@ fn namespace_session_aliases_refers_renames_exclusions_and_phases_agree_in_repl_
     std::fs::write(
         source.join("app/core.cljc"),
         r#"
-#?(:cljs
+#?(:default
    (ns app.core
      (:refer-clojure :exclude [+])
      (:require [dep :as d :refer [answer] :rename {answer renamed}]

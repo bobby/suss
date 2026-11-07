@@ -450,7 +450,7 @@ fn conditional_dependencies_follow_first_portable_branch_and_phase_identity() {
     file(
         root.path(),
         "app.cljc",
-        "(ns app #?(:cljs (:require [selected :as chosen]) :suss (:require missing))) (def value chosen/value) value",
+        "(ns app #?(:default (:require [selected :as chosen]) :suss (:require missing))) (def value chosen/value) value",
     );
     let mut host = Host::new();
     let runtime = host.plan("app", &[root.path()], Phase::Runtime).unwrap();

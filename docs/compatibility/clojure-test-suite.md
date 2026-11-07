@@ -5,73 +5,92 @@ is the function-level basis of the conformance corpus (issue #211). Its 248 test
 namespaces cover about 220 `cljs.core`, `clojure.string` and `clojure.edn` vars,
 one file per function, with arity, edge-case and exception assertions. This suite
 is the behavior conformance oracle (design decision 2026-10-25): its assertions,
-read as Clojure semantics, define the expected behavior. Running it on pinned
-ClojureScript records what each assertion observes, and every recorded assertion
-passes there; Suss is judged host-side against those observations. If a recorded
-ClojureScript observation ever disagrees with the suite's assertion or Clojure
-semantics, Clojure governs and the recording is corrected: a Suss-only patch
-adds `:suss` branches that select the suite's Clojure assertions, and
-`tests/oracle/clojure-test-suite-corrections.json` replaces the matching
-recorded observations, each with its issue and rationale, for comparison only.
-The raw ClojureScript recording itself stays unchanged. The first corrections
-(#286) cover non-number operands to `zero?`, `pos?`, `neg?` and `repeat`, which
-Clojure rejects and ClojureScript coerces. The suite's own `clojure.test` verdicts
-are never evidence for Suss. The targeted differential corpora (effects order,
-binary64 bits, UTF-16, reader) remain the precision layer.
+read as Clojure semantics, define the expected behavior. Running it on JVM
+Clojure records what each assertion observes, and every recorded assertion
+passes there; Suss is judged host-side against those observations (ADR-0003,
+#334). The suite's own `clojure.test` verdicts are never evidence for Suss. The
+targeted differential corpora (effects order, binary64 bits, UTF-16, reader)
+remain the precision layer.
+
+## Reader features
+
+Suss reads the suite as it reads any source: it selects the first `:suss` or
+`:default` branch and claims neither `:cljs` nor `:clj`. The suite's `:default`
+branches state Clojure's behavior; `:cljs`, `:cljr`, `:lpy` and the others mark
+where other platforms differ. JVM Clojure selects `:clj` branches, so at the
+suite's 33 `:clj` sites the two run different assertions. About half of those
+check JVM classes, such as `(instance? java.lang.Long (long 0))`, and stay
+host-specific. Where one states a rule Suss follows, patch `0006` (and `0003` and
+`0004` for operand checks and atoms) adds a `:suss` branch with the same assertion.
+These are worth offering upstream as `:default` branches:
+
+| File | Rule |
+| --- | --- |
+| `abs.cljc` | `(abs Long/MIN_VALUE)` is `Long/MIN_VALUE` |
+| `empty.cljc` | `empty` of a record throws |
+| `juxt.cljc` | `((juxt nil))` throws |
+| `merge.cljc` | merging a vector of more than two items throws |
+| `not_eq.cljc` | `(not= ##NaN ##NaN)` is false, through identity |
+| `edn_test/read_string.cljc` | `foo/bar/baz` reads leniently; an integer beyond the long range reads as a BigInt |
+| `repeat.cljc` | a boolean count throws (`0003`) |
+
+`add_watch.cljc`'s `catch` clauses have no `:default`, so `0006` gives them Suss's
+`:default`, and `atom.cljc` checks atoms with `(type (atom nil))` where it names
+`clojure.lang.Atom` (`0004`).
 
 ## Oracle
 
-`python3 scripts/clojure_test_suite.py oracle` compiles the suite with the pinned
-ClojureScript 1.12.134 submodule (`cljs.main`, not shadow-cljs) and runs it in Node.
-It applies `vendor/clojure-test-suite/patches/0001-*.patch` to a generated copy
-only, requires every recorded assertion to pass, and fails unless the result
-equals the reviewed
-`tests/oracle/clojure-test-suite-observations.json`; `--write` records it for review.
-Java and Node are development dependencies; ordinary CI uses the checked-in file.
+`python3 scripts/clojure_test_suite.py oracle` runs the unpatched suite on JVM
+Clojure 1.12.6 with the runner in
+[`tests/oracle/jvm`](../../tests/oracle/jvm/src/suss_oracle/clojure_test_suite_jvm.clj),
+four times, requires every recorded assertion to pass, and fails unless the
+result equals the reviewed `tests/oracle/clojure-test-suite-observations.json`
+(schema 2, `"upstream": "clojure-1.12.6"`); `--write` records it for review.
+Java and the Clojure CLI are development dependencies; Suss ships no Java, and
+ordinary CI uses the checked-in file.
 
-[The runner](../../tests/oracle/src/suss_oracle/clojure_test_suite.cljs) replaces
-the `cljs.test` reporter. Each assertion becomes one record with a stable ID
-`<namespace>/<test>#<ordinal>`, its form, source position, testing contexts,
-kind and observations:
+The runner replaces `clojure.test`'s reporter. Each assertion becomes one
+record with a stable ID `<namespace>/<test>#<ordinal>`, its form, testing
+contexts, kind and observations:
 
-| Kind | `cljs.test` path | Observation |
+| Kind | `clojure.test` path | Observation |
 | --- | --- | --- |
 | `predicate` | head resolves to a function var (`assert-predicate`) | tagged operand values |
 | `value` | any other form (`assert-any`) | tagged value |
 | `thrown` | `p/thrown?` (the suite's portable throw assertion) | whether it threw |
 | `error` | unexpected exception | thrown value and message |
 
-Recorded forms canonicalize process-global auto-gensym counters (`p1__N#`), which
-otherwise differ between compiler runs. Values use the transport tags of
-`suss-oracle.main` (binary64 bits, UTF-16 code
-units, collection kinds). Observation never changes the program: a sequence with
-an unrealized tail is recorded as `opaque` instead of being forced, and values
-the transport cannot represent (functions, atoms, UUIDs, JavaScript objects) or
-that exceed a 20,000-node budget are `opaque`. `Math.random` is replaced by a
-seeded generator and the suite runs under four seeds. Assertions whose
-observations differ are rejected unless they are in the reviewed
-`RANDOMIZED` list (random-number tests); those keep only kind and verdict.
-Asynchronous tests (`taps`) complete before output is written.
+Recorded forms canonicalize process-global auto-gensym counters (`p1__N#`).
+Values use transport tags: binary64 bits for doubles, `long`, `bigint`,
+`ratio` and `decimal` for Clojure's other numbers, UTF-16 code units for
+strings, and collection kinds. A character is a one-unit string, as Suss
+represents characters. Set items and map entries are sorted, because the JVM
+iterates identity-hashed elements differently in each run and the comparison is
+unordered. Observation never changes the program: a sequence with an unrealized
+tail is recorded as `opaque` instead of being forced, and values the transport
+can't represent (functions, atoms, classes, Java objects) or that exceed a
+20,000-node budget are `opaque`. Assertions whose observations differ between
+runs are rejected unless they are in the reviewed `RANDOMIZED` list
+(random-number tests); those keep only kind and verdict.
 
-At `95d4a91` the oracle records 231 tests and **5,834 assertions, 0 failures,
-0 errors**; 52 are randomized (verdict only), 102 operands or values are opaque
-and 134 contain an opaque node. The 20 oracle skips are the suite's
-`when-var-exists` skips of vars ClojureScript lacks: `bigdec`, `bigint`,
-`bound-fn`, `bound-fn*`, `decimal?`, `denominator`, `format`, `intern`, `num`,
-`numerator`, `+'`, `*'`, `ratio?`, `rational?`, `rationalize` and
-`with-precision` at load time, and inside tests `future` twice and `promise`
-once (`realized?`) plus `promise` once (`ifn?`). ClojureScript lacks all of
-them. The numeric ones are now in Suss's contract (2026-11-06 numeric decision,
-[ADR-0003](../adr/0003-clojure-numeric-tower.md)), and the suite's ClojureScript
-recordings aren't evidence for numeric behavior.
+At `95d4a91` the oracle records 247 tests and **6,939 assertions, 0 failures,
+0 errors**, and no skips: JVM Clojure has every var the suite guards with
+`when-var-exists`. 51 assertions are randomized (verdict only).
+
+Until #335, Suss numbers are binary64, so a recorded `long` matches a Suss
+number holding exactly that integer (within ±2^53), and nothing matches a
+recorded `bigint`, `ratio` or `decimal` yet (`suite_matches` in
+`scripts/clojure_test_suite.py`). Verdicts are still compared, so `(= 1 1.0)`,
+true in Suss today and false in Clojure, fails.
 
 ## Suss harness
 
 `scripts/test-clojure-test-suite.sh` (the issue's acceptance command) runs the
 offline checks and `cargo test -p suss-compile --test clojure_test_suite`. The
 harness builds its source tree with `clojure_test_suite.py suss-sources`: the
-vendored tests, the Suss-only patch `0002` (`:suss` branches for the JavaScript
-Number range constants) and the harness namespaces in
+vendored tests, the Suss-only patches `0003`–`0005` (`:suss` branches for
+Clojure assertions that the suite writes as `:clj`, and core types where it
+names host classes) and the harness namespaces in
 [`tests/clojure-test-suite/suss`](../../tests/clojure-test-suite/suss). It loads
 every namespace, in the oracle's order, through the production `Session` and
 `CompiledMacros` with the shipped compiled core, then runs each namespace's tests
@@ -108,7 +127,7 @@ operand is opaque on its own. Guest equality never decides a result.
 `scripts/clojure_test_suite.py compare` decides each oracle assertion:
 
 * Pass: same kind, same head symbol and a passing verdict, and every deterministic oracle operand
-  matches the Suss operand with `oracle_compare.matches` (exact binary64 bits
+  matches the Suss operand with `suite_matches` (exact binary64 bits
   apart from the canonical NaN sign, distinct collection kinds, unordered maps and
   sets). A predicate the oracle reports by value is compared by its result.
 * Verdict only (`guest-judged`, counted separately from `pass`): randomized
@@ -152,6 +171,27 @@ assertion is not executed and the oracle's skip is a recorded mismatch. The
 Python unit tests cover the remaining failure paths.
 
 ## Current suite result
+
+Against the JVM Clojure oracle, with `:suss`/`:default` reader features
+(#334, 2026-11-07), the reviewed baseline records 2,148 host-decided passes, 54
+guest-judged observations, 243 failures and 4,494 assertions not executed
+because 132 namespaces fail to load, out of 6,939 recorded assertions. The
+ClojureScript-era figures below aren't comparable: those recordings were
+5,834 assertions of `:cljs` branches, and Suss ran the same branches.
+
+- Namespaces now stop where a `:default` branch needs what Suss lacks: most
+  at `^:const` definitions (35); others at `clojure.string` requires (9),
+  reader dispatch Suss doesn't support yet (8), `#uuid` (4), `letfn`,
+  `macroexpand`, `future`, `alter-var-root` (#28), or vars such as `int?`,
+  `sorted?`, `any?` and `bigdec`.
+- 161 failures are assertions that throw in Suss, many on exact numeric
+  literals (#333) that the oracle records as Clojure values (#335).
+- 63 are verdict differences, where Suss's binary64 numbers or one-unit-string
+  characters behave differently from Clojure's (#335, #336).
+- `test-map#68` is one of them: `(map identity \a)` throws in Clojure, but `\a`
+  is a one-unit string, and so a seq, in Suss.
+- 10 are values the test decoder can't read yet, and `test-seq` fails on one
+  outside an assertion.
 
 After #333's numeric literals (2026-11-07), the reviewed baseline records
 2,327 host-decided passes, 54 guest-judged observations, 232 failures and 3,241
@@ -250,8 +290,7 @@ and graph-limit observations are historical, not current performance guarantees.
 classifies every `js/` reference in the vendored tests (26 references in 11
 files) as `suss-branch` (a portable value or a `:suss` adaptation is possible),
 `harness` or `host-specific`, with a rationale and alternative. The lock check
-fails if a reference is unclassified or a classification is stale. The
-`number_range` constants have `:suss` branches (patch `0002`); the harness
+fails if a reference is unclassified or a classification is stale. The harness
 replaces the portability `sleep` helper. Host-specific assertions remain in the
 counts as failures or not executed; the classification explains them.
 

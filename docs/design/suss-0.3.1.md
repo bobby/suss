@@ -91,9 +91,8 @@ source provenance, not textual deletion of JS-looking lines.
 `.cljs` and `.cljc`; reject ambiguous namespace resolutions. Reader conditional
 features are `:suss` and `:default`, taking the first matching branch in source
 order; Suss claims neither `:cljs` nor `:clj` (2026-11-06 decision,
-[ADR-0003](../adr/0003-clojure-numeric-tower.md)), whatever the file's extension,
-so a `.cljs` file is read with the same features. Until that is implemented the
-reader also matches `:cljs`.
+[ADR-0003](../adr/0003-clojure-numeric-tower.md), #334), whatever the file's
+extension, so a `.cljs` file is read with the same features.
 The reader reads tagged literals, `#tag form`, as Clojure's does. Its one built-in
 tag is ClojureScript's `#queue [...]`, a deliberate addition: Clojure has no queue
 literal and prints queues as unreadable objects. It reads as a persistent queue

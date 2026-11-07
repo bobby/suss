@@ -11,7 +11,7 @@ OPAQUE = {'tag': 'opaque', 'type': 'function', 'reason': 'unsupported'}
 
 
 def run(assertions, **extra):
-    document = {'schema': 1, 'suite': suite.COMMIT, 'upstream': suite.CLJS_PIN,
+    document = {'schema': 2, 'suite': suite.COMMIT, 'upstream': suite.ORACLE_ID,
                 'namespaces': ['a.b-test'], 'tests': ['a.b-test/t'], 'skips': [],
                 'assertions': assertions, 'reporter-errors': [],
                 'summary': {'test': 1, 'pass': len(assertions), 'fail': 0, 'error': 0}}
@@ -37,6 +37,43 @@ def observed(assertions, namespaces=None, test_failures=(), skips=()):
 def suss_predicate(ordinal=1, operands=(NUMBER_ONE, NUMBER_ONE), verdict='pass', head='='):
     return {'test': 'a.b-test/t', 'ordinal': ordinal, 'kind': 'predicate', 'verdict': verdict, 'head': head,
             'result': {'tag': 'bool', 'value': verdict == 'pass'}, 'operands': list(operands)}
+
+
+class SuiteMatches(unittest.TestCase):
+    """Until #335, JVM longs match Suss binary64 holding the same integer."""
+
+    def test_long_matches_an_exact_double(self):
+        self.assertTrue(suite.suite_matches({'tag': 'long', 'value': '1'}, NUMBER_ONE))
+        self.assertFalse(suite.suite_matches({'tag': 'long', 'value': '2'}, NUMBER_ONE))
+        self.assertTrue(suite.suite_matches({'tag': 'long', 'value': '0'}, {'tag': 'f64', 'bits': '0000000000000000'}))
+        self.assertFalse(suite.suite_matches({'tag': 'long', 'value': '0'}, {'tag': 'f64', 'bits': '8000000000000000'}))
+
+    def test_longs_beyond_2_53_and_exact_types_never_match(self):
+        rounded = {'tag': 'f64', 'bits': '4340000000000000'}
+        self.assertTrue(suite.suite_matches({'tag': 'long', 'value': str(2 ** 53)}, rounded))
+        self.assertFalse(suite.suite_matches({'tag': 'long', 'value': str(2 ** 53 + 1)}, rounded))
+        for tag in ({'tag': 'bigint', 'value': '1'}, {'tag': 'ratio', 'numerator': '1', 'denominator': '2'},
+                    {'tag': 'decimal', 'unscaled': '1', 'scale': 0}):
+            self.assertFalse(suite.suite_matches(tag, NUMBER_ONE))
+
+    def test_nan_maps_and_exception_data_use_the_same_rule(self):
+        nan = {'tag': 'f64', 'bits': '7ff8000000000000'}
+        self.assertTrue(suite.suite_matches(nan, {'tag': 'f64', 'bits': 'fff8000000000000'}))
+        long_one = {'tag': 'long', 'value': '1'}
+        nil = {'tag': 'nil'}
+        self.assertTrue(suite.suite_matches({'tag': 'map', 'entries': [[long_one, long_one]]},
+                                            {'tag': 'map', 'entries': [[NUMBER_ONE, NUMBER_ONE]]}))
+        info = lambda data: {'tag': 'exception-info', 'data': data, 'message': nil, 'cause': nil}
+        self.assertTrue(suite.suite_matches(info({'tag': 'vector', 'items': [long_one]}),
+                                            info({'tag': 'vector', 'items': [NUMBER_ONE]})))
+        self.assertFalse(suite.suite_matches(info({'tag': 'vector', 'items': [long_one]}),
+                                             info({'tag': 'vector', 'items': [NUMBER_TWO]})))
+
+    def test_collections_compare_their_items_with_the_same_rule(self):
+        long_one = {'tag': 'long', 'value': '1'}
+        self.assertTrue(suite.suite_matches({'tag': 'vector', 'items': [long_one]}, {'tag': 'vector', 'items': [NUMBER_ONE]}))
+        self.assertTrue(suite.suite_matches({'tag': 'set', 'items': [long_one]}, {'tag': 'set', 'items': [NUMBER_ONE]}))
+        self.assertFalse(suite.suite_matches({'tag': 'vector', 'items': [long_one]}, {'tag': 'seq', 'items': [NUMBER_ONE]}))
 
 
 class Normalize(unittest.TestCase):
@@ -97,20 +134,17 @@ class Decide(unittest.TestCase):
     def test_unordered_set_drop_checks_only_the_asserted_truthy_result(self):
         expected = dict(self.expected,
                         id='clojure.core-test.drop/test-drop#12',
-                        form='(doall (drop 1 #{:a :b :c}))',
+                        form='(doall (drop 1 #{:c :b :a}))',
                         operands=[NUMBER_ONE])
         self.assertEqual(suite.decide(expected, suss_predicate(operands=(NUMBER_TWO,), head='doall')),
                          (None, True))
         self.assertEqual(suite.decide(dict(expected, id='another/test#1'),
                                       suss_predicate(operands=(NUMBER_TWO,), head='doall')),
                          ('observation:value', False))
-
-    def test_host_specific_undefined_case_checks_verdict_without_decoding_value(self):
-        expected = dict(self.expected,
-                        id='clojure.core-test.nil-qmark/test-nil?#13',
-                        form='(nil? js/undefined)', operands=[OPAQUE])
-        self.assertEqual(suite.decide(expected, suss_predicate(operands=(OPAQUE,), head='nil?')),
-                         (None, True))
+        # A shifted ordinal names a different assertion, which must not be
+        # judged by verdict alone.
+        with self.assertRaisesRegex(ValueError, 'no longer names its assertion'):
+            suite.decide(dict(expected, form='(= 1 1)'), suss_predicate(head='='))
 
     def test_guest_failure_is_a_failure(self):
         self.assertEqual(suite.decide(self.expected, suss_predicate(verdict='fail')), ('verdict:fail', False))

@@ -25,7 +25,7 @@
   (is (and true 1))
   (is :kw)
   (is (p/thrown? (throw (ex-info "boom" {:k 1}))))
-  (is (= {:k 1} (try (throw (ex-info "x" {:k 1})) (catch :default e (ex-data e))))))
+  (is (= {:k 1} (try (throw (ex-info "x" {:k 1})) (catch #?(:suss :default :default Throwable) e (ex-data e))))))
 
 (deftest templates-and-effects
   (are [x y] (= x (inc y))

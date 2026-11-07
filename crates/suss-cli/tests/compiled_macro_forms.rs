@@ -94,7 +94,7 @@ fn compiled_macro_forms_use_phase_dependencies_and_conditional_selection_once() 
     )
     .unwrap();
     let forms =
-        read_forms("(ns caller (:require [dep :as d])) #?(:suss d/value :cljs missing)").unwrap();
+        read_forms("(ns caller (:require [dep :as d])) #?(:suss d/value :default missing)").unwrap();
     let value = session.eval_forms(forms, 0..80).unwrap();
     let bits = session
         .inspect(&value, |mut store, value| {
@@ -111,7 +111,7 @@ fn compiled_macro_forms_use_phase_dependencies_and_conditional_selection_once() 
     assert_eq!(session.stats().loaded_modules, 1);
     session
         .eval_forms(
-            read_forms("#?(:cljs d/value :suss missing)").unwrap(),
+            read_forms("#?(:default d/value :suss missing)").unwrap(),
             0..50,
         )
         .unwrap();
