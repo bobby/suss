@@ -26,6 +26,7 @@ mod error_properties;
 mod exception_info;
 mod exceptions;
 mod identity_hash;
+mod longs;
 mod named_properties;
 mod native_object_factory;
 mod native_object_methods;
@@ -93,6 +94,90 @@ pub fn boolean_in(first: u32) -> [Instruction<'static>; 5] {
         Instruction::GlobalGet(first),
         Instruction::End,
     ]
+}
+/// `[] -> [i32]`: whether a local holds a number, a long or a double.
+pub fn number_test(local: u32) -> [Instruction<'static>; 8] {
+    longs::number_test(local)
+}
+/// `[eqref] -> [f64]`: a number as a double, without locals; traps unless
+/// the value is a number.
+pub fn number_to_f64() -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let from = RefType::EQREF;
+    let cast = |heap_type| RefType { nullable: false, heap_type };
+    vec![
+        Block(BlockType::Result(ValType::F64)),
+        Block(BlockType::Result(VALUE)),
+        BrOnCastFail {
+            relative_depth: 0,
+            from_ref_type: from,
+            to_ref_type: cast(HeapType::I31),
+        },
+        I31GetS,
+        F64ConvertI32S,
+        Br(1),
+        End,
+        Block(BlockType::Result(VALUE)),
+        BrOnCastFail {
+            relative_depth: 0,
+            from_ref_type: from,
+            to_ref_type: cast(HeapType::Concrete(LONG)),
+        },
+        StructGet {
+            struct_type_index: LONG,
+            field_index: 0,
+        },
+        F64ConvertI64S,
+        Br(1),
+        End,
+        RefCastNonNull(HeapType::Concrete(NUMBER)),
+        StructGet {
+            struct_type_index: NUMBER,
+            field_index: 0,
+        },
+        End,
+    ]
+}
+/// `[eqref] -> [i32]`: whether the value is a number, without locals.
+pub fn number_test_stack() -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let from = RefType::EQREF;
+    let cast = |heap_type| RefType { nullable: false, heap_type };
+    let mut code = vec![Block(BlockType::Result(ValType::I32))];
+    for heap_type in [HeapType::I31, HeapType::Concrete(LONG)] {
+        code.extend([
+            Block(BlockType::Result(VALUE)),
+            BrOnCastFail {
+                relative_depth: 0,
+                from_ref_type: from,
+                to_ref_type: cast(heap_type),
+            },
+            Drop,
+            I32Const(1),
+            Br(1),
+            End,
+        ]);
+    }
+    code.extend([RefTestNonNull(HeapType::Concrete(NUMBER)), End]);
+    code
+}
+/// `[i64] -> [eqref]`: a long, as an i31 when it fits and boxed otherwise,
+/// using `scratch`, an `i64` local.
+pub fn long_box_in(scratch: u32) -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let mut code = vec![LocalTee(scratch)];
+    code.extend(longs::fits_i31());
+    code.extend([
+        If(BlockType::Result(VALUE)),
+        LocalGet(scratch),
+        I32WrapI64,
+        RefI31,
+        Else,
+        LocalGet(scratch),
+        StructNew(LONG),
+        End,
+    ]);
+    code
 }
 pub(crate) fn boolean() -> [Instruction<'static>; 5] {
     boolean_in(FALSE_GLOBAL)
@@ -391,7 +476,6 @@ fn build_module() -> Vec<u8> {
         next_type: helper.type_count,
         names: std::collections::BTreeMap::new(),
     };
-    let number = HeapType::Concrete(NUMBER);
     let string = HeapType::Concrete(STRING);
     for (name, sentinel) in [("nil", NIL), ("false", FALSE), ("true", TRUE)] {
         b.function(name, &[], &[VALUE], &[sentinel_value(sentinel)]);
@@ -402,62 +486,9 @@ fn build_module() -> Vec<u8> {
         &[VALUE],
         &[LocalGet(0), StructNew(NUMBER)],
     );
-    b.function(
-        "number-unbox",
-        &[VALUE],
-        &[ValType::F64],
-        &[
-            LocalGet(0),
-            RefCastNonNull(number),
-            StructGet {
-                struct_type_index: NUMBER,
-                field_index: 0,
-            },
-        ],
-    );
-    for (name, operation) in [
-        ("number-add", F64Add),
-        ("number-subtract", F64Sub),
-        ("number-multiply", F64Mul),
-        ("number-divide", F64Div),
-    ] {
-        b.function(
-            name,
-            &[VALUE, VALUE],
-            &[VALUE],
-            &[
-                LocalGet(0),
-                RefCastNonNull(number),
-                StructGet {
-                    struct_type_index: NUMBER,
-                    field_index: 0,
-                },
-                LocalGet(1),
-                RefCastNonNull(number),
-                StructGet {
-                    struct_type_index: NUMBER,
-                    field_index: 0,
-                },
-                operation,
-                StructNew(NUMBER),
-            ],
-        );
-    }
-    b.function(
-        "number-negate",
-        &[VALUE],
-        &[VALUE],
-        &[
-            LocalGet(0),
-            RefCastNonNull(number),
-            StructGet {
-                struct_type_index: NUMBER,
-                field_index: 0,
-            },
-            F64Neg,
-            StructNew(NUMBER),
-        ],
-    );
+    longs::intrinsics(&mut b);
+    longs::arithmetic(&mut b);
+    longs::string(&mut b);
     b.function(
         "string-new",
         &[ValType::I32],

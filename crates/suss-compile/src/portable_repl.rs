@@ -98,6 +98,11 @@ fn inspect_display(session: &mut Session, value: &SessionValue) -> Result<Output
                 _ => return Err(wasmtime::Error::msg("Unknown language sentinel")),
             }));
         }
+        if let Some(crate::portable_session::RuntimeNumber::Long(_)) =
+            crate::portable_session::runtime_number(&mut store, &value)?
+        {
+            return Ok(Output::Number);
+        }
         let reference = value
             .unwrap_anyref()
             .expect("a non-sentinel value has a reference");

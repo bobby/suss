@@ -219,6 +219,26 @@ fn helper_from(bytes: &[u8]) -> Helper {
     result
 }
 
+/// Coercing arithmetic on two numbers is Clojure's, longs and overflow
+/// checks included; only other operands take the JavaScript conversions.
+fn numbers(b: &Builder, operation: &str) -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let test = b.names["number-test"];
+    vec![
+        LocalGet(0),
+        Call(test),
+        LocalGet(1),
+        Call(test),
+        I32And,
+        If(BlockType::Empty),
+        LocalGet(0),
+        LocalGet(1),
+        Call(b.names[operation]),
+        Return,
+        End,
+    ]
+}
+
 pub(super) fn error(message: &str, global: u32) -> Vec<Instruction<'static>> {
     use Instruction::*;
     let units = message.encode_utf16().collect::<Vec<_>>();
@@ -335,14 +355,10 @@ pub(super) fn intrinsics(
 
     let mut convert = vec![
         LocalGet(0),
-        RefTestNonNull(number),
+        Call(b.names["number-test"]),
         If(BlockType::Empty),
         LocalGet(0),
-        RefCastNonNull(number),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         Return,
         End,
     ];
@@ -436,6 +452,14 @@ pub(super) fn intrinsics(
         to_string.extend([Return, End]);
     }
     to_string.extend([
+        LocalGet(0),
+        Call(b.names["long-test"]),
+        If(BlockType::Empty),
+        LocalGet(0),
+        Call(b.names["long-unbox"]),
+        Call(b.names["long-string"]),
+        Return,
+        End,
         LocalGet(0),
         RefTestNonNull(number),
         If(BlockType::Empty),
@@ -570,6 +594,9 @@ pub(super) fn intrinsics(
         Call(concat),
         Return,
         End,
+    ]);
+    add.extend(numbers(b, "number-add"));
+    add.extend([
         LocalGet(0),
         Call(convert),
         LocalGet(1),
@@ -580,29 +607,34 @@ pub(super) fn intrinsics(
     let add = b.function("value-add", &[VALUE, VALUE], &[VALUE], &add);
     let mut binary = Vec::new();
     for (name, operation) in [
-        ("value-subtract", F64Sub),
-        ("value-multiply", F64Mul),
-        ("value-divide", F64Div),
+        ("subtract", F64Sub),
+        ("multiply", F64Mul),
+        ("divide", F64Div),
     ] {
-        binary.push(b.function(
-            name,
-            &[VALUE, VALUE],
-            &[VALUE],
-            &[
-                LocalGet(0),
-                Call(convert),
-                LocalGet(1),
-                Call(convert),
-                operation,
-                StructNew(NUMBER),
-            ],
-        ));
+        let mut code = numbers(b, &format!("number-{name}"));
+        code.extend([
+            LocalGet(0),
+            Call(convert),
+            LocalGet(1),
+            Call(convert),
+            operation,
+            StructNew(NUMBER),
+        ]);
+        binary.push(b.function(&format!("value-{name}"), &[VALUE, VALUE], &[VALUE], &code));
     }
-    let negate = b.function(
-        "value-negate",
-        &[VALUE],
-        &[VALUE],
-        &[LocalGet(0), Call(convert), F64Neg, StructNew(NUMBER)],
-    );
+    let negate = vec![
+        LocalGet(0),
+        Call(b.names["number-test"]),
+        If(BlockType::Result(VALUE)),
+        LocalGet(0),
+        Call(b.names["number-negate"]),
+        Else,
+        LocalGet(0),
+        Call(convert),
+        F64Neg,
+        StructNew(NUMBER),
+        End,
+    ];
+    let negate = b.function("value-negate", &[VALUE], &[VALUE], &negate);
     [add, binary[0], binary[1], binary[2], negate]
 }

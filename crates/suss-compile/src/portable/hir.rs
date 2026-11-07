@@ -50,7 +50,9 @@ pub enum Literal {
     /// Internal bootstrap result; there is no undefined source literal.
     Undefined,
     Bool(bool),
+    /// A double.
     Number(f64),
+    Long(i64),
     String(Vec<u16>),
 }
 impl Literal {
@@ -59,7 +61,7 @@ impl Literal {
             Self::Nil => Type::Nil,
             Self::Undefined => Type::Value,
             Self::Bool(_) => Type::Bool,
-            Self::Number(_) => Type::Number,
+            Self::Number(_) | Self::Long(_) => Type::Number,
             Self::String(_) => Type::String,
         }
     }
@@ -1314,6 +1316,7 @@ impl Analyzer<'_> {
             Kind::Nil => Expression::Literal(Literal::Nil),
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
             Kind::Number(value) => Expression::Literal(Literal::Number(*value)),
+            Kind::Long(value) => Expression::Literal(Literal::Long(*value)),
             Kind::Exact(number) => return self.exact_literal(form, number),
             Kind::String(value) => Expression::Literal(Literal::String(value.clone())),
             Kind::Keyword(value) => {

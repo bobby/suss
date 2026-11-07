@@ -933,11 +933,7 @@ impl<'a> Lowerer<'a> {
                 }
                 if values.is_empty() {
                     return Ok(Some(self.literal(
-                        Literal::Number(if *operator == Arithmetic::Add {
-                            0.0
-                        } else {
-                            1.0
-                        }),
+                        Literal::Long(if *operator == Arithmetic::Add { 0 } else { 1 }),
                         hir.span.clone(),
                     )?));
                 }
@@ -969,7 +965,7 @@ impl<'a> Lowerer<'a> {
                         )?));
                     }
                     if *operator == Arithmetic::Divide {
-                        let one = self.literal(Literal::Number(1.0), hir.span.clone())?;
+                        let one = self.literal(Literal::Long(1), hir.span.clone())?;
                         return Ok(Some(self.emit(
                             Operation::Arithmetic {
                                 operator: *operator,

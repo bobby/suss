@@ -114,8 +114,8 @@ impl Analyzer<'_> {
             );
         }
         let nil = self.literal_form(form, Literal::Nil);
-        let count = self.literal_form(form, Literal::Number(count as f64));
-        let shift = self.literal_form(form, Literal::Number(5.0));
+        let count = self.literal_form(form, Literal::Long(count as i64));
+        let shift = self.literal_form(form, Literal::Long(5));
         let root = self.collection_property(form, "PersistentVector", "EMPTY_NODE")?;
         Ok(self.nominal(
             form,
@@ -187,7 +187,7 @@ impl Analyzer<'_> {
             );
         }
         let nil = self.literal_form(form, Literal::Nil);
-        let count = self.literal_form(form, Literal::Number((items.len() / 2) as f64));
+        let count = self.literal_form(form, Literal::Long((items.len() / 2) as i64));
         Ok(self.nominal(
             form,
             Nominal::Construct,
@@ -220,7 +220,7 @@ impl Analyzer<'_> {
         let set_class = self.collection_class(form, "PersistentHashSet")?;
         let map_class = self.collection_class(form, "PersistentArrayMap")?;
         let nil = self.literal_form(form, Literal::Nil);
-        let count = self.literal_form(form, Literal::Number(items.len() as f64));
+        let count = self.literal_form(form, Literal::Long(items.len() as i64));
         let mut entries = Vec::new();
         for value in values {
             entries.push(value);
@@ -244,7 +244,7 @@ fn distinct_constants(items: &[&Form]) -> bool {
     items.iter().enumerate().all(|(index, item)| {
         let constant = matches!(
             item.kind,
-            Kind::Nil | Kind::Bool(_) | Kind::Number(_) | Kind::String(_)
+            Kind::Nil | Kind::Bool(_) | Kind::Number(_) | Kind::Long(_) | Kind::String(_)
         );
         constant
             && items[..index]
@@ -257,6 +257,7 @@ fn same_constant(a: &Form, b: &Form) -> bool {
         (Kind::Nil, Kind::Nil) => true,
         (Kind::Bool(a), Kind::Bool(b)) => a == b,
         (Kind::Number(a), Kind::Number(b)) => a == b,
+        (Kind::Long(a), Kind::Long(b)) => a == b,
         (Kind::String(a), Kind::String(b)) => a == b,
         _ => false,
     }

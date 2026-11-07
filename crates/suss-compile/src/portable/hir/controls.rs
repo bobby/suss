@@ -60,7 +60,7 @@ impl Analyzer<'_> {
                 let operator = if operation == ControlForm::Increment {
                     Arithmetic::Add
                 } else { Arithmetic::Subtract };
-                let arguments = vec![value, self.literal_form(form, Literal::Number(1.0))];
+                let arguments = vec![value, self.literal_form(form, Literal::Long(1))];
                 let ty = arithmetic_type(operator, &arguments.iter().map(|arg| arg.ty).collect::<Vec<_>>(), self.coercing_operands())
                     .ok_or_else(|| fail(args[0].span.clone(), "Arithmetic object coercions are not lowered yet"))?;
                 Ok(Hir {
@@ -95,7 +95,7 @@ impl Analyzer<'_> {
                             (ControlForm::Negative, false) => Comparison::NumberNegative,
                             (_, false) => Comparison::NumberPositive,
                         },
-                        arguments: vec![value, self.literal_form(form, Literal::Number(0.0))],
+                        arguments: vec![value, self.literal_form(form, Literal::Long(0))],
                     }),
                 })
             }

@@ -19,9 +19,8 @@ fn boolean(code: &mut Vec<Instruction<'static>>) {
 }
 fn primitive_condition(code: &mut Vec<Instruction<'static>>, local: u32) {
     use Instruction::*;
+    code.extend(longs::number_test(local));
     code.extend([
-        LocalGet(local),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
         LocalGet(local),
         RefTestNonNull(HeapType::Concrete(STRING)),
         I32Or,

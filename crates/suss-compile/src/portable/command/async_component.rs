@@ -489,10 +489,8 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
     next_type += 1;
     types.ty().function([], [ValType::I32]);
     functions.function(ty);
-    emit_with_locals(
-        &mut code,
-        [(1, ValType::F64), (5, ValType::I32)],
-        vec![
+    // The result is a long or a double; check it as a double below.
+    let mut body = vec![
             GlobalGet(1),
             Call(status),
             I32Eqz,
@@ -631,11 +629,9 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
             End,
             GlobalGet(1),
             Call(result),
-            RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
-            StructGet {
-                struct_type_index: runtime_abi::NUMBER,
-                field_index: 0,
-            },
+    ];
+    body.extend(runtime_abi::number_to_f64());
+    body.extend([
             LocalSet(0),
             LocalGet(0),
             F64Const(0.0.into()),
@@ -679,8 +675,8 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
             End,
             I32Const(0),
             End,
-        ],
-    );
+    ]);
+    emit_with_locals(&mut code, [(1, ValType::F64), (5, ValType::I32)], body);
     let entry = index + 2;
     let ty = next_type;
     next_type += 1;

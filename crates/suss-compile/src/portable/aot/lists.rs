@@ -2,7 +2,7 @@
 //! canonical element and nested-string buffers have explicit transfer ownership.
 use super::{boundary_error_message, lift_scalar, lower_scalar, strings, ListElement, Scalar};
 use crate::runtime_abi;
-use wasm_encoder::{BlockType, Function, HeapType, Instruction, MemArg};
+use wasm_encoder::{BlockType, Function, Instruction, MemArg};
 
 pub(super) struct Locals {
     pub value: u32,
@@ -16,6 +16,8 @@ pub(super) struct Locals {
     pub number: u32,
     /// Index of the module's imported false global.
     pub sentinels: u32,
+    /// An `i64` scratch local for boxing a long.
+    pub wide: u32,
 }
 fn emit(body: &mut Function, instructions: &[Instruction<'_>]) {
     for instruction in instructions {
@@ -140,18 +142,8 @@ fn schema(body: &mut Function, root: u32, operation: f64, value: u32, index: Opt
 fn numeric_length(body: &mut Function, root: u32, locals: &Locals) {
     use Instruction::*;
     schema(body, root, 3.0, locals.container, None);
-    emit(
-        body,
-        &[
-            RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
-            StructGet {
-                struct_type_index: runtime_abi::NUMBER,
-                field_index: 0,
-            },
-            I32TruncF64U,
-            LocalSet(locals.length),
-        ],
-    );
+    emit(body, &runtime_abi::number_to_f64());
+    emit(body, &[I32TruncF64U, LocalSet(locals.length)]);
 }
 
 pub(super) fn copy_in(
@@ -207,7 +199,7 @@ pub(super) fn copy_in(
         ListElement::Scalar(ty) => {
             address(body, locals.pointer, locals.index, element);
             body.instruction(&load(ty));
-            lift_scalar(body, &ty, locals.sentinels);
+            lift_scalar(body, &ty, locals.sentinels, locals.wide);
         }
         ListElement::String => {
             address(body, locals.pointer, locals.index, element);
@@ -390,7 +382,8 @@ pub(super) fn post_return(body: &mut Function, element: ListElement) {
         output: 0,
         integer: 0,
         number: 0,
-        sentinels: 0, // release never builds a sentinel
+        sentinels: 0, // release never builds a sentinel or a long
+        wide: 0,
     };
     release(body, element, &locals);
 }

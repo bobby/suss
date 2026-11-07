@@ -229,21 +229,18 @@ pub fn module(
         LocalGet(1),
         I32Const(0),
         ArrayGet(runtime_abi::ARGS),
-        RefTestNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
-        I32Eqz,
-        If(BlockType::Empty),
     ]);
+    body.extend(runtime_abi::number_test_stack());
+    body.extend([I32Eqz, If(BlockType::Empty)]);
     fail(&mut body);
     body.push(End);
     body.extend([
         LocalGet(1),
         I32Const(0),
         ArrayGet(runtime_abi::ARGS),
-        RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
-        StructGet {
-            struct_type_index: runtime_abi::NUMBER,
-            field_index: 0,
-        },
+    ]);
+    body.extend(runtime_abi::number_to_f64());
+    body.extend([
         LocalSet(10),
         LocalGet(10),
         F64Const(0.0.into()),

@@ -138,11 +138,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     code.extend([
         I32Const(0),
         ArrayGet(ARGS),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         LocalSet(5),
         LocalGet(5),
         F64Const(4294967295.0.into()),
@@ -269,8 +265,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         BrIf(1),
         LocalGet(0),
         LocalGet(3),
-        F64ConvertI32U,
-        Call(b.names["number-box"]),
+        Call(b.names["long-box-u32"]),
         Call(b.names["source-array-get"]),
         LocalSet(6),
         // nil and undefined elements join as empty strings.
@@ -307,8 +302,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         If(BlockType::Empty),
         LocalGet(6),
         LocalGet(3),
-        F64ConvertI32U,
-        Call(b.names["number-box"]),
+        Call(b.names["long-box-u32"]),
         LocalGet(4),
         ArrayNewFixed {
             array_type_index: ARGS,
@@ -360,11 +354,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     code.extend([
         I32Const(1),
         ArrayGet(ARGS),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         I32TruncSatF64U,
         LocalSet(3),
         LocalGet(11),

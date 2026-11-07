@@ -351,6 +351,45 @@ pub fn sentinel_tag(
         _ => Ok(None),
     }
 }
+/// A runtime number: a long, held in an i31 or a one-field `i64` struct, or a
+/// double, a one-field `f64` struct.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum RuntimeNumber {
+    Long(i64),
+    Double(f64),
+}
+impl RuntimeNumber {
+    /// The number as a double, rounding a long beyond 2^53.
+    pub fn as_f64(self) -> f64 {
+        match self {
+            Self::Long(value) => value as f64,
+            Self::Double(value) => value,
+        }
+    }
+}
+/// The long or double `value` holds; `None` for any other value.
+pub fn runtime_number(
+    mut store: impl AsContextMut,
+    value: &Val,
+) -> wasmtime::Result<Option<RuntimeNumber>> {
+    let Some(Some(reference)) = value.anyref() else {
+        return Ok(None);
+    };
+    if let Some(small) = reference.as_i31(&store)? {
+        return Ok(Some(RuntimeNumber::Long(i64::from(small.get_i32()))));
+    }
+    let Some(structure) = reference.as_struct(&store)? else {
+        return Ok(None);
+    };
+    if structure.ty(&store)?.fields().len() != 1 {
+        return Ok(None);
+    }
+    Ok(match structure.field(&mut store, 0)? {
+        Val::I64(value) => Some(RuntimeNumber::Long(value)),
+        Val::F64(bits) => Some(RuntimeNumber::Double(f64::from_bits(bits))),
+        _ => None,
+    })
+}
 fn own<C: AsContextMut<Data = ()>>(
     scope: &mut RootScope<C>,
     value: Val,
@@ -1671,6 +1710,20 @@ impl Session {
                     self.runtime,
                     function,
                     &[Val::F64(value.to_bits())],
+                    self.identity,
+                    &self.handles,
+                )
+            }
+            Literal::Long(value) => {
+                let function = self
+                    .runtime
+                    .get_func(&mut scope, "long-box")
+                    .expect("shared runtime long constructor");
+                call(
+                    &mut scope,
+                    self.runtime,
+                    function,
+                    &[Val::I64(*value)],
                     self.identity,
                     &self.handles,
                 )

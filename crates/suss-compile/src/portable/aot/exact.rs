@@ -1,6 +1,6 @@
 //! Original canonical full-width integer transfer through exact u32 word pairs.
 use crate::runtime_abi;
-use wasm_encoder::{Function, HeapType, Instruction};
+use wasm_encoder::{Function, Instruction};
 fn emit(body: &mut Function, items: &[Instruction<'_>]) {
     for item in items {
         body.instruction(item);
@@ -55,18 +55,8 @@ fn word(body: &mut Function, root: u32, pair: u32, operation: f64) {
     emit(body, &[LocalGet(pair), F64Const(0.0.into())]);
     box_number(body);
     schema_tail(body);
-    emit(
-        body,
-        &[
-            RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
-            StructGet {
-                struct_type_index: runtime_abi::NUMBER,
-                field_index: 0,
-            },
-            I32TruncF64U,
-            I64ExtendI32U,
-        ],
-    );
+    emit(body, &runtime_abi::number_to_f64());
+    emit(body, &[I32TruncF64U, I64ExtendI32U]);
 }
 pub(super) fn lower(body: &mut Function, signed: bool, value: u32, pair: u32, root: u32) {
     use Instruction::*;

@@ -25,6 +25,10 @@ fn relation(op: usize, floating: bool) -> Instruction<'static> {
         _ => unreachable!(),
     }
 }
+fn exact(op: usize) -> Instruction<'static> {
+    use Instruction::*;
+    [I64LtS, I64LeS, I64GtS, I64GeS][op].clone()
+}
 pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Vec<u32> {
     use Instruction::*;
     let mut helpers = Vec::new();
@@ -91,6 +95,19 @@ pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Ve
             LocalGet(3),
             LocalGet(4),
             relation(op, false),
+        ]);
+        boolean(&mut body);
+        body.extend([Return, End]);
+        // Two longs compare exactly, even beyond binary64's 2^53.
+        body.extend(longs::both_longs(b));
+        let unbox = b.names["long-unbox"];
+        body.extend([
+            If(BlockType::Empty),
+            LocalGet(0),
+            Call(unbox),
+            LocalGet(1),
+            Call(unbox),
+            exact(op),
         ]);
         boolean(&mut body);
         body.extend([

@@ -34,8 +34,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
         body.extend([
             End,
             GlobalGet(COUNTER),
-            F64ConvertI64U,
-            Call(b.names["number-box"]),
+            Call(b.names["long-box"]),
             LocalSet(1),
             LocalGet(0),
             RefCastNonNull(HeapType::Concrete(ty)),
@@ -50,7 +49,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
             GlobalSet(COUNTER),
             Else,
             LocalGet(1),
-            RefTestNonNull(HeapType::Concrete(NUMBER)),
+            Call(b.names["number-test"]),
             I32Eqz,
             If(BlockType::Empty),
         ]);
@@ -58,11 +57,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
         body.extend([
             End,
             LocalGet(1),
-            RefCastNonNull(HeapType::Concrete(NUMBER)),
-            StructGet {
-                struct_type_index: NUMBER,
-                field_index: 0,
-            },
+            Call(b.names["number-unbox"]),
             LocalSet(2),
             LocalGet(2),
             F64Const(1.0.into()),

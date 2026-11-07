@@ -36,7 +36,12 @@ pub(super) fn functions(b: &mut Builder) {
     ] {
         body.extend([
             LocalGet(0),
-            RefTestNonNull(HeapType::Concrete(ty)),
+            // A long is a number too.
+            if ty == NUMBER {
+                Call(b.names["number-test"])
+            } else {
+                RefTestNonNull(HeapType::Concrete(ty))
+            },
             If(BlockType::Empty),
             Call(b.names[constructor]),
             Return,

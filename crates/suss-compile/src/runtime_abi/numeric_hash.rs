@@ -7,7 +7,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
     // conversion hooks. Keep the existing nil/boolean/string corpus intact.
     let mut number = vec![
         LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        Call(b.names["number-test"]),
         LocalGet(0),
         RefTestNonNull(HeapType::Concrete(STRING)),
         I32Or,
@@ -28,33 +28,28 @@ pub(super) fn intrinsics(b: &mut Builder) {
     // ECMAScript TimeClip: reject nonfinite/out-of-range, truncate, normalize zero.
     let mut time_clip = vec![
         LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        Call(b.names["number-test"]),
         I32Eqz,
         If(BlockType::Empty),
     ];
     nominal::error(&mut time_clip);
+    // A clipped time is a long count of milliseconds, or NaN.
     time_clip.extend([
         End,
         LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         LocalSet(1),
         LocalGet(1),
         F64Abs,
         F64Const(8640000000000000.0.into()),
         F64Le,
-        If(BlockType::Result(ValType::F64)),
+        If(BlockType::Result(VALUE)),
         LocalGet(1),
-        F64Trunc,
-        F64Const(0.0.into()),
-        F64Add,
+        Call(b.names["long-box-f64"]),
         Else,
         F64Const(f64::NAN.into()),
-        End,
         Call(b.names["number-box"]),
+        End,
     ]);
     b.function_with_locals(
         "primitive-f64-time-clip",
@@ -76,7 +71,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
     for (name, offset) in [("primitive-f64-word0", 0), ("primitive-f64-word4", 32)] {
         let mut body = vec![
             LocalGet(0),
-            RefTestNonNull(HeapType::Concrete(NUMBER)),
+            Call(b.names["number-test"]),
             I32Eqz,
             If(BlockType::Empty),
         ];
@@ -84,11 +79,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
         body.extend([
             End,
             LocalGet(0),
-            RefCastNonNull(HeapType::Concrete(NUMBER)),
-            StructGet {
-                struct_type_index: NUMBER,
-                field_index: 0,
-            },
+            Call(b.names["number-unbox"]),
             I64ReinterpretF64,
             I64Const(offset),
             I64ShrU,
@@ -117,8 +108,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
             I32Const(24),
             I32ShrU,
             I32Or,
-            F64ConvertI32S,
-            Call(b.names["number-box"]),
+            Call(b.names["long-box-i32"]),
         ]);
         b.function_with_locals(name, &[VALUE], &[VALUE], &[(1, ValType::I32)], &body);
     }
@@ -127,10 +117,17 @@ pub(super) fn intrinsics(b: &mut Builder) {
         &[VALUE],
         &[VALUE],
         &[
+            // A long is already integral.
+            LocalGet(0),
+            Call(b.names["long-test"]),
+            If(BlockType::Result(VALUE)),
+            LocalGet(0),
+            Else,
             LocalGet(0),
             Call(hash_number),
             F64Ceil,
             Call(b.names["number-box"]),
+            End,
         ],
     );
     b.function(
@@ -138,10 +135,17 @@ pub(super) fn intrinsics(b: &mut Builder) {
         &[VALUE],
         &[VALUE],
         &[
+            // A long is already integral.
+            LocalGet(0),
+            Call(b.names["long-test"]),
+            If(BlockType::Result(VALUE)),
+            LocalGet(0),
+            Else,
             LocalGet(0),
             Call(b.names["coerce-number"]),
             F64Floor,
             Call(b.names["number-box"]),
+            End,
         ],
     );
     b.function(
@@ -166,14 +170,10 @@ pub(super) fn intrinsics(b: &mut Builder) {
         &[(1, ValType::F64)],
         &[
             LocalGet(0),
-            RefTestNonNull(HeapType::Concrete(NUMBER)),
+            Call(b.names["number-test"]),
             If(BlockType::Result(VALUE)),
             LocalGet(0),
-            RefCastNonNull(HeapType::Concrete(NUMBER)),
-            StructGet {
-                struct_type_index: NUMBER,
-                field_index: 0,
-            },
+            Call(b.names["number-unbox"]),
             LocalSet(1),
             LocalGet(1),
             LocalGet(1),
@@ -199,6 +199,28 @@ pub(super) fn intrinsics(b: &mut Builder) {
         &[VALUE],
         &[(7, ValType::F64)],
         &[
+            // Two longs with a nonzero divisor have an exact long remainder,
+            // with the dividend's sign as in JavaScript.
+            LocalGet(0),
+            Call(b.names["long-test"]),
+            LocalGet(1),
+            Call(b.names["long-test"]),
+            I32And,
+            If(BlockType::Empty),
+            LocalGet(1),
+            Call(b.names["long-unbox"]),
+            I64Eqz,
+            I32Eqz,
+            If(BlockType::Empty),
+            LocalGet(0),
+            Call(b.names["long-unbox"]),
+            LocalGet(1),
+            Call(b.names["long-unbox"]),
+            I64RemS,
+            Call(b.names["long-box"]),
+            Return,
+            End,
+            End,
             LocalGet(0),
             Call(b.names["coerce-number"]),
             LocalSet(2),
@@ -320,10 +342,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
         LocalGet(3),
         I64TruncF64S,
         I64RemS,
-        F64ConvertI64S,
-        LocalGet(2),
-        F64Copysign,
-        Call(b.names["number-box"]),
+        Call(b.names["long-box"]),
     ]);
     b.function_with_locals(
         "primitive-safe-integer-remainder",

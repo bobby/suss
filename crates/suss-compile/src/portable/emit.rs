@@ -918,6 +918,16 @@ fn emit_function(
                         .instruction(&Call(index("number-box")))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
+                Operation::Literal(Literal::Long(value)) => {
+                    // A long in i31's range is that i31; others are boxed.
+                    match i32::try_from(*value).ok().filter(|v| (-(1 << 30)..1 << 30).contains(v)) {
+                        Some(small) => function.instruction(&I32Const(small)).instruction(&RefI31),
+                        None => function
+                            .instruction(&I64Const(*value))
+                            .instruction(&StructNew(runtime_abi::LONG)),
+                    };
+                    function.instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
                 Operation::Literal(Literal::String(units)) => {
                     emit_utf16_literal(&mut function, data, units, inst.result.0 as u32 + offset, &ir.span)?;
                 }
@@ -1133,14 +1143,18 @@ fn emit_function(
                             }
                             function.instruction(&I32Or);
                         }
-                        Nominal::IsNumber | Nominal::IsString => {
-                            // The runtime predicates' own test, inline: never a mutable
-                            // public cell, and no closure call on core's hot paths (#286).
-                            // Arguments are already evaluated once in source order.
-                            let ty = if *operation == Nominal::IsNumber { runtime_abi::NUMBER } else { runtime_abi::STRING };
+                        // The runtime predicates' own tests, inline: never a mutable
+                        // public cell, and no closure call on core's hot paths (#286).
+                        // Arguments are already evaluated once in source order.
+                        Nominal::IsNumber => {
+                            for instruction in runtime_abi::number_test(arguments[0].0 as u32 + offset) {
+                                function.instruction(&instruction);
+                            }
+                        }
+                        Nominal::IsString => {
                             function
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
-                                .instruction(&RefTestNonNull(HeapType::Concrete(ty)));
+                                .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::STRING)));
                         }
                         Nominal::IsClosure => {
                             function

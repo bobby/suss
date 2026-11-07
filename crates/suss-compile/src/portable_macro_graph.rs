@@ -319,6 +319,10 @@ fn form_key_metered(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -> 
                     append(&mut key, &[2], charge)?;
                     append(&mut key, &value.to_bits().to_le_bytes(), charge)?;
                 }
+                Kind::Long(value) => {
+                    append(&mut key, &[17], charge)?;
+                    append(&mut key, &value.to_le_bytes(), charge)?;
+                }
                 Kind::Exact(value) => {
                     append(&mut key, &[16], charge)?;
                     write_text(&mut key, &value.text, charge)?;
@@ -737,6 +741,7 @@ impl<'a> AnalysisGraph<'a> {
             Literal::Nil => Kind::Nil,
             Literal::Bool(value) => Kind::Bool(*value),
             Literal::Number(value) => Kind::Number(*value),
+            Literal::Long(value) => Kind::Long(*value),
             Literal::String(value) => {
                 self.charge(value.len())?;
                 Kind::String(value.clone())
@@ -768,7 +773,7 @@ impl<'a> AnalysisGraph<'a> {
         self.scalar(Literal::String(value.encode_utf16().collect()))
     }
     fn number(&mut self, value: usize) -> Result<Value> {
-        self.scalar(Literal::Number(value as f64))
+        self.scalar(Literal::Long(value as i64))
     }
     fn flag(&mut self, value: bool) -> Result<Value> {
         self.scalar(Literal::Bool(value))
@@ -943,6 +948,7 @@ impl<'a> AnalysisGraph<'a> {
                             Kind::Nil => Kind::Nil,
                             Kind::Bool(v) => Kind::Bool(*v),
                             Kind::Number(v) => Kind::Number(*v),
+                            Kind::Long(v) => Kind::Long(*v),
                             Kind::Exact(v) => Kind::Exact(v.clone()),
                             Kind::String(v) => Kind::String(v.clone()),
                             Kind::Symbol(v) => Kind::Symbol(v.clone()),
@@ -1058,7 +1064,7 @@ impl<'a> AnalysisGraph<'a> {
                 continue;
             }
             let form = input.form();
-            if matches!(&form.kind, Kind::Nil | Kind::Bool(_) | Kind::Number(_) | Kind::String(_)) {
+            if matches!(&form.kind, Kind::Nil | Kind::Bool(_) | Kind::Number(_) | Kind::Long(_) | Kind::String(_)) {
                 if !form.metadata.is_empty() {
                     return Err(SessionError::Host(wasmtime::Error::msg("Metadata requires a symbol or collection")));
                 }
@@ -1067,6 +1073,7 @@ impl<'a> AnalysisGraph<'a> {
                     Kind::Nil => Literal::Nil,
                     Kind::Bool(v) => Literal::Bool(v),
                     Kind::Number(v) => Literal::Number(v),
+                    Kind::Long(v) => Literal::Long(v),
                     Kind::String(v) => Literal::String(v),
                     _ => unreachable!("scalar kind checked before ownership copy"),
                 };
@@ -2424,7 +2431,7 @@ impl<'a> AnalysisGraph<'a> {
         if source.form.metadata.is_empty()
             && matches!(
                 &source.form.kind,
-                Kind::Nil | Kind::Bool(_) | Kind::Number(_) | Kind::String(_) | Kind::Keyword(_)
+                Kind::Nil | Kind::Bool(_) | Kind::Number(_) | Kind::Long(_) | Kind::String(_) | Kind::Keyword(_)
             )
         {
             field_push!(self, fields; ("op", self.keyword("const")?));
