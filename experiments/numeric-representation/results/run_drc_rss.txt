@@ -1,0 +1,11 @@
+wasmtime 49.0.1 collector=drc n=20000000 reps=5
+d_i64_plain            0.270 ns/iter  (best of 5, 0.005s)  peakRSS 15 MiB
+d_i64_checked          2.093 ns/iter  (best of 5, 0.042s)  peakRSS 15 MiB
+a_f64box             113.411 ns/iter  (best of 5, 2.268s)  peakRSS 15 MiB
+b_i64box             111.911 ns/iter  (best of 5, 2.238s)  peakRSS 15 MiB
+c_i31                  2.070 ns/iter  (best of 5, 0.041s)  peakRSS 15 MiB
+c_i31_boxedrange     115.279 ns/iter  (best of 5, 2.306s)  peakRSS 15 MiB
+e_call_f64only       113.352 ns/iter  (best of 5, 2.267s)  peakRSS 15 MiB
+e_poly_i31             2.629 ns/iter  (best of 5, 0.053s)  peakRSS 15 MiB
+e_poly_i64box        117.938 ns/iter  (best of 5, 2.359s)  peakRSS 15 MiB
+e_poly_f64box        116.775 ns/iter  (best of 5, 2.336s)  peakRSS 15 MiB

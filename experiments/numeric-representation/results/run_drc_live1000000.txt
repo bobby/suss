@@ -1,0 +1,13 @@
+wasmtime 49.0.1 collector=drc n=2000000 reps=3 live=1000000
+d_i64_plain            0.321 ns/iter  (best of 3, 0.001s)  peakRSS 49 MiB
+d_i64_checked          2.203 ns/iter  (best of 3, 0.004s)  peakRSS 49 MiB
+a_f64box              21.607 ns/iter  (best of 3, 0.043s)  peakRSS 164 MiB
+b_i64box              21.448 ns/iter  (best of 3, 0.043s)  peakRSS 164 MiB
+c_i31                  2.347 ns/iter  (best of 3, 0.005s)  peakRSS 164 MiB
+c_i31_tagged           2.360 ns/iter  (best of 3, 0.005s)  peakRSS 164 MiB
+c_i31_boxedrange      28.447 ns/iter  (best of 3, 0.057s)  peakRSS 164 MiB
+e_call_f64only        24.640 ns/iter  (best of 3, 0.049s)  peakRSS 164 MiB
+e_poly_i31             2.790 ns/iter  (best of 3, 0.006s)  peakRSS 164 MiB
+e_poly_i64box         30.201 ns/iter  (best of 3, 0.060s)  peakRSS 164 MiB
+e_poly_f64box         30.500 ns/iter  (best of 3, 0.061s)  peakRSS 164 MiB
+chunks of 100000 a_f64box: median 2260 us, p99 311869 us, max 311869 us (20 chunks)

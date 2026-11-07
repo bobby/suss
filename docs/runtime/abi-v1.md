@@ -32,7 +32,8 @@ layout, not exported type-index identifiers. The layouts are:
 | Dynamic frame | Parent and binding entries |
 
 Value is eqref. Nil/false/true use i31 sentinels 0/2/4; ordinary integers do not
-use i31 tags. GC roots the runtime's built-in error descriptor once per instance.
+use i31 tags. [ADR-0003](../adr/0003-clojure-numeric-tower.md) proposes Clojure's
+numeric types, with small longs as odd i31 values. GC roots the runtime's built-in error descriptor once per instance.
 The descriptor/protocol/object/frame layouts are established, but their complete
 language machinery remains M2-04/M3 work.
 

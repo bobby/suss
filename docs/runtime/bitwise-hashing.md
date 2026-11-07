@@ -1,5 +1,8 @@
 # Bitwise dependencies for retained collection hashing
 
+> Describes the binary64 implementation that predates the 2026-11-06 numeric
+> decision: numbers follow Clojure ([ADR-0003](../adr/0003-clojure-numeric-tower.md)).
+
 Checked bitwise primitives and bounded macro expansion now execute the scalar
 hashing prerequisites. Complete collection hashing remains unfinished. The pinned
 List/Cons hash path requires ordered hashing and Murmur operations before the

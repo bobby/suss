@@ -108,7 +108,8 @@ them against `*ns*`, and the compiler against the current namespace (#30).
   class with a matching constructor. An unregistered name fails with "No
   record type for tag ...".
 - **Data:** characters are one-unit strings and numbers are binary64, so
-  ratios, `N` and `M` fail. Duplicate keys are found by Suss's `=`, so
+  ratios, `N` and `M` fail; Clojure's numeric types are planned
+  ([ADR-0003](../adr/0003-clojure-numeric-tower.md)). Duplicate keys are found by Suss's `=`, so
   `#{1 1.0}` is a duplicate.
 - **Errors:** errors are `ex-info` values with reader data, not
   `ReaderException`s, and a non-string argument fails with "read-string

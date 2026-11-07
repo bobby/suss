@@ -1,0 +1,11 @@
+wasmtime 49.0.1 collector=auto n=50000000 reps=5
+d_i64_plain            0.270 ns/iter  (best of 5, 0.013s)
+d_i64_checked          1.243 ns/iter  (best of 5, 0.062s)
+a_f64box               4.056 ns/iter  (best of 5, 0.203s)
+b_i64box               3.272 ns/iter  (best of 5, 0.164s)
+c_i31                  1.889 ns/iter  (best of 5, 0.094s)
+c_i31_boxedrange       8.073 ns/iter  (best of 5, 0.404s)
+e_call_f64only         5.093 ns/iter  (best of 5, 0.255s)
+e_poly_i31             2.655 ns/iter  (best of 5, 0.133s)
+e_poly_i64box         11.684 ns/iter  (best of 5, 0.584s)
+e_poly_f64box         10.479 ns/iter  (best of 5, 0.524s)

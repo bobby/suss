@@ -1,0 +1,11 @@
+wasmtime 49.0.1 collector=copying n=20000000 reps=5
+d_i64_plain            0.304 ns/iter  (best of 5, 0.006s)  peakRSS 15 MiB
+d_i64_checked          1.296 ns/iter  (best of 5, 0.026s)  peakRSS 15 MiB
+a_f64box               3.761 ns/iter  (best of 5, 0.075s)  peakRSS 15 MiB
+b_i64box               3.131 ns/iter  (best of 5, 0.063s)  peakRSS 15 MiB
+c_i31                  1.842 ns/iter  (best of 5, 0.037s)  peakRSS 15 MiB
+c_i31_boxedrange       7.835 ns/iter  (best of 5, 0.157s)  peakRSS 15 MiB
+e_call_f64only         4.913 ns/iter  (best of 5, 0.098s)  peakRSS 15 MiB
+e_poly_i31             2.609 ns/iter  (best of 5, 0.052s)  peakRSS 15 MiB
+e_poly_i64box         11.587 ns/iter  (best of 5, 0.232s)  peakRSS 15 MiB
+e_poly_f64box         10.383 ns/iter  (best of 5, 0.208s)  peakRSS 15 MiB

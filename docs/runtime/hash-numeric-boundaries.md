@@ -1,5 +1,8 @@
 # Numeric boundaries for retained public hashing
 
+> Describes the binary64 implementation that predates the 2026-11-06 numeric
+> decision: numbers follow Clojure ([ADR-0003](../adr/0003-clojure-numeric-tower.md)).
+
 Pinned core.cljs1054–1090 dispatches public hash through IHash, finite numeric
 values, Number.isSafeInteger, Math.floor and JavaScript remainder before the
 existing hash-double/string algorithms. Collection hashing at1406/1420 calls that

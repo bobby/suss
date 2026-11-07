@@ -1,8 +1,9 @@
 # Suss
 
 Suss is an experimental Clojure dialect compiling to WebAssembly, named after
-Julie and Gerald Jay Sussman. It targets portable **ClojureScript**
-semantics, WASI 0.3.1 commands and WIT libraries, and browser ES modules.
+Julie and Gerald Jay Sussman. It targets **Clojure** semantics, porting
+ClojureScript's portable core, for WASI 0.3.1 commands, WIT libraries and browser
+ES modules.
 
 The current compiler is a prototype. It does not yet implement that target:
 WIT support is partial, the persistent compiled REPL is incomplete, and the core library has
@@ -23,8 +24,8 @@ python3 scripts/cljs_inventory.py --check
 ```
 
 The native CLI embeds Wasmtime. External `wasmtime` and `wasm-tools` are useful
-for artifact inspection. A JVM is not required to build or run Suss. The planned
-ClojureScript differential oracle may use Java and Node during development.
+for artifact inspection. A JVM is not required to build or run Suss. Development-only
+oracles may use Java (JVM Clojure and the ClojureScript compiler) and Node.
 
 The core compiler and Rust source use the repository license. The ClojureScript
 reference and any future imported forms retain their upstream EPL notices.

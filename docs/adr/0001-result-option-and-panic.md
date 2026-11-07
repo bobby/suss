@@ -5,8 +5,9 @@ Date: 2026-09-29.
 
 ## Context
 
-The [accepted design](../design/suss-0.3.1.md) targets portable ClojureScript
-semantics, including `nil`, truthiness, and language exceptions. Its WIT boundary
+The [accepted design](../design/suss-0.3.1.md) targets Clojure semantics,
+including `nil`, truthiness and language exceptions, porting ClojureScript's
+portable core. Its WIT boundary
 maps results and options to tagged vectors. The [roadmap](../../ROADMAP.md) plan,
 [GitHub milestones and issues](https://github.com/bobby/suss/milestones) (status and
 evidence), and the [compatibility inventory](../compatibility/README.md) remain the

@@ -1,0 +1,11 @@
+wasmtime 49.0.1 collector=null n=2000000 reps=3
+d_i64_plain            0.296 ns/iter  (best of 3, 0.001s)  peakRSS 15 MiB
+d_i64_checked          1.088 ns/iter  (best of 3, 0.002s)  peakRSS 15 MiB
+a_f64box               3.952 ns/iter  (best of 3, 0.008s)  peakRSS 107 MiB
+b_i64box               6.210 ns/iter  (best of 3, 0.012s)  peakRSS 198 MiB
+c_i31                  1.862 ns/iter  (best of 3, 0.004s)  peakRSS 198 MiB
+c_i31_boxedrange      11.064 ns/iter  (best of 3, 0.022s)  peakRSS 290 MiB
+e_call_f64only         8.783 ns/iter  (best of 3, 0.018s)  peakRSS 381 MiB
+e_poly_i31             3.068 ns/iter  (best of 3, 0.006s)  peakRSS 381 MiB
+e_poly_i64box         16.100 ns/iter  (best of 3, 0.032s)  peakRSS 473 MiB
+e_poly_f64box         14.588 ns/iter  (best of 3, 0.029s)  peakRSS 564 MiB
