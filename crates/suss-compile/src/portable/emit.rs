@@ -153,7 +153,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert("arity-error");
                         if let Some(factory) = &body.rest_class {
                             globals.insert(factory.clone());
-                            names.extend(["binding-get", "invoke", "source-array-new", "number-box", "constructor-descriptor", "source-constructor-new"]);
+                            names.extend(["binding-get", "invoke", "source-array-new", "constructor-descriptor", "source-constructor-new"]);
                         }
                     }
                     Operation::MakeClosure { .. } => {
@@ -426,7 +426,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "binding-get" | "binding-bound" | "number-negate" | "value-negate"
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
-            | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit" => {
+            | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit"
+            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" => {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
@@ -690,8 +691,9 @@ fn emit_dispatcher(
             .instruction(&Call(import("source-constructor-new")))
             .instruction(&LocalGet(4))
             .instruction(&Call(import("source-array-new")))
-            .instruction(&F64Const(0.0.into()))
-            .instruction(&Call(import("number-box")))
+            // The rest seq starts at index 0, a long.
+            .instruction(&I32Const(0))
+            .instruction(&RefI31)
             .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, sentinels))
             .instruction(&ArrayNewFixed {
                 array_type_index: runtime_abi::ARGS,

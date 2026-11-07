@@ -465,3 +465,157 @@ pub(super) fn string(b: &mut Builder) {
         &code,
     );
 }
+
+/// Clojure's `quot`, `rem`, `abs`, `unchecked-*` and the `long?` and
+/// `double?` tests, on operands core has already checked are numbers.
+pub(super) fn functions(b: &mut Builder) {
+    use Instruction::*;
+    let boxed = b.names["long-box"];
+    let unbox = b.names["long-unbox"];
+    let number = b.names["number-unbox"];
+    let locals = [(3, ValType::I64), (3, ValType::F64)];
+    // Longs are locals 2 and 3; doubles 5 and 6.
+    let operands = |b: &Builder| {
+        let mut code = both_longs(b).to_vec();
+        code.extend([
+            If(BlockType::Empty),
+            LocalGet(0),
+            Call(unbox),
+            LocalSet(2),
+            LocalGet(1),
+            Call(unbox),
+            LocalSet(3),
+        ]);
+        code
+    };
+    let doubles = vec![
+        LocalGet(0),
+        Call(number),
+        LocalSet(5),
+        LocalGet(1),
+        Call(number),
+        LocalSet(6),
+    ];
+    let zero = |code: &mut Vec<Instruction<'static>>, test: Vec<Instruction<'static>>| {
+        code.extend(test);
+        code.push(If(BlockType::Empty));
+        code.extend(throw("Divide by zero"));
+        code.push(End);
+    };
+    // quot truncates. Long MIN / -1 wraps to MIN, as in Clojure, rather
+    // than trapping; a double quotient is truncated toward zero.
+    let mut code = operands(b);
+    zero(&mut code, vec![LocalGet(3), I64Eqz]);
+    code.extend([
+        LocalGet(3),
+        I64Const(-1),
+        I64Eq,
+        If(BlockType::Result(ValType::I64)),
+        I64Const(0),
+        LocalGet(2),
+        I64Sub,
+        Else,
+        LocalGet(2),
+        LocalGet(3),
+        I64DivS,
+        End,
+        Call(boxed),
+        Return,
+        End,
+    ]);
+    code.extend(doubles.clone());
+    zero(&mut code, vec![LocalGet(6), F64Const(0.0.into()), F64Eq]);
+    code.extend([LocalGet(5), LocalGet(6), F64Div, F64Trunc, StructNew(NUMBER)]);
+    b.function_with_locals("number-quot", &[VALUE, VALUE], &[VALUE], &locals, &code);
+    // rem has the dividend's sign; wasm's rem_s doesn't trap on MIN % -1.
+    let mut code = operands(b);
+    zero(&mut code, vec![LocalGet(3), I64Eqz]);
+    code.extend([LocalGet(2), LocalGet(3), I64RemS, Call(boxed), Return, End]);
+    code.extend(doubles);
+    zero(&mut code, vec![LocalGet(6), F64Const(0.0.into()), F64Eq]);
+    // Clojure: n - trunc(n / d) * d.
+    code.extend([
+        LocalGet(5),
+        LocalGet(5),
+        LocalGet(6),
+        F64Div,
+        F64Trunc,
+        LocalGet(6),
+        F64Mul,
+        F64Sub,
+        StructNew(NUMBER),
+    ]);
+    b.function_with_locals("number-rem", &[VALUE, VALUE], &[VALUE], &locals, &code);
+    // abs of Long/MIN_VALUE is itself, as in Clojure.
+    let code = vec![
+        LocalGet(0),
+        Call(b.names["long-test"]),
+        If(BlockType::Result(VALUE)),
+        LocalGet(0),
+        Call(unbox),
+        LocalTee(1),
+        I64Const(0),
+        I64LtS,
+        If(BlockType::Result(ValType::I64)),
+        I64Const(0),
+        LocalGet(1),
+        I64Sub,
+        Else,
+        LocalGet(1),
+        End,
+        Call(boxed),
+        Else,
+        LocalGet(0),
+        Call(number),
+        F64Abs,
+        StructNew(NUMBER),
+        End,
+    ];
+    b.function_with_locals("number-abs", &[VALUE], &[VALUE], &[(1, ValType::I64)], &code);
+    // unchecked-* wrap longs and are ordinary double arithmetic otherwise.
+    for (name, exact, floating) in [
+        ("add", I64Add, F64Add),
+        ("subtract", I64Sub, F64Sub),
+        ("multiply", I64Mul, F64Mul),
+    ] {
+        let mut code = operands(b);
+        code.extend([LocalGet(2), LocalGet(3), exact, Call(boxed), Return, End]);
+        code.extend([
+            LocalGet(0),
+            Call(number),
+            LocalGet(1),
+            Call(number),
+            floating,
+            StructNew(NUMBER),
+        ]);
+        b.function_with_locals(
+            &format!("number-unchecked-{name}"),
+            &[VALUE, VALUE],
+            &[VALUE],
+            &locals,
+            &code,
+        );
+    }
+    let code = vec![
+        LocalGet(0),
+        Call(b.names["long-test"]),
+        If(BlockType::Result(VALUE)),
+        I64Const(0),
+        LocalGet(0),
+        Call(unbox),
+        I64Sub,
+        Call(boxed),
+        Else,
+        LocalGet(0),
+        Call(number),
+        F64Neg,
+        StructNew(NUMBER),
+        End,
+    ];
+    b.function("number-unchecked-negate", &[VALUE], &[VALUE], &code);
+    for (name, test) in [("long?", "long-test"), ("double?", "double-test")] {
+        let mut code = vec![LocalGet(0), Call(b.names[test])];
+        code.extend(super::boolean());
+        b.function(&format!("number-{name}"), &[VALUE], &[VALUE], &code);
+    }
+}

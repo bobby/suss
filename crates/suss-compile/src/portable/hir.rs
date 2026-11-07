@@ -252,6 +252,17 @@ pub enum Bitwise {
     SafeIntegerRemainder,
     F64Remainder,
     IdentityUid,
+    /// Private exact numeric operations behind core's `quot`, `rem`, `abs`,
+    /// `unchecked-*`, `integer?` and `double?` (#335).
+    Quot,
+    Rem,
+    Abs,
+    UncheckedAdd,
+    UncheckedSubtract,
+    UncheckedMultiply,
+    UncheckedNegate,
+    LongTest,
+    DoubleTest,
 }
 impl Bitwise {
     pub(crate) fn from_name(name: &str) -> Option<Self> {
@@ -300,6 +311,15 @@ impl Bitwise {
             Self::SafeIntegerRemainder => "primitive-safe-integer-remainder",
             Self::F64Remainder => "primitive-f64-remainder",
             Self::IdentityUid => "identity-uid",
+            Self::Quot => "number-quot",
+            Self::Rem => "number-rem",
+            Self::Abs => "number-abs",
+            Self::UncheckedAdd => "number-unchecked-add",
+            Self::UncheckedSubtract => "number-unchecked-subtract",
+            Self::UncheckedMultiply => "number-unchecked-multiply",
+            Self::UncheckedNegate => "number-unchecked-negate",
+            Self::LongTest => "number-long?",
+            Self::DoubleTest => "number-double?",
         }
     }
     pub(crate) fn arity(self) -> usize {
@@ -314,7 +334,11 @@ impl Bitwise {
             | Self::F64Finite
             | Self::F64SafeInteger
             | Self::F64TimeClip
-            | Self::IdentityUid => 1,
+            | Self::IdentityUid
+            | Self::Abs
+            | Self::UncheckedNegate
+            | Self::LongTest
+            | Self::DoubleTest => 1,
             _ => 2,
         }
     }
@@ -322,7 +346,10 @@ impl Bitwise {
         matches!(self, Self::And | Self::Or | Self::Xor | Self::AndNot)
     }
     pub(crate) fn result(self) -> Type {
-        if matches!(self, Self::Test | Self::F64Finite | Self::F64SafeInteger) {
+        if matches!(
+            self,
+            Self::Test | Self::F64Finite | Self::F64SafeInteger | Self::LongTest | Self::DoubleTest
+        ) {
             Type::Bool
         } else {
             Type::Number
@@ -2495,6 +2522,15 @@ impl Analyzer<'_> {
                 "safe-integer-remainder" => Some(Bitwise::SafeIntegerRemainder),
                 "f64-remainder" => Some(Bitwise::F64Remainder),
                 "identity-uid" => Some(Bitwise::IdentityUid),
+                "quot" => Some(Bitwise::Quot),
+                "rem" => Some(Bitwise::Rem),
+                "abs" => Some(Bitwise::Abs),
+                "unchecked-add" => Some(Bitwise::UncheckedAdd),
+                "unchecked-subtract" => Some(Bitwise::UncheckedSubtract),
+                "unchecked-multiply" => Some(Bitwise::UncheckedMultiply),
+                "unchecked-negate" => Some(Bitwise::UncheckedNegate),
+                "long?" => Some(Bitwise::LongTest),
+                "double?" => Some(Bitwise::DoubleTest),
                 _ => None,
             };
             if let Some(operation) = operation {

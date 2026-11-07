@@ -129,23 +129,27 @@ pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Ve
         );
         helpers.push((name, helper));
     }
-    // Strict JS primitive identity already has checked Number/UTF-16/reference
-    // behavior. Use its private factory rather than mutable public predicate cells.
-    let helper = b.function(
-        "comparison-strict-equal",
-        &[VALUE, VALUE],
-        &[VALUE],
-        &[
-            Call(b.names["predicate-identical"]),
-            LocalGet(0),
-            LocalGet(1),
-            ArrayNewFixed {
-                array_type_index: ARGS,
-                array_size: 2,
-            },
-            Call(b.names["invoke"]),
-        ],
-    );
+    // Strict JS primitive identity: numbers by value, a long equal to a double
+    // too, as core's pinned `===` uses expect (Clojure's identical? keeps
+    // them distinct). Otherwise use identical?'s private factory rather than
+    // mutable public predicate cells.
+    let mut strict = longs::number_test(0).to_vec();
+    strict.extend(longs::number_test(1));
+    strict.extend([I32And, If(BlockType::Empty)]);
+    strict.extend(longs::relation(b, I64Eq, F64Eq));
+    boolean(&mut strict);
+    strict.extend([Return, End]);
+    strict.extend([
+        Call(b.names["predicate-identical"]),
+        LocalGet(0),
+        LocalGet(1),
+        ArrayNewFixed {
+            array_type_index: ARGS,
+            array_size: 2,
+        },
+        Call(b.names["invoke"]),
+    ]);
+    let helper = b.function("comparison-strict-equal", &[VALUE, VALUE], &[VALUE], &strict);
     helpers.push(("strict-equal", helper));
     let mut declared = Vec::new();
     // First-class values are public Clojure functions: check numeric operands

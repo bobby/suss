@@ -3421,8 +3421,7 @@
   "quot[ient] of dividing numerator by denominator."
   (fn [n d]
   (if (and (suss.bootstrap/number? n) (suss.bootstrap/number? d))
-    (let [rem (js-mod n d)]
-      (fix (/ (- n rem) d)))
+    (suss.bootstrap/quot n d)
     (throw (suss.bootstrap/error "quot requires number operands")))))
 
 (def ^:private array-copy-downward (fn
@@ -5245,12 +5244,13 @@
   "Modulus of num and div. Truncates toward negative infinity."
   (fn [n d]
     (if (and (suss.bootstrap/number? n) (suss.bootstrap/number? d))
-      (suss.bootstrap/f64-remainder (+ (suss.bootstrap/f64-remainder n d) d) d)
+      (let [m (suss.bootstrap/rem n d)]
+        (if (or (zero? m) (= (pos? n) (pos? d))) m (+ m d)))
       (throw (suss.bootstrap/error "mod requires number operands")))))
 
 (def ^{:doc "Returns the absolute value of a."
    :added "1.11.10"} ^number abs
-(fn [a] (let [n (suss.bootstrap/f64-coerce a)] (if (cljs.core/== n 0) 0 (if (cljs.core/< n 0) (cljs.core/- n) n)))))
+(fn [a] (if (suss.bootstrap/number? a) (suss.bootstrap/abs a) (throw (suss.bootstrap/error "abs requires number operands")))))
 
 (def NaN?
 "Returns true if num is NaN, else false"
@@ -5258,8 +5258,66 @@
   (let [n (suss.bootstrap/f64-coerce val)] (not (cljs.core/== n n)))))
 
 (def integer?
-"Returns true if n is a JavaScript number with no decimal part."
-(fn [n] (and (number? n) (suss.bootstrap/f64-finite n) (cljs.core/== n (suss.bootstrap/f64-floor n)) (cljs.core/< n 1e21) (cljs.core/> n -1e21))))
+"Returns true if n is an integer."
+(fn [n] (suss.bootstrap/long? n)))
+
+(def int?
+"Return true if x is a fixed precision integer"
+(fn [x] (suss.bootstrap/long? x)))
+
+(def double?
+"Return true if x is a Double"
+(fn [x] (suss.bootstrap/double? x)))
+
+(def float?
+"Returns true if n is a floating point number"
+(fn [n] (suss.bootstrap/double? n)))
+
+(def unchecked-add
+"Returns the sum of x and y, both long. Note - uses a primitive operator subject to overflow."
+(fn [x y]
+  (if (and (suss.bootstrap/number? x) (suss.bootstrap/number? y))
+    (suss.bootstrap/unchecked-add x y)
+    (throw (suss.bootstrap/error "unchecked-add requires number operands")))))
+
+(def unchecked-subtract
+"Returns the difference of x and y, both long. Note - uses a primitive operator subject to overflow."
+(fn [x y]
+  (if (and (suss.bootstrap/number? x) (suss.bootstrap/number? y))
+    (suss.bootstrap/unchecked-subtract x y)
+    (throw (suss.bootstrap/error "unchecked-subtract requires number operands")))))
+
+(def unchecked-multiply
+"Returns the product of x and y, both long. Note - uses a primitive operator subject to overflow."
+(fn [x y]
+  (if (and (suss.bootstrap/number? x) (suss.bootstrap/number? y))
+    (suss.bootstrap/unchecked-multiply x y)
+    (throw (suss.bootstrap/error "unchecked-multiply requires number operands")))))
+
+(def unchecked-negate
+"Returns the negation of x, a long. Note - uses a primitive operator subject to overflow."
+(fn [x]
+  (if (suss.bootstrap/number? x)
+    (suss.bootstrap/unchecked-negate x)
+    (throw (suss.bootstrap/error "unchecked-negate requires number operands")))))
+
+(def unchecked-inc
+"Returns a number one greater than x, a long. Note - uses a primitive operator subject to overflow."
+(fn [x] (unchecked-add x 1)))
+
+(def unchecked-dec
+"Returns a number one less than x, a long. Note - uses a primitive operator subject to overflow."
+(fn [x] (unchecked-subtract x 1)))
+
+;; The -int variants wrap to 32 bits, as Clojure's int operations do.
+(def unchecked-add-int (fn [x y] (int (unchecked-add x y))))
+(def unchecked-subtract-int (fn [x y] (int (unchecked-subtract x y))))
+(def unchecked-multiply-int (fn [x y] (int (unchecked-multiply x y))))
+(def unchecked-negate-int (fn [x] (int (unchecked-negate x))))
+(def unchecked-inc-int (fn [x] (int (unchecked-inc x))))
+(def unchecked-dec-int (fn [x] (int (unchecked-dec x))))
+(def unchecked-divide-int (fn [x y] (int (quot x y))))
+(def unchecked-remainder-int (fn [x y] (int (suss.bootstrap/rem x y))))
 
 (def ^number max
 "Returns the greatest of the nums."
@@ -5292,7 +5350,7 @@
 (def even?
 "Returns true if n is even, throws an exception if n is not an integer"
 (fn [n] (if (integer? n)
-         (zero? (bit-and n 1))
+         (zero? (suss.bootstrap/rem n 2))
          (throw (suss.bootstrap/error (str_ "Argument must be an integer: " n))))))
 
 (def odd?
@@ -8370,8 +8428,7 @@ reduces them without incurring seq initialization"
 (def ^{:doc "remainder of dividing numerator by denominator." :arglists '([n d])} rem
   (fn [n d]
   (if (and (suss.bootstrap/number? n) (suss.bootstrap/number? d))
-    (let [q (quot n d)]
-      (- n (* d q)))
+    (suss.bootstrap/rem n d)
     (throw (suss.bootstrap/error "rem requires number operands")))))
 
 (def ^{:doc "Returns a lazy seq of every nth item in coll.  Returns a stateful

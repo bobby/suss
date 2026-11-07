@@ -413,6 +413,7 @@
          "suss.bindings.macro:suss.core/doall"
          "suss.bindings.macro:suss.core/dominates"
          "suss.bindings.macro:suss.core/dorun"
+         "suss.bindings.macro:suss.core/double?"
          "suss.bindings.macro:suss.core/drop"
          "suss.bindings.macro:suss.core/drop-while"
          "suss.bindings.macro:suss.core/edit-and-set"
@@ -438,6 +439,7 @@
          "suss.bindings.macro:suss.core/first-array-for-longvec"
          "suss.bindings.macro:suss.core/fix"
          "suss.bindings.macro:suss.core/flatten"
+         "suss.bindings.macro:suss.core/float?"
          "suss.bindings.macro:suss.core/fn->comparator"
          "suss.bindings.macro:suss.core/fn?"
          "suss.bindings.macro:suss.core/fnil"
@@ -471,6 +473,7 @@
          "suss.bindings.macro:suss.core/inode-kv-reduce"
          "suss.bindings.macro:suss.core/int-array"
          "suss.bindings.macro:suss.core/int-rotate-left"
+         "suss.bindings.macro:suss.core/int?"
          "suss.bindings.macro:suss.core/integer?"
          "suss.bindings.macro:suss.core/interleave"
          "suss.bindings.macro:suss.core/intern-namespace"
@@ -823,8 +826,22 @@
          "suss.bindings.macro:suss.core/tv-push-tail"
          "suss.bindings.macro:suss.core/type"
          "suss.bindings.macro:suss.core/type->str"
+         "suss.bindings.macro:suss.core/unchecked-add"
+         "suss.bindings.macro:suss.core/unchecked-add-int"
          "suss.bindings.macro:suss.core/unchecked-array-for"
+         "suss.bindings.macro:suss.core/unchecked-dec"
+         "suss.bindings.macro:suss.core/unchecked-dec-int"
+         "suss.bindings.macro:suss.core/unchecked-divide-int"
          "suss.bindings.macro:suss.core/unchecked-editable-array-for"
+         "suss.bindings.macro:suss.core/unchecked-inc"
+         "suss.bindings.macro:suss.core/unchecked-inc-int"
+         "suss.bindings.macro:suss.core/unchecked-multiply"
+         "suss.bindings.macro:suss.core/unchecked-multiply-int"
+         "suss.bindings.macro:suss.core/unchecked-negate"
+         "suss.bindings.macro:suss.core/unchecked-negate-int"
+         "suss.bindings.macro:suss.core/unchecked-remainder-int"
+         "suss.bindings.macro:suss.core/unchecked-subtract"
+         "suss.bindings.macro:suss.core/unchecked-subtract-int"
          "suss.bindings.macro:suss.core/underive"
          "suss.bindings.macro:suss.core/unreduced"
          "suss.bindings.macro:suss.core/untyped-printable?"
@@ -1282,6 +1299,7 @@
          "suss.bindings.macro:suss.internal.core-link/doall"
          "suss.bindings.macro:suss.internal.core-link/dominates"
          "suss.bindings.macro:suss.internal.core-link/dorun"
+         "suss.bindings.macro:suss.internal.core-link/double?"
          "suss.bindings.macro:suss.internal.core-link/drop"
          "suss.bindings.macro:suss.internal.core-link/drop-while"
          "suss.bindings.macro:suss.internal.core-link/edit-and-set"
@@ -1307,6 +1325,7 @@
          "suss.bindings.macro:suss.internal.core-link/first-array-for-longvec"
          "suss.bindings.macro:suss.internal.core-link/fix"
          "suss.bindings.macro:suss.internal.core-link/flatten"
+         "suss.bindings.macro:suss.internal.core-link/float?"
          "suss.bindings.macro:suss.internal.core-link/fn->comparator"
          "suss.bindings.macro:suss.internal.core-link/fn?"
          "suss.bindings.macro:suss.internal.core-link/fnil"
@@ -1340,6 +1359,7 @@
          "suss.bindings.macro:suss.internal.core-link/inode-kv-reduce"
          "suss.bindings.macro:suss.internal.core-link/int-array"
          "suss.bindings.macro:suss.internal.core-link/int-rotate-left"
+         "suss.bindings.macro:suss.internal.core-link/int?"
          "suss.bindings.macro:suss.internal.core-link/integer?"
          "suss.bindings.macro:suss.internal.core-link/interleave"
          "suss.bindings.macro:suss.internal.core-link/intern-namespace"
@@ -1692,8 +1712,22 @@
          "suss.bindings.macro:suss.internal.core-link/tv-push-tail"
          "suss.bindings.macro:suss.internal.core-link/type"
          "suss.bindings.macro:suss.internal.core-link/type->str"
+         "suss.bindings.macro:suss.internal.core-link/unchecked-add"
+         "suss.bindings.macro:suss.internal.core-link/unchecked-add-int"
          "suss.bindings.macro:suss.internal.core-link/unchecked-array-for"
+         "suss.bindings.macro:suss.internal.core-link/unchecked-dec"
+         "suss.bindings.macro:suss.internal.core-link/unchecked-dec-int"
+         "suss.bindings.macro:suss.internal.core-link/unchecked-divide-int"
          "suss.bindings.macro:suss.internal.core-link/unchecked-editable-array-for"
+         "suss.bindings.macro:suss.internal.core-link/unchecked-inc"
+         "suss.bindings.macro:suss.internal.core-link/unchecked-inc-int"
+         "suss.bindings.macro:suss.internal.core-link/unchecked-multiply"
+         "suss.bindings.macro:suss.internal.core-link/unchecked-multiply-int"
+         "suss.bindings.macro:suss.internal.core-link/unchecked-negate"
+         "suss.bindings.macro:suss.internal.core-link/unchecked-negate-int"
+         "suss.bindings.macro:suss.internal.core-link/unchecked-remainder-int"
+         "suss.bindings.macro:suss.internal.core-link/unchecked-subtract"
+         "suss.bindings.macro:suss.internal.core-link/unchecked-subtract-int"
          "suss.bindings.macro:suss.internal.core-link/underive"
          "suss.bindings.macro:suss.internal.core-link/unreduced"
          "suss.bindings.macro:suss.internal.core-link/untyped-printable?"
@@ -1998,15 +2032,15 @@
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d666c7573682f31"
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d77726974652f32"
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
-         "suss.bindings.macro:suss.internal.reify/t-reify-3439-10885"],
+         "suss.bindings.macro:suss.internal.reify/t-reify-3507-10941"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "8c7c0a07c8cc96c1eac0d5cc43d75cb6e43cc8311dd5669b0fe5e16840048725",
+ :compiler-source-sha256 "69fbd455271d9dac98f9d1f423d4f049237a85d83fea5ab75dd77575409e61ea",
  :dependency-graph-sha256 "86b094ff9abbfac43389eb4c07f55afa6198c23fdd155c6b353bee477a1a2549",
  :flags [],
  :format-version 2,
  :phase "macro",
  :runtime-abi 3,
- :source-sha256 "9c15a160b372d0482ccb7484ad1f0fa3bf9dbc183e676230d80c1ff3a6b30fc1",
+ :source-sha256 "2b92d28237eff854966cfdf533497b6bc4aa4158321d4605369c7a57915f0b50",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "03b764488ab272ad6cc360f1d3889617e25a8971d9b5a619ef1db3f81491d35b",
+ :wasm-sha256 "64bd75095e6ca4401f2bbd5661900988005282be95381f8a2aa6fd5f7059bfba",
  :wasm-tools "0.258.0"}

@@ -489,6 +489,7 @@ fn build_module() -> Vec<u8> {
     longs::intrinsics(&mut b);
     longs::arithmetic(&mut b);
     longs::string(&mut b);
+    longs::functions(&mut b);
     b.function(
         "string-new",
         &[ValType::I32],
