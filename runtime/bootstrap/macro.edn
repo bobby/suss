@@ -654,12 +654,18 @@
          "suss.bindings.macro:suss.core/reader-conditional-form"
          "suss.bindings.macro:suss.core/reader-conditional?"
          "suss.bindings.macro:suss.core/reader-core-namespace"
+         "suss.bindings.macro:suss.core/reader-decimal?"
          "suss.bindings.macro:suss.core/reader-delimiter?"
          "suss.bindings.macro:suss.core/reader-deref-symbol"
          "suss.bindings.macro:suss.core/reader-digit"
+         "suss.bindings.macro:suss.core/reader-digits-end"
+         "suss.bindings.macro:suss.core/reader-digits-odd?"
+         "suss.bindings.macro:suss.core/reader-digits?"
          "suss.bindings.macro:suss.core/reader-dispatches"
          "suss.bindings.macro:suss.core/reader-duplicate"
          "suss.bindings.macro:suss.core/reader-escape"
+         "suss.bindings.macro:suss.core/reader-exact"
+         "suss.bindings.macro:suss.core/reader-exact-integer"
          "suss.bindings.macro:suss.core/reader-fail"
          "suss.bindings.macro:suss.core/reader-fn-symbol"
          "suss.bindings.macro:suss.core/reader-hash-map-symbol"
@@ -696,6 +702,7 @@
          "suss.bindings.macro:suss.core/reader-quote-symbol"
          "suss.bindings.macro:suss.core/reader-radix-number"
          "suss.bindings.macro:suss.core/reader-radix-unit"
+         "suss.bindings.macro:suss.core/reader-ratio"
          "suss.bindings.macro:suss.core/reader-read"
          "suss.bindings.macro:suss.core/reader-record"
          "suss.bindings.macro:suss.core/reader-required"
@@ -725,6 +732,7 @@
          "suss.bindings.macro:suss.core/reader-vec-symbol"
          "suss.bindings.macro:suss.core/reader-wide-space?"
          "suss.bindings.macro:suss.core/reader-with-meta-symbol"
+         "suss.bindings.macro:suss.core/reader-within-2-53?"
          "suss.bindings.macro:suss.core/realized?"
          "suss.bindings.macro:suss.core/record-readers"
          "suss.bindings.macro:suss.core/record?"
@@ -1515,12 +1523,18 @@
          "suss.bindings.macro:suss.internal.core-link/reader-conditional-form"
          "suss.bindings.macro:suss.internal.core-link/reader-conditional?"
          "suss.bindings.macro:suss.internal.core-link/reader-core-namespace"
+         "suss.bindings.macro:suss.internal.core-link/reader-decimal?"
          "suss.bindings.macro:suss.internal.core-link/reader-delimiter?"
          "suss.bindings.macro:suss.internal.core-link/reader-deref-symbol"
          "suss.bindings.macro:suss.internal.core-link/reader-digit"
+         "suss.bindings.macro:suss.internal.core-link/reader-digits-end"
+         "suss.bindings.macro:suss.internal.core-link/reader-digits-odd?"
+         "suss.bindings.macro:suss.internal.core-link/reader-digits?"
          "suss.bindings.macro:suss.internal.core-link/reader-dispatches"
          "suss.bindings.macro:suss.internal.core-link/reader-duplicate"
          "suss.bindings.macro:suss.internal.core-link/reader-escape"
+         "suss.bindings.macro:suss.internal.core-link/reader-exact"
+         "suss.bindings.macro:suss.internal.core-link/reader-exact-integer"
          "suss.bindings.macro:suss.internal.core-link/reader-fail"
          "suss.bindings.macro:suss.internal.core-link/reader-fn-symbol"
          "suss.bindings.macro:suss.internal.core-link/reader-hash-map-symbol"
@@ -1557,6 +1571,7 @@
          "suss.bindings.macro:suss.internal.core-link/reader-quote-symbol"
          "suss.bindings.macro:suss.internal.core-link/reader-radix-number"
          "suss.bindings.macro:suss.internal.core-link/reader-radix-unit"
+         "suss.bindings.macro:suss.internal.core-link/reader-ratio"
          "suss.bindings.macro:suss.internal.core-link/reader-read"
          "suss.bindings.macro:suss.internal.core-link/reader-record"
          "suss.bindings.macro:suss.internal.core-link/reader-required"
@@ -1586,6 +1601,7 @@
          "suss.bindings.macro:suss.internal.core-link/reader-vec-symbol"
          "suss.bindings.macro:suss.internal.core-link/reader-wide-space?"
          "suss.bindings.macro:suss.internal.core-link/reader-with-meta-symbol"
+         "suss.bindings.macro:suss.internal.core-link/reader-within-2-53?"
          "suss.bindings.macro:suss.internal.core-link/realized?"
          "suss.bindings.macro:suss.internal.core-link/record-readers"
          "suss.bindings.macro:suss.internal.core-link/record?"
@@ -1984,13 +2000,13 @@
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
          "suss.bindings.macro:suss.internal.reify/t-reify-3439-10885"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "3ed3a527ba9feb933c6fd95954128f04048aca92126903508aeaab6b44d5e666",
- :dependency-graph-sha256 "70bd7856112850db03f852ddc7e26df1686a46314236e0e8e272c2271e037646",
+ :compiler-source-sha256 "524dc3abc8fbc449a59944800173f8372896bd9e231f1772b3d3a50396e237a4",
+ :dependency-graph-sha256 "329fe94d7ddae4c4a0ff3150dc4c0a04a051698f6d95865da75d1bb918bcece5",
  :flags [],
  :format-version 2,
  :phase "macro",
  :runtime-abi 2,
- :source-sha256 "d43a805406beb971bf154f309f9444e1c94f81d060b6d5bd644eaeb903f7a0fa",
+ :source-sha256 "b6ca77dab0d9adb49f44f4bc86d65540d6d35b4ddb9167ae4534342ff7b81602",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "bc5f576e8c3c5642c09521d73200308ad36399c7911ba616a7b3815cc4fdb595",
+ :wasm-sha256 "1456bd962124f72e645aeded7a12476f978c5f61ab04a90989df6c50f94f162d",
  :wasm-tools "0.258.0"}

@@ -103,6 +103,10 @@ fn same_metered(
                 charge(meter, x.len().max(y.len()), &a.span)?;
                 x == y
             }
+            (Kind::Exact(x), Kind::Exact(y)) => {
+                charge(meter, x.text.len().max(y.text.len()), &a.span)?;
+                x.text == y.text
+            }
             (Kind::Symbol(x), Kind::Symbol(y)) => {
                 charge(
                     meter,
@@ -206,6 +210,7 @@ fn rebuild_form(node: &Form, children: Vec<Form>) -> Form {
         Kind::Nil => Kind::Nil,
         Kind::Bool(value) => Kind::Bool(*value),
         Kind::Number(value) => Kind::Number(*value),
+        Kind::Exact(value) => Kind::Exact(value.clone()),
         Kind::String(value) => Kind::String(value.clone()),
         Kind::Symbol(value) => Kind::Symbol(value.clone()),
         Kind::Keyword(value) => Kind::Keyword(value.clone()),

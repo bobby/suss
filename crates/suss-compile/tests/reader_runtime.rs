@@ -42,7 +42,7 @@ fn portable_reader_scalars_transfer_losslessly_into_shared_runtime() {
     let runtime = Instance::new(&mut store, &module, &[]).unwrap();
     let boxed = runtime.get_func(&mut store, "number-box").unwrap();
     for (source, expected) in [
-        ("9007199254740993", 9007199254740992.0f64),
+        ("9007199254740993.0", 9007199254740992.0f64),
         ("-0.0", -0.0),
         ("1e3", 1000.0),
         ("##Inf", f64::INFINITY),

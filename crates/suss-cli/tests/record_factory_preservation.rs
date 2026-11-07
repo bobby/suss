@@ -99,6 +99,7 @@ fn erase_spans(form: &mut Form) {
         Kind::Nil
         | Kind::Bool(_)
         | Kind::Number(_)
+        | Kind::Exact(_)
         | Kind::String(_)
         | Kind::Symbol(_)
         | Kind::Keyword(_)

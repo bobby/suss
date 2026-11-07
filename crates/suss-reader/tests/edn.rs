@@ -228,7 +228,7 @@ fn code_only_syntax_and_unknown_tags_fail_with_spans() {
         ("{:a #_ 1}", "Map requires an even number of forms", 0..9),
         ("{:a #queue [] :b}", "Map requires an even number of forms", 0..17),
         ("::a", "Auto-resolved keywords require namespace resolution", 0..3),
-        ("1/2", "Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers", 0..3),
+        ("1/2", "Unsupported numeric literal 1/2: ratios, BigInts, BigDecimals and integers beyond 2^53 need Clojure's numeric types (#335)", 0..3),
         ("\"\\ud800\"", "EDN strings must be valid Unicode", 0..8),
         ("[1 2", "Unclosed collection; expected ]", 0..4),
         ("^1 [x]", "Metadata must be a keyword, symbol, string or map", 1..2),
@@ -427,6 +427,20 @@ fn edn_conformance_with_the_compilers_reader() {
     for source in corpus("edn-malformed") {
         assert!(suss_reader::forms::read_forms(&source).is_ok(), "{source}");
         assert!(edn::read_all(&source, &Options::default()).is_err(), "{source}");
+    }
+    // Tooling data keeps an exact literal's text under a tag (#333).
+    let forms = suss_reader::forms::read_forms("[1/3]").unwrap();
+    assert_eq!(
+        edn::print(&edn::source::form_to_value(&forms[0]).unwrap()).unwrap(),
+        "[#suss/exact-number \"1/3\"]"
+    );
+    // EDN data has no value for an exact literal until #335 (#333).
+    for source in corpus("exact") {
+        let forms = suss_reader::forms::read_forms(&source).unwrap_or_else(|error| panic!("{source}: {error:?}"));
+        let [form] = forms.as_slice() else { panic!("{source}: one form") };
+        let suss_reader::forms::Kind::Exact(number) = &form.kind else { panic!("{source}: {:?}", form.kind) };
+        let error = edn::read_all(&source, &Options::default()).expect_err(&source);
+        assert_eq!((error.message, error.span), (number.unsupported_message(), Some(0..source.len())), "{source}");
     }
 }
 

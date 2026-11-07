@@ -12,6 +12,9 @@ use std::collections::{BTreeMap, BTreeSet};
 /// The tag of a string that is not valid Unicode, such as one holding a lone
 /// surrogate: its UTF-16 code units, `#suss/utf16 [55296]`.
 pub const UTF16_TAG: &str = "utf16";
+/// The tag of an exact numeric literal binary64 can't hold, by its text:
+/// `#suss/exact-number "1/3"` (#333).
+pub const EXACT_NUMBER_TAG: &str = "exact-number";
 
 fn keyword(name: &str) -> Value {
     Value::keyword(name)
@@ -25,6 +28,12 @@ pub fn form_to_value(form: &Form) -> Result<Value, Error> {
             Kind::Nil => Value::Nil,
             Kind::Bool(b) => Value::Bool(*b),
             Kind::Number(n) => Value::Number(*n),
+            // Tooling data has no exact numbers until #335: the literal's text
+            // under EXACT_NUMBER_TAG, as a lone surrogate is kept.
+            Kind::Exact(number) => Value::Tagged(
+                Symbol { namespace: Some("suss".into()), name: EXACT_NUMBER_TAG.into() },
+                Box::new(Value::String(number.text.clone())),
+            ),
             Kind::String(units) => string_value(units),
             Kind::Symbol(s) => Value::Symbol(s.clone()),
             Kind::Keyword(k) => Value::Keyword(k.clone()),

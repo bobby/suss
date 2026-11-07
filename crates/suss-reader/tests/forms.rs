@@ -158,9 +158,9 @@ fn utf16_literals_preserve_lone_surrogates_and_astral_units() {
 }
 
 #[test]
-fn ordinary_numbers_round_to_binary64_and_keep_float_zero_sign() {
+fn ordinary_numbers_read_as_binary64_and_keep_float_zero_sign() {
     let forms = read_forms(
-        "9007199254740993 -0.0 -0e0 -0 +0 1e3 1. 0x10 -0x10 010 2r101 ##Inf ##-Inf ##NaN",
+        "9007199254740992 -0.0 -0e0 -0 +0 1e3 1. 0x10 -0x10 010 2r101 ##Inf ##-Inf ##NaN",
     )
     .unwrap();
     let expected = [
@@ -186,9 +186,9 @@ fn ordinary_numbers_round_to_binary64_and_keep_float_zero_sign() {
     }
     assert!(matches!(forms[13].kind, Kind::Number(value) if value.is_nan()));
     for source in [
-        "1/3",
-        "100N",
-        "1.0M",
+        "1/0",
+        "1.5N",
+        "1.0eM",
         "08",
         "2r102",
         "99r1",
@@ -592,5 +592,85 @@ fn auto_resolved_keywords_await_namespace_resolution() {
     }
     for source in ["::", ":::a", "::a/", "::/"] {
         assert!(read_forms(source).is_err(), "{source}");
+    }
+}
+
+/// Clojure's numeric literals all read (#333). Those binary64 holds exactly
+/// are numbers; the others are exact literals with Clojure's values.
+#[test]
+fn every_clojure_numeric_literal_reads() {
+    use num_bigint::BigInt;
+    use suss_reader::forms::ExactValue;
+    let read = |source: &str| {
+        let forms = resolve_conditionals(read_forms(source).unwrap_or_else(|error| panic!("{source}: {error:?}")))
+            .unwrap_or_else(|error| panic!("{source}: {error:?}"));
+        assert_eq!(forms.len(), 1, "{source}");
+        forms.into_iter().next().unwrap().take_kind()
+    };
+    let int = |value: i128| BigInt::from(value);
+    for (source, value) in [
+        ("4/2", 2.0),
+        ("-6/3", -2.0),
+        ("007/7", 1.0),
+        ("017", 15.0),
+        ("0x1F", 31.0),
+        ("36rZ", 35.0),
+        ("9007199254740992", 9007199254740992.0),
+        ("-9007199254740992", -9007199254740992.0),
+        ("1.", 1.0),
+        ("1e400", f64::INFINITY),
+    ] {
+        assert_eq!(read(source), Kind::Number(value), "{source}");
+    }
+    assert!(matches!(read("-0/5"), Kind::Number(value) if value.to_bits() == 0), "integer zero is +0");
+    for (source, expected) in [
+        ("1/3", ExactValue::Ratio { numerator: int(1), denominator: int(3) }),
+        ("-2/6", ExactValue::Ratio { numerator: int(-1), denominator: int(3) }),
+        ("1N", ExactValue::Integer { value: int(1), big: true }),
+        ("0x1FN", ExactValue::Integer { value: int(31), big: true }),
+        ("017N", ExactValue::Integer { value: int(15), big: true }),
+        ("9007199254740993", ExactValue::Integer { value: int((1 << 53) + 1), big: false }),
+        ("-9223372036854775808", ExactValue::Integer { value: int(i64::MIN as i128), big: false }),
+        ("9223372036854775808", ExactValue::Integer { value: int(1 << 63), big: true }),
+        ("1M", ExactValue::Decimal { unscaled: int(1), scale: 0 }),
+        ("1.50M", ExactValue::Decimal { unscaled: int(150), scale: 2 }),
+        ("-1.5e3M", ExactValue::Decimal { unscaled: int(-15), scale: -2 }),
+        ("1E-2M", ExactValue::Decimal { unscaled: int(1), scale: 2 }),
+        ("017M", ExactValue::Decimal { unscaled: int(17), scale: 0 }),
+    ] {
+        let Kind::Exact(number) = read(source) else { panic!("{source}: not exact") };
+        assert_eq!((number.text.as_str(), number.value), (source, expected));
+    }
+    // A radix integer's trailing N or M is a digit, as in Clojure.
+    assert_eq!(read("36rN"), Kind::Number(23.0));
+    assert_eq!(read("36r1M"), Kind::Number(58.0));
+    // A term beyond the long range makes Clojure's result a BigInt.
+    let Kind::Exact(number) = read("36893488147419103232/8") else { panic!("not exact") };
+    assert_eq!(number.value, ExactValue::Integer { value: int(1 << 62), big: true });
+    assert!(read_forms("2r1N").is_err());
+    // Literals equal by value are equal forms, however written.
+    assert_eq!(read("2/4"), read("1/2"));
+    assert_eq!(read("1N"), read("0x1N"));
+}
+
+/// Only malformed literals fail in unselected branches; exact literals
+/// there are read and dropped (#333).
+#[test]
+fn unselected_branches_check_numeric_syntax() {
+    for source in ["#?(:clj 1/3 :default 2)", "#?(:clj [1N 1.5M 9223372036854775808] :default 2)", "[#?@(:clj [1/3]) 2]"] {
+        let forms = resolve_conditionals(read_forms(source).unwrap()).unwrap();
+        assert!(!format!("{:?}", forms[0].kind).contains("Exact"), "{source}");
+    }
+    for (source, message) in [
+        ("#?(:clj 1/0 :default 2)", "Divide by zero"),
+        ("#?(:clj 1/2N :default 2)", "Invalid ratio"),
+        ("#?(:clj 08 :default 2)", "Invalid numeric digits"),
+        ("#?(:clj 1.5N :default 2)", "Invalid ordinary numeric literal"),
+        ("#?(:clj 0x1M :default 2)", "Invalid decimal literal"),
+        ("#?(:clj 1e99999999999M :default 2)", "Decimal exponent out of range"),
+        ("#?(:clj 02r1 :default 2)", "Invalid numeric radix"),
+    ] {
+        let error = read_forms(source).and_then(resolve_conditionals).expect_err(source);
+        assert_eq!(error.message, message, "{source}");
     }
 }

@@ -183,6 +183,53 @@ fn malformed_input_fails_with_the_compilers_message_and_position() {
     }
 }
 
+/// Each :exact entry fails in both runtime readers with the compiler's
+/// evaluation message, at its start, unless it is in an unselected branch;
+/// evaluating it in source fails with the same message (#333).
+#[test]
+fn exact_numeric_literals_fail_when_read_and_load_when_unselected() {
+    let sources = corpus("exact");
+    for (mut session, mut macros) in sessions() {
+        let expected = sources
+            .iter()
+            .map(|source| {
+                let forms = suss_reader::forms::read_forms(source).unwrap_or_else(|error| panic!("{source}: {error:?}"));
+                let [form] = forms.as_slice() else { panic!("{source}: one form") };
+                let Kind::Exact(number) = &form.kind else { panic!("{source}: {:?}", form.kind) };
+                number.unsupported_message()
+            })
+            .collect::<Vec<_>>();
+        for reader in ["read-string", "edn/read-string"] {
+            let found = runtime_errors(&mut session, &mut macros, reader, &sources);
+            for ((source, found), message) in sources.iter().zip(found).zip(&expected) {
+                let expected = Value::Vector(vec![Value::String(message.clone()), Value::Number(0.0)]);
+                assert_eq!(found, expected, "{reader} {source:?}");
+            }
+        }
+        for (source, message) in sources.iter().zip(&expected) {
+            for evaluated in [source.clone(), format!("(quote [{source}])"), format!("[1 {source}]")] {
+                truthy(
+                    &mut session,
+                    &mut macros,
+                    &format!("(= {} (try {evaluated} :evaluated (catch :default e (ex-message e))))", literal(message)),
+                );
+            }
+            let unselected = format!("#?(:clj {source} :default 2)");
+            truthy(&mut session, &mut macros, &format!("(= 2 {unselected})"));
+            truthy(
+                &mut session,
+                &mut macros,
+                &format!("(= 2 (read-string {{:read-cond :allow}} {}))", literal(&unselected)),
+            );
+            truthy(
+                &mut session,
+                &mut macros,
+                &format!("(= [] (read-string {{:read-cond :allow}} {}))", literal(&format!("[#?@(:clj [{source}])]"))),
+            );
+        }
+    }
+}
+
 #[test]
 fn read_string_follows_clojure() {
     for (mut session, mut macros) in sessions() {
@@ -220,10 +267,10 @@ fn read_string_follows_clojure() {
             "(= 7 (:offset (try (edn/read-string \"{[1] 1 [1] 2}\") (catch :default e (ex-data e)))))",
             // Characters are one-unit strings; numbers have the spec's diagnostics.
             "(= \"a\" (read-string \"\\\\a\"))",
-            "(= \"Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers\" (try (read-string \"1/2\") (catch :default e (ex-message e))))",
+            "(= \"Divide by zero\" (try (read-string \"1/0\") (catch :default e (ex-message e))))",
             "(let [x (read-string \"##NaN\")] (not= x x))",
-            "(== 9007199254740992 (read-string \"9007199254740993\"))",
-            "(== 12157665459056928800 (read-string \"3r2222222222222222222222222222222222222222\"))",
+            "(== 9007199254740991 (read-string \"9007199254740991\"))",
+            "(== 2 (read-string \"4/2\"))",
         ] {
             truthy(&mut session, &mut macros, source);
         }
@@ -579,4 +626,54 @@ fn unquoted(text: &str) -> String {
         Ok(Value::String(text)) => text,
         _ => text.to_owned(),
     }
+}
+
+/// A macro receives an exact literal as data and returns it unchanged, so
+/// evaluating the expansion fails with the literal's own message (#333).
+#[test]
+fn exact_numeric_literals_pass_through_macros() {
+    // Expansion runs in the Macro phase; the REPL defines the macros.
+    let (mut session, mut macros) = sessions().into_iter().next().unwrap();
+    let mut evaluate = |source: &str| {
+        portable_repl::evaluate_compiled(&mut session, &mut macros, source)
+            .unwrap_or_else(|error| panic!("{source}: {error:?}"))
+    };
+    for source in [
+        "(defmacro same-form [x] x)",
+        "(defmacro quoted [x] (list 'quote x))",
+        "(defmacro in-vector [x] [1 x])",
+        "(defmacro templated [] `(+ 1 1/3))",
+        "(defmacro unused [] (if false 1/3 :ok))",
+    ] {
+        evaluate(source);
+    }
+    let message = |source: &str| {
+        let forms = suss_reader::forms::read_forms(source).unwrap();
+        let Kind::Exact(number) = &forms[0].kind else { panic!("{source}") };
+        literal(&number.unsupported_message())
+    };
+    for (expression, literal_text) in [
+        ("(same-form 1/3)", "1/3"),
+        ("(quoted 1.50M)", "1.50M"),
+        ("(in-vector 9223372036854775808)", "9223372036854775808"),
+    ] {
+        let source = format!("(= {} (try {expression} :evaluated (catch :default e (ex-message e))))", message(literal_text));
+        assert_eq!(evaluate(&source), "true", "{source}");
+    }
+    // A case with an exact constant evaluates its expression, then throws.
+    let source = format!(
+        "(let [v (volatile! 0)] [(try (case (vswap! v inc) 1/2 :a :b) (catch :default e (ex-message e))) @v])"
+    );
+    assert_eq!(evaluate(&source), format!("[{} 1]", message("1/2")), "{source}");
+    // A macro call holding one keeps its source position.
+    evaluate("(defmacro line-of [& _] (:line (meta &form)))");
+    assert_eq!(evaluate("(line-of 1/3)"), "1");
+    // Macro arguments in unselected branches never reach the macro.
+    assert_eq!(evaluate("(= 2 (same-form #?(:clj 1/3 :default 2)))"), "true");
+    // A literal in the macro's own code evaluates when the macro runs, so a
+    // template holding one fails to expand until #335; one it never
+    // evaluates is harmless.
+    assert_eq!(evaluate("(unused)"), ":ok");
+    let error = portable_repl::evaluate_compiled(&mut session, &mut macros, "(templated)").expect_err("templated");
+    assert!(format!("{error:?}").contains("Compiled macro expansion failed"), "{error:?}");
 }

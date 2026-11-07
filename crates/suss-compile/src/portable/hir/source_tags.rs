@@ -164,6 +164,7 @@ fn same(a: Option<&Form>, b: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result
                         Kind::Tagged { tag, .. } => identifier_size(tag.namespace.as_deref(), &tag.name),
                         Kind::Bool(_) => 2,
                         Kind::Number(_) => 9,
+                        Kind::Exact(v) => 9usize.saturating_add(v.text.len()),
                         Kind::String(v) => 9usize.saturating_add(v.len().saturating_mul(2)),
                         Kind::Symbol(v) => identifier_size(v.namespace.as_deref(), &v.name),
                         Kind::Keyword(v) | Kind::AutoKeyword(v) => {
@@ -205,6 +206,13 @@ fn same(a: Option<&Form>, b: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result
                             out.extend_from_slice(
                                 &(if *v == 0.0 { 0 } else { v.to_bits() }).to_le_bytes(),
                             );
+                        }
+                        Kind::Exact(v) => {
+                            // The spelling, so diagnostics name it.
+                            let text = &v.text;
+                            out.push(16);
+                            out.extend_from_slice(&(text.len() as u64).to_le_bytes());
+                            out.extend_from_slice(text.as_bytes());
                         }
                         Kind::String(v) => {
                             out.push(3);

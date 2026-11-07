@@ -917,6 +917,24 @@ impl Analyzer<'_> {
             kind: std::sync::Arc::new(Expression::Do(items)),
         })
     }
+    /// An exact numeric literal binary64 can't hold evaluates to a throw
+    /// until Suss has Clojure's numeric types (#333, #335): it reads, so code
+    /// that never evaluates it loads, but it never rounds silently.
+    fn exact_literal(&mut self, form: &Form, number: &suss_reader::forms::ExactNumber) -> Result<Hir, Diagnostic> {
+        let at = |kind| Form { span: form.span.clone(), metadata: vec![], kind };
+        let symbol = |namespace: Option<&str>, name: &str| {
+            at(Kind::Symbol(suss_reader::Symbol {
+                namespace: namespace.map(str::to_owned),
+                name: name.to_owned(),
+            }))
+        };
+        let error = at(Kind::List(vec![
+            symbol(None, "new"),
+            symbol(Some("js"), "Error"),
+            at(Kind::String(number.unsupported_message().encode_utf16().collect())),
+        ]));
+        self.form(&at(Kind::List(vec![symbol(None, "throw"), error])))
+    }
     fn form(&mut self, form: &Form) -> Result<Hir, Diagnostic> {
         self.form_in(form, super::AnalysisContext::Expression, false)
     }
@@ -1296,6 +1314,7 @@ impl Analyzer<'_> {
             Kind::Nil => Expression::Literal(Literal::Nil),
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
             Kind::Number(value) => Expression::Literal(Literal::Number(*value)),
+            Kind::Exact(number) => return self.exact_literal(form, number),
             Kind::String(value) => Expression::Literal(Literal::String(value.clone())),
             Kind::Keyword(value) => {
                 return self.identifier_literal(

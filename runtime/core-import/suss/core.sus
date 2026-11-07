@@ -10136,7 +10136,8 @@ reduces them without incurring seq initialization"
 ;;   :allow or :preserve), 5 features, 6 EDN :readers, 7 EDN :default,
 ;;   8 the open #() literal's [id arguments] or nil, 9 nesting depth,
 ;;   10 depth of unselected conditional branches, 11 queued spliced forms,
-;;   12 depth of delimited collections, 13 the start of the last item read.
+;;   12 depth of delimited collections, 13 the start of the last item read,
+;;   14 depth of #_ forms being read and dropped.
 ;; A helper returns a value, reader-nothing for a discarded form, or a
 ;; ReaderSplice for #?@ items, which the enclosing collection queues.
 (def ^{:dynamic true
@@ -10389,38 +10390,162 @@ reduces them without incurring seq initialization"
                             (reader-big-radix s from to base))
                           value)))))]
       (if negative (* -1 value) value))))
+;; Clojure's exact numeric literals that binary64 can't hold (#333): ratios,
+;; N and M literals, and integers beyond 2^53. Their syntax is checked
+;; everywhere, as the compiler's reader checks it; one that is read rather
+;; than skipped in an unselected conditional branch or dropped by #_ fails
+;; until #335.
+(def ^:private reader-exact
+  (fn [st start s end]
+    (if (if (< 0 (aget st 10)) true (< 0 (aget st 14)))
+      nil
+      (reader-fail st start
+                   (suss.bootstrap/concat-string
+                    (suss.bootstrap/concat-string
+                     "Unsupported numeric literal " (suss.bootstrap/string-slice s start end))
+                    ": ratios, BigInts, BigDecimals and integers beyond 2^53 need Clojure's numeric types (#335)")
+                   false))))
+(def ^:private reader-digits?
+  (fn [s from to]
+    (if (< from to)
+      (loop [i from]
+        (if (< i to)
+          (let [u (.charCodeAt s i)] (if (if (<= 48 u) (<= u 57) false) (recur (inc i)) false))
+          true))
+      false)))
+(def ^:private reader-digits-end
+  (fn [s from to]
+    (loop [i from]
+      (if (< i to)
+        (let [u (.charCodeAt s i)] (if (if (<= 48 u) (<= u 57) false) (recur (inc i)) i))
+        i))))
+(def ^:private reader-digits-odd?
+  ;; Whether the integer with these digits is odd: its last digit's parity in
+  ;; an even base, its digit sum's in an odd one.
+  (fn [s from to base]
+    (let [odd? (fn [n] (== 1 (- n (* 2 (suss.bootstrap/f64-floor (/ n 2))))))]
+      (if (odd? base)
+        (odd? (loop [i from sum 0] (if (< i to) (recur (inc i) (+ sum (reader-digit (.charCodeAt s i)))) sum)))
+        (odd? (reader-digit (.charCodeAt s (dec to))))))))
+(def ^:private reader-within-2-53?
+  ;; Whether digits s[from, to) in base, read as value, are within +-2^53.
+  ;; 2^53 + 1 rounds to 2^53, the only ambiguous case, and it is odd.
+  (fn [s from to base value]
+    (let [magnitude (if (< value 0) (* -1 value) value)]
+      (if (< magnitude 9007199254740992)
+        true
+        (if (== magnitude 9007199254740992) (not (reader-digits-odd? s from to base)) false)))))
+(def ^:private reader-exact-integer
+  (fn [st start s end from base value]
+    ;; Integer zero is +0, as the compiler's reader spells it.
+    (if (reader-within-2-53? s from end base value)
+      (if (== value 0) 0 value)
+      (reader-exact st start s end))))
+;; Clojure's ratioPat, [-+]?[0-9]+/[0-9]+. A ratio of terms within 2^53 that
+;; divide evenly is the integer, as Clojure reads 4/2 as 2.
+(def ^:private reader-ratio
+  (fn [st start s end slash]
+    (let [c (.charCodeAt s start)
+          negative (== c 45)
+          d (if (if negative true (== c 43)) (inc start) start)]
+      (if (if (reader-digits? s d slash) (reader-digits? s (inc slash) end) false)
+        (let [n (suss.bootstrap/f64-coerce (suss.bootstrap/string-slice s d slash))
+              q (suss.bootstrap/f64-coerce (suss.bootstrap/string-slice s (inc slash) end))]
+          (if (== q 0)
+            (reader-fail st start "Divide by zero" false)
+            (let [k (suss.bootstrap/f64-floor (/ n q))]
+              (if (if (reader-within-2-53? s d slash 10 n)
+                    (if (reader-within-2-53? s (inc slash) end 10 q) (== (* k q) n) false)
+                    false)
+                (if (== k 0) 0 (if negative (* -1 k) k))
+                (reader-exact st start s end)))))
+        (reader-fail st start "Invalid ratio" false)))))
+;; Clojure's floatPat without its M: [0-9]+(\.[0-9]*)?([eE][-+]?[0-9]+)?.
+;; A BigDecimal's scale, its fraction digits less its exponent, must fit 32
+;; bits.
+(def ^:private reader-decimal?
+  (fn [st start s from to]
+    (let [whole (reader-digits-end s from to)]
+      (if (< from whole)
+        (let [fraction (if (if (< whole to) (== (.charCodeAt s whole) 46) false)
+                         (reader-digits-end s (inc whole) to)
+                         whole)]
+          (if (== fraction to)
+            true
+            (let [u (.charCodeAt s fraction)]
+              (if (if (== u 101) true (== u 69))
+                (let [e (inc fraction)
+                      digits (if (if (< e to) (let [v (.charCodeAt s e)] (if (== v 43) true (== v 45))) false)
+                               (inc e)
+                               e)]
+                  (if (reader-digits? s digits to)
+                    (let [places (if (< whole fraction) (- fraction (inc whole)) 0)
+                          scale (- places (suss.bootstrap/f64-coerce (suss.bootstrap/string-slice s e to)))]
+                      (if (if (<= -2147483648 scale) (<= scale 2147483647) false)
+                        true
+                        (reader-fail st start "Decimal exponent out of range" false)))
+                    false))
+                false))))
+        false))))
 (def ^:private reader-number
   (fn [st start s end]
-    (let [last (.charCodeAt s (dec end))]
-      (if (if (<= 0 (reader-index-of s 47 start end)) true (if (== last 78) true (== last 77)))
-        (reader-fail st start "Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers" false)
-        (let [c (.charCodeAt s start)
-              negative (== c 45)
-              d (if (if negative true (== c 43)) (inc start) start)
-              x (if (< (inc d) end) (.charCodeAt s (inc d)) 0)]
-          (if (if (== (.charCodeAt s d) 48) (if (== x 120) true (== x 88)) false)
-            (reader-radix-number st start s (+ d 2) end 16 negative)
+    (let [last (.charCodeAt s (dec end))
+          slash (reader-index-of s 47 start end)
+          c (.charCodeAt s start)
+          negative (== c 45)
+          d (if (if negative true (== c 43)) (inc start) start)
+          x (if (< (inc d) end) (.charCodeAt s (inc d)) 0)
+          hex (if (== (.charCodeAt s d) 48) (if (== x 120) true (== x 88)) false)]
+      (if (<= 0 slash)
+        (reader-ratio st start s end slash)
+        ;; A radix integer's trailing M, like its N, is one of its digits.
+        (if (if (== last 77)
+              (if (< (reader-index-of s 114 start end) 0) (< (reader-index-of s 82 start end) 0) false)
+              false)
+          (if (reader-decimal? st start s d (dec end))
+            (reader-exact st start s end)
+            (reader-fail st start "Invalid decimal literal" false))
+          ;; N follows a hexadecimal, octal or decimal integer; a radix
+          ;; integer's trailing N is one of its digits, as in Clojure.
+          (if (if (== last 78)
+                (if (< (reader-index-of s 114 start end) 0) (< (reader-index-of s 82 start end) 0) false)
+                false)
+            (do
+              (if hex
+                (reader-radix-number st start s (+ d 2) (dec end) 16 negative)
+                (if (reader-digits? s d (dec end))
+                  (if (< 1 (- (dec end) d))
+                    (if (== (.charCodeAt s d) 48)
+                      (reader-radix-number st start s (inc d) (dec end) 8 negative)
+                      nil)
+                    nil)
+                  (reader-fail st start "Invalid ordinary numeric literal" false)))
+              (reader-exact st start s end))
+          (if hex
+            (reader-exact-integer st start s end (+ d 2) 16 (reader-radix-number st start s (+ d 2) end 16 negative))
             (let [r (loop [i d]
                       (if (< i end)
                         (let [u (.charCodeAt s i)] (if (if (== u 114) true (== u 82)) i (recur (inc i))))
                         -1))]
               (if (<= 0 r)
-                ;; Rust's u32 parse of the radix: decimal digits only.
-                (let [base (loop [i d base 0]
+                ;; intPat's radix, [1-9][0-9]?, then Rust's u32 parse.
+                (let [base (if (if (< 2 (- r d)) true (if (< d r) (== (.charCodeAt s d) 48) false))
+                             -1
+                             (loop [i d base 0]
                              (if (< i r)
                                (let [digit (reader-digit (.charCodeAt s i))]
                                  (if (if (< digit 10) (< base 4294967296) false)
                                    (recur (inc i) (+ (* base 10) digit))
                                    -1))
-                               (if (if (< d r) (< base 4294967296) false) base -1)))]
+                               (if (if (< d r) (< base 4294967296) false) base -1))))]
                   (if (< base 0)
                     (reader-fail st start "Invalid numeric radix" false)
                     (if (if (<= 2 base) (<= base 36) false)
-                      (reader-radix-number st start s (inc r) end base negative)
+                      (reader-exact-integer st start s end (inc r) base (reader-radix-number st start s (inc r) end base negative))
                       (reader-fail st start "Numeric radix must be between 2 and 36" false))))
                 (let [digits (loop [i d] (if (< i end) (if (< (reader-digit (.charCodeAt s i)) 10) (recur (inc i)) false) true))]
                   (if (if digits (if (< 1 (- end d)) (== (.charCodeAt s d) 48) false) false)
-                    (reader-radix-number st start s (inc d) end 8 negative)
+                    (reader-exact-integer st start s end (inc d) 8 (reader-radix-number st start s (inc d) end 8 negative))
                     (let [plain (loop [i d dotted false]
                                   (if (< i end)
                                     (let [u (.charCodeAt s i)]
@@ -10436,8 +10561,10 @@ reduces them without incurring seq initialization"
                           (if (== value value)
                             ;; The pinned ClojureScript reader spells either signed
                             ;; integer zero as +0; floating syntax keeps the sign.
-                            (if (if (== value 0) (== plain 0) false) 0 value)
-                            (reader-fail st start "Invalid ordinary numeric literal" false)))))))))))))))
+                            (if (if (== value 0) (== plain 0) false)
+                              0
+                              (if (== plain 0) (reader-exact-integer st start s end d 10 value) value))
+                            (reader-fail st start "Invalid ordinary numeric literal" false))))))))))))))))
 
 ;; Strings and characters, decoded as the compiler's reader decodes them.
 (def ^:private reader-radix-unit
@@ -10902,7 +11029,7 @@ reduces them without incurring seq initialization"
                       (let [digit (reader-digit (.charCodeAt s k))]
                         (if (< digit radix) (recur (inc k) (+ (* value radix) digit)) (invalid)))
                       value))]
-        (if (<= 9223372036854775808 value) (invalid) nil)
+        (if (<= 9.223372036854775808E18 value) (invalid) nil)
         (let [value (if negative (* -1 value) value)]
           (if (if (<= -2147483648 value) (<= value 2147483647) false)
             value
@@ -11155,7 +11282,12 @@ reduces them without incurring seq initialization"
       (aset dispatches 123 (fn [st start]
                              (aset st 1 (+ start 2))
                              (persistent! (reader-items st start 125 1 (transient #{})))))
-      (aset dispatches 95 (fn [st start] (aset st 1 (+ start 2)) (reader-required st) reader-nothing))
+      (aset dispatches 95 (fn [st start]
+                            (aset st 1 (+ start 2))
+                            (aset st 14 (inc (aget st 14)))
+                            (reader-required st)
+                            (aset st 14 (dec (aget st 14)))
+                            reader-nothing))
       (aset dispatches 35 reader-symbolic)
       (aset dispatches 40 (fn [st start]
                             (if (aget st 3)
@@ -11193,7 +11325,7 @@ reduces them without incurring seq initialization"
 (def ^:private reader-state
   (fn [s edn mode features readers default]
     (if (nil? reader-leads) (reader-tables!) nil)
-    (array s 0 (.-length s) edn mode features readers default nil 0 0 nil 0 0)))
+    (array s 0 (.-length s) edn mode features readers default nil 0 0 nil 0 0 0)))
 ;; One form, or opts' :eof when the input has none and opts has :eof.
 (def ^:private reader-read
   (fn [st opts]

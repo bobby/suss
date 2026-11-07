@@ -332,7 +332,9 @@ pub fn number(x: f64) -> String {
         if x > 0.0 { "##Inf" } else { "##-Inf" }.into()
     } else if x == 0.0 && x.is_sign_negative() {
         "-0.0".into()
-    } else if x.fract() == 0.0 && x.abs() < 1e16 {
+    } else if x.fract() == 0.0 && x.abs() <= 9007199254740992.0 {
+        // Beyond 2^53 an integer literal is exact, not binary64 (#333), so
+        // larger integral values print as doubles: 9007199254740994.0.
         (x as i64).to_string()
     } else {
         format!("{x:?}")
@@ -491,6 +493,9 @@ struct Parser<'s, 'o> {
     pos: usize,
     options: &'o Options,
     work: u64,
+    /// Depth of `#_` forms being read and dropped; an exact numeric
+    /// literal there is never a value, so it doesn't fail (#333).
+    discarding: usize,
 }
 type Item = (Value, Range<usize>);
 
@@ -507,6 +512,7 @@ impl<'s> Parser<'s, '_> {
             pos: 0,
             options,
             work,
+            discarding: 0,
         })
     }
     fn peek_char(&self) -> Option<char> {
@@ -670,7 +676,14 @@ impl<'s> Parser<'s, '_> {
                 Value::Keyword(Keyword::parse(&token[1..]))
             }
             token if forms::numeric_start(token) => {
-                Value::Number(forms::number(token).map_err(|message| fail(self, message))?)
+                // EDN data has no exact numbers until #335.
+                match forms::number(token).map_err(|message| fail(self, message))? {
+                    forms::NumberToken::Double(value) => Value::Number(value),
+                    forms::NumberToken::Exact(_) if self.discarding > 0 => Value::Nil,
+                    forms::NumberToken::Exact(value) => {
+                        return Err(fail(self, &value.unsupported_message()))
+                    }
+                }
             }
             token => {
                 if !forms::valid_symbol(token) {
@@ -698,7 +711,10 @@ impl<'s> Parser<'s, '_> {
             Some('_') => {
                 // Still read, so its tags are checked, as `clojure.edn` does.
                 self.pos += 1;
-                self.required(depth + 1)?;
+                self.discarding += 1;
+                let read = self.required(depth + 1);
+                self.discarding -= 1;
+                read?;
                 Ok(None)
             }
             Some('#') => {

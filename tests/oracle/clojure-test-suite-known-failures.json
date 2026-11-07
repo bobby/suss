@@ -3,8 +3,8 @@
  "suite": "95d4a9112cfc5fe6629be3d14bb99080ea00af2f",
  "namespaces": {
   "clojure.core-test.abs": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.abs (Some(\"<root>/clojure/core_test/abs.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 519..528"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.any-qmark": {
    "stage": "namespace",
@@ -15,12 +15,12 @@
    "diagnostic": "clojure.core-test.assoc (Some(\"<root>/clojure/core_test/assoc.cljc\")): Unresolved Runtime name sorted? at bytes 235..4147"
   },
   "clojure.core-test.bigdec": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.bigdec (Some(\"<root>/clojure/core_test/bigdec.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 336..338"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.bigdec (Some(\"<root>/clojure/core_test/bigdec.cljc\")): Unresolved Runtime name bigdec at bytes 242..2103"
   },
   "clojure.core-test.bigint": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.bigint (Some(\"<root>/clojure/core_test/bigint.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 341..343"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.bit-and": {
    "stage": "namespace",
@@ -39,8 +39,8 @@
    "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.boolean": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.boolean (Some(\"<root>/clojure/core_test/boolean.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 716..718"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.boolean-qmark": {
    "stage": "namespace",
@@ -55,52 +55,44 @@
    "diagnostic": "clojure.core-test.bound-fn-star (Some(\"<root>/clojure/core_test/bound_fn_star.cljc\")): Unresolved Runtime name bound-fn* at bytes 290..1947"
   },
   "clojure.core-test.byte": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.byte (Some(\"<root>/clojure/core_test/byte.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 928..930"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.byte (Some(\"<root>/clojure/core_test/byte.cljc\")): Unresolved Runtime name byte at bytes 232..3369"
   },
   "clojure.core-test.case": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.case (Some(\"<root>/clojure/core_test/case.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 460..462"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.case (Some(\"<root>/clojure/core_test/case.cljc\")): case bootstrap requires an expression and explicit default at bytes 240..6428"
   },
   "clojure.core-test.char": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.char (Some(\"<root>/clojure/core_test/char.cljc\")): Unresolved Runtime name char at bytes 240..1201"
   },
   "clojure.core-test.char-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.char-qmark (Some(\"<root>/clojure/core_test/char_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 735..737"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.coll-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.coll-qmark (Some(\"<root>/clojure/core_test/coll_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 781..783"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.coll-qmark (Some(\"<root>/clojure/core_test/coll_qmark.cljc\")): Unresolved Runtime name coll? at bytes 229..965"
   },
   "clojure.core-test.comment": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.comment (Some(\"<root>/clojure/core_test/comment.cljc\")): Unresolved Runtime name comment at bytes 237..443"
   },
-  "clojure.core-test.compare": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.compare (Some(\"<root>/clojure/core_test/compare.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 408..413"
-  },
   "clojure.core-test.constantly": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.constantly (Some(\"<root>/clojure/core_test/constantly.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 506..511"
-  },
-  "clojure.core-test.counted-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.counted-qmark (Some(\"<root>/clojure/core_test/counted_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 882..884"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.constantly (Some(\"<root>/clojure/core_test/constantly.cljc\")): Unresolved Runtime name some-fn at bytes 240..1477"
   },
   "clojure.core-test.dec": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.dec (Some(\"<root>/clojure/core_test/dec.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 405..407"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.decimal-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.decimal-qmark (Some(\"<root>/clojure/core_test/decimal_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 354..358"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.denominator": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.denominator (Some(\"<root>/clojure/core_test/denominator.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 285..288"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.denominator (Some(\"<root>/clojure/core_test/denominator.cljc\")): Unresolved Runtime name denominator at bytes 239..685"
   },
   "clojure.core-test.disj": {
    "stage": "namespace",
@@ -115,12 +107,12 @@
    "diagnostic": "clojure.core-test.distinct (Some(\"<root>/clojure/core_test/distinct.cljc\")): Unresolved Runtime name distinct at bytes 244..1776"
   },
   "clojure.core-test.double": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.double (Some(\"<root>/clojure/core_test/double.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 368..370"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.double (Some(\"<root>/clojure/core_test/double.cljc\")): Unresolved Runtime name double at bytes 234..1492"
   },
   "clojure.core-test.double-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.double-qmark (Some(\"<root>/clojure/core_test/double_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1958..1960"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.drop-last": {
    "stage": "namespace",
@@ -132,35 +124,31 @@
   },
   "clojure.core-test.eq": {
    "stage": "read",
-   "diagnostic": "clojure.core-test.eq (Some(\"<root>/clojure/core_test/eq.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 469..478"
+   "diagnostic": "clojure.core-test.eq (Some(\"<root>/clojure/core_test/eq.cljc\")): Unsupported reader dispatch at bytes 2280..2282"
   },
   "clojure.core-test.eval": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.eval (Some(\"<root>/clojure/core_test/eval.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 710..712"
-  },
-  "clojure.core-test.even-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.even-qmark (Some(\"<root>/clojure/core_test/even_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 434..438"
+   "stage": "namespace",
+   "diagnostic": "cljs.js (Some(\"<root>/clojure/core_test/eval.cljc\")): No source for namespace cljs.js at bytes 102..109"
   },
   "clojure.core-test.every-qmark": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.every-qmark (Some(\"<root>/clojure/core_test/every_qmark.cljc\")): Unresolved Runtime name letfn at bytes 292..1825"
   },
   "clojure.core-test.false-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.false-qmark (Some(\"<root>/clojure/core_test/false_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 735..737"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.ffirst": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.ffirst (Some(\"<root>/clojure/core_test/ffirst.cljc\")): Unresolved Runtime name ffirst at bytes 251..1277"
   },
   "clojure.core-test.float": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.float (Some(\"<root>/clojure/core_test/float.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 417..419"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.float-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.float-qmark (Some(\"<root>/clojure/core_test/float_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 851..853"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.fnext": {
    "stage": "namespace",
@@ -169,18 +157,6 @@
   "clojure.core-test.get-in": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.get-in (Some(\"<root>/clojure/core_test/get_in.cljc\")): Unresolved Runtime name get-in at bytes 232..1785"
-  },
-  "clojure.core-test.gt": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.gt (Some(\"<root>/clojure/core_test/gt.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 636..638"
-  },
-  "clojure.core-test.gt-eq": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.gt-eq (Some(\"<root>/clojure/core_test/gt_eq.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 646..648"
-  },
-  "clojure.core-test.ident-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.ident-qmark (Some(\"<root>/clojure/core_test/ident_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 428..430"
   },
   "clojure.core-test.identity": {
    "stage": "read",
@@ -191,20 +167,20 @@
    "diagnostic": "clojure.core-test.ifn-qmark (Some(\"<root>/clojure/core_test/ifn_qmark.cljc\")): Unresolved Runtime name ifn? at bytes 352..1464"
   },
   "clojure.core-test.inc": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.inc (Some(\"<root>/clojure/core_test/inc.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 421..423"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.int": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.int (Some(\"<root>/clojure/core_test/int.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 938..940"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.int (Some(\"<root>/clojure/core_test/int.cljc\")): Unresolved Runtime name int? at bytes 231..3019"
   },
   "clojure.core-test.int-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.int-qmark (Some(\"<root>/clojure/core_test/int_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 999..1001"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.integer-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.integer-qmark (Some(\"<root>/clojure/core_test/integer_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 735..737"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.intern": {
    "stage": "namespace",
@@ -214,73 +190,41 @@
    "stage": "namespace",
    "diagnostic": "clojure.core-test.juxt (Some(\"<root>/clojure/core_test/juxt.cljc\")): Unresolved Runtime name ifn? at bytes 236..1781"
   },
-  "clojure.core-test.keyword-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.keyword-qmark (Some(\"<root>/clojure/core_test/keyword_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 436..438"
-  },
   "clojure.core-test.lazy-seq": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.lazy-seq (Some(\"<root>/clojure/core_test/lazy_seq.cljc\")): Unresolved Runtime name assert at bytes 244..4118"
   },
-  "clojure.core-test.list": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.list (Some(\"<root>/clojure/core_test/list.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1639..1641"
-  },
-  "clojure.core-test.list-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.list-qmark (Some(\"<root>/clojure/core_test/list_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 490..492"
-  },
   "clojure.core-test.long": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.long (Some(\"<root>/clojure/core_test/long.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 887..889"
-  },
-  "clojure.core-test.lt": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.lt (Some(\"<root>/clojure/core_test/lt.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 636..638"
-  },
-  "clojure.core-test.lt-eq": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.lt-eq (Some(\"<root>/clojure/core_test/lt_eq.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 644..646"
-  },
-  "clojure.core-test.map-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.map-qmark (Some(\"<root>/clojure/core_test/map_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 673..675"
-  },
-  "clojure.core-test.max": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.max (Some(\"<root>/clojure/core_test/max.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 340..342"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.long (Some(\"<root>/clojure/core_test/long.cljc\")): Unresolved Runtime name int? at bytes 232..2476"
   },
   "clojure.core-test.merge": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.merge (Some(\"<root>/clojure/core_test/merge.cljc\")): Unresolved Runtime name any? at bytes 237..4689"
   },
-  "clojure.core-test.min": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.min (Some(\"<root>/clojure/core_test/min.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 340..342"
-  },
   "clojure.core-test.min-key": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.min-key (Some(\"<root>/clojure/core_test/min_key.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 638..640"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.min-key (Some(\"<root>/clojure/core_test/min_key.cljc\")): Unresolved Runtime name min-key at bytes 244..4438"
   },
   "clojure.core-test.minus": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.minus (Some(\"<root>/clojure/core_test/minus.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 926..928"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.mod": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.mod (Some(\"<root>/clojure/core_test/mod.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 712..714"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.mod (Some(\"<root>/clojure/core_test/mod.cljc\")): Unresolved Runtime name int? at bytes 231..5438"
   },
   "clojure.core-test.nan-qmark": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.nan-qmark (Some(\"<root>/clojure/core_test/nan_qmark.cljc\")): Unresolved Runtime name double? at bytes 237..958"
   },
   "clojure.core-test.neg-int-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.neg-int-qmark (Some(\"<root>/clojure/core_test/neg_int_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 615..617"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.neg-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.neg-qmark (Some(\"<root>/clojure/core_test/neg_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 447..450"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.nfirst": {
    "stage": "namespace",
@@ -292,7 +236,7 @@
   },
   "clojure.core-test.not-eq": {
    "stage": "read",
-   "diagnostic": "clojure.core-test.eq (Some(\"<root>/clojure/core_test/eq.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 469..478"
+   "diagnostic": "clojure.core-test.eq (Some(\"<root>/clojure/core_test/eq.cljc\")): Unsupported reader dispatch at bytes 2280..2282"
   },
   "clojure.core-test.not-every-qmark": {
    "stage": "namespace",
@@ -308,23 +252,19 @@
   },
   "clojure.core-test.num": {
    "stage": "read",
-   "diagnostic": "clojure.core-test.num (Some(\"<root>/clojure/core_test/num.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 844..847"
+   "diagnostic": "clojure.core-test.num (Some(\"<root>/clojure/core_test/num.cljc\")): Unsupported reader dispatch at bytes 3408..3410"
   },
   "clojure.core-test.number-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.number-qmark (Some(\"<root>/clojure/core_test/number_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 578..580"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
   "clojure.core-test.number-range": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 42..57"
   },
   "clojure.core-test.numerator": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.numerator (Some(\"<root>/clojure/core_test/numerator.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 308..311"
-  },
-  "clojure.core-test.odd-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.odd-qmark (Some(\"<root>/clojure/core_test/odd_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 432..436"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.numerator (Some(\"<root>/clojure/core_test/numerator.cljc\")): Unresolved Runtime name numerator at bytes 233..788"
   },
   "clojure.core-test.parse-boolean": {
    "stage": "namespace",
@@ -342,45 +282,29 @@
    "stage": "read",
    "diagnostic": "clojure.core-test.parse-uuid (Some(\"<root>/clojure/core_test/parse_uuid.cljc\")): No reader function for tag uuid at bytes 1114..1158"
   },
-  "clojure.core-test.partition": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.partition (Some(\"<root>/clojure/core_test/partition.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1041..1043"
-  },
   "clojure.core-test.plus": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.plus (Some(\"<root>/clojure/core_test/plus.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1246..1248"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 42..57"
   },
   "clojure.core-test.plus-squote": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.plus-squote (Some(\"<root>/clojure/core_test/plus_squote.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 507..509"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 42..57"
   },
   "clojure.core-test.pop-bang": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.pop-bang (Some(\"<root>/clojure/core_test/pop_bang.cljc\")): Unresolved Runtime name pop! at bytes 238..1274"
   },
   "clojure.core-test.pos-int-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.pos-int-qmark (Some(\"<root>/clojure/core_test/pos_int_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 538..540"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 42..57"
   },
   "clojure.core-test.pos-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.pos-qmark (Some(\"<root>/clojure/core_test/pos_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 547..549"
-  },
-  "clojure.core-test.qualified-ident-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.qualified-ident-qmark (Some(\"<root>/clojure/core_test/qualified_ident_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 723..725"
-  },
-  "clojure.core-test.qualified-keyword-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.qualified-keyword-qmark (Some(\"<root>/clojure/core_test/qualified_keyword_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 692..694"
-  },
-  "clojure.core-test.qualified-symbol-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.qualified-symbol-qmark (Some(\"<root>/clojure/core_test/qualified_symbol_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 500..502"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 42..57"
   },
   "clojure.core-test.quot": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.quot (Some(\"<root>/clojure/core_test/quot.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 554..556"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.quot (Some(\"<root>/clojure/core_test/quot.cljc\")): Unresolved Runtime name int? at bytes 232..3713"
   },
   "clojure.core-test.rand": {
    "stage": "namespace",
@@ -403,16 +327,16 @@
    "diagnostic": "clojure.core-test.random-uuid (Some(\"<root>/clojure/core_test/random_uuid.cljc\")): Unsupported reader dispatch at bytes 467..469"
   },
   "clojure.core-test.ratio-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.ratio-qmark (Some(\"<root>/clojure/core_test/ratio_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 574..576"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 42..57"
   },
   "clojure.core-test.rational-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.rational-qmark (Some(\"<root>/clojure/core_test/rational_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 440..442"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 42..57"
   },
   "clojure.core-test.rationalize": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.rationalize (Some(\"<root>/clojure/core_test/rationalize.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 565..567"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.rationalize (Some(\"<root>/clojure/core_test/rationalize.cljc\")): Unresolved Runtime name rationalize at bytes 230..1558"
   },
   "clojure.core-test.realized-qmark": {
    "stage": "namespace",
@@ -423,8 +347,8 @@
    "diagnostic": "clojure.core-test.reduce (Some(\"<root>/clojure/core_test/reduce.cljc\")): Unresolved Runtime name long-array at bytes 242..5272"
   },
   "clojure.core-test.rem": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.rem (Some(\"<root>/clojure/core_test/rem.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 505..507"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.rem (Some(\"<root>/clojure/core_test/rem.cljc\")): Unresolved Runtime name int? at bytes 231..3477"
   },
   "clojure.core-test.remove": {
    "stage": "read",
@@ -432,55 +356,19 @@
   },
   "clojure.core-test.repeatedly": {
    "stage": "read",
-   "diagnostic": "clojure.core-test.repeatedly (Some(\"<root>/clojure/core_test/repeatedly.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1850..1853"
-  },
-  "clojure.core-test.reversible-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.reversible-qmark (Some(\"<root>/clojure/core_test/reversible_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 661..663"
+   "diagnostic": "clojure.core-test.repeatedly (Some(\"<root>/clojure/core_test/repeatedly.cljc\")): Unsupported reader dispatch at bytes 2122..2124"
   },
   "clojure.core-test.run-bang": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.run-bang (Some(\"<root>/clojure/core_test/run_bang.cljc\")): Unresolved Runtime name run! at bytes 238..1716"
   },
-  "clojure.core-test.seq": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.seq (Some(\"<root>/clojure/core_test/seq.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 865..869"
-  },
-  "clojure.core-test.seq-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.seq-qmark (Some(\"<root>/clojure/core_test/seq_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 694..696"
-  },
-  "clojure.core-test.seqable-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.seqable-qmark (Some(\"<root>/clojure/core_test/seqable_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 545..547"
-  },
-  "clojure.core-test.set-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.set-qmark (Some(\"<root>/clojure/core_test/set_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 619..621"
-  },
   "clojure.core-test.short": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.short (Some(\"<root>/clojure/core_test/short.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 894..896"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.short (Some(\"<root>/clojure/core_test/short.cljc\")): Unresolved Runtime name short at bytes 233..2859"
   },
   "clojure.core-test.shuffle": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.shuffle (Some(\"<root>/clojure/core_test/shuffle.cljc\")): Unresolved Runtime name shuffle at bytes 239..1519"
-  },
-  "clojure.core-test.simple-ident-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.simple-ident-qmark (Some(\"<root>/clojure/core_test/simple_ident_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 571..573"
-  },
-  "clojure.core-test.simple-keyword-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.simple-keyword-qmark (Some(\"<root>/clojure/core_test/simple_keyword_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 551..553"
-  },
-  "clojure.core-test.simple-symbol-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.simple-symbol-qmark (Some(\"<root>/clojure/core_test/simple_symbol_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 488..490"
-  },
-  "clojure.core-test.slash": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.slash (Some(\"<root>/clojure/core_test/slash.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 385..387"
   },
   "clojure.core-test.some": {
    "stage": "namespace",
@@ -499,44 +387,36 @@
    "diagnostic": "clojure.core-test.sort-by (Some(\"<root>/clojure/core_test/sort_by.cljc\")): Unresolved Runtime name sort at bytes 243..5303"
   },
   "clojure.core-test.sorted-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.sorted-qmark (Some(\"<root>/clojure/core_test/sorted_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1101..1103"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.sorted-qmark (Some(\"<root>/clojure/core_test/sorted_qmark.cljc\")): Unresolved Runtime name sorted? at bytes 242..1286"
   },
   "clojure.core-test.special-symbol-qmark": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.special-symbol-qmark (Some(\"<root>/clojure/core_test/special_symbol_qmark.cljc\")): Unresolved Runtime name special-symbol? at bytes 241..1558"
   },
   "clojure.core-test.star": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.star (Some(\"<root>/clojure/core_test/star.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1119..1121"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 42..57"
   },
   "clojure.core-test.star-squote": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.star-squote (Some(\"<root>/clojure/core_test/star_squote.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 487..514"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 42..57"
   },
   "clojure.core-test.str": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.str (Some(\"<root>/clojure/core_test/str.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1546..1548"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.str (Some(\"<root>/clojure/core_test/str.cljc\")): Unresolved Runtime name float at bytes 225..2867"
   },
   "clojure.core-test.string-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.string-qmark (Some(\"<root>/clojure/core_test/string_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 918..920"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 42..57"
   },
   "clojure.core-test.subs": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.subs (Some(\"<root>/clojure/core_test/subs.cljc\")): Unresolved Runtime name subs at bytes 228..2414"
   },
-  "clojure.core-test.subvec": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.subvec (Some(\"<root>/clojure/core_test/subvec.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1357..1360"
-  },
   "clojure.core-test.symbol": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.symbol (Some(\"<root>/clojure/core_test/symbol.cljc\")): Unresolved Runtime name var at bytes 234..3104"
-  },
-  "clojure.core-test.symbol-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.symbol-qmark (Some(\"<root>/clojure/core_test/symbol_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 432..434"
   },
   "clojure.core-test.take-last": {
    "stage": "namespace",
@@ -546,29 +426,17 @@
    "stage": "namespace",
    "diagnostic": "clojure.core-test.taps (Some(\"<root>/clojure/core_test/taps.cljc\")): Unknown macro binding suss.harness.test-macros/async at bytes 206..211"
   },
-  "clojure.core-test.transient": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.transient (Some(\"<root>/clojure/core_test/transient.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 3035..3037"
-  },
   "clojure.core-test.true-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.true-qmark (Some(\"<root>/clojure/core_test/true_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 730..732"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 42..57"
   },
   "clojure.core-test.uuid-qmark": {
    "stage": "read",
    "diagnostic": "clojure.core-test.uuid-qmark (Some(\"<root>/clojure/core_test/uuid_qmark.cljc\")): No reader function for tag uuid at bytes 345..389"
   },
   "clojure.core-test.var-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.var-qmark (Some(\"<root>/clojure/core_test/var_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1610..1613"
-  },
-  "clojure.core-test.vector": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.vector (Some(\"<root>/clojure/core_test/vector.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 1449..1451"
-  },
-  "clojure.core-test.vector-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.vector-qmark (Some(\"<root>/clojure/core_test/vector_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 580..582"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.var-qmark (Some(\"<root>/clojure/core_test/var_qmark.cljc\")): Unresolved Runtime name var at bytes 517..1919"
   },
   "clojure.core-test.when-first": {
    "stage": "namespace",
@@ -579,16 +447,16 @@
    "diagnostic": "clojure.core-test.with-out-str (Some(\"<root>/clojure/core_test/with_out_str.cljc\")): Unresolved Runtime name with-out-str at bytes 588..1478"
   },
   "clojure.core-test.with-precision": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.with-precision (Some(\"<root>/clojure/core_test/with_precision.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 352..354"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.with-precision (Some(\"<root>/clojure/core_test/with_precision.cljc\")): Unresolved Runtime name with-precision at bytes 238..1641"
   },
   "clojure.core-test.zero-qmark": {
-   "stage": "read",
-   "diagnostic": "clojure.core-test.zero-qmark (Some(\"<root>/clojure/core_test/zero_qmark.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 384..388"
+   "stage": "namespace",
+   "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 42..57"
   },
   "clojure.edn-test.read-string": {
    "stage": "read",
-   "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers at bytes 6211..6213"
+   "diagnostic": "clojure.edn-test.read-string (Some(\"<root>/clojure/edn_test/read_string.cljc\")): No reader function for tag uuid at bytes 9534..9578"
   },
   "clojure.string-test.blank-qmark": {
    "stage": "namespace",
@@ -631,14 +499,270 @@
    "diagnostic": "clojure.string (Some(\"<root>/clojure/string_test/upper_case.cljc\")): No source for namespace clojure.string at bytes 46..60"
   }
  },
- "tests": {},
+ "tests": {
+  "clojure.core-test.compare/test-compare": {
+   "stage": "trap",
+   "diagnostic": "Runtime trap: error while executing at wasm backtrace:\n    0: <unknown>!<wasm function 345>\n    1:  0x15a48 - <unknown>!<wasm function 353>\n    2:  0x1b537 - <unknown>!<wasm function 387>\n    3:  0x23d2d - <unknown>!<wasm function 608>\n    4:  0x23e20 - <unknown>!<wasm function 610>\n    5:   0x8a09 - <unknown>!<wasm function 65>\n    6:  0x11c5d - <unknown>!<wasm function 306>\n    7:  0x11d36 - <unknown>!<wasm function 307>\n    8:   0xefc2 - <unknown>!<wasm function 204>\n    9:  0x1137a - <unknown>!<wasm function 295>\n   10:  0x113a4 - <unknown>!<wasm function 296>\n   11:  0x12e39 - <unknown>!<wasm function 337>\n   12:   0xefc2 - <unknown>!<wasm function 204>\n   13:  0x1137a - <unknown>!<wasm function 295>\n   14:  0x113a4 - <unknown>!<wasm function 296>\n   15:  0x23d3f - <unknown>!<wasm function 608>\n   16:  0x23e20 - <unknown>!<wasm function 610>\n   17:   0x8a09 - <unknown>!<wasm function 65>\n   18:  0x11c5d - <unknown>!<wasm function 306>\n   19:  0x11d36 - <unknown>!<wasm function 307>: wasm trap: call stack exhausted"
+  },
+  "clojure.core-test.seq/test-seq": {
+   "stage": "language-exception",
+   "diagnostic": "{\"reason\":\"Host error: Unsupported ABI2 value layout\",\"tag\":\"opaque\"}"
+  }
+ },
  "assertions": {
   "clojure.core-test.atom/test-atom#6": "observation:undecodable",
+  "clojure.core-test.compare/test-compare#1": "test:trap",
+  "clojure.core-test.compare/test-compare#10": "test:trap",
+  "clojure.core-test.compare/test-compare#11": "test:trap",
+  "clojure.core-test.compare/test-compare#12": "test:trap",
+  "clojure.core-test.compare/test-compare#13": "test:trap",
+  "clojure.core-test.compare/test-compare#14": "test:trap",
+  "clojure.core-test.compare/test-compare#15": "test:trap",
+  "clojure.core-test.compare/test-compare#16": "test:trap",
+  "clojure.core-test.compare/test-compare#17": "test:trap",
+  "clojure.core-test.compare/test-compare#18": "test:trap",
+  "clojure.core-test.compare/test-compare#19": "test:trap",
+  "clojure.core-test.compare/test-compare#2": "test:trap",
+  "clojure.core-test.compare/test-compare#20": "test:trap",
+  "clojure.core-test.compare/test-compare#21": "test:trap",
+  "clojure.core-test.compare/test-compare#22": "test:trap",
+  "clojure.core-test.compare/test-compare#23": "test:trap",
+  "clojure.core-test.compare/test-compare#24": "test:trap",
+  "clojure.core-test.compare/test-compare#25": "test:trap",
+  "clojure.core-test.compare/test-compare#26": "test:trap",
+  "clojure.core-test.compare/test-compare#27": "test:trap",
+  "clojure.core-test.compare/test-compare#28": "test:trap",
+  "clojure.core-test.compare/test-compare#29": "test:trap",
+  "clojure.core-test.compare/test-compare#3": "test:trap",
+  "clojure.core-test.compare/test-compare#30": "test:trap",
+  "clojure.core-test.compare/test-compare#31": "test:trap",
+  "clojure.core-test.compare/test-compare#32": "test:trap",
+  "clojure.core-test.compare/test-compare#4": "test:trap",
+  "clojure.core-test.compare/test-compare#5": "test:trap",
+  "clojure.core-test.compare/test-compare#6": "test:trap",
+  "clojure.core-test.compare/test-compare#7": "test:trap",
+  "clojure.core-test.compare/test-compare#8": "test:trap",
+  "clojure.core-test.compare/test-compare#9": "test:trap",
+  "clojure.core-test.counted-qmark/test-counted?#10": "kind:error",
+  "clojure.core-test.counted-qmark/test-counted?#12": "kind:error",
+  "clojure.core-test.counted-qmark/test-counted?#7": "observation:undecodable",
+  "clojure.core-test.counted-qmark/test-counted?#8": "observation:undecodable",
+  "clojure.core-test.even-qmark/test-even?#10": "kind:error",
+  "clojure.core-test.even-qmark/test-even?#7": "kind:error",
+  "clojure.core-test.even-qmark/test-even?#8": "kind:error",
+  "clojure.core-test.even-qmark/test-even?#9": "kind:error",
+  "clojure.core-test.gt-eq/test->=#10": "kind:error",
+  "clojure.core-test.gt-eq/test->=#13": "kind:error",
+  "clojure.core-test.gt-eq/test->=#14": "kind:error",
+  "clojure.core-test.gt-eq/test->=#21": "kind:error",
+  "clojure.core-test.gt-eq/test->=#22": "kind:error",
+  "clojure.core-test.gt-eq/test->=#25": "kind:error",
+  "clojure.core-test.gt-eq/test->=#26": "kind:error",
+  "clojure.core-test.gt-eq/test->=#37": "kind:error",
+  "clojure.core-test.gt-eq/test->=#38": "kind:error",
+  "clojure.core-test.gt-eq/test->=#57": "kind:error",
+  "clojure.core-test.gt-eq/test->=#58": "kind:error",
+  "clojure.core-test.gt-eq/test->=#59": "kind:error",
+  "clojure.core-test.gt-eq/test->=#60": "kind:error",
+  "clojure.core-test.gt-eq/test->=#9": "kind:error",
+  "clojure.core-test.gt/test->#10": "kind:error",
+  "clojure.core-test.gt/test->#13": "kind:error",
+  "clojure.core-test.gt/test->#14": "kind:error",
+  "clojure.core-test.gt/test->#19": "kind:error",
+  "clojure.core-test.gt/test->#20": "kind:error",
+  "clojure.core-test.gt/test->#23": "kind:error",
+  "clojure.core-test.gt/test->#24": "kind:error",
+  "clojure.core-test.gt/test->#37": "kind:error",
+  "clojure.core-test.gt/test->#38": "kind:error",
+  "clojure.core-test.gt/test->#49": "kind:error",
+  "clojure.core-test.gt/test->#50": "kind:error",
+  "clojure.core-test.gt/test->#51": "kind:error",
+  "clojure.core-test.gt/test->#9": "kind:error",
+  "clojure.core-test.ident-qmark/test-ident?#7": "kind:error",
+  "clojure.core-test.ident-qmark/test-ident?#9": "kind:error",
   "clojure.core-test.interpose/test-interpose#4": "observation:undecodable",
+  "clojure.core-test.keyword-qmark/test-keyword?#7": "kind:error",
+  "clojure.core-test.keyword-qmark/test-keyword?#9": "kind:error",
+  "clojure.core-test.list-qmark/test-list?#10": "kind:error",
+  "clojure.core-test.list-qmark/test-list?#12": "kind:error",
+  "clojure.core-test.list/test-list#29": "kind:error",
+  "clojure.core-test.lt-eq/test-<=#10": "kind:error",
+  "clojure.core-test.lt-eq/test-<=#13": "kind:error",
+  "clojure.core-test.lt-eq/test-<=#14": "kind:error",
+  "clojure.core-test.lt-eq/test-<=#19": "kind:error",
+  "clojure.core-test.lt-eq/test-<=#20": "kind:error",
+  "clojure.core-test.lt-eq/test-<=#23": "kind:error",
+  "clojure.core-test.lt-eq/test-<=#24": "kind:error",
+  "clojure.core-test.lt-eq/test-<=#37": "kind:error",
+  "clojure.core-test.lt-eq/test-<=#38": "kind:error",
+  "clojure.core-test.lt-eq/test-<=#56": "kind:error",
+  "clojure.core-test.lt-eq/test-<=#57": "kind:error",
+  "clojure.core-test.lt-eq/test-<=#58": "kind:error",
+  "clojure.core-test.lt-eq/test-<=#59": "kind:error",
+  "clojure.core-test.lt-eq/test-<=#9": "kind:error",
+  "clojure.core-test.lt/test-<#10": "kind:error",
+  "clojure.core-test.lt/test-<#13": "kind:error",
+  "clojure.core-test.lt/test-<#14": "kind:error",
+  "clojure.core-test.lt/test-<#19": "kind:error",
+  "clojure.core-test.lt/test-<#20": "kind:error",
+  "clojure.core-test.lt/test-<#23": "kind:error",
+  "clojure.core-test.lt/test-<#24": "kind:error",
+  "clojure.core-test.lt/test-<#37": "kind:error",
+  "clojure.core-test.lt/test-<#38": "kind:error",
+  "clojure.core-test.lt/test-<#49": "kind:error",
+  "clojure.core-test.lt/test-<#50": "kind:error",
+  "clojure.core-test.lt/test-<#51": "kind:error",
+  "clojure.core-test.lt/test-<#52": "kind:error",
+  "clojure.core-test.lt/test-<#9": "kind:error",
+  "clojure.core-test.map-qmark/test-map?#12": "kind:error",
+  "clojure.core-test.map-qmark/test-map?#14": "kind:error",
   "clojure.core-test.mapcat/test-mapcat#12": "observation:undecodable",
   "clojure.core-test.mapcat/test-mapcat#3": "observation:undecodable",
+  "clojure.core-test.max/test-max#2": "kind:error",
+  "clojure.core-test.max/test-max#23": "kind:error",
+  "clojure.core-test.max/test-max#24": "kind:error",
+  "clojure.core-test.max/test-max#3": "kind:error",
+  "clojure.core-test.max/test-max#4": "kind:error",
+  "clojure.core-test.min/test-min#2": "kind:error",
+  "clojure.core-test.min/test-min#23": "kind:error",
+  "clojure.core-test.min/test-min#24": "kind:error",
+  "clojure.core-test.min/test-min#3": "kind:error",
+  "clojure.core-test.min/test-min#4": "kind:error",
+  "clojure.core-test.odd-qmark/test-odd?#10": "kind:error",
+  "clojure.core-test.odd-qmark/test-odd?#7": "kind:error",
+  "clojure.core-test.odd-qmark/test-odd?#8": "kind:error",
+  "clojure.core-test.odd-qmark/test-odd?#9": "kind:error",
   "clojure.core-test.partial/test-partial#2": "kind:error",
-  "clojure.core-test.update/test-update#48": "kind:error"
+  "clojure.core-test.partition/test-partition#4": "kind:error",
+  "clojure.core-test.partition/test-partition#9": "kind:error",
+  "clojure.core-test.qualified-ident-qmark/test-qualified-ident?#10": "kind:error",
+  "clojure.core-test.qualified-ident-qmark/test-qualified-ident?#12": "kind:error",
+  "clojure.core-test.qualified-keyword-qmark/test-qualified-keyword?#11": "kind:error",
+  "clojure.core-test.qualified-keyword-qmark/test-qualified-keyword?#9": "kind:error",
+  "clojure.core-test.qualified-symbol-qmark/test-qualified-symbol?#10": "kind:error",
+  "clojure.core-test.qualified-symbol-qmark/test-qualified-symbol?#8": "kind:error",
+  "clojure.core-test.reversible-qmark/test-reversible?#11": "kind:error",
+  "clojure.core-test.reversible-qmark/test-reversible?#13": "kind:error",
+  "clojure.core-test.seq-qmark/test-seq?#13": "kind:error",
+  "clojure.core-test.seq-qmark/test-seq?#15": "kind:error",
+  "clojure.core-test.seq/test-seq#1": "count:8/17",
+  "clojure.core-test.seq/test-seq#10": "test:language-exception",
+  "clojure.core-test.seq/test-seq#11": "test:language-exception",
+  "clojure.core-test.seq/test-seq#12": "test:language-exception",
+  "clojure.core-test.seq/test-seq#13": "test:language-exception",
+  "clojure.core-test.seq/test-seq#14": "test:language-exception",
+  "clojure.core-test.seq/test-seq#15": "test:language-exception",
+  "clojure.core-test.seq/test-seq#16": "test:language-exception",
+  "clojure.core-test.seq/test-seq#17": "test:language-exception",
+  "clojure.core-test.seq/test-seq#2": "count:8/17",
+  "clojure.core-test.seq/test-seq#3": "count:8/17",
+  "clojure.core-test.seq/test-seq#4": "count:8/17",
+  "clojure.core-test.seq/test-seq#5": "count:8/17",
+  "clojure.core-test.seq/test-seq#6": "count:8/17",
+  "clojure.core-test.seq/test-seq#7": "count:8/17",
+  "clojure.core-test.seq/test-seq#8": "count:8/17",
+  "clojure.core-test.seq/test-seq#9": "test:language-exception",
+  "clojure.core-test.seqable-qmark/test-seqable?#12": "kind:error",
+  "clojure.core-test.seqable-qmark/test-seqable?#14": "kind:error",
+  "clojure.core-test.set-qmark/test-set?#12": "kind:error",
+  "clojure.core-test.set-qmark/test-set?#14": "kind:error",
+  "clojure.core-test.simple-ident-qmark/test-simple-ident?#10": "kind:error",
+  "clojure.core-test.simple-ident-qmark/test-simple-ident?#12": "kind:error",
+  "clojure.core-test.simple-keyword-qmark/test-simple-keyword?#11": "kind:error",
+  "clojure.core-test.simple-keyword-qmark/test-simple-keyword?#9": "kind:error",
+  "clojure.core-test.simple-symbol-qmark/test-simple-symbol?#10": "kind:error",
+  "clojure.core-test.simple-symbol-qmark/test-simple-symbol?#8": "kind:error",
+  "clojure.core-test.slash/test-slash#10": "kind:error",
+  "clojure.core-test.slash/test-slash#103": "kind:error",
+  "clojure.core-test.slash/test-slash#104": "kind:error",
+  "clojure.core-test.slash/test-slash#105": "kind:error",
+  "clojure.core-test.slash/test-slash#106": "kind:error",
+  "clojure.core-test.slash/test-slash#107": "kind:error",
+  "clojure.core-test.slash/test-slash#108": "kind:error",
+  "clojure.core-test.slash/test-slash#109": "kind:error",
+  "clojure.core-test.slash/test-slash#11": "kind:error",
+  "clojure.core-test.slash/test-slash#110": "kind:error",
+  "clojure.core-test.slash/test-slash#119": "kind:error",
+  "clojure.core-test.slash/test-slash#12": "kind:error",
+  "clojure.core-test.slash/test-slash#120": "kind:error",
+  "clojure.core-test.slash/test-slash#121": "kind:error",
+  "clojure.core-test.slash/test-slash#122": "kind:error",
+  "clojure.core-test.slash/test-slash#123": "kind:error",
+  "clojure.core-test.slash/test-slash#124": "kind:error",
+  "clojure.core-test.slash/test-slash#125": "kind:error",
+  "clojure.core-test.slash/test-slash#126": "kind:error",
+  "clojure.core-test.slash/test-slash#129": "kind:error",
+  "clojure.core-test.slash/test-slash#13": "kind:error",
+  "clojure.core-test.slash/test-slash#130": "kind:error",
+  "clojure.core-test.slash/test-slash#133": "kind:error",
+  "clojure.core-test.slash/test-slash#134": "kind:error",
+  "clojure.core-test.slash/test-slash#14": "kind:error",
+  "clojure.core-test.slash/test-slash#15": "kind:error",
+  "clojure.core-test.slash/test-slash#16": "kind:error",
+  "clojure.core-test.slash/test-slash#32": "kind:error",
+  "clojure.core-test.slash/test-slash#33": "kind:error",
+  "clojure.core-test.slash/test-slash#34": "kind:error",
+  "clojure.core-test.slash/test-slash#35": "kind:error",
+  "clojure.core-test.slash/test-slash#36": "kind:error",
+  "clojure.core-test.slash/test-slash#37": "kind:error",
+  "clojure.core-test.slash/test-slash#38": "kind:error",
+  "clojure.core-test.slash/test-slash#39": "kind:error",
+  "clojure.core-test.slash/test-slash#40": "kind:error",
+  "clojure.core-test.slash/test-slash#41": "kind:error",
+  "clojure.core-test.slash/test-slash#42": "kind:error",
+  "clojure.core-test.slash/test-slash#43": "kind:error",
+  "clojure.core-test.slash/test-slash#44": "kind:error",
+  "clojure.core-test.slash/test-slash#45": "kind:error",
+  "clojure.core-test.slash/test-slash#46": "kind:error",
+  "clojure.core-test.slash/test-slash#47": "kind:error",
+  "clojure.core-test.slash/test-slash#48": "kind:error",
+  "clojure.core-test.slash/test-slash#49": "kind:error",
+  "clojure.core-test.slash/test-slash#5": "kind:error",
+  "clojure.core-test.slash/test-slash#50": "kind:error",
+  "clojure.core-test.slash/test-slash#51": "kind:error",
+  "clojure.core-test.slash/test-slash#52": "kind:error",
+  "clojure.core-test.slash/test-slash#53": "kind:error",
+  "clojure.core-test.slash/test-slash#54": "kind:error",
+  "clojure.core-test.slash/test-slash#55": "kind:error",
+  "clojure.core-test.slash/test-slash#56": "kind:error",
+  "clojure.core-test.slash/test-slash#57": "kind:error",
+  "clojure.core-test.slash/test-slash#58": "kind:error",
+  "clojure.core-test.slash/test-slash#59": "kind:error",
+  "clojure.core-test.slash/test-slash#6": "kind:error",
+  "clojure.core-test.slash/test-slash#60": "kind:error",
+  "clojure.core-test.slash/test-slash#61": "kind:error",
+  "clojure.core-test.slash/test-slash#62": "kind:error",
+  "clojure.core-test.slash/test-slash#63": "kind:error",
+  "clojure.core-test.slash/test-slash#64": "kind:error",
+  "clojure.core-test.slash/test-slash#65": "kind:error",
+  "clojure.core-test.slash/test-slash#66": "kind:error",
+  "clojure.core-test.slash/test-slash#67": "kind:error",
+  "clojure.core-test.slash/test-slash#68": "kind:error",
+  "clojure.core-test.slash/test-slash#69": "kind:error",
+  "clojure.core-test.slash/test-slash#7": "kind:error",
+  "clojure.core-test.slash/test-slash#70": "kind:error",
+  "clojure.core-test.slash/test-slash#71": "kind:error",
+  "clojure.core-test.slash/test-slash#72": "kind:error",
+  "clojure.core-test.slash/test-slash#73": "kind:error",
+  "clojure.core-test.slash/test-slash#74": "kind:error",
+  "clojure.core-test.slash/test-slash#75": "kind:error",
+  "clojure.core-test.slash/test-slash#76": "kind:error",
+  "clojure.core-test.slash/test-slash#8": "kind:error",
+  "clojure.core-test.slash/test-slash#83": "kind:error",
+  "clojure.core-test.slash/test-slash#84": "kind:error",
+  "clojure.core-test.slash/test-slash#85": "kind:error",
+  "clojure.core-test.slash/test-slash#86": "kind:error",
+  "clojure.core-test.slash/test-slash#87": "kind:error",
+  "clojure.core-test.slash/test-slash#88": "kind:error",
+  "clojure.core-test.slash/test-slash#9": "kind:error",
+  "clojure.core-test.slash/test-slash#93": "kind:error",
+  "clojure.core-test.slash/test-slash#94": "kind:error",
+  "clojure.core-test.symbol-qmark/test-symbol?#7": "kind:error",
+  "clojure.core-test.symbol-qmark/test-symbol?#9": "kind:error",
+  "clojure.core-test.update/test-update#48": "kind:error",
+  "clojure.core-test.vector-qmark/test-vector?#11": "kind:error",
+  "clojure.core-test.vector-qmark/test-vector?#13": "kind:error",
+  "clojure.core-test.vector/test-vector#24": "kind:error"
  },
  "skip-mismatches": [
   [

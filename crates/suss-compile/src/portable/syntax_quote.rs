@@ -397,6 +397,7 @@ impl<M: FnMut(u64) -> Result<(), Diagnostic>> Pass<'_, M> {
                 Kind::Nil
                 | Kind::Bool(_)
                 | Kind::Number(_)
+                | Kind::Exact(_)
                 | Kind::String(_)
                 | Kind::Keyword(_) => data(span, clone_kind_metered(form, &mut *self.meter)?),
                 _ => return Err(error(form, "Unsupported unresolved syntax quote data")),

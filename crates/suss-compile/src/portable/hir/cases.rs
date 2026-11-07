@@ -42,6 +42,7 @@ fn constant(form: &Form) -> Result<(CaseConstant, (u8, Vec<u8>)), Diagnostic> {
             );
             (CaseConstant::Keyword(fqn.clone()), (4, fqn.into_bytes()))
         }
+        Kind::Exact(number) => return Err(fail(form.span.clone(), number.unsupported_message())),
         _ => {
             return Err(fail(
                 form.span.clone(),
@@ -64,6 +65,22 @@ impl Analyzer<'_> {
                 form.span.clone(),
                 "case bootstrap requires an expression and explicit default",
             ));
+        }
+        // No value can hold an exact constant until #335, so such a case
+        // evaluates its expression and then throws as the literal would.
+        let exact = args[1..args.len() - 1].chunks_exact(2).find_map(|pair| match &pair[0].kind {
+            Kind::List(constants) => constants.iter().find(|c| matches!(c.kind, Kind::Exact(_))),
+            Kind::Exact(_) => Some(&pair[0]),
+            _ => None,
+        });
+        if let Some(exact) = exact {
+            let at = |kind| Form { span: form.span.clone(), metadata: vec![], kind };
+            let body = at(Kind::List(vec![
+                at(Kind::Symbol(suss_reader::Symbol::new("do"))),
+                args[0].clone(),
+                exact.clone(),
+            ]));
+            return self.form_in(&body, context, tail);
         }
         let mut seen = BTreeSet::new();
         let mut groups = vec![];
