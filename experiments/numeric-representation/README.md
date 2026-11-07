@@ -105,3 +105,75 @@ median, 99th-percentile and slowest of the chunks of 10⁵ `a_f64box` additions.
 - Peak RSS at 4·10⁶ live objects was 505 MiB, against 260 MiB during the
   unboxed kernels, which run first. That is consistent with copying keeping
   two halves of its heap.
+
+## Sentinel designs (#335)
+
+#335 measures ADR-0003's tagged encoding against moving the sentinels out of
+i31, before ABI v3 fixes the encoding. Three designs:
+
+- **A, tagged:** a long in 30 bits is the i31 `(v << 1) | 1`; nil, false, true
+  and undefined are the even i31 values 0, 2, 4 and 6, as today.
+- **B, sentinels outside i31:** every i31 is a 31-bit long; nil is `ref.null`,
+  and false, true and undefined are singleton structs.
+- **C:** B with nil a singleton struct too, so a value is never null.
+
+Each kernel has a real out-of-line fallback. `setup2` builds a 1,024-value
+array mixing i31 longs, boxed longs, nil, false and true (5:1:1:1 per 8) in
+each design's encoding.
+
+| Kernel | What it does |
+| --- | --- |
+| `f_addA`, `f_addB` | `acc + 1` with the i31 fast path inline and a boxing fallback |
+| `g_truthyA`, `g_truthyB`, `g_truthyC` | `if`'s test (falsy for nil, false, undefined) over the mixed array |
+| `h_numberA`, `h_numberB` | `number?` over the mixed array: an odd i31 or a box, against any i31 or a box |
+| `k_loopA`, `k_loopB` | `(loop [i 0] (if (< i n) (recur (inc i)) i))` through out-of-line polymorphic `<` and `inc`, where `<` returns a boolean sentinel |
+
+Five runs on 2026-11-07, copying collector, `GC_INITIAL_MIB=64` (see below),
+n = 5·10⁷, best of five within each run; nanoseconds per iteration, range and
+median across the runs ([run_sentinels_copying](results/run_sentinels_copying.txt)):
+
+| Kernel | A | B | C |
+| --- | --- | --- | --- |
+| Addition (`f_add`) | 2.36–2.51 (2.38) | 1.84–1.95 (1.87) | as B |
+| Addition outside i31 (`f_add*_boxedrange`) | 7.72–8.33 (7.84) | 7.84–8.33 (7.88) | as B |
+| Truthiness (`g_truthy`) | 2.27–2.49 (2.30) | 2.18–2.38 (2.25) | 2.27–2.45 (2.34) |
+| `number?` (`h_number`) | 1.90–1.93 (1.92) | 2.04–2.09 (2.08) | as B |
+| Counting loop (`k_loop`) | 5.12–5.23 (5.17) | 4.50–4.55 (4.53) | as B |
+
+Moving the sentinels out of i31 makes small-long addition 21% faster and the
+counting loop 12% faster. Truthiness is the same within noise in all three
+designs: comparing against a singleton struct in a global costs no more than
+against an i31 constant. `number?` is 0.16 ns slower in B and C, which need
+two type tests where A needs a type test and a bit test. ABI v3 uses B: every
+i31 is a long from −2³⁰ to 2³⁰ − 1, nil is `ref.null`, and false, true and
+undefined are singleton structs. Suss's `Value` type is already a nullable
+`eqref`, so B needs no new types, and a null is a constant expression that
+default-initialized arrays and structs already hold, which C's nil struct
+isn't.
+
+## GC heap growth
+
+`setup2`'s mixed arrays keep about 2,000 objects live, and with them
+`a_f64box` costs 23 ns instead of 4. wasmtime 49.0.1 grows the GC heap only
+when a collection leaves less free space than the pending allocation needs
+(`collect_and_maybe_grow_gc_heap`), so a heap that live data almost fills is
+collected every few allocations, each copying all of it. `GC_INITIAL_MIB` sets
+`Config::gc_heap_initial_size`. `a_f64box`, ns per addition, n = 2·10⁷, best of
+three ([run_gc_initial](results/run_gc_initial.txt),
+[run_gc_initial_rss](results/run_gc_initial_rss.txt)):
+
+| Initial heap | 0 live | 2,048 live | 65,536 live | 10⁶ live | 4·10⁶ live | Peak RSS, 0 live |
+| --- | --- | --- | --- | --- | --- | --- |
+| Default (0) | 4.1–4.7 | 20.4 | 131 | 22.4–23.3 | 22.1 | 16 MiB |
+| 16 MiB | 4.2 | 4.5 | 9.0 | 20.1 | | |
+| 64 MiB | 4.0 | 4.0 | 4.9 | 20.1–21.3 | 20.6 | 80 MiB |
+| 256 MiB | 4.0–4.1 | 3.8 | 4.1 | 9.0–10.9 | 21.7 | 272 MiB |
+| 1 GiB | 4.3 | | | 5.0 | 7.6 | 1,040 MiB |
+
+i31 arithmetic doesn't allocate, so it stays at 1.8–2.0 ns throughout. Most
+of the live-heap cost measured above comes from this growth policy, not from
+the live heap's size alone. A larger initial heap avoids it, but the copying
+collector touches all of its heap, so peak RSS grows by the same amount. The
+pause for each collection still grows with the live heap: the slowest chunk is
+about 17 ms at 10⁶ live objects and 64–72 ms at 4·10⁶, whatever the initial
+size.

@@ -35,11 +35,10 @@ pub(super) fn functions(b: &mut Builder, primitives: [u32; 7]) -> Vec<u32> {
                     array_type_index: STRING,
                     array_size: message.len() as u32,
                 },
-                I32Const(0),
-                RefI31,
-                I32Const(0),
-                RefI31,
-                I32Const(0), RefI31, StructNew(8),
+                sentinel_value(NIL),
+                sentinel_value(NIL),
+                I32Const(0), RefI31, // Identity UID, unassigned.
+                StructNew(8),
                 Throw(0),
             ]);
         }
@@ -113,8 +112,7 @@ pub(super) fn functions(b: &mut Builder, primitives: [u32; 7]) -> Vec<u32> {
             &[],
             &[VALUE],
             &[
-                I32Const(0),
-                RefI31,
+                sentinel_value(NIL),
                 RefFunc(invoke),
                 I32Const(minimum),
                 I32Const(-1),

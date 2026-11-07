@@ -22,14 +22,9 @@ fn ordinary_object_coercion_preserves_hints_order_and_primitive_results() {
                 .unwrap_or_else(|error| panic!("{source}: {error}"));
             session.collect().unwrap();
             session
-                .inspect(&value, |store, value| {
+                .inspect(&value, |mut store, value| {
                     assert_eq!(
-                        value
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_i31(&store)?
-                            .expect("Boolean ABI")
-                            .get_u32(),
+                        suss_cli::portable_session::sentinel_tag(&mut store, &value)?.expect("Boolean ABI"),
                         4,
                         "{source}"
                     );
@@ -56,14 +51,9 @@ fn array_length_assignment_converts_object_rhs_twice_in_order() {
                 .unwrap_or_else(|error| panic!("{source}: {error}"));
             session.collect().unwrap();
             session
-                .inspect(&value, |store, value| {
+                .inspect(&value, |mut store, value| {
                     assert_eq!(
-                        value
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_i31(&store)?
-                            .expect("Boolean ABI")
-                            .get_u32(),
+                        suss_cli::portable_session::sentinel_tag(&mut store, &value)?.expect("Boolean ABI"),
                         4,
                         "{source}"
                     );

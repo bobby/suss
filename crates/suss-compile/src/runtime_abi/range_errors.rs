@@ -17,11 +17,10 @@ pub(super) fn append_globals(globals: &mut GlobalSection) {
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(0),
+            sentinel_value(NIL),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(0),
-            RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            sentinel_value(NIL), StructNew(DESCRIPTOR),
         ]),
     );
     globals.global(
@@ -30,7 +29,7 @@ pub(super) fn append_globals(globals: &mut GlobalSection) {
             mutable: true,
             shared: false,
         },
-        &ConstExpr::extended([I32Const(0), RefI31]),
+        &ConstExpr::extended([sentinel_value(NIL)]),
     );
 }
 pub(super) fn invalid_length(body: &mut Vec<Instruction<'static>>) {
@@ -42,11 +41,9 @@ pub(super) fn invalid_length(body: &mut Vec<Instruction<'static>>) {
             array_type_index: STRING,
             array_size: units.len() as u32,
         },
-        I32Const(0),
-        RefI31,
-        I32Const(0),
-        RefI31,
-        I32Const(0),
+        sentinel_value(NIL),
+        sentinel_value(NIL),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
         Throw(0),

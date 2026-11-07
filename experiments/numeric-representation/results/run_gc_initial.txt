@@ -1,0 +1,16 @@
+init=default live=0: a_f64box 4.729  c_i31 1.966   
+init=default live=2048: a_f64box 20.376  c_i31 1.837   
+init=default live=65536: a_f64box 131.109  c_i31 1.943   
+init=default live=1000000: a_f64box 23.276  c_i31 1.980   
+init=16 live=0: a_f64box 4.203  c_i31 1.977   
+init=16 live=2048: a_f64box 4.511  c_i31 1.974   
+init=16 live=65536: a_f64box 8.962  c_i31 1.826   
+init=16 live=1000000: a_f64box 20.141  c_i31 1.867   
+init=64 live=0: a_f64box 4.064  c_i31 1.930   
+init=64 live=2048: a_f64box 3.960  c_i31 1.840   
+init=64 live=65536: a_f64box 4.945  c_i31 1.867   
+init=64 live=1000000: a_f64box 20.124  c_i31 1.868   
+init=256 live=0: a_f64box 3.965  c_i31 1.843   
+init=256 live=2048: a_f64box 3.834  c_i31 1.888   
+init=256 live=65536: a_f64box 4.143  c_i31 1.874   
+init=256 live=1000000: a_f64box 10.914  c_i31 1.967   

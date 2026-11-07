@@ -10,14 +10,14 @@ const PIN: &str = "c4295f303100bbf5afac449242d30bca1126f1a1";
 fn observation(session: &mut Session, value: &SessionValue) -> serde_json::Value {
     session
         .inspect(value, |mut store, value| {
-            let value = value.unwrap_anyref().unwrap();
-            if let Some(boolean) = value.as_i31(&store)? {
-                return Ok(match boolean.get_u32() {
+            if let Some(boolean) = suss_cli::portable_session::sentinel_tag(&mut store, &value)? {
+                return Ok(match boolean {
                     2 => serde_json::json!({"tag":"bool", "value":false}),
                     4 => serde_json::json!({"tag":"bool", "value":true}),
                     other => panic!("unexpected scalar sentinel {other}"),
                 });
             }
+            let value = value.unwrap_anyref().unwrap();
             let object = value.as_struct(&store)?.expect("number struct");
             let fields = object.fields(&mut store)?.collect::<Vec<_>>();
             let [Val::F64(bits)] = fields.as_slice() else {

@@ -64,13 +64,8 @@ fn complete_record_helpers_match_closed_pinned_cases_in_both_phases_after_gc() {
             let value = session.eval(case["source"].as_str().unwrap()).unwrap();
             session.collect().unwrap();
             let actual = session
-                .inspect(&value, |store, value| {
-                    let raw = value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .expect("Boolean ABI")
-                        .get_u32();
+                .inspect(&value, |mut store, value| {
+                    let raw = suss_cli::portable_session::sentinel_tag(&mut store, &value)?.expect("Boolean ABI");
                     Ok(match raw {
                         2 => false,
                         4 => true,

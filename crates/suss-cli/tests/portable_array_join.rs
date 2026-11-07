@@ -30,14 +30,9 @@ fn array_join_conversion_preserves_holes_nesting_and_live_reads() {
                 .unwrap_or_else(|error| panic!("{source}: {error}"));
             session.collect().unwrap();
             session
-                .inspect(&value, |store, value| {
+                .inspect(&value, |mut store, value| {
                     assert_eq!(
-                        value
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_i31(&store)?
-                            .expect("Boolean ABI")
-                            .get_u32(),
+                        suss_cli::portable_session::sentinel_tag(&mut store, &value)?.expect("Boolean ABI"),
                         4,
                         "{source}"
                     );
@@ -66,14 +61,9 @@ fn array_join_cancellation_does_not_leave_a_cycle_marker() {
         let value = session.eval("(do (aset retained-join-array 0 \"fixed\") (and (= @join-entered 1) (= (.join retained-join-array) \"fixed\")))").unwrap();
         session.collect().unwrap();
         session
-            .inspect(&value, |store, value| {
+            .inspect(&value, |mut store, value| {
                 assert_eq!(
-                    value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .unwrap()
-                        .get_u32(),
+                    suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap(),
                     4
                 );
                 Ok(())

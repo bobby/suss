@@ -209,7 +209,7 @@ fn portable_component_keeps_source_order_old_captures_live_cells_and_scalar_valu
 
 #[test]
 fn portable_component_boundary_rejects_wrong_result_with_language_payload() {
-    // Cover the i31 boolean sentinel guard, non-i31 guard, and numeric cast guard.
+    // Cover the boolean sentinel guard, non-sentinel guard, and numeric cast guard.
     for (result, value) in [
         ("bool", "nil"),
         ("bool", "1"),

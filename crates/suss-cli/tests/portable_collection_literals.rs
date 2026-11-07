@@ -3,13 +3,8 @@ use suss_cli::portable_session::Session;
 fn boolean(session: &mut Session, source: &str) -> bool {
     let value = session.eval(source).unwrap();
     session
-        .inspect(&value, |store, value| {
-            let bits = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32();
+        .inspect(&value, |mut store, value| {
+            let bits = suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap();
             Ok(match bits {
                 2 => false,
                 4 => true,
@@ -74,12 +69,7 @@ fn collection_literals_match_independently_decoded_primary_values() {
                         serde_json::json!({"tag":"f64","bits":format!("{bits:016x}")})
                     }
                     "bool" => {
-                        let boolean = match value
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_i31(&store)?
-                            .unwrap()
-                            .get_u32()
+                        let boolean = match suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap()
                         {
                             2 => false,
                             4 => true,

@@ -2,6 +2,7 @@
 //! Ported core, its node probe and the core-internal structural tests read
 //! other types' private fields and core-private helpers, so they run as core
 //! (#278). Tests of user probe types stay user code.
+use suss_compile::portable_session::sentinel_tag;
 use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
 use suss_compile::portable::resolve::Phase;
 use wasmtime::{AsContextMut, Val};
@@ -182,13 +183,8 @@ fn complete_tree_nodes_match_ordered_pinned_value_and_effect_cases_after_gc() {
                 .unwrap_or_else(|e| panic!("{}: {source}: {e}", case["id"]));
             session.collect().unwrap();
             session
-                .inspect(&value, |store, value| {
-                    let raw = value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .expect("Boolean ABI")
-                        .get_u32();
+                .inspect(&value, |mut store, value| {
+                    let raw = sentinel_tag(&mut store, &value)?.expect("Boolean ABI");
                     assert_eq!(raw, 4, "{}", case["id"]);
                     Ok(())
                 })
@@ -384,12 +380,7 @@ fn nodes_preserve_canonical_classes_child_sharing_and_cache_boundaries_after_gc(
                 let field = source_field!(store, value, NODE_FIELDS, "__hash");
                 match cache {
                     None => assert_eq!(
-                        field
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_i31(&store)?
-                            .unwrap()
-                            .get_u32(),
+                        sentinel_tag(&mut store, &field)?.unwrap(),
                         0
                     ),
                     Some(n) => assert_eq!(
@@ -445,12 +436,7 @@ fn nodes_preserve_canonical_classes_child_sharing_and_cache_boundaries_after_gc(
                 )?);
                 let cache = source_field!(store, child, NODE_FIELDS, "__hash");
                 assert_eq!(
-                    cache
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .unwrap()
-                        .get_u32(),
+                    sentinel_tag(&mut store, &cache)?.unwrap(),
                     0
                 );
             }
@@ -512,12 +498,7 @@ fn tree_reduction_preserves_wrapper_identity_original_throw_and_effect_order() {
             )?);
             let inner = source_field!(store, value, &["val"], "val");
             assert_eq!(
-                inner
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32(),
+                sentinel_tag(&mut store, &inner)?.unwrap(),
                 2
             );
             Ok(())
@@ -577,8 +558,8 @@ fn hyphenated_object_methods_preserve_receiver_lookup_and_argument_order() {
             .eval("(nil? (.-bad-name (TreeMethodProbe. 7)))")
             .unwrap();
         assert_eq!(
-            s.inspect(&missing, |store, value| {
-                Ok(value.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32())
+            s.inspect(&missing, |mut store, value| {
+                Ok(sentinel_tag(&mut store, &value)?.unwrap())
             })
             .unwrap(),
             4
@@ -708,17 +689,17 @@ fn raw_tree_decode(
         return Err(wasmtime::Error::msg("raw tree depth/budget"));
     }
     *remaining -= 1;
-    let reference = value
-        .unwrap_anyref()
-        .ok_or_else(|| wasmtime::Error::msg("raw tree null reference"))?;
-    if let Some(i) = reference.as_i31(&*store)? {
-        return match i.get_u32() {
+    if let Some(tag) = sentinel_tag(&mut *store, value)? {
+        return match tag {
             0 => Ok(json!({"tag":"nil"})),
             2 => Ok(json!({"tag":"bool","value":false})),
             4 => Ok(json!({"tag":"bool","value":true})),
             _ => Err(wasmtime::Error::msg("raw tree unsupported immediate")),
         };
     }
+    let reference = value
+        .unwrap_anyref()
+        .ok_or_else(|| wasmtime::Error::msg("raw tree null reference"))?;
     let owner = reference
         .as_struct(&*store)?
         .ok_or_else(|| wasmtime::Error::msg("raw tree nonstruct"))?;
@@ -777,12 +758,7 @@ fn raw_tree_decode(
             for i in [2, 3] {
                 let field = owner.field(&mut *store, i)?;
                 assert_eq!(
-                    field
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&*store)?
-                        .unwrap()
-                        .get_u32(),
+                    sentinel_tag(&mut *store, &field)?.unwrap(),
                     0
                 );
             }

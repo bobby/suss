@@ -48,13 +48,8 @@ fn identity_uids_remain_owned_stable_and_distinct_across_gc_fragments() {
 fn eval_bool(session: &mut Session, source: &str) -> bool {
     let value = session.eval(source).unwrap();
     session
-        .inspect(&value, |store, value| {
-            match value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32()
+        .inspect(&value, |mut store, value| {
+            match suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap()
             {
                 2 => Ok(false),
                 4 => Ok(true),

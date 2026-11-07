@@ -229,11 +229,9 @@ pub(super) fn error(message: &str, global: u32) -> Vec<Instruction<'static>> {
             array_type_index: STRING,
             array_size: units.len() as u32,
         },
-        I32Const(0),
-        RefI31,
-        I32Const(0),
-        RefI31,
-        I32Const(0),
+        sentinel_value(NIL),
+        sentinel_value(NIL),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
         Throw(0),
@@ -347,26 +345,19 @@ pub(super) fn intrinsics(
         },
         Return,
         End,
-        LocalGet(0),
-        RefTestNonNull(HeapType::I31),
-        If(BlockType::Empty),
     ];
-    for (sentinel, value) in [(0, 0.0), (2, 0.0), (4, 1.0), (UNDEFINED, f64::NAN)] {
+    for (sentinel, value) in [(NIL, 0.0), (FALSE, 0.0), (TRUE, 1.0), (UNDEFINED, f64::NAN)] {
         convert.extend([
             LocalGet(0),
-            RefCastNonNull(HeapType::I31),
-            I31GetU,
-            I32Const(sentinel),
-            I32Eq,
+            sentinel_value(sentinel),
+            RefEq,
             If(BlockType::Empty),
             F64Const(value.into()),
             Return,
             End,
         ]);
     }
-    convert.extend_from_slice(&unsupported);
     convert.extend([
-        End,
         LocalGet(0),
         RefTestNonNull(string),
         If(BlockType::Empty),
@@ -428,30 +419,23 @@ pub(super) fn intrinsics(
         LocalGet(0),
         Return,
         End,
-        LocalGet(0),
-        RefTestNonNull(HeapType::I31),
-        If(BlockType::Empty),
     ];
     for (sentinel, value) in [
-        (0, "null"),
-        (2, "false"),
-        (4, "true"),
+        (NIL, "null"),
+        (FALSE, "false"),
+        (TRUE, "true"),
         (UNDEFINED, "undefined"),
     ] {
         to_string.extend([
             LocalGet(0),
-            RefCastNonNull(HeapType::I31),
-            I31GetU,
-            I32Const(sentinel),
-            I32Eq,
+            sentinel_value(sentinel),
+            RefEq,
             If(BlockType::Empty),
         ]);
         to_string.extend(text(value));
         to_string.extend([Return, End]);
     }
-    to_string.extend_from_slice(&unsupported);
     to_string.extend([
-        End,
         LocalGet(0),
         RefTestNonNull(number),
         If(BlockType::Empty),

@@ -61,8 +61,7 @@ pub(super) fn callback(b: &mut Builder) -> u32 {
         LocalSet(2),
         I32Const(0),
         LocalSet(5),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         LocalSet(4),
         LocalGet(1),
         ArrayLen,
@@ -72,8 +71,7 @@ pub(super) fn callback(b: &mut Builder) -> u32 {
         LocalGet(1),
         I32Const(0),
         ArrayGet(ARGS),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),
@@ -103,8 +101,7 @@ pub(super) fn callback(b: &mut Builder) -> u32 {
     text(&mut code, "cause");
     code.extend([
         Call(b.names["native-object-property-descriptor"]),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),
@@ -199,8 +196,7 @@ pub(super) fn callback(b: &mut Builder) -> u32 {
         ArrayGet(ARGS),
         LocalSet(6),
         LocalGet(6),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),
@@ -211,8 +207,7 @@ pub(super) fn callback(b: &mut Builder) -> u32 {
         Call(b.names["native-object-property-descriptor"]),
         LocalSet(7),
         LocalGet(7),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),
@@ -243,14 +238,26 @@ pub(super) fn callback(b: &mut Builder) -> u32 {
     nominal::error(&mut code);
     code.extend([
         End,
+        // A kernel error's field 2 is nil: no options are present.
+        Block(BlockType::Result(ValType::I32)),
+        Block(BlockType::Result(VALUE)),
         LocalGet(3),
         RefCastNonNull(HeapType::Concrete(8)),
         StructGet {
             struct_type_index: 8,
             field_index: 2,
         },
-        RefCastNonNull(HeapType::I31),
+        BrOnCastFail {
+            relative_depth: 0,
+            from_ref_type: RefType::EQREF,
+            to_ref_type: RefType { nullable: false, heap_type: HeapType::I31 },
+        },
         I31GetU,
+        Br(1),
+        End,
+        Drop,
+        I32Const(0),
+        End,
         I32Const(1),
         I32And,
         If(BlockType::Empty),
@@ -354,7 +361,7 @@ pub(super) fn callback(b: &mut Builder) -> u32 {
             array_size: 2,
         },
         LocalGet(4),
-        I32Const(0),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
     ]);
@@ -375,7 +382,7 @@ pub(super) fn functions(b: &mut Builder, callback: u32) {
         "undefined-value",
         &[],
         &[VALUE],
-        &[I32Const(UNDEFINED), RefI31],
+        &[sentinel_value(UNDEFINED)],
     );
     b.function(
         "nan-value",

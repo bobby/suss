@@ -1,4 +1,5 @@
 use suss_cli::portable_session::{Session, SessionError, SessionValue};
+use suss_compile::portable_session::sentinel_tag;
 use wasmtime::Val;
 
 fn number(session: &mut Session, value: &SessionValue) -> u64 {
@@ -20,13 +21,8 @@ fn eval_number(session: &mut Session, source: &str) -> u64 {
 fn eval_bool(session: &mut Session, source: &str) -> bool {
     let value = session.eval(source).unwrap();
     session
-        .inspect(&value, |store, value| {
-            match value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32()
+        .inspect(&value, |mut store, value| {
+            match sentinel_tag(&mut store, &value)?.unwrap()
             {
                 2 => Ok(false),
                 4 => Ok(true),
@@ -216,13 +212,8 @@ fn native_satisfies_function_is_first_class_and_macro_fallback_observes_redefini
     session.collect().unwrap();
     let result = session.invoke(&function, &[&protocol, &value]).unwrap();
     let truth = session
-        .inspect(&result, |store, value| {
-            Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32())
+        .inspect(&result, |mut store, value| {
+            Ok(sentinel_tag(&mut store, &value)?.unwrap())
         })
         .unwrap();
     assert_eq!(truth, 4);
@@ -247,12 +238,7 @@ fn native_satisfies_function_is_first_class_and_macro_fallback_observes_redefini
     let result = session.invoke(&function, &[&protocol, &value]).unwrap();
     assert_eq!(
         session
-            .inspect(&result, |store, value| Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32()))
+            .inspect(&result, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()))
             .unwrap(),
         4
     );

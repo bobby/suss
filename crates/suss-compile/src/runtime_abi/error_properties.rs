@@ -105,8 +105,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             Call(b.names["named-property-get"]),
             LocalSet(local),
             LocalGet(local),
-            I32Const(UNDEFINED),
-            RefI31,
+            sentinel_value(UNDEFINED),
             RefEq,
             If(BlockType::Result(VALUE)),
         ]);
@@ -152,8 +151,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &[VALUE],
         &[
             GlobalGet(object_methods::TAG_GLOBAL),
-            I32Const(0),
-            RefI31,
+            sentinel_value(NIL),
             RefFunc(anchored),
             I32Const(1),
             I32Const(-1),
@@ -162,9 +160,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 array_type_index: ARGS,
                 array_size: 1,
             },
-            I32Const(0),
-            RefI31,
-            I32Const(0),
+            sentinel_value(NIL),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(7),
             RefFunc(detached),

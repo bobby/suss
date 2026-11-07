@@ -15,7 +15,7 @@ fn text(value: &str) -> Vec<Instruction<'static>> {
 }
 fn boolean(code: &mut Vec<Instruction<'static>>) {
     use Instruction::*;
-    code.extend([I32Const(1), I32Shl, I32Const(2), I32Add, RefI31]);
+    code.extend(super::boolean());
 }
 fn primitive_condition(code: &mut Vec<Instruction<'static>>, local: u32) {
     use Instruction::*;
@@ -26,8 +26,8 @@ fn primitive_condition(code: &mut Vec<Instruction<'static>>, local: u32) {
         RefTestNonNull(HeapType::Concrete(STRING)),
         I32Or,
     ]);
-    for sentinel in [0, 2, 4, UNDEFINED] {
-        code.extend([LocalGet(local), I32Const(sentinel), RefI31, RefEq, I32Or]);
+    for sentinel in [NIL, FALSE, TRUE, UNDEFINED] {
+        code.extend([LocalGet(local), sentinel_value(sentinel), RefEq, I32Or]);
     }
 }
 fn callback(b: &mut Builder, locals: &[(u32, ValType)], code: &[Instruction<'static>]) -> u32 {
@@ -67,11 +67,10 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         nominal::error(&mut code);
         code.extend([End, LocalGet(1), I32Const(0), ArrayGet(ARGS), LocalSet(2)]);
         if name == "toString" {
-            for (sentinel, spelling) in [(0, "[object Null]"), (UNDEFINED, "[object Undefined]")] {
+            for (sentinel, spelling) in [(NIL, "[object Null]"), (UNDEFINED, "[object Undefined]")] {
                 code.extend([
                     LocalGet(2),
-                    I32Const(sentinel),
-                    RefI31,
+                    sentinel_value(sentinel),
                     RefEq,
                     If(BlockType::Empty),
                 ]);
@@ -126,8 +125,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         I32Const(1),
                         ArrayGet(ARGS),
                         Else,
-                        I32Const(UNDEFINED),
-                        RefI31,
+                        sentinel_value(UNDEFINED),
                         End,
                         Call(b.names["coerce-string"]),
                         Call(b.names["native-object-own-slot"]),
@@ -148,15 +146,13 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         I32Const(1),
                         ArrayGet(ARGS),
                         Else,
-                        I32Const(UNDEFINED),
-                        RefI31,
+                        sentinel_value(UNDEFINED),
                         End,
                         Call(b.names["coerce-string"]),
                         Call(b.names["native-object-own-descriptor"]),
                         LocalSet(3),
                         LocalGet(3),
-                        I32Const(UNDEFINED),
-                        RefI31,
+                        sentinel_value(UNDEFINED),
                         RefEq,
                         If(BlockType::Result(ValType::I32)),
                         I32Const(0),
@@ -198,8 +194,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         I32Const(1),
                         ArrayGet(ARGS),
                         Else,
-                        I32Const(UNDEFINED),
-                        RefI31,
+                        sentinel_value(UNDEFINED),
                         End,
                         LocalGet(1),
                         ArrayLen,
@@ -210,8 +205,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         I32Const(2),
                         ArrayGet(ARGS),
                         Else,
-                        I32Const(UNDEFINED),
-                        RefI31,
+                        sentinel_value(UNDEFINED),
                         End,
                         I32Const(i32::from(name == "__defineSetter__")),
                         Call(b.names["native-object-legacy-define"]),
@@ -229,8 +223,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         I32Const(1),
                         ArrayGet(ARGS),
                         Else,
-                        I32Const(UNDEFINED),
-                        RefI31,
+                        sentinel_value(UNDEFINED),
                         End,
                         I32Const(i32::from(name == "__lookupSetter__")),
                         Call(b.names["native-object-legacy-lookup"]),
@@ -243,8 +236,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         I32Const(1),
                         I32LeU,
                         If(BlockType::Empty),
-                        I32Const(2),
-                        RefI31,
+                        sentinel_value(FALSE),
                         Return,
                         End,
                         LocalGet(1),
@@ -257,7 +249,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         If(BlockType::Empty),
                     ]);
                     primitive_condition(&mut code, 3);
-                    code.extend([If(BlockType::Empty), I32Const(2), RefI31, Return, End]);
+                    code.extend([If(BlockType::Empty), sentinel_value(FALSE), Return, End]);
                     // Callable/error and foreign prototype storage is not yet
                     // implemented. Reject it without invoking conversion hooks.
                     nominal::error(&mut code);
@@ -274,16 +266,14 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         Block(BlockType::Empty),
                         Loop(BlockType::Empty),
                         LocalGet(3),
-                        I32Const(0),
-                        RefI31,
+                        sentinel_value(NIL),
                         RefEq,
                         BrIf(1),
                         LocalGet(3),
                         LocalGet(2),
                         RefEq,
                         If(BlockType::Empty),
-                        I32Const(4),
-                        RefI31,
+                        sentinel_value(TRUE),
                         Return,
                         End,
                         LocalGet(3),
@@ -292,8 +282,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         Br(0),
                         End,
                         End,
-                        I32Const(2),
-                        RefI31,
+                        sentinel_value(FALSE),
                     ]);
                 }
                 _ => unreachable!(),
@@ -310,8 +299,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 ArrayLen,
                 I32Eqz,
                 If(BlockType::Empty),
-                I32Const(2),
-                RefI31,
+                sentinel_value(FALSE),
                 Return,
                 End,
                 LocalGet(1),
@@ -320,7 +308,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 LocalSet(2),
             ]);
             primitive_condition(&mut detached_code, 2);
-            detached_code.extend([If(BlockType::Empty), I32Const(2), RefI31, Return, End]);
+            detached_code.extend([If(BlockType::Empty), sentinel_value(FALSE), Return, End]);
             // Undefined this fails for objects, before any conversion hooks.
             nominal::error(&mut detached_code);
         } else {
@@ -337,8 +325,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         ArrayLen,
         I32Eqz,
         If(BlockType::Result(VALUE)),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         Else,
         LocalGet(1),
         I32Const(0),
@@ -346,12 +333,10 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         End,
         LocalSet(2),
         LocalGet(2),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         LocalGet(2),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         I32Or,
         If(BlockType::Result(VALUE)),
@@ -382,8 +367,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             I32Eqz,
             If(BlockType::Empty),
             // A typed throw for malformed copied callbacks, before array access.
-            I32Const(0),
-            RefI31,
+            sentinel_value(NIL),
             Call(fields),
             Drop,
             End,
@@ -401,8 +385,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             ArrayLen,
             I32Eqz,
             If(BlockType::Empty),
-            I32Const(0),
-            RefI31,
+            sentinel_value(NIL),
             Call(fields),
             Drop,
             End,
@@ -418,8 +401,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             I32Const(1),
             ArrayGet(ARGS),
             Else,
-            I32Const(UNDEFINED),
-            RefI31,
+            sentinel_value(UNDEFINED),
             End,
             Call(b.names["native-object-proto-write"]),
         ],
@@ -430,8 +412,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     refs.extend([getter, setter, detached]);
     let mut code = vec![
         GlobalGet(ROOT),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         If(BlockType::Empty),
         Call(new),
@@ -442,8 +423,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         code.extend(text(name));
         code.extend([
             GlobalGet(object_methods::TAG_GLOBAL),
-            I32Const(0),
-            RefI31,
+            sentinel_value(NIL),
             RefFunc(anchored),
             I32Const(1),
             I32Const(-1),
@@ -452,9 +432,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 array_type_index: ARGS,
                 array_size: 1,
             },
-            I32Const(0),
-            RefI31,
-            I32Const(0),
+            sentinel_value(NIL),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(7),
             RefFunc(detached),
@@ -471,8 +450,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     for anchored in [getter, setter] {
         code.extend([
             GlobalGet(object_methods::TAG_GLOBAL),
-            I32Const(0),
-            RefI31,
+            sentinel_value(NIL),
             RefFunc(anchored),
             I32Const(1),
             I32Const(-1),
@@ -481,9 +459,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 array_type_index: ARGS,
                 array_size: 1,
             },
-            I32Const(0),
-            RefI31,
-            I32Const(0),
+            sentinel_value(NIL),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(7),
             RefFunc(detached),

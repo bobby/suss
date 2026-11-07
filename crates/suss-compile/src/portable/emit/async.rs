@@ -34,10 +34,13 @@ pub struct Locals {
     pub saved: u32,
     pub outcome: u32,
     pub auxiliary: u32,
+    /// Index of the fragment's imported false global.
+    pub sentinels: u32,
 }
 fn nil(f: &mut Function) {
-    f.instruction(&I32Const(0)).instruction(&RefI31);
+    f.instruction(&runtime_abi::sentinel_value(runtime_abi::NIL));
 }
+// Private continuation integers: pc, phase, event kind, generation, targets.
 fn int(f: &mut Function, value: usize) {
     f.instruction(&I32Const(value as i32)).instruction(&RefI31);
 }
@@ -351,7 +354,8 @@ pub fn region_push(
     array(f, 9);
     f.instruction(&LocalSet(l.frame));
     set_item_local(f, l.snapshot, 2, l.frame);
-    int(f, 2); // portable false: normal path never selects a latent exception edge
+    // portable false: normal path never selects a latent exception edge
+    f.instruction(&runtime_abi::sentinel_in(runtime_abi::FALSE, l.sentinels));
     f.instruction(&LocalSet(result.0 as u32 + l.offset));
 }
 pub fn event(f: &mut Function, kind: usize, value: u32, l: &Locals, unwind_pc: usize) {

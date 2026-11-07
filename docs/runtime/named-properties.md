@@ -4,7 +4,7 @@ The compiler lowers literal property reads and assignments needed by retained
 source, including List.EMPTY and UTF-16 string length. Named class/function
 properties use the existing GC-owned closure wrapper's key/value table. Public
 native names null/boolean/number/string/function/object/array/_ alias its existing
-i31 dispatch slots0–7; other UTF-16 names use content equality. Known instance
+private i31 dispatch slots 0–7, which never reach user code; other UTF-16 names use content equality. Known instance
 fields resolve through their UTF-16 schema and retain existing field storage.
 Callback environments remain intact; no owner registry retains replaced values.
 

@@ -28,7 +28,7 @@ fn guard(body: &mut Vec<Instruction<'static>>, local: u32, ty: u32) {
     body.push(Instruction::End);
 }
 fn undefined(body: &mut Vec<Instruction<'static>>) {
-    body.extend([Instruction::I32Const(UNDEFINED), Instruction::RefI31]);
+    body.extend([sentinel_value(UNDEFINED)]);
 }
 fn name(body: &mut Vec<Instruction<'static>>, value: &str) {
     let units: Vec<_> = value.encode_utf16().collect();
@@ -199,6 +199,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             }
             body.extend([
                 If(BlockType::Empty),
+                // Private closure-table kind key 0..7 (not a sentinel, though 0/2/4/6
+                // alias the i31 nil/false/true/undefined); never returned to user code.
                 I32Const(kind as i32),
                 RefI31,
                 Return,
@@ -435,6 +437,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         I32Eqz,
         If(BlockType::Empty),
         LocalGet(1),
+        // I31 here is a private kind/slot key (<= 9), not a sentinel.
         RefTestNonNull(HeapType::I31),
         I32Eqz,
         If(BlockType::Empty),
@@ -533,6 +536,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         I32Eqz,
         If(BlockType::Empty),
         LocalGet(4),
+        // I31 here is a private kind/slot key (<= 9), not a sentinel.
         RefTestNonNull(HeapType::I31),
         I32Eqz,
         If(BlockType::Empty),
@@ -1065,8 +1069,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 Call(b.names["object-method-key"]),
                 LocalSet(fresh),
                 LocalGet(fresh),
-                I32Const(0),
-                RefI31,
+                sentinel_value(NIL),
                 RefEq,
                 I32Eqz,
                 If(BlockType::Empty),
@@ -1077,8 +1080,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 Call(b.names["protocol-method-get"]),
                 LocalSet(fresh),
                 LocalGet(fresh),
-                I32Const(0),
-                RefI31,
+                sentinel_value(NIL),
                 RefEq,
                 I32Eqz,
                 If(BlockType::Empty),

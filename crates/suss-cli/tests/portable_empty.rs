@@ -135,13 +135,8 @@ const CASES_JSON: &str = r#"[
 fn observe(session: &mut Session, value: &SessionValue) -> serde_json::Value {
     session.collect().unwrap();
     session
-        .inspect(value, |store, value| {
-            let raw = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .expect("nil/Boolean ABI")
-                .get_u32();
+        .inspect(value, |mut store, value| {
+            let raw = suss_cli::portable_session::sentinel_tag(&mut store, &value)?.expect("nil/Boolean ABI");
             Ok(match raw {
                 0 => serde_json::json!({"tag":"nil"}),
                 2 => serde_json::json!({"tag":"bool","value":false}),

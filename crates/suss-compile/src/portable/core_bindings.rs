@@ -117,9 +117,9 @@ pub fn compile_with_cells(
                 mutable: false,
                 shared: false,
             },
+            // an unbound binding cell starts holding nil.
             &ConstExpr::extended([
-                Instruction::I32Const(0),
-                Instruction::RefI31,
+                runtime_abi::sentinel_value(runtime_abi::NIL),
                 Instruction::I32Const(0),
                 Instruction::StructNew(runtime_abi::BINDING),
             ]),
@@ -137,8 +137,7 @@ pub fn compile_with_cells(
             // The native bootstrap exposes a bound nil cell to these constructors.
             start
                 .instruction(&Instruction::GlobalGet(link(index)))
-                .instruction(&Instruction::I32Const(0))
-                .instruction(&Instruction::RefI31)
+                .instruction(&runtime_abi::sentinel_value(runtime_abi::NIL))
                 .instruction(&Instruction::Call(0));
         }
         start.instruction(&Instruction::GlobalGet(index as u32));

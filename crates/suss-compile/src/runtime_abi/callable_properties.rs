@@ -200,8 +200,7 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
         Call(b.names["fixed-named-property-get"]),
         LocalSet(3),
         LocalGet(3),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),
@@ -250,8 +249,7 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
             Call(b.names["protocol-method-get"]),
             LocalSet(3),
             LocalGet(3),
-            I32Const(0),
-            RefI31,
+            sentinel_value(NIL),
             RefEq,
             I32Eqz,
             If(BlockType::Empty),
@@ -268,7 +266,7 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
             End,
         ]);
     }
-    code.extend([I32Const(UNDEFINED), RefI31]);
+    code.extend([sentinel_value(UNDEFINED)]);
     b.function_with_locals(
         "callable-property-get",
         &[VALUE, VALUE, VALUE],

@@ -185,13 +185,8 @@ fn native_macro_data_builders_preserve_bits_utf16_canonical_classes_and_shared_r
         let result = session.invoke(&same, &[&shared]).unwrap();
         assert_eq!(
             session
-                .inspect(&result, |store, value| {
-                    Ok(value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .unwrap()
-                        .get_u32())
+                .inspect(&result, |mut store, value| {
+                    Ok(suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap())
                 })
                 .unwrap(),
             4

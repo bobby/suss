@@ -7,6 +7,7 @@ use suss_compile::{
         self,
         resolve::{Environment, Phase},
     },
+    portable_session::sentinel_tag,
     runtime_abi,
 };
 use wasm_encoder as w;
@@ -46,6 +47,13 @@ fn adapters() -> Vec<u8> {
         heap_type: w::HeapType::Concrete(3),
     });
     let mut types = runtime_abi::prelude();
+    // Adapter signatures follow the ABI prelude, whose last type is LONG.
+    let base = runtime_abi::LONG + 1;
+    // ABI v3 nil is a null eqref.
+    let nil = RefNull(w::HeapType::Abstract {
+        shared: false,
+        ty: w::AbstractHeapType::Eq,
+    });
     let signatures = [
         (
             vec![value, invoke, w::ValType::I32, w::ValType::I32],
@@ -65,17 +73,17 @@ fn adapters() -> Vec<u8> {
     }
     let mut imports = w::ImportSection::new();
     for (name, ty) in [
-        ("closure-new", 10),
-        ("number-box", 11),
-        ("future-resolve", 12),
-        ("future-reject", 12),
-        ("async-continuation-snapshot", 13),
-        ("async-array-append", 14),
-        ("async-scheduler-run-one", 15),
-        ("async-task-complete", 17),
-        ("async-task-cancel", 18),
-        ("async-cancelled-dependency-is", 18),
-        ("async-scheduler-cancel-all", 15),
+        ("closure-new", base + 0),
+        ("number-box", base + 1),
+        ("future-resolve", base + 2),
+        ("future-reject", base + 2),
+        ("async-continuation-snapshot", base + 3),
+        ("async-array-append", base + 4),
+        ("async-scheduler-run-one", base + 5),
+        ("async-task-complete", base + 7),
+        ("async-task-cancel", base + 8),
+        ("async-cancelled-dependency-is", base + 8),
+        ("async-scheduler-cancel-all", base + 5),
     ] {
         imports.import("suss.runtime", name, w::EntityType::Function(ty));
     }
@@ -126,18 +134,17 @@ fn adapters() -> Vec<u8> {
                 body.extend([
                     Call(if *name == "resolve" { 2 } else { 3 }),
                     Drop,
-                    I32Const(0),
-                    RefI31,
+                    nil.clone(),
                 ]);
             }
             "emit" => {
                 body.push(GlobalGet(0));
                 body.extend(operand(0));
-                body.extend([Call(5), GlobalSet(0), I32Const(0), RefI31]);
+                body.extend([Call(5), GlobalSet(0), nil.clone()]);
             }
             "observe" => {
                 body.extend(operand(0));
-                body.extend([GlobalSet(1), I32Const(0), RefI31]);
+                body.extend([GlobalSet(1), nil.clone()]);
             }
             "run" => body.extend([Call(6), F64ConvertI32S, Call(1)]),
             "cancel-all" => body.extend([Call(10), F64ConvertI32U, Call(1)]),
@@ -162,7 +169,7 @@ fn adapters() -> Vec<u8> {
                     I32TruncF64S,
                 ]);
                 body.extend(operand(2));
-                body.extend([Call(7), Drop, I32Const(0), RefI31]);
+                body.extend([Call(7), Drop, nil.clone()]);
             }
             _ => unreachable!(),
         }
@@ -175,11 +182,10 @@ fn adapters() -> Vec<u8> {
         }
         function.instruction(&End);
         code.function(&function);
-        functions.function(16);
+        functions.function(base + 6);
         let mut factory = w::Function::new([]);
         for instruction in [
-            I32Const(0),
-            RefI31,
+            nil.clone(),
             RefFunc(resume_index),
             I32Const(*arity as i32),
             I32Const(*arity as i32),
@@ -210,7 +216,7 @@ fn adapters() -> Vec<u8> {
             mutable: true,
             shared: false,
         },
-        &w::ConstExpr::extended([I32Const(0), RefI31]),
+        &w::ConstExpr::extended([nil.clone()]),
     );
     exports.export("trace", w::ExportKind::Global, 0);
     exports.export("observed", w::ExportKind::Global, 1);
@@ -535,12 +541,12 @@ impl Harness {
         ));
     }
     fn same(&self, a: &Val, b: &Val) -> bool {
-        Rooted::ref_eq(
-            &self.store,
-            a.unwrap_anyref().unwrap(),
-            b.unwrap_anyref().unwrap(),
-        )
-        .unwrap()
+        // ABI v3 nil is a null eqref; two nils are the same value.
+        match (a.unwrap_anyref(), b.unwrap_anyref()) {
+            (None, None) => true,
+            (Some(a), Some(b)) => Rooted::ref_eq(&self.store, a, b).unwrap(),
+            _ => false,
+        }
     }
 }
 
@@ -731,14 +737,19 @@ fn pending_producer_live_slots_and_captured_closure_survive_without_external_han
             .as_array(&scope)
             .unwrap()
             .unwrap();
+        // Private pc, generation and event-kind slots are i31 integers, not nil.
+        let zero = Val::AnyRef(Some(wasmtime::AnyRef::from_i31(
+            &mut scope,
+            wasmtime::I31::new_u32(0).unwrap(),
+        )));
         for (index, value) in [
-            nil.clone(),
+            zero.clone(),
             slots,
             unwind,
             nil.clone(),
             producer,
-            nil.clone(),
-            nil.clone(),
+            zero.clone(),
+            zero,
             nil,
         ]
         .into_iter()
@@ -904,14 +915,8 @@ fn initial_start_is_queued_and_delivers_zero_nil_event_to_compiled_resume() {
         .unwrap()
         .get(&mut h.store);
     assert_eq!(
-        event
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&h.store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
-        0
+        sentinel_tag(&mut h.store, &event).unwrap(),
+        Some(runtime_abi::NIL as u32)
     );
     assert_eq!(h.integer("future-status", &[producer.clone()]), 1);
     let result = h.value("future-result", &[producer]);

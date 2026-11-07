@@ -31,11 +31,9 @@ fn malformed(body: &mut Vec<Instruction<'static>>) {
             array_type_index: STRING,
             array_size: text.len() as u32,
         },
-        I32Const(0),
-        RefI31,
-        I32Const(0),
-        RefI31,
-        I32Const(0), RefI31, StructNew(8),
+        sentinel_value(NIL),
+        sentinel_value(NIL),
+        I32Const(0), RefI31, StructNew(8), // UID unassigned
         Throw(0),
     ]);
 }
@@ -139,8 +137,7 @@ fn named_field(b: &mut Builder, field: &str) -> u32 {
         Br(0),
         End,
         End,
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
     ]);
     b.function_with_locals(
         &format!("exception-info-field-{field}"),
@@ -171,7 +168,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             If(BlockType::Result(VALUE)),
         ]);
         argument(&mut ordinary_body, index);
-        ordinary_body.extend([Else, I32Const(UNDEFINED), RefI31, End, ArraySet(ARGS)]);
+        ordinary_body.extend([Else, sentinel_value(UNDEFINED), End, ArraySet(ARGS)]);
     }
     ordinary_body.push(GlobalGet(ORDINARY_ROOT));
     let ordinary = callback(b, &[], &ordinary_body);
@@ -209,8 +206,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     argument(&mut body, 0);
     argument(&mut body, 1);
     body.extend([
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         ArrayNewFixed {
             array_type_index: ARGS,
             array_size: 3,
@@ -240,8 +236,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     argument(&mut body, 2);
     body.extend([
         Else,
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         End,
         ArrayNewFixed {
             array_type_index: ARGS,
@@ -326,7 +321,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 End,
             ]);
         }
-        body.extend([I32Const(0), RefI31]);
+        body.extend([sentinel_value(NIL)]);
         let getter = callback(b, &[(2, VALUE)], &body);
         declared.push(getter);
         b.function(

@@ -140,13 +140,8 @@ fn public_hash_matches_independently_decoded_primary_observations() {
             }
             "bool" => {
                 let boolean = session
-                    .inspect(&value, |store, value| {
-                        match value
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_i31(&store)?
-                            .unwrap()
-                            .get_u32()
+                    .inspect(&value, |mut store, value| {
+                        match suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap()
                         {
                             2 => Ok(false),
                             4 => Ok(true),

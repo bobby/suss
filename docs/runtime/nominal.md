@@ -23,7 +23,7 @@ evaluating them and fills absent fields with internal undefined. The generated
 `->Type` function reads the current type cell, so an old captured arrow sees a later
 type replacement; an old captured class value retains its original descriptor.
 
-Undefined uses internal i31 sentinel6, distinct from source nil0, false2 and true4.
+Undefined is an internal sentinel struct, distinct from source nil, false and true ([ABI v3](abi-v3.md)).
 It is falsey, numerically coerces to NaN and string-coerces to `undefined`; source
 nil still coerces to zero/`null`. Ordinary protocol-object calls also return
 undefined. A `defprotocol` expression also returns undefined; downstream numeric

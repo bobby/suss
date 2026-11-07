@@ -52,11 +52,18 @@ fn decoder_rejects_unknown_sentinels_nulls_and_unboxed_values() {
     let value = session.eval_probe("nil").unwrap();
     session
         .inspect(&value, |mut store, _| {
+            // ABI v3: a sentinel is a one-field i32 struct; forge unknown tags.
+            let sentinel_shape = wasmtime::StructType::new(
+                store.engine(),
+                [wasmtime::FieldType::new(
+                    wasmtime::Mutability::Const,
+                    wasmtime::StorageType::ValType(wasmtime::ValType::I32),
+                )],
+            )?;
+            let allocator = wasmtime::StructRefPre::new(&mut store, sentinel_shape);
             for tag in [1, 6, 99] {
-                let forged = Val::AnyRef(Some(AnyRef::from_i31(
-                    &mut store,
-                    I31::new_u32(tag).unwrap(),
-                )));
+                let forged = wasmtime::StructRef::new(&mut store, &allocator, &[Val::I32(tag)])?;
+                let forged = Val::AnyRef(Some(forged.to_anyref()));
                 assert!(
                     Decoder::new(16)
                         .decode(&mut store, &forged)
@@ -65,8 +72,20 @@ fn decoder_rejects_unknown_sentinels_nulls_and_unboxed_values() {
                         .contains("sentinel")
                 );
             }
+            // Every i31 is reserved for longs, which are not language values yet.
+            for tag in [0, 1, 2, 4, 6, 99] {
+                let i31 = Val::AnyRef(Some(AnyRef::from_i31(
+                    &mut store,
+                    I31::new_u32(tag).unwrap(),
+                )));
+                assert!(Decoder::new(16).decode(&mut store, &i31).is_err());
+            }
+            // A null eqref is language nil under ABI v3, not a malformed value.
+            assert_eq!(
+                Decoder::new(16).decode(&mut store, &Val::null_any_ref())?,
+                Observation::Nil
+            );
             for malformed in [
-                Val::null_any_ref(),
                 Val::I32(42),
                 Val::F64(42.0_f64.to_bits()),
             ] {

@@ -1,4 +1,5 @@
 //! Canonical Array constructor prerequisites; missing support is a failure.
+use suss_compile::portable_session::sentinel_tag;
 use suss_cli::portable_session::Session;
 
 #[test]
@@ -54,13 +55,8 @@ fn array_constructor_preserves_identity_arity_length_and_holes_in_both_phases() 
                 .unwrap_or_else(|error| panic!("Array case {} ({source}): {error}", case["id"]));
             session.collect().unwrap();
             let actual = session
-                .inspect(&value, |store, value| {
-                    let raw = value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .expect("Boolean ABI")
-                        .get_u32();
+                .inspect(&value, |mut store, value| {
+                    let raw = sentinel_tag(&mut store, &value)?.expect("Boolean ABI");
                     Ok(match raw {
                         2 => false,
                         4 => true,
@@ -88,13 +84,8 @@ fn retained_array_constructor_is_callable_after_gc_in_separate_fragment() {
         let value = session.invoke(&invoke, &[&constructor]).unwrap();
         session.collect().unwrap();
         session
-            .inspect(&value, |store, value| {
-                let raw = value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .expect("Boolean ABI")
-                    .get_u32();
+            .inspect(&value, |mut store, value| {
+                let raw = sentinel_tag(&mut store, &value)?.expect("Boolean ABI");
                 assert_eq!(raw, 4, "retained constructor identity and call result");
                 Ok(())
             })
@@ -111,8 +102,8 @@ fn array_own_method_identity_survives_public_property_reads_and_gc() {
         let check = session.eval("(fn [saved] (let [a (array 7)] (and (identical? saved (.-hasOwnProperty a)) (.hasOwnProperty a 0) (.hasOwnProperty a \"length\") (not (.hasOwnProperty a \"00\")) (not (.hasOwnProperty a \"-0\")) (not (.hasOwnProperty a \"1e0\")) (not (.hasOwnProperty a)))))").unwrap();
         let value = session.invoke(&check, &[&method]).unwrap();
         session.collect().unwrap();
-        session.inspect(&value, |store, value| {
-            assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32(), 4);
+        session.inspect(&value, |mut store, value| {
+            assert_eq!(sentinel_tag(&mut store, &value)?.unwrap(), 4);
             Ok(())
         }).unwrap();
     }
@@ -132,8 +123,8 @@ fn array_push_overflow_and_ordinary_properties_match_pinned_cases_in_both_phases
             let source = case["source"].as_str().unwrap();
             let value = session.eval(source).unwrap_or_else(|error| panic!("Array property case {}: {error}", case["id"]));
             session.collect().unwrap();
-            let actual = session.inspect(&value, |store, value| {
-                match value.unwrap_anyref().unwrap().as_i31(&store)?.expect("Boolean ABI").get_u32() {
+            let actual = session.inspect(&value, |mut store, value| {
+                match sentinel_tag(&mut store, &value)?.expect("Boolean ABI") {
                     2 => Ok(false), 4 => Ok(true), other => panic!("Unexpected sentinel {other}"),
                 }
             }).unwrap();
@@ -152,8 +143,8 @@ fn array_named_length_primitive_rhs_and_builtin_shadowing() {
         for source in &cases {
             let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error}"));
             session.collect().unwrap();
-            session.inspect(&value, |store, value| {
-                assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store)?.expect("Boolean ABI").get_u32(), 4, "{source}");
+            session.inspect(&value, |mut store, value| {
+                assert_eq!(sentinel_tag(&mut store, &value)?.expect("Boolean ABI"), 4, "{source}");
                 Ok(())
             }).unwrap();
         }
@@ -170,8 +161,8 @@ fn make_array_preserves_holes_and_literal_nil_presence() {
         for source in &cases {
             let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error}"));
             session.collect().unwrap();
-            session.inspect(&value, |store, value| {
-                assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store)?.expect("Boolean ABI").get_u32(), 4, "{source}");
+            session.inspect(&value, |mut store, value| {
+                assert_eq!(sentinel_tag(&mut store, &value)?.expect("Boolean ABI"), 4, "{source}");
                 Ok(())
             }).unwrap();
         }
@@ -207,8 +198,8 @@ fn make_array_dimension_validation_and_unreachable_leaves() {
         for source in cases {
             let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error}"));
             session.collect().unwrap();
-            session.inspect(&value, |store, value| {
-                assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store)?.expect("Boolean ABI").get_u32(), 4, "{source}");
+            session.inspect(&value, |mut store, value| {
+                assert_eq!(sentinel_tag(&mut store, &value)?.expect("Boolean ABI"), 4, "{source}");
                 Ok(())
             }).unwrap();
         }

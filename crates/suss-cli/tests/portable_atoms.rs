@@ -155,13 +155,8 @@ fn persistent_session_atoms_match_independent_pinned_observations() {
             .unwrap_or_else(|e| panic!("{source}: {e}"));
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "bool" => session
-                .inspect(&result, |store, value| {
-                    let sentinel = value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .unwrap()
-                        .get_u32();
+                .inspect(&result, |mut store, value| {
+                    let sentinel = suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap();
                     let boolean = match sentinel {
                         2 => false,
                         4 => true,

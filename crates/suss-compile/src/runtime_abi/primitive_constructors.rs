@@ -17,12 +17,13 @@ pub(super) fn append_globals(globals: &mut GlobalSection) {
                 mutable: true,
                 shared: false,
             },
-            &ConstExpr::extended([I32Const(0), RefI31]),
+            // unset constructor roots hold nil until installed.
+            &ConstExpr::extended([sentinel_value(NIL)]),
         );
     }
 }
 fn boolean(body: &mut Vec<Instruction<'static>>) {
-    body.extend([I32Const(2), I32Mul, I32Const(2), I32Add, RefI31]);
+    body.extend(super::boolean());
 }
 fn callback(b: &mut Builder, body: &[Instruction<'static>]) -> u32 {
     let index = b.count;
@@ -53,7 +54,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 array_type_index: STRING,
                 array_size: 0,
             }),
-            _ => body.extend([I32Const(2), RefI31]),
+            _ => body.extend([sentinel_value(FALSE)]),
         }
         body.extend([
             Return,
@@ -101,8 +102,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 ]);
                 boolean(&mut body);
                 body.extend([Return, End]);
-                for sentinel in [0, 2, UNDEFINED] {
-                    body.extend([LocalGet(2), I32Const(sentinel), RefI31, RefEq]);
+                for sentinel in [NIL, FALSE, UNDEFINED] {
+                    body.extend([LocalGet(2), sentinel_value(sentinel), RefEq]);
                 }
                 body.extend([I32Or, I32Or, I32Eqz]);
                 boolean(&mut body);

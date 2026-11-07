@@ -38,9 +38,9 @@ fn seqable_predicate_covers_portable_values_in_both_phases_after_gc() {
                 .unwrap_or_else(|error| panic!("{phase:?} {id}: {error}"));
             session.collect().unwrap();
             session
-                .inspect(&value, |store, value| {
+                .inspect(&value, |mut store, value| {
                     assert_eq!(
-                        value.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32(),
+                        suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap(),
                         if expected { 4 } else { 2 },
                         "{phase:?} {id}"
                     );

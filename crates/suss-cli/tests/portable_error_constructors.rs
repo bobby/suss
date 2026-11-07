@@ -5,6 +5,7 @@ use portable_decode::{Decoder, Observation};
 use serde_json::{Value, json};
 use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
 use suss_compile::portable::resolve::Phase;
+use suss_compile::portable_session::sentinel_tag;
 use wasmtime::{AnyRef, OwnedRooted};
 
 fn raw_prototype(
@@ -107,15 +108,15 @@ fn value_json(value: Observation) -> Value {
 fn scalar_json(session: &mut Session, value: &SessionValue, classes: &[ErrorClass]) -> Value {
     session
         .inspect(value, |mut store, value| {
-            if value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .is_some_and(|v| v.get_u32() == 6)
-            {
+            if sentinel_tag(&mut store, &value)? == Some(6) {
                 return Ok(json!({"tag":"undefined"}));
             }
-        if let Some(owner) = value.unwrap_anyref().unwrap().as_struct(&store)? {
+        // Nil has no reference and decodes below.
+        let owner = match value.unwrap_anyref() {
+            Some(reference) => reference.as_struct(&store)?,
+            None => None,
+        };
+        if let Some(owner) = owner {
             if owner.fields(&mut store)?.count() == 4 {
                 let descriptor = owner.field(&mut store, 0)?;
                 assert!(wasmtime::Rooted::ref_eq(&store, descriptor.unwrap_anyref().unwrap(), &classes[0].backing_descriptor)?);
@@ -132,7 +133,7 @@ fn scalar_json(session: &mut Session, value: &SessionValue, classes: &[ErrorClas
                     assert_eq!(slot.len(&store)?, 2);
                     assert_eq!(slot.get(&mut store, 0)?.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32(), 7);
                     let payload = slot.get(&mut store, 1)?;
-                    let payload = if payload.unwrap_anyref().unwrap().as_i31(&store)?.is_some_and(|v| v.get_u32() == 6) {
+                    let payload = if sentinel_tag(&mut store, &payload)? == Some(6) {
                         json!({"tag":"undefined"})
                     } else { value_json(Decoder::new(4097).decode(&mut store, &payload)?) };
                     assert!(values.insert(String::from_utf16(&key).unwrap(), payload).is_none());
@@ -244,7 +245,7 @@ fn error_json(session: &mut Session, value: &SessionValue, classes: &[ErrorClass
             let attributes = descriptor.get(&mut store, 0)?.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32();
             assert!(attributes <= 15 && attributes & 8 == 0, "closed raw Error data properties");
             let payload = descriptor.get(&mut store, 1)?;
-            let payload = if payload.unwrap_anyref().unwrap().as_i31(&store)?.is_some_and(|v| v.get_u32() == 6) { json!({"tag":"undefined"}) }
+            let payload = if sentinel_tag(&mut store, &payload)? == Some(6) { json!({"tag":"undefined"}) }
                 else { value_json(Decoder::new(4097).decode(&mut store, &payload)?) };
             assert!(properties.insert(key, (attributes, payload)).is_none(), "duplicate raw key");
         }
@@ -258,7 +259,7 @@ fn error_json(session: &mut Session, value: &SessionValue, classes: &[ErrorClass
         if let Some((attributes, _)) = cause { assert_eq!(*attributes, 5); }
         let cause = cause.map(|(_, value)| value.clone()).unwrap_or(json!({"tag":"undefined"}));
         let initial_cause = owner.field(&mut store, 3)?;
-        let initial_cause = if initial_cause.unwrap_anyref().unwrap().as_i31(&store)?.is_some_and(|v| v.get_u32() == 6) { json!({"tag":"undefined"}) }
+        let initial_cause = if sentinel_tag(&mut store, &initial_cause)? == Some(6) { json!({"tag":"undefined"}) }
             else { value_json(Decoder::new(128).decode(&mut store, &initial_cause)?) };
         assert_eq!(cause, initial_cause, "physical cause snapshot remains exact");
         assert!(flags & 1 != 0 || cause == json!({"tag":"undefined"}));

@@ -391,7 +391,7 @@ impl FormBridge {
         for (key, value) in entries {
             session.charge_host_work(1)?;
             session.inspect(value, |_, _| Ok(()))?;
-            let is_nil = session.inspect(key, |store, key| Ok(absent(&store, &key)?))?;
+            let is_nil = session.inspect(key, |mut store, key| Ok(absent(&mut store, &key)?))?;
             if is_nil {
                 if nil_value.is_none() {
                     nil_index = pairs.len();
@@ -429,8 +429,8 @@ impl FormBridge {
                 } else {
                     let equal =
                         session.invoke(&self.core.factories["key-test"], &[key, &pairs[index].1])?;
-                    session.inspect(&equal, |store, value| {
-                        Ok(sentinel(&store, &value)? == Some(4))
+                    session.inspect(&equal, |mut store, value| {
+                        Ok(sentinel(&mut store, &value)? == Some(4))
                     })?
                 };
                 if equal {
@@ -519,6 +519,7 @@ impl FormBridge {
                 include_metadata: true,
                 interrupt,
                 calls: None,
+                undefined: None,
                 active: Vec::new(),
                         profile: std::env::var_os("SUSS_MACRO_FUEL_TRACE").is_some(),
                         host_fuel: std::cell::Cell::new(0),
@@ -1009,7 +1010,7 @@ impl FormBridge {
                 .data_inspect_calls(
                     value,
                     &self.core.factories["lazy-sval"],
-                    |mut store, value, args_new, invoke, function| {
+                    |mut store, value, args_new, invoke, function, undefined| {
                         let mut budget = Budget {
                             display: None,
                             source_valid: None,
@@ -1024,6 +1025,7 @@ impl FormBridge {
                                 invoke,
                                 function,
                             }),
+                            undefined: Some(undefined),
                         };
                         let result = decode(&mut store, &value, &self.core.classes, &span, 0, &mut budget);
                         if budget.profile {
@@ -1082,12 +1084,12 @@ fn array(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<V
     }
     Ok(array.elems(&mut *store)?.collect())
 }
-fn sentinel(store: &StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<Option<u32>> {
-    Ok(reference(value)?
-        .as_i31(store)?
-        .map(|value| value.get_u32()))
+/// The sentinel tag of nil (a null reference) or of a false, true or
+/// undefined struct; `None` for any other value.
+fn sentinel(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<Option<u32>> {
+    crate::portable_session::sentinel_tag(&mut *store, value)
 }
-fn nil(store: &StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<bool> {
+fn nil(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<bool> {
     Ok(sentinel(store, value)? == Some(0))
 }
 fn metadata(
@@ -1158,7 +1160,9 @@ fn object(
     let (class, canonical) = classes
         .get(&id)
         .ok_or_else(|| error("Unrecognized nominal macro data type"))?;
-    let expected = canonical.rooted(store);
+    let expected = canonical
+        .rooted(store)
+        .ok_or_else(|| error("Nominal macro data type is nil"))?;
     if !Rooted::ref_eq(&*store, reference(&storage[0])?, &expected)? {
         return Err(error(
             "Macro data descriptor is not the captured canonical identity",
@@ -1166,8 +1170,8 @@ fn object(
     }
     Ok((*class, array(store, &storage[1])?))
 }
-fn absent(store: &StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<bool> {
-    // ABI2 nil (0) and undefined (6) both satisfy the pinned nil? storage test.
+fn absent(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<bool> {
+    // Nil (0) and undefined (6) both satisfy the pinned nil? storage test.
     Ok(matches!(sentinel(store, value)?, Some(0 | 6)))
 }
 struct ReadCalls {
@@ -1182,6 +1186,9 @@ struct Budget {
     // invariant mismatches without treating them as a new source certificate.
     source_valid: Option<bool>,
     calls: Option<ReadCalls>,
+    // The undefined sentinel for source-array holes; None where no source
+    // array can be read.
+    undefined: Option<Val>,
     interrupt: std::sync::Arc<std::sync::atomic::AtomicBool>,
     active: Vec<Val>,
     profile: bool,
@@ -1287,19 +1294,27 @@ fn decode_datum_inner<T: DatumTarget>(
             return T::opaque(leaf);
         }
     }
-    let reference = reference(value)?;
     let mut reader_metadata = vec![];
-    let kind = if let Some(sentinel) = sentinel(store, value)? {
-        match sentinel {
+    let tag = sentinel(store, value)?;
+    // Nil has no reference; other sentinels need none.
+    let reference = match tag {
+        Some(_) => None,
+        None => Some(reference(value)?),
+    };
+    let kind = if let Some(tag) = tag {
+        match tag {
             0 => DecodedKind::Plain(Kind::Nil),
             2 => DecodedKind::Plain(Kind::Bool(false)),
             4 => DecodedKind::Plain(Kind::Bool(true)),
             _ => return Err(error("Unknown language sentinel")),
         }
-    } else if reference.as_array(&*store)?.is_some() {
+    } else if let Some(reference) = reference
+        && reference.as_array(&*store)?.is_some()
+    {
         DecodedKind::Plain(Kind::String(text(store, value, budget)?))
     } else {
         let structure = reference
+            .expect("a non-sentinel value has a reference")
             .as_struct(&*store)?
             .ok_or_else(|| error("Unsupported macro value"))?;
         // Scalar boxes and nominal objects have fixed ABI widths. Checking
@@ -2026,20 +2041,18 @@ fn source_array_suffix(
     {
         return Err(error("Invalid source array dense/presence layout"));
     }
-    let undefined = Val::AnyRef(Some(AnyRef::from_i31(
-        &mut *store,
-        wasmtime::I31::wrapping_u32(6),
-    )));
     let mask_len = mask.len(&*store)?;
     charge_read_work(store, mask_len as u64, budget)?;
-    let mut result = vec![undefined; count];
+    // `None` is a hole, which reads as undefined: invalid macro syntax.
+    let mut result: Vec<Option<Val>> = vec![None; count];
+    let undefined = budget.undefined.clone();
     for index in 0..mask_len {
         let flag = mask.get(&mut *store, index)?.unwrap_i32();
         if !(0..=1).contains(&flag) {
             return Err(error("Invalid source array presence bit"));
         }
         if flag == 1 && index >= start {
-            result[(index - start) as usize] = dense.get(&mut *store, index)?;
+            result[(index - start) as usize] = Some(dense.get(&mut *store, index)?);
         }
     }
     let mut next = backing[1].clone();
@@ -2066,12 +2079,19 @@ fn source_array_suffix(
             return Err(error("Duplicate dense/sparse source array key"));
         }
         if key != u32::MAX && key >= start {
-            result[(key - start) as usize] = node[1].clone();
+            result[(key - start) as usize] = Some(node[1].clone());
         }
         previous = Some(key);
         next = node[2].clone();
     }
-    Ok(result)
+    result
+        .into_iter()
+        .map(|value| {
+            value
+                .or_else(|| undefined.clone())
+                .ok_or_else(|| error("Unknown language sentinel"))
+        })
+        .collect()
 }
 
 fn node_elements(
@@ -2230,10 +2250,7 @@ fn hash_map_pairs(
     };
     let mut pairs = Vec::new();
     if has_nil {
-        pairs.push(Val::AnyRef(Some(AnyRef::from_i31(
-            &mut *store,
-            wasmtime::I31::new_u32(0).expect("zero fits i31"),
-        ))));
+        pairs.push(Val::AnyRef(None));
         pairs.push(data[4].clone());
     }
     if !nil(store, &data[2])? {

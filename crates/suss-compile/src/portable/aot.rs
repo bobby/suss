@@ -1262,6 +1262,20 @@ fn adapter(
             global_indices.insert(export.global.clone(), index);
         }
     }
+    // False, true and undefined follow the binding cells; schema roots follow them.
+    let sentinels = global_indices.len() as u32;
+    for (name, _) in runtime_abi::SENTINEL_EXPORTS {
+        imports.import(
+            "suss.runtime",
+            name,
+            EntityType::Global(GlobalType {
+                val_type: runtime_abi::sentinel_type(),
+                mutable: false,
+                shared: false,
+            }),
+        );
+    }
+    let schema_base = sentinels + runtime_abi::SENTINEL_EXPORTS.len() as u32;
     let imported = helpers + fragment_count as u32;
     let mut functions = FunctionSection::new();
     let mut public = ExportSection::new();
@@ -1321,8 +1335,9 @@ fn adapter(
             output: unit + 6,
             integer,
             number,
+            sentinels,
         };
-        let list_root = global_indices.len() as u32 + u32::from(option_schema);
+        let list_root = schema_base + u32::from(option_schema);
         let exact_root = list_root + u32::from(list_schema);
         body.instruction(&Instruction::GlobalGet(global_indices[&export.global]))
             .instruction(&Instruction::Call(0));
@@ -1357,7 +1372,7 @@ fn adapter(
                 }
                 Boundary::Scalar(ty) => {
                     body.instruction(&Instruction::LocalGet(parameter));
-                    lift_scalar(&mut body, ty);
+                    lift_scalar(&mut body, ty, sentinels);
                     parameter += 1;
                 }
                 Boundary::StringOption => {
@@ -1370,13 +1385,11 @@ fn adapter(
                     strings::copy_in(&mut body, &string_locals, &string_helpers);
                     body.instruction(&Instruction::LocalGet(result))
                         .instruction(&Instruction::Else)
-                        .instruction(&Instruction::I32Const(0))
-                        .instruction(&Instruction::RefI31)
+                        .instruction(&runtime_abi::sentinel_value(runtime_abi::NIL))
                         .instruction(&Instruction::End)
                         .instruction(&Instruction::LocalSet(result))
-                        .instruction(&Instruction::GlobalGet(global_indices.len() as u32))
-                        .instruction(&Instruction::I32Const(4))
-                        .instruction(&Instruction::RefI31)
+                        .instruction(&Instruction::GlobalGet(schema_base))
+                        .instruction(&runtime_abi::sentinel_in(runtime_abi::TRUE, sentinels))
                         .instruction(&Instruction::LocalGet(result))
                         .instruction(&Instruction::ArrayNewFixed {
                             array_type_index: runtime_abi::ARGS,
@@ -1389,17 +1402,15 @@ fn adapter(
                     body.instruction(&Instruction::LocalGet(parameter))
                         .instruction(&Instruction::If(BlockType::Result(VALUE)))
                         .instruction(&Instruction::LocalGet(parameter + 1));
-                    lift_scalar(&mut body, ty);
+                    lift_scalar(&mut body, ty, sentinels);
                     body.instruction(&Instruction::Else)
-                        .instruction(&Instruction::I32Const(0))
-                        .instruction(&Instruction::RefI31)
+                        .instruction(&runtime_abi::sentinel_value(runtime_abi::NIL))
                         .instruction(&Instruction::End);
                     // Consume the lifted scalar exactly once, then form its
                     // [:none]/[:some value] source representation.
                     body.instruction(&Instruction::LocalSet(result))
-                        .instruction(&Instruction::GlobalGet(global_indices.len() as u32))
-                        .instruction(&Instruction::I32Const(4))
-                        .instruction(&Instruction::RefI31)
+                        .instruction(&Instruction::GlobalGet(schema_base))
+                        .instruction(&runtime_abi::sentinel_in(runtime_abi::TRUE, sentinels))
                         .instruction(&Instruction::LocalGet(result))
                         .instruction(&Instruction::ArrayNewFixed {
                             array_type_index: runtime_abi::ARGS,
@@ -1487,9 +1498,8 @@ fn adapter(
                     .instruction(&Instruction::I32Const(0));
             }
             Some(Boundary::StringOption) => {
-                body.instruction(&Instruction::GlobalGet(global_indices.len() as u32))
-                    .instruction(&Instruction::I32Const(2))
-                    .instruction(&Instruction::RefI31)
+                body.instruction(&Instruction::GlobalGet(schema_base))
+                    .instruction(&runtime_abi::sentinel_in(runtime_abi::FALSE, sentinels))
                     .instruction(&Instruction::LocalGet(result))
                     .instruction(&Instruction::ArrayNewFixed {
                         array_type_index: runtime_abi::ARGS,
@@ -1497,16 +1507,9 @@ fn adapter(
                     })
                     .instruction(&Instruction::Call(2))
                     .instruction(&Instruction::LocalSet(result));
+                // A nil result is WIT option none.
                 body.instruction(&Instruction::LocalGet(result))
-                    .instruction(&Instruction::RefTestNonNull(HeapType::I31))
-                    .instruction(&Instruction::If(BlockType::Result(ValType::I32)))
-                    .instruction(&Instruction::LocalGet(result))
-                    .instruction(&Instruction::RefCastNonNull(HeapType::I31))
-                    .instruction(&Instruction::I31GetS)
-                    .instruction(&Instruction::I32Eqz)
-                    .instruction(&Instruction::Else)
-                    .instruction(&Instruction::I32Const(0))
-                    .instruction(&Instruction::End)
+                    .instruction(&Instruction::RefIsNull)
                     .instruction(&Instruction::If(BlockType::Empty));
                 for (offset, align) in [(0, 0), (4, 2), (8, 2)] {
                     body.instruction(&Instruction::I32Const(0))
@@ -1562,13 +1565,12 @@ fn adapter(
                     .instruction(&Instruction::I32Const(0));
             }
             Some(Boundary::Scalar(ty)) => {
-                lower_scalar(&mut body, ty, result, integer, number, &export.name)
+                lower_scalar(&mut body, ty, result, integer, number, &export.name, sentinels)
             }
             Some(Boundary::Option(ty)) => {
                 debug_assert!(option_schema);
-                body.instruction(&Instruction::GlobalGet(global_indices.len() as u32))
-                    .instruction(&Instruction::I32Const(2))
-                    .instruction(&Instruction::RefI31)
+                body.instruction(&Instruction::GlobalGet(schema_base))
+                    .instruction(&runtime_abi::sentinel_in(runtime_abi::FALSE, sentinels))
                     .instruction(&Instruction::LocalGet(result))
                     .instruction(&Instruction::ArrayNewFixed {
                         array_type_index: runtime_abi::ARGS,
@@ -1578,16 +1580,9 @@ fn adapter(
                     .instruction(&Instruction::LocalSet(result));
                 // Scalar option returns use a fixed canonical return area. No
                 // allocation, ownership transfer or post-return free is needed.
+                // A nil result is WIT option none.
                 body.instruction(&Instruction::LocalGet(result))
-                    .instruction(&Instruction::RefTestNonNull(HeapType::I31))
-                    .instruction(&Instruction::If(BlockType::Result(ValType::I32)))
-                    .instruction(&Instruction::LocalGet(result))
-                    .instruction(&Instruction::RefCastNonNull(HeapType::I31))
-                    .instruction(&Instruction::I31GetS)
-                    .instruction(&Instruction::I32Eqz)
-                    .instruction(&Instruction::Else)
-                    .instruction(&Instruction::I32Const(0))
-                    .instruction(&Instruction::End)
+                    .instruction(&Instruction::RefIsNull)
                     .instruction(&Instruction::If(BlockType::Empty))
                     .instruction(&Instruction::I32Const(0))
                     .instruction(&Instruction::I32Const(0))
@@ -1605,7 +1600,7 @@ fn adapter(
                         memory_index: 0,
                     }))
                     .instruction(&Instruction::I32Const(0));
-                lower_scalar(&mut body, ty, result, integer, number, &export.name);
+                lower_scalar(&mut body, ty, result, integer, number, &export.name, sentinels);
                 let store = ty.payload_store();
                 body.instruction(&store)
                     .instruction(&Instruction::End)
@@ -1633,7 +1628,7 @@ fn adapter(
                 .instruction(&Instruction::Call(
                     helpers + (fragment_count - schema_count) as u32,
                 ))
-                .instruction(&Instruction::GlobalSet(global_indices.len() as u32));
+                .instruction(&Instruction::GlobalSet(schema_base));
         }
         if list_schema && index == 0 {
             start
@@ -1641,14 +1636,14 @@ fn adapter(
                     helpers + fragment_count as u32 - 1 - u32::from(exact_schema),
                 ))
                 .instruction(&Instruction::GlobalSet(
-                    global_indices.len() as u32 + u32::from(option_schema),
+                    schema_base + u32::from(option_schema),
                 ));
         }
         if exact_schema && index == 0 {
             start
                 .instruction(&Instruction::Call(helpers + fragment_count as u32 - 1))
                 .instruction(&Instruction::GlobalSet(
-                    global_indices.len() as u32 + u32::from(option_schema) + u32::from(list_schema),
+                    schema_base + u32::from(option_schema) + u32::from(list_schema),
                 ));
         }
     }
@@ -1740,7 +1735,8 @@ fn adapter(
                     mutable: true,
                     shared: false,
                 },
-                &ConstExpr::extended([Instruction::I32Const(0), Instruction::RefI31]),
+                // Schema helper roots hold nil until initialized.
+                &ConstExpr::extended([runtime_abi::sentinel_value(runtime_abi::NIL)]),
             );
         }
         module.section(&globals);
@@ -1753,14 +1749,12 @@ fn adapter(
         .section(&code);
     Ok(module.finish())
 }
-fn lift_scalar(body: &mut Function, ty: &Scalar) {
+fn lift_scalar(body: &mut Function, ty: &Scalar, sentinels: u32) {
     match ty {
         Scalar::Bool => {
-            body.instruction(&Instruction::I32Const(2))
-                .instruction(&Instruction::I32Mul)
-                .instruction(&Instruction::I32Const(2))
-                .instruction(&Instruction::I32Add)
-                .instruction(&Instruction::RefI31);
+            for instruction in runtime_abi::boolean_in(sentinels) {
+                body.instruction(&instruction);
+            }
         }
         Scalar::F32 => {
             body.instruction(&Instruction::F64PromoteF32)
@@ -1806,32 +1800,24 @@ fn lower_scalar(
     integer: u32,
     number: u32,
     name: &str,
+    sentinels: u32,
 ) {
     match scalar {
         Scalar::Bool => {
+            // A WIT bool must be false or true.
             body.instruction(&Instruction::LocalGet(result))
-                .instruction(&Instruction::RefTestNonNull(HeapType::I31))
-                .instruction(&Instruction::I32Eqz)
-                .instruction(&Instruction::If(BlockType::Empty));
-            boundary_error(body, result, name);
-            body.instruction(&Instruction::End)
-                .instruction(&Instruction::LocalGet(result))
-                .instruction(&Instruction::RefCastNonNull(HeapType::I31))
-                .instruction(&Instruction::I31GetS)
+                .instruction(&runtime_abi::sentinel_in(runtime_abi::TRUE, sentinels))
+                .instruction(&Instruction::RefEq)
                 .instruction(&Instruction::LocalTee(integer))
-                .instruction(&Instruction::I32Const(2))
-                .instruction(&Instruction::I32Eq)
-                .instruction(&Instruction::LocalGet(integer))
-                .instruction(&Instruction::I32Const(4))
-                .instruction(&Instruction::I32Eq)
+                .instruction(&Instruction::LocalGet(result))
+                .instruction(&runtime_abi::sentinel_in(runtime_abi::FALSE, sentinels))
+                .instruction(&Instruction::RefEq)
                 .instruction(&Instruction::I32Or)
                 .instruction(&Instruction::I32Eqz)
                 .instruction(&Instruction::If(BlockType::Empty));
             boundary_error(body, result, name);
             body.instruction(&Instruction::End)
-                .instruction(&Instruction::LocalGet(integer))
-                .instruction(&Instruction::I32Const(4))
-                .instruction(&Instruction::I32Eq);
+                .instruction(&Instruction::LocalGet(integer));
         }
         scalar => {
             body.instruction(&Instruction::LocalGet(result))

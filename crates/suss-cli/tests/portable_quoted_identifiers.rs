@@ -77,12 +77,9 @@ fn class_id(session: &mut Session, name: &str) -> i64 {
             // Their unavailable display name remains nil; never interpret it as
             // an anonymous source function or as part of the captured descriptor.
             let source_name_value = storage.get(&mut store, 2)?;
-            let source_name = source_name_value.unwrap_anyref().unwrap();
             assert_eq!(
-                source_name
-                    .as_i31(&store)?
-                    .expect("unset constructor source name")
-                    .get_u32(),
+                suss_cli::portable_session::sentinel_tag(&mut store, &source_name_value)?
+                    .expect("unset constructor source name"),
                 0,
                 "constructor source display name is explicitly unavailable"
             );
@@ -109,15 +106,15 @@ fn decode(
 ) -> wasmtime::Result<serde_json::Value> {
     use serde_json::json;
     assert!(depth < 64, "bounded native observation");
-    let value = value.unwrap_anyref().unwrap();
-    if let Some(sentinel) = value.as_i31(&*store)? {
-        return Ok(match sentinel.get_u32() {
+    if let Some(sentinel) = suss_cli::portable_session::sentinel_tag(&mut *store, value)? {
+        return Ok(match sentinel {
             0 => json!({"tag":"nil"}),
             2 => json!({"tag":"bool","value":false}),
             4 => json!({"tag":"bool","value":true}),
             other => panic!("unknown sentinel {other}"),
         });
     }
+    let value = value.unwrap_anyref().unwrap();
     if let Some(text) = value.as_array(&*store)? {
         assert!(matches!(
             text.ty(&*store)?.element_type(),

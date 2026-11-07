@@ -95,7 +95,7 @@ impl Session {
     ) -> Result<Option<FutureState>, SessionError> {
         self.check(value)?;
         self.frontend_scope(|scope, runtime, identity, handles| {
-            let value = Val::AnyRef(Some(value.value.to_rooted(&mut *scope)));
+            let value = Val::AnyRef(value.value.as_ref().map(|value| value.to_rooted(&mut *scope)));
             Ok(match nominal_status(scope, runtime, value)? {
                 None => None,
                 Some(FutureStatus::Pending) => Some(FutureState::Pending),
@@ -125,7 +125,7 @@ impl Session {
     ) -> Result<Option<FutureStatus>, SessionError> {
         self.check(value)?;
         self.frontend_scope(|scope, runtime, _, _| {
-            let value = Val::AnyRef(Some(value.value.to_rooted(&mut *scope)));
+            let value = Val::AnyRef(value.value.as_ref().map(|value| value.to_rooted(&mut *scope)));
             nominal_status(scope, runtime, value)
         })
     }
@@ -133,7 +133,7 @@ impl Session {
     pub fn is_future(&mut self, value: &SessionValue) -> Result<bool, SessionError> {
         self.check(value)?;
         self.frontend_scope(|scope, runtime, _, _| {
-            let value = Val::AnyRef(Some(value.value.to_rooted(&mut *scope)));
+            let value = Val::AnyRef(value.value.as_ref().map(|value| value.to_rooted(&mut *scope)));
             let mut result = [Val::I32(0)];
             export(scope, runtime, "future-is")?.call(&mut *scope, &[value], &mut result)?;
             Ok(result[0].unwrap_i32() != 0)
@@ -267,9 +267,12 @@ impl Session {
         self.check(a)?;
         self.check(b)?;
         self.frontend_scope(|scope, _, _, _| {
-            let a = a.value.to_rooted(&mut *scope);
-            let b = b.value.to_rooted(&mut *scope);
-            Ok(wasmtime::Rooted::ref_eq(&*scope, &a, &b)?)
+            let a = a.value.as_ref().map(|value| value.to_rooted(&mut *scope));
+            let b = b.value.as_ref().map(|value| value.to_rooted(&mut *scope));
+            match (a, b) {
+                (Some(a), Some(b)) => Ok(wasmtime::Rooted::ref_eq(&*scope, &a, &b)?),
+                (a, b) => Ok(a.is_none() && b.is_none()),
+            }
         })
     }
 
@@ -348,8 +351,8 @@ mod tests {
                     .unwrap()
                     .as_array(&store)?
                     .unwrap();
-                let payload = payload.to_rooted(&mut store);
-                snapshot.set(&mut store, 1, Val::AnyRef(Some(payload)))?;
+                let payload = payload.as_ref().map(|payload| payload.to_rooted(&mut store));
+                snapshot.set(&mut store, 1, Val::AnyRef(payload))?;
                 let ready =
                     wasmtime::AnyRef::from_i31(&mut store, wasmtime::I31::new_u32(1).unwrap());
                 snapshot.set(&mut store, 0, Val::AnyRef(Some(ready)))?;

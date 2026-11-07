@@ -4,7 +4,7 @@ use suss_reader::forms::{read_forms, Kind};
 fn truth(session: &mut Session, source: &str) {
     let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error}"));
     session.collect().unwrap();
-    assert_eq!(session.inspect(&value, |store, value| Ok(value.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32())).unwrap(), 4, "{source}");
+    assert_eq!(session.inspect(&value, |mut store, value| Ok(suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap())).unwrap(), 4, "{source}");
 }
 
 #[test]

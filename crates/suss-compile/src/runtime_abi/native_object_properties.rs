@@ -7,8 +7,7 @@ pub(super) fn primitives(b: &mut Builder) {
         Call(b.names["native-object-fields"]),
         Drop,
         LocalGet(1),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         LocalGet(1),
         RefTestNonNull(HeapType::Concrete(7)),
@@ -22,8 +21,7 @@ pub(super) fn primitives(b: &mut Builder) {
         RefEq,
         If(BlockType::Empty),
         LocalGet(1),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),
@@ -41,8 +39,7 @@ pub(super) fn primitives(b: &mut Builder) {
         Call(b.names["coerce-string"]),
         Drop,
         End,
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
     ]);
     b.function(
         "native-object-proto-write",
@@ -65,8 +62,7 @@ pub(super) fn functions(b: &mut Builder) {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(2),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         BrIf(1),
         LocalGet(2),
@@ -74,8 +70,7 @@ pub(super) fn functions(b: &mut Builder) {
         Call(b.names["native-object-own-descriptor"]),
         LocalSet(3),
         LocalGet(3),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),
@@ -88,8 +83,7 @@ pub(super) fn functions(b: &mut Builder) {
         Br(0),
         End,
         End,
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
     ];
     let resolve = b.function_with_locals(
         "native-object-property-descriptor",
@@ -110,8 +104,7 @@ pub(super) fn functions(b: &mut Builder) {
             Call(resolve),
             LocalSet(2),
             LocalGet(2),
-            I32Const(UNDEFINED),
-            RefI31,
+            sentinel_value(UNDEFINED),
             RefEq,
             If(BlockType::Result(ValType::I32)),
             I32Const(0),
@@ -136,8 +129,7 @@ pub(super) fn functions(b: &mut Builder) {
         Call(resolve),
         LocalSet(3),
         LocalGet(3),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         If(BlockType::Empty),
         LocalGet(3),
@@ -161,8 +153,7 @@ pub(super) fn functions(b: &mut Builder) {
         ArrayGet(ARGS),
         LocalSet(4),
         LocalGet(4),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         If(BlockType::Empty),
         LocalGet(4),
@@ -196,8 +187,7 @@ pub(super) fn functions(b: &mut Builder) {
         Call(resolve),
         LocalSet(3),
         LocalGet(3),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         If(BlockType::Empty),
         LocalGet(3),
@@ -221,8 +211,7 @@ pub(super) fn functions(b: &mut Builder) {
         ArrayGet(ARGS),
         LocalSet(4),
         LocalGet(4),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         If(BlockType::Empty),
         LocalGet(4),
@@ -248,10 +237,8 @@ pub(super) fn functions(b: &mut Builder) {
         &code,
     );
     for strict in [false, true] {
-        code = vec![LocalGet(2), RefIsNull, If(BlockType::Empty)];
-        nominal::error(&mut code);
-        code.extend([
-            End,
+        // Any value may be set, nil (a null reference) included.
+        code = vec![
             LocalGet(1),
             Call(b.names["coerce-string"]),
             LocalSet(3),
@@ -260,8 +247,7 @@ pub(super) fn functions(b: &mut Builder) {
             Call(resolve),
             LocalSet(4),
             LocalGet(4),
-            I32Const(UNDEFINED),
-            RefI31,
+            sentinel_value(UNDEFINED),
             RefEq,
             I32Eqz,
             If(BlockType::Empty),
@@ -285,8 +271,7 @@ pub(super) fn functions(b: &mut Builder) {
             ArrayGet(ARGS),
             LocalSet(4),
             LocalGet(4),
-            I32Const(UNDEFINED),
-            RefI31,
+            sentinel_value(UNDEFINED),
             RefEq,
             I32Eqz,
             If(BlockType::Empty),
@@ -300,7 +285,7 @@ pub(super) fn functions(b: &mut Builder) {
             Call(b.names["object-method-invoke"]),
             Drop,
             Else,
-        ]);
+        ];
         if strict {
             nominal::error(&mut code);
         }
@@ -366,8 +351,7 @@ pub(super) fn functions(b: &mut Builder) {
         code.extend([
             LocalGet(0),
             Call(b.names["owned-error-backing"]),
-            I32Const(0),
-            RefI31,
+            sentinel_value(NIL),
             RefEq,
             I32Eqz,
             If(BlockType::Empty),
@@ -433,14 +417,26 @@ pub(super) fn functions(b: &mut Builder) {
                     },
                     Call(b.names["property-key-equal"]),
                     If(BlockType::Empty),
+                    // A kernel error's field 2 is nil: no options are present.
+                    Block(BlockType::Result(ValType::I32)),
+                    Block(BlockType::Result(VALUE)),
                     LocalGet(0),
                     RefCastNonNull(HeapType::Concrete(8)),
                     StructGet {
                         struct_type_index: 8,
                         field_index: 2,
                     },
-                    RefCastNonNull(HeapType::I31),
+                    BrOnCastFail {
+                        relative_depth: 0,
+                        from_ref_type: RefType::EQREF,
+                        to_ref_type: RefType { nullable: false, heap_type: HeapType::I31 },
+                    },
                     I31GetU,
+                    Br(1),
+                    End,
+                    Drop,
+                    I32Const(0),
+                    End,
                     I32Const(1),
                     I32And,
                     If(BlockType::Result(VALUE)),
@@ -451,8 +447,7 @@ pub(super) fn functions(b: &mut Builder) {
                         field_index: field,
                     },
                     Else,
-                    I32Const(UNDEFINED),
-                    RefI31,
+                    sentinel_value(UNDEFINED),
                     End,
                     Return,
                     End,
@@ -572,8 +567,8 @@ pub(super) fn functions(b: &mut Builder) {
         Call(b.names["named-property-get"]),
         LocalSet(1),
     ]);
-    for sentinel in [0, UNDEFINED] {
-        code.extend([LocalGet(1), I32Const(sentinel), RefI31, RefEq]);
+    for sentinel in [NIL, UNDEFINED] {
+        code.extend([LocalGet(1), sentinel_value(sentinel), RefEq]);
     }
     code.extend([I32Or, I32Eqz, If(BlockType::Empty)]);
     nominal::message_error(&mut code, "Built-in hash caches are private to suss.core");
@@ -601,16 +596,14 @@ fn legacy_functions(b: &mut Builder, resolve: u32) {
         LocalGet(1),
         Call(b.names["coerce-string"]),
         LocalSet(4),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         LocalSet(6),
         LocalGet(0),
         LocalGet(4),
         Call(b.names["native-object-own-descriptor"]),
         LocalSet(5),
         LocalGet(5),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),
@@ -669,8 +662,7 @@ fn legacy_functions(b: &mut Builder, resolve: u32) {
         I32Const(14),
         Call(b.names["native-object-own-define"]),
         Drop,
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
     ]);
     b.function_with_locals(
         "native-object-legacy-define",
@@ -697,8 +689,7 @@ fn legacy_functions(b: &mut Builder, resolve: u32) {
         Call(resolve),
         LocalSet(3),
         LocalGet(3),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         If(BlockType::Empty),
         LocalGet(3),
@@ -721,8 +712,7 @@ fn legacy_functions(b: &mut Builder, resolve: u32) {
         LocalGet(2),
         ArrayGet(ARGS),
         Else,
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         End,
     ]);
     b.function_with_locals(

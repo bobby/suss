@@ -1,5 +1,7 @@
 //! Namespace identities and actual shared-cell imports, independently decoded.
 mod support;
+/// First type index a fragment appends after the shared ABI v3 prelude.
+const APPENDED: u32 = suss_compile::runtime_abi::LONG + 1;
 use suss_compile::{
     portable::{
         self,
@@ -492,7 +494,7 @@ fn direct_binding_read(id: &Identity) -> Vec<u8> {
         [wasm_encoder::ValType::Ref(wasm_encoder::RefType::EQREF)],
     );
     let mut imports = ImportSection::new();
-    imports.import("suss.runtime", "binding-get", EntityType::Function(10));
+    imports.import("suss.runtime", "binding-get", EntityType::Function(APPENDED));
     imports.import(
         &id.import_module(),
         &id.import_name(),
@@ -506,7 +508,7 @@ fn direct_binding_read(id: &Identity) -> Vec<u8> {
         }),
     );
     let mut functions = FunctionSection::new();
-    functions.function(11);
+    functions.function(APPENDED + 1);
     let mut exports = ExportSection::new();
     exports.export("eval", ExportKind::Func, 1);
     let mut function = Function::new([]);
@@ -535,17 +537,17 @@ fn catch_eval() -> Vec<u8> {
     types.ty().function([], [value]);
     types.ty().function([value], []);
     let mut imports = ImportSection::new();
-    imports.import("fragment", "eval", EntityType::Function(10));
+    imports.import("fragment", "eval", EntityType::Function(APPENDED));
     imports.import(
         "suss.runtime",
         "language-exception",
         EntityType::Tag(TagType {
             kind: TagKind::Exception,
-            func_type_idx: 11,
+            func_type_idx: APPENDED + 1,
         }),
     );
     let mut functions = FunctionSection::new();
-    functions.function(10);
+    functions.function(APPENDED);
     let mut exports = ExportSection::new();
     exports.export("eval", ExportKind::Func, 1);
     let mut function = Function::new([]);
@@ -605,13 +607,9 @@ fn namespace_uninitialized_reads_are_undefined_and_internal_cells_still_raise() 
     );
     let undefined = eval(&mut store, instance);
     assert_eq!(
-        undefined
-            .unwrap_anyref()
+        suss_compile::portable_session::sentinel_tag(&mut store, &undefined)
             .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_i32(),
+            .unwrap(),
         6
     );
     let fields = cell
@@ -646,19 +644,26 @@ fn namespace_uninitialized_reads_are_undefined_and_internal_cells_still_raise() 
         .unwrap()
         .unwrap();
     assert_eq!(descriptor.field(&mut store, 0).unwrap().i64(), Some(2));
-    // Fresh errors have nil data, cause and ABI2 identity UID.
-    for field in &fields[2..] {
+    // Fresh errors have nil data and cause.
+    for field in &fields[2..4] {
         assert_eq!(
-            field
-                .unwrap_anyref()
+            suss_compile::portable_session::sentinel_tag(&mut store, field)
                 .unwrap()
-                .as_i31(&store)
-                .unwrap()
-                .unwrap()
-                .get_i32(),
+                .unwrap(),
             0
         );
     }
+    // The identity UID is private runtime state: an unassigned i31 0.
+    assert_eq!(
+        fields[4]
+            .unwrap_anyref()
+            .unwrap()
+            .as_i31(&store)
+            .unwrap()
+            .unwrap()
+            .get_u32(),
+        0
+    );
     let message = fields[1]
         .unwrap_anyref()
         .unwrap()
@@ -682,13 +687,9 @@ fn namespace_uninitialized_reads_are_undefined_and_internal_cells_still_raise() 
         .unwrap();
     let value = eval(&mut store, instance);
     assert_eq!(
-        value
-            .unwrap_anyref()
+        suss_compile::portable_session::sentinel_tag(&mut store, &value)
             .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_i32(),
+            .unwrap(),
         0
     );
 }
@@ -756,9 +757,19 @@ fn namespace_core_aliases_import_one_canonical_live_cell() {
         .filter(|import| matches!(import.ty(), wasmtime::ExternType::Global(_)))
         .map(|import| (import.module().to_owned(), import.name().to_owned()))
         .collect::<Vec<_>>();
+    // ABI v3 fragments also import the runtime's false/true/undefined globals;
+    // both aliases still share one canonical binding cell.
+    let (sentinels, bindings): (Vec<_>, Vec<_>) = imports
+        .into_iter()
+        .partition(|(module, _)| module == "suss.runtime");
     assert_eq!(
-        imports,
+        bindings,
         [("suss.bindings.runtime".into(), "suss.core/shared".into())]
+    );
+    assert_eq!(
+        sentinels,
+        runtime_abi::SENTINEL_EXPORTS
+            .map(|(name, _)| ("suss.runtime".to_owned(), name.to_owned()))
     );
     let instance = fragment(&mut store, &linker, bytes);
     let value = eval(&mut store, instance);

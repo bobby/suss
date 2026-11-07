@@ -23,8 +23,8 @@ fn repeat_counts_use_nominal_conversion_hooks_and_preserve_source_effects() {
         ] {
             let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error:?}"));
             session.collect().unwrap();
-            session.inspect(&value, |store, value| {
-                assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store)?.expect("Boolean ABI").get_u32(), 4, "{source}");
+            session.inspect(&value, |mut store, value| {
+                assert_eq!(suss_cli::portable_session::sentinel_tag(&mut store, &value)?.expect("Boolean ABI"), 4, "{source}");
                 Ok(())
             }).unwrap();
         }

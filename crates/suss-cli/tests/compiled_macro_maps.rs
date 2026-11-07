@@ -1,4 +1,5 @@
 use suss_cli::{portable_macro_data::FormBridge, portable_session::Session};
+use suss_compile::portable_session::sentinel_tag;
 use suss_reader::forms::{Kind, read_forms};
 
 #[test]
@@ -36,12 +37,7 @@ fn compiled_macro_maps_use_canonical_persistent_data_and_preserve_old_values() {
             .unwrap_or_else(|error| panic!("{source}: {error:?}"));
         assert!(
             session
-                .inspect(&value, |store, value| Ok(value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32()
+                .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()
                     == 4))
                 .unwrap(),
             "{source}"
@@ -158,12 +154,7 @@ fn compiled_macro_maps_match_fresh_pinned_scalar_observations_in_both_phases() {
             let actual = session
                 .inspect(&value, |mut store, value| {
                     Ok(if case["expected"]["tag"] == "bool" {
-                        let n = value
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_i31(&store)?
-                            .unwrap()
-                            .get_u32();
+                        let n = sentinel_tag(&mut store, &value)?.unwrap();
                         let v = match n {
                             2 => false,
                             4 => true,
@@ -202,12 +193,7 @@ fn compiled_macro_maps_evaluate_ordered_entries_and_stop_on_throw() {
         .unwrap();
     assert!(
         session
-            .inspect(&value, |store, value| Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32()
+            .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()
                 == 4))
             .unwrap()
     );
@@ -220,12 +206,7 @@ fn compiled_macro_maps_evaluate_ordered_entries_and_stop_on_throw() {
     let value = session.eval("(== trace 1)").unwrap();
     assert!(
         session
-            .inspect(&value, |store, value| Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32()
+            .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()
                 == 4))
             .unwrap()
     );

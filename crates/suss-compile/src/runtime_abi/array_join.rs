@@ -35,15 +35,15 @@ pub(super) fn append_globals(globals: &mut GlobalSection) {
                 mutable: true,
                 shared: false,
             },
-            &ConstExpr::extended([I32Const(0), RefI31]),
+            // empty join stack and lazy method roots start NIL.
+            &ConstExpr::extended([sentinel_value(NIL)]),
         );
     }
 }
 pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     let mut code = vec![
         LocalGet(0),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         If(BlockType::Empty),
         LocalGet(0),
@@ -130,8 +130,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(3),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         BrIf(1),
     ]);
@@ -229,11 +228,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     // Only nonempty converted pieces allocate nodes. Missing own ranges are
     // skipped without logical-length-sized storage or traversal.
     code = vec![
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         LocalSet(4),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         LocalSet(8),
         LocalGet(2),
         I32Eqz,
@@ -276,13 +273,12 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Call(b.names["number-box"]),
         Call(b.names["source-array-get"]),
         LocalSet(6),
+        // nil and undefined elements join as empty strings.
         LocalGet(6),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         LocalGet(6),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         I32Or,
         I32Eqz,
@@ -331,8 +327,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(4),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         BrIf(1),
     ]);
@@ -357,8 +352,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(8),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         BrIf(1),
     ]);
@@ -445,8 +439,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Call(b.names["source-array-sparse-length"]),
         LocalSet(2),
         LocalGet(1),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         If(BlockType::Result(VALUE)),
     ];
@@ -467,8 +460,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Call(next),
         Call(next),
         LocalTee(5),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         BrIf(1),
         LocalGet(4),
@@ -489,8 +481,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(4),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         BrIf(1),
     ]);
@@ -575,8 +566,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 I32Const(1),
                 ArrayGet(ARGS),
                 Else,
-                I32Const(UNDEFINED),
-                RefI31,
+                sentinel_value(UNDEFINED),
                 End,
                 Call(join),
             ]),
@@ -630,8 +620,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 Return,
                 End,
                 GlobalGet(object_methods::TAG_GLOBAL),
-                I32Const(0),
-                RefI31,
+                sentinel_value(NIL),
                 RefFunc(anchored),
                 I32Const(1),
                 I32Const(-1),
@@ -640,9 +629,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                     array_type_index: ARGS,
                     array_size: 1,
                 },
-                I32Const(0),
-                RefI31,
-                I32Const(0),
+                sentinel_value(NIL),
+                I32Const(0), // Identity UID, unassigned.
                 RefI31,
                 StructNew(7),
                 RefFunc(detached),

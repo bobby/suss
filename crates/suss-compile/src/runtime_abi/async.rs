@@ -51,11 +51,9 @@ fn error(body: &mut Vec<Instruction<'static>>) {
             array_type_index: STRING,
             array_size: text.len() as u32,
         },
-        I32Const(0),
-        RefI31,
-        I32Const(0),
-        RefI31,
-        I32Const(0),
+        sentinel_value(NIL),
+        sentinel_value(NIL),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
         Throw(0),
@@ -154,7 +152,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
         If(BlockType::Empty),
     ]);
     slot(&mut body, 1);
-    body.extend([I32Const(0), RefI31, RefEq, Return, End, I32Const(1)]);
+    body.extend([sentinel_value(NIL), RefEq, Return, End, I32Const(1)]);
     let predicate = b.function_with_locals(
         "future-is",
         &[VALUE],
@@ -171,8 +169,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
             GlobalGet(DESCRIPTOR_GLOBAL),
             I32Const(PENDING),
             RefI31,
-            I32Const(0),
-            RefI31,
+            sentinel_value(NIL),
             ArrayNewFixed {
                 array_type_index: ARGS,
                 array_size: 2,
@@ -181,9 +178,8 @@ pub(super) fn intrinsics(b: &mut Builder) {
                 array_type_index: ARGS,
                 array_size: 1,
             },
-            I32Const(0),
-            RefI31,
-            I32Const(0),
+            sentinel_value(NIL),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(OBJECT),
         ],
@@ -245,7 +241,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
         if payload {
             body.push(LocalGet(1));
         } else {
-            body.extend([I32Const(0), RefI31]);
+            body.extend([sentinel_value(NIL)]);
         }
         body.extend([
             ArrayNewFixed {
@@ -291,11 +287,10 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(0),
+            sentinel_value(NIL),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(0),
-            RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            sentinel_value(NIL), StructNew(DESCRIPTOR),
         ]),
     );
     assert_eq!(globals.len(), REGISTRATION_GLOBAL);
@@ -311,16 +306,16 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(0),
+            sentinel_value(NIL),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(0),
-            RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            sentinel_value(NIL), StructNew(DESCRIPTOR),
         ]),
     );
     assert_eq!(globals.len(), SCHEDULER_GLOBAL);
     // Immutable snapshot: registrations, FIFO ready tokens, next generation,
     // active invocation. One GlobalSet commits each queue/registration update.
+    // Next generation is a private i31 counter; no active record is nil.
     globals.global(
         GlobalType {
             val_type: VALUE,
@@ -334,8 +329,7 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             ArrayNewDefault(ARGS),
             I32Const(1),
             RefI31,
-            I32Const(0),
-            RefI31,
+            sentinel_value(NIL),
             ArrayNewFixed {
                 array_type_index: ARGS,
                 array_size: 4,
@@ -355,11 +349,10 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(0),
+            sentinel_value(NIL),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(0),
-            RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            sentinel_value(NIL), StructNew(DESCRIPTOR),
         ]),
     );
     assert_eq!(globals.len(), TRAP_DESCRIPTOR_GLOBAL);
@@ -375,11 +368,10 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(0),
+            sentinel_value(NIL),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(0),
-            RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            sentinel_value(NIL), StructNew(DESCRIPTOR),
         ]),
     );
     assert_eq!(globals.len(), TRAP_VALUE_GLOBAL);
@@ -393,9 +385,8 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             GlobalGet(TRAP_DESCRIPTOR_GLOBAL),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(0),
-            RefI31,
-            I32Const(0),
+            sentinel_value(NIL),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(OBJECT),
         ]),
@@ -411,9 +402,8 @@ pub(super) fn append_descriptor(globals: &mut GlobalSection) {
             GlobalGet(TRAP_DESCRIPTOR_GLOBAL),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(0),
-            RefI31,
-            I32Const(0),
+            sentinel_value(NIL),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(OBJECT),
         ]),
@@ -562,9 +552,8 @@ fn continuation_storage(b: &mut Builder, future_predicate: u32) {
                 array_type_index: ARGS,
                 array_size: 1,
             },
-            I32Const(0),
-            RefI31,
-            I32Const(0),
+            sentinel_value(NIL),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(OBJECT),
         ],
@@ -877,8 +866,7 @@ fn scheduler_queue(b: &mut Builder, predicate: u32, status: u32) -> (u32, u32) {
     item(&mut body, 1, 3);
     body.extend([
         LocalTee(4),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),
@@ -1358,9 +1346,8 @@ fn scheduler_queue(b: &mut Builder, predicate: u32, status: u32) -> (u32, u32) {
             array_type_index: ARGS,
             array_size: 6,
         },
-        I32Const(0),
-        RefI31,
-        I32Const(0),
+        sentinel_value(NIL),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(OBJECT),
         LocalSet(5),
@@ -1657,12 +1644,10 @@ fn cancellation_exports(b: &mut Builder) {
     item(&mut body, 0, 3);
     body.extend([
         LocalTee(0),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         If(BlockType::Result(VALUE)),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         Else,
     ]);
     item(&mut body, 0, 0);
@@ -1692,8 +1677,7 @@ fn cancellation_exports(b: &mut Builder) {
     item(&mut body, 1, 1);
     body.push(LocalSet(3));
     body.extend([
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         LocalSet(4),
         I32Const(0),
         LocalSet(12),
@@ -1738,8 +1722,7 @@ fn cancellation_exports(b: &mut Builder) {
     item(&mut body, 1, 3);
     body.extend([
         LocalTee(10),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),
@@ -1754,8 +1737,7 @@ fn cancellation_exports(b: &mut Builder) {
         End,
         End,
         LocalGet(4),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         If(BlockType::Empty),
     ]);
@@ -1795,9 +1777,8 @@ fn cancellation_exports(b: &mut Builder) {
             array_type_index: ARGS,
             array_size: 6,
         },
-        I32Const(0),
-        RefI31,
-        I32Const(0),
+        sentinel_value(NIL),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(OBJECT),
         LocalSet(4),
@@ -1812,15 +1793,13 @@ fn cancellation_exports(b: &mut Builder) {
         LocalGet(2),
         LocalGet(0),
         I32Const(1),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         Call(filter),
         LocalSet(8),
         LocalGet(3),
         LocalGet(0),
         I32Const(0),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         Call(filter),
         LocalSet(9),
         End,
@@ -1869,8 +1848,7 @@ fn task_exports(b: &mut Builder) {
             Call(b.names["future-pending-new"]),
             LocalSet(2),
             LocalGet(2),
-            I32Const(0),
-            RefI31,
+            sentinel_value(NIL),
             Call(b.names["future-resolve"]),
             Drop,
             LocalGet(0),
@@ -1934,8 +1912,7 @@ fn task_exports(b: &mut Builder) {
         I32Eq,
         If(BlockType::Empty),
         LocalGet(2),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),
@@ -1954,8 +1931,7 @@ fn task_exports(b: &mut Builder) {
         If(BlockType::Empty),
         I32Const(CANCELLED),
         LocalSet(1),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         LocalSet(2),
         End,
     ]);
@@ -2026,8 +2002,7 @@ fn scheduler_runner(b: &mut Builder, refresh: u32, _enqueue: u32) {
     item(&mut body, 0, 3);
     body.extend([
         LocalTee(1),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         If(BlockType::Empty),
         Call(prune),
@@ -2058,8 +2033,7 @@ fn scheduler_runner(b: &mut Builder, refresh: u32, _enqueue: u32) {
     item(&mut body, 0, 1);
     item(&mut body, 0, 2);
     body.extend([
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         ArrayNewFixed {
             array_type_index: ARGS,
             array_size: 4,
@@ -2091,8 +2065,7 @@ fn scheduler_runner(b: &mut Builder, refresh: u32, _enqueue: u32) {
     item(&mut body, 0, 3);
     body.extend([
         LocalTee(1),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         If(BlockType::Empty),
         Call(prune),
@@ -2130,7 +2103,7 @@ fn scheduler_runner(b: &mut Builder, refresh: u32, _enqueue: u32) {
     // 12=caught,13=stale. Each call executes at most one compiled resume.
     let mut body = vec![GlobalGet(SCHEDULER_GLOBAL), LocalSet(0)];
     item(&mut body, 0, 3);
-    body.extend([I32Const(0), RefI31, RefEq, I32Eqz, If(BlockType::Empty)]);
+    body.extend([sentinel_value(NIL), RefEq, I32Eqz, If(BlockType::Empty)]);
     error(&mut body);
     body.push(End);
     body.extend([
@@ -2347,8 +2320,7 @@ fn scheduler_runner(b: &mut Builder, refresh: u32, _enqueue: u32) {
         Call(b.names["future-result"]),
         End,
         Else,
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         End,
         ArraySet(ARGS),
         LocalGet(6),
@@ -2532,7 +2504,7 @@ fn scheduler_runner(b: &mut Builder, refresh: u32, _enqueue: u32) {
     // misses ready dependencies, cancellation, terminal rows and actionable stream service.
     let mut body = vec![GlobalGet(SCHEDULER_GLOBAL), LocalSet(0)];
     item(&mut body, 0, 3);
-    body.extend([I32Const(0), RefI31, RefEq, I32Eqz]);
+    body.extend([sentinel_value(NIL), RefEq, I32Eqz]);
     item(&mut body, 0, 1);
     body.extend([
         RefCastNonNull(HeapType::Concrete(ARGS)),
@@ -2675,8 +2647,7 @@ fn source_api_cancellation(b: &mut Builder) {
     item(&mut body, 1, 3);
     body.extend([
         LocalTee(3),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),
@@ -2816,8 +2787,7 @@ fn scheduler_reset_exports(b: &mut Builder) {
     item(&mut body, 0, 3);
     body.extend([
         LocalTee(5),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),
@@ -2972,8 +2942,7 @@ fn invocation_storage(b: &mut Builder) {
     item(&mut body, 1, 3);
     body.extend([
         LocalTee(3),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),
@@ -3102,8 +3071,7 @@ fn invocation_exports(b: &mut Builder) {
     item(&mut body, 1, 3);
     body.extend([
         LocalTee(6),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),
@@ -3309,8 +3277,7 @@ fn invocation_exports(b: &mut Builder) {
     item(&mut body, 1, 3);
     body.extend([
         LocalTee(4),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),

@@ -4,8 +4,9 @@ use std::sync::{
     atomic::{AtomicUsize, Ordering},
 };
 use suss_compile::portable_session::{
-    FutureState, FutureStatus, Session, SessionError, SessionOptions, SessionValue,
+    FutureState, FutureStatus, Session, SessionError, SessionOptions, SessionValue, sentinel_tag,
 };
+use suss_compile::runtime_abi;
 use suss_reader::Symbol;
 
 fn number(session: &mut Session, value: &SessionValue) -> f64 {
@@ -242,15 +243,10 @@ fn genuine_native_exception_constructor_ignores_redefined_source_cells() {
                 .as_struct(&store)?
                 .unwrap();
             assert_eq!(data.field(&mut store, 0)?.unwrap_f64(), 37.0);
+            let cause = fields.get(&mut store, 2)?;
             assert_eq!(
-                fields
-                    .get(&mut store, 2)?
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32(),
-                0
+                sentinel_tag(&mut store, &cause)?,
+                Some(runtime_abi::NIL as u32)
             );
             Ok(())
         })

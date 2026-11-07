@@ -89,18 +89,18 @@ fn string_text(
 }
 fn inspect_display(session: &mut Session, value: &SessionValue) -> Result<Output, SessionError> {
     let output = session.inspect(value, |mut store, value| {
-        let reference = value
-            .unwrap_anyref()
-            .ok_or_else(|| wasmtime::Error::msg("Null language value"))?;
-        if let Some(bits) = reference.as_i31(&store)? {
-            return Ok(Output::Literal(match bits.get_u32() {
-                0 => "nil",
-                2 => "false",
-                4 => "true",
-                6 => "#<undefined>",
+        if let Some(tag) = crate::portable_session::sentinel_tag(&mut store, &value)? {
+            return Ok(Output::Literal(match tag as i32 {
+                crate::runtime_abi::NIL => "nil",
+                crate::runtime_abi::FALSE => "false",
+                crate::runtime_abi::TRUE => "true",
+                crate::runtime_abi::UNDEFINED => "#<undefined>",
                 _ => return Err(wasmtime::Error::msg("Unknown language sentinel")),
             }));
         }
+        let reference = value
+            .unwrap_anyref()
+            .expect("a non-sentinel value has a reference");
         if let Some(array) = reference.as_array(&store)? {
             if !matches!(array.ty(&store)?.element_type(), wasmtime::StorageType::I16) {
                 return Ok(Output::Printed);

@@ -2,6 +2,8 @@
 //! require proportional allocation; small hole arrays use masked dense storage.
 //! Linked entries preserve presence independently of value for larger arrays.
 //! Uses only the existing shared Args and Number types, with no owner registry.
+//! The empty chain and an absent node or predecessor are NIL; that terminator
+//! is private backing and never returned to user code.
 use super::*;
 use Instruction::*;
 
@@ -23,8 +25,7 @@ fn buffer(body: &mut Vec<Instruction<'static>>, fields: u32, slot: i32, ty: u32)
 fn unlink(body: &mut Vec<Instruction<'static>>, fields: u32, previous: u32, entry: u32) {
     body.extend([
         LocalGet(previous),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         If(BlockType::Empty),
     ]);
@@ -43,8 +44,7 @@ pub(super) fn functions(b: &mut Builder) {
     // Floyd validation so malformed/cyclic foreign chains fail before mutation.
     let mut body = vec![
         LocalGet(0),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         If(BlockType::Empty),
         LocalGet(0),
@@ -102,8 +102,7 @@ pub(super) fn functions(b: &mut Builder) {
         I32Const(2),
         ArrayGet(ARGS),
         LocalTee(2),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         LocalGet(2),
         RefTestNonNull(HeapType::Concrete(ARGS)),
@@ -128,16 +127,14 @@ pub(super) fn functions(b: &mut Builder) {
             LocalGet(0),
             F64ConvertI32U,
             Call(b.names["number-box"]),
-            I32Const(0),
-            RefI31,
+            sentinel_value(NIL),
             // Vector tails/nodes repeatedly populate at most32 slots. Allocate
             // bounded private storage, retaining absence through zero masks.
             LocalGet(0),
             I32Const(32),
             I32LeU,
             If(BlockType::Result(VALUE)),
-            I32Const(UNDEFINED),
-            RefI31,
+            sentinel_value(UNDEFINED),
             LocalGet(0),
             ArrayNew(ARGS),
             Else,
@@ -246,8 +243,7 @@ pub(super) fn functions(b: &mut Builder) {
         I32Const(1),
         ArrayGet(ARGS),
         LocalTee(2),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         If(BlockType::Empty),
         // Shape, uint32 length and dense/mask lengths were checked above.
@@ -263,8 +259,7 @@ pub(super) fn functions(b: &mut Builder) {
         Call(next),
         Call(next),
         LocalTee(3),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         BrIf(1),
         LocalGet(2),
@@ -289,8 +284,7 @@ pub(super) fn functions(b: &mut Builder) {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(2),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         BrIf(1),
     ]);
@@ -421,8 +415,7 @@ pub(super) fn functions(b: &mut Builder) {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(2),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         If(BlockType::Empty),
         LocalGet(2),
@@ -454,8 +447,7 @@ pub(super) fn functions(b: &mut Builder) {
         Br(0),
         End,
         End,
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
     ]);
     let find_validated = b.count;
     b.types
@@ -507,8 +499,7 @@ pub(super) fn functions(b: &mut Builder) {
                 LocalGet(3),
                 I32Eqz,
                 If(BlockType::Empty),
-                I32Const(UNDEFINED),
-                RefI31,
+                sentinel_value(UNDEFINED),
                 Return,
                 End,
             ]);
@@ -522,8 +513,7 @@ pub(super) fn functions(b: &mut Builder) {
             LocalGet(1),
             Call(find_validated),
             LocalTee(2),
-            I32Const(0),
-            RefI31,
+            sentinel_value(NIL),
             RefEq,
         ]);
         if presence {
@@ -531,8 +521,7 @@ pub(super) fn functions(b: &mut Builder) {
         } else {
             body.extend([
                 If(BlockType::Empty),
-                I32Const(UNDEFINED),
-                RefI31,
+                sentinel_value(UNDEFINED),
                 Return,
                 End,
             ]);
@@ -585,8 +574,7 @@ pub(super) fn functions(b: &mut Builder) {
         LocalGet(1),
         Call(find_validated),
         LocalTee(4),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         If(BlockType::Empty),
     ]);
@@ -595,14 +583,12 @@ pub(super) fn functions(b: &mut Builder) {
         I32Const(1),
         ArrayGet(ARGS),
         LocalSet(6),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         LocalSet(7),
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(6),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         BrIf(1),
     ]);
@@ -638,8 +624,7 @@ pub(super) fn functions(b: &mut Builder) {
         },
         LocalSet(4),
         LocalGet(7),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         If(BlockType::Empty),
     ]);
@@ -697,7 +682,7 @@ pub(super) fn functions(b: &mut Builder) {
     nominal::error(&mut body);
     body.push(End);
     buffer(&mut body, 2, 2, ARGS);
-    body.extend([LocalGet(1), I32Const(UNDEFINED), RefI31, ArraySet(ARGS)]);
+    body.extend([LocalGet(1), sentinel_value(UNDEFINED), ArraySet(ARGS)]);
     buffer(&mut body, 2, 3, STRING);
     body.extend([
         LocalGet(1),
@@ -713,8 +698,7 @@ pub(super) fn functions(b: &mut Builder) {
         LocalGet(1),
         Call(find_validated),
         LocalTee(3),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         If(BlockType::Empty),
         I32Const(1),
@@ -726,8 +710,7 @@ pub(super) fn functions(b: &mut Builder) {
         I32Const(1),
         ArrayGet(ARGS),
         LocalSet(4),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         LocalSet(5),
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
@@ -795,14 +778,12 @@ pub(super) fn functions(b: &mut Builder) {
         I32Const(1),
         ArrayGet(ARGS),
         LocalSet(3),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         LocalSet(4),
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(3),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         BrIf(1),
     ]);
@@ -876,8 +857,7 @@ pub(super) fn functions(b: &mut Builder) {
         LocalGet(1),
         F64ConvertI32U,
         Call(b.names["number-box"]),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         LocalGet(2),
         I32Const(1),
         LocalGet(1),
@@ -910,8 +890,7 @@ pub(super) fn functions(b: &mut Builder) {
     nominal::error(&mut body);
     body.extend([
         End,
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         LocalGet(2),
         ArrayNew(ARGS),
         LocalSet(3),
@@ -957,8 +936,7 @@ pub(super) fn functions(b: &mut Builder) {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(6),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         BrIf(1),
     ]);
@@ -1055,8 +1033,7 @@ pub(super) fn functions(b: &mut Builder) {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(8),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         BrIf(1),
     ]);
@@ -1128,15 +1105,13 @@ pub(super) fn functions(b: &mut Builder) {
         I32Const(1),
         ArrayGet(ARGS),
         LocalSet(8),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         LocalTee(9),
         LocalSet(10),
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(8),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         BrIf(1),
     ]);
@@ -1193,16 +1168,14 @@ pub(super) fn functions(b: &mut Builder) {
     body.extend([
         I32Const(1),
         ArrayGet(ARGS),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         ArrayNewFixed {
             array_type_index: ARGS,
             array_size: 3,
         },
         LocalSet(11),
         LocalGet(10),
-        I32Const(0),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         If(BlockType::Empty),
         LocalGet(11),

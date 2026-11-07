@@ -123,9 +123,10 @@ fn host_value(
 ) -> wasmtime::Result<SessionValue> {
     let reference = value
         .anyref()
-        .flatten()
-        .ok_or_else(|| wasmtime::Error::msg("Expected ABI2 Value"))?;
-    let value = reference.to_owned_rooted(&mut *caller)?;
+        .ok_or_else(|| wasmtime::Error::msg("Expected a reference Value"))?;
+    let value = reference
+        .map(|reference| reference.to_owned_rooted(&mut *caller))
+        .transpose()?;
     handles.fetch_add(1, Ordering::Relaxed);
     Ok(SessionValue {
         identity,
@@ -289,7 +290,7 @@ impl Session {
                 });
                 let signal = cancellation.clone();
                 let entry = Arc::new(PendingHostFuture {
-                    root: future.value.clone(),
+                    root: future.object()?.clone(),
                     cancel: Mutex::new(Some(Box::new(move || signal.cancel()))),
                 });
                 let request = NativeRequest {
@@ -401,7 +402,7 @@ impl Session {
             self.identity,
             &self.handles,
         )?;
-        let class_value = Val::AnyRef(Some(class.value.to_rooted(&mut scope)));
+        let class_value = Val::AnyRef(class.value.as_ref().map(|value| value.to_rooted(&mut scope)));
         let descriptor = runtime
             .get_func(&mut scope, "constructor-descriptor")
             .unwrap();
@@ -423,20 +424,20 @@ impl Session {
             &self.handles,
         )?;
         let array = buffer
-            .value
+            .object()?
             .to_rooted(&mut scope)
             .as_array(&scope)?
             .unwrap();
-        let message = Val::AnyRef(Some(message.value.to_rooted(&mut scope)));
-        let data = Val::AnyRef(Some(data.value.to_rooted(&mut scope)));
+        let message = Val::AnyRef(message.value.as_ref().map(|value| value.to_rooted(&mut scope)));
+        let data = Val::AnyRef(data.value.as_ref().map(|value| value.to_rooted(&mut scope)));
         array.set(&mut scope, 0, message)?;
         array.set(&mut scope, 1, data)?;
         let nil = runtime.get_func(&mut scope, "nil").unwrap();
         let nil = call(&mut scope, runtime, nil, &[], self.identity, &self.handles)?;
-        let nil = Val::AnyRef(Some(nil.value.to_rooted(&mut scope)));
+        let nil = Val::AnyRef(nil.value.as_ref().map(|value| value.to_rooted(&mut scope)));
         array.set(&mut scope, 2, nil)?;
-        let descriptor = Val::AnyRef(Some(descriptor.value.to_rooted(&mut scope)));
-        let buffer = Val::AnyRef(Some(buffer.value.to_rooted(&mut scope)));
+        let descriptor = Val::AnyRef(descriptor.value.as_ref().map(|value| value.to_rooted(&mut scope)));
+        let buffer = Val::AnyRef(buffer.value.as_ref().map(|value| value.to_rooted(&mut scope)));
         let constructor = runtime
             .get_func(&mut scope, "source-constructor-new")
             .unwrap();
@@ -448,7 +449,7 @@ impl Session {
             self.identity,
             &self.handles,
         )?;
-        let constructor = Val::AnyRef(Some(constructor.value.to_rooted(&mut scope)));
+        let constructor = Val::AnyRef(constructor.value.as_ref().map(|value| value.to_rooted(&mut scope)));
         let invoke = runtime.get_func(&mut scope, "invoke").unwrap();
         call(
             &mut scope,
@@ -595,7 +596,7 @@ impl Session {
             self.handles.fetch_add(1, Ordering::Relaxed);
             SessionValue {
                 identity: self.identity,
-                value: owner.clone(),
+                value: Some(owner.clone()),
                 handles: self.handles.clone(),
             }
         })
