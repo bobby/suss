@@ -153,6 +153,29 @@ Python unit tests cover the remaining failure paths.
 
 ## Current suite result
 
+After #333's numeric literals (2026-11-07), the reviewed baseline records
+2,327 host-decided passes, 54 guest-judged observations, 232 failures and 3,241
+assertions not executed because 124 namespaces fail to load. The reader now
+reads every Clojure numeric literal, so none of the 87 namespaces it used to
+reject fails to read. 33 of them load: `compare`, `counted?`, `even?`, `>`,
+`>=`, `ident?`, `keyword?`, `list`, `list?`, `<`, `<=`, `map?`, `max`, `min`,
+`odd?`, `partition`, the qualified and simple ident predicates, `reversible?`,
+`seq`, `seq?`, `seqable?`, `set?`, `/`, `subvec`, `symbol?`, `transient`,
+`vector` and `vector?`. The other 54 now stop later, mostly at `^:const`
+definitions and missing vars such as `int?`, `bigdec` and `numerator`.
+
+Of the new failures:
+
+- 198 are assertions that throw "Unsupported numeric literal ...", as #333
+  specifies until #335. The pinned ClojureScript reads `1/2` as the double 0.5
+  and `1N` as 1, so its recordings pass. Most are in `/` (85) and the
+  comparison operators.
+- `test-compare`'s 32 assertions fail because the test exhausts the Wasm call
+  stack inside the harness (#341). Each of its cases evaluates correctly on its
+  own.
+- `test-seq` decodes a value the test decoder can't read ("Unsupported ABI2
+  value layout").
+
 After #30's atoms, volatiles and delays (2026-11-03), the reviewed baseline
 records 1,387 host-decided passes, 47 guest-judged observations, 23 failures and
 4,397 assertions not executed because 168 namespaces fail to load. Newly loading
