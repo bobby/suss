@@ -169,7 +169,7 @@ fn public_namespace_executes_portable_dependency_and_separate_macro_import() {
     write(
         root.path(),
         "math.cljs",
-        "(ns math) (def bias #?(:suss 21 :cljs 99))",
+        "(ns math) (def bias #?(:suss 21 :default 99))",
     );
     write(
         root.path(),

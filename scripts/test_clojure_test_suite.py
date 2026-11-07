@@ -11,7 +11,7 @@ OPAQUE = {'tag': 'opaque', 'type': 'function', 'reason': 'unsupported'}
 
 
 def run(assertions, **extra):
-    document = {'schema': 1, 'suite': suite.COMMIT, 'upstream': suite.CLJS_PIN,
+    document = {'schema': 2, 'suite': suite.COMMIT, 'upstream': suite.ORACLE_ID,
                 'namespaces': ['a.b-test'], 'tests': ['a.b-test/t'], 'skips': [],
                 'assertions': assertions, 'reporter-errors': [],
                 'summary': {'test': 1, 'pass': len(assertions), 'fail': 0, 'error': 0}}
@@ -37,6 +37,30 @@ def observed(assertions, namespaces=None, test_failures=(), skips=()):
 def suss_predicate(ordinal=1, operands=(NUMBER_ONE, NUMBER_ONE), verdict='pass', head='='):
     return {'test': 'a.b-test/t', 'ordinal': ordinal, 'kind': 'predicate', 'verdict': verdict, 'head': head,
             'result': {'tag': 'bool', 'value': verdict == 'pass'}, 'operands': list(operands)}
+
+
+class SuiteMatches(unittest.TestCase):
+    """Until #335, JVM longs match Suss binary64 holding the same integer."""
+
+    def test_long_matches_an_exact_double(self):
+        self.assertTrue(suite.suite_matches({'tag': 'long', 'value': '1'}, NUMBER_ONE))
+        self.assertFalse(suite.suite_matches({'tag': 'long', 'value': '2'}, NUMBER_ONE))
+        self.assertTrue(suite.suite_matches({'tag': 'long', 'value': '0'}, {'tag': 'f64', 'bits': '0000000000000000'}))
+        self.assertFalse(suite.suite_matches({'tag': 'long', 'value': '0'}, {'tag': 'f64', 'bits': '8000000000000000'}))
+
+    def test_longs_beyond_2_53_and_exact_types_never_match(self):
+        rounded = {'tag': 'f64', 'bits': '4340000000000000'}
+        self.assertTrue(suite.suite_matches({'tag': 'long', 'value': str(2 ** 53)}, rounded))
+        self.assertFalse(suite.suite_matches({'tag': 'long', 'value': str(2 ** 53 + 1)}, rounded))
+        for tag in ({'tag': 'bigint', 'value': '1'}, {'tag': 'ratio', 'numerator': '1', 'denominator': '2'},
+                    {'tag': 'decimal', 'unscaled': '1', 'scale': 0}):
+            self.assertFalse(suite.suite_matches(tag, NUMBER_ONE))
+
+    def test_collections_compare_their_items_with_the_same_rule(self):
+        long_one = {'tag': 'long', 'value': '1'}
+        self.assertTrue(suite.suite_matches({'tag': 'vector', 'items': [long_one]}, {'tag': 'vector', 'items': [NUMBER_ONE]}))
+        self.assertTrue(suite.suite_matches({'tag': 'set', 'items': [long_one]}, {'tag': 'set', 'items': [NUMBER_ONE]}))
+        self.assertFalse(suite.suite_matches({'tag': 'vector', 'items': [long_one]}, {'tag': 'seq', 'items': [NUMBER_ONE]}))
 
 
 class Normalize(unittest.TestCase):

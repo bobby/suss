@@ -1,0 +1,4 @@
+;; The JVM Clojure oracle for the clojure-test-suite (#334). Development only.
+{:paths ["src" "out/suite"]
+ :mvn/local-repo "/tmp/suss-oracle-m2"
+ :deps {org.clojure/clojure {:mvn/version "1.12.6"}}}

@@ -61,7 +61,7 @@ fn configured_entry_world_and_mappings_execute_compiled_phases_without_partial_o
     write(
         root.path(),
         "src/app/core.cljc",
-        "#?(:cljs (ns app.core (:require [dep :as d]) (:require-macros [tools :refer [twice]])) :suss (ns wrong)) (def seen 0) (def ^{:export 7} calculate (fn [x] (do (set! seen (+ seen 1)) (twice (+ x 2))))) (def ^:export effects (fn [] (+ seen (* 100 (- d/counter 1))))) (set! seen (+ seen 1))",
+        "#?(:default (ns app.core (:require [dep :as d]) (:require-macros [tools :refer [twice]])) :suss (ns wrong)) (def seen 0) (def ^{:export 7} calculate (fn [x] (do (set! seen (+ seen 1)) (twice (+ x 2))))) (def ^:export effects (fn [] (+ seen (* 100 (- d/counter 1))))) (set! seen (+ seen 1))",
     );
     write(
         root.path(),
@@ -124,7 +124,7 @@ fn retained_world_groups_prepare_shared_roots_once_and_preserve_all_source_effec
     write(
         root.path(),
         "src/b.cljc",
-        "#?(:cljs (ns b (gen-world :bundle))) (def counter 0) (set! counter (+ counter 1))",
+        "#?(:default (ns b (gen-world :bundle))) (def counter 0) (set! counter (+ counter 1))",
     );
     write(
         root.path(),

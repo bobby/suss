@@ -10,9 +10,9 @@
     32,
     40
    ],
-   "classification": "suss-branch",
-   "rationale": "JavaScript Number range constants select binary64 values that Suss shares (max/min safe integer, max/min value).",
-   "alternative": "vendor/clojure-test-suite/patches/0002-number-range-suss-branches.patch adds :suss branches with the same binary64 literals."
+   "classification": "host-specific",
+   "rationale": "ClojureScript's JavaScript Number range constants, in :cljs branches Suss doesn't select (#334).",
+   "alternative": "Suss selects the :default branches, Clojure's long and double ranges (ADR-0003)."
   },
   {
    "file": "clojure/core_test/portability.cljc",

@@ -58,12 +58,12 @@ fn pinned_reader_shapes_match() {
             false,
         ),
         (
-            "#(vector #?(:cljs %2 :default %9) %)",
+            "#(vector #?(:default %2 :default %9) %)",
             "(fn* [arg-1 arg-2 arg-3 arg-4 arg-5 arg-6 arg-7 arg-8 arg-9] (vector arg-2 arg-1))",
             false,
         ),
         (
-            "#(vector #?(:jvm %9 :cljs %) %)",
+            "#(vector #?(:jvm %9 :default %) %)",
             "(fn* [arg-1 arg-2 arg-3 arg-4 arg-5 arg-6 arg-7 arg-8 arg-9] (vector arg-1 arg-1))",
             false,
         ),
@@ -83,15 +83,15 @@ fn pinned_reader_shapes_match() {
         ("#(%-1)", "(fn* [& arg-rest] (arg-rest))", false),
         ("#(%2.0)", "", true),
         ("#(%foo)", "", true),
-        ("[1 #?@(:cljs [2 3]) 4]", "[1 2 3 4]", false),
+        ("[1 #?@(:default [2 3]) 4]", "[1 2 3 4]", false),
         ("(a #?@(:suss (b c)) d)", "(a b c d)", false),
-        ("{:a 1 #?@(:cljs [:b 2])}", "{:a 1, :b 2}", false),
+        ("{:a 1 #?@(:default [:b 2])}", "{:a 1, :b 2}", false),
         ("[1 #?@(:jvm [2]) 3]", "[1 3]", false),
-        ("[#?@(:cljs []) 4]", "[4]", false),
-        ("[#?@(:cljs nil)]", "", true),
-        ("#?@(:cljs [1])", "", true),
-        ("[#?@(:default [1] :cljs [2])]", "[1]", false),
-        ("['#?@(:cljs [x y]) z]", "[(quote x) y z]", false),
+        ("[#?@(:default []) 4]", "[4]", false),
+        ("[#?@(:default nil)]", "", true),
+        ("#?@(:default [1])", "", true),
+        ("[#?@(:default [1] :default [2])]", "[1]", false),
+        ("['#?@(:default [x y]) z]", "[(quote x) y z]", false),
     ];
     for (source, expected, read_error) in cases {
         let result = forms::read_forms(source).and_then(forms::resolve_conditionals);
@@ -171,12 +171,12 @@ fn anonymous_indexing_metadata_matches_pinned_generated_and_real_nodes() {
 #[test]
 fn pinned_reader_edges_match() {
     let cases: &[(&str, &str, bool)] = &[
-        ("#?(:cljs #?@(:cljs [x]))", "", true),
-        ("[#?@(:cljs #?@(:cljs [[x y]]))]", "[x y]", false),
-        ("[^:m #?@(:cljs [x y])]", "[x y]", false),
-        ("[^:m #?@(:cljs []) z]", "[z]", false),
-        ("[#_#?@(:cljs [x y]) z]", "[y z]", false),
-        ("[#?@(:cljs {:a 1})]", "", true),
+        ("#?(:default #?@(:default [x]))", "", true),
+        ("[#?@(:default #?@(:default [[x y]]))]", "[x y]", false),
+        ("[^:m #?@(:default [x y])]", "[x y]", false),
+        ("[^:m #?@(:default []) z]", "[z]", false),
+        ("[#_#?@(:default [x y]) z]", "[y z]", false),
+        ("[#?@(:default {:a 1})]", "", true),
         (
             "#(%0x10)",
             "(fn* [arg-1 arg-2 arg-3 arg-4 arg-5 arg-6 arg-7 arg-8 arg-9 arg-10 arg-11 arg-12 arg-13 arg-14 arg-15 arg-16] (arg-16))",
@@ -215,10 +215,10 @@ fn pinned_reader_edges_match() {
 #[test]
 fn pinned_logical_argument_indices_match() {
     let cases: &[(&str, &str, bool)] = &[
-        ("#(%#?(:cljs 2))", "(fn* [arg-1 arg-2] (arg-2))", false),
+        ("#(%#?(:default 2))", "(fn* [arg-1 arg-2] (arg-2))", false),
         ("#(%#_ 9 2)", "(fn* [arg-1 arg-2] (arg-2))", false),
         (
-            "#(%#?@(:cljs [2 3]))",
+            "#(%#?@(:default [2 3]))",
             "(fn* [arg-1 arg-2] (arg-2 3))",
             false,
         ),
@@ -241,7 +241,7 @@ fn pinned_logical_argument_indices_match() {
 
 #[test]
 fn metadata_on_splice_follows_first_retained_logical_form() {
-    for source in ["[^:m #?@(:cljs [x y])]", "[^:m #?@(:cljs []) z]"] {
+    for source in ["[^:m #?@(:default [x y])]", "[^:m #?@(:default []) z]"] {
         let forms = forms::resolve_conditionals(forms::read_forms(source).unwrap()).unwrap();
         let forms::Kind::Vector(items) = &forms[0].kind else {
             panic!()
@@ -267,7 +267,7 @@ fn logical_index_discard_requests_following_raw_forms() {
 
 #[test]
 fn closed_inner_queue_errors_do_not_consume_outer_siblings() {
-    let failure = forms::read_forms("#(%#?(:cljs ['#?(:jvm ignored)]) 2)").unwrap_err();
+    let failure = forms::read_forms("#(%#?(:default ['#?(:jvm ignored)]) 2)").unwrap_err();
     assert_eq!(failure.message, "Reader prefix requires a retained form");
     assert!(
         !failure

@@ -450,7 +450,7 @@ mod tests {
             "^{:line 99 :custom true} ^:outer (f ^number arg)\r\n[é 😀tag \\\\uD800]",
             "'x @y `(~x ~@ys) [^:v value ^{:column 88} other]",
             "^:quoted '(unresolved x) ^{:file \"override\"} @value",
-            "#?(:cljs ^:selected [foo] :clj [wrong]) #_discarded #{kept}",
+            "#?(:suss ^:selected [foo] :clj [wrong]) #_discarded #{kept}",
             "^:a ^:b (f) ^{:line 4 :column 5 :end-line 6 :end-column 7} value /",
         ] {
             let source = if source.contains("\\uD800") {
@@ -537,7 +537,7 @@ mod tests {
     }
     #[test]
     fn unsupported_selection_metadata_and_anonymous_forms_require_explicit_fallback() {
-        for source in ["^:x #?(:cljs [kept])", "#(+ % 17)"] {
+        for source in ["^:x #?(:suss [kept])", "#(+ % 17)"] {
             let snapshot =
                 SourceMetadata::read_metered(Arc::from(source), None, &mut |_| Ok(())).unwrap();
             assert!(snapshot.requires_eager());
