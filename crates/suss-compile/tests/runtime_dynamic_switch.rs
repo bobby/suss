@@ -153,12 +153,11 @@ impl Harness {
         self.call("dynamic-push", &[entries])
     }
     fn same(&self, a: &Val, b: &Val) -> bool {
-        Rooted::ref_eq(
-            &self.store,
-            a.unwrap_anyref().unwrap(),
-            b.unwrap_anyref().unwrap(),
-        )
-        .unwrap()
+        // nil is a null reference in ABI v3.
+        match (a.unwrap_anyref(), b.unwrap_anyref()) {
+            (Some(a), Some(b)) => Rooted::ref_eq(&self.store, a, b).unwrap(),
+            (a, b) => a.is_none() && b.is_none(),
+        }
     }
     fn forge(&mut self, exemplar: &Val, parent: Val, entries: Val) -> Val {
         let ty = exemplar
@@ -285,7 +284,6 @@ fn dynamic_switch_validates_whole_chains_before_publication_or_effects() {
         .unwrap();
     let hidden_ancestor = h.forge(&valid, bad_cell.clone(), valid_entries);
     for invalid in [
-        Val::null_any_ref(),
         false_value,
         bad_parent,
         bad_shape,
@@ -303,11 +301,7 @@ fn dynamic_switch_validates_whole_chains_before_publication_or_effects() {
         h.rejected("dynamic-fork", &[]);
         h.rejected("dynamic-switch", &[nil.clone()]);
         let current = root.get(&mut h.store);
-        if invalid.unwrap_anyref().is_none() {
-            assert!(current.unwrap_anyref().is_none());
-        } else {
-            assert!(h.same(&current, &invalid));
-        }
+        assert!(h.same(&current, &invalid));
         root.set(&mut h.store, valid.clone()).unwrap();
         assert_eq!((h.read("*x*"), h.read("*y*")), (10.0, 2.0));
     }

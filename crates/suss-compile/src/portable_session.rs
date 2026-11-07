@@ -2745,7 +2745,10 @@ mod tests {
             let frame = value(&mut scope, runtime, "dynamic-fork", &[]);
             let nil = value(&mut scope, runtime, "nil", &[]);
             // Continuation pc/generation/event fields are raw i31 scalars.
-            let zero = nil.clone();
+            let zero = Val::AnyRef(Some(wasmtime::AnyRef::from_i31(
+                &mut scope,
+                wasmtime::I31::wrapping_u32(0),
+            )));
             let state = value(&mut scope, runtime, "args-new", &[Val::I32(8)]);
             let array = state
                 .unwrap_anyref()
