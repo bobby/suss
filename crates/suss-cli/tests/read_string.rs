@@ -660,6 +660,14 @@ fn exact_numeric_literals_pass_through_macros() {
         let source = format!("(= {} (try {expression} :evaluated (catch :default e (ex-message e))))", message(literal_text));
         assert_eq!(evaluate(&source), "true", "{source}");
     }
+    // A case with an exact constant evaluates its expression, then throws.
+    let source = format!(
+        "(let [v (volatile! 0)] [(try (case (vswap! v inc) 1/2 :a :b) (catch :default e (ex-message e))) @v])"
+    );
+    assert_eq!(evaluate(&source), format!("[{} 1]", message("1/2")), "{source}");
+    // A macro call holding one keeps its source position.
+    evaluate("(defmacro line-of [& _] (:line (meta &form)))");
+    assert_eq!(evaluate("(line-of 1/3)"), "1");
     // Macro arguments in unselected branches never reach the macro.
     assert_eq!(evaluate("(= 2 (same-form #?(:clj 1/3 :default 2)))"), "true");
     // A literal in the macro's own code evaluates when the macro runs, so a

@@ -34,6 +34,8 @@ every process.
 - **Map and set entries** appear in the value order above. Map entries are
   separated by `, `, as Clojure's `pr` separates them.
 - **Numbers:**
+  - an exact numeric literal binary64 can't hold, such as `1/3`, appears in
+    analyzer output as `#suss/exact-number "1/3"` (#333);
   - an integer within ±2^53 prints without a fraction. A larger integral
     value prints as a double, such as `9007199254740994.0`, because an integer
     literal beyond 2^53 reads as an exact number, not binary64 (#333);

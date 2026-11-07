@@ -321,7 +321,7 @@ fn form_key_metered(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -> 
                 }
                 Kind::Exact(value) => {
                     append(&mut key, &[16], charge)?;
-                    write_text(&mut key, &value.canonical(), charge)?;
+                    write_text(&mut key, &value.text, charge)?;
                 }
                 Kind::String(value) => {
                     append(&mut key, &[3], charge)?;

@@ -493,6 +493,9 @@ struct Parser<'s, 'o> {
     pos: usize,
     options: &'o Options,
     work: u64,
+    /// Depth of `#_` forms being read and dropped; an exact numeric
+    /// literal there is never a value, so it doesn't fail (#333).
+    discarding: usize,
 }
 type Item = (Value, Range<usize>);
 
@@ -509,6 +512,7 @@ impl<'s> Parser<'s, '_> {
             pos: 0,
             options,
             work,
+            discarding: 0,
         })
     }
     fn peek_char(&self) -> Option<char> {
@@ -675,6 +679,7 @@ impl<'s> Parser<'s, '_> {
                 // EDN data has no exact numbers until #335.
                 match forms::number(token).map_err(|message| fail(self, message))? {
                     forms::NumberToken::Double(value) => Value::Number(value),
+                    forms::NumberToken::Exact(_) if self.discarding > 0 => Value::Nil,
                     forms::NumberToken::Exact(value) => {
                         return Err(fail(self, &value.unsupported_message()))
                     }
@@ -706,7 +711,10 @@ impl<'s> Parser<'s, '_> {
             Some('_') => {
                 // Still read, so its tags are checked, as `clojure.edn` does.
                 self.pos += 1;
-                self.required(depth + 1)?;
+                self.discarding += 1;
+                let read = self.required(depth + 1);
+                self.discarding -= 1;
+                read?;
                 Ok(None)
             }
             Some('#') => {

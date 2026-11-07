@@ -1432,6 +1432,9 @@ pub(crate) fn number(token: &str) -> Result<NumberToken, &'static str> {
         // small integer, as the runtime reader can only check that much.
         let safe = BigInt::from(MAX_EXACT);
         let large = numerator.magnitude() > safe.magnitude() || denominator > safe;
+        // Clojure reads a term beyond the long range as a BigInt.
+        let big = num_traits::ToPrimitive::to_i64(&numerator).is_none()
+            || num_traits::ToPrimitive::to_i64(&denominator).is_none();
         let divisor = numerator.gcd(&denominator);
         let (numerator, denominator) = (numerator / &divisor, denominator / divisor);
         if denominator == BigInt::from(1) {
@@ -1441,7 +1444,7 @@ pub(crate) fn number(token: &str) -> Result<NumberToken, &'static str> {
             return Ok(NumberToken::Exact(ExactNumber {
                 text: token.to_owned(),
                 value: ExactValue::Integer {
-                    big: num_traits::ToPrimitive::to_i64(&numerator).is_none(),
+                    big: big || num_traits::ToPrimitive::to_i64(&numerator).is_none(),
                     value: numerator,
                 },
             }));
@@ -1451,35 +1454,35 @@ pub(crate) fn number(token: &str) -> Result<NumberToken, &'static str> {
             value: ExactValue::Ratio { numerator, denominator },
         }));
     }
-    if let Some(mantissa) = unsigned.strip_suffix('M') {
+    // A radix integer's trailing M, like its N, is one of its digits.
+    let radix_form = unsigned.contains(['r', 'R']);
+    if let Some(mantissa) = unsigned.strip_suffix('M').filter(|_| !radix_form) {
         // floatPat with M: [0-9]+(\.[0-9]*)?([eE][-+]?[0-9]+)?
         let (number, exponent) = match mantissa.split_once(['e', 'E']) {
             Some((number, exponent)) => (number, Some(exponent)),
             None => (mantissa, None),
         };
         let (whole, fraction) = number.split_once('.').unwrap_or((number, ""));
-        let exponent = match exponent {
-            Some(text) => {
-                let digits = text.strip_prefix(['+', '-']).unwrap_or(text);
-                if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
-                    return Err("Invalid decimal literal");
-                }
-                text.parse::<i64>().map_err(|_| "Decimal exponent out of range")?
-            }
-            None => 0,
-        };
+        let exponent_digits = exponent.map(|text| text.strip_prefix(['+', '-']).unwrap_or(text));
         if whole.is_empty()
             || !whole.bytes().all(|b| b.is_ascii_digit())
             || !fraction.bytes().all(|b| b.is_ascii_digit())
+            || exponent_digits.is_some_and(|digits| digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()))
         {
             return Err("Invalid decimal literal");
         }
+        let exponent = match exponent {
+            Some(text) => text.parse::<i64>().map_err(|_| "Decimal exponent out of range")?,
+            None => 0,
+        };
         let mut unscaled = BigInt::parse_bytes(format!("{whole}{fraction}").as_bytes(), 10).unwrap();
         if negative {
             unscaled = -unscaled;
         }
-        let scale = i32::try_from(fraction.len() as i64 - exponent)
-            .map_err(|_| "Decimal exponent out of range")?;
+        let scale = (fraction.len() as i64)
+            .checked_sub(exponent)
+            .and_then(|scale| i32::try_from(scale).ok())
+            .ok_or("Decimal exponent out of range")?;
         return Ok(NumberToken::Exact(ExactNumber {
             text: token.to_owned(),
             value: ExactValue::Decimal { unscaled, scale },
@@ -1493,6 +1496,10 @@ pub(crate) fn number(token: &str) -> Result<NumberToken, &'static str> {
     {
         Some((16, hex, true))
     } else if let Some((base, digits)) = unsigned.split_once(['r', 'R']) {
+        // intPat's radix is [1-9][0-9]?.
+        if base.len() > 2 || base.starts_with('0') {
+            return Err("Invalid numeric radix");
+        }
         let base: u32 = base.parse().map_err(|_| "Invalid numeric radix")?;
         if !(2..=36).contains(&base) {
             return Err("Numeric radix must be between 2 and 36");

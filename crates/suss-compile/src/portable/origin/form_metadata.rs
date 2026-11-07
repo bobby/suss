@@ -103,6 +103,10 @@ fn same_metered(
                 charge(meter, x.len().max(y.len()), &a.span)?;
                 x == y
             }
+            (Kind::Exact(x), Kind::Exact(y)) => {
+                charge(meter, x.text.len().max(y.text.len()), &a.span)?;
+                x.text == y.text
+            }
             (Kind::Symbol(x), Kind::Symbol(y)) => {
                 charge(
                     meter,

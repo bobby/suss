@@ -423,7 +423,7 @@ impl Interner {
                             Kind::Number(v) => {
                                 append(&mut key, &v.to_bits().to_le_bytes(), charge)?
                             }
-                            Kind::Exact(v) => text(&mut key, &v.canonical(), charge)?,
+                            Kind::Exact(v) => text(&mut key, &v.text, charge)?,
                             Kind::String(v) => {
                                 size(&mut key, v.len(), charge)?;
                                 // The UTF-16 payload length is known. Allocate

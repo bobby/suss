@@ -428,6 +428,12 @@ fn edn_conformance_with_the_compilers_reader() {
         assert!(suss_reader::forms::read_forms(&source).is_ok(), "{source}");
         assert!(edn::read_all(&source, &Options::default()).is_err(), "{source}");
     }
+    // Tooling data keeps an exact literal's text under a tag (#333).
+    let forms = suss_reader::forms::read_forms("[1/3]").unwrap();
+    assert_eq!(
+        edn::print(&edn::source::form_to_value(&forms[0]).unwrap()).unwrap(),
+        "[#suss/exact-number \"1/3\"]"
+    );
     // EDN data has no value for an exact literal until #335 (#333).
     for source in corpus("exact") {
         let forms = suss_reader::forms::read_forms(&source).unwrap_or_else(|error| panic!("{source}: {error:?}"));

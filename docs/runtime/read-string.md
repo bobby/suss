@@ -111,7 +111,8 @@ them against `*ns*`, and the compiler against the current namespace (#30).
   Every Clojure numeric literal is read with the compiler's rules
   ([reader forms](reader-forms.md)), but one binary64 can't hold, such as
   `1/3`, `1N`, `1.5M` or `9007199254740993`, fails with "Unsupported numeric
-  literal ..." unless it is in an unselected conditional branch, until
+  literal ..." unless it is in an unselected conditional branch or dropped
+  with `#_`, until
   Clojure's numeric types arrive ([ADR-0003](../adr/0003-clojure-numeric-tower.md),
   #335). Printing and reading back an integral double beyond 2^53, which
   prints without a decimal point, fails the same way. Duplicate keys are found by Suss's `=`, so

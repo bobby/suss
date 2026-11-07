@@ -405,7 +405,8 @@
 ;;   :allow or :preserve), 5 features, 6 EDN :readers, 7 EDN :default,
 ;;   8 the open #() literal's [id arguments] or nil, 9 nesting depth,
 ;;   10 depth of unselected conditional branches, 11 queued spliced forms,
-;;   12 depth of delimited collections, 13 the start of the last item read.
+;;   12 depth of delimited collections, 13 the start of the last item read,
+;;   14 depth of #_ forms being read and dropped.
 ;; A helper returns a value, reader-nothing for a discarded form, or a
 ;; ReaderSplice for #?@ items, which the enclosing collection queues.
 (def ^{:dynamic true
@@ -661,10 +662,11 @@
 ;; Clojure's exact numeric literals that binary64 can't hold (#333): ratios,
 ;; N and M literals, and integers beyond 2^53. Their syntax is checked
 ;; everywhere, as the compiler's reader checks it; one that is read rather
-;; than skipped in an unselected conditional branch fails until #335.
+;; than skipped in an unselected conditional branch or dropped by #_ fails
+;; until #335.
 (def ^:private reader-exact
   (fn [st start s end]
-    (if (< 0 (aget st 10))
+    (if (if (< 0 (aget st 10)) true (< 0 (aget st 14)))
       nil
       (reader-fail st start
                    (suss.bootstrap/concat-string
@@ -727,9 +729,11 @@
                 (if (== k 0) 0 (if negative (* -1 k) k))
                 (reader-exact st start s end)))))
         (reader-fail st start "Invalid ratio" false)))))
-;; Clojure's floatPat without its M: [0-9]+(\.[0-9]*)?([eE][-+]?[0-9]+)?
+;; Clojure's floatPat without its M: [0-9]+(\.[0-9]*)?([eE][-+]?[0-9]+)?.
+;; A BigDecimal's scale, its fraction digits less its exponent, must fit 32
+;; bits.
 (def ^:private reader-decimal?
-  (fn [s from to]
+  (fn [st start s from to]
     (let [whole (reader-digits-end s from to)]
       (if (< from whole)
         (let [fraction (if (if (< whole to) (== (.charCodeAt s whole) 46) false)
@@ -740,10 +744,16 @@
             (let [u (.charCodeAt s fraction)]
               (if (if (== u 101) true (== u 69))
                 (let [e (inc fraction)
-                      e (if (if (< e to) (let [v (.charCodeAt s e)] (if (== v 43) true (== v 45))) false)
-                          (inc e)
-                          e)]
-                  (reader-digits? s e to))
+                      digits (if (if (< e to) (let [v (.charCodeAt s e)] (if (== v 43) true (== v 45))) false)
+                               (inc e)
+                               e)]
+                  (if (reader-digits? s digits to)
+                    (let [places (if (< whole fraction) (- fraction (inc whole)) 0)
+                          scale (- places (suss.bootstrap/f64-coerce (suss.bootstrap/string-slice s e to)))]
+                      (if (if (<= -2147483648 scale) (<= scale 2147483647) false)
+                        true
+                        (reader-fail st start "Decimal exponent out of range" false)))
+                    false))
                 false))))
         false))))
 (def ^:private reader-number
@@ -757,8 +767,11 @@
           hex (if (== (.charCodeAt s d) 48) (if (== x 120) true (== x 88)) false)]
       (if (<= 0 slash)
         (reader-ratio st start s end slash)
-        (if (== last 77)
-          (if (reader-decimal? s d (dec end))
+        ;; A radix integer's trailing M, like its N, is one of its digits.
+        (if (if (== last 77)
+              (if (< (reader-index-of s 114 start end) 0) (< (reader-index-of s 82 start end) 0) false)
+              false)
+          (if (reader-decimal? st start s d (dec end))
             (reader-exact st start s end)
             (reader-fail st start "Invalid decimal literal" false))
           ;; N follows a hexadecimal, octal or decimal integer; a radix
@@ -784,14 +797,16 @@
                         (let [u (.charCodeAt s i)] (if (if (== u 114) true (== u 82)) i (recur (inc i))))
                         -1))]
               (if (<= 0 r)
-                ;; Rust's u32 parse of the radix: decimal digits only.
-                (let [base (loop [i d base 0]
+                ;; intPat's radix, [1-9][0-9]?, then Rust's u32 parse.
+                (let [base (if (if (< 2 (- r d)) true (if (< d r) (== (.charCodeAt s d) 48) false))
+                             -1
+                             (loop [i d base 0]
                              (if (< i r)
                                (let [digit (reader-digit (.charCodeAt s i))]
                                  (if (if (< digit 10) (< base 4294967296) false)
                                    (recur (inc i) (+ (* base 10) digit))
                                    -1))
-                               (if (if (< d r) (< base 4294967296) false) base -1)))]
+                               (if (if (< d r) (< base 4294967296) false) base -1))))]
                   (if (< base 0)
                     (reader-fail st start "Invalid numeric radix" false)
                     (if (if (<= 2 base) (<= base 36) false)
@@ -1536,7 +1551,12 @@
       (aset dispatches 123 (fn [st start]
                              (aset st 1 (+ start 2))
                              (persistent! (reader-items st start 125 1 (transient #{})))))
-      (aset dispatches 95 (fn [st start] (aset st 1 (+ start 2)) (reader-required st) reader-nothing))
+      (aset dispatches 95 (fn [st start]
+                            (aset st 1 (+ start 2))
+                            (aset st 14 (inc (aget st 14)))
+                            (reader-required st)
+                            (aset st 14 (dec (aget st 14)))
+                            reader-nothing))
       (aset dispatches 35 reader-symbolic)
       (aset dispatches 40 (fn [st start]
                             (if (aget st 3)
@@ -1574,7 +1594,7 @@
 (def ^:private reader-state
   (fn [s edn mode features readers default]
     (if (nil? reader-leads) (reader-tables!) nil)
-    (array s 0 (.-length s) edn mode features readers default nil 0 0 nil 0 0)))
+    (array s 0 (.-length s) edn mode features readers default nil 0 0 nil 0 0 0)))
 ;; One form, or opts' :eof when the input has none and opts has :eof.
 (def ^:private reader-read
   (fn [st opts]

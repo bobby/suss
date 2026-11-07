@@ -641,8 +641,12 @@ fn every_clojure_numeric_literal_reads() {
         let Kind::Exact(number) = read(source) else { panic!("{source}: not exact") };
         assert_eq!((number.text.as_str(), number.value), (source, expected));
     }
-    // A radix integer's trailing N is a digit, as in Clojure.
+    // A radix integer's trailing N or M is a digit, as in Clojure.
     assert_eq!(read("36rN"), Kind::Number(23.0));
+    assert_eq!(read("36r1M"), Kind::Number(58.0));
+    // A term beyond the long range makes Clojure's result a BigInt.
+    let Kind::Exact(number) = read("36893488147419103232/8") else { panic!("not exact") };
+    assert_eq!(number.value, ExactValue::Integer { value: int(1 << 62), big: true });
     assert!(read_forms("2r1N").is_err());
     // Literals equal by value are equal forms, however written.
     assert_eq!(read("2/4"), read("1/2"));
@@ -663,6 +667,8 @@ fn unselected_branches_check_numeric_syntax() {
         ("#?(:clj 08 :default 2)", "Invalid numeric digits"),
         ("#?(:clj 1.5N :default 2)", "Invalid ordinary numeric literal"),
         ("#?(:clj 0x1M :default 2)", "Invalid decimal literal"),
+        ("#?(:clj 1e99999999999M :default 2)", "Decimal exponent out of range"),
+        ("#?(:clj 02r1 :default 2)", "Invalid numeric radix"),
     ] {
         let error = read_forms(source).and_then(resolve_conditionals).expect_err(source);
         assert_eq!(error.message, message, "{source}");

@@ -208,7 +208,8 @@ fn same(a: Option<&Form>, b: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result
                             );
                         }
                         Kind::Exact(v) => {
-                            let text = v.canonical();
+                            // The spelling, so diagnostics name it.
+                            let text = &v.text;
                             out.push(16);
                             out.extend_from_slice(&(text.len() as u64).to_le_bytes());
                             out.extend_from_slice(text.as_bytes());

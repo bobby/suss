@@ -51,11 +51,20 @@ integer and scale). Until Suss has Clojure's numeric types
 ([ADR-0003](../adr/0003-clojure-numeric-tower.md), #335), evaluating one
 throws "Unsupported numeric literal 1/3: ratios, BigInts, BigDecimals and
 integers beyond 2^53 need Clojure's numeric types (#335)", in code and in
-quoted data, so nothing rounds silently. Because they read, a
-reader-conditional branch that isn't selected may hold them; only a malformed
-literal, such as `1/0` ("Divide by zero"), `1/2N` or `08`, fails there. As in
-Clojure, a radix integer's trailing `N` is a digit, so `36rN` is 23 and
-`2r1N` is malformed. Macros receive an exact literal as a symbol in the
+quoted data, so nothing rounds silently. A `case` with such a constant
+evaluates its expression and then throws the same way. Because they read, a
+reader-conditional branch that isn't selected, or a form dropped with `#_`,
+may hold them; only a malformed literal, such as `1/0` ("Divide by zero"),
+`1/2N`, `08`, `02r1` or a BigDecimal whose scale doesn't fit 32 bits
+("Decimal exponent out of range"), fails there. As in Clojure, a radix
+integer's trailing `N` or `M` is a digit, so `36rN` is 23 and `2r1N` is
+malformed.
+
+One deviation from that rule remains: a ratio with a term beyond ±2^53 is
+exact even when it reduces to a small integer, so `18014398509481984/2` throws
+though Clojure reads it as 2^53, which binary64 holds. The runtime reader can only check terms that size, and the
+compiler's reader matches it. Tooling EDN (`suss analyze`) shows an exact
+literal as `#suss/exact-number "1/3"`. Macros receive an exact literal as a symbol in the
 `suss.reader.exact-number` namespace named by its text, and an expansion that
 returns that symbol gives the literal back. A literal in a macro's own code,
 such as a syntax-quote template, is evaluated when the macro runs, so that
