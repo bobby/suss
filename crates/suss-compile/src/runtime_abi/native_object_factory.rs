@@ -27,8 +27,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Return,
         End,
         End,
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
         Return,
         End,
         LocalGet(0),
@@ -56,8 +55,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Return,
         End,
         End,
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
     ]);
     let next = b.function_with_locals(
         "native-object-factory-next",
@@ -84,8 +82,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(1),
         Call(next),
         LocalTee(3),
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         If(BlockType::Empty),
         LocalGet(1),
@@ -104,8 +101,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     for _ in 0..2 {
         code.extend([
             LocalGet(2),
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             RefEq,
             I32Eqz,
             If(BlockType::Empty),
@@ -186,8 +182,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &[],
         &[VALUE],
         &[
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             RefFunc(callback),
             I32Const(0),
             I32Const(-1),

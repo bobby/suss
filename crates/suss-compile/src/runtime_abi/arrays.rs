@@ -14,10 +14,8 @@ fn error(body: &mut Vec<Instruction<'static>>) {
             array_type_index: STRING,
             array_size: units.len() as u32,
         },
-        I32Const(NIL),
-        RefI31,
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
+        sentinel_value(NIL),
         I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
@@ -62,8 +60,7 @@ fn factory(
         &[],
         &[VALUE],
         &[
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             RefFunc(f),
             I32Const(minimum),
             I32Const(maximum),
@@ -158,14 +155,12 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             GlobalGet(TAG_GLOBAL),
             LocalGet(0),
             Call(b.names["source-array-sparse-fields"]),
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             ArrayNewFixed {
                 array_type_index: ARGS,
                 array_size: 2,
             },
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(7),
@@ -317,8 +312,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         ArrayLen,
         I32GeU,
         If(BlockType::Empty),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         Return,
         End,
         LocalGet(0),
@@ -755,9 +749,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(4),
         Call(b.names["source-array-holes-new"]),
         Else,
-        // ABI3 sentinel-read: rebuilds the fill sentinel (NIL) from its i32 code.
-        LocalGet(2),
-        RefI31,
+        // Holes are UNDEFINED, taken above; any other fill code is nil.
+        sentinel_value(NIL),
         LocalGet(4),
         ArrayNew(ARGS),
         Call(create),
@@ -869,13 +862,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     let mut body = vec![];
     arg(&mut body, 0);
     body.extend([
-        Call(is_array), // ABI3 boolean
-        I32Const(2),
-        I32Mul,
-        I32Const(2),
-        I32Add,
-        RefI31,
+        Call(is_array),
     ]);
+    body.extend(boolean());
     declared.push(factory(b, "array-predicate-function", 1, 1, &body));
     for (name, primitive) in [
         ("array-length-function", length),

@@ -14,6 +14,8 @@ pub(super) struct Locals {
     pub output: u32,
     pub integer: u32,
     pub number: u32,
+    /// Index of the module's imported false global.
+    pub sentinels: u32,
 }
 fn emit(body: &mut Function, instructions: &[Instruction<'_>]) {
     for instruction in instructions {
@@ -205,7 +207,7 @@ pub(super) fn copy_in(
         ListElement::Scalar(ty) => {
             address(body, locals.pointer, locals.index, element);
             body.instruction(&load(ty));
-            lift_scalar(body, &ty);
+            lift_scalar(body, &ty, locals.sentinels);
         }
         ListElement::String => {
             address(body, locals.pointer, locals.index, element);
@@ -289,6 +291,7 @@ pub(super) fn copy_out(
                 locals.integer,
                 locals.number,
                 export,
+                locals.sentinels,
             );
             body.instruction(&Drop);
         }
@@ -329,6 +332,7 @@ pub(super) fn copy_out(
                 locals.integer,
                 locals.number,
                 export,
+                locals.sentinels,
             );
             body.instruction(&store(ty));
         }
@@ -386,6 +390,7 @@ pub(super) fn post_return(body: &mut Function, element: ListElement) {
         output: 0,
         integer: 0,
         number: 0,
+        sentinels: 0, // release never builds a sentinel
     };
     release(body, element, &locals);
 }

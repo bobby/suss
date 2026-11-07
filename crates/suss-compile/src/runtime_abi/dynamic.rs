@@ -12,10 +12,8 @@ fn error(body: &mut Vec<Instruction<'static>>) {
             array_type_index: STRING,
             array_size: text.len() as u32,
         },
-        I32Const(NIL),
-        RefI31,
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
+        sentinel_value(NIL),
         I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
@@ -79,8 +77,7 @@ pub(super) fn lookup(b: &mut Builder) -> u32 {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(2),
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         BrIf(1),
     ];
@@ -128,8 +125,7 @@ pub(super) fn lookup(b: &mut Builder) -> u32 {
         Br(0),
         End,
         End,
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
         I32Const(-1),
     ]);
     b.function_with_locals(
@@ -228,8 +224,7 @@ pub(super) fn switching(b: &mut Builder) {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(0),
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         BrIf(1),
     ];
@@ -272,8 +267,7 @@ pub(super) fn switching(b: &mut Builder) {
         LocalSet(4),
         End,
         LocalGet(0),
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         I32Eqz,
         LocalGet(0),
@@ -342,8 +336,7 @@ fn fork(b: &mut Builder, validate: u32) {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(1),
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         BrIf(1),
         LocalGet(6),
@@ -383,8 +376,7 @@ fn fork(b: &mut Builder, validate: u32) {
         Br(0),
         End,
         End,
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
         LocalSet(3),
         // Reverse the source-frame array: immutable parents must be constructed
         // outermost first. Every in-progress clone remains in a GC Wasm local.
@@ -514,8 +506,7 @@ pub(super) fn functions(b: &mut Builder, binding_set: u32, try_invoke: u32) -> V
     body.push(LocalSet(2));
     body.extend([
         LocalGet(2),
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),
@@ -563,7 +554,7 @@ pub(super) fn functions(b: &mut Builder, binding_set: u32, try_invoke: u32) -> V
     let callback = b.count;
     b.functions.function(INVOKE);
     let mut body = Function::new([]);
-    for inst in [LocalGet(0), Call(pop), I32Const(NIL), RefI31, End] {
+    for inst in [LocalGet(0), Call(pop), sentinel_value(NIL), End] {
         body.instruction(&inst);
     }
     b.code.function(&body);
@@ -578,8 +569,7 @@ pub(super) fn functions(b: &mut Builder, binding_set: u32, try_invoke: u32) -> V
             Call(push),
             LocalSet(2),
             LocalGet(1),
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             LocalGet(2),
             RefFunc(callback),
             I32Const(0),

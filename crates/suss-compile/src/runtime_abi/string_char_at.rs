@@ -12,19 +12,17 @@ pub(super) fn append_globals(globals: &mut GlobalSection) {
             shared: false,
         },
         // ABI3 const-expr
-        &ConstExpr::extended([I32Const(NIL), RefI31]),
+        &ConstExpr::extended([sentinel_value(NIL)]),
     );
 }
 
 pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     let mut body = vec![
         LocalGet(0),
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         LocalGet(0),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         I32Or,
         If(BlockType::Empty),
@@ -102,8 +100,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         I32Const(1),
         ArrayGet(ARGS),
         Else,
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         End,
         Call(scalar),
         End,
@@ -131,13 +128,11 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &[VALUE],
         &[
             GlobalGet(METHOD_ROOT),
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             RefEq,
             If(BlockType::Empty),
             GlobalGet(object_methods::TAG_GLOBAL),
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             RefFunc(anchored),
             I32Const(1),
             I32Const(-1),
@@ -146,8 +141,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 array_type_index: ARGS,
                 array_size: 1,
             },
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(7),

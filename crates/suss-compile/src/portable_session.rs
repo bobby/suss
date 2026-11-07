@@ -142,15 +142,26 @@ impl From<wasmtime::Error> for SessionError {
 #[derive(Debug)]
 pub struct SessionValue {
     identity: u64,
-    value: OwnedRooted<AnyRef>,
+    /// `None` is nil, which ABI v3 represents as a null reference.
+    value: Option<OwnedRooted<AnyRef>>,
     handles: Arc<AtomicUsize>,
 }
 impl SessionValue {
     pub(crate) fn rooted(
         &self,
         store: &mut wasmtime::StoreContextMut<'_, ()>,
-    ) -> wasmtime::Rooted<AnyRef> {
-        self.value.to_rooted(store)
+    ) -> Option<wasmtime::Rooted<AnyRef>> {
+        self.value.as_ref().map(|value| value.to_rooted(store))
+    }
+    /// The referenced object; nil has none.
+    pub(crate) fn object(&self) -> wasmtime::Result<&OwnedRooted<AnyRef>> {
+        self.value
+            .as_ref()
+            .ok_or_else(|| wasmtime::Error::msg("Expected a non-nil reference"))
+    }
+    /// The value as a Wasm argument; nil is a null reference.
+    pub(crate) fn val(&self, store: &mut wasmtime::StoreContextMut<'_, ()>) -> Val {
+        Val::AnyRef(self.rooted(store))
     }
 }
 impl Clone for SessionValue {
@@ -243,7 +254,7 @@ impl PendingHostFuture {
 /// Binding/catalog transaction only: reachable object effects and resident code are retained.
 pub(crate) struct BindingCheckpoint {
     environment: Environment,
-    values: BTreeMap<CellIdentity, (OwnedRooted<AnyRef>, i32)>,
+    values: BTreeMap<CellIdentity, (Option<OwnedRooted<AnyRef>>, i32)>,
 }
 /// Owned compiler inputs permit macro expansion to execute in this same phase
 /// Store while preparation reads an immutable namespace/module snapshot.
@@ -310,17 +321,46 @@ fn engine() -> Result<Engine, SessionError> {
         .clone()
         .map_err(|message| SessionError::Host(wasmtime::Error::msg(message)))
 }
+/// The sentinel tag (`runtime_abi::NIL`, `FALSE`, `TRUE` or `UNDEFINED`) of
+/// nil, a null reference, or of a false, true or undefined struct; `None` for
+/// any other value. A sentinel is the only one-field `i32` struct.
+pub fn sentinel_tag(
+    mut store: impl AsContextMut,
+    value: &Val,
+) -> wasmtime::Result<Option<u32>> {
+    let Some(reference) = value
+        .anyref()
+        .ok_or_else(|| wasmtime::Error::msg("Expected a reference Value"))?
+    else {
+        return Ok(Some(runtime_abi::NIL as u32));
+    };
+    let Some(structure) = reference.as_struct(&store)? else {
+        return Ok(None);
+    };
+    let ty = structure.ty(&store)?;
+    if ty.fields().len() != 1
+        || !matches!(
+            ty.field(0).map(|field| field.element_type().clone()),
+            Some(wasmtime::StorageType::ValType(wasmtime::ValType::I32))
+        )
+    {
+        return Ok(None);
+    }
+    match structure.field(&mut store, 0)? {
+        Val::I32(tag) => Ok(Some(tag as u32)),
+        _ => Ok(None),
+    }
+}
 fn own<C: AsContextMut<Data = ()>>(
     scope: &mut RootScope<C>,
     value: Val,
     identity: u64,
     handles: &Arc<AtomicUsize>,
 ) -> Result<SessionValue, SessionError> {
-    let object = value
-        .anyref()
-        .flatten()
-        .ok_or_else(|| wasmtime::Error::msg("Expected non-null runtime Value"))?;
-    let value = object.to_owned_rooted(scope)?;
+    let value = match value.anyref() {
+        Some(object) => object.map(|object| object.to_owned_rooted(scope)).transpose()?,
+        None => return Err(wasmtime::Error::msg("Expected a runtime reference Value").into()),
+    };
     handles.fetch_add(1, Ordering::Relaxed);
     Ok(SessionValue {
         identity,
@@ -328,9 +368,10 @@ fn own<C: AsContextMut<Data = ()>>(
         handles: handles.clone(),
     })
 }
+// Either root may be nil (None) when no frame or join is active.
 struct DynamicCheckpoint {
-    frame: OwnedRooted<AnyRef>,
-    array_join: OwnedRooted<AnyRef>,
+    frame: Option<OwnedRooted<AnyRef>>,
+    array_join: Option<OwnedRooted<AnyRef>>,
 }
 // Snapshot the caller's rooted dynamic context, including native interop calls.
 fn dynamic_checkpoint<C: AsContextMut<Data = ()>>(
@@ -342,17 +383,19 @@ fn dynamic_checkpoint<C: AsContextMut<Data = ()>>(
         .ok_or_else(|| wasmtime::Error::msg("Missing dynamic frame root"))?
         .get(&mut *scope);
     let frame = frame
-        .unwrap_anyref()
-        .ok_or_else(|| wasmtime::Error::msg("Null dynamic frame root"))?
-        .to_owned_rooted(&mut *scope)?;
+        .anyref()
+        .ok_or_else(|| wasmtime::Error::msg("Dynamic frame root is not a reference"))?
+        .map(|frame| frame.to_owned_rooted(&mut *scope))
+        .transpose()?;
     let array_join = runtime
         .get_global(&mut *scope, "array-join-active")
         .ok_or_else(|| wasmtime::Error::msg("Missing Array join context"))?
         .get(&mut *scope);
     let array_join = array_join
-        .unwrap_anyref()
-        .ok_or_else(|| wasmtime::Error::msg("Null Array join context"))?
-        .to_owned_rooted(scope)?;
+        .anyref()
+        .ok_or_else(|| wasmtime::Error::msg("Array join context is not a reference"))?
+        .map(|join| join.to_owned_rooted(&mut *scope))
+        .transpose()?;
     Ok(DynamicCheckpoint { frame, array_join })
 }
 fn restore_dynamic<C: AsContextMut<Data = ()>>(
@@ -361,11 +404,11 @@ fn restore_dynamic<C: AsContextMut<Data = ()>>(
     checkpoint: &DynamicCheckpoint,
 ) -> Result<(), SessionError> {
     // Host restoration also covers uncatchable Wasm fuel/cancellation traps.
-    let join = checkpoint.array_join.to_rooted(&mut *scope);
+    let join = checkpoint.array_join.as_ref().map(|join| join.to_rooted(&mut *scope));
     runtime
         .get_global(&mut *scope, "array-join-active")
         .ok_or_else(|| wasmtime::Error::msg("Missing Array join context"))?
-        .set(&mut *scope, Val::AnyRef(Some(join)))?;
+        .set(&mut *scope, Val::AnyRef(join))?;
     let global = runtime
         .get_global(&mut *scope, "dynamic-frame")
         .ok_or_else(|| wasmtime::Error::msg("Missing dynamic frame root"))?;
@@ -380,15 +423,20 @@ fn restore_dynamic<C: AsContextMut<Data = ()>>(
         loop {
             let current = global.get(&mut *scope);
             let current = current
-                .unwrap_anyref()
-                .ok_or_else(|| wasmtime::Error::msg("Null dynamic frame root"))?;
-            let expected = checkpoint.frame.to_rooted(&mut *scope);
-            if wasmtime::Rooted::ref_eq(&*scope, current, &expected)? {
-                return Ok(());
-            }
-            // Reaching nil before the checkpoint means a native callback invalidated it.
-            if current.as_i31(&*scope)?.is_some() {
+                .anyref()
+                .ok_or_else(|| wasmtime::Error::msg("Dynamic frame root is not a reference"))?;
+            let expected = checkpoint.frame.as_ref().map(|frame| frame.to_rooted(&mut *scope));
+            let Some(current) = current else {
+                if expected.is_none() {
+                    return Ok(());
+                }
+                // Reaching nil before the checkpoint means a native callback invalidated it.
                 return Err(wasmtime::Error::msg("Dynamic caller context was removed"));
+            };
+            if let Some(expected) = expected
+                && wasmtime::Rooted::ref_eq(&*scope, current, &expected)?
+            {
+                return Ok(());
             }
             let current = Val::AnyRef(Some(*current));
             pop.call(&mut *scope, &[current], &mut [])?;
@@ -819,7 +867,7 @@ impl Session {
             &self.handles,
         )?;
         registry_lock(&self.pending_host_futures).push(Arc::new(PendingHostFuture {
-            root: future.value.clone(),
+            root: future.object()?.clone(),
             cancel: Mutex::new(Some(Box::new(cancel))),
         }));
         Ok(future)
@@ -889,7 +937,7 @@ impl Session {
             // Wasm publication later traps. Consume its hook before publication;
             // a retry may publish storage, but must never cancel completed I/O.
             let mut scope = RootScope::new(&mut self.store);
-            let target = future.value.to_rooted(&mut scope);
+            let target = future.object()?.to_rooted(&mut scope);
             let requests = registry_lock(&self.pending_host_futures).clone();
             for request in requests {
                 let candidate = request.root.to_rooted(&mut scope);
@@ -900,7 +948,7 @@ impl Session {
             }
         }
         let completed = self.inspect(future, |mut store, future| {
-            let value = Val::AnyRef(Some(value.rooted(&mut store)));
+            let value = Val::AnyRef(value.rooted(&mut store));
             let mut result = [Val::I32(0)];
             function.call(&mut store, &[future, value], &mut result)?;
             Ok(result[0].unwrap_i32() != 0)
@@ -1070,7 +1118,7 @@ impl Session {
         self.check(value)?;
         let mut scope = RootScope::new(&mut self.store);
         let checkpoint = dynamic_checkpoint(&mut scope, self.runtime)?;
-        let value = Val::AnyRef(Some(value.value.to_rooted(&mut scope)));
+        let value = Val::AnyRef(value.value.as_ref().map(|value| value.to_rooted(&mut scope)));
         let result = f(scope.as_context_mut(), value);
         let result = match result {
             Ok(_) if scope.as_context_mut().has_pending_exception() => Err(wasmtime::Error::msg(
@@ -1116,7 +1164,7 @@ impl Session {
             .get_func(&mut self.store, "invoke")
             .expect("runtime invoke");
         self.inspect(value, |mut store, value| {
-            let function = Val::AnyRef(Some(function.rooted(&mut store)));
+            let function = Val::AnyRef(function.rooted(&mut store));
             f(store, value, args_new, invoke, function)
         })
     }
@@ -1347,8 +1395,8 @@ impl Session {
             let value = cell
                 .field(&mut scope, 0)?
                 .unwrap_anyref()
-                .unwrap()
-                .to_owned_rooted(&mut scope)?;
+                .map(|value| value.to_owned_rooted(&mut scope))
+                .transpose()?;
             let bound = cell.field(&mut scope, 1)?.unwrap_i32();
             values.insert(identity.clone(), (value, bound));
         }
@@ -1372,12 +1420,11 @@ impl Session {
                     .as_struct(&scope)?
                     .unwrap();
                 if let Some((value, bound)) = checkpoint.values.get(identity) {
-                    let value = Val::AnyRef(Some(value.to_rooted(&mut scope)));
+                    let value = Val::AnyRef(value.as_ref().map(|value| value.to_rooted(&mut scope)));
                     cell.set_field(&mut scope, 0, value)?;
                     cell.set_field(&mut scope, 1, Val::I32(*bound))?;
                 } else {
-                    let nil = AnyRef::from_i31(&mut scope, wasmtime::I31::new_u32(0).unwrap());
-                    cell.set_field(&mut scope, 0, Val::AnyRef(Some(nil)))?;
+                    cell.set_field(&mut scope, 0, Val::AnyRef(None))?;
                     cell.set_field(&mut scope, 1, Val::I32(0))?;
                 }
             }
@@ -1597,17 +1644,14 @@ impl Session {
             Literal::Undefined => Err(SessionError::Host(wasmtime::Error::msg(
                 "Compiler data has no undefined source literal",
             ))),
-            Literal::Nil | Literal::Bool(_) => {
-                let sentinel = match literal {
-                    Literal::Nil => 0,
-                    Literal::Bool(false) => 2,
-                    Literal::Bool(true) => 4,
-                    _ => unreachable!(),
-                };
-                let value = Val::AnyRef(Some(AnyRef::from_i31(
-                    &mut scope,
-                    wasmtime::I31::new_u32(sentinel).expect("runtime sentinel fits i31"),
-                )));
+            Literal::Nil => own(&mut scope, Val::AnyRef(None), self.identity, &self.handles),
+            Literal::Bool(value) => {
+                let name = if *value { "sentinel-true" } else { "sentinel-false" };
+                let value = self
+                    .runtime
+                    .get_global(&mut scope, name)
+                    .expect("shared runtime boolean")
+                    .get(&mut scope);
                 own(&mut scope, value, self.identity, &self.handles)
             }
             Literal::Number(value) => {
@@ -1643,7 +1687,7 @@ impl Session {
                     &self.handles,
                 )?;
                 let array = value
-                    .value
+                    .object()?
                     .to_rooted(&mut scope)
                     .as_array(&scope)?
                     .expect("runtime string is a UTF-16 array");
@@ -1682,7 +1726,7 @@ impl Session {
             .expect("runtime argument array");
         for (index, value) in values.iter().enumerate() {
             Self::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
-            let value = Val::AnyRef(Some(value.value.to_rooted(&mut scope)));
+            let value = Val::AnyRef(value.value.as_ref().map(|value| value.to_rooted(&mut scope)));
             array.set(&mut scope, index as u32, value)?;
         }
         let function = self
@@ -1720,7 +1764,7 @@ impl Session {
                 .runtime
                 .get_func(&mut scope, "constructor-descriptor")
                 .expect("shared runtime class descriptor");
-            let value = Val::AnyRef(Some(class.value.to_rooted(&mut scope)));
+            let value = Val::AnyRef(class.value.as_ref().map(|value| value.to_rooted(&mut scope)));
             let descriptor = call(
                 &mut scope,
                 self.runtime,
@@ -1733,7 +1777,7 @@ impl Session {
                 .runtime
                 .get_func(&mut scope, "source-constructor-plan")
                 .expect("shared runtime constructor preflight");
-            let value = Val::AnyRef(Some(descriptor.value.to_rooted(&mut scope)));
+            let value = Val::AnyRef(descriptor.value.as_ref().map(|value| value.to_rooted(&mut scope)));
             let plan = call(
                 &mut scope,
                 self.runtime,
@@ -1767,14 +1811,14 @@ impl Session {
             .unwrap();
         for (index, value) in arguments.iter().enumerate() {
             Self::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
-            let value = Val::AnyRef(Some(value.value.to_rooted(&mut scope)));
+            let value = Val::AnyRef(value.value.as_ref().map(|value| value.to_rooted(&mut scope)));
             array.set(&mut scope, index as u32, value)?;
         }
         let function = self
             .runtime
             .get_func(&mut scope, "source-construct-from-plan")
             .expect("shared runtime constructor plan invocation");
-        let plan = Val::AnyRef(Some(plan.value.to_rooted(&mut scope)));
+        let plan = Val::AnyRef(plan.value.as_ref().map(|value| value.to_rooted(&mut scope)));
         call(
             &mut scope,
             self.runtime,
@@ -1791,7 +1835,7 @@ impl Session {
     ) -> Result<SessionValue, SessionError> {
         self.check(value)?;
         let mut scope = RootScope::new(&mut self.store);
-        let value = value.value.to_rooted(&mut scope);
+        let value = value.object()?.to_rooted(&mut scope);
         if class {
             let function = self
                 .runtime
@@ -1818,7 +1862,7 @@ impl Session {
     ) -> Result<Vec<SessionValue>, SessionError> {
         self.check(value)?;
         let mut scope = RootScope::new(&mut self.store);
-        let value = value.value.to_rooted(&mut scope);
+        let value = value.object()?.to_rooted(&mut scope);
         let object = value.as_struct(&scope)?.ok_or_else(|| {
             SessionError::Host(wasmtime::Error::msg("Compiler data needs object storage"))
         })?;
@@ -1861,10 +1905,10 @@ impl Session {
             .unwrap();
         for (index, value) in arguments.iter().enumerate() {
             Self::consume_host_work(scope.as_context_mut(), 1, &interrupt)?;
-            let value = Val::AnyRef(Some(value.value.to_rooted(&mut scope)));
+            let value = Val::AnyRef(value.value.as_ref().map(|value| value.to_rooted(&mut scope)));
             array.set(&mut scope, index as u32, value)?;
         }
-        let function = Val::AnyRef(Some(function.value.to_rooted(&mut scope)));
+        let function = Val::AnyRef(function.value.as_ref().map(|value| value.to_rooted(&mut scope)));
         let invoke = self.runtime.get_func(&mut scope, "invoke").unwrap();
         call(
             &mut scope,
@@ -1895,7 +1939,7 @@ mod tests {
                 .runtime
                 .get_func(&mut scope, "constructor-descriptor")
                 .expect("shared runtime class descriptor");
-            let value = Val::AnyRef(Some(class.value.to_rooted(&mut scope)));
+            let value = Val::AnyRef(class.value.as_ref().map(|value| value.to_rooted(&mut scope)));
             let descriptor = call(
                 &mut scope,
                 session.runtime,
@@ -1908,7 +1952,7 @@ mod tests {
                 .runtime
                 .get_func(&mut scope, "source-constructor-new")
                 .expect("shared runtime source constructor");
-            let value = Val::AnyRef(Some(descriptor.value.to_rooted(&mut scope)));
+            let value = Val::AnyRef(descriptor.value.as_ref().map(|value| value.to_rooted(&mut scope)));
             call(
                 &mut scope,
                 session.runtime,
@@ -1930,7 +1974,7 @@ mod tests {
         let mut scope = RootScope::new(&mut session.store);
         let arguments: Vec<_> = values
             .iter()
-            .map(|value| Val::AnyRef(Some(value.value.to_rooted(&mut scope))))
+            .map(|value| Val::AnyRef(value.value.as_ref().map(|value| value.to_rooted(&mut scope))))
             .collect();
         let function = session.runtime.get_func(&mut scope, name).unwrap();
         call(
@@ -2131,7 +2175,7 @@ mod tests {
                         .unwrap()
                         .as_array(&store)?
                         .unwrap();
-                    let invalid = Val::AnyRef(Some(a.value.to_rooted(&mut store)));
+                    let invalid = Val::AnyRef(a.value.as_ref().map(|value| value.to_rooted(&mut store)));
                     schema.set(&mut store, 2, invalid)
                 })
                 .unwrap();
@@ -2347,7 +2391,7 @@ mod tests {
                 let ty = original.ty(&scope).unwrap();
                 let allocator = wasmtime::StructRefPre::new(&mut scope, ty);
                 let mut fields = original.fields(&mut scope).unwrap().collect::<Vec<_>>();
-                fields[1] = Val::AnyRef(Some(a.value.to_rooted(&mut scope)));
+                fields[1] = Val::AnyRef(a.value.as_ref().map(|value| value.to_rooted(&mut scope)));
                 let invalid = wasmtime::StructRef::new(&mut scope, &allocator, &fields)
                     .unwrap()
                     .to_anyref();
@@ -2716,7 +2760,7 @@ mod tests {
                 array.set(&mut scope, index as u32, item).unwrap();
             }
             let continuation = value(&mut scope, runtime, "async-continuation-new", &[state]);
-            let resume = Val::AnyRef(Some(resume.value.to_rooted(&mut scope)));
+            let resume = Val::AnyRef(resume.value.as_ref().map(|value| value.to_rooted(&mut scope)));
             let token = value(
                 &mut scope,
                 runtime,

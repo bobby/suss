@@ -429,8 +429,7 @@ pub fn module(
         [],
         vec![
             GlobalGet(0),
-            I32Const(runtime_abi::NIL),
-            RefI31,
+            runtime_abi::sentinel_value(runtime_abi::NIL),
             RefFunc(invoke),
             I32Const(1),
             I32Const(1),
@@ -951,8 +950,7 @@ fn field_set(
 fn fail(body: &mut Vec<Instruction<'static>>) {
     // ABI3 check: thrown language-exception payload is a general Value.
     body.extend([
-        Instruction::I32Const(runtime_abi::NIL),
-        Instruction::RefI31,
+        runtime_abi::sentinel_value(runtime_abi::NIL),
         Instruction::Throw(0),
     ]);
 }

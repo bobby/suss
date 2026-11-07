@@ -32,7 +32,7 @@ fn array(body: &mut Vec<Instruction<'static>>, local: u32) {
     ]);
 }
 fn nil(body: &mut Vec<Instruction<'static>>) {
-    body.extend([Instruction::I32Const(NIL), Instruction::RefI31]);
+    body.extend([sentinel_value(NIL)]);
 }
 
 pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
@@ -46,14 +46,12 @@ pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
             LocalGet(0),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(NIL),
-            RefI31, // source display name is unset for kernel closures
+            sentinel_value(NIL), // source display name is unset for kernel closures
             ArrayNewFixed {
                 array_type_index: ARGS,
                 array_size: 3,
             },
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(7),

@@ -20,7 +20,7 @@ const OP: u32 = 6;
 // Phase: 0 prepared begin,1 waiting,2 prepared transfer,3 committed,4 retired.
 // Settle: 1 Ready,2 Failed,3 Cancelled. Writer terminal: 0 open,1 close,2 fail.
 fn nil(v: &mut Vec<Instruction<'static>>) {
-    v.extend([I32Const(NIL), RefI31]);
+    v.extend([sentinel_value(NIL)]);
 }
 fn num(v: &mut Vec<Instruction<'static>>, n: i32) {
     v.extend([I32Const(n), RefI31]);
@@ -108,11 +108,10 @@ pub(super) fn append_globals(globals: &mut GlobalSection, base: u32) {
                 ArrayNewDefault(ARGS),
                 I32Const(0),
                 ArrayNewDefault(ARGS),
-                I32Const(NIL),
-                RefI31,
+                sentinel_value(NIL),
                 I32Const(0), // Identity UID, unassigned.
                 RefI31,
-                I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
+                sentinel_value(NIL), StructNew(DESCRIPTOR),
             ]),
         );
     }
@@ -135,8 +134,7 @@ pub(super) fn append_globals(globals: &mut GlobalSection, base: u32) {
             GlobalGet(base + EOF),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(OBJECT),
@@ -527,13 +525,13 @@ fn withdraw(b: &mut Builder, base: u32) -> u32 {
     copy_snapshot(&mut v, 3, 4);
     int(&mut v, 1, 1);
     v.push(If(BlockType::Empty));
-    set(&mut v, 4, 6, &[I32Const(NIL), RefI31]);
+    set(&mut v, 4, 6, &[sentinel_value(NIL)]);
     v.push(Else);
-    set(&mut v, 4, 5, &[I32Const(NIL), RefI31]);
+    set(&mut v, 4, 5, &[sentinel_value(NIL)]);
     v.push(End);
     set(&mut v, 1, 7, &[LocalGet(3)]);
     set(&mut v, 1, 8, &[LocalGet(4)]);
-    set(&mut v, 1, 9, &[I32Const(NIL), RefI31]);
+    set(&mut v, 1, 9, &[sentinel_value(NIL)]);
     set(&mut v, 1, 10, &[I32Const(3), RefI31]);
     set(&mut v, 1, 6, &[I32Const(2), RefI31]);
     b.function_with_locals("stream-withdraw-op", &[VALUE], &[], &[(4, VALUE)], &v)
@@ -754,9 +752,9 @@ fn prepare(b: &mut Builder, base: u32) -> u32 {
     set(&mut v, 4, 1, &[LocalGet(10), RefI31]);
     v.push(End);
     v.extend([LocalGet(8), If(BlockType::Empty)]);
-    set(&mut v, 4, 6, &[I32Const(NIL), RefI31]);
+    set(&mut v, 4, 6, &[sentinel_value(NIL)]);
     v.push(Else);
-    set(&mut v, 4, 5, &[I32Const(NIL), RefI31]);
+    set(&mut v, 4, 5, &[sentinel_value(NIL)]);
     v.push(End);
     set(&mut v, 1, 7, &[LocalGet(3)]);
     set(&mut v, 1, 8, &[LocalGet(4)]);
@@ -1107,7 +1105,7 @@ fn service(b: &mut Builder, base: u32, status: u32, cancelled: u32) {
     v.extend([I32Const(4), I32Eq, If(BlockType::Empty)]);
     // Release retired roots: state, chunk, owner, old, new, payload.
     for slot in [0, 3, 4, 7, 8, 9] {
-        set(&mut v, 2, slot, &[I32Const(NIL), RefI31]);
+        set(&mut v, 2, slot, &[sentinel_value(NIL)]);
     }
     v.extend([
         GlobalGet(base + 7),
@@ -1519,7 +1517,7 @@ fn boxed_exports(b: &mut Builder, base: u32) {
             End,
         ]);
     }
-    v.extend([I32Const(NIL), RefI31]);
+    v.extend([sentinel_value(NIL)]);
     b.function_with_locals(
         "value-display-text",
         &[VALUE],

@@ -9,12 +9,11 @@ fn argument(body: &mut Vec<Instruction<'static>>, index: i32) {
     ]);
 }
 fn sentinel(body: &mut Vec<Instruction<'static>>, value: i32) {
-    body.extend([Instruction::I32Const(value), Instruction::RefI31]);
+    body.extend([sentinel_value(value)]);
 }
 fn boolean(body: &mut Vec<Instruction<'static>>) {
-    use Instruction::*;
-    // A comparison produces0/1; language booleans are i31 sentinels2/4.
-    body.extend([I32Const(2), I32Mul, I32Const(2), I32Add, RefI31]); // ABI3 boolean
+    // A comparison produces 0/1; language booleans are sentinel globals.
+    body.extend(super::boolean());
 }
 fn callback(b: &mut Builder, locals: &[(u32, ValType)], body: &[Instruction<'static>]) -> u32 {
     let index = b.count;
@@ -42,8 +41,7 @@ fn factory(
         &[],
         &[VALUE],
         &[
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             RefFunc(function),
             I32Const(arity),
             I32Const(arity),
@@ -135,8 +133,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         ArrayLen,
         I32Ne,
         If(BlockType::Empty),
-        I32Const(FALSE),
-        RefI31,
+        sentinel_value(FALSE),
         Return,
         End,
         I32Const(0),
@@ -159,8 +156,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         ArrayGetU(STRING),
         I32Ne,
         If(BlockType::Empty),
-        I32Const(FALSE),
-        RefI31,
+        sentinel_value(FALSE),
         Return,
         End,
         LocalGet(4),
@@ -170,8 +166,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Br(0),
         End,
         End,
-        I32Const(TRUE),
-        RefI31,
+        sentinel_value(TRUE),
         Return,
         End,
         LocalGet(2),

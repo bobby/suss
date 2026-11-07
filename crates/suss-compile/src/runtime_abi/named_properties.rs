@@ -28,7 +28,7 @@ fn guard(body: &mut Vec<Instruction<'static>>, local: u32, ty: u32) {
     body.push(Instruction::End);
 }
 fn undefined(body: &mut Vec<Instruction<'static>>) {
-    body.extend([Instruction::I32Const(UNDEFINED), Instruction::RefI31]);
+    body.extend([sentinel_value(UNDEFINED)]);
 }
 fn name(body: &mut Vec<Instruction<'static>>, value: &str) {
     let units: Vec<_> = value.encode_utf16().collect();
@@ -1069,8 +1069,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 Call(b.names["object-method-key"]),
                 LocalSet(fresh),
                 LocalGet(fresh),
-                I32Const(NIL),
-                RefI31,
+                sentinel_value(NIL),
                 RefEq,
                 I32Eqz,
                 If(BlockType::Empty),
@@ -1081,8 +1080,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 Call(b.names["protocol-method-get"]),
                 LocalSet(fresh),
                 LocalGet(fresh),
-                I32Const(NIL),
-                RefI31,
+                sentinel_value(NIL),
                 RefEq,
                 I32Eqz,
                 If(BlockType::Empty),

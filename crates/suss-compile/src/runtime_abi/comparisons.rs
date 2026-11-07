@@ -5,7 +5,7 @@ use super::*;
 
 fn boolean(body: &mut Vec<Instruction<'static>>) {
     use Instruction::*;
-    body.extend([I32Const(2), I32Mul, I32Const(2), I32Add, RefI31]); // ABI3 boolean
+    body.extend(super::boolean());
 }
 fn units(body: &mut Vec<Instruction<'static>>, owner: u32) {
     use Instruction::*;
@@ -164,8 +164,7 @@ pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Ve
             Call(helper),
             LocalSet(4),
             LocalGet(4),
-            I32Const(FALSE),
-            RefI31,
+            sentinel_value(FALSE),
             RefEq,
             If(BlockType::Empty),
             LocalGet(4),
@@ -178,8 +177,7 @@ pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Ve
             Br(0),
             End,
             End,
-            I32Const(TRUE),
-            RefI31,
+            sentinel_value(TRUE),
         ];
         let callback = b.count;
         b.functions.function(INVOKE);
@@ -196,8 +194,7 @@ pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Ve
             &[],
             &[VALUE],
             &[
-                I32Const(NIL),
-                RefI31,
+                sentinel_value(NIL),
                 RefFunc(callback),
                 I32Const(1),
                 I32Const(-1),

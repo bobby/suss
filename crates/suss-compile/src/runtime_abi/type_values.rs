@@ -20,11 +20,10 @@ pub(super) fn append_globals(globals: &mut GlobalSection) {
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
+            sentinel_value(NIL), StructNew(DESCRIPTOR),
         ]),
     );
 }
@@ -47,12 +46,10 @@ pub(super) fn functions(b: &mut Builder) {
     }
     body.extend([
         LocalGet(0),
-        I32Const(FALSE),
-        RefI31,
+        sentinel_value(FALSE),
         RefEq,
         LocalGet(0),
-        I32Const(TRUE),
-        RefI31,
+        sentinel_value(TRUE),
         RefEq,
         I32Or,
         If(BlockType::Empty),

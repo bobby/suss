@@ -4,7 +4,7 @@ const METHOD_ROOT: u32 = range_errors::DESCRIPTOR_GLOBAL + 2;
 pub(super) fn append_globals(globals: &mut GlobalSection) {
     // ABI3 const-expr: lazy method root, tested with RefTest(CLOSURE).
     globals.global(GlobalType { val_type: VALUE, mutable: true, shared: false },
-        &ConstExpr::extended([Instruction::I32Const(NIL), Instruction::RefI31]));
+        &ConstExpr::extended([sentinel_value(NIL)]));
 }
 pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
     use Instruction::*;
@@ -13,16 +13,16 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
     code.extend([End, LocalGet(1), I32Const(0), ArrayGet(ARGS),
         LocalTee(5), Call(b.names["source-array-backing"]), LocalSet(2),
         LocalGet(1), ArrayLen, I32Const(1), I32GtU, If(BlockType::Result(VALUE)),
-        LocalGet(1), I32Const(1), ArrayGet(ARGS), Else, I32Const(UNDEFINED), RefI31, End,
+        LocalGet(1), I32Const(1), ArrayGet(ARGS), Else, sentinel_value(UNDEFINED), End,
         Call(b.names["coerce-string"]), LocalSet(3), LocalGet(3)]);
     code.extend("length".encode_utf16().map(|u| I32Const(i32::from(u))));
     code.extend([ArrayNewFixed {array_type_index: STRING, array_size: 6}, Call(equal),
-        If(BlockType::Empty), I32Const(TRUE), RefI31, Return, End,
+        If(BlockType::Empty), sentinel_value(TRUE), Return, End,
         LocalGet(3), Call(b.names["source-array-own-key-index"]), LocalTee(4),
         // ABI3 boolean
-        I64Const(-1), I64Eq, If(BlockType::Empty), LocalGet(5), LocalGet(3), Call(b.names["source-array-property-has"]), I32Const(1), I32Shl, I32Const(2), I32Add, RefI31, Return, End,
+        I64Const(-1), I64Eq, If(BlockType::Empty), LocalGet(5), LocalGet(3), Call(b.names["source-array-property-has"]), If(BlockType::Result(VALUE)), GlobalGet(TRUE_GLOBAL), Else, GlobalGet(FALSE_GLOBAL), End, Return, End,
         LocalGet(2), LocalGet(4), I32WrapI64, Call(b.names["source-array-sparse-has"]),
-        I32Const(1), I32Shl, I32Const(2), I32Add, RefI31]); // ABI3 boolean
+        If(BlockType::Result(VALUE)), GlobalGet(TRUE_GLOBAL), Else, GlobalGet(FALSE_GLOBAL), End,]); // ABI3 boolean
     let anchored = b.count;
     b.functions.function(INVOKE);
     let mut body = Function::new([(2, VALUE), (1, ValType::I64), (1, VALUE)]);
@@ -37,10 +37,10 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
     b.function("source-array-has-own-method", &[], &[VALUE], &[
         GlobalGet(METHOD_ROOT), RefTestNonNull(HeapType::Concrete(CLOSURE)),
         If(BlockType::Empty), GlobalGet(METHOD_ROOT), Return, End,
-        GlobalGet(object_methods::TAG_GLOBAL), I32Const(NIL), RefI31, RefFunc(anchored),
+        GlobalGet(object_methods::TAG_GLOBAL), sentinel_value(NIL), RefFunc(anchored),
         I32Const(1), I32Const(-1), Call(b.names["closure-new"]),
         ArrayNewFixed {array_type_index: ARGS, array_size: 1},
-        I32Const(NIL), RefI31, I32Const(0), RefI31, StructNew(7), // UID unassigned
+        sentinel_value(NIL), I32Const(0), RefI31, StructNew(7), // UID unassigned
         RefFunc(detached), I32Const(0), I32Const(-1), Call(b.names["closure-new"]),
         GlobalSet(METHOD_ROOT), GlobalGet(METHOD_ROOT)]);
     vec![anchored, detached]

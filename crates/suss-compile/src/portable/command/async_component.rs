@@ -413,7 +413,7 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
             shared: false,
         },
         // ABI3 const-expr: the root future slot starts as nil.
-        &ConstExpr::extended([I32Const(runtime_abi::NIL), RefI31]),
+        &ConstExpr::extended([runtime_abi::sentinel_value(runtime_abi::NIL)]),
     );
     globals.global(
         GlobalType {
@@ -664,8 +664,7 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
             Call(set_drop),
             GlobalGet(3),
             Call(retire_context),
-            I32Const(runtime_abi::NIL),
-            RefI31,
+            runtime_abi::sentinel_value(runtime_abi::NIL),
             GlobalSet(1),
             I32Const(0),
             GlobalSet(4),

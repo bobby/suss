@@ -48,14 +48,55 @@ mod string_methods;
 mod string_char_at;
 mod type_values;
 
-pub const VERSION: u32 = 2;
-// ABI v2 i31 encodings of the language sentinels. Every site that builds or
-// tests a sentinel names it with these, so ABI v3 can move them out of i31.
-pub(crate) const NIL: i32 = 0;
-pub(crate) const FALSE: i32 = 2;
-pub(crate) const TRUE: i32 = 4;
+pub const VERSION: u32 = 3;
+// The language sentinels. Every i31 is a long (ADR-0003); nil is a null
+// eqref, and false, true and undefined are SENTINEL structs held in runtime
+// globals that fragments import. Code names a sentinel with these and builds
+// it with `sentinel_value`; the numbers are only the SENTINEL struct's tag.
+pub const NIL: i32 = 0;
+pub const FALSE: i32 = 2;
+pub const TRUE: i32 = 4;
 // Internal constructor/ordinary-type-call undefined, distinct from source nil.
-pub(crate) const UNDEFINED: i32 = 6;
+pub const UNDEFINED: i32 = 6;
+// Right after the numeric stack global, before any initializer that uses them.
+pub(crate) const FALSE_GLOBAL: u32 = numeric::ERROR_GLOBALS + 1;
+pub(crate) const TRUE_GLOBAL: u32 = FALSE_GLOBAL + 1;
+pub(crate) const UNDEFINED_GLOBAL: u32 = TRUE_GLOBAL + 1;
+/// Runtime export names of the sentinel globals, in tag order.
+pub const SENTINEL_EXPORTS: [(&str, i32); 3] =
+    [("sentinel-false", FALSE), ("sentinel-true", TRUE), ("sentinel-undefined", UNDEFINED)];
+
+/// A sentinel inside the runtime module, where its globals are local.
+pub(crate) fn sentinel_value(value: i32) -> Instruction<'static> {
+    sentinel_in(value, FALSE_GLOBAL)
+}
+/// A sentinel in a module whose false, true and undefined globals start at
+/// `first` in tag order, such as a fragment that imports them.
+pub fn sentinel_in(value: i32, first: u32) -> Instruction<'static> {
+    match value {
+        NIL => Instruction::RefNull(HeapType::Abstract {
+            shared: false,
+            ty: AbstractHeapType::Eq,
+        }),
+        FALSE => Instruction::GlobalGet(first),
+        TRUE => Instruction::GlobalGet(first + 1),
+        UNDEFINED => Instruction::GlobalGet(first + 2),
+        other => panic!("not a sentinel: {other}"),
+    }
+}
+/// `[cond] -> [boolean]`: true for a nonzero i32, false for zero.
+pub fn boolean_in(first: u32) -> [Instruction<'static>; 5] {
+    [
+        Instruction::If(BlockType::Result(VALUE)),
+        Instruction::GlobalGet(first + 1),
+        Instruction::Else,
+        Instruction::GlobalGet(first),
+        Instruction::End,
+    ]
+}
+pub(crate) fn boolean() -> [Instruction<'static>; 5] {
+    boolean_in(FALSE_GLOBAL)
+}
 const PORTABLE_FORMAT_VERSION: u32 = 3;
 const MANIFEST: &str = "suss.runtime-abi";
 pub(crate) const NUMBER: u32 = 0;
@@ -65,7 +106,9 @@ pub(crate) const INVOKE: u32 = 3;
 pub(crate) const CLOSURE: u32 = 4;
 pub(crate) const BINDING: u32 = 5;
 const DESCRIPTOR: u32 = 6;
-pub(crate) const TYPE_COUNT: u32 = 10;
+pub const SENTINEL: u32 = 10;
+pub const LONG: u32 = 11;
+pub(crate) const TYPE_COUNT: u32 = 12;
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
 
 fn reference(index: u32) -> ValType {
@@ -73,6 +116,10 @@ fn reference(index: u32) -> ValType {
         nullable: false,
         heap_type: HeapType::Concrete(index),
     })
+}
+/// Exact type of the imported false, true and undefined globals.
+pub fn sentinel_type() -> ValType {
+    reference(SENTINEL)
 }
 /// Exact shared binding-cell reference type for fragment imports.
 pub(crate) fn binding_cell_type() -> ValType {
@@ -139,6 +186,10 @@ pub fn prelude() -> TypeSection {
         ]),
         // Dynamic frame: parent and binding entries; scheduler roots it as Value.
         structure(vec![field(VALUE, false), field(reference(ARGS), false)]),
+        // ABI v3. Sentinel: false, true or undefined, by the tag it holds.
+        structure(vec![field(ValType::I32, false)]),
+        // Long outside i31's range; one in range is always an i31.
+        structure(vec![field(ValType::I64, false)]),
     ];
     types.ty().rec(group.into_iter().map(|inner| SubType {
         is_final: true,
@@ -343,7 +394,7 @@ fn build_module() -> Vec<u8> {
     let number = HeapType::Concrete(NUMBER);
     let string = HeapType::Concrete(STRING);
     for (name, sentinel) in [("nil", NIL), ("false", FALSE), ("true", TRUE)] {
-        b.function(name, &[], &[VALUE], &[I32Const(sentinel), RefI31]);
+        b.function(name, &[], &[VALUE], &[sentinel_value(sentinel)]);
     }
     b.function(
         "number-box",
@@ -461,7 +512,7 @@ fn build_module() -> Vec<u8> {
         "args-new",
         &[ValType::I32],
         &[VALUE],
-        &[I32Const(NIL), RefI31, LocalGet(0), ArrayNew(ARGS)],
+        &[sentinel_value(NIL), LocalGet(0), ArrayNew(ARGS)],
     );
     let (wrap_environment, closure_environment) = closure_properties::functions(&mut b);
     b.function(
@@ -485,8 +536,7 @@ fn build_module() -> Vec<u8> {
     // unbound-fn error, not a non-function's (#288).
     let mut invoke = vec![
         LocalGet(0),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         If(BlockType::Empty),
         GlobalGet(2),
@@ -498,10 +548,8 @@ fn build_module() -> Vec<u8> {
             array_type_index: STRING,
             array_size: units.len() as u32,
         },
-        I32Const(NIL),
-        RefI31,
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
+        sentinel_value(NIL),
         I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
@@ -526,10 +574,8 @@ fn build_module() -> Vec<u8> {
                 array_type_index: STRING,
                 array_size: units.len() as u32,
             },
-            I32Const(NIL),
-            RefI31,
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
+            sentinel_value(NIL),
             I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(8),
@@ -578,10 +624,8 @@ fn build_module() -> Vec<u8> {
             array_type_index: STRING,
             array_size: message.len() as u32,
         },
-        I32Const(NIL),
-        RefI31,
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
+        sentinel_value(NIL),
         I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
@@ -606,10 +650,8 @@ fn build_module() -> Vec<u8> {
             array_type_index: STRING,
             array_size: message.len() as u32,
         },
-        I32Const(NIL),
-        RefI31,
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
+        sentinel_value(NIL),
         I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
@@ -627,7 +669,7 @@ fn build_module() -> Vec<u8> {
         "binding-unbound",
         &[],
         &[VALUE],
-        &[I32Const(NIL), RefI31, I32Const(0), StructNew(5)],
+        &[sentinel_value(NIL), I32Const(0), StructNew(5)],
     );
     b.function(
         "binding-bound",
@@ -641,11 +683,9 @@ fn build_module() -> Vec<u8> {
                 field_index: 1,
             },
             If(BlockType::Result(VALUE)),
-            I32Const(TRUE),
-            RefI31,
+            sentinel_value(TRUE),
             Else,
-            I32Const(FALSE),
-            RefI31,
+            sentinel_value(FALSE),
             End,
         ],
     );
@@ -668,10 +708,8 @@ fn build_module() -> Vec<u8> {
             array_type_index: STRING,
             array_size: unbound_message.len() as u32,
         },
-        I32Const(NIL),
-        RefI31,
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
+        sentinel_value(NIL),
         I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
@@ -707,18 +745,14 @@ fn build_module() -> Vec<u8> {
             RefCastNonNull(HeapType::Concrete(ARGS)),
             LocalGet(2),
             ArrayGet(ARGS),
-            I32Const(UNDEFINED),
-            RefI31,
+            sentinel_value(UNDEFINED),
             RefEq,
             I32Eqz,
             Else,
             LocalGet(0),
             Call(b.names["binding-bound"]),
-            // ABI3 sentinel-read: binding-bound result is true.
-            RefCastNonNull(HeapType::I31),
-            I31GetU,
-            I32Const(TRUE),
-            I32Eq,
+            sentinel_value(TRUE),
+            RefEq,
             If(BlockType::Result(ValType::I32)),
             LocalGet(0),
             RefCastNonNull(HeapType::Concrete(5)),
@@ -726,8 +760,7 @@ fn build_module() -> Vec<u8> {
                 struct_type_index: 5,
                 field_index: 0,
             },
-            I32Const(UNDEFINED),
-            RefI31,
+            sentinel_value(UNDEFINED),
             RefEq,
             I32Eqz,
             Else,
@@ -767,10 +800,8 @@ fn build_module() -> Vec<u8> {
             LocalGet(0),
             Call(b.names["coerce-string"]),
             RefCastNonNull(HeapType::Concrete(STRING)),
-            I32Const(NIL),
-            RefI31,
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
+            sentinel_value(NIL),
             I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(8),
@@ -825,15 +856,12 @@ fn build_module() -> Vec<u8> {
             // ABI3 const-expr
             &ConstExpr::extended([
                 I64Const(identity.into()),
-                I32Const(NIL),
-                RefI31,
-                I32Const(NIL),
-                RefI31,
-                I32Const(NIL),
-                RefI31,
+                sentinel_value(NIL),
+                sentinel_value(NIL),
+                sentinel_value(NIL),
                 I32Const(0), // Identity UID, unassigned.
                 RefI31,
-                I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
+                sentinel_value(NIL), StructNew(DESCRIPTOR),
             ]),
         );
     }
@@ -845,6 +873,18 @@ fn build_module() -> Vec<u8> {
         },
         &ConstExpr::i32_const(numeric_info.stack_top),
     );
+    assert_eq!(globals.len(), FALSE_GLOBAL);
+    for (name, tag) in SENTINEL_EXPORTS {
+        globals.global(
+            GlobalType {
+                val_type: reference(SENTINEL),
+                mutable: false,
+                shared: false,
+            },
+            &ConstExpr::extended([I32Const(tag), StructNew(SENTINEL)]),
+        );
+        b.exports.export(name, ExportKind::Global, globals.len() - 1);
+    }
     // Append after the pinned numeric stack global; never relocate its index.
     globals.global(
         GlobalType {
@@ -867,11 +907,10 @@ fn build_module() -> Vec<u8> {
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
+            sentinel_value(NIL), StructNew(DESCRIPTOR),
         ]),
     );
     // A rooted opaque protocol marker, distinct from booleans and callables.
@@ -884,15 +923,12 @@ fn build_module() -> Vec<u8> {
         // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
-            I32Const(NIL),
-            RefI31,
-            I32Const(NIL),
-            RefI31,
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
+            sentinel_value(NIL),
+            sentinel_value(NIL),
             I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
+            sentinel_value(NIL), StructNew(DESCRIPTOR),
         ]),
     );
     globals.global(
@@ -902,7 +938,7 @@ fn build_module() -> Vec<u8> {
             shared: false,
         },
         // ABI3 const-expr
-        &ConstExpr::extended([I32Const(NIL), RefI31]),
+        &ConstExpr::extended([sentinel_value(NIL)]),
     );
     let mut info_descriptor = vec![I64Const(i64::from(numeric::ERROR_GLOBALS) + 2)];
     for field in ["message", "data", "cause"] {
@@ -931,7 +967,7 @@ fn build_module() -> Vec<u8> {
         },
         I32Const(0), // Identity UID, unassigned.
         RefI31,
-        I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
+        sentinel_value(NIL), StructNew(DESCRIPTOR),
     ]);
     globals.global(
         GlobalType {
@@ -958,17 +994,14 @@ fn build_module() -> Vec<u8> {
         },
         I32Const(0),
         ArrayNewDefault(ARGS),
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
         I32Const(0), // Identity UID, unassigned.
         RefI31,
-        I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(NIL), StructNew(DESCRIPTOR),
+        sentinel_value(UNDEFINED),
         I32Const(3),
         ArrayNew(ARGS),
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
         I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(7),
@@ -996,11 +1029,10 @@ fn build_module() -> Vec<u8> {
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
+            sentinel_value(NIL), StructNew(DESCRIPTOR),
         ]),
     );
     // Private source-array identity; appended without changing old global indices.
@@ -1017,11 +1049,10 @@ fn build_module() -> Vec<u8> {
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
+            sentinel_value(NIL), StructNew(DESCRIPTOR),
         ]),
     );
     // Appended private Object method tag and portable implicit-this realm.
@@ -1038,11 +1069,10 @@ fn build_module() -> Vec<u8> {
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
+            sentinel_value(NIL), StructNew(DESCRIPTOR),
         ]),
     );
     globals.global(
@@ -1058,15 +1088,13 @@ fn build_module() -> Vec<u8> {
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
+            sentinel_value(NIL), StructNew(DESCRIPTOR),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(7),
@@ -1081,7 +1109,7 @@ fn build_module() -> Vec<u8> {
         },
         // ABI3 const-expr
         // ABI3 check: lazy-root absent marker, compared with i31 0 on first use.
-        &ConstExpr::extended([I32Const(NIL), RefI31]),
+        &ConstExpr::extended([sentinel_value(NIL)]),
     );
     // Original owned dynamic data-property storage tag, appended privately.
     globals.global(
@@ -1097,11 +1125,10 @@ fn build_module() -> Vec<u8> {
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
+            sentinel_value(NIL), StructNew(DESCRIPTOR),
         ]),
     );
     // Lazy shared default Object prototype, owned by the runtime GC root.
@@ -1113,7 +1140,7 @@ fn build_module() -> Vec<u8> {
         },
         // ABI3 const-expr
         // ABI3 check: lazy-root absent marker, compared with i31 0 on first use.
-        &ConstExpr::extended([I32Const(NIL), RefI31]),
+        &ConstExpr::extended([sentinel_value(NIL)]),
     );
     // Shared Array.slice function root; no receiver retained.
     globals.global(
@@ -1124,7 +1151,7 @@ fn build_module() -> Vec<u8> {
         },
         // ABI3 const-expr
         // ABI3 check: lazy-root absent marker, compared with i31 0 on first use.
-        &ConstExpr::extended([I32Const(NIL), RefI31]),
+        &ConstExpr::extended([sentinel_value(NIL)]),
     );
     // Scalar-only UID allocator; no global reference table retains owners.
     globals.global(

@@ -22,7 +22,7 @@ fn argument(code: &mut Vec<Instruction<'static>>, index: i32) {
         If(BlockType::Result(VALUE)),
     ]);
     arr(code, 1, index);
-    code.extend([Else, I32Const(UNDEFINED), RefI31, End]);
+    code.extend([Else, sentinel_value(UNDEFINED), End]);
 }
 fn put(code: &mut Vec<Instruction<'static>>, local: u32, index: i32, value: u32) {
     code.extend([
@@ -52,8 +52,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
     for sentinel in [NIL, FALSE, UNDEFINED] { // ABI3 sentinel-read: JS ToBoolean treats every other non-number, non-string i31 as true
         code.extend([
             LocalGet(0),
-            I32Const(sentinel),
-            RefI31,
+            sentinel_value(sentinel),
             RefEq,
             If(BlockType::Empty),
             I32Const(0),
@@ -191,7 +190,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
     type_error(b, &mut code, "Property description must be an object");
     code.push(End);
     for _ in 0..6 {
-        code.extend([I32Const(UNDEFINED), RefI31]);
+        code.extend([sentinel_value(UNDEFINED)]);
     }
     code.extend([
         ArrayNewFixed {
@@ -217,8 +216,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         text(&mut code, key);
         code.extend([
             Call(b.names["native-object-property-descriptor"]),
-            I32Const(UNDEFINED),
-            RefI31,
+            sentinel_value(UNDEFINED),
             RefEq,
             I32Eqz,
             If(BlockType::Empty),
@@ -237,11 +235,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
             code.extend([
                 LocalGet(8),
                 Call(boolean),
-                I32Const(2),
-                I32Mul,
-                I32Const(2),
-                I32Add,
-                RefI31, // ABI3 boolean
+                If(BlockType::Result(VALUE)), GlobalGet(TRUE_GLOBAL), Else, GlobalGet(FALSE_GLOBAL), End,
                 LocalSet(8),
             ]);
         } else if index >= 4 {
@@ -249,8 +243,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
                 LocalGet(8),
                 RefTestNonNull(HeapType::Concrete(CLOSURE)),
                 LocalGet(8),
-                I32Const(UNDEFINED),
-                RefI31,
+                sentinel_value(UNDEFINED),
                 RefEq,
                 I32Or,
                 I32Eqz,
@@ -300,8 +293,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         I32Const(0),
         LocalSet(10),
         LocalGet(9),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         I32Eqz,
         If(BlockType::Empty),
@@ -549,8 +541,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         Call(b.names["native-object-own-descriptor"]),
         LocalSet(4),
         LocalGet(4),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         If(BlockType::Empty),
         LocalGet(4),
@@ -591,11 +582,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
                 I32And,
                 I32Eqz,
                 I32Eqz,
-                I32Const(2),
-                I32Mul,
-                I32Const(2),
-                I32Add,
-                RefI31, // ABI3 boolean
+                If(BlockType::Result(VALUE)), GlobalGet(TRUE_GLOBAL), Else, GlobalGet(FALSE_GLOBAL), End,
             ]),
         }
         code.extend([I32Const(7), Call(b.names["native-object-own-define"]), Drop]);
@@ -619,8 +606,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         Call(b.names["native-object-fields"]),
         Drop,
         LocalGet(3),
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         LocalGet(3),
         Call(b.names["native-object?"]),
@@ -642,8 +628,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(4),
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         BrIf(1),
         LocalGet(4),
@@ -686,8 +671,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         I32Const(0),
         I32LtS,
         If(BlockType::Empty),
-        I32Const(TRUE),
-        RefI31,
+        sentinel_value(TRUE),
         Return,
         End,
         LocalGet(2),
@@ -703,8 +687,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         I32And,
         I32Eqz,
         If(BlockType::Empty),
-        I32Const(FALSE),
-        RefI31,
+        sentinel_value(FALSE),
         Return,
         End,
         LocalGet(2),
@@ -756,8 +739,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         I32Const(0),
         LocalGet(8),
         ArraySet(ARGS),
-        I32Const(TRUE),
-        RefI31,
+        sentinel_value(TRUE),
     ]);
     let delete = callback(
         b,
@@ -775,8 +757,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         &[],
         &[VALUE],
         &[
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             RefFunc(delete),
             I32Const(2),
             I32Const(2),
@@ -787,8 +768,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         LocalGet(0),
         I32Const(9),
         Call(b.names["closure-internal-property-get"]),
-        I32Const(TRUE),
-        RefI31,
+        sentinel_value(TRUE),
         RefEq,
         If(BlockType::Empty),
         LocalGet(0),
@@ -796,8 +776,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         End,
         LocalGet(0),
         I32Const(9),
-        I32Const(TRUE),
-        RefI31,
+        sentinel_value(TRUE),
         Call(b.names["closure-internal-property-set"]),
         Drop,
     ];
@@ -810,8 +789,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         code.push(LocalGet(0));
         text(&mut code, name);
         code.extend([
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             RefFunc(function),
             I32Const(0),
             I32Const(-1),

@@ -38,8 +38,7 @@ pub(super) fn functions(
     for sentinel in [NIL, UNDEFINED] { // ABI3 sentinel-read: native kind; any i31 other than these four sentinels falls to object kind 5
         body.extend([
             LocalGet(0),
-            I32Const(sentinel),
-            RefI31,
+            sentinel_value(sentinel),
             RefEq,
             If(BlockType::Empty),
             I32Const(0),
@@ -50,8 +49,7 @@ pub(super) fn functions(
     for sentinel in [FALSE, TRUE] {
         body.extend([
             LocalGet(0),
-            I32Const(sentinel),
-            RefI31,
+            sentinel_value(sentinel),
             RefEq,
             If(BlockType::Empty),
             I32Const(1),
@@ -85,8 +83,7 @@ pub(super) fn functions(
     for sentinel in [NIL, FALSE, UNDEFINED] { // ABI3 sentinel-read: JS truthiness treats every other non-number, non-string i31 as true
         body.extend([
             LocalGet(0),
-            I32Const(sentinel),
-            RefI31,
+            sentinel_value(sentinel),
             RefEq,
             If(BlockType::Empty),
             I32Const(0),
@@ -138,8 +135,7 @@ pub(super) fn functions(
     let mut body = vec![
         LocalGet(0),
         LocalGet(1),
-        I32Const(TRUE),
-        RefI31,
+        sentinel_value(TRUE),
         Call(property_set),
         Drop,
         I32Const(1),
@@ -222,8 +218,7 @@ pub(super) fn functions(
         LocalGet(3),
         I32Ne,
         If(BlockType::Empty),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         LocalGet(2),
         ArrayNew(ARGS),
         LocalSet(4),
@@ -333,12 +328,10 @@ pub(super) fn functions(
         Call(property_get),
         LocalSet(3),
         LocalGet(3),
-        I32Const(NIL),
-        RefI31,
+        sentinel_value(NIL),
         RefEq,
         LocalGet(3),
-        I32Const(UNDEFINED),
-        RefI31,
+        sentinel_value(UNDEFINED),
         RefEq,
         I32Or,
         If(BlockType::Empty),
@@ -453,8 +446,7 @@ pub(super) fn functions(
     for sentinel in [NIL, UNDEFINED] {
         body.extend([
             LocalGet(0),
-            I32Const(sentinel),
-            RefI31,
+            sentinel_value(sentinel),
             RefEq,
             If(BlockType::Empty),
         ]);
@@ -508,11 +500,7 @@ pub(super) fn functions(
         I32Const(1),
         ArrayGet(ARGS),
         Call(satisfies),
-        I32Const(2),
-        I32Mul,
-        I32Const(2),
-        I32Add,
-        RefI31, // ABI3 boolean
+        If(BlockType::Result(VALUE)), GlobalGet(TRUE_GLOBAL), Else, GlobalGet(FALSE_GLOBAL), End,
     ];
     let function = callback(b, &function_body);
     b.function(
@@ -520,8 +508,7 @@ pub(super) fn functions(
         &[],
         &[VALUE],
         &[
-            I32Const(NIL),
-            RefI31,
+            sentinel_value(NIL),
             RefFunc(function),
             I32Const(2),
             I32Const(2),
@@ -595,8 +582,8 @@ pub(super) fn functions(
         LocalGet(0), Call(descriptor), LocalGet(1), Call(method_get), Else,
         // An unbound name stays undefined, so invoke reports Clojure's unbound-fn
         // error (#288); any other non-object has no method.
-        LocalGet(0), I32Const(UNDEFINED), RefI31, RefEq, If(BlockType::Result(VALUE)), LocalGet(0), Else,
-        I32Const(NIL), RefI31, End, End, LocalSet(2),
+        LocalGet(0), sentinel_value(UNDEFINED), RefEq, If(BlockType::Result(VALUE)), LocalGet(0), Else,
+        sentinel_value(NIL), End, End, LocalSet(2),
         LocalGet(0), LocalGet(2), ArrayNewFixed { array_type_index: ARGS, array_size: 2 },
         RefFunc(bound), I32Const(0), I32Const(-1), Call(b.names["closure-new"])]);
     b.function_with_locals("callable-bind", &[VALUE, VALUE], &[VALUE], &[(1, VALUE)], &code);
