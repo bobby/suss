@@ -211,15 +211,16 @@ Numbers are unboxed wherever possible:
   `i64` struct. Each long has exactly one representation, so equality and
   hashing never compare a box with an i31. This is part of the first ABI
   change, not a later stage.
-- **Sentinels outside i31.** nil, false, true and undefined are singleton
-  structs shared by every fragment, so no value is null and no i31 is anything
-  but a long. #335 measured this against the tagged encoding first proposed
-  here, which kept the even i31 values as sentinels and held a long `v` as
+- **Sentinels outside i31.** nil is `ref.null`, and false, true and undefined
+  are singleton structs shared by every fragment, so no i31 is anything but a
+  long. #335 measured this against the tagged encoding first proposed here,
+  which kept the even i31 values as sentinels and held a long `v` as
   `(v << 1) | 1` ([experiments/numeric-representation](../../experiments/numeric-representation/README.md#sentinel-designs-335)):
   small-long addition is 21% faster (1.87 ns against 2.38) and a counting
   loop through polymorphic `<` and `inc` 12% faster, while truthiness tests
-  cost the same within noise. Making nil `ref.null` instead measured no
-  faster than a nil struct, and would make every `Value` type nullable.
+  cost the same within noise. A nil struct measured no faster than
+  `ref.null`; `Value` is already a nullable `eqref`, and a null is a constant
+  that default-initialized arrays and structs already hold.
 - A boxed double is an `f64` struct.
 - Shared GC runtime ABI version 3 adds the new types to the shared recursive group.
 - A BigInt holds a sign and a magnitude array; a Ratio two integers; a BigDecimal

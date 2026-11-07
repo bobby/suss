@@ -144,10 +144,12 @@ Moving the sentinels out of i31 makes small-long addition 21% faster and the
 counting loop 12% faster. Truthiness is the same within noise in all three
 designs: comparing against a singleton struct in a global costs no more than
 against an i31 constant. `number?` is 0.16 ns slower in B and C, which need
-two type tests where A needs a type test and a bit test. ABI v3 uses C:
-every i31 is a long from −2³⁰ to 2³⁰ − 1, and nil, false, true and undefined
-are singleton structs, so no value is null and no sentinel can be mistaken
-for a number.
+two type tests where A needs a type test and a bit test. ABI v3 uses B: every
+i31 is a long from −2³⁰ to 2³⁰ − 1, nil is `ref.null`, and false, true and
+undefined are singleton structs. Suss's `Value` type is already a nullable
+`eqref`, so B needs no new types, and a null is a constant expression that
+default-initialized arrays and structs already hold, which C's nil struct
+isn't.
 
 ## GC heap growth
 
