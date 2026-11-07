@@ -4,11 +4,15 @@
 ;; fails in every reader with the same message at the same position. Each
 ;; :edn-malformed entry fails in the EDN readers only: the compiler's reader and
 ;; read-string resolve auto-resolved keywords against the current namespace (#30).
+;; Each :exact entry is one Clojure numeric literal binary64 can't hold (#333):
+;; the compiler's reader reads it, evaluating it fails, and the other readers
+;; fail on it with the same message, until Suss has Clojure's numbers (#335).
 {:valid
  ["nil true false"
-  "0 -0 +1 -1.5 1e3 1E-3 -0.0 0x1F -0x10 017 2r1010 36rZZ 9007199254740993 ##Inf ##-Inf ##NaN"
+  "0 -0 +1 -1.5 1e3 1E-3 -0.0 0x1F -0x10 017 2r1010 36rZZ 9007199254740992 -9007199254740992 ##Inf ##-Inf ##NaN"
   "1. 1.e2 0.5 00 07 -07 0X1f -2r101 8r777 16rFF 1e400 -1e400 4.9e-324 01e2"
-  "36rZZZZZZZZZZZZZZ 3r2222222222222222222222222222222222222222 7r66666666666666666666666666 2r11111111111111111111111111111111111111111111111111111111111 -0x0 -00"
+  "36rZZZZZZZZZ 2r100000000000000000000000000000000000000000000000000000 0x20000000000000 3r1121202011211211122211100012101112 7r5350140446150306053 -0x0 -00"
+  "4/2 -6/3 0/5 -0/5 +8/4 007/7"
   "\"\" \"plain\" \"\\n\\r\\t\\b\\f\\\"\\\\\" \"\\u00e9\\u2603\" \"\\ud83d\\ude00\" \"\\0\\12\\377\" \"é☃😀\" \"multi\nline\" \"\\0 \\7#\""
   "\\a \\Z \\é \\newline \\return \\tab \\space \\backspace \\formfeed \\u0041 \\o101 \\( \\; \\\" \\o7 \\o377 \\u0000 \\uFFFF \\\\ \\a\\b \\u \\o"
   "a ab/cd a.b/c.d + - -> <=> *x* a' a# a% .. / clojure.core// ns/a:b a:b .x x. a/b.c a? a! a_b -a +a --1"
@@ -28,9 +32,17 @@
   "\\ud800"
   "\\o400"
   "\\uZZZZ"
-  "1/2"
-  "1N"
-  "1.5M"
+  "1/0"
+  "-0/00"
+  "1/"
+  "1/-2"
+  "1/2N"
+  "0x1/2"
+  "1.5N"
+  "08N"
+  "2r101N"
+  "0x1M"
+  "1.5eM"
   "0x"
   "08"
   "1e"
@@ -76,4 +88,29 @@
   "^"
   "#queue"]
  :edn-malformed
- ["::a"]}
+ ["::a"]
+ :exact
+ ["1/2"
+  "-1/2"
+  "+2/4"
+  "1N"
+  "0N"
+  "-0x1FN"
+  "017N"
+  "1M"
+  "1.5M"
+  "-0.0M"
+  "1e3M"
+  "1.50E-2M"
+  "9007199254740993"
+  "-9007199254740993"
+  "9223372036854775808"
+  "0x20000000000001"
+  "2r100000000000000000000000000000000000000000000000000001"
+  "3r1121202011211211122211100012101120"
+  "7r5350140446150306055"
+  "0400000000000000001"
+  "18014398509481986/2"
+  "36rZZZZZZZZZZZZZZ"
+  "3r2222222222222222222222222222222222222222"
+  "18014398509481986/18014398509481986"]}

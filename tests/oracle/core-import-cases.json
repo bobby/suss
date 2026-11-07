@@ -43,7 +43,7 @@
     },
     {
       "id": "rounding",
-      "source": "(identity 9007199254740993)",
+      "source": "(identity 9007199254740993.0)",
       "expected": {
         "tag": "f64",
         "bits": "4340000000000000"

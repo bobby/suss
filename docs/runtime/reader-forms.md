@@ -37,8 +37,31 @@ its containing sequence; it never crosses a collection or enclosing conditional
 boundary.
 Both raw syntax and synthesized prefix nesting are bounded to 64 forms for
 ordinary thread-stack safety.
-Unsupported dispatch, splicing conditionals and numeric precision/ratio forms
-return located errors. An auto-resolved keyword, `::name` or `::alias/name`, is
+Unsupported dispatch and splicing conditionals return located errors.
+
+Numbers follow Clojure 1.12's numeric grammar: decimal, hexadecimal (`0x1F`),
+octal (`017` is 15), radix (`36rZ`), ratios, the `N` and `M` suffixes, doubles
+(`1.`, `1e3`) and `##Inf`, `##-Inf`, `##NaN` (#333). A literal binary64 holds
+exactly reads as a number: every double, any integer within ±2^53, and a
+ratio of terms within ±2^53 that reduces to such an integer, as Clojure reads
+`4/2` as 2. Any other literal, such as `1/3`, `1N`, `1.5M` or
+`9007199254740993`, reads as a `Kind::Exact` form holding its Clojure value
+(a reduced ratio, an integer marked BigInt or not, or a BigDecimal's unscaled
+integer and scale). Until Suss has Clojure's numeric types
+([ADR-0003](../adr/0003-clojure-numeric-tower.md), #335), evaluating one
+throws "Unsupported numeric literal 1/3: ratios, BigInts, BigDecimals and
+integers beyond 2^53 need Clojure's numeric types (#335)", in code and in
+quoted data, so nothing rounds silently. Because they read, a
+reader-conditional branch that isn't selected may hold them; only a malformed
+literal, such as `1/0` ("Divide by zero"), `1/2N` or `08`, fails there. As in
+Clojure, a radix integer's trailing `N` is a digit, so `36rN` is 23 and
+`2r1N` is malformed. Macros receive an exact literal as a symbol in the
+`suss.reader.exact-number` namespace named by its text, and an expansion that
+returns that symbol gives the literal back. A literal in a macro's own code,
+such as a syntax-quote template, is evaluated when the macro runs, so that
+macro fails to expand until #335.
+
+An auto-resolved keyword, `::name` or `::alias/name`, is
 read as an `AutoKeyword` form; the compiler resolves it in the current namespace
 or through that namespace's aliases before macros see it, as Clojure's reader
 does, and an unknown alias is Clojure's "Invalid token" error (#30). This is a bounded syntax foundation;

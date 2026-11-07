@@ -1,7 +1,9 @@
 //! Portable source forms, separate from prototype EDN runtime values.
 //!
 //! Byte spans refer to the original UTF-8 source. String contents are UTF-16,
-//! including lone surrogates; numbers are ordinary binary64, never JVM ratios.
+//! including lone surrogates. Numbers are binary64 where binary64 holds the
+//! literal exactly; other Clojure numeric literals are [`ExactNumber`]s, which
+//! evaluation rejects until Suss has Clojure's numeric types (ADR-0003, #335).
 //! Reader metadata remains syntax until phase analysis interprets it. Reader work
 //! is cumulatively metered; deep syntax uses growable stacks and safe cleanup.
 use crate::{Keyword, ParseError, Symbol};
@@ -155,11 +157,72 @@ fn allowance(remaining: &mut u64, units: u64) -> Result<(), ParseError> {
     Ok(())
 }
 
+/// A Clojure numeric literal that binary64 can't hold exactly: an `N` or `M`
+/// literal, an integer beyond ±2^53, or a ratio that doesn't reduce to an
+/// integer within ±2^53 (ADR-0003). It reads anywhere, so reader-conditional
+/// branches that mention one load, but evaluating it fails (#333).
+#[derive(Debug, Clone)]
+pub struct ExactNumber {
+    /// The literal as written, for diagnostics and macro data.
+    pub text: String,
+    pub value: ExactValue,
+}
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ExactValue {
+    /// An integer; `big` for an `N` literal or one beyond the long range,
+    /// which Clojure reads as a BigInt.
+    Integer { value: num_bigint::BigInt, big: bool },
+    /// A reduced ratio, `denominator > 1`.
+    Ratio { numerator: num_bigint::BigInt, denominator: num_bigint::BigInt },
+    /// A BigDecimal: `unscaled × 10^-scale`, as Java's `BigDecimal`.
+    Decimal { unscaled: num_bigint::BigInt, scale: i32 },
+}
+/// Literals are equal when they denote the same value, however written.
+impl PartialEq for ExactNumber {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
+    }
+}
+/// Macro data has no value for an exact literal until #335, so it carries
+/// one as a symbol in this namespace named by the literal's text, and decoding
+/// that symbol gives the literal back.
+pub const EXACT_NUMBER_NAMESPACE: &str = "suss.reader.exact-number";
+impl ExactNumber {
+    /// The literal a macro-data symbol stands for, if it is one.
+    pub fn from_symbol(namespace: Option<&str>, name: &str) -> Option<Self> {
+        if namespace != Some(EXACT_NUMBER_NAMESPACE) {
+            return None;
+        }
+        match number(name) {
+            Ok(NumberToken::Exact(number)) => Some(number),
+            _ => None,
+        }
+    }
+    /// A spelling of the value alone, equal exactly when the literals are:
+    /// for form identity keys.
+    pub fn canonical(&self) -> String {
+        match &self.value {
+            ExactValue::Integer { value, big } => format!("{value}{}", if *big { "N" } else { "" }),
+            ExactValue::Ratio { numerator, denominator } => format!("{numerator}/{denominator}"),
+            ExactValue::Decimal { unscaled, scale } => format!("{unscaled}E{}M", -i64::from(*scale)),
+        }
+    }
+    /// The evaluation-time failure, until #335.
+    pub fn unsupported_message(&self) -> String {
+        format!(
+            "Unsupported numeric literal {}: ratios, BigInts, BigDecimals and integers beyond 2^53 need Clojure's numeric types (#335)",
+            self.text
+        )
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Kind {
     Nil,
     Bool(bool),
     Number(f64),
+    /// See [`ExactNumber`].
+    Exact(ExactNumber),
     String(Vec<u16>),
     Symbol(Symbol),
     Keyword(Keyword),
@@ -191,8 +254,9 @@ pub enum Kind {
 }
 
 /// Read portable syntax without namespace resolution or macro execution.
-/// Unsupported dispatch/numeric syntax fails explicitly, including ratios and
-/// arbitrary-precision suffixes. Empty/comment-only sources yield no forms.
+/// Unsupported dispatch syntax and malformed numbers fail explicitly; exact
+/// numeric literals read as [`Kind::Exact`]. Empty/comment-only sources yield
+/// no forms.
 pub fn read_forms(source: &str) -> Result<Vec<Form>, ParseError> {
     read_forms_with_work_allowance(source, DEFAULT_WORK_ALLOWANCE)
 }
@@ -1126,7 +1190,10 @@ impl Reader<'_, '_, '_> {
                         }
                     }
                     token if numeric_start(token) => {
-                        Kind::Number(number(token).map_err(|message| self.fail(start, message))?)
+                        match number(token).map_err(|message| self.fail(start, message))? {
+                            NumberToken::Double(value) => Kind::Number(value),
+                            NumberToken::Exact(value) => Kind::Exact(value),
+                        }
                     }
                     token => {
                         if !valid_symbol(token) {
@@ -1317,34 +1384,133 @@ pub(crate) fn numeric_start(token: &str) -> bool {
         _ => false,
     }
 }
-pub(crate) fn number(token: &str) -> Result<f64, &'static str> {
-    if token.contains('/') || token.ends_with(['N', 'M']) {
-        return Err(
-            "Unsupported numeric form: ratios and precision suffixes are not portable ordinary numbers",
-        );
+/// A numeric token: binary64, or an exact literal binary64 can't hold.
+pub(crate) enum NumberToken {
+    Double(f64),
+    Exact(ExactNumber),
+}
+/// Binary64 holds every integer up to 2^53 exactly.
+const MAX_EXACT: u64 = 1 << 53;
+fn integer_token(token: &str, value: num_bigint::BigInt, suffix_n: bool) -> NumberToken {
+    use num_traits::ToPrimitive;
+    match value.to_i64() {
+        Some(small) if !suffix_n && small.unsigned_abs() <= MAX_EXACT => {
+            // The pinned ClojureScript integer reader spells either signed
+            // integer zero as +0.
+            NumberToken::Double(if small == 0 { 0.0 } else { small as f64 })
+        }
+        small => NumberToken::Exact(ExactNumber {
+            text: token.to_owned(),
+            value: ExactValue::Integer { big: suffix_n || small.is_none(), value },
+        }),
     }
+}
+/// Read a numeric token with Clojure 1.12's numeric grammar (`LispReader`'s
+/// `intPat`, `ratioPat` and `floatPat`).
+pub(crate) fn number(token: &str) -> Result<NumberToken, &'static str> {
+    use num_bigint::BigInt;
+    use num_integer::Integer;
+    use num_traits::Zero;
     let negative = token.starts_with('-');
-    let digits = token.strip_prefix(['+', '-']).unwrap_or(token);
-    let radix = if let Some(hex) = digits
+    let unsigned = token.strip_prefix(['+', '-']).unwrap_or(token);
+    let decimal = |digits: &str| -> Result<BigInt, &'static str> {
+        if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
+            return Err("Invalid ratio");
+        }
+        Ok(BigInt::parse_bytes(digits.as_bytes(), 10).unwrap())
+    };
+    if let Some((numerator, denominator)) = unsigned.split_once('/') {
+        let mut numerator = decimal(numerator)?;
+        let denominator = decimal(denominator)?;
+        if denominator.is_zero() {
+            return Err("Divide by zero");
+        }
+        if negative {
+            numerator = -numerator;
+        }
+        // Terms beyond 2^53 make the literal exact even when it reduces to a
+        // small integer, as the runtime reader can only check that much.
+        let safe = BigInt::from(MAX_EXACT);
+        let large = numerator.magnitude() > safe.magnitude() || denominator > safe;
+        let divisor = numerator.gcd(&denominator);
+        let (numerator, denominator) = (numerator / &divisor, denominator / divisor);
+        if denominator == BigInt::from(1) {
+            if !large {
+                return Ok(integer_token(token, numerator, false));
+            }
+            return Ok(NumberToken::Exact(ExactNumber {
+                text: token.to_owned(),
+                value: ExactValue::Integer {
+                    big: num_traits::ToPrimitive::to_i64(&numerator).is_none(),
+                    value: numerator,
+                },
+            }));
+        }
+        return Ok(NumberToken::Exact(ExactNumber {
+            text: token.to_owned(),
+            value: ExactValue::Ratio { numerator, denominator },
+        }));
+    }
+    if let Some(mantissa) = unsigned.strip_suffix('M') {
+        // floatPat with M: [0-9]+(\.[0-9]*)?([eE][-+]?[0-9]+)?
+        let (number, exponent) = match mantissa.split_once(['e', 'E']) {
+            Some((number, exponent)) => (number, Some(exponent)),
+            None => (mantissa, None),
+        };
+        let (whole, fraction) = number.split_once('.').unwrap_or((number, ""));
+        let exponent = match exponent {
+            Some(text) => {
+                let digits = text.strip_prefix(['+', '-']).unwrap_or(text);
+                if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
+                    return Err("Invalid decimal literal");
+                }
+                text.parse::<i64>().map_err(|_| "Decimal exponent out of range")?
+            }
+            None => 0,
+        };
+        if whole.is_empty()
+            || !whole.bytes().all(|b| b.is_ascii_digit())
+            || !fraction.bytes().all(|b| b.is_ascii_digit())
+        {
+            return Err("Invalid decimal literal");
+        }
+        let mut unscaled = BigInt::parse_bytes(format!("{whole}{fraction}").as_bytes(), 10).unwrap();
+        if negative {
+            unscaled = -unscaled;
+        }
+        let scale = i32::try_from(fraction.len() as i64 - exponent)
+            .map_err(|_| "Decimal exponent out of range")?;
+        return Ok(NumberToken::Exact(ExactNumber {
+            text: token.to_owned(),
+            value: ExactValue::Decimal { unscaled, scale },
+        }));
+    }
+    // intPat: hexadecimal and octal integers take an N suffix; a radix
+    // integer's trailing N is one of its digits, as in Clojure.
+    let radix = if let Some(hex) = unsigned
         .strip_prefix("0x")
-        .or_else(|| digits.strip_prefix("0X"))
+        .or_else(|| unsigned.strip_prefix("0X"))
     {
-        Some((16, hex))
-    } else if let Some((base, digits)) = digits.split_once(['r', 'R']) {
+        Some((16, hex, true))
+    } else if let Some((base, digits)) = unsigned.split_once(['r', 'R']) {
         let base: u32 = base.parse().map_err(|_| "Invalid numeric radix")?;
         if !(2..=36).contains(&base) {
             return Err("Numeric radix must be between 2 and 36");
         }
-        Some((base, digits))
-    } else if digits.len() > 1
-        && digits.starts_with('0')
-        && digits.chars().all(|c| c.is_ascii_digit())
-    {
-        Some((8, &digits[1..]))
+        Some((base, digits, false))
     } else {
-        None
+        let digits = unsigned.strip_suffix('N').unwrap_or(unsigned);
+        if digits.len() > 1 && digits.starts_with('0') && digits.bytes().all(|b| b.is_ascii_digit()) {
+            Some((8, &unsigned[1..], true))
+        } else {
+            None
+        }
     };
-    if let Some((base, digits)) = radix {
+    if let Some((base, digits, takes_n)) = radix {
+        let (digits, suffix_n) = match digits.strip_suffix('N') {
+            Some(digits) if takes_n => (digits, true),
+            _ => (digits, false),
+        };
         if digits.is_empty()
             || !digits
                 .chars()
@@ -1352,27 +1518,39 @@ pub(crate) fn number(token: &str) -> Result<f64, &'static str> {
         {
             return Err("Invalid numeric digits");
         }
-        let integer = num_bigint::BigInt::parse_bytes(digits.as_bytes(), base)
-            .ok_or("Invalid numeric digits")?;
-        let value = crate::Number::Integer(integer).to_f64();
-        return Ok(if negative { -value } else { value });
+        let mut integer = BigInt::parse_bytes(digits.as_bytes(), base).ok_or("Invalid numeric digits")?;
+        if negative {
+            integer = -integer;
+        }
+        return Ok(integer_token(token, integer, suffix_n));
     }
-    if !digits
+    if let Some(digits) = unsigned.strip_suffix('N') {
+        if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
+            return Err("Invalid ordinary numeric literal");
+        }
+        let mut integer = BigInt::parse_bytes(digits.as_bytes(), 10).unwrap();
+        if negative {
+            integer = -integer;
+        }
+        return Ok(integer_token(token, integer, true));
+    }
+    if !unsigned
         .chars()
         .all(|c| c.is_ascii_digit() || matches!(c, '.' | 'e' | 'E' | '+' | '-'))
     {
         return Err("Invalid ordinary numeric literal");
     }
+    if unsigned.bytes().all(|b| b.is_ascii_digit()) {
+        let mut integer = BigInt::parse_bytes(unsigned.as_bytes(), 10).unwrap();
+        if negative {
+            integer = -integer;
+        }
+        return Ok(integer_token(token, integer, false));
+    }
     let value: f64 = token
         .parse()
         .map_err(|_| "Invalid ordinary numeric literal")?;
-    // The pinned ClojureScript integer reader spells either signed integer zero
-    // as +0. Floating syntax, including -0.0/-0e0, retains the sign.
-    if value == 0.0 && !digits.contains(['.', 'e', 'E']) {
-        Ok(0.0)
-    } else {
-        Ok(value)
-    }
+    Ok(NumberToken::Double(value))
 }
 pub(crate) fn valid_symbol(token: &str) -> bool {
     if token.is_empty() || token.ends_with(':') || token.starts_with(':') {

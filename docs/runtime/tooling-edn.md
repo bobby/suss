@@ -34,7 +34,9 @@ every process.
 - **Map and set entries** appear in the value order above. Map entries are
   separated by `, `, as Clojure's `pr` separates them.
 - **Numbers:**
-  - an integer below 10^16 prints without a fraction;
+  - an integer within ±2^53 prints without a fraction. A larger integral
+    value prints as a double, such as `9007199254740994.0`, because an integer
+    literal beyond 2^53 reads as an exact number, not binary64 (#333);
   - `-0.0` keeps its sign;
   - infinities and NaN print as `##Inf`, `##-Inf` and `##NaN`;
   - anything else prints in Rust's shortest round-trip form, such as `0.1` or

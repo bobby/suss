@@ -895,6 +895,13 @@ impl FormBridge {
                         Kind::Nil => self.scalar(session, &Literal::Nil)?,
                         Kind::Bool(value) => self.scalar(session, &Literal::Bool(*value))?,
                         Kind::Number(value) => self.scalar(session, &Literal::Number(*value))?,
+                        Kind::Exact(value) => self.identifier(
+                            session,
+                            Some(suss_reader::forms::EXACT_NUMBER_NAMESPACE),
+                            &value.text,
+                            false,
+                            None,
+                        )?,
                         Kind::String(value) => {
                             self.scalar(session, &Literal::String(value.clone()))?
                         }
@@ -1357,7 +1364,10 @@ fn decode_datum_inner<T: DatumTarget>(
                         if !matches { budget.source_valid = Some(false); }
                     }
                     if count == 5 {
-                        DecodedKind::Plain(Kind::Symbol(suss_reader::Symbol { namespace, name }))
+                        match suss_reader::forms::ExactNumber::from_symbol(namespace.as_deref(), &name) {
+                            Some(number) => DecodedKind::Plain(Kind::Exact(number)),
+                            None => DecodedKind::Plain(Kind::Symbol(suss_reader::Symbol { namespace, name })),
+                        }
                     } else {
                         DecodedKind::Plain(Kind::Keyword(suss_reader::Keyword { namespace, name }))
                     }

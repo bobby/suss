@@ -206,6 +206,7 @@ fn rebuild_form(node: &Form, children: Vec<Form>) -> Form {
         Kind::Nil => Kind::Nil,
         Kind::Bool(value) => Kind::Bool(*value),
         Kind::Number(value) => Kind::Number(*value),
+        Kind::Exact(value) => Kind::Exact(value.clone()),
         Kind::String(value) => Kind::String(value.clone()),
         Kind::Symbol(value) => Kind::Symbol(value.clone()),
         Kind::Keyword(value) => Kind::Keyword(value.clone()),

@@ -174,7 +174,7 @@
     },
     {
       "id": "fn-rounded-identity",
-      "source": "((fn [x] x) 9007199254740993)",
+      "source": "((fn [x] x) 9007199254740993.0)",
       "expected": {
         "tag": "f64",
         "bits": "4340000000000000"
@@ -279,7 +279,7 @@
     },
     {
       "id": "def-rounded",
-      "source": "(do (def portable-rounded 9007199254740993) portable-rounded)",
+      "source": "(do (def portable-rounded 9007199254740993.0) portable-rounded)",
       "expected": {
         "tag": "f64",
         "bits": "4340000000000000"
@@ -685,7 +685,7 @@
     },
     {
       "id": "number-to-string-10",
-      "source": "(+ 1000000000000000100 \"\")",
+      "source": "(+ 1000000000000000100.0 \"\")",
       "expected": {
         "tag": "string",
         "units": [

@@ -219,7 +219,7 @@ fn try_execute_fragment(
 
 #[test]
 fn compiled_literal_uses_shared_abi_and_binary64_rounding() {
-    let (mut store, value) = execute("9007199254740993");
+    let (mut store, value) = execute("9007199254740993.0");
     let object = value
         .unwrap_anyref()
         .unwrap()

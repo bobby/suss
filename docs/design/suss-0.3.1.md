@@ -131,8 +131,9 @@ printing, reader literals and 64-bit bitwise operations. The jank suite's
 [ADR-0003](../adr/0003-clojure-numeric-tower.md) gives the representation, which
 keeps numbers unboxed wherever the compiler can, and the staging. Until it is
 implemented, every number is an IEEE-754 binary64 value
-with ClojureScript's 32-bit bitwise coercions, and the reader rejects ratios and
-the `N` and `M` suffixes; these are known gaps, not the contract. Arithmetic (`+ - * /`, `inc`, `dec`,
+with ClojureScript's 32-bit bitwise coercions, and the reader reads ratios, `N`
+and `M` literals and integers beyond 2^53 but evaluating them throws (#333);
+these are known gaps, not the contract. Arithmetic (`+ - * /`, `inc`, `dec`,
 `quot`, `rem`, `mod`), numeric comparison (`< > <= >= ==`, `min`, `max`) and
 `zero?`, `pos?` and `neg?` accept only numbers, as in Clojure: nil, strings,
 keywords, collections and other objects throw a catchable language error naming

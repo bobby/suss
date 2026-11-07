@@ -107,9 +107,14 @@ them against `*ns*`, and the compiler against the current namespace (#30).
 - **Records:** only `defrecord` types are readable. Clojure can construct any
   class with a matching constructor. An unregistered name fails with "No
   record type for tag ...".
-- **Data:** characters are one-unit strings and numbers are binary64, so
-  ratios, `N` and `M` fail; Clojure's numeric types are planned
-  ([ADR-0003](../adr/0003-clojure-numeric-tower.md)). Duplicate keys are found by Suss's `=`, so
+- **Data:** characters are one-unit strings and numbers are binary64.
+  Every Clojure numeric literal is read with the compiler's rules
+  ([reader forms](reader-forms.md)), but one binary64 can't hold, such as
+  `1/3`, `1N`, `1.5M` or `9007199254740993`, fails with "Unsupported numeric
+  literal ..." unless it is in an unselected conditional branch, until
+  Clojure's numeric types arrive ([ADR-0003](../adr/0003-clojure-numeric-tower.md),
+  #335). Printing and reading back an integral double beyond 2^53, which
+  prints without a decimal point, fails the same way. Duplicate keys are found by Suss's `=`, so
   `#{1 1.0}` is a duplicate.
 - **Errors:** errors are `ex-info` values with reader data, not
   `ReaderException`s, and a non-string argument fails with "read-string

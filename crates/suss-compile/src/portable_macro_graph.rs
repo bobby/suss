@@ -319,6 +319,10 @@ fn form_key_metered(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -> 
                     append(&mut key, &[2], charge)?;
                     append(&mut key, &value.to_bits().to_le_bytes(), charge)?;
                 }
+                Kind::Exact(value) => {
+                    append(&mut key, &[16], charge)?;
+                    write_text(&mut key, &value.canonical(), charge)?;
+                }
                 Kind::String(value) => {
                     append(&mut key, &[3], charge)?;
                     write_size(&mut key, value.len(), charge)?;
@@ -939,6 +943,7 @@ impl<'a> AnalysisGraph<'a> {
                             Kind::Nil => Kind::Nil,
                             Kind::Bool(v) => Kind::Bool(*v),
                             Kind::Number(v) => Kind::Number(*v),
+                            Kind::Exact(v) => Kind::Exact(v.clone()),
                             Kind::String(v) => Kind::String(v.clone()),
                             Kind::Symbol(v) => Kind::Symbol(v.clone()),
                             Kind::Keyword(v) => Kind::Keyword(v.clone()),

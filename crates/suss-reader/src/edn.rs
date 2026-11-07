@@ -332,7 +332,9 @@ pub fn number(x: f64) -> String {
         if x > 0.0 { "##Inf" } else { "##-Inf" }.into()
     } else if x == 0.0 && x.is_sign_negative() {
         "-0.0".into()
-    } else if x.fract() == 0.0 && x.abs() < 1e16 {
+    } else if x.fract() == 0.0 && x.abs() <= 9007199254740992.0 {
+        // Beyond 2^53 an integer literal is exact, not binary64 (#333), so
+        // larger integral values print as doubles: 9007199254740994.0.
         (x as i64).to_string()
     } else {
         format!("{x:?}")
@@ -670,7 +672,13 @@ impl<'s> Parser<'s, '_> {
                 Value::Keyword(Keyword::parse(&token[1..]))
             }
             token if forms::numeric_start(token) => {
-                Value::Number(forms::number(token).map_err(|message| fail(self, message))?)
+                // EDN data has no exact numbers until #335.
+                match forms::number(token).map_err(|message| fail(self, message))? {
+                    forms::NumberToken::Double(value) => Value::Number(value),
+                    forms::NumberToken::Exact(value) => {
+                        return Err(fail(self, &value.unsupported_message()))
+                    }
+                }
             }
             token => {
                 if !forms::valid_symbol(token) {

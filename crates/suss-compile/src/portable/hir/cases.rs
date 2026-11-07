@@ -42,6 +42,7 @@ fn constant(form: &Form) -> Result<(CaseConstant, (u8, Vec<u8>)), Diagnostic> {
             );
             (CaseConstant::Keyword(fqn.clone()), (4, fqn.into_bytes()))
         }
+        Kind::Exact(number) => return Err(fail(form.span.clone(), number.unsupported_message())),
         _ => {
             return Err(fail(
                 form.span.clone(),

@@ -173,6 +173,10 @@ fn syntax_hash(form: &Form) -> u32 {
         ),
         // A queue hashes as an ordered collection, like its vector.
         Kind::Tagged { form, .. } => syntax_hash(form),
+        // Any stable hash: evaluating the literal throws (#333).
+        Kind::Exact(number) => number.canonical().bytes().fold(0u32, |hash, byte| {
+            hash.wrapping_mul(31).wrapping_add(u32::from(byte))
+        }),
         _ => unreachable!("Reader conditionals/discards must be resolved before analysis"),
     }
 }

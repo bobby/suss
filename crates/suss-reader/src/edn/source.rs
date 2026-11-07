@@ -25,6 +25,7 @@ pub fn form_to_value(form: &Form) -> Result<Value, Error> {
             Kind::Nil => Value::Nil,
             Kind::Bool(b) => Value::Bool(*b),
             Kind::Number(n) => Value::Number(*n),
+            Kind::Exact(number) => return Err(Error::new(number.unsupported_message())),
             Kind::String(units) => string_value(units),
             Kind::Symbol(s) => Value::Symbol(s.clone()),
             Kind::Keyword(k) => Value::Keyword(k.clone()),
