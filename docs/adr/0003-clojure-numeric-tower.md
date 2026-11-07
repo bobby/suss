@@ -207,15 +207,19 @@ Numbers are unboxed wherever possible:
   point beside its generic one, as Clojure's primitive interfaces do, and
   callers the compiler can resolve use it.
 - **Inline small longs.** A long held as a `Value` reference whose value fits in
-  30 signed bits (−2²⁹ to 2²⁹ − 1) is an i31 reference with its low bit set
-  (`(v << 1) | 1`), so the even i31 values keep their meaning as the nil, false,
-  true and undefined sentinels. Other longs are a boxed `i64` struct. Each long has
-  exactly one representation, so equality and hashing never compare a box with
-  an i31. This is part of the first ABI change, not a later stage. The same work
-  package measures the alternative of moving the sentinels out of i31 (to
-  singleton structs, or nil to `ref.null`), which would make every i31 a 31-bit
-  long with no tag test; it is chosen if it measures faster without slowing
-  truthiness tests.
+  31 signed bits (−2³⁰ to 2³⁰ − 1) is that i31 value; other longs are a boxed
+  `i64` struct. Each long has exactly one representation, so equality and
+  hashing never compare a box with an i31. This is part of the first ABI
+  change, not a later stage.
+- **Sentinels outside i31.** nil, false, true and undefined are singleton
+  structs shared by every fragment, so no value is null and no i31 is anything
+  but a long. #335 measured this against the tagged encoding first proposed
+  here, which kept the even i31 values as sentinels and held a long `v` as
+  `(v << 1) | 1` ([experiments/numeric-representation](../../experiments/numeric-representation/README.md#sentinel-designs-335)):
+  small-long addition is 21% faster (1.87 ns against 2.38) and a counting
+  loop through polymorphic `<` and `inc` 12% faster, while truthiness tests
+  cost the same within noise. Making nil `ref.null` instead measured no
+  faster than a nil struct, and would make every `Value` type nullable.
 - A boxed double is an `f64` struct.
 - Shared GC runtime ABI version 3 adds the new types to the shared recursive group.
 - A BigInt holds a sign and a magnitude array; a Ratio two integers; a BigDecimal
@@ -247,6 +251,16 @@ Node, the JavaScript engine's collector manages WasmGC objects.
   51.0.0-rc.1 crates published on crates.io, although `Auto` selects it (with
   the default `gc-copying` feature) and Suss's tests and these benchmarks run
   on it today. Each wasmtime upgrade rechecks its status and release notes.
+- wasmtime 49.0.1 grows the GC heap only when a collection leaves less free
+  space than the pending allocation needs, so a heap that live data nearly
+  fills is collected every few allocations. #335 measured boxed addition at
+  4 ns with no live heap, 20 ns with 2,048 live objects and 131 ns with 65,536
+  under the default initial heap; with a 64 MiB initial heap
+  (`Config::gc_heap_initial_size`), 4–5 ns at both, at the cost of 64 MiB more
+  peak RSS, since the copying collector touches all of its heap
+  ([GC heap growth](../../experiments/numeric-representation/README.md#gc-heap-growth)).
+  Much of the live-heap cost above is this policy. Suss sets the initial size
+  with the collector, and #335 records the value it chooses.
 - Unboxed math reduces allocation, and so collector pressure, whichever
   collector runs: with 10⁶ live objects, a boxed addition costs about ten
   times an i31 one.
@@ -298,10 +312,10 @@ Node, the JavaScript engine's collector manages WasmGC objects.
   numeric helper; there is no host library to call.
 - About 75 runtime sites test or cast i31 values on the assumption that an i31
   is nil, a boolean or undefined, and some runtime state (stream and async
-  status, named-property kinds) stores odd i31 values. With the tagged
-  encoding each test must also check the tag bit; with the sentinel
-  alternative each must test for the new sentinels instead. Either way, those
-  state slots must never be observable as values.
+  status, named-property kinds) stores i31 values. With the sentinels outside
+  i31, each of those tests must test for the sentinel structs instead, and
+  those state slots, whose values now read as longs, must never be observable
+  as values.
 
 ## Alternatives considered
 
@@ -341,8 +355,8 @@ one work package per stage:
    literals only when they are evaluated.
 2. Reader features `:suss` and `:default` only, with the suite's `:suss`
    branches; JVM Clojure recordings as the suite oracle.
-3. Runtime ABI v3: long and double types, i31 small longs (tagged, unless the
-   sentinel alternative measures faster), the explicit collector, overflow checks, and the
+3. Runtime ABI v3: long and double types, i31 small longs with the sentinels
+   moved out of i31, the explicit collector, overflow checks, and the
    reader, printer, EDN and macro data for longs and doubles.
 4. Equality, hashing, comparison, bitwise operations and coercions for longs and
    doubles; packed primitive arrays; WIT integer and list mapping, retiring the
@@ -360,7 +374,7 @@ Answered on 2026-11-06 before acceptance:
 1. **Reader features.** Suss uses `:suss` and `:default`, drops `:cljs` and
    doesn't claim `:clj`, in user code and the suite alike.
 2. **Unboxed math.** Wherever possible: i31 small longs from the first ABI
-   change (tagged, unless the sentinel alternative measures faster), and
+   change (untagged, with the sentinels moved out of i31, as #335 measured), and
    unboxed locals and primitive entry points in this milestone rather than
    later.
 3. **Narrow types.** No narrow boxed values; `int`, `short`, `byte` and `float`

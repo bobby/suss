@@ -10,21 +10,32 @@ fn main() -> Result<()> {
     let mut config = Config::new();
     config.wasm_gc(true).wasm_function_references(true).wasm_tail_call(true).wasm_exceptions(true);
     config.collector(match collector { "null" => Collector::Null, "drc" => Collector::DeferredReferenceCounting, "copying" => Collector::Copying, _ => Collector::Auto });
+    // GC_INITIAL_MIB sets Config::gc_heap_initial_size (#335).
+    if let Some(mib) = std::env::var("GC_INITIAL_MIB").ok().and_then(|s| s.parse::<u64>().ok()) {
+        config.gc_heap_initial_size(mib << 20);
+    }
     let engine = Engine::new(&config)?;
     let _ = wasm_encoder::Module::new(); // version pin only
     let module = Module::new(&engine, wat::parse_str(include_str!("bench.wat"))?)?;
     let mut store = Store::new(&engine, ());
     let inst = Instance::new(&mut store, &module, &[])?;
     inst.get_typed_func::<(), ()>(&mut store, "setup")?.call(&mut store, ())?;
+    if std::env::var_os("NO_SETUP2").is_none() { inst.get_typed_func::<(), ()>(&mut store, "setup2")?.call(&mut store, ())?; }
     inst.get_typed_func::<i32, ()>(&mut store, "retain")?.call(&mut store, live)?;
-    println!("wasmtime 49.0.1 collector={collector} n={n} reps={reps} live={live}");
+    println!("wasmtime 49.0.1 collector={collector} n={n} reps={reps} live={live} gc_initial_mib={}", std::env::var("GC_INITIAL_MIB").unwrap_or_else(|_| "default".into()));
+    let only: Vec<&str> = args.get(5).map(|s| s.split(',').collect()).unwrap_or_default();
     let cases: &[(&str, i64)] = &[
         ("d_i64_plain", 0), ("d_i64_checked", 0),
         ("a_f64box", 0), ("b_i64box", 0),
         ("c_i31", 0), ("c_i31_tagged", 0), ("c_i31_boxedrange", 1 << 40),
         ("e_call_f64only", 0), ("e_poly_i31", 0), ("e_poly_i64box", 1 << 40), ("e_poly_f64box", 0),
+        // #335: tagged sentinels (A) against sentinels outside i31 (B)
+        ("f_addA", 0), ("f_addB", 0), ("f_addA_boxedrange", 1 << 40), ("f_addB_boxedrange", 1 << 40),
+        ("g_truthyA", 0), ("g_truthyB", 0), ("g_truthyC", 0), ("h_numberA", 0), ("h_numberB", 0),
+        ("k_loopA", 0), ("k_loopB", 0),
     ];
     for &(name, start) in cases {
+        if !only.is_empty() && !only.iter().any(|p| name.starts_with(p)) { continue; }
         let export = name.strip_suffix("_boxedrange").unwrap_or(name);
         let f = inst.get_typed_func::<(i64, i64), i64>(&mut store, export)?;
         let _ = std::fs::write("/proc/self/clear_refs", "5");
