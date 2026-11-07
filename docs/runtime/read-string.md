@@ -15,7 +15,7 @@ the rest, as Clojure's do. They never evaluate code.
 | --- | --- |
 | `:eof` | The value returned when `s` has no form. Without it, such input fails with "EOF while reading". |
 | `:read-cond` | `:allow` reads reader conditionals; `:preserve` returns them as `reader-conditional` values. Without it, a conditional fails with "Conditional read not allowed". |
-| `:features` | Keywords enabled besides the platform features `:suss` and `:cljs`. `:default` always matches. |
+| `:features` | Keywords enabled besides the platform feature `:suss`. `:default` always matches. Suss claims neither `:cljs` nor `:clj` (#334). |
 
 Code forms read as Clojure's reader reads them:
 

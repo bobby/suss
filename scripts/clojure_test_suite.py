@@ -5,9 +5,10 @@ The vendored files are byte-for-byte upstream content at a pinned commit. Local
 adaptations live only in separate MPL-2.0 patch files and are applied to
 generated copies; vendored bytes are never edited in place.
 
-`check` (the default) verifies the lock offline. `oracle` regenerates the pinned
-ClojureScript observations with Java/Node (a development-only dependency) and
-fails unless they equal the reviewed reference; `--write` records them instead.
+`check` (the default) verifies the lock offline. `oracle` regenerates the
+observations with JVM Clojure 1.12.6 (a development-only dependency; ADR-0003,
+#334) and fails unless they equal the reviewed reference; `--write` records
+them instead.
 """
 import argparse
 import collections
@@ -17,6 +18,7 @@ import json
 import os
 import re
 import shutil
+import struct
 import subprocess
 import tarfile
 from pathlib import Path
@@ -30,9 +32,11 @@ LOCK = ROOT / 'docs/compatibility/clojure-test-suite-lock.json'
 REPOSITORY = 'https://github.com/jank-lang/clojure-test-suite'
 COMMIT = '95d4a9112cfc5fe6629be3d14bb99080ea00af2f'
 PATHS = ('LICENSE', 'README.md', 'test')
-CLJS_PIN = 'c4295f303100bbf5afac449242d30bca1126f1a1'
 ORACLE = ROOT / 'tests/oracle'
-GENERATED = ORACLE / 'out/generated'
+# The oracle is JVM Clojure, run from tests/oracle/jvm on the unpatched suite.
+CLOJURE = '1.12.6'
+ORACLE_ID = f'clojure-{CLOJURE}'
+JVM = ORACLE / 'jvm'
 HARNESS = ROOT / 'tests/clojure-test-suite'
 HOST_INTEROP = ROOT / 'docs/compatibility/clojure-test-suite-host-interop.json'
 LEGACY_CASES = ROOT / 'docs/compatibility/cases.json'
@@ -46,22 +50,17 @@ SUITES = {
     'fixture': {'sources': HARNESS / 'fixture', 'reference': ORACLE / 'clojure-test-suite-fixture-observations.json',
                 'baseline': ORACLE / 'clojure-test-suite-fixture-known-failures.json'},
 }
-ORACLE_PATCHES = ('0001-when-var-exists-macro-phase.patch',)
-SUSS_PATCHES = ('0002-number-range-suss-branches.patch',
-                '0003-clojure-numeric-operand-suss-branches.patch',
+SUSS_PATCHES = ('0003-clojure-numeric-operand-suss-branches.patch',
                 '0004-atom-clojure-references-suss-branches.patch',
-                '0005-hierarchy-type-tags-suss-branches.patch')
-# Where a recorded ClojureScript observation disagrees with Clojure, Clojure
-# governs: these reviewed records replace the oracle's for comparison only.
-CORRECTIONS = ORACLE / 'clojure-test-suite-corrections.json'
-CORRECTABLE = {'kind', 'form', 'threw', 'operands', 'value'}
+                '0005-hierarchy-type-tags-suss-branches.patch',
+                '0006-clojure-jvm-rules-suss-branches.patch')
 PORTABILITY = 'clojure.core-test.portability'
-# Math.random is seeded per run; assertions whose observations differ across
-# these seeds are nondeterministic and keep only their kind and verdict.
-SEEDS = (1, 2, 3, 4)
+# The oracle runs the suite this many times; assertions whose observations
+# differ between runs are nondeterministic and keep only their kind and verdict.
+RUNS = 4
 # Reviewed random-number-dependent tests (or single assertions). Their operand
 # values depend on the host generator, so Suss is judged on its verdict only.
-# Every seed-detected difference must fall inside this list.
+# Every difference between runs must fall inside this list.
 RANDOMIZED = {
     'clojure.core-test.rand/test-rand': 'samples from rand',
     'clojure.core-test.rand-int/test-rand-int': 'samples from rand-int',
@@ -69,17 +68,18 @@ RANDOMIZED = {
     'clojure.core-test.random-sample/test-random-sample': 'samples from random-sample',
     'clojure.core-test.random-uuid/test-random-uuid': 'values from random-uuid',
     'clojure.core-test.shuffle/test-shuffle': 'results of shuffle',
-    'clojure.core-test.constantly/test-constantly#30': 'constant chosen by rand-int',
+    'clojure.core-test.constantly/test-constantly#31': 'constant chosen by rand-int',
     'clojure.core-test.uuid-qmark/test-uuid?#4': 'value from random-uuid',
 }
 # These source assertions intentionally test only truthiness/absence of a throw.
 # The portable contract does not promise hash-set traversal order, so comparing
 # the concrete sequence produced by `drop` would overstate what they assert.
+# Each entry names its recorded form, so a shifted ordinal can't silently
+# judge a different assertion by verdict.
 VERDICT_ONLY = {
-    'clojure.core-test.drop/test-drop#12':
-        'upstream comment says map/set order is unknown; assertion checks doall truthiness only',
-    'clojure.core-test.nil-qmark/test-nil?#13':
-        'host-interop inventory classifies js/undefined as host-specific with no portable counterpart',
+    'clojure.core-test.drop/test-drop#12': (
+        '(doall (drop 1 #{:c :b :a}))',
+        'upstream comment says map/set order is unknown; assertion checks doall truthiness only'),
 }
 
 
@@ -208,35 +208,14 @@ def apply_patches(target, names):
 
 
 def generate_oracle(suite):
-    """Write the patched suite (plus the fixture, if selected) and its loader under out/generated."""
-    shutil.rmtree(GENERATED / 'clojure', ignore_errors=True)
-    staging = GENERATED.parent / 'clojure-test-suite-patch'
-    shutil.rmtree(staging, ignore_errors=True)
-    shutil.copytree(UPSTREAM / 'test', staging / 'test')
-    apply_patches(staging, ORACLE_PATCHES)
-    shutil.copytree(staging / 'test' / 'clojure', GENERATED / 'clojure')
-    shutil.rmtree(staging)
+    """Copy the unpatched suite (or the fixture) where the JVM oracle loads it."""
+    target = JVM / 'out/suite'
+    shutil.rmtree(target, ignore_errors=True)
     sources = SUITES[suite]['sources']
+    shutil.copytree(UPSTREAM / 'test', target)
     if sources != UPSTREAM / 'test':
-        shutil.copytree(sources / 'clojure', GENERATED / 'clojure', dirs_exist_ok=True)
-    names = namespaces(sources)
-    package = GENERATED / 'suss_oracle'
-    package.mkdir(parents=True, exist_ok=True)
-    for stale in package.glob('clojure_test_suite_marker_*.cljs'):
-        stale.unlink()
-    requires = []
-    for index, name in enumerate(names):
-        marker = f'suss-oracle.clojure-test-suite-marker-{index:03d}'
-        (package / f'clojure_test_suite_marker_{index:03d}.cljs').write_text(
-            f'(ns {marker} (:require [suss-oracle.clojure-test-suite-skips :as skips]))\n'
-            f'(skips/loading! {json.dumps(name)})\n')
-        requires += [f'[{marker}]', f'[{name}]']
-    (package / 'clojure_test_suite_namespaces.cljs').write_text(
-        '(ns suss-oracle.clojure-test-suite-namespaces\n  (:require\n   '
-        + '\n   '.join(requires) + '))\n'
-        f'(def commit {json.dumps(COMMIT)})\n'
-        f'(def namespaces [{" ".join(json.dumps(name) for name in names)}])\n')
-    return names
+        shutil.copytree(sources, target, dirs_exist_ok=True)
+    return namespaces(sources)
 
 
 def generate_suss_sources(suite, output):
@@ -259,24 +238,13 @@ def generate_suss_sources(suite, output):
 
 
 def run_oracle(suite):
-    """Compile with the pinned ClojureScript and execute once per seed in Node."""
-    pin = subprocess.check_output(['git', '-C', str(ROOT / 'clojurescript'), 'rev-parse', 'HEAD'], text=True).strip()
-    if pin != CLJS_PIN:
-        raise SystemExit(f'wrong ClojureScript oracle pin: {pin}')
-    if subprocess.check_output(['git', '-C', str(ROOT / 'clojurescript'), 'status', '--porcelain'], text=True):
-        raise SystemExit('dirty ClojureScript oracle source')
-    generate_oracle(suite)
-    environment = dict(os.environ, CLJ_CONFIG='/tmp/suss-oracle-clojure-config',
-                       CLJ_CACHE='/tmp/suss-oracle-clojure-cache')
-    options = (f'{{:target :nodejs :output-to "out/clojure-test-suite-{suite}.js" '
-               f':output-dir "out/clojure-test-suite-{suite}-cljs" :optimizations :none :source-map false '
-               ':force true :cache-analysis false :warnings {:invalid-arithmetic false}}')
-    subprocess.run(['clojure', '-Srepro', '-M', '-m', 'cljs.main', '-co', options,
-                    '-c', 'suss-oracle.clojure-test-suite'], cwd=ORACLE, env=environment, check=True)
+    """Run the suite on JVM Clojure RUNS times, once per JVM."""
+    names = generate_oracle(suite)
     runs = []
-    for seed in SEEDS:
-        output = ORACLE / f'out/clojure-test-suite-{suite}-seed-{seed}.json'
-        subprocess.run(['node', f'out/clojure-test-suite-{suite}.js', str(output), str(seed)], cwd=ORACLE, check=True)
+    for run in range(1, RUNS + 1):
+        output = JVM / f'out/{suite}-run-{run}.json'
+        subprocess.run(['clojure', '-Srepro', '-M', '-m', 'suss-oracle.clojure-test-suite-jvm',
+                        str(output), COMMIT, *names], cwd=JVM, check=True)
         runs.append(json.loads(output.read_text(), object_pairs_hook=unique))
     return runs
 
@@ -305,11 +273,40 @@ def form_head(form):
     return match[1] if match else None
 
 
+def canonical_value(node):
+    """A tagged value with set items and map entries in one order. The JVM
+    iterates identity-hashed elements in a different order in each run; the
+    comparison is unordered, so the order carries no information."""
+    tag = node.get('tag')
+    key = lambda item: json.dumps(item, sort_keys=True)
+    if tag == 'set':
+        return dict(node, items=sorted((canonical_value(i) for i in node['items']), key=key))
+    if tag == 'map':
+        entries = [[canonical_value(k), canonical_value(v)] for k, v in node['entries']]
+        return dict(node, entries=sorted(entries, key=key))
+    if tag in ('seq', 'vector'):
+        return dict(node, items=[canonical_value(i) for i in node['items']])
+    if tag == 'exception-info':
+        return dict(node, **{k: canonical_value(node[k]) for k in ('data', 'message', 'cause')})
+    return node
+
+
+def canonical_assertion(assertion):
+    result = dict(assertion)
+    for key in ('value', 'thrown', 'message'):
+        if key in result:
+            result[key] = canonical_value(result[key])
+    if 'operands' in result:
+        result['operands'] = [canonical_value(o) for o in result['operands']]
+    return result
+
+
 def normalize(*runs, suite='suite'):
-    """Merge seeded runs into the reviewed reference, flagging nondeterministic assertions."""
+    """Merge the oracle's runs into the reviewed reference, flagging nondeterministic assertions."""
+    runs = [dict(run, assertions=[canonical_assertion(a) for a in run['assertions']]) for run in runs]
     first = runs[0]
     for run in runs:
-        if run.get('schema') != 1 or run.get('suite') != COMMIT or run.get('upstream') != CLJS_PIN:
+        if run.get('schema') != 2 or run.get('suite') != COMMIT or run.get('upstream') != ORACLE_ID:
             raise ValueError('unexpected oracle run identity')
         if run['reporter-errors']:
             raise ValueError(f"oracle reporter failed: {run['reporter-errors'][:3]}")
@@ -319,6 +316,8 @@ def normalize(*runs, suite='suite'):
             raise ValueError(f'oracle run is incomplete: {summary}')
         if summary['fail'] or summary['error']:
             raise ValueError(f'the oracle must pass every assertion it records: {summary}')
+        if run.get('jvm') != first.get('jvm'):
+            raise ValueError('oracle runs used different JVMs')
         if [run[k] for k in ('namespaces', 'tests', 'skips')] != [first[k] for k in ('namespaces', 'tests', 'skips')]:
             raise ValueError('oracle runs disagree on namespaces, tests or skips')
         if [(a['test'], a['ordinal'], a['kind'], canonical_form(a['form'])) for a in run['assertions']] != \
@@ -347,7 +346,7 @@ def normalize(*runs, suite='suite'):
     unused = set(RANDOMIZED) - seen - {a['test'] for a in assertions}
     if suite == 'suite' and unused:
         raise ValueError(f'stale randomized entries: {sorted(unused)}')
-    return {'schema': 1, 'suite': COMMIT, 'upstream': CLJS_PIN,
+    return {'schema': 2, 'suite': COMMIT, 'upstream': ORACLE_ID, 'jvm': first.get('jvm'),
             'namespaces': first['namespaces'], 'tests': first['tests'], 'skips': first['skips'],
             'assertions': assertions, 'summary': first['summary']}
 
@@ -374,7 +373,7 @@ def opaque(node):
 def decide(expected, actual):
     """Return (reason or None, guest_judged) for one oracle assertion and its Suss observation."""
     if expected['kind'] == 'value' and actual['kind'] == 'predicate':
-        # cljs.test reports a call through a local or non-function var by its
+        # clojure.test reports a call through a local or non-function var by its
         # result; the harness evaluates the same call and keeps that result.
         actual = dict(actual, kind='value', value=actual['result'])
     if actual['kind'] != expected['kind']:
@@ -384,6 +383,8 @@ def decide(expected, actual):
     if actual['verdict'] != expected['verdict']:
         return f"verdict:{actual['verdict']}", False
     if expected['id'] in VERDICT_ONLY:
+        if VERDICT_ONLY[expected['id']][0] != expected['form']:
+            raise ValueError(f"VERDICT_ONLY entry no longer names its assertion: {expected['id']}")
         return None, True
     if not expected['deterministic']:
         return None, True
@@ -403,41 +404,36 @@ def decide(expected, actual):
             judged = True
         elif opaque(suss_value):
             return 'observation:undecodable', False
-        elif not oracle_compare.matches(oracle_value, suss_value):
+        elif not suite_matches(oracle_value, suss_value):
             return 'observation:value', False
     return None, judged
 
 
-def corrected(reference):
-    """Apply the reviewed Clojure corrections to the recorded oracle assertions."""
-    document = json.loads(CORRECTIONS.read_text(), object_pairs_hook=unique)
-    if document['schema'] != 1 or document['suite'] != COMMIT:
-        raise ValueError('unexpected clojure-test-suite correction identity')
-    corrections = {}
-    for correction in document['corrections']:
-        identity = correction['id']
-        if identity in corrections:
-            raise ValueError(f'duplicate correction: {identity}')
-        if not correction.get('issue') or not correction.get('rationale'):
-            raise ValueError(f'correction needs an issue and rationale: {identity}')
-        if not correction['replace'] or set(correction['replace']) - CORRECTABLE:
-            raise ValueError(f'unexpected corrected fields: {identity}')
-        corrections[identity] = correction
-    assertions = []
-    for entry in reference['assertions']:
-        correction = corrections.pop(entry['id'], None)
-        if correction is not None:
-            replace = correction['replace']
-            if entry['form'] != correction.get('original-form'):
-                raise ValueError(f"correction no longer matches its recorded form: {entry['id']}")
-            if not entry['deterministic'] or entry['verdict'] != 'pass':
-                raise ValueError(f"only deterministic passing records are corrected: {entry['id']}")
-            entry = {key: value for key, value in entry.items()
-                     if key not in ('threw', 'operands', 'value')} | replace
-        assertions.append(entry)
-    if corrections:
-        raise ValueError(f'corrections for unknown assertions: {sorted(corrections)}')
-    return dict(reference, assertions=assertions)
+def suite_matches(oracle, suss):
+    """oracle_compare.matches, with the JVM oracle's numbers. Until #335 Suss
+    numbers are binary64, so a long the oracle records within ±2^53 matches
+    a Suss f64 holding exactly that integer, and nothing matches a larger
+    long, a BigInt, a ratio or a BigDecimal yet."""
+    tag = oracle['tag']
+    if tag == 'long':
+        value = int(oracle['value'])
+        bits = struct.unpack('>Q', struct.pack('>d', float(value)))[0]
+        return suss['tag'] == 'f64' and abs(value) <= 2 ** 53 and int(suss['bits'], 16) == bits
+    if tag in ('bigint', 'ratio', 'decimal'):
+        return False
+    if tag != suss['tag']:
+        return False
+    if tag == 'exception-info':
+        return all(suite_matches(oracle[key], suss[key]) for key in ('data', 'message', 'cause'))
+    if tag == 'map':
+        return oracle_compare.unordered(oracle['entries'], suss['entries'],
+                                        lambda a, b: suite_matches(a[0], b[0]) and suite_matches(a[1], b[1]))
+    if tag == 'set':
+        return oracle_compare.unordered(oracle['items'], suss['items'], suite_matches)
+    if tag in ('seq', 'vector'):
+        return len(oracle['items']) == len(suss['items']) and \
+            all(suite_matches(a, b) for a, b in zip(oracle['items'], suss['items']))
+    return oracle_compare.matches(oracle, suss)
 
 
 def compare(reference, observed):
@@ -566,8 +562,8 @@ def main():
             raise SystemExit(f"fresh oracle observations differ from {suite['reference'].relative_to(ROOT)}; review the diff")
         return
     reference = json.loads(suite['reference'].read_text(), object_pairs_hook=unique)
-    if args.suite == 'suite':
-        reference = corrected(reference)
+    if reference.get('schema') != 2 or reference.get('upstream') != ORACLE_ID:
+        raise ValueError('the reference must be a JVM Clojure oracle recording')
     observed = json.loads(args.observations.read_text(), object_pairs_hook=unique)
     counts, failures = compare(reference, observed)
     print(f'clojure-test-suite {args.suite}:', counts_line(counts))

@@ -82,7 +82,6 @@ REPL displays them with `pr-str` ([display](compiled-repl.md#display)).
   - delays (one run, the cached exception, printing).
 - jank's clojure-test-suite: the `atom`, `add-watch` and `remove-watch` namespaces
   run and match the reviewed observations. Patch 0004 selects the suite's Clojure
-  assertions for atom options, with corrections recorded in
-  `tests/oracle/clojure-test-suite-corrections.json`.
+  assertions for atom options.
 - `cargo test -p suss-cli --test portable_atoms --test persistent_repl`: the
   original GC, alias and operand-order cases and the 28-case ClojureScript corpus.

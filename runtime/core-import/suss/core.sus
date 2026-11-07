@@ -11341,8 +11341,8 @@ reduces them without incurring seq initialization"
   "Reads one object from the string s and ignores the rest. Optionally include
   reader options: :eof, the value for input with no form (otherwise reading
   it fails); :read-cond, :allow or :preserve, without which a reader
-  conditional fails; and :features, a set of keywords enabled besides :suss,
-  :cljs and :default.
+  conditional fails; and :features, a set of keywords enabled besides :suss
+  and :default. Suss claims neither :cljs nor :clj (ADR-0003).
 
   Reads code forms as Clojure's reader does: ::k and syntax quote resolve
   against *ns*, tags use *data-readers* and *default-data-reader-fn*, and a
@@ -11357,7 +11357,7 @@ reduces them without incurring seq initialization"
                   :allow
                   (if (keyword-identical? read-cond :preserve) :preserve nil))
            features (if (keyword-identical? mode :allow)
-                      (into #{:suss :cljs :default} (get opts :features))
+                      (into #{:suss :default} (get opts :features))
                       nil)]
        (reader-read (reader-state s false mode features nil nil) opts)))))
 ;; suss.edn/read-string: clojure.edn's data-only reader.

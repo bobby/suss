@@ -555,7 +555,8 @@ fn select_inner(
                     ));
                 };
                 if key.namespace.is_none()
-                    && matches!(key.name.as_str(), "suss" | "cljs" | "default")
+                    // Suss claims neither :cljs nor :clj (ADR-0003, #334).
+                    && matches!(key.name.as_str(), "suss" | "default")
                 {
                     selected = Some(required_selected(
                         &mut clauses,

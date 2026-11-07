@@ -139,7 +139,7 @@ fn persistent_session_command_compiled_macro_core_aliases_conditionals_and_shado
     let output = repl(concat!(
         "(cljs.core/defmacro a [] 42)\n",
         "(a)\n",
-        "#?(:suss (suss.core/defmacro b [] 42) :cljs (throw 99))\n",
+        "#?(:suss (suss.core/defmacro b [] 42) :default (throw 99))\n",
         "(b)\n",
         "(def defmacro (fn [a b c] (+ a (+ b c))))\n",
         "(defmacro 10 20 12)\n",

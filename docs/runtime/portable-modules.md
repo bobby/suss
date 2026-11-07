@@ -18,7 +18,7 @@ and accept `.sus`, `.cljs` and `.cljc`. Discovery checks every configured root a
 extension, deduplicates identical canonical paths, and rejects multiple distinct
 sources. Each source must have a leading `ns` declaring the requested namespace.
 `cljs.core` and `suss.core` share the canonical identity. Reader conditionals select
-the first matching `:suss`/`:cljs` branch in source order.
+the first matching `:suss`/`:default` branch in source order.
 
 Graph discovery and ordinary fragment preparation share the same namespace header
 parser. Syntax errors and unsupported options are diagnosed before searching for

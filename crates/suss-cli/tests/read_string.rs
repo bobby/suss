@@ -319,15 +319,19 @@ fn reader_conditionals_need_opts_as_in_clojure() {
         for source in [
             "(= \"Conditional read not allowed\" (try (read-string \"#?(:clj 1)\") (catch :default e (ex-message e))))",
             "(= 2 (read-string {:read-cond :allow} \"#?(:clj 1 :suss 2)\"))",
-            "(= 2 (read-string {:read-cond :allow} \"#?(:clj 1 :cljs 2)\"))",
+            "(= 2 (read-string {:read-cond :allow} \"#?(:clj 1 :default 2)\"))",
+            // Suss claims neither :cljs nor :clj (#334).
+            "(= 3 (read-string {:read-cond :allow} \"#?(:cljs 1 :clj 2 :default 3)\"))",
+            "(= [3] (read-string {:read-cond :allow} \"[#?(:cljs 1) #?(:clj 2) 3]\"))",
+            "(= 1 (read-string {:read-cond :allow :features #{:cljs}} \"#?(:cljs 1 :default 2)\"))",
             "(= 3 (read-string {:read-cond :allow} \"#?(:clj 1 :default 3)\"))",
             "(= 1 (read-string {:read-cond :allow :features #{:clj}} \"#?(:clj 1 :suss 2)\"))",
-            "(= [1 2 3] (read-string {:read-cond :allow} \"[#?@(:cljs [1 2]) 3]\"))",
+            "(= [1 2 3] (read-string {:read-cond :allow} \"[#?@(:suss [1 2]) 3]\"))",
             "(= :none (read-string {:read-cond :allow :eof :none} \"#?(:clj 1)\"))",
             // Unselected branches are read without resolving their tags.
             "(= [] (read-string {:read-cond :allow} \"[#?(:clj #foo 1)]\"))",
             "(= \"Splicing conditional requires a delimited collection\"
-                (try (read-string {:read-cond :allow} \"#?@(:cljs [1])\") (catch :default e (ex-message e))))",
+                (try (read-string {:read-cond :allow} \"#?@(:suss [1])\") (catch :default e (ex-message e))))",
             "(= \"Reader feature must be a keyword\"
                 (try (read-string {:read-cond :allow} \"#?(clj 1)\") (catch :default e (ex-message e))))",
             "(= \"Reader conditional requires feature/form pairs\"

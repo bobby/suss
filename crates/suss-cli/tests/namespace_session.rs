@@ -225,7 +225,7 @@ fn namespace_session_shipped_core_loads_from_supplied_source_roots() {
     // namespace comes from the caller's root, not the default ./src.
     std::fs::write(
         project.path().join("app/data.cljc"),
-        "(ns app.data) (def total (count (conj [1 2] #?(:suss 3 :cljs 4))))",
+        "(ns app.data) (def total (count (conj [1 2] #?(:suss 3 :default 4))))",
     )
     .unwrap();
     let mut session = suss_cli::portable_session::Session::new_repl_with_options(

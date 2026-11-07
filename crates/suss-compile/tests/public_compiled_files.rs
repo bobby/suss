@@ -169,7 +169,8 @@ fn public_namespace_executes_portable_dependency_and_separate_macro_import() {
     write(
         root.path(),
         "math.cljs",
-        "(ns math) (def bias #?(:suss 21 :cljs 99))",
+        // A .cljs file is read with Suss's features too, not :cljs (#334).
+        "(ns math) (def bias #?(:cljs 99 :suss 21))",
     );
     write(
         root.path(),

@@ -14,7 +14,11 @@ files in `patches/`, applied only to generated copies:
 
 | Patch | Applied to | Purpose |
 | --- | --- | --- |
-| `0001-when-var-exists-macro-phase.patch` | ClojureScript oracle | Guard `when-var-exists` with `#?(:clj ...)` so stock ClojureScript does not analyze the macro body as runtime code (upstream CI uses shadow-cljs, which tolerates it). |
+| `0003-clojure-numeric-operand-suss-branches.patch` | Suss harness | `:suss` branches for Clojure's non-number operand assertions where the suite writes them as `:clj` or not at all (#286). |
+| `0004-atom-clojure-references-suss-branches.patch` | Suss harness | `:suss` branches for Clojure's atom option assertions (#30). |
+| `0005-hierarchy-type-tags-suss-branches.patch` | Suss harness | `:suss` branches naming a core type where the hierarchy tests name a host class (#30). |
+
+The JVM Clojure oracle (#334) runs the suite unpatched.
 
 ```sh
 python3 scripts/clojure_test_suite.py                 # verify the lock offline

@@ -310,7 +310,7 @@ fn numeric_calls_and_truthiness_execute_with_portable_bits() {
         ("(if true 1 2)", 1.0),
         ("(let [x 2 x (+ x 3)] (let [x 7] x) (* x 4))", 20.0),
         ("(+ (if false (* 3 4) (/ 8 2)) (if true 2 9))", 6.0),
-        ("#?(:jvm 1 :cljs (suss.core/+ 1 (cljs.core/* 2 3)))", 7.0),
+        ("#?(:jvm 1 :default (suss.core/+ 1 (cljs.core/* 2 3)))", 7.0),
     ] {
         assert_eq!(number(source).to_bits(), expected.to_bits(), "{source}");
     }
