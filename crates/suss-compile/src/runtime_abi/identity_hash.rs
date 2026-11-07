@@ -20,6 +20,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
             },
             LocalSet(1),
             LocalGet(1),
+            // Private unassigned-UID marker (i31 0), not nil; never returned.
             I32Const(0),
             RefI31,
             RefEq,

@@ -11,18 +11,19 @@ pub(super) fn append_globals(globals: &mut GlobalSection) {
             mutable: true,
             shared: false,
         },
-        &ConstExpr::extended([I32Const(0), RefI31]),
+        // ABI3 const-expr
+        &ConstExpr::extended([I32Const(NIL), RefI31]),
     );
 }
 
 pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     let mut body = vec![
         LocalGet(0),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         LocalGet(0),
-        I32Const(6),
+        I32Const(UNDEFINED),
         RefI31,
         RefEq,
         I32Or,
@@ -101,7 +102,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         I32Const(1),
         ArrayGet(ARGS),
         Else,
-        I32Const(6),
+        I32Const(UNDEFINED),
         RefI31,
         End,
         Call(scalar),
@@ -130,12 +131,12 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &[VALUE],
         &[
             GlobalGet(METHOD_ROOT),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             RefEq,
             If(BlockType::Empty),
             GlobalGet(object_methods::TAG_GLOBAL),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             RefFunc(anchored),
             I32Const(1),
@@ -145,9 +146,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 array_type_index: ARGS,
                 array_size: 1,
             },
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(7),
             RefFunc(detached),

@@ -250,7 +250,7 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
             Call(b.names["protocol-method-get"]),
             LocalSet(3),
             LocalGet(3),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             RefEq,
             I32Eqz,

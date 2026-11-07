@@ -14,7 +14,7 @@ fn sentinel(body: &mut Vec<Instruction<'static>>, value: i32) {
 fn boolean(body: &mut Vec<Instruction<'static>>) {
     use Instruction::*;
     // A comparison produces0/1; language booleans are i31 sentinels2/4.
-    body.extend([I32Const(2), I32Mul, I32Const(2), I32Add, RefI31]);
+    body.extend([I32Const(2), I32Mul, I32Const(2), I32Add, RefI31]); // ABI3 boolean
 }
 fn callback(b: &mut Builder, locals: &[(u32, ValType)], body: &[Instruction<'static>]) -> u32 {
     let index = b.count;
@@ -42,7 +42,7 @@ fn factory(
         &[],
         &[VALUE],
         &[
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             RefFunc(function),
             I32Const(arity),
@@ -57,8 +57,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     use Instruction::*;
     let mut declared = Vec::new();
     for (name, value) in [
-        ("predicate-false", 2),
-        ("predicate-true", 4),
+        ("predicate-false", FALSE),
+        ("predicate-true", TRUE),
         ("predicate-undefined", UNDEFINED),
     ] {
         let mut body = vec![];
@@ -70,7 +70,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     }
     let mut body = vec![];
     argument(&mut body, 0);
-    sentinel(&mut body, 0);
+    sentinel(&mut body, NIL);
     body.push(RefEq);
     argument(&mut body, 0);
     sentinel(&mut body, UNDEFINED);
@@ -135,7 +135,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         ArrayLen,
         I32Ne,
         If(BlockType::Empty),
-        I32Const(2),
+        I32Const(FALSE),
         RefI31,
         Return,
         End,
@@ -159,7 +159,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         ArrayGetU(STRING),
         I32Ne,
         If(BlockType::Empty),
-        I32Const(2),
+        I32Const(FALSE),
         RefI31,
         Return,
         End,
@@ -170,7 +170,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Br(0),
         End,
         End,
-        I32Const(4),
+        I32Const(TRUE),
         RefI31,
         Return,
         End,

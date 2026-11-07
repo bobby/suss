@@ -199,6 +199,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             }
             body.extend([
                 If(BlockType::Empty),
+                // Private closure-table kind key 0..7 (not a sentinel, though 0/2/4/6
+                // alias the i31 nil/false/true/undefined); never returned to user code.
                 I32Const(kind as i32),
                 RefI31,
                 Return,
@@ -435,6 +437,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         I32Eqz,
         If(BlockType::Empty),
         LocalGet(1),
+        // I31 here is a private kind/slot key (<= 9), not a sentinel.
         RefTestNonNull(HeapType::I31),
         I32Eqz,
         If(BlockType::Empty),
@@ -533,6 +536,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         I32Eqz,
         If(BlockType::Empty),
         LocalGet(4),
+        // I31 here is a private kind/slot key (<= 9), not a sentinel.
         RefTestNonNull(HeapType::I31),
         I32Eqz,
         If(BlockType::Empty),
@@ -1065,7 +1069,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 Call(b.names["object-method-key"]),
                 LocalSet(fresh),
                 LocalGet(fresh),
-                I32Const(0),
+                I32Const(NIL),
                 RefI31,
                 RefEq,
                 I32Eqz,
@@ -1077,7 +1081,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 Call(b.names["protocol-method-get"]),
                 LocalSet(fresh),
                 LocalGet(fresh),
-                I32Const(0),
+                I32Const(NIL),
                 RefI31,
                 RefEq,
                 I32Eqz,

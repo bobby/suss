@@ -15,7 +15,7 @@ fn text(value: &str) -> Vec<Instruction<'static>> {
 }
 fn boolean(code: &mut Vec<Instruction<'static>>) {
     use Instruction::*;
-    code.extend([I32Const(1), I32Shl, I32Const(2), I32Add, RefI31]);
+    code.extend([I32Const(1), I32Shl, I32Const(2), I32Add, RefI31]); // ABI3 boolean
 }
 fn primitive_condition(code: &mut Vec<Instruction<'static>>, local: u32) {
     use Instruction::*;
@@ -26,7 +26,7 @@ fn primitive_condition(code: &mut Vec<Instruction<'static>>, local: u32) {
         RefTestNonNull(HeapType::Concrete(STRING)),
         I32Or,
     ]);
-    for sentinel in [0, 2, 4, UNDEFINED] {
+    for sentinel in [NIL, FALSE, TRUE, UNDEFINED] {
         code.extend([LocalGet(local), I32Const(sentinel), RefI31, RefEq, I32Or]);
     }
 }
@@ -67,7 +67,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         nominal::error(&mut code);
         code.extend([End, LocalGet(1), I32Const(0), ArrayGet(ARGS), LocalSet(2)]);
         if name == "toString" {
-            for (sentinel, spelling) in [(0, "[object Null]"), (UNDEFINED, "[object Undefined]")] {
+            for (sentinel, spelling) in [(NIL, "[object Null]"), (UNDEFINED, "[object Undefined]")] {
                 code.extend([
                     LocalGet(2),
                     I32Const(sentinel),
@@ -243,7 +243,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         I32Const(1),
                         I32LeU,
                         If(BlockType::Empty),
-                        I32Const(2),
+                        I32Const(FALSE),
                         RefI31,
                         Return,
                         End,
@@ -257,7 +257,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         If(BlockType::Empty),
                     ]);
                     primitive_condition(&mut code, 3);
-                    code.extend([If(BlockType::Empty), I32Const(2), RefI31, Return, End]);
+                    code.extend([If(BlockType::Empty), I32Const(FALSE), RefI31, Return, End]);
                     // Callable/error and foreign prototype storage is not yet
                     // implemented. Reject it without invoking conversion hooks.
                     nominal::error(&mut code);
@@ -274,7 +274,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         Block(BlockType::Empty),
                         Loop(BlockType::Empty),
                         LocalGet(3),
-                        I32Const(0),
+                        I32Const(NIL),
                         RefI31,
                         RefEq,
                         BrIf(1),
@@ -282,7 +282,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         LocalGet(2),
                         RefEq,
                         If(BlockType::Empty),
-                        I32Const(4),
+                        I32Const(TRUE),
                         RefI31,
                         Return,
                         End,
@@ -292,7 +292,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         Br(0),
                         End,
                         End,
-                        I32Const(2),
+                        I32Const(FALSE),
                         RefI31,
                     ]);
                 }
@@ -310,7 +310,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 ArrayLen,
                 I32Eqz,
                 If(BlockType::Empty),
-                I32Const(2),
+                I32Const(FALSE),
                 RefI31,
                 Return,
                 End,
@@ -320,7 +320,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 LocalSet(2),
             ]);
             primitive_condition(&mut detached_code, 2);
-            detached_code.extend([If(BlockType::Empty), I32Const(2), RefI31, Return, End]);
+            detached_code.extend([If(BlockType::Empty), I32Const(FALSE), RefI31, Return, End]);
             // Undefined this fails for objects, before any conversion hooks.
             nominal::error(&mut detached_code);
         } else {
@@ -337,7 +337,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         ArrayLen,
         I32Eqz,
         If(BlockType::Result(VALUE)),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         Else,
         LocalGet(1),
@@ -346,7 +346,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         End,
         LocalSet(2),
         LocalGet(2),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         LocalGet(2),
@@ -382,7 +382,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             I32Eqz,
             If(BlockType::Empty),
             // A typed throw for malformed copied callbacks, before array access.
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             Call(fields),
             Drop,
@@ -401,7 +401,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             ArrayLen,
             I32Eqz,
             If(BlockType::Empty),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             Call(fields),
             Drop,
@@ -430,7 +430,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     refs.extend([getter, setter, detached]);
     let mut code = vec![
         GlobalGet(ROOT),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         If(BlockType::Empty),
@@ -442,7 +442,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         code.extend(text(name));
         code.extend([
             GlobalGet(object_methods::TAG_GLOBAL),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             RefFunc(anchored),
             I32Const(1),
@@ -452,9 +452,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 array_type_index: ARGS,
                 array_size: 1,
             },
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(7),
             RefFunc(detached),
@@ -471,7 +471,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     for anchored in [getter, setter] {
         code.extend([
             GlobalGet(object_methods::TAG_GLOBAL),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             RefFunc(anchored),
             I32Const(1),
@@ -481,9 +481,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 array_type_index: ARGS,
                 array_size: 1,
             },
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(7),
             RefFunc(detached),

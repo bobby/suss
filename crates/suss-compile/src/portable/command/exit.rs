@@ -150,12 +150,12 @@ pub(super) fn module(
         &mut start,
         &[
             GlobalGet(0),
-            I32Const(0),
+            I32Const(runtime_abi::NIL),
             RefI31,
             RefFunc(5),
             I32Const(1),
             I32Const(1),
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(runtime_abi::CLOSURE),
             Call(0),

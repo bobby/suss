@@ -14,11 +14,11 @@ fn error(body: &mut Vec<Instruction<'static>>) {
             array_type_index: STRING,
             array_size: units.len() as u32,
         },
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
         Throw(0),
@@ -62,7 +62,7 @@ fn factory(
         &[],
         &[VALUE],
         &[
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             RefFunc(f),
             I32Const(minimum),
@@ -158,15 +158,15 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             GlobalGet(TAG_GLOBAL),
             LocalGet(0),
             Call(b.names["source-array-sparse-fields"]),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             ArrayNewFixed {
                 array_type_index: ARGS,
                 array_size: 2,
             },
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(7),
         ],
@@ -691,8 +691,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     error(&mut body);
     body.push(End);
     body.extend([
+        // Fill sentinel: NIL (literal) or UNDEFINED (holes).
         LocalGet(2),
-        I32Const(0),
+        I32Const(NIL),
         I32Ne,
         LocalGet(2),
         I32Const(UNDEFINED),
@@ -754,6 +755,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(4),
         Call(b.names["source-array-holes-new"]),
         Else,
+        // ABI3 sentinel-read: rebuilds the fill sentinel (NIL) from its i32 code.
         LocalGet(2),
         RefI31,
         LocalGet(4),
@@ -818,7 +820,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     array(&mut body, 0);
     body.extend([ArrayLen, I32Const(1), I32Ne, If(BlockType::Empty)]);
     error(&mut body);
-    body.extend([End, LocalGet(0), I32Const(0), I32Const(0), Call(make)]);
+    body.extend([End, LocalGet(0), I32Const(0), I32Const(NIL), Call(make)]);
     b.function("source-array-make-literal", &[VALUE], &[VALUE], &body);
     let mut body = vec![
         LocalGet(0),
@@ -867,7 +869,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     let mut body = vec![];
     arg(&mut body, 0);
     body.extend([
-        Call(is_array),
+        Call(is_array), // ABI3 boolean
         I32Const(2),
         I32Mul,
         I32Const(2),

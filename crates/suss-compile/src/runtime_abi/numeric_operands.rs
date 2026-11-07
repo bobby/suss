@@ -79,7 +79,7 @@ pub(super) fn intrinsics(b: &mut Builder) -> [u32; 7] {
         require_numbers(&mut code, symbol, 2);
         unbox(&mut code, 0);
         unbox(&mut code, 1);
-        code.extend([relation, I32Const(2), I32Mul, I32Const(2), I32Add, RefI31]);
+        code.extend([relation, I32Const(2), I32Mul, I32Const(2), I32Add, RefI31]); // ABI3 boolean
         b.function(
             &format!("comparison-number-{name}"),
             &[VALUE, VALUE],

@@ -11,17 +11,18 @@ pub(super) fn append_globals(globals: &mut GlobalSection) {
             mutable: false,
             shared: false,
         },
+        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(i64::from(numeric::ERROR_GLOBALS) + 4),
             I32Const(0),
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
     globals.global(
@@ -30,7 +31,8 @@ pub(super) fn append_globals(globals: &mut GlobalSection) {
             mutable: true,
             shared: false,
         },
-        &ConstExpr::extended([I32Const(0), RefI31]),
+        // ABI3 const-expr
+        &ConstExpr::extended([I32Const(NIL), RefI31]),
     );
 }
 pub(super) fn invalid_length(body: &mut Vec<Instruction<'static>>) {
@@ -42,11 +44,11 @@ pub(super) fn invalid_length(body: &mut Vec<Instruction<'static>>) {
             array_type_index: STRING,
             array_size: units.len() as u32,
         },
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
         Throw(0),

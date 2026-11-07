@@ -31,11 +31,11 @@ fn malformed(body: &mut Vec<Instruction<'static>>) {
             array_type_index: STRING,
             array_size: text.len() as u32,
         },
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0), RefI31, StructNew(8),
+        I32Const(0), RefI31, StructNew(8), // UID unassigned
         Throw(0),
     ]);
 }
@@ -209,7 +209,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     argument(&mut body, 0);
     argument(&mut body, 1);
     body.extend([
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         ArrayNewFixed {
             array_type_index: ARGS,
@@ -240,7 +240,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     argument(&mut body, 2);
     body.extend([
         Else,
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         End,
         ArrayNewFixed {
@@ -326,7 +326,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 End,
             ]);
         }
-        body.extend([I32Const(0), RefI31]);
+        body.extend([I32Const(NIL), RefI31]);
         let getter = callback(b, &[(2, VALUE)], &body);
         declared.push(getter);
         b.function(

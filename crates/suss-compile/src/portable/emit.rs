@@ -679,7 +679,7 @@ fn emit_dispatcher(
             .instruction(&Call(import("source-array-new")))
             .instruction(&F64Const(0.0.into()))
             .instruction(&Call(import("number-box")))
-            .instruction(&I32Const(0))
+            .instruction(&I32Const(runtime_abi::NIL))
             .instruction(&RefI31)
             .instruction(&ArrayNewFixed {
                 array_type_index: runtime_abi::ARGS,
@@ -687,7 +687,7 @@ fn emit_dispatcher(
             })
             .instruction(&Call(import("invoke")))
             .instruction(&Else)
-            .instruction(&I32Const(0))
+            .instruction(&I32Const(runtime_abi::NIL))
             .instruction(&RefI31)
             .instruction(&End)
             .instruction(&ArraySet(runtime_abi::ARGS));
@@ -826,7 +826,7 @@ fn emit_function(
                 Operation::RegionExit { value, cleanup } => {
                     let plan = continuation.ok_or_else(|| fail("Resumable exit outside continuation"))?;
                     r#async::region_exit(&mut function, *value, *cleanup, &slots, plan.states.len());
-                    function.instruction(&I32Const(0)).instruction(&RefI31).instruction(&LocalSet(inst.result.0 as u32 + offset)).instruction(&Br(1));
+                    function.instruction(&I32Const(runtime_abi::NIL)).instruction(&RefI31).instruction(&LocalSet(inst.result.0 as u32 + offset)).instruction(&Br(1));
                 }
                 Operation::RegionValue => {
                     if continuation.is_none() { return Err(fail("Resumable outcome outside continuation")); }
@@ -885,14 +885,14 @@ fn emit_function(
                         .instruction(&I32Const(if matches!(literal, Literal::Undefined) {
                             runtime_abi::UNDEFINED
                         } else {
-                            0
+                            runtime_abi::NIL
                         }))
                         .instruction(&RefI31)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Literal(Literal::Bool(value)) => {
                     function
-                        .instruction(&I32Const(if *value { 4 } else { 2 }))
+                        .instruction(&I32Const(if *value { runtime_abi::TRUE } else { runtime_abi::FALSE }))
                         .instruction(&RefI31)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
@@ -1009,7 +1009,8 @@ fn emit_function(
                         function.instruction(&LocalGet(value.0 as u32 + offset));
                     }
                     if body.self_capture {
-                        function.instruction(&I32Const(0)).instruction(&RefI31);
+                        // ABI3 check: self slot placeholder, patched with the closure after creation.
+                        function.instruction(&I32Const(runtime_abi::NIL)).instruction(&RefI31);
                     }
                     let size = u32::try_from(captures.len() + usize::from(body.self_capture))
                         .map_err(|_| fail("Too many captures"))?;
@@ -1056,7 +1057,7 @@ fn emit_function(
                 Operation::NilTest(value) => {
                     function
                         .instruction(&LocalGet(value.0 as u32 + offset))
-                        .instruction(&I32Const(0))
+                        .instruction(&I32Const(runtime_abi::NIL))
                         .instruction(&RefI31)
                         .instruction(&RefEq)
                         .instruction(&LocalGet(value.0 as u32 + offset))
@@ -1064,7 +1065,7 @@ fn emit_function(
                         .instruction(&RefI31)
                         .instruction(&RefEq)
                         .instruction(&I32Or)
-                        .instruction(&I32Const(2))
+                        .instruction(&I32Const(2)) // ABI3 boolean
                         .instruction(&I32Mul)
                         .instruction(&I32Const(2))
                         .instruction(&I32Add)
@@ -1114,7 +1115,7 @@ fn emit_function(
                 } => {
                     match operation {
                         Nominal::IsBoolean => {
-                            for sentinel in [2, 4] {
+                            for sentinel in [runtime_abi::FALSE, runtime_abi::TRUE] {
                                 function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                     .instruction(&I32Const(sentinel)).instruction(&RefI31)
                                     .instruction(&RefEq);
@@ -1180,7 +1181,7 @@ fn emit_function(
                             // Descriptors also take their mutable field names.
                             if *operation != Nominal::Array {
                                 if mutable == 0 {
-                                    function.instruction(&I32Const(0)).instruction(&RefI31);
+                                    function.instruction(&I32Const(runtime_abi::NIL)).instruction(&RefI31);
                                 } else {
                                     for argument in &arguments[fields..fields + mutable] {
                                         function.instruction(&LocalGet(argument.0 as u32 + offset));
@@ -1397,10 +1398,10 @@ fn emit_function(
                     }
                     if operation.result() == Type::Bool {
                         function
-                            .instruction(&If(BlockType::Result(ValType::I32)))
-                            .instruction(&I32Const(4))
+                            .instruction(&If(BlockType::Result(ValType::I32))) // ABI3 boolean
+                            .instruction(&I32Const(runtime_abi::TRUE))
                             .instruction(&Else)
-                            .instruction(&I32Const(2))
+                            .instruction(&I32Const(runtime_abi::FALSE))
                             .instruction(&End)
                             .instruction(&RefI31);
                     }
@@ -1474,12 +1475,12 @@ fn emit_function(
                 // boxed numeric zero and empty UTF-16 strings.
                 function
                     .instruction(&LocalGet(condition.0 as u32 + offset))
-                    .instruction(&I32Const(0))
+                    .instruction(&I32Const(runtime_abi::NIL))
                     .instruction(&RefI31)
                     .instruction(&RefEq);
                 function
                     .instruction(&LocalGet(condition.0 as u32 + offset))
-                    .instruction(&I32Const(2))
+                    .instruction(&I32Const(runtime_abi::FALSE))
                     .instruction(&RefI31)
                     .instruction(&RefEq)
                     .instruction(&I32Or);

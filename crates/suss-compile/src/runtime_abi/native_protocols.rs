@@ -35,7 +35,7 @@ pub(super) fn functions(
 ) -> Vec<u32> {
     use Instruction::*;
     let mut body = vec![];
-    for sentinel in [0, UNDEFINED] {
+    for sentinel in [NIL, UNDEFINED] { // ABI3 sentinel-read: native kind; any i31 other than these four sentinels falls to object kind 5
         body.extend([
             LocalGet(0),
             I32Const(sentinel),
@@ -47,7 +47,7 @@ pub(super) fn functions(
             End,
         ]);
     }
-    for sentinel in [2, 4] {
+    for sentinel in [FALSE, TRUE] {
         body.extend([
             LocalGet(0),
             I32Const(sentinel),
@@ -82,7 +82,7 @@ pub(super) fn functions(
     // native-satisfies? is defined under *unchecked-if*: its property tests use
     // JS truthiness, while ordinary portable if keeps ClojureScript truthiness.
     let mut body = vec![];
-    for sentinel in [0, 2, UNDEFINED] {
+    for sentinel in [NIL, FALSE, UNDEFINED] { // ABI3 sentinel-read: JS truthiness treats every other non-number, non-string i31 as true
         body.extend([
             LocalGet(0),
             I32Const(sentinel),
@@ -138,7 +138,7 @@ pub(super) fn functions(
     let mut body = vec![
         LocalGet(0),
         LocalGet(1),
-        I32Const(4),
+        I32Const(TRUE),
         RefI31,
         Call(property_set),
         Drop,
@@ -333,7 +333,7 @@ pub(super) fn functions(
         Call(property_get),
         LocalSet(3),
         LocalGet(3),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         LocalGet(3),
@@ -450,7 +450,7 @@ pub(super) fn functions(
     body = vec![LocalGet(0), RefIsNull, If(BlockType::Empty)];
     error(&mut body);
     body.push(End);
-    for sentinel in [0, UNDEFINED] {
+    for sentinel in [NIL, UNDEFINED] {
         body.extend([
             LocalGet(0),
             I32Const(sentinel),
@@ -512,7 +512,7 @@ pub(super) fn functions(
         I32Mul,
         I32Const(2),
         I32Add,
-        RefI31,
+        RefI31, // ABI3 boolean
     ];
     let function = callback(b, &function_body);
     b.function(
@@ -520,7 +520,7 @@ pub(super) fn functions(
         &[],
         &[VALUE],
         &[
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             RefFunc(function),
             I32Const(2),
@@ -596,7 +596,7 @@ pub(super) fn functions(
         // An unbound name stays undefined, so invoke reports Clojure's unbound-fn
         // error (#288); any other non-object has no method.
         LocalGet(0), I32Const(UNDEFINED), RefI31, RefEq, If(BlockType::Result(VALUE)), LocalGet(0), Else,
-        I32Const(0), RefI31, End, End, LocalSet(2),
+        I32Const(NIL), RefI31, End, End, LocalSet(2),
         LocalGet(0), LocalGet(2), ArrayNewFixed { array_type_index: ARGS, array_size: 2 },
         RefFunc(bound), I32Const(0), I32Const(-1), Call(b.names["closure-new"])]);
     b.function_with_locals("callable-bind", &[VALUE, VALUE], &[VALUE], &[(1, VALUE)], &code);

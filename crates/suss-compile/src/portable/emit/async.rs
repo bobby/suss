@@ -36,8 +36,9 @@ pub struct Locals {
     pub auxiliary: u32,
 }
 fn nil(f: &mut Function) {
-    f.instruction(&I32Const(0)).instruction(&RefI31);
+    f.instruction(&I32Const(runtime_abi::NIL)).instruction(&RefI31);
 }
+// Private continuation integers: pc, phase, event kind, generation, targets.
 fn int(f: &mut Function, value: usize) {
     f.instruction(&I32Const(value as i32)).instruction(&RefI31);
 }
@@ -351,7 +352,8 @@ pub fn region_push(
     array(f, 9);
     f.instruction(&LocalSet(l.frame));
     set_item_local(f, l.snapshot, 2, l.frame);
-    int(f, 2); // portable false: normal path never selects a latent exception edge
+    // portable false: normal path never selects a latent exception edge
+    int(f, runtime_abi::FALSE as usize);
     f.instruction(&LocalSet(result.0 as u32 + l.offset));
 }
 pub fn event(f: &mut Function, kind: usize, value: u32, l: &Locals, unwind_pc: usize) {

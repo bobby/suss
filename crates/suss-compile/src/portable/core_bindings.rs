@@ -117,8 +117,9 @@ pub fn compile_with_cells(
                 mutable: false,
                 shared: false,
             },
+            // ABI3 const-expr: an unbound binding cell starts holding nil.
             &ConstExpr::extended([
-                Instruction::I32Const(0),
+                Instruction::I32Const(runtime_abi::NIL),
                 Instruction::RefI31,
                 Instruction::I32Const(0),
                 Instruction::StructNew(runtime_abi::BINDING),
@@ -137,7 +138,7 @@ pub fn compile_with_cells(
             // The native bootstrap exposes a bound nil cell to these constructors.
             start
                 .instruction(&Instruction::GlobalGet(link(index)))
-                .instruction(&Instruction::I32Const(0))
+                .instruction(&Instruction::I32Const(runtime_abi::NIL))
                 .instruction(&Instruction::RefI31)
                 .instruction(&Instruction::Call(0));
         }

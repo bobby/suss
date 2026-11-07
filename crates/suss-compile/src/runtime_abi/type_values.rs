@@ -13,17 +13,18 @@ pub(super) fn append_globals(globals: &mut GlobalSection) {
             mutable: false,
             shared: false,
         },
+        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
             I32Const(0),
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
 }
@@ -46,11 +47,11 @@ pub(super) fn functions(b: &mut Builder) {
     }
     body.extend([
         LocalGet(0),
-        I32Const(2),
+        I32Const(FALSE),
         RefI31,
         RefEq,
         LocalGet(0),
-        I32Const(4),
+        I32Const(TRUE),
         RefI31,
         RefEq,
         I32Or,

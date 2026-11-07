@@ -12,7 +12,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
         RefTestNonNull(HeapType::Concrete(STRING)),
         I32Or,
     ];
-    for sentinel in [0, 2, 4, UNDEFINED] {
+    for sentinel in [NIL, FALSE, TRUE, UNDEFINED] {
         number.extend([LocalGet(0), I32Const(sentinel), RefI31, RefEq, I32Or]);
     }
     number.extend([I32Eqz, If(BlockType::Empty)]);
@@ -154,7 +154,7 @@ pub(super) fn intrinsics(b: &mut Builder) {
             F64Abs,
             F64Const(f64::INFINITY.into()),
             F64Lt,
-            I32Const(1),
+            I32Const(1), // ABI3 boolean
             I32Shl,
             I32Const(2),
             I32Add,
@@ -188,13 +188,13 @@ pub(super) fn intrinsics(b: &mut Builder) {
             F64Const(9007199254740991.0.into()),
             F64Le,
             I32And,
-            I32Const(1),
+            I32Const(1), // ABI3 boolean
             I32Shl,
             I32Const(2),
             I32Add,
             RefI31,
             Else,
-            I32Const(2),
+            I32Const(FALSE),
             RefI31,
             End,
         ],

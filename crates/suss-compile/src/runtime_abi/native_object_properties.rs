@@ -7,7 +7,7 @@ pub(super) fn primitives(b: &mut Builder) {
         Call(b.names["native-object-fields"]),
         Drop,
         LocalGet(1),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         LocalGet(1),
@@ -22,7 +22,7 @@ pub(super) fn primitives(b: &mut Builder) {
         RefEq,
         If(BlockType::Empty),
         LocalGet(1),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         I32Eqz,
@@ -65,7 +65,7 @@ pub(super) fn functions(b: &mut Builder) {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(2),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         BrIf(1),
@@ -366,7 +366,7 @@ pub(super) fn functions(b: &mut Builder) {
         code.extend([
             LocalGet(0),
             Call(b.names["owned-error-backing"]),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             RefEq,
             I32Eqz,
@@ -572,7 +572,7 @@ pub(super) fn functions(b: &mut Builder) {
         Call(b.names["named-property-get"]),
         LocalSet(1),
     ]);
-    for sentinel in [0, UNDEFINED] {
+    for sentinel in [NIL, UNDEFINED] {
         code.extend([LocalGet(1), I32Const(sentinel), RefI31, RefEq]);
     }
     code.extend([I32Or, I32Eqz, If(BlockType::Empty)]);

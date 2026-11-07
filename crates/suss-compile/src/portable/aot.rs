@@ -1370,12 +1370,12 @@ fn adapter(
                     strings::copy_in(&mut body, &string_locals, &string_helpers);
                     body.instruction(&Instruction::LocalGet(result))
                         .instruction(&Instruction::Else)
-                        .instruction(&Instruction::I32Const(0))
+                        .instruction(&Instruction::I32Const(runtime_abi::NIL))
                         .instruction(&Instruction::RefI31)
                         .instruction(&Instruction::End)
                         .instruction(&Instruction::LocalSet(result))
                         .instruction(&Instruction::GlobalGet(global_indices.len() as u32))
-                        .instruction(&Instruction::I32Const(4))
+                        .instruction(&Instruction::I32Const(runtime_abi::TRUE))
                         .instruction(&Instruction::RefI31)
                         .instruction(&Instruction::LocalGet(result))
                         .instruction(&Instruction::ArrayNewFixed {
@@ -1391,14 +1391,14 @@ fn adapter(
                         .instruction(&Instruction::LocalGet(parameter + 1));
                     lift_scalar(&mut body, ty);
                     body.instruction(&Instruction::Else)
-                        .instruction(&Instruction::I32Const(0))
+                        .instruction(&Instruction::I32Const(runtime_abi::NIL))
                         .instruction(&Instruction::RefI31)
                         .instruction(&Instruction::End);
                     // Consume the lifted scalar exactly once, then form its
                     // [:none]/[:some value] source representation.
                     body.instruction(&Instruction::LocalSet(result))
                         .instruction(&Instruction::GlobalGet(global_indices.len() as u32))
-                        .instruction(&Instruction::I32Const(4))
+                        .instruction(&Instruction::I32Const(runtime_abi::TRUE))
                         .instruction(&Instruction::RefI31)
                         .instruction(&Instruction::LocalGet(result))
                         .instruction(&Instruction::ArrayNewFixed {
@@ -1488,7 +1488,7 @@ fn adapter(
             }
             Some(Boundary::StringOption) => {
                 body.instruction(&Instruction::GlobalGet(global_indices.len() as u32))
-                    .instruction(&Instruction::I32Const(2))
+                    .instruction(&Instruction::I32Const(runtime_abi::FALSE))
                     .instruction(&Instruction::RefI31)
                     .instruction(&Instruction::LocalGet(result))
                     .instruction(&Instruction::ArrayNewFixed {
@@ -1497,6 +1497,7 @@ fn adapter(
                     })
                     .instruction(&Instruction::Call(2))
                     .instruction(&Instruction::LocalSet(result));
+                // ABI3 sentinel-read: an i31 0 result is nil, i.e. WIT option none.
                 body.instruction(&Instruction::LocalGet(result))
                     .instruction(&Instruction::RefTestNonNull(HeapType::I31))
                     .instruction(&Instruction::If(BlockType::Result(ValType::I32)))
@@ -1567,7 +1568,7 @@ fn adapter(
             Some(Boundary::Option(ty)) => {
                 debug_assert!(option_schema);
                 body.instruction(&Instruction::GlobalGet(global_indices.len() as u32))
-                    .instruction(&Instruction::I32Const(2))
+                    .instruction(&Instruction::I32Const(runtime_abi::FALSE))
                     .instruction(&Instruction::RefI31)
                     .instruction(&Instruction::LocalGet(result))
                     .instruction(&Instruction::ArrayNewFixed {
@@ -1578,6 +1579,7 @@ fn adapter(
                     .instruction(&Instruction::LocalSet(result));
                 // Scalar option returns use a fixed canonical return area. No
                 // allocation, ownership transfer or post-return free is needed.
+                // ABI3 sentinel-read: an i31 0 result is nil, i.e. WIT option none.
                 body.instruction(&Instruction::LocalGet(result))
                     .instruction(&Instruction::RefTestNonNull(HeapType::I31))
                     .instruction(&Instruction::If(BlockType::Result(ValType::I32)))
@@ -1740,7 +1742,8 @@ fn adapter(
                     mutable: true,
                     shared: false,
                 },
-                &ConstExpr::extended([Instruction::I32Const(0), Instruction::RefI31]),
+                // ABI3 const-expr: schema helper roots hold nil until initialized.
+                &ConstExpr::extended([Instruction::I32Const(runtime_abi::NIL), Instruction::RefI31]),
             );
         }
         module.section(&globals);
@@ -1756,7 +1759,7 @@ fn adapter(
 fn lift_scalar(body: &mut Function, ty: &Scalar) {
     match ty {
         Scalar::Bool => {
-            body.instruction(&Instruction::I32Const(2))
+            body.instruction(&Instruction::I32Const(2)) // ABI3 boolean
                 .instruction(&Instruction::I32Mul)
                 .instruction(&Instruction::I32Const(2))
                 .instruction(&Instruction::I32Add)
@@ -1809,6 +1812,7 @@ fn lower_scalar(
 ) {
     match scalar {
         Scalar::Bool => {
+            // ABI3 sentinel-read: a WIT bool must be an i31 equal to false or true.
             body.instruction(&Instruction::LocalGet(result))
                 .instruction(&Instruction::RefTestNonNull(HeapType::I31))
                 .instruction(&Instruction::I32Eqz)
@@ -1819,10 +1823,10 @@ fn lower_scalar(
                 .instruction(&Instruction::RefCastNonNull(HeapType::I31))
                 .instruction(&Instruction::I31GetS)
                 .instruction(&Instruction::LocalTee(integer))
-                .instruction(&Instruction::I32Const(2))
+                .instruction(&Instruction::I32Const(runtime_abi::FALSE))
                 .instruction(&Instruction::I32Eq)
                 .instruction(&Instruction::LocalGet(integer))
-                .instruction(&Instruction::I32Const(4))
+                .instruction(&Instruction::I32Const(runtime_abi::TRUE))
                 .instruction(&Instruction::I32Eq)
                 .instruction(&Instruction::I32Or)
                 .instruction(&Instruction::I32Eqz)
@@ -1830,7 +1834,7 @@ fn lower_scalar(
             boundary_error(body, result, name);
             body.instruction(&Instruction::End)
                 .instruction(&Instruction::LocalGet(integer))
-                .instruction(&Instruction::I32Const(4))
+                .instruction(&Instruction::I32Const(runtime_abi::TRUE))
                 .instruction(&Instruction::I32Eq);
         }
         scalar => {

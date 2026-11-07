@@ -115,7 +115,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             _ => unreachable!(),
         }
         if name == "bit-test" {
-            body.extend([I32Const(2), I32Mul, I32Const(2), I32Add, RefI31]);
+            body.extend([I32Const(2), I32Mul, I32Const(2), I32Add, RefI31]); // ABI3 boolean
         } else {
             body.push(if name == "unsigned-bit-shift-right" {
                 F64ConvertI32U
@@ -194,7 +194,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             if variadic { &[VALUE] } else { &[] },
             &[VALUE],
             &[
-                if variadic { LocalGet(0) } else { I32Const(0) },
+                if variadic { LocalGet(0) } else { I32Const(NIL) },
                 if variadic { Nop } else { RefI31 },
                 RefFunc(callback),
                 I32Const(arity as i32),

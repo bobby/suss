@@ -74,7 +74,7 @@ pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
                 ArrayGet(ARGS),
                 LocalSet(3),
                 LocalGet(3),
-                I32Const(0),
+                I32Const(NIL),
                 RefI31,
                 RefEq,
                 LocalGet(3),

@@ -73,7 +73,7 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 3] {
         ]);
     }
     code.push(I32Const(0));
-    for sentinel in [0, 2, 4, UNDEFINED] {
+    for sentinel in [NIL, FALSE, TRUE, UNDEFINED] {
         code.extend([LocalGet(0), I32Const(sentinel), RefI31, RefEq, I32Or]);
     }
     let is_primitive = b.function("coercion-primitive?", &[VALUE], &[ValType::I32], &code);

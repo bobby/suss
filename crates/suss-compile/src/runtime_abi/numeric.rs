@@ -229,11 +229,11 @@ pub(super) fn error(message: &str, global: u32) -> Vec<Instruction<'static>> {
             array_type_index: STRING,
             array_size: units.len() as u32,
         },
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         StructNew(8),
         Throw(0),
@@ -347,11 +347,12 @@ pub(super) fn intrinsics(
         },
         Return,
         End,
+        // ABI3 sentinel-read: ToNumber treats any i31 as nil/false/true/undefined.
         LocalGet(0),
         RefTestNonNull(HeapType::I31),
         If(BlockType::Empty),
     ];
-    for (sentinel, value) in [(0, 0.0), (2, 0.0), (4, 1.0), (UNDEFINED, f64::NAN)] {
+    for (sentinel, value) in [(NIL, 0.0), (FALSE, 0.0), (TRUE, 1.0), (UNDEFINED, f64::NAN)] {
         convert.extend([
             LocalGet(0),
             RefCastNonNull(HeapType::I31),
@@ -428,14 +429,15 @@ pub(super) fn intrinsics(
         LocalGet(0),
         Return,
         End,
+        // ABI3 sentinel-read: ToString treats any i31 as nil/false/true/undefined.
         LocalGet(0),
         RefTestNonNull(HeapType::I31),
         If(BlockType::Empty),
     ];
     for (sentinel, value) in [
-        (0, "null"),
-        (2, "false"),
-        (4, "true"),
+        (NIL, "null"),
+        (FALSE, "false"),
+        (TRUE, "true"),
         (UNDEFINED, "undefined"),
     ] {
         to_string.extend([

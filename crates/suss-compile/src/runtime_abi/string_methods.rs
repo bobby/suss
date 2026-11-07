@@ -104,14 +104,14 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &[VALUE],
         &[
             GlobalGet(METHOD_ROOT),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             RefEq,
             If(BlockType::Empty),
             // Reuse the checked Object wrapper convention: one body, anchored this
             // prepended only by member invocation. No receiver retained in the root.
             GlobalGet(object_methods::TAG_GLOBAL),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             RefFunc(anchored),
             I32Const(2),
@@ -121,9 +121,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 array_type_index: ARGS,
                 array_size: 1,
             },
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(7),
             RefFunc(detached),

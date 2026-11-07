@@ -36,11 +36,11 @@ pub(super) fn message_error(body: &mut Vec<Instruction<'static>>, text: &str) {
             array_type_index: STRING,
             array_size: message.len() as u32,
         },
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
         Throw(0),
@@ -114,7 +114,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         I32Const(0),
         ArrayNewDefault(ARGS),
         LocalGet(2),
-        I32Const(0),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
         LocalGet(1),
         StructNew(DESCRIPTOR),
@@ -207,7 +207,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
             array_type_index: ARGS,
             array_size: 1,
         },
-        I32Const(0),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(OBJECT),
     ]);
@@ -234,7 +234,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         Call(b.names["owned-descriptor-prototype"]),
         LocalSet(2),
         LocalGet(2),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         I32Eqz,
@@ -374,7 +374,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
             }
             fn exhausted(body: &mut Vec<Instruction<'static>>, length: u32, offset: i32) {
                 body.extend([LocalGet(length), I32Const(offset), I32LeU, If(BlockType::Empty),
-                    I32Const(0), RefI31, Return, End]);
+                    I32Const(NIL), RefI31, Return, End]);
             }
             // Preserve the original short-table/early-hit path exactly. Later
             // complete groups share bounds checks; partial groups still check
@@ -390,7 +390,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
                     if offset != group { exhausted(&mut body, length, offset); }
                     pair(&mut body, typed_table, 1, offset);
                 }
-                body.extend([I32Const(0), RefI31, Return, Else]);
+                body.extend([I32Const(NIL), RefI31, Return, Else]);
                 for offset in (group..group + 8).step_by(2) {
                     pair(&mut body, typed_table, 1, offset);
                 }
@@ -477,7 +477,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
                 },
             ]);
         } else {
-            body.extend([I32Const(0), RefI31]);
+            body.extend([I32Const(NIL), RefI31]);
         }
         let method_function = b.function_with_locals(
             if writing {
@@ -649,7 +649,7 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
             Return,
             End,
             End,
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
         ],
     );

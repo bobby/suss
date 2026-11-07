@@ -49,7 +49,7 @@ fn changed(b: &Builder, code: &mut Vec<Instruction<'static>>) {
 }
 pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
     let mut code = vec![];
-    for sentinel in [0, 2, UNDEFINED] {
+    for sentinel in [NIL, FALSE, UNDEFINED] { // ABI3 sentinel-read: JS ToBoolean treats every other non-number, non-string i31 as true
         code.extend([
             LocalGet(0),
             I32Const(sentinel),
@@ -241,7 +241,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
                 I32Mul,
                 I32Const(2),
                 I32Add,
-                RefI31,
+                RefI31, // ABI3 boolean
                 LocalSet(8),
             ]);
         } else if index >= 4 {
@@ -595,7 +595,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
                 I32Mul,
                 I32Const(2),
                 I32Add,
-                RefI31,
+                RefI31, // ABI3 boolean
             ]),
         }
         code.extend([I32Const(7), Call(b.names["native-object-own-define"]), Drop]);
@@ -619,7 +619,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         Call(b.names["native-object-fields"]),
         Drop,
         LocalGet(3),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         LocalGet(3),
@@ -642,7 +642,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(4),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         BrIf(1),
@@ -686,7 +686,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         I32Const(0),
         I32LtS,
         If(BlockType::Empty),
-        I32Const(4),
+        I32Const(TRUE),
         RefI31,
         Return,
         End,
@@ -703,7 +703,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         I32And,
         I32Eqz,
         If(BlockType::Empty),
-        I32Const(2),
+        I32Const(FALSE),
         RefI31,
         Return,
         End,
@@ -756,7 +756,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         I32Const(0),
         LocalGet(8),
         ArraySet(ARGS),
-        I32Const(4),
+        I32Const(TRUE),
         RefI31,
     ]);
     let delete = callback(
@@ -775,7 +775,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         &[],
         &[VALUE],
         &[
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             RefFunc(delete),
             I32Const(2),
@@ -787,7 +787,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         LocalGet(0),
         I32Const(9),
         Call(b.names["closure-internal-property-get"]),
-        I32Const(4),
+        I32Const(TRUE),
         RefI31,
         RefEq,
         If(BlockType::Empty),
@@ -796,7 +796,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         End,
         LocalGet(0),
         I32Const(9),
-        I32Const(4),
+        I32Const(TRUE),
         RefI31,
         Call(b.names["closure-internal-property-set"]),
         Drop,
@@ -810,7 +810,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         code.push(LocalGet(0));
         text(&mut code, name);
         code.extend([
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             RefFunc(function),
             I32Const(0),

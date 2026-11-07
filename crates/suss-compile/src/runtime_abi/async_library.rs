@@ -56,7 +56,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                     .instruction(&ArrayGet(ARGS))
                     .instruction(&Call(b.names[guard]))
                     .instruction(&If(BlockType::Empty))
-                    .instruction(&I32Const(0))
+                    // ABI3 check: thrown payload is a general Value a catch can observe.
+                    .instruction(&I32Const(NIL))
                     .instruction(&RefI31)
                     .instruction(&Throw(0))
                     .instruction(&End);
@@ -70,7 +71,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         }
         callback.instruction(&Call(b.names[export]));
         if result == 1 {
-            callback
+            callback // ABI3 boolean
                 .instruction(&I32Const(2))
                 .instruction(&I32Mul)
                 .instruction(&I32Const(2))
@@ -92,7 +93,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             &[],
             &[VALUE],
             &[
-                I32Const(0),
+                I32Const(NIL),
                 RefI31,
                 RefFunc(index),
                 I32Const(arity),

@@ -90,7 +90,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &[VALUE],
         &[
             GlobalGet(object_methods::TAG_GLOBAL),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             RefFunc(anchored),
             I32Const(1),
@@ -100,9 +100,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 array_type_index: ARGS,
                 array_size: 1,
             },
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(7),
             RefFunc(detached),

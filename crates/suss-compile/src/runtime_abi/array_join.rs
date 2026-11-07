@@ -35,14 +35,15 @@ pub(super) fn append_globals(globals: &mut GlobalSection) {
                 mutable: true,
                 shared: false,
             },
-            &ConstExpr::extended([I32Const(0), RefI31]),
+            // ABI3 const-expr: empty join stack and lazy method roots start NIL.
+            &ConstExpr::extended([I32Const(NIL), RefI31]),
         );
     }
 }
 pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     let mut code = vec![
         LocalGet(0),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         If(BlockType::Empty),
@@ -130,7 +131,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(3),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         BrIf(1),
@@ -229,10 +230,10 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     // Only nonempty converted pieces allocate nodes. Missing own ranges are
     // skipped without logical-length-sized storage or traversal.
     code = vec![
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         LocalSet(4),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         LocalSet(8),
         LocalGet(2),
@@ -276,8 +277,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Call(b.names["number-box"]),
         Call(b.names["source-array-get"]),
         LocalSet(6),
+        // nil and undefined elements join as empty strings.
         LocalGet(6),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         LocalGet(6),
@@ -331,7 +333,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(4),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         BrIf(1),
@@ -357,7 +359,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(8),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         BrIf(1),
@@ -467,7 +469,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Call(next),
         Call(next),
         LocalTee(5),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         BrIf(1),
@@ -489,7 +491,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Block(BlockType::Empty),
         Loop(BlockType::Empty),
         LocalGet(4),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         BrIf(1),
@@ -630,7 +632,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 Return,
                 End,
                 GlobalGet(object_methods::TAG_GLOBAL),
-                I32Const(0),
+                I32Const(NIL),
                 RefI31,
                 RefFunc(anchored),
                 I32Const(1),
@@ -640,9 +642,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                     array_type_index: ARGS,
                     array_size: 1,
                 },
-                I32Const(0),
+                I32Const(NIL),
                 RefI31,
-                I32Const(0),
+                I32Const(0), // Identity UID, unassigned.
                 RefI31,
                 StructNew(7),
                 RefFunc(detached),

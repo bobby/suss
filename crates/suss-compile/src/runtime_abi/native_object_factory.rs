@@ -27,7 +27,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Return,
         End,
         End,
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         Return,
         End,
@@ -56,7 +56,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Return,
         End,
         End,
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
     ]);
     let next = b.function_with_locals(
@@ -84,7 +84,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(1),
         Call(next),
         LocalTee(3),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         If(BlockType::Empty),
@@ -104,7 +104,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     for _ in 0..2 {
         code.extend([
             LocalGet(2),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             RefEq,
             I32Eqz,
@@ -186,7 +186,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &[],
         &[VALUE],
         &[
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
             RefFunc(callback),
             I32Const(0),

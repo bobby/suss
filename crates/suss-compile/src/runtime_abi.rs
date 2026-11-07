@@ -49,6 +49,11 @@ mod string_char_at;
 mod type_values;
 
 pub const VERSION: u32 = 2;
+// ABI v2 i31 encodings of the language sentinels. Every site that builds or
+// tests a sentinel names it with these, so ABI v3 can move them out of i31.
+pub(crate) const NIL: i32 = 0;
+pub(crate) const FALSE: i32 = 2;
+pub(crate) const TRUE: i32 = 4;
 // Internal constructor/ordinary-type-call undefined, distinct from source nil.
 pub(crate) const UNDEFINED: i32 = 6;
 const PORTABLE_FORMAT_VERSION: u32 = 3;
@@ -337,7 +342,7 @@ fn build_module() -> Vec<u8> {
     };
     let number = HeapType::Concrete(NUMBER);
     let string = HeapType::Concrete(STRING);
-    for (name, sentinel) in [("nil", 0), ("false", 2), ("true", 4)] {
+    for (name, sentinel) in [("nil", NIL), ("false", FALSE), ("true", TRUE)] {
         b.function(name, &[], &[VALUE], &[I32Const(sentinel), RefI31]);
     }
     b.function(
@@ -456,7 +461,7 @@ fn build_module() -> Vec<u8> {
         "args-new",
         &[ValType::I32],
         &[VALUE],
-        &[I32Const(0), RefI31, LocalGet(0), ArrayNew(ARGS)],
+        &[I32Const(NIL), RefI31, LocalGet(0), ArrayNew(ARGS)],
     );
     let (wrap_environment, closure_environment) = closure_properties::functions(&mut b);
     b.function(
@@ -469,7 +474,7 @@ fn build_module() -> Vec<u8> {
             LocalGet(1),
             LocalGet(2),
             LocalGet(3),
-            I32Const(0),
+            I32Const(0), // Identity UID: private unassigned marker.
             RefI31,
             StructNew(4),
         ],
@@ -493,11 +498,11 @@ fn build_module() -> Vec<u8> {
             array_type_index: STRING,
             array_size: units.len() as u32,
         },
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
         Throw(0),
@@ -521,11 +526,11 @@ fn build_module() -> Vec<u8> {
                 array_type_index: STRING,
                 array_size: units.len() as u32,
             },
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(8),
             Throw(0),
@@ -573,11 +578,11 @@ fn build_module() -> Vec<u8> {
             array_type_index: STRING,
             array_size: message.len() as u32,
         },
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
         Throw(0),
@@ -601,11 +606,11 @@ fn build_module() -> Vec<u8> {
             array_type_index: STRING,
             array_size: message.len() as u32,
         },
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
         Throw(0),
@@ -622,7 +627,7 @@ fn build_module() -> Vec<u8> {
         "binding-unbound",
         &[],
         &[VALUE],
-        &[I32Const(0), RefI31, I32Const(0), StructNew(5)],
+        &[I32Const(NIL), RefI31, I32Const(0), StructNew(5)],
     );
     b.function(
         "binding-bound",
@@ -636,10 +641,10 @@ fn build_module() -> Vec<u8> {
                 field_index: 1,
             },
             If(BlockType::Result(VALUE)),
-            I32Const(4),
+            I32Const(TRUE),
             RefI31,
             Else,
-            I32Const(2),
+            I32Const(FALSE),
             RefI31,
             End,
         ],
@@ -663,11 +668,11 @@ fn build_module() -> Vec<u8> {
             array_type_index: STRING,
             array_size: unbound_message.len() as u32,
         },
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
         Throw(0),
@@ -709,9 +714,10 @@ fn build_module() -> Vec<u8> {
             Else,
             LocalGet(0),
             Call(b.names["binding-bound"]),
+            // ABI3 sentinel-read: binding-bound result is true.
             RefCastNonNull(HeapType::I31),
             I31GetU,
-            I32Const(4),
+            I32Const(TRUE),
             I32Eq,
             If(BlockType::Result(ValType::I32)),
             LocalGet(0),
@@ -761,11 +767,11 @@ fn build_module() -> Vec<u8> {
             LocalGet(0),
             Call(b.names["coerce-string"]),
             RefCastNonNull(HeapType::Concrete(STRING)),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(8),
         ],
@@ -816,17 +822,18 @@ fn build_module() -> Vec<u8> {
                 mutable: false,
                 shared: false,
             },
+            // ABI3 const-expr
             &ConstExpr::extended([
                 I64Const(identity.into()),
-                I32Const(0),
+                I32Const(NIL),
                 RefI31,
-                I32Const(0),
+                I32Const(NIL),
                 RefI31,
-                I32Const(0),
+                I32Const(NIL),
                 RefI31,
-                I32Const(0),
+                I32Const(0), // Identity UID, unassigned.
                 RefI31,
-                I32Const(0), RefI31, StructNew(DESCRIPTOR),
+                I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
             ]),
         );
     }
@@ -853,17 +860,18 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
+        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(i64::from(numeric::ERROR_GLOBALS) + 1),
             I32Const(0),
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
     // A rooted opaque protocol marker, distinct from booleans and callables.
@@ -873,17 +881,18 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
+        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
     globals.global(
@@ -892,7 +901,8 @@ fn build_module() -> Vec<u8> {
             mutable: true,
             shared: false,
         },
-        &ConstExpr::extended([I32Const(0), RefI31]),
+        // ABI3 const-expr
+        &ConstExpr::extended([I32Const(NIL), RefI31]),
     );
     let mut info_descriptor = vec![I64Const(i64::from(numeric::ERROR_GLOBALS) + 2)];
     for field in ["message", "data", "cause"] {
@@ -919,9 +929,9 @@ fn build_module() -> Vec<u8> {
             array_type_index: STRING,
             array_size: name.len() as u32,
         },
-        I32Const(0),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
-        I32Const(0), RefI31, StructNew(DESCRIPTOR),
+        I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
     ]);
     globals.global(
         GlobalType {
@@ -929,6 +939,7 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
+        // ABI3 const-expr
         &ConstExpr::extended(info_descriptor),
     );
     let mut ordinary_root = vec![I64Const(i64::from(numeric::ERROR_GLOBALS) + 3)];
@@ -947,18 +958,18 @@ fn build_module() -> Vec<u8> {
         },
         I32Const(0),
         ArrayNewDefault(ARGS),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
-        I32Const(0), RefI31, StructNew(DESCRIPTOR),
+        I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
         I32Const(UNDEFINED),
         RefI31,
         I32Const(3),
         ArrayNew(ARGS),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
-        I32Const(0),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(7),
     ]);
@@ -968,6 +979,7 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
+        // ABI3 const-expr
         &ConstExpr::extended(ordinary_root),
     );
     // Owner tag for closure environments/properties; identity is reference based.
@@ -977,17 +989,18 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
+        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
             I32Const(0),
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
     // Private source-array identity; appended without changing old global indices.
@@ -997,17 +1010,18 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
+        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
             I32Const(0),
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
     // Appended private Object method tag and portable implicit-this realm.
@@ -1017,17 +1031,18 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
+        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
             I32Const(0),
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
     globals.global(
@@ -1036,22 +1051,23 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
+        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
             I32Const(0),
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(7),
         ]),
@@ -1063,7 +1079,9 @@ fn build_module() -> Vec<u8> {
             mutable: true,
             shared: false,
         },
-        &ConstExpr::extended([I32Const(0), RefI31]),
+        // ABI3 const-expr
+        // ABI3 check: lazy-root absent marker, compared with i31 0 on first use.
+        &ConstExpr::extended([I32Const(NIL), RefI31]),
     );
     // Original owned dynamic data-property storage tag, appended privately.
     globals.global(
@@ -1072,17 +1090,18 @@ fn build_module() -> Vec<u8> {
             mutable: false,
             shared: false,
         },
+        // ABI3 const-expr
         &ConstExpr::extended([
             I64Const(0),
             I32Const(0),
             ArrayNewDefault(ARGS),
             I32Const(0),
             ArrayNewDefault(ARGS),
-            I32Const(0),
+            I32Const(NIL),
             RefI31,
-            I32Const(0),
+            I32Const(0), // Identity UID, unassigned.
             RefI31,
-            I32Const(0), RefI31, StructNew(DESCRIPTOR),
+            I32Const(NIL), RefI31, StructNew(DESCRIPTOR),
         ]),
     );
     // Lazy shared default Object prototype, owned by the runtime GC root.
@@ -1092,7 +1111,9 @@ fn build_module() -> Vec<u8> {
             mutable: true,
             shared: false,
         },
-        &ConstExpr::extended([I32Const(0), RefI31]),
+        // ABI3 const-expr
+        // ABI3 check: lazy-root absent marker, compared with i31 0 on first use.
+        &ConstExpr::extended([I32Const(NIL), RefI31]),
     );
     // Shared Array.slice function root; no receiver retained.
     globals.global(
@@ -1101,7 +1122,9 @@ fn build_module() -> Vec<u8> {
             mutable: true,
             shared: false,
         },
-        &ConstExpr::extended([I32Const(0), RefI31]),
+        // ABI3 const-expr
+        // ABI3 check: lazy-root absent marker, compared with i31 0 on first use.
+        &ConstExpr::extended([I32Const(NIL), RefI31]),
     );
     // Scalar-only UID allocator; no global reference table retains owners.
     globals.global(

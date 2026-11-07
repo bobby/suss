@@ -199,7 +199,7 @@ pub(super) fn callback(b: &mut Builder) -> u32 {
         ArrayGet(ARGS),
         LocalSet(6),
         LocalGet(6),
-        I32Const(0),
+        I32Const(NIL),
         RefI31,
         RefEq,
         I32Eqz,
@@ -354,7 +354,7 @@ pub(super) fn callback(b: &mut Builder) -> u32 {
             array_size: 2,
         },
         LocalGet(4),
-        I32Const(0),
+        I32Const(0), // Identity UID, unassigned.
         RefI31,
         StructNew(8),
     ]);
