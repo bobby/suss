@@ -519,6 +519,7 @@ impl FormBridge {
                 include_metadata: true,
                 interrupt,
                 calls: None,
+                undefined: None,
                 active: Vec::new(),
                         profile: std::env::var_os("SUSS_MACRO_FUEL_TRACE").is_some(),
                         host_fuel: std::cell::Cell::new(0),
@@ -1009,7 +1010,7 @@ impl FormBridge {
                 .data_inspect_calls(
                     value,
                     &self.core.factories["lazy-sval"],
-                    |mut store, value, args_new, invoke, function| {
+                    |mut store, value, args_new, invoke, function, undefined| {
                         let mut budget = Budget {
                             display: None,
                             source_valid: None,
@@ -1024,6 +1025,7 @@ impl FormBridge {
                                 invoke,
                                 function,
                             }),
+                            undefined: Some(undefined),
                         };
                         let result = decode(&mut store, &value, &self.core.classes, &span, 0, &mut budget);
                         if budget.profile {
@@ -1184,6 +1186,9 @@ struct Budget {
     // invariant mismatches without treating them as a new source certificate.
     source_valid: Option<bool>,
     calls: Option<ReadCalls>,
+    // The undefined sentinel for source-array holes; None where no source
+    // array can be read.
+    undefined: Option<Val>,
     interrupt: std::sync::Arc<std::sync::atomic::AtomicBool>,
     active: Vec<Val>,
     profile: bool,
@@ -2040,6 +2045,7 @@ fn source_array_suffix(
     charge_read_work(store, mask_len as u64, budget)?;
     // `None` is a hole, which reads as undefined: invalid macro syntax.
     let mut result: Vec<Option<Val>> = vec![None; count];
+    let undefined = budget.undefined.clone();
     for index in 0..mask_len {
         let flag = mask.get(&mut *store, index)?.unwrap_i32();
         if !(0..=1).contains(&flag) {
@@ -2080,7 +2086,11 @@ fn source_array_suffix(
     }
     result
         .into_iter()
-        .map(|value| value.ok_or_else(|| error("Unknown language sentinel")))
+        .map(|value| {
+            value
+                .or_else(|| undefined.clone())
+                .ok_or_else(|| error("Unknown language sentinel"))
+        })
         .collect()
 }
 

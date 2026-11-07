@@ -32,13 +32,9 @@ fn compiled_macro_transient_hash_map_omitted_lookup_preserves_undefined() {
         session
             .inspect(&missing, |mut store, value| {
                 assert_eq!(
-                    value
-                        .unwrap_anyref()
+                    suss_cli::portable_session::sentinel_tag(&mut store, &value)
                         .unwrap()
-                        .as_i31(&mut store)
-                        .unwrap()
-                        .unwrap()
-                        .get_u32(),
+                        .unwrap(),
                     6
                 );
                 Ok(())

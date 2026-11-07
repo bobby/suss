@@ -19,11 +19,8 @@ use suss_reader::forms::Kind;
 fn assert_true(session: &mut Session, value: &SessionValue, source: &str) {
     session.collect().unwrap();
     session
-        .inspect(value, |store, value| {
-            let bits = value
-                .unwrap_anyref()
-                .and_then(|value| value.as_i31(&store).ok().flatten())
-                .map(|value| value.get_u32());
+        .inspect(value, |mut store, value| {
+            let bits = suss_cli::portable_session::sentinel_tag(&mut store, &value)?;
             assert_eq!(bits, Some(4), "{source} is not true");
             Ok(())
         })
@@ -184,11 +181,8 @@ fn agreement(session: &mut Session, macros: &mut CompiledMacros) {
         .unwrap_or_else(|error| panic!("{source}: {error:?}"));
     session.collect().unwrap();
     let matches = session
-        .inspect(&value, |store, value| {
-            Ok(value
-                .unwrap_anyref()
-                .and_then(|value| value.as_i31(&store).ok().flatten())
-                .map(|value| value.get_u32())
+        .inspect(&value, |mut store, value| {
+            Ok(suss_cli::portable_session::sentinel_tag(&mut store, &value)?
                 == Some(4))
         })
         .unwrap();

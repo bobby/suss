@@ -1,5 +1,7 @@
 //! Source definitions execute against exact shared live cells, never source replay.
 mod support;
+/// First type index a fragment appends after the shared ABI v3 prelude.
+const APPENDED: u32 = suss_compile::runtime_abi::LONG + 1;
 use suss_compile::{
     portable::{
         self,
@@ -218,10 +220,21 @@ impl Session {
             .map(|value| value.unwrap_i32() as u16)
             .collect::<Vec<_>>();
         assert_eq!(String::from_utf16(&units).unwrap(), message);
-        // Fresh errors have nil data, cause and ABI2 identity UID.
-        for nil in &fields[2..] {
+        // Fresh errors have nil data and cause.
+        for nil in &fields[2..4] {
             assert_eq!(self.sentinel(nil), 0);
         }
+        // The identity UID is private runtime state: an unassigned i31 0.
+        assert_eq!(
+            fields[4]
+                .unwrap_anyref()
+                .unwrap()
+                .as_i31(&self.store)
+                .unwrap()
+                .unwrap()
+                .get_u32(),
+            0
+        );
     }
     fn eval(&mut self, source: &str) -> Val {
         let fragment = self.compile(source, Phase::Runtime).unwrap();
@@ -240,14 +253,10 @@ impl Session {
             .unwrap_f64()
             .to_bits()
     }
-    fn sentinel(&self, value: &Val) -> u32 {
-        value
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&self.store)
+    fn sentinel(&mut self, value: &Val) -> u32 {
+        suss_compile::portable_session::sentinel_tag(&mut self.store, value)
             .unwrap()
             .unwrap()
-            .get_u32()
     }
 }
 
@@ -497,17 +506,17 @@ fn catcher(arity: usize, module: &str, name: &str) -> Vec<u8> {
     types.ty().function(vec![value; arity], [value]);
     types.ty().function([value], []);
     let mut imports = ImportSection::new();
-    imports.import(module, name, EntityType::Function(10));
+    imports.import(module, name, EntityType::Function(APPENDED));
     imports.import(
         "suss.runtime",
         "language-exception",
         EntityType::Tag(TagType {
             kind: TagKind::Exception,
-            func_type_idx: 11,
+            func_type_idx: APPENDED + 1,
         }),
     );
     let mut functions = FunctionSection::new();
-    functions.function(10);
+    functions.function(APPENDED);
     let mut exports = ExportSection::new();
     exports.export("call", ExportKind::Func, 1);
     let mut function = Function::new([]);

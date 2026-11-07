@@ -204,14 +204,9 @@ fn handed_chunk_preserves_actual_backing_array_identity_after_gc() {
                     2,
                     "array owner and ordinary properties"
                 );
+                let fields_nil = fields.get(&mut store, 1)?;
                 assert_eq!(
-                    fields
-                        .get(&mut store, 1)?
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .unwrap()
-                        .get_u32(),
+                    suss_cli::portable_session::sentinel_tag(&mut store, &fields_nil)?.unwrap(),
                     0
                 );
                 let backing_storage = fields
@@ -233,14 +228,9 @@ fn handed_chunk_preserves_actual_backing_array_identity_after_gc() {
                     .unwrap()
                     .field(&mut store, 0)?;
                 assert_eq!(length.unwrap_f64().to_bits(), 2.0_f64.to_bits());
+                let backing_storage_nil = backing_storage.get(&mut store, 1)?;
                 assert_eq!(
-                    backing_storage
-                        .get(&mut store, 1)?
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .unwrap()
-                        .get_u32(),
+                    suss_cli::portable_session::sentinel_tag(&mut store, &backing_storage_nil)?.unwrap(),
                     0
                 );
                 let presence = backing_storage

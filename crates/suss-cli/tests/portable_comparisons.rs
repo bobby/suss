@@ -1,4 +1,5 @@
 use suss_cli::portable_session::{Session, SessionError, SessionValue};
+use suss_compile::portable_session::sentinel_tag;
 use wasmtime::Val;
 
 fn number(session: &mut Session, value: &SessionValue) -> u64 {
@@ -20,13 +21,8 @@ fn eval_number(session: &mut Session, source: &str) -> u64 {
 fn eval_bool(session: &mut Session, source: &str) -> bool {
     let value = session.eval(source).unwrap();
     session
-        .inspect(&value, |store, value| {
-            match value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32()
+        .inspect(&value, |mut store, value| {
+            match sentinel_tag(&mut store, &value)?.unwrap()
             {
                 2 => Ok(false),
                 4 => Ok(true),
@@ -215,13 +211,8 @@ fn comparison_macro_arity_unary_evaluation_and_lexical_shadowing_remain_distinct
         let argument = session.eval("##NaN").unwrap();
         let result = session.invoke(&original, &[&argument]).unwrap();
         let sentinel = session
-            .inspect(&result, |store, value| {
-                Ok(value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32())
+            .inspect(&result, |mut store, value| {
+                Ok(sentinel_tag(&mut store, &value)?.unwrap())
             })
             .unwrap();
         assert_eq!(sentinel, 4);
@@ -253,13 +244,8 @@ fn comparison_macro_and_runtime_names_preserve_aliases_user_shadowing_and_gc() {
     let right = session.eval("2").unwrap();
     let value = session.invoke(&function, &[&left, &right]).unwrap();
     let sentinel = session
-        .inspect(&value, |store, value| {
-            Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32())
+        .inspect(&value, |mut store, value| {
+            Ok(sentinel_tag(&mut store, &value)?.unwrap())
         })
         .unwrap();
     assert_eq!(sentinel, 4);
@@ -298,13 +284,8 @@ fn comparison_utf16_prefix_loop_has_fuel_recovery_and_typed_coercion_errors() {
     session.set_operation_fuel(1_000_000);
     let answer = session.invoke(&function, &[&left, &right]).unwrap();
     let sentinel = session
-        .inspect(&answer, |store, value| {
-            Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32())
+        .inspect(&answer, |mut store, value| {
+            Ok(sentinel_tag(&mut store, &value)?.unwrap())
         })
         .unwrap();
     assert_eq!(sentinel, 4);

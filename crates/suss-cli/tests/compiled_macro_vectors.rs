@@ -1,3 +1,4 @@
+use suss_compile::portable_session::sentinel_tag;
 use suss_cli::portable_session::Session;
 
 #[test]
@@ -22,12 +23,7 @@ fn compiled_macro_vectors_use_retained_nominal_type_and_persistent_tail() {
             .unwrap_or_else(|error| panic!("{source}: {error:?}"));
         assert!(
             session
-                .inspect(&value, |store, value| Ok(value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32()
+                .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()
                     == 4))
                 .unwrap(),
             "{source}"
@@ -95,12 +91,7 @@ fn compiled_macro_vectors_preserve_trie_updates_and_transport_across_gc() {
         let value = session.eval(source).unwrap();
         assert!(
             session
-                .inspect(&value, |store, value| Ok(value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32()
+                .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()
                     == 4))
                 .unwrap()
         );
@@ -173,12 +164,7 @@ fn compiled_macro_array_slice_clamps_bounds_and_owns_copied_storage() {
             .unwrap_or_else(|error| panic!("{source}: {error:?}"));
         assert!(
             session
-                .inspect(&value, |store, value| Ok(value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32()
+                .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()
                     == 4))
                 .unwrap(),
             "{source}"
@@ -227,12 +213,7 @@ fn compiled_macro_vectors_large_literals_use_retained_transient_factory() {
         let value = session.eval(source).unwrap();
         assert!(
             session
-                .inspect(&value, |store, value| Ok(value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32()
+                .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()
                     == 4))
                 .unwrap()
         );
@@ -275,12 +256,7 @@ fn compiled_macro_vectors_match_fresh_pinned_scalar_observations_in_both_phases(
             let actual = session
                 .inspect(&value, |mut store, value| {
                     Ok(if case["expected"]["tag"] == "bool" {
-                        let n = value
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_i31(&store)?
-                            .unwrap()
-                            .get_u32();
+                        let n = sentinel_tag(&mut store, &value)?.unwrap();
                         let v = match n {
                             2 => false,
                             4 => true,
@@ -412,13 +388,8 @@ fn compiled_vectors_collapse_and_regrow_at_1057_preserving_contents_metadata_and
             let value = session.eval_privileged(source).unwrap();
             session.collect().unwrap();
             session
-                .inspect(&value, |store, value| {
-                    let sentinel = value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .unwrap()
-                        .get_u32();
+                .inspect(&value, |mut store, value| {
+                    let sentinel = sentinel_tag(&mut store, &value)?.unwrap();
                     assert_eq!(sentinel, 4, "{source}: true Boolean sentinel");
                     Ok(())
                 })

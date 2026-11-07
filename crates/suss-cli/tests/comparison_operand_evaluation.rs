@@ -9,11 +9,8 @@ fn truthy(session: &mut Session, source: &str) {
         .unwrap_or_else(|error| panic!("{source}: {error:?}"));
     session.collect().unwrap();
     session
-        .inspect(&value, |store, value| {
-            let bits = value
-                .unwrap_anyref()
-                .and_then(|value| value.as_i31(&store).ok().flatten())
-                .map(|value| value.get_u32());
+        .inspect(&value, |mut store, value| {
+            let bits = suss_cli::portable_session::sentinel_tag(&mut store, &value)?;
             assert_eq!(bits, Some(4), "{source} is not true");
             Ok(())
         })

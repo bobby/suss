@@ -1,6 +1,6 @@
 //! Independent ABI2 observations. Never call the guest printer or equality.
 //! Inspect canonical storage directly; unknown objects and malformed layouts fail.
-use suss_compile::portable_session::{Session, SessionError, SessionValue};
+use suss_compile::portable_session::{sentinel_tag, Session, SessionError, SessionValue};
 use wasmtime::{AnyRef, OwnedRooted, Rooted, StorageType, StoreContextMut, Val};
 
 #[path = "probe_eval.rs"]
@@ -302,19 +302,23 @@ impl Decoder {
             return Err(wasmtime::Error::msg("ABI2 decoder nesting limit"));
         }
         self.spend(1)?;
-        let Val::AnyRef(Some(reference)) = value else {
+        if !matches!(value, Val::AnyRef(_)) {
             return Err(wasmtime::Error::msg(
-                "Expected non-null ABI2 language value",
+                "Expected a reference ABI2 language value",
             ));
-        };
-        if let Some(sentinel) = reference.as_i31(&*store)? {
-            return match sentinel.get_u32() {
+        }
+        // Nil is a null eqref, so sentinels are decided before requiring a reference.
+        if let Some(sentinel) = sentinel(store, value)? {
+            return match sentinel {
                 0 => Ok(Observation::Nil),
                 2 => Ok(Observation::Bool(false)),
                 4 => Ok(Observation::Bool(true)),
                 _ => Err(wasmtime::Error::msg("Unknown ABI2 language sentinel")),
             };
         }
+        let Val::AnyRef(Some(reference)) = value else {
+            unreachable!("a null eqref is the nil sentinel");
+        };
         if let Some(array) = reference.as_array(&*store)? {
             let ty = array.ty(&*store)?;
             if !matches!(ty.element_type(), StorageType::I16)
@@ -660,7 +664,7 @@ impl Decoder {
         let tail = self.source_array(store, &data[4], count - tail_start)?;
         let (root_class, root_data) = self.object(store, &data[3])?;
         if root_class != Class::Node
-            || !matches!(non_null_ref(&root_data[0])?.as_i31(&*store)?, Some(nil) if nil.get_u32() == 0)
+            || sentinel(store, &root_data[0])? != Some(0)
         {
             return Err(wasmtime::Error::msg(
                 "Persistent vector root has an active edit token",
@@ -780,10 +784,24 @@ impl Decoder {
                 "Malformed source array dense/presence layout",
             ));
         }
-        let undefined = Val::AnyRef(Some(AnyRef::from_i31(
-            &mut *store,
-            wasmtime::I31::wrapping_u32(6),
-        )));
+        // A host-only absent-slot placeholder: a one-field i32 struct tagged
+        // UNDEFINED. The decoder reads only its sentinel tag; it never escapes.
+        let undefined = {
+            let ty = wasmtime::StructType::new(
+                store.engine(),
+                [wasmtime::FieldType::new(
+                    wasmtime::Mutability::Const,
+                    StorageType::ValType(wasmtime::ValType::I32),
+                )],
+            )?;
+            let allocator = wasmtime::StructRefPre::new(&mut *store, ty);
+            let placeholder = wasmtime::StructRef::new(
+                &mut *store,
+                &allocator,
+                &[Val::I32(suss_compile::runtime_abi::UNDEFINED)],
+            )?;
+            Val::AnyRef(Some(placeholder.to_anyref()))
+        };
         let mut result = vec![undefined; length as usize];
         let dense_length = dense.len(&*store)?;
         for index in 0..dense_length {
@@ -1332,8 +1350,8 @@ impl Decoder {
         let mut current = value.clone();
         loop {
             self.spend(1)?;
-            if let Some(sentinel) = non_null_ref(&current)?.as_i31(&*store)? {
-                if sentinel.get_u32() == 0 {
+            if let Some(sentinel) = sentinel(store, &current)? {
+                if sentinel == 0 {
                     break;
                 }
                 return Err(wasmtime::Error::msg("Invalid list tail"));
@@ -1495,12 +1513,10 @@ fn count(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<u
     count_field(store, value)
 }
 
-fn sentinel(store: &StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<Option<u32>> {
-    Ok(non_null_ref(value)?
-        .as_i31(&*store)?
-        .map(|value| value.get_u32()))
+fn sentinel(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<Option<u32>> {
+    sentinel_tag(&mut *store, value)
 }
-fn internal_absent(store: &StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<bool> {
+fn internal_absent(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<bool> {
     // Undefined (6) is allowed only for private unused trie storage, never as an observed language value.
     Ok(matches!(sentinel(store, value)?, Some(0 | 6)))
 }
@@ -1557,7 +1573,7 @@ mod adversarial_owner {
                 node.set(&mut store, 0, old_key)?;
                 let slots = decoder.raw_array(&mut store, &value)?;
                 assert_eq!(slots.len(), 2);
-                assert_eq!(sentinel(&store, &slots[0])?, Some(6));
+                assert_eq!(sentinel(&mut store, &slots[0])?, Some(6));
                 assert_eq!(number_bits(&mut store, &slots[1])?, 7.0_f64.to_bits());
                 Ok(())
             })

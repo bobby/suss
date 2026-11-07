@@ -724,12 +724,9 @@ fn descriptor_functions(b: &mut Builder) -> u32 {
         I32Const(1),
         ArrayGet(ARGS),
         LocalSet(1),
-        LocalGet(1),
-        RefIsNull,
-        If(BlockType::Empty),
     ]);
-    nominal::error(&mut code);
-    code.extend([End, LocalGet(2), I32Const(8), I32And, If(BlockType::Empty)]);
+    // The value slot may hold nil, a null reference.
+    code.extend([LocalGet(2), I32Const(8), I32And, If(BlockType::Empty)]);
     code.extend([LocalGet(2), I32Const(1), I32And, If(BlockType::Empty)]);
     nominal::error(&mut code);
     code.push(End);

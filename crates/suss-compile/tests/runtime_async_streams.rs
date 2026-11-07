@@ -7,6 +7,7 @@ use suss_compile::{
         self,
         resolve::{Environment, Phase},
     },
+    portable_session::sentinel_tag,
     runtime_abi,
 };
 use wasmtime::{
@@ -673,6 +674,10 @@ fn later_published_write_receipt_survives_earlier_read_service_or_retirement() {
                 .unwrap()
                 .unwrap();
             let operation = snapshot.get(&mut h.store, 6).unwrap();
+            // No operation yet is a language sentinel (nil is a null eqref).
+            if sentinel_tag(&mut h.store, &operation).unwrap().is_some() {
+                continue;
+            }
             let Some(object) = operation
                 .unwrap_anyref()
                 .unwrap()

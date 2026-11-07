@@ -27,13 +27,10 @@ fn status(session: &mut Session, source: &str) -> bool {
     let value = session.eval(source).unwrap();
     session.collect().unwrap();
     session
-        .inspect(&value, |store, value| {
-            let raw = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
+        .inspect(&value, |mut store, value| {
+            let raw = suss_cli::portable_session::sentinel_tag(&mut store, &value)?
                 .ok_or_else(|| wasmtime::Error::msg("Expected portable Boolean sentinel"))?;
-            match raw.get_u32() {
+            match raw {
                 2 => Ok(false),
                 4 => Ok(true),
                 _ => Err(wasmtime::Error::msg("Unexpected language sentinel")),

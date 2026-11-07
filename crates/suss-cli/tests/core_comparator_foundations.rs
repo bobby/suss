@@ -1,4 +1,5 @@
 //! Authored scalar comparator prerequisites; full compare is deliberately absent.
+use suss_compile::portable_session::sentinel_tag;
 use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
 use suss_compile::portable::resolve::Phase;
 use wasmtime::Val;
@@ -7,13 +8,8 @@ fn boolean(session: &mut Session, source: &str, expected: bool) {
     let value = session.eval(source).unwrap();
     session.collect().unwrap();
     let actual = session
-        .inspect(&value, |store, value| {
-            Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32())
+        .inspect(&value, |mut store, value| {
+            Ok(sentinel_tag(&mut store, &value)?.unwrap())
         })
         .unwrap();
     assert_eq!(actual, if expected { 4 } else { 2 }, "{source}");
@@ -165,13 +161,8 @@ fn private_predicates_and_scalar_comparison_preserve_live_publics_in_both_phases
             };
             session.collect().unwrap();
             let actual = session
-                .inspect(&payload, |store, value| {
-                    Ok(value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .unwrap()
-                        .get_u32())
+                .inspect(&payload, |mut store, value| {
+                    Ok(sentinel_tag(&mut store, &value)?.unwrap())
                 })
                 .unwrap();
             assert_eq!(actual, expected, "rooted payload: {source}");
@@ -378,13 +369,8 @@ fn staged_type_returns_retained_nominal_constructors_in_both_phases() {
             };
             session.collect().unwrap();
             let actual = session
-                .inspect(&payload, |store, value| {
-                    Ok(value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .unwrap()
-                        .get_u32())
+                .inspect(&payload, |mut store, value| {
+                    Ok(sentinel_tag(&mut store, &value)?.unwrap())
                 })
                 .unwrap();
             assert_eq!(actual, expected, "rooted payload: {source}");

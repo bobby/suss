@@ -4,6 +4,7 @@ mod portable_decode;
 
 use portable_decode::{Decoder, Observation};
 use suss_cli::portable_session::{Session, SessionValue};
+use suss_compile::portable_session::sentinel_tag;
 use wasmtime::{AnyRef, OwnedRooted, Rooted, StorageType, Val};
 
 const FIXTURE: &str = include_str!("../../../tests/oracle/fixtures/hamt-sharing.sus");
@@ -97,7 +98,7 @@ fn uint32_number(store: &mut wasmtime::StoreContextMut<'_, ()>, value: &Val) -> 
 }
 
 fn is_nil(store: &mut wasmtime::StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<bool> {
-    Ok(value.unwrap_anyref().unwrap().as_i31(&*store)?.is_some_and(|v| v.get_u32() == 0))
+    Ok(sentinel_tag(&mut *store, value)? == Some(0))
 }
 
 // Validate the private source-array owner and unsparse its exact backing.
@@ -106,6 +107,7 @@ fn source_array(
     store: &mut wasmtime::StoreContextMut<'_, ()>,
     value: &Val,
     source_array_class: &Canonical,
+    undefined: &OwnedRooted<AnyRef>,
 ) -> wasmtime::Result<Vec<Val>> {
     let owner = value.unwrap_anyref().unwrap().as_struct(&*store)?
         .ok_or_else(|| wasmtime::Error::msg("expected source-array owner"))?;
@@ -130,7 +132,7 @@ fn source_array(
         return Err(wasmtime::Error::msg("invalid source-array wrapper layout"));
     }
     let wrapped = wrapper.elems(&mut *store)?.collect::<Vec<_>>();
-    if wrapped[1].unwrap_anyref().unwrap().as_i31(&*store)?.map(|v| v.get_u32()) != Some(0) {
+    if sentinel_tag(&mut *store, &wrapped[1])? != Some(0) {
         return Err(wasmtime::Error::msg("invalid source-array wrapper flag"));
     }
     let backing = wrapped[0].unwrap_anyref().unwrap().as_array(&*store)?
@@ -154,7 +156,7 @@ fn source_array(
     {
         return Err(wasmtime::Error::msg("invalid dense source-array storage"));
     }
-    let undefined = Val::AnyRef(Some(AnyRef::from_i31(&mut *store, wasmtime::I31::wrapping_u32(6))));
+    let undefined = Val::AnyRef(Some(undefined.to_rooted(&mut *store)));
     let mut result = vec![undefined; len];
     for index in 0..dense.len(&*store)? {
         match mask.get(&mut *store, index)?.unwrap_i32() {
@@ -217,6 +219,7 @@ fn node_child(
     bit: u32,
     bitmap_class: &Canonical,
     source_array_class: &Canonical,
+    undefined: &OwnedRooted<AnyRef>,
 ) -> OwnedRooted<AnyRef> {
     session.inspect(anchor, |mut store, _| {
         let value = Val::AnyRef(Some(node.to_rooted(&mut store)));
@@ -226,7 +229,7 @@ fn node_child(
             return Err(wasmtime::Error::msg("expected HAMT branch absent"));
         }
         let index = (bitmap & ((1 << bit) - 1)).count_ones() as usize;
-        let slots = source_array(&mut store, &fields[2], source_array_class)?;
+        let slots = source_array(&mut store, &fields[2], source_array_class, undefined)?;
         let key = &slots[index * 2];
         if !is_nil(&mut store, key)? {
             return Err(wasmtime::Error::msg("expected nested HAMT child slot"));
@@ -244,13 +247,14 @@ fn collision_child(
     bitmap_class: &Canonical,
     collision_class: &Canonical,
     source_array_class: &Canonical,
+    undefined: &OwnedRooted<AnyRef>,
 ) -> OwnedRooted<AnyRef> {
     session.inspect(anchor, |mut store, _| {
         let node = Val::AnyRef(Some(branch0.to_rooted(&mut store)));
         let fields = checked_fields(&mut store, &node, bitmap_class)?;
         let bitmap = uint32_number(&mut store, &fields[1])?;
         if bitmap & 1 == 0 { return Err(wasmtime::Error::msg("expected collision branch")); }
-        let slots = source_array(&mut store, &fields[2], source_array_class)?;
+        let slots = source_array(&mut store, &fields[2], source_array_class, undefined)?;
         let index = (bitmap & 0).count_ones() as usize;
         if !is_nil(&mut store, &slots[index * 2])? {
             return Err(wasmtime::Error::msg("expected nested collision slot"));
@@ -279,7 +283,16 @@ fn persistent_hamt_update_copies_selected_path_and_retains_unrelated_child_after
         let map_class = canonical(&mut session, "share-old", &["meta", "cnt", "root", "has_nil_QMARK_", "nil_val", "__hash"]);
         let bitmap_class = canonical(&mut session, "(new suss.core/BitmapIndexedNode nil 0 (array))", &["edit", "bitmap", "arr"]);
         let collision_class = canonical(&mut session, "(new suss.core/HashCollisionNode nil 0 0 (array))", &["edit", "collision_hash", "cnt", "arr"]);
-        let _anchors = (&source_array_class.anchor, &map_class.anchor, &bitmap_class.anchor, &collision_class.anchor);
+        // ABI v3 undefined is the runtime's singleton sentinel struct; capture
+        // the canonical one so source-array holes decode exactly as undefined.
+        let undefined_anchor = session.eval("(aget (array) 0)").unwrap();
+        let undefined = session
+            .inspect(&undefined_anchor, |mut store, value| {
+                assert_eq!(sentinel_tag(&mut store, &value)?, Some(6), "undefined ABI");
+                Ok(value.unwrap_anyref().unwrap().to_owned_rooted(&mut store)?)
+            })
+            .unwrap();
+        let _anchors = (&undefined_anchor, &source_array_class.anchor, &map_class.anchor, &bitmap_class.anchor, &collision_class.anchor);
 
         let old = session.eval("share-old").unwrap();
         let changed = session.eval("share-changed").unwrap();
@@ -292,15 +305,15 @@ fn persistent_hamt_update_copies_selected_path_and_retains_unrelated_child_after
         assert!(!same(&mut session, &old, &old_root, &changed_root), "changed map root is copied");
         assert!(!same(&mut session, &old, &old_root, &other_root), "negative-control map root is copied");
 
-        let old_b0 = node_child(&mut session, &old, &old_root, 0, &bitmap_class, &source_array_class);
-        let old_b1 = node_child(&mut session, &old, &old_root, 1, &bitmap_class, &source_array_class);
-        let changed_b0 = node_child(&mut session, &changed, &changed_root, 0, &bitmap_class, &source_array_class);
-        let changed_b1 = node_child(&mut session, &changed, &changed_root, 1, &bitmap_class, &source_array_class);
-        let other_b0 = node_child(&mut session, &other, &other_root, 0, &bitmap_class, &source_array_class);
-        let other_b1 = node_child(&mut session, &other, &other_root, 1, &bitmap_class, &source_array_class);
-        let old_collision = collision_child(&mut session, &old, &old_b0, &bitmap_class, &collision_class, &source_array_class);
-        let changed_collision = collision_child(&mut session, &changed, &changed_b0, &bitmap_class, &collision_class, &source_array_class);
-        let other_collision = collision_child(&mut session, &other, &other_b0, &bitmap_class, &collision_class, &source_array_class);
+        let old_b0 = node_child(&mut session, &old, &old_root, 0, &bitmap_class, &source_array_class, &undefined);
+        let old_b1 = node_child(&mut session, &old, &old_root, 1, &bitmap_class, &source_array_class, &undefined);
+        let changed_b0 = node_child(&mut session, &changed, &changed_root, 0, &bitmap_class, &source_array_class, &undefined);
+        let changed_b1 = node_child(&mut session, &changed, &changed_root, 1, &bitmap_class, &source_array_class, &undefined);
+        let other_b0 = node_child(&mut session, &other, &other_root, 0, &bitmap_class, &source_array_class, &undefined);
+        let other_b1 = node_child(&mut session, &other, &other_root, 1, &bitmap_class, &source_array_class, &undefined);
+        let old_collision = collision_child(&mut session, &old, &old_b0, &bitmap_class, &collision_class, &source_array_class, &undefined);
+        let changed_collision = collision_child(&mut session, &changed, &changed_b0, &bitmap_class, &collision_class, &source_array_class, &undefined);
+        let other_collision = collision_child(&mut session, &other, &other_b0, &bitmap_class, &collision_class, &source_array_class, &undefined);
 
         assert!(!same(&mut session, &old, &old_b0, &changed_b0), "selected branch 0 copied");
         assert!(same(&mut session, &old, &old_b1, &changed_b1), "untouched branch 1 shared");

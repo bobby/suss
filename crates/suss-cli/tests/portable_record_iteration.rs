@@ -54,13 +54,8 @@ fn record_iterator_matches_pinned_order_and_effects_in_both_phases() {
             let value = session.eval(&source).unwrap();
             session.collect().unwrap();
             let actual = session
-                .inspect(&value, |store, value| {
-                    let raw = value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .expect("Boolean ABI")
-                        .get_u32();
+                .inspect(&value, |mut store, value| {
+                    let raw = suss_cli::portable_session::sentinel_tag(&mut store, &value)?.expect("Boolean ABI");
                     Ok(match raw {
                         2 => false,
                         4 => true,
@@ -109,13 +104,8 @@ fn record_iterator_survives_with_only_host_handle_and_mutates_across_fragments()
         let result = session.invoke(&exhausted, &[&iterator]).unwrap();
         session.collect().unwrap();
         session
-            .inspect(&result, |store, value| {
-                let raw = value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .expect("Boolean ABI")
-                    .get_u32();
+            .inspect(&result, |mut store, value| {
+                let raw = suss_cli::portable_session::sentinel_tag(&mut store, &value)?.expect("Boolean ABI");
                 assert_eq!(
                     raw, 2,
                     "iterator exhausted after both independent invocations"

@@ -86,7 +86,7 @@ fn lazy_result_interrupt_is_synchronized_after_thunk_effects_and_recovers() {
             .data_inspect_calls(
                 &spin,
                 &setter,
-                |mut store, spin, args_new, invoke, setter| {
+                |mut store, spin, args_new, invoke, setter, _undefined| {
                     let object = spin
                         .unwrap_anyref()
                         .unwrap()

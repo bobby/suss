@@ -131,13 +131,8 @@ fn exception_info_distinguishes_false_nil_and_missing_constructor_fields() {
     ] {
         let value = s.eval(source).unwrap();
         let sentinel = s
-            .inspect(&value, |store, value| {
-                Ok(value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32())
+            .inspect(&value, |mut store, value| {
+                Ok(suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap())
             })
             .unwrap();
         assert_eq!(sentinel, expected, "{source}");

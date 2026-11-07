@@ -48,7 +48,8 @@ fn imported_identity_preserves_exact_values_and_object_identity_across_gc() {
         let original = session.eval(source).unwrap();
         let root = session
             .inspect(&original, |store, value| {
-                value.unwrap_anyref().unwrap().to_owned_rooted(store)
+                // ABI v3 nil is the null reference: there is nothing to root.
+                value.unwrap_anyref().map(|value| value.to_owned_rooted(store)).transpose()
             })
             .unwrap();
         session.collect().unwrap();
@@ -56,11 +57,11 @@ fn imported_identity_preserves_exact_values_and_object_identity_across_gc() {
         session.collect().unwrap();
         assert!(
             session
-                .inspect(&returned, |store, value| Rooted::ref_eq(
-                    &store,
-                    &root,
-                    value.unwrap_anyref().unwrap()
-                ))
+                .inspect(&returned, |store, value| match (&root, value.unwrap_anyref()) {
+                    (None, None) => Ok(true),
+                    (Some(root), Some(value)) => Rooted::ref_eq(&store, root, value),
+                    _ => Ok(false),
+                })
                 .unwrap(),
             "{source}"
         );
@@ -161,13 +162,8 @@ fn imported_core_matches_independently_decoded_pinned_scalar_corpus() {
             }
             "nil" | "bool" => {
                 let sentinel = session
-                    .inspect(&value, |store, value| {
-                        Ok(value
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_i31(&store)?
-                            .unwrap()
-                            .get_u32())
+                    .inspect(&value, |mut store, value| {
+                        Ok(suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap())
                     })
                     .unwrap();
                 match sentinel {
@@ -198,13 +194,8 @@ fn imported_core_matches_independently_decoded_pinned_scalar_corpus() {
 
 fn boolean(session: &mut Session, value: &SessionValue) -> bool {
     session
-        .inspect(value, |store, value| {
-            match value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32()
+        .inspect(value, |mut store, value| {
+            match suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap()
             {
                 2 => Ok(false),
                 4 => Ok(true),

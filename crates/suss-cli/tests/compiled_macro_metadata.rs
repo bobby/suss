@@ -1,4 +1,5 @@
 use suss_cli::{portable_macro_data::FormBridge, portable_session::Session};
+use suss_compile::portable_session::sentinel_tag;
 use suss_reader::forms::{Kind, read_forms};
 
 #[test]
@@ -85,12 +86,7 @@ fn compiled_macro_metadata_desugars_and_merges_prefixes_with_outer_precedence() 
             .unwrap_or_else(|failure| panic!("{source}: {failure:?}"));
         assert!(
             session
-                .inspect(&value, |store, value| Ok(value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32()
+                .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()
                     == 4))
                 .unwrap(),
             "{source}"
@@ -125,12 +121,7 @@ fn compiled_macro_metadata_match_fresh_pinned_scalar_observations_in_both_phases
             let actual = session
                 .inspect(&value, |mut store, value| {
                     Ok(if case["expected"]["tag"] == "bool" {
-                        let n = value
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_i31(&store)?
-                            .unwrap()
-                            .get_u32();
+                        let n = sentinel_tag(&mut store, &value)?.unwrap();
                         let v = match n {
                             2 => false,
                             4 => true,
@@ -224,12 +215,7 @@ fn compiled_macro_metadata_captures_with_meta_before_literal_entry_effects() {
         .unwrap();
     assert!(
         session
-            .inspect(&value, |store, value| Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32()
+            .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()
                 == 4))
             .unwrap()
     );
@@ -247,12 +233,7 @@ fn compiled_macro_remainder_preserves_operand_order_arity_errors_and_recovers_af
     let value = session.eval("(and (== trace 12) (== result 1.5))").unwrap();
     assert!(
         session
-            .inspect(&value, |store, value| Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32()
+            .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()
                 == 4))
             .unwrap()
     );
@@ -264,12 +245,7 @@ fn compiled_macro_remainder_preserves_operand_order_arity_errors_and_recovers_af
     let value = session.eval("(== trace 3)").unwrap();
     assert!(
         session
-            .inspect(&value, |store, value| Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32()
+            .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()
                 == 4))
             .unwrap()
     );
@@ -312,12 +288,7 @@ fn compiled_macro_remainder_preserves_operand_order_arity_errors_and_recovers_af
     let value = session.eval("(== trace 123)").unwrap();
     assert!(
         session
-            .inspect(&value, |store, value| Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32()
+            .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()
                 == 4))
             .unwrap()
     );
@@ -348,12 +319,7 @@ fn compiled_macro_metadata_evaluates_ordinary_literal_expressions_after_reader_m
                 .unwrap_or_else(|failure| panic!("{source}: {failure:?}"));
             assert!(
                 session
-                    .inspect(&value, |store, value| Ok(value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .unwrap()
-                        .get_u32()
+                    .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()
                         == 4))
                     .unwrap(),
                 "{source}"
@@ -365,12 +331,7 @@ fn compiled_macro_metadata_evaluates_ordinary_literal_expressions_after_reader_m
         let value = session.eval("(and (== metadata-trace 123) (== (get (meta metadata-result) :answer) 7) (== (get (meta metadata-result) :extra) 8) (== (nth metadata-result 0) 42))").unwrap();
         assert!(
             session
-                .inspect(&value, |store, value| Ok(value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32()
+                .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()
                     == 4))
                 .unwrap()
         );
@@ -418,12 +379,7 @@ fn compiled_macro_metadata_keeps_distinct_duplicate_map_syntax_keys() {
             let value = session.eval(source).unwrap();
             assert!(
                 session
-                    .inspect(&value, |store, value| Ok(value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .unwrap()
-                        .get_u32()
+                    .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()
                         == 4))
                     .unwrap(),
                 "{source}"

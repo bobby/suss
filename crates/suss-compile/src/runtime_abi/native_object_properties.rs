@@ -237,10 +237,8 @@ pub(super) fn functions(b: &mut Builder) {
         &code,
     );
     for strict in [false, true] {
-        code = vec![LocalGet(2), RefIsNull, If(BlockType::Empty)];
-        nominal::error(&mut code);
-        code.extend([
-            End,
+        // Any value may be set, nil (a null reference) included.
+        code = vec![
             LocalGet(1),
             Call(b.names["coerce-string"]),
             LocalSet(3),
@@ -287,7 +285,7 @@ pub(super) fn functions(b: &mut Builder) {
             Call(b.names["object-method-invoke"]),
             Drop,
             Else,
-        ]);
+        ];
         if strict {
             nominal::error(&mut code);
         }

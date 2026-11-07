@@ -1,4 +1,5 @@
 use suss_cli::portable_session::Session;
+use suss_compile::portable_session::sentinel_tag;
 use wasmtime::Val;
 
 #[test]
@@ -41,14 +42,9 @@ fn named_properties_match_independently_decoded_primary_observations_after_gc() 
             }
             "nil" => {
                 session
-                    .inspect(&value, |store, value| {
+                    .inspect(&value, |mut store, value| {
                         assert_eq!(
-                            value
-                                .unwrap_anyref()
-                                .unwrap()
-                                .as_i31(&store)?
-                                .unwrap()
-                                .get_u32(),
+                            sentinel_tag(&mut store, &value)?.unwrap(),
                             0
                         );
                         Ok(())
@@ -58,13 +54,8 @@ fn named_properties_match_independently_decoded_primary_observations_after_gc() 
             }
             "bool" => {
                 let boolean = session
-                    .inspect(&value, |store, value| {
-                        let sentinel = value
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_i31(&store)?
-                            .unwrap()
-                            .get_u32();
+                    .inspect(&value, |mut store, value| {
+                        let sentinel = sentinel_tag(&mut store, &value)?.unwrap();
                         match sentinel {
                             2 => Ok(false),
                             4 => Ok(true),
@@ -127,9 +118,9 @@ fn malformed_or_unsupported_named_forms_preserve_session_and_recover() {
         .unwrap();
     session.collect().unwrap();
     session
-        .inspect(&absent, |store, value| {
+        .inspect(&absent, |mut store, value| {
             assert_eq!(
-                value.unwrap_anyref().unwrap().as_i31(&store)?.expect("undefined ABI").get_u32(),
+                sentinel_tag(&mut store, &value)?.expect("undefined ABI"),
                 6,
                 "absent hyphenated property must be canonical undefined after GC"
             );
@@ -179,14 +170,9 @@ fn malformed_or_unsupported_named_forms_preserve_session_and_recover() {
     let removed = session.eval("(aget named-array 0)").unwrap();
     session.collect().unwrap();
     session
-        .inspect(&removed, |store, value| {
+        .inspect(&removed, |mut store, value| {
             assert_eq!(
-                value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32(),
+                sentinel_tag(&mut store, &value)?.unwrap(),
                 6
             );
             Ok(())
@@ -224,8 +210,8 @@ fn named_access_uses_canonical_storage_without_changing_raw_lexical_names() {
     session.collect().unwrap();
     let missing = session.eval("(.-null named-review-reserved)").unwrap();
     session.collect().unwrap();
-    session.inspect(&missing, |store, value| {
-        assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store)?.expect("undefined ABI").get_u32(), 6,
+    session.inspect(&missing, |mut store, value| {
+        assert_eq!(sentinel_tag(&mut store, &value)?.expect("undefined ABI"), 6,
             "raw absent property must be canonical undefined after GC");
         Ok(())
     }).unwrap();
@@ -272,15 +258,15 @@ fn constructor_prototype_is_stable_and_callable_attributes_remain_explicit_error
     let stable_prototype = session
         .eval("(identical? (.-prototype NamedHostBoundary) (.-prototype NamedHostBoundary))")
         .unwrap();
-    session.inspect(&stable_prototype, |store, value| {
-        assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 4);
+    session.inspect(&stable_prototype, |mut store, value| {
+        assert_eq!(sentinel_tag(&mut store, &value)?.unwrap(), 4);
         Ok(())
     }).unwrap();
     let constructor = session
         .eval("(identical? (.-constructor named-host-object) NamedHostBoundary)")
         .unwrap();
-    session.inspect(&constructor, |store, value| {
-        assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 4);
+    session.inspect(&constructor, |mut store, value| {
+        assert_eq!(sentinel_tag(&mut store, &value)?.unwrap(), 4);
         Ok(())
     }).unwrap();
     for source in [

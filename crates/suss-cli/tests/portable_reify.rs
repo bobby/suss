@@ -37,13 +37,8 @@ fn reify_preserves_capture_metadata_and_nominal_identity_in_both_phases() {
             let value = session.eval(source).unwrap();
             session.collect().unwrap();
             let actual = session
-                .inspect(&value, |store, value| {
-                    let raw = value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .expect("Boolean ABI")
-                        .get_u32();
+                .inspect(&value, |mut store, value| {
+                    let raw = suss_cli::portable_session::sentinel_tag(&mut store, &value)?.expect("Boolean ABI");
                     Ok(match raw {
                         2 => false,
                         4 => true,

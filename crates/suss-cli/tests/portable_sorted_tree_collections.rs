@@ -1,6 +1,7 @@
 //! Execute retained sorted collections and independently decode their contracts.
 #[path = "../../suss-compile/tests/support/portable_decode.rs"]
 mod portable_decode;
+use suss_compile::portable_session::sentinel_tag;
 use portable_decode::{Decoder, Observation};
 use serde_json::{Value, json};
 use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
@@ -81,12 +82,7 @@ fn error_json(
             for index in [2, 3] {
                 let field = owner.field(&mut store, index)?;
                 assert_eq!(
-                    field
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .unwrap()
-                        .get_u32(),
+                    sentinel_tag(&mut store, &field)?.unwrap(),
                     0
                 );
             }
@@ -176,6 +172,14 @@ fn field(
     anchor: &SessionValue,
     path: &[(&[&str], &str)],
 ) -> OwnedRooted<AnyRef> {
+    nullable_field(session, anchor, path).expect("non-nil field")
+}
+// ABI v3 nil is a null reference, so a nil field has no rooted reference.
+fn nullable_field(
+    session: &mut Session,
+    anchor: &SessionValue,
+    path: &[(&[&str], &str)],
+) -> Option<OwnedRooted<AnyRef>> {
     session
         .inspect(anchor, |mut store, mut value| {
             for (names, wanted) in path {
@@ -230,7 +234,10 @@ fn field(
                     names.iter().position(|n| *n == *wanted).unwrap() as u32,
                 )?;
             }
-            value.unwrap_anyref().unwrap().to_owned_rooted(&mut store)
+            Ok(match value.unwrap_anyref() {
+                Some(reference) => Some(reference.to_owned_rooted(&mut store)?),
+                None => None,
+            })
         })
         .unwrap()
 }
@@ -492,14 +499,15 @@ fn assert_rotation_shape(
     ancestors: &mut Vec<OwnedRooted<AnyRef>>,
 ) {
     assert!(ancestors.len() < 64);
-    let actual = field(session, anchor, path);
+    let actual = nullable_field(session, anchor, path);
+    if expected.is_null() {
+        assert!(actual.is_none(), "nil tree child");
+        return;
+    }
+    let actual = actual.expect("non-nil tree child");
     session
         .inspect(anchor, |mut store, _| {
             let rooted = actual.to_rooted(&mut store);
-            if expected.is_null() {
-                assert_eq!(rooted.as_i31(&store)?.expect("nil tree child").get_u32(), 0);
-                return Ok(());
-            }
             for parent in ancestors.iter() {
                 assert!(
                     !wasmtime::Rooted::ref_eq(&store, parent, &actual)?,
@@ -525,9 +533,6 @@ fn assert_rotation_shape(
             Ok(())
         })
         .unwrap();
-    if expected.is_null() {
-        return;
-    }
     ancestors.push(actual);
     for name in ["key", "val"] {
         let mut child_path = path.to_vec();
@@ -548,15 +553,9 @@ fn assert_rotation_shape(
     }
     let mut hash_path = path.to_vec();
     hash_path.push((NODE_FIELDS, "__hash"));
-    let hash = field(session, anchor, &hash_path);
-    session
-        .inspect(anchor, |mut store, _| {
-            assert!(expected["hash"].is_null());
-            let rooted = hash.to_rooted(&mut store);
-            assert_eq!(rooted.as_i31(&store)?.expect("nil hash").get_u32(), 0);
-            Ok(())
-        })
-        .unwrap();
+    let hash = nullable_field(session, anchor, &hash_path);
+    assert!(expected["hash"].is_null());
+    assert!(hash.is_none(), "nil hash");
     for name in ["left", "right"] {
         let mut child_path = path.to_vec();
         child_path.push((NODE_FIELDS, name));

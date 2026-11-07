@@ -36,13 +36,8 @@ fn source_throw_keeps_exact_scalar_payloads_and_recovers_after_gc() {
         let payload = language(&mut session, source);
         session.collect().unwrap();
         let actual = session
-            .inspect(&payload, |store, value| {
-                Ok(value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32())
+            .inspect(&payload, |mut store, value| {
+                Ok(suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap())
             })
             .unwrap();
         assert_eq!(actual, expected);
@@ -300,12 +295,7 @@ fn unhandled_nil_and_closure_run_cleanup_without_replacing_payload() {
     assert_eq!(eval_number(&mut session, "counter"), 1.0f64.to_bits());
     assert_eq!(
         session
-            .inspect(&nil, |store, value| Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32()))
+            .inspect(&nil, |mut store, value| Ok(suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap()))
             .unwrap(),
         0
     );

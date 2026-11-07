@@ -1,6 +1,6 @@
 //! Execute future GC storage only; no scheduler/source futures/WIT acceptance.
 mod support;
-use suss_compile::runtime_abi;
+use suss_compile::{portable_session::sentinel_tag, runtime_abi};
 use wasmtime::{
     AsContextMut, Instance, Module, RootScope, Rooted, Store, StructRef, StructRefPre, Val,
 };
@@ -94,12 +94,12 @@ impl Harness {
         ))
     }
     fn same(&self, left: &Val, right: &Val) -> bool {
-        Rooted::ref_eq(
-            &self.store,
-            left.unwrap_anyref().unwrap(),
-            right.unwrap_anyref().unwrap(),
-        )
-        .unwrap()
+        // ABI v3 nil is a null eqref; two nils are the same value.
+        match (left.unwrap_anyref(), right.unwrap_anyref()) {
+            (None, None) => true,
+            (Some(left), Some(right)) => Rooted::ref_eq(&self.store, left, right).unwrap(),
+            _ => false,
+        }
     }
     fn rejected(&mut self, name: &str, args: &[Val]) {
         let error = self
@@ -643,14 +643,8 @@ fn fuel_exhaustion_cannot_publish_a_partial_terminal_outcome() {
             let stored = outcome.get(&mut scope, 1).unwrap();
             if observed == 0 || observed == 3 {
                 assert_eq!(
-                    stored
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&scope)
-                        .unwrap()
-                        .unwrap()
-                        .get_u32(),
-                    0
+                    sentinel_tag(&mut scope, &stored).unwrap(),
+                    Some(runtime_abi::NIL as u32)
                 );
             } else {
                 assert!(

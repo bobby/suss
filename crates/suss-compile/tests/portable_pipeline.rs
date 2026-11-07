@@ -1,5 +1,5 @@
 mod support;
-use suss_compile::{portable, runtime_abi};
+use suss_compile::{portable, portable_session::sentinel_tag, runtime_abi};
 use wasmtime::{Instance, Linker, Module, Store, Val};
 
 fn execute(source: &str) -> (Store<()>, Val) {
@@ -246,16 +246,10 @@ fn number(source: &str) -> f64 {
 }
 #[test]
 fn empty_let_body_returns_nil() {
-    let (store, value) = execute("(let [x 1])");
+    let (mut store, value) = execute("(let [x 1])");
     assert_eq!(
-        value
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
-        0
+        sentinel_tag(&mut store, &value).unwrap(),
+        Some(runtime_abi::NIL as u32)
     );
 }
 #[test]
@@ -625,17 +619,17 @@ fn edge_parameter_replacements_are_parallel_in_executed_ir() {
     assert_eq!(result, 10.0); // sequential replacement would incorrectly produce zero
 }
 fn tagged(store: &mut Store<()>, value: &Val) -> serde_json::Value {
-    let reference = value
-        .unwrap_anyref()
-        .expect("unexpected Wasm null, not language nil");
-    if let Some(i31) = reference.as_i31(&*store).unwrap() {
-        return match i31.get_u32() {
+    if let Some(tag) = sentinel_tag(&mut *store, value).unwrap() {
+        return match tag {
             0 | 6 => serde_json::json!({"tag":"nil"}),
             2 => serde_json::json!({"tag":"bool","value":false}),
             4 => serde_json::json!({"tag":"bool","value":true}),
-            _ => panic!("unknown i31 runtime value"),
+            _ => panic!("unknown runtime sentinel"),
         };
     }
+    let reference = value
+        .unwrap_anyref()
+        .expect("a non-sentinel runtime value is a reference");
     if let Some(object) = reference.as_struct(&*store).unwrap() {
         let fields = object.fields(&mut *store).unwrap().collect::<Vec<_>>();
         let [Val::F64(bits)] = fields.as_slice() else {
@@ -823,16 +817,10 @@ fn primitive_let_star_keeps_sequential_bindings_and_special_form_identity() {
         number("(let [let* 99] (let* [base 40 copy (+ base 2)] copy))"),
         42.0
     );
-    let (store, value) = execute("(let* [copy 42])");
+    let (mut store, value) = execute("(let* [copy 42])");
     assert_eq!(
-        value
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
-        0
+        sentinel_tag(&mut store, &value).unwrap(),
+        Some(runtime_abi::NIL as u32)
     );
 }
 

@@ -356,12 +356,7 @@ fn exhausted_analysis_metadata_budget_preserves_effects_and_session_state() {
     let value = session.eval("(== effects 0)").unwrap();
     assert_eq!(
         session
-            .inspect(&value, |store, value| Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32()))
+            .inspect(&value, |mut store, value| Ok(suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap()))
             .unwrap(),
         4
     );
@@ -499,7 +494,7 @@ fn native_analysis_graph_retains_staged_definition_and_function_syntax() {
             assert!(matches!(&values[5].kind, Kind::Bool(true)));
         }
         let result = session.eval("(== (+ (staged 1) (staged 1 2 3)) 84)").unwrap();
-        assert_eq!(session.inspect(&result, |store, value| Ok(value.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32())).unwrap(), 4);
+        assert_eq!(session.inspect(&result, |mut store, value| Ok(suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap())).unwrap(), 4);
     }
 }
 

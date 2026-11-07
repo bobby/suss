@@ -187,8 +187,8 @@ fn cli_prints_documents_that_suss_reads() {
     let value = session.eval_with_macros(&program, &mut macros).unwrap_or_else(|error| panic!("{error:?}"));
     session.collect().unwrap();
     session
-        .inspect(&value, |store, value| {
-            let bits = value.unwrap_anyref().and_then(|v| v.as_i31(&store).ok().flatten()).map(|v| v.get_u32());
+        .inspect(&value, |mut store, value| {
+            let bits = suss_cli::portable_session::sentinel_tag(&mut store, &value)?;
             assert_eq!(bits, Some(4), "the Suss walk disagrees");
             Ok(())
         })

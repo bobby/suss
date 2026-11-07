@@ -1,5 +1,9 @@
 //! Execute the shipped source API, rather than asserting only Wasm encoding.
-use suss_compile::{portable_macros::CompiledMacros, portable_session::Session};
+use suss_compile::{
+    portable_macros::CompiledMacros,
+    portable_session::{sentinel_tag, Session},
+    runtime_abi,
+};
 
 fn session() -> (Session, CompiledMacros) {
     let mut session = Session::new_repl().unwrap();
@@ -12,15 +16,10 @@ fn assert_true(session: &mut Session, source: &str) {
     let value = session.eval(source).unwrap();
     session.collect().unwrap();
     session
-        .inspect(&value, |store, value| {
+        .inspect(&value, |mut store, value| {
             assert_eq!(
-                value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32(),
-                4,
+                sentinel_tag(&mut store, &value)?,
+                Some(runtime_abi::TRUE as u32),
                 "{source}"
             );
             Ok(())

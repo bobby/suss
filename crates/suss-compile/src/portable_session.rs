@@ -1151,6 +1151,7 @@ impl Session {
             wasmtime::Func,
             wasmtime::Func,
             Val,
+            Val,
         ) -> wasmtime::Result<R>,
     ) -> Result<R, SessionError> {
         self.check(function)?;
@@ -1163,9 +1164,15 @@ impl Session {
             .runtime
             .get_func(&mut self.store, "invoke")
             .expect("runtime invoke");
+        let runtime = self.runtime;
         self.inspect(value, |mut store, value| {
             let function = Val::AnyRef(function.rooted(&mut store));
-            f(store, value, args_new, invoke, function)
+            // The undefined sentinel, which reads in place of a source-array hole.
+            let undefined = runtime
+                .get_global(&mut store, "sentinel-undefined")
+                .expect("runtime undefined")
+                .get(&mut store);
+            f(store, value, args_new, invoke, function, undefined)
         })
     }
     fn budget(&mut self) -> Result<(), SessionError> {

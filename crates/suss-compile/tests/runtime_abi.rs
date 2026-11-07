@@ -1,7 +1,46 @@
-//! Execute production ABI v2 runtime bytes, independently of Suss printing/equality.
+//! Execute production ABI v3 runtime bytes, independently of Suss printing/equality.
 mod support;
+/// First type index a fragment appends after the shared ABI v3 prelude.
+const APPENDED: u32 = suss_compile::runtime_abi::LONG + 1;
 use suss_compile::runtime_abi;
 use wasmtime::{Instance, Module, Store, Val};
+
+/// The ABI v3 sentinel tag of a language value: 0 nil, 2 false, 4 true, 6 undefined.
+#[track_caller]
+fn sentinel_of(store: &mut Store<()>, value: &Val) -> u32 {
+    suss_compile::portable_session::sentinel_tag(&mut *store, value)
+        .unwrap()
+        .expect("nil, Boolean or undefined sentinel")
+}
+
+/// A runtime sentinel value: nil is a null eqref; the others are runtime globals.
+fn sentinel_value(store: &mut Store<()>, runtime: Instance, tag: i32) -> Val {
+    if tag == runtime_abi::NIL {
+        return Val::AnyRef(None);
+    }
+    let (name, _) = runtime_abi::SENTINEL_EXPORTS
+        .into_iter()
+        .find(|(_, candidate)| *candidate == tag)
+        .expect("sentinel tag");
+    runtime.get_global(&mut *store, name).unwrap().get(&mut *store)
+}
+
+/// A host-built SENTINEL struct with an unknown tag: the ABI v3 shape of a
+/// forged sentinel, distinct from every runtime singleton.
+fn forged_sentinel(store: &mut Store<()>, runtime: Instance, tag: i32) -> Val {
+    let genuine = sentinel_value(store, runtime, runtime_abi::FALSE);
+    let ty = genuine
+        .unwrap_anyref()
+        .unwrap()
+        .as_struct(&*store)
+        .unwrap()
+        .unwrap()
+        .ty(&*store)
+        .unwrap();
+    let pre = wasmtime::StructRefPre::new(&mut *store, ty);
+    let forged = wasmtime::StructRef::new(&mut *store, &pre, &[Val::I32(tag)]).unwrap();
+    Val::AnyRef(Some(forged.to_anyref()))
+}
 
 #[test]
 fn runtime_abi_owned_prototype_call_refs_use_typed_globals() {
@@ -340,10 +379,10 @@ fn fragment(producer: bool) -> Vec<u8> {
     if producer {
         types.ty().function([ValType::F64], [value]);
         types.ty().function([ValType::I32], [value]);
-        imports.import("rt", "number-box", EntityType::Function(10));
-        imports.import("rt", "string-new", EntityType::Function(11));
+        imports.import("rt", "number-box", EntityType::Function(APPENDED));
+        imports.import("rt", "string-new", EntityType::Function(APPENDED + 1));
         for (i, name) in ["number", "string"].iter().enumerate() {
-            functions.function(10 + i as u32);
+            functions.function(APPENDED + i as u32);
             exports.export(name, ExportKind::Func, 2 + i as u32);
             let mut function = Function::new([]);
             function
@@ -355,7 +394,7 @@ fn fragment(producer: bool) -> Vec<u8> {
     } else {
         types.ty().function([value], [ValType::F64]);
         types.ty().function([value, ValType::I32], [ValType::I32]);
-        functions.function(10).function(11);
+        functions.function(APPENDED).function(APPENDED + 1);
         exports
             .export("number", ExportKind::Func, 0)
             .export("unit", ExportKind::Func, 1);
@@ -452,9 +491,9 @@ fn initializer(manifest: &runtime_abi::Manifest) -> Vec<u8> {
     let mut types = runtime_abi::prelude();
     types.ty().function([], []);
     let mut imports = ImportSection::new();
-    imports.import("host", "mark", EntityType::Function(10));
+    imports.import("host", "mark", EntityType::Function(APPENDED));
     let mut functions = FunctionSection::new();
-    functions.function(10);
+    functions.function(APPENDED);
     let mut function = Function::new([]);
     function
         .instruction(&Instruction::Call(0))
@@ -515,7 +554,7 @@ fn runtime_abi_manifest_gate_precedes_initializer_effects() {
         assert_eq!(*store.data(), 0);
     }
     let mut altered = initializer(&expected);
-    let marker = [0x4e, 10, 0x5f, 1, 0x7c, 0]; // rec(10), struct, one f64 field
+    let marker = [0x4e, 12, 0x5f, 1, 0x7c, 0]; // rec(12), struct, one f64 field
     let offset = altered
         .windows(marker.len())
         .position(|bytes| bytes == marker)
@@ -571,18 +610,18 @@ fn closure_fragment(catcher: bool) -> Vec<u8> {
     let mut code = CodeSection::new();
     let mut elements = ElementSection::new();
     if catcher {
-        types.ty().function([value, value], [value]); // 10
-        types.ty().function([value], []); // 11
-        imports.import("rt", "invoke", EntityType::Function(10));
+        types.ty().function([value, value], [value]); // APPENDED
+        types.ty().function([value], []); // APPENDED + 1
+        imports.import("rt", "invoke", EntityType::Function(APPENDED));
         imports.import(
             "rt",
             "language-exception",
             EntityType::Tag(TagType {
                 kind: TagKind::Exception,
-                func_type_idx: 11,
+                func_type_idx: APPENDED + 1,
             }),
         );
-        functions.function(10);
+        functions.function(APPENDED);
         exports.export("call", ExportKind::Func, 1);
         let mut function = Function::new([]);
         function
@@ -610,12 +649,12 @@ fn closure_fragment(catcher: bool) -> Vec<u8> {
                 ValType::I32,
             ],
             [value],
-        ); // 10
+        ); // APPENDED
         types
             .ty()
-            .function([value, ValType::I32, ValType::I32], [value]); // 11
-        imports.import("rt", "closure-new", EntityType::Function(10));
-        functions.function(3).function(11);
+            .function([value, ValType::I32, ValType::I32], [value]); // APPENDED + 1
+        imports.import("rt", "closure-new", EntityType::Function(APPENDED));
+        functions.function(3).function(APPENDED + 1);
         exports.export("make", ExportKind::Func, 2);
         elements.declared(Elements::Functions(Cow::Borrowed(&[1])));
         let mut callback = Function::new([]);
@@ -778,11 +817,8 @@ fn runtime_abi_closures_check_arity_and_keep_old_captures_after_rebinding() {
         .map(|i| message.get(&mut store, i).unwrap().i32().unwrap() as u16)
         .collect();
     assert_eq!(String::from_utf16(&units).unwrap(), "Wrong arity");
-    for field in &fields[2..] {
-        let Val::AnyRef(Some(nil)) = field else {
-            panic!("expected nil sentinel")
-        };
-        assert_eq!(nil.as_i31(&store).unwrap().unwrap().get_i32(), 0);
+    for field in &fields[2..4] {
+        assert!(matches!(field, Val::AnyRef(None)), "expected nil");
     }
     runtime
         .get_func(&mut store, "args-new")
@@ -858,13 +894,7 @@ fn runtime_abi_numeric_operations_and_sentinels_execute() {
             .unwrap()
             .call(&mut store, &[], &mut result)
             .unwrap();
-        let Val::AnyRef(Some(reference)) = &result[0] else {
-            panic!("expected sentinel")
-        };
-        assert_eq!(
-            reference.as_i31(&store).unwrap().unwrap().get_i32(),
-            expected
-        );
+        assert_eq!(sentinel_of(&mut store, &result[0]), expected);
     }
     for (name, a, b, expected) in [
         ("number-subtract", 3.0f64, 5.0f64, -2.0f64),
@@ -1091,8 +1121,8 @@ fn nominal_fragment() -> Vec<u8> {
         types
             .ty()
             .function(params.iter().copied(), results.iter().copied());
-        imports.import("rt", name, EntityType::Function(10 + index));
-        functions.function(10 + index);
+        imports.import("rt", name, EntityType::Function(APPENDED + index));
+        functions.function(APPENDED + index);
         exports.export(name, ExportKind::Func, signatures.len() as u32 + index);
         let mut function = Function::new([]);
         for argument in 0..params.len() {
@@ -1106,7 +1136,7 @@ fn nominal_fragment() -> Vec<u8> {
     // Deliberately malformed descriptors remain valid Wasm with the exact prelude.
     // They probe guards and prove numeric identity alone cannot forge a type.
     types.ty().function([value, value, ValType::I64], [value]);
-    functions.function(10 + signatures.len() as u32);
+    functions.function(APPENDED + signatures.len() as u32);
     exports.export(
         "forge-descriptor",
         ExportKind::Func,
@@ -1137,6 +1167,7 @@ fn nominal_fragment() -> Vec<u8> {
     module.finish()
 }
 
+#[track_caller]
 fn nominal_value(store: &mut Store<()>, instance: Instance, name: &str, args: &[Val]) -> Val {
     let mut result = [Val::null_any_ref()];
     // Descriptors built here declare no mutable field names (#278) and no
@@ -1424,13 +1455,7 @@ fn runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_
     .unwrap());
     let missing = nominal_value(&mut store, consumer, "protocol-method-get", &[b, key]);
     assert_eq!(
-        missing
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_i32(),
+        sentinel_of(&mut store, &missing),
         0
     );
     // Field construction copied the argument storage; mutation did not rewrite it.
@@ -1443,13 +1468,7 @@ fn runtime_abi_nominal_identity_fields_and_live_protocols_cross_fragments_after_
         .get(&mut store, 0)
         .unwrap();
     assert_eq!(
-        original
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_i32(),
+        sentinel_of(&mut store, &original),
         0
     );
 }
@@ -1621,13 +1640,7 @@ fn runtime_abi_nominal_bad_inputs_throw_language_errors_before_storage_access() 
         &[object, Val::I32(0)],
     );
     assert_eq!(
-        field
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_i32(),
+        sentinel_of(&mut store, &field),
         0
     );
     let missing = nominal_value(
@@ -1637,13 +1650,7 @@ fn runtime_abi_nominal_bad_inputs_throw_language_errors_before_storage_access() 
         &[descriptor.clone(), descriptor],
     );
     assert_eq!(
-        missing
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_i32(),
+        sentinel_of(&mut store, &missing),
         0
     );
 }
@@ -1919,13 +1926,7 @@ fn runtime_abi_closure_properties_keep_assigned_values_through_gc_and_reject_bad
         .call(&mut store, &function, &mut environment)
         .unwrap();
     assert_eq!(
-        environment[0]
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &environment[0]),
         0
     );
     let mut args = [Val::null_any_ref()];
@@ -1945,13 +1946,7 @@ fn runtime_abi_closure_properties_keep_assigned_values_through_gc_and_reject_bad
         )
         .unwrap();
     assert_eq!(
-        result[0]
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &result[0]),
         4
     );
 }
@@ -2058,7 +2053,7 @@ fn runtime_abi_accepts_foreign_raw_closure_environments_without_properties() {
     let mut types = runtime_abi::prelude();
     types.ty().function([value], [value]);
     let mut functions = FunctionSection::new();
-    functions.function(3).function(10);
+    functions.function(3).function(APPENDED);
     let mut exports = ExportSection::new();
     exports.export("make", ExportKind::Func, 1);
     let mut elements = ElementSection::new();
@@ -2144,13 +2139,7 @@ fn runtime_abi_accepts_foreign_raw_closure_environments_without_properties() {
         .call(&mut store, &[function[0].clone(), Val::I32(0)], &mut result)
         .unwrap();
     assert_eq!(
-        result[0]
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &result[0]),
         0
     );
     let error = runtime
@@ -2520,13 +2509,7 @@ fn runtime_abi_named_storage_preserves_native_keys_and_rejects_malformed_tables(
         &[owner.clone(), other_name.clone()],
     );
     assert_eq!(
-        actual
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_i32(),
+        sentinel_of(&mut store, &actual),
         0
     );
     let actual = nominal_value(
@@ -2740,7 +2723,7 @@ fn runtime_abi_object_method_tables_and_wrappers_reject_corruption_without_trapp
     let value = wasm_encoder::ValType::Ref(wasm_encoder::RefType::EQREF);
     types.ty().function([value, value], [value]);
     let mut functions = wasm_encoder::FunctionSection::new();
-    functions.function(10);
+    functions.function(APPENDED);
     let mut exports = wasm_encoder::ExportSection::new();
     exports.export("copy-callback", wasm_encoder::ExportKind::Func, 0);
     let mut code = wasm_encoder::CodeSection::new();
@@ -2995,10 +2978,7 @@ fn runtime_abi_variadic_bitwise_callback_rejects_bad_cells_without_trapping() {
         &[],
     )
     .unwrap();
-    let nil = Val::AnyRef(Some(wasmtime::AnyRef::from_i31(
-        &mut store,
-        wasmtime::I31::new_u32(0).unwrap(),
-    )));
+    let nil = Val::AnyRef(None);
     let mut args = [Val::null_any_ref()];
     runtime
         .get_func(&mut store, "args-new")
@@ -3189,7 +3169,7 @@ fn runtime_abi_string_method_copied_callbacks_and_corrupt_environments_do_not_tr
     let value = wasm_encoder::ValType::Ref(wasm_encoder::RefType::EQREF);
     types.ty().function([value, value], [value]);
     let mut functions = wasm_encoder::FunctionSection::new();
-    functions.function(10);
+    functions.function(APPENDED);
     let mut exports = wasm_encoder::ExportSection::new();
     exports.export("copy-callback", wasm_encoder::ExportKind::Func, 0);
     let mut code = wasm_encoder::CodeSection::new();
@@ -3411,11 +3391,9 @@ fn runtime_abi_binary64_scalar_adapters_reject_foreign_values_and_recover_after_
     .unwrap();
     let nil = nominal_value(&mut store, runtime, "nil", &[]);
     let opaque = nominal_value(&mut store, runtime, "args-new", &[Val::I32(2)]);
-    let invalid_sentinel = Val::AnyRef(Some(wasmtime::AnyRef::from_i31(
-        &mut store,
-        wasmtime::I31::new_u32(99).unwrap(),
-    )));
-    for input in [opaque, invalid_sentinel, Val::null_any_ref()] {
+    let invalid_sentinel = forged_sentinel(&mut store, runtime, 99);
+    // A null eqref is nil in ABI v3, which coerces (below); it is no longer foreign.
+    for input in [opaque, invalid_sentinel] {
         store.gc(None).unwrap();
         for name in [
             "primitive-f64-coerce",
@@ -3426,7 +3404,7 @@ fn runtime_abi_binary64_scalar_adapters_reject_foreign_values_and_recover_after_
                 .get_func(&mut store, name)
                 .unwrap()
                 .call(&mut store, &[input.clone()], &mut [Val::null_any_ref()])
-                .unwrap_err();
+                .expect_err(&format!("accepted {input:?}"));
             assert!(error.is::<wasmtime::ThrownException>(), "{name}: {error:#}");
             assert!(!error.is::<wasmtime::Trap>());
             assert!(store.take_pending_exception().is_some());
@@ -3519,13 +3497,7 @@ fn runtime_abi_owned_dynamic_properties_preserve_keys_values_and_gc() {
             &[other.clone(), key.clone()],
         );
         assert_eq!(
-            missing
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)
-                .unwrap()
-                .unwrap()
-                .get_u32(),
+            sentinel_of(&mut store, &missing),
             6
         );
     }
@@ -3644,18 +3616,20 @@ fn runtime_abi_owned_dynamic_properties_reject_corrupt_storage_and_null_values()
     assert!(!error.is::<wasmtime::Trap>());
     assert!(store.take_pending_exception().is_some());
     array.set(&mut store, 0, original).unwrap();
-    let error = runtime
-        .get_func(&mut store, "native-object-own-set")
-        .unwrap()
-        .call(
-            &mut store,
-            &[owner.clone(), key.clone(), Val::null_any_ref()],
-            &mut [Val::null_any_ref()],
-        )
-        .unwrap_err();
-    assert!(error.is::<wasmtime::ThrownException>(), "{error:#}");
-    assert!(!error.is::<wasmtime::Trap>());
-    assert!(store.take_pending_exception().is_some());
+    // ABI v3: a null eqref is nil, an ordinary storable value, not a corrupt one.
+    nominal_value(
+        &mut store,
+        runtime,
+        "native-object-own-set",
+        &[owner.clone(), key.clone(), Val::null_any_ref()],
+    );
+    let stored = nominal_value(
+        &mut store,
+        runtime,
+        "native-object-own-get",
+        &[owner.clone(), key.clone()],
+    );
+    assert_eq!(sentinel_of(&mut store, &stored), 0, "nil is stored as nil");
     let value = nominal_value(
         &mut store,
         runtime,
@@ -3747,10 +3721,7 @@ fn runtime_abi_native_prototype_chain_preserves_shadowing_and_rejects_cycles_ato
         42.0
     );
     // Undefined is a present own value and must suppress a farther inherited value.
-    let undefined = Val::AnyRef(Some(wasmtime::AnyRef::from_i31(
-        &mut store,
-        wasmtime::I31::new_u32(6).unwrap(),
-    )));
+    let undefined = sentinel_value(&mut store, runtime, runtime_abi::UNDEFINED);
     nominal_value(
         &mut store,
         runtime,
@@ -3764,20 +3735,15 @@ fn runtime_abi_native_prototype_chain_preserves_shadowing_and_rejects_cycles_ato
         &[child.clone(), key.clone()],
     );
     assert_eq!(
-        shadow
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &shadow),
         6
     );
     for (owner, prototype) in [
         (child.clone(), child.clone()),
         (grandparent.clone(), child.clone()),
         (child.clone(), number),
-        (child.clone(), Val::null_any_ref()),
+        // ABI v3: a null eqref is nil, a valid prototype; forge a sentinel instead.
+        (child.clone(), forged_sentinel(&mut store, runtime, 99)),
     ] {
         let error = runtime
             .get_func(&mut store, "native-object-prototype-set")
@@ -3815,13 +3781,7 @@ fn runtime_abi_native_prototype_chain_preserves_shadowing_and_rejects_cycles_ato
         &[child, key],
     );
     assert_eq!(
-        detached
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &detached),
         6
     );
 }
@@ -3852,7 +3812,9 @@ fn runtime_abi_native_prototype_chain_rejects_forged_cycles_and_recovers() {
         .unwrap();
     let nil = nominal_value(&mut store, runtime, "nil", &[]);
     let key = nominal_value(&mut store, runtime, "string-new", &[Val::I32(0)]);
-    for corrupt in [owner.clone(), Val::null_any_ref()] {
+    // ABI v3: a null eqref is nil, the valid empty prototype; forge a sentinel instead.
+    let forged = forged_sentinel(&mut store, runtime, 99);
+    for corrupt in [owner.clone(), forged] {
         fields.set(&mut store, 1, corrupt).unwrap();
         store.gc(None).unwrap();
         for (name, arguments) in [
@@ -4109,13 +4071,7 @@ fn runtime_abi_default_object_methods_are_callable_shared_and_survive_gc() {
             &[method.clone(), owner.clone(), args.clone()],
         );
         assert_eq!(
-            result
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)
-                .unwrap()
-                .unwrap()
-                .get_u32(),
+            sentinel_of(&mut store, &result),
             2
         );
     }
@@ -4134,13 +4090,7 @@ fn runtime_abi_default_object_methods_are_callable_shared_and_survive_gc() {
         &[methods[3].clone(), root, one.clone()],
     );
     assert_eq!(
-        result
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &result),
         4
     );
     let same = nominal_value(
@@ -4207,13 +4157,7 @@ fn runtime_abi_default_object_methods_are_callable_shared_and_survive_gc() {
         &[methods[3].clone(), args.clone()],
     );
     assert_eq!(
-        result
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &result),
         2
     );
     let scalar = nominal_value(
@@ -4231,13 +4175,7 @@ fn runtime_abi_default_object_methods_are_callable_shared_and_survive_gc() {
         &[methods[3].clone(), one.clone()],
     );
     assert_eq!(
-        result
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &result),
         2
     );
     let own_key = nominal_value(&mut store, runtime, "string-new", &[Val::I32(11)]);
@@ -4260,13 +4198,7 @@ fn runtime_abi_default_object_methods_are_callable_shared_and_survive_gc() {
         &[methods[2].clone(), root2, one.clone()],
     );
     assert_eq!(
-        present
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &present),
         4
     );
     let absent = nominal_value(
@@ -4276,13 +4208,7 @@ fn runtime_abi_default_object_methods_are_callable_shared_and_survive_gc() {
         &[methods[2].clone(), owner.clone(), one.clone()],
     );
     assert_eq!(
-        absent
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &absent),
         2
     );
     let nil = nominal_value(&mut store, runtime, "nil", &[]);
@@ -4300,13 +4226,7 @@ fn runtime_abi_default_object_methods_are_callable_shared_and_survive_gc() {
         &[methods[2].clone(), owner.clone(), one.clone()],
     );
     assert_eq!(
-        present
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &present),
         4
     );
     one_array.set(&mut store, 0, owner.clone()).unwrap();
@@ -4396,10 +4316,7 @@ fn runtime_abi_native_property_accessor_preserves_proto_writes_shadows_and_gc() 
     .unwrap());
     for value in [
         seven.clone(),
-        Val::AnyRef(Some(wasmtime::AnyRef::from_i31(
-            &mut store,
-            wasmtime::I31::new_u32(4).unwrap(),
-        ))),
+        sentinel_value(&mut store, runtime, runtime_abi::TRUE),
     ] {
         nominal_value(
             &mut store,
@@ -4566,10 +4483,7 @@ fn runtime_abi_native_property_scalar_keys_and_malformed_values_recover() {
     let mut cases = vec![];
     for (sentinel, spelling) in [(0, "null"), (2, "false"), (4, "true"), (6, "undefined")] {
         cases.push((
-            Val::AnyRef(Some(wasmtime::AnyRef::from_i31(
-                &mut store,
-                wasmtime::I31::new_u32(sentinel).unwrap(),
-            ))),
+            sentinel_value(&mut store, runtime, sentinel),
             spelling.encode_utf16().collect::<Vec<_>>(),
         ));
     }
@@ -4627,7 +4541,9 @@ fn runtime_abi_native_property_scalar_keys_and_malformed_values_recover() {
         &"__proto__".encode_utf16().collect::<Vec<_>>(),
     );
     let foreign = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
-    for value in [foreign.clone(), Val::null_any_ref()] {
+    // ABI v3: a null eqref is nil, a valid key and value; forge a sentinel instead.
+    let forged = forged_sentinel(&mut store, runtime, 99);
+    for value in [foreign.clone(), forged] {
         for (name, arguments) in [
             (
                 "native-object-property-get",
@@ -4712,13 +4628,7 @@ fn runtime_abi_default_proto_accessor_is_an_own_property() {
         &[method, root, args],
     );
     assert_eq!(
-        result
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &result),
         4,
         "the default accessor must be a real own property, not only a lookup special case"
     );
@@ -4793,13 +4703,7 @@ fn runtime_abi_owned_descriptors_preserve_attributes_and_invoke_accessors() {
         &[owner.clone(), key.clone()],
     );
     assert_eq!(
-        missing
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &missing),
         6
     );
     nominal_value(
@@ -4918,13 +4822,7 @@ fn runtime_abi_owned_descriptors_preserve_attributes_and_invoke_accessors() {
         &[owner.clone(), key.clone()],
     );
     assert_eq!(
-        after
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &after),
         0
     );
     for flags in [-1, 16, i32::MAX, i32::MIN, 9] {
@@ -5009,13 +4907,7 @@ fn runtime_abi_descriptor_methods_observe_enumerability_and_live_tostring() {
         &[enumerable.clone(), root, args.clone()],
     );
     assert_eq!(
-        result
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &result),
         2
     );
     let key = native_property_key(&mut store, runtime, &[120]);
@@ -5034,13 +4926,7 @@ fn runtime_abi_descriptor_methods_observe_enumerability_and_live_tostring() {
         &[enumerable.clone(), owner.clone(), args.clone()],
     );
     assert_eq!(
-        result
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &result),
         4
     );
     nominal_value(
@@ -5056,13 +4942,7 @@ fn runtime_abi_descriptor_methods_observe_enumerability_and_live_tostring() {
         &[enumerable, owner.clone(), args],
     );
     assert_eq!(
-        result
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &result),
         2
     );
     let key = native_property_key(
@@ -5179,13 +5059,7 @@ fn runtime_abi_legacy_accessors_are_real_methods_and_preserve_counterparts() {
         &[define_get.clone(), parent.clone(), args.clone()],
     );
     assert_eq!(
-        result
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &result),
         6
     );
     array.set(&mut store, 1, setter.clone()).unwrap();
@@ -5246,13 +5120,7 @@ fn runtime_abi_legacy_accessors_are_real_methods_and_preserve_counterparts() {
         &[child.clone()],
     );
     assert_eq!(
-        detached
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &detached),
         0
     );
     // Defining only a setter creates no getter; the later getter keeps that setter.
@@ -5269,13 +5137,7 @@ fn runtime_abi_legacy_accessors_are_real_methods_and_preserve_counterparts() {
         &[child.clone(), key.clone()],
     );
     assert_eq!(
-        no_getter
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &no_getter),
         6
     );
     array.set(&mut store, 1, value_of.clone()).unwrap();
@@ -5334,13 +5196,7 @@ fn runtime_abi_legacy_accessors_are_real_methods_and_preserve_counterparts() {
         &[lookup_get.clone(), child.clone(), args.clone()],
     );
     assert_eq!(
-        shadow
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &shadow),
         6
     );
     let empty = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
@@ -5502,7 +5358,9 @@ fn runtime_abi_native_factory_guards_foreign_buffers_and_recovers_after_gc() {
         .as_array(&store)
         .unwrap()
         .unwrap();
-    array.set(&mut store, 0, Val::null_any_ref()).unwrap();
+    // ABI v3: a null eqref is nil, a valid key; forge a sentinel instead.
+    let forged = forged_sentinel(&mut store, runtime, 99);
+    array.set(&mut store, 0, forged).unwrap();
     let error = runtime
         .get_func(&mut store, "protocol-native-invoke")
         .unwrap()
@@ -5531,13 +5389,7 @@ fn runtime_abi_native_factory_guards_foreign_buffers_and_recovers_after_gc() {
         &[object, key],
     );
     assert_eq!(
-        value
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &value),
         0
     );
 }
@@ -5661,11 +5513,9 @@ fn runtime_abi_numeric_hash_boundaries_reject_bad_values_without_traps() {
         &[Val::F64(3.0f64.to_bits())],
     );
     let opaque = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
-    let forged = Val::AnyRef(Some(wasmtime::AnyRef::from_i31(
-        &mut store,
-        wasmtime::I31::new_u32(99).unwrap(),
-    )));
-    for input in [opaque, forged, Val::null_any_ref()] {
+    let forged = forged_sentinel(&mut store, runtime, 99);
+    // A null eqref is nil in ABI v3, a valid numeric operand; it is no longer foreign.
+    for input in [opaque, forged] {
         for export in [
             "primitive-f64-floor",
             "primitive-f64-finite",
@@ -5680,7 +5530,7 @@ fn runtime_abi_numeric_hash_boundaries_reject_bad_values_without_traps() {
                 .get_func(&mut store, export)
                 .unwrap()
                 .call(&mut store, &args, &mut [Val::null_any_ref()])
-                .unwrap_err();
+                .expect_err(&format!("accepted {args:?}"));
             assert!(
                 error.is::<wasmtime::ThrownException>(),
                 "{export}: {error:#}"
@@ -5710,13 +5560,7 @@ fn runtime_abi_numeric_hash_boundaries_reject_bad_values_without_traps() {
         }
         let output = nominal_value(&mut store, runtime, "primitive-f64-safe-integer", &[input]);
         assert_eq!(
-            output
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)
-                .unwrap()
-                .unwrap()
-                .get_u32(),
+            sentinel_of(&mut store, &output),
             2
         );
     }
@@ -6137,13 +5981,7 @@ fn runtime_abi_callable_adapter_roots_source_method_and_rejects_corrupt_environm
         &[bound.clone(), empty.clone()],
     );
     assert_eq!(
-        result
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &result),
         2
     );
     let newer = nominal_value(
@@ -6166,7 +6004,7 @@ fn runtime_abi_callable_adapter_roots_source_method_and_rejects_corrupt_environm
     let value = wasm_encoder::ValType::Ref(wasm_encoder::RefType::EQREF);
     types.ty().function([value, value], [value]);
     let mut functions = wasm_encoder::FunctionSection::new();
-    functions.function(10);
+    functions.function(APPENDED);
     let mut exports = wasm_encoder::ExportSection::new();
     exports.export("copy-callback", wasm_encoder::ExportKind::Func, 0);
     let mut code = wasm_encoder::CodeSection::new();
@@ -6211,13 +6049,7 @@ fn runtime_abi_callable_adapter_roots_source_method_and_rejects_corrupt_environm
     // Corruption did not poison the valid rooted callback or runtime exception tag.
     let result = nominal_value(&mut store, runtime, "invoke", &[bound, empty]);
     assert_eq!(
-        result
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &result),
         2
     );
 }
@@ -6257,7 +6089,7 @@ fn runtime_abi_apply_callbacks_reject_foreign_environments_and_empty_push_buffer
     let value = wasm_encoder::ValType::Ref(wasm_encoder::RefType::EQREF);
     types.ty().function([value, value], [value]);
     let mut functions = wasm_encoder::FunctionSection::new();
-    functions.function(10);
+    functions.function(APPENDED);
     let mut exports = wasm_encoder::ExportSection::new();
     exports.export("copy-callback", wasm_encoder::ExportKind::Func, 0);
     let mut code = wasm_encoder::CodeSection::new();
@@ -6567,13 +6399,7 @@ fn runtime_abi_sparse_array_length_presence_and_uint32_boundary_survive_gc() {
             &[storage.clone(), Val::I32(7)],
         );
         assert_eq!(
-            absent
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)
-                .unwrap()
-                .unwrap()
-                .get_u32(),
+            sentinel_of(&mut store, &absent),
             6
         );
         assert_eq!(
@@ -7095,13 +6921,7 @@ fn runtime_abi_sparse_array_bulk_ingress_copies_input_and_preserves_explicit_und
         &[storage, Val::I32(1)],
     );
     assert_eq!(
-        value
-            .unwrap_anyref()
-            .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_u32(),
+        sentinel_of(&mut store, &value),
         6
     );
 }
@@ -7454,19 +7274,8 @@ fn runtime_abi_sparse_array_materialization_is_linear_snapshot_and_keeps_sparse_
         .unwrap();
     assert_eq!(array.len(&store).unwrap(), 13, "ordinary max key excluded");
     for index in [1, 8, 9, 10, 11] {
-        assert_eq!(
-            array
-                .get(&mut store, index)
-                .unwrap()
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)
-                .unwrap()
-                .unwrap()
-                .get_u32(),
-            6,
-            "hole {index}"
-        );
+        let hole = array.get(&mut store, index).unwrap();
+        assert_eq!(sentinel_of(&mut store, &hole), 6, "hole {index}");
     }
     assert_eq!(
         array
@@ -7973,7 +7782,7 @@ fn runtime_abi_array_constructor_lengths_and_range_error_identity_after_gc() {
         let units: Vec<_> = message.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().elems(&mut store).unwrap().map(|v| v.unwrap_i32() as u16).collect();
         assert_eq!(String::from_utf16(&units).unwrap(), "Invalid array length");
     }
-    let undefined = Val::AnyRef(Some(wasmtime::AnyRef::from_i31(&mut store, wasmtime::I31::new_u32(6).unwrap())));
+    let undefined = sentinel_value(&mut store, runtime, runtime_abi::UNDEFINED);
     let one = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
     one.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().set(&mut store, 0, undefined).unwrap();
     let range_constructor = nominal_value(&mut store, runtime, "range-error-constructor", &[]);
@@ -8004,16 +7813,16 @@ fn runtime_abi_array_own_property_names_preserve_canonical_decimal_keys() {
     let owner = nominal_value(&mut store, runtime, "source-array-holes-new", &[Val::I32(1)]);
     let empty = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
     let value = nominal_value(&mut store, runtime, "object-method-invoke", &[method.clone(), owner.clone(), empty.clone()]);
-    assert_eq!(value.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 2);
+    assert_eq!(sentinel_of(&mut store, &value), 2);
     let zero = nominal_value(&mut store, runtime, "number-box", &[Val::F64(0.0_f64.to_bits())]);
     let args = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
     args.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().set(&mut store, 0, zero.clone()).unwrap();
     let hole = nominal_value(&mut store, runtime, "object-method-invoke", &[method.clone(), owner.clone(), args.clone()]);
-    assert_eq!(hole.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 2);
+    assert_eq!(sentinel_of(&mut store, &hole), 2);
     let undefined = nominal_value(&mut store, runtime, "source-array-get", &[owner.clone(), zero.clone()]);
     nominal_value(&mut store, runtime, "source-array-set", &[owner.clone(), zero, undefined]);
     let present = nominal_value(&mut store, runtime, "object-method-invoke", &[method.clone(), owner, args]);
-    assert_eq!(present.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 4);
+    assert_eq!(sentinel_of(&mut store, &present), 4);
     let failure = runtime.get_func(&mut store, "invoke").unwrap().call(&mut store, &[method, empty], &mut [Val::null_any_ref()]).unwrap_err();
     assert!(failure.is::<wasmtime::ThrownException>());
     assert!(!failure.is::<wasmtime::Trap>());
@@ -8151,7 +7960,8 @@ fn runtime_abi_array_join_rejects_corrupt_active_chains_and_recovers_after_gc() 
         let recovered = nominal_value(&mut store, runtime, "source-array-join", &[owner.clone(), nil.clone()]);
         assert_eq!(nominal_value(&mut store, runtime, "string-length", &[recovered]).unwrap_i32(), 0);
         let restored = active.get(&mut store);
-        assert!(wasmtime::Rooted::ref_eq(&store, restored.unwrap_anyref().unwrap(), nil.unwrap_anyref().unwrap()).unwrap());
+        assert!(matches!(nil, Val::AnyRef(None)), "nil is a null eqref");
+        assert!(matches!(restored, Val::AnyRef(None)), "the active chain is restored to nil");
     }
 }
 
@@ -8217,7 +8027,7 @@ fn runtime_abi_small_hole_arrays_use_private_masked_storage_without_changing_pre
             assert_eq!(flags.get(&mut store, index).unwrap().unwrap_i32(), 0);
         }
         let absent = nominal_value(&mut store, runtime, "source-array-sparse-get", &[source.clone(), Val::I32(0)]);
-        assert_eq!(absent.unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 6);
+        assert_eq!(sentinel_of(&mut store, &absent), 6);
         let present = nominal_value(&mut store, runtime, "source-array-sparse-has", &[source.clone(), Val::I32(0)]);
         assert_eq!(present.unwrap_i32(), 0);
         let undefined = absent;
@@ -8712,7 +8522,7 @@ fn runtime_abi_method_lookup_preserves_live_values_equal_id_keys_and_first_match
     getter.call(&mut store, &[owner.clone(), key], &mut result).unwrap();
     assert!(wasmtime::Rooted::ref_eq(&store, result[0].unwrap_anyref().unwrap(), a.unwrap_anyref().unwrap()).unwrap());
     getter.call(&mut store, &[owner, other_key], &mut result).unwrap();
-    assert_eq!(result[0].unwrap_anyref().unwrap().as_i31(&store).unwrap().unwrap().get_u32(), 0);
+    assert_eq!(sentinel_of(&mut store, &result[0]), 0);
 }
 
 fn nominal_fueled_engine() -> wasmtime::Engine {
@@ -9028,13 +8838,7 @@ fn runtime_abi_protocol_lookup_preserves_order_live_tables_and_group_boundaries(
             );
         } else {
             assert_eq!(
-                value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&*store)
-                    .unwrap()
-                    .unwrap()
-                    .get_u32(),
+                sentinel_of(&mut *store, &value),
                 0
             );
         }

@@ -231,7 +231,8 @@ pub(super) fn error(message: &str, global: u32) -> Vec<Instruction<'static>> {
         },
         sentinel_value(NIL),
         sentinel_value(NIL),
-        sentinel_value(NIL),
+        I32Const(0), // Identity UID, unassigned.
+        RefI31,
         StructNew(8),
         Throw(0),
     ]);

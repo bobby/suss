@@ -133,14 +133,9 @@ fn complete_comparator_source_candidates_and_policy_in_both_phases_after_gc() {
                 .unwrap_or_else(|e| panic!("{}: {source}: {e}", case["id"]));
             session.collect().unwrap();
             session
-                .inspect(&value, |store, value| {
+                .inspect(&value, |mut store, value| {
                     assert_eq!(
-                        value
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_i31(&store)?
-                            .expect("Boolean")
-                            .get_u32(),
+                        suss_cli::portable_session::sentinel_tag(&mut store, &value)?.expect("Boolean"),
                         4,
                         "{}",
                         case["id"]

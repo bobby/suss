@@ -16,7 +16,7 @@ fn native_error_catch_adapter_distinguishes_errors_and_rethrows_other_payloads()
         ] {
             let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error}"));
             session.collect().unwrap();
-            assert_eq!(session.inspect(&value, |store, value| Ok(value.unwrap_anyref().unwrap().as_i31(&store)?.unwrap().get_u32())).unwrap(), 4, "{source}");
+            assert_eq!(session.inspect(&value, |mut store, value| Ok(suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap())).unwrap(), 4, "{source}");
         }
         assert!(session.eval("(suss.bootstrap/error?)").is_err());
         assert!(session.eval("(suss.bootstrap/error? nil nil)").is_err());

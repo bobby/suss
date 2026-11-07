@@ -1,4 +1,6 @@
 mod support;
+/// First type index a fragment appends after the shared ABI v3 prelude.
+const APPENDED: u32 = suss_compile::runtime_abi::LONG + 1;
 use suss_compile::{portable, runtime_abi};
 use wasmtime::{Instance, Linker, Module, Store, Val};
 fn execute(source: &str) -> (Store<()>, Val) {
@@ -103,17 +105,17 @@ fn catcher(arity: usize, module: &str, name: &str) -> Vec<u8> {
     types.ty().function(vec![value; arity], [value]);
     types.ty().function([value], []);
     let mut imports = ImportSection::new();
-    imports.import(module, name, EntityType::Function(10));
+    imports.import(module, name, EntityType::Function(APPENDED));
     imports.import(
         "suss.runtime",
         "language-exception",
         EntityType::Tag(TagType {
             kind: TagKind::Exception,
-            func_type_idx: 11,
+            func_type_idx: APPENDED + 1,
         }),
     );
     let mut functions = FunctionSection::new();
-    functions.function(10);
+    functions.function(APPENDED);
     let mut exports = ExportSection::new();
     exports.export("call", ExportKind::Func, 1);
     let mut function = Function::new([]);
@@ -181,18 +183,26 @@ fn exception<T>(store: &mut Store<T>, value: &Val, descriptor: i64, expected: &s
         .map(|unit| unit.unwrap_i32() as u16)
         .collect::<Vec<_>>();
     assert_eq!(String::from_utf16(&units).unwrap(), expected);
-    // Data, cause and the newly allocated ABI2 identity slot are nil.
-    for nil in &fields[2..] {
+    // Data and cause are nil.
+    for nil in &fields[2..4] {
         assert_eq!(
-            nil.unwrap_anyref()
+            suss_compile::portable_session::sentinel_tag(&mut *store, nil)
                 .unwrap()
-                .as_i31(&*store)
-                .unwrap()
-                .unwrap()
-                .get_i32(),
+                .unwrap(),
             0
         );
     }
+    // The identity UID is private runtime state: an unassigned i31 0.
+    assert_eq!(
+        fields[4]
+            .unwrap_anyref()
+            .unwrap()
+            .as_i31(&*store)
+            .unwrap()
+            .unwrap()
+            .get_u32(),
+        0
+    );
 }
 
 #[test]
@@ -223,15 +233,11 @@ fn nested_closures_parameters_shadowing_and_computed_callees_execute() {
         .map(|unit| unit.unwrap_i32() as u16)
         .collect::<Vec<_>>();
     assert_eq!(units, [0xd800]);
-    let (store, value) = execute("((fn []))");
+    let (mut store, value) = execute("((fn []))");
     assert_eq!(
-        value
-            .unwrap_anyref()
+        suss_compile::portable_session::sentinel_tag(&mut store, &value)
             .unwrap()
-            .as_i31(&store)
-            .unwrap()
-            .unwrap()
-            .get_i32(),
+            .unwrap(),
         0
     );
 }
@@ -474,10 +480,10 @@ fn invocation_checks_non_callable_and_malformed_arrays_without_wasm_traps() {
         exception(&mut store, &error, 3, "Not callable");
     }
     // A name left unbound holds the undefined sentinel (#288).
-    let undefined = Val::AnyRef(Some(wasmtime::AnyRef::from_i31(
-        &mut store,
-        wasmtime::I31::wrapping_u32(6),
-    )));
+    let undefined = rt
+        .get_global(&mut store, "sentinel-undefined")
+        .unwrap()
+        .get(&mut store);
     let error = call(&mut store, catch, "call", &[undefined, args.clone()]);
     exception(&mut store, &error, 3, "Attempting to call unbound fn");
     let function = fragment(

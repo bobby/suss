@@ -1,5 +1,6 @@
 //! Original FIFO/metadata/equality regressions shared with the pinned CLJS oracle.
 //! Queue support must execute; missing constructors are failures, never skips.
+use suss_compile::portable_session::sentinel_tag;
 use suss_cli::portable_session::Session;
 
 #[test]
@@ -22,13 +23,8 @@ fn persistent_queues_match_pinned_fifo_and_value_contract_in_both_phases() {
             let value = session.eval(case["source"].as_str().unwrap()).unwrap();
             session.collect().unwrap();
             let actual = session
-                .inspect(&value, |store, value| {
-                    let raw = value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .expect("Boolean ABI")
-                        .get_u32();
+                .inspect(&value, |mut store, value| {
+                    let raw = sentinel_tag(&mut store, &value)?.expect("Boolean ABI");
                     Ok(match raw {
                         2 => false,
                         4 => true,
@@ -72,13 +68,10 @@ fn queue_versions_share_front_and_rear_storage_and_sole_handle_survives_gc() {
                     .unwrap();
                 assert_eq!(array_fields.len(&store)?, 2);
                 assert_eq!(
-                    array_fields
-                        .get(&mut store, 1)?
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .unwrap()
-                        .get_u32(),
+                    {
+                        let metadata = array_fields.get(&mut store, 1)?;
+                        sentinel_tag(&mut store, &metadata)?.unwrap()
+                    },
                     0
                 );
                 let backing = array_fields
@@ -97,8 +90,7 @@ fn queue_versions_share_front_and_rear_storage_and_sole_handle_survives_gc() {
                     .field(&mut store, 0)?;
                 assert_eq!(length.unwrap_f64().to_bits(), 4.0_f64.to_bits());
                 let sparse_value = backing.get(&mut store, 1)?;
-                let sparse = sparse_value.unwrap_anyref().unwrap();
-                assert_eq!(sparse.as_i31(&store)?.unwrap().get_u32(), 0);
+                assert_eq!(sentinel_tag(&mut store, &sparse_value)?.unwrap(), 0);
                 let versions = backing
                     .get(&mut store, 2)?
                     .unwrap_anyref()
@@ -227,12 +219,7 @@ fn queue_iterator_preserves_mutation_exhaustion_and_returned_error_contract() {
         session.collect().unwrap();
         assert_eq!(
             session
-                .inspect(&first_identity, |store, value| Ok(value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32()))
+                .inspect(&first_identity, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()))
                 .unwrap(),
             4
         );
@@ -241,12 +228,7 @@ fn queue_iterator_preserves_mutation_exhaustion_and_returned_error_contract() {
             session.collect().unwrap();
             assert_eq!(
                 session
-                    .inspect(&available, |store, value| Ok(value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .unwrap()
-                        .get_u32()))
+                    .inspect(&available, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()))
                     .unwrap(),
                 4
             );
@@ -268,12 +250,7 @@ fn queue_iterator_preserves_mutation_exhaustion_and_returned_error_contract() {
         session.collect().unwrap();
         assert_eq!(
             session
-                .inspect(&exhausted, |store, value| Ok(value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32()))
+                .inspect(&exhausted, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()))
                 .unwrap(),
             2
         );
@@ -315,12 +292,7 @@ fn queue_iterator_preserves_mutation_exhaustion_and_returned_error_contract() {
         let old = session.eval("(= (seq q3) [1 2 3])").unwrap();
         assert_eq!(
             session
-                .inspect(&old, |store, value| Ok(value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32()))
+                .inspect(&old, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()))
                 .unwrap(),
             4
         );

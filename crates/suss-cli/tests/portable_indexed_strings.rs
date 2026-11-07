@@ -34,13 +34,8 @@ fn indexed_strings_match_independently_decoded_primary_observations_after_gc() {
             }
             "bool" => {
                 let boolean = session
-                    .inspect(&value, |store, value| {
-                        let sentinel = value
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_i31(&store)?
-                            .unwrap()
-                            .get_u32();
+                    .inspect(&value, |mut store, value| {
+                        let sentinel = suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap();
                         match sentinel {
                             2 => Ok(false),
                             4 => Ok(true),

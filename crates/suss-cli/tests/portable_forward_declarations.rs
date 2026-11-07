@@ -1,4 +1,5 @@
 use suss_cli::portable_session::Session;
+use suss_compile::portable_session::sentinel_tag;
 use wasmtime::Val;
 
 #[test]
@@ -40,14 +41,9 @@ fn forward_declarations_match_independently_decoded_primary_observations_after_g
             }
             "nil" => {
                 session
-                    .inspect(&value, |store, value| {
+                    .inspect(&value, |mut store, value| {
                         assert_eq!(
-                            value
-                                .unwrap_anyref()
-                                .unwrap()
-                                .as_i31(&store)?
-                                .unwrap()
-                                .get_u32(),
+                            sentinel_tag(&mut store, &value)?.unwrap(),
                             0
                         );
                         Ok(())
@@ -57,13 +53,8 @@ fn forward_declarations_match_independently_decoded_primary_observations_after_g
             }
             "bool" => {
                 let boolean = session
-                    .inspect(&value, |store, value| {
-                        let sentinel = value
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_i31(&store)?
-                            .unwrap()
-                            .get_u32();
+                    .inspect(&value, |mut store, value| {
+                        let sentinel = sentinel_tag(&mut store, &value)?.unwrap();
                         match sentinel {
                             2 => Ok(false),
                             4 => Ok(true),
@@ -120,14 +111,9 @@ fn declaration_errors_are_atomic_and_unknown_names_still_fail_resolution() {
         .unwrap();
     let value = session.eval("(undefined? aliased)").unwrap();
     session
-        .inspect(&value, |store, value| {
+        .inspect(&value, |mut store, value| {
             assert_eq!(
-                value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32(),
+                sentinel_tag(&mut store, &value)?.unwrap(),
                 4
             );
             Ok(())

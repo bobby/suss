@@ -1,4 +1,5 @@
 use suss_cli::portable_session::{Session, SessionError, SessionValue};
+use suss_compile::portable_session::sentinel_tag;
 use wasmtime::Val;
 
 fn number(session: &mut Session, value: &SessionValue) -> u64 {
@@ -468,13 +469,8 @@ fn persistent_session_nil_and_false_are_initialized_defonce_bindings() {
     for (source, expected) in [("held", 0), ("other", 2)] {
         let value = session.eval(source).unwrap();
         let tag = session
-            .inspect(&value, |store, value| {
-                Ok(value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_i32())
+            .inspect(&value, |mut store, value| {
+                Ok(sentinel_tag(&mut store, &value)?.unwrap() as i32)
             })
             .unwrap();
         assert_eq!(tag, expected);
@@ -863,13 +859,8 @@ fn nominal_same_layout_types_keep_distinct_identity_through_aliases_and_gc() {
     ] {
         let value = session.eval(source).unwrap();
         let actual = session
-            .inspect(&value, |store, value| {
-                Ok(value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32())
+            .inspect(&value, |mut store, value| {
+                Ok(sentinel_tag(&mut store, &value)?.unwrap())
             })
             .unwrap();
         assert_eq!(actual, expected, "{source}");
@@ -886,13 +877,8 @@ fn nominal_protocol_extensions_update_existing_objects_across_fragments() {
     );
     let before = session.eval("(satisfies? NominalReader later)").unwrap();
     let before = session
-        .inspect(&before, |store, value| {
-            Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32())
+        .inspect(&before, |mut store, value| {
+            Ok(sentinel_tag(&mut store, &value)?.unwrap())
         })
         .unwrap();
     assert_eq!(before, 2);
@@ -910,13 +896,8 @@ fn nominal_protocol_extensions_update_existing_objects_across_fragments() {
     );
     let after = session.eval("(satisfies? NominalReader later)").unwrap();
     let after = session
-        .inspect(&after, |store, value| {
-            Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32())
+        .inspect(&after, |mut store, value| {
+            Ok(sentinel_tag(&mut store, &value)?.unwrap())
         })
         .unwrap();
     assert_eq!(after, 4);
@@ -925,13 +906,8 @@ fn nominal_protocol_extensions_update_existing_objects_across_fragments() {
 fn nominal_bool(session: &mut Session, source: &str) -> u32 {
     let value = session.eval(source).unwrap();
     session
-        .inspect(&value, |store, value| {
-            Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32())
+        .inspect(&value, |mut store, value| {
+            Ok(sentinel_tag(&mut store, &value)?.unwrap())
         })
         .unwrap()
 }
@@ -943,14 +919,9 @@ fn nominal_constructor_aliases_arrows_redefinitions_and_missing_fields_follow_th
     let old_constructor = session.eval("Changing").unwrap();
     let ordinary = session.invoke(&old_constructor, &[]).unwrap();
     session
-        .inspect(&ordinary, |store, value| {
+        .inspect(&ordinary, |mut store, value| {
             assert_eq!(
-                value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32(),
+                sentinel_tag(&mut store, &value)?.unwrap(),
                 6
             );
             Ok(())
@@ -987,14 +958,9 @@ fn nominal_constructor_aliases_arrows_redefinitions_and_missing_fields_follow_th
     );
     let missing = session.eval("(read-field (new old-type))").unwrap();
     session
-        .inspect(&missing, |store, value| {
+        .inspect(&missing, |mut store, value| {
             assert_eq!(
-                value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_i31(&store)?
-                    .unwrap()
-                    .get_u32(),
+                sentinel_tag(&mut store, &value)?.unwrap(),
                 6
             );
             Ok(())
@@ -1179,8 +1145,8 @@ fn nominal_empty_extensions_return_the_shared_non_boolean_protocol_marker() {
     session.collect().unwrap();
     session
         .inspect(&a, |mut store, value| {
+            assert!(sentinel_tag(&mut store, &value)?.is_none());
             let reference = value.unwrap_anyref().unwrap();
-            assert!(reference.as_i31(&store)?.is_none());
             let descriptor = reference.as_struct(&store)?.unwrap();
             assert_eq!(descriptor.field(&mut store, 0)?.unwrap_i64(), 0);
             Ok(())

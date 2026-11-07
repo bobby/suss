@@ -20,13 +20,8 @@ fn eval_number(session: &mut Session, source: &str) -> u64 {
 fn eval_bool(session: &mut Session, source: &str) -> bool {
     let value = session.eval(source).unwrap();
     session
-        .inspect(&value, |store, value| {
-            match value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32()
+        .inspect(&value, |mut store, value| {
+            match suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap()
             {
                 2 => Ok(false),
                 4 => Ok(true),
@@ -90,12 +85,7 @@ fn implements_aliases_user_refers_exclusions_and_gc_preserve_direct_only_test() 
     let result = session.invoke(&direct, &[&item]).unwrap();
     assert!(
         session
-            .inspect(&result, |store, value| Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .unwrap()
-                .get_u32()
+            .inspect(&result, |mut store, value| Ok(suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap()
                 == 4))
             .unwrap()
     );

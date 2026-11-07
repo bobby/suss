@@ -37,7 +37,8 @@ pub(super) fn functions(b: &mut Builder, primitives: [u32; 7]) -> Vec<u32> {
                 },
                 sentinel_value(NIL),
                 sentinel_value(NIL),
-                sentinel_value(NIL), StructNew(8),
+                I32Const(0), RefI31, // Identity UID, unassigned.
+                StructNew(8),
                 Throw(0),
             ]);
         }

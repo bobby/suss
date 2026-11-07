@@ -119,13 +119,8 @@ fn complete_sorted_prerequisites_match_ordered_pinned_value_and_effect_cases_aft
                 .unwrap_or_else(|e| panic!("{}: {source}: {e}", case["id"]));
             session.collect().unwrap();
             session
-                .inspect(&value, |store, value| {
-                    let raw = value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .expect("Boolean ABI")
-                        .get_u32();
+                .inspect(&value, |mut store, value| {
+                    let raw = suss_cli::portable_session::sentinel_tag(&mut store, &value)?.expect("Boolean ABI");
                     assert_eq!(raw, 4, "{}", case["id"]);
                     Ok(())
                 })

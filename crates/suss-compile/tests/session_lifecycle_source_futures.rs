@@ -1,6 +1,7 @@
 //! Source-future entry gates from accepted design section 9; not full async acceptance.
 use suss_compile::portable_macros::CompiledMacros;
-use suss_compile::portable_session::{Session, SessionError, SessionValue};
+use suss_compile::portable_session::{Session, SessionError, SessionValue, sentinel_tag};
+use suss_compile::runtime_abi;
 
 fn async_session() -> (Session, CompiledMacros) {
     let mut session = Session::new_repl().unwrap();
@@ -14,12 +15,8 @@ fn async_session() -> (Session, CompiledMacros) {
 
 fn is_false(session: &mut Session, value: &SessionValue) -> bool {
     session
-        .inspect(value, |store, value| {
-            Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_i31(&store)?
-                .is_some_and(|value| value.get_u32() == 2))
+        .inspect(value, |mut store, value| {
+            Ok(sentinel_tag(&mut store, &value)? == Some(runtime_abi::FALSE as u32))
         })
         .unwrap()
 }

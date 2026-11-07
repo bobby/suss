@@ -74,13 +74,9 @@ fn emitted_source_cells_initialize_once_and_keep_live_closures_across_fragments(
                     .call(&mut store, &[value], &mut result)
                     .unwrap();
                 assert_eq!(
-                    result[0]
-                        .unwrap_anyref()
+                    suss_compile::portable_session::sentinel_tag(&mut store, &result[0])
                         .unwrap()
-                        .as_i31(&store)
-                        .unwrap()
-                        .unwrap()
-                        .get_i32(),
+                        .unwrap(),
                     if cell.namespace() == "suss.core" {
                         4
                     } else {
@@ -192,13 +188,9 @@ fn emitted_core_cells_execute_in_both_phases_and_survive_gc() {
                 .call(&mut store, &[cell], &mut bound)
                 .unwrap();
             assert_eq!(
-                bound[0]
-                    .unwrap_anyref()
+                suss_compile::portable_session::sentinel_tag(&mut store, &bound[0])
                     .unwrap()
-                    .as_i31(&store)
-                    .unwrap()
-                    .unwrap()
-                    .get_i32(),
+                    .unwrap(),
                 4,
                 "uninitialized {identity:?}"
             );
