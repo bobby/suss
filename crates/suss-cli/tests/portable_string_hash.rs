@@ -1,5 +1,8 @@
 use suss_cli::portable_session::Session;
 
+#[path = "support/clojure_corrections.rs"]
+mod clojure_corrections;
+
 /// The observation of a runtime number, distinguishing a long from a double.
 fn number_json(number: suss_cli::portable_session::RuntimeNumber) -> serde_json::Value {
     match number {
@@ -41,6 +44,15 @@ fn string_hash_match_independently_decoded_primary_observations_after_gc() {
         let id = case["id"].as_str().unwrap();
         assert!(ids.insert(id));
         let source = case["source"].as_str().unwrap();
+        if clojure_corrections::calls_imul(source) {
+            match session.eval(source) {
+                Err(suss_cli::portable_session::SessionError::Compile(error))
+                    if error.message.contains("Unresolved Runtime name")
+                        && error.message.contains("imul") => {}
+                _ => failures.push(format!("{id}: {source}: expected imul to be unresolved")),
+            }
+            continue;
+        }
         let value = match session.eval(source) {
             Ok(value) => value,
             Err(error) => {

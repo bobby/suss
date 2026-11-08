@@ -137,8 +137,8 @@ fn numeric_operands_keep_clojure_results() {
         "(= 2 (let [f /] (f 24 3 4)))",
         "(= 5 (let [f -] (f 10 2 3)))",
         "(= -0.25 (let [f /] (f -4)))",
-        // Bitwise operations keep the ClojureScript coercions of section 4.
-        "(= 1 (bit-or nil 1))",
+        // Bit operations take longs, as Clojure's do (#336).
+        "(= \"bit operation not supported for a non-number\" (try (bit-or nil 1) (catch :default e (ex-message e))))",
     ];
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.set_operation_fuel(100_000_000);
@@ -161,7 +161,8 @@ fn core_namespace_source_keeps_its_coercing_primitives() {
             "(== nil nil)",
             "(< \"a\" \"b\")",
             "(false? (zero? false))",
-            "(= 0 (dec true))",
+            // Core coerces true to the double 1.0; `=` keeps 0.0 from 0 (#336).
+            "(== 0 (dec true))",
         ] {
             truthy(&mut session, source);
         }

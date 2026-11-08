@@ -24,3 +24,10 @@ pub fn corrected(case: &Value, corrections: &[Correction], used: &mut usize) -> 
         "expected": {"tag": "bool", "value": true},
     })
 }
+
+/// Whether a recorded case calls ClojureScript's `imul`, which is not public in
+/// Suss (#336): such a case must fail to resolve it instead.
+#[allow(dead_code)]
+pub fn calls_imul(source: &str) -> bool {
+    source.contains("imul")
+}

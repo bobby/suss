@@ -174,31 +174,49 @@ fn cast(b: &Builder, name: &str, kind: Cast) -> Vec<Instruction<'static>> {
                     I64Ne,
                     If(BlockType::Empty),
                 ]);
-                code.extend(throw_with_value(b, &range, 0));
+                // Clojure's intCast of a long is Math.toIntExact.
+                if bits == 32 {
+                    code.extend(numeric::error("integer overflow", nominal::ERROR_GLOBAL));
+                } else {
+                    code.extend(throw_with_value(b, &range, 0));
+                }
                 code.push(End);
             }
             code.extend([LocalGet(0), Return, End]);
-            // A double's limits: Clojure's intCast compares the double itself;
-            // longCast and the narrower casts truncate to a long first.
+            // A double is compared itself, untruncated. Clojure's long and
+            // int casts let NaN through, as 0; short and byte reject it. The
+            // long cast's upper limit, 2^63, saturates to Long/MAX_VALUE.
             let (low, high) = if bits == 64 {
                 (-9_223_372_036_854_775_808.0, 9_223_372_036_854_775_808.0)
             } else {
                 let limit = (1u64 << (bits - 1)) as f64;
                 (-limit, limit - 1.0)
             };
-            code.extend([LocalGet(0), Call(double), LocalTee(2)]);
-            if bits != 32 {
-                code.push(F64Trunc);
-            }
-            code.extend([LocalTee(2), F64Const(low.into()), F64Lt, LocalGet(2)]);
-            if bits == 64 {
-                code.extend([F64Const(high.into()), F64Ge]);
+            code.extend([LocalGet(0), Call(double), LocalSet(2)]);
+            if bits >= 32 {
+                code.extend([
+                    LocalGet(2),
+                    F64Const(low.into()),
+                    F64Lt,
+                    LocalGet(2),
+                    F64Const(high.into()),
+                    F64Gt,
+                    I32Or,
+                ]);
             } else {
-                code.extend([F64Const(high.into()), F64Gt]);
+                code.extend([
+                    LocalGet(2),
+                    F64Const(low.into()),
+                    F64Ge,
+                    LocalGet(2),
+                    F64Const(high.into()),
+                    F64Le,
+                    I32And,
+                    I32Eqz,
+                ]);
             }
-            code.extend([I32Or, If(BlockType::Empty)]);
+            code.push(If(BlockType::Empty));
             code.extend(throw_with_value(b, &range, 0));
-            // NaN fails both tests and is 0, as Java's casts make it.
             code.extend([End, LocalGet(2), I64TruncSatF64S, Call(boxed)]);
         }
         Cast::Unchecked(bits) => {

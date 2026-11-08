@@ -1,93 +1,71 @@
-# Bitwise dependencies for retained collection hashing
+# Bit operations and numeric casts
 
-> Describes the binary64 implementation that predates the 2026-11-06 numeric
-> decision: numbers follow Clojure ([ADR-0003](../adr/0003-clojure-numeric-tower.md)).
+Numbers follow Clojure 1.12
+([ADR-0003](../adr/0003-clojure-numeric-tower.md), #336). This page replaces
+the 32-bit ClojureScript notes that preceded that decision.
 
-Checked bitwise primitives and bounded macro expansion now execute the scalar
-hashing prerequisites. Complete collection hashing remains unfinished. The pinned
-List/Cons hash path requires ordered hashing and Murmur operations before the
-complete source types can execute. Preserve their Object blocks and persistent
-representations; do not substitute the internal argument array for a list.
+## Bit operations
 
-Pinned runtime source is core.cljs at c4295f303100bbf5afac449242d30bca1126f1a1:
-int at 2942, bitwise forms at 2993–3064, int-rotate-left at 947 and the conditional
-imul definitions at 955/956. Macro forms are core.cljc 1223–1273. The conditional imul region has explicit
-[hash provenance](../compatibility/bitwise-primitives.json); the top-level inventory
-does not discover those nested definitions, so no declaration IDs are invented. The retained bit-count and int-rotate-left forms have explicit hash-bound fixed
-defn bootstrap patches, original algorithms/docstrings/metadata and EPL packaging.
-Other runtime forms use original primitive adapters; they are not claimed retained
-source. The oracle transport and probes are original.
+`bit-and`, `bit-or`, `bit-xor`, `bit-and-not`, `bit-not`, `bit-clear`,
+`bit-flip`, `bit-set`, `bit-test`, `bit-shift-left`, `bit-shift-right` and
+`unsigned-bit-shift-right` take longs and operate on 64 bits, as Clojure's do.
 
-`int` uses signed 32-bit wrapping. `long`, `unchecked-long` and `unchecked-int`
-use the private fix function and must not be aliased to that conversion. Shift
-counts mask to five bits; unsigned right shift returns a nonnegative binary64
-number, including 4294967295. Multiplication must retain wrapping 32-bit output
-rather than ordinary f64 multiplication followed by a lossy conversion.
-Coercion should share the checked numeric runtime; object-to-primitive behavior
-remains an explicit unsupported boundary until separately implemented.
+- Any other operand throws: a double throws "bit operation not supported for:
+  double", as Clojure's `bitOpsCast` rejects a `Double`, and nil or a
+  non-number throws too.
+- Shift counts and bit indexes use their low six bits, as Java's shifts do:
+  `(bit-shift-left 1 65)` is 2 and `(bit-set 0 64)` is 1.
+- `unsigned-bit-shift-right` is a logical 64-bit shift:
+  `(unsigned-bit-shift-right -1 1)` is 9223372036854775807.
+- `bit-shift-right-zero-fill`, ClojureScript's name, is the same operation.
 
-The 70-case shared scalar corpus matches fresh pinned ClojureScript and independently
-decoded validated native Wasm exactly, preserving the original 54 cases (including the original 37). It covers
-coercions, shifts, wrapping multiplication, advertised direct/computed/variadic
-calls, namespace qualification, redefinitions and old captures. Separate native
-guards check aliases, exclusions, both compiler phases, located compile errors and
-no partial publication. Unsupported-object conversion tests preserve the difference
-between nested macro folds and computed calls' complete argument evaluation.
+Direct calls lower inline; variadic direct calls nest pairs. The first-class
+values live in canonical `suss.core` cells and use universal invocation. A
+variadic body computes its first pair, then reads its live cell once for the
+reducer that folds the rest, so a saved function keeps its body while that
+lookup sees redefinitions.
 
-Direct bitwise macros use immutable primitive lowering. Variadic direct calls nest
-pairs as the pin does; conversion of each pair precedes later operand syntax.
-First-class values reside in canonical live cells and use universal Invoke;
-computed calls evaluate all arguments before the function folds their internal
-argument buffer. Variadic bodies compute the initial pair with the original
-primitive, then read their canonical live cell once for the reducer passed to the
-tail fold. A saved function value preserves the original body while that var
-lookup observes redefinitions/dynamic bindings; mutations during an earlier
-tail call do not replace the already selected reducer. That buffer is private call storage, not a persistent source list.
-The alias bit-shift-right-zero-fill preserves its own public cell. Resident native
-bootstrap cells now number45; retained source loading additionally defines the two
-hashing functions. All source selection/license bytes are reproducible:30 selected
-forms,34 artifacts,113 partial reviews/952 unassessed. No review is marked complete.
+ClojureScript's `imul` and the runtime's ToInt32, `coerce-int32`, are not
+public. Shipped core keeps them, with 32-bit forms of the operations above, for
+its hashing ([numeric equality and hashing](numeric-hashing.md)). Their
+provenance stays in [bitwise-primitives.json](../compatibility/bitwise-primitives.json),
+checked by `scripts/bitwise_provenance.py`.
 
-Separate development diagnostics show captured JS function wrappers can supply
-undefined for missing arguments and ignore extra arguments. For example captured
-int with zero arguments yields 0 and with three arguments uses the first;
-captured bit-and with one argument yields 0; captured imul with one yields 0.
-These are not cases in the normal-arity compatibility corpus or native successes.
-Direct calls have separate macro expansion behavior. The accepted wrong-arity diagnostic contract is retained: unadvertised calls are
-located compile errors for direct macros or language arity errors for computed
-functions. These captured JavaScript wrapper outcomes remain explicit differences,
-not differential matches or skipped successes. Complete public arity compatibility
-is not claimed.
+## Casts
 
-An original private `coerce-int32` runtime intrinsic now reuses scalar coercion.
-It rejects unsupported objects as language exceptions, returns zero for nonfinite
-values, truncates fractions and computes an exact power-of-two remainder before
-Wasm unsigned conversion. It changes no shared GC layouts, language cells or ABI
-version. All 22 runtime ABI tests pass; the added regression covers 20 boundaries,
-2,048 varied float encodings, scalar sentinels, UTF-16 parsing after forced GC and
-typed opaque-object rejection followed by successful conversion.
+There are no narrow boxed values; casts return longs and doubles. Core's casts
+call the private `suss.bootstrap/cast` with an index into the runtime's table,
+and each table entry is a runtime function `number-cast-<name>`.
 
-Independent review fixed variadic captured-function bodies that previously froze
-all tail operations to the primitive. The red native probe returned7 instead of107;
-canonical cell environments now preserve the original initial pair and resolve the
-tail reducer once, following the pinned retained definition. Six source tests and the ABI guard cover
-GC, dynamic frames, reducer arity/throw recovery, selected reducer identity and
-malformed cells failing as language exceptions rather than traps.
+| Cast | Long | Double |
+| --- | --- | --- |
+| `long` | as is | truncated; beyond the long range throws |
+| `int`, `short`, `byte` | as is if in range, else throws | truncated if in range, else throws |
+| `unchecked-long` | as is | truncated, saturating |
+| `unchecked-int`, `unchecked-short`, `unchecked-byte` | low bits, sign-extended | truncated to an int, saturating, then its low bits |
+| `float` | rounded to binary32, as a double | the same; beyond the float range throws |
+| `unchecked-float` | rounded to binary32, as a double | the same, unchecked |
+| `double`, `unchecked-double` | as a double | as is |
 
-Four separately tracked pinned public-wrapper calls throw exact TypeErrors because
-the generated JS dispatcher reads the replacement global variadic property. These
-are recorded in `tests/oracle/bitwise-capture-observations.json`; they are not counted
-among the70 equal public observations. Five separate development-only js* probes
-inspect the captured pinned implementation body, confirming107/104/107/105 and215
-when an earlier reducer call redefines its own var. The native expected outcomes
-follow the accepted old-function/live-var contract; unequal wrapper observations
-are preserved explicitly. Complete public wrapper compatibility is not claimed.
+Each matches JVM Clojure 1.12's cast:
 
-Independent review added sixteen primary/native boundary probes and repaired the
-conditional imul provenance range:953–964 covers precisely the complete conditional
-form; the old953–966 range also included a following Murmur comment. CI now verifies
-the pin, whole-file hash, region hash and complete form bounds with
-`scripts/bitwise_provenance.py`, with mutation regressions. Require exact
-reviewed-head CI after the required full baseline. Then continue retained ordered
-hashing/Murmur dependencies and actual persistent sequence/list source. Full List/Cons,
-Murmur hashing, equality, printing and compiled macros remain unfinished.
+- The range check compares the double itself, before truncation, so
+  `(int 2147483647.5)` and `(short 32767.5)` throw.
+- An out-of-range double throws with the printed value: "Value out of range for
+  int: 3.0E9", "Value out of range for long: 1.0E19", "Value out of range for
+  float: Infinity". The long cast's upper limit, 2^63 itself, saturates to
+  9223372036854775807.
+- An out-of-range long passed to `short` or `byte` throws the same way:
+  "Value out of range for byte: 128".
+- `int` of an out-of-range long throws "integer overflow", as Clojure's
+  `Math.toIntExact` does.
+- NaN casts to 0 with `long` and `int`; `short` and `byte` reject it.
+- A non-number throws "int requires a number operand", and likewise for the
+  others.
+
+`float` returns a double, so `(= (float 0.1) 0.1)` is false, as in Clojure,
+but `(float 0.1)` prints as 0.10000000149011612 where Clojure prints a `Float`
+as 0.1.
+
+The `-int` arithmetic functions, such as `unchecked-add-int`, wrap their result
+to 32 bits.

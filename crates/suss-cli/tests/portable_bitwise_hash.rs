@@ -1,5 +1,31 @@
 use suss_cli::portable_session::Session;
 
+#[path = "support/clojure_corrections.rs"]
+mod clojure_corrections;
+
+/// Clojure governs bit operations and casts (#336): bit operations take longs,
+/// and `int` checks the range. These recorded observations throw in JVM
+/// Clojure 1.12, with these messages.
+const CORRECTIONS: &[clojure_corrections::Correction] = &[
+    ("int-wrap", "", "integer overflow"),
+    ("int-large", "", "integer overflow"),
+    ("int-huge", "", "Value out of range for int: 1.0E100"),
+    ("int-nil", "", "int requires a number operand"),
+    ("int-true", "", "int requires a number operand"),
+    ("int-string", "", "int requires a number operand"),
+    ("int-utf16-invalid", "", "int requires a number operand"),
+    ("shift-fraction", "", "bit operation not supported for: double"),
+    ("first-class-int", "", "integer overflow"),
+    ("undefined-int", "", "int requires a number operand"),
+    ("capture-old-value", "", "integer overflow"),
+    ("review-int-negative-max", "", "Value out of range for int: -1.7976931348623157E308"),
+    ("review-int-positive-max", "", "Value out of range for int: 1.7976931348623157E308"),
+    ("review-int-large-low-bits", "", "integer overflow"),
+    ("review-int-negative-large-low-bits", "", "integer overflow"),
+    ("review-int-prefix-string", "", "int requires a number operand"),
+    ("review-shift-negative-fraction", "", "bit operation not supported for: double"),
+];
+
 /// An exact runtime number: a long, or a double by its bits.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Number {
@@ -82,9 +108,11 @@ fn bitwise_hash_match_independently_decoded_primary_observations_after_gc() {
         .unwrap();
     let mut ids = std::collections::BTreeSet::new();
     let mut failures = Vec::new();
+    let mut corrected = 0;
     for case in cases {
+        let case = &clojure_corrections::corrected(case, CORRECTIONS, &mut corrected);
         let id = case["id"].as_str().unwrap();
-        assert!(ids.insert(id));
+        assert!(ids.insert(id.to_owned()));
         let source = case["source"].as_str().unwrap();
         // Clojure governs: dividing longs by zero throws rather than producing
         // the pinned ClojureScript NaN or infinity operand.
@@ -105,6 +133,31 @@ fn bitwise_hash_match_independently_decoded_primary_observations_after_gc() {
             session.collect().unwrap();
             continue;
         }
+        // Bit operations operate on 64 bits (#336); these are JVM Clojure
+        // 1.12's results where the pinned ClojureScript observation differs.
+        // ClojureScript's `imul` is not public.
+        let clojure_long = [
+            ("and", 4294967297),
+            ("or", 2147483651),
+            ("not", -4294967297),
+            ("clear-mask", -8589934593),
+            ("flip-mask", i64::MIN),
+            ("set-mask", 4294967296),
+            ("left-mask", 8589934592),
+            ("right-sign", 1073741824),
+            ("unsigned", -1),
+            ("unsigned-alias", -1),
+            ("first-class-set", 2147483648),
+        ];
+        if clojure_corrections::calls_imul(source) {
+            match session.eval(source) {
+                Err(suss_cli::portable_session::SessionError::Compile(error))
+                    if error.message.contains("Unresolved Runtime name")
+                        && error.message.contains("imul") => {}
+                _ => failures.push(format!("{id}: {source}: expected imul to be unresolved")),
+            }
+            continue;
+        }
         let value = match session.eval(source) {
             Ok(value) => value,
             Err(error) => {
@@ -112,6 +165,16 @@ fn bitwise_hash_match_independently_decoded_primary_observations_after_gc() {
                 continue;
             }
         };
+        if let Some((_, expected)) = clojure_long.iter().find(|(name, _)| *name == id) {
+            let actual = session
+                .inspect(&value, |mut store, value| exact_number(&mut store, &value))
+                .unwrap();
+            if actual != Number::Long(*expected) {
+                failures.push(format!("{id}: {source}: actual {actual:?}, expected {expected}"));
+            }
+            session.collect().unwrap();
+            continue;
+        }
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "f64" => {
                 number_observation(
@@ -169,6 +232,7 @@ fn bitwise_hash_match_independently_decoded_primary_observations_after_gc() {
         }
         session.collect().unwrap();
     }
+    assert_eq!(corrected, CORRECTIONS.len());
     assert!(
         failures.is_empty(),
         "{} failing observations:\n{}",
@@ -202,7 +266,7 @@ fn bitwise_bad_arities_fail_with_spans_and_no_partial_publication() {
         };
         assert!(error.span.start < error.span.end && error.span.end <= source.len());
         assert!(session.eval("bitwise_unpublished").is_err());
-        assert_eq!(bitwise_number(&mut session, "(int 4294967295)"), -1.0);
+        assert_eq!(bitwise_number(&mut session, "(int -1)"), -1.0);
     }
     // The accepted arity contract diagnoses these separately from pinned JS
     // captured wrappers' off-arity fill/ignore behavior; no differential claim.
@@ -213,7 +277,7 @@ fn bitwise_bad_arities_fail_with_spans_and_no_partial_publication() {
         "(imul 1)",
     ] {
         assert!(session.eval(source).is_err(), "{source}");
-        assert_eq!(bitwise_number(&mut session, "(imul 7 3)"), 21.0);
+        assert_eq!(bitwise_number(&mut session, "(bit-xor 7 3)"), 4.0);
     }
 }
 

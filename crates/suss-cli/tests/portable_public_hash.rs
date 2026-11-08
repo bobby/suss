@@ -41,13 +41,14 @@ fn public_hash_retains_scalar_branches_and_captured_callable_after_gc() {
     session.enter_namespace("user").unwrap();
     session.eval("(def captured-hash hash)").unwrap();
     session.collect().unwrap();
-    // Pinned core.cljs1054–1090 literals and safe-integer remainder branch.
+    // Pinned core.cljs1054–1090 literals; numbers hash as Clojure's hasheq.
     for (source, expected) in [
         ("(captured-hash nil)", 0),
         ("(captured-hash true)", 1231),
         ("(captured-hash false)", 1237),
         ("(captured-hash 0)", 0),
-        ("(captured-hash 2147483648)", 1),
+        // A long hashes as Clojure's Murmur3 hashLong (#336).
+        ("(captured-hash 2147483648)", 386683422),
         ("(captured-hash ##Inf)", 2146435072),
         ("(captured-hash ##-Inf)", -1048576),
         ("(captured-hash ##NaN)", 2146959360),
@@ -172,7 +173,27 @@ fn public_hash_matches_independently_decoded_primary_observations() {
             }
             tag => panic!("Unexpected corpus tag {tag}"),
         };
-        assert_eq!(observed, clojure_number(&case["expected"]), "{}", case["id"]);
+        // A number hashes as Clojure's hasheq (#336); these are JVM Clojure
+        // 1.12's hashes where the ClojureScript observation differs.
+        let hasheq = [
+            ("one", 1392991556),
+            ("minus-one", 1651860712),
+            ("modulus", 1819228606),
+            ("modulus-plus-one", 386683422),
+            ("negative-modulus", 622954245),
+            ("negative-modulus-minus-one", -2073034792),
+            ("fraction", 1073217536),
+            ("negative-fraction", -1074266112),
+            ("subnormal", 1),
+            ("large-nonsafe", -2093373915),
+            ("review-safe-max", -1247966309),
+            ("review-negative-safe-max", -19448363),
+        ];
+        let expected = match hasheq.iter().find(|(id, _)| *id == case["id"]) {
+            Some((_, hash)) => serde_json::json!({"tag":"long", "value":hash}),
+            None => clojure_number(&case["expected"]),
+        };
+        assert_eq!(observed, expected, "{}", case["id"]);
         session.collect().unwrap();
     }
 }

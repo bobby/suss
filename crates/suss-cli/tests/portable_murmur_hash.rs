@@ -59,6 +59,15 @@ fn murmur_hash_match_independently_decoded_primary_observations_after_gc() {
         let id = case["id"].as_str().unwrap();
         assert!(ids.insert(id.to_owned()));
         let source = case["source"].as_str().unwrap();
+        if clojure_corrections::calls_imul(source) {
+            match session.eval(source) {
+                Err(suss_cli::portable_session::SessionError::Compile(error))
+                    if error.message.contains("Unresolved Runtime name")
+                        && error.message.contains("imul") => {}
+                _ => failures.push(format!("{id}: {source}: expected imul to be unresolved")),
+            }
+            continue;
+        }
         let value = match session.eval(source) {
             Ok(value) => value,
             Err(error) => {
@@ -182,11 +191,11 @@ fn threading_aliases_exclusions_and_phase_are_explicit() {
         .eval("(ns murmur.alias (:require [cljs.core :as c]))")
         .unwrap();
     assert_eq!(
-        murmur_number(&mut session, "(c/-> 3 (imul 5) (bit-or 2))"),
+        murmur_number(&mut session, "(c/-> 3 (* 5) (bit-or 2))"),
         15.0
     );
     assert_eq!(
-        murmur_number(&mut session, "(c/as-> 3 n (imul n 5) (bit-or n 2))"),
+        murmur_number(&mut session, "(c/as-> 3 n (* n 5) (bit-or n 2))"),
         15.0
     );
     session.eval("(ns murmur.excluded (:refer-clojure :exclude [-> as-> zero?])) (def -> (fn [x] (+ x 100))) (def as-> (fn [x y] (+ x y))) (def zero? (fn [x] (+ x 7)))").unwrap();
@@ -194,7 +203,7 @@ fn threading_aliases_exclusions_and_phase_are_explicit() {
     assert_eq!(murmur_number(&mut session, "(as-> 3 4)"), 7.0);
     assert_eq!(murmur_number(&mut session, "(zero? 3)"), 10.0);
     assert_eq!(
-        murmur_number(&mut session, "(cljs.core/-> 3 (imul 5))"),
+        murmur_number(&mut session, "(cljs.core/-> 3 (* 5))"),
         15.0
     );
     for phase in [Phase::Runtime, Phase::Macro] {
@@ -222,9 +231,11 @@ fn retained_murmur_functions_observe_live_globals_and_old_values_survive_gc() {
     assert_eq!(
         murmur_number(
             &mut session,
-            "(with-redefs [cljs.core/imul (fn [x y] 71)] (saved_murmur 7))"
+            "(with-redefs [cljs.core/int-rotate-left (fn [x n] 71)] (saved_murmur 7))"
         ),
-        71.0
+        // imul is inline in core (#336); the redefined live global still
+        // feeds its last multiplication.
+        -1568678971.0
     );
     let expected = murmur_number(&mut session, "(m3-mix-K1 7)");
     session

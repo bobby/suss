@@ -1,42 +1,60 @@
-# Retained scalar numeric hashing
+# Numeric equality and hashing
 
-> Describes the binary64 implementation that predates the 2026-11-06 numeric
-> decision: numbers follow Clojure ([ADR-0003](../adr/0003-clojure-numeric-tower.md)).
+Numbers follow Clojure 1.12
+([ADR-0003](../adr/0003-clojure-numeric-tower.md), #336). This page replaces
+the binary64 notes that preceded that decision, including the former
+`hash-numeric-boundaries` page.
 
-This slice retains pinned `hash-double` and `hash-combine` with fixed defn patches,
-original composition and EPL provenance. It does not select public `hash`, nor
-claim complete numeric/collection hashing or JavaScript typed-buffer support.
+## Equality
 
-The nonescaping hash-double Float64Array/DataView storage is adapted to a boxed
-binary64 temporary. One checked scalar ToNumber conversion precedes both reads;
-the original live hash-long call remains after their evaluation. Each word reads
-the exact four bytes at offsets0/4 as signed big-endian, modeling little-endian
-Float64Array storage. Simply XORing the un-swapped binary64 halves is incorrect
-for the pinned reference. The explicit byte order is a portable adaptation of a
-host representation dependency, not a general typed-array interoperability claim.
+`=` compares numbers only within a category, as Clojure's `Util.equiv` does:
 
-Three original private compiler/runtime primitives normalize the scalar and read
-the two words. They retain raw binary64 bits (including signed zero/NaN payloads)
-and validate Number storage before casts. Scalar coercion supports the existing
-numbers/nil/booleans/UTF-16 string domain; arbitrary object ToPrimitive remains
-unsupported with typed errors. HIR/IR check unary arity and numeric result types;
-these primitives are not public core cells or bitwise macro names.
+| Expression | Result |
+| --- | --- |
+| `(= 1 1.0)` | false |
+| `(= 0.0 -0.0)` | true |
+| `(= ##NaN ##NaN)` | false |
+| `(= [1 2] [1 2.0])` | false |
+| `(== 1 1.0)` | true |
 
-72 fresh primary/native observations match, preserving the original 52 review
-candidate and its initial 42. Twenty independent review probes cover scalar
-string/Boolean/nil
-coercions, binary64 boundaries, explicit word order, live dependency mutation and
-throw/evaluation order. Three source guards cover scalar coercion, captures/live dependencies, effect order,
-checked runtime arity/errors/GC recovery and located compile-atomic private
-primitive arities with both-phase validation. Compiler HIR/IR2 and ABI26 pass;
-the new ABI guard checks267 binary64 encodings including signed zero, infinities,
-signaling/quiet NaN payloads and malformed storage with typed recovery. An additional independent guard rejects foreign arrays,
-unknown i31 sentinels and
-null references in each adapter, with typed exception recovery after GC. Python76
-and inventory/import/WIT/numeric/bitwise/offline roadmap gates pass. Independent
-review found no significant production defect; the full workspace baseline passes.
-Exact final reviewed-head CI remains required before readiness.
-Source recipe selects45 forms/49 licensed files; overlay132 partial/933 unassessed.
-Shared GC layouts, runtime ABI version and native core cell count are unchanged.
-Cached/public/string/numeric/collection hashing, public equality, persistent
-sequences and compiled macro bootstrap remain incomplete.
+Core's `=` tests scalars with the private `suss.bootstrap/equiv`, the runtime's
+`number-equiv`. Two longs compare as 64-bit integers, two doubles by IEEE-754
+equality, and a long never equals a double or a non-number. Other values fall
+through to strict identity and then `-equiv`, as before. `==` compares numeric
+value across categories and throws on a non-number.
+
+## Hashing
+
+`hash` of a number is Clojure's `hasheq`, the runtime's `number-hash`, reached
+through the private `suss.bootstrap/hash-number`:
+
+- A long hashes with Murmur3's `hashLong`: its low and high words mixed in
+  turn, finalized with length 8. Zero hashes to 0.
+- A double hashes as `Double.hashCode`, the XOR of its bits' two words, with
+  NaN's canonical bits. -0.0 hashes as 0.0, to 0, as `Numbers.hasheq` makes it,
+  so the two zeros that `=` equates hash alike.
+
+| Value | `hash` |
+| --- | --- |
+| `1` | 1392991556 |
+| `-1` | 1651860712 |
+| `9223372036854775807` | -2106506049 |
+| `1.0` | 1072693248 |
+| `2.5` | 1074003968 |
+| `##NaN` | 2146959360 |
+
+A long and the equal double hash differently, as in Clojure, so hash maps and
+sets keep them apart. Hash maps, and sets of more than eight elements, iterate
+in the JVM's order because their hashes, and core's hash tries, match
+Clojure's. A set of eight or fewer elements still iterates in insertion order,
+as ClojureScript's array-backed small sets do; JVM Clojure orders it by hash.
+
+## Core's 32-bit hashing
+
+Shipped core's string, keyword, symbol and collection hashing is
+ClojureScript's Murmur3 and hash-trie code, written for 32-bit bit operations.
+Inside `suss.core`, inline `int`, `bit-and`, `bit-or`, `bit-xor`,
+`bit-shift-left`, `bit-shift-right`, `unsigned-bit-shift-right` and `imul`
+lower to private `int32-*` runtime helpers with ClojureScript's semantics, so
+those algorithms and their results are unchanged. User code gets Clojure's
+64-bit operations ([bit operations](bitwise-hashing.md)).

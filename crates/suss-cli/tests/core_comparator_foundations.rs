@@ -562,7 +562,8 @@ fn primitive_constructor_values_are_canonical_callable_and_rooted_in_both_phases
         ] {
             boolean(&mut session, source, expected);
         }
-        boolean(&mut session, "(= (scalar-number-constructor (array 1)) 1)", true);
+        // Number() returns a double, which `=` keeps apart from the long 1 (#336).
+        boolean(&mut session, "(= (scalar-number-constructor (array 1)) 1.0)", true);
         boolean(&mut session, "(= (scalar-string-constructor (array 1)) \"1\")", true);
         boolean(&mut session, "(identical? (retained-type 1) scalar-number-constructor)", true);
     }

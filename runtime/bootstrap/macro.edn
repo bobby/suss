@@ -2047,7 +2047,7 @@
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
          "suss.bindings.macro:suss.internal.reify/t-reify-3438-10876"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "a425ae833e50577d949fee76106777aee81602d15cd3f96e3ad09313917209b2",
+ :compiler-source-sha256 "d16c6463c655f9687f795cf6ec9ccee698e55102e4e784f96fd7b63b00091d72",
  :dependency-graph-sha256 "6844fe870b78094f7984c9ff13a12346a3517887e0e2fb1ef3489cff86c4d016",
  :flags [],
  :format-version 2,
@@ -2055,5 +2055,5 @@
  :runtime-abi 3,
  :source-sha256 "6746ec2a876da0032a3ddd13b0de07cce34a3799c63c258aa66e86e023e13fd9",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "52736c3aaeafefca0bc3d45593dd756bb78b3abe656ddab2df82fcf664840fed",
+ :wasm-sha256 "f5ce86e96c8d7fa10db3b7995d6f91c363e5d9feb6fac71ff4e5038e9d1db550",
  :wasm-tools "0.258.0"}

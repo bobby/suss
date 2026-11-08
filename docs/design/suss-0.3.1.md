@@ -130,10 +130,9 @@ printing, reader literals and 64-bit bitwise operations. The jank suite's
 [ADR-0003](../adr/0003-clojure-numeric-tower.md) gives the representation, which
 keeps numbers unboxed wherever the compiler can, and the staging. Longs and
 doubles are distinct values with Clojure's arithmetic, overflow checks,
-contagion, `quot`, `rem` and `mod`, reading and printing (#335). Until the
-rest is implemented, `=` and `hash` still equate a long with an equal double,
-`type` doesn't distinguish them, bitwise operations keep ClojureScript's 32-bit
-coercions (#336), a quotient of longs that doesn't divide evenly is a double
+contagion, `quot`, `rem` and `mod`, reading and printing (#335), and with
+Clojure's `=`, `hash`, 64-bit bit operations and range-checked casts (#336).
+Until the rest is implemented, `type` doesn't distinguish them, a quotient of longs that doesn't divide evenly is a double
 (#338), and the reader reads ratios, `N` and `M` literals and integers beyond
 the long range but evaluating them throws (#333, #338, #339); these are known
 gaps, not the contract. Arithmetic (`+ - * /`, `inc`, `dec`,
