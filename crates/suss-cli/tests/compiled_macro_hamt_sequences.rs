@@ -25,6 +25,20 @@ fn tagged(form: &Form) -> serde_json::Value {
         other => panic!("Unexpected sequence observation: {other:?}"),
     }
 }
+/// JVM Clojure 1.12's observation of a hash-ordered case of `corpus`, which
+/// replaces its pinned ClojureScript order (#336).
+fn clojure_order(corpus: &str, id: &str) -> Option<serde_json::Value> {
+    let observations: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/oracle/clojure-hash-order-observations.json"
+    ))
+    .unwrap();
+    observations["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|case| case["corpus"] == corpus && case["id"] == id)
+        .map(|case| case["expected"].clone())
+}
 fn literal(n: usize) -> String {
     format!(
         "{{{}}}",
@@ -63,10 +77,12 @@ fn compiled_macro_hamt_sequences_match_exact_pinned_order_in_both_phases_after_g
                 Ok(form) => {
                     assert_eq!(form.span, 70..80);
                     let actual = tagged(&form);
-                    if actual != case["expected"] {
+                    let expected = clojure_order("hamt-sequence-cases.json", case["id"].as_str().unwrap())
+                        .unwrap_or_else(|| case["expected"].clone());
+                    if actual != expected {
                         failures.push(format!(
-                            "{phase} {}: actual {actual}, expected {}",
-                            case["id"], case["expected"]
+                            "{phase} {}: actual {actual}, expected {expected}",
+                            case["id"]
                         ));
                     }
                 }

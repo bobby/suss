@@ -66,10 +66,6 @@
    "stage": "namespace",
    "diagnostic": "clojure.core-test.bound-fn-star (Some(\"<root>/clojure/core_test/bound_fn_star.cljc\")): Unresolved Runtime name bound-fn* at bytes 290..1947"
   },
-  "clojure.core-test.byte": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.byte (Some(\"<root>/clojure/core_test/byte.cljc\")): Unresolved Runtime name byte at bytes 232..3369"
-  },
   "clojure.core-test.case": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.case (Some(\"<root>/clojure/core_test/case.cljc\")): case bootstrap requires an expression and explicit default at bytes 240..6428"
@@ -117,10 +113,6 @@
   "clojure.core-test.distinct": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.distinct (Some(\"<root>/clojure/core_test/distinct.cljc\")): Unresolved Runtime name distinct at bytes 244..1776"
-  },
-  "clojure.core-test.double": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.double (Some(\"<root>/clojure/core_test/double.cljc\")): Unresolved Runtime name double at bytes 234..1492"
   },
   "clojure.core-test.double-qmark": {
    "stage": "namespace",
@@ -206,10 +198,6 @@
    "stage": "namespace",
    "diagnostic": "clojure.core-test.lazy-seq (Some(\"<root>/clojure/core_test/lazy_seq.cljc\")): Unresolved Runtime name assert at bytes 244..4118"
   },
-  "clojure.core-test.long": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.long (Some(\"<root>/clojure/core_test/long.cljc\")): Unresolved Runtime name long at bytes 232..2476"
-  },
   "clojure.core-test.merge": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.merge (Some(\"<root>/clojure/core_test/merge.cljc\")): Unresolved Runtime name any? at bytes 237..4753"
@@ -225,10 +213,6 @@
   "clojure.core-test.mod": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.mod (Some(\"<root>/clojure/core_test/mod.cljc\")): Unresolved Runtime name decimal? at bytes 231..5438"
-  },
-  "clojure.core-test.nan-qmark": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.nan-qmark (Some(\"<root>/clojure/core_test/nan_qmark.cljc\")): Unresolved Runtime name double at bytes 237..958"
   },
   "clojure.core-test.neg-int-qmark": {
    "stage": "namespace",
@@ -384,7 +368,7 @@
   },
   "clojure.core-test.short": {
    "stage": "namespace",
-   "diagnostic": "clojure.core-test.short (Some(\"<root>/clojure/core_test/short.cljc\")): Unresolved Runtime name short at bytes 233..2859"
+   "diagnostic": "clojure.core-test.short (Some(\"<root>/clojure/core_test/short.cljc\")): instance? requires exactly two operands at bytes 233..2859"
   },
   "clojure.core-test.shuffle": {
    "stage": "namespace",
@@ -425,10 +409,6 @@
   "clojure.core-test.star-squote": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 42..57"
-  },
-  "clojure.core-test.str": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.str (Some(\"<root>/clojure/core_test/str.cljc\")): Unresolved Runtime name float at bytes 225..2867"
   },
   "clojure.core-test.string-qmark": {
    "stage": "namespace",
@@ -535,21 +515,34 @@
  },
  "assertions": {
   "clojure.core-test.atom/test-atom#6": "observation:undecodable",
-  "clojure.core-test.bit-clear/test-bit-clear#1": "verdict:fail",
-  "clojure.core-test.bit-clear/test-bit-clear#2": "verdict:fail",
-  "clojure.core-test.bit-flip/test-bit-flip#1": "verdict:fail",
-  "clojure.core-test.bit-flip/test-bit-flip#2": "verdict:fail",
-  "clojure.core-test.bit-not/test-bit-not#1": "verdict:fail",
-  "clojure.core-test.bit-set/test-bit-set#1": "verdict:fail",
-  "clojure.core-test.bit-set/test-bit-set#2": "verdict:fail",
-  "clojure.core-test.bit-set/test-bit-set#4": "verdict:fail",
-  "clojure.core-test.bit-set/test-bit-set#5": "verdict:fail",
-  "clojure.core-test.bit-shift-left/test-bit-shift-left#1": "verdict:fail",
-  "clojure.core-test.bit-shift-left/test-bit-shift-left#2": "verdict:fail",
-  "clojure.core-test.bit-shift-right/test-bit-shift-right#1": "verdict:fail",
-  "clojure.core-test.bit-shift-right/test-bit-shift-right#2": "verdict:fail",
-  "clojure.core-test.bit-test/test-bit-test#1": "verdict:fail",
-  "clojure.core-test.bit-test/test-bit-test#2": "verdict:fail",
+  "clojure.core-test.byte/test-byte#1": "count:27/28",
+  "clojure.core-test.byte/test-byte#10": "count:27/28",
+  "clojure.core-test.byte/test-byte#11": "count:27/28",
+  "clojure.core-test.byte/test-byte#12": "count:27/28",
+  "clojure.core-test.byte/test-byte#13": "count:27/28",
+  "clojure.core-test.byte/test-byte#14": "count:27/28",
+  "clojure.core-test.byte/test-byte#15": "count:27/28",
+  "clojure.core-test.byte/test-byte#16": "count:27/28",
+  "clojure.core-test.byte/test-byte#17": "count:27/28",
+  "clojure.core-test.byte/test-byte#18": "count:27/28",
+  "clojure.core-test.byte/test-byte#19": "count:27/28",
+  "clojure.core-test.byte/test-byte#2": "count:27/28",
+  "clojure.core-test.byte/test-byte#20": "count:27/28",
+  "clojure.core-test.byte/test-byte#21": "count:27/28",
+  "clojure.core-test.byte/test-byte#22": "count:27/28",
+  "clojure.core-test.byte/test-byte#23": "count:27/28",
+  "clojure.core-test.byte/test-byte#24": "count:27/28",
+  "clojure.core-test.byte/test-byte#25": "count:27/28",
+  "clojure.core-test.byte/test-byte#26": "count:27/28",
+  "clojure.core-test.byte/test-byte#27": "count:27/28",
+  "clojure.core-test.byte/test-byte#28": "count:27/28",
+  "clojure.core-test.byte/test-byte#3": "count:27/28",
+  "clojure.core-test.byte/test-byte#4": "count:27/28",
+  "clojure.core-test.byte/test-byte#5": "count:27/28",
+  "clojure.core-test.byte/test-byte#6": "count:27/28",
+  "clojure.core-test.byte/test-byte#7": "count:27/28",
+  "clojure.core-test.byte/test-byte#8": "count:27/28",
+  "clojure.core-test.byte/test-byte#9": "count:27/28",
   "clojure.core-test.compare/test-compare#12": "observation:value",
   "clojure.core-test.compare/test-compare#3": "kind:error",
   "clojure.core-test.compare/test-compare#8": "kind:error",
@@ -571,6 +564,25 @@
   "clojure.core-test.counted-qmark/test-counted?#6": "observation:undecodable",
   "clojure.core-test.counted-qmark/test-counted?#7": "observation:undecodable",
   "clojure.core-test.counted-qmark/test-counted?#9": "kind:error",
+  "clojure.core-test.double/test-double#1": "count:15/19",
+  "clojure.core-test.double/test-double#10": "count:15/19",
+  "clojure.core-test.double/test-double#11": "count:15/19",
+  "clojure.core-test.double/test-double#12": "count:15/19",
+  "clojure.core-test.double/test-double#13": "count:15/19",
+  "clojure.core-test.double/test-double#14": "count:15/19",
+  "clojure.core-test.double/test-double#15": "count:15/19",
+  "clojure.core-test.double/test-double#16": "count:15/19",
+  "clojure.core-test.double/test-double#17": "count:15/19",
+  "clojure.core-test.double/test-double#18": "count:15/19",
+  "clojure.core-test.double/test-double#19": "count:15/19",
+  "clojure.core-test.double/test-double#2": "count:15/19",
+  "clojure.core-test.double/test-double#3": "count:15/19",
+  "clojure.core-test.double/test-double#4": "count:15/19",
+  "clojure.core-test.double/test-double#5": "count:15/19",
+  "clojure.core-test.double/test-double#6": "count:15/19",
+  "clojure.core-test.double/test-double#7": "count:15/19",
+  "clojure.core-test.double/test-double#8": "count:15/19",
+  "clojure.core-test.double/test-double#9": "count:15/19",
   "clojure.core-test.empty-qmark/test-empty?#15": "verdict:fail",
   "clojure.core-test.even-qmark/test-even?#10": "kind:error",
   "clojure.core-test.even-qmark/test-even?#7": "kind:error",
@@ -666,6 +678,32 @@
   "clojure.core-test.list-qmark/test-list?#10": "kind:error",
   "clojure.core-test.list-qmark/test-list?#12": "kind:error",
   "clojure.core-test.list/test-list#29": "kind:error",
+  "clojure.core-test.long/test-long#1": "count:25/26",
+  "clojure.core-test.long/test-long#10": "count:25/26",
+  "clojure.core-test.long/test-long#11": "count:25/26",
+  "clojure.core-test.long/test-long#12": "count:25/26",
+  "clojure.core-test.long/test-long#13": "count:25/26",
+  "clojure.core-test.long/test-long#14": "count:25/26",
+  "clojure.core-test.long/test-long#15": "count:25/26",
+  "clojure.core-test.long/test-long#16": "count:25/26",
+  "clojure.core-test.long/test-long#17": "count:25/26",
+  "clojure.core-test.long/test-long#18": "count:25/26",
+  "clojure.core-test.long/test-long#19": "count:25/26",
+  "clojure.core-test.long/test-long#2": "count:25/26",
+  "clojure.core-test.long/test-long#20": "count:25/26",
+  "clojure.core-test.long/test-long#21": "count:25/26",
+  "clojure.core-test.long/test-long#22": "count:25/26",
+  "clojure.core-test.long/test-long#23": "count:25/26",
+  "clojure.core-test.long/test-long#24": "count:25/26",
+  "clojure.core-test.long/test-long#25": "count:25/26",
+  "clojure.core-test.long/test-long#26": "count:25/26",
+  "clojure.core-test.long/test-long#3": "count:25/26",
+  "clojure.core-test.long/test-long#4": "count:25/26",
+  "clojure.core-test.long/test-long#5": "count:25/26",
+  "clojure.core-test.long/test-long#6": "count:25/26",
+  "clojure.core-test.long/test-long#7": "count:25/26",
+  "clojure.core-test.long/test-long#8": "count:25/26",
+  "clojure.core-test.long/test-long#9": "count:25/26",
   "clojure.core-test.lt-eq/test-<=#10": "kind:error",
   "clojure.core-test.lt-eq/test-<=#13": "kind:error",
   "clojure.core-test.lt-eq/test-<=#14": "kind:error",
@@ -723,6 +761,8 @@
   "clojure.core-test.min/test-min#2": "kind:error",
   "clojure.core-test.min/test-min#3": "kind:error",
   "clojure.core-test.min/test-min#4": "kind:error",
+  "clojure.core-test.nan-qmark/test-NaN?#1": "verdict:fail",
+  "clojure.core-test.nan-qmark/test-NaN?#2": "verdict:fail",
   "clojure.core-test.not-empty/test-not-empty#11": "verdict:fail",
   "clojure.core-test.nthrest/test-nthrest#11": "verdict:fail",
   "clojure.core-test.nthrest/test-nthrest#12": "verdict:fail",
@@ -795,6 +835,14 @@
   "clojure.core-test.simple-symbol-qmark/test-simple-symbol?#10": "kind:error",
   "clojure.core-test.simple-symbol-qmark/test-simple-symbol?#14": "kind:error",
   "clojure.core-test.simple-symbol-qmark/test-simple-symbol?#8": "kind:error",
+  "clojure.core-test.str/test-str#17": "kind:error",
+  "clojure.core-test.str/test-str#18": "kind:error",
+  "clojure.core-test.str/test-str#19": "kind:error",
+  "clojure.core-test.str/test-str#21": "kind:error",
+  "clojure.core-test.str/test-str#22": "kind:error",
+  "clojure.core-test.str/test-str#23": "kind:error",
+  "clojure.core-test.str/test-str#24": "kind:error",
+  "clojure.core-test.str/test-str#25": "kind:error",
   "clojure.core-test.subvec/test-subvec#14": "kind:error",
   "clojure.core-test.subvec/test-subvec#28": "verdict:fail",
   "clojure.core-test.subvec/test-subvec#30": "verdict:fail",
@@ -805,9 +853,6 @@
   "clojure.core-test.symbol-qmark/test-symbol?#13": "kind:error",
   "clojure.core-test.symbol-qmark/test-symbol?#7": "kind:error",
   "clojure.core-test.symbol-qmark/test-symbol?#9": "kind:error",
-  "clojure.core-test.unsigned-bit-shift-right/test-unsigned-bit-shift-right#1": "verdict:fail",
-  "clojure.core-test.unsigned-bit-shift-right/test-unsigned-bit-shift-right#2": "verdict:fail",
-  "clojure.core-test.unsigned-bit-shift-right/test-unsigned-bit-shift-right#3": "verdict:fail",
   "clojure.core-test.vector-qmark/test-vector?#11": "kind:error",
   "clojure.core-test.vector-qmark/test-vector?#13": "kind:error",
   "clojure.core-test.vector/test-vector#24": "kind:error"

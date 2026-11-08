@@ -7,6 +7,12 @@ mod clojure_corrections;
 const CORRECTIONS: &[clojure_corrections::Correction] = &[
     ("equal-string-value", "", "+ requires number operands"),
 ];
+/// Recorded observations that `=` equates a long and a double; JVM Clojure
+/// 1.12's `=` keeps the categories apart (#336).
+const CLOJURE_EQUALITY: &[(&str, bool)] = &[
+    ("equal-signed-zero", false),
+    ("review-equality-negative-zero-nan-rest", false),
+];
 
 fn number(session: &mut Session, value: &SessionValue) -> RuntimeNumber {
     session
@@ -80,7 +86,11 @@ fn sequence_foundations_match_independently_encoded_primary_observations() {
             }
             tag => panic!("unexpected sequence observation tag {tag}"),
         };
-        assert_eq!(actual, clojure_number(&case["expected"]), "{id}: {source}");
+        let expected = match CLOJURE_EQUALITY.iter().find(|(name, _)| *name == id) {
+            Some((_, value)) => serde_json::json!({"tag":"bool", "value":value}),
+            None => clojure_number(&case["expected"]),
+        };
+        assert_eq!(actual, expected, "{id}: {source}");
         session.collect().unwrap();
     }
     assert_eq!(corrected, CORRECTIONS.len());

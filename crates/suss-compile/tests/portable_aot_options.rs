@@ -354,7 +354,7 @@ fn optional_small_integer_result_rejects_invalid_payload_with_language_exception
     // failures; successful calls below retain repeated-call/post-return coverage.
     for bad in [256.0, -2.0, 1.5, f64::NAN, f64::INFINITY] {
         let (mut store, instance) = instantiate(
-            "(defn ^:export value [x] (if (= x -1) [:none] [:some x]))",
+            "(defn ^:export value [x] (if (== x -1) [:none] [:some x]))",
             "export value: func(x: f64) -> option<u8>;",
         );
         let function = instance

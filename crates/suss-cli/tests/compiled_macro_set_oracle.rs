@@ -46,6 +46,21 @@ fn clojure_longs(expected: &serde_json::Value) -> serde_json::Value {
     }
 }
 
+/// JVM Clojure 1.12's observation of a hash-ordered case of `corpus`, which
+/// replaces its pinned ClojureScript order (#336).
+fn clojure_order(corpus: &str, id: &str) -> Option<serde_json::Value> {
+    let observations: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/oracle/clojure-hash-order-observations.json"
+    ))
+    .unwrap();
+    observations["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|case| case["corpus"] == corpus && case["id"] == id)
+        .map(|case| case["expected"].clone())
+}
+
 #[test]
 fn compiled_macro_sets_match_pinned_source_observations_in_both_phases_after_gc() {
     let corpus: serde_json::Value = serde_json::from_str(include_str!(
@@ -74,7 +89,8 @@ fn compiled_macro_sets_match_pinned_source_observations_in_both_phases_after_gc(
                 Ok(form) => {
                     assert_eq!(form.span, 70..80);
                     let actual = tagged(&form);
-                    let expected = clojure_longs(&case["expected"]);
+                    let expected = clojure_order("set-data-cases.json", case["id"].as_str().unwrap())
+                        .unwrap_or_else(|| clojure_longs(&case["expected"]));
                     if actual != expected {
                         failures.push(format!(
                             "{phase} {}: actual {actual}, expected {expected}",
