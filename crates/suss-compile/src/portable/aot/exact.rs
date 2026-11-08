@@ -49,24 +49,26 @@ pub(super) fn lift(body: &mut Function, signed: bool, parameter: u32, root: u32)
     box_number(body);
     schema_tail(body);
 }
-fn word(body: &mut Function, root: u32, pair: u32, operation: f64) {
+/// `scratch` is a value local for reading the word, a long.
+fn word(body: &mut Function, root: u32, pair: u32, operation: f64, scratch: u32) {
     use Instruction::*;
     schema_head(body, root, operation);
     emit(body, &[LocalGet(pair), F64Const(0.0.into())]);
     box_number(body);
     schema_tail(body);
-    emit(body, &runtime_abi::number_to_f64());
+    emit(body, &[LocalSet(scratch)]);
+    emit(body, &runtime_abi::number_to_f64(scratch));
     emit(body, &[I32TruncF64U, I64ExtendI32U]);
 }
-pub(super) fn lower(body: &mut Function, signed: bool, value: u32, pair: u32, root: u32) {
+pub(super) fn lower(body: &mut Function, signed: bool, value: u32, pair: u32, root: u32, scratch: u32) {
     use Instruction::*;
     schema_head(body, root, if signed { 2.0 } else { 3.0 });
     emit(body, &[LocalGet(value), F64Const(0.0.into())]);
     box_number(body);
     schema_tail(body);
     body.instruction(&LocalSet(pair));
-    word(body, root, pair, 4.0);
+    word(body, root, pair, 4.0, scratch);
     emit(body, &[I64Const(32), I64Shl]);
-    word(body, root, pair, 5.0);
+    word(body, root, pair, 5.0, scratch);
     body.instruction(&I64Or);
 }

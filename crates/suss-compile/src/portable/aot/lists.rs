@@ -18,6 +18,8 @@ pub(super) struct Locals {
     pub sentinels: u32,
     /// An `i64` scratch local for boxing a long.
     pub wide: u32,
+    /// A value scratch local for reading a number.
+    pub scratch: u32,
 }
 fn emit(body: &mut Function, instructions: &[Instruction<'_>]) {
     for instruction in instructions {
@@ -142,7 +144,8 @@ fn schema(body: &mut Function, root: u32, operation: f64, value: u32, index: Opt
 fn numeric_length(body: &mut Function, root: u32, locals: &Locals) {
     use Instruction::*;
     schema(body, root, 3.0, locals.container, None);
-    emit(body, &runtime_abi::number_to_f64());
+    emit(body, &[LocalSet(locals.scratch)]);
+    emit(body, &runtime_abi::number_to_f64(locals.scratch));
     emit(body, &[I32TruncF64U, LocalSet(locals.length)]);
 }
 
@@ -384,6 +387,7 @@ pub(super) fn post_return(body: &mut Function, element: ListElement) {
         number: 0,
         sentinels: 0, // release never builds a sentinel or a long
         wide: 0,
+        scratch: 0,
     };
     release(body, element, &locals);
 }

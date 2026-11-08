@@ -88,8 +88,8 @@ pub(super) fn module(
         ],
     );
     emit(&mut invoke, &runtime_abi::number_test(2));
-    emit(&mut invoke, &[I32Eqz, If(BlockType::Empty), Call(6), Throw(0), End, LocalGet(2)]);
-    emit(&mut invoke, &runtime_abi::number_to_f64());
+    emit(&mut invoke, &[I32Eqz, If(BlockType::Empty), Call(6), Throw(0), End]);
+    emit(&mut invoke, &runtime_abi::number_to_f64(2));
     emit(
         &mut invoke,
         &[

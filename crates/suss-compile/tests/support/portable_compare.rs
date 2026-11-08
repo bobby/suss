@@ -11,12 +11,9 @@ pub fn matches(expected: &Edn, actual: &Observation) -> bool {
             let expected = a.to_bits();
             expected == *bits || (canonical_nan(expected) && canonical_nan(*bits))
         }
-        (Edn::Number(Number::Integer(integer)), Observation::Number(bits)) => {
-            let number = f64::from_bits(*bits);
-            number.is_finite()
-                && number.fract() == 0.0
-                && *bits != (-0.0_f64).to_bits()
-                && format!("{number:.0}") == integer.to_string()
+        // An integer is a long, never an integral double (#335).
+        (Edn::Number(Number::Integer(integer)), Observation::Long(long)) => {
+            integer.to_string() == long.to_string()
         }
         (Edn::String(text), Observation::String(units)) => {
             text.encode_utf16().eq(units.iter().copied())

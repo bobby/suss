@@ -112,12 +112,6 @@ pub fn module(
         vec![VALUE],
         vec![ValType::I32],
     );
-    let number = add_import(
-        "suss.runtime",
-        "number-box",
-        vec![ValType::F64],
-        vec![VALUE],
-    );
     let set_binding = add_import("suss.runtime", "binding-set", vec![VALUE, VALUE], vec![]);
     let closure = add_import(
         "suss.runtime",
@@ -229,8 +223,9 @@ pub fn module(
         LocalGet(1),
         I32Const(0),
         ArrayGet(runtime_abi::ARGS),
+        LocalSet(11),
     ]);
-    body.extend(runtime_abi::number_test_stack());
+    body.extend(runtime_abi::number_test(11));
     body.extend([I32Eqz, If(BlockType::Empty)]);
     fail(&mut body);
     body.push(End);
@@ -238,8 +233,9 @@ pub fn module(
         LocalGet(1),
         I32Const(0),
         ArrayGet(runtime_abi::ARGS),
+        LocalSet(11),
     ]);
-    body.extend(runtime_abi::number_to_f64());
+    body.extend(runtime_abi::number_to_f64(11));
     body.extend([
         LocalSet(10),
         LocalGet(10),
@@ -365,10 +361,9 @@ pub fn module(
     field_set(&mut body, 8, 9, &[I32Const(2)]);
     body.extend([
         LocalGet(9),
-        LocalGet(4),
-        I32Load(mem()),
-        F64ConvertI32U,
-        Call(number),
+    ]);
+    body.extend(u32_long(&[LocalGet(4), I32Load(mem())]));
+    body.extend([
         Call(resolve_future),
         Drop,
         LocalGet(8),
@@ -413,7 +408,8 @@ pub fn module(
     body.extend([End, End, LocalGet(9), End]);
     emit(
         &mut code,
-        [(6, ValType::I32), (2, VALUE), (1, ValType::F64)],
+        // Local 11 holds the requested count while it is checked.
+        [(6, ValType::I32), (2, VALUE), (1, ValType::F64), (1, VALUE)],
         body,
     );
     let install = n + 1;
@@ -516,11 +512,11 @@ pub fn module(
     field(&mut body, 5, 2);
     body.extend([Call(status), I32Eqz, If(BlockType::Empty)]);
     field(&mut body, 5, 2);
-    field(&mut body, 5, 4);
+    let mut word = Vec::new();
+    field(&mut word, 5, 4);
+    word.push(I32Load(mem()));
+    body.extend(u32_long(&word));
     body.extend([
-        I32Load(mem()),
-        F64ConvertI32U,
-        Call(number),
         Call(resolve_future),
         Drop,
         End,
@@ -917,6 +913,18 @@ fn root(body: &mut Vec<Instruction<'static>>) {
         Instruction::GlobalGet(ROOTS),
         Instruction::RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)),
     ]);
+}
+/// The u32 that `read` loads, without side effects, as a long: an i31 when
+/// it fits, otherwise a boxed long.
+fn u32_long(read: &[Instruction<'static>]) -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let mut code = read.to_vec();
+    code.extend([I32Const(1 << 30), I32LtU, If(BlockType::Result(VALUE))]);
+    code.extend_from_slice(read);
+    code.extend([RefI31, Else]);
+    code.extend_from_slice(read);
+    code.extend([I64ExtendI32U, StructNew(runtime_abi::LONG), End]);
+    code
 }
 fn field(body: &mut Vec<Instruction<'static>>, local: u32, index: i32) {
     body.extend([

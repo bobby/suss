@@ -1,6 +1,6 @@
 //! Independent ABI2 observations. Never call the guest printer or equality.
 //! Inspect canonical storage directly; unknown objects and malformed layouts fail.
-use suss_compile::portable_session::{sentinel_tag, Session, SessionError, SessionValue};
+use suss_compile::portable_session::{runtime_number, sentinel_tag, RuntimeNumber, Session, SessionError, SessionValue};
 use wasmtime::{AnyRef, OwnedRooted, Rooted, StorageType, StoreContextMut, Val};
 
 #[path = "probe_eval.rs"]
@@ -12,7 +12,9 @@ pub use probe_eval::ProbeEval;
 pub enum Observation {
     Nil,
     Bool(bool),
+    /// A double's bits.
     Number(u64),
+    Long(i64),
     String(Vec<u16>),
     Keyword(Option<Vec<u16>>, Vec<u16>),
     Symbol(Option<Vec<u16>>, Vec<u16>),
@@ -319,6 +321,9 @@ impl Decoder {
         let Val::AnyRef(Some(reference)) = value else {
             unreachable!("a null eqref is the nil sentinel");
         };
+        if let Some(RuntimeNumber::Long(long)) = runtime_number(&mut *store, value)? {
+            return Ok(Observation::Long(long));
+        }
         if let Some(array) = reference.as_array(&*store)? {
             let ty = array.ty(&*store)?;
             if !matches!(ty.element_type(), StorageType::I16)
@@ -1045,6 +1050,13 @@ impl Decoder {
         class: Class,
         data: &[Val],
     ) -> wasmtime::Result<Observation> {
+        // A range of longs yields longs.
+        let longs = [&data[1], &data[2], &data[3]]
+            .into_iter()
+            .map(|value| runtime_number(&mut *store, value).map(|n| matches!(n, Some(RuntimeNumber::Long(_)))))
+            .collect::<wasmtime::Result<Vec<_>>>()?
+            .into_iter()
+            .all(|long| long);
         let mut current = f64::from_bits(number_bits(store, &data[1])?);
         let end = f64::from_bits(number_bits(store, &data[2])?);
         let step = f64::from_bits(number_bits(store, &data[3])?);
@@ -1077,7 +1089,11 @@ impl Decoder {
                 return Err(wasmtime::Error::msg("ABI2 decoder range traversal limit"));
             }
             self.spend(1)?;
-            result.push(Observation::Number(current.to_bits()));
+            result.push(if longs {
+                Observation::Long(current as i64)
+            } else {
+                Observation::Number(current.to_bits())
+            });
             let next = current + step;
             if next == current {
                 return Err(wasmtime::Error::msg("ABI2 decoder range does not advance"));
@@ -1478,7 +1494,12 @@ fn fields(
     Ok(fields)
 }
 
+/// A runtime integer field or double as a double's bits; integer fields such
+/// as counts and hash words are longs.
 fn number_bits(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<u64> {
+    if let Some(RuntimeNumber::Long(long)) = runtime_number(&mut *store, value)? {
+        return Ok((long as f64).to_bits());
+    }
     let structure = non_null_ref(value)?
         .as_struct(&*store)?
         .ok_or_else(|| wasmtime::Error::msg("Expected ABI2 number box"))?;

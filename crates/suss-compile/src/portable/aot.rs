@@ -1311,8 +1311,10 @@ fn adapter(
             (2, VALUE),
             (4, ValType::I32),
             (1, ValType::I64),
+            (1, VALUE),
         ]);
         let wide = unit + 7;
+        let scratch = unit + 8;
         let string_locals = strings::Locals {
             value: result,
             pointer,
@@ -1339,6 +1341,7 @@ fn adapter(
             number,
             sentinels,
             wide,
+            scratch,
         };
         let list_root = schema_base + u32::from(option_schema);
         let exact_root = list_root + u32::from(list_schema);
@@ -1459,7 +1462,7 @@ fn adapter(
         match export.result {
             None => {}
             Some(Boundary::Exact(signed)) => {
-                exact::lower(&mut body, signed, result, list_locals.container, exact_root);
+                exact::lower(&mut body, signed, result, list_locals.container, exact_root, scratch);
             }
             Some(Boundary::List(element)) => {
                 lists::copy_out(
@@ -1833,9 +1836,8 @@ fn lower_scalar(
             body.instruction(&Instruction::I32Eqz)
                 .instruction(&Instruction::If(BlockType::Empty));
             boundary_error(body, result, name);
-            body.instruction(&Instruction::End)
-                .instruction(&Instruction::LocalGet(result));
-            for instruction in runtime_abi::number_to_f64() {
+            body.instruction(&Instruction::End);
+            for instruction in runtime_abi::number_to_f64(result) {
                 body.instruction(&instruction);
             }
             if let Some((min, max, signed)) = scalar.integer_bounds() {

@@ -99,67 +99,38 @@ pub fn boolean_in(first: u32) -> [Instruction<'static>; 5] {
 pub fn number_test(local: u32) -> [Instruction<'static>; 8] {
     longs::number_test(local)
 }
-/// `[eqref] -> [f64]`: a number as a double, without locals; traps unless
-/// the value is a number.
-pub fn number_to_f64() -> Vec<Instruction<'static>> {
+/// `[] -> [f64]`: the number in `local` as a double; traps unless it is one.
+pub fn number_to_f64(local: u32) -> Vec<Instruction<'static>> {
     use Instruction::*;
-    let from = RefType::EQREF;
-    let cast = |heap_type| RefType { nullable: false, heap_type };
     vec![
-        Block(BlockType::Result(ValType::F64)),
-        Block(BlockType::Result(VALUE)),
-        BrOnCastFail {
-            relative_depth: 0,
-            from_ref_type: from,
-            to_ref_type: cast(HeapType::I31),
-        },
-        I31GetS,
-        F64ConvertI32S,
-        Br(1),
-        End,
-        Block(BlockType::Result(VALUE)),
-        BrOnCastFail {
-            relative_depth: 0,
-            from_ref_type: from,
-            to_ref_type: cast(HeapType::Concrete(LONG)),
-        },
-        StructGet {
-            struct_type_index: LONG,
-            field_index: 0,
-        },
-        F64ConvertI64S,
-        Br(1),
-        End,
+        LocalGet(local),
+        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        If(BlockType::Result(ValType::F64)),
+        LocalGet(local),
         RefCastNonNull(HeapType::Concrete(NUMBER)),
         StructGet {
             struct_type_index: NUMBER,
             field_index: 0,
         },
+        Else,
+        LocalGet(local),
+        RefTestNonNull(HeapType::I31),
+        If(BlockType::Result(ValType::F64)),
+        LocalGet(local),
+        RefCastNonNull(HeapType::I31),
+        I31GetS,
+        F64ConvertI32S,
+        Else,
+        LocalGet(local),
+        RefCastNonNull(HeapType::Concrete(LONG)),
+        StructGet {
+            struct_type_index: LONG,
+            field_index: 0,
+        },
+        F64ConvertI64S,
+        End,
         End,
     ]
-}
-/// `[eqref] -> [i32]`: whether the value is a number, without locals.
-pub fn number_test_stack() -> Vec<Instruction<'static>> {
-    use Instruction::*;
-    let from = RefType::EQREF;
-    let cast = |heap_type| RefType { nullable: false, heap_type };
-    let mut code = vec![Block(BlockType::Result(ValType::I32))];
-    for heap_type in [HeapType::I31, HeapType::Concrete(LONG)] {
-        code.extend([
-            Block(BlockType::Result(VALUE)),
-            BrOnCastFail {
-                relative_depth: 0,
-                from_ref_type: from,
-                to_ref_type: cast(heap_type),
-            },
-            Drop,
-            I32Const(1),
-            Br(1),
-            End,
-        ]);
-    }
-    code.extend([RefTestNonNull(HeapType::Concrete(NUMBER)), End]);
-    code
 }
 /// `[i64] -> [eqref]`: a long, as an i31 when it fits and boxed otherwise,
 /// using `scratch`, an `i64` local.

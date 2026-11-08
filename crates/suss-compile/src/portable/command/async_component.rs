@@ -280,12 +280,6 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
     };
     let get = add("suss.runtime", "binding-get", vec![value], vec![value]);
     let invoke = add("suss.runtime", "invoke", vec![value, value], vec![value]);
-    let number = add(
-        "suss.runtime",
-        "number-box",
-        vec![ValType::F64],
-        vec![value],
-    );
     let status = add(
         "suss.runtime",
         "future-status",
@@ -630,7 +624,8 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
             GlobalGet(1),
             Call(result),
     ];
-    body.extend(runtime_abi::number_to_f64());
+    body.extend([LocalSet(6)]);
+    body.extend(runtime_abi::number_to_f64(6));
     body.extend([
             LocalSet(0),
             LocalGet(0),
@@ -676,7 +671,7 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
             I32Const(0),
             End,
     ]);
-    emit_with_locals(&mut code, [(1, ValType::F64), (5, ValType::I32)], body);
+    emit_with_locals(&mut code, [(1, ValType::F64), (5, ValType::I32), (1, ValType::Ref(RefType::EQREF))], body);
     let entry = index + 2;
     let ty = next_type;
     next_type += 1;
@@ -720,9 +715,18 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
             ),
             GlobalGet(0),
             Call(get),
+            // The u32 argument as a long.
             LocalGet(0),
-            F64ConvertI32U,
-            Call(number),
+            I32Const(1 << 30),
+            I32LtU,
+            If(BlockType::Result(value)),
+            LocalGet(0),
+            RefI31,
+            Else,
+            LocalGet(0),
+            I64ExtendI32U,
+            StructNew(runtime_abi::LONG),
+            End,
             ArrayNewFixed {
                 array_type_index: runtime_abi::ARGS,
                 array_size: 1,
