@@ -32,6 +32,11 @@ def value(node, depth=0):
         fields(node, 'tag bits')
         if not isinstance(node['bits'], str) or not re.fullmatch('[0-9a-f]{16}', node['bits']):
             raise ValueError('invalid binary64 bits')
+    elif tag == 'long':
+        fields(node, 'tag value')
+        if not isinstance(node['value'], str) or not re.fullmatch('-?(0|[1-9][0-9]*)', node['value']) \
+                or not -2 ** 63 <= int(node['value']) < 2 ** 63:
+            raise ValueError('invalid long')
     elif tag == 'string':
         fields(node, 'tag units')
         if not isinstance(node['units'], list) or any(type(n) is not int or not 0 <= n <= 65535 for n in node['units']):

@@ -24,17 +24,27 @@ fn require_numbers(b: &Builder, code: &mut Vec<Instruction<'static>>, symbol: &s
 pub(super) fn intrinsics(b: &mut Builder) -> [u32; 7] {
     use Instruction::*;
     let mut checked = Vec::new();
-    for (name, symbol) in [
-        ("add", "+"),
-        ("subtract", "-"),
-        ("multiply", "*"),
-        ("divide", "/"),
+    for (name, symbol, small) in [
+        ("add", "+", Some(I64Add)),
+        ("subtract", "-", Some(I64Sub)),
+        ("multiply", "*", Some(I64Mul)),
+        ("divide", "/", None),
     ] {
         let operation = b.names[&format!("number-{name}")];
-        let mut code = longs::small_call_fast_path(operation);
+        // Locals 2 and 3 are the small fast path's i32 and i64.
+        let mut code = match small {
+            Some(small) => longs::small_arithmetic_fast_path(&small, 2, 3),
+            None => longs::small_call_fast_path(operation),
+        };
         require_numbers(b, &mut code, symbol, 2);
         code.extend([LocalGet(0), LocalGet(1), Call(operation)]);
-        checked.push(b.function(&format!("checked-{name}"), &[VALUE, VALUE], &[VALUE], &code));
+        checked.push(b.function_with_locals(
+            &format!("checked-{name}"),
+            &[VALUE, VALUE],
+            &[VALUE],
+            &[(1, ValType::I32), (1, ValType::I64)],
+            &code,
+        ));
     }
     let mut code = vec![];
     require_numbers(b, &mut code, "-", 1);

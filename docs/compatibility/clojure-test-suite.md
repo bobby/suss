@@ -172,7 +172,21 @@ Python unit tests cover the remaining failure paths.
 
 ## Current suite result
 
-Against the JVM Clojure oracle, with `:suss`/`:default` reader features
+With ABI v3's longs and doubles (#335, 2026-11-08), the reviewed baseline
+records 2,151 host-decided passes, 54 guest-judged observations, 268 failures
+and 4,466 assertions not executed because 131 namespaces fail to load, out of
+6,939 recorded assertions. An oracle long now matches only a Suss long of the
+same value; before, it matched a binary64 holding that integer.
+
+- `clojure.core-test.int` now loads, since `int?` exists. Its 28 assertions
+  fail as a count mismatch (Suss runs 27); `int`'s narrowing is #336's.
+- One assertion each of `print-str`, `println-str` and `take-nth` now passes.
+- `bit-set#4` and `unsigned-bit-shift-right#3` now return a wrong value instead
+  of throwing: 64-bit bitwise operations are #336's.
+- `long`, `mod`, `quot`, `rem` and `nan?` now stop at `long`, `double` and
+  `decimal?` rather than `int?` (#336, #339).
+
+Before longs, against the JVM Clojure oracle, with `:suss`/`:default` reader features
 (#334, 2026-11-07), the reviewed baseline records 2,148 host-decided passes, 54
 guest-judged observations, 243 failures and 4,494 assertions not executed
 because 132 namespaces fail to load, out of 6,939 recorded assertions. The

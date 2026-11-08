@@ -153,6 +153,51 @@ pub unsafe extern "C" fn suss_parse_number(ptr: *mut u16, len: usize) -> f64 {
 /// prints doubles this way (ADR-0003). Java also widens a one-digit result to
 /// the closest two digits, which differs only for some subnormals
 /// (`4.9E-324` where this gives `5.0E-324`).
+/// 10^power, correctly rounded, through core's decimal parser.
+fn power_of_ten(power: i32) -> f64 {
+    let mut text = [0u8; 8];
+    text[0] = b'1';
+    text[1] = b'e';
+    let mut length = 2;
+    if power < 0 {
+        text[length] = b'-';
+        length += 1;
+    }
+    let magnitude = power.unsigned_abs();
+    let mut divisor = 100;
+    while divisor > 0 {
+        text[length] = b'0' + (magnitude / divisor % 10) as u8;
+        length += 1;
+        divisor /= 10;
+    }
+    core::str::from_utf8(&text[..length]).unwrap().parse().unwrap()
+}
+/// The two digits nn and exponent of the decimal n.n × 10^exponent nearest
+/// `value`, ties to even, when that isn't the one-digit decimal itself.
+/// `exponent` is the one-digit decimal's; a value just below 10^exponent has
+/// its nearest two-digit decimal one exponent lower (9.9E-324).
+fn two_digits(value: f64, exponent: i32) -> Option<(u8, i32)> {
+    // Scale in two steps so neither power overflows or underflows.
+    let shift = 1 - exponent;
+    let half = shift / 2;
+    let mut scaled = value * power_of_ten(half) * power_of_ten(shift - half);
+    let mut exponent = exponent;
+    if scaled < 10.0 {
+        scaled *= 10.0;
+        exponent -= 1;
+    }
+    let whole = scaled as u64;
+    let fraction = scaled - whole as f64;
+    let nearest = if fraction > 0.5 || (fraction == 0.5 && whole % 2 == 1) {
+        whole + 1
+    } else {
+        whole
+    };
+    (10..100)
+        .contains(&nearest)
+        .then_some((nearest as u8, exponent))
+        .filter(|(pair, _)| pair % 10 != 0)
+}
 fn java(value: f64, js: &[u8], out: &mut [u8; 32]) -> usize {
     let mut length = 0;
     let mut push = |byte: u8, length: &mut usize| {
@@ -213,7 +258,7 @@ fn java(value: f64, js: &[u8], out: &mut [u8; 32]) -> usize {
     while count > 1 && digits[count - 1] == b'0' {
         count -= 1;
     }
-    let exponent = match exponent {
+    let mut exponent = match exponent {
         // ryu-js writes one digit before the point of an exponent form.
         Some(exponent) => exponent,
         // 0.000123 is 1.23 × 10^-4: minus its leading zeros, 0. included.
@@ -221,6 +266,16 @@ fn java(value: f64, js: &[u8], out: &mut [u8; 32]) -> usize {
         // 123.45 is 1.2345 × 10^2.
         None => point as i32 - 1,
     };
+    // When one digit is the shortest, Java chooses among one- and two-digit
+    // decimals the one closest to the exact value: 4.9E-324, not 5.0E-324.
+    if count == 1 {
+        if let Some((pair, lower)) = two_digits(value.abs(), exponent) {
+            digits[0] = b'0' + pair / 10;
+            digits[1] = b'0' + pair % 10;
+            count = 2;
+            exponent = lower;
+        }
+    }
     let digits = &digits[..count];
     if (-3..7).contains(&exponent) {
         if exponent >= 0 {

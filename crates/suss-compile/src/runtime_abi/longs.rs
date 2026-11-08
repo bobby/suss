@@ -205,6 +205,62 @@ pub(super) fn small_relation_fast_path(exact: &Instruction<'static>) -> Vec<Inst
     code.extend([Return, End]);
     code
 }
+/// Return `+`, `-` or `*` of locals 0 and 1 inline when both are i31
+/// longs, which can't overflow a long: an i31 when the result fits, else a
+/// boxed long. `small` is an i32 local and `wide` an i64 local.
+pub(super) fn small_arithmetic_fast_path(
+    operation: &Instruction<'static>,
+    small: u32,
+    wide: u32,
+) -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let get = |local| [LocalGet(local), RefCastNonNull(i31()), I31GetS];
+    let mut code = both(i31()).to_vec();
+    code.push(If(BlockType::Empty));
+    match operation {
+        // Two 31-bit operands add or subtract within 32 bits.
+        I64Add | I64Sub => {
+            code.extend(get(0));
+            code.extend(get(1));
+            code.extend([
+                if matches!(operation, I64Add) { I32Add } else { I32Sub },
+                LocalTee(small),
+                I32Const(1 << 30),
+                I32Add,
+                I32Const(i32::MIN),
+                I32LtU,
+                If(BlockType::Result(VALUE)),
+                LocalGet(small),
+                RefI31,
+                Else,
+                LocalGet(small),
+                I64ExtendI32S,
+                StructNew(LONG),
+                End,
+            ]);
+        }
+        I64Mul => {
+            code.extend(get(0));
+            code.push(I64ExtendI32S);
+            code.extend(get(1));
+            code.extend([I64ExtendI32S, I64Mul, LocalTee(wide)]);
+            code.extend(fits_i31());
+            code.extend([
+                If(BlockType::Result(VALUE)),
+                LocalGet(wide),
+                I32WrapI64,
+                RefI31,
+                Else,
+                LocalGet(wide),
+                StructNew(LONG),
+                End,
+            ]);
+        }
+        _ => unreachable!("small long arithmetic"),
+    }
+    code.extend([Return, End]);
+    code
+}
 /// Call `callee` on locals 0 and 1 at once when both are i31 longs, before
 /// any type dispatch.
 pub(super) fn small_call_fast_path(callee: u32) -> Vec<Instruction<'static>> {
