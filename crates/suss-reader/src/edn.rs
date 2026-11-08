@@ -32,7 +32,9 @@ pub use self::serde::{from_str, from_value, to_string, to_string_pretty, to_valu
 pub enum Value {
     Nil,
     Bool(bool),
+    /// A double.
     Number(f64),
+    Long(i64),
     String(String),
     Keyword(Keyword),
     Symbol(Symbol),
@@ -62,7 +64,7 @@ impl Value {
         match self {
             Value::Nil => 0,
             Value::Bool(_) => 1,
-            Value::Number(_) => 2,
+            Value::Number(_) | Value::Long(_) => 2,
             Value::String(_) => 3,
             Value::Keyword(_) => 4,
             Value::Symbol(_) => 5,
@@ -88,6 +90,7 @@ impl Ord for Value {
             }
             (Value::String(a), Value::String(b)) => a.cmp(b),
             (Value::Number(a), Value::Number(b)) => number_cmp(*a, *b),
+            (Value::Long(a), Value::Long(b)) => a.cmp(b),
             // Only collections recurse, so only they need a growable stack.
             (a, b) => stacker::maybe_grow(64 * 1024, 1024 * 1024, || a.cmp_slow(b)),
         }
@@ -98,6 +101,11 @@ impl Value {
         match (self, other) {
             (Value::Bool(a), Value::Bool(b)) => a.cmp(b),
             (Value::Number(a), Value::Number(b)) => number_cmp(*a, *b),
+            (Value::Long(a), Value::Long(b)) => a.cmp(b),
+            // A long and a double are different values; order them by value
+            // and put the long first when they're numerically equal.
+            (Value::Long(a), Value::Number(b)) => number_cmp(*a as f64, *b).then(Ordering::Less),
+            (Value::Number(a), Value::Long(b)) => number_cmp(*a, *b as f64).then(Ordering::Greater),
             (Value::String(a), Value::String(b)) => a.cmp(b),
             (Value::Keyword(a), Value::Keyword(b)) => {
                 (&a.namespace, &a.name).cmp(&(&b.namespace, &b.name))
@@ -194,6 +202,7 @@ fn write(out: &mut String, value: &Value) -> Result<(), Error> {
             Value::Nil => out.push_str("nil"),
             Value::Bool(b) => out.push_str(if *b { "true" } else { "false" }),
             Value::Number(x) => out.push_str(&number(*x)),
+            Value::Long(x) => out.push_str(&x.to_string()),
             Value::String(s) => string(out, s),
             Value::Keyword(k) => out.push_str(&keyword_text(k)?),
             Value::Symbol(s) => out.push_str(&symbol_text(s)?),
@@ -322,20 +331,14 @@ fn check_meta_target(value: &Value) -> Result<(), Error> {
     }
 }
 
-/// The canonical spelling of a binary64: integers below 10^16 without a
-/// fraction, `-0.0` with its sign, `##Inf`, `##-Inf` and `##NaN`, and
-/// otherwise Rust's shortest round-trip form, such as `0.1` or `1e300`.
+/// The canonical spelling of a double: `##Inf`, `##-Inf` and `##NaN`, and
+/// otherwise Rust's shortest round-trip form, which always has a fraction or
+/// an exponent, so it reads back as a double: `1.0`, `-0.0`, `0.1`, `1e300`.
 pub fn number(x: f64) -> String {
     if x.is_nan() {
         "##NaN".into()
     } else if x.is_infinite() {
         if x > 0.0 { "##Inf" } else { "##-Inf" }.into()
-    } else if x == 0.0 && x.is_sign_negative() {
-        "-0.0".into()
-    } else if x.fract() == 0.0 && x.abs() <= 9007199254740992.0 {
-        // Beyond 2^53 an integer literal is exact, not binary64 (#333), so
-        // larger integral values print as doubles: 9007199254740994.0.
-        (x as i64).to_string()
     } else {
         format!("{x:?}")
     }
@@ -676,9 +679,10 @@ impl<'s> Parser<'s, '_> {
                 Value::Keyword(Keyword::parse(&token[1..]))
             }
             token if forms::numeric_start(token) => {
-                // EDN data has no exact numbers until #335.
+                // EDN data has no BigInt, ratio or BigDecimal until #338.
                 match forms::number(token).map_err(|message| fail(self, message))? {
                     forms::NumberToken::Double(value) => Value::Number(value),
+                    forms::NumberToken::Long(value) => Value::Long(value),
                     forms::NumberToken::Exact(_) if self.discarding > 0 => Value::Nil,
                     forms::NumberToken::Exact(value) => {
                         return Err(fail(self, &value.unsupported_message()))

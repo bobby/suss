@@ -248,7 +248,7 @@ pub fn verify(bytes: &[u8], expected: Expected<'_>) -> Result<Manifest, String> 
 mod tests {
     use super::*;
     fn source() -> Vec<u8> {
-        super::super::compile("42").unwrap()
+        super::super::compile("42.5").unwrap()
     }
     #[test]
     fn artifact_identity_preserves_exact_source_and_phase_and_unknown_provenance() {
@@ -257,7 +257,7 @@ mod tests {
             &wasm,
             Expected {
                 phase: Some(Phase::Runtime),
-                source: Some("42"),
+                source: Some("42.5"),
                 macro_dependencies: Some(&[]),
             },
         )
@@ -265,7 +265,7 @@ mod tests {
         assert_eq!(found.compiler_source_sha256, compiler_source_sha256());
         assert_eq!(found.phase.as_deref(), Some("runtime"));
         assert_eq!(found.macro_dependencies, Some(vec![]));
-        let function = super::super::ir::lower(&super::super::analyze("42").unwrap()).unwrap();
+        let function = super::super::ir::lower(&super::super::analyze("42.5").unwrap()).unwrap();
         let bare = super::super::compile_ir(&function).unwrap();
         let found = verify(&bare, Expected::default()).unwrap();
         assert_eq!(found.phase, None);
@@ -317,7 +317,7 @@ mod tests {
         let wasm = annotate_source(
             &wasm,
             Phase::Runtime,
-            Some(&SourceOrigin::new("42", Some("input.sus".into()))),
+            Some(&SourceOrigin::new("42.5", Some("input.sus".into()))),
             Some(&versions),
         )
         .unwrap();
@@ -368,7 +368,7 @@ mod tests {
     }
     #[test]
     fn artifact_identity_preserves_custom_sections_and_code_across_reannotation() {
-        let function = super::super::ir::lower(&super::super::analyze("42").unwrap()).unwrap();
+        let function = super::super::ir::lower(&super::super::analyze("42.5").unwrap()).unwrap();
         let emitted = super::super::emit::emit(&function).unwrap();
         let mut body = emitted[..8].to_vec();
         let before = wasm_encoder::CustomSection {
@@ -394,7 +394,7 @@ mod tests {
                 .unwrap_err()
                 .contains("integrity")
         );
-        let origin = SourceOrigin::new("42", None);
+        let origin = SourceOrigin::new("42.5", None);
         let annotated =
             annotate_source(&with_after, Phase::Runtime, Some(&origin), Some(&[])).unwrap();
         assert_eq!(split(&annotated).unwrap().0, body);
@@ -405,7 +405,7 @@ mod tests {
             &repeated,
             Expected {
                 phase: Some(Phase::Runtime),
-                source: Some("42"),
+                source: Some("42.5"),
                 macro_dependencies: Some(&[]),
             },
         )
@@ -436,12 +436,12 @@ mod tests {
                 .contains("Duplicate")
         );
         let mut corrupt = wasm;
-        let constant = 42.0f64.to_bits().to_le_bytes();
+        let constant = 42.5f64.to_bits().to_le_bytes();
         let index = corrupt
             .windows(8)
             .position(|bytes| bytes == constant)
             .unwrap();
-        corrupt[index..index + 8].copy_from_slice(&43.0f64.to_bits().to_le_bytes());
+        corrupt[index..index + 8].copy_from_slice(&43.5f64.to_bits().to_le_bytes());
         assert!(
             verify(&corrupt, Expected::default())
                 .unwrap_err()

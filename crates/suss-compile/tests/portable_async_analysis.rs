@@ -16,10 +16,8 @@ fn single(mut hir: &Hir) -> &Hir {
     }
     hir
 }
-fn number(hir: &Hir, expected: f64) {
-    assert!(
-        matches!(&*hir.kind, Expression::Literal(Literal::Number(n)) if n.to_bits() == expected.to_bits())
-    );
+fn number(hir: &Hir, expected: i64) {
+    assert!(matches!(&*hir.kind, Expression::Literal(Literal::Long(n)) if *n == expected));
 }
 fn await_local(hir: &Hir, expected: BindingId) {
     let Expression::Await { value } = &*single(hir).kind else {
@@ -166,7 +164,7 @@ fn async_body_order_and_provisional_global_identity_are_retained_without_publica
         panic!("body")
     };
     assert_eq!(items.len(), 5);
-    number(&items[0], 17.0);
+    number(&items[0], 17);
     let Expression::Await { value } = &*items[1].kind else {
         panic!("await")
     };
@@ -174,10 +172,10 @@ fn async_body_order_and_provisional_global_identity_are_retained_without_publica
         panic!("operand do")
     };
     assert_eq!(operands.len(), 2);
-    number(&operands[0], 41.0);
-    number(&operands[1], 42.0);
+    number(&operands[0], 41);
+    number(&operands[1], 42);
     assert!(operands[0].span.start < operands[1].span.start);
-    number(&items[2], 99.0);
+    number(&items[2], 99);
     let Expression::Definition {
         global,
         initializer,
@@ -186,7 +184,7 @@ fn async_body_order_and_provisional_global_identity_are_retained_without_publica
     else {
         panic!("def")
     };
-    number(initializer.as_ref().unwrap(), 3.0);
+    number(initializer.as_ref().unwrap(), 3);
     assert!(matches!(&*items[4].kind, Expression::Global(reference) if reference == global));
     for pair in items.windows(2) {
         assert!(pair[0].span.start < pair[1].span.start);

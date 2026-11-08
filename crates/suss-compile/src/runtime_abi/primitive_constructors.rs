@@ -70,14 +70,10 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             _ => {
                 body.extend([
                     LocalGet(2),
-                    RefTestNonNull(HeapType::Concrete(NUMBER)),
+                    Call(b.names["number-test"]),
                     If(BlockType::Empty),
                     LocalGet(2),
-                    RefCastNonNull(HeapType::Concrete(NUMBER)),
-                    StructGet {
-                        struct_type_index: NUMBER,
-                        field_index: 0,
-                    },
+                    Call(b.names["number-unbox"]),
                     LocalSet(3),
                     LocalGet(3),
                     F64Const(0.0.into()),

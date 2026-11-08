@@ -34,7 +34,7 @@ fn kw(name: &str) -> Value {
 
 fn header(kind: &str, path: &Path) -> BTreeMap<Value, Value> {
     BTreeMap::from([
-        (kw("suss.analyzer/version"), Value::Number(f64::from(analyzer_edn::VERSION))),
+        (kw("suss.analyzer/version"), Value::Long(i64::from(analyzer_edn::VERSION))),
         (kw("suss.analyzer/kind"), kw(kind)),
         (kw("file"), Value::String(path.display().to_string())),
     ])

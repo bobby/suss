@@ -28,7 +28,7 @@ impl portable::ExpansionHost for Observe {
         };
         if matches!(&items[0].kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "expanded-initializer") {
             return Ok(Some(Form {
-                span: form.span.clone(), metadata: vec![], kind: Kind::Number(41.0),
+                span: form.span.clone(), metadata: vec![], kind: Kind::Long(41),
             }));
         }
         if !matches!(&items[0].kind, Kind::Symbol(name) if name.namespace.is_none() && name.name == "checkpoint")
@@ -63,19 +63,16 @@ fn snapshot<'a>(host: &'a Observe, name: &str) -> &'a HashMap<String, LocalBindi
         .unwrap()
         .1
 }
-fn scalar(session: &mut Session, source: &str) -> f64 {
+fn scalar(session: &mut Session, source: &str) -> i64 {
     let value = session.eval(source).unwrap();
     session
-        .inspect(&value, |mut store, value| {
-            Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap()
-                .fields(&mut store)?
-                .next()
-                .unwrap()
-                .unwrap_f64())
+        .inspect(&value, |store, value| {
+            let Some(suss_compile::portable_session::RuntimeNumber::Long(long)) =
+                suss_compile::portable_session::runtime_number(store, &value)?
+            else {
+                panic!("expected a long: {source}")
+            };
+            Ok(long)
         })
         .unwrap()
 }
@@ -91,8 +88,8 @@ fn compiler_catch_records_keep_private_payload_and_immutable_source_declarations
   (checkpoint "outside" x)))
 (def prior 41)"#;
         session.eval_with_macros(source, &mut host).unwrap();
-        assert_eq!(scalar(&mut session, "result"), 40.0);
-        assert_eq!(scalar(&mut session, "prior"), 41.0);
+        assert_eq!(scalar(&mut session, "result"), 40);
+        assert_eq!(scalar(&mut session, "prior"), 41);
         let caught = snapshot(&host, "caught");
         let problem = &caught["problem"];
         assert_eq!(problem.kind, LocalKind::Catch);
@@ -121,9 +118,9 @@ fn compiler_catch_records_keep_private_payload_and_immutable_source_declarations
         assert!(!original.locals.contains_key(&name.name));
         let Some(SourceBinding::Global { global, declaration: Some(info) }) = &original.resolved else { panic!("actual resolved declaration") };
         assert_eq!(global.name(), "prior");
-        assert!(matches!(*info.initializer.as_ref().unwrap().kind, Expression::Literal(portable::hir::Literal::Number(40.0))));
+        assert!(matches!(*info.initializer.as_ref().unwrap().kind, Expression::Literal(portable::hir::Literal::Long(40))));
         let catalog = &original.scope.declarations[global];
-        assert!(matches!(*catalog.initializer.as_ref().unwrap().kind, Expression::Literal(portable::hir::Literal::Number(40.0))));
+        assert!(matches!(*catalog.initializer.as_ref().unwrap().kind, Expression::Literal(portable::hir::Literal::Long(40))));
         assert_eq!(original.origin.as_ref().unwrap().text(), source);
     }
 }
@@ -148,8 +145,8 @@ fn compiler_macro_binding_records_preserve_initializer_shadow_scope_and_once_onl
         let mut host = Observe::default();
         let source = r#"(def effects (array)) (def result (let [^:private x (do (.push effects 1) 41)] (checkpoint "outer" x) (let [x (+ x 1)] (checkpoint "inner" x)) (checkpoint "restored" x)))"#;
         session.eval_with_macros(&source, &mut host).unwrap();
-        assert_eq!(scalar(&mut session, "result"), 41.0);
-        assert_eq!(scalar(&mut session, "(alength effects)"), 1.0);
+        assert_eq!(scalar(&mut session, "result"), 41);
+        assert_eq!(scalar(&mut session, "(alength effects)"), 1);
         let outer = &snapshot(&host, "outer")["x"];
         let inner = &snapshot(&host, "inner")["x"];
         let restored = &snapshot(&host, "restored")["x"];
@@ -187,8 +184,8 @@ fn compiler_macro_binding_records_preserve_parameter_roles_catches_and_lowered_l
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut host = Observe::default();
         session.eval_with_macros(r#"(def result (let [x 41] (def f (fn named [^number x & xs] (checkpoint "args" x))) (loop [i 0] (checkpoint "loop" i)) (try (throw 2) (catch :default x (checkpoint "catch" x))) (checkpoint "restored" x)))"#, &mut host).unwrap();
-        assert_eq!(scalar(&mut session, "result"), 41.0);
-        assert_eq!(scalar(&mut session, "(f 42 1 2)"), 42.0);
+        assert_eq!(scalar(&mut session, "result"), 41);
+        assert_eq!(scalar(&mut session, "(f 42 1 2)"), 42);
         let args = snapshot(&host, "args");
         assert_eq!(
             args["x"].kind,
@@ -297,7 +294,7 @@ fn compiler_macro_namespace_facts_are_phase_scoped_staged_and_distinct_from_runt
             session.eval(r#"(def tracked "changed compiler doc" (throw 1))"#),
             Err(suss_cli::portable_session::SessionError::Language(_))
         ));
-        assert_eq!(scalar(&mut session, "tracked"), 40.0);
+        assert_eq!(scalar(&mut session, "tracked"), 40);
         session
             .eval_with_macros(r#"(checkpoint "failed-init" tracked)"#, &mut host)
             .unwrap();
@@ -394,7 +391,7 @@ fn compiler_macro_source_origins_keep_module_paths_separate_from_inline_inputs()
             declaration.origin.as_ref().unwrap().path(),
             Some(path.as_path())
         );
-        assert_eq!(scalar(&mut session, "y"), 22.0);
+        assert_eq!(scalar(&mut session, "y"), 22);
     }
 }
 
@@ -407,7 +404,7 @@ fn compiler_macro_nested_definitions_keep_each_declaration_and_initializer_toget
       (checkpoint "outer-body" tracked)))
 (checkpoint "after-nesting" tracked)"#;
         session.eval_with_macros(source, &mut host).unwrap();
-        assert_eq!(scalar(&mut session, "tracked"), 7.0);
+        assert_eq!(scalar(&mut session, "tracked"), 7);
         let declared = |label: &str| {
             &host
                 .catalogs
@@ -451,17 +448,17 @@ fn compiler_source_analysis_keeps_actual_expansion_instead_of_relabeling_the_mac
         let source = r#"(def result (let [x (expanded-initializer)] (checkpoint "expanded" x)))"#;
         session.eval_with_macros(source, &mut host).unwrap();
         session.collect().unwrap();
-        assert_eq!(scalar(&mut session, "result"), 41.0);
+        assert_eq!(scalar(&mut session, "result"), 41);
         let init = snapshot(&host, "expanded")["x"].initializer.as_ref().unwrap();
         let analyzed = init.source.as_ref().unwrap();
-        assert!(matches!(&analyzed.form.kind, Kind::Number(41.0)));
+        assert!(matches!(&analyzed.form.kind, Kind::Long(41)));
         // The original text contains a call, not a numeric source token. The
         // record retains actual expansion syntax and only call-site provenance.
         assert_eq!(&source[analyzed.form.span.clone()], "(expanded-initializer)");
         assert_eq!(analyzed.context, portable::AnalysisContext::Expression);
         assert_eq!(analyzed.phase, session.phase());
         assert_eq!(analyzed.origin.as_ref().unwrap().text(), source);
-        assert!(matches!(*init.kind, Expression::Literal(portable::hir::Literal::Number(41.0))));
+        assert!(matches!(*init.kind, Expression::Literal(portable::hir::Literal::Long(41))));
     }
     let source = r#"(let [x 41] (checkpoint "owned" x))"#;
     for phase in [portable::resolve::Phase::Runtime, portable::resolve::Phase::Macro] {
@@ -474,6 +471,6 @@ fn compiler_source_analysis_keeps_actual_expansion_instead_of_relabeling_the_mac
         let analyzed = init.source.as_ref().unwrap();
         assert!(analyzed.origin.is_none());
         assert_eq!(analyzed.phase, phase);
-        assert!(matches!(&analyzed.form.kind, Kind::Number(41.0)));
+        assert!(matches!(&analyzed.form.kind, Kind::Long(41)));
     }
 }

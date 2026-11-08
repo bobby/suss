@@ -233,16 +233,16 @@ fn repeated_declare_keeps_existing_snapshot_catalog_and_runtime_bindings() {
             differences.push(format!("{phase:?} forward: {forward:?} versus {after:?}"));
         }
         for (source, expected) in [
-            ("scalar", 7.0),
-            ("(callable 20)", 21.0),
-            ("(old-callable 22)", 23.0),
-            ("effects", 1.0),
-            ("(def forward 19) forward", 19.0),
+            ("scalar", 7),
+            ("(callable 20)", 21),
+            ("(old-callable 22)", 23),
+            ("effects", 1),
+            ("(def forward 19) forward", 19),
         ] {
             let value = session.eval(source).unwrap();
             assert_eq!(
                 read(&mut session, &value).kind,
-                Kind::Number(expected),
+                Kind::Long(expected),
                 "{phase:?}: {source}"
             );
         }
@@ -290,7 +290,7 @@ fn repeated_declare_keeps_existing_snapshot_catalog_and_runtime_bindings() {
             Kind::Nil,
         );
         let value = session.eval("initialized").unwrap();
-        assert_eq!(read(&mut session, &value).kind, Kind::Number(9.0));
+        assert_eq!(read(&mut session, &value).kind, Kind::Long(9));
     }
     assert!(differences.is_empty(), "{}", differences.join("\n"));
 }

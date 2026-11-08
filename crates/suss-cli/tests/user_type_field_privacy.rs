@@ -61,24 +61,24 @@ fn text(value: &str) -> Observation {
     Observation::String(value.encode_utf16().collect())
 }
 
-fn number(value: f64) -> Observation {
-    Observation::Number(value.to_bits())
+fn number(value: i64) -> Observation {
+    Observation::Long(value)
 }
 
 #[test]
 fn mutable_fields_work_inside_their_own_type_bodies() {
     for (phase, mut session) in sessions() {
         for (source, expected) in [
-            ("(cell-get (Cell. 1 2))", 1.0),
-            ("(cell-set! (Cell. 1 2) 5)", 5.0),
-            ("(named-get (Cell. 1 2))", 1.0),
-            ("(let [c (Cell. 1 2)] (named-set! c 4) (cell-get c))", 4.0),
+            ("(cell-get (Cell. 1 2))", 1),
+            ("(cell-set! (Cell. 1 2) 5)", 5),
+            ("(named-get (Cell. 1 2))", 1),
+            ("(let [c (Cell. 1 2)] (named-set! c 4) (cell-get c))", 4),
             // Another instance of the same type, from a method body.
-            ("(peer-get (Cell. 0 0) (Cell. 7 0))", 7.0),
-            ("(let [o (Cell. 0 0)] (peer-set! (Cell. 0 0) o 8) (cell-get o))", 8.0),
+            ("(peer-get (Cell. 0 0) (Cell. 7 0))", 7),
+            ("(let [o (Cell. 0 0)] (peer-set! (Cell. 0 0) o 8) (cell-get o))", 8),
             // Closures created in method bodies, called there and later.
-            ("(via-closure (Cell. 1 2))", 9.0),
-            ("(let [c (Cell. 3 2) f (reader c)] (cell-set! c 6) (f))", 6.0),
+            ("(via-closure (Cell. 1 2))", 9),
+            ("(let [c (Cell. 3 2) f (reader c)] (cell-set! c 6) (f))", 6),
         ] {
             assert_eq!(observe(&mut session, source), number(expected), "{phase}: {source}");
         }
@@ -121,8 +121,8 @@ fn mutable_fields_are_private_outside_their_type() {
         for source in ["(.-call (CallCell. 42 1))", "(.-apply (CallCell. 42 1))"] {
             assert_eq!(caught(&mut session, source), text(PRIVATE), "{phase}: {source}");
         }
-        assert_eq!(observe(&mut session, "(call-read (CallCell. 42 1))"), number(42.0), "{phase}");
-        assert_eq!(observe(&mut session, "(.-call (OpenCall. 5))"), number(5.0), "{phase}");
+        assert_eq!(observe(&mut session, "(call-read (CallCell. 42 1))"), number(42), "{phase}");
+        assert_eq!(observe(&mut session, "(.-call (OpenCall. 5))"), number(5), "{phase}");
         // An inline extension extends the type being defined, even when the
         // body rebinds its name to another type first.
         session.eval("(defprotocol IForge (forged [o]))").unwrap();
@@ -133,7 +133,7 @@ fn mutable_fields_are_private_outside_their_type() {
         // A rejected write changes nothing.
         assert_eq!(
             observe(&mut session, "(let [c (Cell. 1 2)] (try (set! (.-v c) 3) (catch :default _ nil)) (cell-get c))"),
-            number(1.0), "{phase}");
+            number(1), "{phase}");
     }
 }
 
@@ -141,10 +141,10 @@ fn mutable_fields_are_private_outside_their_type() {
 fn immutable_fields_are_public_reads_and_never_writable() {
     for (phase, mut session) in sessions() {
         for (source, expected) in [
-            ("(.-k (Cell. 1 2))", 2.0),
-            ("(.-a (->Rec 1))", 1.0),
-            ("(:a (->Rec 1))", 1.0),
-            ("(:a (assoc (->Rec 1) :a 3))", 3.0),
+            ("(.-k (Cell. 1 2))", 2),
+            ("(.-a (->Rec 1))", 1),
+            ("(:a (->Rec 1))", 1),
+            ("(:a (assoc (->Rec 1) :a 3))", 3),
         ] {
             assert_eq!(observe(&mut session, source), number(expected), "{phase}: {source}");
         }
@@ -158,7 +158,7 @@ fn immutable_fields_are_public_reads_and_never_writable() {
             assert_eq!(caught(&mut session, source), text(IMMUTABLE), "{phase}: {source}");
         }
         assert_eq!(observe(&mut session, "(let [c (Cell. 1 2)] (try (set-k! c 3) (catch :default _ nil)) (.-k c))"),
-            number(2.0), "{phase}");
+            number(2), "{phase}");
         // The lexical path still rejects it at compile time.
         let error = session.eval("(deftype Fixed [k] ICell (set-k! [_ x] (set! k x)))").unwrap_err();
         assert!(error.to_string().contains("Cannot assign a local or immutable field"), "{phase}: {error}");

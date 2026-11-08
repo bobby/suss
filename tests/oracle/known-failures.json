@@ -1,1 +1,52 @@
-{}
+{
+  "binary64-rounding": {
+    "stage": "value",
+    "expected": {
+      "id": "binary64-rounding",
+      "status": "value",
+      "value": {
+        "tag": "f64",
+        "bits": "4340000000000000"
+      },
+      "effects": []
+    },
+    "actual": {
+      "effects": [],
+      "id": "binary64-rounding",
+      "status": "value",
+      "value": {
+        "tag": "long",
+        "value": "9007199254740993"
+      }
+    }
+  },
+  "negative-zero": {
+    "stage": "value",
+    "expected": {
+      "id": "negative-zero",
+      "status": "value",
+      "value": {
+        "tag": "f64",
+        "bits": "8000000000000000"
+      },
+      "effects": []
+    },
+    "actual": {
+      "effects": [],
+      "id": "negative-zero",
+      "status": "value",
+      "value": {
+        "tag": "long",
+        "value": "0"
+      }
+    }
+  },
+  "positive-infinity": {
+    "stage": "decode",
+    "diagnostic": "Host error: Unsupported ABI2 value layout"
+  },
+  "nan": {
+    "stage": "decode",
+    "diagnostic": "Host error: Unsupported ABI2 value layout"
+  }
+}

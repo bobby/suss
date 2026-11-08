@@ -186,10 +186,6 @@
    "stage": "namespace",
    "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
   },
-  "clojure.core-test.int": {
-   "stage": "namespace",
-   "diagnostic": "clojure.core-test.int (Some(\"<root>/clojure/core_test/int.cljc\")): Unresolved Runtime name int? at bytes 231..3019"
-  },
   "clojure.core-test.int-qmark": {
    "stage": "namespace",
    "diagnostic": "clojure.core-test.number-range (Some(\"<root>/clojure/core_test/number_range.cljc\")): Definition const/macro attributes are not implemented yet at bytes 88..103"
@@ -212,7 +208,7 @@
   },
   "clojure.core-test.long": {
    "stage": "namespace",
-   "diagnostic": "clojure.core-test.long (Some(\"<root>/clojure/core_test/long.cljc\")): Unresolved Runtime name int? at bytes 232..2476"
+   "diagnostic": "clojure.core-test.long (Some(\"<root>/clojure/core_test/long.cljc\")): Unresolved Runtime name long at bytes 232..2476"
   },
   "clojure.core-test.merge": {
    "stage": "namespace",
@@ -228,11 +224,11 @@
   },
   "clojure.core-test.mod": {
    "stage": "namespace",
-   "diagnostic": "clojure.core-test.mod (Some(\"<root>/clojure/core_test/mod.cljc\")): Unresolved Runtime name int? at bytes 231..5438"
+   "diagnostic": "clojure.core-test.mod (Some(\"<root>/clojure/core_test/mod.cljc\")): Unresolved Runtime name decimal? at bytes 231..5438"
   },
   "clojure.core-test.nan-qmark": {
    "stage": "namespace",
-   "diagnostic": "clojure.core-test.nan-qmark (Some(\"<root>/clojure/core_test/nan_qmark.cljc\")): Unresolved Runtime name double? at bytes 237..958"
+   "diagnostic": "clojure.core-test.nan-qmark (Some(\"<root>/clojure/core_test/nan_qmark.cljc\")): Unresolved Runtime name double at bytes 237..958"
   },
   "clojure.core-test.neg-int-qmark": {
    "stage": "namespace",
@@ -324,7 +320,7 @@
   },
   "clojure.core-test.quot": {
    "stage": "namespace",
-   "diagnostic": "clojure.core-test.quot (Some(\"<root>/clojure/core_test/quot.cljc\")): Unresolved Runtime name int? at bytes 232..3713"
+   "diagnostic": "clojure.core-test.quot (Some(\"<root>/clojure/core_test/quot.cljc\")): Unresolved Runtime name decimal? at bytes 232..3713"
   },
   "clojure.core-test.rand": {
    "stage": "namespace",
@@ -368,7 +364,7 @@
   },
   "clojure.core-test.rem": {
    "stage": "namespace",
-   "diagnostic": "clojure.core-test.rem (Some(\"<root>/clojure/core_test/rem.cljc\")): Unresolved Runtime name int? at bytes 231..3477"
+   "diagnostic": "clojure.core-test.rem (Some(\"<root>/clojure/core_test/rem.cljc\")): Unresolved Runtime name decimal? at bytes 231..3477"
   },
   "clojure.core-test.remove": {
    "stage": "read",
@@ -546,7 +542,7 @@
   "clojure.core-test.bit-not/test-bit-not#1": "verdict:fail",
   "clojure.core-test.bit-set/test-bit-set#1": "verdict:fail",
   "clojure.core-test.bit-set/test-bit-set#2": "verdict:fail",
-  "clojure.core-test.bit-set/test-bit-set#4": "kind:error",
+  "clojure.core-test.bit-set/test-bit-set#4": "verdict:fail",
   "clojure.core-test.bit-set/test-bit-set#5": "verdict:fail",
   "clojure.core-test.bit-shift-left/test-bit-shift-left#1": "verdict:fail",
   "clojure.core-test.bit-shift-left/test-bit-shift-left#2": "verdict:fail",
@@ -629,6 +625,34 @@
   "clojure.core-test.ident-qmark/test-ident?#13": "kind:error",
   "clojure.core-test.ident-qmark/test-ident?#7": "kind:error",
   "clojure.core-test.ident-qmark/test-ident?#9": "kind:error",
+  "clojure.core-test.int/test-int#1": "count:27/28",
+  "clojure.core-test.int/test-int#10": "count:27/28",
+  "clojure.core-test.int/test-int#11": "count:27/28",
+  "clojure.core-test.int/test-int#12": "count:27/28",
+  "clojure.core-test.int/test-int#13": "count:27/28",
+  "clojure.core-test.int/test-int#14": "count:27/28",
+  "clojure.core-test.int/test-int#15": "count:27/28",
+  "clojure.core-test.int/test-int#16": "count:27/28",
+  "clojure.core-test.int/test-int#17": "count:27/28",
+  "clojure.core-test.int/test-int#18": "count:27/28",
+  "clojure.core-test.int/test-int#19": "count:27/28",
+  "clojure.core-test.int/test-int#2": "count:27/28",
+  "clojure.core-test.int/test-int#20": "count:27/28",
+  "clojure.core-test.int/test-int#21": "count:27/28",
+  "clojure.core-test.int/test-int#22": "count:27/28",
+  "clojure.core-test.int/test-int#23": "count:27/28",
+  "clojure.core-test.int/test-int#24": "count:27/28",
+  "clojure.core-test.int/test-int#25": "count:27/28",
+  "clojure.core-test.int/test-int#26": "count:27/28",
+  "clojure.core-test.int/test-int#27": "count:27/28",
+  "clojure.core-test.int/test-int#28": "count:27/28",
+  "clojure.core-test.int/test-int#3": "count:27/28",
+  "clojure.core-test.int/test-int#4": "count:27/28",
+  "clojure.core-test.int/test-int#5": "count:27/28",
+  "clojure.core-test.int/test-int#6": "count:27/28",
+  "clojure.core-test.int/test-int#7": "count:27/28",
+  "clojure.core-test.int/test-int#8": "count:27/28",
+  "clojure.core-test.int/test-int#9": "count:27/28",
   "clojure.core-test.interpose/test-interpose#4": "observation:undecodable",
   "clojure.core-test.keyword-qmark/test-keyword?#13": "kind:error",
   "clojure.core-test.keyword-qmark/test-keyword?#7": "kind:error",
@@ -711,8 +735,6 @@
   "clojure.core-test.partition/test-partition#4": "kind:error",
   "clojure.core-test.partition/test-partition#9": "kind:error",
   "clojure.core-test.pr-str/test-pr-str#2": "verdict:fail",
-  "clojure.core-test.print-str/test-print-str#2": "verdict:fail",
-  "clojure.core-test.println-str/test-println-str#2": "verdict:fail",
   "clojure.core-test.prn-str/test-prn-str#2": "verdict:fail",
   "clojure.core-test.qualified-ident-qmark/test-qualified-ident?#1": "verdict:fail",
   "clojure.core-test.qualified-ident-qmark/test-qualified-ident?#10": "kind:error",
@@ -783,10 +805,9 @@
   "clojure.core-test.symbol-qmark/test-symbol?#13": "kind:error",
   "clojure.core-test.symbol-qmark/test-symbol?#7": "kind:error",
   "clojure.core-test.symbol-qmark/test-symbol?#9": "kind:error",
-  "clojure.core-test.take-nth/test-take-nth#15": "verdict:fail",
   "clojure.core-test.unsigned-bit-shift-right/test-unsigned-bit-shift-right#1": "verdict:fail",
   "clojure.core-test.unsigned-bit-shift-right/test-unsigned-bit-shift-right#2": "verdict:fail",
-  "clojure.core-test.unsigned-bit-shift-right/test-unsigned-bit-shift-right#3": "kind:error",
+  "clojure.core-test.unsigned-bit-shift-right/test-unsigned-bit-shift-right#3": "verdict:fail",
   "clojure.core-test.vector-qmark/test-vector?#11": "kind:error",
   "clojure.core-test.vector-qmark/test-vector?#13": "kind:error",
   "clojure.core-test.vector/test-vector#24": "kind:error"

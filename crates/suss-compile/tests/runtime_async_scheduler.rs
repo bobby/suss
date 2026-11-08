@@ -59,7 +59,7 @@ fn adapters() -> Vec<u8> {
             vec![value, invoke, w::ValType::I32, w::ValType::I32],
             vec![value],
         ),
-        (vec![w::ValType::F64], vec![value]),
+        (vec![w::ValType::I64], vec![value]),
         (vec![value, value], vec![w::ValType::I32]),
         (vec![value], vec![value]),
         (vec![value, value], vec![value]),
@@ -67,6 +67,7 @@ fn adapters() -> Vec<u8> {
         (vec![], vec![value]),
         (vec![value, w::ValType::I32, value], vec![w::ValType::I32]),
         (vec![value], vec![w::ValType::I32]),
+        (vec![value], vec![w::ValType::F64]),
     ];
     for (params, results) in signatures {
         types.ty().function(params, results);
@@ -74,7 +75,8 @@ fn adapters() -> Vec<u8> {
     let mut imports = w::ImportSection::new();
     for (name, ty) in [
         ("closure-new", base + 0),
-        ("number-box", base + 1),
+        // Integer results are longs (#335).
+        ("long-box", base + 1),
         ("future-resolve", base + 2),
         ("future-reject", base + 2),
         ("async-continuation-snapshot", base + 3),
@@ -84,10 +86,11 @@ fn adapters() -> Vec<u8> {
         ("async-task-cancel", base + 8),
         ("async-cancelled-dependency-is", base + 8),
         ("async-scheduler-cancel-all", base + 5),
+        ("number-unbox", base + 9),
     ] {
         imports.import("suss.runtime", name, w::EntityType::Function(ty));
     }
-    let imported = 11;
+    let imported = 12;
     let mut functions = w::FunctionSection::new();
     let mut code = w::CodeSection::new();
     let mut exports = w::ExportSection::new();
@@ -123,7 +126,7 @@ fn adapters() -> Vec<u8> {
                     body.extend([
                         RefCastNonNull(w::HeapType::I31),
                         I31GetU,
-                        F64ConvertI32U,
+                        I64ExtendI32U,
                         Call(1),
                     ]);
                 }
@@ -146,28 +149,22 @@ fn adapters() -> Vec<u8> {
                 body.extend(operand(0));
                 body.extend([GlobalSet(1), nil.clone()]);
             }
-            "run" => body.extend([Call(6), F64ConvertI32S, Call(1)]),
-            "cancel-all" => body.extend([Call(10), F64ConvertI32U, Call(1)]),
+            "run" => body.extend([Call(6), I64ExtendI32S, Call(1)]),
+            "cancel-all" => body.extend([Call(10), I64ExtendI32U, Call(1)]),
             "trap" => body.push(Unreachable),
             "cancel" | "cancel-marker" => {
                 body.extend(operand(0));
                 body.extend([
                     Call(if *name == "cancel" { 8 } else { 9 }),
-                    F64ConvertI32U,
+                    I64ExtendI32U,
                     Call(1),
                 ]);
             }
             "complete" => {
                 body.extend(operand(0));
                 body.extend(operand(1));
-                body.extend([
-                    RefCastNonNull(w::HeapType::Concrete(0)),
-                    StructGet {
-                        struct_type_index: 0,
-                        field_index: 0,
-                    },
-                    I32TruncF64S,
-                ]);
+                // The completion kind is a long or a double.
+                body.extend([Call(11), I32TruncF64S]);
                 body.extend(operand(2));
                 body.extend([Call(7), Drop, nil.clone()]);
             }
@@ -347,19 +344,15 @@ impl Harness {
             wasmtime::I31::new_u32(value).unwrap(),
         )))
     }
-    fn number(&mut self, n: f64) -> Val {
-        self.value("number-box", &[Val::F64(n.to_bits())])
+    fn number(&mut self, n: i64) -> Val {
+        self.value("long-box", &[Val::I64(n)])
     }
-    fn decode(&mut self, value: &Val) -> f64 {
-        value
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&self.store)
-            .unwrap()
-            .unwrap()
-            .field(&mut self.store, 0)
-            .unwrap()
-            .unwrap_f64()
+    /// A long, as Clojure's integer values are.
+    fn decode(&mut self, value: &Val) -> i64 {
+        match suss_compile::portable_session::runtime_number(&mut self.store, value).unwrap() {
+            Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => value,
+            other => panic!("expected a long, observed {other:?}"),
+        }
     }
     fn module(&self, source: &str) -> Module {
         let prepared =
@@ -435,7 +428,7 @@ impl Harness {
             .call(&mut self.store, &[cell, value], &mut [])
             .unwrap();
     }
-    fn dynamic_push(&mut self, n: f64) -> Val {
+    fn dynamic_push(&mut self, n: i64) -> Val {
         let cell = self.cells["user/*x*"].get(&mut self.store);
         let old = self.value("binding-get", &[cell.clone()]);
         let current = self.number(n);
@@ -501,7 +494,7 @@ impl Harness {
             .unwrap();
         self.value("async-continuation-commit", &[continuation.clone(), state]);
     }
-    fn trace(&mut self) -> Vec<f64> {
+    fn trace(&mut self) -> Vec<i64> {
         let value = self
             .adapter
             .get_global(&mut self.store, "trace")
@@ -580,7 +573,7 @@ fn fifo_completion_queues_compiled_resumes_without_recursive_execution() {
     }
     assert!(h.trace().is_empty());
     assert_eq!(h.counts(), (3, 3));
-    for expected in [vec![3.0], vec![3.0, 1.0], vec![3.0, 1.0, 2.0]] {
+    for expected in [vec![3], vec![3, 1], vec![3, 1, 2]] {
         h.store.gc(None).unwrap();
         assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
         assert_eq!(h.trace(), expected);
@@ -636,7 +629,7 @@ fn generations_duplicates_and_terminal_retirement_cover_all_producer_rows() {
         0
     );
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
-    assert_eq!(h.trace(), [1.0, 2.0]);
+    assert_eq!(h.trace(), [1, 2]);
     assert_eq!(h.counts(), (0, 0));
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
     assert_eq!(h.integer("future-status", &[producer]), 1);
@@ -655,7 +648,7 @@ fn failed_and_cancelled_dependencies_deliver_distinct_events_not_task_cancellati
             "async-registration-new",
             &[cont.clone(), dependency.clone(), resume],
         );
-        let payload = h.number(17.0);
+        let payload = h.number(17);
         let args = if cancelled {
             vec![dependency]
         } else {
@@ -720,7 +713,7 @@ fn pending_producer_live_slots_and_captured_closure_survive_without_external_han
         let producer = call(&mut scope, "future-pending-new", &[]);
         let nil = call(&mut scope, "nil", &[]);
         let slots = call(&mut scope, "args-new", &[Val::I32(1)]);
-        let one = call(&mut scope, "number-box", &[Val::F64(1.0f64.to_bits())]);
+        let one = call(&mut scope, "long-box", &[Val::I64(1)]);
         slots
             .unwrap_anyref()
             .unwrap()
@@ -785,7 +778,7 @@ fn pending_producer_live_slots_and_captured_closure_survive_without_external_han
         .get(&mut h.store);
     assert_eq!(h.integer("future-status", &[producer.clone()]), 1);
     let result = h.value("future-result", &[producer]);
-    assert_eq!(h.decode(&result), 42.0);
+    assert_eq!(h.decode(&result), 42);
     assert_eq!(h.counts(), (0, 0));
 }
 
@@ -908,7 +901,7 @@ fn initial_start_is_queued_and_delivers_zero_nil_event_to_compiled_resume() {
     assert!(h.trace().is_empty());
     assert_eq!(h.integer("future-status", &[producer.clone()]), 0);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
-    assert_eq!(h.trace(), [0.0]);
+    assert_eq!(h.trace(), [0]);
     let event = h
         .adapter
         .get_global(&mut h.store, "observed")
@@ -920,7 +913,7 @@ fn initial_start_is_queued_and_delivers_zero_nil_event_to_compiled_resume() {
     );
     assert_eq!(h.integer("future-status", &[producer.clone()]), 1);
     let result = h.value("future-result", &[producer]);
-    assert_eq!(h.decode(&result), 42.0);
+    assert_eq!(h.decode(&result), 42);
     assert_eq!(h.counts(), (0, 0));
 }
 
@@ -974,7 +967,7 @@ fn owner_completion_requires_empty_unwind_and_preserves_first_terminal_outcome()
     );
     assert_eq!(h.integer("future-status", &[producer]), 3);
     assert_eq!(h.counts(), (0, 0));
-    let payload = h.number(99.0);
+    let payload = h.number(99);
     assert_eq!(
         h.integer("async-task-complete", &[cont, Val::I32(1), payload]),
         0
@@ -986,8 +979,8 @@ fn compiled_resumes_restore_caller_dynamic_context_on_normal_and_language_exits(
     for throwing in [false, true] {
         let mut h = Harness::new();
         h.install("(def ^:dynamic *x* 1)");
-        let caller = h.dynamic_push(3.0);
-        h.dynamic_push(17.0);
+        let caller = h.dynamic_push(3);
+        h.dynamic_push(17);
         let task = h.value("dynamic-fork", &[]);
         h.value("dynamic-switch", &[caller.clone()]);
         let producer = h.value("future-pending-new", &[]);
@@ -1008,14 +1001,14 @@ fn compiled_resumes_restore_caller_dynamic_context_on_normal_and_language_exits(
         assert!(h.same(&current, &caller));
         let cell = h.cells["user/*x*"].get(&mut h.store);
         let caller_value = h.value("binding-get", &[cell]);
-        assert_eq!(h.decode(&caller_value), 3.0);
-        assert_eq!(h.trace(), [17.0]);
+        assert_eq!(h.decode(&caller_value), 3);
+        assert_eq!(h.trace(), [17]);
         assert_eq!(
             h.integer("future-status", &[producer.clone()]),
             if throwing { 2 } else { 1 }
         );
         let result = h.value("future-result", &[producer]);
-        assert_eq!(h.decode(&result), if throwing { 17.0 } else { 19.0 });
+        assert_eq!(h.decode(&result), if throwing { 17 } else { 19 });
         assert_eq!(h.counts(), (0, 0));
         assert!(!h.store.has_pending_exception());
     }
@@ -1043,8 +1036,8 @@ fn check_trapped_resume(unreachable: bool) {
     let engine = Engine::new(&config).unwrap();
     let mut h = Harness::with_engine(&engine, true);
     h.install("(def ^:dynamic *x* 1)");
-    let caller = h.dynamic_push(3.0);
-    h.dynamic_push(17.0);
+    let caller = h.dynamic_push(3);
+    h.dynamic_push(17);
     let task = h.value("dynamic-fork", &[]);
     h.value("dynamic-switch", &[caller.clone()]);
     let producer = h.value("future-pending-new", &[]);
@@ -1079,7 +1072,7 @@ fn check_trapped_resume(unreachable: bool) {
     h.store.set_fuel(1_000_000).unwrap();
     assert_eq!(
         h.trace(),
-        [17.0],
+        [17],
         "must enter the compiled resume before trapping"
     );
     h.runtime
@@ -1099,7 +1092,7 @@ fn check_trapped_resume(unreachable: bool) {
         0
     );
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
-    assert_eq!(h.trace(), [17.0]);
+    assert_eq!(h.trace(), [17]);
     let result = h.value("future-result", &[producer]);
     assert_eq!(h.integer("async-runtime-trap-is", &[result]), 1);
     assert_eq!(h.integer("async-runtime-trap-is", &[nil]), 0);
@@ -1111,7 +1104,7 @@ fn check_trapped_resume(unreachable: bool) {
     h.value("async-task-start", &[cont, resume]);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
     assert_eq!(h.integer("future-status", &[next]), 1);
-    assert_eq!(h.trace(), [17.0, 23.0]);
+    assert_eq!(h.trace(), [17, 23]);
     assert_eq!(h.counts(), (0, 0));
 }
 
@@ -1128,8 +1121,8 @@ fn interrupted_trap_recovery_retries_root_retirement_without_replay() {
     let engine = Engine::new(&config).unwrap();
     let mut h = Harness::with_engine(&engine, true);
     h.install("(def ^:dynamic *x* 1)");
-    let caller = h.dynamic_push(3.0);
-    h.dynamic_push(17.0);
+    let caller = h.dynamic_push(3);
+    h.dynamic_push(17);
     let task = h.value("dynamic-fork", &[]);
     h.value("dynamic-switch", &[caller.clone()]);
     let resume = h.closure("(fn [c] (do (t/emit *x*) (t/trap)))");
@@ -1187,7 +1180,7 @@ fn interrupted_trap_recovery_retries_root_retirement_without_replay() {
             0
         );
         assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
-        assert_eq!(h.trace(), vec![17.0; iteration + 1], "budget {budget}");
+        assert_eq!(h.trace(), vec![17; iteration + 1], "budget {budget}");
     }
     // Also interrupt terminal publication with no active turn. This creates
     // the precise inactive + terminal rows state that recovery must prune.
@@ -1278,8 +1271,8 @@ fn cancelled_dependency_is_catchable_marker_and_does_not_cancel_owner() {
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
     assert_eq!(h.integer("future-status", &[owner.clone()]), 1);
     let result = h.value("future-result", &[owner]);
-    assert_eq!(h.decode(&result), 42.0);
-    assert_eq!(h.trace(), [1.0, 7.0]);
+    assert_eq!(h.decode(&result), 42);
+    assert_eq!(h.trace(), [1, 7]);
     assert_eq!(h.counts(), (0, 0));
 }
 
@@ -1287,7 +1280,7 @@ fn cancelled_dependency_is_catchable_marker_and_does_not_cancel_owner() {
 fn owner_cancellation_bypasses_catch_and_stays_pending_through_cleanup_await() {
     let mut h = Harness::new();
     h.install("(def ^:dynamic *x* 1)");
-    let caller = h.dynamic_push(3.0);
+    let caller = h.dynamic_push(3);
     let dependency = h.value("future-pending-new", &[]);
     let cleanup = h.value("future-pending-new", &[]);
     h.bind("dependency", dependency.clone());
@@ -1300,7 +1293,7 @@ fn owner_cancellation_bypasses_catch_and_stays_pending_through_cleanup_await() {
     h.integer("future-resolve", &[dependency, nil.clone()]);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
     assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
-    assert_eq!(h.trace(), [17.0]);
+    assert_eq!(h.trace(), [17]);
     let restored = h.value("dynamic-save", &[]);
     assert!(h.same(&restored, &caller));
     assert_eq!(h.integer("async-task-cancel", &[owner.clone()]), 0);
@@ -1309,7 +1302,7 @@ fn owner_cancellation_bypasses_catch_and_stays_pending_through_cleanup_await() {
     h.integer("future-resolve", &[cleanup, nil]);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
     assert_eq!(h.integer("future-status", &[owner]), 3);
-    assert_eq!(h.trace(), [17.0, 17.0]);
+    assert_eq!(h.trace(), [17, 17]);
     let restored = h.value("dynamic-save", &[]);
     assert!(h.same(&restored, &caller));
     assert_eq!(h.counts(), (0, 0));
@@ -1327,12 +1320,12 @@ fn active_cancellation_is_deferred_and_new_await_cannot_replay_body() {
     let owner = h.source("(suss.async/future* (try (do (t/emit (t/cancel owner)) (t/emit (t/cancel owner)) (suss.async/await* dependency) (t/emit 99)) (finally (t/emit 7) (suss.async/await* cleanup) (t/emit 8))))");
     h.bind("owner", owner.clone());
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
-    assert_eq!(h.trace(), [1.0, 0.0], "no recursive cancellation resume");
+    assert_eq!(h.trace(), [1, 0], "no recursive cancellation resume");
     assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
     let nil = h.value("nil", &[]);
     h.integer("future-resolve", &[dependency, nil.clone()]);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
-    assert_eq!(h.trace(), [1.0, 0.0, 7.0]);
+    assert_eq!(h.trace(), [1, 0, 7]);
     assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
     assert_eq!(h.integer("async-task-cancel", &[owner.clone()]), 0);
     h.store.gc(None).unwrap();
@@ -1340,7 +1333,7 @@ fn active_cancellation_is_deferred_and_new_await_cannot_replay_body() {
     h.integer("future-resolve", &[cleanup, nil]);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
     assert_eq!(h.integer("future-status", &[owner]), 3);
-    assert_eq!(h.trace(), [1.0, 0.0, 7.0, 8.0]);
+    assert_eq!(h.trace(), [1, 0, 7, 8]);
     assert_eq!(h.counts(), (0, 0));
 }
 
@@ -1354,7 +1347,7 @@ fn active_cancellation_then_normal_return_finishes_only_after_cleanup() {
     );
     h.bind("owner", owner.clone());
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
-    assert_eq!(h.trace(), [1.0, 7.0]);
+    assert_eq!(h.trace(), [1, 7]);
     assert_eq!(h.integer("future-status", &[owner.clone()]), 3);
     assert_eq!(h.integer("async-task-cancel", &[owner]), 0);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
@@ -1370,7 +1363,7 @@ fn cancellation_does_not_abandon_already_suspended_finally() {
         "(suss.async/future* (try 42 (finally (t/emit 7) (suss.async/await* cleanup) (t/emit 8))))",
     );
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
-    assert_eq!(h.trace(), [7.0]);
+    assert_eq!(h.trace(), [7]);
     assert_eq!(h.integer("async-task-cancel", &[owner.clone()]), 1);
     assert_eq!(
         h.integer("async-scheduler-run-one", &[]),
@@ -1384,7 +1377,7 @@ fn cancellation_does_not_abandon_already_suspended_finally() {
     let nil = h.value("nil", &[]);
     h.integer("future-resolve", &[cleanup, nil]);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
-    assert_eq!(h.trace(), [7.0, 8.0]);
+    assert_eq!(h.trace(), [7, 8]);
     assert_eq!(h.integer("future-status", &[owner]), 3);
     assert_eq!(h.counts(), (0, 0));
 }
@@ -1455,7 +1448,7 @@ fn cancellation_publication_fuel_sweep_keeps_old_waiter_or_complete_request() {
         trapped > 0 && published > 0,
         "sweep must cover both publication sides"
     );
-    assert!(h.trace().iter().all(|event| *event == 3.0));
+    assert!(h.trace().iter().all(|event| *event == 3));
     assert_eq!(h.trace().len(), (0..=2048).step_by(16).count());
 }
 
@@ -1472,7 +1465,7 @@ fn yield_is_fifo_zero_nil_event_and_preserves_committed_continuation_state() {
 
     let owner = h.value("future-pending-new", &[]);
     let slots = h.value("args-new", &[Val::I32(1)]);
-    let saved = h.number(42.0);
+    let saved = h.number(42);
     slots
         .unwrap_anyref()
         .unwrap()
@@ -1507,10 +1500,10 @@ fn yield_is_fifo_zero_nil_event_and_preserves_committed_continuation_state() {
     );
     h.rejected("async-task-yield", &[cont.clone(), resume]);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
-    assert_eq!(h.trace(), [7.0], "completed waiter precedes FIFO yield");
+    assert_eq!(h.trace(), [7], "completed waiter precedes FIFO yield");
     h.store.gc(None).unwrap();
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
-    assert_eq!(h.trace(), [7.0, 0.0, 42.0]);
+    assert_eq!(h.trace(), [7, 0, 42]);
     let observed = h
         .adapter
         .get_global(&mut h.store, "observed")
@@ -1559,7 +1552,7 @@ fn repeated_yields_bound_consumed_rows_and_preserve_cancellation_latch() {
     h.value("async-task-yield", &[cont.clone(), resume.clone()]);
     assert_eq!(h.integer("async-task-cancel", &[owner.clone()]), 1);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
-    assert_eq!(h.trace(), [3.0]);
+    assert_eq!(h.trace(), [3]);
     assert_eq!(h.counts(), (1, 0), "consumed cancellation latch survives");
     // Storage-level generation advancement models compiler checkpoints. Root's
     // source fairness gates execute the actual loop/backedge lowering.
@@ -1593,7 +1586,7 @@ fn repeated_yields_bound_consumed_rows_and_preserve_cancellation_latch() {
     );
     assert_eq!(h.counts(), (0, 0));
     assert_eq!(h.trace().len(), 257);
-    assert!(h.trace()[1..].iter().all(|event| *event == 0.0));
+    assert!(h.trace()[1..].iter().all(|event| *event == 0));
 }
 
 #[test]
@@ -1609,7 +1602,7 @@ fn source_yields_preserve_shadowed_frames_and_cancelled_cleanup_across_gc() {
     let engine = Engine::new(&config).unwrap();
     let mut h = Harness::with_engine(&engine, true);
     h.install("(def ^:dynamic *x* 1)");
-    let caller = h.dynamic_push(3.0);
+    let caller = h.dynamic_push(3);
     let owner = h.source("(suss.async/future* (binding [*x* 17] (try (loop [n 0] (do (t/emit *x*) (recur (+ n 1)))) (finally (binding [*x* 23] (loop [n 0] (if (< n 4) (do (t/emit *x*) (recur (+ n 1))) nil))) (t/emit *x*)))))");
     for _ in 0..3 {
         h.store.set_fuel(1_000_000).unwrap();
@@ -1619,7 +1612,7 @@ fn source_yields_preserve_shadowed_frames_and_cancelled_cleanup_across_gc() {
         assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
         h.store.gc(None).unwrap();
     }
-    assert_eq!(h.trace(), [17.0, 17.0, 17.0]);
+    assert_eq!(h.trace(), [17, 17, 17]);
     assert_eq!(h.integer("async-task-cancel", &[owner.clone()]), 1);
     h.store.set_fuel(1_000_000).unwrap();
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
@@ -1628,7 +1621,7 @@ fn source_yields_preserve_shadowed_frames_and_cancelled_cleanup_across_gc() {
         0,
         "cleanup's first backedge yields before cancellation is terminal"
     );
-    assert_eq!(h.trace(), [17.0, 17.0, 17.0, 23.0]);
+    assert_eq!(h.trace(), [17, 17, 17, 23]);
     for _ in 0..8 {
         h.store.set_fuel(1_000_000).unwrap();
         if h.integer("future-status", &[owner.clone()]) == 3 {
@@ -1646,12 +1639,12 @@ fn source_yields_preserve_shadowed_frames_and_cancelled_cleanup_across_gc() {
         h.store.gc(None).unwrap();
     }
     assert_eq!(h.integer("future-status", &[owner]), 3);
-    assert_eq!(h.trace(), [17.0, 17.0, 17.0, 23.0, 23.0, 23.0, 23.0, 17.0]);
+    assert_eq!(h.trace(), [17, 17, 17, 23, 23, 23, 23, 17]);
     let restored = h.value("dynamic-save", &[]);
     assert!(h.same(&restored, &caller));
     let cell = h.cells["user/*x*"].get(&mut h.store);
     let current = h.value("binding-get", &[cell]);
-    assert_eq!(h.decode(&current), 3.0);
+    assert_eq!(h.decode(&current), 3);
     assert_eq!(h.counts(), (0, 0));
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
 }
@@ -1677,7 +1670,7 @@ fn cancel_all_snapshots_unique_owners_and_preserves_pending_host_cleanup() {
     );
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
-    assert_eq!(h.trace(), [1.0, 3.0]);
+    assert_eq!(h.trace(), [1, 3]);
     assert_eq!(h.integer("future-status", &[first.clone()]), 0);
     assert_eq!(h.integer("future-status", &[second.clone()]), 0);
     assert_eq!(
@@ -1702,7 +1695,7 @@ fn cancel_all_snapshots_unique_owners_and_preserves_pending_host_cleanup() {
     assert_eq!(h.integer("future-resolve", &[cleanup, nil]), 1);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
-    assert_eq!(h.trace(), [1.0, 3.0, 2.0, 4.0]);
+    assert_eq!(h.trace(), [1, 3, 2, 4]);
     assert_eq!(h.integer("future-status", &[first]), 3);
     assert_eq!(h.integer("future-status", &[second]), 3);
     assert_eq!(h.integer("async-scheduler-pending-task-count", &[]), 0);
@@ -1720,7 +1713,7 @@ fn cancel_all_from_active_callback_is_deferred_and_does_not_skip_snapshot_owners
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
     assert_eq!(
         h.trace(),
-        [2.0, 0.0],
+        [2, 0],
         "requests don't recursively invoke callbacks"
     );
     assert_eq!(h.integer("future-status", &[active]), 3);
@@ -1730,7 +1723,7 @@ fn cancel_all_from_active_callback_is_deferred_and_does_not_skip_snapshot_owners
     h.store.gc(None).unwrap();
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
     assert_eq!(h.integer("future-status", &[queued]), 3);
-    assert_eq!(h.trace(), [2.0, 0.0]);
+    assert_eq!(h.trace(), [2, 0]);
     assert_eq!(h.integer("async-scheduler-pending-task-count", &[]), 0);
     assert_eq!(h.counts(), (0, 0));
 }
@@ -1752,7 +1745,7 @@ fn cancel_all_captures_owners_once_and_drives_each_cleanup() {
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 1);
     assert_eq!(h.integer("future-status", &[first]), 3);
     assert_eq!(h.integer("future-status", &[second]), 3);
-    assert_eq!(h.trace(), [1.0, 2.0]);
+    assert_eq!(h.trace(), [1, 2]);
     assert_eq!(h.integer("async-scheduler-pending-task-count", &[]), 0);
     assert_eq!(h.counts(), (0, 0));
     assert_eq!(h.integer("async-scheduler-cancel-all", &[]), 0);

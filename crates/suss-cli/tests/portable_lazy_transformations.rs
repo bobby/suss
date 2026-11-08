@@ -51,6 +51,7 @@ const IDS: [&str; 38] = [
 fn tagged(form: &Form) -> Value {
     assert!(form.metadata.is_empty(), "unexpected observation metadata");
     match &form.kind {
+        Kind::Long(n) => json!({"tag":"long", "value":n}),
         Kind::Number(n) => json!({"tag":"f64", "bits":format!("{:016x}", n.to_bits())}),
         Kind::Nil => json!({"tag":"nil"}),
         Kind::Bool(v) => json!({"tag":"bool", "value":v}),
@@ -66,6 +67,26 @@ fn observe(session: &mut Session, bridge: &FormBridge, source: &str) -> Value {
         .unwrap_or_else(|e| panic!("{source}: {e}"));
     session.collect().unwrap();
     tagged(&bridge.read(session, &value, 0..source.len()).unwrap())
+}
+/// `expected` with each integral ClojureScript double observation as the long
+/// JVM Clojure gives for it.
+fn clojure_numbers(expected: &Value) -> Value {
+    match expected {
+        Value::Object(fields) if fields.get("tag").is_some_and(|tag| tag == "f64") => {
+            let bits = u64::from_str_radix(fields["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.fract() == 0.0 && value.abs() < 2f64.powi(53) && bits != (-0.0f64).to_bits() {
+                json!({"tag":"long", "value":value as i64})
+            } else {
+                expected.clone()
+            }
+        }
+        Value::Object(fields) => Value::Object(
+            fields.iter().map(|(key, value)| (key.clone(), clojure_numbers(value))).collect(),
+        ),
+        Value::Array(items) => items.iter().map(clojure_numbers).collect(),
+        other => other.clone(),
+    }
 }
 #[test]
 fn lazy_transformations_match_complete_pinned_observations_in_both_phases_after_gc() {
@@ -88,7 +109,7 @@ fn lazy_transformations_match_complete_pinned_observations_in_both_phases_after_
             let actual = observe(&mut session, &bridge, case["source"].as_str().unwrap());
             assert_eq!(
                 actual,
-                case["expected"],
+                clojure_numbers(&case["expected"]),
                 "phase={:?}, case={id}",
                 session.phase()
             );
@@ -107,8 +128,8 @@ fn unforced_transformations_keep_callbacks_and_captures_across_gc_and_fragments(
         assert_eq!(
             observe(&mut session, &bridge, "[lazy-map-count lazy-filter-count]"),
             json!({"tag":"vector", "items":[
-                {"tag":"f64", "bits":"0000000000000000"},
-                {"tag":"f64", "bits":"0000000000000000"}]}),
+                {"tag":"long", "value":0},
+                {"tag":"long", "value":0}]}),
         );
         assert_eq!(
             observe(
@@ -117,10 +138,10 @@ fn unforced_transformations_keep_callbacks_and_captures_across_gc_and_fragments(
                 "[(first retained-map) (first retained-filter) lazy-map-count lazy-filter-count]"
             ),
             json!({"tag":"vector", "items":[
-                {"tag":"f64", "bits":"4026000000000000"},
-                {"tag":"f64", "bits":"4000000000000000"},
-                {"tag":"f64", "bits":"3ff0000000000000"},
-                {"tag":"f64", "bits":"4000000000000000"}]}),
+                {"tag":"long", "value":11},
+                {"tag":"long", "value":2},
+                {"tag":"long", "value":1},
+                {"tag":"long", "value":2}]}),
         );
         session.collect().unwrap();
         assert_eq!(
@@ -130,10 +151,10 @@ fn unforced_transformations_keep_callbacks_and_captures_across_gc_and_fragments(
                 "[(nth retained-map 1) (nth retained-filter 1) lazy-map-count lazy-filter-count]"
             ),
             json!({"tag":"vector", "items":[
-                {"tag":"f64", "bits":"4028000000000000"},
-                {"tag":"f64", "bits":"4008000000000000"},
-                {"tag":"f64", "bits":"4000000000000000"},
-                {"tag":"f64", "bits":"4008000000000000"}]}),
+                {"tag":"long", "value":12},
+                {"tag":"long", "value":3},
+                {"tag":"long", "value":2},
+                {"tag":"long", "value":3}]}),
         );
         // Demanding cached heads after realizing tails must not rerun either callback.
         assert_eq!(
@@ -143,10 +164,10 @@ fn unforced_transformations_keep_callbacks_and_captures_across_gc_and_fragments(
                 "[(first retained-map) (first retained-filter) lazy-map-count lazy-filter-count]"
             ),
             json!({"tag":"vector", "items":[
-                {"tag":"f64", "bits":"4026000000000000"},
-                {"tag":"f64", "bits":"4000000000000000"},
-                {"tag":"f64", "bits":"4000000000000000"},
-                {"tag":"f64", "bits":"4008000000000000"}]}),
+                {"tag":"long", "value":11},
+                {"tag":"long", "value":2},
+                {"tag":"long", "value":2},
+                {"tag":"long", "value":3}]}),
         );
     }
 }
@@ -161,24 +182,24 @@ fn unforced_transformations_survive_with_only_host_handles() {
         session.collect().unwrap();
         let project = session.eval("(fn [coll] (into [] coll))").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
-        for (handle, bits) in [
-            (&mapped, ["4026000000000000", "4028000000000000"]),
-            (&filtered, ["4000000000000000", "4008000000000000"]),
+        for (handle, values) in [
+            (&mapped, [11, 12]),
+            (&filtered, [2, 3]),
         ] {
             let result = session.invoke(&project, &[handle]).unwrap();
             session.collect().unwrap();
             assert_eq!(
                 tagged(&bridge.read(&mut session, &result, 0..0).unwrap()),
                 json!({"tag":"vector", "items":[
-                    {"tag":"f64", "bits":bits[0]},
-                    {"tag":"f64", "bits":bits[1]}]})
+                    {"tag":"long", "value":values[0]},
+                    {"tag":"long", "value":values[1]}]})
             );
         }
         assert_eq!(
             observe(&mut session, &bridge, "[lazy-map-count lazy-filter-count]"),
             json!({"tag":"vector", "items":[
-                {"tag":"f64", "bits":"4000000000000000"},
-                {"tag":"f64", "bits":"4008000000000000"}]})
+                {"tag":"long", "value":2},
+                {"tag":"long", "value":3}]})
         );
     }
 }
@@ -220,14 +241,11 @@ fn handed_chunk_preserves_actual_backing_array_identity_after_gc() {
                     4,
                     "length, sparse chain, dense values, presence"
                 );
-                let length = backing_storage
-                    .get(&mut store, 0)?
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_struct(&store)?
-                    .unwrap()
-                    .field(&mut store, 0)?;
-                assert_eq!(length.unwrap_f64().to_bits(), 2.0_f64.to_bits());
+                let length = backing_storage.get(&mut store, 0)?;
+                assert_eq!(
+                    suss_cli::portable_session::runtime_number(&mut store, &length)?,
+                    Some(suss_cli::portable_session::RuntimeNumber::Long(2))
+                );
                 let backing_storage_nil = backing_storage.get(&mut store, 1)?;
                 assert_eq!(
                     suss_cli::portable_session::sentinel_tag(&mut store, &backing_storage_nil)?.unwrap(),

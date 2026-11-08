@@ -1,7 +1,6 @@
 //! Whole sorted prerequisites; authored only, bootstrap/native execution pending.
-use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
+use suss_cli::portable_session::{RuntimeNumber, Session, SessionError, SessionOptions, SessionValue};
 use suss_compile::portable::resolve::Phase;
-use wasmtime::Val;
 const IDS: &[&str] = &[
     "symbol-identity",
     "symbol-no-namespace",
@@ -71,21 +70,19 @@ fn setup(phase: Phase) -> Session {
     session.collect().unwrap();
     session
 }
-fn number_bits(session: &mut Session, value: &SessionValue) -> u64 {
+fn number(session: &mut Session, value: &SessionValue) -> RuntimeNumber {
     session
-        .inspect(value, |mut store, value| {
-            let number = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .expect("Number");
-            let fields = number.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("boxed Number layout")
-            };
-            Ok(*bits)
+        .inspect(value, |store, value| {
+            Ok(suss_cli::portable_session::runtime_number(store, &value)?.expect("Number"))
         })
         .unwrap()
+}
+/// A number's kind and exact bits, so -0.0 differs from 0.0.
+fn exact(number: RuntimeNumber) -> (bool, u64) {
+    match number {
+        RuntimeNumber::Long(value) => (true, value as u64),
+        RuntimeNumber::Double(value) => (false, value.to_bits()),
+    }
 }
 #[test]
 fn complete_sorted_prerequisites_match_ordered_pinned_value_and_effect_cases_after_gc() {
@@ -135,35 +132,35 @@ fn sorted_prerequisite_returns_and_original_throw_payload_are_independently_deco
         for (source, expected) in [
             (
                 "(ci-reduce [-0.0] (fn [_ _] (throw 73)))",
-                (-0.0_f64).to_bits(),
+                RuntimeNumber::Double(-0.0),
             ),
-            ("(ci-reduce [] (fn [] 17))", 17.0_f64.to_bits()),
+            ("(ci-reduce [] (fn [] 17))", RuntimeNumber::Long(17)),
             (
                 "(ci-reduce [1 2] (fn [_ _] (reduced -0.0)))",
-                (-0.0_f64).to_bits(),
+                RuntimeNumber::Double(-0.0),
             ),
             (
                 "(ci-reduce [1] (fn [_ _] (reduced ##Inf)) 0)",
-                f64::INFINITY.to_bits(),
+                RuntimeNumber::Double(f64::INFINITY),
             ),
             (
                 "(compare-symbols (symbol \"n\" \"a\") (symbol \"n\" \"b\"))",
-                (-1.0_f64).to_bits(),
+                RuntimeNumber::Long(-1),
             ),
             (
                 "(compare-keywords (keyword \"n\" \"b\") (keyword \"n\" \"a\"))",
-                1.0_f64.to_bits(),
+                RuntimeNumber::Long(1),
             ),
         ] {
             let value = session.eval(source).unwrap();
             session.collect().unwrap();
-            assert_eq!(number_bits(&mut session, &value), expected, "{source}");
+            assert_eq!(exact(number(&mut session, &value)), exact(expected), "{source}");
         }
         let value = session
             .eval("(ci-reduce [1] (fn [_ _] (reduced ##NaN)) 0)")
             .unwrap();
         session.collect().unwrap();
-        assert!(f64::from_bits(number_bits(&mut session, &value)).is_nan());
+        assert!(matches!(number(&mut session, &value), RuntimeNumber::Double(value) if value.is_nan()));
         session.eval("(def sorted-effect 0)").unwrap();
         let Err(SessionError::Language(payload)) = session.eval(
             "(ci-reduce [1 2] (fn [_ _] (set! sorted-effect (+ sorted-effect 1)) (throw 73)) 0)",
@@ -171,12 +168,12 @@ fn sorted_prerequisite_returns_and_original_throw_payload_are_independently_deco
             panic!("original reducer throw required")
         };
         session.collect().unwrap();
-        assert_eq!(number_bits(&mut session, &payload), 73.0_f64.to_bits());
+        assert_eq!(number(&mut session, &payload), RuntimeNumber::Long(73));
         let trace = session.eval("sorted-effect").unwrap();
         session.collect().unwrap();
-        assert_eq!(number_bits(&mut session, &trace), 1.0_f64.to_bits());
+        assert_eq!(number(&mut session, &trace), RuntimeNumber::Long(1));
         let recovery = session.eval("(ci-reduce [17 23] + 0)").unwrap();
         session.collect().unwrap();
-        assert_eq!(number_bits(&mut session, &recovery), 40.0_f64.to_bits());
+        assert_eq!(number(&mut session, &recovery), RuntimeNumber::Long(40));
     }
 }

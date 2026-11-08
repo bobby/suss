@@ -3,7 +3,7 @@
 
 use suss_compile::{
     portable::resolve::Phase, portable_macro_data::FormBridge, portable_macros::CompiledMacros,
-    portable_session::Session,
+    portable_session::{RuntimeNumber, Session, runtime_number},
 };
 use suss_reader::forms::Kind;
 use wasmtime::AsContextMut;
@@ -24,7 +24,7 @@ fn compiler_embedding_executes_macros_and_retains_live_values_across_fragments()
     let bridge = FormBridge::new(&mut session).unwrap();
     assert!(matches!(
         bridge.read(&mut session, &result, 0..1).unwrap().kind,
-        Kind::Number(43.0)
+        Kind::Long(43)
     ));
     let saved = session.eval("(fn [] @state)").unwrap();
     session.eval("(swap! state inc)").unwrap();
@@ -32,7 +32,7 @@ fn compiler_embedding_executes_macros_and_retains_live_values_across_fragments()
     let result = session.invoke(&saved, &[]).unwrap();
     assert!(matches!(
         bridge.read(&mut session, &result, 0..1).unwrap().kind,
-        Kind::Number(42.0)
+        Kind::Long(42)
     ));
     assert_eq!(session.phase(), Phase::Runtime);
     let mut isolated = Session::new_macro().unwrap();
@@ -78,14 +78,8 @@ fn compiler_embedding_prepares_aot_without_executing_runtime_initializers() {
         .expect("the Runtime initializer must throw a language exception");
     let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
     assert_eq!(fields.len(), 1);
-    let payload = fields[0]
-        .unwrap_anyref()
-        .unwrap()
-        .as_struct(&store)
-        .unwrap()
-        .unwrap();
     assert_eq!(
-        payload.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
-        42.0_f64.to_bits()
+        runtime_number(&mut store, &fields[0]).unwrap(),
+        Some(RuntimeNumber::Long(42))
     );
 }

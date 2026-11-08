@@ -163,7 +163,7 @@ fn same(a: Option<&Form>, b: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result
                         Kind::Nil | Kind::Discard(_) | Kind::Prefix { .. } => 1,
                         Kind::Tagged { tag, .. } => identifier_size(tag.namespace.as_deref(), &tag.name),
                         Kind::Bool(_) => 2,
-                        Kind::Number(_) => 9,
+                        Kind::Number(_) | Kind::Long(_) => 9,
                         Kind::Exact(v) => 9usize.saturating_add(v.text.len()),
                         Kind::String(v) => 9usize.saturating_add(v.len().saturating_mul(2)),
                         Kind::Symbol(v) => identifier_size(v.namespace.as_deref(), &v.name),
@@ -206,6 +206,10 @@ fn same(a: Option<&Form>, b: Option<&Form>, meter: &mut WorkMeter<'_>) -> Result
                             out.extend_from_slice(
                                 &(if *v == 0.0 { 0 } else { v.to_bits() }).to_le_bytes(),
                             );
+                        }
+                        Kind::Long(v) => {
+                            out.push(17);
+                            out.extend_from_slice(&v.to_le_bytes());
                         }
                         Kind::Exact(v) => {
                             // The spelling, so diagnostics name it.
@@ -351,7 +355,7 @@ fn constant(form: &Form) -> Option<Form> {
     Some(named(match &form.kind {
         Kind::Nil => "clj-nil",
         Kind::Bool(_) => "boolean",
-        Kind::Number(_) => "number",
+        Kind::Number(_) | Kind::Long(_) => "number",
         Kind::String(_) => "string",
         Kind::Keyword(_) => "cljs.core/Keyword",
         Kind::Symbol(_) => "cljs.core/Symbol",
@@ -433,7 +437,7 @@ fn callable_before_dispatch(hir: &Hir) -> Option<&SourceCallable> {
 }
 fn truthy_constant(form: &Form) -> bool {
     match &form.kind {
-        Kind::Number(_) | Kind::String(_) | Kind::Keyword(_) | Kind::Bool(true) => true,
+        Kind::Number(_) | Kind::Long(_) | Kind::String(_) | Kind::Keyword(_) | Kind::Bool(true) => true,
         Kind::List(items) if items.is_empty() => true,
         Kind::List(items)
             if items.len() == 2
@@ -734,7 +738,7 @@ fn inferred(hir: &Hir, meter: &mut WorkMeter<'_>) -> Result<Option<Form>, Diagno
                 return Ok(Some(named(match value {
                     Literal::Nil | Literal::Undefined => "clj-nil",
                     Literal::Bool(_) => "boolean",
-                    Literal::Number(_) => "number",
+                    Literal::Number(_) | Literal::Long(_) => "number",
                     Literal::String(_) => "string",
                 })));
             }
@@ -798,6 +802,7 @@ pub(super) fn source_tags_metered(
             Kind::Nil
             | Kind::Bool(_)
             | Kind::Number(_)
+            | Kind::Long(_)
             | Kind::String(_)
             | Kind::Keyword(_)
             | Kind::Vector(_)

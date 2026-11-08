@@ -1340,8 +1340,7 @@ fn scheduler_queue(b: &mut Builder, predicate: u32, status: u32) -> (u32, u32) {
         RefI31,
         LocalGet(0),
         Call(b.names["async-continuation-invocation"]),
-        F64ConvertI32U,
-        StructNew(NUMBER),
+        Call(b.names["long-box-u32"]),
         ArrayNewFixed {
             array_type_index: ARGS,
             array_size: 6,
@@ -1771,8 +1770,7 @@ fn cancellation_exports(b: &mut Builder) {
         RefI31,
         LocalGet(4),
         Call(b.names["async-registration-invocation"]),
-        F64ConvertI32U,
-        StructNew(NUMBER),
+        Call(b.names["long-box-u32"]),
         ArrayNewFixed {
             array_type_index: ARGS,
             array_size: 6,
@@ -2014,11 +2012,7 @@ fn scheduler_runner(b: &mut Builder, refresh: u32, _enqueue: u32) {
     ]);
     item(&mut body, 1, 3);
     body.extend([
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         I32TruncF64U,
         GlobalSet(INVOCATION_GLOBAL),
     ]);
@@ -2077,11 +2071,7 @@ fn scheduler_runner(b: &mut Builder, refresh: u32, _enqueue: u32) {
     ]);
     item(&mut body, 1, 3);
     body.extend([
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         I32TruncF64U,
         GlobalSet(INVOCATION_GLOBAL),
     ]);
@@ -2404,8 +2394,7 @@ fn scheduler_runner(b: &mut Builder, refresh: u32, _enqueue: u32) {
         LocalGet(8),
         LocalGet(3),
         LocalGet(16),
-        F64ConvertI32U,
-        StructNew(NUMBER),
+        Call(b.names["long-box-u32"]),
         ArrayNewFixed {
             array_type_index: ARGS,
             array_size: 4,
@@ -2881,11 +2870,7 @@ fn invocation_storage(b: &mut Builder) {
     let mut body = Vec::new();
     registration_item(&mut body, 0, 5);
     body.extend([
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         I32TruncF64U,
     ]);
     let scope = b.function(

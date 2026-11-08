@@ -26,7 +26,7 @@ fn printing_is_canonical() {
         ("#{:c :a :b}", "#{:a :b :c}"),
         ("#{[2] [1 2] [1]}", "#{[1] [1 2] [2]}"),
         ("[1 1.0 1.5 -0.0 -0 0.1 1e300 1e-7 1e16 123456789012345 ##Inf ##-Inf ##NaN]",
-         "[1 1 1.5 -0.0 0 0.1 1e300 1e-7 1e16 123456789012345 ##Inf ##-Inf ##NaN]"),
+         "[1 1.0 1.5 -0.0 0 0.1 1e300 1e-7 1e16 123456789012345 ##Inf ##-Inf ##NaN]"),
         ("0x10", "16"),
         ("\"a\\\"b\\\\c\\nd\\te\\rf\\bg\\fh\\u0001\\u007f é ☃\"",
          "\"a\\\"b\\\\c\\nd\\te\\rf\\bg\\fh\\u0001\\u007f é ☃\""),
@@ -49,8 +49,8 @@ fn pretty_printing_breaks_wide_collections_only() {
     assert_eq!(edn::print_pretty(&narrow).unwrap(), edn::print(&narrow).unwrap());
     let wide = Value::Map(BTreeMap::from([
         (Value::keyword("cells"), Value::Vector((0..12).map(|i| Value::String(format!("core:cell-{i:04}"))).collect())),
-        (Value::keyword("format-version"), Value::Number(2.0)),
-        (Value::keyword("tag"), Value::Tagged(Symbol::new("queue"), Box::new(Value::Vector((0..30).map(|i| Value::Number(i.into())).collect())))),
+        (Value::keyword("format-version"), Value::Long(2)),
+        (Value::keyword("tag"), Value::Tagged(Symbol::new("queue"), Box::new(Value::Vector((0..30).map(Value::Long).collect())))),
     ]));
     let text = edn::print_pretty(&wide).unwrap();
     assert!(text.starts_with("{:cells [\"core:cell-0000\"\n         \"core:cell-0001\""), "{text}");
@@ -223,12 +223,13 @@ fn code_only_syntax_and_unknown_tags_fail_with_spans() {
         ("[#_#foo 1]", "No reader function for tag foo", 3..9),
         ("#queue 1", "Queue literal expects a vector for its elements.", 0..8),
         ("{:a 1 :a 2}", "Duplicate key: :a", 6..8),
-        ("#{1 1.0}", "Duplicate key: 1", 4..7),
+        ("#{1 1}", "Duplicate key: 1", 4..5),
+        ("#{1.0 1.0}", "Duplicate key: 1.0", 6..9),
         ("{:a}", "Map requires an even number of forms", 0..4),
         ("{:a #_ 1}", "Map requires an even number of forms", 0..9),
         ("{:a #queue [] :b}", "Map requires an even number of forms", 0..17),
         ("::a", "Auto-resolved keywords require namespace resolution", 0..3),
-        ("1/2", "Unsupported numeric literal 1/2: ratios, BigInts, BigDecimals and integers beyond 2^53 need Clojure's numeric types (#335)", 0..3),
+        ("1/2", "Unsupported numeric literal 1/2: ratios, BigInts and BigDecimals need Clojure's numeric types (#338, #339)", 0..3),
         ("\"\\ud800\"", "EDN strings must be valid Unicode", 0..8),
         ("[1 2", "Unclosed collection; expected ]", 0..4),
         ("^1 [x]", "Metadata must be a keyword, symbol, string or map", 1..2),
@@ -242,20 +243,20 @@ fn code_only_syntax_and_unknown_tags_fail_with_spans() {
 fn read_one_requires_exactly_one_value() {
     assert_eq!(edn::read_one(" ;x\n", &Options::default()).unwrap_err().message, "Expected an EDN value");
     assert_eq!(edn::read_one("1 2", &Options::default()).unwrap_err().message, "Expected exactly one EDN value");
-    assert_eq!(edn::read_all("1 #_2 3", &Options::default()).unwrap(), vec![Value::Number(1.0), Value::Number(3.0)]);
+    assert_eq!(edn::read_all("1 #_2 3", &Options::default()).unwrap(), vec![Value::Long(1), Value::Long(3)]);
 }
 
 #[test]
 fn tag_readers_and_defaults_follow_clojure_edn() {
     let mut options = Options::default();
     options.readers.insert(Symbol::namespaced("suss", "binding"), Box::new(|value| match value {
-        Value::Number(id) => Ok(Value::String(format!("binding-{id}"))),
+        Value::Long(id) => Ok(Value::String(format!("binding-{id}"))),
         _ => Err("Binding ids are numbers".into()),
     }));
     // A reader takes precedence over the built-in tag.
     options.readers.insert(Symbol::new("queue"), Box::new(|value| Ok(Value::List(vec![value]))));
     assert_eq!(edn::read_one("#suss/binding 12", &options).unwrap(), Value::String("binding-12".into()));
-    assert_eq!(edn::read_one("#queue 1", &options).unwrap(), Value::List(vec![Value::Number(1.0)]));
+    assert_eq!(edn::read_one("#queue 1", &options).unwrap(), Value::List(vec![Value::Long(1)]));
     let error = edn::read_one("[#suss/binding x]", &options).unwrap_err();
     assert_eq!((error.message.as_str(), error.span), ("Binding ids are numbers", Some(1..16)));
     assert_eq!(edn::read_one("#other 1", &options).unwrap_err().message, "No reader function for tag other");
@@ -343,10 +344,11 @@ fn serde_types_round_trip_through_canonical_edn() {
 }
 
 #[test]
-fn integers_must_be_exact_in_binary64() {
+fn integers_must_be_longs() {
     assert_eq!(edn::to_string(&(1u64 << 53)).unwrap(), "9007199254740992");
-    assert_eq!(edn::to_string(&u64::MAX).unwrap_err().message, "Integer 18446744073709551615 is not exact in binary64");
-    assert_eq!(edn::to_string(&(-(1i64 << 53) - 1)).unwrap_err().message, "Integer -9007199254740993 is not exact in binary64");
+    assert_eq!(edn::to_string(&(-(1i64 << 53) - 1)).unwrap(), "-9007199254740993");
+    assert_eq!(edn::to_string(&i64::MIN).unwrap(), "-9223372036854775808");
+    assert_eq!(edn::to_string(&u64::MAX).unwrap_err().message, "Integer 18446744073709551615 is not a long");
 }
 
 /// The compiler's reader's data, as EDN values, for comparison.
@@ -357,6 +359,7 @@ fn form_value(form: &suss_reader::forms::Form) -> Value {
         Kind::Nil => Value::Nil,
         Kind::Bool(b) => Value::Bool(*b),
         Kind::Number(x) => Value::Number(*x),
+        Kind::Long(x) => Value::Long(*x),
         Kind::String(units) => Value::String(String::from_utf16(units).unwrap()),
         Kind::Symbol(s) => Value::Symbol(s.clone()),
         Kind::Keyword(k) => Value::Keyword(k.clone()),

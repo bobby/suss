@@ -13,6 +13,7 @@ fn raw(value: Observation) -> Value {
         Observation::Nil => json!({"tag":"nil"}),
         Observation::Bool(value) => json!({"tag":"bool","value":value}),
         Observation::Number(bits) => json!({"tag":"f64","bits":format!("{bits:016x}")}),
+        Observation::Long(value) => json!({"tag":"long", "value":value.to_string()}),
         Observation::String(units) => string(units),
         Observation::Keyword(namespace, name) => {
             json!({"tag":"keyword","namespace":namespace.map(string).unwrap_or(json!({"tag":"nil"})),"name":string(name)})
@@ -24,6 +25,30 @@ fn raw(value: Observation) -> Value {
             json!({"tag":"seq","items":items.into_iter().map(raw).collect::<Vec<_>>()})
         }
         other => panic!("Unexpected corpus value: {other:?}"),
+    }
+}
+
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_value(expected: &Value) -> Value {
+    match expected {
+        Value::Object(fields) if fields.get("tag").and_then(Value::as_str) == Some("f64") => {
+            let bits = u64::from_str_radix(fields["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+                json!({"tag":"long", "value":(value as i64).to_string()})
+            } else {
+                expected.clone()
+            }
+        }
+        Value::Object(fields) => Value::Object(
+            fields
+                .iter()
+                .map(|(key, value)| (key.clone(), clojure_value(value)))
+                .collect(),
+        ),
+        Value::Array(items) => Value::Array(items.iter().map(clojure_value).collect()),
+        other => other.clone(),
     }
 }
 
@@ -89,11 +114,12 @@ fn public_transducers_match_all_pinned_values_effects_and_throws_in_both_phases(
             assert_eq!(status, expected["status"].as_str().unwrap(), "{phase}/{id}");
             assert_eq!(
                 result[1],
-                expected[if status == "value" { "value" } else { "thrown" }],
+                clojure_value(&expected[if status == "value" { "value" } else { "thrown" }]),
                 "{phase}/{id}: raw value"
             );
             assert_eq!(
-                observed["items"][1]["items"], expected["effects"],
+                observed["items"][1]["items"],
+                clojure_value(&expected["effects"]),
                 "{phase}/{id}: ordered effects"
             );
         }
@@ -106,23 +132,23 @@ fn public_lazy_seq_respects_core_resolution_aliases_exclusions_and_shadows() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
         for (source, expected) in [
-            ("(first (lazy-seq (list 17)))", 17.0_f64),
-            ("(first (cljs.core/lazy-seq (list 23)))", 23.0),
+            ("(first (lazy-seq (list 17)))", 17_i64),
+            ("(first (cljs.core/lazy-seq (list 23)))", 23),
             (
                 "(ns lazy.alias (:require [cljs.core :as c])) (first (c/lazy-seq (list 29)))",
-                29.0,
+                29,
             ),
             (
                 "(ns lazy.renamed (:refer-clojure :rename {lazy-seq delayed})) (first (delayed (list 31)))",
-                31.0,
+                31,
             ),
             (
                 "(ns lazy.lexical) (let [lazy-seq (fn [x] x)] (lazy-seq 37))",
-                37.0,
+                37,
             ),
             (
                 "(ns lazy.owned) (def lazy-seq (fn [x] x)) (lazy-seq 41)",
-                41.0,
+                41,
             ),
         ] {
             let result = session
@@ -138,7 +164,7 @@ fn public_lazy_seq_respects_core_resolution_aliases_exclusions_and_shadows() {
                 Decoder::new(16)
                     .decode_session(&mut session, &result)
                     .unwrap(),
-                Observation::Number(expected.to_bits()),
+                Observation::Long(expected),
                 "{source}"
             );
         }
@@ -176,7 +202,7 @@ fn public_lazy_seq_respects_core_resolution_aliases_exclusions_and_shadows() {
             Decoder::new(16)
                 .decode_session(&mut session, &qualified)
                 .unwrap(),
-            Observation::Number(47.0_f64.to_bits())
+            Observation::Long(47)
         );
         let result = session
             .eval_with_macros(
@@ -189,7 +215,7 @@ fn public_lazy_seq_respects_core_resolution_aliases_exclusions_and_shadows() {
             Decoder::new(16)
                 .decode_session(&mut session, &result)
                 .unwrap(),
-            Observation::Number(43.0_f64.to_bits())
+            Observation::Long(43)
         );
     }
 }
@@ -263,11 +289,12 @@ fn public_array_dependencies_match_all_pinned_values_and_effects_in_both_phases(
             assert_eq!(status, expected["status"].as_str().unwrap(), "{phase}/{id}");
             assert_eq!(
                 result[1],
-                expected[if status == "value" { "value" } else { "thrown" }],
+                clojure_value(&expected[if status == "value" { "value" } else { "thrown" }]),
                 "{phase}/{id}: raw value"
             );
             assert_eq!(
-                observed["items"][1]["items"], expected["effects"],
+                observed["items"][1]["items"],
+                clojure_value(&expected["effects"]),
                 "{phase}/{id}: ordered effects"
             );
         }
@@ -291,13 +318,13 @@ fn owned_array_shift_preserves_holes_owner_and_single_evaluation_after_gc() {
             Observation::Vector(vec![
                 Observation::Bool(true),
                 Observation::Nil,
-                Observation::Number(3.0_f64.to_bits()),
+                Observation::Long(3),
                 Observation::Bool(false),
                 Observation::Bool(true),
                 Observation::Bool(false),
-                Observation::Number(17.0_f64.to_bits()),
+                Observation::Long(17),
                 Observation::Bool(false),
-                Observation::Vector(vec![Observation::Number(7.0_f64.to_bits())]),
+                Observation::Vector(vec![Observation::Long(7)]),
             ])
         );
         for source in [
@@ -313,7 +340,7 @@ fn owned_array_shift_preserves_holes_owner_and_single_evaluation_after_gc() {
                     .unwrap(),
                 Observation::Vector(vec![
                     Observation::Bool(true),
-                    Observation::Number(0.0_f64.to_bits()),
+                    Observation::Long(0),
                     Observation::Bool(false)
                 ])
             );

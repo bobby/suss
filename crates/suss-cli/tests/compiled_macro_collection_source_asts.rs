@@ -17,6 +17,14 @@ fn datum(form: &Form) -> Value {
     match &form.kind {
         Kind::Nil => Value::Null,
         Kind::Bool(value) => json!(value),
+        // The pinned corpus writes every number as a JSON float; an integral
+        // one is a Clojure long, so an integral double is marked apart.
+        Kind::Long(value) => json!(*value as f64),
+        Kind::Number(value)
+            if value.is_finite() && value.fract() == 0.0 && value.to_bits() != (-0.0f64).to_bits() =>
+        {
+            json!(["double", value])
+        }
         Kind::Number(value) => json!(value),
         Kind::String(value) => json!(String::from_utf16(value).unwrap()),
         Kind::Symbol(value) => json!(["symbol", value.to_string()]),

@@ -28,6 +28,11 @@ fn constant(form: &Form) -> Result<(CaseConstant, (u8, Vec<u8>)), Diagnostic> {
                 (2, bits.to_be_bytes().to_vec()),
             )
         }
+        // Longs and doubles are different case constants, as in Clojure.
+        Kind::Long(value) => (
+            CaseConstant::Scalar(Literal::Long(*value)),
+            (17, value.to_be_bytes().to_vec()),
+        ),
         Kind::String(units) => (
             CaseConstant::Scalar(Literal::String(units.clone())),
             (
@@ -110,7 +115,7 @@ impl Analyzer<'_> {
             group.iter().all(|(_, value)| {
                 matches!(
                     value,
-                    CaseConstant::Scalar(Literal::Number(_) | Literal::String(_))
+                    CaseConstant::Scalar(Literal::Number(_) | Literal::Long(_) | Literal::String(_))
                 )
             })
         });
@@ -180,7 +185,7 @@ impl Analyzer<'_> {
                         metadata: syntax.metadata.clone(),
                         ty: Type::Bool,
                         kind: std::sync::Arc::new(Expression::Comparison {
-                            operation: Comparison::StrictEqual,
+                            operation: Comparison::CaseEqual,
                             arguments: vec![selected.clone(), self.literal_form(syntax, value)],
                         }),
                     }

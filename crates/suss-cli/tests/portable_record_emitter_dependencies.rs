@@ -13,10 +13,10 @@ fn observe(session: &mut Session, decoder: &mut Decoder, source: &str) -> Observ
     session.collect().unwrap();
     decoder.decode_session(session, &value).unwrap()
 }
-fn number(value: f64) -> Observation {
-    Observation::Number(value.to_bits())
+fn number(value: i64) -> Observation {
+    Observation::Long(value)
 }
-fn vector(values: &[f64]) -> Observation {
+fn vector(values: &[i64]) -> Observation {
     Observation::Vector(values.iter().map(|value| number(*value)).collect())
 }
 
@@ -30,7 +30,7 @@ fn emitter_sequence_helpers_keep_all_collection_and_transducer_branches() {
                 &mut decoder,
                 "(into [] (mapcat (fn [x] [x (+ x 10)]) [1 2]))"
             ),
-            vector(&[1.0, 11.0, 2.0, 12.0])
+            vector(&[1, 11, 2, 12])
         );
         assert_eq!(
             observe(
@@ -38,7 +38,7 @@ fn emitter_sequence_helpers_keep_all_collection_and_transducer_branches() {
                 &mut decoder,
                 "(into [] (mapcat (fn [a b] [(+ a b)] ) [1 2 3] [10 20]))"
             ),
-            vector(&[11.0, 22.0])
+            vector(&[11, 22])
         );
         assert_eq!(
             observe(
@@ -46,7 +46,7 @@ fn emitter_sequence_helpers_keep_all_collection_and_transducer_branches() {
                 &mut decoder,
                 "(into [] (mapcat (fn [x] [x (+ x 10)])) [1 2])"
             ),
-            vector(&[1.0, 11.0, 2.0, 12.0])
+            vector(&[1, 11, 2, 12])
         );
         for source in [
             "(into [] (remove (fn [x] (> x 2)) [1 2 3 4]))",
@@ -54,7 +54,7 @@ fn emitter_sequence_helpers_keep_all_collection_and_transducer_branches() {
         ] {
             assert_eq!(
                 observe(&mut session, &mut decoder, source),
-                vector(&[1.0, 2.0])
+                vector(&[1, 2])
             );
         }
         for source in [
@@ -63,7 +63,7 @@ fn emitter_sequence_helpers_keep_all_collection_and_transducer_branches() {
         ] {
             assert_eq!(
                 observe(&mut session, &mut decoder, source),
-                vector(&[3.0, 1.0])
+                vector(&[3, 1])
             );
         }
         assert_eq!(
@@ -85,7 +85,7 @@ fn emitter_sequence_helpers_keep_all_collection_and_transducer_branches() {
                 &mut decoder,
                 "(into [] (list* 1 2 3 4 5 [6 7]))"
             ),
-            vector(&[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0])
+            vector(&[1, 2, 3, 4, 5, 6, 7])
         );
     }
 }
@@ -101,7 +101,7 @@ fn concatenating_transduction_stops_before_later_nested_and_outer_effects() {
                 &mut decoder,
                 "[(into [] (comp (mapcat (fn [x] (set! emitter-effects (+ emitter-effects 1)) [x (+ x 10)])) (take 1)) [1 2 3]) emitter-effects]"
             ),
-            Observation::Vector(vec![vector(&[1.0]), number(1.0)])
+            Observation::Vector(vec![vector(&[1]), number(1)])
         );
         assert_eq!(
             observe(
@@ -109,7 +109,7 @@ fn concatenating_transduction_stops_before_later_nested_and_outer_effects() {
                 &mut decoder,
                 "(let [rf (cat (fn ([] 9) ([result] result) ([result input] (+ result input))))] [(rf) (rf 11) (rf 0 [1 2 3])])"
             ),
-            vector(&[9.0, 11.0, 6.0])
+            vector(&[9, 11, 6])
         );
         assert_eq!(
             observe(
@@ -117,7 +117,7 @@ fn concatenating_transduction_stops_before_later_nested_and_outer_effects() {
                 &mut decoder,
                 "(do (set! emitter-effects 0) (let [xf (drop-while (fn [x] (set! emitter-effects (+ emitter-effects 1)) (< x 3)))] [(into [] xf [1 2 3 1 0]) emitter-effects]))"
             ),
-            Observation::Vector(vec![vector(&[3.0, 1.0, 0.0]), number(3.0)])
+            Observation::Vector(vec![vector(&[3, 1, 0]), number(3)])
         );
     }
 }

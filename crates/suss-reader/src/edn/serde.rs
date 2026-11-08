@@ -3,7 +3,8 @@
 //! Structs and maps become maps, struct fields keywords (`a/b` names are
 //! namespaced), sequences and tuples vectors, `None` and `()` nil, unit
 //! variants keywords and other variants a one-entry map from the variant's
-//! keyword. Integers must be exact in binary64; strings must be Unicode.
+//! keyword. Integers are longs and must fit 64 signed bits; floats are
+//! doubles; strings must be Unicode.
 use super::{Error, Options, Value, print, print_pretty, read_one};
 use ::serde::{
     de::{self, DeserializeOwned, IntoDeserializer, Visitor},
@@ -47,14 +48,15 @@ fn keyword(name: &str) -> Value {
 }
 const EXACT: u128 = 1 << 53;
 fn integer(negative: bool, magnitude: u128) -> Result<Value, Error> {
-    if magnitude > EXACT {
+    let signed = i128::try_from(magnitude)
+        .ok()
+        .map(|magnitude| if negative { -magnitude } else { magnitude })
+        .and_then(|value| i64::try_from(value).ok());
+    let Some(value) = signed else {
         let sign = if negative { "-" } else { "" };
-        return Err(Error::new(format!(
-            "Integer {sign}{magnitude} is not exact in binary64"
-        )));
-    }
-    let x = magnitude as f64;
-    Ok(Value::Number(if negative { -x } else { x }))
+        return Err(Error::new(format!("Integer {sign}{magnitude} is not a long")));
+    };
+    Ok(Value::Long(value))
 }
 
 struct Serializer;
@@ -115,7 +117,7 @@ impl ser::Serializer for Serializer {
         Ok(Value::String(v.into()))
     }
     fn serialize_bytes(self, v: &[u8]) -> Result<Value, Error> {
-        Ok(Value::Vector(v.iter().map(|&b| Value::Number(b.into())).collect()))
+        Ok(Value::Vector(v.iter().map(|&b| Value::Long(b.into())).collect()))
     }
     fn serialize_none(self) -> Result<Value, Error> {
         Ok(Value::Nil)
@@ -347,6 +349,8 @@ impl<'de> de::Deserializer<'de> for Deserializer {
                 }
             }
             Value::Number(x) => visitor.visit_f64(x),
+            Value::Long(x) if x >= 0 => visitor.visit_u64(x as u64),
+            Value::Long(x) => visitor.visit_i64(x),
             Value::String(s) => visitor.visit_string(s),
             Value::Keyword(Keyword { namespace, name: n }) | Value::Symbol(Symbol { namespace, name: n }) => {
                 visitor.visit_string(name(namespace, n))
@@ -369,6 +373,7 @@ impl<'de> de::Deserializer<'de> for Deserializer {
     fn deserialize_f64<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value, Error> {
         match self.0 {
             Value::Number(x) => visitor.visit_f64(x),
+            Value::Long(x) => visitor.visit_f64(x as f64),
             value => Deserializer(value).deserialize_any(visitor),
         }
     }

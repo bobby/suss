@@ -123,7 +123,7 @@ pub(super) fn attach_metered(
         ("end-line", end_line),
         ("end-column", end_column),
     ] {
-        entries.extend(pair(&form.span, key, Kind::Number(value as f64)));
+        entries.extend(pair(&form.span, key, Kind::Long(value as i64)));
     }
     if let Some(file) = file {
         entries.extend(pair(
@@ -158,8 +158,8 @@ fn list_prefixes_inner(
                 if let Some(&(line, column)) = carets.get(&(prefix.span.start, prefix.span.end)) {
                     charge(meter, 4, prefix.span.clone())?;
                     let mut entries = vec![];
-                    entries.extend(pair(&prefix.span, "line", Kind::Number(line as f64)));
-                    entries.extend(pair(&prefix.span, "column", Kind::Number(column as f64)));
+                    entries.extend(pair(&prefix.span, "line", Kind::Long(line as i64)));
+                    entries.extend(pair(&prefix.span, "column", Kind::Long(column as i64)));
                     match &prefix.kind {
                         Kind::Map(items) => {
                             for item in items {

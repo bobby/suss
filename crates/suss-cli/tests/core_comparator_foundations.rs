@@ -2,7 +2,6 @@
 use suss_compile::portable_session::sentinel_tag;
 use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
 use suss_compile::portable::resolve::Phase;
-use wasmtime::Val;
 
 fn boolean(session: &mut Session, source: &str, expected: bool) {
     let value = session.eval(source).unwrap();
@@ -17,16 +16,21 @@ fn boolean(session: &mut Session, source: &str, expected: bool) {
 fn number(session: &mut Session, value: &SessionValue, expected: f64) {
     session.collect().unwrap();
     let actual = session
-        .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("number layout")
-            };
-            Ok(*bits)
+        .inspect(value, |store, value| {
+            suss_compile::portable_session::runtime_number(store, &value)
         })
-        .unwrap();
-    assert_eq!(actual, expected.to_bits());
+        .unwrap()
+        .expect("number");
+    // Integral expectations are Clojure longs, others doubles.
+    let integral = expected.is_finite()
+        && expected.fract() == 0.0
+        && !(expected == 0.0 && expected.is_sign_negative());
+    let expected = if integral {
+        suss_compile::portable_session::RuntimeNumber::Long(expected as i64)
+    } else {
+        suss_compile::portable_session::RuntimeNumber::Double(expected)
+    };
+    assert_eq!(actual, expected);
 }
 
 fn expect_language_error(
@@ -473,20 +477,35 @@ fn primitive_constructor_values_are_canonical_callable_and_rooted_in_both_phases
             "(identical? (retained-type \"x\") scalar-string-constructor)",
             true,
         );
+        // JS Number() has no Clojure counterpart: like Clojure's double, it
+        // always gives a double (ToNumber), even for a long argument.
+        use suss_compile::portable_session::RuntimeNumber::{Double, Long};
         for (source, expected) in [
-            ("(scalar-number-constructor)", 0.0),
-            ("(scalar-number-constructor nil)", 0.0),
-            ("(scalar-number-constructor true)", 1.0),
-            ("(scalar-number-constructor \"16\")", 16.0),
-            ("(scalar-number-constructor -0.0)", -0.0),
+            ("(scalar-number-constructor)", Double(0.0)),
+            ("(scalar-number-constructor nil)", Double(0.0)),
+            ("(scalar-number-constructor true)", Double(1.0)),
+            ("(scalar-number-constructor \"16\")", Double(16.0)),
+            ("(scalar-number-constructor -0.0)", Double(-0.0)),
             (
                 "(scalar-number-constructor (do (set! primitive-constructor-trace 1) 7) (do (set! primitive-constructor-trace (+ (* primitive-constructor-trace 10) 2)) 9))",
-                7.0,
+                Double(7.0),
             ),
-            ("primitive-constructor-trace", 12.0),
+            ("primitive-constructor-trace", Long(12)),
         ] {
             let value = session.eval(source).unwrap();
-            number(&mut session, &value, expected);
+            session.collect().unwrap();
+            let actual = session
+                .inspect(&value, |store, value| {
+                    suss_compile::portable_session::runtime_number(store, &value)
+                })
+                .unwrap()
+                .expect("number");
+            match (actual, expected) {
+                (Double(actual), Double(expected)) => {
+                    assert_eq!(actual.to_bits(), expected.to_bits(), "{source}")
+                }
+                (actual, expected) => assert_eq!(actual, expected, "{source}"),
+            }
         }
         for (source, expected) in [
             ("(scalar-string-constructor)", ""),
@@ -496,7 +515,9 @@ fn primitive_constructor_values_are_canonical_callable_and_rooted_in_both_phases
                 "undefined",
             ),
             ("(scalar-string-constructor false)", "false"),
-            ("(scalar-string-constructor -0.0)", "0"),
+            // Numbers convert as Clojure str prints them.
+            ("(scalar-string-constructor -0.0)", "-0.0"),
+            ("(scalar-string-constructor 1.0)", "1.0"),
             (
                 "(scalar-string-constructor \"\\ud800\\udc00\")",
                 "\u{10000}",

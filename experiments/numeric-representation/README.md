@@ -177,3 +177,7 @@ collector touches all of its heap, so peak RSS grows by the same amount. The
 pause for each collection still grows with the live heap: the slowest chunk is
 about 17 ms at 10⁶ live objects and 64–72 ms at 4·10⁶, whatever the initial
 size.
+
+Suss sets a 64 MiB initial heap (`SUSS_GC_INITIAL_MIB` overrides it), chosen
+from REPL measurements recorded in
+[ADR-0003](../../docs/adr/0003-clojure-numeric-tower.md#collector).

@@ -19,9 +19,8 @@ fn boolean(code: &mut Vec<Instruction<'static>>) {
 }
 fn primitive_condition(code: &mut Vec<Instruction<'static>>, local: u32) {
     use Instruction::*;
+    code.extend(longs::number_test(local));
     code.extend([
-        LocalGet(local),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
         LocalGet(local),
         RefTestNonNull(HeapType::Concrete(STRING)),
         I32Or,
@@ -127,7 +126,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         Else,
                         sentinel_value(UNDEFINED),
                         End,
-                        Call(b.names["coerce-string"]),
+                        Call(b.names["property-key"]),
                         Call(b.names["native-object-own-slot"]),
                         I32Const(0),
                         I32GeS,
@@ -148,7 +147,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                         Else,
                         sentinel_value(UNDEFINED),
                         End,
-                        Call(b.names["coerce-string"]),
+                        Call(b.names["property-key"]),
                         Call(b.names["native-object-own-descriptor"]),
                         LocalSet(3),
                         LocalGet(3),

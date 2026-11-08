@@ -9,7 +9,11 @@ fn assert_primary(label: &str, actual: &Form) {
             serde_json::Value::Null => assert_eq!(actual.kind, Kind::Nil),
             serde_json::Value::Bool(value) => assert_eq!(actual.kind, Kind::Bool(*value)),
             serde_json::Value::Number(value) => {
-                assert_eq!(actual.kind, Kind::Number(value.as_f64().unwrap()))
+                let expected = match value.as_i64() {
+                    Some(long) => Kind::Long(long),
+                    None => Kind::Number(value.as_f64().unwrap()),
+                };
+                assert_eq!(actual.kind, expected)
             }
             serde_json::Value::String(value) => {
                 assert_eq!(actual.kind, Kind::String(value.encode_utf16().collect()))
@@ -91,7 +95,7 @@ fn compiled_source_macro_form_retains_reader_positions_on_nested_syntax() {
                 assert_eq!(fields.len(), if index == 1 { 5 } else { 6 });
                 for (field, value) in fields[..4].iter().enumerate() {
                     assert!(
-                        matches!(&value.kind, Kind::Number(n) if *n > 0.0 && n.fract() == 0.0),
+                        matches!(&value.kind, Kind::Long(n) if *n > 0),
                         "actual reader position missing at row {index}, field {field}: {value:?}"
                     );
                 }
@@ -123,15 +127,15 @@ fn compiled_source_macro_form_preserves_explicit_location_overrides() {
             panic!("metadata rows")
         };
         for (row, expected) in [
-            (0, &[50.0, 60.0, 70.0, 80.0][..]),
-            (2, &[11.0, 12.0][..]),
-            (3, &[21.0, 22.0][..]),
+            (0, &[50, 60, 70, 80][..]),
+            (2, &[11, 12][..]),
+            (3, &[21, 22][..]),
         ] {
             let Kind::Vector(fields) = &rows[row].kind else {
                 panic!("metadata fields")
             };
             for (field, expected) in fields.iter().zip(expected) {
-                assert_eq!(field.kind, Kind::Number(*expected));
+                assert_eq!(field.kind, Kind::Long(*expected));
             }
             assert_eq!(fields[5].kind, Kind::Bool(true));
         }
@@ -345,11 +349,11 @@ fn compiled_source_macro_metadata_is_data_and_never_replays_assignment_syntax() 
         assert!(
             matches!(&items[1].kind, Kind::Symbol(symbol) if symbol.name == "metadata-effects")
         );
-        assert_eq!(items[2].kind, Kind::Number(99.0));
+        assert_eq!(items[2].kind, Kind::Long(99));
         let effects = session.eval("metadata-effects").unwrap();
         assert_eq!(
             bridge.read(&mut session, &effects, 0..1).unwrap().kind,
-            Kind::Number(0.0)
+            Kind::Long(0)
         );
     }
 }
@@ -370,7 +374,7 @@ fn large_source_metadata_executes_and_exhausted_budget_preserves_bindings_and_re
         );
         let value = session.eval_with_macros(&source, &mut macros).unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
-        assert_eq!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(42.0));
+        assert_eq!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Long(42));
         // Keep the large source valid; a smaller computation allowance, rather
         // than a text-size ceiling, must reject the next attempted definition.
         macros.set_operation_fuel(100_000);
@@ -382,11 +386,11 @@ fn large_source_metadata_executes_and_exhausted_budget_preserves_bindings_and_re
         assert!(error.message.to_lowercase().contains("fuel"), "{error}");
         assert!(failing_source.get(error.span.clone()).is_some());
         session.collect().unwrap();
-        for (name, expected) in [("metadata-keep", 42.0), ("metadata-effects", 1.0)] {
+        for (name, expected) in [("metadata-keep", 42), ("metadata-effects", 1)] {
             let value = session.eval(name).unwrap();
             assert_eq!(
                 bridge.read(&mut session, &value, 0..1).unwrap().kind,
-                Kind::Number(expected)
+                Kind::Long(expected)
             );
         }
         let value = session
@@ -394,7 +398,7 @@ fn large_source_metadata_executes_and_exhausted_budget_preserves_bindings_and_re
             .unwrap();
         assert_eq!(
             bridge.read(&mut session, &value, 0..1).unwrap().kind,
-            Kind::Number(42.0)
+            Kind::Long(42)
         );
     }
 }

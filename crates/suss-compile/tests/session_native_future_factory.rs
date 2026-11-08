@@ -9,11 +9,19 @@ use suss_compile::portable_session::{
 use suss_compile::runtime_abi;
 use suss_reader::Symbol;
 
-fn number(session: &mut Session, value: &SessionValue) -> f64 {
+/// A long, as Clojure's integer values are.
+fn long_value(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<i64> {
+    match suss_compile::portable_session::runtime_number(store, value)? {
+        Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => Ok(value),
+        other => Err(wasmtime::Error::msg(format!("expected a long, observed {other:?}"))),
+    }
+}
+
+
+fn number(session: &mut Session, value: &SessionValue) -> i64 {
     session
         .inspect(value, |mut store, value| {
-            let value = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            Ok(value.field(&mut store, 0)?.unwrap_f64())
+            long_value(&mut store, &value)
         })
         .unwrap()
 }
@@ -36,7 +44,7 @@ fn source_factory_queues_owned_arguments_and_completion_never_resumes_inline() {
     assert_eq!(requests.len(), 1);
     let request = requests.pop().unwrap();
     assert!(!request.cancelled && !request.is_cancelled());
-    assert_eq!(number(&mut session, &request.args[0]), 7.0);
+    assert_eq!(number(&mut session, &request.args[0]), 7);
     assert_eq!(
         session.future_status(&request.future).unwrap(),
         Some(FutureStatus::Pending)
@@ -58,14 +66,14 @@ fn source_factory_queues_owned_arguments_and_completion_never_resumes_inline() {
         "native publication disarms cancellation before storage mutation"
     );
     let trace = session.eval("trace").unwrap();
-    assert_eq!(number(&mut session, &trace), 0.0);
+    assert_eq!(number(&mut session, &trace), 0);
     assert!(!session.reject_future(&request.future, &payload).unwrap());
     assert!(session.run_async_turn().unwrap());
     let task = session.eval("task").unwrap();
     let Some(FutureState::Ready(result)) = session.future_state(&task).unwrap() else {
         panic!("task did not resolve")
     };
-    assert_eq!(number(&mut session, &result), 42.0);
+    assert_eq!(number(&mut session, &result), 42);
     assert_eq!(session.stats().pending_host_requests, 0);
     assert!(!session.run_async_turn().unwrap());
 }
@@ -105,7 +113,7 @@ fn reset_reinstalls_profile_same_controller_with_fresh_roots_and_rejects_late_re
     assert_ne!(old.id.session_identity, new.id.session_identity);
     assert!(new.id.generation > old.id.generation);
     assert!(!new.is_cancelled());
-    assert_eq!(number(&mut session, &new.args[0]), 12.0);
+    assert_eq!(number(&mut session, &new.args[0]), 12);
     assert!(session.resolve_future(&new.future, &payload).unwrap());
     session.reset().unwrap();
     assert_eq!(calls.load(Ordering::SeqCst), 1);
@@ -200,7 +208,7 @@ fn second_factory_cannot_replace_source_binding_in_its_native_namespace() {
             .is_err()
     );
     let existing = session.eval("existing").unwrap();
-    assert_eq!(number(&mut session, &existing), 37.0);
+    assert_eq!(number(&mut session, &existing), 37);
     session
         .install_native_future_factory(Symbol::namespaced("native.factory", "other"), 0)
         .unwrap();
@@ -236,13 +244,8 @@ fn genuine_native_exception_constructor_ignores_redefined_source_cells() {
                 .map(|v| v.unwrap_i32() as u16)
                 .collect::<Vec<_>>();
             assert_eq!(String::from_utf16(&units).unwrap(), "native failure");
-            let data = fields
-                .get(&mut store, 1)?
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap();
-            assert_eq!(data.field(&mut store, 0)?.unwrap_f64(), 37.0);
+            let data = fields.get(&mut store, 1)?;
+            assert_eq!(long_value(&mut store, &data)?, 37);
             let cause = fields.get(&mut store, 2)?;
             assert_eq!(
                 sentinel_tag(&mut store, &cause)?,
@@ -252,7 +255,7 @@ fn genuine_native_exception_constructor_ignores_redefined_source_cells() {
         })
         .unwrap();
     let intercepted = session.eval("intercepted").unwrap();
-    assert_eq!(number(&mut session, &intercepted), 0.0);
+    assert_eq!(number(&mut session, &intercepted), 0);
     let mut other = Session::new().unwrap();
     let foreign = other.eval("nil").unwrap();
     assert!(matches!(
@@ -296,7 +299,7 @@ fn frontend_host_cancellation_waits_for_source_retirement_then_consumes_hook_onc
     );
     assert_eq!(session.async_task_counts().unwrap(), (0, 0, 0));
     let trace = session.eval("trace").unwrap();
-    assert_eq!(number(&mut session, &trace), 1.0);
+    assert_eq!(number(&mut session, &trace), 1);
     session.request_cancel_pending_host_requests().unwrap();
     assert!(request.is_cancelled());
     assert_eq!(calls.load(Ordering::SeqCst), 1);

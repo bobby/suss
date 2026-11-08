@@ -35,6 +35,7 @@ fn raw(value: Observation) -> Value {
         Observation::Nil => json!({"tag":"nil"}),
         Observation::Bool(value) => json!({"tag":"bool", "value":value}),
         Observation::Number(bits) => json!({"tag":"f64", "bits":format!("{bits:016x}")}),
+        Observation::Long(value) => json!({"tag":"long", "value":value.to_string()}),
         Observation::String(units) => string(units),
         Observation::Keyword(namespace, name) => json!({
             "tag":"keyword",
@@ -63,6 +64,30 @@ fn raw(value: Observation) -> Value {
             "tag":"exception-info",
             "message":raw(*message), "data":raw(*data), "cause":raw(*cause)
         }),
+    }
+}
+
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_value(expected: &Value) -> Value {
+    match expected {
+        Value::Object(fields) if fields.get("tag").and_then(Value::as_str) == Some("f64") => {
+            let bits = u64::from_str_radix(fields["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+                json!({"tag":"long", "value":(value as i64).to_string()})
+            } else {
+                expected.clone()
+            }
+        }
+        Value::Object(fields) => Value::Object(
+            fields
+                .iter()
+                .map(|(key, value)| (key.clone(), clojure_value(value)))
+                .collect(),
+        ),
+        Value::Array(items) => Value::Array(items.iter().map(clojure_value).collect()),
+        other => other.clone(),
     }
 }
 
@@ -161,7 +186,7 @@ fn public_reduce_kv_fallback_matches_five_pinned_cases_in_both_phases_after_gc()
             decoder.refill(65536);
             assert_eq!(
                 raw(decoder.decode_session(&mut session, &result).unwrap()),
-                expected["value"],
+                clojure_value(&expected["value"]),
                 "{phase}/{id}: raw ABI value including returned callback trace"
             );
         }

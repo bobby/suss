@@ -1,19 +1,71 @@
 use suss_cli::portable_session::{Session, SessionError, SessionValue};
-use wasmtime::Val;
 
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
+/// Whether `actual` matches a pinned `f64` observation. The ClojureScript
+/// corpus cannot distinguish longs: an integral observation is a Clojure long,
+/// or an integral double when the source has a double operand.
+fn matches_pinned(actual: Number, expected: &serde_json::Value, source: &str) -> bool {
+    let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+    match actual {
+        Number::Long(_) => actual == num(f64::from_bits(bits)),
+        Number::Double(actual) => {
+            actual == bits
+                && (num(f64::from_bits(bits)) == Number::Double(bits)
+                    || source.contains("##")
+                    || source.as_bytes().windows(3).any(|w| {
+                        w[0].is_ascii_digit()
+                            && (w[1] == b'.' || w[1] == b'e')
+                            && (w[2].is_ascii_digit() || w[2] == b'-')
+                    }))
+        }
+    }
+}
+/// The pinned observation when `actual` matches it, otherwise a distinct value.
+fn number_observation(actual: Number, expected: &serde_json::Value, source: &str) -> serde_json::Value {
+    if matches_pinned(actual, expected, source) {
+        expected.clone()
+    } else {
+        serde_json::json!({ "tag": "number", "actual": format!("{actual:?}") })
+    }
+}
+
+fn number(session: &mut Session, value: &SessionValue) -> Number {
     session
         .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Expected exact Number layout");
-            };
-            Ok(*bits)
+            exact_number(&mut store, &value)
         })
         .unwrap()
 }
-fn eval_number(session: &mut Session, source: &str) -> u64 {
+fn eval_number(session: &mut Session, source: &str) -> Number {
     let value = session.eval(source).unwrap();
     number(session, &value)
 }
@@ -74,16 +126,16 @@ fn persistent_session_atoms_and_old_contents_remain_rooted_across_fragments_and_
     }
     session.collect().unwrap();
     let old_result = session.invoke(&old, &[]).unwrap();
-    assert_eq!(number(&mut session, &old_result), 17f64.to_bits());
+    assert_eq!(number(&mut session, &old_result), num(17.0));
     let contents = session.invoke(&read_old, &[]).unwrap();
     let result = session.invoke(&contents, &[]).unwrap();
-    assert_eq!(number(&mut session, &result), 17f64.to_bits());
+    assert_eq!(number(&mut session, &result), num(17.0));
     session.eval("(mutate-old (fn [] 31))").unwrap();
     session.collect().unwrap();
-    assert_eq!(eval_number(&mut session, "((read-old))"), 31f64.to_bits());
-    assert_eq!(eval_number(&mut session, "(@a)"), 23f64.to_bits());
+    assert_eq!(eval_number(&mut session, "((read-old))"), num(31.0));
+    assert_eq!(eval_number(&mut session, "(@a)"), num(23.0));
     let result = session.invoke(&old, &[]).unwrap();
-    assert_eq!(number(&mut session, &result), 17f64.to_bits());
+    assert_eq!(number(&mut session, &result), num(17.0));
 }
 
 #[test]
@@ -95,29 +147,29 @@ fn persistent_session_atom_operations_preserve_order_and_errors_before_mutation(
             &mut session,
             "(swap! (do (set! trace (+ (* trace 10) 1)) a) (do (set! trace (+ (* trace 10) 2)) (fn [v x y] (+ v x y))) (do (set! trace (+ (* trace 10) 3)) 2) (do (set! trace (+ (* trace 10) 4)) 3))"
         ),
-        22f64.to_bits()
+        num(22.0)
     );
-    assert_eq!(eval_number(&mut session, "trace"), 1234f64.to_bits());
+    assert_eq!(eval_number(&mut session, "trace"), num(1234.0));
     let Err(SessionError::Language(thrown)) =
         session.eval("(swap! a (fn [x] (do (set! trace 9) (throw 31))))")
     else {
         panic!("Expected callback throw");
     };
-    assert_eq!(number(&mut session, &thrown), 31f64.to_bits());
-    assert_eq!(eval_number(&mut session, "@a"), 22f64.to_bits());
-    assert_eq!(eval_number(&mut session, "trace"), 9f64.to_bits());
+    assert_eq!(number(&mut session, &thrown), num(31.0));
+    assert_eq!(eval_number(&mut session, "@a"), num(22.0));
+    assert_eq!(eval_number(&mut session, "trace"), num(9.0));
     // Validators and watches are implemented (#30); see suss-compile's
     // core_state tests. A rejected value leaves the state unchanged.
     session.eval("(set-validator! a (fn [v] (< v 50)))").unwrap();
     assert_language_error(&mut session, "(reset! a 99)", "Invalid reference state");
-    assert_eq!(eval_number(&mut session, "@a"), 22f64.to_bits());
+    assert_eq!(eval_number(&mut session, "@a"), num(22.0));
     session.eval("(set-validator! a nil)").unwrap();
     assert_language_error(&mut session, "(swap! a (fn [x] x) 1 2 3)", "Wrong arity");
     assert_language_error(&mut session, "(atom 1 2)", "No value supplied for key: 2");
     // Non-atom references go through IReset and ISwap, which nil lacks.
     assert_language_error(&mut session, "(reset! nil 99)", "Invalid nominal operation");
     assert_language_error(&mut session, "(swap! nil (fn [x] x))", "Invalid nominal operation");
-    assert_eq!(eval_number(&mut session, "@a"), 22f64.to_bits());
+    assert_eq!(eval_number(&mut session, "@a"), num(22.0));
 }
 
 #[test]
@@ -130,7 +182,7 @@ fn session_lifecycle_atom_core_is_reprovisioned_on_reset_and_failed_reset_preser
     assert!(matches!(session.reset(), Err(SessionError::Trap(_))));
     assert_eq!(session.stats(), before);
     session.set_operation_fuel(10_000_000);
-    assert_eq!(eval_number(&mut session, "@a"), 17f64.to_bits());
+    assert_eq!(eval_number(&mut session, "@a"), num(17.0));
     session.reset().unwrap();
     assert!(matches!(
         session.invoke(&old, &[]),
@@ -138,7 +190,7 @@ fn session_lifecycle_atom_core_is_reprovisioned_on_reset_and_failed_reset_preser
     ));
     assert_eq!(session.stats().external_value_handles, 0);
     assert_eq!(session.stats().resident_fragments, 1);
-    assert_eq!(eval_number(&mut session, "@(atom 23)"), 23f64.to_bits());
+    assert_eq!(eval_number(&mut session, "@(atom 23)"), num(23.0));
 }
 
 #[test]
@@ -166,7 +218,7 @@ fn persistent_session_atoms_match_independent_pinned_observations() {
                 })
                 .unwrap(),
             "f64" => {
-                serde_json::json!({"tag":"f64", "bits":format!("{:016x}",number(&mut session, &result))})
+                number_observation(number(&mut session, &result), &case["expected"], source)
             }
             tag => panic!("unexpected tag {tag}"),
         };

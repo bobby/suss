@@ -553,6 +553,7 @@ fn run_component_impl(
 
     // Enable component model and GC
     let mut config = Config::new();
+    suss_compile::portable_session::configure_collector(&mut config)?;
     config.wasm_component_model(true);
     config.wasm_component_model_implements(true);
     config.wasm_component_model_async(true);

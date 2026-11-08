@@ -33,9 +33,8 @@ pub(super) fn primitive(code: &mut Vec<Instruction<'static>>, types: Types, loca
     // Canonical boxed numbers and strings cannot run conversion methods.
     // Keep their hot arithmetic paths inline; every other representation still
     // enters the checked ordered adapter, including invalid I31 sentinels.
+    code.extend(longs::number_test(local));
     code.extend([
-        LocalGet(local),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
         If(BlockType::Empty),
         Else,
         LocalGet(local),
@@ -65,7 +64,12 @@ pub(super) fn functions(b: &mut Builder) -> [u32; 3] {
     for ty in [NUMBER, STRING] {
         code.extend([
             LocalGet(0),
-            RefTestNonNull(HeapType::Concrete(ty)),
+            // A long is a number too.
+            if ty == NUMBER {
+                Call(b.names["number-test"])
+            } else {
+                RefTestNonNull(HeapType::Concrete(ty))
+            },
             If(BlockType::Empty),
             I32Const(1),
             Return,

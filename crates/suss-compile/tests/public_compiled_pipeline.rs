@@ -119,15 +119,9 @@ fn public_compiler_defers_runtime_initialization_until_component_instantiation()
         .expect("Runtime language exception");
     let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
     assert_eq!(fields.len(), 1);
-    let payload = fields[0]
-        .unwrap_anyref()
-        .unwrap()
-        .as_struct(&store)
-        .unwrap()
-        .unwrap();
     assert_eq!(
-        payload.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
-        42.0_f64.to_bits()
+        suss_compile::portable_session::runtime_number(&mut store, &fields[0]).unwrap(),
+        Some(suss_compile::portable_session::RuntimeNumber::Long(42))
     );
 }
 

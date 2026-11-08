@@ -416,6 +416,7 @@ impl Interner {
                             Kind::Tagged { .. } => 14,
                             Kind::AutoKeyword(_) => 15,
                             Kind::Exact(_) => 16,
+                            Kind::Long(_) => 17,
                         };
                         append(&mut key, &[tag], charge)?;
                         match &form.kind {
@@ -423,6 +424,7 @@ impl Interner {
                             Kind::Number(v) => {
                                 append(&mut key, &v.to_bits().to_le_bytes(), charge)?
                             }
+                            Kind::Long(v) => append(&mut key, &v.to_le_bytes(), charge)?,
                             Kind::Exact(v) => text(&mut key, &v.text, charge)?,
                             Kind::String(v) => {
                                 size(&mut key, v.len(), charge)?;

@@ -1,6 +1,36 @@
-use suss_cli::portable_session::Session;
+use suss_cli::portable_session::{RuntimeNumber, Session, runtime_number};
 use suss_compile::portable_session::sentinel_tag;
-use wasmtime::Val;
+use wasmtime::{StoreContextMut, Val};
+
+/// The long `value` holds; panics on any other value.
+fn long(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<i64> {
+    match runtime_number(store, value)? {
+        Some(RuntimeNumber::Long(value)) => Ok(value),
+        other => panic!("long result, got {other:?}"),
+    }
+}
+
+/// The observation of a runtime number, distinguishing a long from a double.
+fn number_json(number: RuntimeNumber) -> serde_json::Value {
+    match number {
+        RuntimeNumber::Long(value) => serde_json::json!({"tag":"long", "value":value}),
+        RuntimeNumber::Double(value) => {
+            serde_json::json!({"tag":"f64", "bits":format!("{:016x}", value.to_bits())})
+        }
+    }
+}
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_number(expected: &serde_json::Value) -> serde_json::Value {
+    if expected["tag"] == "f64" {
+        let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+        let value = f64::from_bits(bits);
+        if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+            return serde_json::json!({"tag":"long", "value":value as i64});
+        }
+    }
+    expected.clone()
+}
 
 #[test]
 fn named_properties_match_independently_decoded_primary_observations_after_gc() {
@@ -22,23 +52,22 @@ fn named_properties_match_independently_decoded_primary_observations_after_gc() 
     for case in cases {
         let id = case["id"].as_str().unwrap();
         assert!(ids.insert(id));
-        let source = case["source"].as_str().unwrap();
+        // Clojure throws for a long divided by zero; a double divisor still
+        // gives the NaN marker this case probes.
+        let source = &case["source"].as_str().unwrap().replace("(/ 0 0)", "(/ 0.0 0)");
         let value = session
             .eval(source)
             .unwrap_or_else(|error| panic!("{id}: {source}: {error:?}"));
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "f64" => {
-                let bits = session
-                    .inspect(&value, |mut store, value| {
-                        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-                        let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-                        let [Val::F64(bits)] = fields.as_slice() else {
-                            panic!("Number layout");
-                        };
-                        Ok(*bits)
-                    })
-                    .unwrap();
-                serde_json::json!({"tag":"f64", "bits":format!("{bits:016x}")})
+                number_json(
+                    session
+                        .inspect(&value, |store, value| {
+                            Ok(suss_cli::portable_session::runtime_number(store, &value)?
+                                .expect("Number layout"))
+                        })
+                        .unwrap(),
+                )
             }
             "nil" => {
                 session
@@ -79,7 +108,7 @@ fn named_properties_match_independently_decoded_primary_observations_after_gc() 
             }
             tag => panic!("unsupported control observation {tag}"),
         };
-        assert_eq!(actual, case["expected"], "{id}: {source}");
+        assert_eq!(actual, clojure_number(&case["expected"]), "{id}: {source}");
         session.collect().unwrap();
     }
 }
@@ -152,17 +181,7 @@ fn malformed_or_unsupported_named_forms_preserve_session_and_recover() {
         session.collect().unwrap();
         session
             .inspect(&value, |mut store, value| {
-                let fields = value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_struct(&store)?
-                    .unwrap()
-                    .fields(&mut store)?
-                    .collect::<Vec<_>>();
-                let [Val::F64(bits)] = fields.as_slice() else {
-                    panic!("Number layout")
-                };
-                assert_eq!(*bits, 0.0_f64.to_bits());
+                assert_eq!(long(&mut store, &value)?, 0);
                 Ok(())
             })
             .unwrap();
@@ -184,17 +203,7 @@ fn malformed_or_unsupported_named_forms_preserve_session_and_recover() {
     session.collect().unwrap();
     session
         .inspect(&result, |mut store, value| {
-            let fields = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap()
-                .fields(&mut store)?
-                .collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            assert_eq!(*bits, 39.0f64.to_bits());
+            assert_eq!(long(&mut store, &value)?, 39);
             Ok(())
         })
         .unwrap();
@@ -216,15 +225,13 @@ fn named_access_uses_canonical_storage_without_changing_raw_lexical_names() {
         Ok(())
     }).unwrap();
     for (source, expected) in [
-        ("(.-null$ named-review-reserved)", 7.0f64),
-        ("(.-some_field named-review-hyphen)", 9.0f64),
+        ("(.-null$ named-review-reserved)", 7),
+        ("(.-some_field named-review-hyphen)", 9),
     ] {
         let value = session.eval(source).unwrap();
         session.collect().unwrap();
         session.inspect(&value, |mut store, value| {
-            let fields = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap()
-                .fields(&mut store)?.collect::<Vec<_>>();
-            assert!(matches!(fields.as_slice(), [Val::F64(bits)] if *bits == expected.to_bits()), "{source}");
+            assert_eq!(long(&mut store, &value)?, expected, "{source}");
             Ok(())
         }).unwrap();
     }
@@ -237,14 +244,7 @@ fn named_access_uses_canonical_storage_without_changing_raw_lexical_names() {
         .unwrap();
     session
         .inspect(&value, |mut store, value| {
-            let fields = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap()
-                .fields(&mut store)?
-                .collect::<Vec<_>>();
-            assert!(matches!(fields.as_slice(), [Val::F64(bits)] if *bits == 7.0f64.to_bits()));
+            assert_eq!(long(&mut store, &value)?, 7);
             Ok(())
         })
         .unwrap();
@@ -290,14 +290,7 @@ fn constructor_prototype_is_stable_and_callable_attributes_remain_explicit_error
         .unwrap();
     session
         .inspect(&value, |mut store, value| {
-            let fields = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap()
-                .fields(&mut store)?
-                .collect::<Vec<_>>();
-            assert!(matches!(fields.as_slice(), [Val::F64(bits)] if *bits == 23.0f64.to_bits()));
+            assert_eq!(long(&mut store, &value)?, 23);
             Ok(())
         })
         .unwrap();

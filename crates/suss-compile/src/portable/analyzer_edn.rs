@@ -44,7 +44,7 @@ fn sym(namespace: Option<&str>, name: &str) -> Value {
     })
 }
 fn num(n: usize) -> Value {
-    Value::Number(n as f64)
+    Value::Long(n as i64)
 }
 fn global_symbol(global: &Global) -> Value {
     sym(Some(global.namespace()), global.name())
@@ -224,7 +224,8 @@ impl<'o> Projector<'o> {
             && let Some(kind) = match &form.kind {
                 Kind::Nil => Some("nil"),
                 Kind::Bool(_) => Some("bool"),
-                Kind::Number(_) => Some("number"),
+                Kind::Number(_) => Some("double"),
+                Kind::Long(_) => Some("long"),
                 Kind::String(_) => Some("string"),
                 Kind::Keyword(_) => Some("keyword"),
                 _ => None,

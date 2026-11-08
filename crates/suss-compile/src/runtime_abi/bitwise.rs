@@ -11,6 +11,24 @@ pub(super) fn intrinsics(b: &mut Builder) {
         &[ValType::I32],
         &[(1, ValType::F64)],
         &[
+            // ToInt32 of a long is its low 32 bits; no binary64 detour.
+            LocalGet(0),
+            RefTestNonNull(HeapType::I31),
+            If(BlockType::Empty),
+            LocalGet(0),
+            RefCastNonNull(HeapType::I31),
+            I31GetS,
+            Return,
+            End,
+            LocalGet(0),
+            RefTestNonNull(HeapType::Concrete(LONG)),
+            If(BlockType::Empty),
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(LONG)),
+            StructGet { struct_type_index: LONG, field_index: 0 },
+            I32WrapI64,
+            Return,
+            End,
             LocalGet(0),
             Call(convert),
             F64Trunc,
@@ -117,12 +135,12 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         if name == "bit-test" {
             body.extend(super::boolean());
         } else {
-            body.push(if name == "unsigned-bit-shift-right" {
-                F64ConvertI32U
+            // 32-bit results are longs; #336 widens bit operations to 64.
+            body.push(Call(b.names[if name == "unsigned-bit-shift-right" {
+                "long-box-u32"
             } else {
-                F64ConvertI32S
-            });
-            body.push(Call(b.names["number-box"]));
+                "long-box-i32"
+            }]));
         }
         let helper = b.function_with_locals(
             &format!("primitive-{name}"),

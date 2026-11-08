@@ -37,7 +37,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(2),
         LocalGet(5), I64ExtendI32U,
         LocalGet(6), I64ExtendI32U,
-        I64Add, F64ConvertI64U, Call(b.names["number-box"]),
+        I64Add, Call(b.names["long-box"]),
         LocalGet(1),
         LocalGet(6),
         I32Const(1),
@@ -61,8 +61,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(5),
         LocalGet(4),
         I32Add,
-        F64ConvertI32U,
-        Call(b.names["number-box"]),
+        Call(b.names["long-box-u32"]),
     ]);
     let anchored = b.count;
     b.functions.function(INVOKE);

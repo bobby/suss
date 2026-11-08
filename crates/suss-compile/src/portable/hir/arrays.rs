@@ -51,7 +51,7 @@ impl Analyzer<'_> {
                 let value = self.form(argument)?;
                 dimensions.push(self.array_temporary(argument, value));
             }
-            let value = if let Kind::Number(size) = args[1].kind {
+            let value = if let Some(size) = literal_size(&args[1].kind) {
                 if !size.is_finite() || size > 1_000_000.0 {
                     return Err(fail(
                         args[1].span.clone(),
@@ -63,7 +63,7 @@ impl Analyzer<'_> {
                     span: args[1].span.clone(),
                     metadata: vec![],
                     ty: Type::Number,
-                    kind: std::sync::Arc::new(Expression::Literal(Literal::Number(size.ceil().max(0.0)))),
+                    kind: std::sync::Arc::new(Expression::Literal(Literal::Long(size.ceil().max(0.0) as i64))),
                 }
             } else {
                 self.form(&args[1])?
@@ -90,7 +90,7 @@ impl Analyzer<'_> {
         }
         let mut arguments = Vec::new();
         if operation == ArrayOperation::Make && args.len() == 1 {
-            if let Kind::Number(size) = args[0].kind {
+            if let Some(size) = literal_size(&args[0].kind) {
                 if !size.is_finite() || size > 1_000_000.0 {
                     return Err(fail(
                         args[0].span.clone(),
@@ -103,7 +103,7 @@ impl Analyzer<'_> {
                     span: args[0].span.clone(),
                     metadata: vec![],
                     ty: Type::Number,
-                    kind: std::sync::Arc::new(Expression::Literal(Literal::Number(size.ceil().max(0.0)))),
+                    kind: std::sync::Arc::new(Expression::Literal(Literal::Long(size.ceil().max(0.0) as i64))),
                 });
             }
         }
@@ -125,5 +125,14 @@ impl Analyzer<'_> {
             metadata: vec![],
             value,
         }
+    }
+}
+
+/// A literal array size, long or double.
+fn literal_size(kind: &Kind) -> Option<f64> {
+    match kind {
+        Kind::Long(size) => Some(*size as f64),
+        Kind::Number(size) => Some(*size),
+        _ => None,
     }
 }

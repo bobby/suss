@@ -51,7 +51,7 @@ impl Analyzer<'_> {
         let full = self.literal_form(form, Literal::String(full.encode_utf16().collect()));
         let hash = self.literal_form(
             form,
-            Literal::Number(identifier_hash(namespace, name, keyword) as f64),
+            Literal::Long(identifier_hash(namespace, name, keyword) as i64),
         );
         let mut arguments = vec![constructor, ns, short, full, hash];
         if !keyword {
@@ -118,7 +118,8 @@ impl Analyzer<'_> {
             Kind::Nil => Ok(self.literal_form(form, Literal::Nil)),
             Kind::Bool(value) => Ok(self.literal_form(form, Literal::Bool(*value))),
             Kind::Number(value) => Ok(self.literal_form(form, Literal::Number(*value))),
-            // Quoted data can't hold it either until #335.
+            Kind::Long(value) => Ok(self.literal_form(form, Literal::Long(*value))),
+            // Quoted data can't hold it either until #338.
             Kind::Exact(number) => self.exact_literal(form, number),
             Kind::String(value) => Ok(self.literal_form(form, Literal::String(value.clone()))),
             Kind::Vector(items) => {
@@ -438,6 +439,7 @@ fn reader_key_equal_inner(
         (Kind::Nil, Kind::Nil) => true,
         (Kind::Bool(a), Kind::Bool(b)) => a == b,
         (Kind::Number(a), Kind::Number(b)) => a == b,
+        (Kind::Long(a), Kind::Long(b)) => a == b,
         (Kind::Exact(a), Kind::Exact(b)) => a == b,
         (Kind::String(a), Kind::String(b)) => a == b,
         (Kind::Symbol(a), Kind::Symbol(b)) => a == b,

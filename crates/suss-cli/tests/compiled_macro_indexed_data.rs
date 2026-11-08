@@ -4,21 +4,15 @@ use suss_cli::{
     portable_session::{Session, SessionError},
 };
 use suss_reader::forms::Kind;
-use wasmtime::Val;
-fn number(runtime: &mut Session, value: &suss_cli::portable_session::SessionValue) -> f64 {
+fn number(runtime: &mut Session, value: &suss_cli::portable_session::SessionValue) -> i64 {
     runtime
-        .inspect(value, |mut store, value| {
-            let data = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap()
-                .fields(&mut store)?
-                .collect::<Vec<_>>();
-            let [Val::F64(bits)] = data.as_slice() else {
+        .inspect(value, |store, value| {
+            let Some(suss_compile::portable_session::RuntimeNumber::Long(long)) =
+                suss_compile::portable_session::runtime_number(store, &value)?
+            else {
                 panic!("Number")
             };
-            Ok(f64::from_bits(*bits))
+            Ok(long)
         })
         .unwrap()
 }
@@ -30,7 +24,7 @@ fn compiled_macro_indexed_data_returns_actual_variadic_arguments_as_code() {
     let value = runtime
         .eval_with_macros("(call + 20 22)", &mut macros)
         .unwrap();
-    assert_eq!(number(&mut runtime, &value), 42.0);
+    assert_eq!(number(&mut runtime, &value), 42);
 }
 #[test]
 fn compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc() {
@@ -47,7 +41,7 @@ fn compiled_macro_indexed_data_decodes_array_string_and_cons_tails_after_gc() {
         assert_eq!(form.span, 101..110);
         let mut runtime = Session::new_repl().unwrap();
         let value = runtime.eval_forms(vec![form], 100..120).unwrap();
-        assert_eq!(number(&mut runtime, &value), 42.0);
+        assert_eq!(number(&mut runtime, &value), 42);
     }
     let value = macros.eval("(seq \"a😀\")").unwrap();
     let form = bridge.read(&mut macros, &value, 20..30).unwrap();
@@ -116,7 +110,7 @@ fn compiled_macro_indexed_data_rejects_bad_storage_indices_metadata_and_cycles()
     let form = bridge.read(&mut macros, &value, 91..99).unwrap();
     assert_eq!(form.span, 91..99);
     assert!(matches!(&form.kind, Kind::List(items)
-        if items.len() == 1 && items[0].kind == Kind::Number(42.0)));
+        if items.len() == 1 && items[0].kind == Kind::Long(42)));
 }
 #[test]
 fn compiled_macro_indexed_data_finite_sizes_use_fuel_instead_of_element_limits() {

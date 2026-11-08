@@ -74,9 +74,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 callback.instruction(&instruction);
             }
         } else if result == 2 {
-            callback
-                .instruction(&F64ConvertI32U)
-                .instruction(&Call(b.names["number-box"]));
+            callback.instruction(&Call(b.names["long-box-u32"]));
         }
         callback.instruction(&End);
         let index = b.count;

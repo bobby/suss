@@ -33,8 +33,8 @@ fn observe(session: &mut Session, source: &str) -> Observation {
     decoder.decode_session(session, &value).unwrap()
 }
 
-fn number(value: f64) -> Observation {
-    Observation::Number(value.to_bits())
+fn number(value: i64) -> Observation {
+    Observation::Long(value)
 }
 
 #[test]
@@ -56,13 +56,13 @@ fn user_protocols_and_user_types_stay_open() {
         session.eval("(defprotocol Shout (shout [x]))").unwrap();
         session.eval("(extend-type Keyword Shout (shout [_] 1))").unwrap();
         session.eval("(extend-type number Shout (shout [_] 2))").unwrap();
-        assert_eq!(observe(&mut session, "(shout :k)"), number(1.0), "{phase}");
-        assert_eq!(observe(&mut session, "(shout 5)"), number(2.0), "{phase}");
+        assert_eq!(observe(&mut session, "(shout :k)"), number(1), "{phase}");
+        assert_eq!(observe(&mut session, "(shout 5)"), number(2), "{phase}");
         session.eval("(deftype Fixed [] IHash (-hash [_] 42) IEquiv (-equiv [_ other] (instance? Fixed other)))").unwrap();
-        assert_eq!(observe(&mut session, "(hash (Fixed.))"), number(42.0), "{phase}");
+        assert_eq!(observe(&mut session, "(hash (Fixed.))"), number(42), "{phase}");
         assert_eq!(observe(&mut session, "(= (Fixed.) (Fixed.))"), Observation::Bool(true), "{phase}");
         session.eval("(deftype Later [])").unwrap();
         session.eval("(extend-type Later IHash (-hash [_] 43))").unwrap();
-        assert_eq!(observe(&mut session, "(hash (Later.))"), number(43.0), "{phase}");
+        assert_eq!(observe(&mut session, "(hash (Later.))"), number(43), "{phase}");
     }
 }

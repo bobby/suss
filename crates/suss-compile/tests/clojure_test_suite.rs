@@ -237,6 +237,7 @@ fn tagged(value: &Observation) -> Value {
         Observation::Nil => json!({"tag": "nil"}),
         Observation::Bool(value) => json!({"tag": "bool", "value": value}),
         Observation::Number(bits) => json!({"tag": "f64", "bits": format!("{bits:016x}")}),
+        Observation::Long(value) => json!({"tag":"long", "value":value.to_string()}),
         Observation::String(value) => units(value),
         Observation::Keyword(namespace, name) | Observation::Symbol(namespace, name) => {
             let tag = if matches!(value, Observation::Keyword(..)) {
@@ -295,7 +296,7 @@ fn items(value: Observation) -> Option<Vec<Observation>> {
 
 fn count(value: &Observation) -> Option<usize> {
     match value {
-        Observation::Number(bits) => Some(f64::from_bits(*bits) as usize),
+        Observation::Long(value) => usize::try_from(*value).ok(),
         _ => None,
     }
 }
@@ -693,7 +694,7 @@ fn observation_capture_and_host_decoding_do_not_force_pending_guest_values() {
     assert_eq!(captured[0]["operands"][0]["tag"], "opaque");
     assert_eq!(
         harness.query("capture-effects"),
-        Observation::Number(0.0_f64.to_bits())
+        Observation::Long(0)
     );
 }
 
@@ -732,11 +733,11 @@ fn observation_snapshots_preserve_alias_values_before_later_mutation() {
     assert_eq!(captured.len(), 2);
     let first = &captured[0]["operands"][1]["items"];
     let second = &captured[1]["operands"][1]["items"];
-    assert_eq!(first[0]["bits"], "3ff0000000000000");
-    assert_eq!(second[0]["bits"], "bff0000000000000");
+    assert_eq!(first[0], json!({"tag": "long", "value": "1"}));
+    assert_eq!(second[0], json!({"tag": "long", "value": "-1"}));
     assert_eq!(
         harness.query("(first alias-vector)"),
-        Observation::Number((-1.0_f64).to_bits()),
+        Observation::Long(-1),
         "Snapshotting must preserve source aliasing"
     );
 }
@@ -771,7 +772,7 @@ fn observation_tokens_do_not_drift_after_capture_then_fuel_trap() {
         .unwrap();
     let captured = harness.assertions(0, "recovered");
     assert_eq!(
-        captured[0]["operands"][1]["items"][0]["bits"], "401c000000000000",
+        captured[0]["operands"][1]["items"][0], json!({"tag": "long", "value": "7"}),
         "An orphan capture must not replace the next assertion's payload"
     );
 }

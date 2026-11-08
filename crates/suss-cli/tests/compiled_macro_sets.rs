@@ -81,7 +81,7 @@ fn compiled_macro_sets_transport_canonical_small_and_hamt_values_after_gc() {
             session.collect().unwrap();
             let output = bridge.read(&mut session, &value, 10..20).unwrap();
             let Kind::Set(items) = output.kind.clone() else { panic!("canonical set syntax") };
-            let mut actual = items.iter().map(|item| { let Kind::Number(n) = item.kind else { panic!("number") }; n as usize }).collect::<Vec<_>>();
+            let mut actual = items.iter().map(|item| { let Kind::Long(n) = item.kind else { panic!("number") }; n as usize }).collect::<Vec<_>>();
             actual.sort_unstable();
             assert_eq!(actual, (0..size).collect::<Vec<_>>());
             assert_eq!(session.stats().resident_fragments, before.resident_fragments);
@@ -112,7 +112,7 @@ fn compiled_macro_key_sequences_ignore_values_and_keep_their_own_metadata() {
             let output = bridge.read(&mut session, &value, 1..2).unwrap();
             assert_eq!(output.metadata.len(), 1);
             let Kind::List(items) = output.kind.clone() else { panic!("actual key sequence") };
-            let mut keys = items.iter().map(|item| { let Kind::Number(n) = item.kind else { panic!("key") }; n as usize }).collect::<Vec<_>>();
+            let mut keys = items.iter().map(|item| { let Kind::Long(n) = item.kind else { panic!("key") }; n as usize }).collect::<Vec<_>>();
             keys.sort_unstable(); assert_eq!(keys, (0..size).collect::<Vec<_>>());
         }
     }

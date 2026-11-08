@@ -1,23 +1,18 @@
 //! Original canonical full-width integer transfer through exact u32 word pairs.
 use crate::runtime_abi;
-use wasm_encoder::{Function, HeapType, Instruction};
+use wasm_encoder::{Function, Instruction};
 fn emit(body: &mut Function, items: &[Instruction<'_>]) {
     for item in items {
         body.instruction(item);
     }
 }
-fn box_number(body: &mut Function) {
-    body.instruction(&Instruction::Call(1));
+/// Operation codes and small schema operands are i31 longs.
+fn small_long(body: &mut Function, value: i32) {
+    emit(body, &[Instruction::I32Const(value), Instruction::RefI31]);
 }
-fn schema_head(body: &mut Function, root: u32, operation: f64) {
-    emit(
-        body,
-        &[
-            Instruction::GlobalGet(root),
-            Instruction::F64Const(operation.into()),
-        ],
-    );
-    box_number(body);
+fn schema_head(body: &mut Function, root: u32, operation: i32) {
+    body.instruction(&Instruction::GlobalGet(root));
+    small_long(body, operation);
 }
 fn schema_tail(body: &mut Function) {
     emit(
@@ -31,52 +26,36 @@ fn schema_tail(body: &mut Function) {
         ],
     );
 }
-pub(super) fn lift(body: &mut Function, signed: bool, parameter: u32, root: u32) {
+/// `wide` is an i64 local for boxing each unsigned word as a long.
+pub(super) fn lift(body: &mut Function, signed: bool, parameter: u32, root: u32, wide: u32) {
     use Instruction::*;
-    schema_head(body, root, if signed { 0.0 } else { 1.0 });
-    emit(
-        body,
-        &[
-            LocalGet(parameter),
-            I64Const(32),
-            I64ShrU,
-            I32WrapI64,
-            F64ConvertI32U,
-        ],
-    );
-    box_number(body);
-    emit(body, &[LocalGet(parameter), I32WrapI64, F64ConvertI32U]);
-    box_number(body);
+    schema_head(body, root, if signed { 0 } else { 1 });
+    emit(body, &[LocalGet(parameter), I64Const(32), I64ShrU]);
+    emit(body, &runtime_abi::long_box_in(wide));
+    emit(body, &[LocalGet(parameter), I64Const(0xffff_ffff), I64And]);
+    emit(body, &runtime_abi::long_box_in(wide));
     schema_tail(body);
 }
-fn word(body: &mut Function, root: u32, pair: u32, operation: f64) {
+/// `scratch` is a value local for reading the word, a long.
+fn word(body: &mut Function, root: u32, pair: u32, operation: i32, scratch: u32) {
     use Instruction::*;
     schema_head(body, root, operation);
-    emit(body, &[LocalGet(pair), F64Const(0.0.into())]);
-    box_number(body);
+    body.instruction(&LocalGet(pair));
+    small_long(body, 0);
     schema_tail(body);
-    emit(
-        body,
-        &[
-            RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
-            StructGet {
-                struct_type_index: runtime_abi::NUMBER,
-                field_index: 0,
-            },
-            I32TruncF64U,
-            I64ExtendI32U,
-        ],
-    );
+    emit(body, &[LocalSet(scratch)]);
+    emit(body, &runtime_abi::number_to_f64(scratch));
+    emit(body, &[I32TruncF64U, I64ExtendI32U]);
 }
-pub(super) fn lower(body: &mut Function, signed: bool, value: u32, pair: u32, root: u32) {
+pub(super) fn lower(body: &mut Function, signed: bool, value: u32, pair: u32, root: u32, scratch: u32) {
     use Instruction::*;
-    schema_head(body, root, if signed { 2.0 } else { 3.0 });
-    emit(body, &[LocalGet(value), F64Const(0.0.into())]);
-    box_number(body);
+    schema_head(body, root, if signed { 2 } else { 3 });
+    body.instruction(&LocalGet(value));
+    small_long(body, 0);
     schema_tail(body);
     body.instruction(&LocalSet(pair));
-    word(body, root, pair, 4.0);
+    word(body, root, pair, 4, scratch);
     emit(body, &[I64Const(32), I64Shl]);
-    word(body, root, pair, 5.0);
+    word(body, root, pair, 5, scratch);
     body.instruction(&I64Or);
 }

@@ -5,8 +5,17 @@ mod portable_decode;
 use portable_decode::{Decoder, Observation};
 use suss_cli::{portable_macros::CompiledMacros, portable_session::Session};
 
+/// The expected number for `value`: integral values are longs, as in Clojure.
 fn number(value: f64) -> Observation {
-    Observation::Number(value.to_bits())
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Observation::Long(value as i64)
+    } else {
+        Observation::Number(value.to_bits())
+    }
 }
 
 fn observe(session: &mut Session, macros: &mut CompiledMacros, source: &str) -> Observation {

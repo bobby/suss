@@ -193,8 +193,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(0),
         RefCastNonNull(HeapType::Concrete(STRING)),
         ArrayLen,
-        F64ConvertI32U,
-        Call(b.names["number-box"]),
+        Call(b.names["long-box-u32"]),
         Return,
         End,
         LocalGet(0),
@@ -203,14 +202,13 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         I32Const(0),
         ArrayGet(ARGS),
         Call(b.names["source-array-sparse-length"]),
-        F64ConvertI32U,
-        Call(b.names["number-box"]),
+        Call(b.names["long-box-u32"]),
     ];
     let length = b.function("source-array-length", &[VALUE], &[VALUE], &body);
     // Numeric indexed access. Other host-property coercions remain a typed boundary.
     body = vec![
         LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        Call(b.names["number-test"]),
         I32Eqz,
         If(BlockType::Empty),
     ];
@@ -218,11 +216,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     body.extend([
         End,
         LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         LocalSet(1),
         LocalGet(1),
         F64Const(0.0.into()),
@@ -252,7 +246,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     );
     let mut property_body = vec![
         LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        Call(b.names["number-test"]),
         I32Eqz,
         If(BlockType::Empty),
     ];
@@ -265,11 +259,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     property_body.extend([
         End,
         LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         LocalSet(1),
         LocalGet(1),
         F64Const(0.0.into()),
@@ -328,7 +318,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         // Canonical numeric index keys have no observable string conversion.
         // Avoid formatting/parsing every internal vector/sequence array read.
         LocalGet(1),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        Call(b.names["number-test"]),
         If(BlockType::Empty),
         LocalGet(1),
         Call(property_index),
@@ -348,7 +338,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         End,
         End,
         LocalGet(1),
-        Call(b.names["coerce-string"]),
+        Call(b.names["property-key"]),
         LocalSet(1),
         LocalGet(1),
         Call(b.names["source-array-length-key?"]),
@@ -388,7 +378,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         // Non-index numbers and effectful object keys still take the ordinary
         // checked string-hint property route exactly once.
         LocalGet(1),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        Call(b.names["number-test"]),
         If(BlockType::Empty),
         LocalGet(1),
         Call(property_index),
@@ -409,7 +399,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         End,
         End,
         LocalGet(1),
-        Call(b.names["coerce-string"]),
+        Call(b.names["property-key"]),
         LocalSet(1),
         LocalGet(1),
         Call(b.names["source-array-length-key?"]),
@@ -504,14 +494,10 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         I32Const(0),
         ArrayGet(ARGS),
         LocalTee(1),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        Call(b.names["number-test"]),
         If(BlockType::Empty),
         LocalGet(1),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         LocalSet(2),
         LocalGet(2),
         F64Const(0.0.into()),
@@ -550,18 +536,14 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     // nonnumeric argument is one element, not a numeric length conversion.
     body = vec![
         LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        Call(b.names["number-test"]),
         I32Eqz,
         If(BlockType::Empty),
         I32Const(1),
         Return,
         End,
         LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         LocalSet(1),
         LocalGet(1),
         F64Const(0.0.into()),
@@ -777,8 +759,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         BrIf(1),
         LocalGet(5),
         LocalGet(7),
-        F64ConvertI32U,
-        Call(b.names["number-box"]),
+        Call(b.names["long-box-u32"]),
         LocalGet(0),
         LocalGet(6),
         I32Const(UNDEFINED),

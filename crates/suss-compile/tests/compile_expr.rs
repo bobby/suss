@@ -36,12 +36,12 @@ fn run_expr_f64(expr: &str) -> f64 {
     }
 }
 
-/// ClojureScript numbers are binary64; an integer result must be integral.
+/// An integer result is a long, as in Clojure.
 fn run_expr_i64(expr: &str) -> i64 {
-    let value = run_expr_f64(expr);
-    assert!(value.fract() == 0.0 && value.abs() <= 9007199254740992.0,
-            "expected an integral number from {expr}, observed {value}");
-    value as i64
+    match observe(expr) {
+        Observation::Long(value) => value,
+        other => panic!("expected a long from {expr}, observed {other:?}"),
+    }
 }
 
 fn run_expr_i32(expr: &str) -> i32 {
@@ -77,8 +77,9 @@ fn test_multiplication() {
 
 #[test]
 fn test_division() {
-    // Division always returns float (Clojure semantics)
-    assert_eq!(run_expr_f64("(/ 21 3)"), 7.0);
+    // Exact division of longs is a long (Clojure semantics).
+    assert_eq!(run_expr_i64("(/ 21 3)"), 7);
+    assert_eq!(run_expr_f64("(/ 21.0 3)"), 7.0);
 }
 
 #[test]
@@ -167,7 +168,7 @@ fn run_expr_string(expr: &str) -> String {
 #[test]
 fn test_vector_literal() {
     // Vector literals should compile to PERSISTENT_VECTOR structs
-    assert_eq!(observe("[1 2 3]"), Observation::Vector(vec![Observation::Number(1.0f64.to_bits()), Observation::Number(2.0f64.to_bits()), Observation::Number(3.0f64.to_bits())]));
+    assert_eq!(observe("[1 2 3]"), Observation::Vector(vec![Observation::Long(1), Observation::Long(2), Observation::Long(3)]));
 }
 
 #[test]
@@ -179,7 +180,7 @@ fn test_empty_vector() {
 fn test_map_literal() {
     // Map literals should compile to PERSISTENT_MAP structs
     // Using integers as keys since keywords aren't supported yet
-    assert_eq!(observe("{1 2}"), Observation::Map(vec![(Observation::Number(1.0f64.to_bits()), Observation::Number(2.0f64.to_bits()))]));
+    assert_eq!(observe("{1 2}"), Observation::Map(vec![(Observation::Long(1), Observation::Long(2))]));
 }
 
 #[test]
@@ -203,8 +204,8 @@ fn test_map_get_empty() {
 fn test_set_literal() {
     // Set literals should compile to PERSISTENT_SET structs
     let Observation::Set(mut items) = observe("#{1 2 3}") else { panic!("expected a set") };
-    items.sort_by_key(|item| match item { Observation::Number(bits) => f64::from_bits(*bits) as i64, _ => i64::MAX });
-    assert_eq!(items, vec![Observation::Number(1.0f64.to_bits()), Observation::Number(2.0f64.to_bits()), Observation::Number(3.0f64.to_bits())]);
+    items.sort_by_key(|item| match item { Observation::Long(value) => *value, _ => i64::MAX });
+    assert_eq!(items, vec![Observation::Long(1), Observation::Long(2), Observation::Long(3)]);
 }
 
 #[test]
@@ -1579,7 +1580,7 @@ fn test_builtin_as_value_sub() {
 #[test]
 fn test_builtin_as_value_div() {
     // Use / as a value (division always returns float)
-    assert_eq!(run_expr_f64("(let [f /] (f 20 4))"), 5.0);
+    assert_eq!(run_expr_i64("(let [f /] (f 20 4))"), 5);
 }
 
 #[test]
@@ -2629,14 +2630,23 @@ fn reactivated_helpers_preserve_raw_values_effects_and_captures_after_gc() {
         assert_eq!(case["id"].as_str(), Some(id));
         let expected = &case["expected"];
         let actual = observe(case["source"].as_str().unwrap());
+        // The corpus was pinned from ClojureScript, whose f64 can't say long
+        // or double; each case's integral results are Clojure longs.
+        let number = |bits: &str| {
+            let bits = u64::from_str_radix(bits, 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+                Observation::Long(value as i64)
+            } else {
+                Observation::Number(bits)
+            }
+        };
         match expected["tag"].as_str().unwrap() {
-            "f64" => assert_eq!(actual, Observation::Number(
-                u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap()
-            ), "{id}"),
+            "f64" => assert_eq!(actual, number(expected["bits"].as_str().unwrap()), "{id}"),
             "vector" => {
                 let values = expected["items"].as_array().unwrap().iter().map(|item| {
                     assert_eq!(item["tag"].as_str(), Some("f64"));
-                    Observation::Number(u64::from_str_radix(item["bits"].as_str().unwrap(), 16).unwrap())
+                    number(item["bits"].as_str().unwrap())
                 }).collect();
                 assert_eq!(actual, Observation::Vector(values), "{id}");
             }

@@ -153,7 +153,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert("arity-error");
                         if let Some(factory) = &body.rest_class {
                             globals.insert(factory.clone());
-                            names.extend(["binding-get", "invoke", "source-array-new", "number-box", "constructor-descriptor", "source-constructor-new"]);
+                            names.extend(["binding-get", "invoke", "source-array-new", "constructor-descriptor", "source-constructor-new"]);
                         }
                     }
                     Operation::MakeClosure { .. } => {
@@ -368,6 +368,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "comparison-greater"
             | "comparison-greater-equal"
             | "comparison-strict-equal"
+            | "comparison-case-equal"
             | "comparison-number-less"
             | "comparison-number-less-equal"
             | "comparison-number-greater"
@@ -426,10 +427,13 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "binding-get" | "binding-bound" | "number-negate" | "value-negate"
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
-            | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit" => {
+            | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit"
+            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" => {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
+            "number-parse-long" => (vec![VALUE; 4], vec![VALUE]),
+            "number-range-count" => (vec![VALUE; 3], vec![VALUE]),
             "string-slice" | "callable-property-get" | "named-property-set" | "user-field-get-guard" | "user-field-set-guard" | "object-method-set" | "object-method-invoke" | "native-object-property-set" | "native-object-property-set-strict" => {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])
             }
@@ -690,8 +694,9 @@ fn emit_dispatcher(
             .instruction(&Call(import("source-constructor-new")))
             .instruction(&LocalGet(4))
             .instruction(&Call(import("source-array-new")))
-            .instruction(&F64Const(0.0.into()))
-            .instruction(&Call(import("number-box")))
+            // The rest seq starts at index 0, a long.
+            .instruction(&I32Const(0))
+            .instruction(&RefI31)
             .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, sentinels))
             .instruction(&ArrayNewFixed {
                 array_type_index: runtime_abi::ARGS,
@@ -918,6 +923,16 @@ fn emit_function(
                         .instruction(&Call(index("number-box")))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
+                Operation::Literal(Literal::Long(value)) => {
+                    // A long in i31's range is that i31; others are boxed.
+                    match i32::try_from(*value).ok().filter(|v| (-(1 << 30)..1 << 30).contains(v)) {
+                        Some(small) => function.instruction(&I32Const(small)).instruction(&RefI31),
+                        None => function
+                            .instruction(&I64Const(*value))
+                            .instruction(&StructNew(runtime_abi::LONG)),
+                    };
+                    function.instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
                 Operation::Literal(Literal::String(units)) => {
                     emit_utf16_literal(&mut function, data, units, inst.result.0 as u32 + offset, &ir.span)?;
                 }
@@ -1133,14 +1148,18 @@ fn emit_function(
                             }
                             function.instruction(&I32Or);
                         }
-                        Nominal::IsNumber | Nominal::IsString => {
-                            // The runtime predicates' own test, inline: never a mutable
-                            // public cell, and no closure call on core's hot paths (#286).
-                            // Arguments are already evaluated once in source order.
-                            let ty = if *operation == Nominal::IsNumber { runtime_abi::NUMBER } else { runtime_abi::STRING };
+                        // The runtime predicates' own tests, inline: never a mutable
+                        // public cell, and no closure call on core's hot paths (#286).
+                        // Arguments are already evaluated once in source order.
+                        Nominal::IsNumber => {
+                            for instruction in runtime_abi::number_test(arguments[0].0 as u32 + offset) {
+                                function.instruction(&instruction);
+                            }
+                        }
+                        Nominal::IsString => {
                             function
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
-                                .instruction(&RefTestNonNull(HeapType::Concrete(ty)));
+                                .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::STRING)));
                         }
                         Nominal::IsClosure => {
                             function

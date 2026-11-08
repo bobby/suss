@@ -43,16 +43,17 @@ Unsupported dispatch and splicing conditionals return located errors.
 
 Numbers follow Clojure 1.12's numeric grammar: decimal, hexadecimal (`0x1F`),
 octal (`017` is 15), radix (`36rZ`), ratios, the `N` and `M` suffixes, doubles
-(`1.`, `1e3`) and `##Inf`, `##-Inf`, `##NaN` (#333). A literal binary64 holds
-exactly reads as a number: every double, any integer within ±2^53, and a
-ratio of terms within ±2^53 that reduces to such an integer, as Clojure reads
-`4/2` as 2. Any other literal, such as `1/3`, `1N`, `1.5M` or
-`9007199254740993`, reads as a `Kind::Exact` form holding its Clojure value
-(a reduced ratio, an integer marked BigInt or not, or a BigDecimal's unscaled
-integer and scale). Until Suss has Clojure's numeric types
-([ADR-0003](../adr/0003-clojure-numeric-tower.md), #335), evaluating one
-throws "Unsupported numeric literal 1/3: ratios, BigInts, BigDecimals and
-integers beyond 2^53 need Clojure's numeric types (#335)", in code and in
+(`1.`, `1e3`) and `##Inf`, `##-Inf`, `##NaN` (#333). An integer in the long
+range reads as a long, `Kind::Long` (#335), and every double as a double,
+`Kind::Number`. As in Clojure, a ratio whose terms are both longs and that
+reduces to an integer is that long (`4/2` is 2), while a term beyond the long
+range makes the result a BigInt (`36893488147419103232/8`). Any other literal,
+such as `1/3`, `1N`, `1.5M` or `9223372036854775808`, reads as a `Kind::Exact`
+form holding its Clojure value (a reduced ratio, an integer marked BigInt or
+not, or a BigDecimal's unscaled integer and scale). Until Suss has BigInt,
+Ratio and BigDecimal ([ADR-0003](../adr/0003-clojure-numeric-tower.md), #338,
+#339), evaluating one throws "Unsupported numeric literal 1/3: ratios, BigInts
+and BigDecimals need Clojure's numeric types (#338, #339)", in code and in
 quoted data, so nothing rounds silently. A `case` with such a constant
 evaluates its expression and then throws the same way. Because they read, a
 reader-conditional branch that isn't selected, or a form dropped with `#_`,
@@ -62,15 +63,12 @@ may hold them; only a malformed literal, such as `1/0` ("Divide by zero"),
 integer's trailing `N` or `M` is a digit, so `36rN` is 23 and `2r1N` is
 malformed.
 
-One deviation from that rule remains: a ratio with a term beyond ±2^53 is
-exact even when it reduces to a small integer, so `18014398509481984/2` throws
-though Clojure reads it as 2^53, which binary64 holds. The runtime reader can only check terms that size, and the
-compiler's reader matches it. Tooling EDN (`suss analyze`) shows an exact
-literal as `#suss/exact-number "1/3"`. Macros receive an exact literal as a symbol in the
+Tooling EDN (`suss analyze`) shows an exact literal as
+`#suss/exact-number "1/3"`. Macros receive an exact literal as a symbol in the
 `suss.reader.exact-number` namespace named by its text, and an expansion that
 returns that symbol gives the literal back. A literal in a macro's own code,
 such as a syntax-quote template, is evaluated when the macro runs, so that
-macro fails to expand until #335.
+macro fails to expand until #338 and #339.
 
 An auto-resolved keyword, `::name` or `::alias/name`, is
 read as an `AutoKeyword` form; the compiler resolves it in the current namespace

@@ -92,6 +92,7 @@ fn same_metered(
         let equal = match (&a.kind, &b.kind) {
             (Kind::Nil, Kind::Nil) => true,
             (Kind::Bool(x), Kind::Bool(y)) => x == y,
+            (Kind::Long(x), Kind::Long(y)) => x == y,
             (Kind::Number(x), Kind::Number(y)) => {
                 if derived {
                     x == y
@@ -210,6 +211,7 @@ fn rebuild_form(node: &Form, children: Vec<Form>) -> Form {
         Kind::Nil => Kind::Nil,
         Kind::Bool(value) => Kind::Bool(*value),
         Kind::Number(value) => Kind::Number(*value),
+        Kind::Long(value) => Kind::Long(*value),
         Kind::Exact(value) => Kind::Exact(value.clone()),
         Kind::String(value) => Kind::String(value.clone()),
         Kind::Symbol(value) => Kind::Symbol(value.clone()),

@@ -1,19 +1,73 @@
 use suss_cli::portable_session::{Session, SessionValue};
-use wasmtime::Val;
 
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
+/// Whether `actual` matches a pinned `f64` observation. The ClojureScript
+/// corpus cannot distinguish longs: an integral observation is a Clojure long,
+/// or an integral double when the source has a double operand.
+fn matches_pinned(actual: Number, expected: &serde_json::Value, source: &str) -> bool {
+    let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+    match actual {
+        Number::Long(_) => actual == num(f64::from_bits(bits)),
+        Number::Double(actual) => {
+            actual == bits
+                && (num(f64::from_bits(bits)) == Number::Double(bits)
+                    || source.contains("##")
+                    // The f64 primitives return doubles for non-long operands.
+                    || source.contains("suss.bootstrap/f64-")
+                    || source.as_bytes().windows(3).any(|w| {
+                        w[0].is_ascii_digit()
+                            && (w[1] == b'.' || w[1] == b'e')
+                            && (w[2].is_ascii_digit() || w[2] == b'-')
+                    }))
+        }
+    }
+}
+/// The pinned observation when `actual` matches it, otherwise a distinct value.
+fn number_observation(actual: Number, expected: &serde_json::Value, source: &str) -> serde_json::Value {
+    if matches_pinned(actual, expected, source) {
+        expected.clone()
+    } else {
+        serde_json::json!({ "tag": "number", "actual": format!("{actual:?}") })
+    }
+}
+
+fn number(session: &mut Session, value: &SessionValue) -> Number {
     session
         .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            Ok(*bits)
+            exact_number(&mut store, &value)
         })
         .unwrap()
 }
-fn eval_number(session: &mut Session, source: &str) -> u64 {
+fn eval_number(session: &mut Session, source: &str) -> Number {
     let value = session.eval(source).unwrap();
     number(session, &value)
 }
@@ -52,7 +106,23 @@ fn hash_numeric_boundaries_match_independently_encoded_primary_observations() {
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "bool" => serde_json::json!({"tag":"bool", "value":eval_bool(&mut session, source)}),
             "f64" => {
-                serde_json::json!({"tag":"f64", "bits":format!("{:016x}",eval_number(&mut session, source))})
+                let actual = eval_number(&mut session, source);
+                // Clojure governs: a remainder of longs is a long, never the
+                // pinned ClojureScript negative zero. safe-integer-remainder
+                // is hash's private integral remainder, so -0.0 gives long 0
+                // too (rem-57).
+                let long_zero = [
+                    "rem-57",
+                    "rem-59",
+                    "review-rem-negative-divisor-zero",
+                    "review-rem-negative-unit",
+                ];
+                if long_zero.contains(&id) {
+                    assert_eq!(actual, Number::Long(0), "{id}: {source}");
+                    case["expected"].clone()
+                } else {
+                    number_observation(actual, &case["expected"], source)
+                }
             }
             tag => panic!("unexpected numeric hashing observation tag {tag}"),
         };
@@ -83,17 +153,18 @@ fn numeric_hash_boundaries_keep_effects_typed_errors_and_compile_atomicity() {
         session.collect().unwrap();
         assert_eq!(
             eval_number(&mut session, "boundary-effects"),
-            17.0f64.to_bits()
+            num(17.0)
         );
         assert_eq!(
             eval_number(
                 &mut session,
                 "(suss.bootstrap/safe-integer-remainder -2147483647 2147483647)"
             ),
-            (-0.0f64).to_bits()
+            // Long operands give a long, as Clojure's rem: no negative zero.
+            num(0.0)
         );
     }
-    assert_eq!(eval_number(&mut session, "(let [a (array 0)] (suss.bootstrap/safe-integer-remainder (do (aset a 0 17) 19) (do (aset a 0 (+ (aget a 0) 1)) 3)) (aget a 0))"), 18.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(let [a (array 0)] (suss.bootstrap/safe-integer-remainder (do (aset a 0 17) 19) (do (aset a 0 (+ (aget a 0) 1)) 3)) (aget a 0))"), num(18.0));
     for (name, arity) in [
         ("f64-floor", 1),
         ("f64-finite", 1),
@@ -174,13 +245,14 @@ fn numeric_hash_remainder_checks_both_operands_after_source_evaluation() {
                 &mut session,
                 "(suss.bootstrap/safe-integer-remainder -17 -17)"
             ),
-            (-0.0f64).to_bits()
+            // Long operands give a long, as Clojure's rem: no negative zero.
+            num(0.0)
         );
     }
     assert!(matches!(session.eval("(suss.bootstrap/safe-integer-remainder (do (set! review-effects 1) 1.5) (do (set! review-effects (+ review-effects 10)) 3))"), Err(SessionError::Language(_))));
     assert_eq!(
         eval_number(&mut session, "review-effects"),
-        11.0f64.to_bits()
+        num(11.0)
     );
     session.eval("(set! review-effects 0)").unwrap();
     assert!(matches!(
@@ -192,6 +264,6 @@ fn numeric_hash_remainder_checks_both_operands_after_source_evaluation() {
     session.collect().unwrap();
     assert_eq!(
         eval_number(&mut session, "review-effects"),
-        0.0f64.to_bits()
+        num(0.0)
     );
 }

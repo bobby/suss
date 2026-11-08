@@ -1,17 +1,35 @@
-use suss_cli::portable_session::{Session, SessionValue};
-use wasmtime::Val;
+use suss_cli::portable_session::{RuntimeNumber, Session, SessionValue};
+use suss_cli::portable_session::RuntimeNumber::{Double, Long};
 
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+fn number(session: &mut Session, value: &SessionValue) -> RuntimeNumber {
     session
-        .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            Ok(*bits)
+        .inspect(value, |store, value| {
+            Ok(suss_cli::portable_session::runtime_number(store, &value)?.expect("Number layout"))
         })
         .unwrap()
+}
+
+/// The observation of a runtime number, distinguishing a long from a double.
+fn number_json(number: RuntimeNumber) -> serde_json::Value {
+    match number {
+        RuntimeNumber::Long(value) => serde_json::json!({"tag":"long", "value":value}),
+        RuntimeNumber::Double(value) => {
+            serde_json::json!({"tag":"f64", "bits":format!("{:016x}", value.to_bits())})
+        }
+    }
+}
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results, including the
+/// ClojureScript `-0` hash of `-0.0`, which is `0` in Clojure.
+fn clojure_number(expected: &serde_json::Value) -> serde_json::Value {
+    if expected["tag"] == "f64" {
+        let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+        let value = f64::from_bits(bits);
+        if value.is_finite() && value.fract() == 0.0 {
+            return serde_json::json!({"tag":"long", "value":value as i64});
+        }
+    }
+    expected.clone()
 }
 
 #[test]
@@ -25,18 +43,18 @@ fn public_hash_retains_scalar_branches_and_captured_callable_after_gc() {
     session.collect().unwrap();
     // Pinned core.cljs1054–1090 literals and safe-integer remainder branch.
     for (source, expected) in [
-        ("(captured-hash nil)", 0.0f64),
-        ("(captured-hash true)", 1231.0),
-        ("(captured-hash false)", 1237.0),
-        ("(captured-hash 0)", 0.0),
-        ("(captured-hash 2147483648)", 1.0),
-        ("(captured-hash ##Inf)", 2146435072.0),
-        ("(captured-hash ##-Inf)", -1048576.0),
-        ("(captured-hash ##NaN)", 2146959360.0),
-        ("(captured-hash \"\")", 0.0),
+        ("(captured-hash nil)", 0),
+        ("(captured-hash true)", 1231),
+        ("(captured-hash false)", 1237),
+        ("(captured-hash 0)", 0),
+        ("(captured-hash 2147483648)", 1),
+        ("(captured-hash ##Inf)", 2146435072),
+        ("(captured-hash ##-Inf)", -1048576),
+        ("(captured-hash ##NaN)", 2146959360),
+        ("(captured-hash \"\")", 0),
     ] {
         let value = session.eval(source).unwrap();
-        assert_eq!(number(&mut session, &value), expected.to_bits(), "{source}");
+        assert_eq!(number(&mut session, &value), Long(expected), "{source}");
         session.collect().unwrap();
     }
 }
@@ -51,7 +69,7 @@ fn numeric_date_storage_executes_without_full_core() {
         .eval("(def date-probe (fn [ms] (DateProbe. (suss.bootstrap/f64-time-clip ms))))")
         .unwrap();
     let value = session.eval("(.valueOf (date-probe 17.9))").unwrap();
-    assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), Long(17));
 }
 
 #[test]
@@ -63,12 +81,12 @@ fn date_hash_normalizes_numeric_milliseconds_and_keeps_protocol_priority() {
         .unwrap();
     session.enter_namespace("user").unwrap();
     for (milliseconds, stored, hash) in [
-        ("-0.0", 0.0f64, 0.0f64),
-        ("-0.9", 0.0, 0.0),
-        ("17.9", 17.0, 17.0),
-        ("-17.9", -17.0, -17.0),
-        ("2147483648.9", 2147483648.0, -2147483648.0),
-        ("4294967297", 4294967297.0, 1.0),
+        ("-0.0", 0, 0),
+        ("-0.9", 0, 0),
+        ("17.9", 17, 17),
+        ("-17.9", -17, -17),
+        ("2147483648.9", 2147483648, -2147483648),
+        ("4294967297", 4294967297, 1),
     ] {
         session
             .eval(&format!(
@@ -77,9 +95,10 @@ fn date_hash_normalizes_numeric_milliseconds_and_keeps_protocol_priority() {
             .unwrap();
         session.collect().unwrap();
         let value = session.eval("(.valueOf hash-date)").unwrap();
-        assert_eq!(number(&mut session, &value), stored.to_bits());
+        // Time-clipped milliseconds are a long, as `Date.getTime` is in Clojure.
+        assert_eq!(number(&mut session, &value), Long(stored));
         let value = session.eval("(hash hash-date)").unwrap();
-        assert_eq!(number(&mut session, &value), hash.to_bits());
+        assert_eq!(number(&mut session, &value), Long(hash));
     }
     for milliseconds in [
         "8640000000000001",
@@ -94,9 +113,9 @@ fn date_hash_normalizes_numeric_milliseconds_and_keeps_protocol_priority() {
             ))
             .unwrap();
         let value = session.eval("(.valueOf invalid-hash-date)").unwrap();
-        assert!(f64::from_bits(number(&mut session, &value)).is_nan());
+        assert!(matches!(number(&mut session, &value), Double(value) if value.is_nan()));
         let value = session.eval("(hash invalid-hash-date)").unwrap();
-        assert_eq!(number(&mut session, &value), 0.0f64.to_bits());
+        assert_eq!(number(&mut session, &value), Long(0));
     }
     // Numeric-only construction rejects unsupported Date string/object inputs.
     assert!(matches!(
@@ -105,15 +124,15 @@ fn date_hash_normalizes_numeric_milliseconds_and_keeps_protocol_priority() {
     ));
     session.eval("(def date-method-effects 0) (extend-type suss.core/BootstrapDate Object (valueOf [_] (do (set! date-method-effects (+ date-method-effects 1)) 19)))").unwrap();
     let value = session.eval("(hash hash-date)").unwrap();
-    assert_eq!(number(&mut session, &value), 19.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), Long(19));
     session
         .eval("(extend-type suss.core/BootstrapDate IHash (-hash [_] 17))")
         .unwrap();
     session.collect().unwrap();
     let value = session.eval("(hash hash-date)").unwrap();
-    assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), Long(17));
     let value = session.eval("date-method-effects").unwrap();
-    assert_eq!(number(&mut session, &value), 1.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), Long(1));
 }
 
 #[test]
@@ -136,7 +155,7 @@ fn public_hash_matches_independently_decoded_primary_observations() {
             .unwrap_or_else(|error| panic!("{}: {error:?}", case["id"]));
         let observed = match case["expected"]["tag"].as_str().unwrap() {
             "f64" => {
-                serde_json::json!({"tag":"f64","bits":format!("{:016x}",number(&mut session,&value))})
+                number_json(number(&mut session, &value))
             }
             "bool" => {
                 let boolean = session
@@ -153,7 +172,7 @@ fn public_hash_matches_independently_decoded_primary_observations() {
             }
             tag => panic!("Unexpected corpus tag {tag}"),
         };
-        assert_eq!(observed, case["expected"], "{}", case["id"]);
+        assert_eq!(observed, clojure_number(&case["expected"]), "{}", case["id"]);
         session.collect().unwrap();
     }
 }
@@ -168,9 +187,9 @@ fn time_clip_rejects_wrong_storage_and_preserves_effects_and_compile_atomicity()
         session.collect().unwrap();
     }
     let value = session.eval("clip-effects").unwrap();
-    assert_eq!(number(&mut session, &value), 5.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), Long(5));
     let value = session.eval("(suss.bootstrap/f64-time-clip -0.9)").unwrap();
-    assert_eq!(number(&mut session, &value), 0.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), Long(0));
     assert!(matches!(
         session.eval("(suss.bootstrap/f64-time-clip (throw 17))"),
         Err(SessionError::Language(_))

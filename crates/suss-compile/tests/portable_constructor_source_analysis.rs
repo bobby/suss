@@ -8,7 +8,7 @@ use suss_reader::forms::{Form, Kind, read_forms};
 
 #[derive(Default)]
 struct Observe {
-    marks: Vec<f64>,
+    marks: Vec<i64>,
     initializer: Option<Arc<hir::Hir>>,
 }
 impl portable::ExpansionHost for Observe {
@@ -33,7 +33,7 @@ impl portable::ExpansionHost for Observe {
         match head.name.as_str() {
             "mark" => {
                 assert_eq!(items.len(), 2);
-                let Kind::Number(value) = &items[1].kind else {
+                let Kind::Long(value) = &items[1].kind else {
                     panic!("number mark required")
                 };
                 self.marks.push(*value);
@@ -71,7 +71,7 @@ fn constructor_source_children_share_once_analyzed_callee_and_arguments() {
             phase,
             "(new (do (mark 0) SourceConstructorPair) (mark 1) (mark 2))",
         );
-        assert_eq!(host.marks, [0.0, 1.0, 2.0]);
+        assert_eq!(host.marks, [0, 1, 2]);
         let init = host.initializer.unwrap();
         let source = init.source.as_ref().unwrap();
         let hir::SourceNode::Construct { class, arguments } = source.node.as_deref().unwrap()
@@ -116,7 +116,7 @@ fn constructor_source_children_share_once_analyzed_callee_and_arguments() {
 fn constructor_shorthand_retains_expanded_new_form_and_real_type_declaration() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let host = analyze(phase, "(SourceConstructorPair. (mark 1) (mark 2))");
-        assert_eq!(host.marks, [1.0, 2.0]);
+        assert_eq!(host.marks, [1, 2]);
         let init = host.initializer.unwrap();
         let source = init.source.as_ref().unwrap();
         let Kind::List(parts) = &source.form.kind else {
@@ -164,7 +164,7 @@ fn invocation_class_has_no_reference_result_tag() {
             &mut host,
         )
         .unwrap();
-        assert_eq!(host.marks, [1.0, 2.0]);
+        assert_eq!(host.marks, [1, 2]);
         let init = host.initializer.unwrap();
         let source = init.source.as_ref().unwrap();
         assert!(matches!(&source.tags.tag.as_ref().unwrap().kind, Kind::Nil));

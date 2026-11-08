@@ -1,7 +1,6 @@
 //! Retained sorted protocols on original nominal probes; no tree implementation.
 use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
 use suss_compile::portable::resolve::Phase;
-use wasmtime::Val;
 
 const CORE: &str = include_str!("../../../runtime/core-import/suss/core.sus");
 const FIXTURE: &str = include_str!("../../../tests/oracle/fixtures/sorted-interface-probe.sus");
@@ -17,15 +16,41 @@ fn observation(session: &mut Session, value: &SessionValue) -> serde_json::Value
                     other => panic!("unexpected scalar sentinel {other}"),
                 });
             }
-            let value = value.unwrap_anyref().unwrap();
-            let object = value.as_struct(&store)?.expect("number struct");
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("number layout")
-            };
-            Ok(serde_json::json!({"tag":"f64", "bits":format!("{bits:016x}")}))
+            use suss_compile::portable_session::{RuntimeNumber, runtime_number};
+            Ok(match runtime_number(&mut store, &value)?.expect("number") {
+                RuntimeNumber::Long(value) => serde_json::json!({"tag":"long", "value":value}),
+                RuntimeNumber::Double(value) => {
+                    serde_json::json!({"tag":"f64", "bits":format!("{:016x}", value.to_bits())})
+                }
+            })
         })
         .unwrap()
+}
+
+/// The pinned ClojureScript observation with each integral `f64` as a Clojure
+/// long, a distinction that corpus cannot record.
+fn clojure_longs(expected: &serde_json::Value) -> serde_json::Value {
+    use serde_json::Value;
+    match expected {
+        Value::Object(fields) if fields.get("tag") == Some(&Value::from("f64")) => {
+            let bits = u64::from_str_radix(fields["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.is_finite()
+                && value.fract() == 0.0
+                && !(value == 0.0 && value.is_sign_negative())
+                && value.abs() < 9_223_372_036_854_775_808.0
+            {
+                serde_json::json!({"tag":"long", "value":value as i64})
+            } else {
+                expected.clone()
+            }
+        }
+        Value::Object(fields) => Value::Object(
+            fields.iter().map(|(key, value)| (key.clone(), clojure_longs(value))).collect(),
+        ),
+        Value::Array(items) => Value::Array(items.iter().map(clojure_longs).collect()),
+        other => other.clone(),
+    }
 }
 
 // Inspect the actual exception payload, not merely the SessionError variant.
@@ -83,11 +108,19 @@ fn setup(phase: Phase) -> Session {
 }
 
 fn expect_number(session: &mut Session, source: &str, expected: f64) {
-    let value = session.eval(source).unwrap();
+    // Every probe call appends a decimal digit to the long trace; reset it so
+    // repeated calls cannot overflow it, as the pinned trace cases do.
+    session.eval("(aset sorted-interface-trace 0 0)").unwrap();
+    let value = session.eval(source).unwrap_or_else(|error| {
+        panic!(
+            "{source}: {}",
+            suss_cli::portable_repl::error_display(session, &error)
+        )
+    });
     session.collect().unwrap();
     assert_eq!(
         observation(session, &value),
-        serde_json::json!({"tag":"f64", "bits":format!("{:016x}",expected.to_bits())}),
+        clojure_longs(&serde_json::json!({"tag":"f64", "bits":format!("{:016x}",expected.to_bits())})),
         "{source}"
     );
 }
@@ -115,7 +148,7 @@ fn sorted_protocol_shared_nominal_observations_match_both_phases_after_gc() {
             session.collect().unwrap();
             assert_eq!(
                 observation(&mut session, &value),
-                case["expected"],
+                clojure_longs(&case["expected"]),
                 "{phase:?}, {id}"
             );
         }

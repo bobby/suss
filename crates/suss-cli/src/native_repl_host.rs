@@ -539,7 +539,7 @@ impl<Out: Write, Err: Write> NativeReplHost<Out, Err> {
             // Copy only small owned outcome data before mutably borrowing the
             // bridge/Session. No read or source work is repeated after this point.
             let literal = match self.endpoints[index].outcome.as_ref().unwrap() {
-                Outcome::Byte(byte) => Literal::Number(*byte as f64),
+                Outcome::Byte(byte) => Literal::Long(i64::from(*byte)),
                 Outcome::Eof => Literal::Nil,
                 Outcome::Error(message) => Literal::String(message.encode_utf16().collect()),
             };

@@ -85,19 +85,14 @@ pub(super) fn module(
             I32Const(0),
             ArrayGet(runtime_abi::ARGS),
             LocalSet(2),
-            LocalGet(2),
-            RefTestNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
-            I32Eqz,
-            If(BlockType::Empty),
-            Call(6),
-            Throw(0),
-            End,
-            LocalGet(2),
-            RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
-            StructGet {
-                struct_type_index: runtime_abi::NUMBER,
-                field_index: 0,
-            },
+        ],
+    );
+    emit(&mut invoke, &runtime_abi::number_test(2));
+    emit(&mut invoke, &[I32Eqz, If(BlockType::Empty), Call(6), Throw(0), End]);
+    emit(&mut invoke, &runtime_abi::number_to_f64(2));
+    emit(
+        &mut invoke,
+        &[
             LocalSet(3),
             LocalGet(3),
             F64Const(0.0.into()),

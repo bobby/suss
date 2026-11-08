@@ -1033,7 +1033,7 @@ mod when_let_validation_tests {
             assert_eq!(case["phase"], ":macro-syntax-check");
             let recovered = macros.session.eval("(+ 20 22)").unwrap();
             let recovered = macros.bridge.read(&mut macros.session, &recovered, 0..1).unwrap();
-            assert!(matches!(recovered.kind, Kind::Number(n) if n == 42.0));
+            assert!(matches!(recovered.kind, Kind::Long(42)));
         }
     }
 }
@@ -1248,7 +1248,7 @@ mod declaration_provenance_tests {
         let mut caller = Session::new_repl().unwrap();
         let value = caller.eval_with_macros("(retained-policy)", &mut macros).unwrap();
         let bridge = FormBridge::new(&mut caller).unwrap();
-        assert_eq!(bridge.read(&mut caller, &value, 0..1).unwrap().kind, Kind::Number(17.0));
+        assert_eq!(bridge.read(&mut caller, &value, 0..1).unwrap().kind, Kind::Long(17));
         assert_eq!(macros.expansion_work_fuel(), 2_000_000);
     }
 }
@@ -1410,7 +1410,7 @@ mod parameter_observation_tests {
         let mut caller = Session::new_repl().unwrap();
         let value = caller.eval_with_macros("(retained-observation)", &mut macros).unwrap();
         let bridge = FormBridge::new(&mut caller).unwrap();
-        assert_eq!(bridge.read(&mut caller, &value, 0..1).unwrap().kind, Kind::Number(17.0));
+        assert_eq!(bridge.read(&mut caller, &value, 0..1).unwrap().kind, Kind::Long(17));
         assert_eq!(macros.expansion_work_fuel(), budget);
     }
 }

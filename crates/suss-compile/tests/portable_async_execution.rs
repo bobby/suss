@@ -173,18 +173,18 @@ impl Harness {
         self.store.set_fuel(1_000_000).unwrap();
         assert_eq!(self.integer("async-scheduler-run-one", &[]), 1);
     }
-    fn ready_number(&mut self, future: &Val) -> f64 {
+    fn ready_number(&mut self, future: &Val) -> i64 {
         assert_eq!(self.integer("future-status", &[future.clone()]), 1);
         let result = self.value("future-result", &[future.clone()]);
-        result
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&self.store)
-            .unwrap()
-            .unwrap()
-            .field(&mut self.store, 0)
-            .unwrap()
-            .unwrap_f64()
+        long_value(&mut self.store, &result)
+    }
+}
+
+/// A runtime value that must be a long, as Clojure's integer arithmetic gives.
+fn long_value(store: &mut Store<()>, value: &Val) -> i64 {
+    match suss_compile::portable_session::runtime_number(store, value).unwrap() {
+        Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => value,
+        other => panic!("expected a long, observed {other:?}"),
     }
 }
 
@@ -201,10 +201,10 @@ fn actual_pending_await_preserves_capture_and_resumes_after_gc() {
     assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
     h.store.gc(None).unwrap();
-    let value = h.value("number-box", &[Val::F64(32f64.to_bits())]);
+    let value = h.value("long-box", &[Val::I64(32)]);
     assert_eq!(h.integer("future-resolve", &[dependency, value]), 1);
     h.run();
-    assert_eq!(h.ready_number(&owner), 42.0);
+    assert_eq!(h.ready_number(&owner), 42);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
 }
 
@@ -216,7 +216,7 @@ fn nested_future_and_consecutive_awaits_execute_compiled_states() {
         h.run();
         h.store.gc(None).unwrap();
     }
-    assert_eq!(h.ready_number(&owner), 42.0);
+    assert_eq!(h.ready_number(&owner), 42);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
 }
 
@@ -227,9 +227,9 @@ fn pending_nested_try_binding_and_finally_await_preserve_roots_and_caller() {
     let cleanup = h.value("future-pending-new", &[]);
     h.bind("dependency", dependency.clone());
     h.bind("cleanup", cleanup.clone());
-    let one = h.value("number-box", &[Val::F64(1f64.to_bits())]);
+    let one = h.value("long-box", &[Val::I64(1)]);
     h.bind("v", one);
-    let zero = h.value("number-box", &[Val::F64(0f64.to_bits())]);
+    let zero = h.value("long-box", &[Val::I64(0)]);
     h.bind("trace", zero);
     let owner = h.source("(suss.async/future* (binding [test/v 7] (try (try (+ (suss.async/await* test/dependency) test/v) (finally (set! test/trace 5))) (finally (suss.async/await* test/cleanup) (set! test/trace test/v)))))");
     h.run();
@@ -237,65 +237,33 @@ fn pending_nested_try_binding_and_finally_await_preserve_roots_and_caller() {
     // Runtime turn restoration must make the caller's binding observable now.
     let caller = h.source("test/v");
     assert_eq!(
-        caller
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&h.store)
-            .unwrap()
-            .unwrap()
-            .field(&mut h.store, 0)
-            .unwrap()
-            .unwrap_f64(),
-        1.0
+        long_value(&mut h.store, &caller),
+        1
     );
     h.store.gc(None).unwrap();
-    let eleven = h.value("number-box", &[Val::F64(11f64.to_bits())]);
+    let eleven = h.value("long-box", &[Val::I64(11)]);
     assert_eq!(h.integer("future-resolve", &[dependency, eleven]), 1);
     h.run();
     assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
     let inner_cleanup = h.source("test/trace");
     assert_eq!(
-        inner_cleanup
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&h.store)
-            .unwrap()
-            .unwrap()
-            .field(&mut h.store, 0)
-            .unwrap()
-            .unwrap_f64(),
-        5.0
+        long_value(&mut h.store, &inner_cleanup),
+        5
     );
     h.store.gc(None).unwrap();
-    let zero = h.value("number-box", &[Val::F64(0f64.to_bits())]);
+    let zero = h.value("long-box", &[Val::I64(0)]);
     assert_eq!(h.integer("future-resolve", &[cleanup, zero]), 1);
     h.run();
-    assert_eq!(h.ready_number(&owner), 18.0);
+    assert_eq!(h.ready_number(&owner), 18);
     let outer_cleanup = h.source("test/trace");
     assert_eq!(
-        outer_cleanup
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&h.store)
-            .unwrap()
-            .unwrap()
-            .field(&mut h.store, 0)
-            .unwrap()
-            .unwrap_f64(),
-        7.0
+        long_value(&mut h.store, &outer_cleanup),
+        7
     );
     let caller = h.source("test/v");
     assert_eq!(
-        caller
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&h.store)
-            .unwrap()
-            .unwrap()
-            .field(&mut h.store, 0)
-            .unwrap()
-            .unwrap_f64(),
-        1.0
+        long_value(&mut h.store, &caller),
+        1
     );
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
 }
@@ -309,37 +277,29 @@ fn failed_dependency_enters_handler_then_pending_cleanup_and_keeps_payload() {
     h.bind("cleanup", cleanup.clone());
     let owner = h.source("(let [captured 10] (suss.async/future* (try (suss.async/await* test/dependency) (catch :default payload (+ captured payload)) (finally (suss.async/await* test/cleanup)))))");
     h.run();
-    let payload = h.value("number-box", &[Val::F64(32f64.to_bits())]);
+    let payload = h.value("long-box", &[Val::I64(32)]);
     assert_eq!(h.integer("future-reject", &[dependency, payload]), 1);
     h.run();
     assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
     h.store.gc(None).unwrap();
-    let zero = h.value("number-box", &[Val::F64(0f64.to_bits())]);
+    let zero = h.value("long-box", &[Val::I64(0)]);
     assert_eq!(h.integer("future-resolve", &[cleanup, zero]), 1);
     h.run();
-    assert_eq!(h.ready_number(&owner), 42.0);
+    assert_eq!(h.ready_number(&owner), 42);
 }
 
 #[test]
 fn invalid_await_registration_throws_to_catch_and_finally_executes_once() {
     let mut h = Harness::new();
-    let zero = h.value("number-box", &[Val::F64(0f64.to_bits())]);
+    let zero = h.value("long-box", &[Val::I64(0)]);
     h.bind("trace", zero);
     let owner = h.source("(suss.async/future* (try (suss.async/await* 42) (catch :default e 7) (finally (set! test/trace (+ test/trace 1)))))");
     h.run();
-    assert_eq!(h.ready_number(&owner), 7.0);
+    assert_eq!(h.ready_number(&owner), 7);
     let trace = h.source("test/trace");
     assert_eq!(
-        trace
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&h.store)
-            .unwrap()
-            .unwrap()
-            .field(&mut h.store, 0)
-            .unwrap()
-            .unwrap_f64(),
-        1.0
+        long_value(&mut h.store, &trace),
+        1
     );
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
 }
@@ -347,36 +307,20 @@ fn invalid_await_registration_throws_to_catch_and_finally_executes_once() {
 #[test]
 fn body_throw_is_caught_but_cleanup_throw_overrides_the_pending_result_once() {
     let mut h = Harness::new();
-    let zero = h.value("number-box", &[Val::F64(0f64.to_bits())]);
+    let zero = h.value("long-box", &[Val::I64(0)]);
     h.bind("trace", zero);
     let owner = h.source("(suss.async/future* (try (throw 2) (catch :default payload (+ payload 5)) (finally (set! test/trace (+ test/trace 1)) (throw 9))))");
     h.run();
     assert_eq!(h.integer("future-status", &[owner.clone()]), 2);
     let payload = h.value("future-result", &[owner]);
     assert_eq!(
-        payload
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&h.store)
-            .unwrap()
-            .unwrap()
-            .field(&mut h.store, 0)
-            .unwrap()
-            .unwrap_f64(),
-        9.0
+        long_value(&mut h.store, &payload),
+        9
     );
     let trace = h.source("test/trace");
     assert_eq!(
-        trace
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&h.store)
-            .unwrap()
-            .unwrap()
-            .field(&mut h.store, 0)
-            .unwrap()
-            .unwrap_f64(),
-        1.0
+        long_value(&mut h.store, &trace),
+        1
     );
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
 }
@@ -388,7 +332,7 @@ fn cancelled_dependency_is_catchable_and_suspended_finally_completes_once() {
     let cleanup = h.value("future-pending-new", &[]);
     h.bind("dependency", dependency.clone());
     h.bind("cleanup", cleanup.clone());
-    let zero = h.value("number-box", &[Val::F64(0f64.to_bits())]);
+    let zero = h.value("long-box", &[Val::I64(0)]);
     h.bind("trace", zero);
     let owner = h.source("(suss.async/future* (try (suss.async/await* test/dependency) (catch :default payload (if (suss.bootstrap/nil? payload) (throw 99) 7)) (finally (suss.async/await* test/cleanup) (set! test/trace (+ test/trace 1)))))");
     h.run();
@@ -398,34 +342,18 @@ fn cancelled_dependency_is_catchable_and_suspended_finally_completes_once() {
     assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
     let trace = h.source("test/trace");
     assert_eq!(
-        trace
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&h.store)
-            .unwrap()
-            .unwrap()
-            .field(&mut h.store, 0)
-            .unwrap()
-            .unwrap_f64(),
-        0.0
+        long_value(&mut h.store, &trace),
+        0
     );
     h.store.gc(None).unwrap();
-    let zero = h.value("number-box", &[Val::F64(0f64.to_bits())]);
+    let zero = h.value("long-box", &[Val::I64(0)]);
     assert_eq!(h.integer("future-resolve", &[cleanup, zero]), 1);
     h.run();
-    assert_eq!(h.ready_number(&owner), 7.0);
+    assert_eq!(h.ready_number(&owner), 7);
     let trace = h.source("test/trace");
     assert_eq!(
-        trace
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&h.store)
-            .unwrap()
-            .unwrap()
-            .field(&mut h.store, 0)
-            .unwrap()
-            .unwrap_f64(),
-        1.0
+        long_value(&mut h.store, &trace),
+        1
     );
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
 }
@@ -437,7 +365,7 @@ fn own_cancel_bypasses_catch_and_waits_for_finally_before_terminal_cancel() {
     let cleanup = h.value("future-pending-new", &[]);
     h.bind("dependency", dependency.clone());
     h.bind("cleanup", cleanup.clone());
-    let zero = h.value("number-box", &[Val::F64(0f64.to_bits())]);
+    let zero = h.value("long-box", &[Val::I64(0)]);
     h.bind("trace", zero);
     let owner = h.source("(suss.async/future* (try (suss.async/await* test/dependency) (catch :default payload (set! test/trace 100)) (finally (suss.async/await* test/cleanup) (set! test/trace (+ test/trace 1)))))");
     h.run();
@@ -448,23 +376,15 @@ fn own_cancel_bypasses_catch_and_waits_for_finally_before_terminal_cancel() {
     assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
     let trace = h.source("test/trace");
     assert_eq!(
-        trace
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&h.store)
-            .unwrap()
-            .unwrap()
-            .field(&mut h.store, 0)
-            .unwrap()
-            .unwrap_f64(),
-        0.0
+        long_value(&mut h.store, &trace),
+        0
     );
     h.store.gc(None).unwrap();
     // The old body registration must not resume after cancellation replaced it.
-    let stale = h.value("number-box", &[Val::F64(99f64.to_bits())]);
+    let stale = h.value("long-box", &[Val::I64(99)]);
     assert_eq!(h.integer("future-resolve", &[dependency, stale]), 1);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
-    let zero = h.value("number-box", &[Val::F64(0f64.to_bits())]);
+    let zero = h.value("long-box", &[Val::I64(0)]);
     assert_eq!(h.integer("future-resolve", &[cleanup, zero]), 1);
     h.run();
     assert_eq!(h.integer("future-status", &[owner.clone()]), 3);
@@ -472,16 +392,8 @@ fn own_cancel_bypasses_catch_and_waits_for_finally_before_terminal_cancel() {
     assert_eq!(h.integer("future-status", &[owner.clone()]), 3);
     let trace = h.source("test/trace");
     assert_eq!(
-        trace
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&h.store)
-            .unwrap()
-            .unwrap()
-            .field(&mut h.store, 0)
-            .unwrap()
-            .unwrap_f64(),
-        1.0
+        long_value(&mut h.store, &trace),
+        1
     );
     assert_eq!(h.integer("async-task-cancel", &[owner]), 0);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
@@ -490,7 +402,7 @@ fn own_cancel_bypasses_catch_and_waits_for_finally_before_terminal_cancel() {
 #[test]
 fn own_cancel_before_first_turn_does_not_execute_body_or_enter_finally() {
     let mut h = Harness::new();
-    let zero = h.value("number-box", &[Val::F64(0f64.to_bits())]);
+    let zero = h.value("long-box", &[Val::I64(0)]);
     h.bind("trace", zero);
     let owner =
         h.source("(suss.async/future* (try (set! test/trace 10) (finally (set! test/trace 100))))");
@@ -501,16 +413,8 @@ fn own_cancel_before_first_turn_does_not_execute_body_or_enter_finally() {
     assert_eq!(h.integer("future-status", &[owner]), 3);
     let trace = h.source("test/trace");
     assert_eq!(
-        trace
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&h.store)
-            .unwrap()
-            .unwrap()
-            .field(&mut h.store, 0)
-            .unwrap()
-            .unwrap_f64(),
-        0.0
+        long_value(&mut h.store, &trace),
+        0
     );
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
 }
@@ -522,7 +426,7 @@ fn owner_cancellation_waits_for_cleanup_and_retires_old_dependency() {
     let cleanup = h.value("future-pending-new", &[]);
     h.bind("dependency", dependency.clone());
     h.bind("cleanup", cleanup.clone());
-    let zero = h.value("number-box", &[Val::F64(0f64.to_bits())]);
+    let zero = h.value("long-box", &[Val::I64(0)]);
     h.bind("trace", zero);
     let owner = h.source("(suss.async/future* (try (suss.async/await* test/dependency) (catch :default e (set! test/trace 99)) (finally (suss.async/await* test/cleanup) (set! test/trace (+ test/trace 1)))))");
     h.run();
@@ -533,22 +437,17 @@ fn owner_cancellation_waits_for_cleanup_and_retires_old_dependency() {
     assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
     assert_eq!(h.integer("async-task-cancel", &[owner.clone()]), 0);
     h.store.gc(None).unwrap();
-    let value = h.value("number-box", &[Val::F64(42f64.to_bits())]);
+    let value = h.value("long-box", &[Val::I64(42)]);
     assert_eq!(h.integer("future-resolve", &[dependency, value]), 1);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
-    let value = h.value("number-box", &[Val::F64(0f64.to_bits())]);
+    let value = h.value("long-box", &[Val::I64(0)]);
     assert_eq!(h.integer("future-resolve", &[cleanup, value]), 1);
     h.run();
     assert_eq!(h.integer("future-status", &[owner.clone()]), 3);
     assert_eq!(h.integer("async-task-cancel", &[owner]), 0);
     let trace = h.source("test/trace");
-    let object = trace
-        .unwrap_anyref()
-        .unwrap()
-        .as_struct(&h.store)
-        .unwrap()
-        .unwrap();
-    assert_eq!(object.field(&mut h.store, 0).unwrap().unwrap_f64(), 1.0);
+    let object = trace;
+    assert_eq!(long_value(&mut h.store, &object), 1);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
 }
 
@@ -558,7 +457,7 @@ fn cancellation_during_pending_finally_preserves_remaining_cleanup_and_override(
         let mut h = Harness::new();
         let cleanup = h.value("future-pending-new", &[]);
         h.bind("cleanup", cleanup.clone());
-        let zero = h.value("number-box", &[Val::F64(0f64.to_bits())]);
+        let zero = h.value("long-box", &[Val::I64(0)]);
         h.bind("trace", zero);
         let end = if throws { "(throw 9)" } else { "nil" };
         let owner = h.source(&format!("(suss.async/future* (try 42 (finally (suss.async/await* test/cleanup) (set! test/trace (+ test/trace 1)) {end})))"));
@@ -570,18 +469,18 @@ fn cancellation_during_pending_finally_preserves_remaining_cleanup_and_override(
         h.integer("async-scheduler-run-one", &[]);
         assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
         h.store.gc(None).unwrap();
-        let zero = h.value("number-box", &[Val::F64(0f64.to_bits())]);
+        let zero = h.value("long-box", &[Val::I64(0)]);
         assert_eq!(h.integer("future-resolve", &[cleanup, zero]), 1);
         h.run();
         assert_eq!(h.integer("future-status", &[owner.clone()]), if throws { 2 } else { 3 });
         if throws {
             let payload = h.value("future-result", &[owner]);
-            let object = payload.unwrap_anyref().unwrap().as_struct(&h.store).unwrap().unwrap();
-            assert_eq!(object.field(&mut h.store, 0).unwrap().unwrap_f64(), 9.0);
+            let object = payload;
+            assert_eq!(long_value(&mut h.store, &object), 9);
         }
         let trace = h.source("test/trace");
-        let object = trace.unwrap_anyref().unwrap().as_struct(&h.store).unwrap().unwrap();
-        assert_eq!(object.field(&mut h.store, 0).unwrap().unwrap_f64(), 1.0);
+        let object = trace;
+        assert_eq!(long_value(&mut h.store, &object), 1);
         assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
     }
 }
@@ -596,7 +495,7 @@ fn cpu_backedges_yield_to_completed_dependency_and_preserve_loop_state() {
     h.run(); // worker yields instead of finishing all iterations
     assert_eq!(h.integer("future-status", &[worker.clone()]), 0);
     h.run(); // waiter registers while worker stays queued
-    let value = h.value("number-box", &[Val::F64(42f64.to_bits())]);
+    let value = h.value("long-box", &[Val::I64(42)]);
     assert_eq!(h.integer("future-resolve", &[dependency, value]), 1);
     for _ in 0..3 {
         if h.integer("future-status", &[waiter.clone()]) == 1 { break; }
@@ -605,7 +504,7 @@ fn cpu_backedges_yield_to_completed_dependency_and_preserve_loop_state() {
         let (registrations, queued) = h.scheduler_counts();
         assert!(registrations <= 4 && queued <= 2, "yield roots must remain bounded: {registrations}/{queued}");
     }
-    assert_eq!(h.ready_number(&waiter), 42.0);
+    assert_eq!(h.ready_number(&waiter), 42);
     assert_eq!(h.integer("future-status", &[worker.clone()]), 0);
     for _ in 0..24 {
         if h.integer("future-status", &[worker.clone()]) == 1 { break; }
@@ -614,16 +513,16 @@ fn cpu_backedges_yield_to_completed_dependency_and_preserve_loop_state() {
         let (registrations, queued) = h.scheduler_counts();
         assert!(registrations <= 4 && queued <= 2, "yield roots must remain bounded: {registrations}/{queued}");
     }
-    assert_eq!(h.ready_number(&worker), 20.0);
+    assert_eq!(h.ready_number(&worker), 20);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
 }
 
 #[test]
 fn yields_preserve_catch_payload_cleanup_outcome_and_dynamic_frame() {
     let mut h = Harness::new();
-    let one = h.value("number-box", &[Val::F64(1f64.to_bits())]);
+    let one = h.value("long-box", &[Val::I64(1)]);
     h.bind("v", one);
-    let zero = h.value("number-box", &[Val::F64(0f64.to_bits())]);
+    let zero = h.value("long-box", &[Val::I64(0)]);
     h.bind("trace", zero);
     let owner = h.source("(suss.async/future* (binding [test/v 7] (try (throw 22) (catch :default payload (loop [n 0] (if (< n 20) (recur (+ n 1)) (+ payload n)))) (finally (loop [n 0] (if (< n 10) (recur (+ n 1)) (set! test/trace test/v)))))))");
     for _ in 0..36 {
@@ -631,12 +530,12 @@ fn yields_preserve_catch_payload_cleanup_outcome_and_dynamic_frame() {
         h.run();
         h.store.gc(None).unwrap();
         let caller = h.source("test/v");
-        let object = caller.unwrap_anyref().unwrap().as_struct(&h.store).unwrap().unwrap();
-        assert_eq!(object.field(&mut h.store, 0).unwrap().unwrap_f64(), 1.0);
+        let object = caller;
+        assert_eq!(long_value(&mut h.store, &object), 1);
     }
-    assert_eq!(h.ready_number(&owner), 42.0);
+    assert_eq!(h.ready_number(&owner), 42);
     let trace = h.source("test/trace");
-    let object = trace.unwrap_anyref().unwrap().as_struct(&h.store).unwrap().unwrap();
-    assert_eq!(object.field(&mut h.store, 0).unwrap().unwrap_f64(), 7.0);
+    let object = trace;
+    assert_eq!(long_value(&mut h.store, &object), 7);
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
 }

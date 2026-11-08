@@ -19,12 +19,12 @@ fn cumulative_exhaustion_follows_multiple_completed_guest_helpers_and_recovers()
         let value = caller
             .eval_with_macros("(do (tick) (tick))", &mut macros)
             .unwrap();
-        assert_eq!(number(&mut caller, &value), 1.0f64.to_bits());
+        assert_eq!(number(&mut caller, &value), 1);
         drop(value);
         let value = caller
             .eval_with_macros("(completed-count)", &mut macros)
             .unwrap();
-        assert_eq!(number(&mut caller, &value), 2.0f64.to_bits());
+        assert_eq!(number(&mut caller, &value), 2);
         drop(value);
         caller
             .eval_with_macros("(clear-count)", &mut macros)
@@ -32,7 +32,7 @@ fn cumulative_exhaustion_follows_multiple_completed_guest_helpers_and_recovers()
         let zero = caller
             .eval_with_macros("(completed-count)", &mut macros)
             .unwrap();
-        assert_eq!(number(&mut caller, &zero), 0.0f64.to_bits());
+        assert_eq!(number(&mut caller, &zero), 0);
         drop(zero);
         caller.eval("(def counted-stable 7)").unwrap();
         let calls = std::iter::repeat_n("(tick)", 512)
@@ -53,14 +53,13 @@ fn cumulative_exhaustion_follows_multiple_completed_guest_helpers_and_recovers()
         let missing = caller.eval("counted-unpublished").unwrap_err();
         assert!(missing.to_string().contains("Unresolved"), "{missing}");
         let stable = caller.eval("counted-stable").unwrap();
-        assert_eq!(number(&mut caller, &stable), 7.0f64.to_bits());
+        assert_eq!(number(&mut caller, &stable), 7);
         drop(stable);
         let value = caller
             .eval_with_macros("(completed-count)", &mut macros)
             .unwrap();
         let bits = number(&mut caller, &value);
-        let increments = f64::from_bits(bits);
-        assert!(increments.is_finite() && increments.fract() == 0.0);
+        let increments = bits as f64;
         assert!(increments <= 512.0);
         // The final transformer may trap after incrementing but before return.
         // Sequential expansion permits at most one such in-flight call. Deduct
@@ -81,7 +80,7 @@ fn cumulative_exhaustion_follows_multiple_completed_guest_helpers_and_recovers()
         let value = caller
             .eval_with_macros("(counted-recover)", &mut macros)
             .unwrap();
-        assert_eq!(number(&mut caller, &value), 42.0f64.to_bits());
+        assert_eq!(number(&mut caller, &value), 42);
         assert_eq!(caller.options().fuel_per_operation, caller_fuel);
         assert_eq!(
             portable::ExpansionHost::expansion_work_fuel(&macros),

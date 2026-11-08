@@ -106,6 +106,20 @@ fn collection_hash(basis: u32, count: usize) -> u32 {
     hash = hash.wrapping_mul(0xc2b2ae35);
     hash ^ (hash >> 16)
 }
+fn number_hash(value: f64) -> u32 {
+    if value.is_finite() && value.fract() == 0.0 && value.abs() <= 9007199254740991.0 {
+        (value % 2147483647.0) as i64 as u32
+    } else if value.is_nan() {
+        2146959360
+    } else if value == f64::INFINITY {
+        2146435072
+    } else if value == f64::NEG_INFINITY {
+        (-1048576i32) as u32
+    } else {
+        let bits = value.to_bits();
+        ((bits as u32) ^ (bits >> 32) as u32).swap_bytes()
+    }
+}
 fn syntax_hash(form: &Form) -> u32 {
     match &form.kind {
         Kind::Symbol(name) => identifier_hash(name.namespace.as_deref(), &name.name, false) as u32,
@@ -128,20 +142,9 @@ fn syntax_hash(form: &Form) -> u32 {
                 collection_hash(hash, 4)
             }
         }
-        Kind::Number(value) => {
-            if value.is_finite() && value.fract() == 0.0 && value.abs() <= 9007199254740991.0 {
-                (*value % 2147483647.0) as i64 as u32
-            } else if value.is_nan() {
-                2146959360
-            } else if *value == f64::INFINITY {
-                2146435072
-            } else if *value == f64::NEG_INFINITY {
-                (-1048576i32) as u32
-            } else {
-                let bits = value.to_bits();
-                ((bits as u32) ^ (bits >> 32) as u32).swap_bytes()
-            }
-        }
+        // Runtime hash takes a long through the same integral path.
+        Kind::Long(value) => number_hash(*value as f64),
+        Kind::Number(value) => number_hash(*value),
         Kind::Vector(items) | Kind::List(items) => collection_hash(
             items.iter().fold(1u32, |hash, item| {
                 hash.wrapping_mul(31).wrapping_add(syntax_hash(item))
@@ -321,7 +324,7 @@ impl Expansion {
                     "cljs.core/nth",
                     vec![
                         vector.clone(),
-                        make(item, Kind::Number(index as f64)),
+                        make(item, Kind::Long(index as i64)),
                         make(item, Kind::Nil),
                     ],
                 )

@@ -280,13 +280,10 @@ fn project_compilation_defers_original_runtime_exception_to_each_fresh_store() {
         let exception = store.as_context_mut().take_pending_exception().unwrap();
         let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
         assert_eq!(fields.len(), 1);
-        let payload = fields[0]
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&store)
-            .unwrap()
-            .unwrap();
-        assert_eq!(payload.field(&mut store, 0).unwrap().unwrap_f64(), 17.0);
+        assert_eq!(
+            suss_compile::portable_session::runtime_number(&mut store, &fields[0]).unwrap(),
+            Some(suss_compile::portable_session::RuntimeNumber::Long(17))
+        );
     }
 }
 

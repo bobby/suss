@@ -1,23 +1,22 @@
 //! Actual retained constructor execution required by syntax quote.
 use suss_cli::portable_session::Session;
-use wasmtime::Val;
 
 fn number(session: &mut Session, source: &str) -> f64 {
     let value = session.eval(source).unwrap();
     session.collect().unwrap();
     session
-        .inspect(&value, |mut store, value| {
-            let fields = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap()
-                .fields(&mut store)?
-                .collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Expected number: {fields:?}")
-            };
-            Ok(f64::from_bits(*bits))
+        .inspect(&value, |store, value| {
+            // Integral results are longs, as in Clojure; only a fractional result
+            // may be a double.
+            match suss_cli::portable_session::runtime_number(store, &value)? {
+                Some(suss_cli::portable_session::RuntimeNumber::Long(value)) => Ok(value as f64),
+                Some(suss_cli::portable_session::RuntimeNumber::Double(value))
+                    if value.fract() != 0.0 =>
+                {
+                    Ok(value)
+                }
+                other => panic!("{source}: number result, got {other:?}"),
+            }
         })
         .unwrap()
 }

@@ -1,9 +1,10 @@
 //! Portable source forms, separate from prototype EDN runtime values.
 //!
 //! Byte spans refer to the original UTF-8 source. String contents are UTF-16,
-//! including lone surrogates. Numbers are binary64 where binary64 holds the
-//! literal exactly; other Clojure numeric literals are [`ExactNumber`]s, which
-//! evaluation rejects until Suss has Clojure's numeric types (ADR-0003, #335).
+//! including lone surrogates. Integer literals in the long range are longs and
+//! other decimal literals doubles; BigInt, ratio and BigDecimal literals are
+//! [`ExactNumber`]s, which evaluation rejects until Suss has those types
+//! (ADR-0003, #338, #339).
 //! Reader metadata remains syntax until phase analysis interprets it. Reader work
 //! is cumulatively metered; deep syntax uses growable stacks and safe cleanup.
 use crate::{Keyword, ParseError, Symbol};
@@ -210,7 +211,7 @@ impl ExactNumber {
     /// The evaluation-time failure, until #335.
     pub fn unsupported_message(&self) -> String {
         format!(
-            "Unsupported numeric literal {}: ratios, BigInts, BigDecimals and integers beyond 2^53 need Clojure's numeric types (#335)",
+            "Unsupported numeric literal {}: ratios, BigInts and BigDecimals need Clojure's numeric types (#338, #339)",
             self.text
         )
     }
@@ -220,7 +221,10 @@ impl ExactNumber {
 pub enum Kind {
     Nil,
     Bool(bool),
+    /// A double.
     Number(f64),
+    /// A long: an integer literal in the 64-bit range without an `N` suffix.
+    Long(i64),
     /// See [`ExactNumber`].
     Exact(ExactNumber),
     String(Vec<u16>),
@@ -750,7 +754,7 @@ impl Reader<'_, '_, '_> {
                     }
                 };
                 self.logical_pending = pending;
-                if !matches!(selected.kind, Kind::Number(_)) {
+                if !matches!(selected.kind, Kind::Long(_) | Kind::Number(_)) {
                     return Err(self.fail(start, "Anonymous argument index requires an integer"));
                 }
                 self.anonymous_index_value(&self.source[selected.span.clone()], start)?
@@ -1193,6 +1197,7 @@ impl Reader<'_, '_, '_> {
                     token if numeric_start(token) => {
                         match number(token).map_err(|message| self.fail(start, message))? {
                             NumberToken::Double(value) => Kind::Number(value),
+                            NumberToken::Long(value) => Kind::Long(value),
                             NumberToken::Exact(value) => Kind::Exact(value),
                         }
                     }
@@ -1385,24 +1390,21 @@ pub(crate) fn numeric_start(token: &str) -> bool {
         _ => false,
     }
 }
-/// A numeric token: binary64, or an exact literal binary64 can't hold.
+/// A numeric token: a double, a long, or an exact literal neither holds.
 pub(crate) enum NumberToken {
     Double(f64),
+    Long(i64),
     Exact(ExactNumber),
 }
-/// Binary64 holds every integer up to 2^53 exactly.
-const MAX_EXACT: u64 = 1 << 53;
+/// Clojure reads an integer as a long when it fits and has no `N` suffix,
+/// and as a BigInt otherwise.
 fn integer_token(token: &str, value: num_bigint::BigInt, suffix_n: bool) -> NumberToken {
     use num_traits::ToPrimitive;
     match value.to_i64() {
-        Some(small) if !suffix_n && small.unsigned_abs() <= MAX_EXACT => {
-            // The pinned ClojureScript integer reader spells either signed
-            // integer zero as +0.
-            NumberToken::Double(if small == 0 { 0.0 } else { small as f64 })
-        }
-        small => NumberToken::Exact(ExactNumber {
+        Some(long) if !suffix_n => NumberToken::Long(long),
+        long => NumberToken::Exact(ExactNumber {
             text: token.to_owned(),
-            value: ExactValue::Integer { big: suffix_n || small.is_none(), value },
+            value: ExactValue::Integer { big: suffix_n || long.is_none(), value },
         }),
     }
 }
@@ -1429,26 +1431,18 @@ pub(crate) fn number(token: &str) -> Result<NumberToken, &'static str> {
         if negative {
             numerator = -numerator;
         }
-        // Terms beyond 2^53 make the literal exact even when it reduces to a
-        // small integer, as the runtime reader can only check that much.
-        let safe = BigInt::from(MAX_EXACT);
-        let large = numerator.magnitude() > safe.magnitude() || denominator > safe;
-        // Clojure reads a term beyond the long range as a BigInt.
-        let big = num_traits::ToPrimitive::to_i64(&numerator).is_none()
-            || num_traits::ToPrimitive::to_i64(&denominator).is_none();
+        // Clojure reads each term as a long when it fits and divides: two
+        // longs that divide evenly give a long (`4/2` is 2), but a BigInt
+        // term gives a BigInt (`36893488147419103232/8`), and so does a
+        // Long/MIN_VALUE term, which Clojure's long division takes through
+        // BigIntegers.
+        use num_traits::ToPrimitive;
+        let long = |term: &BigInt| term.to_i64().is_some_and(|term| term != i64::MIN);
+        let long_terms = long(&numerator) && long(&denominator);
         let divisor = numerator.gcd(&denominator);
         let (numerator, denominator) = (numerator / &divisor, denominator / divisor);
         if denominator == BigInt::from(1) {
-            if !large {
-                return Ok(integer_token(token, numerator, false));
-            }
-            return Ok(NumberToken::Exact(ExactNumber {
-                text: token.to_owned(),
-                value: ExactValue::Integer {
-                    big: big || num_traits::ToPrimitive::to_i64(&numerator).is_none(),
-                    value: numerator,
-                },
-            }));
+            return Ok(integer_token(token, numerator, !long_terms));
         }
         return Ok(NumberToken::Exact(ExactNumber {
             text: token.to_owned(),

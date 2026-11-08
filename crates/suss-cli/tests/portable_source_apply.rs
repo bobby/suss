@@ -1,19 +1,13 @@
-use suss_cli::portable_session::{Session, SessionValue};
-use wasmtime::Val;
+use suss_cli::portable_session::{RuntimeNumber, Session, SessionValue};
 
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+fn number(session: &mut Session, value: &SessionValue) -> RuntimeNumber {
     session
-        .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            Ok(*bits)
+        .inspect(value, |store, value| {
+            Ok(suss_cli::portable_session::runtime_number(store, &value)?.expect("Number layout"))
         })
         .unwrap()
 }
-fn eval_number(session: &mut Session, source: &str) -> u64 {
+fn eval_number(session: &mut Session, source: &str) -> RuntimeNumber {
     let value = session.eval(source).unwrap();
     number(session, &value)
 }
@@ -32,17 +26,17 @@ fn source_apply_preserves_fixed_variadic_and_captured_functions_after_gc() {
     session.eval("(def original (fn [x y] (+ x y))) (def captured original) (def variadic (fn [x & xs] (+ x (count xs))))").unwrap();
     assert_eq!(
         eval_number(&mut session, "(apply captured [17 19])"),
-        36.0f64.to_bits()
+        RuntimeNumber::Long(36)
     );
     assert_eq!(
         eval_number(&mut session, "(apply variadic 10 [1 2 3])"),
-        13.0f64.to_bits()
+        RuntimeNumber::Long(13)
     );
     session.eval("(def original (fn [x y] 99))").unwrap();
     session.collect().unwrap();
     assert_eq!(
         eval_number(&mut session, "(apply captured 20 [22])"),
-        42.0f64.to_bits()
+        RuntimeNumber::Long(42)
     );
 }
 
@@ -55,19 +49,19 @@ fn source_apply_invokes_actual_metafn_and_collection_methods() {
     session.collect().unwrap();
     assert_eq!(
         eval_number(&mut session, "(apply wrapped [41])"),
-        42.0f64.to_bits()
+        RuntimeNumber::Long(42)
     );
     assert_eq!(
         eval_number(&mut session, "(apply [17 19] [1])"),
-        19.0f64.to_bits()
+        RuntimeNumber::Long(19)
     );
     assert_eq!(
         eval_number(&mut session, "(apply {:x 23} [:x])"),
-        23.0f64.to_bits()
+        RuntimeNumber::Long(23)
     );
     assert_eq!(
         eval_number(&mut session, "(apply :x [{:x 29}])"),
-        29.0f64.to_bits()
+        RuntimeNumber::Long(29)
     );
 }
 
@@ -78,11 +72,11 @@ fn source_apply_runs_operands_once_before_language_arity_failure() {
         .eval("(def effects 0) (def target (fn [x] x))")
         .unwrap();
     assert!(matches!(session.eval("(apply (do (set! effects 1) target) (do (set! effects (+ effects 10)) 7) (do (set! effects (+ effects 100)) [8]))"), Err(suss_cli::portable_session::SessionError::Language(_))));
-    assert_eq!(eval_number(&mut session, "effects"), 111.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "effects"), RuntimeNumber::Long(111));
     session.collect().unwrap();
     assert_eq!(
         eval_number(&mut session, "(apply target [42])"),
-        42.0f64.to_bits()
+        RuntimeNumber::Long(42)
     );
 }
 
@@ -99,21 +93,21 @@ fn source_apply_high_arity_and_sequence_tail_are_preserved() {
             &mut session,
             &format!("(apply (fn [{parameters}] a24) [{arguments}])")
         ),
-        24.0f64.to_bits()
+        RuntimeNumber::Long(24)
     );
     session.eval("(def seq-effects 0) (deftype ApplySeq [n] ISeqable (-seq [this] this) ISeq (-first [_] (do (set! seq-effects (+ seq-effects 10)) n)) (-rest [_] (do (set! seq-effects (+ seq-effects 100)) (ApplySeq. (+ n 1)))) INext (-next [_] (do (set! seq-effects (+ seq-effects 1)) (ApplySeq. (+ n 1)))))").unwrap();
     assert_eq!(
         eval_number(&mut session, "(apply (fn [x y & more] x) (ApplySeq. 0))"),
-        0.0f64.to_bits()
+        RuntimeNumber::Long(0)
     );
-    assert_eq!(eval_number(&mut session, "seq-effects"), 124.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "seq-effects"), RuntimeNumber::Long(124));
     session.collect().unwrap();
     assert_eq!(
         eval_number(
             &mut session,
             "(apply (fn [& more] (first more)) (ApplySeq. 99))"
         ),
-        99.0f64.to_bits()
+        RuntimeNumber::Long(99)
     );
 }
 
@@ -137,21 +131,27 @@ fn source_apply_corpus_matches_in_both_phases_with_explicit_strict_arity_boundar
             session.collect().unwrap();
             let source = case["source"].as_str().unwrap();
             let actual = eval_number(&mut session, source);
-            let primary =
-                u64::from_str_radix(case["expected"]["bits"].as_str().unwrap(), 16).unwrap();
+            // The ClojureScript primary encodes every number as a double; these
+            // integral results are longs in JVM Clojure.
+            let primary = RuntimeNumber::Long(
+                f64::from_bits(
+                    u64::from_str_radix(case["expected"]["bits"].as_str().unwrap(), 16)
+                        .unwrap(),
+                ) as i64,
+            );
             if case["id"] == "strict-fixed-arity-boundary" {
-                assert_eq!(primary, 7.0f64.to_bits());
+                assert_eq!(primary, RuntimeNumber::Long(7));
                 assert_eq!(
                     actual,
-                    111.0f64.to_bits(),
+                    RuntimeNumber::Long(111),
                     "accepted design requires strict arity"
                 );
                 boundaries += 1;
             } else if case["id"] == "vector-wrong-arity" {
-                assert_eq!(primary, 1.0f64.to_bits());
+                assert_eq!(primary, RuntimeNumber::Long(1));
                 assert_eq!(
                     actual,
-                    47.0f64.to_bits(),
+                    RuntimeNumber::Long(47),
                     "accepted design requires strict vector arity"
                 );
                 boundaries += 1;

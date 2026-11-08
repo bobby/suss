@@ -1,5 +1,4 @@
 use suss_cli::portable_session::{Session, SessionError};
-use wasmtime::Val;
 fn number(session: &mut Session, source: &str) -> f64 {
     let value = session.eval(source).unwrap_or_else(|error| {
         panic!(
@@ -8,21 +7,34 @@ fn number(session: &mut Session, source: &str) -> f64 {
         )
     });
     session
-        .inspect(&value, |mut store, value| {
-            let fields = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap()
-                .fields(&mut store)?
-                .collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number")
-            };
-            Ok(f64::from_bits(*bits))
+        .inspect(&value, |store, value| {
+            // Integral results are longs, as in Clojure; only a fractional result
+            // may be a double.
+            match suss_cli::portable_session::runtime_number(store, &value)? {
+                Some(suss_cli::portable_session::RuntimeNumber::Long(value)) => Ok(value as f64),
+                Some(suss_cli::portable_session::RuntimeNumber::Double(value))
+                    if value.fract() != 0.0 =>
+                {
+                    Ok(value)
+                }
+                other => panic!("number result, got {other:?}"),
+            }
         })
         .unwrap()
 }
+/// The long or double `source` evaluates to.
+fn runtime_number(
+    session: &mut Session,
+    source: &str,
+) -> suss_cli::portable_session::RuntimeNumber {
+    let value = session.eval(source).unwrap();
+    session
+        .inspect(&value, |store, value| {
+            Ok(suss_cli::portable_session::runtime_number(store, &value)?.expect("number"))
+        })
+        .unwrap()
+}
+
 #[test]
 fn retained_map_mutation_helpers_execute_all_dissoc_arities_and_sequence_dependencies() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
@@ -85,26 +97,29 @@ fn retained_map_mutation_helpers_dissoc_bang_dispatches_each_key_once_and_return
 
 #[test]
 fn retained_hash_map_quotient_dependencies_preserve_numeric_boundaries_and_recovery() {
+    use suss_cli::portable_session::RuntimeNumber::{Double, Long};
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         for (source, expected) in [
-            ("(suss.bootstrap/f64-ceil -1.75)", -1.0_f64),
-            ("(suss.bootstrap/f64-ceil 1.75)", 2.0),
-            ("(suss.bootstrap/f64-ceil -0.75)", -0.0),
-            ("(suss.bootstrap/f64-ceil -0.0)", -0.0),
-            ("(suss.bootstrap/f64-ceil 0.0)", 0.0),
-            ("(suss.bootstrap/f64-ceil ##Inf)", f64::INFINITY),
-            ("(suss.bootstrap/f64-ceil ##-Inf)", f64::NEG_INFINITY),
-            ("(fix -1.75)", -1.0),
-            ("(fix 1.75)", 1.0),
-            ("(quot -7 3)", -2.0),
-            ("(quot 7 -3)", -2.0),
-            ("(quot -7 -3)", 2.0),
+            ("(suss.bootstrap/f64-ceil -1.75)", Double(-1.0)),
+            ("(suss.bootstrap/f64-ceil 1.75)", Double(2.0)),
+            ("(suss.bootstrap/f64-ceil -0.75)", Double(-0.0)),
+            ("(suss.bootstrap/f64-ceil -0.0)", Double(-0.0)),
+            ("(suss.bootstrap/f64-ceil 0.0)", Double(0.0)),
+            ("(suss.bootstrap/f64-ceil ##Inf)", Double(f64::INFINITY)),
+            ("(suss.bootstrap/f64-ceil ##-Inf)", Double(f64::NEG_INFINITY)),
+            ("(fix -1.75)", Double(-1.0)),
+            ("(fix 1.75)", Double(1.0)),
+            ("(quot -7 3)", Long(-2)),
+            ("(quot 7 -3)", Long(-2)),
+            ("(quot -7 -3)", Long(2)),
         ] {
-            assert_eq!(
-                number(&mut session, source).to_bits(),
-                expected.to_bits(),
-                "{source}"
-            );
+            let actual = runtime_number(&mut session, source);
+            // Compare bits so -0.0 stays distinct from 0.0.
+            let bits = |number| match number {
+                Long(value) => (0, value as u64),
+                Double(value) => (1, value.to_bits()),
+            };
+            assert_eq!(bits(actual), bits(expected), "{source}: {actual:?}");
         }
         assert!(number(&mut session, "(suss.bootstrap/f64-ceil ##NaN)").is_nan());
         for source in [

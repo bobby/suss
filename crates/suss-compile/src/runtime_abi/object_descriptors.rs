@@ -72,14 +72,10 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         Return,
         End,
         LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        Call(b.names["number-test"]),
         If(BlockType::Empty),
         LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         LocalSet(1),
         LocalGet(1),
         F64Const(0.0.into()),
@@ -110,20 +106,16 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
     ];
     code.extend([
         LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        Call(b.names["number-test"]),
         LocalGet(1),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        Call(b.names["number-test"]),
         I32And,
         If(BlockType::Empty),
     ]);
     for (value, local) in [(0, 2), (1, 3)] {
         code.extend([
             LocalGet(value),
-            RefCastNonNull(HeapType::Concrete(NUMBER)),
-            StructGet {
-                struct_type_index: NUMBER,
-                field_index: 0,
-            },
+            Call(b.names["number-unbox"]),
             LocalSet(local),
         ]);
     }
@@ -180,7 +172,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
     code.extend([
         End,
         LocalGet(3),
-        Call(b.names["coerce-string"]),
+        Call(b.names["property-key"]),
         LocalSet(3),
         LocalGet(4),
         Call(b.names["native-object?"]),
@@ -534,7 +526,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
     }
     code.extend([
         LocalGet(3),
-        Call(b.names["coerce-string"]),
+        Call(b.names["property-key"]),
         LocalSet(3),
         LocalGet(2),
         LocalGet(3),
@@ -661,7 +653,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
     }
     code.extend([
         LocalGet(3),
-        Call(b.names["coerce-string"]),
+        Call(b.names["property-key"]),
         LocalSet(3),
         LocalGet(2),
         LocalGet(3),

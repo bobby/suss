@@ -1,7 +1,7 @@
 //! Bounded native transport between reader forms and real compiled macro values.
 //! Macro bodies execute in Wasm; this module constructs and reads nominal data.
 use crate::portable::Diagnostic;
-use crate::portable_session::{Session, SessionError, SessionValue};
+use crate::portable_session::{RuntimeNumber, Session, SessionError, SessionValue, runtime_number};
 use std::{collections::BTreeMap, ops::Range, sync::Arc};
 use suss_reader::forms::{Form, Kind};
 use wasmtime::{AnyRef, AsContextMut, Rooted, StoreContextMut, Val};
@@ -406,11 +406,9 @@ impl FormBridge {
             } else {
                 let hash = session.invoke(&self.core.factories["hash"], &[key])?;
                 session.inspect(&hash, |mut store, hash| {
-                    let data = fields(&mut store, &hash, 1)?;
-                    let [Val::F64(bits)] = data.as_slice() else {
+                    let Some(value) = number(&mut store, &hash)? else {
                         return Err(error("Compiler map hash requires a numeric scalar"));
                     };
-                    let value = f64::from_bits(*bits);
                     // ECMAScript ToUint32: truncation followed by modulo 2^32,
                     // with nonfinite numbers and signed zero mapped to zero.
                     Ok(if value.is_finite() {
@@ -448,7 +446,7 @@ impl FormBridge {
         let count = pairs.len() + usize::from(nil_value.is_some());
         let count = self.scalar(
             session,
-            &crate::portable::hir::Literal::Number(count as f64),
+            &crate::portable::hir::Literal::Long(count as i64),
         )?;
         if entries.len() <= 8 {
             let mut data = pairs
@@ -541,8 +539,8 @@ impl FormBridge {
             return Ok(nil.clone());
         }
         if pairs.len() > 1 && pairs.iter().all(|pair| pair.0 == pairs[0].0) {
-            let hash = self.scalar(session, &Literal::Number(pairs[0].0 as i32 as f64))?;
-            let count = self.scalar(session, &Literal::Number(pairs.len() as f64))?;
+            let hash = self.scalar(session, &Literal::Long(i64::from(pairs[0].0 as i32)))?;
+            let count = self.scalar(session, &Literal::Long(pairs.len() as i64))?;
             let items = pairs
                 .iter()
                 .flat_map(|(_, key, value)| [key, value])
@@ -577,7 +575,7 @@ impl FormBridge {
                 items.push(self.map_node(session, &group, shift + 5, nil)?);
             }
         }
-        let bitmap = self.scalar(session, &Literal::Number(bitmap as i32 as f64))?;
+        let bitmap = self.scalar(session, &Literal::Long(i64::from(bitmap as i32)))?;
         let array = self.array(session, &items.iter().collect::<Vec<_>>())?;
         self.construct(session,
             Class::BitmapIndexedNode,
@@ -670,8 +668,8 @@ impl FormBridge {
             shift += 5;
         }
         let root = self.vector_node(session, &items[..tail_offset], shift, &nil)?;
-        let count = self.scalar(session, &Literal::Number(items.len() as f64))?;
-        let shift = self.scalar(session, &Literal::Number(shift as f64))?;
+        let count = self.scalar(session, &Literal::Long(items.len() as i64))?;
+        let shift = self.scalar(session, &Literal::Long(shift as i64))?;
         self.construct(session,
             Class::PersistentVector,
             &[&nil, &count, &shift, &root, &tail, &nil],
@@ -721,7 +719,7 @@ impl FormBridge {
         for (index, value) in items.iter().enumerate().rev() {
             let count = self.scalar(
                 session,
-                &crate::portable::hir::Literal::Number((items.len() - index) as f64),
+                &crate::portable::hir::Literal::Long((items.len() - index) as i64),
             )?;
             tail = self.construct(session,
                 Class::List,
@@ -896,6 +894,7 @@ impl FormBridge {
                         Kind::Nil => self.scalar(session, &Literal::Nil)?,
                         Kind::Bool(value) => self.scalar(session, &Literal::Bool(*value))?,
                         Kind::Number(value) => self.scalar(session, &Literal::Number(*value))?,
+                        Kind::Long(value) => self.scalar(session, &Literal::Long(*value))?,
                         Kind::Exact(value) => self.identifier(
                             session,
                             Some(suss_reader::forms::EXACT_NUMBER_NAMESPACE),
@@ -1071,6 +1070,10 @@ fn fields(
         return Err(error("Unexpected structure layout"));
     }
     Ok(object.fields(&mut *store)?.collect())
+}
+/// A runtime long or double as a double; these fields are bounded integers.
+fn number(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<Option<f64>> {
+    Ok(runtime_number(&mut *store, value)?.map(RuntimeNumber::as_f64))
 }
 fn array(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<Vec<Val>> {
     let array = reference(value)?
@@ -1296,12 +1299,18 @@ fn decode_datum_inner<T: DatumTarget>(
     }
     let mut reader_metadata = vec![];
     let tag = sentinel(store, value)?;
-    // Nil has no reference; other sentinels need none.
-    let reference = match tag {
-        Some(_) => None,
-        None => Some(reference(value)?),
+    let long = match runtime_number(&mut *store, value)? {
+        Some(RuntimeNumber::Long(long)) => Some(long),
+        _ => None,
     };
-    let kind = if let Some(tag) = tag {
+    // Nil has no reference; other sentinels and an i31 long need none.
+    let reference = match (tag, long) {
+        (None, None) => Some(reference(value)?),
+        _ => None,
+    };
+    let kind = if let Some(long) = long {
+        DecodedKind::Plain(Kind::Long(long))
+    } else if let Some(tag) = tag {
         match tag {
             0 => DecodedKind::Plain(Kind::Nil),
             2 => DecodedKind::Plain(Kind::Bool(false)),
@@ -1719,11 +1728,10 @@ fn sequence_inner<T: DatumTarget>(
                     metadata(store, &data[0], classes, span, depth, budget)?;
                 }
                 if count == 5 {
-                    let boxed = fields(store, &data[3], 1)?;
-                    let [Val::F64(bits)] = boxed.as_slice() else {
+                    let Some(count) = number(store, &data[3])? else {
                         return Err(error("Invalid list count"));
                     };
-                    counts.push((items.len(), f64::from_bits(*bits)));
+                    counts.push((items.len(), count));
                 }
                 items.push(decode_datum(
                     store,
@@ -1919,11 +1927,9 @@ fn append_indexed<T: DatumTarget>(
     if data.len() != 3 {
         return Err(error("Invalid IndexedSeq field layout"));
     }
-    let index = fields(store, &data[1], 1)?;
-    let [Val::F64(bits)] = index.as_slice() else {
+    let Some(index) = number(store, &data[1])? else {
         return Err(error("Invalid IndexedSeq index"));
     };
-    let index = f64::from_bits(*bits);
     if !index.is_finite() || index < 0.0 || index.fract() != 0.0 {
         return Err(error("Invalid IndexedSeq index"));
     }
@@ -1973,11 +1979,9 @@ fn append_indexed<T: DatumTarget>(
 }
 
 fn integer(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<usize> {
-    let data = fields(store, value, 1)?;
-    let [Val::F64(bits)] = data.as_slice() else {
+    let Some(n) = number(store, value)? else {
         return Err(error("Invalid vector integer field"));
     };
-    let n = f64::from_bits(*bits);
     if !n.is_finite() || n < 0.0 || n.fract() != 0.0 || n > f64::from(u32::MAX) {
         return Err(error("Vector integer field exceeds ABI range"));
     }
@@ -2002,11 +2006,9 @@ fn source_array_suffix(
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
     fn uint32(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<u32> {
-        let data = fields(store, value, 1)?;
-        let [Val::F64(bits)] = data.as_slice() else {
+        let Some(n) = number(store, value)? else {
             return Err(error("Invalid source array uint32"));
         };
-        let n = f64::from_bits(*bits);
         if !n.is_finite() || n < 0.0 || n > f64::from(u32::MAX) || n.fract() != 0.0 {
             return Err(error("Invalid source array uint32"));
         }
@@ -2378,11 +2380,9 @@ fn map_sequence_pairs_inner(
     Ok(pairs)
 }
 fn bitmap(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<u32> {
-    let data = fields(store, value, 1)?;
-    let [Val::F64(bits)] = data.as_slice() else {
+    let Some(n) = number(store, value)? else {
         return Err(error("Invalid hash trie bitmap"));
     };
-    let n = f64::from_bits(*bits);
     if !n.is_finite() || n.fract() != 0.0 || n < i32::MIN as f64 || n > i32::MAX as f64 {
         return Err(error("Invalid signed hash trie bitmap"));
     }

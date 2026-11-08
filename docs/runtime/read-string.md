@@ -107,16 +107,14 @@ them against `*ns*`, and the compiler against the current namespace (#30).
 - **Records:** only `defrecord` types are readable. Clojure can construct any
   class with a matching constructor. An unregistered name fails with "No
   record type for tag ...".
-- **Data:** characters are one-unit strings and numbers are binary64.
-  Every Clojure numeric literal is read with the compiler's rules
-  ([reader forms](reader-forms.md)), but one binary64 can't hold, such as
-  `1/3`, `1N`, `1.5M` or `9007199254740993`, fails with "Unsupported numeric
-  literal ..." unless it is in an unselected conditional branch or dropped
-  with `#_`, until
-  Clojure's numeric types arrive ([ADR-0003](../adr/0003-clojure-numeric-tower.md),
-  #335). Printing and reading back an integral double beyond 2^53, which
-  prints without a decimal point, fails the same way. Duplicate keys are found by Suss's `=`, so
-  `#{1 1.0}` is a duplicate.
+- **Data:** characters are one-unit strings. Integers in the long range read
+  as longs and decimals as doubles (#335), with the compiler's rules
+  ([reader forms](reader-forms.md)); a literal that needs a BigInt, Ratio or
+  BigDecimal, such as `1/3`, `1N`, `1.5M` or `9223372036854775808`, fails
+  with "Unsupported numeric literal ..." unless it is in an unselected
+  conditional branch or dropped with `#_`, until #338 and #339. Duplicate keys
+  are found by Suss's `=`, so `#{1 1}` is a duplicate; `#{1 1.0}` holds two
+  elements, as in Clojure.
 - **Errors:** errors are `ex-info` values with reader data, not
   `ReaderException`s, and a non-string argument fails with "read-string
   requires a string".
@@ -148,10 +146,10 @@ character class table and builds values with transients. `read-form` and
 because a Wasm frame holds a slot for every value its function keeps across a
 call. Other forms dispatch through tables of handlers indexed by the next unit.
 
-Numbers follow the compiler's reader: decimal through the runtime's correctly
-rounded parser, and other radixes exactly. Digits beyond 2^53 in a radix that
-is not a power of two are converted exactly to hexadecimal, which the parser
-rounds once. A `suss.bootstrap/string-from-unit` primitive builds the
+Numbers follow the compiler's reader. Integers in every radix, and ratio terms,
+are read exactly as longs by a private `suss.bootstrap/parse-long` primitive,
+which reports a value beyond the long range so the reader can reject it as a
+BigInt; doubles go through the runtime's correctly rounded parser. A `suss.bootstrap/string-from-unit` primitive builds the
 one-unit strings of escapes and characters.
 
 `TaggedLiteral`, `tagged-literal?` and `tagged-literal` are imported from the

@@ -117,17 +117,12 @@ fn compiler_macro_field_records_preserve_declarations_access_and_parameter_shado
         for name in ["result", "direct-result"] {
             let result = session.eval(name).unwrap();
             session
-                .inspect(&result, |mut store, value| {
-                    let number = value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_struct(&store)?
-                        .unwrap()
-                        .fields(&mut store)?
-                        .next()
-                        .unwrap()
-                        .unwrap_f64();
-                    assert_eq!(number.to_bits(), 42f64.to_bits());
+                .inspect(&result, |store, value| {
+                    let number = suss_compile::portable_session::runtime_number(store, &value)?;
+                    assert_eq!(
+                        number,
+                        Some(suss_compile::portable_session::RuntimeNumber::Long(42))
+                    );
                     Ok(())
                 })
                 .unwrap();

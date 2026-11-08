@@ -1,5 +1,69 @@
 use suss_cli::portable_session::Session;
-use wasmtime::Val;
+
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+/// An expected number compares by `num`: integral values are longs.
+impl PartialEq<f64> for Number {
+    fn eq(&self, expected: &f64) -> bool {
+        *self == num(*expected)
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
+
+/// Whether `actual` matches a pinned `f64` observation. The ClojureScript
+/// corpus cannot distinguish longs: an integral observation is a Clojure long,
+/// or an integral double when the source has a double operand.
+fn matches_pinned(actual: Number, expected: &serde_json::Value, source: &str) -> bool {
+    let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+    match actual {
+        Number::Long(_) => actual == num(f64::from_bits(bits)),
+        Number::Double(actual) => {
+            actual == bits
+                && (num(f64::from_bits(bits)) == Number::Double(bits)
+                    || source.contains("##")
+                    || source.as_bytes().windows(3).any(|w| {
+                        w[0].is_ascii_digit()
+                            && (w[1] == b'.' || w[1] == b'e')
+                            && (w[2].is_ascii_digit() || w[2] == b'-')
+                    }))
+        }
+    }
+}
+/// The pinned observation when `actual` matches it, otherwise a distinct value.
+fn number_observation(actual: Number, expected: &serde_json::Value, source: &str) -> serde_json::Value {
+    if matches_pinned(actual, expected, source) {
+        expected.clone()
+    } else {
+        serde_json::json!({ "tag": "number", "actual": format!("{actual:?}") })
+    }
+}
 
 #[test]
 fn bitwise_hash_match_independently_decoded_primary_observations_after_gc() {
@@ -22,6 +86,25 @@ fn bitwise_hash_match_independently_decoded_primary_observations_after_gc() {
         let id = case["id"].as_str().unwrap();
         assert!(ids.insert(id));
         let source = case["source"].as_str().unwrap();
+        // Clojure governs: dividing longs by zero throws rather than producing
+        // the pinned ClojureScript NaN or infinity operand.
+        let divides_by_zero = [
+            "int-nan",
+            "int-infinity",
+            "shift-nan",
+            "review-shift-infinity",
+            "review-count-nan",
+        ];
+        if divides_by_zero.contains(&id) {
+            if !matches!(
+                session.eval(source),
+                Err(suss_cli::portable_session::SessionError::Language(_))
+            ) {
+                failures.push(format!("{id}: {source}: expected a division by zero"));
+            }
+            session.collect().unwrap();
+            continue;
+        }
         let value = match session.eval(source) {
             Ok(value) => value,
             Err(error) => {
@@ -31,17 +114,13 @@ fn bitwise_hash_match_independently_decoded_primary_observations_after_gc() {
         };
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "f64" => {
-                let bits = session
-                    .inspect(&value, |mut store, value| {
-                        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-                        let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-                        let [Val::F64(bits)] = fields.as_slice() else {
-                            panic!("Number layout");
-                        };
-                        Ok(*bits)
-                    })
-                    .unwrap();
-                serde_json::json!({"tag":"f64", "bits":format!("{bits:016x}")})
+                number_observation(
+                    session
+                        .inspect(&value, |mut store, value| exact_number(&mut store, &value))
+                        .unwrap(),
+                    &case["expected"],
+                    &source,
+                )
             }
             "nil" => {
                 session
@@ -98,13 +177,10 @@ fn bitwise_hash_match_independently_decoded_primary_observations_after_gc() {
     );
 }
 
-fn bitwise_number(session: &mut Session, source: &str) -> f64 {
+fn bitwise_number(session: &mut Session, source: &str) -> Number {
     let value = session.eval(source).unwrap();
     session
-        .inspect(&value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            Ok(object.field(&mut store, 0)?.unwrap_f64())
-        })
+        .inspect(&value, |mut store, value| exact_number(&mut store, &value))
         .unwrap()
 }
 
@@ -200,11 +276,11 @@ fn captured_variadic_bitwise_body_keeps_core_reducer_under_user_redefinition() {
         // Four pinned public wrapper errors remain separate observations, never
         // counted as equal public-source matches. The five body diagnostics use
         // development-only JS to inspect the retained implementation directly.
-        let actual = bitwise_number(&mut session, case["native-source"].as_str().unwrap());
-        assert_eq!(
-            format!("{:016x}", actual.to_bits()),
-            case["expected-native"]["bits"].as_str().unwrap(),
-            "{}",
+        let source = case["native-source"].as_str().unwrap();
+        let actual = bitwise_number(&mut session, source);
+        assert!(
+            matches_pinned(actual, &case["expected-native"], source),
+            "{}: {actual:?}",
             case["id"]
         );
         session.collect().unwrap();

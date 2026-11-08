@@ -28,8 +28,8 @@ fn bundled_async_library_loads_and_compiled_macros_preserve_ordered_body_forms()
     let locals = HashMap::new();
     let fields = HashMap::new();
     for (source, marker, expected) in [
-        ("(suss.async/future 17 42)", "future*", vec![17.0f64, 42.0f64]),
-        ("(suss.async/await 42)", "await*", vec![42.0f64]),
+        ("(suss.async/future 17 42)", "future*", vec![17, 42]),
+        ("(suss.async/await 42)", "await*", vec![42]),
     ] {
         let form = read_forms(source).unwrap().remove(0);
         let expanded = macros
@@ -58,10 +58,10 @@ fn bundled_async_library_loads_and_compiled_macros_preserve_ordered_body_forms()
         assert_eq!(head.name, marker);
         assert_eq!(items.len(), expected.len() + 1);
         for (form, expected) in items[1..].iter().zip(expected) {
-            let Kind::Number(actual) = &form.kind else {
+            let Kind::Long(actual) = &form.kind else {
                 panic!("body form must remain numeric");
             };
-            assert_eq!(actual.to_bits(), expected.to_bits());
+            assert_eq!(*actual, expected);
         }
     }
     session.collect().unwrap();

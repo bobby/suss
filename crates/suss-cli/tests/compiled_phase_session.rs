@@ -1,20 +1,45 @@
 use suss_cli::portable_session::{Session, SessionError, SessionValue};
 use suss_compile::portable::resolve::Phase;
-use wasmtime::Val;
 
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
+
+fn number(session: &mut Session, value: &SessionValue) -> Number {
     session
         .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Expected Number layout");
-            };
-            Ok(*bits)
+            exact_number(&mut store, &value)
         })
         .unwrap()
 }
-fn eval_number(session: &mut Session, source: &str) -> u64 {
+fn eval_number(session: &mut Session, source: &str) -> Number {
     let value = session.eval(source).unwrap();
     number(session, &value)
 }
@@ -41,13 +66,13 @@ fn compiled_phase_session_uses_separate_store_cells_core_and_roots() {
         Err(SessionError::ForeignValue)
     ));
     runtime.eval("(reset! a 31)").unwrap();
-    assert_eq!(eval_number(&mut macros, "@a"), 2f64.to_bits());
+    assert_eq!(eval_number(&mut macros, "@a"), num(2.0));
     macros.eval("(def value 29) (reset! a 37)").unwrap();
     macros.collect().unwrap();
     let result = macros.invoke(&closure, &[]).unwrap();
-    assert_eq!(number(&mut macros, &result), 29f64.to_bits());
-    assert_eq!(eval_number(&mut runtime, "value"), 17f64.to_bits());
-    assert_eq!(eval_number(&mut runtime, "@a"), 31f64.to_bits());
+    assert_eq!(number(&mut macros, &result), num(29.0));
+    assert_eq!(eval_number(&mut runtime, "value"), num(17.0));
+    assert_eq!(eval_number(&mut runtime, "@a"), num(31.0));
     let name = macros.eval("(name (first '(macro/data)))").unwrap();
     let units = macros
         .inspect(&name, |mut store, value| {
@@ -70,8 +95,8 @@ fn compiled_phase_session_uses_separate_store_cells_core_and_roots() {
         macros.eval("shared/value"),
         Err(SessionError::Compile(_))
     ));
-    assert_eq!(eval_number(&mut macros, "@(atom 41)"), 41f64.to_bits());
-    assert_eq!(eval_number(&mut runtime, "@a"), 31f64.to_bits());
+    assert_eq!(eval_number(&mut macros, "@(atom 41)"), num(41.0));
+    assert_eq!(eval_number(&mut runtime, "@a"), num(31.0));
 }
 
 #[test]
@@ -101,15 +126,15 @@ fn compiled_phase_session_load_reload_failure_and_reset_preserve_phase() {
     macros.reload_namespace("phase.target", true).unwrap();
     assert_eq!(
         eval_number(&mut macros, "(phase.target/read)"),
-        11f64.to_bits()
+        num(11.0)
     );
     assert_eq!(
         eval_number(&mut runtime, "(phase.target/read)"),
-        7f64.to_bits()
+        num(7.0)
     );
     macros.collect().unwrap();
     let result = macros.invoke(&captured, &[]).unwrap();
-    assert_eq!(number(&mut macros, &result), 11f64.to_bits());
+    assert_eq!(number(&mut macros, &result), num(11.0));
     let before = macros.stats();
     std::fs::write(&dependency, "(ns phase.dep) (def value absent)").unwrap();
     assert!(matches!(
@@ -119,7 +144,7 @@ fn compiled_phase_session_load_reload_failure_and_reset_preserve_phase() {
     assert_eq!(macros.stats(), before);
     assert_eq!(
         eval_number(&mut macros, "(phase.target/read)"),
-        11f64.to_bits()
+        num(11.0)
     );
     std::fs::write(&dependency, "(ns phase.dep) (def value (throw 19))").unwrap();
     assert!(matches!(
@@ -128,13 +153,13 @@ fn compiled_phase_session_load_reload_failure_and_reset_preserve_phase() {
     ));
     assert_eq!(
         eval_number(&mut macros, "(phase.target/read)"),
-        11f64.to_bits()
+        num(11.0)
     );
     std::fs::write(&dependency, "(ns phase.dep) (def value 23)").unwrap();
     macros.load_namespace("phase.target").unwrap();
     assert_eq!(
         eval_number(&mut macros, "(phase.target/read)"),
-        23f64.to_bits()
+        num(23.0)
     );
     macros.reset().unwrap();
     assert_eq!(macros.phase(), Phase::Macro);
@@ -145,7 +170,7 @@ fn compiled_phase_session_load_reload_failure_and_reset_preserve_phase() {
     ));
     assert_eq!(
         eval_number(&mut runtime, "(phase.target/read)"),
-        7f64.to_bits()
+        num(7.0)
     );
 }
 
@@ -175,17 +200,17 @@ fn compiled_phase_session_invokes_compiled_transformer_and_failed_reset_keeps_st
         .eval("(fn [form] (first (next (next form))))")
         .unwrap();
     let value = macros.invoke(&constant, &[&expansion]).unwrap();
-    assert_eq!(number(&mut macros, &value), 1f64.to_bits());
-    assert_eq!(eval_number(&mut macros, "count"), 1f64.to_bits());
+    assert_eq!(number(&mut macros, &value), num(1.0));
+    assert_eq!(eval_number(&mut macros, "count"), num(1.0));
     macros.set_operation_fuel(1);
     let before = macros.stats();
     assert!(macros.reset().is_err());
     assert_eq!(macros.phase(), Phase::Macro);
     assert_eq!(macros.stats(), before);
     macros.set_operation_fuel(10_000_000);
-    assert_eq!(eval_number(&mut macros, "count"), 1f64.to_bits());
+    assert_eq!(eval_number(&mut macros, "count"), num(1.0));
     let another = macros.invoke(&transformer, &[&argument]).unwrap();
     let value = macros.invoke(&constant, &[&another]).unwrap();
-    assert_eq!(number(&mut macros, &value), 1f64.to_bits());
-    assert_eq!(eval_number(&mut macros, "count"), 2f64.to_bits());
+    assert_eq!(number(&mut macros, &value), num(1.0));
+    assert_eq!(eval_number(&mut macros, "count"), num(2.0));
 }

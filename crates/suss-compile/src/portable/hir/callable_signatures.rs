@@ -104,7 +104,7 @@ impl Analyzer<'_> {
                 form,
                 Literal::String("cljs$lang$maxFixedArity".encode_utf16().collect()),
             );
-            let count = self.literal_form(form, Literal::Number(fixed as f64));
+            let count = self.literal_form(form, Literal::Long(fixed as i64));
             effects.push(self.nominal(
                 form,
                 Nominal::CoreNamedSet,

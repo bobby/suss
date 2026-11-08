@@ -28,7 +28,8 @@ pub fn form_to_value(form: &Form) -> Result<Value, Error> {
             Kind::Nil => Value::Nil,
             Kind::Bool(b) => Value::Bool(*b),
             Kind::Number(n) => Value::Number(*n),
-            // Tooling data has no exact numbers until #335: the literal's text
+            Kind::Long(n) => Value::Long(*n),
+            // Tooling data has no exact numbers until #338: the literal's text
             // under EXACT_NUMBER_TAG, as a lone surrogate is kept.
             Kind::Exact(number) => Value::Tagged(
                 Symbol { namespace: Some("suss".into()), name: EXACT_NUMBER_TAG.into() },
@@ -74,7 +75,7 @@ pub fn string_value(units: &[u16]) -> Value {
         Ok(text) => Value::String(text),
         Err(_) => Value::Tagged(
             Symbol { namespace: Some("suss".into()), name: UTF16_TAG.into() },
-            Box::new(Value::Vector(units.iter().map(|&u| Value::Number(f64::from(u))).collect())),
+            Box::new(Value::Vector(units.iter().map(|&u| Value::Long(i64::from(u))).collect())),
         ),
     }
 }
@@ -111,6 +112,7 @@ pub fn value_to_form(value: &Value) -> Form {
             Value::Nil => form(Kind::Nil),
             Value::Bool(b) => form(Kind::Bool(*b)),
             Value::Number(n) => form(Kind::Number(*n)),
+            Value::Long(n) => form(Kind::Long(*n)),
             Value::String(s) => form(Kind::String(s.encode_utf16().collect())),
             Value::Keyword(k) => form(Kind::Keyword(k.clone())),
             Value::Symbol(s) => form(Kind::Symbol(s.clone())),
@@ -122,10 +124,10 @@ pub fn value_to_form(value: &Value) -> Form {
             )),
             Value::Tagged(tag, inner) => match (tag.namespace.as_deref(), tag.name.as_str(), &**inner) {
                 (Some("suss"), UTF16_TAG, Value::Vector(units))
-                    if units.iter().all(|u| matches!(u, Value::Number(n) if n.fract() == 0.0 && (0.0..=65535.0).contains(n))) =>
+                    if units.iter().all(|u| matches!(u, Value::Long(n) if (0..=65535).contains(n))) =>
                 {
                     form(Kind::String(
-                        units.iter().map(|u| match u { Value::Number(n) => *n as u16, _ => 0 }).collect(),
+                        units.iter().map(|u| match u { Value::Long(n) => *n as u16, _ => 0 }).collect(),
                     ))
                 }
                 _ => form(Kind::Tagged { tag: tag.clone(), form: Box::new(value_to_form(inner)) }),
@@ -278,7 +280,7 @@ fn trees<'f>(items: impl Iterator<Item = &'f Form>, lines: Option<&LineIndex>) -
 
 /// `{:start :end}` and, with `lines`, `:line :column :end-line :end-column`.
 pub fn position(span: &std::ops::Range<usize>, lines: Option<&LineIndex>) -> BTreeMap<Value, Value> {
-    let number = |n: usize| Value::Number(n as f64);
+    let number = |n: usize| Value::Long(n as i64);
     let mut map = BTreeMap::from([(keyword("start"), number(span.start)), (keyword("end"), number(span.end))]);
     if let Some(lines) = lines {
         let (line, column) = lines.position(span.start);

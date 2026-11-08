@@ -75,8 +75,12 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     body.extend([RefEq, I32Or]);
     boolean(&mut body);
     declared.push(factory(b, "predicate-nil", 1, &[], &body));
+    let mut body = vec![];
+    argument(&mut body, 0);
+    body.push(Call(b.names["number-test"]));
+    boolean(&mut body);
+    declared.push(factory(b, "predicate-number", 1, &[], &body));
     for (name, ty) in [
-        ("predicate-number", NUMBER),
         ("predicate-string", STRING),
         ("predicate-function", 4),
     ] {
@@ -94,7 +98,27 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     body.push(LocalSet(2));
     argument(&mut body, 1);
     body.push(LocalSet(3));
+    // Two longs are identical when equal, as an i31 is; two doubles too,
+    // as JavaScript's primitive numbers were. A long is never a double.
+    let long_test = b.names["long-test"];
+    let long_unbox = b.names["long-unbox"];
     body.extend([
+        LocalGet(2),
+        Call(long_test),
+        LocalGet(3),
+        Call(long_test),
+        I32And,
+        If(BlockType::Empty),
+        LocalGet(2),
+        Call(long_unbox),
+        LocalGet(3),
+        Call(long_unbox),
+        I64Eq,
+    ]);
+    boolean(&mut body);
+    body.extend([
+        Return,
+        End,
         LocalGet(2),
         RefTestNonNull(HeapType::Concrete(NUMBER)),
         LocalGet(3),

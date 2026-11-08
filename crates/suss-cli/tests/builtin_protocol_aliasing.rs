@@ -46,7 +46,7 @@ fn aliased_core_method_vars_do_not_receive_native_extensions() {
             session.eval("(def own-original -own)").unwrap();
             session.eval("(def -own suss.core/-name)").unwrap();
             session.eval(&format!("(extend-type {kind} IOwn (-own [_] 92))")).unwrap();
-            assert_eq!(observe(&mut session, &format!("(own-original {value})")), Observation::Number(92.0_f64.to_bits()), "{phase} {kind}");
+            assert_eq!(observe(&mut session, &format!("(own-original {value})")), Observation::Long(92), "{phase} {kind}");
             assert_eq!(observe(&mut session, &core_reads(value)), before, "{phase} {kind}");
         }
     }
@@ -73,7 +73,7 @@ fn native_extensions_follow_protocol_redefinition() {
     for (phase, mut session) in sessions() {
         session.eval("(defprotocol IAgain (-again [x]))").unwrap();
         session.eval("(extend-type string IAgain (-again [_] 1))").unwrap();
-        assert_eq!(observe(&mut session, "(-again \"s\")"), Observation::Number(1.0_f64.to_bits()), "{phase}");
+        assert_eq!(observe(&mut session, "(-again \"s\")"), Observation::Long(1), "{phase}");
         // A fresh defprotocol starts with fresh tables, as it does in Clojure.
         session.eval("(defprotocol IAgain (-again [x]))").unwrap();
         assert_eq!(
@@ -82,7 +82,7 @@ fn native_extensions_follow_protocol_redefinition() {
             "{phase}"
         );
         session.eval("(extend-type string IAgain (-again [_] 2))").unwrap();
-        assert_eq!(observe(&mut session, "(-again \"s\")"), Observation::Number(2.0_f64.to_bits()), "{phase}");
+        assert_eq!(observe(&mut session, "(-again \"s\")"), Observation::Long(2), "{phase}");
     }
 }
 
@@ -98,7 +98,7 @@ fn user_redefinition_of_a_core_protocol_does_not_replace_core_tables() {
         session.eval("(extend-type default IHash (-hash [_] 91))").unwrap();
         session.enter_namespace("user").unwrap();
         // The user definition dispatches through its own tables.
-        assert_eq!(observe(&mut session, "(suss.core/-hash f)"), Observation::Number(91.0_f64.to_bits()), "{phase}");
+        assert_eq!(observe(&mut session, "(suss.core/-hash f)"), Observation::Long(91), "{phase}");
         // Core's hash still uses core's default IHash implementation.
         assert_eq!(observe(&mut session, "[(hash f) (= f f) (count nil)]"), before, "{phase}");
     }

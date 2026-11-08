@@ -5,8 +5,8 @@ mod portable_decode;
 use portable_decode::{Decoder, Observation};
 use suss_cli::{portable_macros::CompiledMacros, portable_session::Session};
 
-fn number(value: f64) -> Observation {
-    Observation::Number(value.to_bits())
+fn number(value: i64) -> Observation {
+    Observation::Long(value)
 }
 
 #[test]
@@ -27,11 +27,11 @@ fn let_patterns_preserve_order_once_defaults_scope_and_hygiene() {
         "#, &mut macros).unwrap();
         session.collect().unwrap();
         assert_eq!(decoder.decode_session(&mut session, &value).unwrap(),
-            Observation::Vector(vec![number(17.0), number(19.0),
-                Observation::Vector(vec![number(17.0), number(19.0)]),
-                number(23.0), number(19.0), number(59.0), number(77.0),
+            Observation::Vector(vec![number(17), number(19),
+                Observation::Vector(vec![number(17), number(19)]),
+                number(23), number(19), number(59), number(77),
                 // get's default argument is eager, including when :y exists.
-                Observation::Vector(vec![number(1.0), number(4.0), number(2.0), number(3.0), number(5.0)])]));
+                Observation::Vector(vec![number(1), number(4), number(2), number(3), number(5)])]));
     }
 }
 
@@ -49,6 +49,6 @@ fn let_patterns_preserve_outer_initializer_scope_and_tail_recur() {
         "#, &mut macros).unwrap();
         session.collect().unwrap();
         assert_eq!(decoder.decode_session(&mut session, &value).unwrap(),
-            Observation::Vector(vec![Observation::Vector(vec![number(11.0), number(7.0), number(18.0)]), number(6.0)]));
+            Observation::Vector(vec![Observation::Vector(vec![number(11), number(7), number(18)]), number(6)]));
     }
 }

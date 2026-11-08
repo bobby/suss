@@ -604,66 +604,20 @@
               (let [namespace (str target) name (suss.bootstrap/string-slice s (inc slash) end)]
                 (Keyword. namespace name (str namespace "/" name) nil)))))))))
 
-;; Numbers, as the compiler reader's number: decimal through the runtime's
-;; correctly rounded parser, other radixes exactly.
-(def ^:private reader-hex-digits "0123456789abcdef")
-;; Digits beyond 2^53 in a radix that is not a power of two: convert them
-;; exactly to hexadecimal, which the runtime parser rounds once.
-(def ^:private reader-big-radix
-  (fn [s from to base]
-    (let [limbs (make-array (inc (* 2 (- to from))))]
-      (aset limbs 0 0)
-      (let [used (loop [i from used 1]
-                   (if (< i to)
-                     (recur (inc i)
-                            (loop [j 0 carry (reader-digit (.charCodeAt s i))]
-                              (if (< j used)
-                                (let [x (+ (* (aget limbs j) base) carry)
-                                      high (suss.bootstrap/f64-floor (/ x 16))]
-                                  (aset limbs j (- x (* high 16)))
-                                  (recur (inc j) high))
-                                (loop [used used carry carry]
-                                  (if (< 0 carry)
-                                    (let [high (suss.bootstrap/f64-floor (/ carry 16))]
-                                      (aset limbs used (- carry (* high 16)))
-                                      (recur (inc used) high))
-                                    used)))))
-                     used))]
-        (suss.bootstrap/f64-coerce
-         (loop [j (dec used) text "0x"]
-           (if (< j 0)
-             text
-             (let [digit (aget limbs j)]
-               (recur (dec j) (suss.bootstrap/concat-string
-                               text (suss.bootstrap/string-slice reader-hex-digits digit (inc digit))))))))))))
+;; Numbers, as the compiler reader's number: integers exactly as longs,
+;; decimal doubles through the runtime's correctly rounded parser.
+;; The digits s[from, to) in base as a long, or nil when they overflow the
+;; long range (Clojure's BigInt).
 (def ^:private reader-radix-number
   (fn [st start s from to base negative]
     (if (< from to) nil (reader-fail st start "Invalid numeric digits" false))
-    (loop [i from]
-      (if (< i to)
-        (if (< (reader-digit (.charCodeAt s i)) base)
-          (recur (inc i))
-          (reader-fail st start "Invalid numeric digits" false))
-        nil))
-    (let [value (if (== base 16)
-                  (suss.bootstrap/f64-coerce (suss.bootstrap/concat-string "0x" (suss.bootstrap/string-slice s from to)))
-                  (if (== base 8)
-                    (suss.bootstrap/f64-coerce (suss.bootstrap/concat-string "0o" (suss.bootstrap/string-slice s from to)))
-                    (if (== base 2)
-                      (suss.bootstrap/f64-coerce (suss.bootstrap/concat-string "0b" (suss.bootstrap/string-slice s from to)))
-                      ;; Exact while below 2^47, where value * 36 + 35 stays exact.
-                      (loop [i from value 0]
-                        (if (< i to)
-                          (if (< value 140737488355328)
-                            (recur (inc i) (+ (* value base) (reader-digit (.charCodeAt s i))))
-                            (reader-big-radix s from to base))
-                          value)))))]
-      (if negative (* -1 value) value))))
-;; Clojure's exact numeric literals that binary64 can't hold (#333): ratios,
-;; N and M literals, and integers beyond 2^53. Their syntax is checked
-;; everywhere, as the compiler's reader checks it; one that is read rather
-;; than skipped in an unselected conditional branch or dropped by #_ fails
-;; until #335.
+    (let [value (suss.bootstrap/parse-long s from to (if negative (- base) base))]
+      (if (false? value) (reader-fail st start "Invalid numeric digits" false) value))))
+;; Clojure's numeric literals Suss can't hold yet: ratios, N and M literals,
+;; and integers beyond the long range. Their syntax is checked everywhere, as
+;; the compiler's reader checks it; one that is read rather than skipped in
+;; an unselected conditional branch or dropped by #_ fails until #338 and
+;; #339.
 (def ^:private reader-exact
   (fn [st start s end]
     (if (if (< 0 (aget st 10)) true (< 0 (aget st 14)))
@@ -672,7 +626,7 @@
                    (suss.bootstrap/concat-string
                     (suss.bootstrap/concat-string
                      "Unsupported numeric literal " (suss.bootstrap/string-slice s start end))
-                    ": ratios, BigInts, BigDecimals and integers beyond 2^53 need Clojure's numeric types (#335)")
+                    ": ratios, BigInts and BigDecimals need Clojure's numeric types (#338, #339)")
                    false))))
 (def ^:private reader-digits?
   (fn [s from to]
@@ -688,46 +642,29 @@
       (if (< i to)
         (let [u (.charCodeAt s i)] (if (if (<= 48 u) (<= u 57) false) (recur (inc i)) i))
         i))))
-(def ^:private reader-digits-odd?
-  ;; Whether the integer with these digits is odd: its last digit's parity in
-  ;; an even base, its digit sum's in an odd one.
-  (fn [s from to base]
-    (let [odd? (fn [n] (== 1 (- n (* 2 (suss.bootstrap/f64-floor (/ n 2))))))]
-      (if (odd? base)
-        (odd? (loop [i from sum 0] (if (< i to) (recur (inc i) (+ sum (reader-digit (.charCodeAt s i)))) sum)))
-        (odd? (reader-digit (.charCodeAt s (dec to))))))))
-(def ^:private reader-within-2-53?
-  ;; Whether digits s[from, to) in base, read as value, are within +-2^53.
-  ;; 2^53 + 1 rounds to 2^53, the only ambiguous case, and it is odd.
-  (fn [s from to base value]
-    (let [magnitude (if (< value 0) (* -1 value) value)]
-      (if (< magnitude 9007199254740992)
-        true
-        (if (== magnitude 9007199254740992) (not (reader-digits-odd? s from to base)) false)))))
+;; An integer literal is a long unless it overflows the long range.
 (def ^:private reader-exact-integer
   (fn [st start s end from base value]
-    ;; Integer zero is +0, as the compiler's reader spells it.
-    (if (reader-within-2-53? s from end base value)
-      (if (== value 0) 0 value)
-      (reader-exact st start s end))))
-;; Clojure's ratioPat, [-+]?[0-9]+/[0-9]+. A ratio of terms within 2^53 that
-;; divide evenly is the integer, as Clojure reads 4/2 as 2.
+    (if (nil? value) (reader-exact st start s end) value)))
+;; Clojure's ratioPat, [-+]?[0-9]+/[0-9]+. A ratio of longs that divide evenly
+;; is the long, as Clojure reads 4/2 as 2.
 (def ^:private reader-ratio
   (fn [st start s end slash]
     (let [c (.charCodeAt s start)
           negative (== c 45)
           d (if (if negative true (== c 43)) (inc start) start)]
       (if (if (reader-digits? s d slash) (reader-digits? s (inc slash) end) false)
-        (let [n (suss.bootstrap/f64-coerce (suss.bootstrap/string-slice s d slash))
-              q (suss.bootstrap/f64-coerce (suss.bootstrap/string-slice s (inc slash) end))]
-          (if (== q 0)
+        (let [n (suss.bootstrap/parse-long s d slash (if negative -10 10))
+              q (suss.bootstrap/parse-long s (inc slash) end 10)]
+          (if (if (nil? q) false (zero? q))
             (reader-fail st start "Divide by zero" false)
-            (let [k (suss.bootstrap/f64-floor (/ n q))]
-              (if (if (reader-within-2-53? s d slash 10 n)
-                    (if (reader-within-2-53? s (inc slash) end 10 q) (== (* k q) n) false)
-                    false)
-                (if (== k 0) 0 (if negative (* -1 k) k))
-                (reader-exact st start s end)))))
+            ;; A Long/MIN_VALUE term gives a BigInt in Clojure, as a term
+            ;; beyond the long range does.
+            (if (if (nil? n) false
+                  (if (nil? q) false
+                    (if (== n -9223372036854775808) false (zero? (rem n q)))))
+              (quot n q)
+              (reader-exact st start s end))))
         (reader-fail st start "Invalid ratio" false)))))
 ;; Clojure's floatPat without its M: [0-9]+(\.[0-9]*)?([eE][-+]?[0-9]+)?.
 ;; A BigDecimal's scale, its fraction digits less its exponent, must fit 32
@@ -826,14 +763,15 @@
                                     (if dotted 1 0)))]
                       (if (< plain 0)
                         (reader-fail st start "Invalid ordinary numeric literal" false)
-                        (let [value (suss.bootstrap/f64-coerce (suss.bootstrap/string-slice s start end))]
-                          (if (== value value)
-                            ;; The pinned ClojureScript reader spells either signed
-                            ;; integer zero as +0; floating syntax keeps the sign.
-                            (if (if (== value 0) (== plain 0) false)
-                              0
-                              (if (== plain 0) (reader-exact-integer st start s end d 10 value) value))
-                            (reader-fail st start "Invalid ordinary numeric literal" false))))))))))))))))
+                        (if (== plain 0)
+                          (let [value (suss.bootstrap/parse-long s d end (if negative -10 10))]
+                            (if (false? value)
+                              (reader-fail st start "Invalid ordinary numeric literal" false)
+                              (reader-exact-integer st start s end d 10 value)))
+                          (let [value (suss.bootstrap/f64-coerce (suss.bootstrap/string-slice s start end))]
+                            (if (== value value)
+                              value
+                              (reader-fail st start "Invalid ordinary numeric literal" false)))))))))))))))))
 
 ;; Strings and characters, decoded as the compiler's reader decodes them.
 (def ^:private reader-radix-unit
@@ -1801,3 +1739,63 @@
         f f
         (and dup (record? obj)) nil
         :else (print-method-of print-method print-method-table obj (get (meta obj) :type))))))
+
+;; Original Suss: Clojure numeric predicates and unchecked arithmetic over
+;; longs and doubles (ADR-0003, #335).
+(def int?
+"Return true if x is a fixed precision integer"
+(fn [x] (suss.bootstrap/long? x)))
+
+(def double?
+"Return true if x is a Double"
+(fn [x] (suss.bootstrap/double? x)))
+
+(def float?
+"Returns true if n is a floating point number"
+(fn [n] (suss.bootstrap/double? n)))
+
+(def unchecked-add
+"Returns the sum of x and y, both long. Note - uses a primitive operator subject to overflow."
+(fn [x y]
+  (if (and (suss.bootstrap/number? x) (suss.bootstrap/number? y))
+    (suss.bootstrap/unchecked-add x y)
+    (throw (suss.bootstrap/error "unchecked-add requires number operands")))))
+
+(def unchecked-subtract
+"Returns the difference of x and y, both long. Note - uses a primitive operator subject to overflow."
+(fn [x y]
+  (if (and (suss.bootstrap/number? x) (suss.bootstrap/number? y))
+    (suss.bootstrap/unchecked-subtract x y)
+    (throw (suss.bootstrap/error "unchecked-subtract requires number operands")))))
+
+(def unchecked-multiply
+"Returns the product of x and y, both long. Note - uses a primitive operator subject to overflow."
+(fn [x y]
+  (if (and (suss.bootstrap/number? x) (suss.bootstrap/number? y))
+    (suss.bootstrap/unchecked-multiply x y)
+    (throw (suss.bootstrap/error "unchecked-multiply requires number operands")))))
+
+(def unchecked-negate
+"Returns the negation of x, a long. Note - uses a primitive operator subject to overflow."
+(fn [x]
+  (if (suss.bootstrap/number? x)
+    (suss.bootstrap/unchecked-negate x)
+    (throw (suss.bootstrap/error "unchecked-negate requires number operands")))))
+
+(def unchecked-inc
+"Returns a number one greater than x, a long. Note - uses a primitive operator subject to overflow."
+(fn [x] (unchecked-add x 1)))
+
+(def unchecked-dec
+"Returns a number one less than x, a long. Note - uses a primitive operator subject to overflow."
+(fn [x] (unchecked-subtract x 1)))
+
+;; The -int variants wrap to 32 bits, as Clojure's int operations do.
+(def unchecked-add-int (fn [x y] (int (unchecked-add x y))))
+(def unchecked-subtract-int (fn [x y] (int (unchecked-subtract x y))))
+(def unchecked-multiply-int (fn [x y] (int (unchecked-multiply x y))))
+(def unchecked-negate-int (fn [x] (int (unchecked-negate x))))
+(def unchecked-inc-int (fn [x] (int (unchecked-inc x))))
+(def unchecked-dec-int (fn [x] (int (unchecked-dec x))))
+(def unchecked-divide-int (fn [x y] (int (quot x y))))
+(def unchecked-remainder-int (fn [x y] (int (suss.bootstrap/rem x y))))

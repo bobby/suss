@@ -68,7 +68,12 @@ pub(super) fn functions(
     for (ty, kind) in [(NUMBER, 2), (STRING, 3), (4, 4), (ARGS, 6)] {
         body.extend([
             LocalGet(0),
-            RefTestNonNull(HeapType::Concrete(ty)),
+            // A long is a number too.
+            if ty == NUMBER {
+                Call(b.names["number-test"])
+            } else {
+                RefTestNonNull(HeapType::Concrete(ty))
+            },
             If(BlockType::Empty),
             I32Const(kind),
             Return,
@@ -93,14 +98,10 @@ pub(super) fn functions(
     }
     body.extend([
         LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        Call(b.names["number-test"]),
         If(BlockType::Empty),
         LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         LocalSet(1),
         LocalGet(1),
         F64Const(0.0.into()),

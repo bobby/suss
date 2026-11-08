@@ -28,6 +28,10 @@ Clojure gives the object's class and hash. Printing adds no import to a componen
   are not levels or items of their own, so
   `(binding [*print-level* 1] (pr-str {:a [1]}))` is `"{:a #}"`.
 - **Atoms** such as numbers, strings and keywords print at any level.
+- **Numbers** print as Clojure's do (#335): a long as its digits, a double in
+  Java's `Double.toString` format (`1.0`, `-0.0`, `0.001`, `1.0E7`,
+  `1.0E-4`, `4.9E-324`), and `##NaN`, `##Inf` and `##-Inf` under `pr`. `str`
+  prints doubles the same way, with `NaN`, `Infinity` and `-Infinity`.
 - **Records:** as in Clojure, the record's name is written before the level
   check, so a record below the level prints as `#user.R#`.
 - **Metadata** prints at the level of the value it belongs to.

@@ -304,11 +304,54 @@ impl CompilationSnapshot {
         })
     }
 }
+/// Select wasmtime's GC collector for every Suss engine (ADR-0003,
+/// "Collector"): copying by default, set explicitly because
+/// `Collector::Auto` may change; `SUSS_GC=null` opts in to the null
+/// collector, which never frees and traps when the heap is full, for
+/// short-lived runs. Deferred reference counting is not offered: it cannot
+/// collect cycles.
+pub fn configure_collector(config: &mut Config) -> Result<(), String> {
+    let (collector, initial) =
+        collector_settings(std::env::var("SUSS_GC"), std::env::var("SUSS_GC_INITIAL_MIB"))?;
+    config.collector(collector);
+    config.gc_heap_initial_size(initial);
+    Ok(())
+}
+/// The collector and initial heap bytes that `SUSS_GC` and
+/// `SUSS_GC_INITIAL_MIB` select.
+fn collector_settings(
+    gc: Result<String, std::env::VarError>,
+    initial: Result<String, std::env::VarError>,
+) -> Result<(wasmtime::Collector, u64), String> {
+    use std::env::VarError::NotPresent;
+    let collector = match gc.as_deref() {
+        Err(NotPresent) | Ok("copying") => wasmtime::Collector::Copying,
+        Ok("null") => wasmtime::Collector::Null,
+        Ok(other) => return Err(format!("SUSS_GC must be copying or null, not {other:?}")),
+        Err(_) => return Err("SUSS_GC must be copying or null".into()),
+    };
+    let initial = match initial.as_deref() {
+        Err(NotPresent) => GC_HEAP_INITIAL_SIZE,
+        Ok(text) => match text.parse::<u64>() {
+            Ok(mib) if mib <= 1 << 20 => mib << 20,
+            _ => return Err(format!("SUSS_GC_INITIAL_MIB must be a size in MiB, not {text:?}")),
+        },
+        Err(_) => return Err("SUSS_GC_INITIAL_MIB must be a size in MiB".into()),
+    };
+    Ok((collector, initial))
+}
+/// Each store's initial GC heap, unless `SUSS_GC_INITIAL_MIB` sets it.
+/// wasmtime 49 grows the heap only when a collection frees too little, so a
+/// heap that live data nearly fills is collected every few allocations;
+/// starting larger avoids that up to the initial size, at the cost of peak
+/// RSS (ADR-0003).
+pub const GC_HEAP_INITIAL_SIZE: u64 = 64 << 20;
 fn engine() -> Result<Engine, SessionError> {
     static ENGINE: OnceLock<Result<Engine, String>> = OnceLock::new();
     ENGINE
         .get_or_init(|| {
             let mut config = Config::new();
+            configure_collector(&mut config)?;
             config
                 .wasm_gc(true)
                 .wasm_function_references(true)
@@ -350,6 +393,45 @@ pub fn sentinel_tag(
         Val::I32(tag) => Ok(Some(tag as u32)),
         _ => Ok(None),
     }
+}
+/// A runtime number: a long, held in an i31 or a one-field `i64` struct, or a
+/// double, a one-field `f64` struct.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum RuntimeNumber {
+    Long(i64),
+    Double(f64),
+}
+impl RuntimeNumber {
+    /// The number as a double, rounding a long beyond 2^53.
+    pub fn as_f64(self) -> f64 {
+        match self {
+            Self::Long(value) => value as f64,
+            Self::Double(value) => value,
+        }
+    }
+}
+/// The long or double `value` holds; `None` for any other value.
+pub fn runtime_number(
+    mut store: impl AsContextMut,
+    value: &Val,
+) -> wasmtime::Result<Option<RuntimeNumber>> {
+    let Some(Some(reference)) = value.anyref() else {
+        return Ok(None);
+    };
+    if let Some(small) = reference.as_i31(&store)? {
+        return Ok(Some(RuntimeNumber::Long(i64::from(small.get_i32()))));
+    }
+    let Some(structure) = reference.as_struct(&store)? else {
+        return Ok(None);
+    };
+    if structure.ty(&store)?.fields().len() != 1 {
+        return Ok(None);
+    }
+    Ok(match structure.field(&mut store, 0)? {
+        Val::I64(value) => Some(RuntimeNumber::Long(value)),
+        Val::F64(bits) => Some(RuntimeNumber::Double(f64::from_bits(bits))),
+        _ => None,
+    })
 }
 fn own<C: AsContextMut<Data = ()>>(
     scope: &mut RootScope<C>,
@@ -1671,6 +1753,20 @@ impl Session {
                     self.runtime,
                     function,
                     &[Val::F64(value.to_bits())],
+                    self.identity,
+                    &self.handles,
+                )
+            }
+            Literal::Long(value) => {
+                let function = self
+                    .runtime
+                    .get_func(&mut scope, "long-box")
+                    .expect("shared runtime long constructor");
+                call(
+                    &mut scope,
+                    self.runtime,
+                    function,
+                    &[Val::I64(*value)],
                     self.identity,
                     &self.handles,
                 )
@@ -3127,9 +3223,29 @@ mod tests {
     }
 
     #[test]
+    fn collector_settings_default_to_copying_and_validate_overrides() {
+        use std::env::VarError::NotPresent;
+        let setting = |value: &str| Ok(value.to_owned());
+        assert!(matches!(
+            collector_settings(Err(NotPresent), Err(NotPresent)),
+            Ok((wasmtime::Collector::Copying, GC_HEAP_INITIAL_SIZE))
+        ));
+        assert!(matches!(
+            collector_settings(setting("null"), setting("0")),
+            Ok((wasmtime::Collector::Null, 0))
+        ));
+        assert!(matches!(
+            collector_settings(setting("copying"), setting("256")),
+            Ok((wasmtime::Collector::Copying, 268_435_456))
+        ));
+        for (gc, initial) in [("drc", "1"), ("auto", "1"), ("copying", "-1"), ("copying", "1.5")] {
+            assert!(collector_settings(setting(gc), setting(initial)).is_err(), "{gc} {initial}");
+        }
+    }
+    #[test]
     fn session_lifecycle_native_callback_trap_restores_dynamic_context() {
         let mut session = Session::new().unwrap();
-        session.eval("(def ^:dynamic *value* 1)").unwrap();
+        session.eval("(def ^:dynamic *value* 1.0)").unwrap();
         let body = session
             .eval("(fn [] (binding [*value* 7] (loop [] (recur))))")
             .unwrap();
@@ -3196,7 +3312,8 @@ mod tests {
             "must actually interrupt a Rust helper frame, not just its GC copy loop"
         );
         session.set_operation_fuel(100000);
-        let output = session.eval("(suss.bootstrap/value-add 42 \"\")").unwrap();
+        // A double, so the string conversion calls the numeric helper.
+        let output = session.eval("(suss.bootstrap/value-add 42.5 \"\")").unwrap();
         let units = session
             .inspect(&output, |mut scope, value| {
                 let array = value.unwrap_anyref().unwrap().as_array(&scope)?.unwrap();
@@ -3206,7 +3323,7 @@ mod tests {
                     .collect::<Vec<_>>())
             })
             .unwrap();
-        assert_eq!(units, [52, 50]);
+        assert_eq!(units, [52, 50, 46, 53]);
         assert_eq!(stack.get(&mut session.store).unwrap_i32(), initial);
     }
     #[test]
@@ -3260,7 +3377,7 @@ mod tests {
             }));
             assert!(!session.store.has_pending_exception());
             assert_eq!(session.stats().external_value_handles, 1);
-            let next = session.eval("42").unwrap();
+            let next = session.eval("42.0").unwrap();
             let bits = session
                 .inspect(&next, |mut store, value| {
                     let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
@@ -3334,7 +3451,7 @@ mod tests {
             }
         }
         let mut session = Session::new().unwrap();
-        session.eval("(def keep 17)").unwrap();
+        session.eval("(def keep 17.0)").unwrap();
         let prepared =
             portable::prepare_fragment("(def ghost 7)", &session.environment, Phase::Runtime)
                 .unwrap();

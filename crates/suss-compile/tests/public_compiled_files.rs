@@ -338,15 +338,9 @@ fn public_file_defers_runtime_initialization_and_preserves_exception_payload() {
         .expect("language initializer exception");
     let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
     assert_eq!(fields.len(), 1);
-    let payload = fields[0]
-        .unwrap_anyref()
-        .unwrap()
-        .as_struct(&store)
-        .unwrap()
-        .unwrap();
     assert_eq!(
-        payload.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
-        42.0_f64.to_bits()
+        suss_compile::portable_session::runtime_number(&mut store, &fields[0]).unwrap(),
+        Some(suss_compile::portable_session::RuntimeNumber::Long(42))
     );
 }
 
@@ -425,7 +419,8 @@ fn public_file_mod_preserves_negative_divisor_fraction_and_signed_zero() {
     execute(
         bytes,
         None,
-        &[(5.0, -1.0), (-5.0, -2.0), (1.5, -1.5), (0.0, -0.0)],
+        // Clojure's mod of a zero remainder is that remainder: 0.0, not -0.0.
+        &[(5.0, -1.0), (-5.0, -2.0), (1.5, -1.5), (0.0, 0.0), (-0.0, 0.0)],
     );
 }
 
@@ -452,7 +447,8 @@ fn public_file_mod_retains_compiled_numeric_macro_semantics_after_js_mod_redefin
     execute(
         bytes,
         None,
-        &[(5.0, -1.0), (-5.0, -2.0), (1.5, -1.5), (0.0, -0.0)],
+        // Clojure's mod of a zero remainder is that remainder: 0.0, not -0.0.
+        &[(5.0, -1.0), (-5.0, -2.0), (1.5, -1.5), (0.0, 0.0), (-0.0, 0.0)],
     );
 }
 

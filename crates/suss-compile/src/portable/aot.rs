@@ -1310,7 +1310,11 @@ fn adapter(
             (4, ValType::I32),
             (2, VALUE),
             (4, ValType::I32),
+            (1, ValType::I64),
+            (1, VALUE),
         ]);
+        let wide = unit + 7;
+        let scratch = unit + 8;
         let string_locals = strings::Locals {
             value: result,
             pointer,
@@ -1336,6 +1340,8 @@ fn adapter(
             integer,
             number,
             sentinels,
+            wide,
+            scratch,
         };
         let list_root = schema_base + u32::from(option_schema);
         let exact_root = list_root + u32::from(list_schema);
@@ -1345,7 +1351,7 @@ fn adapter(
         for (_, ty) in &export.params {
             match ty {
                 Boundary::Exact(signed) => {
-                    exact::lift(&mut body, *signed, parameter, exact_root);
+                    exact::lift(&mut body, *signed, parameter, exact_root, wide);
                     parameter += 1;
                 }
                 Boundary::List(element) => {
@@ -1372,7 +1378,7 @@ fn adapter(
                 }
                 Boundary::Scalar(ty) => {
                     body.instruction(&Instruction::LocalGet(parameter));
-                    lift_scalar(&mut body, ty, sentinels);
+                    lift_scalar(&mut body, ty, sentinels, wide);
                     parameter += 1;
                 }
                 Boundary::StringOption => {
@@ -1402,7 +1408,7 @@ fn adapter(
                     body.instruction(&Instruction::LocalGet(parameter))
                         .instruction(&Instruction::If(BlockType::Result(VALUE)))
                         .instruction(&Instruction::LocalGet(parameter + 1));
-                    lift_scalar(&mut body, ty, sentinels);
+                    lift_scalar(&mut body, ty, sentinels, wide);
                     body.instruction(&Instruction::Else)
                         .instruction(&runtime_abi::sentinel_value(runtime_abi::NIL))
                         .instruction(&Instruction::End);
@@ -1456,7 +1462,7 @@ fn adapter(
         match export.result {
             None => {}
             Some(Boundary::Exact(signed)) => {
-                exact::lower(&mut body, signed, result, list_locals.container, exact_root);
+                exact::lower(&mut body, signed, result, list_locals.container, exact_root, scratch);
             }
             Some(Boundary::List(element)) => {
                 lists::copy_out(
@@ -1749,7 +1755,8 @@ fn adapter(
         .section(&code);
     Ok(module.finish())
 }
-fn lift_scalar(body: &mut Function, ty: &Scalar, sentinels: u32) {
+/// `wide` is an `i64` scratch local for boxing a long.
+fn lift_scalar(body: &mut Function, ty: &Scalar, sentinels: u32, wide: u32) {
     match ty {
         Scalar::Bool => {
             for instruction in runtime_abi::boolean_in(sentinels) {
@@ -1764,8 +1771,8 @@ fn lift_scalar(body: &mut Function, ty: &Scalar, sentinels: u32) {
             body.instruction(&Instruction::Call(1));
         }
         Scalar::U8 | Scalar::S8 | Scalar::U16 | Scalar::S16 | Scalar::U32 | Scalar::S32 => {
-            // Normalize canonical subword bits before widening to the
-            // ordinary binary64 language number; u32 must stay unsigned.
+            // Normalize canonical subword bits before widening to a long;
+            // u32 must stay unsigned.
             match ty {
                 Scalar::U8 => {
                     body.instruction(&Instruction::I32Const(255))
@@ -1784,11 +1791,13 @@ fn lift_scalar(body: &mut Function, ty: &Scalar, sentinels: u32) {
                 _ => {}
             }
             body.instruction(&if ty.integer_bounds().unwrap().2 {
-                Instruction::F64ConvertI32S
+                Instruction::I64ExtendI32S
             } else {
-                Instruction::F64ConvertI32U
-            })
-            .instruction(&Instruction::Call(1));
+                Instruction::I64ExtendI32U
+            });
+            for instruction in runtime_abi::long_box_in(wide) {
+                body.instruction(&instruction);
+            }
         }
     }
 }
@@ -1820,22 +1829,17 @@ fn lower_scalar(
                 .instruction(&Instruction::LocalGet(integer));
         }
         scalar => {
-            body.instruction(&Instruction::LocalGet(result))
-                .instruction(&Instruction::RefTestNonNull(HeapType::Concrete(
-                    runtime_abi::NUMBER,
-                )))
-                .instruction(&Instruction::I32Eqz)
+            // A long or a double; #336 range-checks longs exactly.
+            for instruction in runtime_abi::number_test(result) {
+                body.instruction(&instruction);
+            }
+            body.instruction(&Instruction::I32Eqz)
                 .instruction(&Instruction::If(BlockType::Empty));
             boundary_error(body, result, name);
-            body.instruction(&Instruction::End)
-                .instruction(&Instruction::LocalGet(result))
-                .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(
-                    runtime_abi::NUMBER,
-                )))
-                .instruction(&Instruction::StructGet {
-                    struct_type_index: runtime_abi::NUMBER,
-                    field_index: 0,
-                });
+            body.instruction(&Instruction::End);
+            for instruction in runtime_abi::number_to_f64(result) {
+                body.instruction(&instruction);
+            }
             if let Some((min, max, signed)) = scalar.integer_bounds() {
                 // Validate before truncation: NaN fails the integral test,
                 // infinities fail bounds, and no invalid result reaches a

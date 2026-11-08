@@ -1,5 +1,27 @@
+use suss_cli::portable_session::RuntimeNumber;
 use suss_cli::portable_session::Session;
-use wasmtime::Val;
+
+/// The observation of a runtime number, distinguishing a long from a double.
+fn number_json(number: RuntimeNumber) -> serde_json::Value {
+    match number {
+        RuntimeNumber::Long(value) => serde_json::json!({"tag":"long", "value":value}),
+        RuntimeNumber::Double(value) => {
+            serde_json::json!({"tag":"f64", "bits":format!("{:016x}", value.to_bits())})
+        }
+    }
+}
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_number(expected: &serde_json::Value) -> serde_json::Value {
+    if expected["tag"] == "f64" {
+        let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+        let value = f64::from_bits(bits);
+        if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+            return serde_json::json!({"tag":"long", "value":value as i64});
+        }
+    }
+    expected.clone()
+}
 
 #[test]
 fn numeric_hash_match_independently_decoded_primary_observations_after_gc() {
@@ -31,17 +53,14 @@ fn numeric_hash_match_independently_decoded_primary_observations_after_gc() {
         };
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "f64" => {
-                let bits = session
-                    .inspect(&value, |mut store, value| {
-                        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-                        let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-                        let [Val::F64(bits)] = fields.as_slice() else {
-                            panic!("Number layout");
-                        };
-                        Ok(*bits)
-                    })
-                    .unwrap();
-                serde_json::json!({"tag":"f64", "bits":format!("{bits:016x}")})
+                number_json(
+                    session
+                        .inspect(&value, |store, value| {
+                            Ok(suss_cli::portable_session::runtime_number(store, &value)?
+                                .expect("Number layout"))
+                        })
+                        .unwrap(),
+                )
             }
             "nil" => {
                 session
@@ -82,7 +101,7 @@ fn numeric_hash_match_independently_decoded_primary_observations_after_gc() {
             }
             tag => panic!("unsupported Numeric hash observation {tag}"),
         };
-        if actual != case["expected"] {
+        if actual != clojure_number(&case["expected"]) {
             failures.push(format!(
                 "{id}: {source}: actual {actual}, expected {}",
                 case["expected"]
@@ -101,9 +120,12 @@ fn numeric_hash_match_independently_decoded_primary_observations_after_gc() {
 fn numeric_hash_number(session: &mut Session, source: &str) -> f64 {
     let value = session.eval(source).unwrap();
     session
-        .inspect(&value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            Ok(object.field(&mut store, 0)?.unwrap_f64())
+        .inspect(&value, |store, value| {
+            // Every hash result here is integral: a long.
+            match suss_cli::portable_session::runtime_number(store, &value)? {
+                Some(RuntimeNumber::Long(value)) => Ok(value as f64),
+                other => panic!("long result, got {other:?}"),
+            }
         })
         .unwrap()
 }

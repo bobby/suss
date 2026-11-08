@@ -262,15 +262,9 @@ fn compile_file_defers_runtime_throw_and_preserves_output_on_invalid_selection_o
     let exception = store.as_context_mut().take_pending_exception().unwrap();
     let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
     assert_eq!(fields.len(), 1);
-    let payload = fields[0]
-        .unwrap_anyref()
-        .unwrap()
-        .as_struct(&store)
-        .unwrap()
-        .unwrap();
     assert_eq!(
-        payload.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
-        17.0_f64.to_bits()
+        suss_compile::portable_session::runtime_number(&mut store, &fields[0]).unwrap(),
+        Some(suss_compile::portable_session::RuntimeNumber::Long(17))
     );
 }
 

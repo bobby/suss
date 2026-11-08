@@ -13,12 +13,18 @@ fn number(session: &mut Session, source: &str) -> f64 {
     let value = session.eval(source).unwrap();
     session.collect().unwrap();
     session
-        .inspect(&value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let Val::F64(bits) = object.field(&mut store, 0)? else {
-                return Err(wasmtime::Error::msg("Expected portable Number result"));
-            };
-            Ok(f64::from_bits(bits))
+        .inspect(&value, |store, value| {
+            // Integral results are longs, as in Clojure; only a fractional result
+            // may be a double.
+            match suss_cli::portable_session::runtime_number(store, &value)? {
+                Some(suss_cli::portable_session::RuntimeNumber::Long(value)) => Ok(value as f64),
+                Some(suss_cli::portable_session::RuntimeNumber::Double(value))
+                    if value.fract() != 0.0 =>
+                {
+                    Ok(value)
+                }
+                other => panic!("{source}: number result, got {other:?}"),
+            }
         })
         .unwrap()
 }
@@ -135,10 +141,8 @@ fn public_realization_matches_actual_pinned_value_and_effect_observations() {
             };
             assert_eq!(items.len(), width);
             for (item, expected) in items.iter().zip(expected) {
-                let Kind::Number(actual) = item.kind else {
-                    panic!("Expected numeric observation")
-                };
-                assert_eq!(actual.to_bits(), expected.as_f64().unwrap().to_bits());
+                // Every observation is integral: a long in Clojure.
+                assert_eq!(item.kind, Kind::Long(expected.as_i64().unwrap()));
             }
         }
     }

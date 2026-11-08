@@ -83,6 +83,15 @@ deferred-reference-counting collector calls into the host for every
 objects, about 22 ns, as under copying. Why the cost falls wasn't
 investigated.
 
+In Suss itself (#335, 2026-11-08, REPL, test profile, the same machine and
+load for both builds), a loop of 3·10⁶ iterations that counts, compares and
+adds small integers and allocates one vector per iteration takes 60 s with i31
+longs and a 16 MiB initial heap (18 s per 10⁶ iterations from an empty heap),
+against 174 s on the boxed-double main branch (a44e3ad5), whose heap starts
+empty. Its
+operation fuel, a proxy for instructions executed, is 824,072 against 836,279
+for 10⁴ iterations of `(loop [i 0] (if (< i 10000) (recur (inc i)) i))`.
+
 ## Decision
 
 Adopt Clojure 1.12's numeric semantics and types, with the jank suite's
@@ -247,6 +256,31 @@ Node, the JavaScript engine's collector manages WasmGC objects.
   functions (a named `fn`, `letfn`) and atoms whose value refers back to the
   atom create. It also costs about 110–150 ns per allocation with a small
   heap.
+- Suss sets a 64 MiB initial GC heap per store, which `SUSS_GC_INITIAL_MIB`
+  overrides. Measured in the REPL on 2026-11-08 (#335, test profile, warm build
+  cache), peak RSS and time for an input that allocates a vector in each of 10⁶
+  iterations, alone and after `(def v (vec (range 1000000)))` keeps 10⁶ longs
+  live:
+
+  | Initial heap | Startup | Loop | Loop, 10⁶ live |
+  | --- | --- | --- | --- |
+  | 0 | 2.1 s, 583 MiB | 17.9 s, 583 MiB | 59.9 s, 587 MiB |
+  | 16 MiB | 1.7 s, 581 MiB | 7.5 s, 581 MiB | 54.6 s, 597 MiB |
+  | 64 MiB | 2.1 s, 581 MiB | 7.8 s, 627 MiB | 15.3 s, 629 MiB |
+  | 256 MiB | 2.5 s, 580 MiB | 9.0 s, 818 MiB | 13.0 s, 820 MiB |
+  | Null collector | 2.2 s, 587 MiB | 8.4 s, 1,885 MiB | |
+
+  The live longs of `(range 1000000)` are mostly unallocated i31s, so that
+  heap holds only about 3·10⁴ vector nodes. With 10⁶ boxed doubles live
+  instead (`(vec (map (fn [i] (* 1.0 i)) (range 1000000)))`), the same loop
+  takes 61.3 s from an empty heap, 61.5 s at 16 MiB, 55.3 s at 64 MiB and
+  16.2 s at 256 MiB, at 820–822 MiB peak RSS throughout.
+
+  The compiler dominates the REPL's RSS. 64 MiB removes most of the
+  collections a nearly full heap forces for about 46 MiB more; a live heap
+  beyond the initial size still collects often, since wasmtime grows the heap
+  only when a collection frees too little, and `SUSS_GC_INITIAL_MIB` is the
+  remedy for a program known to keep a large heap.
 - wasmtime's own documentation of `Collector::Copying` still says it "is still
   under construction and is not yet functional", in the 49.0.1, 50.0.0 and
   51.0.0-rc.1 crates published on crates.io, although `Auto` selects it (with

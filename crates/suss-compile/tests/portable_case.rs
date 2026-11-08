@@ -36,15 +36,9 @@ fn scalar_case_fragments_execute_in_runtime_and_macro_phase() {
             .call(&mut store, &[], &mut value)
             .unwrap();
         store.gc(None).unwrap();
-        let number = value[0]
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&store)
-            .unwrap()
-            .unwrap();
         assert_eq!(
-            number.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
-            17.0f64.to_bits()
+            suss_compile::portable_session::runtime_number(&mut store, &value[0]).unwrap(),
+            Some(suss_compile::portable_session::RuntimeNumber::Long(17))
         );
         assert!(prepare_fragment("(case 1 1 17 1 19 23)", &environment, phase).is_err());
     }

@@ -94,7 +94,7 @@ impl ExpansionHost for Inspect {
         Ok(Some(Form {
             span: form.span.clone(),
             metadata: vec![],
-            kind: Kind::Number(42.0),
+            kind: Kind::Long(42),
         }))
     }
 }
@@ -148,11 +148,11 @@ fn native_analysis_graph_retains_source_methods_before_wrappers_and_duplicate_ar
         let Kind::Vector(values) = &host.calls[0].kind else { panic!("executed source methods query") };
         assert_eq!(values.len(), 19);
         assert!(matches!(&values[0].kind, Kind::Bool(false)));
-        assert!(matches!(&values[1].kind, Kind::Number(1.0)));
+        assert!(matches!(&values[1].kind, Kind::Long(1)));
         assert!(matches!(&values[3].kind, Kind::Symbol(name) if name.name == "number"));
         assert!(matches!(&values[4].kind, Kind::Bool(true)));
-        assert!(matches!(&values[5].kind, Kind::Number(2.0)));
-        assert!(matches!(&values[8].kind, Kind::Number(1.0)));
+        assert!(matches!(&values[5].kind, Kind::Long(2)));
+        assert!(matches!(&values[8].kind, Kind::Long(1)));
         for (index, expected) in [(2, vec!["x"]), (6, vec!["x"]), (7, vec!["x", "y", "more"]), (9, vec!["x"]), (10, vec!["y"]), (14, vec!["outer"]), (15, vec!["inner"])] {
             let Kind::Vector(parameters) = &values[index].kind else { panic!("actual source parameters") };
             assert_eq!(parameters.len(), expected.len());
@@ -172,7 +172,7 @@ fn native_analysis_graph_retains_source_methods_before_wrappers_and_duplicate_ar
         assert!(matches!(&values[18].kind, Kind::Keyword(name) if name.name == "fn"));
         let result = session.eval("(+ (fixed 11) (multiple 12) (multiple 12 13 14) (duplicate 17) ((nested 20) 22) effects)").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
-        assert!(matches!(&bridge.read(&mut session, &result, 0..1).unwrap().kind, Kind::Number(81.0)));
+        assert!(matches!(&bridge.read(&mut session, &result, 0..1).unwrap().kind, Kind::Long(81)));
     }
 }
 
@@ -231,7 +231,7 @@ fn native_analysis_graph_separates_top_level_namespace_snapshot_from_live_catalo
         }
         let value = session.eval("(+ scalar nested-first nested-second nested-wrapper)").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
-        assert!(matches!(&bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(127.0)));
+        assert!(matches!(&bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Long(127)));
     }
 }
 
@@ -265,7 +265,7 @@ fn native_analysis_graph_preserves_deep_shared_initializer_scopes_without_source
             panic!("executed graph query")
         };
         assert!(matches!(&values[0].kind, Kind::Bool(true)));
-        assert!(matches!(&values[1].kind, Kind::Number(96.0)));
+        assert!(matches!(&values[1].kind, Kind::Long(96)));
         assert!(
             matches!(&values[2].kind, Kind::List(parts) if parts.len() == 3 && matches!(&parts[0].kind, Kind::Symbol(name) if name.name == "+"))
         );
@@ -277,7 +277,7 @@ fn native_analysis_graph_preserves_deep_shared_initializer_scopes_without_source
         let bridge = FormBridge::new(&mut session).unwrap();
         assert!(matches!(
             bridge.read(&mut session, &effects, 0..1).unwrap().kind,
-            Kind::Number(1.0)
+            Kind::Long(1)
         ));
     }
 }
@@ -382,7 +382,7 @@ fn native_analysis_graph_reader_depth_is_independent_of_record_depth() {
     let mut nested = Form {
         span: 0..1,
         metadata: vec![],
-        kind: Kind::Number(42.0),
+        kind: Kind::Long(42),
     };
     for _ in 0..61 {
         nested = Form {
@@ -404,7 +404,7 @@ fn native_analysis_graph_reader_depth_is_independent_of_record_depth() {
     session
         .eval_with_macros("(let [x 1] (inspect-graph))", &mut host)
         .unwrap();
-    assert!(matches!(&host.calls[0].kind, Kind::Number(42.0)));
+    assert!(matches!(&host.calls[0].kind, Kind::Long(42)));
 }
 
 #[test]
@@ -451,7 +451,7 @@ fn native_analysis_graph_preserves_actual_definition_forms_through_staging_and_r
         }
         let value = session.eval("tracked").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
-        assert!(matches!(&bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(8.0)));
+        assert!(matches!(&bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Long(8)));
     }
 }
 
@@ -505,7 +505,7 @@ fn native_analysis_graph_namespace_exclusions_are_canonical_sets() {
     session.eval_with_macros("(ns exclusions (:refer-clojure :exclude [identity])) (inspect-graph)", &mut host).unwrap();
     let Kind::Vector(values) = &host.calls[0].kind else { panic!("namespace exclusions") };
     assert!(matches!(&values[0].kind, Kind::Bool(true)));
-    assert!(matches!(&values[1].kind, Kind::Number(1.0)));
+    assert!(matches!(&values[1].kind, Kind::Long(1)));
     assert!(matches!(&values[2].kind, Kind::Bool(true)));
 }
 

@@ -2,6 +2,7 @@
 """Compare independent Suss observations to the pinned reference, tracking exact failures."""
 import argparse
 import json
+import struct
 from pathlib import Path
 from oracle_transport import fields, unique, validate, value, IDS, PIN, SCHEMA
 
@@ -43,6 +44,13 @@ def unordered(left, right, equal):
 
 
 def matches(left, right):
+    # The reference was recorded from ClojureScript, whose numbers are all
+    # binary64: an integral one there stands for the long Suss now gives,
+    # exactly as Clojure would (#335).
+    if left['tag'] == 'f64' and right['tag'] == 'long':
+        value = int(right['value'])
+        return abs(value) <= 2 ** 53 and int(left['bits'], 16) == \
+            struct.unpack('>Q', struct.pack('>d', float(value)))[0] and left['bits'] != '8000000000000000'
     if left['tag'] != right['tag']:
         return False
     tag = left['tag']

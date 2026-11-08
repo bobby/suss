@@ -56,11 +56,11 @@
   "patch_sha256": "b0648abff634d85b8f2883c64faf1dd16ae2cffababd2a5c9d767e2f822a8bc5",
   "files": {
     "crates/suss-compile/src/portable_when_let.rs": "0de7d8f16339b7327b7e133279d6be7e4a7ecb8d554379e196d0a0f1a7a39e09",
-    "crates/suss-compile/src/portable/hir/destructuring.rs": "3c8e0c77942b00d134385a1ae5282ca5d2d9bd8e38d86d6ae20c52145be9b42a",
+    "crates/suss-compile/src/portable/hir/destructuring.rs": "61fb410f60d3dbc2a13337361a8dfc50cec6b93e7a53c4a4fcddb21045daee23",
     "tests/oracle/when-let-observations.json": "7cb0874f0d1c8506c57232a61c183e60eadd1d692793cacc553f04815cb97529",
     "tests/oracle/when-let-validation-observations.json": "ca3e470f944c341ce6e966af2daf157e75e88683209648b79a03e23196e54804",
-    "crates/suss-cli/tests/compiled_when_let.rs": "3164302cac850756b1a5c2d2449b38331c943f786a2f24837ad8e5928ba08d3d",
-    "crates/suss-cli/tests/compiled_let_destructuring.rs": "808a25b03e75aa7ed60de7b984eab3f52b810a1f89c7dd398631e05622c1364d"
+    "crates/suss-cli/tests/compiled_when_let.rs": "3477a82bdd81a9a427fa10df82ac323c759534d68cb9746a358260201db30e63",
+    "crates/suss-cli/tests/compiled_let_destructuring.rs": "56afe352ab6471aafca02b2d85ffd77f456448b3e700084e09a79e5da6b1c9a4"
   },
   "adaptations": [
     "Register defmacro locally; core/let spelling uses established bootstrap binding resolution.",
@@ -158,7 +158,13 @@
       "original": "native-fixtures/compiled_when_let-captured.rs",
       "original_sha256": "f85bc8c1591ac6fb51274ec8230deb0880e3c1f4e387ddacf9b66f1fca3e2e02",
       "patch": "native-fixtures/compiled_when_let-stage-diagnostic.patch",
-      "patch_sha256": "d83b8c653535eac9390cb8566f57a3d31a2c3a39f363a7356e2a2d68f870e64a"
+      "patch_sha256": "5ae99cdafb544c98b37496c2774569f9d89925aca2cfc1a794dcdc43ad837159"
+    },
+    "crates/suss-cli/tests/compiled_let_destructuring.rs": {
+      "original": "native-fixtures/compiled_let_destructuring-captured.rs",
+      "original_sha256": "808a25b03e75aa7ed60de7b984eab3f52b810a1f89c7dd398631e05622c1364d",
+      "patch": "native-fixtures/compiled_let_destructuring-longs.patch",
+      "patch_sha256": "a65373560b119ec7ce11115545069c026cd5b54ea6d0c2a253957ffa038bb427"
     }
   }
 }

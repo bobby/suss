@@ -136,7 +136,7 @@ fn conditional_clause_pairing_follows_deferred_prefix_selection() {
         "#?(:jvm '#?(:jvm 1) :suss 2)",
     ] {
         let forms = resolve_conditionals(read_forms(source).unwrap()).unwrap();
-        assert_eq!(forms[0].kind, Kind::Number(2.0));
+        assert_eq!(forms[0].kind, Kind::Long(2));
     }
     let forms = resolve_conditionals(
         read_forms("#?(:suss '#?(:jvm ignored) :default alternative) retained").unwrap(),
@@ -158,31 +158,32 @@ fn utf16_literals_preserve_lone_surrogates_and_astral_units() {
 }
 
 #[test]
-fn ordinary_numbers_read_as_binary64_and_keep_float_zero_sign() {
+fn ordinary_numbers_read_as_longs_or_doubles_and_keep_float_zero_sign() {
     let forms = read_forms(
         "9007199254740992 -0.0 -0e0 -0 +0 1e3 1. 0x10 -0x10 010 2r101 ##Inf ##-Inf ##NaN",
     )
     .unwrap();
     let expected = [
-        9007199254740992.0,
-        -0.0,
-        -0.0,
-        0.0,
-        0.0,
-        1000.0,
-        1.0,
-        16.0,
-        -16.0,
-        8.0,
-        5.0,
-        f64::INFINITY,
-        f64::NEG_INFINITY,
+        Kind::Long(9007199254740992),
+        Kind::Number(-0.0),
+        Kind::Number(-0.0),
+        Kind::Long(0),
+        Kind::Long(0),
+        Kind::Number(1000.0),
+        Kind::Number(1.0),
+        Kind::Long(16),
+        Kind::Long(-16),
+        Kind::Long(8),
+        Kind::Long(5),
+        Kind::Number(f64::INFINITY),
+        Kind::Number(f64::NEG_INFINITY),
     ];
     for (form, expected) in forms.iter().zip(expected) {
-        let Kind::Number(value) = form.kind else {
-            panic!("not a number")
-        };
-        assert_eq!(value.to_bits(), expected.to_bits());
+        match (&form.kind, expected) {
+            (Kind::Number(value), Kind::Number(expected)) => assert_eq!(value.to_bits(), expected.to_bits()),
+            (Kind::Long(value), Kind::Long(expected)) => assert_eq!(*value, expected),
+            (found, expected) => panic!("{found:?} is not {expected:?}"),
+        }
     }
     assert!(matches!(forms[13].kind, Kind::Number(value) if value.is_nan()));
     for source in [
@@ -261,10 +262,10 @@ fn conditional_resolution_uses_first_portable_feature_in_source_order() {
     assert_eq!(
         items.iter().map(|x| x.kind.clone()).collect::<Vec<_>>(),
         vec![
-            Kind::Number(1.0),
-            Kind::Number(3.0),
-            Kind::Number(7.0),
-            Kind::Number(8.0)
+            Kind::Long(1),
+            Kind::Long(3),
+            Kind::Long(7),
+            Kind::Long(8)
         ]
     );
     assert!(
@@ -277,13 +278,13 @@ fn conditional_resolution_uses_first_portable_feature_in_source_order() {
         panic!()
     };
     assert_eq!(entries.len(), 2);
-    assert_eq!(entries[1].kind, Kind::Number(2.0));
+    assert_eq!(entries[1].kind, Kind::Long(2));
     let shifted =
         resolve_conditionals(read_forms("{#?(:jvm :a) 1 :b #?(:jvm 2)}").unwrap()).unwrap();
     let Kind::Map(entries) = &shifted[0].kind else {
         panic!()
     };
-    assert_eq!(entries[0].kind, Kind::Number(1.0));
+    assert_eq!(entries[0].kind, Kind::Long(1));
     assert!(matches!(&entries[1].kind, Kind::Keyword(key) if key.name == "b"));
     let incomplete = read_forms("{#?(:jvm :key) 1}").unwrap();
     assert!(resolve_conditionals(incomplete).is_err());
@@ -324,7 +325,7 @@ fn javascript_object_literals_lower_to_ordered_js_obj_calls() {
     };
     assert!(matches!(&items[0].kind, Kind::Symbol(symbol) if symbol.name == "js-obj"));
     assert_eq!(items[1].kind, Kind::String("get".encode_utf16().collect()));
-    assert_eq!(items[2].kind, Kind::Number(1.0));
+    assert_eq!(items[2].kind, Kind::Long(1));
     assert_eq!(
         items[3].kind,
         Kind::String("configurable".encode_utf16().collect())
@@ -334,7 +335,7 @@ fn javascript_object_literals_lower_to_ordered_js_obj_calls() {
         items[5].kind,
         Kind::String("answer".encode_utf16().collect())
     );
-    assert_eq!(items[6].kind, Kind::Number(42.0));
+    assert_eq!(items[6].kind, Kind::Long(42));
     assert!(read_forms("#js {:odd}").is_err());
     assert!(read_forms("#js {1 :value}").is_err());
 }
@@ -445,7 +446,7 @@ fn deep_reader_clone_selection_and_cleanup_are_stack_safe() {
         assert_eq!(items.len(), 1);
         item = &items[0];
     }
-    assert_eq!(item.kind, Kind::Number(0.0));
+    assert_eq!(item.kind, Kind::Long(0));
     drop(forms);
     drop(selected);
     // Partial nested trees must also clean up when parsing stops at EOF.
@@ -609,28 +610,29 @@ fn every_clojure_numeric_literal_reads() {
     };
     let int = |value: i128| BigInt::from(value);
     for (source, value) in [
-        ("4/2", 2.0),
-        ("-6/3", -2.0),
-        ("007/7", 1.0),
-        ("017", 15.0),
-        ("0x1F", 31.0),
-        ("36rZ", 35.0),
-        ("9007199254740992", 9007199254740992.0),
-        ("-9007199254740992", -9007199254740992.0),
-        ("1.", 1.0),
-        ("1e400", f64::INFINITY),
+        ("4/2", 2),
+        ("-6/3", -2),
+        ("007/7", 1),
+        ("017", 15),
+        ("0x1F", 31),
+        ("36rZ", 35),
+        ("9007199254740992", 9007199254740992),
+        ("-9007199254740992", -9007199254740992),
+        ("9007199254740993", (1 << 53) + 1),
+        ("-9223372036854775808", i64::MIN),
+        ("-0/5", 0),
     ] {
+        assert_eq!(read(source), Kind::Long(value), "{source}");
+    }
+    for (source, value) in [("1.", 1.0), ("1e400", f64::INFINITY)] {
         assert_eq!(read(source), Kind::Number(value), "{source}");
     }
-    assert!(matches!(read("-0/5"), Kind::Number(value) if value.to_bits() == 0), "integer zero is +0");
     for (source, expected) in [
         ("1/3", ExactValue::Ratio { numerator: int(1), denominator: int(3) }),
         ("-2/6", ExactValue::Ratio { numerator: int(-1), denominator: int(3) }),
         ("1N", ExactValue::Integer { value: int(1), big: true }),
         ("0x1FN", ExactValue::Integer { value: int(31), big: true }),
         ("017N", ExactValue::Integer { value: int(15), big: true }),
-        ("9007199254740993", ExactValue::Integer { value: int((1 << 53) + 1), big: false }),
-        ("-9223372036854775808", ExactValue::Integer { value: int(i64::MIN as i128), big: false }),
         ("9223372036854775808", ExactValue::Integer { value: int(1 << 63), big: true }),
         ("1M", ExactValue::Decimal { unscaled: int(1), scale: 0 }),
         ("1.50M", ExactValue::Decimal { unscaled: int(150), scale: 2 }),
@@ -642,8 +644,8 @@ fn every_clojure_numeric_literal_reads() {
         assert_eq!((number.text.as_str(), number.value), (source, expected));
     }
     // A radix integer's trailing N or M is a digit, as in Clojure.
-    assert_eq!(read("36rN"), Kind::Number(23.0));
-    assert_eq!(read("36r1M"), Kind::Number(58.0));
+    assert_eq!(read("36rN"), Kind::Long(23));
+    assert_eq!(read("36r1M"), Kind::Long(58));
     // A term beyond the long range makes Clojure's result a BigInt.
     let Kind::Exact(number) = read("36893488147419103232/8") else { panic!("not exact") };
     assert_eq!(number.value, ExactValue::Integer { value: int(1 << 62), big: true });
@@ -685,5 +687,5 @@ fn reader_features_are_suss_and_default() {
     .unwrap();
     let Kind::Vector(items) = &forms[0].kind else { panic!("vector") };
     let values: Vec<_> = items.iter().map(|item| item.kind.clone()).collect();
-    assert_eq!(values, vec![Kind::Number(3.0), Kind::Number(7.0)]);
+    assert_eq!(values, vec![Kind::Long(3), Kind::Long(7)]);
 }

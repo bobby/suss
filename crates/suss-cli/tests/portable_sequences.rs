@@ -1,5 +1,4 @@
-use suss_cli::portable_session::{Session, SessionValue};
-use wasmtime::Val;
+use suss_cli::portable_session::{RuntimeNumber, Session, SessionValue};
 
 #[path = "support/clojure_corrections.rs"]
 mod clojure_corrections;
@@ -9,21 +8,38 @@ const CORRECTIONS: &[clojure_corrections::Correction] = &[
     ("equal-string-value", "", "+ requires number operands"),
 ];
 
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+fn number(session: &mut Session, value: &SessionValue) -> RuntimeNumber {
     session
-        .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            Ok(*bits)
+        .inspect(value, |store, value| {
+            Ok(suss_cli::portable_session::runtime_number(store, &value)?.expect("Number layout"))
         })
         .unwrap()
 }
-fn eval_number(session: &mut Session, source: &str) -> u64 {
+fn eval_number(session: &mut Session, source: &str) -> RuntimeNumber {
     let value = session.eval(source).unwrap();
     number(session, &value)
+}
+
+/// The observation of a runtime number, distinguishing a long from a double.
+fn number_json(number: RuntimeNumber) -> serde_json::Value {
+    match number {
+        RuntimeNumber::Long(value) => serde_json::json!({"tag":"long", "value":value}),
+        RuntimeNumber::Double(value) => {
+            serde_json::json!({"tag":"f64", "bits":format!("{:016x}", value.to_bits())})
+        }
+    }
+}
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_number(expected: &serde_json::Value) -> serde_json::Value {
+    if expected["tag"] == "f64" {
+        let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+        let value = f64::from_bits(bits);
+        if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+            return serde_json::json!({"tag":"long", "value":value as i64});
+        }
+    }
+    expected.clone()
 }
 fn eval_bool(session: &mut Session, source: &str) -> bool {
     let value = session.eval(source).unwrap();
@@ -60,11 +76,11 @@ fn sequence_foundations_match_independently_encoded_primary_observations() {
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "bool" => serde_json::json!({"tag":"bool", "value":eval_bool(&mut session, source)}),
             "f64" => {
-                serde_json::json!({"tag":"f64", "bits":format!("{:016x}",eval_number(&mut session, source))})
+                number_json(eval_number(&mut session, source))
             }
             tag => panic!("unexpected sequence observation tag {tag}"),
         };
-        assert_eq!(actual, case["expected"], "{id}: {source}");
+        assert_eq!(actual, clojure_number(&case["expected"]), "{id}: {source}");
         session.collect().unwrap();
     }
     assert_eq!(corrected, CORRECTIONS.len());
@@ -102,21 +118,21 @@ fn retained_concrete_sequence_types_execute_fields_tails_metadata_and_gc() {
         session.collect().unwrap();
     }
     for (source, expected) in [
-        ("(count retained-tail)", 1.0f64),
-        ("(count retained-head)", 2.0),
-        ("(first retained-head)", 1.0),
-        ("(first (next retained-head))", 2.0),
-        ("(count retained-view)", 2.0),
-        ("(-nth retained-view 1)", 4.0),
-        ("(-nth retained-view 9 77)", 77.0),
-        ("(-meta (-with-meta retained-head 17))", 17.0),
-        ("(-meta (-with-meta () 19))", 19.0),
-        ("(first (-conj retained-tail 29))", 29.0),
-        ("(first (cons 8 \"AB\"))", 8.0),
+        ("(count retained-tail)", 1i64),
+        ("(count retained-head)", 2),
+        ("(first retained-head)", 1),
+        ("(first (next retained-head))", 2),
+        ("(count retained-view)", 2),
+        ("(-nth retained-view 1)", 4),
+        ("(-nth retained-view 9 77)", 77),
+        ("(-meta (-with-meta retained-head 17))", 17),
+        ("(-meta (-with-meta () 19))", 19),
+        ("(first (-conj retained-tail 29))", 29),
+        ("(first (cons 8 \"AB\"))", 8),
     ] {
         assert_eq!(
             eval_number(&mut session, source),
-            expected.to_bits(),
+            RuntimeNumber::Long(expected),
             "{source}"
         );
         session.collect().unwrap();
@@ -127,11 +143,11 @@ fn retained_concrete_sequence_types_execute_fields_tails_metadata_and_gc() {
     session.collect().unwrap();
     assert_eq!(
         eval_number(&mut session, "(first retained-view)"),
-        31.0f64.to_bits()
+        RuntimeNumber::Long(31)
     );
     assert_eq!(
         eval_number(&mut session, "(count retained-view)"),
-        3.0f64.to_bits()
+        RuntimeNumber::Long(3)
     );
     assert!(eval_bool(&mut session, "(nil? (seq (array)))"));
     assert!(eval_bool(&mut session, "(nil? (seq \"\"))"));
@@ -173,7 +189,7 @@ fn retained_source_errors_are_typed_and_recover_after_gc() {
         assert_eq!(value, message.encode_utf16().collect::<Vec<_>>());
         assert_eq!(
             eval_number(&mut session, "(first (cons 17 nil))"),
-            17.0f64.to_bits()
+            RuntimeNumber::Long(17)
         );
     }
     assert!(eval_bool(
@@ -203,11 +219,11 @@ fn variadic_rest_values_survive_gc_and_arity_failures_preserve_effects() {
     ));
     assert_eq!(
         eval_number(&mut session, "(count saved-rest)"),
-        3.0f64.to_bits()
+        RuntimeNumber::Long(3)
     );
     assert_eq!(
         eval_number(&mut session, "((first (next (next saved-rest))))"),
-        29.0f64.to_bits()
+        RuntimeNumber::Long(29)
     );
     assert!(matches!(
         session.eval("(variadic-floor (do (set! variadic-trace 1) 7))"),
@@ -215,7 +231,7 @@ fn variadic_rest_values_survive_gc_and_arity_failures_preserve_effects() {
     ));
     assert_eq!(
         eval_number(&mut session, "variadic-trace"),
-        1.0f64.to_bits()
+        RuntimeNumber::Long(1)
     );
     for signature in [
         "(fn [a &] 1)",
@@ -238,7 +254,7 @@ fn variadic_rest_values_survive_gc_and_arity_failures_preserve_effects() {
     session.collect().unwrap();
     assert_eq!(
         eval_number(&mut session, "(variadic-floor 1 2 3 4)"),
-        2.0f64.to_bits()
+        RuntimeNumber::Long(2)
     );
 }
 
@@ -266,14 +282,14 @@ fn variadic_live_class_failures_are_typed_and_recover_after_gc() {
         session.collect().unwrap();
         assert_eq!(
             eval_number(&mut session, "argument-effect"),
-            17.0f64.to_bits()
+            RuntimeNumber::Long(17)
         );
         session
             .eval("(set! cljs.core/IndexedSeq saved-class)")
             .unwrap();
         assert_eq!(
             eval_number(&mut session, "(first (receiver 29))"),
-            29.0f64.to_bits()
+            RuntimeNumber::Long(29)
         );
     }
 }
@@ -293,9 +309,9 @@ fn retained_equality_survives_gc_and_wrong_arity_keeps_operand_effects() {
         "(retained-equality equality-left equality-right)"
     ));
     for (source, trace) in [
-        ("(retained-equality)", 0.0f64),
-        ("(equiv-sequential (do (set! equality-arity-trace 17) equality-left))", 17.0),
-        ("(equiv-sequential equality-left equality-right (do (set! equality-arity-trace 29) nil))", 29.0),
+        ("(retained-equality)", 0i64),
+        ("(equiv-sequential (do (set! equality-arity-trace 17) equality-left))", 17),
+        ("(equiv-sequential equality-left equality-right (do (set! equality-arity-trace 29) nil))", 29),
     ] {
         assert!(
             matches!(session.eval(source), Err(SessionError::Language(_))),
@@ -304,7 +320,7 @@ fn retained_equality_survives_gc_and_wrong_arity_keeps_operand_effects() {
         session.collect().unwrap();
         assert_eq!(
             eval_number(&mut session, "equality-arity-trace"),
-            trace.to_bits(),
+            RuntimeNumber::Long(trace),
             "{source}"
         );
         assert!(eval_bool(
@@ -314,7 +330,7 @@ fn retained_equality_survives_gc_and_wrong_arity_keeps_operand_effects() {
     }
     assert_eq!(
         eval_number(&mut session, "equality-arity-trace"),
-        29.0f64.to_bits()
+        RuntimeNumber::Long(29)
     );
     session.eval("(deftype ThrowEquiv [] IEquiv (-equiv [_ other] (do (set! equality-arity-trace 41) (throw 73))))").unwrap();
     let Err(SessionError::Language(value)) = session.eval("(= (list (ThrowEquiv.)) (list nil))")
@@ -322,10 +338,10 @@ fn retained_equality_survives_gc_and_wrong_arity_keeps_operand_effects() {
         panic!("typed equality throw");
     };
     session.collect().unwrap();
-    assert_eq!(number(&mut session, &value), 73.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), RuntimeNumber::Long(73));
     assert_eq!(
         eval_number(&mut session, "equality-arity-trace"),
-        41.0f64.to_bits()
+        RuntimeNumber::Long(41)
     );
     assert!(eval_bool(
         &mut session,

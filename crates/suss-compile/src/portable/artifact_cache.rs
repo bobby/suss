@@ -255,7 +255,7 @@ mod tests {
                 "a real error must not publish a bypass"
             );
             drop(request);
-            let value = session.eval("42").unwrap();
+            let value = session.eval("42.0").unwrap();
             assert_eq!(session.options().fuel_per_operation, configured);
             session
                 .inspect(&value, |mut store, value| {
@@ -390,7 +390,7 @@ mod tests {
     #[test]
     fn source_cache_preserves_nan_payload_bits_and_checks_integrity() {
         let mut cache = ArtifactCache::default();
-        let mut function = graph("0");
+        let mut function = graph("0.0");
         let set_number = |function: &mut ir::Function, bits| {
             let instruction = function
                 .blocks

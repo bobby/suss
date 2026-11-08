@@ -72,7 +72,7 @@ fn syntax_quote_constructor_observes_core_sequence_redefinition() {
         session.collect().unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let actual = bridge.read(&mut session, &value, 0..16).unwrap();
-        assert_eq!(actual.kind, Kind::Number(42.0));
+        assert_eq!(actual.kind, Kind::Long(42));
     }
 }
 
@@ -88,7 +88,7 @@ fn syntax_quote_old_closure_observes_later_core_sequence_definition() {
         let bridge = FormBridge::new(&mut session).unwrap();
         session.collect().unwrap();
         let actual = bridge.read(&mut session, &value, 0..21).unwrap();
-        assert_eq!(actual.kind, Kind::Number(42.0));
+        assert_eq!(actual.kind, Kind::Long(42));
     }
 }
 
@@ -110,7 +110,7 @@ fn reader_fallback_stays_private_and_does_not_replay_after_definition() {
             .unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let actual = bridge.read(&mut session, &value, 0..1).unwrap();
-        assert_eq!(actual.kind, Kind::Number(84.0));
+        assert_eq!(actual.kind, Kind::Long(84));
     }
 }
 
@@ -123,7 +123,7 @@ fn failed_reader_compile_does_not_publish_the_support_cell() {
         let value = session.eval("(count (make-quoted))").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let actual = bridge.read(&mut session, &value, 0..1).unwrap();
-        assert_eq!(actual.kind, Kind::Number(3.0));
+        assert_eq!(actual.kind, Kind::Long(3));
     }
 }
 
@@ -140,7 +140,7 @@ fn reader_support_recovers_from_failed_initializer_and_reset() {
         let value = session.eval("(count `(+ 1 2))").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let actual = bridge.read(&mut session, &value, 0..1).unwrap();
-        assert_eq!(actual.kind, Kind::Number(3.0));
+        assert_eq!(actual.kind, Kind::Long(3));
     }
 }
 
@@ -162,8 +162,8 @@ fn first_public_defonce_replaces_private_reader_fallback_once() {
         let Kind::Vector(values) = actual.into_parts().2 else {
             panic!("reader result and initializer count")
         };
-        assert_eq!(values[0].kind, Kind::Number(42.0));
-        assert_eq!(values[1].kind, Kind::Number(1.0));
+        assert_eq!(values[0].kind, Kind::Long(42));
+        assert_eq!(values[1].kind, Kind::Long(1));
     }
 }
 
@@ -185,7 +185,7 @@ fn reader_fallback_preserves_declared_and_failed_defonce_initialization() {
         let fresh_quote = session.eval("(count `(+ 1 2))").unwrap();
         assert_eq!(
             bridge.read(&mut session, &fresh_quote, 0..1).unwrap().kind,
-            Kind::Number(3.0)
+            Kind::Long(3)
         );
         assert!(session.eval("(defonce sequence (do (set! reader-definition-effects (+ reader-definition-effects 1)) (throw 7)))").is_err());
         session.eval("(defonce sequence (do (set! reader-definition-effects (+ reader-definition-effects 1)) (fn [coll] (list 42))))").unwrap();
@@ -198,8 +198,8 @@ fn reader_fallback_preserves_declared_and_failed_defonce_initialization() {
         let Kind::Vector(values) = actual.into_parts().2 else {
             panic!("reader result and failed/retried initializer count")
         };
-        assert_eq!(values[0].kind, Kind::Number(42.0));
-        assert_eq!(values[1].kind, Kind::Number(2.0));
+        assert_eq!(values[0].kind, Kind::Long(42));
+        assert_eq!(values[1].kind, Kind::Long(2));
     }
 }
 
@@ -213,15 +213,15 @@ fn reader_callee_is_selected_before_unquote_redefines_its_live_binding() {
         let bridge = FormBridge::new(&mut session).unwrap();
         assert_eq!(
             bridge.read(&mut session, &first, 0..1).unwrap().kind,
-            Kind::Number(42.0)
+            Kind::Long(42)
         );
         let after = session.eval("[(first `(+ 1 2)) reader-effects]").unwrap();
         let actual = bridge.read(&mut session, &after, 0..1).unwrap();
         let Kind::Vector(values) = actual.into_parts().2 else {
             panic!("new callee and once-only unquote effects")
         };
-        assert_eq!(values[0].kind, Kind::Number(99.0));
-        assert_eq!(values[1].kind, Kind::Number(1.0));
+        assert_eq!(values[0].kind, Kind::Long(99));
+        assert_eq!(values[1].kind, Kind::Long(1));
     }
 }
 
@@ -245,9 +245,9 @@ fn bootstrapped_public_sequence_survives_reader_failures_defonce_and_reset() {
             values.iter().map(|v| v.kind.clone()).collect::<Vec<_>>(),
             vec![
                 Kind::Bool(true),
-                Kind::Number(0.0),
-                Kind::Number(3.0),
-                Kind::Number(2.0)
+                Kind::Long(0),
+                Kind::Long(3),
+                Kind::Long(2)
             ]
         );
         session.reset().unwrap();
@@ -258,7 +258,7 @@ fn bootstrapped_public_sequence_survives_reader_failures_defonce_and_reset() {
         let bridge = FormBridge::new(&mut session).unwrap();
         assert_eq!(
             bridge.read(&mut session, &value, 0..1).unwrap().into_parts().2,
-            Kind::Number(2.0)
+            Kind::Long(2)
         );
     }
 }

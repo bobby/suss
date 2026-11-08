@@ -3,7 +3,26 @@ mod support;
 /// First type index a fragment appends after the shared ABI v3 prelude.
 const APPENDED: u32 = suss_compile::runtime_abi::LONG + 1;
 use suss_compile::runtime_abi;
+use suss_compile::portable_session::{RuntimeNumber, runtime_number};
 use wasmtime::{Instance, Module, Store, Val};
+
+/// A runtime value that must be a long.
+#[track_caller]
+fn long_of(store: &mut Store<()>, value: &Val) -> i64 {
+    match runtime_number(&mut *store, value).unwrap() {
+        Some(RuntimeNumber::Long(value)) => value,
+        other => panic!("expected a long, observed {other:?}"),
+    }
+}
+
+/// A runtime value that must be a double.
+#[track_caller]
+fn double_of(store: &mut Store<()>, value: &Val) -> f64 {
+    match runtime_number(&mut *store, value).unwrap() {
+        Some(RuntimeNumber::Double(value)) => value,
+        other => panic!("expected a double, observed {other:?}"),
+    }
+}
 
 /// The ABI v3 sentinel tag of a language value: 0 nil, 2 false, 4 true, 6 undefined.
 #[track_caller]
@@ -83,6 +102,76 @@ fn runtime_abi_object_constructor_accepts_reserved_closure_property_slots() {
         .expect("Object constructor result must be a reference");
 }
 
+/// Java's `Double.toString` (JDK 19+): the shortest digits that round-trip,
+/// at least two, in plain notation for
+/// magnitudes in [1e-3, 1e7) and computerized scientific notation otherwise.
+fn java_double_string(value: f64) -> String {
+    if value.is_nan() {
+        return "NaN".into();
+    }
+    if value.is_infinite() {
+        return if value > 0.0 { "Infinity" } else { "-Infinity" }.into();
+    }
+    let sign = if value.is_sign_negative() { "-" } else { "" };
+    if value == 0.0 {
+        return format!("{sign}0.0");
+    }
+    let magnitude = value.abs();
+    let split = |text: String| {
+        let (mantissa, exponent) = text.split_once('e').unwrap();
+        (mantissa.replace('.', ""), exponent.parse::<i32>().unwrap())
+    };
+    // Of the decimals with the shortest length (at least two digits) that
+    // round-trip, Java picks the closest, ties to an even digit: exactly
+    // Rust's correctly rounded fixed-precision formatting at that length.
+    let shortest = split(format!("{magnitude:e}")).0.len().max(2);
+    let (digits, exponent) = split(format!("{magnitude:.*e}", shortest - 1));
+    let digits = match digits.trim_end_matches('0') {
+        "" => "0".to_owned(),
+        trimmed => trimmed.to_owned(),
+    };
+    if (1e-3..1e7).contains(&magnitude) {
+        let point = exponent + 1;
+        if point <= 0 {
+            format!("{sign}0.{}{digits}", "0".repeat((-point) as usize))
+        } else if point as usize >= digits.len() {
+            format!("{sign}{digits}{}.0", "0".repeat(point as usize - digits.len()))
+        } else {
+            let (whole, fraction) = digits.split_at(point as usize);
+            format!("{sign}{whole}.{fraction}")
+        }
+    } else {
+        let (first, rest) = digits.split_at(1);
+        let rest = if rest.is_empty() { "0" } else { rest };
+        format!("{sign}{first}.{rest}E{exponent}")
+    }
+}
+
+#[test]
+fn java_double_string_matches_reviewed_jvm_samples() {
+    for (value, text) in [
+        (1.0, "1.0"),
+        (-0.0, "-0.0"),
+        (0.5, "0.5"),
+        (0.001, "0.001"),
+        (1234567.0, "1234567.0"),
+        (1e7, "1.0E7"),
+        (1e21, "1.0E21"),
+        (1e-7, "1.0E-7"),
+        (1.5e300, "1.5E300"),
+        (f64::MIN_POSITIVE * f64::EPSILON, "4.9E-324"),
+        (2.0 * f64::MIN_POSITIVE * f64::EPSILON, "9.9E-324"),
+        (3e-323, "3.0E-323"),
+        (1.25e-322, "1.24E-322"),
+        (f64::MAX, "1.7976931348623157E308"),
+        (0.1 + 0.2, "0.30000000000000004"),
+        (f64::from_bits(0x42df575484f5b3e8), "1.3783976246241562E14"),
+        (f64::from_bits(0x43119d557fc60531), "1.2395162863865082E15"),
+    ] {
+        assert_eq!(java_double_string(value), text, "{value:e}");
+    }
+}
+
 #[test]
 fn runtime_abi_numeric_samples_match_pinned_formatting_and_parsing() {
     let corpus: serde_json::Value =
@@ -107,6 +196,7 @@ fn runtime_abi_numeric_samples_match_pinned_formatting_and_parsing() {
         .get_memory(&mut store, "numeric-scratch-memory")
         .unwrap();
     let mut identities = std::collections::HashSet::new();
+    let mut mismatches = Vec::new();
     let mut capacity = 0;
     for (index, case) in corpus["cases"].as_array().unwrap().iter().enumerate() {
         let input = case["bits"].as_str().unwrap();
@@ -142,18 +232,20 @@ fn runtime_abi_numeric_samples_match_pinned_formatting_and_parsing() {
                 .unwrap()
                 .map(|unit| unit.unwrap_i32() as u16)
                 .collect::<Vec<_>>();
-            assert_eq!(
-                serde_json::json!({"tag":"string","units":units}),
-                case["formatted"],
-                "{input}"
-            );
+            // The corpus pins ClojureScript's formatting; Clojure prints a
+            // double as Java's Double.toString does.
+            let expected = java_double_string(f64::from_bits(bits));
+            let found = String::from_utf16(&units).unwrap();
+            if found != expected {
+                mismatches.push(format!("{input}: {found} vs Java {expected}"));
+            }
             let mut number = [Val::F64(0)];
             parsed.call(&mut scope, &text, &mut number).unwrap();
-            let bits = number[0].unwrap_f64().to_bits();
-            assert_eq!(
-                serde_json::json!({"tag":"f64","bits":format!("{bits:016x}")}),
-                case["parsed"],
-                "{input}"
+            let parsed_bits = number[0].unwrap_f64().to_bits();
+            // Java's text round-trips the double (every NaN reads as NaN).
+            assert!(
+                parsed_bits == bits || (f64::from_bits(bits).is_nan() && f64::from_bits(parsed_bits).is_nan()),
+                "{input}: {parsed_bits:016x}"
             );
         }
         if index == 0 {
@@ -165,6 +257,7 @@ fn runtime_abi_numeric_samples_match_pinned_formatting_and_parsing() {
         }
     }
     assert_eq!(identities.len(), 1024);
+    assert!(mismatches.is_empty(), "{} formatting mismatches: {mismatches:#?}", mismatches.len());
 }
 
 #[test]
@@ -972,16 +1065,17 @@ fn runtime_abi_arithmetic_function_values_check_arity_and_fold_in_order() {
     .unwrap();
     let invoke = runtime.get_func(&mut store, "invoke").unwrap();
     for (name, inputs, expected) in [
-        ("add", vec![], 0.0),
-        ("multiply", vec![], 1.0),
-        ("add", vec![2.0], 2.0),
-        ("multiply", vec![2.0], 2.0),
-        ("subtract", vec![0.0], -0.0),
-        ("divide", vec![4.0], 0.25),
-        ("add", vec![1.0, 2.0, 3.0], 6.0),
-        ("multiply", vec![2.0, 3.0, 4.0], 24.0),
-        ("subtract", vec![10.0, 2.0, 3.0], 5.0),
-        ("divide", vec![24.0, 3.0, 2.0], 4.0),
+        // (+) and (*) are the longs 0 and 1; double operands give doubles.
+        ("add", vec![], RuntimeNumber::Long(0)),
+        ("multiply", vec![], RuntimeNumber::Long(1)),
+        ("add", vec![2.0], RuntimeNumber::Double(2.0)),
+        ("multiply", vec![2.0], RuntimeNumber::Double(2.0)),
+        ("subtract", vec![0.0], RuntimeNumber::Double(-0.0)),
+        ("divide", vec![4.0], RuntimeNumber::Double(0.25)),
+        ("add", vec![1.0, 2.0, 3.0], RuntimeNumber::Double(6.0)),
+        ("multiply", vec![2.0, 3.0, 4.0], RuntimeNumber::Double(24.0)),
+        ("subtract", vec![10.0, 2.0, 3.0], RuntimeNumber::Double(5.0)),
+        ("divide", vec![24.0, 3.0, 2.0], RuntimeNumber::Double(4.0)),
     ] {
         let mut closure = [Val::null_any_ref()];
         runtime
@@ -1036,17 +1130,12 @@ fn runtime_abi_arithmetic_function_values_check_arity_and_fold_in_order() {
                 &mut result,
             )
             .unwrap();
-        let object = result[0]
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&store)
-            .unwrap()
-            .unwrap();
-        assert_eq!(
-            object.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
-            f64::to_bits(expected),
-            "{name}"
-        );
+        match (runtime_number(&mut store, &result[0]).unwrap(), expected) {
+            (Some(RuntimeNumber::Double(found)), RuntimeNumber::Double(expected)) => {
+                assert_eq!(found.to_bits(), expected.to_bits(), "{name}")
+            }
+            (found, expected) => assert_eq!(found, Some(expected), "{name}"),
+        }
     }
     for name in ["subtract", "divide"] {
         let mut closure = [Val::null_any_ref()];
@@ -2236,15 +2325,9 @@ fn runtime_abi_source_arrays_copy_argument_buffers_and_own_values_through_growth
             .unwrap();
         assert_eq!(object.field(&mut store, 0).unwrap().unwrap_f64(), 7.0);
     }
-    for (array, count) in [(value, 4.0), (clone, 1.0)] {
+    for (array, count) in [(value, 4), (clone, 1)] {
         let length = nominal_value(&mut store, runtime, "source-array-length", &[array]);
-        let object = length
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&store)
-            .unwrap()
-            .unwrap();
-        assert_eq!(object.field(&mut store, 0).unwrap().unwrap_f64(), count);
+        assert_eq!(long_of(&mut store, &length), count);
     }
 }
 
@@ -2284,18 +2367,7 @@ fn runtime_abi_source_array_bad_inputs_and_capacity_fail_as_language_errors() {
         &[value.clone(), huge.clone(), nil.clone()],
     );
     let length = nominal_value(&mut store, runtime, "source-array-length", &[value.clone()]);
-    assert_eq!(
-        length
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&store)
-            .unwrap()
-            .unwrap()
-            .field(&mut store, 0)
-            .unwrap()
-            .unwrap_f64(),
-        1_000_002.0
-    );
+    assert_eq!(long_of(&mut store, &length), 1_000_002);
     for (export, args) in [
         ("source-array-new", vec![nil.clone()]),
         ("source-array-fields", vec![nil.clone()]),
@@ -3079,14 +3151,13 @@ fn runtime_abi_utf16_char_code_bounds_and_errors_never_trap() {
         let mut output = [Val::null_any_ref()];
         get.call(&mut store, &[text.clone(), input], &mut output)
             .unwrap();
-        let object = output[0]
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&store)
-            .unwrap()
-            .unwrap();
-        let actual = object.field(&mut store, 0).unwrap().unwrap_f64();
-        assert_eq!(actual.to_bits(), expected.to_bits(), "{index:?}");
+        // A code unit is a long; a missing unit is the double NaN.
+        let actual = runtime_number(&mut store, &output[0]).unwrap();
+        if expected.is_nan() {
+            assert!(matches!(actual, Some(RuntimeNumber::Double(value)) if value.is_nan()), "{index:?}: {actual:?}");
+        } else {
+            assert_eq!(actual, Some(RuntimeNumber::Long(expected as i64)), "{index:?}");
+        }
     }
     let nil = nominal_value(&mut store, runtime, "nil", &[]);
     let opaque = nominal_value(&mut store, runtime, "args-new", &[Val::I32(0)]);
@@ -3103,13 +3174,7 @@ fn runtime_abi_utf16_char_code_bounds_and_errors_never_trap() {
         assert!(store.take_pending_exception().is_some());
     }
     let value = nominal_value(&mut store, runtime, "string-char-code-at", &[text, nil]);
-    let object = value
-        .unwrap_anyref()
-        .unwrap()
-        .as_struct(&store)
-        .unwrap()
-        .unwrap();
-    assert_eq!(object.field(&mut store, 0).unwrap().unwrap_f64(), 55296.0);
+    assert_eq!(long_of(&mut store, &value), 55296);
 }
 
 #[test]
@@ -3250,18 +3315,7 @@ fn runtime_abi_string_method_copied_callbacks_and_corrupt_environments_do_not_tr
             "invoke",
             &[copied_anchored, pair.clone()],
         );
-        assert_eq!(
-            value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)
-                .unwrap()
-                .unwrap()
-                .field(&mut store, 0)
-                .unwrap()
-                .unwrap_f64(),
-            57343.0
-        );
+        assert_eq!(long_of(&mut store, &value), 57343);
     }
     // A malformed tagged payload must fail before dereference or callback.
     array.set(&mut store, 0, nil.clone()).unwrap();
@@ -3273,18 +3327,7 @@ fn runtime_abi_string_method_copied_callbacks_and_corrupt_environments_do_not_tr
         &[method, text.clone(), empty.clone()],
     );
     let recovered = nominal_value(&mut store, runtime, "string-char-code-at", &[text, nil]);
-    assert_eq!(
-        recovered
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&store)
-            .unwrap()
-            .unwrap()
-            .field(&mut store, 0)
-            .unwrap()
-            .unwrap_f64(),
-        57343.0
-    );
+    assert_eq!(long_of(&mut store, &recovered), 57343);
 }
 
 #[test]
@@ -3340,15 +3383,9 @@ fn runtime_abi_binary64_words_preserve_payloads_byte_order_and_typed_errors() {
             ("primitive-f64-word4", (bits >> 32) as u32),
         ] {
             let value = nominal_value(&mut store, runtime, name, &[input.clone()]);
-            let object = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)
-                .unwrap()
-                .unwrap();
             assert_eq!(
-                object.field(&mut store, 0).unwrap().unwrap_f64(),
-                f64::from(word.swap_bytes() as i32),
+                long_of(&mut store, &value),
+                i64::from(word.swap_bytes() as i32),
                 "{name}: {bits:016x}"
             );
         }
@@ -3370,13 +3407,7 @@ fn runtime_abi_binary64_words_preserve_payloads_byte_order_and_typed_errors() {
     }
     let normalized = nominal_value(&mut store, runtime, "primitive-f64-coerce", &[nil]);
     let output = nominal_value(&mut store, runtime, "primitive-f64-word0", &[normalized]);
-    let object = output
-        .unwrap_anyref()
-        .unwrap()
-        .as_struct(&store)
-        .unwrap()
-        .unwrap();
-    assert_eq!(object.field(&mut store, 0).unwrap().unwrap_f64(), 0.0);
+    assert_eq!(long_of(&mut store, &output), 0);
 }
 
 #[test]
@@ -3412,18 +3443,7 @@ fn runtime_abi_binary64_scalar_adapters_reject_foreign_values_and_recover_after_
         let normalized = nominal_value(&mut store, runtime, "primitive-f64-coerce", &[nil.clone()]);
         for name in ["primitive-f64-word0", "primitive-f64-word4"] {
             let output = nominal_value(&mut store, runtime, name, &[normalized.clone()]);
-            assert_eq!(
-                output
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_struct(&store)
-                    .unwrap()
-                    .unwrap()
-                    .field(&mut store, 0)
-                    .unwrap()
-                    .unwrap_f64(),
-                0.0
-            );
+            assert_eq!(long_of(&mut store, &output), 0);
         }
     }
 }
@@ -5544,19 +5564,7 @@ fn runtime_abi_numeric_hash_boundaries_reject_bad_values_without_traps() {
                 "primitive-safe-integer-remainder",
                 &[three.clone(), three.clone()],
             );
-            assert_eq!(
-                recovered
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_struct(&store)
-                    .unwrap()
-                    .unwrap()
-                    .field(&mut store, 0)
-                    .unwrap()
-                    .unwrap_f64()
-                    .to_bits(),
-                0.0f64.to_bits()
-            );
+            assert_eq!(long_of(&mut store, &recovered), 0);
         }
         let output = nominal_value(&mut store, runtime, "primitive-f64-safe-integer", &[input]);
         assert_eq!(
@@ -5608,16 +5616,7 @@ fn runtime_abi_identity_slots_keep_metadata_and_reject_corruption_without_traps(
             0
         );
         let cached = nominal_value(&mut store, runtime, "identity-uid", &[owner.clone()]);
-        let id = cached
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&store)
-            .unwrap()
-            .unwrap()
-            .field(&mut store, 0)
-            .unwrap()
-            .unwrap_f64()
-            .to_bits();
+        let id = long_of(&mut store, &cached);
         assert!(seen.insert(id));
         store.gc(None).unwrap();
         let repeated = nominal_value(&mut store, runtime, "identity-uid", &[owner.clone()]);
@@ -5856,16 +5855,7 @@ fn runtime_abi_uid_safe_integer_exhaustion_preserves_cached_owners() {
     const LIMIT: i64 = 9_007_199_254_740_991;
     counter.set(&mut store, Val::I64(LIMIT)).unwrap();
     let cached = nominal_value(&mut store, runtime, "identity-uid", &[first.clone()]);
-    let boxed = cached
-        .unwrap_anyref()
-        .unwrap()
-        .as_struct(&store)
-        .unwrap()
-        .unwrap();
-    assert_eq!(
-        boxed.field(&mut store, 0).unwrap().unwrap_f64(),
-        LIMIT as f64
-    );
+    assert_eq!(long_of(&mut store, &cached), LIMIT);
     assert_eq!(counter.get(&mut store).unwrap_i64(), LIMIT + 1);
     store.gc(None).unwrap();
     let repeat = nominal_value(&mut store, runtime, "identity-uid", &[first.clone()]);
@@ -6174,16 +6164,7 @@ fn runtime_abi_apply_callbacks_reject_foreign_environments_and_empty_push_buffer
     }
     let valid = nominal_value(&mut store, runtime, "closure-call-method", &[owner]);
     let value = nominal_value(&mut store, runtime, "invoke", &[valid, empty]);
-    let bits = value
-        .unwrap_anyref()
-        .unwrap()
-        .as_struct(&store)
-        .unwrap()
-        .unwrap()
-        .fields(&mut store)
-        .unwrap()
-        .collect::<Vec<_>>();
-    assert!(matches!(bits.as_slice(), [Val::F64(bits)] if *bits == 0.0f64.to_bits()));
+    assert_eq!(long_of(&mut store, &value), 0);
 }
 
 #[test]
@@ -6793,19 +6774,7 @@ fn runtime_abi_sparse_array_rejects_corrupt_chains_before_shrink_mutates_length(
             "{corruption}: {error:#}"
         );
         let length = fields.get(&mut store, 0).unwrap();
-        assert_eq!(
-            length
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)
-                .unwrap()
-                .unwrap()
-                .field(&mut store, 0)
-                .unwrap()
-                .unwrap_f64(),
-            9.0,
-            "{corruption} mutated length"
-        );
+        assert_eq!(long_of(&mut store, &length), 9, "{corruption} mutated length");
     }
 }
 
@@ -7132,20 +7101,8 @@ fn runtime_abi_sparse_array_rejects_duplicate_out_of_range_and_dense_overlap_key
             .call(&mut store, &[storage, Val::I32(3)], &mut [Val::I32(0)])
             .unwrap_err();
         assert!(error.is::<wasmtime::ThrownException>(), "{mode}: {error:#}");
-        assert_eq!(
-            fields
-                .get(&mut store, 0)
-                .unwrap()
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)
-                .unwrap()
-                .unwrap()
-                .field(&mut store, 0)
-                .unwrap()
-                .unwrap_f64(),
-            10.0
-        );
+        let length = fields.get(&mut store, 0).unwrap();
+        assert_eq!(long_of(&mut store, &length), 10);
     }
 }
 
@@ -7205,20 +7162,8 @@ fn runtime_abi_sparse_array_mutations_reject_invalid_presence_without_repairing_
             2,
             "must not silently repair"
         );
-        assert_eq!(
-            fields
-                .get(&mut store, 0)
-                .unwrap()
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)
-                .unwrap()
-                .unwrap()
-                .field(&mut store, 0)
-                .unwrap()
-                .unwrap_f64(),
-            8.0
-        );
+        let length = fields.get(&mut store, 0).unwrap();
+        assert_eq!(long_of(&mut store, &length), 8);
     }
 }
 
@@ -7445,18 +7390,7 @@ fn runtime_abi_source_array_sparse_owner_clone_preserves_holes_and_maximum_lengt
         23.0
     );
     let length = nominal_value(&mut store, runtime, "source-array-length", &[cloned]);
-    assert_eq!(
-        length
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&store)
-            .unwrap()
-            .unwrap()
-            .field(&mut store, 0)
-            .unwrap()
-            .unwrap_f64(),
-        4294967295.0
-    );
+    assert_eq!(long_of(&mut store, &length), 4294967295);
 }
 
 #[test]
@@ -7789,7 +7723,7 @@ fn runtime_abi_array_constructor_lengths_and_range_error_identity_after_gc() {
     let error = nominal_value(&mut store, runtime, "invoke", &[range_constructor.clone(), one.clone()]);
     let message = error.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().field(&mut store, 1).unwrap();
     assert_eq!(message.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().len(&store).unwrap(), 0, "RangeError(undefined) has an empty message");
-    let seven = nominal_value(&mut store, runtime, "number-box", &[Val::F64(7.0_f64.to_bits())]);
+    let seven = nominal_value(&mut store, runtime, "long-box", &[Val::I64(7)]);
     let message_args = nominal_value(&mut store, runtime, "args-new", &[Val::I32(1)]);
     message_args.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().set(&mut store, 0, seven).unwrap();
     let error = nominal_value(&mut store, runtime, "invoke", &[range_constructor, message_args]);
@@ -7866,8 +7800,11 @@ fn runtime_abi_array_push_overflow_preserves_all_writes_before_range_error() {
         for index in 0..3 {
             let key = nominal_value(&mut store, runtime, "number-box", &[Val::F64((f64::from(initial) + f64::from(index)).to_bits())]);
             let value = nominal_value(&mut store, runtime, "source-array-get", &[owner.clone(), key]);
-            let number = value.unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap().field(&mut store, 0).unwrap().unwrap_f64();
-            assert_eq!(number, 17.0 + f64::from(index));
+            // An integral double key names the same property as the equal long.
+            let long_key = nominal_value(&mut store, runtime, "long-box", &[Val::I64(i64::from(initial) + i64::from(index))]);
+            let by_long = nominal_value(&mut store, runtime, "source-array-get", &[owner.clone(), long_key]);
+            assert_eq!(double_of(&mut store, &by_long), 17.0 + f64::from(index), "long key {initial}+{index}");
+            assert_eq!(runtime_number(&mut store, &value).unwrap(), Some(RuntimeNumber::Double(17.0 + f64::from(index))), "double key {initial}+{index}");
         }
     }
 }

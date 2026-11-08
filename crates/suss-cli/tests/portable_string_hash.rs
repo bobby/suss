@@ -1,5 +1,26 @@
 use suss_cli::portable_session::Session;
-use wasmtime::Val;
+
+/// The observation of a runtime number, distinguishing a long from a double.
+fn number_json(number: suss_cli::portable_session::RuntimeNumber) -> serde_json::Value {
+    match number {
+        suss_cli::portable_session::RuntimeNumber::Long(value) => serde_json::json!({"tag":"long", "value":value}),
+        suss_cli::portable_session::RuntimeNumber::Double(value) => {
+            serde_json::json!({"tag":"f64", "bits":format!("{:016x}", value.to_bits())})
+        }
+    }
+}
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_number(expected: &serde_json::Value) -> serde_json::Value {
+    if expected["tag"] == "f64" {
+        let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+        let value = f64::from_bits(bits);
+        if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+            return serde_json::json!({"tag":"long", "value":value as i64});
+        }
+    }
+    expected.clone()
+}
 
 #[test]
 fn string_hash_match_independently_decoded_primary_observations_after_gc() {
@@ -29,17 +50,12 @@ fn string_hash_match_independently_decoded_primary_observations_after_gc() {
         };
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "f64" => {
-                let bits = session
-                    .inspect(&value, |mut store, value| {
-                        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-                        let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-                        let [Val::F64(bits)] = fields.as_slice() else {
-                            panic!("Number layout");
-                        };
-                        Ok(*bits)
+                let number = session
+                    .inspect(&value, |store, value| {
+                        Ok(suss_cli::portable_session::runtime_number(store, &value)?.expect("Number layout"))
                     })
                     .unwrap();
-                serde_json::json!({"tag":"f64", "bits":format!("{bits:016x}")})
+                number_json(number)
             }
             "nil" => {
                 session
@@ -80,7 +96,7 @@ fn string_hash_match_independently_decoded_primary_observations_after_gc() {
             }
             tag => panic!("unsupported String hash observation {tag}"),
         };
-        if actual != case["expected"] {
+        if actual != clojure_number(&case["expected"]) {
             failures.push(format!(
                 "{id}: {source}: actual {actual}, expected {}",
                 case["expected"]
@@ -96,12 +112,14 @@ fn string_hash_match_independently_decoded_primary_observations_after_gc() {
     );
 }
 
-fn string_number(session: &mut Session, source: &str) -> f64 {
+fn string_number(session: &mut Session, source: &str) -> i64 {
     let value = session.eval(source).unwrap();
     session
         .inspect(&value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            Ok(object.field(&mut store, 0)?.unwrap_f64())
+            match suss_cli::portable_session::runtime_number(&mut store, &value)? {
+                Some(suss_cli::portable_session::RuntimeNumber::Long(value)) => Ok(value),
+                other => panic!("long result {other:?}"),
+            }
         })
         .unwrap()
 }
@@ -120,7 +138,7 @@ fn string_member_domain_errors_recover_after_gc() {
         session.collect().unwrap();
         let result = session.eval(source);
         assert!(matches!(result, Err(SessionError::Language(_))), "{source}: {result:?}");
-        assert_eq!(string_number(&mut session, "(.charCodeAt \"AB\" 1)"), 66.0);
+        assert_eq!(string_number(&mut session, "(.charCodeAt \"AB\" 1)"), 66);
     }
     session
         .eval("(def saved_char_method (.-charCodeAt \"A\"))")
@@ -132,7 +150,7 @@ fn string_member_domain_errors_recover_after_gc() {
     ));
     assert_eq!(
         string_number(&mut session, "(.charCodeAt \"\\ud800\" 0)"),
-        55296.0
+        55296
     );
 }
 
@@ -155,7 +173,7 @@ fn positive_predicate_compile_errors_are_located_atomic_and_phase_checked() {
     session
         .eval("(ns string.alias (:require [cljs.core :as c]))")
         .unwrap();
-    assert_eq!(string_number(&mut session, "(if (c/pos? 1) 7 9)"), 7.0);
+    assert_eq!(string_number(&mut session, "(if (c/pos? 1) 7 9)"), 7);
     for phase in [Phase::Runtime, Phase::Macro] {
         let prepared =
             prepare_fragment("(cljs.core/pos? 1)", &Environment::default(), phase).unwrap();
@@ -171,6 +189,6 @@ fn positive_predicate_compile_errors_are_located_atomic_and_phase_checked() {
     assert!(session.eval("(pos? 1)").is_err());
     assert_eq!(
         string_number(&mut session, "(let [pos? (fn [x] 42)] (pos? 1))"),
-        42.0
+        42
     );
 }

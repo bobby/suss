@@ -2,7 +2,7 @@
 //! canonical element and nested-string buffers have explicit transfer ownership.
 use super::{boundary_error_message, lift_scalar, lower_scalar, strings, ListElement, Scalar};
 use crate::runtime_abi;
-use wasm_encoder::{BlockType, Function, HeapType, Instruction, MemArg};
+use wasm_encoder::{BlockType, Function, Instruction, MemArg};
 
 pub(super) struct Locals {
     pub value: u32,
@@ -16,6 +16,10 @@ pub(super) struct Locals {
     pub number: u32,
     /// Index of the module's imported false global.
     pub sentinels: u32,
+    /// An `i64` scratch local for boxing a long.
+    pub wide: u32,
+    /// A value scratch local for reading a number.
+    pub scratch: u32,
 }
 fn emit(body: &mut Function, instructions: &[Instruction<'_>]) {
     for instruction in instructions {
@@ -109,26 +113,22 @@ fn end(body: &mut Function, index: u32) {
         ],
     );
 }
-fn schema(body: &mut Function, root: u32, operation: f64, value: u32, index: Option<u32>) {
+/// Operation codes and bounded list indexes are i31 longs.
+fn schema(body: &mut Function, root: u32, operation: i32, value: u32, index: Option<u32>) {
     use Instruction::*;
     emit(
         body,
-        &[
-            GlobalGet(root),
-            F64Const(operation.into()),
-            Call(1),
-            LocalGet(value),
-        ],
+        &[GlobalGet(root), I32Const(operation), RefI31, LocalGet(value)],
     );
     if let Some(index) = index {
-        emit(body, &[LocalGet(index), F64ConvertI32U]);
+        body.instruction(&LocalGet(index));
     } else {
-        body.instruction(&F64Const(0.0.into()));
+        body.instruction(&I32Const(0));
     }
     emit(
         body,
         &[
-            Call(1),
+            RefI31,
             ArrayNewFixed {
                 array_type_index: runtime_abi::ARGS,
                 array_size: 3,
@@ -139,19 +139,10 @@ fn schema(body: &mut Function, root: u32, operation: f64, value: u32, index: Opt
 }
 fn numeric_length(body: &mut Function, root: u32, locals: &Locals) {
     use Instruction::*;
-    schema(body, root, 3.0, locals.container, None);
-    emit(
-        body,
-        &[
-            RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
-            StructGet {
-                struct_type_index: runtime_abi::NUMBER,
-                field_index: 0,
-            },
-            I32TruncF64U,
-            LocalSet(locals.length),
-        ],
-    );
+    schema(body, root, 3, locals.container, None);
+    emit(body, &[LocalSet(locals.scratch)]);
+    emit(body, &runtime_abi::number_to_f64(locals.scratch));
+    emit(body, &[I32TruncF64U, LocalSet(locals.length)]);
 }
 
 pub(super) fn copy_in(
@@ -199,15 +190,14 @@ pub(super) fn copy_in(
         &[
             LocalGet(locals.array),
             LocalGet(locals.index),
-            F64ConvertI32U,
-            Call(1),
+            RefI31,
         ],
     );
     match element {
         ListElement::Scalar(ty) => {
             address(body, locals.pointer, locals.index, element);
             body.instruction(&load(ty));
-            lift_scalar(body, &ty, locals.sentinels);
+            lift_scalar(body, &ty, locals.sentinels, locals.wide);
         }
         ListElement::String => {
             address(body, locals.pointer, locals.index, element);
@@ -220,7 +210,7 @@ pub(super) fn copy_in(
     }
     emit(body, &[Call(11), Drop]);
     end(body, locals.index);
-    schema(body, root, 0.0, locals.array, None);
+    schema(body, root, 0, locals.array, None);
 }
 
 fn release(body: &mut Function, element: ListElement, locals: &Locals) {
@@ -274,13 +264,13 @@ pub(super) fn copy_out(
 ) {
     use Instruction::*;
     emit(body, &[LocalGet(locals.value), LocalSet(locals.container)]);
-    schema(body, root, 1.0, locals.container, None);
+    schema(body, root, 1, locals.container, None);
     body.instruction(&LocalSet(locals.container));
     numeric_length(body, root, locals);
     // Check every value before allocating any output buffer. Private indexing
     // has no user callbacks or mutation between validation and copying.
     begin(body, locals.length, locals.index);
-    schema(body, root, 2.0, locals.container, Some(locals.index));
+    schema(body, root, 2, locals.container, Some(locals.index));
     body.instruction(&LocalSet(locals.value));
     match element {
         ListElement::Scalar(ty) => {
@@ -320,7 +310,7 @@ pub(super) fn copy_out(
         ],
     );
     begin(body, locals.length, locals.index);
-    schema(body, root, 2.0, locals.container, Some(locals.index));
+    schema(body, root, 2, locals.container, Some(locals.index));
     body.instruction(&LocalSet(locals.value));
     match element {
         ListElement::Scalar(ty) => {
@@ -390,7 +380,9 @@ pub(super) fn post_return(body: &mut Function, element: ListElement) {
         output: 0,
         integer: 0,
         number: 0,
-        sentinels: 0, // release never builds a sentinel
+        sentinels: 0, // release never builds a sentinel or a long
+        wide: 0,
+        scratch: 0,
     };
     release(body, element, &locals);
 }

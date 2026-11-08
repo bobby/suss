@@ -1,6 +1,7 @@
 use suss_cli::portable_session::{Session, SessionError};
 use suss_compile::portable::resolve::Phase;
 use suss_reader::forms::{Form, Kind, read_forms};
+use suss_compile::portable_session::{RuntimeNumber, runtime_number};
 use wasmtime::Val;
 
 #[test]
@@ -97,16 +98,14 @@ fn compiled_macro_forms_use_phase_dependencies_and_conditional_selection_once() 
         read_forms("(ns caller (:require [dep :as d])) #?(:suss d/value :default missing)").unwrap();
     let value = session.eval_forms(forms, 0..80).unwrap();
     let bits = session
-        .inspect(&value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number");
+        .inspect(&value, |store, value| {
+            let Some(RuntimeNumber::Long(long)) = runtime_number(store, &value)? else {
+                panic!("Long");
             };
-            Ok(*bits)
+            Ok(long)
         })
         .unwrap();
-    assert_eq!(bits, 37f64.to_bits());
+    assert_eq!(bits, 37);
     assert_eq!(session.current_namespace(), "caller");
     assert_eq!(session.stats().loaded_modules, 1);
     session
@@ -142,30 +141,25 @@ fn compiled_macro_forms_execute_actual_transformer_output_through_runtime_pipeli
     assert!(items.iter().all(|form| form.span == (801..820)));
     let value = runtime.eval_forms(vec![expanded], 801..820).unwrap();
     let bits = runtime
-        .inspect(&value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number");
+        .inspect(&value, |store, value| {
+            let Some(RuntimeNumber::Long(long)) = runtime_number(store, &value)? else {
+                panic!("Long");
             };
-            Ok(*bits)
+            Ok(long)
         })
         .unwrap();
-    assert_eq!(bits, 42f64.to_bits());
+    assert_eq!(bits, 42);
     let effects = macros.eval("effects").unwrap();
     let count = macros
-        .inspect(&effects, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number");
+        .inspect(&effects, |store, value| {
+            let Some(RuntimeNumber::Long(long)) = runtime_number(store, &value)? else {
+                panic!("Long");
             };
-            Ok(*bits)
+            Ok(long)
         })
         .unwrap();
     assert_eq!(
-        count,
-        1f64.to_bits(),
+        count, 1,
         "Transformer body is not replayed during transport or runtime compilation"
     );
     assert!(matches!(

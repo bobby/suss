@@ -51,19 +51,20 @@ impl Session {
         let HeapType::ConcreteFunc(invoke_type) = parameter.unwrap_ref().heap_type() else {
             return Err(wasmtime::Error::msg("Unexpected ABI2 invoke type").into());
         };
-        let number_type = {
+        // The boxed long layout, for tokens too wide for an i31.
+        let long_type = {
             let mut scope = RootScope::new(&mut self.store);
-            let number_box = self
+            let long_box = self
                 .runtime
-                .get_func(&mut scope, "number-box")
-                .ok_or_else(|| wasmtime::Error::msg("Missing ABI2 number constructor"))?;
+                .get_func(&mut scope, "long-box")
+                .ok_or_else(|| wasmtime::Error::msg("Missing ABI3 long constructor"))?;
             let mut boxed = [Val::null_any_ref()];
-            number_box.call(&mut scope, &[Val::F64(0.0f64.to_bits())], &mut boxed)?;
+            long_box.call(&mut scope, &[Val::I64(i64::MAX)], &mut boxed)?;
             boxed[0]
                 .unwrap_anyref()
-                .ok_or_else(|| wasmtime::Error::msg("number-box returned null"))?
+                .ok_or_else(|| wasmtime::Error::msg("long-box returned null"))?
                 .as_struct(&scope)?
-                .ok_or_else(|| wasmtime::Error::msg("number-box returned a non-struct"))?
+                .ok_or_else(|| wasmtime::Error::msg("long-box returned a non-struct"))?
                 .ty(&scope)?
         };
         let factory = Func::try_new(
@@ -83,15 +84,15 @@ impl Session {
                 }
                 let value = array.get(&mut caller, 0)?;
                 let token = callback(caller.as_context_mut(), value)?;
-                // Every u32 is exactly representable as binary64. Construct the
-                // result with the runtime-derived number layout, without reentry.
-                let allocator = wasmtime::StructRefPre::new(&mut caller, number_type.clone());
-                let number = wasmtime::StructRef::new(
-                    &mut caller,
-                    &allocator,
-                    &[Val::F64((token as f64).to_bits())],
-                )?;
-                results[0] = Val::AnyRef(Some(number.to_anyref()));
+                // The token is a long: an i31 when it fits, otherwise boxed with
+                // the runtime-derived layout, without reentry.
+                results[0] = Val::AnyRef(Some(if token < 1 << 30 {
+                    wasmtime::AnyRef::from_i31(&mut caller, wasmtime::I31::wrapping_u32(token))
+                } else {
+                    let allocator = wasmtime::StructRefPre::new(&mut caller, long_type.clone());
+                    wasmtime::StructRef::new(&mut caller, &allocator, &[Val::I64(i64::from(token))])?
+                        .to_anyref()
+                }));
                 Ok(())
             },
         )?;

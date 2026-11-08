@@ -155,7 +155,7 @@ fn completed_declaration_hint_boundaries_match_actual_primary_expression_tags() 
             session.collect().unwrap();
             assert_eq!(
                 bridge.read(&mut session, &value, 0..1).unwrap().kind,
-                Kind::Number(number),
+                Kind::Long(number as i64),
                 "Actual runtime storage: {source}"
             );
         }

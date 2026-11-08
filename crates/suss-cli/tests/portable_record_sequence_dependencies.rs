@@ -18,11 +18,11 @@ fn observe(session: &mut Session, decoder: &mut Decoder, source: &str) -> Observ
         .unwrap_or_else(|error| panic!("{source}: {error:?}"))
 }
 
-fn number(value: f64) -> Observation {
-    Observation::Number(value.to_bits())
+fn number(value: i64) -> Observation {
+    Observation::Long(value)
 }
 
-fn vector(values: &[f64]) -> Observation {
+fn vector(values: &[i64]) -> Observation {
     Observation::Vector(values.iter().map(|value| number(*value)).collect())
 }
 
@@ -67,11 +67,11 @@ fn replace_preserves_vector_identity_metadata_and_nil_false_replacements() {
                 &mut decoder,
                 "(replace {2 9} record-replace-original)"
             ),
-            vector(&[1.0, 9.0, 3.0])
+            vector(&[1, 9, 3])
         );
         assert_eq!(
             observe(&mut session, &mut decoder, "record-replace-original"),
-            vector(&[1.0, 2.0, 3.0])
+            vector(&[1, 2, 3])
         );
         assert_eq!(
             observe(
@@ -79,14 +79,14 @@ fn replace_preserves_vector_identity_metadata_and_nil_false_replacements() {
                 &mut decoder,
                 "(get (meta (replace {2 9} record-replace-original)) :marker)"
             ),
-            number(17.0)
+            number(17)
         );
         let expected = Observation::Vector(vec![
             Observation::Bool(false),
             Observation::Nil,
             Observation::Bool(false),
             Observation::Nil,
-            number(9.0),
+            number(9),
         ]);
         for source in [
             "(replace {nil false false nil :a false :b nil} [nil false :a :b 9])",
@@ -102,23 +102,23 @@ fn replace_preserves_vector_identity_metadata_and_nil_false_replacements() {
         session.eval("(def record-replace-effects 0) (def record-replace-lazy (replace {1 7} (map (fn [x] (set! record-replace-effects (+ record-replace-effects 1)) x) (list 1 2 3))))").unwrap();
         assert_eq!(
             observe(&mut session, &mut decoder, "record-replace-effects"),
-            number(0.0)
+            number(0)
         );
         assert_eq!(
             observe(&mut session, &mut decoder, "(first record-replace-lazy)"),
-            number(7.0)
+            number(7)
         );
         assert_eq!(
             observe(&mut session, &mut decoder, "record-replace-effects"),
-            number(1.0)
+            number(1)
         );
         assert_eq!(
             observe(&mut session, &mut decoder, "(into [] record-replace-lazy)"),
-            vector(&[7.0, 2.0, 3.0])
+            vector(&[7, 2, 3])
         );
         assert_eq!(
             observe(&mut session, &mut decoder, "record-replace-effects"),
-            number(3.0)
+            number(3)
         );
     }
 }
@@ -134,7 +134,7 @@ fn iterate_preserves_seed_cache_next_identity_and_reduction_demand() {
                 &mut decoder,
                 "[(first record-iterate-head) record-iterate-effects]"
             ),
-            vector(&[1.0, 0.0])
+            vector(&[1, 0])
         );
         let tail = session
             .eval("(def record-iterate-tail (next record-iterate-head)) record-iterate-tail")
@@ -142,7 +142,7 @@ fn iterate_preserves_seed_cache_next_identity_and_reduction_demand() {
         let tail = retain(&mut session, &tail);
         assert_eq!(
             observe(&mut session, &mut decoder, "record-iterate-effects"),
-            number(0.0)
+            number(0)
         );
         same(&mut session, &tail, "(next record-iterate-head)");
         assert_eq!(
@@ -151,7 +151,7 @@ fn iterate_preserves_seed_cache_next_identity_and_reduction_demand() {
                 &mut decoder,
                 "[(first record-iterate-tail) (first record-iterate-tail) record-iterate-effects]"
             ),
-            vector(&[11.0, 11.0, 1.0])
+            vector(&[11, 11, 1])
         );
         assert_eq!(
             observe(
@@ -159,7 +159,7 @@ fn iterate_preserves_seed_cache_next_identity_and_reduction_demand() {
                 &mut decoder,
                 "[(first (with-meta record-iterate-tail {:tag 19})) (get (meta (with-meta record-iterate-tail {:tag 19})) :tag) record-iterate-effects]"
             ),
-            vector(&[11.0, 19.0, 1.0])
+            vector(&[11, 19, 1])
         );
         assert_eq!(
             observe(
@@ -167,7 +167,7 @@ fn iterate_preserves_seed_cache_next_identity_and_reduction_demand() {
                 &mut decoder,
                 "(do (set! record-iterate-effects 0) [(reduce (fn [_ x] (reduced x)) 0 (iterate (fn [x] (set! record-iterate-effects (+ record-iterate-effects 1)) (+ x 1)) 7)) record-iterate-effects])"
             ),
-            vector(&[7.0, 0.0])
+            vector(&[7, 0])
         );
         assert_eq!(
             observe(
@@ -175,7 +175,7 @@ fn iterate_preserves_seed_cache_next_identity_and_reduction_demand() {
                 &mut decoder,
                 "(do (set! record-iterate-effects 0) [(reduce (fn [a b] (reduced (+ a b))) (iterate (fn [x] (set! record-iterate-effects (+ record-iterate-effects 1)) (+ x 1)) 7)) record-iterate-effects])"
             ),
-            vector(&[15.0, 1.0])
+            vector(&[15, 1])
         );
     }
 }
@@ -186,11 +186,11 @@ fn take_preserves_numeric_preconditions_lazy_demand_and_reduced_identity() {
         let mut decoder = Decoder::capture(&mut session, 4096).unwrap();
         assert_eq!(
             observe(&mut session, &mut decoder, "(into [] (take 2.2 [1 2 3 4]))"),
-            vector(&[1.0, 2.0, 3.0])
+            vector(&[1, 2, 3])
         );
         assert_eq!(
             observe(&mut session, &mut decoder, "(into [] (take 2.2) [1 2 3 4])"),
-            vector(&[1.0, 2.0, 3.0])
+            vector(&[1, 2, 3])
         );
         session.eval("(def record-take-effects 0) (def record-take-pending (new LazySeq nil (fn [] (set! record-take-effects 1) (throw (suss.bootstrap/error \"forced\"))) nil nil))").unwrap();
         assert_eq!(
@@ -203,7 +203,7 @@ fn take_preserves_numeric_preconditions_lazy_demand_and_reduced_identity() {
         );
         assert_eq!(
             observe(&mut session, &mut decoder, "record-take-effects"),
-            number(0.0)
+            number(0)
         );
         assert_eq!(
             observe(
@@ -211,7 +211,7 @@ fn take_preserves_numeric_preconditions_lazy_demand_and_reduced_identity() {
                 &mut decoder,
                 "[(try (take nil) 0 (catch :default error 1)) (try (take nil []) 0 (catch :default error 1))]"
             ),
-            vector(&[1.0, 1.0])
+            vector(&[1, 1])
         );
         let reduced = session
             .eval("(def record-take-reduced (reduced 17)) record-take-reduced")
@@ -228,7 +228,7 @@ fn take_preserves_numeric_preconditions_lazy_demand_and_reduced_identity() {
                 &mut decoder,
                 "(let [rf ((take 2) (fn ([] 9) ([result] result) ([result input] (+ result input))))] [(rf) (rf 11) (unreduced (rf 0 3)) (unreduced (rf 3 4))])"
             ),
-            vector(&[9.0, 11.0, 3.0, 7.0])
+            vector(&[9, 11, 3, 7])
         );
     }
 }

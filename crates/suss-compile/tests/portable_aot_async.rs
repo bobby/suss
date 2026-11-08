@@ -176,7 +176,7 @@ fn async_exports_complete_once_and_share_live_cells_with_sync_exports_after_gc()
 fn async_errors_preserve_boundary_and_source_language_payloads() {
     for (source, result_type, expected) in [
         ("(def fail (fn [] false))", " -> f64", None),
-        ("(def fail (fn [] (throw 17)))", "", Some(17.0_f64)),
+        ("(def fail (fn [] (throw 17)))", "", Some(17_i64)),
     ] {
         let fragment =
             portable::prepare_fragment(source, &Environment::default(), Phase::Runtime).unwrap();
@@ -211,18 +211,18 @@ fn async_errors_preserve_boundary_and_source_language_payloads() {
                 .expect("actual language exception payload");
             let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
             assert_eq!(fields.len(), 1);
-            let payload = fields[0]
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)
-                .unwrap()
-                .unwrap();
             if let Some(expected) = expected {
                 assert_eq!(
-                    payload.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
-                    expected.to_bits()
+                    suss_compile::portable_session::runtime_number(&mut store, &fields[0]).unwrap(),
+                    Some(suss_compile::portable_session::RuntimeNumber::Long(expected))
                 );
             } else {
+                let payload = fields[0]
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_struct(&store)
+                    .unwrap()
+                    .unwrap();
                 let message = payload.field(&mut store, 1).unwrap();
                 let array = message
                     .unwrap_anyref()

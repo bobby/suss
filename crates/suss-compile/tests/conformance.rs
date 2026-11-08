@@ -286,18 +286,20 @@ fn comparison_rejects_wrong_values_and_collections() {
     };
     let number = |value: f64| Number(value.to_bits());
     let keyword = |name: &str| Keyword(None, name.encode_utf16().collect());
-    let cases: [(&str, Observation, bool); 11] = [
-        ("[1 2]", List(vec![number(1.0), number(2.0)]), true),
-        ("[1 2]", Vector(vec![number(1.0), number(3.0)]), false),
-        ("{:a 1}", Map(vec![(keyword("a"), number(2.0))]), false),
-        ("#{1 2}", Set(vec![number(1.0), number(3.0)]), false),
-        ("{:a 1 :b 2}", Map(vec![(keyword("b"), number(2.0)), (keyword("a"), number(1.0))]), true),
-        ("#{1 2}", Set(vec![number(2.0), number(1.0)]), true),
+    let cases: [(&str, Observation, bool); 13] = [
+        ("[1 2]", List(vec![Long(1), Long(2)]), true),
+        ("[1 2]", Vector(vec![Long(1), Long(3)]), false),
+        ("{:a 1}", Map(vec![(keyword("a"), Long(2))]), false),
+        ("#{1 2}", Set(vec![Long(1), Long(3)]), false),
+        ("{:a 1 :b 2}", Map(vec![(keyword("b"), Long(2)), (keyword("a"), Long(1))]), true),
+        ("#{1 2}", Set(vec![Long(2), Long(1)]), true),
         ("false", Nil, false),
         ("nil", Bool(false), false),
         ("1.0", number(1.00001), false),
-        ("9007199254740993", number(9007199254740992.0), false),
+        ("9007199254740993", Long(9007199254740992), false),
         ("0", number(-0.0), false),
+        ("0", number(0.0), false),
+        ("1.0", Long(1), false),
     ];
     for (expected, actual, matching) in cases {
         assert_eq!(portable_compare::matches(&read(expected), &actual), matching, "{expected} vs {actual:?}");

@@ -17,6 +17,14 @@ fn datum(form: &Form) -> Value {
     match &form.kind {
         Kind::Nil => Value::Null,
         Kind::Bool(value) => json!(value),
+        // The pinned corpus writes every number as a JSON float; an integral
+        // one is a Clojure long, so an integral double is marked apart.
+        Kind::Long(value) => json!(*value as f64),
+        Kind::Number(value)
+            if value.is_finite() && value.fract() == 0.0 && value.to_bits() != (-0.0f64).to_bits() =>
+        {
+            json!(["double", value])
+        }
         Kind::Number(value) => json!(value),
         Kind::String(value) => json!(String::from_utf16(value).unwrap()),
         Kind::Symbol(value) => json!(["symbol", value.to_string()]),
@@ -219,7 +227,7 @@ fn check_source_cases() {
         session.collect().unwrap();
         let actual = bridge.read(&mut session, &value, 0..1).unwrap();
         assert!(
-            matches!(&actual.kind, Kind::Number(value) if value.to_bits() == 2.0_f64.to_bits()),
+            matches!(&actual.kind, Kind::Long(2)),
             "cleanup state: {actual:?}"
         );
     }

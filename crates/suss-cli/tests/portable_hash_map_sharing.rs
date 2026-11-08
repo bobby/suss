@@ -82,15 +82,10 @@ fn checked_fields(
 }
 
 fn uint32_number(store: &mut wasmtime::StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<u32> {
-    let number = value.unwrap_anyref().unwrap().as_struct(&*store)?
-        .ok_or_else(|| wasmtime::Error::msg("expected boxed number"))?;
-    if number.fields(&mut *store)?.count() != 1 {
-        return Err(wasmtime::Error::msg("malformed boxed number"));
-    }
-    let Val::F64(bits) = number.field(&mut *store, 0)? else {
-        return Err(wasmtime::Error::msg("malformed boxed number payload"));
-    };
-    let n = f64::from_bits(bits);
+    // A length, index or bitmap: a long, or an integral double.
+    let n = suss_compile::portable_session::runtime_number(&mut *store, value)?
+        .ok_or_else(|| wasmtime::Error::msg("expected a number"))?
+        .as_f64();
     if !n.is_finite() || n < 0.0 || n > u32::MAX as f64 || n.fract() != 0.0 {
         return Err(wasmtime::Error::msg("invalid bounded array length/index"));
     }
@@ -324,9 +319,9 @@ fn persistent_hamt_update_copies_selected_path_and_retains_unrelated_child_after
         assert!(!same(&mut session, &old, &old_b1, &other_b1), "negative control copies selected branch 1");
 
         for (source, expected) in [
-            ("(vector (get share-old share-k0) (get share-old share-k1) (get share-old share-k2) (get share-old share-k3) (get share-old share-k4))", [100.0_f64, 101.0, 102.0, 103.0, 104.0]),
-            ("(vector (get share-changed share-k0) (get share-changed share-k1) (get share-changed share-k2) (get share-changed share-k3) (get share-changed share-k4))", [900.0_f64, 101.0, 102.0, 103.0, 104.0]),
-            ("(vector (get share-other-changed share-k0) (get share-other-changed share-k1) (get share-other-changed share-k2) (get share-other-changed share-k3) (get share-other-changed share-k4))", [100.0_f64, 101.0, 102.0, 903.0, 104.0]),
+            ("(vector (get share-old share-k0) (get share-old share-k1) (get share-old share-k2) (get share-old share-k3) (get share-old share-k4))", [100, 101, 102, 103, 104]),
+            ("(vector (get share-changed share-k0) (get share-changed share-k1) (get share-changed share-k2) (get share-changed share-k3) (get share-changed share-k4))", [900, 101, 102, 103, 104]),
+            ("(vector (get share-other-changed share-k0) (get share-other-changed share-k1) (get share-other-changed share-k2) (get share-other-changed share-k3) (get share-other-changed share-k4))", [100, 101, 102, 903, 104]),
         ] {
             // These lookups execute after both updates and the earlier GC;
             // fixture values are not cached snapshots.
@@ -338,10 +333,7 @@ fn persistent_hamt_update_copies_selected_path_and_retains_unrelated_child_after
             };
             assert_eq!(values.len(), expected.len(), "{source}");
             for (actual, expected) in values.iter().zip(expected) {
-                let Observation::Number(actual_bits) = actual else {
-                    panic!("{source}: unexpected decoded value {actual:?}")
-                };
-                assert_eq!(*actual_bits, expected.to_bits(), "{source}");
+                assert_eq!(*actual, Observation::Long(expected), "{source}");
             }
         }
     }

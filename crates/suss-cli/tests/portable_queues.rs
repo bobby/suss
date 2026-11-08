@@ -1,7 +1,8 @@
 //! Original FIFO/metadata/equality regressions shared with the pinned CLJS oracle.
 //! Queue support must execute; missing constructors are failures, never skips.
 use suss_compile::portable_session::sentinel_tag;
-use suss_cli::portable_session::Session;
+use suss_cli::portable_session::RuntimeNumber::Long;
+use suss_cli::portable_session::{Session, runtime_number};
 
 #[test]
 fn persistent_queues_match_pinned_fifo_and_value_contract_in_both_phases() {
@@ -81,14 +82,8 @@ fn queue_versions_share_front_and_rear_storage_and_sole_handle_survives_gc() {
                     .as_array(&store)?
                     .unwrap();
                 assert_eq!(backing.len(&store)?, 4);
-                let length = backing
-                    .get(&mut store, 0)?
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_struct(&store)?
-                    .unwrap()
-                    .field(&mut store, 0)?;
-                assert_eq!(length.unwrap_f64().to_bits(), 4.0_f64.to_bits());
+                let length = backing.get(&mut store, 0)?;
+                assert_eq!(runtime_number(&mut store, &length)?, Some(Long(4)));
                 let sparse_value = backing.get(&mut store, 1)?;
                 assert_eq!(sentinel_tag(&mut store, &sparse_value)?.unwrap(), 0);
                 let versions = backing
@@ -111,7 +106,7 @@ fn queue_versions_share_front_and_rear_storage_and_sole_handle_survives_gc() {
                 let mut fronts = Vec::new();
                 let mut rears = Vec::new();
                 let mut descriptors = Vec::new();
-                for (index, count) in [3.0_f64, 3.0, 3.0, 4.0].into_iter().enumerate() {
+                for (index, count) in [3, 3, 3, 4].into_iter().enumerate() {
                     let queue = versions
                         .get(&mut store, index as u32)?
                         .unwrap_anyref()
@@ -138,13 +133,8 @@ fn queue_versions_share_front_and_rear_storage_and_sole_handle_survives_gc() {
                         .as_array(&store)?
                         .unwrap();
                     assert_eq!(fields.len(&store)?, 5, "full upstream queue field layout");
-                    let number = fields
-                        .get(&mut store, 1)?
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_struct(&store)?
-                        .unwrap();
-                    assert_eq!(number.field(&mut store, 0)?.unwrap_f64(), count);
+                    let number = fields.get(&mut store, 1)?;
+                    assert_eq!(runtime_number(&mut store, &number)?, Some(Long(count)));
                     fronts.push(
                         fields
                             .get(&mut store, 2)?
@@ -192,11 +182,8 @@ fn queue_versions_share_front_and_rear_storage_and_sole_handle_survives_gc() {
             panic!("queue projected vector")
         };
         assert_eq!(items.len(), 3);
-        for (item, expected) in items.iter().zip([1.0_f64, 2.0, 3.0]) {
-            let suss_reader::forms::Kind::Number(actual) = &item.kind else {
-                panic!("queue numeric item")
-            };
-            assert_eq!(actual.to_bits(), expected.to_bits());
+        for (item, expected) in items.iter().zip([1, 2, 3]) {
+            assert_eq!(item.kind, suss_reader::forms::Kind::Long(expected));
         }
     }
 }
@@ -223,7 +210,7 @@ fn queue_iterator_preserves_mutation_exhaustion_and_returned_error_contract() {
                 .unwrap(),
             4
         );
-        for expected in [1.0_f64, 2.0, 3.0] {
+        for expected in [1, 2, 3] {
             let available = session.eval("(boolean (.hasNext qi))").unwrap();
             session.collect().unwrap();
             assert_eq!(
@@ -234,17 +221,10 @@ fn queue_iterator_preserves_mutation_exhaustion_and_returned_error_contract() {
             );
             let item = session.eval("(.next qi)").unwrap();
             session.collect().unwrap();
-            let bits = session
-                .inspect(&item, |mut store, value| {
-                    let boxed = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-                    let fields = boxed.fields(&mut store)?.collect::<Vec<_>>();
-                    let [wasmtime::Val::F64(bits)] = fields.as_slice() else {
-                        panic!("iterator Number layout")
-                    };
-                    Ok(*bits)
-                })
+            let number = session
+                .inspect(&item, |store, value| runtime_number(store, &value))
                 .unwrap();
-            assert_eq!(bits, expected.to_bits());
+            assert_eq!(number, Some(Long(expected)));
         }
         let exhausted = session.eval("(.hasNext qi)").unwrap();
         session.collect().unwrap();

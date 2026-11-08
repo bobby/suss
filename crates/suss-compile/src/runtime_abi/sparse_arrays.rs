@@ -65,7 +65,7 @@ pub(super) fn functions(b: &mut Builder) {
     body.extend([
         I32Const(0),
         ArrayGet(ARGS),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        Call(b.names["number-test"]),
         I32Eqz,
         If(BlockType::Empty),
     ]);
@@ -75,11 +75,7 @@ pub(super) fn functions(b: &mut Builder) {
     body.extend([
         I32Const(0),
         ArrayGet(ARGS),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         LocalSet(1),
         LocalGet(1),
         F64Const(0.0.into()),
@@ -125,8 +121,7 @@ pub(super) fn functions(b: &mut Builder) {
         &[VALUE],
         &[
             LocalGet(0),
-            F64ConvertI32U,
-            Call(b.names["number-box"]),
+            Call(b.names["long-box-u32"]),
             sentinel_value(NIL),
             // Vector tails/nodes repeatedly populate at most32 slots. Allocate
             // bounded private storage, retaining absence through zero masks.
@@ -178,7 +173,7 @@ pub(super) fn functions(b: &mut Builder) {
     body.extend([
         I32Const(0),
         ArrayGet(ARGS),
-        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        Call(b.names["number-test"]),
         I32Eqz,
         If(BlockType::Empty),
     ]);
@@ -188,11 +183,7 @@ pub(super) fn functions(b: &mut Builder) {
     body.extend([
         I32Const(0),
         ArrayGet(ARGS),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         LocalSet(1),
         LocalGet(1),
         F64Const(0.0.into()),
@@ -292,11 +283,7 @@ pub(super) fn functions(b: &mut Builder) {
     body.extend([
         I32Const(0),
         ArrayGet(ARGS),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         LocalTee(5),
         LocalGet(4),
         F64Le,
@@ -397,11 +384,7 @@ pub(super) fn functions(b: &mut Builder) {
             RefCastNonNull(HeapType::Concrete(ARGS)),
             I32Const(0),
             ArrayGet(ARGS),
-            RefCastNonNull(HeapType::Concrete(NUMBER)),
-            StructGet {
-                struct_type_index: NUMBER,
-                field_index: 0,
-            },
+            Call(b.names["number-unbox"]),
             I32TruncSatF64U,
         ],
     );
@@ -426,11 +409,7 @@ pub(super) fn functions(b: &mut Builder) {
     body.extend([
         I32Const(0),
         ArrayGet(ARGS),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         LocalGet(1),
         F64ConvertI32U,
         F64Eq,
@@ -596,11 +575,7 @@ pub(super) fn functions(b: &mut Builder) {
     body.extend([
         I32Const(0),
         ArrayGet(ARGS),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         LocalGet(1),
         F64ConvertI32U,
         F64Ge,
@@ -614,8 +589,7 @@ pub(super) fn functions(b: &mut Builder) {
         End,
         End,
         LocalGet(1),
-        F64ConvertI32U,
-        Call(b.names["number-box"]),
+        Call(b.names["long-box-u32"]),
         LocalGet(2),
         LocalGet(6),
         ArrayNewFixed {
@@ -654,8 +628,7 @@ pub(super) fn functions(b: &mut Builder) {
         LocalGet(1),
         I32Const(1),
         I32Add,
-        F64ConvertI32U,
-        Call(b.names["number-box"]),
+        Call(b.names["long-box-u32"]),
         ArraySet(ARGS),
         End,
         LocalGet(2),
@@ -769,8 +742,7 @@ pub(super) fn functions(b: &mut Builder) {
     body.extend([
         I32Const(0),
         LocalGet(1),
-        F64ConvertI32U,
-        Call(b.names["number-box"]),
+        Call(b.names["long-box-u32"]),
         ArraySet(ARGS),
     ]);
     args(&mut body, 2);
@@ -793,11 +765,7 @@ pub(super) fn functions(b: &mut Builder) {
     body.extend([
         I32Const(0),
         ArrayGet(ARGS),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         I32TruncSatF64U,
         LocalTee(6),
         I32Const(-1),
@@ -855,8 +823,7 @@ pub(super) fn functions(b: &mut Builder) {
             array_type_index_src: ARGS,
         },
         LocalGet(1),
-        F64ConvertI32U,
-        Call(b.names["number-box"]),
+        Call(b.names["long-box-u32"]),
         sentinel_value(NIL),
         LocalGet(2),
         I32Const(1),
@@ -944,11 +911,7 @@ pub(super) fn functions(b: &mut Builder) {
     body.extend([
         I32Const(0),
         ArrayGet(ARGS),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         I32TruncSatF64U,
         LocalTee(5),
         I32Const(-1),
@@ -1041,11 +1004,7 @@ pub(super) fn functions(b: &mut Builder) {
     body.extend([
         I32Const(0),
         ArrayGet(ARGS),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         I32TruncSatF64U,
         LocalSet(12),
         LocalGet(12),
@@ -1119,11 +1078,7 @@ pub(super) fn functions(b: &mut Builder) {
     body.extend([
         I32Const(0),
         ArrayGet(ARGS),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         I32TruncSatF64U,
         LocalTee(12),
         LocalGet(1),
@@ -1161,8 +1116,7 @@ pub(super) fn functions(b: &mut Builder) {
         LocalGet(12),
         LocalGet(1),
         I32Sub,
-        F64ConvertI32U,
-        Call(b.names["number-box"]),
+        Call(b.names["long-box-u32"]),
     ]);
     args(&mut body, 8);
     body.extend([
@@ -1201,8 +1155,7 @@ pub(super) fn functions(b: &mut Builder) {
         LocalGet(2),
         LocalGet(1),
         I32Sub,
-        F64ConvertI32U,
-        Call(b.names["number-box"]),
+        Call(b.names["long-box-u32"]),
         LocalGet(9),
         LocalGet(6),
         LocalGet(7),

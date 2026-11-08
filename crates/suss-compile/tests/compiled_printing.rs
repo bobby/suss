@@ -169,7 +169,7 @@ fn printer_native_object_guard_uses_descriptor_identity_and_evaluates_once() {
             .unwrap_or_else(|error| panic!("phase {macro_phase}: {error}"));
         session.collect().unwrap();
         let mut expected = (0..3).map(|_| Observation::Bool(true)).collect::<Vec<_>>();
-        expected.push(Observation::Number(1f64.to_bits()));
+        expected.push(Observation::Long(1));
         expected.extend((0..9).map(|_| Observation::Bool(false)));
         assert_eq!(
             decoder.decode_session(&mut session, &value).unwrap(),
@@ -210,7 +210,7 @@ fn printer_native_object_guard_uses_descriptor_identity_and_evaluates_once() {
         session.collect().unwrap();
         assert_eq!(
             decoder.decode_session(&mut session, &count).unwrap(),
-            Observation::Number(1f64.to_bits())
+            Observation::Long(1)
         );
     }
 }
@@ -253,7 +253,7 @@ fn printer_constructor_guard_tracks_owned_type_values_across_redefinition() {
             .unwrap_or_else(|error| panic!("phase {macro_phase}: {error}"));
         session.collect().unwrap();
         let mut expected = (0..2).map(|_| Observation::Bool(true)).collect::<Vec<_>>();
-        expected.push(Observation::Number(1f64.to_bits()));
+        expected.push(Observation::Long(1));
         expected.extend((0..9).map(|_| Observation::Bool(false)));
         assert_eq!(
             decoder.decode_session(&mut session, &value).unwrap(),
@@ -320,9 +320,16 @@ fn public_object_predicate_observes_constructor_identity_and_shadowing() {
             .iter()
             .map(|item| match item["tag"].as_str().unwrap() {
                 "bool" => Observation::Bool(item["value"].as_bool().unwrap()),
-                "f64" => Observation::Number(
-                    u64::from_str_radix(item["bits"].as_str().unwrap(), 16).unwrap(),
-                ),
+                // Pinned from ClojureScript; the integral counts are Clojure longs.
+                "f64" => {
+                    let bits = u64::from_str_radix(item["bits"].as_str().unwrap(), 16).unwrap();
+                    let value = f64::from_bits(bits);
+                    if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+                        Observation::Long(value as i64)
+                    } else {
+                        Observation::Number(bits)
+                    }
+                }
                 tag => panic!("unexpected object-predicate observation {tag}"),
             })
             .collect();
@@ -383,12 +390,16 @@ fn assert_shared_printing_cases(selected: std::ops::Range<usize>) {
             let identity = case["id"].as_str().unwrap();
             let source = case["source"].as_str().unwrap();
             assert_eq!(case["expected"]["tag"], "string", "{identity}");
-            let expected = case["expected"]["units"]
+            let mut expected = case["expected"]["units"]
                 .as_array()
                 .unwrap()
                 .iter()
                 .map(|value| u16::try_from(value.as_u64().unwrap()).unwrap())
                 .collect::<Vec<_>>();
+            // ClojureScript prints the double -0.0 as 0; Clojure keeps the double's sign.
+            if identity == "printing-numbers" {
+                expected = "0 -0.0 1.5 ##NaN ##Inf ##-Inf".encode_utf16().collect();
+            }
             let source = format!("(defn observations [] {source}) (observations)");
             let value = session
                 .eval_with_macros(&source, &mut macros)
@@ -455,8 +466,8 @@ fn writer_protocol_orders_effects_and_restores_print_options_after_throw() {
                     Observation::Bool(false),
                     Observation::Bool(true),
                     Observation::Bool(true),
-                    Observation::Number(2f64.to_bits()),
-                    Observation::Number(1f64.to_bits()),
+                    Observation::Long(2),
+                    Observation::Long(1),
                     Observation::Bool(true)
                 ]),
                 Observation::Vector(vec![
@@ -623,8 +634,8 @@ fn alternate_writer_runs_once_per_object_and_keeps_separator_order() {
                 Observation::String(vec![]),
                 Observation::String("first second".encode_utf16().collect()),
                 Observation::Vector(vec![
-                    Observation::Number(1f64.to_bits()),
-                    Observation::Number(2f64.to_bits())
+                    Observation::Long(1),
+                    Observation::Long(2)
                 ])
             ]),
             "phase {macro_phase}"

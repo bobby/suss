@@ -8,9 +8,33 @@ fn raw(form: &Form) -> Value {
         Kind::Nil => json!({"tag":"nil"}),
         Kind::Bool(v) => json!({"tag":"bool","value":v}),
         Kind::String(units) => json!({"tag":"string","units":units}),
+        Kind::Long(v) => json!({"tag":"long","value":v}),
         Kind::Number(v) => json!({"tag":"f64","bits":format!("{:016x}", v.to_bits())}),
         Kind::Vector(xs) => json!({"tag":"vector","items":xs.iter().map(raw).collect::<Vec<_>>()}),
         other => panic!("Unexpected independently decoded raw value: {other:?}"),
+    }
+}
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_value(expected: &Value) -> Value {
+    match expected {
+        Value::Object(fields) if fields.get("tag").and_then(Value::as_str) == Some("f64") => {
+            let bits = u64::from_str_radix(fields["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+                json!({"tag":"long", "value":value as i64})
+            } else {
+                expected.clone()
+            }
+        }
+        Value::Object(fields) => Value::Object(
+            fields
+                .iter()
+                .map(|(key, value)| (key.clone(), clojure_value(value)))
+                .collect(),
+        ),
+        Value::Array(items) => Value::Array(items.iter().map(clojure_value).collect()),
+        other => other.clone(),
     }
 }
 #[test]
@@ -39,7 +63,7 @@ fn genuine_char_at_and_complete_get_match_raw_pin_after_gc_and_recover() {
             let actual = bridge.read(&mut session, &result, 0..source.len()).unwrap();
             assert_eq!(
                 raw(&actual),
-                row["expected"],
+                clojure_value(&row["expected"]),
                 "{} postGC original value/throw and numeric effect trace",
                 row["id"]
             );
@@ -47,7 +71,7 @@ fn genuine_char_at_and_complete_get_match_raw_pin_after_gc_and_recover() {
             session.collect().unwrap();
             assert_eq!(
                 raw(&bridge.read(&mut session, &counter, 0..0).unwrap()),
-                row["expected"]["items"][1],
+                clojure_value(&row["expected"]["items"][1]),
                 "{} independent postGC counter",
                 row["id"]
             );
@@ -55,7 +79,7 @@ fn genuine_char_at_and_complete_get_match_raw_pin_after_gc_and_recover() {
             session.collect().unwrap();
             assert_eq!(
                 raw(&bridge.read(&mut session, &recovery, 0..0).unwrap()),
-                json!({"tag":"f64","bits":"4014000000000000"})
+                json!({"tag":"long","value":5})
             );
         }
     }

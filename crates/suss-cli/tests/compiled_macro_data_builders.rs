@@ -94,12 +94,12 @@ fn native_macro_maps_keep_custom_hash_coercion_and_array_map_hash_effects() {
         let small = bridge.map_values(&mut session, &entries[..8]).unwrap();
         session.collect().unwrap();
         let effects = session.eval("hash-effects").unwrap();
-        assert!(matches!(&bridge.read(&mut session, &effects, 0..1).unwrap().kind, Kind::Number(0.0)));
+        assert!(matches!(&bridge.read(&mut session, &effects, 0..1).unwrap().kind, Kind::Long(0)));
         drop(small);
         let large = bridge.map_values(&mut session, &entries).unwrap();
         session.collect().unwrap();
         let effects = session.eval("hash-effects").unwrap();
-        assert!(matches!(&bridge.read(&mut session, &effects, 0..1).unwrap().kind, Kind::Number(9.0)));
+        assert!(matches!(&bridge.read(&mut session, &effects, 0..1).unwrap().kind, Kind::Long(9)));
         for (index, (key, _)) in entries.iter().enumerate() {
             let value = session.invoke(&lookup, &[&large, key]).unwrap();
             assert!(matches!(&bridge.read(&mut session, &value, 0..1).unwrap().into_parts().2, Kind::Number(value) if *value == index as f64), "custom key {index}");
@@ -142,7 +142,7 @@ fn native_macro_data_builders_preserve_bits_utf16_canonical_classes_and_shared_r
         }
         let size = session.invoke(&count, &[&map]).unwrap();
         assert!(
-            matches!(&bridge.read(&mut session, &size, 0..1).unwrap().kind, Kind::Number(size) if *size == 17.0)
+            matches!(&bridge.read(&mut session, &size, 0..1).unwrap().kind, Kind::Long(17))
         );
         let shared = bridge
             .vector_values(&mut session, &[map.clone(), map.clone()])
@@ -337,17 +337,17 @@ fn native_macro_form_transport_is_bounded_data_and_adds_no_resident_code() {
             assert!(matches!(&items[0].kind, Kind::Symbol(name) if name.name == "unresolved"));
             assert_eq!(items[1].metadata.len(), 1);
             assert!(
-                matches!(&items[3].kind, Kind::Map(entries) if entries.len() == 2 && matches!(&entries[1].kind, Kind::Number(4.0)))
+                matches!(&items[3].kind, Kind::Map(entries) if entries.len() == 2 && matches!(&entries[1].kind, Kind::Long(4)))
             );
             let Kind::Map(metadata) = &form.metadata[0].kind else {
                 panic!("reader metadata")
             };
-            assert!(matches!(&metadata[1].kind, Kind::Number(7.0)));
+            assert!(matches!(&metadata[1].kind, Kind::Long(7)));
         }
         let value = session.invoke(&effects, &[]).unwrap();
         assert!(matches!(
             bridge.read(&mut session, &value, 0..1).unwrap().into_parts().2,
-            Kind::Number(0.0)
+            Kind::Long(0)
         ));
         drop(value);
         let form = |kind| Form {

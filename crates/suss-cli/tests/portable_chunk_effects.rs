@@ -22,6 +22,7 @@ const IDS: [&str; 9] = [
 fn tagged(form: &Form) -> Value {
     assert!(form.metadata.is_empty(), "unexpected observation metadata");
     match &form.kind {
+        Kind::Long(n) => json!({"tag":"long", "value":n}),
         Kind::Number(n) => json!({"tag":"f64", "bits":format!("{:016x}", n.to_bits())}),
         Kind::Bool(v) => json!({"tag":"bool", "value":v}),
         Kind::Vector(items) => {
@@ -38,7 +39,32 @@ fn observe(session: &mut Session, bridge: &FormBridge, source: &str) -> Value {
     tagged(&bridge.read(session, &value, 0..source.len()).unwrap())
 }
 fn number(n: f64) -> Value {
-    json!({"tag":"f64","bits":format!("{:016x}",n.to_bits())})
+    clojure_longs(&json!({"tag":"f64","bits":format!("{:016x}",n.to_bits())}))
+}
+/// The pinned ClojureScript observation with each integral `f64` as a Clojure
+/// long, a distinction that corpus cannot record.
+fn clojure_longs(expected: &serde_json::Value) -> serde_json::Value {
+    use serde_json::Value;
+    match expected {
+        Value::Object(fields) if fields.get("tag") == Some(&Value::from("f64")) => {
+            let bits = u64::from_str_radix(fields["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.is_finite()
+                && value.fract() == 0.0
+                && !(value == 0.0 && value.is_sign_negative())
+                && value.abs() < 9_223_372_036_854_775_808.0
+            {
+                serde_json::json!({"tag":"long", "value":value as i64})
+            } else {
+                expected.clone()
+            }
+        }
+        Value::Object(fields) => Value::Object(
+            fields.iter().map(|(key, value)| (key.clone(), clojure_longs(value))).collect(),
+        ),
+        Value::Array(items) => Value::Array(items.iter().map(clojure_longs).collect()),
+        other => other.clone(),
+    }
 }
 fn vector(items: Vec<Value>) -> Value {
     json!({"tag":"vector","items":items})
@@ -65,7 +91,7 @@ fn chunk_effects_match_complete_pinned_observations_in_both_phases_after_gc() {
             let actual = observe(&mut session, &bridge, case["source"].as_str().unwrap());
             assert_eq!(
                 actual,
-                case["expected"],
+                clojure_longs(&case["expected"]),
                 "phase={:?}, case={id}",
                 session.phase()
             );

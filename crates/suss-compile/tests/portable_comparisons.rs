@@ -78,19 +78,15 @@ fn wide_finite_comparison_executes_without_a_fixed_arity_resource_cap() {
     use suss_compile::portable_session::Session;
     for mut session in [Session::new().unwrap(), Session::new_macro().unwrap()] {
         for (values, expected) in [
-            ((0..257).map(|n| n.to_string()).collect::<Vec<_>>(), 42.0_f64),
-            (std::iter::repeat_n("1".to_owned(), 257).collect::<Vec<_>>(), 0.0_f64),
+            ((0..257).map(|n| n.to_string()).collect::<Vec<_>>(), 42),
+            (std::iter::repeat_n("1".to_owned(), 257).collect::<Vec<_>>(), 0),
         ] {
             let source = format!("(if (< {}) 42 0)", values.join(" "));
             let result = session.eval(&source).unwrap();
-            let bits = session.inspect(&result, |mut store, value| {
-                let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-                let wasmtime::Val::F64(bits) = object.field(&mut store, 0)? else {
-                    return Err(wasmtime::Error::msg("Expected portable Number storage"));
-                };
-                Ok(bits)
+            let number = session.inspect(&result, |store, value| {
+                suss_compile::portable_session::runtime_number(store, &value)
             }).unwrap();
-            assert_eq!(bits, expected.to_bits());
+            assert_eq!(number, Some(suss_compile::portable_session::RuntimeNumber::Long(expected)));
         }
     }
 }

@@ -1289,15 +1289,11 @@ fn terminal(b: &mut Builder, base: u32, fail: bool) {
     );
 }
 fn boxed_exports(b: &mut Builder, base: u32) {
-    let mut v = vec![LocalGet(0), RefTestNonNull(HeapType::Concrete(NUMBER))];
+    let mut v = vec![LocalGet(0), Call(b.names["number-test"])];
     check(&mut v);
     v.extend([
         LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(NUMBER)),
-        StructGet {
-            struct_type_index: NUMBER,
-            field_index: 0,
-        },
+        Call(b.names["number-unbox"]),
         LocalTee(1),
         F64Const(0.0.into()),
         F64Ge,

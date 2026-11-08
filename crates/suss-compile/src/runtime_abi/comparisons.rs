@@ -25,6 +25,10 @@ fn relation(op: usize, floating: bool) -> Instruction<'static> {
         _ => unreachable!(),
     }
 }
+fn exact(op: usize) -> Instruction<'static> {
+    use Instruction::*;
+    [I64LtS, I64LeS, I64GtS, I64GeS][op].clone()
+}
 pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Vec<u32> {
     use Instruction::*;
     let mut helpers = Vec::new();
@@ -32,7 +36,7 @@ pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Ve
         .into_iter()
         .enumerate()
     {
-        let mut body = vec![];
+        let mut body = longs::small_relation_fast_path(&exact(op));
         coercions::primitive(&mut body, coercion_types, 0, 0);
         coercions::primitive(&mut body, coercion_types, 1, 0);
         body.extend([
@@ -93,6 +97,19 @@ pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Ve
             relation(op, false),
         ]);
         boolean(&mut body);
+        body.extend([Return, End]);
+        // Two longs compare exactly, even beyond binary64's 2^53.
+        body.extend(longs::both_longs(b));
+        let unbox = b.names["long-unbox"];
+        body.extend([
+            If(BlockType::Empty),
+            LocalGet(0),
+            Call(unbox),
+            LocalGet(1),
+            Call(unbox),
+            exact(op),
+        ]);
+        boolean(&mut body);
         body.extend([
             Return,
             End,
@@ -112,24 +129,62 @@ pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Ve
         );
         helpers.push((name, helper));
     }
-    // Strict JS primitive identity already has checked Number/UTF-16/reference
-    // behavior. Use its private factory rather than mutable public predicate cells.
-    let helper = b.function(
-        "comparison-strict-equal",
-        &[VALUE, VALUE],
-        &[VALUE],
-        &[
-            Call(b.names["predicate-identical"]),
-            LocalGet(0),
-            LocalGet(1),
-            ArrayNewFixed {
-                array_type_index: ARGS,
-                array_size: 2,
-            },
-            Call(b.names["invoke"]),
-        ],
-    );
+    // Strict JS primitive identity: numbers by value, a long equal to a double
+    // too, as core's pinned `===` uses expect (Clojure's identical? keeps
+    // them distinct). Otherwise use identical?'s private factory rather than
+    // mutable public predicate cells.
+    let mut strict = longs::number_test(0).to_vec();
+    strict.extend(longs::number_test(1));
+    strict.extend([I32And, If(BlockType::Empty)]);
+    strict.extend(longs::relation(b, I64Eq, F64Eq));
+    boolean(&mut strict);
+    strict.extend([Return, End]);
+    strict.extend([
+        Call(b.names["predicate-identical"]),
+        LocalGet(0),
+        LocalGet(1),
+        ArrayNewFixed {
+            array_type_index: ARGS,
+            array_size: 2,
+        },
+        Call(b.names["invoke"]),
+    ]);
+    let helper = b.function("comparison-strict-equal", &[VALUE, VALUE], &[VALUE], &strict);
     helpers.push(("strict-equal", helper));
+    // case's test of a scalar constant: a number matches only a number of its
+    // own kind, a double only by its bits (so -0.0 is not 0.0 and NaN matches
+    // nothing), as Clojure's case tests long constants as longs and others by
+    // hash and equality. Anything else uses strict equality.
+    let mut case = longs::both_longs(b).to_vec();
+    case.extend([If(BlockType::Empty)]);
+    case.extend([LocalGet(0), Call(b.names["long-unbox"]), LocalGet(1), Call(b.names["long-unbox"]), I64Eq]);
+    boolean(&mut case);
+    case.extend([Return, End]);
+    let double = b.names["double-test"];
+    case.extend([LocalGet(0), Call(double), LocalGet(1), Call(double), I32And, If(BlockType::Empty)]);
+    let number = b.names["number-unbox"];
+    case.extend([
+        LocalGet(0),
+        Call(number),
+        LocalTee(2),
+        LocalGet(1),
+        Call(number),
+        LocalTee(3),
+        F64Eq,
+        LocalGet(2),
+        I64ReinterpretF64,
+        LocalGet(3),
+        I64ReinterpretF64,
+        I64Eq,
+        I32And,
+    ]);
+    boolean(&mut case);
+    case.extend([Return, End]);
+    case.extend(longs::number_test(0));
+    case.extend(longs::number_test(1));
+    case.extend([I32Or, If(BlockType::Empty), sentinel_value(FALSE), Return, End]);
+    case.extend([LocalGet(0), LocalGet(1), Call(helper)]);
+    b.function_with_locals("comparison-case-equal", &[VALUE, VALUE], &[VALUE], &[(2, ValType::F64)], &case);
     let mut declared = Vec::new();
     // First-class values are public Clojure functions: check numeric operands
     // (#286). The coercing helpers above remain for shipped core's direct use.

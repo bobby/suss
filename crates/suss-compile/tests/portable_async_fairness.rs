@@ -167,33 +167,17 @@ impl Harness {
         self.store.set_fuel(1_000_000).unwrap();
         assert_eq!(self.integer("async-scheduler-run-one", &[]), 1);
     }
-    fn ready_number(&mut self, future: &Val) -> f64 {
+    fn ready_number(&mut self, future: &Val) -> i64 {
         assert_eq!(self.integer("future-status", &[future.clone()]), 1);
         let result = self.value("future-result", &[future.clone()]);
-        result
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&self.store)
-            .unwrap()
-            .unwrap()
-            .field(&mut self.store, 0)
-            .unwrap()
-            .unwrap_f64()
+        long_value(&mut self.store, &result)
     }
 }
 
 impl Harness {
-    fn source_number(&mut self, source: &str) -> f64 {
+    fn source_number(&mut self, source: &str) -> i64 {
         let value = self.source(source);
-        value
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&self.store)
-            .unwrap()
-            .unwrap()
-            .field(&mut self.store, 0)
-            .unwrap()
-            .unwrap_f64()
+        long_value(&mut self.store, &value)
     }
     fn counts(&mut self) -> (i32, i32) {
         self.store.set_fuel(1_000_000).unwrap();
@@ -205,9 +189,17 @@ impl Harness {
             .unwrap();
         (result[0].unwrap_i32(), result[1].unwrap_i32())
     }
-    fn bind_number(&mut self, name: &str, value: f64) {
-        let boxed = self.value("number-box", &[Val::F64(value.to_bits())]);
+    fn bind_number(&mut self, name: &str, value: i64) {
+        let boxed = self.value("long-box", &[Val::I64(value)]);
         self.bind(name, boxed);
+    }
+}
+
+/// A runtime value that must be a long, as Clojure's integer arithmetic gives.
+fn long_value(store: &mut Store<()>, value: &Val) -> i64 {
+    match suss_compile::portable_session::runtime_number(store, value).unwrap() {
+        Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => value,
+        other => panic!("expected a long, observed {other:?}"),
     }
 }
 
@@ -216,23 +208,23 @@ fn computing_loop_yields_to_completed_pending_io_before_cpu_finishes() {
     let mut h = Harness::new();
     let dependency = h.value("future-pending-new", &[]);
     h.bind("dependency", dependency.clone());
-    h.bind_number("counter", 0.0);
+    h.bind_number("counter", 0);
     let io = h.source("(suss.async/future* (+ 1 (suss.async/await* test/dependency)))");
     h.run();
     assert_eq!(h.integer("future-status", &[io.clone()]), 0);
     let cpu = h.source("(suss.async/future* (loop [n 0] (if (< n 128) (do (set! test/counter (+ test/counter 1)) (recur (+ n 1))) n)))");
-    let completed = h.value("number-box", &[Val::F64(41f64.to_bits())]);
+    let completed = h.value("long-box", &[Val::I64(41)]);
     assert_eq!(h.integer("future-resolve", &[dependency, completed]), 1);
     // CPU was queued first. It must return normally at its first backedge,
     // placing its next quantum behind the now completed I/O continuation.
     h.run();
-    assert_eq!(h.source_number("test/counter"), 1.0);
+    assert_eq!(h.source_number("test/counter"), 1);
     assert_eq!(h.integer("future-status", &[cpu.clone()]), 0);
     h.store.gc(None).unwrap();
     h.run();
-    assert_eq!(h.ready_number(&io), 42.0);
+    assert_eq!(h.ready_number(&io), 42);
     assert_eq!(h.integer("future-status", &[cpu.clone()]), 0);
-    assert_eq!(h.source_number("test/counter"), 1.0);
+    assert_eq!(h.source_number("test/counter"), 1);
     for _ in 0..128 {
         h.store.gc(None).unwrap();
         h.run();
@@ -242,8 +234,8 @@ fn computing_loop_yields_to_completed_pending_io_before_cpu_finishes() {
             "yield roots must stay bounded: {rows}/{queue}"
         );
     }
-    assert_eq!(h.ready_number(&cpu), 128.0);
-    assert_eq!(h.source_number("test/counter"), 128.0);
+    assert_eq!(h.ready_number(&cpu), 128);
+    assert_eq!(h.source_number("test/counter"), 128);
     assert_eq!(h.counts(), (0, 0));
     assert_eq!(h.integer("async-scheduler-run-one", &[]), 0);
 }
@@ -251,22 +243,22 @@ fn computing_loop_yields_to_completed_pending_io_before_cpu_finishes() {
 #[test]
 fn loop_yield_preserves_parallel_parameters_capture_dynamic_and_finally_across_gc() {
     let mut h = Harness::new();
-    h.bind_number("v", 1.0);
-    h.bind_number("trace", 0.0);
-    h.bind_number("cleanup", 0.0);
+    h.bind_number("v", 1);
+    h.bind_number("trace", 0);
+    h.bind_number("cleanup", 0);
     let owner = h.source("(let [captured 7] (suss.async/future* (binding [test/v 5] (try (loop [n 0 a 1 b 2] (if (< n 4) (do (set! test/trace (+ test/trace test/v)) (recur (+ n 1) b a)) (+ captured (+ (* a 10) b)))) (finally (set! test/cleanup (+ test/cleanup 1)))))))");
     for quantum in 1..=4 {
         h.run();
         assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
-        assert_eq!(h.source_number("test/trace"), quantum as f64 * 5.0);
-        assert_eq!(h.source_number("test/v"), 1.0);
-        assert_eq!(h.source_number("test/cleanup"), 0.0);
+        assert_eq!(h.source_number("test/trace"), quantum * 5);
+        assert_eq!(h.source_number("test/v"), 1);
+        assert_eq!(h.source_number("test/cleanup"), 0);
         h.store.gc(None).unwrap();
     }
     h.run();
-    assert_eq!(h.ready_number(&owner), 19.0);
-    assert_eq!(h.source_number("test/v"), 1.0);
-    assert_eq!(h.source_number("test/cleanup"), 1.0);
+    assert_eq!(h.ready_number(&owner), 19);
+    assert_eq!(h.source_number("test/v"), 1);
+    assert_eq!(h.source_number("test/cleanup"), 1);
     assert_eq!(h.counts(), (0, 0));
 }
 
@@ -275,27 +267,27 @@ fn cancellation_at_yield_does_not_replay_loop_and_waits_for_rooted_cleanup() {
     let mut h = Harness::new();
     let cleanup = h.value("future-pending-new", &[]);
     h.bind("cleanup", cleanup.clone());
-    h.bind_number("counter", 0.0);
-    h.bind_number("caught", 0.0);
-    h.bind_number("cleaned", 0.0);
+    h.bind_number("counter", 0);
+    h.bind_number("caught", 0);
+    h.bind_number("cleaned", 0);
     let owner = h.source("(suss.async/future* (try (loop [n 0] (if (< n 128) (do (set! test/counter (+ test/counter 1)) (recur (+ n 1))) n)) (catch :default e (set! test/caught 100)) (finally (suss.async/await* test/cleanup) (set! test/cleaned (+ test/cleaned 1)))))");
     h.run();
-    assert_eq!(h.source_number("test/counter"), 1.0);
+    assert_eq!(h.source_number("test/counter"), 1);
     assert_eq!(h.integer("async-task-cancel", &[owner.clone()]), 1);
     assert_eq!(h.integer("async-task-cancel", &[owner.clone()]), 0);
     h.run();
     assert_eq!(h.integer("future-status", &[owner.clone()]), 0);
-    assert_eq!(h.source_number("test/counter"), 1.0);
-    assert_eq!(h.source_number("test/caught"), 0.0);
-    assert_eq!(h.source_number("test/cleaned"), 0.0);
+    assert_eq!(h.source_number("test/counter"), 1);
+    assert_eq!(h.source_number("test/caught"), 0);
+    assert_eq!(h.source_number("test/cleaned"), 0);
     h.store.gc(None).unwrap();
-    let value = h.value("number-box", &[Val::F64(0f64.to_bits())]);
+    let value = h.value("long-box", &[Val::I64(0)]);
     assert_eq!(h.integer("future-resolve", &[cleanup, value]), 1);
     h.run();
     assert_eq!(h.integer("future-status", &[owner.clone()]), 3);
     h.checked_language_error("future-result", &[owner]);
-    assert_eq!(h.source_number("test/counter"), 1.0);
-    assert_eq!(h.source_number("test/caught"), 0.0);
-    assert_eq!(h.source_number("test/cleaned"), 1.0);
+    assert_eq!(h.source_number("test/counter"), 1);
+    assert_eq!(h.source_number("test/caught"), 0);
+    assert_eq!(h.source_number("test/cleaned"), 1);
     assert_eq!(h.counts(), (0, 0));
 }

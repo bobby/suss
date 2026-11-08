@@ -44,9 +44,14 @@ permitted by WebAssembly. Raw bits remain in the observations, and storage/
 boundary tests require exact NaN bits. This is observation comparison, not guest
 numeric equality.
 Malformed transport and absent cases fail. `known-failures.json` records reviewed exact failures; a changed failure, new
-failure or unexpected pass fails the suite. The migrated native expression
-artifact now reports **16 passing, 0 failing, 0 skipped** against both the retained
-reference and a fresh pinned compiler/Node execution. The fresh reference exactly
+failure or unexpected pass fails the suite. The reference was recorded from
+ClojureScript, whose integral binary64 results stand for Suss's longs. Since
+ABI v3 (#335) four cases follow JVM Clojure instead and are recorded as known
+failures: `binary64-rounding` and `negative-zero` give the exact longs
+9007199254740993 and 0, and `positive-infinity` and `nan` throw Clojure's
+"Divide by zero", which this observer doesn't decode. The migrated native
+expression artifact otherwise reported **16 passing, 0 failing, 0 skipped** against
+both the retained reference and a fresh pinned compiler/Node execution. The fresh reference exactly
 matches the retained JSON values, numeric bits, UTF-16 units and effects. All
 original corpus expressions remain unchanged. The host wrapper now uses portable
 `(catch :default error ...)` syntax; the prototype wrapper omitted `:default`.

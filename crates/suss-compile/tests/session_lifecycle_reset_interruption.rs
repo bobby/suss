@@ -7,6 +7,15 @@ use std::sync::{
 
 use suss_compile::portable_session::{Session, SessionError};
 
+/// A long, as Clojure's integer values are.
+fn long_value(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<i64> {
+    match suss_compile::portable_session::runtime_number(store, value)? {
+        Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => Ok(value),
+        other => Err(wasmtime::Error::msg(format!("expected a long, observed {other:?}"))),
+    }
+}
+
+
 struct ReadGuard(Arc<AtomicUsize>);
 impl Drop for ReadGuard {
     fn drop(&mut self) {
@@ -81,8 +90,7 @@ fn session_lifecycle_reset_interrupt_after_host_hook_preserves_pending_root_and_
     let kept = session.invoke(&old, &[]).unwrap();
     session
         .inspect(&kept, |mut store, value| {
-            let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            assert_eq!(number.field(&mut store, 0)?.unwrap_f64(), 17.0);
+            assert_eq!(long_value(&mut store, &value)?, 17);
             Ok(())
         })
         .unwrap();

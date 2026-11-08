@@ -150,7 +150,7 @@ fn macros_receive_and_return_queues() {
         };
         assert_eq!(tag.name, "queue");
         let Kind::Vector(items) = &form.kind else { panic!("{form:?}") };
-        assert_eq!(items[0].kind, Kind::Number(1.0));
+        assert_eq!(items[0].kind, Kind::Long(1));
         assert!(matches!(&items[1].kind, Kind::Symbol(symbol) if symbol.name == "a"));
     }
 }

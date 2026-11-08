@@ -185,15 +185,15 @@ fn raw_function_metadata_is_preserved_before_completed_callable_overlays() {
         // Portable metadata does not create a callable or alter native arity.
         let bridge = FormBridge::new(&mut session).unwrap();
         for (source, number) in [
-            ("raw-scalar", 7.0),
-            ("(raw-function 23)", 23.0),
-            ("(normal-function 29)", 29.0),
+            ("raw-scalar", 7),
+            ("(raw-function 23)", 23),
+            ("(normal-function 29)", 29),
         ] {
             let value = session.eval(source).unwrap();
             session.collect().unwrap();
             assert_eq!(
                 bridge.read(&mut session, &value, 0..1).unwrap().kind,
-                Kind::Number(number)
+                Kind::Long(number)
             );
         }
         macros.define("(defmacro declared-flag [name] (list 'quote (get (get (get (get &env :suss/catalog) :defs) name) :declared)))").unwrap();
@@ -241,7 +241,10 @@ fn data(value: &serde_json::Value) -> Form {
     form(match value {
         serde_json::Value::Null => Kind::Nil,
         serde_json::Value::Bool(value) => Kind::Bool(*value),
-        serde_json::Value::Number(value) => Kind::Number(value.as_f64().unwrap()),
+        serde_json::Value::Number(value) => match value.as_i64() {
+            Some(long) => Kind::Long(long),
+            None => Kind::Number(value.as_f64().unwrap()),
+        },
         serde_json::Value::String(value) => Kind::String(value.encode_utf16().collect()),
         serde_json::Value::Array(values) if values.len() == 2 => {
             match values[0].as_str().unwrap() {

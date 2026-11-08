@@ -61,7 +61,7 @@ pub(super) fn functions(b: &mut Builder) {
     code.extend([End, Br(0), End, End,
         LocalGet(0), Call(b.names["source-array-fields"]), RefCastNonNull(HeapType::Concrete(ARGS)), I32Const(1), ArrayGet(ARGS)]);
     let head=b.function_with_locals("source-array-property-head", &[VALUE], &[VALUE], &[(2,VALUE)], &code);
-    code=vec![LocalGet(1), Call(b.names["coerce-string"]), LocalSet(2),
+    code=vec![LocalGet(1), Call(b.names["property-key"]), LocalSet(2),
         LocalGet(0), Call(head), LocalSet(3), Block(BlockType::Empty), Loop(BlockType::Empty),
         LocalGet(3), sentinel_value(NIL), RefEq, BrIf(1)];
     args(&mut code,3); code.extend([I32Const(0), ArrayGet(ARGS), LocalGet(2), Call(equal), If(BlockType::Empty),
@@ -73,7 +73,7 @@ pub(super) fn functions(b: &mut Builder) {
     b.function_with_locals("source-array-property-get", &[VALUE,VALUE], &[VALUE], &[(1,VALUE)], &code);
     b.function("source-array-property-has", &[VALUE,VALUE], &[ValType::I32], &[
         LocalGet(0),LocalGet(1),Call(find),sentinel_value(NIL),RefEq,I32Eqz]);
-    code=vec![LocalGet(1),Call(b.names["coerce-string"]),LocalSet(3),
+    code=vec![LocalGet(1),Call(b.names["property-key"]),LocalSet(3),
         LocalGet(0),LocalGet(3),Call(find),LocalTee(4),sentinel_value(NIL),RefEq,
         If(BlockType::Empty),LocalGet(0),Call(b.names["source-array-fields"]),RefCastNonNull(HeapType::Concrete(ARGS)),
         I32Const(1),LocalGet(3),LocalGet(2),LocalGet(0),Call(head),

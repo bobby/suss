@@ -12,6 +12,28 @@ fn boolean(session: &mut Session, source: &str) -> bool {
         })
         .unwrap()
 }
+/// The observation of a runtime number, distinguishing a long from a double.
+fn number_json(number: suss_cli::portable_session::RuntimeNumber) -> serde_json::Value {
+    match number {
+        suss_cli::portable_session::RuntimeNumber::Long(value) => serde_json::json!({"tag":"long", "value":value}),
+        suss_cli::portable_session::RuntimeNumber::Double(value) => {
+            serde_json::json!({"tag":"f64", "bits":format!("{:016x}", value.to_bits())})
+        }
+    }
+}
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_number(expected: &serde_json::Value) -> serde_json::Value {
+    if expected["tag"] == "f64" {
+        let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+        let value = f64::from_bits(bits);
+        if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+            return serde_json::json!({"tag":"long", "value":value as i64});
+        }
+    }
+    expected.clone()
+}
+
 #[test]
 fn vector_node_clone_owns_outer_array_and_preserves_edit_and_child() {
     let mut session = Session::new().unwrap();
@@ -29,7 +51,6 @@ fn vector_node_clone_owns_outer_array_and_preserves_edit_and_child() {
 
 #[test]
 fn vector_trie_matches_independently_decoded_primary_values() {
-    use wasmtime::Val;
     let corpus: serde_json::Value =
         serde_json::from_str(include_str!("../../../tests/oracle/vector-trie-cases.json")).unwrap();
     let cases = corpus["cases"].as_array().unwrap();
@@ -48,12 +69,10 @@ fn vector_trie_matches_independently_decoded_primary_values() {
             .inspect(&value, |mut store, value| {
                 Ok(match case["expected"]["tag"].as_str().unwrap() {
                     "f64" => {
-                        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-                        let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-                        let [Val::F64(bits)] = fields.as_slice() else {
-                            panic!("Number layout")
-                        };
-                        serde_json::json!({"tag":"f64","bits":format!("{bits:016x}")})
+                        number_json(
+                            suss_cli::portable_session::runtime_number(&mut store, &value)?
+                                .expect("Number layout"),
+                        )
                     }
                     "bool" => {
                         let boolean = match suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap()
@@ -68,7 +87,7 @@ fn vector_trie_matches_independently_decoded_primary_values() {
                 })
             })
             .unwrap();
-        assert_eq!(observed, case["expected"], "{}", case["id"]);
+        assert_eq!(observed, clojure_number(&case["expected"]), "{}", case["id"]);
         session.collect().unwrap();
     }
 }
@@ -93,7 +112,6 @@ fn association_copies_only_selected_path_across_fragments_and_gc() {
 #[test]
 fn throwing_live_clone_prevents_source_parent_mutation_and_recovers() {
     use suss_cli::portable_session::SessionError;
-    use wasmtime::Val;
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -103,12 +121,10 @@ fn throwing_live_clone_prevents_source_parent_mutation_and_recovers() {
     let Err(SessionError::Language(thrown)) = session.eval("(with-redefs [suss.core/pv-clone-node (fn [_] (do (set! trie-effects (inc trie-effects)) (throw 19)))] (suss.core/do-assoc nil 0 trie-guarded 31 23))") else { panic!("expected numeric language exception") };
     session
         .inspect(&thrown, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            assert_eq!(*bits, 19f64.to_bits());
+            assert_eq!(
+                suss_cli::portable_session::runtime_number(&mut store, &value)?,
+                Some(suss_cli::portable_session::RuntimeNumber::Long(19))
+            );
             Ok(())
         })
         .unwrap();
@@ -119,7 +135,6 @@ fn throwing_live_clone_prevents_source_parent_mutation_and_recovers() {
 #[test]
 fn throwing_outer_pop_clone_preserves_original_recursive_path_after_gc() {
     use suss_cli::portable_session::SessionError;
-    use wasmtime::Val;
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -131,12 +146,10 @@ fn throwing_outer_pop_clone_preserves_original_recursive_path_after_gc() {
     };
     session
         .inspect(&thrown, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            assert_eq!(*bits, 23f64.to_bits());
+            assert_eq!(
+                suss_cli::portable_session::runtime_number(&mut store, &value)?,
+                Some(suss_cli::portable_session::RuntimeNumber::Long(23))
+            );
             Ok(())
         })
         .unwrap();

@@ -106,6 +106,7 @@ fn observed_tagged(value: &Observation) -> Value {
         Observation::Nil => json!({"tag":"nil"}),
         Observation::Bool(value) => json!({"tag":"bool", "value":value}),
         Observation::Number(bits) => json!({"tag":"f64", "bits":format!("{bits:016x}")}),
+        Observation::Long(value) => json!({"tag":"long", "value":value.to_string()}),
         Observation::String(value) => units(value),
         Observation::Keyword(namespace, name) | Observation::Symbol(namespace, name) => {
             let tag = if matches!(value, Observation::Keyword(..)) {
@@ -287,7 +288,8 @@ fn caught_values_and_partial_effects_are_independently_decoded() {
     for (source, expected) in [
         ("nil", json!({"tag":"nil"})),
         ("false", json!({"tag":"bool","value":false})),
-        ("0", json!({"tag":"f64","bits":"0000000000000000"})),
+        ("0", json!({"tag":"long","value":"0"})),
+        ("0.0", json!({"tag":"f64","bits":"0000000000000000"})),
         ("\"probe\"", string("probe")),
         (
             "{:reason :expected}",

@@ -112,7 +112,18 @@ fn raw(value: Observation) -> Value {
     match value {
         Observation::Nil => json!({"tag":"nil"}),
         Observation::Bool(value) => json!({"tag":"bool", "value":value}),
-        Observation::Number(bits) => json!({"tag":"f64", "bits":format!("{bits:016x}")}),
+        // Every number in this corpus is integral, a long in JVM Clojure. The
+        // strict comparator speaks the ClojureScript transport, where every
+        // number is binary64, so a long crosses it as its exact binary64 bits
+        // and a double is rejected here.
+        Observation::Number(bits) => {
+            panic!("expected a long, observed double {}", f64::from_bits(bits))
+        }
+        Observation::Long(value) => {
+            let number = value as f64;
+            assert_eq!(number as i64, value, "long beyond binary64 transport");
+            json!({"tag":"f64", "bits":format!("{:016x}", number.to_bits())})
+        }
         Observation::String(units) => string(units),
         Observation::Keyword(namespace, name) => {
             json!({"tag":"keyword", "namespace":namespace.map(string).unwrap_or(json!({"tag":"nil"})), "name":string(name)})

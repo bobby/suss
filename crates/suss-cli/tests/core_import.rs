@@ -1,6 +1,64 @@
 //! Execute the generated, provenance-checked upstream bootstrap form.
 use suss_cli::portable_session::{Session, SessionError, SessionValue};
-use wasmtime::{Rooted, Val};
+use wasmtime::Rooted;
+
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
+/// Whether `actual` matches a pinned `f64` observation. The ClojureScript
+/// corpus cannot distinguish longs: an integral observation is a Clojure long,
+/// or an integral double when the source has a double operand.
+fn matches_pinned(actual: Number, expected: &serde_json::Value, source: &str) -> bool {
+    let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+    match actual {
+        Number::Long(_) => actual == num(f64::from_bits(bits)),
+        Number::Double(actual) => {
+            actual == bits
+                && (num(f64::from_bits(bits)) == Number::Double(bits)
+                    || source.contains("##")
+                    || source.as_bytes().windows(3).any(|w| {
+                        w[0].is_ascii_digit()
+                            && (w[1] == b'.' || w[1] == b'e')
+                            && (w[2].is_ascii_digit() || w[2] == b'-')
+                    }))
+        }
+    }
+}
+/// The pinned observation when `actual` matches it, otherwise a distinct value.
+fn number_observation(actual: Number, expected: &serde_json::Value, source: &str) -> serde_json::Value {
+    if matches_pinned(actual, expected, source) {
+        expected.clone()
+    } else {
+        serde_json::json!({ "tag": "number", "actual": format!("{actual:?}") })
+    }
+}
 
 const CORE: &str = include_str!("../../../runtime/core-import/suss/core.sus");
 
@@ -15,15 +73,10 @@ fn loaded() -> Session {
     session
 }
 
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+fn number(session: &mut Session, value: &SessionValue) -> Number {
     session
         .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            Ok(*bits)
+            exact_number(&mut store, &value)
         })
         .unwrap()
 }
@@ -101,10 +154,10 @@ fn imported_core_aliases_and_captured_function_observe_live_redefinition() {
     session.enter_namespace("app").unwrap();
     session.collect().unwrap();
     let value = session.eval("(call 7)").unwrap();
-    assert_eq!(number(&mut session, &value), 9.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(9.0));
     let arg = session.eval("7").unwrap();
     let value = session.invoke(&original, &[&arg]).unwrap();
-    assert_eq!(number(&mut session, &value), 7.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(7.0));
 }
 
 #[test]
@@ -114,19 +167,19 @@ fn imported_identity_evaluates_arguments_once_and_recovers_from_wrong_arity() {
         .eval("(def count 0) (def next (fn [] (def count (+ count 1))))")
         .unwrap();
     let value = session.eval("(identity (next))").unwrap();
-    assert_eq!(number(&mut session, &value), 1.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(1.0));
     assert!(matches!(
         session.eval("(identity (next) (next))"),
         Err(SessionError::Language(_))
     ));
     let value = session.eval("count").unwrap();
-    assert_eq!(number(&mut session, &value), 3.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(3.0));
     assert!(matches!(
         session.eval("(identity)"),
         Err(SessionError::Language(_))
     ));
     let value = session.eval("(identity 42)").unwrap();
-    assert_eq!(number(&mut session, &value), 42.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(42.0));
 }
 
 #[test]
@@ -158,7 +211,22 @@ fn imported_core_matches_independently_decoded_pinned_scalar_corpus() {
         session.collect().unwrap();
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "f64" => {
-                serde_json::json!({"tag":"f64", "bits":format!("{:016x}", number(&mut session, &value))})
+                let actual = number(&mut session, &value);
+                // Clojure governs: longs are exact past 2^53, where the pinned
+                // ClojureScript doubles round.
+                let exact = [
+                    ("inc-rounding", 9_007_199_254_740_993),
+                    ("inc-negative-rounding", -9_007_199_254_740_991),
+                    ("dec-rounding", 9_007_199_254_740_991),
+                    ("dec-negative-rounding", -9_007_199_254_740_993),
+                ];
+                match exact.iter().find(|(exact, _)| *exact == id) {
+                    Some((_, long)) => {
+                        assert_eq!(actual, Number::Long(*long), "{source}");
+                        case["expected"].clone()
+                    }
+                    None => number_observation(actual, &case["expected"], source),
+                }
             }
             "nil" | "bool" => {
                 let sentinel = session
@@ -302,7 +370,7 @@ fn imported_boolean_port_arguments_run_once_before_arity_errors() {
         ));
     }
     let count = session.eval("count").unwrap();
-    assert_eq!(number(&mut session, &count), 6.0f64.to_bits());
+    assert_eq!(number(&mut session, &count), num(6.0));
     let value = session.eval("(not nil)").unwrap();
     assert!(boolean(&mut session, &value));
 }
@@ -410,7 +478,7 @@ fn imported_some_evaluates_arguments_once_before_arity_error() {
         Err(SessionError::Language(_))
     ));
     let count = session.eval("count").unwrap();
-    assert_eq!(number(&mut session, &count), 3.0f64.to_bits());
+    assert_eq!(number(&mut session, &count), num(3.0));
     let value = session.eval("(some? false)").unwrap();
     assert!(boolean(&mut session, &value));
 }
@@ -424,11 +492,11 @@ fn bootstrap_nil_test_evaluates_once_and_propagates_exceptions() {
     let value = session.eval("(suss.bootstrap/nil? (next))").unwrap();
     assert!(boolean(&mut session, &value));
     let count = session.eval("count").unwrap();
-    assert_eq!(number(&mut session, &count), 1.0f64.to_bits());
+    assert_eq!(number(&mut session, &count), num(1.0));
     let value = session
         .eval("(try (suss.bootstrap/nil? (throw 7)) (catch :default e e))")
         .unwrap();
-    assert_eq!(number(&mut session, &value), 7.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(7.0));
     for source in [
         "(suss.bootstrap/nil?)",
         "(suss.bootstrap/nil? nil false)",
@@ -481,7 +549,7 @@ fn imported_inc_dec_preserve_primitives_captured_arithmetic_and_live_bindings() 
         let argument = session.eval("2").unwrap();
         for alias in [format!("cljs.core/{name}"), format!("suss.core/{name}")] {
             let returned = session.eval(&format!("(let [f {alias}] (f 2))")).unwrap();
-            assert_eq!(number(&mut session, &returned), expected.to_bits());
+            assert_eq!(number(&mut session, &returned), num(expected));
         }
         session.enter_namespace("suss.core").unwrap();
         session
@@ -492,9 +560,9 @@ fn imported_inc_dec_preserve_primitives_captured_arithmetic_and_live_bindings() 
         session.enter_namespace("user").unwrap();
         session.collect().unwrap();
         let returned = session.invoke(&original, &[&argument]).unwrap();
-        assert_eq!(number(&mut session, &returned), expected.to_bits());
+        assert_eq!(number(&mut session, &returned), num(expected));
         let returned = session.eval(&format!("(let [f {name}] (f 2))")).unwrap();
-        assert_eq!(number(&mut session, &returned), 80.0f64.to_bits());
+        assert_eq!(number(&mut session, &returned), num(80.0));
     }
 }
 
@@ -506,13 +574,15 @@ fn imported_inc_dec_evaluate_arguments_before_typed_arity_failure_and_recover() 
         .unwrap();
     for name in ["inc", "dec"] {
         let before = session.eval("effects").unwrap();
-        let before = f64::from_bits(number(&mut session, &before));
+        let Number::Long(before) = number(&mut session, &before) else {
+            panic!("effects counter is a long")
+        };
         assert!(matches!(
             session.eval(&format!("(let [f {name}] (f (tick) (tick)))")),
             Err(SessionError::Language(_))
         ));
         let after = session.eval("effects").unwrap();
-        assert_eq!(number(&mut session, &after), (before + 2.0).to_bits());
+        assert_eq!(number(&mut session, &after), Number::Long(before + 2));
         assert!(matches!(
             session.eval(&format!("(let [f {name}] (f))")),
             Err(SessionError::Language(_))
@@ -520,7 +590,7 @@ fn imported_inc_dec_evaluate_arguments_before_typed_arity_failure_and_recover() 
         let value = session.eval(&format!("(let [f {name}] (f 4))")).unwrap();
         assert_eq!(
             number(&mut session, &value),
-            (if name == "inc" { 5.0f64 } else { 3.0 }).to_bits()
+            num(if name == "inc" { 5.0 } else { 3.0 })
         );
     }
 }
@@ -542,7 +612,7 @@ fn imported_inc_dec_reject_objects_and_recover() {
             let value = session.eval(&format!("(let [f {name}] (f 3))")).unwrap();
             assert_eq!(
                 number(&mut session, &value),
-                (if name == "inc" { 4.0f64 } else { 2.0 }).to_bits()
+                num(if name == "inc" { 4.0 } else { 2.0 })
             );
         }
     }
@@ -559,16 +629,16 @@ fn imported_inc_dec_alias_calls_capture_callee_before_mutating_operand() {
             "(with-redefs [core/{name} core/{name}] ((if true core/{name} core/identity) (do (set! core/{name} (fn [x] 90)) 2)))"
         );
         let value = session.eval(&source).unwrap();
-        assert_eq!(number(&mut session, &value), expected.to_bits());
+        assert_eq!(number(&mut session, &value), num(expected));
         session.collect().unwrap();
         let value = session
             .eval(&format!("(let [f core/{name}] (f 2))"))
             .unwrap();
-        assert_eq!(number(&mut session, &value), expected.to_bits());
+        assert_eq!(number(&mut session, &value), num(expected));
         let source = format!(
             "(do (def effects 0) (try (let [f core/{name}] (f (do (def effects (+ effects 1)) (throw 7)))) (catch :default e nil) (finally (def effects (+ effects 10)))) effects)"
         );
         let value = session.eval(&source).unwrap();
-        assert_eq!(number(&mut session, &value), 11.0f64.to_bits());
+        assert_eq!(number(&mut session, &value), num(11.0));
     }
 }

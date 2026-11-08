@@ -21,8 +21,9 @@ pub(super) fn functions(b: &mut Builder, primitives: [u32; 7]) -> Vec<u32> {
         ];
         if minimum == 0 {
             body.extend([
-                F64Const((if operator == 0 { 0.0 } else { 1.0 }).into()),
-                StructNew(NUMBER),
+                // (+) is 0 and (*) is 1, both longs.
+                I32Const(if operator == 0 { 0 } else { 1 }),
+                RefI31,
                 Return,
             ]);
         } else {
@@ -56,8 +57,8 @@ pub(super) fn functions(b: &mut Builder, primitives: [u32; 7]) -> Vec<u32> {
         match operator {
             1 => body.extend([LocalGet(4), Call(primitives[4])]),
             3 => body.extend([
-                F64Const(1.0.into()),
-                StructNew(NUMBER),
+                I32Const(1),
+                RefI31,
                 LocalGet(4),
                 Call(primitive),
             ]),

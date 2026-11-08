@@ -14,13 +14,13 @@ fn lowered(source: &str) -> Function {
     function
 }
 
-fn literal_id(function: &Function, expected: f64) -> usize {
+fn literal_id(function: &Function, expected: i64) -> usize {
     function
         .blocks
         .iter()
         .flat_map(|block| &block.instructions)
         .find_map(|instruction| match instruction.operation {
-            Operation::Literal(Literal::Number(value)) if value == expected => {
+            Operation::Literal(Literal::Long(value)) if value == expected => {
                 Some(instruction.result.0)
             }
             _ => None,
@@ -32,9 +32,9 @@ fn literal_id(function: &Function, expected: f64) -> usize {
 fn lowered_branch_captures_are_live_but_discarded_locals_are_not() {
     let function = lowered("(let [x 11 y 22 unused 99] (if true (fn [] (+ x 333)) (fn [] y)))");
     let result = analyze(&function).unwrap();
-    let x = literal_id(&function, 11.0);
-    let y = literal_id(&function, 22.0);
-    let unused = literal_id(&function, 99.0);
+    let x = literal_id(&function, 11);
+    let y = literal_id(&function, 22);
+    let unused = literal_id(&function, 99);
     let (branch_id, condition) = function
         .blocks
         .iter()
@@ -112,8 +112,8 @@ fn lowered_loop_backedge_preserves_outer_values_and_substitutes_parameters() {
         "(let [saved 77 unused 99] (loop [flag true x 1] (if flag (recur false 2) (+ saved x))))",
     );
     let result = analyze(&function).unwrap();
-    let saved = literal_id(&function, 77.0);
-    let unused = literal_id(&function, 99.0);
+    let saved = literal_id(&function, 77);
+    let unused = literal_id(&function, 99);
     let (header, parameters) = function
         .blocks
         .iter()

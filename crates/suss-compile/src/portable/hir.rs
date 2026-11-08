@@ -50,7 +50,9 @@ pub enum Literal {
     /// Internal bootstrap result; there is no undefined source literal.
     Undefined,
     Bool(bool),
+    /// A double.
     Number(f64),
+    Long(i64),
     String(Vec<u16>),
 }
 impl Literal {
@@ -59,7 +61,7 @@ impl Literal {
             Self::Nil => Type::Nil,
             Self::Undefined => Type::Value,
             Self::Bool(_) => Type::Bool,
-            Self::Number(_) => Type::Number,
+            Self::Number(_) | Self::Long(_) => Type::Number,
             Self::String(_) => Type::String,
         }
     }
@@ -179,6 +181,9 @@ pub enum Comparison {
     Greater,
     GreaterEqual,
     StrictEqual,
+    /// `case`'s test of a scalar constant: numbers match only within their
+    /// kind, doubles by their bits.
+    CaseEqual,
     /// Clojure numeric comparison: non-Number operands throw (#286). Shipped
     /// core and compiler-generated tests keep the coercing variants above.
     NumberLess,
@@ -199,6 +204,7 @@ impl Comparison {
             Self::Greater => "comparison-greater",
             Self::GreaterEqual => "comparison-greater-equal",
             Self::StrictEqual => "comparison-strict-equal",
+            Self::CaseEqual => "comparison-case-equal",
             Self::NumberLess => "comparison-number-less",
             Self::NumberLessEqual => "comparison-number-less-equal",
             Self::NumberGreater => "comparison-number-greater",
@@ -217,7 +223,7 @@ impl Comparison {
             Self::Greater | Self::NumberGreater => Self::NumberGreater,
             Self::GreaterEqual | Self::NumberGreaterEqual => Self::NumberGreaterEqual,
             Self::StrictEqual | Self::NumberEqual => Self::NumberEqual,
-            Self::NumberZero | Self::NumberPositive | Self::NumberNegative => self,
+            Self::NumberZero | Self::NumberPositive | Self::NumberNegative | Self::CaseEqual => self,
         }
     }
 }
@@ -250,6 +256,24 @@ pub enum Bitwise {
     SafeIntegerRemainder,
     F64Remainder,
     IdentityUid,
+    /// Private exact numeric operations behind core's `quot`, `rem`, `abs`,
+    /// `unchecked-*`, `integer?` and `double?` (#335).
+    Quot,
+    Rem,
+    Abs,
+    UncheckedAdd,
+    UncheckedSubtract,
+    UncheckedMultiply,
+    UncheckedNegate,
+    LongTest,
+    DoubleTest,
+    /// Private Java `(long)` narrowing of a number, for counts computed with
+    /// doubles, as in `drop`'s `Math/ceil`.
+    ToLong,
+    /// Private exact count of an integer range, without overflow.
+    RangeCount,
+    /// Private exact integer parsing for core's reader.
+    ParseLong,
 }
 impl Bitwise {
     pub(crate) fn from_name(name: &str) -> Option<Self> {
@@ -298,6 +322,18 @@ impl Bitwise {
             Self::SafeIntegerRemainder => "primitive-safe-integer-remainder",
             Self::F64Remainder => "primitive-f64-remainder",
             Self::IdentityUid => "identity-uid",
+            Self::Quot => "number-quot",
+            Self::Rem => "number-rem",
+            Self::Abs => "number-abs",
+            Self::UncheckedAdd => "number-unchecked-add",
+            Self::UncheckedSubtract => "number-unchecked-subtract",
+            Self::UncheckedMultiply => "number-unchecked-multiply",
+            Self::UncheckedNegate => "number-unchecked-negate",
+            Self::LongTest => "number-long?",
+            Self::DoubleTest => "number-double?",
+            Self::ToLong => "number-to-long",
+            Self::RangeCount => "number-range-count",
+            Self::ParseLong => "number-parse-long",
         }
     }
     pub(crate) fn arity(self) -> usize {
@@ -312,7 +348,14 @@ impl Bitwise {
             | Self::F64Finite
             | Self::F64SafeInteger
             | Self::F64TimeClip
-            | Self::IdentityUid => 1,
+            | Self::IdentityUid
+            | Self::Abs
+            | Self::UncheckedNegate
+            | Self::LongTest
+            | Self::DoubleTest
+            | Self::ToLong => 1,
+            Self::ParseLong => 4,
+            Self::RangeCount => 3,
             _ => 2,
         }
     }
@@ -320,8 +363,13 @@ impl Bitwise {
         matches!(self, Self::And | Self::Or | Self::Xor | Self::AndNot)
     }
     pub(crate) fn result(self) -> Type {
-        if matches!(self, Self::Test | Self::F64Finite | Self::F64SafeInteger) {
+        if matches!(
+            self,
+            Self::Test | Self::F64Finite | Self::F64SafeInteger | Self::LongTest | Self::DoubleTest
+        ) {
             Type::Bool
+        } else if matches!(self, Self::ParseLong | Self::RangeCount) {
+            Type::Value
         } else {
             Type::Number
         }
@@ -1314,6 +1362,7 @@ impl Analyzer<'_> {
             Kind::Nil => Expression::Literal(Literal::Nil),
             Kind::Bool(value) => Expression::Literal(Literal::Bool(*value)),
             Kind::Number(value) => Expression::Literal(Literal::Number(*value)),
+            Kind::Long(value) => Expression::Literal(Literal::Long(*value)),
             Kind::Exact(number) => return self.exact_literal(form, number),
             Kind::String(value) => Expression::Literal(Literal::String(value.clone())),
             Kind::Keyword(value) => {
@@ -2492,6 +2541,18 @@ impl Analyzer<'_> {
                 "safe-integer-remainder" => Some(Bitwise::SafeIntegerRemainder),
                 "f64-remainder" => Some(Bitwise::F64Remainder),
                 "identity-uid" => Some(Bitwise::IdentityUid),
+                "quot" => Some(Bitwise::Quot),
+                "rem" => Some(Bitwise::Rem),
+                "abs" => Some(Bitwise::Abs),
+                "unchecked-add" => Some(Bitwise::UncheckedAdd),
+                "unchecked-subtract" => Some(Bitwise::UncheckedSubtract),
+                "unchecked-multiply" => Some(Bitwise::UncheckedMultiply),
+                "unchecked-negate" => Some(Bitwise::UncheckedNegate),
+                "long?" => Some(Bitwise::LongTest),
+                "double?" => Some(Bitwise::DoubleTest),
+                "to-long" => Some(Bitwise::ToLong),
+                "range-count" => Some(Bitwise::RangeCount),
+                "parse-long" => Some(Bitwise::ParseLong),
                 _ => None,
             };
             if let Some(operation) = operation {

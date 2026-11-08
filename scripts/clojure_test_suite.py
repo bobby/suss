@@ -18,7 +18,6 @@ import json
 import os
 import re
 import shutil
-import struct
 import subprocess
 import tarfile
 from pathlib import Path
@@ -410,15 +409,12 @@ def decide(expected, actual):
 
 
 def suite_matches(oracle, suss):
-    """oracle_compare.matches, with the JVM oracle's numbers. Until #335 Suss
-    numbers are binary64, so a long the oracle records within ±2^53 matches
-    a Suss f64 holding exactly that integer, and nothing matches a larger
-    long, a BigInt, a ratio or a BigDecimal yet."""
+    """oracle_compare.matches, with the JVM oracle's numbers. Since #335 a
+    long matches only a Suss long with the same value; nothing matches a
+    BigInt, a ratio or a BigDecimal yet (#338, #339)."""
     tag = oracle['tag']
     if tag == 'long':
-        value = int(oracle['value'])
-        bits = struct.unpack('>Q', struct.pack('>d', float(value)))[0]
-        return suss['tag'] == 'f64' and abs(value) <= 2 ** 53 and int(suss['bits'], 16) == bits
+        return suss['tag'] == 'long' and int(suss['value']) == int(oracle['value'])
     if tag in ('bigint', 'ratio', 'decimal'):
         return False
     if tag != suss['tag']:

@@ -8,7 +8,7 @@ use suss_reader::forms::{Form, Kind, read_forms};
 
 #[derive(Default)]
 struct Observe {
-    entries: Vec<f64>,
+    entries: Vec<i64>,
     initializer: Option<Arc<hir::SourceAnalysis>>,
 }
 impl portable::ExpansionHost for Observe {
@@ -33,7 +33,7 @@ impl portable::ExpansionHost for Observe {
         match head.name.as_str() {
             "mark" => {
                 assert_eq!(items.len(), 2);
-                let Kind::Number(value) = &items[1].kind else {
+                let Kind::Long(value) = &items[1].kind else {
                     panic!("numeric mark required")
                 };
                 self.entries.push(*value);
@@ -95,7 +95,7 @@ fn binding_children_share_real_declarations_and_analyzed_body_scope() {
                 &mut host,
             )
             .unwrap();
-            assert_eq!(host.entries, vec![0.0, 1.0]);
+            assert_eq!(host.entries, vec![0, 1]);
             let initializer = host.initializer.unwrap();
             let hir::SourceNode::Bindings {
                 is_loop,
@@ -107,7 +107,7 @@ fn binding_children_share_real_declarations_and_analyzed_body_scope() {
             };
             assert_eq!(*is_loop, input == "loop");
             assert_eq!(bindings.len(), 2);
-            for (binding, expected) in bindings.iter().zip([0.0, 1.0]) {
+            for (binding, expected) in bindings.iter().zip([0, 1]) {
                 let facts = binding
                     .initializer
                     .as_ref()
@@ -115,7 +115,7 @@ fn binding_children_share_real_declarations_and_analyzed_body_scope() {
                     .source
                     .as_ref()
                     .unwrap();
-                assert!(matches!(&facts.form.kind, Kind::Number(value) if *value == expected));
+                assert!(matches!(&facts.form.kind, Kind::Long(value) if *value == expected));
             }
             let facts = body.source.as_ref().unwrap();
             assert!(facts.is_body);
@@ -249,7 +249,7 @@ fn recur_children_are_original_operands_analyzed_once() {
             &mut host,
         )
         .unwrap();
-        assert_eq!(host.entries, vec![0.0, 1.0]);
+        assert_eq!(host.entries, vec![0, 1]);
         let initializer = host.initializer.unwrap();
         let hir::SourceNode::Bindings { body, .. } = initializer.node.as_ref().unwrap().as_ref()
         else {
@@ -289,9 +289,9 @@ fn recur_children_are_original_operands_analyzed_once() {
             panic!("original recur children required")
         };
         assert_eq!(arguments.len(), 2);
-        for (argument, number) in arguments.iter().zip([0.0, 1.0]) {
+        for (argument, number) in arguments.iter().zip([0, 1]) {
             assert!(
-                matches!(&argument.source.as_ref().unwrap().form.kind, Kind::Number(value) if *value == number)
+                matches!(&argument.source.as_ref().unwrap().form.kind, Kind::Long(value) if *value == number)
             );
         }
     }
@@ -315,9 +315,9 @@ fn source_if_retains_each_analyzed_operand_once_in_both_phases() {
             assert_eq!(
                 host.entries,
                 if alternative {
-                    vec![0.0, 1.0, 2.0]
+                    vec![0, 1, 2]
                 } else {
-                    vec![0.0, 1.0]
+                    vec![0, 1]
                 }
             );
             let initializer = host.initializer.unwrap();
@@ -329,15 +329,15 @@ fn source_if_retains_each_analyzed_operand_once_in_both_phases() {
             else {
                 panic!("original conditional source children required")
             };
-            for (child, number) in [(condition, 0.0), (consequent, 1.0)] {
+            for (child, number) in [(condition, 0), (consequent, 1)] {
                 let facts = child.source.as_ref().unwrap();
                 assert_eq!(facts.phase, phase);
-                assert!(matches!(&facts.form.kind, Kind::Number(value) if *value == number));
+                assert!(matches!(&facts.form.kind, Kind::Long(value) if *value == number));
             }
             let facts = otherwise.source.as_ref().unwrap();
             assert_eq!(facts.phase, phase);
             if alternative {
-                assert!(matches!(&facts.form.kind, Kind::Number(value) if *value == 2.0));
+                assert!(matches!(&facts.form.kind, Kind::Long(value) if *value == 2));
             } else {
                 assert!(matches!(&facts.form.kind, Kind::Nil));
                 assert!(
@@ -375,9 +375,9 @@ fn function_methods_retain_original_declarations_and_once_analyzed_bodies() {
             assert_eq!(
                 host.entries,
                 if callable.methods.len() == 2 {
-                    vec![0.0, 1.0]
+                    vec![0, 1]
                 } else {
-                    vec![0.0]
+                    vec![0]
                 }
             );
             for (index, method) in callable.methods.iter().enumerate() {
@@ -450,7 +450,7 @@ fn throw_operand_retains_original_analysis_without_reexpansion() {
             &mut host,
         )
         .unwrap();
-        assert_eq!(host.entries, vec![42.0]);
+        assert_eq!(host.entries, vec![42]);
         let source = host.initializer.unwrap();
         let hir::SourceNode::Throw(exception) =
             source.node.as_ref().expect("throw source node").as_ref()
@@ -458,7 +458,7 @@ fn throw_operand_retains_original_analysis_without_reexpansion() {
             panic!("throw must retain source exception operand")
         };
         let facts = exception.source.as_ref().unwrap();
-        assert!(matches!(&facts.form.kind, Kind::Number(value) if *value == 42.0));
+        assert!(matches!(&facts.form.kind, Kind::Long(value) if *value == 42));
         assert_eq!(facts.context, portable::AnalysisContext::Expression);
     }
 }
@@ -476,7 +476,7 @@ fn try_source_regions_are_analyzed_once_in_pinned_visitation_order() {
             &mut host,
         )
         .unwrap();
-        assert_eq!(host.entries, vec![2.0, 1.0, 0.0]);
+        assert_eq!(host.entries, vec![2, 1, 0]);
         let facts = host.initializer.unwrap();
         let hir::SourceNode::Try {
             body,
