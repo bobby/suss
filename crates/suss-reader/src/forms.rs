@@ -211,7 +211,7 @@ impl ExactNumber {
     /// The evaluation-time failure, until #335.
     pub fn unsupported_message(&self) -> String {
         format!(
-            "Unsupported numeric literal {}: ratios, BigInts, BigDecimals and integers beyond 2^53 need Clojure's numeric types (#335)",
+            "Unsupported numeric literal {}: ratios, BigInts and BigDecimals need Clojure's numeric types (#338, #339)",
             self.text
         )
     }

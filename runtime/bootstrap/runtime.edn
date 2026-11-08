@@ -646,7 +646,6 @@
          "suss.bindings.runtime:suss.core/reader-argument-symbol"
          "suss.bindings.runtime:suss.core/reader-array-map-symbol"
          "suss.bindings.runtime:suss.core/reader-auto-keyword"
-         "suss.bindings.runtime:suss.core/reader-big-radix"
          "suss.bindings.runtime:suss.core/reader-character"
          "suss.bindings.runtime:suss.core/reader-classes"
          "suss.bindings.runtime:suss.core/reader-classes!"
@@ -662,7 +661,6 @@
          "suss.bindings.runtime:suss.core/reader-deref-symbol"
          "suss.bindings.runtime:suss.core/reader-digit"
          "suss.bindings.runtime:suss.core/reader-digits-end"
-         "suss.bindings.runtime:suss.core/reader-digits-odd?"
          "suss.bindings.runtime:suss.core/reader-digits?"
          "suss.bindings.runtime:suss.core/reader-dispatches"
          "suss.bindings.runtime:suss.core/reader-duplicate"
@@ -673,7 +671,6 @@
          "suss.bindings.runtime:suss.core/reader-fn-symbol"
          "suss.bindings.runtime:suss.core/reader-hash-map-symbol"
          "suss.bindings.runtime:suss.core/reader-hash-set-symbol"
-         "suss.bindings.runtime:suss.core/reader-hex-digits"
          "suss.bindings.runtime:suss.core/reader-id"
          "suss.bindings.runtime:suss.core/reader-index-of"
          "suss.bindings.runtime:suss.core/reader-into-symbol"
@@ -735,7 +732,6 @@
          "suss.bindings.runtime:suss.core/reader-vec-symbol"
          "suss.bindings.runtime:suss.core/reader-wide-space?"
          "suss.bindings.runtime:suss.core/reader-with-meta-symbol"
-         "suss.bindings.runtime:suss.core/reader-within-2-53?"
          "suss.bindings.runtime:suss.core/realized?"
          "suss.bindings.runtime:suss.core/record-readers"
          "suss.bindings.runtime:suss.core/record?"
@@ -1532,7 +1528,6 @@
          "suss.bindings.runtime:suss.internal.core-link/reader-argument-symbol"
          "suss.bindings.runtime:suss.internal.core-link/reader-array-map-symbol"
          "suss.bindings.runtime:suss.internal.core-link/reader-auto-keyword"
-         "suss.bindings.runtime:suss.internal.core-link/reader-big-radix"
          "suss.bindings.runtime:suss.internal.core-link/reader-character"
          "suss.bindings.runtime:suss.internal.core-link/reader-classes"
          "suss.bindings.runtime:suss.internal.core-link/reader-classes!"
@@ -1548,7 +1543,6 @@
          "suss.bindings.runtime:suss.internal.core-link/reader-deref-symbol"
          "suss.bindings.runtime:suss.internal.core-link/reader-digit"
          "suss.bindings.runtime:suss.internal.core-link/reader-digits-end"
-         "suss.bindings.runtime:suss.internal.core-link/reader-digits-odd?"
          "suss.bindings.runtime:suss.internal.core-link/reader-digits?"
          "suss.bindings.runtime:suss.internal.core-link/reader-dispatches"
          "suss.bindings.runtime:suss.internal.core-link/reader-duplicate"
@@ -1559,7 +1553,6 @@
          "suss.bindings.runtime:suss.internal.core-link/reader-fn-symbol"
          "suss.bindings.runtime:suss.internal.core-link/reader-hash-map-symbol"
          "suss.bindings.runtime:suss.internal.core-link/reader-hash-set-symbol"
-         "suss.bindings.runtime:suss.internal.core-link/reader-hex-digits"
          "suss.bindings.runtime:suss.internal.core-link/reader-id"
          "suss.bindings.runtime:suss.internal.core-link/reader-index-of"
          "suss.bindings.runtime:suss.internal.core-link/reader-into-symbol"
@@ -1621,7 +1614,6 @@
          "suss.bindings.runtime:suss.internal.core-link/reader-vec-symbol"
          "suss.bindings.runtime:suss.internal.core-link/reader-wide-space?"
          "suss.bindings.runtime:suss.internal.core-link/reader-with-meta-symbol"
-         "suss.bindings.runtime:suss.internal.core-link/reader-within-2-53?"
          "suss.bindings.runtime:suss.internal.core-link/realized?"
          "suss.bindings.runtime:suss.internal.core-link/record-readers"
          "suss.bindings.runtime:suss.internal.core-link/record?"
@@ -2032,15 +2024,15 @@
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d666c7573682f31"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d77726974652f32"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
-         "suss.bindings.runtime:suss.internal.reify/t-reify-3507-10941"],
+         "suss.bindings.runtime:suss.internal.reify/t-reify-3439-10879"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "69fbd455271d9dac98f9d1f423d4f049237a85d83fea5ab75dd77575409e61ea",
- :dependency-graph-sha256 "86b094ff9abbfac43389eb4c07f55afa6198c23fdd155c6b353bee477a1a2549",
+ :compiler-source-sha256 "ad1b18c5f26ae15b64f120d596c5236239ecb313952551563a2663cd82e26e07",
+ :dependency-graph-sha256 "645438cb9d5d6dd2d49f70d1ebf7cc5c678f01c98c2e92dcbd95a9e838106cde",
  :flags [],
  :format-version 2,
  :phase "runtime",
  :runtime-abi 3,
- :source-sha256 "2b92d28237eff854966cfdf533497b6bc4aa4158321d4605369c7a57915f0b50",
+ :source-sha256 "481cdec6ce6ea2edd3368402d9a674cd7c76a71b084012197e707379dd0a5385",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "d01efb68514915b4b35e48dfba7d601c40a8286dc937104fea2bb82d86aa05d9",
+ :wasm-sha256 "470d27c0336a55e5870d8158e3beb53a12126d0a2cf7f6bc0c17037275493f1c",
  :wasm-tools "0.258.0"}

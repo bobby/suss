@@ -228,7 +228,7 @@ fn code_only_syntax_and_unknown_tags_fail_with_spans() {
         ("{:a #_ 1}", "Map requires an even number of forms", 0..9),
         ("{:a #queue [] :b}", "Map requires an even number of forms", 0..17),
         ("::a", "Auto-resolved keywords require namespace resolution", 0..3),
-        ("1/2", "Unsupported numeric literal 1/2: ratios, BigInts, BigDecimals and integers beyond 2^53 need Clojure's numeric types (#335)", 0..3),
+        ("1/2", "Unsupported numeric literal 1/2: ratios, BigInts and BigDecimals need Clojure's numeric types (#338, #339)", 0..3),
         ("\"\\ud800\"", "EDN strings must be valid Unicode", 0..8),
         ("[1 2", "Unclosed collection; expected ]", 0..4),
         ("^1 [x]", "Metadata must be a keyword, symbol, string or map", 1..2),

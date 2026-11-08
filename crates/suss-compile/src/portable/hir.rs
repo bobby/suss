@@ -263,6 +263,8 @@ pub enum Bitwise {
     UncheckedNegate,
     LongTest,
     DoubleTest,
+    /// Private exact integer parsing for core's reader.
+    ParseLong,
 }
 impl Bitwise {
     pub(crate) fn from_name(name: &str) -> Option<Self> {
@@ -320,6 +322,7 @@ impl Bitwise {
             Self::UncheckedNegate => "number-unchecked-negate",
             Self::LongTest => "number-long?",
             Self::DoubleTest => "number-double?",
+            Self::ParseLong => "number-parse-long",
         }
     }
     pub(crate) fn arity(self) -> usize {
@@ -339,6 +342,7 @@ impl Bitwise {
             | Self::UncheckedNegate
             | Self::LongTest
             | Self::DoubleTest => 1,
+            Self::ParseLong => 4,
             _ => 2,
         }
     }
@@ -351,6 +355,8 @@ impl Bitwise {
             Self::Test | Self::F64Finite | Self::F64SafeInteger | Self::LongTest | Self::DoubleTest
         ) {
             Type::Bool
+        } else if self == Self::ParseLong {
+            Type::Value
         } else {
             Type::Number
         }
@@ -2531,6 +2537,7 @@ impl Analyzer<'_> {
                 "unchecked-negate" => Some(Bitwise::UncheckedNegate),
                 "long?" => Some(Bitwise::LongTest),
                 "double?" => Some(Bitwise::DoubleTest),
+                "parse-long" => Some(Bitwise::ParseLong),
                 _ => None,
             };
             if let Some(operation) = operation {
