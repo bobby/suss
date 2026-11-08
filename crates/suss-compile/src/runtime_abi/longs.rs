@@ -180,6 +180,40 @@ fn small(local: u32) -> [Instruction<'static>; 4] {
     [LocalGet(local), RefCastNonNull(i31()), I31GetS, I64ExtendI32S]
 }
 
+/// The 32-bit form of a signed 64-bit relation, for two i31 operands.
+fn small_relation(exact: &Instruction<'static>) -> Instruction<'static> {
+    use Instruction::*;
+    match exact {
+        I64LtS => I32LtS,
+        I64LeS => I32LeS,
+        I64GtS => I32GtS,
+        I64GeS => I32GeS,
+        I64Eq => I32Eq,
+        _ => unreachable!("signed long relation"),
+    }
+}
+/// Return the relation's boolean at once when locals 0 and 1 are both i31
+/// longs, before any type dispatch.
+pub(super) fn small_relation_fast_path(exact: &Instruction<'static>) -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let mut code = both(i31()).to_vec();
+    code.push(If(BlockType::Empty));
+    code.extend([LocalGet(0), RefCastNonNull(i31()), I31GetS]);
+    code.extend([LocalGet(1), RefCastNonNull(i31()), I31GetS]);
+    code.push(small_relation(exact));
+    code.extend(super::boolean());
+    code.extend([Return, End]);
+    code
+}
+/// Call `callee` on locals 0 and 1 at once when both are i31 longs, before
+/// any type dispatch.
+pub(super) fn small_call_fast_path(callee: u32) -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let mut code = both(i31()).to_vec();
+    code.extend([If(BlockType::Empty), LocalGet(0), LocalGet(1), Call(callee), Return, End]);
+    code
+}
+
 /// `[] -> [i32]`: a numeric relation of locals 0 and 1, which are numbers:
 /// exact between two longs, and between doubles otherwise.
 pub(super) fn relation(
@@ -190,7 +224,12 @@ pub(super) fn relation(
     use Instruction::*;
     let unbox = b.names["long-unbox"];
     let number = b.names["number-unbox"];
-    let mut code = both_longs(b).to_vec();
+    let mut code = both(i31()).to_vec();
+    code.push(If(BlockType::Result(ValType::I32)));
+    code.extend([LocalGet(0), RefCastNonNull(i31()), I31GetS]);
+    code.extend([LocalGet(1), RefCastNonNull(i31()), I31GetS]);
+    code.extend([small_relation(&exact), Else]);
+    code.extend(both_longs(b));
     code.extend([
         If(BlockType::Result(ValType::I32)),
         LocalGet(0),
@@ -204,6 +243,7 @@ pub(super) fn relation(
         LocalGet(1),
         Call(number),
         floating,
+        End,
         End,
     ]);
     code
@@ -618,6 +658,19 @@ pub(super) fn functions(b: &mut Builder) {
         code.extend(super::boolean());
         b.function(&format!("number-{name}"), &[VALUE], &[VALUE], &code);
     }
+    // A long as is; a double truncated toward zero, saturating, NaN as 0, as
+    // Java's (long) cast does.
+    let mut code = vec![LocalGet(0), Call(b.names["long-test"]), If(BlockType::Empty), LocalGet(0), Return, End];
+    code.extend([LocalGet(0), Call(b.names["double-test"]), I32Eqz, If(BlockType::Empty)]);
+    code.extend(throw("to-long requires a number operand"));
+    code.extend([
+        End,
+        LocalGet(0),
+        Call(b.names["number-unbox"]),
+        I64TruncSatF64S,
+        Call(b.names["long-box"]),
+    ]);
+    b.function("number-to-long", &[VALUE], &[VALUE], &code);
 }
 
 /// `number-parse-long`: the digits `s[from, to)` in `|base|` as a long,

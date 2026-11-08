@@ -263,6 +263,9 @@ pub enum Bitwise {
     UncheckedNegate,
     LongTest,
     DoubleTest,
+    /// Private Java `(long)` narrowing of a number, for counts computed with
+    /// doubles, as in `drop`'s `Math/ceil`.
+    ToLong,
     /// Private exact integer parsing for core's reader.
     ParseLong,
 }
@@ -322,6 +325,7 @@ impl Bitwise {
             Self::UncheckedNegate => "number-unchecked-negate",
             Self::LongTest => "number-long?",
             Self::DoubleTest => "number-double?",
+            Self::ToLong => "number-to-long",
             Self::ParseLong => "number-parse-long",
         }
     }
@@ -341,7 +345,8 @@ impl Bitwise {
             | Self::Abs
             | Self::UncheckedNegate
             | Self::LongTest
-            | Self::DoubleTest => 1,
+            | Self::DoubleTest
+            | Self::ToLong => 1,
             Self::ParseLong => 4,
             _ => 2,
         }
@@ -2537,6 +2542,7 @@ impl Analyzer<'_> {
                 "unchecked-negate" => Some(Bitwise::UncheckedNegate),
                 "long?" => Some(Bitwise::LongTest),
                 "double?" => Some(Bitwise::DoubleTest),
+                "to-long" => Some(Bitwise::ToLong),
                 "parse-long" => Some(Bitwise::ParseLong),
                 _ => None,
             };

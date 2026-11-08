@@ -172,7 +172,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
     code.extend([
         End,
         LocalGet(3),
-        Call(b.names["coerce-string"]),
+        Call(b.names["property-key"]),
         LocalSet(3),
         LocalGet(4),
         Call(b.names["native-object?"]),
@@ -526,7 +526,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
     }
     code.extend([
         LocalGet(3),
-        Call(b.names["coerce-string"]),
+        Call(b.names["property-key"]),
         LocalSet(3),
         LocalGet(2),
         LocalGet(3),
@@ -653,7 +653,7 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
     }
     code.extend([
         LocalGet(3),
-        Call(b.names["coerce-string"]),
+        Call(b.names["property-key"]),
         LocalSet(3),
         LocalGet(2),
         LocalGet(3),

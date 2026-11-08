@@ -30,13 +30,10 @@ pub(super) fn intrinsics(b: &mut Builder) -> [u32; 7] {
         ("multiply", "*"),
         ("divide", "/"),
     ] {
-        let mut code = vec![];
+        let operation = b.names[&format!("number-{name}")];
+        let mut code = longs::small_call_fast_path(operation);
         require_numbers(b, &mut code, symbol, 2);
-        code.extend([
-            LocalGet(0),
-            LocalGet(1),
-            Call(b.names[&format!("number-{name}")]),
-        ]);
+        code.extend([LocalGet(0), LocalGet(1), Call(operation)]);
         checked.push(b.function(&format!("checked-{name}"), &[VALUE, VALUE], &[VALUE], &code));
     }
     let mut code = vec![];
@@ -65,7 +62,7 @@ pub(super) fn intrinsics(b: &mut Builder) -> [u32; 7] {
         ("positive", "pos?", I64GtS, F64Gt),
         ("negative", "neg?", I64LtS, F64Lt),
     ] {
-        let mut code = vec![];
+        let mut code = longs::small_relation_fast_path(&exact);
         require_numbers(b, &mut code, symbol, 2);
         code.extend(longs::relation(b, exact, floating));
         code.extend(super::boolean());

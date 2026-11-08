@@ -224,7 +224,8 @@ fn helper_from(bytes: &[u8]) -> Helper {
 fn numbers(b: &Builder, operation: &str) -> Vec<Instruction<'static>> {
     use Instruction::*;
     let test = b.names["number-test"];
-    vec![
+    let mut code = longs::small_call_fast_path(b.names[operation]);
+    code.extend([
         LocalGet(0),
         Call(test),
         LocalGet(1),
@@ -236,7 +237,8 @@ fn numbers(b: &Builder, operation: &str) -> Vec<Instruction<'static>> {
         Call(b.names[operation]),
         Return,
         End,
-    ]
+    ]);
+    code
 }
 
 pub(super) fn error(message: &str, global: u32) -> Vec<Instruction<'static>> {
@@ -516,6 +518,36 @@ pub(super) fn intrinsics(
         &[(3, ValType::I32), (1, VALUE)],
         &to_string,
     );
+    // JS property keys: an integral double names the same property as the
+    // equal long ("0" for -0.0, "1" for 1.0), as JS ToString gives, while
+    // coerce-string prints doubles as Java does.
+    let key = vec![
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(NUMBER)),
+        If(BlockType::Empty),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(NUMBER)),
+        StructGet { struct_type_index: NUMBER, field_index: 0 },
+        LocalTee(1),
+        LocalGet(1),
+        F64Trunc,
+        F64Eq,
+        LocalGet(1),
+        F64Abs,
+        F64Const(9.0e18_f64.into()),
+        F64Lt,
+        I32And,
+        If(BlockType::Empty),
+        LocalGet(1),
+        I64TruncSatF64S,
+        Call(b.names["long-string"]),
+        Return,
+        End,
+        End,
+        LocalGet(0),
+        Call(to_string),
+    ];
+    b.function_with_locals("property-key", &[VALUE], &[VALUE], &[(1, ValType::F64)], &key);
 
     let mut concat = check(
         &[

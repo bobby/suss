@@ -44,7 +44,7 @@ fn sym(namespace: Option<&str>, name: &str) -> Value {
     })
 }
 fn num(n: usize) -> Value {
-    Value::Number(n as f64)
+    Value::Long(n as i64)
 }
 fn global_symbol(global: &Global) -> Value {
     sym(Some(global.namespace()), global.name())

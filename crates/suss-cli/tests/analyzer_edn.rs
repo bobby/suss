@@ -314,9 +314,9 @@ fn recur_targets_the_innermost_loop() {
     let source = "(defn g [] (loop [i 0] (when (< i 3) ((fn [k] (if (pos? k) (recur (dec k)) k)) i) (recur (inc i)))))";
     let document = hir_document(&analyze_source(source, &path, &[], None, None).unwrap(), &path).unwrap();
     let mut found = Vec::new();
-    fn walk(node: &Value, loops: &mut Vec<f64>, found: &mut Vec<(Vec<f64>, f64)>) {
+    fn walk(node: &Value, loops: &mut Vec<i64>, found: &mut Vec<(Vec<i64>, i64)>) {
         let Value::Map(map) = node else { return };
-        let id = |key| match map.get(&Value::keyword(key)) { Some(Value::Number(n)) => Some(*n), _ => None };
+        let id = |key| match map.get(&Value::keyword(key)) { Some(Value::Long(n)) => Some(*n), _ => None };
         let op = map.get(&Value::keyword("op")).cloned();
         let pushed = matches!(&op, Some(Value::Keyword(k)) if k.name == "loop" || k.name == "fn-method");
         if pushed { loops.push(id("loop-id").unwrap()); }

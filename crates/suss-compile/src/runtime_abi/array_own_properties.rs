@@ -14,7 +14,7 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
         LocalTee(5), Call(b.names["source-array-backing"]), LocalSet(2),
         LocalGet(1), ArrayLen, I32Const(1), I32GtU, If(BlockType::Result(VALUE)),
         LocalGet(1), I32Const(1), ArrayGet(ARGS), Else, sentinel_value(UNDEFINED), End,
-        Call(b.names["coerce-string"]), LocalSet(3), LocalGet(3)]);
+        Call(b.names["property-key"]), LocalSet(3), LocalGet(3)]);
     code.extend("length".encode_utf16().map(|u| I32Const(i32::from(u))));
     code.extend([ArrayNewFixed {array_type_index: STRING, array_size: 6}, Call(equal),
         If(BlockType::Empty), sentinel_value(TRUE), Return, End,

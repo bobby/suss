@@ -8048,7 +8048,10 @@ reduces them without incurring seq initialization"
 
 (def ^{:private true :doc "Returns exact size of remaining items in an IntegerRange."} range-count
   (fn [start end step]
-    (suss.bootstrap/f64-ceil (/ (- end start) step))))
+    (let [distance (- end start)]
+      (if (pos? step)
+        (suss.bootstrap/quot (+ distance (dec step)) step)
+        (suss.bootstrap/quot (+ distance (inc step)) step)))))
 
 (deftype IntegerRange [meta start end step cnt ^:mutable __hash]
   Object
@@ -8330,7 +8333,7 @@ reduces them without incurring seq initialization"
      (if (implements? IDrop coll)
        (or
          (if (pos? n)
-           (-drop coll (suss.bootstrap/f64-ceil n))
+           (-drop coll (suss.bootstrap/to-long (suss.bootstrap/f64-ceil n)))
            (seq coll))
          ())
        (let [step (fn [n coll]
@@ -8597,7 +8600,7 @@ reduces them without incurring seq initialization"
   (fn [coll n]
     (if (implements? IDrop coll)
       (if (pos? n)
-        (or (-drop coll (suss.bootstrap/f64-ceil n)) ())
+        (or (-drop coll (suss.bootstrap/to-long (suss.bootstrap/f64-ceil n))) ())
         coll)
       (loop [n n xs coll]
         (let [s (and (pos? n) (seq xs))]

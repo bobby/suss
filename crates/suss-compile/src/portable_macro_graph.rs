@@ -3440,7 +3440,7 @@ mod sharing_tests {
         assert_eq!(bridge.read(&mut session, &value, 0..1).unwrap().kind,
             Kind::String("retained".encode_utf16().collect()));
         let value = session.eval("review-retained").unwrap();
-        assert_eq!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Number(17.0));
+        assert_eq!(bridge.read(&mut session, &value, 0..1).unwrap().kind, Kind::Long(17));
     }
 
     #[test]
@@ -3469,8 +3469,8 @@ mod sharing_tests {
             let form = bridge.read(&mut session, &log, 0..1).unwrap();
             let Kind::List(items) = &form.kind else { panic!("nonempty numeric hash callback log") };
             let actual = items.iter().map(|item| {
-                let Kind::Number(value) = &item.kind else { panic!("numeric hash key") };
-                *value
+                let Kind::Long(value) = &item.kind else { panic!("numeric hash key") };
+                *value as f64
             }).collect::<Vec<_>>();
             // A declaration can contain more than one reader occurrence. Each
             // nine-item set occurrence must keep its complete textual order.
@@ -3622,7 +3622,7 @@ mod sharing_tests {
         let count = session.eval("raw-key-hash-calls").unwrap();
         // Direct occurrence and first alias each construct two nine-item sets;
         // the second alias reuses its result. Key interning executes no hashes.
-        assert_eq!(bridge.read(&mut session, &count, 0..1).unwrap().kind, Kind::Number(36.0));
+        assert_eq!(bridge.read(&mut session, &count, 0..1).unwrap().kind, Kind::Long(36));
         let probe = session.eval("(fn [v] [(identical? (nth v 0) (nth v 1)) (identical? (nth v 1) (nth v 2))])").unwrap();
         let result = session.invoke(&probe, &[&value]).unwrap();
         let result = bridge.read(&mut session, &result, 0..1).unwrap();
@@ -3737,12 +3737,12 @@ mod sharing_tests {
             let count = session.eval("review-hash-effects").unwrap();
             assert_eq!(
                 bridge.read(&mut session, &count, 0..1).unwrap().kind,
-                Kind::Number(calls)
+                Kind::Long(calls as i64)
             );
             let first_key = session.eval("review-first-hash").unwrap();
             assert_eq!(
                 bridge.read(&mut session, &first_key, 0..1).unwrap().kind,
-                Kind::Number(first)
+                Kind::Long(first as i64)
             );
             session.eval("(set! review-hash-effects 0)").unwrap();
             let actual = {
@@ -3754,12 +3754,12 @@ mod sharing_tests {
             let count = session.eval("review-hash-effects").unwrap();
             assert_eq!(
                 bridge.read(&mut session, &count, 0..1).unwrap().kind,
-                Kind::Number(calls)
+                Kind::Long(calls as i64)
             );
             let first_key = session.eval("review-first-hash").unwrap();
             assert_eq!(
                 bridge.read(&mut session, &first_key, 0..1).unwrap().kind,
-                Kind::Number(first)
+                Kind::Long(first as i64)
             );
             assert_eq!(
                 form_key(&bridge.read(&mut session, &actual, 0..1).unwrap()).unwrap(),
@@ -3791,11 +3791,11 @@ mod sharing_tests {
                     let map = session.data_fields(&set).unwrap()[1].clone();
                     let root = session.data_fields(&map).unwrap()[2].clone();
                     let bitmap = session.data_fields(&root).unwrap()[1].clone();
-                    let Kind::Number(bitmap) = bridge.read(session, &bitmap, 0..1).unwrap().kind
+                    let Kind::Long(bitmap) = bridge.read(session, &bitmap, 0..1).unwrap().kind
                     else {
                         panic!("bitmap scalar");
                     };
-                    bitmap.to_bits()
+                    (bitmap as f64).to_bits()
                 })
                 .collect()
         }
@@ -3818,7 +3818,7 @@ mod sharing_tests {
             let count = session.eval("review-hash-effects").unwrap();
             assert_eq!(
                 bridge.read(&mut session, &count, 0..1).unwrap().kind,
-                Kind::Number(18.0)
+                Kind::Long(18)
             );
             let actual_probe = bitmaps(&mut session, &bridge, &probe, &actual);
             assert_eq!(actual_probe, expected_probe);
@@ -3850,7 +3850,7 @@ mod sharing_tests {
         drop(graph);
         // The same allowance admits a genuinely small independent operation.
         let effects = session.eval("review-diamond-effects").unwrap();
-        assert_eq!(bridge.read(&mut session, &effects, 0..1).unwrap().kind, Kind::Number(0.0));
+        assert_eq!(bridge.read(&mut session, &effects, 0..1).unwrap().kind, Kind::Long(0));
         let small = {
             let request = session.operation_budget_scope().unwrap();
             let mut graph = AnalysisGraph::new(&bridge, &mut session);
@@ -3881,7 +3881,7 @@ mod sharing_tests {
         let count = session.eval("review-hash-effects").unwrap();
         assert_eq!(
             bridge.read(&mut session, &count, 0..1).unwrap().kind,
-            Kind::Number(0.0)
+            Kind::Long(0)
         );
         let value = {
             let mut graph = AnalysisGraph::new(&bridge, &mut session);
@@ -3892,7 +3892,7 @@ mod sharing_tests {
         let count = session.eval("review-hash-effects").unwrap();
         assert_eq!(
             bridge.read(&mut session, &count, 0..1).unwrap().kind,
-            Kind::Number(18.0)
+            Kind::Long(18)
         );
         assert!(matches!(
             bridge.read(&mut session, &value, 0..1).unwrap().kind,

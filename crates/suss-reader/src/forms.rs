@@ -1431,12 +1431,15 @@ pub(crate) fn number(token: &str) -> Result<NumberToken, &'static str> {
         if negative {
             numerator = -numerator;
         }
+        // Clojure reads each term as a long when it fits and divides: two
+        // longs that divide evenly give a long (`4/2` is 2), but a BigInt
+        // term gives a BigInt (`36893488147419103232/8`).
+        use num_traits::ToPrimitive;
+        let long_terms = numerator.to_i64().is_some() && denominator.to_i64().is_some();
         let divisor = numerator.gcd(&denominator);
         let (numerator, denominator) = (numerator / &divisor, denominator / divisor);
-        // A ratio that reduces to an integer is that integer: a long when it
-        // fits, as `4/2` is 2.
         if denominator == BigInt::from(1) {
-            return Ok(integer_token(token, numerator, false));
+            return Ok(integer_token(token, numerator, !long_terms));
         }
         return Ok(NumberToken::Exact(ExactNumber {
             text: token.to_owned(),

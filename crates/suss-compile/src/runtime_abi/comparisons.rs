@@ -36,7 +36,7 @@ pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Ve
         .into_iter()
         .enumerate()
     {
-        let mut body = vec![];
+        let mut body = longs::small_relation_fast_path(&exact(op));
         coercions::primitive(&mut body, coercion_types, 0, 0);
         coercions::primitive(&mut body, coercion_types, 1, 0);
         body.extend([

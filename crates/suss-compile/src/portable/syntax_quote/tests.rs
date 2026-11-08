@@ -12,6 +12,7 @@ fn project(form: &Form) -> Value {
         Kind::Nil => Value::Null,
         Kind::Bool(v) => json!(v),
         Kind::Number(v) => json!(v),
+        Kind::Long(v) => json!(v),
         Kind::String(v) => json!(String::from_utf16(v).unwrap()),
         Kind::Symbol(v) => json!(["symbol", v.to_string()]),
         Kind::Keyword(v) => json!(["keyword", v.to_string()]),
@@ -399,7 +400,7 @@ fn scalar_bits_utf16_and_textual_collection_effect_order_are_preserved() {
             .expand(&read(source), &env, Phase::Runtime)
             .unwrap();
         let text = project(&result).to_string();
-        assert!(text.find("1.0").unwrap() < text.find("2.0").unwrap());
+        assert!(text.find(",1]").unwrap() < text.find(",2]").unwrap(), "{text}");
         assert_eq!(text.matches("tick").count(), 2);
     }
     let mut state = ReaderState::default();

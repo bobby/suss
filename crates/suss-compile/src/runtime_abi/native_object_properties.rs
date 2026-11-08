@@ -36,7 +36,7 @@ pub(super) fn primitives(b: &mut Builder) {
         Drop,
         Else,
         LocalGet(1),
-        Call(b.names["coerce-string"]),
+        Call(b.names["property-key"]),
         Drop,
         End,
         sentinel_value(UNDEFINED),
@@ -122,7 +122,7 @@ pub(super) fn functions(b: &mut Builder) {
     );
     code = vec![
         LocalGet(1),
-        Call(b.names["coerce-string"]),
+        Call(b.names["property-key"]),
         LocalSet(2),
         LocalGet(0),
         LocalGet(2),
@@ -240,7 +240,7 @@ pub(super) fn functions(b: &mut Builder) {
         // Any value may be set, nil (a null reference) included.
         code = vec![
             LocalGet(1),
-            Call(b.names["coerce-string"]),
+            Call(b.names["property-key"]),
             LocalSet(3),
             LocalGet(0),
             LocalGet(3),
@@ -594,7 +594,7 @@ fn legacy_functions(b: &mut Builder, resolve: u32) {
     code.extend([
         End,
         LocalGet(1),
-        Call(b.names["coerce-string"]),
+        Call(b.names["property-key"]),
         LocalSet(4),
         sentinel_value(UNDEFINED),
         LocalSet(6),
@@ -685,7 +685,7 @@ fn legacy_functions(b: &mut Builder, resolve: u32) {
         End,
         LocalGet(0),
         LocalGet(1),
-        Call(b.names["coerce-string"]),
+        Call(b.names["property-key"]),
         Call(resolve),
         LocalSet(3),
         LocalGet(3),

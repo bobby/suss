@@ -304,11 +304,38 @@ impl CompilationSnapshot {
         })
     }
 }
+/// Select wasmtime's GC collector for every Suss engine (ADR-0003,
+/// "Collector"): copying by default, set explicitly because
+/// `Collector::Auto` may change; `SUSS_GC=null` opts in to the null
+/// collector, which never frees and traps when the heap is full, for
+/// short-lived runs. Deferred reference counting is not offered: it cannot
+/// collect cycles.
+pub fn configure_collector(config: &mut Config) -> Result<(), String> {
+    let collector = match std::env::var("SUSS_GC").as_deref() {
+        Err(std::env::VarError::NotPresent) | Ok("copying") => wasmtime::Collector::Copying,
+        Ok("null") => wasmtime::Collector::Null,
+        Ok(other) => {
+            return Err(format!("SUSS_GC must be copying or null, not {other:?}"));
+        }
+        Err(std::env::VarError::NotUnicode(_)) => {
+            return Err("SUSS_GC must be copying or null".into());
+        }
+    };
+    config.collector(collector);
+    config.gc_heap_initial_size(GC_HEAP_INITIAL_SIZE);
+    Ok(())
+}
+/// Each store's initial GC heap. wasmtime 49 grows the heap only when a
+/// collection frees too little, so a heap that live data nearly fills is
+/// collected every few allocations; starting larger avoids most of that
+/// for small programs, at the cost of peak RSS (ADR-0003).
+pub const GC_HEAP_INITIAL_SIZE: u64 = 16 << 20;
 fn engine() -> Result<Engine, SessionError> {
     static ENGINE: OnceLock<Result<Engine, String>> = OnceLock::new();
     ENGINE
         .get_or_init(|| {
             let mut config = Config::new();
+            configure_collector(&mut config)?;
             config
                 .wasm_gc(true)
                 .wasm_function_references(true)
@@ -3182,7 +3209,7 @@ mod tests {
     #[test]
     fn session_lifecycle_native_callback_trap_restores_dynamic_context() {
         let mut session = Session::new().unwrap();
-        session.eval("(def ^:dynamic *value* 1)").unwrap();
+        session.eval("(def ^:dynamic *value* 1.0)").unwrap();
         let body = session
             .eval("(fn [] (binding [*value* 7] (loop [] (recur))))")
             .unwrap();
@@ -3249,7 +3276,8 @@ mod tests {
             "must actually interrupt a Rust helper frame, not just its GC copy loop"
         );
         session.set_operation_fuel(100000);
-        let output = session.eval("(suss.bootstrap/value-add 42 \"\")").unwrap();
+        // A double, so the string conversion calls the numeric helper.
+        let output = session.eval("(suss.bootstrap/value-add 42.5 \"\")").unwrap();
         let units = session
             .inspect(&output, |mut scope, value| {
                 let array = value.unwrap_anyref().unwrap().as_array(&scope)?.unwrap();
@@ -3259,7 +3287,7 @@ mod tests {
                     .collect::<Vec<_>>())
             })
             .unwrap();
-        assert_eq!(units, [52, 50]);
+        assert_eq!(units, [52, 50, 46, 53]);
         assert_eq!(stack.get(&mut session.store).unwrap_i32(), initial);
     }
     #[test]
@@ -3313,7 +3341,7 @@ mod tests {
             }));
             assert!(!session.store.has_pending_exception());
             assert_eq!(session.stats().external_value_handles, 1);
-            let next = session.eval("42").unwrap();
+            let next = session.eval("42.0").unwrap();
             let bits = session
                 .inspect(&next, |mut store, value| {
                     let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
@@ -3387,7 +3415,7 @@ mod tests {
             }
         }
         let mut session = Session::new().unwrap();
-        session.eval("(def keep 17)").unwrap();
+        session.eval("(def keep 17.0)").unwrap();
         let prepared =
             portable::prepare_fragment("(def ghost 7)", &session.environment, Phase::Runtime)
                 .unwrap();

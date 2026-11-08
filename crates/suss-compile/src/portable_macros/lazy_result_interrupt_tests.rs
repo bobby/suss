@@ -49,10 +49,10 @@ fn decoded_number(macros: &mut CompiledMacros, caller: &mut Session, source: &st
     let value = caller.eval_with_macros(source, macros).unwrap();
     let bridge = FormBridge::new(caller).unwrap();
     let form = bridge.read(caller, &value, 0..source.len()).unwrap();
-    let Kind::Number(number) = &form.kind else {
-        panic!("expected number: {form:?}")
+    let Kind::Long(number) = &form.kind else {
+        panic!("expected long: {form:?}")
     };
-    *number
+    *number as f64
 }
 
 #[test]
@@ -217,7 +217,7 @@ fn lazy_result_interrupt_is_synchronized_after_thunk_effects_and_recovers() {
         let stable = caller.eval("realization-irq-stable").unwrap();
         let bridge = FormBridge::new(&mut caller).unwrap();
         let stable = bridge.read(&mut caller, &stable, 0..1).unwrap();
-        assert!(matches!(stable.kind, Kind::Number(n) if n == 7.0));
+        assert!(matches!(stable.kind, Kind::Long(7)));
         assert_eq!(
             decoded_number(&mut macros, &mut caller, "(realization-irq-observed)"),
             12.0
