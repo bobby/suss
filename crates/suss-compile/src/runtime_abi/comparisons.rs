@@ -151,6 +151,25 @@ pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Ve
     ]);
     let helper = b.function("comparison-strict-equal", &[VALUE, VALUE], &[VALUE], &strict);
     helpers.push(("strict-equal", helper));
+    // Clojure's `=` of scalars: numbers are equal only within a category,
+    // by value (so 0.0 equals -0.0 and NaN equals nothing), and a number
+    // never equals a non-number. Anything else is strict equality.
+    let mut equiv = longs::both_longs(b).to_vec();
+    equiv.extend([If(BlockType::Empty)]);
+    equiv.extend([LocalGet(0), Call(b.names["long-unbox"]), LocalGet(1), Call(b.names["long-unbox"]), I64Eq]);
+    boolean(&mut equiv);
+    equiv.extend([Return, End]);
+    let double = b.names["double-test"];
+    equiv.extend([LocalGet(0), Call(double), LocalGet(1), Call(double), I32And, If(BlockType::Empty)]);
+    let number = b.names["number-unbox"];
+    equiv.extend([LocalGet(0), Call(number), LocalGet(1), Call(number), F64Eq]);
+    boolean(&mut equiv);
+    equiv.extend([Return, End]);
+    equiv.extend(longs::number_test(0));
+    equiv.extend(longs::number_test(1));
+    equiv.extend([I32Or, If(BlockType::Empty), sentinel_value(FALSE), Return, End]);
+    equiv.extend([LocalGet(0), LocalGet(1), Call(helper)]);
+    b.function("number-equiv", &[VALUE, VALUE], &[VALUE], &equiv);
     // case's test of a scalar constant: a number matches only a number of its
     // own kind, a double only by its bits (so -0.0 is not 0.0 and NaN matches
     // nothing), as Clojure's case tests long constants as longs and others by

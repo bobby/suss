@@ -1799,3 +1799,19 @@
 (def unchecked-dec-int (fn [x] (int (unchecked-dec x))))
 (def unchecked-divide-int (fn [x y] (int (quot x y))))
 (def unchecked-remainder-int (fn [x y] (int (suss.bootstrap/rem x y))))
+
+;; Clojure's numeric casts (ADR-0003, #336). There are no narrow boxed values:
+;; int, short and byte check the range and return a long, the unchecked casts
+;; take the low bits, and float rounds to binary32 and returns a double. Each
+;; passes its index in the runtime's table of casts.
+(def long "Coerce to long" (fn [x] (suss.bootstrap/cast x 0)))
+(def short "Coerce to short" (fn [x] (suss.bootstrap/cast x 2)))
+(def byte "Coerce to byte" (fn [x] (suss.bootstrap/cast x 3)))
+(def unchecked-long "Coerce to long. Subject to rounding or truncation." (fn [x] (suss.bootstrap/cast x 4)))
+(def unchecked-int "Coerce to int. Subject to rounding or truncation." (fn [x] (suss.bootstrap/cast x 5)))
+(def unchecked-short "Coerce to short. Subject to rounding or truncation." (fn [x] (suss.bootstrap/cast x 6)))
+(def unchecked-byte "Coerce to byte. Subject to rounding or truncation." (fn [x] (suss.bootstrap/cast x 7)))
+(def float "Coerce to float" (fn [x] (suss.bootstrap/cast x 8)))
+(def unchecked-float "Coerce to float. Subject to rounding." (fn [x] (suss.bootstrap/cast x 9)))
+(def double "Coerce to double" (fn [x] (suss.bootstrap/cast x 10)))
+(def unchecked-double "Coerce to double. Subject to rounding." (fn [x] (suss.bootstrap/cast x 10)))

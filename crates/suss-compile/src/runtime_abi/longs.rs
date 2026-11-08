@@ -838,6 +838,128 @@ pub(super) fn functions(b: &mut Builder) {
         &[(5, ValType::I64)],
         &code,
     );
+    hash(b);
+}
+
+/// Murmur3's `mixK1` of the i32 on the stack.
+fn mix_k1() -> [Instruction<'static>; 6] {
+    use Instruction::*;
+    [
+        I32Const(0xcc9e2d51_u32 as i32),
+        I32Mul,
+        I32Const(15),
+        I32Rotl,
+        I32Const(0x1b873593),
+        I32Mul,
+    ]
+}
+/// Murmur3's `mixH1` of the hash in local `h` and the k1 on the stack.
+fn mix_h1(h: u32) -> [Instruction<'static>; 9] {
+    use Instruction::*;
+    [
+        LocalGet(h),
+        I32Xor,
+        I32Const(13),
+        I32Rotl,
+        I32Const(5),
+        I32Mul,
+        I32Const(0xe6546b64_u32 as i32),
+        I32Add,
+        LocalSet(h),
+    ]
+}
+
+/// `number-hash`: Clojure's `hasheq` of a number. A long hashes as Murmur3's
+/// `hashLong`; a double as `Double.hashCode`, with NaN's canonical bits and
+/// -0.0 hashing as 0.0 does, as `Numbers.hasheq` makes it.
+fn hash(b: &mut Builder) {
+    use Instruction::*;
+    // Local 1 is the long or the double's bits, local 2 the hash.
+    let mut code = vec![
+        LocalGet(0),
+        Call(b.names["long-test"]),
+        If(BlockType::Result(ValType::I32)),
+        LocalGet(0),
+        Call(b.names["long-unbox"]),
+        LocalTee(1),
+        I64Eqz,
+        If(BlockType::Result(ValType::I32)),
+        I32Const(0),
+        Else,
+        I32Const(0),
+        LocalSet(2),
+        LocalGet(1),
+        I32WrapI64,
+    ];
+    code.extend(mix_k1());
+    code.extend(mix_h1(2));
+    code.extend([LocalGet(1), I64Const(32), I64ShrU, I32WrapI64]);
+    code.extend(mix_k1());
+    code.extend(mix_h1(2));
+    code.extend([
+        // fmix(h1, 8)
+        LocalGet(2),
+        I32Const(8),
+        I32Xor,
+        LocalTee(2),
+        LocalGet(2),
+        I32Const(16),
+        I32ShrU,
+        I32Xor,
+        I32Const(0x85ebca6b_u32 as i32),
+        I32Mul,
+        LocalTee(2),
+        LocalGet(2),
+        I32Const(13),
+        I32ShrU,
+        I32Xor,
+        I32Const(0xc2b2ae35_u32 as i32),
+        I32Mul,
+        LocalTee(2),
+        LocalGet(2),
+        I32Const(16),
+        I32ShrU,
+        I32Xor,
+        End,
+        Else,
+        LocalGet(0),
+        Call(b.names["double-test"]),
+        I32Eqz,
+        If(BlockType::Empty),
+    ]);
+    code.extend(throw("hash-number requires a number operand"));
+    code.extend([
+        End,
+        LocalGet(0),
+        Call(b.names["number-unbox"]),
+        LocalTee(3),
+        LocalGet(3),
+        F64Ne,
+        If(BlockType::Result(ValType::I64)),
+        I64Const(0x7ff8_0000_0000_0000),
+        Else,
+        // -0.0 + 0.0 is 0.0, so both zeros hash as 0.0's bits, 0.
+        LocalGet(3),
+        F64Const(0.0.into()),
+        F64Add,
+        I64ReinterpretF64,
+        End,
+        LocalTee(1),
+        LocalGet(1),
+        I64Const(32),
+        I64ShrU,
+        I64Xor,
+        I32WrapI64,
+        End,
+        Call(b.names["long-box-i32"]),
+    ]);
+    b.function_with_locals(
+        "number-hash",
+        &[VALUE],
+        &[VALUE],
+        &[(1, ValType::I64), (1, ValType::I32), (1, ValType::F64)],
+        &code,
+    );
 }
 
 /// `number-parse-long`: the digits `s[from, to)` in `|base|` as a long,
