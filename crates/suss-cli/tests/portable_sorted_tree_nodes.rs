@@ -3,7 +3,9 @@
 //! other types' private fields and core-private helpers, so they run as core
 //! (#278). Tests of user probe types stay user code.
 use suss_compile::portable_session::sentinel_tag;
-use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
+use suss_cli::portable_session::{
+    RuntimeNumber, Session, SessionError, SessionOptions, SessionValue, runtime_number,
+};
 use suss_compile::portable::resolve::Phase;
 use wasmtime::{AsContextMut, Val};
 const IDS: &[&str] = &[
@@ -137,21 +139,33 @@ fn setup(phase: Phase) -> Session {
     session.collect().unwrap();
     session
 }
-fn number_bits(session: &mut Session, value: &SessionValue) -> u64 {
+fn number(session: &mut Session, value: &SessionValue) -> RuntimeNumber {
     session
-        .inspect(value, |mut store, value| {
-            let number = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .expect("Number");
-            let fields = number.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("boxed Number layout")
-            };
-            Ok(*bits)
-        })
+        .inspect(value, |store, value| Ok(runtime_number(store, &value)?.expect("Number")))
         .unwrap()
+}
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_value(expected: &serde_json::Value) -> serde_json::Value {
+    match expected {
+        serde_json::Value::Object(fields) if fields.get("tag").and_then(serde_json::Value::as_str) == Some("number") => {
+            let bits = u64::from_str_radix(fields["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+                serde_json::json!({"tag":"long", "value":(value as i64).to_string()})
+            } else {
+                expected.clone()
+            }
+        }
+        serde_json::Value::Object(fields) => serde_json::Value::Object(
+            fields
+                .iter()
+                .map(|(key, value)| (key.clone(), clojure_value(value)))
+                .collect(),
+        ),
+        serde_json::Value::Array(items) => serde_json::Value::Array(items.iter().map(clojure_value).collect()),
+        other => other.clone(),
+    }
 }
 #[test]
 fn complete_tree_nodes_match_ordered_pinned_value_and_effect_cases_after_gc() {
@@ -317,7 +331,7 @@ fn nodes_preserve_canonical_classes_child_sharing_and_cache_boundaries_after_gc(
             })
             .unwrap();
         for (source, red, same, cache) in [
-            ("(.blacken native-parent)", false, true, Some(47.0_f64)),
+            ("(.blacken native-parent)", false, true, Some(47_i64)),
             ("(.redden native-parent)", true, false, None),
             (
                 "(balance-left 6 66 native-left native-right)",
@@ -368,13 +382,11 @@ fn nodes_preserve_canonical_classes_child_sharing_and_cache_boundaries_after_gc(
                         child.unwrap_anyref().unwrap()
                     )?);
                 }
-                for (name, expected) in [("key", 6.0_f64), ("val", 66.0_f64)] {
+                for (name, expected) in [("key", 6_i64), ("val", 66)] {
                     let field = source_field!(store, value, NODE_FIELDS, name);
-                    let number = field.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-                    assert_eq!(number.fields(&mut store)?.count(), 1);
                     assert_eq!(
-                        number.field(&mut store, 0)?.unwrap_f64().to_bits(),
-                        expected.to_bits()
+                        runtime_number(&mut store, &field)?,
+                        Some(RuntimeNumber::Long(expected))
                     );
                 }
                 let field = source_field!(store, value, NODE_FIELDS, "__hash");
@@ -384,15 +396,8 @@ fn nodes_preserve_canonical_classes_child_sharing_and_cache_boundaries_after_gc(
                         0
                     ),
                     Some(n) => assert_eq!(
-                        field
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_struct(&store)?
-                            .unwrap()
-                            .field(&mut store, 0)?
-                            .unwrap_f64()
-                            .to_bits(),
-                        n.to_bits()
+                        runtime_number(&mut store, &field)?,
+                        Some(RuntimeNumber::Long(n))
                     ),
                 }
                 Ok(())
@@ -457,15 +462,15 @@ fn nodes_preserve_canonical_classes_child_sharing_and_cache_boundaries_after_gc(
         })
         .unwrap();
         for (source, n) in [
-            ("(.-__hash native-left)", 41.0_f64),
-            ("(.-__hash native-right)", 43.0_f64),
-            ("(.-__hash native-parent)", 47.0_f64),
-            ("(.-__hash native-insertion)", 59.0_f64),
-            ("(.-__hash (.-left native-insertion))", 53.0_f64),
+            ("(.-__hash native-left)", 41_i64),
+            ("(.-__hash native-right)", 43),
+            ("(.-__hash native-parent)", 47),
+            ("(.-__hash native-insertion)", 59),
+            ("(.-__hash (.-left native-insertion))", 53),
         ] {
             let value = s.eval_privileged(source).unwrap();
             s.collect().unwrap();
-            assert_eq!(number_bits(&mut s, &value), n.to_bits());
+            assert_eq!(number(&mut s, &value), RuntimeNumber::Long(n));
         }
     }
 }
@@ -506,7 +511,7 @@ fn tree_reduction_preserves_wrapper_identity_original_throw_and_effect_order() {
         .unwrap();
         let effects = s.eval_privileged("tree-effects").unwrap();
         s.collect().unwrap();
-        assert_eq!(number_bits(&mut s, &effects), 12.0_f64.to_bits());
+        assert_eq!(number(&mut s, &effects), RuntimeNumber::Long(12));
         s.eval_privileged("(set! tree-effects 0)").unwrap();
         let Err(SessionError::Language(payload)) = s.eval_privileged(
             "(tree-map-kv-reduce native-tree
@@ -515,15 +520,15 @@ fn tree_reduction_preserves_wrapper_identity_original_throw_and_effect_order() {
             panic!("original payload")
         };
         s.collect().unwrap();
-        assert_eq!(number_bits(&mut s, &payload), 73.0_f64.to_bits());
+        assert_eq!(number(&mut s, &payload), RuntimeNumber::Long(73));
         let effects = s.eval_privileged("tree-effects").unwrap();
         s.collect().unwrap();
-        assert_eq!(number_bits(&mut s, &effects), 1.0_f64.to_bits());
+        assert_eq!(number(&mut s, &effects), RuntimeNumber::Long(1));
         let recovered = s
             .eval_privileged("(tree-map-kv-reduce native-tree (fn [acc k v] (+ acc v)) 0)")
             .unwrap();
         s.collect().unwrap();
-        assert_eq!(number_bits(&mut s, &recovered), 60.0_f64.to_bits());
+        assert_eq!(number(&mut s, &recovered), RuntimeNumber::Long(60));
     }
 }
 
@@ -545,13 +550,13 @@ fn hyphenated_object_methods_preserve_receiver_lookup_and_argument_order() {
             )
             .unwrap();
         s.collect().unwrap();
-        assert_eq!(number_bits(&mut s, &result), 16.0_f64.to_bits());
+        assert_eq!(number(&mut s, &result), RuntimeNumber::Long(16));
         let effects = s.eval("method-effects").unwrap();
         s.collect().unwrap();
-        assert_eq!(number_bits(&mut s, &effects), 12.0_f64.to_bits());
+        assert_eq!(number(&mut s, &effects), RuntimeNumber::Long(12));
         let result = s.eval("(.read-value (TreeMethodProbe. 7))").unwrap();
         s.collect().unwrap();
-        assert_eq!(number_bits(&mut s, &result), 7.0_f64.to_bits());
+        assert_eq!(number(&mut s, &result), RuntimeNumber::Long(7));
         // ClojureScript munges the source property spelling consistently; an
         // absent field reads nil rather than becoming a compile-time error.
         let missing = s
@@ -573,10 +578,10 @@ fn hyphenated_object_methods_preserve_receiver_lookup_and_argument_order() {
             panic!("owner throw")
         };
         s.collect().unwrap();
-        assert_eq!(number_bits(&mut s, &payload), 73.0_f64.to_bits());
+        assert_eq!(number(&mut s, &payload), RuntimeNumber::Long(73));
         let effects = s.eval("method-effects").unwrap();
         s.collect().unwrap();
-        assert_eq!(number_bits(&mut s, &effects), 1.0_f64.to_bits());
+        assert_eq!(number(&mut s, &effects), RuntimeNumber::Long(1));
     }
 }
 
@@ -606,7 +611,7 @@ fn this_as_restores_the_enclosing_receiver_after_nested_calls_and_language_throw
                 .eval(&format!("(if {expression} 1 0)"))
                 .unwrap();
             s.collect().unwrap();
-            assert_eq!(number_bits(&mut s, &result), 1.0_f64.to_bits(), "{expression}");
+            assert_eq!(number(&mut s, &result), RuntimeNumber::Long(1), "{expression}");
         }
     }
 }
@@ -633,15 +638,15 @@ fn direct_nominal_protocol_call_captures_live_method_before_argument_effects() {
             )
             .unwrap();
         s.collect().unwrap();
-        assert_eq!(number_bits(&mut s, &value), 7.0_f64.to_bits());
+        assert_eq!(number(&mut s, &value), RuntimeNumber::Long(7));
         let effects = s.eval("direct-effects").unwrap();
         s.collect().unwrap();
-        assert_eq!(number_bits(&mut s, &effects), 12.0_f64.to_bits());
+        assert_eq!(number(&mut s, &effects), RuntimeNumber::Long(12));
         let value = s
             .eval("(suss.bootstrap/direct-protocol-call IIndexed -nth (TreeIndexedProbe. 7) 0)")
             .unwrap();
         s.collect().unwrap();
-        assert_eq!(number_bits(&mut s, &value), 9.0_f64.to_bits());
+        assert_eq!(number(&mut s, &value), RuntimeNumber::Long(9));
         for source in [
             "(suss.bootstrap/direct-protocol-call IIndexed unknown (TreeIndexedProbe. 7) 0)",
             "(suss.bootstrap/direct-protocol-call IIndexed -nth)",
@@ -661,10 +666,10 @@ fn direct_nominal_protocol_call_captures_live_method_before_argument_effects() {
             panic!("owner throw")
         };
         s.collect().unwrap();
-        assert_eq!(number_bits(&mut s, &payload), 73.0_f64.to_bits());
+        assert_eq!(number(&mut s, &payload), RuntimeNumber::Long(73));
         let effects = s.eval("direct-effects").unwrap();
         s.collect().unwrap();
-        assert_eq!(number_bits(&mut s, &effects), 1.0_f64.to_bits());
+        assert_eq!(number(&mut s, &effects), RuntimeNumber::Long(1));
     }
 }
 
@@ -696,6 +701,14 @@ fn raw_tree_decode(
             4 => Ok(json!({"tag":"bool","value":true})),
             _ => Err(wasmtime::Error::msg("raw tree unsupported immediate")),
         };
+    }
+    if let Some(number) = runtime_number(&mut *store, value)? {
+        return Ok(match number {
+            RuntimeNumber::Long(value) => json!({"tag":"long","value":value.to_string()}),
+            RuntimeNumber::Double(value) => {
+                json!({"tag":"number","bits":format!("{:016x}", value.to_bits())})
+            }
+        });
     }
     let reference = value
         .unwrap_anyref()
@@ -925,18 +938,25 @@ fn raw_tree_shapes_comparison_bits_errors_and_traces_match_fresh_pinned_observat
                     raw_tree_decode(&mut store, &value, &classes, &mut Vec::new(), &mut 4096)
                 })
                 .unwrap();
-            assert_eq!(actual, case["expected"]["value"], "{}", case["id"]);
+            assert_eq!(actual, clojure_value(&case["expected"]["value"]), "{}", case["id"]);
             let trace = s.eval_privileged("raw-tree-trace").unwrap();
             s.collect().unwrap();
             assert_eq!(
-                format!("{:016x}", number_bits(&mut s, &trace)),
-                case["expected"]["trace"]["bits"].as_str().unwrap(),
+                match number(&mut s, &trace) {
+                    RuntimeNumber::Long(value) => {
+                        serde_json::json!({"tag":"long","value":value.to_string()})
+                    }
+                    RuntimeNumber::Double(value) => {
+                        serde_json::json!({"tag":"number","bits":format!("{:016x}", value.to_bits())})
+                    }
+                },
+                clojure_value(&case["expected"]["trace"]),
                 "{} trace",
                 case["id"]
             );
             // Recovery is observed directly even after an original thrown value.
             let recovery = s.eval_privileged("(+ 17 43)").unwrap();
-            assert_eq!(number_bits(&mut s, &recovery), 60.0_f64.to_bits());
+            assert_eq!(number(&mut s, &recovery), RuntimeNumber::Long(60));
         }
     }
 }

@@ -5,8 +5,17 @@ fn number(session: &mut Session, source: &str) -> f64 {
     session
         .inspect(&value, |mut store, value| {
             store.gc(None)?;
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            Ok(object.field(&mut store, 0)?.unwrap_f64())
+            // Integral results are longs, as in Clojure; only a fractional result
+            // may be a double.
+            match suss_cli::portable_session::runtime_number(&mut store, &value)? {
+                Some(suss_cli::portable_session::RuntimeNumber::Long(value)) => Ok(value as f64),
+                Some(suss_cli::portable_session::RuntimeNumber::Double(value))
+                    if value.fract() != 0.0 =>
+                {
+                    Ok(value)
+                }
+                other => panic!("{source}: number result, got {other:?}"),
+            }
         })
         .unwrap()
 }

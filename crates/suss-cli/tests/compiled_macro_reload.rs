@@ -2,18 +2,16 @@ use suss_cli::{
     portable_macros::CompiledMacros,
     portable_session::{Session, SessionOptions},
 };
-use wasmtime::Val;
+use suss_compile::portable_session::{RuntimeNumber, runtime_number};
 
-fn number(runtime: &mut Session, macros: &mut CompiledMacros, source: &str) -> u64 {
+fn number(runtime: &mut Session, macros: &mut CompiledMacros, source: &str) -> i64 {
     let value = runtime.eval_with_macros(source, macros).unwrap();
     runtime
-        .inspect(&value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Expected ordinary number")
+        .inspect(&value, |store, value| {
+            let Some(RuntimeNumber::Long(long)) = runtime_number(store, &value)? else {
+                panic!("Expected ordinary long")
             };
-            Ok(*bits)
+            Ok(long)
         })
         .unwrap()
 }
@@ -40,7 +38,7 @@ fn namespace_session_compiled_macro_reload_observes_changed_source_and_keeps_old
         .unwrap();
     assert_eq!(
         number(&mut runtime, &mut macros, "(old)"),
-        42.0f64.to_bits()
+        42
     );
     std::fs::write(&source, "(ns tools) (defmacro answer [] 43)").unwrap();
     runtime
@@ -48,7 +46,7 @@ fn namespace_session_compiled_macro_reload_observes_changed_source_and_keeps_old
         .unwrap();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        42.0f64.to_bits()
+        42
     );
     runtime
         .eval_with_macros(
@@ -58,11 +56,11 @@ fn namespace_session_compiled_macro_reload_observes_changed_source_and_keeps_old
         .unwrap();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        43.0f64.to_bits()
+        43
     );
     assert_eq!(
         number(&mut runtime, &mut macros, "(old)"),
-        42.0f64.to_bits()
+        42
     );
 }
 
@@ -93,7 +91,7 @@ fn namespace_session_compiled_macro_reload_all_updates_reachable_macro_dependenc
         .unwrap();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/add 40)"),
-        42.0f64.to_bits()
+        42
     );
     runtime
         .eval_with_macros(
@@ -103,11 +101,11 @@ fn namespace_session_compiled_macro_reload_all_updates_reachable_macro_dependenc
         .unwrap();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/add 40)"),
-        43.0f64.to_bits()
+        43
     );
     assert_eq!(
         number(&mut runtime, &mut macros, "(old)"),
-        42.0f64.to_bits()
+        42
     );
 }
 
@@ -132,10 +130,10 @@ fn namespace_session_compiled_macro_failed_reload_keeps_old_binding_and_retries_
         )
         .unwrap_err();
     assert!(error.to_string().contains("unresolved"), "{error}");
-    assert_eq!(number(&mut runtime, &mut macros, "keep"), 17.0f64.to_bits());
+    assert_eq!(number(&mut runtime, &mut macros, "keep"), 17);
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        42.0f64.to_bits()
+        42
     );
     assert!(runtime.eval_with_macros("ghost", &mut macros).is_err());
     std::fs::write(&source, "(ns tools) (defmacro answer [] 43)").unwrap();
@@ -144,11 +142,11 @@ fn namespace_session_compiled_macro_failed_reload_keeps_old_binding_and_retries_
         .unwrap();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        43.0f64.to_bits()
+        43
     );
     assert_eq!(
         number(&mut runtime, &mut macros, "(old)"),
-        42.0f64.to_bits()
+        42
     );
 }
 
@@ -188,11 +186,11 @@ fn namespace_session_compiled_macro_reload_all_leaves_unreachable_modules_loaded
         .unwrap();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        42.0f64.to_bits()
+        42
     );
     assert_eq!(
         number(&mut runtime, &mut macros, "(u/calls)"),
-        1.0f64.to_bits()
+        1
     );
 }
 
@@ -212,7 +210,7 @@ fn namespace_session_compiled_macro_reload_metadata_is_checked_before_publicatio
         runtime.eval_with_macros(&input, &mut macros).unwrap();
         assert_eq!(
             number(&mut runtime, &mut macros, "(t/answer)"),
-            42.0f64.to_bits()
+            42
         );
     }
     let error = runtime
@@ -240,7 +238,7 @@ fn namespace_session_compiled_macro_reload_metadata_is_checked_before_publicatio
     );
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        42.0f64.to_bits()
+        42
     );
 }
 
@@ -317,7 +315,7 @@ fn namespace_session_compiled_macro_reload_metadata_outer_prefix_wins() {
         .unwrap();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        43.0f64.to_bits()
+        43
     );
     std::fs::write(&source, "(ns tools) (defmacro answer [] 44)").unwrap();
     for metadata in [
@@ -330,7 +328,7 @@ fn namespace_session_compiled_macro_reload_metadata_outer_prefix_wins() {
         runtime.eval_with_macros(&input, &mut macros).unwrap();
         assert_eq!(
             number(&mut runtime, &mut macros, "(t/answer)"),
-            43.0f64.to_bits()
+            43
         );
     }
     runtime
@@ -341,7 +339,7 @@ fn namespace_session_compiled_macro_reload_metadata_outer_prefix_wins() {
         .unwrap();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        44.0f64.to_bits()
+        44
     );
     let input = "(ns user (:require-macros ^{:reload 7} ^{:reload nil} [tools :as t]))";
     let error = runtime.eval_with_macros(input, &mut macros).unwrap_err();
@@ -351,7 +349,7 @@ fn namespace_session_compiled_macro_reload_metadata_outer_prefix_wins() {
     );
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        44.0f64.to_bits()
+        44
     );
     // The same effective metadata on an ordinary Runtime libspec is still
     // unsupported rather than silently acquiring macro reload semantics.

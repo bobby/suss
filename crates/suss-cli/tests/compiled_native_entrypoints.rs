@@ -82,7 +82,7 @@ fn canonical_display_preserves_gc_data_numeric_spelling_and_utf16_without_growth
     let value = session
         .eval(r#"'(a :ns/k [1e21 1e-7 -0 ##NaN ##Inf ##-Inf "\ud800" "a\n\"\\"] {:a 2} #{3})"#)
         .unwrap();
-    let expected = r#"(a :ns/k [1e+21 1e-7 0 ##NaN ##Inf ##-Inf "\ud800" "a\n\"\\"] {:a 2} #{3})"#;
+    let expected = r#"(a :ns/k [1.0E21 1.0E-7 0 ##NaN ##Inf ##-Inf "\ud800" "a\n\"\\"] {:a 2} #{3})"#;
     let mut display = NativeDisplay::default();
     assert_eq!(display.display(&mut session, &value).unwrap(), expected);
     let warmed = session.stats();

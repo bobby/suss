@@ -1,20 +1,45 @@
 //! Executing source exception regressions for the replacement ABI pipeline.
 use suss_cli::portable_session::{Session, SessionError, SessionValue};
-use wasmtime::Val;
 
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
+
+fn number(session: &mut Session, value: &SessionValue) -> Number {
     session
         .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("expected exact Number layout")
-            };
-            Ok(*bits)
+            exact_number(&mut store, &value)
         })
         .unwrap()
 }
-fn eval_number(session: &mut Session, source: &str) -> u64 {
+fn eval_number(session: &mut Session, source: &str) -> Number {
     let result = session.eval(source).unwrap();
     number(session, &result)
 }
@@ -44,7 +69,7 @@ fn source_throw_keeps_exact_scalar_payloads_and_recovers_after_gc() {
     }
     let payload = language(&mut session, "(throw -0.0)");
     session.collect().unwrap();
-    assert_eq!(number(&mut session, &payload), (-0.0f64).to_bits());
+    assert_eq!(number(&mut session, &payload), num(-0.0));
     let payload = language(&mut session, "(throw \"\\uD800\")");
     session.collect().unwrap();
     let units = session
@@ -57,7 +82,7 @@ fn source_throw_keeps_exact_scalar_payloads_and_recovers_after_gc() {
         })
         .unwrap();
     assert_eq!(units, [0xd800]);
-    assert_eq!(eval_number(&mut session, "(+ 20 22)"), 42.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(+ 20 22)"), num(42.0));
 }
 
 #[test]
@@ -65,34 +90,34 @@ fn source_try_preserves_results_cleanup_order_and_superseding_exceptions() {
     let mut session = Session::new().unwrap();
     assert_eq!(
         eval_number(&mut session, "(try 42 (finally 7))"),
-        42.0f64.to_bits()
+        num(42.0)
     );
     assert_eq!(
         eval_number(
             &mut session,
             "(try (throw 7) (catch :default error (+ error 35)) (finally 9))"
         ),
-        42.0f64.to_bits()
+        num(42.0)
     );
     assert_eq!(
         eval_number(
             &mut session,
             "(try (try (throw 7) (catch :default error (throw (+ error 2))) (finally 11)) (catch :default error error))"
         ),
-        9.0f64.to_bits()
+        num(9.0)
     );
     for source in [
         "(try (try (throw 7) (finally (throw 42))) (catch :default error error))",
         "(try (try (throw 7) (catch :default error (throw 9)) (finally (throw 42))) (catch :default error error))",
     ] {
-        assert_eq!(eval_number(&mut session, source), 42.0f64.to_bits());
+        assert_eq!(eval_number(&mut session, source), num(42.0));
     }
     assert_eq!(
         eval_number(
             &mut session,
             "(do (def counter 0) (try (try (do (def counter (+ (* counter 10) 1)) (throw 7)) (catch :default error (def counter (+ (* counter 10) 2)) (throw error)) (finally (def counter (+ (* counter 10) 3)))) (catch :default error (def counter (+ (* counter 10) 4)))) counter)"
         ),
-        1234.0f64.to_bits()
+        num(1234.0)
     );
 }
 
@@ -105,7 +130,7 @@ fn source_typed_catches_use_descriptor_identity_and_preserve_payload_roots() {
             &mut session,
             "(try (throw thrown) (catch CatchA error 9) (catch alias error 42) (catch :default error 11))"
         ),
-        42.0f64.to_bits()
+        num(42.0)
     );
     let payload = session
         .eval("(try (throw thrown) (catch :default error error))")
@@ -129,7 +154,7 @@ fn source_typed_catches_use_descriptor_identity_and_preserve_payload_roots() {
             &mut session,
             "(try (throw nil) (catch CatchA error 7) (catch :default error 42))"
         ),
-        42.0f64.to_bits()
+        num(42.0)
     );
 }
 
@@ -141,20 +166,20 @@ fn source_catch_bindings_shadow_restore_and_survive_closure_capture() {
             &mut session,
             "(let [error 35] (+ (try (throw 7) (catch :default error error)) error))"
         ),
-        42.0f64.to_bits()
+        num(42.0)
     );
     let captured = session
         .eval("(let [outside 35] (fn [] (try (throw 7) (catch :default error (+ outside error)))))")
         .unwrap();
     session.collect().unwrap();
     let result = session.invoke(&captured, &[]).unwrap();
-    assert_eq!(number(&mut session, &result), 42.0f64.to_bits());
+    assert_eq!(number(&mut session, &result), num(42.0));
     let captured = session
         .eval("(try (throw 7) (catch :default error (fn [] error)))")
         .unwrap();
     session.collect().unwrap();
     let result = session.invoke(&captured, &[]).unwrap();
-    assert_eq!(number(&mut session, &result), 7.0f64.to_bits());
+    assert_eq!(number(&mut session, &result), num(7.0));
 }
 
 #[test]
@@ -185,7 +210,7 @@ fn source_try_rejects_invalid_handlers_and_cross_region_recur_atomically() {
             &mut session,
             "(try (loop [again true value 0] (if again (recur false 42) value)) (finally 7))"
         ),
-        42.0f64.to_bits()
+        num(42.0)
     );
 }
 
@@ -200,11 +225,11 @@ fn source_handlers_catch_runtime_errors_without_publishing_failed_initializers()
             &mut session,
             "(try (def old (do (def counter (+ counter 1)) (wrong 7))) (catch :default error 42) (finally (def counter (+ counter 10))))"
         ),
-        42.0f64.to_bits()
+        num(42.0)
     );
-    assert_eq!(eval_number(&mut session, "old"), 7.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "counter"), 11.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "(+ 20 22)"), 42.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "old"), num(7.0));
+    assert_eq!(eval_number(&mut session, "counter"), num(11.0));
+    assert_eq!(eval_number(&mut session, "(+ 20 22)"), num(42.0));
 }
 
 #[test]
@@ -253,12 +278,12 @@ fn source_throw_divergence_stops_later_operands_and_failed_publication() {
         session.eval("(def counter 0)").unwrap();
         assert_eq!(
             eval_number(&mut session, source),
-            f64::to_bits(result),
+            num(result),
             "{source}"
         );
         assert_eq!(
             eval_number(&mut session, "counter"),
-            f64::to_bits(effects),
+            num(effects),
             "{source}"
         );
     }
@@ -268,20 +293,20 @@ fn source_throw_divergence_stops_later_operands_and_failed_publication() {
             &mut session,
             "(try (def old (do (tick) (throw 42))) (catch :default error error))"
         ),
-        42.0f64.to_bits()
+        num(42.0)
     );
-    assert_eq!(eval_number(&mut session, "old"), 7.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "old"), num(7.0));
     session.eval("(defonce bound (throw 42))").unwrap();
-    assert_eq!(eval_number(&mut session, "bound"), 11.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "bound"), num(11.0));
     assert_eq!(
         eval_number(
             &mut session,
             "(try (defonce unbound (throw 7)) (catch :default error error))"
         ),
-        7.0f64.to_bits()
+        num(7.0)
     );
     session.eval("(defonce unbound 42)").unwrap();
-    assert_eq!(eval_number(&mut session, "unbound"), 42.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "unbound"), num(42.0));
 }
 
 #[test]
@@ -292,7 +317,7 @@ fn unhandled_nil_and_closure_run_cleanup_without_replacing_payload() {
         &mut session,
         "(try (throw nil) (finally (def counter (+ counter 1))))",
     );
-    assert_eq!(eval_number(&mut session, "counter"), 1.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "counter"), num(1.0));
     assert_eq!(
         session
             .inspect(&nil, |mut store, value| Ok(suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap()))
@@ -305,8 +330,8 @@ fn unhandled_nil_and_closure_run_cleanup_without_replacing_payload() {
     );
     session.collect().unwrap();
     let value = session.invoke(&closure, &[]).unwrap();
-    assert_eq!(number(&mut session, &value), 42.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "counter"), 2.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(42.0));
+    assert_eq!(eval_number(&mut session, "counter"), num(2.0));
 }
 
 #[test]
@@ -320,13 +345,13 @@ fn typed_catch_operands_are_lazy_ordered_and_short_circuit_after_matching() {
             &mut session,
             "(try 42 (catch (do (def counter 99) First) error 7))"
         ),
-        42.0f64.to_bits()
+        num(42.0)
     );
-    assert_eq!(eval_number(&mut session, "counter"), 0.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "(try (throw (Second.)) (catch (do (def counter (+ (* counter 10) 1)) First) error 7) (catch (do (def counter (+ (* counter 10) 2)) Second) error 42) (catch (do (def counter 99) First) error 9) (finally (def counter (+ (* counter 10) 3))))"), 42.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "counter"), 123.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "(try (try (throw 7) (catch (throw 42) error 9) (finally (def counter (+ counter 1)))) (catch :default error error))"), 42.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "counter"), 124.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "counter"), num(0.0));
+    assert_eq!(eval_number(&mut session, "(try (throw (Second.)) (catch (do (def counter (+ (* counter 10) 1)) First) error 7) (catch (do (def counter (+ (* counter 10) 2)) Second) error 42) (catch (do (def counter 99) First) error 9) (finally (def counter (+ (* counter 10) 3))))"), num(42.0));
+    assert_eq!(eval_number(&mut session, "counter"), num(123.0));
+    assert_eq!(eval_number(&mut session, "(try (try (throw 7) (catch (throw 42) error 9) (finally (def counter (+ counter 1)))) (catch :default error error))"), num(42.0));
+    assert_eq!(eval_number(&mut session, "counter"), num(124.0));
 }
 
 #[test]
@@ -336,8 +361,8 @@ fn nested_exception_regions_capture_nominal_fields_and_loop_bindings() {
     let closure = session.eval("(read-captured object)").unwrap();
     session.collect().unwrap();
     let value = session.invoke(&closure, &[]).unwrap();
-    assert_eq!(number(&mut session, &value), 42.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "(loop [again true value 7] (if again (recur false (try (throw (+ value 35)) (catch :default error error) (finally 9))) value))"), 42.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(42.0));
+    assert_eq!(eval_number(&mut session, "(loop [again true value 7] (if again (recur false (try (throw (+ value 35)) (catch :default error error) (finally 9))) value))"), num(42.0));
 }
 
 #[test]

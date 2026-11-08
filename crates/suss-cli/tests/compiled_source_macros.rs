@@ -5,22 +5,42 @@ use suss_cli::{
     portable_macros::CompiledMacros,
     portable_session::{Session, SessionError},
 };
-use wasmtime::Val;
-fn number(session: &mut Session, source: &str, macros: &mut CompiledMacros) -> u64 {
+
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
+fn number(session: &mut Session, source: &str, macros: &mut CompiledMacros) -> Number {
     let value = session.eval_with_macros(source, macros).unwrap();
     session
         .inspect(&value, |mut store, value| {
-            let fields = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap()
-                .fields(&mut store)?
-                .collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number");
-            };
-            Ok(*bits)
+            exact_number(&mut store, &value)
         })
         .unwrap()
 }
@@ -34,11 +54,11 @@ fn compiled_source_macros_expand_nested_calls_in_actual_lexical_analysis() {
     let mut runtime = Session::new_repl().unwrap();
     assert_eq!(
         number(&mut runtime, "(let [x 40] (add1 (add1 x)))", &mut macros),
-        42f64.to_bits()
+        num(42.0)
     );
     assert_eq!(
         number(&mut runtime, "(pair 20 22)", &mut macros),
-        42f64.to_bits()
+        num(42.0)
     );
     assert_eq!(
         number(
@@ -46,7 +66,7 @@ fn compiled_source_macros_expand_nested_calls_in_actual_lexical_analysis() {
             "(let [add1 (fn [x] (+ x 3))] (add1 39))",
             &mut macros
         ),
-        42f64.to_bits()
+        num(42.0)
     );
     assert!(matches!(
         runtime.eval("add1"),
@@ -102,12 +122,12 @@ fn compiled_source_macros_pass_real_form_and_preserve_quote_and_failures() {
         .unwrap();
     assert_eq!(
         number(&mut runtime, "(let [x 40 y 2] (needs-env))", &mut macros),
-        2f64.to_bits(),
+        num(2.0),
         "Implicit environment contains the actual caller's lexical bindings"
     );
     assert_eq!(
         number(&mut runtime, "(+ 20 22)", &mut macros),
-        42f64.to_bits()
+        num(42.0)
     );
 }
 
@@ -133,22 +153,22 @@ fn compiled_source_macros_expand_dependency_artifacts_before_publication() {
             "(ns user (:require [leaf])) (leaf/read)",
             &mut macros
         ),
-        42f64.to_bits()
+        num(42.0)
     );
     macros.define("(defmacro add1 [x] (list '+ x 2))").unwrap();
     assert_eq!(
         number(&mut runtime, "(user/add1 40)", &mut macros),
-        42f64.to_bits()
+        num(42.0)
     );
     assert_eq!(
         number(&mut runtime, "(leaf/read)", &mut macros),
-        42f64.to_bits(),
+        num(42.0),
         "Existing artifact keeps its prior expansion"
     );
     assert!(macros.define("(defmacro add1 [x] missing)").is_err());
     assert_eq!(
         number(&mut runtime, "(user/add1 40)", &mut macros),
-        42f64.to_bits()
+        num(42.0)
     );
 }
 
@@ -163,11 +183,11 @@ fn compiled_source_macros_preserve_true_loop_special_form_priority() {
             "(loop* [n 0] (if (< n 42) (recur (+ n 1)) n))",
             &mut macros
         ),
-        42f64.to_bits()
+        num(42.0)
     );
     assert_eq!(
         number(&mut runtime, "(user/loop*)", &mut macros),
-        99f64.to_bits(),
+        num(99.0),
         "Qualified macro name remains an ordinary macro lookup"
     );
 }
@@ -192,11 +212,11 @@ fn compiled_source_macros_materialize_env_only_for_macros_that_can_read_it() {
     let defined = macros.environment_materializations();
     assert_eq!(defined, 1);
     let mut runtime = Session::new_repl().unwrap();
-    assert_eq!(number(&mut runtime, "(plain 41)", &mut macros), 42f64.to_bits());
+    assert_eq!(number(&mut runtime, "(plain 41)", &mut macros), num(42.0));
     assert_eq!(macros.environment_materializations(), defined);
-    assert_eq!(number(&mut runtime, "(direct)", &mut macros), 1f64.to_bits());
+    assert_eq!(number(&mut runtime, "(direct)", &mut macros), num(1.0));
     assert_eq!(macros.environment_materializations(), defined + 1);
-    assert_eq!(number(&mut runtime, "(indirect)", &mut macros), 1f64.to_bits());
+    assert_eq!(number(&mut runtime, "(indirect)", &mut macros), num(1.0));
     assert_eq!(macros.environment_materializations(), defined + 2);
     // The compiled defn bootstrap macro cannot read &env: definitions in a
     // namespace no longer rebuild the growing caller environment per form.
@@ -208,7 +228,7 @@ fn compiled_source_macros_materialize_env_only_for_macros_that_can_read_it() {
         .eval_with_macros(&format!("(do {definitions} nil)"), &mut macros)
         .unwrap();
     assert_eq!(macros.environment_materializations(), defined + 2);
-    assert_eq!(number(&mut runtime, "(f31 11)", &mut macros), 42f64.to_bits());
+    assert_eq!(number(&mut runtime, "(f31 11)", &mut macros), num(42.0));
 }
 #[test]
 fn compiled_source_macros_pass_env_through_renamed_and_rewritten_helper_expansions() {
@@ -244,7 +264,7 @@ fn compiled_source_macros_pass_env_through_renamed_and_rewritten_helper_expansio
     for name in ["direct", "aliased", "renamed", "threaded"] {
         assert_eq!(
             number(&mut runtime, &format!("(t/{name})"), &mut macros),
-            1f64.to_bits(),
+            num(1.0),
             "{name} must receive a genuine &env"
         );
     }
@@ -253,5 +273,5 @@ fn compiled_source_macros_pass_env_through_renamed_and_rewritten_helper_expansio
     macros
         .define("(defmacro threaded2 [] (if (map? (-> 1 env-ref2)) 1 0))")
         .unwrap();
-    assert_eq!(number(&mut runtime, "(threaded2)", &mut macros), 1f64.to_bits());
+    assert_eq!(number(&mut runtime, "(threaded2)", &mut macros), num(1.0));
 }

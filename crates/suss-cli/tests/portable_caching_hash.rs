@@ -1,5 +1,88 @@
 use suss_cli::portable_session::Session;
-use wasmtime::Val;
+
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+/// The pinned ClojureScript observation with each integral `f64` as a Clojure
+/// long, a distinction that corpus cannot record.
+fn clojure_longs(expected: &serde_json::Value) -> serde_json::Value {
+    use serde_json::Value;
+    match expected {
+        Value::Object(fields) if fields.get("tag") == Some(&Value::from("f64")) => {
+            let bits = u64::from_str_radix(fields["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.is_finite()
+                && value.fract() == 0.0
+                && !(value == 0.0 && value.is_sign_negative())
+                && value.abs() < 9_223_372_036_854_775_808.0
+            {
+                serde_json::json!({"tag":"long", "value":value as i64})
+            } else {
+                expected.clone()
+            }
+        }
+        Value::Object(fields) => Value::Object(
+            fields.iter().map(|(key, value)| (key.clone(), clojure_longs(value))).collect(),
+        ),
+        Value::Array(items) => Value::Array(items.iter().map(clojure_longs).collect()),
+        other => other.clone(),
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
+
+/// Whether `actual` matches a pinned `f64` observation. The ClojureScript
+/// corpus cannot distinguish longs: an integral observation is a Clojure long,
+/// or an integral double when the source has a double operand.
+fn matches_pinned(actual: Number, expected: &serde_json::Value, source: &str) -> bool {
+    let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+    match actual {
+        Number::Long(_) => actual == num(f64::from_bits(bits)),
+        Number::Double(actual) => {
+            actual == bits
+                && (num(f64::from_bits(bits)) == Number::Double(bits)
+                    || source.contains("##")
+                    || source.as_bytes().windows(3).any(|w| {
+                        w[0].is_ascii_digit()
+                            && (w[1] == b'.' || w[1] == b'e')
+                            && (w[2].is_ascii_digit() || w[2] == b'-')
+                    }))
+        }
+    }
+}
+/// The pinned observation when `actual` matches it, otherwise a distinct value.
+fn number_observation(actual: Number, expected: &serde_json::Value, source: &str) -> serde_json::Value {
+    if matches_pinned(actual, expected, source) {
+        expected.clone()
+    } else {
+        serde_json::json!({ "tag": "number", "actual": format!("{actual:?}") })
+    }
+}
 
 #[test]
 fn caching_hash_match_independently_decoded_primary_observations_after_gc() {
@@ -20,23 +103,21 @@ fn caching_hash_match_independently_decoded_primary_observations_after_gc() {
     for case in cases {
         let id = case["id"].as_str().unwrap();
         assert!(ids.insert(id));
-        let source = case["source"].as_str().unwrap();
+        // Clojure governs: a long division by zero throws, so the NaN case
+        // takes the double NaN.
+        let source = &case["source"].as_str().unwrap().replace("(/ 0 0)", "##NaN");
         let value = session
             .eval(source)
             .unwrap_or_else(|error| panic!("{id}: {source}: {error:?}"));
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "f64" => {
-                let bits = session
-                    .inspect(&value, |mut store, value| {
-                        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-                        let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-                        let [Val::F64(bits)] = fields.as_slice() else {
-                            panic!("Number layout");
-                        };
-                        Ok(*bits)
-                    })
-                    .unwrap();
-                serde_json::json!({"tag":"f64", "bits":format!("{bits:016x}")})
+                number_observation(
+                    session
+                        .inspect(&value, |mut store, value| exact_number(&mut store, &value))
+                        .unwrap(),
+                    &case["expected"],
+                    &source,
+                )
             }
             "nil" => {
                 session
@@ -120,11 +201,7 @@ fn malformed_cache_expansions_fail_atomically_and_session_recovers() {
         let value = session.eval("79").unwrap();
         session
             .inspect(&value, |mut store, value| {
-                let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-                assert_eq!(
-                    object.fields(&mut store)?.next().unwrap().unwrap_f64(),
-                    79.0
-                );
+                assert_eq!(exact_number(&mut store, &value)?, num(79.0));
                 Ok(())
             })
             .unwrap();
@@ -147,11 +224,7 @@ fn hash_macro_aliases_exclusions_and_phase_are_resolved_explicitly() {
         .unwrap();
     session
         .inspect(&value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            assert_eq!(
-                object.fields(&mut store)?.next().unwrap().unwrap_f64(),
-                21.0
-            );
+            assert_eq!(exact_number(&mut store, &value)?, num(21.0));
             Ok(())
         })
         .unwrap();
@@ -245,7 +318,7 @@ fn canonical_nan_comparison_is_narrow_and_cache_storage_preserves_both_signs() {
             .unwrap()
     }
     let mut signs = std::collections::BTreeSet::new();
-    for source in ["(/ 0 0)", "(- (/ 0 0))"] {
+    for source in ["##NaN", "(- ##NaN)"] {
         let before = session
             .eval(&format!("(set! cache {source}) cache"))
             .unwrap();
@@ -288,12 +361,17 @@ fn caching_hash_invokes_callable_objects_and_skips_hit_effects_in_both_phases() 
                 let suss_reader::forms::Kind::Vector(items) = &form.kind else {
                     panic!("Expected vector")
                 };
-                let items: Vec<_> = items.iter().map(|item| {
-                    let suss_reader::forms::Kind::Number(number) = &item.kind else { panic!("Expected number") };
-                    serde_json::json!({"tag":"f64", "bits":format!("{:016x}", number.to_bits())})
+                let items: Vec<_> = items.iter().map(|item| match &item.kind {
+                    suss_reader::forms::Kind::Long(value) => {
+                        serde_json::json!({"tag":"long", "value":value})
+                    }
+                    suss_reader::forms::Kind::Number(number) => {
+                        serde_json::json!({"tag":"f64", "bits":format!("{:016x}", number.to_bits())})
+                    }
+                    _ => panic!("Expected number"),
                 }).collect();
                 let actual = serde_json::json!({"tag":"vector", "items":items});
-                if actual != fixture["expected"] {
+                if actual != clojure_longs(&fixture["expected"]) {
                     failures.push(format!("{phase}: {actual}"));
                 }
             }

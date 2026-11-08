@@ -53,6 +53,7 @@ fn raw_parameter_tag(form: &suss_reader::forms::Form) -> serde_json::Value {
         Kind::Nil => json!({"tag":"nil"}),
         Kind::Bool(value) => json!({"tag":"bool", "value":value}),
         Kind::String(units) => json!({"tag":"string", "units":units}),
+        Kind::Long(value) => json!({"tag":"long", "value":value}),
         Kind::Number(value) => json!({"tag":"f64", "bits":format!("{:016x}", value.to_bits())}),
         Kind::Vector(items) => {
             json!({"tag":"vector", "items":items.iter().map(raw_parameter_tag).collect::<Vec<_>>()})
@@ -69,6 +70,32 @@ fn raw_parameter_tag(form: &suss_reader::forms::Form) -> serde_json::Value {
             },
             "name":{"tag":"string", "units":key.name.encode_utf16().collect::<Vec<_>>()}}),
         other => panic!("unsupported raw helper observation: {other:?}"),
+    }
+}
+
+/// The pinned ClojureScript observation with each integral `f64` as a Clojure
+/// long, a distinction that corpus cannot record.
+fn clojure_longs(expected: &serde_json::Value) -> serde_json::Value {
+    use serde_json::Value;
+    match expected {
+        Value::Object(fields) if fields.get("tag") == Some(&Value::from("f64")) => {
+            let bits = u64::from_str_radix(fields["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.is_finite()
+                && value.fract() == 0.0
+                && !(value == 0.0 && value.is_sign_negative())
+                && value.abs() < 9_223_372_036_854_775_808.0
+            {
+                serde_json::json!({"tag":"long", "value":value as i64})
+            } else {
+                expected.clone()
+            }
+        }
+        Value::Object(fields) => Value::Object(
+            fields.iter().map(|(key, value)| (key.clone(), clojure_longs(value))).collect(),
+        ),
+        Value::Array(items) => Value::Array(items.iter().map(clojure_longs).collect()),
+        other => other.clone(),
     }
 }
 
@@ -102,7 +129,7 @@ fn function_parameters_match_raw_pinned_values_and_effect_traces_in_both_phases_
             let decoded = bridge.read(&mut session, &result, 0..source.len()).unwrap();
             assert_eq!(
                 raw_parameter_tag(&decoded),
-                case["expected"],
+                clojure_longs(&case["expected"]),
                 "{}",
                 case["id"]
             );
@@ -135,8 +162,8 @@ fn destructured_callable_sole_host_handle_retains_default_captures_after_gc() {
             assert_eq!(items.len(), 3);
             for (actual, expected) in items.iter().zip(expected.as_array().unwrap()) {
                 match &actual.kind {
-                    suss_reader::forms::Kind::Number(value) => {
-                        assert_eq!(value.to_bits(), expected.as_f64().unwrap().to_bits())
+                    suss_reader::forms::Kind::Long(value) => {
+                        assert_eq!(*value, expected.as_i64().unwrap())
                     }
                     suss_reader::forms::Kind::Bool(value) => {
                         assert_eq!(*value, expected.as_bool().unwrap())

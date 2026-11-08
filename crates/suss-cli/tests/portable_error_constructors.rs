@@ -96,6 +96,30 @@ fn owned_error_ancestry_retains_actual_constructor_and_instance_prototype_refere
     }
 }
 
+/// The pinned ClojureScript observation with each integral number as a
+/// Clojure long, a distinction that corpus cannot record.
+fn clojure_longs(expected: &Value) -> Value {
+    match expected {
+        Value::Object(fields) if fields.get("tag") == Some(&Value::from("number")) => {
+            let bits = u64::from_str_radix(fields["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.is_finite()
+                && value.fract() == 0.0
+                && !(value == 0.0 && value.is_sign_negative())
+                && value.abs() < 9_223_372_036_854_775_808.0
+            {
+                json!({"tag":"long", "value":(value as i64).to_string()})
+            } else {
+                expected.clone()
+            }
+        }
+        Value::Object(fields) => Value::Object(
+            fields.iter().map(|(key, value)| (key.clone(), clojure_longs(value))).collect(),
+        ),
+        Value::Array(items) => Value::Array(items.iter().map(clojure_longs).collect()),
+        other => other.clone(),
+    }
+}
 fn value_json(value: Observation) -> Value {
     match value {
         Observation::Nil => json!({"tag":"nil"}),
@@ -301,13 +325,13 @@ fn raw_error_constructors_ancestry_original_throws_and_effects_match_pinned_afte
             } else {
                 scalar_json(&mut session, &value, &classes)
             };
-            assert_eq!(actual, case["expected"]["value"], "{}", case["id"]);
+            assert_eq!(actual, clojure_longs(&case["expected"]["value"]), "{}", case["id"]);
             let trace = session.eval("error-effects").unwrap();
             session.collect().unwrap();
             let mut decoder = Decoder::new(128);
             assert_eq!(
                 value_json(decoder.decode_session(&mut session, &trace).unwrap()),
-                case["expected"]["trace"],
+                clojure_longs(&case["expected"]["trace"]),
                 "{} ordered trace",
                 case["id"]
             );
@@ -315,7 +339,7 @@ fn raw_error_constructors_ancestry_original_throws_and_effects_match_pinned_afte
             let mut decoder = Decoder::new(128);
             assert_eq!(
                 value_json(decoder.decode_session(&mut session, &recovery).unwrap()),
-                json!({"tag":"number","bits":"404e000000000000"})
+                json!({"tag":"long","value":"60"})
             );
         }
         let constructor = session.eval("js/Error").unwrap();
@@ -327,7 +351,7 @@ fn raw_error_constructors_ancestry_original_throws_and_effects_match_pinned_afte
         session.collect().unwrap();
         assert_eq!(
             error_json(&mut session, &value, &classes),
-            json!({"tag":"error","class":"Error","message":[114,101,116,97,105,110,101,100],"messageOwn":true,"causeOwn":true,"cause":{"tag":"number","bits":"4052400000000000"}})
+            json!({"tag":"error","class":"Error","message":[114,101,116,97,105,110,101,100],"messageOwn":true,"causeOwn":true,"cause":{"tag":"long","value":"73"}})
         );
     }
 }

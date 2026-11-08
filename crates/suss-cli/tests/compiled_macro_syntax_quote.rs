@@ -1,24 +1,50 @@
 //! Executing M3 syntax quote regressions. These exercise compiled transformers,
 //! rather than the prototype evaluator or reader encoding alone.
 use suss_cli::{portable_macros::CompiledMacros, portable_session::Session};
-use wasmtime::Val;
 
-fn number(runtime: &mut Session, macros: &mut CompiledMacros, source: &str) -> f64 {
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
+/// An expected number compares by `num`: integral values are longs.
+impl PartialEq<f64> for Number {
+    fn eq(&self, expected: &f64) -> bool {
+        *self == num(*expected)
+    }
+}
+
+fn number(runtime: &mut Session, macros: &mut CompiledMacros, source: &str) -> Number {
     let value = runtime.eval_with_macros(source, macros).unwrap();
     runtime.collect().unwrap();
     runtime
         .inspect(&value, |mut store, value| {
-            let fields = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap()
-                .fields(&mut store)?
-                .collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Expected numeric execution result: {fields:?}")
-            };
-            Ok(f64::from_bits(*bits))
+            exact_number(&mut store, &value)
         })
         .unwrap()
 }
@@ -100,14 +126,12 @@ fn compiled_macro_syntax_quote_matches_actual_pinned_execution_and_reader_form()
         };
         assert_eq!(actual.len(), expected.len());
         for (index, (actual, expected)) in actual.iter().zip(expected).enumerate() {
-            let Kind::Number(actual) = &actual.kind else {
-                panic!("Expected numeric observation {index}")
+            // Observation 5 is `(twice (twice 10.5))`: a double, as in Clojure.
+            let expected = match index {
+                5 => Kind::Number(expected.as_f64().unwrap()),
+                _ => Kind::Long(expected.as_i64().unwrap()),
             };
-            assert_eq!(
-                actual.to_bits(),
-                expected.as_f64().unwrap().to_bits(),
-                "Observation {index}"
-            );
+            assert_eq!(actual.kind, expected, "Observation {index}");
         }
     }
 }
@@ -131,7 +155,7 @@ fn compiled_macro_syntax_quote_reuses_auto_gensyms_and_evaluates_input_once() {
     assert_eq!(number(&mut runtime, &mut macros, "effects"), 1.0);
     assert_eq!(
         number(&mut runtime, &mut macros, "(twice (twice 10.5))"),
-        42.0
+        Number::Double(42.0f64.to_bits())
     );
 }
 
@@ -155,7 +179,7 @@ fn compiled_macro_reader_provenance_retains_automatic_parent_positions() {
             panic!("reader observations")
         };
         assert_eq!(items.len(), 3);
-        assert_eq!(items[0].kind, Kind::Number(2.0));
+        assert_eq!(items[0].kind, Kind::Long(2));
         assert_eq!(
             items[1].kind,
             Kind::String("clojure.core".encode_utf16().collect())
@@ -379,19 +403,9 @@ fn compiled_syntax_quote_splices_inside_defn_helpers_of_macro_namespaces() {
         let value = session.eval(name).unwrap();
         let bits = session
             .inspect(&value, |mut store, value| {
-                let fields = value
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_struct(&store)?
-                    .unwrap()
-                    .fields(&mut store)?
-                    .collect::<Vec<_>>();
-                let [wasmtime::Val::F64(bits)] = fields.as_slice() else {
-                    panic!("Number");
-                };
-                Ok(*bits)
+                exact_number(&mut store, &value)
             })
             .unwrap();
-        assert_eq!(f64::from_bits(bits), expected, "{name}");
+        assert_eq!(bits, expected, "{name}");
     }
 }

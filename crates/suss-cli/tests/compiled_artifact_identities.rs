@@ -81,7 +81,7 @@ fn source_artifact_identity_keeps_external_macro_provenance_unknown() {
             if matches!(&form.kind, Kind::List(_)) {
                 self.calls += 1;
                 Ok(Some(Form {
-                    kind: Kind::Number(42.0),
+                    kind: Kind::Long(42),
                     span: form.span.clone(),
                     metadata: vec![],
                 }))

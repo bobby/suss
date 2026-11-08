@@ -10,20 +10,10 @@ fn compiled_macro_transient_hash_map_omitted_lookup_preserves_undefined() {
         session.eval_privileged("(def lookup-map (transient (assoc (PersistentHashMap. nil 0 nil false nil nil) 1 101)))").unwrap();
         let present = session.eval("(get lookup-map 1)").unwrap();
         session
-            .inspect(&present, |mut store, value| {
+            .inspect(&present, |store, value| {
                 assert_eq!(
-                    value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_struct(&store)
-                        .unwrap()
-                        .unwrap()
-                        .fields(&mut store)
-                        .unwrap()
-                        .next()
-                        .unwrap()
-                        .unwrap_f64(),
-                    101_f64
+                    suss_compile::portable_session::runtime_number(store, &value).unwrap(),
+                    Some(suss_compile::portable_session::RuntimeNumber::Long(101))
                 );
                 Ok(())
             })
@@ -77,8 +67,8 @@ fn compiled_macro_transient_hash_map_rejects_lookup_after_persistence() {
         let suss_reader::forms::Kind::Vector(items) = decoded.into_parts().2 else {
             panic!("Vector result")
         };
-        for (item, expected) in items.iter().zip([101.0, 2.0, 1.0, 2.0]) {
-            assert!(matches!(&item.kind, suss_reader::forms::Kind::Number(n) if *n == expected));
+        for (item, expected) in items.iter().zip([101, 2, 1, 2]) {
+            assert!(matches!(&item.kind, suss_reader::forms::Kind::Long(n) if *n == expected));
         }
         assert_eq!(items.len(), 4);
     }
@@ -100,8 +90,14 @@ fn compiled_macro_transient_hash_map_lookup_matches_pinned_active_observations()
                 suss_reader::forms::Kind::Bool(value) => {
                     serde_json::json!({"tag":"bool", "value":value})
                 }
+                // The pinned corpus tags every number "f64" (all integral);
+                // Clojure returns each as a long, so a double is tagged apart.
+                suss_reader::forms::Kind::Long(n) => {
+                    serde_json::json!({"tag":"f64", "bits":format!("{:016x}", (n as f64).to_bits())})
+                }
                 suss_reader::forms::Kind::Number(n) => {
-                    serde_json::json!({"tag":"f64", "bits":format!("{:016x}", n.to_bits())})
+                    let tag = if n.is_finite() && n.fract() == 0.0 && n.to_bits() != (-0.0f64).to_bits() { "double" } else { "f64" };
+                    serde_json::json!({"tag":tag, "bits":format!("{:016x}", n.to_bits())})
                 }
                 other => panic!("Unexpected observation: {other:?}"),
             };

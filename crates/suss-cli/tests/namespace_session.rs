@@ -1,6 +1,37 @@
 use std::io::Write;
 use std::process::{Command, Stdio};
 
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
+
 #[test]
 fn namespace_session_command_loads_once_and_keeps_live_globals_and_old_captures() {
     let project = tempfile::tempdir().unwrap();
@@ -60,16 +91,11 @@ fn session_project() -> (tempfile::TempDir, suss_cli::portable_session::Session)
     .unwrap();
     (project, session)
 }
-fn number(session: &mut suss_cli::portable_session::Session, source: &str) -> u64 {
+fn number(session: &mut suss_cli::portable_session::Session, source: &str) -> Number {
     let value = session.eval(source).unwrap();
     session
         .inspect(&value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [wasmtime::Val::F64(bits)] = fields.as_slice() else {
-                panic!("exact Number layout");
-            };
-            Ok(*bits)
+            exact_number(&mut store, &value)
         })
         .unwrap()
 }
@@ -94,11 +120,11 @@ fn namespace_session_reload_reads_changed_source_and_preserves_bindings_on_failu
     )
     .unwrap();
     assert!(session.load_namespace("counter").unwrap().is_none());
-    assert_eq!(number(&mut session, "(live)"), 17f64.to_bits());
+    assert_eq!(number(&mut session, "(live)"), num(17.0));
     session.reload_namespace("counter", false).unwrap();
     session.collect().unwrap();
-    assert_eq!(number(&mut session, "(live)"), 23f64.to_bits());
-    assert_eq!(number(&mut session, "(old)"), 17f64.to_bits());
+    assert_eq!(number(&mut session, "(live)"), num(23.0));
+    assert_eq!(number(&mut session, "(old)"), num(17.0));
     let stats = session.stats();
     std::fs::write(
         &path,
@@ -110,8 +136,8 @@ fn namespace_session_reload_reads_changed_source_and_preserves_bindings_on_failu
         Err(SessionError::Module(_))
     ));
     assert_eq!(session.stats(), stats);
-    assert_eq!(number(&mut session, "effects"), 0f64.to_bits());
-    assert_eq!(number(&mut session, "counter/value"), 23f64.to_bits());
+    assert_eq!(number(&mut session, "effects"), num(0.0));
+    assert_eq!(number(&mut session, "counter/value"), num(23.0));
     std::fs::write(
         &path,
         "(ns counter) (set! user/effects 1) (def value (throw 31))",
@@ -121,14 +147,14 @@ fn namespace_session_reload_reads_changed_source_and_preserves_bindings_on_failu
         session.reload_namespace("counter", false),
         Err(SessionError::Language(_))
     ));
-    assert_eq!(number(&mut session, "effects"), 1f64.to_bits());
-    assert_eq!(number(&mut session, "counter/value"), 23f64.to_bits());
-    assert_eq!(number(&mut session, "(live)"), 23f64.to_bits());
+    assert_eq!(number(&mut session, "effects"), num(1.0));
+    assert_eq!(number(&mut session, "counter/value"), num(23.0));
+    assert_eq!(number(&mut session, "(live)"), num(23.0));
     // Failed initialization clears the loaded identity; ordinary load retries it.
     std::fs::write(&path, "(ns counter) (def value 41) (def f (fn [] 41))").unwrap();
     assert!(session.load_namespace("counter").unwrap().is_some());
-    assert_eq!(number(&mut session, "(live)"), 41f64.to_bits());
-    assert_eq!(number(&mut session, "(old)"), 17f64.to_bits());
+    assert_eq!(number(&mut session, "(live)"), num(41.0));
+    assert_eq!(number(&mut session, "(old)"), num(17.0));
     assert_eq!(session.current_namespace(), "user");
 }
 
@@ -157,17 +183,17 @@ fn namespace_session_reload_all_visits_only_reachable_dependencies_in_require_or
     )
     .unwrap();
     session.load_namespace("target").unwrap();
-    assert_eq!(number(&mut session, "trace"), 21f64.to_bits());
+    assert_eq!(number(&mut session, "trace"), num(21.0));
     session.load_namespace("other").unwrap();
     session.reload_namespace("target", false).unwrap();
-    assert_eq!(number(&mut session, "dep/calls"), 1f64.to_bits());
-    assert_eq!(number(&mut session, "target/calls"), 2f64.to_bits());
-    assert_eq!(number(&mut session, "trace"), 21f64.to_bits());
+    assert_eq!(number(&mut session, "dep/calls"), num(1.0));
+    assert_eq!(number(&mut session, "target/calls"), num(2.0));
+    assert_eq!(number(&mut session, "trace"), num(21.0));
     session.reload_namespace("target", true).unwrap();
-    assert_eq!(number(&mut session, "trace"), 2121f64.to_bits());
-    assert_eq!(number(&mut session, "dep/calls"), 2f64.to_bits());
-    assert_eq!(number(&mut session, "target/calls"), 3f64.to_bits());
-    assert_eq!(number(&mut session, "other/calls"), 1f64.to_bits());
+    assert_eq!(number(&mut session, "trace"), num(2121.0));
+    assert_eq!(number(&mut session, "dep/calls"), num(2.0));
+    assert_eq!(number(&mut session, "target/calls"), num(3.0));
+    assert_eq!(number(&mut session, "other/calls"), num(1.0));
     assert!(session.load_namespace("other").unwrap().is_none());
     let stats = session.stats();
     assert!(session.reload_namespace("cljs.core", true).is_err());
@@ -196,12 +222,12 @@ fn namespace_session_errors_are_deterministic_and_reload_failure_keeps_dependenc
         session.reload_namespace("target", true),
         Err(SessionError::Language(_))
     ));
-    assert_eq!(number(&mut session, "dep/calls"), 2f64.to_bits());
-    assert_eq!(number(&mut session, "target/value"), 17f64.to_bits());
+    assert_eq!(number(&mut session, "dep/calls"), num(2.0));
+    assert_eq!(number(&mut session, "target/value"), num(17.0));
     std::fs::write(&path, "(ns target (:require [dep])) (def value 23)").unwrap();
     assert!(session.load_namespace("target").unwrap().is_some());
-    assert_eq!(number(&mut session, "dep/calls"), 2f64.to_bits());
-    assert_eq!(number(&mut session, "target/value"), 23f64.to_bits());
+    assert_eq!(number(&mut session, "dep/calls"), num(2.0));
+    assert_eq!(number(&mut session, "target/value"), num(23.0));
     std::fs::write(&path, "(ns wrong) (def value 99)").unwrap();
     let before = session.stats();
     let first = session
@@ -214,7 +240,7 @@ fn namespace_session_errors_are_deterministic_and_reload_failure_keeps_dependenc
         .to_string();
     assert_eq!(first, second);
     assert_eq!(session.stats(), before);
-    assert_eq!(number(&mut session, "target/value"), 23f64.to_bits());
+    assert_eq!(number(&mut session, "target/value"), num(23.0));
 }
 
 #[test]
@@ -236,7 +262,7 @@ fn namespace_session_shipped_core_loads_from_supplied_source_roots() {
     )
     .unwrap();
     session.load_namespace("app.data").unwrap();
-    assert_eq!(f64::from_bits(number(&mut session, "app.data/total")), 3.0);
+    assert_eq!(number(&mut session, "app.data/total"), num(3.0));
     let missing = suss_cli::portable_session::Session::new_repl()
         .unwrap()
         .load_namespace("app.data");

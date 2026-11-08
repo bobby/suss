@@ -1,20 +1,72 @@
 use suss_cli::portable_session::{Session, SessionError, SessionValue};
 use suss_compile::portable_session::sentinel_tag;
-use wasmtime::Val;
 
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
+/// Whether `actual` matches a pinned `f64` observation. The ClojureScript
+/// corpus cannot distinguish longs: an integral observation is a Clojure long,
+/// or an integral double when the source has a double operand.
+fn matches_pinned(actual: Number, expected: &serde_json::Value, source: &str) -> bool {
+    let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+    match actual {
+        Number::Long(_) => actual == num(f64::from_bits(bits)),
+        Number::Double(actual) => {
+            actual == bits
+                && (num(f64::from_bits(bits)) == Number::Double(bits)
+                    || source.contains("##")
+                    || source.as_bytes().windows(3).any(|w| {
+                        w[0].is_ascii_digit()
+                            && (w[1] == b'.' || w[1] == b'e')
+                            && (w[2].is_ascii_digit() || w[2] == b'-')
+                    }))
+        }
+    }
+}
+/// The pinned observation when `actual` matches it, otherwise a distinct value.
+fn number_observation(actual: Number, expected: &serde_json::Value, source: &str) -> serde_json::Value {
+    if matches_pinned(actual, expected, source) {
+        expected.clone()
+    } else {
+        serde_json::json!({ "tag": "number", "actual": format!("{actual:?}") })
+    }
+}
+
+fn number(session: &mut Session, value: &SessionValue) -> Number {
     session
         .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            Ok(*bits)
+            exact_number(&mut store, &value)
         })
         .unwrap()
 }
-fn eval_number(session: &mut Session, source: &str) -> u64 {
+fn eval_number(session: &mut Session, source: &str) -> Number {
     let value = session.eval(source).unwrap();
     number(session, &value)
 }
@@ -72,10 +124,10 @@ fn comparisons_match_independently_encoded_primary_corpus() {
             session.collect().unwrap();
             continue;
         }
-        let actual = match case["expected"]["tag"].as_str().unwrap() {
+        let actual = match expected["tag"].as_str().unwrap() {
             "bool" => serde_json::json!({"tag":"bool", "value":eval_bool(&mut session, source)}),
             "f64" => {
-                serde_json::json!({"tag":"f64", "bits":format!("{:016x}",eval_number(&mut session, source))})
+                number_observation(eval_number(&mut session, source), expected, source)
             }
             tag => panic!("unexpected tag {tag}"),
         };
@@ -206,7 +258,7 @@ fn comparison_macro_arity_unary_evaluation_and_lexical_shadowing_remain_distinct
                 &mut session,
                 &format!("(let [{name} (fn [x] 77)] ({name} 1))")
             ),
-            77.0f64.to_bits()
+            num(77.0)
         );
         let argument = session.eval("##NaN").unwrap();
         let result = session.invoke(&original, &[&argument]).unwrap();
@@ -234,7 +286,7 @@ fn comparison_macro_and_runtime_names_preserve_aliases_user_shadowing_and_gc() {
         .eval("(ns comparison-consumer (:require [cljs.core :as c])) (def retained <)")
         .unwrap();
     session.eval("(def < (fn [x y] 77))").unwrap();
-    assert_eq!(eval_number(&mut session, "(< 1 2)"), 77.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(< 1 2)"), num(77.0));
     assert!(eval_bool(&mut session, "(c/< 1 2)"));
     assert!(eval_bool(&mut session, "(let [f retained] (f 1 2))"));
     let function = session.eval("retained").unwrap();
@@ -335,7 +387,7 @@ fn explicit_user_refers_preserve_pinned_core_macros_but_aliases_call_user_vars()
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "bool" => serde_json::json!({"tag":"bool", "value":eval_bool(&mut session, source)}),
             "f64" => {
-                serde_json::json!({"tag":"f64", "bits":format!("{:016x}",eval_number(&mut session, source))})
+                number_observation(eval_number(&mut session, source), &case["expected"], source)
             }
             tag => panic!("unexpected referral tag {tag}"),
         };

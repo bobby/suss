@@ -93,12 +93,36 @@ fn tagged(form: &Form) -> Value {
     match &form.kind {
         Kind::Nil => json!({"tag":"nil"}),
         Kind::Bool(value) => json!({"tag":"bool", "value":value}),
+        Kind::Long(value) => json!({"tag":"long", "value":value}),
         Kind::Number(value) => json!({"tag":"f64", "bits":format!("{:016x}",value.to_bits())}),
         Kind::String(units) => json!({"tag":"string", "units":units}),
         Kind::Vector(items) => {
             json!({"tag":"vector", "items":items.iter().map(tagged).collect::<Vec<_>>()})
         }
         other => panic!("unsupported decoded observation {other:?}"),
+    }
+}
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_value(expected: &Value) -> Value {
+    match expected {
+        Value::Object(fields) if fields.get("tag").and_then(Value::as_str) == Some("f64") => {
+            let bits = u64::from_str_radix(fields["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+                json!({"tag":"long", "value":value as i64})
+            } else {
+                expected.clone()
+            }
+        }
+        Value::Object(fields) => Value::Object(
+            fields
+                .iter()
+                .map(|(key, value)| (key.clone(), clojure_value(value)))
+                .collect(),
+        ),
+        Value::Array(items) => Value::Array(items.iter().map(clojure_value).collect()),
+        other => other.clone(),
     }
 }
 #[test]
@@ -129,7 +153,7 @@ fn whole_record_graph_runtime_functions_match_raw_pinned_values_and_traces_after
             let value = session.eval(source).unwrap();
             session.collect().unwrap();
             let form = bridge.read(&mut session, &value, 0..source.len()).unwrap();
-            assert_eq!(tagged(&form), case["expected"], "{}", case["id"]);
+            assert_eq!(tagged(&form), clojure_value(&case["expected"]), "{}", case["id"]);
         }
     }
 }
@@ -141,15 +165,15 @@ fn composition_partial_and_juxt_retain_sole_host_callback_captures_across_invoca
         for (source, expected) in [
             (
                 "(let [captured [17 23]] (comp (fn [v] [(get captured 1) v]) vector))",
-                json!({"tag":"vector","items":[{"tag":"f64","bits":"4037000000000000"},{"tag":"vector","items":[{"tag":"bool","value":false}]}]}),
+                json!({"tag":"vector","items":[{"tag":"long","value":23},{"tag":"vector","items":[{"tag":"bool","value":false}]}]}),
             ),
             (
                 "(let [captured [17 23]] (partial (fn [captured x] [(get captured 1) x]) captured))",
-                json!({"tag":"vector","items":[{"tag":"f64","bits":"4037000000000000"},{"tag":"bool","value":false}]}),
+                json!({"tag":"vector","items":[{"tag":"long","value":23},{"tag":"bool","value":false}]}),
             ),
             (
                 "(let [captured [17 23]] (juxt (fn [x] (get captured 1)) (fn [x] x)))",
-                json!({"tag":"vector","items":[{"tag":"f64","bits":"4037000000000000"},{"tag":"bool","value":false}]}),
+                json!({"tag":"vector","items":[{"tag":"long","value":23},{"tag":"bool","value":false}]}),
             ),
         ] {
             let callable = session.eval(source).unwrap();

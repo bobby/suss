@@ -1,23 +1,45 @@
 //! Bounded retained Subvec regressions; native execution remains a separate gate.
-use suss_cli::portable_session::{Session, SessionError};
+use suss_cli::portable_session::{RuntimeNumber, Session, SessionError};
 const FIXTURE: &str = include_str!("../../../tests/oracle/fixtures/subvector-probe.sus");
-fn number(session: &mut Session, source: &str) -> u64 {
+fn number(session: &mut Session, source: &str) -> RuntimeNumber {
     let value = session.eval(source).unwrap();
     session
-        .inspect(&value, |mut store, value| {
-            let fields = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap()
-                .fields(&mut store)?
-                .collect::<Vec<_>>();
-            let [wasmtime::Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            Ok(*bits)
+        .inspect(&value, |store, value| {
+            Ok(suss_cli::portable_session::runtime_number(store, &value)?.expect("Number layout"))
         })
         .unwrap()
+}
+/// The observation of a runtime number, distinguishing a long from a double.
+fn number_json(number: RuntimeNumber) -> serde_json::Value {
+    match number {
+        RuntimeNumber::Long(value) => serde_json::json!({"tag":"long", "value":value}),
+        RuntimeNumber::Double(value) => {
+            serde_json::json!({"tag":"f64", "bits":format!("{:016x}", value.to_bits())})
+        }
+    }
+}
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_value(expected: &serde_json::Value) -> serde_json::Value {
+    match expected {
+        serde_json::Value::Object(fields) if fields.get("tag").and_then(serde_json::Value::as_str) == Some("f64") => {
+            let bits = u64::from_str_radix(fields["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+                serde_json::json!({"tag":"long", "value":value as i64})
+            } else {
+                expected.clone()
+            }
+        }
+        serde_json::Value::Object(fields) => serde_json::Value::Object(
+            fields
+                .iter()
+                .map(|(key, value)| (key.clone(), clojure_value(value)))
+                .collect(),
+        ),
+        serde_json::Value::Array(items) => serde_json::Value::Array(items.iter().map(clojure_value).collect()),
+        other => other.clone(),
+    }
 }
 // Probes also inspect subvector sharing through fields private to suss.core;
 // these core-internal checks use the host's privileged evaluation.
@@ -84,7 +106,7 @@ fn public_subvectors_match_pinned_facts_in_both_phases() {
         for case in corpus["cases"].as_array().unwrap() {
             let source = case["source"].as_str().unwrap();
             let observed = if case["expected"]["tag"] == "f64" {
-                serde_json::json!({"tag":"f64", "bits":format!("{:016x}", number(&mut session, source))})
+                number_json(number(&mut session, source))
             } else {
                 let result = session.eval(source).unwrap();
                 let form = bridge.read(&mut session, &result, 0..0).unwrap();
@@ -94,15 +116,18 @@ fn public_subvectors_match_pinned_facts_in_both_phases() {
                 let items: Vec<_> = items
                     .into_iter()
                     .map(|item| {
-                        let suss_reader::forms::Kind::Number(n) = item.into_parts().2 else {
-                            panic!("actual numeric element")
-                        };
-                        serde_json::json!({"tag":"f64", "bits":format!("{:016x}", n.to_bits())})
+                        match item.into_parts().2 {
+                            suss_reader::forms::Kind::Long(n) => number_json(RuntimeNumber::Long(n)),
+                            suss_reader::forms::Kind::Number(n) => {
+                                number_json(RuntimeNumber::Double(n))
+                            }
+                            _ => panic!("actual numeric element"),
+                        }
                     })
                     .collect();
                 serde_json::json!({"tag":"vector", "items":items})
             };
-            assert_eq!(observed, case["expected"], "{}", case["id"]);
+            assert_eq!(observed, clojure_value(&case["expected"]), "{}", case["id"]);
             session.collect().unwrap();
         }
     }
@@ -137,7 +162,7 @@ fn subvector_bounds_are_typed_errors_and_recover_in_both_phases() {
             "Index out of bounds",
             "invalid ordered bounds",
         );
-        assert_eq!(number(&mut session, "sv-effects"), 123f64.to_bits());
+        assert_eq!(number(&mut session, "sv-effects"), RuntimeNumber::Long(123));
     }
 }
 #[test]
@@ -172,7 +197,7 @@ fn subvector_retains_actual_backing_and_rooted_contents_across_gc() {
         assert_eq!(items.len(), 33);
         for (i, item) in items.iter().enumerate() {
             assert!(
-                matches!(&item.kind, Kind::Number(n) if n.to_bits() == ((i+31) as f64).to_bits())
+                matches!(&item.kind, Kind::Long(n) if *n == (i + 31) as i64)
             );
         }
     }

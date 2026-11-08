@@ -1,6 +1,5 @@
 //! Execute portable primitive predicates through canonical live core cells.
-use suss_cli::portable_session::{Session, SessionError, SessionValue};
-use wasmtime::Val;
+use suss_cli::portable_session::{RuntimeNumber, Session, SessionError, SessionValue};
 
 fn boolean(session: &mut Session, value: &SessionValue) -> bool {
     session
@@ -19,15 +18,10 @@ fn check(session: &mut Session, source: &str, expected: bool) {
     session.collect().unwrap();
     assert_eq!(boolean(session, &value), expected, "{source}");
 }
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+fn number(session: &mut Session, value: &SessionValue) -> RuntimeNumber {
     session
-        .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            Ok(*bits)
+        .inspect(value, |store, value| {
+            Ok(suss_cli::portable_session::runtime_number(store, &value)?.expect("Number layout"))
         })
         .unwrap()
 }
@@ -67,7 +61,8 @@ fn identical_compares_primitive_values_and_nominal_references() {
     for (source, expected) in [
         ("(identical? 7 7)", true),
         ("(identical? 7 8)", false),
-        ("(identical? 0 -0.0)", true),
+        // A long and a double are distinct values, as in Clojure.
+        ("(identical? 0 -0.0)", false),
         ("(identical? ##NaN ##NaN)", false),
         ("(let [n ##NaN] (identical? n n))", false),
         ("(identical? ##Inf ##Inf)", true),
@@ -129,13 +124,13 @@ fn predicate_calls_evaluate_callee_and_arguments_once_and_recover_after_arity_er
         .unwrap();
     check(&mut s, "((do (next) identical?) (next) (next))", false);
     let trace = s.eval("trace").unwrap();
-    assert_eq!(number(&mut s, &trace), 3.0f64.to_bits());
+    assert_eq!(number(&mut s, &trace), RuntimeNumber::Long(3));
     assert!(matches!(
         s.eval("(nil? (next) (next))"),
         Err(SessionError::Language(_))
     ));
     let trace = s.eval("trace").unwrap();
-    assert_eq!(number(&mut s, &trace), 5.0f64.to_bits());
+    assert_eq!(number(&mut s, &trace), RuntimeNumber::Long(5));
     for source in [
         "(nil?)",
         "(identical? 1)",

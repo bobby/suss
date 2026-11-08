@@ -27,7 +27,7 @@ fn primitive_let_star_executes_directly_and_from_compiled_macros_in_both_phases(
             session.collect().unwrap();
             let actual = bridge.read(&mut session, &value, 0..source.len()).unwrap();
             assert!(
-                matches!(&actual.kind, Kind::Number(value) if value.to_bits() == 42.0_f64.to_bits()),
+                matches!(&actual.kind, Kind::Long(42)),
                 "{source}: {actual:?}"
             );
         }
@@ -38,10 +38,10 @@ fn primitive_let_star_executes_directly_and_from_compiled_macros_in_both_phases(
             .unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         session.collect().unwrap();
-        for (value, expected) in [(&value, 42.0_f64), (&visits, 12.0_f64)] {
+        for (value, expected) in [(&value, 42), (&visits, 12)] {
             let actual = bridge.read(&mut session, value, 0..source.len()).unwrap();
             assert!(
-                matches!(&actual.kind, Kind::Number(value) if value.to_bits() == expected.to_bits()),
+                matches!(&actual.kind, Kind::Long(value) if *value == expected),
                 "ordered primitive bindings: {actual:?}, expected {expected}"
             );
         }

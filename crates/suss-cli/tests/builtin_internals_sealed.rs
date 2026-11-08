@@ -83,18 +83,18 @@ fn user_code_cannot_reach_builtin_internals_in_either_phase() {
             assert!(error.contains("is private to suss.core"), "{phase} {source}: {error}");
         }
         // Sealing changes no value: built-ins still behave through public APIs.
-        assert_eq!(observe(&mut session, "(count [1 2 3])"), Observation::Number(3f64.to_bits()));
-        assert_eq!(observe(&mut session, "(get {:a 1} :a)"), Observation::Number(1f64.to_bits()));
+        assert_eq!(observe(&mut session, "(count [1 2 3])"), Observation::Long(3));
+        assert_eq!(observe(&mut session, "(get {:a 1} :a)"), Observation::Long(1));
         assert_eq!(observe(&mut session, "(= (hash :k) (hash :k))"), Observation::Bool(true));
         assert_eq!(observe(&mut session, "(name 'sym)"), text("sym"));
         // Static reads of built-in classes stay public, as in Clojure.
-        assert_eq!(observe(&mut session, "(count (.-EMPTY PersistentVector))"), Observation::Number(0f64.to_bits()));
-        assert_eq!(observe(&mut session, "(count (.fromArray PersistentVector (array 1 2) true))"), Observation::Number(2f64.to_bits()));
+        assert_eq!(observe(&mut session, "(count (.-EMPTY PersistentVector))"), Observation::Long(0));
+        assert_eq!(observe(&mut session, "(count (.fromArray PersistentVector (array 1 2) true))"), Observation::Long(2));
         // Methods of built-in instances stay public, as in Clojure.
-        assert_eq!(observe(&mut session, "(.indexOf [1 2 3] 2)"), Observation::Number(1f64.to_bits()));
+        assert_eq!(observe(&mut session, "(.indexOf [1 2 3] 2)"), Observation::Long(1));
         // ExceptionInfo fields are public reads but not writable, like
         // Clojure's public final exception fields.
-        assert_eq!(observe(&mut session, "(.-data (ex-info \"x\" 7))"), Observation::Number(7f64.to_bits()));
+        assert_eq!(observe(&mut session, "(.-data (ex-info \"x\" 7))"), Observation::Long(7));
     }
 }
 
@@ -108,11 +108,11 @@ fn user_type_fields_keep_ordinary_access() {
         session.eval("(defprotocol IOpenCell (open-set! [c x]))").unwrap();
         session.eval("(deftype OpenCell [^:mutable v] IOpenCell (open-set! [this x] (set! (.-v this) x) (.-v this)))").unwrap();
         for (source, expected) in [
-            ("(.-x (OpenPoint. 1))", 1.0),
-            ("(.-x (OpenRecord. 2))", 2.0),
-            ("(open-set! (OpenCell. 1) 3)", 3.0),
+            ("(.-x (OpenPoint. 1))", 1),
+            ("(.-x (OpenRecord. 2))", 2),
+            ("(open-set! (OpenCell. 1) 3)", 3),
         ] {
-            assert_eq!(observe(&mut session, source), Observation::Number(f64::to_bits(expected)), "{phase}: {source}");
+            assert_eq!(observe(&mut session, source), Observation::Long(expected), "{phase}: {source}");
         }
     }
 }
@@ -124,13 +124,13 @@ fn core_internal_calls_are_direct_linked_against_user_redefinition() {
     for (phase, mut session) in sessions() {
         session.eval("(def stolen (atom nil)) (def original-chunked-seq suss.core/chunked-seq)").unwrap();
         let rest = "(with-redefs [suss.core/chunked-seq (fn [v n i o] (reset! stolen n) (original-chunked-seq v n i o))] (count (rest (seq (vec (range 40))))))";
-        assert_eq!(observe(&mut session, rest), Observation::Number(39f64.to_bits()), "{phase}");
+        assert_eq!(observe(&mut session, rest), Observation::Long(39), "{phase}");
         assert_eq!(observe(&mut session, "(nil? @stolen)"), Observation::Bool(true), "{phase}");
         // Hashing of built-ins does not follow a redefined protocol method var.
         let before = observe(&mut session, "(hash :k)");
         assert_eq!(observe(&mut session, "(with-redefs [suss.core/-hash (fn [_] 0)] (hash :k))"), before, "{phase}");
         // User call sites still see redefinition, as in Clojure.
-        assert_eq!(observe(&mut session, "(with-redefs [suss.core/identity (fn [_] 0)] (identity 5))"), Observation::Number(0f64.to_bits()), "{phase}");
+        assert_eq!(observe(&mut session, "(with-redefs [suss.core/identity (fn [_] 0)] (identity 5))"), Observation::Long(0), "{phase}");
     }
 }
 
@@ -174,7 +174,7 @@ fn core_primitives_and_recursion_are_direct_linked_and_private_helpers_hidden() 
         // Bootstrap primitives that core calls with internal storage.
         session.eval("(def seen (atom [])) (def original-aclone aclone) (def original-nil? nil?)").unwrap();
         let captured = "(with-redefs [suss.core/aclone (fn [a] (swap! seen conj a) (original-aclone a)) suss.core/nil? (fn [x] (swap! seen conj x) (original-nil? x))] (count (persistent! (conj! (transient {:a 1}) [:b 2]))))";
-        assert_eq!(observe(&mut session, captured), Observation::Number(2f64.to_bits()), "{phase}");
+        assert_eq!(observe(&mut session, captured), Observation::Long(2), "{phase}");
         assert_eq!(observe(&mut session, "(empty? @seen)"), Observation::Bool(true), "{phase}");
         // Upstream defn- helpers are private to suss.core.
         for source in ["(suss.core/do-assoc [1] 5 nil 0 nil)", "(suss.core/pv-aset (array) 0 1)", "(suss.core/push-tail [1] 5 nil nil)", "suss.core/string-hash-cache"] {

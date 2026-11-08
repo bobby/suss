@@ -1,20 +1,45 @@
 use suss_cli::portable_session::{Session, SessionError, SessionValue};
 use suss_compile::portable_session::sentinel_tag;
-use wasmtime::Val;
 
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
+
+fn number(session: &mut Session, value: &SessionValue) -> Number {
     session
         .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("expected exact Number layout")
-            };
-            Ok(*bits)
+            exact_number(&mut store, &value)
         })
         .unwrap()
 }
-fn eval_number(session: &mut Session, source: &str) -> u64 {
+fn eval_number(session: &mut Session, source: &str) -> Number {
     let value = session.eval(source).unwrap();
     number(session, &value)
 }
@@ -59,13 +84,13 @@ fn persistent_session_arithmetic_checks_live_cells_and_evaluates_operands_once()
         .unwrap();
     assert_eq!(
         eval_number(&mut session, "(+ (next) (* (next) 10) (next))"),
-        24.0f64.to_bits()
+        num(24.0)
     );
-    assert_eq!(eval_number(&mut session, "counter"), 3.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "counter"), num(3.0));
     session
         .eval("(def value 3) (def read (fn [] (+ value 1)))")
         .unwrap();
-    assert_eq!(eval_number(&mut session, "(read)"), 4.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(read)"), num(4.0));
     session.eval("(def value \"4\")").unwrap();
     assert_eq!(thrown(&mut session, "(read)"), "+ requires number operands");
     assert_eq!(
@@ -107,8 +132,8 @@ fn persistent_session_arithmetic_checks_live_cells_and_evaluates_operands_once()
         String::from_utf16(&message).unwrap(),
         "+ requires number operands"
     );
-    assert_eq!(eval_number(&mut session, "old"), 7.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "counter"), 4.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "old"), num(7.0));
+    assert_eq!(eval_number(&mut session, "counter"), num(4.0));
 }
 
 #[test]
@@ -117,11 +142,11 @@ fn session_lifecycle_numeric_memory_has_bounded_high_water_capacity_and_reset() 
     let initial = session.stats().numeric_memory_capacity;
     let text = format!("0.{}1", "0".repeat(40000));
     session.eval(&format!("(def text {text:?})")).unwrap();
-    assert_eq!(eval_number(&mut session, "(suss.bootstrap/f64-coerce text)"), 0.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(suss.bootstrap/f64-coerce text)"), Number::Double(0.0f64.to_bits()));
     let capacity = session.stats().numeric_memory_capacity;
     assert!(capacity > initial);
     for _ in 0..20 {
-        assert_eq!(eval_number(&mut session, "(suss.bootstrap/f64-coerce text)"), 0.0f64.to_bits());
+        assert_eq!(eval_number(&mut session, "(suss.bootstrap/f64-coerce text)"), Number::Double(0.0f64.to_bits()));
     }
     session.collect().unwrap();
     assert_eq!(session.stats().numeric_memory_capacity, capacity);
@@ -153,11 +178,11 @@ fn persistent_session_unary_arithmetic_returns_numbers_and_rejects_other_operand
         thrown(&mut session, "(+ (do (def effect 1) (* f)))"),
         "* requires number operands"
     );
-    assert_eq!(eval_number(&mut session, "effect"), 1.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "effect"), num(1.0));
     session.collect().unwrap();
-    assert_eq!(eval_number(&mut session, "(f)"), 7.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(f)"), num(7.0));
     for (source, expected) in [("(identity 7)", 7.0), ("(identity -0.0)", -0.0)] {
-        assert_eq!(eval_number(&mut session, source), f64::to_bits(expected), "{source}");
+        assert_eq!(eval_number(&mut session, source), num(expected), "{source}");
     }
     for source in [
         "(identity nil)",
@@ -174,12 +199,12 @@ fn persistent_session_initializers_execute_once_and_defonce_skips_effects() {
     session
         .eval("(def counter 1) (def next (fn [] (def counter 2))) (def value (next))")
         .unwrap();
-    assert_eq!(eval_number(&mut session, "counter"), 2.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "counter"), num(2.0));
     session.eval("(def counter 9)").unwrap();
     session.eval("(+ 20 22)").unwrap();
     session.eval("(defonce value (next))").unwrap();
-    assert_eq!(eval_number(&mut session, "counter"), 9.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "value"), 2.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "counter"), num(9.0));
+    assert_eq!(eval_number(&mut session, "value"), num(2.0));
 }
 
 #[test]
@@ -195,8 +220,8 @@ fn persistent_session_old_closures_and_owned_values_survive_rebinding_and_gc() {
     }
     session.collect().unwrap();
     let result = session.invoke(&old, &[&arg]).unwrap();
-    assert_eq!(number(&mut session, &result), 1.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "(f 7)"), 10.0f64.to_bits());
+    assert_eq!(number(&mut session, &result), num(1.0));
+    assert_eq!(eval_number(&mut session, "(f 7)"), num(10.0));
     let units = session
         .inspect(&string, |mut store, value| {
             let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
@@ -244,8 +269,8 @@ fn persistent_session_compile_failure_is_atomic_and_language_failure_recovers() 
         .unwrap();
     assert_eq!(descriptor, 3);
     session.collect().unwrap();
-    assert_eq!(eval_number(&mut session, "old"), 7.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "effect"), 9.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "old"), num(7.0));
+    assert_eq!(eval_number(&mut session, "effect"), num(9.0));
 }
 
 #[test]
@@ -282,7 +307,7 @@ fn session_lifecycle_reset_rejects_old_values_and_distinguishes_code_from_roots(
         Err(SessionError::ForeignValue)
     ));
     assert!(matches!(session.eval("old"), Err(SessionError::Compile(_))));
-    assert_eq!(eval_number(&mut session, "42"), 42.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "42"), num(42.0));
 }
 
 fn sources() -> (tempfile::TempDir, Session) {
@@ -319,7 +344,7 @@ fn persistent_session_input_dependencies_compile_atomically_and_initialize_once(
             &mut session,
             "(ns app (:require [dependency :as d])) (def value d/value) value"
         ),
-        1.0f64.to_bits()
+        num(1.0)
     );
     assert_eq!(session.current_namespace(), "app");
     assert_eq!(session.stats().loaded_modules, 1);
@@ -329,9 +354,9 @@ fn persistent_session_input_dependencies_compile_atomically_and_initialize_once(
             &mut session,
             "(ns app (:require [dependency :as d])) d/value"
         ),
-        1.0f64.to_bits()
+        num(1.0)
     );
-    assert_eq!(eval_number(&mut session, "value"), 1.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "value"), num(1.0));
     assert_eq!(session.stats().loaded_modules, 1);
 }
 
@@ -354,7 +379,7 @@ fn persistent_session_failed_module_retries_without_replaying_successful_depende
     ));
     assert_eq!(session.current_namespace(), "user");
     assert_eq!(session.stats().loaded_modules, 1);
-    assert_eq!(eval_number(&mut session, "app/value"), 2.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "app/value"), num(2.0));
     std::fs::write(root.path().join("dependency.sus"), "must never replay this").unwrap();
     std::fs::write(
         root.path().join("app.sus"),
@@ -362,7 +387,7 @@ fn persistent_session_failed_module_retries_without_replaying_successful_depende
     )
     .unwrap();
     let value = session.load_namespace("app").unwrap().unwrap();
-    assert_eq!(number(&mut session, &value), 3.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(3.0));
     assert_eq!(session.current_namespace(), "user");
     assert_eq!(session.stats().loaded_modules, 2);
     assert!(session.load_namespace("app").unwrap().is_none());
@@ -385,7 +410,7 @@ fn persistent_session_catalog_scopes_cannot_skip_loading_and_core_alias_is_canon
             &mut session,
             "(ns app (:require [cljs.core :as core])) (core/+ 1 2)"
         ),
-        3.0f64.to_bits()
+        num(3.0)
     );
     assert_eq!(session.stats().loaded_modules, 0);
 }
@@ -421,7 +446,7 @@ fn session_lifecycle_fuel_trap_is_distinct_and_the_next_input_recovers() {
         Some(&wasmtime::Trap::OutOfFuel)
     );
     session.set_operation_fuel(10_000);
-    assert_eq!(eval_number(&mut session, "42"), 42.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "42"), num(42.0));
     assert_eq!(session.stats().external_value_handles, 0);
 }
 
@@ -449,11 +474,11 @@ fn persistent_session_diamond_effects_follow_reverse_require_order() {
             &mut session,
             "(ns app (:require right left [shared :as s])) s/value"
         ),
-        2.0f64.to_bits()
+        num(2.0)
     );
     assert_eq!(session.stats().loaded_modules, 3);
     assert_eq!(session.stats().resident_fragments, 4);
-    assert_eq!(eval_number(&mut session, "s/value"), 2.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "s/value"), num(2.0));
 }
 
 #[test]
@@ -465,7 +490,7 @@ fn persistent_session_nil_and_false_are_initialized_defonce_bindings() {
     session
         .eval("(defonce held (def touched 9)) (defonce other (def touched 10))")
         .unwrap();
-    assert_eq!(eval_number(&mut session, "touched"), 7.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "touched"), num(7.0));
     for (source, expected) in [("held", 0), ("other", 2)] {
         let value = session.eval(source).unwrap();
         let tag = session
@@ -485,13 +510,13 @@ fn persistent_session_arithmetic_function_values_use_universal_invocation() {
         ("(let [f *] (f))", 1.0),
         ("(let [f +] (f 1 2))", 3.0),
         ("(let [f *] (f 2 3 4))", 24.0),
-        ("(let [f -] (f 0))", -0.0),
+        ("(let [f -] (f 0))", 0.0),
         ("(let [f /] (f 4))", 0.25),
         ("((if false + *) 2 3)", 6.0),
     ] {
         assert_eq!(
             eval_number(&mut session, source),
-            f64::to_bits(expected),
+            num(expected),
             "{source}"
         );
     }
@@ -510,7 +535,7 @@ fn persistent_session_arithmetic_function_values_use_universal_invocation() {
         session.invoke(&subtract, &[]),
         Err(SessionError::Language(_))
     ));
-    assert_eq!(eval_number(&mut session, "(+ 40 2)"), 42.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(+ 40 2)"), num(42.0));
 }
 
 #[test]
@@ -555,16 +580,16 @@ fn persistent_session_arithmetic_values_share_cells_and_keep_old_functions() {
     let two = session.eval("2").unwrap();
     session.collect().unwrap();
     let result = session.invoke(&original, &[&one, &two]).unwrap();
-    assert_eq!(number(&mut session, &result), 3.0f64.to_bits());
+    assert_eq!(number(&mut session, &result), num(3.0));
     let result = session.invoke(&replacement, &[&one, &two]).unwrap();
-    assert_eq!(number(&mut session, &result), (-1.0f64).to_bits());
+    assert_eq!(number(&mut session, &result), num(-1.0));
     assert_eq!(
         eval_number(&mut session, "(captured 1 2)"),
-        3.0f64.to_bits()
+        num(3.0)
     );
     assert_eq!(
         eval_number(&mut session, "(let [f +] (f 1 2))"),
-        (-1.0f64).to_bits()
+        num(-1.0)
     );
     let before = session.stats();
     assert!(matches!(
@@ -582,14 +607,14 @@ fn persistent_session_arithmetic_values_evaluate_callee_and_arguments_once() {
         .unwrap();
     assert_eq!(
         eval_number(&mut session, "((do (next) +) (next) (next))"),
-        5.0f64.to_bits()
+        num(5.0)
     );
-    assert_eq!(eval_number(&mut session, "counter"), 3.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "counter"), num(3.0));
     assert_eq!(
         eval_number(&mut session, "(let [f *] (f (next) (next)))"),
-        20.0f64.to_bits()
+        num(20.0)
     );
-    assert_eq!(eval_number(&mut session, "counter"), 5.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "counter"), num(5.0));
 }
 
 #[test]
@@ -610,7 +635,7 @@ fn persistent_session_loop_and_function_recur_replace_bindings_in_parallel() {
     ] {
         assert_eq!(
             eval_number(&mut session, source),
-            f64::to_bits(expected),
+            num(expected),
             "{source}"
         );
     }
@@ -628,21 +653,21 @@ fn recurrence_preserves_old_iteration_captures_effect_order_and_dynamic_types() 
             &mut session,
             "(loop [flag true x 1 f nil] (if flag (recur false 2 (fn [] x)) (f)))"
         ),
-        1.0f64.to_bits()
+        num(1.0)
     );
     assert_eq!(
         eval_number(
             &mut session,
             "(let [outer 10] ((fn [flag x] (if flag (recur false 2) (+ outer x))) true 1))"
         ),
-        12.0f64.to_bits()
+        num(12.0)
     );
     assert_eq!(
         eval_number(
             &mut session,
             "(loop [x 2] ((fn [flag y] (if flag (recur false (+ y 1)) y)) true x))"
         ),
-        3.0f64.to_bits()
+        num(3.0)
     );
     assert_eq!(
         thrown(
@@ -659,15 +684,15 @@ fn recurrence_preserves_old_iteration_captures_effect_order_and_dynamic_types() 
             &mut session,
             "(loop [flag true x 0 y 0] (if flag (recur false (next) (next)) (+ (* x 10) y)))"
         ),
-        12.0f64.to_bits()
+        num(12.0)
     );
-    assert_eq!(eval_number(&mut session, "counter"), 2.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "counter"), num(2.0));
     let saved = session
         .eval("(loop [flag true x 1] (if flag (recur false (fn [] x)) x))")
         .unwrap();
     session.collect().unwrap();
     let result = session.invoke(&saved, &[]).unwrap();
-    assert_eq!(number(&mut session, &result), 1.0f64.to_bits());
+    assert_eq!(number(&mut session, &result), num(1.0));
 }
 
 #[test]
@@ -686,14 +711,14 @@ fn recurrence_fuel_traps_and_compile_errors_leave_the_session_usable() {
         Err(SessionError::Trap(_))
     ));
     session.set_operation_fuel(100_000);
-    assert_eq!(eval_number(&mut session, "(+ old 1)"), 8.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(+ old 1)"), num(8.0));
     session.set_operation_fuel(500);
     assert!(matches!(
         session.eval("((fn [] (recur)))"),
         Err(SessionError::Trap(_))
     ));
     session.set_operation_fuel(100_000);
-    assert_eq!(eval_number(&mut session, "old"), 7.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "old"), num(7.0));
 }
 
 #[test]
@@ -732,7 +757,7 @@ fn persistent_session_named_and_multiple_fixed_signatures_preserve_captures_and_
     ] {
         assert_eq!(
             eval_number(&mut session, source),
-            expected.to_bits(),
+            num(expected),
             "{source}"
         );
     }
@@ -782,15 +807,15 @@ fn named_function_identity_and_multiple_dispatch_survive_gc_and_rebinding() {
     let flag = session.eval("true").unwrap();
     let two = session.eval("2").unwrap();
     let result = session.invoke(&original, &[&flag, &two]).unwrap();
-    assert_eq!(number(&mut session, &result), 13.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "(dispatch 2)"), 99.0f64.to_bits());
+    assert_eq!(number(&mut session, &result), num(13.0));
+    assert_eq!(eval_number(&mut session, "(dispatch 2)"), num(99.0));
     for (source, expected) in [
         ("((fn ([x] 1) ([x] 2)) 0)", 2.0f64),
         ("((fn local ([x] 1) ([x] 2)) 0)", 2.0),
         ("(let [f (fn ([x] 1) ([x] 2))] (f 0))", 2.0),
         ("((fn self [self] self) 7)", 7.0),
     ] {
-        assert_eq!(eval_number(&mut session, source), expected.to_bits());
+        assert_eq!(eval_number(&mut session, source), num(expected));
     }
 }
 
@@ -827,12 +852,12 @@ fn multiple_fixed_arity_gaps_throw_before_body_effects_after_ordered_arguments()
         })
         .unwrap();
     assert_eq!(String::from_utf16(&message).unwrap(), "Wrong arity");
-    assert_eq!(eval_number(&mut session, "counter"), 3.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "counter"), num(3.0));
     assert_eq!(
         eval_number(&mut session, "(dispatch (next))"),
-        4.0f64.to_bits()
+        num(4.0)
     );
-    assert_eq!(eval_number(&mut session, "counter"), 104.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "counter"), num(104.0));
     for source in ["(dispatch)", "(dispatch 1 2)", "(dispatch 1 2 3 4)"] {
         assert!(
             matches!(session.eval(source), Err(SessionError::Language(_))),
@@ -841,7 +866,7 @@ fn multiple_fixed_arity_gaps_throw_before_body_effects_after_ordered_arguments()
     }
     assert_eq!(
         eval_number(&mut session, "(dispatch 1 2 3)"),
-        6.0f64.to_bits()
+        num(6.0)
     );
 }
 #[test]
@@ -873,7 +898,7 @@ fn nominal_protocol_extensions_update_existing_objects_across_fragments() {
     session.eval("(defprotocol NominalReader (read-value [this])) (deftype NominalRead [value] NominalReader (read-value [this] value)) (deftype NominalLater [value]) (def early (NominalRead. 7)) (def later (NominalLater. 9))").unwrap();
     assert_eq!(
         eval_number(&mut session, "(read-value early)"),
-        7.0f64.to_bits()
+        num(7.0)
     );
     let before = session.eval("(satisfies? NominalReader later)").unwrap();
     let before = session
@@ -888,11 +913,11 @@ fn nominal_protocol_extensions_update_existing_objects_across_fragments() {
     session.collect().unwrap();
     assert_eq!(
         eval_number(&mut session, "(read-value later)"),
-        42.0f64.to_bits()
+        num(42.0)
     );
     assert_eq!(
         eval_number(&mut session, "(read-value early)"),
-        7.0f64.to_bits()
+        num(7.0)
     );
     let after = session.eval("(satisfies? NominalReader later)").unwrap();
     let after = session
@@ -947,14 +972,14 @@ fn nominal_constructor_aliases_arrows_redefinitions_and_missing_fields_follow_th
     );
     assert_eq!(
         eval_number(&mut session, "(read-field (new old-type 11 12))"),
-        11.0f64.to_bits()
+        num(11.0)
     );
     assert_eq!(
         eval_number(
             &mut session,
             "(read-field (let [klass old-type] (new klass 13)))"
         ),
-        13.0f64.to_bits()
+        num(13.0)
     );
     let missing = session.eval("(read-field (new old-type))").unwrap();
     session
@@ -968,7 +993,7 @@ fn nominal_constructor_aliases_arrows_redefinitions_and_missing_fields_follow_th
         .unwrap();
     assert_eq!(
         eval_number(&mut session, "(if (deftype ExpressionType []) 7 9)"),
-        7.0f64.to_bits()
+        num(7.0)
     );
 }
 
@@ -991,22 +1016,22 @@ fn nominal_protocol_membership_and_method_keys_survive_redeclaration() {
     );
     assert_eq!(
         eval_number(&mut session, "(read-redeclared old-object)"),
-        7.0f64.to_bits()
+        num(7.0)
     );
     assert_eq!(
         eval_number(&mut session, "(old-method old-object)"),
-        7.0f64.to_bits()
+        num(7.0)
     );
     session
         .eval("(extend-type InitialRead Redeclared (read-redeclared [this] 42))")
         .unwrap();
     assert_eq!(
         eval_number(&mut session, "(read-redeclared old-object)"),
-        42.0f64.to_bits()
+        num(42.0)
     );
     assert_eq!(
         eval_number(&mut session, "(old-method old-object)"),
-        42.0f64.to_bits()
+        num(42.0)
     );
     // Membership uses the canonical marker before consulting the protocol value.
     session.eval("(def Redeclared nil)").unwrap();
@@ -1018,7 +1043,7 @@ fn nominal_protocol_membership_and_method_keys_survive_redeclaration() {
         session.eval("(satisfies? Redeclared 7)"),
         Err(SessionError::Language(_))
     ));
-    assert_eq!(eval_number(&mut session, "(+ 20 22)"), 42.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(+ 20 22)"), num(42.0));
 }
 
 #[test]
@@ -1027,11 +1052,11 @@ fn nominal_protocol_multiple_signatures_empty_partial_membership_and_field_captu
     session.eval("(defprotocol Compute (compute [this] [this x])) (defprotocol EmptyProtocol) (defprotocol PartialProtocol (one-method [this]) (missing-method [this])) (deftype Computed [value] Compute (compute [this] value) (compute [this x] (+ value x)) EmptyProtocol PartialProtocol (one-method [this] (fn [] value))) (def computed (Computed. 7))").unwrap();
     assert_eq!(
         eval_number(&mut session, "(compute computed)"),
-        7.0f64.to_bits()
+        num(7.0)
     );
     assert_eq!(
         eval_number(&mut session, "(compute computed 11)"),
-        18.0f64.to_bits()
+        num(18.0)
     );
     assert_eq!(
         nominal_bool(&mut session, "(satisfies? EmptyProtocol computed)"),
@@ -1045,21 +1070,21 @@ fn nominal_protocol_multiple_signatures_empty_partial_membership_and_field_captu
     session.eval("(deftype Computed [value])").unwrap();
     session.collect().unwrap();
     let result = session.invoke(&saved, &[]).unwrap();
-    assert_eq!(number(&mut session, &result), 7.0f64.to_bits());
+    assert_eq!(number(&mut session, &result), num(7.0));
     assert!(matches!(
         session.eval("(missing-method computed)"),
         Err(SessionError::Language(_))
     ));
     assert_eq!(
         eval_number(&mut session, "(if (defprotocol ExpressionProtocol) 7 9)"),
-        9.0f64.to_bits()
+        num(9.0)
     );
     assert_eq!(
         eval_number(
             &mut session,
             "(if (extend-type Computed ExpressionProtocol) 7 9)"
         ),
-        7.0f64.to_bits()
+        num(7.0)
     );
 }
 
@@ -1069,17 +1094,17 @@ fn nominal_method_receiver_fields_and_callable_fields_preserve_recur_and_evaluat
     session.eval("(def counter 0) (defprotocol RecurProtocol (step [this again]) (call-field [this x])) (deftype RecurType [a unused f] RecurProtocol (step [this again] (if again (recur (do (def counter (+ counter 1)) nil) false) (do (def counter (+ counter 10)) (+ a (if (instance? RecurType this) 100 200))))) (call-field [this x] (f x))) (def recur-object (RecurType. 1 2 (fn [x] (+ x 7))))").unwrap();
     assert_eq!(
         eval_number(&mut session, "(step recur-object true)"),
-        101.0f64.to_bits()
+        num(101.0)
     );
-    assert_eq!(eval_number(&mut session, "counter"), 11.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "counter"), num(11.0));
     assert_eq!(
         eval_number(&mut session, "(call-field recur-object 11)"),
-        18.0f64.to_bits()
+        num(18.0)
     );
     session.collect().unwrap();
     assert_eq!(
         eval_number(&mut session, "(step recur-object false)"),
-        101.0f64.to_bits()
+        num(101.0)
     );
 }
 
@@ -1126,8 +1151,8 @@ fn nominal_unknown_types_preserve_order_and_failed_analysis_does_not_publish_bin
         session.eval("(new (do (next) 7) (next) (next))"),
         Err(SessionError::Language(_))
     ));
-    assert_eq!(eval_number(&mut session, "counter"), 3.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "(+ 20 22)"), 42.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "counter"), num(3.0));
+    assert_eq!(eval_number(&mut session, "(+ 20 22)"), num(42.0));
 }
 
 #[test]
@@ -1182,7 +1207,7 @@ fn nominal_undefined_constructor_results_preserve_truthiness_and_reject_arithmet
     }
     assert_eq!(
         eval_number(&mut session, "(if (undefined-field (UndefinedType.)) 7 9)"),
-        9.0f64.to_bits()
+        num(9.0)
     );
 }
 
@@ -1199,10 +1224,10 @@ fn nominal_review_grouped_extension_and_protocol_expression_operands() {
     session.collect().unwrap();
     assert_eq!(
         eval_number(&mut session, "(review-grouped review-object)"),
-        7.0f64.to_bits()
+        num(7.0)
     );
     assert_eq!(
         eval_number(&mut session, "(review-grouped review-object 11)"),
-        18.0f64.to_bits()
+        num(18.0)
     );
 }

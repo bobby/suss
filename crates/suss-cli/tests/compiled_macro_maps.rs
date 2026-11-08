@@ -1,5 +1,5 @@
 use suss_cli::{portable_macro_data::FormBridge, portable_session::Session};
-use suss_compile::portable_session::sentinel_tag;
+use suss_compile::portable_session::{RuntimeNumber, runtime_number, sentinel_tag};
 use suss_reader::forms::{Kind, read_forms};
 
 #[test]
@@ -17,7 +17,7 @@ fn compiled_macro_maps_use_canonical_persistent_data_and_preserve_old_values() {
     };
     assert_eq!(entries.len(), 4);
     assert!(matches!(&entries[0].kind, Kind::Keyword(_)));
-    assert!(matches!(&entries[1].kind, Kind::Number(n) if *n == 42.0));
+    assert!(matches!(&entries[1].kind, Kind::Long(42)));
     assert!(matches!(&entries[3].kind, Kind::Vector(_)));
     session
         .eval(
@@ -162,17 +162,12 @@ fn compiled_macro_maps_match_fresh_pinned_scalar_observations_in_both_phases() {
                         };
                         serde_json::json!({"tag":"bool","value":v})
                     } else {
-                        let fields = value
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_struct(&store)?
-                            .unwrap()
-                            .fields(&mut store)?
-                            .collect::<Vec<_>>();
-                        let [wasmtime::Val::F64(bits)] = fields.as_slice() else {
-                            panic!("Number layout");
-                        };
-                        serde_json::json!({"tag":"f64","bits":format!("{bits:016x}")})
+                        // The pinned corpus tags every number "f64"; an integral
+                        // one is a Clojure long, so an integral double is tagged apart.
+                        match runtime_number(&mut store, &value)?.expect("Number layout") {
+                            RuntimeNumber::Long(n) => serde_json::json!({"tag":"f64","bits":format!("{:016x}", (n as f64).to_bits())}),
+                            RuntimeNumber::Double(d) => serde_json::json!({"tag":if d.is_finite() && d.fract() == 0.0 && d.to_bits() != (-0.0f64).to_bits() { "double" } else { "f64" },"bits":format!("{:016x}", d.to_bits())}),
+                        }
                     })
                 })
                 .unwrap();
@@ -222,7 +217,7 @@ fn compiled_macro_map_sequences_count_entry_vectors_in_nesting_bound() {
         assert_eq!(pair[1].span, 0..1);
         assert!(matches!(&pair[0].kind, Kind::Keyword(key)
             if key.namespace.is_none() && key.name == "a"));
-        assert_eq!(pair[1].kind, Kind::Number(1.0));
+        assert_eq!(pair[1].kind, Kind::Long(1));
     }
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.set_operation_fuel(100_000_000);

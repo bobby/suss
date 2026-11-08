@@ -28,7 +28,10 @@ fn data(value: &serde_json::Value) -> Form {
     let kind = match value {
         serde_json::Value::Null => Kind::Nil,
         serde_json::Value::Bool(value) => Kind::Bool(*value),
-        serde_json::Value::Number(value) => Kind::Number(value.as_f64().unwrap()),
+        serde_json::Value::Number(value) => match value.as_i64() {
+            Some(long) => Kind::Long(long),
+            None => Kind::Number(value.as_f64().unwrap()),
+        },
         serde_json::Value::String(value) => Kind::String(value.encode_utf16().collect()),
         serde_json::Value::Array(values) if values.len() == 2 => {
             match values[0].as_str().unwrap() {
@@ -171,7 +174,7 @@ fn compiled_argument_lists_preserve_quoted_data_and_actual_file_positions() {
         let result = session.eval("(annotated 22 23)").unwrap();
         assert_eq!(
             bridge.read(&mut session, &result, 0..1).unwrap().kind,
-            Kind::Number(22.0)
+            Kind::Long(22)
         );
     }
 }
@@ -257,15 +260,15 @@ fn compiled_function_declarations_match_primary_presence_and_parameter_shapes() 
         // Duplicate source signatures remain visible above; emission still runs
         // the final body, and aliases remain executable without fn-var facts.
         for (source, number) in [
-            ("(duplicate 17)", 2.0),
-            ("(alias 15)", 15.0),
-            ("(multiple 12 13 14)", 13.0),
+            ("(duplicate 17)", 2),
+            ("(alias 15)", 15),
+            ("(multiple 12 13 14)", 13),
         ] {
             let value = session.eval(source).unwrap();
             let bridge = FormBridge::new(&mut session).unwrap();
             assert_eq!(
                 bridge.read(&mut session, &value, 0..1).unwrap().kind,
-                Kind::Number(number)
+                Kind::Long(number)
             );
         }
         macros

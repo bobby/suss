@@ -48,6 +48,29 @@ fn value_json(value: Observation) -> Value {
         other => panic!("Unexpected closed observation: {other:?}"),
     }
 }
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_value(expected: &Value) -> Value {
+    match expected {
+        Value::Object(fields) if fields.get("tag").and_then(Value::as_str) == Some("number") => {
+            let bits = u64::from_str_radix(fields["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+                json!({"tag":"long", "value":(value as i64).to_string()})
+            } else {
+                expected.clone()
+            }
+        }
+        Value::Object(fields) => Value::Object(
+            fields
+                .iter()
+                .map(|(key, value)| (key.clone(), clojure_value(value)))
+                .collect(),
+        ),
+        Value::Array(items) => Value::Array(items.iter().map(clojure_value).collect()),
+        other => other.clone(),
+    }
+}
 fn error_json(
     session: &mut Session,
     value: &SessionValue,
@@ -147,13 +170,13 @@ fn complete_sorted_values_iterator_returns_and_range_arities_match_pinned_raw_va
                 let mut decoder = Decoder::capture(&mut session, 20_000).unwrap();
                 value_json(decoder.decode_session(&mut session, &actual).unwrap())
             };
-            assert_eq!(observed, case["expected"]["value"], "{}", case["id"]);
+            assert_eq!(observed, clojure_value(&case["expected"]["value"]), "{}", case["id"]);
             let trace = session.eval("sorted-effects").unwrap();
             session.collect().unwrap();
             let mut decoder = Decoder::capture(&mut session, 128).unwrap();
             assert_eq!(
                 value_json(decoder.decode_session(&mut session, &trace).unwrap()),
-                case["expected"]["trace"],
+                clojure_value(&case["expected"]["trace"]),
                 "{} trace",
                 case["id"]
             );
@@ -161,7 +184,7 @@ fn complete_sorted_values_iterator_returns_and_range_arities_match_pinned_raw_va
             let mut decoder = Decoder::capture(&mut session, 128).unwrap();
             assert_eq!(
                 value_json(decoder.decode_session(&mut session, &recovery).unwrap()),
-                json!({"tag":"number","bits":"404e000000000000"})
+                json!({"tag":"long","value":"60"})
             );
         }
     }
@@ -347,12 +370,11 @@ fn tree_map_update_sharing_comparator_identity_and_old_tree_survive_gc() {
         let cnt = field(&mut s, &original, &[(MAP_FIELDS, "cnt")]);
         s.inspect(&original, |mut store, _| {
             let rooted = cnt.to_rooted(&mut store);
-            let number = rooted.as_struct(&store)?.unwrap();
-            assert_eq!(number.fields(&mut store)?.count(), 1);
-            let Val::F64(bits) = number.field(&mut store, 0)? else {
-                panic!("raw count Number")
-            };
-            assert_eq!(bits, 3.0_f64.to_bits());
+            assert_eq!(
+                suss_cli::portable_session::runtime_number(&mut store, &Val::AnyRef(Some(rooted)))?,
+                Some(suss_cli::portable_session::RuntimeNumber::Long(3)),
+                "raw count long"
+            );
             Ok(())
         })
         .unwrap();
@@ -365,13 +387,13 @@ fn tree_map_update_sharing_comparator_identity_and_old_tree_survive_gc() {
         let mut decoder = Decoder::capture(&mut s, 128).unwrap();
         assert_eq!(
             value_json(decoder.decode_session(&mut s, &payload).unwrap()),
-            json!({"tag":"number","bits":"4052400000000000"})
+            json!({"tag":"long","value":"73"})
         );
         let trace = s.eval("sorted-effects").unwrap();
         let mut decoder = Decoder::capture(&mut s, 128).unwrap();
         assert_eq!(
             value_json(decoder.decode_session(&mut s, &trace).unwrap()),
-            json!({"tag":"number","bits":"3ff0000000000000"})
+            json!({"tag":"long","value":"1"})
         );
     }
 }
@@ -396,38 +418,38 @@ fn additional_typed_protocol_pairs_ignore_public_rebinding_and_retain_capture_or
                 "IEquiv",
                 "-equiv",
                 "nil",
-                json!({"tag":"number","bits":"401c000000000000"}),
+                json!({"tag":"long","value":"7"}),
             ),
             (
                 "ILookup",
                 "-lookup",
                 "0",
-                json!({"tag":"number","bits":"401c000000000000"}),
+                json!({"tag":"long","value":"7"}),
             ),
             (
                 "ILookup",
                 "-lookup",
                 "0 17",
-                json!({"tag":"number","bits":"4031000000000000"}),
+                json!({"tag":"long","value":"17"}),
             ),
             (
                 "IAssociative",
                 "-assoc",
                 "0 17",
-                json!({"tag":"number","bits":"401c000000000000"}),
+                json!({"tag":"long","value":"7"}),
             ),
             (
                 "ISeq",
                 "-first",
                 "",
-                json!({"tag":"number","bits":"401c000000000000"}),
+                json!({"tag":"long","value":"7"}),
             ),
             ("INext", "-next", "", json!({"tag":"nil"})),
             (
                 "IMapEntry",
                 "-val",
                 "",
-                json!({"tag":"number","bits":"401c000000000000"}),
+                json!({"tag":"long","value":"7"}),
             ),
         ] {
             let source = format!(
@@ -454,13 +476,13 @@ fn additional_typed_protocol_pairs_ignore_public_rebinding_and_retain_capture_or
         let mut decoder = Decoder::capture(&mut session, 128).unwrap();
         assert_eq!(
             value_json(decoder.decode_session(&mut session, &value).unwrap()),
-            json!({"tag":"number","bits":"401c000000000000"})
+            json!({"tag":"long","value":"7"})
         );
         let trace = session.eval("sorted-effects").unwrap();
         let mut decoder = Decoder::capture(&mut session, 128).unwrap();
         assert_eq!(
             value_json(decoder.decode_session(&mut session, &trace).unwrap()),
-            json!({"tag":"number","bits":"4028000000000000"})
+            json!({"tag":"long","value":"12"})
         );
         let value = session
             .eval(
@@ -470,7 +492,7 @@ fn additional_typed_protocol_pairs_ignore_public_rebinding_and_retain_capture_or
         let mut decoder = Decoder::capture(&mut session, 128).unwrap();
         assert_eq!(
             value_json(decoder.decode_session(&mut session, &value).unwrap()),
-            json!({"tag":"number","bits":"4022000000000000"})
+            json!({"tag":"long","value":"9"})
         );
         for source in [
             "(suss.bootstrap/direct-protocol-call ILookup -lookup (SortedDispatchProbe. 7))",
@@ -542,12 +564,13 @@ fn assert_rotation_shape(
         session
             .inspect(anchor, |mut store, _| {
                 let rooted = value.to_rooted(&mut store);
-                let number = rooted.as_struct(&store)?.expect("raw Number");
-                assert_eq!(number.fields(&mut store)?.count(), 1);
-                let Val::F64(bits) = number.field(&mut store, 0)? else {
-                    panic!("raw Number layout")
-                };
-                assert_eq!(bits, (expected[name].as_i64().unwrap() as f64).to_bits());
+                assert_eq!(
+                    suss_cli::portable_session::runtime_number(&mut store, &Val::AnyRef(Some(rooted)))?,
+                    Some(suss_cli::portable_session::RuntimeNumber::Long(
+                        expected[name].as_i64().unwrap()
+                    )),
+                    "raw long {name}"
+                );
                 Ok(())
             })
             .unwrap();

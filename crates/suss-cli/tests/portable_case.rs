@@ -1,15 +1,67 @@
 use suss_cli::portable_session::{Session, SessionValue};
-use wasmtime::Val;
 
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
+/// Whether `actual` matches a pinned `f64` observation. The ClojureScript
+/// corpus cannot distinguish longs: an integral observation is a Clojure long,
+/// or an integral double when the source has a double operand.
+fn matches_pinned(actual: Number, expected: &serde_json::Value, source: &str) -> bool {
+    let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+    match actual {
+        Number::Long(_) => actual == num(f64::from_bits(bits)),
+        Number::Double(actual) => {
+            actual == bits
+                && (num(f64::from_bits(bits)) == Number::Double(bits)
+                    || source.contains("##")
+                    || source.as_bytes().windows(3).any(|w| {
+                        w[0].is_ascii_digit()
+                            && (w[1] == b'.' || w[1] == b'e')
+                            && (w[2].is_ascii_digit() || w[2] == b'-')
+                    }))
+        }
+    }
+}
+/// The pinned observation when `actual` matches it, otherwise a distinct value.
+fn number_observation(actual: Number, expected: &serde_json::Value, source: &str) -> serde_json::Value {
+    if matches_pinned(actual, expected, source) {
+        expected.clone()
+    } else {
+        serde_json::json!({ "tag": "number", "actual": format!("{actual:?}") })
+    }
+}
+
+fn number(session: &mut Session, value: &SessionValue) -> Number {
     session
         .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout");
-            };
-            Ok(*bits)
+            exact_number(&mut store, &value)
         })
         .unwrap()
 }
@@ -19,10 +71,10 @@ fn scalar_case_evaluates_selector_once_and_only_selected_result() {
     let mut session = Session::new().unwrap();
     session.eval("(def case-effects 0)").unwrap();
     let value = session.eval("(case (do (set! case-effects (+ case-effects 1)) 2) (1 2) 17 (do (set! case-effects 99) 19))").unwrap();
-    assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(17.0));
     session.collect().unwrap();
     let value = session.eval("case-effects").unwrap();
-    assert_eq!(number(&mut session, &value), 1.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(1.0));
 }
 
 #[test]
@@ -41,7 +93,7 @@ fn scalar_case_matches_independently_decoded_pinned_observations() {
             .eval(case["source"].as_str().unwrap())
             .unwrap_or_else(|error| panic!("{}: {error:?}", case["id"]));
         assert_eq!(
-            serde_json::json!({"tag":"f64", "bits":format!("{:016x}",number(&mut session, &value))}),
+            number_observation(number(&mut session, &value), &case["expected"], case["source"].as_str().unwrap()),
             case["expected"],
             "{}",
             case["id"]
@@ -88,7 +140,7 @@ fn case_errors_and_namespace_guards_keep_effects_and_recover_after_gc() {
     ));
     session.collect().unwrap();
     let value = session.eval("case-effects").unwrap();
-    assert_eq!(number(&mut session, &value), 0.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(0.0));
     for source in [
         "(case)",
         "(case 1 1 17)",
@@ -113,22 +165,22 @@ fn case_errors_and_namespace_guards_keep_effects_and_recover_after_gc() {
         .collect::<Vec<_>>()
         .join(" ");
     let value = session.eval(&format!("(case 1 ({constants}) 17 19)")).unwrap();
-    assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(17.0));
     // Also reach the final constant, with selector/selected-arm effects once.
     session.eval("(def finite-case-selector 0) (def finite-case-arm 0)").unwrap();
     let value = session.eval(&format!(
         "(case (do (set! finite-case-selector (+ finite-case-selector 1)) 256) ({constants}) (do (set! finite-case-arm (+ finite-case-arm 1)) 17) (throw 91))"
     )).unwrap();
-    assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(17.0));
     for source in ["finite-case-selector", "finite-case-arm"] {
         let value = session.eval(source).unwrap();
-        assert_eq!(number(&mut session, &value), 1.0f64.to_bits());
+        assert_eq!(number(&mut session, &value), num(1.0));
     }
     session
         .eval("(ns case.alias (:require [cljs.core :as c]))")
         .unwrap();
     let value = session.eval("(c/case 1 1 17 19)").unwrap();
-    assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(17.0));
     session
         .eval("(ns case.excluded (:refer-clojure :exclude [case]))")
         .unwrap();
@@ -137,7 +189,7 @@ fn case_errors_and_namespace_guards_keep_effects_and_recover_after_gc() {
         Err(SessionError::Compile(_))
     ));
     let value = session.eval("(cljs.core/case 1 1 17 19)").unwrap();
-    assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(17.0));
 }
 
 #[test]
@@ -152,11 +204,11 @@ fn generic_case_throw_restores_equality_and_bounds_are_located() {
     assert!(matches!(session.eval("(with-redefs [cljs.core/= (fn [a b] (throw 17))] (case true false (set! case-review-effects 1) true (set! case-review-effects 2) (set! case-review-effects 3)))"), Err(SessionError::Language(_))));
     session.collect().unwrap();
     let value = session.eval("case-review-effects").unwrap();
-    assert_eq!(number(&mut session, &value), 0.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(0.0));
     let value = session.eval("(case true false 19 true 17 23)").unwrap();
-    assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(17.0));
     for (source, message) in [
-        ("(case 0 (0 -0.0) 17 19)", "Duplicate case test constant"),
+        ("(case 0 (0 0) 17 19)", "Duplicate case test constant"),
     ] {
         let Err(SessionError::Compile(error)) =
             session.eval(&format!("(def case-review-ghost 7) {source}"))
@@ -170,16 +222,21 @@ fn generic_case_throw_restores_equality_and_bounds_are_located() {
             Err(SessionError::Compile(_))
         ));
     }
+    // Clojure governs: long 0 and double -0.0 are distinct case constants.
+    for source in ["(case 0 (0 -0.0) 17 19)", "(case -0.0 (0 -0.0) 17 19)"] {
+        let value = session.eval(source).unwrap();
+        assert_eq!(number(&mut session, &value), num(17.0), "{source}");
+    }
     // The same formerly rejected nine-constant source is legitimate finite
     // generic dispatch; selector8 reaches the explicit default19.
     let value = session.eval("(case 8 (false nil 0 1 2 3 4 5 6) 17 19)").unwrap();
-    assert_eq!(number(&mut session, &value), 19.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(19.0));
     let closure = session
         .eval("(let [x 17] (case true false (fn [] 19) true (fn [] x) (fn [] 23)))")
         .unwrap();
     session.collect().unwrap();
     let value = session.invoke(&closure, &[]).unwrap();
-    assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), num(17.0));
 }
 
 #[test]
@@ -187,28 +244,28 @@ fn keyword_case_groups_follow_pinned_dispatch_and_preserve_selector_effects() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.eval("(def keyword-case-effects 0)").unwrap();
         let value = session.eval("(case (do (set! keyword-case-effects (inc keyword-case-effects)) :ns/b) (:a :ns/b) 17 :b 19 23)").unwrap();
-        assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+        assert_eq!(number(&mut session, &value), num(17.0));
         session.collect().unwrap();
         let value = session.eval("keyword-case-effects").unwrap();
-        assert_eq!(number(&mut session, &value), 1.0f64.to_bits());
+        assert_eq!(number(&mut session, &value), num(1.0));
         for selector in ["nil", "false", "17", "\"ns/b\"", "'ns/b"] {
             let value = session
                 .eval(&format!("(case {selector} (:a :ns/b) 17 :b 19 23)"))
                 .unwrap();
-            assert_eq!(number(&mut session, &value), 23.0f64.to_bits());
+            assert_eq!(number(&mut session, &value), num(23.0));
         }
         let value = session
             .eval(
                 "(with-redefs [suss.core/= (fn [a b] (throw :bad))] (case :ns/b (:a :ns/b) 17 23))",
             )
             .unwrap();
-        assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+        assert_eq!(number(&mut session, &value), num(17.0));
         let value = session
             .eval("(with-redefs [suss.core/keyword? (fn [x] false)] (case :ns/b (:a :ns/b) 17 23))")
             .unwrap();
-        assert_eq!(number(&mut session, &value), 23.0f64.to_bits());
+        assert_eq!(number(&mut session, &value), num(23.0));
         let value = session.eval("(with-redefs [suss.core/keyword? (fn [x] (throw :bad))] (case (do (set! keyword-case-effects 7) :a) 23))").unwrap();
-        assert_eq!(number(&mut session, &value), 23.0f64.to_bits());
+        assert_eq!(number(&mut session, &value), num(23.0));
         assert!(session.eval("(case :a (:a :b) 17 :a 19 23)").is_err());
         let values = (0..9)
             .map(|i| format!(":k{i}"))
@@ -217,7 +274,7 @@ fn keyword_case_groups_follow_pinned_dispatch_and_preserve_selector_effects() {
         let value = session
             .eval(&format!("(case :k8 ({values}) 17 23)"))
             .unwrap();
-        assert_eq!(number(&mut session, &value), 17.0f64.to_bits());
+        assert_eq!(number(&mut session, &value), num(17.0));
     }
 }
 
@@ -261,13 +318,13 @@ fn generic_case_many_mixed_constants_keep_order_selector_once_and_duplicate_guar
                   (do (set! large-case-arms (+ (* large-case-arms 10) 4)) 23)))
             "#);
             let value = caller.eval_with_macros(&source, &mut macros).unwrap();
-            assert_eq!(number(&mut caller, &value), result.to_bits());
+            assert_eq!(number(&mut caller, &value), num(result));
             caller.collect().unwrap();
             let snapshot = caller.eval("[large-case-selector large-case-arms large-case-order]").unwrap();
             let snapshot = bridge.read(&mut caller, &snapshot, 0..1).unwrap();
             let Kind::Vector(fields) = &snapshot.kind else { panic!("actual observations") };
-            assert_eq!(fields[0].kind, Kind::Number(1.0));
-            assert_eq!(fields[1].kind, Kind::Number(arm));
+            assert_eq!(fields[0].kind, Kind::Long(1));
+            assert_eq!(fields[1].kind, Kind::Long(arm as i64));
             let Kind::Vector(order) = &fields[2].kind else { panic!("actual order") };
             assert_eq!(order.len(), comparisons);
             let selected = read_forms(selector).unwrap().remove(0);
@@ -281,7 +338,8 @@ fn generic_case_many_mixed_constants_keep_order_selector_once_and_duplicate_guar
         for duplicate in [
             "(case :late (false nil 0 1 2 :hit \"seven\" true :late) 17 :late 19 23)",
             "(case :missing (false nil 0 1 2 :hit \"seven\" true :late) 17 nil 19 23)",
-            "(case 0 (false nil 0 1 2 :hit \"seven\" true -0.0) 17 23)",
+            // Clojure: long 0 and double -0.0 are distinct constants, so repeat 0.
+            "(case 0 (false nil 0 1 2 :hit \"seven\" true 0) 17 23)",
         ] {
             let source = format!("(def large-case-ghost 99) {duplicate}");
             let before = caller.stats();
@@ -322,12 +380,12 @@ fn generic_case_late_equality_throw_retains_prefix_and_restores_live_binding() {
             else { panic!("actual late equality callback must throw") };
         caller.collect().unwrap();
         let bridge = FormBridge::new(&mut caller).unwrap();
-        assert_eq!(bridge.read(&mut caller, &payload, 0..1).unwrap().kind, Kind::Number(91.0));
+        assert_eq!(bridge.read(&mut caller, &payload, 0..1).unwrap().kind, Kind::Long(91));
         let snapshot = caller.eval("[late-case-selector late-case-arms late-case-order (identical? late-case-original-eq suss.core/=)]").unwrap();
         let snapshot = bridge.read(&mut caller, &snapshot, 0..1).unwrap();
         let Kind::Vector(fields) = &snapshot.kind else { panic!("actual observations") };
-        assert_eq!(fields[0].kind, Kind::Number(1.0));
-        assert_eq!(fields[1].kind, Kind::Number(0.0));
+        assert_eq!(fields[0].kind, Kind::Long(1));
+        assert_eq!(fields[1].kind, Kind::Long(0));
         assert_eq!(fields[3].kind, Kind::Bool(true));
         let expected = read_forms("[false nil 0 1 2 :hit \"seven\" true :late]").unwrap().remove(0);
         // Span/reader metadata are not part of comparison effects; retain all values/order.
@@ -336,7 +394,7 @@ fn generic_case_late_equality_throw_retains_prefix_and_restores_live_binding() {
         assert_eq!(order.len(), expected.len());
         for (actual, expected) in order.iter().zip(expected.iter()) { assert_eq!(actual.kind, expected.kind); }
         let value = caller.eval_with_macros("(case :late (false nil 0 1 2 :hit \"seven\" true :late) 42 0)", &mut macros).unwrap();
-        assert_eq!(number(&mut caller, &value), 42.0f64.to_bits());
+        assert_eq!(number(&mut caller, &value), num(42.0));
         assert_eq!(caller.options().fuel_per_operation, caller_fuel);
     }
 }

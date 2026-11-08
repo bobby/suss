@@ -1,24 +1,44 @@
 //! Dynamic scope executes in the persistent ABI runtime; no source replay.
 use suss_cli::portable_session::{Session, SessionError, SessionValue};
-use wasmtime::Val;
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
+fn number(session: &mut Session, value: &SessionValue) -> Number {
     session
         .inspect(value, |mut store, value| {
-            let fields = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap()
-                .fields(&mut store)?
-                .collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            Ok(*bits)
+            exact_number(&mut store, &value)
         })
         .unwrap()
 }
-fn eval(session: &mut Session, source: &str) -> u64 {
+fn eval(session: &mut Session, source: &str) -> Number {
     let value = session.eval(source).unwrap();
     number(session, &value)
 }
@@ -30,28 +50,28 @@ fn binding_initializers_are_parallel_and_nested_scopes_restore_current_values() 
         .unwrap();
     assert_eq!(
         eval(&mut s, "(binding [*x* 7 *y* *x*] (+ (* *x* 10) *y*))"),
-        71.0f64.to_bits()
+        num(71.0)
     );
-    assert_eq!(eval(&mut s, "*x*"), 1.0f64.to_bits());
-    assert_eq!(eval(&mut s, "*y*"), 2.0f64.to_bits());
+    assert_eq!(eval(&mut s, "*x*"), num(1.0));
+    assert_eq!(eval(&mut s, "*y*"), num(2.0));
     assert_eq!(
         eval(
             &mut s,
             "(binding [*x* 2] (+ (* (binding [*x* 7] *x*) 10) *x*))"
         ),
-        72.0f64.to_bits()
+        num(72.0)
     );
     assert_eq!(
         eval(&mut s, "(binding [*x* 7 *x* 9] *x*)"),
-        9.0f64.to_bits()
+        num(9.0)
     );
-    assert_eq!(eval(&mut s, "*x*"), 1.0f64.to_bits());
+    assert_eq!(eval(&mut s, "*x*"), num(1.0));
     assert_eq!(
         eval(
             &mut s,
             "(binding [*x* nil *y* false] (+ (if *x* 1 10) (if *y* 2 20)))"
         ),
-        30.0f64.to_bits()
+        num(30.0)
     );
 }
 
@@ -62,7 +82,7 @@ fn binding_is_visible_to_old_functions_but_escaped_readers_do_not_capture_scope(
         .unwrap();
     assert_eq!(
         eval(&mut s, "(binding [*value* 7] (read-value))"),
-        7.0f64.to_bits()
+        num(7.0)
     );
     let escaped = s.eval("(binding [*value* 7] (fn [] *value*))").unwrap();
     let captured = s
@@ -70,13 +90,13 @@ fn binding_is_visible_to_old_functions_but_escaped_readers_do_not_capture_scope(
         .unwrap();
     s.collect().unwrap();
     let result = s.invoke(&escaped, &[]).unwrap();
-    assert_eq!(number(&mut s, &result), 1.0f64.to_bits());
+    assert_eq!(number(&mut s, &result), num(1.0));
     let result = s.invoke(&captured, &[]).unwrap();
-    assert_eq!(number(&mut s, &result), 7.0f64.to_bits());
+    assert_eq!(number(&mut s, &result), num(7.0));
     s.eval("(def ^:dynamic *value* 42)").unwrap();
     s.collect().unwrap();
     let result = s.invoke(&escaped, &[]).unwrap();
-    assert_eq!(number(&mut s, &result), 42.0f64.to_bits());
+    assert_eq!(number(&mut s, &result), num(42.0));
 }
 
 #[test]
@@ -88,29 +108,29 @@ fn original_values_are_snapshotted_before_initializers_and_failed_initializers_k
             &mut s,
             "(binding [*value* (do (set! *value* 2) 7)] *value*)"
         ),
-        7.0f64.to_bits()
+        num(7.0)
     );
-    assert_eq!(eval(&mut s, "*value*"), 1.0f64.to_bits());
+    assert_eq!(eval(&mut s, "*value*"), num(1.0));
     assert_eq!(
         eval(
             &mut s,
             "(try (binding [*value* (do (set! *value* 2) (throw 7))] 42) (catch :default error *value*))"
         ),
-        2.0f64.to_bits()
+        num(2.0)
     );
-    assert_eq!(eval(&mut s, "(set! *value* 1)"), 1.0f64.to_bits());
+    assert_eq!(eval(&mut s, "(set! *value* 1)"), num(1.0));
     assert_eq!(
         eval(
             &mut s,
             "(binding [*value* 7] (try (binding [*value* (do (set! *value* 8) (throw 9))] 42) (catch :default error *value*)))"
         ),
-        8.0f64.to_bits()
+        num(8.0)
     );
-    assert_eq!(eval(&mut s, "*value*"), 1.0f64.to_bits());
+    assert_eq!(eval(&mut s, "*value*"), num(1.0));
     s.eval("(binding [*value* 7] (set! *value* 9))").unwrap();
-    assert_eq!(eval(&mut s, "*value*"), 1.0f64.to_bits());
+    assert_eq!(eval(&mut s, "*value*"), num(1.0));
     s.eval("(binding [*value* 7] (def *value* 9))").unwrap();
-    assert_eq!(eval(&mut s, "*value*"), 1.0f64.to_bits());
+    assert_eq!(eval(&mut s, "*value*"), num(1.0));
 }
 
 #[test]
@@ -122,23 +142,23 @@ fn binding_cleanup_restores_after_throw_and_runs_inside_finally_before_outer_han
             &mut s,
             "(try (binding [*value* 7] (throw *value*)) (catch :default error (+ (* error 10) *value*)))"
         ),
-        71.0f64.to_bits()
+        num(71.0)
     );
     assert_eq!(
         eval(
             &mut s,
             "(try (binding [*value* 7] (try (throw 42) (finally (def seen *value*)))) (catch :default error (+ seen *value*)))"
         ),
-        8.0f64.to_bits()
+        num(8.0)
     );
     assert_eq!(
         eval(
             &mut s,
             "(try (binding [*value* 7] (try (throw 9) (finally (throw *value*)))) (catch :default error (+ (* error 10) *value*)))"
         ),
-        71.0f64.to_bits()
+        num(71.0)
     );
-    assert_eq!(eval(&mut s, "*value*"), 1.0f64.to_bits());
+    assert_eq!(eval(&mut s, "*value*"), num(1.0));
 }
 
 #[test]
@@ -147,21 +167,21 @@ fn with_redefs_keeps_macro_calls_and_rebinds_actual_function_values() {
     s.eval("(def ordinary (fn [] 1)) (def plain 1)").unwrap();
     assert_eq!(
         eval(&mut s, "(with-redefs [ordinary (fn [] 42)] (ordinary))"),
-        42.0f64.to_bits()
+        num(42.0)
     );
-    assert_eq!(eval(&mut s, "(ordinary)"), 1.0f64.to_bits());
+    assert_eq!(eval(&mut s, "(ordinary)"), num(1.0));
     // The pin warns for plain vars but executes them; do not impose JVM rules.
-    assert_eq!(eval(&mut s, "(binding [plain 7] plain)"), 7.0f64.to_bits());
-    assert_eq!(eval(&mut s, "plain"), 1.0f64.to_bits());
+    assert_eq!(eval(&mut s, "(binding [plain 7] plain)"), num(7.0));
+    assert_eq!(eval(&mut s, "plain"), num(1.0));
     assert_eq!(
         eval(&mut s, "(with-redefs [+ (fn [x y] 42)] (+ 1 2))"),
-        3.0f64.to_bits()
+        num(3.0)
     );
     assert_eq!(
         eval(&mut s, "((with-redefs [+ (fn [x y] 42)] +) 1 2)"),
-        42.0f64.to_bits()
+        num(42.0)
     );
-    assert_eq!(eval(&mut s, "(+ 1 2)"), 3.0f64.to_bits());
+    assert_eq!(eval(&mut s, "(+ 1 2)"), num(3.0));
 }
 
 #[test]
@@ -186,7 +206,7 @@ fn malformed_binding_and_assignment_fail_locally_without_publishing_declarations
         assert_eq!(s.stats().binding_cells, before, "{source}");
     }
     assert!(matches!(s.eval("leaked"), Err(SessionError::Compile(_))));
-    assert_eq!(eval(&mut s, "*value*"), 1.0f64.to_bits());
+    assert_eq!(eval(&mut s, "*value*"), num(1.0));
 }
 
 #[test]
@@ -202,11 +222,11 @@ fn fuel_traps_do_not_leak_dynamic_values_into_the_next_prompt_or_saved_function(
         Err(SessionError::Trap(_))
     ));
     s.set_operation_fuel(50_000);
-    assert_eq!(eval(&mut s, "*value*"), 1.0f64.to_bits());
+    assert_eq!(eval(&mut s, "*value*"), num(1.0));
     s.set_operation_fuel(5_000);
     assert!(matches!(s.invoke(&saved, &[]), Err(SessionError::Trap(_))));
     s.set_operation_fuel(50_000);
-    assert_eq!(eval(&mut s, "*value*"), 1.0f64.to_bits());
+    assert_eq!(eval(&mut s, "*value*"), num(1.0));
 }
 
 #[test]
@@ -221,12 +241,12 @@ fn fuel_interruption_during_frame_pop_restores_pre_initializer_snapshot() {
         s.set_operation_fuel(fuel);
         let result = s.eval("(binding [*value* (do (set! *value* 2) 7)] (set! entered true) 42)");
         s.set_operation_fuel(50_000);
-        let entered = eval(&mut s, "(if entered 1 0)") == 1.0f64.to_bits();
+        let entered = eval(&mut s, "(if entered 1 0)") == num(1.0);
         if entered {
             if matches!(result, Err(SessionError::Trap(_))) {
                 interrupted += 1;
             }
-            assert_eq!(eval(&mut s, "*value*"), 1.0f64.to_bits(), "fuel {fuel}");
+            assert_eq!(eval(&mut s, "*value*"), num(1.0), "fuel {fuel}");
         }
     }
     assert!(interrupted > 0, "actually interrupt after body entry");
@@ -245,12 +265,12 @@ fn nested_multi_target_pop_is_restartable_at_every_fuel_boundary() {
         s.set_operation_fuel(fuel);
         let result = s.eval("(binding [*x* (do (set! *x* 3) 7) *y* (do (set! *y* 4) 8)] (binding [*x* (do (set! *x* 9) 11) *y* (do (set! *y* 10) 12) *x* 13] (set! entered true) 42))");
         s.set_operation_fuel(50_000);
-        if eval(&mut s, "(if entered 1 0)") == 1.0f64.to_bits() {
+        if eval(&mut s, "(if entered 1 0)") == num(1.0) {
             if matches!(result, Err(SessionError::Trap(_))) {
                 interrupted += 1;
             }
-            assert_eq!(eval(&mut s, "*x*"), 1.0f64.to_bits(), "x at fuel {fuel}");
-            assert_eq!(eval(&mut s, "*y*"), 2.0f64.to_bits(), "y at fuel {fuel}");
+            assert_eq!(eval(&mut s, "*x*"), num(1.0), "x at fuel {fuel}");
+            assert_eq!(eval(&mut s, "*y*"), num(2.0), "y at fuel {fuel}");
         }
     }
     assert!(interrupted > 0);
@@ -267,8 +287,8 @@ fn closure_values_and_thrown_closures_survive_frame_restoration_and_gc() {
     };
     s.collect().unwrap();
     let value = s.invoke(&replacement, &[]).unwrap();
-    assert_eq!(number(&mut s, &value), 42.0f64.to_bits());
+    assert_eq!(number(&mut s, &value), num(42.0));
     let value = s.invoke(&thrown, &[]).unwrap();
-    assert_eq!(number(&mut s, &value), 7.0f64.to_bits());
-    assert_eq!(eval(&mut s, "(*f*)"), 1.0f64.to_bits());
+    assert_eq!(number(&mut s, &value), num(7.0));
+    assert_eq!(eval(&mut s, "(*f*)"), num(1.0));
 }

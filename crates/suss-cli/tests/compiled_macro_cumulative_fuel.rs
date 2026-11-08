@@ -35,15 +35,15 @@ fn fuel_failure(error: SessionError) {
     );
 }
 
-fn number(session: &mut Session, value: &suss_compile::portable_session::SessionValue) -> u64 {
+fn number(session: &mut Session, value: &suss_compile::portable_session::SessionValue) -> i64 {
     session
-        .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [wasmtime::Val::F64(bits)] = fields.as_slice() else {
-                panic!("expected the portable Number representation")
+        .inspect(value, |store, value| {
+            let Some(suss_compile::portable_session::RuntimeNumber::Long(long)) =
+                suss_compile::portable_session::runtime_number(store, &value)?
+            else {
+                panic!("expected a portable long")
             };
-            Ok(*bits)
+            Ok(long)
         })
         .unwrap()
 }
@@ -78,14 +78,14 @@ fn macros_cannot_mutate_transported_metadata_storage() {
         let mut macros = CompiledMacros::new().unwrap();
         macros.define(OBSERVE).unwrap();
         let first = caller.eval_with_macros("(inspect-audit nil)", &mut macros).unwrap();
-        assert_eq!(number(&mut caller, &first), 17.0f64.to_bits());
+        assert_eq!(number(&mut caller, &first), 17);
         assert!(caller.eval_with_macros("(inspect-audit 99)", &mut macros).is_err(),
             "a macro must not reach the backing storage of transported metadata");
         caller.collect().unwrap();
         let target = caller.eval("review-metadata-target").unwrap();
-        assert_eq!(number(&mut caller, &target), 0.0f64.to_bits());
+        assert_eq!(number(&mut caller, &target), 0);
         let again = caller.eval_with_macros("(do (inspect-audit nil))", &mut macros).unwrap();
-        assert_eq!(number(&mut caller, &again), 17.0f64.to_bits());
+        assert_eq!(number(&mut caller, &again), 17);
     }
 }
 
@@ -99,7 +99,7 @@ fn independent_macro_calls_in_one_fragment_share_fuel_and_next_repl_input_recove
     // A single call establishes that each expansion is comfortably below the
     // configured budget. Keep that exact setting for the multi-call input.
     let one = repl.eval_with_macros("(cheap 7)", &mut macros).unwrap();
-    assert_eq!(number(&mut repl, &one), 7.0f64.to_bits());
+    assert_eq!(number(&mut repl, &one), 7);
 
     // Every macro call is cheap on its own, while their aggregate work exceeds
     // one operation budget. Resetting fuel at each transformer root would let
@@ -116,7 +116,7 @@ fn independent_macro_calls_in_one_fragment_share_fuel_and_next_repl_input_recove
     );
     // A later REPL input receives the same configured budget and remains usable.
     let recovered = repl.eval_with_macros("(cheap 42)", &mut macros).unwrap();
-    assert_eq!(number(&mut repl, &recovered), 42.0f64.to_bits());
+    assert_eq!(number(&mut repl, &recovered), 42);
 }
 
 #[test]
@@ -131,13 +131,13 @@ fn recursive_macro_reexpansion_does_not_reset_the_fragment_budget() {
     // A shallow chain is below the limit; one deeper chain contains many
     // individually small re-expansions in the same source operation.
     let shallow = repl.eval_with_macros("(descend 1)", &mut macros).unwrap();
-    assert_eq!(number(&mut repl, &shallow), 42.0f64.to_bits());
+    assert_eq!(number(&mut repl, &shallow), 42);
     fuel_failure(
         repl.eval_with_macros("(descend 512)", &mut macros)
             .unwrap_err(),
     );
     let recovered = repl.eval_with_macros("(descend 1)", &mut macros).unwrap();
-    assert_eq!(number(&mut repl, &recovered), 42.0f64.to_bits());
+    assert_eq!(number(&mut repl, &recovered), 42);
 }
 
 #[test]
@@ -167,14 +167,14 @@ fn source_metadata_observer_and_nonobserver_survive_macro_input_and_result_trans
                 &mut macros,
             )
             .unwrap();
-        assert_eq!(number(&mut repl, &ignored), 42.0f64.to_bits());
+        assert_eq!(number(&mut repl, &ignored), 42);
 
         // Explicit nested argument metadata remains observable to a macro that
         // does not inspect the implicit caller form.
         let child_metadata = repl
             .eval_with_macros("(observe-argument ^{:payload 19} (+ 40 2))", &mut macros)
             .unwrap();
-        assert_eq!(number(&mut repl, &child_metadata), 19.0f64.to_bits());
+        assert_eq!(number(&mut repl, &child_metadata), 19);
     }
 }
 
@@ -212,7 +212,7 @@ fn interrupted_macro_expansion_recovers_for_repl_and_aot_with_same_fuel_setting(
     let warm = repl
         .eval_with_macros("(recover-value 0)", &mut macros)
         .unwrap();
-    assert_eq!(number(&mut repl, &warm), 2.0f64.to_bits());
+    assert_eq!(number(&mut repl, &warm), 2);
 
     let interrupt = macros.interrupt_handle();
     let stop_interrupts = std::sync::Arc::new(AtomicBool::new(false));
@@ -238,7 +238,7 @@ fn interrupted_macro_expansion_recovers_for_repl_and_aot_with_same_fuel_setting(
     let recovered = repl
         .eval_with_macros("(recover-value 40)", &mut macros)
         .unwrap();
-    assert_eq!(number(&mut repl, &recovered), 42.0f64.to_bits());
+    assert_eq!(number(&mut repl, &recovered), 42);
     // Exercise the recovered Macro session through the public fragment->AOT
     // path and execute the resulting component, again without changing fuel.
     let source = "(ns user) (def calculate (fn [] (recover-value 40)))";
@@ -295,7 +295,7 @@ fn exhausted_expansion_preserves_effects_already_executed_in_the_macro_store() {
     let first = repl
         .eval_with_macros("(record-effect 7)", &mut macros)
         .unwrap();
-    assert_eq!(number(&mut repl, &first), 7.0f64.to_bits());
+    assert_eq!(number(&mut repl, &first), 7);
     let calls = (0..32)
         .map(|_| "(record-effect 1)")
         .collect::<Vec<_>>()
@@ -309,13 +309,13 @@ fn exhausted_expansion_preserves_effects_already_executed_in_the_macro_store() {
         .unwrap();
     assert_eq!(
         number(&mut repl, &observed),
-        1.0f64.to_bits(),
+        1,
         "the failed operation must actually execute an effect and retain it"
     );
     let recovered = repl
         .eval_with_macros("(record-effect 42)", &mut macros)
         .unwrap();
-    assert_eq!(number(&mut repl, &recovered), 42.0f64.to_bits());
+    assert_eq!(number(&mut repl, &recovered), 42);
 }
 
 
@@ -332,7 +332,7 @@ fn infinite_lazy_expanded_result_exhausts_without_publication_and_preserves_effe
         macros.set_operation_fuel(2_000_000);
         caller.eval("(def lazy-stable 7)").unwrap();
         let warm = caller.eval_with_macros("(lazy-recover)", &mut macros).unwrap();
-        assert_eq!(number(&mut caller, &warm), 42.0f64.to_bits());
+        assert_eq!(number(&mut caller, &warm), 42);
         let source = "(def lazy-unpublished 99) (lazy-spin)";
         let start = source.find("(lazy-spin)").unwrap();
         let before = caller.stats();
@@ -348,14 +348,14 @@ fn infinite_lazy_expanded_result_exhausts_without_publication_and_preserves_effe
         let missing = caller.eval("lazy-unpublished").unwrap_err();
         assert!(missing.to_string().contains("Unresolved"), "{missing}");
         let stable = caller.eval("lazy-stable").unwrap();
-        assert_eq!(number(&mut caller, &stable), 7.0f64.to_bits());
+        assert_eq!(number(&mut caller, &stable), 7);
         // 12 proves ordered transformer effect 1 then thunk effect (1*10)+2.
         // Prior Macro effects survive; Runtime compilation is not published.
         let effects = caller.eval_with_macros("(lazy-effects)", &mut macros).unwrap();
-        assert_eq!(number(&mut caller, &effects), 12.0f64.to_bits());
+        assert_eq!(number(&mut caller, &effects), 12);
         caller.collect().unwrap();
         let recovered = caller.eval_with_macros("(lazy-recover)", &mut macros).unwrap();
-        assert_eq!(number(&mut caller, &recovered), 42.0f64.to_bits());
+        assert_eq!(number(&mut caller, &recovered), 42);
     }
 }
 

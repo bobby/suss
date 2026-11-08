@@ -18,7 +18,10 @@ fn assert_shared(label: &str, actual: &Form) {
         let kind = match value {
             serde_json::Value::Null => Kind::Nil,
             serde_json::Value::Bool(value) => Kind::Bool(*value),
-            serde_json::Value::Number(value) => Kind::Number(value.as_f64().unwrap()),
+            serde_json::Value::Number(value) => match value.as_i64() {
+                Some(value) => Kind::Long(value),
+                None => Kind::Number(value.as_f64().unwrap()),
+            },
             serde_json::Value::String(value) => Kind::String(value.encode_utf16().collect()),
             serde_json::Value::Array(values) if values.len() == 2 => {
                 match values[0].as_str().unwrap() {
@@ -86,9 +89,9 @@ fn compiled_source_macro_environment_retains_lexical_initializer_and_shadow_with
         for index in [2, 6] {
             assert!(matches!(&items[index].kind, Kind::Symbol(symbol) if symbol.name == "x"));
         }
-        assert!(matches!(&items[3].kind, Kind::Number(9.0)));
+        assert!(matches!(&items[3].kind, Kind::Long(9)));
         let effects = session.eval("effects").unwrap();
-        assert!(matches!(&read(&mut session, &effects).kind, Kind::Number(1.0)));
+        assert!(matches!(&read(&mut session, &effects).kind, Kind::Long(1)));
     }
 }
 
@@ -114,7 +117,7 @@ fn compiled_source_macro_environment_tracks_function_scopes_and_implicit_argumen
         let Kind::Vector(items) = result.into_parts().2 else { panic!("function facts") };
         assert_eq!(items.len(), 3);
         assert!(matches!(&items[0].kind, Kind::Keyword(keyword) if keyword.name == "return"));
-        assert!(matches!(&items[1].kind, Kind::Number(1.0)));
+        assert!(matches!(&items[1].kind, Kind::Long(1)));
         assert!(matches!(&items[2].kind, Kind::Keyword(keyword) if keyword.name == "arg"));
         let value = session.eval_with_macros("(let [x 7] (scope-facts x a b))", &mut macros).unwrap();
         let result = read(&mut session, &value);
@@ -123,8 +126,8 @@ fn compiled_source_macro_environment_tracks_function_scopes_and_implicit_argumen
         assert_eq!(items.len(), 4);
         assert!(matches!(&items[0].kind, Kind::Symbol(symbol) if symbol.name == "suss-oracle.source-environment-runner"));
         assert!(matches!(&items[1].kind, Kind::Keyword(keyword) if keyword.name == "let"));
-        assert!(matches!(&items[2].kind, Kind::Number(2.0)));
-        assert!(matches!(&items[3].kind, Kind::Number(4.0)));
+        assert!(matches!(&items[2].kind, Kind::Long(2)));
+        assert!(matches!(&items[3].kind, Kind::Long(4)));
     }
 }
 

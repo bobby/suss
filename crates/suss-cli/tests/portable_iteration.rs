@@ -1,21 +1,37 @@
-use suss_cli::portable_session::{Session, SessionValue};
-use wasmtime::Val;
+use suss_cli::portable_session::{RuntimeNumber, Session, SessionValue};
 
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+fn number(session: &mut Session, value: &SessionValue) -> RuntimeNumber {
     session
-        .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            Ok(*bits)
+        .inspect(value, |store, value| {
+            Ok(suss_cli::portable_session::runtime_number(store, &value)?.expect("Number layout"))
         })
         .unwrap()
 }
-fn eval_number(session: &mut Session, source: &str) -> u64 {
+fn eval_number(session: &mut Session, source: &str) -> RuntimeNumber {
     let value = session.eval(source).unwrap();
     number(session, &value)
+}
+
+/// The observation of a runtime number, distinguishing a long from a double.
+fn number_json(number: RuntimeNumber) -> serde_json::Value {
+    match number {
+        RuntimeNumber::Long(value) => serde_json::json!({"tag":"long", "value":value}),
+        RuntimeNumber::Double(value) => {
+            serde_json::json!({"tag":"f64", "bits":format!("{:016x}", value.to_bits())})
+        }
+    }
+}
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_number(expected: &serde_json::Value) -> serde_json::Value {
+    if expected["tag"] == "f64" {
+        let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+        let value = f64::from_bits(bits);
+        if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+            return serde_json::json!({"tag":"long", "value":value as i64});
+        }
+    }
+    expected.clone()
 }
 fn boolean(session: &mut Session, value: &SessionValue) -> bool {
     session
@@ -52,11 +68,11 @@ fn iteration_contract_match_independently_encoded_primary_observations() {
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "bool" => serde_json::json!({"tag":"bool", "value":boolean(&mut session, &value)}),
             "f64" => {
-                serde_json::json!({"tag":"f64", "bits":format!("{:016x}",number(&mut session, &value))})
+                number_json(number(&mut session, &value))
             }
             tag => panic!("unexpected iteration observation tag {tag}"),
         };
-        assert_eq!(actual, case["expected"], "{id}: {source}");
+        assert_eq!(actual, clojure_number(&case["expected"]), "{id}: {source}");
         session.collect().unwrap();
     }
 }
@@ -73,16 +89,16 @@ fn retained_iterators_and_reverse_views_survive_gc_and_explicit_adapter_errors()
     session.collect().unwrap();
     assert_eq!(
         eval_number(&mut session, "(.next retained-iterator)"),
-        17.0f64.to_bits()
+        RuntimeNumber::Long(17)
     );
     session.collect().unwrap();
     assert_eq!(
         eval_number(&mut session, "(.next retained-iterator)"),
-        19.0f64.to_bits()
+        RuntimeNumber::Long(19)
     );
     assert_eq!(
         eval_number(&mut session, "(first retained-reverse)"),
-        19.0f64.to_bits()
+        RuntimeNumber::Long(19)
     );
     let boundary: serde_json::Value = serde_json::from_str(include_str!(
         "../../../tests/oracle/iteration-length-boundary.json"
@@ -107,11 +123,11 @@ fn retained_iterators_and_reverse_views_survive_gc_and_explicit_adapter_errors()
         session.collect().unwrap();
         assert_eq!(
             eval_number(&mut session, "(count iteration-array)"),
-            2.0f64.to_bits()
+            RuntimeNumber::Long(2)
         );
         assert_eq!(
             eval_number(&mut session, "(first retained-reverse)"),
-            19.0f64.to_bits()
+            RuntimeNumber::Long(19)
         );
     }
     session
@@ -120,14 +136,14 @@ fn retained_iterators_and_reverse_views_survive_gc_and_explicit_adapter_errors()
     session.collect().unwrap();
     assert_eq!(
         eval_number(&mut session, "(first retained-reverse)"),
-        23.0f64.to_bits()
+        RuntimeNumber::Long(23)
     );
     assert_eq!(
         eval_number(&mut session, "(.next retained-iterator)"),
-        29.0f64.to_bits()
+        RuntimeNumber::Long(29)
     );
     assert_eq!(
         eval_number(&mut session, "(count retained-reverse)"),
-        2.0f64.to_bits()
+        RuntimeNumber::Long(2)
     );
 }

@@ -113,10 +113,10 @@ fn emitted_forms_follow_edited_nodes() {
     fn edit(value: &Value) -> Value {
         match value {
             Value::Map(map) if map.get(&Value::keyword("op")) == Some(&Value::keyword("const"))
-                && map.get(&Value::keyword("val")) == Some(&Value::Number(1.0)) =>
+                && map.get(&Value::keyword("val")) == Some(&Value::Long(1)) =>
             {
                 let mut map = map.clone();
-                map.insert(Value::keyword("val"), Value::Number(2.0));
+                map.insert(Value::keyword("val"), Value::Long(2));
                 Value::Map(map)
             }
             Value::Map(map) => Value::Map(map.iter().map(|(k, v)| (k.clone(), edit(v))).collect()),
@@ -154,11 +154,11 @@ fn cli_prints_documents_that_suss_reads() {
         String::from_utf8(output.stdout).unwrap()
     };
     let forms = read_one(&run("forms"), &Options::default()).unwrap();
-    assert_eq!(get(&forms, "suss.analyzer/version"), &Value::Number(1.0));
+    assert_eq!(get(&forms, "suss.analyzer/version"), &Value::Long(1));
     assert_eq!(get(&forms, "suss.analyzer/kind"), &Value::keyword("forms"));
     let Value::Vector(trees) = get(&forms, "suss/source") else { panic!("trees") };
-    assert_eq!(get(&trees[0], "line"), &Value::Number(8.0));
-    assert_eq!(get(&trees[0], "column"), &Value::Number(1.0));
+    assert_eq!(get(&trees[0], "line"), &Value::Long(8));
+    assert_eq!(get(&trees[0], "column"), &Value::Long(1));
     let text = run("hir");
     let document = read_one(&text, &Options::default()).unwrap();
     assert_eq!(get(&document, "suss.analyzer/kind"), &Value::keyword("hir"));

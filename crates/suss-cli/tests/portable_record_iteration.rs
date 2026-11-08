@@ -90,15 +90,15 @@ fn record_iterator_survives_with_only_host_handle_and_mutates_across_fragments()
             .unwrap();
         session.collect().unwrap();
         let advance = session.eval("(fn [iter] (val (.next iter)))").unwrap();
-        for expected in [17.0_f64, 23.0] {
+        for expected in [17_i64, 23] {
             let result = session.invoke(&advance, &[&iterator]).unwrap();
             session.collect().unwrap();
             let bridge = FormBridge::new(&mut session).unwrap();
             let decoded = bridge.read(&mut session, &result, 0..0).unwrap();
-            let Kind::Number(actual) = decoded.into_parts().2 else {
+            let Kind::Long(actual) = decoded.into_parts().2 else {
                 panic!("numeric record field")
             };
-            assert_eq!(actual.to_bits(), expected.to_bits());
+            assert_eq!(actual, expected);
         }
         let exhausted = session.eval("(fn [iter] (.hasNext iter))").unwrap();
         let result = session.invoke(&exhausted, &[&iterator]).unwrap();

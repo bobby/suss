@@ -8,7 +8,10 @@ fn tagged(form: &Form) -> serde_json::Value {
     match &form.kind {
         Kind::Bool(value) => serde_json::json!({"tag":"bool", "value":value}),
         Kind::Nil => serde_json::json!({"tag":"nil"}),
-        Kind::Number(n) => serde_json::json!({"tag":"f64", "bits":format!("{:016x}", n.to_bits())}),
+        // The pinned corpus tags every number "f64" (all integral); Clojure
+        // reads and returns each as a long, so only a long matches it.
+        Kind::Long(n) => serde_json::json!({"tag":"f64", "bits":format!("{:016x}", (*n as f64).to_bits())}),
+        Kind::Number(n) => serde_json::json!({"tag":if n.is_finite() && n.fract() == 0.0 && n.to_bits() != (-0.0f64).to_bits() { "double" } else { "f64" }, "bits":format!("{:016x}", n.to_bits())}),
         Kind::String(units) => serde_json::json!({"tag":"string", "units":units}),
         Kind::Symbol(symbol) => {
             serde_json::json!({"tag":"symbol", "namespace":symbol.namespace.as_ref().map(|name| serde_json::json!({"tag":"string", "units":name.encode_utf16().collect::<Vec<_>>()})).unwrap_or_else(|| serde_json::json!({"tag":"nil"})), "name":{"tag":"string", "units":symbol.name.encode_utf16().collect::<Vec<_>>()}})
@@ -118,26 +121,21 @@ fn compiled_macro_hamt_sequences_retain_metadata_old_descriptors_and_reject_fore
             assert!(
                 matches!(&meta[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "doc")
             );
-            assert!(matches!(&meta[1].kind, Kind::Number(7.0)));
+            assert!(matches!(&meta[1].kind, Kind::Long(7)));
         }
     }
 }
 
-fn number(session: &mut Session, source: &str) -> f64 {
+fn number(session: &mut Session, source: &str) -> i64 {
     let value = session.eval_privileged(source).unwrap();
     session
-        .inspect(&value, |mut store, value| {
-            let fields = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap()
-                .fields(&mut store)?
-                .collect::<Vec<_>>();
-            let [wasmtime::Val::F64(bits)] = fields.as_slice() else {
+        .inspect(&value, |store, value| {
+            let Some(suss_compile::portable_session::RuntimeNumber::Long(long)) =
+                suss_compile::portable_session::runtime_number(store, &value)?
+            else {
                 panic!("number")
             };
-            Ok(f64::from_bits(*bits))
+            Ok(long)
         })
         .unwrap()
 }
@@ -155,19 +153,19 @@ fn compiled_macro_hamt_sequences_grow_persistent_array_maps_with_symbol_collisio
         }
         session.collect().unwrap();
         for (source, expected) in [
-            ("(count old)", 8.0),
-            ("(count grown)", 20.0),
+            ("(count old)", 8),
+            ("(count grown)", 20),
             (
                 "(get grown (cljs.core/Symbol. nil \"key0\" \"key0\" 7 nil))",
-                100.0,
+                100,
             ),
             (
                 "(get grown (cljs.core/Symbol. nil \"key19\" \"key19\" 7 nil))",
-                119.0,
+                119,
             ),
             (
                 "(get old (cljs.core/Symbol. nil \"key19\" \"key19\" 7 nil) 999)",
-                999.0,
+                999,
             ),
         ] {
             assert_eq!(number(&mut session, source), expected, "{source}");

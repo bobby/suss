@@ -2,7 +2,37 @@
 //! Authored only; bootstrap regeneration and all native execution remain pending.
 use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
 use suss_compile::portable::resolve::Phase;
-use wasmtime::Val;
+
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
 const CORE: &str = include_str!("../../../runtime/core-import/suss/core.sus");
 const PROBE: &str = include_str!("../../../tests/oracle/fixtures/comparator-probe.sus");
 const IDS: &[&str] = &[
@@ -80,20 +110,9 @@ fn setup(phase: Phase) -> Session {
     session.collect().unwrap();
     session
 }
-fn bits(session: &mut Session, value: &SessionValue) -> u64 {
+fn bits(session: &mut Session, value: &SessionValue) -> Number {
     session
-        .inspect(value, |mut store, value| {
-            let object = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .expect("Number");
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            Ok(*bits)
-        })
+        .inspect(value, |mut store, value| exact_number(&mut store, &value))
         .unwrap()
 }
 #[test]
@@ -153,15 +172,15 @@ fn comparator_numeric_return_bits_errors_and_retained_capture_after_gc() {
         for (source, expected) in [
             (
                 "((fn->comparator (fn [_ _] -0.0)) 2 3)",
-                (-0.0_f64).to_bits(),
+                num(-0.0),
             ),
             (
                 "((fn->comparator (fn [_ _] ##Inf)) 2 3)",
-                f64::INFINITY.to_bits(),
+                num(f64::INFINITY),
             ),
             (
                 "((fn->comparator (fn [_ _] ##-Inf)) 2 3)",
-                f64::NEG_INFINITY.to_bits(),
+                num(f64::NEG_INFINITY),
             ),
         ] {
             let value = session.eval(source).unwrap();
@@ -172,7 +191,10 @@ fn comparator_numeric_return_bits_errors_and_retained_capture_after_gc() {
             .eval("((fn->comparator (fn [_ _] ##NaN)) 2 3)")
             .unwrap();
         session.collect().unwrap();
-        assert!(f64::from_bits(bits(&mut session, &value)).is_nan());
+        let Number::Double(nan) = bits(&mut session, &value) else {
+            panic!("a NaN double")
+        };
+        assert!(f64::from_bits(nan).is_nan());
         for (source, message) in [
             ("(compare 1 \"x\")", "Cannot compare 1 to x"),
             ("(compare false 0)", "Cannot compare false to 0"),
@@ -211,7 +233,7 @@ fn comparator_numeric_return_bits_errors_and_retained_capture_after_gc() {
                 })
                 .unwrap();
             let value = session.eval("(compare 2 3)").unwrap();
-            assert_eq!(bits(&mut session, &value), (-1.0_f64).to_bits());
+            assert_eq!(bits(&mut session, &value), num(-1.0));
         }
         session.eval("(def captured-cmp (let [v [17 23]] (fn->comparator (fn [x y] (- (+ (nth v 1) x) y)))))").unwrap();
         session.collect().unwrap();
@@ -220,6 +242,6 @@ fn comparator_numeric_return_bits_errors_and_retained_capture_after_gc() {
         session.collect().unwrap();
         let value = session.eval("(saved-cmp 2 3)").unwrap();
         session.collect().unwrap();
-        assert_eq!(bits(&mut session, &value), 22.0_f64.to_bits());
+        assert_eq!(bits(&mut session, &value), num(22.0));
     }
 }

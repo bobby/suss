@@ -3,27 +3,21 @@ use suss_cli::{
     portable_session::{Session, SessionError},
 };
 use suss_reader::forms::{Kind, read_forms};
-use wasmtime::Val;
 
 // Probes also inspect HAMT node structure, which is private to suss.core;
 // these core-internal checks use the host's privileged evaluation.
-fn number(session: &mut Session, source: &str) -> f64 {
+fn number(session: &mut Session, source: &str) -> i64 {
     let value = session
         .eval_privileged(source)
         .unwrap_or_else(|error| panic!("{source}: {error:?}"));
     session
-        .inspect(&value, |mut store, value| {
-            let fields = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap()
-                .fields(&mut store)?
-                .collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
+        .inspect(&value, |store, value| {
+            let Some(suss_compile::portable_session::RuntimeNumber::Long(long)) =
+                suss_compile::portable_session::runtime_number(store, &value)?
+            else {
                 panic!("Number layout")
             };
-            Ok(f64::from_bits(*bits))
+            Ok(long)
         })
         .unwrap()
 }
@@ -55,11 +49,11 @@ fn compiled_macro_hash_maps_transport_large_literals_in_both_phases_after_gc() {
             let mut pairs = entries
                 .chunks_exact(2)
                 .map(|pair| {
-                    let (Kind::Number(key), Kind::Number(value)) = (&pair[0].kind, &pair[1].kind)
+                    let (Kind::Long(key), Kind::Long(value)) = (&pair[0].kind, &pair[1].kind)
                     else {
                         panic!("Numeric map pair")
                     };
-                    assert_eq!(*value, *key + 100.0);
+                    assert_eq!(*value, *key + 100);
                     *key as usize
                 })
                 .collect::<Vec<_>>();
@@ -87,15 +81,15 @@ fn compiled_macro_hash_maps_preserve_old_roots_and_nil_entries_across_growth() {
         }
         session.collect().unwrap();
         for (source, expected) in [
-            ("(count original)", 33.0),
-            ("(get original 32)", 132.0),
-            ("(count changed)", 34.0),
-            ("(get changed 32)", 999.0),
-            ("(get changed nil)", 700.0),
-            ("(count removed)", 32.0),
-            ("(get removed 0 701)", 701.0),
-            ("(get removed nil 702)", 702.0),
-            ("(get original 0)", 100.0),
+            ("(count original)", 33),
+            ("(get original 32)", 132),
+            ("(count changed)", 34),
+            ("(get changed 32)", 999),
+            ("(get changed nil)", 700),
+            ("(count removed)", 32),
+            ("(get removed 0 701)", 701),
+            ("(get removed nil 702)", 702),
+            ("(get original 0)", 100),
         ] {
             assert_eq!(number(&mut session, source), expected, "{source}");
         }
@@ -104,14 +98,14 @@ fn compiled_macro_hash_maps_preserve_old_roots_and_nil_entries_across_growth() {
                 &mut session,
                 "(if (= original (assoc (dissoc original 0) 0 100)) 1 0)"
             ),
-            1.0
+            1
         );
         assert_eq!(
             number(
                 &mut session,
                 "(if (== (hash original) (hash (assoc (dissoc original 0) 0 100))) 1 0)"
             ),
-            1.0
+            1
         );
     }
 }
@@ -127,23 +121,23 @@ fn compiled_macro_hash_maps_resolve_collision_nodes_and_preserve_earlier_values(
             .join(" ");
         session.eval(&format!("(def collision-map {{{pairs}}}) (def updated (assoc collision-map (CollisionKey. 3) 999)) (def removed (dissoc updated (CollisionKey. 4)))")).unwrap();
         session.collect().unwrap();
-        assert_eq!(number(&mut session, "(count collision-map)"), 20.0);
+        assert_eq!(number(&mut session, "(count collision-map)"), 20);
         assert_eq!(
             number(&mut session, "(get collision-map (CollisionKey. 3))"),
-            103.0
+            103
         );
         assert_eq!(
             number(&mut session, "(get updated (CollisionKey. 3))"),
-            999.0
+            999
         );
         assert_eq!(
             number(&mut session, "(get removed (CollisionKey. 4) 888)"),
-            888.0
+            888
         );
-        assert_eq!(number(&mut session, "(count removed)"), 19.0);
+        assert_eq!(number(&mut session, "(count removed)"), 19);
         assert_eq!(
             number(&mut session, "(get removed (CollisionKey. 19))"),
-            119.0
+            119
         );
     }
 }
@@ -154,10 +148,10 @@ fn compiled_macro_hash_maps_transients_cross_array_boundary_and_close_after_pers
         session.set_operation_fuel(100_000_000);
         session.eval(&format!("(def old {}) (def edit (transient old)) (def grown (loop [m edit i 8] (if (< i 40) (recur (assoc! m i (+ i 100)) (+ i 1)) m))) (def finished (persistent! (dissoc! grown 3)))", literal(8))).unwrap();
         session.collect().unwrap();
-        assert_eq!(number(&mut session, "(count old)"), 8.0);
-        assert_eq!(number(&mut session, "(get old 3)"), 103.0);
-        assert_eq!(number(&mut session, "(count finished)"), 39.0);
-        assert_eq!(number(&mut session, "(get finished 39)"), 139.0);
+        assert_eq!(number(&mut session, "(count old)"), 8);
+        assert_eq!(number(&mut session, "(get old 3)"), 103);
+        assert_eq!(number(&mut session, "(count finished)"), 39);
+        assert_eq!(number(&mut session, "(get finished 39)"), 139);
         for source in [
             "(assoc! grown 50 150)",
             "(dissoc! grown 0)",
@@ -168,7 +162,7 @@ fn compiled_macro_hash_maps_transients_cross_array_boundary_and_close_after_pers
                 "{source}"
             );
         }
-        assert_eq!(number(&mut session, "(get finished 39)"), 139.0);
+        assert_eq!(number(&mut session, "(get finished 39)"), 139);
     }
 }
 
@@ -184,10 +178,13 @@ fn compiled_macro_hash_maps_match_fresh_pinned_observations_in_both_phases() {
             .unwrap();
         for case in corpus["cases"].as_array().unwrap() {
             session.collect().unwrap();
-            let actual = number(&mut session, case["source"].as_str().unwrap()).to_bits();
-            let expected =
-                u64::from_str_radix(case["expected"]["bits"].as_str().unwrap(), 16).unwrap();
-            assert_eq!(actual, expected, "{}", case["id"]);
+            // The pinned corpus records every (integral) result as f64 bits;
+            // Clojure returns each as a long, which `number` requires.
+            let actual = number(&mut session, case["source"].as_str().unwrap());
+            let expected = f64::from_bits(
+                u64::from_str_radix(case["expected"]["bits"].as_str().unwrap(), 16).unwrap(),
+            );
+            assert_eq!(actual as f64, expected, "{}", case["id"]);
         }
     }
 }
@@ -252,9 +249,9 @@ fn compiled_macro_hash_maps_validate_counts_flags_nodes_and_cycles() {
             panic!("map")
         };
         assert!(matches!(&entries[0].kind, Kind::Nil));
-        assert!(matches!(&entries[1].kind, Kind::Number(9.0)));
-        assert!(matches!(&entries[2].kind, Kind::Number(7.0)));
-        assert!(matches!(&entries[3].kind, Kind::Number(8.0)));
+        assert!(matches!(&entries[1].kind, Kind::Long(9)));
+        assert!(matches!(&entries[2].kind, Kind::Long(7)));
+        assert!(matches!(&entries[3].kind, Kind::Long(8)));
     }
 }
 
@@ -287,23 +284,23 @@ fn compiled_hash_map_deletion_crosses_collision_and_dense_boundaries_in_both_pha
         ] {
             assert_eq!(
                 number(&mut session, &format!("(if {source} 1 0)")),
-                1.0,
+                1,
                 "{source}"
             );
         }
         for (source, expected) in [
             (
                 "(.-cnt (aget (.-arr (.-root deletion-collision-old)) 1))",
-                20.0,
+                20,
             ),
             (
                 "(.-cnt (aget (.-arr (.-root deletion-collision-one)) 1))",
-                1.0,
+                1,
             ),
-            ("(.-cnt (.-root deletion-dense-old))", 32.0),
-            ("(.-cnt (.-root deletion-dense-eight))", 8.0),
-            ("(alength (.-arr (.-root deletion-dense-seven)))", 14.0),
-            ("(.-bitmap (.-root deletion-dense-seven))", -33_554_432.0),
+            ("(.-cnt (.-root deletion-dense-old))", 32),
+            ("(.-cnt (.-root deletion-dense-eight))", 8),
+            ("(alength (.-arr (.-root deletion-dense-seven)))", 14),
+            ("(.-bitmap (.-root deletion-dense-seven))", -33_554_432),
         ] {
             assert_eq!(number(&mut session, source), expected, "{source}");
         }

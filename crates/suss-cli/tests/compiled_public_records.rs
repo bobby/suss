@@ -100,12 +100,12 @@ fn public_record_field_and_metadata_values_decode_independently_after_gc() {
         assert_eq!(
             actual,
             Observation::Vector(vec![
-                Observation::Number(17.0_f64.to_bits()),
+                Observation::Long(17),
                 Observation::Bool(false),
                 Observation::Nil,
                 Observation::Map(vec![(keyword("tag"), keyword("record"))]),
                 Observation::Map(vec![(keyword("extra"), Observation::Nil)]),
-                Observation::Number(4.0_f64.to_bits()),
+                Observation::Long(4),
             ])
         );
         let value = session.eval("(let [changed (assoc observed-record :a 31) removed (dissoc observed-record :a)] [(.-a changed) (.-a observed-record) (meta changed) (meta removed) removed])").unwrap();
@@ -127,8 +127,8 @@ fn public_record_field_and_metadata_values_decode_independently_after_gc() {
         assert_eq!(
             actual,
             Observation::Vector(vec![
-                Observation::Number(31.0_f64.to_bits()),
-                Observation::Number(17.0_f64.to_bits()),
+                Observation::Long(31),
+                Observation::Long(17),
                 Observation::Map(vec![(keyword("tag"), keyword("record"))]),
                 Observation::Map(vec![(keyword("tag"), keyword("record"))]),
                 Observation::Map(vec![
@@ -170,7 +170,7 @@ fn public_record_custom_protocols_and_record_input_factory_decode_after_gc() {
             decoder.decode_session(&mut session, &value).unwrap(),
             Observation::Vector(vec![
                 // Pinned CLJS warns about duplicate ICounted and generated count wins.
-                Observation::Number(2.0_f64.to_bits()),
+                Observation::Long(2),
                 Observation::Bool(false),
                 Observation::Bool(true),
                 Observation::Nil,
@@ -178,7 +178,7 @@ fn public_record_custom_protocols_and_record_input_factory_decode_after_gc() {
                 Observation::Keyword(None, "old".encode_utf16().collect()),
                 // The record hash cache is a mutable field, private to its type (#278).
                 Observation::String("Mutable fields are private to their type".encode_utf16().collect()),
-                Observation::Number(73.0_f64.to_bits()),
+                Observation::Long(73),
             ])
         );
     }

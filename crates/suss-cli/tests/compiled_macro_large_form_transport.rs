@@ -26,8 +26,8 @@ fn metadata<'a>(form: &'a Form, name: &str) -> Option<&'a Form> {
     form.metadata.iter().find_map(|map| keyword_entry(map, name))
 }
 
-fn number(form: &Form) -> f64 {
-    let Kind::Number(value) = form.kind else { panic!("number: {form:?}") };
+fn number(form: &Form) -> i64 {
+    let Kind::Long(value) = form.kind else { panic!("number: {form:?}") };
     value
 }
 
@@ -40,15 +40,15 @@ fn items(form: &Form) -> &[Form] {
 
 /// The complete wide vector, with its marked element and its own metadata.
 fn assert_wide(vector: &Form) {
-    assert_eq!(number(metadata(vector, "arg-mark").expect("argument metadata")), 23.0);
+    assert_eq!(number(metadata(vector, "arg-mark").expect("argument metadata")), 23);
     let items = items(vector);
     assert_eq!(items.len(), WIDTH);
     for (index, item) in items.iter().enumerate() {
         if index == MARKED {
             assert!(matches!(&item.kind, Kind::Symbol(name) if name.name == "marker"));
-            assert_eq!(number(metadata(item, "leaf").expect("leaf metadata")), 91.0);
+            assert_eq!(number(metadata(item, "leaf").expect("leaf metadata")), 91);
         } else {
-            assert_eq!(item.kind, Kind::Number(index as f64), "index {index}");
+            assert_eq!(item.kind, Kind::Long(index as i64), "index {index}");
         }
     }
 }
@@ -98,20 +98,20 @@ fn large_macro_calls_transport_form_arguments_and_results_at_default_allowance()
         // &form metadata, reader position and children are the caller's.
         let facts = expand(&mut caller, "form-facts");
         let facts = items(&facts);
-        assert_eq!(number(&facts[0]), 17.0, "{phase} &form metadata");
-        assert_eq!(number(&facts[1]), 1.0, "{phase} &form :line");
+        assert_eq!(number(&facts[0]), 17, "{phase} &form metadata");
+        assert_eq!(number(&facts[1]), 1, "{phase} &form :line");
         // As in Clojure's MetaReader, the position is that of the leading `^`.
-        assert_eq!(number(&facts[2]), 1.0, "{phase} &form :column");
-        assert_eq!(number(&facts[3]), WIDTH as f64);
-        assert_eq!(number(&facts[4]), 23.0);
-        assert_eq!(number(&facts[5]), 91.0);
+        assert_eq!(number(&facts[2]), 1, "{phase} &form :column");
+        assert_eq!(number(&facts[3]), WIDTH as i64);
+        assert_eq!(number(&facts[4]), 23);
+        assert_eq!(number(&facts[5]), 91);
         // Identity across &form and the explicit argument is unspecified
         // (#276); only record that the comparison itself executed.
         assert!(matches!(facts[6].kind, Kind::Bool(_)));
 
         // Expanded-result transport of the whole &form, including metadata.
         let echoed = expand(&mut caller, "form-echo");
-        assert_eq!(number(metadata(&echoed, "call-mark").expect("call metadata")), 17.0);
+        assert_eq!(number(metadata(&echoed, "call-mark").expect("call metadata")), 17);
         let echoed = items(&echoed);
         assert!(matches!(&echoed[0].kind, Kind::Symbol(name) if name.name == "form-echo"));
         assert_wide(&echoed[1]);
@@ -119,15 +119,15 @@ fn large_macro_calls_transport_form_arguments_and_results_at_default_allowance()
         // &form reached only through a source macro expanded in the body.
         let indirect = expand(&mut caller, "form-indirect");
         let indirect = items(&indirect);
-        assert_eq!(number(&indirect[0]), 17.0, "{phase} indirect &form must not be elided");
-        assert_eq!(number(&indirect[1]), WIDTH as f64);
+        assert_eq!(number(&indirect[0]), 17, "{phase} indirect &form must not be elided");
+        assert_eq!(number(&indirect[1]), WIDTH as i64);
 
         // A macro that cannot read &form still receives its whole argument.
         let free = expand(&mut caller, "form-free");
-        assert_eq!(number(metadata(&free, "payload").expect("result metadata")), 41.0);
+        assert_eq!(number(metadata(&free, "payload").expect("result metadata")), 41);
         let free = items(&free);
         assert_wide(&free[0]);
-        assert_eq!(number(&free[1]), WIDTH as f64);
+        assert_eq!(number(&free[1]), WIDTH as i64);
 
         assert_eq!(suss_compile::portable::ExpansionHost::expansion_work_fuel(&macros), allowance);
     }

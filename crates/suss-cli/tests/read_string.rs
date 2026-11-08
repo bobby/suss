@@ -86,14 +86,14 @@ fn sessions() -> Vec<(Session, CompiledMacros)> {
 }
 
 /// Structural equality as the Rust conformance test checks it: lists and
-/// vectors differ, numbers compare with their sign and NaN equals NaN, and
-/// metadata must be equal at every level.
+/// vectors differ, numbers compare with their kind (long or double) and sign
+/// and NaN equals NaN, and metadata must be equal at every level.
 const SAME: &str = "(defn same? [a b]
   (and (= (meta a) (meta b))
        (cond
          (number? a) (and (number? b)
                           (or (and (not= a a) (not= b b))
-                              (and (== a b) (== (/ 1 a) (/ 1 b)))))
+                              (and (== a b) (= (str a) (str b)))))
          (map? a) (and (map? b) (= (count a) (count b))
                        (every? (fn [e] (and (contains? b (key e)) (same? (val e) (get b (key e))))) a))
          (set? a) (and (set? b) (= a b))
@@ -131,8 +131,8 @@ fn both_readers_agree_with_the_compilers_reader_on_the_shared_corpus() {
 }
 
 /// The 0-based UTF-16 offset of a byte offset in `source`.
-fn units(source: &str, bytes: usize) -> f64 {
-    source[..bytes].encode_utf16().count() as f64
+fn units(source: &str, bytes: usize) -> i64 {
+    source[..bytes].encode_utf16().count() as i64
 }
 
 /// Each runtime reader's message and offset for every malformed entry.
@@ -173,7 +173,7 @@ fn malformed_input_fails_with_the_compilers_message_and_position() {
                     let error = edn::read_all(source, &Options::default()).expect_err(source);
                     (error.message, error.span.unwrap().start)
                 };
-                let expected = Value::Vector(vec![Value::String(expected.0), Value::Number(units(source, expected.1))]);
+                let expected = Value::Vector(vec![Value::String(expected.0), Value::Long(units(source, expected.1))]);
                 assert_eq!(found, expected, "{reader} {source:?}");
             }
         }
@@ -199,7 +199,7 @@ fn exact_numeric_literals_fail_when_read_and_load_when_unselected() {
         for reader in ["read-string", "edn/read-string"] {
             let found = runtime_errors(&mut session, &mut macros, reader, &sources);
             for ((source, found), message) in sources.iter().zip(found).zip(&expected) {
-                let expected = Value::Vector(vec![Value::String(message.clone()), Value::Number(0.0)]);
+                let expected = Value::Vector(vec![Value::String(message.clone()), Value::Long(0)]);
                 assert_eq!(found, expected, "{reader} {source:?}");
             }
         }
@@ -258,7 +258,9 @@ fn read_string_follows_clojure() {
             "(= \"Invalid token: ::nope/k\" (try (read-string \"::nope/k\") (catch :default e (ex-message e))))",
             // Duplicate keys and set elements, as Clojure's reader rejects them.
             "(= \"Duplicate key: :a\" (try (read-string \"{:a 1 :a 2}\") (catch :default e (ex-message e))))",
-            "(= \"Duplicate key: 1\" (try (read-string \"#{1 1.0}\") (catch :default e (ex-message e))))",
+            "(= \"Duplicate key: 1\" (try (read-string \"#{1 1}\") (catch :default e (ex-message e))))",
+            // A long and a double are distinct elements, as in Clojure.
+            "(= 2 (count (read-string \"#{1 1.0}\")))",
             // The position is the duplicate's start, also for a collection.
             "(= 6 (:offset (try (read-string \"#{[1] [1]}\") (catch :default e (ex-data e)))))",
             "(= 7 (:offset (try (edn/read-string \"{[1] 1 [1] 2}\") (catch :default e (ex-data e)))))",

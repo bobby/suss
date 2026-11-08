@@ -1,5 +1,4 @@
-use suss_cli::portable_session::{Session, SessionValue};
-use wasmtime::Val;
+use suss_cli::portable_session::{RuntimeNumber, Session, SessionValue};
 
 #[path = "support/clojure_corrections.rs"]
 mod clojure_corrections;
@@ -10,21 +9,38 @@ const CORRECTIONS: &[clojure_corrections::Correction] = &[
     ("negative-nil", "", "neg? requires number operands"),
 ];
 
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+fn number(session: &mut Session, value: &SessionValue) -> RuntimeNumber {
     session
-        .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            Ok(*bits)
+        .inspect(value, |store, value| {
+            Ok(suss_cli::portable_session::runtime_number(store, &value)?.expect("Number layout"))
         })
         .unwrap()
 }
-fn eval_number(session: &mut Session, source: &str) -> u64 {
+fn eval_number(session: &mut Session, source: &str) -> RuntimeNumber {
     let value = session.eval(source).unwrap();
     number(session, &value)
+}
+
+/// The observation of a runtime number, distinguishing a long from a double.
+fn number_json(number: RuntimeNumber) -> serde_json::Value {
+    match number {
+        RuntimeNumber::Long(value) => serde_json::json!({"tag":"long", "value":value}),
+        RuntimeNumber::Double(value) => {
+            serde_json::json!({"tag":"f64", "bits":format!("{:016x}", value.to_bits())})
+        }
+    }
+}
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_number(expected: &serde_json::Value) -> serde_json::Value {
+    if expected["tag"] == "f64" {
+        let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+        let value = f64::from_bits(bits);
+        if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+            return serde_json::json!({"tag":"long", "value":value as i64});
+        }
+    }
+    expected.clone()
 }
 fn eval_bool(session: &mut Session, source: &str) -> bool {
     let value = session.eval(source).unwrap();
@@ -61,11 +77,11 @@ fn indexing_contract_match_independently_encoded_primary_observations() {
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "bool" => serde_json::json!({"tag":"bool", "value":eval_bool(&mut session, source)}),
             "f64" => {
-                serde_json::json!({"tag":"f64", "bits":format!("{:016x}",eval_number(&mut session, source))})
+                number_json(eval_number(&mut session, source))
             }
             tag => panic!("unexpected indexing observation tag {tag}"),
         };
-        assert_eq!(actual, case["expected"], "{id}: {source}");
+        assert_eq!(actual, clojure_number(&case["expected"]), "{id}: {source}");
         session.collect().unwrap();
     }
     assert_eq!(corrected, CORRECTIONS.len());
@@ -117,7 +133,7 @@ fn indexing_errors_preserve_messages_effects_and_gc_recovery() {
         assert_eq!(units, message.encode_utf16().collect::<Vec<_>>());
         assert_eq!(
             eval_number(&mut session, "(saved-nth indexing-values 1)"),
-            19.0f64.to_bits()
+            RuntimeNumber::Long(19)
         );
     }
     assert!(matches!(
@@ -127,11 +143,11 @@ fn indexing_errors_preserve_messages_effects_and_gc_recovery() {
     session.collect().unwrap();
     assert_eq!(
         eval_number(&mut session, "indexing-effects"),
-        17.0f64.to_bits()
+        RuntimeNumber::Long(17)
     );
     assert_eq!(
         eval_number(&mut session, "(.lastIndexOf indexing-values 17)"),
-        0.0f64.to_bits()
+        RuntimeNumber::Long(0)
     );
     for source in [
         "(neg?)",
@@ -157,7 +173,7 @@ fn indexing_errors_preserve_messages_effects_and_gc_recovery() {
     ));
     assert_eq!(
         eval_number(&mut session, "(saved-nth indexing-values 0)"),
-        17.0f64.to_bits()
+        RuntimeNumber::Long(17)
     );
 }
 
@@ -177,18 +193,18 @@ fn indexing_macros_resolve_aliases_exclusions_shadowing_and_both_phases() {
         .unwrap();
     assert_eq!(
         eval_number(&mut session, "(c/inc (dec 9))"),
-        9.0f64.to_bits()
+        RuntimeNumber::Long(9)
     );
     assert!(eval_bool(&mut session, "(c/neg? (c/dec 0))"));
     session.eval("(def inc (fn [x] (+ x 100)))").unwrap_err(); // Explicit refer conflicts with a local declaration.
     session.eval("(ns indexing.shadow) (def inc (fn [x] (+ x 100))) (def dec (fn [x] (+ x 200))) (def neg? (fn [x] (+ x 300)))").unwrap();
     assert_eq!(
         eval_number(&mut session, "(+ (inc 1) (dec 2) (neg? 3))"),
-        606.0f64.to_bits()
+        RuntimeNumber::Long(606)
     );
     assert_eq!(
         eval_number(&mut session, "(cljs.core/inc (cljs.core/dec 7))"),
-        7.0f64.to_bits()
+        RuntimeNumber::Long(7)
     );
     assert!(eval_bool(&mut session, "(cljs.core/neg? -1)"));
     session
@@ -203,7 +219,7 @@ fn indexing_macros_resolve_aliases_exclusions_shadowing_and_both_phases() {
     session.collect().unwrap();
     assert_eq!(
         eval_number(&mut session, "(cljs.core/inc 7)"),
-        8.0f64.to_bits()
+        RuntimeNumber::Long(8)
     );
     for phase in [Phase::Runtime, Phase::Macro] {
         for source in ["(inc 7)", "(dec 7)", "(neg? -1)"] {

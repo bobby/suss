@@ -114,6 +114,15 @@ fn decode(
             other => panic!("unknown sentinel {other}"),
         });
     }
+    match suss_cli::portable_session::runtime_number(&mut *store, value)? {
+        Some(suss_cli::portable_session::RuntimeNumber::Long(value)) => {
+            return Ok(json!({"tag":"long","value":value}));
+        }
+        Some(suss_cli::portable_session::RuntimeNumber::Double(value)) => {
+            return Ok(json!({"tag":"f64","bits":format!("{:016x}", value.to_bits())}));
+        }
+        None => {}
+    }
     let value = value.unwrap_anyref().unwrap();
     if let Some(text) = value.as_array(&*store)? {
         assert!(matches!(
@@ -126,9 +135,6 @@ fn decode(
     }
     let object = value.as_struct(&*store)?.expect("known portable object");
     let fields = object.fields(&mut *store)?.collect::<Vec<_>>();
-    if let [wasmtime::Val::F64(bits)] = fields.as_slice() {
-        return Ok(json!({"tag":"f64","bits":format!("{bits:016x}")}));
-    }
     assert_eq!(fields.len(), 4, "ABI2 Object layout");
     let descriptor = fields[0]
         .unwrap_anyref()
@@ -169,11 +175,32 @@ fn decode(
             let count = decode(store, &data[3], classes, depth + 1)?;
             assert_eq!(
                 count,
-                json!({"tag":"f64","bits":format!("{:016x}",(items.len()as f64).to_bits())})
+                json!({"tag":"long","value":items.len()})
             );
             Ok(json!({"tag":"seq","items":items}))
         }
         other => panic!("unsupported nominal observation {other}"),
+    }
+}
+/// `expected` with each integral ClojureScript double observation as the long
+/// JVM Clojure reads for it.
+fn clojure_numbers(expected: &serde_json::Value) -> serde_json::Value {
+    match expected {
+        serde_json::Value::Object(fields) if fields.get("tag").is_some_and(|tag| tag == "f64") => {
+            let bits = u64::from_str_radix(fields["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            // `1e21` and the like stay doubles: Clojure reads them as such.
+            if value.fract() == 0.0 && value.abs() < 2f64.powi(53) && bits != (-0.0f64).to_bits() {
+                serde_json::json!({"tag":"long", "value":value as i64})
+            } else {
+                expected.clone()
+            }
+        }
+        serde_json::Value::Object(fields) => serde_json::Value::Object(
+            fields.iter().map(|(key, value)| (key.clone(), clojure_numbers(value))).collect(),
+        ),
+        serde_json::Value::Array(items) => items.iter().map(clojure_numbers).collect(),
+        other => other.clone(),
     }
 }
 #[test]
@@ -200,7 +227,7 @@ fn compiled_macro_prerequisite_quotes_match_lossless_primary_observations() {
                 decode(&mut store, &value, &classes, 0)
             })
             .unwrap();
-        assert_eq!(actual, case["expected"], "{source}");
+        assert_eq!(actual, clojure_numbers(&case["expected"]), "{source}");
     }
     assert_eq!(ids.len(), 48);
 }
@@ -242,16 +269,10 @@ fn compiled_macro_prerequisite_quote_errors_are_located_and_preserve_session_sta
         .unwrap();
     let effects = session.eval("effects").unwrap();
     session
-        .inspect(&effects, |mut store, value| {
-            let fields = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap()
-                .fields(&mut store)?
-                .collect::<Vec<_>>();
-            assert!(
-                matches!(fields.as_slice(),[wasmtime::Val::F64(bits)] if *bits==0f64.to_bits())
+        .inspect(&effects, |store, value| {
+            assert_eq!(
+                suss_cli::portable_session::runtime_number(store, &value)?,
+                Some(suss_cli::portable_session::RuntimeNumber::Long(0))
             );
             Ok(())
         })

@@ -1,5 +1,26 @@
 use suss_cli::portable_session::Session;
-use wasmtime::Val;
+
+/// The observation of a runtime number, distinguishing a long from a double.
+fn number_json(number: suss_cli::portable_session::RuntimeNumber) -> serde_json::Value {
+    match number {
+        suss_cli::portable_session::RuntimeNumber::Long(value) => serde_json::json!({"tag":"long", "value":value}),
+        suss_cli::portable_session::RuntimeNumber::Double(value) => {
+            serde_json::json!({"tag":"f64", "bits":format!("{:016x}", value.to_bits())})
+        }
+    }
+}
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_number(expected: &serde_json::Value) -> serde_json::Value {
+    if expected["tag"] == "f64" {
+        let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+        let value = f64::from_bits(bits);
+        if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+            return serde_json::json!({"tag":"long", "value":value as i64});
+        }
+    }
+    expected.clone()
+}
 
 #[test]
 fn string_cache_match_independently_decoded_primary_observations_after_gc() {
@@ -31,17 +52,12 @@ fn string_cache_match_independently_decoded_primary_observations_after_gc() {
         };
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "f64" => {
-                let bits = session
-                    .inspect(&value, |mut store, value| {
-                        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-                        let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-                        let [Val::F64(bits)] = fields.as_slice() else {
-                            panic!("Number layout");
-                        };
-                        Ok(*bits)
+                let number = session
+                    .inspect(&value, |store, value| {
+                        suss_cli::portable_session::runtime_number(store, &value)
                     })
                     .unwrap();
-                serde_json::json!({"tag":"f64", "bits":format!("{bits:016x}")})
+                number.map_or(serde_json::json!({"tag":"not-a-number"}), number_json)
             }
             "nil" => {
                 session
@@ -82,7 +98,7 @@ fn string_cache_match_independently_decoded_primary_observations_after_gc() {
             }
             tag => panic!("unsupported String hash observation {tag}"),
         };
-        if actual != case["expected"] {
+        if actual != clojure_number(&case["expected"]) {
             failures.push(format!(
                 "{id}: {source}: actual {actual}, expected {}",
                 case["expected"]
@@ -98,13 +114,15 @@ fn string_cache_match_independently_decoded_primary_observations_after_gc() {
     );
 }
 
-fn cache_number(session: &mut Session, source: &str) -> f64 {
+fn cache_number(session: &mut Session, source: &str) -> i64 {
     let value = session.eval(source).unwrap();
     session
         .inspect(&value, |mut store, value| {
             store.gc(None)?;
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            Ok(object.field(&mut store, 0)?.unwrap_f64())
+            match suss_cli::portable_session::runtime_number(&mut store, &value)? {
+                Some(suss_cli::portable_session::RuntimeNumber::Long(value)) => Ok(value),
+                other => panic!("long result {other:?}"),
+            }
         })
         .unwrap()
 }
@@ -118,49 +136,49 @@ fn string_cache_aliases_factories_and_native_members_remain_live() {
     session
         .eval("(ns cache.alias (:require [cljs.core :as c]))")
         .unwrap();
-    assert_eq!(cache_number(&mut session, "(c/hash-string \"A\")"), 65.0);
+    assert_eq!(cache_number(&mut session, "(c/hash-string \"A\")"), 65);
     assert_eq!(
         cache_number(
             &mut session,
             "(let [f c/js-obj o (f \"x\" 7)] (c/unchecked-get o \"x\"))"
         ),
-        7.0
+        7
     );
     assert_eq!(
         cache_number(
             &mut session,
             "(let [f c/js-obj o (f (array \"x\" 9))] (c/unchecked-get o \"x\"))"
         ),
-        9.0
+        9
     );
     assert_eq!(
         cache_number(
             &mut session,
             "(let [o (c/js-obj)] (if (identical? (.valueOf o) o) 1 0))"
         ),
-        1.0
+        1
     );
     assert_eq!(
         cache_number(
             &mut session,
             "(let [o (c/js-obj)] (if (.hasOwnProperty (.-__proto__ o) \"__proto__\") 1 0))"
         ),
-        1.0
+        1
     );
     assert_eq!(
         cache_number(
             &mut session,
             "(let [o (c/js-obj)] (set! (.-x o) 11) (.-x o))"
         ),
-        11.0
+        11
     );
-    assert_eq!(cache_number(&mut session, "(let [saved c/hash-string] (with-redefs [c/string-hash-cache (c/js-obj) c/string-hash-cache-count 0 c/hash-string* (fn [k] 13)] (saved \"new\")))"), 13.0);
+    assert_eq!(cache_number(&mut session, "(let [saved c/hash-string] (with-redefs [c/string-hash-cache (c/js-obj) c/string-hash-cache-count 0 c/hash-string* (fn [k] 13)] (saved \"new\")))"), 13);
     assert_eq!(
         cache_number(
             &mut session,
             "(let [unchecked-get (fn [o k] 17)] (unchecked-get nil nil))"
         ),
-        17.0
+        17
     );
 }
 
@@ -184,7 +202,7 @@ fn string_cache_errors_and_macro_arity_preserve_effects_and_recover() {
         .eval("(let [f js-obj] (f (do (set! factory_effects 7) \"odd\")))")
         .unwrap_err();
     assert!(matches!(error, SessionError::Language(_)), "{error:?}");
-    assert_eq!(cache_number(&mut session, "factory_effects"), 7.0);
+    assert_eq!(cache_number(&mut session, "factory_effects"), 7);
     for source in [
         "(hash-string)",
         "(hash-string \"x\" \"y\")",
@@ -197,7 +215,7 @@ fn string_cache_errors_and_macro_arity_preserve_effects_and_recover() {
             "{source}: {error:?}"
         );
     }
-    assert_eq!(cache_number(&mut session, "(hash-string \"AB\")"), 2081.0);
+    assert_eq!(cache_number(&mut session, "(hash-string \"AB\")"), 2081);
 }
 
 #[test]
@@ -205,13 +223,13 @@ fn reviewed_cache_accessors_preserve_live_effects_and_failed_write_order() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
     session.eval(include_str!("../../../runtime/core-import/suss/core.sus")).unwrap();
-    assert_eq!(cache_number(&mut session, r#"(do (def review_effects 0) (let [p (js-obj) o (js-obj)] (.__defineGetter__ p "answer" (fn [] (set! review_effects (+ review_effects 1)) 23)) (unchecked-set o "__proto__" p) (+ (unchecked-get o "answer") (unchecked-get o "answer") review_effects)))"#), 48.0);
-    assert_eq!(cache_number(&mut session, r#"(let [p (js-obj) o (js-obj)] (.__defineSetter__ p "answer" (fn [v] (set! review_effects v))) (unchecked-set o "__proto__" p) (unchecked-set o "answer" 31) (+ review_effects (if (.hasOwnProperty o "answer") 100 0)))"#), 31.0);
+    assert_eq!(cache_number(&mut session, r#"(do (def review_effects 0) (let [p (js-obj) o (js-obj)] (.__defineGetter__ p "answer" (fn [] (set! review_effects (+ review_effects 1)) 23)) (unchecked-set o "__proto__" p) (+ (unchecked-get o "answer") (unchecked-get o "answer") review_effects)))"#), 48);
+    assert_eq!(cache_number(&mut session, r#"(let [p (js-obj) o (js-obj)] (.__defineSetter__ p "answer" (fn [v] (set! review_effects v))) (unchecked-set o "__proto__" p) (unchecked-set o "answer" 31) (+ review_effects (if (.hasOwnProperty o "answer") 100 0)))"#), 31);
     session.eval(r#"(def review_cache (js-obj)) (.__defineSetter__ review_cache "new" (fn [v] (throw v)))"#).unwrap();
     let error = session.eval(r#"(with-redefs [string-hash-cache review_cache string-hash-cache-count 17 hash-string* (fn [k] 7)] (hash-string "new"))"#).unwrap_err();
     assert!(matches!(error, SessionError::Language(_)), "{error:?}");
-    assert_eq!(cache_number(&mut session, r#"(with-redefs [string-hash-cache review_cache string-hash-cache-count 17 hash-string* (fn [k] 7)] (try (hash-string "new") (catch :default e string-hash-cache-count)))"#), 17.0);
-    assert_eq!(cache_number(&mut session, r#"(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0 hash-string* (fn [k] 19)] (.__defineGetter__ string-hash-cache "readonly" (fn [] false)) (try (hash-string "readonly") (catch :default e string-hash-cache-count)))"#), 0.0);
-    assert_eq!(cache_number(&mut session, r#"(let [o (js-obj)] (.__defineGetter__ o "readonly" (fn [] 29)) (unchecked-set o "readonly" 7) (unchecked-get o "readonly"))"#), 29.0);
-    assert_eq!(cache_number(&mut session, "(hash-string \"A\")"), 65.0);
+    assert_eq!(cache_number(&mut session, r#"(with-redefs [string-hash-cache review_cache string-hash-cache-count 17 hash-string* (fn [k] 7)] (try (hash-string "new") (catch :default e string-hash-cache-count)))"#), 17);
+    assert_eq!(cache_number(&mut session, r#"(with-redefs [string-hash-cache (js-obj) string-hash-cache-count 0 hash-string* (fn [k] 19)] (.__defineGetter__ string-hash-cache "readonly" (fn [] false)) (try (hash-string "readonly") (catch :default e string-hash-cache-count)))"#), 0);
+    assert_eq!(cache_number(&mut session, r#"(let [o (js-obj)] (.__defineGetter__ o "readonly" (fn [] 29)) (unchecked-set o "readonly" 7) (unchecked-get o "readonly"))"#), 29);
+    assert_eq!(cache_number(&mut session, "(hash-string \"A\")"), 65);
 }

@@ -2,7 +2,37 @@ use suss_cli::{
     portable_macros::CompiledMacros,
     portable_session::{Session, SessionOptions},
 };
-use wasmtime::Val;
+
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
 
 #[test]
 fn source_artifact_cache_executes_distinct_nan_payloads_and_unknown_host_bypass() {
@@ -51,15 +81,10 @@ fn source_artifact_cache_executes_distinct_nan_payloads_and_unknown_host_bypass(
         let value = runtime.eval_with_macros("(payload)", &mut host).unwrap();
         let actual = runtime
             .inspect(&value, |mut store, value| {
-                let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-                let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-                let [Val::F64(bits)] = fields.as_slice() else {
-                    panic!("Expected number")
-                };
-                Ok(*bits)
+                exact_number(&mut store, &value)
             })
             .unwrap();
-        assert_eq!(actual, bits);
+        assert_eq!(actual, Number::Double(bits));
     }
     assert_eq!(host.cache.stats().misses, 2);
     assert_eq!(host.cache.stats().hits, 1);
@@ -71,16 +96,11 @@ fn source_artifact_cache_executes_distinct_nan_payloads_and_unknown_host_bypass(
     assert_eq!(host.cache.stats().hits, 1);
 }
 
-fn number(runtime: &mut Session, macros: &mut CompiledMacros, source: &str) -> u64 {
+fn number(runtime: &mut Session, macros: &mut CompiledMacros, source: &str) -> Number {
     let value = runtime.eval_with_macros(source, macros).unwrap();
     runtime
         .inspect(&value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Expected number")
-            };
-            Ok(*bits)
+            exact_number(&mut store, &value)
         })
         .unwrap()
 }
@@ -103,19 +123,19 @@ fn source_artifact_cache_hits_keep_macro_effects_and_runtime_initializers() {
         )
         .unwrap();
     let source = "(do (set! counter (+ counter 1)) (t/answer))";
-    assert_eq!(number(&mut runtime, &mut macros, source), 42.0f64.to_bits());
+    assert_eq!(number(&mut runtime, &mut macros, source), num(42.0));
     let before = macros.artifact_cache_stats();
-    assert_eq!(number(&mut runtime, &mut macros, source), 42.0f64.to_bits());
+    assert_eq!(number(&mut runtime, &mut macros, source), num(42.0));
     let after = macros.artifact_cache_stats();
     assert_eq!(after.hits, before.hits + 1);
     assert_eq!(after.misses, before.misses);
     assert_eq!(
         number(&mut runtime, &mut macros, "counter"),
-        2.0f64.to_bits()
+        num(2.0)
     );
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/observed)"),
-        2.0f64.to_bits()
+        num(2.0)
     );
 }
 
@@ -143,7 +163,7 @@ fn source_artifact_cache_uses_loaded_macro_graph_until_explicit_reload_all() {
         .unwrap();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        42.0f64.to_bits()
+        num(42.0)
     );
     std::fs::write(
         &helper,
@@ -153,7 +173,7 @@ fn source_artifact_cache_uses_loaded_macro_graph_until_explicit_reload_all() {
     let before = macros.artifact_cache_stats();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        42.0f64.to_bits()
+        num(42.0)
     );
     assert_eq!(macros.artifact_cache_stats().hits, before.hits + 1);
     runtime
@@ -165,7 +185,7 @@ fn source_artifact_cache_uses_loaded_macro_graph_until_explicit_reload_all() {
     let before = macros.artifact_cache_stats();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        42.0f64.to_bits()
+        num(42.0)
     );
     assert_eq!(macros.artifact_cache_stats().misses, before.misses + 1);
     std::fs::write(&helper, "(ns helper) (def bias 3)").unwrap();
@@ -177,11 +197,11 @@ fn source_artifact_cache_uses_loaded_macro_graph_until_explicit_reload_all() {
         .unwrap();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        43.0f64.to_bits()
+        num(43.0)
     );
     assert_eq!(
         number(&mut runtime, &mut macros, "(old)"),
-        42.0f64.to_bits()
+        num(42.0)
     );
 }
 
@@ -192,7 +212,7 @@ fn source_artifact_cache_restores_declaration_provenance_after_script_compile_er
     macros.define("(defmacro keep [] 17)").unwrap();
     assert_eq!(
         number(&mut runtime, &mut macros, "(keep)"),
-        17.0f64.to_bits()
+        num(17.0)
     );
     assert!(
         suss_cli::portable_repl::evaluate_script_compiled(
@@ -206,7 +226,7 @@ fn source_artifact_cache_restores_declaration_provenance_after_script_compile_er
     let before = macros.artifact_cache_stats();
     assert_eq!(
         number(&mut runtime, &mut macros, "(keep)"),
-        17.0f64.to_bits()
+        num(17.0)
     );
     assert_eq!(macros.artifact_cache_stats().hits, before.hits + 1);
 }
@@ -227,7 +247,7 @@ fn source_artifact_cache_tracks_new_dependencies_failed_discovery_and_reset() {
     runtime.eval_with_macros(import, &mut macros).unwrap();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        42.0f64.to_bits()
+        num(42.0)
     );
     std::fs::write(
         &source,
@@ -238,7 +258,7 @@ fn source_artifact_cache_tracks_new_dependencies_failed_discovery_and_reset() {
     let before = macros.artifact_cache_stats();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        42.0f64.to_bits()
+        num(42.0)
     );
     assert_eq!(macros.artifact_cache_stats().hits, before.hits + 1);
     std::fs::write(
@@ -250,7 +270,7 @@ fn source_artifact_cache_tracks_new_dependencies_failed_discovery_and_reset() {
     let before = macros.artifact_cache_stats();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        42.0f64.to_bits()
+        num(42.0)
     );
     assert_eq!(macros.artifact_cache_stats().misses, before.misses + 1);
     suss_cli::portable_repl::reset_compiled(&mut runtime, &mut macros).unwrap();
@@ -259,7 +279,7 @@ fn source_artifact_cache_tracks_new_dependencies_failed_discovery_and_reset() {
     runtime.eval_with_macros(import, &mut macros).unwrap();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        42.0f64.to_bits()
+        num(42.0)
     );
 }
 
@@ -279,7 +299,7 @@ fn source_artifact_cache_bypasses_partial_load_until_successful_reload() {
     runtime.eval_with_macros(import, &mut macros).unwrap();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        42.0f64.to_bits()
+        num(42.0)
     );
     std::fs::write(
         &source,
@@ -292,7 +312,7 @@ fn source_artifact_cache_bypasses_partial_load_until_successful_reload() {
     let before = macros.artifact_cache_stats();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        42.0f64.to_bits()
+        num(42.0)
     );
     let after = macros.artifact_cache_stats();
     assert_eq!(after.bypasses, before.bypasses + 1);
@@ -303,11 +323,11 @@ fn source_artifact_cache_bypasses_partial_load_until_successful_reload() {
     let before = macros.artifact_cache_stats();
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        42.0f64.to_bits()
+        num(42.0)
     );
     assert_eq!(
         number(&mut runtime, &mut macros, "(t/answer)"),
-        42.0f64.to_bits()
+        num(42.0)
     );
     assert_eq!(macros.artifact_cache_stats().hits, before.hits + 2);
     assert_eq!(macros.artifact_cache_stats().bypasses, before.bypasses);
@@ -327,7 +347,7 @@ fn source_artifact_key_admission_keeps_effects_and_executes_uncached_large_input
     for expected in [2.0f64, 4.0] {
         assert_eq!(
             number(&mut runtime, &mut macros, &source),
-            expected.to_bits()
+            num(expected)
         );
         runtime.collect().unwrap();
         let now = macros.artifact_cache_stats();
@@ -340,25 +360,18 @@ fn source_artifact_key_admission_keeps_effects_and_executes_uncached_large_input
     let next_macro_count = number(&mut runtime, &mut macros, "(review-cache-large)");
     assert_eq!(
         next_macro_count,
-        3.0f64.to_bits(),
+        num(3.0),
         "uncached emission must not suppress or replay macro effects"
     );
     let runtime_count = runtime.eval("review-cache-runtime-calls").unwrap();
     let actual = runtime
         .inspect(&runtime_count, |mut store, value| {
-            Ok(value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap()
-                .field(&mut store, 0)?
-                .unwrap_f64()
-                .to_bits())
+            exact_number(&mut store, &value)
         })
         .unwrap();
     assert_eq!(
         actual,
-        2.0f64.to_bits(),
+        num(2.0),
         "each runtime initializer executes exactly once"
     );
 }

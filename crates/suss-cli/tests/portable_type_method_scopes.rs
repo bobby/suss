@@ -1,5 +1,26 @@
 use suss_cli::portable_session::Session;
-use wasmtime::Val;
+
+/// The observation of a runtime number, distinguishing a long from a double.
+fn number_json(number: suss_cli::portable_session::RuntimeNumber) -> serde_json::Value {
+    match number {
+        suss_cli::portable_session::RuntimeNumber::Long(value) => serde_json::json!({"tag":"long", "value":value}),
+        suss_cli::portable_session::RuntimeNumber::Double(value) => {
+            serde_json::json!({"tag":"f64", "bits":format!("{:016x}", value.to_bits())})
+        }
+    }
+}
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_number(expected: &serde_json::Value) -> serde_json::Value {
+    if expected["tag"] == "f64" {
+        let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+        let value = f64::from_bits(bits);
+        if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+            return serde_json::json!({"tag":"long", "value":value as i64});
+        }
+    }
+    expected.clone()
+}
 
 #[test]
 fn type_method_scopes_match_independently_decoded_primary_observations_after_gc() {
@@ -26,17 +47,12 @@ fn type_method_scopes_match_independently_decoded_primary_observations_after_gc(
             .unwrap_or_else(|error| panic!("{id}: {source}: {error:?}"));
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "f64" => {
-                let bits = session
-                    .inspect(&value, |mut store, value| {
-                        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-                        let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-                        let [Val::F64(bits)] = fields.as_slice() else {
-                            panic!("Number layout");
-                        };
-                        Ok(*bits)
+                let number = session
+                    .inspect(&value, |store, value| {
+                        Ok(suss_cli::portable_session::runtime_number(store, &value)?.expect("Number layout"))
                     })
                     .unwrap();
-                serde_json::json!({"tag":"f64", "bits":format!("{bits:016x}")})
+                number_json(number)
             }
             "nil" => {
                 session
@@ -77,7 +93,7 @@ fn type_method_scopes_match_independently_decoded_primary_observations_after_gc(
             }
             tag => panic!("unsupported Type-method-scope observation {tag}"),
         };
-        assert_eq!(actual, case["expected"], "{id}: {source}");
+        assert_eq!(actual, clojure_number(&case["expected"]), "{id}: {source}");
         session.collect().unwrap();
     }
 }
@@ -106,15 +122,11 @@ fn unresolved_type_method_capture_is_compile_atomic_and_session_recovers() {
     let result = session.eval("(let [scope-factor 7] (do (deftype ScopeRecovery [value] ScopeTransaction (scope-transaction [this] (* value scope-factor))) (+ scope-kept scope-factor (scope-transaction (ScopeRecovery. 5)))))").unwrap();
     session.collect().unwrap();
     session
-        .inspect(&result, |mut store, value| {
-            let fields = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap()
-                .fields(&mut store)?
-                .collect::<Vec<_>>();
-            assert!(matches!(fields.as_slice(), [Val::F64(bits)] if *bits == 79.0f64.to_bits()));
+        .inspect(&result, |store, value| {
+            assert_eq!(
+                suss_cli::portable_session::runtime_number(store, &value)?,
+                Some(suss_cli::portable_session::RuntimeNumber::Long(79))
+            );
             Ok(())
         })
         .unwrap();

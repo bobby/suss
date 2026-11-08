@@ -103,20 +103,43 @@ fn fnil_sole_host_handle_keeps_callback_captures_and_defaults_across_gc() {
                 panic!("source vector result")
             };
             assert_eq!(items.len(), 3);
-            let Kind::Number(first) = &items[0].kind else {
-                panic!("captured payload")
-            };
-            assert_eq!(first.to_bits(), 23.0_f64.to_bits());
+            assert!(
+                matches!(&items[0].kind, Kind::Long(23)),
+                "captured payload"
+            );
             assert!(
                 matches!(&items[1].kind, Kind::Bool(false)),
                 "false default is retained"
             );
-            let Kind::Number(count) = &items[2].kind else {
+            let Kind::Long(count) = &items[2].kind else {
                 panic!("variadic count")
             };
-            let expected_count = if extra { 1.0_f64 } else { 0.0_f64 };
-            assert_eq!(count.to_bits(), expected_count.to_bits());
+            assert_eq!(*count, i64::from(extra));
         }
+    }
+}
+
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_value(expected: &serde_json::Value) -> serde_json::Value {
+    match expected {
+        serde_json::Value::Object(fields) if fields.get("tag").and_then(serde_json::Value::as_str) == Some("f64") => {
+            let bits = u64::from_str_radix(fields["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+                serde_json::json!({"tag":"long", "value":value as i64})
+            } else {
+                expected.clone()
+            }
+        }
+        serde_json::Value::Object(fields) => serde_json::Value::Object(
+            fields
+                .iter()
+                .map(|(key, value)| (key.clone(), clojure_value(value)))
+                .collect(),
+        ),
+        serde_json::Value::Array(items) => serde_json::Value::Array(items.iter().map(clojure_value).collect()),
+        other => other.clone(),
     }
 }
 
@@ -131,6 +154,7 @@ fn raw_helper_tag(form: &suss_reader::forms::Form) -> serde_json::Value {
     match &form.kind {
         Kind::Nil => json!({"tag":"nil"}),
         Kind::Bool(value) => json!({"tag":"bool", "value":value}),
+        Kind::Long(value) => json!({"tag":"long", "value":value}),
         Kind::Number(value) => json!({"tag":"f64", "bits":format!("{:016x}", value.to_bits())}),
         Kind::Vector(items) => {
             json!({"tag":"vector", "items":items.iter().map(raw_helper_tag).collect::<Vec<_>>()})
@@ -178,7 +202,7 @@ fn record_helper_raw_values_and_traces_match_pinned_bits_in_both_phases_after_gc
             let result = session.eval(source).unwrap();
             session.collect().unwrap();
             let decoded = bridge.read(&mut session, &result, 0..source.len()).unwrap();
-            assert_eq!(raw_helper_tag(&decoded), case["expected"], "{}", case["id"]);
+            assert_eq!(raw_helper_tag(&decoded), clojure_value(&case["expected"]), "{}", case["id"]);
         }
     }
 }

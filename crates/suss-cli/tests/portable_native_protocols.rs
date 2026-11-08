@@ -1,22 +1,38 @@
-use suss_cli::portable_session::{Session, SessionError, SessionValue};
+use suss_cli::portable_session::{RuntimeNumber, Session, SessionError, SessionValue};
 use suss_compile::portable_session::sentinel_tag;
-use wasmtime::Val;
 
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+fn number(session: &mut Session, value: &SessionValue) -> RuntimeNumber {
     session
-        .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            Ok(*bits)
+        .inspect(value, |store, value| {
+            Ok(suss_cli::portable_session::runtime_number(store, &value)?.expect("Number layout"))
         })
         .unwrap()
 }
-fn eval_number(session: &mut Session, source: &str) -> u64 {
+fn eval_number(session: &mut Session, source: &str) -> RuntimeNumber {
     let value = session.eval(source).unwrap();
     number(session, &value)
+}
+
+/// The observation of a runtime number, distinguishing a long from a double.
+fn number_json(number: RuntimeNumber) -> serde_json::Value {
+    match number {
+        RuntimeNumber::Long(value) => serde_json::json!({"tag":"long", "value":value}),
+        RuntimeNumber::Double(value) => {
+            serde_json::json!({"tag":"f64", "bits":format!("{:016x}", value.to_bits())})
+        }
+    }
+}
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_number(expected: &serde_json::Value) -> serde_json::Value {
+    if expected["tag"] == "f64" {
+        let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+        let value = f64::from_bits(bits);
+        if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+            return serde_json::json!({"tag":"long", "value":value as i64});
+        }
+    }
+    expected.clone()
 }
 fn eval_bool(session: &mut Session, source: &str) -> bool {
     let value = session.eval(source).unwrap();
@@ -37,25 +53,25 @@ fn native_protocols_dispatch_nil_undefined_and_scalar_kinds() {
     let mut session = Session::new().unwrap();
     session.eval("(defprotocol P (read [x]))").unwrap();
     for (kind, source, expected) in [
-        ("nil", "nil", 10.0f64),
-        ("number", "0", 20.0),
-        ("boolean", "false", 30.0),
-        ("string", "\"\"", 40.0),
-        ("function", "(fn [] 1)", 50.0),
-        ("object", "(ex-info \"m\" 7)", 60.0),
+        ("nil", "nil", 10i64),
+        ("number", "0", 20),
+        ("boolean", "false", 30),
+        ("string", "\"\"", 40),
+        ("function", "(fn [] 1)", 50),
+        ("object", "(ex-info \"m\" 7)", 60),
     ] {
         session
             .eval(&format!("(extend-type {kind} P (read [x] {expected}))"))
             .unwrap();
         assert_eq!(
             eval_number(&mut session, &format!("(read {source})")),
-            expected.to_bits()
+            RuntimeNumber::Long(expected)
         );
         assert!(eval_bool(&mut session, &format!("(satisfies? P {source})")));
     }
     assert_eq!(
         eval_number(&mut session, "(read (ex-data (new ExceptionInfo \"m\")))"),
-        10.0f64.to_bits()
+        RuntimeNumber::Long(10)
     );
 }
 
@@ -63,15 +79,15 @@ fn native_protocols_dispatch_nil_undefined_and_scalar_kinds() {
 fn native_protocols_choose_direct_then_specific_then_default_methods() {
     let mut session = Session::new().unwrap();
     session.eval("(defprotocol P (read [x])) (deftype Item [] P (read [x] 1)) (deftype Bare []) (def item (Item.)) (def bare (Bare.)) (extend-type default P (read [x] 9))").unwrap();
-    assert_eq!(eval_number(&mut session, "(read item)"), 1.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "(read bare)"), 9.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "(read 7)"), 9.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(read item)"), RuntimeNumber::Long(1));
+    assert_eq!(eval_number(&mut session, "(read bare)"), RuntimeNumber::Long(9));
+    assert_eq!(eval_number(&mut session, "(read 7)"), RuntimeNumber::Long(9));
     session
         .eval("(extend-type object P (read [x] 8)) (extend-type number P (read [x] 2))")
         .unwrap();
-    assert_eq!(eval_number(&mut session, "(read item)"), 1.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "(read bare)"), 8.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "(read 7)"), 2.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(read item)"), RuntimeNumber::Long(1));
+    assert_eq!(eval_number(&mut session, "(read bare)"), RuntimeNumber::Long(8));
+    assert_eq!(eval_number(&mut session, "(read 7)"), RuntimeNumber::Long(2));
     assert!(eval_bool(&mut session, "(satisfies? P false)"));
 }
 
@@ -84,15 +100,15 @@ fn native_protocol_extensions_remain_live_for_old_dispatchers_after_gc() {
     let y = session.eval("2").unwrap();
     session.collect().unwrap();
     let value = session.invoke(&reader, &[&x, &y]).unwrap();
-    assert_eq!(number(&mut session, &value), 9.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), RuntimeNumber::Long(9));
     session
         .eval("(extend-type number P (read ([x] 3) ([x y] 4)))")
         .unwrap();
     session.collect().unwrap();
     let value = session.invoke(&reader, &[&x]).unwrap();
-    assert_eq!(number(&mut session, &value), 3.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), RuntimeNumber::Long(3));
     let value = session.invoke(&reader, &[&x, &y]).unwrap();
-    assert_eq!(number(&mut session, &value), 4.0f64.to_bits());
+    assert_eq!(number(&mut session, &value), RuntimeNumber::Long(4));
 }
 
 #[test]
@@ -122,11 +138,11 @@ fn missing_native_method_preserves_argument_effects_and_language_recovery() {
         session.eval("(read (next) (next))"),
         Err(SessionError::Language(_))
     ));
-    assert_eq!(eval_number(&mut session, "count"), 2.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "count"), RuntimeNumber::Long(2));
     session
         .eval("(extend-type number P (read [x y] (+ x y)))")
         .unwrap();
-    assert_eq!(eval_number(&mut session, "(read 3 4)"), 7.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(read 3 4)"), RuntimeNumber::Long(7));
 }
 
 /// Native tables belong to the method wrapper its defprotocol created, not to
@@ -137,12 +153,12 @@ fn missing_native_method_preserves_argument_effects_and_language_recovery() {
 fn captured_native_dispatcher_reads_current_method_table_after_replacement() {
     let mut session = Session::new().unwrap();
     session.eval("(defprotocol P (read [x])) (extend-type number P (read [x] 1)) (def old read) (def read (fn [x] 9))").unwrap();
-    assert_eq!(eval_number(&mut session, "(old 7)"), 1.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "(read 7)"), 9.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(old 7)"), RuntimeNumber::Long(1));
+    assert_eq!(eval_number(&mut session, "(read 7)"), RuntimeNumber::Long(9));
     session
         .eval("(defprotocol P (read [x])) (extend-type number P (read [x] 2))")
         .unwrap();
-    assert_eq!(eval_number(&mut session, "(old 7)"), 2.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(old 7)"), RuntimeNumber::Long(2));
 }
 
 #[test]
@@ -155,15 +171,15 @@ fn native_protocol_redeclaration_resets_tables_but_direct_object_methods_survive
         session.eval("(old 7)"),
         Err(SessionError::Language(_))
     ));
-    assert_eq!(eval_number(&mut session, "(old item)"), 3.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(old item)"), RuntimeNumber::Long(3));
 }
 
 #[test]
 fn native_extension_replaces_all_arities_and_recur_changes_receiver() {
     let mut session = Session::new().unwrap();
     session.eval("(defprotocol P (read [x] [x y])) (extend-type number P (read ([x] 1) ([x y] 2))) (def old read) (extend-type number P (read [x] (if (nil? x) 3 (recur nil))))").unwrap();
-    assert_eq!(eval_number(&mut session, "(old 7)"), 3.0f64.to_bits());
-    assert_eq!(eval_number(&mut session, "(old 7 8)"), 3.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(old 7)"), RuntimeNumber::Long(3));
+    assert_eq!(eval_number(&mut session, "(old 7 8)"), RuntimeNumber::Long(3));
     session
         .eval("(extend-type number P (read [x y] (undefined? y)))")
         .unwrap();
@@ -184,17 +200,17 @@ fn native_protocols_match_independently_encoded_primary_corpus() {
         if case["id"] == "captured-live-method-table" {
             // The pinned ClojureScript dispatcher read the redefined public
             // var and threw; Suss keeps the protocol's own table (#279).
-            assert_eq!(eval_number(&mut session, source), 1.0f64.to_bits());
+            assert_eq!(eval_number(&mut session, source), RuntimeNumber::Long(1));
             continue;
         }
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "bool" => serde_json::json!({"tag":"bool", "value":eval_bool(&mut session, source)}),
             "f64" => {
-                serde_json::json!({"tag":"f64", "bits":format!("{:016x}",eval_number(&mut session, source))})
+                number_json(eval_number(&mut session, source))
             }
             tag => panic!("unexpected tag {tag}"),
         };
-        assert_eq!(actual, case["expected"], "{source}");
+        assert_eq!(actual, clojure_number(&case["expected"]), "{source}");
         session.collect().unwrap();
     }
     assert_eq!(ids.len(), 29);
@@ -232,7 +248,7 @@ fn native_satisfies_function_is_first_class_and_macro_fallback_observes_redefini
     session.enter_namespace("user").unwrap();
     assert_eq!(
         eval_number(&mut session, "(satisfies? P 7)"),
-        9.0f64.to_bits()
+        RuntimeNumber::Long(9)
     );
     assert!(eval_bool(&mut session, "(satisfies? P (Item.))"));
     let result = session.invoke(&function, &[&protocol, &value]).unwrap();
@@ -254,25 +270,25 @@ fn qualified_native_extension_updates_captured_dispatcher_across_namespaces_and_
     session.enter_namespace("protocol.client").unwrap();
     session.eval("(def captured protocol.owner/read)").unwrap();
     session.collect().unwrap();
-    assert_eq!(eval_number(&mut session, "(captured 7)"), 1.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(captured 7)"), RuntimeNumber::Long(1));
     session
         .eval("(extend-type number protocol.owner/P (read [x] 2))")
         .unwrap();
     session.collect().unwrap();
-    assert_eq!(eval_number(&mut session, "(captured 7)"), 2.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(captured 7)"), RuntimeNumber::Long(2));
     assert!(eval_bool(&mut session, "(satisfies? protocol.owner/P 7)"));
     session.enter_namespace("protocol.owner").unwrap();
     session.eval("(def read (fn [x] 9))").unwrap();
     session.enter_namespace("protocol.client").unwrap();
     // The captured wrapper keeps the protocol's own table (#279).
-    assert_eq!(eval_number(&mut session, "(captured 7)"), 2.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(captured 7)"), RuntimeNumber::Long(2));
     session
         .eval("(extend-type number protocol.owner/P (read [x] 3))")
         .unwrap();
     session.collect().unwrap();
-    assert_eq!(eval_number(&mut session, "(captured 7)"), 3.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(captured 7)"), RuntimeNumber::Long(3));
     assert_eq!(
         eval_number(&mut session, "(protocol.owner/read 7)"),
-        9.0f64.to_bits()
+        RuntimeNumber::Long(9)
     );
 }

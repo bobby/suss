@@ -45,7 +45,10 @@ fn data(value: &serde_json::Value) -> Form {
     form(match value {
         serde_json::Value::Null => Kind::Nil,
         serde_json::Value::Bool(value) => Kind::Bool(*value),
-        serde_json::Value::Number(value) => Kind::Number(value.as_f64().unwrap()),
+        serde_json::Value::Number(value) => match value.as_i64() {
+            Some(value) => Kind::Long(value),
+            None => Kind::Number(value.as_f64().unwrap()),
+        },
         serde_json::Value::String(value) => Kind::String(value.encode_utf16().collect()),
         serde_json::Value::Array(values) if values.len() == 2 => {
             match values[0].as_str().unwrap() {

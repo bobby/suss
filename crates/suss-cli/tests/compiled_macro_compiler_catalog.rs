@@ -22,7 +22,7 @@ fn decode(session: &mut Session, value: &SessionValue) -> Form {
     let bridge = FormBridge::new(session).unwrap();
     bridge.read(session, value, 0..0).unwrap()
 }
-fn expect_facts(form: &Form, phase: &str, doc: &str, arities: &[f64]) {
+fn expect_facts(form: &Form, phase: &str, doc: &str, arities: &[i64]) {
     let Kind::Vector(items) = &form.kind else {
         panic!("decoded fact vector")
     };
@@ -46,10 +46,10 @@ fn expect_facts(form: &Form, phase: &str, doc: &str, arities: &[f64]) {
     };
     assert_eq!(actual.len(), arities.len());
     for (actual, expected) in actual.iter().zip(arities) {
-        let Kind::Number(number) = &actual.kind else {
+        let Kind::Long(number) = &actual.kind else {
             panic!("numeric arity")
         };
-        assert_eq!(number.to_bits(), expected.to_bits());
+        assert_eq!(number, expected);
     }
 }
 
@@ -75,7 +75,7 @@ fn source_macro_consumes_actual_other_namespace_and_protocol_revisions_after_gc(
             &decode(&mut session, &retained),
             phase,
             "first revision",
-            &[1.0, 2.0],
+            &[1, 2],
         );
         session.enter_namespace("record.live").unwrap();
         session.eval("(def ^{:doc \"second revision\"} value 23) (defprotocol Pair (-pair [this] [this x y]))").unwrap();
@@ -87,13 +87,13 @@ fn source_macro_consumes_actual_other_namespace_and_protocol_revisions_after_gc(
             &decode(&mut session, &fresh),
             phase,
             "second revision",
-            &[1.0, 3.0],
+            &[1, 3],
         );
         expect_facts(
             &decode(&mut session, &retained),
             phase,
             "first revision",
-            &[1.0, 2.0],
+            &[1, 2],
         );
         assert_eq!(session.current_namespace(), "record.caller");
     }

@@ -45,6 +45,7 @@ fn raw_helper_tag(form: &suss_reader::forms::Form) -> serde_json::Value {
         }
         Kind::Nil => json!({"tag":"nil"}),
         Kind::Bool(value) => json!({"tag":"bool", "value":value}),
+        Kind::Long(value) => json!({"tag":"long", "value":value}),
         Kind::Number(value) => json!({"tag":"f64", "bits":format!("{:016x}", value.to_bits())}),
         Kind::Vector(items) => {
             json!({"tag":"vector", "items":items.iter().map(raw_helper_tag).collect::<Vec<_>>()})
@@ -64,6 +65,29 @@ fn raw_helper_tag(form: &suss_reader::forms::Form) -> serde_json::Value {
     }
 }
 
+/// The ClojureScript oracle encodes every number as a double; JVM Clojure,
+/// Suss's oracle, gives a long for these integral results.
+fn clojure_value(expected: &serde_json::Value) -> serde_json::Value {
+    match expected {
+        serde_json::Value::Object(fields) if fields.get("tag").and_then(serde_json::Value::as_str) == Some("f64") => {
+            let bits = u64::from_str_radix(fields["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+                serde_json::json!({"tag":"long", "value":value as i64})
+            } else {
+                expected.clone()
+            }
+        }
+        serde_json::Value::Object(fields) => serde_json::Value::Object(
+            fields
+                .iter()
+                .map(|(key, value)| (key.clone(), clojure_value(value)))
+                .collect(),
+        ),
+        serde_json::Value::Array(items) => serde_json::Value::Array(items.iter().map(clojure_value).collect()),
+        other => other.clone(),
+    }
+}
 #[test]
 fn string_buffer_fields_and_str_match_raw_pin_in_both_phases_after_gc() {
     use suss_cli::portable_macro_data::FormBridge;
@@ -95,7 +119,7 @@ fn string_buffer_fields_and_str_match_raw_pin_in_both_phases_after_gc() {
             let result = session.eval(source).unwrap();
             session.collect().unwrap();
             let decoded = bridge.read(&mut session, &result, 0..source.len()).unwrap();
-            assert_eq!(raw_helper_tag(&decoded), case["expected"], "{}", case["id"]);
+            assert_eq!(raw_helper_tag(&decoded), clojure_value(&case["expected"]), "{}", case["id"]);
         }
     }
 }

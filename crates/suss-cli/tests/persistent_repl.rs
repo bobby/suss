@@ -78,7 +78,7 @@ fn persistent_session_command_repl_displays_utf16_and_binary64_without_reexecuti
     assert_eq!(String::from_utf8(output.stderr).unwrap(), "");
     assert_eq!(
         String::from_utf8(output.stdout).unwrap(),
-        "#'user/calls\n1e+21\n1\n\"\\ud800😀\\n\\\"\\\\\"\n##NaN\n##Inf\n##-Inf\nfalse\ntrue\nnil\n"
+        "#'user/calls\n1.0E21\n1\n\"\\ud800😀\\n\\\"\\\\\"\n##NaN\n##Inf\n##-Inf\nfalse\ntrue\nnil\n"
     );
 }
 

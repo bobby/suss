@@ -2,7 +2,6 @@
 use suss_compile::portable_session::sentinel_tag;
 use suss_cli::portable_session::{Session, SessionError, SessionOptions, SessionValue};
 use suss_compile::portable::resolve::Phase;
-use wasmtime::Val;
 
 fn boolean(session: &mut Session, source: &str, expected: bool) {
     let value = session.eval(source).unwrap();
@@ -17,16 +16,21 @@ fn boolean(session: &mut Session, source: &str, expected: bool) {
 fn number(session: &mut Session, value: &SessionValue, expected: f64) {
     session.collect().unwrap();
     let actual = session
-        .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("number layout")
-            };
-            Ok(*bits)
+        .inspect(value, |store, value| {
+            suss_compile::portable_session::runtime_number(store, &value)
         })
-        .unwrap();
-    assert_eq!(actual, expected.to_bits());
+        .unwrap()
+        .expect("number");
+    // Integral expectations are Clojure longs, others doubles.
+    let integral = expected.is_finite()
+        && expected.fract() == 0.0
+        && !(expected == 0.0 && expected.is_sign_negative());
+    let expected = if integral {
+        suss_compile::portable_session::RuntimeNumber::Long(expected as i64)
+    } else {
+        suss_compile::portable_session::RuntimeNumber::Double(expected)
+    };
+    assert_eq!(actual, expected);
 }
 
 fn expect_language_error(

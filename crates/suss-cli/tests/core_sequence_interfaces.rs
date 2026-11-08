@@ -1,19 +1,71 @@
 use suss_cli::portable_session::{Session, SessionError, SessionValue};
-use wasmtime::Val;
 
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
+/// Whether `actual` matches a pinned `f64` observation. The ClojureScript
+/// corpus cannot distinguish longs: an integral observation is a Clojure long,
+/// or an integral double when the source has a double operand.
+fn matches_pinned(actual: Number, expected: &serde_json::Value, source: &str) -> bool {
+    let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+    match actual {
+        Number::Long(_) => actual == num(f64::from_bits(bits)),
+        Number::Double(actual) => {
+            actual == bits
+                && (num(f64::from_bits(bits)) == Number::Double(bits)
+                    || source.contains("##")
+                    || source.as_bytes().windows(3).any(|w| {
+                        w[0].is_ascii_digit()
+                            && (w[1] == b'.' || w[1] == b'e')
+                            && (w[2].is_ascii_digit() || w[2] == b'-')
+                    }))
+        }
+    }
+}
+/// The pinned observation when `actual` matches it, otherwise a distinct value.
+fn number_observation(actual: Number, expected: &serde_json::Value, source: &str) -> serde_json::Value {
+    if matches_pinned(actual, expected, source) {
+        expected.clone()
+    } else {
+        serde_json::json!({ "tag": "number", "actual": format!("{actual:?}") })
+    }
+}
+
+fn number(session: &mut Session, value: &SessionValue) -> Number {
     session
         .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            Ok(*bits)
+            exact_number(&mut store, &value)
         })
         .unwrap()
 }
-fn eval_number(session: &mut Session, source: &str) -> u64 {
+fn eval_number(session: &mut Session, source: &str) -> Number {
     let value = session.eval(source).unwrap();
     number(session, &value)
 }
@@ -91,7 +143,7 @@ fn imported_sequence_interfaces_execute_direct_methods_after_gc() {
     ] {
         assert_eq!(
             eval_number(&mut session, source),
-            expected.to_bits(),
+            num(expected),
             "{source}"
         );
         session.collect().unwrap();
@@ -135,7 +187,7 @@ fn imported_interfaces_match_independently_encoded_primary_adapter_observations(
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "bool" => serde_json::json!({"tag":"bool", "value":eval_bool(&mut session, source)}),
             "f64" => {
-                serde_json::json!({"tag":"f64", "bits":format!("{:016x}",eval_number(&mut session, source))})
+                number_observation(eval_number(&mut session, source), &case["expected"], source)
             }
             tag => panic!("unexpected interface tag {tag}"),
         };
@@ -161,7 +213,7 @@ fn canonical_core_aliases_and_retained_methods_survive_source_reload() {
     ] {
         assert_eq!(
             eval_number(&mut session, source),
-            52.0f64.to_bits(),
+            num(52.0),
             "{source}"
         );
     }
@@ -185,7 +237,7 @@ fn canonical_core_aliases_and_retained_methods_survive_source_reload() {
     }
     assert_eq!(
         eval_number(&mut session, "(retained-nth retained-indexed 3)"),
-        13.0f64.to_bits()
+        num(13.0)
     );
 }
 
@@ -206,7 +258,7 @@ fn imported_operation_methods_survive_reload_gc_and_invalid_arity_recovery() {
     ] {
         assert_eq!(
             eval_number(&mut session, source),
-            10.0f64.to_bits(),
+            num(10.0),
             "{source}"
         );
     }
@@ -231,7 +283,7 @@ fn imported_operation_methods_survive_reload_gc_and_invalid_arity_recovery() {
             &mut session,
             "(saved-reduce reload-operation (fn [a b] (+ a b)))"
         ),
-        14.0f64.to_bits()
+        num(14.0)
     );
 }
 
@@ -257,18 +309,18 @@ fn malformed_operation_declarations_and_extensions_preserve_loaded_core() {
                 &mut session,
                 "(review-saved-reduce review-stable (fn [a b] (+ a b)))"
             ),
-            11.0f64.to_bits()
+            num(11.0)
         );
         assert_eq!(
             eval_number(
                 &mut session,
                 "(review-saved-reduce review-stable (fn [a b] (+ a b)) 40)"
             ),
-            49.0f64.to_bits()
+            num(49.0)
         );
         assert_eq!(
             eval_number(&mut session, "(cljs.core/-peek review-stable)"),
-            9.0f64.to_bits()
+            num(9.0)
         );
     }
     assert!(matches!(
@@ -283,7 +335,7 @@ fn malformed_operation_declarations_and_extensions_preserve_loaded_core() {
     session.collect().unwrap();
     assert_eq!(
         eval_number(&mut session, "(bad-reduce review-stable)"),
-        19.0f64.to_bits()
+        num(19.0)
     );
 }
 
@@ -317,7 +369,7 @@ fn empty_list_literal_reads_canonical_core_class_property_after_gc() {
         &mut session,
         "(instance? cljs.core/EmptyList ())"
     ));
-    assert_eq!(eval_number(&mut session, "(if () 1 2)"), 1.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(if () 1 2)"), num(1.0));
     session
         .eval("(set! (.-EMPTY cljs.core/List) (cljs.core/EmptyList. 29))")
         .unwrap();
@@ -326,7 +378,7 @@ fn empty_list_literal_reads_canonical_core_class_property_after_gc() {
     assert!(eval_bool(&mut session, "(identical? () (read-empty))"));
     assert_eq!(
         eval_number(&mut session, "(.-value (read-empty))"),
-        29.0f64.to_bits()
+        num(29.0)
     );
     session.eval("(set! (.-EMPTY cljs.core/List) nil)").unwrap();
     assert!(eval_bool(&mut session, "(nil? ())"));

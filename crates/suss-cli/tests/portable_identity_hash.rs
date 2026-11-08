@@ -1,19 +1,16 @@
 use suss_cli::portable_session::{Session, SessionValue};
-use wasmtime::Val;
 
-fn number(session: &mut Session, value: &SessionValue) -> u64 {
+fn number(session: &mut Session, value: &SessionValue) -> i64 {
     session
-        .inspect(value, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout");
-            };
-            Ok(*bits)
+        .inspect(value, |store, value| {
+            match suss_cli::portable_session::runtime_number(store, &value)? {
+                Some(suss_cli::portable_session::RuntimeNumber::Long(value)) => Ok(value),
+                other => panic!("Long layout {other:?}"),
+            }
         })
         .unwrap()
 }
-fn eval_number(session: &mut Session, source: &str) -> u64 {
+fn eval_number(session: &mut Session, source: &str) -> i64 {
     let value = session.eval(source).unwrap();
     number(session, &value)
 }
@@ -28,7 +25,7 @@ fn identity_uids_remain_owned_stable_and_distinct_across_gc_fragments() {
         eval_number(&mut session, "(suss.bootstrap/identity-uid identity-f)"),
         first
     );
-    assert_eq!(eval_number(&mut session, "(identity-f)"), 17.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(identity-f)"), 17);
     session
         .eval("(deftype IdentityObject [x]) (def identity-o (IdentityObject. 19))")
         .unwrap();
@@ -41,7 +38,7 @@ fn identity_uids_remain_owned_stable_and_distinct_across_gc_fragments() {
     );
     assert_eq!(
         eval_number(&mut session, "(.-x identity-o)"),
-        19.0f64.to_bits()
+        19
     );
 }
 
@@ -136,7 +133,7 @@ fn identity_uid_errors_preserve_effects_and_compile_atomicity() {
         session.collect().unwrap();
         assert_eq!(
             eval_number(&mut session, "identity-effects"),
-            19.0f64.to_bits()
+            19
         );
         assert_eq!(
             eval_number(
@@ -147,7 +144,7 @@ fn identity_uid_errors_preserve_effects_and_compile_atomicity() {
         );
         assert_eq!(
             eval_number(&mut session, "(identity-survivor)"),
-            17.0f64.to_bits()
+            17
         );
     }
     for source in [
@@ -202,10 +199,10 @@ fn explicit_ifn_receiver_preserves_operand_effects_and_unrelated_protocols() {
         .eval("(def invoke-effects 0) (def invoke-owner (with-meta (fn [target a] a) false))")
         .unwrap();
     let saved = eval_number(&mut session, "(suss.bootstrap/identity-uid invoke-owner)");
-    assert_eq!(eval_number(&mut session, "(-invoke (do (set! invoke-effects 1) invoke-owner) (do (set! invoke-effects (+ invoke-effects 10)) 17))"), 17.0f64.to_bits());
+    assert_eq!(eval_number(&mut session, "(-invoke (do (set! invoke-effects 1) invoke-owner) (do (set! invoke-effects (+ invoke-effects 10)) 17))"), 17);
     assert_eq!(
         eval_number(&mut session, "invoke-effects"),
-        11.0f64.to_bits()
+        11
     );
     assert_wrong_arity(&mut session, "(-invoke invoke-owner 17 19)");
     session.eval("(set! invoke-effects 0)").unwrap();
@@ -215,7 +212,7 @@ fn explicit_ifn_receiver_preserves_operand_effects_and_unrelated_protocols() {
     ));
     assert_eq!(
         eval_number(&mut session, "invoke-effects"),
-        0.0f64.to_bits()
+        0
     );
     session.collect().unwrap();
     assert_eq!(
@@ -224,12 +221,12 @@ fn explicit_ifn_receiver_preserves_operand_effects_and_unrelated_protocols() {
     );
     assert_eq!(
         eval_number(&mut session, "(-invoke invoke-owner 17)"),
-        17.0f64.to_bits()
+        17
     );
     session.enter_namespace("ordinary-invoke").unwrap();
     session.eval("(defprotocol IFn (-invoke [this a])) (deftype OrdinaryInvoke [] IFn (-invoke [this a] a))").unwrap();
     assert_eq!(
         eval_number(&mut session, "(-invoke (OrdinaryInvoke.) 23)"),
-        23.0f64.to_bits()
+        23
     );
 }

@@ -1,13 +1,47 @@
 //! Pinned ClojureScript `drop` sequence behavior in the portable runtime.
 use suss_cli::portable_session::Session;
-use wasmtime::Val;
 
-fn number(session: &mut Session, source: &str) -> f64 {
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
+/// An expected number compares by `num`: integral values are longs.
+impl PartialEq<f64> for Number {
+    fn eq(&self, expected: &f64) -> bool {
+        *self == num(*expected)
+    }
+}
+
+fn number(session: &mut Session, source: &str) -> Number {
     let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error:?}"));
     session.inspect(&value, |mut store, value| {
-        let fields = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap().fields(&mut store)?.collect::<Vec<_>>();
-        let [Val::F64(bits)] = fields.as_slice() else { panic!("numeric result: {fields:?}") };
-        Ok(f64::from_bits(*bits))
+        exact_number(&mut store, &value)
     }).unwrap()
 }
 

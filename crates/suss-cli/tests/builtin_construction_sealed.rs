@@ -65,7 +65,7 @@ fn public_constructions_keep_working() {
             observe(&mut session, "(let [e (MapEntry. :a 1 nil)] [(key e) (val e) (= e [:a 1]) (= (hash e) (hash [:a 1]))])"),
             Observation::Vector(vec![
                 Observation::Keyword(None, "a".encode_utf16().collect()),
-                Observation::Number(1.0_f64.to_bits()),
+                Observation::Long(1),
                 Observation::Bool(true),
                 Observation::Bool(true),
             ]),

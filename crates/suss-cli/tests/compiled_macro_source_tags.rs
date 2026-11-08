@@ -12,6 +12,7 @@ fn data(form: &Form) -> Value {
     match &form.kind {
         Kind::Nil => Value::Null,
         Kind::Bool(value) => json!(value),
+        Kind::Long(value) => json!(value),
         Kind::Number(value) => json!(value),
         Kind::String(value) => json!(String::from_utf16(value).unwrap()),
         Kind::Symbol(symbol) => json!([
@@ -32,8 +33,12 @@ fn data(form: &Form) -> Value {
 }
 fn canonical(mut value: Value) -> Value {
     if let Value::Number(number) = &value {
-        // Ordinary Suss numbers are binary64. Booleans remain a distinct kind.
-        return json!(number.as_f64().unwrap());
+        // Integral JSON numbers are longs, others binary64 doubles. Booleans
+        // remain a distinct kind.
+        return match number.as_i64() {
+            Some(number) => json!(number),
+            None => json!(number.as_f64().unwrap()),
+        };
     }
     if let Value::Array(items) = &mut value {
         for item in items.iter_mut() {
@@ -190,7 +195,7 @@ fn compiled_source_inference_matches_pinned_tags_without_changing_executed_stora
         let count = session.eval("(count facts)").unwrap();
         assert!(matches!(
             bridge.read(&mut session, &count, 0..1).unwrap().kind,
-            Kind::Number(30.0)
+            Kind::Long(30)
         ));
         macros
             .define(

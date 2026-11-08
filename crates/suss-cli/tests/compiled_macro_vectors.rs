@@ -1,6 +1,32 @@
 use suss_compile::portable_session::sentinel_tag;
 use suss_cli::portable_session::Session;
 
+/// The pinned ClojureScript observation with each integral `f64` as a Clojure
+/// long, a distinction that corpus cannot record.
+fn clojure_longs(expected: &serde_json::Value) -> serde_json::Value {
+    use serde_json::Value;
+    match expected {
+        Value::Object(fields) if fields.get("tag") == Some(&Value::from("f64")) => {
+            let bits = u64::from_str_radix(fields["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.is_finite()
+                && value.fract() == 0.0
+                && !(value == 0.0 && value.is_sign_negative())
+                && value.abs() < 9_223_372_036_854_775_808.0
+            {
+                serde_json::json!({"tag":"long", "value":value as i64})
+            } else {
+                expected.clone()
+            }
+        }
+        Value::Object(fields) => Value::Object(
+            fields.iter().map(|(key, value)| (key.clone(), clojure_longs(value))).collect(),
+        ),
+        Value::Array(items) => Value::Array(items.iter().map(clojure_longs).collect()),
+        other => other.clone(),
+    }
+}
+
 #[test]
 fn compiled_macro_vectors_use_retained_nominal_type_and_persistent_tail() {
     let mut session = Session::new_macro().unwrap();
@@ -42,22 +68,15 @@ fn compiled_macro_vectors_transport_actual_binding_vectors_and_quoted_symbols() 
     let value = runtime
         .eval_with_macros("(bind (+ 20 22))", &mut macros)
         .unwrap();
-    let bits = runtime
-        .inspect(&value, |mut store, value| {
-            let fields = value
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap()
-                .fields(&mut store)?
-                .collect::<Vec<_>>();
-            let [wasmtime::Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number");
-            };
-            Ok(*bits)
+    let number = runtime
+        .inspect(&value, |store, value| {
+            suss_compile::portable_session::runtime_number(store, &value)
         })
         .unwrap();
-    assert_eq!(bits, 42f64.to_bits());
+    assert_eq!(
+        number,
+        Some(suss_compile::portable_session::RuntimeNumber::Long(42))
+    );
 }
 
 #[test]
@@ -81,7 +100,7 @@ fn compiled_macro_vectors_preserve_trie_updates_and_transport_across_gc() {
     };
     assert_eq!(items.len(), 1100);
     for (i, item) in items.iter().enumerate() {
-        assert!(matches!(&item.kind, Kind::Number(n) if *n == i as f64));
+        assert!(matches!(&item.kind, Kind::Long(n) if *n == i as i64));
         assert_eq!(item.span, 101..111);
     }
     for source in [
@@ -201,7 +220,7 @@ fn compiled_macro_vectors_large_literals_use_retained_transient_factory() {
         };
         assert_eq!(items.len(), size);
         for (index, item) in items.iter().enumerate() {
-            assert!(matches!(&item.kind, Kind::Number(n) if *n == index as f64));
+            assert!(matches!(&item.kind, Kind::Long(n) if *n == index as i64));
         }
     }
     session.eval("(def old [10 20 30]) (def t (transient old)) (-assoc-n! t 1 99) (conj! t 40) (def result (persistent! t))").unwrap();
@@ -264,21 +283,19 @@ fn compiled_macro_vectors_match_fresh_pinned_scalar_observations_in_both_phases(
                         };
                         serde_json::json!({"tag":"bool","value":v})
                     } else {
-                        let fields = value
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_struct(&store)?
-                            .unwrap()
-                            .fields(&mut store)?
-                            .collect::<Vec<_>>();
-                        let [wasmtime::Val::F64(bits)] = fields.as_slice() else {
-                            panic!("Number layout");
-                        };
-                        serde_json::json!({"tag":"f64","bits":format!("{bits:016x}")})
+                        use suss_compile::portable_session::{RuntimeNumber, runtime_number};
+                        match runtime_number(&mut store, &value)?.expect("Number layout") {
+                            RuntimeNumber::Long(value) => {
+                                serde_json::json!({"tag":"long","value":value})
+                            }
+                            RuntimeNumber::Double(value) => serde_json::json!(
+                                {"tag":"f64","bits":format!("{:016x}", value.to_bits())}
+                            ),
+                        }
                     })
                 })
                 .unwrap();
-            assert_eq!(actual, case["expected"], "{}", case["id"]);
+            assert_eq!(actual, clojure_longs(&case["expected"]), "{}", case["id"]);
         }
     }
 }
@@ -287,7 +304,6 @@ fn compiled_macro_vectors_match_fresh_pinned_scalar_observations_in_both_phases(
 fn compiled_vectors_collapse_and_regrow_at_1057_preserving_contents_metadata_and_sharing() {
     use suss_cli::portable_macro_data::FormBridge;
     use suss_reader::forms::Kind;
-    use wasmtime::Val;
 
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.set_operation_fuel(100_000_000);
@@ -316,15 +332,15 @@ fn compiled_vectors_collapse_and_regrow_at_1057_preserving_contents_metadata_and
             };
             assert_eq!(items.len(), length, "{source}");
             for (index, item) in items.iter().enumerate() {
-                let Kind::Number(actual) = &item.kind else {
-                    panic!("{source}[{index}]: independently decoded Number");
+                let Kind::Long(actual) = &item.kind else {
+                    panic!("{source}[{index}]: independently decoded long");
                 };
                 let expected = if changed && (index == 31 || index == 1024) {
-                    -(index as f64)
+                    -(index as i64)
                 } else {
-                    index as f64
+                    index as i64
                 };
-                assert_eq!(actual.to_bits(), expected.to_bits(), "{source}[{index}]");
+                assert_eq!(*actual, expected, "{source}[{index}]");
             }
         }
         session.collect().unwrap();
@@ -334,10 +350,10 @@ fn compiled_vectors_collapse_and_regrow_at_1057_preserving_contents_metadata_and
         };
         assert_eq!(items.len(), 1057);
         for (index, item) in items.iter().enumerate() {
-            let Kind::Number(actual) = &item.kind else {
-                panic!("old[{index}]: Number");
+            let Kind::Long(actual) = &item.kind else {
+                panic!("old[{index}]: long");
             };
-            assert_eq!(actual.to_bits(), (index as f64).to_bits(), "old[{index}]");
+            assert_eq!(*actual, index as i64, "old[{index}]");
         }
 
         // Independently inspect the metadata marker's ABI Number, without
@@ -354,18 +370,12 @@ fn compiled_vectors_collapse_and_regrow_at_1057_preserving_contents_metadata_and
                 .unwrap();
             session.collect().unwrap();
             session
-                .inspect(&value, |mut store, value| {
-                    let fields = value
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_struct(&store)?
-                        .unwrap()
-                        .fields(&mut store)?
-                        .collect::<Vec<_>>();
-                    let [Val::F64(bits)] = fields.as_slice() else {
-                        panic!("{name}: metadata Number layout");
-                    };
-                    assert_eq!(*bits, 17f64.to_bits(), "{name}: metadata marker");
+                .inspect(&value, |store, value| {
+                    assert_eq!(
+                        suss_compile::portable_session::runtime_number(store, &value)?,
+                        Some(suss_compile::portable_session::RuntimeNumber::Long(17)),
+                        "{name}: metadata marker"
+                    );
                     Ok(())
                 })
                 .unwrap();

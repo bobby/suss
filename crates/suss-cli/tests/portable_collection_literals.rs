@@ -1,5 +1,64 @@
 use suss_cli::portable_session::Session;
 
+/// An exact runtime number: a long, or a double by its bits.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Number {
+    Long(i64),
+    Double(u64),
+}
+/// The expected number for `value`: integral values are longs, as in Clojure.
+fn num(value: f64) -> Number {
+    if value.is_finite()
+        && value.fract() == 0.0
+        && !(value == 0.0 && value.is_sign_negative())
+        && value.abs() < 9_223_372_036_854_775_808.0
+    {
+        Number::Long(value as i64)
+    } else {
+        Number::Double(value.to_bits())
+    }
+}
+fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<Number> {
+    Ok(
+        match suss_compile::portable_session::runtime_number(store, value)?
+            .expect("expected a runtime number")
+        {
+            suss_compile::portable_session::RuntimeNumber::Long(value) => Number::Long(value),
+            suss_compile::portable_session::RuntimeNumber::Double(value) => {
+                Number::Double(value.to_bits())
+            }
+        },
+    )
+}
+
+/// Whether `actual` matches a pinned `f64` observation. The ClojureScript
+/// corpus cannot distinguish longs: an integral observation is a Clojure long,
+/// or an integral double when the source has a double operand.
+fn matches_pinned(actual: Number, expected: &serde_json::Value, source: &str) -> bool {
+    let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+    match actual {
+        Number::Long(_) => actual == num(f64::from_bits(bits)),
+        Number::Double(actual) => {
+            actual == bits
+                && (num(f64::from_bits(bits)) == Number::Double(bits)
+                    || source.contains("##")
+                    || source.as_bytes().windows(3).any(|w| {
+                        w[0].is_ascii_digit()
+                            && (w[1] == b'.' || w[1] == b'e')
+                            && (w[2].is_ascii_digit() || w[2] == b'-')
+                    }))
+        }
+    }
+}
+/// The pinned observation when `actual` matches it, otherwise a distinct value.
+fn number_observation(actual: Number, expected: &serde_json::Value, source: &str) -> serde_json::Value {
+    if matches_pinned(actual, expected, source) {
+        expected.clone()
+    } else {
+        serde_json::json!({ "tag": "number", "actual": format!("{actual:?}") })
+    }
+}
+
 fn boolean(session: &mut Session, source: &str) -> bool {
     let value = session.eval(source).unwrap();
     session
@@ -33,7 +92,6 @@ fn vector_literal_normalizes_entries_once_before_constructor_invocation() {
 
 #[test]
 fn collection_literals_match_independently_decoded_primary_values() {
-    use wasmtime::Val;
     let corpus: serde_json::Value = serde_json::from_str(include_str!(
         "../../../tests/oracle/collection-literal-cases.json"
     ))
@@ -61,12 +119,11 @@ fn collection_literals_match_independently_decoded_primary_values() {
             .inspect(&value, |mut store, value| {
                 Ok(match case["expected"]["tag"].as_str().unwrap() {
                     "f64" => {
-                        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-                        let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-                        let [Val::F64(bits)] = fields.as_slice() else {
-                            panic!("Number layout")
-                        };
-                        serde_json::json!({"tag":"f64","bits":format!("{bits:016x}")})
+                        number_observation(
+                        exact_number(&mut store, &value)?,
+                        &case["expected"],
+                        case["source"].as_str().unwrap(),
+                    )
                     }
                     "bool" => {
                         let boolean = match suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap()
@@ -107,18 +164,12 @@ fn large_vector_method_is_captured_before_entry_property_mutation() {
     session.collect().unwrap();
     assert!(boolean(&mut session,"(and (= (.-cnt literal-large) 32) (true? (.-root literal-large)) (= (aget (.-tail literal-large) 0) 17) (= (aget (.-tail literal-large) 31) 31))"));
     use suss_cli::portable_session::SessionError;
-    use wasmtime::Val;
     let Err(SessionError::Language(thrown)) = session.eval(&format!("[{entries}]")) else {
         panic!("next lookup uses changed method")
     };
     session
         .inspect(&thrown, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = object.fields(&mut store)?.collect::<Vec<_>>();
-            let [Val::F64(bits)] = fields.as_slice() else {
-                panic!("Number layout")
-            };
-            assert_eq!(*bits, 23f64.to_bits());
+            assert_eq!(exact_number(&mut store, &value)?, num(23.0));
             Ok(())
         })
         .unwrap();

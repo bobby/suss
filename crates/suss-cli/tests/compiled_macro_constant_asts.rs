@@ -9,6 +9,14 @@ fn data(form: &Form) -> Value {
     match &form.kind {
         Kind::Nil => Value::Null,
         Kind::Bool(value) => json!(value),
+        // The pinned corpus writes every number as a JSON float; an integral
+        // one is a Clojure long, so an integral double is marked apart.
+        Kind::Long(value) => json!(*value as f64),
+        Kind::Number(value)
+            if value.is_finite() && value.fract() == 0.0 && value.to_bits() != (-0.0f64).to_bits() =>
+        {
+            json!(["double", value])
+        }
         Kind::Number(value) => json!(value),
         Kind::String(value) => json!(String::from_utf16(value).unwrap()),
         Kind::Keyword(value) => json!([
@@ -246,7 +254,7 @@ fn reviewed_scalar_facts_keep_source_values_and_do_not_classify_local_reads_as_c
                     if s.namespace.is_none() && s.name == "+"));
                 assert!(matches!(&fields[8].kind, Kind::Symbol(s)
                     if s.namespace.is_none() && s.name == "observed"));
-                assert!(matches!(&fields[9].kind, Kind::Number(0.0)));
+                assert!(matches!(&fields[9].kind, Kind::Long(0)));
             }
             assert!(
                 matches!(&fields[2].kind, Kind::Bool(false)),

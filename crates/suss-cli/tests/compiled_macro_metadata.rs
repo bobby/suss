@@ -1,5 +1,5 @@
 use suss_cli::{portable_macro_data::FormBridge, portable_session::Session};
-use suss_compile::portable_session::sentinel_tag;
+use suss_compile::portable_session::{RuntimeNumber, runtime_number, sentinel_tag};
 use suss_reader::forms::{Kind, read_forms};
 
 #[test]
@@ -94,6 +94,17 @@ fn compiled_macro_metadata_desugars_and_merges_prefixes_with_outer_precedence() 
     }
 }
 
+/// Pinned remainder cases with an integral result and a double operand, or
+/// a non-number operand that JavaScript's remainder converts to a double.
+const DOUBLE_REMAINDERS: &[&str] = &[
+    "remainder-huge",
+    "remainder-max",
+    "remainder-subnormal-divisor",
+    "remainder-infinite-divisor",
+    "remainder-nil",
+    "remainder-boolean",
+];
+
 #[test]
 fn compiled_macro_metadata_match_fresh_pinned_scalar_observations_in_both_phases() {
     let corpus: serde_json::Value = serde_json::from_str(include_str!(
@@ -113,6 +124,7 @@ fn compiled_macro_metadata_match_fresh_pinned_scalar_observations_in_both_phases
             .unwrap();
         let mut matching = 0;
         let mut strict_arity_boundaries = 0;
+        let mut long_remainders = 0;
         for case in cases {
             let value = session
                 .eval_with_macros(case["source"].as_str().unwrap(), &mut macros)
@@ -129,17 +141,12 @@ fn compiled_macro_metadata_match_fresh_pinned_scalar_observations_in_both_phases
                         };
                         serde_json::json!({"tag":"bool","value":v})
                     } else {
-                        let fields = value
-                            .unwrap_anyref()
-                            .unwrap()
-                            .as_struct(&store)?
-                            .unwrap()
-                            .fields(&mut store)?
-                            .collect::<Vec<_>>();
-                        let [wasmtime::Val::F64(bits)] = fields.as_slice() else {
-                            panic!("Number layout");
-                        };
-                        serde_json::json!({"tag":"f64","bits":format!("{bits:016x}")})
+                        // The pinned corpus tags every number "f64"; an integral
+                        // one is a Clojure long, so an integral double is tagged apart.
+                        match runtime_number(&mut store, &value)?.expect("Number layout") {
+                            RuntimeNumber::Long(n) => serde_json::json!({"tag":"f64","bits":format!("{:016x}", (n as f64).to_bits())}),
+                            RuntimeNumber::Double(d) => serde_json::json!({"tag":if d.is_finite() && d.fract() == 0.0 && d.to_bits() != (-0.0f64).to_bits() { "double" } else { "f64" },"bits":format!("{:016x}", d.to_bits())}),
+                        }
                     })
                 })
                 .unwrap();
@@ -156,12 +163,35 @@ fn compiled_macro_metadata_match_fresh_pinned_scalar_observations_in_both_phases
                     serde_json::json!({"tag":"f64","bits":"405bc00000000000"})
                 );
                 strict_arity_boundaries += 1;
+            } else if DOUBLE_REMAINDERS.contains(&case["id"].as_str().unwrap()) {
+                // These remainders are doubles; the pin's "f64" tag cannot
+                // say so for an integral result.
+                let mut expected = case["expected"].clone();
+                expected["tag"] = "double".into();
+                assert_eq!(actual, expected, "{}", case["id"]);
+                matching += 1;
+            } else if case["id"] == "remainder-negative-zero" {
+                // The pin records JavaScript's -0.0 for (js-mod -4 2). Both
+                // operands are longs, and a long remainder has no signed
+                // zero, as with Clojure's (rem -4 2) => 0.
+                assert_eq!(
+                    case["expected"],
+                    serde_json::json!({"tag":"f64","bits":"8000000000000000"})
+                );
+                assert_eq!(
+                    actual,
+                    serde_json::json!({"tag":"f64","bits":"0000000000000000"})
+                );
+                long_remainders += 1;
             } else {
                 assert_eq!(actual, case["expected"], "{}", case["id"]);
                 matching += 1;
             }
         }
-        assert_eq!((matching, strict_arity_boundaries), (66, 1));
+        assert_eq!(
+            (matching, strict_arity_boundaries, long_remainders),
+            (65, 1, 1)
+        );
     }
 }
 
@@ -184,7 +214,7 @@ fn compiled_macro_metadata_transports_real_vector_chunk_sequences_across_trie_bo
         };
         assert_eq!(entries.len(), 64);
         for (i, entry) in entries.iter().enumerate() {
-            assert!(matches!(&entry.kind, Kind::Number(n) if *n == (i + 1) as f64));
+            assert!(matches!(&entry.kind, Kind::Long(n) if *n == (i + 1) as i64));
         }
         for source in [
             "(suss.core/ChunkedSeq. source-vector (array) 0 0 nil nil)",
@@ -274,17 +304,14 @@ fn compiled_macro_remainder_preserves_operand_order_arity_errors_and_recovers_af
         panic!("expected original conversion throw")
     };
     session.collect().unwrap();
-    let bits = session
-        .inspect(&payload, |mut store, value| {
-            let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = number.fields(&mut store)?.collect::<Vec<_>>();
-            let [wasmtime::Val::F64(bits)] = fields.as_slice() else {
-                panic!("expected original numeric throw payload")
-            };
-            Ok(*bits)
-        })
+    let thrown = session
+        .inspect(&payload, |store, value| runtime_number(store, &value))
         .unwrap();
-    assert_eq!(bits, 73.0_f64.to_bits());
+    assert_eq!(
+        thrown,
+        Some(RuntimeNumber::Long(73)),
+        "expected original numeric throw payload"
+    );
     let value = session.eval("(== trace 123)").unwrap();
     assert!(
         session
@@ -294,13 +321,10 @@ fn compiled_macro_remainder_preserves_operand_order_arity_errors_and_recovers_af
     );
     let value = session.eval("(js-mod 7 3)").unwrap();
     session.collect().unwrap();
-    let bits = session
-        .inspect(&value, |mut store, value| {
-            let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            Ok(number.field(&mut store, 0)?.unwrap_f64().to_bits())
-        })
+    let remainder = session
+        .inspect(&value, |store, value| runtime_number(store, &value))
         .unwrap();
-    assert_eq!(bits, 1.0_f64.to_bits());
+    assert_eq!(remainder, Some(RuntimeNumber::Long(1)));
 }
 
 #[test]
@@ -358,7 +382,7 @@ fn compiled_macro_metadata_merges_data_before_constructing_discarded_values() {
             .unwrap();
         session.collect().unwrap();
         let form = bridge.read(&mut session, &value, 810..820).unwrap();
-        assert!(matches!(&form.kind, Kind::Number(7.0)));
+        assert!(matches!(&form.kind, Kind::Long(7)));
         let input = read_forms(&syntax).unwrap().remove(0);
         let value = bridge.quote(&mut session, input).unwrap();
         session.collect().unwrap();
