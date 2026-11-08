@@ -1351,7 +1351,7 @@ fn adapter(
         for (_, ty) in &export.params {
             match ty {
                 Boundary::Exact(signed) => {
-                    exact::lift(&mut body, *signed, parameter, exact_root);
+                    exact::lift(&mut body, *signed, parameter, exact_root, wide);
                     parameter += 1;
                 }
                 Boundary::List(element) => {

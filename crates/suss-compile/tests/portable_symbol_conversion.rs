@@ -211,6 +211,7 @@ fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases() 
             Observation::Nil => json!({"tag": "nil"}),
             Observation::Bool(value) => json!({"tag": "bool", "value": value}),
             Observation::Number(bits) => json!({"tag": "f64", "bits": format!("{bits:016x}")}),
+            Observation::Long(value) => json!({"tag":"long", "value":value.to_string()}),
             Observation::String(units) => json!({"tag": "string", "units": units}),
             Observation::Vector(items) => {
                 json!({"tag": "vector", "items": items.iter().map(tagged).collect::<Vec<_>>()})

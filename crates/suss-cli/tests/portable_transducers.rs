@@ -13,6 +13,7 @@ fn raw(value: Observation) -> Value {
         Observation::Nil => json!({"tag":"nil"}),
         Observation::Bool(value) => json!({"tag":"bool","value":value}),
         Observation::Number(bits) => json!({"tag":"f64","bits":format!("{bits:016x}")}),
+        Observation::Long(value) => json!({"tag":"long", "value":value.to_string()}),
         Observation::String(units) => string(units),
         Observation::Keyword(namespace, name) => {
             json!({"tag":"keyword","namespace":namespace.map(string).unwrap_or(json!({"tag":"nil"})),"name":string(name)})

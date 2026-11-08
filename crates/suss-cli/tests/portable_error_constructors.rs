@@ -101,6 +101,7 @@ fn value_json(value: Observation) -> Value {
         Observation::Nil => json!({"tag":"nil"}),
         Observation::Bool(value) => json!({"tag":"bool","value":value}),
         Observation::Number(bits) => json!({"tag":"number","bits":format!("{bits:016x}")}),
+        Observation::Long(value) => json!({"tag":"long","value":value.to_string()}),
         Observation::String(units) => json!({"tag":"string","units":units}),
         other => panic!("Unexpected closed Error scalar: {other:?}"),
     }
