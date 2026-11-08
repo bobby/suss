@@ -398,15 +398,9 @@ fn public_command_initializer_failure_preserves_the_actual_language_payload() {
         .expect("language exception, not a host linking or validation failure");
     let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
     assert_eq!(fields.len(), 1);
-    let payload = fields[0]
-        .unwrap_anyref()
-        .unwrap()
-        .as_struct(&store)
-        .unwrap()
-        .unwrap();
     assert_eq!(
-        payload.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
-        42.0_f64.to_bits()
+        suss_compile::portable_session::runtime_number(&mut store, &fields[0]).unwrap(),
+        Some(suss_compile::portable_session::RuntimeNumber::Long(42))
     );
 }
 

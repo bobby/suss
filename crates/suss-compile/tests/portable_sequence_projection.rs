@@ -10,9 +10,9 @@ fn reverse_and_value_sequences_decode_canonical_storage_after_gc() {
         let mut decoder = Decoder::capture(&mut session, 8192).unwrap();
         decoder.capture_sequences(&mut session).unwrap();
         for (source, expected) in [
-            ("(rseq [1 2 3])", vec![3.0_f64, 2.0, 1.0]),
-            ("(next (rseq [1 2 3]))", vec![2.0, 1.0]),
-            ("(vals (sorted-map :a 7 :b 11))", vec![7.0, 11.0]),
+            ("(rseq [1 2 3])", vec![3_i64, 2, 1]),
+            ("(next (rseq [1 2 3]))", vec![2, 1]),
+            ("(vals (sorted-map :a 7 :b 11))", vec![7, 11]),
         ] {
             let value = session.eval_probe(source).unwrap();
             session.collect().unwrap();
@@ -22,7 +22,7 @@ fn reverse_and_value_sequences_decode_canonical_storage_after_gc() {
                 Observation::List(
                     expected
                         .into_iter()
-                        .map(|n| Observation::Number(n.to_bits()))
+                        .map(Observation::Long)
                         .collect()
                 ),
                 "{source}"
@@ -65,7 +65,7 @@ fn projected_spines_remain_iterative_and_reverse_views_reject_bad_declared_bound
             decoder.decode_session(&mut session, &value).unwrap(),
             Observation::List(
                 (0..200)
-                    .map(|i| Observation::Number((i as f64).to_bits()))
+                    .map(Observation::Long)
                     .collect()
             )
         );

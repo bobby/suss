@@ -1,6 +1,7 @@
 //! Frozen ABI1 recursive group from reviewed8e0f3b5; development compatibility fixture.
 //! Keep this historical shape when the production group changes.
 use wasm_encoder::*;
+#[allow(dead_code)] // Type index 0, named for the frozen layout.
 const NUMBER: u32 = 0;
 const STRING: u32 = 1;
 const ARGS: u32 = 2;

@@ -8,6 +8,7 @@ fn text(form: &forms::Form) -> String {
         Kind::Nil => "nil".into(),
         Kind::Bool(x) => x.to_string(),
         Kind::Number(x) => x.to_string(),
+        Kind::Long(x) => x.to_string(),
         Kind::String(x) => format!("{:?}", String::from_utf16_lossy(x)),
         Kind::Symbol(x) => {
             let spelling = x.to_string();

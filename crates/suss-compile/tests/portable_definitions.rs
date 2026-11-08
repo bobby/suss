@@ -72,15 +72,9 @@ fn source_definition_initializes_a_shared_cell() {
         .call(&mut store, &[], &mut result)
         .unwrap();
     store.gc(None).unwrap();
-    let number = result[0]
-        .unwrap_anyref()
-        .unwrap()
-        .as_struct(&store)
-        .unwrap()
-        .unwrap();
     assert_eq!(
-        number.field(&mut store, 0).unwrap().unwrap_f64().to_bits(),
-        7.0f64.to_bits()
+        suss_compile::portable_session::runtime_number(&mut store, &result[0]).unwrap(),
+        Some(suss_compile::portable_session::RuntimeNumber::Long(7))
     );
 }
 
@@ -240,18 +234,18 @@ impl Session {
         let fragment = self.compile(source, Phase::Runtime).unwrap();
         self.call(fragment).unwrap()
     }
+    /// A double's bits.
     fn bits(&mut self, value: &Val) -> u64 {
-        let number = value
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&self.store)
-            .unwrap()
-            .unwrap();
-        number
-            .field(&mut self.store, 0)
-            .unwrap()
-            .unwrap_f64()
-            .to_bits()
+        match suss_compile::portable_session::runtime_number(&mut self.store, value).unwrap() {
+            Some(suss_compile::portable_session::RuntimeNumber::Double(value)) => value.to_bits(),
+            other => panic!("expected a double, observed {other:?}"),
+        }
+    }
+    fn long(&mut self, value: &Val) -> i64 {
+        match suss_compile::portable_session::runtime_number(&mut self.store, value).unwrap() {
+            Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => value,
+            other => panic!("expected a long, observed {other:?}"),
+        }
     }
     fn sentinel(&mut self, value: &Val) -> u32 {
         suss_compile::portable_session::sentinel_tag(&mut self.store, value)
@@ -264,7 +258,7 @@ impl Session {
 fn source_definitions_rebind_live_globals_without_changing_old_captures() {
     let mut session = Session::new();
     let value = session.eval("(ns app) (def value 7) (def function (fn [] value)) (def captured (let [old value] (fn [] old))) (def call (fn [] (function))) (call)");
-    assert_eq!(session.bits(&value), 7.0f64.to_bits());
+    assert_eq!(session.long(&value), 7);
     let old_code = session.compile("(function)", Phase::Runtime).unwrap();
     let old_function = session.eval("(def original function)");
     assert!(old_function
@@ -274,16 +268,16 @@ fn source_definitions_rebind_live_globals_without_changing_old_captures() {
         .unwrap());
     session.eval("(def value 9) (def function (fn [] 11))");
     for (source, expected) in [
-        ("(function)", 11.0f64),
-        ("(captured)", 7.0),
-        ("(original)", 9.0),
-        ("(call)", 11.0),
+        ("(function)", 11),
+        ("(captured)", 7),
+        ("(original)", 9),
+        ("(call)", 11),
     ] {
         let value = session.eval(source);
-        assert_eq!(session.bits(&value), expected.to_bits(), "{source}");
+        assert_eq!(session.long(&value), expected, "{source}");
     }
     let value = session.call(old_code).unwrap();
-    assert_eq!(session.bits(&value), 11.0f64.to_bits());
+    assert_eq!(session.long(&value), 11);
 }
 
 #[test]
@@ -301,13 +295,13 @@ fn source_defonce_checks_bound_state_and_skips_initializer_effects() {
         // Reading undefined must not mark the cell initialized.
     }
     let value = session.eval("(defonce forbidden 17) forbidden");
-    assert_eq!(session.bits(&value), 17.0f64.to_bits());
+    assert_eq!(session.long(&value), 17);
     let value = session.eval("(def declaration) (defonce declaration 5) declaration");
-    assert_eq!(session.bits(&value), 5.0f64.to_bits());
+    assert_eq!(session.long(&value), 5);
     let value = session.eval("(defonce declaration 8)");
     assert_eq!(session.sentinel(&value), 0);
     let value = session.eval("declaration");
-    assert_eq!(session.bits(&value), 5.0f64.to_bits());
+    assert_eq!(session.long(&value), 5);
 }
 
 #[test]
@@ -330,11 +324,11 @@ fn failed_compile_and_initializer_preserve_existing_cells_and_prior_effects() {
         .unwrap();
     session.catch(fragment, 3, "Not callable");
     let value = session.eval("value");
-    assert_eq!(session.bits(&value), 7.0f64.to_bits());
+    assert_eq!(session.long(&value), 7);
     let value = session.eval("effect");
-    assert_eq!(session.bits(&value), 3.0f64.to_bits());
+    assert_eq!(session.long(&value), 3);
     let value = session.eval("(def value 12) value");
-    assert_eq!(session.bits(&value), 12.0f64.to_bits());
+    assert_eq!(session.long(&value), 12);
 }
 
 #[test]
@@ -344,25 +338,25 @@ fn source_namespaces_resolve_requires_renames_core_aliases_and_exclusions() {
     let value = session.eval("(ns app \"docs\" {:retained true} (:require [library :as lib :refer [value choose] :rename {value renamed}] [cljs.core :as core]) (:refer-clojure :exclude [+] :rename {* product})) (def own (lib/choose renamed)) own");
     assert_eq!(session.bits(&value), (-0.0f64).to_bits());
     for (source, expected) in [
-        ("(core/+ 1 2)", 3.0f64),
-        ("(product 2 3)", 6.0),
-        ("(choose 9)", 9.0),
+        ("(core/+ 1 2)", 3),
+        ("(product 2 3)", 6),
+        ("(choose 9)", 9),
     ] {
         let value = session.eval(source);
-        assert_eq!(session.bits(&value), expected.to_bits());
+        assert_eq!(session.long(&value), expected);
     }
     assert!(session.compile("(+ 1 2)", Phase::Runtime).is_err());
     session.eval("(ns library) (def value 10)");
     let value = session
         .eval("(ns app (:require [library :refer [value] :rename {value renamed}])) renamed");
-    assert_eq!(session.bits(&value), 10.0f64.to_bits());
+    assert_eq!(session.long(&value), 10);
 }
 
 #[test]
 fn definitions_inside_functions_capture_lexicals_and_preserve_name_metadata() {
     let mut session = Session::new();
     let value = session.eval("(let [local 3] ((fn [] (def captured-value local)))) captured-value");
-    assert_eq!(session.bits(&value), 3.0f64.to_bits());
+    assert_eq!(session.long(&value), 3);
     let hir = portable::analyze("(def ^:retained value \"doc\" 7)").unwrap();
     let portable::hir::Expression::Do(body) = &*hir.kind else {
         panic!()
@@ -419,12 +413,12 @@ fn definition_and_namespace_diagnostics_are_located_and_transactional() {
     }
     let mut session = Session::new();
     let value = session.eval("(def user/value 7) (def value) value");
-    assert_eq!(session.bits(&value), 7.0f64.to_bits());
+    assert_eq!(session.long(&value), 7);
     let value = session.eval("(let [defonce (fn [value init] value)] (defonce 3 4))");
-    assert_eq!(session.bits(&value), 3.0f64.to_bits());
+    assert_eq!(session.long(&value), 3);
     let value =
         session.eval("(ns cljs.core) (def cljs.core/portable-value 7) suss.core/portable-value");
-    assert_eq!(session.bits(&value), 7.0f64.to_bits());
+    assert_eq!(session.long(&value), 7);
 }
 
 #[test]
@@ -438,8 +432,8 @@ fn definition_cells_remain_separate_by_phase() {
         .unwrap();
     let a = session.call(runtime).unwrap();
     let b = session.call(macro_phase).unwrap();
-    assert_eq!(session.bits(&a), 7.0f64.to_bits());
-    assert_eq!(session.bits(&b), 9.0f64.to_bits());
+    assert_eq!(session.long(&a), 7);
+    assert_eq!(session.long(&b), 9);
     assert_eq!(session.cells.len(), 2);
 }
 
@@ -555,10 +549,10 @@ fn namespace_declarations_replace_import_scopes_but_keep_existing_cells() {
     );
     let fragment = session.compile("(ns app) (+ 1 2)", Phase::Runtime).unwrap();
     let value = session.call(fragment).unwrap();
-    assert_eq!(session.bits(&value), 3.0f64.to_bits());
+    assert_eq!(session.long(&value), 3);
     assert!(session.compile("(core/+ 1 2)", Phase::Runtime).is_err());
     let value = session.eval("value");
-    assert_eq!(session.bits(&value), 7.0f64.to_bits());
+    assert_eq!(session.long(&value), 7);
 }
 
 #[test]
@@ -586,7 +580,7 @@ fn declaration_expression_contexts_are_explicitly_unsupported() {
     let value = session.eval("(def value 7) (def value)");
     assert_eq!(session.sentinel(&value), 0);
     let value = session.eval("((fn [] (def value) value))");
-    assert_eq!(session.bits(&value), 7.0f64.to_bits());
+    assert_eq!(session.long(&value), 7);
     let value = session.eval("(if true (def value) nil)");
     assert_eq!(session.sentinel(&value), 0);
 }
@@ -610,7 +604,7 @@ fn source_require_reload_metadata_is_explicitly_unsupported() {
     }
     let mut session = Session::new();
     let value = session.eval("(ns app (:require ^:retained [cljs.core :as core])) (core/+ 1 2)");
-    assert_eq!(session.bits(&value), 3.0f64.to_bits());
+    assert_eq!(session.long(&value), 3);
 }
 
 #[test]

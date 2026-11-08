@@ -1,16 +1,12 @@
 use std::sync::{Arc, Mutex};
 use suss_compile::portable_session::{Session, SessionOptions};
 
-fn observed_number(store: &mut wasmtime::StoreContextMut<'_, ()>, value: wasmtime::Val) -> f64 {
-    value
-        .unwrap_anyref()
-        .unwrap()
-        .as_struct(&*store)
-        .unwrap()
-        .unwrap()
-        .field(&mut *store, 0)
-        .unwrap()
-        .unwrap_f64()
+/// A long, as Clojure's integer values are.
+fn observed_number(store: &mut wasmtime::StoreContextMut<'_, ()>, value: wasmtime::Val) -> i64 {
+    match suss_compile::portable_session::runtime_number(&mut *store, &value).unwrap() {
+        Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => value,
+        other => panic!("expected a long, observed {other:?}"),
+    }
 }
 
 #[test]
@@ -30,7 +26,7 @@ fn hook_observes_values_synchronously_with_fixed_arity_and_expires_on_reset() {
     assert!(session.install_observation_hook(|_, _| Ok(0)).is_err());
 
     session.eval("(def hook-values (array 3)) (def token-a (suss.harness.observation/capture (aget hook-values 0))) (aset hook-values 0 9) (def token-b (suss.harness.observation/capture (aget hook-values 0)))").unwrap();
-    for (source, expected) in [("token-a", 0.0), ("token-b", 1.0)] {
+    for (source, expected) in [("token-a", 0), ("token-b", 1)] {
         let value = session.eval(source).unwrap();
         assert_eq!(
             session
@@ -41,14 +37,14 @@ fn hook_observes_values_synchronously_with_fixed_arity_and_expires_on_reset() {
             expected
         );
     }
-    assert_eq!(*observed.lock().unwrap(), vec![(0, 3.0), (1, 9.0)]);
+    assert_eq!(*observed.lock().unwrap(), vec![(0, 3), (1, 9)]);
     assert!(session.eval("(suss.harness.observation/capture)").is_err());
     assert!(
         session
             .eval("(suss.harness.observation/capture 1 2)")
             .is_err()
     );
-    assert_eq!(*observed.lock().unwrap(), vec![(0, 3.0), (1, 9.0)]);
+    assert_eq!(*observed.lock().unwrap(), vec![(0, 3), (1, 9)]);
 
     session.reset().unwrap();
     assert!(

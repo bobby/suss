@@ -48,11 +48,11 @@ fn is_interrupt(result: &Result<SessionValue, SessionError>) -> bool {
     matches!(result, Err(error) if error.is_interrupt() && error.to_string() == "Interrupted")
 }
 
-fn number(session: &mut Session, source: &str) -> f64 {
+fn number(session: &mut Session, source: &str) -> i64 {
     let mut decoder = Decoder::capture(session, 1_000).unwrap();
     let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error}"));
     match decoder.decode_session(session, &value).unwrap() {
-        Observation::Number(bits) => f64::from_bits(bits),
+        Observation::Long(value) => value,
         other => panic!("{source}: {other:?}"),
     }
 }
@@ -66,15 +66,15 @@ fn interrupt_stops_running_code_without_rolling_back_effects() {
     });
     assert!(is_interrupt(&result), "{:?}", result.map(|_| ()));
     // Effects before the interrupt remain; the session accepts the next input.
-    assert!(number(&mut session, "(deref progress)") > 0.0);
-    assert_eq!(number(&mut session, "(+ 1 2)"), 3.0);
+    assert!(number(&mut session, "(deref progress)") > 0);
+    assert_eq!(number(&mut session, "(+ 1 2)"), 3);
 }
 
 #[test]
 fn an_idle_interrupt_does_not_cancel_the_next_operation() {
     let mut session = Session::new_repl().unwrap();
     session.interrupt_handle().interrupt();
-    assert_eq!(number(&mut session, "(+ 40 2)"), 42.0);
+    assert_eq!(number(&mut session, "(+ 40 2)"), 42);
 }
 
 #[test]
@@ -99,7 +99,7 @@ fn interrupt_handles_survive_reset() {
     session.reset().unwrap();
     let result = interrupted(handle, || session.eval(SPIN));
     assert!(is_interrupt(&result));
-    assert_eq!(number(&mut session, "(+ 1 2)"), 3.0);
+    assert_eq!(number(&mut session, "(+ 1 2)"), 3);
 }
 
 #[test]
@@ -119,6 +119,6 @@ fn interrupt_stops_a_running_macro_expansion() {
     let mut decoder = Decoder::capture(&mut session, 1_000).unwrap();
     assert_eq!(
         decoder.decode_session(&mut session, &value).unwrap(),
-        Observation::Number(42f64.to_bits())
+        Observation::Long(42)
     );
 }

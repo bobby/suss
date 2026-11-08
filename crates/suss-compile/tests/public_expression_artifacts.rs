@@ -10,13 +10,15 @@ use suss_compile::{
     portable_session::{Session, SessionError, SessionOptions},
 };
 
-fn number(session: &mut Session, value: &suss_compile::portable_session::SessionValue) -> f64 {
-    session
-        .inspect(value, |mut store, value| {
-            let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            Ok(number.field(&mut store, 0)?.unwrap_f64())
-        })
-        .unwrap()
+fn number(session: &mut Session, value: &suss_compile::portable_session::SessionValue) -> i64 {
+    // Each observed result is an integer, so a Clojure long.
+    let number = session
+        .inspect(value, |store, value| suss_compile::portable_session::runtime_number(store, &value))
+        .unwrap();
+    match number {
+        Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => value,
+        other => panic!("expected a long, observed {other:?}"),
+    }
 }
 
 #[test]
@@ -38,11 +40,11 @@ fn compiled_macro_artifact_retains_runtime_state_and_roots() {
     let mut session = Session::new().unwrap();
     let result = artifact.execute(&mut session).unwrap().unwrap();
     session.collect().unwrap();
-    assert_eq!(number(&mut session, &result), 42.0);
+    assert_eq!(number(&mut session, &result), 42);
     let next = session.eval("(calculate 41)").unwrap();
-    assert_eq!(number(&mut session, &next), 43.0);
+    assert_eq!(number(&mut session, &next), 43);
     session.collect().unwrap();
-    assert_eq!(number(&mut session, &result), 42.0);
+    assert_eq!(number(&mut session, &result), 42);
 }
 
 #[test]
@@ -53,7 +55,7 @@ fn cached_runtime_initializer_is_deferred_and_exception_payload_survives() {
         panic!("compiled Runtime initializer must run only during artifact execution");
     };
     session.collect().unwrap();
-    assert_eq!(number(&mut session, &payload), 17.0);
+    assert_eq!(number(&mut session, &payload), 17);
 }
 
 #[test]
@@ -79,10 +81,10 @@ fn prepared_dependencies_execute_once_even_after_source_disappears() {
     })
     .unwrap();
     let value = artifact.execute(&mut session).unwrap().unwrap();
-    assert_eq!(number(&mut session, &value), 1.0);
+    assert_eq!(number(&mut session, &value), 1);
     session.load_namespace("artifact-dep").unwrap();
     let value = session.eval("@dep/seen").unwrap();
-    assert_eq!(number(&mut session, &value), 1.0);
+    assert_eq!(number(&mut session, &value), 1);
 }
 
 #[test]
@@ -95,9 +97,9 @@ fn artifact_language_exception_remains_inspectable_and_prompt_recovers() {
         panic!("expected an owned language exception");
     };
     session.collect().unwrap();
-    assert_eq!(number(&mut session, &payload), 41.0);
+    assert_eq!(number(&mut session, &payload), 41);
     let value = session.eval("(+ value 1)").unwrap();
-    assert_eq!(number(&mut session, &value), 42.0);
+    assert_eq!(number(&mut session, &value), 42);
 }
 
 #[test]
@@ -113,7 +115,7 @@ fn populated_session_rejects_bundle_before_initialization() {
     ));
     assert_eq!(session.stats().resident_fragments, before);
     let value = session.eval("(+ 40 2)").unwrap();
-    assert_eq!(number(&mut session, &value), 42.0);
+    assert_eq!(number(&mut session, &value), 42);
 }
 
 #[test]
@@ -129,7 +131,7 @@ fn resetting_core_observer_invalidates_pending_artifact_execution() {
         "user initialization must not cross reset"
     );
     let value = session.eval("42").unwrap();
-    assert_eq!(number(&mut session, &value), 42.0);
+    assert_eq!(number(&mut session, &value), 42);
 }
 
 #[test]
@@ -198,7 +200,7 @@ fn empty_macro_session_rejects_runtime_bundle_before_core_callback() {
     assert_eq!(session.phase(), Phase::Macro);
     assert_eq!(session.stats().resident_fragments, 0);
     let value = session.eval("42").unwrap();
-    assert_eq!(number(&mut session, &value), 42.0);
+    assert_eq!(number(&mut session, &value), 42);
 }
 
 
@@ -227,10 +229,10 @@ fn public_expression_compile_fuel_preserves_none_zero_roots_and_recovery() {
                 .unwrap().execute(&mut session).unwrap().unwrap()
         };
         session.collect().unwrap();
-        assert_eq!(number(&mut session, &result), 42.0);
+        assert_eq!(number(&mut session, &result), 42);
         let seen = session.eval("@seen").unwrap();
-        assert_eq!(number(&mut session, &seen), 42.0, "initializer executes exactly once");
+        assert_eq!(number(&mut session, &seen), 42, "initializer executes exactly once");
         session.collect().unwrap();
-        assert_eq!(number(&mut session, &result), 42.0, "result root survives GC");
+        assert_eq!(number(&mut session, &result), 42, "result root survives GC");
     }
 }

@@ -1,6 +1,7 @@
 //! Execute emitted initialization and source fragments without native Session setup.
 mod support;
 use suss_compile::{
+    portable_session::{RuntimeNumber, runtime_number},
     portable::{
         self,
         resolve::{Environment, Phase},
@@ -89,7 +90,7 @@ fn emitted_source_cells_initialize_once_and_keep_live_closures_across_fragments(
         let first_module = linker
             .instantiate(&mut store, &Module::new(&engine, first.wasm).unwrap())
             .unwrap();
-        assert_eq!(evaluate_number(&mut store, first_module), 1.0_f64.to_bits());
+        assert_eq!(evaluate_number(&mut store, first_module), RuntimeNumber::Long(1));
         store.gc(None).unwrap();
         let second = portable::prepare_fragment("(f)", &first.environment, phase).unwrap();
         // Preparation carries the complete catalog; the second fragment adds no cells.
@@ -99,29 +100,19 @@ fn emitted_source_cells_initialize_once_and_keep_live_closures_across_fragments(
             .unwrap();
         assert_eq!(
             evaluate_number(&mut store, second_module),
-            2.0_f64.to_bits()
+            RuntimeNumber::Long(2)
         );
     }
 }
 
-fn evaluate_number(store: &mut Store<()>, instance: Instance) -> u64 {
+fn evaluate_number(store: &mut Store<()>, instance: Instance) -> RuntimeNumber {
     let mut result = [Val::null_any_ref()];
     instance
         .get_func(&mut *store, "eval")
         .unwrap()
         .call(&mut *store, &[], &mut result)
         .unwrap();
-    let number = result[0]
-        .unwrap_anyref()
-        .unwrap()
-        .as_struct(&*store)
-        .unwrap()
-        .unwrap();
-    let fields = number.fields(store).unwrap().collect::<Vec<_>>();
-    match fields.as_slice() {
-        [Val::F64(bits)] => *bits,
-        _ => panic!("not a boxed number: {fields:?}"),
-    }
+    runtime_number(store, &result[0]).unwrap().expect("a runtime number")
 }
 
 #[test]
@@ -197,28 +188,30 @@ fn emitted_core_cells_execute_in_both_phases_and_survive_gc() {
         }
         store.gc(None).unwrap();
         for (source, expected) in [
-            ("(let [sum +] (sum 19 23))", 42.0_f64),
+            ("(let [sum +] (sum 19 23))", 42),
+            (
+                "(if (identical? unsigned-bit-shift-right bit-shift-right-zero-fill) 1 2)",
+                2,
+            ),
+            ("(let [bits bit-and] (bits 15 7 3))", 3),
+            ("(let [bits bit-or] (bits 1 2 4))", 7),
+            ("(let [bits bit-xor] (bits 1 3 7))", 5),
+            ("(let [bits bit-and-not] (bits 15 1 2))", 12),
+            ("(ex-data (ex-info \"retained\" 17))", 17),
+            ("(ex-cause (ex-info \"retained\" nil 23))", 23),
+            (
+                "(if (instance? ExceptionInfo (ex-info \"retained\" nil)) 1 2)",
+                1,
+            ),
+            // Clojure's longs are 64-bit; Suss's bitwise operations are still
+            // 32-bit (#336). Last, so the cases above are still checked.
             (
                 "(let [shift unsigned-bit-shift-right] (shift -1 1))",
-                2147483647.0,
+                i64::MAX,
             ),
             (
                 "(let [shift bit-shift-right-zero-fill] (shift -1 1))",
-                2147483647.0,
-            ),
-            (
-                "(if (identical? unsigned-bit-shift-right bit-shift-right-zero-fill) 1 2)",
-                2.0,
-            ),
-            ("(let [bits bit-and] (bits 15 7 3))", 3.0),
-            ("(let [bits bit-or] (bits 1 2 4))", 7.0),
-            ("(let [bits bit-xor] (bits 1 3 7))", 5.0),
-            ("(let [bits bit-and-not] (bits 15 1 2))", 12.0),
-            ("(ex-data (ex-info \"retained\" 17))", 17.0),
-            ("(ex-cause (ex-info \"retained\" nil 23))", 23.0),
-            (
-                "(if (instance? ExceptionInfo (ex-info \"retained\" nil)) 1 2)",
-                1.0,
+                i64::MAX,
             ),
         ] {
             let wasm = portable::compile_in(source, &Environment::default(), phase).unwrap();
@@ -231,16 +224,10 @@ fn emitted_core_cells_execute_in_both_phases_and_survive_gc() {
                 .unwrap()
                 .call(&mut store, &[], &mut result)
                 .unwrap();
-            let number = result[0]
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)
-                .unwrap()
-                .unwrap();
-            let fields = number.fields(&mut store).unwrap().collect::<Vec<_>>();
-            assert!(
-                matches!(fields.as_slice(), [Val::F64(bits)] if *bits == expected.to_bits()),
-                "{phase:?} {source}: {fields:?}"
+            assert_eq!(
+                runtime_number(&mut store, &result[0]).unwrap(),
+                Some(RuntimeNumber::Long(expected)),
+                "{phase:?} {source}"
             );
         }
         // A phase's cells cannot resolve imports for an artifact of the other phase.

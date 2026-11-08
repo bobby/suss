@@ -11,6 +11,7 @@ fn expected(form: &Form) -> Observation {
         Kind::Nil => Observation::Nil,
         Kind::Bool(value) => Observation::Bool(*value),
         Kind::Number(value) => Observation::Number(value.to_bits()),
+        Kind::Long(value) => Observation::Long(*value),
         Kind::String(units) => Observation::String(units.clone()),
         Kind::Symbol(value) => Observation::Symbol(
             value.namespace.as_ref().map(|s| s.encode_utf16().collect()),
@@ -219,6 +220,23 @@ fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases() 
             other => panic!("Unexpected primary corpus observation: {other:?}"),
         }
     }
+    // Pinned from ClojureScript: its integral binary64 results are Clojure longs.
+    fn clojure(expected: &serde_json::Value) -> serde_json::Value {
+        match expected["tag"].as_str() {
+            Some("f64") => {
+                let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+                let value = f64::from_bits(bits);
+                if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+                    serde_json::json!({"tag":"long","value":(value as i64).to_string()})
+                } else {
+                    expected.clone()
+                }
+            }
+            Some("vector") => serde_json::json!({"tag":"vector","items":
+                expected["items"].as_array().unwrap().iter().map(clojure).collect::<Vec<_>>()}),
+            _ => expected.clone(),
+        }
+    }
     let corpus: serde_json::Value = serde_json::from_str(include_str!(
         "../../../tests/oracle/symbol-conversion-cases.json"
     ))
@@ -245,7 +263,7 @@ fn retained_identifier_dependency_matches_shared_pinned_corpus_in_both_phases() 
             let actual = decoder.decode_session(&mut session, &value).unwrap();
             assert_eq!(
                 tagged(&actual),
-                case["expected"],
+                clojure(&case["expected"]),
                 "phase={macro_phase} {}",
                 case["id"]
             );

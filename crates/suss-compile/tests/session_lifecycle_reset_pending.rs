@@ -2,6 +2,15 @@
 use std::sync::{Arc, atomic::{AtomicUsize, Ordering}};
 use suss_compile::portable_session::{Session, SessionError};
 
+/// A long, as Clojure's integer values are.
+fn long_value(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<i64> {
+    match suss_compile::portable_session::runtime_number(store, value)? {
+        Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => Ok(value),
+        other => Err(wasmtime::Error::msg(format!("expected a long, observed {other:?}"))),
+    }
+}
+
+
 #[test]
 fn session_lifecycle_reset_pending_retains_cleanup_and_cancels_host_request_once() {
     let mut session = Session::new().unwrap();
@@ -23,8 +32,7 @@ fn session_lifecycle_reset_pending_retains_cleanup_and_cancels_host_request_once
     assert!(session.run_async_turn().unwrap());
     let effects = session.eval("effects").unwrap();
     session.inspect(&effects, |mut store, value| {
-        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-        assert_eq!(object.field(&mut store, 0)?.unwrap_f64(), 1.0);
+        assert_eq!(long_value(&mut store, &value)?, 1);
         Ok(())
     }).unwrap();
     session.reset().unwrap();

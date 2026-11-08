@@ -32,7 +32,7 @@ fn required_source_is_compiled_before_the_importing_namespace() {
     );
     let mut host = Host::new();
     let value = host.run(plan).unwrap().pop().unwrap();
-    assert_eq!(host.bits(&value), 7.0f64.to_bits());
+    assert_eq!(host.long(&value), 7);
 }
 
 use portable::modules::{ModuleIdentity, ModulePlan, prepare_modules};
@@ -43,9 +43,9 @@ use wasmtime::{
 };
 
 struct Host {
-    store: Store<Vec<u64>>,
+    store: Store<Vec<i64>>,
     runtime: Instance,
-    linker: Linker<Vec<u64>>,
+    linker: Linker<Vec<i64>>,
     environment: Environment,
     cells: BTreeMap<portable::resolve::Global, Global>,
     provided: BTreeSet<ModuleIdentity>,
@@ -69,17 +69,13 @@ impl Host {
         let setter_type = setter.ty(&store);
         let trace =
             wasmtime::Func::new(&mut store, setter_type, move |mut caller, args, results| {
-                let object = args[1]
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_struct(&caller)
-                    .unwrap()
-                    .unwrap();
-                let fields = object.fields(&mut caller).unwrap().collect::<Vec<_>>();
-                let [Val::F64(bits)] = fields.as_slice() else {
-                    panic!("this trace fixture only defines Numbers")
+                // Longs are traced by value, a double by its bits.
+                let value = match suss_compile::portable_session::runtime_number(&mut caller, &args[1]).unwrap() {
+                    Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => value,
+                    Some(suss_compile::portable_session::RuntimeNumber::Double(value)) => value.to_bits() as i64,
+                    None => panic!("this trace fixture only defines numbers"),
                 };
-                caller.data_mut().push(*bits);
+                caller.data_mut().push(value);
                 setter.call(&mut caller, args, results)
             });
         linker
@@ -159,18 +155,18 @@ impl Host {
         }
         Ok(values)
     }
+    /// A double's bits.
     fn bits(&mut self, value: &Val) -> u64 {
-        let object = value
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&self.store)
-            .unwrap()
-            .unwrap();
-        object
-            .field(&mut self.store, 0)
-            .unwrap()
-            .unwrap_f64()
-            .to_bits()
+        match suss_compile::portable_session::runtime_number(&mut self.store, value).unwrap() {
+            Some(suss_compile::portable_session::RuntimeNumber::Double(value)) => value.to_bits(),
+            other => panic!("expected a double, observed {other:?}"),
+        }
+    }
+    fn long(&mut self, value: &Val) -> i64 {
+        match suss_compile::portable_session::runtime_number(&mut self.store, value).unwrap() {
+            Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => value,
+            other => panic!("expected a long, observed {other:?}"),
+        }
     }
     fn read(&mut self, name: &str) -> Val {
         let bytes = portable::compile_in(name, &self.environment, Phase::Runtime).unwrap();
@@ -220,14 +216,14 @@ fn diamond_graph_initializes_once_in_require_order_and_reuses_provided_modules()
         ["shared", "right", "left", "app"]
     );
     let values = host.run(plan).unwrap();
-    assert_eq!(host.bits(values.last().unwrap()), 1.0f64.to_bits());
+    assert_eq!(host.long(values.last().unwrap()), 1);
     assert_eq!(
         host.store.data(),
         &[
-            1.0f64.to_bits(),
-            3.0f64.to_bits(),
-            2.0f64.to_bits(),
-            4.0f64.to_bits()
+            1,
+            3,
+            2,
+            4
         ]
     );
     // Already initialized is explicit host authority, not inferred from a namespace.
@@ -237,7 +233,7 @@ fn diamond_graph_initializes_once_in_require_order_and_reuses_provided_modules()
     host.run(plan).unwrap();
     assert_eq!(host.store.data().len(), 4);
     let value = host.read("shared/value");
-    assert_eq!(host.bits(&value), 1.0f64.to_bits());
+    assert_eq!(host.long(&value), 1);
 }
 
 #[test]
@@ -398,9 +394,9 @@ fn failed_initializer_keeps_prior_effects_and_only_successful_modules_are_provid
             .provided
             .contains(&ModuleIdentity::new(Phase::Runtime, "app").unwrap())
     );
-    assert_eq!(host.store.data(), &[1.0f64.to_bits(), 2.0f64.to_bits()]);
+    assert_eq!(host.store.data(), &[1, 2]);
     let previous = host.read("app/value");
-    assert_eq!(host.bits(&previous), 2.0f64.to_bits());
+    assert_eq!(host.long(&previous), 2);
     // Retrying the failed module must not replay its successful dependency.
     file(root.path(), "dependency.sus", "not valid source anymore");
     file(
@@ -411,10 +407,10 @@ fn failed_initializer_keeps_prior_effects_and_only_successful_modules_are_provid
     let plan = host.plan("app", &[root.path()], Phase::Runtime).unwrap();
     assert_eq!(plan.modules.len(), 1);
     let value = host.run(plan).unwrap().pop().unwrap();
-    assert_eq!(host.bits(&value), 3.0f64.to_bits());
+    assert_eq!(host.long(&value), 3);
     assert_eq!(
         host.store.data(),
-        &[1.0f64.to_bits(), 2.0f64.to_bits(), 3.0f64.to_bits()]
+        &[1, 2, 3]
     );
 }
 
@@ -440,7 +436,7 @@ fn immutable_source_snapshots_and_artifact_gates_precede_initialization() {
     let plan = host.plan("app", &[root.path()], Phase::Runtime).unwrap();
     file(root.path(), "dependency.sus", "not the compiled source");
     let values = host.run(plan).unwrap();
-    assert_eq!(host.bits(values.last().unwrap()), 1.0f64.to_bits());
+    assert_eq!(host.long(values.last().unwrap()), 1);
 }
 
 #[test]
@@ -456,7 +452,7 @@ fn conditional_dependencies_follow_first_portable_branch_and_phase_identity() {
     let runtime = host.plan("app", &[root.path()], Phase::Runtime).unwrap();
     assert_eq!(runtime.modules.len(), 2);
     let values = host.run(runtime).unwrap();
-    assert_eq!(host.bits(values.last().unwrap()), 7.0f64.to_bits());
+    assert_eq!(host.long(values.last().unwrap()), 7);
     // Runtime availability does not skip the same source in the Macro phase.
     let macro_phase = host.plan("app", &[root.path()], Phase::Macro).unwrap();
     assert_eq!(macro_phase.modules.len(), 2);
@@ -524,7 +520,7 @@ fn bootstrap_core_aliases_are_explicit_provided_identities_and_body_refs_execute
     assert_eq!(plan.modules[0].dependencies.len(), 1);
     assert_eq!(plan.modules[0].dependencies[0].namespace(), "suss.core");
     let value = host.run(plan).unwrap().pop().unwrap();
-    assert_eq!(host.bits(&value), 3.0f64.to_bits());
+    assert_eq!(host.long(&value), 3);
 }
 
 #[test]
@@ -545,5 +541,5 @@ fn finite_dependency_chain_beyond_old_limit_compiles_and_executes() {
         assert_eq!(module.identity.namespace(), format!("n{index}"));
     }
     let value = host.run(plan).unwrap().pop().unwrap();
-    assert_eq!(host.bits(&value), 42.0f64.to_bits());
+    assert_eq!(host.long(&value), 42);
 }

@@ -3,6 +3,15 @@ use suss_compile::portable_macros::CompiledMacros;
 use suss_compile::portable_session::{Session, SessionError, SessionValue, sentinel_tag};
 use suss_compile::runtime_abi;
 
+/// A long, as Clojure's integer values are.
+fn long_value(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<i64> {
+    match suss_compile::portable_session::runtime_number(store, value)? {
+        Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => Ok(value),
+        other => Err(wasmtime::Error::msg(format!("expected a long, observed {other:?}"))),
+    }
+}
+
+
 fn async_session() -> (Session, CompiledMacros) {
     let mut session = Session::new_repl().unwrap();
     let mut macros = CompiledMacros::new().unwrap();
@@ -43,11 +52,7 @@ fn session_lifecycle_source_future_contains_body_language_failure() {
     session.collect().unwrap();
     session
         .inspect(&recovered, |mut store, value| {
-            let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            assert_eq!(
-                object.field(&mut store, 0)?.unwrap_f64().to_bits(),
-                42.0f64.to_bits()
-            );
+            assert_eq!(long_value(&mut store, &value)?, 42);
             Ok(())
         })
         .unwrap();
@@ -81,8 +86,7 @@ fn session_lifecycle_scheduler_runs_compiled_body_once_and_recovers_from_trap() 
     assert!(!session.run_async_turn().unwrap());
     let trace = session.eval("trace").unwrap();
     session.inspect(&trace, |mut store, value| {
-        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-        assert_eq!(object.field(&mut store, 0)?.unwrap_f64(), 1.0);
+        assert_eq!(long_value(&mut store, &value)?, 1);
         Ok(())
     }).unwrap();
     session.eval_with_macros("(suss.async/future (set! trace (+ trace 1)) ((fn [] (loop [] (recur)))))", &mut macros).unwrap();
@@ -93,8 +97,7 @@ fn session_lifecycle_scheduler_runs_compiled_body_once_and_recovers_from_trap() 
     assert!(session.run_async_turn().unwrap());
     let trace = session.eval("trace").unwrap();
     session.inspect(&trace, |mut store, value| {
-        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-        assert_eq!(object.field(&mut store, 0)?.unwrap_f64(), 3.0);
+        assert_eq!(long_value(&mut store, &value)?, 3);
         Ok(())
     }).unwrap();
 }
@@ -110,8 +113,7 @@ fn session_lifecycle_cancel_request_before_start_skips_body_and_checks_ownership
     assert!(!session.run_async_turn().unwrap());
     let trace = session.eval("trace").unwrap();
     session.inspect(&trace, |mut store, value| {
-        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-        assert_eq!(object.field(&mut store, 0)?.unwrap_f64(), 0.0);
+        assert_eq!(long_value(&mut store, &value)?, 0);
         Ok(())
     }).unwrap();
     let mut other = Session::new().unwrap();
@@ -135,16 +137,14 @@ fn session_lifecycle_host_completion_queues_waiter_without_inline_resumption() {
     assert!(!session.reject_future(&pending, &payload).unwrap());
     let trace = session.eval("trace").unwrap();
     session.inspect(&trace, |mut store, value| {
-        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-        assert_eq!(object.field(&mut store, 0)?.unwrap_f64(), 0.0);
+        assert_eq!(long_value(&mut store, &value)?, 0);
         Ok(())
     }).unwrap();
     assert!(session.run_async_turn().unwrap());
     assert!(!session.run_async_turn().unwrap());
     let trace = session.eval("trace").unwrap();
     session.inspect(&trace, |mut store, value| {
-        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-        assert_eq!(object.field(&mut store, 0)?.unwrap_f64(), 1.0);
+        assert_eq!(long_value(&mut store, &value)?, 1);
         Ok(())
     }).unwrap();
     drop(task);
@@ -173,8 +173,7 @@ fn session_lifecycle_host_rejection_is_caught_and_foreign_payload_is_rejected() 
     assert!(!session.run_async_turn().unwrap());
     let trace = session.eval("trace").unwrap();
     session.inspect(&trace, |mut store, value| {
-        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-        assert_eq!(object.field(&mut store, 0)?.unwrap_f64(), 17.0);
+        assert_eq!(long_value(&mut store, &value)?, 17);
         Ok(())
     }).unwrap();
     drop(task);
@@ -201,8 +200,7 @@ fn session_lifecycle_host_settlement_cannot_bypass_pending_task_cleanup() {
     assert!(!session.run_async_turn().unwrap());
     let trace = session.eval("trace").unwrap();
     session.inspect(&trace, |mut store, value| {
-        let object = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-        assert_eq!(object.field(&mut store, 0)?.unwrap_f64(), 1.0);
+        assert_eq!(long_value(&mut store, &value)?, 1);
         Ok(())
     }).unwrap();
 }

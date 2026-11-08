@@ -1,5 +1,9 @@
 mod support;
-use suss_compile::{portable, portable_session::sentinel_tag, runtime_abi};
+use suss_compile::{
+    portable,
+    portable_session::{RuntimeNumber, runtime_number, sentinel_tag},
+    runtime_abi,
+};
 use wasmtime::{Instance, Linker, Module, Store, Val};
 
 fn execute(source: &str) -> (Store<()>, Val) {
@@ -232,17 +236,51 @@ fn compiled_literal_uses_shared_abi_and_binary64_rounding() {
     );
 }
 
-fn number(source: &str) -> f64 {
+fn number(source: &str) -> RuntimeNumber {
     let (mut store, value) = execute(source);
-    value
-        .unwrap_anyref()
+    runtime_number(&mut store, &value)
         .unwrap()
-        .as_struct(&store)
-        .unwrap()
-        .unwrap()
-        .field(&mut store, 0)
-        .unwrap()
-        .unwrap_f64()
+        .unwrap_or_else(|| panic!("{source}: not a number"))
+}
+fn long(source: &str) -> i64 {
+    match number(source) {
+        RuntimeNumber::Long(value) => value,
+        other => panic!("{source}: expected a long, observed {other:?}"),
+    }
+}
+fn double(source: &str) -> f64 {
+    match number(source) {
+        RuntimeNumber::Double(value) => value,
+        other => panic!("{source}: expected a double, observed {other:?}"),
+    }
+}
+/// A pinned ClojureScript expectation as Clojure's: an integral, finite,
+/// non-negative-zero binary64 from source without double literals or
+/// double primitives is a long.
+fn clojure_expected(expected: &serde_json::Value, source: &str) -> serde_json::Value {
+    let doubles = source.contains("##")
+        || source.contains("f64-")
+        // The JavaScript-coercing addition intrinsic gives a double.
+        || source.contains("suss.bootstrap/value-add")
+        || source
+            .as_bytes()
+            .windows(2)
+            .any(|pair| pair[0].is_ascii_digit() && matches!(pair[1], b'.' | b'e' | b'E'));
+    clojure_value(expected, doubles)
+}
+fn clojure_value(expected: &serde_json::Value, doubles: bool) -> serde_json::Value {
+    match expected["tag"].as_str() {
+        Some("f64") if !doubles => {
+            let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
+            let value = f64::from_bits(bits);
+            if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
+                serde_json::json!({"tag":"long","value":(value as i64).to_string()})
+            } else {
+                expected.clone()
+            }
+        }
+        _ => expected.clone(),
+    }
 }
 #[test]
 fn empty_let_body_returns_nil() {
@@ -267,9 +305,8 @@ fn compiled_scalars_match_the_pinned_reader_observations() {
         let reference = value.unwrap_anyref().unwrap();
         let actual = match case["expected"]["tag"].as_str().unwrap() {
             "f64" => {
-                let object = reference.as_struct(&store).unwrap().unwrap();
-                let bits = object.field(&mut store, 0).unwrap().unwrap_f64().to_bits();
-                serde_json::json!({"tag":"f64","bits":format!("{bits:016x}")})
+                let _ = reference;
+                tagged(&mut store, &value)
             }
             "string" => {
                 let array = reference.as_array(&store).unwrap().unwrap();
@@ -282,34 +319,44 @@ fn compiled_scalars_match_the_pinned_reader_observations() {
             }
             _ => panic!("unknown oracle tag"),
         };
-        assert_eq!(actual, case["expected"], "{}", case["source"]);
+        let source = case["source"].as_str().unwrap();
+        assert_eq!(actual, clojure_expected(&case["expected"], source), "{source}");
     }
     assert_eq!(ids.len(), 14);
 }
 #[test]
 fn numeric_calls_and_truthiness_execute_with_portable_bits() {
+    use RuntimeNumber::{Double, Long};
     for (source, expected) in [
-        ("(+ 9007199254740992 1)", 9007199254740992.0f64),
-        ("(- 0)", -0.0),
-        ("(+ -0.0)", -0.0),
-        ("(/ 4)", 0.25),
-        ("(+)", 0.0),
-        ("(*)", 1.0),
-        ("(- 10 3 2)", 5.0),
-        ("(/ 20 2 5)", 2.0),
-        ("(if 0 1 2)", 1.0),
-        ("(if \"\" 1 2)", 1.0),
-        ("(if nil 1 2)", 2.0),
-        ("(if false 1 2)", 2.0),
-        ("(if true 1 2)", 1.0),
-        ("(let [x 2 x (+ x 3)] (let [x 7] x) (* x 4))", 20.0),
-        ("(+ (if false (* 3 4) (/ 8 2)) (if true 2 9))", 6.0),
-        ("#?(:jvm 1 :default (suss.core/+ 1 (cljs.core/* 2 3)))", 7.0),
+        ("(+ 9007199254740992 1)", Long(9007199254740993)),
+        ("(- 0)", Long(0)),
+        ("(+ -0.0)", Double(-0.0)),
+        // Clojure's result is the ratio 1/4 (#338).
+        ("(/ 4)", Double(0.25)),
+        ("(/ 4.0)", Double(0.25)),
+        ("(+)", Long(0)),
+        ("(*)", Long(1)),
+        ("(- 10 3 2)", Long(5)),
+        ("(/ 20 2 5)", Long(2)),
+        ("(if 0 1 2)", Long(1)),
+        ("(if \"\" 1 2)", Long(1)),
+        ("(if nil 1 2)", Long(2)),
+        ("(if false 1 2)", Long(2)),
+        ("(if true 1 2)", Long(1)),
+        ("(let [x 2 x (+ x 3)] (let [x 7] x) (* x 4))", Long(20)),
+        ("(+ (if false (* 3 4) (/ 8 2)) (if true 2 9))", Long(6)),
+        ("#?(:jvm 1 :default (suss.core/+ 1 (cljs.core/* 2 3)))", Long(7)),
     ] {
-        assert_eq!(number(source).to_bits(), expected.to_bits(), "{source}");
+        match (number(source), expected) {
+            (Double(found), Double(expected)) => assert_eq!(found.to_bits(), expected.to_bits(), "{source}"),
+            (found, expected) => assert_eq!(found, expected, "{source}"),
+        }
     }
-    assert!(number("(/ 0 0)").is_nan());
-    assert_eq!(number("(/ 1 0)"), f64::INFINITY);
+    // Integer division by zero throws in Clojure; double division doesn't.
+    assert!(throws_language_exception("(/ 0 0)"));
+    assert!(throws_language_exception("(/ 1 0)"));
+    assert!(double("(/ 0.0 0)").is_nan());
+    assert_eq!(double("(/ 1.0 0)"), f64::INFINITY);
 }
 #[test]
 fn unary_sum_and_product_check_operands_and_return_numbers_unchanged() {
@@ -333,14 +380,15 @@ fn unary_sum_and_product_check_operands_and_return_numbers_unchanged() {
     for (source, bits) in [
         ("(+ -0.0)", (-0.0f64).to_bits()),
         ("(* -0.0)", (-0.0f64).to_bits()),
-        ("(+ (if true 7 nil))", 7.0f64.to_bits()),
+        ("(+ (if true 7.0 nil))", 7.0f64.to_bits()),
         ("(* (if true ##Inf nil))", f64::INFINITY.to_bits()),
     ] {
         let (mut store, value) = execute(source);
         let expected = serde_json::json!({"tag": "f64", "bits": format!("{bits:016x}")});
         assert_eq!(tagged(&mut store, &value), expected, "{source}");
     }
-    assert!(number("(* ##NaN)").is_nan());
+    assert!(double("(* ##NaN)").is_nan());
+    assert_eq!(long("(+ (if true 7 nil))"), 7);
 }
 #[test]
 fn arithmetic_import_trace_observes_once_only_source_order_and_short_circuit() {
@@ -392,16 +440,10 @@ fn arithmetic_import_trace_observes_once_only_source_order_and_short_circuit() {
         ]
     );
     store.gc(None).unwrap();
-    let value = result[0]
-        .unwrap_anyref()
-        .unwrap()
-        .as_struct(&store)
-        .unwrap()
-        .unwrap()
-        .field(&mut store, 0)
-        .unwrap()
-        .unwrap_f64();
-    assert_eq!(value, 14.0);
+    assert_eq!(
+        runtime_number(&mut store, &result[0]).unwrap(),
+        Some(RuntimeNumber::Long(14))
+    );
 }
 #[test]
 fn hir_retains_binding_identity_metadata_and_located_diagnostics() {
@@ -630,12 +672,14 @@ fn tagged(store: &mut Store<()>, value: &Val) -> serde_json::Value {
     let reference = value
         .unwrap_anyref()
         .expect("a non-sentinel runtime value is a reference");
-    if let Some(object) = reference.as_struct(&*store).unwrap() {
-        let fields = object.fields(&mut *store).unwrap().collect::<Vec<_>>();
-        let [Val::F64(bits)] = fields.as_slice() else {
-            panic!("unknown GC object layout")
-        };
-        return serde_json::json!({"tag":"f64","bits":format!("{bits:016x}")});
+    match runtime_number(&mut *store, value).unwrap() {
+        Some(RuntimeNumber::Double(value)) => {
+            return serde_json::json!({"tag":"f64","bits":format!("{:016x}", value.to_bits())});
+        }
+        Some(RuntimeNumber::Long(value)) => {
+            return serde_json::json!({"tag":"long","value":value.to_string()});
+        }
+        None => assert!(reference.as_struct(&*store).unwrap().is_none(), "unknown GC object layout"),
     }
     let array = reference
         .as_array(&*store)
@@ -680,13 +724,38 @@ fn compiled_source_cases_match_the_pinned_compiler_observations() {
         let observed = try_execute(&source)
             .map(|(mut store, value)| tagged(&mut store, &value))
             .map_err(|error| format!("{error:?}"));
-        if observed.as_ref() != Ok(&case["expected"]) {
+        let expected = clojure_override(id).unwrap_or_else(|| clojure_expected(&case["expected"], &source));
+        if observed.as_ref() != Ok(&expected) {
             failing.push(format!("{id}: {source}: {observed:?}"));
         }
     }
     assert!(failing.is_empty(), "{failing:#?}");
     assert_eq!(ids.len(), 397);
     assert_eq!(corrected, 142);
+}
+
+/// Where Clojure's result differs from the pinned ClojureScript one beyond
+/// long-versus-double (#335): exact long arithmetic, a long's zero, Java's
+/// double formatting and long/double identity.
+fn clojure_override(id: &str) -> Option<serde_json::Value> {
+    let string = |text: &str| serde_json::json!({"tag":"string","units":text.encode_utf16().collect::<Vec<_>>()});
+    Some(match id {
+        "rounding" => serde_json::json!({"tag":"long","value":"9007199254740993"}),
+        "negative-zero" => serde_json::json!({"tag":"long","value":"0"}),
+        "predicate-identical-signed-zero" => serde_json::json!({"tag":"bool","value":false}),
+        "number-to-string-2" => string("-0.0"),
+        "number-to-string-4" => string("1.0E-7"),
+        "number-to-string-5" => string("1.0E-6"),
+        "number-to-string-6" => string("1.0E-5"),
+        "number-to-string-7" => string("1.0E20"),
+        "number-to-string-8" => string("1.0E21"),
+        "number-to-string-9" => string("1.0E22"),
+        "number-to-string-10" => string("1.0000000000000001E18"),
+        "number-to-string-11" => string("1.2345678901234567E19"),
+        "number-to-string-12" => string("4.9E-324"),
+        "number-to-string-13" => string("1.7976931348623157E308"),
+        _ => return None,
+    })
 }
 
 /// Clojure governs (#286): pinned ClojureScript coerces these non-number
@@ -716,8 +785,11 @@ fn clojure_correction(id: &str, source: &str) -> Option<Option<String>> {
         | "function-invalid-numeric-string" | "function-negative-zero-string"
         | "loop-changing-type-arithmetic" => Some(None),
         // Number formatting and undefined field values, through the final +.
-        "primitive-format-infinity" | "primitive-format-neg-infinity" | "primitive-format-nan"
-        | "nominal-undefined-number" | "nominal-ordinary-undefined-number"
+        // Clojure's integer division by zero throws; a double operand measures the format.
+        "primitive-format-infinity" => add("(/ 1.0 0) \"\""),
+        "primitive-format-neg-infinity" => add("(/ -1.0 0) \"\""),
+        "primitive-format-nan" => add("(/ 0.0 0) \"\""),
+        "nominal-undefined-number" | "nominal-ordinary-undefined-number"
         | "nominal-undefined-string" | "nominal-defprotocol-number-coercion"
         | "nominal-defprotocol-string-coercion" => {
             let at = source.rfind("(+ ")?;
@@ -794,28 +866,28 @@ fn independently_compiled_fragment_values_remain_live_across_gc() {
     );
     assert_eq!(
         tagged(&mut store, &new),
-        serde_json::json!({"tag":"f64","bits":"4340000000000000"})
+        serde_json::json!({"tag":"long","value":"9007199254740993"})
     );
 }
 
 #[test]
 fn lexical_bindings_hide_the_bootstrap_let_macro() {
     // The local callee now lowers to a universal call rather than a bootstrap macro.
-    assert_eq!(number("(let [let (fn [x] x)] (let 7))"), 7.0);
+    assert_eq!(long("(let [let (fn [x] x)] (let 7))"), 7);
     // True special forms remain special even when their names are locals.
-    assert_eq!(number("(let [if 7 do 8] (if true (do 1 2) 3))"), 2.0);
+    assert_eq!(long("(let [if 7 do 8] (if true (do 1 2) 3))"), 2);
     // A nested local hiding let does not escape its lexical scope.
-    assert_eq!(number("(do (let [let 7] let) (let [x 3] x))"), 3.0);
+    assert_eq!(long("(do (let [let 7] let) (let [x 3] x))"), 3);
 }
 
 #[test]
 fn primitive_let_star_keeps_sequential_bindings_and_special_form_identity() {
     // Pinned analyzer.cljc parse let*2594: primitive lexical binding syntax.
     // These tests are original; no upstream implementation is copied.
-    assert_eq!(number("(let* [base 40 copy (+ base 2)] copy)"), 42.0);
+    assert_eq!(long("(let* [base 40 copy (+ base 2)] copy)"), 42);
     assert_eq!(
-        number("(let [let* 99] (let* [base 40 copy (+ base 2)] copy))"),
-        42.0
+        long("(let [let* 99] (let* [base 40 copy (+ base 2)] copy))"),
+        42
     );
     let (mut store, value) = execute("(let* [copy 42])");
     assert_eq!(
@@ -884,12 +956,12 @@ fn recurrence_rejects_non_tail_wrong_arity_and_cross_function_targets_with_spans
             "{source}: {errors:?}"
         );
     }
-    assert_eq!(number("(let [loop (fn [x] x)] (loop 7))"), 7.0);
+    assert_eq!(long("(let [loop (fn [x] x)] (loop 7))"), 7);
     assert_eq!(
-        number("(cljs.core/loop [flag true x 1] (if flag (recur false 2) x))"),
-        2.0
+        long("(cljs.core/loop [flag true x 1] (if flag (recur false 2) x))"),
+        2
     );
-    assert_eq!(number("(loop* [x 3] x)"), 3.0);
+    assert_eq!(long("(loop* [x 3] x)"), 3);
 }
 
 #[test]
@@ -1018,5 +1090,5 @@ fn closures_beyond_the_old_verifier_depth_execute() {
     let mut source = "42".to_owned();
     for _ in 0..80 { source = format!("(fn* [] {source})"); }
     for _ in 0..80 { source = format!("({source})"); }
-    assert_eq!(number(&source), 42.0);
+    assert_eq!(long(&source), 42);
 }

@@ -30,23 +30,20 @@ fn execute(source: &str) -> (Store<()>, Val) {
     store.gc(None).unwrap();
     (store, result[0].clone())
 }
-fn bits<T>(store: &mut Store<T>, value: &Val) -> u64 {
-    let object = value
-        .unwrap_anyref()
-        .unwrap()
-        .as_struct(&*store)
-        .unwrap()
-        .unwrap();
-    let fields = object.fields(store).unwrap().collect::<Vec<_>>();
-    match fields.as_slice() {
-        [Val::F64(bits)] => *bits,
-        _ => panic!("not a number: {fields:?}"),
+use suss_compile::portable_session::{RuntimeNumber, runtime_number};
+fn number<T>(store: &mut Store<T>, value: &Val) -> RuntimeNumber {
+    runtime_number(store, value).unwrap().expect("a runtime number")
+}
+fn long<T>(store: &mut Store<T>, value: &Val) -> i64 {
+    match number(store, value) {
+        RuntimeNumber::Long(value) => value,
+        other => panic!("expected a long, observed {other:?}"),
     }
 }
 #[test]
 fn source_closures_capture_values_and_execute_universal_calls() {
     let (mut store, value) = execute("(let [x 7 f (fn [] x) x 9] (f))");
-    assert_eq!(bits(&mut store, &value), 7.0f64.to_bits());
+    assert_eq!(long(&mut store, &value), 7);
 }
 
 fn runtime<T>(store: &mut Store<T>) -> Instance {
@@ -208,18 +205,25 @@ fn exception<T>(store: &mut Store<T>, value: &Val, descriptor: i64, expected: &s
 #[test]
 fn nested_closures_parameters_shadowing_and_computed_callees_execute() {
     for (source, expected) in [
-        ("((fn [x] x) 9)", 9.0f64),
-        ("(((fn [x] (fn [] x)) -0.0))", -0.0),
-        ("((fn [f] (f 7)) (fn [x] x))", 7.0),
-        ("(let [x 5 f (fn [] (+ x 1))] (f))", 6.0),
-        ("(let [x 1] (let [x 2] ((fn [] x))))", 2.0),
-        ("((if false (fn [] 1) (fn [] 2)))", 2.0),
-        ("(let [fn (fn [x] x)] (fn 3))", 3.0),
-        ("((cljs.core/fn [x] x) 6)", 6.0),
-        ("((fn* [x] x) 8)", 8.0),
+        ("((fn [x] x) 9)", RuntimeNumber::Long(9)),
+        ("(((fn [x] (fn [] x)) -0.0))", RuntimeNumber::Double(-0.0)),
+        ("((fn [f] (f 7)) (fn [x] x))", RuntimeNumber::Long(7)),
+        ("(let [x 5 f (fn [] (+ x 1))] (f))", RuntimeNumber::Long(6)),
+        ("(let [x 1] (let [x 2] ((fn [] x))))", RuntimeNumber::Long(2)),
+        ("((if false (fn [] 1) (fn [] 2)))", RuntimeNumber::Long(2)),
+        ("(let [fn (fn [x] x)] (fn 3))", RuntimeNumber::Long(3)),
+        ("((cljs.core/fn [x] x) 6)", RuntimeNumber::Long(6)),
+        ("((fn* [x] x) 8)", RuntimeNumber::Long(8)),
     ] {
         let (mut store, value) = execute(source);
-        assert_eq!(bits(&mut store, &value), expected.to_bits(), "{source}");
+        let found = number(&mut store, &value);
+        // Compare a double's bits so -0.0 keeps its sign.
+        match (found, expected) {
+            (RuntimeNumber::Double(found), RuntimeNumber::Double(expected)) => {
+                assert_eq!(found.to_bits(), expected.to_bits(), "{source}")
+            }
+            _ => assert_eq!(found, expected, "{source}"),
+        }
     }
     let (mut store, value) = execute("((fn [x] x) \"\\uD800\")");
     let units = value
@@ -269,11 +273,11 @@ fn captures_use_lexical_identity_and_retain_parameter_metadata() {
     assert_eq!(&source[parameters[0].span.clone()], "^:argument a");
     // A hint is not an unchecked cast: actual non-number values are rejected.
     for (source, expected) in [
-        ("((fn [^number x] (+ x 1)) 7)", 8.0f64),
-        ("(try ((fn [^number x] (+ x 1)) false) (catch :default e 42))", 42.0f64),
+        ("((fn [^number x] (+ x 1)) 7)", 8),
+        ("(try ((fn [^number x] (+ x 1)) false) (catch :default e 42))", 42),
     ] {
         let (mut store, value) = execute(source);
-        assert_eq!(bits(&mut store, &value), expected.to_bits());
+        assert_eq!(long(&mut store, &value), expected);
     }
 }
 
@@ -322,9 +326,9 @@ fn bootstrap_fn_rejects_parameter_metadata_pre_and_post_conditions() {
     assert!(error.message.contains("pre/post"));
     // Only the fn macro interprets signature conditions; fn* is already expanded.
     let (mut store, value) = execute("((fn* ^{:pre [false]} [] 1))");
-    assert_eq!(bits(&mut store, &value), 1.0f64.to_bits());
+    assert_eq!(long(&mut store, &value), 1);
     let (mut store, value) = execute("((fn ^:signature [] 2))");
-    assert_eq!(bits(&mut store, &value), 2.0f64.to_bits());
+    assert_eq!(long(&mut store, &value), 2);
 }
 
 #[test]
@@ -351,16 +355,10 @@ fn calls_evaluate_computed_callee_then_each_argument_exactly_once() {
             }
             func.call(&mut caller, args, results)?;
             if name == "binding-get" {
-                let object = results[0]
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_struct(&caller)?
-                    .unwrap();
-                let fields = object.fields(&mut caller)?.collect::<Vec<_>>();
-                let text = if let [Val::F64(bits)] = fields.as_slice() {
-                    format!("read:{}", f64::from_bits(*bits))
-                } else {
-                    "read:closure".into()
+                let text = match runtime_number(&mut caller, &results[0])? {
+                    Some(RuntimeNumber::Long(value)) => format!("read:{value}"),
+                    Some(RuntimeNumber::Double(value)) => format!("read:{value:?}"),
+                    None => "read:closure".into(),
                 };
                 caller.data_mut().push(text);
             }
@@ -374,11 +372,11 @@ fn calls_evaluate_computed_callee_then_each_argument_exactly_once() {
         ("maker", maker),
         (
             "a",
-            call(&mut store, rt, "number-box", &[Val::F64(1.0f64.to_bits())]),
+            call(&mut store, rt, "long-box", &[Val::I64(1)]),
         ),
         (
             "b",
-            call(&mut store, rt, "number-box", &[Val::F64(2.0f64.to_bits())]),
+            call(&mut store, rt, "long-box", &[Val::I64(2)]),
         ),
     ] {
         let id = env.declare_cell(Phase::Runtime, "app", name).unwrap();
@@ -392,7 +390,7 @@ fn calls_evaluate_computed_callee_then_each_argument_exactly_once() {
         &["read:closure", "invoke:0", "read:1", "read:2", "invoke:2"]
     );
     store.gc(None).unwrap();
-    assert_eq!(bits(&mut store, &value), 1.0f64.to_bits());
+    assert_eq!(long(&mut store, &value), 1);
 }
 
 #[test]
@@ -425,14 +423,14 @@ fn old_closure_values_and_live_global_calls_survive_rebinding_and_gc() {
         .unwrap();
     store.gc(None).unwrap();
     let value = call(&mut store, caller, "eval", &[]);
-    assert_eq!(bits(&mut store, &value), 7.0f64.to_bits());
+    assert_eq!(long(&mut store, &value), 7);
     rt.get_func(&mut store, "binding-set")
         .unwrap()
         .call(&mut store, &[caller_cell, live], &mut [])
         .unwrap();
     store.gc(None).unwrap();
     let value = call(&mut store, caller, "eval", &[]);
-    assert_eq!(bits(&mut store, &value), 9.0f64.to_bits());
+    assert_eq!(long(&mut store, &value), 9);
 }
 
 #[test]
@@ -462,7 +460,7 @@ fn dynamic_arity_errors_are_language_exceptions_and_store_remains_usable() {
         .call(&mut store, &[cell, replacement], &mut [])
         .unwrap();
     let value = call(&mut store, target, "eval", &[]);
-    assert_eq!(bits(&mut store, &value), 11.0f64.to_bits());
+    assert_eq!(long(&mut store, &value), 11);
 }
 
 #[test]
@@ -473,7 +471,7 @@ fn invocation_checks_non_callable_and_malformed_arrays_without_wasm_traps() {
     let mut linker = Linker::new(&engine);
     linker.instance(&mut store, "suss.runtime", rt).unwrap();
     let catch = load_catcher(&mut store, &linker, catcher(2, "suss.runtime", "invoke"));
-    let number = call(&mut store, rt, "number-box", &[Val::F64(1.0f64.to_bits())]);
+    let number = call(&mut store, rt, "long-box", &[Val::I64(1)]);
     let args = call(&mut store, rt, "args-new", &[Val::I32(0)]);
     for non_callable in [number.clone(), Val::null_any_ref()] {
         let error = call(&mut store, catch, "call", &[non_callable, args.clone()]);
@@ -575,7 +573,7 @@ fn non_callable_errors_happen_after_argument_effects() {
         .unwrap();
     let mut env = Environment::default();
     let id = env.declare_cell(Phase::Runtime, "app", "arg").unwrap();
-    let number = call(&mut store, rt, "number-box", &[Val::F64(2.0f64.to_bits())]);
+    let number = call(&mut store, rt, "long-box", &[Val::I64(2)]);
     let cell = call(&mut store, rt, "binding-new", &[number]);
     define(&mut store, &mut linker, &id, &cell);
     let target = fragment(&mut store, &linker, "(1 app/arg)", &env);

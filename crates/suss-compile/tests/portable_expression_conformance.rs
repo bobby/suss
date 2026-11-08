@@ -274,7 +274,7 @@ fn lossless_comparison_rejects_rounding_signed_zero_opaque_values_and_duplicate_
     };
     assert!(!portable_compare::matches(
         &read("9007199254740993"),
-        &O::Number(9007199254740992.0_f64.to_bits())
+        &O::Long(9007199254740992)
     ));
     assert!(!portable_compare::matches(
         &read("0"),
@@ -285,15 +285,15 @@ fn lossless_comparison_rejects_rounding_signed_zero_opaque_values_and_duplicate_
     assert!(portable_compare::matches(
         &read("[1 2]"),
         &O::List(vec![
-            O::Number(1.0_f64.to_bits()),
-            O::Number(2.0_f64.to_bits())
+            O::Long(1),
+            O::Long(2)
         ])
     ));
     assert!(!portable_compare::matches(
         &read("#{1 2}"),
         &O::Set(vec![
-            O::Number(1.0_f64.to_bits()),
-            O::Number(1.0_f64.to_bits())
+            O::Long(1),
+            O::Long(1)
         ])
     ));
     assert!(portable_compare::matches(
@@ -357,7 +357,7 @@ fn corpus_runner_records_actual_exception_payload_and_source_failure() {
         exception.1,
         format!(
             "uncaught payload {:?}",
-            portable_decode::Observation::Number(42.0_f64.to_bits())
+            portable_decode::Observation::Long(42)
         )
     );
     let unresolved = run(&make("definitely-missing-corpus-name")).unwrap_err();

@@ -5,13 +5,8 @@ mod portable_decode;
 use portable_decode::{Decoder, Observation};
 use suss_compile::portable_session::Session;
 
-fn numbers(values: &[f64]) -> Observation {
-    Observation::List(
-        values
-            .iter()
-            .map(|value| Observation::Number(value.to_bits()))
-            .collect(),
-    )
+fn numbers(values: &[i64]) -> Observation {
+    Observation::List(values.iter().map(|value| Observation::Long(*value)).collect())
 }
 
 #[test]
@@ -32,18 +27,18 @@ fn sequence_decoding_preserves_pending_effects_and_reports_bounds() {
         let effects = session.eval("observation-effects").unwrap();
         assert_eq!(
             decoder.decode_session(&mut session, &effects).unwrap(),
-            Observation::Number(0.0_f64.to_bits())
+            Observation::Long(0)
         );
         session.eval("(doall observation-pending)").unwrap();
         session.collect().unwrap();
         assert_eq!(
             decoder.decode_session(&mut session, &pending).unwrap(),
-            numbers(&[7.0, 8.0])
+            numbers(&[7, 8])
         );
         let effects = session.eval("observation-effects").unwrap();
         assert_eq!(
             decoder.decode_session(&mut session, &effects).unwrap(),
-            Observation::Number(1.0_f64.to_bits())
+            Observation::Long(1)
         );
 
         let partial = session.eval("(cons 1 (new suss.core/LazySeq nil (fn [] (throw (suss.bootstrap/error \"forced\"))) nil nil))").unwrap();
@@ -54,12 +49,12 @@ fn sequence_decoding_preserves_pending_effects_and_reports_bounds() {
         let finite = session.eval("(drop 1 (range 1 7 2))").unwrap();
         assert_eq!(
             decoder.decode_session(&mut session, &finite).unwrap(),
-            numbers(&[3.0, 5.0])
+            numbers(&[3, 5])
         );
         let chunked = session.eval("(doall (map (fn [x] x) [1 2 3]))").unwrap();
         assert_eq!(
             decoder.decode_session(&mut session, &chunked).unwrap(),
-            numbers(&[1.0, 2.0, 3.0])
+            numbers(&[1, 2, 3])
         );
     }
 }
@@ -84,25 +79,25 @@ fn stored_map_sequences_and_sorted_views_decode_without_guest_projection() {
                     let Observation::Vector(pair) = entry else {
                         panic!("map entry")
                     };
-                    let [Observation::Number(key), Observation::Number(value)] = pair.as_slice()
+                    let [Observation::Long(key), Observation::Long(value)] = pair.as_slice()
                     else {
                         panic!("numeric map entry")
                     };
-                    (f64::from_bits(*key) as i32, f64::from_bits(*value) as i32)
+                    (*key, *value)
                 })
                 .collect::<Vec<_>>();
             pairs.sort_unstable();
             assert_eq!(pairs, vec![(1, 10), (2, 20), (3, 30)]);
         }
         for (source, keys) in [
-            ("(keys (sorted-map 3 30 1 10 2 20))", vec![1.0, 2.0, 3.0]),
+            ("(keys (sorted-map 3 30 1 10 2 20))", vec![1, 2, 3]),
             (
                 "(keys (sorted-map-by (fn [a b] (compare b a)) 3 30 1 10 2 20))",
-                vec![3.0, 2.0, 1.0],
+                vec![3, 2, 1],
             ),
             (
                 "(keys (next (-sorted-seq-from (sorted-map 1 10 2 20 3 30) 1 true)))",
-                vec![2.0, 3.0],
+                vec![2, 3],
             ),
         ] {
             let value = session.eval(source).unwrap();

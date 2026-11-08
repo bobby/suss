@@ -477,20 +477,35 @@ fn primitive_constructor_values_are_canonical_callable_and_rooted_in_both_phases
             "(identical? (retained-type \"x\") scalar-string-constructor)",
             true,
         );
+        // JS Number() has no Clojure counterpart: like Clojure's double, it
+        // always gives a double (ToNumber), even for a long argument.
+        use suss_compile::portable_session::RuntimeNumber::{Double, Long};
         for (source, expected) in [
-            ("(scalar-number-constructor)", 0.0),
-            ("(scalar-number-constructor nil)", 0.0),
-            ("(scalar-number-constructor true)", 1.0),
-            ("(scalar-number-constructor \"16\")", 16.0),
-            ("(scalar-number-constructor -0.0)", -0.0),
+            ("(scalar-number-constructor)", Double(0.0)),
+            ("(scalar-number-constructor nil)", Double(0.0)),
+            ("(scalar-number-constructor true)", Double(1.0)),
+            ("(scalar-number-constructor \"16\")", Double(16.0)),
+            ("(scalar-number-constructor -0.0)", Double(-0.0)),
             (
                 "(scalar-number-constructor (do (set! primitive-constructor-trace 1) 7) (do (set! primitive-constructor-trace (+ (* primitive-constructor-trace 10) 2)) 9))",
-                7.0,
+                Double(7.0),
             ),
-            ("primitive-constructor-trace", 12.0),
+            ("primitive-constructor-trace", Long(12)),
         ] {
             let value = session.eval(source).unwrap();
-            number(&mut session, &value, expected);
+            session.collect().unwrap();
+            let actual = session
+                .inspect(&value, |store, value| {
+                    suss_compile::portable_session::runtime_number(store, &value)
+                })
+                .unwrap()
+                .expect("number");
+            match (actual, expected) {
+                (Double(actual), Double(expected)) => {
+                    assert_eq!(actual.to_bits(), expected.to_bits(), "{source}")
+                }
+                (actual, expected) => assert_eq!(actual, expected, "{source}"),
+            }
         }
         for (source, expected) in [
             ("(scalar-string-constructor)", ""),
@@ -500,7 +515,9 @@ fn primitive_constructor_values_are_canonical_callable_and_rooted_in_both_phases
                 "undefined",
             ),
             ("(scalar-string-constructor false)", "false"),
-            ("(scalar-string-constructor -0.0)", "0"),
+            // Numbers convert as Clojure str prints them.
+            ("(scalar-string-constructor -0.0)", "-0.0"),
+            ("(scalar-string-constructor 1.0)", "1.0"),
             (
                 "(scalar-string-constructor \"\\ud800\\udc00\")",
                 "\u{10000}",

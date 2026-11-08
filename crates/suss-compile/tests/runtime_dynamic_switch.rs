@@ -102,24 +102,22 @@ impl Harness {
     fn cell(&mut self, name: &str) -> Val {
         self.cells[name].get(&mut self.store)
     }
-    fn number(&mut self, value: f64) -> Val {
-        self.call("number-box", &[Val::F64(value.to_bits())])
+    fn number(&mut self, value: i64) -> Val {
+        self.call("long-box", &[Val::I64(value)])
     }
-    fn decode(&mut self, value: &Val) -> f64 {
-        let object = value
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&self.store)
-            .unwrap()
-            .unwrap();
-        object.field(&mut self.store, 0).unwrap().unwrap_f64()
+    /// A long, as Clojure's integer values are.
+    fn decode(&mut self, value: &Val) -> i64 {
+        match suss_compile::portable_session::runtime_number(&mut self.store, value).unwrap() {
+            Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => value,
+            other => panic!("expected a long, observed {other:?}"),
+        }
     }
-    fn read(&mut self, name: &str) -> f64 {
+    fn read(&mut self, name: &str) -> i64 {
         let cell = self.cell(name);
         let value = self.call("binding-get", &[cell]);
         self.decode(&value)
     }
-    fn eval(&mut self, source: &str) -> f64 {
+    fn eval(&mut self, source: &str) -> i64 {
         let prepared =
             portable::prepare_fragment(source, &self.environment, Phase::Runtime).unwrap();
         let module = Module::new(self.store.engine(), prepared.wasm).unwrap();
@@ -132,7 +130,7 @@ impl Harness {
             .unwrap();
         self.decode(&output[0])
     }
-    fn push(&mut self, bindings: &[(&str, f64)]) -> Val {
+    fn push(&mut self, bindings: &[(&str, i64)]) -> Val {
         let entries = self.call("args-new", &[Val::I32(bindings.len() as i32 * 3)]);
         let array = entries
             .unwrap_anyref()
@@ -200,39 +198,39 @@ impl Harness {
 fn dynamic_switch_retains_nested_effective_values_writes_and_source_caller_after_gc() {
     let mut h = Harness::new();
     let nil = h.call("dynamic-save", &[]);
-    let outer = h.push(&[("*x*", 10.0), ("*y*", 20.0)]);
-    let inner = h.push(&[("*x*", 30.0)]);
+    let outer = h.push(&[("*x*", 10), ("*y*", 20)]);
+    let inner = h.push(&[("*x*", 30)]);
     let saved = h.call("dynamic-save", &[]);
     assert!(h.same(&saved, &inner));
     let old = h.call("dynamic-switch", &[nil.clone()]);
     assert!(h.same(&old, &inner));
     h.store.gc(None).unwrap();
-    assert_eq!((h.read("*x*"), h.read("*y*")), (1.0, 2.0));
-    let other = h.push(&[("*y*", 90.0)]);
+    assert_eq!((h.read("*x*"), h.read("*y*")), (1, 2));
+    let other = h.push(&[("*y*", 90)]);
     let old = h.call("dynamic-switch", &[saved.clone()]);
     assert!(h.same(&old, &other));
     h.store.gc(None).unwrap();
     // *y* must come from the ancestor, not the inner frame or inactive task.
-    assert_eq!((h.eval("*x*"), h.eval("*y*")), (30.0, 20.0));
-    assert_eq!(h.eval("(set! *x* 31)"), 31.0);
-    assert_eq!(h.eval("(set! *y* 21)"), 21.0);
+    assert_eq!((h.eval("*x*"), h.eval("*y*")), (30, 20));
+    assert_eq!(h.eval("(set! *x* 31)"), 31);
+    assert_eq!(h.eval("(set! *y* 21)"), 21);
     h.call("dynamic-switch", &[other.clone()]);
-    assert_eq!((h.read("*x*"), h.read("*y*")), (1.0, 90.0));
+    assert_eq!((h.read("*x*"), h.read("*y*")), (1, 90));
     h.call("dynamic-switch", &[saved.clone()]);
-    assert_eq!((h.read("*x*"), h.read("*y*")), (31.0, 21.0));
-    assert_eq!(h.eval("(binding [*x* 100] (binding [*y* 200] *x*))"), 100.0);
+    assert_eq!((h.read("*x*"), h.read("*y*")), (31, 21));
+    assert_eq!(h.eval("(binding [*x* 100] (binding [*y* 200] *x*))"), 100);
     let current = h.call("dynamic-save", &[]);
     assert!(h.same(&current, &saved));
-    assert_eq!((h.read("*x*"), h.read("*y*")), (31.0, 21.0));
+    assert_eq!((h.read("*x*"), h.read("*y*")), (31, 21));
     // A switch did not pop or modify the old snapshots. Ordinary scope exit is
     // still explicit and restores its original caller values.
     let pop = h.runtime.get_func(&mut h.store, "dynamic-pop").unwrap();
     pop.call(&mut h.store, &[inner], &mut []).unwrap();
     let current = h.call("dynamic-save", &[]);
     assert!(h.same(&current, &outer));
-    assert_eq!((h.read("*x*"), h.read("*y*")), (10.0, 21.0));
+    assert_eq!((h.read("*x*"), h.read("*y*")), (10, 21));
     pop.call(&mut h.store, &[outer], &mut []).unwrap();
-    assert_eq!((h.read("*x*"), h.read("*y*")), (1.0, 2.0));
+    assert_eq!((h.read("*x*"), h.read("*y*")), (1, 2));
     let old = h.call("dynamic-switch", &[nil.clone()]);
     assert!(h.same(&old, &nil));
 }
@@ -241,7 +239,7 @@ fn dynamic_switch_retains_nested_effective_values_writes_and_source_caller_after
 fn dynamic_switch_validates_whole_chains_before_publication_or_effects() {
     let mut h = Harness::new();
     let nil = h.nil();
-    let valid = h.push(&[("*x*", 10.0)]);
+    let valid = h.push(&[("*x*", 10)]);
     let root = h.runtime.get_global(&mut h.store, "dynamic-frame").unwrap();
     let empty = h.call("args-new", &[Val::I32(0)]);
     let short = h.call("args-new", &[Val::I32(1)]);
@@ -258,8 +256,8 @@ fn dynamic_switch_validates_whole_chains_before_publication_or_effects() {
         .unwrap()
         .unwrap();
     let cell = h.cell("*x*");
-    let old = h.number(1.0);
-    let value = h.number(99.0);
+    let old = h.number(1);
+    let value = h.number(99);
     for (index, item) in [
         false_value.clone(),
         nil.clone(),
@@ -294,7 +292,7 @@ fn dynamic_switch_validates_whole_chains_before_publication_or_effects() {
         h.rejected("dynamic-switch", &[invalid.clone()]);
         let current = root.get(&mut h.store);
         assert!(h.same(&current, &valid));
-        assert_eq!((h.eval("*x*"), h.eval("*y*")), (10.0, 2.0));
+        assert_eq!((h.eval("*x*"), h.eval("*y*")), (10, 2));
         // An invalid outgoing context cannot be silently saved or replaced.
         root.set(&mut h.store, invalid.clone()).unwrap();
         h.rejected("dynamic-save", &[]);
@@ -303,10 +301,10 @@ fn dynamic_switch_validates_whole_chains_before_publication_or_effects() {
         let current = root.get(&mut h.store);
         assert!(h.same(&current, &invalid));
         root.set(&mut h.store, valid.clone()).unwrap();
-        assert_eq!((h.read("*x*"), h.read("*y*")), (10.0, 2.0));
+        assert_eq!((h.read("*x*"), h.read("*y*")), (10, 2));
     }
     h.call("dynamic-switch", &[nil]);
-    assert_eq!((h.eval("*x*"), h.eval("*y*")), (1.0, 2.0));
+    assert_eq!((h.eval("*x*"), h.eval("*y*")), (1, 2));
 }
 
 fn frame_fields(h: &mut Harness, value: &Val) -> Vec<Val> {
@@ -324,15 +322,15 @@ fn frame_fields(h: &mut Harness, value: &Val) -> Vec<Val> {
 #[test]
 fn dynamic_forks_clone_every_frame_and_array_with_independent_ancestor_writes_after_gc() {
     let mut h = Harness::new();
-    let outer = h.push(&[("*x*", 10.0), ("*y*", 20.0)]);
-    let caller = h.push(&[("*x*", 30.0)]);
+    let outer = h.push(&[("*x*", 10), ("*y*", 20)]);
+    let caller = h.push(&[("*x*", 30)]);
     // Snapshot the effective value after a write, not just the initializer.
-    assert_eq!(h.eval("(set! *y* 21)"), 21.0);
+    assert_eq!(h.eval("(set! *y* 21)"), 21);
     let first = h.call("dynamic-fork", &[]);
     let second = h.call("dynamic-fork", &[]);
     let current = h.call("dynamic-save", &[]);
     assert!(h.same(&current, &caller));
-    assert_eq!((h.read("*x*"), h.read("*y*")), (30.0, 21.0));
+    assert_eq!((h.read("*x*"), h.read("*y*")), (30, 21));
     h.store.gc(None).unwrap();
 
     // Independent layout observations prove every frame and mutable array is
@@ -383,25 +381,25 @@ fn dynamic_forks_clone_every_frame_and_array_with_independent_ancestor_writes_af
     let y = h.cell("*y*");
     let set = h.runtime.get_func(&mut h.store, "binding-set").unwrap();
     h.call("dynamic-switch", &[first.clone()]);
-    let value = h.number(111.0);
+    let value = h.number(111);
     set.call(&mut h.store, &[y.clone(), value], &mut [])
         .unwrap();
-    let value = h.number(31.0);
+    let value = h.number(31);
     set.call(&mut h.store, &[x.clone(), value], &mut [])
         .unwrap();
     h.call("dynamic-switch", &[second.clone()]);
-    assert_eq!((h.eval("*x*"), h.eval("*y*")), (30.0, 21.0));
-    let value = h.number(222.0);
+    assert_eq!((h.eval("*x*"), h.eval("*y*")), (30, 21));
+    let value = h.number(222);
     set.call(&mut h.store, &[y.clone(), value], &mut [])
         .unwrap();
-    let value = h.number(32.0);
+    let value = h.number(32);
     set.call(&mut h.store, &[x, value], &mut []).unwrap();
     h.call("dynamic-switch", &[caller.clone()]);
-    let value = h.number(23.0);
+    let value = h.number(23);
     set.call(&mut h.store, &[y, value], &mut []).unwrap();
     h.store.gc(None).unwrap();
-    assert_eq!((h.eval("*x*"), h.eval("*y*")), (30.0, 23.0));
-    for (context, expected) in [(&first, (31.0, 111.0)), (&second, (32.0, 222.0))] {
+    assert_eq!((h.eval("*x*"), h.eval("*y*")), (30, 23));
+    for (context, expected) in [(&first, (31, 111)), (&second, (32, 222))] {
         h.call("dynamic-switch", &[context.clone()]);
         h.store.gc(None).unwrap();
         assert_eq!((h.eval("*x*"), h.eval("*y*")), expected);
@@ -409,10 +407,10 @@ fn dynamic_forks_clone_every_frame_and_array_with_independent_ancestor_writes_af
         // remains 10, and the independent ancestor *y* has its task's write.
         let fields = frame_fields(&mut h, context);
         h.call("dynamic-switch", &[fields[0].clone()]);
-        assert_eq!((h.read("*x*"), h.read("*y*")), (10.0, expected.1));
+        assert_eq!((h.read("*x*"), h.read("*y*")), (10, expected.1));
     }
     h.call("dynamic-switch", &[caller.clone()]);
-    assert_eq!((h.eval("*x*"), h.eval("*y*")), (30.0, 23.0));
+    assert_eq!((h.eval("*x*"), h.eval("*y*")), (30, 23));
     let current = h.call("dynamic-save", &[]);
     assert!(h.same(&current, &caller));
     let fields = frame_fields(&mut h, &caller);
@@ -430,5 +428,5 @@ fn dynamic_fork_empty_context_returns_nil_without_publishing_a_frame() {
     assert!(h.same(&forked, &nil));
     let current = h.call("dynamic-save", &[]);
     assert!(h.same(&current, &caller));
-    assert_eq!((h.eval("*x*"), h.eval("*y*")), (1.0, 2.0));
+    assert_eq!((h.eval("*x*"), h.eval("*y*")), (1, 2));
 }

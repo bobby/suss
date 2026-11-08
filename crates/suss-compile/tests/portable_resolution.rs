@@ -54,7 +54,7 @@ fn source_namespace_snapshots_share_unchanged_declarations_and_keep_old_revision
                 .as_ref()
                 .unwrap()
                 .kind,
-            suss_reader::forms::Kind::Number(1.0)
+            suss_reader::forms::Kind::Long(1)
         ));
     }
 }
@@ -108,6 +108,12 @@ fn fragment<T>(store: &mut Store<T>, linker: &Linker<T>, bytes: Vec<u8>) -> Inst
 }
 fn eval<T>(store: &mut Store<T>, instance: Instance) -> Val {
     call(store, instance, "eval", &[])
+}
+fn long<T>(store: &mut Store<T>, value: &Val) -> i64 {
+    match suss_compile::portable_session::runtime_number(store, value).unwrap() {
+        Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => value,
+        other => panic!("expected a long, observed {other:?}"),
+    }
 }
 fn bits<T>(store: &mut Store<T>, value: &Val) -> u64 {
     let object = value
@@ -209,16 +215,15 @@ fn namespace_aliases_refers_exclusions_and_shadowing_share_resolution() {
             .unwrap(),
         Binding::Arithmetic { .. }
     ));
-    let expected = 7.0f64;
     let (mut store, result) = execute_in("(sum (core/+ 1 2) 4)", &env, Phase::Runtime);
-    assert_eq!(bits(&mut store, &result), expected.to_bits());
+    assert_eq!(long(&mut store, &result), 7);
     env.exclude_core(Phase::Runtime, "+").unwrap();
     let error = portable::compile_in("(+ 1 2)", &env, Phase::Runtime).unwrap_err();
     assert_eq!(error.span, 1..2);
     assert!(error.message.contains("Unresolved Runtime"));
     assert!(portable::compile_in("(cljs.core/+ 1 2)", &env, Phase::Runtime).is_ok());
     let (mut store, result) = execute_in("(let [renamed 9] renamed)", &env, Phase::Runtime);
-    assert_eq!(bits(&mut store, &result), 9.0f64.to_bits());
+    assert_eq!(long(&mut store, &result), 9);
     env.refer(Phase::Runtime, "+", "dependency", "value")
         .unwrap();
     let hir = portable::analyze_in("(+ 1 2)", &env, Phase::Runtime).unwrap();
@@ -236,16 +241,16 @@ fn namespace_aliases_refers_exclusions_and_shadowing_share_resolution() {
     env.declare_cell(Phase::Runtime, "app", "let").unwrap();
     // Runtime vars do not hide core macros; only a lexical local does.
     let (mut store, result) = execute_in("(let [x 8] x)", &env, Phase::Runtime);
-    assert_eq!(bits(&mut store, &result), 8.0f64.to_bits());
+    assert_eq!(long(&mut store, &result), 8);
     env.refer(Phase::Runtime, "bindingForm", "cljs.core", "let")
         .unwrap();
     env.declare_cell(Phase::Runtime, "cljs.core", "let")
         .unwrap();
     let (mut store, result) = execute_in("(bindingForm [x 12] x)", &env, Phase::Runtime);
-    assert_eq!(bits(&mut store, &result), 12.0f64.to_bits());
+    assert_eq!(long(&mut store, &result), 12);
     // The same resolver selects qualified/aliased bootstrap macros.
     let (mut store, result) = execute_in("(core/let [x 6] x)", &env, Phase::Runtime);
-    assert_eq!(bits(&mut store, &result), 6.0f64.to_bits());
+    assert_eq!(long(&mut store, &result), 6);
 }
 fn execute_in(source: &str, env: &Environment, phase: Phase) -> (Store<()>, Val) {
     let engine = support::engine();
@@ -789,8 +794,8 @@ fn namespace_arithmetic_values_materialize_canonical_phase_cells() {
         .unwrap();
     let mut identities = Vec::new();
     for (phase, factory, expected) in [
-        (Phase::Runtime, "arithmetic-add", 5.0f64),
-        (Phase::Macro, "arithmetic-multiply", 6.0f64),
+        (Phase::Runtime, "arithmetic-add", 5),
+        (Phase::Macro, "arithmetic-multiply", 6),
     ] {
         let prepared =
             portable::prepare_fragment("(let [f cljs.core/+] (f 2 3))", &environment, phase)
@@ -804,7 +809,7 @@ fn namespace_arithmetic_values_materialize_canonical_phase_cells() {
         define(&mut store, &mut linker, identity, &cell);
         let instance = fragment(&mut store, &linker, prepared.wasm);
         let value = eval(&mut store, instance);
-        assert_eq!(bits(&mut store, &value), expected.to_bits());
+        assert_eq!(long(&mut store, &value), expected);
         identities.push(identity.clone());
     }
     assert_ne!(identities[0], identities[1]);
@@ -858,7 +863,7 @@ fn source_requires_retain_library_identity_without_aliases_in_each_phase() {
         linker.instance(&mut store, "suss.runtime", runtime).unwrap();
         let instance = fragment(&mut store, &linker, prepared.wasm);
         let result = eval(&mut store, instance);
-        assert_eq!(bits(&mut store, &result), 42.0f64.to_bits());
+        assert_eq!(long(&mut store, &result), 42);
         // A later implicit library identity must not overwrite an earlier alias.
         let conflict = "(ns clash (:require-macros [first :as next] next)) 42";
         let error = portable::prepare_fragment_forms_with_expander(

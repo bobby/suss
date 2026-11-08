@@ -12,6 +12,15 @@ use std::thread::ThreadId;
 use suss_compile::portable_macros::CompiledMacros;
 use suss_compile::portable_session::{Session, SessionStats, SessionValue};
 
+/// A long, as Clojure's integer values are.
+fn long_value(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<i64> {
+    match suss_compile::portable_session::runtime_number(store, value)? {
+        Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => Ok(value),
+        other => Err(wasmtime::Error::msg(format!("expected a long, observed {other:?}"))),
+    }
+}
+
+
 const GC_MODULE: &str = "wasmtime::runtime::vm::gc";
 const PREFIX: &str = "After collection, GC heap's allocated bytes = ";
 
@@ -90,12 +99,11 @@ fn eval(session: &mut Session, macros: &mut CompiledMacros, source: &str) -> Ses
         .unwrap_or_else(|error| panic!("{source}: {error}"))
 }
 
-fn observed(session: &mut Session, read: &SessionValue) -> f64 {
+fn observed(session: &mut Session, read: &SessionValue) -> i64 {
     let value = session.invoke(read, &[]).unwrap();
     session
         .inspect(&value, |mut store, value| {
-            let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            Ok(number.field(&mut store, 0)?.unwrap_f64())
+            long_value(&mut store, &value)
         })
         .unwrap()
 }
@@ -120,24 +128,24 @@ fn lifecycle(session: &mut Session, fixtures: &Fixtures) -> (usize, usize, usize
         .unwrap();
     drop(graph);
     let queued = live_bytes(session);
-    assert_eq!(observed(session, &fixtures.read), 0.0);
+    assert_eq!(observed(session, &fixtures.read), 0);
 
     assert!(session.run_async_turn().unwrap());
     assert!(!session.run_async_turn().unwrap());
     let awaiting = live_bytes(session);
-    assert_eq!(observed(session, &fixtures.read), 0.0);
+    assert_eq!(observed(session, &fixtures.read), 0);
 
     assert!(session.cancel_future(&task).unwrap());
     assert!(session.run_async_turn().unwrap());
     assert!(!session.run_async_turn().unwrap());
     let cleaning = live_bytes(session);
-    assert_eq!(observed(session, &fixtures.read), 0.0);
+    assert_eq!(observed(session, &fixtures.read), 0);
     // Finally really suspended on a second unknown producer. Cancellation must
     // not invent its result or discard the captured graph while cleanup waits.
     assert!(session.resolve_future(&cleanup, &fixtures.nil).unwrap());
     assert!(session.run_async_turn().unwrap());
     assert!(!session.run_async_turn().unwrap());
-    assert_eq!(observed(session, &fixtures.read), 300.0);
+    assert_eq!(observed(session, &fixtures.read), 300);
     assert!(!session.cancel_future(&task).unwrap());
 
     // Settle the original dependency late: its retired waiter must not replay
@@ -145,7 +153,7 @@ fn lifecycle(session: &mut Session, fixtures: &Fixtures) -> (usize, usize, usize
     // so no native pending-request registry holds them alive after these drops.
     assert!(session.resolve_future(&dependency, &fixtures.nil).unwrap());
     assert!(!session.run_async_turn().unwrap());
-    assert_eq!(observed(session, &fixtures.read), 300.0);
+    assert_eq!(observed(session, &fixtures.read), 300);
     drop(task);
     drop(dependency);
     drop(cleanup);

@@ -1,5 +1,7 @@
 //! Independent ABI2 observations. Never call the guest printer or equality.
 //! Inspect canonical storage directly; unknown objects and malformed layouts fail.
+// Each test includes only the decoding entry points it needs.
+#![allow(dead_code)]
 use suss_compile::portable_session::{runtime_number, sentinel_tag, RuntimeNumber, Session, SessionError, SessionValue};
 use wasmtime::{AnyRef, OwnedRooted, Rooted, StorageType, StoreContextMut, Val};
 

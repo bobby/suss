@@ -161,15 +161,13 @@ impl Harness {
         self.environment = prepared.environment;
         result[0].clone()
     }
-    fn number(&mut self, source: &str) -> f64 {
+    /// A long, as Clojure's integer values are.
+    fn number(&mut self, source: &str) -> i64 {
         let value = self.source(source);
-        let object = value
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&self.store)
-            .unwrap()
-            .unwrap();
-        object.field(&mut self.store, 0).unwrap().unwrap_f64()
+        match suss_compile::portable_session::runtime_number(&mut self.store, &value).unwrap() {
+            Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => value,
+            other => panic!("expected a long, observed {other:?}"),
+        }
     }
     fn status(&mut self, source: &str) -> i32 {
         let value = self.source(source);
@@ -230,10 +228,10 @@ fn stream_trapped_owner_orphan_withdraws_write_without_running_finally_or_accept
         h.status("(suss.internal.async/stream-operation-future op)"),
         3
     );
-    assert_eq!(h.number("trace"), 1.0);
+    assert_eq!(h.number("trace"), 1);
     assert_eq!(
         h.number("cleanup"),
-        0.0,
+        0,
         "engine trap bypasses source finally"
     );
     assert!(!h.run(1), "consumed trapped callback cannot replay");
@@ -248,7 +246,7 @@ fn stream_trapped_owner_orphan_withdraws_write_without_running_finally_or_accept
     h.drain();
     assert_eq!(
         h.number("(suss.internal.async/stream-chunk-nth (suss.internal.async/result read-task) 0)"),
-        23.0
+        23
     );
     assert_eq!(h.pending(), 0);
 }
@@ -282,14 +280,14 @@ fn stream_consumed_cancel_latch_withdraws_preexisting_operation_before_consumpti
     h.drain();
     assert_eq!(
         h.number("(suss.internal.async/stream-chunk-nth (suss.internal.async/result read-task) 0)"),
-        17.0,
+        17,
         "cancelled read must not consume accepted data"
     );
     let gate = h.source("gate");
     let nil = h.value("nil", &[]);
     h.integer("future-resolve", &[gate, nil]);
     h.drain();
-    assert_eq!(h.number("cleanup"), 1.0);
+    assert_eq!(h.number("cleanup"), 1);
     assert_eq!(h.integer("future-status", &[task]), 3);
     assert_eq!(h.integer("async-scheduler-pending-task-count", &[]), 0);
 }
@@ -303,7 +301,7 @@ fn stream_private_future_source_settlement_guards_preserve_pending_and_reset_roo
     assert_eq!(h.integer("stream-operation-owned", &[future]), 1);
     for operation in ["resolve!", "reject!", "cancel!"] {
         let payload = if operation == "cancel!" { "" } else { " 99" };
-        assert_eq!(h.number(&format!("(try (suss.internal.async/{operation} (suss.internal.async/stream-operation-future op){payload}) 0 (catch :default error 1))")),1.0);
+        assert_eq!(h.number(&format!("(try (suss.internal.async/{operation} (suss.internal.async/stream-operation-future op){payload}) 0 (catch :default error 1))")),1);
         assert_eq!(
             h.status("(suss.internal.async/stream-operation-future op)"),
             0,
@@ -397,7 +395,7 @@ fn stream_service_fuel_sweep_retains_live_owner_and_delivers_eof_once() {
         );
         assert_eq!(
             h.number("trace"),
-            1.0,
+            1,
             "fuel={fuel}: once-only resumed effects"
         );
         assert_eq!(h.pending(), 0);
@@ -407,7 +405,7 @@ fn stream_service_fuel_sweep_retains_live_owner_and_delivers_eof_once() {
         assert_eq!(h.integer("stream-eof-is", &[payload]), 1);
         h.void("stream-service", &[]);
         assert!(!h.run(1));
-        assert_eq!(h.number("trace"), 1.0);
+        assert_eq!(h.number("trace"), 1);
     }
     assert!(
         traps > 0 && finished > 0,
@@ -463,7 +461,7 @@ fn stream_active_owner_fuel_sweep_recovers_orphan_without_duplicate_acceptance()
         }
         h.void("stream-service", &[]);
         assert_eq!(h.status("task"), 2);
-        assert!(h.number("trace") <= 1.0, "consumed callback cannot replay");
+        assert!(h.number("trace") <= 1, "consumed callback cannot replay");
         assert_eq!(
             h.pending(),
             0,
@@ -482,7 +480,7 @@ fn stream_active_owner_fuel_sweep_recovers_orphan_without_duplicate_acceptance()
             h.number(
                 "(suss.internal.async/stream-chunk-nth (suss.internal.async/result read-task) 0)"
             ),
-            23.0
+            23
         );
         assert_eq!(h.pending(), 0);
     }
@@ -533,18 +531,11 @@ fn interrupted_read_journal_is_recovered_before_new_close_mutates_snapshot() {
         assert_eq!(h.integer("stream-close", &[writer]), 1);
         assert_eq!(h.integer("future-status", &[future.clone()]), 1);
         let chunk = h.value("future-result", &[future]);
-        let zero = h.value("number-box", &[Val::F64(0.0f64.to_bits())]);
+        let zero = h.value("long-box", &[Val::I64(0)]);
         let item = h.value("stream-chunk-nth", &[chunk, zero]);
         assert_eq!(
-            item.unwrap_anyref()
-                .unwrap()
-                .as_struct(&h.store)
-                .unwrap()
-                .unwrap()
-                .field(&mut h.store, 0)
-                .unwrap()
-                .unwrap_f64(),
-            17.0
+            suss_compile::portable_session::runtime_number(&mut h.store, &item).unwrap(),
+            Some(suss_compile::portable_session::RuntimeNumber::Long(17))
         );
         h.void("async-scheduler-recover", &[]);
         h.source("(def next-task (suss.async/future* (suss.async/await* (suss.internal.async/stream-operation-future (suss.internal.async/stream-begin-read reader 1)))))");
@@ -594,7 +585,7 @@ fn stream_operation_created_after_cancel_dispatch_finishes_awaited_finally() {
         "new cleanup operation must not be withdrawn by the old latch"
     );
     assert_eq!(h.pending(), 1);
-    assert_eq!(h.number("cleanup"), 0.0);
+    assert_eq!(h.number("cleanup"), 0);
     h.write_task(17);
     h.drain();
     assert_eq!(h.integer("future-status", &[completion]), 1);
@@ -603,12 +594,12 @@ fn stream_operation_created_after_cancel_dispatch_finishes_awaited_finally() {
         3,
         "awaited finally finishes before owner cancellation publishes"
     );
-    assert_eq!(h.number("trace"), 17.0);
-    assert_eq!(h.number("cleanup"), 1.0);
+    assert_eq!(h.number("trace"), 17);
+    assert_eq!(h.number("cleanup"), 1);
     assert_eq!(h.pending(), 0);
     assert_eq!(h.integer("async-scheduler-pending-task-count", &[]), 0);
     assert!(!h.run(1));
-    assert_eq!(h.number("cleanup"), 1.0);
+    assert_eq!(h.number("cleanup"), 1);
 }
 
 #[test]
@@ -753,18 +744,11 @@ fn later_published_write_receipt_survives_earlier_read_service_or_retirement() {
             let read_future = h.value("stream-operation-future", &[read]);
             assert_eq!(h.integer("future-status", &[read_future.clone()]), 1);
             let data = h.value("future-result", &[read_future]);
-            let zero = h.value("number-box", &[Val::F64(0.0f64.to_bits())]);
+            let zero = h.value("long-box", &[Val::I64(0)]);
             let item = h.value("stream-chunk-nth", &[data, zero]);
             assert_eq!(
-                item.unwrap_anyref()
-                    .unwrap()
-                    .as_struct(&h.store)
-                    .unwrap()
-                    .unwrap()
-                    .field(&mut h.store, 0)
-                    .unwrap()
-                    .unwrap_f64(),
-                17.0
+                suss_compile::portable_session::runtime_number(&mut h.store, &item).unwrap(),
+                Some(suss_compile::portable_session::RuntimeNumber::Long(17))
             );
             h.source("(def probe-op nil) (def probe (suss.async/future* (set! probe-op (suss.internal.async/stream-begin-read reader 1)) (suss.async/await* gate)))");
             assert!(h.run(1));

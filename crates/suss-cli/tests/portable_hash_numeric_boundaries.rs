@@ -108,8 +108,11 @@ fn hash_numeric_boundaries_match_independently_encoded_primary_observations() {
             "f64" => {
                 let actual = eval_number(&mut session, source);
                 // Clojure governs: a remainder of longs is a long, never the
-                // pinned ClojureScript negative zero.
+                // pinned ClojureScript negative zero. safe-integer-remainder
+                // is hash's private integral remainder, so -0.0 gives long 0
+                // too (rem-57).
                 let long_zero = [
+                    "rem-57",
                     "rem-59",
                     "review-rem-negative-divisor-zero",
                     "review-rem-negative-unit",

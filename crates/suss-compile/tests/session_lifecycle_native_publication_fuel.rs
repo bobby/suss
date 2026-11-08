@@ -8,6 +8,15 @@ use std::sync::{
 use suss_compile::portable_session::{Session, SessionError, SessionValue};
 use suss_compile::runtime_abi;
 
+/// A long, as Clojure's integer values are.
+fn long_value(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wasmtime::Result<i64> {
+    match suss_compile::portable_session::runtime_number(store, value)? {
+        Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => Ok(value),
+        other => Err(wasmtime::Error::msg(format!("expected a long, observed {other:?}"))),
+    }
+}
+
+
 const NORMAL_FUEL: u64 = 1_000_000;
 
 fn state(session: &mut Session, future: &SessionValue) -> u32 {
@@ -28,20 +37,18 @@ fn state(session: &mut Session, future: &SessionValue) -> u32 {
                 .get_u32();
             if status == 1 || status == 2 {
                 let payload = outcome.get(&mut store, 1)?;
-                let number = payload.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-                assert_eq!(number.field(&mut store, 0)?.unwrap_f64(), 42.0);
+                assert_eq!(long_value(&mut store, &payload)?, 42);
             }
             Ok(status)
         })
         .unwrap()
 }
 
-fn number(session: &mut Session, reader: &SessionValue) -> f64 {
+fn number(session: &mut Session, reader: &SessionValue) -> i64 {
     let value = session.invoke(reader, &[]).unwrap();
     session
         .inspect(&value, |mut store, value| {
-            let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            Ok(number.field(&mut store, 0)?.unwrap_f64())
+            long_value(&mut store, &value)
         })
         .unwrap()
 }
@@ -87,8 +94,8 @@ fn native_terminal_publication_fuel_trap_keeps_producer_disarmed_and_wakes_waite
             let waiter = session.invoke(&spawn, &[&dependency]).unwrap();
             assert!(session.run_async_turn().unwrap());
             assert!(!session.run_async_turn().unwrap());
-            assert_eq!(number(&mut session, &read_starts), fuel as f64);
-            assert_eq!(number(&mut session, &read_finishes), (fuel - 1) as f64);
+            assert_eq!(number(&mut session, &read_starts), fuel as i64);
+            assert_eq!(number(&mut session, &read_finishes), (fuel - 1) as i64);
             session.set_operation_fuel(fuel);
             let result = if reject {
                 session.reject_future(&dependency, &payload)
@@ -146,12 +153,12 @@ fn native_terminal_publication_fuel_trap_keeps_producer_disarmed_and_wakes_waite
             );
             assert_eq!(
                 number(&mut session, &read_starts),
-                fuel as f64,
+                fuel as i64,
                 "fuel {fuel}: pre-await source replay"
             );
             assert_eq!(
                 number(&mut session, &read_finishes),
-                fuel as f64,
+                fuel as i64,
                 "fuel {fuel}: continuation executes once"
             );
             assert_eq!(session.stats().pending_host_requests, 0);

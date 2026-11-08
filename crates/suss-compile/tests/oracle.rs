@@ -288,7 +288,8 @@ fn caught_values_and_partial_effects_are_independently_decoded() {
     for (source, expected) in [
         ("nil", json!({"tag":"nil"})),
         ("false", json!({"tag":"bool","value":false})),
-        ("0", json!({"tag":"f64","bits":"0000000000000000"})),
+        ("0", json!({"tag":"long","value":"0"})),
+        ("0.0", json!({"tag":"f64","bits":"0000000000000000"})),
         ("\"probe\"", string("probe")),
         (
             "{:reason :expected}",

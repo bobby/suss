@@ -167,15 +167,13 @@ impl Harness {
         self.environment = prepared.environment;
         result[0].clone()
     }
-    fn number(&mut self, source: &str) -> f64 {
+    /// A long, as Clojure's integer values are.
+    fn number(&mut self, source: &str) -> i64 {
         let value = self.source(source);
-        let object = value
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&self.store)
-            .unwrap()
-            .unwrap();
-        object.field(&mut self.store, 0).unwrap().unwrap_f64()
+        match suss_compile::portable_session::runtime_number(&mut self.store, &value).unwrap() {
+            Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => value,
+            other => panic!("expected a long, observed {other:?}"),
+        }
     }
     fn status(&mut self, source: &str) -> i32 {
         let value = self.source(source);
@@ -197,9 +195,9 @@ fn invocation_scope_zero_initializer_is_untouched_by_pump_and_cancel_of_one_and_
     assert!(h.run(1));
     assert!(h.run(2));
     assert_eq!(h.counts(0), zero);
-    assert_eq!(h.number("zero"), 0.0);
-    assert_eq!(h.number("one"), 1.0);
-    assert_eq!(h.number("two"), 1.0);
+    assert_eq!(h.number("zero"), 0);
+    assert_eq!(h.number("one"), 1);
+    assert_eq!(h.number("two"), 1);
     assert_eq!(h.counts(1), (1, 0, 0));
     assert_eq!(h.counts(2), (1, 0, 0));
     assert_eq!(h.cancel(1), 1);
@@ -212,8 +210,8 @@ fn invocation_scope_zero_initializer_is_untouched_by_pump_and_cancel_of_one_and_
         0,
         "cancellation must not globally settle a shared dependency"
     );
-    assert_eq!(h.number("clean-one"), 1.0);
-    assert_eq!(h.number("clean-two"), 0.0);
+    assert_eq!(h.number("clean-one"), 1);
+    assert_eq!(h.number("clean-two"), 0);
     assert_eq!(h.counts(1), (0, 0, 0));
     assert_eq!(h.counts(2), (1, 0, 0));
     assert_eq!(h.counts(0), zero);
@@ -225,15 +223,15 @@ fn invocation_scope_zero_initializer_is_untouched_by_pump_and_cancel_of_one_and_
     assert!(h.run(2));
     assert!(!h.run(2));
     assert_eq!(h.status("task-two"), 1);
-    assert_eq!(h.number("clean-two"), 1.0);
+    assert_eq!(h.number("clean-two"), 1);
     assert_eq!(h.counts(2), (0, 0, 0));
     assert_eq!(h.counts(0), zero);
-    assert_eq!(h.number("zero"), 0.0);
+    assert_eq!(h.number("zero"), 0);
     assert!(h.run(0));
     assert!(!h.run(0));
-    assert_eq!(h.number("zero"), 1.0);
-    assert_eq!(h.number("one"), 1.0, "consumed source body is not replayed");
-    assert_eq!(h.number("two"), 1.0);
+    assert_eq!(h.number("zero"), 1);
+    assert_eq!(h.number("one"), 1, "consumed source body is not replayed");
+    assert_eq!(h.number("two"), 1);
     assert_eq!(h.counts(0), (0, 0, 0));
 }
 
@@ -251,7 +249,7 @@ fn invocation_scope_keys_preserve_all_i32_bits_without_aliasing_scope_zero_or_on
         assert_eq!(h.enter(0), key, "previous key must retain its high bits");
         assert_eq!(h.counts(key), (1, 1, 0));
     }
-    assert_eq!(h.number("trace"), 0.0);
+    assert_eq!(h.number("trace"), 0);
     for (index, key) in keys.iter().copied().enumerate() {
         assert_eq!(
             h.cancel(key ^ 0x4000_0000),
@@ -262,7 +260,7 @@ fn invocation_scope_keys_preserve_all_i32_bits_without_aliasing_scope_zero_or_on
         assert!(!h.run(key));
         assert_eq!(h.counts(key), (0, 0, 0));
         assert_eq!(h.status(&format!("task-{index}")), 1);
-        assert_eq!(h.number("trace"), ((1 << (index + 1)) - 1) as f64);
+        assert_eq!(h.number("trace"), ((1 << (index + 1)) - 1) as i64);
         assert_eq!(h.counts(0), (1, 1, 0));
         for other in keys.iter().copied().skip(index + 1) {
             assert_eq!(
@@ -276,7 +274,7 @@ fn invocation_scope_keys_preserve_all_i32_bits_without_aliasing_scope_zero_or_on
     }
     assert!(h.run(0));
     assert!(!h.run(0));
-    assert_eq!(h.number("trace"), 1015.0);
+    assert_eq!(h.number("trace"), 1015);
 }
 
 #[test]
@@ -287,7 +285,7 @@ fn invocation_scope_descendants_cleanup_and_trap_recovery_restore_caller_without
     h.source("(def dependency (suss.internal.async/pending)) (def parent (suss.async/future* (try (set! trace (+ trace 1)) (set! child (suss.async/future* (set! trace (+ trace 10)))) (suss.async/await* dependency) (finally (set! cleanup-child (suss.async/future* (set! trace (+ trace 100))))))))");
     assert_eq!(h.enter(2), 1);
     assert!(h.run(1));
-    assert_eq!(h.number("trace"), 1.0);
+    assert_eq!(h.number("trace"), 1);
     assert_eq!(
         h.counts(1),
         (2, 1, 0),
@@ -297,7 +295,7 @@ fn invocation_scope_descendants_cleanup_and_trap_recovery_restore_caller_without
     assert_eq!(h.enter(3), 2);
     assert_eq!(h.enter(2), 3);
     assert!(h.run(1));
-    assert_eq!(h.number("trace"), 11.0);
+    assert_eq!(h.number("trace"), 11);
     assert_eq!(h.status("child"), 1);
     assert_eq!(h.counts(1), (1, 0, 0));
     assert_eq!(h.cancel(1), 1);
@@ -315,7 +313,7 @@ fn invocation_scope_descendants_cleanup_and_trap_recovery_restore_caller_without
     assert!(h.run(1));
     assert!(!h.run(1));
     assert_eq!(h.status("cleanup-child"), 1);
-    assert_eq!(h.number("trace"), 111.0);
+    assert_eq!(h.number("trace"), 111);
     assert_eq!(h.counts(1), (0, 0, 0));
 
     assert_eq!(h.enter(i32::MIN), 2);
@@ -360,7 +358,7 @@ fn invocation_scope_descendants_cleanup_and_trap_recovery_restore_caller_without
     assert_eq!(h.counts(2), (0, 0, 0));
     assert_eq!(
         h.number("trace"),
-        112.0,
+        112,
         "recovery cannot replay either trapped or cleanup source effects"
     );
     assert_eq!(h.enter(0), 2);

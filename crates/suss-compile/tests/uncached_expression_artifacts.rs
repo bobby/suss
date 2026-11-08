@@ -10,13 +10,15 @@ use suss_compile::{
     portable_session::{Session, SessionError, SessionValue},
 };
 
-fn number(session: &mut Session, value: &SessionValue) -> f64 {
-    session
-        .inspect(value, |mut store, value| {
-            let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            Ok(number.field(&mut store, 0)?.unwrap_f64())
-        })
-        .unwrap()
+fn number(session: &mut Session, value: &SessionValue) -> i64 {
+    // Each observed result is an integer, so a Clojure long.
+    let number = session
+        .inspect(value, |store, value| suss_compile::portable_session::runtime_number(store, &value))
+        .unwrap();
+    match number {
+        Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => value,
+        other => panic!("expected a long, observed {other:?}"),
+    }
 }
 
 #[test]
@@ -40,7 +42,7 @@ fn uncached_expression_executes_lexical_macro_and_keeps_live_bindings() {
     let mut session = Session::new().unwrap();
     let first = artifact.execute(&mut session).unwrap().unwrap();
     session.collect().unwrap();
-    assert_eq!(number(&mut session, &first), 42.0);
+    assert_eq!(number(&mut session, &first), 42);
     let mut macros = CompiledMacros::new().unwrap();
     session
         .eval_with_macros("(defn calculate [x] 100)", &mut macros)
@@ -48,9 +50,9 @@ fn uncached_expression_executes_lexical_macro_and_keeps_live_bindings() {
     let captured = session.eval("(captured 41)").unwrap();
     let current = session.eval("(calculate 41)").unwrap();
     session.collect().unwrap();
-    assert_eq!(number(&mut session, &first), 42.0);
-    assert_eq!(number(&mut session, &captured), 43.0);
-    assert_eq!(number(&mut session, &current), 100.0);
+    assert_eq!(number(&mut session, &first), 42);
+    assert_eq!(number(&mut session, &captured), 43);
+    assert_eq!(number(&mut session, &current), 100);
 }
 
 #[test]
@@ -63,9 +65,9 @@ fn uncached_runtime_throw_is_deferred_and_prompt_recovers() {
         panic!("Runtime effects must execute in the caller's Store");
     };
     session.collect().unwrap();
-    assert_eq!(number(&mut session, &payload), 41.0);
+    assert_eq!(number(&mut session, &payload), 41);
     let recovered = session.eval("(+ initialized 1)").unwrap();
-    assert_eq!(number(&mut session, &recovered), 42.0);
+    assert_eq!(number(&mut session, &recovered), 42);
 }
 
 #[test]
@@ -84,8 +86,8 @@ fn repeated_uncached_compilations_have_isolated_macro_namespaces() {
     let second = second.execute(&mut second_session).unwrap().unwrap();
     first_session.collect().unwrap();
     second_session.collect().unwrap();
-    assert_eq!(number(&mut first_session, &first), 41.0);
-    assert_eq!(number(&mut second_session, &second), 42.0);
+    assert_eq!(number(&mut first_session, &first), 41);
+    assert_eq!(number(&mut second_session, &second), 42);
 }
 
 #[test]
@@ -107,6 +109,6 @@ fn uncached_compile_fuel_preserves_zero_and_isolated_default_recovery() {
         let mut session = Session::new().unwrap();
         let value = artifact.execute(&mut session).unwrap().unwrap();
         session.collect().unwrap();
-        assert_eq!(number(&mut session, &value), 42.0);
+        assert_eq!(number(&mut session, &value), 42);
     }
 }

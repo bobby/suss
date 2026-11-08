@@ -8,7 +8,7 @@ use suss_reader::forms::{Form, Kind, read_forms};
 
 #[derive(Default)]
 struct Observe {
-    entries: Vec<f64>,
+    entries: Vec<i64>,
     initializer: Option<Arc<hir::SourceAnalysis>>,
 }
 impl portable::ExpansionHost for Observe {
@@ -33,7 +33,7 @@ impl portable::ExpansionHost for Observe {
         match head.name.as_str() {
             "mark" => {
                 assert_eq!(items.len(), 2);
-                let Kind::Number(value) = &items[1].kind else {
+                let Kind::Long(value) = &items[1].kind else {
                     panic!("numeric mark required")
                 };
                 self.entries.push(*value);
@@ -96,7 +96,7 @@ fn source_collection_analysis_preserves_forms_and_expands_entries_once_in_textua
             .unwrap();
             assert_eq!(
                 host.entries,
-                (0..count).map(|index| index as f64).collect::<Vec<_>>(),
+                (0..count).map(|index| index as i64).collect::<Vec<_>>(),
                 "{source}"
             );
             let initializer = host.initializer.unwrap();
@@ -121,7 +121,7 @@ fn source_collection_analysis_preserves_forms_and_expands_entries_once_in_textua
                 let analyzed = child.source.as_ref().unwrap();
                 assert_eq!(analyzed.phase, phase);
                 assert_eq!(analyzed.context, portable::AnalysisContext::Expression);
-                assert_eq!(analyzed.form.kind, Kind::Number(index as f64));
+                assert_eq!(analyzed.form.kind, Kind::Long(index as i64));
             }
             let Kind::Symbol(actual_tag) = &initializer.tags.tag.as_ref().unwrap().kind else {
                 panic!("collection source tag required")
@@ -168,7 +168,7 @@ fn metadata_wrapper_retains_separate_expression_and_metadata_analysis() {
             .unwrap();
             assert_eq!(
                 host.entries,
-                [0.0, 1.0],
+                [0, 1],
                 "expression and metadata analyzed once"
             );
             let wrapper = host.initializer.unwrap();
@@ -231,7 +231,7 @@ fn effectful_collection_child_retains_analyzed_operands_without_reexpansion() {
             &mut host,
         )
         .unwrap();
-        assert_eq!(host.entries, [0.0, 1.0]);
+        assert_eq!(host.entries, [0, 1]);
         let collection = host.initializer.unwrap();
         let hir::SourceNode::Vector(items) = collection.node.as_deref().unwrap() else {
             panic!("vector required")
@@ -243,7 +243,7 @@ fn effectful_collection_child_retains_analyzed_operands_without_reexpansion() {
         assert_eq!(statements.len(), 1);
         assert_eq!(
             result.source.as_ref().unwrap().form.kind,
-            Kind::Number(42.0)
+            Kind::Long(42)
         );
         let assignment = statements[0].source.as_ref().unwrap();
         assert_eq!(assignment.context, portable::AnalysisContext::Statement);
@@ -266,7 +266,7 @@ fn effectful_collection_child_retains_analyzed_operands_without_reexpansion() {
         assert_eq!(arguments.len(), 2);
         for (index, argument) in arguments.iter().enumerate() {
             let argument = argument.source.as_ref().unwrap();
-            assert_eq!(argument.form.kind, Kind::Number(index as f64));
+            assert_eq!(argument.form.kind, Kind::Long(index as i64));
             assert_eq!(argument.context, portable::AnalysisContext::Expression);
             assert_eq!(argument.phase, phase);
         }

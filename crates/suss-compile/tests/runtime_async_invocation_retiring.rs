@@ -167,15 +167,13 @@ impl RetiringHarness {
         self.environment = prepared.environment;
         result[0].clone()
     }
-    fn number(&mut self, source: &str) -> f64 {
+    /// A long, as Clojure's integer values are.
+    fn number(&mut self, source: &str) -> i64 {
         let value = self.source(source);
-        let object = value
-            .unwrap_anyref()
-            .unwrap()
-            .as_struct(&self.store)
-            .unwrap()
-            .unwrap();
-        object.field(&mut self.store, 0).unwrap().unwrap_f64()
+        match suss_compile::portable_session::runtime_number(&mut self.store, &value).unwrap() {
+            Some(suss_compile::portable_session::RuntimeNumber::Long(value)) => value,
+            other => panic!("expected a long, observed {other:?}"),
+        }
     }
     fn status(&mut self, source: &str) -> i32 {
         let value = self.source(source);
@@ -221,7 +219,7 @@ fn consumed_latch_counts_once_while_cleanup_awaits_an_uncancelled_child_across_g
     assert_eq!(retiring(&mut h, -1), 1);
     assert!(h.run(-1));
     assert_eq!(h.status("parent"), 3);
-    assert_eq!(h.number("trace"), 11.0);
+    assert_eq!(h.number("trace"), 11);
     assert_eq!(retiring(&mut h, -1), 0);
     assert_eq!(h.counts(-1), (0, 0, 0));
     assert_eq!(
@@ -278,11 +276,11 @@ fn active_consumed_cancellation_latch_counts_until_trap_recovery_publishes_termi
     assert_eq!(retiring(&mut h, i32::MIN), 0);
     assert_eq!(h.counts(i32::MIN), (0, 0, 0));
     assert_eq!(h.enter(0), 2, "trap recovery restored caller selection");
-    assert_eq!(h.number("trace"), 1.0);
+    assert_eq!(h.number("trace"), 1);
     assert!(!h.run(i32::MIN));
     assert_eq!(
         h.number("trace"),
-        1.0,
+        1,
         "recovery never replays cleanup effects"
     );
 }
@@ -322,7 +320,7 @@ fn active_request_is_counted_before_dispatch_and_deduplicates_ordinary_owner_row
     assert_eq!(retiring(&mut h, 1), 0);
     assert_eq!(h.counts(1), (0, 0, 0));
     assert_eq!(h.enter(0), 2);
-    assert_eq!(h.number("trace"), 1.0);
+    assert_eq!(h.number("trace"), 1);
     assert!(!h.run(1));
 }
 
@@ -361,7 +359,7 @@ fn interrupted_scoped_cancellation_publishes_whole_latch_and_retries_without_sco
         assert_eq!(retiring(&mut h, -1), 1);
         assert!(h.run(-1));
         assert_eq!(h.status("parent"), 3);
-        assert_eq!(h.number("trace"), 1.0);
+        assert_eq!(h.number("trace"), 1);
         assert_eq!(retiring(&mut h, -1), 0);
         assert_eq!(h.counts(-1), (0, 0, 0));
         assert_eq!(h.status("initializer"), 0);

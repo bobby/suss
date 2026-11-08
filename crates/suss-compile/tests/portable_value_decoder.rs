@@ -13,7 +13,9 @@ fn scalar_decoder_preserves_bits_and_language_sentinels_after_gc() {
         ("nil", Observation::Nil),
         ("false", Observation::Bool(false)),
         ("true", Observation::Bool(true)),
-        ("42", Observation::Number(42.0_f64.to_bits())),
+        ("42", Observation::Long(42)),
+        ("42.0", Observation::Number(42.0_f64.to_bits())),
+        ("9007199254740993", Observation::Long(9007199254740993)),
         ("-0.0", Observation::Number((-0.0_f64).to_bits())),
         ("##NaN", Observation::Number(f64::NAN.to_bits())),
         ("##Inf", Observation::Number(f64::INFINITY.to_bits())),
@@ -72,13 +74,16 @@ fn decoder_rejects_unknown_sentinels_nulls_and_unboxed_values() {
                         .contains("sentinel")
                 );
             }
-            // Every i31 is reserved for longs, which are not language values yet.
+            // Every i31 is a long (ABI v3), never a sentinel.
             for tag in [0, 1, 2, 4, 6, 99] {
                 let i31 = Val::AnyRef(Some(AnyRef::from_i31(
                     &mut store,
                     I31::new_u32(tag).unwrap(),
                 )));
-                assert!(Decoder::new(16).decode(&mut store, &i31).is_err());
+                assert_eq!(
+                    Decoder::new(16).decode(&mut store, &i31)?,
+                    Observation::Long(i64::from(tag))
+                );
             }
             // A null eqref is language nil under ABI v3, not a malformed value.
             assert_eq!(
@@ -261,7 +266,7 @@ fn persistent_vectors_decode_tree_boundaries_and_nested_values_without_guest_cal
             decoder.decode_session(&mut session, &value).unwrap(),
             Observation::Vector(
                 (0..count)
-                    .map(|i| Observation::Number((i as f64).to_bits()))
+                    .map(|i| Observation::Long(i as i64))
                     .collect()
             ),
             "vector count={count}"
@@ -286,7 +291,7 @@ fn persistent_vectors_decode_tree_boundaries_and_nested_values_without_guest_cal
                 Some("app".encode_utf16().collect()),
                 "name".encode_utf16().collect()
             ),
-            Observation::Vector(vec![Observation::Number(42.0_f64.to_bits())]),
+            Observation::Vector(vec![Observation::Long(42)]),
         ])
     );
     let retained = session.eval_probe("[42]").unwrap();
@@ -296,7 +301,7 @@ fn persistent_vectors_decode_tree_boundaries_and_nested_values_without_guest_cal
     session.collect().unwrap();
     assert_eq!(
         decoder.decode_session(&mut session, &retained).unwrap(),
-        Observation::Vector(vec![Observation::Number(42.0_f64.to_bits())])
+        Observation::Vector(vec![Observation::Long(42)])
     );
 }
 
@@ -309,34 +314,34 @@ fn persistent_lists_and_cons_decode_empty_nested_and_gc_retained_values() {
         (
             "'(1 2 3)",
             Observation::List(
-                vec![1.0_f64, 2.0, 3.0]
+                vec![1_i64, 2, 3]
                     .into_iter()
-                    .map(|n| Observation::Number(n.to_bits()))
+                    .map(Observation::Long)
                     .collect(),
             ),
         ),
         (
             "(cons 1 (list 2 3))",
             Observation::List(
-                vec![1.0_f64, 2.0, 3.0]
+                vec![1_i64, 2, 3]
                     .into_iter()
-                    .map(|n| Observation::Number(n.to_bits()))
+                    .map(Observation::Long)
                     .collect(),
             ),
         ),
         (
             "(new suss.core/Cons nil 1 [2 3] nil)",
             Observation::List(
-                vec![1.0_f64, 2.0, 3.0]
+                vec![1_i64, 2, 3]
                     .into_iter()
-                    .map(|n| Observation::Number(n.to_bits()))
+                    .map(Observation::Long)
                     .collect(),
             ),
         ),
         (
             "(list [42] (list nil false))",
             Observation::List(vec![
-                Observation::Vector(vec![Observation::Number(42.0_f64.to_bits())]),
+                Observation::Vector(vec![Observation::Long(42)]),
                 Observation::List(vec![Observation::Nil, Observation::Bool(false)]),
             ]),
         ),
@@ -395,15 +400,15 @@ fn indexed_sequences_and_map_entries_decode_actual_storage_after_gc() {
             "(new suss.core/MapEntry :ready [42] nil)",
             Observation::Vector(vec![
                 Observation::Keyword(None, "ready".encode_utf16().collect()),
-                Observation::Vector(vec![Observation::Number(42.0_f64.to_bits())]),
+                Observation::Vector(vec![Observation::Long(42)]),
             ]),
         ),
         (
             "(new suss.core/Cons nil 0 (new suss.core/IndexedSeq (array 1 2) 0 nil) nil)",
             Observation::List(
-                vec![0.0_f64, 1.0, 2.0]
+                vec![0_i64, 1, 2]
                     .into_iter()
-                    .map(|n| Observation::Number(n.to_bits()))
+                    .map(Observation::Long)
                     .collect(),
             ),
         ),
@@ -475,7 +480,7 @@ fn map_decoder_observes_array_and_hash_storage_nil_keys_and_large_tries() {
         vec![
             (
                 Observation::Nil,
-                Observation::Vector(vec![Observation::Number(42.0_f64.to_bits())]),
+                Observation::Vector(vec![Observation::Long(42)]),
             ),
             (
                 Observation::Keyword(None, "ready".encode_utf16().collect()),
@@ -492,8 +497,8 @@ fn map_decoder_observes_array_and_hash_storage_nil_keys_and_large_tries() {
         let mut expected = (0..count)
             .map(|i| {
                 (
-                    Observation::Number((i as f64).to_bits()),
-                    Observation::Number((0.0_f64 - i as f64).to_bits()),
+                    Observation::Long(i as i64),
+                    Observation::Long(-(i as i64)),
                 )
             })
             .collect::<Vec<_>>();
@@ -510,11 +515,11 @@ fn map_decoder_observes_array_and_hash_storage_nil_keys_and_large_tries() {
         vec![
             (
                 Observation::String("Aa".encode_utf16().collect()),
-                Observation::Number(1.0_f64.to_bits()),
+                Observation::Long(1),
             ),
             (
                 Observation::String("BB".encode_utf16().collect()),
-                Observation::Number(2.0_f64.to_bits()),
+                Observation::Long(2),
             ),
         ],
     );
@@ -535,11 +540,11 @@ fn set_decoder_preserves_nested_elements_and_nil_through_gc() {
             panic!("expected set")
         };
         let mut expected = (0..count)
-            .map(|i| Observation::Number((i as f64).to_bits()))
+            .map(|i| Observation::Long(i as i64))
             .collect::<Vec<_>>();
         expected.extend([
             Observation::Nil,
-            Observation::Vector(vec![Observation::Number(42.0_f64.to_bits())]),
+            Observation::Vector(vec![Observation::Long(42)]),
         ]);
         unordered_exact(elements, expected);
     }
@@ -585,9 +590,9 @@ fn vector_chunk_sequences_observe_rest_and_cons_tails_across_chunks_after_gc() {
             session.collect().unwrap();
             let mut expected = Vec::new();
             if prepend {
-                expected.push(Observation::Number((-1.0_f64).to_bits()));
+                expected.push(Observation::Long(-1));
             }
-            expected.extend((1..count).map(|i| Observation::Number((i as f64).to_bits())));
+            expected.extend((1..count).map(|i| Observation::Long(i as i64)));
             assert_eq!(
                 decoder.decode_session(&mut session, &value).unwrap(),
                 Observation::List(expected),
@@ -601,8 +606,8 @@ fn vector_chunk_sequences_observe_rest_and_cons_tails_across_chunks_after_gc() {
     assert_eq!(
         decoder.decode_session(&mut session, &retained).unwrap(),
         Observation::List(vec![
-            Observation::Number(1.0_f64.to_bits()),
-            Observation::Number(2.0_f64.to_bits())
+            Observation::Long(1),
+            Observation::Long(2)
         ])
     );
 }
@@ -636,7 +641,7 @@ fn chunk_sequences_reject_malformed_storage_and_ignore_unobserved_prefix_values(
     session.collect().unwrap();
     assert_eq!(
         decoder.decode_session(&mut session, &value).unwrap(),
-        Observation::List(vec![Observation::Number(7.0_f64.to_bits())])
+        Observation::List(vec![Observation::Long(7)])
     );
 }
 
@@ -665,7 +670,7 @@ fn vector_decoder_rejects_count_exceeding_trie_capacity() {
 #[test]
 fn scalar_decoder_rejects_mutable_number_impostor() {
     let mut session = Session::new_repl().unwrap();
-    let anchor = session.eval_probe("42").unwrap();
+    let anchor = session.eval_probe("42.0").unwrap();
     session
         .inspect(&anchor, |mut store, canonical| {
             let canonical_type = canonical
@@ -743,7 +748,7 @@ fn sparse_array_backed_sequences_preserve_present_values_and_reject_observed_hol
             assert_eq!(
                 decoder.decode_session(&mut session, &value).unwrap(),
                 Observation::List(vec![
-                    Observation::Number(7.0_f64.to_bits()),
+                    Observation::Long(7),
                     Observation::Nil,
                     Observation::Bool(false)
                 ]),
@@ -756,7 +761,7 @@ fn sparse_array_backed_sequences_preserve_present_values_and_reject_observed_hol
         session.collect().unwrap();
         assert_eq!(
             decoder.decode_session(&mut session, &tail).unwrap(),
-            Observation::List(vec![Observation::Number(7.0_f64.to_bits())])
+            Observation::List(vec![Observation::Long(7)])
         );
         let hole = session
             .eval_probe("(let [a (array)] (aset a 2 7) (new suss.core/IndexedSeq a 1 nil))")
