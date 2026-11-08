@@ -658,7 +658,11 @@
               q (suss.bootstrap/parse-long s (inc slash) end 10)]
           (if (if (nil? q) false (zero? q))
             (reader-fail st start "Divide by zero" false)
-            (if (if (nil? n) false (if (nil? q) false (zero? (rem n q))))
+            ;; A Long/MIN_VALUE term gives a BigInt in Clojure, as a term
+            ;; beyond the long range does.
+            (if (if (nil? n) false
+                  (if (nil? q) false
+                    (if (== n -9223372036854775808) false (zero? (rem n q)))))
               (quot n q)
               (reader-exact st start s end))))
         (reader-fail st start "Invalid ratio" false)))))

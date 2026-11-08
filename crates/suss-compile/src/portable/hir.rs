@@ -181,6 +181,9 @@ pub enum Comparison {
     Greater,
     GreaterEqual,
     StrictEqual,
+    /// `case`'s test of a scalar constant: numbers match only within their
+    /// kind, doubles by their bits.
+    CaseEqual,
     /// Clojure numeric comparison: non-Number operands throw (#286). Shipped
     /// core and compiler-generated tests keep the coercing variants above.
     NumberLess,
@@ -201,6 +204,7 @@ impl Comparison {
             Self::Greater => "comparison-greater",
             Self::GreaterEqual => "comparison-greater-equal",
             Self::StrictEqual => "comparison-strict-equal",
+            Self::CaseEqual => "comparison-case-equal",
             Self::NumberLess => "comparison-number-less",
             Self::NumberLessEqual => "comparison-number-less-equal",
             Self::NumberGreater => "comparison-number-greater",
@@ -219,7 +223,7 @@ impl Comparison {
             Self::Greater | Self::NumberGreater => Self::NumberGreater,
             Self::GreaterEqual | Self::NumberGreaterEqual => Self::NumberGreaterEqual,
             Self::StrictEqual | Self::NumberEqual => Self::NumberEqual,
-            Self::NumberZero | Self::NumberPositive | Self::NumberNegative => self,
+            Self::NumberZero | Self::NumberPositive | Self::NumberNegative | Self::CaseEqual => self,
         }
     }
 }
@@ -266,6 +270,8 @@ pub enum Bitwise {
     /// Private Java `(long)` narrowing of a number, for counts computed with
     /// doubles, as in `drop`'s `Math/ceil`.
     ToLong,
+    /// Private exact count of an integer range, without overflow.
+    RangeCount,
     /// Private exact integer parsing for core's reader.
     ParseLong,
 }
@@ -326,6 +332,7 @@ impl Bitwise {
             Self::LongTest => "number-long?",
             Self::DoubleTest => "number-double?",
             Self::ToLong => "number-to-long",
+            Self::RangeCount => "number-range-count",
             Self::ParseLong => "number-parse-long",
         }
     }
@@ -348,6 +355,7 @@ impl Bitwise {
             | Self::DoubleTest
             | Self::ToLong => 1,
             Self::ParseLong => 4,
+            Self::RangeCount => 3,
             _ => 2,
         }
     }
@@ -360,7 +368,7 @@ impl Bitwise {
             Self::Test | Self::F64Finite | Self::F64SafeInteger | Self::LongTest | Self::DoubleTest
         ) {
             Type::Bool
-        } else if self == Self::ParseLong {
+        } else if matches!(self, Self::ParseLong | Self::RangeCount) {
             Type::Value
         } else {
             Type::Number
@@ -2543,6 +2551,7 @@ impl Analyzer<'_> {
                 "long?" => Some(Bitwise::LongTest),
                 "double?" => Some(Bitwise::DoubleTest),
                 "to-long" => Some(Bitwise::ToLong),
+                "range-count" => Some(Bitwise::RangeCount),
                 "parse-long" => Some(Bitwise::ParseLong),
                 _ => None,
             };

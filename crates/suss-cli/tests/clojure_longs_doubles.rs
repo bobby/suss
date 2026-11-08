@@ -158,3 +158,72 @@ fn macro_data_preserves_longs_and_doubles() {
         );
     }
 }
+
+#[test]
+fn case_matches_numbers_only_within_their_kind() {
+    assert_printed(
+        "[(case 1.0 1 :a :b) (case 1 1.0 :a :b) (case -0.0 0 :a :b) (case -0.0 0.0 :a :b)
+          (case ##NaN ##NaN :a :b) (case 2 (1 2) :a :b) (case 2.0 (1.0 2.0) :a :b)
+          (case 9223372036854775807 9223372036854775807 :a :b)]",
+        "[:b :b :b :b :b :a :a :a]",
+    );
+}
+
+#[test]
+fn ranges_reach_the_ends_of_the_long_range() {
+    assert_printed(
+        "[(take 2 (range -9223372036854775808 9223372036854775807))
+          (take 2 (range 0 9223372036854775807 2))
+          (vec (range 9223372036854775805 9223372036854775807 5))
+          (vec (range -9223372036854775806 -9223372036854775808 -5))
+          (into [] (range 9223372036854775805 9223372036854775807))
+          (count (range -9223372036854775808 9223372036854775807 4))
+          (reduce + (range 10)) (nth (range 0 100 7) 13) (count (range 10 0 -3))
+          (vec (drop 30 (range 0 70 2)))]",
+        "[(-9223372036854775808 -9223372036854775807) (0 2) [9223372036854775805] \
+         [-9223372036854775806] [9223372036854775805 9223372036854775806] \
+         4611686018427387904 45 91 4 [60 62 64 66 68]]",
+    );
+}
+
+#[test]
+fn double_quot_and_rem_truncate_through_a_long() {
+    assert_printed(
+        "[(quot -0.5 1.0) (rem -0.0 2) (quot 1e20 3.0) (rem 1e20 3.0) (rem 5.5 ##Inf)
+          (quot 5.5 ##Inf) (quot -7.5 2) (rem -7.5 2) (mod -7.5 2) (mod 7 2.5)]",
+        "[0.0 -0.0 3.333333333333333E19 0.0 ##NaN 0.0 -3.0 -1.5 0.5 2.0]",
+    );
+    for source in ["(quot ##NaN 1.0)", "(rem ##Inf 1.0)", "(mod ##NaN 1.0)"] {
+        assert_eq!(thrown(source), "\"Infinite or NaN\"", "{source}");
+    }
+}
+
+#[test]
+fn counts_narrow_as_clojure_casts_to_long() {
+    assert_printed("(drop ##NaN [1 2 3])", "(1 2 3)");
+    for source in ["(doall (drop 1e20 [1 2 3]))", "(doall (drop ##Inf [1 2 3]))", "(nthrest [1 2 3] 1e20)"] {
+        assert_eq!(thrown(source), "\"Value out of range for long\"", "{source}");
+    }
+}
+
+#[test]
+fn long_min_value_quotients_and_ratio_terms_need_bigints() {
+    // Clojure divides through BigIntegers when either long is MIN, so these
+    // are BigInts or ratios (#338); Suss says so rather than answer wrongly.
+    for source in ["(/ -9223372036854775808 -1)", "(/ -9223372036854775808 1)", "(/ 4 -9223372036854775808)"] {
+        assert!(thrown(source).contains("(#338)"), "{source}");
+    }
+    assert!(thrown("(read-string \"-9223372036854775808/2\")").contains("Unsupported numeric literal"));
+    assert!(thrown("-9223372036854775808/1").contains("Unsupported numeric literal"));
+    assert_printed("[(/ 6 -2) -9223372036854775807/1 (read-string \"-9223372036854775807/1\")]", "[-3 -9223372036854775807 -9223372036854775807]");
+}
+
+#[test]
+fn double_contagion_reaches_every_arithmetic_function() {
+    assert_printed(
+        "[(inc 1.0) (dec 1.0) (- 1.0) (* 2 1.0) (+ 1 1.0 1) (- 3 1.0) (/ 4 2.0) (quot 7.0 2)
+          (rem 7 2.0) (mod 7.0 2) (abs -2.0) (max 1 2.0) (min 1.0 2) (unchecked-add 1 1.0)
+          (unchecked-multiply 2.0 3) (reduce + [1 2 3.0])]",
+        "[2.0 0.0 -1.0 2.0 3.0 2.0 2.0 3.0 1.0 1.0 2.0 2.0 1.0 2.0 6.0 6.0]",
+    );
+}

@@ -55,13 +55,19 @@ function types after `TYPE_COUNT` (12).
   operands take an inline path in the checked and coercing wrappers.
   `number-divide` of longs that divide evenly is a long, other quotients of
   longs are doubles until ratios (#338), and a long divided by zero throws
-  "Divide by zero". `number-quot`, `-rem`, `-abs`, `-unchecked-*`, `-long?`,
-  `-double?` and `-to-long` back the private `suss.bootstrap` primitives of
-  core's `quot`, `rem`, `mod`, `abs`, `unchecked-*`, `integer?`, `double?` and
-  count narrowing.
+  "Divide by zero". A `Long/MIN_VALUE` operand throws instead, since Clojure's
+  quotient is then a BigInt or ratio (#338). `number-quot`, `-rem`, `-abs`,
+  `-unchecked-*`, `-long?`, `-double?`, `-to-long` and `-range-count` back the
+  private `suss.bootstrap` primitives of core's `quot`, `rem`, `mod`, `abs`,
+  `unchecked-*`, `integer?`, `double?`, count narrowing (which throws "Value
+  out of range for long", as Clojure's `longCast`) and integer range counts
+  (exact on the unsigned distance). Double `quot` and `rem` truncate the
+  quotient through a long, as Clojure does, and throw "Infinite or NaN" when
+  it isn't finite.
 - Comparisons of two longs are exact, beyond binary64's 2⁵³, and so is core's
   strict equality (`===`), which also equates a long with an equal double.
-  `identical?` keeps them distinct.
+  `identical?` keeps them distinct, and so does `case` (`comparison-case-equal`),
+  which matches a number only within its kind and a double only by its bits.
 - `long-string` prints a long; `coerce-string` prints a double in Java's
   `Double.toString` format, through the numeric helper's ryu-js digits.
   `number-parse-long` reads core's integer literals exactly.

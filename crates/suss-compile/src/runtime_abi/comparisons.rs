@@ -151,6 +151,40 @@ pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Ve
     ]);
     let helper = b.function("comparison-strict-equal", &[VALUE, VALUE], &[VALUE], &strict);
     helpers.push(("strict-equal", helper));
+    // case's test of a scalar constant: a number matches only a number of its
+    // own kind, a double only by its bits (so -0.0 is not 0.0 and NaN matches
+    // nothing), as Clojure's case tests long constants as longs and others by
+    // hash and equality. Anything else uses strict equality.
+    let mut case = longs::both_longs(b).to_vec();
+    case.extend([If(BlockType::Empty)]);
+    case.extend([LocalGet(0), Call(b.names["long-unbox"]), LocalGet(1), Call(b.names["long-unbox"]), I64Eq]);
+    boolean(&mut case);
+    case.extend([Return, End]);
+    let double = b.names["double-test"];
+    case.extend([LocalGet(0), Call(double), LocalGet(1), Call(double), I32And, If(BlockType::Empty)]);
+    let number = b.names["number-unbox"];
+    case.extend([
+        LocalGet(0),
+        Call(number),
+        LocalTee(2),
+        LocalGet(1),
+        Call(number),
+        LocalTee(3),
+        F64Eq,
+        LocalGet(2),
+        I64ReinterpretF64,
+        LocalGet(3),
+        I64ReinterpretF64,
+        I64Eq,
+        I32And,
+    ]);
+    boolean(&mut case);
+    case.extend([Return, End]);
+    case.extend(longs::number_test(0));
+    case.extend(longs::number_test(1));
+    case.extend([I32Or, If(BlockType::Empty), sentinel_value(FALSE), Return, End]);
+    case.extend([LocalGet(0), LocalGet(1), Call(helper)]);
+    b.function_with_locals("comparison-case-equal", &[VALUE, VALUE], &[VALUE], &[(2, ValType::F64)], &case);
     let mut declared = Vec::new();
     // First-class values are public Clojure functions: check numeric operands
     // (#286). The coercing helpers above remain for shipped core's direct use.

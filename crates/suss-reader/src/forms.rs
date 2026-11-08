@@ -1433,9 +1433,12 @@ pub(crate) fn number(token: &str) -> Result<NumberToken, &'static str> {
         }
         // Clojure reads each term as a long when it fits and divides: two
         // longs that divide evenly give a long (`4/2` is 2), but a BigInt
-        // term gives a BigInt (`36893488147419103232/8`).
+        // term gives a BigInt (`36893488147419103232/8`), and so does a
+        // Long/MIN_VALUE term, which Clojure's long division takes through
+        // BigIntegers.
         use num_traits::ToPrimitive;
-        let long_terms = numerator.to_i64().is_some() && denominator.to_i64().is_some();
+        let long = |term: &BigInt| term.to_i64().is_some_and(|term| term != i64::MIN);
+        let long_terms = long(&numerator) && long(&denominator);
         let divisor = numerator.gcd(&denominator);
         let (numerator, denominator) = (numerator / &divisor, denominator / divisor);
         if denominator == BigInt::from(1) {

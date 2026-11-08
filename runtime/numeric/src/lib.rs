@@ -146,13 +146,6 @@ pub unsafe extern "C" fn suss_parse_number(ptr: *mut u16, len: usize) -> f64 {
     text.parse().unwrap_or(f64::NAN)
 }
 
-/// Java's `Double.toString` layout of the shortest round-trip digits that
-/// ryu-js gives: plain decimal with at least one fraction digit for
-/// 10^-3 <= |v| < 10^7 (`1.0`, `0.001`, `1234567.0`), and otherwise one digit,
-/// a fraction and an exponent (`1.0E21`, `1.2345678E7`, `1.0E-4`). Clojure
-/// prints doubles this way (ADR-0003). Java also widens a one-digit result to
-/// the closest two digits, which differs only for some subnormals
-/// (`4.9E-324` where this gives `5.0E-324`).
 /// 10^power, correctly rounded, through core's decimal parser.
 fn power_of_ten(power: i32) -> f64 {
     let mut text = [0u8; 8];
@@ -198,6 +191,13 @@ fn two_digits(value: f64, exponent: i32) -> Option<(u8, i32)> {
         .then_some((nearest as u8, exponent))
         .filter(|(pair, _)| pair % 10 != 0)
 }
+/// Java's `Double.toString` layout of the shortest round-trip digits that
+/// ryu-js gives: plain decimal with at least one fraction digit for
+/// 10^-3 <= |v| < 10^7 (`1.0`, `0.001`, `1234567.0`), and otherwise one digit,
+/// a fraction and an exponent (`1.0E21`, `1.2345678E7`, `1.0E-4`). Clojure
+/// prints doubles this way (ADR-0003). As Java does, a one-digit result
+/// widens to the closest two-digit decimal when that is nearer the exact
+/// value (`4.9E-324`, `9.9E-324`; see `two_digits`).
 fn java(value: f64, js: &[u8], out: &mut [u8; 32]) -> usize {
     let mut length = 0;
     let mut push = |byte: u8, length: &mut usize| {

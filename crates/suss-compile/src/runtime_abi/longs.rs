@@ -422,6 +422,22 @@ pub(super) fn arithmetic(b: &mut Builder) {
     let mut code = exact(b);
     code.extend([LocalGet(3), I64Eqz, If(BlockType::Empty)]);
     code.extend(throw("Divide by zero"));
+    // Clojure divides by way of BigIntegers when either long is MIN, so the
+    // quotient is a BigInt or a ratio, even (/ Long/MIN_VALUE 1).
+    code.extend([
+        End,
+        LocalGet(2),
+        I64Const(i64::MIN),
+        I64Eq,
+        LocalGet(3),
+        I64Const(i64::MIN),
+        I64Eq,
+        I32Or,
+        If(BlockType::Empty),
+    ]);
+    code.extend(throw(
+        "Unsupported quotient: a Long/MIN_VALUE operand gives a BigInt or ratio, which needs Clojure's numeric types (#338)",
+    ));
     code.extend([
         End,
         LocalGet(2),
@@ -619,9 +635,31 @@ pub(super) fn functions(b: &mut Builder) {
         Return,
         End,
     ]);
+    // Clojure's double quotient: n / d must be finite ("Infinite or NaN"),
+    // and is truncated through a long when it fits, so -0.5 gives 0.0; a
+    // larger quotient is already integral. Leaves it in local 7.
+    let truncated = |code: &mut Vec<Instruction<'static>>| {
+        code.extend([LocalGet(5), LocalGet(6), F64Div, LocalTee(7), F64Abs]);
+        code.extend([F64Const(f64::INFINITY.into()), F64Lt, I32Eqz, If(BlockType::Empty)]);
+        code.extend(throw("Infinite or NaN"));
+        code.extend([
+            End,
+            LocalGet(7),
+            F64Abs,
+            F64Const(9_223_372_036_854_775_808.0f64.into()),
+            F64Lt,
+            If(BlockType::Empty),
+            LocalGet(7),
+            I64TruncF64S,
+            F64ConvertI64S,
+            LocalSet(7),
+            End,
+        ]);
+    };
     code.extend(doubles.clone());
     zero(&mut code, vec![LocalGet(6), F64Const(0.0.into()), F64Eq]);
-    code.extend([LocalGet(5), LocalGet(6), F64Div, F64Trunc, StructNew(NUMBER)]);
+    truncated(&mut code);
+    code.extend([LocalGet(7), StructNew(NUMBER)]);
     b.function_with_locals("number-quot", &[VALUE, VALUE], &[VALUE], &locals, &code);
     // rem has the dividend's sign; wasm's rem_s doesn't trap on MIN % -1.
     let mut code = operands(b);
@@ -629,18 +667,9 @@ pub(super) fn functions(b: &mut Builder) {
     code.extend([LocalGet(2), LocalGet(3), I64RemS, Call(boxed), Return, End]);
     code.extend(doubles);
     zero(&mut code, vec![LocalGet(6), F64Const(0.0.into()), F64Eq]);
-    // Clojure: n - trunc(n / d) * d.
-    code.extend([
-        LocalGet(5),
-        LocalGet(5),
-        LocalGet(6),
-        F64Div,
-        F64Trunc,
-        LocalGet(6),
-        F64Mul,
-        F64Sub,
-        StructNew(NUMBER),
-    ]);
+    // Clojure: n - quotient * d, so (rem -0.0 2) is -0.0.
+    truncated(&mut code);
+    code.extend([LocalGet(5), LocalGet(7), LocalGet(6), F64Mul, F64Sub, StructNew(NUMBER)]);
     b.function_with_locals("number-rem", &[VALUE, VALUE], &[VALUE], &locals, &code);
     // abs of Long/MIN_VALUE is itself, as in Clojure.
     let code = vec![
@@ -714,8 +743,8 @@ pub(super) fn functions(b: &mut Builder) {
         code.extend(super::boolean());
         b.function(&format!("number-{name}"), &[VALUE], &[VALUE], &code);
     }
-    // A long as is; a double truncated toward zero, saturating, NaN as 0, as
-    // Java's (long) cast does.
+    // A long as is; a double truncated toward zero, as Clojure's longCast:
+    // outside the long range, infinities included, it throws, and NaN is 0.
     let mut code = vec![LocalGet(0), Call(b.names["long-test"]), If(BlockType::Empty), LocalGet(0), Return, End];
     code.extend([LocalGet(0), Call(b.names["double-test"]), I32Eqz, If(BlockType::Empty)]);
     code.extend(throw("to-long requires a number operand"));
@@ -723,10 +752,92 @@ pub(super) fn functions(b: &mut Builder) {
         End,
         LocalGet(0),
         Call(b.names["number-unbox"]),
-        I64TruncSatF64S,
-        Call(b.names["long-box"]),
+        LocalTee(1),
+        F64Const(9_223_372_036_854_775_808.0f64.into()),
+        F64Ge,
+        LocalGet(1),
+        F64Const((-9_223_372_036_854_775_808.0f64).into()),
+        F64Lt,
+        I32Or,
+        If(BlockType::Empty),
     ]);
-    b.function("number-to-long", &[VALUE], &[VALUE], &code);
+    code.extend(throw("Value out of range for long"));
+    code.extend([End, LocalGet(1), I64TruncSatF64S, Call(b.names["long-box"])]);
+    b.function_with_locals("number-to-long", &[VALUE], &[VALUE], &[(1, ValType::F64)], &code);
+    // The count of an integer range: start, end and a nonzero step are longs.
+    // The distance is unsigned, so no subtraction overflows, and a count
+    // beyond the long range saturates (Clojure's own count of such a range
+    // runs for ever). Locals 3-5 are start, end and step; 6 the distance and
+    // 7 the step's magnitude.
+    let mut code = vec![];
+    for (argument, local) in [(0, 3), (1, 4), (2, 5)] {
+        code.extend([LocalGet(argument), Call(unbox), LocalSet(local)]);
+    }
+    code.extend([
+        LocalGet(5),
+        I64Const(0),
+        I64GtS,
+        If(BlockType::Empty),
+        LocalGet(4),
+        LocalGet(3),
+        I64LeS,
+        If(BlockType::Empty),
+        I32Const(0),
+        RefI31,
+        Return,
+        End,
+        LocalGet(4),
+        LocalGet(3),
+        I64Sub,
+        LocalSet(6),
+        LocalGet(5),
+        LocalSet(7),
+        Else,
+        LocalGet(4),
+        LocalGet(3),
+        I64GeS,
+        If(BlockType::Empty),
+        I32Const(0),
+        RefI31,
+        Return,
+        End,
+        LocalGet(3),
+        LocalGet(4),
+        I64Sub,
+        LocalSet(6),
+        I64Const(0),
+        LocalGet(5),
+        I64Sub,
+        LocalSet(7),
+        End,
+        // The unsigned ceiling of distance / magnitude.
+        LocalGet(6),
+        LocalGet(7),
+        I64DivU,
+        LocalGet(6),
+        LocalGet(7),
+        I64RemU,
+        I64Const(0),
+        I64Ne,
+        I64ExtendI32U,
+        I64Add,
+        LocalTee(6),
+        I64Const(0),
+        I64LtS,
+        If(BlockType::Result(ValType::I64)),
+        I64Const(i64::MAX),
+        Else,
+        LocalGet(6),
+        End,
+        Call(boxed),
+    ]);
+    b.function_with_locals(
+        "number-range-count",
+        &[VALUE, VALUE, VALUE],
+        &[VALUE],
+        &[(5, ValType::I64)],
+        &code,
+    );
 }
 
 /// `number-parse-long`: the digits `s[from, to)` in `|base|` as a long,

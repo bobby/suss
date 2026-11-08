@@ -270,10 +270,17 @@ Node, the JavaScript engine's collector manages WasmGC objects.
   | 256 MiB | 2.5 s, 580 MiB | 9.0 s, 818 MiB | 13.0 s, 820 MiB |
   | Null collector | 2.2 s, 587 MiB | 8.4 s, 1,885 MiB | |
 
+  The live longs of `(range 1000000)` are mostly unallocated i31s, so that
+  heap holds only about 3·10⁴ vector nodes. With 10⁶ boxed doubles live
+  instead (`(vec (map (fn [i] (* 1.0 i)) (range 1000000)))`), the same loop
+  takes 61.3 s from an empty heap, 61.5 s at 16 MiB, 55.3 s at 64 MiB and
+  16.2 s at 256 MiB, at 820–822 MiB peak RSS throughout.
+
   The compiler dominates the REPL's RSS. 64 MiB removes most of the
   collections a nearly full heap forces for about 46 MiB more; a live heap
-  well beyond the initial size still collects often, since wasmtime grows the
-  heap only when a collection frees too little.
+  beyond the initial size still collects often, since wasmtime grows the heap
+  only when a collection frees too little, and `SUSS_GC_INITIAL_MIB` is the
+  remedy for a program known to keep a large heap.
 - wasmtime's own documentation of `Collector::Copying` still says it "is still
   under construction and is not yet functional", in the 49.0.1, 50.0.0 and
   51.0.0-rc.1 crates published on crates.io, although `Auto` selects it (with

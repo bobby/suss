@@ -8023,17 +8023,17 @@ reduces them without incurring seq initialization"
 
   IIndexed
   (-nth [coll i]
-    (+ start (* i step)))
+    (suss.bootstrap/unchecked-add start (suss.bootstrap/unchecked-multiply i step)))
   (-nth [coll i not-found]
     (if (and (>= i 0) (< i count))
-      (+ start (* i step))
+      (suss.bootstrap/unchecked-add start (suss.bootstrap/unchecked-multiply i step))
       not-found))
 
   IChunk
   (-drop-first [coll]
     (if (<= count 1)
       (throw (suss.bootstrap/error "-drop-first of empty chunk"))
-      (IntegerRangeChunk. (+ start step) step (dec count)))))
+      (IntegerRangeChunk. (suss.bootstrap/unchecked-add start step) step (dec count)))))
 
 (deftype RangeIterator [^:mutable i end step]
   Object
@@ -8048,10 +8048,7 @@ reduces them without incurring seq initialization"
 
 (def ^{:private true :doc "Returns exact size of remaining items in an IntegerRange."} range-count
   (fn [start end step]
-    (let [distance (- end start)]
-      (if (pos? step)
-        (suss.bootstrap/quot (+ distance (dec step)) step)
-        (suss.bootstrap/quot (+ distance (inc step)) step)))))
+    (suss.bootstrap/range-count start end step)))
 
 (deftype IntegerRange [meta start end step cnt ^:mutable __hash]
   Object
@@ -8092,22 +8089,19 @@ reduces them without incurring seq initialization"
         s)))
 
   IIterable
-  (-iterator [_]
-    (RangeIterator. start end step))
+  (-iterator [rng]
+    (seq-iter rng))
 
   INext
   (-next [rng]
-    (if (pos? step)
-      (when (< (+ start step) end)
-        (IntegerRange. nil (+ start step) end step (range-count (+ start step) end step) nil))
-      (when (> (+ start step) end)
-        (IntegerRange. nil (+ start step) end step (range-count (+ start step) end step) nil))))
+    (when (> cnt 1)
+      (IntegerRange. nil (suss.bootstrap/unchecked-add start step) end step (dec cnt) nil)))
 
   IDrop
   (-drop [rng n]
     (if (pos? n)
       (if (< n cnt)
-        (IntegerRange. nil (+ start (* step n)) end step (- cnt n) nil)
+        (IntegerRange. nil (suss.bootstrap/unchecked-add start (suss.bootstrap/unchecked-multiply step n)) end step (- cnt n) nil)
         nil)
       rng))
 
@@ -8117,22 +8111,7 @@ reduces them without incurring seq initialization"
   (-chunked-rest [rng]
     (if (<= cnt 32)
       ()
-      (let [start (+ start (* step 32))]
-        (cond
-          (pos? step)
-          (if (<= end start)
-            ()
-            (IntegerRange. nil start end step (range-count start end step) nil))
-
-          (neg? step)
-          (if (>= end start)
-            ()
-            (IntegerRange. nil start end step (range-count start end step) nil))
-
-          :else
-          (if (== end start)
-            ()
-            (repeat start))))))
+      (IntegerRange. nil (suss.bootstrap/unchecked-add start (suss.bootstrap/unchecked-multiply step 32)) end step (- cnt 32) nil)))
 
   IChunkedNext
   (-chunked-next [rng]
@@ -8158,13 +8137,13 @@ reduces them without incurring seq initialization"
   IIndexed
   (-nth [rng n]
     (if (and (<= 0 n) (< n (-count rng)))
-      (+ start (* n step))
+      (suss.bootstrap/unchecked-add start (suss.bootstrap/unchecked-multiply n step))
       (if (and (<= 0 n) (> start end) (zero? step))
         start
         (throw (suss.bootstrap/error "Index out of bounds")))))
   (-nth [rng n not-found]
     (if (and (<= 0 n) (< n (-count rng)))
-      (+ start (* n step))
+      (suss.bootstrap/unchecked-add start (suss.bootstrap/unchecked-multiply n step))
       (if (and (<= 0 n) (> start end) (zero? step))
         start
         not-found)))
@@ -8172,12 +8151,12 @@ reduces them without incurring seq initialization"
   IReduce
   (-reduce [rng f] (ci-reduce rng f))
   (-reduce [rng f init]
-    (loop [i start ret init]
-      (if (if (pos? step) (< i end) (> i end))
+    (loop [i start remaining cnt ret init]
+      (if (pos? remaining)
         (let [ret (f ret i)]
           (if (reduced? ret)
             @ret
-            (recur (+ i step) ret)))
+            (recur (suss.bootstrap/unchecked-add i step) (dec remaining) ret)))
         ret))))
 
 (deftype Range [meta start end step ^:mutable chunk ^:mutable chunk-next ^:mutable __hash]
@@ -10391,7 +10370,11 @@ reduces them without incurring seq initialization"
               q (suss.bootstrap/parse-long s (inc slash) end 10)]
           (if (if (nil? q) false (zero? q))
             (reader-fail st start "Divide by zero" false)
-            (if (if (nil? n) false (if (nil? q) false (zero? (rem n q))))
+            ;; A Long/MIN_VALUE term gives a BigInt in Clojure, as a term
+            ;; beyond the long range does.
+            (if (if (nil? n) false
+                  (if (nil? q) false
+                    (if (== n -9223372036854775808) false (zero? (rem n q)))))
               (quot n q)
               (reader-exact st start s end))))
         (reader-fail st start "Invalid ratio" false)))))

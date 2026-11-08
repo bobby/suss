@@ -185,7 +185,7 @@ impl Analyzer<'_> {
                         metadata: syntax.metadata.clone(),
                         ty: Type::Bool,
                         kind: std::sync::Arc::new(Expression::Comparison {
-                            operation: Comparison::StrictEqual,
+                            operation: Comparison::CaseEqual,
                             arguments: vec![selected.clone(), self.literal_form(syntax, value)],
                         }),
                     }
