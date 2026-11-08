@@ -40,40 +40,43 @@ def suss_predicate(ordinal=1, operands=(NUMBER_ONE, NUMBER_ONE), verdict='pass',
 
 
 class SuiteMatches(unittest.TestCase):
-    """Until #335, JVM longs match Suss binary64 holding the same integer."""
+    """Since #335, a JVM long matches only a Suss long of the same value."""
 
-    def test_long_matches_an_exact_double(self):
-        self.assertTrue(suite.suite_matches({'tag': 'long', 'value': '1'}, NUMBER_ONE))
-        self.assertFalse(suite.suite_matches({'tag': 'long', 'value': '2'}, NUMBER_ONE))
-        self.assertTrue(suite.suite_matches({'tag': 'long', 'value': '0'}, {'tag': 'f64', 'bits': '0000000000000000'}))
-        self.assertFalse(suite.suite_matches({'tag': 'long', 'value': '0'}, {'tag': 'f64', 'bits': '8000000000000000'}))
+    def test_long_matches_only_an_equal_long(self):
+        long_one = {'tag': 'long', 'value': '1'}
+        self.assertTrue(suite.suite_matches(long_one, {'tag': 'long', 'value': '1'}))
+        self.assertFalse(suite.suite_matches(long_one, {'tag': 'long', 'value': '2'}))
+        self.assertFalse(suite.suite_matches(long_one, NUMBER_ONE))
+        big = str(2 ** 53 + 1)
+        self.assertTrue(suite.suite_matches({'tag': 'long', 'value': big}, {'tag': 'long', 'value': big}))
+        self.assertFalse(suite.suite_matches({'tag': 'long', 'value': big}, {'tag': 'f64', 'bits': '4340000000000000'}))
 
-    def test_longs_beyond_2_53_and_exact_types_never_match(self):
-        rounded = {'tag': 'f64', 'bits': '4340000000000000'}
-        self.assertTrue(suite.suite_matches({'tag': 'long', 'value': str(2 ** 53)}, rounded))
-        self.assertFalse(suite.suite_matches({'tag': 'long', 'value': str(2 ** 53 + 1)}, rounded))
+    def test_exact_types_never_match(self):
         for tag in ({'tag': 'bigint', 'value': '1'}, {'tag': 'ratio', 'numerator': '1', 'denominator': '2'},
                     {'tag': 'decimal', 'unscaled': '1', 'scale': 0}):
             self.assertFalse(suite.suite_matches(tag, NUMBER_ONE))
+            self.assertFalse(suite.suite_matches(tag, {'tag': 'long', 'value': '1'}))
 
     def test_nan_maps_and_exception_data_use_the_same_rule(self):
         nan = {'tag': 'f64', 'bits': '7ff8000000000000'}
         self.assertTrue(suite.suite_matches(nan, {'tag': 'f64', 'bits': 'fff8000000000000'}))
         long_one = {'tag': 'long', 'value': '1'}
+        long_two = {'tag': 'long', 'value': '2'}
         nil = {'tag': 'nil'}
         self.assertTrue(suite.suite_matches({'tag': 'map', 'entries': [[long_one, long_one]]},
-                                            {'tag': 'map', 'entries': [[NUMBER_ONE, NUMBER_ONE]]}))
+                                            {'tag': 'map', 'entries': [[long_one, long_one]]}))
         info = lambda data: {'tag': 'exception-info', 'data': data, 'message': nil, 'cause': nil}
         self.assertTrue(suite.suite_matches(info({'tag': 'vector', 'items': [long_one]}),
-                                            info({'tag': 'vector', 'items': [NUMBER_ONE]})))
+                                            info({'tag': 'vector', 'items': [long_one]})))
         self.assertFalse(suite.suite_matches(info({'tag': 'vector', 'items': [long_one]}),
-                                             info({'tag': 'vector', 'items': [NUMBER_TWO]})))
+                                             info({'tag': 'vector', 'items': [long_two]})))
 
     def test_collections_compare_their_items_with_the_same_rule(self):
         long_one = {'tag': 'long', 'value': '1'}
-        self.assertTrue(suite.suite_matches({'tag': 'vector', 'items': [long_one]}, {'tag': 'vector', 'items': [NUMBER_ONE]}))
-        self.assertTrue(suite.suite_matches({'tag': 'set', 'items': [long_one]}, {'tag': 'set', 'items': [NUMBER_ONE]}))
-        self.assertFalse(suite.suite_matches({'tag': 'vector', 'items': [long_one]}, {'tag': 'seq', 'items': [NUMBER_ONE]}))
+        self.assertTrue(suite.suite_matches({'tag': 'vector', 'items': [long_one]}, {'tag': 'vector', 'items': [long_one]}))
+        self.assertTrue(suite.suite_matches({'tag': 'set', 'items': [long_one]}, {'tag': 'set', 'items': [long_one]}))
+        self.assertFalse(suite.suite_matches({'tag': 'vector', 'items': [long_one]}, {'tag': 'vector', 'items': [NUMBER_ONE]}))
+        self.assertFalse(suite.suite_matches({'tag': 'vector', 'items': [long_one]}, {'tag': 'seq', 'items': [long_one]}))
 
 
 class Normalize(unittest.TestCase):

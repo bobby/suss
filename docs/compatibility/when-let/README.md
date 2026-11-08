@@ -90,3 +90,10 @@ fixture hash are checked separately by `check_when_let_provenance.py`; historica
 capture inputs and receipts remain unchanged. The guest expressions continue to
 match the retained pinned guest source byte-for-byte. This adaptation changes no
 expected language value/effect observation or upstream form.
+
+ABI v3's longs (#335) adapt both native fixtures the same way:
+`compiled_when_let-stage-diagnostic.patch` and
+`native-fixtures/compiled_let_destructuring-longs.patch` (from
+`compiled_let_destructuring-captured.rs`) change only how the host decodes
+integral results, now longs as in Clojure; guest sources and the observed values
+are unchanged.
