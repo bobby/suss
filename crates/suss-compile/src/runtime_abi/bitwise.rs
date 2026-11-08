@@ -237,19 +237,37 @@ fn cast(b: &Builder, name: &str, kind: Cast) -> Vec<Instruction<'static>> {
             }
             code.push(Call(boxed));
         }
-        Cast::Float(checked) => {
-            code.extend([LocalGet(0), Call(double), LocalTee(2)]);
-            if checked {
-                code.extend([
-                    F64Abs,
-                    F64Const(f64::from(f32::MAX).into()),
-                    F64Gt,
-                    If(BlockType::Empty),
-                ]);
-                code.extend(throw_with_value(b, &range, 0));
-                code.extend([End, LocalGet(2)]);
-            }
-            code.extend([F32DemoteF64, F64PromoteF32, Call(b.names["number-box"])]);
+        Cast::Float(false) => {
+            // Java's (float) of a long rounds once, straight to binary32.
+            code.extend([
+                LocalGet(0),
+                Call(long),
+                If(BlockType::Result(ValType::F32)),
+                LocalGet(0),
+                Call(unbox),
+                F32ConvertI64S,
+                Else,
+                LocalGet(0),
+                Call(double),
+                F32DemoteF64,
+                End,
+                F64PromoteF32,
+                Call(b.names["number-box"]),
+            ]);
+        }
+        Cast::Float(true) => {
+            // Clojure's floatCast widens a long to a double first.
+            code.extend([
+                LocalGet(0),
+                Call(double),
+                LocalTee(2),
+                F64Abs,
+                F64Const(f64::from(f32::MAX).into()),
+                F64Gt,
+                If(BlockType::Empty),
+            ]);
+            code.extend(throw_with_value(b, &range, 0));
+            code.extend([End, LocalGet(2), F32DemoteF64, F64PromoteF32, Call(b.names["number-box"])]);
         }
         Cast::Double => {
             code.extend([LocalGet(0), Call(double), Call(b.names["number-box"])]);
@@ -272,7 +290,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             &body,
         ));
     }
-    let mut dispatch = vec![LocalGet(1), Call(b.names["long-unbox"]), I32WrapI64, LocalSet(2)];
+    let mut dispatch = vec![LocalGet(1), Call(b.names["long-test"]), I32Eqz, If(BlockType::Empty)];
+    dispatch.extend(numeric::error("Invalid numeric cast", nominal::ERROR_GLOBAL));
+    dispatch.extend([End, LocalGet(1), Call(b.names["long-unbox"]), I32WrapI64, LocalSet(2)]);
     for (index, function) in casts.iter().enumerate() {
         dispatch.extend([
             LocalGet(2),

@@ -106,19 +106,35 @@ fn collection_hash(basis: u32, count: usize) -> u32 {
     hash = hash.wrapping_mul(0xc2b2ae35);
     hash ^ (hash >> 16)
 }
-fn number_hash(value: f64) -> u32 {
-    if value.is_finite() && value.fract() == 0.0 && value.abs() <= 9007199254740991.0 {
-        (value % 2147483647.0) as i64 as u32
-    } else if value.is_nan() {
-        2146959360
-    } else if value == f64::INFINITY {
-        2146435072
-    } else if value == f64::NEG_INFINITY {
-        (-1048576i32) as u32
-    } else {
-        let bits = value.to_bits();
-        ((bits as u32) ^ (bits >> 32) as u32).swap_bytes()
+fn mix_h1(hash: u32, k1: u32) -> u32 {
+    (hash ^ mix_word(k1)).rotate_left(13).wrapping_mul(5).wrapping_add(0xe6546b64)
+}
+fn fmix(mut hash: u32, length: u32) -> u32 {
+    hash ^= length;
+    hash ^= hash >> 16;
+    hash = hash.wrapping_mul(0x85ebca6b);
+    hash ^= hash >> 13;
+    hash = hash.wrapping_mul(0xc2b2ae35);
+    hash ^ (hash >> 16)
+}
+/// Clojure's hasheq of a long, Murmur3's hashLong, as the runtime's
+/// `number-hash` (#336).
+fn long_hash(value: i64) -> u32 {
+    if value == 0 {
+        return 0;
     }
+    let hash = mix_h1(mix_h1(0, value as u32), (value as u64 >> 32) as u32);
+    fmix(hash, 8)
+}
+/// Clojure's hasheq of a double: `Double.hashCode` of its canonical bits, with
+/// -0.0 as 0.0.
+fn double_hash(value: f64) -> u32 {
+    let bits = if value.is_nan() {
+        0x7ff8_0000_0000_0000
+    } else {
+        (value + 0.0).to_bits()
+    };
+    (bits ^ (bits >> 32)) as u32
 }
 fn syntax_hash(form: &Form) -> u32 {
     match &form.kind {
@@ -142,9 +158,8 @@ fn syntax_hash(form: &Form) -> u32 {
                 collection_hash(hash, 4)
             }
         }
-        // Runtime hash takes a long through the same integral path.
-        Kind::Long(value) => number_hash(*value as f64),
-        Kind::Number(value) => number_hash(*value),
+        Kind::Long(value) => long_hash(*value),
+        Kind::Number(value) => double_hash(*value),
         Kind::Vector(items) | Kind::List(items) => collection_hash(
             items.iter().fold(1u32, |hash, item| {
                 hash.wrapping_mul(31).wrapping_add(syntax_hash(item))
@@ -742,6 +757,36 @@ mod tests {
                     "{source}"
                 );
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod hash_tests {
+    use super::{double_hash, long_hash};
+
+    #[test]
+    fn literal_numbers_hash_as_runtime_hasheq() {
+        // JVM Clojure 1.12's (hash x), as the runtime's number-hash (#336).
+        for (value, hash) in [
+            (0, 0),
+            (1, 1392991556),
+            (-1, 1651860712),
+            (i64::MAX, -2106506049),
+            (i64::MIN, 1366273829),
+            (2147483648, 386683422),
+        ] {
+            assert_eq!(long_hash(value), hash as u32, "{value}");
+        }
+        for (value, hash) in [
+            (1.0, 1072693248),
+            (-0.0, 0),
+            (1.5, 1073217536),
+            (f64::NAN, 2146959360),
+            (f64::INFINITY, 2146435072),
+            (f64::NEG_INFINITY, -1048576),
+        ] {
+            assert_eq!(double_hash(value), hash as u32, "{value}");
         }
     }
 }

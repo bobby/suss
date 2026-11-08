@@ -44,10 +44,15 @@ and each table entry is a runtime function `number-cast-<name>`.
 | `unchecked-long` | as is | truncated, saturating |
 | `unchecked-int`, `unchecked-short`, `unchecked-byte` | low bits, sign-extended | truncated to an int, saturating, then its low bits |
 | `float` | rounded to binary32, as a double | the same; beyond the float range throws |
-| `unchecked-float` | rounded to binary32, as a double | the same, unchecked |
+| `unchecked-float` | rounded once to binary32, as a double | rounded to binary32, as a double |
 | `double`, `unchecked-double` | as a double | as is |
 
-Each matches JVM Clojure 1.12's cast:
+Each matches JVM Clojure 1.12's cast of a double literal or primitive. JVM
+Clojure casts a boxed double, such as one read from a var or passed to `int` as
+a value, by another path that truncates to a long first, so there
+`((fn [f] (f 2147483647.5)) int)` is 2147483647 and `(int x)` of a boxed 1e100
+throws "Value out of range for long". Suss has one path, the primitive one, for
+every value (ADR-0003):
 
 - The range check compares the double itself, before truncation, so
   `(int 2147483647.5)` and `(short 32767.5)` throw.

@@ -19,7 +19,11 @@ the binary64 notes that preceded that decision, including the former
 
 Core's `=` tests scalars with the private `suss.bootstrap/equiv`, the runtime's
 `number-equiv`. Two longs compare as 64-bit integers, two doubles by IEEE-754
-equality, and a long never equals a double or a non-number. Other values fall
+equality, and a long never equals a double or a non-number. NaN equals nothing,
+itself included: JVM Clojure's `Util.equiv` tests identity first, so there a
+boxed NaN, as in `(def n ##NaN) (= n n)` or `(= [n] [n])`, equals itself, while
+a primitive one, as in `(let [x ##NaN] (= x x))`, doesn't. Suss compares a
+double by value only. Other values fall
 through to strict identity and then `-equiv`, as before. `==` compares numeric
 value across categories and throws on a non-number.
 

@@ -106,10 +106,11 @@ fn casts_check_the_range_and_return_longs_and_doubles() {
           (unchecked-byte 200) (unchecked-short 70000) (unchecked-int 3000000000)
           (unchecked-int 3e10) (unchecked-long 1e30) (unchecked-byte 300.7)
           (double 3) (float 16777217) (unchecked-float 1e300) (float ##NaN) (float 3)
-          (= (float 0.1) 0.1) (map int [1 2.5]) ((fn [f] (f 7.9)) int)]",
+          (= (float 0.1) 0.1) (map int [1 2.5]) ((fn [f] (f 7.9)) int)
+          (unchecked-float 4611686293305294849)]",
         "[-2147483648 1 -1 2147483647 0 15000000000 0 9223372036854775807 32767 127 -128 \
          -56 4464 -1294967296 2147483647 9223372036854775807 44 3.0 1.6777216E7 ##Inf ##NaN \
-         3.0 false (1 2) 7]",
+         3.0 false (1 2) 7 4.611686568183202E18]",
     );
     for (source, message) in [
         ("(int 4294967295)", "integer overflow"),
@@ -132,6 +133,9 @@ fn casts_check_the_range_and_return_longs_and_doubles() {
         ("(int nil)", "int requires a number operand"),
         ("(double \"x\")", "double requires a number operand"),
         ("(long :a)", "long requires a number operand"),
+        ("(suss.bootstrap/cast 1 1.5)", "Invalid numeric cast"),
+        ("(suss.bootstrap/cast 1 nil)", "Invalid numeric cast"),
+        ("(suss.bootstrap/cast 1 99)", "Invalid numeric cast"),
     ] {
         assert_eq!(thrown(source), format!("{message:?}"), "{source}");
     }
