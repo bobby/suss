@@ -8,7 +8,7 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "f8ecd8e0b9cdba9be584b3ffbceeea290ee9c214a5fefae00b067b4074dfe3ee",
+  "recipe-sha256": "d18d6abac3654085d67d2b7da52565148966236e75c99f44d68441d88614d4f5",
   "reviews-sha256": "bee1f83599cca54a2bcef9f708200e83072af79cef895212c5ee28daa0b1c879",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
@@ -2259,8 +2259,8 @@
       "extracted": "extracted/0068.cljs",
       "extracted-sha256": "fb9bbb0b991a329d7875287acbe6a90dae809e54c4eb83fd96d525a1eacf76f0",
       "patch": "docs/compatibility/patches/sequence-equality.json",
-      "patch-sha256": "1ec962d66cf3468ac676f550e033ea23a7119e5108fbe6e3e8108cd19e913c2f",
-      "adapted-form-sha256": "708476ff48826ea0af0818eb1d08162245e9e13e44820463e65a8a22654389c5",
+      "patch-sha256": "2af283064000a45f9750c4c2b4a4d97a461feb0478f6c6ca7f4a6c08567815a3",
+      "adapted-form-sha256": "cbeead6922b7714d4d42d0b7f216ef57e4ac0facbc32d50270bc59adafdb1f46",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -3220,8 +3220,8 @@
       "extracted": "extracted/0097.cljs",
       "extracted-sha256": "6c770cde666c72a52657bb581e89e64e0f188c0fb978b5b882dbeb19f5526d11",
       "patch": "docs/compatibility/patches/public-hash.json",
-      "patch-sha256": "51cef9fe863677267c700e26ad9f4642b5d303e47a00370abb34cd2b6b1b4c66",
-      "adapted-form-sha256": "20efe90680ca0ae6b3918984f63a7752e89928143aa7e4754d0a244b99f8cbc2",
+      "patch-sha256": "83ec739d60607ed06fd1b8249ffdd4a485e90f7b41f22fba2565ef85fd10ebd1",
+      "adapted-form-sha256": "303e521738c75e4bbc202d7093aab611453529c9a9baa8953c065820e453d971",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -15962,7 +15962,7 @@
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "e0c8130b19a72270fbaeaa4e1cd63996cfd5c4a65caf0b24c13e2b3f9ce71623"
+      "sha256": "5a6af43916c4caf66bbfb546e342157f5526191d744c7b38623d6ca4ab4ba21c"
     }
   },
   "files": {
@@ -16484,6 +16484,6 @@
     "extracted/0513.cljs": "02b4047a3496243c5528041564a9f8ded2f3aae951be387e8779ab0e956464c3",
     "extracted/0514.cljs": "d42068d54f1844f88abb73548a3a554a3cc1f5af315fd590533b4fd80de350ec",
     "extracted/0515.cljs": "072c8a681fd905767f56c48e6c3529b99e9d5f537def64cb299f5bac29c7c59b",
-    "suss/core.sus": "7409b9f5d2cadd90f7c6b2dc26c278987e619e0d2a8148bc036a0e2637a94fce"
+    "suss/core.sus": "6746ec2a876da0032a3ddd13b0de07cce34a3799c63c258aa66e86e023e13fd9"
   }
 }

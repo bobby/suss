@@ -243,7 +243,18 @@ pub enum Bitwise {
     Left,
     Right,
     Unsigned,
+    /// Shipped core's private 32-bit operations, as ClojureScript's, which
+    /// its hashing and collection tries depend on (#336).
+    Int32,
+    Int32And,
+    Int32Or,
+    Int32Xor,
+    Int32Left,
+    Int32Right,
+    Int32Unsigned,
     Imul,
+    /// Private Clojure numeric casts: the operand and a `CASTS` index (#336).
+    Cast,
     /// Private scalar binary64 storage adapters; never public bitwise macros.
     F64Coerce,
     F64Word0,
@@ -274,6 +285,11 @@ pub enum Bitwise {
     RangeCount,
     /// Private exact integer parsing for core's reader.
     ParseLong,
+    /// Private Clojure `hasheq` of a number, for core's `hash` (#336).
+    HashNumber,
+    /// Private Clojure `=` of scalars: numbers equal only within a category
+    /// (#336).
+    Equiv,
 }
 impl Bitwise {
     pub(crate) fn from_name(name: &str) -> Option<Self> {
@@ -292,8 +308,22 @@ impl Bitwise {
             "bit-shift-right" => Self::Right,
             "unsigned-bit-shift-right" => Self::Unsigned,
             "bit-shift-right-zero-fill" => Self::Unsigned,
+            "imul" => Self::Imul,
             _ => return None,
         })
+    }
+    /// Shipped core's 32-bit form of an inline bit operation.
+    pub(crate) fn int32(self) -> Self {
+        match self {
+            Self::Int => Self::Int32,
+            Self::And => Self::Int32And,
+            Self::Or => Self::Int32Or,
+            Self::Xor => Self::Int32Xor,
+            Self::Left => Self::Int32Left,
+            Self::Right => Self::Int32Right,
+            Self::Unsigned => Self::Int32Unsigned,
+            other => other,
+        }
     }
     pub(crate) fn export(self) -> &'static str {
         match self {
@@ -310,7 +340,15 @@ impl Bitwise {
             Self::Left => "primitive-bit-shift-left",
             Self::Right => "primitive-bit-shift-right",
             Self::Unsigned => "primitive-unsigned-bit-shift-right",
-            Self::Imul => "primitive-imul",
+            Self::Int32 => "int32-int",
+            Self::Int32And => "int32-bit-and",
+            Self::Int32Or => "int32-bit-or",
+            Self::Int32Xor => "int32-bit-xor",
+            Self::Int32Left => "int32-bit-shift-left",
+            Self::Int32Right => "int32-bit-shift-right",
+            Self::Int32Unsigned => "int32-unsigned-bit-shift-right",
+            Self::Imul => "int32-imul",
+            Self::Cast => "number-cast",
             Self::F64Coerce => "primitive-f64-coerce",
             Self::F64Word0 => "primitive-f64-word0",
             Self::F64Word4 => "primitive-f64-word4",
@@ -334,11 +372,14 @@ impl Bitwise {
             Self::ToLong => "number-to-long",
             Self::RangeCount => "number-range-count",
             Self::ParseLong => "number-parse-long",
+            Self::HashNumber => "number-hash",
+            Self::Equiv => "number-equiv",
         }
     }
     pub(crate) fn arity(self) -> usize {
         match self {
             Self::Int
+            | Self::Int32
             | Self::Not
             | Self::F64Coerce
             | Self::F64Word0
@@ -353,19 +394,34 @@ impl Bitwise {
             | Self::UncheckedNegate
             | Self::LongTest
             | Self::DoubleTest
-            | Self::ToLong => 1,
+            | Self::ToLong
+            | Self::HashNumber => 1,
             Self::ParseLong => 4,
             Self::RangeCount => 3,
             _ => 2,
         }
     }
     pub(crate) fn variadic(self) -> bool {
-        matches!(self, Self::And | Self::Or | Self::Xor | Self::AndNot)
+        matches!(
+            self,
+            Self::And
+                | Self::Or
+                | Self::Xor
+                | Self::AndNot
+                | Self::Int32And
+                | Self::Int32Or
+                | Self::Int32Xor
+        )
     }
     pub(crate) fn result(self) -> Type {
         if matches!(
             self,
-            Self::Test | Self::F64Finite | Self::F64SafeInteger | Self::LongTest | Self::DoubleTest
+            Self::Test
+                | Self::F64Finite
+                | Self::F64SafeInteger
+                | Self::LongTest
+                | Self::DoubleTest
+                | Self::Equiv
         ) {
             Type::Bool
         } else if matches!(self, Self::ParseLong | Self::RangeCount) {
@@ -2553,6 +2609,9 @@ impl Analyzer<'_> {
                 "to-long" => Some(Bitwise::ToLong),
                 "range-count" => Some(Bitwise::RangeCount),
                 "parse-long" => Some(Bitwise::ParseLong),
+                "hash-number" => Some(Bitwise::HashNumber),
+                "equiv" => Some(Bitwise::Equiv),
+                "cast" => Some(Bitwise::Cast),
                 _ => None,
             };
             if let Some(operation) = operation {

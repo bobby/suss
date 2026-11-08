@@ -174,7 +174,7 @@ fn file_compiler_rejects_unsupported_boundary_before_effectful_macro_expansion()
 fn public_compiler_loop_recur_executes_deep_iterations_with_bounded_stack() {
     let bytes = Compiler::new()
         .compile(
-            "(defn ^:export count-down [n] (loop [i n total 0] (if (= i 0) total (recur (dec i) (inc total)))))",
+            "(defn ^:export count-down [n] (loop [i n total 0] (if (zero? i) total (recur (dec i) (inc total)))))",
             "package test:public-recur; world api { export count-down: func(n: f64) -> f64; }",
         )
         .unwrap();
@@ -231,7 +231,7 @@ fn public_compiler_async_scalar_exports_execute_and_retain_live_state_after_gc()
 fn public_compiler_function_recur_uses_bounded_stack_and_simultaneous_rebinding() {
     let bytes = Compiler::new()
         .compile(
-            "(defn ^:export rotate [n a b] (if (= n 0) (+ (* a 100) b) (recur (dec n) b a)))",
+            "(defn ^:export rotate [n a b] (if (zero? n) (+ (* a 100) b) (recur (dec n) b a)))",
             "package test:public-function-recur; world api { export rotate: func(n: f64, a: f64, b: f64) -> f64; }",
         )
         .unwrap();

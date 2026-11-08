@@ -203,16 +203,14 @@ fn emitted_core_cells_execute_in_both_phases_and_survive_gc() {
                 "(if (instance? ExceptionInfo (ex-info \"retained\" nil)) 1 2)",
                 1,
             ),
-            // Known gap: Suss's bitwise operations are still 32-bit, so this is
-            // 2^31 - 1 where Clojure's 64-bit shift gives Long/MAX_VALUE. #336
-            // widens them and must change these expectations to i64::MAX.
+            // Clojure's 64-bit logical shift (#336).
             (
                 "(let [shift unsigned-bit-shift-right] (shift -1 1))",
-                i64::from(i32::MAX),
+                i64::MAX,
             ),
             (
                 "(let [shift bit-shift-right-zero-fill] (shift -1 1))",
-                i64::from(i32::MAX),
+                i64::MAX,
             ),
         ] {
             let wasm = portable::compile_in(source, &Environment::default(), phase).unwrap();

@@ -7,6 +7,12 @@ impl Analyzer<'_> {
         args: &[Form],
         operation: Bitwise,
     ) -> Result<Hir, Diagnostic> {
+        // Shipped core keeps ClojureScript's 32-bit operations (#336).
+        let operation = if self.coercing_operands() {
+            operation.int32()
+        } else {
+            operation
+        };
         if args.len() > 256
             || (operation.variadic() && args.len() < 2)
             || (!operation.variadic() && args.len() != operation.arity())

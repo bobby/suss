@@ -749,10 +749,10 @@ fn test_hash_false() {
 
 #[test]
 fn test_hash_small_int() {
-    // Small integers are their own hash (good distribution for i31ref range)
-    assert_eq!(run_expr_i32("(hash 42)"), 42);
-    assert_eq!(run_expr_i32("(hash 1)"), 1);
-    assert_eq!(run_expr_i32("(hash 100)"), 100);
+    // Clojure's hasheq of a long, Murmur3's hashLong (JVM Clojure 1.12)
+    assert_eq!(run_expr_i32("(hash 42)"), 1871679806);
+    assert_eq!(run_expr_i32("(hash 1)"), 1392991556);
+    assert_eq!(run_expr_i32("(hash 100)"), -970256272);
 }
 
 #[test]
@@ -762,10 +762,10 @@ fn test_hash_zero() {
 
 #[test]
 fn test_hash_negative() {
-    // Negative small integers
-    assert_eq!(run_expr_i32("(hash -1)"), -1);
-    assert_eq!(run_expr_i32("(hash -5)"), -5);
-    assert_eq!(run_expr_i32("(hash -100)"), -100);
+    // Negative longs, as JVM Clojure 1.12 hashes them
+    assert_eq!(run_expr_i32("(hash -1)"), 1651860712);
+    assert_eq!(run_expr_i32("(hash -5)"), 1222806974);
+    assert_eq!(run_expr_i32("(hash -100)"), 16143486);
 }
 
 #[test]

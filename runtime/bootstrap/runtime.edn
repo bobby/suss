@@ -362,6 +362,7 @@
          "suss.bindings.runtime:suss.core/bounded-count"
          "suss.bindings.runtime:suss.core/build-subvec"
          "suss.bindings.runtime:suss.core/butlast"
+         "suss.bindings.runtime:suss.core/byte"
          "suss.bindings.runtime:suss.core/cat"
          "suss.bindings.runtime:suss.core/char-escapes"
          "suss.bindings.runtime:suss.core/chunk"
@@ -413,6 +414,7 @@
          "suss.bindings.runtime:suss.core/doall"
          "suss.bindings.runtime:suss.core/dominates"
          "suss.bindings.runtime:suss.core/dorun"
+         "suss.bindings.runtime:suss.core/double"
          "suss.bindings.runtime:suss.core/double?"
          "suss.bindings.runtime:suss.core/drop"
          "suss.bindings.runtime:suss.core/drop-while"
@@ -439,6 +441,7 @@
          "suss.bindings.runtime:suss.core/first-array-for-longvec"
          "suss.bindings.runtime:suss.core/fix"
          "suss.bindings.runtime:suss.core/flatten"
+         "suss.bindings.runtime:suss.core/float"
          "suss.bindings.runtime:suss.core/float?"
          "suss.bindings.runtime:suss.core/fn->comparator"
          "suss.bindings.runtime:suss.core/fn?"
@@ -502,6 +505,7 @@
          "suss.bindings.runtime:suss.core/list"
          "suss.bindings.runtime:suss.core/list*"
          "suss.bindings.runtime:suss.core/list?"
+         "suss.bindings.runtime:suss.core/long"
          "suss.bindings.runtime:suss.core/lookup-sentinel"
          "suss.bindings.runtime:suss.core/m3-C1"
          "suss.bindings.runtime:suss.core/m3-C2"
@@ -770,6 +774,7 @@
          "suss.bindings.runtime:suss.core/set"
          "suss.bindings.runtime:suss.core/set-validator!"
          "suss.bindings.runtime:suss.core/set?"
+         "suss.bindings.runtime:suss.core/short"
          "suss.bindings.runtime:suss.core/simple-ident?"
          "suss.bindings.runtime:suss.core/simple-keyword?"
          "suss.bindings.runtime:suss.core/simple-symbol?"
@@ -825,17 +830,23 @@
          "suss.bindings.runtime:suss.core/unchecked-add"
          "suss.bindings.runtime:suss.core/unchecked-add-int"
          "suss.bindings.runtime:suss.core/unchecked-array-for"
+         "suss.bindings.runtime:suss.core/unchecked-byte"
          "suss.bindings.runtime:suss.core/unchecked-dec"
          "suss.bindings.runtime:suss.core/unchecked-dec-int"
          "suss.bindings.runtime:suss.core/unchecked-divide-int"
+         "suss.bindings.runtime:suss.core/unchecked-double"
          "suss.bindings.runtime:suss.core/unchecked-editable-array-for"
+         "suss.bindings.runtime:suss.core/unchecked-float"
          "suss.bindings.runtime:suss.core/unchecked-inc"
          "suss.bindings.runtime:suss.core/unchecked-inc-int"
+         "suss.bindings.runtime:suss.core/unchecked-int"
+         "suss.bindings.runtime:suss.core/unchecked-long"
          "suss.bindings.runtime:suss.core/unchecked-multiply"
          "suss.bindings.runtime:suss.core/unchecked-multiply-int"
          "suss.bindings.runtime:suss.core/unchecked-negate"
          "suss.bindings.runtime:suss.core/unchecked-negate-int"
          "suss.bindings.runtime:suss.core/unchecked-remainder-int"
+         "suss.bindings.runtime:suss.core/unchecked-short"
          "suss.bindings.runtime:suss.core/unchecked-subtract"
          "suss.bindings.runtime:suss.core/unchecked-subtract-int"
          "suss.bindings.runtime:suss.core/underive"
@@ -886,7 +897,6 @@
          "suss.bindings.runtime:suss.internal.bootstrap-link/ex-message"
          "suss.bindings.runtime:suss.internal.bootstrap-link/false?"
          "suss.bindings.runtime:suss.internal.bootstrap-link/identical?"
-         "suss.bindings.runtime:suss.internal.bootstrap-link/imul"
          "suss.bindings.runtime:suss.internal.bootstrap-link/js-fn?"
          "suss.bindings.runtime:suss.internal.bootstrap-link/native-satisfies?"
          "suss.bindings.runtime:suss.internal.bootstrap-link/nil?"
@@ -1244,6 +1254,7 @@
          "suss.bindings.runtime:suss.internal.core-link/bounded-count"
          "suss.bindings.runtime:suss.internal.core-link/build-subvec"
          "suss.bindings.runtime:suss.internal.core-link/butlast"
+         "suss.bindings.runtime:suss.internal.core-link/byte"
          "suss.bindings.runtime:suss.internal.core-link/cat"
          "suss.bindings.runtime:suss.internal.core-link/char-escapes"
          "suss.bindings.runtime:suss.internal.core-link/chunk"
@@ -1295,6 +1306,7 @@
          "suss.bindings.runtime:suss.internal.core-link/doall"
          "suss.bindings.runtime:suss.internal.core-link/dominates"
          "suss.bindings.runtime:suss.internal.core-link/dorun"
+         "suss.bindings.runtime:suss.internal.core-link/double"
          "suss.bindings.runtime:suss.internal.core-link/double?"
          "suss.bindings.runtime:suss.internal.core-link/drop"
          "suss.bindings.runtime:suss.internal.core-link/drop-while"
@@ -1321,6 +1333,7 @@
          "suss.bindings.runtime:suss.internal.core-link/first-array-for-longvec"
          "suss.bindings.runtime:suss.internal.core-link/fix"
          "suss.bindings.runtime:suss.internal.core-link/flatten"
+         "suss.bindings.runtime:suss.internal.core-link/float"
          "suss.bindings.runtime:suss.internal.core-link/float?"
          "suss.bindings.runtime:suss.internal.core-link/fn->comparator"
          "suss.bindings.runtime:suss.internal.core-link/fn?"
@@ -1384,6 +1397,7 @@
          "suss.bindings.runtime:suss.internal.core-link/list"
          "suss.bindings.runtime:suss.internal.core-link/list*"
          "suss.bindings.runtime:suss.internal.core-link/list?"
+         "suss.bindings.runtime:suss.internal.core-link/long"
          "suss.bindings.runtime:suss.internal.core-link/lookup-sentinel"
          "suss.bindings.runtime:suss.internal.core-link/m3-C1"
          "suss.bindings.runtime:suss.internal.core-link/m3-C2"
@@ -1652,6 +1666,7 @@
          "suss.bindings.runtime:suss.internal.core-link/set"
          "suss.bindings.runtime:suss.internal.core-link/set-validator!"
          "suss.bindings.runtime:suss.internal.core-link/set?"
+         "suss.bindings.runtime:suss.internal.core-link/short"
          "suss.bindings.runtime:suss.internal.core-link/simple-ident?"
          "suss.bindings.runtime:suss.internal.core-link/simple-keyword?"
          "suss.bindings.runtime:suss.internal.core-link/simple-symbol?"
@@ -1707,17 +1722,23 @@
          "suss.bindings.runtime:suss.internal.core-link/unchecked-add"
          "suss.bindings.runtime:suss.internal.core-link/unchecked-add-int"
          "suss.bindings.runtime:suss.internal.core-link/unchecked-array-for"
+         "suss.bindings.runtime:suss.internal.core-link/unchecked-byte"
          "suss.bindings.runtime:suss.internal.core-link/unchecked-dec"
          "suss.bindings.runtime:suss.internal.core-link/unchecked-dec-int"
          "suss.bindings.runtime:suss.internal.core-link/unchecked-divide-int"
+         "suss.bindings.runtime:suss.internal.core-link/unchecked-double"
          "suss.bindings.runtime:suss.internal.core-link/unchecked-editable-array-for"
+         "suss.bindings.runtime:suss.internal.core-link/unchecked-float"
          "suss.bindings.runtime:suss.internal.core-link/unchecked-inc"
          "suss.bindings.runtime:suss.internal.core-link/unchecked-inc-int"
+         "suss.bindings.runtime:suss.internal.core-link/unchecked-int"
+         "suss.bindings.runtime:suss.internal.core-link/unchecked-long"
          "suss.bindings.runtime:suss.internal.core-link/unchecked-multiply"
          "suss.bindings.runtime:suss.internal.core-link/unchecked-multiply-int"
          "suss.bindings.runtime:suss.internal.core-link/unchecked-negate"
          "suss.bindings.runtime:suss.internal.core-link/unchecked-negate-int"
          "suss.bindings.runtime:suss.internal.core-link/unchecked-remainder-int"
+         "suss.bindings.runtime:suss.internal.core-link/unchecked-short"
          "suss.bindings.runtime:suss.internal.core-link/unchecked-subtract"
          "suss.bindings.runtime:suss.internal.core-link/unchecked-subtract-int"
          "suss.bindings.runtime:suss.internal.core-link/underive"
@@ -2024,15 +2045,15 @@
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d666c7573682f31"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d77726974652f32"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
-         "suss.bindings.runtime:suss.internal.reify/t-reify-3439-10879"],
+         "suss.bindings.runtime:suss.internal.reify/t-reify-3438-10876"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "c6096e8800906d473b3edc30b95047004e4aac7de770605a9b621b148f5c8118",
- :dependency-graph-sha256 "aaccbbf5bca8b8b3a68e41478f7b1357ae6329830d3ea1c4813639beb207cee0",
+ :compiler-source-sha256 "063c46a0b42348738d1de3b43a45ecfd8995bd0809620f9985657e9429404e89",
+ :dependency-graph-sha256 "6844fe870b78094f7984c9ff13a12346a3517887e0e2fb1ef3489cff86c4d016",
  :flags [],
  :format-version 2,
  :phase "runtime",
  :runtime-abi 3,
- :source-sha256 "7409b9f5d2cadd90f7c6b2dc26c278987e619e0d2a8148bc036a0e2637a94fce",
+ :source-sha256 "6746ec2a876da0032a3ddd13b0de07cce34a3799c63c258aa66e86e023e13fd9",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "56d9f596c758bceda4b507ebe324f40900aa2d99313c44f9942c3d5f896a6c4a",
+ :wasm-sha256 "13b74de0eb1b05c9f6c8c4327e98fc820481535306c94e48fd5ea80858836722",
  :wasm-tools "0.258.0"}

@@ -118,10 +118,48 @@ fn collection_hash_matches_independently_decoded_primary_values() {
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
+    // Numbers hash as Clojure's hasheq (#336), so collections of numbers hash
+    // as JVM Clojure 1.12's do where the ClojureScript observation differs.
+    let hasheq: &[(&[&str], i64)] = &[
+        (&["ordered-one", "public-one"], -1381383523),
+        (&["unordered-one"], 1038464948),
+        (
+            &[
+                "ordered-two",
+                "public-two",
+                "helper-cons",
+                "hash-cons",
+                "helper-indexed",
+                "hash-indexed",
+                "helper-reverse-seq",
+                "hash-reverse-seq",
+            ],
+            156247261,
+        ),
+        (&["unordered-two", "unordered-reverse"], 460223544),
+        (&["ordered-reverse", "public-reverse"], -1994590503),
+        (&["ordered-mixed", "public-mixed"], 409217517),
+        (&["unordered-mixed"], -1941226628),
+        (&["ordered-nested", "public-nested"], 512463664),
+        (&["unordered-nested"], -949793658),
+        (&["ordered-duplicates"], 670845861),
+        (&["unordered-duplicates"], -1628626703),
+    ];
+    let mut overridden = 0;
     for case in cases {
         let value = session
             .eval(case["source"].as_str().unwrap())
             .unwrap_or_else(|error| panic!("{}: {error:?}", case["id"]));
+        let id = case["id"].as_str().unwrap();
+        if let Some((_, hash)) = hasheq.iter().find(|(ids, _)| ids.contains(&id)) {
+            let actual = session
+                .inspect(&value, |mut store, value| exact_number(&mut store, &value))
+                .unwrap();
+            assert_eq!(actual, Number::Long(*hash), "{id}");
+            overridden += 1;
+            session.collect().unwrap();
+            continue;
+        }
         let observed = session
             .inspect(&value, |mut store, value| {
                 Ok(match case["expected"]["tag"].as_str().unwrap() {
@@ -148,6 +186,7 @@ fn collection_hash_matches_independently_decoded_primary_values() {
         assert_eq!(observed, case["expected"], "{}", case["id"]);
         session.collect().unwrap();
     }
+    assert_eq!(overridden, 23);
 }
 
 #[test]

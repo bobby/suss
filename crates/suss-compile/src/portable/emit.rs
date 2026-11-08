@@ -350,7 +350,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "object-instance" | "object-same-descriptor" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
             }
-            "primitive-int" | "primitive-bit-not" => (vec![VALUE], vec![VALUE]),
+            "primitive-int" | "primitive-bit-not" | "int32-int" => (vec![VALUE], vec![VALUE]),
             "primitive-bit-and"
             | "primitive-bit-or"
             | "primitive-bit-xor"
@@ -362,7 +362,13 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "primitive-bit-shift-left"
             | "primitive-bit-shift-right"
             | "primitive-unsigned-bit-shift-right"
-            | "primitive-imul" => (vec![VALUE, VALUE], vec![VALUE]),
+            | "int32-bit-and"
+            | "int32-bit-or"
+            | "int32-bit-xor"
+            | "int32-bit-shift-left"
+            | "int32-bit-shift-right"
+            | "int32-unsigned-bit-shift-right"
+            | "int32-imul" => (vec![VALUE, VALUE], vec![VALUE]),
             "comparison-less"
             | "comparison-less-equal"
             | "comparison-greater"
@@ -428,7 +434,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
             | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit"
-            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" => {
+            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" => {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),

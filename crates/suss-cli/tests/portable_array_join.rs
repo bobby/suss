@@ -13,7 +13,7 @@ fn array_join_conversion_preserves_holes_nesting_and_live_reads() {
         "(let [a (array nil 2) x (js-obj \"toString\" (fn [] (aset a \"length\" 1) \"x\"))] (aset a 0 x) (= (.join a) \"x,\"))",
         "(let [a (array 1 2)] (aset a \"join\" (fn [] \"overridden\")) (= (.toString a) \"overridden\"))",
         "(let [a (array 1)] (aset a \"join\" 7) (= (.toString a) \"[object Array]\"))",
-        "(let [ctor (type 1)] (= (ctor (array 1)) 1))",
+        "(let [ctor (type 1)] (== (ctor (array 1)) 1))",
         "(let [ctor (type \"x\")] (= (ctor (array 1)) \"1\"))",
         "(let [ctor (type (array)) a (ctor 1000001)] (= (.join a \"\") \"\"))",
         "(let [ctor (type (array)) a (ctor 1000001)] (aset a 1000000 \"x\") (= (.join a \"\") \"x\"))",

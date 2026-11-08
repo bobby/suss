@@ -2,15 +2,13 @@
 use suss_cli::portable_session::Session;
 #[test]
 fn ordinary_object_coercion_preserves_hints_order_and_primitive_results() {
-    // Clojure arithmetic and comparison reject objects before converting them
-    // (#286); bitwise operators keep ClojureScript's ToNumber conversion.
+    // Clojure arithmetic, comparison and bit operations reject objects before
+    // converting them (#286, #336); array keys keep ToPropertyKey's order.
     let cases = [
-        "(= 2 (bit-or (js-obj \"valueOf\" (fn [] 2)) 0))",
-        "(let [trace (atom []) x (js-obj \"valueOf\" (fn [] (swap! trace conj :x) 2)) y (js-obj \"valueOf\" (fn [] (swap! trace conj :y) 3))] (and (= 3 (bit-or x y)) (= @trace [:x :y])))",
+        "(let [trace (atom []) x (js-obj \"valueOf\" (fn [] (swap! trace conj :x) 2))] (and (= \"bit operation not supported for a non-number\" (try (bit-or x 0) nil (catch :default e (ex-message e)))) (= @trace [])))",
+        "(let [trace (atom []) x (js-obj \"valueOf\" (fn [] (swap! trace conj :x) 2)) y (js-obj \"valueOf\" (fn [] (swap! trace conj :y) 3))] (and (= \"bit operation not supported for a non-number\" (try (bit-or x y) nil (catch :default e (ex-message e)))) (= @trace [])))",
         "(let [trace (atom []) a (array) key (js-obj \"toString\" (fn [] (swap! trace conj :string) \"label\") \"valueOf\" (fn [] (swap! trace conj :number) 7))] (aset a key 23) (and (= (aget a \"label\") 23) (= @trace [:string])))",
-        "(let [trace (atom []) x (js-obj \"valueOf\" (fn [] (swap! trace conj :number) (js-obj)) \"toString\" (fn [] (swap! trace conj :string) \"2\"))] (and (= 2 (bit-or x 0)) (= @trace [:number :string])))",
         "(let [a (array) key (js-obj \"toString\" 17 \"valueOf\" (fn [] 7))] (aset a key 23) (= (aget a 7) 23))",
-        "(let [trace (atom []) x (js-obj \"valueOf\" (fn [] (swap! trace conj :x) (throw 17))) y (js-obj \"valueOf\" (fn [] (swap! trace conj :y) 3))] (try (bit-or x y) false (catch :default e (and (= e 17) (= @trace [:x])))))",
         "(let [trace (atom []) x (js-obj \"valueOf\" (fn [] (swap! trace conj :x) 2))] (and (= \"< requires number operands\" (try (< x 3) nil (catch :default e (ex-message e)))) (= @trace [])))",
         "(let [trace (atom []) x (js-obj \"valueOf\" (fn [] (swap! trace conj :x) \"2\"))] (and (= \"+ requires number operands\" (try (+ x 3) nil (catch :default e (ex-message e)))) (= @trace [])))",
     ];

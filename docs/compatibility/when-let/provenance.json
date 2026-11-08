@@ -56,7 +56,7 @@
   "patch_sha256": "b0648abff634d85b8f2883c64faf1dd16ae2cffababd2a5c9d767e2f822a8bc5",
   "files": {
     "crates/suss-compile/src/portable_when_let.rs": "0de7d8f16339b7327b7e133279d6be7e4a7ecb8d554379e196d0a0f1a7a39e09",
-    "crates/suss-compile/src/portable/hir/destructuring.rs": "61fb410f60d3dbc2a13337361a8dfc50cec6b93e7a53c4a4fcddb21045daee23",
+    "crates/suss-compile/src/portable/hir/destructuring.rs": "31b19c0135b15c10c5d046d1ff6e615d19d76f6096abb4461ef1a6c96611c983",
     "tests/oracle/when-let-observations.json": "7cb0874f0d1c8506c57232a61c183e60eadd1d692793cacc553f04815cb97529",
     "tests/oracle/when-let-validation-observations.json": "ca3e470f944c341ce6e966af2daf157e75e88683209648b79a03e23196e54804",
     "crates/suss-cli/tests/compiled_when_let.rs": "3477a82bdd81a9a427fa10df82ac323c759534d68cb9746a358260201db30e63",

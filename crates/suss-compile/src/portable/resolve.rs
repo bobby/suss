@@ -413,6 +413,8 @@ pub(crate) const BOOTSTRAP_MACROS: &[&str] = &[
     "bit-shift-right",
     "unsigned-bit-shift-right",
     "bit-shift-right-zero-fill",
+    // Shipped core's private 32-bit multiply; not public (#336).
+    "imul",
 ];
 impl Environment {
     pub fn new(namespace: &str) -> Result<Self, Diagnostic> {
@@ -470,7 +472,6 @@ impl Environment {
                     "unsigned-bit-shift-right",
                     "primitive-unsigned-bit-shift-right-function",
                 ),
-                ("imul", "primitive-imul-function"),
                 (
                     "bit-shift-right-zero-fill",
                     "primitive-unsigned-bit-shift-right-function",
@@ -1406,6 +1407,9 @@ impl Environment {
             (BOOTSTRAP_MACROS.contains(&symbol.name.as_str()) && !scope.excluded_core.contains(&symbol.name))
             .then_some(symbol.name.as_str())
         }?;
+        if name == "imul" && scope.namespace != "suss.core" {
+            return None;
+        }
         // A new runtime definition hides these automatic core bootstrap macros;
         // explicit core qualification remains independent of that user var.
         if symbol.namespace.is_none()
