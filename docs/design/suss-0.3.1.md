@@ -128,11 +128,15 @@ with Clojure's overflow and promotion, contagion, `=` and `==`, hashing,
 printing, reader literals and 64-bit bitwise operations. The jank suite's
 `:default` expectations and JVM Clojure are the oracle.
 [ADR-0003](../adr/0003-clojure-numeric-tower.md) gives the representation, which
-keeps numbers unboxed wherever the compiler can, and the staging. Until it is
-implemented, every number is an IEEE-754 binary64 value
-with ClojureScript's 32-bit bitwise coercions, and the reader reads ratios, `N`
-and `M` literals and integers beyond 2^53 but evaluating them throws (#333);
-these are known gaps, not the contract. Arithmetic (`+ - * /`, `inc`, `dec`,
+keeps numbers unboxed wherever the compiler can, and the staging. Longs and
+doubles are distinct values with Clojure's arithmetic, overflow checks,
+contagion, `quot`, `rem` and `mod`, reading and printing (#335). Until the
+rest is implemented, `=` and `hash` still equate a long with an equal double,
+`type` doesn't distinguish them, bitwise operations keep ClojureScript's 32-bit
+coercions (#336), a quotient of longs that doesn't divide evenly is a double
+(#338), and the reader reads ratios, `N` and `M` literals and integers beyond
+the long range but evaluating them throws (#333, #338, #339); these are known
+gaps, not the contract. Arithmetic (`+ - * /`, `inc`, `dec`,
 `quot`, `rem`, `mod`), numeric comparison (`< > <= >= ==`, `min`, `max`) and
 `zero?`, `pos?` and `neg?` accept only numbers, as in Clojure: nil, strings,
 keywords, collections and other objects throw a catchable language error naming
@@ -200,10 +204,9 @@ imports. Optimization must preserve effect ordering and exceptions.
 
 Use a small stable, versioned recursive type group imported by every compiled
 fragment. `Value` is a nullable eqref: nil is null, false, true and undefined
-are singleton sentinel structs, and i31 is reserved for small longs
-([ABI v3](../runtime/abi-v3.md), ADR-0003); numbers are still boxed f64 until
-#335 adds Clojure's longs and doubles,
-UTF-16 arrays, and typed runtime objects. Initially use a universal closure
+are singleton sentinel structs, a long is an i31 when it fits and a boxed
+`i64` otherwise, a double is a boxed `f64` ([ABI v3](../runtime/abi-v3.md),
+ADR-0003), and the group holds UTF-16 arrays and typed runtime objects. Initially use a universal closure
 `(environment, argument-array) -> Value`; arity checks are centralized. Specialized
 call paths can be introduced later with equivalent tests.
 
@@ -264,7 +267,7 @@ all scalar and composite types, maps, adopted `implements`/external-id semantics
 async functions, futures and streams. Compile-time unsupported-feature errors are
 acceptable during development; release claims require interoperability tests.
 
-This table follows ADR-0003's mapping. Until it is implemented, integers cross as checked binary64 numbers and `s64`/`u64` as exact wrapper values
+This table follows ADR-0003's mapping. Until #336 implements it, integers up to `u32` cross as longs (range-checked as binary64 values when leaving Suss) and `s64`/`u64` as exact wrapper values
 ([exact integers](../runtime/portable-exact-integers.md)).
 
 | WIT type | Suss boundary value |

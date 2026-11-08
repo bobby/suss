@@ -29,9 +29,59 @@ rejected before initialization, as [ABI v1](abi-v1.md) artifacts were.
 ## Types
 
 The shared recursive group has twelve types: the ten of ABI v2, then `SENTINEL`
-(index 10) and `LONG` (index 11, `struct { i64 }`), which holds longs outside
-i31's range once longs land. Fragments append their function types after
-`TYPE_COUNT` (12).
+(index 10) and `LONG` (index 11, `struct { i64 }`). Fragments append their
+function types after `TYPE_COUNT` (12).
+
+## Longs and doubles
+
+| Value | Representation |
+| --- | --- |
+| A long from −2³⁰ to 2³⁰ − 1 | An `i31ref` |
+| Any other long | A `LONG` struct holding the `i64` |
+| A double | A `NUMBER` struct (index 0) holding the `f64` |
+
+- Each long has exactly one representation: `long-box` makes an i31 whenever the
+  value fits, so `identical?` and `ref.eq` see one small long as one value.
+  `long-test`, `double-test` and `number-test` test the kinds, `long-unbox`
+  reads a long's `i64`, and `number-unbox` reads any number as an `f64`.
+  `runtime_abi::number_test`, `number_to_f64` and `long_box_in` are the inline
+  forms for modules that can't call the runtime, such as AOT adapters.
+- Integer literals in the long range compile to longs: `i32.const` and
+  `ref.i31` when they fit, else `i64.const` and a `LONG`. Other decimal
+  literals are doubles. Counts, indexes, hashes, character codes and the other
+  integral results of the runtime are longs.
+- `number-add`, `-subtract`, `-multiply` and `-negate` on two longs give a long
+  or throw "long overflow"; with a double operand they give a double. Two i31
+  operands take an inline path in the checked and coercing wrappers.
+  `number-divide` of longs that divide evenly is a long, other quotients of
+  longs are doubles until ratios (#338), and a long divided by zero throws
+  "Divide by zero". `number-quot`, `-rem`, `-abs`, `-unchecked-*`, `-long?`,
+  `-double?` and `-to-long` back the private `suss.bootstrap` primitives of
+  core's `quot`, `rem`, `mod`, `abs`, `unchecked-*`, `integer?`, `double?` and
+  count narrowing.
+- Comparisons of two longs are exact, beyond binary64's 2⁵³, and so is core's
+  strict equality (`===`), which also equates a long with an equal double.
+  `identical?` keeps them distinct.
+- `long-string` prints a long; `coerce-string` prints a double in Java's
+  `Double.toString` format, through the numeric helper's ryu-js digits.
+  `number-parse-long` reads core's integer literals exactly.
+- A JS property key that is an integral double in the long range names the same
+  property as the equal long (`property-key`), as JS's ToString would.
+- On the host, `portable_session::runtime_number` decodes a number as
+  `RuntimeNumber::Long` or `RuntimeNumber::Double`. Macro data and EDN carry
+  `Kind::Long` and `Value::Long` beside doubles.
+- AOT exports lift WIT integers up to `u32` as longs. `s64` and `u64` still
+  travel as the `WitSigned64` and `WitUnsigned64` wrappers, whose words and
+  schema operations are now longs; direct WIT numbers are #336's.
+
+## Collector
+
+Every Suss engine, the REPL's and `suss run`'s, configures
+`Collector::Copying` explicitly (`portable_session::configure_collector`), with
+a 64 MiB initial GC heap per store. `SUSS_GC=null` selects the null collector
+for short-lived runs, `SUSS_GC_INITIAL_MIB` sets the initial heap, and any
+other `SUSS_GC` value is an error. [ADR-0003](../adr/0003-clojure-numeric-tower.md#collector)
+records the choice and its measurements.
 
 ## Private i31 state
 

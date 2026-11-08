@@ -311,25 +311,41 @@ impl CompilationSnapshot {
 /// short-lived runs. Deferred reference counting is not offered: it cannot
 /// collect cycles.
 pub fn configure_collector(config: &mut Config) -> Result<(), String> {
-    let collector = match std::env::var("SUSS_GC").as_deref() {
-        Err(std::env::VarError::NotPresent) | Ok("copying") => wasmtime::Collector::Copying,
-        Ok("null") => wasmtime::Collector::Null,
-        Ok(other) => {
-            return Err(format!("SUSS_GC must be copying or null, not {other:?}"));
-        }
-        Err(std::env::VarError::NotUnicode(_)) => {
-            return Err("SUSS_GC must be copying or null".into());
-        }
-    };
+    let (collector, initial) =
+        collector_settings(std::env::var("SUSS_GC"), std::env::var("SUSS_GC_INITIAL_MIB"))?;
     config.collector(collector);
-    config.gc_heap_initial_size(GC_HEAP_INITIAL_SIZE);
+    config.gc_heap_initial_size(initial);
     Ok(())
 }
-/// Each store's initial GC heap. wasmtime 49 grows the heap only when a
-/// collection frees too little, so a heap that live data nearly fills is
-/// collected every few allocations; starting larger avoids most of that
-/// for small programs, at the cost of peak RSS (ADR-0003).
-pub const GC_HEAP_INITIAL_SIZE: u64 = 16 << 20;
+/// The collector and initial heap bytes that `SUSS_GC` and
+/// `SUSS_GC_INITIAL_MIB` select.
+fn collector_settings(
+    gc: Result<String, std::env::VarError>,
+    initial: Result<String, std::env::VarError>,
+) -> Result<(wasmtime::Collector, u64), String> {
+    use std::env::VarError::NotPresent;
+    let collector = match gc.as_deref() {
+        Err(NotPresent) | Ok("copying") => wasmtime::Collector::Copying,
+        Ok("null") => wasmtime::Collector::Null,
+        Ok(other) => return Err(format!("SUSS_GC must be copying or null, not {other:?}")),
+        Err(_) => return Err("SUSS_GC must be copying or null".into()),
+    };
+    let initial = match initial.as_deref() {
+        Err(NotPresent) => GC_HEAP_INITIAL_SIZE,
+        Ok(text) => match text.parse::<u64>() {
+            Ok(mib) if mib <= 1 << 20 => mib << 20,
+            _ => return Err(format!("SUSS_GC_INITIAL_MIB must be a size in MiB, not {text:?}")),
+        },
+        Err(_) => return Err("SUSS_GC_INITIAL_MIB must be a size in MiB".into()),
+    };
+    Ok((collector, initial))
+}
+/// Each store's initial GC heap, unless `SUSS_GC_INITIAL_MIB` sets it.
+/// wasmtime 49 grows the heap only when a collection frees too little, so a
+/// heap that live data nearly fills is collected every few allocations;
+/// starting larger avoids that up to the initial size, at the cost of peak
+/// RSS (ADR-0003).
+pub const GC_HEAP_INITIAL_SIZE: u64 = 64 << 20;
 fn engine() -> Result<Engine, SessionError> {
     static ENGINE: OnceLock<Result<Engine, String>> = OnceLock::new();
     ENGINE
@@ -3206,6 +3222,26 @@ mod tests {
         assert_eq!(calls.load(Ordering::SeqCst), 1);
     }
 
+    #[test]
+    fn collector_settings_default_to_copying_and_validate_overrides() {
+        use std::env::VarError::NotPresent;
+        let setting = |value: &str| Ok(value.to_owned());
+        assert!(matches!(
+            collector_settings(Err(NotPresent), Err(NotPresent)),
+            Ok((wasmtime::Collector::Copying, GC_HEAP_INITIAL_SIZE))
+        ));
+        assert!(matches!(
+            collector_settings(setting("null"), setting("0")),
+            Ok((wasmtime::Collector::Null, 0))
+        ));
+        assert!(matches!(
+            collector_settings(setting("copying"), setting("256")),
+            Ok((wasmtime::Collector::Copying, 268_435_456))
+        ));
+        for (gc, initial) in [("drc", "1"), ("auto", "1"), ("copying", "-1"), ("copying", "1.5")] {
+            assert!(collector_settings(setting(gc), setting(initial)).is_err(), "{gc} {initial}");
+        }
+    }
     #[test]
     fn session_lifecycle_native_callback_trap_restores_dynamic_context() {
         let mut session = Session::new().unwrap();
