@@ -1,7 +1,7 @@
 //! Original rooted RangeError identity for native array length operations.
 use super::*;
 use Instruction::*;
-pub(super) const DESCRIPTOR_GLOBAL: u32 = primitive_constructors::ARRAY_ROOT + 1;
+pub(super) const DESCRIPTOR_GLOBAL: u32 = primitive_constructors::ROOT_END;
 const CONSTRUCTOR_ROOT: u32 = DESCRIPTOR_GLOBAL + 1;
 
 pub(super) fn append_globals(globals: &mut GlobalSection) {

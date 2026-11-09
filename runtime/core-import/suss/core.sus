@@ -81,6 +81,10 @@
          ^:private pr-tagged-object ^:private deref-as-map ^:private pr-throwable
          js-keys print-map keyword)
 
+;; vec, str and the default printer convert packed primitive arrays with
+;; these, defined in core's appendix (#336).
+(declare to-array ^:private packed-array-string ^:private pr-packed-array)
+
 ;; pr-writer prints through print-method and print-dup, which need MultiFn and
 ;; are defined in core's appendix (#302).
 (declare ^:private print-method-for)
@@ -2465,7 +2469,7 @@
         (-lookup o k)
 
         (array? o)
-        (when (and (some? k) (< k (.-length o)))
+        (when (and (number? k) (< -1 k (.-length o)))
           (aget o (int k)))
 
         (string? o)
@@ -2483,7 +2487,7 @@
         (-lookup o k not-found)
 
         (array? o)
-        (if (and (some? k) (< -1 k (.-length o)))
+        (if (and (number? k) (< -1 k (.-length o)))
           (aget o (int k))
           not-found)
 
@@ -5037,6 +5041,10 @@
     (vector? coll)
     (with-meta coll nil)
 
+    ;; A packed primitive array is copied, as Clojure's vec of one is (#336).
+    (suss.bootstrap/packed-array? coll)
+    (.fromArray PersistentVector (to-array coll) true)
+
     (array? coll)
     (.fromArray PersistentVector coll true)
 
@@ -5060,7 +5068,8 @@
 (def array-map "keyval => key val
   Returns a new array map with supplied mappings."
   (fn [& keyvals]
-  (let [arr (if (and (instance? IndexedSeq keyvals) (zero? (.-i keyvals)))
+  (let [arr (if (and (instance? IndexedSeq keyvals) (zero? (.-i keyvals))
+                     (not (suss.bootstrap/packed-array? (.-arr keyvals))))
               (aclone (.-arr keyvals))
               (into-array keyvals))]
     (if (== 1 (bit-and (alength arr) 1))
@@ -5315,7 +5324,9 @@
       ([x] (if (nil? x) ""
              (if (or (string? x) (number? x) (or (identical? x true) (identical? x false)))
                (suss.bootstrap/coerce-string x)
-               (suss.bootstrap/object-coerce-string x))))
+               (if (suss.bootstrap/packed-array? x)
+                 (packed-array-string x)
+                 (suss.bootstrap/object-coerce-string x)))))
       ([x & more]
        (if (nil? x) ""
          (loop [result (str_ x) remaining (seq more)]
@@ -5730,6 +5741,10 @@
                   (unchecked-get obj k)
                   nil)))
             pr-writer writer opts))
+
+        ;; A packed primitive array prints as Clojure prints a Java array (#336).
+        (suss.bootstrap/packed-array? obj)
+        (pr-packed-array obj writer opts)
 
         (array? obj)
         (pr-sequential-writer writer pr-writer "#js [" " " "]" opts obj)
@@ -6470,7 +6485,8 @@
 (def vector
   "Creates a new vector containing the args."
   (fn [& args]
-  (if (and (instance? IndexedSeq args) (zero? (.-i args)))
+  (if (and (instance? IndexedSeq args) (zero? (.-i args))
+           (not (suss.bootstrap/packed-array? (.-arr args))))
     (.fromArray PersistentVector (.-arr args) (not (array? (.-arr args))))
     (vec args))))
 
@@ -6496,10 +6512,15 @@
          (if (or (suss.bootstrap/number? x) (suss.bootstrap/string? x) (suss.bootstrap/boolean? x))
            (suss.bootstrap/coerce-string x)
            ;; A type value is Clojure's Class, whose toString is "class Name" (#304).
-           (if (suss.bootstrap/type-constructor? x)
+           (if (or (suss.bootstrap/type-constructor? x)
+                   ;; A packed array type is named but has no constructor (#336).
+                   (not (suss.bootstrap/nil? (suss.bootstrap/type-name x))))
              (let [name (suss.bootstrap/type-name x)]
                (suss.bootstrap/concat-string "class " (if (suss.bootstrap/nil? name) "Object" name)))
-             (.toString x)))))
+             ;; A packed primitive array converts as Java's Object.toString (#336).
+             (if (suss.bootstrap/packed-array? x)
+               (packed-array-string x)
+               (.toString x))))))
   ([x & ys]
    (loop [sb (bootstrap-string-buffer (str x)) more ys]
      (if more
@@ -8819,28 +8840,31 @@ reduces them without incurring seq initialization"
 
 (def constantly "Returns a function that takes any number of arguments and returns x." (fn [x] (fn [& args] x)))
 
-(def int-array "Creates an array of ints. Does not coerce array, provided for compatibility
-  with Clojure." (fn ([size-or-seq]
-     (if (number? size-or-seq)
-       (int-array size-or-seq nil)
-       (into-array size-or-seq)))
-  ([size init-val-or-seq]
-     (let [a (make-array size)]
-       (if (seq? init-val-or-seq)
-         (let [s (seq init-val-or-seq)]
+(def int-array "Creates an array of ints"
+  (fn ([size-or-seq]
+       (if (number? size-or-seq)
+         (suss.bootstrap/packed-array 2 (suss.bootstrap/cast size-or-seq 5))
+         (let [s (seq size-or-seq)
+               a (suss.bootstrap/packed-array 2 (count s))]
            (loop [i 0 s s]
-             (if (and s (< i size))
-               (do
-                 (aset a i (first s))
-                 (recur (inc i) (next s)))
-               a)))
-         (do
-           (let [array-limit__ size]
-             (loop [array-index__ 0]
-               (when (< array-index__ array-limit__)
-                 (aset a array-index__ init-val-or-seq)
-                 (recur (inc array-index__)))))
-           a))))))
+             (if s
+               (do (suss.bootstrap/packed-store a i (first s))
+                   (recur (inc i) (next s)))
+               a)))))
+      ([size init-val-or-seq]
+       (let [a (suss.bootstrap/packed-array 2 size)
+             n (alength a)]
+         (if (number? init-val-or-seq)
+           (loop [i 0]
+             (if (< i n)
+               (do (suss.bootstrap/packed-store a i init-val-or-seq)
+                   (recur (inc i)))
+               a))
+           (loop [i 0 s (seq init-val-or-seq)]
+             (if (and s (< i n))
+               (do (suss.bootstrap/packed-store a i (first s))
+                   (recur (inc i) (next s)))
+               a)))))))
 
 (def object-array "Creates an array of objects. Does not coerce array, provided for compatibility
   with Clojure." (fn ([size-or-seq]
@@ -11518,3 +11542,67 @@ reduces them without incurring seq initialization"
 (def unchecked-float "Coerce to float. Subject to rounding." (fn [x] (suss.bootstrap/cast x 9)))
 (def double "Coerce to double" (fn [x] (suss.bootstrap/cast x 10)))
 (def unchecked-double "Coerce to double. Subject to rounding." (fn [x] (suss.bootstrap/cast x 10)))
+
+;; Packed primitive arrays (ADR-0003, #336). Each constructor passes its
+;; element kind: 0 byte, 1 short, 2 int, 3 float, 4 long, 5 double. Elements
+;; from a sequence or a fill value are stored with the unchecked cast, as
+;; Java's Number methods convert them; aset checks the range instead.
+(def ^:private packed-array-of
+  (fn [kind size-or-seq]
+    (if (number? size-or-seq)
+      ;; A lone size is Number.intValue, unchecked, as in Clojure.
+      (suss.bootstrap/packed-array kind (suss.bootstrap/cast size-or-seq 5))
+      (let [s (seq size-or-seq)
+            a (suss.bootstrap/packed-array kind (count s))]
+        (loop [i 0 s s]
+          (if s
+            (do (suss.bootstrap/packed-store a i (first s))
+                (recur (inc i) (next s)))
+            a))))))
+(def ^:private packed-array-filled
+  (fn [kind size init-val-or-seq]
+    (let [a (suss.bootstrap/packed-array kind size)
+          n (alength a)]
+      (if (number? init-val-or-seq)
+        (loop [i 0]
+          (if (< i n)
+            (do (suss.bootstrap/packed-store a i init-val-or-seq)
+                (recur (inc i)))
+            a))
+        (loop [i 0 s (seq init-val-or-seq)]
+          (if (and s (< i n))
+            (do (suss.bootstrap/packed-store a i (first s))
+                (recur (inc i) (next s)))
+            a))))))
+(def byte-array "Creates an array of bytes"
+  (fn ([size-or-seq] (packed-array-of 0 size-or-seq))
+      ([size init-val-or-seq] (packed-array-filled 0 size init-val-or-seq))))
+(def short-array "Creates an array of shorts"
+  (fn ([size-or-seq] (packed-array-of 1 size-or-seq))
+      ([size init-val-or-seq] (packed-array-filled 1 size init-val-or-seq))))
+(def float-array "Creates an array of floats"
+  (fn ([size-or-seq] (packed-array-of 3 size-or-seq))
+      ([size init-val-or-seq] (packed-array-filled 3 size init-val-or-seq))))
+(def long-array "Creates an array of longs"
+  (fn ([size-or-seq] (packed-array-of 4 size-or-seq))
+      ([size init-val-or-seq] (packed-array-filled 4 size init-val-or-seq))))
+(def double-array "Creates an array of doubles"
+  (fn ([size-or-seq] (packed-array-of 5 size-or-seq))
+      ([size init-val-or-seq] (packed-array-filled 5 size init-val-or-seq))))
+;; Java's Object.toString of an array: its class name, "@" and its identity
+;; hash in hexadecimal, as str gives it; and the #object form Clojure prints
+;; for a Java array, whose class name prints as a string (#336).
+(def ^:private packed-array-string
+  (fn [a]
+    (suss.bootstrap/concat-string
+      (class-name a)
+      (suss.bootstrap/concat-string "@" (hex-string (suss.bootstrap/identity-uid a))))))
+(def ^:private pr-packed-array
+  (fn [a writer opts]
+    (-write writer "#object[")
+    (pr-writer (class-name a) writer opts)
+    (-write writer " 0x")
+    (-write writer (hex-string (suss.bootstrap/identity-uid a)))
+    (-write writer " ")
+    (pr-writer (packed-array-string a) writer opts)
+    (-write writer "]")))

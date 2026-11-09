@@ -363,6 +363,7 @@
          "suss.bindings.runtime:suss.core/build-subvec"
          "suss.bindings.runtime:suss.core/butlast"
          "suss.bindings.runtime:suss.core/byte"
+         "suss.bindings.runtime:suss.core/byte-array"
          "suss.bindings.runtime:suss.core/cat"
          "suss.bindings.runtime:suss.core/char-escapes"
          "suss.bindings.runtime:suss.core/chunk"
@@ -415,6 +416,7 @@
          "suss.bindings.runtime:suss.core/dominates"
          "suss.bindings.runtime:suss.core/dorun"
          "suss.bindings.runtime:suss.core/double"
+         "suss.bindings.runtime:suss.core/double-array"
          "suss.bindings.runtime:suss.core/double?"
          "suss.bindings.runtime:suss.core/drop"
          "suss.bindings.runtime:suss.core/drop-while"
@@ -442,6 +444,7 @@
          "suss.bindings.runtime:suss.core/fix"
          "suss.bindings.runtime:suss.core/flatten"
          "suss.bindings.runtime:suss.core/float"
+         "suss.bindings.runtime:suss.core/float-array"
          "suss.bindings.runtime:suss.core/float?"
          "suss.bindings.runtime:suss.core/fn->comparator"
          "suss.bindings.runtime:suss.core/fn?"
@@ -506,6 +509,7 @@
          "suss.bindings.runtime:suss.core/list*"
          "suss.bindings.runtime:suss.core/list?"
          "suss.bindings.runtime:suss.core/long"
+         "suss.bindings.runtime:suss.core/long-array"
          "suss.bindings.runtime:suss.core/lookup-sentinel"
          "suss.bindings.runtime:suss.core/m3-C1"
          "suss.bindings.runtime:suss.core/m3-C2"
@@ -570,6 +574,9 @@
          "suss.bindings.runtime:suss.core/object?"
          "suss.bindings.runtime:suss.core/odd?"
          "suss.bindings.runtime:suss.core/pack-array-node"
+         "suss.bindings.runtime:suss.core/packed-array-filled"
+         "suss.bindings.runtime:suss.core/packed-array-of"
+         "suss.bindings.runtime:suss.core/packed-array-string"
          "suss.bindings.runtime:suss.core/pam-dupes?"
          "suss.bindings.runtime:suss.core/pam-grow-seed-array"
          "suss.bindings.runtime:suss.core/pam-new-size"
@@ -591,6 +598,7 @@
          "suss.bindings.runtime:suss.core/pr-opts-len"
          "suss.bindings.runtime:suss.core/pr-opts-meta"
          "suss.bindings.runtime:suss.core/pr-opts-readably"
+         "suss.bindings.runtime:suss.core/pr-packed-array"
          "suss.bindings.runtime:suss.core/pr-record-writer"
          "suss.bindings.runtime:suss.core/pr-sb-with-opts"
          "suss.bindings.runtime:suss.core/pr-seq-writer"
@@ -775,6 +783,7 @@
          "suss.bindings.runtime:suss.core/set-validator!"
          "suss.bindings.runtime:suss.core/set?"
          "suss.bindings.runtime:suss.core/short"
+         "suss.bindings.runtime:suss.core/short-array"
          "suss.bindings.runtime:suss.core/simple-ident?"
          "suss.bindings.runtime:suss.core/simple-keyword?"
          "suss.bindings.runtime:suss.core/simple-symbol?"
@@ -1255,6 +1264,7 @@
          "suss.bindings.runtime:suss.internal.core-link/build-subvec"
          "suss.bindings.runtime:suss.internal.core-link/butlast"
          "suss.bindings.runtime:suss.internal.core-link/byte"
+         "suss.bindings.runtime:suss.internal.core-link/byte-array"
          "suss.bindings.runtime:suss.internal.core-link/cat"
          "suss.bindings.runtime:suss.internal.core-link/char-escapes"
          "suss.bindings.runtime:suss.internal.core-link/chunk"
@@ -1307,6 +1317,7 @@
          "suss.bindings.runtime:suss.internal.core-link/dominates"
          "suss.bindings.runtime:suss.internal.core-link/dorun"
          "suss.bindings.runtime:suss.internal.core-link/double"
+         "suss.bindings.runtime:suss.internal.core-link/double-array"
          "suss.bindings.runtime:suss.internal.core-link/double?"
          "suss.bindings.runtime:suss.internal.core-link/drop"
          "suss.bindings.runtime:suss.internal.core-link/drop-while"
@@ -1334,6 +1345,7 @@
          "suss.bindings.runtime:suss.internal.core-link/fix"
          "suss.bindings.runtime:suss.internal.core-link/flatten"
          "suss.bindings.runtime:suss.internal.core-link/float"
+         "suss.bindings.runtime:suss.internal.core-link/float-array"
          "suss.bindings.runtime:suss.internal.core-link/float?"
          "suss.bindings.runtime:suss.internal.core-link/fn->comparator"
          "suss.bindings.runtime:suss.internal.core-link/fn?"
@@ -1398,6 +1410,7 @@
          "suss.bindings.runtime:suss.internal.core-link/list*"
          "suss.bindings.runtime:suss.internal.core-link/list?"
          "suss.bindings.runtime:suss.internal.core-link/long"
+         "suss.bindings.runtime:suss.internal.core-link/long-array"
          "suss.bindings.runtime:suss.internal.core-link/lookup-sentinel"
          "suss.bindings.runtime:suss.internal.core-link/m3-C1"
          "suss.bindings.runtime:suss.internal.core-link/m3-C2"
@@ -1462,6 +1475,9 @@
          "suss.bindings.runtime:suss.internal.core-link/object?"
          "suss.bindings.runtime:suss.internal.core-link/odd?"
          "suss.bindings.runtime:suss.internal.core-link/pack-array-node"
+         "suss.bindings.runtime:suss.internal.core-link/packed-array-filled"
+         "suss.bindings.runtime:suss.internal.core-link/packed-array-of"
+         "suss.bindings.runtime:suss.internal.core-link/packed-array-string"
          "suss.bindings.runtime:suss.internal.core-link/pam-dupes?"
          "suss.bindings.runtime:suss.internal.core-link/pam-grow-seed-array"
          "suss.bindings.runtime:suss.internal.core-link/pam-new-size"
@@ -1483,6 +1499,7 @@
          "suss.bindings.runtime:suss.internal.core-link/pr-opts-len"
          "suss.bindings.runtime:suss.internal.core-link/pr-opts-meta"
          "suss.bindings.runtime:suss.internal.core-link/pr-opts-readably"
+         "suss.bindings.runtime:suss.internal.core-link/pr-packed-array"
          "suss.bindings.runtime:suss.internal.core-link/pr-record-writer"
          "suss.bindings.runtime:suss.internal.core-link/pr-sb-with-opts"
          "suss.bindings.runtime:suss.internal.core-link/pr-seq-writer"
@@ -1667,6 +1684,7 @@
          "suss.bindings.runtime:suss.internal.core-link/set-validator!"
          "suss.bindings.runtime:suss.internal.core-link/set?"
          "suss.bindings.runtime:suss.internal.core-link/short"
+         "suss.bindings.runtime:suss.internal.core-link/short-array"
          "suss.bindings.runtime:suss.internal.core-link/simple-ident?"
          "suss.bindings.runtime:suss.internal.core-link/simple-keyword?"
          "suss.bindings.runtime:suss.internal.core-link/simple-symbol?"
@@ -2045,15 +2063,15 @@
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d666c7573682f31"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d77726974652f32"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
-         "suss.bindings.runtime:suss.internal.reify/t-reify-3438-10876"],
+         "suss.bindings.runtime:suss.internal.reify/t-reify-3447-10891"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "063c46a0b42348738d1de3b43a45ecfd8995bd0809620f9985657e9429404e89",
- :dependency-graph-sha256 "6844fe870b78094f7984c9ff13a12346a3517887e0e2fb1ef3489cff86c4d016",
+ :compiler-source-sha256 "c755bbaad16afe6577983c95866f605012848b56b909f2cee4f07bd2df7bfee2",
+ :dependency-graph-sha256 "207a8c7f7fdeaeb25b9b10b4073971136087be2d83f2e927b5de638ab34477c9",
  :flags [],
  :format-version 2,
  :phase "runtime",
  :runtime-abi 3,
- :source-sha256 "6746ec2a876da0032a3ddd13b0de07cce34a3799c63c258aa66e86e023e13fd9",
+ :source-sha256 "9e87fec15aefce62a400115061ae3e007a80d563e80814ce820c99875740c0ea",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "13b74de0eb1b05c9f6c8c4327e98fc820481535306c94e48fd5ea80858836722",
+ :wasm-sha256 "6b0ee9b6f507a30a1040a0dab5a17c15437f08f804d0cfe010e93b3d1480acb4",
  :wasm-tools "0.258.0"}

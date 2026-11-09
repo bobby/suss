@@ -34,9 +34,10 @@ fn constructor_cache_preserves_shared_recursive_abi_type_count_and_descriptor_la
             let group = types.into_iter().next().unwrap().unwrap();
             assert!(group.is_explicit_rec_group());
             let types = group.types().collect::<Vec<_>>();
+            // PACKED is the group's last type (#336).
             assert_eq!(
                 types.len(),
-                12,
+                suss_compile::runtime_abi::PACKED as usize + 1,
                 "cache must not enlarge the shared recursive ABI group"
             );
             let CompositeInnerType::Struct(descriptor) = &types[6].composite_type.inner else {

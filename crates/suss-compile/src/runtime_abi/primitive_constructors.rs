@@ -8,9 +8,13 @@ pub(super) const NUMBER_ROOT: u32 = type_values::KEY_GLOBAL + 1;
 pub(super) const STRING_ROOT: u32 = NUMBER_ROOT + 1;
 pub(super) const BOOLEAN_ROOT: u32 = STRING_ROOT + 1;
 pub(super) const ARRAY_ROOT: u32 = BOOLEAN_ROOT + 1;
+/// The type values of the packed primitive arrays, one per element type in
+/// `packed_arrays::KINDS` order (#336).
+pub(super) const PACKED_ROOT: u32 = ARRAY_ROOT + 1;
+pub(super) const ROOT_END: u32 = PACKED_ROOT + packed_arrays::KINDS.len() as u32;
 
 pub(super) fn append_globals(globals: &mut GlobalSection) {
-    for _ in 0..4 {
+    for _ in NUMBER_ROOT..ROOT_END {
         globals.global(
             GlobalType {
                 val_type: VALUE,
@@ -171,5 +175,43 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         GlobalGet(ARRAY_ROOT),
     ]);
     b.function("array-constructor", &[], &[VALUE], &body);
+    // A packed array type's value names the JVM's array class; like a Java
+    // class, it cannot be called to make an array (#336).
+    let mut body = vec![GlobalGet(nominal::ERROR_GLOBAL)];
+    body.extend(packed_arrays::string("A packed array type cannot be called; use its array function"));
+    body.extend([
+        sentinel_value(NIL),
+        sentinel_value(NIL),
+        I32Const(0), // Identity UID, unassigned.
+        RefI31,
+        StructNew(8),
+        Throw(0),
+    ]);
+    let invoke = callback(b, &body);
+    declared.push(invoke);
+    for (kind, (name, _, _, class)) in packed_arrays::KINDS.iter().enumerate() {
+        let root = PACKED_ROOT + kind as u32;
+        let mut body = vec![
+            GlobalGet(root),
+            RefTestNonNull(HeapType::Concrete(CLOSURE)),
+            If(BlockType::Empty),
+            GlobalGet(root),
+            Return,
+            End,
+            ArrayNewFixed {
+                array_type_index: ARGS,
+                array_size: 0,
+            },
+            RefFunc(invoke),
+            I32Const(0),
+            I32Const(-1),
+            Call(b.names["closure-new"]),
+            GlobalSet(root),
+            GlobalGet(root),
+        ];
+        body.extend(packed_arrays::string(class));
+        body.extend([Call(b.names["closure-source-name-initialize"]), GlobalGet(root)]);
+        b.function(&format!("packed-array-type-{name}"), &[], &[VALUE], &body);
+    }
     declared
 }

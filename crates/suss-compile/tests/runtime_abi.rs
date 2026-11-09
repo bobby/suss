@@ -1,7 +1,7 @@
 //! Execute production ABI v3 runtime bytes, independently of Suss printing/equality.
 mod support;
 /// First type index a fragment appends after the shared ABI v3 prelude.
-const APPENDED: u32 = suss_compile::runtime_abi::LONG + 1;
+const APPENDED: u32 = suss_compile::runtime_abi::PACKED + 1;
 use suss_compile::runtime_abi;
 use suss_compile::portable_session::{RuntimeNumber, runtime_number};
 use wasmtime::{Instance, Module, Store, Val};
@@ -647,7 +647,7 @@ fn runtime_abi_manifest_gate_precedes_initializer_effects() {
         assert_eq!(*store.data(), 0);
     }
     let mut altered = initializer(&expected);
-    let marker = [0x4e, 12, 0x5f, 1, 0x7c, 0]; // rec(12), struct, one f64 field
+    let marker = [0x4e, 19, 0x5f, 1, 0x7c, 0]; // rec(19), struct, one f64 field
     let offset = altered
         .windows(marker.len())
         .position(|bytes| bytes == marker)

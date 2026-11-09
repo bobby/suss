@@ -623,32 +623,43 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
     // A type value's name (#304), or nil for any other value and for types
     // without one. Only descriptor construction stores a name, so the printer
     // cannot be handed a forged one.
-    b.function_with_locals(
-        "class-value-name",
-        &[VALUE],
-        &[VALUE],
-        &[(1, VALUE)],
-        &[
+    let mut body = vec![
+        LocalGet(0),
+        Call(b.names["class-value-is"]),
+        If(BlockType::Empty),
+        LocalGet(0),
+        Call(b.names["closure-environment"]),
+        RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
+        StructGet {
+            struct_type_index: DESCRIPTOR,
+            field_index: 3,
+        },
+        LocalTee(1),
+        RefTestNonNull(HeapType::Concrete(STRING)),
+        If(BlockType::Empty),
+        LocalGet(1),
+        Return,
+        End,
+        End,
+    ];
+    // A packed array type is named as the JVM names its array class (#336).
+    // Its root holds nil until first use, so nil itself is never named.
+    for (kind, (_, _, _, class)) in packed_arrays::KINDS.iter().enumerate() {
+        body.extend([
             LocalGet(0),
-            Call(b.names["class-value-is"]),
-            If(BlockType::Empty),
+            GlobalGet(primitive_constructors::PACKED_ROOT + kind as u32),
+            RefEq,
             LocalGet(0),
-            Call(b.names["closure-environment"]),
-            RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
-            StructGet {
-                struct_type_index: DESCRIPTOR,
-                field_index: 3,
-            },
-            LocalTee(1),
-            RefTestNonNull(HeapType::Concrete(STRING)),
+            RefIsNull,
+            I32Eqz,
+            I32And,
             If(BlockType::Empty),
-            LocalGet(1),
-            Return,
-            End,
-            End,
-            sentinel_value(NIL),
-        ],
-    );
+        ]);
+        body.extend(packed_arrays::string(class));
+        body.extend([Return, End]);
+    }
+    body.push(sentinel_value(NIL));
+    b.function_with_locals("class-value-name", &[VALUE], &[VALUE], &[(1, VALUE)], &body);
     let mut body = vec![];
     guard(&mut body, 0, ARGS);
     body.extend([

@@ -84,6 +84,7 @@ Values that are not data print as Clojure's default `print-method` prints them
 | A type value, such as `(type [])` | `suss.core.PersistentVector` |
 | A `deftype` value, a transient, a `reify` | `#object[my_ns.T 0x1f "my_ns.T@1f"]` |
 | A reference: an atom or `reduced` value | `#object[suss.core.Atom 0x2 {:status :ready, :val 1}]` |
+| A packed primitive array, such as `(long-array 1)` | `#object["[J" 0x3 "[J@3"]`, as Clojure prints a Java array ([packed arrays](packed-arrays.md)) |
 | An `ex-info` | `#error {:cause "x" :data {} :via [...] :trace []}`, on several lines |
 
 - **Objects:** `#object[`, the type's name, `0x` and the identity hash in

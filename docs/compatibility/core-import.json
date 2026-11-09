@@ -2588,7 +2588,7 @@
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "dd1de8862b9e57e054195fb8416c762f61455073fee42c7b770c4c0562734e4f"
+      "sha256": "69e9260295d2260596a8c602715debdacbe3dce557b2ba53d488945d04f765de"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
@@ -2596,7 +2596,7 @@
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "5a6af43916c4caf66bbfb546e342157f5526191d744c7b38623d6ca4ab4ba21c"
+      "sha256": "98b9d9ca161b8c0cc42fb7200f60a312277e2f23eba7bb37ab1edcc1f4b8728a"
     }
   }
 }

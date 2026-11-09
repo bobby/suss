@@ -188,6 +188,13 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     );
     body = vec![
         LocalGet(0),
+        Call(b.names["packed-array?"]),
+        If(BlockType::Empty),
+        LocalGet(0),
+        Call(b.names["packed-array-length"]),
+        Return,
+        End,
+        LocalGet(0),
         RefTestNonNull(HeapType::Concrete(STRING)),
         If(BlockType::Empty),
         LocalGet(0),
@@ -288,6 +295,15 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &property_body,
     );
     body = vec![
+        // A packed primitive array's elements are longs or doubles (#336).
+        LocalGet(0),
+        Call(b.names["packed-array?"]),
+        If(BlockType::Empty),
+        LocalGet(0),
+        LocalGet(1),
+        Call(b.names["packed-array-get"]),
+        Return,
+        End,
         // IndexedSeq uses the same numeric access for array and UTF-16 owners.
         // A string read allocates a one-unit string, including lone surrogates.
         LocalGet(0),
@@ -375,6 +391,15 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &body,
     );
     body = vec![
+        LocalGet(0),
+        Call(b.names["packed-array?"]),
+        If(BlockType::Empty),
+        LocalGet(0),
+        LocalGet(1),
+        LocalGet(2),
+        Call(b.names["packed-array-set"]),
+        Return,
+        End,
         // Non-index numbers and effectful object keys still take the ordinary
         // checked string-hint property route exactly once.
         LocalGet(1),
@@ -465,6 +490,13 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     );
     // Copy mutable backing directly; materialization would turn holes into values.
     body = vec![
+        LocalGet(0),
+        Call(b.names["packed-array?"]),
+        If(BlockType::Empty),
+        LocalGet(0),
+        Call(b.names["packed-array-clone"]),
+        Return,
+        End,
         LocalGet(0),
         Call(fields),
         RefCastNonNull(HeapType::Concrete(ARGS)),
@@ -841,10 +873,11 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &[LocalGet(1), Call(create)],
     ));
     let mut body = vec![];
+    // Packed primitive arrays are arrays too, though not JS arrays.
     arg(&mut body, 0);
-    body.extend([
-        Call(is_array),
-    ]);
+    body.push(Call(is_array));
+    arg(&mut body, 0);
+    body.extend([Call(b.names["packed-array?"]), I32Or]);
     body.extend(boolean());
     declared.push(factory(b, "array-predicate-function", 1, 1, &body));
     for (name, primitive) in [

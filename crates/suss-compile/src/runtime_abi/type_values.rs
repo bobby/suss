@@ -60,6 +60,28 @@ pub(super) fn functions(b: &mut Builder) {
         Call(b.names["boolean-constructor"]),
         Return,
         End,
+    ]);
+    // A packed primitive array's type value, by its storage (#336).
+    for (kind, (name, _, _, _)) in packed_arrays::KINDS.iter().enumerate() {
+        body.extend([
+            LocalGet(0),
+            RefTestNonNull(HeapType::Concrete(PACKED)),
+            If(BlockType::Empty),
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(PACKED)),
+            StructGet {
+                struct_type_index: PACKED,
+                field_index: 0,
+            },
+            RefTestNonNull(HeapType::Concrete(packed_arrays::storage(kind))),
+            If(BlockType::Empty),
+            Call(b.names[&format!("packed-array-type-{name}")]),
+            Return,
+            End,
+            End,
+        ]);
+    }
+    body.extend([
         LocalGet(0),
         Call(b.names["source-array?"]),
         If(BlockType::Empty),

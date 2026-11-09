@@ -1933,6 +1933,45 @@ fn append_indexed<T: DatumTarget>(
     if !index.is_finite() || index < 0.0 || index.fract() != 0.0 {
         return Err(error("Invalid IndexedSeq index"));
     }
+    // A packed primitive array: its storage and identity UID (#336).
+    let fields = match reference(&data[0])?.as_struct(&*store)? {
+        Some(packed) => packed.fields(&mut *store)?.collect::<Vec<_>>(),
+        None => Vec::new(),
+    };
+    let packed = match fields.as_slice() {
+        [Val::AnyRef(Some(storage)), _] => storage
+            .as_array(&*store)?
+            .filter(|storage| !matches!(storage.ty(&*store).map(|ty| ty.element_type()), Ok(wasmtime::StorageType::ValType(wasmtime::ValType::Ref(_))))),
+        _ => None,
+    };
+    if let Some(storage) = packed {
+        let element = storage.ty(&*store)?.element_type();
+        let length = storage.len(&*store)?;
+        if index > f64::from(length) {
+            return Err(error("IndexedSeq index exceeds backing storage"));
+        }
+        let index = index as u32;
+        charge_read_work(store, u64::from(length - index), budget)?;
+        for offset in index..length {
+            let value = storage.get(&mut *store, offset)?;
+            spend(store, budget)?;
+            let kind = match (&element, value) {
+                (wasmtime::StorageType::I8, Val::I32(n)) => Kind::Long(i64::from(n as i8)),
+                (wasmtime::StorageType::I16, Val::I32(n)) => Kind::Long(i64::from(n as i16)),
+                (_, Val::I32(n)) => Kind::Long(i64::from(n)),
+                (_, Val::I64(n)) => Kind::Long(n),
+                (_, Val::F32(bits)) => Kind::Number(f64::from(f32::from_bits(bits))),
+                (_, Val::F64(bits)) => Kind::Number(f64::from_bits(bits)),
+                _ => return Err(error("Invalid packed array element")),
+            };
+            items.push(T::plain(Form {
+                span: span.clone(),
+                metadata: vec![],
+                kind,
+            }));
+        }
+        return Ok(());
+    }
     if reference(&data[0])?.as_array(&*store)?.is_none() {
         if index > f64::from(u32::MAX) {
             return Err(error("IndexedSeq index exceeds source array storage"));

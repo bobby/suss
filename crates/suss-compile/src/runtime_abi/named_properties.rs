@@ -868,6 +868,28 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         }
         body.push(End);
 
+        // A packed primitive array has only its length (#336).
+        body.extend([
+            LocalGet(0),
+            Call(b.names["packed-array?"]),
+            If(BlockType::Empty),
+        ]);
+        if writing {
+            nominal::error(&mut body);
+        } else {
+            body.push(LocalGet(1));
+            name(&mut body, "length");
+            body.extend([
+                Call(equal),
+                If(BlockType::Empty),
+                LocalGet(0),
+                Call(b.names["packed-array-length"]),
+                Return,
+                End,
+            ]);
+            nominal::error(&mut body);
+        }
+        body.push(End);
         // Strings and source arrays provide their actual UTF-16/indexed length.
         body.extend([
             LocalGet(0),

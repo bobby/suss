@@ -290,6 +290,12 @@ pub enum Bitwise {
     /// Private Clojure `=` of scalars: numbers equal only within a category
     /// (#336).
     Equiv,
+    /// Private packed primitive arrays for core's constructors: a new zeroed
+    /// array of an element kind and length, and an unchecked element store
+    /// (#336).
+    PackedNew,
+    PackedStore,
+    PackedTest,
 }
 impl Bitwise {
     pub(crate) fn from_name(name: &str) -> Option<Self> {
@@ -374,6 +380,9 @@ impl Bitwise {
             Self::ParseLong => "number-parse-long",
             Self::HashNumber => "number-hash",
             Self::Equiv => "number-equiv",
+            Self::PackedNew => "packed-array-new",
+            Self::PackedStore => "packed-array-store",
+            Self::PackedTest => "packed-array-test",
         }
     }
     pub(crate) fn arity(self) -> usize {
@@ -395,9 +404,10 @@ impl Bitwise {
             | Self::LongTest
             | Self::DoubleTest
             | Self::ToLong
-            | Self::HashNumber => 1,
+            | Self::HashNumber
+            | Self::PackedTest => 1,
             Self::ParseLong => 4,
-            Self::RangeCount => 3,
+            Self::RangeCount | Self::PackedStore => 3,
             _ => 2,
         }
     }
@@ -422,9 +432,10 @@ impl Bitwise {
                 | Self::LongTest
                 | Self::DoubleTest
                 | Self::Equiv
+                | Self::PackedTest
         ) {
             Type::Bool
-        } else if matches!(self, Self::ParseLong | Self::RangeCount) {
+        } else if matches!(self, Self::ParseLong | Self::RangeCount | Self::PackedNew | Self::PackedStore) {
             Type::Value
         } else {
             Type::Number
@@ -2612,6 +2623,9 @@ impl Analyzer<'_> {
                 "hash-number" => Some(Bitwise::HashNumber),
                 "equiv" => Some(Bitwise::Equiv),
                 "cast" => Some(Bitwise::Cast),
+                "packed-array" => Some(Bitwise::PackedNew),
+                "packed-store" => Some(Bitwise::PackedStore),
+                "packed-array?" => Some(Bitwise::PackedTest),
                 _ => None,
             };
             if let Some(operation) = operation {
