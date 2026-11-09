@@ -29,6 +29,7 @@ The proposal has not changed this roadmap's accepted semantics or release gates.
 | [M10: Reader, printer and analyzer as data](https://github.com/bobby/suss/milestone/12) | M4 | All M10 acceptance criteria pass |
 | [M11: Compile cost and code size](https://github.com/bobby/suss/milestone/13) | M4 | All M11 acceptance criteria pass |
 | [M12: Clojure numeric tower](https://github.com/bobby/suss/milestone/14) | M4 | All M12 acceptance criteria pass |
+| [M15: Performance](https://github.com/bobby/suss/milestone/15) | M4, M12 | All M15 acceptance criteria pass |
 
 M4 and M5 can overlap after their foundations; M8 feasibility happens in M0,
 with browser product delivery after the WASI alpha. CSP is deliberately last.
@@ -47,6 +48,22 @@ ratios and BigDecimals, unboxed wherever the compiler can, `:suss`/`:default`
 reader features, and JVM Clojure as the suite oracle. It can proceed alongside
 M5–M7; its reader package can land first, and M7's numeric compatibility
 depends on it.
+M15 makes compiled code fast where profiling shows it is slow: calls, var
+reads and dispatch, not numbers (#349). A fixed-arity call costs about 815
+instructions, against a target of under 50 for a direct-linked call. Its gate is
+measured on a release build against JVM Clojure 1.12:
+
+- var reads cost the same however many `binding`s enclose them;
+- keyword `=` takes under 5 ns, and vector `nth` under 10 ns;
+- a monomorphic protocol call costs within 2× of a direct call;
+- the benchmark suite runs within about 5× of the JVM.
+
+Var reads, inline predicates and structured control flow come first. An ADR
+then fixes the calling convention, which must avoid wasmtime's host call for
+reading a function reference out of a GC struct. Direct linking, protocol
+dispatch, core fast paths and Binaryen follow it. [M12-05]'s primitive entry
+points become typed slots on the new convention; its unboxed locals don't wait.
+It can proceed alongside M5–M7.
 
 ## Work packages
 
