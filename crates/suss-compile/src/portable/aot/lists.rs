@@ -2,7 +2,7 @@
 //! canonical element and nested-string buffers have explicit transfer ownership.
 use super::{boundary_error_message, lift_scalar, lower_scalar, strings, ListElement, Scalar};
 use crate::runtime_abi;
-use wasm_encoder::{BlockType, Function, Instruction, MemArg};
+use wasm_encoder::{BlockType, Function, HeapType, Instruction, MemArg};
 
 pub(super) struct Locals {
     pub value: u32,
@@ -13,7 +13,6 @@ pub(super) struct Locals {
     pub index: u32,
     pub output: u32,
     pub integer: u32,
-    pub number: u32,
     /// Index of the module's imported false global.
     pub sentinels: u32,
     /// An `i64` scratch local for boxing a long.
@@ -28,7 +27,7 @@ fn emit(body: &mut Function, instructions: &[Instruction<'_>]) {
 }
 fn size(element: ListElement) -> i32 {
     match element {
-        ListElement::String | ListElement::Scalar(Scalar::F64) => 8,
+        ListElement::String | ListElement::Scalar(Scalar::F64 | Scalar::U64 | Scalar::S64) => 8,
         ListElement::Scalar(Scalar::Bool | Scalar::U8 | Scalar::S8) => 1,
         ListElement::Scalar(Scalar::U16 | Scalar::S16) => 2,
         ListElement::Scalar(_) => 4,
@@ -57,6 +56,7 @@ fn load(ty: Scalar) -> Instruction<'static> {
         Scalar::U32 | Scalar::S32 => I32Load(memory(0, 2)),
         Scalar::F32 => F32Load(memory(0, 2)),
         Scalar::F64 => F64Load(memory(0, 3)),
+        Scalar::U64 | Scalar::S64 => I64Load(memory(0, 3)),
     }
 }
 fn store(ty: Scalar) -> Instruction<'static> {
@@ -67,6 +67,7 @@ fn store(ty: Scalar) -> Instruction<'static> {
         Scalar::U32 | Scalar::S32 => I32Store(memory(0, 2)),
         Scalar::F32 => F32Store(memory(0, 2)),
         Scalar::F64 => F64Store(memory(0, 3)),
+        Scalar::U64 | Scalar::S64 => I64Store(memory(0, 3)),
     }
 }
 fn address(body: &mut Function, pointer: u32, index: u32, element: ListElement) {
@@ -197,7 +198,7 @@ pub(super) fn copy_in(
         ListElement::Scalar(ty) => {
             address(body, locals.pointer, locals.index, element);
             body.instruction(&load(ty));
-            lift_scalar(body, &ty, locals.sentinels, locals.wide);
+            lift_scalar(body, &ty, locals.sentinels, locals.wide, locals.scratch, export);
         }
         ListElement::String => {
             address(body, locals.pointer, locals.index, element);
@@ -253,6 +254,105 @@ pub(super) fn release_input(
     release(body, element, locals);
 }
 
+/// The packed array element type (`runtime_abi::PACKED_STORAGE` order) whose
+/// array a list of `ty` also accepts: `list<u8>` takes a `byte-array`'s bits.
+fn packed_kind(ty: Scalar) -> Option<u32> {
+    match ty {
+        Scalar::S8 | Scalar::U8 => Some(0),
+        Scalar::S16 => Some(1),
+        Scalar::S32 => Some(2),
+        Scalar::F32 => Some(3),
+        Scalar::S64 => Some(4),
+        Scalar::F64 => Some(5),
+        _ => None,
+    }
+}
+/// Allocate the output buffer for `length` elements.
+fn allocate(body: &mut Function, element: ListElement, locals: &Locals) {
+    use Instruction::*;
+    emit(
+        body,
+        &[
+            I32Const(0),
+            I32Const(0),
+            I32Const(alignment(element)),
+            LocalGet(locals.length),
+            I32Const(size(element)),
+            I32Mul,
+            Call(8),
+            LocalSet(locals.output),
+        ],
+    );
+}
+/// Store the output list in the return area, leaving its address.
+fn result_area(body: &mut Function, locals: &Locals) {
+    use Instruction::*;
+    emit(
+        body,
+        &[
+            I32Const(0),
+            LocalGet(locals.output),
+            I32Store(memory(0, 2)),
+            I32Const(0),
+            LocalGet(locals.length),
+            I32Store(memory(4, 2)),
+            I32Const(0),
+        ],
+    );
+}
+/// A packed array of the list's element type is copied from its storage,
+/// without boxing; the value in `locals.value` is known to be packed.
+fn copy_packed(body: &mut Function, ty: Scalar, kind: u32, locals: &Locals, export: &str) {
+    use Instruction::*;
+    let storage = runtime_abi::PACKED_STORAGE + kind;
+    emit(
+        body,
+        &[
+            LocalGet(locals.value),
+            RefCastNonNull(HeapType::Concrete(runtime_abi::PACKED)),
+            StructGet {
+                struct_type_index: runtime_abi::PACKED,
+                field_index: 0,
+            },
+            LocalTee(locals.container),
+            RefTestNonNull(HeapType::Concrete(storage)),
+            I32Eqz,
+            If(BlockType::Empty),
+        ],
+    );
+    boundary_error_message(
+        body,
+        locals.scratch,
+        &format!("WIT export {export} returned a primitive array of another element type"),
+    );
+    emit(
+        body,
+        &[
+            End,
+            LocalGet(locals.container),
+            RefCastNonNull(HeapType::Concrete(storage)),
+            ArrayLen,
+            LocalSet(locals.length),
+        ],
+    );
+    let element = ListElement::Scalar(ty);
+    allocate(body, element, locals);
+    begin(body, locals.length, locals.index);
+    address(body, locals.output, locals.index, element);
+    emit(
+        body,
+        &[
+            LocalGet(locals.container),
+            RefCastNonNull(HeapType::Concrete(storage)),
+            LocalGet(locals.index),
+            if kind < 2 { ArrayGetU(storage) } else { ArrayGet(storage) },
+            store(ty),
+        ],
+    );
+    end(body, locals.index);
+    result_area(body, locals);
+}
+
 pub(super) fn copy_out(
     body: &mut Function,
     element: ListElement,
@@ -263,6 +363,22 @@ pub(super) fn copy_out(
     export: &str,
 ) {
     use Instruction::*;
+    let packed = match element {
+        ListElement::Scalar(ty) => packed_kind(ty).map(|kind| (ty, kind)),
+        ListElement::String => None,
+    };
+    if let Some((ty, kind)) = packed {
+        emit(
+            body,
+            &[
+                LocalGet(locals.value),
+                RefTestNonNull(HeapType::Concrete(runtime_abi::PACKED)),
+                If(BlockType::Result(wasm_encoder::ValType::I32)),
+            ],
+        );
+        copy_packed(body, ty, kind, locals, export);
+        body.instruction(&Else);
+    }
     emit(body, &[LocalGet(locals.value), LocalSet(locals.container)]);
     schema(body, root, 1, locals.container, None);
     body.instruction(&LocalSet(locals.container));
@@ -279,7 +395,7 @@ pub(super) fn copy_out(
                 ty,
                 locals.value,
                 locals.integer,
-                locals.number,
+                locals.wide,
                 export,
                 locals.sentinels,
             );
@@ -296,19 +412,7 @@ pub(super) fn copy_out(
         }),
     }
     end(body, locals.index);
-    emit(
-        body,
-        &[
-            I32Const(0),
-            I32Const(0),
-            I32Const(alignment(element)),
-            LocalGet(locals.length),
-            I32Const(size(element)),
-            I32Mul,
-            Call(8),
-            LocalSet(locals.output),
-        ],
-    );
+    allocate(body, element, locals);
     begin(body, locals.length, locals.index);
     schema(body, root, 2, locals.container, Some(locals.index));
     body.instruction(&LocalSet(locals.value));
@@ -320,7 +424,7 @@ pub(super) fn copy_out(
                 ty,
                 locals.value,
                 locals.integer,
-                locals.number,
+                locals.wide,
                 export,
                 locals.sentinels,
             );
@@ -343,18 +447,10 @@ pub(super) fn copy_out(
         }
     }
     end(body, locals.index);
-    emit(
-        body,
-        &[
-            I32Const(0),
-            LocalGet(locals.output),
-            I32Store(memory(0, 2)),
-            I32Const(0),
-            LocalGet(locals.length),
-            I32Store(memory(4, 2)),
-            I32Const(0),
-        ],
-    );
+    result_area(body, locals);
+    if packed.is_some() {
+        body.instruction(&End);
+    }
 }
 
 pub(super) fn post_return(body: &mut Function, element: ListElement) {
@@ -379,7 +475,6 @@ pub(super) fn post_return(body: &mut Function, element: ListElement) {
         index: 3,
         output: 0,
         integer: 0,
-        number: 0,
         sentinels: 0, // release never builds a sentinel or a long
         wide: 0,
         scratch: 0,

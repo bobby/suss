@@ -181,9 +181,9 @@ fn core_primitives_and_recursion_are_direct_linked_and_private_helpers_hidden() 
             let error = session.eval(source).map(|_| ()).expect_err(source).to_string();
             assert!(error.contains("is private to suss.core"), "{phase} {source}: {error}");
         }
-        // Exact WIT integers and runtime-built classes are closed to core protocol extension too.
+        // Aliased core classes and runtime-built classes are closed to core protocol extension too.
         for source in [
-            "(do (def aliased-wit WitSigned64) (extend-type aliased-wit IHash (-hash [_] 0)))",
+            "(do (def aliased-keyword Keyword) (extend-type aliased-keyword IHash (-hash [_] 0)))",
             "(extend-type ExceptionInfo IEquiv (-equiv [_ _] true))",
         ] {
             assert!(session.eval(source).is_err(), "{phase}: {source}");

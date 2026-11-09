@@ -1,0 +1,39 @@
+ 22:09:25 up 17 days, 13:25,  1 user,  load average: 1.14, 1.97, 2.61
+3950da6a WIP: type-group count from PACKED, part 2 handoff note (#336, part 2)
+n = 5000000, best of 3; Suss startup 0.17 s
+
+Nanoseconds per operation, less its control loop; a control's row is
+the whole loop iteration.
+
+| Case | Suss ns | JVM ns | Ratio |
+| --- | --- | --- | --- |
+| `i` (control) | 86.7 | 0.29 | 299× |
+| `(identity i)` | 66.3 | 0.09 | 703× |
+| `(identical? i 7)` | 72.5 | 0.00 |  |
+| `(= i 7)` | 457.5 | 0.08 | 5489× |
+| `(= i 7.5)` | 465.7 | 5.58 | 83× |
+| `(== i 7)` | -1.6 | 0.18 |  |
+| `(+ i 7)` | -0.9 | 0.21 |  |
+| `(hash i)` | 192.4 | 4.53 | 42× |
+| `(double i)` (control) | 184.7 | 0.31 | 599× |
+| `(= (double i) 7.5)` | 602.7 | 0.70 | 867× |
+| `(+ (double i) 0.5)` | 48.8 | -0.02 |  |
+| `(hash (double i))` | 254.1 | 10.66 | 24× |
+| `(bit-and i 1023)` (control) | 101.4 | 0.30 | 337× |
+| `(aget la (bit-and i 1023))` | 53.6 | 0.63 | 85× |
+| `(aget ia (bit-and i 1023))` | 45.0 | 0.63 | 71× |
+| `(aget da (bit-and i 1023))` | 53.8 | 0.61 | 88× |
+| `(aget oa (bit-and i 1023))` | 46296.3 | 3.93 | 11778× |
+| `(nth v (bit-and i 1023))` | 2572.2 | 2.24 | 1149× |
+| `(aset la (bit-and i 1023) i)` | 71.9 | 0.78 | 92× |
+| `(aset da (bit-and i 1023) 1.5)` | 98.3 | 0.79 | 125× |
+| `(aset oa (bit-and i 1023) i)` | 89014.8 | 9.83 | 9057× |
+
+Per element of 1024, the loop step included:
+
+| Case | Suss ns | JVM ns | Ratio |
+| --- | --- | --- | --- |
+| `(reduce + la)` | 302.2 | 21.43 | 14× |
+| `(reduce + da)` | 318.3 | 19.71 | 16× |
+| `(reduce + oa)` | 45939.4 | 18.87 | 2435× |
+| `(reduce + v)` | 438.4 | 5.33 | 82× |

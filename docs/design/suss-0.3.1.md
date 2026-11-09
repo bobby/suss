@@ -266,8 +266,7 @@ all scalar and composite types, maps, adopted `implements`/external-id semantics
 async functions, futures and streams. Compile-time unsupported-feature errors are
 acceptable during development; release claims require interoperability tests.
 
-This table follows ADR-0003's mapping. Until #336 implements it, integers up to `u32` cross as longs (range-checked as binary64 values when leaving Suss) and `s64`/`u64` as exact wrapper values
-([exact integers](../runtime/portable-exact-integers.md)).
+This table follows ADR-0003's mapping ([WIT numbers](../runtime/wit-numbers.md)). Until BigInt arrives (#338), a `u64` above 2^63 − 1 entering Suss throws.
 
 | WIT type | Suss boundary value |
 | --- | --- |

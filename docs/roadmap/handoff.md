@@ -29710,3 +29710,15 @@ document's 2026-10-25 decision now records all three outcomes.
 - Suite: 2,218 passes, unchanged; `reduce` now fails on `boolean-array` instead of `long-array`.
 - Part 3 (closes #336): WIT integers to longs and floats to doubles, range-checked on the way out, packed arrays for numeric lists, retiring `WitSigned64`/`WitUnsigned64`/`wit-s64`/`wit-u64`/`wit-to-number` and the `portable-exact-integers` doc; u64 above 2^63−1 throws until #338.
 - Full baseline on df604621: 2181 passed, 3 failed, 14 ignored, 285 binaries. Two `build_cache` failures were the local seed cache exceeding the `/tmp` quota (cleared, both pass); `portable_comparator_foundations` asserted 12 group types and now uses `PACKED + 1` (passes). CI green on the final head.
+
+## #336 part 3: WIT numbers, packed-array lists, retired 64-bit wrappers (2026-11-09)
+
+- PR #352, closes #336. WIT `s8`–`s64` and `u8`–`u64` enter as longs, `f32`/`f64` as doubles (`portable/aot.rs`: `Scalar::U64`/`S64`, `lift_scalar`, `lower_scalar`). Integer results must be longs in the type's range (`runtime_abi::long_test`/`long_to_i64`, exact `i64` comparison); a double, even `1.0`, is rejected. Float results accept any number; `f32` from a long rounds once (`F32ConvertI64S`). A `u64` above 2^63−1 throws "… needs unsupported BigInt" in scalars, lists and options until #338.
+- Lists (`aot/lists.rs`): `list<s64>`/`list<u64>` work; numeric list results take the matching packed array (`copy_packed`, no boxing) or a vector; another element type's packed array throws. `list<u8>` takes a `byte-array`'s bits.
+- Retired: `WitSigned64`, `WitUnsigned64`, `wit-s64`, `wit-u64`, `wit-to-number` (removed from `exact-integers.sus`, sha in `core-import.json`), `aot/exact.rs`, `aot/exact_schema.rs`; `PUBLIC_FIELD_TYPES` is empty.
+- `=` (`sequence-equality.json`): a number on the left compares with a number on the right by `suss.bootstrap/equiv` only, and asks `-equiv` of a collection on the right, as `Util.equiv`; 552 → 157 ns for `(= i 7)`. Don't put a `^boolean` hint on that branch: `analyzer_edn_core`'s round trip then infers a different `:tag`.
+- Benchmark: `experiments/numeric-representation/suss-jvm/bench.py`, README "Suss against JVM Clojure (#336)"; follow-ups #348, #349, #350, #351. Never commit `experiments/numeric-representation/Cargo.lock`.
+- Docs: `wit-numbers.md` (replaces `portable-exact-integers.md`), `arithmetic-values.md`, `scalar-predicates.md`, `comparisons.md` rewritten from JVM probes; documented gaps: `identical?` by value for numbers and strings, `(/ 1 2)` is 0.5 until #339, `+'` absent.
+- Tests: `portable_aot_wit_numbers.rs` (about 5 minutes; compiled components are cached per source). Overflow messages are "long overflow", as the JVM.
+- Full baseline on afd873c0: 2184 passed, 0 failed, 14 ignored. CI green on afd873c0.
+- Next in M12: #337, #338, #339. The M15 plan defers #337's primitive entry points until after #353; its unboxed locals can go ahead.

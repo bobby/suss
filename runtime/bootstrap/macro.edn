@@ -94,8 +94,6 @@
          "suss.bindings.macro:suss.core/->Var"
          "suss.bindings.macro:suss.core/->VectorNode"
          "suss.bindings.macro:suss.core/->Volatile"
-         "suss.bindings.macro:suss.core/->WitSigned64"
-         "suss.bindings.macro:suss.core/->WitUnsigned64"
          "suss.bindings.macro:suss.core/-add-method"
          "suss.bindings.macro:suss.core/-add-watch"
          "suss.bindings.macro:suss.core/-as-transient"
@@ -314,8 +312,6 @@
          "suss.bindings.macro:suss.core/Var"
          "suss.bindings.macro:suss.core/VectorNode"
          "suss.bindings.macro:suss.core/Volatile"
-         "suss.bindings.macro:suss.core/WitSigned64"
-         "suss.bindings.macro:suss.core/WitUnsigned64"
          "suss.bindings.macro:suss.core/abs"
          "suss.bindings.macro:suss.core/accumulating-seq-count"
          "suss.bindings.macro:suss.core/add-to-string-hash-cache"
@@ -874,14 +870,6 @@
          "suss.bindings.macro:suss.core/volatile!"
          "suss.bindings.macro:suss.core/volatile?"
          "suss.bindings.macro:suss.core/vreset!"
-         "suss.bindings.macro:suss.core/wit-checked-words"
-         "suss.bindings.macro:suss.core/wit-parse-words"
-         "suss.bindings.macro:suss.core/wit-s64"
-         "suss.bindings.macro:suss.core/wit-s64?"
-         "suss.bindings.macro:suss.core/wit-to-number"
-         "suss.bindings.macro:suss.core/wit-u64"
-         "suss.bindings.macro:suss.core/wit-u64?"
-         "suss.bindings.macro:suss.core/wit-valid-word?"
          "suss.bindings.macro:suss.core/with-meta"
          "suss.bindings.macro:suss.core/write-all"
          "suss.bindings.macro:suss.core/zero?"
@@ -898,7 +886,6 @@
          "suss.bindings.macro:suss.internal.bootstrap-link/ExceptionInfo"
          "suss.bindings.macro:suss.internal.bootstrap-link/Object"
          "suss.bindings.macro:suss.internal.bootstrap-link/aclone"
-         "suss.bindings.macro:suss.internal.bootstrap-link/aget"
          "suss.bindings.macro:suss.internal.bootstrap-link/array?"
          "suss.bindings.macro:suss.internal.bootstrap-link/ex-cause"
          "suss.bindings.macro:suss.internal.bootstrap-link/ex-data"
@@ -995,8 +982,6 @@
          "suss.bindings.macro:suss.internal.core-link/->Var"
          "suss.bindings.macro:suss.internal.core-link/->VectorNode"
          "suss.bindings.macro:suss.internal.core-link/->Volatile"
-         "suss.bindings.macro:suss.internal.core-link/->WitSigned64"
-         "suss.bindings.macro:suss.internal.core-link/->WitUnsigned64"
          "suss.bindings.macro:suss.internal.core-link/-add-method"
          "suss.bindings.macro:suss.internal.core-link/-add-watch"
          "suss.bindings.macro:suss.internal.core-link/-as-transient"
@@ -1215,8 +1200,6 @@
          "suss.bindings.macro:suss.internal.core-link/Var"
          "suss.bindings.macro:suss.internal.core-link/VectorNode"
          "suss.bindings.macro:suss.internal.core-link/Volatile"
-         "suss.bindings.macro:suss.internal.core-link/WitSigned64"
-         "suss.bindings.macro:suss.internal.core-link/WitUnsigned64"
          "suss.bindings.macro:suss.internal.core-link/abs"
          "suss.bindings.macro:suss.internal.core-link/accumulating-seq-count"
          "suss.bindings.macro:suss.internal.core-link/add-to-string-hash-cache"
@@ -1775,14 +1758,6 @@
          "suss.bindings.macro:suss.internal.core-link/volatile!"
          "suss.bindings.macro:suss.internal.core-link/volatile?"
          "suss.bindings.macro:suss.internal.core-link/vreset!"
-         "suss.bindings.macro:suss.internal.core-link/wit-checked-words"
-         "suss.bindings.macro:suss.internal.core-link/wit-parse-words"
-         "suss.bindings.macro:suss.internal.core-link/wit-s64"
-         "suss.bindings.macro:suss.internal.core-link/wit-s64?"
-         "suss.bindings.macro:suss.internal.core-link/wit-to-number"
-         "suss.bindings.macro:suss.internal.core-link/wit-u64"
-         "suss.bindings.macro:suss.internal.core-link/wit-u64?"
-         "suss.bindings.macro:suss.internal.core-link/wit-valid-word?"
          "suss.bindings.macro:suss.internal.core-link/with-meta"
          "suss.bindings.macro:suss.internal.core-link/write-all"
          "suss.bindings.macro:suss.internal.core-link/zero?"
@@ -2063,15 +2038,15 @@
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d666c7573682f31"
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d77726974652f32"
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
-         "suss.bindings.macro:suss.internal.reify/t-reify-3447-10891"],
+         "suss.bindings.macro:suss.internal.reify/t-reify-3447-10892"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "c755bbaad16afe6577983c95866f605012848b56b909f2cee4f07bd2df7bfee2",
- :dependency-graph-sha256 "207a8c7f7fdeaeb25b9b10b4073971136087be2d83f2e927b5de638ab34477c9",
+ :compiler-source-sha256 "27c23e8de410dbd6a0af3b9d175c9536254cdcc719a4bf35c061bbf4db5aad3e",
+ :dependency-graph-sha256 "3a6ab655e46f8cc8273a7228b21e7dfc01ae6f3564899d47df0185132677ff7d",
  :flags [],
  :format-version 2,
  :phase "macro",
  :runtime-abi 3,
- :source-sha256 "9e87fec15aefce62a400115061ae3e007a80d563e80814ce820c99875740c0ea",
+ :source-sha256 "84e402cdd1455c9c8cf680fff118cee38e57d0f381c8b21258704067275d3ca5",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "03db566755faf87ae26fe9588f85f9540acec5e5ae1c9181d38d41e310fa9b78",
+ :wasm-sha256 "96398331cafccba683e7a26a820508e03029d31d18aab64843b4488875c9d21d",
  :wasm-tools "0.258.0"}

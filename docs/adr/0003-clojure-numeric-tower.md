@@ -13,7 +13,7 @@ where Suss still follows ClojureScript instead. Every Suss number is one
 IEEE-754 binary64 value, boxed in the shared GC group's `NUMBER` struct
 (`runtime_abi.rs`). The reader rejects ratios and the `N` and `M` suffixes, `=`
 is `==`, and WIT `s64`/`u64` values travel in separate `WitSigned64` and
-`WitUnsigned64` wrapper types ([exact integers](../runtime/portable-exact-integers.md)).
+`WitUnsigned64` wrapper types, since retired ([WIT numbers](../runtime/wit-numbers.md)).
 
 This disagrees with the oracle in ways programs can see. Clojure 1.12.6 gives:
 

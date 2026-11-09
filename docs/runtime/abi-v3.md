@@ -82,9 +82,8 @@ types' values, nil until first use; later runtime globals follow them.
 - On the host, `portable_session::runtime_number` decodes a number as
   `RuntimeNumber::Long` or `RuntimeNumber::Double`. Macro data and EDN carry
   `Kind::Long` and `Value::Long` beside doubles.
-- AOT exports lift WIT integers up to `u32` as longs. `s64` and `u64` still
-  travel as the `WitSigned64` and `WitUnsigned64` wrappers, whose words and
-  schema operations are now longs; direct WIT numbers are #336's.
+- AOT exports lift WIT integers as longs and floats as doubles, and lower them
+  with exact range checks ([WIT numbers](wit-numbers.md), #336).
 
 ## Collector
 
