@@ -518,7 +518,7 @@ fn small_integer_boundaries_round_trip_and_check_numeric_results() {
     )
     .unwrap();
     let kinds = ["u8", "s8", "u16", "s16", "u32", "s32"];
-    let declarations = kinds.iter().map(|kind| format!("export echo-{kind}: func(x: {kind}) -> {kind}; export check-{kind}: func(x: f64) -> {kind};")).collect::<String>();
+    let declarations = kinds.iter().map(|kind| format!("export echo-{kind}: func(x: {kind}) -> {kind}; export check-{kind}: func(x: s64) -> {kind};")).collect::<String>();
     let (resolve, selected) = world(&format!(
         "package test:integers; world api {{ export seen: func() -> f64; {declarations} }}"
     ));
@@ -542,27 +542,24 @@ fn small_integer_boundaries_round_trip_and_check_numeric_results() {
                 .get_typed_func::<($ty,), ($ty,)>(&mut store, concat!("echo-", $kind))
                 .unwrap();
             let checked = instance
-                .get_typed_func::<(f64,), ($ty,)>(&mut store, concat!("check-", $kind))
+                .get_typed_func::<(i64,), ($ty,)>(&mut store, concat!("check-", $kind))
                 .unwrap();
             for value in $values {
                 assert_eq!(echo.call(&mut store, (value,)).unwrap().0, value);
                 echo.post_return(&mut store).unwrap();
-                assert_eq!(checked.call(&mut store, (value as f64,)).unwrap().0, value);
+                assert_eq!(checked.call(&mut store, (value as i64,)).unwrap().0, value);
                 checked.post_return(&mut store).unwrap();
             }
             store.gc(None).unwrap();
-            assert_eq!(checked.call(&mut store, (-0.0,)).unwrap().0, 0);
+            assert_eq!(checked.call(&mut store, (0,)).unwrap().0, 0);
             checked.post_return(&mut store).unwrap();
+            // Results are longs checked against the type's range (#336);
+            // doubles are rejected (portable_aot_wit_numbers.rs).
             for value in [
-                <$ty>::MIN as f64 - 1.0,
-                <$ty>::MAX as f64 + 1.0,
-                0.5,
-                -0.5,
-                f64::from_bits(1),
-                -f64::from_bits(1),
-                f64::NAN,
-                f64::INFINITY,
-                f64::NEG_INFINITY,
+                <$ty>::MIN as i64 - 1,
+                <$ty>::MAX as i64 + 1,
+                i64::MIN,
+                i64::MAX,
             ] {
                 // A failed lifted component call locks its Store in the pinned
                 // canonical engine. Decode each failure in a fresh instance.
@@ -572,7 +569,7 @@ fn small_integer_boundaries_round_trip_and_check_numeric_results() {
                     .instantiate(&mut store, &component)
                     .unwrap();
                 let checked = instance
-                    .get_typed_func::<(f64,), ($ty,)>(&mut store, concat!("check-", $kind))
+                    .get_typed_func::<(i64,), ($ty,)>(&mut store, concat!("check-", $kind))
                     .unwrap();
                 assert!(
                     checked.call(&mut store, (value,)).is_err(),

@@ -94,8 +94,6 @@
          "suss.bindings.runtime:suss.core/->Var"
          "suss.bindings.runtime:suss.core/->VectorNode"
          "suss.bindings.runtime:suss.core/->Volatile"
-         "suss.bindings.runtime:suss.core/->WitSigned64"
-         "suss.bindings.runtime:suss.core/->WitUnsigned64"
          "suss.bindings.runtime:suss.core/-add-method"
          "suss.bindings.runtime:suss.core/-add-watch"
          "suss.bindings.runtime:suss.core/-as-transient"
@@ -314,8 +312,6 @@
          "suss.bindings.runtime:suss.core/Var"
          "suss.bindings.runtime:suss.core/VectorNode"
          "suss.bindings.runtime:suss.core/Volatile"
-         "suss.bindings.runtime:suss.core/WitSigned64"
-         "suss.bindings.runtime:suss.core/WitUnsigned64"
          "suss.bindings.runtime:suss.core/abs"
          "suss.bindings.runtime:suss.core/accumulating-seq-count"
          "suss.bindings.runtime:suss.core/add-to-string-hash-cache"
@@ -874,14 +870,6 @@
          "suss.bindings.runtime:suss.core/volatile!"
          "suss.bindings.runtime:suss.core/volatile?"
          "suss.bindings.runtime:suss.core/vreset!"
-         "suss.bindings.runtime:suss.core/wit-checked-words"
-         "suss.bindings.runtime:suss.core/wit-parse-words"
-         "suss.bindings.runtime:suss.core/wit-s64"
-         "suss.bindings.runtime:suss.core/wit-s64?"
-         "suss.bindings.runtime:suss.core/wit-to-number"
-         "suss.bindings.runtime:suss.core/wit-u64"
-         "suss.bindings.runtime:suss.core/wit-u64?"
-         "suss.bindings.runtime:suss.core/wit-valid-word?"
          "suss.bindings.runtime:suss.core/with-meta"
          "suss.bindings.runtime:suss.core/write-all"
          "suss.bindings.runtime:suss.core/zero?"
@@ -898,7 +886,6 @@
          "suss.bindings.runtime:suss.internal.bootstrap-link/ExceptionInfo"
          "suss.bindings.runtime:suss.internal.bootstrap-link/Object"
          "suss.bindings.runtime:suss.internal.bootstrap-link/aclone"
-         "suss.bindings.runtime:suss.internal.bootstrap-link/aget"
          "suss.bindings.runtime:suss.internal.bootstrap-link/array?"
          "suss.bindings.runtime:suss.internal.bootstrap-link/ex-cause"
          "suss.bindings.runtime:suss.internal.bootstrap-link/ex-data"
@@ -995,8 +982,6 @@
          "suss.bindings.runtime:suss.internal.core-link/->Var"
          "suss.bindings.runtime:suss.internal.core-link/->VectorNode"
          "suss.bindings.runtime:suss.internal.core-link/->Volatile"
-         "suss.bindings.runtime:suss.internal.core-link/->WitSigned64"
-         "suss.bindings.runtime:suss.internal.core-link/->WitUnsigned64"
          "suss.bindings.runtime:suss.internal.core-link/-add-method"
          "suss.bindings.runtime:suss.internal.core-link/-add-watch"
          "suss.bindings.runtime:suss.internal.core-link/-as-transient"
@@ -1215,8 +1200,6 @@
          "suss.bindings.runtime:suss.internal.core-link/Var"
          "suss.bindings.runtime:suss.internal.core-link/VectorNode"
          "suss.bindings.runtime:suss.internal.core-link/Volatile"
-         "suss.bindings.runtime:suss.internal.core-link/WitSigned64"
-         "suss.bindings.runtime:suss.internal.core-link/WitUnsigned64"
          "suss.bindings.runtime:suss.internal.core-link/abs"
          "suss.bindings.runtime:suss.internal.core-link/accumulating-seq-count"
          "suss.bindings.runtime:suss.internal.core-link/add-to-string-hash-cache"
@@ -1775,14 +1758,6 @@
          "suss.bindings.runtime:suss.internal.core-link/volatile!"
          "suss.bindings.runtime:suss.internal.core-link/volatile?"
          "suss.bindings.runtime:suss.internal.core-link/vreset!"
-         "suss.bindings.runtime:suss.internal.core-link/wit-checked-words"
-         "suss.bindings.runtime:suss.internal.core-link/wit-parse-words"
-         "suss.bindings.runtime:suss.internal.core-link/wit-s64"
-         "suss.bindings.runtime:suss.internal.core-link/wit-s64?"
-         "suss.bindings.runtime:suss.internal.core-link/wit-to-number"
-         "suss.bindings.runtime:suss.internal.core-link/wit-u64"
-         "suss.bindings.runtime:suss.internal.core-link/wit-u64?"
-         "suss.bindings.runtime:suss.internal.core-link/wit-valid-word?"
          "suss.bindings.runtime:suss.internal.core-link/with-meta"
          "suss.bindings.runtime:suss.internal.core-link/write-all"
          "suss.bindings.runtime:suss.internal.core-link/zero?"
@@ -2065,13 +2040,13 @@
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
          "suss.bindings.runtime:suss.internal.reify/t-reify-3447-10891"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "c755bbaad16afe6577983c95866f605012848b56b909f2cee4f07bd2df7bfee2",
- :dependency-graph-sha256 "207a8c7f7fdeaeb25b9b10b4073971136087be2d83f2e927b5de638ab34477c9",
+ :compiler-source-sha256 "7c69c5af28c403a6dacff1bc1f81caeb85e5fa3039ba03c0fb9a979b1e22c3b3",
+ :dependency-graph-sha256 "6cd767fd26ec6518b17c342e8cc58d6c16265098ce329584fcbc03c8a933cc28",
  :flags [],
  :format-version 2,
  :phase "runtime",
  :runtime-abi 3,
- :source-sha256 "9e87fec15aefce62a400115061ae3e007a80d563e80814ce820c99875740c0ea",
+ :source-sha256 "efa574de4db2eca3be2b13e96f56731cfa8f95343553e044a193086f1e71e595",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "6b0ee9b6f507a30a1040a0dab5a17c15437f08f804d0cfe010e93b3d1480acb4",
+ :wasm-sha256 "6d6664343ea619e1ccc395110713714f9bced0bdffaba336c6b73df38e0bc6a8",
  :wasm-tools "0.258.0"}

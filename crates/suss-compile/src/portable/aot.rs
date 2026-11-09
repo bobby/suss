@@ -7,8 +7,6 @@ use wasm_encoder::*;
 use wit_parser::{FunctionKind, Type, WorldItem};
 pub use wit_parser::{Resolve, WorldId};
 
-mod exact;
-mod exact_schema;
 mod list_schema;
 mod lists;
 mod strings;
@@ -45,6 +43,8 @@ enum Scalar {
     S16,
     U32,
     S32,
+    U64,
+    S64,
 }
 #[derive(Clone, Copy)]
 enum ListElement {
@@ -55,7 +55,6 @@ enum ListElement {
 #[derive(Clone, Copy)]
 enum Boundary {
     Scalar(Scalar),
-    Exact(bool),
     Option(Scalar),
     String,
     StringOption,
@@ -65,7 +64,6 @@ impl Boundary {
     fn flat(self) -> Vec<ValType> {
         match self {
             Self::Scalar(ty) => vec![ty.core()],
-            Self::Exact(_) => vec![ValType::I64],
             Self::Option(ty) => vec![ValType::I32, ty.core()],
             Self::String | Self::List(_) => vec![ValType::I32, ValType::I32],
             Self::StringOption => vec![ValType::I32; 3],
@@ -74,19 +72,12 @@ impl Boundary {
     fn core_result(self) -> ValType {
         match self {
             Self::Scalar(ty) => ty.core(),
-            Self::Exact(_) => ValType::I64,
             Self::Option(_) | Self::String | Self::StringOption | Self::List(_) => ValType::I32,
         }
     }
     fn component(self, types: &mut ComponentTypeSection) -> ComponentValType {
         match self {
             Self::Scalar(ty) => ty.component(),
-            Self::Exact(signed) => if signed {
-                PrimitiveValType::S64
-            } else {
-                PrimitiveValType::U64
-            }
-            .into(),
             Self::String => PrimitiveValType::String.into(),
             Self::List(element) => {
                 let index = types.len();
@@ -107,12 +98,6 @@ impl Boundary {
                 types.defined_type().option(ty.component());
                 ComponentValType::Type(index)
             }
-        }
-    }
-    fn exact(self) -> Option<bool> {
-        match self {
-            Self::Exact(signed) => Some(signed),
-            _ => None,
         }
     }
     fn string(self) -> bool {
@@ -197,9 +182,6 @@ fn boundary(resolve: &Resolve, mut ty: Type) -> Result<Boundary, Diagnostic> {
         if ty == Type::String {
             return Ok(Boundary::String);
         }
-        if ty == Type::S64 || ty == Type::U64 {
-            return Ok(Boundary::Exact(ty == Type::S64));
-        }
         return scalar(resolve, ty).map(Boundary::Scalar);
     }
     Err(error("WIT boundary alias nesting exceeds 64"))
@@ -213,12 +195,13 @@ impl Scalar {
             }
             Self::F32 => ValType::F32,
             Self::F64 => ValType::F64,
+            Self::U64 | Self::S64 => ValType::I64,
         }
     }
     fn payload_memory(self) -> MemArg {
         // Canonical option's one-byte discriminant precedes its aligned payload.
         let (offset, align) = match self {
-            Self::F64 => (8, 3),
+            Self::F64 | Self::U64 | Self::S64 => (8, 3),
             Self::F32 | Self::U32 | Self::S32 => (4, 2),
             Self::U16 | Self::S16 => (2, 1),
             _ => (1, 0),
@@ -233,6 +216,7 @@ impl Scalar {
         let arg = self.payload_memory();
         match self {
             Self::F64 => Instruction::F64Store(arg),
+            Self::U64 | Self::S64 => Instruction::I64Store(arg),
             Self::F32 => Instruction::F32Store(arg),
             Self::U32 | Self::S32 => Instruction::I32Store(arg),
             Self::U16 | Self::S16 => Instruction::I32Store16(arg),
@@ -243,6 +227,7 @@ impl Scalar {
         let arg = self.payload_memory();
         match self {
             Self::F64 => Instruction::F64Load(arg),
+            Self::U64 | Self::S64 => Instruction::I64Load(arg),
             Self::F32 => Instruction::F32Load(arg),
             Self::U32 | Self::S32 => Instruction::I32Load(arg),
             Self::U16 => Instruction::I32Load16U(arg),
@@ -251,14 +236,18 @@ impl Scalar {
             _ => Instruction::I32Load8U(arg),
         }
     }
-    fn integer_bounds(self) -> Option<(f64, f64, bool)> {
+    /// The range of longs an integer type accepts. A long is at most
+    /// 2^63 - 1, so `u64` above that needs BigInt (#338).
+    fn integer_bounds(self) -> Option<(i64, i64)> {
         Some(match self {
-            Self::U8 => (0.0, u8::MAX as f64, false),
-            Self::S8 => (i8::MIN as f64, i8::MAX as f64, true),
-            Self::U16 => (0.0, u16::MAX as f64, false),
-            Self::S16 => (i16::MIN as f64, i16::MAX as f64, true),
-            Self::U32 => (0.0, u32::MAX as f64, false),
-            Self::S32 => (i32::MIN as f64, i32::MAX as f64, true),
+            Self::U8 => (0, u8::MAX.into()),
+            Self::S8 => (i8::MIN.into(), i8::MAX.into()),
+            Self::U16 => (0, u16::MAX.into()),
+            Self::S16 => (i16::MIN.into(), i16::MAX.into()),
+            Self::U32 => (0, u32::MAX.into()),
+            Self::S32 => (i32::MIN.into(), i32::MAX.into()),
+            Self::U64 => (0, i64::MAX),
+            Self::S64 => (i64::MIN, i64::MAX),
             _ => return None,
         })
     }
@@ -278,6 +267,8 @@ impl From<Scalar> for PrimitiveValType {
             Scalar::S16 => Self::S16,
             Scalar::U32 => Self::U32,
             Scalar::S32 => Self::S32,
+            Scalar::U64 => Self::U64,
+            Scalar::S64 => Self::S64,
         }
     }
 }
@@ -315,6 +306,8 @@ fn scalar(resolve: &Resolve, mut ty: Type) -> Result<Scalar, Diagnostic> {
             Type::S16 => Ok(Scalar::S16),
             Type::U32 => Ok(Scalar::U32),
             Type::S32 => Ok(Scalar::S32),
+            Type::U64 => Ok(Scalar::U64),
+            Type::S64 => Ok(Scalar::S64),
             Type::Id(id) => match &resolve.types[id].kind {
                 wit_parser::TypeDefKind::Type(next) => {
                     ty = *next;
@@ -326,7 +319,7 @@ fn scalar(resolve: &Resolve, mut ty: Type) -> Result<Scalar, Diagnostic> {
                 ))),
             },
             _ => Err(error(format!(
-                "Portable AOT {} boundary adapters remain unimplemented; supported scalar types are bool/f32/f64 and small integers",
+                "Portable AOT {} boundary adapters remain unimplemented; supported scalar types are bool, integers and floats",
                 boundary_description(resolve, ty, 0)
             ))),
         };
@@ -636,10 +629,6 @@ pub fn component(
         export.params.iter().any(|(_, ty)| ty.list().is_some())
             || export.result.is_some_and(|ty| ty.list().is_some())
     });
-    let exact_schema = exports.iter().any(|export| {
-        export.params.iter().any(|(_, ty)| ty.exact().is_some())
-            || export.result.is_some_and(|ty| ty.exact().is_some())
-    });
     let mut fragments = fragments.to_vec();
     if option_schema {
         fragments.push(super::prepare_privileged_fragment(
@@ -682,13 +671,6 @@ pub fn component(
             Phase::Runtime,
         )?);
     }
-    if exact_schema {
-        fragments.push(super::prepare_privileged_fragment(
-            exact_schema::SOURCE,
-            &fragments[0].environment,
-            Phase::Runtime,
-        )?);
-    }
     // Reject every artifact before assembling any initialization start function.
     for fragment in &fragments {
         runtime_abi::verify_artifact(&fragment.wasm, &runtime_abi::Manifest::default())
@@ -716,7 +698,6 @@ pub fn component(
         fragments.len(),
         option_schema,
         list_schema,
-        exact_schema,
     )?;
     let asynchronous = exports
         .iter()
@@ -1149,7 +1130,6 @@ fn adapter(
     fragment_count: usize,
     option_schema: bool,
     list_schema: bool,
-    exact_schema: bool,
 ) -> Result<Vec<u8>, Diagnostic> {
     let has_memory = exports.iter().any(|export| {
         export.params.iter().any(|(_, ty)| ty.uses_memory())
@@ -1298,8 +1278,8 @@ fn adapter(
             .map(|(_, ty)| ty.flat().len() as u32)
             .sum::<u32>();
         let integer = result + 1;
-        let number = integer + 1;
-        let pointer = number + 1;
+        // integer + 1 is an unused f64 local.
+        let pointer = integer + 2;
         let length = pointer + 1;
         let position = length + 1;
         let unit = position + 1;
@@ -1338,22 +1318,16 @@ fn adapter(
             index: unit + 5,
             output: unit + 6,
             integer,
-            number,
             sentinels,
             wide,
             scratch,
         };
         let list_root = schema_base + u32::from(option_schema);
-        let exact_root = list_root + u32::from(list_schema);
         body.instruction(&Instruction::GlobalGet(global_indices[&export.global]))
             .instruction(&Instruction::Call(0));
         let mut parameter = 0;
         for (_, ty) in &export.params {
             match ty {
-                Boundary::Exact(signed) => {
-                    exact::lift(&mut body, *signed, parameter, exact_root, wide);
-                    parameter += 1;
-                }
                 Boundary::List(element) => {
                     lists::copy_in(
                         &mut body,
@@ -1378,7 +1352,7 @@ fn adapter(
                 }
                 Boundary::Scalar(ty) => {
                     body.instruction(&Instruction::LocalGet(parameter));
-                    lift_scalar(&mut body, ty, sentinels, wide);
+                    lift_scalar(&mut body, ty, sentinels, wide, scratch, &export.name);
                     parameter += 1;
                 }
                 Boundary::StringOption => {
@@ -1408,7 +1382,7 @@ fn adapter(
                     body.instruction(&Instruction::LocalGet(parameter))
                         .instruction(&Instruction::If(BlockType::Result(VALUE)))
                         .instruction(&Instruction::LocalGet(parameter + 1));
-                    lift_scalar(&mut body, ty, sentinels, wide);
+                    lift_scalar(&mut body, ty, sentinels, wide, scratch, &export.name);
                     body.instruction(&Instruction::Else)
                         .instruction(&runtime_abi::sentinel_value(runtime_abi::NIL))
                         .instruction(&Instruction::End);
@@ -1461,9 +1435,6 @@ fn adapter(
             .instruction(&Instruction::LocalSet(result));
         match export.result {
             None => {}
-            Some(Boundary::Exact(signed)) => {
-                exact::lower(&mut body, signed, result, list_locals.container, exact_root, scratch);
-            }
             Some(Boundary::List(element)) => {
                 lists::copy_out(
                     &mut body,
@@ -1571,7 +1542,7 @@ fn adapter(
                     .instruction(&Instruction::I32Const(0));
             }
             Some(Boundary::Scalar(ty)) => {
-                lower_scalar(&mut body, ty, result, integer, number, &export.name, sentinels)
+                lower_scalar(&mut body, ty, result, integer, wide, &export.name, sentinels)
             }
             Some(Boundary::Option(ty)) => {
                 debug_assert!(option_schema);
@@ -1606,7 +1577,7 @@ fn adapter(
                         memory_index: 0,
                     }))
                     .instruction(&Instruction::I32Const(0));
-                lower_scalar(&mut body, ty, result, integer, number, &export.name, sentinels);
+                lower_scalar(&mut body, ty, result, integer, wide, &export.name, sentinels);
                 let store = ty.payload_store();
                 body.instruction(&store)
                     .instruction(&Instruction::End)
@@ -1620,8 +1591,7 @@ fn adapter(
     types.ty().function([], []);
     functions.function(start_type);
     let mut start = Function::new([]);
-    let schema_count =
-        usize::from(option_schema) + usize::from(list_schema) + usize::from(exact_schema);
+    let schema_count = usize::from(option_schema) + usize::from(list_schema);
     for index in 0..fragment_count - schema_count {
         start
             .instruction(&Instruction::Call(helpers + index as u32))
@@ -1638,18 +1608,9 @@ fn adapter(
         }
         if list_schema && index == 0 {
             start
-                .instruction(&Instruction::Call(
-                    helpers + fragment_count as u32 - 1 - u32::from(exact_schema),
-                ))
-                .instruction(&Instruction::GlobalSet(
-                    schema_base + u32::from(option_schema),
-                ));
-        }
-        if exact_schema && index == 0 {
-            start
                 .instruction(&Instruction::Call(helpers + fragment_count as u32 - 1))
                 .instruction(&Instruction::GlobalSet(
-                    schema_base + u32::from(option_schema) + u32::from(list_schema),
+                    schema_base + u32::from(option_schema),
                 ));
         }
     }
@@ -1732,7 +1693,7 @@ fn adapter(
     {
         public.export("suss.canonical.memory", ExportKind::Memory, 0);
     }
-    if option_schema || list_schema || exact_schema {
+    if option_schema || list_schema {
         let mut globals = GlobalSection::new();
         for _ in 0..schema_count {
             globals.global(
@@ -1755,8 +1716,9 @@ fn adapter(
         .section(&code);
     Ok(module.finish())
 }
-/// `wide` is an `i64` scratch local for boxing a long.
-fn lift_scalar(body: &mut Function, ty: &Scalar, sentinels: u32, wide: u32) {
+/// `wide` is an `i64` scratch local for boxing a long, and `scratch` a value
+/// local for an error message.
+fn lift_scalar(body: &mut Function, ty: &Scalar, sentinels: u32, wide: u32, scratch: u32, name: &str) {
     match ty {
         Scalar::Bool => {
             for instruction in runtime_abi::boolean_in(sentinels) {
@@ -1769,6 +1731,28 @@ fn lift_scalar(body: &mut Function, ty: &Scalar, sentinels: u32, wide: u32) {
         }
         Scalar::F64 => {
             body.instruction(&Instruction::Call(1));
+        }
+        Scalar::U64 => {
+            // A long is at most 2^63 - 1; larger values need BigInt (#338).
+            body.instruction(&Instruction::LocalTee(wide))
+                .instruction(&Instruction::I64Const(0))
+                .instruction(&Instruction::I64LtS)
+                .instruction(&Instruction::If(BlockType::Empty));
+            boundary_error_message(
+                body,
+                scratch,
+                &format!("WIT export {name} received a u64 above 9223372036854775807, which needs unsupported BigInt"),
+            );
+            body.instruction(&Instruction::End)
+                .instruction(&Instruction::LocalGet(wide));
+            for instruction in runtime_abi::long_box_in(wide) {
+                body.instruction(&instruction);
+            }
+        }
+        Scalar::S64 => {
+            for instruction in runtime_abi::long_box_in(wide) {
+                body.instruction(&instruction);
+            }
         }
         Scalar::U8 | Scalar::S8 | Scalar::U16 | Scalar::S16 | Scalar::U32 | Scalar::S32 => {
             // Normalize canonical subword bits before widening to a long;
@@ -1790,10 +1774,10 @@ fn lift_scalar(body: &mut Function, ty: &Scalar, sentinels: u32, wide: u32) {
                 }
                 _ => {}
             }
-            body.instruction(&if ty.integer_bounds().unwrap().2 {
-                Instruction::I64ExtendI32S
-            } else {
+            body.instruction(&if matches!(ty, Scalar::U8 | Scalar::U16 | Scalar::U32) {
                 Instruction::I64ExtendI32U
+            } else {
+                Instruction::I64ExtendI32S
             });
             for instruction in runtime_abi::long_box_in(wide) {
                 body.instruction(&instruction);
@@ -1802,12 +1786,13 @@ fn lift_scalar(body: &mut Function, ty: &Scalar, sentinels: u32, wide: u32) {
     }
 }
 
+/// `integer` is an `i32` scratch local and `wide` an `i64` one.
 fn lower_scalar(
     body: &mut Function,
     scalar: Scalar,
     result: u32,
     integer: u32,
-    number: u32,
+    wide: u32,
     name: &str,
     sentinels: u32,
 ) {
@@ -1828,8 +1813,8 @@ fn lower_scalar(
             body.instruction(&Instruction::End)
                 .instruction(&Instruction::LocalGet(integer));
         }
-        scalar => {
-            // A long or a double; #336 range-checks longs exactly.
+        Scalar::F32 | Scalar::F64 => {
+            // Any number, as a double; f32 rounds.
             for instruction in runtime_abi::number_test(result) {
                 body.instruction(&instruction);
             }
@@ -1840,34 +1825,36 @@ fn lower_scalar(
             for instruction in runtime_abi::number_to_f64(result) {
                 body.instruction(&instruction);
             }
-            if let Some((min, max, signed)) = scalar.integer_bounds() {
-                // Validate before truncation: NaN fails the integral test,
-                // infinities fail bounds, and no invalid result reaches a
-                // trapping numeric conversion instead of a language error.
-                body.instruction(&Instruction::LocalSet(number))
-                    .instruction(&Instruction::LocalGet(number))
-                    .instruction(&Instruction::F64Const(min.into()))
-                    .instruction(&Instruction::F64Lt)
-                    .instruction(&Instruction::LocalGet(number))
-                    .instruction(&Instruction::F64Const(max.into()))
-                    .instruction(&Instruction::F64Gt)
-                    .instruction(&Instruction::I32Or)
-                    .instruction(&Instruction::LocalGet(number))
-                    .instruction(&Instruction::LocalGet(number))
-                    .instruction(&Instruction::F64Trunc)
-                    .instruction(&Instruction::F64Ne)
-                    .instruction(&Instruction::I32Or)
-                    .instruction(&Instruction::If(BlockType::Empty));
-                boundary_error(body, result, name);
-                body.instruction(&Instruction::End)
-                    .instruction(&Instruction::LocalGet(number))
-                    .instruction(&if signed {
-                        Instruction::I32TruncF64S
-                    } else {
-                        Instruction::I32TruncF64U
-                    });
-            } else if matches!(scalar, Scalar::F32) {
+            if matches!(scalar, Scalar::F32) {
                 body.instruction(&Instruction::F32DemoteF64);
+            }
+        }
+        scalar => {
+            // A long within the type's range; a double is not converted.
+            let (min, max) = scalar.integer_bounds().unwrap();
+            for instruction in runtime_abi::long_test(result) {
+                body.instruction(&instruction);
+            }
+            body.instruction(&Instruction::I32Eqz)
+                .instruction(&Instruction::If(BlockType::Empty));
+            boundary_error(body, result, name);
+            body.instruction(&Instruction::End);
+            for instruction in runtime_abi::long_to_i64(result) {
+                body.instruction(&instruction);
+            }
+            body.instruction(&Instruction::LocalTee(wide))
+                .instruction(&Instruction::I64Const(min))
+                .instruction(&Instruction::I64LtS)
+                .instruction(&Instruction::LocalGet(wide))
+                .instruction(&Instruction::I64Const(max))
+                .instruction(&Instruction::I64GtS)
+                .instruction(&Instruction::I32Or)
+                .instruction(&Instruction::If(BlockType::Empty));
+            boundary_error(body, result, name);
+            body.instruction(&Instruction::End)
+                .instruction(&Instruction::LocalGet(wide));
+            if !matches!(scalar, Scalar::U64 | Scalar::S64) {
+                body.instruction(&Instruction::I32WrapI64);
             }
         }
     }

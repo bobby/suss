@@ -6,11 +6,8 @@ use crate::portable::resolve::{NominalForm, ProtocolMethod};
 /// only scalars, with no storage arrays or hash caches, so reading them exposes
 /// nothing private (design decision 2026-10-25). Their fields are immutable,
 /// so named writes are rejected like those to any immutable field (#278).
-const PUBLIC_FIELD_TYPES: &[&str] = &[
-    // Exact WIT 64-bit integers: high and low unsigned 32-bit words.
-    "WitSigned64",
-    "WitUnsigned64",
-];
+/// None remain since the WIT 64-bit wrappers were retired for longs (#336).
+const PUBLIC_FIELD_TYPES: &[&str] = &[];
 /// Core types whose constructors user code may call, while their fields stay
 /// private (#279): those core macro expansions construct in user code
 /// (defrecord's seq and iterator, lazy-seq, delay, defmulti), as Clojure's

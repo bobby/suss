@@ -424,7 +424,7 @@ world multi-string {
 #[test]
 fn test_i64_export() {
     let suss = r#"
-(defn ^:export big [] (suss.core/wit-s64 "999999999999"))
+(defn ^:export big [] 999999999999)
 "#;
     let wit = r#"
 package test:int64;
@@ -448,13 +448,7 @@ world int64-world {
 #[test]
 fn test_i64_param_return() {
     let suss = r#"
-(defn ^:export inc64 [x]
-  (let [high (.-high x) low (.-low x)]
-    (if (== low 4294967295)
-      (if (== high 2147483647)
-        (throw "Signed 64-bit increment overflow")
-        (new suss.core/WitSigned64 (if (== high 4294967295) 0 (+ high 1)) 0))
-      (new suss.core/WitSigned64 high (+ low 1)))))
+(defn ^:export inc64 [x] (inc x))
 "#;
     let wit = r#"
 package test:int64;
@@ -810,16 +804,10 @@ fn execute_wit_export_catch_and_finally_with_flattened_params() {
 
 
 #[test]
-fn execute_file_compiled_exact_integer_wrappers_and_word_carries() {
+fn execute_file_compiled_s64_as_longs_with_overflow_checks() {
     let (mut store, instance) = instantiate_fixture(
-        r#"(defn ^:export big [] (suss.core/wit-s64 "9223372036854775807"))
-        (defn ^:export inc64 [x]
-          (let [high (.-high x) low (.-low x)]
-            (if (== low 4294967295)
-              (if (== high 2147483647)
-                (throw "Signed 64-bit increment overflow")
-                (new suss.core/WitSigned64 (if (== high 4294967295) 0 (+ high 1)) 0))
-              (new suss.core/WitSigned64 high (+ low 1)))))"#,
+        r#"(defn ^:export big [] 9223372036854775807)
+        (defn ^:export inc64 [x] (inc x))"#,
         "export big: func() -> s64; export inc64: func(x: s64) -> s64;",
     );
     let big = instance.get_typed_func::<(), (i64,)>(&mut store, "big").unwrap();
@@ -836,8 +824,10 @@ fn execute_file_compiled_exact_integer_wrappers_and_word_carries() {
         .take_pending_exception()
         .expect("signed overflow must be a language exception");
     let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
-    let message = fields[0].unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
+    // A language error: its message is field 1.
+    let error = fields[0].unwrap_anyref().unwrap().as_struct(&store).unwrap().unwrap();
+    let message = error.field(&mut store, 1).unwrap().unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
     let units = message.elems(&mut store).unwrap()
         .map(|value| value.unwrap_i32() as u16).collect::<Vec<_>>();
-    assert_eq!(String::from_utf16(&units).unwrap(), "Signed 64-bit increment overflow");
+    assert_eq!(String::from_utf16(&units).unwrap(), "long overflow");
 }

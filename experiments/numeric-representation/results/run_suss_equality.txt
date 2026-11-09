@@ -1,0 +1,16 @@
+3950da6a, suss run --invoke, n = 3000000, best of 3, less 0.17 s startup.
+ns per iteration, then less the control loop (`i`):
+ctl 94.3 0.0            i
+eqv 413.1 318.8         (-equiv i 7)
+eq7 646.0 551.7         (= i 7)
+eqi 239.5 145.2         (= i i)
+nilq 159.9 65.6         (nil? i)
+kw 2161.1 2066.8        (= :a :b)
+
+After = answers a number without dispatching -equiv (#336 part 3), same method:
+ctl 93.5 0.0            i
+eqv 431.1 337.6         (-equiv i 7)
+eq7 250.3 156.8         (= i 7)
+eqi 274.7 181.2         (= i i)
+nilq 159.7 66.2         (nil? i)
+kw 2016.0 1922.5        (= :a :b)

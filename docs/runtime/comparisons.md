@@ -1,68 +1,23 @@
-# Comparison primitives and bounded macros
+# Comparisons
 
-> Describes the binary64 implementation that predates the 2026-11-06 numeric
-> decision: numbers follow Clojure ([ADR-0003](../adr/0003-clojure-numeric-tower.md)).
+`<`, `<=`, `>`, `>=` and `==` compare numbers as Clojure 1.12 does
+([ADR-0003](../adr/0003-clojure-numeric-tower.md)), across longs and doubles:
+`(< 1 2.5)` is true and `(== 1 1.0)` is true, while `(= 1 1.0)` is false
+([numeric hashing](numeric-hashing.md)).
 
-Original checked comparison primitives now implement separate runtime and bounded
-macro behavior through verified HIR/IR and the shared ten-type GC ABI. Runtime <, <=, >,
->= and numeric == are first-class functions with one/two/variadic signatures;
-caller operands evaluate before invocation. Relational strings compare UTF-16
-units when both primitives are strings, otherwise numeric coercion applies.
-Runtime numeric == documents non-number behavior as undefined; full collection
-IEquiv/equality remains separate work.
+- Any operand that isn't a number throws, for example "< requires number
+  operands", where the JVM throws a `ClassCastException` or a
+  `NullPointerException`. Strings compare with `compare`, not `<`.
+- NaN compares false with everything, itself included, and `-0.0` equals
+  `0.0`: `(> 0.0 -0.0)` is false and `(<= -0.0 0.0)` true.
+- With one argument each returns true without comparing; with more it checks
+  each adjacent pair, left to right, and stops at the first false.
+- As first-class values they check arity and evaluate their arguments once in
+  source order. The core macros expand a direct call into a chain of binary
+  comparisons; a lexical binding of the same name hides the macro.
 
-Pinned core.cljc comparison macros1164–1187 erase unary operand syntax and expand
-variadic chains through short-circuiting binary comparisons. Middle syntax can
-appear again in a later comparison. Macro == uses strict primitive identity;
-its nil/undefined, Boolean/number and object-reference behavior is not the
-runtime numeric equivalence implementation. Lexical callable bindings hide macro
-lookup. Namespace/qualified macro versus runtime-var replacement needs explicit
-source-backed execution, not inference from symbol spelling.
+`compare` orders numbers by value, so `(compare 1 1.0)` is 0; `max` and `min`
+return the greater or lesser operand, and NaN if either is NaN.
 
-The separate123-case primary corpus verifies primitive scalar/UTF-16 order,
-signed zero, NaN, infinity, nil/undefined, unary effects, repeated middle effects,
-short-circuit chains, runtime lookup, qualified macros and lexical shadowing.
-Native execution now passes this corpus, preserving the original119 observations
-and adding four independent thrown-operand/finally/short-circuit probes. Additional regressions cover located
-macro arity/resource errors, universal runtime arity rejection, erased unary
-throws, retained values through GC, lexical and namespace resolution (including
-explicit user refers retaining automatic core macros while provider-qualified
-aliases invoke user vars), a300-operand
-runtime call, UTF-16 loop fuel recovery and typed unsupported-object coercion.
-Public HIR/IR guards reject wrong arity/result types and non-dominating operands.
-
-Five additional capture probes record an explicit divergence, with exact pinned
-TypeError name/message versus the accepted native outcome. The pinned generic
-core wrapper reads a replacement global arity property even when invoked through
-an old capture. The accepted design section7 requires an old captured function
-to retain original behavior. This is the already documented arithmetic boundary
-([arithmetic evidence](arithmetic-values.md)), not a new semantics decision.
-The reference runner certifies the five exact errors separately; native tests
-require the accepted old-capture outcome. Neither is labeled equivalent, skipped
-or replaced by a fabricated success. Complete portable core acceptance must
-retain this boundary explicitly.
-
-Source provenance: pinned commitc4295f303100bbf5afac449242d30bca1126f1a1,
-core.cljs2755–2801 (< through >=) and3064–3075 (numeric ==), plus core.cljc
-1164–1187 (comparison macros). The source submodule retains upstream notices/EPL.
-No upstream form is copied or imported here. Ten source declarations have partial
-hash-bound reviews. There is no layout/global/prelude/version or dependency change;
-the comparison functions append to the original runtime. Canonical bootstrap
-cells now total29 (previously24). Relational string loops compare unsigned UTF-16
-units; other supported primitives use existing numeric coercion. Strict identity
-uses the private predicate factory, independent of mutable public predicate cells.
-Public numeric== support is certified for numbers; non-number behavior remains
-outside its documented upstream guarantee, and complete IEquiv/collection equality
-is separate work; the public -equiv protocol hook and its redefinition are not
-connected by this primitive bootstrap. Arbitrary object coercion and complete source/core/macro import
-remain unfinished. Recursive macro expansion consumes the configured compilation
-allowance rather than a fixed256-operand cap; runtime first-class calls use
-constant callback code and a loop. Full baseline, independent review/pushed fixes and exact-head CI are required
-before PR readiness. No acceptance gate is complete from this prerequisite slice.
-
-A separate ten-case pinned/native referral corpus certifies all five operators:
-with a user provider explicitly referred into another namespace, unqualified
-calls still expand the automatic core macro. Provider-qualified alias calls
-invoke the user functions. This differs from an own runtime declaration hiding
-an automatically referred comparison macro. Independent fresh source compilation
-corrected the initial review's unsupported inference that both behaved alike.
+Tests: `crates/suss-cli/tests/portable_comparisons.rs` and
+`crates/suss-cli/tests/comparison_operand_evaluation.rs`.

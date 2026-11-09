@@ -133,6 +133,38 @@ pub fn number_to_f64(local: u32) -> Vec<Instruction<'static>> {
         End,
     ]
 }
+/// `[] -> [i32]`: whether a local holds a long.
+pub fn long_test(local: u32) -> [Instruction<'static>; 5] {
+    use Instruction::*;
+    [
+        LocalGet(local),
+        RefTestNonNull(HeapType::I31),
+        LocalGet(local),
+        RefTestNonNull(HeapType::Concrete(LONG)),
+        I32Or,
+    ]
+}
+/// `[] -> [i64]`: the long in `local`; traps unless it is one.
+pub fn long_to_i64(local: u32) -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    vec![
+        LocalGet(local),
+        RefTestNonNull(HeapType::I31),
+        If(BlockType::Result(ValType::I64)),
+        LocalGet(local),
+        RefCastNonNull(HeapType::I31),
+        I31GetS,
+        I64ExtendI32S,
+        Else,
+        LocalGet(local),
+        RefCastNonNull(HeapType::Concrete(LONG)),
+        StructGet {
+            struct_type_index: LONG,
+            field_index: 0,
+        },
+        End,
+    ]
+}
 /// `[i64] -> [eqref]`: a long, as an i31 when it fits and boxed otherwise,
 /// using `scratch`, an `i64` local.
 pub fn long_box_in(scratch: u32) -> Vec<Instruction<'static>> {

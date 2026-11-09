@@ -181,3 +181,56 @@ size.
 Suss sets a 64 MiB initial heap (`SUSS_GC_INITIAL_MIB` overrides it), chosen
 from REPL measurements recorded in
 [ADR-0003](../../docs/adr/0003-clojure-numeric-tower.md#collector).
+
+## Suss against JVM Clojure (#336)
+
+[`suss-jvm/bench.py`](suss-jvm/bench.py) times numeric operations in compiled
+Suss against the same forms in JVM Clojure 1.12.6. Each case evaluates one
+expression in a loop; its cost is the loop's time per iteration less that of a
+control loop that evaluates only the operands. Suss runs a compiled component
+with `suss run --invoke`, which meters no fuel, as one process per run, less
+the process's startup; the JVM runs every case in one process with
+`System/nanoTime`, after three warm-up runs of each. JVM forms carry the array
+type hints Clojure code would use, and box a long where the shared form would
+reflect. The JVM is a local measuring tool, as for the suite oracle.
+
+```sh
+cargo build --profile test -p suss-cli --bin suss --locked
+python3 experiments/numeric-representation/suss-jvm/bench.py 5000000 3
+```
+
+Results on 3950da6a, the same machine at load 1.1–2.6, best of three, in
+[run_suss_jvm.txt](results/run_suss_jvm.txt). Nanoseconds per operation, less
+the control; a control's row is its whole loop iteration:
+
+| Case | Suss | JVM |
+| --- | --- | --- |
+| Loop of `<`, `inc` and `identical?` (control) | 87 | 0.29 |
+| `(identity i)`, a call to a core function | 66 | 0.09 |
+| `(+ i 7)`, `(== i 7)` | 0 | 0.2 |
+| `(= i 7)` | 458 | 0.08 |
+| `(= i 7.5)` | 466 | 5.6 |
+| `(hash i)` | 192 | 4.5 |
+| `(+ (double i) 0.5)` | 49 | 0 |
+| `(hash (double i))` | 254 | 11 |
+| `aget` of a `long-array`, `int-array` or `double-array` | 45–54 | 0.6 |
+| `aset` of a `long-array` or `double-array` | 72–98 | 0.8 |
+| `aget` of a 1024-element object array (`to-array`) | 46,296 | 3.9 |
+| `(nth v i)` of a 1024-element vector | 2,572 | 2.2 |
+| `(reduce + a)` of a packed array, per element | 302–318 | 20–21 |
+| `(reduce + v)` of a vector, per element | 438 | 5.3 |
+
+- Suss's numeric representation costs little. Inline arithmetic and `==` cost
+  nothing measurable beyond the loop, a boxed double about 50 ns, and a packed
+  array access about one call. A call to a core function costs about 66 ns.
+- Protocol dispatch dominates (#349). In a separate run, `(-equiv i 7)` cost 319 ns,
+  `(= i i)` 145 ns and `(= :a :b)` 2,067 ns. `(= i 7)` paid both: core's `=`
+  asked `suss.bootstrap/equiv` and then, when two numbers differed, dispatched
+  `-equiv`, which Clojure's `Util.equiv` doesn't for a number. Since #336's
+  third part `=` answers a number directly, and `(= i 7)` costs 157 ns
+  ([run_suss_equality.txt](results/run_suss_equality.txt)).
+- An object array built by `.push`, as `to-array` builds one, keeps elements
+  past its dense prefix in a chain of entries (`sparse_arrays.rs`), so an
+  access is linear in the length and `reduce` over it quadratic (#348).
+- Only the Suss side includes process startup noise, so differences under
+  about 5 ns are within noise; negative differences are reported as 0.

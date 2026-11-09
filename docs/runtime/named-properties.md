@@ -15,7 +15,7 @@ built-in `suss.core` instances are private: unprivileged reads and writes throw
 writes; user code may read only whitelisted statics (`EMPTY`, `fromArray`,
 `fromArrays`, `createWithCheck`, `createAsIfByAssoc`, `HASHMAP_THRESHOLD`) of
 the user-facing collection classes, never node classes, other statics or
-`prototype`. `WitSigned64`/`WitUnsigned64` keep their `high`/`low` words public.
+`prototype`.
 Compiler-authored source and compiler lowerings of user syntax keep privileged
 access.
 

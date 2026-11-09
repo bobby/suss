@@ -352,20 +352,21 @@ fn optional_small_integer_result_rejects_invalid_payload_with_language_exception
     // A failed canonical lifted call locks its instance in pinned Wasmtime,
     // independently of the Suss exception payload. Use fresh instances for
     // failures; successful calls below retain repeated-call/post-return coverage.
-    for bad in [256.0, -2.0, 1.5, f64::NAN, f64::INFINITY] {
+    // 7 returns the double 1.5, which an integer result rejects (#336).
+    for bad in [256, -2, 7] {
         let (mut store, instance) = instantiate(
-            "(defn ^:export value [x] (if (== x -1) [:none] [:some x]))",
-            "export value: func(x: f64) -> option<u8>;",
+            "(defn ^:export value [x] (if (== x -1) [:none] [:some (if (== x 7) 1.5 x)]))",
+            "export value: func(x: s64) -> option<u8>;",
         );
         let function = instance
-            .get_typed_func::<(f64,), (Option<u8>,)>(&mut store, "value")
+            .get_typed_func::<(i64,), (Option<u8>,)>(&mut store, "value")
             .unwrap();
-        assert_eq!(function.call(&mut store, (42.0,)).unwrap(), (Some(42),));
+        assert_eq!(function.call(&mut store, (42,)).unwrap(), (Some(42),));
         function.post_return(&mut store).unwrap();
-        assert_eq!(function.call(&mut store, (-1.0,)).unwrap(), (None,));
+        assert_eq!(function.call(&mut store, (-1,)).unwrap(), (None,));
         function.post_return(&mut store).unwrap();
         store.gc(None).unwrap();
-        assert_eq!(function.call(&mut store, (42.0,)).unwrap(), (Some(42),));
+        assert_eq!(function.call(&mut store, (42,)).unwrap(), (Some(42),));
         function.post_return(&mut store).unwrap();
         assert!(function.call(&mut store, (bad,)).is_err());
         let exception = store
@@ -397,7 +398,7 @@ fn optional_small_integer_result_rejects_invalid_payload_with_language_exception
             "WIT export value returned an incompatible scalar value"
         );
         assert!(function
-            .call(&mut store, (42.0,))
+            .call(&mut store, (42,))
             .unwrap_err()
             .to_string()
             .contains("cannot enter component instance"));
