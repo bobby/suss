@@ -26,6 +26,12 @@ def adapt(raw, name):
     if name == 'to-array':
         if body.count('(nil? s)') != 1 or body.count('(. ary push (first s))') != 1: raise ValueError('exact primitive macro/dot sites')
         body = body.replace('(nil? s)', '(suss.bootstrap/nil? s)').replace('(. ary push (first s))', '(.push ary (first s))')
+    if name == 'vector':
+        # Arguments applied from a packed primitive array take the vec path (#336).
+        before = '(if (and (instance? IndexedSeq args) (zero? (.-i args)))'
+        after = '(if (and (instance? IndexedSeq args) (zero? (.-i args))\n           (not (suss.bootstrap/packed-array? (.-arr args))))'
+        if body.count(before) != 1: raise ValueError('exact IndexedSeq reuse site')
+        body = body.replace(before, after)
     if name == 'some':
         before = '(when-let [s (seq coll)]\n    (or (pred (first s)) (recur pred (next s))))'
         after = '(let [some_seq_once__ (seq coll)]\n    (when some_seq_once__\n      (let [s some_seq_once__]\n        (or (pred (first s)) (recur pred (next s))))))'
