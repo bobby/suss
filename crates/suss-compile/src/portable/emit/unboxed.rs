@@ -95,7 +95,10 @@ fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool) -> La
     }
     if double {
         Lattice::Known(Repr::Double)
-    } else if arguments.iter().all(|argument| *argument == Lattice::Top) {
+    } else if arguments.iter().all(|argument| *argument == Lattice::Top)
+        || (operator == Arithmetic::Divide && arguments.contains(&Lattice::Top))
+    {
+        // A quotient waits for every operand: one double makes it raw.
         Lattice::Top
     } else if operator == Arithmetic::Divide {
         // A quotient of longs is a long only when exact.

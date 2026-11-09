@@ -37,9 +37,12 @@ because their locals are saved as GC values across a suspension.
 A raw value is boxed at each use that needs a GC value: a call argument, a
 collection element, a closure capture, a return, a `throw`, a loop local that
 stays boxed, or any operation without a raw form. Within one block, a value is
-boxed at most once. A long boxes to an i31 when it fits and to a `LONG`
-struct otherwise, and a double to a `NUMBER` struct; both are inline, without a
-runtime call.
+boxed at most once, but each block boxes it again: a raw double that escapes
+inside a loop allocates a box on every iteration, where the boxed path made one.
+Results don't change, since `identical?` compares numbers by value
+([scalar predicates](scalar-predicates.md)). A long boxes to an i31 when it
+fits and to a `LONG` struct otherwise, and a double to a `NUMBER` struct; both
+are inline, without a runtime call.
 
 Long `+`, `-`, `*` and negation check for overflow inline. When the check
 fails, the compiler calls the boxed runtime operation on boxed copies of the

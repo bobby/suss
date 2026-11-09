@@ -117,6 +117,7 @@ fn loops_keep_counters_raw_and_box_where_values_escape() {
             "[3000004950 3000005050]",
         ),
         ("(loop [i 0 acc []] (if (< i 3) (recur (inc i) (conj acc (* i 1.5))) acc))", "(loop [i (identity 0) acc []] (if (< i 3) (recur (inc i) (conj acc (* i 1.5))) acc))", "[0.0 1.5 3.0]"),
+        ("(loop [x 1.0] (if (< x 0.001) x (recur (/ x 2))))", "(loop [x (identity 1.0)] (if (< x 0.001) x (recur (/ x 2))))", "9.765625E-4"),
         // Closures capture boxed copies of raw locals.
         ("(let [x 5 y 2.5 g (fn [] [x y])] (g))", "(let [x (identity 5) y (identity 2.5) g (fn [] [x y])] (g))", "[5 2.5]"),
         (
