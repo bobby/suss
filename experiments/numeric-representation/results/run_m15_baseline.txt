@@ -1,0 +1,50 @@
+ 12:16:22 up 18 days,  3:32,  1 user,  load average: 8.80, 9.56, 6.68
+ 12:22:29 up 18 days,  3:38,  1 user,  load average: 5.45, 6.68, 6.29
+5e5dbc53 release suss, wasmtime 49.0.1; JVM Clojure 1.12.6 on OpenJDK 21.0.13; i7-1165G7, 8 threads
+n = 5000000, best of 3; Suss startup 0.28 s
+
+Nanoseconds and user-space instructions per operation, less its control
+loop; a control's row is the whole loop iteration.
+
+| Case | Suss ns | Suss instructions | JVM ns | Ratio |
+| --- | --- | --- | --- | --- |
+| `i` (control) | 104.4 | 1,076 | 0.63 | 165× |
+| `(identity i)` | 42.0 | 806 | 0.45 | 94× |
+| `(f0)` | 47.9 | 783 | 0.89 | 54× |
+| `(f1 i)` | 61.2 | 825 | 0.12 | 511× |
+| `(f2 i i)` | 52.5 | 848 | -0.07 |  |
+| `(f3 i i i)` | 63.1 | 880 | -0.09 |  |
+| `(fv i)` | 85.2 | 1,129 | -0.08 |  |
+| `(g i)` in `(let [g (fn [x] x)] …)` | 23.7 | 617 | -0.34 |  |
+| `(identity i)` in `(binding [*d* 1] (binding [*d* 2] (binding [*d* 3] …)))` | 164.6 | 1,948 | -0.09 |  |
+| `(ident b)` | 228.2 | 2,552 | 0.81 | 282× |
+| `(identical? i 7)` | 56.1 | 949 | -0.20 |  |
+| `(nil? i)` | 50.3 | 834 | -0.21 |  |
+| `(= :a :b)` | 2754.8 | 23,202 | -0.22 |  |
+| `(= i 7)` | 143.1 | 1,914 | 0.03 |  |
+| `(= i 7.5)` | 173.2 | 2,040 | 6.78 | 26× |
+| `(== i 7)` | 5.6 | 79 | 0.05 |  |
+| `(+ i 7)` | -7.9 | 59 | 0.08 |  |
+| `(hash i)` | 232.3 | 2,374 | 6.03 | 39× |
+| `(double i)` (control) | 184.6 | 2,138 | 0.46 | 397× |
+| `(= (double i) 7.5)` | 202.9 | 2,113 | 1.09 | 187× |
+| `(+ (double i) 0.5)` | 65.7 | 402 | -0.03 |  |
+| `(hash (double i))` | 374.8 | 2,438 | 16.87 | 22× |
+| `(bit-and i 1023)` (control) | 135.7 | 1,262 | 0.62 | 221× |
+| `(aget la (bit-and i 1023))` | 85.1 | 730 | 0.68 | 124× |
+| `(aget ia (bit-and i 1023))` | 65.4 | 700 | 0.98 | 67× |
+| `(aget da (bit-and i 1023))` | 108.6 | 787 | 0.82 | 132× |
+| `(aget oa (bit-and i 1023))` | 75837.8 | 865,770 | 5.56 | 13637× |
+| `(nth v (bit-and i 1023))` | 3529.7 | 34,675 | 3.25 | 1088× |
+| `(aset la (bit-and i 1023) i)` | 71.3 | 1,043 | 1.06 | 67× |
+| `(aset da (bit-and i 1023) 1.5)` | 129.8 | 1,261 | 0.96 | 135× |
+| `(aset oa (bit-and i 1023) i)` | 195976.5 | 1,671,220 | 13.80 | 14199× |
+
+Per element of 1024, the loop step included:
+
+| Case | Suss ns | Suss instructions | JVM ns | Ratio |
+| --- | --- | --- | --- | --- |
+| `(reduce + la)` | 400.8 | 3,850 | 18.21 | 22× |
+| `(reduce + da)` | 440.6 | 4,217 | 29.59 | 15× |
+| `(reduce + oa)` | 72862.9 | 870,629 | 25.31 | 2878× |
+| `(reduce + v)` | 567.4 | 5,631 | 5.97 | 95× |
