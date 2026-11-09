@@ -338,6 +338,15 @@ fn namespace_global_reads_preserve_once_only_source_order_and_short_circuit() {
         let id = env.declare_cell(Phase::Runtime, "app", name).unwrap();
         let value = number(&mut store, runtime, expected);
         let cell = call(&mut store, runtime, "binding-new", &[value]);
+        // Bound and dynamic (`CELL_BOUND | CELL_DYNAMIC`), so reads call the
+        // wrapped binding-get: a static cell's read is inline (#354).
+        cell.unwrap_anyref()
+            .unwrap()
+            .as_struct(&store)
+            .unwrap()
+            .unwrap()
+            .set_field(&mut store, 1, Val::I32(3))
+            .unwrap();
         define(&mut store, &mut linker, &id, &cell);
     }
     let instance = fragment(

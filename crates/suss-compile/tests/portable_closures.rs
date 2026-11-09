@@ -331,6 +331,14 @@ fn bootstrap_fn_rejects_parameter_metadata_pre_and_post_conditions() {
     assert_eq!(long(&mut store, &value), 2);
 }
 
+/// Mark a cell bound and dynamic (`runtime_abi::CELL_BOUND | CELL_DYNAMIC`),
+/// so its reads call the imported binding-get these tests observe: a static
+/// cell's read is inline (#354).
+fn dynamic<T>(store: &mut Store<T>, cell: &Val) {
+    let cell = cell.unwrap_anyref().unwrap().as_struct(&*store).unwrap().unwrap();
+    cell.set_field(&mut *store, 1, Val::I32(3)).unwrap();
+}
+
 #[test]
 fn calls_evaluate_computed_callee_then_each_argument_exactly_once() {
     use portable::resolve::{Environment, Phase};
@@ -381,6 +389,7 @@ fn calls_evaluate_computed_callee_then_each_argument_exactly_once() {
     ] {
         let id = env.declare_cell(Phase::Runtime, "app", name).unwrap();
         let cell = call(&mut store, rt, "binding-new", &[value]);
+        dynamic(&mut store, &cell);
         define(&mut store, &mut linker, &id, &cell);
     }
     let target = fragment(&mut store, &linker, "((app/maker) app/a app/b)", &env);
@@ -575,6 +584,7 @@ fn non_callable_errors_happen_after_argument_effects() {
     let id = env.declare_cell(Phase::Runtime, "app", "arg").unwrap();
     let number = call(&mut store, rt, "long-box", &[Val::I64(2)]);
     let cell = call(&mut store, rt, "binding-new", &[number]);
+    dynamic(&mut store, &cell);
     define(&mut store, &mut linker, &id, &cell);
     let target = fragment(&mut store, &linker, "(1 app/arg)", &env);
     linker.instance(&mut store, "target", target).unwrap();
