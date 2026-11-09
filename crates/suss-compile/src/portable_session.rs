@@ -1508,13 +1508,16 @@ impl Session {
                     .unwrap()
                     .as_struct(&scope)?
                     .unwrap();
+                // A frame that held the cell since the checkpoint may still be
+                // reachable from a saved context, so the cell stays dynamic.
+                let dynamic = cell.field(&mut scope, 1)?.unwrap_i32() & crate::runtime_abi::CELL_DYNAMIC;
                 if let Some((value, bound)) = checkpoint.values.get(identity) {
                     let value = Val::AnyRef(value.as_ref().map(|value| value.to_rooted(&mut scope)));
                     cell.set_field(&mut scope, 0, value)?;
-                    cell.set_field(&mut scope, 1, Val::I32(*bound))?;
+                    cell.set_field(&mut scope, 1, Val::I32(*bound | dynamic))?;
                 } else {
                     cell.set_field(&mut scope, 0, Val::AnyRef(None))?;
-                    cell.set_field(&mut scope, 1, Val::I32(0))?;
+                    cell.set_field(&mut scope, 1, Val::I32(dynamic))?;
                 }
             }
         }

@@ -59,6 +59,16 @@ fn shape(body: &mut Vec<Instruction<'static>>, entries: u32) {
     error(body);
     body.push(End);
 }
+/// The flags of the cell on the stack.
+fn flags() -> [Instruction<'static>; 2] {
+    [
+        Instruction::RefCastNonNull(HeapType::Concrete(5)),
+        Instruction::StructGet {
+            struct_type_index: 5,
+            field_index: 1,
+        },
+    ]
+}
 fn check_cell(body: &mut Vec<Instruction<'static>>) {
     use Instruction::*;
     body.extend([
@@ -138,7 +148,13 @@ pub(super) fn lookup(b: &mut Builder) -> u32 {
 }
 pub(super) fn binding_get(b: &mut Builder, lookup: u32, root: Vec<Instruction<'static>>) {
     use Instruction::*;
-    let mut body = vec![
+    // Only a cell a frame has held can have a frame entry.
+    let mut body = vec![LocalGet(0)];
+    body.extend(flags());
+    body.extend([I32Const(CELL_DYNAMIC), I32And, I32Eqz, If(BlockType::Empty)]);
+    body.extend(root.iter().cloned());
+    body.extend([Return, End]);
+    body.extend([
         LocalGet(0),
         GlobalGet(CURRENT),
         Call(lookup),
@@ -148,7 +164,7 @@ pub(super) fn binding_get(b: &mut Builder, lookup: u32, root: Vec<Instruction<'s
         I32Const(0),
         I32GeS,
         If(BlockType::Result(VALUE)),
-    ];
+    ]);
     array(&mut body, 1);
     body.extend([LocalGet(2), ArrayGet(ARGS), Else]);
     body.extend(root);
@@ -189,7 +205,13 @@ pub(super) fn binding_set(b: &mut Builder, lookup: u32) -> u32 {
         },
         LocalGet(0),
         RefCastNonNull(HeapType::Concrete(5)),
-        I32Const(1),
+        LocalGet(0),
+    ]);
+    // Binding the root keeps CELL_DYNAMIC.
+    body.extend(flags());
+    body.extend([
+        I32Const(CELL_BOUND),
+        I32Or,
         StructSet {
             struct_type_index: 5,
             field_index: 1,
@@ -441,6 +463,37 @@ pub(super) fn functions(b: &mut Builder, binding_set: u32, try_invoke: u32) -> V
     body.extend([LocalGet(2), ArrayGet(ARGS)]);
     check_cell(&mut body);
     body.extend([Br(0), End, End]);
+    // Mark every cell dynamic, so its reads search the frames from now on.
+    array(&mut body, 0);
+    body.extend([
+        ArrayLen,
+        LocalSet(2),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(2),
+        I32Eqz,
+        BrIf(1),
+        LocalGet(2),
+        I32Const(3),
+        I32Sub,
+        LocalSet(2),
+    ]);
+    array(&mut body, 0);
+    body.extend([LocalGet(2), ArrayGet(ARGS), RefCastNonNull(HeapType::Concrete(5))]);
+    array(&mut body, 0);
+    body.extend([LocalGet(2), ArrayGet(ARGS)]);
+    body.extend(flags());
+    body.extend([
+        I32Const(CELL_DYNAMIC),
+        I32Or,
+        StructSet {
+            struct_type_index: 5,
+            field_index: 1,
+        },
+        Br(0),
+        End,
+        End,
+    ]);
     array(&mut body, 0);
     body.extend([ArrayLen, ArrayNewDefault(ARGS), LocalSet(1)]);
     array(&mut body, 1);

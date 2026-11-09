@@ -954,21 +954,43 @@ fn emit_function(
                 Operation::GlobalRead(global) => {
                     let index_global =
                         globals.binary_search(global).expect("collected global") as u32;
-                    function
-                        .instruction(&GlobalGet(index_global))
-                        // The shared binding cell stores the bound flag as i32.
-                        // Read the same checked field as binding-bound without
-                        // boxing and immediately unboxing its Boolean result.
-                        .instruction(&RefCastNonNull(HeapType::Concrete(5)))
-                        .instruction(&StructGet {
-                            struct_type_index: 5,
+                    let flags = [
+                        GlobalGet(index_global),
+                        RefCastNonNull(HeapType::Concrete(runtime_abi::BINDING)),
+                        StructGet {
+                            struct_type_index: runtime_abi::BINDING,
                             field_index: 1,
+                        },
+                    ];
+                    // A bound cell that no binding frame has held reads its
+                    // root inline (#354). Otherwise an unbound cell reads as
+                    // undefined, and a dynamic one asks binding-get.
+                    for instruction in &flags {
+                        function.instruction(instruction);
+                    }
+                    function
+                        .instruction(&I32Const(runtime_abi::CELL_BOUND))
+                        .instruction(&I32Eq)
+                        .instruction(&If(BlockType::Result(VALUE)))
+                        .instruction(&GlobalGet(index_global))
+                        .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::BINDING)))
+                        .instruction(&StructGet {
+                            struct_type_index: runtime_abi::BINDING,
+                            field_index: 0,
                         })
+                        .instruction(&Else);
+                    for instruction in &flags {
+                        function.instruction(instruction);
+                    }
+                    function
+                        .instruction(&I32Const(runtime_abi::CELL_BOUND))
+                        .instruction(&I32And)
                         .instruction(&If(BlockType::Result(VALUE)))
                         .instruction(&GlobalGet(index_global))
                         .instruction(&Call(index("binding-get")))
                         .instruction(&Else)
                         .instruction(&runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels))
+                        .instruction(&End)
                         .instruction(&End)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
