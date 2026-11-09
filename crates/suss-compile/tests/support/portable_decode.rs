@@ -1001,6 +1001,43 @@ impl Decoder {
     ) -> wasmtime::Result<Observation> {
         let index = count_field(store, &data[1])?;
         let backing = non_null_ref(&data[0])?;
+        // A packed primitive array: storage and identity UID (#336).
+        let fields = match backing.as_struct(&*store)? {
+            Some(packed) => packed.fields(&mut *store)?.collect::<Vec<_>>(),
+            None => Vec::new(),
+        };
+        let packed = match fields.as_slice() {
+            [Val::AnyRef(Some(storage)), _] => storage.as_array(&*store)?,
+            _ => None,
+        };
+        if let Some(storage) = packed {
+            let element = storage.ty(&*store)?.element_type();
+            let length = storage.len(&*store)? as usize;
+            if index > length || length - index > self.remaining {
+                return Err(wasmtime::Error::msg(
+                    "ABI2 decoder indexed bounds/traversal limit",
+                ));
+            }
+            self.spend(length - index)?;
+            let elements = storage.elems(&mut *store)?.collect::<Vec<_>>();
+            return elements[index..]
+                .iter()
+                .map(|item| {
+                    Ok(match (&element, item) {
+                        (StorageType::I8, Val::I32(n)) => Observation::Long(i64::from(*n as i8)),
+                        (StorageType::I16, Val::I32(n)) => Observation::Long(i64::from(*n as i16)),
+                        (_, Val::I32(n)) => Observation::Long(i64::from(*n)),
+                        (_, Val::I64(n)) => Observation::Long(*n),
+                        (_, Val::F32(bits)) => {
+                            Observation::Number(f64::from(f32::from_bits(*bits)).to_bits())
+                        }
+                        (_, Val::F64(bits)) => Observation::Number(*bits),
+                        _ => return Err(wasmtime::Error::msg("Malformed packed array element")),
+                    })
+                })
+                .collect::<wasmtime::Result<Vec<_>>>()
+                .map(Observation::List);
+        }
         let (array, string) = if let Some(array) = backing.as_array(&*store)? {
             let ty = array.ty(&*store)?;
             if !matches!(ty.element_type(), StorageType::I16)

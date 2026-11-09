@@ -28,9 +28,15 @@ rejected before initialization, as [ABI v1](abi-v1.md) artifacts were.
 
 ## Types
 
-The shared recursive group has twelve types: the ten of ABI v2, then `SENTINEL`
-(index 10) and `LONG` (index 11, `struct { i64 }`). Fragments append their
-function types after `TYPE_COUNT` (12).
+The shared recursive group has nineteen types: the ten of ABI v2, then `SENTINEL`
+(index 10), `LONG` (index 11, `struct { i64 }`), the storage of the packed
+primitive arrays (indexes 12 to 17: mutable arrays of `i8`, `i16`, `i32`,
+`f32`, `i64` and `f64`) and `PACKED` (index 18), a packed array: its storage
+and a mutable identity UID ([packed arrays](packed-arrays.md), #336).
+Fragments append their function types after `TYPE_COUNT` (19).
+
+Six runtime globals after the Array constructor's root hold the packed array
+types' values, nil until first use; later runtime globals follow them.
 
 ## Longs and doubles
 

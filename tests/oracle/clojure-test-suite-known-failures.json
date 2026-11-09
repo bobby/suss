@@ -344,7 +344,7 @@
   },
   "clojure.core-test.reduce": {
    "stage": "namespace",
-   "diagnostic": "clojure.core-test.reduce (Some(\"<root>/clojure/core_test/reduce.cljc\")): Unresolved Runtime name long-array at bytes 242..5272"
+   "diagnostic": "clojure.core-test.reduce (Some(\"<root>/clojure/core_test/reduce.cljc\")): Unresolved Runtime name boolean-array at bytes 242..5272"
   },
   "clojure.core-test.rem": {
    "stage": "namespace",

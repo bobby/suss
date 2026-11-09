@@ -1,5 +1,9 @@
 # Mutable array foundation in progress
 
+This page covers JS arrays, made by `array`, `make-array`, `object-array`,
+`into-array` and `to-array`. Clojure's primitive arrays, such as `long-array`,
+are [packed arrays](packed-arrays.md).
+
 The portable compiler now provides GC-owned mutable arrays as a prerequisite for
 the pinned IndexedSeq, list, variadic rest and collection implementations. Source
 arrays have their own private descriptor identity; invocation Args arrays remain

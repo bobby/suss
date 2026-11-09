@@ -126,11 +126,14 @@ Narrow types are storage types instead. `byte-array`, `short-array`,
 `int-array` and `float-array` are packed WasmGC arrays of `i8`, `i16`, `i32` and
 `f32`, and `long-array` and `double-array` arrays of `i64` and `f64`. Elements
 are signed, as in Clojure. `aget` returns an element as a long or double.
-`aset` on a narrow integer array checks the range and throws "Value out of
-range for byte: 200", as `(byte 200)` does, and `aset` on a `float-array`
-rounds. This differs from Clojure, where `aget` returns a boxed `Byte` or
-`Float`, `(aset (int-array 1) 0 10000000000)` throws "integer overflow", and
-`aset` on a `byte-array` with a long fails reflection.
+`aset` converts with the element type's cast, so on a narrow integer array it
+checks the range and throws "Value out of range for byte: 200", as `(byte 200)`
+does, `(aset (int-array 1) 0 10000000000)` throws "integer overflow", as in
+Clojure, and `aset` on a `float-array` rounds. The constructors store elements
+from a sequence or fill value with the unchecked casts, as Java's `Number`
+methods do, so `(byte-array [200])` holds -56. This differs from Clojure, where
+`aget` returns a boxed `Byte` or `Float`, and `aset` on a `byte-array` with a
+long fails reflection ([packed arrays](../runtime/packed-arrays.md)).
 
 ### Arithmetic
 

@@ -1,6 +1,6 @@
 mod support;
 /// First type index a fragment appends after the shared ABI v3 prelude.
-const APPENDED: u32 = suss_compile::runtime_abi::LONG + 1;
+const APPENDED: u32 = suss_compile::runtime_abi::PACKED + 1;
 use suss_compile::{portable, runtime_abi};
 use wasmtime::{Instance, Linker, Module, Store, Val};
 fn execute(source: &str) -> (Store<()>, Val) {
