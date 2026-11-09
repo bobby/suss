@@ -1822,11 +1822,27 @@ fn lower_scalar(
                 .instruction(&Instruction::If(BlockType::Empty));
             boundary_error(body, result, name);
             body.instruction(&Instruction::End);
-            for instruction in runtime_abi::number_to_f64(result) {
-                body.instruction(&instruction);
-            }
             if matches!(scalar, Scalar::F32) {
-                body.instruction(&Instruction::F32DemoteF64);
+                // A long rounds once, as Clojure's float does, not through
+                // a double first.
+                for instruction in runtime_abi::long_test(result) {
+                    body.instruction(&instruction);
+                }
+                body.instruction(&Instruction::If(BlockType::Result(ValType::F32)));
+                for instruction in runtime_abi::long_to_i64(result) {
+                    body.instruction(&instruction);
+                }
+                body.instruction(&Instruction::F32ConvertI64S)
+                    .instruction(&Instruction::Else);
+                for instruction in runtime_abi::number_to_f64(result) {
+                    body.instruction(&instruction);
+                }
+                body.instruction(&Instruction::F32DemoteF64)
+                    .instruction(&Instruction::End);
+            } else {
+                for instruction in runtime_abi::number_to_f64(result) {
+                    body.instruction(&instruction);
+                }
             }
         }
         scalar => {

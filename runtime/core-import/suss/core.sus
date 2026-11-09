@@ -837,7 +837,9 @@
     (if (nil? x)
       (nil? y)
       (if (suss.bootstrap/number? x)
-        (suss.bootstrap/equiv x y)
+        (if (suss.bootstrap/number? y)
+          (suss.bootstrap/equiv x y)
+          (if (satisfies? ICollection y) ^boolean (-equiv y x) false))
         (or (suss.bootstrap/equiv x y)
           ^boolean (-equiv x y)))))
   ([x y & more]

@@ -18,8 +18,9 @@ what crosses nor what is rejected.
 - A `u64` argument above 2^63 − 1 throws "WIT export *name* received a u64
   above 9223372036854775807, which needs unsupported BigInt", in a list or an
   option too.
-- A float result may be a long, converted as `double` converts it, so
-  `(defn f [] 7)` returns 7.0 as an `f64`.
+- A float result may be a long, converted as `double` or `float` converts
+  it, so `(defn f [] 7)` returns 7.0 as an `f64`; an `f32` from a long rounds
+  once, as `float` does, not through a double.
 - Options and lists of these types follow the same rules for each element.
 
 ## Lists
@@ -36,7 +37,8 @@ it accepts a vector or the matching packed array
 
 A packed array of another element type throws "WIT export *name* returned a
 primitive array of another element type"; `list<u16>`, `list<u32>` and
-`list<u64>` take vectors only.
+`list<u64>` take vectors only. Lists in either direction hold at most 1,000,000
+elements, the bound packed arrays already have when they are made.
 
 ## History
 

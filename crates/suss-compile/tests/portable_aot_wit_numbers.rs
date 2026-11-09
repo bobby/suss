@@ -65,7 +65,11 @@ fn compile(engine: &Engine, source: &str, exports: &str) -> Component {
         })
         .flatten()
         .collect::<Vec<_>>();
-    let expected_memories: &[u64] = if exports.contains("string") || exports.contains("list<") {
+    // Option results return through canonical memory; option parameters don't.
+    let expected_memories: &[u64] = if exports.contains("string")
+        || exports.contains("list<")
+        || exports.contains("-> option<")
+    {
         &[17, 1]
     } else {
         &[17]
@@ -496,5 +500,73 @@ fn boundary_checks_survive_public_core_redefinition() {
             "WIT export bad returned an incompatible scalar value",
             "{redefinition}"
         );
+    }
+}
+
+#[test]
+fn f32_results_from_longs_round_once() {
+    // 2^60 + 2^36 + 1 rounds differently through a double.
+    let x: i64 = 1152921573326323713;
+    assert_ne!(x as f32, (x as f64) as f32);
+    let (mut store, instance) = instantiate(
+        &format!("(defn ^:export single [] {x})"),
+        "export single: func() -> f32;",
+    );
+    assert_eq!(call(&mut store, &instance, "single", &[]), Val::Float32(x as f32));
+}
+
+#[test]
+fn long_options_round_trip_synchronously_and_asynchronously() {
+    let (mut store, instance) = instantiate(
+        "(defn ^:export signed [x] x) (defn ^:export unsigned [x] x) (defn ^:export async-signed [x] x)",
+        "export signed: func(x: option<s64>) -> option<s64>; export unsigned: func(x: option<u64>) -> option<u64>;
+         export async-signed: async func(x: option<s64>) -> option<s64>;",
+    );
+    let signed = instance
+        .get_typed_func::<(Option<i64>,), (Option<i64>,)>(&mut store, "signed")
+        .unwrap();
+    let unsigned = instance
+        .get_typed_func::<(Option<u64>,), (Option<u64>,)>(&mut store, "unsigned")
+        .unwrap();
+    let asynchronous = instance
+        .get_typed_func::<(Option<i64>,), (Option<i64>,)>(&mut store, "async-signed")
+        .unwrap();
+    for value in [None, Some(i64::MIN), Some(-1), Some(0), Some(i64::MAX)] {
+        assert_eq!(signed.call(&mut store, (value,)).unwrap(), (value,));
+        assert_eq!(complete(asynchronous.call_async(&mut store, (value,))).unwrap(), (value,));
+        store.gc(None).unwrap();
+    }
+    for value in [None, Some(0), Some(1), Some(i64::MAX as u64)] {
+        assert_eq!(unsigned.call(&mut store, (value,)).unwrap(), (value,));
+    }
+}
+
+#[test]
+fn numeric_lists_round_trip_at_every_element_type_boundary() {
+    let floats32 = [f32::MIN, -0.0, f32::from_bits(1), f32::MIN_POSITIVE, 0.1, f32::MAX, f32::INFINITY, f32::NAN];
+    let floats64 = [f64::MIN, -0.0, f64::from_bits(1), f64::MIN_POSITIVE, 0.1, f64::MAX, f64::NEG_INFINITY, f64::NAN];
+    let mut source = String::new();
+    let mut exports = String::new();
+    for ty in INTEGERS.map(|(ty, _, _)| ty).into_iter().chain(["f32", "f64"]) {
+        source.push_str(&format!("(defn ^:export list-{ty} [xs] xs) (defn ^:export scalar-{ty} [x] x)"));
+        exports.push_str(&format!(
+            "export list-{ty}: func(xs: list<{ty}>) -> list<{ty}>; export scalar-{ty}: func(x: {ty}) -> {ty};"
+        ));
+    }
+    let (mut store, instance) = instantiate(&source, &exports);
+    // Debug strings compare NaN by its spelling and keep -0.0's sign.
+    let mut check = |name: String, value: Val| {
+        let result = call(&mut store, &instance, &name, &[value.clone()]);
+        assert_eq!(format!("{result:?}"), format!("{value:?}"), "{name}");
+        store.gc(None).unwrap();
+    };
+    for (ty, min, max) in INTEGERS {
+        let values = [min, min + 1, 0, max - 1, max].map(|value| val(ty, value)).to_vec();
+        check(format!("list-{ty}"), Val::List(values));
+    }
+    check("list-f32".into(), Val::List(floats32.map(Val::Float32).to_vec()));
+    check("list-f64".into(), Val::List(floats64.map(Val::Float64).to_vec()));
+    for value in floats32 {
+        check("scalar-f32".into(), Val::Float32(value));
     }
 }
