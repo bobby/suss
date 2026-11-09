@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Numeric operations in compiled Suss against JVM Clojure (#336, #347).
+"""Numeric operations in compiled Suss against JVM Clojure (#336, #337, #347).
 
 Each case is one expression evaluated in a loop of `n` iterations; the cost
 per operation is the loop's time less the time of its control loop, which
@@ -66,6 +66,13 @@ REDUCTIONS = [
     ("vector-reduce", "(reduce + v)", 1),
 ]
 
+# Whole loops, timed per iteration with nothing subtracted, against the
+# unboxed i64 kernels in ../src/bench.wat (#337): name, loop, WIT result.
+LOOPS = [
+    ("long-sum", "(loop [i 0 acc 0] (if (< i n) (recur (inc i) (+ acc i)) acc))", "s64"),
+    ("double-sum", "(loop [i 0 acc 0.0] (if (< i n) (recur (inc i) (+ acc 0.5)) acc))", "f64"),
+]
+
 
 # JVM forms where the shared one would reflect: Util.equiv has no (long,
 # double) overload and RT.aset none for an Object[] and a long, so Clojure code
@@ -99,10 +106,14 @@ def suss_times(work):
         source.append(f"(def case-{name} (fn [n] {loop(expr, 'n')}))")
     for name, expr, _ in REDUCTIONS:
         source.append(f"(def case-{name} (fn [n] {loop(expr, 'n')}))")
+    for name, body, _ in LOOPS:
+        source.append(f"(def case-{name} (fn [n] {body}))")
     with open(os.path.join(work, "bench.sus"), "w") as file:
         file.write("\n".join(source) + "\n")
     with open(os.path.join(work, "bench.wit"), "w") as file:
         exports = " ".join(f"export {name}: func(n: u32) -> u32;" for name in names)
+        exports += "".join(f" export case-{name}: func(n: u32) -> {ty};" for name, _, ty in LOOPS)
+        names += [f"case-{name}" for name, *_ in LOOPS]
         file.write(f"package bench:numeric; world bench {{ {exports} }}\n")
     exports = [arg for name in names for arg in ("--export", f"{name}=bench/{name}")]
     compiled = subprocess.run(
@@ -130,6 +141,8 @@ def suss_times(work):
     for name, _, divisor in REDUCTIONS:
         count = N // 1024 // divisor
         times[name] = (min(run(f"case-{name}", count) for _ in range(REPS)) - startup) / count
+    for name, *_ in LOOPS:
+        times[name] = (min(run(f"case-{name}", N) for _ in range(REPS)) - startup) / N
     return times
 
 
@@ -145,6 +158,9 @@ def jvm_times(work):
     for name, expr, divisor in REDUCTIONS:
         lines.append(f"(defn case-{name} [^long n] {loop(hinted(expr), 'n')})")
         entries.append(f'["{name}" {N // 1024 // divisor} (timed {N // 1024 // divisor} case-{name})]')
+    for name, body, _ in LOOPS:
+        lines.append(f"(defn case-{name} [^long n] {body})")
+        entries.append(f'["{name}" {N} (timed {N} case-{name})]')
     lines.append(f"(def cases [{' '.join(entries)}])")
     # Warm up every case, then take the best of REPS runs.
     lines.append("(doseq [[_ _ f] cases] (dotimes [_ 3] (f)))")
@@ -182,6 +198,11 @@ def table(suss, jvm):
     print("| --- | --- | --- | --- |")
     for name, expr, _ in REDUCTIONS:
         print(row(f"`{expr}`", suss[name] / 1024 * 1e9, jvm[name] / 1024 * 1e9))
+    print("\nWhole loops, per iteration:\n")
+    print("| Loop | Suss ns | JVM ns | Ratio |")
+    print("| --- | --- | --- | --- |")
+    for name, body, _ in LOOPS:
+        print(row(f"`{body}`", suss[name] * 1e9, jvm[name] * 1e9))
 
 
 if __name__ == "__main__":

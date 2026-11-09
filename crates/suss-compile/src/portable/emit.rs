@@ -1,5 +1,6 @@
 //! Emit only verified IR. Operands are local value IDs, never source expressions.
 mod r#async;
+mod unboxed;
 use super::{
     hir::{Arithmetic, Literal, Nominal, Type},
     ir::{self, ClosureBody, Function as IrFunction, GeneralClosureBody, FutureBody, Operation, Terminator},
@@ -788,7 +789,10 @@ fn emit_function(
     // resumable states and all branch/backedge functions on the dispatcher.
     let straight_line = continuation.is_none() && ir.blocks.len() == 1
         && matches!(&ir.blocks[0].terminator, Terminator::Return(_) | Terminator::Throw(_));
-    let mut function = Function::new([(count + 14, VALUE), (1, ValType::I32)]);
+    let locals = unboxed::Locals::new(unboxed::infer(ir, continuation.is_some()), pc + 1, offset, sentinels);
+    let mut declarations = vec![(count + 14, VALUE), (1, ValType::I32)];
+    declarations.extend(locals.declarations.iter().copied());
+    let mut function = Function::new(declarations);
     use Instruction::*;
     if continuation.is_none() {
     if let Some(capture_count) = capture_count {
@@ -840,7 +844,26 @@ fn emit_function(
                 .instruction(&If(BlockType::Empty));
         }
         if let Some(plan) = continuation { r#async::resume_result(&mut function, plan, state_id, &slots); }
+        let mut boxed = std::collections::HashSet::new();
+        let mut code = Vec::new();
         for inst in instructions {
+            if unboxed::inline(&locals, inst) {
+                match &inst.operation {
+                    Operation::Literal(literal) => locals.literal(&mut code, literal, inst.result),
+                    Operation::Arithmetic { operator, arguments, coercing } => locals.arithmetic(
+                        &mut code, *operator, arguments, inst.result,
+                        index(arithmetic_name(*operator, arguments, *coercing, ir)),
+                    ),
+                    Operation::Comparison { operation, arguments } => locals.comparison(
+                        &mut code, *operation, arguments, inst.result, index(operation.export()),
+                    ),
+                    _ => unreachable!("inline numeric instruction"),
+                }
+                for instruction in code.drain(..) { function.instruction(&instruction); }
+                continue;
+            }
+            locals.materialize(&mut code, ir::operands(&inst.operation), &mut boxed);
+            for instruction in code.drain(..) { function.instruction(&instruction); }
             match &inst.operation {
                 Operation::RegionPush { handler, cleanup, end, dynamic } => {
                     let plan = continuation.ok_or_else(|| fail("Resumable region outside continuation"))?;
@@ -1462,6 +1485,20 @@ fn emit_function(
         }
         let target_state = |target: usize| continuation.map_or(target, |plan| plan.block_entries[target]);
         match &block.terminator {
+            Terminator::Throw(value) | Terminator::Return(value) => locals.materialize(&mut code, &[*value], &mut boxed),
+            Terminator::Branch { condition, .. } if locals.of(*condition) != unboxed::Repr::Flag => {
+                locals.materialize(&mut code, &[*condition], &mut boxed);
+            }
+            Terminator::Jump { target, arguments } => {
+                let boxed_arguments = ir.blocks[*target].parameters.iter().zip(arguments)
+                    .filter(|(parameter, _)| locals.of(**parameter) == unboxed::Repr::Boxed)
+                    .map(|(_, argument)| *argument).collect::<Vec<_>>();
+                locals.materialize(&mut code, &boxed_arguments, &mut boxed);
+            }
+            Terminator::Branch { .. } => {}
+        }
+        for instruction in code.drain(..) { function.instruction(&instruction); }
+        match &block.terminator {
             Terminator::Throw(value) => {
                 if let Some(plan) = continuation {
                     r#async::event(&mut function, 2, value.0 as u32 + offset, &slots, plan.states.len());
@@ -1479,11 +1516,17 @@ fn emit_function(
             }
             Terminator::Jump { target, arguments } => {
                 // Push every replacement value before any parameter assignment.
-                for argument in arguments {
-                    function.instruction(&LocalGet(argument.0 as u32 + offset));
+                for (parameter, argument) in ir.blocks[*target].parameters.iter().zip(arguments) {
+                    function.instruction(&LocalGet(match locals.of(*parameter) {
+                        unboxed::Repr::Boxed => argument.0 as u32 + offset,
+                        _ => locals.raw(*argument),
+                    }));
                 }
                 for parameter in ir.blocks[*target].parameters.iter().rev() {
-                    function.instruction(&LocalSet(parameter.0 as u32 + offset));
+                    function.instruction(&LocalSet(match locals.of(*parameter) {
+                        unboxed::Repr::Boxed => parameter.0 as u32 + offset,
+                        _ => locals.raw(*parameter),
+                    }));
                 }
                 if let Some(plan) = continuation.filter(|plan| plan.backedges.contains(&(block_id, *target))) {
                     r#async::yield_turn(&mut function, plan.block_entries[*target], &slots, ir.values.len(), &index);
@@ -1505,6 +1548,9 @@ fn emit_function(
             } => {
                 // Nil, false and internal undefined are falsey, including for
                 // boxed numeric zero and empty UTF-16 strings.
+                if locals.of(*condition) == unboxed::Repr::Flag {
+                    function.instruction(&LocalGet(locals.raw(*condition))).instruction(&I32Eqz);
+                } else {
                 function
                     .instruction(&LocalGet(condition.0 as u32 + offset))
                     .instruction(&RefIsNull);
@@ -1518,6 +1564,7 @@ fn emit_function(
                     .instruction(&runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels))
                     .instruction(&RefEq)
                     .instruction(&I32Or);
+                }
                 function
                     .instruction(&If(BlockType::Result(ValType::I32)))
                     .instruction(&I32Const(target_state(*alternative) as i32))
