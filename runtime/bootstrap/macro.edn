@@ -363,6 +363,7 @@
          "suss.bindings.macro:suss.core/build-subvec"
          "suss.bindings.macro:suss.core/butlast"
          "suss.bindings.macro:suss.core/byte"
+         "suss.bindings.macro:suss.core/byte-array"
          "suss.bindings.macro:suss.core/cat"
          "suss.bindings.macro:suss.core/char-escapes"
          "suss.bindings.macro:suss.core/chunk"
@@ -415,6 +416,7 @@
          "suss.bindings.macro:suss.core/dominates"
          "suss.bindings.macro:suss.core/dorun"
          "suss.bindings.macro:suss.core/double"
+         "suss.bindings.macro:suss.core/double-array"
          "suss.bindings.macro:suss.core/double?"
          "suss.bindings.macro:suss.core/drop"
          "suss.bindings.macro:suss.core/drop-while"
@@ -442,6 +444,7 @@
          "suss.bindings.macro:suss.core/fix"
          "suss.bindings.macro:suss.core/flatten"
          "suss.bindings.macro:suss.core/float"
+         "suss.bindings.macro:suss.core/float-array"
          "suss.bindings.macro:suss.core/float?"
          "suss.bindings.macro:suss.core/fn->comparator"
          "suss.bindings.macro:suss.core/fn?"
@@ -506,6 +509,7 @@
          "suss.bindings.macro:suss.core/list*"
          "suss.bindings.macro:suss.core/list?"
          "suss.bindings.macro:suss.core/long"
+         "suss.bindings.macro:suss.core/long-array"
          "suss.bindings.macro:suss.core/lookup-sentinel"
          "suss.bindings.macro:suss.core/m3-C1"
          "suss.bindings.macro:suss.core/m3-C2"
@@ -570,6 +574,9 @@
          "suss.bindings.macro:suss.core/object?"
          "suss.bindings.macro:suss.core/odd?"
          "suss.bindings.macro:suss.core/pack-array-node"
+         "suss.bindings.macro:suss.core/packed-array-filled"
+         "suss.bindings.macro:suss.core/packed-array-of"
+         "suss.bindings.macro:suss.core/packed-array-string"
          "suss.bindings.macro:suss.core/pam-dupes?"
          "suss.bindings.macro:suss.core/pam-grow-seed-array"
          "suss.bindings.macro:suss.core/pam-new-size"
@@ -591,6 +598,7 @@
          "suss.bindings.macro:suss.core/pr-opts-len"
          "suss.bindings.macro:suss.core/pr-opts-meta"
          "suss.bindings.macro:suss.core/pr-opts-readably"
+         "suss.bindings.macro:suss.core/pr-packed-array"
          "suss.bindings.macro:suss.core/pr-record-writer"
          "suss.bindings.macro:suss.core/pr-sb-with-opts"
          "suss.bindings.macro:suss.core/pr-seq-writer"
@@ -775,6 +783,7 @@
          "suss.bindings.macro:suss.core/set-validator!"
          "suss.bindings.macro:suss.core/set?"
          "suss.bindings.macro:suss.core/short"
+         "suss.bindings.macro:suss.core/short-array"
          "suss.bindings.macro:suss.core/simple-ident?"
          "suss.bindings.macro:suss.core/simple-keyword?"
          "suss.bindings.macro:suss.core/simple-symbol?"
@@ -1255,6 +1264,7 @@
          "suss.bindings.macro:suss.internal.core-link/build-subvec"
          "suss.bindings.macro:suss.internal.core-link/butlast"
          "suss.bindings.macro:suss.internal.core-link/byte"
+         "suss.bindings.macro:suss.internal.core-link/byte-array"
          "suss.bindings.macro:suss.internal.core-link/cat"
          "suss.bindings.macro:suss.internal.core-link/char-escapes"
          "suss.bindings.macro:suss.internal.core-link/chunk"
@@ -1307,6 +1317,7 @@
          "suss.bindings.macro:suss.internal.core-link/dominates"
          "suss.bindings.macro:suss.internal.core-link/dorun"
          "suss.bindings.macro:suss.internal.core-link/double"
+         "suss.bindings.macro:suss.internal.core-link/double-array"
          "suss.bindings.macro:suss.internal.core-link/double?"
          "suss.bindings.macro:suss.internal.core-link/drop"
          "suss.bindings.macro:suss.internal.core-link/drop-while"
@@ -1334,6 +1345,7 @@
          "suss.bindings.macro:suss.internal.core-link/fix"
          "suss.bindings.macro:suss.internal.core-link/flatten"
          "suss.bindings.macro:suss.internal.core-link/float"
+         "suss.bindings.macro:suss.internal.core-link/float-array"
          "suss.bindings.macro:suss.internal.core-link/float?"
          "suss.bindings.macro:suss.internal.core-link/fn->comparator"
          "suss.bindings.macro:suss.internal.core-link/fn?"
@@ -1398,6 +1410,7 @@
          "suss.bindings.macro:suss.internal.core-link/list*"
          "suss.bindings.macro:suss.internal.core-link/list?"
          "suss.bindings.macro:suss.internal.core-link/long"
+         "suss.bindings.macro:suss.internal.core-link/long-array"
          "suss.bindings.macro:suss.internal.core-link/lookup-sentinel"
          "suss.bindings.macro:suss.internal.core-link/m3-C1"
          "suss.bindings.macro:suss.internal.core-link/m3-C2"
@@ -1462,6 +1475,9 @@
          "suss.bindings.macro:suss.internal.core-link/object?"
          "suss.bindings.macro:suss.internal.core-link/odd?"
          "suss.bindings.macro:suss.internal.core-link/pack-array-node"
+         "suss.bindings.macro:suss.internal.core-link/packed-array-filled"
+         "suss.bindings.macro:suss.internal.core-link/packed-array-of"
+         "suss.bindings.macro:suss.internal.core-link/packed-array-string"
          "suss.bindings.macro:suss.internal.core-link/pam-dupes?"
          "suss.bindings.macro:suss.internal.core-link/pam-grow-seed-array"
          "suss.bindings.macro:suss.internal.core-link/pam-new-size"
@@ -1483,6 +1499,7 @@
          "suss.bindings.macro:suss.internal.core-link/pr-opts-len"
          "suss.bindings.macro:suss.internal.core-link/pr-opts-meta"
          "suss.bindings.macro:suss.internal.core-link/pr-opts-readably"
+         "suss.bindings.macro:suss.internal.core-link/pr-packed-array"
          "suss.bindings.macro:suss.internal.core-link/pr-record-writer"
          "suss.bindings.macro:suss.internal.core-link/pr-sb-with-opts"
          "suss.bindings.macro:suss.internal.core-link/pr-seq-writer"
@@ -1667,6 +1684,7 @@
          "suss.bindings.macro:suss.internal.core-link/set-validator!"
          "suss.bindings.macro:suss.internal.core-link/set?"
          "suss.bindings.macro:suss.internal.core-link/short"
+         "suss.bindings.macro:suss.internal.core-link/short-array"
          "suss.bindings.macro:suss.internal.core-link/simple-ident?"
          "suss.bindings.macro:suss.internal.core-link/simple-keyword?"
          "suss.bindings.macro:suss.internal.core-link/simple-symbol?"
@@ -2045,15 +2063,15 @@
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d666c7573682f31"
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d77726974652f32"
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
-         "suss.bindings.macro:suss.internal.reify/t-reify-3438-10876"],
+         "suss.bindings.macro:suss.internal.reify/t-reify-3447-10882"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "063c46a0b42348738d1de3b43a45ecfd8995bd0809620f9985657e9429404e89",
- :dependency-graph-sha256 "6844fe870b78094f7984c9ff13a12346a3517887e0e2fb1ef3489cff86c4d016",
+ :compiler-source-sha256 "80e0c7110e6c45c378938fea8e481b6e1eb4bec4d5004dc1dbef314d355bdaa4",
+ :dependency-graph-sha256 "78f3d18d07e290cda29a288571dff8bc660d3d48119258a833020fbeb4bbd703",
  :flags [],
  :format-version 2,
  :phase "macro",
  :runtime-abi 3,
- :source-sha256 "6746ec2a876da0032a3ddd13b0de07cce34a3799c63c258aa66e86e023e13fd9",
+ :source-sha256 "7583905a9193329b1cdea888ae1922cfd25925ec1d2439c2ce4343a7b8de2542",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "d3d4883355b3f5a98812bd318b7f17d003dda0199e44a5f2383ee73a9118ae9d",
+ :wasm-sha256 "8813d756e28f70a2debe062c5e0fdf924502439e42baac489a8c9024469d1796",
  :wasm-tools "0.258.0"}

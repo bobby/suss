@@ -70,6 +70,10 @@
          ^:private pr-tagged-object ^:private deref-as-map ^:private pr-throwable
          js-keys print-map keyword)
 
+;; vec, str and the default printer convert packed primitive arrays with
+;; these, defined in core's appendix (#336).
+(declare to-array ^:private packed-array-string ^:private pr-packed-array)
+
 ;; pr-writer prints through print-method and print-dup, which need MultiFn and
 ;; are defined in core's appendix (#302).
 (declare ^:private print-method-for)

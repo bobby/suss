@@ -1815,3 +1815,66 @@
 (def unchecked-float "Coerce to float. Subject to rounding." (fn [x] (suss.bootstrap/cast x 9)))
 (def double "Coerce to double" (fn [x] (suss.bootstrap/cast x 10)))
 (def unchecked-double "Coerce to double. Subject to rounding." (fn [x] (suss.bootstrap/cast x 10)))
+
+;; Packed primitive arrays (ADR-0003, #336). Each constructor passes its
+;; element kind: 0 byte, 1 short, 2 int, 3 float, 4 long, 5 double. Elements
+;; from a sequence or a fill value are stored with the unchecked cast, as
+;; Java's Number methods convert them; aset checks the range instead.
+(def ^:private packed-array-of
+  (fn [kind size-or-seq]
+    (if (number? size-or-seq)
+      (suss.bootstrap/packed-array kind size-or-seq)
+      (let [s (seq size-or-seq)
+            a (suss.bootstrap/packed-array kind (count s))]
+        (loop [i 0 s s]
+          (if s
+            (do (suss.bootstrap/packed-store a i (first s))
+                (recur (inc i) (next s)))
+            a))))))
+(def ^:private packed-array-filled
+  (fn [kind size init-val-or-seq]
+    (let [a (suss.bootstrap/packed-array kind size)
+          n (alength a)]
+      (if (number? init-val-or-seq)
+        (loop [i 0]
+          (if (< i n)
+            (do (suss.bootstrap/packed-store a i init-val-or-seq)
+                (recur (inc i)))
+            a))
+        (loop [i 0 s (seq init-val-or-seq)]
+          (if (and s (< i n))
+            (do (suss.bootstrap/packed-store a i (first s))
+                (recur (inc i) (next s)))
+            a))))))
+(def byte-array "Creates an array of bytes"
+  (fn ([size-or-seq] (packed-array-of 0 size-or-seq))
+      ([size init-val-or-seq] (packed-array-filled 0 size init-val-or-seq))))
+(def short-array "Creates an array of shorts"
+  (fn ([size-or-seq] (packed-array-of 1 size-or-seq))
+      ([size init-val-or-seq] (packed-array-filled 1 size init-val-or-seq))))
+(def float-array "Creates an array of floats"
+  (fn ([size-or-seq] (packed-array-of 3 size-or-seq))
+      ([size init-val-or-seq] (packed-array-filled 3 size init-val-or-seq))))
+(def long-array "Creates an array of longs"
+  (fn ([size-or-seq] (packed-array-of 4 size-or-seq))
+      ([size init-val-or-seq] (packed-array-filled 4 size init-val-or-seq))))
+(def double-array "Creates an array of doubles"
+  (fn ([size-or-seq] (packed-array-of 5 size-or-seq))
+      ([size init-val-or-seq] (packed-array-filled 5 size init-val-or-seq))))
+;; Java's Object.toString of an array: its class name, "@" and its identity
+;; hash in hexadecimal, as str gives it; and the #object form Clojure prints
+;; for a Java array, whose class name prints as a string (#336).
+(def ^:private packed-array-string
+  (fn [a]
+    (suss.bootstrap/concat-string
+      (class-name a)
+      (suss.bootstrap/concat-string "@" (hex-string (suss.bootstrap/identity-uid a))))))
+(def ^:private pr-packed-array
+  (fn [a writer opts]
+    (-write writer "#object[")
+    (pr-writer (class-name a) writer opts)
+    (-write writer " 0x")
+    (-write writer (hex-string (suss.bootstrap/identity-uid a)))
+    (-write writer " ")
+    (pr-writer (packed-array-string a) writer opts)
+    (-write writer "]")))

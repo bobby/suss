@@ -35,6 +35,7 @@ mod native_objects;
 mod native_protocols;
 mod nominal;
 mod numeric;
+mod packed_arrays;
 mod numeric_hash;
 mod numeric_operands;
 mod object_descriptors;
@@ -164,7 +165,12 @@ pub(crate) const BINDING: u32 = 5;
 const DESCRIPTOR: u32 = 6;
 pub const SENTINEL: u32 = 10;
 pub const LONG: u32 = 11;
-pub(crate) const TYPE_COUNT: u32 = 12;
+/// Packed primitive array storage, one type per element type, in
+/// `packed_arrays::KINDS` order: byte, short, int, float, long, double (#336).
+pub const PACKED_STORAGE: u32 = 12;
+/// A packed primitive array: its storage and an identity UID.
+pub const PACKED: u32 = 18;
+pub(crate) const TYPE_COUNT: u32 = 19;
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
 
 fn reference(index: u32) -> ValType {
@@ -247,6 +253,23 @@ pub fn prelude() -> TypeSection {
         // Long outside i31's range; one in range is always an i31.
         structure(vec![field(ValType::I64, false)]),
     ];
+    // Packed primitive array storage (#336), then the array value itself:
+    // storage and a lazily assigned identity UID, as `hash` needs one.
+    let mut group = group;
+    for element in [
+        StorageType::I8,
+        StorageType::I16,
+        StorageType::Val(ValType::I32),
+        StorageType::Val(ValType::F32),
+        StorageType::Val(ValType::I64),
+        StorageType::Val(ValType::F64),
+    ] {
+        group.push(CompositeInnerType::Array(ArrayType(FieldType {
+            element_type: element,
+            mutable: true,
+        })));
+    }
+    group.push(structure(vec![field(VALUE, false), field(VALUE, true)]));
     types.ty().rec(group.into_iter().map(|inner| SubType {
         is_final: true,
         supertype_idx: None,
@@ -783,6 +806,9 @@ fn build_module() -> Vec<u8> {
     bitwise::intrinsics(&mut b);
     numeric_hash::intrinsics(&mut b);
     identity_hash::intrinsics(&mut b);
+    // Casts come before arrays, as packed primitive arrays convert with them.
+    let bitwise_functions = bitwise::functions(&mut b);
+    packed_arrays::functions(&mut b);
     let mut arithmetic_functions = arithmetic::functions(&mut b, primitives);
     sparse_arrays::functions(&mut b);
     arithmetic_functions.extend(arrays::functions(&mut b));
@@ -791,7 +817,7 @@ fn build_module() -> Vec<u8> {
     arithmetic_functions.extend(dynamic::functions(&mut b, binding_set, try_invoke));
     arithmetic_functions.extend(predicates::functions(&mut b));
     arithmetic_functions.extend(comparisons::functions(&mut b, coercion_types));
-    arithmetic_functions.extend(bitwise::functions(&mut b));
+    arithmetic_functions.extend(bitwise_functions);
     arithmetic_functions.extend(named_properties::functions(&mut b));
     // Original source error adapter: retain the ABI Error descriptor/message
     // rather than substituting nil, an opaque object or a Wasm trap.

@@ -7,7 +7,7 @@ const MAX_UID: i64 = 9_007_199_254_740_991;
 pub(super) fn intrinsics(b: &mut Builder) {
     use Instruction::*;
     let mut body = vec![];
-    for (ty, slot) in [(4, 4), (DESCRIPTOR, 4), (7, 3), (8, 4)] {
+    for (ty, slot) in [(4, 4), (DESCRIPTOR, 4), (7, 3), (8, 4), (PACKED, 1)] {
         body.extend([
             LocalGet(0),
             RefTestNonNull(HeapType::Concrete(ty)),
