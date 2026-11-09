@@ -561,6 +561,16 @@ fn run_component_impl(
     config.wasm_function_references(true);
     config.wasm_tail_call(true);
     config.wasm_exceptions(true);
+    // `SUSS_PROFILE=perfmap` writes /tmp/perf-<pid>.map, so `perf` can name
+    // compiled functions (#347). It is set here rather than in the compiler,
+    // whose source is part of the bootstrap identity.
+    match std::env::var("SUSS_PROFILE").as_deref() {
+        Err(std::env::VarError::NotPresent) => {}
+        Ok("perfmap") => {
+            config.profiler(wasmtime::ProfilingStrategy::PerfMap);
+        }
+        _ => return Err("SUSS_PROFILE must be perfmap".into()),
+    }
     let engine = Engine::new(&config).map_err(|e| format!("Failed to create engine: {}", e))?;
 
     // Load component from file
