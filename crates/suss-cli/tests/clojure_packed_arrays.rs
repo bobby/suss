@@ -2,7 +2,7 @@
 //! 1.12's, except where ADR-0003 differs: `float` elements are doubles, and
 //! `aset` converts with the element type's cast where Clojure's reflection
 //! fails to find a method.
-use suss_cli::portable_session::Session;
+use suss_cli::{portable_macros::CompiledMacros, portable_session::Session};
 
 fn units(session: &mut Session, value: &suss_cli::portable_session::SessionValue) -> String {
     let units = session
@@ -47,14 +47,17 @@ fn constructors_store_elements_with_the_unchecked_casts() {
           (vec (double-array [1 2.5])) (vec (float-array [1e300 3]))
           (vec (long-array 3 [1 2])) (vec (long-array 2 7)) (vec (int-array 2 7.9))
           (vec (long-array 1 [1 2 3])) (vec (long-array nil)) (alength (long-array 2.5))
-          (vec (byte-array 2)) (vec (double-array 2)) (vec (int-array (range 5)))]",
+          (vec (byte-array 2)) (vec (double-array 2)) (vec (int-array (range 5)))
+          (alength (long-array 4294967297)) (alength (long-array ##NaN))]",
         "[[-56 1 127] [4464] [2147483647 -1294967296] [1 9223372036854775807] [1.0 2.5] \
-         [##Inf 3.0] [1 2 0] [7 7] [7 7] [1] [] 2 [0 0] [0.0 0.0] [0 1 2 3 4]]",
+         [##Inf 3.0] [1 2 0] [7 7] [7 7] [1] [] 2 [0 0] [0.0 0.0] [0 1 2 3 4] 1 0]",
     );
     for (source, message) in [
         ("(long-array -1)", "-1"),
         ("(int-array -3 0)", "-3"),
-        ("(long-array 3e10)", "Value out of range for int: 3.0E10"),
+        // A lone size is Number.intValue; one with a fill is RT.intCast.
+        ("(long-array 3e10)", "Array length out of range: 2147483647"),
+        ("(int-array 4294967297 0)", "integer overflow"),
         ("(long-array [:a])", "unchecked-long requires a number operand"),
     ] {
         assert_eq!(thrown(source), format!("{message:?}"), "{source}");
@@ -113,6 +116,31 @@ fn core_reads_packed_arrays_as_arrays() {
            [(vec a) (vec b) v (identical? a b) (count (conj (vec (long-array (range 40))) nil))])",
         "[[1 7] [9 2] [1 2] false 41]",
     );
+    // Applied arguments are copied too, so vectors and array maps built from
+    // them hold JS arrays; get of an index outside the array is nil.
+    assert_printed(
+        "[(assoc (apply vector (long-array [1 2])) 0 :a) (assoc (apply vector (long-array [1 2])) 0 1.5)
+          (pop (apply vector (long-array [1 2 3]))) (count (apply vector (long-array 40)))
+          (assoc (apply array-map (long-array [1 2])) 1 :x) (apply list (long-array [1 2]))
+          (apply hash-set (long-array [1 2])) (set (long-array [1 2 1]))
+          (get (long-array 2) -1) (get (long-array 2) :a) (get (long-array [5]) 0 :nf)
+          (get (long-array [5]) 3 :nf) (get (array 1 2) -1)]",
+        "[[:a 2] [1.5 2] [1 2] 40 {1 :x} (1 2) #{1 2} #{1 2} nil nil 5 :nf nil]",
+    );
+    // Macro expansions read sequences over packed arrays.
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        for source in [
+            "(defmacro packed-sum [] (cons '+ (seq (long-array [1 2]))))",
+            "(defmacro packed-doubles [] (vec (double-array [1.5 2])))",
+        ] {
+            macros.define(source).unwrap();
+        }
+        let value = session
+            .eval_with_macros("(pr-str [(packed-sum) (packed-doubles)])", &mut macros)
+            .unwrap();
+        assert_eq!(units(&mut session, &value), "[3 [1.5 2.0]]");
+    }
 }
 
 #[test]
@@ -128,8 +156,8 @@ fn packed_arrays_print_and_convert_as_java_arrays() {
     );
     assert_printed(
         "[(= (type (long-array 1)) (type (long-array 2))) (= (type (long-array 1)) (type (int-array 1)))
-          (= (type (long-array 1)) (type (array))) (type (double-array 1))]",
-        "[true false false #object[[D]]",
+          (= (type (long-array 1)) (type (array))) (type (double-array 1)) (str (type (int-array 1)))]",
+        "[true false false #object[[D] \"class [I\"]",
     );
     assert_eq!(
         thrown("((type (long-array 1)))"),

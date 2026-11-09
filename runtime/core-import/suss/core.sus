@@ -2469,7 +2469,7 @@
         (-lookup o k)
 
         (array? o)
-        (when (and (some? k) (< k (.-length o)))
+        (when (and (number? k) (< -1 k (.-length o)))
           (aget o (int k)))
 
         (string? o)
@@ -2487,7 +2487,7 @@
         (-lookup o k not-found)
 
         (array? o)
-        (if (and (some? k) (< -1 k (.-length o)))
+        (if (and (number? k) (< -1 k (.-length o)))
           (aget o (int k))
           not-found)
 
@@ -5068,7 +5068,8 @@
 (def array-map "keyval => key val
   Returns a new array map with supplied mappings."
   (fn [& keyvals]
-  (let [arr (if (and (instance? IndexedSeq keyvals) (zero? (.-i keyvals)))
+  (let [arr (if (and (instance? IndexedSeq keyvals) (zero? (.-i keyvals))
+                     (not (suss.bootstrap/packed-array? (.-arr keyvals))))
               (aclone (.-arr keyvals))
               (into-array keyvals))]
     (if (== 1 (bit-and (alength arr) 1))
@@ -6484,7 +6485,8 @@
 (def vector
   "Creates a new vector containing the args."
   (fn [& args]
-  (if (and (instance? IndexedSeq args) (zero? (.-i args)))
+  (if (and (instance? IndexedSeq args) (zero? (.-i args))
+           (not (suss.bootstrap/packed-array? (.-arr args))))
     (.fromArray PersistentVector (.-arr args) (not (array? (.-arr args))))
     (vec args))))
 
@@ -6510,7 +6512,9 @@
          (if (or (suss.bootstrap/number? x) (suss.bootstrap/string? x) (suss.bootstrap/boolean? x))
            (suss.bootstrap/coerce-string x)
            ;; A type value is Clojure's Class, whose toString is "class Name" (#304).
-           (if (suss.bootstrap/type-constructor? x)
+           (if (or (suss.bootstrap/type-constructor? x)
+                   ;; A packed array type is named but has no constructor (#336).
+                   (not (suss.bootstrap/nil? (suss.bootstrap/type-name x))))
              (let [name (suss.bootstrap/type-name x)]
                (suss.bootstrap/concat-string "class " (if (suss.bootstrap/nil? name) "Object" name)))
              ;; A packed primitive array converts as Java's Object.toString (#336).
@@ -8839,7 +8843,7 @@ reduces them without incurring seq initialization"
 (def int-array "Creates an array of ints"
   (fn ([size-or-seq]
        (if (number? size-or-seq)
-         (suss.bootstrap/packed-array 2 size-or-seq)
+         (suss.bootstrap/packed-array 2 (suss.bootstrap/cast size-or-seq 5))
          (let [s (seq size-or-seq)
                a (suss.bootstrap/packed-array 2 (count s))]
            (loop [i 0 s s]
@@ -11546,7 +11550,8 @@ reduces them without incurring seq initialization"
 (def ^:private packed-array-of
   (fn [kind size-or-seq]
     (if (number? size-or-seq)
-      (suss.bootstrap/packed-array kind size-or-seq)
+      ;; A lone size is Number.intValue, unchecked, as in Clojure.
+      (suss.bootstrap/packed-array kind (suss.bootstrap/cast size-or-seq 5))
       (let [s (seq size-or-seq)
             a (suss.bootstrap/packed-array kind (count s))]
         (loop [i 0 s s]

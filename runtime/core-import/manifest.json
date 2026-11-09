@@ -8,7 +8,7 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "319808424dac4d35ede88ce1b91509e5b98c1605ce1d9e14e2a11e97a36a269b",
+  "recipe-sha256": "4ac76e0db01ac8241de0921d31a80836fc78d136676e3e1c3a2218a82fdc3866",
   "reviews-sha256": "bee1f83599cca54a2bcef9f708200e83072af79cef895212c5ee28daa0b1c879",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
@@ -5634,8 +5634,8 @@
       "extracted": "extracted/0178.cljs",
       "extracted-sha256": "3133f795eadde2b358446602353d951b1385bafaf66ff29713432729b9d8097b",
       "patch": "docs/compatibility/patches/array-map-get.json",
-      "patch-sha256": "f589769ce015cd0c5ed26fa6202cdb142ff64b1777589c419f9599eabe0fbb06",
-      "adapted-form-sha256": "f12b82db8869a3b885fb2d8532efddbfe06f2f74d3bab9571a9186455247d1ac",
+      "patch-sha256": "73cc3321d8b9a435535dd25e69eb11ffc9aba4d406218f429b857f0330c1dba3",
+      "adapted-form-sha256": "de6a58d6fc015db5ad0a8e80e06a02963c221bd3c19a0edf3953971c5e0be4d8",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -8789,8 +8789,8 @@
       "extracted": "extracted/0283.cljs",
       "extracted-sha256": "e8e06c108ba48615b1df252d66bcda82f72229e1d8b34eae7b71578df5398fb5",
       "patch": "docs/compatibility/patches/syntax-quote-array-map.json",
-      "patch-sha256": "50b5b373289077cd4c5a9530c0504e65bf7a938256aa7792429eda03b09cd89b",
-      "adapted-form-sha256": "6719e100f9f86958cb52b139c07e053d04c4a943380113f4f1b9f55a6128a07b",
+      "patch-sha256": "8b5202beced04187bf5532a29d1e3a3077f65435aafed90893a56371c7fdc150",
+      "adapted-form-sha256": "8396dff8eb6216b85d91bd41cd6ec93da6a704fd2a9f4f69688cf6ebbe01b78a",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -11849,8 +11849,8 @@
       "extracted": "extracted/0382.cljs",
       "extracted-sha256": "6de860e95f4991547dc61e7dfa98dc62dedf9b0905253983df9d7b8d2d8cadd3",
       "patch": "docs/compatibility/patches/destructuring-vector.json",
-      "patch-sha256": "8d6d4ac9c0e32d7e36ccd208f1bfb4a6d648ced75ddfc1b5a696ddfda6b2b9b1",
-      "adapted-form-sha256": "8eff22abe84639a1106cf8404380b0020abbb371458470afa7efa0813c1a732b",
+      "patch-sha256": "3bf731ffa54e545b6dc4cdad02d44e1101cf4db908a935be1149bb61c97a4ddc",
+      "adapted-form-sha256": "010735083592527cabc7e808e7f3c4ab995b56ecf669e1024cdf96e4c455e0f5",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -11909,8 +11909,8 @@
       "extracted": "extracted/0384.cljs",
       "extracted-sha256": "575cab19d08f2a144dea3ecf5abf8d917afcb3fda13f3dea4ee8a4be02b2a1db",
       "patch": "docs/compatibility/patches/record-public-str.json",
-      "patch-sha256": "98970ae63cb9ea00fb4ab1f4096a48456c88b93f550623b4254fc0c2b70221b3",
-      "adapted-form-sha256": "fad0f6d4b3d9514469c4c010bf0fcedbdb194cb86cc55e69a468ef074ed4c2ce",
+      "patch-sha256": "788b991f9b0c389185412b7140532153f235e44f77f57b547867b8a900cd8cba",
+      "adapted-form-sha256": "b0086bf6271a8eb50c0028a8c8533f4076813858d592ee3baa38ed833f1c45d7",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -15065,8 +15065,8 @@
       "extracted": "extracted/0485.cljs",
       "extracted-sha256": "3e7f1005279cb4a36aa911da26711d3f404be087ea63ba851ae21d0e0f76149e",
       "patch": "docs/compatibility/transducers/dependency-3840-int-array-patch.json",
-      "patch-sha256": "559fbf8144eaa5dc41abd004c7902f27e085ea8c5e168ca630ab409b8ee535a1",
-      "adapted-form-sha256": "b22eb83765d2d04883032a23af2c8cb17f4e9ff7e85c70f94e60852790f36972",
+      "patch-sha256": "e20e480161578b054784da2ade5f3bfd3c1d6aaae3a25cf6f0feab6f19b4b3d3",
+      "adapted-form-sha256": "adfb103b9f6411055a5723f32996282dfe7c2eb4499b7751168af74b6c7d8b82",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -15962,7 +15962,7 @@
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "0ce45d002749addb3726796da9b27b75e66700a509194b94b1e406f9acf54629"
+      "sha256": "98b9d9ca161b8c0cc42fb7200f60a312277e2f23eba7bb37ab1edcc1f4b8728a"
     }
   },
   "files": {
@@ -16484,6 +16484,6 @@
     "extracted/0513.cljs": "02b4047a3496243c5528041564a9f8ded2f3aae951be387e8779ab0e956464c3",
     "extracted/0514.cljs": "d42068d54f1844f88abb73548a3a554a3cc1f5af315fd590533b4fd80de350ec",
     "extracted/0515.cljs": "072c8a681fd905767f56c48e6c3529b99e9d5f537def64cb299f5bac29c7c59b",
-    "suss/core.sus": "7583905a9193329b1cdea888ae1922cfd25925ec1d2439c2ce4343a7b8de2542"
+    "suss/core.sus": "9e87fec15aefce62a400115061ae3e007a80d563e80814ce820c99875740c0ea"
   }
 }

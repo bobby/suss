@@ -220,6 +220,29 @@ fn public_lazy_seq_respects_core_resolution_aliases_exclusions_and_shadows() {
     }
 }
 
+/// JVM Clojure 1.12's observation of a pinned ClojureScript int-array case:
+/// an int array is a packed array of ints (#336), zeroed by a size, and a
+/// non-number element or fill throws.
+fn clojure_int_array(id: &str) -> Option<Value> {
+    let zero = json!({"tag": "f64", "bits": "0000000000000000"});
+    Some(match id {
+        "int-array-nil-size" => json!({
+            "id": id, "status": "value",
+            "value": {"tag": "vector", "items": [zero, zero, zero]}, "effects": [],
+        }),
+        // A vector fill is a sequence of its elements, not one element.
+        "int-array-vector-fill" => json!({
+            "id": id, "status": "value",
+            "value": {"tag": "vector", "items": [{"tag": "bool", "value": false}, {"tag": "bool", "value": false}]},
+            "effects": [],
+        }),
+        "int-array-source" | "int-array-false-fill" | "int-array-short-seq" => {
+            json!({"id": id, "status": "exception", "effects": []})
+        }
+        _ => return None,
+    })
+}
+
 #[test]
 fn public_array_dependencies_match_all_pinned_values_and_effects_in_both_phases() {
     let cases: Value = serde_json::from_str(include_str!(
@@ -259,6 +282,7 @@ fn public_array_dependencies_match_all_pinned_values_and_effects_in_both_phases(
         let mut decoder = Decoder::capture(&mut session, 65536).unwrap();
         for (case, expected) in cases.iter().zip(expected) {
             let id = case["id"].as_str().unwrap();
+            let expected = &clojure_int_array(id).unwrap_or_else(|| expected.clone());
             let source = case["source"].as_str().unwrap();
             assert_eq!(case["id"], expected["id"]);
             assert!(fixture.contains(&format!(
@@ -266,8 +290,15 @@ fn public_array_dependencies_match_all_pinned_values_and_effects_in_both_phases(
             )));
             // Original public input is unchanged. Numeric exceptions are retained
             // as values only by this observation wrapper; effects are read once.
+            // A corrected exception is Suss's language error, which the
+            // decoder doesn't read, so only its status is recorded.
+            let caught = if expected["status"] == "exception" && expected["thrown"].is_null() {
+                "nil"
+            } else {
+                "error"
+            };
             let source = format!(
-                "(let [trace (atom []) result (try [true {source}] (catch :default error [false error]))] [result @trace])"
+                "(let [trace (atom []) result (try [true {source}] (catch :default error [false {caught}]))] [result @trace])"
             );
             let result = session
                 .eval_with_macros(&source, &mut macros)
@@ -287,11 +318,14 @@ fn public_array_dependencies_match_all_pinned_values_and_effects_in_both_phases(
                 "exception"
             };
             assert_eq!(status, expected["status"].as_str().unwrap(), "{phase}/{id}");
-            assert_eq!(
-                result[1],
-                clojure_value(&expected[if status == "value" { "value" } else { "thrown" }]),
-                "{phase}/{id}: raw value"
-            );
+            // A corrected exception's message is Suss's, not the JVM's.
+            if status == "value" || !expected["thrown"].is_null() {
+                assert_eq!(
+                    result[1],
+                    clojure_value(&expected[if status == "value" { "value" } else { "thrown" }]),
+                    "{phase}/{id}: raw value"
+                );
+            }
             assert_eq!(
                 observed["items"][1]["items"],
                 clojure_value(&expected["effects"]),

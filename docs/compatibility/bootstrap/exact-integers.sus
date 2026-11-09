@@ -1823,7 +1823,8 @@
 (def ^:private packed-array-of
   (fn [kind size-or-seq]
     (if (number? size-or-seq)
-      (suss.bootstrap/packed-array kind size-or-seq)
+      ;; A lone size is Number.intValue, unchecked, as in Clojure.
+      (suss.bootstrap/packed-array kind (suss.bootstrap/cast size-or-seq 5))
       (let [s (seq size-or-seq)
             a (suss.bootstrap/packed-array kind (count s))]
         (loop [i 0 s s]
