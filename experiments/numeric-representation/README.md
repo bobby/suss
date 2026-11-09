@@ -195,9 +195,16 @@ type hints Clojure code would use, and box a long where the shared form would
 reflect. The JVM is a local measuring tool, as for the suite oracle.
 
 ```sh
-cargo build --profile test -p suss-cli --bin suss --locked
+cargo build --release -p suss-cli --bin suss --locked
 python3 experiments/numeric-representation/suss-jvm/bench.py 5000000 3
 ```
+
+Since #347 the bench runs a release `suss`, and with `perf` installed also
+reports user-space instructions per operation (`perf stat -e instructions:u`,
+the count at n less the count at 0), which unlike time doesn't depend on
+machine load. The results below this paragraph used a `--profile test` build,
+whose debug assertions also apply to wasmtime and add about 106 instructions
+to every call; [the M15 baseline](#m15-baseline-347) replaces them.
 
 Results on 3950da6a, the same machine at load 1.1–2.6, best of three, in
 [run_suss_jvm.txt](results/run_suss_jvm.txt). Nanoseconds per operation, less
@@ -234,3 +241,52 @@ the control; a control's row is its whole loop iteration:
   access is linear in the length and `reduce` over it quadratic (#348).
 - Only the Suss side includes process startup noise, so differences under
   about 5 ns are within noise; negative differences are reported as 0.
+
+## M15 baseline (#347)
+
+The baseline for [M15](https://github.com/bobby/suss/milestone/15) (#349):
+`bench.py` on 5e5dbc53, a release `suss` on wasmtime 49.0.1 against JVM
+Clojure 1.12.6 on OpenJDK 21.0.13, an i7-1165G7 at load 5.5–9.6, best of three,
+in [run_m15_baseline.txt](results/run_m15_baseline.txt). Every later M15
+package reports its cases against these. Instructions are per operation, less
+the control; times are less reliable at this load:
+
+| Case | Suss instructions | Suss ns | JVM ns |
+| --- | --- | --- | --- |
+| Loop of `<`, `inc` and `identical?` (control) | 1,076 | 104 | 0.63 |
+| `(identity i)`, a core function | 806 | 42 | 0.45 |
+| `(f0)` to `(f3 i i i)`, user functions | 783–880 | 48–63 | 0–0.9 |
+| `(fv i)`, a variadic function | 1,129 | 85 | 0 |
+| `(g i)`, a local closure | 617 | 24 | 0 |
+| `(identity i)` inside three `binding`s | 1,948 | 165 | 0 |
+| `(ident b)`, a protocol method on a `deftype` | 2,552 | 228 | 0.81 |
+| `(identical? i 7)`, `(nil? i)` | 834–949 | 50–56 | 0 |
+| `(= :a :b)` | 23,202 | 2,755 | 0 |
+| `(= i 7)` | 1,914 | 143 | 0.03 |
+| `(+ i 7)`, `(== i 7)` | 59–79 | 0–6 | 0.1 |
+| `(hash i)` | 2,374 | 232 | 6.0 |
+| `aget` of a `long-array`, `int-array` or `double-array` | 700–787 | 65–109 | 0.7–1.0 |
+| `(nth v i)` of a 1024-element vector | 34,675 | 3,530 | 3.3 |
+| `(reduce + v)` of a vector, per element | 5,631 | 567 | 6.0 |
+
+- A call costs about 800 instructions, whether to core, a user function of any
+  fixed arity, or a closure; the closure saves the var read, about 190.
+- Each enclosing `binding` adds about 380 instructions to an iteration that
+  reads two vars, `identity` and `identical?`, since every var read searches
+  the binding frames, about 190 per frame (M15-02, #354).
+- The control loop itself costs 1,076 instructions, against 126 for a loop
+  without its `identical?`, which is a full call (M15-03, #356).
+- Keyword `=`, vector `nth` and protocol dispatch cost several calls each
+  (M15-08, #355; M15-09, #361).
+- JVM times under about 0.5 ns are within noise, and negative differences are
+  reported as 0.
+
+### Profiling
+
+`SUSS_PROFILE=perfmap` makes `suss run` write `/tmp/perf-<pid>.map`, so
+`perf record` and `perf report` name compiled functions as
+`wasm[N]::function[M]`. Profile a release build: under `--profile test`,
+wasmtime's type registry takes a lock on every function reference read from a
+GC struct, a third of a call's cycles. Machine code for a component is in the
+native component cache (`~/.cache/suss/cache/v1/native-component/`), a 97-byte
+header followed by an ELF object that `objdump -d` reads.
