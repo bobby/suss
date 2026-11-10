@@ -4,7 +4,9 @@
 for longs and doubles ([ADR-0003](../adr/0003-clojure-numeric-tower.md)). The
 operations live in the shared runtime (`runtime_abi/longs.rs`); the compiler
 inlines them where it can, and they are also first-class functions in
-`suss.core`, with `cljs.core` aliasing the same cells.
+`suss.core`, with `cljs.core` aliasing the same cells. Inside a function, the
+compiler keeps longs and doubles in raw Wasm locals and boxes them only where
+they escape ([unboxed locals](unboxed-locals.md)).
 
 - Two longs give a long, checked: a result outside the 64-bit range throws
   "long overflow", as `(+ Long/MAX_VALUE 1)`, `(- Long/MIN_VALUE)` and

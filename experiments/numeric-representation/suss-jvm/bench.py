@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Operations and small programs in compiled Suss against JVM Clojure (#336, #347).
+"""Operations and small programs in compiled Suss against JVM Clojure (#336, #337, #347).
 
 Each case is one expression evaluated in a loop of `n` iterations; the cost
 per operation is the loop's time less the time of its control loop, which
@@ -134,6 +134,13 @@ PROGRAMS = [
 ]
 PROGRAM_DIVISOR = 100_000
 
+# Whole loops, timed per iteration with nothing subtracted, against the
+# unboxed i64 kernels in ../src/bench.wat (#337): name, loop, WIT result.
+LOOPS = [
+    ("long-sum", "(loop [i 0 acc 0] (if (< i n) (recur (inc i) (+ acc i)) acc))", "s64"),
+    ("double-sum", "(loop [i 0 acc 0.0] (if (< i n) (recur (inc i) (+ acc 0.5)) acc))", "f64"),
+]
+
 
 # JVM forms where the shared one would reflect: Util.equiv has no (long,
 # double) overload and RT.aset none for an Object[] and a long, so Clojure code
@@ -172,12 +179,15 @@ def suss_times(work):
     source = ["(ns bench)"] + [f"(def {name} {init})" for name, init, _ in SETUP] + DEFS
     for name, expr, _ in cases:
         source.append(f"(def case-{name} (fn [n] {loop(name, expr, 'n')}))")
+    for name, body, _ in LOOPS:
+        source.append(f"(def case-{name} (fn [n] {body}))")
     with open(os.path.join(work, "bench.sus"), "w") as file:
         file.write("\n".join(source) + "\n")
     with open(os.path.join(work, "bench.wit"), "w") as file:
         exports = " ".join(f"export case-{name}: func(n: u32) -> u32;" for name, *_ in cases)
+        exports += "".join(f" export case-{name}: func(n: u32) -> {ty};" for name, _, ty in LOOPS)
         file.write(f"package bench:numeric; world bench {{ {exports} }}\n")
-    exports = [arg for name, *_ in cases for arg in ("--export", f"case-{name}=bench/case-{name}")]
+    exports = [arg for name, *_ in cases + LOOPS for arg in ("--export", f"case-{name}=bench/case-{name}")]
     compiled = subprocess.run(
         [SUSS, "--build-dir", os.path.join(work, "build"), "compile", "bench.sus",
          "-w", "bench.wit", "-o", "bench.wasm", *exports],
@@ -207,7 +217,7 @@ def suss_times(work):
     # iteration, less the case's count at 0.
     startup = best("long-control", 0)[0]
     times, instructions = {"startup": startup}, {}
-    for name, _, count in cases:
+    for name, _, count in cases + [(name, body, N) for name, body, _ in LOOPS]:
         seconds, total = best(name, count)
         times[name] = (seconds - startup) / count
         if PERF:
@@ -226,6 +236,9 @@ def jvm_times(work):
     for name, expr, count in counted():
         lines.append(f"(defn case-{name} [^long n] {loop(name, hinted(expr), 'n', sink=True)})")
         entries.append(f'["{name}" {count} (timed {count} case-{name})]')
+    for name, body, _ in LOOPS:
+        lines.append(f"(defn case-{name} [^long n] {body})")
+        entries.append(f'["{name}" {N} (timed {N} case-{name})]')
     lines.append(f"(def cases [{' '.join(entries)}])")
     # Warm up every case, then take the best of REPS runs.
     lines.append("(doseq [[_ _ f] cases] (dotimes [_ 3] (f)))")
@@ -274,6 +287,12 @@ def table(suss, instructions, jvm):
     for name, expr in PROGRAMS:
         count = instructions[name] if instructions else None
         print(row(f"{name}: `{expr}`", suss[name] * 1e6, count, jvm[name] * 1e6))
+    print("\nWhole loops, per iteration:\n")
+    print("| Loop | Suss ns | Suss instructions | JVM ns | Ratio |")
+    print("| --- | --- | --- | --- | --- |")
+    for name, body, _ in LOOPS:
+        count = instructions[name] if instructions else None
+        print(row(f"`{body}`", suss[name] * 1e9, count, jvm[name] * 1e9))
 
 
 if __name__ == "__main__":

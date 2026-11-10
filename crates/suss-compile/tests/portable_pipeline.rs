@@ -420,7 +420,9 @@ fn arithmetic_import_trace_observes_once_only_source_order_and_short_circuit() {
     // Unary identities must return each already-evaluated operand without
     // replaying it. The ordered import trace catches duplicate evaluation;
     // assigning an identical literal to a binding twice would not.
-    let bytes = portable::compile("(+ (+ (if (* 2 3) (/ 8 4) (* 9 9))) (* (* 3 4)))").unwrap();
+    // Quotients of longs stay boxed runtime calls (#337), so the trace sees
+    // each evaluated operation and not the untaken branch's.
+    let bytes = portable::compile("(+ (+ (if (/ 6 3) (/ 8 4) (/ 81 9))) (/ (/ 24 2) 1))").unwrap();
     let fragment = linker
         .instantiate(&mut store, &Module::new(&engine, bytes).unwrap())
         .unwrap();
@@ -433,9 +435,10 @@ fn arithmetic_import_trace_observes_once_only_source_order_and_short_circuit() {
     assert_eq!(
         store.data(),
         &[
-            "number-multiply",
             "number-divide",
-            "number-multiply",
+            "number-divide",
+            "number-divide",
+            "number-divide",
             "number-add"
         ]
     );

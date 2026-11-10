@@ -305,3 +305,21 @@ wasmtime's type registry takes a lock on every function reference read from a
 GC struct, a third of a call's cycles. Machine code for a component is in the
 native component cache (`~/.cache/suss/cache/v1/native-component/`), a 97-byte
 header followed by an ELF object that `objdump -d` reads.
+
+## Unboxed loops (#337)
+
+With unboxed numeric locals, a `loop` summing longs compiles to raw `i64`
+locals with Clojure's inline overflow check, the same work as the
+`d_i64_checked` kernel. Both were timed at n = 10⁹ on 19d03bcc, an Apple M3 Pro
+at load 6.5–8, best of three, in
+[run_m12_05_loops.txt](results/run_m12_05_loops.txt). The Suss time is the
+`suss run` wall-clock time at n = 10⁹ less the time at n = 0:
+
+| Loop | Suss ns per iteration | Kernel | Kernel ns per iteration | Ratio |
+| --- | --- | --- | --- | --- |
+| `(loop [i 0 acc 0] (if (< i n) (recur (inc i) (+ acc i)) acc))` | 0.81 | `d_i64_checked` | 0.80 | 1.01× |
+| `(loop [i 0 acc 0.0] (if (< i n) (recur (inc i) (+ acc 0.5)) acc))` | 0.83 | | | |
+
+`bench.py`'s whole-loop rows run the same loops at its default n = 5·10⁶,
+where startup (about 0.2 s) dwarfs the loop (about 9 ms), so use them only to
+check that the loops still run; time the loops at a large n as above.

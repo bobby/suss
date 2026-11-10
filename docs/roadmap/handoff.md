@@ -29722,3 +29722,13 @@ document's 2026-10-25 decision now records all three outcomes.
 - Tests: `portable_aot_wit_numbers.rs` (about 5 minutes; compiled components are cached per source). Overflow messages are "long overflow", as the JVM.
 - Full baseline on afd873c0: 2184 passed, 0 failed, 14 ignored. CI green on afd873c0.
 - Next in M12: #337, #338, #339. The M15 plan defers #337's primitive entry points until after #353; its unboxed locals can go ahead.
+
+## #337 part 1: unboxed numeric locals (2026-11-10)
+
+- PR #363, part of #337. `portable/emit/unboxed.rs` infers each IR value boxed, raw long (`i64`), raw double (`f64`) or raw truth value (`i32`), and `emit.rs` boxes a raw value at each use that needs a GC value, at most once per block ([unboxed-locals.md](../runtime/unboxed-locals.md)). Async continuations keep every value boxed.
+- Merged with structured control flow (#358): raw locals are declared after the dispatcher's `i32`, so the dispatcher is the first `i32` local (`portable_structured_control.rs` checks only it). A raw truth value branches with `i32.eqz`, before the structured `If`.
+- Fixture: `native_repl_async_io`'s compile-budget probe loops 8192 times (224,813 fuel); 1024 iterations now cost about 31,000, under its 50,000 runtime budget.
+- Full baseline on b40cc9f2 (`--no-fail-fast`): 2196 passed, 1 failed, 14 ignored, 289 binaries; the failure was the structured-control test's `i32` check, fixed on 19d03bcc. `verify_bootstrap_identity.py` passes.
+- Benchmark: the long-sum loop runs at 0.81 ns per iteration against `d_i64_checked`'s 0.80 at n = 10⁹ (README "Unboxed loops (#337)", `results/run_m12_05_loops.txt`). The kernel binary reads `/proc/self/status` and panics on macOS; patch that read locally to run it there. `bench.py`'s default n is too small to time the whole loops.
+- Known cost: a raw value that escapes in several blocks is boxed in each, so a raw double escaping inside a loop allocates every iteration (#351).
+- Next for #337 (part 2, after #353): `^long`/`^double` hints, known core result types and primitive entry points.
