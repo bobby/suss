@@ -106,12 +106,19 @@ fn first_class_predicates_use_live_aliases_and_retained_original_closures() {
             .unwrap()
         );
     }
-    s.eval("(def read (fn [x] (nil? x)))").unwrap();
+    s.eval("(def read (fn [x] (nil? x))) (def read-true (fn [x] (true? x)))")
+        .unwrap();
     s.enter_namespace("suss.core").unwrap();
-    s.eval("(def nil? (fn [x] false))").unwrap();
+    s.eval("(def nil? (fn [x] false)) (def true? (fn [x] false))").unwrap();
     s.enter_namespace("user").unwrap();
     s.collect().unwrap();
-    check(&mut s, "(read nil)", false);
+    // As in Clojure 1.12, `nil?` and `identical?` are :inline, so a call
+    // compiled earlier keeps the core test (#356); `true?` isn't, and its
+    // call is live. The redefinition has no :inline, so later calls use it.
+    check(&mut s, "(read nil)", true);
+    check(&mut s, "(read-true true)", false);
+    check(&mut s, "(nil? nil)", false);
+    check(&mut s, "((fn [f] (f nil)) nil?)", false);
     let nil = s.eval("nil").unwrap();
     let value = s.invoke(&original, &[&nil]).unwrap();
     assert!(boolean(&mut s, &value));
