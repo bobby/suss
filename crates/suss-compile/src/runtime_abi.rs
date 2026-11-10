@@ -194,6 +194,11 @@ pub(crate) const ARGS: u32 = 2;
 pub(crate) const INVOKE: u32 = 3;
 pub(crate) const CLOSURE: u32 = 4;
 pub(crate) const BINDING: u32 = 5;
+/// Bits of a binding cell's flag field. A cell is dynamic once a binding frame
+/// has held it, and stays so; only a dynamic cell's reads search the frames, so
+/// a read of a bound, never-bound-dynamically cell is its root (#354).
+pub(crate) const CELL_BOUND: i32 = 1;
+pub(crate) const CELL_DYNAMIC: i32 = 2;
 const DESCRIPTOR: u32 = 6;
 pub const SENTINEL: u32 = 10;
 pub const LONG: u32 = 11;
@@ -251,7 +256,8 @@ pub fn prelude() -> TypeSection {
             field(ValType::I32, false),
             field(VALUE, true), // Lazily assigned, owner-held identity UID.
         ]),
-        // Binding cell: value and independent bound flag (nil can be a binding).
+        // Binding cell: value and flags, CELL_BOUND independent of the value
+        // (nil can be a binding) and CELL_DYNAMIC.
         structure(vec![field(VALUE, true), field(ValType::I32, true)]),
         // Descriptor: nominal identity, field schema, protocol table, metadata.
         structure(vec![
@@ -741,6 +747,8 @@ fn build_module() -> Vec<u8> {
                 struct_type_index: 5,
                 field_index: 1,
             },
+            I32Const(CELL_BOUND),
+            I32And,
             If(BlockType::Result(VALUE)),
             sentinel_value(TRUE),
             Else,
@@ -756,6 +764,8 @@ fn build_module() -> Vec<u8> {
             struct_type_index: 5,
             field_index: 1,
         },
+        I32Const(CELL_BOUND),
+        I32And,
         I32Eqz,
         If(BlockType::Empty),
         GlobalGet(1),

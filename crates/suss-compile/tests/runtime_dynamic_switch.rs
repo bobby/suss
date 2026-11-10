@@ -430,3 +430,39 @@ fn dynamic_fork_empty_context_returns_nil_without_publishing_a_frame() {
     assert!(h.same(&current, &caller));
     assert_eq!((h.eval("*x*"), h.eval("*y*")), (1, 2));
 }
+
+/// A cell's flag field: bit 0 bound, bit 1 dynamic (`runtime_abi::CELL_*`).
+fn flags(h: &mut Harness, name: &str) -> i32 {
+    let cell = h.cell(name);
+    cell.unwrap_anyref()
+        .unwrap()
+        .as_struct(&h.store)
+        .unwrap()
+        .unwrap()
+        .field(&mut h.store, 1)
+        .unwrap()
+        .unwrap_i32()
+}
+
+#[test]
+fn a_cell_becomes_dynamic_when_first_framed_and_stays_dynamic() {
+    // Compiled reads of a bound cell that isn't dynamic read its root inline,
+    // without searching the frames (#354).
+    let mut h = Harness::new();
+    let reader = "*x*";
+    assert_eq!((flags(&mut h, "*x*"), flags(&mut h, "*y*")), (1, 1));
+    assert_eq!(h.eval(reader), 1);
+    let frame = h.push(&[("*x*", 10)]);
+    assert_eq!((flags(&mut h, "*x*"), flags(&mut h, "*y*")), (3, 1));
+    assert_eq!((h.eval(reader), h.read("*x*")), (10, 10));
+    let pop = h.runtime.get_func(&mut h.store, "dynamic-pop").unwrap();
+    pop.call(&mut h.store, &[frame], &mut []).unwrap();
+    // Pop restores the root through binding-set, which keeps the dynamic bit,
+    // as does a later root write.
+    assert_eq!(flags(&mut h, "*x*"), 3);
+    assert_eq!(h.eval("(set! *x* 5)"), 5);
+    assert_eq!(flags(&mut h, "*x*"), 3);
+    assert_eq!((h.eval(reader), h.read("*x*")), (5, 5));
+    assert_eq!(h.eval("(binding [*y* 7] *y*)"), 7);
+    assert_eq!((flags(&mut h, "*y*"), h.eval("*y*")), (3, 2));
+}

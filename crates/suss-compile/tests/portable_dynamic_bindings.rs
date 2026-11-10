@@ -59,3 +59,31 @@ fn dynamic_targets_preserve_namespace_aliases_phase_and_lexical_shadowing() {
     assert!(portable::compile_in("(binding [cfg/*x* 7] config/*x*)", &e, Phase::Macro).is_err());
     portable::compile_in("(let [binding (fn [x] x)] (binding 7))", &e, Phase::Runtime).unwrap();
 }
+
+#[test]
+fn a_global_read_reads_a_static_root_inline_and_asks_binding_get_otherwise() {
+    // Only a cell a binding frame has held searches the frames; any other
+    // bound cell's read is a field read at the read site (#354).
+    use wasmparser::{Operator, Parser, Payload};
+    let e = Environment::default();
+    let fragment = portable::prepare_fragment("(def x 1)", &e, Phase::Runtime).unwrap();
+    let hir = portable::analyze_in("x", &fragment.environment, Phase::Runtime).unwrap();
+    let wasm = portable::compile_ir(&ir::lower(&hir).unwrap()).unwrap();
+    let mut operators = vec![];
+    for payload in Parser::new(0).parse_all(&wasm) {
+        if let Payload::CodeSectionEntry(body) = payload.unwrap() {
+            let mut reader = body.get_operators_reader().unwrap();
+            while !reader.eof() {
+                operators.push(format!("{:?}", reader.read().unwrap()));
+            }
+        }
+    }
+    let field = |field_index| format!("{:?}", Operator::StructGet { struct_type_index: 5, field_index });
+    let at = operators.iter().position(|op| *op == field(1)).expect("flag read");
+    // Exactly bound (CELL_BOUND, not CELL_DYNAMIC): the root, inline.
+    assert_eq!(operators[at + 1..at + 3], ["I32Const { value: 1 }", "I32Eq"]);
+    assert!(operators[at + 3].starts_with("If"));
+    assert_eq!(operators[at + 6], field(0));
+    assert!(operators[at + 7] == "Else", "{:?}", &operators[at..]);
+    assert!(operators[at + 7..].iter().any(|op| op.starts_with("Call")), "a dynamic read calls binding-get");
+}

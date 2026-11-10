@@ -26,7 +26,7 @@ layout, not exported type-index identifiers. The layouts are:
 | Arguments | Value array, initialized with the nil sentinel |
 | Invoke | `(environment: Value, arguments: Arguments) -> Value` |
 | Closure | Environment, typed invoke reference, minimum/maximum arity; maximum -1 means variadic |
-| Binding cell | Mutable value and bound flag, independent of nil |
+| Binding cell | Mutable value and flags: bound, independent of nil, and dynamic once a binding frame has held it ([resolution](portable-resolution.md)) |
 | Descriptor | Nominal identity, field schema, mutable protocol table and metadata |
 | User object | Descriptor reference, fields, object metadata |
 | Exception | Descriptor reference, UTF-16 message, data, cause |
