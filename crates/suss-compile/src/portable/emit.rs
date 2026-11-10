@@ -583,7 +583,18 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             None => vec![runtime_abi::sentinel_in(runtime_abi::NIL, 0)],
         };
         init.extend(definition.entries.iter().map(|entry| Instruction::RefFunc(*entry)));
-        init.extend([Instruction::RefFunc(definition.spread), Instruction::StructNew(runtime_abi::CODE)]);
+        let minimum = definition.methods.iter().map(|&(_, arity, variadic)| arity - usize::from(variadic)).min().unwrap_or(0);
+        let maximum = if definition.methods.iter().any(|method| method.2) {
+            -1
+        } else {
+            definition.methods.iter().map(|method| method.1 as i32).max().unwrap_or(0)
+        };
+        init.extend([
+            Instruction::RefFunc(definition.spread),
+            Instruction::I32Const(minimum as i32),
+            Instruction::I32Const(maximum),
+            Instruction::StructNew(runtime_abi::CODE),
+        ]);
         code_globals.global(
             GlobalType { val_type: runtime_abi::code_type(), mutable: false, shared: false },
             &ConstExpr::extended(init),

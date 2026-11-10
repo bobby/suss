@@ -196,6 +196,108 @@ pub(super) fn functions(
         &body,
     );
 
+    // A JavaScript-convention method call (`.method` interop, as the pinned
+    // ClojureScript runs it): a function with one fixed arity receives exactly
+    // that many operands, missing ones undefined and surplus ones dropped
+    // (already evaluated). Other functions are called with their operands.
+    let mut body = vec![
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(CLOSURE)),
+        I32Eqz,
+        If(BlockType::Empty),
+    ];
+    error(&mut body);
+    body.extend([
+        End,
+        LocalGet(1),
+        RefTestNonNull(HeapType::Concrete(ARGS)),
+        I32Eqz,
+        If(BlockType::Empty),
+    ]);
+    error(&mut body);
+    body.push(End);
+    // The arity range: a universal closure's own, else its code struct's.
+    body.extend([LocalGet(0), RefTestNonNull(HeapType::Concrete(UNIVERSAL)), If(BlockType::Empty)]);
+    for (field, local) in [(UNIVERSAL_MIN, 2), (UNIVERSAL_MAX, 3)] {
+        body.extend([
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(UNIVERSAL)),
+            StructGet { struct_type_index: UNIVERSAL, field_index: field },
+            LocalSet(local),
+        ]);
+    }
+    body.push(Else);
+    for (field, local) in [(CODE_MIN, 2), (CODE_MAX, 3)] {
+        body.extend([
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(CLOSURE)),
+            StructGet { struct_type_index: CLOSURE, field_index: CLOSURE_CODE },
+            StructGet { struct_type_index: CODE, field_index: field },
+            LocalSet(local),
+        ]);
+    }
+    body.extend([
+        End,
+        LocalGet(2),
+        LocalGet(3),
+        I32Eq,
+        If(BlockType::Empty),
+        LocalGet(2),
+        I32Const(0),
+        I32LtS,
+        If(BlockType::Empty),
+    ]);
+    error(&mut body);
+    body.push(End);
+    body.extend([
+        LocalGet(1),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        ArrayLen,
+        LocalSet(3),
+        LocalGet(2),
+        LocalGet(3),
+        I32Ne,
+        If(BlockType::Empty),
+        sentinel_value(UNDEFINED),
+        LocalGet(2),
+        ArrayNew(ARGS),
+        LocalSet(4),
+        LocalGet(4),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(0),
+        LocalGet(1),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(0),
+        LocalGet(2),
+        LocalGet(3),
+        I32LtU,
+        If(BlockType::Result(ValType::I32)),
+        LocalGet(2),
+        Else,
+        LocalGet(3),
+        End,
+        ArrayCopy {
+            array_type_index_dst: ARGS,
+            array_type_index_src: ARGS,
+        },
+        LocalGet(0),
+        LocalGet(4),
+        Call(invoke),
+        Return,
+        End,
+        End,
+        LocalGet(0),
+        LocalGet(1),
+        Call(invoke),
+    ]);
+    b.function_with_locals(
+        "js-method-invoke",
+        &[VALUE, VALUE],
+        &[VALUE],
+        &[(2, ValType::I32), (1, VALUE)],
+        &body,
+    );
+
     // First direct object method, then CURRENT method's specific/default table.
     let mut body = vec![
         LocalGet(1),

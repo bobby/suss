@@ -1602,17 +1602,9 @@ impl Analyzer<'_> {
             .iter()
             .map(|arg| self.form(arg))
             .collect::<Result<Vec<_>, _>>()?;
-        if let Type::Closure(arity) = callee.ty {
-            if arity != arguments.len() {
-                return Err(fail(
-                    form.span.clone(),
-                    format!(
-                        "Wrong arity: expected {arity}, received {}",
-                        arguments.len()
-                    ),
-                ));
-            }
-        }
+        // A known closure called with another count compiles, as in Clojure:
+        // the call reaches the definition's arity-error entry, which throws
+        // Clojure's arity error when it runs (ADR-0004).
         *self.source_nodes.last_mut().expect("source node fact slot") =
             Some(std::sync::Arc::new(SourceNode::Invoke {
                 callee: std::sync::Arc::new(callee.as_ref().clone()),

@@ -1,7 +1,8 @@
 //! Namespace identities and actual shared-cell imports, independently decoded.
 mod support;
 /// First type index a fragment appends after the shared ABI v3 prelude.
-const APPENDED: u32 = suss_compile::runtime_abi::PACKED + 1;
+/// Fragment types follow the shared group.
+const APPENDED: u32 = suss_compile::runtime_abi::TYPE_COUNT;
 use suss_compile::{
     portable::{
         self,

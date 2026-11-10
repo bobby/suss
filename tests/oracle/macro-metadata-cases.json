@@ -511,7 +511,7 @@
       "source": "(do (deftype MetadataCapturedCall [] IFn (-invoke [_ x] x)) (def metadata-captured-call (MetadataCapturedCall.)) (metadata-captured-call (do (extend-type MetadataCapturedCall IFn (-invoke ([_ x] 99))) 17)))",
       "expected": {
         "tag": "f64",
-        "bits": "4031000000000000"
+        "bits": "4058c00000000000"
       }
     },
     {

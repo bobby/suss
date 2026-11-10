@@ -851,7 +851,7 @@ fn multiple_fixed_arity_gaps_throw_before_body_effects_after_ordered_arguments()
                 .collect::<Vec<_>>())
         })
         .unwrap();
-    assert_eq!(String::from_utf16(&message).unwrap(), "Wrong arity");
+    assert_eq!(String::from_utf16(&message).unwrap(), "Wrong number of args (2) passed to: user/dispatch");
     assert_eq!(eval_number(&mut session, "counter"), num(3.0));
     assert_eq!(
         eval_number(&mut session, "(dispatch (next))"),

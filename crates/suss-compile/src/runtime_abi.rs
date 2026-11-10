@@ -192,7 +192,7 @@ pub(crate) const NUMBER: u32 = 0;
 pub(crate) const STRING: u32 = 1;
 pub(crate) const ARGS: u32 = 2;
 pub(crate) const INVOKE: u32 = 3;
-pub(crate) const CLOSURE: u32 = 4;
+pub const CLOSURE: u32 = 4;
 pub(crate) const BINDING: u32 = 5;
 /// Bits of a binding cell's flag field. A cell is dynamic once a binding frame
 /// has held it, and stays so; only a dynamic cell's reads search the frames, so
@@ -221,7 +221,7 @@ pub const CODE: u32 = 19;
 pub const CALL: u32 = 20;
 pub const SPREAD: u32 = CALL + MAX_FIXED + 1;
 pub const UNIVERSAL: u32 = SPREAD + 1;
-pub(crate) const TYPE_COUNT: u32 = UNIVERSAL + 1;
+pub const TYPE_COUNT: u32 = UNIVERSAL + 1;
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
 
 fn reference(index: u32) -> ValType {
@@ -330,6 +330,8 @@ pub fn prelude() -> TypeSection {
     let mut code = vec![field(VALUE, false)];
     code.extend((0..=MAX_FIXED).map(|k| field(reference(CALL + k), false)));
     code.push(field(reference(SPREAD), false));
+    // The arity range, for JavaScript-convention method calls only.
+    code.extend([field(ValType::I32, false), field(ValType::I32, false)]);
     group.push(structure(code));
     for k in 0..=MAX_FIXED {
         let mut params = vec![reference(CLOSURE)];
@@ -389,6 +391,11 @@ pub(crate) const UNIVERSAL_MAX: u32 = 6;
 pub(crate) const CODE_NAME: u32 = 0;
 pub(crate) const CODE_ENTRY: u32 = 1;
 pub(crate) const CODE_SPREAD: u32 = CODE_ENTRY + MAX_FIXED + 1;
+/// A definition's minimum and maximum arity (-1 when variadic). Clojure calls
+/// never read them; JavaScript-convention method calls (`.method` interop)
+/// fill missing operands with undefined and drop surplus ones by them.
+pub(crate) const CODE_MIN: u32 = CODE_SPREAD + 1;
+pub(crate) const CODE_MAX: u32 = CODE_SPREAD + 2;
 /// Runtime exports by arity (ADR-0004): `call-k` takes any callee and k
 /// arguments, the out-of-line path of a call site; `arity-error-k` is the
 /// entry of type `$callk` for an arity a function lacks.
@@ -1615,7 +1622,8 @@ fn build_module() -> Vec<u8> {
     assert_eq!(globals.len(), UNIVERSAL_CODE_GLOBAL);
     let mut code = vec![sentinel_value(NIL)];
     code.extend(universal_entries.iter().map(|entry| RefFunc(*entry)));
-    code.push(StructNew(CODE));
+    // A universal closure holds its own arity range.
+    code.extend([I32Const(0), I32Const(-1), StructNew(CODE)]);
     globals.global(
         GlobalType {
             val_type: reference(CODE),

@@ -1654,11 +1654,6 @@ fn verify_function_inner(
                     if operands.is_empty() || result_ty != Type::Value {
                         return Err(fail("IR call requires callee and dynamic result"));
                     }
-                    if let Type::Closure(arity) = ty(operands[0])? {
-                        if arity != operands.len() - 1 {
-                            return Err(fail("IR known closure call arity mismatch"));
-                        }
-                    }
                 }
                 Operation::Await { .. } => {
                     if result_ty != Type::Value {

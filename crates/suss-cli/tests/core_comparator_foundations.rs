@@ -322,12 +322,14 @@ fn staged_type_returns_retained_nominal_constructors_in_both_phases() {
                 true,
             );
         }
-        for source in [
-            "(retained-type)",
-            "(retained-type retained-instance retained-instance)",
+        // Clojure's arity error (ADR-0004), naming the captured core function.
+        for (source, count) in [
+            ("(retained-type)", 0),
+            ("(retained-type retained-instance retained-instance)", 2),
         ] {
             let error = session.eval(source).unwrap_err();
-            expect_language_error(&mut session, error, 1, "Wrong arity", source);
+            let message = format!("Wrong number of args ({count}) passed to: clojure.core/type");
+            expect_language_error(&mut session, error, 1, &message, source);
             boolean(
                 &mut session,
                 "(identical? (retained-type retained-instance) retained-class)",

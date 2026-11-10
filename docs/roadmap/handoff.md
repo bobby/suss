@@ -29732,3 +29732,19 @@ document's 2026-10-25 decision now records all three outcomes.
 - Benchmark: the long-sum loop runs at 0.81 ns per iteration against `d_i64_checked`'s 0.80 at n = 10⁹ (README "Unboxed loops (#337)", `results/run_m12_05_loops.txt`). The kernel binary reads `/proc/self/status` and panics on macOS; patch that read locally to run it there. `bench.py`'s default n is too small to time the whole loops.
 - Known cost: a raw value that escapes in several blocks is boxed in each, so a raw double escaping inside a loop allocates every iteration (#351).
 - Next for #337 (part 2, after #353): `^long`/`^double` hints, known core result types and primitive entry points.
+
+## #353: ADR-0004 calling convention, runtime ABI 4 (2026-11-10)
+
+- PR #370, M15-06 of #349. Types: `runtime_abi.rs` `CLOSURE` is now the non-final `{code, properties, uid}`. `CODE`, `CALL + k`, `SPREAD` and `UNIVERSAL` are appended at 19–30, so no earlier index moved. The universal closure keeps `(environment, args)` functions for runtime- and host-made callables (`closure-new`), all behind `UNIVERSAL_CODE_GLOBAL`.
+- Emitter (`portable/emit.rs`, `Layout`/`Definition`):
+  - Per `fn`: a capture struct (subtype of `CLOSURE`, captures from field `CLOSURE_FIELDS`), a code struct global after the imported sentinels, methods typed `CALL + arity`, a spread entry (`emit_spread`, which replaces `emit_dispatcher`) and variadic adapters (`emit_adapter`).
+  - A method's locals are offset by `1 + arity`, with local 0 its closure.
+  - Known callees (`known` in `emit_function`) are static calls.
+- Out-of-line path: `call-k` packs and tail-calls `call-spread`. That binds a non-closure through the IFn `-invoke` key in `CALLABLE_KEYS_GLOBAL`, which `protocol_definition` registers (`Nominal::CallableKeyRegister`; registrations are bound after the protocol bundle). The HIR call-site wrapper in `prepare_source_callee` is gone.
+- Arity errors: `arity-throw(closure, count)` builds `Wrong number of args (k) passed to: name`.
+  - The name is the code struct's (IR `arity_name`, e.g. `user/f`), else the display name, else `fn`.
+  - The static "Wrong arity: expected" compile error and the IR known-arity check are removed, since such a call reaches `arity-error-k` at run time, as in Clojure.
+  - `protocol-native-invoke` no longer fills `undefined` or drops operands.
+- Host: `portable_macro_data.rs` reads a class constructor's descriptor from `UNIVERSAL_ENVIRONMENT`. `data_inspect_calls` also passes `closure-new`. Command `exit.rs` imports `closure-new` instead of building a closure struct.
+- Benchmarks: `scratchpad`-style `calls_bench.py` (case loops, `(total(n) - total(0)) / n`) on release builds. On an M3 Pro: user calls 24 → 12 ns, local `fn` 22 → 2 ns, `(fib 27)` 964 → 489 µs. No `perf` on macOS, so no instruction counts. Run `bench.py` on the Linux machine for #349's instruction targets.
+- Known gaps: `#'f` (`var`) doesn't resolve. Non-callables throw "Not callable"; JVM Clojure throws ClassCastException or NullPointerException. Unbound calls lack Clojure's `: #'user/u`. Anonymous functions are named `fn`.
