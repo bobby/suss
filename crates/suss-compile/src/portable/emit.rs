@@ -1,5 +1,6 @@
 //! Emit only verified IR. Operands are local value IDs, never source expressions.
 mod r#async;
+mod structured;
 use super::{
     hir::{Arithmetic, Literal, Nominal, Type},
     ir::{self, ClosureBody, Function as IrFunction, GeneralClosureBody, FutureBody, Operation, Terminator},
@@ -785,11 +786,11 @@ fn emit_function(
             .position(|item| *item == name)
             .expect("collected import") as u32
     };
-    // Every SSA value has one GC local. The last local is the block dispatcher.
-    // A verified single return/throw block has no control-flow dispatch. Keep
-    // resumable states and all branch/backedge functions on the dispatcher.
-    let straight_line = continuation.is_none() && ir.blocks.len() == 1
-        && matches!(&ir.blocks[0].terminator, Terminator::Return(_) | Terminator::Throw(_));
+    // Every SSA value has one GC local. The last local is the block dispatcher,
+    // used only by resumable states and irreducible graphs; every other
+    // function emits structured control flow (#358).
+    let structured = if continuation.is_none() { structured::plan(ir) } else { None };
+    let dispatch = structured.is_none();
     let mut function = Function::new([(count + 14, VALUE), (1, ValType::I32)]);
     use Instruction::*;
     if continuation.is_none() {
@@ -818,7 +819,7 @@ fn emit_function(
         outcome: scratch + 12, auxiliary: scratch + 13, sentinels };
     if let Some(plan) = continuation {
         r#async::initialize(&mut function, plan, &slots, &index);
-    } else if !straight_line {
+    } else if dispatch {
         function.instruction(&I32Const(0)).instruction(&LocalSet(pc));
     }
     if continuation.is_some() {
@@ -826,15 +827,24 @@ fn emit_function(
             .instruction(&Block(BlockType::Result(VALUE)))
             .instruction(&TryTable(BlockType::Empty, Cow::Owned(vec![wasm_encoder::Catch::One { tag: 0, label: 0 }])));
     }
-    if !straight_line { function.instruction(&Loop(BlockType::Empty)); }
+    if dispatch { function.instruction(&Loop(BlockType::Empty)); }
     let state_count = continuation.map_or(ir.blocks.len(), |plan| plan.states.len());
-    for state_id in 0..state_count {
+    let steps = structured.unwrap_or_else(|| (0..state_count).map(structured::Step::Code).collect());
+    for step in steps {
+        let state_id = match step {
+            structured::Step::Code(state_id) => state_id,
+            structured::Step::Loop => { function.instruction(&Loop(BlockType::Empty)); continue; }
+            structured::Step::Block => { function.instruction(&Block(BlockType::Empty)); continue; }
+            structured::Step::Else => { function.instruction(&Else); continue; }
+            structured::Step::End => { function.instruction(&End); continue; }
+            structured::Step::Br(depth) => { function.instruction(&Br(depth)); continue; }
+        };
         let state = continuation.map(|plan| &plan.states[state_id]);
         let block_id = state.map_or(state_id, |state| state.block);
         let block = &ir.blocks[block_id];
         let instructions = state.map_or(block.instructions.as_slice(), |state| &block.instructions[state.instructions.clone()]);
         let state_number = i32::try_from(state_id).map_err(|_| fail("Too many IR blocks"))?;
-        if !straight_line {
+        if dispatch {
             function
                 .instruction(&LocalGet(pc))
                 .instruction(&I32Const(state_number))
@@ -1549,7 +1559,9 @@ fn emit_function(
                 for parameter in ir.blocks[*target].parameters.iter().rev() {
                     function.instruction(&LocalSet(parameter.0 as u32 + offset));
                 }
-                if let Some(plan) = continuation.filter(|plan| plan.backedges.contains(&(block_id, *target))) {
+                if !dispatch {
+                    // The plan's steps branch or continue in place.
+                } else if let Some(plan) = continuation.filter(|plan| plan.backedges.contains(&(block_id, *target))) {
                     r#async::yield_turn(&mut function, plan.block_entries[*target], &slots, ir.values.len(), &index);
                 } else {
                     function.instruction(&I32Const(target_state(*target) as i32))
@@ -1585,6 +1597,11 @@ fn emit_function(
                         .instruction(&RefEq)
                         .instruction(&I32Or);
                 }
+                if !dispatch {
+                    // The plan's steps give the alternative, then the consequent.
+                    function.instruction(&If(BlockType::Empty));
+                    continue;
+                }
                 function
                     .instruction(&If(BlockType::Result(ValType::I32)))
                     .instruction(&I32Const(target_state(*alternative) as i32))
@@ -1607,7 +1624,7 @@ fn emit_function(
                 }
             }
         }
-        if !straight_line { function.instruction(&End); }
+        if dispatch { function.instruction(&End); }
     }
     if let Some(plan) = continuation {
         function.instruction(&LocalGet(pc)).instruction(&I32Const(plan.states.len() as i32))
@@ -1615,7 +1632,7 @@ fn emit_function(
         r#async::unwind(&mut function, &slots, ir.values.len(), &index);
         function.instruction(&Br(1)).instruction(&End);
     }
-    if !straight_line { function.instruction(&Unreachable).instruction(&End); }
+    if dispatch { function.instruction(&Unreachable).instruction(&End); }
     if let Some(plan) = continuation {
         // Language exceptions thrown by any compiled operation become an
         // explicit unwind event. Wasm traps remain runtime/host recovery work.
