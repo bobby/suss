@@ -1,0 +1,17 @@
+# Whole loops against the unboxed i64 kernel (#337), on 19d03bcc.
+# Apple M3 Pro, macOS 26.5.2, release suss, wasmtime 49.0.1, collector auto; load 6.5-8.
+
+## Compiled Suss: suss run loop.wasm --invoke case-<loop> -- n, best of 3 wall-clock runs
+# (ns bench)
+# (def case-long-sum (fn [n] (loop [i 0 acc 0] (if (< i n) (recur (inc i) (+ acc i)) acc))))
+# (def case-double-sum (fn [n] (loop [i 0 acc 0.0] (if (< i n) (recur (inc i) (+ acc 0.5)) acc))))
+long-sum   n=0          0.124 s  -> 0
+long-sum   n=1000000000 0.932 s  -> 499999999500000000   (0.808 ns/iter)
+double-sum n=0          0.124 s  -> 0
+double-sum n=1000000000 0.954 s  -> 500000000            (0.830 ns/iter)
+
+## Kernels: NO_SETUP2=1 cargo run --release -- auto 1000000000 3 (peak RSS not read on macOS)
+wasmtime 49.0.1 collector=auto n=1000000000 reps=3 live=0 gc_initial_mib=default
+d_i64_plain            0.266 ns/iter  (best of 3, 0.266s)  peakRSS 0 MiB
+d_i64_checked          0.799 ns/iter  (best of 3, 0.799s)  peakRSS 0 MiB
+c_i31                  1.109 ns/iter  (best of 3, 1.109s)  peakRSS 0 MiB
