@@ -792,13 +792,17 @@ impl Layout {
         }
         Ok(layout)
     }
+    fn general_index(&self, body: &GeneralClosureBody) -> usize {
+        self.generals.iter().position(|general| std::ptr::eq(*general, body)).expect("collected general closure")
+    }
+    fn single_index(&self, body: &ClosureBody) -> usize {
+        self.singles.iter().find(|(single, _)| std::ptr::eq(*single, body)).expect("collected closure").1
+    }
     fn general(&self, body: &GeneralClosureBody) -> &Definition {
-        let index = self.generals.iter().position(|general| std::ptr::eq(*general, body)).expect("collected general closure");
-        &self.definitions[index]
+        &self.definitions[self.general_index(body)]
     }
     fn single(&self, body: &ClosureBody) -> &Definition {
-        let index = self.singles.iter().find(|(single, _)| std::ptr::eq(*single, body)).expect("collected closure").1;
-        &self.definitions[index]
+        &self.definitions[self.single_index(body)]
     }
 }
 /// `[] -> [ref $closure]`: a new closure of `definition` over the captures
@@ -1015,6 +1019,26 @@ fn emit_function(
             function.instruction(&LocalSet(value.0 as u32 + offset));
         }
     }
+    }
+    // Callees known statically (ADR-0004): closures this function makes, and
+    // a method's own closure, its self reference. A call to one calls its
+    // entry directly, with no cast to `$closure` or code struct reads.
+    let mut known: std::collections::HashMap<u32, (usize, bool)> = std::collections::HashMap::new();
+    for block in &ir.blocks {
+        for inst in &block.instructions {
+            match &inst.operation {
+                Operation::MakeClosure { body, .. } => { known.insert(inst.result.0 as u32, (layout.single_index(body), false)); }
+                Operation::MakeGeneralClosure { body, .. } => { known.insert(inst.result.0 as u32, (layout.general_index(body), false)); }
+                _ => {}
+            }
+        }
+    }
+    if let Entry::Method(body) = entry {
+        let definition = &layout.definitions[layout.body_definitions[body]];
+        if definition.self_capture {
+            let value = ir.blocks[0].parameters[definition.captures];
+            known.insert(value.0 as u32, (layout.body_definitions[body], true));
+        }
     }
     let slots = r#async::Locals { scratch, snapshot: scratch + 1, cont: scratch + 2,
         live: scratch + 3, resume: scratch + 4, pc, offset,
@@ -1251,7 +1275,26 @@ fn emit_function(
                         && returns_unchanged(ir, &block.terminator, inst.result);
                     let arguments = &operands[1..];
                     let callee_local = operands[0].0 as u32 + offset;
-                    if arguments.len() <= runtime_abi::MAX_FIXED as usize {
+                    let direct = known.get(&(operands[0].0 as u32)).filter(|_| arguments.len() <= runtime_abi::MAX_FIXED as usize);
+                    if let Some(&(definition, own)) = direct {
+                        let definition = &layout.definitions[definition];
+                        if own {
+                            function.instruction(&LocalGet(0));
+                        } else {
+                            function
+                                .instruction(&LocalGet(callee_local))
+                                .instruction(&RefCastNonNull(HeapType::Concrete(definition.structure)));
+                        }
+                        for value in arguments {
+                            function.instruction(&LocalGet(value.0 as u32 + offset));
+                        }
+                        let entry = definition.entries[arguments.len()];
+                        if tail {
+                            function.instruction(&ReturnCall(entry));
+                        } else {
+                            function.instruction(&Call(entry)).instruction(&LocalSet(inst.result.0 as u32 + offset));
+                        }
+                    } else if arguments.len() <= runtime_abi::MAX_FIXED as usize {
                         // ADR-0004: a closure calls its code struct's entry for
                         // this many arguments; anything else goes out of line
                         // to the runtime's `call-k`.
