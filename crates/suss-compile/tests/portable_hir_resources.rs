@@ -63,6 +63,7 @@ fn nested_ir(depth: usize) -> suss_compile::portable::ir::Function {
                     result: ValueId(0),
                     operation: Operation::MakeClosure {
                         body: Box::new(ClosureBody {
+                            arity_name: None,
                             display_name: None, variadic: false, capture_types: vec![], arity: 0, function,
                         }),
                         captures: vec![],

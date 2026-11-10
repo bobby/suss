@@ -400,7 +400,158 @@ pub const ARITY_ERROR_EXPORTS: [&str; MAX_FIXED as usize + 1] = [
 ];
 /// The runtime's universal code struct, shared by every universal closure.
 pub(crate) const UNIVERSAL_CODE_GLOBAL: u32 = object_methods::CURRENT_THIS + 1;
+/// IFn's `-invoke` keys for the out-of-line call path: an `ARGS` indexed by
+/// signature arity (receiver included: 1 to 22, the last with `rest`), or
+/// null before IFn.
+pub(crate) const CALLABLE_KEYS_GLOBAL: u32 = UNIVERSAL_CODE_GLOBAL + 1;
+const CALLABLE_KEY_COUNT: i32 = 23;
 
+/// `arity-throw(closure, count)`: throws Clojure's arity error, "Wrong number
+/// of args (count) passed to: name", with the arity descriptor. The name is the
+/// code struct's, else the closure's display name, else "fn". Self-contained,
+/// as it precedes the runtime's string functions.
+fn arity_throw(b: &mut Builder) -> u32 {
+    use Instruction::*;
+    let string = HeapType::Concrete(STRING);
+    let constant = |text: &str| {
+        let units: Vec<_> = text.encode_utf16().collect();
+        let mut code: Vec<Instruction<'static>> = units.iter().map(|unit| I32Const(*unit as i32)).collect();
+        code.push(ArrayNewFixed { array_type_index: STRING, array_size: units.len() as u32 });
+        code
+    };
+    // Params: 0 closure, 1 count. Locals: 2 name, 3 digits, 4 first digit,
+    // 5 remaining count, 6 message, 7 write position, 8 prefix, 9 middle.
+    let mut body = vec![sentinel_value(NIL), LocalSet(2)];
+    body.extend([
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(CLOSURE)),
+        If(BlockType::Empty),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(CLOSURE)),
+        StructGet { struct_type_index: CLOSURE, field_index: CLOSURE_CODE },
+        StructGet { struct_type_index: CODE, field_index: CODE_NAME },
+        LocalSet(2),
+        LocalGet(2),
+        RefTestNonNull(string),
+        I32Eqz,
+        If(BlockType::Empty),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(CLOSURE)),
+        StructGet { struct_type_index: CLOSURE, field_index: CLOSURE_PROPERTIES },
+        LocalSet(2),
+        LocalGet(2),
+        RefTestNonNull(HeapType::Concrete(ARGS)),
+        If(BlockType::Empty),
+        LocalGet(2),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(2),
+        ArrayGet(ARGS),
+        LocalSet(2),
+        End,
+        End,
+        End,
+        // No name, or an anonymous function's empty display name: "fn".
+        LocalGet(2),
+        RefTestNonNull(string),
+        If(BlockType::Result(ValType::I32)),
+        LocalGet(2),
+        RefCastNonNull(string),
+        ArrayLen,
+        I32Eqz,
+        Else,
+        I32Const(1),
+        End,
+        If(BlockType::Empty),
+    ]);
+    body.extend(constant("fn"));
+    body.extend([LocalSet(2), End]);
+    // The count's decimal digits, from the end of a ten-unit buffer.
+    body.extend([
+        I32Const(10),
+        ArrayNewDefault(STRING),
+        LocalSet(3),
+        I32Const(10),
+        LocalSet(4),
+        LocalGet(1),
+        LocalSet(5),
+        Loop(BlockType::Empty),
+        LocalGet(4),
+        I32Const(1),
+        I32Sub,
+        LocalSet(4),
+        LocalGet(3),
+        LocalGet(4),
+        LocalGet(5),
+        I32Const(10),
+        I32RemU,
+        I32Const('0' as i32),
+        I32Add,
+        ArraySet(STRING),
+        LocalGet(5),
+        I32Const(10),
+        I32DivU,
+        LocalTee(5),
+        BrIf(0),
+        End,
+    ]);
+    body.extend(constant("Wrong number of args ("));
+    body.push(LocalSet(8));
+    body.extend(constant(") passed to: "));
+    body.push(LocalSet(9));
+    // Length: prefix, digits, middle, name.
+    body.extend([
+        LocalGet(8), ArrayLen,
+        I32Const(10), LocalGet(4), I32Sub, I32Add,
+        LocalGet(9), ArrayLen, I32Add,
+        LocalGet(2), RefCastNonNull(string), ArrayLen, I32Add,
+        ArrayNewDefault(STRING),
+        LocalSet(6),
+        I32Const(0),
+        LocalSet(7),
+    ]);
+    // Copy each piece at the write position: (source, start, length).
+    let pieces: [(Vec<Instruction<'static>>, Vec<Instruction<'static>>, Vec<Instruction<'static>>); 4] = [
+        (vec![LocalGet(8)], vec![I32Const(0)], vec![LocalGet(8), ArrayLen]),
+        (vec![LocalGet(3)], vec![LocalGet(4)], vec![I32Const(10), LocalGet(4), I32Sub]),
+        (vec![LocalGet(9)], vec![I32Const(0)], vec![LocalGet(9), ArrayLen]),
+        (vec![LocalGet(2), RefCastNonNull(string)], vec![I32Const(0)], vec![LocalGet(2), RefCastNonNull(string), ArrayLen]),
+    ];
+    for (source, start, length) in pieces {
+        body.extend([LocalGet(6), LocalGet(7)]);
+        body.extend(source);
+        body.extend(start);
+        body.extend(length.clone());
+        body.push(ArrayCopy { array_type_index_dst: STRING, array_type_index_src: STRING });
+        body.push(LocalGet(7));
+        body.extend(length);
+        body.extend([I32Add, LocalSet(7)]);
+    }
+    body.extend([
+        GlobalGet(0),
+        LocalGet(6),
+        RefAsNonNull,
+        sentinel_value(NIL),
+        sentinel_value(NIL),
+        I32Const(0), // Identity UID, unassigned.
+        RefI31,
+        StructNew(8),
+        Throw(0),
+    ]);
+    b.function_with_locals(
+        "arity-throw",
+        &[VALUE, ValType::I32],
+        &[VALUE],
+        &[
+            (1, VALUE),
+            (1, ValType::Ref(RefType { nullable: true, heap_type: string })),
+            (2, ValType::I32),
+            (1, ValType::Ref(RefType { nullable: true, heap_type: string })),
+            (1, ValType::I32),
+            (2, ValType::Ref(RefType { nullable: true, heap_type: string })),
+        ],
+        &body,
+    )
+}
 /// Versions checked before any fragment initialization. Layout compatibility is
 /// additionally checked by Wasm validation/linking; a manifest is not a proof.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -674,6 +825,7 @@ fn build_module() -> Vec<u8> {
         &[sentinel_value(NIL), LocalGet(0), ArrayNew(ARGS)],
     );
     let closure_environment = closure_properties::functions(&mut b);
+    let arity_throw = arity_throw(&mut b);
     // A universal closure: the shared universal code struct, no properties
     // until one is set, an unassigned UID, then its environment, function and
     // arity range.
@@ -796,21 +948,12 @@ fn build_module() -> Vec<u8> {
         I32And,
         I32Or,
         If(BlockType::Empty),
-        GlobalGet(0),
-    ]);
-    let message: Vec<_> = "Wrong arity".encode_utf16().collect();
-    invoke.extend(message.iter().map(|unit| I32Const(*unit as i32)));
-    invoke.extend([
-        ArrayNewFixed {
-            array_type_index: STRING,
-            array_size: message.len() as u32,
-        },
-        sentinel_value(NIL),
-        sentinel_value(NIL),
-        I32Const(0), // Identity UID, unassigned.
-        RefI31,
-        StructNew(8),
-        Throw(0),
+        LocalGet(0),
+        LocalGet(1),
+        RefCastNonNull(args),
+        ArrayLen,
+        Call(arity_throw),
+        Drop,
         End,
         LocalGet(0),
         Call(closure_environment),
@@ -824,6 +967,7 @@ fn build_module() -> Vec<u8> {
         },
         ReturnCallRef(INVOKE),
     ]);
+    let message: Vec<_> = "Wrong arity".encode_utf16().collect();
     let mut arity_error = vec![GlobalGet(0)];
     arity_error.extend(message.iter().map(|unit| I32Const(*unit as i32)));
     arity_error.extend([
@@ -855,11 +999,7 @@ fn build_module() -> Vec<u8> {
     body.extend([End, LocalGet(0), LocalGet(1), ReturnCall(generic_invoke)]);
     universal_entries.push(b.typed(SPREAD, &[], &body));
     for k in 0..=MAX_FIXED {
-        let mut body: Vec<_> = (0..=k).map(LocalGet).collect();
-        body.extend([ArrayNewFixed { array_type_index: ARGS, array_size: k }, ReturnCall(generic_invoke)]);
-        b.function(CALL_EXPORTS[k as usize], &vec![VALUE; k as usize + 1], &[VALUE], &body);
-        let error = b.names["arity-error"];
-        let index = b.typed(CALL + k, &[], &[Call(error)]);
+        let index = b.typed(CALL + k, &[], &[LocalGet(0), I32Const(k as i32), ReturnCall(arity_throw)]);
         b.names.insert(ARITY_ERROR_EXPORTS[k as usize].to_owned(), index);
         b.exports.export(ARITY_ERROR_EXPORTS[k as usize], ExportKind::Func, index);
     }
@@ -994,6 +1134,93 @@ fn build_module() -> Vec<u8> {
     sparse_arrays::functions(&mut b);
     arithmetic_functions.extend(arrays::functions(&mut b));
     arithmetic_functions.extend(nominal::functions(&mut b, generic_invoke));
+    // The out-of-line call path (ADR-0004). A closure is invoked; any other
+    // callee is bound through IFn's `-invoke` key for its signature arity,
+    // which core registers as it declares IFn, as the call site's own
+    // protocol path did; without a key, `invoke` reports Clojure's
+    // unbound-fn or not-callable error.
+    let keys = CALLABLE_KEYS_GLOBAL;
+    let mut body = vec![
+        LocalGet(1),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        ArrayLen,
+        I32Const(1),
+        I32Add,
+        LocalSet(2),
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(CLOSURE)),
+        GlobalGet(keys),
+        RefIsNull,
+        I32Or,
+        LocalGet(2),
+        I32Const(CALLABLE_KEY_COUNT),
+        I32GeU,
+        I32Or,
+        If(BlockType::Empty),
+        LocalGet(0),
+        LocalGet(1),
+        ReturnCall(generic_invoke),
+        End,
+        GlobalGet(keys),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        LocalGet(2),
+        ArrayGet(ARGS),
+        LocalTee(3),
+        RefIsNull,
+        If(BlockType::Empty),
+        LocalGet(0),
+        LocalGet(1),
+        ReturnCall(generic_invoke),
+        End,
+        LocalGet(0),
+        LocalGet(3),
+        Call(b.names["callable-bind"]),
+        LocalGet(1),
+        ReturnCall(generic_invoke),
+    ];
+    let call_spread = b.function_with_locals("call-spread", &[VALUE, VALUE], &[VALUE], &[(1, ValType::I32), (1, VALUE)], &body);
+    for k in 0..=MAX_FIXED {
+        let mut body: Vec<_> = (0..=k).map(LocalGet).collect();
+        body.extend([ArrayNewFixed { array_type_index: ARGS, array_size: k }, ReturnCall(call_spread)]);
+        b.function(CALL_EXPORTS[k as usize], &vec![VALUE; k as usize + 1], &[VALUE], &body);
+    }
+    // `(defprotocol IFn …)` registers `-invoke`'s key for each signature arity.
+    body = vec![
+        GlobalGet(keys),
+        RefIsNull,
+        If(BlockType::Empty),
+        sentinel_value(NIL),
+        I32Const(CALLABLE_KEY_COUNT),
+        ArrayNew(ARGS),
+        GlobalSet(keys),
+        End,
+        LocalGet(0),
+        RefTestNonNull(HeapType::I31),
+        I32Eqz,
+        If(BlockType::Empty),
+    ];
+    nominal::error(&mut body);
+    body.extend([
+        End,
+        LocalGet(0),
+        RefCastNonNull(HeapType::I31),
+        I31GetU,
+        LocalTee(2),
+        I32Const(CALLABLE_KEY_COUNT),
+        I32GeU,
+        If(BlockType::Empty),
+    ]);
+    nominal::error(&mut body);
+    body.extend([
+        End,
+        GlobalGet(keys),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        LocalGet(2),
+        LocalGet(1),
+        ArraySet(ARGS),
+        sentinel_value(NIL),
+    ]);
+    b.function_with_locals("callable-key-register", &[VALUE, VALUE], &[VALUE], &[(1, ValType::I32)], &body);
     let try_invoke = exceptions::functions(&mut b, generic_invoke);
     arithmetic_functions.extend(dynamic::functions(&mut b, binding_set, try_invoke));
     arithmetic_functions.extend(predicates::functions(&mut b));
@@ -1396,6 +1623,15 @@ fn build_module() -> Vec<u8> {
             shared: false,
         },
         &ConstExpr::extended(code),
+    );
+    // IFn's registered `-invoke` keys, by signature arity, or null.
+    globals.global(
+        GlobalType {
+            val_type: VALUE,
+            mutable: true,
+            shared: false,
+        },
+        &ConstExpr::extended([sentinel_value(NIL)]),
     );
     b.exports.export("array-join-active", ExportKind::Global, array_join::ACTIVE);
     b.exports

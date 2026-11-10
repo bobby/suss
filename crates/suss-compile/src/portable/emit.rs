@@ -154,7 +154,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert("binding-set");
                     }
                     Operation::MakeGeneralClosure { body, .. } => {
-                        names.extend(["closure-source-name-initialize", "arity-error"]);
+                        names.extend(["closure-source-name-initialize", "arity-throw"]);
                         names.extend(runtime_abi::ARITY_ERROR_EXPORTS);
                         if let Some(factory) = &body.rest_class {
                             globals.insert(factory.clone());
@@ -162,12 +162,12 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         }
                     }
                     Operation::MakeClosure { .. } => {
-                        names.extend(["closure-source-name-initialize", "arity-error"]);
+                        names.extend(["closure-source-name-initialize", "arity-throw"]);
                         names.extend(runtime_abi::ARITY_ERROR_EXPORTS);
                     }
                     Operation::Call { operands } => match runtime_abi::CALL_EXPORTS.get(operands.len() - 1) {
                         Some(name) => { names.insert(name); }
-                        None => { names.insert("invoke"); }
+                        None => { names.insert("call-spread"); }
                     },
                     Operation::Bitwise { operation, .. } => {
                         names.insert(operation.export());
@@ -234,6 +234,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::IsClosure => {}
                         Nominal::BindCallable => {
                             names.insert("callable-bind");
+                        }
+                        Nominal::CallableKeyRegister => {
+                            names.insert("callable-key-register");
                         }
                         Nominal::LiveDispatcher => {
                             names.insert("protocol-live-dispatcher-new");
@@ -453,6 +456,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])
             }
             "string-new" => (vec![ValType::I32], vec![VALUE]),
+            "arity-throw" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "string-set-unit" => (vec![VALUE, ValType::I32, ValType::I32], vec![ValType::I32]),
             _ => (vec![VALUE, VALUE], vec![VALUE]),
         };
@@ -570,7 +574,14 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     // initializer, after the imported cells and sentinels (ADR-0004).
     let mut code_globals = GlobalSection::new();
     for definition in &layout.definitions {
-        let mut init = vec![runtime_abi::sentinel_in(runtime_abi::NIL, 0)];
+        let mut init = match &definition.name {
+            Some(name) => {
+                let mut init: Vec<_> = name.iter().map(|unit| Instruction::I32Const(i32::from(*unit))).collect();
+                init.push(Instruction::ArrayNewFixed { array_type_index: runtime_abi::STRING, array_size: name.len() as u32 });
+                init
+            }
+            None => vec![runtime_abi::sentinel_in(runtime_abi::NIL, 0)],
+        };
         init.extend(definition.entries.iter().map(|entry| Instruction::RefFunc(*entry)));
         init.extend([Instruction::RefFunc(definition.spread), Instruction::StructNew(runtime_abi::CODE)]);
         code_globals.global(
@@ -689,6 +700,7 @@ struct Definition {
     self_capture: bool,
     spread: u32,
     entries: [u32; runtime_abi::MAX_FIXED as usize + 1],
+    name: Option<Vec<u16>>,
 }
 /// Functions after the futures: single-method spread entries and variadic adapters.
 enum Extra {
@@ -733,15 +745,15 @@ impl Layout {
             let methods = general.methods.iter()
                 .map(|method| (body_index(method), method.arity, method.variadic)).collect::<Vec<_>>();
             let spread = function(bodies.len() + index)?;
-            sources.push((methods, general.rest_class.clone(), general.capture_types.len(), general.self_capture, spread));
+            sources.push((methods, general.rest_class.clone(), general.capture_types.len(), general.self_capture, spread, general.arity_name.clone()));
         }
         for single in singles {
             let spread = function(extras_base + layout.extras.len())?;
             layout.extras.push(Extra::Spread(dispatchers.len() + layout.singles.len()));
             layout.singles.push((*single as *const ClosureBody, dispatchers.len() + layout.singles.len()));
-            sources.push((vec![(body_index(single), single.arity, false)], None, single.capture_types.len(), false, spread));
+            sources.push((vec![(body_index(single), single.arity, false)], None, single.capture_types.len(), false, spread, single.arity_name.clone()));
         }
-        for (definition, (methods, rest_class, captures, self_capture, spread)) in sources.into_iter().enumerate() {
+        for (definition, (methods, rest_class, captures, self_capture, spread, name)) in sources.into_iter().enumerate() {
             let mut entries = [0; runtime_abi::MAX_FIXED as usize + 1];
             for (k, entry) in entries.iter_mut().enumerate() {
                 *entry = import(runtime_abi::ARITY_ERROR_EXPORTS[k]).ok_or("Missing arity error import")?;
@@ -766,7 +778,7 @@ impl Layout {
             layout.definitions.push(Definition {
                 methods, rest_class, structure: first_type + definition as u32,
                 global: first_global + definition as u32, captures, self_capture,
-                spread, entries,
+                spread, entries, name,
             });
         }
         let mut big = first_type + layout.definitions.len() as u32;
@@ -878,8 +890,8 @@ fn emit_spread(definition: &Definition, context: &Context) -> Function {
             .instruction(&ReturnCall(method(body)))
             .instruction(&End);
     }
-    let error = names.iter().position(|name| *name == "arity-error").expect("arity helper");
-    function.instruction(&Call(error as u32)).instruction(&End);
+    let error = names.iter().position(|name| *name == "arity-throw").expect("arity helper");
+    function.instruction(&LocalGet(0)).instruction(&LocalGet(3)).instruction(&Call(error as u32)).instruction(&End);
     function
 }
 /// A variadic method's entry for `arity` arguments: its required arguments,
@@ -1283,9 +1295,9 @@ fn emit_function(
                             .map_err(|_| fail("Too many call arguments"))?;
                         function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: size });
                         if tail {
-                            function.instruction(&ReturnCall(index("invoke")));
+                            function.instruction(&ReturnCall(index("call-spread")));
                         } else {
-                            function.instruction(&Call(index("invoke")))
+                            function.instruction(&Call(index("call-spread")))
                                 .instruction(&LocalSet(inst.result.0 as u32 + offset));
                         }
                     }
@@ -1439,6 +1451,12 @@ fn emit_function(
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
                             }
                             function.instruction(&Call(index("callable-bind")));
+                        }
+                        Nominal::CallableKeyRegister => {
+                            for argument in arguments {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function.instruction(&Call(index("callable-key-register")));
                         }
                         Nominal::LiveDispatcher | Nominal::IFnLiveDispatcher => {
                             for argument in arguments {

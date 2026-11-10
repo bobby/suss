@@ -455,6 +455,9 @@ pub enum Nominal {
     Identical,
     IsClosure,
     BindCallable,
+    /// Registers IFn's `-invoke` key for a signature arity with the runtime's
+    /// out-of-line call path (ADR-0004): an arity long and the key.
+    CallableKeyRegister,
     /// Private selected binding-cell presence, not value truthiness.
     BindingDefined,
     ObjectDescriptor,
@@ -565,7 +568,7 @@ impl Nominal {
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
-                Self::BindCallable | Self::MethodGet => count == 2,
+                Self::BindCallable | Self::MethodGet | Self::CallableKeyRegister => count == 2,
                 Self::NativeObjectGet => count == 2,
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
                 Self::NamedGet => count == 3 && arguments[1] == Type::String,
