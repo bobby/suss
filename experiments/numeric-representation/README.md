@@ -305,3 +305,58 @@ wasmtime's type registry takes a lock on every function reference read from a
 GC struct, a third of a call's cycles. Machine code for a component is in the
 native component cache (`~/.cache/suss/cache/v1/native-component/`), a 97-byte
 header followed by an ELF object that `objdump -d` reads.
+
+## Calling conventions (ADR-0004, #359)
+
+`src/calls.wat` has one kernel per way of reaching a one-argument function
+entry, for [ADR-0004](../../docs/adr/0004-calling-convention.md). Each loops
+doing `acc = f(acc)` with an i31 increment as `f`, reading the callee from a
+mutable global each iteration:
+
+| Kernel | How the call reaches its entry |
+| --- | --- |
+| `inline` | No call: the increment inline (lower bound) |
+| `direct` | A static `call` |
+| `indirect`, `indirect_typed` | `call_indirect` by an index the closure holds, through a `funcref` table or one typed as the signature |
+| `table_ref` | `table.get` of the typed table, then `call_ref` |
+| `field_typed`, `field_untyped` | `call_ref` of a function reference read from the closure struct, typed or cast |
+| `proposed` | ADR-0004's call site: `br_on_cast_fail` to an out-of-line path, the entry at `base + 1`, a capture read from the environment |
+| `proposed_subtype` | The same with one closure subtype per function |
+| `today` | Suss's ABI 3 path: callable test, argument array, `invoke`, dispatcher, method |
+
+```sh
+cd experiments/numeric-representation
+sh calls.sh > results/run_calls.txt    # both engines, times and instructions
+cargo run --release --bin calls -- 20000000 5 indirect,today
+target/release/calls --obj target/calls.cwasm && objdump -d target/calls.cwasm
+```
+
+`calls.py` counts user-space instructions per call with `perf stat`, (count at
+n − count at 0) / n; with `--node` it counts V8 under `--single-threaded
+--no-liftoff`, since a single call otherwise runs in Liftoff, V8's baseline
+tier. `calls.mjs` times the same module on V8 with default tiering.
+
+Results on 2026-11-10, i7-1165G7 at load 8–12, in
+[run_calls.txt](results/run_calls.txt); instructions per call, less `inline`:
+
+| Kernel | wasmtime 49.0.1 | V8 14 (Node 26.8.2), no feedback |
+| --- | --- | --- |
+| `direct` | 9 | 0 |
+| `indirect` | 53 | 40 |
+| `indirect_typed` | 50 | 38 |
+| `table_ref` | 50 | 46 |
+| `field_typed` | 205 | 32 |
+| `field_untyped` | 173 | 37 |
+| `proposed` | 82 | 57 |
+| `proposed_subtype` | 172 | 57 |
+| `today` | 401 | 90 |
+
+- Wasmtime stores a function reference in a GC struct as an interned ID, and
+  reading it calls `wasmtime_builtin_get_interned_func_ref`; `objdump` shows
+  the call in `field_typed` and `field_untyped`.
+- A cast to a non-final type whose value is a strict subtype calls
+  `wasmtime_builtin_is_subtype`, the 90 instructions between `proposed_subtype`
+  and `proposed`.
+- On V8 with default tiering, every kernel but `today` runs within 0.7 ns of
+  `inline`, since TurboFan inlines the monomorphic call; `today` costs 4.8 ns
+  more.

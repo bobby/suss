@@ -10,6 +10,7 @@ roadmap, compatibility contracts, and executing evidence.
 | ADR-0001 | [Nominal results and options, explicit absence, and panic](0001-result-option-and-panic.md) | Proposed |
 | ADR-0002 | [Defer MLIR compiler adoption after the bounded evaluation](0002-defer-mlir-adoption.md) | Accepted — defer adoption |
 | ADR-0003 | [Clojure's numeric tower](0003-clojure-numeric-tower.md) | Accepted 2026-11-06 |
+| ADR-0004 | [Calling convention](0004-calling-convention.md) | Proposed |
 
 ## ADR-0001 work tracking
 
