@@ -646,8 +646,10 @@ fn session_lifecycle_compile_budget_override_preserves_runtime_in_both_flag_orde
         repl.send(&format!("(+ {ready} 0)"));
         repl.line(&ready.to_string());
         // A bounded, environment-free real Macro computation. Actual trace
-        // below must prove it exceeds Runtime fuel; no phase/cost mock.
-        repl.send("(defmacro compile-budget-probe [] (loop [i 0] (if (< i 1024) (recur (+ i 1)) 42)))");
+        // below must prove it exceeds Runtime fuel; no phase/cost mock. With
+        // unboxed loop locals (#337), 1024 iterations cost about 31,000 fuel,
+        // so the loop runs 8192 to stay well above the Runtime budget.
+        repl.send("(defmacro compile-budget-probe [] (loop [i 0] (if (< i 8192) (recur (+ i 1)) 42)))");
         let start = repl.err.len();
         let fortytwos = repl.out.lines().filter(|line| *line == "42").count();
         repl.send("(compile-budget-probe)");
