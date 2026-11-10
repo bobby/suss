@@ -1010,7 +1010,7 @@ impl FormBridge {
                 .data_inspect_calls(
                     value,
                     &self.core.factories["lazy-sval"],
-                    |mut store, value, args_new, invoke, function, undefined| {
+                    |mut store, value, args_new, invoke, _closure_new, function, undefined| {
                         let mut budget = Budget {
                             display: None,
                             source_valid: None,
