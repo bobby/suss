@@ -206,6 +206,21 @@ machine load. The results below this paragraph used a `--profile test` build,
 whose debug assertions also apply to wasmtime and add about 106 instructions
 to every call; [the M15 baseline](#m15-baseline-347) replaces them.
 
+Besides numeric operations and calls, the bench covers persistent
+collections (`conj`, map `get` and `assoc`, keyword lookup, set
+`contains?`), `str`, `apply` and a multimethod, and small programs run whole:
+recursive `(fib 20)`, word frequencies with `reduce` and `assoc`, a
+transducer, a lazy `map`/`filter` pipeline, `into` a vector and a map, and
+string building. Since #347's second part, each JVM iteration stores its
+result in a sink array, as its control loop does, so the JIT can't drop the
+operation; JVM times recorded before that, including the M15 baseline's, are
+often below 0.5 ns for that reason.
+
+[`suss-jvm/history.py`](suss-jvm/history.py) builds
+[m15_history.md](results/m15_history.md): instructions per operation for every
+case, one column per M15 package, from the runs checked in under `results/`.
+A package that changes performance adds its run and regenerates the table.
+
 Results on 3950da6a, the same machine at load 1.1–2.6, best of three, in
 [run_suss_jvm.txt](results/run_suss_jvm.txt). Nanoseconds per operation, less
 the control; a control's row is its whole loop iteration:
