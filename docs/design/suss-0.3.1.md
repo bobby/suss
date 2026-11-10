@@ -207,9 +207,11 @@ are singleton sentinel structs, a long is an i31 when it fits and a boxed
 `i64` otherwise, a double is a boxed `f64` ([ABI v3](../runtime/abi-v3.md),
 ADR-0003), and the group holds UTF-16 arrays and typed runtime objects.
 Calls follow [ADR-0004](../adr/0004-calling-convention.md) from ABI version 4:
-a closure holds the index of its entries in a function table the runtime
-shares, with one entry per fixed arity up to four and a spread entry for more
-arguments, `apply` and the host. An arity a function lacks is an entry that
+a closure is a subtype of one shared closure type, holding its captures and its
+function's immutable code struct of typed entries, called with `call_ref`.
+There is one entry per fixed arity up to eight and a spread entry for more
+arguments, `apply` and the host. Calls use WasmGC as designed rather than
+routing around one engine's present costs. An arity a function lacks is an entry that
 throws Clojure's `ArityException` message, so neither call sites nor entries
 check arity, and nothing fills missing parameters or drops surplus operands.
 Callables other than closures, unbound vars and non-callables take one

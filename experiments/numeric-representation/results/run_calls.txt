@@ -1,27 +1,29 @@
- 09:32:31 up 19 days, 48 min,  1 user,  load average: 8.29, 11.68, 10.95
+ 12:23:02 up 19 days,  3:39,  1 user,  load average: 9.57, 8.62, 8.94
 wasmtime 49.0.1, n = 2e7, best of 5
-inline             2.039 ns/call
-direct             3.568 ns/call
-indirect          10.261 ns/call
-indirect_typed    10.796 ns/call
-table_ref          9.744 ns/call
-field_typed       21.160 ns/call
-field_untyped     17.926 ns/call
-proposed           8.138 ns/call
-proposed_subtype  16.263 ns/call
-today             29.642 ns/call
+inline             2.164 ns/call
+direct             3.743 ns/call
+indirect          10.155 ns/call
+indirect_typed    10.478 ns/call
+table_ref         11.112 ns/call
+field_typed       22.743 ns/call
+field_untyped     19.437 ns/call
+index_final        9.310 ns/call
+index_subtype     16.021 ns/call
+proposed          36.833 ns/call
+today             36.193 ns/call
 
 V8 v26.8.2, default tiering, n = 2e7, best of 5
-inline             1.336 ns/call
-direct             1.412 ns/call
-indirect           1.555 ns/call
-indirect_typed     1.495 ns/call
-table_ref          1.983 ns/call
-proposed           1.361 ns/call
-proposed_subtype   1.554 ns/call
-field_typed        1.381 ns/call
-field_untyped      1.698 ns/call
-today              6.091 ns/call
+inline             1.462 ns/call
+direct             1.507 ns/call
+indirect           1.378 ns/call
+indirect_typed     1.439 ns/call
+table_ref          5.490 ns/call
+index_final        3.295 ns/call
+index_subtype      3.045 ns/call
+field_typed        2.004 ns/call
+field_untyped      1.787 ns/call
+proposed           8.644 ns/call
+today             17.886 ns/call
 
 User-space instructions, (count at n - count at 0) / n, on wasmtime
 inline              12.0 instructions/iteration,    0.0 for the call
@@ -31,19 +33,21 @@ indirect_typed      62.0 instructions/iteration,   50.0 for the call
 table_ref           62.0 instructions/iteration,   50.0 for the call
 field_typed        217.0 instructions/iteration,  205.0 for the call
 field_untyped      185.0 instructions/iteration,  173.0 for the call
-proposed            94.0 instructions/iteration,   82.0 for the call
-proposed_subtype   184.0 instructions/iteration,  172.0 for the call
-today              413.1 instructions/iteration,  401.1 for the call
+index_final         94.0 instructions/iteration,   82.0 for the call
+index_subtype      184.0 instructions/iteration,  172.0 for the call
+proposed           340.0 instructions/iteration,  328.0 for the call
+today              414.3 instructions/iteration,  402.3 for the call
 
 On V8 with --single-threaded --no-liftoff: TurboFan without call feedback
-inline               6.8 instructions/iteration,    0.0 for the call
-direct               7.1 instructions/iteration,    0.3 for the call
-indirect            46.7 instructions/iteration,   39.9 for the call
-indirect_typed      45.0 instructions/iteration,   38.2 for the call
-table_ref           53.1 instructions/iteration,   46.2 for the call
-field_typed         39.1 instructions/iteration,   32.2 for the call
-field_untyped       43.9 instructions/iteration,   37.1 for the call
-proposed            64.0 instructions/iteration,   57.2 for the call
-proposed_subtype    63.9 instructions/iteration,   57.1 for the call
-today               97.0 instructions/iteration,   90.2 for the call
- 09:33:15 up 19 days, 49 min,  1 user,  load average: 8.12, 11.20, 10.82
+inline               7.0 instructions/iteration,    0.0 for the call
+direct               7.2 instructions/iteration,    0.2 for the call
+indirect            47.2 instructions/iteration,   40.3 for the call
+indirect_typed      45.2 instructions/iteration,   38.2 for the call
+table_ref           53.1 instructions/iteration,   46.1 for the call
+field_typed         39.0 instructions/iteration,   32.1 for the call
+field_untyped       44.0 instructions/iteration,   37.1 for the call
+index_final         63.5 instructions/iteration,   56.5 for the call
+index_subtype       64.5 instructions/iteration,   57.5 for the call
+proposed            56.1 instructions/iteration,   49.1 for the call
+today               97.0 instructions/iteration,   90.0 for the call
+ 12:24:15 up 19 days,  3:40,  1 user,  load average: 9.38, 8.83, 8.99

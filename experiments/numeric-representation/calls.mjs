@@ -3,8 +3,8 @@
 // Usage: node calls.mjs <calls.wasm> [n] [reps] [kernel,...]
 import { readFileSync } from "node:fs";
 
-const KERNELS = ["inline", "direct", "indirect", "indirect_typed", "table_ref", "proposed", "proposed_subtype",
-  "field_typed", "field_untyped", "today"];
+const KERNELS = ["inline", "direct", "indirect", "indirect_typed", "table_ref", "index_final", "index_subtype",
+  "field_typed", "field_untyped", "proposed", "today"];
 const [path, n = "100000000", reps = "5", only = ""] = process.argv.slice(2);
 const { instance } = await WebAssembly.instantiate(readFileSync(path));
 const { exports } = instance;

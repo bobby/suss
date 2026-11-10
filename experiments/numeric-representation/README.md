@@ -320,8 +320,9 @@ mutable global each iteration:
 | `indirect`, `indirect_typed` | `call_indirect` by an index the closure holds, through a `funcref` table or one typed as the signature |
 | `table_ref` | `table.get` of the typed table, then `call_ref` |
 | `field_typed`, `field_untyped` | `call_ref` of a function reference read from the closure struct, typed or cast |
-| `proposed` | ADR-0004's call site: `br_on_cast_fail` to an out-of-line path, the entry at `base + 1`, a capture read from the environment |
-| `proposed_subtype` | The same with one closure subtype per function |
+| `index_final` | `br_on_cast_fail` to a final closure type, the entry at table index `base + 1`, `call_indirect`, a capture read from a separate environment |
+| `index_subtype` | The same with one closure subtype per function |
+| `proposed` | ADR-0004's call site: `br_on_cast_fail` to a closure subtype, its function's code struct, the typed entry, `call_ref` |
 | `today` | Suss's ABI 3 path: callable test, argument array, `invoke`, dispatcher, method |
 
 ```sh
@@ -336,7 +337,7 @@ n − count at 0) / n; with `--node` it counts V8 under `--single-threaded
 --no-liftoff`, since a single call otherwise runs in Liftoff, V8's baseline
 tier. `calls.mjs` times the same module on V8 with default tiering.
 
-Results on 2026-11-10, i7-1165G7 at load 8–12, in
+Results on 2026-11-10, i7-1165G7 at load 9–10, in
 [run_calls.txt](results/run_calls.txt); instructions per call, less `inline`:
 
 | Kernel | wasmtime 49.0.1 | V8 14 (Node 26.8.2), no feedback |
@@ -347,16 +348,19 @@ Results on 2026-11-10, i7-1165G7 at load 8–12, in
 | `table_ref` | 50 | 46 |
 | `field_typed` | 205 | 32 |
 | `field_untyped` | 173 | 37 |
-| `proposed` | 82 | 57 |
-| `proposed_subtype` | 172 | 57 |
-| `today` | 401 | 90 |
+| `index_final` | 82 | 57 |
+| `index_subtype` | 172 | 57 |
+| `proposed` | 328 | 49 |
+| `today` | 402 | 90 |
 
 - Wasmtime stores a function reference in a GC struct as an interned ID, and
   reading it calls `wasmtime_builtin_get_interned_func_ref`; `objdump` shows
   the call in `field_typed` and `field_untyped`.
 - A cast to a non-final type whose value is a strict subtype calls
-  `wasmtime_builtin_is_subtype`, the 90 instructions between `proposed_subtype`
-  and `proposed`.
-- On V8 with default tiering, every kernel but `today` runs within 0.7 ns of
-  `inline`, since TurboFan inlines the monomorphic call; `today` costs 4.8 ns
-  more.
+  `wasmtime_builtin_is_subtype`, the 90 instructions between `index_subtype`
+  and `index_final`. `proposed` pays both host calls on wasmtime 49; ADR-0004
+  keeps the platform's design anyway, and
+  [`docs/upstream/`](../../docs/upstream/) has the issues to file.
+- On V8 with default tiering, every kernel but `today` usually runs within
+  about 1 ns of `inline`, since TurboFan inlines the monomorphic call; `today`
+  costs 5–20 ns more. These times vary with load and tier-up timing.

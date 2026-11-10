@@ -12,7 +12,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 KERNELS = ["inline", "direct", "indirect", "indirect_typed", "table_ref",
-           "field_typed", "field_untyped", "proposed", "proposed_subtype", "today"]
+           "field_typed", "field_untyped", "index_final", "index_subtype", "proposed", "today"]
 N = int(next((a for a in sys.argv[1:] if a.isdigit()), 20_000_000))
 NODE = "--node" in sys.argv
 

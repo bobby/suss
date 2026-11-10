@@ -3,11 +3,12 @@
 //!
 //! Usage: calls [n] [reps] [kernel,...]   time kernels, best of reps
 //!        calls --emit <path>             write calls.wasm for calls.mjs
+//!        calls --obj <path> [module.wat] write wasmtime's compiled object
 use std::time::Instant;
 use wasmtime::*;
 
 const KERNELS: &[&str] = &[
-    "inline", "direct", "indirect", "indirect_typed", "table_ref", "field_typed", "field_untyped", "proposed", "proposed_subtype", "today",
+    "inline", "direct", "indirect", "indirect_typed", "table_ref", "field_typed", "field_untyped", "index_final", "index_subtype", "proposed", "today",
 ];
 
 fn main() -> Result<()> {
@@ -18,7 +19,12 @@ fn main() -> Result<()> {
         return Ok(());
     }
     if args.get(1).map(String::as_str) == Some("--obj") {
-        // Wasmtime's compiled module is an ELF object, for objdump -d.
+        // Wasmtime's compiled module is an ELF object, for objdump -d; of
+        // calls.wat, or of another module such as docs/upstream's examples.
+        let wasm = match args.get(3) {
+            Some(path) => wat::parse_file(path)?,
+            None => wasm,
+        };
         let mut config = Config::new();
         config.wasm_gc(true).wasm_function_references(true).wasm_tail_call(true).wasm_exceptions(true);
         std::fs::write(&args[2], Engine::new(&config)?.precompile_module(&wasm)?)?;

@@ -17,7 +17,7 @@
       (field $idx1 i32)            ;; candidate: index of the 1-arity entry
       (field $ref1 (ref $f1))      ;; candidate: typed per-arity reference
       (field $any1 funcref)))      ;; candidate: untyped reference
-    ;; The proposal: a closure holds the table index of its arity-0 entry,
+    ;; Table-index variant: a closure holds the table index of its arity-0 entry,
     ;; and its entry for k arguments is at base + k. Each function's closure
     ;; is a subtype holding its captures as fields.
     (type $pclo (sub (struct (field $base i32))))
@@ -27,17 +27,24 @@
     ;; struct per function: every cast compares a type ID.
     (type $fclo (struct (field $base i32) (field $env eqref)))
     (type $fenv (struct (field $step eqref)))
-    (type $q1 (func (param (ref $fclo) eqref) (result eqref))))
+    (type $q1 (func (param (ref $fclo) eqref) (result eqref)))
+    ;; ADR-0004: a closure subtype per function, holding its
+    ;; captures, and pointing to its function's immutable code struct of typed
+    ;; entries, called with call_ref.
+    (type $nclo (sub (struct (field $code (ref $ncode)))))
+    (type $nclo_x (sub final $nclo (struct (field $code (ref $ncode)) (field $step eqref))))
+    (type $ncode (struct (field $e1 (ref $n1))))
+    (type $n1 (func (param (ref $nclo) eqref) (result eqref))))
 
   ;; One table of funcref, and one typed as the arity's signature.
   (table $tbl 5 funcref)
   (elem (table $tbl) (i32.const 4) func $q_e1)
   (table $typed 1 (ref null $f1))
   (elem (table $tbl) (i32.const 0) func $e1)
-  ;; The proposal's function: base 1, so its 1-argument entry is at 2.
+  ;; The table-index variant's function: base 1, so its 1-argument entry is at 2.
   (elem (table $tbl) (i32.const 2) func $p_e1)
   (elem (table $typed) (i32.const 0) (ref null $f1) (ref.func $e1))
-  (elem declare func $dispatch $e1)
+  (elem declare func $dispatch $e1 $n_e1)
 
   (global $g (mut eqref) (ref.null eq))
   (global $gp (mut eqref) (ref.null eq))
@@ -45,14 +52,22 @@
     (global.set $g (struct.new $clo (ref.null eq) (ref.func $dispatch)
       (i32.const 1) (i32.const 1) (i32.const 0) (ref.func $e1) (ref.func $e1)))
     (global.set $gp (struct.new $pclo_x (i32.const 1) (ref.i31 (i32.const 1))))
-    (global.set $gq (struct.new $fclo (i32.const 3) (struct.new $fenv (ref.i31 (i32.const 1))))))
+    (global.set $gq (struct.new $fclo (i32.const 3) (struct.new $fenv (ref.i31 (i32.const 1)))))
+    (global.set $gn (struct.new $nclo_x (global.get $ncode_x) (ref.i31 (i32.const 1)))))
   (global $gq (mut eqref) (ref.null eq))
+  (global $gn (mut eqref) (ref.null eq))
+  ;; The function's code struct, one per function, not per closure.
+  (global $ncode_x (ref $ncode) (struct.new $ncode (ref.func $n_e1)))
+  (func $n_e1 (type $n1) (param $self (ref $nclo)) (param $x eqref) (result eqref)
+    (ref.i31 (i32.add (i31.get_s (ref.cast (ref i31) (local.get $x)))
+      (i31.get_s (ref.cast (ref i31)
+        (struct.get $nclo_x $step (ref.cast (ref $nclo_x) (local.get $self))))))))
   (func $q_e1 (type $q1) (param $self (ref $fclo)) (param $x eqref) (result eqref)
     (ref.i31 (i32.add (i31.get_s (ref.cast (ref i31) (local.get $x)))
       (i31.get_s (ref.cast (ref i31) (struct.get $fenv $step
         (ref.cast (ref $fenv) (struct.get $fclo $env (local.get $self)))))))))
 
-  ;; The proposal's entry: casts itself to its closure type for a capture.
+  ;; The table-index variant's entry: casts itself to its closure type for a capture.
   (func $p_e1 (type $p1) (param $self (ref $pclo)) (param $x eqref) (result eqref)
     (ref.i31 (i32.add (i31.get_s (ref.cast (ref i31) (local.get $x)))
       (i31.get_s (ref.cast (ref i31)
@@ -189,9 +204,9 @@
       (br $l)))
     (call $result (local.get $acc)))
 
-  ;; The proposal's call site: a closure test that branches out of line, the
+  ;; Table-index variant: a closure test that branches out of line, the
   ;; entry at base + 1, and call_indirect.
-  (func (export "proposed") (param $n i64) (result i64)
+  (func (export "index_final") (param $n i64) (result i64)
     (local $acc eqref) (local $c (ref null $fclo))
     (local.set $acc (ref.i31 (i32.const 0)))
     (block $done (loop $l
@@ -214,7 +229,7 @@
 
   ;; The same with a closure subtype per function: the call site's cast to
   ;; the non-final supertype.
-  (func (export "proposed_subtype") (param $n i64) (result i64)
+  (func (export "index_subtype") (param $n i64) (result i64)
     (local $acc eqref) (local $c (ref null $pclo))
     (local.set $acc (ref.i31 (i32.const 0)))
     (block $done (loop $l
@@ -228,6 +243,29 @@
           (call_indirect $tbl (type $p1)
             (ref.as_non_null (local.get $c)) (local.get $acc)
             (i32.add (struct.get $pclo $base (local.get $c)) (i32.const 1)))
+          br $call)
+        local.get $acc
+        call $call1_slow)
+      local.set $acc
+      (br $l)))
+    (call $result (local.get $acc)))
+
+  ;; ADR-0004's call site: a closure test that branches out of line,
+  ;; the closure's code struct, its 1-argument entry, and call_ref.
+  (func (export "proposed") (param $n i64) (result i64)
+    (local $acc eqref) (local $c (ref null $nclo))
+    (local.set $acc (ref.i31 (i32.const 0)))
+    (block $done (loop $l
+      (br_if $done (i64.eqz (local.get $n)))
+      (local.set $n (i64.sub (local.get $n) (i64.const 1)))
+      (block $call (result eqref)
+        (block $slow (result eqref)
+          global.get $gn
+          br_on_cast_fail $slow eqref (ref $nclo)
+          local.set $c
+          (call_ref $n1
+            (ref.as_non_null (local.get $c)) (local.get $acc)
+            (struct.get $ncode $e1 (struct.get $nclo $code (local.get $c))))
           br $call)
         local.get $acc
         call $call1_slow)
