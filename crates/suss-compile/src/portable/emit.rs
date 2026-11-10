@@ -178,6 +178,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ConcatString => { names.insert("string-concat"); }
                         Nominal::ValueAdd => { names.insert("value-add"); }
                         Nominal::IsBoolean => {}
+                        Nominal::Identical => { names.insert("identical-value"); }
                         Nominal::StringIndexOf => { names.insert("string-index-of"); }
                         Nominal::StringSlice => { names.insert("string-slice"); }
                         Nominal::StringFromUnit => { names.insert("string-from-unit"); }
@@ -347,6 +348,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "protocol-native-method-set" => (vec![VALUE, ValType::I32, VALUE], vec![VALUE]),
             "try-invoke" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
             "binding-defined" | "language-error-is" | "native-object?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
+            "identical-value" => (vec![VALUE, VALUE], vec![VALUE]),
             "object-instance" | "object-same-descriptor" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
             }
@@ -1176,6 +1178,46 @@ fn emit_function(
                             }
                             function.instruction(&I32Or);
                         }
+                        // The same reference is identical, unless a boxed double,
+                        // which compares by value (NaN isn't identical to
+                        // itself). Otherwise nil, or a long in i31 range,
+                        // which has no other representation (ABI v3), isn't;
+                        // only two other values need the runtime's test of
+                        // boxed numbers and strings.
+                        Nominal::Identical => {
+                            let [a, b] = [arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset];
+                            function
+                                .instruction(&LocalGet(a))
+                                .instruction(&LocalGet(b))
+                                .instruction(&RefEq)
+                                .instruction(&LocalGet(a))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::NUMBER)))
+                                .instruction(&I32Eqz)
+                                .instruction(&I32And)
+                                .instruction(&If(BlockType::Result(ValType::I32)))
+                                .instruction(&I32Const(1))
+                                .instruction(&Else);
+                            for local in [a, b] {
+                                function
+                                    .instruction(&LocalGet(local))
+                                    .instruction(&RefIsNull)
+                                    .instruction(&LocalGet(local))
+                                    .instruction(&RefTestNonNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 }))
+                                    .instruction(&I32Or);
+                            }
+                            function
+                                .instruction(&I32Or)
+                                .instruction(&If(BlockType::Result(ValType::I32)))
+                                .instruction(&I32Const(0))
+                                .instruction(&Else)
+                                .instruction(&LocalGet(a))
+                                .instruction(&LocalGet(b))
+                                .instruction(&Call(index("identical-value")))
+                                .instruction(&runtime_abi::sentinel_in(runtime_abi::TRUE, sentinels))
+                                .instruction(&RefEq)
+                                .instruction(&End)
+                                .instruction(&End);
+                        }
                         // The runtime predicates' own tests, inline: never a mutable
                         // public cell, and no closure call on core's hot paths (#286).
                         // Arguments are already evaluated once in source order.
@@ -1526,20 +1568,23 @@ fn emit_function(
                 alternative,
             } => {
                 // Nil, false and internal undefined are falsey, including for
-                // boxed numeric zero and empty UTF-16 strings.
-                function
-                    .instruction(&LocalGet(condition.0 as u32 + offset))
-                    .instruction(&RefIsNull);
+                // boxed numeric zero and empty UTF-16 strings. A Bool is one
+                // of the two boolean sentinels, so only false is (#356).
                 function
                     .instruction(&LocalGet(condition.0 as u32 + offset))
                     .instruction(&runtime_abi::sentinel_in(runtime_abi::FALSE, sentinels))
-                    .instruction(&RefEq)
-                    .instruction(&I32Or);
-                function
-                    .instruction(&LocalGet(condition.0 as u32 + offset))
-                    .instruction(&runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels))
-                    .instruction(&RefEq)
-                    .instruction(&I32Or);
+                    .instruction(&RefEq);
+                if ir.values[condition.0].ty != Type::Bool {
+                    function
+                        .instruction(&LocalGet(condition.0 as u32 + offset))
+                        .instruction(&RefIsNull)
+                        .instruction(&I32Or);
+                    function
+                        .instruction(&LocalGet(condition.0 as u32 + offset))
+                        .instruction(&runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels))
+                        .instruction(&RefEq)
+                        .instruction(&I32Or);
+                }
                 function
                     .instruction(&If(BlockType::Result(ValType::I32)))
                     .instruction(&I32Const(target_state(*alternative) as i32))
