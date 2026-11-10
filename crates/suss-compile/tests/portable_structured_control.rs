@@ -5,8 +5,9 @@ use suss_compile::portable::{
     resolve::{Environment, Phase},
 };
 
-/// For each function body: its `loop` count, and whether it touches an `i32`
-/// local, which only the dispatcher's block index is.
+/// For each function body: its `loop` count, and whether it touches the
+/// dispatcher's block index. That is the first declared `i32` local; raw
+/// truth values from unboxed comparisons (#337) are `i32` locals after it.
 fn functions(source: &str) -> Vec<(usize, bool)> {
     use wasmparser::{CompositeInnerType, Operator, Parser, Payload, ValType};
     let wasm = portable::compile_in(source, &Environment::default(), Phase::Runtime).unwrap();
@@ -30,10 +31,10 @@ fn functions(source: &str) -> Vec<(usize, bool)> {
             _ => continue,
         };
         let mut index = parameters[found.len()].expect("function type");
-        let mut dispatch = vec![];
+        let mut dispatch = None;
         for local in body.get_locals_reader().unwrap() {
             let (count, ty) = local.unwrap();
-            if ty == ValType::I32 { dispatch.extend(index..index + count); }
+            if ty == ValType::I32 && dispatch.is_none() { dispatch = Some(index); }
             index += count;
         }
         let (mut loops, mut touched) = (0, false);
@@ -41,7 +42,7 @@ fn functions(source: &str) -> Vec<(usize, bool)> {
             match operator.unwrap() {
                 Operator::Loop { .. } => loops += 1,
                 Operator::LocalGet { local_index } | Operator::LocalSet { local_index } => {
-                    touched |= dispatch.contains(&local_index);
+                    touched |= dispatch == Some(local_index);
                 }
                 _ => {}
             }
