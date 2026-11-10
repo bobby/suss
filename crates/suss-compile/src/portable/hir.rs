@@ -450,6 +450,9 @@ pub enum Nominal {
     IsNumber,
     IsString,
     IsBoolean,
+    /// Inline `identical?` (#356): a reference test, with the runtime's test
+    /// only for two boxed or string operands that aren't the same reference.
+    Identical,
     IsClosure,
     BindCallable,
     /// Private selected binding-cell presence, not value truthiness.
@@ -537,6 +540,7 @@ impl Nominal {
             | Self::IsNumber
             | Self::IsString
             | Self::IsBoolean
+            | Self::Identical
             | Self::IsClosure
             | Self::IsNativeObject
             | Self::IsTypeConstructor
@@ -556,6 +560,7 @@ impl Nominal {
                 Self::Array => true,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::CurrentThis => count == 0,
+                Self::Identical => count == 2,
                 Self::IsNumber | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
@@ -3136,6 +3141,43 @@ impl Analyzer<'_> {
                 )
             }
             _ => {
+                if let Some(ResolvedBinding::Core { export, .. }) = &resolved {
+                    // `nil?` and `identical?` compile inline (#356), as their
+                    // Clojure :inline definitions do, so a call compiled before
+                    // a redefinition of the var keeps the core test. Clojure
+                    // inlines no other predicate; `true?`, `number?` and the
+                    // like stay live calls. Another arity stays a call, which
+                    // raises the arity error.
+                    let predicate = match (*export, args.len()) {
+                        ("predicate-nil", 1) => Some(None),
+                        ("predicate-identical", 2) => Some(Some(Nominal::Identical)),
+                        _ => None,
+                    };
+                    if let Some(predicate) = predicate {
+                        let callee = self.form(&items[0])?;
+                        let arguments = args
+                            .iter()
+                            .map(|arg| self.form(arg))
+                            .collect::<Result<Vec<_>, _>>()?;
+                        *self.source_nodes.last_mut().expect("source node fact slot") =
+                            Some(std::sync::Arc::new(SourceNode::Invoke {
+                                callee: std::sync::Arc::new(callee),
+                                arguments: arguments.clone().into(),
+                            }));
+                        return Ok(match predicate {
+                            Some(operation) => self.nominal(form, operation, arguments),
+                            None => Hir {
+                                source: None,
+                                span: form.span.clone(),
+                                metadata: form.metadata.clone(),
+                                ty: Type::Bool,
+                                kind: std::sync::Arc::new(Expression::NilTest(Box::new(
+                                    arguments.into_iter().next().expect("one operand"),
+                                ))),
+                            },
+                        });
+                    }
+                }
                 let Some(ResolvedBinding::Arithmetic { operator, .. }) = resolved else {
                     return self.call(form, items);
                 };

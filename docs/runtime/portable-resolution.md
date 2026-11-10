@@ -49,7 +49,7 @@ hyphen or underscore; other forms fail explicitly.
 ## Executable cell imports
 
 HIR retains the resolved cell identity, byte span and reader metadata. Ordered
-IR `GlobalRead` instructions emit one `binding-get` call each. No backend source
+IR `GlobalRead` instructions emit one read of the cell each (below). No backend source
 re-evaluation, hoisting or type inspection can duplicate a read. Cells import
 under `suss.bindings.runtime` or `suss.bindings.macro` with `namespace/name` fields.
 Only used identities are imported, deduplicated and deterministically ordered.
@@ -103,5 +103,18 @@ Source GlobalRead now checks binding-bound before binding-get and yields interna
 undefined for an uninitialized, already resolved source variable. This does not
 initialize its cell; defonce remains able to run. Unresolved names still fail
 compilation, and direct internal ABI binding-get still raises its unbound error.
+
+The cell's i32 field holds flags: `CELL_BOUND` (1) and `CELL_DYNAMIC` (2).
+`dynamic-push` sets `CELL_DYNAMIC` on every cell of a frame it publishes, and
+nothing clears it: root writes keep it, and a session restoring a checkpoint
+keeps it, since a saved context may still hold a frame with the cell. Every
+frame comes from `dynamic-push` or `dynamic-fork`'s copy of one, so a cell
+without the flag has no frame entry. A source read whose flags are exactly
+`CELL_BOUND` reads the root inline, a `struct.get`; otherwise an unbound cell
+reads as undefined, and a dynamic one calls `binding-get`, which searches the
+frames. `binding-get` skips the search for a cell that isn't dynamic. So a
+var's reads cost the same however many `binding`s enclose them, unless the
+var itself has been bound (#354). Suss doesn't require `^:dynamic` to bind a
+var, so the flag follows what is bound rather than its metadata.
 Fresh [forward-declaration evidence](forward-declarations.md) supersedes the old
 source-read assumption while preserving the ABI cell distinction.

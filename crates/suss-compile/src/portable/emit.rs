@@ -1,5 +1,6 @@
 //! Emit only verified IR. Operands are local value IDs, never source expressions.
 mod r#async;
+mod structured;
 mod unboxed;
 use super::{
     hir::{Arithmetic, Literal, Nominal, Type},
@@ -179,6 +180,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ConcatString => { names.insert("string-concat"); }
                         Nominal::ValueAdd => { names.insert("value-add"); }
                         Nominal::IsBoolean => {}
+                        Nominal::Identical => { names.insert("identical-value"); }
                         Nominal::StringIndexOf => { names.insert("string-index-of"); }
                         Nominal::StringSlice => { names.insert("string-slice"); }
                         Nominal::StringFromUnit => { names.insert("string-from-unit"); }
@@ -348,6 +350,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "protocol-native-method-set" => (vec![VALUE, ValType::I32, VALUE], vec![VALUE]),
             "try-invoke" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
             "binding-defined" | "language-error-is" | "native-object?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
+            "identical-value" => (vec![VALUE, VALUE], vec![VALUE]),
             "object-instance" | "object-same-descriptor" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
             }
@@ -784,11 +787,12 @@ fn emit_function(
             .position(|item| *item == name)
             .expect("collected import") as u32
     };
-    // Every SSA value has one GC local. The last local is the block dispatcher.
-    // A verified single return/throw block has no control-flow dispatch. Keep
-    // resumable states and all branch/backedge functions on the dispatcher.
-    let straight_line = continuation.is_none() && ir.blocks.len() == 1
-        && matches!(&ir.blocks[0].terminator, Terminator::Return(_) | Terminator::Throw(_));
+    // Every SSA value has one GC local. The last local is the block dispatcher,
+    // used only by resumable states and irreducible graphs; every other
+    // function emits structured control flow (#358). Raw numeric values get
+    // extra typed locals after the dispatcher (#337).
+    let structured = if continuation.is_none() { structured::plan(ir) } else { None };
+    let dispatch = structured.is_none();
     let locals = unboxed::Locals::new(unboxed::infer(ir, continuation.is_some()), pc + 1, offset, sentinels);
     let mut declarations = vec![(count + 14, VALUE), (1, ValType::I32)];
     declarations.extend(locals.declarations.iter().copied());
@@ -820,7 +824,7 @@ fn emit_function(
         outcome: scratch + 12, auxiliary: scratch + 13, sentinels };
     if let Some(plan) = continuation {
         r#async::initialize(&mut function, plan, &slots, &index);
-    } else if !straight_line {
+    } else if dispatch {
         function.instruction(&I32Const(0)).instruction(&LocalSet(pc));
     }
     if continuation.is_some() {
@@ -828,15 +832,24 @@ fn emit_function(
             .instruction(&Block(BlockType::Result(VALUE)))
             .instruction(&TryTable(BlockType::Empty, Cow::Owned(vec![wasm_encoder::Catch::One { tag: 0, label: 0 }])));
     }
-    if !straight_line { function.instruction(&Loop(BlockType::Empty)); }
+    if dispatch { function.instruction(&Loop(BlockType::Empty)); }
     let state_count = continuation.map_or(ir.blocks.len(), |plan| plan.states.len());
-    for state_id in 0..state_count {
+    let steps = structured.unwrap_or_else(|| (0..state_count).map(structured::Step::Code).collect());
+    for step in steps {
+        let state_id = match step {
+            structured::Step::Code(state_id) => state_id,
+            structured::Step::Loop => { function.instruction(&Loop(BlockType::Empty)); continue; }
+            structured::Step::Block => { function.instruction(&Block(BlockType::Empty)); continue; }
+            structured::Step::Else => { function.instruction(&Else); continue; }
+            structured::Step::End => { function.instruction(&End); continue; }
+            structured::Step::Br(depth) => { function.instruction(&Br(depth)); continue; }
+        };
         let state = continuation.map(|plan| &plan.states[state_id]);
         let block_id = state.map_or(state_id, |state| state.block);
         let block = &ir.blocks[block_id];
         let instructions = state.map_or(block.instructions.as_slice(), |state| &block.instructions[state.instructions.clone()]);
         let state_number = i32::try_from(state_id).map_err(|_| fail("Too many IR blocks"))?;
-        if !straight_line {
+        if dispatch {
             function
                 .instruction(&LocalGet(pc))
                 .instruction(&I32Const(state_number))
@@ -977,21 +990,43 @@ fn emit_function(
                 Operation::GlobalRead(global) => {
                     let index_global =
                         globals.binary_search(global).expect("collected global") as u32;
-                    function
-                        .instruction(&GlobalGet(index_global))
-                        // The shared binding cell stores the bound flag as i32.
-                        // Read the same checked field as binding-bound without
-                        // boxing and immediately unboxing its Boolean result.
-                        .instruction(&RefCastNonNull(HeapType::Concrete(5)))
-                        .instruction(&StructGet {
-                            struct_type_index: 5,
+                    let flags = [
+                        GlobalGet(index_global),
+                        RefCastNonNull(HeapType::Concrete(runtime_abi::BINDING)),
+                        StructGet {
+                            struct_type_index: runtime_abi::BINDING,
                             field_index: 1,
+                        },
+                    ];
+                    // A bound cell that no binding frame has held reads its
+                    // root inline (#354). Otherwise an unbound cell reads as
+                    // undefined, and a dynamic one asks binding-get.
+                    for instruction in &flags {
+                        function.instruction(instruction);
+                    }
+                    function
+                        .instruction(&I32Const(runtime_abi::CELL_BOUND))
+                        .instruction(&I32Eq)
+                        .instruction(&If(BlockType::Result(VALUE)))
+                        .instruction(&GlobalGet(index_global))
+                        .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::BINDING)))
+                        .instruction(&StructGet {
+                            struct_type_index: runtime_abi::BINDING,
+                            field_index: 0,
                         })
+                        .instruction(&Else);
+                    for instruction in &flags {
+                        function.instruction(instruction);
+                    }
+                    function
+                        .instruction(&I32Const(runtime_abi::CELL_BOUND))
+                        .instruction(&I32And)
                         .instruction(&If(BlockType::Result(VALUE)))
                         .instruction(&GlobalGet(index_global))
                         .instruction(&Call(index("binding-get")))
                         .instruction(&Else)
                         .instruction(&runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels))
+                        .instruction(&End)
                         .instruction(&End)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
@@ -1176,6 +1211,46 @@ fn emit_function(
                                     .instruction(&RefEq);
                             }
                             function.instruction(&I32Or);
+                        }
+                        // The same reference is identical, unless a boxed double,
+                        // which compares by value (NaN isn't identical to
+                        // itself). Otherwise nil, or a long in i31 range,
+                        // which has no other representation (ABI v3), isn't;
+                        // only two other values need the runtime's test of
+                        // boxed numbers and strings.
+                        Nominal::Identical => {
+                            let [a, b] = [arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset];
+                            function
+                                .instruction(&LocalGet(a))
+                                .instruction(&LocalGet(b))
+                                .instruction(&RefEq)
+                                .instruction(&LocalGet(a))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::NUMBER)))
+                                .instruction(&I32Eqz)
+                                .instruction(&I32And)
+                                .instruction(&If(BlockType::Result(ValType::I32)))
+                                .instruction(&I32Const(1))
+                                .instruction(&Else);
+                            for local in [a, b] {
+                                function
+                                    .instruction(&LocalGet(local))
+                                    .instruction(&RefIsNull)
+                                    .instruction(&LocalGet(local))
+                                    .instruction(&RefTestNonNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 }))
+                                    .instruction(&I32Or);
+                            }
+                            function
+                                .instruction(&I32Or)
+                                .instruction(&If(BlockType::Result(ValType::I32)))
+                                .instruction(&I32Const(0))
+                                .instruction(&Else)
+                                .instruction(&LocalGet(a))
+                                .instruction(&LocalGet(b))
+                                .instruction(&Call(index("identical-value")))
+                                .instruction(&runtime_abi::sentinel_in(runtime_abi::TRUE, sentinels))
+                                .instruction(&RefEq)
+                                .instruction(&End)
+                                .instruction(&End);
                         }
                         // The runtime predicates' own tests, inline: never a mutable
                         // public cell, and no closure call on core's hot paths (#286).
@@ -1528,7 +1603,9 @@ fn emit_function(
                         _ => locals.raw(*parameter),
                     }));
                 }
-                if let Some(plan) = continuation.filter(|plan| plan.backedges.contains(&(block_id, *target))) {
+                if !dispatch {
+                    // The plan's steps branch or continue in place.
+                } else if let Some(plan) = continuation.filter(|plan| plan.backedges.contains(&(block_id, *target))) {
                     r#async::yield_turn(&mut function, plan.block_entries[*target], &slots, ir.values.len(), &index);
                 } else {
                     function.instruction(&I32Const(target_state(*target) as i32))
@@ -1547,23 +1624,32 @@ fn emit_function(
                 alternative,
             } => {
                 // Nil, false and internal undefined are falsey, including for
-                // boxed numeric zero and empty UTF-16 strings.
+                // boxed numeric zero and empty UTF-16 strings. A Bool is one
+                // of the two boolean sentinels, so only false is (#356). A raw
+                // truth value is falsey when zero (#337).
                 if locals.of(*condition) == unboxed::Repr::Flag {
                     function.instruction(&LocalGet(locals.raw(*condition))).instruction(&I32Eqz);
                 } else {
                 function
                     .instruction(&LocalGet(condition.0 as u32 + offset))
-                    .instruction(&RefIsNull);
-                function
-                    .instruction(&LocalGet(condition.0 as u32 + offset))
                     .instruction(&runtime_abi::sentinel_in(runtime_abi::FALSE, sentinels))
-                    .instruction(&RefEq)
-                    .instruction(&I32Or);
-                function
-                    .instruction(&LocalGet(condition.0 as u32 + offset))
-                    .instruction(&runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels))
-                    .instruction(&RefEq)
-                    .instruction(&I32Or);
+                    .instruction(&RefEq);
+                if ir.values[condition.0].ty != Type::Bool {
+                    function
+                        .instruction(&LocalGet(condition.0 as u32 + offset))
+                        .instruction(&RefIsNull)
+                        .instruction(&I32Or);
+                    function
+                        .instruction(&LocalGet(condition.0 as u32 + offset))
+                        .instruction(&runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels))
+                        .instruction(&RefEq)
+                        .instruction(&I32Or);
+                }
+                }
+                if !dispatch {
+                    // The plan's steps give the alternative, then the consequent.
+                    function.instruction(&If(BlockType::Empty));
+                    continue;
                 }
                 function
                     .instruction(&If(BlockType::Result(ValType::I32)))
@@ -1587,7 +1673,7 @@ fn emit_function(
                 }
             }
         }
-        if !straight_line { function.instruction(&End); }
+        if dispatch { function.instruction(&End); }
     }
     if let Some(plan) = continuation {
         function.instruction(&LocalGet(pc)).instruction(&I32Const(plan.states.len() as i32))
@@ -1595,7 +1681,7 @@ fn emit_function(
         r#async::unwind(&mut function, &slots, ir.values.len(), &index);
         function.instruction(&Br(1)).instruction(&End);
     }
-    if !straight_line { function.instruction(&Unreachable).instruction(&End); }
+    if dispatch { function.instruction(&Unreachable).instruction(&End); }
     if let Some(plan) = continuation {
         // Language exceptions thrown by any compiled operation become an
         // explicit unwind event. Wasm traps remain runtime/host recovery work.

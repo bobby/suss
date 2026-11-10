@@ -93,11 +93,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
 
     // JavaScript strict identity compares primitive number/string values, but
     // nominal objects and closures by identity. RefEq alone fails boxed scalars.
-    let mut body = vec![];
-    argument(&mut body, 0);
-    body.push(LocalSet(2));
-    argument(&mut body, 1);
-    body.push(LocalSet(3));
+    // A direct function, so inline `identical?` calls it without a closure
+    // when its operands are distinct references (#356).
+    let mut body = vec![LocalGet(0), LocalSet(2), LocalGet(1), LocalSet(3)];
     // Two longs are identical when equal, as an i31 is; two doubles too,
     // as JavaScript's primitive numbers were. A long is never a double.
     let long_test = b.names["long-test"];
@@ -198,12 +196,17 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         RefEq,
     ]);
     boolean(&mut body);
-    declared.push(factory(
-        b,
-        "predicate-identical",
-        2,
+    let identical = b.function_with_locals(
+        "identical-value",
+        &[VALUE, VALUE],
+        &[VALUE],
         &[(2, VALUE), (1, ValType::I32)],
         &body,
-    ));
+    );
+    let mut body = vec![];
+    argument(&mut body, 0);
+    argument(&mut body, 1);
+    body.push(Call(identical));
+    declared.push(factory(b, "predicate-identical", 2, &[], &body));
     declared
 }
