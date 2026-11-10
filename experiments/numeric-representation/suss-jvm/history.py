@@ -17,6 +17,7 @@ RESULTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "result
 RUNS = [
     ("M15-01 baseline", "5e5dbc53", "run_m15_baseline.txt"),
     ("M15-02 var reads", "28309f6d", "run_m15_02.txt"),
+    ("M15-03 inline predicates", "168e4311", "run_m15_03.txt"),
 ]
 ROW = re.compile(r"^\| (.+?) \| (-?[\d,.]+) \| ([\d,]*) \| (-?[\d,.]+) \| [^|]* \|$")
 
