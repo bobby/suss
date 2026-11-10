@@ -2512,7 +2512,7 @@ mod tests {
                 let ty = original.ty(&scope).unwrap();
                 let allocator = wasmtime::StructRefPre::new(&mut scope, ty);
                 let mut fields = original.fields(&mut scope).unwrap().collect::<Vec<_>>();
-                fields[0] = Val::AnyRef(Some(invalid));
+                fields[crate::runtime_abi::UNIVERSAL_ENVIRONMENT as usize] = Val::AnyRef(Some(invalid));
                 let invalid = wasmtime::StructRef::new(&mut scope, &allocator, &fields)
                     .unwrap()
                     .to_anyref();

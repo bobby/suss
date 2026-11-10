@@ -94,12 +94,13 @@ fn lazy_result_interrupt_is_synchronized_after_thunk_effects_and_recovers() {
                         .ok_or_else(|| wasmtime::Error::msg("spin is not a closure"))?;
                     let ty = object.ty(&store)?;
                     let mut fields = object.fields(&mut store)?.collect::<Vec<_>>();
-                    if fields.len() != 5 {
+                    // The universal closure layout (ADR-0004).
+                    if fields.len() != 7 {
                         return Err(wasmtime::Error::msg("unexpected closure layout"));
                     }
                     // Direct construction is necessary because inspect does not
                     // expose closure-new. Do not copy an already assigned UID.
-                    let uid = fields[4]
+                    let uid = fields[crate::runtime_abi::CLOSURE_UID as usize]
                         .unwrap_anyref()
                         .unwrap()
                         .as_i31(&store)?
@@ -107,7 +108,8 @@ fn lazy_result_interrupt_is_synchronized_after_thunk_effects_and_recovers() {
                     if uid.get_u32() != 0 {
                         return Err(wasmtime::Error::msg("expected fresh nil closure UID"));
                     }
-                    let Val::FuncRef(Some(original)) = fields[1].clone() else {
+                    let invoke = crate::runtime_abi::UNIVERSAL_INVOKE as usize;
+                    let Val::FuncRef(Some(original)) = fields[invoke].clone() else {
                         return Err(wasmtime::Error::msg("missing original invoke Func"));
                     };
                     let original_type = original.ty(&store);
@@ -130,7 +132,7 @@ fn lazy_result_interrupt_is_synchronized_after_thunk_effects_and_recovers() {
                             original.call(callback.as_context_mut(), args, results)
                         },
                     );
-                    fields[1] = Val::FuncRef(Some(host));
+                    fields[invoke] = Val::FuncRef(Some(host));
                     let allocator = StructRefPre::new(&mut store, ty);
                     let replacement = StructRef::new(&mut store, &allocator, &fields)?;
                     let mut args = [Val::null_any_ref()];

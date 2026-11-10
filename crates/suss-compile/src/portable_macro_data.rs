@@ -284,13 +284,14 @@ impl FormBridge {
         for (name, class) in SOURCE_CLASSES {
             let value = session.eval(&format!("suss.core/{name}"))?;
             let id = session.inspect(&value, |mut store, value| {
-                let closure = fields(&mut store, &value, 5)?;
-                let owner = fields(&mut store, &closure[0], 4)?;
-                let storage = array(&mut store, &owner[1])?;
-                if storage.len() != 3 {
-                    return Err(error("Invalid class property owner"));
-                }
-                let descriptor = fields(&mut store, &storage[0], 6)?;
+                // A class constructor is a universal closure (ADR-0004) whose
+                // environment is its descriptor.
+                let closure = fields(&mut store, &value, 7)?;
+                let descriptor = fields(
+                    &mut store,
+                    &closure[crate::runtime_abi::UNIVERSAL_ENVIRONMENT as usize],
+                    6,
+                )?;
                 match descriptor[0] {
                     Val::I64(id) => Ok(id),
                     _ => Err(error("Invalid class descriptor identity")),

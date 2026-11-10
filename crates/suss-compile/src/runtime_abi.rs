@@ -50,7 +50,7 @@ mod string_methods;
 mod string_char_at;
 mod type_values;
 
-pub const VERSION: u32 = 3;
+pub const VERSION: u32 = 4;
 // The language sentinels. Every i31 is a long (ADR-0003); nil is a null
 // eqref, and false, true and undefined are SENTINEL structs held in runtime
 // globals that fragments import. Code names a sentinel with these and builds
@@ -207,7 +207,21 @@ pub const LONG: u32 = 11;
 pub const PACKED_STORAGE: u32 = 12;
 /// A packed primitive array: its storage and an identity UID.
 pub const PACKED: u32 = 18;
-pub(crate) const TYPE_COUNT: u32 = 19;
+/// ADR-0004's calling convention (ABI 4). `CLOSURE` is the non-final
+/// `$closure {code, properties, uid}`; `CODE` is a function's shared code
+/// struct `{name, e0 … e8, spread}`; `CALL + k` is `$callk`, the entry for k
+/// arguments, `(ref $closure) eqref × k -> eqref`; `SPREAD` is the spread entry,
+/// `(ref $closure) (ref $args) eqref -> eqref`, taking realized arguments and
+/// the unrealized rest, a seq or nil. `UNIVERSAL` is the closure subtype the
+/// runtime and host make: `{code, properties, uid, environment, invoke,
+/// minimum arity, maximum arity (-1 variadic)}`, called through one shared
+/// code struct whose entries pack their arguments for `invoke`.
+pub const MAX_FIXED: u32 = 8;
+pub const CODE: u32 = 19;
+pub const CALL: u32 = 20;
+pub const SPREAD: u32 = CALL + MAX_FIXED + 1;
+pub const UNIVERSAL: u32 = SPREAD + 1;
+pub(crate) const TYPE_COUNT: u32 = UNIVERSAL + 1;
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
 
 fn reference(index: u32) -> ValType {
@@ -219,6 +233,14 @@ fn reference(index: u32) -> ValType {
 /// Exact type of the imported false, true and undefined globals.
 pub fn sentinel_type() -> ValType {
     reference(SENTINEL)
+}
+/// A function's code struct reference, as a definition's global holds it.
+pub(crate) fn code_type() -> ValType {
+    reference(CODE)
+}
+/// The universal function type's reference, as `closure-new` takes it.
+pub(crate) fn invoke_type() -> ValType {
+    reference(INVOKE)
 }
 /// Exact shared binding-cell reference type for fragment imports.
 pub(crate) fn binding_cell_type() -> ValType {
@@ -248,14 +270,9 @@ pub fn prelude() -> TypeSection {
         })),
         CompositeInnerType::Array(ArrayType(field(VALUE, true))),
         CompositeInnerType::Func(FuncType::new([VALUE, reference(ARGS)], [VALUE])),
-        // Closure: environment, invoke, minimum arity, maximum arity (-1 variadic).
-        structure(vec![
-            field(VALUE, false),
-            field(reference(INVOKE), false),
-            field(ValType::I32, false),
-            field(ValType::I32, false),
-            field(VALUE, true), // Lazily assigned, owner-held identity UID.
-        ]),
+        // Closure (ADR-0004): its function's code struct, native protocol
+        // properties or null, and the lazily assigned, owner-held identity UID.
+        structure(closure_fields()),
         // Binding cell: value and flags, CELL_BOUND independent of the value
         // (nil can be a binding) and CELL_DYNAMIC.
         structure(vec![field(VALUE, true), field(ValType::I32, true)]),
@@ -308,18 +325,81 @@ pub fn prelude() -> TypeSection {
         })));
     }
     group.push(structure(vec![field(VALUE, false), field(VALUE, true)]));
-    types.ty().rec(group.into_iter().map(|inner| SubType {
-        is_final: true,
-        supertype_idx: None,
-        composite_type: CompositeType {
-            inner,
-            shared: false,
-            descriptor: None,
-            describes: None,
-        },
+    // ABI 4 (ADR-0004): the code struct, the entry types and the runtime's
+    // universal closure, appended so no earlier index moves.
+    let mut code = vec![field(VALUE, false)];
+    code.extend((0..=MAX_FIXED).map(|k| field(reference(CALL + k), false)));
+    code.push(field(reference(SPREAD), false));
+    group.push(structure(code));
+    for k in 0..=MAX_FIXED {
+        let mut params = vec![reference(CLOSURE)];
+        params.extend((0..k).map(|_| VALUE));
+        group.push(CompositeInnerType::Func(FuncType::new(params, [VALUE])));
+    }
+    group.push(CompositeInnerType::Func(FuncType::new(
+        [reference(CLOSURE), reference(ARGS), VALUE],
+        [VALUE],
+    )));
+    let mut universal = closure_fields();
+    universal.extend([
+        field(VALUE, false),
+        field(reference(INVOKE), false),
+        field(ValType::I32, false),
+        field(ValType::I32, false),
+    ]);
+    group.push(structure(universal));
+    debug_assert_eq!(group.len() as u32, TYPE_COUNT);
+    types.ty().rec(group.into_iter().enumerate().map(|(index, inner)| {
+        let index = index as u32;
+        SubType {
+            // Only `$closure` has subtypes: the universal closure here, and
+            // each compiled function's capture struct in its fragment.
+            is_final: index != CLOSURE,
+            supertype_idx: (index == UNIVERSAL).then_some(CLOSURE),
+            composite_type: CompositeType {
+                inner,
+                shared: false,
+                descriptor: None,
+                describes: None,
+            },
+        }
     }));
     types
 }
+
+/// `$closure`'s fields, which every closure subtype begins with.
+pub(crate) fn closure_fields() -> Vec<FieldType> {
+    vec![
+        field(reference(CODE), false),
+        field(VALUE, true),
+        field(VALUE, true),
+    ]
+}
+/// Fields of `$closure` and of the universal closure.
+pub(crate) const CLOSURE_CODE: u32 = 0;
+pub(crate) const CLOSURE_PROPERTIES: u32 = 1;
+pub(crate) const CLOSURE_UID: u32 = 2;
+/// Fields every closure begins with; a capture struct's captures follow.
+pub(crate) const CLOSURE_FIELDS: u32 = 3;
+pub(crate) const UNIVERSAL_ENVIRONMENT: u32 = 3;
+pub(crate) const UNIVERSAL_INVOKE: u32 = 4;
+pub(crate) const UNIVERSAL_MIN: u32 = 5;
+pub(crate) const UNIVERSAL_MAX: u32 = 6;
+/// Code struct fields: the name, then entry k at `CODE_ENTRY + k`, then spread.
+pub(crate) const CODE_NAME: u32 = 0;
+pub(crate) const CODE_ENTRY: u32 = 1;
+pub(crate) const CODE_SPREAD: u32 = CODE_ENTRY + MAX_FIXED + 1;
+/// Runtime exports by arity (ADR-0004): `call-k` takes any callee and k
+/// arguments, the out-of-line path of a call site; `arity-error-k` is the
+/// entry of type `$callk` for an arity a function lacks.
+pub const CALL_EXPORTS: [&str; MAX_FIXED as usize + 1] =
+    ["call-0", "call-1", "call-2", "call-3", "call-4", "call-5", "call-6", "call-7", "call-8"];
+pub const ARITY_ERROR_EXPORTS: [&str; MAX_FIXED as usize + 1] = [
+    "arity-error-0", "arity-error-1", "arity-error-2", "arity-error-3", "arity-error-4",
+    "arity-error-5", "arity-error-6", "arity-error-7", "arity-error-8",
+];
+/// The runtime's universal code struct, shared by every universal closure.
+pub(crate) const UNIVERSAL_CODE_GLOBAL: u32 = object_methods::CURRENT_THIS + 1;
 
 /// Versions checked before any fragment initialization. Layout compatibility is
 /// additionally checked by Wasm validation/linking; a manifest is not a proof.
@@ -459,6 +539,20 @@ impl Builder {
     ) -> u32 {
         self.function_with_locals(name, params, results, &[], instructions)
     }
+    /// A private function of one of the shared group's function types, such as
+    /// an entry `$callk`. Not exported.
+    fn typed(&mut self, ty: u32, locals: &[(u32, ValType)], instructions: &[Instruction<'_>]) -> u32 {
+        let index = self.count;
+        self.functions.function(ty);
+        let mut function = Function::new(locals.iter().copied());
+        for instruction in instructions {
+            function.instruction(instruction);
+        }
+        function.instruction(&Instruction::End);
+        self.code.function(&function);
+        self.count += 1;
+        index
+    }
     fn function_with_locals(
         &mut self,
         name: &str,
@@ -579,23 +673,27 @@ fn build_module() -> Vec<u8> {
         &[VALUE],
         &[sentinel_value(NIL), LocalGet(0), ArrayNew(ARGS)],
     );
-    let (wrap_environment, closure_environment) = closure_properties::functions(&mut b);
+    let closure_environment = closure_properties::functions(&mut b);
+    // A universal closure: the shared universal code struct, no properties
+    // until one is set, an unassigned UID, then its environment, function and
+    // arity range.
     b.function(
         "closure-new",
         &[VALUE, reference(INVOKE), ValType::I32, ValType::I32],
         &[VALUE],
         &[
+            GlobalGet(UNIVERSAL_CODE_GLOBAL),
+            sentinel_value(NIL),
+            I32Const(0), // Identity UID: private unassigned marker.
+            RefI31,
             LocalGet(0),
-            Call(wrap_environment),
             LocalGet(1),
             LocalGet(2),
             LocalGet(3),
-            I32Const(0), // Identity UID: private unassigned marker.
-            RefI31,
-            StructNew(4),
+            StructNew(UNIVERSAL),
         ],
     );
-    let closure = HeapType::Concrete(4);
+    let closure = HeapType::Concrete(UNIVERSAL);
     let args = HeapType::Concrete(ARGS);
     // Calling a name a failed `def` or `declare` left unbound is Clojure's
     // unbound-fn error, not a non-function's (#288).
@@ -622,7 +720,7 @@ fn build_module() -> Vec<u8> {
         End,
     ]);
     for (local, kind, descriptor, message) in [
-        (0, closure, 2, "Not callable"),
+        (0, HeapType::Concrete(CLOSURE), 2, "Not callable"),
         (1, args, 3, "Invalid argument array"),
     ] {
         invoke.extend([
@@ -648,6 +746,24 @@ fn build_module() -> Vec<u8> {
             End,
         ]);
     }
+    // Any other closure takes its spread entry, with no unrealized rest.
+    invoke.extend([
+        LocalGet(0),
+        RefTestNonNull(closure),
+        I32Eqz,
+        If(BlockType::Empty),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(CLOSURE)),
+        LocalGet(1),
+        RefCastNonNull(args),
+        sentinel_value(NIL),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(CLOSURE)),
+        StructGet { struct_type_index: CLOSURE, field_index: CLOSURE_CODE },
+        StructGet { struct_type_index: CODE, field_index: CODE_SPREAD },
+        ReturnCallRef(SPREAD),
+        End,
+    ]);
     invoke.extend([
         LocalGet(1),
         RefCastNonNull(args),
@@ -655,15 +771,15 @@ fn build_module() -> Vec<u8> {
         LocalGet(0),
         RefCastNonNull(closure),
         StructGet {
-            struct_type_index: 4,
-            field_index: 2,
+            struct_type_index: UNIVERSAL,
+            field_index: UNIVERSAL_MIN,
         },
         I32LtU,
         LocalGet(0),
         RefCastNonNull(closure),
         StructGet {
-            struct_type_index: 4,
-            field_index: 3,
+            struct_type_index: UNIVERSAL,
+            field_index: UNIVERSAL_MAX,
         },
         I32Const(-1),
         I32Ne,
@@ -673,8 +789,8 @@ fn build_module() -> Vec<u8> {
         LocalGet(0),
         RefCastNonNull(closure),
         StructGet {
-            struct_type_index: 4,
-            field_index: 3,
+            struct_type_index: UNIVERSAL,
+            field_index: UNIVERSAL_MAX,
         },
         I32GtU,
         I32And,
@@ -703,8 +819,8 @@ fn build_module() -> Vec<u8> {
         LocalGet(0),
         RefCastNonNull(closure),
         StructGet {
-            struct_type_index: 4,
-            field_index: 1,
+            struct_type_index: UNIVERSAL,
+            field_index: UNIVERSAL_INVOKE,
         },
         ReturnCallRef(INVOKE),
     ]);
@@ -724,6 +840,29 @@ fn build_module() -> Vec<u8> {
     ]);
     b.function("arity-error", &[], &[VALUE], &arity_error);
     let generic_invoke = b.function("invoke", &[VALUE, VALUE], &[VALUE], &invoke);
+    // The universal code struct's entries pack their arguments for `invoke`,
+    // which checks the universal closure's arity range. Its spread entry takes
+    // realized arguments only until `apply` passes an unrealized rest.
+    let mut universal_entries = vec![];
+    for k in 0..=MAX_FIXED {
+        let mut body = vec![LocalGet(0)];
+        body.extend((1..=k).map(LocalGet));
+        body.extend([ArrayNewFixed { array_type_index: ARGS, array_size: k }, ReturnCall(generic_invoke)]);
+        universal_entries.push(b.typed(CALL + k, &[], &body));
+    }
+    let mut body = vec![LocalGet(2), RefIsNull, I32Eqz, If(BlockType::Empty)];
+    nominal::error(&mut body);
+    body.extend([End, LocalGet(0), LocalGet(1), ReturnCall(generic_invoke)]);
+    universal_entries.push(b.typed(SPREAD, &[], &body));
+    for k in 0..=MAX_FIXED {
+        let mut body: Vec<_> = (0..=k).map(LocalGet).collect();
+        body.extend([ArrayNewFixed { array_type_index: ARGS, array_size: k }, ReturnCall(generic_invoke)]);
+        b.function(CALL_EXPORTS[k as usize], &vec![VALUE; k as usize + 1], &[VALUE], &body);
+        let error = b.names["arity-error"];
+        let index = b.typed(CALL + k, &[], &[Call(error)]);
+        b.names.insert(ARITY_ERROR_EXPORTS[k as usize].to_owned(), index);
+        b.exports.export(ARITY_ERROR_EXPORTS[k as usize], ExportKind::Func, index);
+    }
     b.function(
         "binding-new",
         &[VALUE],
@@ -1245,6 +1384,18 @@ fn build_module() -> Vec<u8> {
             shared: false,
         },
         &ConstExpr::extended([GlobalGet(object_methods::DEFAULT_THIS)]),
+    );
+    assert_eq!(globals.len(), UNIVERSAL_CODE_GLOBAL);
+    let mut code = vec![sentinel_value(NIL)];
+    code.extend(universal_entries.iter().map(|entry| RefFunc(*entry)));
+    code.push(StructNew(CODE));
+    globals.global(
+        GlobalType {
+            val_type: reference(CODE),
+            mutable: false,
+            shared: false,
+        },
+        &ConstExpr::extended(code),
     );
     b.exports.export("array-join-active", ExportKind::Global, array_join::ACTIVE);
     b.exports
