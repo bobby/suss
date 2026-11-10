@@ -205,9 +205,19 @@ Use a small stable, versioned recursive type group imported by every compiled
 fragment. `Value` is a nullable eqref: nil is null, false, true and undefined
 are singleton sentinel structs, a long is an i31 when it fits and a boxed
 `i64` otherwise, a double is a boxed `f64` ([ABI v3](../runtime/abi-v3.md),
-ADR-0003), and the group holds UTF-16 arrays and typed runtime objects. Initially use a universal closure
-`(environment, argument-array) -> Value`; arity checks are centralized. Specialized
-call paths can be introduced later with equivalent tests.
+ADR-0003), and the group holds UTF-16 arrays and typed runtime objects.
+Calls follow [ADR-0004](../adr/0004-calling-convention.md) from ABI version 4:
+a closure is a subtype of one shared closure type, holding its captures and its
+function's immutable code struct of typed entries, called with `call_ref`.
+There is one entry per fixed arity up to eight and a spread entry for more
+arguments, `apply` and the host. Calls use WasmGC as designed rather than
+routing around one engine's present costs. An arity a function lacks is an entry that
+throws Clojure's `ArityException` message, so neither call sites nor entries
+check arity, and nothing fills missing parameters or drops surplus operands.
+Callables other than closures, unbound vars and non-callables take one
+out-of-line runtime path per arity. `undefined` is only the internal marker
+of an unbound cell and never reaches a call. Until M15-06 lands, ABI 3's
+universal `(environment, argument-array) -> Value` closure remains.
 
 A user-defined object carries a stable type descriptor and a field array rather
 than introducing a new cross-fragment Wasm struct layout for each `deftype`.
