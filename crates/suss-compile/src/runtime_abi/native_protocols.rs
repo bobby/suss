@@ -168,12 +168,41 @@ pub(super) fn functions(
         &body,
     );
 
-    // A valid protocol signature can select a plain native implementation with
-    // a different fixed parameter count. The pin's native function call fills
-    // absent slots with undefined and ignores surplus values (already evaluated).
+    // A native implementation is a closure like any other (ADR-0004): it is
+    // called with exactly the protocol call's operands, so a wrong count
+    // reaches its arity error, as in Clojure. No operand is filled with
+    // undefined or dropped.
     let mut body = vec![
         LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(4)),
+        RefTestNonNull(HeapType::Concrete(CLOSURE)),
+        I32Eqz,
+        If(BlockType::Empty),
+    ];
+    error(&mut body);
+    body.extend([
+        End,
+        LocalGet(1),
+        RefTestNonNull(HeapType::Concrete(ARGS)),
+        I32Eqz,
+        If(BlockType::Empty),
+    ]);
+    error(&mut body);
+    body.extend([End, LocalGet(0), LocalGet(1), ReturnCall(invoke)]);
+    let native_invoke = b.function_with_locals(
+        "protocol-native-invoke",
+        &[VALUE, VALUE],
+        &[VALUE],
+        &[(2, ValType::I32), (1, VALUE)],
+        &body,
+    );
+
+    // A JavaScript-convention method call (`.method` interop, as the pinned
+    // ClojureScript runs it): a function with one fixed arity receives exactly
+    // that many operands, missing ones undefined and surplus ones dropped
+    // (already evaluated). Other functions are called with their operands.
+    let mut body = vec![
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(CLOSURE)),
         I32Eqz,
         If(BlockType::Empty),
     ];
@@ -187,18 +216,28 @@ pub(super) fn functions(
     ]);
     error(&mut body);
     body.push(End);
-    for (field, local) in [(2, 2), (3, 3)] {
+    // The arity range: a universal closure's own, else its code struct's.
+    body.extend([LocalGet(0), RefTestNonNull(HeapType::Concrete(UNIVERSAL)), If(BlockType::Empty)]);
+    for (field, local) in [(UNIVERSAL_MIN, 2), (UNIVERSAL_MAX, 3)] {
         body.extend([
             LocalGet(0),
-            RefCastNonNull(HeapType::Concrete(4)),
-            StructGet {
-                struct_type_index: 4,
-                field_index: field,
-            },
+            RefCastNonNull(HeapType::Concrete(UNIVERSAL)),
+            StructGet { struct_type_index: UNIVERSAL, field_index: field },
+            LocalSet(local),
+        ]);
+    }
+    body.push(Else);
+    for (field, local) in [(CODE_MIN, 2), (CODE_MAX, 3)] {
+        body.extend([
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(CLOSURE)),
+            StructGet { struct_type_index: CLOSURE, field_index: CLOSURE_CODE },
+            StructGet { struct_type_index: CODE, field_index: field },
             LocalSet(local),
         ]);
     }
     body.extend([
+        End,
         LocalGet(2),
         LocalGet(3),
         I32Eq,
@@ -251,8 +290,8 @@ pub(super) fn functions(
         LocalGet(1),
         Call(invoke),
     ]);
-    let native_invoke = b.function_with_locals(
-        "protocol-native-invoke",
+    b.function_with_locals(
+        "js-method-invoke",
         &[VALUE, VALUE],
         &[VALUE],
         &[(2, ValType::I32), (1, VALUE)],

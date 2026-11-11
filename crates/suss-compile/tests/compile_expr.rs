@@ -2613,7 +2613,8 @@ fn known_function_wrong_arity_raises_runtime_exceptions() {
             Ok(Observation::String(units)) => String::from_utf16_lossy(&units),
             other => panic!("{expression}: undecodable exception message {other:?}"),
         };
-        assert!(message.to_lowercase().contains("arity"), "{expression}: {message}");
+        // Clojure's ArityException message (ADR-0004).
+        assert!(message.starts_with("Wrong number of args ("), "{expression}: {message}");
     }
 }
 

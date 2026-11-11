@@ -8,7 +8,7 @@ use crate::portable::{
     analyzer_edn::{self, Projector},
     resolve::Phase,
 };
-use crate::portable_aot::{SourceInput, prepare_inputs_with_command};
+use crate::portable_aot::{SourceInput, prepare_inputs_for_analysis};
 use crate::portable_repl::read_script_forms;
 use std::{
     collections::BTreeMap,
@@ -79,7 +79,7 @@ pub fn analyze_source(
         }
     };
     let (result, fragments) = analysis_record::record(Box::new(selected), || {
-        prepare_inputs_with_command(&inputs, source_paths, false, compile_fuel)
+        prepare_inputs_for_analysis(&inputs, source_paths, compile_fuel)
     });
     result.map_err(|error| error.to_string())?;
     Ok(fragments)

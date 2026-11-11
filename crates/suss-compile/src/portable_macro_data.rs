@@ -284,13 +284,14 @@ impl FormBridge {
         for (name, class) in SOURCE_CLASSES {
             let value = session.eval(&format!("suss.core/{name}"))?;
             let id = session.inspect(&value, |mut store, value| {
-                let closure = fields(&mut store, &value, 5)?;
-                let owner = fields(&mut store, &closure[0], 4)?;
-                let storage = array(&mut store, &owner[1])?;
-                if storage.len() != 3 {
-                    return Err(error("Invalid class property owner"));
-                }
-                let descriptor = fields(&mut store, &storage[0], 6)?;
+                // A class constructor is a universal closure (ADR-0004) whose
+                // environment is its descriptor.
+                let closure = fields(&mut store, &value, 7)?;
+                let descriptor = fields(
+                    &mut store,
+                    &closure[crate::runtime_abi::UNIVERSAL_ENVIRONMENT as usize],
+                    6,
+                )?;
                 match descriptor[0] {
                     Val::I64(id) => Ok(id),
                     _ => Err(error("Invalid class descriptor identity")),
@@ -494,6 +495,19 @@ impl FormBridge {
             };
             let storage = structure.fields(&mut store)?.collect::<Vec<_>>();
             if storage.len() != 4 {
+                return Ok(None);
+            }
+            // A closure with one capture is also four fields (ADR-0004), its
+            // first a code struct: only an object's first field is a
+            // descriptor.
+            let is_descriptor = match storage[0].anyref().flatten() {
+                Some(first) => match first.as_struct(&store)? {
+                    Some(first) => first.ty(&store)?.fields().len() == 6,
+                    None => false,
+                },
+                None => false,
+            };
+            if !is_descriptor {
                 return Ok(None);
             }
             let descriptor = fields(&mut store, &storage[0], 6)?;
@@ -1009,7 +1023,7 @@ impl FormBridge {
                 .data_inspect_calls(
                     value,
                     &self.core.factories["lazy-sval"],
-                    |mut store, value, args_new, invoke, function, undefined| {
+                    |mut store, value, args_new, invoke, _closure_new, function, undefined| {
                         let mut budget = Budget {
                             display: None,
                             source_valid: None,
@@ -2078,7 +2092,6 @@ fn source_array_suffix(
         wasmtime::StorageType::ValType(wasmtime::ValType::Ref(_))
     ) || !matches!(mask.ty(&*store)?.element_type(), wasmtime::StorageType::I16)
         || dense.len(&*store)? != mask.len(&*store)?
-        || dense.len(&*store)? > length
     {
         return Err(error("Invalid source array dense/presence layout"));
     }
@@ -2089,7 +2102,8 @@ fn source_array_suffix(
     let undefined = budget.undefined.clone();
     for index in 0..mask_len {
         let flag = mask.get(&mut *store, index)?.unwrap_i32();
-        if !(0..=1).contains(&flag) {
+        // Push growth leaves capacity past the length (#348), always absent.
+        if !(0..=1).contains(&flag) || (flag == 1 && index >= length) {
             return Err(error("Invalid source array presence bit"));
         }
         if flag == 1 && index >= start {

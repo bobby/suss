@@ -1,7 +1,8 @@
 //! Execute production ABI v3 runtime bytes, independently of Suss printing/equality.
 mod support;
 /// First type index a fragment appends after the shared ABI v3 prelude.
-const APPENDED: u32 = suss_compile::runtime_abi::PACKED + 1;
+/// Fragment types follow the shared group.
+const APPENDED: u32 = suss_compile::runtime_abi::TYPE_COUNT;
 use suss_compile::runtime_abi;
 use suss_compile::portable_session::{RuntimeNumber, runtime_number};
 use wasmtime::{Instance, Module, Store, Val};
@@ -647,7 +648,8 @@ fn runtime_abi_manifest_gate_precedes_initializer_effects() {
         assert_eq!(*store.data(), 0);
     }
     let mut altered = initializer(&expected);
-    let marker = [0x4e, 19, 0x5f, 1, 0x7c, 0]; // rec(19), struct, one f64 field
+    // rec(TYPE_COUNT), struct, one f64 field.
+    let marker = [0x4e, runtime_abi::TYPE_COUNT as u8, 0x5f, 1, 0x7c, 0];
     let offset = altered
         .windows(marker.len())
         .position(|bytes| bytes == marker)
@@ -909,7 +911,8 @@ fn runtime_abi_closures_check_arity_and_keep_old_captures_after_rebinding() {
     let units: Vec<_> = (0..message.len(&store).unwrap())
         .map(|i| message.get(&mut store, i).unwrap().i32().unwrap() as u16)
         .collect();
-    assert_eq!(String::from_utf16(&units).unwrap(), "Wrong arity");
+    // Clojure's arity error (ADR-0004); a runtime-made closure is named fn.
+    assert_eq!(String::from_utf16(&units).unwrap(), "Wrong number of args (0) passed to: fn");
     for field in &fields[2..4] {
         assert!(matches!(field, Val::AnyRef(None)), "expected nil");
     }
@@ -1089,15 +1092,16 @@ fn runtime_abi_arithmetic_function_values_check_arity_and_fold_in_order() {
             .as_struct(&store)
             .unwrap()
             .unwrap();
+        // A universal closure's arity range (ABI 4): fields 5 and 6.
         assert_eq!(
-            object.field(&mut store, 2).unwrap().unwrap_i32(),
+            object.field(&mut store, 5).unwrap().unwrap_i32(),
             if matches!(name, "add" | "multiply") {
                 0
             } else {
                 1
             }
         );
-        assert_eq!(object.field(&mut store, 3).unwrap().unwrap_i32(), -1);
+        assert_eq!(object.field(&mut store, 6).unwrap().unwrap_i32(), -1);
         let mut args = [Val::null_any_ref()];
         runtime
             .get_func(&mut store, "args-new")
@@ -1786,8 +1790,8 @@ fn runtime_abi_nominal_callables_reject_arity_missing_methods_and_non_objects() 
         .set(&mut store, 0, object.clone())
         .unwrap();
     for (callable, args, identity, message) in [
-        (constructor, none.clone(), 1, "Wrong arity"),
-        (dispatcher.clone(), none, 1, "Wrong arity"),
+        (constructor, none.clone(), 1, "Wrong number of args (0) passed to: fn"),
+        (dispatcher.clone(), none, 1, "Wrong number of args (0) passed to: fn"),
         (
             dispatcher.clone(),
             one.clone(),
@@ -2135,38 +2139,81 @@ fn runtime_abi_source_closure_names_survive_gc_and_reject_unset_or_invalid_owner
 }
 
 #[test]
-fn runtime_abi_accepts_foreign_raw_closure_environments_without_properties() {
+fn runtime_abi_calls_foreign_closures_through_their_own_code_struct() {
+    // Under ABI 4 (ADR-0004) any module can define a closure: a `$closure`
+    // subtype holding its captures, and a code struct whose entries and spread
+    // entry are its own functions. Here every entry returns the one capture.
     use std::borrow::Cow;
     use wasm_encoder::*;
     let value = ValType::Ref(RefType::EQREF);
     let mut types = runtime_abi::prelude();
+    let capture = APPENDED;
+    types.ty().subtype(&SubType {
+        is_final: true,
+        supertype_idx: Some(runtime_abi::CLOSURE),
+        composite_type: CompositeType {
+            inner: CompositeInnerType::Struct(StructType {
+                fields: vec![
+                    FieldType { element_type: StorageType::Val(ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::CODE) })), mutable: false },
+                    FieldType { element_type: StorageType::Val(value), mutable: true },
+                    FieldType { element_type: StorageType::Val(value), mutable: true },
+                    FieldType { element_type: StorageType::Val(value), mutable: false },
+                ]
+                .into_boxed_slice(),
+            }),
+            shared: false,
+            descriptor: None,
+            describes: None,
+        },
+    });
     types.ty().function([value], [value]);
     let mut functions = FunctionSection::new();
-    functions.function(3).function(APPENDED);
+    // Entries 0 to 8, the spread entry, then make.
+    for k in 0..=runtime_abi::MAX_FIXED {
+        functions.function(runtime_abi::CALL + k);
+    }
+    functions.function(runtime_abi::SPREAD).function(APPENDED + 1);
+    let make_index = runtime_abi::MAX_FIXED + 2;
     let mut exports = ExportSection::new();
-    exports.export("make", ExportKind::Func, 1);
+    exports.export("make", ExportKind::Func, make_index);
+    let mut globals = GlobalSection::new();
+    let mut init = vec![Instruction::RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq })];
+    init.extend((0..=runtime_abi::MAX_FIXED + 1).map(Instruction::RefFunc));
+    init.extend([Instruction::I32Const(0), Instruction::I32Const(-1), Instruction::StructNew(runtime_abi::CODE)]);
+    globals.global(
+        GlobalType {
+            val_type: ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::CODE) }),
+            mutable: false,
+            shared: false,
+        },
+        &ConstExpr::extended(init),
+    );
     let mut elements = ElementSection::new();
-    elements.declared(Elements::Functions(Cow::Borrowed(&[0])));
+    elements.declared(Elements::Functions(Cow::Owned((0..=runtime_abi::MAX_FIXED + 1).collect())));
     let mut code = CodeSection::new();
-    let mut callback = Function::new([]);
-    callback
-        .instruction(&Instruction::LocalGet(0))
-        .instruction(&Instruction::End);
-    code.function(&callback);
+    for _ in 0..=runtime_abi::MAX_FIXED + 1 {
+        let mut entry = Function::new([]);
+        entry
+            .instruction(&Instruction::LocalGet(0))
+            .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(capture)))
+            .instruction(&Instruction::StructGet { struct_type_index: capture, field_index: 3 })
+            .instruction(&Instruction::End);
+        code.function(&entry);
+    }
     let mut make = Function::new([]);
-    make.instruction(&Instruction::LocalGet(0))
-        .instruction(&Instruction::RefFunc(0))
-        .instruction(&Instruction::I32Const(0))
-        .instruction(&Instruction::I32Const(0))
+    make.instruction(&Instruction::GlobalGet(0))
+        .instruction(&Instruction::RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }))
         .instruction(&Instruction::I32Const(0))
         .instruction(&Instruction::RefI31)
-        .instruction(&Instruction::StructNew(4))
+        .instruction(&Instruction::LocalGet(0))
+        .instruction(&Instruction::StructNew(capture))
         .instruction(&Instruction::End);
     code.function(&make);
     let mut module = Module::new();
     module
         .section(&types)
         .section(&functions)
+        .section(&globals)
         .section(&exports)
         .section(&elements)
         .section(&code)
@@ -2231,7 +2278,8 @@ fn runtime_abi_accepts_foreign_raw_closure_environments_without_properties() {
         sentinel_of(&mut store, &result[0]),
         0
     );
-    let error = runtime
+    // Its properties are created on first use, as for any closure.
+    runtime
         .get_func(&mut store, "closure-property-set")
         .unwrap()
         .call(
@@ -2239,9 +2287,18 @@ fn runtime_abi_accepts_foreign_raw_closure_environments_without_properties() {
             &[function[0].clone(), Val::I32(0), environment[0].clone()],
             &mut result,
         )
-        .unwrap_err();
-    assert!(error.is::<wasmtime::ThrownException>());
-    assert!(!error.is::<wasmtime::Trap>());
+        .unwrap();
+    runtime
+        .get_func(&mut store, "closure-property-get")
+        .unwrap()
+        .call(&mut store, &[function[0].clone(), Val::I32(0)], &mut result)
+        .unwrap();
+    assert!(wasmtime::Rooted::ref_eq(
+        &store,
+        result[0].unwrap_anyref().unwrap(),
+        environment[0].unwrap_anyref().unwrap()
+    )
+    .unwrap());
 }
 
 #[test]
@@ -2802,18 +2859,28 @@ fn runtime_abi_object_method_tables_and_wrappers_reject_corruption_without_trapp
     let mut forge = wasm_encoder::Function::new([]);
     use wasm_encoder::{HeapType, Instruction};
     forge
+        // A universal closure (ABI 4): the callback's code struct, no
+        // properties, an unassigned UID, the new environment, the callback's
+        // function and an open arity range.
+        .instruction(&Instruction::LocalGet(0))
+        .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(runtime_abi::UNIVERSAL)))
+        .instruction(&Instruction::StructGet {
+            struct_type_index: runtime_abi::UNIVERSAL,
+            field_index: 0,
+        })
+        .instruction(&Instruction::RefNull(HeapType::Abstract { shared: false, ty: wasm_encoder::AbstractHeapType::Eq }))
+        .instruction(&Instruction::I32Const(0))
+        .instruction(&Instruction::RefI31)
         .instruction(&Instruction::LocalGet(1))
         .instruction(&Instruction::LocalGet(0))
-        .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(4)))
+        .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(runtime_abi::UNIVERSAL)))
         .instruction(&Instruction::StructGet {
-            struct_type_index: 4,
-            field_index: 1,
+            struct_type_index: runtime_abi::UNIVERSAL,
+            field_index: 4,
         })
         .instruction(&Instruction::I32Const(0))
         .instruction(&Instruction::I32Const(-1))
-        .instruction(&Instruction::I32Const(0))
-        .instruction(&Instruction::RefI31)
-        .instruction(&Instruction::StructNew(4))
+        .instruction(&Instruction::StructNew(runtime_abi::UNIVERSAL))
         .instruction(&Instruction::End);
     code.function(&forge);
     let mut module = wasm_encoder::Module::new();
@@ -3240,18 +3307,28 @@ fn runtime_abi_string_method_copied_callbacks_and_corrupt_environments_do_not_tr
     let mut code = wasm_encoder::CodeSection::new();
     let mut forge = wasm_encoder::Function::new([]);
     forge
+        // A universal closure (ABI 4): the callback's code struct, no
+        // properties, an unassigned UID, the new environment, the callback's
+        // function and an open arity range.
+        .instruction(&Instruction::LocalGet(0))
+        .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(runtime_abi::UNIVERSAL)))
+        .instruction(&Instruction::StructGet {
+            struct_type_index: runtime_abi::UNIVERSAL,
+            field_index: 0,
+        })
+        .instruction(&Instruction::RefNull(HeapType::Abstract { shared: false, ty: wasm_encoder::AbstractHeapType::Eq }))
+        .instruction(&Instruction::I32Const(0))
+        .instruction(&Instruction::RefI31)
         .instruction(&Instruction::LocalGet(1))
         .instruction(&Instruction::LocalGet(0))
-        .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(4)))
+        .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(runtime_abi::UNIVERSAL)))
         .instruction(&Instruction::StructGet {
-            struct_type_index: 4,
-            field_index: 1,
+            struct_type_index: runtime_abi::UNIVERSAL,
+            field_index: 4,
         })
         .instruction(&Instruction::I32Const(0))
         .instruction(&Instruction::I32Const(-1))
-        .instruction(&Instruction::I32Const(0))
-        .instruction(&Instruction::RefI31)
-        .instruction(&Instruction::StructNew(4))
+        .instruction(&Instruction::StructNew(runtime_abi::UNIVERSAL))
         .instruction(&Instruction::End);
     code.function(&forge);
     let mut module = wasm_encoder::Module::new();
@@ -5596,7 +5673,7 @@ fn runtime_abi_identity_slots_keep_metadata_and_reject_corruption_without_traps(
     let text = nominal_value(&mut store, runtime, "string-new", &[Val::I32(0)]);
     let error = nominal_value(&mut store, runtime, "language-error-new", &[text]);
     let mut seen = std::collections::BTreeSet::new();
-    for (owner, slot) in [(descriptor, 4), (object, 3), (closure, 4), (error, 4)] {
+    for (owner, slot) in [(descriptor, 4), (object, 3), (closure, 2), (error, 4)] {
         let reference = owner
             .unwrap_anyref()
             .unwrap()
@@ -6000,18 +6077,28 @@ fn runtime_abi_callable_adapter_roots_source_method_and_rejects_corrupt_environm
     let mut code = wasm_encoder::CodeSection::new();
     let mut forge = wasm_encoder::Function::new([]);
     forge
+        // A universal closure (ABI 4): the callback's code struct, no
+        // properties, an unassigned UID, the new environment, the callback's
+        // function and an open arity range.
+        .instruction(&Instruction::LocalGet(0))
+        .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(runtime_abi::UNIVERSAL)))
+        .instruction(&Instruction::StructGet {
+            struct_type_index: runtime_abi::UNIVERSAL,
+            field_index: 0,
+        })
+        .instruction(&Instruction::RefNull(HeapType::Abstract { shared: false, ty: wasm_encoder::AbstractHeapType::Eq }))
+        .instruction(&Instruction::I32Const(0))
+        .instruction(&Instruction::RefI31)
         .instruction(&Instruction::LocalGet(1))
         .instruction(&Instruction::LocalGet(0))
-        .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(4)))
+        .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(runtime_abi::UNIVERSAL)))
         .instruction(&Instruction::StructGet {
-            struct_type_index: 4,
-            field_index: 1,
+            struct_type_index: runtime_abi::UNIVERSAL,
+            field_index: 4,
         })
         .instruction(&Instruction::I32Const(0))
         .instruction(&Instruction::I32Const(-1))
-        .instruction(&Instruction::I32Const(0))
-        .instruction(&Instruction::RefI31)
-        .instruction(&Instruction::StructNew(4))
+        .instruction(&Instruction::StructNew(runtime_abi::UNIVERSAL))
         .instruction(&Instruction::End);
     code.function(&forge);
     let mut module = wasm_encoder::Module::new();
@@ -6085,18 +6172,28 @@ fn runtime_abi_apply_callbacks_reject_foreign_environments_and_empty_push_buffer
     let mut code = wasm_encoder::CodeSection::new();
     let mut forge = wasm_encoder::Function::new([]);
     forge
+        // A universal closure (ABI 4): the callback's code struct, no
+        // properties, an unassigned UID, the new environment, the callback's
+        // function and an open arity range.
+        .instruction(&Instruction::LocalGet(0))
+        .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(runtime_abi::UNIVERSAL)))
+        .instruction(&Instruction::StructGet {
+            struct_type_index: runtime_abi::UNIVERSAL,
+            field_index: 0,
+        })
+        .instruction(&Instruction::RefNull(HeapType::Abstract { shared: false, ty: wasm_encoder::AbstractHeapType::Eq }))
+        .instruction(&Instruction::I32Const(0))
+        .instruction(&Instruction::RefI31)
         .instruction(&Instruction::LocalGet(1))
         .instruction(&Instruction::LocalGet(0))
-        .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(4)))
+        .instruction(&Instruction::RefCastNonNull(HeapType::Concrete(runtime_abi::UNIVERSAL)))
         .instruction(&Instruction::StructGet {
-            struct_type_index: 4,
-            field_index: 1,
+            struct_type_index: runtime_abi::UNIVERSAL,
+            field_index: 4,
         })
         .instruction(&Instruction::I32Const(0))
         .instruction(&Instruction::I32Const(-1))
-        .instruction(&Instruction::I32Const(0))
-        .instruction(&Instruction::RefI31)
-        .instruction(&Instruction::StructNew(4))
+        .instruction(&Instruction::StructNew(runtime_abi::UNIVERSAL))
         .instruction(&Instruction::End);
     code.function(&forge);
     let mut module = wasm_encoder::Module::new();
@@ -7924,8 +8021,10 @@ fn runtime_abi_sparse_clone_coalesces_present_prefix_without_filling_holes_or_al
     let copy_fields = copy.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
     let source_dense = source_fields.get(&mut store, 2).unwrap();
     let copy_dense = copy_fields.get(&mut store, 2).unwrap();
-    assert_eq!(source_dense.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().len(&store).unwrap(), 2);
-    assert_eq!(copy_dense.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().len(&store).unwrap(), 3);
+    // Key 2 is at the dense prefix's end, so it grows the prefix to 8 (#348);
+    // 1_000_000 stays sparse.
+    assert_eq!(source_dense.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().len(&store).unwrap(), 8);
+    assert_eq!(copy_dense.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().len(&store).unwrap(), 8);
     assert!(!wasmtime::Rooted::ref_eq(&store, source_dense.unwrap_anyref().unwrap(), copy_dense.unwrap_anyref().unwrap()).unwrap());
     let source_mask = source_fields.get(&mut store, 3).unwrap();
     let copy_mask = copy_fields.get(&mut store, 3).unwrap();

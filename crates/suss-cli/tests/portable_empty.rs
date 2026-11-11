@@ -244,8 +244,10 @@ fn empty_preserves_throw_payloads_arity_and_recovery_after_gc() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.set_operation_fuel(100_000_000);
         session.eval(FIXTURE).unwrap();
-        for source in ["(empty)", "(empty [] [])"] {
-            error(&mut session, source, 1, "Wrong arity");
+        // Clojure's arity error (ADR-0004).
+        for (source, count) in [("(empty)", 0), ("(empty [] [])", 2)] {
+            let message = format!("Wrong number of args ({count}) passed to: clojure.core/empty");
+            error(&mut session, source, 1, &message);
             truth(&mut session, "(= (count (empty [1])) 0)");
         }
         for (source, expected) in [

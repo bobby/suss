@@ -179,11 +179,14 @@ fn native_extension_replaces_all_arities_and_recur_changes_receiver() {
     let mut session = Session::new().unwrap();
     session.eval("(defprotocol P (read [x] [x y])) (extend-type number P (read ([x] 1) ([x y] 2))) (def old read) (extend-type number P (read [x] (if (nil? x) 3 (recur nil))))").unwrap();
     assert_eq!(eval_number(&mut session, "(old 7)"), RuntimeNumber::Long(3));
-    assert_eq!(eval_number(&mut session, "(old 7 8)"), RuntimeNumber::Long(3));
+    // The replacement has only one arity: Clojure's arity error, not a
+    // dropped operand (ADR-0004), and likewise no undefined parameter.
+    assert!(matches!(session.eval("(old 7 8)"), Err(SessionError::Language(_))));
     session
         .eval("(extend-type number P (read [x y] (undefined? y)))")
         .unwrap();
-    assert!(eval_bool(&mut session, "(old 7)"));
+    assert!(matches!(session.eval("(old 7)"), Err(SessionError::Language(_))));
+    assert!(eval_bool(&mut session, "(old 7 8)") == false);
 }
 
 #[test]
@@ -201,6 +204,28 @@ fn native_protocols_match_independently_encoded_primary_corpus() {
             // The pinned ClojureScript dispatcher read the redefined public
             // var and threw; Suss keeps the protocol's own table (#279).
             assert_eq!(eval_number(&mut session, source), RuntimeNumber::Long(1));
+            continue;
+        }
+        // The pinned ClojureScript call convention dropped surplus operands
+        // and filled missing ones with undefined. Under ADR-0004 a native
+        // implementation is called with exactly its operands, so both throw
+        // Clojure's arity error (#353).
+        if case["id"] == "native-arity-replacement" {
+            assert!(eval_bool(&mut session, source), "{source}");
+            continue;
+        }
+        if case["id"] == "native-missing-parameter" {
+            let message = session
+                .eval(&format!("(try {source} (catch :default e (ex-message e)))"))
+                .unwrap();
+            let units = session
+                .inspect(&message, |mut store, value| {
+                    let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+                    Ok(array.elems(&mut store)?.map(|unit| unit.unwrap_i32() as u16).collect::<Vec<_>>())
+                })
+                .unwrap();
+            let message = String::from_utf16(&units).unwrap();
+            assert!(message.starts_with("Wrong number of args (1) passed to: "), "{message}");
             continue;
         }
         let actual = match case["expected"]["tag"].as_str().unwrap() {

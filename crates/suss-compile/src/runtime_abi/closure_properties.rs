@@ -35,73 +35,47 @@ fn nil(body: &mut Vec<Instruction<'static>>) {
     body.extend([sentinel_value(NIL)]);
 }
 
-pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
+pub(super) fn functions(b: &mut Builder) -> u32 {
     use Instruction::*;
-    let wrap = b.function(
-        "closure-wrap-environment",
-        &[VALUE],
-        &[VALUE],
-        &[
-            GlobalGet(TAG_GLOBAL),
-            LocalGet(0),
-            I32Const(0),
-            ArrayNewDefault(ARGS),
-            sentinel_value(NIL), // source display name is unset for kernel closures
-            ArrayNewFixed {
-                array_type_index: ARGS,
-                array_size: 3,
-            },
-            sentinel_value(NIL),
-            I32Const(0), // Identity UID, unassigned.
-            RefI31,
-            StructNew(7),
-        ],
-    );
+    // A universal closure's environment; any other closure has none (nil).
     let mut body = vec![];
-    guard(&mut body, 0, 4);
-    field(&mut body, 0, 4, 0);
-    body.push(LocalSet(1));
+    guard(&mut body, 0, CLOSURE);
     body.extend([
-        LocalGet(1),
-        RefTestNonNull(HeapType::Concrete(7)),
-        If(BlockType::Empty),
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(UNIVERSAL)),
+        If(BlockType::Result(VALUE)),
     ]);
-    field(&mut body, 1, 7, 0);
-    body.extend([GlobalGet(TAG_GLOBAL), RefEq, If(BlockType::Empty)]);
-    field(&mut body, 1, 7, 1);
-    body.push(LocalSet(1));
-    array(&mut body, 1);
-    body.extend([ArrayLen, I32Const(3), I32Ne, If(BlockType::Empty)]);
-    nominal::error(&mut body);
-    body.push(End);
-    array(&mut body, 1);
-    body.extend([I32Const(0), ArrayGet(ARGS), Return, End, End, LocalGet(1)]);
-    let environment = b.function_with_locals(
-        "closure-environment",
-        &[VALUE],
-        &[VALUE],
-        &[(1, VALUE)],
-        &body,
-    );
-
-    let mut body = vec![];
-    guard(&mut body, 0, 4);
-    field(&mut body, 0, 4, 0);
-    body.push(LocalSet(1));
-    body.extend([
-        LocalGet(1),
-        RefTestNonNull(HeapType::Concrete(7)),
-        If(BlockType::Empty),
-    ]);
-    field(&mut body, 1, 7, 0);
-    body.extend([GlobalGet(TAG_GLOBAL), RefEq, If(BlockType::Empty)]);
-    field(&mut body, 1, 7, 1);
-    body.push(LocalSet(1));
-    array(&mut body, 1);
-    body.extend([ArrayLen, I32Const(3), I32Ne, If(BlockType::Empty)]);
-    nominal::error(&mut body);
-    body.extend([End, LocalGet(1), Return, End, End]);
+    field(&mut body, 0, UNIVERSAL, UNIVERSAL_ENVIRONMENT);
+    body.push(Else);
     nil(&mut body);
+    body.push(End);
+    let environment = b.function("closure-environment", &[VALUE], &[VALUE], &body);
+
+    // A closure's property storage, `[unused, native table, display name]`,
+    // created in its `properties` field on first use (ADR-0004).
+    let mut body = vec![];
+    guard(&mut body, 0, CLOSURE);
+    field(&mut body, 0, CLOSURE, CLOSURE_PROPERTIES);
+    body.extend([LocalTee(1), RefIsNull, If(BlockType::Empty)]);
+    nil(&mut body);
+    body.extend([I32Const(0), ArrayNewDefault(ARGS)]);
+    nil(&mut body);
+    body.extend([
+        ArrayNewFixed {
+            array_type_index: ARGS,
+            array_size: 3,
+        },
+        LocalSet(1),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(CLOSURE)),
+        LocalGet(1),
+        StructSet {
+            struct_type_index: CLOSURE,
+            field_index: CLOSURE_PROPERTIES,
+        },
+        End,
+        LocalGet(1),
+    ]);
     let fields = b.function_with_locals(
         "closure-property-fields",
         &[VALUE],
@@ -270,5 +244,5 @@ pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
             &body,
         );
     }
-    (wrap, environment)
+    environment
 }

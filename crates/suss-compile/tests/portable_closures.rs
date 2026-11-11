@@ -1,6 +1,7 @@
 mod support;
 /// First type index a fragment appends after the shared ABI v3 prelude.
-const APPENDED: u32 = suss_compile::runtime_abi::PACKED + 1;
+/// Fragment types follow the shared group.
+const APPENDED: u32 = suss_compile::runtime_abi::TYPE_COUNT;
 use suss_compile::{portable, runtime_abi};
 use wasmtime::{Instance, Linker, Module, Store, Val};
 fn execute(source: &str) -> (Store<()>, Val) {
@@ -283,10 +284,10 @@ fn captures_use_lexical_identity_and_retain_parameter_metadata() {
 
 #[test]
 fn source_wrong_arity_and_missing_rest_class_are_located_diagnostics() {
+    // A known closure called with another count compiles, as in Clojure, and
+    // throws Clojure's arity error when it runs (ADR-0004).
     for source in ["((fn [x] x))", "(let [f (fn [x] x)] (f 1 2))"] {
-        let error = portable::compile(source).unwrap_err();
-        assert!(error.message.contains("Wrong arity"));
-        assert!(source[error.span].starts_with('('));
+        assert!(portable::compile(source).is_ok(), "{source}");
     }
     let source = "(fn [& xs] xs)";
     let error = portable::compile(source).unwrap_err();
@@ -396,7 +397,10 @@ fn calls_evaluate_computed_callee_then_each_argument_exactly_once() {
     let value = call(&mut store, target, "eval", &[]);
     assert_eq!(
         store.data(),
-        &["read:closure", "invoke:0", "read:1", "read:2", "invoke:2"]
+        // A closure is called through its code struct's entry (ADR-0004),
+        // not an import, so only the reads are traced: the computed callee,
+        // then each argument, once each.
+        &["read:closure", "read:1", "read:2"]
     );
     store.gc(None).unwrap();
     assert_eq!(long(&mut store, &value), 1);
@@ -461,7 +465,7 @@ fn dynamic_arity_errors_are_language_exceptions_and_store_remains_usable() {
     let catch = load_catcher(&mut store, &linker, catcher(0, "target", "eval"));
     let error = call(&mut store, catch, "call", &[]);
     store.gc(None).unwrap();
-    exception(&mut store, &error, 1, "Wrong arity");
+    exception(&mut store, &error, 1, "Wrong number of args (0) passed to: fn");
     let replacement = fragment(&mut store, &linker, "(fn [] 11)", &env);
     let replacement = call(&mut store, replacement, "eval", &[]);
     rt.get_func(&mut store, "binding-set")
@@ -554,7 +558,11 @@ fn verifier_rejects_malformed_closure_shapes_calls_and_capture_facts() {
                 operands[0] = ValueId(99);
             }
             _ => {
+                // Another argument count is a valid call, which reaches the
+                // definition's arity-error entry (ADR-0004).
                 operands.pop();
+                assert!(portable::compile_ir(&bad).is_ok());
+                continue;
             }
         }
         assert!(portable::compile_ir(&bad).is_err());
