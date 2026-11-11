@@ -385,6 +385,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     // Core field reads by a plain literal name get an inline cache (#361):
     // a site's last descriptor and its field's index, in two globals.
     let mut field_site_list = vec![];
+    // Of those, the `.-length` reads, which test for a string first.
+    let mut length_sites = std::collections::HashSet::new();
     for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
         .chain(futures.iter().map(|body| &body.continuation.function))
     {
@@ -398,7 +400,11 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             if let Operation::Nominal { operation: Nominal::CoreNamedGet, arguments } = &inst.operation
                 && literals.get(&arguments[1]).is_some_and(|units| plain_field_name(units))
             {
-                field_site_list.push((function as *const IrFunction as usize, inst.result.0 as u32));
+                let site = (function as *const IrFunction as usize, inst.result.0 as u32);
+                if literals[&arguments[1]].iter().copied().eq("length".encode_utf16()) {
+                    length_sites.insert(site);
+                }
+                field_site_list.push(site);
             }
         }
     }
@@ -719,7 +725,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let mut code = CodeSection::new();
     let mut data = LiteralData::default();
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
-        dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites,
+        dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites, length_sites: &length_sites,
         method_sites: &method_sites, epoch_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
@@ -914,6 +920,7 @@ struct Context<'a> {
     links: &'a Links,
     /// Cached core field read sites, by (function, result): their first global.
     field_sites: &'a std::collections::HashMap<(usize, u32), u32>,
+    length_sites: &'a std::collections::HashSet<(usize, u32)>,
     /// Cached protocol method lookup sites: their first global; the epoch.
     method_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     epoch_global: u32,
@@ -1223,7 +1230,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
-    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, method_sites, epoch_global } = *context;
+    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, epoch_global } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -1859,8 +1866,32 @@ fn emit_function(
                             // time reads the cached field; another looks its
                             // field up and caches it; anything else, or a name
                             // that isn't a field, takes the full lookup.
-                            let cache = field_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            let site = (ir as *const IrFunction as usize, inst.result.0 as u32);
+                            let cache = field_sites[&site];
                             let (object, name) = (arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset);
+                            // A string's length is its array's (#361).
+                            let length = length_sites.contains(&site);
+                            if length {
+                                function
+                                    .instruction(&LocalGet(object))
+                                    .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::STRING)))
+                                    .instruction(&If(BlockType::Result(VALUE)))
+                                    .instruction(&LocalGet(object))
+                                    .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::STRING)))
+                                    .instruction(&ArrayLen)
+                                    .instruction(&LocalTee(field_index_local))
+                                    .instruction(&I32Const(0x3fff_ffff))
+                                    .instruction(&I32LeU)
+                                    .instruction(&If(BlockType::Result(VALUE)))
+                                    .instruction(&LocalGet(field_index_local))
+                                    .instruction(&RefI31)
+                                    .instruction(&Else)
+                                    .instruction(&LocalGet(object))
+                                    .instruction(&LocalGet(name))
+                                    .instruction(&Call(index("named-property-get")))
+                                    .instruction(&End)
+                                    .instruction(&Else);
+                            }
                             let fields = |function: &mut Function| {
                                 function
                                     .instruction(&LocalGet(object))
@@ -1911,6 +1942,9 @@ fn emit_function(
                                 .instruction(&LocalGet(name))
                                 .instruction(&Call(index("named-property-get")))
                                 .instruction(&End);
+                            if length {
+                                function.instruction(&End);
+                            }
                         }
                         Nominal::IsKeyword => {
                             function

@@ -111,11 +111,15 @@ pub(super) fn functions(b: &mut Builder) -> u32 {
         &[(1, VALUE)],
         &body,
     );
-    for (writing, max_kind, name) in [
-        (false, 7, "closure-property-get"),
-        (true, 7, "closure-property-set"),
-        (false, 9, "closure-internal-property-get"),
-        (true, 9, "closure-internal-property-set"),
+    // An absent key reads as nil, except through a named property read
+    // (`(.-number f)`), where it is undefined. The array holds null for an
+    // absent key, which never leaves these functions.
+    for (writing, max_kind, name, absent) in [
+        (false, 7, "closure-property-get", NIL),
+        (true, 7, "closure-property-set", NIL),
+        (false, 7, "closure-property-lookup", UNDEFINED),
+        (false, 9, "closure-internal-property-get", NIL),
+        (true, 9, "closure-internal-property-set", NIL),
     ] {
         // Params: function, key, optional assigned value. Keys 0..7 are
         // native kinds; 8 is the private constructor prototype carrier and 9
@@ -142,13 +146,11 @@ pub(super) fn functions(b: &mut Builder) -> u32 {
             If(BlockType::Empty),
         ]);
         if writing {
-            nil(&mut body);
-            body.extend([I32Const(KEYS), ArrayNew(ARGS), LocalSet(keys)]);
+            body.extend([I32Const(KEYS), ArrayNewDefault(ARGS), LocalSet(keys)]);
             array(&mut body, owner);
             body.extend([I32Const(0), LocalGet(keys), ArraySet(ARGS)]);
         } else {
-            nil(&mut body);
-            body.push(Return);
+            body.extend([sentinel_value(absent), Return]);
         }
         body.push(End);
         array(&mut body, keys);
@@ -160,7 +162,16 @@ pub(super) fn functions(b: &mut Builder) -> u32 {
         if writing {
             body.extend([LocalGet(2), ArraySet(ARGS), LocalGet(2)]);
         } else {
-            body.push(ArrayGet(ARGS));
+            body.extend([
+                ArrayGet(ARGS),
+                LocalTee(keys),
+                RefIsNull,
+                If(BlockType::Result(VALUE)),
+                sentinel_value(absent),
+                Else,
+                LocalGet(keys),
+                End,
+            ]);
         }
         b.function_with_locals(
             name,
