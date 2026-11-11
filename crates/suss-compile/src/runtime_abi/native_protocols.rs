@@ -14,11 +14,10 @@ fn key(body: &mut Vec<Instruction<'static>>, index: i32) {
     cast_array(body, 0);
     body.extend([I32Const(index), ArrayGet(ARGS)]);
 }
-/// `return_call_ref` of the closure in `local`'s entry for k operands, with
-/// operands 1..=k.
-/// The tail call of `tail_entry`, for an implementation in `local` that may
-/// not be a closure: one `br_on_cast_fail` to the non-final `$closure` into
-/// `typed`, a `(ref null $closure)` local, then no further cast. On wasmtime
+/// `return_call_ref` of the implementation in `local`'s entry for k operands,
+/// with operands 1..=k, when it is a closure: one `br_on_cast_fail` to the
+/// non-final `$closure` into `typed`, a `(ref null $closure)` local, then no
+/// further cast. On wasmtime
 /// 49 each cast to `$closure` is a host call (ADR-0004). A non-closure falls
 /// through, with the stack empty.
 fn tail_entry_checked(body: &mut Vec<Instruction<'static>>, local: u32, typed: u32, k: u32) {
@@ -43,18 +42,6 @@ fn tail_entry_checked(body: &mut Vec<Instruction<'static>>, local: u32, typed: u
         ReturnCallRef(CALL + k),
         End,
         Drop,
-    ]);
-}
-fn tail_entry(body: &mut Vec<Instruction<'static>>, local: u32, k: u32) {
-    use Instruction::*;
-    body.extend([LocalGet(local), RefCastNonNull(HeapType::Concrete(CLOSURE))]);
-    body.extend((1..=k).map(LocalGet));
-    body.extend([
-        LocalGet(local),
-        RefCastNonNull(HeapType::Concrete(CLOSURE)),
-        StructGet { struct_type_index: CLOSURE, field_index: CLOSURE_CODE },
-        StructGet { struct_type_index: CODE, field_index: CODE_ENTRY + k },
-        ReturnCallRef(CALL + k),
     ]);
 }
 fn callback(b: &mut Builder, body: &[Instruction<'static>]) -> u32 {
