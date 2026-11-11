@@ -339,12 +339,24 @@ pub(super) fn functions(b: &mut Builder) {
         I32GeU,
         BrIf(1),
     ]);
+    // A presence bit is 0 or 1, and 0 past the length (#348).
     buffer(&mut body, 1, 3, STRING);
     body.extend([
         LocalGet(2),
         ArrayGetU(STRING),
         I32Const(1),
         I32GtU,
+    ]);
+    buffer(&mut body, 1, 3, STRING);
+    body.extend([LocalGet(2), ArrayGetU(STRING), LocalGet(2), F64ConvertI32U]);
+    args(&mut body, 1);
+    body.extend([
+        I32Const(0),
+        ArrayGet(ARGS),
+        Call(b.names["number-unbox"]),
+        F64Ge,
+        I32And,
+        I32Or,
         If(BlockType::Empty),
     ]);
     nominal::error(&mut body);
@@ -869,6 +881,20 @@ pub(super) fn functions(b: &mut Builder) {
     body.push(LocalGet(1));
     buffer(&mut body, 2, 2, ARGS);
     body.extend([ArrayLen, I32LtU, If(BlockType::Empty)]);
+    // A shrink that keeps at least half the capacity clears the vacated
+    // slots and presence bits in place, so alternating push and pop doesn't
+    // copy the array (#348); a larger shrink releases the storage.
+    body.extend([LocalGet(1), I32Const(1), I32Shl]);
+    buffer(&mut body, 2, 2, ARGS);
+    body.extend([ArrayLen, I32GeU, If(BlockType::Empty)]);
+    buffer(&mut body, 2, 2, ARGS);
+    body.extend([LocalGet(1), sentinel_value(UNDEFINED)]);
+    buffer(&mut body, 2, 2, ARGS);
+    body.extend([ArrayLen, LocalGet(1), I32Sub, ArrayFill(ARGS)]);
+    buffer(&mut body, 2, 3, STRING);
+    body.extend([LocalGet(1), I32Const(0)]);
+    buffer(&mut body, 2, 3, STRING);
+    body.extend([ArrayLen, LocalGet(1), I32Sub, ArrayFill(STRING), Else]);
     for (slot, ty) in [(2, ARGS), (3, STRING)] {
         body.extend([
             LocalGet(1),
@@ -890,7 +916,7 @@ pub(super) fn functions(b: &mut Builder) {
         args(&mut body, 2);
         body.extend([I32Const(slot), LocalGet(7), ArraySet(ARGS)]);
     }
-    body.push(End);
+    body.extend([End, End]);
     args(&mut body, 2);
     body.extend([
         I32Const(0),
@@ -1015,10 +1041,19 @@ pub(super) fn functions(b: &mut Builder) {
         ArrayNew(ARGS),
         LocalSet(3),
     ]);
-    // Copy dense payload only where its presence mask is set.
+    // Copy dense payload only where its presence mask is set, within the
+    // length: capacity past it is always absent (#348).
     buffer(&mut body, 1, 2, ARGS);
+    body.extend([ArrayLen, LocalSet(4)]);
+    args(&mut body, 3);
+    body.push(ArrayLen);
+    body.push(LocalGet(4));
+    args(&mut body, 3);
     body.extend([
         ArrayLen,
+        LocalGet(4),
+        I32LtU,
+        Select,
         LocalSet(4),
         I32Const(0),
         LocalSet(5),

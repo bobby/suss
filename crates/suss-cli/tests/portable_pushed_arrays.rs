@@ -32,6 +32,12 @@ fn arrays_built_by_push_read_every_element_and_keep_holes() {
             ("(let [a (array)] (.push a 1) (.push a 2) (.pop a) (.push a 3) (vec a))", "[1 3]"),
             // Capacity past the length never shows a popped value.
             ("(let [a (array)] (.push a 1) (.push a 2) (.pop a) (set! (.-length a) 3) (vec a))", "[1 nil nil]"),
+            // A stack: push and pop alternate on one array, keeping capacity.
+            ("(let [a (to-array (range 100))] (loop [i 0] (when (< i 1000) (.push a i) (.pop a) (recur (inc i)))) [(alength a) (aget a 99) (reduce + a)])", "[100 99 4950]"),
+            // A small shrink keeps capacity; regrowing shows holes, not old values.
+            ("(let [a (to-array (range 8))] (set! (.-length a) 6) (set! (.-length a) 8) [(aget a 5) (aget a 6) (aget a 7) (.push a :x) (aget a 8)])", "[5 nil nil 9 :x]"),
+            // The 2^32-1 key is an ordinary property, untouched by growth.
+            ("(let [a (array)] (aset a 4294967295 :p) (.push a 1) (.push a 2) [(alength a) (vec a) (aget a 4294967295)])", "[2 [1 2] :p]"),
         ] {
             assert_eq!(printed(&mut session, source), expected, "{source}");
         }
