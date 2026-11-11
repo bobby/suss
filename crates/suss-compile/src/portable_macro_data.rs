@@ -2095,7 +2095,6 @@ fn source_array_suffix(
         wasmtime::StorageType::ValType(wasmtime::ValType::Ref(_))
     ) || !matches!(mask.ty(&*store)?.element_type(), wasmtime::StorageType::I16)
         || dense.len(&*store)? != mask.len(&*store)?
-        || dense.len(&*store)? > length
     {
         return Err(error("Invalid source array dense/presence layout"));
     }
@@ -2106,7 +2105,8 @@ fn source_array_suffix(
     let undefined = budget.undefined.clone();
     for index in 0..mask_len {
         let flag = mask.get(&mut *store, index)?.unwrap_i32();
-        if !(0..=1).contains(&flag) {
+        // Push growth leaves capacity past the length (#348), always absent.
+        if !(0..=1).contains(&flag) || (flag == 1 && index >= length) {
             return Err(error("Invalid source array presence bit"));
         }
         if flag == 1 && index >= start {
