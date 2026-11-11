@@ -447,6 +447,12 @@ fn keyword_intern(b: &mut Builder) -> u32 {
     ];
     body.extend(fields(0));
     body.extend([ArrayLen, I32Const(4), I32Ne, If(BlockType::Empty), LocalGet(0), Return, End]);
+    // Only a well-formed keyword is interned: a nil or string namespace and a
+    // string name and full name. Anything else is returned as constructed.
+    body.extend(fields(0));
+    body.extend([I32Const(0), ArrayGet(ARGS), LocalTee(1), RefIsNull, LocalGet(1), RefTestNonNull(string), I32Or, I32Eqz]);
+    body.extend(fields(0));
+    body.extend([I32Const(1), ArrayGet(ARGS), RefTestNonNull(string), I32Eqz, I32Or, If(BlockType::Empty), LocalGet(0), Return, End]);
     body.extend(fields(0));
     body.extend([
         I32Const(2),
