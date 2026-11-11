@@ -264,11 +264,14 @@ fn sorted_protocol_aliases_retained_values_reload_and_method_arities() {
         ] {
             let short = valid[..valid.len() - 1].join(" ");
             let long = format!("{} 99", valid.join(" "));
-            for arguments in [short, long] {
+            for (arguments, count) in [(short, valid.len() - 1), (long, valid.len() + 1)] {
                 for namespace in ["cljs.core", "suss.core"] {
                     let source = format!("({namespace}/{method} {arguments})");
                     let error = session.eval(&source).unwrap_err();
-                    expect_language_error(&mut session, error, 1, "Wrong arity", &source);
+                    // Clojure's arity error (ADR-0004); the protocol method's
+                    // dispatcher is an anonymous function.
+                    let message = format!("Wrong number of args ({count}) passed to: fn");
+                    expect_language_error(&mut session, error, 1, &message, &source);
                     session.collect().unwrap();
                     expect_number(
                         &mut session,

@@ -48,7 +48,7 @@ fn adapters() -> Vec<u8> {
     });
     let mut types = runtime_abi::prelude();
     // Adapter signatures follow the ABI prelude, whose last type is PACKED.
-    let base = runtime_abi::PACKED + 1;
+    let base = runtime_abi::TYPE_COUNT;
     // ABI v3 nil is a null eqref.
     let nil = RefNull(w::HeapType::Abstract {
         shared: false,

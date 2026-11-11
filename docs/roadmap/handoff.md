@@ -29732,3 +29732,37 @@ document's 2026-10-25 decision now records all three outcomes.
 - Benchmark: the long-sum loop runs at 0.81 ns per iteration against `d_i64_checked`'s 0.80 at n = 10⁹ (README "Unboxed loops (#337)", `results/run_m12_05_loops.txt`). The kernel binary reads `/proc/self/status` and panics on macOS; patch that read locally to run it there. `bench.py`'s default n is too small to time the whole loops.
 - Known cost: a raw value that escapes in several blocks is boxed in each, so a raw double escaping inside a loop allocates every iteration (#351).
 - Next for #337 (part 2, after #353): `^long`/`^double` hints, known core result types and primitive entry points.
+
+## #353: ADR-0004 calling convention, runtime ABI 4 (2026-11-10)
+
+- PR #370, M15-06 of #349. Types: `runtime_abi.rs` `CLOSURE` is now the non-final `{code, properties, uid}`. `CODE`, `CALL + k`, `SPREAD` and `UNIVERSAL` are appended at 19–30, so no earlier index moved. The universal closure keeps `(environment, args)` functions for runtime- and host-made callables (`closure-new`), all behind `UNIVERSAL_CODE_GLOBAL`.
+- Emitter (`portable/emit.rs`, `Layout`/`Definition`):
+  - Per `fn`: a capture struct (subtype of `CLOSURE`, captures from field `CLOSURE_FIELDS`), a code struct global after the imported sentinels, methods typed `CALL + arity`, a spread entry (`emit_spread`, which replaces `emit_dispatcher`) and variadic adapters (`emit_adapter`).
+  - A method's locals are offset by `1 + arity`, with local 0 its closure.
+  - Known callees (`known` in `emit_function`) are static calls.
+- Out-of-line path: `call-k` packs and tail-calls `call-spread`. That binds a non-closure through the IFn `-invoke` key in `CALLABLE_KEYS_GLOBAL`, which `protocol_definition` registers (`Nominal::CallableKeyRegister`; registrations are bound after the protocol bundle). The HIR call-site wrapper in `prepare_source_callee` is gone.
+- Arity errors: `arity-throw(closure, count)` builds `Wrong number of args (k) passed to: name`.
+  - The name is the code struct's (IR `arity_name`, e.g. `user/f`), else the display name, else `fn`.
+  - The static "Wrong arity: expected" compile error and the IR known-arity check are removed, since such a call reaches `arity-error-k` at run time, as in Clojure.
+  - `protocol-native-invoke` no longer fills `undefined` or drops operands. JavaScript-convention `.method` interop keeps them through `js-method-invoke`, which reads a code struct's `CODE_MIN`/`CODE_MAX` (an addition to the ADR's layout).
+- Host: `portable_macro_data.rs` reads a class constructor's descriptor from `UNIVERSAL_ENVIRONMENT`, and `identifier_key` checks for a real descriptor, since a one-capture closure is also four fields. `data_inspect_calls` also passes `closure-new`. Command `exit.rs` imports `closure-new` instead of building a closure struct.
+- Benchmarks: `bench.py` on release builds, Apple M3 Pro, `main` at load 2.5 and the branch (9c7ee882) at 2.5–5, best of three, ns per operation. No `perf` on macOS, so no instruction counts; run on the Linux machine for #349's instruction targets.
+  - Calls: `(f0)` to `(f3 i i i)` 20–24 → 12–13, `(identity i)` 21.9 → 12.5, `(fv i)` 30.9 → 13.2, a local `fn` (static call) 20.2 → 0.5. `(fib 20)` 958 → 742 µs, `transduce` 462 → 445 µs.
+  - Calls through runtime-made (universal) closures cost 4–21% more: `(ident b)` 84 → 113, `hash` and array `reduce` +11–19%, protocol-backed collection operations +4–9%. They now pass `br_on_cast_fail` to the non-final `$closure`, which wasmtime 49 checks with a host call (ADR-0004, `docs/upstream/`). A call-site fast path for the final universal type recovered about half of that but cost 1.5–2 ns on every compiled call, so it isn't used. #355 replaces most of these closures (protocol dispatchers) with typed method tables.
+- Known gaps: a spread entry traps on an unrealized rest, which nothing passes yet (`apply` realizes its seq; `(apply f (range))` works through core's `applyTo`). `#'f` (`var`) doesn't resolve. Non-callables throw "Not callable"; JVM Clojure throws ClassCastException or NullPointerException. Unbound calls lack Clojure's `: #'user/u`. Anonymous functions are named `fn`.
+
+## #360: direct linking of user code in AOT builds (2026-11-10)
+
+- Stacked on #353 (PR #370). Rule: docs/design/suss-0.3.1.md, after "Shipped core is direct-linked".
+- `Environment::set_direct_linking` is set by `portable_aot::prepare_inputs_with_imports` only, so sessions and the REPL stay live.
+- A user `def` whose initializer is a capture-free function, and whose var is neither dynamic nor `^:redef`, gets a link (`define_direct_link`): a per-var slot (the first linked definition's id) and a definition id, packed with `hir::link_pair`.
+  - The initializer is wrapped with `Nominal::DirectLinkDefine`, which writes the closure to the slot.
+  - A top-level `fn` form links before its analysis, so its own recursive calls are direct.
+  - Calls of a linked var become `Nominal::DirectLinkRead` callees.
+- Emitter (`emit.rs`, `Links`):
+  - The owner fragment exports `slot.S`; a definer exports `link.D.code` and `link.D.k`. Callers import them from `suss.slot.S` / `suss.link.D`; entry imports use leaked `link.D.k` names in the runtime import list.
+  - A call casts the slot's closure to the capture-free closure type, compares its code struct with `link.D.code` (`ref.eq`), and calls the entry statically, else through the closure's code struct.
+- AOT assembly (`aot.rs`): each fragment's `suss.slot.*`/`suss.link.*` imports are instantiated from the fragment exporting them.
+- Test: `compiled_aot_direct_linking.rs` checks results against JVM Clojure 1.12.6 with `-Dclojure.compiler.direct-linking=true`: later `defn` seen, `with-redefs` not seen, `^:redef`/`^:dynamic` live, value use live, recursion, a required namespace. It also checks that the REPL stays live.
+- Calls (`calls_bench.py`-style loops, release, M3 Pro): `(f1 i)` 23 → 1.6 ns, `(f3 i i i)` 25 → 1.9 ns, variadic 32 → 2.1 ns, `(fib 27)` 1029 → 449 µs. No `perf` here, so #360's under-50-instructions target still needs the Linux machine.
+- Not linked: core functions from user code (`identity`), since shipped core is one prebuilt module with its own link cells; a redefinition to a function with captures (earlier calls keep the old function); calls with more than 8 arguments.

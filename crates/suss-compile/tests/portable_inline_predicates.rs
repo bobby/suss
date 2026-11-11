@@ -22,9 +22,50 @@ fn imports(source: &str) -> Vec<String> {
     names
 }
 
+/// Whether a compiled expression calls a function (ADR-0004): through
+/// `call_ref` or the runtime's out-of-line `call-k`, or by a static call of a
+/// known callee's entry. Spread entries, which call their methods, don't count.
+fn calls(source: &str) -> bool {
+    use wasmparser::{Operator, Parser, Payload, TypeRef};
+    let wasm = portable::compile_in(source, &Environment::default(), Phase::Runtime).unwrap();
+    let (mut imports, mut types, mut found) = (vec![], vec![], false);
+    let mut body = 0;
+    for payload in Parser::new(0).parse_all(&wasm) {
+        match payload.unwrap() {
+            Payload::ImportSection(section) => {
+                for import in section.into_imports() {
+                    let import = import.unwrap();
+                    if matches!(import.ty, TypeRef::Func(_)) {
+                        imports.push(import.name.to_owned());
+                    }
+                }
+            }
+            Payload::FunctionSection(section) => types.extend(section.into_iter().map(Result::unwrap)),
+            Payload::CodeSectionEntry(code) => {
+                let spread = types[body] == suss_compile::runtime_abi::SPREAD;
+                body += 1;
+                if spread {
+                    continue;
+                }
+                for operator in code.get_operators_reader().unwrap() {
+                    found |= match operator.unwrap() {
+                        Operator::CallRef { .. } | Operator::ReturnCallRef { .. } => true,
+                        Operator::Call { function_index } | Operator::ReturnCall { function_index } => {
+                            imports.get(function_index as usize).is_none_or(|name| name.starts_with("call-"))
+                        }
+                        _ => false,
+                    };
+                }
+            }
+            _ => {}
+        }
+    }
+    found
+}
+
 #[test]
 fn nil_and_identical_compile_inline_unless_shadowed_or_of_another_arity() {
-    let call = |source: &str| imports(source).iter().any(|name| name == "invoke");
+    let call = calls;
     for source in [
         "(fn [x] (nil? x))",
         "(fn [x y] (identical? x y))",

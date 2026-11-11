@@ -11,7 +11,7 @@ use suss_compile::portable::{
 fn functions(source: &str) -> Vec<(usize, bool)> {
     use wasmparser::{CompositeInnerType, Operator, Parser, Payload, ValType};
     let wasm = portable::compile_in(source, &Environment::default(), Phase::Runtime).unwrap();
-    let (mut types, mut parameters, mut found) = (vec![], vec![], vec![]);
+    let (mut types, mut parameters, mut kinds, mut found) = (vec![], vec![], vec![], vec![]);
     for payload in Parser::new(0).parse_all(&wasm) {
         let body = match payload.unwrap() {
             Payload::TypeSection(section) => {
@@ -24,7 +24,17 @@ fn functions(source: &str) -> Vec<(usize, bool)> {
                 continue;
             }
             Payload::FunctionSection(section) => {
-                parameters.extend(section.into_iter().map(|ty| types[ty.unwrap() as usize]));
+                for ty in section {
+                    let ty = ty.unwrap();
+                    parameters.push(types[ty as usize]);
+                    kinds.push(ty);
+                }
+                continue;
+            }
+            // A spread entry (ADR-0004) counts its arguments in an i32
+            // local; it has no control flow to dispatch.
+            Payload::CodeSectionEntry(_) if kinds[found.len()] == suss_compile::runtime_abi::SPREAD => {
+                found.push((0, false));
                 continue;
             }
             Payload::CodeSectionEntry(body) => body,

@@ -1,4 +1,64 @@
-# Portable universal closure and call lowering
+# Portable closures and calls
+
+## Calling convention (runtime ABI 4, ADR-0004)
+
+Compiled closures and calls follow
+[ADR-0004](../adr/0004-calling-convention.md) (#353). The shared type group
+defines:
+
+- `$closure {code, properties, uid}`, non-final. Every closure is a subtype.
+- `$code {name, e0 … e8, spread}`, a function definition's shared code struct.
+  `name` is the name Clojure's arity error reports, such as `user/f`.
+- `$call0` to `$call8`: `(ref $closure) eqref × k -> eqref`, the entry for k
+  arguments.
+- `$spread`: `(ref $closure) (ref $args) eqref -> eqref`, realized arguments
+  and an unrealized rest (nil until `apply` passes one).
+- The universal closure, a `$closure` subtype with an environment, an
+  `(environment, args)` function and an arity range. The runtime and host make
+  these with `closure-new`, and all of them share one code struct whose entries
+  pack their arguments for `invoke`.
+
+Each `fn` definition gets:
+
+- a final capture struct, `$closure`'s fields followed by one immutable field
+  per capture;
+- an immutable code struct global with a constant initializer;
+- a typed method per arity;
+- a spread entry, which takes the method for the argument count, as the arity
+  dispatcher did;
+- for a variadic method with `r` required parameters, adapters for each
+  surplus arity up to 8, which build the rest seq (nil when there's no
+  surplus).
+
+An arity the function lacks is the runtime's `arity-error-k`, which throws
+`Wrong number of args (k) passed to: name`. A general closure's self reference
+is the closure parameter, so nothing is patched after allocation. Properties
+(native protocol tables and the display name) live in the closure's
+`properties` field, created on first use.
+
+A call with up to 8 arguments to an unknown callee casts it to `$closure` with
+`br_on_cast_fail`, reads the code struct's entry, and `call_ref`s it
+(`return_call_ref` in tail position). Any other callee goes out of line to the
+runtime's `call-k`, as do calls with more arguments, through `call-spread`.
+Those helpers invoke a closure, and bind any other value through IFn's
+`-invoke` key for the signature arity, which `(defprotocol IFn …)` registers
+with the runtime. Without a key, `invoke` reports Clojure's unbound-fn error
+or "Not callable". The callable is bound after its arguments are evaluated, as
+Clojure's `invoke` dispatches.
+
+A call to a closure made in the same function, or a method's call to its own
+self reference, is a static `call` of the entry.
+
+Host and runtime callers use `invoke(f, args)`. It calls a universal closure's
+function after checking its arity range, and any other closure's spread entry.
+Wrong arity throws Clojure's message for every kind of closure, including
+native protocol implementations, which are called with exactly their
+operands.
+
+## History: the ABI 1 universal convention
+
+The rest of this page describes the portable pipeline's original lowering, on
+which the convention above was built.
 
 The portable source pipeline now executes fixed-arity anonymous/named and multiple-signature `fn`/`fn*`,
 lexical captures, computed/local/live-global callees and higher-order calls.

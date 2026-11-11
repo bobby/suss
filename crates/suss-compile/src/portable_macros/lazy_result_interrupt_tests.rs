@@ -86,31 +86,18 @@ fn lazy_result_interrupt_is_synchronized_after_thunk_effects_and_recovers() {
             .data_inspect_calls(
                 &spin,
                 &setter,
-                |mut store, spin, args_new, invoke, setter, _undefined| {
-                    let object = spin
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_struct(&store)?
-                        .ok_or_else(|| wasmtime::Error::msg("spin is not a closure"))?;
-                    let ty = object.ty(&store)?;
-                    let mut fields = object.fields(&mut store)?.collect::<Vec<_>>();
-                    if fields.len() != 5 {
-                        return Err(wasmtime::Error::msg("unexpected closure layout"));
-                    }
-                    // Direct construction is necessary because inspect does not
-                    // expose closure-new. Do not copy an already assigned UID.
-                    let uid = fields[4]
-                        .unwrap_anyref()
-                        .unwrap()
-                        .as_i31(&store)?
-                        .ok_or_else(|| wasmtime::Error::msg("closure UID already assigned"))?;
-                    if uid.get_u32() != 0 {
-                        return Err(wasmtime::Error::msg("expected fresh nil closure UID"));
-                    }
-                    let Val::FuncRef(Some(original)) = fields[1].clone() else {
-                        return Err(wasmtime::Error::msg("missing original invoke Func"));
+                |mut store, spin, args_new, invoke, closure_new, setter, _undefined| {
+                    // A universal closure (ADR-0004) over a host function that
+                    // waits for the interrupter, then calls the original spin
+                    // closure, its environment, through generic invocation.
+                    let wasmtime::ValType::Ref(universal) = closure_new.ty(&store).param(1).expect("invoke type") else {
+                        return Err(wasmtime::Error::msg("closure-new takes a function reference"));
                     };
-                    let original_type = original.ty(&store);
+                    let original_type = universal
+                        .heap_type()
+                        .as_concrete_func()
+                        .ok_or_else(|| wasmtime::Error::msg("closure-new takes a typed function"))?
+                        .clone();
                     let host = Func::new(
                         &mut store,
                         original_type,
@@ -127,12 +114,18 @@ fn lazy_result_interrupt_is_synchronized_after_thunk_effects_and_recovers() {
                                 })?;
                             // Actual guest reentry observes the requested epoch interrupt.
                             // Never fabricate an Interrupted error in the host callback.
-                            original.call(callback.as_context_mut(), args, results)
+                            invoke.call(callback.as_context_mut(), args, results)
                         },
                     );
-                    fields[1] = Val::FuncRef(Some(host));
-                    let allocator = StructRefPre::new(&mut store, ty);
-                    let replacement = StructRef::new(&mut store, &allocator, &fields)?;
+                    let mut replacement = [Val::null_any_ref()];
+                    closure_new.call(
+                        &mut store,
+                        &[spin, Val::FuncRef(Some(host)), Val::I32(0), Val::I32(0)],
+                        &mut replacement,
+                    )?;
+                    let replacement = replacement[0]
+                        .unwrap_anyref()
+                        .ok_or_else(|| wasmtime::Error::msg("closure-new returned nil"))?;
                     let mut args = [Val::null_any_ref()];
                     args_new.call(&mut store, &[Val::I32(1)], &mut args)?;
                     let array: wasmtime::Rooted<ArrayRef> = args[0]
@@ -140,7 +133,7 @@ fn lazy_result_interrupt_is_synchronized_after_thunk_effects_and_recovers() {
                         .unwrap()
                         .as_array(&store)?
                         .ok_or_else(|| wasmtime::Error::msg("missing ARGS array"))?;
-                    array.set(&mut store, 0, Val::AnyRef(Some(replacement.to_anyref())))?;
+                    array.set(&mut store, 0, Val::AnyRef(Some(*replacement)))?;
                     invoke.call(
                         &mut store,
                         &[setter, args[0].clone()],

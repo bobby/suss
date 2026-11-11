@@ -42,49 +42,34 @@ fn class_id(session: &mut Session, name: &str) -> i64 {
     session.collect().unwrap();
     session
         .inspect(&value, |mut store, value| {
+            // A type constructor is a universal closure (ADR-0004): code,
+            // properties, UID, then its environment, the descriptor.
             let constructor = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
             let fields = constructor.fields(&mut store)?.collect::<Vec<_>>();
-            assert_eq!(fields.len(), 5, "Class closure layout");
-            let wrapper = fields[0]
-                .unwrap_anyref()
-                .unwrap()
-                .as_struct(&store)?
-                .unwrap();
-            assert_eq!(
-                wrapper.fields(&mut store)?.count(),
-                4,
-                "closure property owner layout"
-            );
-            let storage = wrapper
-                .field(&mut store, 1)?
-                .unwrap_anyref()
-                .unwrap()
-                .as_array(&store)?
-                .unwrap();
-            assert_eq!(
-                storage.len(&store)?,
-                3,
-                "original environment, property entries and source display name"
-            );
-            let properties = storage
-                .get(&mut store, 1)?
-                .unwrap_anyref()
-                .unwrap()
-                .as_array(&store)?
-                .expect("closure property entries are an array");
-            assert_eq!(properties.len(&store)? % 2, 0, "key/value property entries");
-            // Type constructors are kernel closures, not named source functions.
-            // Their unavailable display name remains nil; never interpret it as
-            // an anonymous source function or as part of the captured descriptor.
-            let source_name_value = storage.get(&mut store, 2)?;
-            assert_eq!(
-                suss_cli::portable_session::sentinel_tag(&mut store, &source_name_value)?
-                    .expect("unset constructor source name"),
-                0,
-                "constructor source display name is explicitly unavailable"
-            );
-            let descriptor = storage
-                .get(&mut store, 0)?
+            assert_eq!(fields.len(), 7, "Class closure layout");
+            // Properties, when present: unused, key/value entries, display name.
+            if let Some(storage) = fields[1].unwrap_anyref() {
+                let storage = storage.as_array(&store)?.expect("closure properties are an array");
+                assert_eq!(storage.len(&store)?, 3, "property entries and source display name");
+                let properties = storage
+                    .get(&mut store, 1)?
+                    .unwrap_anyref()
+                    .unwrap()
+                    .as_array(&store)?
+                    .expect("closure property entries are an array");
+                assert_eq!(properties.len(&store)? % 2, 0, "key/value property entries");
+                // Type constructors are kernel closures, not named source functions.
+                // Their unavailable display name remains nil; never interpret it as
+                // an anonymous source function or as part of the captured descriptor.
+                let source_name_value = storage.get(&mut store, 2)?;
+                assert_eq!(
+                    suss_cli::portable_session::sentinel_tag(&mut store, &source_name_value)?
+                        .expect("unset constructor source name"),
+                    0,
+                    "constructor source display name is explicitly unavailable"
+                );
+            }
+            let descriptor = fields[3]
                 .unwrap_anyref()
                 .unwrap()
                 .as_struct(&store)?
