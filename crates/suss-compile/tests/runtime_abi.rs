@@ -8021,8 +8021,10 @@ fn runtime_abi_sparse_clone_coalesces_present_prefix_without_filling_holes_or_al
     let copy_fields = copy.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap();
     let source_dense = source_fields.get(&mut store, 2).unwrap();
     let copy_dense = copy_fields.get(&mut store, 2).unwrap();
-    assert_eq!(source_dense.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().len(&store).unwrap(), 2);
-    assert_eq!(copy_dense.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().len(&store).unwrap(), 3);
+    // Key 2 is at the dense prefix's end, so it grows the prefix to 8 (#348);
+    // 1_000_000 stays sparse.
+    assert_eq!(source_dense.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().len(&store).unwrap(), 8);
+    assert_eq!(copy_dense.unwrap_anyref().unwrap().as_array(&store).unwrap().unwrap().len(&store).unwrap(), 8);
     assert!(!wasmtime::Rooted::ref_eq(&store, source_dense.unwrap_anyref().unwrap(), copy_dense.unwrap_anyref().unwrap()).unwrap());
     let source_mask = source_fields.get(&mut store, 3).unwrap();
     let copy_mask = copy_fields.get(&mut store, 3).unwrap();
