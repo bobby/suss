@@ -11,6 +11,7 @@ roadmap, compatibility contracts, and executing evidence.
 | ADR-0002 | [Defer MLIR compiler adoption after the bounded evaluation](0002-defer-mlir-adoption.md) | Accepted — defer adoption |
 | ADR-0003 | [Clojure's numeric tower](0003-clojure-numeric-tower.md) | Accepted 2026-11-06 |
 | ADR-0004 | [Calling convention](0004-calling-convention.md) | Accepted 2026-11-10 |
+| ADR-0005 | [Whole-component Binaryen optimization of AOT builds](0005-binaryen.md) | Proposed |
 
 ## ADR-0001 work tracking
 
