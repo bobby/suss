@@ -16,6 +16,35 @@ fn key(body: &mut Vec<Instruction<'static>>, index: i32) {
 }
 /// `return_call_ref` of the closure in `local`'s entry for k operands, with
 /// operands 1..=k.
+/// The tail call of `tail_entry`, for an implementation in `local` that may
+/// not be a closure: one `br_on_cast_fail` to the non-final `$closure` into
+/// `typed`, a `(ref null $closure)` local, then no further cast. On wasmtime
+/// 49 each cast to `$closure` is a host call (ADR-0004). A non-closure falls
+/// through, with the stack empty.
+fn tail_entry_checked(body: &mut Vec<Instruction<'static>>, local: u32, typed: u32, k: u32) {
+    use Instruction::*;
+    let closure = HeapType::Concrete(CLOSURE);
+    body.extend([
+        Block(BlockType::Result(VALUE)),
+        LocalGet(local),
+        BrOnCastFail {
+            relative_depth: 0,
+            from_ref_type: RefType { nullable: true, heap_type: HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq } },
+            to_ref_type: RefType { nullable: false, heap_type: closure },
+        },
+        LocalTee(typed),
+        RefAsNonNull,
+    ]);
+    body.extend((1..=k).map(LocalGet));
+    body.extend([
+        LocalGet(typed),
+        StructGet { struct_type_index: CLOSURE, field_index: CLOSURE_CODE },
+        StructGet { struct_type_index: CODE, field_index: CODE_ENTRY + k },
+        ReturnCallRef(CALL + k),
+        End,
+        Drop,
+    ]);
+}
 fn tail_entry(body: &mut Vec<Instruction<'static>>, local: u32, k: u32) {
     use Instruction::*;
     body.extend([LocalGet(local), RefCastNonNull(HeapType::Concrete(CLOSURE))]);
@@ -416,7 +445,7 @@ pub(super) fn functions(
     // entry for k operands directly, with no argument array or `invoke`.
     // Params: 0 dispatcher, 1..=k operands; locals: environment, then impl.
     for k in 1..=MAX_FIXED {
-        let (environment, implementation) = (k + 1, k + 2);
+        let (environment, implementation, typed) = (k + 1, k + 2, k + 3);
         let mut body = vec![
             LocalGet(0),
             RefCastNonNull(HeapType::Concrete(UNIVERSAL)),
@@ -438,7 +467,8 @@ pub(super) fn functions(
         ];
         // The dispatcher caches its last descriptor and method, valid while
         // the protocol epoch is unchanged (#355): environment slots 2 to 4.
-        body.extend([LocalGet(1), Call(descriptor)]);
+        // The receiver is a user object, so its descriptor is its field 0.
+        body.extend([LocalGet(1), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 0 }]);
         cast_array(&mut body, environment);
         body.extend([I32Const(2), ArrayGet(ARGS), RefEq]);
         cast_array(&mut body, environment);
@@ -453,11 +483,11 @@ pub(super) fn functions(
             If(BlockType::Result(VALUE)),
         ]);
         cast_array(&mut body, environment);
-        body.extend([I32Const(3), ArrayGet(ARGS), Else, LocalGet(1), Call(descriptor)]);
+        body.extend([I32Const(3), ArrayGet(ARGS), Else, LocalGet(1), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 0 }]);
         cast_array(&mut body, environment);
         body.extend([I32Const(0), ArrayGet(ARGS), Call(method_get), LocalSet(implementation)]);
         cast_array(&mut body, environment);
-        body.extend([I32Const(2), LocalGet(1), Call(descriptor), ArraySet(ARGS)]);
+        body.extend([I32Const(2), LocalGet(1), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 0 }, ArraySet(ARGS)]);
         cast_array(&mut body, environment);
         body.extend([I32Const(3), LocalGet(implementation), ArraySet(ARGS)]);
         cast_array(&mut body, environment);
@@ -470,12 +500,10 @@ pub(super) fn functions(
             ArraySet(ARGS),
             LocalGet(implementation),
             End,
-            LocalTee(implementation),
-            RefTestNonNull(HeapType::Concrete(CLOSURE)),
-            If(BlockType::Empty),
+            LocalSet(implementation),
         ]);
-        tail_entry(&mut body, implementation, k);
-        body.extend([End, End]);
+        tail_entry_checked(&mut body, implementation, typed, k);
+        body.push(End);
         cast_array(&mut body, environment);
         body.extend([
             I32Const(1),
@@ -498,15 +526,14 @@ pub(super) fn functions(
             Call(property_get),
             LocalSet(implementation),
             End,
-            LocalGet(implementation),
-            RefTestNonNull(HeapType::Concrete(CLOSURE)),
-            I32Eqz,
-            If(BlockType::Empty),
         ]);
+        tail_entry_checked(&mut body, implementation, typed, k);
         error(&mut body);
-        body.push(End);
-        tail_entry(&mut body, implementation, k);
-        let index = b.typed(CALL + k, &[(2, VALUE)], &body);
+        let index = b.typed(
+            CALL + k,
+            &[(2, VALUE), (1, ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(CLOSURE) }))],
+            &body,
+        );
         b.names.insert(format!("protocol-dispatch-{k}"), index);
     }
     for (name, count) in [
