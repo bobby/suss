@@ -26,14 +26,6 @@ pub struct Global {
     name: std::sync::Arc<str>,
 }
 impl Global {
-    /// The `suss.core` var a core link cell stands for (#360).
-    pub(crate) fn core_var_of_link(&self) -> Option<Global> {
-        (&*self.namespace == "suss.internal.core-link").then(|| Global {
-            phase: self.phase,
-            namespace: "suss.core".into(),
-            name: self.name.clone(),
-        })
-    }
     pub fn phase(&self) -> Phase {
         self.phase
     }
