@@ -339,7 +339,7 @@ impl Analyzer<'_> {
             .global()
             .clone())
     }
-    fn do_hir(&self, form: &Form, items: Vec<Hir>) -> Hir {
+    pub(super) fn do_hir(&self, form: &Form, items: Vec<Hir>) -> Hir {
         Hir {
             source: None,
             span: form.span.clone(),

@@ -180,6 +180,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     }
                     Operation::Nominal { operation, .. } => match operation {
                         Nominal::IsNumber | Nominal::IsString | Nominal::Array => {}
+                        Nominal::DirectLinkDefine(_) | Nominal::DirectLinkRead(_) | Nominal::DirectLinkSet(_) => {}
                         Nominal::CoerceString => { names.insert("coerce-string"); }
                         Nominal::ObjectCoerceString => { names.insert("object-coerce-string"); }
                         Nominal::ConcatString => { names.insert("string-concat"); }
@@ -334,6 +335,55 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }
         }
     }
+    // Direct links (#360): links this fragment defines, and links it calls
+    // that an earlier fragment defined, whose closure global and entries it
+    // imports from that fragment's `suss.link.n`.
+    let mut defined_links = std::collections::BTreeMap::new();
+    let mut read_links = BTreeSet::new();
+    let mut set_slots = BTreeSet::new();
+    for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
+        .chain(futures.iter().map(|body| &body.continuation.function))
+    {
+        for block in &function.blocks {
+            for inst in &block.instructions {
+                match &inst.operation {
+                    Operation::Nominal { operation: Nominal::DirectLinkDefine(link), arguments } => {
+                        defined_links.insert(*link, closure_definition(function, arguments[0])
+                            .ok_or_else(|| fail("Direct link of a value that isn't a closure"))?);
+                    }
+                    Operation::Nominal { operation: Nominal::DirectLinkRead(link), .. } => {
+                        read_links.insert(*link);
+                    }
+                    Operation::Nominal { operation: Nominal::DirectLinkSet(slot), .. } => {
+                        set_slots.insert(*slot);
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+    // Packed (slot, definition) operands, by part.
+    let defined_definitions = defined_links.iter()
+        .map(|(link, source)| (super::hir::link_parts(*link).1, (super::hir::link_parts(*link).0, source)))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let owned_slots = defined_definitions.iter().filter(|(definition, (slot, _))| *definition == slot)
+        .map(|(_, (slot, _))| *slot).collect::<BTreeSet<_>>();
+    let mut slots = set_slots.clone();
+    let mut called = BTreeSet::new();
+    for link in defined_links.keys().chain(&read_links) {
+        let (slot, definition) = super::hir::link_parts(*link);
+        slots.insert(slot);
+        if read_links.contains(link) {
+            called.insert(definition);
+        }
+    }
+    let imported_slots = slots.iter().copied().filter(|slot| !owned_slots.contains(slot)).collect::<Vec<_>>();
+    let imported_definitions = called.iter().copied().filter(|definition| !defined_definitions.contains_key(definition)).collect::<Vec<_>>();
+    for definition in &imported_definitions {
+        for k in 0..=runtime_abi::MAX_FIXED {
+            names.insert(Box::leak(format!("link.{definition}.{k}").into_boxed_str()));
+        }
+    }
     let names = names.into_iter().collect::<Vec<_>>();
     let globals = globals.into_iter().collect::<Vec<_>>();
     let mut types = runtime_abi::prelude();
@@ -471,7 +521,11 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             Some(k) => runtime_abi::CALL + k as u32,
             None => type_count + i as u32,
         };
-        imports.import("suss.runtime", name, EntityType::Function(ty));
+        if let Some((link, k)) = link_entry(name) {
+            imports.import(&format!("suss.link.{link}"), name, EntityType::Function(runtime_abi::CALL + k));
+        } else {
+            imports.import("suss.runtime", name, EntityType::Function(ty));
+        }
     }
     for global in &globals {
         imports.import(
@@ -496,6 +550,23 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }),
         );
     }
+    // Imported var slots, then imported definitions' code structs, follow
+    // the sentinels.
+    for slot in &imported_slots {
+        imports.import(
+            &format!("suss.slot.{slot}"),
+            &format!("slot.{slot}"),
+            EntityType::Global(GlobalType { val_type: VALUE, mutable: true, shared: false }),
+        );
+    }
+    for definition in &imported_definitions {
+        imports.import(
+            &format!("suss.link.{definition}"),
+            &format!("link.{definition}.code"),
+            EntityType::Global(GlobalType { val_type: runtime_abi::code_type(), mutable: false, shared: false }),
+        );
+    }
+    let imported_link_globals = (imported_slots.len() + imported_definitions.len()) as u32;
     let eval_type = type_count + names.len() as u32;
     types.ty().function([], [VALUE]);
     if throws {
@@ -511,7 +582,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     }
     let layout = Layout::new(
         &bodies, &singles, &dispatchers, futures.len(), &names,
-        eval_type + 1 + u32::from(throws), globals.len() as u32 + 3,
+        eval_type + 1 + u32::from(throws), globals.len() as u32 + 3 + imported_link_globals,
     ).map_err(|message| fail(message))?;
     for definition in &layout.definitions {
         let mut fields = runtime_abi::closure_fields();
@@ -530,10 +601,55 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             },
         });
     }
+    let mut next_type = eval_type + 1 + u32::from(throws) + layout.definitions.len() as u32;
     for body in bodies.iter().filter(|body| body.arity > runtime_abi::MAX_FIXED as usize) {
         let mut params = vec![closure_type(false)];
         params.extend(std::iter::repeat_n(VALUE, body.arity));
         types.ty().function(params, [VALUE]);
+        next_type += 1;
+    }
+    // A linked definition's closure: a capture struct with no captures,
+    // the same canonical type in every fragment.
+    let link_type = next_type;
+    if !read_links.is_empty() {
+        types.ty().subtype(&SubType {
+            is_final: true,
+            supertype_idx: Some(runtime_abi::CLOSURE),
+            composite_type: CompositeType {
+                inner: CompositeInnerType::Struct(StructType { fields: runtime_abi::closure_fields().into_boxed_slice() }),
+                shared: false,
+                descriptor: None,
+                describes: None,
+            },
+        });
+    }
+    // Each slot's global, and each called definition's code struct global and
+    // entries: imported, or this fragment's.
+    let first_imported_link = globals.len() as u32 + 3;
+    let first_owned_slot = first_imported_link + imported_link_globals + layout.definitions.len() as u32;
+    let mut links = Links { link_type, slots: Default::default(), codes: Default::default(), entries: Default::default() };
+    for (index, slot) in imported_slots.iter().enumerate() {
+        links.slots.insert(*slot, first_imported_link + index as u32);
+    }
+    for (index, slot) in owned_slots.iter().enumerate() {
+        links.slots.insert(*slot, first_owned_slot + index as u32);
+    }
+    for (index, definition) in imported_definitions.iter().enumerate() {
+        links.codes.insert(*definition, first_imported_link + imported_slots.len() as u32 + index as u32);
+        let entries = (0..=runtime_abi::MAX_FIXED).map(|k| {
+            names.iter().position(|name| *name == format!("link.{definition}.{k}")).expect("link import") as u32
+        }).collect::<Vec<_>>();
+        links.entries.insert(*definition, entries);
+    }
+    let mut defined_code = vec![];
+    for (definition, (_, source)) in &defined_definitions {
+        let index = match source {
+            ClosureSource::Single(body) => layout.single_index(body),
+            ClosureSource::General(body) => layout.general_index(body),
+        };
+        links.codes.insert(*definition, layout.definitions[index].global);
+        links.entries.insert(*definition, layout.definitions[index].entries.to_vec());
+        defined_code.push((*definition, layout.definitions[index].global));
     }
     let mut functions = FunctionSection::new();
     functions.function(eval_type);
@@ -542,7 +658,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let mut code = CodeSection::new();
     let mut data = LiteralData::default();
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
-        dispatchers: &dispatchers, futures: &futures, layout: &layout };
+        dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -599,6 +715,21 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             GlobalType { val_type: runtime_abi::code_type(), mutable: false, shared: false },
             &ConstExpr::extended(init),
         );
+    }
+    // Owned var slots, set by each linked definition, and each defined
+    // definition's code struct and entries, exported for later fragments.
+    for slot in &owned_slots {
+        code_globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
+        );
+        exports.export(&format!("slot.{slot}"), ExportKind::Global, links.slots[slot]);
+    }
+    for (definition, global) in &defined_code {
+        exports.export(&format!("link.{definition}.code"), ExportKind::Global, *global);
+        for (k, entry) in links.entries[definition].iter().enumerate() {
+            exports.export(&format!("link.{definition}.{k}"), ExportKind::Func, *entry);
+        }
     }
     let mut elements = ElementSection::new();
     let defined = bodies.len() + dispatchers.len() + futures.len() + layout.extras.len();
@@ -696,6 +827,7 @@ struct Context<'a> {
     dispatchers: &'a [&'a GeneralClosureBody],
     futures: &'a [&'a FutureBody],
     layout: &'a Layout,
+    links: &'a Links,
 }
 /// One function definition (`fn`): its closures' capture struct, its code
 /// struct global and its entries (ADR-0004).
@@ -829,6 +961,35 @@ fn emit_closure(function: &mut Function, definition: &Definition, captures: impl
         function.instruction(&LocalGet(capture));
     }
     function.instruction(&StructNew(definition.structure));
+}
+/// How a value was made, for a direct link's definition (#360).
+enum ClosureSource<'a> {
+    Single(&'a ClosureBody),
+    General(&'a GeneralClosureBody),
+}
+/// The closure `value` holds in `function`, when one of its instructions made it.
+fn closure_definition(function: &IrFunction, value: ir::ValueId) -> Option<ClosureSource<'_>> {
+    function.blocks.iter().flat_map(|block| &block.instructions).find(|inst| inst.result == value)
+        .and_then(|inst| match &inst.operation {
+            Operation::MakeClosure { body, .. } => Some(ClosureSource::Single(body)),
+            Operation::MakeGeneralClosure { body, .. } => Some(ClosureSource::General(body)),
+            _ => None,
+        })
+}
+/// A link entry import's name, `link.n.k`, as (n, k).
+fn link_entry(name: &str) -> Option<(usize, u32)> {
+    let (link, k) = name.strip_prefix("link.")?.split_once('.')?;
+    Some((link.parse().ok()?, k.parse().ok()?))
+}
+/// Direct links (#360): each link's closure global and its entries' function
+/// indices, by link, and the capture-free closure type their closures share.
+struct Links {
+    link_type: u32,
+    /// Var slot globals, by slot.
+    slots: std::collections::BTreeMap<usize, u32>,
+    /// Code struct globals and entries, by definition.
+    codes: std::collections::BTreeMap<usize, u32>,
+    entries: std::collections::BTreeMap<usize, Vec<u32>>,
 }
 /// A nullable or non-null reference to `$closure`.
 fn closure_type(nullable: bool) -> ValType {
@@ -966,7 +1127,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
-    let Context { names, globals, bodies, dispatchers, futures, layout } = *context;
+    let Context { names, globals, bodies, dispatchers, futures, layout, links } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -1041,6 +1202,15 @@ fn emit_function(
                 Operation::MakeClosure { body, .. } => { known.insert(inst.result.0 as u32, (layout.single_index(body), false)); }
                 Operation::MakeGeneralClosure { body, .. } => { known.insert(inst.result.0 as u32, (layout.general_index(body), false)); }
                 _ => {}
+            }
+        }
+    }
+    // A direct-linked callee (#360): its definition's entries, statically.
+    let mut linked: std::collections::HashMap<u32, usize> = std::collections::HashMap::new();
+    for block in &ir.blocks {
+        for inst in &block.instructions {
+            if let Operation::Nominal { operation: Nominal::DirectLinkRead(link), .. } = &inst.operation {
+                linked.insert(inst.result.0 as u32, *link);
             }
         }
     }
@@ -1287,7 +1457,64 @@ fn emit_function(
                     let arguments = &operands[1..];
                     let callee_local = operands[0].0 as u32 + offset;
                     let direct = known.get(&(operands[0].0 as u32)).filter(|_| arguments.len() <= runtime_abi::MAX_FIXED as usize);
-                    if let Some(&(definition, own)) = direct {
+                    let link = linked.get(&(operands[0].0 as u32)).filter(|_| arguments.len() <= runtime_abi::MAX_FIXED as usize);
+                    if let Some(link) = link {
+                        // The var's slot holds its latest linked definition's
+                        // closure, a capture-free closure (final type, so the
+                        // cast is inline). While that is still the definition
+                        // this call was compiled against, it calls the entry
+                        // statically; after a redefinition, through the new
+                        // closure's code struct, as Clojure's direct-linked
+                        // calls reach the newest compiled function.
+                        // Any other value, as `set!` can leave, takes the
+                        // out-of-line path.
+                        let definition = super::hir::link_parts(*link).1;
+                        let k = arguments.len() as u32;
+                        function
+                            .instruction(&Block(BlockType::Result(VALUE)))
+                            .instruction(&Block(BlockType::Result(VALUE)))
+                            .instruction(&LocalGet(callee_local))
+                            .instruction(&BrOnCastFail {
+                                relative_depth: 0,
+                                from_ref_type: RefType::EQREF,
+                                to_ref_type: RefType { nullable: false, heap_type: HeapType::Concrete(links.link_type) },
+                            })
+                            .instruction(&LocalTee(callee))
+                            .instruction(&StructGet { struct_type_index: runtime_abi::CLOSURE, field_index: runtime_abi::CLOSURE_CODE })
+                            .instruction(&GlobalGet(links.codes[&definition]))
+                            .instruction(&RefEq)
+                            .instruction(&If(BlockType::Result(VALUE)))
+                            .instruction(&LocalGet(callee))
+                            .instruction(&RefAsNonNull);
+                        for value in arguments {
+                            function.instruction(&LocalGet(value.0 as u32 + offset));
+                        }
+                        let entry = links.entries[&definition][arguments.len()];
+                        function
+                            .instruction(&if tail { ReturnCall(entry) } else { Call(entry) })
+                            .instruction(&Else)
+                            .instruction(&LocalGet(callee))
+                            .instruction(&RefAsNonNull);
+                        for value in arguments {
+                            function.instruction(&LocalGet(value.0 as u32 + offset));
+                        }
+                        function
+                            .instruction(&LocalGet(callee))
+                            .instruction(&StructGet { struct_type_index: runtime_abi::CLOSURE, field_index: runtime_abi::CLOSURE_CODE })
+                            .instruction(&StructGet { struct_type_index: runtime_abi::CODE, field_index: runtime_abi::CODE_ENTRY + k })
+                            .instruction(&if tail { ReturnCallRef(runtime_abi::CALL + k) } else { CallRef(runtime_abi::CALL + k) })
+                            .instruction(&End)
+                            .instruction(&Br(1))
+                            .instruction(&End);
+                        for value in arguments {
+                            function.instruction(&LocalGet(value.0 as u32 + offset));
+                        }
+                        let call = index(runtime_abi::CALL_EXPORTS[k as usize]);
+                        function
+                            .instruction(&if tail { ReturnCall(call) } else { Call(call) })
+                            .instruction(&End)
+                            .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    } else if let Some(&(definition, own)) = direct {
                         let definition = &layout.definitions[definition];
                         if own {
                             function.instruction(&LocalGet(0));
@@ -1511,6 +1738,23 @@ fn emit_function(
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
                             }
                             function.instruction(&Call(index("callable-key-register")));
+                        }
+                        // A direct link's closure (#360): read for a call, and
+                        // published when its definition runs.
+                        Nominal::DirectLinkRead(link) => {
+                            function.instruction(&GlobalGet(links.slots[&super::hir::link_parts(*link).0]));
+                        }
+                        Nominal::DirectLinkSet(slot) => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&GlobalSet(links.slots[slot]))
+                                .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, sentinels));
+                        }
+                        Nominal::DirectLinkDefine(link) => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&GlobalSet(links.slots[&super::hir::link_parts(*link).0]))
+                                .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, sentinels));
                         }
                         Nominal::LiveDispatcher | Nominal::IFnLiveDispatcher => {
                             for argument in arguments {
