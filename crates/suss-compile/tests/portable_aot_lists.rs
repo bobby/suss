@@ -294,8 +294,8 @@ fn list_results_accept_persistent_vectors_and_subvector_views() {
 #[test]
 fn list_results_accept_primitive_vectors_and_their_views() {
     let (mut store, instance) = instantiate(
-        "(defn ^:export longs [n] (into (vector-of :long) (range n))) (defn ^:export doubles [n] (into (vector-of :double) (map (fn [x] (/ x 2)) (range n)))) (defn ^:export view [n start end] (subvec (into (vector-of :long) (range n)) start end)) (defn ^:export wide [] (vector-of :long 9007199254740993 -9223372036854775808))",
-        "export longs: func(n: s32) -> list<s64>; export doubles: func(n: s32) -> list<f64>; export view: func(n: s32, start: s32, end: s32) -> list<s64>; export wide: func() -> list<s64>;",
+        "(defn ^:export longs [n] (into (vector-of :long) (range n))) (defn ^:export doubles [n] (into (vector-of :double) (map (fn [x] (/ x 2)) (range n)))) (defn ^:export view [n start end] (subvec (into (vector-of :long) (range n)) start end)) (defn ^:export wide [] (vector-of :long 9007199254740993 -9223372036854775808)) (defn ^:export narrow [x] (vector-of :long 1 x))",
+        "export longs: func(n: s32) -> list<s64>; export doubles: func(n: s32) -> list<f64>; export view: func(n: s32, start: s32, end: s32) -> list<s64>; export wide: func() -> list<s64>; export narrow: func(x: s64) -> list<s32>;",
     );
     let longs = instance
         .get_typed_func::<(i32,), (Vec<i64>,)>(&mut store, "longs")
@@ -338,6 +338,15 @@ fn list_results_accept_primitive_vectors_and_their_views() {
         [9_007_199_254_740_993, i64::MIN]
     );
     wide.post_return(&mut store).unwrap();
+    // Another element type takes the vector path, with its range checks.
+    let narrow = instance
+        .get_typed_func::<(i64,), (Vec<i32>,)>(&mut store, "narrow")
+        .unwrap();
+    store.set_fuel(500_000_000).unwrap();
+    assert_eq!(narrow.call(&mut store, (-2,)).unwrap().0, [1, -2]);
+    narrow.post_return(&mut store).unwrap();
+    store.set_fuel(500_000_000).unwrap();
+    assert!(narrow.call(&mut store, (1 << 40,)).is_err());
 }
 
 #[test]

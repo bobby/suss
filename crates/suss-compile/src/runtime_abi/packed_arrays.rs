@@ -289,4 +289,44 @@ pub(super) fn functions(b: &mut Builder) {
         &[(1, VALUE), (1, ValType::I32), (1, VALUE)],
         &body,
     );
+    // Core's private `System/arraycopy` of two arrays of one element kind:
+    // source, source index, destination, destination index and length, as
+    // longs. It returns the destination. Callers are core's own collections,
+    // which pass in-bounds ranges; `array.copy` traps otherwise. Locals: 5
+    // source storage, 6 destination storage.
+    let unbox = |local| [LocalGet(local), Call(b.names["long-unbox"]), I32WrapI64];
+    let mut body = data(5).to_vec();
+    body.extend([
+        LocalGet(2),
+        RefCastNonNull(HeapType::Concrete(PACKED)),
+        StructGet {
+            struct_type_index: PACKED,
+            field_index: 0,
+        },
+        LocalSet(6),
+    ]);
+    each_kind(&mut body, 5, |kind| {
+        let ty = storage(kind);
+        let mut code = cast_storage(kind, 6).to_vec();
+        code.extend(unbox(3));
+        code.extend(cast_storage(kind, 5));
+        code.extend(unbox(1));
+        code.extend(unbox(4));
+        code.extend([
+            ArrayCopy {
+                array_type_index_dst: ty,
+                array_type_index_src: ty,
+            },
+            LocalGet(2),
+            Return,
+        ]);
+        code
+    });
+    b.function_with_locals(
+        "packed-array-copy",
+        &[VALUE; 5],
+        &[VALUE],
+        &[(2, VALUE)],
+        &body,
+    );
 }

@@ -368,6 +368,24 @@ pub(super) fn copy_out(
         ListElement::String => None,
     };
     if let Some((ty, kind)) = packed {
+        // A vector-of of this element kind becomes a packed array first.
+        emit(
+            body,
+            &[
+                GlobalGet(root),
+                I32Const(4),
+                RefI31,
+                LocalGet(locals.value),
+                I32Const(kind as i32),
+                RefI31,
+                ArrayNewFixed {
+                    array_type_index: runtime_abi::ARGS,
+                    array_size: 3,
+                },
+                Call(2),
+                LocalSet(locals.value),
+            ],
+        );
         emit(
             body,
             &[

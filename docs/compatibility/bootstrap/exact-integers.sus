@@ -1811,12 +1811,9 @@
 
 (def ^:private packed-copy
   (fn [kind a n]
-    (let [b (suss.bootstrap/packed-array kind n)
-          m (min n (alength a))]
-      (loop [i 0]
-        (if (< i m)
-          (do (aset b i (aget a i)) (recur (inc i)))
-          b)))))
+    ;; A raw range copy of the packed storage: no element is boxed.
+    (suss.bootstrap/packed-copy a 0 (suss.bootstrap/packed-array kind n) 0
+                                (min n (alength a)))))
 
 (declare vec-of-array-for)
 

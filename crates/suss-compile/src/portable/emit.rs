@@ -443,6 +443,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
             "number-parse-long" => (vec![VALUE; 4], vec![VALUE]),
+            "packed-array-copy" => (vec![VALUE; 5], vec![VALUE]),
             "number-range-count" | "packed-array-store" => (vec![VALUE; 3], vec![VALUE]),
             "string-slice" | "callable-property-get" | "named-property-set" | "user-field-get-guard" | "user-field-set-guard" | "object-method-set" | "object-method-invoke" | "native-object-property-set" | "native-object-property-set-strict" => {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])

@@ -296,6 +296,8 @@ pub enum Bitwise {
     PackedNew,
     PackedStore,
     PackedTest,
+    /// Copy a range between packed arrays of one element kind (#350).
+    PackedCopy,
 }
 impl Bitwise {
     pub(crate) fn from_name(name: &str) -> Option<Self> {
@@ -383,6 +385,7 @@ impl Bitwise {
             Self::PackedNew => "packed-array-new",
             Self::PackedStore => "packed-array-store",
             Self::PackedTest => "packed-array-test",
+            Self::PackedCopy => "packed-array-copy",
         }
     }
     pub(crate) fn arity(self) -> usize {
@@ -406,6 +409,7 @@ impl Bitwise {
             | Self::ToLong
             | Self::HashNumber
             | Self::PackedTest => 1,
+            Self::PackedCopy => 5,
             Self::ParseLong => 4,
             Self::RangeCount | Self::PackedStore => 3,
             _ => 2,
@@ -435,7 +439,7 @@ impl Bitwise {
                 | Self::PackedTest
         ) {
             Type::Bool
-        } else if matches!(self, Self::ParseLong | Self::RangeCount | Self::PackedNew | Self::PackedStore) {
+        } else if matches!(self, Self::ParseLong | Self::RangeCount | Self::PackedNew | Self::PackedStore | Self::PackedCopy) {
             Type::Value
         } else {
             Type::Number
@@ -2631,6 +2635,7 @@ impl Analyzer<'_> {
                 "packed-array" => Some(Bitwise::PackedNew),
                 "packed-store" => Some(Bitwise::PackedStore),
                 "packed-array?" => Some(Bitwise::PackedTest),
+                "packed-copy" => Some(Bitwise::PackedCopy),
                 _ => None,
             };
             if let Some(operation) = operation {

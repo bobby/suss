@@ -168,10 +168,36 @@ pub(super) const SOURCE: &str = r#"
                 (if (suss.core/instance? vector-of-class value)
                   (recur (construct (vector-of-values normalize value))
                          offset requested parent-end (suss.core/+ depth 1))
-                  (throw "WIT list requires a persistent vector")))))))]
+                  (throw "WIT list requires a persistent vector")))))))
+      packed-vector
+      (fn [value kind]
+        ;; A vector-of of the list's element kind leaves as one packed array,
+        ;; copied by range so no element is boxed. Anything else is returned
+        ;; as it is, for the vector path.
+        (if (suss.core/instance? vector-of-class value)
+          (if (identical (.-kind value) kind)
+            (let [count (bounded-length (.-cnt value))
+                  chunks (normalize (.-chunks value))
+                  chunk-count (get chunks 2)
+                  tail-length (suss.core/- count (suss.core/* chunk-count 32))
+                  packed (fn [leaf length]
+                           (if (suss.bootstrap/packed-array? leaf)
+                             (checked-array leaf length)
+                             (throw "WIT list requires packed vector-of storage")))
+                  tail (packed (.-tail value) tail-length)
+                  out (suss.bootstrap/packed-array kind count)]
+              (loop [chunk 0]
+                (if (suss.core/< chunk chunk-count)
+                  (do (suss.bootstrap/packed-copy (packed (indexed chunks chunk) 32) 0
+                                                  out (suss.core/* chunk 32) 32)
+                      (recur (suss.core/+ chunk 1))) nil))
+              (suss.bootstrap/packed-copy tail 0 out (suss.core/* chunk-count 32) tail-length))
+            value)
+          value))]
   (fn [operation value index]
     (if (identical operation 0) (construct value)
       (if (identical operation 1) (normalize value)
         (if (identical operation 3) (get value 2)
-          (indexed value index))))))
+          (if (identical operation 4) (packed-vector value index)
+            (indexed value index)))))))
 "#;
