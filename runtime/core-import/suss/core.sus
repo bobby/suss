@@ -840,7 +840,7 @@
         (if (suss.bootstrap/number? y)
           (suss.bootstrap/equiv x y)
           (if (satisfies? ICollection y) (-equiv y x) false))
-        (if (instance? Keyword x)
+        (if (suss.bootstrap/keyword? x)
           (identical? x y)
           (or (suss.bootstrap/equiv x y)
             ^boolean (-equiv x y))))))

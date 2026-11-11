@@ -417,6 +417,8 @@ pub(crate) const DISPATCH_CODE_GLOBAL: u32 = CALLABLE_KEYS_GLOBAL + 1;
 /// The interned keywords (#361): `KEYWORD_BUCKETS` chains of `[keyword,
 /// next]`, by a hash of the full name, or null before the first.
 pub(crate) const KEYWORDS_GLOBAL: u32 = DISPATCH_CODE_GLOBAL + 1;
+/// The interned keywords' descriptor, from the first keyword interned, or null.
+pub(crate) const KEYWORD_DESCRIPTOR_GLOBAL: u32 = KEYWORDS_GLOBAL + 1;
 const KEYWORD_BUCKETS: i32 = 4096;
 
 /// `keyword-intern(keyword)`: the first keyword interned with the same full
@@ -586,7 +588,12 @@ fn keyword_intern(b: &mut Builder) -> u32 {
         Br(0),
         End,
         End,
-        // The first of its name: chain it at the bucket's head.
+        // The first of its name: chain it at the bucket's head, and remember
+        // the keywords' descriptor.
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(7)),
+        StructGet { struct_type_index: 7, field_index: 0 },
+        GlobalSet(KEYWORD_DESCRIPTOR_GLOBAL),
         LocalGet(4),
         LocalGet(3),
         LocalGet(0),
@@ -1422,6 +1429,24 @@ fn build_module() -> Vec<u8> {
     ]);
     b.function_with_locals("callable-key-register", &[VALUE, VALUE], &[VALUE], &[(1, ValType::I32)], &body);
     keyword_intern(&mut b);
+    b.function(
+        "keyword-test",
+        &[VALUE],
+        &[ValType::I32],
+        &[
+            LocalGet(0),
+            RefTestNonNull(HeapType::Concrete(7)),
+            If(BlockType::Result(ValType::I32)),
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(7)),
+            StructGet { struct_type_index: 7, field_index: 0 },
+            GlobalGet(KEYWORD_DESCRIPTOR_GLOBAL),
+            RefEq,
+            Else,
+            I32Const(0),
+            End,
+        ],
+    );
     let try_invoke = exceptions::functions(&mut b, generic_invoke);
     arithmetic_functions.extend(dynamic::functions(&mut b, binding_set, try_invoke));
     arithmetic_functions.extend(predicates::functions(&mut b));
@@ -1849,12 +1874,14 @@ fn build_module() -> Vec<u8> {
         },
         &ConstExpr::extended(code),
     );
-    // Interned keywords (#361), created on first use.
+    // Interned keywords (#361), created on first use, and their descriptor.
     assert_eq!(globals.len(), DISPATCH_CODE_GLOBAL + 1);
-    globals.global(
-        GlobalType { val_type: VALUE, mutable: true, shared: false },
-        &ConstExpr::extended([sentinel_value(NIL)]),
-    );
+    for _ in 0..2 {
+        globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::extended([sentinel_value(NIL)]),
+        );
+    }
     b.exports.export("array-join-active", ExportKind::Global, array_join::ACTIVE);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

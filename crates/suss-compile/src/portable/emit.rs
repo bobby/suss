@@ -180,6 +180,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     }
                     Operation::Nominal { operation, .. } => match operation {
                         Nominal::IsNumber | Nominal::IsString | Nominal::Array => {}
+                        Nominal::IsKeyword => { names.insert("keyword-test"); }
                         Nominal::DirectLinkDefine(_) | Nominal::DirectLinkRead(_) | Nominal::DirectLinkSet(_) => {}
                         Nominal::KeywordIntern => { names.insert("keyword-intern"); }
                         Nominal::CoerceString => { names.insert("coerce-string"); }
@@ -509,6 +510,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "string-new" => (vec![ValType::I32], vec![VALUE]),
             "arity-throw" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "keyword-intern" => (vec![VALUE], vec![VALUE]),
+            "keyword-test" => (vec![VALUE], vec![ValType::I32]),
             "string-set-unit" => (vec![VALUE, ValType::I32, ValType::I32], vec![ValType::I32]),
             _ => (vec![VALUE, VALUE], vec![VALUE]),
         };
@@ -1718,6 +1720,11 @@ fn emit_function(
                             for instruction in runtime_abi::number_test(arguments[0].0 as u32 + offset) {
                                 function.instruction(&instruction);
                             }
+                        }
+                        Nominal::IsKeyword => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&Call(index("keyword-test")));
                         }
                         Nominal::IsString => {
                             function

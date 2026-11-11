@@ -448,6 +448,9 @@ impl Bitwise {
 pub enum Nominal {
     /// Immutable private tests; public predicate cells remain live.
     IsNumber,
+    /// `suss.bootstrap/keyword?` (#361): an object with the interned keywords'
+    /// descriptor. Needs no Keyword class, so core can test before defining it.
+    IsKeyword,
     IsString,
     IsBoolean,
     /// Inline `identical?` (#356): a reference test, with the runtime's test
@@ -553,6 +556,7 @@ impl Nominal {
             Self::StringIndexOf => Type::Number,
             Self::BindingDefined
             | Self::IsNumber
+            | Self::IsKeyword
             | Self::IsString
             | Self::IsBoolean
             | Self::Identical
@@ -576,7 +580,7 @@ impl Nominal {
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::CurrentThis => count == 0,
                 Self::Identical => count == 2,
-                Self::IsNumber | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
+                Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
@@ -2622,6 +2626,7 @@ impl Analyzer<'_> {
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
             let operation = match symbol.name.as_str() {
                 "number?" => Some(Nominal::IsNumber),
+                "keyword?" => Some(Nominal::IsKeyword),
                 "string?" => Some(Nominal::IsString),
                 "boolean?" => Some(Nominal::IsBoolean),
                 "value-add" => Some(Nominal::ValueAdd),
