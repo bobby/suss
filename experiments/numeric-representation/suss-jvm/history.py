@@ -19,6 +19,8 @@ RUNS = [
     ("M15-02 var reads", "28309f6d", "run_m15_02.txt"),
     ("M15-03 inline predicates", "168e4311", "run_m15_03.txt"),
     ("M15-04 structured control", "a35c5699", "run_m15_04.txt"),
+    ("M15-05 unboxed locals, ADR-0004", "53958035", "run_m15_05.txt"),
+    ("M15-06 calling convention", "e5daf0ff", "run_m15_06.txt"),
 ]
 ROW = re.compile(r"^\| (.+?) \| (-?[\d,.]+) \| ([\d,]*) \| (-?[\d,.]+) \| [^|]* \|$")
 
