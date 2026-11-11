@@ -180,7 +180,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     }
                     Operation::Nominal { operation, .. } => match operation {
                         Nominal::IsNumber | Nominal::IsString | Nominal::Array => {}
-                        Nominal::DirectLinkDefine(_) | Nominal::DirectLinkRead(_) => {}
+                        Nominal::DirectLinkDefine(_) | Nominal::DirectLinkRead(_) | Nominal::DirectLinkSet(_) => {}
                         Nominal::CoerceString => { names.insert("coerce-string"); }
                         Nominal::ObjectCoerceString => { names.insert("object-coerce-string"); }
                         Nominal::ConcatString => { names.insert("string-concat"); }
@@ -340,6 +340,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     // imports from that fragment's `suss.link.n`.
     let mut defined_links = std::collections::BTreeMap::new();
     let mut read_links = BTreeSet::new();
+    let mut set_slots = BTreeSet::new();
     for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
         .chain(futures.iter().map(|body| &body.continuation.function))
     {
@@ -353,6 +354,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     Operation::Nominal { operation: Nominal::DirectLinkRead(link), .. } => {
                         read_links.insert(*link);
                     }
+                    Operation::Nominal { operation: Nominal::DirectLinkSet(slot), .. } => {
+                        set_slots.insert(*slot);
+                    }
                     _ => {}
                 }
             }
@@ -364,7 +368,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .collect::<std::collections::BTreeMap<_, _>>();
     let owned_slots = defined_definitions.iter().filter(|(definition, (slot, _))| *definition == slot)
         .map(|(_, (slot, _))| *slot).collect::<BTreeSet<_>>();
-    let mut slots = BTreeSet::new();
+    let mut slots = set_slots.clone();
     let mut called = BTreeSet::new();
     for link in defined_links.keys().chain(&read_links) {
         let (slot, definition) = super::hir::link_parts(*link);
@@ -1462,11 +1466,19 @@ fn emit_function(
                         // statically; after a redefinition, through the new
                         // closure's code struct, as Clojure's direct-linked
                         // calls reach the newest compiled function.
+                        // Any other value, as `set!` can leave, takes the
+                        // out-of-line path.
                         let definition = super::hir::link_parts(*link).1;
                         let k = arguments.len() as u32;
                         function
+                            .instruction(&Block(BlockType::Result(VALUE)))
+                            .instruction(&Block(BlockType::Result(VALUE)))
                             .instruction(&LocalGet(callee_local))
-                            .instruction(&RefCastNonNull(HeapType::Concrete(links.link_type)))
+                            .instruction(&BrOnCastFail {
+                                relative_depth: 0,
+                                from_ref_type: RefType::EQREF,
+                                to_ref_type: RefType { nullable: false, heap_type: HeapType::Concrete(links.link_type) },
+                            })
                             .instruction(&LocalTee(callee))
                             .instruction(&StructGet { struct_type_index: runtime_abi::CLOSURE, field_index: runtime_abi::CLOSURE_CODE })
                             .instruction(&GlobalGet(links.codes[&definition]))
@@ -1491,6 +1503,15 @@ fn emit_function(
                             .instruction(&StructGet { struct_type_index: runtime_abi::CLOSURE, field_index: runtime_abi::CLOSURE_CODE })
                             .instruction(&StructGet { struct_type_index: runtime_abi::CODE, field_index: runtime_abi::CODE_ENTRY + k })
                             .instruction(&if tail { ReturnCallRef(runtime_abi::CALL + k) } else { CallRef(runtime_abi::CALL + k) })
+                            .instruction(&End)
+                            .instruction(&Br(1))
+                            .instruction(&End);
+                        for value in arguments {
+                            function.instruction(&LocalGet(value.0 as u32 + offset));
+                        }
+                        let call = index(runtime_abi::CALL_EXPORTS[k as usize]);
+                        function
+                            .instruction(&if tail { ReturnCall(call) } else { Call(call) })
                             .instruction(&End)
                             .instruction(&LocalSet(inst.result.0 as u32 + offset));
                     } else if let Some(&(definition, own)) = direct {
@@ -1722,6 +1743,12 @@ fn emit_function(
                         // published when its definition runs.
                         Nominal::DirectLinkRead(link) => {
                             function.instruction(&GlobalGet(links.slots[&super::hir::link_parts(*link).0]));
+                        }
+                        Nominal::DirectLinkSet(slot) => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&GlobalSet(links.slots[slot]))
+                                .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, sentinels));
                         }
                         Nominal::DirectLinkDefine(link) => {
                             function

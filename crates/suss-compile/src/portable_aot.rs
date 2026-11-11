@@ -390,6 +390,7 @@ pub(crate) fn compile_inputs_with_options(
         false,
         std::slice::from_ref(&import_mapping.source),
         options.compile_fuel,
+        true,
     )
     .map_err(|error| CompileError::Semantic(error.to_string()))?;
     // Retain the actual predeclared identity; final aliases must not redirect it.
@@ -491,7 +492,16 @@ pub(crate) fn prepare_inputs_with_command(
     command: bool,
     compile_fuel: Option<u64>,
 ) -> Result<Vec<PreparedFragment>, SessionError> {
-    prepare_inputs_with_imports(inputs, source_paths, command, &[], compile_fuel)
+    prepare_inputs_with_imports(inputs, source_paths, command, &[], compile_fuel, true)
+}
+/// As an AOT build prepares its inputs, without direct linking, so analyzer
+/// output keeps each call's source shape (#360).
+pub(crate) fn prepare_inputs_for_analysis(
+    inputs: &[SourceInput],
+    source_paths: &[PathBuf],
+    compile_fuel: Option<u64>,
+) -> Result<Vec<PreparedFragment>, SessionError> {
+    prepare_inputs_with_imports(inputs, source_paths, false, &[], compile_fuel, false)
 }
 
 fn prepare_inputs_with_imports(
@@ -500,6 +510,7 @@ fn prepare_inputs_with_imports(
     command: bool,
     imports: &[Symbol],
     compile_fuel: Option<u64>,
+    direct_linking: bool,
 ) -> Result<Vec<PreparedFragment>, SessionError> {
     let mut core = portable::bootstrap::shipped(Phase::Runtime)
         .map_err(SessionError::Compile)?
@@ -530,7 +541,7 @@ fn prepare_inputs_with_imports(
     }
     // AOT builds direct-link user code (#360); sessions and the REPL don't.
     let mut environment = core.environment.clone();
-    environment.set_direct_linking(true);
+    environment.set_direct_linking(direct_linking);
     let mut snapshot = CompilationSnapshot::new(
         environment,
         Phase::Runtime,

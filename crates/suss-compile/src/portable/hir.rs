@@ -458,6 +458,9 @@ pub enum Nominal {
     /// A direct-linked definition (#360), its var's slot and the definition
     /// packed by `link_pair`: write its closure, the argument, to the slot.
     DirectLinkDefine(usize),
+    /// `set!` of a direct-linked var also writes its slot, the slot number
+    /// here, so its direct calls reach the new value, as a redefinition (#360).
+    DirectLinkSet(usize),
     /// A direct-linked var's slot, the callee of a call compiled while the
     /// packed definition was the var's (#360).
     DirectLinkRead(usize),
@@ -575,7 +578,7 @@ impl Nominal {
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable | Self::MethodGet | Self::CallableKeyRegister => count == 2,
-                Self::DirectLinkDefine(_) => count == 1,
+                Self::DirectLinkDefine(_) | Self::DirectLinkSet(_) => count == 1,
                 Self::DirectLinkRead(_) => count == 0,
                 Self::NativeObjectGet => count == 2,
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
@@ -2915,6 +2918,23 @@ impl Analyzer<'_> {
                     value: std::sync::Arc::new(value.clone()),
                 }));
             let linked = self.core_reference_link(&global);
+            // `set!` of a direct-linked var writes its slot too (#360).
+            let value = match self.environment.direct_slot(&global).filter(|_| self.environment.direct_linking && !self.privileged) {
+                Some(slot) => {
+                    let binding = self.fresh_binding(form, value);
+                    let write = self.nominal(form, Nominal::DirectLinkSet(slot), vec![self.local(form, binding.id)]);
+                    let result = self.local(form, binding.id);
+                    let body = self.do_hir(form, vec![write, result]);
+                    Hir {
+                        source: None,
+                        span: form.span.clone(),
+                        metadata: vec![],
+                        ty: Type::Value,
+                        kind: std::sync::Arc::new(Expression::Let { bindings: vec![binding], body: Box::new(body) }),
+                    }
+                }
+                None => value,
+            };
             return Ok(Hir {
                 source: None,
                 span: form.span.clone(),

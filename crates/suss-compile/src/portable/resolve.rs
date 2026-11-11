@@ -1110,6 +1110,10 @@ impl Environment {
         self.direct_links.insert(global.clone(), (slot, definition));
         (slot, definition)
     }
+    /// A direct-linked var's slot, which `set!` also writes (#360).
+    pub(crate) fn direct_slot(&self, global: &Global) -> Option<usize> {
+        self.direct_slots.get(global).copied()
+    }
     /// A var that is no longer direct-linkable, such as one redefined to a
     /// non-function, stops linking new calls.
     pub(crate) fn end_direct_link(&mut self, global: &Global) {
