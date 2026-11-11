@@ -418,7 +418,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .chain(futures.iter().map(|body| &body.continuation.function))
     {
         for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
-            if let Operation::Nominal { operation: Nominal::MethodGet, .. } = &inst.operation {
+            // Marker tests (`implements?`) cache their answer the same way.
+            if let Operation::Nominal { operation: Nominal::MethodGet | Nominal::Satisfies, .. } = &inst.operation {
                 method_site_list.push((function as *const IrFunction as usize, inst.result.0 as u32));
             }
         }
@@ -1832,6 +1833,55 @@ fn emit_function(
                             for instruction in runtime_abi::number_test(arguments[0].0 as u32 + offset) {
                                 function.instruction(&instruction);
                             }
+                        }
+                        Nominal::Satisfies if method_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
+                            // Inline cache (#361): a user object's marker test
+                            // depends only on its descriptor and the protocol
+                            // epoch, so a site keeps its last descriptor and
+                            // answer. Other values take the runtime's test.
+                            let cache = method_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            let (marker, object) = (arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset);
+                            let descriptor = |function: &mut Function| {
+                                function
+                                    .instruction(&LocalGet(object))
+                                    .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+                                    .instruction(&StructGet { struct_type_index: 7, field_index: 0 });
+                            };
+                            function
+                                .instruction(&LocalGet(object))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(7)))
+                                .instruction(&If(BlockType::Result(ValType::I32)));
+                            descriptor(&mut function);
+                            function
+                                .instruction(&GlobalGet(cache))
+                                .instruction(&RefEq)
+                                .instruction(&GlobalGet(cache + 2))
+                                .instruction(&GlobalGet(epoch_global))
+                                .instruction(&I32Eq)
+                                .instruction(&I32And)
+                                .instruction(&If(BlockType::Result(ValType::I32)))
+                                .instruction(&GlobalGet(cache + 1))
+                                .instruction(&RefCastNonNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 }))
+                                .instruction(&I31GetU)
+                                .instruction(&Else)
+                                .instruction(&LocalGet(marker))
+                                .instruction(&LocalGet(object))
+                                .instruction(&Call(index("protocol-marker-satisfies")))
+                                .instruction(&LocalTee(field_index_local))
+                                .instruction(&RefI31)
+                                .instruction(&GlobalSet(cache + 1));
+                            descriptor(&mut function);
+                            function
+                                .instruction(&GlobalSet(cache))
+                                .instruction(&GlobalGet(epoch_global))
+                                .instruction(&GlobalSet(cache + 2))
+                                .instruction(&LocalGet(field_index_local))
+                                .instruction(&End)
+                                .instruction(&Else)
+                                .instruction(&LocalGet(marker))
+                                .instruction(&LocalGet(object))
+                                .instruction(&Call(index("protocol-marker-satisfies")))
+                                .instruction(&End);
                         }
                         Nominal::MethodGet if method_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
                             // Inline cache (#355): the same descriptor at the
