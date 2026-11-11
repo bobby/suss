@@ -984,6 +984,9 @@ struct Analyzer<'a> {
     /// Shared with the source facts captured at each node; changed by copy
     /// on write (#319).
     locals: std::sync::Arc<HashMap<String, LocalBinding>>,
+    /// Definitions linked in this fragment (#360). Privileged code links only
+    /// to these: other modules don't export core's links.
+    fragment_links: BTreeSet<usize>,
     fields: std::sync::Arc<HashMap<String, FieldBinding>>,
     /// Field declarations in an intrinsic type body, before methods bind a receiver.
     type_body_fields: Vec<(Global, Form, Vec<Form>, BindingId)>,
@@ -1587,10 +1590,21 @@ impl Analyzer<'_> {
     }
     /// The direct-link callee for a call of `global`, in an AOT build (#360).
     fn direct_link(&self, global: &Global) -> Option<usize> {
-        if !self.environment.direct_linking || self.privileged {
+        // Core calls its own definitions, which it reads through their core
+        // link cells; user AOT code calls user definitions.
+        let global = if self.privileged {
+            if !self.environment.core_image_links {
+                return None;
+            }
+            global.core_var_of_link()?
+        } else if self.environment.direct_linking && global.namespace() != "suss.core" {
+            global.clone()
+        } else {
             return None;
-        }
-        self.environment.direct_links.get(global).map(|&(slot, definition)| link_pair(slot, definition))
+        };
+        self.environment.direct_links.get(&global)
+            .filter(|&&(_, definition)| !self.privileged || self.fragment_links.contains(&definition))
+            .map(|&(slot, definition)| link_pair(slot, definition))
     }
     /// Shipped core's own definitions are direct-linked, except dynamic and
     /// `^:redef` vars (as in Clojure), including ones a later form redeclares.
@@ -1763,12 +1777,19 @@ impl Analyzer<'_> {
         let linked = self.core_link(&global, dynamic);
         // A top-level `fn` initializer links before its analysis, so the
         // function's own calls of the var are direct too (#360).
-        let link_base = self.environment.direct_linking
-            && !self.privileged
-            && !dynamic
-            && global.namespace() != "suss.core";
+        // Shipped core is direct-linked by design, in every build (#360);
+        // user code is in AOT builds.
+        let link_base = !dynamic
+            && if self.privileged {
+                self.environment.core_image_links && global.namespace() == "suss.core"
+            } else {
+                self.environment.direct_linking && global.namespace() != "suss.core"
+            };
         let early_link = (link_base && self.locals.is_empty() && init.is_some_and(fn_form))
             .then(|| self.environment.define_direct_link(&global));
+        if let Some((_, definition)) = early_link {
+            self.fragment_links.insert(definition);
+        }
         let initializer = init
             .map(|init| {
                 self.form_in_named(
@@ -1801,6 +1822,7 @@ impl Analyzer<'_> {
                 Some(link) => link,
                 None => self.environment.define_direct_link(&global),
             };
+            self.fragment_links.insert(definition);
             let link = link_pair(slot, definition);
             initializer.map(|initializer| {
                 let value = self.fresh_binding(form, *initializer);
@@ -2935,7 +2957,9 @@ impl Analyzer<'_> {
                 }));
             let linked = self.core_reference_link(&global);
             // `set!` of a direct-linked var writes its slot too (#360).
-            let value = match self.environment.direct_slot(&global).filter(|_| self.environment.direct_linking && !self.privileged) {
+            let value = match self.environment.direct_slot(&global)
+                .filter(|_| self.environment.direct_linking && !self.privileged && global.namespace() != "suss.core")
+            {
                 Some(slot) => {
                     let binding = self.fresh_binding(form, value);
                     let write = self.nominal(form, Nominal::DirectLinkSet(slot), vec![self.local(form, binding.id)]);
@@ -3527,6 +3551,7 @@ pub(crate) fn prepare_with_origin(
         analysis_depth: 0,
         analysis_contexts: Vec::new(),
         source_namespace: None,
+        fragment_links: BTreeSet::new(),
         namespace_snapshot: None,
         source_callables: Vec::new(),
         source_nodes: Vec::new(),

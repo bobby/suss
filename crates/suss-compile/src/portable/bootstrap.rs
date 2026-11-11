@@ -125,10 +125,12 @@ fn catalog(phase: Phase) -> Result<super::AnalyzedFragment, Diagnostic> {
             span: failure.span,
             message: failure.message,
         })?;
+    let mut environment = Environment::default();
+    environment.set_core_image_links(true);
     super::analyze_selected_fragment(
         forms,
         0..SOURCE.len(),
-        &Environment::default(),
+        &environment,
         phase,
         &mut super::NoExpansion,
         Some(&super::SourceOrigin::privileged(SOURCE)),

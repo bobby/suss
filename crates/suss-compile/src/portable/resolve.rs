@@ -26,6 +26,14 @@ pub struct Global {
     name: std::sync::Arc<str>,
 }
 impl Global {
+    /// The `suss.core` var a core link cell stands for (#360).
+    pub(crate) fn core_var_of_link(&self) -> Option<Global> {
+        (&*self.namespace == "suss.internal.core-link").then(|| Global {
+            phase: self.phase,
+            namespace: "suss.core".into(),
+            name: self.name.clone(),
+        })
+    }
     pub fn phase(&self) -> Phase {
         self.phase
     }
@@ -296,6 +304,11 @@ pub struct Environment {
     /// Direct linking of user code (#360): set for AOT builds, off for the
     /// REPL and source sessions, whose calls read live cells.
     pub(crate) direct_linking: bool,
+    /// Analyzing the shipped core image itself, whose capture-free functions
+    /// call each other directly (#360, #361). Only the bootstrap catalog sets
+    /// it: privileged code compiled elsewhere, such as a session's core
+    /// fragments or the analyzer's record of core, links nothing.
+    pub(crate) core_image_links: bool,
     /// Each direct-linked var's current definition (#360). A call compiled
     /// while it holds calls that definition's entry, as Clojure's
     /// direct-linked call sites call the function compiled at the time.
@@ -446,6 +459,7 @@ impl Environment {
             protocols: BTreeMap::new(),
             core_protocols: BTreeSet::new(),
             direct_linking: false,
+            core_image_links: false,
             direct_links: BTreeMap::new(),
             direct_slots: BTreeMap::new(),
             direct_link_count: 0,
@@ -1108,6 +1122,10 @@ impl Environment {
             self.bind(global.clone(), Binding::InternalCell(global.clone()));
         }
         global
+    }
+    /// Link the shipped core image's calls to its own functions (#360).
+    pub(crate) fn set_core_image_links(&mut self, enabled: bool) {
+        self.core_image_links = enabled;
     }
     /// Turn on direct linking of user code, as an AOT build does (#360).
     pub fn set_direct_linking(&mut self, enabled: bool) {
