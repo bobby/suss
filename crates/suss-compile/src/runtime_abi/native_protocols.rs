@@ -14,6 +14,20 @@ fn key(body: &mut Vec<Instruction<'static>>, index: i32) {
     cast_array(body, 0);
     body.extend([I32Const(index), ArrayGet(ARGS)]);
 }
+/// `return_call_ref` of the closure in `local`'s entry for k operands, with
+/// operands 1..=k.
+fn tail_entry(body: &mut Vec<Instruction<'static>>, local: u32, k: u32) {
+    use Instruction::*;
+    body.extend([LocalGet(local), RefCastNonNull(HeapType::Concrete(CLOSURE))]);
+    body.extend((1..=k).map(LocalGet));
+    body.extend([
+        LocalGet(local),
+        RefCastNonNull(HeapType::Concrete(CLOSURE)),
+        StructGet { struct_type_index: CLOSURE, field_index: CLOSURE_CODE },
+        StructGet { struct_type_index: CODE, field_index: CODE_ENTRY + k },
+        ReturnCallRef(CALL + k),
+    ]);
+}
 fn callback(b: &mut Builder, body: &[Instruction<'static>]) -> u32 {
     let index = b.count;
     b.functions.function(INVOKE);
@@ -397,6 +411,77 @@ pub(super) fn functions(
     function.instruction(&End);
     b.code.function(&function);
     b.count += 1;
+    // Typed dispatch entries (#355): entry k takes the dispatcher and the k
+    // operands, finds the implementation as `dispatch` does, and calls its
+    // entry for k operands directly, with no argument array or `invoke`.
+    // Params: 0 dispatcher, 1..=k operands; locals: environment, then impl.
+    for k in 1..=MAX_FIXED {
+        let (environment, implementation) = (k + 1, k + 2);
+        let mut body = vec![
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(UNIVERSAL)),
+            StructGet { struct_type_index: UNIVERSAL, field_index: UNIVERSAL_MIN },
+            I32Const(k as i32),
+            I32Ne,
+            If(BlockType::Empty),
+            LocalGet(0),
+            I32Const(k as i32),
+            ReturnCall(b.names["arity-throw"]),
+            End,
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(UNIVERSAL)),
+            StructGet { struct_type_index: UNIVERSAL, field_index: UNIVERSAL_ENVIRONMENT },
+            LocalSet(environment),
+            LocalGet(1),
+            RefTestNonNull(HeapType::Concrete(7)),
+            If(BlockType::Empty),
+            LocalGet(1),
+            Call(descriptor),
+        ];
+        cast_array(&mut body, environment);
+        body.extend([
+            I32Const(0),
+            ArrayGet(ARGS),
+            Call(method_get),
+            LocalTee(implementation),
+            RefTestNonNull(HeapType::Concrete(CLOSURE)),
+            If(BlockType::Empty),
+        ]);
+        tail_entry(&mut body, implementation, k);
+        body.extend([End, End]);
+        cast_array(&mut body, environment);
+        body.extend([
+            I32Const(1),
+            ArrayGet(ARGS),
+            Call(b.names["binding-get"]),
+            LocalTee(environment),
+            LocalGet(1),
+            Call(kind),
+            Call(property_get),
+            LocalTee(implementation),
+            sentinel_value(NIL),
+            RefEq,
+            LocalGet(implementation),
+            sentinel_value(UNDEFINED),
+            RefEq,
+            I32Or,
+            If(BlockType::Empty),
+            LocalGet(environment),
+            I32Const(7),
+            Call(property_get),
+            LocalSet(implementation),
+            End,
+            LocalGet(implementation),
+            RefTestNonNull(HeapType::Concrete(CLOSURE)),
+            I32Eqz,
+            If(BlockType::Empty),
+        ]);
+        error(&mut body);
+        body.push(End);
+        tail_entry(&mut body, implementation, k);
+        let index = b.typed(CALL + k, &[(2, VALUE)], &body);
+        b.names.insert(format!("protocol-dispatch-{k}"), index);
+    }
     for (name, count) in [
         ("protocol-live-dispatcher-new", 2u32),
         ("ifn-live-dispatcher-new", 3u32),
@@ -460,16 +545,35 @@ pub(super) fn functions(
         if count == 3 {
             body.push(LocalGet(2));
         }
-        body.extend([
-            ArrayNewFixed {
-                array_type_index: ARGS,
-                array_size: count,
-            },
-            RefFunc(dispatch),
-            LocalGet(arity_local),
-            LocalGet(arity_local),
-            Call(b.names["closure-new"]),
-        ]);
+        if count == 3 {
+            // IFn's dispatchers prepend the receiver; they keep `invoke`.
+            body.extend([
+                ArrayNewFixed {
+                    array_type_index: ARGS,
+                    array_size: count,
+                },
+                RefFunc(dispatch),
+                LocalGet(arity_local),
+                LocalGet(arity_local),
+                Call(b.names["closure-new"]),
+            ]);
+        } else {
+            // A universal closure whose code struct holds the typed dispatch
+            // entries; `invoke` still reaches `dispatch` (#355).
+            let operands = body.split_off(body.len() - 2);
+            body.extend([GlobalGet(DISPATCH_CODE_GLOBAL), sentinel_value(NIL), I32Const(0), RefI31]);
+            body.extend(operands);
+            body.extend([
+                ArrayNewFixed {
+                    array_type_index: ARGS,
+                    array_size: count,
+                },
+                RefFunc(dispatch),
+                LocalGet(arity_local),
+                LocalGet(arity_local),
+                StructNew(UNIVERSAL),
+            ]);
+        }
         b.function_with_locals(
             name,
             &vec![VALUE; count as usize],
