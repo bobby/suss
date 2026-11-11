@@ -528,8 +528,11 @@ fn prepare_inputs_with_imports(
             .map_err(SessionError::Compile)?;
         core.cells.push(cell);
     }
+    // AOT builds direct-link user code (#360); sessions and the REPL don't.
+    let mut environment = core.environment.clone();
+    environment.set_direct_linking(true);
     let mut snapshot = CompilationSnapshot::new(
-        core.environment.clone(),
+        environment,
         Phase::Runtime,
         source_paths.to_vec(),
         BTreeSet::from([

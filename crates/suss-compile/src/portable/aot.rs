@@ -731,14 +731,50 @@ pub fn component(
     let mut instances = InstanceSection::new();
     instances.instantiate(0, std::iter::empty::<(&str, ModuleArg)>());
     instances.instantiate(1, [("suss.runtime", ModuleArg::Instance(0))]);
-    for index in 0..fragments.len() {
-        instances.instantiate(
-            2 + index as u32,
-            [
-                ("suss.runtime", ModuleArg::Instance(0)),
-                ("suss.bindings.runtime", ModuleArg::Instance(1)),
-            ],
-        );
+    // Direct links (#360): a fragment imports each link's closure global and
+    // entries from module `suss.link.n`, which the earlier fragment that
+    // exports `link.n` provides.
+    let mut link_definers = std::collections::BTreeMap::new();
+    for (index, fragment) in fragments.iter().enumerate() {
+        for payload in wasmparser::Parser::new(0).parse_all(&fragment.wasm) {
+            if let Ok(wasmparser::Payload::ExportSection(section)) = payload {
+                for export in section.into_iter().flatten() {
+                    // `slot.S` names its owner's `suss.slot.S`; `link.D.code`
+                    // its definer's `suss.link.D`.
+                    if export.kind == wasmparser::ExternalKind::Global {
+                        if export.name.starts_with("slot.") {
+                            link_definers.insert(format!("suss.{}", export.name), 2 + index as u32);
+                        } else if let Some(definition) = export.name.strip_prefix("link.").and_then(|name| name.strip_suffix(".code")) {
+                            link_definers.insert(format!("suss.link.{definition}"), 2 + index as u32);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    for (index, fragment) in fragments.iter().enumerate() {
+        let mut modules = std::collections::BTreeSet::new();
+        for payload in wasmparser::Parser::new(0).parse_all(&fragment.wasm) {
+            if let Ok(wasmparser::Payload::ImportSection(section)) = payload {
+                for import in section.into_imports().flatten() {
+                    if import.module.starts_with("suss.link.") || import.module.starts_with("suss.slot.") {
+                        modules.insert(import.module.to_owned());
+                    }
+                }
+            }
+        }
+        let mut args = vec![
+            ("suss.runtime".to_owned(), ModuleArg::Instance(0)),
+            ("suss.bindings.runtime".to_owned(), ModuleArg::Instance(1)),
+        ];
+        for module in modules {
+            let definer = *link_definers.get(&module).ok_or_else(|| Diagnostic {
+                span: 0..0,
+                message: format!("Direct link {module} has no defining fragment"),
+            })?;
+            args.push((module, ModuleArg::Instance(definer)));
+        }
+        instances.instantiate(2 + index as u32, args);
     }
     let mut args = vec![
         ("suss.runtime".to_owned(), ModuleArg::Instance(0)),

@@ -455,6 +455,12 @@ pub enum Nominal {
     Identical,
     IsClosure,
     BindCallable,
+    /// A direct-linked definition (#360), its var's slot and the definition
+    /// packed by `link_pair`: write its closure, the argument, to the slot.
+    DirectLinkDefine(usize),
+    /// A direct-linked var's slot, the callee of a call compiled while the
+    /// packed definition was the var's (#360).
+    DirectLinkRead(usize),
     /// Registers IFn's `-invoke` key for a signature arity with the runtime's
     /// out-of-line call path (ADR-0004): an arity long and the key.
     CallableKeyRegister,
@@ -569,6 +575,8 @@ impl Nominal {
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable | Self::MethodGet | Self::CallableKeyRegister => count == 2,
+                Self::DirectLinkDefine(_) => count == 1,
+                Self::DirectLinkRead(_) => count == 0,
                 Self::NativeObjectGet => count == 2,
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
                 Self::NamedGet => count == 3 && arguments[1] == Type::String,
@@ -1567,6 +1575,13 @@ impl Analyzer<'_> {
             _ => false,
         })
     }
+    /// The direct-link callee for a call of `global`, in an AOT build (#360).
+    fn direct_link(&self, global: &Global) -> Option<usize> {
+        if !self.environment.direct_linking || self.privileged {
+            return None;
+        }
+        self.environment.direct_links.get(global).map(|&(slot, definition)| link_pair(slot, definition))
+    }
     /// Shipped core's own definitions are direct-linked, except dynamic and
     /// `^:redef` vars (as in Clojure), including ones a later form redeclares.
     fn core_link(&mut self, global: &Global, dynamic: bool) -> Option<Global> {
@@ -1597,7 +1612,13 @@ impl Analyzer<'_> {
             .is_some_and(|origin| origin.is_privileged())
     }
     fn call(&mut self, form: &Form, items: &[Form]) -> Result<Hir, Diagnostic> {
-        let callee = Box::new(self.form(&items[0])?);
+        let mut callee = Box::new(self.form(&items[0])?);
+        // A call of a direct-linked var calls its current definition (#360).
+        if let Expression::Global(global) = &*callee.kind
+            && let Some(link) = self.direct_link(global)
+        {
+            callee = Box::new(self.nominal(&items[0], Nominal::DirectLinkRead(link), vec![]));
+        }
         let arguments = items[1..]
             .iter()
             .map(|arg| self.form(arg))
@@ -1730,6 +1751,14 @@ impl Analyzer<'_> {
             return Err(fail(args[0].span.clone(), "A dynamic core var cannot be declared before its definition"));
         }
         let linked = self.core_link(&global, dynamic);
+        // A top-level `fn` initializer links before its analysis, so the
+        // function's own calls of the var are direct too (#360).
+        let link_base = self.environment.direct_linking
+            && !self.privileged
+            && !dynamic
+            && global.namespace() != "suss.core";
+        let early_link = (link_base && self.locals.is_empty() && init.is_some_and(fn_form))
+            .then(|| self.environment.define_direct_link(&global));
         let initializer = init
             .map(|init| {
                 self.form_in_named(
@@ -1749,6 +1778,37 @@ impl Analyzer<'_> {
             self.environment
                 .record_definition(global.clone(), definition);
         }
+        // Direct linking (#360): in an AOT build, a user var defined as a
+        // function with no captures publishes its closure as a new link, and
+        // later calls of the var call that definition, as Clojure's
+        // direct-linked calls do. Dynamic and ^:redef vars stay live.
+        let capture_free = initializer.as_deref().is_some_and(capture_free_function);
+        if early_link.is_some() && !capture_free {
+            return Err(fail(form.span.clone(), "A top-level fn initializer captured a local"));
+        }
+        let initializer = if link_base && capture_free {
+            let (slot, definition) = match early_link {
+                Some(link) => link,
+                None => self.environment.define_direct_link(&global),
+            };
+            let link = link_pair(slot, definition);
+            initializer.map(|initializer| {
+                let value = self.fresh_binding(form, *initializer);
+                let publish = self.nominal(form, Nominal::DirectLinkDefine(link), vec![self.local(form, value.id)]);
+                let result = self.local(form, value.id);
+                let body = self.do_hir(form, vec![publish, result]);
+                Box::new(Hir {
+                    source: None,
+                    span: form.span.clone(),
+                    metadata: vec![],
+                    ty: Type::Value,
+                    kind: std::sync::Arc::new(Expression::Let { bindings: vec![value], body: Box::new(body) }),
+                })
+            })
+        } else {
+            self.environment.end_direct_link(&global);
+            initializer
+        };
         Ok(Hir {
             source: None,
             span: form.span.clone(),
@@ -3465,4 +3525,31 @@ pub(crate) fn prepare_with_origin(
         };
     }
     Ok((hir, analyzer.environment))
+}
+
+/// A function expression with no captures, as a top-level `fn` is, also
+/// inside the callable-signature wrapper: a direct-linkable definition (#360).
+fn capture_free_function(hir: &Hir) -> bool {
+    match &*hir.kind {
+        Expression::Function { captures, .. } | Expression::GeneralFunction { captures, .. } => captures.is_empty(),
+        Expression::Let { bindings, .. } => bindings.first().is_some_and(|binding| {
+            matches!(&*binding.value.kind,
+                Expression::Function { captures, .. } | Expression::GeneralFunction { captures, .. } if captures.is_empty())
+        }),
+        _ => false,
+    }
+}
+/// A `fn` form: `fn`, `fn*` or core's `fn`, before analysis (#360).
+fn fn_form(form: &Form) -> bool {
+    let Kind::List(items) = &form.kind else { return false };
+    matches!(items.first().map(|item| &item.kind), Some(Kind::Symbol(symbol))
+        if matches!(symbol.name.as_str(), "fn" | "fn*")
+            && symbol.namespace.as_deref().is_none_or(|namespace| matches!(namespace, "suss.core" | "cljs.core" | "clojure.core")))
+}
+/// A direct link's var slot and definition, packed into one operand (#360).
+pub(crate) fn link_pair(slot: usize, definition: usize) -> usize {
+    (slot << 32) | definition
+}
+pub(crate) fn link_parts(link: usize) -> (usize, usize) {
+    (link >> 32, link & 0xffff_ffff)
 }

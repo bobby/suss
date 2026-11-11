@@ -293,6 +293,18 @@ pub struct Environment {
     pub(crate) protocols: BTreeMap<Global, Vec<ProtocolMethod>>,
     /// Protocols whose current definition is shipped core's (#279).
     pub(crate) core_protocols: BTreeSet<Global>,
+    /// Direct linking of user code (#360): set for AOT builds, off for the
+    /// REPL and source sessions, whose calls read live cells.
+    pub(crate) direct_linking: bool,
+    /// Each direct-linked var's current definition (#360). A call compiled
+    /// while it holds calls that definition's entry, as Clojure's
+    /// direct-linked call sites call the function compiled at the time.
+    pub(crate) direct_links: BTreeMap<Global, (usize, usize)>,
+    /// Each direct-linked var's slot (#360): the id of its first linked
+    /// definition, whose fragment owns the global every later linked
+    /// definition writes its closure to.
+    direct_slots: BTreeMap<Global, usize>,
+    direct_link_count: usize,
 }
 /// Namespace of a qualified symbol, as the pinned analyzer's resolve-var and
 /// resolve-macro-var resolve it: `clojure.core` names `cljs.core` (`suss.core`)
@@ -433,6 +445,10 @@ impl Environment {
             macro_namespaces: BTreeSet::new(),
             protocols: BTreeMap::new(),
             core_protocols: BTreeSet::new(),
+            direct_linking: false,
+            direct_links: BTreeMap::new(),
+            direct_slots: BTreeMap::new(),
+            direct_link_count: 0,
         };
         for phase in [Phase::Runtime, Phase::Macro] {
             env.scopes.insert(
@@ -1078,6 +1094,26 @@ impl Environment {
             self.source_changed();
         }
         global
+    }
+    /// Turn on direct linking of user code, as an AOT build does (#360).
+    pub fn set_direct_linking(&mut self, enabled: bool) {
+        self.direct_linking = enabled;
+    }
+    /// A fresh link identity for a new direct-linked definition of `global`,
+    /// which becomes its current one. The identity names the defining
+    /// fragment's exports and the module callers import them from.
+    /// A new linked definition of `global`: (its var's slot, the definition).
+    pub(crate) fn define_direct_link(&mut self, global: &Global) -> (usize, usize) {
+        self.direct_link_count += 1;
+        let definition = self.direct_link_count;
+        let slot = *self.direct_slots.entry(global.clone()).or_insert(definition);
+        self.direct_links.insert(global.clone(), (slot, definition));
+        (slot, definition)
+    }
+    /// A var that is no longer direct-linkable, such as one redefined to a
+    /// non-function, stops linking new calls.
+    pub(crate) fn end_direct_link(&mut self, global: &Global) {
+        self.direct_links.remove(global);
     }
     pub(crate) fn protocol_key(&mut self, protocol: &Global, method: &str, arity: usize) -> Global {
         let identity = format!(
