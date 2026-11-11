@@ -785,7 +785,6 @@ impl Decoder {
             .ok_or_else(|| wasmtime::Error::msg("Malformed source array presence mask"))?;
         if !matches!(mask.ty(&*store)?.element_type(), StorageType::I16)
             || mask.len(&*store)? != dense.len(&*store)?
-            || dense.len(&*store)? > length
         {
             return Err(wasmtime::Error::msg(
                 "Malformed source array dense/presence layout",
@@ -814,7 +813,8 @@ impl Decoder {
         for index in 0..dense_length {
             match mask.get(&mut *store, index)?.unwrap_i32() {
                 0 => (),
-                1 => result[index as usize] = dense.get(&mut *store, index)?,
+                // Push growth leaves capacity past the length (#348), absent.
+                1 if index < length => result[index as usize] = dense.get(&mut *store, index)?,
                 _ => return Err(wasmtime::Error::msg("Malformed source array presence bit")),
             }
         }
