@@ -11526,3 +11526,155 @@ reduces them without incurring seq initialization"
     (-write writer " ")
     (pr-writer (packed-array-string a) writer opts)
     (-write writer "]")))
+
+;; vector-of (#350): a persistent vector whose elements are stored as
+;; primitives, as Clojure's clojure.core.Vec. An original implementation, with
+;; JVM Clojure 1.12 as the behavior oracle. Full 32-element leaves are packed
+;; arrays held in an ordinary persistent vector; the tail is a packed array of
+;; 0 to 32 elements, so no element holds a box. Stores convert with the packed
+;; array's checked cast, as Vec's array managers cast; reads return a long or
+;; a double, as aget does. Equality, hashing and printing are a vector's.
+(def ^:private vector-of-kind
+  (fn [t]
+    (case t
+      :byte 0 :short 1 :int 2 :float 3 :long 4 :double 5
+      (throw (js/Error. (str "Unrecognized type " (pr-str t)))))))
+
+(def ^:private packed-copy
+  (fn [kind a n]
+    (let [b (suss.bootstrap/packed-array kind n)
+          m (min n (alength a))]
+      (loop [i 0]
+        (if (< i m)
+          (do (aset b i (aget a i)) (recur (inc i)))
+          b)))))
+
+(declare vec-of-array-for)
+
+(deftype VecOf [kind cnt chunks tail meta ^:mutable __hash]
+  Object
+  (toString [coll] (pr-str* coll))
+  (equiv [this other] (-equiv this other))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta) coll (VecOf. kind cnt chunks tail new-meta __hash)))
+  IMeta
+  (-meta [coll] meta)
+
+  IStack
+  (-peek [coll] (when (pos? cnt) (-nth coll (dec cnt))))
+  (-pop [coll]
+    (cond
+      (zero? cnt) (throw (js/Error. "Can't pop empty vector"))
+      (> (alength tail) 1) (VecOf. kind (dec cnt) chunks (packed-copy kind tail (dec (alength tail))) meta nil)
+      (zero? (count chunks)) (VecOf. kind 0 [] (suss.bootstrap/packed-array kind 0) meta nil)
+      :else (VecOf. kind (dec cnt) (pop chunks) (peek chunks) meta nil)))
+
+  ICollection
+  (-conj [coll o]
+    (if (< (alength tail) 32)
+      (let [t (packed-copy kind tail (inc (alength tail)))]
+        (aset t (alength tail) o)
+        (VecOf. kind (inc cnt) chunks t meta nil))
+      (let [t (suss.bootstrap/packed-array kind 1)]
+        (aset t 0 o)
+        (VecOf. kind (inc cnt) (conj chunks tail) t meta nil))))
+
+  IEmptyableCollection
+  (-empty [coll] (VecOf. kind 0 [] (suss.bootstrap/packed-array kind 0) meta nil))
+
+  ISequential
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  IHash
+  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
+
+  ISeqable
+  (-seq [coll]
+    (when (pos? cnt)
+      ((fn step [i]
+         (LazySeq. nil (fn [] (when (< i cnt) (cons (-nth coll i) (step (inc i))))) nil nil))
+       0)))
+
+  ICounted
+  (-count [coll] cnt)
+
+  IIndexed
+  (-nth [coll n]
+    (if (and (<= 0 n) (< n cnt))
+      (aget (vec-of-array-for coll n) (bit-and n 31))
+      (vector-index-out-of-bounds n cnt)))
+  (-nth [coll n not-found]
+    (if (and (<= 0 n) (< n cnt))
+      (aget (vec-of-array-for coll n) (bit-and n 31))
+      not-found))
+
+  ILookup
+  (-lookup [coll k] (-lookup coll k nil))
+  (-lookup [coll k not-found]
+    (if (integer? k) (-nth coll k not-found) not-found))
+
+  IAssociative
+  (-assoc [coll k v]
+    (if (integer? k)
+      (-assoc-n coll k v)
+      (throw (js/Error. "Key must be integer"))))
+  (-contains-key? [coll k]
+    (and (integer? k) (<= 0 k) (< k cnt)))
+
+  IVector
+  (-assoc-n [coll n val]
+    (cond
+      (and (<= 0 n) (< n cnt))
+      (let [chunk (bit-shift-right n 5)]
+        (if (< chunk (count chunks))
+          (let [a (packed-copy kind (nth chunks chunk) 32)]
+            (aset a (bit-and n 31) val)
+            (VecOf. kind cnt (assoc chunks chunk a) tail meta nil))
+          (let [t (packed-copy kind tail (alength tail))]
+            (aset t (bit-and n 31) val)
+            (VecOf. kind cnt chunks t meta nil))))
+      (== n cnt) (-conj coll val)
+      :else (vector-index-out-of-bounds n cnt)))
+
+  IReduce
+  (-reduce [coll f]
+    (if (zero? cnt)
+      (f)
+      (loop [i 1 acc (-nth coll 0)]
+        (if (< i cnt)
+          (let [acc (f acc (-nth coll i))]
+            (if (reduced? acc) @acc (recur (inc i) acc)))
+          acc))))
+  (-reduce [coll f init]
+    (loop [i 0 acc init]
+      (if (< i cnt)
+        (let [acc (f acc (-nth coll i))]
+          (if (reduced? acc) @acc (recur (inc i) acc)))
+        acc)))
+
+  IFn
+  (-invoke [coll k] (-nth coll k))
+  (-invoke [coll k not-found] (-nth coll k not-found))
+
+  IPrintWithWriter
+  (-pr-writer [coll writer opts]
+    (pr-sequential-writer writer pr-writer "[" " " "]" opts coll)))
+
+(def ^:private vec-of-array-for
+  (fn [v n]
+    (let [chunks (.-chunks v)
+          chunk (bit-shift-right n 5)]
+      (if (< chunk (count chunks)) (nth chunks chunk) (.-tail v)))))
+
+(def vector-of
+  "Creates a new vector of a single primitive type t, where t is one of
+  :int :long :float :double :byte or :short. The vector holds its elements
+  unboxed, and otherwise behaves as a vector."
+  (fn
+    ([t] (let [kind (vector-of-kind t)]
+           (VecOf. kind 0 [] (suss.bootstrap/packed-array kind 0) nil nil)))
+    ([t & elements]
+     (reduce conj (vector-of t) elements))))

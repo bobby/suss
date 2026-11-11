@@ -92,6 +92,7 @@
          "suss.bindings.runtime:suss.core/->TransientVector"
          "suss.bindings.runtime:suss.core/->ValSeq"
          "suss.bindings.runtime:suss.core/->Var"
+         "suss.bindings.runtime:suss.core/->VecOf"
          "suss.bindings.runtime:suss.core/->VectorNode"
          "suss.bindings.runtime:suss.core/->Volatile"
          "suss.bindings.runtime:suss.core/-add-method"
@@ -310,6 +311,7 @@
          "suss.bindings.runtime:suss.core/UNREALIZED-SEED"
          "suss.bindings.runtime:suss.core/ValSeq"
          "suss.bindings.runtime:suss.core/Var"
+         "suss.bindings.runtime:suss.core/VecOf"
          "suss.bindings.runtime:suss.core/VectorNode"
          "suss.bindings.runtime:suss.core/Volatile"
          "suss.bindings.runtime:suss.core/abs"
@@ -573,6 +575,7 @@
          "suss.bindings.runtime:suss.core/packed-array-filled"
          "suss.bindings.runtime:suss.core/packed-array-of"
          "suss.bindings.runtime:suss.core/packed-array-string"
+         "suss.bindings.runtime:suss.core/packed-copy"
          "suss.bindings.runtime:suss.core/pam-dupes?"
          "suss.bindings.runtime:suss.core/pam-grow-seed-array"
          "suss.bindings.runtime:suss.core/pam-new-size"
@@ -864,8 +867,11 @@
          "suss.bindings.runtime:suss.core/var?"
          "suss.bindings.runtime:suss.core/vary-meta"
          "suss.bindings.runtime:suss.core/vec"
+         "suss.bindings.runtime:suss.core/vec-of-array-for"
          "suss.bindings.runtime:suss.core/vector"
          "suss.bindings.runtime:suss.core/vector-index-out-of-bounds"
+         "suss.bindings.runtime:suss.core/vector-of"
+         "suss.bindings.runtime:suss.core/vector-of-kind"
          "suss.bindings.runtime:suss.core/vector?"
          "suss.bindings.runtime:suss.core/volatile!"
          "suss.bindings.runtime:suss.core/volatile?"
@@ -980,6 +986,7 @@
          "suss.bindings.runtime:suss.internal.core-link/->TransientVector"
          "suss.bindings.runtime:suss.internal.core-link/->ValSeq"
          "suss.bindings.runtime:suss.internal.core-link/->Var"
+         "suss.bindings.runtime:suss.internal.core-link/->VecOf"
          "suss.bindings.runtime:suss.internal.core-link/->VectorNode"
          "suss.bindings.runtime:suss.internal.core-link/->Volatile"
          "suss.bindings.runtime:suss.internal.core-link/-add-method"
@@ -1198,6 +1205,7 @@
          "suss.bindings.runtime:suss.internal.core-link/UNREALIZED-SEED"
          "suss.bindings.runtime:suss.internal.core-link/ValSeq"
          "suss.bindings.runtime:suss.internal.core-link/Var"
+         "suss.bindings.runtime:suss.internal.core-link/VecOf"
          "suss.bindings.runtime:suss.internal.core-link/VectorNode"
          "suss.bindings.runtime:suss.internal.core-link/Volatile"
          "suss.bindings.runtime:suss.internal.core-link/abs"
@@ -1461,6 +1469,7 @@
          "suss.bindings.runtime:suss.internal.core-link/packed-array-filled"
          "suss.bindings.runtime:suss.internal.core-link/packed-array-of"
          "suss.bindings.runtime:suss.internal.core-link/packed-array-string"
+         "suss.bindings.runtime:suss.internal.core-link/packed-copy"
          "suss.bindings.runtime:suss.internal.core-link/pam-dupes?"
          "suss.bindings.runtime:suss.internal.core-link/pam-grow-seed-array"
          "suss.bindings.runtime:suss.internal.core-link/pam-new-size"
@@ -1752,8 +1761,11 @@
          "suss.bindings.runtime:suss.internal.core-link/var?"
          "suss.bindings.runtime:suss.internal.core-link/vary-meta"
          "suss.bindings.runtime:suss.internal.core-link/vec"
+         "suss.bindings.runtime:suss.internal.core-link/vec-of-array-for"
          "suss.bindings.runtime:suss.internal.core-link/vector"
          "suss.bindings.runtime:suss.internal.core-link/vector-index-out-of-bounds"
+         "suss.bindings.runtime:suss.internal.core-link/vector-of"
+         "suss.bindings.runtime:suss.internal.core-link/vector-of-kind"
          "suss.bindings.runtime:suss.internal.core-link/vector?"
          "suss.bindings.runtime:suss.internal.core-link/volatile!"
          "suss.bindings.runtime:suss.internal.core-link/volatile?"
@@ -2041,12 +2053,12 @@
          "suss.bindings.runtime:suss.internal.reify/t-reify-3447-10690"],
  :compiler "0.1.0+portable.3",
  :compiler-source-sha256 "ea500b0455148bb41a56fbb279ad9043eac764e7fdc3cfce28fbe8bb16e8c2ef",
- :dependency-graph-sha256 "3a6ab655e46f8cc8273a7228b21e7dfc01ae6f3564899d47df0185132677ff7d",
+ :dependency-graph-sha256 "a1eaef9448a85ef7c1566e65d557b4c4d7a2db240abb5d4a9176bf6cf2ec6b74",
  :flags [],
  :format-version 2,
  :phase "runtime",
  :runtime-abi 3,
- :source-sha256 "84e402cdd1455c9c8cf680fff118cee38e57d0f381c8b21258704067275d3ca5",
+ :source-sha256 "bb8963347df2a5194db843e445021ccfe79d945ded4938deed53aebbc570b5be",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "c0c8a353596d0682adf9970be5b764c3d6a8b2a50c19f8bc53047a30148dfd89",
+ :wasm-sha256 "2a9cdab796ca40242291b25e8934bc8a66b6b160f40017f44378a604096d5d6b",
  :wasm-tools "0.258.0"}
