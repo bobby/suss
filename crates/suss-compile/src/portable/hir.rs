@@ -455,6 +455,9 @@ pub enum Nominal {
     Identical,
     IsClosure,
     BindCallable,
+    /// Registers IFn's `-invoke` key for a signature arity with the runtime's
+    /// out-of-line call path (ADR-0004): an arity long and the key.
+    CallableKeyRegister,
     /// Private selected binding-cell presence, not value truthiness.
     BindingDefined,
     ObjectDescriptor,
@@ -565,7 +568,7 @@ impl Nominal {
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
-                Self::BindCallable | Self::MethodGet => count == 2,
+                Self::BindCallable | Self::MethodGet | Self::CallableKeyRegister => count == 2,
                 Self::NativeObjectGet => count == 2,
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
                 Self::NamedGet => count == 3 && arguments[1] == Type::String,
@@ -1599,17 +1602,9 @@ impl Analyzer<'_> {
             .iter()
             .map(|arg| self.form(arg))
             .collect::<Result<Vec<_>, _>>()?;
-        if let Type::Closure(arity) = callee.ty {
-            if arity != arguments.len() {
-                return Err(fail(
-                    form.span.clone(),
-                    format!(
-                        "Wrong arity: expected {arity}, received {}",
-                        arguments.len()
-                    ),
-                ));
-            }
-        }
+        // A known closure called with another count compiles, as in Clojure:
+        // the call reaches the definition's arity-error entry, which throws
+        // Clojure's arity error when it runs (ADR-0004).
         *self.source_nodes.last_mut().expect("source node fact slot") =
             Some(std::sync::Arc::new(SourceNode::Invoke {
                 callee: std::sync::Arc::new(callee.as_ref().clone()),

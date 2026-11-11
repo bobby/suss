@@ -166,13 +166,13 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
         I32Const(0),
         ArrayGet(ARGS),
         LocalGet(5),
-        Call(b.names["protocol-native-invoke"]),
+        Call(b.names["js-method-invoke"]),
         Return,
         End,
         End,
         LocalGet(0),
         LocalGet(2),
-        Call(b.names["protocol-native-invoke"]),
+        Call(b.names["js-method-invoke"]),
     ]);
     let dispatch = b.function_with_locals(
         "object-method-invoke-dispatch",

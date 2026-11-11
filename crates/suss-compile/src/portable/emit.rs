@@ -109,6 +109,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let mut dispatchers = Vec::new();
     let mut futures = Vec::new();
     collect_bodies(ir, &mut bodies, &mut dispatchers, &mut futures);
+    let singles = bodies.iter().copied().filter(|body| !dispatchers.iter()
+        .any(|general| general.methods.iter().any(|method| std::ptr::eq(method, *body))))
+        .collect::<Vec<_>>();
     let all_functions = std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
         .chain(futures.iter().map(|body| &body.continuation.function));
     let mut names = BTreeSet::new();
@@ -151,19 +154,21 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert("binding-set");
                     }
                     Operation::MakeGeneralClosure { body, .. } => {
-                        names.extend(["closure-new", "closure-source-name-initialize"]);
-                        names.insert("arity-error");
+                        names.extend(["closure-source-name-initialize", "arity-throw"]);
+                        names.extend(runtime_abi::ARITY_ERROR_EXPORTS);
                         if let Some(factory) = &body.rest_class {
                             globals.insert(factory.clone());
                             names.extend(["binding-get", "invoke", "source-array-new", "constructor-descriptor", "source-constructor-new"]);
                         }
                     }
                     Operation::MakeClosure { .. } => {
-                        names.extend(["closure-new", "closure-source-name-initialize"]);
+                        names.extend(["closure-source-name-initialize", "arity-throw"]);
+                        names.extend(runtime_abi::ARITY_ERROR_EXPORTS);
                     }
-                    Operation::Call { .. } => {
-                        names.insert("invoke");
-                    }
+                    Operation::Call { operands } => match runtime_abi::CALL_EXPORTS.get(operands.len() - 1) {
+                        Some(name) => { names.insert(name); }
+                        None => { names.insert("call-spread"); }
+                    },
                     Operation::Bitwise { operation, .. } => {
                         names.insert(operation.export());
                     }
@@ -229,6 +234,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::IsClosure => {}
                         Nominal::BindCallable => {
                             names.insert("callable-bind");
+                        }
+                        Nominal::CallableKeyRegister => {
+                            names.insert("callable-key-register");
                         }
                         Nominal::LiveDispatcher => {
                             names.insert("protocol-live-dispatcher-new");
@@ -448,15 +456,22 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])
             }
             "string-new" => (vec![ValType::I32], vec![VALUE]),
+            "arity-throw" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "string-set-unit" => (vec![VALUE, ValType::I32, ValType::I32], vec![ValType::I32]),
             _ => (vec![VALUE, VALUE], vec![VALUE]),
         };
+        let (params, results) = if let Some(k) = runtime_abi::CALL_EXPORTS.iter().position(|call| call == name) {
+            (vec![VALUE; k + 1], vec![VALUE])
+        } else {
+            (params, results)
+        };
         types.ty().function(params, results);
-        imports.import(
-            "suss.runtime",
-            name,
-            EntityType::Function(type_count + i as u32),
-        );
+        // An arity error is an entry, of the shared group's `$callk` type.
+        let ty = match runtime_abi::ARITY_ERROR_EXPORTS.iter().position(|error| error == name) {
+            Some(k) => runtime_abi::CALL + k as u32,
+            None => type_count + i as u32,
+        };
+        imports.import("suss.runtime", name, EntityType::Function(ty));
     }
     for global in &globals {
         imports.import(
@@ -494,45 +509,101 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }),
         );
     }
+    let layout = Layout::new(
+        &bodies, &singles, &dispatchers, futures.len(), &names,
+        eval_type + 1 + u32::from(throws), globals.len() as u32 + 3,
+    ).map_err(|message| fail(message))?;
+    for definition in &layout.definitions {
+        let mut fields = runtime_abi::closure_fields();
+        fields.extend((0..definition.captures).map(|_| FieldType {
+            element_type: StorageType::Val(VALUE),
+            mutable: false,
+        }));
+        types.ty().subtype(&SubType {
+            is_final: true,
+            supertype_idx: Some(runtime_abi::CLOSURE),
+            composite_type: CompositeType {
+                inner: CompositeInnerType::Struct(StructType { fields: fields.into_boxed_slice() }),
+                shared: false,
+                descriptor: None,
+                describes: None,
+            },
+        });
+    }
+    for body in bodies.iter().filter(|body| body.arity > runtime_abi::MAX_FIXED as usize) {
+        let mut params = vec![closure_type(false)];
+        params.extend(std::iter::repeat_n(VALUE, body.arity));
+        types.ty().function(params, [VALUE]);
+    }
     let mut functions = FunctionSection::new();
     functions.function(eval_type);
     let mut exports = ExportSection::new();
     exports.export("eval", ExportKind::Func, names.len() as u32);
     let mut code = CodeSection::new();
     let mut data = LiteralData::default();
-    code.function(&emit_function(
-        ir,
-        None,
-        &names,
-        &globals,
-        &bodies,
-        &dispatchers,
-        &futures, None, &mut data,
-    )?);
-    for body in &bodies {
-        functions.function(runtime_abi::INVOKE);
-        code.function(&emit_function(
-            &body.function,
-            Some(body.capture_types.len()),
-            &names,
-            &globals,
-            &bodies,
-            &dispatchers,
-            &futures, None, &mut data,
-        )?);
+    let context = Context { names: &names, globals: &globals, bodies: &bodies,
+        dispatchers: &dispatchers, futures: &futures, layout: &layout };
+    code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
+    for (index, body) in bodies.iter().enumerate() {
+        functions.function(layout.body_types[index]);
+        code.function(&emit_function(&body.function, Entry::Method(index), &context, None, &mut data)?);
     }
     for dispatcher in &dispatchers {
-        functions.function(runtime_abi::INVOKE);
-        code.function(&emit_dispatcher(dispatcher, &names, &globals, &bodies));
+        let definition = layout.general(dispatcher);
+        functions.function(runtime_abi::SPREAD);
+        code.function(&emit_spread(definition, &context));
     }
     for body in &futures {
         functions.function(runtime_abi::INVOKE);
-        code.function(&emit_function(&body.continuation.function, Some(0),
-            &names, &globals, &bodies, &dispatchers, &futures, Some(&body.continuation), &mut data)?);
+        code.function(&emit_function(&body.continuation.function, Entry::Future,
+            &context, Some(&body.continuation), &mut data)?);
+    }
+    for extra in &layout.extras {
+        match *extra {
+            Extra::Spread(definition) => {
+                functions.function(runtime_abi::SPREAD);
+                code.function(&emit_spread(&layout.definitions[definition], &context));
+            }
+            Extra::Adapter { definition, arity } => {
+                functions.function(runtime_abi::CALL + arity as u32);
+                code.function(&emit_adapter(&layout.definitions[definition], arity, &context));
+            }
+        }
+    }
+    // Each definition's code struct: an immutable global with a constant
+    // initializer, after the imported cells and sentinels (ADR-0004).
+    let mut code_globals = GlobalSection::new();
+    for definition in &layout.definitions {
+        let mut init = match &definition.name {
+            Some(name) => {
+                let mut init: Vec<_> = name.iter().map(|unit| Instruction::I32Const(i32::from(*unit))).collect();
+                init.push(Instruction::ArrayNewFixed { array_type_index: runtime_abi::STRING, array_size: name.len() as u32 });
+                init
+            }
+            None => vec![runtime_abi::sentinel_in(runtime_abi::NIL, 0)],
+        };
+        init.extend(definition.entries.iter().map(|entry| Instruction::RefFunc(*entry)));
+        let minimum = definition.methods.iter().map(|&(_, arity, variadic)| arity - usize::from(variadic)).min().unwrap_or(0);
+        let maximum = if definition.methods.iter().any(|method| method.2) {
+            -1
+        } else {
+            definition.methods.iter().map(|method| method.1 as i32).max().unwrap_or(0)
+        };
+        init.extend([
+            Instruction::RefFunc(definition.spread),
+            Instruction::I32Const(minimum as i32),
+            Instruction::I32Const(maximum),
+            Instruction::StructNew(runtime_abi::CODE),
+        ]);
+        code_globals.global(
+            GlobalType { val_type: runtime_abi::code_type(), mutable: false, shared: false },
+            &ConstExpr::extended(init),
+        );
     }
     let mut elements = ElementSection::new();
-    if !bodies.is_empty() || !dispatchers.is_empty() || !futures.is_empty() {
-        let indices = (0..bodies.len() + dispatchers.len() + futures.len())
+    let defined = bodies.len() + dispatchers.len() + futures.len() + layout.extras.len();
+    if defined > 0 {
+        let indices = (0..defined)
             .map(|i| u32::try_from(names.len() + 1 + i).map_err(|_| fail("Too many functions")))
             .collect::<Result<Vec<_>, _>>()?;
         elements.declared(Elements::Functions(Cow::Owned(indices)));
@@ -542,9 +613,12 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .section(&runtime_abi::Manifest::default().section())
         .section(&types)
         .section(&imports)
-        .section(&functions)
-        .section(&exports);
-    if !bodies.is_empty() || !dispatchers.is_empty() || !futures.is_empty() {
+        .section(&functions);
+    if !layout.definitions.is_empty() {
+        module.section(&code_globals);
+    }
+    module.section(&exports);
+    if defined > 0 {
         module.section(&elements);
     }
     if !data.segments.is_empty() {
@@ -605,130 +679,259 @@ fn collect_bodies<'a>(
     }
     });
 }
-fn emit_dispatcher(
-    body: &GeneralClosureBody,
-    names: &[&str],
-    globals: &[super::resolve::Global],
-    bodies: &[&ClosureBody],
-) -> Function {
-    use Instruction::*;
-    let sentinels = globals.len() as u32;
-    let mut function = Function::new([(1, ValType::I32), (2, VALUE)]);
-    function
-        .instruction(&LocalGet(1))
-        .instruction(&ArrayLen)
-        .instruction(&LocalSet(2));
-    for method in body.methods.iter().filter(|method| !method.variadic) {
-        let index = bodies
-            .iter()
-            .position(|candidate| std::ptr::eq(*candidate, method))
-            .expect("collected method");
-        function
-            .instruction(&LocalGet(2))
-            .instruction(&I32Const(method.arity as i32))
-            .instruction(&I32Eq)
-            .instruction(&If(BlockType::Empty))
-            .instruction(&LocalGet(0))
-            .instruction(&LocalGet(1))
-            .instruction(&ReturnCall((names.len() + 1 + index) as u32))
-            .instruction(&End);
-    }
-    if let Some(method) = body.methods.iter().find(|method| method.variadic) {
-        let minimum = method.arity - 1;
-        let body_index = bodies
-            .iter()
-            .position(|candidate| std::ptr::eq(*candidate, method))
-            .expect("collected method");
-        let factory_index = globals
-            .binary_search(body.rest_class.as_ref().expect("verified rest class"))
-            .expect("collected rest class") as u32;
-        let import = |name: &str| {
-            names
-                .iter()
-                .position(|candidate| *candidate == name)
-                .expect("collected import") as u32
+/// Where a function body begins: the fragment's `eval`, a resumable future's
+/// universal continuation, or a method of a function definition, whose
+/// parameters are its closure and its arguments (ADR-0004).
+#[derive(Clone, Copy)]
+enum Entry {
+    Eval,
+    Future,
+    Method(usize),
+}
+/// What every function in one fragment needs to know about the others.
+struct Context<'a> {
+    names: &'a [&'a str],
+    globals: &'a [super::resolve::Global],
+    bodies: &'a [&'a ClosureBody],
+    dispatchers: &'a [&'a GeneralClosureBody],
+    futures: &'a [&'a FutureBody],
+    layout: &'a Layout,
+}
+/// One function definition (`fn`): its closures' capture struct, its code
+/// struct global and its entries (ADR-0004).
+struct Definition {
+    /// Methods as (body index, arity including any rest parameter, variadic).
+    methods: Vec<(usize, usize, bool)>,
+    rest_class: Option<super::resolve::Global>,
+    structure: u32,
+    global: u32,
+    /// Captures held as fields; a general closure's self reference is its
+    /// closure parameter instead.
+    captures: usize,
+    self_capture: bool,
+    spread: u32,
+    entries: [u32; runtime_abi::MAX_FIXED as usize + 1],
+    name: Option<Vec<u16>>,
+}
+/// Functions after the futures: single-method spread entries and variadic adapters.
+enum Extra {
+    Spread(usize),
+    Adapter { definition: usize, arity: usize },
+}
+struct Layout {
+    definitions: Vec<Definition>,
+    /// General closures in collection order; general closure j is definition j.
+    generals: Vec<*const GeneralClosureBody>,
+    /// For each single-method closure body, in collection order, its definition.
+    singles: Vec<(*const ClosureBody, usize)>,
+    /// Per body: its function type, and its definition.
+    body_types: Vec<u32>,
+    body_definitions: Vec<usize>,
+    extras: Vec<Extra>,
+}
+impl Layout {
+    fn new(
+        bodies: &[&ClosureBody],
+        singles: &[&ClosureBody],
+        dispatchers: &[&GeneralClosureBody],
+        futures: usize,
+        names: &[&str],
+        first_type: u32,
+        first_global: u32,
+    ) -> Result<Self, &'static str> {
+        let max = runtime_abi::MAX_FIXED as usize;
+        let body_index = |body: &ClosureBody| {
+            bodies.iter().position(|candidate| std::ptr::eq(*candidate, body)).expect("collected body")
         };
-        function
-            .instruction(&LocalGet(2))
-            .instruction(&I32Const(minimum as i32))
-            .instruction(&I32GeU)
-            .instruction(&If(BlockType::Empty));
-        // Fixed arguments and the persistent rest value form the compiled entry.
-        function
-            .instruction(&I32Const(method.arity as i32))
-            .instruction(&ArrayNewDefault(runtime_abi::ARGS))
-            .instruction(&LocalSet(3));
-        function
-            .instruction(&LocalGet(3))
-            .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)))
-            .instruction(&I32Const(0))
-            .instruction(&LocalGet(1))
-            .instruction(&I32Const(0))
-            .instruction(&I32Const(minimum as i32))
-            .instruction(&ArrayCopy {
-                array_type_index_dst: runtime_abi::ARGS,
-                array_type_index_src: runtime_abi::ARGS,
+        let function = |index: usize| u32::try_from(names.len() + 1 + index).map_err(|_| "Too many functions");
+        let import = |name: &str| names.iter().position(|candidate| *candidate == name).map(|index| index as u32);
+        let extras_base = bodies.len() + dispatchers.len() + futures;
+        let mut layout = Layout {
+            definitions: vec![], generals: vec![], singles: vec![],
+            body_types: vec![0; bodies.len()], body_definitions: vec![0; bodies.len()], extras: vec![],
+        };
+        let mut sources = vec![];
+        layout.generals = dispatchers.iter().map(|general| *general as *const GeneralClosureBody).collect();
+        for (index, general) in dispatchers.iter().enumerate() {
+            let methods = general.methods.iter()
+                .map(|method| (body_index(method), method.arity, method.variadic)).collect::<Vec<_>>();
+            let spread = function(bodies.len() + index)?;
+            sources.push((methods, general.rest_class.clone(), general.capture_types.len(), general.self_capture, spread, general.arity_name.clone()));
+        }
+        for single in singles {
+            let spread = function(extras_base + layout.extras.len())?;
+            layout.extras.push(Extra::Spread(dispatchers.len() + layout.singles.len()));
+            layout.singles.push((*single as *const ClosureBody, dispatchers.len() + layout.singles.len()));
+            sources.push((vec![(body_index(single), single.arity, false)], None, single.capture_types.len(), false, spread, single.arity_name.clone()));
+        }
+        for (definition, (methods, rest_class, captures, self_capture, spread, name)) in sources.into_iter().enumerate() {
+            let mut entries = [0; runtime_abi::MAX_FIXED as usize + 1];
+            for (k, entry) in entries.iter_mut().enumerate() {
+                *entry = import(runtime_abi::ARITY_ERROR_EXPORTS[k]).ok_or("Missing arity error import")?;
+            }
+            for &(body, arity, variadic) in &methods {
+                if !variadic && arity <= max {
+                    entries[arity] = function(body)?;
+                }
+            }
+            if let Some(&(_, arity, _)) = methods.iter().find(|method| method.2) {
+                let required = arity - 1;
+                for k in required..=max {
+                    if !methods.iter().any(|&(_, fixed, variadic)| !variadic && fixed == k) {
+                        entries[k] = function(extras_base + layout.extras.len())?;
+                        layout.extras.push(Extra::Adapter { definition, arity: k });
+                    }
+                }
+            }
+            for &(body, _, _) in &methods {
+                layout.body_definitions[body] = definition;
+            }
+            layout.definitions.push(Definition {
+                methods, rest_class, structure: first_type + definition as u32,
+                global: first_global + definition as u32, captures, self_capture,
+                spread, entries, name,
             });
+        }
+        let mut big = first_type + layout.definitions.len() as u32;
+        for (index, body) in bodies.iter().enumerate() {
+            layout.body_types[index] = if body.arity <= max {
+                runtime_abi::CALL + body.arity as u32
+            } else {
+                big += 1;
+                big - 1
+            };
+        }
+        Ok(layout)
+    }
+    fn general_index(&self, body: &GeneralClosureBody) -> usize {
+        self.generals.iter().position(|general| std::ptr::eq(*general, body)).expect("collected general closure")
+    }
+    fn single_index(&self, body: &ClosureBody) -> usize {
+        self.singles.iter().find(|(single, _)| std::ptr::eq(*single, body)).expect("collected closure").1
+    }
+    fn general(&self, body: &GeneralClosureBody) -> &Definition {
+        &self.definitions[self.general_index(body)]
+    }
+    fn single(&self, body: &ClosureBody) -> &Definition {
+        &self.definitions[self.single_index(body)]
+    }
+}
+/// `[] -> [ref $closure]`: a new closure of `definition` over the captures
+/// in `captures`, with no properties and an unassigned UID.
+fn emit_closure(function: &mut Function, definition: &Definition, captures: impl Iterator<Item = u32>) {
+    use Instruction::*;
+    function
+        .instruction(&GlobalGet(definition.global))
+        .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, 0))
+        .instruction(&I32Const(0))
+        .instruction(&RefI31);
+    for capture in captures {
+        function.instruction(&LocalGet(capture));
+    }
+    function.instruction(&StructNew(definition.structure));
+}
+/// A nullable or non-null reference to `$closure`.
+fn closure_type(nullable: bool) -> ValType {
+    ValType::Ref(RefType { nullable, heap_type: HeapType::Concrete(runtime_abi::CLOSURE) })
+}
+/// `[] -> [eqref]`: a variadic method's rest seq over the values in the
+/// `ARGS` local `surplus`, an `IndexedSeq` from index 0, built as the pinned
+/// wrapper builds it over a fresh source array; Internal Args never becomes the
+/// language rest sequence.
+fn emit_rest(function: &mut Function, definition: &Definition, surplus: u32, context: &Context) {
+    use Instruction::*;
+    let factory = context.globals
+        .binary_search(definition.rest_class.as_ref().expect("verified rest class"))
+        .expect("collected rest class") as u32;
+    let import = |name: &str| context.names.iter().position(|candidate| *candidate == name).expect("collected import") as u32;
+    function
+        .instruction(&GlobalGet(factory))
+        .instruction(&Call(import("binding-get")))
+        .instruction(&Call(import("constructor-descriptor")))
+        .instruction(&Call(import("source-constructor-new")))
+        .instruction(&LocalGet(surplus))
+        .instruction(&Call(import("source-array-new")))
+        .instruction(&I32Const(0))
+        .instruction(&RefI31)
+        .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, context.globals.len() as u32))
+        .instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: 3 })
+        .instruction(&Call(import("invoke")));
+}
+/// The spread entry, `(closure, args, rest)`: calls the method that takes
+/// `args`' length, as the arity dispatcher did, or throws the arity error.
+fn emit_spread(definition: &Definition, context: &Context) -> Function {
+    use Instruction::*;
+    let names = context.names;
+    let method = |body: usize| (names.len() + 1 + body) as u32;
+    // Locals: 3 the argument count, 4 the surplus array.
+    let mut function = Function::new([(1, ValType::I32), (1, VALUE)]);
+    // An unrealized rest comes only from `apply`, which realizes it first.
+    function
+        .instruction(&LocalGet(2)).instruction(&RefIsNull).instruction(&I32Eqz)
+        .instruction(&If(BlockType::Empty)).instruction(&Unreachable).instruction(&End)
+        .instruction(&LocalGet(1)).instruction(&ArrayLen).instruction(&LocalSet(3));
+    for &(body, arity, _) in definition.methods.iter().filter(|method| !method.2) {
         function
-            .instruction(&LocalGet(2))
-            .instruction(&I32Const(minimum as i32))
-            .instruction(&I32Sub)
-            .instruction(&ArrayNewDefault(runtime_abi::ARGS))
-            .instruction(&LocalSet(4));
+            .instruction(&LocalGet(3)).instruction(&I32Const(arity as i32)).instruction(&I32Eq)
+            .instruction(&If(BlockType::Empty)).instruction(&LocalGet(0));
+        for index in 0..arity {
+            function.instruction(&LocalGet(1)).instruction(&I32Const(index as i32)).instruction(&ArrayGet(runtime_abi::ARGS));
+        }
+        function.instruction(&ReturnCall(method(body))).instruction(&End);
+    }
+    if let Some(&(body, arity, _)) = definition.methods.iter().find(|method| method.2) {
+        let required = arity - 1;
         function
-            .instruction(&LocalGet(4))
-            .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)))
-            .instruction(&I32Const(0))
-            .instruction(&LocalGet(1))
-            .instruction(&I32Const(minimum as i32))
-            .instruction(&LocalGet(2))
-            .instruction(&I32Const(minimum as i32))
-            .instruction(&I32Sub)
-            .instruction(&ArrayCopy {
-                array_type_index_dst: runtime_abi::ARGS,
-                array_type_index_src: runtime_abi::ARGS,
-            });
-        // The pinned wrapper constructs the live IndexedSeq class over a fresh source array.
-        // Internal Args never becomes the language rest sequence.
+            .instruction(&LocalGet(3)).instruction(&I32Const(required as i32)).instruction(&I32GeU)
+            .instruction(&If(BlockType::Empty)).instruction(&LocalGet(0));
+        for index in 0..required {
+            function.instruction(&LocalGet(1)).instruction(&I32Const(index as i32)).instruction(&ArrayGet(runtime_abi::ARGS));
+        }
         function
-            .instruction(&LocalGet(3))
-            .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)))
-            .instruction(&I32Const(minimum as i32))
-            .instruction(&LocalGet(2))
-            .instruction(&I32Const(minimum as i32))
-            .instruction(&I32GtU)
+            .instruction(&LocalGet(3)).instruction(&I32Const(required as i32)).instruction(&I32GtU)
             .instruction(&If(BlockType::Result(VALUE)))
-            .instruction(&GlobalGet(factory_index))
-            .instruction(&Call(import("binding-get")))
-            .instruction(&Call(import("constructor-descriptor")))
-            .instruction(&Call(import("source-constructor-new")))
-            .instruction(&LocalGet(4))
-            .instruction(&Call(import("source-array-new")))
-            // The rest seq starts at index 0, a long.
+            .instruction(&LocalGet(3)).instruction(&I32Const(required as i32)).instruction(&I32Sub)
+            .instruction(&ArrayNewDefault(runtime_abi::ARGS)).instruction(&LocalSet(4))
+            .instruction(&LocalGet(4)).instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)))
             .instruction(&I32Const(0))
-            .instruction(&RefI31)
-            .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, sentinels))
-            .instruction(&ArrayNewFixed {
-                array_type_index: runtime_abi::ARGS,
-                array_size: 3,
-            })
-            .instruction(&Call(import("invoke")))
-            .instruction(&Else)
-            .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, sentinels))
-            .instruction(&End)
-            .instruction(&ArraySet(runtime_abi::ARGS));
+            .instruction(&LocalGet(1)).instruction(&I32Const(required as i32))
+            .instruction(&LocalGet(3)).instruction(&I32Const(required as i32)).instruction(&I32Sub)
+            .instruction(&ArrayCopy { array_type_index_dst: runtime_abi::ARGS, array_type_index_src: runtime_abi::ARGS });
+        emit_rest(&mut function, definition, 4, context);
         function
-            .instruction(&LocalGet(0))
-            .instruction(&LocalGet(3))
-            .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)))
-            .instruction(&ReturnCall((names.len() + 1 + body_index) as u32))
+            .instruction(&Else)
+            .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, 0))
+            .instruction(&End)
+            .instruction(&ReturnCall(method(body)))
             .instruction(&End);
     }
-    let error = names
-        .iter()
-        .position(|name| *name == "arity-error")
-        .expect("arity helper");
-    function.instruction(&Call(error as u32)).instruction(&End);
+    let error = names.iter().position(|name| *name == "arity-throw").expect("arity helper");
+    function.instruction(&LocalGet(0)).instruction(&LocalGet(3)).instruction(&Call(error as u32)).instruction(&End);
+    function
+}
+/// A variadic method's entry for `arity` arguments: its required arguments,
+/// then the rest as a seq over the surplus, or nil when there is none.
+fn emit_adapter(definition: &Definition, arity: usize, context: &Context) -> Function {
+    use Instruction::*;
+    let (body, method_arity, _) = *definition.methods.iter().find(|method| method.2).expect("variadic method");
+    let required = method_arity - 1;
+    // Local arity + 1: the surplus array.
+    let mut function = Function::new([(1, VALUE)]);
+    for local in 0..=required as u32 {
+        function.instruction(&LocalGet(local));
+    }
+    if arity > required {
+        for local in required + 1..=arity {
+            function.instruction(&LocalGet(local as u32));
+        }
+        function
+            .instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: (arity - required) as u32 })
+            .instruction(&LocalSet(arity as u32 + 1));
+        emit_rest(&mut function, definition, arity as u32 + 1, context);
+    } else {
+        function.instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, 0));
+    }
+    function.instruction(&ReturnCall((context.names.len() + 1 + body) as u32)).instruction(&End);
     function
 }
 /// A call can leave its frame only when its result is forwarded unchanged to
@@ -758,22 +961,25 @@ fn returns_unchanged<'a>(ir: &'a IrFunction, mut terminator: &'a Terminator, mut
 
 fn emit_function(
     ir: &IrFunction,
-    capture_count: Option<usize>,
-    names: &[&str],
-    globals: &[super::resolve::Global],
-    bodies: &[&ClosureBody],
-    dispatchers: &[&GeneralClosureBody],
-    futures: &[&FutureBody],
+    entry: Entry,
+    context: &Context,
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
+    let Context { names, globals, bodies, dispatchers, futures, layout } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
     };
     let count = u32::try_from(ir.values.len()).map_err(|_| fail("Too many IR values"))?;
     let sentinels = globals.len() as u32;
-    let offset = if capture_count.is_some() { 2 } else { 0 };
+    // Parameters before the SSA locals: none for `eval`; a future's
+    // environment and arguments; a method's closure and arguments.
+    let offset = match entry {
+        Entry::Eval => 0,
+        Entry::Future => 2,
+        Entry::Method(body) => 1 + u32::try_from(bodies[body].arity).map_err(|_| fail("Too many parameters"))?,
+    };
     let scratch = count
         .checked_add(offset)
         .ok_or_else(|| fail("Too many IR locals"))?;
@@ -796,27 +1002,54 @@ fn emit_function(
     let locals = unboxed::Locals::new(unboxed::infer(ir, continuation.is_some()), pc + 1, offset, sentinels);
     let mut declarations = vec![(count + 14, VALUE), (1, ValType::I32)];
     declarations.extend(locals.declarations.iter().copied());
+    // A call site's callee, once it is known to be a closure.
+    let callee = pc + 1 + locals.declarations.iter().map(|(count, _)| count).sum::<u32>();
+    declarations.push((1, closure_type(true)));
     let mut function = Function::new(declarations);
     use Instruction::*;
     if continuation.is_none() {
-    if let Some(capture_count) = capture_count {
+    if let Entry::Method(body) = entry {
+        // Captures are fields of the closure's own struct; a general closure's
+        // self reference is the closure; arguments are parameters (ADR-0004).
+        let definition = &layout.definitions[layout.body_definitions[body]];
+        let environment = definition.captures + usize::from(definition.self_capture);
         for (index, value) in ir.blocks[0].parameters.iter().enumerate() {
-            if index < capture_count {
+            if index < definition.captures {
                 function
                     .instruction(&LocalGet(0))
-                    .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)))
-                    .instruction(&I32Const(index as i32));
+                    .instruction(&RefCastNonNull(HeapType::Concrete(definition.structure)))
+                    .instruction(&StructGet {
+                        struct_type_index: definition.structure,
+                        field_index: runtime_abi::CLOSURE_FIELDS + index as u32,
+                    });
+            } else if index < environment {
+                function.instruction(&LocalGet(0));
             } else {
-                function
-                    .instruction(&LocalGet(1))
-                    .instruction(&I32Const((index - capture_count) as i32));
+                function.instruction(&LocalGet(1 + (index - environment) as u32));
             }
-            function
-                .instruction(&ArrayGet(runtime_abi::ARGS))
-                .instruction(&LocalSet(value.0 as u32 + offset));
+            function.instruction(&LocalSet(value.0 as u32 + offset));
         }
     }
-
+    }
+    // Callees known statically (ADR-0004): closures this function makes, and
+    // a method's own closure, its self reference. A call to one calls its
+    // entry directly, with no cast to `$closure` or code struct reads.
+    let mut known: std::collections::HashMap<u32, (usize, bool)> = std::collections::HashMap::new();
+    for block in &ir.blocks {
+        for inst in &block.instructions {
+            match &inst.operation {
+                Operation::MakeClosure { body, .. } => { known.insert(inst.result.0 as u32, (layout.single_index(body), false)); }
+                Operation::MakeGeneralClosure { body, .. } => { known.insert(inst.result.0 as u32, (layout.general_index(body), false)); }
+                _ => {}
+            }
+        }
+    }
+    if let Entry::Method(body) = entry {
+        let definition = &layout.definitions[layout.body_definitions[body]];
+        if definition.self_capture {
+            let value = ir.blocks[0].parameters[definition.captures];
+            known.insert(value.0 as u32, (layout.body_definitions[body], true));
+        }
     }
     let slots = r#async::Locals { scratch, snapshot: scratch + 1, cont: scratch + 2,
         live: scratch + 3, resume: scratch + 4, pc, offset,
@@ -1049,48 +1282,84 @@ fn emit_function(
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Call { operands } => {
-                    function.instruction(&LocalGet(operands[0].0 as u32 + offset));
-                    for value in &operands[1..] {
-                        function.instruction(&LocalGet(value.0 as u32 + offset));
-                    }
-                    let size = u32::try_from(operands.len() - 1)
-                        .map_err(|_| fail("Too many call arguments"))?;
-                    function
-                        .instruction(&ArrayNewFixed {
-                            array_type_index: runtime_abi::ARGS,
-                            array_size: size,
-                        });
                     let tail = continuation.is_none() && block.instructions.last().is_some_and(|last| std::ptr::eq(last, inst))
                         && returns_unchanged(ir, &block.terminator, inst.result);
-                    if tail {
-                        function.instruction(&ReturnCall(index("invoke")));
-                    } else {
-                        function.instruction(&Call(index("invoke")))
+                    let arguments = &operands[1..];
+                    let callee_local = operands[0].0 as u32 + offset;
+                    let direct = known.get(&(operands[0].0 as u32)).filter(|_| arguments.len() <= runtime_abi::MAX_FIXED as usize);
+                    if let Some(&(definition, own)) = direct {
+                        let definition = &layout.definitions[definition];
+                        if own {
+                            function.instruction(&LocalGet(0));
+                        } else {
+                            function
+                                .instruction(&LocalGet(callee_local))
+                                .instruction(&RefCastNonNull(HeapType::Concrete(definition.structure)));
+                        }
+                        for value in arguments {
+                            function.instruction(&LocalGet(value.0 as u32 + offset));
+                        }
+                        let entry = definition.entries[arguments.len()];
+                        if tail {
+                            function.instruction(&ReturnCall(entry));
+                        } else {
+                            function.instruction(&Call(entry)).instruction(&LocalSet(inst.result.0 as u32 + offset));
+                        }
+                    } else if arguments.len() <= runtime_abi::MAX_FIXED as usize {
+                        // ADR-0004: a closure calls its code struct's entry for
+                        // this many arguments; anything else goes out of line
+                        // to the runtime's `call-k`.
+                        let k = arguments.len() as u32;
+                        function
+                            .instruction(&Block(BlockType::Result(VALUE)))
+                            .instruction(&Block(BlockType::Result(VALUE)))
+                            .instruction(&LocalGet(callee_local))
+                            .instruction(&BrOnCastFail {
+                                relative_depth: 0,
+                                from_ref_type: RefType::EQREF,
+                                to_ref_type: RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::CLOSURE) },
+                            })
+                            .instruction(&LocalTee(callee))
+                            .instruction(&RefAsNonNull);
+                        for value in arguments {
+                            function.instruction(&LocalGet(value.0 as u32 + offset));
+                        }
+                        function
+                            .instruction(&LocalGet(callee))
+                            .instruction(&StructGet { struct_type_index: runtime_abi::CLOSURE, field_index: runtime_abi::CLOSURE_CODE })
+                            .instruction(&StructGet { struct_type_index: runtime_abi::CODE, field_index: runtime_abi::CODE_ENTRY + k })
+                            .instruction(&if tail { ReturnCallRef(runtime_abi::CALL + k) } else { CallRef(runtime_abi::CALL + k) })
+                            .instruction(&Br(1))
+                            .instruction(&End);
+                        // The callee, left by the failed cast, then its arguments.
+                        for value in arguments {
+                            function.instruction(&LocalGet(value.0 as u32 + offset));
+                        }
+                        let call = index(runtime_abi::CALL_EXPORTS[k as usize]);
+                        function
+                            .instruction(&if tail { ReturnCall(call) } else { Call(call) })
+                            .instruction(&End)
                             .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    } else {
+                        function.instruction(&LocalGet(callee_local));
+                        for value in arguments {
+                            function.instruction(&LocalGet(value.0 as u32 + offset));
+                        }
+                        let size = u32::try_from(arguments.len())
+                            .map_err(|_| fail("Too many call arguments"))?;
+                        function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: size });
+                        if tail {
+                            function.instruction(&ReturnCall(index("call-spread")));
+                        } else {
+                            function.instruction(&Call(index("call-spread")))
+                                .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                        }
                     }
                 }
                 Operation::MakeClosure { body, captures } => {
-                    for value in captures {
-                        function.instruction(&LocalGet(value.0 as u32 + offset));
-                    }
-                    let size =
-                        u32::try_from(captures.len()).map_err(|_| fail("Too many captures"))?;
-                    let body_index = bodies
-                        .iter()
-                        .position(|candidate| std::ptr::eq(*candidate, body.as_ref()))
-                        .expect("collected body");
-                    let function_index = u32::try_from(names.len() + 1 + body_index)
-                        .map_err(|_| fail("Too many functions"))?;
-                    function
-                        .instruction(&ArrayNewFixed {
-                            array_type_index: runtime_abi::ARGS,
-                            array_size: size,
-                        })
-                        .instruction(&RefFunc(function_index))
-                        .instruction(&I32Const(body.arity as i32))
-                        .instruction(&I32Const(body.arity as i32))
-                        .instruction(&Call(index("closure-new")))
-                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    let definition = layout.single(body);
+                    emit_closure(&mut function, definition, captures.iter().map(|value| value.0 as u32 + offset));
+                    function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                     if let Some(name) = &body.display_name {
                         emit_utf16_literal(&mut function, data, name, scratch, &ir.span)?;
                         function.instruction(&LocalGet(inst.result.0 as u32 + offset))
@@ -1099,48 +1368,9 @@ fn emit_function(
                     }
                 }
                 Operation::MakeGeneralClosure { body, captures } => {
-                    for value in captures {
-                        function.instruction(&LocalGet(value.0 as u32 + offset));
-                    }
-                    if body.self_capture {
-                        // Self slot placeholder, patched with the closure after creation.
-                        function.instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, sentinels));
-                    }
-                    let size = u32::try_from(captures.len() + usize::from(body.self_capture))
-                        .map_err(|_| fail("Too many captures"))?;
-                    let dispatcher = dispatchers
-                        .iter()
-                        .position(|candidate| std::ptr::eq(*candidate, body.as_ref()))
-                        .expect("collected dispatcher");
-                    let dispatcher_function =
-                        u32::try_from(names.len() + 1 + bodies.len() + dispatcher)
-                            .map_err(|_| fail("Too many functions"))?;
-                    let minimum = body
-                        .methods
-                        .iter()
-                        .map(|method| method.arity - usize::from(method.variadic))
-                        .min()
-                        .expect("verified methods");
-                    let maximum = if body.rest_class.is_some() { -1 } else { body.methods.iter().map(|method| method.arity as i32).max().expect("verified methods") };
-                    function
-                        .instruction(&ArrayNewFixed {
-                            array_type_index: runtime_abi::ARGS,
-                            array_size: size,
-                        })
-                        .instruction(&LocalTee(scratch))
-                        .instruction(&RefFunc(dispatcher_function))
-                        .instruction(&I32Const(minimum as i32))
-                        .instruction(&I32Const(maximum))
-                        .instruction(&Call(index("closure-new")))
-                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
-                    if body.self_capture {
-                        function
-                            .instruction(&LocalGet(scratch))
-                            .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)))
-                            .instruction(&I32Const(captures.len() as i32))
-                            .instruction(&LocalGet(inst.result.0 as u32 + offset))
-                            .instruction(&ArraySet(runtime_abi::ARGS));
-                    }
+                    let definition = layout.general(body);
+                    emit_closure(&mut function, definition, captures.iter().map(|value| value.0 as u32 + offset));
+                    function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                     if let Some(name) = &body.display_name {
                         emit_utf16_literal(&mut function, data, name, scratch, &ir.span)?;
                         function.instruction(&LocalGet(inst.result.0 as u32 + offset))
@@ -1275,6 +1505,12 @@ fn emit_function(
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
                             }
                             function.instruction(&Call(index("callable-bind")));
+                        }
+                        Nominal::CallableKeyRegister => {
+                            for argument in arguments {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function.instruction(&Call(index("callable-key-register")));
                         }
                         Nominal::LiveDispatcher | Nominal::IFnLiveDispatcher => {
                             for argument in arguments {

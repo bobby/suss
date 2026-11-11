@@ -284,13 +284,14 @@ impl FormBridge {
         for (name, class) in SOURCE_CLASSES {
             let value = session.eval(&format!("suss.core/{name}"))?;
             let id = session.inspect(&value, |mut store, value| {
-                let closure = fields(&mut store, &value, 5)?;
-                let owner = fields(&mut store, &closure[0], 4)?;
-                let storage = array(&mut store, &owner[1])?;
-                if storage.len() != 3 {
-                    return Err(error("Invalid class property owner"));
-                }
-                let descriptor = fields(&mut store, &storage[0], 6)?;
+                // A class constructor is a universal closure (ADR-0004) whose
+                // environment is its descriptor.
+                let closure = fields(&mut store, &value, 7)?;
+                let descriptor = fields(
+                    &mut store,
+                    &closure[crate::runtime_abi::UNIVERSAL_ENVIRONMENT as usize],
+                    6,
+                )?;
                 match descriptor[0] {
                     Val::I64(id) => Ok(id),
                     _ => Err(error("Invalid class descriptor identity")),
@@ -494,6 +495,19 @@ impl FormBridge {
             };
             let storage = structure.fields(&mut store)?.collect::<Vec<_>>();
             if storage.len() != 4 {
+                return Ok(None);
+            }
+            // A closure with one capture is also four fields (ADR-0004), its
+            // first a code struct: only an object's first field is a
+            // descriptor.
+            let is_descriptor = match storage[0].anyref().flatten() {
+                Some(first) => match first.as_struct(&store)? {
+                    Some(first) => first.ty(&store)?.fields().len() == 6,
+                    None => false,
+                },
+                None => false,
+            };
+            if !is_descriptor {
                 return Ok(None);
             }
             let descriptor = fields(&mut store, &storage[0], 6)?;
@@ -1009,7 +1023,7 @@ impl FormBridge {
                 .data_inspect_calls(
                     value,
                     &self.core.factories["lazy-sval"],
-                    |mut store, value, args_new, invoke, function, undefined| {
+                    |mut store, value, args_new, invoke, _closure_new, function, undefined| {
                         let mut budget = Budget {
                             display: None,
                             source_valid: None,

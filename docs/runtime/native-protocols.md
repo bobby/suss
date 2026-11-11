@@ -15,10 +15,12 @@ and wrong arities produce typed language errors, not Wasm traps. Nil and interna
 undefined select the same native kind, while false selects Boolean.
 
 Native implementations replace an entire function for one receiver kind, including
-its fixed arities. A valid protocol call selecting a plain fixed implementation
-fills missing parameters with internal undefined and ignores already evaluated
-surplus operands, matching the pinned native call convention. Multiple-signature
-implementations retain their exact signature dispatch. Their first argument is an ordinary function
+its fixed arities. Since runtime ABI 4 ([ADR-0004](../adr/0004-calling-convention.md)),
+a protocol call selecting a native implementation calls it with exactly its
+operands, so a count the implementation lacks throws Clojure's arity error.
+ClojureScript's convention of filling missing parameters with undefined and
+ignoring surplus operands is gone. Multiple-signature implementations retain
+their exact signature dispatch. Their first argument is an ordinary function
 parameter: recur may replace it. Nominal methods continue to anchor their implicit
 receiver and store independent prototype method slots.
 
@@ -40,8 +42,8 @@ checks kinds/storage and copies a growing array before publication. No global
 registry retains all replaced closures. The wrapper/table/implementations remain
 reachable from their owning function and can be collected with it.
 
-Universal invocation and original environment inspectors unwrap the environment
-before invoking the unchanged shared callback. The ten-type recursive prelude,
+Since runtime ABI 4 the property storage is the closure's own `properties` field,
+created on first use, and no call unwraps an environment. The ten-type recursive prelude,
 ABI version, numeric helper and its stack/global indices remain unchanged. Only
 one private descriptor global is appended after the earlier runtime globals.
 Independent foreign closures with raw environments remain callable. Assigning

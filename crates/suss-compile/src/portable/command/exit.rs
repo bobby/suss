@@ -61,6 +61,15 @@ pub(super) fn module(
         "exit",
         EntityType::Function(runtime_abi::TYPE_COUNT + 5),
     );
+    types.ty().function(
+        [VALUE, runtime_abi::invoke_type(), ValType::I32, ValType::I32],
+        [VALUE],
+    );
+    imports.import(
+        "suss.runtime",
+        "closure-new",
+        EntityType::Function(runtime_abi::TYPE_COUNT + 6),
+    );
     imports.import(
         cell.import_module(),
         &cell.import_name(),
@@ -74,8 +83,8 @@ pub(super) fn module(
     types.ty().function([], []);
     let mut functions = FunctionSection::new();
     functions.function(runtime_abi::INVOKE);
-    functions.function(runtime_abi::TYPE_COUNT + 6);
     functions.function(runtime_abi::TYPE_COUNT + 7);
+    functions.function(runtime_abi::TYPE_COUNT + 8);
     let mut code = CodeSection::new();
     let mut invoke = Function::new([(1, VALUE), (1, ValType::F64)]);
     emit(
@@ -88,7 +97,7 @@ pub(super) fn module(
         ],
     );
     emit(&mut invoke, &runtime_abi::number_test(2));
-    emit(&mut invoke, &[I32Eqz, If(BlockType::Empty), Call(6), Throw(0), End]);
+    emit(&mut invoke, &[I32Eqz, If(BlockType::Empty), Call(7), Throw(0), End]);
     emit(&mut invoke, &runtime_abi::number_to_f64(2));
     emit(
         &mut invoke,
@@ -107,7 +116,7 @@ pub(super) fn module(
             F64Ne,
             I32Or,
             If(BlockType::Empty),
-            Call(6),
+            Call(7),
             Throw(0),
             End,
             LocalGet(3),
@@ -146,26 +155,24 @@ pub(super) fn module(
         &[
             GlobalGet(0),
             runtime_abi::sentinel_value(runtime_abi::NIL),
-            RefFunc(5),
+            RefFunc(6),
             I32Const(1),
             I32Const(1),
-            I32Const(0), // Identity UID, unassigned.
-            RefI31,
-            StructNew(runtime_abi::CLOSURE),
+            Call(5),
             Call(0),
             End,
         ],
     );
     code.function(&start);
     let mut elements = ElementSection::new();
-    elements.declared(Elements::Functions(Cow::Borrowed(&[5])));
+    elements.declared(Elements::Functions(Cow::Borrowed(&[6])));
     let mut module = Module::new();
     module
         .section(&runtime_abi::Manifest::default().section())
         .section(&types)
         .section(&imports)
         .section(&functions)
-        .section(&StartSection { function_index: 7 })
+        .section(&StartSection { function_index: 8 })
         .section(&elements)
         .section(&code);
     Ok(module.finish())

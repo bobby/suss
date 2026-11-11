@@ -476,12 +476,14 @@ fn hir_retains_binding_identity_metadata_and_located_diagnostics() {
     assert_eq!(&source[items[1].span.clone()], "^:last x");
     for (source, needle) in [
         ("(let [x missing] x)", "missing"),
-        ("(let [+ (fn [x] x)] (+ 2 3))", "(+ 2 3)"),
         ("(other.core/+ 1 2)", "other.core/+"),
     ] {
         let error = portable::compile(source).unwrap_err();
         assert_eq!(&source[error.span], needle);
     }
+    // A known closure called with another count compiles, as in Clojure, and
+    // throws its arity error at run time (ADR-0004).
+    assert!(portable::compile("(let [+ (fn [x] x)] (+ 2 3))").is_ok());
     for source in ["(/)", "(-)", "(if 1)", "(let [x] x)", "(recur 1)"] {
         assert!(portable::compile(source).is_err(), "{source}");
     }

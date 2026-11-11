@@ -106,7 +106,9 @@ fn assert_wrong_arity(session: &mut Session, source: &str) {
         let text = fields[1].unwrap_anyref().unwrap().as_array(&store)?.unwrap();
         Ok(text.elems(&mut store)?.map(|v| v.unwrap_i32() as u16).collect::<Vec<_>>())
     }).unwrap();
-    assert_eq!(units, "Wrong arity".encode_utf16().collect::<Vec<_>>());
+    // Clojure's arity error (ADR-0004).
+    let message = String::from_utf16(&units).unwrap();
+    assert!(message.starts_with("Wrong number of args ("), "{source}: {message}");
 }
 
 #[test]

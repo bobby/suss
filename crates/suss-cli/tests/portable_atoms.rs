@@ -164,7 +164,7 @@ fn persistent_session_atom_operations_preserve_order_and_errors_before_mutation(
     assert_language_error(&mut session, "(reset! a 99)", "Invalid reference state");
     assert_eq!(eval_number(&mut session, "@a"), num(22.0));
     session.eval("(set-validator! a nil)").unwrap();
-    assert_language_error(&mut session, "(swap! a (fn [x] x) 1 2 3)", "Wrong arity");
+    assert_language_error(&mut session, "(swap! a (fn [x] x) 1 2 3)", "Wrong number of args (4) passed to: fn");
     assert_language_error(&mut session, "(atom 1 2)", "No value supplied for key: 2");
     // Non-atom references go through IReset and ISwap, which nil lacks.
     assert_language_error(&mut session, "(reset! nil 99)", "Invalid nominal operation");
