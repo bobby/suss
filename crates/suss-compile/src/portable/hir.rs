@@ -2879,6 +2879,26 @@ impl Analyzer<'_> {
         if let Some(ResolvedBinding::BootstrapControl { operation, .. }) = &resolved {
             return self.control_form(form, args, *operation, context, tail);
         }
+        // `(= :k y)` in direct-linked user code (#360, #361): core's `=`
+        // answers `(identical? x y)` when x is a keyword, as Clojure's
+        // Keyword equality is identity, so a keyword literal first operand
+        // compiles to that test. Only the first: `(= y :k)` asks y.
+        if self.environment.direct_linking
+            && !self.privileged
+            && args.len() == 2
+            && matches!(args[0].kind, Kind::Keyword(_) | Kind::AutoKeyword(_))
+            && matches!(&resolved, Some(ResolvedBinding::Cell(global))
+                if global.namespace() == "suss.core" && global.name() == "=")
+        {
+            let callee = self.form(&items[0])?;
+            let arguments = args.iter().map(|arg| self.form(arg)).collect::<Result<Vec<_>, _>>()?;
+            *self.source_nodes.last_mut().expect("source node fact slot") =
+                Some(std::sync::Arc::new(SourceNode::Invoke {
+                    callee: std::sync::Arc::new(callee),
+                    arguments: arguments.clone().into(),
+                }));
+            return Ok(self.nominal(form, Nominal::Identical, arguments));
+        }
         if let Some(ResolvedBinding::BootstrapBitwise { operation, .. }) = &resolved {
             return self.bitwise_form(form, args, *operation);
         }

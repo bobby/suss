@@ -87,3 +87,47 @@ fn the_repl_keeps_live_calls() {
     // JVM Clojure without direct linking: 4 under with-redefs, then 2.
     assert_eq!(&lines[lines.len() - 2..], ["4", "2"], "{stdout}");
 }
+
+/// `(= :k y)` compiles to an identity test in AOT builds (#361), as core's
+/// `=` answers for a keyword first operand; a keyword second operand still
+/// asks the first. JVM Clojure 1.12.6 gives the same results, with a type
+/// whose `equals` is always true in place of `Eq`.
+const KEYWORD_CASES: &[(&str, &str, i64)] = &[
+    ("same", "(= :a :a)", 1),
+    ("different", "(= :a :b)", 0),
+    ("built", "(= :a (keyword \"a\"))", 1),
+    ("string", "(= :a \"a\")", 0),
+    ("nil", "(= :a nil)", 0),
+    ("qualified", "(= :ns/a :ns/a)", 1),
+    ("keyword-first", "(= :a (Eq.))", 0),
+    ("keyword-second", "(= (Eq.) :a)", 1),
+];
+
+#[test]
+fn aot_keyword_equality_matches_core() {
+    let root = tempfile::tempdir().unwrap();
+    let mut app = String::from("(ns app)\n(deftype Eq [] IEquiv (-equiv [_ _] true))\n");
+    for (name, source, _) in KEYWORD_CASES {
+        app.push_str(&format!("(defn case-{name} [n] (if {source} 1 0))\n"));
+    }
+    std::fs::write(root.path().join("app.sus"), app).unwrap();
+    let exports = KEYWORD_CASES.iter().map(|(name, ..)| format!("export case-{name}: func(n: u32) -> s64;")).collect::<Vec<_>>();
+    std::fs::write(root.path().join("app.wit"), format!("package test:kw; world w {{ {} }}", exports.join(" "))).unwrap();
+    let mut compile = Command::new(env!("CARGO_BIN_EXE_suss"));
+    compile.current_dir(root.path()).args(["compile", "app.sus", "-w", "app.wit", "-o", "app.wasm", "--src", "."]);
+    for (name, ..) in KEYWORD_CASES {
+        compile.args(["--export", &format!("case-{name}=app/case-{name}")]);
+    }
+    let output = compile.output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    for (name, source, expected) in KEYWORD_CASES {
+        let output = Command::new(env!("CARGO_BIN_EXE_suss"))
+            .current_dir(root.path())
+            .args(["run", "app.wasm", "--invoke", &format!("case-{name}"), "--", "0"])
+            .output()
+            .unwrap();
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(output.status.success(), "{source}: {}", String::from_utf8_lossy(&output.stderr));
+        assert_eq!(stdout.trim(), expected.to_string(), "{source}");
+    }
+}
