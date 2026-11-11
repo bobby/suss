@@ -1,6 +1,6 @@
 # ADR-0005: Whole-component Binaryen optimization of AOT builds
 
-Status: **Proposed** 2026-11-11.
+Status: **Accepted** 2026-11-11.
 Issue: [#357](https://github.com/bobby/suss/issues/357) (M15-10).
 
 ## Context
@@ -46,41 +46,88 @@ exceptions and the shared recursive type group. These are per-module numbers,
 without merging or closed-world passes, and not yet checked for behavior or
 speed.
 
-## Decision (proposed)
+## Measurements of merged components
 
-1. **Merge, then optimize.** `suss compile --optimize` merges the component's
-   core modules into one with `wasm-merge`, wiring each module's
-   `suss.runtime`, `suss.bindings.runtime`, `suss.fragment.N`, `suss.slot.N`
-   and `suss.link.N` imports to the matching exports. It then runs
-   `wasm-opt --all-features -O2 --closed-world --gufa --type-refining
-   --inlining`, and componentizes the result as today. Exports stay the
-   component's WIT exports; everything else may be renamed or removed.
-2. **Obtaining Binaryen.** `suss compile --optimize` invokes a separately
-   installed `wasm-opt`/`wasm-merge`, found on `PATH` or through `SUSS_WASM_OPT`,
-   and fails with a clear message if it's missing. A build without
-   `--optimize` is unchanged and needs no Binaryen. Vendoring a Wasm build of
-   Binaryen, run under wasmtime, is a later option if the flag should work out
-   of the box. Binaryen is Apache-2.0, and invoking it adds nothing to Suss's
-   shipped code or license.
-3. **Optional, off by default.** That holds until the full baseline, including
-   the corpus run as components, passes on optimized components.
-   `bench.py` and component size are reported with and without it.
+A component exporting loops over `(-equiv i 7)`, `(count "abcdefgh")` and
+`(nth v i)` on a 1024-element vector, built by #375's head (06783f4d). The
+counts are user-space instructions per iteration from macOS `time -l`
+(arm64), with a run of n = 1M less a run of n = 0. All variants return the
+same results.
+
+| Case | today | merged | merged, `-O3` | merged, closed-world `-O3` |
+| --- | --- | --- | --- | --- |
+| `(-equiv i 7)` | 1,746 | 1,744 | 1,689 | 1,674 |
+| `(count "abcdefgh")` | 1,896 | 1,890 | 1,599 | 1,594 |
+| `(nth v i)` | 3,971 | 3,897 | 3,406 | 3,392 |
+
+- **Merging alone** changes little.
+- **`-O3`** on the merged module takes 14–16% off `nth` and `count`.
+- **Closed-world passes** (`--type-ssa --gufa --type-refining`) add under 1%,
+  for about 2 s more.
+- **Size:** the merged module is 2.09 MB, and 1.49 MB at `-O3`.
+- **Startup** falls from 0.17 s to 0.12 s.
+
+Binaryen can't reach the calls that cost most:
+- calls through mutable var cells;
+- protocol dispatch through runtime tables;
+- wasmtime 49's host calls wherever a `call_ref` or a `$closure` cast remains.
+
+That remaining cost is #378's work.
+
+## Decision
+
+1. **Merge, then optimize.** `suss compile --optimize` (`-O`) merges the
+   component's runtime, bindings, fragment and adapter modules with
+   `wasm-merge`, in instantiation order, so their start functions run in the
+   same order.
+   - Each fragment's direct-link imports (`suss.link.N`, `suss.slot.N`) are
+     renamed to the defining fragment's `suss.fragment.N` first, as a merged
+     module has one name.
+   - The merged module exports only the adapter's exports, and imports only
+     the allocator, if the component has one.
+   - `wasm-opt -O3` optimizes it, and the component is assembled around it as
+     before (`portable/aot/optimize.rs`).
+2. **No closed-world passes.** They gained under 1%. Whole-program type
+   refinement also assumes no closure is made outside the module, which the
+   host breaks. #379 can add them as an option.
+3. **A separately installed Binaryen.**
+   - `--optimize` runs `wasm-opt` from `SUSS_WASM_OPT` or `PATH`, with
+     `wasm-merge` beside it.
+   - It requires version 133 or later, and fails with a clear message
+     otherwise.
+   - A build without `--optimize` is unchanged and needs no Binaryen.
+   - Vendoring a Wasm build of Binaryen is a later option, if `--optimize`
+     becomes a default.
+   - Binaryen is Apache-2.0, and running it adds nothing to Suss's shipped
+     code or license.
+4. **wasmtime 49's features only.**
+   - Binaryen runs with `--all-features` minus every proposal wasmtime 49
+     lacks: custom descriptors, compact imports, strings, stack switching,
+     shared-everything, fp16, multibyte, custom page sizes, wide arithmetic,
+     and the newer atomics.
+   - With custom descriptors it narrows exported globals to exact reference
+     types, which break instantiation.
+   - With compact imports it writes an import encoding that wasmtime 49 can't
+     parse.
+5. **Scope.**
+   - `--optimize` covers WIT-export components: file, namespace and project
+     modes. It isn't yet supported for `--main` command components or for
+     async imports, and says so.
+   - `suss run` of a source file doesn't optimize. Pre-optimizing from other
+     subcommands, cached separately, is #379.
+   - Optimized builds are cached under their own key.
+6. **Off by default**, until the full baseline, including the corpus run as
+   components, passes on optimized components.
 
 ## Consequences
 
-- Build time grows by about a second for core, plus merging, per optimized
-  build. The build cache should key optimized artifacts separately.
-- Optimized components are no longer fragment-per-form, so the incremental
-  fragment cache doesn't apply to them. That's acceptable for release builds.
-- Stack traces and source names in Wasm function names may change. The
-  language's error messages don't depend on them.
-- If Binaryen's optimizations rely on assumptions that don't hold for Suss
-  (for example, closed-world type refinement while host code creates
-  closures), `--closed-world` must be dropped or narrowed. The baseline on
-  optimized components decides this.
-
-## Open questions
-
-1. A separately installed tool, or a vendored Wasm build, by default?
-2. `-O2` or `-O3` for `--optimize`? The size difference is about 1%.
-3. Should `suss run` of a source file ever optimize? This proposal says no.
+- **Build time:** an optimized build takes several seconds longer, mostly in
+  `wasm-opt` over core: about 5 s for a small component on an M3 Pro.
+- **Fragment cache:** optimized components are no longer fragment-per-form, so
+  the incremental fragment cache doesn't apply to them. That's acceptable for
+  release builds.
+- **Names:** stack traces and source names in Wasm function names may change.
+  The language's error messages don't depend on them.
+- **The old flag:** the previous `--optimize`, which ran `wasm-opt` over the
+  finished component, never worked: Binaryen doesn't read components. It is
+  replaced.

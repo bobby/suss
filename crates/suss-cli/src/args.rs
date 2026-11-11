@@ -498,7 +498,8 @@ COMMANDS:
 
     compile - Shared options:
         --compile-fuel <N>  Set compilation and macro-expansion fuel (default 10000000); artifact execution is unchanged
-        -O, --optimize       Run wasm-opt on output (requires wasm-opt in PATH)
+        -O, --optimize       Merge the component's modules and optimize them with Binaryen 133 or later
+                             (wasm-opt and wasm-merge, from SUSS_WASM_OPT or PATH); not yet with --main
 
     compile - File mode (single file compilation):
         -w, --wit <PATH>     WIT file or package directory (including deps)
