@@ -868,6 +868,7 @@
          "suss.bindings.runtime:suss.core/vary-meta"
          "suss.bindings.runtime:suss.core/vec"
          "suss.bindings.runtime:suss.core/vec-of-array-for"
+         "suss.bindings.runtime:suss.core/vec-of-reduce"
          "suss.bindings.runtime:suss.core/vector"
          "suss.bindings.runtime:suss.core/vector-index-out-of-bounds"
          "suss.bindings.runtime:suss.core/vector-of"
@@ -1762,6 +1763,7 @@
          "suss.bindings.runtime:suss.internal.core-link/vary-meta"
          "suss.bindings.runtime:suss.internal.core-link/vec"
          "suss.bindings.runtime:suss.internal.core-link/vec-of-array-for"
+         "suss.bindings.runtime:suss.internal.core-link/vec-of-reduce"
          "suss.bindings.runtime:suss.internal.core-link/vector"
          "suss.bindings.runtime:suss.internal.core-link/vector-index-out-of-bounds"
          "suss.bindings.runtime:suss.internal.core-link/vector-of"
@@ -2053,12 +2055,12 @@
          "suss.bindings.runtime:suss.internal.reify/t-reify-3447-10690"],
  :compiler "0.1.0+portable.3",
  :compiler-source-sha256 "869b1bfb38bceeb737bcf9028855b22369c0cb460a3cf7c4171090061638ea00",
- :dependency-graph-sha256 "2d22b4412ec87dfab4cee87130fa57141690738f609905921a73a7d73b4f092b",
+ :dependency-graph-sha256 "0fe242f377faebf2e9c551398c150bc80e3246adf30ac3106b2ac4b6eb233e9f",
  :flags [],
  :format-version 2,
  :phase "runtime",
  :runtime-abi 3,
- :source-sha256 "f09e21f84408defbe6ac96e1babb856e9e0b8c6a815ccd13b191e8a4d4bb50f6",
+ :source-sha256 "aa0d28c2be8a55be534cab296af3788e503d97765de53e9e584fbb8a6ccde8a2",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "08df1f16d84f8e5b4c907c6781430ea1a81e1c854040c22f56f5829fad4039a3",
+ :wasm-sha256 "fd4109884aa3a2b30fa9a77c37d70cb0658ede6ce56549515e09133fc1d6d68b",
  :wasm-tools "0.258.0"}

@@ -11548,6 +11548,21 @@ reduces them without incurring seq initialization"
 
 (declare vec-of-array-for)
 
+;; Reduce from index i, reading each packed leaf directly rather than through
+;; -nth for every element.
+(def ^:private vec-of-reduce
+  (fn [chunks tail cnt f acc i]
+    (let [tail-start (- cnt (alength tail))
+          leaf-for (fn [i] (if (< i tail-start) (nth chunks (bit-shift-right i 5)) tail))]
+      (loop [i i acc acc leaf (leaf-for i)]
+        (if (< i cnt)
+          (let [acc (f acc (aget leaf (bit-and i 31)))]
+            (if (reduced? acc)
+              @acc
+              (let [j (inc i)]
+                (recur j acc (if (zero? (bit-and j 31)) (if (< j cnt) (leaf-for j) leaf) leaf)))))
+          acc)))))
+
 (deftype VecOf [kind cnt chunks tail meta ^:mutable __hash]
   Object
   (toString [coll] (pr-str* coll))
@@ -11636,21 +11651,23 @@ reduces them without incurring seq initialization"
       (== n cnt) (-conj coll val)
       :else (vector-index-out-of-bounds n cnt)))
 
+  IReversible
+  (-rseq [coll] (when (pos? cnt) (RSeq. coll (dec cnt) nil)))
+
+  ;; Clojure's Vec is Comparable against any vector, by length first.
+  IComparable
+  (-compare [x y]
+    (if (vector? y)
+      (compare-indexed x y)
+      (throw (js/Error. (str "Cannot compare " x " to " y)))))
+
   IReduce
   (-reduce [coll f]
     (if (zero? cnt)
       (f)
-      (loop [i 1 acc (-nth coll 0)]
-        (if (< i cnt)
-          (let [acc (f acc (-nth coll i))]
-            (if (reduced? acc) @acc (recur (inc i) acc)))
-          acc))))
+      (vec-of-reduce chunks tail cnt f (aget (vec-of-array-for coll 0) 0) 1)))
   (-reduce [coll f init]
-    (loop [i 0 acc init]
-      (if (< i cnt)
-        (let [acc (f acc (-nth coll i))]
-          (if (reduced? acc) @acc (recur (inc i) acc)))
-        acc)))
+    (vec-of-reduce chunks tail cnt f init 0))
 
   IFn
   (-invoke [coll k] (-nth coll k))
