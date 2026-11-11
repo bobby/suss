@@ -49,6 +49,24 @@ pub(super) fn display_name(hir: &Hir) -> Option<Vec<u16>> {
     )
 }
 
+/// The name Clojure's arity error reports for a named source function: its
+/// namespace, `clojure.core` for core, then each enclosing name, joined by
+/// `/`, as Clojure demunges the function's class (`user/f`, `user/f/g`). An
+/// anonymous function has none; the runtime reports "fn".
+pub(super) fn arity_name(hir: &Hir) -> Option<Vec<u16>> {
+    let scope = hir.source.as_ref()?.callable.as_ref()?.name.as_ref()?;
+    let spelling = |form: &suss_reader::forms::Form| match &form.kind {
+        Kind::Symbol(symbol) => symbol.name.clone(),
+        _ => unreachable!("source function declaration is a symbol"),
+    };
+    let namespace = if scope.namespace == "suss.core" { "clojure.core" } else { &scope.namespace };
+    let mut name = namespace.to_owned();
+    for parent in scope.parents.iter().chain(std::iter::once(scope)) {
+        name.push('/');
+        name.push_str(&spelling(&parent.declaration));
+    }
+    Some(name.encode_utf16().collect())
+}
 fn munge(source: &str) -> String {
     let replaced = source.replace("..", "_DOT__DOT_");
     let mut slash = String::new();

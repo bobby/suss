@@ -230,7 +230,9 @@ fn cached_hash_suppresses_effects_and_recovers_after_a_throw() {
                 .elems(&mut store)?
                 .map(|v| v.unwrap_i32() as u16)
                 .collect::<Vec<_>>();
-            assert_eq!(units, "Wrong arity".encode_utf16().collect::<Vec<_>>());
+            // Clojure's arity error (ADR-0004).
+            let message = String::from_utf16(&units).unwrap();
+            assert!(message.starts_with("Wrong number of args ("), "{message}");
             Ok(())
         })
         .unwrap();

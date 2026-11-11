@@ -504,6 +504,17 @@ evidence where they agree with Clojure semantics. Consequences:
   Redefining or `with-redefs` of a public core var affects user call sites
   only. Dynamic and `^:redef` vars stay live; a core var first defined dynamic
   stays live even if later redefined without `:dynamic`.
+* AOT builds (`suss compile`) direct-link user code too, as Clojure does with
+  `-Dclojure.compiler.direct-linking=true` (#360). A call of a user var whose
+  definition is a function with no captures calls that function's entry
+  statically, across fragments. `with-redefs`, `set!` and other changes to the
+  var's root don't reach such calls. A later `defn` of the var in the same
+  build does, as the JVM loads the newest class of the same name: each
+  linked definition writes the var's link slot, and a call compares the
+  slot's closure with the definition it was compiled against before calling
+  the entry. A value use of the var (`(map f xs)`) reads its root. Dynamic
+  and `^:redef` vars stay live, and the REPL and source sessions don't
+  direct-link, so every call there reads the live var.
 * Native protocol extension (`extend-type` of `default`, `nil`, `string`,
   `array` and the other native kinds) installs on the protocol value and method
   functions its `defprotocol` created, never on whatever the public vars hold

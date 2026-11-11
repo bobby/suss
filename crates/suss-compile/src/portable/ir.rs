@@ -165,6 +165,8 @@ pub struct FutureBody {
 #[derive(Debug, Clone)]
 pub struct ClosureBody {
     pub display_name: Option<Vec<u16>>,
+    /// The name Clojure's arity error reports, such as `user/f` (ADR-0004).
+    pub arity_name: Option<Vec<u16>>,
     pub variadic: bool,
     pub capture_types: Vec<Type>,
     pub arity: usize,
@@ -173,6 +175,7 @@ pub struct ClosureBody {
 #[derive(Debug, Clone)]
 pub struct GeneralClosureBody {
     pub display_name: Option<Vec<u16>>,
+    pub arity_name: Option<Vec<u16>>,
     pub capture_types: Vec<Type>,
     pub methods: Vec<ClosureBody>,
     pub self_capture: bool,
@@ -577,6 +580,7 @@ impl<'a> Lowerer<'a> {
                     Operation::MakeClosure {
                         body: Box::new(ClosureBody {
                             display_name,
+                            arity_name: super::function_names::arity_name(hir),
                             variadic: false,
                             capture_types,
                             arity: parameters.len(),
@@ -631,6 +635,7 @@ impl<'a> Lowerer<'a> {
                     }
                     lowered.push(ClosureBody {
                         display_name: None,
+                        arity_name: None,
                         variadic: method.variadic,
                         capture_types: environment_types,
                         arity: method.parameters.len(),
@@ -646,6 +651,7 @@ impl<'a> Lowerer<'a> {
                     Operation::MakeGeneralClosure {
                         body: Box::new(GeneralClosureBody {
                             display_name,
+                            arity_name: super::function_names::arity_name(hir),
                             capture_types,
                             methods: lowered,
                             self_capture: self_binding.is_some(),
@@ -753,6 +759,7 @@ impl<'a> Lowerer<'a> {
                             unreachable!("general function owner construction");
                         };
                         body.display_name = Some(name);
+                        body.arity_name = super::function_names::arity_name(hir);
                     }
                     self.charge(1, &binding.span)?;
                     if self.bindings.insert(binding.id, value).is_some() {
@@ -1646,11 +1653,6 @@ fn verify_function_inner(
                 Operation::Call { operands } => {
                     if operands.is_empty() || result_ty != Type::Value {
                         return Err(fail("IR call requires callee and dynamic result"));
-                    }
-                    if let Type::Closure(arity) = ty(operands[0])? {
-                        if arity != operands.len() - 1 {
-                            return Err(fail("IR known closure call arity mismatch"));
-                        }
                     }
                 }
                 Operation::Await { .. } => {

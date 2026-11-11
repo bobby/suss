@@ -1232,6 +1232,7 @@ impl Session {
             Val,
             wasmtime::Func,
             wasmtime::Func,
+            wasmtime::Func,
             Val,
             Val,
         ) -> wasmtime::Result<R>,
@@ -1246,6 +1247,10 @@ impl Session {
             .runtime
             .get_func(&mut self.store, "invoke")
             .expect("runtime invoke");
+        let closure_new = self
+            .runtime
+            .get_func(&mut self.store, "closure-new")
+            .expect("runtime closure-new");
         let runtime = self.runtime;
         self.inspect(value, |mut store, value| {
             let function = Val::AnyRef(function.rooted(&mut store));
@@ -1254,7 +1259,7 @@ impl Session {
                 .get_global(&mut store, "sentinel-undefined")
                 .expect("runtime undefined")
                 .get(&mut store);
-            f(store, value, args_new, invoke, function, undefined)
+            f(store, value, args_new, invoke, closure_new, function, undefined)
         })
     }
     fn budget(&mut self) -> Result<(), SessionError> {
@@ -2512,7 +2517,7 @@ mod tests {
                 let ty = original.ty(&scope).unwrap();
                 let allocator = wasmtime::StructRefPre::new(&mut scope, ty);
                 let mut fields = original.fields(&mut scope).unwrap().collect::<Vec<_>>();
-                fields[0] = Val::AnyRef(Some(invalid));
+                fields[crate::runtime_abi::UNIVERSAL_ENVIRONMENT as usize] = Val::AnyRef(Some(invalid));
                 let invalid = wasmtime::StructRef::new(&mut scope, &allocator, &fields)
                     .unwrap()
                     .to_anyref();

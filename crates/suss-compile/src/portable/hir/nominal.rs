@@ -293,70 +293,17 @@ impl Analyzer<'_> {
         };
         self.do_hir(form, vec![initialize, read])
     }
-    /// Prepare one source callee before its arguments. Canonical closures keep
-    /// the universal ABI path; objects invoke the actual retained IFn method.
-    /// The branch is lazy so function calls do not read protocol bindings.
+    /// Prepare one source callee before its arguments. Under ADR-0004 the
+    /// call site itself tests for a closure, and every other callable goes out
+    /// of line to the runtime's `call-k`, which binds IFn's `-invoke` after the
+    /// arguments are evaluated, as Clojure's `invoke` dispatches.
     pub(super) fn prepare_source_callee(
         &mut self,
-        form: &Form,
+        _form: &Form,
         value: Hir,
-        arity: usize,
+        _arity: usize,
     ) -> Result<Hir, Diagnostic> {
-        if matches!(value.ty, Type::Closure(_)) {
-            return Ok(value);
-        }
-        let protocol = self
-            .environment
-            .protocols
-            .keys()
-            .find(|global| {
-                global.phase() == self.phase
-                    && global.namespace() == "suss.core"
-                    && global.name() == "IFn"
-            })
-            .cloned();
-        let Some(protocol) = protocol else {
-            // Before compiled core declares IFn, bootstrap calls are closures.
-            return Ok(value);
-        };
-        let callee = self.fresh_binding(form, value);
-        let test = self.nominal(form, Nominal::IsClosure, vec![self.local(form, callee.id)]);
-        let signature = arity
-            .checked_add(1)
-            .ok_or_else(|| fail(form.span.clone(), "Too many callable arguments"))?;
-        let schema = (0..signature)
-            .map(|_| self.literal_form(form, Literal::String(vec![])))
-            .collect();
-        let key = self.stable_key(form, &protocol, "-invoke", signature, schema);
-        // Ordinary emitted ClojureScript calls capture the object's callable
-        // method before evaluating arguments. Explicit -invoke separately uses
-        // its live native protocol table and receiver convention.
-        let bound = self.nominal(
-            form,
-            Nominal::BindCallable,
-            vec![self.local(form, callee.id), key],
-        );
-        let body = Hir {
-            source: None,
-            span: form.span.clone(),
-            metadata: vec![],
-            ty: Type::Value,
-            kind: std::sync::Arc::new(Expression::If {
-                condition: Box::new(test),
-                consequent: Box::new(self.local(form, callee.id)),
-                alternative: Box::new(bound),
-            }),
-        };
-        Ok(Hir {
-            source: None,
-            span: form.span.clone(),
-            metadata: vec![],
-            ty: Type::Value,
-            kind: std::sync::Arc::new(Expression::Let {
-                bindings: vec![callee],
-                body: Box::new(body),
-            }),
-        })
+        Ok(value)
     }
     pub(super) fn callable_named_get(&mut self, form: &Form, owner: Hir, name: Hir, spelling: &str) -> Result<Hir, Diagnostic> {
         if !matches!(spelling, "call" | "apply") && !spelling.starts_with("cljs$core$IFn$_invoke$arity$") {
@@ -392,7 +339,7 @@ impl Analyzer<'_> {
             .global()
             .clone())
     }
-    fn do_hir(&self, form: &Form, items: Vec<Hir>) -> Hir {
+    pub(super) fn do_hir(&self, form: &Form, items: Vec<Hir>) -> Hir {
         Hir {
             source: None,
             span: form.span.clone(),
@@ -1249,6 +1196,7 @@ impl Analyzer<'_> {
         bindings.push(self.fresh_binding(form, marker));
         let mut methods = Vec::new();
         let mut definitions = Vec::new();
+        let mut registrations = Vec::new();
         let mut method_names = BTreeSet::new();
         let mut declarations = &args[1..];
         if declarations
@@ -1331,6 +1279,18 @@ impl Analyzer<'_> {
                 let key = self.fresh_binding(params, descriptor);
                 let key_value = self.local(params, key.id);
                 bindings.push(key);
+                if protocol.namespace() == "suss.core"
+                    && protocol.name() == "IFn"
+                    && symbol.name == "-invoke"
+                {
+                    // A call with k arguments to a value that isn't a closure
+                    // looks up this key, for signature arity k + 1, in the
+                    // runtime's out-of-line call path (ADR-0004).
+                    let arity = self.literal_form(params, Literal::Long(parameters.len() as i64));
+                    let register = self.nominal(params, Nominal::CallableKeyRegister, vec![arity, key_value.clone()]);
+                    // Bound after the bundle, which holds only the keys.
+                    registrations.push(self.fresh_binding(params, register));
+                }
                 let namespace = self.environment.current_namespace(self.phase).to_owned();
                 self.environment
                     .declare_cell(self.phase, &namespace, &symbol.name)?;
@@ -1451,6 +1411,7 @@ impl Analyzer<'_> {
         let protocol_binding = self.fresh_binding(form, protocol_value);
         let protocol_value = self.local(form, protocol_binding.id);
         bindings.push(protocol_binding);
+        bindings.extend(registrations);
         let protocol = protocol.clone();
         let mut effects = vec![
             self.protocol_native_definition(form, &protocol, None, protocol_value.clone()),
