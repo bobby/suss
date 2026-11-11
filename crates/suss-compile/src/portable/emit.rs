@@ -1517,6 +1517,18 @@ fn emit_function(
                         .instruction(&GlobalGet(index_global))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
+                // A keyword literal's hidden cell (#361) is compiler-owned, never
+                // dynamic, and read only right after the site's once-definition
+                // of it, so it is bound: read its root directly.
+                Operation::GlobalRead(global) if global.namespace() == "suss.internal.keywords" => {
+                    let index_global =
+                        globals.binary_search(global).expect("collected global") as u32;
+                    function
+                        .instruction(&GlobalGet(index_global))
+                        .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::BINDING)))
+                        .instruction(&StructGet { struct_type_index: runtime_abi::BINDING, field_index: 0 })
+                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
                 Operation::GlobalRead(global) => {
                     let index_global =
                         globals.binary_search(global).expect("collected global") as u32;
