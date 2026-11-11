@@ -379,6 +379,29 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             called.insert(definition);
         }
     }
+    // Core field reads by a plain literal name get an inline cache (#361):
+    // a site's last descriptor and its field's index, in two globals.
+    let mut field_site_list = vec![];
+    for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
+        .chain(futures.iter().map(|body| &body.continuation.function))
+    {
+        let literals = function.blocks.iter().flat_map(|block| &block.instructions)
+            .filter_map(|inst| match &inst.operation {
+                Operation::Literal(Literal::String(units)) => Some((inst.result, units)),
+                _ => None,
+            })
+            .collect::<std::collections::HashMap<_, _>>();
+        for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
+            if let Operation::Nominal { operation: Nominal::CoreNamedGet, arguments } = &inst.operation
+                && literals.get(&arguments[1]).is_some_and(|units| plain_field_name(units))
+            {
+                field_site_list.push((function as *const IrFunction as usize, inst.result.0 as u32));
+            }
+        }
+    }
+    if !field_site_list.is_empty() {
+        names.insert("named-field-slot");
+    }
     let imported_slots = slots.iter().copied().filter(|slot| !owned_slots.contains(slot)).collect::<Vec<_>>();
     let imported_definitions = called.iter().copied().filter(|definition| !defined_definitions.contains_key(definition)).collect::<Vec<_>>();
     for definition in &imported_definitions {
@@ -511,6 +534,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "arity-throw" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "keyword-intern" => (vec![VALUE], vec![VALUE]),
             "keyword-test" => (vec![VALUE], vec![ValType::I32]),
+            "named-field-slot" => (vec![VALUE, VALUE], vec![ValType::I32]),
             "string-set-unit" => (vec![VALUE, ValType::I32, ValType::I32], vec![ValType::I32]),
             _ => (vec![VALUE, VALUE], vec![VALUE]),
         };
@@ -638,6 +662,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     for (index, slot) in owned_slots.iter().enumerate() {
         links.slots.insert(*slot, first_owned_slot + index as u32);
     }
+    let first_field_site = first_owned_slot + owned_slots.len() as u32;
+    let field_sites = field_site_list.iter().enumerate()
+        .map(|(index, site)| (*site, first_field_site + 2 * index as u32))
+        .collect::<std::collections::HashMap<_, _>>();
     for (index, definition) in imported_definitions.iter().enumerate() {
         links.codes.insert(*definition, first_imported_link + imported_slots.len() as u32 + index as u32);
         let entries = (0..=runtime_abi::MAX_FIXED).map(|k| {
@@ -662,7 +690,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let mut code = CodeSection::new();
     let mut data = LiteralData::default();
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
-        dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links };
+        dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -729,6 +757,16 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         );
         exports.export(&format!("slot.{slot}"), ExportKind::Global, links.slots[slot]);
     }
+    for _ in &field_site_list {
+        code_globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
+        );
+        code_globals.global(
+            GlobalType { val_type: ValType::I32, mutable: true, shared: false },
+            &ConstExpr::i32_const(0),
+        );
+    }
     for (definition, global) in &defined_code {
         exports.export(&format!("link.{definition}.code"), ExportKind::Global, *global);
         for (k, entry) in links.entries[definition].iter().enumerate() {
@@ -749,7 +787,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .section(&types)
         .section(&imports)
         .section(&functions);
-    if !layout.definitions.is_empty() {
+    if !layout.definitions.is_empty() || !field_site_list.is_empty() {
         module.section(&code_globals);
     }
     module.section(&exports);
@@ -832,6 +870,8 @@ struct Context<'a> {
     futures: &'a [&'a FutureBody],
     layout: &'a Layout,
     links: &'a Links,
+    /// Cached core field read sites, by (function, result): their first global.
+    field_sites: &'a std::collections::HashMap<(usize, u32), u32>,
 }
 /// One function definition (`fn`): its closures' capture struct, its code
 /// struct global and its entries (ADR-0004).
@@ -979,6 +1019,13 @@ fn closure_definition(function: &IrFunction, value: ir::ValueId) -> Option<Closu
             Operation::MakeGeneralClosure { body, .. } => Some(ClosureSource::General(body)),
             _ => None,
         })
+}
+/// A field name a schema holds as written: letters, digits and `_`, not
+/// starting with a digit, so no munging applies (#361).
+fn plain_field_name(units: &[u16]) -> bool {
+    !units.is_empty()
+        && !(units[0] >= b'0' as u16 && units[0] <= b'9' as u16)
+        && units.iter().all(|&unit| unit < 128 && ((unit as u8).is_ascii_alphanumeric() || unit == b'_' as u16))
 }
 /// A link entry import's name, `link.n.k`, as (n, k).
 fn link_entry(name: &str) -> Option<(usize, u32)> {
@@ -1131,7 +1178,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
-    let Context { names, globals, bodies, dispatchers, futures, layout, links } = *context;
+    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -1170,6 +1217,9 @@ fn emit_function(
     // A call site's callee, once it is known to be a closure.
     let callee = pc + 1 + locals.declarations.iter().map(|(count, _)| count).sum::<u32>();
     declarations.push((1, closure_type(true)));
+    // A cached field read's looked-up index.
+    let field_index_local = callee + 1;
+    declarations.push((1, ValType::I32));
     let mut function = Function::new(declarations);
     use Instruction::*;
     if continuation.is_none() {
@@ -1720,6 +1770,64 @@ fn emit_function(
                             for instruction in runtime_abi::number_test(arguments[0].0 as u32 + offset) {
                                 function.instruction(&instruction);
                             }
+                        }
+                        Nominal::CoreNamedGet if field_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
+                            // Inline cache (#361): the same descriptor as last
+                            // time reads the cached field; another looks its
+                            // field up and caches it; anything else, or a name
+                            // that isn't a field, takes the full lookup.
+                            let cache = field_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            let (object, name) = (arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset);
+                            let fields = |function: &mut Function| {
+                                function
+                                    .instruction(&LocalGet(object))
+                                    .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+                                    .instruction(&StructGet { struct_type_index: 7, field_index: 1 })
+                                    .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)));
+                            };
+                            function
+                                .instruction(&LocalGet(object))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(7)))
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&LocalGet(object))
+                                .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+                                .instruction(&StructGet { struct_type_index: 7, field_index: 0 })
+                                .instruction(&GlobalGet(cache))
+                                .instruction(&RefEq)
+                                .instruction(&If(BlockType::Result(VALUE)));
+                            fields(&mut function);
+                            function
+                                .instruction(&GlobalGet(cache + 1))
+                                .instruction(&ArrayGet(runtime_abi::ARGS))
+                                .instruction(&Else)
+                                .instruction(&LocalGet(object))
+                                .instruction(&LocalGet(name))
+                                .instruction(&Call(index("named-field-slot")))
+                                .instruction(&LocalTee(field_index_local))
+                                .instruction(&I32Const(0))
+                                .instruction(&I32GeS)
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&LocalGet(object))
+                                .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+                                .instruction(&StructGet { struct_type_index: 7, field_index: 0 })
+                                .instruction(&GlobalSet(cache))
+                                .instruction(&LocalGet(field_index_local))
+                                .instruction(&GlobalSet(cache + 1));
+                            fields(&mut function);
+                            function
+                                .instruction(&LocalGet(field_index_local))
+                                .instruction(&ArrayGet(runtime_abi::ARGS))
+                                .instruction(&Else)
+                                .instruction(&LocalGet(object))
+                                .instruction(&LocalGet(name))
+                                .instruction(&Call(index("named-property-get")))
+                                .instruction(&End)
+                                .instruction(&End)
+                                .instruction(&Else)
+                                .instruction(&LocalGet(object))
+                                .instruction(&LocalGet(name))
+                                .instruction(&Call(index("named-property-get")))
+                                .instruction(&End);
                         }
                         Nominal::IsKeyword => {
                             function

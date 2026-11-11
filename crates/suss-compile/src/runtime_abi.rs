@@ -1453,6 +1453,56 @@ fn build_module() -> Vec<u8> {
     arithmetic_functions.extend(comparisons::functions(&mut b, coercion_types));
     arithmetic_functions.extend(bitwise_functions);
     arithmetic_functions.extend(named_properties::functions(&mut b));
+    // `named-field-slot(object, name)`: the index of a nominal object's field
+    // with this name in its descriptor's schema, or -1 (#361). Call sites
+    // cache it per descriptor, as a schema never changes.
+    let mut body = vec![
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(7)),
+        I32Eqz,
+        If(BlockType::Empty),
+        I32Const(-1),
+        Return,
+        End,
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(7)),
+        StructGet { struct_type_index: 7, field_index: 0 },
+        StructGet { struct_type_index: DESCRIPTOR, field_index: 1 },
+        LocalTee(2),
+        RefTestNonNull(HeapType::Concrete(ARGS)),
+        I32Eqz,
+        If(BlockType::Empty),
+        I32Const(-1),
+        Return,
+        End,
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(3),
+        LocalGet(2),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        ArrayLen,
+        I32GeU,
+        BrIf(1),
+        LocalGet(2),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        LocalGet(3),
+        ArrayGet(ARGS),
+        LocalGet(1),
+        Call(b.names["property-key-equal"]),
+        If(BlockType::Empty),
+        LocalGet(3),
+        Return,
+        End,
+        LocalGet(3),
+        I32Const(1),
+        I32Add,
+        LocalSet(3),
+        Br(0),
+        End,
+        End,
+        I32Const(-1),
+    ];
+    b.function_with_locals("named-field-slot", &[VALUE, VALUE], &[ValType::I32], &[(1, VALUE), (1, ValType::I32)], &body);
     // Original source error adapter: retain the ABI Error descriptor/message
     // rather than substituting nil, an opaque object or a Wasm trap.
     b.function(
