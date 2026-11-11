@@ -1075,6 +1075,26 @@ fn closure_definition(function: &IrFunction, value: ir::ValueId) -> Option<Closu
 }
 /// A field name a schema holds as written: letters, digits and `_`, not
 /// starting with a digit, so no munging applies (#361).
+/// Whether locals `a` and `b` both hold i31 values, as an i32.
+fn i31_operands(function: &mut Function, a: u32, b: u32) {
+    let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
+    function
+        .instruction(&Instruction::LocalGet(a))
+        .instruction(&Instruction::RefTestNonNull(i31))
+        .instruction(&Instruction::LocalGet(b))
+        .instruction(&Instruction::RefTestNonNull(i31))
+        .instruction(&Instruction::I32And);
+}
+/// The i31 values of locals `a` and `b`, sign-extended.
+fn i31_values(function: &mut Function, a: u32, b: u32) {
+    let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
+    for local in [a, b] {
+        function
+            .instruction(&Instruction::LocalGet(local))
+            .instruction(&Instruction::RefCastNonNull(i31))
+            .instruction(&Instruction::I31GetS);
+    }
+}
 fn plain_field_name(units: &[u16]) -> bool {
     !units.is_empty()
         && !(units[0] >= b'0' as u16 && units[0] <= b'9' as u16)
@@ -1730,23 +1750,91 @@ fn emit_function(
                     operation,
                     arguments,
                 } => {
-                    for argument in arguments {
-                        function.instruction(&LocalGet(argument.0 as u32 + offset));
+                    // Two i31 operands (#361): and, or and xor of sign-extended
+                    // 31-bit values, and an arithmetic right shift by 0..31,
+                    // are i31 values again, for longs and JS int32 alike.
+                    use super::hir::Bitwise;
+                    let inline = match operation {
+                        Bitwise::And | Bitwise::Int32And => Some(I32And),
+                        Bitwise::Or | Bitwise::Int32Or => Some(I32Or),
+                        Bitwise::Xor | Bitwise::Int32Xor => Some(I32Xor),
+                        Bitwise::Right | Bitwise::Int32Right => Some(I32ShrS),
+                        _ => None,
                     }
-                    function
-                        .instruction(&Call(index(operation.export())))
-                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    .filter(|_| arguments.len() == 2);
+                    if let Some(op) = inline {
+                        let [a, b] = [arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset];
+                        i31_operands(&mut function, a, b);
+                        if matches!(op, I32ShrS) {
+                            // A shift beyond 31 isn't i32's (shifts mask to 5 bits).
+                            function
+                                .instruction(&LocalGet(b))
+                                .instruction(&RefCastNonNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 }))
+                                .instruction(&I31GetU)
+                                .instruction(&I32Const(32))
+                                .instruction(&I32LtU)
+                                .instruction(&I32And);
+                        }
+                        function.instruction(&If(BlockType::Result(VALUE)));
+                        i31_values(&mut function, a, b);
+                        function
+                            .instruction(&op)
+                            .instruction(&RefI31)
+                            .instruction(&Else)
+                            .instruction(&LocalGet(a))
+                            .instruction(&LocalGet(b))
+                            .instruction(&Call(index(operation.export())))
+                            .instruction(&End)
+                            .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    } else {
+                        for argument in arguments {
+                            function.instruction(&LocalGet(argument.0 as u32 + offset));
+                        }
+                        function
+                            .instruction(&Call(index(operation.export())))
+                            .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    }
                 }
                 Operation::Comparison {
                     operation,
                     arguments,
                 } => {
-                    for argument in arguments {
-                        function.instruction(&LocalGet(argument.0 as u32 + offset));
+                    // Two i31 operands compare as i32 (#361).
+                    use super::hir::Comparison;
+                    let inline = match operation {
+                        Comparison::Less | Comparison::NumberLess => Some(I32LtS),
+                        Comparison::LessEqual | Comparison::NumberLessEqual => Some(I32LeS),
+                        Comparison::Greater | Comparison::NumberGreater => Some(I32GtS),
+                        Comparison::GreaterEqual | Comparison::NumberGreaterEqual => Some(I32GeS),
+                        _ => None,
                     }
-                    function
-                        .instruction(&Call(index(operation.export())))
-                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    .filter(|_| arguments.len() == 2);
+                    if let Some(op) = inline {
+                        let [a, b] = [arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset];
+                        i31_operands(&mut function, a, b);
+                        function.instruction(&If(BlockType::Result(VALUE)));
+                        i31_values(&mut function, a, b);
+                        function
+                            .instruction(&op)
+                            .instruction(&If(BlockType::Result(VALUE)))
+                            .instruction(&runtime_abi::sentinel_in(runtime_abi::TRUE, sentinels))
+                            .instruction(&Else)
+                            .instruction(&runtime_abi::sentinel_in(runtime_abi::FALSE, sentinels))
+                            .instruction(&End)
+                            .instruction(&Else)
+                            .instruction(&LocalGet(a))
+                            .instruction(&LocalGet(b))
+                            .instruction(&Call(index(operation.export())))
+                            .instruction(&End)
+                            .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    } else {
+                        for argument in arguments {
+                            function.instruction(&LocalGet(argument.0 as u32 + offset));
+                        }
+                        function
+                            .instruction(&Call(index(operation.export())))
+                            .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    }
                 }
                 Operation::Array {
                     operation: ArrayOperation::Get,
