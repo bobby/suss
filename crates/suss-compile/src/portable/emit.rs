@@ -2399,12 +2399,49 @@ fn emit_function(
                     arguments,
                     coercing,
                 } => {
+                    let name = arithmetic_name(*operator, arguments, *coercing, ir);
+                    // Two i31 longs add or subtract inline (#361) while the
+                    // result is an i31; the runtime boxes a larger one.
+                    let inline = match name {
+                        "number-add" | "checked-add" => Some(I32Add),
+                        "number-subtract" | "checked-subtract" => Some(I32Sub),
+                        _ => None,
+                    }
+                    .filter(|_| arguments.len() == 2);
+                    let fast = inline.is_some();
+                    // block: the fast path's result skips the runtime call.
+                    if let Some(op) = inline {
+                        let [a, b] = [arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset];
+                        function.instruction(&Block(BlockType::Empty));
+                        i31_operands(&mut function, a, b);
+                        function.instruction(&If(BlockType::Empty));
+                        i31_values(&mut function, a, b);
+                        // An i32 sum of two i31 values is an i31 when adding
+                        // 2^30 leaves it nonnegative.
+                        function
+                            .instruction(&op)
+                            .instruction(&LocalTee(field_index_local))
+                            .instruction(&I32Const(0x4000_0000))
+                            .instruction(&I32Add)
+                            .instruction(&I32Const(0))
+                            .instruction(&I32GeS)
+                            .instruction(&If(BlockType::Empty))
+                            .instruction(&LocalGet(field_index_local))
+                            .instruction(&RefI31)
+                            .instruction(&LocalSet(inst.result.0 as u32 + offset))
+                            .instruction(&Br(2))
+                            .instruction(&End)
+                            .instruction(&End);
+                    }
                     for argument in arguments {
                         function.instruction(&LocalGet(argument.0 as u32 + offset));
                     }
                     function
-                        .instruction(&Call(index(arithmetic_name(*operator, arguments, *coercing, ir))))
+                        .instruction(&Call(index(name)))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    if fast {
+                        function.instruction(&End);
+                    }
                 }
             }
         }

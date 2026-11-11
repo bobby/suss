@@ -1,6 +1,6 @@
-//! Bitwise operations and comparisons of two i31 longs run inline (#361);
-//! every other operand takes the runtime's operation. Expected values are
-//! JVM Clojure 1.12.6's.
+//! Addition, subtraction, bitwise operations and comparisons of two i31
+//! longs run inline (#361); every other operand takes the runtime's
+//! operation. Expected values are JVM Clojure 1.12.6's.
 use suss_cli::portable_session::Session;
 
 fn printed(session: &mut Session, source: &str) -> String {
@@ -37,6 +37,15 @@ fn i31_operations_match_jvm_clojure() {
             (
                 "[(< 3 4) (< 4 3) (<= 3 3) (> -1 -2)]",
                 "[true false true true]",
+            ),
+            // Sums past the i31 range take the runtime, which boxes them.
+            (
+                "[(+ 1073741823 1) (- -1073741824 1) (+ -3 5) (- 3 5)]",
+                "[1073741824 -1073741825 2 -2]",
+            ),
+            (
+                "[(+ 1 1.5) (- 1073741824 1) (+ 1073741823 1073741823)]",
+                "[2.5 1073741823 2147483646]",
             ),
             // A double or a long beyond i31 takes the runtime's comparison.
             (
