@@ -219,16 +219,8 @@ pub(super) fn functions(b: &mut Builder) {
     body.extend([ArrayLen, I32Ne, If(BlockType::Empty)]);
     nominal::error(&mut body);
     body.push(End);
-    buffer(&mut body, 0, 2, ARGS);
-    body.extend([
-        ArrayLen,
-        F64ConvertI32U,
-        LocalGet(1),
-        F64Gt,
-        If(BlockType::Empty),
-    ]);
-    nominal::error(&mut body);
-    body.push(End);
+    // The dense prefix may have capacity past the logical length, from push
+    // growth (#348); slots past the length are always absent in the mask.
     args(&mut body, 0);
     body.extend([
         I32Const(1),
@@ -543,6 +535,167 @@ pub(super) fn functions(b: &mut Builder) {
         LocalGet(1),
         I32Const(1),
         ArraySet(STRING),
+        // Grown capacity can lie past the length (#348).
+        LocalGet(1),
+        LocalGet(5),
+        I32GeU,
+        If(BlockType::Empty),
+    ]);
+    args(&mut body, 3);
+    body.extend([
+        I32Const(0),
+        LocalGet(1),
+        I32Const(1),
+        I32Add,
+        Call(b.names["long-box-u32"]),
+        ArraySet(ARGS),
+        End,
+        LocalGet(2),
+        Return,
+        End,
+    ]);
+    // Appending at the dense prefix's end grows the prefix, doubling it (at
+    // least 8), so an array built by push keeps constant-time indexed access
+    // (#348). Sparse entries the larger prefix now covers move into it: they
+    // are the chain's first entries, as the chain is ordered and disjoint from
+    // the prefix. Grown slots stay absent in the mask, as holes.
+    // Locals: 8 capacity, 9 dense, 10 mask, 11 node, 12 old length, 13 key.
+    body.push(LocalGet(1));
+    buffer(&mut body, 3, 2, ARGS);
+    body.extend([
+        ArrayLen,
+        LocalTee(12),
+        I32Eq,
+        LocalGet(1),
+        I32Const(-1),
+        I32Ne,
+        I32And,
+        LocalGet(12),
+        I32Const(arrays::MAX_LENGTH / 2),
+        I32LtU,
+        I32And,
+        If(BlockType::Empty),
+        LocalGet(12),
+        I32Const(1),
+        I32Shl,
+        LocalTee(8),
+        I32Const(8),
+        LocalGet(8),
+        I32Const(8),
+        I32GtU,
+        Select,
+        LocalSet(8),
+        sentinel_value(UNDEFINED),
+        LocalGet(8),
+        ArrayNew(ARGS),
+        LocalSet(9),
+        LocalGet(9),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(0),
+    ]);
+    buffer(&mut body, 3, 2, ARGS);
+    body.extend([
+        I32Const(0),
+        LocalGet(12),
+        ArrayCopy { array_type_index_dst: ARGS, array_type_index_src: ARGS },
+        LocalGet(8),
+        ArrayNewDefault(STRING),
+        LocalSet(10),
+        LocalGet(10),
+        RefCastNonNull(HeapType::Concrete(STRING)),
+        I32Const(0),
+    ]);
+    buffer(&mut body, 3, 3, STRING);
+    body.extend([
+        I32Const(0),
+        LocalGet(12),
+        ArrayCopy { array_type_index_dst: STRING, array_type_index_src: STRING },
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+    ]);
+    args(&mut body, 3);
+    body.extend([
+        I32Const(1),
+        ArrayGet(ARGS),
+        LocalTee(11),
+        sentinel_value(NIL),
+        RefEq,
+        BrIf(1),
+    ]);
+    args(&mut body, 11);
+    body.extend([
+        I32Const(0),
+        ArrayGet(ARGS),
+        Call(b.names["number-unbox"]),
+        LocalGet(8),
+        F64ConvertI32U,
+        F64Ge,
+        BrIf(1),
+    ]);
+    args(&mut body, 11);
+    body.extend([
+        I32Const(0),
+        ArrayGet(ARGS),
+        Call(b.names["number-unbox"]),
+        I32TruncF64U,
+        LocalSet(13),
+        LocalGet(9),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        LocalGet(13),
+    ]);
+    args(&mut body, 11);
+    body.extend([
+        I32Const(1),
+        ArrayGet(ARGS),
+        ArraySet(ARGS),
+        LocalGet(10),
+        RefCastNonNull(HeapType::Concrete(STRING)),
+        LocalGet(13),
+        I32Const(1),
+        ArraySet(STRING),
+    ]);
+    args(&mut body, 3);
+    body.push(I32Const(1));
+    args(&mut body, 11);
+    body.extend([
+        I32Const(2),
+        ArrayGet(ARGS),
+        ArraySet(ARGS),
+        Br(0),
+        End,
+        End,
+    ]);
+    args(&mut body, 3);
+    body.extend([I32Const(2), LocalGet(9), ArraySet(ARGS)]);
+    args(&mut body, 3);
+    body.extend([
+        I32Const(3),
+        LocalGet(10),
+        ArraySet(ARGS),
+        LocalGet(9),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        LocalGet(1),
+        LocalGet(2),
+        ArraySet(ARGS),
+        LocalGet(10),
+        RefCastNonNull(HeapType::Concrete(STRING)),
+        LocalGet(1),
+        I32Const(1),
+        ArraySet(STRING),
+        LocalGet(1),
+        LocalGet(5),
+        I32GeU,
+        If(BlockType::Empty),
+    ]);
+    args(&mut body, 3);
+    body.extend([
+        I32Const(0),
+        LocalGet(1),
+        I32Const(1),
+        I32Add,
+        Call(b.names["long-box-u32"]),
+        ArraySet(ARGS),
+        End,
         LocalGet(2),
         Return,
         End,
@@ -637,7 +790,7 @@ pub(super) fn functions(b: &mut Builder) {
         "source-array-sparse-set",
         &[VALUE, ValType::I32, VALUE],
         &[VALUE],
-        &[(2, VALUE), (1, ValType::I32), (2, VALUE)],
+        &[(2, VALUE), (1, ValType::I32), (2, VALUE), (1, ValType::I32), (3, VALUE), (2, ValType::I32)],
         &body,
     );
     let mut body = vec![LocalGet(0), Call(fields), LocalSet(2)];
