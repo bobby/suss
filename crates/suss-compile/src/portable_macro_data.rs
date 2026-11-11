@@ -497,6 +497,19 @@ impl FormBridge {
             if storage.len() != 4 {
                 return Ok(None);
             }
+            // A closure with one capture is also four fields (ADR-0004), its
+            // first a code struct: only an object's first field is a
+            // descriptor.
+            let is_descriptor = match storage[0].anyref().flatten() {
+                Some(first) => match first.as_struct(&store)? {
+                    Some(first) => first.ty(&store)?.fields().len() == 6,
+                    None => false,
+                },
+                None => false,
+            };
+            if !is_descriptor {
+                return Ok(None);
+            }
             let descriptor = fields(&mut store, &storage[0], 6)?;
             let Val::I64(id) = descriptor[0] else {
                 return Ok(None);
