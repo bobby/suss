@@ -34,6 +34,12 @@ fn i31_operations_match_jvm_clojure() {
             ("(bit-shift-right 1000 63)", "0"),
             ("(bit-shift-right 1000 0)", "1000"),
             ("(bit-and 1099511627776 -1)", "1099511627776"),
+            // A shift amount or value that isn't an i31 takes the runtime.
+            ("(bit-shift-right 1099511627776 3)", "137438953472"),
+            ("(bit-shift-right 1024 (long 3))", "128"),
+            ("(bit-shift-right 1024 1099511627779)", "128"),
+            ("(unsigned-bit-shift-right -8 1)", "9223372036854775804"),
+            ("(unsigned-bit-shift-right 1024 3)", "128"),
             (
                 "[(< 3 4) (< 4 3) (<= 3 3) (> -1 -2)]",
                 "[true false true true]",

@@ -1752,28 +1752,43 @@ fn emit_function(
                 } => {
                     // Two i31 operands (#361): and, or and xor of sign-extended
                     // 31-bit values, and an arithmetic right shift by 0..31,
-                    // are i31 values again, for longs and JS int32 alike.
+                    // are i31 values again, for longs and JS int32 alike. An
+                    // unsigned shift of a nonnegative value is the same shift.
                     use super::hir::Bitwise;
                     let inline = match operation {
                         Bitwise::And | Bitwise::Int32And => Some(I32And),
                         Bitwise::Or | Bitwise::Int32Or => Some(I32Or),
                         Bitwise::Xor | Bitwise::Int32Xor => Some(I32Xor),
                         Bitwise::Right | Bitwise::Int32Right => Some(I32ShrS),
+                        Bitwise::Unsigned | Bitwise::Int32Unsigned => Some(I32ShrU),
                         _ => None,
                     }
                     .filter(|_| arguments.len() == 2);
                     if let Some(op) = inline {
                         let [a, b] = [arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset];
                         i31_operands(&mut function, a, b);
-                        if matches!(op, I32ShrS) {
-                            // A shift beyond 31 isn't i32's (shifts mask to 5 bits).
+                        if matches!(op, I32ShrS | I32ShrU) {
+                            // Only once both are i31: a shift by 0..31, and for
+                            // an unsigned shift, a nonnegative value. (`i32.and`
+                            // evaluates both sides, so these casts are guarded.)
+                            let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
                             function
+                                .instruction(&If(BlockType::Result(ValType::I32)))
                                 .instruction(&LocalGet(b))
-                                .instruction(&RefCastNonNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 }))
+                                .instruction(&RefCastNonNull(i31))
                                 .instruction(&I31GetU)
                                 .instruction(&I32Const(32))
-                                .instruction(&I32LtU)
-                                .instruction(&I32And);
+                                .instruction(&I32LtU);
+                            if matches!(op, I32ShrU) {
+                                function
+                                    .instruction(&LocalGet(a))
+                                    .instruction(&RefCastNonNull(i31))
+                                    .instruction(&I31GetS)
+                                    .instruction(&I32Const(0))
+                                    .instruction(&I32GeS)
+                                    .instruction(&I32And);
+                            }
+                            function.instruction(&Else).instruction(&I32Const(0)).instruction(&End);
                         }
                         function.instruction(&If(BlockType::Result(VALUE)));
                         i31_values(&mut function, a, b);
