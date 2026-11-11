@@ -412,6 +412,8 @@ pub(crate) const UNIVERSAL_CODE_GLOBAL: u32 = object_methods::CURRENT_THIS + 1;
 /// null before IFn.
 pub(crate) const CALLABLE_KEYS_GLOBAL: u32 = UNIVERSAL_CODE_GLOBAL + 1;
 const CALLABLE_KEY_COUNT: i32 = 23;
+/// Protocol dispatchers' shared code struct (#355).
+pub(crate) const DISPATCH_CODE_GLOBAL: u32 = CALLABLE_KEYS_GLOBAL + 1;
 
 /// `arity-throw(closure, count)`: throws Clojure's arity error, "Wrong number
 /// of args (count) passed to: name", with the arity descriptor. The name is the
@@ -1005,6 +1007,7 @@ fn build_module() -> Vec<u8> {
     nominal::error(&mut body);
     body.extend([End, LocalGet(0), LocalGet(1), ReturnCall(generic_invoke)]);
     universal_entries.push(b.typed(SPREAD, &[], &body));
+    b.names.insert("universal-spread".to_owned(), *universal_entries.last().unwrap());
     for k in 0..=MAX_FIXED {
         let index = b.typed(CALL + k, &[], &[LocalGet(0), I32Const(k as i32), ReturnCall(arity_throw)]);
         b.names.insert(ARITY_ERROR_EXPORTS[k as usize].to_owned(), index);
@@ -1640,6 +1643,20 @@ fn build_module() -> Vec<u8> {
             shared: false,
         },
         &ConstExpr::extended([sentinel_value(NIL)]),
+    );
+    // Protocol dispatchers' code struct (#355): typed entries that dispatch
+    // and call the implementation's entry directly.
+    assert_eq!(globals.len(), DISPATCH_CODE_GLOBAL);
+    let mut code = vec![sentinel_value(NIL), RefFunc(b.names[ARITY_ERROR_EXPORTS[0]])];
+    code.extend((1..=MAX_FIXED).map(|k| RefFunc(b.names[&format!("protocol-dispatch-{k}")])));
+    code.extend([RefFunc(b.names["universal-spread"]), I32Const(0), I32Const(-1), StructNew(CODE)]);
+    globals.global(
+        GlobalType {
+            val_type: reference(CODE),
+            mutable: false,
+            shared: false,
+        },
+        &ConstExpr::extended(code),
     );
     b.exports.export("array-join-active", ExportKind::Global, array_join::ACTIVE);
     b.exports
