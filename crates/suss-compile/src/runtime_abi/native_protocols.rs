@@ -435,14 +435,41 @@ pub(super) fn functions(
             LocalGet(1),
             RefTestNonNull(HeapType::Concrete(7)),
             If(BlockType::Empty),
-            LocalGet(1),
-            Call(descriptor),
         ];
+        // The dispatcher caches its last descriptor and method, valid while
+        // the protocol epoch is unchanged (#355): environment slots 2 to 4.
+        body.extend([LocalGet(1), Call(descriptor)]);
+        cast_array(&mut body, environment);
+        body.extend([I32Const(2), ArrayGet(ARGS), RefEq]);
         cast_array(&mut body, environment);
         body.extend([
-            I32Const(0),
+            I32Const(4),
             ArrayGet(ARGS),
-            Call(method_get),
+            RefCastNonNull(HeapType::I31),
+            I31GetS,
+            GlobalGet(PROTOCOL_EPOCH_GLOBAL),
+            I32Eq,
+            I32And,
+            If(BlockType::Result(VALUE)),
+        ]);
+        cast_array(&mut body, environment);
+        body.extend([I32Const(3), ArrayGet(ARGS), Else, LocalGet(1), Call(descriptor)]);
+        cast_array(&mut body, environment);
+        body.extend([I32Const(0), ArrayGet(ARGS), Call(method_get), LocalSet(implementation)]);
+        cast_array(&mut body, environment);
+        body.extend([I32Const(2), LocalGet(1), Call(descriptor), ArraySet(ARGS)]);
+        cast_array(&mut body, environment);
+        body.extend([I32Const(3), LocalGet(implementation), ArraySet(ARGS)]);
+        cast_array(&mut body, environment);
+        body.extend([
+            I32Const(4),
+            GlobalGet(PROTOCOL_EPOCH_GLOBAL),
+            I32Const(0x3fff_ffff),
+            I32And,
+            RefI31,
+            ArraySet(ARGS),
+            LocalGet(implementation),
+            End,
             LocalTee(implementation),
             RefTestNonNull(HeapType::Concrete(CLOSURE)),
             If(BlockType::Empty),
@@ -563,10 +590,12 @@ pub(super) fn functions(
             let operands = body.split_off(body.len() - 2);
             body.extend([GlobalGet(DISPATCH_CODE_GLOBAL), sentinel_value(NIL), I32Const(0), RefI31]);
             body.extend(operands);
+            // Cache slots: descriptor, method, epoch (none yet).
+            body.extend([sentinel_value(NIL), sentinel_value(NIL), I32Const(-1), RefI31]);
             body.extend([
                 ArrayNewFixed {
                     array_type_index: ARGS,
-                    array_size: count,
+                    array_size: count + 3,
                 },
                 RefFunc(dispatch),
                 LocalGet(arity_local),

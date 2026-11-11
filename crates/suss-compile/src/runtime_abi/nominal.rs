@@ -350,6 +350,11 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         let length = table + if writing { 2 } else { 1 };
         let typed_table = length + 1;
         let mut body = vec![];
+        if writing {
+            // Every method table write invalidates call sites' inline
+            // caches (#355).
+            body.extend([GlobalGet(PROTOCOL_EPOCH_GLOBAL), I32Const(1), I32Add, GlobalSet(PROTOCOL_EPOCH_GLOBAL)]);
+        }
         guard(&mut body, 0, DESCRIPTOR);
         guard(&mut body, 1, DESCRIPTOR);
         if writing {

@@ -402,6 +402,18 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     if !field_site_list.is_empty() {
         names.insert("named-field-slot");
     }
+    // Protocol method lookups get an inline cache (#355): the last
+    // descriptor, its method and the protocol epoch it was found at.
+    let mut method_site_list = vec![];
+    for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
+        .chain(futures.iter().map(|body| &body.continuation.function))
+    {
+        for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
+            if let Operation::Nominal { operation: Nominal::MethodGet, .. } = &inst.operation {
+                method_site_list.push((function as *const IrFunction as usize, inst.result.0 as u32));
+            }
+        }
+    }
     let imported_slots = slots.iter().copied().filter(|slot| !owned_slots.contains(slot)).collect::<Vec<_>>();
     let imported_definitions = called.iter().copied().filter(|definition| !defined_definitions.contains_key(definition)).collect::<Vec<_>>();
     for definition in &imported_definitions {
@@ -594,7 +606,17 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             EntityType::Global(GlobalType { val_type: runtime_abi::code_type(), mutable: false, shared: false }),
         );
     }
+    // The protocol epoch follows the imported link globals.
+    if !method_site_list.is_empty() {
+        imports.import(
+            "suss.runtime",
+            "protocol-epoch",
+            EntityType::Global(GlobalType { val_type: ValType::I32, mutable: true, shared: false }),
+        );
+    }
     let imported_link_globals = (imported_slots.len() + imported_definitions.len()) as u32;
+    let epoch_global = globals.len() as u32 + 3 + imported_link_globals;
+    let imported_link_globals = imported_link_globals + u32::from(!method_site_list.is_empty());
     let eval_type = type_count + names.len() as u32;
     types.ty().function([], [VALUE]);
     if throws {
@@ -666,6 +688,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let field_sites = field_site_list.iter().enumerate()
         .map(|(index, site)| (*site, first_field_site + 2 * index as u32))
         .collect::<std::collections::HashMap<_, _>>();
+    let first_method_site = first_field_site + 2 * field_site_list.len() as u32;
+    let method_sites = method_site_list.iter().enumerate()
+        .map(|(index, site)| (*site, first_method_site + 3 * index as u32))
+        .collect::<std::collections::HashMap<_, _>>();
     for (index, definition) in imported_definitions.iter().enumerate() {
         links.codes.insert(*definition, first_imported_link + imported_slots.len() as u32 + index as u32);
         let entries = (0..=runtime_abi::MAX_FIXED).map(|k| {
@@ -690,7 +716,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let mut code = CodeSection::new();
     let mut data = LiteralData::default();
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
-        dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites };
+        dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites,
+        method_sites: &method_sites, epoch_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -767,6 +794,18 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             &ConstExpr::i32_const(0),
         );
     }
+    for _ in &method_site_list {
+        for ty in [VALUE, VALUE] {
+            code_globals.global(
+                GlobalType { val_type: ty, mutable: true, shared: false },
+                &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
+            );
+        }
+        code_globals.global(
+            GlobalType { val_type: ValType::I32, mutable: true, shared: false },
+            &ConstExpr::i32_const(-1),
+        );
+    }
     for (definition, global) in &defined_code {
         exports.export(&format!("link.{definition}.code"), ExportKind::Global, *global);
         for (k, entry) in links.entries[definition].iter().enumerate() {
@@ -787,7 +826,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .section(&types)
         .section(&imports)
         .section(&functions);
-    if !layout.definitions.is_empty() || !field_site_list.is_empty() {
+    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() {
         module.section(&code_globals);
     }
     module.section(&exports);
@@ -872,6 +911,9 @@ struct Context<'a> {
     links: &'a Links,
     /// Cached core field read sites, by (function, result): their first global.
     field_sites: &'a std::collections::HashMap<(usize, u32), u32>,
+    /// Cached protocol method lookup sites: their first global; the epoch.
+    method_sites: &'a std::collections::HashMap<(usize, u32), u32>,
+    epoch_global: u32,
 }
 /// One function definition (`fn`): its closures' capture struct, its code
 /// struct global and its entries (ADR-0004).
@@ -1178,7 +1220,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
-    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites } = *context;
+    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, method_sites, epoch_global } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -1770,6 +1812,34 @@ fn emit_function(
                             for instruction in runtime_abi::number_test(arguments[0].0 as u32 + offset) {
                                 function.instruction(&instruction);
                             }
+                        }
+                        Nominal::MethodGet if method_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
+                            // Inline cache (#355): the same descriptor at the
+                            // same protocol epoch has the same method; any
+                            // method table write since bumps the epoch.
+                            let cache = method_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            let (descriptor, key) = (arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset);
+                            function
+                                .instruction(&LocalGet(descriptor))
+                                .instruction(&GlobalGet(cache))
+                                .instruction(&RefEq)
+                                .instruction(&GlobalGet(cache + 2))
+                                .instruction(&GlobalGet(epoch_global))
+                                .instruction(&I32Eq)
+                                .instruction(&I32And)
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&GlobalGet(cache + 1))
+                                .instruction(&Else)
+                                .instruction(&LocalGet(descriptor))
+                                .instruction(&LocalGet(key))
+                                .instruction(&Call(index("protocol-method-get")))
+                                .instruction(&GlobalSet(cache + 1))
+                                .instruction(&LocalGet(descriptor))
+                                .instruction(&GlobalSet(cache))
+                                .instruction(&GlobalGet(epoch_global))
+                                .instruction(&GlobalSet(cache + 2))
+                                .instruction(&GlobalGet(cache + 1))
+                                .instruction(&End);
                         }
                         Nominal::CoreNamedGet if field_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
                             // Inline cache (#361): the same descriptor as last
