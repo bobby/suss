@@ -1095,6 +1095,20 @@ impl Environment {
         }
         global
     }
+    /// The hidden cell that holds the interned keyword `fqn` for literals
+    /// (#361): every literal site of a keyword reads the same keyword.
+    pub(crate) fn keyword_cell(&mut self, phase: Phase, fqn: &str) -> Global {
+        let name = fqn.as_bytes().iter().map(|byte| format!("{byte:02x}")).collect::<String>();
+        let global = Global {
+            phase,
+            namespace: "suss.internal.keywords".into(),
+            name: format!("keyword-{name}").into(),
+        };
+        if !self.bindings.contains_key(&global) {
+            self.bind(global.clone(), Binding::InternalCell(global.clone()));
+        }
+        global
+    }
     /// Turn on direct linking of user code, as an AOT build does (#360).
     pub fn set_direct_linking(&mut self, enabled: bool) {
         self.direct_linking = enabled;

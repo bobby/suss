@@ -56,8 +56,38 @@ impl Analyzer<'_> {
         let mut arguments = vec![constructor, ns, short, full, hash];
         if !keyword {
             arguments.push(self.literal_form(form, Literal::Nil));
+            return Ok(self.nominal(form, Nominal::Construct, arguments));
         }
-        Ok(self.nominal(form, Nominal::Construct, arguments))
+        // A keyword literal reads its name's hidden cell, defined once with
+        // the interned keyword (#361): no allocation per evaluation, and the
+        // same keyword at every site, as in Clojure.
+        let construction = self.nominal(form, Nominal::Construct, arguments);
+        let interned = self.nominal(form, Nominal::KeywordIntern, vec![construction]);
+        let fqn = namespace.map_or_else(|| name.to_owned(), |ns| format!("{ns}/{name}"));
+        let global = self.environment.keyword_cell(self.phase, &fqn);
+        let initialize = Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: Vec::new(),
+            ty: Type::Value,
+            kind: std::sync::Arc::new(Expression::Definition {
+                global: global.clone(),
+                name_metadata: Vec::new(),
+                name_span: form.span.clone(),
+                docstring: None,
+                initializer: Some(Box::new(interned)),
+                once: true,
+                linked: None,
+            }),
+        };
+        let read = Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: Vec::new(),
+            ty: Type::Value,
+            kind: std::sync::Arc::new(Expression::Global(global)),
+        };
+        Ok(self.do_hir(form, vec![initialize, read]))
     }
     pub(super) fn quote_data(&mut self, form: &Form, depth: usize) -> Result<Hir, Diagnostic> {
         self.quote_data_impl(form, depth, false)

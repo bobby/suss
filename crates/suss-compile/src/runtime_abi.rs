@@ -414,7 +414,191 @@ pub(crate) const CALLABLE_KEYS_GLOBAL: u32 = UNIVERSAL_CODE_GLOBAL + 1;
 const CALLABLE_KEY_COUNT: i32 = 23;
 /// Protocol dispatchers' shared code struct (#355).
 pub(crate) const DISPATCH_CODE_GLOBAL: u32 = CALLABLE_KEYS_GLOBAL + 1;
+/// The interned keywords (#361): `KEYWORD_BUCKETS` chains of `[keyword,
+/// next]`, by a hash of the full name, or null before the first.
+pub(crate) const KEYWORDS_GLOBAL: u32 = DISPATCH_CODE_GLOBAL + 1;
+const KEYWORD_BUCKETS: i32 = 4096;
 
+/// `keyword-intern(keyword)`: the first keyword interned with the same full
+/// name, interning this one if it is the first (#361). A keyword is a user
+/// object whose fields are `[ns, name, fqn, hash]`; anything else is returned
+/// unchanged. Clojure interns keywords weakly; Suss holds them.
+fn keyword_intern(b: &mut Builder) -> u32 {
+    use Instruction::*;
+    let string = HeapType::Concrete(STRING);
+    let fields = |object: u32| {
+        vec![
+            LocalGet(object),
+            RefCastNonNull(HeapType::Concrete(7)),
+            StructGet { struct_type_index: 7, field_index: 1 },
+            RefCastNonNull(HeapType::Concrete(ARGS)),
+        ]
+    };
+    // Params: 0 keyword. Locals: 1 fqn, 2 hash, 3 index, 4 bucket table,
+    // 5 node, 6 other fqn, 7 equal.
+    let mut body = vec![
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(7)),
+        I32Eqz,
+        If(BlockType::Empty),
+        LocalGet(0),
+        Return,
+        End,
+    ];
+    body.extend(fields(0));
+    body.extend([ArrayLen, I32Const(4), I32Ne, If(BlockType::Empty), LocalGet(0), Return, End]);
+    body.extend(fields(0));
+    body.extend([
+        I32Const(2),
+        ArrayGet(ARGS),
+        LocalTee(1),
+        RefTestNonNull(string),
+        I32Eqz,
+        If(BlockType::Empty),
+        LocalGet(0),
+        Return,
+        End,
+        // FNV-1a over the name's UTF-16 units.
+        I32Const(-2128831035),
+        LocalSet(2),
+        I32Const(0),
+        LocalSet(3),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(3),
+        LocalGet(1),
+        RefCastNonNull(string),
+        ArrayLen,
+        I32GeU,
+        BrIf(1),
+        LocalGet(2),
+        LocalGet(1),
+        RefCastNonNull(string),
+        LocalGet(3),
+        ArrayGetU(STRING),
+        I32Xor,
+        I32Const(16777619),
+        I32Mul,
+        LocalSet(2),
+        LocalGet(3),
+        I32Const(1),
+        I32Add,
+        LocalSet(3),
+        Br(0),
+        End,
+        End,
+        LocalGet(2),
+        I32Const(KEYWORD_BUCKETS - 1),
+        I32And,
+        LocalSet(3),
+        GlobalGet(KEYWORDS_GLOBAL),
+        RefIsNull,
+        If(BlockType::Empty),
+        sentinel_value(NIL),
+        I32Const(KEYWORD_BUCKETS),
+        ArrayNew(ARGS),
+        GlobalSet(KEYWORDS_GLOBAL),
+        End,
+        GlobalGet(KEYWORDS_GLOBAL),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        LocalTee(4),
+        LocalGet(3),
+        ArrayGet(ARGS),
+        LocalSet(5),
+        // Walk the bucket's chain for a keyword with the same name.
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(5),
+        RefIsNull,
+        BrIf(1),
+        LocalGet(5),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(0),
+        ArrayGet(ARGS),
+        LocalSet(6),
+    ]);
+    body.extend(fields(6));
+    body.extend([
+        I32Const(2),
+        ArrayGet(ARGS),
+        LocalSet(6),
+        LocalGet(6),
+        RefCastNonNull(string),
+        ArrayLen,
+        LocalGet(1),
+        RefCastNonNull(string),
+        ArrayLen,
+        I32Eq,
+        LocalSet(7),
+        LocalGet(7),
+        If(BlockType::Empty),
+        I32Const(0),
+        LocalSet(2),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(2),
+        LocalGet(1),
+        RefCastNonNull(string),
+        ArrayLen,
+        I32GeU,
+        BrIf(1),
+        LocalGet(6),
+        RefCastNonNull(string),
+        LocalGet(2),
+        ArrayGetU(STRING),
+        LocalGet(1),
+        RefCastNonNull(string),
+        LocalGet(2),
+        ArrayGetU(STRING),
+        I32Ne,
+        If(BlockType::Empty),
+        I32Const(0),
+        LocalSet(7),
+        Br(2),
+        End,
+        LocalGet(2),
+        I32Const(1),
+        I32Add,
+        LocalSet(2),
+        Br(0),
+        End,
+        End,
+        End,
+        LocalGet(7),
+        If(BlockType::Empty),
+        LocalGet(5),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(0),
+        ArrayGet(ARGS),
+        Return,
+        End,
+        LocalGet(5),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(1),
+        ArrayGet(ARGS),
+        LocalSet(5),
+        Br(0),
+        End,
+        End,
+        // The first of its name: chain it at the bucket's head.
+        LocalGet(4),
+        LocalGet(3),
+        LocalGet(0),
+        LocalGet(4),
+        LocalGet(3),
+        ArrayGet(ARGS),
+        ArrayNewFixed { array_type_index: ARGS, array_size: 2 },
+        ArraySet(ARGS),
+        LocalGet(0),
+    ]);
+    b.function_with_locals(
+        "keyword-intern",
+        &[VALUE],
+        &[VALUE],
+        &[(1, VALUE), (2, ValType::I32), (1, reference(ARGS)), (2, VALUE), (1, ValType::I32)],
+        &body,
+    )
+}
 /// `arity-throw(closure, count)`: throws Clojure's arity error, "Wrong number
 /// of args (count) passed to: name", with the arity descriptor. The name is the
 /// code struct's, else the closure's display name, else "fn". Self-contained,
@@ -1231,6 +1415,7 @@ fn build_module() -> Vec<u8> {
         sentinel_value(NIL),
     ]);
     b.function_with_locals("callable-key-register", &[VALUE, VALUE], &[VALUE], &[(1, ValType::I32)], &body);
+    keyword_intern(&mut b);
     let try_invoke = exceptions::functions(&mut b, generic_invoke);
     arithmetic_functions.extend(dynamic::functions(&mut b, binding_set, try_invoke));
     arithmetic_functions.extend(predicates::functions(&mut b));
@@ -1657,6 +1842,12 @@ fn build_module() -> Vec<u8> {
             shared: false,
         },
         &ConstExpr::extended(code),
+    );
+    // Interned keywords (#361), created on first use.
+    assert_eq!(globals.len(), DISPATCH_CODE_GLOBAL + 1);
+    globals.global(
+        GlobalType { val_type: VALUE, mutable: true, shared: false },
+        &ConstExpr::extended([sentinel_value(NIL)]),
     );
     b.exports.export("array-join-active", ExportKind::Global, array_join::ACTIVE);
     b.exports

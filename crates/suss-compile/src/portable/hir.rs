@@ -458,6 +458,9 @@ pub enum Nominal {
     /// A direct-linked definition (#360), its var's slot and the definition
     /// packed by `link_pair`: write its closure, the argument, to the slot.
     DirectLinkDefine(usize),
+    /// The interned keyword equal to the constructed one, the argument: the
+    /// first keyword made with its name (#361), as Clojure interns keywords.
+    KeywordIntern,
     /// `set!` of a direct-linked var also writes its slot, the slot number
     /// here, so its direct calls reach the new value, as a redefinition (#360).
     DirectLinkSet(usize),
@@ -578,7 +581,7 @@ impl Nominal {
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable | Self::MethodGet | Self::CallableKeyRegister => count == 2,
-                Self::DirectLinkDefine(_) | Self::DirectLinkSet(_) => count == 1,
+                Self::DirectLinkDefine(_) | Self::DirectLinkSet(_) | Self::KeywordIntern => count == 1,
                 Self::DirectLinkRead(_) => count == 0,
                 Self::NativeObjectGet => count == 2,
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
@@ -2790,7 +2793,15 @@ impl Analyzer<'_> {
                     class: std::sync::Arc::new(arguments[0].clone()),
                     arguments: arguments[1..].to_vec().into(),
                 }));
-            let construction = self.nominal(form, Nominal::Construct, arguments);
+            // A keyword is interned: constructing one gives the keyword of
+            // that name (#361).
+            // Core reads the type through its direct-link cell.
+            let keyword = matches!(&*arguments[0].kind, Expression::Global(global)
+                if matches!(global.namespace(), "suss.core" | "suss.internal.core-link") && global.name() == "Keyword");
+            let mut construction = self.nominal(form, Nominal::Construct, arguments);
+            if keyword {
+                construction = self.nominal(form, Nominal::KeywordIntern, vec![construction]);
+            }
             if self.privileged {
                 return Ok(construction);
             }

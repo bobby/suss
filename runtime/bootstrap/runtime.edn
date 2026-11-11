@@ -1885,6 +1885,41 @@
          "suss.bindings.runtime:suss.internal.core-protocol-natives/native-737573732e636f72652f495772697465722f"
          "suss.bindings.runtime:suss.internal.core-protocol-natives/native-737573732e636f72652f495772697465722f2d666c757368"
          "suss.bindings.runtime:suss.internal.core-protocol-natives/native-737573732e636f72652f495772697465722f2d7772697465"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-616c6c6f77"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-616c742d696d706c"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-616e636573746f7273"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-636c6a732e636f72652f6e6f742d666f756e64"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-636f6c"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-64656661756c74"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-64657363656e64616e7473"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-647570"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-656f66"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-65782d6b696e64"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-6661696c6564"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-66616c6c6261636b2d696d706c"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-6665617475726573"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-666f726d"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-6c696e65"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-6d657461"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-6d6f72652d6d61726b6572"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-6f6666736574"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-706172656e7473"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-70656e64696e67"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-7072657365727665"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-7072696e742d6c656e677468"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-726561642d636f6e64"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-7265616461626c79"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-7265616465722d6572726f72"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-7265616465722d657863657074696f6e"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-72656164657273"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-7265616479"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-73706c6963696e673f"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-737461747573"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-73757373"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-746167"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-74797065"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-76616c"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-76616c696461746f72"
          "suss.bindings.runtime:suss.internal.namespaces/suss.core"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f4150657273697374656e74566563746f722f2f30"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f415365712f2f30"
@@ -2040,7 +2075,7 @@
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
          "suss.bindings.runtime:suss.internal.reify/t-reify-3447-8511"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "ff5b6b5e177d470d566a770f94ac044e93dbeda392e0625ca8c953eed32e2f46",
+ :compiler-source-sha256 "8bb401287aeeeea6d3a57dfe0fab43b1f3e7b593682051b6cf9cc676e38ef0de",
  :dependency-graph-sha256 "3a6ab655e46f8cc8273a7228b21e7dfc01ae6f3564899d47df0185132677ff7d",
  :flags [],
  :format-version 2,
@@ -2048,5 +2083,5 @@
  :runtime-abi 4,
  :source-sha256 "84e402cdd1455c9c8cf680fff118cee38e57d0f381c8b21258704067275d3ca5",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "da81372f90e4d4b7afff16941894af270d24e938baa77076385dacad283aa64d",
+ :wasm-sha256 "9c6ae5f2e1de5031bbb1c4c9d2852e46ce99bb006f9598ecbd78f24ece3d1f86",
  :wasm-tools "0.258.0"}

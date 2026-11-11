@@ -181,6 +181,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     Operation::Nominal { operation, .. } => match operation {
                         Nominal::IsNumber | Nominal::IsString | Nominal::Array => {}
                         Nominal::DirectLinkDefine(_) | Nominal::DirectLinkRead(_) | Nominal::DirectLinkSet(_) => {}
+                        Nominal::KeywordIntern => { names.insert("keyword-intern"); }
                         Nominal::CoerceString => { names.insert("coerce-string"); }
                         Nominal::ObjectCoerceString => { names.insert("object-coerce-string"); }
                         Nominal::ConcatString => { names.insert("string-concat"); }
@@ -507,6 +508,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }
             "string-new" => (vec![ValType::I32], vec![VALUE]),
             "arity-throw" => (vec![VALUE, ValType::I32], vec![VALUE]),
+            "keyword-intern" => (vec![VALUE], vec![VALUE]),
             "string-set-unit" => (vec![VALUE, ValType::I32, ValType::I32], vec![ValType::I32]),
             _ => (vec![VALUE, VALUE], vec![VALUE]),
         };
@@ -1743,6 +1745,11 @@ fn emit_function(
                         // published when its definition runs.
                         Nominal::DirectLinkRead(link) => {
                             function.instruction(&GlobalGet(links.slots[&super::hir::link_parts(*link).0]));
+                        }
+                        Nominal::KeywordIntern => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&Call(index("keyword-intern")));
                         }
                         Nominal::DirectLinkSet(slot) => {
                             function
