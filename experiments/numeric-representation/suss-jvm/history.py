@@ -22,6 +22,7 @@ RUNS = [
     ("M15-05 unboxed locals, ADR-0004", "53958035", "run_m15_05.txt"),
     ("M15-06 calling convention", "e5daf0ff", "run_m15_06.txt"),
     ("M15-07 direct linking", "151c90ad", "run_m15_07.txt"),
+    ("M15-08 dispatch entries", "c00a97c9", "run_m15_08a.txt"),
 ]
 ROW = re.compile(r"^\| (.+?) \| (-?[\d,.]+) \| ([\d,]*) \| (-?[\d,.]+) \| [^|]* \|$")
 
