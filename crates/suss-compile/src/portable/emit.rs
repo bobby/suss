@@ -3,7 +3,7 @@ mod r#async;
 mod structured;
 mod unboxed;
 use super::{
-    hir::{Arithmetic, Literal, Nominal, Type},
+    hir::{Arithmetic, ArrayOperation, Literal, Nominal, Type},
     ir::{self, ClosureBody, Function as IrFunction, GeneralClosureBody, FutureBody, Operation, Terminator},
     Diagnostic,
 };
@@ -174,6 +174,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     }
                     Operation::Comparison { operation, .. } => {
                         names.insert(operation.export());
+                    }
+                    Operation::Array { operation: ArrayOperation::Get, arguments } if arguments.len() == 2 => {
+                        names.insert("source-array-get-2");
                     }
                     Operation::Array { operation, .. } => {
                         names.insert(operation.export());
@@ -1735,6 +1738,16 @@ fn emit_function(
                     }
                     function
                         .instruction(&Call(index(operation.export())))
+                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
+                Operation::Array {
+                    operation: ArrayOperation::Get,
+                    arguments,
+                } if arguments.len() == 2 => {
+                    function
+                        .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                        .instruction(&LocalGet(arguments[1].0 as u32 + offset))
+                        .instruction(&Call(index("source-array-get-2")))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Array {

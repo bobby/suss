@@ -889,6 +889,60 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         body.push(Call(primitive));
         declared.push(factory(b, name, 1, 1, &body));
     }
+    // `(aget a i)` with one index (#361): a present element of a source
+    // array's dense prefix at an i31 index is read directly, with no index
+    // array and no generic key conversion. Anything else, including any
+    // malformed backing, takes `source-array-get`. Locals: 2 sparse backing,
+    // then dense prefix; 3 presence mask; 4 index.
+    let mut body = vec![Block(BlockType::Empty)];
+    let cast = |local: u32, ty: u32| [LocalGet(local), RefCastNonNull(HeapType::Concrete(ty))];
+    let test = |ty: u32| [RefTestNonNull(HeapType::Concrete(ty)), I32Eqz, BrIf(0)];
+    body.extend([LocalGet(1), RefTestNonNull(HeapType::I31), I32Eqz, BrIf(0)]);
+    body.extend([LocalGet(0), Call(is_array), I32Eqz, BrIf(0)]);
+    body.extend(cast(0, 7));
+    body.extend([
+        StructGet {
+            struct_type_index: 7,
+            field_index: 1,
+        },
+        LocalTee(2),
+    ]);
+    body.extend(test(ARGS));
+    body.extend(cast(2, ARGS));
+    body.extend([ArrayLen, I32Const(2), I32Ne, BrIf(0)]);
+    body.extend(cast(2, ARGS));
+    body.extend([I32Const(0), ArrayGet(ARGS), LocalTee(2)]);
+    body.extend(test(ARGS));
+    body.extend(cast(2, ARGS));
+    body.extend([ArrayLen, I32Const(4), I32LtU, BrIf(0)]);
+    body.extend(cast(2, ARGS));
+    body.extend([I32Const(3), ArrayGet(ARGS), LocalTee(3)]);
+    body.extend(test(STRING));
+    body.extend(cast(2, ARGS));
+    body.extend([I32Const(2), ArrayGet(ARGS), LocalTee(2)]);
+    body.extend(test(ARGS));
+    body.extend([
+        LocalGet(1),
+        RefCastNonNull(HeapType::I31),
+        I31GetS,
+        LocalTee(4),
+    ]);
+    body.extend(cast(2, ARGS));
+    body.extend([ArrayLen, I32GeU, BrIf(0), LocalGet(4)]);
+    body.extend(cast(3, STRING));
+    body.extend([ArrayLen, I32GeU, BrIf(0)]);
+    body.extend(cast(3, STRING));
+    body.extend([LocalGet(4), ArrayGetU(STRING), I32Const(1), I32Ne, BrIf(0)]);
+    body.extend(cast(2, ARGS));
+    body.extend([LocalGet(4), ArrayGet(ARGS), Return, End]);
+    body.extend([LocalGet(0), LocalGet(1), ReturnCall(get)]);
+    b.function_with_locals(
+        "source-array-get-2",
+        &[VALUE, VALUE],
+        &[VALUE],
+        &[(2, VALUE), (1, ValType::I32)],
+        &body,
+    );
     // Macro and first-class variants share explicit sequential nested traversal.
     for (name, writing) in [
         ("source-array-get-indices", false),
