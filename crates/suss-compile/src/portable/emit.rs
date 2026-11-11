@@ -1563,9 +1563,18 @@ fn emit_function(
                 Operation::GlobalBound(global) => {
                     let index_global =
                         globals.binary_search(global).expect("collected global") as u32;
+                    // The cell's bound flag, inline (#361).
                     function
                         .instruction(&GlobalGet(index_global))
-                        .instruction(&Call(index("binding-bound")))
+                        .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::BINDING)))
+                        .instruction(&StructGet { struct_type_index: runtime_abi::BINDING, field_index: 1 })
+                        .instruction(&I32Const(runtime_abi::CELL_BOUND))
+                        .instruction(&I32And)
+                        .instruction(&If(BlockType::Result(VALUE)))
+                        .instruction(&runtime_abi::sentinel_in(runtime_abi::TRUE, sentinels))
+                        .instruction(&Else)
+                        .instruction(&runtime_abi::sentinel_in(runtime_abi::FALSE, sentinels))
+                        .instruction(&End)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::GlobalWrite { global, value } => {
@@ -1916,16 +1925,30 @@ fn emit_function(
                                     .instruction(&RefTestNonNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 }))
                                     .instruction(&I32Or);
                             }
+                            // Only two boxed longs, doubles or strings compare by
+                            // value; distinct references of any other type aren't
+                            // identical (#361).
                             function
                                 .instruction(&I32Or)
                                 .instruction(&If(BlockType::Result(ValType::I32)))
                                 .instruction(&I32Const(0))
-                                .instruction(&Else)
+                                .instruction(&Else);
+                            for (index, ty) in [runtime_abi::NUMBER, runtime_abi::LONG, runtime_abi::STRING].into_iter().enumerate() {
+                                function.instruction(&LocalGet(a)).instruction(&RefTestNonNull(HeapType::Concrete(ty)));
+                                if index > 0 {
+                                    function.instruction(&I32Or);
+                                }
+                            }
+                            function
+                                .instruction(&If(BlockType::Result(ValType::I32)))
                                 .instruction(&LocalGet(a))
                                 .instruction(&LocalGet(b))
                                 .instruction(&Call(index("identical-value")))
                                 .instruction(&runtime_abi::sentinel_in(runtime_abi::TRUE, sentinels))
                                 .instruction(&RefEq)
+                                .instruction(&Else)
+                                .instruction(&I32Const(0))
+                                .instruction(&End)
                                 .instruction(&End)
                                 .instruction(&End);
                         }
