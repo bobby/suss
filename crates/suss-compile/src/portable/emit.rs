@@ -2441,8 +2441,10 @@ fn emit_function(
                     // Two i31 longs add or subtract inline (#361) while the
                     // result is an i31; the runtime boxes a larger one.
                     let inline = match name {
-                        "number-add" | "checked-add" => Some(I32Add),
-                        "number-subtract" | "checked-subtract" => Some(I32Sub),
+                        // value-add and value-subtract (JS convention) treat
+                        // two numbers as number-add and number-subtract do.
+                        "number-add" | "checked-add" | "value-add" => Some(I32Add),
+                        "number-subtract" | "checked-subtract" | "value-subtract" => Some(I32Sub),
                         _ => None,
                     }
                     .filter(|_| arguments.len() == 2);

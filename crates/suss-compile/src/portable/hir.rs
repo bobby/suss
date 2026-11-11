@@ -3263,9 +3263,15 @@ impl Analyzer<'_> {
                     // inlines no other predicate; `true?`, `number?` and the
                     // like stay live calls. Another arity stays a call, which
                     // raises the arity error.
+                    // The shipped core image is direct-linked (#360), so its own
+                    // calls of `number?` and `string?` take the core test
+                    // inline too, as a static call would (#361).
+                    let core_image = self.privileged && self.environment.core_image_links;
                     let predicate = match (*export, args.len()) {
                         ("predicate-nil", 1) => Some(None),
                         ("predicate-identical", 2) => Some(Some(Nominal::Identical)),
+                        ("predicate-number", 1) if core_image => Some(Some(Nominal::IsNumber)),
+                        ("predicate-string", 1) if core_image => Some(Some(Nominal::IsString)),
                         _ => None,
                     };
                     if let Some(predicate) = predicate {
