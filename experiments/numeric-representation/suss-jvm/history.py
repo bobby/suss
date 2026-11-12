@@ -28,7 +28,8 @@ RUNS = [
 ]
 # A time is a number or ≈ 0, below the run-to-run spread; runs before the bench
 # printed ≈ 0 could show negative times, which are below it too.
-ROW = re.compile(r"^\| (.+?) \| (-?[\d,.]+|≈ 0) \| (-?[\d,]*) \| (-?[\d,.]+|≈ 0) \| [^|]* \|$")
+# Runs since #386 have a bytes column after the instructions.
+ROW = re.compile(r"^\| (.+?) \| (-?[\d,.]+|≈ 0) \| (-?[\d,]*) \| (?:(?:[\d,]+|≈ 0) \| )?(-?[\d,.]+|≈ 0) \| [^|]* \|$")
 
 
 def time(text):

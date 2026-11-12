@@ -23,6 +23,14 @@ Where `perf` is installed, each Suss case also reports user-space
 instructions per iteration from `perf stat -e instructions:u`, the slope
 between the same two counts, which unlike time doesn't depend on machine load.
 
+Each Suss case also reports bytes allocated per iteration (#386). wasmtime
+exposes no allocation counter, so the bench runs the case under the null
+collector (`SUSS_GC=null`), which never frees: the heap, and so the process's
+peak RSS, grows by every byte allocated. The slope of peak RSS between two
+loop counts is the case's allocation per iteration. Counts grow until the two
+runs differ by ALLOC_WORK bytes; a difference below ALLOC_RESOLUTION prints
+as ≈ 0.
+
 Usage: bench.py [n] [reps]   (from the repository root, after building a
 release suss)
 """
@@ -39,9 +47,16 @@ REPS = int(sys.argv[2]) if len(sys.argv) > 2 else 3
 SUSS = os.path.abspath("target/release/suss")
 PERF = shutil.which("perf")
 # Seconds of work between a Suss case's two loop counts, and the largest
-# count, since a case takes its count as a WIT u32 and also runs at twice it.
+# count, which a case also runs at twice. Counts stay i31s (below 2^30): a
+# larger WIT u32 arrives as a boxed long, and the loop's `(< i n)` would then
+# measure the boxed comparison (#385, #386).
 MIN_WORK = 0.5
-MAX_COUNT = 2**31 - 1
+MAX_COUNT = 2**30 - 1
+# Allocation: bytes of peak RSS between a case's two loop counts under the
+# null collector, and the smallest difference that isn't page noise.
+ALLOC_WORK = 32 << 20
+ALLOC_RESOLUTION = 1 << 20
+ALLOC_COUNTS = 16
 
 # The loop's operands: `i` is the loop counter, a long, and `m` is it masked
 # to an index. Arrays have 1024 elements. JVM forms add the type hints
@@ -168,6 +183,8 @@ LOOPS = [
 # double) overload and RT.aset none for an Object[] and a long, so Clojure code
 # boxes the long, as Suss always does.
 JVM = {
+    # -equiv is a Suss protocol method; JVM `=` on two longs calls Util.equiv.
+    "(-equiv i 7)": "(clojure.lang.Util/equiv i 7)",
     "(= i 7.5)": "(= (num i) 7.5)",
     "(aset oa (bit-and i 1023) i)": "(aset oa (bit-and i 1023) (num i))",
 }
@@ -254,13 +271,39 @@ def suss_times(work):
             counts = (min(c for _, c in longs) - min(c for _, c in shorts)) / count
         return (per_iteration, spread), counts
 
+    def peak(name, n):
+        # Peak RSS in bytes of one run under the null collector.
+        command = [SUSS, "run", "bench.wasm", "--invoke", f"case-{name}", "--", str(n)]
+        process = subprocess.Popen(command, cwd=work, stdout=subprocess.DEVNULL,
+                                   env=dict(os.environ, SUSS_GC="null"))
+        _, status, usage = os.wait4(process.pid, 0)
+        if status:
+            sys.exit(f"{name} failed under SUSS_GC=null at n = {n}")
+        # ru_maxrss is in KiB on Linux and bytes on macOS.
+        return usage.ru_maxrss * (1 if sys.platform == "darwin" else 1024)
+
+    def allocation(name, count):
+        # Bytes allocated per iteration, or None below ALLOC_RESOLUTION. The
+        # count may grow to ALLOC_COUNTS times the timed one, for programs
+        # whose timed count is a few runs.
+        n, limit = max(1, min(count, 1000)), min(count * ALLOC_COUNTS, MAX_COUNT // 2)
+        while True:
+            grown = peak(name, 2 * n) - peak(name, n)
+            if grown >= ALLOC_WORK or n >= limit:
+                break
+            # Aim for ALLOC_WORK, at most 64 times further.
+            n = min(limit, n * 64, max(2 * n, math.ceil(ALLOC_WORK * n / max(grown, 1))))
+        return grown / n if grown >= ALLOC_RESOLUTION else None
+
     run("long-control", 1)  # Compiles and caches native code.
-    times, instructions = {}, {}
+    peak("long-control", 1)  # The same under the null collector, a separate cache entry.
+    times, instructions, allocated = {}, {}, {}
     for name, _, count in cases + [(name, body, N) for name, body, _ in LOOPS]:
         times[name], counts = slope(name, max(count, 1))
+        allocated[name] = allocation(name, max(count, 1))
         if PERF:
             instructions[name] = counts
-    return times, instructions
+    return times, instructions, allocated
 
 
 def jvm_times(work):
@@ -300,7 +343,7 @@ def jvm_times(work):
     return times
 
 
-def table(suss, instructions, jvm):
+def table(suss, instructions, allocated, jvm):
     def per_op(values, name, control, scale):
         # A case's time less its control's, and the two runs' spreads together.
         value, spread = values[name]
@@ -314,24 +357,34 @@ def table(suss, instructions, jvm):
         value, spread = time
         return value if value > spread else None
 
-    def row(label, s, i, j):
+    def row(label, s, i, b, j):
         s, j = measured(s), measured(j)
         ratio = f"{s / j:.0f}×" if s is not None and j is not None and j >= 0.05 else ""
         count = "" if i is None else f"{i:,.0f}"
+        size = "≈ 0" if b is None or b < 0.5 else f"{b:,.0f}"
         suss_time = "≈ 0" if s is None else f"{s:,.1f}"
         jvm_time = "≈ 0" if j is None else f"{j:,.2f}"
-        return f"| {label} | {suss_time} | {count} | {jvm_time} | {ratio} |"
+        return f"| {label} | {suss_time} | {count} | {size} | {jvm_time} | {ratio} |"
+
+    def bytes_of(name, control, scale=1.0):
+        # Bytes per operation less the control's, None where below resolution.
+        value = allocated[name]
+        if control and value is not None and allocated[control] is not None:
+            value -= allocated[control]
+        return None if value is None else value * scale
 
     def scaled(values, name, scale):
         value, spread = values[name]
         return value * scale, spread * scale
 
-    header = ["| Case | Suss ns | Suss instructions | JVM ns | Ratio |", "| --- | --- | --- | --- | --- |"]
+    header = ["| Case | Suss ns | Suss instructions | Suss bytes | JVM ns | Ratio |",
+              "| --- | --- | --- | --- | --- | --- |"]
     print(f"n = {N}, best of {REPS}; Suss times are slopes between loop counts at least "
           f"{MIN_WORK} s of work apart\n")
     print("Nanoseconds and user-space instructions per operation, less its control")
     print("loop; a control's row is the whole loop iteration. ≈ 0 is a time no larger")
-    print("than its run-to-run spread.\n")
+    print("than its run-to-run spread. Bytes are allocated per operation, measured")
+    print(f"under the null collector; ≈ 0 is below {ALLOC_RESOLUTION >> 20} MiB between the two counts.\n")
     print("\n".join(header))
     for name, expr, control, _ in CASES:
         label = f"`{expr}`" + ("" if control else " (control)")
@@ -340,30 +393,34 @@ def table(suss, instructions, jvm):
         count = None
         if instructions:
             count = instructions[name] - (instructions[control] if control else 0.0)
-        print(row(label, per_op(suss, name, control, 1e9), count, per_op(jvm, name, control, 1e9)))
+        print(row(label, per_op(suss, name, control, 1e9), count, bytes_of(name, control),
+                  per_op(jvm, name, control, 1e9)))
     print("\nPer element of 1024, the loop step included:\n")
     print("\n".join(header))
     for name, expr, _ in REDUCTIONS:
         count = instructions[name] / 1024 if instructions else None
-        print(row(f"`{expr}`", scaled(suss, name, 1e9 / 1024), count, scaled(jvm, name, 1e9 / 1024)))
+        print(row(f"`{expr}`", scaled(suss, name, 1e9 / 1024), count, bytes_of(name, None, 1 / 1024),
+                  scaled(jvm, name, 1e9 / 1024)))
     print("\nPrograms, microseconds and instructions per run, the loop step included:\n")
     print("\n".join(h.replace(" ns", " µs") for h in header))
     for name, expr in PROGRAMS:
         count = instructions[name] if instructions else None
-        print(row(f"{name}: `{expr}`", scaled(suss, name, 1e6), count, scaled(jvm, name, 1e6)))
+        print(row(f"{name}: `{expr}`", scaled(suss, name, 1e6), count, bytes_of(name, None),
+                  scaled(jvm, name, 1e6)))
     print("\nWhole loops, per iteration:\n")
-    print("| Loop | Suss ns | Suss instructions | JVM ns | Ratio |")
-    print("| --- | --- | --- | --- | --- |")
+    print("| Loop | Suss ns | Suss instructions | Suss bytes | JVM ns | Ratio |")
+    print("| --- | --- | --- | --- | --- | --- |")
     for name, body, _ in LOOPS:
         count = instructions[name] if instructions else None
-        print(row(f"`{body}`", scaled(suss, name, 1e9), count, scaled(jvm, name, 1e9)))
+        print(row(f"`{body}`", scaled(suss, name, 1e9), count, bytes_of(name, None),
+                  scaled(jvm, name, 1e9)))
 
 
 if __name__ == "__main__":
     work = tempfile.mkdtemp(prefix="suss-numeric-bench-")
     try:
         jvm = jvm_times(work)
-        suss, instructions = suss_times(work)
-        table(suss, instructions, jvm)
+        suss, instructions, allocated = suss_times(work)
+        table(suss, instructions, allocated, jvm)
     finally:
         shutil.rmtree(work)
