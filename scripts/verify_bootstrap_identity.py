@@ -67,10 +67,13 @@ def main():
     expected = found[0]
     # The generator has already built this executable. Match its emitted identity
     # to avoid accidentally exercising an unrelated stale Cargo build directory.
-    builders = [path for path in sorted(target.glob("debug/build/suss-compile-generator-*/build-script-build"))
-                if fingerprint(path, ROOT) == expected]
+    candidates = sorted(target.glob("debug/build/suss-compile-generator-*/build-script-build"))
+    identities = {path: fingerprint(path, ROOT) for path in candidates}
+    builders = [path for path, identity in identities.items() if identity == expected]
     if not builders:
-        raise RuntimeError("no compiled build script matches the generated compiler identity")
+        found = "\n".join(f"  {path}: {identity}" for path, identity in identities.items()) or "  (none)"
+        raise RuntimeError(
+            f"no compiled build script matches the generated compiler identity {expected}; found:\n{found}")
     builder = builders[0]
     with tempfile.TemporaryDirectory(prefix="suss-bootstrap-identity-") as directory:
         first = Path(directory) / "first"
