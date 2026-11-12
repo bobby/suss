@@ -258,6 +258,81 @@ pub(super) fn functions(b: &mut Builder) {
             &body,
         );
     }
+    // `(aget a i)` and `(aset a i v)` on a packed array (#389): an i31 index
+    // inside the length reads or writes the storage directly. aset does so for
+    // the values whose conversion is exact: an i31 into long or int storage,
+    // and an i31 or boxed double into double storage. Anything else, and every
+    // error, takes packed-array-get or packed-array-set.
+    // Kinds in order of likely use, each cast once (br_on_cast_fail) into its
+    // own typed local. Locals: 2 storage, 3 index, then one per kind.
+    const ORDER: [usize; 6] = [4, 5, 2, 0, 1, 3];
+    let typed = |base: u32, kind: usize| base + kind as u32;
+    let locals = |base: usize| {
+        let mut locals = vec![(1, VALUE), (1, ValType::I32)];
+        locals.extend((0..KINDS.len()).map(|kind| (1, ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(storage(kind)) }))));
+        let _ = base;
+        locals
+    };
+    let cast_to = |body: &mut Vec<Instruction<'static>>, data: u32, local: u32, kind: usize| {
+        body.extend([
+            Block(BlockType::Result(VALUE)),
+            LocalGet(data),
+            BrOnCastFail {
+                relative_depth: 0,
+                from_ref_type: RefType::EQREF,
+                to_ref_type: RefType { nullable: false, heap_type: HeapType::Concrete(storage(kind)) },
+            },
+            LocalSet(local),
+        ]);
+    };
+    let mut body = vec![Block(BlockType::Empty)];
+    body.extend([LocalGet(1), RefTestNonNull(HeapType::I31), I32Eqz, BrIf(0)]);
+    body.extend([LocalGet(0), RefTestNonNull(HeapType::Concrete(PACKED)), I32Eqz, BrIf(0)]);
+    body.extend(data(2));
+    body.extend([LocalGet(1), RefCastNonNull(HeapType::I31), I31GetS, LocalSet(3)]);
+    for kind in ORDER {
+        let local = typed(4, kind);
+        cast_to(&mut body, 2, local, kind);
+        // Inside the cast's block, the slow path is one out.
+        body.extend([LocalGet(3), LocalGet(local), ArrayLen, I32GeU, BrIf(1), LocalGet(local), LocalGet(3)]);
+        body.extend(element(b, kind));
+        body.extend([Return, End, Drop]);
+    }
+    body.extend([End, LocalGet(0), LocalGet(1), Call(b.names["packed-array-get"])]);
+    b.function_with_locals("packed-array-get-2", &[VALUE, VALUE], &[VALUE], &locals(4), &body);
+    // Locals: 3 storage, 4 index, then one per kind.
+    let mut body = vec![Block(BlockType::Empty)];
+    body.extend([LocalGet(1), RefTestNonNull(HeapType::I31), I32Eqz, BrIf(0)]);
+    body.extend([LocalGet(0), RefTestNonNull(HeapType::Concrete(PACKED)), I32Eqz, BrIf(0)]);
+    body.extend(data(3));
+    body.extend([LocalGet(1), RefCastNonNull(HeapType::I31), I31GetS, LocalSet(4)]);
+    // long (4) and int (2) storage take an i31 value as it is; double (5) an
+    // i31, converted exactly, or a boxed double as it is. The result is the
+    // stored value, as aset's casts give. Other kinds and values fall through.
+    for kind in [4, 5, 2] {
+        let local = typed(5, kind);
+        cast_to(&mut body, 3, local, kind);
+        body.extend([LocalGet(4), LocalGet(local), ArrayLen, I32GeU, BrIf(1)]);
+        if kind == 5 {
+            body.extend([LocalGet(2), RefTestNonNull(HeapType::I31), If(BlockType::Empty)]);
+            body.extend([LocalGet(local), LocalGet(4), LocalGet(2), RefCastNonNull(HeapType::I31), I31GetS, F64ConvertI32S, ArraySet(storage(5))]);
+            body.extend([LocalGet(local), LocalGet(4), ArrayGet(storage(5)), Call(b.names["number-box"]), Return, End]);
+            body.extend([LocalGet(2), RefTestNonNull(HeapType::Concrete(NUMBER)), I32Eqz, BrIf(1)]);
+            body.extend([LocalGet(local), LocalGet(4), LocalGet(2), Call(b.names["number-unbox"]), ArraySet(storage(5)), LocalGet(2), Return]);
+        } else {
+            body.extend([LocalGet(2), RefTestNonNull(HeapType::I31), I32Eqz, BrIf(1)]);
+            body.extend([LocalGet(local), LocalGet(4), LocalGet(2), RefCastNonNull(HeapType::I31), I31GetS]);
+            if kind == 4 {
+                body.push(I64ExtendI32S);
+            }
+            body.extend([ArraySet(storage(kind)), LocalGet(2), Return]);
+        }
+        body.extend([End, Drop]);
+    }
+    body.extend([End, LocalGet(0), LocalGet(1), LocalGet(2), Call(b.names["packed-array-set"])]);
+    let mut set_locals = vec![(1, VALUE), (1, ValType::I32)];
+    set_locals.extend((0..KINDS.len()).map(|kind| (1, ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(storage(kind)) }))));
+    b.function_with_locals("packed-array-set-3", &[VALUE, VALUE, VALUE], &[VALUE], &set_locals, &body);
     // Locals: 1 source storage, 2 length, 3 copy.
     let mut body = data(1).to_vec();
     each_kind(&mut body, 1, |kind| {
