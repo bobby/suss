@@ -94,3 +94,26 @@ fn method_calls_keep_javascript_conventions() {
         }
     }
 }
+
+/// `(instance? T x)` answers false for an i31 without the prototype walk,
+/// after checking T (#378); closure-environment tests for a universal
+/// closure first. Expected values are `ebda997f`'s.
+#[test]
+fn instance_checks_keep_their_answers() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
+        for (source, expected) in [
+            ("[(instance? js/Object 1) (instance? Reduced 1) (instance? js/Object 1.5) (instance? js/Object 3000000000) (instance? js/Object \"a\") (instance? js/Object nil)]", "[false false false false false false]"),
+            ("[(instance? js/Object (js-obj)) (instance? js/Object [1]) (instance? Reduced (reduced 1)) (instance? js/Error 1) (instance? js/Error (js/Error. \"x\"))]", "[true true true false true]"),
+            ("[(reduced? 5) (reduced? (reduced 5)) (reduce (fn [a x] (if (> x 5) (reduced a) (+ a x))) 0 (range 100))]", "[false true 15]"),
+            ("(instance? 5 1)", r#"[:error "Invalid nominal operation"]"#),
+            ("(instance? (fn [] 1) 1)", r#"[:error "Invalid nominal operation"]"#),
+            ("(instance? :k 1)", r#"[:error "Invalid nominal operation"]"#),
+            ("(.call 5 nil)", r#"[:error "Invalid nominal operation"]"#),
+            ("(reduce + (long-array (range 1000)))", "499500"),
+            ("(transduce (comp (map inc) (filter even?)) + 0 (range 1000))", "250500"),
+        ] {
+            assert_eq!(printed(&mut session, source), expected, "{source}");
+        }
+    }
+}

@@ -40,15 +40,17 @@ fn nil(body: &mut Vec<Instruction<'static>>) {
 pub(super) fn functions(b: &mut Builder) -> u32 {
     use Instruction::*;
     // A universal closure's environment; any other closure has none (nil).
-    let mut body = vec![];
-    guard(&mut body, 0, CLOSURE);
-    body.extend([
+    // The universal test comes first (#378): it is an exact type match, inline
+    // in wasmtime 49, where a closure test of a universal closure is an
+    // out-of-line subtype check. Anything else must still be a closure.
+    let mut body = vec![
         LocalGet(0),
         RefTestNonNull(HeapType::Concrete(UNIVERSAL)),
         If(BlockType::Result(VALUE)),
-    ]);
+    ];
     field(&mut body, 0, UNIVERSAL, UNIVERSAL_ENVIRONMENT);
     body.push(Else);
+    guard(&mut body, 0, CLOSURE);
     nil(&mut body);
     body.push(End);
     let environment = b.function("closure-environment", &[VALUE], &[VALUE], &body);
@@ -136,7 +138,13 @@ pub(super) fn functions(b: &mut Builder) -> u32 {
             If(BlockType::Empty),
         ];
         nominal::error(&mut body);
-        body.extend([End, LocalGet(0), Call(fields), LocalSet(owner)]);
+        body.push(End);
+        if writing {
+            // A function's keyed or internal properties (its prototype
+            // carrier among them) back cached call sites (#378).
+            body.extend([GlobalGet(PROTOCOL_EPOCH_GLOBAL), I32Const(1), I32Add, GlobalSet(PROTOCOL_EPOCH_GLOBAL)]);
+        }
+        body.extend([LocalGet(0), Call(fields), LocalSet(owner)]);
         guard(&mut body, owner, ARGS);
         array(&mut body, owner);
         body.extend([I32Const(0), ArrayGet(ARGS), LocalTee(keys)]);

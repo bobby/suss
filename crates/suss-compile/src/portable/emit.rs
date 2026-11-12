@@ -448,6 +448,21 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }
         }
     }
+    // `instance?` sites cache their constructor's descriptor and prototype
+    // (#378): the descriptor is immutable and the prototype is created once.
+    let mut instance_site_list = vec![];
+    for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
+        .chain(futures.iter().map(|body| &body.continuation.function))
+    {
+        for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
+            if let Operation::Nominal { operation: Nominal::Instance, .. } = &inst.operation {
+                instance_site_list.push((function as *const IrFunction as usize, inst.result.0 as u32));
+            }
+        }
+    }
+    if !instance_site_list.is_empty() {
+        names.insert("owned-descriptor-prototype");
+    }
     let imported_slots = slots.iter().copied().filter(|slot| !owned_slots.contains(slot)).collect::<Vec<_>>();
     let imported_definitions = called.iter().copied().filter(|definition| !defined_definitions.contains_key(definition)).collect::<Vec<_>>();
     for definition in &imported_definitions {
@@ -541,6 +556,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 vec![VALUE],
             ),
             "number-hash"
+            | "owned-descriptor-prototype"
             | "source-array-new"
             | "source-array-make"
             | "source-array-make-literal"
@@ -648,7 +664,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     }
     // The protocol epoch follows the imported link globals. Field sites also
     // cache methods under it (#378).
-    let epoch_used = !method_site_list.is_empty() || !field_site_list.is_empty();
+    let epoch_used = !method_site_list.is_empty() || !field_site_list.is_empty() || !instance_site_list.is_empty();
     if epoch_used {
         imports.import(
             "suss.runtime",
@@ -734,6 +750,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let method_sites = method_site_list.iter().enumerate()
         .map(|(index, site)| (*site, first_method_site + 3 * index as u32))
         .collect::<std::collections::HashMap<_, _>>();
+    let first_instance_site = first_method_site + 3 * method_site_list.len() as u32;
+    let instance_sites = instance_site_list.iter().enumerate()
+        .map(|(index, site)| (*site, first_instance_site + 4 * index as u32))
+        .collect::<std::collections::HashMap<_, _>>();
     for (index, definition) in imported_definitions.iter().enumerate() {
         links.codes.insert(*definition, first_imported_link + imported_slots.len() as u32 + index as u32);
         let entries = (0..=runtime_abi::MAX_FIXED).map(|k| {
@@ -759,7 +779,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let mut data = LiteralData::default();
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
         dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites, length_sites: &length_sites,
-        method_sites: &method_sites, epoch_global };
+        method_sites: &method_sites, instance_sites: &instance_sites, epoch_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -882,6 +902,19 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             &ConstExpr::i32_const(-1),
         );
     }
+    for _ in &instance_site_list {
+        // Constructor, descriptor, prototype, epoch.
+        for _ in 0..3 {
+            code_globals.global(
+                GlobalType { val_type: VALUE, mutable: true, shared: false },
+                &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
+            );
+        }
+        code_globals.global(
+            GlobalType { val_type: ValType::I32, mutable: true, shared: false },
+            &ConstExpr::i32_const(-1),
+        );
+    }
     for (definition, global) in &defined_code {
         exports.export(&format!("link.{definition}.code"), ExportKind::Global, *global);
         for (k, entry) in links.entries[definition].iter().enumerate() {
@@ -902,7 +935,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .section(&types)
         .section(&imports)
         .section(&functions);
-    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() {
+    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() {
         module.section(&code_globals);
     }
     module.section(&exports);
@@ -988,6 +1021,8 @@ struct Context<'a> {
     /// Cached core field read sites, by (function, result): their first global.
     field_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     length_sites: &'a std::collections::HashSet<(usize, u32)>,
+    /// Cached `instance?` sites: their first global (#378).
+    instance_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     /// Cached protocol method lookup sites: their first global; the epoch.
     method_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     epoch_global: u32,
@@ -1317,7 +1352,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
-    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, epoch_global } = *context;
+    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, epoch_global } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -2473,7 +2508,69 @@ fn emit_function(
                                 })
                                 .instruction(&Call(index("source-construct-from-plan")));
                         }
-                        Nominal::Instance | Nominal::Set | Nominal::Marker => {
+                        Nominal::Instance => {
+                            // Inline cache (#378): the site keeps its last
+                            // constructor's descriptor and prototype. An i31
+                            // is a primitive, never an instance; an object of
+                            // the descriptor other than its prototype is one;
+                            // anything else takes object-instance. The
+                            // constructor is checked before the value.
+                            let cache = instance_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            let (constructor, value) = (arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset);
+                            let full = |function: &mut Function| {
+                                function
+                                    .instruction(&GlobalGet(cache + 1))
+                                    .instruction(&LocalGet(value))
+                                    .instruction(&Call(index("object-instance")));
+                            };
+                            function
+                                .instruction(&LocalGet(constructor))
+                                .instruction(&GlobalGet(cache))
+                                .instruction(&RefEq)
+                                .instruction(&GlobalGet(cache + 3))
+                                .instruction(&GlobalGet(epoch_global))
+                                .instruction(&I32Eq)
+                                .instruction(&I32And)
+                                .instruction(&I32Eqz)
+                                .instruction(&If(BlockType::Empty))
+                                .instruction(&LocalGet(constructor))
+                                .instruction(&Call(index("constructor-descriptor")))
+                                .instruction(&GlobalSet(cache + 1))
+                                .instruction(&GlobalGet(cache + 1))
+                                .instruction(&Call(index("owned-descriptor-prototype")))
+                                .instruction(&GlobalSet(cache + 2))
+                                .instruction(&LocalGet(constructor))
+                                .instruction(&GlobalSet(cache))
+                                .instruction(&GlobalGet(epoch_global))
+                                .instruction(&GlobalSet(cache + 3))
+                                .instruction(&End)
+                                .instruction(&LocalGet(value))
+                                .instruction(&RefTestNonNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 }))
+                                .instruction(&If(BlockType::Result(ValType::I32)))
+                                .instruction(&I32Const(0))
+                                .instruction(&Else)
+                                .instruction(&LocalGet(value))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(7)))
+                                .instruction(&If(BlockType::Result(ValType::I32)))
+                                .instruction(&LocalGet(value))
+                                .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+                                .instruction(&StructGet { struct_type_index: 7, field_index: 0 })
+                                .instruction(&GlobalGet(cache + 1))
+                                .instruction(&RefEq)
+                                .instruction(&LocalGet(value))
+                                .instruction(&GlobalGet(cache + 2))
+                                .instruction(&RefEq)
+                                .instruction(&I32Eqz)
+                                .instruction(&I32And)
+                                .instruction(&If(BlockType::Result(ValType::I32)))
+                                .instruction(&I32Const(1))
+                                .instruction(&Else);
+                            full(&mut function);
+                            function.instruction(&End).instruction(&Else);
+                            full(&mut function);
+                            function.instruction(&End).instruction(&End);
+                        }
+                        Nominal::Set | Nominal::Marker => {
                             function
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                 .instruction(&Call(index("constructor-descriptor")));
