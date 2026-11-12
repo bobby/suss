@@ -1,21 +1,32 @@
 #!/usr/bin/env python3
 """Operations and small programs in compiled Suss against JVM Clojure (#336, #337, #347).
 
-Each case is one expression evaluated in a loop of `n` iterations; the cost
-per operation is the loop's time less the time of its control loop, which
-evaluates only the operands, divided by the number of operations. Suss runs
-compiled components with `suss run --invoke` (no fuel metering); the JVM side
-runs the same forms in one process, timed with System/nanoTime after warm-up.
-Each JVM iteration stores its result in a sink array, so the JIT can't drop the
-operation; the control loop stores too, so the store cancels out.
+Each case is one expression evaluated in a loop; the cost per operation is the
+loop's time per iteration less that of its control loop, which evaluates only
+the operands. Suss runs compiled components with `suss run --invoke` (no fuel
+metering), one process per run. A case's time per iteration is the slope
+between its best run at a loop count and its best run at twice that count, so
+process startup cancels; the count grows until the two differ by at least
+MIN_WORK seconds, so startup's run-to-run jitter stays small beside the work.
+The JVM side runs the same forms in one process, timed with System/nanoTime
+after warm-up. Each JVM iteration stores its result in a sink array, so the JIT
+can't drop the operation; the control loop stores too. Each Suss iteration
+compares its result with `sentinel`, a var the compiler can't fold the test
+against, whatever the result's type.
+
+A time no larger than its run-to-run spread, or a case no slower than its
+control by more than both spreads, prints as ≈ 0: that difference is below
+what the bench can measure, so neither a negative time nor a clamped 0 would
+be meaningful.
 
 Where `perf` is installed, each Suss case also reports user-space
-instructions per operation from `perf stat -e instructions:u`: the count at n
-less the count at 0, which unlike time doesn't depend on machine load.
+instructions per iteration from `perf stat -e instructions:u`, the slope
+between the same two counts, which unlike time doesn't depend on machine load.
 
 Usage: bench.py [n] [reps]   (from the repository root, after building a
 release suss)
 """
+import math
 import os
 import shutil
 import subprocess
@@ -27,6 +38,10 @@ N = int(sys.argv[1]) if len(sys.argv) > 1 else 5_000_000
 REPS = int(sys.argv[2]) if len(sys.argv) > 2 else 3
 SUSS = os.path.abspath("target/release/suss")
 PERF = shutil.which("perf")
+# Seconds of work between a Suss case's two loop counts, and the largest
+# count, since a case takes its count as a WIT u32 and also runs at twice it.
+MIN_WORK = 0.5
+MAX_COUNT = 2**31 - 1
 
 # The loop's operands: `i` is the loop counter, a long, and `m` is it masked
 # to an index. Arrays have 1024 elements. JVM forms add the type hints
@@ -161,7 +176,7 @@ JVM = {
 def loop(name, expr, n, sink=False):
     # The result feeds the accumulator, or on the JVM the sink, so neither side
     # can drop the operation.
-    use = "(do (sink! r) (recur (inc i) c))" if sink else "(recur (inc i) (if (identical? r nil) (inc c) c))"
+    use = "(do (sink! r) (recur (inc i) c))" if sink else "(recur (inc i) (if (identical? r sentinel) (inc c) c))"
     form = f"(loop [i 0 c 0] (if (< i {n}) (let [r {expr}] {use}) c))"
     return WRAP.get(name, "{}").format(form)
 
@@ -183,7 +198,10 @@ def counted():
 
 def suss_times(work):
     cases = counted()
-    source = ["(ns bench)"] + [f"(def {name} {init})" for name, init, _ in SETUP] + DEFS
+    # `sentinel` is a long, so comparing any result with it stays inline; as a
+    # var, it can't be folded, as `nil` is against a result typed as a Bool.
+    source = (["(ns bench)", "(def sentinel -1)"]
+              + [f"(def {name} {init})" for name, init, _ in SETUP] + DEFS)
     for name, expr, _ in cases:
         source.append(f"(def case-{name} (fn [n] {loop(name, expr, 'n')}))")
     for name, body, _ in LOOPS:
@@ -215,20 +233,33 @@ def suss_times(work):
                   if "instructions" in line and line.split(",")[0].isdigit()]
         return seconds, (counts[0] if counts else None)
 
-    def best(name, n):
-        runs = [run(name, n) for _ in range(REPS)]
-        return min(s for s, _ in runs), (min(c for _, c in runs) if PERF else None)
+    def slope(name, count):
+        # Seconds per iteration and its run-to-run spread, and instructions
+        # per iteration, from REPS runs each at count and 2·count. The count
+        # grows until the best runs differ by MIN_WORK seconds.
+        short, long = run(name, count), run(name, 2 * count)
+        while long[0] - short[0] < MIN_WORK and count < MAX_COUNT // 2:
+            work = max(long[0] - short[0], MIN_WORK / 64)
+            count = min(count * max(2, math.ceil(MIN_WORK / work)), MAX_COUNT // 2)
+            short, long = run(name, count), run(name, 2 * count)
+        shorts, longs = [short], [long]
+        for _ in range(REPS - 1):
+            shorts.append(run(name, count))
+            longs.append(run(name, 2 * count))
+        seconds = [s for s, _ in shorts], [s for s, _ in longs]
+        per_iteration = (min(seconds[1]) - min(seconds[0])) / count
+        spread = sum(max(s) - min(s) for s in seconds) / count
+        counts = None
+        if PERF:
+            counts = (min(c for _, c in longs) - min(c for _, c in shorts)) / count
+        return (per_iteration, spread), counts
 
     run("long-control", 1)  # Compiles and caches native code.
-    # Seconds per iteration, less process startup, and instructions per
-    # iteration, less the case's count at 0.
-    startup = best("long-control", 0)[0]
-    times, instructions = {"startup": startup}, {}
+    times, instructions = {}, {}
     for name, _, count in cases + [(name, body, N) for name, body, _ in LOOPS]:
-        seconds, total = best(name, count)
-        times[name] = (seconds - startup) / count
+        times[name], counts = slope(name, max(count, 1))
         if PERF:
-            instructions[name] = (total - best(name, 0)[1]) / count
+            instructions[name] = counts
     return times, instructions
 
 
@@ -249,8 +280,9 @@ def jvm_times(work):
     lines.append(f"(def cases [{' '.join(entries)}])")
     # Warm up every case, then take the best of REPS runs.
     lines.append("(doseq [[_ _ f] cases] (dotimes [_ 3] (f)))")
-    # Seconds per iteration.
-    lines.append(f"(doseq [[name count f] cases] (println name (/ (apply min (repeatedly {REPS} f)) count)))")
+    # Seconds per iteration, best and worst.
+    lines.append(f"(doseq [[name count f] cases] (let [ts (repeatedly {REPS} f)] "
+                 "(println name (/ (apply min ts) count) (/ (apply max ts) count))))")
     path = os.path.join(work, "bench.clj")
     with open(path, "w") as file:
         file.write("\n".join(lines) + "\n")
@@ -261,45 +293,70 @@ def jvm_times(work):
     reflection = [line for line in output.stderr.splitlines() if "Reflection warning" in line]
     if reflection:
         sys.exit("\n".join(reflection))
-    return {name: float(value) for name, value in (line.split() for line in output.stdout.splitlines())}
+    # Name -> (seconds per iteration, run-to-run spread).
+    times = {}
+    for name, best, worst in (line.split() for line in output.stdout.splitlines()):
+        times[name] = (float(best), float(worst) - float(best))
+    return times
 
 
 def table(suss, instructions, jvm):
     def per_op(values, name, control, scale):
-        return (values[name] - (values[control] if control else 0.0)) * scale
+        # A case's time less its control's, and the two runs' spreads together.
+        value, spread = values[name]
+        if control:
+            value -= values[control][0]
+            spread += values[control][1]
+        return value * scale, spread * scale
+
+    def measured(time):
+        # The time, or None when it's no larger than its spread.
+        value, spread = time
+        return value if value > spread else None
 
     def row(label, s, i, j):
-        ratio = f"{s / j:.0f}×" if j >= 0.05 and s > 0 else ""
+        s, j = measured(s), measured(j)
+        ratio = f"{s / j:.0f}×" if s is not None and j is not None and j >= 0.05 else ""
         count = "" if i is None else f"{i:,.0f}"
-        return f"| {label} | {s:,.1f} | {count} | {j:,.2f} | {ratio} |"
+        suss_time = "≈ 0" if s is None else f"{s:,.1f}"
+        jvm_time = "≈ 0" if j is None else f"{j:,.2f}"
+        return f"| {label} | {suss_time} | {count} | {jvm_time} | {ratio} |"
+
+    def scaled(values, name, scale):
+        value, spread = values[name]
+        return value * scale, spread * scale
 
     header = ["| Case | Suss ns | Suss instructions | JVM ns | Ratio |", "| --- | --- | --- | --- | --- |"]
-    print(f"n = {N}, best of {REPS}; Suss startup {suss['startup']:.2f} s\n")
+    print(f"n = {N}, best of {REPS}; Suss times are slopes between loop counts at least "
+          f"{MIN_WORK} s of work apart\n")
     print("Nanoseconds and user-space instructions per operation, less its control")
-    print("loop; a control's row is the whole loop iteration.\n")
+    print("loop; a control's row is the whole loop iteration. ≈ 0 is a time no larger")
+    print("than its run-to-run spread.\n")
     print("\n".join(header))
     for name, expr, control, _ in CASES:
         label = f"`{expr}`" + ("" if control else " (control)")
         if name in WRAP:
             label += f" in `{WRAP[name].format('…')}`"
-        count = per_op(instructions, name, control, 1) if instructions else None
+        count = None
+        if instructions:
+            count = instructions[name] - (instructions[control] if control else 0.0)
         print(row(label, per_op(suss, name, control, 1e9), count, per_op(jvm, name, control, 1e9)))
     print("\nPer element of 1024, the loop step included:\n")
     print("\n".join(header))
     for name, expr, _ in REDUCTIONS:
         count = instructions[name] / 1024 if instructions else None
-        print(row(f"`{expr}`", suss[name] / 1024 * 1e9, count, jvm[name] / 1024 * 1e9))
+        print(row(f"`{expr}`", scaled(suss, name, 1e9 / 1024), count, scaled(jvm, name, 1e9 / 1024)))
     print("\nPrograms, microseconds and instructions per run, the loop step included:\n")
     print("\n".join(h.replace(" ns", " µs") for h in header))
     for name, expr in PROGRAMS:
         count = instructions[name] if instructions else None
-        print(row(f"{name}: `{expr}`", suss[name] * 1e6, count, jvm[name] * 1e6))
+        print(row(f"{name}: `{expr}`", scaled(suss, name, 1e6), count, scaled(jvm, name, 1e6)))
     print("\nWhole loops, per iteration:\n")
     print("| Loop | Suss ns | Suss instructions | JVM ns | Ratio |")
     print("| --- | --- | --- | --- | --- |")
     for name, body, _ in LOOPS:
         count = instructions[name] if instructions else None
-        print(row(f"`{body}`", suss[name] * 1e9, count, jvm[name] * 1e9))
+        print(row(f"`{body}`", scaled(suss, name, 1e9), count, scaled(jvm, name, 1e9)))
 
 
 if __name__ == "__main__":

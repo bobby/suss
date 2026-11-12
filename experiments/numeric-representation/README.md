@@ -188,8 +188,8 @@ from REPL measurements recorded in
 Suss against the same forms in JVM Clojure 1.12.6. Each case evaluates one
 expression in a loop; its cost is the loop's time per iteration less that of a
 control loop that evaluates only the operands. Suss runs a compiled component
-with `suss run --invoke`, which meters no fuel, as one process per run, less
-the process's startup; the JVM runs every case in one process with
+with `suss run --invoke`, which meters no fuel, as one process per run; the JVM
+runs every case in one process with
 `System/nanoTime`, after three warm-up runs of each. JVM forms carry the array
 type hints Clojure code would use, and box a long where the shared form would
 reflect. The JVM is a local measuring tool, as for the suite oracle.
@@ -205,6 +205,34 @@ the count at n less the count at 0), which unlike time doesn't depend on
 machine load. The results below this paragraph used a `--profile test` build,
 whose debug assertions also apply to wasmtime and add about 106 instructions
 to every call; [the M15 baseline](#m15-baseline-347) replaces them.
+
+### Timing without negative results
+
+Runs up to M15-09 (`run_m15_09.txt`) report time per iteration as a run's time
+less the best startup of another case at n = 0, and each case less its
+control. Both subtractions could go negative, and often did:
+
+- **Startup jitter.** A run's startup, 0.2–0.35 s, varies by tens of
+  milliseconds, as much as a fast case's whole loop or the 50 runs of a
+  program. `(fib 20)` measured −313.9 µs per run on 06783f4d.
+- **JVM boxing.** The JVM control `i` sinks a freshly boxed `Long` each
+  iteration, while a case returning a cached value, such as `(f0)` or
+  `(= :a :b)`, allocates nothing: 2.85 ns per iteration for the control
+  against 2.03 for `(f0)`, so the difference is negative before any noise.
+- **A foldable Suss control.** Each Suss iteration tested its result with
+  `(identical? r nil)`, which the compiler folds away for a Bool result, so
+  `(== i 7)` measured −8 to −14 instructions below its control.
+
+Since then, a Suss case's time and instructions per iteration are the slope
+between its best of three runs at a loop count and at twice that count, so
+startup cancels; the count grows until the two runs differ by at least 0.5 s
+of work. Each Suss iteration compares its result with a var, `sentinel`, which
+the compiler can't fold. A time no larger than its run-to-run spread (a
+case's, plus its control's), including any negative difference, prints as
+≈ 0, below what the bench resolves; `history.py` reads ≈ 0 and earlier
+negative times the same way. The JVM's boxing difference remains, so JVM
+times for operations cheaper than boxing a long print as ≈ 0. Instruction
+counts from before and after compare; net times from before don't.
 
 Besides numeric operations and calls, the bench covers persistent
 collections (`conj`, map `get` and `assoc`, keyword lookup, set
@@ -320,9 +348,10 @@ at load 6.5–8, best of three, in
 | `(loop [i 0 acc 0] (if (< i n) (recur (inc i) (+ acc i)) acc))` | 0.81 | `d_i64_checked` | 0.80 | 1.01× |
 | `(loop [i 0 acc 0.0] (if (< i n) (recur (inc i) (+ acc 0.5)) acc))` | 0.83 | | | |
 
-`bench.py`'s whole-loop rows run the same loops at its default n = 5·10⁶,
-where startup (about 0.2 s) dwarfs the loop (about 9 ms), so use them only to
-check that the loops still run; time the loops at a large n as above.
+Before `bench.py` timed by slope, its whole-loop rows ran these loops at
+n = 5·10⁶, where startup (about 0.2 s) dwarfed the loop (about 9 ms). They now
+grow n until the loop's time stands out from startup's jitter, as the cases
+do.
 
 ## Calling conventions (ADR-0004, #359)
 

@@ -25,11 +25,20 @@ RUNS = [
     ("M15-08 dispatch entries", "c00a97c9", "run_m15_08a.txt"),
     ("M15-09 keyword interning, fast paths", "06783f4d", "run_m15_09.txt"),
 ]
-ROW = re.compile(r"^\| (.+?) \| (-?[\d,.]+) \| ([\d,]*) \| (-?[\d,.]+) \| [^|]* \|$")
+# A time is a number or ≈ 0, below the run-to-run spread; runs before the bench
+# printed ≈ 0 could show negative times, which are below it too.
+ROW = re.compile(r"^\| (.+?) \| (-?[\d,.]+|≈ 0) \| (-?[\d,]*) \| (-?[\d,.]+|≈ 0) \| [^|]* \|$")
+
+
+def time(text):
+    # A row's time, or None for one below the bench's resolution.
+    value = None if text == "≈ 0" else float(text.replace(",", ""))
+    return value if value is not None and value > 0 else None
 
 
 def rows(path):
-    # Section unit and (label -> (Suss time, instructions, JVM time)), in order.
+    # Section unit and (label -> (Suss time, instructions, JVM time)), in
+    # order; a time is None where it's below the bench's resolution.
     section, found = "ns per operation", {}
     for line in open(path):
         if line.startswith("Per element"):
@@ -39,8 +48,7 @@ def rows(path):
         match = ROW.match(line.strip())
         if match:
             label, suss, count, jvm = match.groups()
-            found[label] = (section, float(suss.replace(",", "")),
-                            count.replace(",", "") or None, float(jvm.replace(",", "")))
+            found[label] = (section, time(suss), count.replace(",", "") or None, time(jvm))
     return found
 
 
@@ -68,7 +76,8 @@ def main():
             counts.append(f"{int(count):,}" if count else "—")
         if label in latest:
             _, suss, _, jvm = latest[label]
-            times = f"{max(suss, 0):,.1f} | {max(jvm, 0):,.2f}"
+            times = ("≈ 0" if suss is None else f"{suss:,.1f}") + " | " + \
+                ("≈ 0" if jvm is None else f"{jvm:,.2f}")
         else:
             times = "— | —"
         print(f"| {label} | " + " | ".join(counts) + f" | {times} |")
