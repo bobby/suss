@@ -585,9 +585,8 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
             &body,
         );
     }
-    let mut body = vec![];
-    guard(&mut body, 0, 4);
-    body.extend([LocalGet(0), Call(b.names["closure-environment"])]);
+    // closure-environment rejects a non-closure with the same error (#378).
+    let mut body = vec![LocalGet(0), Call(b.names["closure-environment"])];
     body.push(LocalSet(1));
     guard(&mut body, 1, DESCRIPTOR);
     body.push(LocalGet(1));
