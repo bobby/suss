@@ -11,6 +11,10 @@ use crate::runtime_abi;
 use std::{borrow::Cow, collections::BTreeSet};
 use wasm_encoder::*;
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
+/// Globals per cached named-read site: descriptor, field slot, method and
+/// epoch, then a second method entry's descriptor, epoch and method (#378).
+const FIELD_SITE_GLOBALS: u32 = 7;
+
 fn arithmetic_name(
     operator: Arithmetic,
     arguments: &[ir::ValueId],
@@ -415,6 +419,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     }
     if !field_site_list.is_empty() {
         names.insert("named-field-slot");
+        names.insert("descriptor-method-get");
     }
     // Protocol method lookups get an inline cache (#355): the last
     // descriptor, its method and the protocol epoch it was found at.
@@ -623,8 +628,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             EntityType::Global(GlobalType { val_type: runtime_abi::code_type(), mutable: false, shared: false }),
         );
     }
-    // The protocol epoch follows the imported link globals.
-    if !method_site_list.is_empty() {
+    // The protocol epoch follows the imported link globals. Field sites also
+    // cache methods under it (#378).
+    let epoch_used = !method_site_list.is_empty() || !field_site_list.is_empty();
+    if epoch_used {
         imports.import(
             "suss.runtime",
             "protocol-epoch",
@@ -633,7 +640,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     }
     let imported_link_globals = (imported_slots.len() + imported_definitions.len()) as u32;
     let epoch_global = globals.len() as u32 + 3 + imported_link_globals;
-    let imported_link_globals = imported_link_globals + u32::from(!method_site_list.is_empty());
+    let imported_link_globals = imported_link_globals + u32::from(epoch_used);
     let eval_type = type_count + names.len() as u32;
     types.ty().function([], [VALUE]);
     if throws {
@@ -703,9 +710,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     }
     let first_field_site = first_owned_slot + owned_slots.len() as u32;
     let field_sites = field_site_list.iter().enumerate()
-        .map(|(index, site)| (*site, first_field_site + 2 * index as u32))
+        .map(|(index, site)| (*site, first_field_site + FIELD_SITE_GLOBALS * index as u32))
         .collect::<std::collections::HashMap<_, _>>();
-    let first_method_site = first_field_site + 2 * field_site_list.len() as u32;
+    let first_method_site = first_field_site + FIELD_SITE_GLOBALS * field_site_list.len() as u32;
     let method_sites = method_site_list.iter().enumerate()
         .map(|(index, site)| (*site, first_method_site + 3 * index as u32))
         .collect::<std::collections::HashMap<_, _>>();
@@ -802,6 +809,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         exports.export(&format!("slot.{slot}"), ExportKind::Global, links.slots[slot]);
     }
     for _ in &field_site_list {
+        // Descriptor, field slot (-1 for a method), method, and the protocol
+        // epoch the method was found at.
         code_globals.global(
             GlobalType { val_type: VALUE, mutable: true, shared: false },
             &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
@@ -809,6 +818,26 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         code_globals.global(
             GlobalType { val_type: ValType::I32, mutable: true, shared: false },
             &ConstExpr::i32_const(0),
+        );
+        code_globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
+        );
+        code_globals.global(
+            GlobalType { val_type: ValType::I32, mutable: true, shared: false },
+            &ConstExpr::i32_const(-1),
+        );
+        code_globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
+        );
+        code_globals.global(
+            GlobalType { val_type: ValType::I32, mutable: true, shared: false },
+            &ConstExpr::i32_const(-1),
+        );
+        code_globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
         );
     }
     for _ in &method_site_list {
@@ -1300,6 +1329,9 @@ fn emit_function(
     // A cached field read's looked-up index.
     let field_index_local = callee + 1;
     declarations.push((1, ValType::I32));
+    // A cached named read's looked-up method (#378).
+    let method_local = callee + 2;
+    declarations.push((1, VALUE));
     let mut function = Function::new(declarations);
     use Instruction::*;
     if continuation.is_none() {
@@ -2105,6 +2137,51 @@ fn emit_function(
                                     .instruction(&StructGet { struct_type_index: 7, field_index: 1 })
                                     .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)));
                             };
+                            // Not a field: the descriptor's own method, cached
+                            // with the epoch, or the full lookup when it has
+                            // none (#378).
+                            let method = |function: &mut Function| {
+                                function
+                                    .instruction(&LocalGet(object))
+                                    .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+                                    .instruction(&StructGet { struct_type_index: 7, field_index: 0 })
+                                    .instruction(&LocalGet(name))
+                                    .instruction(&Call(index("descriptor-method-get")))
+                                    .instruction(&LocalTee(method_local))
+                                    .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, sentinels))
+                                    .instruction(&RefEq)
+                                    .instruction(&If(BlockType::Result(VALUE)))
+                                    .instruction(&LocalGet(object))
+                                    .instruction(&LocalGet(name))
+                                    .instruction(&Call(index("named-property-get")))
+                                    .instruction(&Else)
+                                    // Two-way (#378): a site that alternates
+                                    // between two node types keeps both, so
+                                    // the method entry moves to the second.
+                                    .instruction(&GlobalGet(cache + 1))
+                                    .instruction(&I32Const(0))
+                                    .instruction(&I32LtS)
+                                    .instruction(&If(BlockType::Empty))
+                                    .instruction(&GlobalGet(cache))
+                                    .instruction(&GlobalSet(cache + 4))
+                                    .instruction(&GlobalGet(cache + 3))
+                                    .instruction(&GlobalSet(cache + 5))
+                                    .instruction(&GlobalGet(cache + 2))
+                                    .instruction(&GlobalSet(cache + 6))
+                                    .instruction(&End)
+                                    .instruction(&LocalGet(object))
+                                    .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+                                    .instruction(&StructGet { struct_type_index: 7, field_index: 0 })
+                                    .instruction(&GlobalSet(cache))
+                                    .instruction(&I32Const(-1))
+                                    .instruction(&GlobalSet(cache + 1))
+                                    .instruction(&LocalGet(method_local))
+                                    .instruction(&GlobalSet(cache + 2))
+                                    .instruction(&GlobalGet(epoch_global))
+                                    .instruction(&GlobalSet(cache + 3))
+                                    .instruction(&LocalGet(method_local))
+                                    .instruction(&End);
+                            };
                             function
                                 .instruction(&LocalGet(object))
                                 .instruction(&RefTestNonNull(HeapType::Concrete(7)))
@@ -2114,11 +2191,40 @@ fn emit_function(
                                 .instruction(&StructGet { struct_type_index: 7, field_index: 0 })
                                 .instruction(&GlobalGet(cache))
                                 .instruction(&RefEq)
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&GlobalGet(cache + 1))
+                                .instruction(&I32Const(0))
+                                .instruction(&I32GeS)
                                 .instruction(&If(BlockType::Result(VALUE)));
                             fields(&mut function);
                             function
                                 .instruction(&GlobalGet(cache + 1))
                                 .instruction(&ArrayGet(runtime_abi::ARGS))
+                                .instruction(&Else)
+                                // A method found at this epoch (#378).
+                                .instruction(&GlobalGet(cache + 3))
+                                .instruction(&GlobalGet(epoch_global))
+                                .instruction(&I32Eq)
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&GlobalGet(cache + 2))
+                                .instruction(&Else);
+                            method(&mut function);
+                            function
+                                .instruction(&End)
+                                .instruction(&End)
+                                .instruction(&Else)
+                                // The second method entry, at this epoch.
+                                .instruction(&LocalGet(object))
+                                .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+                                .instruction(&StructGet { struct_type_index: 7, field_index: 0 })
+                                .instruction(&GlobalGet(cache + 4))
+                                .instruction(&RefEq)
+                                .instruction(&GlobalGet(cache + 5))
+                                .instruction(&GlobalGet(epoch_global))
+                                .instruction(&I32Eq)
+                                .instruction(&I32And)
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&GlobalGet(cache + 6))
                                 .instruction(&Else)
                                 .instruction(&LocalGet(object))
                                 .instruction(&LocalGet(name))
@@ -2137,10 +2243,10 @@ fn emit_function(
                             function
                                 .instruction(&LocalGet(field_index_local))
                                 .instruction(&ArrayGet(runtime_abi::ARGS))
-                                .instruction(&Else)
-                                .instruction(&LocalGet(object))
-                                .instruction(&LocalGet(name))
-                                .instruction(&Call(index("named-property-get")))
+                                .instruction(&Else);
+                            method(&mut function);
+                            function
+                                .instruction(&End)
                                 .instruction(&End)
                                 .instruction(&End)
                                 .instruction(&Else)
