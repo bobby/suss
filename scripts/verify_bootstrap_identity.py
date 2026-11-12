@@ -6,6 +6,7 @@ manifest (runtime.edn); its compiler identity is the expected one. The build
 script exercised is suss-compile-generator's, which computes the same identity
 as suss-compile's without generating artifacts (#383)."""
 import sys
+import json
 import os
 from pathlib import Path
 import re
@@ -54,9 +55,6 @@ def copy_inputs(destination):
 
 
 def main():
-    target = Path(os.environ.get("CARGO_TARGET_DIR", ROOT / "target"))
-    if not target.is_absolute():
-        target = ROOT / target
     if len(sys.argv) != 2:
         raise RuntimeError("usage: verify_bootstrap_identity.py GENERATED-RUNTIME-MANIFEST")
     manifest = Path(sys.argv[1]).read_text()
@@ -65,9 +63,22 @@ def main():
     if len(found) != 1:
         raise RuntimeError("runtime.edn does not record exactly one compiler identity")
     expected = found[0]
-    # The generator has already built this executable. Match its emitted identity
-    # to avoid accidentally exercising an unrelated stale Cargo build directory.
-    candidates = sorted(target.glob("debug/build/suss-compile-generator-*/build-script-build"))
+    # The build script Cargo compiled for this checkout, as Cargo reports it:
+    # its build-script layout is internal and changed in Cargo 1.100, so the
+    # path comes from `--message-format=json`, not a glob (#383). The build is
+    # already up to date, so this only reports it.
+    output = subprocess.run(
+        ["cargo", "build", "--profile", "test", "--locked", "-p", "suss-compile-generator",
+         "--message-format=json"],
+        cwd=ROOT, capture_output=True, text=True, check=True,
+    ).stdout
+    candidates = []
+    for line in output.splitlines():
+        message = json.loads(line)
+        if (message.get("reason") == "compiler-artifact"
+                and "custom-build" in message["target"]["kind"]
+                and message["target"]["src_path"].endswith("suss-compile-generator/build.rs")):
+            candidates.extend(Path(name) for name in message["filenames"])
     identities = {path: fingerprint(path, ROOT) for path in candidates}
     builders = [path for path, identity in identities.items() if identity == expected]
     if not builders:
