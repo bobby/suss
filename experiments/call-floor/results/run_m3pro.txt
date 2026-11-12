@@ -1,0 +1,25 @@
+Apple M3 Pro, macOS 26.5, best of 5 at n = 5x10^7; each block is one build of this crate with the wasmtime pin shown.
+
+== wasmtime 49.0.1
+control            0.54 ns  (+0.00)
+cast_final         0.54 ns  (+0.00)
+cast_super         3.81 ns  (+3.27)
+callref_global     1.33 ns  (+0.79)
+callref_struct     8.95 ns  (+8.41)
+call_indirect      1.36 ns  (+0.82)
+== wasmtime 50.0.1
+control            0.56 ns  (+0.00)
+cast_final         0.55 ns  (+-0.01)
+cast_super         4.15 ns  (+3.59)
+callref_global     1.38 ns  (+0.82)
+callref_struct     9.02 ns  (+8.45)
+call_indirect      1.48 ns  (+0.91)
+== wasmtime 51.0.0-rc.1
+control            0.55 ns  (+0.00)
+cast_final         0.55 ns  (+0.00)
+cast_super         4.06 ns  (+3.50)
+callref_global     1.35 ns  (+0.80)
+callref_struct    11.78 ns  (+11.22)
+call_indirect      1.50 ns  (+0.95)
+
+[exited with code 0]
