@@ -23,6 +23,7 @@ RUNS = [
     ("M15-06 calling convention", "e5daf0ff", "run_m15_06.txt"),
     ("M15-07 direct linking", "151c90ad", "run_m15_07.txt"),
     ("M15-08 dispatch entries", "c00a97c9", "run_m15_08a.txt"),
+    ("M15-09 keyword interning, fast paths", "06783f4d", "run_m15_09.txt"),
 ]
 ROW = re.compile(r"^\| (.+?) \| (-?[\d,.]+) \| ([\d,]*) \| (-?[\d,.]+) \| [^|]* \|$")
 

@@ -1865,6 +1865,18 @@ impl Session {
         let (_, plan) = self.data_constructor_plan(class)?;
         self.data_construct_from_plan(&plan, arguments)
     }
+    /// The interned keyword equal to `keyword`, as guest construction
+    /// interns them (#361), so host-built keywords are identical to literals.
+    pub(crate) fn data_keyword_intern(&mut self, keyword: &SessionValue) -> Result<SessionValue, SessionError> {
+        self.check(keyword)?;
+        let mut scope = RootScope::new(&mut self.store);
+        let function = self
+            .runtime
+            .get_func(&mut scope, "keyword-intern")
+            .expect("shared runtime keyword interning");
+        let value = Val::AnyRef(keyword.value.as_ref().map(|value| value.to_rooted(&mut scope)));
+        call(&mut scope, self.runtime, function, &[value], self.identity, &self.handles)
+    }
     fn data_constructor_plan(
         &mut self,
         class: &SessionValue,

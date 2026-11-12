@@ -1885,6 +1885,41 @@
          "suss.bindings.runtime:suss.internal.core-protocol-natives/native-737573732e636f72652f495772697465722f"
          "suss.bindings.runtime:suss.internal.core-protocol-natives/native-737573732e636f72652f495772697465722f2d666c757368"
          "suss.bindings.runtime:suss.internal.core-protocol-natives/native-737573732e636f72652f495772697465722f2d7772697465"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-616c6c6f77"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-616c742d696d706c"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-616e636573746f7273"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-636c6a732e636f72652f6e6f742d666f756e64"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-636f6c"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-64656661756c74"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-64657363656e64616e7473"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-647570"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-656f66"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-65782d6b696e64"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-6661696c6564"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-66616c6c6261636b2d696d706c"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-6665617475726573"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-666f726d"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-6c696e65"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-6d657461"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-6d6f72652d6d61726b6572"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-6f6666736574"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-706172656e7473"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-70656e64696e67"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-7072657365727665"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-7072696e742d6c656e677468"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-726561642d636f6e64"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-7265616461626c79"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-7265616465722d6572726f72"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-7265616465722d657863657074696f6e"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-72656164657273"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-7265616479"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-73706c6963696e673f"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-737461747573"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-73757373"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-746167"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-74797065"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-76616c"
+         "suss.bindings.runtime:suss.internal.keywords/keyword-76616c696461746f72"
          "suss.bindings.runtime:suss.internal.namespaces/suss.core"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f4150657273697374656e74566563746f722f2f30"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f415365712f2f30"
@@ -2038,15 +2073,15 @@
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d666c7573682f31"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2d77726974652f32"
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
-         "suss.bindings.runtime:suss.internal.reify/t-reify-3447-8511"],
+         "suss.bindings.runtime:suss.internal.reify/t-reify-3447-8787"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "84e13259c8dfcb87f82a76ef5c899d58c22873e5b964d5d23426c46fd93681d1",
- :dependency-graph-sha256 "3a6ab655e46f8cc8273a7228b21e7dfc01ae6f3564899d47df0185132677ff7d",
+ :compiler-source-sha256 "cdadb2c190c0ea6a63412a894a0bd57c540e6ca0ce559b8c474299773d3eec66",
+ :dependency-graph-sha256 "eba5a56ac346fec0de3b1e0efd5366abb5c80721dcf1e288d000df6ac4b7cdfb",
  :flags [],
  :format-version 2,
  :phase "runtime",
  :runtime-abi 4,
- :source-sha256 "84e402cdd1455c9c8cf680fff118cee38e57d0f381c8b21258704067275d3ca5",
+ :source-sha256 "7409d50a8e149fe5d093df6949d3ce31a231fe246a76d676407c9115a773796c",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "24fb6953e6ac8d26d9e0206534377d59818bf234273c51dcb253afece1fe73bd",
+ :wasm-sha256 "ffb65a348bbce61c4b9e2cd6f3cfd82eb556593ee04af78b5ed8b25bf57db7e0",
  :wasm-tools "0.258.0"}

@@ -448,6 +448,9 @@ impl Bitwise {
 pub enum Nominal {
     /// Immutable private tests; public predicate cells remain live.
     IsNumber,
+    /// `suss.bootstrap/keyword?` (#361): an object with the interned keywords'
+    /// descriptor. Needs no Keyword class, so core can test before defining it.
+    IsKeyword,
     IsString,
     IsBoolean,
     /// Inline `identical?` (#356): a reference test, with the runtime's test
@@ -458,6 +461,9 @@ pub enum Nominal {
     /// A direct-linked definition (#360), its var's slot and the definition
     /// packed by `link_pair`: write its closure, the argument, to the slot.
     DirectLinkDefine(usize),
+    /// The interned keyword equal to the constructed one, the argument: the
+    /// first keyword made with its name (#361), as Clojure interns keywords.
+    KeywordIntern,
     /// `set!` of a direct-linked var also writes its slot, the slot number
     /// here, so its direct calls reach the new value, as a redefinition (#360).
     DirectLinkSet(usize),
@@ -550,6 +556,7 @@ impl Nominal {
             Self::StringIndexOf => Type::Number,
             Self::BindingDefined
             | Self::IsNumber
+            | Self::IsKeyword
             | Self::IsString
             | Self::IsBoolean
             | Self::Identical
@@ -573,12 +580,12 @@ impl Nominal {
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::CurrentThis => count == 0,
                 Self::Identical => count == 2,
-                Self::IsNumber | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
+                Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable | Self::MethodGet | Self::CallableKeyRegister => count == 2,
-                Self::DirectLinkDefine(_) | Self::DirectLinkSet(_) => count == 1,
+                Self::DirectLinkDefine(_) | Self::DirectLinkSet(_) | Self::KeywordIntern => count == 1,
                 Self::DirectLinkRead(_) => count == 0,
                 Self::NativeObjectGet => count == 2,
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
@@ -977,6 +984,9 @@ struct Analyzer<'a> {
     /// Shared with the source facts captured at each node; changed by copy
     /// on write (#319).
     locals: std::sync::Arc<HashMap<String, LocalBinding>>,
+    /// Definitions linked in this fragment (#360). Privileged code links only
+    /// to these: other modules don't export core's links.
+    fragment_links: BTreeSet<usize>,
     fields: std::sync::Arc<HashMap<String, FieldBinding>>,
     /// Field declarations in an intrinsic type body, before methods bind a receiver.
     type_body_fields: Vec<(Global, Form, Vec<Form>, BindingId)>,
@@ -1580,10 +1590,21 @@ impl Analyzer<'_> {
     }
     /// The direct-link callee for a call of `global`, in an AOT build (#360).
     fn direct_link(&self, global: &Global) -> Option<usize> {
-        if !self.environment.direct_linking || self.privileged {
+        // Core calls its own definitions, which it reads through their core
+        // link cells; user AOT code calls user definitions.
+        let global = if self.privileged {
+            if !self.environment.core_image_links {
+                return None;
+            }
+            global.core_var_of_link()?
+        } else if self.environment.direct_linking && global.namespace() != "suss.core" {
+            global.clone()
+        } else {
             return None;
-        }
-        self.environment.direct_links.get(global).map(|&(slot, definition)| link_pair(slot, definition))
+        };
+        self.environment.direct_links.get(&global)
+            .filter(|&&(_, definition)| !self.privileged || self.fragment_links.contains(&definition))
+            .map(|&(slot, definition)| link_pair(slot, definition))
     }
     /// Shipped core's own definitions are direct-linked, except dynamic and
     /// `^:redef` vars (as in Clojure), including ones a later form redeclares.
@@ -1756,12 +1777,19 @@ impl Analyzer<'_> {
         let linked = self.core_link(&global, dynamic);
         // A top-level `fn` initializer links before its analysis, so the
         // function's own calls of the var are direct too (#360).
-        let link_base = self.environment.direct_linking
-            && !self.privileged
-            && !dynamic
-            && global.namespace() != "suss.core";
+        // Shipped core is direct-linked by design, in every build (#360);
+        // user code is in AOT builds.
+        let link_base = !dynamic
+            && if self.privileged {
+                self.environment.core_image_links && global.namespace() == "suss.core"
+            } else {
+                self.environment.direct_linking && global.namespace() != "suss.core"
+            };
         let early_link = (link_base && self.locals.is_empty() && init.is_some_and(fn_form))
             .then(|| self.environment.define_direct_link(&global));
+        if let Some((_, definition)) = early_link {
+            self.fragment_links.insert(definition);
+        }
         let initializer = init
             .map(|init| {
                 self.form_in_named(
@@ -1794,6 +1822,7 @@ impl Analyzer<'_> {
                 Some(link) => link,
                 None => self.environment.define_direct_link(&global),
             };
+            self.fragment_links.insert(definition);
             let link = link_pair(slot, definition);
             initializer.map(|initializer| {
                 let value = self.fresh_binding(form, *initializer);
@@ -2619,6 +2648,7 @@ impl Analyzer<'_> {
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
             let operation = match symbol.name.as_str() {
                 "number?" => Some(Nominal::IsNumber),
+                "keyword?" => Some(Nominal::IsKeyword),
                 "string?" => Some(Nominal::IsString),
                 "boolean?" => Some(Nominal::IsBoolean),
                 "value-add" => Some(Nominal::ValueAdd),
@@ -2790,7 +2820,15 @@ impl Analyzer<'_> {
                     class: std::sync::Arc::new(arguments[0].clone()),
                     arguments: arguments[1..].to_vec().into(),
                 }));
-            let construction = self.nominal(form, Nominal::Construct, arguments);
+            // A keyword is interned: constructing one gives the keyword of
+            // that name (#361).
+            // Core reads the type through its direct-link cell.
+            let keyword = matches!(&*arguments[0].kind, Expression::Global(global)
+                if matches!(global.namespace(), "suss.core" | "suss.internal.core-link") && global.name() == "Keyword");
+            let mut construction = self.nominal(form, Nominal::Construct, arguments);
+            if keyword {
+                construction = self.nominal(form, Nominal::KeywordIntern, vec![construction]);
+            }
             if self.privileged {
                 return Ok(construction);
             }
@@ -2840,6 +2878,26 @@ impl Analyzer<'_> {
         };
         if let Some(ResolvedBinding::BootstrapControl { operation, .. }) = &resolved {
             return self.control_form(form, args, *operation, context, tail);
+        }
+        // `(= :k y)` in direct-linked user code (#360, #361): core's `=`
+        // answers `(identical? x y)` when x is a keyword, as Clojure's
+        // Keyword equality is identity, so a keyword literal first operand
+        // compiles to that test. Only the first: `(= y :k)` asks y.
+        if self.environment.direct_linking
+            && !self.privileged
+            && args.len() == 2
+            && matches!(args[0].kind, Kind::Keyword(_) | Kind::AutoKeyword(_))
+            && matches!(&resolved, Some(ResolvedBinding::Cell(global))
+                if global.namespace() == "suss.core" && global.name() == "=")
+        {
+            let callee = self.form(&items[0])?;
+            let arguments = args.iter().map(|arg| self.form(arg)).collect::<Result<Vec<_>, _>>()?;
+            *self.source_nodes.last_mut().expect("source node fact slot") =
+                Some(std::sync::Arc::new(SourceNode::Invoke {
+                    callee: std::sync::Arc::new(callee),
+                    arguments: arguments.clone().into(),
+                }));
+            return Ok(self.nominal(form, Nominal::Identical, arguments));
         }
         if let Some(ResolvedBinding::BootstrapBitwise { operation, .. }) = &resolved {
             return self.bitwise_form(form, args, *operation);
@@ -2919,7 +2977,9 @@ impl Analyzer<'_> {
                 }));
             let linked = self.core_reference_link(&global);
             // `set!` of a direct-linked var writes its slot too (#360).
-            let value = match self.environment.direct_slot(&global).filter(|_| self.environment.direct_linking && !self.privileged) {
+            let value = match self.environment.direct_slot(&global)
+                .filter(|_| self.environment.direct_linking && !self.privileged && global.namespace() != "suss.core")
+            {
                 Some(slot) => {
                     let binding = self.fresh_binding(form, value);
                     let write = self.nominal(form, Nominal::DirectLinkSet(slot), vec![self.local(form, binding.id)]);
@@ -3223,9 +3283,15 @@ impl Analyzer<'_> {
                     // inlines no other predicate; `true?`, `number?` and the
                     // like stay live calls. Another arity stays a call, which
                     // raises the arity error.
+                    // The shipped core image is direct-linked (#360), so its own
+                    // calls of `number?` and `string?` take the core test
+                    // inline too, as a static call would (#361).
+                    let core_image = self.privileged && self.environment.core_image_links;
                     let predicate = match (*export, args.len()) {
                         ("predicate-nil", 1) => Some(None),
                         ("predicate-identical", 2) => Some(Some(Nominal::Identical)),
+                        ("predicate-number", 1) if core_image => Some(Some(Nominal::IsNumber)),
+                        ("predicate-string", 1) if core_image => Some(Some(Nominal::IsString)),
                         _ => None,
                     };
                     if let Some(predicate) = predicate {
@@ -3511,6 +3577,7 @@ pub(crate) fn prepare_with_origin(
         analysis_depth: 0,
         analysis_contexts: Vec::new(),
         source_namespace: None,
+        fragment_links: BTreeSet::new(),
         namespace_snapshot: None,
         source_callables: Vec::new(),
         source_nodes: Vec::new(),

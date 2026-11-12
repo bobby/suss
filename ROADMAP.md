@@ -54,8 +54,10 @@ instructions, against a target of under 50 for a direct-linked call. Its gate is
 measured on a release build against JVM Clojure 1.12:
 
 - var reads cost the same however many `binding`s enclose them;
-- keyword `=` takes under 5 ns, and vector `nth` under 10 ns;
-- a monomorphic protocol call costs within 2× of a direct call;
+- keyword `=` takes under 5 ns, and vector `nth` is at least 10× faster than
+  at the start of M15 (under 10 ns moves to type-directed specialization, #378);
+- a monomorphic protocol call costs within 4× of a call through an unknown
+  closure (2× moves to #378);
 - the benchmark suite runs within about 5× of the JVM.
 
 Var reads, inline predicates and structured control flow come first. An ADR

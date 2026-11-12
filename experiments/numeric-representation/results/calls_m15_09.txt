@@ -1,0 +1,53 @@
+ 16:50:15 up 20 days,  8:06,  1 user,  load average: 1.08, 1.34, 3.25
+wasmtime 49.0.1, n = 2e7, best of 5
+inline             1.061 ns/call
+direct             1.507 ns/call
+indirect           3.475 ns/call
+indirect_typed     3.450 ns/call
+table_ref          3.457 ns/call
+field_typed       14.796 ns/call
+field_untyped     12.962 ns/call
+index_final        5.701 ns/call
+index_subtype     11.792 ns/call
+proposed          23.293 ns/call
+today             25.275 ns/call
+
+V8 v26.8.2, default tiering, n = 2e7, best of 5
+inline             0.855 ns/call
+direct             0.854 ns/call
+indirect           0.868 ns/call
+indirect_typed     0.876 ns/call
+table_ref          1.453 ns/call
+index_final        0.907 ns/call
+index_subtype      1.102 ns/call
+field_typed        0.854 ns/call
+field_untyped      0.855 ns/call
+proposed           0.923 ns/call
+today              3.931 ns/call
+
+User-space instructions, (count at n - count at 0) / n, on wasmtime
+inline              12.0 instructions/iteration,    0.0 for the call
+direct              21.0 instructions/iteration,    9.0 for the call
+indirect            65.0 instructions/iteration,   53.0 for the call
+indirect_typed      62.0 instructions/iteration,   50.0 for the call
+table_ref           62.0 instructions/iteration,   50.0 for the call
+field_typed        217.0 instructions/iteration,  205.0 for the call
+field_untyped      185.0 instructions/iteration,  173.0 for the call
+index_final         94.0 instructions/iteration,   82.0 for the call
+index_subtype      184.0 instructions/iteration,  172.0 for the call
+proposed           340.0 instructions/iteration,  328.0 for the call
+today              414.4 instructions/iteration,  402.4 for the call
+
+On V8 with --single-threaded --no-liftoff: TurboFan without call feedback
+inline               7.1 instructions/iteration,    0.0 for the call
+direct               6.9 instructions/iteration,   -0.2 for the call
+indirect            46.8 instructions/iteration,   39.7 for the call
+indirect_typed      45.1 instructions/iteration,   38.0 for the call
+table_ref           52.9 instructions/iteration,   45.8 for the call
+field_typed         39.2 instructions/iteration,   32.1 for the call
+field_untyped       44.2 instructions/iteration,   37.1 for the call
+index_final         64.0 instructions/iteration,   56.9 for the call
+index_subtype       63.9 instructions/iteration,   56.8 for the call
+proposed            55.8 instructions/iteration,   48.7 for the call
+today               97.1 instructions/iteration,   90.0 for the call
+ 16:50:39 up 20 days,  8:06,  1 user,  load average: 0.98, 1.29, 3.18

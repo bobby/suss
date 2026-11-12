@@ -421,7 +421,8 @@ fn arithmetic_import_trace_observes_once_only_source_order_and_short_circuit() {
     // replaying it. The ordered import trace catches duplicate evaluation;
     // assigning an identical literal to a binding twice would not.
     // Quotients of longs stay boxed runtime calls (#337), so the trace sees
-    // each evaluated operation and not the untaken branch's.
+    // each evaluated operation and not the untaken branch's. The outer sum of
+    // two i31 longs runs inline (#361), so it calls no import.
     let bytes = portable::compile("(+ (+ (if (/ 6 3) (/ 8 4) (/ 81 9))) (/ (/ 24 2) 1))").unwrap();
     let fragment = linker
         .instantiate(&mut store, &Module::new(&engine, bytes).unwrap())
@@ -439,7 +440,6 @@ fn arithmetic_import_trace_observes_once_only_source_order_and_short_circuit() {
             "number-divide",
             "number-divide",
             "number-divide",
-            "number-add"
         ]
     );
     store.gc(None).unwrap();
