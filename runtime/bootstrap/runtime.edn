@@ -93,6 +93,7 @@
          "suss.bindings.runtime:suss.core/->ValSeq"
          "suss.bindings.runtime:suss.core/->Var"
          "suss.bindings.runtime:suss.core/->VecOf"
+         "suss.bindings.runtime:suss.core/->VecOfSeq"
          "suss.bindings.runtime:suss.core/->VectorNode"
          "suss.bindings.runtime:suss.core/->Volatile"
          "suss.bindings.runtime:suss.core/-add-method"
@@ -312,6 +313,7 @@
          "suss.bindings.runtime:suss.core/ValSeq"
          "suss.bindings.runtime:suss.core/Var"
          "suss.bindings.runtime:suss.core/VecOf"
+         "suss.bindings.runtime:suss.core/VecOfSeq"
          "suss.bindings.runtime:suss.core/VectorNode"
          "suss.bindings.runtime:suss.core/Volatile"
          "suss.bindings.runtime:suss.core/abs"
@@ -988,6 +990,7 @@
          "suss.bindings.runtime:suss.internal.core-link/->ValSeq"
          "suss.bindings.runtime:suss.internal.core-link/->Var"
          "suss.bindings.runtime:suss.internal.core-link/->VecOf"
+         "suss.bindings.runtime:suss.internal.core-link/->VecOfSeq"
          "suss.bindings.runtime:suss.internal.core-link/->VectorNode"
          "suss.bindings.runtime:suss.internal.core-link/->Volatile"
          "suss.bindings.runtime:suss.internal.core-link/-add-method"
@@ -1207,6 +1210,7 @@
          "suss.bindings.runtime:suss.internal.core-link/ValSeq"
          "suss.bindings.runtime:suss.internal.core-link/Var"
          "suss.bindings.runtime:suss.internal.core-link/VecOf"
+         "suss.bindings.runtime:suss.internal.core-link/VecOfSeq"
          "suss.bindings.runtime:suss.internal.core-link/VectorNode"
          "suss.bindings.runtime:suss.internal.core-link/Volatile"
          "suss.bindings.runtime:suss.internal.core-link/abs"
@@ -2089,13 +2093,13 @@
          "suss.bindings.runtime:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
          "suss.bindings.runtime:suss.internal.reify/t-reify-3447-8787"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "5d4641a4f1335127cb5cffcf7a080582719b3846244d40d66ba4e3a555756f66",
- :dependency-graph-sha256 "305241ac87e4667c862f9020593be5dd7f76f0e5699a01420b3bda6d1a7d3614",
+ :compiler-source-sha256 "73060aa436551bb29bcda4c36287c73f792c4dc1c267e93ae406c6c6a1783eb3",
+ :dependency-graph-sha256 "e06a6b00354f85e5522354badc0ab9edd998387f2bd3e56bed0ff056ee46c039",
  :flags [],
  :format-version 2,
  :phase "runtime",
  :runtime-abi 4,
- :source-sha256 "5d03a0280a4d5f0fbfaa56b3adcf6a116892859b6779de4fb9280e4bb98ae070",
+ :source-sha256 "12d57e1e1c8f7ed19e15734066870513fe7b991dfb5a3bdc8dceb103b0c70144",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "c58fed69db6b6ebfb8d297a29b639bf8a215ec60040c3e91e88aeb3d5ae1d906",
+ :wasm-sha256 "04782e2caa52f1c53bf33dd3ca5b426f627398c84f9e0abde9f172795e3917db",
  :wasm-tools "0.258.0"}

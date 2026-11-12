@@ -1832,6 +1832,72 @@
                 (recur j acc (if (zero? (bit-and j 31)) (if (< j cnt) (leaf-for j) leaf) leaf)))))
           acc)))))
 
+;; The seq of a vector-of (#350): chunked by packed leaf, as Clojure's Vec's
+;; VecSeq is, so first and next read the leaf directly and chunked consumers
+;; (map, filter, doseq) take a leaf at a time. node is the leaf holding
+;; element i + off, i that leaf's first index.
+(deftype VecOfSeq [vec node i off meta ^:mutable __hash]
+  Object
+  (toString [coll] (pr-str* coll))
+  (equiv [this other] (-equiv this other))
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta meta) coll (VecOfSeq. vec node i off new-meta nil)))
+  IMeta
+  (-meta [coll] meta)
+
+  ISeqable
+  (-seq [coll] coll)
+
+  ISequential
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  ASeq
+  ISeq
+  (-first [coll] (aget node off))
+  (-rest [coll] (or (-next coll) ()))
+
+  INext
+  (-next [coll]
+    (if (< (inc off) (alength node))
+      (VecOfSeq. vec node i (inc off) nil nil)
+      (-chunked-next coll)))
+
+  ICollection
+  (-conj [coll o] (cons o coll))
+
+  IEmptyableCollection
+  (-empty [coll] ())
+
+  ICounted
+  (-count [coll] (- (count vec) (+ i off)))
+
+  IChunkedSeq
+  (-chunked-first [coll] (array-chunk node off))
+  (-chunked-rest [coll] (or (-chunked-next coll) ()))
+
+  IChunkedNext
+  (-chunked-next [coll]
+    (let [end (+ i (alength node))]
+      (when (< end (count vec))
+        (VecOfSeq. vec (vec-of-array-for vec end) end 0 nil nil))))
+
+  IHash
+  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
+
+  IReduce
+  (-reduce [coll f]
+    (let [start (+ i off)]
+      (vec-of-reduce (.-chunks vec) (.-tail vec) (count vec) f (aget node off) (inc start))))
+  (-reduce [coll f init]
+    (vec-of-reduce (.-chunks vec) (.-tail vec) (count vec) f init (+ i off)))
+
+  IPrintWithWriter
+  (-pr-writer [coll writer opts]
+    (pr-sequential-writer writer pr-writer "(" " " ")" opts coll)))
+
 (deftype VecOf [kind cnt chunks tail meta ^:mutable __hash]
   Object
   (toString [coll] (pr-str* coll))
@@ -1874,10 +1940,7 @@
 
   ISeqable
   (-seq [coll]
-    (when (pos? cnt)
-      ((fn step [i]
-         (LazySeq. nil (fn [] (when (< i cnt) (cons (-nth coll i) (step (inc i))))) nil nil))
-       0)))
+    (when (pos? cnt) (VecOfSeq. coll (vec-of-array-for coll 0) 0 0 nil nil)))
 
   ICounted
   (-count [coll] cnt)

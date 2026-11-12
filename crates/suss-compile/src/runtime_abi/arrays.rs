@@ -1059,11 +1059,88 @@ pub(super) fn set_or_property(b: &mut Builder) {
         Call(b.names["source-array-set-indices"]),
         End,
     ]);
-    b.function_with_locals(
+    let set_or_property = b.function_with_locals(
         "source-array-set-or-property",
         &[VALUE],
         &[VALUE],
         &[(1, VALUE)],
+        &body,
+    );
+    // `(aset a i v)` with one index (#350): a write to a source array's dense
+    // prefix at an i31 index inside its logical length stores directly and
+    // marks the slot present, as `source-array-sparse-set` does there, with no
+    // index array and no generic key conversion. Anything else, including any
+    // malformed backing, takes `source-array-set-or-property`. Locals: 3
+    // sparse backing; 4 dense prefix; 5 presence mask; 6 index; 7 length.
+    let mut body = vec![Block(BlockType::Empty)];
+    let cast = |local: u32, ty: u32| [LocalGet(local), RefCastNonNull(HeapType::Concrete(ty))];
+    let test = |ty: u32| [RefTestNonNull(HeapType::Concrete(ty)), I32Eqz, BrIf(0)];
+    body.extend([LocalGet(1), RefTestNonNull(HeapType::I31), I32Eqz, BrIf(0)]);
+    body.extend([LocalGet(0), Call(b.names["source-array?"]), I32Eqz, BrIf(0)]);
+    body.extend(cast(0, 7));
+    body.extend([
+        StructGet {
+            struct_type_index: 7,
+            field_index: 1,
+        },
+        LocalTee(3),
+    ]);
+    body.extend(test(ARGS));
+    body.extend(cast(3, ARGS));
+    body.extend([ArrayLen, I32Const(2), I32Ne, BrIf(0)]);
+    body.extend(cast(3, ARGS));
+    body.extend([I32Const(0), ArrayGet(ARGS), LocalTee(3)]);
+    body.extend(test(ARGS));
+    body.extend(cast(3, ARGS));
+    body.extend([ArrayLen, I32Const(4), I32LtU, BrIf(0)]);
+    body.extend(cast(3, ARGS));
+    body.extend([I32Const(3), ArrayGet(ARGS), LocalTee(5)]);
+    body.extend(test(STRING));
+    body.extend(cast(3, ARGS));
+    body.extend([I32Const(2), ArrayGet(ARGS), LocalTee(4)]);
+    body.extend(test(ARGS));
+    // The logical length, an i31 for any array this small.
+    body.extend(cast(3, ARGS));
+    body.extend([I32Const(0), ArrayGet(ARGS), LocalTee(7)]);
+    body.extend([RefTestNonNull(HeapType::I31), I32Eqz, BrIf(0)]);
+    body.extend([
+        LocalGet(1),
+        RefCastNonNull(HeapType::I31),
+        I31GetS,
+        LocalTee(6),
+        LocalGet(7),
+        RefCastNonNull(HeapType::I31),
+        I31GetS,
+        I32GeU,
+        BrIf(0),
+        LocalGet(6),
+    ]);
+    body.extend(cast(4, ARGS));
+    body.extend([ArrayLen, I32GeU, BrIf(0), LocalGet(6)]);
+    body.extend(cast(5, STRING));
+    body.extend([ArrayLen, I32GeU, BrIf(0)]);
+    // A presence bit other than 0 or 1 is malformed.
+    body.extend(cast(5, STRING));
+    body.extend([LocalGet(6), ArrayGetU(STRING), I32Const(1), I32GtU, BrIf(0)]);
+    body.extend(cast(4, ARGS));
+    body.extend([LocalGet(6), LocalGet(2), ArraySet(ARGS)]);
+    body.extend(cast(5, STRING));
+    body.extend([LocalGet(6), I32Const(1), ArraySet(STRING), LocalGet(2), Return, End]);
+    body.extend([
+        LocalGet(0),
+        LocalGet(1),
+        LocalGet(2),
+        ArrayNewFixed {
+            array_type_index: ARGS,
+            array_size: 3,
+        },
+        ReturnCall(set_or_property),
+    ]);
+    b.function_with_locals(
+        "source-array-set-3",
+        &[VALUE, VALUE, VALUE],
+        &[VALUE],
+        &[(3, VALUE), (1, ValType::I32), (1, VALUE)],
         &body,
     );
 }
