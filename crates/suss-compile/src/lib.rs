@@ -36,6 +36,11 @@
 //! let wasm = compiler.compile(source, wit)?;
 //! ```
 
+/// The digest of the compiler sources this build embeds (build_identity.rs),
+/// which generated bootstrap artifacts record.
+pub fn compiler_source_sha256() -> &'static str {
+    env!("SUSS_COMPILER_SOURCE_SHA256")
+}
 pub mod build_cache;
 mod config;
 mod error;
@@ -45,38 +50,38 @@ pub mod worlds;
 
 // Native compiled phase/session host for compiler embedding and CLI paths.
 // Wasm target assembly remains in portable; these modules require Wasmtime.
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 pub mod portable_analyze;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 pub mod portable_aot;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 mod portable_defn;
 mod portable_lazy_seq;
 mod portable_core_macros;
 mod portable_state_macros;
 mod portable_when_let;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 pub mod portable_expression;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 pub mod portable_macro_data;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 pub mod portable_macro_graph;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 pub mod portable_macros;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 mod portable_module_cache;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 pub mod portable_project;
 mod portable_record_emitter;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 mod portable_record_factories;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 mod portable_record_label;
 mod portable_record_protocol_facts;
 mod portable_record_public;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 pub mod portable_repl;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 pub mod portable_session;
 
 pub use config::{SussConfig, WorldConfig};
@@ -90,11 +95,11 @@ pub struct CompiledExpr {
     pub wasm: Vec<u8>,
     /// Whether this is a WASM Component (true) or core module (false)
     pub is_component: bool,
-    #[cfg(not(target_family = "wasm"))]
+    #[cfg(suss_host)]
     pub prepared: Option<portable_expression::ExpressionArtifact>,
 }
 
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 impl CompiledExpr {
     pub fn execute(
         self,
@@ -132,7 +137,7 @@ pub struct Compiler {}
 impl Compiler {
     /// Prepare host-owned ABI2 expression artifacts through isolated compiled
     /// macros. Runtime initializers run only when the returned artifact executes.
-    #[cfg(not(target_family = "wasm"))]
+    #[cfg(suss_host)]
     pub fn prepare_expression(
         &mut self,
         source: &str,
@@ -141,7 +146,7 @@ impl Compiler {
         self.prepare_expression_with_compile_fuel(source, source_paths, None)
     }
     /// Prepare an expression with an explicit compilation-only allowance.
-    #[cfg(not(target_family = "wasm"))]
+    #[cfg(suss_host)]
     pub fn prepare_expression_with_compile_fuel(
         &mut self,
         source: &str,
@@ -159,13 +164,13 @@ impl Compiler {
     /// Compile an expression bundle using the cached compiled core bootstrap.
     /// User macros execute in an isolated compiled phase; Runtime initialization
     /// is deferred. This is a fresh compilation, not a source-replaying REPL.
-    #[cfg(not(target_family = "wasm"))]
+    #[cfg(suss_host)]
     pub fn compile_expr_cached(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
         self.compile_expression_with_fuel(expr_source, None)
     }
 
     /// Compile a cached expression bundle with an explicit compilation allowance.
-    #[cfg(not(target_family = "wasm"))]
+    #[cfg(suss_host)]
     pub fn compile_expr_cached_with_compile_fuel(
         &mut self, expr_source: &str, compile_fuel: Option<u64>,
     ) -> CompileResult<CompiledExpr> {
@@ -177,21 +182,21 @@ impl Compiler {
     /// complete bundle, not its entry-module inspection copy, is executable.
     /// Each call has an isolated Macro session and fresh user compilation. The
     /// reproducible compiled core bootstrap is shared with the cached entrypoint.
-    #[cfg(not(target_family = "wasm"))]
+    #[cfg(suss_host)]
     pub fn compile_expr_with_info(&mut self, expr_source: &str) -> CompileResult<CompiledExpr> {
         self.compile_expr_with_compile_fuel(expr_source, None)
     }
 
     /// Prepare an uncached expression with an explicit compilation allowance.
     /// None preserves the default; Some(0) is explicit. Runtime fuel is unchanged.
-    #[cfg(not(target_family = "wasm"))]
+    #[cfg(suss_host)]
     pub fn compile_expr_with_compile_fuel(
         &mut self, expr_source: &str, compile_fuel: Option<u64>,
     ) -> CompileResult<CompiledExpr> {
         self.compile_expression_with_fuel(expr_source, compile_fuel)
     }
 
-    #[cfg(not(target_family = "wasm"))]
+    #[cfg(suss_host)]
     fn compile_expression_with_fuel(
         &mut self, expr_source: &str, compile_fuel: Option<u64>,
     ) -> CompileResult<CompiledExpr> {
@@ -229,7 +234,7 @@ impl Compiler {
     pub fn compile_with_compile_fuel(
         &mut self, source: &str, wit_source: &str, compile_fuel: Option<u64>,
     ) -> CompileResult<Vec<u8>> {
-        #[cfg(not(target_family = "wasm"))]
+        #[cfg(suss_host)]
         {
             // Resolve the world before entering the effectful Macro phase.
             let mut resolve = Resolve::new();
@@ -251,7 +256,7 @@ impl Compiler {
             portable::aot::component(&fragments, &resolve, world, &mappings)
                 .map_err(|error| CompileError::Component(error.to_string()))
         }
-        #[cfg(target_family = "wasm")]
+        #[cfg(not(suss_host))]
         {
             let _ = (source, wit_source, compile_fuel);
             Err(CompileError::Unsupported(
@@ -272,7 +277,7 @@ impl Compiler {
     pub fn compile_files_with_compile_fuel(
         &mut self, source_path: &str, wit_path: &str, compile_fuel: Option<u64>,
     ) -> CompileResult<Vec<u8>> {
-        #[cfg(not(target_family = "wasm"))]
+        #[cfg(suss_host)]
         {
             portable_aot::compile_file_typed_with_compile_fuel(
                 std::path::Path::new(source_path),
@@ -283,7 +288,7 @@ impl Compiler {
                 compile_fuel,
             )
         }
-        #[cfg(target_family = "wasm")]
+        #[cfg(not(suss_host))]
         {
             let _ = (source_path, wit_path, compile_fuel);
             Err(CompileError::Unsupported(
@@ -300,7 +305,7 @@ impl Compiler {
         src_paths: &[std::path::PathBuf],
         wit_path: &str,
     ) -> CompileResult<Vec<u8>> {
-        #[cfg(not(target_family = "wasm"))]
+        #[cfg(suss_host)]
         {
             portable_aot::compile_namespace_typed(
                 entry_ns,
@@ -310,7 +315,7 @@ impl Compiler {
                 &[],
             )
         }
-        #[cfg(target_family = "wasm")]
+        #[cfg(not(suss_host))]
         {
             let _ = (entry_ns, src_paths, wit_path);
             Err(CompileError::Unsupported(
@@ -335,7 +340,7 @@ impl Compiler {
     pub fn compile_for_main_with_compile_fuel(
         &mut self, source: &str, main_ns: &str, compile_fuel: Option<u64>,
     ) -> CompileResult<Vec<u8>> {
-        #[cfg(not(target_family = "wasm"))]
+        #[cfg(suss_host)]
         {
             portable_aot::compile_main_source_with_compile_fuel(
                 source,
@@ -346,7 +351,7 @@ impl Compiler {
             )
             .map_err(CompileError::Semantic)
         }
-        #[cfg(target_family = "wasm")]
+        #[cfg(not(suss_host))]
         {
             let _ = (source, main_ns, compile_fuel);
             Err(CompileError::Unsupported(
@@ -716,12 +721,12 @@ impl Compiler {
         config: &SussConfig,
         world: Option<&str>,
     ) -> CompileResult<std::collections::HashMap<String, Vec<u8>>> {
-        #[cfg(not(target_family = "wasm"))]
+        #[cfg(suss_host)]
         {
             portable_project::compile_project_typed(config, world)
                 .map(|artifacts| artifacts.into_iter().collect())
         }
-        #[cfg(target_family = "wasm")]
+        #[cfg(not(suss_host))]
         {
             let _ = (config, world);
             Err(CompileError::Unsupported(
@@ -737,7 +742,7 @@ impl Default for Compiler {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod deftype_tests {
     use super::*;
 

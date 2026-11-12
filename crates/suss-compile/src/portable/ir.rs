@@ -1262,7 +1262,7 @@ pub(super) fn operands(operation: &Operation) -> &[ValueId] {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod metering_tests {
     use super::*;
 

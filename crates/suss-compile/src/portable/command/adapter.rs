@@ -350,7 +350,7 @@ fn emit(function: &mut Function, instructions: &[Instruction<'_>]) {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use crate::portable::{
         self,

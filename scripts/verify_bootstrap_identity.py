@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Exercise the actual compiled Cargo build script's bootstrap identity inputs."""
+"""Exercise the actual compiled Cargo build script's bootstrap identity inputs.
+
+Usage: verify_bootstrap_identity.py MANIFEST, a freshly generated bootstrap
+manifest (runtime.edn); its compiler identity is the expected one. The build
+script exercised is suss-compile-generator's, which computes the same identity
+as suss-compile's without generating artifacts (#383)."""
+import sys
 import json
 import os
 from pathlib import Path
@@ -26,7 +32,7 @@ ASSETS = (
 def fingerprint(builder, root):
     result = subprocess.run(
         [str(builder)],
-        env={**os.environ, "CARGO_MANIFEST_DIR": str(root / "crates/suss-compile")},
+        env={**os.environ, "CARGO_MANIFEST_DIR": str(root / "crates/suss-compile-generator")},
         capture_output=True, text=True, check=True,
     )
     identities = [line.removeprefix(PREFIX) for line in result.stdout.splitlines()
@@ -41,14 +47,17 @@ def copy_inputs(destination):
         target = destination / "crates" / name
         shutil.copytree(ROOT / "crates" / name / "src", target / "src")
         shutil.copyfile(ROOT / "crates" / name / "Cargo.toml", target / "Cargo.toml")
-    for relative in ("Cargo.toml", "Cargo.lock", "crates/suss-compile/build.rs", *ASSETS):
+    for relative in ("Cargo.toml", "Cargo.lock", "crates/suss-compile/build.rs",
+                     "crates/suss-compile/build_identity.rs", *ASSETS):
         target = destination / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / relative, target)
 
 
 def main():
-    manifest = (ROOT / "runtime/bootstrap/runtime.edn").read_text()
+    if len(sys.argv) != 2:
+        raise RuntimeError("usage: verify_bootstrap_identity.py GENERATED-RUNTIME-MANIFEST")
+    manifest = Path(sys.argv[1]).read_text()
     # The canonical EDN manifest (#299) has one quoted digest for this key.
     found = re.findall(r':compiler-source-sha256 "([0-9a-f]{64})"', manifest)
     if len(found) != 1:
@@ -56,10 +65,10 @@ def main():
     expected = found[0]
     # The build script Cargo compiled for this checkout, as Cargo reports it:
     # its build-script layout is internal and changed in Cargo 1.100, so the
-    # path comes from `--message-format=json`, not a glob. The build is already
-    # up to date, so this only reports it.
+    # path comes from `--message-format=json`, not a glob (#383). The build is
+    # already up to date, so this only reports it.
     output = subprocess.run(
-        ["cargo", "build", "--profile", "test", "--locked", "-p", "suss-compile",
+        ["cargo", "build", "--profile", "test", "--locked", "-p", "suss-compile-generator",
          "--message-format=json"],
         cwd=ROOT, capture_output=True, text=True, check=True,
     ).stdout
@@ -68,14 +77,14 @@ def main():
         message = json.loads(line)
         if (message.get("reason") == "compiler-artifact"
                 and "custom-build" in message["target"]["kind"]
-                and message["target"]["src_path"].endswith("suss-compile/build.rs")):
+                and message["target"]["src_path"].endswith("suss-compile-generator/build.rs")):
             candidates.extend(Path(name) for name in message["filenames"])
     identities = {path: fingerprint(path, ROOT) for path in candidates}
     builders = [path for path, identity in identities.items() if identity == expected]
     if not builders:
         found = "\n".join(f"  {path}: {identity}" for path, identity in identities.items()) or "  (none)"
         raise RuntimeError(
-            f"no compiled build script matches the shipped compiler identity {expected}; found:\n{found}")
+            f"no compiled build script matches the generated compiler identity {expected}; found:\n{found}")
     builder = builders[0]
     with tempfile.TemporaryDirectory(prefix="suss-bootstrap-identity-") as directory:
         first = Path(directory) / "first"

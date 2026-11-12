@@ -974,7 +974,7 @@ pub(super) fn source_tags_metered(
     })
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod quoted_tag_tests {
     use super::*;
 

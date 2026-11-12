@@ -424,7 +424,7 @@ fn merged_metadata_pairs_metered(
 // syntax before evaluation, not equality of evaluated metadata keys. Reader
 // locations/metadata do not participate; lists/vectors share sequential data
 // equality, and maps/sets compare without an iteration-order dependency.
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 fn reader_key_equal(
     a: &Form,
     b: &Form,
@@ -673,7 +673,7 @@ pub fn identifier_hash(namespace: Option<&str>, name: &str, keyword: bool) -> i3
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod metadata_reader_tests {
     use super::*;
 

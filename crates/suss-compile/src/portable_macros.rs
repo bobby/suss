@@ -230,7 +230,7 @@ fn declaration_observation_context(
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 #[test]
 fn environment_observation_traverses_raw_splicing_children_and_metadata() {
     let mut form = Form {
@@ -995,7 +995,7 @@ impl ExpansionHost for CompiledMacros {
 
 
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod when_let_validation_tests {
     use super::*;
 
@@ -1038,7 +1038,7 @@ mod when_let_validation_tests {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod doseq_validation_tests {
     use super::*;
 
@@ -1072,7 +1072,7 @@ mod doseq_validation_tests {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod defmulti_validation_tests {
     use super::*;
 
@@ -1105,7 +1105,7 @@ mod defmulti_validation_tests {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod declaration_provenance_tests {
     use super::*;
     use crate::portable::SourceOrigin;
@@ -1254,10 +1254,10 @@ mod declaration_provenance_tests {
 }
 
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod lazy_result_interrupt_tests;
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod parameter_observation_tests {
     use super::*;
 

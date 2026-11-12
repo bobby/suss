@@ -52,7 +52,7 @@ pub(super) struct Interner {
     profile_comparison_work: u64,
     profile_head_lookup_work: u64,
     profile_head_insert_work: u64,
-    #[cfg(test)]
+    #[cfg(all(test, not(suss_generator)))]
     key_bytes: usize,
 }
 // Hashes select buckets only. Immutable exact bytes remain the identity proof.
@@ -203,7 +203,7 @@ fn sort_groups<E>(
 }
 
 impl Interner {
-    #[cfg(test)]
+    #[cfg(all(test, not(suss_generator)))]
     fn intern<E>(
         &mut self,
         mut key: Vec<u8>,
@@ -238,7 +238,7 @@ impl Interner {
         }
         result
     }
-    #[cfg(test)]
+    #[cfg(all(test, not(suss_generator)))]
     fn intern_bucket<E>(
         &mut self,
         mut key: Vec<u8>,
@@ -311,7 +311,7 @@ impl Interner {
             };
             self.heads.get_or_insert(hash, head_index, &mut head_charge)?;
         }
-        #[cfg(test)]
+        #[cfg(all(test, not(suss_generator)))]
         { self.key_bytes += key.len(); }
         self.keys.publish(prepared,Entry { key: std::mem::take(key), next: None });
         if let Some(location) = tail_location {
@@ -512,7 +512,7 @@ pub(super) fn bind<T: Copy, E>(
     Ok(())
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]

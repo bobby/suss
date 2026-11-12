@@ -1908,7 +1908,7 @@ impl Analyzer<'_> {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod object_callback_tests {
     use super::*;
     use suss_reader::forms::{read_forms, resolve_conditionals};

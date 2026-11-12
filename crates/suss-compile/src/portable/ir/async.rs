@@ -438,7 +438,7 @@ fn check_instructions(
     Ok(())
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
     use crate::portable::ir::{Block, Instruction, Terminator, Value};

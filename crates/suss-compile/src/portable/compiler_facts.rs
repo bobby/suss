@@ -172,7 +172,7 @@ pub fn elide_reader_metadata(form: &Form) -> Result<Vec<Form>, Diagnostic> {
     }).flat_map(|pair| pair.iter().cloned()).collect())
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod native_interface_tests {
     use super::*;
 

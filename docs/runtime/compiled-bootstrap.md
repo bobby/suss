@@ -12,7 +12,15 @@ callable, namespace and position facts needed by compiled macro environments.
 The existing bounded bootstrap forms break the compiler/core cycle. This is the
 selected imported profile, not complete public core compatibility.
 
-Each manifest (`runtime/bootstrap/<phase>.edn`, canonical EDN as described in
+The artifacts are not committed (#383). suss-compile's build script generates
+them into its `OUT_DIR` with the same compiler built as `suss-compile-generator`
+(the same library source, with no native host and no embedded artifacts), and
+`portable/bootstrap.rs` embeds them from there. Both packages compute the
+compiler identity with `crates/suss-compile/build_identity.rs`, and the build
+script checks that they agree, so the artifacts record the identity of the
+compiler that loads them.
+
+Each manifest (`<phase>.edn`, canonical EDN as described in
 `docs/runtime/tooling-edn.md`) records format and phase, core source SHA256, compiler/reader/core
 implementation SHA256, locked compiler/runtime ABI, Wasm tooling, dependency graph
 SHA256, target, compiler flags, artifact SHA256 and canonical binding identities.
@@ -23,17 +31,19 @@ and its provenance manifest; checkout location is excluded. Changed identity,
 missing/unknown manifest fields, corrupted bytes and incompatible phase are
 rejected before installation. Hosts still validate and link the actual Wasm.
 
-Regenerate after compiler, ABI, dependency or selected source changes:
+A build regenerates them whenever the compiler sources, core or its import
+manifest change. To inspect them, or check them by hand:
 
 ```sh
-CARGO_BUILD_JOBS=2 cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- runtime/bootstrap
+CARGO_BUILD_JOBS=2 cargo run --profile test -p suss-cli --bin suss-bootstrap --locked -- <directory>
 scripts/verify-bootstrap.sh
 ```
 
 The verifier supplies Cargo/linker tools through a restricted PATH where Java and
 Node are unavailable. Two fresh generator processes must produce identical Wasm
-and manifests, matching the shipped files. The verifier also executes the actual
-compiled Cargo build script against two
+and manifests. The verifier also executes the actual compiled Cargo build script
+(suss-compile-generator's, which computes the identity without generating)
+against two
 temporary checkout locations and mutations of each numeric runtime asset. Both
 asset changes must invalidate the identity, and restoring them must restore it.
 Native tests then execute source

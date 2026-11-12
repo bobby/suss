@@ -55,9 +55,6 @@ def verify():
             raise ValueError('anonymous parent bytes/ranges')
     from sequence_provenance import verify as loader
     loader()
-    for name in ['macro.wasm','macro.json','runtime.wasm','runtime.json']:
-        p='runtime/bootstrap/'+name
-        if (ROOT/p).read_bytes()!=subprocess.check_output(['git','show',BASE+':'+p]):raise ValueError('bootstrap changed during authoring')
     if (ROOT/'runtime/core-import/epl-v10.html').read_bytes()!=pinned_file(ROOT,'epl-v10.html'):raise ValueError('EPL')
     if (FOLDER/'NOTICE').read_text().rstrip('\n')!=source.split('\n\n')[0]:raise ValueError('notice')
     if ledger['native-status']!='uncompiled/unexecuted; bootstrap stale':raise ValueError('native status')

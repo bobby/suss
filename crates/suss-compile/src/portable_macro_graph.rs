@@ -21,7 +21,7 @@ use suss_reader::forms::{Form, Kind};
 #[path = "portable_macro_graph/raw_keys.rs"]
 mod raw_keys;
 mod initializer_plan;
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod plan_scratch_tests;
 #[path = "portable_macro_graph/occurrence_work.rs"]
 mod occurrence_work;
@@ -255,12 +255,12 @@ fn validate_form_data(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -
 // remain distinct. Bare byte spans are not carried by FormBridge; source positions
 // remain in the actual reader metadata and separate compiler records. This is
 // local graph sharing, not a persisted artifact key.
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 fn form_key(form: &Form) -> Result<Vec<u8>> {
     form_key_metered(form, &mut |_| Ok(()))
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 fn form_key_metered(form: &Form, charge: &mut impl FnMut(u64) -> Result<()>) -> Result<Vec<u8>> {
     enum Task<'a> {
         Form(&'a Form),
@@ -3009,7 +3009,7 @@ impl<'a> AnalysisGraph<'a> {
 }
 
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod sharing_tests {
     use super::*;
     fn number(bits: u64) -> Form {

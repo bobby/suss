@@ -1060,7 +1060,7 @@ fn generated(name: &str, names: &mut HashMap<String, String>) -> String {
     out
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
 

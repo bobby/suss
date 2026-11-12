@@ -336,7 +336,7 @@ impl<K: Ord + Clone> Ord for PersistentSet<K> {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
     use std::collections::BTreeMap;

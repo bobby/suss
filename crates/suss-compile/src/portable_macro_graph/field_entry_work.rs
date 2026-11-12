@@ -86,7 +86,7 @@ impl AnalysisGraph<'_> {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
     fn build(graph: &mut AnalysisGraph<'_>, input: &Form) -> Result<Value> {

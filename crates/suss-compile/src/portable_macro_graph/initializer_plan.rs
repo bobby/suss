@@ -97,7 +97,7 @@ pub(super) fn same(session: &mut Session, a: &Form, b: &Form) -> Result<bool> {
     Ok(true)
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
     use super::super::AnalysisGraph;

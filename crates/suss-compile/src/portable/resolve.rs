@@ -826,7 +826,7 @@ impl Environment {
     }
     /// Panics unless every namespace's identities equal a full recomputation
     /// from the bindings and materialized bootstrap cells.
-    #[cfg(test)]
+    #[cfg(all(test, not(suss_generator)))]
     pub(crate) fn check_identities(&self) {
         let mut expected = BTreeMap::<(Phase, std::sync::Arc<str>), Vec<Global>>::new();
         let visible = self

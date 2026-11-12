@@ -174,10 +174,10 @@ impl Session {
     /// states qualify as idle, even when no source callback can currently run.
     pub fn observe_async_dispatch(&mut self) -> Result<AsyncDispatch, SessionError> {
         let requests = registry_lock(&self.pending_host_futures).clone();
-        #[cfg(test)]
+        #[cfg(all(test, not(suss_generator)))]
         let interrupt = self.interrupt_handle();
         self.frontend_scope(|scope, runtime, _, _| {
-            #[cfg(test)]
+            #[cfg(all(test, not(suss_generator)))]
             if tests::INTERRUPT_OBSERVATION.with(|flag| flag.replace(false)) {
                 interrupt.interrupt();
             }
@@ -307,7 +307,7 @@ impl Session {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
     thread_local! { pub(super) static INTERRUPT_OBSERVATION: std::cell::Cell<bool> = const { std::cell::Cell::new(false) }; }

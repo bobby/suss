@@ -12,7 +12,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let (wasm, manifest) = bootstrap::generate(phase)?;
         let name = bootstrap::phase_name(phase);
         fs::write(output.join(format!("{name}.wasm")), wasm)?;
-        let mut edn = suss_reader::edn::to_string_pretty(&manifest)?;
+        let mut edn = bootstrap::manifest_edn(&manifest)?;
         edn.push('\n');
         fs::write(output.join(format!("{name}.edn")), edn)?;
     }

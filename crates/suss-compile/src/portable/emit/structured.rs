@@ -194,7 +194,7 @@ impl Plan {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::{plan, Step::{self, *}};
     use crate::portable::ir::{Block, Function, Terminator, ValueId};

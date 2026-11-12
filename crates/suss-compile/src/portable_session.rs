@@ -840,7 +840,7 @@ impl Session {
     pub fn run_async_turn(&mut self) -> Result<bool, SessionError> {
         self.last_async_recovered_owner = None;
         self.budget()?;
-        #[cfg(test)]
+        #[cfg(all(test, not(suss_generator)))]
         let recovery_interrupt = self.interrupt_handle();
         let runtime = self.runtime;
         let mut scope = RootScope::new(&mut self.store);
@@ -869,10 +869,10 @@ impl Session {
                         let function = runtime
                             .get_func(&mut scope, "async-scheduler-recover")
                             .ok_or_else(|| wasmtime::Error::msg("Missing async recovery"))?;
-                        #[cfg(test)]
+                        #[cfg(all(test, not(suss_generator)))]
                         tests::before_async_recovery(&recovery_interrupt);
                         let result = function.call(&mut scope, &[], &mut []);
-                        #[cfg(test)]
+                        #[cfg(all(test, not(suss_generator)))]
                         tests::observe_async_recovery(&result);
                         if matches!(&result, Err(error)
                             if error.downcast_ref::<wasmtime::Trap>() == Some(&wasmtime::Trap::Interrupt))
@@ -2044,7 +2044,7 @@ impl Session {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
     fn legacy_construct(

@@ -22,6 +22,7 @@ serde = { version = "1", features = ["derive"] }
 
 [build-dependencies]
 sha2 = "=0.10.9"
+suss-compile-generator = { path = "../suss-compile-generator" }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 wasmtime = { workspace = true }

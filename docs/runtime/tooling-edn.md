@@ -142,8 +142,8 @@ Each format carries `:format-version 2`. Version 1 was JSON.
   is part of the manifest key, so old JSON entries are never consulted; they
   are misses. An entry that does not parse or has another version is also a
   miss.
-- **Bootstrap manifests** `runtime/bootstrap/runtime.edn` and `macro.edn`, in
-  the pretty layout. A JSON or otherwise mismatched manifest is rejected, as any
+- **Bootstrap manifests** `runtime.edn` and `macro.edn`, in the pretty layout,
+  generated at build time into suss-compile's `OUT_DIR` (#383). A JSON or otherwise mismatched manifest is rejected, as any
   identity change is.
 - **The `suss.source-artifact` Wasm custom section**, on one line. An artifact
   whose section is JSON fails identity verification. Caches treat that as a

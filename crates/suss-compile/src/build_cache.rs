@@ -623,7 +623,7 @@ pub fn write_output(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
     Ok(())
 }
 
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 mod native {
     use super::*;
     use std::hash::{Hash, Hasher};
@@ -688,9 +688,9 @@ mod native {
         Ok(component)
     }
 }
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 pub use native::component;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 pub(crate) use native::module;
 
 /// The directory a CLI process uses, by documented precedence: an explicit
@@ -736,7 +736,7 @@ fn user_cache_dir() -> Option<PathBuf> {
         .or_else(|| std::env::var_os("HOME").and_then(absolute).map(|home| home.join(".cache")))
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
     fn directory() -> (tempfile::TempDir, BuildDir) {

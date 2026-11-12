@@ -100,7 +100,7 @@ pub(crate) fn prepare_with_compile_fuel(
     Ok(ExpressionArtifact { core, inputs })
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
 

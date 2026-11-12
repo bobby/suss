@@ -1,0 +1,34 @@
+[package]
+name = "suss-compile-generator"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "suss-compile built as the generator of its own bootstrap artifacts (#383)"
+publish = false
+build = "build.rs"
+
+# The same library source as suss-compile, without the native host (wasmtime)
+# or the embedded bootstrap artifacts, which suss-compile's build script
+# generates with it.
+[lib]
+path = "../suss-compile/src/lib.rs"
+doctest = false
+test = false
+
+[dependencies]
+suss-core = { workspace = true }
+suss-reader = { path = "../suss-reader" }
+num-traits = { workspace = true }
+wasm-encoder = { workspace = true }
+wasmparser = { workspace = true }
+wit-parser = { workspace = true }
+wit-component = { workspace = true }
+thiserror = { workspace = true }
+stacker = "=0.1.22"
+xxhash-rust = { version = "0.8.15", features = ["xxh32"] }
+sha2 = "=0.10.9"
+serde_json = "1"
+serde = { version = "1", features = ["derive"] }
+
+[build-dependencies]
+sha2 = "=0.10.9"

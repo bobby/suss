@@ -489,7 +489,7 @@ impl Drop for Session {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
     #[test]

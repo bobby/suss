@@ -665,7 +665,7 @@ fn compilation_macros(compile_fuel: Option<u64>) -> Result<CompiledMacros, Sessi
     Ok(macros)
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod compilation_budget_tests {
     use super::*;
     #[test]
