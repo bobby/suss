@@ -196,50 +196,6 @@ fn run_file(path: &str) {
     }
 }
 
-/// Run wasm-opt on a compiled WASM file for size/performance optimization
-fn run_wasm_opt(path: &str) -> Result<(), String> {
-    let original_size = std::fs::metadata(path).map(|m| m.len())
-        .map_err(|e| format!("{}", e))?;
-
-    // Optimize into a sibling and rename it over the output, so a failed or
-    // interrupted wasm-opt leaves the unoptimized output intact.
-    let optimized = format!("{path}.wasm-opt-{}", std::process::id());
-    let status = std::process::Command::new("wasm-opt")
-        .args(["-O3", "--enable-gc", "--enable-reference-types",
-               "--enable-multivalue", "--enable-bulk-memory",
-               "--enable-tail-call", "-o", &optimized, path])
-        .status();
-    let status = match status {
-        Ok(s) if s.success() => std::fs::rename(&optimized, path)
-            .map(|()| s)
-            .map_err(|error| {
-                let _ = std::fs::remove_file(&optimized);
-                error
-            }),
-        other => {
-            let _ = std::fs::remove_file(&optimized);
-            other
-        }
-    };
-
-    match status {
-        Ok(s) if s.success() => {
-            let opt_size = std::fs::metadata(path).map(|m| m.len()).unwrap_or(0);
-            let pct = if original_size > 0 {
-                100.0 * (1.0 - opt_size as f64 / original_size as f64)
-            } else { 0.0 };
-            println!("Optimized: {} bytes -> {} bytes ({:.0}% smaller)",
-                     original_size, opt_size, pct);
-            Ok(())
-        }
-        Ok(s) => Err(format!("wasm-opt exited with status: {}", s)),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-            Err("wasm-opt not found. Install: brew install binaryen".into())
-        }
-        Err(e) => Err(format!("Failed to run wasm-opt: {}", e)),
-    }
-}
-
 /// Compile native file or namespace input through the shared portable pipeline.
 fn compile_source(
     source_path: Option<&str>,
@@ -285,11 +241,13 @@ fn compile_source(
             ("src", format!("{source_paths:?}")),
             ("exports", format!("{exports:?}")),
             ("compile-fuel", format!("{compile_fuel:?}")),
+            ("optimize", format!("{optimize}")),
         ]);
         let source_paths = source_paths.iter().map(PathBuf::from).collect::<Vec<_>>();
         let options = suss_cli::portable_aot::AotOptions {
             exports: mappings,
             compile_fuel,
+            optimize,
             ..Default::default()
         };
         let (mut outputs, _) = build_cache::builds::reuse_or_build(&request, || {
@@ -342,12 +300,6 @@ fn compile_source(
                 namespace.or(source_path).expect("source input"),
                 wasm.len()
             );
-            if optimize {
-                if let Err(error) = run_wasm_opt(output_path) {
-                    eprintln!("Optimization error: {error}");
-                    std::process::exit(1);
-                }
-            }
         }
         Err(error) => {
             eprintln!("Compilation error: {error}");
@@ -365,6 +317,10 @@ fn compile_main(
     optimize: bool,
     compile_fuel: Option<u64>,
 ) {
+    if optimize {
+        eprintln!("Compilation error: --optimize doesn't support --main command components yet");
+        std::process::exit(1);
+    }
     #[cfg(not(target_family = "wasm"))]
     let result = (|| -> Result<Vec<u8>, String> {
         let request = compile_request(&[
@@ -406,12 +362,6 @@ fn compile_main(
                 wasm.len()
             );
             println!("Run with: suss run {}", output_path);
-            if optimize {
-                if let Err(e) = run_wasm_opt(output_path) {
-                    eprintln!("Optimization error: {}", e);
-                    std::process::exit(1);
-                }
-            }
         }
         Err(e) => {
             eprintln!("Compilation error: {}", e);
@@ -451,13 +401,14 @@ fn compile_project(
             ("config", config_path.into()),
             ("world", format!("{world:?}")),
             ("compile-fuel", format!("{compile_fuel:?}")),
+            ("optimize", format!("{optimize}")),
         ]);
         build_cache::builds::reuse_or_build(&request, || {
             // Reload under recording, so the manifest holds exactly the
             // configuration this build used; outputs follow the same one.
             config = suss_compile::SussConfig::load(Path::new(config_path))
                 .map_err(|error| format!("Error loading config '{config_path}': {error}"))?;
-            suss_cli::portable_project::compile_project_with_compile_fuel(&config, world, compile_fuel)
+            suss_cli::portable_project::compile_project_with_options(&config, world, compile_fuel, optimize)
         })
         .map(|(outputs, _)| outputs)
     };
@@ -487,12 +438,6 @@ fn compile_project(
                         }
                         println!("Compiled {} -> {} ({} bytes)",
                                  world_name, output_path.display(), wasm.len());
-                        if optimize {
-                            if let Err(e) = run_wasm_opt(&output_path.display().to_string()) {
-                                eprintln!("Optimization error: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
                     }
                     Err(e) => {
                         eprintln!("Error: {}", e);

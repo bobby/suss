@@ -139,19 +139,28 @@ pub(crate) fn compile_project_typed(
     config: &SussConfig,
     selected: Option<&str>,
 ) -> CompileResult<BTreeMap<String, Vec<u8>>> {
-    compile_project_typed_with_compile_fuel(config, selected, None)
+    compile_project_typed_with_compile_fuel(config, selected, None, false)
 }
 
 /// Apply the explicit compilation limit to the existing compilation session for each selected world.
 pub fn compile_project_with_compile_fuel(
     config: &SussConfig, selected: Option<&str>, compile_fuel: Option<u64>,
 ) -> Result<BTreeMap<String, Vec<u8>>, String> {
-    compile_project_typed_with_compile_fuel(config, selected, compile_fuel)
+    compile_project_typed_with_compile_fuel(config, selected, compile_fuel, false)
+        .map_err(|error| error.to_string())
+}
+
+/// As `compile_project_with_compile_fuel`, optionally merging and optimizing
+/// each world's component with Binaryen (ADR-0005).
+pub fn compile_project_with_options(
+    config: &SussConfig, selected: Option<&str>, compile_fuel: Option<u64>, optimize: bool,
+) -> Result<BTreeMap<String, Vec<u8>>, String> {
+    compile_project_typed_with_compile_fuel(config, selected, compile_fuel, optimize)
         .map_err(|error| error.to_string())
 }
 
 fn compile_project_typed_with_compile_fuel(
-    config: &SussConfig, selected: Option<&str>, compile_fuel: Option<u64>,
+    config: &SussConfig, selected: Option<&str>, compile_fuel: Option<u64>, optimize: bool,
 ) -> CompileResult<BTreeMap<String, Vec<u8>>> {
     if !config.deps.is_empty() {
         return Err(CompileError::Unsupported("Published project dependency loading remains unimplemented; project :deps cannot be ignored".into()));
@@ -239,7 +248,7 @@ fn compile_project_typed_with_compile_fuel(
             world.wit_world.as_deref(),
             &config.src_paths,
             &portable_aot::AotOptions {
-                exports: world.exports.clone(), compile_fuel, ..Default::default()
+                exports: world.exports.clone(), compile_fuel, optimize, ..Default::default()
             },
         )?;
         result.insert(name, bytes);
