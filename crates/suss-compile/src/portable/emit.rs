@@ -20,10 +20,8 @@ fn object_method_invoke_name(n: usize) -> &'static str {
     NAMES[n]
 }
 
-/// Globals per cached named-read site: descriptor, field slot, method and
-/// epoch, then a second method entry's descriptor, epoch and method, then a
-/// function owner, epoch and its named property (#378).
-const FIELD_SITE_GLOBALS: u32 = 10;
+/// Globals per cached named-read site: its immutable `NAMED_SITE` struct (#378).
+const FIELD_SITE_GLOBALS: u32 = 1;
 
 fn arithmetic_name(
     operator: Arithmetic,
@@ -314,8 +312,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                             names.insert("object-same-descriptor");
                         }
                         Nominal::Instance => {
-                            names.insert("constructor-descriptor");
-                            names.insert("object-instance");
+                            names.insert("instance-site-test");
                         }
                         Nominal::Field(_) => {
                             names.insert("object-field-get");
@@ -431,9 +428,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         }
     }
     if !field_site_list.is_empty() {
-        names.insert("named-field-slot");
-        names.insert("descriptor-method-get");
-        names.insert("closure-named-get");
+        names.insert("named-site-get");
     }
     // Protocol method lookups get an inline cache (#355): the last
     // descriptor, its method and the protocol epoch it was found at.
@@ -460,9 +455,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }
         }
     }
-    if !instance_site_list.is_empty() {
-        names.insert("owned-descriptor-prototype");
-    }
+
     let imported_slots = slots.iter().copied().filter(|slot| !owned_slots.contains(slot)).collect::<Vec<_>>();
     let imported_definitions = called.iter().copied().filter(|definition| !defined_definitions.contains_key(definition)).collect::<Vec<_>>();
     for definition in &imported_definitions {
@@ -595,6 +588,14 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])
             }
             "string-new" => (vec![ValType::I32], vec![VALUE]),
+            "instance-site-test" => (
+                vec![ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::NAMED_SITE) }), VALUE, VALUE],
+                vec![ValType::I32],
+            ),
+            "named-site-get" => (
+                vec![ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::NAMED_SITE) }), VALUE, VALUE],
+                vec![VALUE],
+            ),
             name if name.starts_with("object-method-invoke-") => {
                 let n: usize = name["object-method-invoke-".len()..].parse().expect("object-method-invoke-N");
                 (vec![VALUE; n + 2], vec![VALUE])
@@ -752,7 +753,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .collect::<std::collections::HashMap<_, _>>();
     let first_instance_site = first_method_site + 3 * method_site_list.len() as u32;
     let instance_sites = instance_site_list.iter().enumerate()
-        .map(|(index, site)| (*site, first_instance_site + 4 * index as u32))
+        .map(|(index, site)| (*site, first_instance_site + index as u32))
         .collect::<std::collections::HashMap<_, _>>();
     for (index, definition) in imported_definitions.iter().enumerate() {
         links.codes.insert(*definition, first_imported_link + imported_slots.len() as u32 + index as u32);
@@ -847,47 +848,14 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         exports.export(&format!("slot.{slot}"), ExportKind::Global, links.slots[slot]);
     }
     for _ in &field_site_list {
-        // Descriptor, field slot (-1 for a method), method, and the protocol
-        // epoch the method was found at.
+        // The site's cache, a struct of its own (#378).
         code_globals.global(
-            GlobalType { val_type: VALUE, mutable: true, shared: false },
-            &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
-        );
-        code_globals.global(
-            GlobalType { val_type: ValType::I32, mutable: true, shared: false },
-            &ConstExpr::i32_const(0),
-        );
-        code_globals.global(
-            GlobalType { val_type: VALUE, mutable: true, shared: false },
-            &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
-        );
-        code_globals.global(
-            GlobalType { val_type: ValType::I32, mutable: true, shared: false },
-            &ConstExpr::i32_const(-1),
-        );
-        code_globals.global(
-            GlobalType { val_type: VALUE, mutable: true, shared: false },
-            &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
-        );
-        code_globals.global(
-            GlobalType { val_type: ValType::I32, mutable: true, shared: false },
-            &ConstExpr::i32_const(-1),
-        );
-        code_globals.global(
-            GlobalType { val_type: VALUE, mutable: true, shared: false },
-            &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
-        );
-        code_globals.global(
-            GlobalType { val_type: VALUE, mutable: true, shared: false },
-            &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
-        );
-        code_globals.global(
-            GlobalType { val_type: ValType::I32, mutable: true, shared: false },
-            &ConstExpr::i32_const(-1),
-        );
-        code_globals.global(
-            GlobalType { val_type: VALUE, mutable: true, shared: false },
-            &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
+            GlobalType {
+                val_type: ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::NAMED_SITE) }),
+                mutable: false,
+                shared: false,
+            },
+            &ConstExpr::extended(runtime_abi::named_site_initializer()),
         );
     }
     for _ in &method_site_list {
@@ -903,16 +871,14 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         );
     }
     for _ in &instance_site_list {
-        // Constructor, descriptor, prototype, epoch.
-        for _ in 0..3 {
-            code_globals.global(
-                GlobalType { val_type: VALUE, mutable: true, shared: false },
-                &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
-            );
-        }
+        // The site's cache, a NAMED_SITE struct (#378).
         code_globals.global(
-            GlobalType { val_type: ValType::I32, mutable: true, shared: false },
-            &ConstExpr::i32_const(-1),
+            GlobalType {
+                val_type: ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::NAMED_SITE) }),
+                mutable: false,
+                shared: false,
+            },
+            &ConstExpr::extended(runtime_abi::named_site_initializer()),
         );
     }
     for (definition, global) in &defined_code {
@@ -2195,166 +2161,12 @@ fn emit_function(
                                     .instruction(&End)
                                     .instruction(&Else);
                             }
-                            let fields = |function: &mut Function| {
-                                function
-                                    .instruction(&LocalGet(object))
-                                    .instruction(&RefCastNonNull(HeapType::Concrete(7)))
-                                    .instruction(&StructGet { struct_type_index: 7, field_index: 1 })
-                                    .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)));
-                            };
-                            // Not a field: the descriptor's own method, cached
-                            // with the epoch, or the full lookup when it has
-                            // none (#378).
-                            let method = |function: &mut Function| {
-                                function
-                                    .instruction(&LocalGet(object))
-                                    .instruction(&RefCastNonNull(HeapType::Concrete(7)))
-                                    .instruction(&StructGet { struct_type_index: 7, field_index: 0 })
-                                    .instruction(&LocalGet(name))
-                                    .instruction(&Call(index("descriptor-method-get")))
-                                    .instruction(&LocalTee(method_local))
-                                    .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, sentinels))
-                                    .instruction(&RefEq)
-                                    .instruction(&If(BlockType::Result(VALUE)))
-                                    .instruction(&LocalGet(object))
-                                    .instruction(&LocalGet(name))
-                                    .instruction(&Call(index("named-property-get")))
-                                    .instruction(&Else)
-                                    // Two-way (#378): a site that alternates
-                                    // between two node types keeps both, so
-                                    // the method entry moves to the second.
-                                    .instruction(&GlobalGet(cache + 1))
-                                    .instruction(&I32Const(0))
-                                    .instruction(&I32LtS)
-                                    .instruction(&If(BlockType::Empty))
-                                    .instruction(&GlobalGet(cache))
-                                    .instruction(&GlobalSet(cache + 4))
-                                    .instruction(&GlobalGet(cache + 3))
-                                    .instruction(&GlobalSet(cache + 5))
-                                    .instruction(&GlobalGet(cache + 2))
-                                    .instruction(&GlobalSet(cache + 6))
-                                    .instruction(&End)
-                                    .instruction(&LocalGet(object))
-                                    .instruction(&RefCastNonNull(HeapType::Concrete(7)))
-                                    .instruction(&StructGet { struct_type_index: 7, field_index: 0 })
-                                    .instruction(&GlobalSet(cache))
-                                    .instruction(&I32Const(-1))
-                                    .instruction(&GlobalSet(cache + 1))
-                                    .instruction(&LocalGet(method_local))
-                                    .instruction(&GlobalSet(cache + 2))
-                                    .instruction(&GlobalGet(epoch_global))
-                                    .instruction(&GlobalSet(cache + 3))
-                                    .instruction(&LocalGet(method_local))
-                                    .instruction(&End);
-                            };
+                            // The site's struct and the runtime's cached read (#378).
                             function
-                                .instruction(&LocalGet(object))
-                                .instruction(&RefTestNonNull(HeapType::Concrete(7)))
-                                .instruction(&If(BlockType::Result(VALUE)))
-                                .instruction(&LocalGet(object))
-                                .instruction(&RefCastNonNull(HeapType::Concrete(7)))
-                                .instruction(&StructGet { struct_type_index: 7, field_index: 0 })
                                 .instruction(&GlobalGet(cache))
-                                .instruction(&RefEq)
-                                .instruction(&If(BlockType::Result(VALUE)))
-                                .instruction(&GlobalGet(cache + 1))
-                                .instruction(&I32Const(0))
-                                .instruction(&I32GeS)
-                                .instruction(&If(BlockType::Result(VALUE)));
-                            fields(&mut function);
-                            function
-                                .instruction(&GlobalGet(cache + 1))
-                                .instruction(&ArrayGet(runtime_abi::ARGS))
-                                .instruction(&Else)
-                                // A method found at this epoch (#378).
-                                .instruction(&GlobalGet(cache + 3))
-                                .instruction(&GlobalGet(epoch_global))
-                                .instruction(&I32Eq)
-                                .instruction(&If(BlockType::Result(VALUE)))
-                                .instruction(&GlobalGet(cache + 2))
-                                .instruction(&Else);
-                            method(&mut function);
-                            function
-                                .instruction(&End)
-                                .instruction(&End)
-                                .instruction(&Else)
-                                // The second method entry, at this epoch.
-                                .instruction(&LocalGet(object))
-                                .instruction(&RefCastNonNull(HeapType::Concrete(7)))
-                                .instruction(&StructGet { struct_type_index: 7, field_index: 0 })
-                                .instruction(&GlobalGet(cache + 4))
-                                .instruction(&RefEq)
-                                .instruction(&GlobalGet(cache + 5))
-                                .instruction(&GlobalGet(epoch_global))
-                                .instruction(&I32Eq)
-                                .instruction(&I32And)
-                                .instruction(&If(BlockType::Result(VALUE)))
-                                .instruction(&GlobalGet(cache + 6))
-                                .instruction(&Else)
                                 .instruction(&LocalGet(object))
                                 .instruction(&LocalGet(name))
-                                .instruction(&Call(index("named-field-slot")))
-                                .instruction(&LocalTee(field_index_local))
-                                .instruction(&I32Const(0))
-                                .instruction(&I32GeS)
-                                .instruction(&If(BlockType::Result(VALUE)))
-                                .instruction(&LocalGet(object))
-                                .instruction(&RefCastNonNull(HeapType::Concrete(7)))
-                                .instruction(&StructGet { struct_type_index: 7, field_index: 0 })
-                                .instruction(&GlobalSet(cache))
-                                .instruction(&LocalGet(field_index_local))
-                                .instruction(&GlobalSet(cache + 1));
-                            fields(&mut function);
-                            function
-                                .instruction(&LocalGet(field_index_local))
-                                .instruction(&ArrayGet(runtime_abi::ARGS))
-                                .instruction(&Else);
-                            method(&mut function);
-                            function
-                                .instruction(&End)
-                                .instruction(&End)
-                                .instruction(&End)
-                                .instruction(&Else)
-                                // A function's own named property, such as a
-                                // constructor static, cached with the epoch.
-                                .instruction(&LocalGet(object))
-                                .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::CLOSURE)))
-                                .instruction(&If(BlockType::Result(VALUE)))
-                                .instruction(&LocalGet(object))
-                                .instruction(&GlobalGet(cache + 7))
-                                .instruction(&RefEq)
-                                .instruction(&GlobalGet(cache + 8))
-                                .instruction(&GlobalGet(epoch_global))
-                                .instruction(&I32Eq)
-                                .instruction(&I32And)
-                                .instruction(&If(BlockType::Result(VALUE)))
-                                .instruction(&GlobalGet(cache + 9))
-                                .instruction(&Else)
-                                .instruction(&LocalGet(object))
-                                .instruction(&LocalGet(name))
-                                .instruction(&Call(index("closure-named-get")))
-                                .instruction(&LocalTee(method_local))
-                                .instruction(&RefIsNull)
-                                .instruction(&If(BlockType::Result(VALUE)))
-                                .instruction(&LocalGet(object))
-                                .instruction(&LocalGet(name))
-                                .instruction(&Call(index("named-property-get")))
-                                .instruction(&Else)
-                                .instruction(&LocalGet(object))
-                                .instruction(&GlobalSet(cache + 7))
-                                .instruction(&GlobalGet(epoch_global))
-                                .instruction(&GlobalSet(cache + 8))
-                                .instruction(&LocalGet(method_local))
-                                .instruction(&GlobalSet(cache + 9))
-                                .instruction(&LocalGet(method_local))
-                                .instruction(&End)
-                                .instruction(&End)
-                                .instruction(&Else)
-                                .instruction(&LocalGet(object))
-                                .instruction(&LocalGet(name))
-                                .instruction(&Call(index("named-property-get")))
-                                .instruction(&End)
-                                .instruction(&End);
+                                .instruction(&Call(index("named-site-get")));
                             if length {
                                 function.instruction(&End);
                             }
@@ -2509,66 +2321,13 @@ fn emit_function(
                                 .instruction(&Call(index("source-construct-from-plan")));
                         }
                         Nominal::Instance => {
-                            // Inline cache (#378): the site keeps its last
-                            // constructor's descriptor and prototype. An i31
-                            // is a primitive, never an instance; an object of
-                            // the descriptor other than its prototype is one;
-                            // anything else takes object-instance. The
-                            // constructor is checked before the value.
+                            // The site's cached test (#378).
                             let cache = instance_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
-                            let (constructor, value) = (arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset);
-                            let full = |function: &mut Function| {
-                                function
-                                    .instruction(&GlobalGet(cache + 1))
-                                    .instruction(&LocalGet(value))
-                                    .instruction(&Call(index("object-instance")));
-                            };
                             function
-                                .instruction(&LocalGet(constructor))
                                 .instruction(&GlobalGet(cache))
-                                .instruction(&RefEq)
-                                .instruction(&GlobalGet(cache + 3))
-                                .instruction(&GlobalGet(epoch_global))
-                                .instruction(&I32Eq)
-                                .instruction(&I32And)
-                                .instruction(&I32Eqz)
-                                .instruction(&If(BlockType::Empty))
-                                .instruction(&LocalGet(constructor))
-                                .instruction(&Call(index("constructor-descriptor")))
-                                .instruction(&GlobalSet(cache + 1))
-                                .instruction(&GlobalGet(cache + 1))
-                                .instruction(&Call(index("owned-descriptor-prototype")))
-                                .instruction(&GlobalSet(cache + 2))
-                                .instruction(&LocalGet(constructor))
-                                .instruction(&GlobalSet(cache))
-                                .instruction(&GlobalGet(epoch_global))
-                                .instruction(&GlobalSet(cache + 3))
-                                .instruction(&End)
-                                .instruction(&LocalGet(value))
-                                .instruction(&RefTestNonNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 }))
-                                .instruction(&If(BlockType::Result(ValType::I32)))
-                                .instruction(&I32Const(0))
-                                .instruction(&Else)
-                                .instruction(&LocalGet(value))
-                                .instruction(&RefTestNonNull(HeapType::Concrete(7)))
-                                .instruction(&If(BlockType::Result(ValType::I32)))
-                                .instruction(&LocalGet(value))
-                                .instruction(&RefCastNonNull(HeapType::Concrete(7)))
-                                .instruction(&StructGet { struct_type_index: 7, field_index: 0 })
-                                .instruction(&GlobalGet(cache + 1))
-                                .instruction(&RefEq)
-                                .instruction(&LocalGet(value))
-                                .instruction(&GlobalGet(cache + 2))
-                                .instruction(&RefEq)
-                                .instruction(&I32Eqz)
-                                .instruction(&I32And)
-                                .instruction(&If(BlockType::Result(ValType::I32)))
-                                .instruction(&I32Const(1))
-                                .instruction(&Else);
-                            full(&mut function);
-                            function.instruction(&End).instruction(&Else);
-                            full(&mut function);
-                            function.instruction(&End).instruction(&End);
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&LocalGet(arguments[1].0 as u32 + offset))
+                                .instruction(&Call(index("instance-site-test")));
                         }
                         Nominal::Set | Nominal::Marker => {
                             function
@@ -2598,46 +2357,7 @@ fn emit_function(
                                 .instruction(&Call(index("object-field-set")))
                                 .instruction(&LocalGet(arguments[1].0 as u32 + offset));
                         }
-                        Nominal::Field(field) => {
-                            // Inline (#378): an object's field array read,
-                            // with object-field-get's own checks taking the
-                            // call (and its error) for anything else.
-                            let object = arguments[0].0 as u32 + offset;
-                            let fallback = |function: &mut Function| {
-                                function
-                                    .instruction(&LocalGet(object))
-                                    .instruction(&I32Const(*field as i32))
-                                    .instruction(&Call(index("object-field-get")));
-                            };
-                            function
-                                .instruction(&LocalGet(object))
-                                .instruction(&RefTestNonNull(HeapType::Concrete(7)))
-                                .instruction(&If(BlockType::Result(VALUE)))
-                                .instruction(&LocalGet(object))
-                                .instruction(&RefCastNonNull(HeapType::Concrete(7)))
-                                .instruction(&StructGet { struct_type_index: 7, field_index: 1 })
-                                .instruction(&LocalTee(method_local))
-                                .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::ARGS)))
-                                .instruction(&If(BlockType::Result(VALUE)))
-                                .instruction(&LocalGet(method_local))
-                                .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)))
-                                .instruction(&ArrayLen)
-                                .instruction(&I32Const(*field as i32))
-                                .instruction(&I32GtU)
-                                .instruction(&If(BlockType::Result(VALUE)))
-                                .instruction(&LocalGet(method_local))
-                                .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)))
-                                .instruction(&I32Const(*field as i32))
-                                .instruction(&ArrayGet(runtime_abi::ARGS))
-                                .instruction(&Else);
-                            fallback(&mut function);
-                            function.instruction(&End).instruction(&Else);
-                            fallback(&mut function);
-                            function.instruction(&End).instruction(&Else);
-                            fallback(&mut function);
-                            function.instruction(&End);
-                        }
-                        Nominal::Key(field) => {
+                        Nominal::Field(field) | Nominal::Key(field) => {
                             function
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                 .instruction(&I32Const(*field as i32))

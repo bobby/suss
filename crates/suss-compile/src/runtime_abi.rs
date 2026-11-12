@@ -50,7 +50,7 @@ mod string_methods;
 mod string_char_at;
 mod type_values;
 
-pub const VERSION: u32 = 4;
+pub const VERSION: u32 = 5;
 // The language sentinels. Every i31 is a long (ADR-0003); nil is a null
 // eqref, and false, true and undefined are SENTINEL structs held in runtime
 // globals that fragments import. Code names a sentinel with these and builds
@@ -221,8 +221,174 @@ pub const CODE: u32 = 19;
 pub const CALL: u32 = 20;
 pub const SPREAD: u32 = CALL + MAX_FIXED + 1;
 pub const UNIVERSAL: u32 = SPREAD + 1;
-pub const TYPE_COUNT: u32 = UNIVERSAL + 1;
+/// ABI 5 (#378): a cached named-read site's state, one struct per site held in
+/// an immutable global, so the site's code is a call to `named-site-get`:
+/// `{descriptor, slot (-1 for a method), method, epoch, second descriptor,
+/// second epoch, second method, function owner, owner epoch, owner value}`.
+pub const NAMED_SITE: u32 = UNIVERSAL + 1;
+pub const TYPE_COUNT: u32 = NAMED_SITE + 1;
+/// `NAMED_SITE` fields.
+pub(crate) const SITE_DESCRIPTOR: u32 = 0;
+pub(crate) const SITE_SLOT: u32 = 1;
+pub(crate) const SITE_METHOD: u32 = 2;
+pub(crate) const SITE_EPOCH: u32 = 3;
+pub(crate) const SITE_DESCRIPTOR_2: u32 = 4;
+pub(crate) const SITE_EPOCH_2: u32 = 5;
+pub(crate) const SITE_METHOD_2: u32 = 6;
+pub(crate) const SITE_OWNER: u32 = 7;
+pub(crate) const SITE_OWNER_EPOCH: u32 = 8;
+pub(crate) const SITE_OWNER_VALUE: u32 = 9;
+/// A new site's fields: no descriptor or owner (none is null) and no epoch.
+pub fn named_site_initializer() -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let null = || RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq });
+    vec![
+        null(), I32Const(-1), null(), I32Const(-1),
+        null(), I32Const(-1), null(),
+        null(), I32Const(-1), null(),
+        StructNew(NAMED_SITE),
+    ]
+}
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
+
+/// `named-site-get(site, object, name)` (#378): a core named read through its
+/// site's cache. An object with the site's descriptor reads the cached field,
+/// or the cached method while the protocol epoch is unchanged; the second
+/// method entry serves a site that alternates between two types; a function
+/// owner reads its cached named property. Otherwise the field slot, the
+/// descriptor's own method or the function's own property is looked up and
+/// cached, and anything else takes `named-property-get`, uncached.
+fn named_site_get(b: &mut Builder) {
+    use Instruction::*;
+    // Params: 0 site, 1 object, 2 name. Locals: 3 descriptor, 4 slot, 5 value.
+    let site = |field| [LocalGet(0), StructGet { struct_type_index: NAMED_SITE, field_index: field }];
+    let set = |field: u32, value: Vec<Instruction<'static>>| {
+        let mut code = vec![LocalGet(0)];
+        code.extend(value);
+        code.push(StructSet { struct_type_index: NAMED_SITE, field_index: field });
+        code
+    };
+    let epoch = || vec![GlobalGet(PROTOCOL_EPOCH_GLOBAL)];
+    let property_get = b.names["named-property-get"];
+    let full = || [LocalGet(1), LocalGet(2), Call(property_get), Return];
+    let field_read = |slot: u32| [
+        LocalGet(1),
+        RefCastNonNull(HeapType::Concrete(7)),
+        StructGet { struct_type_index: 7, field_index: 1 },
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        LocalGet(slot),
+        ArrayGet(ARGS),
+        Return,
+    ];
+    // The descriptor's own method, cached in the first entry (its method
+    // moves to the second), or the full lookup when it has none.
+    let mut method = vec![
+        LocalGet(3), LocalGet(2), Call(b.names["descriptor-method-get"]), LocalTee(5),
+        RefIsNull, LocalGet(5), sentinel_value(NIL), RefEq, I32Or, If(BlockType::Empty),
+    ];
+    method.extend(full());
+    method.push(End);
+    method.extend(site(SITE_SLOT));
+    method.extend([I32Const(0), I32LtS, If(BlockType::Empty)]);
+    method.extend(set(SITE_DESCRIPTOR_2, site(SITE_DESCRIPTOR).to_vec()));
+    method.extend(set(SITE_EPOCH_2, site(SITE_EPOCH).to_vec()));
+    method.extend(set(SITE_METHOD_2, site(SITE_METHOD).to_vec()));
+    method.push(End);
+    method.extend(set(SITE_DESCRIPTOR, vec![LocalGet(3)]));
+    method.extend(set(SITE_SLOT, vec![I32Const(-1)]));
+    method.extend(set(SITE_METHOD, vec![LocalGet(5)]));
+    method.extend(set(SITE_EPOCH, epoch()));
+    method.extend([LocalGet(5), Return]);
+
+    let mut code = vec![LocalGet(1), RefTestNonNull(HeapType::Concrete(7)), If(BlockType::Empty)];
+    code.extend([LocalGet(1), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 0 }, LocalTee(3)]);
+    code.extend(site(SITE_DESCRIPTOR));
+    code.extend([RefEq, If(BlockType::Empty)]);
+    code.extend(site(SITE_SLOT));
+    code.extend([LocalTee(4), I32Const(0), I32GeS, If(BlockType::Empty)]);
+    code.extend(field_read(4));
+    code.push(End);
+    code.extend(site(SITE_EPOCH));
+    code.extend(epoch());
+    code.extend([I32Eq, If(BlockType::Empty)]);
+    code.extend(site(SITE_METHOD));
+    code.extend([Return, End]);
+    code.extend(method.clone());
+    code.push(End);
+    code.push(LocalGet(3));
+    code.extend(site(SITE_DESCRIPTOR_2));
+    code.push(RefEq);
+    code.extend(site(SITE_EPOCH_2));
+    code.extend(epoch());
+    code.extend([I32Eq, I32And, If(BlockType::Empty)]);
+    code.extend(site(SITE_METHOD_2));
+    code.extend([Return, End]);
+    code.extend([LocalGet(1), LocalGet(2), Call(b.names["named-field-slot"]), LocalTee(4), I32Const(0), I32GeS, If(BlockType::Empty)]);
+    code.extend(set(SITE_DESCRIPTOR, vec![LocalGet(3)]));
+    code.extend(set(SITE_SLOT, vec![LocalGet(4)]));
+    code.extend(field_read(4));
+    code.push(End);
+    code.extend(method);
+    code.push(End);
+    // A function's own named property, such as a constructor static.
+    code.extend([LocalGet(1), RefTestNonNull(HeapType::Concrete(CLOSURE)), If(BlockType::Empty)]);
+    code.push(LocalGet(1));
+    code.extend(site(SITE_OWNER));
+    code.push(RefEq);
+    code.extend(site(SITE_OWNER_EPOCH));
+    code.extend(epoch());
+    code.extend([I32Eq, I32And, If(BlockType::Empty)]);
+    code.extend(site(SITE_OWNER_VALUE));
+    code.extend([Return, End]);
+    code.extend([LocalGet(1), LocalGet(2), Call(b.names["closure-named-get"]), LocalTee(5), RefIsNull, If(BlockType::Empty)]);
+    code.extend(full());
+    code.push(End);
+    code.extend(set(SITE_OWNER, vec![LocalGet(1)]));
+    code.extend(set(SITE_OWNER_EPOCH, epoch()));
+    code.extend(set(SITE_OWNER_VALUE, vec![LocalGet(5)]));
+    code.extend([LocalGet(5), Return, End]);
+    code.extend(full());
+    b.function_with_locals("named-site-get", &[reference(NAMED_SITE), VALUE, VALUE], &[VALUE], &[(1, VALUE), (1, ValType::I32), (1, VALUE)], &code);
+}
+
+/// `instance-site-test(site, constructor, value)` (#378): `instance?` through
+/// its site's cache, a `NAMED_SITE` struct whose descriptor, method and
+/// second-descriptor fields hold the last constructor, its descriptor and its
+/// prototype, valid at the protocol epoch. The constructor is checked first;
+/// an i31 is never an instance; an object of the descriptor other than its
+/// prototype is one; anything else takes `object-instance`.
+fn instance_site_test(b: &mut Builder) {
+    use Instruction::*;
+    // Params: 0 site, 1 constructor, 2 value.
+    let site = |field| [LocalGet(0), StructGet { struct_type_index: NAMED_SITE, field_index: field }];
+    let set = |field: u32, value: Vec<Instruction<'static>>| {
+        let mut code = vec![LocalGet(0)];
+        code.extend(value);
+        code.push(StructSet { struct_type_index: NAMED_SITE, field_index: field });
+        code
+    };
+    let (constructor, descriptor, prototype) = (SITE_DESCRIPTOR, SITE_METHOD, SITE_DESCRIPTOR_2);
+    let mut code = vec![LocalGet(1)];
+    code.extend(site(constructor));
+    code.push(RefEq);
+    code.extend(site(SITE_EPOCH));
+    code.extend([GlobalGet(PROTOCOL_EPOCH_GLOBAL), I32Eq, I32And, I32Eqz, If(BlockType::Empty)]);
+    code.extend(set(descriptor, vec![LocalGet(1), Call(b.names["constructor-descriptor"])]));
+    code.extend(set(prototype, [site(descriptor).to_vec(), vec![Call(b.names["owned-descriptor-prototype"])]].concat()));
+    code.extend(set(constructor, vec![LocalGet(1)]));
+    code.extend(set(SITE_EPOCH, vec![GlobalGet(PROTOCOL_EPOCH_GLOBAL)]));
+    code.push(End);
+    code.extend([LocalGet(2), RefTestNonNull(HeapType::I31), If(BlockType::Empty), I32Const(0), Return, End]);
+    code.extend([LocalGet(2), RefTestNonNull(HeapType::Concrete(7)), If(BlockType::Empty)]);
+    code.extend([LocalGet(2), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 0 }]);
+    code.extend(site(descriptor));
+    code.extend([RefEq, LocalGet(2)]);
+    code.extend(site(prototype));
+    code.extend([RefEq, I32Eqz, I32And, If(BlockType::Empty), I32Const(1), Return, End, End]);
+    code.extend(site(descriptor));
+    code.extend([LocalGet(2), Call(b.names["object-instance"])]);
+    b.function("instance-site-test", &[reference(NAMED_SITE), VALUE, VALUE], &[ValType::I32], &code);
+}
 
 fn reference(index: u32) -> ValType {
     ValType::Ref(RefType {
@@ -350,6 +516,12 @@ pub fn prelude() -> TypeSection {
         field(ValType::I32, false),
     ]);
     group.push(structure(universal));
+    let mutable = |ty| field(ty, true);
+    group.push(structure(vec![
+        mutable(VALUE), mutable(ValType::I32), mutable(VALUE), mutable(ValType::I32),
+        mutable(VALUE), mutable(ValType::I32), mutable(VALUE),
+        mutable(VALUE), mutable(ValType::I32), mutable(VALUE),
+    ]));
     debug_assert_eq!(group.len() as u32, TYPE_COUNT);
     types.ty().rec(group.into_iter().enumerate().map(|(index, inner)| {
         let index = index as u32;
@@ -1532,6 +1704,8 @@ fn build_module() -> Vec<u8> {
     native_objects::functions(&mut b);
     native_object_properties::primitives(&mut b);
     native_object_properties::functions(&mut b);
+    // After named-property-get, which native_object_properties defines.
+    named_site_get(&mut b);
     arrays::set_or_property(&mut b);
     arithmetic_functions.extend(native_object_methods::functions(&mut b));
     arithmetic_functions.extend(native_object_factory::functions(&mut b));
@@ -1548,6 +1722,7 @@ fn build_module() -> Vec<u8> {
     arithmetic_functions.extend(exception_info::functions(&mut b));
     type_values::functions(&mut b);
     let prototype_functions = owned_prototypes::functions(&mut b);
+    instance_site_test(&mut b);
     arithmetic_functions.extend(prototype_functions);
     let coercion_functions = coercions::functions(&mut b);
     arithmetic_functions.extend(coercion_functions);
