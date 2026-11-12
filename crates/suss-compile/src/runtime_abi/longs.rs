@@ -494,10 +494,14 @@ pub(super) fn arithmetic(b: &mut Builder) {
 /// `long-string`: a long's decimal digits as a new string.
 pub(super) fn string(b: &mut Builder) {
     use Instruction::*;
-    const UNITS: i32 = 20;
-    let code = vec![
-        // Local 1 is the sign, 2 the digit buffer, 3 the first digit's index
-        // and 4 the unsigned magnitude still to write.
+    // A u64 has at most 20 digits.
+    const DIGITS: u32 = 20;
+    // Locals: 1 the sign, 2 the unsigned magnitude still to write, 3 the digit
+    // count, then 4.. the digits as code units, least significant first. The
+    // string is built at its exact length with array.new_fixed (#388): no
+    // zeroed scratch buffer and no copy, each a host call in wasmtime.
+    let digit = |k: u32| 4 + k;
+    let mut code = vec![
         LocalGet(0),
         I64Const(0),
         I64LtS,
@@ -509,73 +513,51 @@ pub(super) fn string(b: &mut Builder) {
         Else,
         LocalGet(0),
         End,
-        LocalSet(4),
-        I32Const(UNITS),
-        ArrayNewDefault(STRING),
         LocalSet(2),
-        I32Const(UNITS),
-        LocalSet(3),
-        Loop(BlockType::Empty),
-        LocalGet(3),
-        I32Const(1),
-        I32Sub,
-        LocalSet(3),
-        LocalGet(2),
-        LocalGet(3),
-        LocalGet(4),
-        I64Const(10),
-        I64RemU,
-        I32WrapI64,
-        I32Const(i32::from(b'0')),
-        I32Add,
-        ArraySet(STRING),
-        LocalGet(4),
-        I64Const(10),
-        I64DivU,
-        LocalTee(4),
-        I64Const(0),
-        I64Ne,
-        BrIf(0),
-        End,
-        LocalGet(1),
-        If(BlockType::Empty),
-        LocalGet(3),
-        I32Const(1),
-        I32Sub,
-        LocalSet(3),
-        LocalGet(2),
-        LocalGet(3),
-        I32Const(i32::from(b'-')),
-        ArraySet(STRING),
-        End,
-        I32Const(UNITS),
-        LocalGet(3),
-        I32Sub,
-        ArrayNewDefault(STRING),
-        LocalTee(5),
-        I32Const(0),
-        LocalGet(2),
-        LocalGet(3),
-        I32Const(UNITS),
-        LocalGet(3),
-        I32Sub,
-        ArrayCopy {
-            array_type_index_dst: STRING,
-            array_type_index_src: STRING,
-        },
-        LocalGet(5),
     ];
-    let string = ValType::Ref(RefType {
-        nullable: true,
-        heap_type: HeapType::Concrete(STRING),
-    });
-    b.function_with_locals(
-        "long-string",
-        &[ValType::I64],
-        &[VALUE],
-        &[(1, ValType::I32), (1, string), (1, ValType::I32), (1, ValType::I64), (1, string)],
-        &code,
-    );
+    // Unrolled: digit k is written, then the loop stops once nothing remains.
+    code.push(Block(BlockType::Empty));
+    for k in 0..DIGITS {
+        code.extend([
+            LocalGet(2),
+            I64Const(10),
+            I64RemU,
+            I32WrapI64,
+            I32Const(i32::from(b'0')),
+            I32Add,
+            LocalSet(digit(k)),
+            I32Const(k as i32 + 1),
+            LocalSet(3),
+            LocalGet(2),
+            I64Const(10),
+            I64DivU,
+            LocalTee(2),
+            I64Eqz,
+            BrIf(0),
+        ]);
+    }
+    code.push(End);
+    for count in 1..=DIGITS {
+        code.extend([LocalGet(3), I32Const(count as i32), I32Eq, If(BlockType::Empty)]);
+        for negative in [true, false] {
+            if negative {
+                code.extend([LocalGet(1), If(BlockType::Empty), I32Const(i32::from(b'-'))]);
+            }
+            code.extend((0..count).rev().map(|k| LocalGet(digit(k))));
+            code.extend([
+                ArrayNewFixed { array_type_index: STRING, array_size: count + u32::from(negative) },
+                Return,
+            ]);
+            if negative {
+                code.push(End);
+            }
+        }
+        code.push(End);
+    }
+    code.push(Unreachable);
+    let mut locals = vec![(1, ValType::I32), (1, ValType::I64), (1, ValType::I32)];
+    locals.push((DIGITS, ValType::I32));
+    b.function_with_locals("long-string", &[ValType::I64], &[VALUE], &locals, &code);
 }
 
 /// Clojure's `quot`, `rem`, `abs`, `unchecked-*` and the `long?` and
