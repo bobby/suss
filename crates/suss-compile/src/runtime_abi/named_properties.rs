@@ -1164,6 +1164,32 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             &body,
         );
     }
+    // A descriptor's own Object method named `name`, or nil (#378): what
+    // fixed-named-property-get returns for an instance's non-field name
+    // before instance-owned properties. It depends only on the descriptor and
+    // its method table, whose writes bump the protocol epoch, so call sites
+    // may cache it.
+    b.function_with_locals(
+        "descriptor-method-get",
+        &[VALUE, VALUE],
+        &[VALUE],
+        &[(1, VALUE)],
+        &[
+            Instruction::LocalGet(0),
+            Instruction::LocalGet(1),
+            Instruction::Call(b.names["object-method-key"]),
+            Instruction::LocalTee(2),
+            sentinel_value(NIL),
+            Instruction::RefEq,
+            Instruction::If(BlockType::Result(VALUE)),
+            sentinel_value(NIL),
+            Instruction::Else,
+            Instruction::LocalGet(0),
+            Instruction::LocalGet(2),
+            Instruction::Call(b.names["protocol-method-get"]),
+            Instruction::End,
+        ],
+    );
     callbacks.extend(callable_properties::functions(b, equal));
     callbacks
 }
