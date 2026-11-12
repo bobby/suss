@@ -93,7 +93,7 @@ impl RawHeads {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
     #[derive(Debug, PartialEq)]
@@ -298,7 +298,7 @@ mod tests {
 }
 
 // Original4c table algorithm and 24-byte slot representation, test-only oracle.
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod legacy {
     //! Metered native hash-to-chain heads for exact raw reader keys.
     //! Native keys only. Generic charging errors are propagated unchanged.

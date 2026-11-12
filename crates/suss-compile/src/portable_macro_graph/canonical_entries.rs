@@ -200,13 +200,13 @@ impl Entries {
     pub(super) fn link(&mut self, location: Location, index: usize) {
         self.pages[location.page][location.offset].next = Some(index);
     }
-    #[cfg(test)]
+    #[cfg(all(test, not(suss_generator)))]
     pub(super) fn iter(&self) -> impl Iterator<Item = &Entry> {
         self.pages.iter().flat_map(|page| page.iter())
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
     #[derive(Debug, PartialEq, Eq)]

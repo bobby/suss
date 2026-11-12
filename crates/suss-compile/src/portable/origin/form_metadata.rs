@@ -295,7 +295,7 @@ fn same(a: &Form, b: &Form, metadata: bool) -> bool {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 fn find<'a>(
     forms: &'a [Form],
     wanted: &Form,
@@ -829,7 +829,7 @@ impl SourceOrigin {
 
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
 

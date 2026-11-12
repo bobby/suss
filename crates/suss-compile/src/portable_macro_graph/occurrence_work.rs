@@ -66,7 +66,7 @@ pub(super) fn count_indexed<E, C: FnMut(u64) -> Result<(), E>>(
     Ok(Some(total))
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::count;
 

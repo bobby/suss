@@ -90,7 +90,7 @@ pub fn build_repl_component_world() -> String {
     REPL_COMPONENT_WORLD.to_string()
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
 

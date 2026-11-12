@@ -244,7 +244,7 @@ pub fn verify(bytes: &[u8], expected: Expected<'_>) -> Result<Manifest, String> 
     Ok(found)
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
     fn source() -> Vec<u8> {

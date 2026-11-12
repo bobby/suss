@@ -19,7 +19,7 @@ pub struct CacheStats {
     pub bytes: usize,
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
     fn graph(source: &str) -> ir::Function {

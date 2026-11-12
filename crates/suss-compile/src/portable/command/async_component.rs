@@ -907,7 +907,7 @@ pub(crate) fn check_scalar(
     Ok(())
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 #[path = "async_component_entry_tests.rs"]
 mod entry_tests;
 

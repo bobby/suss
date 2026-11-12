@@ -742,7 +742,7 @@ impl Default for Compiler {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod deftype_tests {
     use super::*;
 

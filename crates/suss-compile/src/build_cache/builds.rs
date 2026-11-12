@@ -126,7 +126,7 @@ fn reuse(directory: &super::BuildDir, key: &[u8; 32]) -> Option<BTreeMap<String,
     Some(outputs)
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
     #[test]

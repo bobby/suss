@@ -67,7 +67,7 @@ pub(crate) fn compile(engine: &Engine, bytes: &[u8]) -> wasmtime::Result<Module>
         .compile(engine, bytes)
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
     const EMPTY: &[u8] = b"\0asm\x01\0\0\0";

@@ -619,7 +619,7 @@ fn charge_metadata_tree<M: FnMut(u64) -> Result<(), Diagnostic>>(
     Ok(())
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests;
 
 /// Select the private coercion only after provisional definitions and macro

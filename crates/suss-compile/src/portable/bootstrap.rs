@@ -256,7 +256,7 @@ fn shipped_bundle(phase: Phase) -> Result<&'static ShippedBootstrap, Diagnostic>
         .map_err(|message| error(message.clone()))
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     /// Core's analysis keeps each namespace's identities in step with its
     /// bindings (#319).

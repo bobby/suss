@@ -736,7 +736,7 @@ fn user_cache_dir() -> Option<PathBuf> {
         .or_else(|| std::env::var_os("HOME").and_then(absolute).map(|home| home.join(".cache")))
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(suss_generator)))]
 mod tests {
     use super::*;
     fn directory() -> (tempfile::TempDir, BuildDir) {
