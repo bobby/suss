@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Exercise the actual compiled Cargo build script's bootstrap identity inputs."""
+import json
 import os
 from pathlib import Path
 import re
@@ -47,21 +48,34 @@ def copy_inputs(destination):
 
 
 def main():
-    target = Path(os.environ.get("CARGO_TARGET_DIR", ROOT / "target"))
-    if not target.is_absolute():
-        target = ROOT / target
     manifest = (ROOT / "runtime/bootstrap/runtime.edn").read_text()
     # The canonical EDN manifest (#299) has one quoted digest for this key.
     found = re.findall(r':compiler-source-sha256 "([0-9a-f]{64})"', manifest)
     if len(found) != 1:
         raise RuntimeError("runtime.edn does not record exactly one compiler identity")
     expected = found[0]
-    # The generator has already built this executable. Match its emitted identity
-    # to avoid accidentally exercising an unrelated stale Cargo build directory.
-    builders = [path for path in sorted(target.glob("debug/build/suss-compile-*/build-script-build"))
-                if fingerprint(path, ROOT) == expected]
+    # The build script Cargo compiled for this checkout, as Cargo reports it:
+    # its build-script layout is internal and changed in Cargo 1.100, so the
+    # path comes from `--message-format=json`, not a glob. The build is already
+    # up to date, so this only reports it.
+    output = subprocess.run(
+        ["cargo", "build", "--profile", "test", "--locked", "-p", "suss-compile",
+         "--message-format=json"],
+        cwd=ROOT, capture_output=True, text=True, check=True,
+    ).stdout
+    candidates = []
+    for line in output.splitlines():
+        message = json.loads(line)
+        if (message.get("reason") == "compiler-artifact"
+                and "custom-build" in message["target"]["kind"]
+                and message["target"]["src_path"].endswith("suss-compile/build.rs")):
+            candidates.extend(Path(name) for name in message["filenames"])
+    identities = {path: fingerprint(path, ROOT) for path in candidates}
+    builders = [path for path, identity in identities.items() if identity == expected]
     if not builders:
-        raise RuntimeError("no compiled build script matches the shipped compiler identity")
+        found = "\n".join(f"  {path}: {identity}" for path, identity in identities.items()) or "  (none)"
+        raise RuntimeError(
+            f"no compiled build script matches the shipped compiler identity {expected}; found:\n{found}")
     builder = builders[0]
     with tempfile.TemporaryDirectory(prefix="suss-bootstrap-identity-") as directory:
         first = Path(directory) / "first"
