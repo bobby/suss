@@ -178,6 +178,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     Operation::Array { operation: ArrayOperation::Get, arguments } if arguments.len() == 2 => {
                         names.insert("source-array-get-2");
                     }
+                    Operation::Array { operation: ArrayOperation::Set, arguments } if arguments.len() == 3 => {
+                        names.insert("source-array-set-3");
+                    }
                     Operation::Array { operation, .. } => {
                         names.insert(operation.export());
                     }
@@ -549,7 +552,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "binding-set" => (vec![VALUE, VALUE], vec![]),
             "number-parse-long" => (vec![VALUE; 4], vec![VALUE]),
             "packed-array-copy" => (vec![VALUE; 5], vec![VALUE]),
-            "number-range-count" | "packed-array-store" => (vec![VALUE; 3], vec![VALUE]),
+            "number-range-count" | "packed-array-store" | "source-array-set-3" => (vec![VALUE; 3], vec![VALUE]),
             "string-slice" | "callable-property-get" | "named-property-set" | "user-field-get-guard" | "user-field-set-guard" | "object-method-set" | "object-method-invoke" | "native-object-property-set" | "native-object-property-set-strict" => {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])
             }
@@ -1881,6 +1884,17 @@ fn emit_function(
                         .instruction(&LocalGet(arguments[0].0 as u32 + offset))
                         .instruction(&LocalGet(arguments[1].0 as u32 + offset))
                         .instruction(&Call(index("source-array-get-2")))
+                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
+                Operation::Array {
+                    operation: ArrayOperation::Set,
+                    arguments,
+                } if arguments.len() == 3 => {
+                    for argument in arguments {
+                        function.instruction(&LocalGet(argument.0 as u32 + offset));
+                    }
+                    function
+                        .instruction(&Call(index("source-array-set-3")))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Array {

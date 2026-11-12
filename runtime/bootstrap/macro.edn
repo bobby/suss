@@ -93,6 +93,7 @@
          "suss.bindings.macro:suss.core/->ValSeq"
          "suss.bindings.macro:suss.core/->Var"
          "suss.bindings.macro:suss.core/->VecOf"
+         "suss.bindings.macro:suss.core/->VecOfSeq"
          "suss.bindings.macro:suss.core/->VectorNode"
          "suss.bindings.macro:suss.core/->Volatile"
          "suss.bindings.macro:suss.core/-add-method"
@@ -312,6 +313,7 @@
          "suss.bindings.macro:suss.core/ValSeq"
          "suss.bindings.macro:suss.core/Var"
          "suss.bindings.macro:suss.core/VecOf"
+         "suss.bindings.macro:suss.core/VecOfSeq"
          "suss.bindings.macro:suss.core/VectorNode"
          "suss.bindings.macro:suss.core/Volatile"
          "suss.bindings.macro:suss.core/abs"
@@ -988,6 +990,7 @@
          "suss.bindings.macro:suss.internal.core-link/->ValSeq"
          "suss.bindings.macro:suss.internal.core-link/->Var"
          "suss.bindings.macro:suss.internal.core-link/->VecOf"
+         "suss.bindings.macro:suss.internal.core-link/->VecOfSeq"
          "suss.bindings.macro:suss.internal.core-link/->VectorNode"
          "suss.bindings.macro:suss.internal.core-link/->Volatile"
          "suss.bindings.macro:suss.internal.core-link/-add-method"
@@ -1207,6 +1210,7 @@
          "suss.bindings.macro:suss.internal.core-link/ValSeq"
          "suss.bindings.macro:suss.internal.core-link/Var"
          "suss.bindings.macro:suss.internal.core-link/VecOf"
+         "suss.bindings.macro:suss.internal.core-link/VecOfSeq"
          "suss.bindings.macro:suss.internal.core-link/VectorNode"
          "suss.bindings.macro:suss.internal.core-link/Volatile"
          "suss.bindings.macro:suss.internal.core-link/abs"
@@ -2089,13 +2093,13 @@
          "suss.bindings.macro:suss.internal.protocol-keys/key-737573732e636f72652f495772697465722f2f30"
          "suss.bindings.macro:suss.internal.reify/t-reify-3447-8787"],
  :compiler "0.1.0+portable.3",
- :compiler-source-sha256 "5d4641a4f1335127cb5cffcf7a080582719b3846244d40d66ba4e3a555756f66",
- :dependency-graph-sha256 "305241ac87e4667c862f9020593be5dd7f76f0e5699a01420b3bda6d1a7d3614",
+ :compiler-source-sha256 "73060aa436551bb29bcda4c36287c73f792c4dc1c267e93ae406c6c6a1783eb3",
+ :dependency-graph-sha256 "e06a6b00354f85e5522354badc0ab9edd998387f2bd3e56bed0ff056ee46c039",
  :flags [],
  :format-version 2,
  :phase "macro",
  :runtime-abi 4,
- :source-sha256 "5d03a0280a4d5f0fbfaa56b3adcf6a116892859b6779de4fb9280e4bb98ae070",
+ :source-sha256 "12d57e1e1c8f7ed19e15734066870513fe7b991dfb5a3bdc8dceb103b0c70144",
  :target "portable-wasm-gc-shared-abi",
- :wasm-sha256 "cf812d0295186f3552da29342931c52d74aa2d03ece8c10791d4224f3f7a29db",
+ :wasm-sha256 "328de24f879cad65f94ae8337325c88f3f712d236e57acc3b2218a50dc28f286",
  :wasm-tools "0.258.0"}
