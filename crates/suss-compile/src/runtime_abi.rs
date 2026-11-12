@@ -50,7 +50,7 @@ mod string_methods;
 mod string_char_at;
 mod type_values;
 
-pub const VERSION: u32 = 5;
+pub const VERSION: u32 = 6;
 // The language sentinels. Every i31 is a long (ADR-0003); nil is a null
 // eqref, and false, true and undefined are SENTINEL structs held in runtime
 // globals that fragments import. Code names a sentinel with these and builds
@@ -390,6 +390,43 @@ fn instance_site_test(b: &mut Builder) {
     b.function("instance-site-test", &[reference(NAMED_SITE), VALUE, VALUE], &[ValType::I32], &code);
 }
 
+/// Closure call sites (#378) hold their last callee and its entry for k
+/// arguments in two globals. `call-fallback-k`, an entry, calls `call-k`: a
+/// site starts with it, and caches it for any callee that is not a closure.
+/// `call-entry-k(f)` is the entry a site caches for `f`: a closure's entry is
+/// a function reference read from its code struct, an out-of-line host call
+/// in wasmtime that a global read is not. Returns the fallbacks, which
+/// `ref.func` names.
+fn call_site_functions(b: &mut Builder) -> Vec<u32> {
+    use Instruction::*;
+    let mut fallbacks = vec![];
+    for k in 0..=MAX_FIXED {
+        let mut code: Vec<_> = (0..=k).map(LocalGet).collect();
+        code.push(ReturnCall(b.names[CALL_EXPORTS[k as usize]]));
+        let fallback = b.typed(CALL + k, &[], &code);
+        b.names.insert(CALL_FALLBACK_EXPORTS[k as usize].to_owned(), fallback);
+        b.exports.export(CALL_FALLBACK_EXPORTS[k as usize], ExportKind::Func, fallback);
+        fallbacks.push(fallback);
+        let code = vec![
+            Block(BlockType::Result(VALUE)),
+            LocalGet(0),
+            BrOnCastFail {
+                relative_depth: 0,
+                from_ref_type: RefType::EQREF,
+                to_ref_type: RefType { nullable: false, heap_type: HeapType::Concrete(CLOSURE) },
+            },
+            StructGet { struct_type_index: CLOSURE, field_index: CLOSURE_CODE },
+            StructGet { struct_type_index: CODE, field_index: CODE_ENTRY + k },
+            Return,
+            End,
+            Drop,
+            RefFunc(fallback),
+        ];
+        b.function(CALL_ENTRY_EXPORTS[k as usize], &[VALUE], &[reference(CALL + k)], &code);
+    }
+    fallbacks
+}
+
 fn reference(index: u32) -> ValType {
     ValType::Ref(RefType {
         nullable: false,
@@ -499,8 +536,11 @@ pub fn prelude() -> TypeSection {
     // The arity range, for JavaScript-convention method calls only.
     code.extend([field(ValType::I32, false), field(ValType::I32, false)]);
     group.push(structure(code));
+    // ABI 6 (#378): an entry takes its closure as eqref and casts it to its
+    // own type, which is final, so a call site that holds the entry calls it
+    // with no cast to the non-final `$closure`.
     for k in 0..=MAX_FIXED {
-        let mut params = vec![reference(CLOSURE)];
+        let mut params = vec![VALUE];
         params.extend((0..k).map(|_| VALUE));
         group.push(CompositeInnerType::Func(FuncType::new(params, [VALUE])));
     }
@@ -571,6 +611,15 @@ pub(crate) const CODE_MAX: u32 = CODE_SPREAD + 2;
 /// Runtime exports by arity (ADR-0004): `call-k` takes any callee and k
 /// arguments, the out-of-line path of a call site; `arity-error-k` is the
 /// entry of type `$callk` for an arity a function lacks.
+/// A closure call site's entry for a callee, and its initial entry (#378).
+pub const CALL_ENTRY_EXPORTS: [&str; MAX_FIXED as usize + 1] = [
+    "call-entry-0", "call-entry-1", "call-entry-2", "call-entry-3", "call-entry-4",
+    "call-entry-5", "call-entry-6", "call-entry-7", "call-entry-8",
+];
+pub const CALL_FALLBACK_EXPORTS: [&str; MAX_FIXED as usize + 1] = [
+    "call-fallback-0", "call-fallback-1", "call-fallback-2", "call-fallback-3", "call-fallback-4",
+    "call-fallback-5", "call-fallback-6", "call-fallback-7", "call-fallback-8",
+];
 pub const CALL_EXPORTS: [&str; MAX_FIXED as usize + 1] =
     ["call-0", "call-1", "call-2", "call-3", "call-4", "call-5", "call-6", "call-7", "call-8"];
 pub const ARITY_ERROR_EXPORTS: [&str; MAX_FIXED as usize + 1] = [
@@ -1723,6 +1772,7 @@ fn build_module() -> Vec<u8> {
     type_values::functions(&mut b);
     let prototype_functions = owned_prototypes::functions(&mut b);
     instance_site_test(&mut b);
+    arithmetic_functions.extend(call_site_functions(&mut b));
     arithmetic_functions.extend(prototype_functions);
     let coercion_functions = coercions::functions(&mut b);
     arithmetic_functions.extend(coercion_functions);

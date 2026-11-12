@@ -256,7 +256,7 @@ impl Analyzer<'_> {
             kind: std::sync::Arc::new(Expression::Global(global)),
         }
     }
-    fn stable_key(
+    pub(super) fn stable_key(
         &mut self,
         form: &Form,
         protocol: &Global,

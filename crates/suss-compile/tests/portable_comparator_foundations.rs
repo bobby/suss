@@ -27,7 +27,7 @@ fn private_comparator_adapters_require_one_operand_and_are_not_first_class() {
 #[test]
 fn constructor_cache_preserves_shared_recursive_abi_type_count_and_descriptor_layout() {
     use wasmparser::{CompositeInnerType, Parser, Payload};
-    assert_eq!(suss_compile::runtime_abi::VERSION, 5);
+    assert_eq!(suss_compile::runtime_abi::VERSION, 6);
     let runtime = suss_compile::runtime_abi::module();
     for payload in Parser::new(0).parse_all(&runtime) {
         if let Payload::TypeSection(types) = payload.unwrap() {
