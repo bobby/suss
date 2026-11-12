@@ -3,7 +3,7 @@ mod r#async;
 mod structured;
 mod unboxed;
 use super::{
-    hir::{Arithmetic, Literal, Nominal, Type},
+    hir::{Arithmetic, ArrayOperation, Literal, Nominal, Type},
     ir::{self, ClosureBody, Function as IrFunction, GeneralClosureBody, FutureBody, Operation, Terminator},
     Diagnostic,
 };
@@ -175,12 +175,17 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     Operation::Comparison { operation, .. } => {
                         names.insert(operation.export());
                     }
+                    Operation::Array { operation: ArrayOperation::Get, arguments } if arguments.len() == 2 => {
+                        names.insert("source-array-get-2");
+                    }
                     Operation::Array { operation, .. } => {
                         names.insert(operation.export());
                     }
                     Operation::Nominal { operation, .. } => match operation {
                         Nominal::IsNumber | Nominal::IsString | Nominal::Array => {}
+                        Nominal::IsKeyword => { names.insert("keyword-test"); }
                         Nominal::DirectLinkDefine(_) | Nominal::DirectLinkRead(_) | Nominal::DirectLinkSet(_) => {}
+                        Nominal::KeywordIntern => { names.insert("keyword-intern"); }
                         Nominal::CoerceString => { names.insert("coerce-string"); }
                         Nominal::ObjectCoerceString => { names.insert("object-coerce-string"); }
                         Nominal::ConcatString => { names.insert("string-concat"); }
@@ -377,6 +382,48 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             called.insert(definition);
         }
     }
+    // Core field reads by a plain literal name get an inline cache (#361):
+    // a site's last descriptor and its field's index, in two globals.
+    let mut field_site_list = vec![];
+    // Of those, the `.-length` reads, which test for a string first.
+    let mut length_sites = std::collections::HashSet::new();
+    for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
+        .chain(futures.iter().map(|body| &body.continuation.function))
+    {
+        let literals = function.blocks.iter().flat_map(|block| &block.instructions)
+            .filter_map(|inst| match &inst.operation {
+                Operation::Literal(Literal::String(units)) => Some((inst.result, units)),
+                _ => None,
+            })
+            .collect::<std::collections::HashMap<_, _>>();
+        for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
+            if let Operation::Nominal { operation: Nominal::CoreNamedGet, arguments } = &inst.operation
+                && literals.get(&arguments[1]).is_some_and(|units| plain_field_name(units))
+            {
+                let site = (function as *const IrFunction as usize, inst.result.0 as u32);
+                if literals[&arguments[1]].iter().copied().eq("length".encode_utf16()) {
+                    length_sites.insert(site);
+                }
+                field_site_list.push(site);
+            }
+        }
+    }
+    if !field_site_list.is_empty() {
+        names.insert("named-field-slot");
+    }
+    // Protocol method lookups get an inline cache (#355): the last
+    // descriptor, its method and the protocol epoch it was found at.
+    let mut method_site_list = vec![];
+    for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
+        .chain(futures.iter().map(|body| &body.continuation.function))
+    {
+        for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
+            // Marker tests (`implements?`) cache their answer the same way.
+            if let Operation::Nominal { operation: Nominal::MethodGet | Nominal::Satisfies, .. } = &inst.operation {
+                method_site_list.push((function as *const IrFunction as usize, inst.result.0 as u32));
+            }
+        }
+    }
     let imported_slots = slots.iter().copied().filter(|slot| !owned_slots.contains(slot)).collect::<Vec<_>>();
     let imported_definitions = called.iter().copied().filter(|definition| !defined_definitions.contains_key(definition)).collect::<Vec<_>>();
     for definition in &imported_definitions {
@@ -508,6 +555,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }
             "string-new" => (vec![ValType::I32], vec![VALUE]),
             "arity-throw" => (vec![VALUE, ValType::I32], vec![VALUE]),
+            "keyword-intern" => (vec![VALUE], vec![VALUE]),
+            "keyword-test" => (vec![VALUE], vec![ValType::I32]),
+            "named-field-slot" => (vec![VALUE, VALUE], vec![ValType::I32]),
             "string-set-unit" => (vec![VALUE, ValType::I32, ValType::I32], vec![ValType::I32]),
             _ => (vec![VALUE, VALUE], vec![VALUE]),
         };
@@ -567,7 +617,17 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             EntityType::Global(GlobalType { val_type: runtime_abi::code_type(), mutable: false, shared: false }),
         );
     }
+    // The protocol epoch follows the imported link globals.
+    if !method_site_list.is_empty() {
+        imports.import(
+            "suss.runtime",
+            "protocol-epoch",
+            EntityType::Global(GlobalType { val_type: ValType::I32, mutable: true, shared: false }),
+        );
+    }
     let imported_link_globals = (imported_slots.len() + imported_definitions.len()) as u32;
+    let epoch_global = globals.len() as u32 + 3 + imported_link_globals;
+    let imported_link_globals = imported_link_globals + u32::from(!method_site_list.is_empty());
     let eval_type = type_count + names.len() as u32;
     types.ty().function([], [VALUE]);
     if throws {
@@ -635,6 +695,14 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     for (index, slot) in owned_slots.iter().enumerate() {
         links.slots.insert(*slot, first_owned_slot + index as u32);
     }
+    let first_field_site = first_owned_slot + owned_slots.len() as u32;
+    let field_sites = field_site_list.iter().enumerate()
+        .map(|(index, site)| (*site, first_field_site + 2 * index as u32))
+        .collect::<std::collections::HashMap<_, _>>();
+    let first_method_site = first_field_site + 2 * field_site_list.len() as u32;
+    let method_sites = method_site_list.iter().enumerate()
+        .map(|(index, site)| (*site, first_method_site + 3 * index as u32))
+        .collect::<std::collections::HashMap<_, _>>();
     for (index, definition) in imported_definitions.iter().enumerate() {
         links.codes.insert(*definition, first_imported_link + imported_slots.len() as u32 + index as u32);
         let entries = (0..=runtime_abi::MAX_FIXED).map(|k| {
@@ -659,7 +727,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let mut code = CodeSection::new();
     let mut data = LiteralData::default();
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
-        dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links };
+        dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites, length_sites: &length_sites,
+        method_sites: &method_sites, epoch_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -726,6 +795,28 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         );
         exports.export(&format!("slot.{slot}"), ExportKind::Global, links.slots[slot]);
     }
+    for _ in &field_site_list {
+        code_globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
+        );
+        code_globals.global(
+            GlobalType { val_type: ValType::I32, mutable: true, shared: false },
+            &ConstExpr::i32_const(0),
+        );
+    }
+    for _ in &method_site_list {
+        for ty in [VALUE, VALUE] {
+            code_globals.global(
+                GlobalType { val_type: ty, mutable: true, shared: false },
+                &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
+            );
+        }
+        code_globals.global(
+            GlobalType { val_type: ValType::I32, mutable: true, shared: false },
+            &ConstExpr::i32_const(-1),
+        );
+    }
     for (definition, global) in &defined_code {
         exports.export(&format!("link.{definition}.code"), ExportKind::Global, *global);
         for (k, entry) in links.entries[definition].iter().enumerate() {
@@ -746,7 +837,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .section(&types)
         .section(&imports)
         .section(&functions);
-    if !layout.definitions.is_empty() {
+    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() {
         module.section(&code_globals);
     }
     module.section(&exports);
@@ -829,6 +920,12 @@ struct Context<'a> {
     futures: &'a [&'a FutureBody],
     layout: &'a Layout,
     links: &'a Links,
+    /// Cached core field read sites, by (function, result): their first global.
+    field_sites: &'a std::collections::HashMap<(usize, u32), u32>,
+    length_sites: &'a std::collections::HashSet<(usize, u32)>,
+    /// Cached protocol method lookup sites: their first global; the epoch.
+    method_sites: &'a std::collections::HashMap<(usize, u32), u32>,
+    epoch_global: u32,
 }
 /// One function definition (`fn`): its closures' capture struct, its code
 /// struct global and its entries (ADR-0004).
@@ -976,6 +1073,33 @@ fn closure_definition(function: &IrFunction, value: ir::ValueId) -> Option<Closu
             Operation::MakeGeneralClosure { body, .. } => Some(ClosureSource::General(body)),
             _ => None,
         })
+}
+/// A field name a schema holds as written: letters, digits and `_`, not
+/// starting with a digit, so no munging applies (#361).
+/// Whether locals `a` and `b` both hold i31 values, as an i32.
+fn i31_operands(function: &mut Function, a: u32, b: u32) {
+    let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
+    function
+        .instruction(&Instruction::LocalGet(a))
+        .instruction(&Instruction::RefTestNonNull(i31))
+        .instruction(&Instruction::LocalGet(b))
+        .instruction(&Instruction::RefTestNonNull(i31))
+        .instruction(&Instruction::I32And);
+}
+/// The i31 values of locals `a` and `b`, sign-extended.
+fn i31_values(function: &mut Function, a: u32, b: u32) {
+    let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
+    for local in [a, b] {
+        function
+            .instruction(&Instruction::LocalGet(local))
+            .instruction(&Instruction::RefCastNonNull(i31))
+            .instruction(&Instruction::I31GetS);
+    }
+}
+fn plain_field_name(units: &[u16]) -> bool {
+    !units.is_empty()
+        && !(units[0] >= b'0' as u16 && units[0] <= b'9' as u16)
+        && units.iter().all(|&unit| unit < 128 && ((unit as u8).is_ascii_alphanumeric() || unit == b'_' as u16))
 }
 /// A link entry import's name, `link.n.k`, as (n, k).
 fn link_entry(name: &str) -> Option<(usize, u32)> {
@@ -1128,7 +1252,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
-    let Context { names, globals, bodies, dispatchers, futures, layout, links } = *context;
+    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, epoch_global } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -1167,6 +1291,9 @@ fn emit_function(
     // A call site's callee, once it is known to be a closure.
     let callee = pc + 1 + locals.declarations.iter().map(|(count, _)| count).sum::<u32>();
     declarations.push((1, closure_type(true)));
+    // A cached field read's looked-up index.
+    let field_index_local = callee + 1;
+    declarations.push((1, ValType::I32));
     let mut function = Function::new(declarations);
     use Instruction::*;
     if continuation.is_none() {
@@ -1391,6 +1518,18 @@ fn emit_function(
                         .instruction(&GlobalGet(index_global))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
+                // A keyword literal's hidden cell (#361) is compiler-owned, never
+                // dynamic, and read only right after the site's once-definition
+                // of it, so it is bound: read its root directly.
+                Operation::GlobalRead(global) if global.namespace() == "suss.internal.keywords" => {
+                    let index_global =
+                        globals.binary_search(global).expect("collected global") as u32;
+                    function
+                        .instruction(&GlobalGet(index_global))
+                        .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::BINDING)))
+                        .instruction(&StructGet { struct_type_index: runtime_abi::BINDING, field_index: 0 })
+                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
                 Operation::GlobalRead(global) => {
                     let index_global =
                         globals.binary_search(global).expect("collected global") as u32;
@@ -1437,9 +1576,18 @@ fn emit_function(
                 Operation::GlobalBound(global) => {
                     let index_global =
                         globals.binary_search(global).expect("collected global") as u32;
+                    // The cell's bound flag, inline (#361).
                     function
                         .instruction(&GlobalGet(index_global))
-                        .instruction(&Call(index("binding-bound")))
+                        .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::BINDING)))
+                        .instruction(&StructGet { struct_type_index: runtime_abi::BINDING, field_index: 1 })
+                        .instruction(&I32Const(runtime_abi::CELL_BOUND))
+                        .instruction(&I32And)
+                        .instruction(&If(BlockType::Result(VALUE)))
+                        .instruction(&runtime_abi::sentinel_in(runtime_abi::TRUE, sentinels))
+                        .instruction(&Else)
+                        .instruction(&runtime_abi::sentinel_in(runtime_abi::FALSE, sentinels))
+                        .instruction(&End)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::GlobalWrite { global, value } => {
@@ -1624,22 +1772,115 @@ fn emit_function(
                     operation,
                     arguments,
                 } => {
-                    for argument in arguments {
-                        function.instruction(&LocalGet(argument.0 as u32 + offset));
+                    // Two i31 operands (#361): and, or and xor of sign-extended
+                    // 31-bit values, and an arithmetic right shift by 0..31,
+                    // are i31 values again, for longs and JS int32 alike. An
+                    // unsigned shift of a nonnegative value is the same shift.
+                    use super::hir::Bitwise;
+                    let inline = match operation {
+                        Bitwise::And | Bitwise::Int32And => Some(I32And),
+                        Bitwise::Or | Bitwise::Int32Or => Some(I32Or),
+                        Bitwise::Xor | Bitwise::Int32Xor => Some(I32Xor),
+                        Bitwise::Right | Bitwise::Int32Right => Some(I32ShrS),
+                        Bitwise::Unsigned | Bitwise::Int32Unsigned => Some(I32ShrU),
+                        _ => None,
                     }
-                    function
-                        .instruction(&Call(index(operation.export())))
-                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    .filter(|_| arguments.len() == 2);
+                    if let Some(op) = inline {
+                        let [a, b] = [arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset];
+                        i31_operands(&mut function, a, b);
+                        if matches!(op, I32ShrS | I32ShrU) {
+                            // Only once both are i31: a shift by 0..31, and for
+                            // an unsigned shift, a nonnegative value. (`i32.and`
+                            // evaluates both sides, so these casts are guarded.)
+                            let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
+                            function
+                                .instruction(&If(BlockType::Result(ValType::I32)))
+                                .instruction(&LocalGet(b))
+                                .instruction(&RefCastNonNull(i31))
+                                .instruction(&I31GetU)
+                                .instruction(&I32Const(32))
+                                .instruction(&I32LtU);
+                            if matches!(op, I32ShrU) {
+                                function
+                                    .instruction(&LocalGet(a))
+                                    .instruction(&RefCastNonNull(i31))
+                                    .instruction(&I31GetS)
+                                    .instruction(&I32Const(0))
+                                    .instruction(&I32GeS)
+                                    .instruction(&I32And);
+                            }
+                            function.instruction(&Else).instruction(&I32Const(0)).instruction(&End);
+                        }
+                        function.instruction(&If(BlockType::Result(VALUE)));
+                        i31_values(&mut function, a, b);
+                        function
+                            .instruction(&op)
+                            .instruction(&RefI31)
+                            .instruction(&Else)
+                            .instruction(&LocalGet(a))
+                            .instruction(&LocalGet(b))
+                            .instruction(&Call(index(operation.export())))
+                            .instruction(&End)
+                            .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    } else {
+                        for argument in arguments {
+                            function.instruction(&LocalGet(argument.0 as u32 + offset));
+                        }
+                        function
+                            .instruction(&Call(index(operation.export())))
+                            .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    }
                 }
                 Operation::Comparison {
                     operation,
                     arguments,
                 } => {
-                    for argument in arguments {
-                        function.instruction(&LocalGet(argument.0 as u32 + offset));
+                    // Two i31 operands compare as i32 (#361).
+                    use super::hir::Comparison;
+                    let inline = match operation {
+                        Comparison::Less | Comparison::NumberLess => Some(I32LtS),
+                        Comparison::LessEqual | Comparison::NumberLessEqual => Some(I32LeS),
+                        Comparison::Greater | Comparison::NumberGreater => Some(I32GtS),
+                        Comparison::GreaterEqual | Comparison::NumberGreaterEqual => Some(I32GeS),
+                        _ => None,
                     }
+                    .filter(|_| arguments.len() == 2);
+                    if let Some(op) = inline {
+                        let [a, b] = [arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset];
+                        i31_operands(&mut function, a, b);
+                        function.instruction(&If(BlockType::Result(VALUE)));
+                        i31_values(&mut function, a, b);
+                        function
+                            .instruction(&op)
+                            .instruction(&If(BlockType::Result(VALUE)))
+                            .instruction(&runtime_abi::sentinel_in(runtime_abi::TRUE, sentinels))
+                            .instruction(&Else)
+                            .instruction(&runtime_abi::sentinel_in(runtime_abi::FALSE, sentinels))
+                            .instruction(&End)
+                            .instruction(&Else)
+                            .instruction(&LocalGet(a))
+                            .instruction(&LocalGet(b))
+                            .instruction(&Call(index(operation.export())))
+                            .instruction(&End)
+                            .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    } else {
+                        for argument in arguments {
+                            function.instruction(&LocalGet(argument.0 as u32 + offset));
+                        }
+                        function
+                            .instruction(&Call(index(operation.export())))
+                            .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    }
+                }
+                Operation::Array {
+                    operation: ArrayOperation::Get,
+                    arguments,
+                } if arguments.len() == 2 => {
                     function
-                        .instruction(&Call(index(operation.export())))
+                        .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                        .instruction(&LocalGet(arguments[1].0 as u32 + offset))
+                        .instruction(&Call(index("source-array-get-2")))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Array {
@@ -1697,16 +1938,30 @@ fn emit_function(
                                     .instruction(&RefTestNonNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 }))
                                     .instruction(&I32Or);
                             }
+                            // Only two boxed longs, doubles or strings compare by
+                            // value; distinct references of any other type aren't
+                            // identical (#361).
                             function
                                 .instruction(&I32Or)
                                 .instruction(&If(BlockType::Result(ValType::I32)))
                                 .instruction(&I32Const(0))
-                                .instruction(&Else)
+                                .instruction(&Else);
+                            for (index, ty) in [runtime_abi::NUMBER, runtime_abi::LONG, runtime_abi::STRING].into_iter().enumerate() {
+                                function.instruction(&LocalGet(a)).instruction(&RefTestNonNull(HeapType::Concrete(ty)));
+                                if index > 0 {
+                                    function.instruction(&I32Or);
+                                }
+                            }
+                            function
+                                .instruction(&If(BlockType::Result(ValType::I32)))
                                 .instruction(&LocalGet(a))
                                 .instruction(&LocalGet(b))
                                 .instruction(&Call(index("identical-value")))
                                 .instruction(&runtime_abi::sentinel_in(runtime_abi::TRUE, sentinels))
                                 .instruction(&RefEq)
+                                .instruction(&Else)
+                                .instruction(&I32Const(0))
+                                .instruction(&End)
                                 .instruction(&End)
                                 .instruction(&End);
                         }
@@ -1717,6 +1972,173 @@ fn emit_function(
                             for instruction in runtime_abi::number_test(arguments[0].0 as u32 + offset) {
                                 function.instruction(&instruction);
                             }
+                        }
+                        Nominal::Satisfies if method_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
+                            // Inline cache (#361): a user object's marker test
+                            // depends only on its descriptor and the protocol
+                            // epoch, so a site keeps its last descriptor and
+                            // answer. Other values take the runtime's test.
+                            let cache = method_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            let (marker, object) = (arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset);
+                            let descriptor = |function: &mut Function| {
+                                function
+                                    .instruction(&LocalGet(object))
+                                    .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+                                    .instruction(&StructGet { struct_type_index: 7, field_index: 0 });
+                            };
+                            function
+                                .instruction(&LocalGet(object))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(7)))
+                                .instruction(&If(BlockType::Result(ValType::I32)));
+                            descriptor(&mut function);
+                            function
+                                .instruction(&GlobalGet(cache))
+                                .instruction(&RefEq)
+                                .instruction(&GlobalGet(cache + 2))
+                                .instruction(&GlobalGet(epoch_global))
+                                .instruction(&I32Eq)
+                                .instruction(&I32And)
+                                .instruction(&If(BlockType::Result(ValType::I32)))
+                                .instruction(&GlobalGet(cache + 1))
+                                .instruction(&RefCastNonNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 }))
+                                .instruction(&I31GetU)
+                                .instruction(&Else)
+                                .instruction(&LocalGet(marker))
+                                .instruction(&LocalGet(object))
+                                .instruction(&Call(index("protocol-marker-satisfies")))
+                                .instruction(&LocalTee(field_index_local))
+                                .instruction(&RefI31)
+                                .instruction(&GlobalSet(cache + 1));
+                            descriptor(&mut function);
+                            function
+                                .instruction(&GlobalSet(cache))
+                                .instruction(&GlobalGet(epoch_global))
+                                .instruction(&GlobalSet(cache + 2))
+                                .instruction(&LocalGet(field_index_local))
+                                .instruction(&End)
+                                .instruction(&Else)
+                                .instruction(&LocalGet(marker))
+                                .instruction(&LocalGet(object))
+                                .instruction(&Call(index("protocol-marker-satisfies")))
+                                .instruction(&End);
+                        }
+                        Nominal::MethodGet if method_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
+                            // Inline cache (#355): the same descriptor at the
+                            // same protocol epoch has the same method; any
+                            // method table write since bumps the epoch.
+                            let cache = method_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            let (descriptor, key) = (arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset);
+                            function
+                                .instruction(&LocalGet(descriptor))
+                                .instruction(&GlobalGet(cache))
+                                .instruction(&RefEq)
+                                .instruction(&GlobalGet(cache + 2))
+                                .instruction(&GlobalGet(epoch_global))
+                                .instruction(&I32Eq)
+                                .instruction(&I32And)
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&GlobalGet(cache + 1))
+                                .instruction(&Else)
+                                .instruction(&LocalGet(descriptor))
+                                .instruction(&LocalGet(key))
+                                .instruction(&Call(index("protocol-method-get")))
+                                .instruction(&GlobalSet(cache + 1))
+                                .instruction(&LocalGet(descriptor))
+                                .instruction(&GlobalSet(cache))
+                                .instruction(&GlobalGet(epoch_global))
+                                .instruction(&GlobalSet(cache + 2))
+                                .instruction(&GlobalGet(cache + 1))
+                                .instruction(&End);
+                        }
+                        Nominal::CoreNamedGet if field_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
+                            // Inline cache (#361): the same descriptor as last
+                            // time reads the cached field; another looks its
+                            // field up and caches it; anything else, or a name
+                            // that isn't a field, takes the full lookup.
+                            let site = (ir as *const IrFunction as usize, inst.result.0 as u32);
+                            let cache = field_sites[&site];
+                            let (object, name) = (arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset);
+                            // A string's length is its array's (#361).
+                            let length = length_sites.contains(&site);
+                            if length {
+                                function
+                                    .instruction(&LocalGet(object))
+                                    .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::STRING)))
+                                    .instruction(&If(BlockType::Result(VALUE)))
+                                    .instruction(&LocalGet(object))
+                                    .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::STRING)))
+                                    .instruction(&ArrayLen)
+                                    .instruction(&LocalTee(field_index_local))
+                                    .instruction(&I32Const(0x3fff_ffff))
+                                    .instruction(&I32LeU)
+                                    .instruction(&If(BlockType::Result(VALUE)))
+                                    .instruction(&LocalGet(field_index_local))
+                                    .instruction(&RefI31)
+                                    .instruction(&Else)
+                                    .instruction(&LocalGet(object))
+                                    .instruction(&LocalGet(name))
+                                    .instruction(&Call(index("named-property-get")))
+                                    .instruction(&End)
+                                    .instruction(&Else);
+                            }
+                            let fields = |function: &mut Function| {
+                                function
+                                    .instruction(&LocalGet(object))
+                                    .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+                                    .instruction(&StructGet { struct_type_index: 7, field_index: 1 })
+                                    .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)));
+                            };
+                            function
+                                .instruction(&LocalGet(object))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(7)))
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&LocalGet(object))
+                                .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+                                .instruction(&StructGet { struct_type_index: 7, field_index: 0 })
+                                .instruction(&GlobalGet(cache))
+                                .instruction(&RefEq)
+                                .instruction(&If(BlockType::Result(VALUE)));
+                            fields(&mut function);
+                            function
+                                .instruction(&GlobalGet(cache + 1))
+                                .instruction(&ArrayGet(runtime_abi::ARGS))
+                                .instruction(&Else)
+                                .instruction(&LocalGet(object))
+                                .instruction(&LocalGet(name))
+                                .instruction(&Call(index("named-field-slot")))
+                                .instruction(&LocalTee(field_index_local))
+                                .instruction(&I32Const(0))
+                                .instruction(&I32GeS)
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&LocalGet(object))
+                                .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+                                .instruction(&StructGet { struct_type_index: 7, field_index: 0 })
+                                .instruction(&GlobalSet(cache))
+                                .instruction(&LocalGet(field_index_local))
+                                .instruction(&GlobalSet(cache + 1));
+                            fields(&mut function);
+                            function
+                                .instruction(&LocalGet(field_index_local))
+                                .instruction(&ArrayGet(runtime_abi::ARGS))
+                                .instruction(&Else)
+                                .instruction(&LocalGet(object))
+                                .instruction(&LocalGet(name))
+                                .instruction(&Call(index("named-property-get")))
+                                .instruction(&End)
+                                .instruction(&End)
+                                .instruction(&Else)
+                                .instruction(&LocalGet(object))
+                                .instruction(&LocalGet(name))
+                                .instruction(&Call(index("named-property-get")))
+                                .instruction(&End);
+                            if length {
+                                function.instruction(&End);
+                            }
+                        }
+                        Nominal::IsKeyword => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&Call(index("keyword-test")));
                         }
                         Nominal::IsString => {
                             function
@@ -1744,6 +2166,11 @@ fn emit_function(
                         // published when its definition runs.
                         Nominal::DirectLinkRead(link) => {
                             function.instruction(&GlobalGet(links.slots[&super::hir::link_parts(*link).0]));
+                        }
+                        Nominal::KeywordIntern => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&Call(index("keyword-intern")));
                         }
                         Nominal::DirectLinkSet(slot) => {
                             function
@@ -2023,12 +2450,51 @@ fn emit_function(
                     arguments,
                     coercing,
                 } => {
+                    let name = arithmetic_name(*operator, arguments, *coercing, ir);
+                    // Two i31 longs add or subtract inline (#361) while the
+                    // result is an i31; the runtime boxes a larger one.
+                    let inline = match name {
+                        // value-add and value-subtract (JS convention) treat
+                        // two numbers as number-add and number-subtract do.
+                        "number-add" | "checked-add" | "value-add" => Some(I32Add),
+                        "number-subtract" | "checked-subtract" | "value-subtract" => Some(I32Sub),
+                        _ => None,
+                    }
+                    .filter(|_| arguments.len() == 2);
+                    let fast = inline.is_some();
+                    // block: the fast path's result skips the runtime call.
+                    if let Some(op) = inline {
+                        let [a, b] = [arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset];
+                        function.instruction(&Block(BlockType::Empty));
+                        i31_operands(&mut function, a, b);
+                        function.instruction(&If(BlockType::Empty));
+                        i31_values(&mut function, a, b);
+                        // An i32 sum of two i31 values is an i31 when adding
+                        // 2^30 leaves it nonnegative.
+                        function
+                            .instruction(&op)
+                            .instruction(&LocalTee(field_index_local))
+                            .instruction(&I32Const(0x4000_0000))
+                            .instruction(&I32Add)
+                            .instruction(&I32Const(0))
+                            .instruction(&I32GeS)
+                            .instruction(&If(BlockType::Empty))
+                            .instruction(&LocalGet(field_index_local))
+                            .instruction(&RefI31)
+                            .instruction(&LocalSet(inst.result.0 as u32 + offset))
+                            .instruction(&Br(2))
+                            .instruction(&End)
+                            .instruction(&End);
+                    }
                     for argument in arguments {
                         function.instruction(&LocalGet(argument.0 as u32 + offset));
                     }
                     function
-                        .instruction(&Call(index(arithmetic_name(*operator, arguments, *coercing, ir))))
+                        .instruction(&Call(index(name)))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                    if fast {
+                        function.instruction(&End);
+                    }
                 }
             }
         }

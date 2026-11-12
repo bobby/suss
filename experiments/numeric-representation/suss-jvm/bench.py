@@ -85,6 +85,8 @@ CASES = [
     ("call-local", "(g i)", "long-control", 1),
     ("call-bound", "(identity i)", "long-control", 1),
     ("call-protocol", "(ident b)", "long-control", 1),
+    # A protocol call on a native kind (#355): IEquiv on a long.
+    ("call-protocol-native", "(-equiv i 7)", "long-control", 1),
     ("call-apply", "(apply f2 i [i])", "long-control", 1),
     ("call-multimethod", "(area sq)", "long-control", 1),
     ("long-identical", "(identical? i 7)", "long-control", 1),

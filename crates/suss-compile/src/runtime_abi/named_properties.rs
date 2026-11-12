@@ -721,7 +721,22 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             LocalGet(0),
             Call(b.names["closure-property-fields"]),
             LocalSet(payload),
+            // A native kind's name reads or writes the function's keyed
+            // properties.
+            LocalGet(normalized),
+            RefTestNonNull(HeapType::I31),
+            If(BlockType::Empty),
+            LocalGet(0),
+            LocalGet(normalized),
+            RefCastNonNull(HeapType::I31),
+            I31GetU,
         ]);
+        if writing {
+            body.extend([LocalGet(2), Call(b.names["closure-property-set"])]);
+        } else {
+            body.push(Call(b.names["closure-property-lookup"]));
+        }
+        body.extend([Return, End]);
         if !writing {
             body.push(LocalGet(1));
             name(&mut body, "prototype");

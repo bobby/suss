@@ -26,6 +26,9 @@ pub struct AotOptions {
     pub compile_fuel: Option<u64>,
     pub exports: Vec<(String, Symbol)>,
     pub async_imports: Vec<AsyncImportMapping>,
+    /// Merge the component's modules and optimize them with Binaryen
+    /// (ADR-0005). Needs a separately installed Binaryen.
+    pub optimize: bool,
 }
 
 /// Compile through the normal staged source pipeline with canonical imports.
@@ -87,6 +90,7 @@ pub fn compile_file(
             exports: mappings.to_vec(),
             async_imports: Vec::new(),
             compile_fuel: None,
+            optimize: false,
         },
     )
 }
@@ -273,6 +277,7 @@ pub(crate) fn compile_inputs_typed(
             exports: mappings.to_vec(),
             async_imports: Vec::new(),
             compile_fuel: None,
+            optimize: false,
         },
     )
 }
@@ -306,8 +311,13 @@ pub(crate) fn compile_inputs_with_options(
         let mappings =
             portable::aot::source_export_mappings(&fragments, &resolve, world, &options.exports)
                 .map_err(|error| CompileError::ExportMismatch(error.to_string()))?;
-        return portable::aot::component(&fragments, &resolve, world, &mappings)
+        return portable::aot::component_with(&fragments, &resolve, world, &mappings, options.optimize)
             .map_err(|error| CompileError::Component(error.to_string()));
+    }
+    if options.optimize {
+        return Err(CompileError::Unsupported(
+            "--optimize doesn't support async imports yet".into(),
+        ));
     }
     // Validate the entire selected transport scope before Macro-session effects.
     let selected = &resolve.worlds[world];

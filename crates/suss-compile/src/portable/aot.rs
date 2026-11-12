@@ -9,6 +9,8 @@ pub use wit_parser::{Resolve, WorldId};
 
 mod list_schema;
 mod lists;
+#[cfg(not(target_family = "wasm"))]
+mod optimize;
 mod strings;
 
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
@@ -546,6 +548,16 @@ pub fn component(
     world: WorldId,
     mappings: &[(String, Symbol)],
 ) -> Result<Vec<u8>, Diagnostic> {
+    component_with(fragments, resolve, world, mappings, false)
+}
+/// `component`, optionally merged and optimized with Binaryen (ADR-0005).
+pub fn component_with(
+    fragments: &[PreparedFragment],
+    resolve: &Resolve,
+    world: WorldId,
+    mappings: &[(String, Symbol)],
+    optimize: bool,
+) -> Result<Vec<u8>, Diagnostic> {
     validate_boundary(resolve, world)?;
     let last = fragments
         .last()
@@ -703,15 +715,84 @@ pub fn component(
         .iter()
         .filter(|export| export.asynchronous)
         .collect::<Vec<_>>();
+    // Direct links (#360): a fragment imports each link's closure global and
+    // entries from module `suss.link.n`, and a var's slot from `suss.slot.s`,
+    // which the earlier fragment that exports `link.n.code` or `slot.s`
+    // provides. Fragment by fragment, each such import module and its definer.
+    let mut link_definers = std::collections::BTreeMap::new();
+    for (index, fragment) in fragments.iter().enumerate() {
+        for payload in wasmparser::Parser::new(0).parse_all(&fragment.wasm) {
+            if let Ok(wasmparser::Payload::ExportSection(section)) = payload {
+                for export in section.into_iter().flatten() {
+                    if export.kind == wasmparser::ExternalKind::Global {
+                        if export.name.starts_with("slot.") {
+                            link_definers.insert(format!("suss.{}", export.name), index);
+                        } else if let Some(definition) = export.name.strip_prefix("link.").and_then(|name| name.strip_suffix(".code")) {
+                            link_definers.insert(format!("suss.link.{definition}"), index);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    let mut fragment_links = Vec::new();
+    for fragment in &fragments {
+        let mut modules = std::collections::BTreeMap::new();
+        for payload in wasmparser::Parser::new(0).parse_all(&fragment.wasm) {
+            if let Ok(wasmparser::Payload::ImportSection(section)) = payload {
+                for import in section.into_imports().flatten() {
+                    if import.module.starts_with("suss.link.") || import.module.starts_with("suss.slot.") {
+                        let definer = *link_definers.get(import.module).ok_or_else(|| Diagnostic {
+                            span: 0..0,
+                            message: format!("Direct link {} has no defining fragment", import.module),
+                        })?;
+                        modules.insert(import.module.to_owned(), definer);
+                    }
+                }
+            }
+        }
+        fragment_links.push(modules);
+    }
     let mut component = Component::new();
-    let modules = std::iter::once(runtime_abi::module())
-        .chain(std::iter::once(bindings.wasm))
-        .chain(fragments.iter().map(|fragment| fragment.wasm.clone()))
-        .chain(std::iter::once(adapter));
-    for module in modules {
+    let mut modules = std::iter::once(("suss.runtime".to_owned(), runtime_abi::module()))
+        .chain(std::iter::once(("suss.bindings.runtime".to_owned(), bindings.wasm)))
+        .chain(fragments.iter().enumerate().map(|(index, fragment)| {
+            (format!("suss.fragment.{index}"), fragment.wasm.clone())
+        }))
+        .chain(std::iter::once(("suss.aot".to_owned(), adapter)))
+        .collect::<Vec<_>>();
+    // ADR-0005 (#357): optimizing merges these into one module, which keeps
+    // only the adapter's exports and imports only the allocator, if any.
+    if optimize {
+        #[cfg(not(target_family = "wasm"))]
+        {
+            // A merged module has one name, so a fragment's link and slot
+            // imports name their definer's fragment instead.
+            for (index, links) in fragment_links.iter().enumerate() {
+                if !links.is_empty() {
+                    let module = &mut modules[2 + index].1;
+                    *module = optimize::rename_import_modules(module, |name| {
+                        links.get(name).map(|definer| format!("suss.fragment.{definer}"))
+                    })?;
+                }
+            }
+            modules = vec![("suss.aot".to_owned(), optimize::merge(&modules)?)];
+        }
+        #[cfg(target_family = "wasm")]
+        return Err(error("--optimize needs the native compiler host"));
+    }
+    // Module and instance indices of the two layouts. Unoptimized: runtime,
+    // bindings, fragments, adapter, then the allocator and bridge modules;
+    // the allocator's instance precedes the adapter's. Optimized: the merged
+    // module stands for all of the first group.
+    let separate = modules.len() > 1;
+    let adapter_module = modules.len() as u32 - 1;
+    let memory_module = adapter_module + 1;
+    let bridge_module = memory_module + u32::from(has_memory);
+    for (_, module) in &modules {
         component.section(&RawSection {
             id: ComponentSectionId::CoreModule.into(),
-            data: &module,
+            data: module,
         });
     }
     if has_memory {
@@ -729,76 +810,36 @@ pub fn component(
         });
     }
     let mut instances = InstanceSection::new();
-    instances.instantiate(0, std::iter::empty::<(&str, ModuleArg)>());
-    instances.instantiate(1, [("suss.runtime", ModuleArg::Instance(0))]);
-    // Direct links (#360): a fragment imports each link's closure global and
-    // entries from module `suss.link.n`, which the earlier fragment that
-    // exports `link.n` provides.
-    let mut link_definers = std::collections::BTreeMap::new();
-    for (index, fragment) in fragments.iter().enumerate() {
-        for payload in wasmparser::Parser::new(0).parse_all(&fragment.wasm) {
-            if let Ok(wasmparser::Payload::ExportSection(section)) = payload {
-                for export in section.into_iter().flatten() {
-                    // `slot.S` names its owner's `suss.slot.S`; `link.D.code`
-                    // its definer's `suss.link.D`.
-                    if export.kind == wasmparser::ExternalKind::Global {
-                        if export.name.starts_with("slot.") {
-                            link_definers.insert(format!("suss.{}", export.name), 2 + index as u32);
-                        } else if let Some(definition) = export.name.strip_prefix("link.").and_then(|name| name.strip_suffix(".code")) {
-                            link_definers.insert(format!("suss.link.{definition}"), 2 + index as u32);
-                        }
-                    }
-                }
-            }
+    let mut args = vec![];
+    if separate {
+        instances.instantiate(0, std::iter::empty::<(&str, ModuleArg)>());
+        instances.instantiate(1, [("suss.runtime", ModuleArg::Instance(0))]);
+        for (index, links) in fragment_links.iter().enumerate() {
+            let mut args = vec![
+                ("suss.runtime".to_owned(), ModuleArg::Instance(0)),
+                ("suss.bindings.runtime".to_owned(), ModuleArg::Instance(1)),
+            ];
+            args.extend(links.iter().map(|(module, definer)| {
+                (module.clone(), ModuleArg::Instance(2 + *definer as u32))
+            }));
+            instances.instantiate(2 + index as u32, args);
         }
+        args.push(("suss.runtime".to_owned(), ModuleArg::Instance(0)));
+        args.push(("suss.bindings.runtime".to_owned(), ModuleArg::Instance(1)));
+        args.extend((0..fragments.len()).map(|index| {
+            (
+                format!("suss.fragment.{index}"),
+                ModuleArg::Instance(2 + index as u32),
+            )
+        }));
     }
-    for (index, fragment) in fragments.iter().enumerate() {
-        let mut modules = std::collections::BTreeSet::new();
-        for payload in wasmparser::Parser::new(0).parse_all(&fragment.wasm) {
-            if let Ok(wasmparser::Payload::ImportSection(section)) = payload {
-                for import in section.into_imports().flatten() {
-                    if import.module.starts_with("suss.link.") || import.module.starts_with("suss.slot.") {
-                        modules.insert(import.module.to_owned());
-                    }
-                }
-            }
-        }
-        let mut args = vec![
-            ("suss.runtime".to_owned(), ModuleArg::Instance(0)),
-            ("suss.bindings.runtime".to_owned(), ModuleArg::Instance(1)),
-        ];
-        for module in modules {
-            let definer = *link_definers.get(&module).ok_or_else(|| Diagnostic {
-                span: 0..0,
-                message: format!("Direct link {module} has no defining fragment"),
-            })?;
-            args.push((module, ModuleArg::Instance(definer)));
-        }
-        instances.instantiate(2 + index as u32, args);
-    }
-    let mut args = vec![
-        ("suss.runtime".to_owned(), ModuleArg::Instance(0)),
-        ("suss.bindings.runtime".to_owned(), ModuleArg::Instance(1)),
-    ];
-    args.extend((0..fragments.len()).map(|index| {
-        (
-            format!("suss.fragment.{index}"),
-            ModuleArg::Instance(2 + index as u32),
-        )
-    }));
+    let first_own = if separate { 2 + fragments.len() as u32 } else { 0 };
     if has_memory {
-        let allocator_instance = 2 + fragments.len() as u32;
-        instances.instantiate(
-            3 + fragments.len() as u32,
-            std::iter::empty::<(&str, ModuleArg)>(),
-        );
-        args.push((
-            "suss.memory".to_owned(),
-            ModuleArg::Instance(allocator_instance),
-        ));
+        instances.instantiate(memory_module, std::iter::empty::<(&str, ModuleArg)>());
+        args.push(("suss.memory".to_owned(), ModuleArg::Instance(first_own)));
     }
-    let adapter_instance = 2 + fragments.len() as u32 + u32::from(has_memory);
-    instances.instantiate(2 + fragments.len() as u32, args);
+    let adapter_instance = first_own + u32::from(has_memory);
+    instances.instantiate(adapter_module, args);
     component.section(&instances);
     let mut types = ComponentTypeSection::new();
     let mut function_types = Vec::new();
@@ -878,7 +919,7 @@ pub fn component(
             )
         }));
         bridge_instances.instantiate(
-            3 + fragments.len() as u32 + u32::from(has_memory),
+            bridge_module,
             [
                 ("suss.aot", ModuleArg::Instance(adapter_instance)),
                 ("suss.completion", ModuleArg::Instance(adapter_instance + 1)),
