@@ -623,7 +623,7 @@ pub fn write_output(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
     Ok(())
 }
 
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 mod native {
     use super::*;
     use std::hash::{Hash, Hasher};
@@ -688,9 +688,9 @@ mod native {
         Ok(component)
     }
 }
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 pub use native::component;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 pub(crate) use native::module;
 
 /// The directory a CLI process uses, by documented precedence: an explicit

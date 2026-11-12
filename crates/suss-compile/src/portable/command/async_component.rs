@@ -915,13 +915,13 @@ mod entry_tests;
 /// A concurrent component trap can poison Wasmtime's task state. This owner
 /// preserves the original error and retains the Store without attempting guest
 /// reentry or replay. Dispose of the owner explicitly to retire uncertain roots.
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 pub struct ScalarHost<T: Send + 'static> {
     store: wasmtime::Store<T>,
     run: wasmtime::component::TypedFunc<(u32,), (u32,)>,
     quarantined: bool,
 }
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 impl<T: Send + 'static> ScalarHost<T> {
     pub fn new(
         mut store: wasmtime::Store<T>,

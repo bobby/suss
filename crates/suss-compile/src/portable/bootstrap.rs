@@ -15,10 +15,25 @@ pub const SOURCE: &str = include_str!("../../../../runtime/core-import/suss/core
 const DEPENDENCIES: &[u8] = include_bytes!("../../../../runtime/core-import/manifest.json");
 const TARGET: &str = "portable-wasm-gc-shared-abi";
 const MAX_ARTIFACT_BYTES: usize = 32 * 1024 * 1024;
-const RUNTIME_WASM: &[u8] = include_bytes!("../../../../runtime/bootstrap/runtime.wasm");
-const RUNTIME_EDN: &[u8] = include_bytes!("../../../../runtime/bootstrap/runtime.edn");
-const MACRO_WASM: &[u8] = include_bytes!("../../../../runtime/bootstrap/macro.wasm");
-const MACRO_EDN: &[u8] = include_bytes!("../../../../runtime/bootstrap/macro.edn");
+// The artifacts are generated at build time by this same compiler, built as
+// suss-compile-generator, into OUT_DIR (#383). The generator itself embeds
+// none: it only generates.
+#[cfg(not(suss_generator))]
+const RUNTIME_WASM: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/runtime.wasm"));
+#[cfg(not(suss_generator))]
+const RUNTIME_EDN: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/runtime.edn"));
+#[cfg(not(suss_generator))]
+const MACRO_WASM: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/macro.wasm"));
+#[cfg(not(suss_generator))]
+const MACRO_EDN: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/macro.edn"));
+#[cfg(suss_generator)]
+const RUNTIME_WASM: &[u8] = &[];
+#[cfg(suss_generator)]
+const RUNTIME_EDN: &[u8] = &[];
+#[cfg(suss_generator)]
+const MACRO_WASM: &[u8] = &[];
+#[cfg(suss_generator)]
+const MACRO_EDN: &[u8] = &[];
 
 /// Digest of the embedded inputs that `SUSS_COMPILER_SOURCE_SHA256` cannot
 /// cover: core source, its import manifest and the versioned bootstrap
@@ -172,6 +187,10 @@ pub fn generate(phase: Phase) -> Result<(Vec<u8>, Manifest), Diagnostic> {
     ).map_err(error)?;
     let manifest = manifest(phase, &wasm, &analyzed.cells);
     Ok((wasm, manifest))
+}
+/// A manifest as its canonical EDN, as the artifacts record it.
+pub fn manifest_edn(manifest: &Manifest) -> Result<String, String> {
+    suss_reader::edn::to_string_pretty(manifest).map_err(|error| error.to_string())
 }
 /// Validate all identity inputs before a host can install or initialize the artifact.
 /// Wasm validation/linking remains mandatory in the consuming host.

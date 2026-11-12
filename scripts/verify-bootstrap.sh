@@ -1,5 +1,8 @@
 #!/bin/sh
-# Reproduce and execute the shipped bounded bootstrap with Java absent from PATH.
+# Generate the bounded bootstrap twice with Java absent from PATH and require
+# identical artifacts, then check the compiler identity and execute it. The
+# artifacts aren't committed: suss-compile's build script generates the ones
+# it embeds (#383).
 set -eu
 bootstrap_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 bootstrap_tmp=$(mktemp -d)
@@ -22,8 +25,7 @@ CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}" cargo run --profile test -p suss-cli -
 for bootstrap_phase in runtime macro; do
     for bootstrap_suffix in wasm edn; do
         cmp "$bootstrap_tmp/first/$bootstrap_phase.$bootstrap_suffix" "$bootstrap_tmp/second/$bootstrap_phase.$bootstrap_suffix"
-        cmp "$bootstrap_tmp/first/$bootstrap_phase.$bootstrap_suffix" "runtime/bootstrap/$bootstrap_phase.$bootstrap_suffix"
     done
 done
-python3 scripts/verify_bootstrap_identity.py
+python3 scripts/verify_bootstrap_identity.py "$bootstrap_tmp/first/runtime.edn"
 CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}" cargo test -p suss-cli --locked --test compiled_bootstrap -- --test-threads=2

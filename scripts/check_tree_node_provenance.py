@@ -90,10 +90,6 @@ def verify():
                 raise ValueError('whole seven-target adaptation/hash')
     from sequence_provenance import verify as verify_loader
     verify_loader()
-    for name in ['macro.wasm', 'macro.json', 'runtime.wasm', 'runtime.json']:
-        path = 'runtime/bootstrap/' + name
-        if (ROOT / path).read_bytes() != subprocess.check_output(['git', 'show', BASE + ':' + path]):
-            raise ValueError('bootstrap artifact changed during authoring')
     if (FOLDER / 'NOTICE').read_text().rstrip('\n') != raw.decode().split('\n\n')[0]: raise ValueError('notice')
     if (ROOT / 'runtime/core-import/epl-v10.html').read_bytes() != pinned_file(ROOT, 'epl-v10.html'): raise ValueError('EPL')
     recipe = json.loads((ROOT / 'docs/compatibility/core-import.json').read_text())

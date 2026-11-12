@@ -9,7 +9,7 @@ pub use wit_parser::{Resolve, WorldId};
 
 mod list_schema;
 mod lists;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(suss_host)]
 mod optimize;
 mod strings;
 
@@ -764,7 +764,7 @@ pub fn component_with(
     // ADR-0005 (#357): optimizing merges these into one module, which keeps
     // only the adapter's exports and imports only the allocator, if any.
     if optimize {
-        #[cfg(not(target_family = "wasm"))]
+        #[cfg(suss_host)]
         {
             // A merged module has one name, so a fragment's link and slot
             // imports name their definer's fragment instead.
@@ -778,7 +778,7 @@ pub fn component_with(
             }
             modules = vec![("suss.aot".to_owned(), optimize::merge(&modules)?)];
         }
-        #[cfg(target_family = "wasm")]
+        #[cfg(not(suss_host))]
         return Err(error("--optimize needs the native compiler host"));
     }
     // Module and instance indices of the two layouts. Unoptimized: runtime,

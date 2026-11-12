@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Exercise the actual compiled Cargo build script's bootstrap identity inputs."""
+"""Exercise the actual compiled Cargo build script's bootstrap identity inputs.
+
+Usage: verify_bootstrap_identity.py MANIFEST, a freshly generated bootstrap
+manifest (runtime.edn); its compiler identity is the expected one. The build
+script exercised is suss-compile-generator's, which computes the same identity
+as suss-compile's without generating artifacts (#383)."""
+import sys
 import os
 from pathlib import Path
 import re
@@ -25,7 +31,7 @@ ASSETS = (
 def fingerprint(builder, root):
     result = subprocess.run(
         [str(builder)],
-        env={**os.environ, "CARGO_MANIFEST_DIR": str(root / "crates/suss-compile")},
+        env={**os.environ, "CARGO_MANIFEST_DIR": str(root / "crates/suss-compile-generator")},
         capture_output=True, text=True, check=True,
     )
     identities = [line.removeprefix(PREFIX) for line in result.stdout.splitlines()
@@ -40,7 +46,8 @@ def copy_inputs(destination):
         target = destination / "crates" / name
         shutil.copytree(ROOT / "crates" / name / "src", target / "src")
         shutil.copyfile(ROOT / "crates" / name / "Cargo.toml", target / "Cargo.toml")
-    for relative in ("Cargo.toml", "Cargo.lock", "crates/suss-compile/build.rs", *ASSETS):
+    for relative in ("Cargo.toml", "Cargo.lock", "crates/suss-compile/build.rs",
+                     "crates/suss-compile/build_identity.rs", *ASSETS):
         target = destination / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / relative, target)
@@ -50,7 +57,9 @@ def main():
     target = Path(os.environ.get("CARGO_TARGET_DIR", ROOT / "target"))
     if not target.is_absolute():
         target = ROOT / target
-    manifest = (ROOT / "runtime/bootstrap/runtime.edn").read_text()
+    if len(sys.argv) != 2:
+        raise RuntimeError("usage: verify_bootstrap_identity.py GENERATED-RUNTIME-MANIFEST")
+    manifest = Path(sys.argv[1]).read_text()
     # The canonical EDN manifest (#299) has one quoted digest for this key.
     found = re.findall(r':compiler-source-sha256 "([0-9a-f]{64})"', manifest)
     if len(found) != 1:
@@ -58,10 +67,10 @@ def main():
     expected = found[0]
     # The generator has already built this executable. Match its emitted identity
     # to avoid accidentally exercising an unrelated stale Cargo build directory.
-    builders = [path for path in sorted(target.glob("debug/build/suss-compile-*/build-script-build"))
+    builders = [path for path in sorted(target.glob("debug/build/suss-compile-generator-*/build-script-build"))
                 if fingerprint(path, ROOT) == expected]
     if not builders:
-        raise RuntimeError("no compiled build script matches the shipped compiler identity")
+        raise RuntimeError("no compiled build script matches the generated compiler identity")
     builder = builders[0]
     with tempfile.TemporaryDirectory(prefix="suss-bootstrap-identity-") as directory:
         first = Path(directory) / "first"

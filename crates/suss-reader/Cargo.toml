@@ -4,8 +4,12 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+# An rlib only (#383): with a cdylib too, Cargo names the rlib without a
+# metadata hash, so suss-compile-generator's host build of this crate (a
+# build dependency of suss-compile) and the ordinary build overwrite each
+# other. Build the reader component with `cargo rustc --crate-type cdylib`.
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["rlib"]
 
 [dependencies]
 suss-core = { workspace = true }

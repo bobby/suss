@@ -1844,6 +1844,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "stacker",
+ "suss-compile-generator",
  "suss-core",
  "suss-reader",
  "tempfile",
@@ -1851,6 +1852,25 @@ dependencies = [
  "wasm-encoder",
  "wasmparser",
  "wasmtime",
+ "wit-component",
+ "wit-parser",
+ "xxhash-rust",
+]
+
+[[package]]
+name = "suss-compile-generator"
+version = "0.1.0"
+dependencies = [
+ "num-traits",
+ "serde",
+ "serde_json",
+ "sha2",
+ "stacker",
+ "suss-core",
+ "suss-reader",
+ "thiserror 2.0.17",
+ "wasm-encoder",
+ "wasmparser",
  "wit-component",
  "wit-parser",
  "xxhash-rust",

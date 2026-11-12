@@ -5,6 +5,7 @@ members = [
     "crates/suss-reader",
     "crates/suss-cli",
     "crates/suss-compile",
+    "crates/suss-compile-generator",
 ]
 
 [workspace.package]
