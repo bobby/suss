@@ -50,6 +50,45 @@ fn cached_methods_match_the_full_lookup() {
             ("(let [m (merge (zipmap (range 100) (range 100)) (zipmap (map #(K. %) (range 100)) (range 100)))] [(count m) (get m 50) (get m (K. 50)) (get m (K. 100) :none)])", "[200 50 50 :none]"),
             ("(let [s (into #{} (concat (range 2000) (map #(K. %) (range 50))))] [(count s) (contains? s 1999) (contains? s (K. 49)) (contains? s (K. 50))])", "[2050 true true false]"),
             ("(let [t (persistent! (reduce #(assoc! %1 %2 %2) (transient {}) (range 2000)))] [(count t) (get t 1234)])", "[2000 1234]"),
+            // Core's constructor statics (EMPTY, fromArray) are cached per
+            // site; user code can't write them.
+            ("[(vector) (vector 1 2) (list 1 2) (hash-map 1 2) (hash-set 1)]", "[[] [1 2] (1 2) {1 2} #{1}]"),
+            ("(set! (.-EMPTY PersistentVector) [:replaced])", r#"[:error "Built-in type internals are private to suss.core"]"#),
+            ("[(vector) (empty [1 2]) (.-EMPTY PersistentVector)]", "[[] [] []]"),
+        ] {
+            assert_eq!(printed(&mut session, source), expected, "{source}");
+        }
+    }
+}
+
+/// `(.m o …)` calls an Object method's function directly when it takes the
+/// call's operands and this (#378), and otherwise as JavaScript would:
+/// missing operands are undefined and surplus ones dropped. this is the
+/// receiver inside the method and is restored after it, including after a
+/// throw. The expected values are `ebda997f`'s, before the direct call.
+#[test]
+fn method_calls_keep_javascript_conventions() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
+        for definition in [
+            "(deftype M [x] Object (two [this a b] [x a (undefined? b)]) (none [this] x) (eight [this a b c d e f g h] [a h]) (boom [this] (throw (ex-info \"boom\" {}))) (self [this] (this-as t (identical? t this))) (nested [this other] [(.self other) (this-as t (identical? t this))]))",
+            "(def o (M. 7))",
+            "(def p (M. 8))",
+        ] {
+            session.eval(definition).unwrap_or_else(|error| panic!("{definition}: {error}"));
+        }
+        for (source, expected) in [
+            ("(.two o 1)", "[7 1 true]"),
+            ("(.two o 1 2 3)", "[7 1 false]"),
+            ("(.none o)", "7"),
+            ("(.eight o 1 2 3 4 5 6 7 8)", "[1 8]"),
+            ("(.self o)", "true"),
+            ("(.nested o p)", "[true true]"),
+            ("(try (.boom o) (catch :default e (ex-message e)))", r#""boom""#),
+            ("(do (try (.boom o) (catch :default e nil)) (this-as t (undefined? t)))", "false"),
+            ("(this-as t (undefined? t))", "false"),
+            ("(.nope o)", r#"[:error "Invalid nominal operation"]"#),
+            ("(reduce + (map #(.none (M. %)) (range 100)))", "4950"),
         ] {
             assert_eq!(printed(&mut session, source), expected, "{source}");
         }

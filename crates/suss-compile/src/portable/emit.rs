@@ -11,9 +11,19 @@ use crate::runtime_abi;
 use std::{borrow::Cow, collections::BTreeSet};
 use wasm_encoder::*;
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
+/// `object-method-invoke-N` (#378): a method call with N arguments after this.
+fn object_method_invoke_name(n: usize) -> &'static str {
+    const NAMES: [&str; runtime_abi::MAX_FIXED as usize] = [
+        "object-method-invoke-0", "object-method-invoke-1", "object-method-invoke-2", "object-method-invoke-3",
+        "object-method-invoke-4", "object-method-invoke-5", "object-method-invoke-6", "object-method-invoke-7",
+    ];
+    NAMES[n]
+}
+
 /// Globals per cached named-read site: descriptor, field slot, method and
-/// epoch, then a second method entry's descriptor, epoch and method (#378).
-const FIELD_SITE_GLOBALS: u32 = 7;
+/// epoch, then a second method entry's descriptor, epoch and method, then a
+/// function owner, epoch and its named property (#378).
+const FIELD_SITE_GLOBALS: u32 = 10;
 
 fn arithmetic_name(
     operator: Arithmetic,
@@ -188,7 +198,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     Operation::Array { operation, .. } => {
                         names.insert(operation.export());
                     }
-                    Operation::Nominal { operation, .. } => match operation {
+                    Operation::Nominal { operation, arguments } => match operation {
                         Nominal::IsNumber | Nominal::IsString | Nominal::Array => {}
                         Nominal::IsKeyword => { names.insert("keyword-test"); }
                         Nominal::DirectLinkDefine(_) | Nominal::DirectLinkRead(_) | Nominal::DirectLinkSet(_) => {}
@@ -221,6 +231,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::NativeObjectStrictSet => { names.insert("native-object-property-set-strict"); }
                         Nominal::ObjectSet => {
                             names.insert("object-method-set");
+                        }
+                        Nominal::ObjectInvoke if arguments.len() - 2 < runtime_abi::MAX_FIXED as usize => {
+                            names.insert(object_method_invoke_name(arguments.len() - 2));
                         }
                         Nominal::ObjectInvoke => {
                             names.insert("object-method-invoke");
@@ -420,6 +433,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     if !field_site_list.is_empty() {
         names.insert("named-field-slot");
         names.insert("descriptor-method-get");
+        names.insert("closure-named-get");
     }
     // Protocol method lookups get an inline cache (#355): the last
     // descriptor, its method and the protocol epoch it was found at.
@@ -565,6 +579,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])
             }
             "string-new" => (vec![ValType::I32], vec![VALUE]),
+            name if name.starts_with("object-method-invoke-") => {
+                let n: usize = name["object-method-invoke-".len()..].parse().expect("object-method-invoke-N");
+                (vec![VALUE; n + 2], vec![VALUE])
+            }
             "arity-throw" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "keyword-intern" => (vec![VALUE], vec![VALUE]),
             "keyword-test" => (vec![VALUE], vec![ValType::I32]),
@@ -826,6 +844,18 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         code_globals.global(
             GlobalType { val_type: ValType::I32, mutable: true, shared: false },
             &ConstExpr::i32_const(-1),
+        );
+        code_globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
+        );
+        code_globals.global(
+            GlobalType { val_type: ValType::I32, mutable: true, shared: false },
+            &ConstExpr::i32_const(-1),
+        );
+        code_globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
         );
         code_globals.global(
             GlobalType { val_type: VALUE, mutable: true, shared: false },
@@ -2250,9 +2280,45 @@ fn emit_function(
                                 .instruction(&End)
                                 .instruction(&End)
                                 .instruction(&Else)
+                                // A function's own named property, such as a
+                                // constructor static, cached with the epoch.
+                                .instruction(&LocalGet(object))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::CLOSURE)))
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&LocalGet(object))
+                                .instruction(&GlobalGet(cache + 7))
+                                .instruction(&RefEq)
+                                .instruction(&GlobalGet(cache + 8))
+                                .instruction(&GlobalGet(epoch_global))
+                                .instruction(&I32Eq)
+                                .instruction(&I32And)
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&GlobalGet(cache + 9))
+                                .instruction(&Else)
+                                .instruction(&LocalGet(object))
+                                .instruction(&LocalGet(name))
+                                .instruction(&Call(index("closure-named-get")))
+                                .instruction(&LocalTee(method_local))
+                                .instruction(&RefIsNull)
+                                .instruction(&If(BlockType::Result(VALUE)))
                                 .instruction(&LocalGet(object))
                                 .instruction(&LocalGet(name))
                                 .instruction(&Call(index("named-property-get")))
+                                .instruction(&Else)
+                                .instruction(&LocalGet(object))
+                                .instruction(&GlobalSet(cache + 7))
+                                .instruction(&GlobalGet(epoch_global))
+                                .instruction(&GlobalSet(cache + 8))
+                                .instruction(&LocalGet(method_local))
+                                .instruction(&GlobalSet(cache + 9))
+                                .instruction(&LocalGet(method_local))
+                                .instruction(&End)
+                                .instruction(&End)
+                                .instruction(&Else)
+                                .instruction(&LocalGet(object))
+                                .instruction(&LocalGet(name))
+                                .instruction(&Call(index("named-property-get")))
+                                .instruction(&End)
                                 .instruction(&End);
                             if length {
                                 function.instruction(&End);
@@ -2435,7 +2501,46 @@ fn emit_function(
                                 .instruction(&Call(index("object-field-set")))
                                 .instruction(&LocalGet(arguments[1].0 as u32 + offset));
                         }
-                        Nominal::Field(field) | Nominal::Key(field) => {
+                        Nominal::Field(field) => {
+                            // Inline (#378): an object's field array read,
+                            // with object-field-get's own checks taking the
+                            // call (and its error) for anything else.
+                            let object = arguments[0].0 as u32 + offset;
+                            let fallback = |function: &mut Function| {
+                                function
+                                    .instruction(&LocalGet(object))
+                                    .instruction(&I32Const(*field as i32))
+                                    .instruction(&Call(index("object-field-get")));
+                            };
+                            function
+                                .instruction(&LocalGet(object))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(7)))
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&LocalGet(object))
+                                .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+                                .instruction(&StructGet { struct_type_index: 7, field_index: 1 })
+                                .instruction(&LocalTee(method_local))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::ARGS)))
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&LocalGet(method_local))
+                                .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)))
+                                .instruction(&ArrayLen)
+                                .instruction(&I32Const(*field as i32))
+                                .instruction(&I32GtU)
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&LocalGet(method_local))
+                                .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS)))
+                                .instruction(&I32Const(*field as i32))
+                                .instruction(&ArrayGet(runtime_abi::ARGS))
+                                .instruction(&Else);
+                            fallback(&mut function);
+                            function.instruction(&End).instruction(&Else);
+                            fallback(&mut function);
+                            function.instruction(&End).instruction(&Else);
+                            fallback(&mut function);
+                            function.instruction(&End);
+                        }
+                        Nominal::Key(field) => {
                             function
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                 .instruction(&I32Const(*field as i32))
@@ -2446,6 +2551,13 @@ fn emit_function(
                                         "protocol-key"
                                     },
                                 )));
+                        }
+                        Nominal::ObjectInvoke if arguments.len() - 2 < runtime_abi::MAX_FIXED as usize => {
+                            // No argument array (#378): object-method-invoke-N.
+                            for argument in arguments {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function.instruction(&Call(index(object_method_invoke_name(arguments.len() - 2))));
                         }
                         Nominal::ObjectInvoke => {
                             for argument in &arguments[..2] {

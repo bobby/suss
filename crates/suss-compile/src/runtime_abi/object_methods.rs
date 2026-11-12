@@ -221,6 +221,117 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
         &[(3, VALUE)],
         &body,
     );
+    // `object-method-invoke-N` (#378): `(.m this a1 … aN)` with no argument
+    // arrays. When the method is an Object wrapper whose function takes N + 1
+    // operands, it calls that function's typed entry with this as the first,
+    // as object-method-invoke-dispatch and js-method-invoke would, with this
+    // as CURRENT_THIS and the same restore on a throw. Anything else takes
+    // object-method-invoke with the operands in an array.
+    for n in 0..MAX_FIXED {
+        let k = n + 1;
+        // Locals: environment, inner function, saved this, result, payload,
+        // then the inner function cast once to a closure. Each cast to the
+        // non-final closure type is an out-of-line subtype check in
+        // wasmtime 49, so the wrapper is tested as the universal closure it
+        // is (an exact match, inline) and the function is cast once.
+        let (env, inner, saved, result, payload, typed) = (n + 2, n + 3, n + 4, n + 5, n + 6, n + 7);
+        let mut body = vec![Block(BlockType::Empty)];
+        body.extend([LocalGet(0), RefTestNonNull(HeapType::Concrete(UNIVERSAL)), I32Eqz, BrIf(0)]);
+        body.extend([
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(UNIVERSAL)),
+            StructGet { struct_type_index: UNIVERSAL, field_index: UNIVERSAL_ENVIRONMENT },
+            LocalTee(env),
+            RefTestNonNull(HeapType::Concrete(7)),
+            I32Eqz,
+            BrIf(0),
+        ]);
+        get(&mut body, env, 7, 0);
+        body.extend([GlobalGet(TAG_GLOBAL), RefEq, I32Eqz, BrIf(0)]);
+        get(&mut body, env, 7, 1);
+        body.extend([LocalTee(inner), RefTestNonNull(HeapType::Concrete(ARGS)), I32Eqz, BrIf(0)]);
+        array(&mut body, inner);
+        body.extend([ArrayLen, I32Const(1), I32Ne, BrIf(0)]);
+        array(&mut body, inner);
+        body.extend([
+            I32Const(0),
+            ArrayGet(ARGS),
+            LocalSet(inner),
+            Block(BlockType::Result(VALUE)),
+            LocalGet(inner),
+            BrOnCastFail {
+                relative_depth: 0,
+                from_ref_type: RefType::EQREF,
+                to_ref_type: RefType { nullable: false, heap_type: HeapType::Concrete(CLOSURE) },
+            },
+            LocalSet(typed),
+        ]);
+        let code = |body: &mut Vec<Instruction<'static>>, field: u32| {
+            body.extend([
+                LocalGet(typed),
+                StructGet { struct_type_index: CLOSURE, field_index: CLOSURE_CODE },
+                StructGet { struct_type_index: CODE, field_index: field },
+            ]);
+        };
+        // A universal closure keeps its arity range outside its code; every
+        // one shares the universal code struct.
+        body.extend([
+            LocalGet(typed),
+            StructGet { struct_type_index: CLOSURE, field_index: CLOSURE_CODE },
+            GlobalGet(UNIVERSAL_CODE_GLOBAL),
+            RefEq,
+            BrIf(1),
+        ]);
+        code(&mut body, CODE_MIN);
+        body.extend([I32Const(k as i32), I32GtS, BrIf(1)]);
+        code(&mut body, CODE_MAX);
+        body.extend([I32Const(k as i32), I32LtS, BrIf(1)]);
+        body.extend([
+            GlobalGet(CURRENT_THIS),
+            LocalSet(saved),
+            LocalGet(1),
+            GlobalSet(CURRENT_THIS),
+            Block(BlockType::Empty),
+            Block(BlockType::Result(VALUE)),
+            TryTable(BlockType::Empty, Cow::Owned(vec![wasm_encoder::Catch::One { tag: 0, label: 0 }])),
+            LocalGet(typed),
+            RefAsNonNull,
+        ]);
+        for operand in 1..=k {
+            body.push(LocalGet(operand));
+        }
+        code(&mut body, CODE_ENTRY + k);
+        body.extend([
+            CallRef(CALL + k),
+            LocalSet(result),
+            Br(2),
+            End,
+            Unreachable,
+            End,
+            LocalSet(payload),
+            LocalGet(saved),
+            GlobalSet(CURRENT_THIS),
+            LocalGet(payload),
+            Throw(0),
+            End,
+            LocalGet(saved),
+            GlobalSet(CURRENT_THIS),
+            LocalGet(result),
+            Return,
+            End,
+            Drop,
+            End,
+            LocalGet(0),
+            LocalGet(1),
+        ]);
+        for operand in 2..n + 2 {
+            body.push(LocalGet(operand));
+        }
+        body.extend([ArrayNewFixed { array_type_index: ARGS, array_size: n }, Call(invoke)]);
+        let name: &'static str = Box::leak(format!("object-method-invoke-{n}").into_boxed_str());
+        let closure = ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(CLOSURE) });
+        b.function_with_locals(name, &vec![VALUE; n as usize + 2], &[VALUE], &[(5, VALUE), (1, closure)], &body);
+    }
     // A plain detached call uses the non-strict portable realm's implicit this.
     // Rebuild the wrapper from its already unwrapped callback environment.
     let detached_index = b.count;

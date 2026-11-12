@@ -718,6 +718,13 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             LocalGet(0),
             RefTestNonNull(HeapType::Concrete(4)),
             If(BlockType::Empty),
+        ]);
+        if writing {
+            // Call sites cache a function's named properties (constructor
+            // statics, #378) under the protocol epoch.
+            body.extend([GlobalGet(PROTOCOL_EPOCH_GLOBAL), I32Const(1), I32Add, GlobalSet(PROTOCOL_EPOCH_GLOBAL)]);
+        }
+        body.extend([
             LocalGet(0),
             Call(b.names["closure-property-fields"]),
             LocalSet(payload),
@@ -1164,6 +1171,37 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             &body,
         );
     }
+    // A function's own named property, such as a constructor's static
+    // `EMPTY` or `fromArray`, or null when it has none (#378). A named read
+    // of a function returns it: the names it checks first (native kinds,
+    // prototype, call, apply and host names) never reach the table, whose
+    // writes bump the protocol epoch.
+    let null = || Instruction::RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq });
+    let mut body = vec![];
+    let absent = |body: &mut Vec<Instruction<'static>>| body.extend([Instruction::If(BlockType::Empty), null(), Instruction::Return, Instruction::End]);
+    body.extend([Instruction::LocalGet(0), Instruction::RefTestNonNull(HeapType::Concrete(4)), Instruction::I32Eqz]);
+    absent(&mut body);
+    body.extend([Instruction::LocalGet(1), Instruction::RefTestNonNull(HeapType::Concrete(STRING)), Instruction::I32Eqz]);
+    absent(&mut body);
+    body.extend([Instruction::LocalGet(1), Instruction::Call(normalize), Instruction::LocalTee(3), Instruction::RefTestNonNull(HeapType::I31)]);
+    absent(&mut body);
+    body.extend([Instruction::LocalGet(0), Instruction::Call(b.names["closure-property-fields"]), Instruction::LocalTee(2),
+        Instruction::RefTestNonNull(HeapType::Concrete(ARGS)), Instruction::I32Eqz]);
+    absent(&mut body);
+    body.extend([Instruction::LocalGet(2), Instruction::RefCastNonNull(HeapType::Concrete(ARGS)), Instruction::ArrayLen,
+        Instruction::I32Const(3), Instruction::I32Ne]);
+    absent(&mut body);
+    body.extend([
+        Instruction::LocalGet(2), Instruction::RefCastNonNull(HeapType::Concrete(ARGS)), Instruction::I32Const(1),
+        Instruction::ArrayGet(ARGS), Instruction::LocalTee(2), Instruction::LocalGet(3), Instruction::I32Const(2),
+        Instruction::Call(find), Instruction::LocalTee(4), Instruction::I32Const(0), Instruction::I32LtS,
+    ]);
+    absent(&mut body);
+    body.extend([
+        Instruction::LocalGet(2), Instruction::RefCastNonNull(HeapType::Concrete(ARGS)), Instruction::LocalGet(4),
+        Instruction::I32Const(1), Instruction::I32Add, Instruction::ArrayGet(ARGS),
+    ]);
+    b.function_with_locals("closure-named-get", &[VALUE, VALUE], &[VALUE], &[(2, VALUE), (1, ValType::I32)], &body);
     // A descriptor's own Object method named `name`, or nil (#378): what
     // fixed-named-property-get returns for an instance's non-field name
     // before instance-owned properties. It depends only on the descriptor and
