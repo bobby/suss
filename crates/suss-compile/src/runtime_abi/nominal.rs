@@ -231,6 +231,28 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         LocalGet(0),
         Call(b.names["owned-descriptor-prototype"]),
         LocalSet(2),
+    ]);
+    // An object whose own descriptor is the class's is an instance, unless it
+    // is the class's prototype object, which carries the descriptor but isn't
+    // one (as `Foo.prototype instanceof Foo` is false): answer before the
+    // prototype-chain walk (#361).
+    body.extend([LocalGet(1), RefTestNonNull(HeapType::Concrete(OBJECT)), If(BlockType::Empty)]);
+    get(&mut body, 1, OBJECT, 0);
+    body.extend([
+        LocalGet(0),
+        RefEq,
+        LocalGet(1),
+        LocalGet(2),
+        RefEq,
+        I32Eqz,
+        I32And,
+        If(BlockType::Empty),
+        I32Const(1),
+        Return,
+        End,
+        End,
+    ]);
+    body.extend([
         LocalGet(2),
         sentinel_value(NIL),
         RefEq,
@@ -328,6 +350,11 @@ pub(super) fn functions(b: &mut Builder, generic_invoke: u32) -> Vec<u32> {
         let length = table + if writing { 2 } else { 1 };
         let typed_table = length + 1;
         let mut body = vec![];
+        if writing {
+            // Every method table write invalidates call sites' inline
+            // caches (#355).
+            body.extend([GlobalGet(PROTOCOL_EPOCH_GLOBAL), I32Const(1), I32Add, GlobalSet(PROTOCOL_EPOCH_GLOBAL)]);
+        }
         guard(&mut body, 0, DESCRIPTOR);
         guard(&mut body, 1, DESCRIPTOR);
         if writing {

@@ -414,7 +414,207 @@ pub(crate) const CALLABLE_KEYS_GLOBAL: u32 = UNIVERSAL_CODE_GLOBAL + 1;
 const CALLABLE_KEY_COUNT: i32 = 23;
 /// Protocol dispatchers' shared code struct (#355).
 pub(crate) const DISPATCH_CODE_GLOBAL: u32 = CALLABLE_KEYS_GLOBAL + 1;
+/// The interned keywords (#361): `KEYWORD_BUCKETS` chains of `[keyword,
+/// next]`, by a hash of the full name, or null before the first.
+pub(crate) const KEYWORDS_GLOBAL: u32 = DISPATCH_CODE_GLOBAL + 1;
+/// The interned keywords' descriptor, from the first keyword interned, or null.
+pub(crate) const KEYWORD_DESCRIPTOR_GLOBAL: u32 = KEYWORDS_GLOBAL + 1;
+/// Bumped by every protocol method table write; a call site's method cache
+/// holds only while it is unchanged (#355). Exported as `protocol-epoch`.
+pub(crate) const PROTOCOL_EPOCH_GLOBAL: u32 = KEYWORD_DESCRIPTOR_GLOBAL + 1;
+const KEYWORD_BUCKETS: i32 = 4096;
 
+/// `keyword-intern(keyword)`: the first keyword interned with the same full
+/// name, interning this one if it is the first (#361). A keyword is a user
+/// object whose fields are `[ns, name, fqn, hash]`; anything else is returned
+/// unchanged. Clojure interns keywords weakly; Suss holds them.
+fn keyword_intern(b: &mut Builder) -> u32 {
+    use Instruction::*;
+    let string = HeapType::Concrete(STRING);
+    let fields = |object: u32| {
+        vec![
+            LocalGet(object),
+            RefCastNonNull(HeapType::Concrete(7)),
+            StructGet { struct_type_index: 7, field_index: 1 },
+            RefCastNonNull(HeapType::Concrete(ARGS)),
+        ]
+    };
+    // Params: 0 keyword. Locals: 1 fqn, 2 hash, 3 index, 4 bucket table,
+    // 5 node, 6 other fqn, 7 equal.
+    let mut body = vec![
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(7)),
+        I32Eqz,
+        If(BlockType::Empty),
+        LocalGet(0),
+        Return,
+        End,
+    ];
+    body.extend(fields(0));
+    body.extend([ArrayLen, I32Const(4), I32Ne, If(BlockType::Empty), LocalGet(0), Return, End]);
+    // Only a well-formed keyword is interned: a nil or string namespace and a
+    // string name and full name. Anything else is returned as constructed.
+    body.extend(fields(0));
+    body.extend([I32Const(0), ArrayGet(ARGS), LocalTee(1), RefIsNull, LocalGet(1), RefTestNonNull(string), I32Or, I32Eqz]);
+    body.extend(fields(0));
+    body.extend([I32Const(1), ArrayGet(ARGS), RefTestNonNull(string), I32Eqz, I32Or, If(BlockType::Empty), LocalGet(0), Return, End]);
+    body.extend(fields(0));
+    body.extend([
+        I32Const(2),
+        ArrayGet(ARGS),
+        LocalTee(1),
+        RefTestNonNull(string),
+        I32Eqz,
+        If(BlockType::Empty),
+        LocalGet(0),
+        Return,
+        End,
+        // FNV-1a over the name's UTF-16 units.
+        I32Const(-2128831035),
+        LocalSet(2),
+        I32Const(0),
+        LocalSet(3),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(3),
+        LocalGet(1),
+        RefCastNonNull(string),
+        ArrayLen,
+        I32GeU,
+        BrIf(1),
+        LocalGet(2),
+        LocalGet(1),
+        RefCastNonNull(string),
+        LocalGet(3),
+        ArrayGetU(STRING),
+        I32Xor,
+        I32Const(16777619),
+        I32Mul,
+        LocalSet(2),
+        LocalGet(3),
+        I32Const(1),
+        I32Add,
+        LocalSet(3),
+        Br(0),
+        End,
+        End,
+        LocalGet(2),
+        I32Const(KEYWORD_BUCKETS - 1),
+        I32And,
+        LocalSet(3),
+        GlobalGet(KEYWORDS_GLOBAL),
+        RefIsNull,
+        If(BlockType::Empty),
+        sentinel_value(NIL),
+        I32Const(KEYWORD_BUCKETS),
+        ArrayNew(ARGS),
+        GlobalSet(KEYWORDS_GLOBAL),
+        End,
+        GlobalGet(KEYWORDS_GLOBAL),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        LocalTee(4),
+        LocalGet(3),
+        ArrayGet(ARGS),
+        LocalSet(5),
+        // Walk the bucket's chain for a keyword with the same name.
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(5),
+        RefIsNull,
+        BrIf(1),
+        LocalGet(5),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(0),
+        ArrayGet(ARGS),
+        LocalSet(6),
+    ]);
+    body.extend(fields(6));
+    body.extend([
+        I32Const(2),
+        ArrayGet(ARGS),
+        LocalSet(6),
+        LocalGet(6),
+        RefCastNonNull(string),
+        ArrayLen,
+        LocalGet(1),
+        RefCastNonNull(string),
+        ArrayLen,
+        I32Eq,
+        LocalSet(7),
+        LocalGet(7),
+        If(BlockType::Empty),
+        I32Const(0),
+        LocalSet(2),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(2),
+        LocalGet(1),
+        RefCastNonNull(string),
+        ArrayLen,
+        I32GeU,
+        BrIf(1),
+        LocalGet(6),
+        RefCastNonNull(string),
+        LocalGet(2),
+        ArrayGetU(STRING),
+        LocalGet(1),
+        RefCastNonNull(string),
+        LocalGet(2),
+        ArrayGetU(STRING),
+        I32Ne,
+        If(BlockType::Empty),
+        I32Const(0),
+        LocalSet(7),
+        Br(2),
+        End,
+        LocalGet(2),
+        I32Const(1),
+        I32Add,
+        LocalSet(2),
+        Br(0),
+        End,
+        End,
+        End,
+        LocalGet(7),
+        If(BlockType::Empty),
+        LocalGet(5),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(0),
+        ArrayGet(ARGS),
+        Return,
+        End,
+        LocalGet(5),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(1),
+        ArrayGet(ARGS),
+        LocalSet(5),
+        Br(0),
+        End,
+        End,
+        // The first of its name: chain it at the bucket's head, and remember
+        // the keywords' descriptor.
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(7)),
+        StructGet { struct_type_index: 7, field_index: 0 },
+        GlobalSet(KEYWORD_DESCRIPTOR_GLOBAL),
+        LocalGet(4),
+        LocalGet(3),
+        LocalGet(0),
+        LocalGet(4),
+        LocalGet(3),
+        ArrayGet(ARGS),
+        ArrayNewFixed { array_type_index: ARGS, array_size: 2 },
+        ArraySet(ARGS),
+        LocalGet(0),
+    ]);
+    b.function_with_locals(
+        "keyword-intern",
+        &[VALUE],
+        &[VALUE],
+        &[(1, VALUE), (2, ValType::I32), (1, reference(ARGS)), (2, VALUE), (1, ValType::I32)],
+        &body,
+    )
+}
 /// `arity-throw(closure, count)`: throws Clojure's arity error, "Wrong number
 /// of args (count) passed to: name", with the arity descriptor. The name is the
 /// code struct's, else the closure's display name, else "fn". Self-contained,
@@ -1231,12 +1431,81 @@ fn build_module() -> Vec<u8> {
         sentinel_value(NIL),
     ]);
     b.function_with_locals("callable-key-register", &[VALUE, VALUE], &[VALUE], &[(1, ValType::I32)], &body);
+    keyword_intern(&mut b);
+    b.function(
+        "keyword-test",
+        &[VALUE],
+        &[ValType::I32],
+        &[
+            LocalGet(0),
+            RefTestNonNull(HeapType::Concrete(7)),
+            If(BlockType::Result(ValType::I32)),
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(7)),
+            StructGet { struct_type_index: 7, field_index: 0 },
+            GlobalGet(KEYWORD_DESCRIPTOR_GLOBAL),
+            RefEq,
+            Else,
+            I32Const(0),
+            End,
+        ],
+    );
     let try_invoke = exceptions::functions(&mut b, generic_invoke);
     arithmetic_functions.extend(dynamic::functions(&mut b, binding_set, try_invoke));
     arithmetic_functions.extend(predicates::functions(&mut b));
     arithmetic_functions.extend(comparisons::functions(&mut b, coercion_types));
     arithmetic_functions.extend(bitwise_functions);
     arithmetic_functions.extend(named_properties::functions(&mut b));
+    // `named-field-slot(object, name)`: the index of a nominal object's field
+    // with this name in its descriptor's schema, or -1 (#361). Call sites
+    // cache it per descriptor, as a schema never changes.
+    let mut body = vec![
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(7)),
+        I32Eqz,
+        If(BlockType::Empty),
+        I32Const(-1),
+        Return,
+        End,
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(7)),
+        StructGet { struct_type_index: 7, field_index: 0 },
+        StructGet { struct_type_index: DESCRIPTOR, field_index: 1 },
+        LocalTee(2),
+        RefTestNonNull(HeapType::Concrete(ARGS)),
+        I32Eqz,
+        If(BlockType::Empty),
+        I32Const(-1),
+        Return,
+        End,
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(3),
+        LocalGet(2),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        ArrayLen,
+        I32GeU,
+        BrIf(1),
+        LocalGet(2),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        LocalGet(3),
+        ArrayGet(ARGS),
+        LocalGet(1),
+        Call(b.names["property-key-equal"]),
+        If(BlockType::Empty),
+        LocalGet(3),
+        Return,
+        End,
+        LocalGet(3),
+        I32Const(1),
+        I32Add,
+        LocalSet(3),
+        Br(0),
+        End,
+        End,
+        I32Const(-1),
+    ];
+    b.function_with_locals("named-field-slot", &[VALUE, VALUE], &[ValType::I32], &[(1, VALUE), (1, ValType::I32)], &body);
     // Original source error adapter: retain the ABI Error descriptor/message
     // rather than substituting nil, an opaque object or a Wasm trap.
     b.function(
@@ -1658,6 +1927,20 @@ fn build_module() -> Vec<u8> {
         },
         &ConstExpr::extended(code),
     );
+    // Interned keywords (#361), created on first use, and their descriptor.
+    assert_eq!(globals.len(), DISPATCH_CODE_GLOBAL + 1);
+    for _ in 0..2 {
+        globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::extended([sentinel_value(NIL)]),
+        );
+    }
+    assert_eq!(globals.len(), PROTOCOL_EPOCH_GLOBAL);
+    globals.global(
+        GlobalType { val_type: ValType::I32, mutable: true, shared: false },
+        &ConstExpr::i32_const(0),
+    );
+    b.exports.export("protocol-epoch", ExportKind::Global, PROTOCOL_EPOCH_GLOBAL);
     b.exports.export("array-join-active", ExportKind::Global, array_join::ACTIVE);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

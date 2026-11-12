@@ -235,8 +235,11 @@ impl FormBridge {
         class: Class,
         arguments: &[&SessionValue],
     ) -> Result<SessionValue, SessionError> {
+        let keyword = class == Class::Keyword;
         let class = &self.core.roots[self.core.constructors[&class]];
-        session.data_construct(class, arguments)
+        let value = session.data_construct(class, arguments)?;
+        // Keywords are interned, as guest construction interns them (#361).
+        if keyword { session.data_keyword_intern(&value) } else { Ok(value) }
     }
     fn array(
         &self,

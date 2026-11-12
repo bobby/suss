@@ -2,6 +2,8 @@
 //! No global registry retains replaced closures or their implementations.
 use super::*;
 pub(super) const TAG_GLOBAL: u32 = exception_info::ORDINARY_ROOT + 1;
+/// Keyed properties: native kinds 0..7, then keys 8 and 9.
+const KEYS: i32 = 10;
 
 fn guard(body: &mut Vec<Instruction<'static>>, local: u32, ty: u32) {
     use Instruction::*;
@@ -51,7 +53,7 @@ pub(super) fn functions(b: &mut Builder) -> u32 {
     body.push(End);
     let environment = b.function("closure-environment", &[VALUE], &[VALUE], &body);
 
-    // A closure's property storage, `[unused, native table, display name]`,
+    // A closure's property storage, `[keyed properties, named table, display name]`,
     // created in its `properties` field on first use (ADR-0004).
     let mut body = vec![];
     guard(&mut body, 0, CLOSURE);
@@ -109,129 +111,68 @@ pub(super) fn functions(b: &mut Builder) -> u32 {
         &[(1, VALUE)],
         &body,
     );
-    for (writing, max_kind, name) in [
-        (false, 7, "closure-property-get"),
-        (true, 7, "closure-property-set"),
-        (false, 9, "closure-internal-property-get"),
-        (true, 9, "closure-internal-property-set"),
+    // An absent key reads as nil, except through a named property read
+    // (`(.-number f)`), where it is undefined. The array holds null for an
+    // absent key, which never leaves these functions.
+    for (writing, max_kind, name, absent) in [
+        (false, 7, "closure-property-get", NIL),
+        (true, 7, "closure-property-set", NIL),
+        (false, 7, "closure-property-lookup", UNDEFINED),
+        (false, 9, "closure-internal-property-get", NIL),
+        (true, 9, "closure-internal-property-set", NIL),
     ] {
-        // Params: function, native kind, optional assigned value. Locals follow.
+        // Params: function, key, optional assigned value. Keys 0..7 are
+        // native kinds; 8 is the private constructor prototype carrier and 9
+        // the static initializer, which source string properties can't
+        // address. They live in a dense array indexed by key, in the
+        // properties' first slot, created on first assignment: a lookup is
+        // one read, with no search (#355). Locals: owner, then keys.
         let owner = if writing { 3 } else { 2 };
-        let table = owner + 1;
-        let index = owner + 2;
-        let fresh = owner + 3;
-        // Kind keys0..7 and the private constructor prototype carrier at8 and static initializer at9.
-        // Source string properties cannot address this integer-keyed carrier.
-        let mut body = vec![LocalGet(1), I32Const(max_kind), I32GtU, If(BlockType::Empty)];
-        nominal::error(&mut body);
-        body.extend([
-            End,
-            LocalGet(0),
-            Call(fields),
-            LocalSet(owner),
-            LocalGet(owner),
-        ]);
-        nil(&mut body);
-        body.extend([RefEq, If(BlockType::Empty)]);
-        if writing {
-            nominal::error(&mut body);
-        } else {
-            nil(&mut body);
-            body.push(Return);
-        }
-        body.push(End);
-        array(&mut body, owner);
-        body.extend([I32Const(1), ArrayGet(ARGS), LocalSet(table)]);
-        guard(&mut body, table, ARGS);
-        array(&mut body, table);
-        body.extend([ArrayLen, I32Const(1), I32And, If(BlockType::Empty)]);
-        nominal::error(&mut body);
-        body.extend([
-            End,
-            I32Const(0),
-            LocalSet(index),
-            Block(BlockType::Empty),
-            Loop(BlockType::Empty),
-            LocalGet(index),
-        ]);
-        array(&mut body, table);
-        body.extend([ArrayLen, I32GeU, BrIf(1)]);
-        array(&mut body, table);
-        body.extend([
-            LocalGet(index),
-            ArrayGet(ARGS),
+        let keys = owner + 1;
+        let mut body = vec![
             LocalGet(1),
-            RefI31,
-            RefEq,
+            I32Const(max_kind),
+            I32GtU,
+            If(BlockType::Empty),
+        ];
+        nominal::error(&mut body);
+        body.extend([End, LocalGet(0), Call(fields), LocalSet(owner)]);
+        guard(&mut body, owner, ARGS);
+        array(&mut body, owner);
+        body.extend([I32Const(0), ArrayGet(ARGS), LocalTee(keys)]);
+        body.extend([
+            RefTestNonNull(HeapType::Concrete(ARGS)),
+            I32Eqz,
             If(BlockType::Empty),
         ]);
-        array(&mut body, table);
-        body.extend([LocalGet(index), I32Const(1), I32Add]);
         if writing {
-            body.extend([LocalGet(2), ArraySet(ARGS), LocalGet(2), Return]);
-        } else {
-            body.extend([ArrayGet(ARGS), Return]);
-        }
-        body.extend([
-            End,
-            LocalGet(index),
-            I32Const(2),
-            I32Add,
-            LocalSet(index),
-            Br(0),
-            End,
-            End,
-        ]);
-        if writing {
-            array(&mut body, table);
-            body.extend([
-                ArrayLen,
-                I32Const(i32::MAX - 2),
-                I32GtU,
-                If(BlockType::Empty),
-            ]);
-            nominal::error(&mut body);
-            body.push(End);
-            array(&mut body, table);
-            body.extend([
-                ArrayLen,
-                I32Const(2),
-                I32Add,
-                ArrayNewDefault(ARGS),
-                LocalSet(fresh),
-            ]);
-            array(&mut body, fresh);
-            body.push(I32Const(0));
-            array(&mut body, table);
-            body.push(I32Const(0));
-            array(&mut body, table);
-            body.extend([
-                ArrayLen,
-                ArrayCopy {
-                    array_type_index_dst: ARGS,
-                    array_type_index_src: ARGS,
-                },
-            ]);
-            array(&mut body, fresh);
-            body.extend([LocalGet(index), LocalGet(1), RefI31, ArraySet(ARGS)]);
-            array(&mut body, fresh);
-            body.extend([
-                LocalGet(index),
-                I32Const(1),
-                I32Add,
-                LocalGet(2),
-                ArraySet(ARGS),
-            ]);
+            body.extend([I32Const(KEYS), ArrayNewDefault(ARGS), LocalSet(keys)]);
             array(&mut body, owner);
-            body.extend([I32Const(1), LocalGet(fresh), ArraySet(ARGS), LocalGet(2)]);
+            body.extend([I32Const(0), LocalGet(keys), ArraySet(ARGS)]);
         } else {
-            nil(&mut body);
+            body.extend([sentinel_value(absent), Return]);
         }
-        let locals = if writing {
-            vec![(2, VALUE), (1, ValType::I32), (1, VALUE)]
+        body.push(End);
+        array(&mut body, keys);
+        body.extend([ArrayLen, I32Const(KEYS), I32Ne, If(BlockType::Empty)]);
+        nominal::error(&mut body);
+        body.push(End);
+        array(&mut body, keys);
+        body.push(LocalGet(1));
+        if writing {
+            body.extend([LocalGet(2), ArraySet(ARGS), LocalGet(2)]);
         } else {
-            vec![(2, VALUE), (1, ValType::I32)]
-        };
+            body.extend([
+                ArrayGet(ARGS),
+                LocalTee(keys),
+                RefIsNull,
+                If(BlockType::Result(VALUE)),
+                sentinel_value(absent),
+                Else,
+                LocalGet(keys),
+                End,
+            ]);
+        }
         b.function_with_locals(
             name,
             if writing {
@@ -240,7 +181,7 @@ pub(super) fn functions(b: &mut Builder) -> u32 {
                 &[VALUE, ValType::I32]
             },
             &[VALUE],
-            &locals,
+            &[(2, VALUE)],
             &body,
         );
     }
