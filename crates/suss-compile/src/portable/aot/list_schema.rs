@@ -12,6 +12,7 @@ pub(super) const SOURCE: &str = r#"
       vector-class suss.core/PersistentVector
       subvector-class suss.core/Subvec
       node-class suss.core/VectorNode
+      vector-of-class suss.core/VecOf
       empty-root (.-EMPTY_NODE suss.core/PersistentVector)
       checked-array
       (fn [value length]
@@ -32,39 +33,6 @@ pub(super) const SOURCE: &str = r#"
             (if (suss.core/> length 1000000)
               (throw "WIT list exceeds the bounded source array capacity") length))
           (throw "WIT list requires an integral vector length")))
-      normalize
-      (fn [value]
-        (loop [value value offset 0 requested nil parent-end nil depth 0]
-          (if (suss.core/> depth 64)
-            (throw "WIT list exceeds the bounded subvector view depth")
-            (if (suss.core/instance? vector-class value)
-              (let [count (bounded-length (.-cnt value))
-                    parent-range-check
-                    (if (identical nil parent-end) nil
-                      (if (suss.core/> parent-end count)
-                        (throw "WIT list subvector range exceeds its vector") nil))
-                    length (if (identical nil requested) count requested)
-                    tail-start (if (suss.core/<= count 32) 0
-                                 (suss.core/bit-and (suss.core/- count 1) -32))
-                    tail (checked-array (.-tail value) (suss.core/- count tail-start))
-                    root (checked-node (.-root value))]
-                (if (suss.core/> (suss.core/+ offset length) count)
-                  (throw "WIT list subvector range exceeds its vector")
-                  (array value offset length)))
-              (if (suss.core/instance? subvector-class value)
-                (let [start (bounded-length (.-start value))
-                      end (bounded-length (.-end value))
-                      length (bounded-length (suss.core/- end start))
-                      parent-range-check
-                      (if (identical nil parent-end) nil
-                        (if (suss.core/> parent-end length)
-                          (throw "WIT list subvector range exceeds its view") nil))
-                      requested (if (identical nil requested) length requested)]
-                  (if (suss.core/> (suss.core/+ offset requested) length)
-                    (throw "WIT list subvector range exceeds its view")
-                    (recur (.-v value) (suss.core/+ start offset) requested end
-                           (suss.core/+ depth 1))))
-                (throw "WIT list requires a persistent vector"))))))
       construct
       (fn [values]
         (let [count (bounded-length (array-length values))
@@ -139,10 +107,97 @@ pub(super) const SOURCE: &str = r#"
                           (recur (get (.-arr node)
                                       (suss.core/bit-and (suss.core/bit-shift-right index level) 31))
                                  (suss.core/- level 5)))))
-                    (throw "WIT list requires a valid vector shift"))))))))]
+                    (throw "WIT list requires a valid vector shift"))))))))
+      vector-of-values
+      (fn [normalize value]
+        ;; vector-of keeps full 32-element packed leaves in an ordinary
+        ;; vector, plus a packed tail. Its elements are copied out once.
+        (let [count (bounded-length (.-cnt value))
+              chunks (normalize (.-chunks value))
+              chunk-count (get chunks 2)
+              tail-length (suss.core/- count (suss.core/* chunk-count 32))
+              tail (checked-array (.-tail value) tail-length)
+              values (allocate count)]
+          (loop [chunk 0]
+            (if (suss.core/< chunk chunk-count)
+              (let [items (checked-array (indexed chunks chunk) 32)
+                    base (suss.core/* chunk 32)]
+                (loop [index 0]
+                  (if (suss.core/< index 32)
+                    (do (put values (suss.core/+ base index) (get items index))
+                        (recur (suss.core/+ index 1))) nil))
+                (recur (suss.core/+ chunk 1))) nil))
+          (loop [index 0]
+            (if (suss.core/< index tail-length)
+              (do (put values (suss.core/+ (suss.core/* chunk-count 32) index)
+                       (get tail index))
+                  (recur (suss.core/+ index 1))) nil))
+          values))
+      normalize
+      (fn normalize [value]
+        (loop [value value offset 0 requested nil parent-end nil depth 0]
+          (if (suss.core/> depth 64)
+            (throw "WIT list exceeds the bounded subvector view depth")
+            (if (suss.core/instance? vector-class value)
+              (let [count (bounded-length (.-cnt value))
+                    parent-range-check
+                    (if (identical nil parent-end) nil
+                      (if (suss.core/> parent-end count)
+                        (throw "WIT list subvector range exceeds its vector") nil))
+                    length (if (identical nil requested) count requested)
+                    tail-start (if (suss.core/<= count 32) 0
+                                 (suss.core/bit-and (suss.core/- count 1) -32))
+                    tail (checked-array (.-tail value) (suss.core/- count tail-start))
+                    root (checked-node (.-root value))]
+                (if (suss.core/> (suss.core/+ offset length) count)
+                  (throw "WIT list subvector range exceeds its vector")
+                  (array value offset length)))
+              (if (suss.core/instance? subvector-class value)
+                (let [start (bounded-length (.-start value))
+                      end (bounded-length (.-end value))
+                      length (bounded-length (suss.core/- end start))
+                      parent-range-check
+                      (if (identical nil parent-end) nil
+                        (if (suss.core/> parent-end length)
+                          (throw "WIT list subvector range exceeds its view") nil))
+                      requested (if (identical nil requested) length requested)]
+                  (if (suss.core/> (suss.core/+ offset requested) length)
+                    (throw "WIT list subvector range exceeds its view")
+                    (recur (.-v value) (suss.core/+ start offset) requested end
+                           (suss.core/+ depth 1))))
+                (if (suss.core/instance? vector-of-class value)
+                  (recur (construct (vector-of-values normalize value))
+                         offset requested parent-end (suss.core/+ depth 1))
+                  (throw "WIT list requires a persistent vector")))))))
+      packed-vector
+      (fn [value kind]
+        ;; A vector-of of the list's element kind leaves as one packed array,
+        ;; copied by range so no element is boxed. Anything else is returned
+        ;; as it is, for the vector path.
+        (if (suss.core/instance? vector-of-class value)
+          (if (identical (.-kind value) kind)
+            (let [count (bounded-length (.-cnt value))
+                  chunks (normalize (.-chunks value))
+                  chunk-count (get chunks 2)
+                  tail-length (suss.core/- count (suss.core/* chunk-count 32))
+                  packed (fn [leaf length]
+                           (if (suss.bootstrap/packed-array? leaf)
+                             (checked-array leaf length)
+                             (throw "WIT list requires packed vector-of storage")))
+                  tail (packed (.-tail value) tail-length)
+                  out (suss.bootstrap/packed-array kind count)]
+              (loop [chunk 0]
+                (if (suss.core/< chunk chunk-count)
+                  (do (suss.bootstrap/packed-copy (packed (indexed chunks chunk) 32) 0
+                                                  out (suss.core/* chunk 32) 32)
+                      (recur (suss.core/+ chunk 1))) nil))
+              (suss.bootstrap/packed-copy tail 0 out (suss.core/* chunk-count 32) tail-length))
+            value)
+          value))]
   (fn [operation value index]
     (if (identical operation 0) (construct value)
       (if (identical operation 1) (normalize value)
         (if (identical operation 3) (get value 2)
-          (indexed value index))))))
+          (if (identical operation 4) (packed-vector value index)
+            (indexed value index)))))))
 "#;

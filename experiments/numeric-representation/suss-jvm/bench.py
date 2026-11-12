@@ -52,6 +52,7 @@ SETUP = [
     ("ia", "(int-array (range 1024))", "^ints"),
     ("oa", "(to-array (range 1024))", "^objects"),
     ("v", "(vec (range 1024))", ""),
+    ("vl", "(into (vector-of :long) (range 1024))", ""),
     ("m", "(zipmap (range 1024) (range 1024))", ""),
     ("km", "{:a 1 :b 2 :c 3 :d 4}", ""),
     ("s", "(set (range 1024))", ""),
@@ -127,6 +128,9 @@ CASES = [
     ("object-aset", "(aset oa (bit-and i 1023) i)", "index-control", 100),
     # Persistent collections of 1024 entries, and a small keyword map.
     ("vector-conj", "(conj v i)", "long-control", 1),
+    # vector-of :long (#350), against the vector cases above.
+    ("vector-of-nth", "(nth vl (bit-and i 1023))", "index-control", 1),
+    ("vector-of-conj", "(conj vl i)", "long-control", 1),
     ("map-get", "(get m (bit-and i 1023))", "index-control", 1),
     ("map-assoc", "(assoc m (bit-and i 1023) i)", "index-control", 1),
     ("keyword-get", "(:b km)", "long-control", 1),
@@ -138,6 +142,7 @@ REDUCTIONS = [
     ("double-array-reduce", "(reduce + da)", 1),
     ("object-array-reduce", "(reduce + oa)", 100),
     ("vector-reduce", "(reduce + v)", 1),
+    ("vector-of-reduce", "(reduce + vl)", 1),
 ]
 # Small programs, run n/100,000 times: 50 runs at the default n.
 PROGRAMS = [

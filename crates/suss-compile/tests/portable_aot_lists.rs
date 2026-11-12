@@ -292,6 +292,64 @@ fn list_results_accept_persistent_vectors_and_subvector_views() {
 }
 
 #[test]
+fn list_results_accept_primitive_vectors_and_their_views() {
+    let (mut store, instance) = instantiate(
+        "(defn ^:export longs [n] (into (vector-of :long) (range n))) (defn ^:export doubles [n] (into (vector-of :double) (map (fn [x] (/ x 2)) (range n)))) (defn ^:export view [n start end] (subvec (into (vector-of :long) (range n)) start end)) (defn ^:export wide [] (vector-of :long 9007199254740993 -9223372036854775808)) (defn ^:export narrow [x] (vector-of :long 1 x))",
+        "export longs: func(n: s32) -> list<s64>; export doubles: func(n: s32) -> list<f64>; export view: func(n: s32, start: s32, end: s32) -> list<s64>; export wide: func() -> list<s64>; export narrow: func(x: s64) -> list<s32>;",
+    );
+    let longs = instance
+        .get_typed_func::<(i32,), (Vec<i64>,)>(&mut store, "longs")
+        .unwrap();
+    // Empty, tail-only, exactly one full leaf, and leaves plus a tail.
+    for n in [0, 3, 32, 33, 70] {
+        store.set_fuel(500_000_000).unwrap();
+        assert_eq!(
+            longs.call(&mut store, (n,)).unwrap().0,
+            (0..i64::from(n)).collect::<Vec<_>>()
+        );
+        longs.post_return(&mut store).unwrap();
+    }
+    let doubles = instance
+        .get_typed_func::<(i32,), (Vec<f64>,)>(&mut store, "doubles")
+        .unwrap();
+    store.set_fuel(500_000_000).unwrap();
+    assert_eq!(
+        doubles.call(&mut store, (5,)).unwrap().0,
+        [0.0, 0.5, 1.0, 1.5, 2.0]
+    );
+    doubles.post_return(&mut store).unwrap();
+    let view = instance
+        .get_typed_func::<(i32, i32, i32), (Vec<i64>,)>(&mut store, "view")
+        .unwrap();
+    for (n, start, end) in [(40, 31, 34), (70, 0, 70), (70, 64, 64)] {
+        store.set_fuel(500_000_000).unwrap();
+        assert_eq!(
+            view.call(&mut store, (n, start, end)).unwrap().0,
+            (i64::from(start)..i64::from(end)).collect::<Vec<_>>()
+        );
+        view.post_return(&mut store).unwrap();
+    }
+    let wide = instance
+        .get_typed_func::<(), (Vec<i64>,)>(&mut store, "wide")
+        .unwrap();
+    store.set_fuel(500_000_000).unwrap();
+    assert_eq!(
+        wide.call(&mut store, ()).unwrap().0,
+        [9_007_199_254_740_993, i64::MIN]
+    );
+    wide.post_return(&mut store).unwrap();
+    // Another element type takes the vector path, with its range checks.
+    let narrow = instance
+        .get_typed_func::<(i64,), (Vec<i32>,)>(&mut store, "narrow")
+        .unwrap();
+    store.set_fuel(500_000_000).unwrap();
+    assert_eq!(narrow.call(&mut store, (-2,)).unwrap().0, [1, -2]);
+    narrow.post_return(&mut store).unwrap();
+    store.set_fuel(500_000_000).unwrap();
+    assert!(narrow.call(&mut store, (1 << 40,)).is_err());
+}
+
+#[test]
 fn string_list_payloads_are_owned_unicode_and_cleanup_nested_buffers() {
     let (mut store, instance) = instantiate(
         "(def saved (atom [])) (defn ^:export echo [xs] (do (reset! saved xs) xs)) (defn ^:export recall [] (deref saved))",
