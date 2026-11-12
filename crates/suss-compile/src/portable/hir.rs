@@ -460,6 +460,12 @@ pub enum Nominal {
     /// Inline `identical?` (#356): a reference test, with the runtime's test
     /// only for two boxed or string operands that aren't the same reference.
     Identical,
+    /// Whether every operand is an i31: a long in i31 range, whose value is
+    /// its identity (#387).
+    AllSmallIntegers,
+    /// `number-hash` (#387): Clojure's hash of a number, for an operand
+    /// already known to be one.
+    NumberHash,
     IsClosure,
     BindCallable,
     /// A direct-linked definition (#360), its var's slot and the definition
@@ -564,6 +570,7 @@ impl Nominal {
             | Self::IsString
             | Self::IsBoolean
             | Self::Identical
+            | Self::AllSmallIntegers
             | Self::IsClosure
             | Self::IsNativeObject
             | Self::IsTypeConstructor
@@ -584,6 +591,8 @@ impl Nominal {
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::CurrentThis => count == 0,
                 Self::Identical => count == 2,
+                Self::AllSmallIntegers => count >= 1,
+                Self::NumberHash => count == 1,
                 Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
@@ -1638,6 +1647,87 @@ impl Analyzer<'_> {
             .definition_info(global)
             .and_then(|info| info.origin.as_ref())
             .is_some_and(|origin| origin.is_privileged())
+    }
+    /// Whether `resolved` is core's `name`, called where it can't be
+    /// redefined: from direct-linked user code (#360), or from core through
+    /// its link cell.
+    fn linked_core_call(&self, resolved: &Option<ResolvedBinding>, name: &str) -> bool {
+        let Some(ResolvedBinding::Cell(global)) = resolved else { return false };
+        if global.namespace() != "suss.core" || global.name() != name {
+            return false;
+        }
+        if self.privileged {
+            self.direct_link(global).is_some()
+        } else {
+            self.environment.direct_linking
+        }
+    }
+    /// `(f a …)` where every operand is an i31 runs `fast` on the operands,
+    /// and otherwise calls f (#387). Operands are evaluated once, in order.
+    fn small_integer_call(
+        &mut self,
+        form: &Form,
+        items: &[Form],
+        fast: impl FnOnce(&mut Self, &Form, Vec<Hir>) -> Hir,
+    ) -> Result<Hir, Diagnostic> {
+        let mut bindings = Vec::with_capacity(items.len() - 1);
+        for item in &items[1..] {
+            let value = self.form(item)?;
+            bindings.push(self.fresh_binding(item, value));
+        }
+        let locals = bindings
+            .iter()
+            .map(|binding| {
+                let mut local = self.local(form, binding.id);
+                local.ty = binding.value.ty;
+                local
+            })
+            .collect::<Vec<_>>();
+        let callee = self.form(&items[0])?;
+        let callee = match &*callee.kind {
+            Expression::Global(global) => match self.direct_link(global) {
+                Some(link) => self.nominal(&items[0], Nominal::DirectLinkRead(link), vec![]),
+                None => callee,
+            },
+            _ => callee,
+        };
+        *self.source_nodes.last_mut().expect("source node fact slot") =
+            Some(std::sync::Arc::new(SourceNode::Invoke {
+                callee: std::sync::Arc::new(callee.clone()),
+                arguments: bindings.iter().map(|binding| binding.value.clone()).collect::<Vec<_>>().into(),
+            }));
+        let call = Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: Type::Value,
+            kind: std::sync::Arc::new(Expression::Call {
+                callee: Box::new(self.prepare_source_callee(form, callee, locals.len())?),
+                arguments: locals.clone(),
+            }),
+        };
+        let test = self.nominal(form, Nominal::AllSmallIntegers, locals.clone());
+        let fast = fast(self, form, locals);
+        Ok(Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: Type::Value,
+            kind: std::sync::Arc::new(Expression::Let {
+                bindings,
+                body: Box::new(Hir {
+                    source: None,
+                    span: form.span.clone(),
+                    metadata: form.metadata.clone(),
+                    ty: Type::Value,
+                    kind: std::sync::Arc::new(Expression::If {
+                        condition: Box::new(test),
+                        consequent: Box::new(fast),
+                        alternative: Box::new(call),
+                    }),
+                }),
+            }),
+        })
     }
     fn call(&mut self, form: &Form, items: &[Form]) -> Result<Hir, Diagnostic> {
         let mut callee = Box::new(self.form(&items[0])?);
@@ -2903,6 +2993,17 @@ impl Analyzer<'_> {
                     arguments: arguments.clone().into(),
                 }));
             return Ok(self.nominal(form, Nominal::Identical, arguments));
+        }
+        // `(= x y)` and `(hash x)` on longs in i31 range (#387). Core's `=`
+        // answers equiv for two numbers, and two i31 longs are equiv exactly
+        // when identical; core's `hash` of a number is `number-hash`, as `=`
+        // ignores IEquiv on numbers. So both test their operands inline and
+        // call core only for anything else.
+        if args.len() == 2 && self.linked_core_call(&resolved, "=") {
+            return self.small_integer_call(form, items, |this, form, locals| this.nominal(form, Nominal::Identical, locals));
+        }
+        if args.len() == 1 && self.linked_core_call(&resolved, "hash") {
+            return self.small_integer_call(form, items, |this, form, locals| this.nominal(form, Nominal::NumberHash, locals));
         }
         if let Some(ResolvedBinding::BootstrapBitwise { operation, .. }) = &resolved {
             return self.bitwise_form(form, args, *operation);

@@ -195,6 +195,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ValueAdd => { names.insert("value-add"); }
                         Nominal::IsBoolean => {}
                         Nominal::Identical => { names.insert("identical-value"); }
+                        Nominal::AllSmallIntegers => {}
+                        Nominal::NumberHash => { names.insert("number-hash"); }
                         Nominal::StringIndexOf => { names.insert("string-index-of"); }
                         Nominal::StringSlice => { names.insert("string-slice"); }
                         Nominal::StringFromUnit => { names.insert("string-from-unit"); }
@@ -519,7 +521,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 })],
                 vec![VALUE],
             ),
-            "source-array-new"
+            "number-hash"
+            | "source-array-new"
             | "source-array-make"
             | "source-array-make-literal"
             | "source-array-length-args"
@@ -2153,6 +2156,21 @@ fn emit_function(
                             function
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                 .instruction(&Call(index("keyword-test")));
+                        }
+                        Nominal::AllSmallIntegers => {
+                            for (k, argument) in arguments.iter().enumerate() {
+                                function
+                                    .instruction(&LocalGet(argument.0 as u32 + offset))
+                                    .instruction(&RefTestNonNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 }));
+                                if k > 0 {
+                                    function.instruction(&I32And);
+                                }
+                            }
+                        }
+                        Nominal::NumberHash => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&Call(index("number-hash")));
                         }
                         Nominal::IsString => {
                             function
