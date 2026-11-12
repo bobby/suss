@@ -1,0 +1,80 @@
+ebda997f release suss, wasmtime 49.0.1; JVM Clojure 1.12.6 on OpenJDK 21.0.13; i7-1165G7, 8 threads; load 0.88, 4.21, 6.59 at start, 1.09, 1.17, 1.56 at end
+n = 5000000, best of 3; Suss times are slopes between loop counts at least 0.5 s of work apart
+
+Nanoseconds and user-space instructions per operation, less its control
+loop; a control's row is the whole loop iteration. ≈ 0 is a time no larger
+than its run-to-run spread.
+
+| Case | Suss ns | Suss instructions | JVM ns | Ratio |
+| --- | --- | --- | --- | --- |
+| `i` (control) | 5.8 | 115 | 6.93 | 1× |
+| `(identity i)` | 23.8 | 388 | ≈ 0 |  |
+| `(f0)` | ≈ 0 | 34 | ≈ 0 |  |
+| `(f1 i)` | ≈ 0 | 40 | ≈ 0 |  |
+| `(f2 i i)` | ≈ 0 | 41 | 0.48 |  |
+| `(f3 i i i)` | ≈ 0 | 42 | 0.48 |  |
+| `(fv i)` | ≈ 0 | 52 | 0.57 |  |
+| `(g i)` in `(let [g (fn [x] x)] …)` | ≈ 0 | 24 | 0.59 |  |
+| `(identity i)` in `(binding [*d* 1] (binding [*d* 2] (binding [*d* 3] …)))` | 24.7 | 382 | ≈ 0 |  |
+| `(ident b)` | 77.3 | 1,238 | ≈ 0 |  |
+| `(-equiv i 7)` | 116.9 | 1,791 | ≈ 0 |  |
+| `(apply f2 i [i])` | 4,676.0 | 60,933 | 51.32 | 91× |
+| `(area sq)` | 3,436.8 | 43,468 | 11.38 | 302× |
+| `(identical? i 7)` | ≈ 0 | 41 | 0.73 |  |
+| `(nil? i)` | ≈ 0 | 15 | ≈ 0 |  |
+| `(= :a :b)` | 7.7 | 178 | ≈ 0 |  |
+| `(= i 7)` | 33.5 | 586 | ≈ 0 |  |
+| `(= i 7.5)` | 35.9 | 723 | 2.16 | 17× |
+| `(== i 7)` | ≈ 0 | -1 | ≈ 0 |  |
+| `(+ i 7)` | ≈ 0 | 8 | 0.40 |  |
+| `(hash i)` | 53.3 | 729 | 2.53 | 21× |
+| `(str "a" i)` | 11,012.6 | 134,056 | 38.45 | 286× |
+| `(double i)` (control) | 46.7 | 745 | 6.91 | 7× |
+| `(= (double i) 7.5)` | ≈ 0 | 812 | ≈ 0 |  |
+| `(+ (double i) 0.5)` | ≈ 0 | 418 | ≈ 0 |  |
+| `(hash (double i))` | 59.5 | 794 | 11.74 | 5× |
+| `(bit-and i 1023)` (control) | 6.4 | 135 | 6.41 | 1× |
+| `(aget la (bit-and i 1023))` | 30.5 | 461 | ≈ 0 |  |
+| `(aget ia (bit-and i 1023))` | 22.8 | 431 | ≈ 0 |  |
+| `(aget da (bit-and i 1023))` | 28.2 | 506 | ≈ 0 |  |
+| `(aget oa (bit-and i 1023))` | 23.2 | 427 | 5.04 | 5× |
+| `(nth v (bit-and i 1023))` | 288.1 | 4,469 | ≈ 0 |  |
+| `(aset la (bit-and i 1023) i)` | 57.5 | 1,001 | ≈ 0 |  |
+| `(aset da (bit-and i 1023) 1.5)` | 68.6 | 1,212 | ≈ 0 |  |
+| `(aset oa (bit-and i 1023) i)` | 25.1 | 492 | 10.25 | 2× |
+| `(conj v i)` | 2,214.5 | 28,903 | 23.29 | 95× |
+| `(nth vl (bit-and i 1023))` | 737.5 | 9,846 | ≈ 0 |  |
+| `(conj vl i)` | 3,915.8 | 51,925 | 26.64 | 147× |
+| `(get m (bit-and i 1023))` | 2,631.5 | 37,247 | 21.94 | 120× |
+| `(assoc m (bit-and i 1023) i)` | 6,221.2 | 87,286 | 69.62 | 89× |
+| `(:b km)` | 1,348.7 | 17,908 | 2.58 | 522× |
+| `(contains? s (bit-and i 1023))` | 3,395.3 | 44,769 | 25.50 | 133× |
+
+Per element of 1024, the loop step included:
+
+| Case | Suss ns | Suss instructions | JVM ns | Ratio |
+| --- | --- | --- | --- | --- |
+| `(reduce + la)` | 256.5 | 3,931 | 21.04 | 12× |
+| `(reduce + da)` | 263.2 | 4,318 | 19.84 | 13× |
+| `(reduce + oa)` | 251.5 | 3,897 | 18.72 | 13× |
+| `(reduce + v)` | 283.2 | 4,064 | 4.92 | 58× |
+| `(reduce + vl)` | 311.3 | 4,139 | 14.37 | 22× |
+
+Programs, microseconds and instructions per run, the loop step included:
+
+| Case | Suss µs | Suss instructions | JVM µs | Ratio |
+| --- | --- | --- | --- | --- |
+| fib: `(fib 20)` | 109.2 | 2,057,824 | 91.89 | 1× |
+| word-frequencies: `(reduce (fn [acc w] (assoc acc w (inc (get acc w 0)))) {} words)` | 8,329.2 | 101,851,575 | 54.11 | 154× |
+| transduce: `(transduce (comp (map inc) (filter even?)) + 0 v)` | 402.6 | 5,519,143 | ≈ 0 |  |
+| lazy-pipeline: `(reduce + (map inc (filter even? v)))` | 2,567.1 | 28,750,755 | 19.01 | 135× |
+| into-vector: `(into [] (map inc) v)` | 846.0 | 12,739,770 | 14.29 | 59× |
+| into-map: `(into {} (map (fn [x] [x x])) v)` | 16,666.4 | 167,642,308 | 94.85 | 176× |
+| string-build: `(apply str (map str v))` | 6,625.0 | 75,427,560 | 41.91 | 158× |
+
+Whole loops, per iteration:
+
+| Loop | Suss ns | Suss instructions | JVM ns | Ratio |
+| --- | --- | --- | --- | --- |
+| `(loop [i 0 acc 0] (if (< i n) (recur (inc i) (+ acc i)) acc))` | 26.4 | 489 | 0.82 | 32× |
+| `(loop [i 0 acc 0.0] (if (< i n) (recur (inc i) (+ acc 0.5)) acc))` | 2.1 | 31 | 0.91 | 2× |
