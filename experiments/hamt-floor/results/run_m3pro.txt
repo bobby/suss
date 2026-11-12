@@ -1,0 +1,69 @@
+Apple M3 Pro, macOS 26.5 (Darwin 25.5.0), 2026-11-12, commit ebda997f plus this experiment
+Load average about 10 throughout (other sessions on this 12-core machine), so
+times vary by up to 50% between runs; instruction counts below don't.
+
+$ cargo run --release -- copying 20000000 5
+wasmtime 49.0.1 collector=copying gc_initial_mib=64 n=20000000 reps=5 map=1024 keys
+
+| Kernel | ns per iteration | less control |
+| --- | --- | --- |
+| `control` | 0.40 | 0.00 |
+| `get_typed` | 35.37 | 34.96 |
+| `get_dispatch` | 39.71 | 39.31 |
+| `assoc_typed` | 161.55 | 161.15 |
+| `assoc_dispatch` | 122.77 | 122.37 |
+
+$ GC_INITIAL_MIB=0 cargo run --release -- copying 200000 3   # wasmtime default heap
+wasmtime 49.0.1 collector=copying gc_initial_mib=0 n=200000 reps=3 map=1024 keys
+
+| Kernel | ns per iteration | less control |
+| --- | --- | --- |
+| `control` | 0.40 | 0.00 |
+| `get_typed` | 23.67 | 23.26 |
+| `get_dispatch` | 22.86 | 22.46 |
+| `assoc_typed` | 4167.01 | 4166.60 |
+| `assoc_dispatch` | 4187.80 | 4187.40 |
+
+$ cargo run --release -- null 200000 3   # never frees, so a smaller n
+wasmtime 49.0.1 collector=null gc_initial_mib=64 n=200000 reps=3 map=1024 keys
+
+| Kernel | ns per iteration | less control |
+| --- | --- | --- |
+| `control` | 0.40 | 0.00 |
+| `get_typed` | 23.62 | 23.21 |
+| `get_dispatch` | 22.77 | 22.36 |
+| `assoc_typed` | 151.85 | 151.45 |
+| `assoc_dispatch` | 156.43 | 156.02 |
+
+$ cargo run --release -- drc 2000000 3
+wasmtime 49.0.1 collector=drc gc_initial_mib=64 n=2000000 reps=3 map=1024 keys
+
+| Kernel | ns per iteration | less control |
+| --- | --- | --- |
+| `control` | 1.40 | 0.00 |
+| `get_typed` | 29.31 | 27.91 |
+| `get_dispatch` | 29.53 | 28.13 |
+| `assoc_typed` | 1827.58 | 1826.18 |
+| `assoc_dispatch` | 1828.69 | 1827.29 |
+
+$ clojure -M jvm.clj 20000000 5
+JVM Clojure 1.12.6, Java 21.0.2, n=20000000, best of 5
+
+| Kernel | ns per iteration | less control |
+| --- | --- | --- |
+| `control` | 1.90 | 0.00 |
+| `get` | 20.83 | 18.94 |
+| `assoc` | 66.46 | 64.57 |
+
+$ cargo run --release -- copying 20000000 5, repeated three times (less control, ns)
+get_typed 23.15 23.43 23.25; get_dispatch 22.37 22.56 22.55
+assoc_typed 119.90 120.06 119.01; assoc_dispatch 120.95 117.67 119.57
+
+User-space instructions per iteration (macOS "instructions retired" for the whole
+process, slope between `one KERNEL N copying` and `one KERNEL 2N copying`):
+control 12; get_typed 295; get_dispatch 310; assoc_typed 2,221; assoc_dispatch 2,236
+
+Suss at ebda997f on the same machine (release suss, the bench.py forms
+(get m (bit-and i 1023)) and (assoc m (bit-and i 1023) i) with m =
+(zipmap (range 1024) (range 1024)), best of 3, slope, loop included):
+get 1,745 ns, 31,989 instructions; assoc 4,141 ns, 73,316 instructions
