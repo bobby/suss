@@ -81,8 +81,9 @@ fn known_callees_are_static_calls() {
 }
 
 #[test]
-fn artifacts_record_runtime_abi_4_and_abi_3_is_rejected() {
-    assert_eq!(runtime_abi::VERSION, 4);
+fn artifacts_record_runtime_abi_5_and_abi_4_is_rejected() {
+    // ABI 5 (#378): cached named-read sites hold a NAMED_SITE struct.
+    assert_eq!(runtime_abi::VERSION, 5);
     let module = |abi| {
         let mut module = wasm_encoder::Module::new();
         module
@@ -91,7 +92,7 @@ fn artifacts_record_runtime_abi_4_and_abi_3_is_rejected() {
         module.finish()
     };
     let expected = runtime_abi::Manifest::default();
-    assert_eq!(runtime_abi::verify_artifact(&module(4), &expected), Ok(()));
-    let error = runtime_abi::verify_artifact(&module(3), &expected).unwrap_err();
+    assert_eq!(runtime_abi::verify_artifact(&module(5), &expected), Ok(()));
+    let error = runtime_abi::verify_artifact(&module(4), &expected).unwrap_err();
     assert!(error.starts_with("runtime ABI version mismatch"), "{error}");
 }
