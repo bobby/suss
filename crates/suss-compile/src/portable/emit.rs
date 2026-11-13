@@ -1237,6 +1237,30 @@ fn i31_operands(function: &mut Function, a: u32, b: u32) {
         .instruction(&Instruction::RefTestNonNull(i31))
         .instruction(&Instruction::I32And);
 }
+/// Sets i64 local `raw` to GC local `local`'s long, an i31 or a boxed long,
+/// or branches out of the enclosing block for anything else (#385).
+fn long_operand(function: &mut Function, local: u32, raw: u32) {
+    use Instruction::*;
+    let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
+    function
+        .instruction(&LocalGet(local))
+        .instruction(&RefTestNonNull(i31))
+        .instruction(&If(BlockType::Result(ValType::I64)))
+        .instruction(&LocalGet(local))
+        .instruction(&RefCastNonNull(i31))
+        .instruction(&I31GetS)
+        .instruction(&I64ExtendI32S)
+        .instruction(&Else)
+        .instruction(&LocalGet(local))
+        .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::LONG)))
+        .instruction(&I32Eqz)
+        .instruction(&BrIf(1))
+        .instruction(&LocalGet(local))
+        .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::LONG)))
+        .instruction(&StructGet { struct_type_index: runtime_abi::LONG, field_index: 0 })
+        .instruction(&End)
+        .instruction(&LocalSet(raw));
+}
 /// The i31 values of locals `a` and `b`, sign-extended.
 fn i31_values(function: &mut Function, a: u32, b: u32) {
     let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
@@ -1448,6 +1472,9 @@ fn emit_function(
     // A cached named read's looked-up method (#378).
     let method_local = callee + 2;
     declarations.push((1, VALUE));
+    // A boxed-long add or subtract's operands and result (#385).
+    let long_locals = [callee + 3, callee + 4, callee + 5];
+    declarations.push((3, ValType::I64));
     let mut function = Function::new(declarations);
     use Instruction::*;
     if continuation.is_none() {
@@ -2009,10 +2036,41 @@ fn emit_function(
                             .instruction(&Else)
                             .instruction(&runtime_abi::sentinel_in(runtime_abi::FALSE, sentinels))
                             .instruction(&End)
+                            .instruction(&Else);
+                        // In a Clojure numeric comparison (not core's
+                        // JS-convention one), operands that are each an i31 or
+                        // a boxed long (#385) compare as i64s; anything else
+                        // asks the runtime.
+                        let clojure = matches!(operation, Comparison::NumberLess | Comparison::NumberLessEqual
+                            | Comparison::NumberGreater | Comparison::NumberGreaterEqual);
+                        let wide = match op {
+                            I32LtS => I64LtS,
+                            I32LeS => I64LeS,
+                            I32GtS => I64GtS,
+                            _ => I64GeS,
+                        };
+                        let [x, y, _] = long_locals;
+                        function.instruction(&Block(BlockType::Result(VALUE))).instruction(&Block(BlockType::Empty));
+                        if clojure {
+                        long_operand(&mut function, a, x);
+                        long_operand(&mut function, b, y);
+                        function
+                            .instruction(&LocalGet(x))
+                            .instruction(&LocalGet(y))
+                            .instruction(&wide)
+                            .instruction(&If(BlockType::Result(VALUE)))
+                            .instruction(&runtime_abi::sentinel_in(runtime_abi::TRUE, sentinels))
                             .instruction(&Else)
+                            .instruction(&runtime_abi::sentinel_in(runtime_abi::FALSE, sentinels))
+                            .instruction(&End)
+                            .instruction(&Br(1));
+                        }
+                        function
+                            .instruction(&End)
                             .instruction(&LocalGet(a))
                             .instruction(&LocalGet(b))
                             .instruction(&Call(index(operation.export())))
+                            .instruction(&End)
                             .instruction(&End)
                             .instruction(&LocalSet(inst.result.0 as u32 + offset));
                     } else {
@@ -2689,6 +2747,46 @@ fn emit_function(
                             .instruction(&Br(2))
                             .instruction(&End)
                             .instruction(&End);
+                        // In Clojure arithmetic (not core's JS-convention
+                        // value-*), operands that are each an i31 or a boxed
+                        // long (#385) add or subtract as i64s, without the
+                        // runtime's dispatch; overflow, or any other operand,
+                        // takes the call, which throws or converts as it does.
+                        let [x, y, r] = long_locals;
+                        if !name.starts_with("value-") {
+                        function.instruction(&Block(BlockType::Empty));
+                        for (operand, raw) in [(a, x), (b, y)] {
+                            long_operand(&mut function, operand, raw);
+                        }
+                        let overflow: &[Instruction] = if matches!(op, I32Add) {
+                            &[LocalGet(x), LocalGet(y), I64Add, LocalTee(r), LocalGet(x), I64Xor,
+                              LocalGet(y), LocalGet(r), I64Xor, I64And, I64Const(0), I64LtS]
+                        } else {
+                            &[LocalGet(x), LocalGet(y), I64Sub, LocalTee(r), LocalGet(x), LocalGet(y), I64Xor,
+                              LocalGet(x), LocalGet(r), I64Xor, I64And, I64Const(0), I64LtS]
+                        };
+                        for instruction in overflow {
+                            function.instruction(instruction);
+                        }
+                        function
+                            .instruction(&BrIf(0))
+                            .instruction(&LocalGet(r))
+                            .instruction(&I64Const(1 << 30))
+                            .instruction(&I64Add)
+                            .instruction(&I64Const(1 << 31))
+                            .instruction(&I64LtU)
+                            .instruction(&If(BlockType::Result(VALUE)))
+                            .instruction(&LocalGet(r))
+                            .instruction(&I32WrapI64)
+                            .instruction(&RefI31)
+                            .instruction(&Else)
+                            .instruction(&LocalGet(r))
+                            .instruction(&StructNew(runtime_abi::LONG))
+                            .instruction(&End)
+                            .instruction(&LocalSet(inst.result.0 as u32 + offset))
+                            .instruction(&Br(1))
+                            .instruction(&End);
+                        }
                     }
                     for argument in arguments {
                         function.instruction(&LocalGet(argument.0 as u32 + offset));

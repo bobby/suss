@@ -305,6 +305,57 @@ pub(super) fn relation(
     code
 }
 
+/// Sets i64 local `raw` to parameter `local`'s long, an i31 or a boxed long,
+/// or branches out of the enclosing block for anything else (#385).
+fn long_operand(code: &mut Vec<Instruction<'static>>, local: u32, raw: u32) {
+    use Instruction::*;
+    code.extend([
+        LocalGet(local), RefTestNonNull(HeapType::I31), If(BlockType::Result(ValType::I64)),
+        LocalGet(local), RefCastNonNull(HeapType::I31), I31GetS, I64ExtendI32S,
+        Else,
+        LocalGet(local), RefTestNonNull(HeapType::Concrete(LONG)), I32Eqz, BrIf(1),
+        LocalGet(local), RefCastNonNull(HeapType::Concrete(LONG)), StructGet { struct_type_index: LONG, field_index: 0 },
+        End, LocalSet(raw),
+    ]);
+}
+/// Two longs (i31 or boxed) added or subtracted as i64s, returning the boxed
+/// result (#385). Overflow, or any other operand, falls through to the
+/// polymorphic path, which converts or throws as before. `x`, `y` and `r` are
+/// i64 locals.
+pub(super) fn long_arithmetic_fast_path(add: bool, x: u32, y: u32, r: u32) -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let mut code = vec![Block(BlockType::Empty)];
+    long_operand(&mut code, 0, x);
+    long_operand(&mut code, 1, y);
+    if add {
+        code.extend([LocalGet(x), LocalGet(y), I64Add, LocalTee(r), LocalGet(x), I64Xor,
+            LocalGet(y), LocalGet(r), I64Xor, I64And, I64Const(0), I64LtS]);
+    } else {
+        code.extend([LocalGet(x), LocalGet(y), I64Sub, LocalTee(r), LocalGet(x), LocalGet(y), I64Xor,
+            LocalGet(x), LocalGet(r), I64Xor, I64And, I64Const(0), I64LtS]);
+    }
+    code.extend([
+        BrIf(0),
+        LocalGet(r), I64Const(1 << 30), I64Add, I64Const(1 << 31), I64LtU, If(BlockType::Result(VALUE)),
+        LocalGet(r), I32WrapI64, RefI31,
+        Else,
+        LocalGet(r), StructNew(LONG),
+        End, Return, End,
+    ]);
+    code
+}
+/// Two longs (i31 or boxed) compared as i64s, returning the boolean (#385);
+/// anything else falls through. `x` and `y` are i64 locals.
+pub(super) fn long_relation_fast_path(exact: &Instruction<'static>, x: u32, y: u32) -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let mut code = vec![Block(BlockType::Empty)];
+    long_operand(&mut code, 0, x);
+    long_operand(&mut code, 1, y);
+    code.extend([LocalGet(x), LocalGet(y), exact.clone()]);
+    code.extend(super::boolean());
+    code.extend([Return, End]);
+    code
+}
 /// Polymorphic `number-add`, `-subtract`, `-multiply`, `-divide` and
 /// `-negate` on operands already known to be numbers. Two longs give a long
 /// or throw "long overflow"; any double makes the result a double.

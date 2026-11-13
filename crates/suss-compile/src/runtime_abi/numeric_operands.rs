@@ -36,13 +36,17 @@ pub(super) fn intrinsics(b: &mut Builder) -> [u32; 7] {
             Some(small) => longs::small_arithmetic_fast_path(&small, 2, 3),
             None => longs::small_call_fast_path(operation),
         };
+        // Locals 4, 5 and 6: two boxed longs' i64s and their result (#385).
+        if matches!(name, "add" | "subtract") {
+            code.extend(longs::long_arithmetic_fast_path(name == "add", 4, 5, 6));
+        }
         require_numbers(b, &mut code, symbol, 2);
         code.extend([LocalGet(0), LocalGet(1), Call(operation)]);
         checked.push(b.function_with_locals(
             &format!("checked-{name}"),
             &[VALUE, VALUE],
             &[VALUE],
-            &[(1, ValType::I32), (1, ValType::I64)],
+            &[(1, ValType::I32), (1, ValType::I64), (3, ValType::I64)],
             &code,
         ));
     }
@@ -73,13 +77,16 @@ pub(super) fn intrinsics(b: &mut Builder) -> [u32; 7] {
         ("negative", "neg?", I64LtS, F64Lt),
     ] {
         let mut code = longs::small_relation_fast_path(&exact);
+        // Locals 2 and 3: two boxed longs' i64s (#385).
+        code.extend(longs::long_relation_fast_path(&exact, 2, 3));
         require_numbers(b, &mut code, symbol, 2);
         code.extend(longs::relation(b, exact, floating));
         code.extend(super::boolean());
-        b.function(
+        b.function_with_locals(
             &format!("comparison-number-{name}"),
             &[VALUE, VALUE],
             &[VALUE],
+            &[(2, ValType::I64)],
             &code,
         );
     }
