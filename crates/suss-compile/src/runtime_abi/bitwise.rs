@@ -326,9 +326,25 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         ("unsigned-bit-shift-right", 2),
         ("imul", 2),
     ] {
-        let mut body = vec![LocalGet(0), Call(int32)];
+        // An i31 or boxed long operand's int32 is read inline (#387): an
+        // i31 is already one, and a long's ToInt32 is its low 32 bits.
+        // Anything else converts through coerce-int32.
+        let operand = |body: &mut Vec<Instruction<'static>>, local: u32| {
+            body.extend([
+                LocalGet(local), RefTestNonNull(HeapType::I31), If(BlockType::Result(ValType::I32)),
+                LocalGet(local), RefCastNonNull(HeapType::I31), I31GetS,
+                Else,
+                LocalGet(local), RefTestNonNull(HeapType::Concrete(LONG)), If(BlockType::Result(ValType::I32)),
+                LocalGet(local), RefCastNonNull(HeapType::Concrete(LONG)), StructGet { struct_type_index: LONG, field_index: 0 }, I32WrapI64,
+                Else,
+                LocalGet(local), Call(int32),
+                End, End,
+            ]);
+        };
+        let mut body = vec![];
+        operand(&mut body, 0);
         if arity == 2 {
-            body.extend([LocalGet(1), Call(int32)]);
+            operand(&mut body, 1);
         }
         match name {
             "int" => {}
@@ -341,12 +357,16 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             "imul" => body.push(I32Mul),
             _ => unreachable!(),
         }
-        body.push(Call(b.names[if name == "unsigned-bit-shift-right" {
-            "long-box-u32"
-        } else {
-            "long-box-i32"
-        }]));
-        b.function(&format!("int32-{name}"), &vec![VALUE; arity], &[VALUE], &body);
+        // The result, boxed inline (#387): an i31 when it fits, else a long.
+        body.push(if name == "unsigned-bit-shift-right" { I64ExtendI32U } else { I64ExtendI32S });
+        body.extend([
+            LocalTee(arity as u32), I64Const(1 << 30), I64Add, I64Const(1 << 31), I64LtU, If(BlockType::Result(VALUE)),
+            LocalGet(arity as u32), I32WrapI64, RefI31,
+            Else,
+            LocalGet(arity as u32), StructNew(LONG),
+            End,
+        ]);
+        b.function_with_locals(&format!("int32-{name}"), &vec![VALUE; arity], &[VALUE], &[(1, ValType::I64)], &body);
     }
 
     let operand = b.names["bitwise-long-operand"];
