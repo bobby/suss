@@ -205,6 +205,10 @@ pub(super) fn functions(b: &mut Builder) {
     body.extend([ArrayLen, I32Const(1), I32And, If(BlockType::Empty)]);
     nominal::error(&mut body);
     body.push(End);
+    // The shape checks only, for operations that check the entries they
+    // touch (#409): native-object-table.
+    let mut table = body.clone();
+    table.push(LocalGet(1));
     body.extend([
         I32Const(0),
         LocalSet(3),
@@ -243,9 +247,19 @@ pub(super) fn functions(b: &mut Builder) {
         &[(2, VALUE), (1, ValType::I32), (1, VALUE)],
         &body,
     );
+    // native-object-fields without the walk over every entry (#409): an
+    // operation that reads or writes a few entries checks those.
+    let table = b.function_with_locals(
+        "native-object-table",
+        &[VALUE],
+        &[VALUE],
+        &[(2, VALUE), (1, ValType::I32), (1, VALUE)],
+        &table,
+    );
+    // Each key it compares is checked to be a string (#409).
     let mut body = vec![
         LocalGet(0),
-        Call(fields),
+        Call(table),
         RefCastNonNull(HeapType::Concrete(ARGS)),
         I32Const(0),
         ArrayGet(ARGS),
@@ -264,14 +278,25 @@ pub(super) fn functions(b: &mut Builder) {
     array(&mut body, 2);
     body.extend([ArrayLen, I32GeU, BrIf(1)]);
     array(&mut body, 2);
+    body.extend([LocalGet(3), ArrayGet(ARGS), LocalSet(5)]);
+    guard(&mut body, 5, STRING);
+    // The first equal key ends the search (#409): writers keep keys unique.
+    // The same string object is equal without the call.
     body.extend([
-        LocalGet(3),
-        ArrayGet(ARGS),
+        LocalGet(5),
+        LocalGet(1),
+        RefEq,
+        If(BlockType::Result(ValType::I32)),
+        I32Const(1),
+        Else,
+        LocalGet(5),
         LocalGet(1),
         Call(b.names["property-key-equal"]),
+        End,
         If(BlockType::Empty),
         LocalGet(3),
         LocalSet(4),
+        Br(2),
         End,
         LocalGet(3),
         I32Const(2),
@@ -286,7 +311,7 @@ pub(super) fn functions(b: &mut Builder) {
         "native-object-own-slot",
         &[VALUE, VALUE],
         &[ValType::I32],
-        &[(1, VALUE), (2, ValType::I32)],
+        &[(1, VALUE), (2, ValType::I32), (1, VALUE)],
         &body,
     );
     let mut body = vec![
@@ -299,7 +324,7 @@ pub(super) fn functions(b: &mut Builder) {
         I32GeS,
         If(BlockType::Result(VALUE)),
         LocalGet(0),
-        Call(fields),
+        Call(table),
         RefCastNonNull(HeapType::Concrete(ARGS)),
         I32Const(0),
         ArrayGet(ARGS),
@@ -308,6 +333,8 @@ pub(super) fn functions(b: &mut Builder) {
         I32Const(1),
         I32Add,
         ArrayGet(ARGS),
+        // The descriptor found is checked, as the full walk would (#409).
+        Call(descriptor),
         Else,
         sentinel_value(UNDEFINED),
         End,
@@ -351,7 +378,9 @@ pub(super) fn functions(b: &mut Builder) {
         Call(descriptor),
         Drop,
     ];
-    body.extend([LocalGet(0), Call(fields), LocalSet(4)]);
+    // The written descriptor is checked above; the rest of the table is not
+    // walked (#409).
+    body.extend([LocalGet(0), Call(table), LocalSet(4)]);
     array(&mut body, 4);
     body.extend([
         I32Const(0),
@@ -460,7 +489,8 @@ pub(super) fn functions(b: &mut Builder) {
             Call(b.names["native-object-own-define"]),
         ],
     );
-    prototype_functions(b, fields, slot);
+    // Prototype reads and writes touch only the prototype slot (#409).
+    prototype_functions(b, table, slot);
 }
 
 // These operations manipulate raw internal prototypes. Source __proto__ accessor

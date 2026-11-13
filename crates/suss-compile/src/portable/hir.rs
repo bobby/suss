@@ -454,6 +454,10 @@ pub enum Nominal {
     IsNumber,
     /// Whether the operand is a long: an i31 or a boxed long (#388).
     IsLongValue,
+    /// `hash` of a string (#409): Murmur3's `hashInt` of its Java
+    /// `hashCode`, `h = 31h + unit` over its UTF-16 units in int32
+    /// arithmetic, as ClojureScript's `(m3-hash-int (hash-string* s))`.
+    StringHash,
     /// A string, the first operand, followed by the digits of a long, the
     /// second (#388).
     StringAppendLong,
@@ -620,7 +624,7 @@ impl Nominal {
                 Self::AllSmallIntegers => count >= 1,
                 Self::NumberHash => count == 1,
                 Self::IsObject | Self::IsDescriptor => count == 1,
-                Self::IsLongValue => count == 1,
+                Self::IsLongValue | Self::StringHash => count == 1,
                 Self::StringAppendLong => count == 2,
                 Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit => count == 1,
@@ -2976,6 +2980,7 @@ impl Analyzer<'_> {
                 "coerce-string" => Some(Nominal::CoerceString),
                 "object-coerce-string" => Some(Nominal::ObjectCoerceString),
                 "concat-string" => Some(Nominal::ConcatString),
+                "string-hash" => Some(Nominal::StringHash),
                 "string-index-of" => Some(Nominal::StringIndexOf),
                 "string-slice" => Some(Nominal::StringSlice),
                 "string-from-unit" => Some(Nominal::StringFromUnit),
