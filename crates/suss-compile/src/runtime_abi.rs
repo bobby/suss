@@ -260,7 +260,8 @@ const VALUE: ValType = ValType::Ref(RefType::EQREF);
 /// cached, and anything else takes `named-property-get`, uncached.
 fn named_site_get(b: &mut Builder) {
     use Instruction::*;
-    // Params: 0 site, 1 object, 2 name. Locals: 3 descriptor, 4 slot, 5 value.
+    // Params: 0 site, 1 object, 2 name. Locals: 3 descriptor, 4 slot, 5 value,
+    // 6 the object as a user object, cast once (#389).
     let site = |field| [LocalGet(0), StructGet { struct_type_index: NAMED_SITE, field_index: field }];
     let set = |field: u32, value: Vec<Instruction<'static>>| {
         let mut code = vec![LocalGet(0)];
@@ -272,10 +273,8 @@ fn named_site_get(b: &mut Builder) {
     let property_get = b.names["named-property-get"];
     let full = || [LocalGet(1), LocalGet(2), Call(property_get), Return];
     let field_read = |slot: u32| [
-        LocalGet(1),
-        RefCastNonNull(HeapType::Concrete(7)),
+        LocalGet(6),
         StructGet { struct_type_index: 7, field_index: 1 },
-        RefCastNonNull(HeapType::Concrete(ARGS)),
         LocalGet(slot),
         ArrayGet(ARGS),
         Return,
@@ -301,7 +300,7 @@ fn named_site_get(b: &mut Builder) {
     method.extend([LocalGet(5), Return]);
 
     let mut code = vec![LocalGet(1), RefTestNonNull(HeapType::Concrete(7)), If(BlockType::Empty)];
-    code.extend([LocalGet(1), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 0 }, LocalTee(3)]);
+    code.extend([LocalGet(1), RefCastNonNull(HeapType::Concrete(7)), LocalTee(6), StructGet { struct_type_index: 7, field_index: 0 }, LocalTee(3)]);
     code.extend(site(SITE_DESCRIPTOR));
     code.extend([RefEq, If(BlockType::Empty)]);
     code.extend(site(SITE_SLOT));
@@ -348,7 +347,7 @@ fn named_site_get(b: &mut Builder) {
     code.extend(set(SITE_OWNER_VALUE, vec![LocalGet(5)]));
     code.extend([LocalGet(5), Return, End]);
     code.extend(full());
-    b.function_with_locals("named-site-get", &[reference(NAMED_SITE), VALUE, VALUE], &[VALUE], &[(1, VALUE), (1, ValType::I32), (1, VALUE)], &code);
+    b.function_with_locals("named-site-get", &[reference(NAMED_SITE), VALUE, VALUE], &[VALUE], &[(1, VALUE), (1, ValType::I32), (1, VALUE), (1, ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(7) }))], &code);
 }
 
 /// `instance-site-test(site, constructor, value)` (#378): `instance?` through
