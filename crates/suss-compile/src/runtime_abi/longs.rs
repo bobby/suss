@@ -625,6 +625,61 @@ pub(super) fn string(b: &mut Builder) {
     b.function_with_locals("long-string", &[ValType::I64], &[VALUE], &locals, &code);
 }
 
+/// `string-append-long(s, n)` (#388): string `s` followed by the decimal
+/// digits of long `n`, an i31 or a boxed long, in one new string, with no
+/// intermediate digit string and one copy.
+pub(super) fn append(b: &mut Builder) {
+    use Instruction::*;
+    const DIGITS: u32 = 20;
+    // Locals: 2 the sign, 3 the magnitude still to write, 4 the digit count,
+    // 5 the quotient, 6 the prefix length, 7 the result, 8 the first digit's
+    // index, then 9.. the digits as code units, least significant first.
+    let digit = |k: u32| 9 + k;
+    let string_ref = ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(STRING) });
+    let mut code = vec![
+        LocalGet(1), RefTestNonNull(i31()), If(BlockType::Result(ValType::I64)),
+        LocalGet(1), RefCastNonNull(i31()), I31GetS, I64ExtendI32S,
+        Else,
+        LocalGet(1), RefCastNonNull(long()), StructGet { struct_type_index: LONG, field_index: 0 },
+        End,
+        LocalTee(3), I64Const(0), I64LtS, LocalTee(2),
+        If(BlockType::Empty), I64Const(0), LocalGet(3), I64Sub, LocalSet(3), End,
+        Block(BlockType::Empty),
+    ];
+    for k in 0..DIGITS {
+        code.extend([
+            LocalGet(3), LocalGet(3), I64Const(10), I64DivU, LocalTee(5), I64Const(10), I64Mul, I64Sub,
+            I32WrapI64, I32Const(i32::from(b'0')), I32Add, LocalSet(digit(k)),
+            I32Const(k as i32 + 1), LocalSet(4),
+            LocalGet(5), LocalTee(3), I64Eqz, BrIf(0),
+        ]);
+    }
+    code.extend([
+        End,
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(STRING)), ArrayLen, LocalTee(6),
+        LocalGet(2), I32Add, LocalTee(8), LocalGet(4), I32Add, ArrayNewDefault(STRING), LocalSet(7),
+        LocalGet(6), If(BlockType::Empty),
+        LocalGet(7), I32Const(0), LocalGet(0), RefCastNonNull(HeapType::Concrete(STRING)), I32Const(0), LocalGet(6),
+        ArrayCopy { array_type_index_dst: STRING, array_type_index_src: STRING },
+        End,
+        LocalGet(2), If(BlockType::Empty),
+        LocalGet(7), LocalGet(6), I32Const(i32::from(b'-')), ArraySet(STRING),
+        End,
+    ]);
+    // Digit k goes at first + count - 1 - k, for each k below the count.
+    for k in 0..DIGITS {
+        code.extend([
+            LocalGet(4), I32Const(k as i32), I32GtU, If(BlockType::Empty),
+            LocalGet(7), LocalGet(8), LocalGet(4), I32Add, I32Const(k as i32 + 1), I32Sub, LocalGet(digit(k)), ArraySet(STRING),
+            End,
+        ]);
+    }
+    code.push(LocalGet(7));
+    let mut locals = vec![(1, ValType::I32), (1, ValType::I64), (1, ValType::I32), (1, ValType::I64), (1, ValType::I32), (1, string_ref), (1, ValType::I32)];
+    locals.push((DIGITS, ValType::I32));
+    b.function_with_locals("string-append-long", &[VALUE, VALUE], &[VALUE], &locals, &code);
+}
+
 /// Clojure's `quot`, `rem`, `abs`, `unchecked-*` and the `long?` and
 /// `double?` tests, on operands core has already checked are numbers.
 pub(super) fn functions(b: &mut Builder) {

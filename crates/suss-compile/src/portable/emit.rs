@@ -207,10 +207,11 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::CoerceString => { names.insert("coerce-string"); }
                         Nominal::ObjectCoerceString => { names.insert("object-coerce-string"); }
                         Nominal::ConcatString => { names.insert("string-concat"); }
+                        Nominal::StringAppendLong => { names.insert("string-append-long"); }
                         Nominal::ValueAdd => { names.insert("value-add"); }
                         Nominal::IsBoolean => {}
                         Nominal::Identical => { names.insert("identical-value"); }
-                        Nominal::AllSmallIntegers | Nominal::IsObject | Nominal::IsDescriptor | Nominal::SameReference => {}
+                        Nominal::AllSmallIntegers | Nominal::IsLongValue | Nominal::IsObject | Nominal::IsDescriptor | Nominal::SameReference => {}
                         Nominal::NumberHash => { names.insert("number-hash"); }
                         Nominal::StringIndexOf => { names.insert("string-index-of"); }
                         Nominal::StringSlice => { names.insert("string-slice"); }
@@ -2362,6 +2363,21 @@ fn emit_function(
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                 .instruction(&LocalGet(arguments[1].0 as u32 + offset))
                                 .instruction(&RefEq);
+                        }
+                        Nominal::IsLongValue => {
+                            let value = arguments[0].0 as u32 + offset;
+                            function
+                                .instruction(&LocalGet(value))
+                                .instruction(&RefTestNonNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 }))
+                                .instruction(&LocalGet(value))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::LONG)))
+                                .instruction(&I32Or);
+                        }
+                        Nominal::StringAppendLong => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&LocalGet(arguments[1].0 as u32 + offset))
+                                .instruction(&Call(index("string-append-long")));
                         }
                         Nominal::IsDescriptor => {
                             function

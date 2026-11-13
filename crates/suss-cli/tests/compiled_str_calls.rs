@@ -1,5 +1,6 @@
 //! A direct-linked `(str a b …)` with 2 to 8 operands concatenates each
-//! operand's `(str x)` in order without str's rest seq (#388). Each case's
+//! operand's `(str x)` in order without str's rest seq (#388); a long after
+//! the first operand has its digits appended directly. Each case's
 //! AOT result must equal the REPL's, which calls str, and some fixed expected
 //! values. Operands derive from the argument `n`, 0.
 use std::process::Command;
@@ -16,6 +17,7 @@ const CASES: &[(&str, &str)] = &[
     ("longs", "(str (+ n 3000000000) \"/\" (- n 1073741825) \"/\" (+ n 9223372036854775807))"),
     ("order", "(do (reset! log []) [(str (tracked 1 \"a\") (tracked 2 \"b\") (tracked 3 \"c\")) @log])"),
     ("throw", "(do (reset! log []) [(try (str (tracked 1 \"a\") (boom 2) (tracked 3 \"c\")) (catch :default e (:tag (ex-data e)))) @log])"),
+    ("append-longs", "[(str \"\" n) (str \"x\" (- n 9223372036854775807 1)) (str \"a\" 0 -1 (+ n 7)) (str nil (+ n 1073741824)) (str \"λ\" (- n 12345))]"),
     ("nested", "(str (str \"a\" n) (str) (str (str n n) \"z\"))"),
 ];
 
@@ -60,6 +62,7 @@ fn direct_linked_str_calls_match_the_repl() {
         // The expected values, independent of either implementation.
         let expected = match *name {
             "two" => Some(r#"["a0" "0a" "0" "0" ":ksym"]"#),
+            "append-longs" => Some(r#"["0" "x-9223372036854775808" "a0-17" "1073741824" "λ-12345"]"#),
             "many" => Some(r#"["1234" "12345" "12345678" "123456789"]"#),
             "order" => Some("[\"abc\" [[:eval 1] [:eval 2] [:eval 3] [:str 1] [:str 2] [:str 3]]]"),
             "throw" => Some("[2 [[:eval 1] [:eval 3] [:str 1] [:str 2]]]"),

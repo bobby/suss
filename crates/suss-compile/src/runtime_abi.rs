@@ -1195,6 +1195,7 @@ fn build_module() -> Vec<u8> {
     longs::intrinsics(&mut b);
     longs::arithmetic(&mut b);
     longs::string(&mut b);
+    longs::append(&mut b);
     longs::functions(&mut b);
     longs::parse(&mut b);
     b.function(
