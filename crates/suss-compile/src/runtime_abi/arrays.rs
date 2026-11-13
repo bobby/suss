@@ -932,6 +932,110 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &[(1, typed(7)), (1, typed(ARGS)), (1, typed(ARGS)), (1, typed(ARGS)), (1, typed(STRING)), (1, VALUE), (1, ValType::I32)],
         &body,
     );
+    // `source-array-element(a, j)` (#378): source array a's present element
+    // at index j of its dense prefix, or undefined for anything else, which
+    // a caller answers with the general path. Locals: 2 the object, 3 its
+    // fields, 4 the backing, 5 the dense prefix, 6 the mask, 7 a value.
+    let take = |body: &mut Vec<Instruction<'static>>, ty: u32, local: u32| {
+        body.extend([LocalTee(7), RefTestNonNull(HeapType::Concrete(ty)), I32Eqz, BrIf(0),
+            LocalGet(7), RefCastNonNull(HeapType::Concrete(ty)), LocalSet(local)]);
+    };
+    let mut body = vec![Block(BlockType::Empty)];
+    body.extend([LocalGet(0), RefTestNonNull(HeapType::Concrete(7)), I32Eqz, BrIf(0)]);
+    body.extend([
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(7)), LocalTee(2),
+        StructGet { struct_type_index: 7, field_index: 0 }, GlobalGet(TAG_GLOBAL), RefEq, I32Eqz, BrIf(0),
+        LocalGet(2), StructGet { struct_type_index: 7, field_index: 1 }, LocalTee(3),
+        ArrayLen, I32Const(2), I32Ne, BrIf(0),
+        LocalGet(3), I32Const(0), ArrayGet(ARGS),
+    ]);
+    take(&mut body, ARGS, 4);
+    body.extend([LocalGet(4), ArrayLen, I32Const(4), I32LtU, BrIf(0), LocalGet(4), I32Const(3), ArrayGet(ARGS)]);
+    take(&mut body, STRING, 6);
+    body.extend([LocalGet(4), I32Const(2), ArrayGet(ARGS)]);
+    take(&mut body, ARGS, 5);
+    body.extend([
+        LocalGet(1), LocalGet(5), ArrayLen, I32GeU, BrIf(0),
+        LocalGet(1), LocalGet(6), ArrayLen, I32GeU, BrIf(0),
+        LocalGet(6), LocalGet(1), ArrayGetU(STRING), I32Const(1), I32Ne, BrIf(0),
+        LocalGet(5), LocalGet(1), ArrayGet(ARGS), Return, End,
+        sentinel_value(UNDEFINED),
+    ]);
+    let element = b.function_with_locals(
+        "source-array-element",
+        &[VALUE, ValType::I32],
+        &[VALUE],
+        &[(1, typed(7)), (1, typed(ARGS)), (1, typed(ARGS)), (1, typed(ARGS)), (1, typed(STRING)), (1, VALUE)],
+        &body,
+    );
+    // `vector-nth(v, n)` (#378): element n of PersistentVector v, walking
+    // its trie as unchecked-array-for does, or undefined for anything that
+    // isn't that shape, an index that isn't an i31 in range, or a slot
+    // that's absent, which the caller answers with its general path. Core's
+    // PersistentVector is [meta cnt shift root tail __hash] and VectorNode
+    // [edit arr]; every step is tested, so another shape only misses.
+    // Locals: 2 the fields, 3 the index, 4 the count, 5 the level, 6 the
+    // node or array, 7 a value.
+    let field = |body: &mut Vec<Instruction<'static>>, index: i32| {
+        body.extend([LocalGet(2), I32Const(index), ArrayGet(ARGS)]);
+    };
+    let small = |body: &mut Vec<Instruction<'static>>, local: u32| {
+        body.extend([LocalTee(7), RefTestNonNull(HeapType::I31), I32Eqz, BrIf(0),
+            LocalGet(7), RefCastNonNull(HeapType::I31), I31GetS, LocalSet(local)]);
+    };
+    // A VectorNode's arr, from the node in local 6, back into local 6.
+    let node_array = |body: &mut Vec<Instruction<'static>>| {
+        body.extend([LocalGet(6), RefTestNonNull(HeapType::Concrete(7)), I32Eqz, BrIf(1),
+            LocalGet(6), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 1 },
+            LocalTee(2), ArrayLen, I32Const(2), I32LtU, BrIf(1),
+            LocalGet(2), I32Const(1), ArrayGet(ARGS), LocalSet(6)]);
+    };
+    let mut body = vec![Block(BlockType::Empty)];
+    body.extend([LocalGet(1), RefTestNonNull(HeapType::I31), I32Eqz, BrIf(0),
+        LocalGet(1), RefCastNonNull(HeapType::I31), I31GetS, LocalSet(3),
+        LocalGet(0), RefTestNonNull(HeapType::Concrete(7)), I32Eqz, BrIf(0),
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 1 },
+        LocalTee(2), ArrayLen, I32Const(6), I32LtU, BrIf(0)]);
+    field(&mut body, 1);
+    small(&mut body, 4);
+    // 0 <= n < cnt, as an unsigned comparison.
+    body.extend([LocalGet(3), LocalGet(4), I32GeU, BrIf(0)]);
+    // n >= tail-off: the tail, which is the cnt < 32 case too.
+    body.extend([
+        LocalGet(4), I32Const(32), I32LtS,
+        LocalGet(3),
+        LocalGet(4), I32Const(1), I32Sub, I32Const(5), I32ShrU, I32Const(5), I32Shl,
+        I32GeS, I32Or,
+        If(BlockType::Empty),
+    ]);
+    field(&mut body, 4);
+    body.extend([LocalSet(6), Else]);
+    field(&mut body, 2);
+    // Within this If, branch depth 1 is the outer block.
+    body.extend([LocalTee(7), RefTestNonNull(HeapType::I31), I32Eqz, BrIf(1),
+        LocalGet(7), RefCastNonNull(HeapType::I31), I31GetS, LocalSet(5)]);
+    field(&mut body, 3);
+    body.extend([LocalSet(6), Block(BlockType::Empty), Loop(BlockType::Empty),
+        LocalGet(5), I32Const(0), I32LeS, BrIf(1)]);
+    // Inside block, loop: the outer miss block is depth 3.
+    body.extend([LocalGet(6), RefTestNonNull(HeapType::Concrete(7)), I32Eqz, BrIf(3),
+        LocalGet(6), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 1 },
+        LocalTee(2), ArrayLen, I32Const(2), I32LtU, BrIf(3),
+        LocalGet(2), I32Const(1), ArrayGet(ARGS),
+        LocalGet(3), LocalGet(5), I32ShrU, I32Const(31), I32And,
+        Call(element), LocalTee(6), sentinel_value(UNDEFINED), RefEq, BrIf(3),
+        LocalGet(5), I32Const(5), I32Sub, LocalSet(5), Br(0), End, End]);
+    node_array(&mut body);
+    body.push(End);
+    body.extend([LocalGet(6), LocalGet(3), I32Const(31), I32And, Call(element), Return, End,
+        sentinel_value(UNDEFINED)]);
+    b.function_with_locals(
+        "vector-nth",
+        &[VALUE, VALUE],
+        &[VALUE],
+        &[(1, typed(ARGS)), (3, ValType::I32), (1, VALUE), (1, VALUE)],
+        &body,
+    );
     // Macro and first-class variants share explicit sequential nested traversal.
     for (name, writing) in [
         ("source-array-get-indices", false),
