@@ -567,29 +567,42 @@ pub(super) fn string(b: &mut Builder) {
         LocalSet(2),
     ];
     // Unrolled: digit k is written, then the loop stops once nothing remains.
+    // One division per digit: the digit is the remainder, n - 10q (#388).
+    let quotient = 4 + DIGITS;
     code.push(Block(BlockType::Empty));
     for k in 0..DIGITS {
         code.extend([
             LocalGet(2),
+            LocalGet(2),
             I64Const(10),
-            I64RemU,
+            I64DivU,
+            LocalTee(quotient),
+            I64Const(10),
+            I64Mul,
+            I64Sub,
             I32WrapI64,
             I32Const(i32::from(b'0')),
             I32Add,
             LocalSet(digit(k)),
             I32Const(k as i32 + 1),
             LocalSet(3),
-            LocalGet(2),
-            I64Const(10),
-            I64DivU,
+            LocalGet(quotient),
             LocalTee(2),
             I64Eqz,
             BrIf(0),
         ]);
     }
     code.push(End);
+    // The digit count selects its builder with one br_table (#388): blocks
+    // nest so that depth `count - 1` ends just before that count's builder.
+    for _ in 0..DIGITS {
+        code.push(Block(BlockType::Empty));
+    }
+    code.push(Block(BlockType::Empty));
+    code.extend([LocalGet(3), I32Const(1), I32Sub]);
+    code.push(BrTable(Cow::Owned((0..DIGITS).collect()), DIGITS));
+    code.push(End);
     for count in 1..=DIGITS {
-        code.extend([LocalGet(3), I32Const(count as i32), I32Eq, If(BlockType::Empty)]);
         for negative in [true, false] {
             if negative {
                 code.extend([LocalGet(1), If(BlockType::Empty), I32Const(i32::from(b'-'))]);
@@ -608,6 +621,7 @@ pub(super) fn string(b: &mut Builder) {
     code.push(Unreachable);
     let mut locals = vec![(1, ValType::I32), (1, ValType::I64), (1, ValType::I32)];
     locals.push((DIGITS, ValType::I32));
+    locals.push((1, ValType::I64));
     b.function_with_locals("long-string", &[ValType::I64], &[VALUE], &locals, &code);
 }
 

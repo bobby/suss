@@ -430,7 +430,27 @@ pub(super) fn intrinsics(
         &convert,
     );
 
+    // A long, an i31 or a boxed one, first (#388): its digits, with no
+    // long-test or long-unbox call. An i31 is never a string or a sentinel.
+    let long_string = b.names["long-string"];
     let mut to_string = vec![
+        LocalGet(0),
+        RefTestNonNull(HeapType::I31),
+        If(BlockType::Empty),
+        LocalGet(0),
+        RefCastNonNull(HeapType::I31),
+        I31GetS,
+        I64ExtendI32S,
+        ReturnCall(long_string),
+        End,
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(LONG)),
+        If(BlockType::Empty),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(LONG)),
+        StructGet { struct_type_index: LONG, field_index: 0 },
+        ReturnCall(long_string),
+        End,
         LocalGet(0),
         RefTestNonNull(string),
         If(BlockType::Empty),
