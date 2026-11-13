@@ -6527,11 +6527,14 @@
              (if (suss.bootstrap/packed-array? x)
                (packed-array-string x)
                (.toString x))))))
+  ;; Each value's str, concatenated in order (#388): the same result as the
+  ;; pinned StringBuffer, whose append concatenates, without its source
+  ;; array, method lookups and dynamic calls.
   ([x & ys]
-   (loop [sb (bootstrap-string-buffer (str x)) more ys]
-     (if more
-       (recur (.append sb (str (first more))) (next more))
-       (.toString sb))))))
+   (loop [s (str x) ys ys]
+     (if ys
+       (recur (suss.bootstrap/concat-string s (str (first ys))) (next ys))
+       s)))))
 
 (def ^number compare
   "Comparator. Returns a negative number, zero, or a positive number

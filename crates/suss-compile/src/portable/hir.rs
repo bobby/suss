@@ -1793,6 +1793,62 @@ impl Analyzer<'_> {
         let body = node(Expression::Let { bindings: vec![method], body: Box::new(found) }, Type::Value);
         Ok(node(Expression::Let { bindings, body: Box::new(body) }, Type::Value))
     }
+    /// `(str a b …)` with 2 to 8 operands (#388): each operand's `(str x)`,
+    /// in order, concatenated, which is what str's variadic arity computes,
+    /// without its rest seq. Operands are evaluated once, in order, before
+    /// any is converted, as for the call.
+    fn str_call(&mut self, form: &Form, items: &[Form]) -> Result<Hir, Diagnostic> {
+        let mut bindings = Vec::with_capacity(items.len() - 1);
+        for item in &items[1..] {
+            let value = self.form(item)?;
+            bindings.push(self.fresh_binding(item, value));
+        }
+        let locals = bindings
+            .iter()
+            .map(|binding| {
+                let mut local = self.local(form, binding.id);
+                local.ty = binding.value.ty;
+                local
+            })
+            .collect::<Vec<_>>();
+        let callee = self.form(&items[0])?;
+        let callee = match &*callee.kind {
+            Expression::Global(global) => match self.direct_link(global) {
+                Some(link) => self.nominal(&items[0], Nominal::DirectLinkRead(link), vec![]),
+                None => callee,
+            },
+            _ => callee,
+        };
+        *self.source_nodes.last_mut().expect("source node fact slot") =
+            Some(std::sync::Arc::new(SourceNode::Invoke {
+                callee: std::sync::Arc::new(callee.clone()),
+                arguments: bindings.iter().map(|binding| binding.value.clone()).collect::<Vec<_>>().into(),
+            }));
+        let mut text = None;
+        for local in locals {
+            let converted = Hir {
+                source: None,
+                span: form.span.clone(),
+                metadata: form.metadata.clone(),
+                ty: Type::Value,
+                kind: std::sync::Arc::new(Expression::Call {
+                    callee: Box::new(self.prepare_source_callee(form, callee.clone(), 1)?),
+                    arguments: vec![local],
+                }),
+            };
+            text = Some(match text {
+                None => converted,
+                Some(left) => self.nominal(form, Nominal::ConcatString, vec![left, converted]),
+            });
+        }
+        Ok(Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty: Type::Value,
+            kind: std::sync::Arc::new(Expression::Let { bindings, body: Box::new(text.expect("operands")) }),
+        })
+    }
     /// `(f a …)` where every operand is an i31 runs `fast` on the operands,
     /// and otherwise calls f (#387). Operands are evaluated once, in order.
     fn small_integer_call(
@@ -3132,6 +3188,9 @@ impl Analyzer<'_> {
         // call core only for anything else.
         if args.len() == 2 && self.linked_core_call(&resolved, "=") {
             return self.small_integer_call(form, items, |this, form, locals| this.nominal(form, Nominal::Identical, locals));
+        }
+        if (2..=8).contains(&args.len()) && self.linked_core_call(&resolved, "str") {
+            return self.str_call(form, items);
         }
         if args.len() == 1 && self.linked_core_call(&resolved, "hash") {
             return self.small_integer_call(form, items, |this, form, locals| this.nominal(form, Nominal::NumberHash, locals));
