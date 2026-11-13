@@ -209,6 +209,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ConcatString => { names.insert("string-concat"); }
                         Nominal::StringAppendLong => { names.insert("string-append-long"); }
                         Nominal::StringHash => { names.insert("string-hash"); }
+                        Nominal::PackedGet(_) => { names.insert("packed-array-get-2"); names.insert("source-array-get-2"); }
+                        Nominal::PackedSet(_) => { names.insert("packed-array-set-3"); names.insert("source-array-set-3"); }
                         Nominal::ValueAdd => { names.insert("value-add"); }
                         Nominal::IsBoolean => {}
                         Nominal::Identical => { names.insert("identical-value"); }
@@ -2373,6 +2375,76 @@ fn emit_function(
                                 .instruction(&LocalGet(value))
                                 .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::LONG)))
                                 .instruction(&I32Or);
+                        }
+                        Nominal::PackedGet(kind) | Nominal::PackedSet(kind) => {
+                            // Inline for a packed array of the hinted kind and
+                            // an i31 index in range (#389); anything else
+                            // takes the generic path, so a wrong hint is only
+                            // slower.
+                            let set = matches!(operation, Nominal::PackedSet(_));
+                            let [array, position] = [arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset];
+                            let storage = runtime_abi::PACKED_STORAGE + *kind as u32;
+                            let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
+                            let data = [LocalGet(array), RefCastNonNull(HeapType::Concrete(runtime_abi::PACKED)),
+                                StructGet { struct_type_index: runtime_abi::PACKED, field_index: 0 }];
+                            let [wide, _, _] = long_locals;
+                            let mut code = vec![Block(BlockType::Result(VALUE)), Block(BlockType::Empty),
+                                LocalGet(position), RefTestNonNull(i31), I32Eqz, BrIf(0),
+                                LocalGet(array), RefTestNonNull(HeapType::Concrete(runtime_abi::PACKED)), I32Eqz, BrIf(0)];
+                            // The storage is read once, into the method scratch
+                            // local; each use casts it to its final array type.
+                            code.extend(data.clone());
+                            code.extend([LocalTee(method_local), RefTestNonNull(HeapType::Concrete(storage)), I32Eqz, BrIf(0),
+                                LocalGet(position), RefCastNonNull(i31), I31GetS, LocalSet(field_index_local),
+                                LocalGet(method_local), RefCastNonNull(HeapType::Concrete(storage)), ArrayLen, LocalGet(field_index_local), I32LeU, BrIf(0)]);
+                            let data = [LocalGet(method_local), Nop, Nop];
+                            let boxed_wide = |code: &mut Vec<Instruction<'static>>| code.extend([
+                                LocalTee(wide), I64Const(1 << 30), I64Add, I64Const(1 << 31), I64LtU, If(BlockType::Result(VALUE)),
+                                LocalGet(wide), I32WrapI64, RefI31, Else, LocalGet(wide), StructNew(runtime_abi::LONG), End]);
+                            if set {
+                                let value = arguments[2].0 as u32 + offset;
+                                // The value as the element: an i31 for int and
+                                // long, an i31 or a long box for long, an i31
+                                // or a double box for double.
+                                code.extend(data.clone());
+                                code.extend([RefCastNonNull(HeapType::Concrete(storage)), LocalGet(field_index_local)]);
+                                match kind {
+                                    2 => code.extend([LocalGet(value), RefTestNonNull(i31), I32Eqz, BrIf(0),
+                                        LocalGet(value), RefCastNonNull(i31), I31GetS, ArraySet(storage), LocalGet(value)]),
+                                    4 => code.extend([LocalGet(value), RefTestNonNull(i31), If(BlockType::Result(ValType::I64)),
+                                        LocalGet(value), RefCastNonNull(i31), I31GetS, I64ExtendI32S, Else,
+                                        LocalGet(value), RefTestNonNull(HeapType::Concrete(runtime_abi::LONG)), I32Eqz, BrIf(1),
+                                        LocalGet(value), RefCastNonNull(HeapType::Concrete(runtime_abi::LONG)),
+                                        StructGet { struct_type_index: runtime_abi::LONG, field_index: 0 }, End,
+                                        ArraySet(storage), LocalGet(value)]),
+                                    _ => code.extend([LocalGet(value), RefTestNonNull(HeapType::Concrete(runtime_abi::NUMBER)), I32Eqz, BrIf(0),
+                                        LocalGet(value), RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
+                                        StructGet { struct_type_index: runtime_abi::NUMBER, field_index: 0 }, ArraySet(storage), LocalGet(value)]),
+                                }
+                            } else {
+                                code.extend(data.clone());
+                                code.extend([RefCastNonNull(HeapType::Concrete(storage)), LocalGet(field_index_local)]);
+                                match kind {
+                                    0 | 1 => { code.extend([ArrayGetS(storage), I64ExtendI32S]); boxed_wide(&mut code); }
+                                    2 => { code.extend([ArrayGet(storage), I64ExtendI32S]); boxed_wide(&mut code); }
+                                    3 => code.extend([ArrayGet(storage), F64PromoteF32, StructNew(runtime_abi::NUMBER)]),
+                                    4 => { code.push(ArrayGet(storage)); boxed_wide(&mut code); }
+                                    _ => code.extend([ArrayGet(storage), StructNew(runtime_abi::NUMBER)]),
+                                }
+                            }
+                            code.extend([Br(1), End,
+                                LocalGet(array), RefTestNonNull(HeapType::Concrete(runtime_abi::PACKED)), If(BlockType::Result(VALUE))]);
+                            for argument in arguments {
+                                code.push(LocalGet(argument.0 as u32 + offset));
+                            }
+                            code.extend([Call(index(if set { "packed-array-set-3" } else { "packed-array-get-2" })), Else]);
+                            for argument in arguments {
+                                code.push(LocalGet(argument.0 as u32 + offset));
+                            }
+                            code.extend([Call(index(if set { "source-array-set-3" } else { "source-array-get-2" })), End, End]);
+                            for instruction in code {
+                                function.instruction(&instruction);
+                            }
                         }
                         Nominal::StringHash => {
                             function
