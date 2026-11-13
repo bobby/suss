@@ -188,6 +188,11 @@ fn public_hash_matches_independently_decoded_primary_observations() {
             ("large-nonsafe", -2093373915),
             ("review-safe-max", -1247966309),
             ("review-negative-safe-max", -19448363),
+            // `hash` computes a string's hash in the runtime (#409), as JVM
+            // Clojure's String.hashCode, instead of through the live
+            // hash-string and m3-hash-int vars, so redefining them doesn't
+            // change it: this is (hash "review") itself.
+            ("review-captured-live-string-helpers", 2019226501),
         ];
         let expected = match hasheq.iter().find(|(id, _)| *id == case["id"]) {
             Some((_, hash)) => serde_json::json!({"tag":"long", "value":hash}),

@@ -1346,6 +1346,14 @@
 
 (def hash (fn [o]
   (cond
+    ;; A string's hash is computed directly, as JVM Clojure's String.hashCode
+    ;; is (#409), by the runtime: ClojureScript's string-hash-cache, a js-obj,
+    ;; costs more to search than the hash does to compute. hash-string keeps
+    ;; the cache. It is tested first: no string implements IHash, since a
+    ;; built-in type's core protocols can't be extended outside core.
+    (string? o)
+    (suss.bootstrap/string-hash o)
+
     (implements? IHash o)
     (bit-xor (-hash o) 0)
 
@@ -1358,9 +1366,6 @@
     (true? o) 1231
 
     (false? o) 1237
-
-    (string? o)
-    (m3-hash-int (hash-string o))
 
     (instance? BootstrapDate o)
     (bit-xor (.valueOf o) 0)

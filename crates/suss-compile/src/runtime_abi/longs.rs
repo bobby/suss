@@ -625,6 +625,49 @@ pub(super) fn string(b: &mut Builder) {
     b.function_with_locals("long-string", &[ValType::I64], &[VALUE], &locals, &code);
 }
 
+/// `string-hash(s)` (#409): `hash` of string `s`, Murmur3's `hashInt` of
+/// its Java `hashCode`, boxed: ClojureScript's `(m3-hash-int
+/// (hash-string* s))`. hash-string* wraps to int32 only at its next imul, but
+/// m3-hash-int converts its operand with ToInt32 first, and the unwrapped sum
+/// is below 2^32, so its zero test agrees too. Locals: 1 the string, 2 its
+/// length, 3 the index, 4 the hash.
+pub(super) fn string_hash(b: &mut Builder) {
+    use Instruction::*;
+    let typed_string = ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(STRING) });
+    let mut code = vec![
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(STRING)), LocalTee(1), ArrayLen, LocalSet(2),
+        Block(BlockType::Empty), Loop(BlockType::Empty),
+        LocalGet(3), LocalGet(2), I32GeU, BrIf(1),
+        LocalGet(4), I32Const(31), I32Mul, LocalGet(1), LocalGet(3), ArrayGetU(STRING), I32Add, LocalSet(4),
+        LocalGet(3), I32Const(1), I32Add, LocalSet(3), Br(0),
+        End, End,
+        // m3-hash-int: zero hashes as zero.
+        LocalGet(4), If(BlockType::Empty),
+        LocalGet(4),
+    ];
+    code.extend(mix_k1());
+    // mixH1 with seed 0: the hash local starts at 0.
+    code.extend([I32Const(0), LocalSet(4)]);
+    code.extend(mix_h1(4));
+    code.extend([
+        // fmix(h1, 4)
+        LocalGet(4), I32Const(4), I32Xor, LocalTee(4),
+        LocalGet(4), I32Const(16), I32ShrU, I32Xor,
+        I32Const(0x85ebca6b_u32 as i32), I32Mul, LocalTee(4),
+        LocalGet(4), I32Const(13), I32ShrU, I32Xor,
+        I32Const(0xc2b2ae35_u32 as i32), I32Mul, LocalTee(4),
+        LocalGet(4), I32Const(16), I32ShrU, I32Xor,
+        LocalSet(4),
+        End,
+        LocalGet(4), I32Const(0x4000_0000), I32Add, I32Const(0), I32GeS, If(BlockType::Result(VALUE)),
+        LocalGet(4), RefI31,
+        Else,
+        LocalGet(4), I64ExtendI32S, StructNew(LONG),
+        End,
+    ]);
+    b.function_with_locals("string-hash", &[VALUE], &[VALUE], &[(1, typed_string), (3, ValType::I32)], &code);
+}
+
 /// `string-append-long(s, n)` (#388): string `s` followed by the decimal
 /// digits of long `n`, an i31 or a boxed long, in one new string, with no
 /// intermediate digit string and one copy.
