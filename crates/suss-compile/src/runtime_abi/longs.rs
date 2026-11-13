@@ -976,13 +976,28 @@ fn mix_h1(h: u32) -> [Instruction<'static>; 9] {
 /// -0.0 hashing as 0.0 does, as `Numbers.hasheq` makes it.
 fn hash(b: &mut Builder) {
     use Instruction::*;
-    // Local 1 is the long or the double's bits, local 2 the hash.
+    // Local 1 is the long or the double's bits, local 2 the hash. A long, an
+    // i31 or a boxed one, is read inline, with no long-test or long-unbox
+    // call (#387).
     let mut code = vec![
         LocalGet(0),
-        Call(b.names["long-test"]),
+        RefTestNonNull(i31()),
+        LocalGet(0),
+        RefTestNonNull(long()),
+        I32Or,
         If(BlockType::Result(ValType::I32)),
         LocalGet(0),
-        Call(b.names["long-unbox"]),
+        RefTestNonNull(i31()),
+        If(BlockType::Result(ValType::I64)),
+        LocalGet(0),
+        RefCastNonNull(i31()),
+        I31GetS,
+        I64ExtendI32S,
+        Else,
+        LocalGet(0),
+        RefCastNonNull(long()),
+        StructGet { struct_type_index: LONG, field_index: 0 },
+        End,
         LocalTee(1),
         I64Eqz,
         If(BlockType::Result(ValType::I32)),
@@ -1025,7 +1040,7 @@ fn hash(b: &mut Builder) {
         End,
         Else,
         LocalGet(0),
-        Call(b.names["double-test"]),
+        RefTestNonNull(double()),
         I32Eqz,
         If(BlockType::Empty),
     ]);
@@ -1033,7 +1048,8 @@ fn hash(b: &mut Builder) {
     code.extend([
         End,
         LocalGet(0),
-        Call(b.names["number-unbox"]),
+        RefCastNonNull(double()),
+        StructGet { struct_type_index: NUMBER, field_index: 0 },
         LocalTee(3),
         LocalGet(3),
         F64Ne,
@@ -1053,7 +1069,20 @@ fn hash(b: &mut Builder) {
         I64Xor,
         I32WrapI64,
         End,
-        Call(b.names["long-box-i32"]),
+        // The hash, boxed inline (#387): an i31 when it fits, else a long.
+        LocalTee(2),
+        I32Const(0x4000_0000),
+        I32Add,
+        I32Const(0),
+        I32GeS,
+        If(BlockType::Result(VALUE)),
+        LocalGet(2),
+        RefI31,
+        Else,
+        LocalGet(2),
+        I64ExtendI32S,
+        StructNew(LONG),
+        End,
     ]);
     b.function_with_locals(
         "number-hash",
