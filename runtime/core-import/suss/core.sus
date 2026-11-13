@@ -11504,19 +11504,19 @@ reduces them without incurring seq initialization"
             (do (suss.bootstrap/packed-store a i (first s))
                 (recur (inc i) (next s)))
             a))))))
-(def byte-array "Creates an array of bytes"
+(def ^bytes byte-array "Creates an array of bytes"
   (fn ([size-or-seq] (packed-array-of 0 size-or-seq))
       ([size init-val-or-seq] (packed-array-filled 0 size init-val-or-seq))))
-(def short-array "Creates an array of shorts"
+(def ^shorts short-array "Creates an array of shorts"
   (fn ([size-or-seq] (packed-array-of 1 size-or-seq))
       ([size init-val-or-seq] (packed-array-filled 1 size init-val-or-seq))))
-(def float-array "Creates an array of floats"
+(def ^floats float-array "Creates an array of floats"
   (fn ([size-or-seq] (packed-array-of 3 size-or-seq))
       ([size init-val-or-seq] (packed-array-filled 3 size init-val-or-seq))))
-(def long-array "Creates an array of longs"
+(def ^longs long-array "Creates an array of longs"
   (fn ([size-or-seq] (packed-array-of 4 size-or-seq))
       ([size init-val-or-seq] (packed-array-filled 4 size init-val-or-seq))))
-(def double-array "Creates an array of doubles"
+(def ^doubles double-array "Creates an array of doubles"
   (fn ([size-or-seq] (packed-array-of 5 size-or-seq))
       ([size init-val-or-seq] (packed-array-filled 5 size init-val-or-seq))))
 ;; Java's Object.toString of an array: its class name, "@" and its identity
