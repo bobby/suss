@@ -470,6 +470,9 @@ pub enum Nominal {
     /// defrecord or other nominal instance), whose protocol methods are in
     /// its descriptor's method table (#378).
     IsObject,
+    /// Whether the two operands are the same reference (#387): `identical?`
+    /// for an operand that is never a boxed double, such as a keyword.
+    SameReference,
     /// Whether the operand is a descriptor: a bound protocol method key (#378).
     IsDescriptor,
     IsClosure,
@@ -480,6 +483,13 @@ pub enum Nominal {
     /// The interned keyword equal to the constructed one, the argument: the
     /// first keyword made with its name (#361), as Clojure interns keywords.
     KeywordIntern,
+    /// A fragment's cache of the interned keyword for the numbered keyword
+    /// cell (#387): nil until `KeywordCacheSet` stores the keyword, the
+    /// argument, which it returns. A keyword cell never changes once defined.
+    KeywordCacheGet(usize),
+    KeywordCacheSet(usize),
+    /// Whether that cache is still empty.
+    KeywordCacheEmpty(usize),
     /// `set!` of a direct-linked var also writes its slot, the slot number
     /// here, so its direct calls reach the new value, as a redefinition (#360).
     DirectLinkSet(usize),
@@ -576,6 +586,7 @@ impl Nominal {
             | Self::IsString
             | Self::IsBoolean
             | Self::Identical
+            | Self::SameReference
             | Self::AllSmallIntegers
             | Self::IsObject
             | Self::IsDescriptor
@@ -587,7 +598,8 @@ impl Nominal {
             | Self::SameNominalType
             | Self::Satisfies
             | Self::NativeSatisfies
-            | Self::NativeMarker(_) => Type::Bool,
+            | Self::NativeMarker(_)
+            | Self::KeywordCacheEmpty(_) => Type::Bool,
             _ => Type::Value,
         }
     }
@@ -598,7 +610,7 @@ impl Nominal {
                 Self::Array => true,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::CurrentThis => count == 0,
-                Self::Identical => count == 2,
+                Self::Identical | Self::SameReference => count == 2,
                 Self::AllSmallIntegers => count >= 1,
                 Self::NumberHash => count == 1,
                 Self::IsObject | Self::IsDescriptor => count == 1,
@@ -607,8 +619,8 @@ impl Nominal {
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable | Self::MethodGet | Self::CallableKeyRegister => count == 2,
-                Self::DirectLinkDefine(_) | Self::DirectLinkSet(_) | Self::KeywordIntern => count == 1,
-                Self::DirectLinkRead(_) => count == 0,
+                Self::DirectLinkDefine(_) | Self::DirectLinkSet(_) | Self::KeywordIntern | Self::KeywordCacheSet(_) => count == 1,
+                Self::DirectLinkRead(_) | Self::KeywordCacheGet(_) | Self::KeywordCacheEmpty(_) => count == 0,
                 Self::NativeObjectGet => count == 2,
                 Self::NativeObjectSet | Self::NativeObjectStrictSet => count == 3,
                 Self::NamedGet => count == 3 && arguments[1] == Type::String,
@@ -3179,7 +3191,7 @@ impl Analyzer<'_> {
                     callee: std::sync::Arc::new(callee),
                     arguments: arguments.clone().into(),
                 }));
-            return Ok(self.nominal(form, Nominal::Identical, arguments));
+            return Ok(self.nominal(form, Nominal::SameReference, arguments));
         }
         // `(= x y)` and `(hash x)` on longs in i31 range (#387). Core's `=`
         // answers equiv for two numbers, and two i31 longs are equiv exactly
