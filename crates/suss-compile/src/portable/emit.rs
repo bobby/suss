@@ -201,7 +201,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     Operation::Nominal { operation, arguments } => match operation {
                         Nominal::IsNumber | Nominal::IsString | Nominal::Array => {}
                         Nominal::IsKeyword => { names.insert("keyword-test"); }
-                        Nominal::DirectLinkDefine(_) | Nominal::DirectLinkRead(_) | Nominal::DirectLinkSet(_) => {}
+                        Nominal::DirectLinkDefine(_) | Nominal::DirectLinkRead(_) | Nominal::DirectLinkSet(_)
+                        | Nominal::KeywordCacheGet(_) | Nominal::KeywordCacheSet(_) | Nominal::KeywordCacheEmpty(_) => {}
                         Nominal::KeywordIntern => { names.insert("keyword-intern"); }
                         Nominal::CoerceString => { names.insert("coerce-string"); }
                         Nominal::ObjectCoerceString => { names.insert("object-coerce-string"); }
@@ -209,7 +210,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ValueAdd => { names.insert("value-add"); }
                         Nominal::IsBoolean => {}
                         Nominal::Identical => { names.insert("identical-value"); }
-                        Nominal::AllSmallIntegers | Nominal::IsObject | Nominal::IsDescriptor => {}
+                        Nominal::AllSmallIntegers | Nominal::IsObject | Nominal::IsDescriptor | Nominal::SameReference => {}
                         Nominal::NumberHash => { names.insert("number-hash"); }
                         Nominal::StringIndexOf => { names.insert("string-index-of"); }
                         Nominal::StringSlice => { names.insert("string-slice"); }
@@ -478,6 +479,17 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 && !static_callees.contains(&operands[0])
             {
                 call_site_list.push(((function as *const IrFunction as usize, inst.result.0 as u32), operands.len() as u32 - 1));
+            }
+        }
+    }
+    // Keyword literal caches (#387): one global per keyword cell read.
+    let mut keyword_cache_list = std::collections::BTreeSet::new();
+    for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
+        .chain(futures.iter().map(|body| &body.continuation.function))
+    {
+        for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
+            if let Operation::Nominal { operation: Nominal::KeywordCacheGet(cache) | Nominal::KeywordCacheSet(cache) | Nominal::KeywordCacheEmpty(cache), .. } = &inst.operation {
+                keyword_cache_list.insert(*cache);
             }
         }
     }
@@ -796,6 +808,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let call_sites = call_site_list.iter().enumerate()
         .map(|(index, (site, _))| (*site, first_call_site + 2 * index as u32))
         .collect::<std::collections::HashMap<_, _>>();
+    let first_keyword_cache = first_call_site + 2 * call_site_list.len() as u32;
+    let keyword_caches = keyword_cache_list.iter().enumerate()
+        .map(|(index, cache)| (*cache, first_keyword_cache + index as u32))
+        .collect::<std::collections::HashMap<_, _>>();
     for (index, definition) in imported_definitions.iter().enumerate() {
         links.codes.insert(*definition, first_imported_link + imported_slots.len() as u32 + index as u32);
         let entries = (0..=runtime_abi::MAX_FIXED).map(|k| {
@@ -821,7 +837,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let mut data = LiteralData::default();
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
         dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites, length_sites: &length_sites,
-        method_sites: &method_sites, instance_sites: &instance_sites, call_sites: &call_sites, epoch_global };
+        method_sites: &method_sites, instance_sites: &instance_sites, call_sites: &call_sites, keyword_caches: &keyword_caches, epoch_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -940,6 +956,12 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             &ConstExpr::ref_func(fallback as u32),
         );
     }
+    for _ in &keyword_cache_list {
+        code_globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::ref_null(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }),
+        );
+    }
     for (definition, global) in &defined_code {
         exports.export(&format!("link.{definition}.code"), ExportKind::Global, *global);
         for (k, entry) in links.entries[definition].iter().enumerate() {
@@ -960,7 +982,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .section(&types)
         .section(&imports)
         .section(&functions);
-    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() {
+    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() || !keyword_cache_list.is_empty() {
         module.section(&code_globals);
     }
     module.section(&exports);
@@ -1046,6 +1068,8 @@ struct Context<'a> {
     /// Cached core field read sites, by (function, result): their first global.
     field_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     length_sites: &'a std::collections::HashSet<(usize, u32)>,
+    /// Keyword literal caches, by keyword cell number: their global (#387).
+    keyword_caches: &'a std::collections::HashMap<usize, u32>,
     /// Cached closure call sites: their first global (#378).
     call_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     /// Cached `instance?` sites: their first global (#378).
@@ -1379,7 +1403,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
-    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, call_sites, epoch_global } = *context;
+    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, call_sites, keyword_caches, epoch_global } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -1886,10 +1910,14 @@ fn emit_function(
                         .instruction(&runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels))
                         .instruction(&RefEq)
                         .instruction(&I32Or);
-                    for instruction in runtime_abi::boolean_in(sentinels) {
-                        function.instruction(&instruction);
+                    if locals.of(inst.result) == unboxed::Repr::Flag {
+                        function.instruction(&LocalSet(locals.raw(inst.result)));
+                    } else {
+                        for instruction in runtime_abi::boolean_in(sentinels) {
+                            function.instruction(&instruction);
+                        }
+                        function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                     }
-                    function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Bitwise {
                     operation,
@@ -2271,6 +2299,12 @@ fn emit_function(
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                 .instruction(&RefTestNonNull(HeapType::Concrete(7)));
                         }
+                        Nominal::SameReference => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&LocalGet(arguments[1].0 as u32 + offset))
+                                .instruction(&RefEq);
+                        }
                         Nominal::IsDescriptor => {
                             function
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
@@ -2302,6 +2336,18 @@ fn emit_function(
                         // published when its definition runs.
                         Nominal::DirectLinkRead(link) => {
                             function.instruction(&GlobalGet(links.slots[&super::hir::link_parts(*link).0]));
+                        }
+                        Nominal::KeywordCacheGet(cache) => {
+                            function.instruction(&GlobalGet(keyword_caches[cache]));
+                        }
+                        Nominal::KeywordCacheEmpty(cache) => {
+                            function.instruction(&GlobalGet(keyword_caches[cache])).instruction(&RefIsNull);
+                        }
+                        Nominal::KeywordCacheSet(cache) => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&GlobalSet(keyword_caches[cache]))
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset));
                         }
                         Nominal::KeywordIntern => {
                             function
@@ -2590,12 +2636,18 @@ fn emit_function(
                             })));
                         }
                     }
-                    if operation.result() == Type::Bool {
-                        for instruction in runtime_abi::boolean_in(sentinels) {
-                            function.instruction(&instruction);
+                    if locals.of(inst.result) == unboxed::Repr::Flag {
+                        // Its i32 truth value (#387); uses that need a value
+                        // take the boolean sentinel.
+                        function.instruction(&LocalSet(locals.raw(inst.result)));
+                    } else {
+                        if operation.result() == Type::Bool {
+                            for instruction in runtime_abi::boolean_in(sentinels) {
+                                function.instruction(&instruction);
+                            }
                         }
+                        function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                     }
-                    function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Arithmetic {
                     operator,

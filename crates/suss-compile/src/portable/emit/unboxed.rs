@@ -19,7 +19,8 @@ pub(super) enum Repr {
     Boxed,
     Long,
     Double,
-    /// An i32 truth value, from a numeric comparison.
+    /// An i32 truth value, from a numeric comparison, a nil test or a
+    /// boolean nominal test (#387).
     Flag,
 }
 impl Repr {
@@ -261,7 +262,26 @@ pub(super) fn infer(function: &Function, resumable: bool) -> Vec<Repr> {
             }
         }
     }
+    // A nil test or a boolean nominal test keeps its i32 truth value (#387):
+    // a branch tests it directly, and any other use takes the boolean
+    // sentinel, as a numeric comparison's flag does.
+    for block in &function.blocks {
+        for instruction in &block.instructions {
+            if flag_test(&instruction.operation) {
+                repr[instruction.result.0] = Repr::Flag;
+            }
+        }
+    }
     repr
+}
+
+/// Whether the operation computes an i32 truth value that emission boxes.
+pub(super) fn flag_test(operation: &Operation) -> bool {
+    match operation {
+        Operation::NilTest(_) => true,
+        Operation::Nominal { operation, .. } => operation.result() == super::super::hir::Type::Bool,
+        _ => false,
+    }
 }
 
 /// Raw locals for the unboxed values, numbered from `base`.

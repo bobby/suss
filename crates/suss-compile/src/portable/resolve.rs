@@ -318,6 +318,9 @@ pub struct Environment {
     /// definition writes its closure to.
     direct_slots: BTreeMap<Global, usize>,
     direct_link_count: usize,
+    /// Each keyword cell's number (#387): a fragment caches the interned
+    /// keyword its literals read in one global per number.
+    keyword_caches: BTreeMap<Global, usize>,
 }
 /// Namespace of a qualified symbol, as the pinned analyzer's resolve-var and
 /// resolve-macro-var resolve it: `clojure.core` names `cljs.core` (`suss.core`)
@@ -463,6 +466,7 @@ impl Environment {
             direct_links: BTreeMap::new(),
             direct_slots: BTreeMap::new(),
             direct_link_count: 0,
+            keyword_caches: BTreeMap::new(),
         };
         for phase in [Phase::Runtime, Phase::Macro] {
             env.scopes.insert(
@@ -1122,6 +1126,11 @@ impl Environment {
             self.bind(global.clone(), Binding::InternalCell(global.clone()));
         }
         global
+    }
+    /// The number of a keyword cell's per-fragment cache (#387).
+    pub(crate) fn keyword_cache(&mut self, cell: &Global) -> usize {
+        let next = self.keyword_caches.len();
+        *self.keyword_caches.entry(cell.clone()).or_insert(next)
     }
     /// Link the shipped core image's calls to its own functions (#360).
     pub(crate) fn set_core_image_links(&mut self, enabled: bool) {

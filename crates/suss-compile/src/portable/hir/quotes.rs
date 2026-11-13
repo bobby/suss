@@ -85,9 +85,26 @@ impl Analyzer<'_> {
             span: form.span.clone(),
             metadata: Vec::new(),
             ty: Type::Value,
-            kind: std::sync::Arc::new(Expression::Global(global)),
+            kind: std::sync::Arc::new(Expression::Global(global.clone())),
         };
-        Ok(self.do_hir(form, vec![initialize, read]))
+        let slow = self.do_hir(form, vec![initialize, read]);
+        // The fragment caches the keyword after its first read (#387), so a
+        // literal costs a global read, not the cell's definition test.
+        let cache = self.environment.keyword_cache(&global);
+        let node = |kind: Expression, ty: Type| Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: Vec::new(),
+            ty,
+            kind: std::sync::Arc::new(kind),
+        };
+        let empty = self.nominal(form, Nominal::KeywordCacheEmpty(cache), vec![]);
+        let store = self.nominal(form, Nominal::KeywordCacheSet(cache), vec![slow]);
+        let read = self.nominal(form, Nominal::KeywordCacheGet(cache), vec![]);
+        Ok(node(
+            Expression::If { condition: Box::new(empty), consequent: Box::new(store), alternative: Box::new(read) },
+            Type::Value,
+        ))
     }
     pub(super) fn quote_data(&mut self, form: &Form, depth: usize) -> Result<Hir, Diagnostic> {
         self.quote_data_impl(form, depth, false)
