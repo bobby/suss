@@ -452,6 +452,11 @@ impl Bitwise {
 pub enum Nominal {
     /// Immutable private tests; public predicate cells remain live.
     IsNumber,
+    /// Whether the operand is a long: an i31 or a boxed long (#388).
+    IsLongValue,
+    /// A string, the first operand, followed by the digits of a long, the
+    /// second (#388).
+    StringAppendLong,
     /// `suss.bootstrap/keyword?` (#361): an object with the interned keywords'
     /// descriptor. Needs no Keyword class, so core can test before defining it.
     IsKeyword,
@@ -598,6 +603,7 @@ impl Nominal {
             | Self::SameNominalType
             | Self::Satisfies
             | Self::NativeSatisfies
+            | Self::IsLongValue
             | Self::NativeMarker(_)
             | Self::KeywordCacheEmpty(_) => Type::Bool,
             _ => Type::Value,
@@ -614,6 +620,8 @@ impl Nominal {
                 Self::AllSmallIntegers => count >= 1,
                 Self::NumberHash => count == 1,
                 Self::IsObject | Self::IsDescriptor => count == 1,
+                Self::IsLongValue => count == 1,
+                Self::StringAppendLong => count == 2,
                 Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
@@ -1836,30 +1844,41 @@ impl Analyzer<'_> {
                 callee: std::sync::Arc::new(callee.clone()),
                 arguments: bindings.iter().map(|binding| binding.value.clone()).collect::<Vec<_>>().into(),
             }));
-        let mut text = None;
-        for local in locals {
-            let converted = Hir {
-                source: None,
-                span: form.span.clone(),
-                metadata: form.metadata.clone(),
-                ty: Type::Value,
-                kind: std::sync::Arc::new(Expression::Call {
-                    callee: Box::new(self.prepare_source_callee(form, callee.clone(), 1)?),
-                    arguments: vec![local],
-                }),
-            };
-            text = Some(match text {
-                None => converted,
-                Some(left) => self.nominal(form, Nominal::ConcatString, vec![left, converted]),
-            });
-        }
-        Ok(Hir {
+        let node = |kind: Expression, ty: Type| Hir {
             source: None,
             span: form.span.clone(),
             metadata: form.metadata.clone(),
-            ty: Type::Value,
-            kind: std::sync::Arc::new(Expression::Let { bindings, body: Box::new(text.expect("operands")) }),
-        })
+            ty,
+            kind: std::sync::Arc::new(kind),
+        };
+        // The text so far, bound once; a later long operand's digits are
+        // appended to it directly, with no intermediate digit string.
+        let mut text: Option<Hir> = None;
+        for local in locals {
+            let converted = node(
+                Expression::Call {
+                    callee: Box::new(self.prepare_source_callee(form, callee.clone(), 1)?),
+                    arguments: vec![local.clone()],
+                },
+                Type::Value,
+            );
+            text = Some(match text {
+                None => converted,
+                Some(left) => {
+                    let left = self.fresh_binding(form, left);
+                    let read = self.local(form, left.id);
+                    let test = self.nominal(form, Nominal::IsLongValue, vec![local.clone()]);
+                    let append = self.nominal(form, Nominal::StringAppendLong, vec![read.clone(), local]);
+                    let concat = self.nominal(form, Nominal::ConcatString, vec![read, converted]);
+                    let choice = node(
+                        Expression::If { condition: Box::new(test), consequent: Box::new(append), alternative: Box::new(concat) },
+                        Type::Value,
+                    );
+                    node(Expression::Let { bindings: vec![left], body: Box::new(choice) }, Type::Value)
+                }
+            });
+        }
+        Ok(node(Expression::Let { bindings, body: Box::new(text.expect("operands")) }, Type::Value))
     }
     /// `(f a …)` where every operand is an i31 runs `fast` on the operands,
     /// and otherwise calls f (#387). Operands are evaluated once, in order.
