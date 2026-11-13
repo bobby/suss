@@ -2104,12 +2104,20 @@
   (-count [coll] cnt)
 
   IIndexed
+  ;; The runtime walks the trie (#378); it answers undefined, which nil?
+  ;; matches, for anything it doesn't read, which takes the pinned path.
   (-nth [coll n]
-    (aget (array-for coll n) (bit-and n 0x01f)))
+    (let [x (suss.bootstrap/vector-nth coll n)]
+      (if (suss.bootstrap/nil? x)
+        (aget (array-for coll n) (bit-and n 0x01f))
+        x)))
   (-nth [coll n not-found]
-    (if (and (<= 0 n) (< n cnt))
-      (aget (unchecked-array-for coll n) (bit-and n 0x01f))
-      not-found))
+    (let [x (suss.bootstrap/vector-nth coll n)]
+      (if (suss.bootstrap/nil? x)
+        (if (and (<= 0 n) (< n cnt))
+          (aget (unchecked-array-for coll n) (bit-and n 0x01f))
+          not-found)
+        x)))
 
   ILookup
   (-lookup [coll k] (-lookup coll k nil))

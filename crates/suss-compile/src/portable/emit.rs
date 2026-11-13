@@ -209,6 +209,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ConcatString => { names.insert("string-concat"); }
                         Nominal::StringAppendLong => { names.insert("string-append-long"); }
                         Nominal::StringHash => { names.insert("string-hash"); }
+                        Nominal::VectorNth => { names.insert("vector-nth"); }
                         Nominal::PackedGet(_) => { names.insert("packed-array-get-2"); names.insert("source-array-get-2"); }
                         Nominal::PackedSet(_) => { names.insert("packed-array-set-3"); names.insert("source-array-set-3"); }
                         Nominal::ValueAdd => { names.insert("value-add"); }
@@ -2445,6 +2446,12 @@ fn emit_function(
                             for instruction in code {
                                 function.instruction(&instruction);
                             }
+                        }
+                        Nominal::VectorNth => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&LocalGet(arguments[1].0 as u32 + offset))
+                                .instruction(&Call(index("vector-nth")));
                         }
                         Nominal::StringHash => {
                             function

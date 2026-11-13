@@ -464,6 +464,9 @@ pub enum Nominal {
     /// `hashCode`, `h = 31h + unit` over its UTF-16 units in int32
     /// arithmetic, as ClojureScript's `(m3-hash-int (hash-string* s))`.
     StringHash,
+    /// Element n of a PersistentVector, walked by the runtime, or undefined
+    /// for the general path (#378).
+    VectorNth,
     /// A string, the first operand, followed by the digits of a long, the
     /// second (#388).
     StringAppendLong,
@@ -631,7 +634,7 @@ impl Nominal {
                 Self::NumberHash => count == 1,
                 Self::IsObject | Self::IsDescriptor => count == 1,
                 Self::IsLongValue | Self::StringHash => count == 1,
-                Self::PackedGet(_) => count == 2,
+                Self::PackedGet(_) | Self::VectorNth => count == 2,
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
                 Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
@@ -2989,6 +2992,7 @@ impl Analyzer<'_> {
                 "object-coerce-string" => Some(Nominal::ObjectCoerceString),
                 "concat-string" => Some(Nominal::ConcatString),
                 "string-hash" => Some(Nominal::StringHash),
+                "vector-nth" => Some(Nominal::VectorNth),
                 "string-index-of" => Some(Nominal::StringIndexOf),
                 "string-slice" => Some(Nominal::StringSlice),
                 "string-from-unit" => Some(Nominal::StringFromUnit),

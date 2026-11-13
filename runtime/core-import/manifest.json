@@ -5026,8 +5026,8 @@
       "extracted": "extracted/0157.cljs",
       "extracted-sha256": "a084c97574a4e1d22d23973be4f9ecb9dc9850e264092917cba5d4fbab44d5e7",
       "patch": "docs/compatibility/patches/vector-persistent-vector.json",
-      "patch-sha256": "cb7cf46e9ef3157c180f19a64d656d8d360beeede66b66cc5b76e83364672978",
-      "adapted-form-sha256": "eb9995341a11890ef9a8e6bd4b81b51d1c77c622b706d7a4e689d3d409735419",
+      "patch-sha256": "99b1f5b594087088d0fa2e66431e9c333f26c50db920768535a84bd23f15ee50",
+      "adapted-form-sha256": "1d4b9e8600bb9a9acfff7265e791dcccf01ab38f53520f5f036465e6191e07e0",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -16484,6 +16484,6 @@
     "extracted/0513.cljs": "02b4047a3496243c5528041564a9f8ded2f3aae951be387e8779ab0e956464c3",
     "extracted/0514.cljs": "d42068d54f1844f88abb73548a3a554a3cc1f5af315fd590533b4fd80de350ec",
     "extracted/0515.cljs": "072c8a681fd905767f56c48e6c3529b99e9d5f537def64cb299f5bac29c7c59b",
-    "suss/core.sus": "388879a09d110ddd6d4164d3089d29a26c6b36935080e4eb41d33a046e42b0ef"
+    "suss/core.sus": "2b1dfa38cd1685f16fccfe846d0e89f9ebe0addeea87ed9952e4c432c7b49041"
   }
 }
