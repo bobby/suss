@@ -1,6 +1,6 @@
 # Portable closures and calls
 
-## Calling convention (runtime ABI 4, ADR-0004)
+## Calling convention (runtime ABI 6, ADR-0004)
 
 Compiled closures and calls follow
 [ADR-0004](../adr/0004-calling-convention.md) (#353). The shared type group
@@ -9,8 +9,9 @@ defines:
 - `$closure {code, properties, uid}`, non-final. Every closure is a subtype.
 - `$code {name, e0 … e8, spread}`, a function definition's shared code struct.
   `name` is the name Clojure's arity error reports, such as `user/f`.
-- `$call0` to `$call8`: `(ref $closure) eqref × k -> eqref`, the entry for k
-  arguments.
+- `$call0` to `$call8`: `eqref eqref × k -> eqref`, the entry for k
+  arguments. It takes its closure as `eqref` (ABI 6) and casts it to its own
+  final type, so a caller holding the entry needs no cast.
 - `$spread`: `(ref $closure) (ref $args) eqref -> eqref`, realized arguments
   and an unrealized rest (nil until `apply` passes one).
 - The universal closure, a `$closure` subtype with an environment, an
@@ -36,11 +37,14 @@ is the closure parameter, so nothing is patched after allocation. Properties
 (native protocol tables and the display name) live in the closure's
 `properties` field, created on first use.
 
-A call with up to 8 arguments to an unknown callee casts it to `$closure` with
-`br_on_cast_fail`, reads the code struct's entry, and `call_ref`s it
-(`return_call_ref` in tail position). Any other callee goes out of line to the
-runtime's `call-k`, as do calls with more arguments, through `call-spread`.
-Those helpers invoke a closure, and bind any other value through IFn's
+A call with up to 8 arguments to an unknown callee goes through its site's
+cache (#378): two mutable globals holding the site's last callee and that
+callee's entry. The same callee `call_ref`s the cached entry
+(`return_call_ref` in tail position). A different callee first replaces both
+with `call-entry-k`'s answer: a closure's entry from its code struct, or for
+any other value `call-fallback-k`, an entry that calls the runtime's `call-k`.
+A site starts with nil and the fallback. Calls with more arguments go to
+`call-spread`. `call-k` and `call-spread` invoke a closure, and bind any other value through IFn's
 `-invoke` key for the signature arity, which `(defprotocol IFn …)` registers
 with the runtime. Without a key, `invoke` reports Clojure's unbound-fn error
 or "Not callable". The callable is bound after its arguments are evaluated, as

@@ -209,7 +209,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ValueAdd => { names.insert("value-add"); }
                         Nominal::IsBoolean => {}
                         Nominal::Identical => { names.insert("identical-value"); }
-                        Nominal::AllSmallIntegers => {}
+                        Nominal::AllSmallIntegers | Nominal::IsObject | Nominal::IsDescriptor => {}
                         Nominal::NumberHash => { names.insert("number-hash"); }
                         Nominal::StringIndexOf => { names.insert("string-index-of"); }
                         Nominal::StringSlice => { names.insert("string-slice"); }
@@ -457,6 +457,34 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }
         }
     }
+    // Closure call sites cache their last callee and its entry (#378): a
+    // closure's code never changes, and an entry held in a global calls
+    // without wasmtime's out-of-line function-reference read from a struct.
+    // Callees the function makes or direct-links call their entries
+    // statically.
+    let mut call_site_list = vec![];
+    for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
+        .chain(futures.iter().map(|body| &body.continuation.function))
+    {
+        let static_callees = function.blocks.iter().flat_map(|block| &block.instructions)
+            .filter(|inst| matches!(&inst.operation,
+                Operation::MakeClosure { .. } | Operation::MakeGeneralClosure { .. }
+                | Operation::Nominal { operation: Nominal::DirectLinkRead(_), .. }))
+            .map(|inst| inst.result)
+            .collect::<std::collections::HashSet<_>>();
+        for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
+            if let Operation::Call { operands } = &inst.operation
+                && operands.len() - 1 <= runtime_abi::MAX_FIXED as usize
+                && !static_callees.contains(&operands[0])
+            {
+                call_site_list.push(((function as *const IrFunction as usize, inst.result.0 as u32), operands.len() as u32 - 1));
+            }
+        }
+    }
+    for (_, k) in &call_site_list {
+        names.insert(runtime_abi::CALL_ENTRY_EXPORTS[*k as usize]);
+        names.insert(runtime_abi::CALL_FALLBACK_EXPORTS[*k as usize]);
+    }
 
     let imported_slots = slots.iter().copied().filter(|slot| !owned_slots.contains(slot)).collect::<Vec<_>>();
     let imported_definitions = called.iter().copied().filter(|definition| !defined_definitions.contains_key(definition)).collect::<Vec<_>>();
@@ -594,6 +622,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 vec![ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::NAMED_SITE) }), VALUE, VALUE],
                 vec![ValType::I32],
             ),
+            name if name.starts_with("call-entry-") => {
+                let k: u32 = name["call-entry-".len()..].parse().expect("call-entry-k");
+                (vec![VALUE], vec![ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::CALL + k) })])
+            }
             "named-site-get" => (
                 vec![ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::NAMED_SITE) }), VALUE, VALUE],
                 vec![VALUE],
@@ -615,8 +647,11 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             (params, results)
         };
         types.ty().function(params, results);
-        // An arity error is an entry, of the shared group's `$callk` type.
-        let ty = match runtime_abi::ARITY_ERROR_EXPORTS.iter().position(|error| error == name) {
+        // An arity error or a call fallback is an entry, of the shared
+        // group's `$callk` type.
+        let entry = runtime_abi::ARITY_ERROR_EXPORTS.iter().position(|error| error == name)
+            .or_else(|| runtime_abi::CALL_FALLBACK_EXPORTS.iter().position(|fallback| fallback == name));
+        let ty = match entry {
             Some(k) => runtime_abi::CALL + k as u32,
             None => type_count + i as u32,
         };
@@ -757,6 +792,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let instance_sites = instance_site_list.iter().enumerate()
         .map(|(index, site)| (*site, first_instance_site + index as u32))
         .collect::<std::collections::HashMap<_, _>>();
+    let first_call_site = first_instance_site + instance_site_list.len() as u32;
+    let call_sites = call_site_list.iter().enumerate()
+        .map(|(index, (site, _))| (*site, first_call_site + 2 * index as u32))
+        .collect::<std::collections::HashMap<_, _>>();
     for (index, definition) in imported_definitions.iter().enumerate() {
         links.codes.insert(*definition, first_imported_link + imported_slots.len() as u32 + index as u32);
         let entries = (0..=runtime_abi::MAX_FIXED).map(|k| {
@@ -782,7 +821,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let mut data = LiteralData::default();
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
         dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites, length_sites: &length_sites,
-        method_sites: &method_sites, instance_sites: &instance_sites, epoch_global };
+        method_sites: &method_sites, instance_sites: &instance_sites, call_sites: &call_sites, epoch_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -883,6 +922,24 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             &ConstExpr::extended(runtime_abi::named_site_initializer()),
         );
     }
+    for (_, k) in &call_site_list {
+        // The site's last callee, and its entry for k arguments (#378). The
+        // site starts with nil and the fallback entry, which calls `call-k`
+        // and so is right for any callee.
+        code_globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::ref_null(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }),
+        );
+        let fallback = names.iter().position(|name| *name == runtime_abi::CALL_FALLBACK_EXPORTS[*k as usize]).expect("call fallback");
+        code_globals.global(
+            GlobalType {
+                val_type: ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::CALL + k) }),
+                mutable: true,
+                shared: false,
+            },
+            &ConstExpr::ref_func(fallback as u32),
+        );
+    }
     for (definition, global) in &defined_code {
         exports.export(&format!("link.{definition}.code"), ExportKind::Global, *global);
         for (k, entry) in links.entries[definition].iter().enumerate() {
@@ -903,7 +960,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .section(&types)
         .section(&imports)
         .section(&functions);
-    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() {
+    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() {
         module.section(&code_globals);
     }
     module.section(&exports);
@@ -989,6 +1046,8 @@ struct Context<'a> {
     /// Cached core field read sites, by (function, result): their first global.
     field_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     length_sites: &'a std::collections::HashSet<(usize, u32)>,
+    /// Cached closure call sites: their first global (#378).
+    call_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     /// Cached `instance?` sites: their first global (#378).
     instance_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     /// Cached protocol method lookup sites: their first global; the epoch.
@@ -1320,7 +1379,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
-    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, epoch_global } = *context;
+    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, call_sites, epoch_global } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -1754,38 +1813,31 @@ fn emit_function(
                         }
                     } else if arguments.len() <= runtime_abi::MAX_FIXED as usize {
                         // ADR-0004: a closure calls its code struct's entry for
-                        // this many arguments; anything else goes out of line
-                        // to the runtime's `call-k`.
+                        // this many arguments, which the site caches with
+                        // its last callee (#378). Any other callee caches its
+                        // entry from `call-entry-k`: a closure's, or the
+                        // fallback that calls the runtime's `call-k`.
                         let k = arguments.len() as u32;
+                        let site = call_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
                         function
-                            .instruction(&Block(BlockType::Result(VALUE)))
-                            .instruction(&Block(BlockType::Result(VALUE)))
+                            .instruction(&GlobalGet(site))
                             .instruction(&LocalGet(callee_local))
-                            .instruction(&BrOnCastFail {
-                                relative_depth: 0,
-                                from_ref_type: RefType::EQREF,
-                                to_ref_type: RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::CLOSURE) },
-                            })
-                            .instruction(&LocalTee(callee))
-                            .instruction(&RefAsNonNull);
-                        for value in arguments {
-                            function.instruction(&LocalGet(value.0 as u32 + offset));
-                        }
-                        function
-                            .instruction(&LocalGet(callee))
-                            .instruction(&StructGet { struct_type_index: runtime_abi::CLOSURE, field_index: runtime_abi::CLOSURE_CODE })
-                            .instruction(&StructGet { struct_type_index: runtime_abi::CODE, field_index: runtime_abi::CODE_ENTRY + k })
-                            .instruction(&if tail { ReturnCallRef(runtime_abi::CALL + k) } else { CallRef(runtime_abi::CALL + k) })
-                            .instruction(&Br(1))
-                            .instruction(&End);
-                        // The callee, left by the failed cast, then its arguments.
-                        for value in arguments {
-                            function.instruction(&LocalGet(value.0 as u32 + offset));
-                        }
-                        let call = index(runtime_abi::CALL_EXPORTS[k as usize]);
-                        function
-                            .instruction(&if tail { ReturnCall(call) } else { Call(call) })
+                            .instruction(&RefEq)
+                            .instruction(&I32Eqz)
+                            .instruction(&If(BlockType::Empty))
+                            .instruction(&LocalGet(callee_local))
+                            .instruction(&Call(index(runtime_abi::CALL_ENTRY_EXPORTS[k as usize])))
+                            .instruction(&GlobalSet(site + 1))
+                            .instruction(&LocalGet(callee_local))
+                            .instruction(&GlobalSet(site))
                             .instruction(&End)
+                            .instruction(&LocalGet(callee_local));
+                        for value in arguments {
+                            function.instruction(&LocalGet(value.0 as u32 + offset));
+                        }
+                        function
+                            .instruction(&GlobalGet(site + 1))
+                            .instruction(&if tail { ReturnCallRef(runtime_abi::CALL + k) } else { CallRef(runtime_abi::CALL + k) })
                             .instruction(&LocalSet(inst.result.0 as u32 + offset));
                     } else {
                         function.instruction(&LocalGet(callee_local));
@@ -2213,6 +2265,16 @@ fn emit_function(
                             function
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                 .instruction(&Call(index("number-hash")));
+                        }
+                        Nominal::IsObject => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(7)));
+                        }
+                        Nominal::IsDescriptor => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(6)));
                         }
                         Nominal::IsString => {
                             function

@@ -466,6 +466,12 @@ pub enum Nominal {
     /// `number-hash` (#387): Clojure's hash of a number, for an operand
     /// already known to be one.
     NumberHash,
+    /// Whether the operand is an object with a descriptor (a deftype,
+    /// defrecord or other nominal instance), whose protocol methods are in
+    /// its descriptor's method table (#378).
+    IsObject,
+    /// Whether the operand is a descriptor: a bound protocol method key (#378).
+    IsDescriptor,
     IsClosure,
     BindCallable,
     /// A direct-linked definition (#360), its var's slot and the definition
@@ -571,6 +577,8 @@ impl Nominal {
             | Self::IsBoolean
             | Self::Identical
             | Self::AllSmallIntegers
+            | Self::IsObject
+            | Self::IsDescriptor
             | Self::IsClosure
             | Self::IsNativeObject
             | Self::IsTypeConstructor
@@ -593,6 +601,7 @@ impl Nominal {
                 Self::Identical => count == 2,
                 Self::AllSmallIntegers => count >= 1,
                 Self::NumberHash => count == 1,
+                Self::IsObject | Self::IsDescriptor => count == 1,
                 Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
@@ -1661,6 +1670,128 @@ impl Analyzer<'_> {
         } else {
             self.environment.direct_linking
         }
+    }
+    /// The protocol whose method `resolved` is, for a call with `count`
+    /// operands (the receiver first), when the call may dispatch at its site:
+    /// from core, or from direct-linked user code, as Clojure's call sites
+    /// test the receiver's class whatever the var later holds. IFn's -invoke
+    /// keeps its own dispatcher.
+    fn protocol_call_site(&self, resolved: &Option<ResolvedBinding>, count: usize) -> Option<Global> {
+        let Some(ResolvedBinding::Cell(global)) = resolved else { return None };
+        if count == 0 || count > crate::runtime_abi::MAX_FIXED as usize {
+            return None;
+        }
+        let allowed = if self.privileged {
+            global.namespace() == "suss.core"
+        } else {
+            self.environment.direct_linking
+        };
+        if !allowed {
+            return None;
+        }
+        self.environment
+            .protocols
+            .iter()
+            .find(|(protocol, methods)| {
+                protocol.phase() == self.phase
+                    && protocol.namespace() == global.namespace()
+                    && !(protocol.namespace() == "suss.core" && protocol.name() == "IFn")
+                    && methods.iter().any(|method| {
+                        method.name == global.name() && method.signatures.iter().any(|(n, _)| *n == count)
+                    })
+            })
+            .map(|(protocol, _)| protocol.clone())
+    }
+    /// `(m x a …)` for protocol method m (#378): an object receiver whose
+    /// descriptor has the method calls it directly, through the site's cached
+    /// method lookup and closure call; anything else calls m, whose
+    /// dispatcher also tries native and default implementations and raises
+    /// the protocol's error. Operands are evaluated once, in order.
+    fn protocol_site_call(&mut self, form: &Form, items: &[Form], protocol: &Global) -> Result<Hir, Diagnostic> {
+        let Kind::Symbol(symbol) = &items[0].kind else { unreachable!("protocol call by symbol") };
+        let mut bindings = Vec::with_capacity(items.len() - 1);
+        for item in &items[1..] {
+            let value = self.form(item)?;
+            bindings.push(self.fresh_binding(item, value));
+        }
+        let locals = bindings
+            .iter()
+            .map(|binding| {
+                let mut local = self.local(form, binding.id);
+                local.ty = binding.value.ty;
+                local
+            })
+            .collect::<Vec<_>>();
+        let callee = self.form(&items[0])?;
+        let callee = match &*callee.kind {
+            Expression::Global(global) => match self.direct_link(global) {
+                Some(link) => self.nominal(&items[0], Nominal::DirectLinkRead(link), vec![]),
+                None => callee,
+            },
+            _ => callee,
+        };
+        *self.source_nodes.last_mut().expect("source node fact slot") =
+            Some(std::sync::Arc::new(SourceNode::Invoke {
+                callee: std::sync::Arc::new(callee.clone()),
+                arguments: bindings.iter().map(|binding| binding.value.clone()).collect::<Vec<_>>().into(),
+            }));
+        let call = |this: &mut Self, callee: Hir| -> Result<Hir, Diagnostic> {
+            Ok(Hir {
+                source: None,
+                span: form.span.clone(),
+                metadata: form.metadata.clone(),
+                ty: Type::Value,
+                kind: std::sync::Arc::new(Expression::Call {
+                    callee: Box::new(this.prepare_source_callee(form, callee, locals.len())?),
+                    arguments: locals.clone(),
+                }),
+            })
+        };
+        let slow = call(self, callee)?;
+        let node = |kind: Expression, ty: Type| Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty,
+            kind: std::sync::Arc::new(kind),
+        };
+        // The method: an object's, from its descriptor through the site's
+        // cache, or nil. The protocol fn is called in one place, for nil.
+        // The site reads the method's key without creating it: only a method
+        // definition creates a key (`stable_key`), so while it is unbound no
+        // type has the method, and a definition bumps the protocol epoch.
+        let key = self.environment.protocol_key(protocol, &symbol.name, locals.len());
+        let key = node(Expression::Global(key), Type::Value);
+        let key = self.fresh_binding(form, key);
+        let key_read = self.local(form, key.id);
+        let descriptor = self.nominal(form, Nominal::ObjectDescriptor, vec![locals[0].clone()]);
+        let lookup = self.nominal(form, Nominal::MethodGet, vec![descriptor, key_read.clone()]);
+        let bound = self.nominal(form, Nominal::IsDescriptor, vec![key_read]);
+        let nil = || node(Expression::Literal(Literal::Nil), Type::Value);
+        let lookup = node(
+            Expression::If { condition: Box::new(bound), consequent: Box::new(lookup), alternative: Box::new(nil()) },
+            Type::Value,
+        );
+        let lookup = node(Expression::Let { bindings: vec![key], body: Box::new(lookup) }, Type::Value);
+        let test = self.nominal(form, Nominal::IsObject, vec![locals[0].clone()]);
+        let lookup = node(
+            Expression::If {
+                condition: Box::new(test),
+                consequent: Box::new(lookup),
+                alternative: Box::new(nil()),
+            },
+            Type::Value,
+        );
+        let method = self.fresh_binding(form, lookup);
+        let method_read = self.local(form, method.id);
+        let direct = node(Expression::Call { callee: Box::new(method_read.clone()), arguments: locals.clone() }, Type::Value);
+        let absent = node(Expression::NilTest(Box::new(method_read)), Type::Bool);
+        let found = node(
+            Expression::If { condition: Box::new(absent), consequent: Box::new(slow), alternative: Box::new(direct) },
+            Type::Value,
+        );
+        let body = node(Expression::Let { bindings: vec![method], body: Box::new(found) }, Type::Value);
+        Ok(node(Expression::Let { bindings, body: Box::new(body) }, Type::Value))
     }
     /// `(f a …)` where every operand is an i31 runs `fast` on the operands,
     /// and otherwise calls f (#387). Operands are evaluated once, in order.
@@ -3004,6 +3135,12 @@ impl Analyzer<'_> {
         }
         if args.len() == 1 && self.linked_core_call(&resolved, "hash") {
             return self.small_integer_call(form, items, |this, form, locals| this.nominal(form, Nominal::NumberHash, locals));
+        }
+        // A protocol method call dispatches at its own site (#378), as
+        // Clojure's compiler emits a class test and an interface call at each
+        // protocol call site rather than relying on the protocol fn's cache.
+        if let Some(protocol) = self.protocol_call_site(&resolved, args.len()) {
+            return self.protocol_site_call(form, items, &protocol);
         }
         if let Some(ResolvedBinding::BootstrapBitwise { operation, .. }) = &resolved {
             return self.bitwise_form(form, args, *operation);

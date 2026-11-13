@@ -229,7 +229,7 @@ falls back to the boxed entry. M15-06 reserves nothing for them.
 
 ### ABI version and migration
 
-This is runtime ABI version 4:
+This is runtime ABI version 4 (version 6 since the amendment below):
 
 - The shared group's `$closure` and `$code` types, and the `$callk`, `$spread`
   and `$args` types, replace today's closure struct and invoke type.
@@ -238,6 +238,51 @@ This is runtime ABI version 4:
 - Compiled artifacts record `:runtime-abi 4`. An artifact compiled for ABI 3
   fails early with the existing mismatch error and must be recompiled. M15-06
   regenerates the bootstrap.
+
+### Amendment: ABI 6 and per-site caches (2026-11-12, #378)
+
+The layout above stands. Two changes keep wasmtime's two host calls off the
+common path without changing it:
+
+- **Entries take their closure as `eqref`.** `$callk` is now
+  `(func (param eqref eqref × k) (result eqref))`. Each method already cast its
+  closure to its own final closure type to read captures, and that cast is
+  inline on every engine. A caller that holds an entry therefore calls it with
+  no cast to the non-final `$closure`. `$spread` is unchanged.
+- **Call sites cache what they found, as a JIT's inline caches would.** Wasm
+  engines don't build these for compiled code, so Suss emits them. Clojure's
+  compiler emits the same kind of check at each protocol call site.
+  - A closure call site keeps its last callee and that callee's entry for the
+    call's arity in two mutable globals. A different callee replaces both with
+    `call-entry-k`'s answer: a closure's entry, or `call-fallback-k`, an entry
+    that calls `call-k`. Then the site calls the entry in its global. A site
+    starts with nil and the fallback, which is right for any callee, so the
+    call is one `ref.eq`, two `global.get`s and a `call_ref`. A closure's code
+    never changes, so the cache needs no invalidation. The entry is held in a
+    global, not a struct field, because reading a function reference from a
+    struct is the host call this avoids.
+  - A call of a protocol method var from core, or from direct-linked code,
+    dispatches at its site: an object whose descriptor has the method calls it
+    through the site's cached method lookup, valid at the protocol epoch, and
+    anything else calls the protocol fn. This is the analogue of Clojure's
+    per-site class test before `invokeinterface`. The site reads the method's
+    key without creating it; only a method definition creates a key.
+  - Named reads, method calls and `instance?` sites cache their descriptor's
+    method, field, or prototype and descriptor (#393, #394, #396, #399).
+
+The runtime exports `call-entry-0` to `call-entry-8` and `call-fallback-0` to
+`call-fallback-8`. This is runtime ABI version 6: artifacts compiled for ABI 5
+fail with the existing mismatch error and must be recompiled.
+
+On wasmtime 49 a cache hit makes no host call. In `experiments/call-floor`
+(#395), a Suss-shaped closure call drops from 16.7 ns to 1.1 ns. In compiled
+Suss on macOS, `(identity i)` drops from 438 to 133 instructions per call, and
+`(ident b)`, a protocol call on a user type, from 1,205 to 278. On V8, the same
+caches cost a compare and a global read. They enlarge the core images by 9%.
+
+Table indices and one final closure type remain the alternatives considered
+above. #395 measured them against wasmtime 49, 50 and 51; neither upgrade
+changes these costs.
 
 ## Consequences
 

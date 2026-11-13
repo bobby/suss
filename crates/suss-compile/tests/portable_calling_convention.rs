@@ -1,6 +1,6 @@
 //! The compiled form of ADR-0004's calling convention (#353): call sites with
 //! no argument array or runtime `invoke`, static calls of known callees, and
-//! runtime ABI 4 artifacts.
+//! runtime ABI 6 artifacts.
 use suss_compile::portable::{
     self,
     resolve::{Environment, Phase},
@@ -54,14 +54,18 @@ fn call_sites_call_the_entry_without_an_argument_array() {
     let (bodies, imports) = functions("(fn [g x] (g x))");
     // The method of `(fn [g x] …)`, which calls an unknown closure.
     let method = &bodies[1];
-    assert!(method.iter().any(|op| op.starts_with("BrOnCastFail")), "{method:?}");
+    // The site calls the entry it cached in a global for its last callee
+    // (ABI 6, #378), with no cast to `$closure` and no read of a function
+    // reference from a struct.
+    assert!(!method.iter().any(|op| op.starts_with("StructGet")), "{method:?}");
+    assert!(!method.iter().any(|op| op.starts_with("BrOnCastFail") || op.starts_with("RefCast")), "{method:?}");
     assert!(
         method.iter().any(|op| *op == format!("ReturnCallRef {{ type_index: {} }}", runtime_abi::CALL + 1)),
         "{method:?}"
     );
     assert!(!method.iter().any(|op| op.starts_with("ArrayNewFixed")), "{method:?}");
-    // Its only call is the out-of-line path, and no call site uses `invoke`.
-    assert_eq!(calls(method, &imports), ["call-1"]);
+    // Its only call finds a new callee's entry, and no call site uses `invoke`.
+    assert_eq!(calls(method, &imports), ["call-entry-1"]);
     assert!(!imports.iter().any(|name| name == "invoke"), "{imports:?}");
 }
 
@@ -81,9 +85,10 @@ fn known_callees_are_static_calls() {
 }
 
 #[test]
-fn artifacts_record_runtime_abi_5_and_abi_4_is_rejected() {
-    // ABI 5 (#378): cached named-read sites hold a NAMED_SITE struct.
-    assert_eq!(runtime_abi::VERSION, 5);
+fn artifacts_record_runtime_abi_6_and_abi_5_is_rejected() {
+    // ABI 6 (#378): entries take their closure as eqref, so a call site calls
+    // its cached entry with no cast.
+    assert_eq!(runtime_abi::VERSION, 6);
     let module = |abi| {
         let mut module = wasm_encoder::Module::new();
         module
@@ -92,7 +97,7 @@ fn artifacts_record_runtime_abi_5_and_abi_4_is_rejected() {
         module.finish()
     };
     let expected = runtime_abi::Manifest::default();
-    assert_eq!(runtime_abi::verify_artifact(&module(5), &expected), Ok(()));
-    let error = runtime_abi::verify_artifact(&module(4), &expected).unwrap_err();
+    assert_eq!(runtime_abi::verify_artifact(&module(6), &expected), Ok(()));
+    let error = runtime_abi::verify_artifact(&module(5), &expected).unwrap_err();
     assert!(error.starts_with("runtime ABI version mismatch"), "{error}");
 }
