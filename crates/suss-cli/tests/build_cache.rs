@@ -366,3 +366,36 @@ fn build_directory_precedence_and_clean() {
     assert!(!refused.status.success());
     assert!(project_dir.join("src/app/core.cljc").exists());
 }
+
+/// `suss run` compiles a program's runtime and core image once (#403): a
+/// different program reuses them from the module layer and compiles only
+/// its own component.
+#[test]
+fn a_new_program_reuses_the_lifted_runtime_and_core_image() {
+    let root = tempfile::tempdir().unwrap();
+    project(root.path());
+    let build = seeded(root.path());
+    success(&compile(root.path(), Some(&build), &[]));
+    let first = suss(
+        root.path(),
+        Some(&build),
+        &["run", "project/out/app.wasm", "--invoke", "api#calculate", "--", "3"],
+    );
+    success(&first);
+    // A different program: the macro's bias changes the compiled code.
+    std::fs::write(root.path().join("project/src/tools.cljs"), tools(7)).unwrap();
+    success(&compile(root.path(), Some(&build), &[]));
+    let second = suss(
+        root.path(),
+        Some(&build),
+        &["run", "project/out/app.wasm", "--invoke", "api#calculate", "--", "3"],
+    );
+    success(&second);
+    assert_ne!(first.stdout, second.stdout);
+    // Its component is new, so it compiles; the lifted modules, the runtime
+    // and the core image among them, are the first program's.
+    assert_eq!(count(&second, "native-component hit"), 0, "{:?}", events(&second));
+    // The program's own module is lifted too and, being new, stored.
+    assert!(count(&second, "native-module hit") >= 2, "{:?}", events(&second));
+    assert!(count(&second, "native-module store") <= 1, "{:?}", events(&second));
+}

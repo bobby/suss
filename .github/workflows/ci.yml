@@ -41,10 +41,32 @@ jobs:
           python3 scripts/clojure_test_suite.py overlap
       - name: Reproduce and execute versioned bootstrap without Java
         run: scripts/verify-bootstrap.sh
+      - name: Restore compiled core images
+        uses: actions/cache/restore@v4
+        with:
+          path: target/suss/cache/v1/native-module
+          key: suss-native-v1-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}-foundation-${{ github.run_id }}
+          restore-keys: |
+            suss-native-v1-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}-foundation-
+            suss-native-v1-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}-
       - name: Test libraries, binaries, examples and documentation
         run: |
           cargo test --workspace --locked --lib --bins --examples -- --test-threads=2
           cargo test --workspace --locked --doc -- --test-threads=2
+      # Keep only the large native modules (the runtime and core images, which
+      # every test program shares); per-form modules and components are cheap
+      # to rebuild and would make the cache several GB (#403). Entries are keyed
+      # by module bytes and wasmtime's compatibility hash, so a stale entry is
+      # only a miss.
+      - name: Keep only large compiled modules
+        if: always()
+        run: find target/suss/cache/v1/native-module -type f -size -1M -delete 2>/dev/null || true
+      - name: Save compiled core images
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: target/suss/cache/v1/native-module
+          key: suss-native-v1-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}-foundation-${{ github.run_id }}
 
   integration:
     runs-on: ubuntu-latest
@@ -62,8 +84,30 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: workspace-tests
+      - name: Restore compiled core images
+        uses: actions/cache/restore@v4
+        with:
+          path: target/suss/cache/v1/native-module
+          key: suss-native-v1-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}-shard${{ matrix.shard }}-${{ github.run_id }}
+          restore-keys: |
+            suss-native-v1-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}-shard${{ matrix.shard }}-
+            suss-native-v1-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}-
       - name: Execute complete integration suites in this partition
         run: python3 scripts/ci_test_shards.py --count 8 --index ${{ matrix.shard }}
+      # Keep only the large native modules (the runtime and core images, which
+      # every test program shares); per-form modules and components are cheap
+      # to rebuild and would make the cache several GB (#403). Entries are keyed
+      # by module bytes and wasmtime's compatibility hash, so a stale entry is
+      # only a miss.
+      - name: Keep only large compiled modules
+        if: always()
+        run: find target/suss/cache/v1/native-module -type f -size -1M -delete 2>/dev/null || true
+      - name: Save compiled core images
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: target/suss/cache/v1/native-module
+          key: suss-native-v1-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}-shard${{ matrix.shard }}-${{ github.run_id }}
 
   # Preserve the required check name; skipped/cancelled partitions cannot pass it.
   test:

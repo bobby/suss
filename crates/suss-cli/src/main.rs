@@ -521,7 +521,9 @@ fn run_component_impl(
     // Load component from file
     let bytes = std::fs::read(path)
         .map_err(|e| format!("Failed to load component '{}': {}", path, e))?;
-    let component = build_cache::component(&engine, &bytes)
+    // The component's large core modules (the runtime and core image) are
+    // compiled once and supplied by name (#403).
+    let (component, lifted_modules) = build_cache::linked_component(&engine, &bytes)
         .map_err(|e| format!("Failed to load component '{}': {}", path, e))?;
 
     let official_command = component
@@ -607,6 +609,12 @@ fn run_component_impl(
 
     // Create linker and add WASI
     let mut linker: Linker<ComponentState> = Linker::new(&engine);
+    for (name, module) in &lifted_modules {
+        linker
+            .root()
+            .module(name, module)
+            .map_err(|e| format!("Failed to link core module {name}: {e}"))?;
+    }
     wasmtime_wasi::p2::add_to_linker_sync(&mut linker)
         .map_err(|e| format!("Failed to add WASI to linker: {}", e))?;
     wasmtime_wasi::p3::add_to_linker(&mut linker)

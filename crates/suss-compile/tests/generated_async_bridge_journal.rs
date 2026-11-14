@@ -54,7 +54,7 @@ impl Harness {
         linker
             .instance(&mut store, "suss.runtime", runtime)
             .unwrap();
-        let memory = Memory::new(&mut store, MemoryType::new(1, Some(65536))).unwrap();
+        let memory = Memory::new(&mut store, MemoryType::new(1, Some(65536)).unwrap()).unwrap();
         memory.write(&mut store, 64, &99u32.to_le_bytes()).unwrap();
         linker
             .define(&store, "suss.memory", "memory", memory)

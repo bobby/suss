@@ -665,6 +665,25 @@ mod native {
         }
         Ok(module)
     }
+    /// A component to run, with each large embedded core module lifted out
+    /// into a core-module import that the returned modules satisfy (#403).
+    /// Suss components embed the same runtime and core image in every
+    /// program, which wasmtime would otherwise compile again for each one; a
+    /// lifted module is compiled once and reused through the module cache,
+    /// keyed by its bytes, and only the program's own modules are compiled.
+    /// A component whose layout this doesn't handle runs as it is.
+    pub fn linked_component(engine: &Engine, bytes: &[u8]) -> wasmtime::Result<(Component, Vec<(String, Module)>)> {
+        match lift_modules(bytes) {
+            Some((rewritten, lifted)) if !lifted.is_empty() => {
+                let mut modules = Vec::with_capacity(lifted.len());
+                for (name, range) in lifted {
+                    modules.push((name, module(engine, &bytes[range])?));
+                }
+                Ok((component(engine, &rewritten)?, modules))
+            }
+            _ => Ok((component(engine, bytes)?, Vec::new())),
+        }
+    }
     /// Compile a component, reusing validated native code when trusted.
     pub fn component(engine: &Engine, bytes: &[u8]) -> wasmtime::Result<Component> {
         let Some(directory) = current() else {
@@ -690,6 +709,8 @@ mod native {
 }
 #[cfg(suss_host)]
 pub use native::component;
+#[cfg(suss_host)]
+pub use native::linked_component;
 #[cfg(suss_host)]
 pub(crate) use native::module;
 
@@ -891,3 +912,148 @@ mod tests {
         );
     }
 }
+
+/// Embedded core modules at least this large are lifted into imports (#403):
+/// the runtime and the core image, which every program shares. A program's own
+/// module above it is lifted too, harmlessly: it is cached by its bytes.
+const LIFT_THRESHOLD: usize = 64 << 10;
+
+/// The component with each large top-level core module replaced, in place, by
+/// a core module type and an import of that type, and the import names and
+/// byte ranges of the lifted modules. None when the component defines core
+/// types of its own, which the inserted module types would renumber, or when
+/// its sections can't be read.
+fn lift_modules(bytes: &[u8]) -> Option<(Vec<u8>, Vec<(String, std::ops::Range<usize>)>)> {
+    use wasm_encoder::{ComponentImportSection, ComponentSectionId, ComponentTypeRef, CoreTypeSection, Encode};
+    const CORE_MODULE: u8 = ComponentSectionId::CoreModule as u8;
+    const CORE_TYPE: u8 = ComponentSectionId::CoreType as u8;
+    if bytes.len() < 8 || &bytes[..4] != b"\0asm" {
+        return None;
+    }
+    let mut sections = Vec::new();
+    let mut offset = 8;
+    while offset < bytes.len() {
+        let id = bytes[offset];
+        let (size, read) = leb_u32(&bytes[offset + 1..])?;
+        let start = offset + 1 + read;
+        let end = start.checked_add(size as usize).filter(|end| *end <= bytes.len())?;
+        if id == CORE_TYPE {
+            return None;
+        }
+        sections.push((id, offset..end, start..end));
+        offset = end;
+    }
+    let mut out = bytes[..8].to_vec();
+    let mut lifted = Vec::new();
+    let mut core_types = 0u32;
+    for (id, whole, payload) in sections {
+        if id != CORE_MODULE || payload.len() < LIFT_THRESHOLD {
+            out.extend_from_slice(&bytes[whole]);
+            continue;
+        }
+        let module_type = module_type(&bytes[payload.clone()])?;
+        let mut types = CoreTypeSection::new();
+        types.ty().module(&module_type);
+        out.push(CORE_TYPE);
+        types.encode(&mut out);
+        let digest = Sha256::digest(&bytes[payload.clone()]);
+        let name = format!("suss-module-x{}", digest.iter().map(|byte| format!("{byte:02x}")).collect::<String>());
+        let mut import = ComponentImportSection::new();
+        import.import(&name, ComponentTypeRef::Module(core_types));
+        out.push(ComponentSectionId::Import as u8);
+        import.encode(&mut out);
+        core_types += 1;
+        lifted.push((name, payload));
+    }
+    Some((out, lifted))
+}
+
+fn leb_u32(bytes: &[u8]) -> Option<(u32, usize)> {
+    let mut value = 0u32;
+    for (index, byte) in bytes.iter().take(5).enumerate() {
+        value |= u32::from(byte & 0x7f) << (7 * index);
+        if byte & 0x80 == 0 {
+            return Some((value, index + 1));
+        }
+    }
+    None
+}
+
+/// A core module's type for a component import: its types, imports and
+/// exports, as the module itself declares them.
+fn module_type(module: &[u8]) -> Option<wasm_encoder::ModuleType> {
+    use wasm_encoder::reencode::{Reencode, RoundtripReencoder, utils};
+    use wasmparser::{ExternalKind, Payload, TypeRef};
+    let mut reencoder = RoundtripReencoder;
+    let mut ty = wasm_encoder::ModuleType::new();
+    let (mut functions, mut tables, mut memories, mut globals, mut tags) = (Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new());
+    let mut exports = Vec::new();
+    for payload in wasmparser::Parser::new(0).parse_all(module) {
+        match payload.ok()? {
+            Payload::TypeSection(reader) => {
+                for group in reader {
+                    utils::parse_recursive_type_group(&mut reencoder, ty.ty(), group.ok()?).ok()?;
+                }
+            }
+            Payload::ImportSection(reader) => {
+                for import in reader.into_imports() {
+                    let import = import.ok()?;
+                    let entity = reencoder.entity_type(import.ty).ok()?;
+                    match import.ty {
+                        TypeRef::Func(index) => functions.push(wasm_encoder::EntityType::Function(index)),
+                        TypeRef::Table(_) => tables.push(entity.clone()),
+                        TypeRef::Memory(_) => memories.push(entity.clone()),
+                        TypeRef::Global(_) => globals.push(entity.clone()),
+                        TypeRef::Tag(_) => tags.push(entity.clone()),
+                        _ => functions.push(entity.clone()),
+                    }
+                    ty.import(import.module, import.name, entity);
+                }
+            }
+            Payload::FunctionSection(reader) => {
+                for index in reader {
+                    functions.push(wasm_encoder::EntityType::Function(index.ok()?));
+                }
+            }
+            Payload::TableSection(reader) => {
+                for table in reader {
+                    tables.push(wasm_encoder::EntityType::Table(reencoder.table_type(table.ok()?.ty).ok()?));
+                }
+            }
+            Payload::MemorySection(reader) => {
+                for memory in reader {
+                    memories.push(wasm_encoder::EntityType::Memory(reencoder.memory_type(memory.ok()?).ok()?));
+                }
+            }
+            Payload::GlobalSection(reader) => {
+                for global in reader {
+                    globals.push(wasm_encoder::EntityType::Global(reencoder.global_type(global.ok()?.ty).ok()?));
+                }
+            }
+            Payload::TagSection(reader) => {
+                for tag in reader {
+                    tags.push(wasm_encoder::EntityType::Tag(reencoder.tag_type(tag.ok()?).ok()?));
+                }
+            }
+            Payload::ExportSection(reader) => {
+                for export in reader {
+                    let export = export.ok()?;
+                    exports.push((export.name.to_owned(), export.kind, export.index as usize));
+                }
+            }
+            _ => {}
+        }
+    }
+    for (name, kind, index) in exports {
+        let entity = match kind {
+            ExternalKind::Func | ExternalKind::FuncExact => functions.get(index)?,
+            ExternalKind::Table => tables.get(index)?,
+            ExternalKind::Memory => memories.get(index)?,
+            ExternalKind::Global => globals.get(index)?,
+            ExternalKind::Tag => tags.get(index)?,
+        };
+        ty.export(&name, entity.clone());
+    }
+    Some(ty)
+}
+
