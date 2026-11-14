@@ -6,7 +6,22 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn reversible?
-  "Returns true if coll satisfies? IReversible."
-  [coll]
-  (satisfies? IReversible coll))
+(defn- linear-traversal-nth
+  ([coll n]
+     (cond
+       (nil? coll)     (throw (js/Error. "Index out of bounds"))
+       (zero? n)       (if (seq coll)
+                         (first coll)
+                         (throw (js/Error. "Index out of bounds")))
+       (indexed? coll) (-nth coll n)
+       (seq coll)      (recur (next coll) (dec n))
+       :else           (throw (js/Error. "Index out of bounds"))))
+  ([coll n not-found]
+     (cond
+       (nil? coll)     not-found
+       (zero? n)       (if (seq coll)
+                         (first coll)
+                         not-found)
+       (indexed? coll) (-nth coll n not-found)
+       (seq coll)      (recur (next coll) (dec n) not-found)
+       :else           not-found)))

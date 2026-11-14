@@ -6,5 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- array-map-index-of [m k]
-  (array-index-of (.-arr m) k))
+(defn map-entry?
+  "Returns true if x satisfies IMapEntry"
+  [x]
+  (implements? IMapEntry x))

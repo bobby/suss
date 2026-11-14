@@ -56,7 +56,7 @@
               (recur (inc i) (conj! out (aget xs i)))
               (persistent! out))))))))
 
-(set! (.-EMPTY PersistentArrayMap) (PersistentArrayMap. nil 0 (array) empty-unordered-hash))
+(set! (.-EMPTY PersistentArrayMap) (PersistentArrayMap. nil 0 (make-array 0) empty-unordered-hash))
 
 (set! (.-HASHMAP_THRESHOLD PersistentArrayMap) 8)
 
@@ -297,7 +297,7 @@
       (compare-symbols x y)
       (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
       (throw (suss.bootstrap/error
-        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+        (str_ "Cannot compare " compare-x-text__ " to " compare-y-text__)))))))
 
 (extend-type Keyword IComparable
   (-compare [x y]
@@ -305,7 +305,7 @@
       (compare-keywords x y)
       (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
       (throw (suss.bootstrap/error
-        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+        (str_ "Cannot compare " compare-x-text__ " to " compare-y-text__)))))))
 
 (extend-type Subvec IComparable
   (-compare [x y]
@@ -313,7 +313,7 @@
       (compare-indexed x y)
       (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
       (throw (suss.bootstrap/error
-        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+        (str_ "Cannot compare " compare-x-text__ " to " compare-y-text__)))))))
 
 (extend-type PersistentVector IComparable
   (-compare [x y]
@@ -321,7 +321,7 @@
       (compare-indexed x y)
       (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
       (throw (suss.bootstrap/error
-        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+        (str_ "Cannot compare " compare-x-text__ " to " compare-y-text__)))))))
 
 (extend-type MapEntry IComparable
   (-compare [x y]
@@ -329,7 +329,7 @@
       (compare-indexed x y)
       (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
       (throw (suss.bootstrap/error
-        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+        (str_ "Cannot compare " compare-x-text__ " to " compare-y-text__)))))))
 
 (extend-type BlackNode IComparable
   (-compare [x y]
@@ -337,7 +337,7 @@
       (compare-indexed x y)
       (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
       (throw (suss.bootstrap/error
-        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+        (str_ "Cannot compare " compare-x-text__ " to " compare-y-text__)))))))
 
 (extend-type RedNode IComparable
   (-compare [x y]
@@ -345,7 +345,7 @@
       (compare-indexed x y)
       (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
       (throw (suss.bootstrap/error
-        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) ""))))))))
+        (str_ "Cannot compare " compare-x-text__ " to " compare-y-text__))))))))
 
 ;; Complete canonical tree singletons; comparator captured once in source order.
 (set! (.-EMPTY PersistentTreeMap) (PersistentTreeMap. compare nil 0 nil empty-unordered-hash))
@@ -357,13 +357,10 @@
 (set! (.-__proto__ (.-prototype ExceptionInfo)) (.-prototype js/Error))
 
 ;; Complete retained transducer setup parents; EPL-1.0, see ../transducers/provenance.json.
-;; Current target uses the pinned string fallback; native Symbol branch is retained in its ledger.
-(def ITER_SYMBOL "@@iterator")
-(unchecked-set (.-prototype TransformerIterator) cljs.core/ITER_SYMBOL (fn [] (this-as __suss_iter_this__ (cljs.core/es6-iterator __suss_iter_this__))))
+;; The JS iteration protocol's ITER_SYMBOL methods are not retained (#425).
 (set! (.-create TransformerIterator)
   (fn [xform source]
     (transformer-iterator xform source false)))
 (set! (.-createMulti TransformerIterator)
   (fn [xform sources]
     (transformer-iterator xform (MultiIterator. (to-array sources)) true)))
-(unchecked-set (.-prototype Eduction) cljs.core/ITER_SYMBOL (fn [] (this-as __suss_iter_this__ (cljs.core/es6-iterator __suss_iter_this__))))

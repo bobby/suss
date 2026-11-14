@@ -23,6 +23,10 @@
 ;; Original portable numeric-Date storage, not copied upstream source.
 ;; Internal bootstrap construction accepts numeric milliseconds only; calendar,
 ;; timezone/string parsing, reader instants and full Inst semantics remain pending.
+;; Original Suss (#425): a fresh Unique is identical only to itself. Edit
+;; tokens and sentinels are Uniques, where the JVM uses a new Object.
+(deftype Unique [])
+
 (deftype BootstrapDate [milliseconds]
   Object
   (valueOf [_] milliseconds))
@@ -37,7 +41,7 @@
 (declare PersistentArrayMap PersistentArrayMapSeq PersistentArrayMapIterator lookup-sentinel
   array-index-of array-map-index-of array-extend-kv array-map-extend-kv
   persistent-array-map-seq map? record? vector? key val map-entry? contains?
-  keys vals es6-iterator es6-entries-iterator ci-reduce assoc into
+  keys vals ci-reduce assoc into
   PersistentHashMap TransientArrayMap key-test pam-dupes? pam-new-size pam-grow-seed-array)
 
 (declare ArrayChunk array-chunk ChunkedSeq chunked-seq)
@@ -52,7 +56,7 @@
  create-node array-to-transient-hash-map array->transient-hash-map pack-array-node
  inode-kv-reduce nil-iter equiv-map every? reduce-kv)
 
-(declare KeySeq keys ISet ITransientSet PersistentHashSet TransientHashSet HashSetIter set set? hash-set disj disj! es6-set-entries-iterator)
+(declare KeySeq keys ISet ITransientSet PersistentHashSet TransientHashSet HashSetIter set set? hash-set disj disj!)
 
 ;; Original declarations for retained subvector mutual references.
 (declare Subvec build-subvec subvec seq-iter)
@@ -113,10 +117,10 @@
 (declare BlackNode RedNode balance-left balance-right balance-left-del balance-right-del tree-map-kv-reduce)
 
 ;; Whole sorted collection/iteration/range mutual dependencies.
-(declare StringIter string-iter ArrayIter array-iter INIT START SeqIter seq-iter nil-iter iter ES6Iterator es6-iterator ES6EntriesIterator es6-entries-iterator ES6SetEntriesIterator es6-set-entries-iterator tree-map-seq-push PersistentTreeMapSeq create-tree-map-seq tree-map-add tree-map-append tree-map-remove tree-map-replace ValSeq vals PersistentTreeMap PersistentTreeSet sorted-map sorted-map-by sorted-set sorted-set-by take-while mk-bound-fn subseq rsubseq)
+(declare StringIter string-iter ArrayIter array-iter INIT START SeqIter seq-iter nil-iter iter tree-map-seq-push PersistentTreeMapSeq create-tree-map-seq tree-map-add tree-map-append tree-map-remove tree-map-replace ValSeq vals PersistentTreeMap PersistentTreeSet sorted-map sorted-map-by sorted-set sorted-set-by take-while mk-bound-fn subseq rsubseq)
 
 ;; Complete transducer graph mutual references; implementations follow as reviewed imports.
-(declare completing butlast Many NONE Single Empty EMPTY MultiIterator chunkIteratorSeq TransformerIterator transformer-iterator sequence Eduction eduction ITER_SYMBOL)
+(declare completing butlast Many NONE Single Empty EMPTY MultiIterator chunkIteratorSeq TransformerIterator transformer-iterator sequence Eduction eduction)
 
 ;; Atom functions use these before their definitions (#30).
 (declare dissoc hash-map set-validator! keyword? keyword-identical?)
@@ -393,27 +397,6 @@
       (bit-shift-right seed 2)))))
 
 (def js-obj (suss.bootstrap/object-factory))
-
-(def string-hash-cache (js-obj))
-
-(def string-hash-cache-count 0)
-
-(def add-to-string-hash-cache (fn [k]
-  (let [h (hash-string* k)]
-    (suss.bootstrap/object-set-strict string-hash-cache k h)
-    (set! string-hash-cache-count (inc string-hash-cache-count))
-    h)))
-
-(def hash-string (fn [k]
-  (when (> string-hash-cache-count 1024)
-    (set! string-hash-cache (js-obj))
-    (set! string-hash-cache-count 0))
-  (if (nil? k)
-    0
-    (let [h (unchecked-get string-hash-cache k)]
-      (if (number? h)
-        h
-        (add-to-string-hash-cache k))))))
 
 (deftype List [meta first rest count ^:mutable __hash]
   Object
@@ -839,19 +822,19 @@
 (def list
   "Creates a new list containing the items."
   (fn [& xs]
-  (let [arr (if (and (instance? IndexedSeq xs) (zero? (.-i xs)))
-              (.-arr xs)
-              (let [arr (array)]
-                (loop [^not-native xs xs]
-                  (if-not (nil? xs)
-                    (do
-                      (aset arr (alength arr) (-first xs))
-                      (recur (-next xs)))
-                    arr))))]
-    (loop [i (alength arr) r ()]
-      (if (> i 0)
-        (recur (dec i) (-conj r (aget arr (dec i))))
-        r)))))
+  (if (and (instance? IndexedSeq xs) (zero? (.-i xs)))
+    (let [arr (.-arr xs)]
+      (loop [i (alength arr) r ()]
+        (if (> i 0)
+          (recur (dec i) (-conj r (aget arr (dec i))))
+          r)))
+    (loop [^not-native xs xs reversed ()]
+      (if-not (nil? xs)
+        (recur (-next xs) (-conj reversed (-first xs)))
+        (loop [s (seq reversed) r ()]
+          (if (nil? s)
+            r
+            (recur (next s) (-conj r (first s))))))))))
 
 (def ^boolean =
   "Equality. Returns true if x equals y, false if not. Compares
@@ -1187,7 +1170,7 @@
       (-nth coll n)
 
       (array? coll)
-      (if (and (< -1 n (.-length coll)))
+      (if (and (< -1 n (alength coll)))
         (aget coll (int n))
         (throw (suss.bootstrap/error "Index out of bounds")))
 
@@ -1220,7 +1203,7 @@
       (-nth coll n not-found)
 
       (array? coll)
-      (if (and (< -1 n (.-length coll)))
+      (if (and (< -1 n (alength coll)))
         (aget coll (int n))
         not-found)
 
@@ -1378,9 +1361,9 @@
 (def hash (fn [o]
   (cond
     ;; A string's hash is computed directly, as JVM Clojure's String.hashCode
-    ;; is (#409), by the runtime: ClojureScript's string-hash-cache, a js-obj,
-    ;; costs more to search than the hash does to compute. hash-string keeps
-    ;; the cache. It is tested first: no string implements IHash, since a
+    ;; is (#409), by the runtime: ClojureScript's string-hash-cache, a JS
+    ;; object, cost more to search than the hash does to compute (#425). It is
+    ;; tested first: no string implements IHash, since a
     ;; built-in type's core protocols can't be extended outside core.
     (string? o)
     (suss.bootstrap/string-hash o)
@@ -1812,7 +1795,7 @@
 (def hash-symbol (fn [sym]
   (hash-combine
     (m3-hash-unencoded-chars (.-name sym))
-    (hash-string (.-ns sym)))))
+    (hash-string* (.-ns sym)))))
 
 (def hash-keyword (fn [k]
   (int (+ (hash-symbol k) 0x9e3779b9))))
@@ -2278,7 +2261,7 @@
 
 (def tv-editable-root
   (fn [node]
-(VectorNode. (js-obj) (aclone (.-arr node)))))
+(VectorNode. (Unique.) (aclone (.-arr node)))))
 
 (def tv-editable-tail
   (fn [tl]
@@ -2525,7 +2508,7 @@
         (-lookup o k)
 
         (array? o)
-        (when (and (number? k) (< -1 k (.-length o)))
+        (when (and (number? k) (< -1 k (alength o)))
           (aget o (int k)))
 
         (string? o)
@@ -2543,7 +2526,7 @@
         (-lookup o k not-found)
 
         (array? o)
-        (if (and (number? k) (< -1 k (.-length o)))
+        (if (and (number? k) (< -1 k (alength o)))
           (aget o (int k))
           not-found)
 
@@ -2581,7 +2564,7 @@
   (fn [map-entry]
 (-val map-entry)))
 
-(def lookup-sentinel (js-obj))
+(def lookup-sentinel (Unique.))
 
 (def array-index-of-nil?
   (fn [arr]
@@ -2859,12 +2842,6 @@
     (pr-str* coll))
   (equiv [this other]
     (-equiv this other))
-  (keys [coll]
-    (es6-iterator (keys coll)))
-  (entries [coll]
-    (es6-entries-iterator (seq coll)))
-  (values [coll]
-    (es6-iterator (vals coll)))
   (has [coll k]
     (contains? coll k))
   (get [coll k not-found]
@@ -3027,7 +3004,7 @@
 
   IEditableCollection
   (-as-transient [coll]
-    (TransientArrayMap. (js-obj) (alength arr) (aclone arr))))
+    (TransientArrayMap. true (alength arr) (aclone arr))))
 
 (def key-test
   (fn [key other]
@@ -3306,7 +3283,7 @@
      (if (.-cljs$core$IFn$_invoke$arity$4 f)
        (.cljs$core$IFn$_invoke$arity$4 f a0 a1 a2 a3)
        (.call f f a0 a1 a2 a3))
-     (let [a4 (cljs.core/-first args) next_4 (cljs.core/next args)] (if (nil? next_4) (if (.-cljs$core$IFn$_invoke$arity$5 f) (.cljs$core$IFn$_invoke$arity$5 f a0 a1 a2 a3 a4) (.call f f a0 a1 a2 a3 a4)) (let [a5 (cljs.core/-first next_4) next_5 (cljs.core/next next_4)] (if (nil? next_5) (if (.-cljs$core$IFn$_invoke$arity$6 f) (.cljs$core$IFn$_invoke$arity$6 f a0 a1 a2 a3 a4 a5) (.call f f a0 a1 a2 a3 a4 a5)) (let [a6 (cljs.core/-first next_5) next_6 (cljs.core/next next_5)] (if (nil? next_6) (if (.-cljs$core$IFn$_invoke$arity$7 f) (.cljs$core$IFn$_invoke$arity$7 f a0 a1 a2 a3 a4 a5 a6) (.call f f a0 a1 a2 a3 a4 a5 a6)) (let [a7 (cljs.core/-first next_6) next_7 (cljs.core/next next_6)] (if (nil? next_7) (if (.-cljs$core$IFn$_invoke$arity$8 f) (.cljs$core$IFn$_invoke$arity$8 f a0 a1 a2 a3 a4 a5 a6 a7) (.call f f a0 a1 a2 a3 a4 a5 a6 a7)) (let [a8 (cljs.core/-first next_7) next_8 (cljs.core/next next_7)] (if (nil? next_8) (if (.-cljs$core$IFn$_invoke$arity$9 f) (.cljs$core$IFn$_invoke$arity$9 f a0 a1 a2 a3 a4 a5 a6 a7 a8) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8)) (let [a9 (cljs.core/-first next_8) next_9 (cljs.core/next next_8)] (if (nil? next_9) (if (.-cljs$core$IFn$_invoke$arity$10 f) (.cljs$core$IFn$_invoke$arity$10 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)) (let [a10 (cljs.core/-first next_9) next_10 (cljs.core/next next_9)] (if (nil? next_10) (if (.-cljs$core$IFn$_invoke$arity$11 f) (.cljs$core$IFn$_invoke$arity$11 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)) (let [a11 (cljs.core/-first next_10) next_11 (cljs.core/next next_10)] (if (nil? next_11) (if (.-cljs$core$IFn$_invoke$arity$12 f) (.cljs$core$IFn$_invoke$arity$12 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)) (let [a12 (cljs.core/-first next_11) next_12 (cljs.core/next next_11)] (if (nil? next_12) (if (.-cljs$core$IFn$_invoke$arity$13 f) (.cljs$core$IFn$_invoke$arity$13 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)) (let [a13 (cljs.core/-first next_12) next_13 (cljs.core/next next_12)] (if (nil? next_13) (if (.-cljs$core$IFn$_invoke$arity$14 f) (.cljs$core$IFn$_invoke$arity$14 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)) (let [a14 (cljs.core/-first next_13) next_14 (cljs.core/next next_13)] (if (nil? next_14) (if (.-cljs$core$IFn$_invoke$arity$15 f) (.cljs$core$IFn$_invoke$arity$15 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)) (let [a15 (cljs.core/-first next_14) next_15 (cljs.core/next next_14)] (if (nil? next_15) (if (.-cljs$core$IFn$_invoke$arity$16 f) (.cljs$core$IFn$_invoke$arity$16 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)) (let [a16 (cljs.core/-first next_15) next_16 (cljs.core/next next_15)] (if (nil? next_16) (if (.-cljs$core$IFn$_invoke$arity$17 f) (.cljs$core$IFn$_invoke$arity$17 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16)) (let [a17 (cljs.core/-first next_16) next_17 (cljs.core/next next_16)] (if (nil? next_17) (if (.-cljs$core$IFn$_invoke$arity$18 f) (.cljs$core$IFn$_invoke$arity$18 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17)) (let [a18 (cljs.core/-first next_17) next_18 (cljs.core/next next_17)] (if (nil? next_18) (if (.-cljs$core$IFn$_invoke$arity$19 f) (.cljs$core$IFn$_invoke$arity$19 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18)) (let [a19 (cljs.core/-first next_18) next_19 (cljs.core/next next_18)] (if (nil? next_19) (if (.-cljs$core$IFn$_invoke$arity$20 f) (.cljs$core$IFn$_invoke$arity$20 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19)) (let [arr (array a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19)] (loop [s next_19] (when s (do (.push arr (-first s)) (recur (next s))))) (.apply f f arr)))))))))))))))))))))))))))))))))))))))
+     (let [a4 (cljs.core/-first args) next_4 (cljs.core/next args)] (if (nil? next_4) (if (.-cljs$core$IFn$_invoke$arity$5 f) (.cljs$core$IFn$_invoke$arity$5 f a0 a1 a2 a3 a4) (.call f f a0 a1 a2 a3 a4)) (let [a5 (cljs.core/-first next_4) next_5 (cljs.core/next next_4)] (if (nil? next_5) (if (.-cljs$core$IFn$_invoke$arity$6 f) (.cljs$core$IFn$_invoke$arity$6 f a0 a1 a2 a3 a4 a5) (.call f f a0 a1 a2 a3 a4 a5)) (let [a6 (cljs.core/-first next_5) next_6 (cljs.core/next next_5)] (if (nil? next_6) (if (.-cljs$core$IFn$_invoke$arity$7 f) (.cljs$core$IFn$_invoke$arity$7 f a0 a1 a2 a3 a4 a5 a6) (.call f f a0 a1 a2 a3 a4 a5 a6)) (let [a7 (cljs.core/-first next_6) next_7 (cljs.core/next next_6)] (if (nil? next_7) (if (.-cljs$core$IFn$_invoke$arity$8 f) (.cljs$core$IFn$_invoke$arity$8 f a0 a1 a2 a3 a4 a5 a6 a7) (.call f f a0 a1 a2 a3 a4 a5 a6 a7)) (let [a8 (cljs.core/-first next_7) next_8 (cljs.core/next next_7)] (if (nil? next_8) (if (.-cljs$core$IFn$_invoke$arity$9 f) (.cljs$core$IFn$_invoke$arity$9 f a0 a1 a2 a3 a4 a5 a6 a7 a8) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8)) (let [a9 (cljs.core/-first next_8) next_9 (cljs.core/next next_8)] (if (nil? next_9) (if (.-cljs$core$IFn$_invoke$arity$10 f) (.cljs$core$IFn$_invoke$arity$10 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)) (let [a10 (cljs.core/-first next_9) next_10 (cljs.core/next next_9)] (if (nil? next_10) (if (.-cljs$core$IFn$_invoke$arity$11 f) (.cljs$core$IFn$_invoke$arity$11 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)) (let [a11 (cljs.core/-first next_10) next_11 (cljs.core/next next_10)] (if (nil? next_11) (if (.-cljs$core$IFn$_invoke$arity$12 f) (.cljs$core$IFn$_invoke$arity$12 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)) (let [a12 (cljs.core/-first next_11) next_12 (cljs.core/next next_11)] (if (nil? next_12) (if (.-cljs$core$IFn$_invoke$arity$13 f) (.cljs$core$IFn$_invoke$arity$13 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)) (let [a13 (cljs.core/-first next_12) next_13 (cljs.core/next next_12)] (if (nil? next_13) (if (.-cljs$core$IFn$_invoke$arity$14 f) (.cljs$core$IFn$_invoke$arity$14 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)) (let [a14 (cljs.core/-first next_13) next_14 (cljs.core/next next_13)] (if (nil? next_14) (if (.-cljs$core$IFn$_invoke$arity$15 f) (.cljs$core$IFn$_invoke$arity$15 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)) (let [a15 (cljs.core/-first next_14) next_15 (cljs.core/next next_14)] (if (nil? next_15) (if (.-cljs$core$IFn$_invoke$arity$16 f) (.cljs$core$IFn$_invoke$arity$16 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)) (let [a16 (cljs.core/-first next_15) next_16 (cljs.core/next next_15)] (if (nil? next_16) (if (.-cljs$core$IFn$_invoke$arity$17 f) (.cljs$core$IFn$_invoke$arity$17 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16)) (let [a17 (cljs.core/-first next_16) next_17 (cljs.core/next next_16)] (if (nil? next_17) (if (.-cljs$core$IFn$_invoke$arity$18 f) (.cljs$core$IFn$_invoke$arity$18 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17)) (let [a18 (cljs.core/-first next_17) next_18 (cljs.core/next next_17)] (if (nil? next_18) (if (.-cljs$core$IFn$_invoke$arity$19 f) (.cljs$core$IFn$_invoke$arity$19 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18)) (let [a19 (cljs.core/-first next_18) next_19 (cljs.core/next next_18)] (if (nil? next_19) (if (.-cljs$core$IFn$_invoke$arity$20 f) (.cljs$core$IFn$_invoke$arity$20 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19)) (.apply f f (to-array (cons a0 (cons a1 (cons a2 (cons a3 args)))))))))))))))))))))))))))))))))))))))))))
 
 (def apply
  "Applies fn f to the argument list formed by prepending intervening arguments to args."
@@ -3485,7 +3462,7 @@
 
 (deftype TransientArrayMap [^:mutable ^boolean editable_QMARK_
                             ^:mutable len
-                            arr]
+                            ^:mutable arr]
   ICounted
   (-count [tcoll]
     (if editable_QMARK_
@@ -3533,8 +3510,7 @@
         (if (== idx -1)
           (if (<= (+ len 2) (* 2 (.-HASHMAP_THRESHOLD PersistentArrayMap)))
             (do (set! len (+ len 2))
-                (.push arr key)
-                (.push arr val)
+                (set! arr (array-extend-kv arr key val))
                 tcoll)
             (assoc! (array->transient-hash-map len arr) key val))
           (if (identical? val (aget arr (inc idx)))
@@ -3550,8 +3526,10 @@
         (when (>= idx 0)
           (aset arr idx (aget arr (- len 2)))
           (aset arr (inc idx) (aget arr (dec len)))
-          (let [hamt-bootstrap-doto-2 arr] (.pop hamt-bootstrap-doto-2) (.pop hamt-bootstrap-doto-2) hamt-bootstrap-doto-2)
-          (set! len (- len 2)))
+          (set! len (- len 2))
+          (let [shorter (make-array len)]
+            (array-copy arr 0 shorter 0 len)
+            (set! arr shorter)))
         tcoll)
       (throw (suss.bootstrap/error "dissoc! after persistent!"))))
 
@@ -4276,12 +4254,6 @@
     (pr-str* coll))
   (equiv [this other]
     (-equiv this other))
-  (keys [coll]
-    (es6-iterator (keys coll)))
-  (entries [coll]
-    (es6-entries-iterator (seq coll)))
-  (values [coll]
-    (es6-iterator (vals coll)))
   (has [coll k]
     (contains? coll k))
   (get [coll k not-found]
@@ -4409,7 +4381,7 @@
 
   IEditableCollection
   (-as-transient [coll]
-    (TransientHashMap. (js-obj) root cnt has_nil_QMARK_ nil_val)))
+    (TransientHashMap. (Unique.) root cnt has_nil_QMARK_ nil_val)))
 
 (deftype TransientHashMap [^:mutable ^boolean edit
                            ^:mutable root
@@ -4710,12 +4682,6 @@
     (pr-str* coll))
   (equiv [this other]
     (-equiv this other))
-  (keys [coll]
-    (es6-iterator (seq coll)))
-  (entries [coll]
-    (es6-set-entries-iterator (seq coll)))
-  (values [coll]
-    (es6-iterator (seq coll)))
   (has [coll k]
     (contains? coll k))
   (forEach [coll f]
@@ -5085,7 +5051,7 @@
   (fn ([aseq]
      (into-array nil aseq))
   ([type aseq]
-     (reduce (fn [a x] (.push a x) a) (array) aseq))))
+     (to-array aseq))))
 
 (def vec "Creates a new vector containing the contents of coll. JavaScript arrays
   will be aliased and should not be modified."
@@ -5897,14 +5863,13 @@
   "Returns #js [lifted-ns lifted-map] or nil if m can't be lifted."
   (fn [m]
   (when *print-namespace-maps*
-    (let [lm (array)
-          initial-cursor (seq m)
+    (let [initial-cursor (seq m)
           initial-seq (seq initial-cursor)
           initial-entry (first initial-seq)
           initial-entries (next initial-seq)
           initial-k (nth initial-entry 0 nil)
           initial-v (nth initial-entry 1 nil)]
-      (loop [ns nil cursor initial-cursor]
+      (loop [ns nil cursor initial-cursor lm []]
         (let [seq-cursor (seq cursor)
               entry (first seq-cursor)
               entries (next seq-cursor)
@@ -5914,13 +5879,11 @@
           (when (or (keyword? k) (symbol? k))
             (if ns
               (when (= ns (namespace k))
-                (.push lm (MapEntry. (strip-ns k) v nil))
-                (recur ns entries))
+                (recur ns entries (conj lm (MapEntry. (strip-ns k) v nil))))
               (let [new-ns (namespace k)]
                 (when new-ns
-                  (.push lm (MapEntry. (strip-ns k) v nil))
-                  (recur new-ns entries)))))
-          (array ns lm))))))))
+                  (recur new-ns entries (conj lm (MapEntry. (strip-ns k) v nil)))))))
+          (array ns (to-array lm)))))))))
 
 (def print-prefix-map
   (fn [prefix m print-one writer opts]
@@ -6506,11 +6469,11 @@
 (def to-array
   "Returns an array containing the contents of coll."
   (fn [coll]
-  (let [ary (array)]
-    (loop [s (seq coll)]
+  (let [s (seq coll) ary (make-array (count s))]
+    (loop [s s i 0]
       (if-not (suss.bootstrap/nil? s)
-        (do (.push ary (first s))
-            (recur (next s)))
+        (do (aset ary i (first s))
+            (recur (next s) (inc i)))
         ary)))))
 
 (def --destructure-map
@@ -6589,7 +6552,7 @@
 (def ^number compare
   "Comparator. Returns a negative number, zero, or a positive number
   when x is logically 'less than', 'equal to', or 'greater than'
-  y. Uses IComparable if available and google.array.defaultCompare for objects
+  y. Uses IComparable if available and the Closure Library's default array comparison for objects
  of the same type and special-cases nil to be less than any other object."
   (let [default-compare__ (fn [a b]
                            (if (cljs.core/> a b)
@@ -6606,8 +6569,7 @@
           (let [compare-x-text__ (str_ x)
                         compare-y-text__ (str_ y)]
                     (throw (suss.bootstrap/error
-                             (.join (cljs.core/array "Cannot compare " compare-x-text__
-                                                    " to " compare-y-text__) "")))))
+                             (str_ "Cannot compare " compare-x-text__ " to " compare-y-text__)))))
         (satisfies? IComparable x) (-compare x y)
         :else
         (if (and (or (suss.bootstrap/string? x) (array? x)
@@ -6617,8 +6579,7 @@
           (let [compare-x-text__ (str_ x)
                         compare-y-text__ (str_ y)]
                     (throw (suss.bootstrap/error
-                             (.join (cljs.core/array "Cannot compare " compare-x-text__
-                                                    " to " compare-y-text__) "")))))))))
+                             (str_ "Cannot compare " compare-x-text__ " to " compare-y-text__)))))))))
 
 (def ^:private compare-indexed
   "Compare indexed collection."
@@ -7130,9 +7091,9 @@ reduces them without incurring seq initialization"
   (fn [x]
   (ArrayIter. x 0)))
 
-(def INIT (cljs.core/js-obj))
+(def INIT (Unique.))
 
-(def START (cljs.core/js-obj))
+(def START (Unique.))
 
 (deftype SeqIter [^:mutable _seq ^:mutable _next]
   Object
@@ -7172,48 +7133,7 @@ reduces them without incurring seq initialization"
     (suss.bootstrap/string? coll) (string-iter coll)
     (array? coll) (array-iter coll)
     (seqable? coll) (seq-iter coll)
-    :else (throw (suss.bootstrap/error (let [sorted-text__ (str_ coll)] (.join (cljs.core/array "Cannot create iterator from " sorted-text__) "")))))))
-
-(deftype ES6Iterator [^:mutable s]
-  Object
-  (next [_]
-    (if-not (suss.bootstrap/nil? s)
-      (let [x (first s)]
-        (set! s (next s))
-        (cljs.core/js-obj "value" x "done" false))
-      (cljs.core/js-obj "value" nil "done" true))))
-
-(def ^{:doc "Return a ES2015+ compatible iterator for coll." :arglists '([coll])} es6-iterator
-  (fn [coll]
-  (ES6Iterator. (seq coll))))
-
-(deftype ES6EntriesIterator [^:mutable s]
-  Object
-  (next [_]
-    (if-not (suss.bootstrap/nil? s)
-      (let [entry (first s)
-            k (nth entry 0 nil)
-            v (nth entry 1 nil)]
-        (set! s (next s))
-        (cljs.core/js-obj "value" (cljs.core/array k v) "done" false))
-      (cljs.core/js-obj "value" nil "done" true))))
-
-(def ^{:arglists '([coll])} es6-entries-iterator
-  (fn [coll]
-  (ES6EntriesIterator. (seq coll))))
-
-(deftype ES6SetEntriesIterator [^:mutable s]
-  Object
-  (next [_]
-    (if-not (suss.bootstrap/nil? s)
-      (let [x (first s)]
-        (set! s (next s))
-        (cljs.core/js-obj "value" (cljs.core/array x x) "done" false))
-      (cljs.core/js-obj "value" nil "done" true))))
-
-(def ^{:arglists '([coll])} es6-set-entries-iterator
-  (fn [coll]
-  (ES6SetEntriesIterator. (seq coll))))
+    :else (throw (suss.bootstrap/error (str_ "Cannot create iterator from " coll))))))
 
 (def ^{:arglists '([node stack ^boolean ascending?]) :private true} tree-map-seq-push
   (fn [node stack ^boolean ascending?]
@@ -7489,12 +7409,6 @@ reduces them without incurring seq initialization"
     (pr-str* coll))
   (equiv [this other]
     (suss.bootstrap/direct-protocol-call IEquiv -equiv this other))
-  (keys [coll]
-    (es6-iterator (keys coll)))
-  (entries [coll]
-    (es6-entries-iterator (seq coll)))
-  (values [coll]
-    (es6-iterator (vals coll)))
   (has [coll k]
     (contains? coll k))
   (get [coll k not-found]
@@ -7659,12 +7573,6 @@ reduces them without incurring seq initialization"
     (pr-str* coll))
   (equiv [this other]
     (suss.bootstrap/direct-protocol-call IEquiv -equiv this other))
-  (keys [coll]
-    (es6-iterator (seq coll)))
-  (entries [coll]
-    (es6-set-entries-iterator (seq coll)))
-  (values [coll]
-    (es6-iterator (seq coll)))
   (has [coll k]
     (contains? coll k))
   (forEach [coll f]
@@ -7717,7 +7625,7 @@ reduces them without incurring seq initialization"
        (reduce-kv
          (fn [sorted-acc__ sorted-key__ sorted-value__] (or (contains? other sorted-key__) (reduced false)))
          true tree-map)
-       (catch js/Error ex
+       (catch :default ex
          false))))
 
   IHash
@@ -8478,7 +8386,7 @@ reduces them without incurring seq initialization"
              (when s (cons (first s) (take (dec n) (rest s)))))))
        nil nil))))
 
-(def ^:private UNREALIZED-SEED (js-obj))
+(def ^:private UNREALIZED-SEED (Unique.))
 
 (deftype Iterate [meta f prev-seed ^:mutable seed ^:mutable next]
   Object
@@ -8715,19 +8623,21 @@ reduces them without incurring seq initialization"
       (recur (conj ret (first s)) (next s))
       (seq ret)))))
 
-(deftype Many [vals]
+(deftype Many [^:mutable vals]
   Object
   (add [this o]
-    (.push vals o)
+    (set! vals (conj vals o))
     this)
   (remove [this]
-    (.shift vals))
+    (let [ret (peek vals)]
+      (set! vals (pop vals))
+      ret))
   (isEmpty [this]
-    (zero? (.-length vals)))
+    (empty? vals))
   (toString [this]
     (str_ "Many: " vals)))
 
-(def ^:private NONE #js {})
+(def ^:private NONE (Unique.))
 
 (deftype Single [^:mutable val]
   Object
@@ -8736,10 +8646,10 @@ reduces them without incurring seq initialization"
       (do
         (set! val o)
         this)
-      (Many. (array val o))))
+      (Many. (conj (.-EMPTY PersistentQueue) val o))))
   (remove [this]
     (if (identical? val NONE)
-      (throw (js/Error. (str_ "Removing object from empty buffer")))
+      (throw (suss.bootstrap/error (str_ "Removing object from empty buffer")))
       (let [ret val]
         (set! val NONE)
         ret)))
@@ -8753,7 +8663,7 @@ reduces them without incurring seq initialization"
   (add [this o]
     (Single. o))
   (remove [this]
-    (throw (js/Error. (str_ "Removing object from empty buffer"))))
+    (throw (suss.bootstrap/error (str_ "Removing object from empty buffer"))))
   (isEmpty [this]
     true)
   (toString [this]
@@ -8772,7 +8682,7 @@ reduces them without incurring seq initialization"
             (recur (next iters))))
         true)))
   (next [_]
-    (let [nexts (array)]
+    (let [nexts (make-array (alength iters))]
       (let [multi-count__ (alength iters)]
         (loop [multi-index__ 0]
           (when (< multi-index__ multi-count__)
@@ -8782,7 +8692,7 @@ reduces them without incurring seq initialization"
 
 (def ^:private chunkIteratorSeq (fn [iter]
   (cljs.core/LazySeq. nil (fn* [] (when ^boolean (.hasNext iter)
-      (let [arr (array)]
+      (let [arr (make-array 32)]
         (loop [n 0]
           (if (and (.hasNext iter) (< n 32))
             (do
@@ -8823,9 +8733,9 @@ reduces them without incurring seq initialization"
       (let [ret _next]
         (set! _next NONE)
         ret)
-      (throw (js/Error. "No such element"))))
+      (throw (suss.bootstrap/error "No such element"))))
   (remove [_]
-    (js/Error. "Unsupported operation")))
+    (suss.bootstrap/error "Unsupported operation")))
 
 (def transformer-iterator
   (fn [xform sourceIter multi]
@@ -9488,7 +9398,7 @@ reduces them without incurring seq initialization"
               (recur (inc i) (conj! out (aget xs i)))
               (persistent! out))))))))
 
-(set! (.-EMPTY PersistentArrayMap) (PersistentArrayMap. nil 0 (array) empty-unordered-hash))
+(set! (.-EMPTY PersistentArrayMap) (PersistentArrayMap. nil 0 (make-array 0) empty-unordered-hash))
 
 (set! (.-HASHMAP_THRESHOLD PersistentArrayMap) 8)
 
@@ -9729,7 +9639,7 @@ reduces them without incurring seq initialization"
       (compare-symbols x y)
       (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
       (throw (suss.bootstrap/error
-        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+        (str_ "Cannot compare " compare-x-text__ " to " compare-y-text__)))))))
 
 (extend-type Keyword IComparable
   (-compare [x y]
@@ -9737,7 +9647,7 @@ reduces them without incurring seq initialization"
       (compare-keywords x y)
       (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
       (throw (suss.bootstrap/error
-        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+        (str_ "Cannot compare " compare-x-text__ " to " compare-y-text__)))))))
 
 (extend-type Subvec IComparable
   (-compare [x y]
@@ -9745,7 +9655,7 @@ reduces them without incurring seq initialization"
       (compare-indexed x y)
       (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
       (throw (suss.bootstrap/error
-        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+        (str_ "Cannot compare " compare-x-text__ " to " compare-y-text__)))))))
 
 (extend-type PersistentVector IComparable
   (-compare [x y]
@@ -9753,7 +9663,7 @@ reduces them without incurring seq initialization"
       (compare-indexed x y)
       (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
       (throw (suss.bootstrap/error
-        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+        (str_ "Cannot compare " compare-x-text__ " to " compare-y-text__)))))))
 
 (extend-type MapEntry IComparable
   (-compare [x y]
@@ -9761,7 +9671,7 @@ reduces them without incurring seq initialization"
       (compare-indexed x y)
       (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
       (throw (suss.bootstrap/error
-        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+        (str_ "Cannot compare " compare-x-text__ " to " compare-y-text__)))))))
 
 (extend-type BlackNode IComparable
   (-compare [x y]
@@ -9769,7 +9679,7 @@ reduces them without incurring seq initialization"
       (compare-indexed x y)
       (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
       (throw (suss.bootstrap/error
-        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) "")))))))
+        (str_ "Cannot compare " compare-x-text__ " to " compare-y-text__)))))))
 
 (extend-type RedNode IComparable
   (-compare [x y]
@@ -9777,7 +9687,7 @@ reduces them without incurring seq initialization"
       (compare-indexed x y)
       (let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
       (throw (suss.bootstrap/error
-        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) ""))))))))
+        (str_ "Cannot compare " compare-x-text__ " to " compare-y-text__))))))))
 
 ;; Complete canonical tree singletons; comparator captured once in source order.
 (set! (.-EMPTY PersistentTreeMap) (PersistentTreeMap. compare nil 0 nil empty-unordered-hash))
@@ -9789,28 +9699,24 @@ reduces them without incurring seq initialization"
 (set! (.-__proto__ (.-prototype ExceptionInfo)) (.-prototype js/Error))
 
 ;; Complete retained transducer setup parents; EPL-1.0, see ../transducers/provenance.json.
-;; Current target uses the pinned string fallback; native Symbol branch is retained in its ledger.
-(def ITER_SYMBOL "@@iterator")
-(unchecked-set (.-prototype TransformerIterator) cljs.core/ITER_SYMBOL (fn [] (this-as __suss_iter_this__ (cljs.core/es6-iterator __suss_iter_this__))))
+;; The JS iteration protocol's ITER_SYMBOL methods are not retained (#425).
 (set! (.-create TransformerIterator)
   (fn [xform source]
     (transformer-iterator xform source false)))
 (set! (.-createMulti TransformerIterator)
   (fn [xform sources]
     (transformer-iterator xform (MultiIterator. (to-array sources)) true)))
-(unchecked-set (.-prototype Eduction) cljs.core/ITER_SYMBOL (fn [] (this-as __suss_iter_this__ (cljs.core/es6-iterator __suss_iter_this__))))
 ;; Original Suss UTF-16 storage helper for keyword's fixed slash split only.
 ;; Every empty/trailing part is retained. This is not general JS String.split.
 (def ^:private keyword-name-parts
   (fn [text]
-    (let [parts (array) length (count text)]
-      (loop [index 0 start 0]
+    (let [length (count text)]
+      (loop [index 0 start 0 parts []]
         (if (< index length)
           (if (== (.charCodeAt text index) 47)
-            (do (.push parts (suss.bootstrap/string-slice text start index))
-                (recur (inc index) (inc index)))
-            (recur (inc index) start))
-          (do (.push parts (suss.bootstrap/string-slice text start length)) parts))))))
+            (recur (inc index) (inc index) (conj parts (suss.bootstrap/string-slice text start index)))
+            (recur (inc index) start parts))
+          (to-array (conj parts (suss.bootstrap/string-slice text start length))))))))
 
 ;; Original Suss adaptation: read the source closure's owned UTF16 label.
 ;; A function the compiler made, such as a protocol method, has no name and
@@ -9859,7 +9765,7 @@ reduces them without incurring seq initialization"
 
 ;; Copyright The Closure Library Authors.
 ;; SPDX-License-Identifier: Apache-2.0
-;; Adapted from the complete goog/string/stringbuffer.js retained beside this
+;; Adapted from the complete Closure Library stringbuffer.js retained beside this
 ;; file. Native owned storage replaces the Closure prototype buffer slot.
 ;; All constructor and method branches remain; this is not JS prototype interop.
 (def bootstrap-buffer-to-array to-array)
@@ -9868,7 +9774,7 @@ reduces them without incurring seq initialization"
   (set [this & values]
     (let [args (bootstrap-buffer-to-array values) s (aget args 0)]
       (set! buffer_ (suss.bootstrap/value-add "" s))
-      (aget (array) 0)))
+      nil))
   (append [this & values]
     (let [args (bootstrap-buffer-to-array values)
           old buffer_
@@ -9886,7 +9792,7 @@ reduces them without incurring seq initialization"
       this))
   (clear [this & ignored]
     (set! buffer_ "")
-    (aget (array) 0))
+    nil)
   (getLength [this & ignored] (.-length buffer_))
   (toString [this & ignored] buffer_))
 (def bootstrap-string-buffer
@@ -9963,13 +9869,13 @@ reduces them without incurring seq initialization"
   (fn [name] (Namespace. name (array {} {} {} {} #{} #{} #{} #{} []))))
 ;; Programs have few namespaces, and a scan comparing name strings costs far
 ;; less than hashing a symbol, so every fragment can afford to publish.
-(def ^:private namespace-registry (array))
+(def ^:private namespace-registry [])
 (def ^:private registered-namespace
   (fn [name]
-    (let [text (.-str name) length (alength namespace-registry)]
+    (let [text (.-str name) length (count namespace-registry)]
       (loop [index 0]
         (if (< index length)
-          (let [ns (aget namespace-registry index)]
+          (let [ns (nth namespace-registry index)]
             (if (= text (.-str (.-name ns))) ns (recur (inc index))))
           nil)))))
 (def ^:private intern-namespace
@@ -9978,7 +9884,7 @@ reduces them without incurring seq initialization"
       (let [found (registered-namespace name)]
         (if (nil? found)
           (let [created (new-namespace name)]
-            (.push namespace-registry created)
+            (set! namespace-registry (conj namespace-registry created))
             created)
           found))
       (throw (suss.bootstrap/error "Namespace name must be a symbol")))))
@@ -10166,9 +10072,9 @@ reduces them without incurring seq initialization"
   (fn [value] (instance? ReaderConditional value)))
 
 (deftype ReaderSplice [items])
-(def ^:private reader-nothing (array))
+(def ^:private reader-nothing (Unique.))
 ;; What a collection's item loop sees at its closing delimiter.
-(def ^:private reader-close (array))
+(def ^:private reader-close (Unique.))
 (def ^:private reader-max-depth 128)
 ;; Each #() literal's argument names and each auto-gensym share this counter.
 (def ^:private reader-id 0)
@@ -11608,7 +11514,7 @@ reduces them without incurring seq initialization"
   (fn [t]
     (case t
       :byte 0 :short 1 :int 2 :float 3 :long 4 :double 5
-      (throw (js/Error. (str "Unrecognized type " (pr-str t)))))))
+      (throw (suss.bootstrap/error (str "Unrecognized type " (pr-str t)))))))
 
 (def ^:private packed-copy
   (fn [kind a n]
@@ -11714,7 +11620,7 @@ reduces them without incurring seq initialization"
   (-peek [coll] (when (pos? cnt) (-nth coll (dec cnt))))
   (-pop [coll]
     (cond
-      (zero? cnt) (throw (js/Error. "Can't pop empty vector"))
+      (zero? cnt) (throw (suss.bootstrap/error "Can't pop empty vector"))
       (> (alength tail) 1) (VecOf. kind (dec cnt) chunks (packed-copy kind tail (dec (alength tail))) meta nil)
       (zero? (count chunks)) (VecOf. kind 0 [] (suss.bootstrap/packed-array kind 0) meta nil)
       :else (VecOf. kind (dec cnt) (pop chunks) (peek chunks) meta nil)))
@@ -11765,7 +11671,7 @@ reduces them without incurring seq initialization"
   (-assoc [coll k v]
     (if (integer? k)
       (-assoc-n coll k v)
-      (throw (js/Error. "Key must be integer"))))
+      (throw (suss.bootstrap/error "Key must be integer"))))
   (-contains-key? [coll k]
     (and (integer? k) (<= 0 k) (< k cnt)))
 
@@ -11792,7 +11698,7 @@ reduces them without incurring seq initialization"
   (-compare [x y]
     (if (vector? y)
       (compare-indexed x y)
-      (throw (js/Error. (str "Cannot compare " x " to " y)))))
+      (throw (suss.bootstrap/error (str "Cannot compare " x " to " y)))))
 
   IReduce
   (-reduce [coll f]

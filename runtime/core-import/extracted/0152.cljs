@@ -6,13 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- unchecked-array-for [pv i]
-  ;; invariant: i is a valid index of pv (use array-for if unknown).
-  (if (>= i (tail-off pv))
-      (.-tail pv)
-      (loop [node (.-root pv)
-             level (.-shift pv)]
-        (if (pos? level)
-          (recur (pv-aget node (bit-and (bit-shift-right-zero-fill i level) 0x01f))
-                 (- level 5))
-          (.-arr node)))))
+(defn- pv-reduce
+  ([pv f start end]
+   (if (< start end)
+     (pv-reduce pv f (nth pv start) (inc start) end)
+     (f)))
+  ([pv f init start end]
+   (loop [acc init i start arr (unchecked-array-for pv start)]
+     (if (< i end)
+       (let [j (bit-and i 0x01f)
+             arr (if (zero? j) (unchecked-array-for pv i) arr)
+             nacc (f acc (aget arr j))]
+         (if (reduced? nacc)
+           @nacc
+           (recur nacc (inc i) arr)))
+       acc))))

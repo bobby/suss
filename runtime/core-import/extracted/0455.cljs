@@ -6,61 +6,17 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Iterate [meta f prev-seed ^:mutable seed ^:mutable next]
-  Object
-  (toString [coll]
-    (pr-str* coll))
-
-  IPending
-  (-realized? [coll]
-    (not (identical? seed UNREALIZED-SEED)))
-
-  IWithMeta
-  (-with-meta [coll new-meta]
-    (if (identical? new-meta meta)
-      coll
-      (Iterate. new-meta f prev-seed seed next)))
-
-  IMeta
-  (-meta [coll] meta)
-
-  ISeq
-  (-first [coll]
-    (when (identical? UNREALIZED-SEED seed)
-      (set! seed (f prev-seed)))
-    seed)
-  (-rest [coll]
-    (when (nil? next)
-      (set! next (Iterate. nil f (-first coll) UNREALIZED-SEED nil)))
-    next)
-
-  INext
-  (-next [coll]
-    (-rest coll))
-
-  ICollection
-  (-conj [coll o] (cons o coll))
-
-  IEmptyableCollection
-  (-empty [coll] (.-EMPTY List))
-
-  ISequential
-  ISeqable
-  (-seq [coll] coll)
-
-  IReduce
-  (-reduce [coll rf]
-    (let [first (-first coll)
-          v     (f first)]
-      (loop [ret (rf first v) v v]
-        (if (reduced? ret)
-          @ret
-          (let [v (f v)]
-            (recur (rf ret v) v))))))
-  (-reduce [coll rf start]
-    (let [v (-first coll)]
-      (loop [ret (rf start v) v v]
-        (if (reduced? ret)
-          @ret
-          (let [v (f v)]
-            (recur (rf ret v) v)))))))
+(defn tree-seq
+  "Returns a lazy sequence of the nodes in a tree, via a depth-first walk.
+  branch? must be a fn of one arg that returns true if passed a node
+  that can have children (but may not).  children must be a fn of one
+  arg that returns a sequence of the children. Will only be called on
+  nodes for which branch? returns true. Root is the root node of the
+  tree."
+   [branch? children root]
+   (let [walk (fn walk [node]
+                (lazy-seq
+                 (cons node
+                  (when (branch? node)
+                    (mapcat walk (children node))))))]
+     (walk root)))

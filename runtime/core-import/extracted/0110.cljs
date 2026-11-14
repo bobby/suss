@@ -6,16 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- pop-tail [pv level node]
-  (let [subidx (bit-and (bit-shift-right-zero-fill (- (.-cnt pv) 2) level) 0x01f)]
-    (cond
-     (> level 5) (let [new-child (pop-tail pv (- level 5) (pv-aget node subidx))]
-                   (if (and (nil? new-child) (zero? subidx))
-                     nil
-                     (let [ret (pv-clone-node node)]
-                       (pv-aset ret subidx new-child)
-                       ret)))
-     (zero? subidx) nil
-     :else (let [ret (pv-clone-node node)]
-             (pv-aset ret subidx nil)
-             ret))))
+(defprotocol IVolatile
+  "Protocol for adding volatile functionality."
+  (-vreset! [o new-value]
+    "Sets the value of volatile o to new-value without regard for the
+     current value. Returns new-value."))

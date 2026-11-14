@@ -6,12 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- new-path [edit level node]
-  (loop [ll level
-         ret node]
-    (if (zero? ll)
-      ret
-      (let [embed ret
-            r (pv-fresh-node edit)
-            _ (pv-aset r 0 embed)]
-        (recur (- ll 5) r)))))
+(defprotocol IWatchable
+  "Protocol for types that can be watched. Currently only implemented by Atom."
+  (-notify-watches [this oldval newval]
+    "Calls all watchers with this, oldval and newval.")
+  (-add-watch [this key f]
+    "Adds a watcher function f to this. Keys must be unique per reference,
+     and can be used to remove the watch with -remove-watch.")
+  (-remove-watch [this key]
+    "Removes watcher that corresponds to key from this."))

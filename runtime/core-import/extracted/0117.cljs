@@ -6,19 +6,25 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn atom
-  "Creates and returns an Atom with an initial value of x and zero or
-  more options (in any order):
-
-  :meta metadata-map
-
-  :validator validate-fn
-
-  If metadata-map is supplied, it will become the metadata on the
-  atom. validate-fn must be nil or a side-effect-free fn of one
-  argument, which will be passed the intended new state on any state
-  change. If the new state is unacceptable, the validate-fn should
-  return false or throw an Error.  If either of these error conditions
-  occur, then the value of the atom will not change."
-  ([x] (Atom. x nil nil nil))
-  ([x & {:keys [meta validator]}] (Atom. x meta validator nil)))
+(defn swap-vals!
+  "Atomically swaps the value of atom to be:
+  (apply f current-value-of-atom args). Note that f may be called
+  multiple times, and thus should be free of side effects.
+  Returns [old new], the value of the atom before and after the swap."
+  {:added "1.9"}
+  ([a f]
+   (if (instance? Atom a)
+     (reset-vals! a (f (.-state a)))
+     [(-deref a) (-swap! a f)]))
+  ([a f x]
+   (if (instance? Atom a)
+     (reset-vals! a (f (.-state a) x))
+     [(-deref a) (-swap! a f x)]))
+  ([a f x y]
+   (if (instance? Atom a)
+     (reset-vals! a (f (.-state a) x y))
+     [(-deref a) (-swap! a f x y)]))
+  ([a f x y & more]
+   (if (instance? Atom a)
+     (reset-vals! a (apply f (.-state a) x y more))
+     [(-deref a) (-swap! a f x y more)])))

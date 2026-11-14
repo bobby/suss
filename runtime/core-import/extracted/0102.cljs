@@ -6,5 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- pv-fresh-node [edit]
-  (VectorNode. edit (make-array 32)))
+(defn- tail-off [pv]
+  (let [cnt (.-cnt pv)]
+    (if (< cnt 32)
+      0
+      (bit-shift-left (bit-shift-right-zero-fill (dec cnt) 5) 5))))

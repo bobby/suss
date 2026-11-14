@@ -6,10 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn prim-seq
-  "Create seq from a primitive JavaScript Array-like."
-  ([prim]
-     (prim-seq prim 0))
-  ([prim i]
-     (when (< i (alength prim))
-       (IndexedSeq. prim i nil))))
+(defn list?
+  "Returns true if x implements IList"
+  [x]
+  (satisfies? IList x))

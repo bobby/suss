@@ -6,9 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- ^seq next*
-  "Internal. DO NOT USE! Next without the nil? check."
+(defn second
+  "Same as (first (next x))"
   [coll]
-  (if (implements? INext coll)
-    (-next ^not-native coll)
-    (seq (rest coll))))
+  (first (next coll)))

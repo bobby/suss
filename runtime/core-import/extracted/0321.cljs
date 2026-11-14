@@ -6,10 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn pr-seq-writer [objs writer opts]
-  (pr-writer (first objs) writer opts)
-  (loop [objs (next objs)]
-    (when-not (nil? objs)
-      (-write writer " ")
-      (pr-writer (first objs) writer opts)
-      (recur (next objs)))))
+(defn- pr-sb-with-opts [objs opts]
+  (let [sb (StringBuffer.)
+        writer (StringBufferWriter. sb)]
+    (pr-seq-writer objs writer opts)
+    (-flush writer)
+    sb))

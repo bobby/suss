@@ -6,7 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(goog-define
-  ^{:doc "Boolean flag for LITE_MODE"
-    :jsdoc ["@type {boolean}"]}
-  LITE_MODE false)
+(defn vector
+  "Creates a new vector containing the args."
+  [& args]
+  (if (and (instance? IndexedSeq args) (zero? (.-i args)))
+    (.fromArray PersistentVector (.-arr args) (not (array? (.-arr args))))
+    (vec args)))

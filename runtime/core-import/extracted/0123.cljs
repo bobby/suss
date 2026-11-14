@@ -6,15 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn set-validator!
-  "Sets the validator-fn for an atom. validator-fn must be nil or a
-  side-effect-free fn of one argument, which will be passed the intended
-  new state on any state change. If the new state is unacceptable, the
-  validator-fn should return false or throw an Error. If the current state
-  is not acceptable to the new validator, an Error will be thrown and the
-  validator will not be changed."
-  [iref val]
-  (when (and (some? val)
-             (not (val (-deref iref))))
-    (throw (js/Error. "Validator rejected reference state")))
-  (set! (.-validator iref) val))
+(deftype Volatile [^:mutable state]
+  IVolatile
+  (-vreset! [_ new-state]
+    (set! state new-state))
+
+  IDeref
+  (-deref [_] state))

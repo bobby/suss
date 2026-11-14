@@ -6,6 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn constantly
-  "Returns a function that takes any number of arguments and returns x."
-  [x] (fn [& args] x))
+(defn make-hierarchy
+  "Creates a hierarchy object for use with derive, isa? etc."
+  [] {:parents {} :descendants {} :ancestors {}})

@@ -6,18 +6,22 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- inode-kv-reduce [arr f init]
-  (let [len (alength arr)]
-    (loop [i 0 init init]
-      (if (< i len)
-        (let [init (let [k (aget arr i)]
-                     (if-not (nil? k)
-                       (f init k (aget arr (inc i)))
-                       (let [node (aget arr (inc i))]
-                         (if-not (nil? node)
-                           (.kv-reduce node f init)
-                           init))))]
-          (if (reduced? init)
-            init
-            (recur (+ i 2) init)))
-        init))))
+(deftype ArrayNodeIterator [arr ^:mutable i ^:mutable next-iter]
+  Object
+  (hasNext [this]
+    (let [len (alength arr)]
+      (loop []
+        (if-not (and  (some? next-iter) ^boolean (.hasNext next-iter))
+          (if (< i len)
+            (let [node (aget arr i)]
+              (set! i (inc i))
+              (when (some? node)
+                (set! next-iter (-iterator node)))
+              (recur))
+            false)
+          true))))
+  (next [this]
+    (if ^boolean (.hasNext this)
+      (.next next-iter)
+      (throw (js/Error. "No such element"))))
+  (remove [_] (js/Error. "Unsupported operation")))

@@ -6,16 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- seq-reduce
-  ([f coll]
-    (if-let [s (seq coll)]
-      (reduce f (first s) (next s))
-      (f)))
-  ([f val coll]
-    (loop [val val, coll (seq coll)]
-      (if coll
-        (let [nval (f val (first coll))]
-          (if (reduced? nval)
-            @nval
-            (recur nval (next coll))))
-        val))))
+(defn reversible?
+  "Returns true if coll satisfies? IReversible."
+  [coll]
+  (satisfies? IReversible coll))

@@ -6,8 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IMap
-  "Protocol for adding mapping functionality to collections."
-  #_(-assoc-ex [coll k v])
-  (^clj -dissoc [coll k]
-    "Returns a new collection of coll without the mapping for key k."))
+(defn record?
+  "Return true if x satisfies IRecord"
+  [x]
+  (satisfies? IRecord x))

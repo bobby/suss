@@ -6,11 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn with-meta
-  "Returns an object of the same type and value as obj, with
-  map m as its metadata."
-  [o meta]
-  (if (js-fn? o)
-    (MetaFn. o meta)
-    (when-not (nil? o)
-      (-with-meta o meta))))
+(defn ^number hash-ordered-coll
+  "Returns the hash code, consistent with =, for an external ordered
+   collection implementing Iterable.
+   See http://clojure.org/data_structures#hash for full algorithms."
+  [coll]
+  (loop [n 0 hash-code 1 coll (seq coll)]
+    (if-not (nil? coll)
+      (recur (inc n) (bit-or (+ (imul 31 hash-code) (hash (first coll))) 0)
+        (next coll))
+      (mix-collection-hash hash-code n))))

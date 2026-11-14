@@ -12,6 +12,10 @@
 ;; Original portable numeric-Date storage, not copied upstream source.
 ;; Internal bootstrap construction accepts numeric milliseconds only; calendar,
 ;; timezone/string parsing, reader instants and full Inst semantics remain pending.
+;; Original Suss (#425): a fresh Unique is identical only to itself. Edit
+;; tokens and sentinels are Uniques, where the JVM uses a new Object.
+(deftype Unique [])
+
 (deftype BootstrapDate [milliseconds]
   Object
   (valueOf [_] milliseconds))
@@ -26,7 +30,7 @@
 (declare PersistentArrayMap PersistentArrayMapSeq PersistentArrayMapIterator lookup-sentinel
   array-index-of array-map-index-of array-extend-kv array-map-extend-kv
   persistent-array-map-seq map? record? vector? key val map-entry? contains?
-  keys vals es6-iterator es6-entries-iterator ci-reduce assoc into
+  keys vals ci-reduce assoc into
   PersistentHashMap TransientArrayMap key-test pam-dupes? pam-new-size pam-grow-seed-array)
 
 (declare ArrayChunk array-chunk ChunkedSeq chunked-seq)
@@ -41,7 +45,7 @@
  create-node array-to-transient-hash-map array->transient-hash-map pack-array-node
  inode-kv-reduce nil-iter equiv-map every? reduce-kv)
 
-(declare KeySeq keys ISet ITransientSet PersistentHashSet TransientHashSet HashSetIter set set? hash-set disj disj! es6-set-entries-iterator)
+(declare KeySeq keys ISet ITransientSet PersistentHashSet TransientHashSet HashSetIter set set? hash-set disj disj!)
 
 ;; Original declarations for retained subvector mutual references.
 (declare Subvec build-subvec subvec seq-iter)
@@ -102,10 +106,10 @@
 (declare BlackNode RedNode balance-left balance-right balance-left-del balance-right-del tree-map-kv-reduce)
 
 ;; Whole sorted collection/iteration/range mutual dependencies.
-(declare StringIter string-iter ArrayIter array-iter INIT START SeqIter seq-iter nil-iter iter ES6Iterator es6-iterator ES6EntriesIterator es6-entries-iterator ES6SetEntriesIterator es6-set-entries-iterator tree-map-seq-push PersistentTreeMapSeq create-tree-map-seq tree-map-add tree-map-append tree-map-remove tree-map-replace ValSeq vals PersistentTreeMap PersistentTreeSet sorted-map sorted-map-by sorted-set sorted-set-by take-while mk-bound-fn subseq rsubseq)
+(declare StringIter string-iter ArrayIter array-iter INIT START SeqIter seq-iter nil-iter iter tree-map-seq-push PersistentTreeMapSeq create-tree-map-seq tree-map-add tree-map-append tree-map-remove tree-map-replace ValSeq vals PersistentTreeMap PersistentTreeSet sorted-map sorted-map-by sorted-set sorted-set-by take-while mk-bound-fn subseq rsubseq)
 
 ;; Complete transducer graph mutual references; implementations follow as reviewed imports.
-(declare completing butlast Many NONE Single Empty EMPTY MultiIterator chunkIteratorSeq TransformerIterator transformer-iterator sequence Eduction eduction ITER_SYMBOL)
+(declare completing butlast Many NONE Single Empty EMPTY MultiIterator chunkIteratorSeq TransformerIterator transformer-iterator sequence Eduction eduction)
 
 ;; Atom functions use these before their definitions (#30).
 (declare dissoc hash-map set-validator! keyword? keyword-identical?)

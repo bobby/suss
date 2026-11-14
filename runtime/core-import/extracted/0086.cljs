@@ -6,6 +6,19 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn indexed?
-  "Returns true if coll implements nth in constant time"
-  [x] (satisfies? IIndexed x))
+(defn- -indexOf
+  ([coll x]
+   (-indexOf coll x 0))
+  ([coll x start]
+   (let [len (count coll)]
+     (if (>= start len)
+       -1
+       (loop [idx (cond
+                    (pos? start) start
+                    (neg? start) (unchecked-max 0 (+ start len))
+                    :else start)]
+         (if (< idx len)
+           (if (= (nth coll idx) x)
+             idx
+             (recur (inc idx)))
+           -1))))))

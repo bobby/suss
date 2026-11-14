@@ -6,11 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn symbol-identical?
-  "Efficient test to determine that two symbols are identical."
-  [x y]
-  (if (identical? x y)
-    true
-    (if (and (symbol? x) (symbol? y))
-      (identical? (.-str x) (.-str y))
-      false)))
+(defprotocol IVector
+  "Protocol for adding vector functionality to collections."
+  (^clj -assoc-n [coll n val]
+    "Returns a new vector with value val added at position n."))

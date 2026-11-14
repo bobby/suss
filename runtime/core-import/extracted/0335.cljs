@@ -6,6 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ident?
-  "Return true if x is a symbol or keyword"
-  [x] (or (keyword? x) (symbol? x)))
+(defn qualified-symbol?
+  "Return true if x is a symbol with a namespace"
+  [x] (boolean (and (symbol? x) (namespace x) true)))

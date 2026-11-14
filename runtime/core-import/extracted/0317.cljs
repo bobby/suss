@@ -6,12 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(def ^:private char-escapes
-  (js-obj
-    "\"" "\\\""
-    "\\" "\\\\"
-    "\b" "\\b"
-    "\f" "\\f"
-    "\n" "\\n"
-    "\r" "\\r"
-    "\t" "\\t"))
+(defn pr-seq-writer [objs writer opts]
+  (pr-writer (first objs) writer opts)
+  (loop [objs (next objs)]
+    (when-not (nil? objs)
+      (-write writer " ")
+      (pr-writer (first objs) writer opts)
+      (recur (next objs)))))

@@ -8,8 +8,6 @@
 
 (def
   ^{:dynamic true
-    :doc "When set to logical true, objects will be printed in a way that preserves
-  their type when read in later.
-
-  Defaults to false."}
-  *print-dup* false)
+    :doc "*print-fns-bodies* controls whether functions print their source or
+    only their names."}
+  *print-fn-bodies* false)

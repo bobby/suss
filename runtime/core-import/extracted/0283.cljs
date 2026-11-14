@@ -6,13 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn array-map
-  "keyval => key val
-  Returns a new array map with supplied mappings."
-  [& keyvals]
-  (let [arr (if (and (instance? IndexedSeq keyvals) (zero? (.-i keyvals)))
-              (.-arr keyvals)
-              (into-array keyvals))]
-    (if (odd? (alength arr))
-      (throw (js/Error. (str_ "No value supplied for key: " (last arr))))
-      (.createAsIfByAssoc PersistentArrayMap arr))))
+(defn subvec
+  "Returns a persistent vector of the items in vector from
+  start (inclusive) to end (exclusive).  If end is not supplied,
+  defaults to (count vector). This operation is O(1) and very fast, as
+  the resulting vector shares structure with the original and no
+  trimming is done."
+  ([v start]
+   (subvec v start (count v)))
+  ([v start end]
+   (assert (and (not (nil? start)) (not (nil? end))))
+   (build-subvec nil v (int start) (int end) nil)))

@@ -6,9 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn array-seq
-  "Create a seq from a JavaScript array."
-  ([array]
-     (prim-seq array 0))
-  ([array i]
-     (prim-seq array i)))
+(defn sequential?
+  "Returns true if coll satisfies ISequential"
+  [x] (satisfies? ISequential x))

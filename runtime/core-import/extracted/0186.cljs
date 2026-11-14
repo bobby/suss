@@ -6,10 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- array-index-of-identical? [arr k]
-  (let [len (alength arr)]
+(defn- array-extend-kv [arr k v]
+  (let [l (alength arr)
+        narr (make-array (+ l 2))]
     (loop [i 0]
-      (cond
-        (<= len i) -1
-        (identical? k (aget arr i)) i
-        :else (recur (+ i 2))))))
+      (when (< i l)
+        (aset narr i (aget arr i))
+        (recur (inc i))))
+    (aset narr l k)
+    (aset narr (inc l) v)
+    narr))

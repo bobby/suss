@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- hash-symbol [sym]
-  (hash-combine
-    (m3-hash-unencoded-chars (.-name sym))
-    (hash-string (.-ns sym))))
+(defn ^boolean symbol?
+  "Return true if x is a Symbol"
+  [x]
+  (instance? Symbol x))

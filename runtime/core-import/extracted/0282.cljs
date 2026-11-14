@@ -6,14 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn hash-map
-  "keyval => key val
-  Returns a new hash map with supplied mappings."
-  [& keyvals]
-  (loop [in (seq keyvals), out (transient (.-EMPTY PersistentHashMap))]
-    (if in
-      (let [in' (next in)]
-        (if (nil? in')
-          (throw (js/Error. (str_ "No value supplied for key: " (first in))))
-          (recur (next in') (assoc! out (first in) (first in')) )))
-      (persistent! out))))
+(defn- build-subvec [meta v start end __hash]
+  (if (instance? Subvec v)
+    (recur meta (.-v v) (+ (.-start v) start) (+ (.-start v) end) __hash)
+    (do
+      (when-not (vector? v)
+        (throw (js/Error. "v must satisfy IVector")))
+      (when (or (neg? start)
+                (< end start)
+                (> end (count v)))
+        (throw (js/Error. "Index out of bounds")))
+      (Subvec. meta v start end __hash))))

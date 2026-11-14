@@ -6,16 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn dissoc
-  "dissoc[iate]. Returns a new map of the same (hashed/sorted) type,
-  that does not contain a mapping for key(s)."
-  ([coll] coll)
-  ([coll k]
-    (when-not (nil? coll)
-      (-dissoc coll k)))
-  ([coll k & ks]
-    (when-not (nil? coll)
-      (let [ret (dissoc coll k)]
-        (if ks
-          (recur ret (first ks) (next ks))
-          ret)))))
+(defn every?
+  "Returns true if (pred x) is logical true for every x in coll, else
+  false."
+  [pred coll]
+  (cond
+   (nil? (seq coll)) true
+   (pred (first coll)) (recur pred (next coll))
+   :else false))

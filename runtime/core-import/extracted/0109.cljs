@@ -6,12 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- do-assoc [pv level node i val]
-  (let [ret (pv-clone-node node)]
-    (if (zero? level)
-      (do
-        (pv-aset ret (bit-and i 0x01f) val)
-        ret)
-      (let [subidx (bit-and (bit-shift-right-zero-fill i level) 0x01f)]
-        (pv-aset ret subidx (do-assoc pv (- level 5) (pv-aget node subidx) i val))
-        ret))))
+(defprotocol ISwap
+  "Protocol for adding swapping functionality."
+  (-swap! [o f] [o f a] [o f a b] [o f a b xs]
+    "Swaps the value of o to be (apply f current-value-of-atom args)."))

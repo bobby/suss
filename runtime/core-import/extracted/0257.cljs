@@ -6,19 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn conj
-  "conj[oin]. Returns a new collection with the xs
-  'added'. (conj nil item) returns (item).
-  (conj coll) returns coll. (conj) returns [].
-  The 'addition' may happen at different 'places' depending
-  on the concrete type."
-  ([] [])
-  ([coll] coll)
-  ([coll x]
-    (if-not (nil? coll)
-      (-conj coll x)
-      (list x)))
-  ([coll x & xs]
-    (if xs
-      (recur (conj coll x) (first xs) (next xs))
-      (conj coll x))))
+(defprotocol ITransientSet
+  "Protocol for adding set functionality to a transient collection."
+  (^clj -disjoin! [tcoll v]
+    "Returns tcoll without v."))

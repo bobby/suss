@@ -6,18 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn reset!
-  "Sets the value of atom to newval without regard for the
-  current value. Returns new-value."
-  [a new-value]
-  (if (instance? Atom a)
-    (let [validate (.-validator a)]
-      (when-not (nil? validate)
-        (when-not (validate new-value)
-          (throw (js/Error. "Validator rejected reference state"))))
-      (let [old-value (.-state a)]
-        (set! (.-state a) new-value)
-        (when-not (nil? (.-watches a))
-          (-notify-watches a old-value new-value))
-        new-value))
-    (-reset! a new-value)))
+(defn compare-and-set!
+  "Atomically sets the value of atom to newval if and only if the
+  current value of the atom is equal to oldval. Returns true if
+  set happened, else false."
+  [^not-native a oldval newval]
+  (if (= (-deref a) oldval)
+    (do (reset! a newval) true)
+    false))

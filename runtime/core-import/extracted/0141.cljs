@@ -6,11 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn keyword-identical?
-  "Efficient test to determine that two keywords are identical."
-  [x y]
-  (if (identical? x y)
-    true
-    (if (and (keyword? x) (keyword? y))
-      (identical? (.-fqn x) (.-fqn y))
-      false)))
+(defprotocol IFind
+  "Protocol for implementing entry finding in collections."
+  (-find [coll k] "Returns the map entry for key, or nil if key not present."))

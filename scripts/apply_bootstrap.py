@@ -25,7 +25,8 @@ def simple(n=4):
     args = ' '.join(f'a{i}' for i in range(n+1))
     property_name = f'cljs$core$IFn$_invoke$arity${n+1}'
     invoke = f'(if (.-{property_name} f) (.{property_name} f {args}) (.call f f {args}))'
-    more = f'(let [arr (array {args})] (loop [s next_{n}] (when s (do (.push arr (-first s)) (recur (next s))))) (.apply f f arr))' if n >= 19 else simple(n+1)
+    # Past twenty arguments, the whole argument seq becomes one array (#425).
+    more = '(.apply f f (to-array (cons a0 (cons a1 (cons a2 (cons a3 args))))))' if n >= 19 else simple(n+1)
     source = 'args' if n == 4 else f'next_{n-1}'
     return f'(let [a{n} (cljs.core/-first {source}) next_{n} (cljs.core/next {source})] (if (nil? next_{n}) {invoke} {more}))'
 

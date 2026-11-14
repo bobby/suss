@@ -6,9 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn object?
-  "Returns true if x's constructor is Object"
-  [x]
-  (if-not (nil? x)
-    (identical? (.-constructor x) js/Object)
-    false))
+(defn simple-ident?
+  "Return true if x is a symbol or keyword without a namespace"
+  [x] (and (ident? x) (nil? (namespace x))))

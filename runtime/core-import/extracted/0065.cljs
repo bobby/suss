@@ -6,23 +6,17 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn count
-  "Returns the number of items in the collection. (count nil) returns
-  0.  Also works on strings, arrays, and Maps"
-  [coll]
-  (if-not (nil? coll)
-    (cond
-      (implements? ICounted coll)
-      (-count coll)
-
-      (array? coll)
-      (alength coll)
-
-      (string? coll)
-      ^number (.-length coll)
-
-      (implements? ISeqable coll)
-      (accumulating-seq-count coll)
-
-      :else (-count coll))
-    0))
+(defn- equiv-sequential
+  "Assumes x is sequential. Returns true if x equals y, otherwise
+  returns false."
+  [x y]
+  (boolean
+    (when (sequential? y)
+      (if (and (counted? x) (counted? y)
+               (not (== (count x) (count y))))
+        false
+        (loop [xs (seq x) ys (seq y)]
+          (cond (nil? xs) (nil? ys)
+            (nil? ys) false
+            (= (first xs) (first ys)) (recur (next xs) (next ys))
+            :else false))))))

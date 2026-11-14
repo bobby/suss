@@ -6,20 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^boolean =
-  "Equality. Returns true if x equals y, false if not. Compares
-  numbers and collections in a type-independent manner.  Clojure's immutable data
-  structures define -equiv (and thus =) as a value, not an identity,
-  comparison."
-  ([x] true)
-  ([x y]
-    (if (nil? x)
-      (nil? y)
-      (or (identical? x y)
-        ^boolean (-equiv x y))))
-  ([x y & more]
-     (if (= x y)
-       (if (next more)
-         (recur y (first more) (next more))
-         (= y (first more)))
-       false)))
+(defn reduced
+  "Wraps x in a way such that a reduce will terminate with the value x"
+  [x]
+  (Reduced. x))

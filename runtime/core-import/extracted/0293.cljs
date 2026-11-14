@@ -6,14 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^number min
-  "Returns the least of the nums."
-  ([x] x)
-  ([x y]
-   (cond
-     (NaN? x) x
-     (NaN? y) y
-     (< x y) x
-     :else y))
-  ([x y & more]
-   (reduce min (cljs.core/min x y) more)))
+(defn pop
+  "For a list or queue, returns a new list/queue without the first
+  item, for a vector, returns a new vector without the last item.
+  Note - not the same as next/butlast."
+  [coll]
+  (when-not (nil? coll)
+    (-pop coll)))

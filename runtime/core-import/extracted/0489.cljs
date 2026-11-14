@@ -6,9 +6,15 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn force
-  "If x is a Delay, returns the (possibly cached) value of its expression, else returns x"
-  [x]
-  (if (delay? x)
-    (deref x)
-    x))
+(defn parents
+  "Returns the immediate parents of tag, either via a JavaScript type
+  inheritance relationship or a relationship established via derive. h
+  must be a hierarchy obtained from make-hierarchy, if not supplied
+  defaults to the global hierarchy"
+  ([tag] (parents @(get-global-hierarchy) tag))
+  ([h tag]
+   (not-empty
+     (let [tp (get (:parents h) tag)]
+       (if (js-fn? tag)
+         (into (set (bases tag)) tp)
+         tp)))))

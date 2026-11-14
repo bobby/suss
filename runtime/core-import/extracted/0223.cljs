@@ -6,11 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn every?
-  "Returns true if (pred x) is logical true for every x in coll, else
-  false."
-  [pred coll]
-  (cond
-   (nil? (seq coll)) true
-   (pred (first coll)) (recur pred (next coll))
-   :else false))
+(defn- ^number fix [q]
+  (if (>= q 0)
+    (Math/floor q)
+    (Math/ceil q)))

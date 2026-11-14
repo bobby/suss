@@ -6,5 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- array-map-extend-kv [m k v]
-  (array-extend-kv (.-arr m) k v))
+(defn persistent-array-map-seq [arr i _meta]
+  (when (<= i (- (alength arr) 2))
+    (PersistentArrayMapSeq. arr i _meta)))

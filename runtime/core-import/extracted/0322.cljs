@@ -6,16 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn empty?
-  "Returns true if coll has no items. To check the emptiness of a seq,
-  please use the idiom (seq x) rather than (not (empty? x))"
-  [coll]
-  (cond
-    (nil? coll)
-    true
-
-    (satisfies? ICounted coll)
-    (zero? (-count coll))
-
-    :else
-    (not (seq coll))))
+(defn pr-str-with-opts
+  "Prints a sequence of objects to a string, observing all the
+  options given in opts"
+  [objs opts]
+  (if (empty? objs)
+    ""
+    (str_ (pr-sb-with-opts objs opts))))

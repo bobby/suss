@@ -6,16 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- create-array-node-seq
-  ([nodes] (create-array-node-seq nodes 0 nil))
-  ([nodes i s]
-     (if (nil? s)
-       (let [len (alength nodes)]
-         (loop [j i]
-           (if (< j len)
-             (if-let [nj (aget nodes j)]
-               (if-let [ns (.inode-seq nj)]
-                 (ArrayNodeSeq. nil nodes (inc j) ns nil)
-                 (recur (inc j)))
-               (recur (inc j))))))
-       (ArrayNodeSeq. nil nodes i s nil))))
+(defn ^boolean not=
+  "Same as (not (= obj1 obj2))"
+  ([x] false)
+  ([x y] (not (= x y)))
+  ([x y & more]
+   (not (apply = x y more))))

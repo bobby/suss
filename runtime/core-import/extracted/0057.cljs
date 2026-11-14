@@ -6,11 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^seq next
-  "Returns a seq of the items after the first. Calls seq on its
-  argument.  If there are no more items, returns nil"
-  [coll]
-  (when-not (nil? coll)
-    (if (implements? INext coll)
-      (-next coll)
-      (seq (rest coll)))))
+(defn counted?
+  "Returns true if coll implements count in constant time"
+  [x] (satisfies? ICounted x))

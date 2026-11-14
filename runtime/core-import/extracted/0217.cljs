@@ -6,7 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn second
-  "Same as (first (next x))"
-  [coll]
-  (first (next coll)))
+(defn dissoc!
+  "Returns a transient map that doesn't contain a mapping for key(s)."
+  ([tcoll key]
+    (-dissoc! tcoll key))
+  ([tcoll key & ks]
+    (let [ntcoll (-dissoc! tcoll key)]
+      (if ks
+        (recur ntcoll (first ks) (next ks))
+        ntcoll))))

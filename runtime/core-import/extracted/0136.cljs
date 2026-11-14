@@ -6,30 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Keyword [ns name fqn ^:mutable _hash]
-  Object
-  (toString [_] (str_ ":" fqn))
-  (equiv [this other]
-    (-equiv this other))
-
-  IEquiv
-  (-equiv [_ other]
-    (if (instance? Keyword other)
-      (identical? fqn (.-fqn other))
-      false))
-  IFn
-  (-invoke [kw coll]
-    (get coll kw))
-  (-invoke [kw coll not-found]
-    (get coll kw not-found))
-
-  IHash
-  (-hash [this]
-    (caching-hash this hash-keyword _hash))
-
-  INamed
-  (-name [_] name)
-  (-namespace [_] ns)
-
-  IPrintWithWriter
-  (-pr-writer [o writer _] (-write writer (str_ ":" fqn))))
+(defn namespace
+  "Returns the namespace String of a symbol or keyword, or nil if not present."
+  [x]
+  (if (implements? INamed x)
+    (-namespace x)
+    (throw (js/Error. (str_ "Doesn't support namespace: " x)))))

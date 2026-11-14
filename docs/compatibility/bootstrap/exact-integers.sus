@@ -2,14 +2,13 @@
 ;; Every empty/trailing part is retained. This is not general JS String.split.
 (def ^:private keyword-name-parts
   (fn [text]
-    (let [parts (array) length (count text)]
-      (loop [index 0 start 0]
+    (let [length (count text)]
+      (loop [index 0 start 0 parts []]
         (if (< index length)
           (if (== (.charCodeAt text index) 47)
-            (do (.push parts (suss.bootstrap/string-slice text start index))
-                (recur (inc index) (inc index)))
-            (recur (inc index) start))
-          (do (.push parts (suss.bootstrap/string-slice text start length)) parts))))))
+            (recur (inc index) (inc index) (conj parts (suss.bootstrap/string-slice text start index)))
+            (recur (inc index) start parts))
+          (to-array (conj parts (suss.bootstrap/string-slice text start length))))))))
 
 ;; Original Suss adaptation: read the source closure's owned UTF16 label.
 ;; A function the compiler made, such as a protocol method, has no name and
@@ -58,7 +57,7 @@
 
 ;; Copyright The Closure Library Authors.
 ;; SPDX-License-Identifier: Apache-2.0
-;; Adapted from the complete goog/string/stringbuffer.js retained beside this
+;; Adapted from the complete Closure Library stringbuffer.js retained beside this
 ;; file. Native owned storage replaces the Closure prototype buffer slot.
 ;; All constructor and method branches remain; this is not JS prototype interop.
 (def bootstrap-buffer-to-array to-array)
@@ -67,7 +66,7 @@
   (set [this & values]
     (let [args (bootstrap-buffer-to-array values) s (aget args 0)]
       (set! buffer_ (suss.bootstrap/value-add "" s))
-      (aget (array) 0)))
+      nil))
   (append [this & values]
     (let [args (bootstrap-buffer-to-array values)
           old buffer_
@@ -85,7 +84,7 @@
       this))
   (clear [this & ignored]
     (set! buffer_ "")
-    (aget (array) 0))
+    nil)
   (getLength [this & ignored] (.-length buffer_))
   (toString [this & ignored] buffer_))
 (def bootstrap-string-buffer
@@ -162,13 +161,13 @@
   (fn [name] (Namespace. name (array {} {} {} {} #{} #{} #{} #{} []))))
 ;; Programs have few namespaces, and a scan comparing name strings costs far
 ;; less than hashing a symbol, so every fragment can afford to publish.
-(def ^:private namespace-registry (array))
+(def ^:private namespace-registry [])
 (def ^:private registered-namespace
   (fn [name]
-    (let [text (.-str name) length (alength namespace-registry)]
+    (let [text (.-str name) length (count namespace-registry)]
       (loop [index 0]
         (if (< index length)
-          (let [ns (aget namespace-registry index)]
+          (let [ns (nth namespace-registry index)]
             (if (= text (.-str (.-name ns))) ns (recur (inc index))))
           nil)))))
 (def ^:private intern-namespace
@@ -177,7 +176,7 @@
       (let [found (registered-namespace name)]
         (if (nil? found)
           (let [created (new-namespace name)]
-            (.push namespace-registry created)
+            (set! namespace-registry (conj namespace-registry created))
             created)
           found))
       (throw (suss.bootstrap/error "Namespace name must be a symbol")))))
@@ -365,9 +364,9 @@
   (fn [value] (instance? ReaderConditional value)))
 
 (deftype ReaderSplice [items])
-(def ^:private reader-nothing (array))
+(def ^:private reader-nothing (Unique.))
 ;; What a collection's item loop sees at its closing delimiter.
-(def ^:private reader-close (array))
+(def ^:private reader-close (Unique.))
 (def ^:private reader-max-depth 128)
 ;; Each #() literal's argument names and each auto-gensym share this counter.
 (def ^:private reader-id 0)
@@ -1807,7 +1806,7 @@
   (fn [t]
     (case t
       :byte 0 :short 1 :int 2 :float 3 :long 4 :double 5
-      (throw (js/Error. (str "Unrecognized type " (pr-str t)))))))
+      (throw (suss.bootstrap/error (str "Unrecognized type " (pr-str t)))))))
 
 (def ^:private packed-copy
   (fn [kind a n]
@@ -1913,7 +1912,7 @@
   (-peek [coll] (when (pos? cnt) (-nth coll (dec cnt))))
   (-pop [coll]
     (cond
-      (zero? cnt) (throw (js/Error. "Can't pop empty vector"))
+      (zero? cnt) (throw (suss.bootstrap/error "Can't pop empty vector"))
       (> (alength tail) 1) (VecOf. kind (dec cnt) chunks (packed-copy kind tail (dec (alength tail))) meta nil)
       (zero? (count chunks)) (VecOf. kind 0 [] (suss.bootstrap/packed-array kind 0) meta nil)
       :else (VecOf. kind (dec cnt) (pop chunks) (peek chunks) meta nil)))
@@ -1964,7 +1963,7 @@
   (-assoc [coll k v]
     (if (integer? k)
       (-assoc-n coll k v)
-      (throw (js/Error. "Key must be integer"))))
+      (throw (suss.bootstrap/error "Key must be integer"))))
   (-contains-key? [coll k]
     (and (integer? k) (<= 0 k) (< k cnt)))
 
@@ -1991,7 +1990,7 @@
   (-compare [x y]
     (if (vector? y)
       (compare-indexed x y)
-      (throw (js/Error. (str "Cannot compare " x " to " y)))))
+      (throw (suss.bootstrap/error (str "Cannot compare " x " to " y)))))
 
   IReduce
   (-reduce [coll f]

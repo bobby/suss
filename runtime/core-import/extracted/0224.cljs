@@ -6,9 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype NeverEquiv []
-  Object
-  (equiv [this other]
-    (-equiv this other))
-  IEquiv
-  (-equiv [o other] false))
+(defn quot
+  "quot[ient] of dividing numerator by denominator."
+  [n d]
+  (let [rem (js-mod n d)]
+    (fix (/ (- n rem) d))))

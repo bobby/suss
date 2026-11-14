@@ -6,7 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn keyword?
-  "Return true if x is a Keyword"
-  [x]
-  (instance? Keyword x))
+(defn symbol-identical?
+  "Efficient test to determine that two symbols are identical."
+  [x y]
+  (if (identical? x y)
+    true
+    (if (and (symbol? x) (symbol? y))
+      (identical? (.-str x) (.-str y))
+      false)))

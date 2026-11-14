@@ -6,10 +6,4 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn flatten
-  "Takes any nested combination of sequential things (lists, vectors,
-  etc.) and returns their contents as a single, flat sequence.
-  (flatten nil) returns nil."
-  [x]
-  (filter #(not (sequential? %))
-          (rest (tree-seq sequential? seq x))))
+(def ^:private EMPTY (Empty.))

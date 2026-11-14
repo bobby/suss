@@ -6,7 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol ITransientSet
-  "Protocol for adding set functionality to a transient collection."
-  (^clj -disjoin! [tcoll v]
-    "Returns tcoll without v."))
+(deftype HashSetIter [iter]
+  Object
+  (hasNext [_]
+    (.hasNext iter))
+  (next [_]
+    (if ^boolean (.hasNext iter)
+      (.-key (.next iter))
+      (throw (js/Error. "No such element"))))
+  (remove [_] (js/Error. "Unsupported operation")))

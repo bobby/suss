@@ -6,7 +6,20 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(def
-  ^{:private true
-    :jsdoc ["@type {*}"]}
-  -global-hierarchy nil)
+(defn- prefers*
+  [x y prefer-table]
+  (let [xprefs (@prefer-table x)]
+    (or
+     (when (and xprefs (xprefs y))
+       true)
+     (loop [ps (parents y)]
+       (when (pos? (count ps))
+         (when (prefers* x (first ps) prefer-table)
+           true)
+         (recur (rest ps))))
+     (loop [ps (parents x)]
+       (when (pos? (count ps))
+         (when (prefers* (first ps) y prefer-table)
+           true)
+         (recur (rest ps))))
+     false)))

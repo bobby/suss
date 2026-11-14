@@ -6,8 +6,20 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- accumulating-seq-count [coll]
-  (loop [s (seq coll) acc 0]
-    (if (counted? s) ; assumes nil is counted, which it currently is
-      (+ acc (-count s))
-      (recur (next s) (inc acc)))))
+(defn ^boolean =
+  "Equality. Returns true if x equals y, false if not. Compares
+  numbers and collections in a type-independent manner.  Clojure's immutable data
+  structures define -equiv (and thus =) as a value, not an identity,
+  comparison."
+  ([x] true)
+  ([x y]
+    (if (nil? x)
+      (nil? y)
+      (or (identical? x y)
+        ^boolean (-equiv x y))))
+  ([x y & more]
+     (if (= x y)
+       (if (next more)
+         (recur y (first more) (next more))
+         (= y (first more)))
+       false)))

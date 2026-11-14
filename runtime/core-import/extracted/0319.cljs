@@ -6,25 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn pr-sequential-writer [writer print-one begin sep end opts coll]
-  (binding [*print-level* (when-not (nil? *print-level*) (dec *print-level*))]
-    (if (and (not (nil? *print-level*)) (neg? *print-level*))
-      (-write writer "#")
-      (do
-        (-write writer begin)
-        (if (zero? (pr-opts-len opts))
-          (when (seq coll)
-            (-write writer (or (:more-marker opts) "...")))
-          (do
-            (when (seq coll)
-              (print-one (first coll) writer opts))
-            (loop [coll (next coll) n (dec (pr-opts-len opts))]
-              (if (and coll (or (nil? n) (not (zero? n))))
-                (do
-                  (-write writer sep)
-                  (print-one (first coll) writer opts)
-                  (recur (next coll) (dec n)))
-                (when (and (seq coll) (zero? n))
-                  (-write writer sep)
-                  (-write writer (or (:more-marker opts) "...")))))))
-        (-write writer end)))))
+(defn- pr-writer
+  "Prefer this to pr-seq, because it makes the printing function
+   configurable, allowing efficient implementations such as appending
+   to a StringBuffer."
+  [obj writer opts]
+  (if-let [alt-impl (:alt-impl opts)]
+    (alt-impl obj writer (-assoc opts :fallback-impl pr-writer-impl))
+    (pr-writer-impl obj writer opts)))

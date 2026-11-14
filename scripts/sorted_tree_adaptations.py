@@ -153,8 +153,6 @@ def adapt(original, name):
         # shorthand argument is %2. Retain ignored accumulator/value semantics.
         result = result.replace('#(or (contains? other %2) (reduced false))',
                                 '(fn [sorted-acc__ sorted-key__ sorted-value__] (or (contains? other sorted-key__) (reduced false)))')
-        # Retain the genuine typed catch verbatim. Error ancestry is a blocker.
-    if name == 'iter':
-        result = result.replace('(str_ "Cannot create iterator from " coll)',
-             '(let [sorted-text__ (str_ coll)] (.join (cljs.core/array "Cannot create iterator from " sorted-text__) ""))')
+        # Any error ends the comparison, as Clojure catches Exception (#425).
+        result = result.replace('(catch js/Error ex', '(catch :default ex')
     return result

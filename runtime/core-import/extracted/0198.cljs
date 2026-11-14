@@ -6,8 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn key-test [key other]
-  (cond
-    (identical? key other) true
-    (keyword-identical? key other) true
-    :else (= key other)))
+(defprotocol IChunk
+  "Protocol for accessing the items of a chunk."
+  (-drop-first [coll]
+    "Return a new chunk of coll with the first item removed."))

@@ -6,72 +6,29 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype List [meta first rest count ^:mutable __hash]
-  Object
-  (toString [coll]
-    (pr-str* coll))
-  (equiv [this other]
-    (-equiv this other))
-  (indexOf [coll x]
-    (-indexOf coll x 0))
-  (indexOf [coll x start]
-    (-indexOf coll x start))
-  (lastIndexOf [coll x]
-    (-lastIndexOf coll x count))
-  (lastIndexOf [coll x start]
-    (-lastIndexOf coll x start))
+(defn ^seq seq
+  "Returns a seq on the collection. If the collection is
+  empty, returns nil.  (seq nil) returns nil. seq also works on
+  Strings."
+  [coll]
+  (when-not (nil? coll)
+    (cond
+      (implements? ISeqable coll)
+      (-seq coll)
 
-  IList
+      (array? coll)
+      (when-not (zero? (alength coll))
+        (IndexedSeq. coll 0 nil))
 
-  ICloneable
-  (-clone [_] (List. meta first rest count __hash))
+      (string? coll)
+      (when-not (zero? (.-length coll))
+        (IndexedSeq. coll 0 nil))
 
-  IWithMeta
-  (-with-meta [coll new-meta]
-    (if (identical? new-meta meta)
-      coll
-      (List. new-meta first rest count __hash)))
+      (js-iterable? coll)
+      (es6-iterator-seq
+        (.call (gobject/get coll ITER_SYMBOL) coll))
 
-  IMeta
-  (-meta [coll] meta)
+      (native-satisfies? ISeqable coll)
+      (-seq coll)
 
-  ASeq
-  ISeq
-  (-first [coll] first)
-  (-rest [coll]
-    (if (== count 1)
-      ()
-      rest))
-
-  INext
-  (-next [coll]
-    (if (== count 1)
-      nil
-      rest))
-
-  IStack
-  (-peek [coll] first)
-  (-pop [coll] (-rest coll))
-
-  ICollection
-  (-conj [coll o] (List. meta o coll (inc count) nil))
-
-  IEmptyableCollection
-  (-empty [coll] (-with-meta (.-EMPTY List) meta))
-
-  ISequential
-  IEquiv
-  (-equiv [coll other] (equiv-sequential coll other))
-
-  IHash
-  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
-
-  ISeqable
-  (-seq [coll] coll)
-
-  ICounted
-  (-count [coll] count)
-
-  IReduce
-  (-reduce [coll f] (seq-reduce f coll))
-  (-reduce [coll f start] (seq-reduce f start coll)))
+      :else (throw (js/Error. (str_ coll " is not ISeqable"))))))

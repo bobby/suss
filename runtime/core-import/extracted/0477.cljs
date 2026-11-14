@@ -6,18 +6,20 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype MultiIterator [iters]
-  Object
-  (hasNext [_]
-    (loop [iters (seq iters)]
-      (if-not (nil? iters)
-        (let [iter (first iters)]
-          (if-not ^boolean (.hasNext iter)
-            false
-            (recur (next iters))))
-        true)))
-  (next [_]
-    (let [nexts (array)]
-      (dotimes [i (alength iters)]
-        (aset nexts i (.next (aget iters i))))
-      (prim-seq nexts 0))))
+(deftype Delay [^:mutable f ^:mutable value]
+  IDeref
+  (-deref [_]
+    (when f
+      (set! value (f))
+      (set! f nil))
+    value)
+
+  IPending
+  (-realized? [x]
+    (not f))
+
+  IPrintWithWriter
+  (-pr-writer [x writer opts]
+    (-write writer "#object[cljs.core.Delay ")
+    (pr-writer {:status (if (nil? f) :ready :pending), :val value} writer opts)
+    (-write writer "]")))

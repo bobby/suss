@@ -6,14 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^number max
-  "Returns the greatest of the nums."
-  ([x] x)
-  ([x y]
-   (cond
-     (NaN? x) x
-     (NaN? y) y
-     (> x y) x
-     :else y))
-  ([x y & more]
-   (reduce max (cljs.core/max x y) more)))
+(defn peek
+  "For a list or queue, same as first, for a vector, same as, but much
+  more efficient than, last. If the collection is empty, returns nil."
+  [coll]
+  (when-not (nil? coll)
+    (-peek coll)))

@@ -6,6 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn make-hierarchy
-  "Creates a hierarchy object for use with derive, isa? etc."
-  [] {:parents {} :descendants {} :ancestors {}})
+(defprotocol IMultiFn
+  (-reset [mf])
+  (-add-method [mf dispatch-val method])
+  (-remove-method [mf dispatch-val])
+  (-prefer-method [mf dispatch-val dispatch-val-y])
+  (-get-method [mf dispatch-val])
+  (-methods [mf])
+  (-prefers [mf])
+  (-default-dispatch-val [mf])
+  (-dispatch-fn [mf]))

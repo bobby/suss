@@ -6,6 +6,19 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^boolean neg?
-  "Returns true if num is less than zero, else false"
-  [x] (cljs.core/neg? x))
+(defn- -lastIndexOf
+  ([coll x]
+   (-lastIndexOf coll x (count coll)))
+  ([coll x start]
+   (let [len (count coll)]
+    (if (zero? len)
+      -1
+      (loop [idx (cond
+                   (pos? start) (unchecked-min (dec len) start)
+                   (neg? start) (+ len start)
+                   :else start)]
+        (if (>= idx 0)
+          (if (= (nth coll idx) x)
+            idx
+            (recur (dec idx)))
+          -1))))))

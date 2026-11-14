@@ -6,7 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- ^number fix [q]
-  (if (>= q 0)
-    (Math/floor q)
-    (Math/ceil q)))
+(defn- array->transient-hash-map [len arr]
+  (loop [out (transient (.-EMPTY PersistentHashMap))
+         i   0]
+    (if (< i len)
+      (recur (assoc! out (aget arr i) (aget arr (inc i))) (+ i 2))
+      out)))

@@ -6,9 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol ITransientCollection
-  "Protocol for adding basic functionality to transient collections."
-  (^clj -conj! [tcoll val]
-    "Adds value val to tcoll and returns tcoll.")
-  (^clj -persistent! [tcoll]
-    "Creates a persistent data structure from tcoll and returns it."))
+(defn- tv-ensure-editable [edit node]
+  (if (identical? edit (.-edit node))
+    node
+    (VectorNode. edit (aclone (.-arr node)))))

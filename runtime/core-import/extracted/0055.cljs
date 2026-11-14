@@ -6,13 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn first
-  "Returns the first item in the collection. Calls seq on its
-  argument. If coll is nil, returns nil."
-  [coll]
-  (when-not (nil? coll)
-    (if (implements? ISeq coll)
-      (-first coll)
-      (let [s (seq coll)]
-        (when-not (nil? s)
-          (-first s))))))
+(defn array-seq
+  "Create a seq from a JavaScript array."
+  ([array]
+     (prim-seq array 0))
+  ([array i]
+     (prim-seq array i)))

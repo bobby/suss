@@ -6,11 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn name
-  "Returns the name String of a string, symbol or keyword."
-  [x]
-  (if (implements? INamed x)
-    (-name x)
-    (if (string? x)
-      x
-      (throw (js/Error. (str_ "Doesn't support name: " x))))))
+(defprotocol ILookup
+  "Protocol for looking up a value in a data structure."
+  (-lookup [o k] [o k not-found]
+    "Use k to look up a value in o. If not-found is supplied and k is not
+     a valid value that can be used for look up, not-found is returned."))

@@ -6,6 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn associative?
- "Returns true if coll implements IAssociative"
-  [x] (satisfies? IAssociative x))
+(defn- range-count
+  "Returns exact size of remaining items in an IntegerRange."
+  [start end step]
+  (Math/ceil (/ (- end start) step)))

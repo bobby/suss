@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "8b175171b1c779b69e713066d12836225117c8149e9e9d0310a5825198797f57",
+  "replacement": "(set! (.-EMPTY PersistentArrayMap) (PersistentArrayMap. nil 0 (make-array 0) empty-unordered-hash))",
+  "rationale": "Suss has no JS array literal (#425): the empty map's array is a zero-length array from make-array, as the JVM's empty PersistentArrayMap holds new Object[0]."
+}

@@ -6,9 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn seq?
-  "Return true if s satisfies ISeq"
-  [s]
-  (if (nil? s)
-    false
-    (satisfies? ISeq s)))
+(defn mod
+  "Modulus of num and div. Truncates toward negative infinity."
+  [n d]
+  (js-mod (+ (js-mod n d) d) d))

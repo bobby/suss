@@ -6,6 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn simple-keyword?
-  "Return true if x is a keyword without a namespace"
-  [x] (and (keyword? x) (nil? (namespace x))))
+(defn print-prefix-map [prefix m print-one writer opts]
+  (pr-sequential-writer
+    writer
+    (fn [e w opts]
+      (do (print-one (key e) w opts)
+          (-write w \space)
+          (print-one (val e) w opts)))
+    (str_ prefix "{") ", " "}"
+    opts (seq m)))

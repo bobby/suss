@@ -6,13 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn disj!
-  "disj[oin]. Returns a transient set of the same (hashed/sorted) type, that
-  does not contain key(s)."
-  ([tcoll val]
-    (-disjoin! tcoll val))
-  ([tcoll val & vals]
-    (let [ntcoll (-disjoin! tcoll val)]
-      (if vals
-        (recur ntcoll (first vals) (next vals))
-        ntcoll))))
+(defn chunk-cons [chunk rest]
+  (if (zero? (-count chunk))
+    rest
+    (ChunkedCons. chunk rest nil nil)))

@@ -6,22 +6,20 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype ArrayNodeIterator [arr ^:mutable i ^:mutable next-iter]
-  Object
-  (hasNext [this]
-    (let [len (alength arr)]
-      (loop []
-        (if-not (and  (some? next-iter) ^boolean (.hasNext next-iter))
-          (if (< i len)
-            (let [node (aget arr i)]
-              (set! i (inc i))
-              (when (some? node)
-                (set! next-iter (-iterator node)))
-              (recur))
-            false)
-          true))))
-  (next [this]
-    (if ^boolean (.hasNext this)
-      (.next next-iter)
-      (throw (js/Error. "No such element"))))
-  (remove [_] (js/Error. "Unsupported operation")))
+(defn- create-node
+  ([shift key1 val1 key2hash key2 val2]
+     (let [key1hash (hash key1)]
+       (if (== key1hash key2hash)
+         (HashCollisionNode. nil key1hash 2 (array key1 val1 key2 val2))
+         (let [added-leaf? (Box. false)]
+           (-> (.-EMPTY BitmapIndexedNode)
+               (.inode-assoc shift key1hash key1 val1 added-leaf?)
+               (.inode-assoc shift key2hash key2 val2 added-leaf?))))))
+  ([edit shift key1 val1 key2hash key2 val2]
+     (let [key1hash (hash key1)]
+       (if (== key1hash key2hash)
+         (HashCollisionNode. nil key1hash 2 (array key1 val1 key2 val2))
+         (let [added-leaf? (Box. false)]
+           (-> (.-EMPTY BitmapIndexedNode)
+               (.inode-assoc! edit shift key1hash key1 val1 added-leaf?)
+               (.inode-assoc! edit shift key2hash key2 val2 added-leaf?)))))))
