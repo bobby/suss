@@ -210,6 +210,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::StringAppendLong => { names.insert("string-append-long"); }
                         Nominal::StringHash => { names.insert("string-hash"); }
                         Nominal::VectorNth => { names.insert("vector-nth"); }
+                        Nominal::LongCast => { names.insert("number-cast-long"); }
+                        Nominal::DoubleCast => { names.insert("number-cast-double"); }
                         Nominal::PackedGet(_) => { names.insert("packed-array-get-2"); names.insert("source-array-get-2"); }
                         Nominal::PackedSet(_) => { names.insert("packed-array-set-3"); names.insert("source-array-set-3"); }
                         Nominal::ValueAdd => { names.insert("value-add"); }
@@ -624,7 +626,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
             | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit"
-            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string-hash" | "packed-array-test" => {
+            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string-hash" | "number-cast-long" | "number-cast-double" | "packed-array-test" => {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
@@ -2447,6 +2449,69 @@ fn emit_function(
                                 function.instruction(&instruction);
                             }
                         }
+                        Nominal::LongCast | Nominal::DoubleCast => {
+                            // The checked cast (#385): an i31 or a boxed long
+                            // (or double) inline, anything else through the
+                            // runtime's cast, which converts or throws. The
+                            // value is raw when its local is.
+                            let long = matches!(operation, Nominal::LongCast);
+                            let value = arguments[0].0 as u32 + offset;
+                            let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
+                            let boxed = if long { runtime_abi::LONG } else { runtime_abi::NUMBER };
+                            let raw = if long { ValType::I64 } else { ValType::F64 };
+                            let read_box = |function: &mut Function| {
+                                function
+                                    .instruction(&RefCastNonNull(HeapType::Concrete(boxed)))
+                                    .instruction(&StructGet { struct_type_index: boxed, field_index: 0 });
+                            };
+                            function
+                                .instruction(&LocalGet(value))
+                                .instruction(&RefTestNonNull(i31))
+                                .instruction(&If(BlockType::Result(raw)))
+                                .instruction(&LocalGet(value))
+                                .instruction(&RefCastNonNull(i31))
+                                .instruction(&I31GetS)
+                                .instruction(&if long { I64ExtendI32S } else { F64ConvertI32S })
+                                .instruction(&Else)
+                                .instruction(&LocalGet(value))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(boxed)))
+                                .instruction(&If(BlockType::Result(raw)))
+                                .instruction(&LocalGet(value));
+                            read_box(&mut function);
+                            function
+                                .instruction(&Else)
+                                .instruction(&LocalGet(value))
+                                .instruction(&Call(index(if long { "number-cast-long" } else { "number-cast-double" })));
+                            if long {
+                                // The cast's result is an i31 or a long box.
+                                function
+                                    .instruction(&LocalTee(method_local))
+                                    .instruction(&RefTestNonNull(i31))
+                                    .instruction(&If(BlockType::Result(ValType::I64)))
+                                    .instruction(&LocalGet(method_local))
+                                    .instruction(&RefCastNonNull(i31))
+                                    .instruction(&I31GetS)
+                                    .instruction(&I64ExtendI32S)
+                                    .instruction(&Else)
+                                    .instruction(&LocalGet(method_local));
+                                read_box(&mut function);
+                                function.instruction(&End);
+                            } else {
+                                read_box(&mut function);
+                            }
+                            function.instruction(&End).instruction(&End);
+                            if locals.of(inst.result) == unboxed::Repr::Boxed {
+                                // Resumable functions keep values boxed.
+                                if long {
+                                    function.instruction(&LocalSet(long_locals[0]));
+                                    for instruction in runtime_abi::long_box_in(long_locals[0]) {
+                                        function.instruction(&instruction);
+                                    }
+                                } else {
+                                    function.instruction(&StructNew(runtime_abi::NUMBER));
+                                }
+                            }
+                        }
                         Nominal::VectorNth => {
                             function
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
@@ -2795,9 +2860,10 @@ fn emit_function(
                             })));
                         }
                     }
-                    if locals.of(inst.result) == unboxed::Repr::Flag {
-                        // Its i32 truth value (#387); uses that need a value
-                        // take the boolean sentinel.
+                    if matches!(locals.of(inst.result), unboxed::Repr::Flag | unboxed::Repr::Long | unboxed::Repr::Double) {
+                        // Its i32 truth value (#387), or a parameter cast's
+                        // raw long or double (#385); uses that need a value
+                        // take it boxed.
                         function.instruction(&LocalSet(locals.raw(inst.result)));
                     } else {
                         if operation.result() == Type::Bool {

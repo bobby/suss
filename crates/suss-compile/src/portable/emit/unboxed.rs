@@ -150,6 +150,16 @@ pub(super) fn infer(function: &Function, resumable: bool) -> Vec<Repr> {
     }
     let mut state = vec![Lattice::Known(Repr::Boxed); count];
     let mut seeded = vec![false; count];
+    // A `^long` or `^double` parameter's cast is raw (#385).
+    for block in &function.blocks {
+        for instruction in &block.instructions {
+            match &instruction.operation {
+                Operation::Nominal { operation: super::super::hir::Nominal::LongCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Long),
+                Operation::Nominal { operation: super::super::hir::Nominal::DoubleCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Double),
+                _ => {}
+            }
+        }
+    }
     for block in &function.blocks {
         for instruction in &block.instructions {
             if matches!(
