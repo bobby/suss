@@ -22,6 +22,19 @@ impl Analyzer<'_> {
         };
         if operation == ArrayOperation::Get || operation == ArrayOperation::Set {
             let mut current = self.form(&args[0])?;
+            // One index into an array whose source tag is a packed element
+            // type (#389): `^longs`, `^doubles` and the rest, as Clojure's
+            // hinted aget and aset, read and write the element inline.
+            let kind = packed_kind(&current);
+            let simple = if operation == ArrayOperation::Get { args.len() == 2 } else { args.len() == 3 };
+            if let Some(kind) = kind.filter(|kind| simple && (operation == ArrayOperation::Get || matches!(kind, 2 | 4 | 5))) {
+                let mut operands = vec![current];
+                for argument in &args[1..] {
+                    operands.push(self.form(argument)?);
+                }
+                let nominal = if operation == ArrayOperation::Get { Nominal::PackedGet(kind) } else { Nominal::PackedSet(kind) };
+                return Ok(self.nominal(form, nominal, operands));
+            }
             let last = if operation == ArrayOperation::Set {
                 args.len() - 2
             } else {
@@ -135,4 +148,25 @@ fn literal_size(kind: &Kind) -> Option<f64> {
         Kind::Number(size) => Some(*size),
         _ => None,
     }
+}
+
+/// The packed element kind, in `packed_arrays::KINDS` order, that an array
+/// expression's source tag names (#389).
+fn packed_kind(array: &Hir) -> Option<usize> {
+    let source = array.source.as_ref()?;
+    // The inferred tag already gives a hint precedence over the operand's own.
+    let tag = source.tags.inferred.as_ref().or(source.tags.tag.as_ref())?;
+    let Kind::Symbol(symbol) = &tag.kind else { return None };
+    if symbol.namespace.is_some() {
+        return None;
+    }
+    Some(match symbol.name.as_str() {
+        "bytes" => 0,
+        "shorts" => 1,
+        "ints" => 2,
+        "floats" => 3,
+        "longs" => 4,
+        "doubles" => 5,
+        _ => return None,
+    })
 }
