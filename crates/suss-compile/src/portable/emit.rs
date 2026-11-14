@@ -135,6 +135,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         for block in &function.blocks {
             throws |= matches!(&block.terminator, Terminator::Throw(_));
             for inst in &block.instructions {
+                // A hinted array access throws for a wrong hint (#389).
+                throws |= matches!(inst.operation, Operation::Nominal { operation: Nominal::PackedGet(_) | Nominal::PackedSet(_), .. });
                 match &inst.operation {
                     Operation::Await { .. } | Operation::MakeFuture { .. } => {}
                     Operation::DynamicScope {
@@ -212,8 +214,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::VectorNth => { names.insert("vector-nth"); }
                         Nominal::LongCast => { names.insert("number-cast-long"); }
                         Nominal::DoubleCast => { names.insert("number-cast-double"); }
-                        Nominal::PackedGet(_) => { names.insert("packed-array-get-2"); names.insert("source-array-get-2"); }
-                        Nominal::PackedSet(_) => { names.insert("packed-array-set-3"); names.insert("source-array-set-3"); }
+                        Nominal::PackedGet(_) => { names.insert("packed-array-get-2"); names.insert("language-error-new"); }
+                        Nominal::PackedSet(_) => { names.insert("packed-array-set-3"); names.insert("language-error-new"); }
                         Nominal::ValueAdd => { names.insert("value-add"); }
                         Nominal::IsBoolean => {}
                         Nominal::Identical => { names.insert("identical-value"); }
@@ -1486,7 +1488,7 @@ fn emit_function(
     let storage_locals = callee + 6;
     for kind in 0..6 {
         declarations.push((1, ValType::Ref(wasm_encoder::RefType {
-            nullable: true,
+            nullable: false,
             heap_type: HeapType::Concrete(runtime_abi::PACKED_STORAGE + kind),
         })));
     }
@@ -2442,126 +2444,167 @@ fn emit_function(
                                 .instruction(&I32Or);
                         }
                         Nominal::PackedGet(kind) | Nominal::PackedSet(kind) => {
-                            // Inline for a packed array of the hinted kind and
-                            // an i31 index in range (#389); anything else
-                            // takes the generic path, so a wrong hint is only
-                            // slower. Each type test is one `br_on_cast_fail`
-                            // into the generic path, and a raw index or value
-                            // (#387) is read raw there and boxed only for the
-                            // generic path.
+                            // A hinted aget or aset (#389). The array is cast
+                            // to a packed array of the hinted kind, as
+                            // Clojure's hint is a checked cast, so a wrong hint
+                            // throws (as #385's `^long` parameters do). The
+                            // element is then read or written inline for an
+                            // index in range, raw (#387) when its local is;
+                            // any other index takes the generic path, which
+                            // reports a bad index as before.
                             let set = matches!(operation, Nominal::PackedSet(_));
+                            let kind = *kind;
                             let array = arguments[0].0 as u32 + offset;
                             let position = arguments[1];
-                            let storage = runtime_abi::PACKED_STORAGE + *kind as u32;
-                            let typed = storage_locals + *kind as u32;
+                            let storage = runtime_abi::PACKED_STORAGE + kind as u32;
+                            let typed = storage_locals + kind as u32;
                             let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
-                            // A cast failure leaves for the generic block,
-                            // `depth` blocks out.
-                            let cast_out = |depth, heap_type| BrOnCastFail {
-                                relative_depth: depth,
+                            let cast = |heap_type| BrOnCastFail {
+                                relative_depth: 0,
                                 from_ref_type: wasm_encoder::RefType::EQREF,
                                 to_ref_type: wasm_encoder::RefType { nullable: false, heap_type },
                             };
-                            let cast = |heap_type| cast_out(0, heap_type);
                             let [wide, _, _] = long_locals;
-                            // The generic path's block takes the failed cast's
-                            // value, or the array from a failed range test, and
-                            // drops it.
-                            let mut code = vec![Block(BlockType::Result(VALUE)), Block(BlockType::Result(VALUE))];
+                            // Doubles and floats read as doubles; the rest as longs.
+                            let floating = matches!(kind, 3 | 5);
+                            let element_type = if floating { ValType::F64 } else { ValType::I64 };
+                            let name = runtime_abi::packed_kind_name(kind);
+                            let article = if name.starts_with(['a', 'e', 'i', 'o', 'u']) { "an" } else { "a" };
+                            let message = format!("{} ^{name}s requires {article} {name} array", if set { "aset" } else { "aget" });
+                            // An aset whose value is raw returns it raw.
+                            let raw_result = set && locals.of(inst.result) != unboxed::Repr::Boxed;
+                            let result = if !set {
+                                element_type
+                            } else if raw_result {
+                                locals.of(inst.result).val_type().expect("raw aset result")
+                            } else {
+                                VALUE
+                            };
+                            // The access runs inside the cast's success block,
+                            // where the storage local, non-nullable, is set.
+                            let mut code = vec![Block(BlockType::Result(result)), Block(BlockType::Result(VALUE)), LocalGet(array),
+                                cast(HeapType::Concrete(runtime_abi::PACKED)),
+                                StructGet { struct_type_index: runtime_abi::PACKED, field_index: 0 },
+                                cast(HeapType::Concrete(storage)), LocalSet(typed)];
+                            // The inline path, or out to the generic one.
+                            code.extend([Block(BlockType::Result(result)), Block(BlockType::Empty)]);
                             match locals.of(position) {
                                 unboxed::Repr::Long => {
                                     // Unsigned, so a negative index is out of range.
-                                    code.extend([LocalGet(locals.raw(position)), I32WrapI64, LocalSet(field_index_local)]);
+                                    let raw = locals.raw(position);
+                                    code.extend([LocalGet(raw), I32WrapI64, LocalSet(field_index_local),
+                                        LocalGet(typed), ArrayLen, I64ExtendI32U, LocalGet(raw), I64LeU, BrIf(0)]);
                                 }
-                                _ => code.extend([LocalGet(position.0 as u32 + offset), cast(i31), I31GetS, LocalSet(field_index_local)]),
+                                _ => {
+                                    let boxed = position.0 as u32 + offset;
+                                    code.extend([LocalGet(boxed), RefTestNonNull(i31), I32Eqz, BrIf(0),
+                                        LocalGet(boxed), RefCastNonNull(i31), I31GetS, LocalTee(field_index_local),
+                                        LocalGet(typed), ArrayLen, I32GeU, BrIf(0)]);
+                                }
                             }
-                            code.extend([
-                                LocalGet(array), cast(HeapType::Concrete(runtime_abi::PACKED)),
-                                StructGet { struct_type_index: runtime_abi::PACKED, field_index: 0 },
-                                cast(HeapType::Concrete(storage)), LocalTee(typed), ArrayLen,
-                            ]);
-                            match locals.of(position) {
-                                unboxed::Repr::Long => code.extend([I64ExtendI32U, LocalGet(locals.raw(position)), I64LeU]),
-                                _ => code.extend([LocalGet(field_index_local), I32LeU]),
-                            }
-                            // Out of range: the array, into the generic block.
-                            code.extend([If(BlockType::Empty), LocalGet(array), Br(1), End]);
-                            let boxed_wide = |code: &mut Vec<Instruction<'static>>| code.extend([
-                                LocalTee(wide), I64Const(1 << 30), I64Add, I64Const(1 << 31), I64LtU, If(BlockType::Result(VALUE)),
-                                LocalGet(wide), I32WrapI64, RefI31, Else, LocalGet(wide), StructNew(runtime_abi::LONG), End]);
                             let element = [LocalGet(typed), LocalGet(field_index_local)];
-                            if set && locals.of(arguments[2]) != unboxed::Repr::Boxed {
-                                // A raw value: a long into a long array, an
-                                // i31's worth into an int array (as a boxed
-                                // value's inline path takes only an i31), a
-                                // double into a double array; any other goes
-                                // generic.
-                                let value = locals.raw(arguments[2]);
-                                let repr = locals.of(arguments[2]);
-                                let inline = match (kind, repr) {
+                            if set {
+                                let value = arguments[2];
+                                let repr = locals.of(value);
+                                let boxed = value.0 as u32 + offset;
+                                match (kind, repr) {
+                                    // A raw value of the element's kind; an
+                                    // int takes only an i31's worth inline,
+                                    // as a boxed value does.
                                     (2, unboxed::Repr::Long) => {
-                                        code.extend([LocalGet(value), I64Const(1 << 30), I64Add,
-                                            I64Const(1 << 31), I64LtU, I32Eqz, If(BlockType::Empty), LocalGet(array), Br(1), End]);
-                                        true
+                                        let raw = locals.raw(value);
+                                        code.extend([LocalGet(raw), I64Const(1 << 30), I64Add, I64Const(1 << 31), I64LtU, I32Eqz, BrIf(0)]);
+                                        code.extend(element);
+                                        code.extend([LocalGet(raw), I32WrapI64, ArraySet(storage)]);
                                     }
-                                    (4, unboxed::Repr::Long) | (5, unboxed::Repr::Double) => true,
-                                    _ => false,
-                                };
-                                if inline {
-                                    code.extend(element.clone());
-                                    code.push(LocalGet(value));
-                                    if *kind == 2 {
-                                        code.push(I32WrapI64);
+                                    (4, unboxed::Repr::Long) | (5, unboxed::Repr::Double) => {
+                                        code.extend(element);
+                                        code.extend([LocalGet(locals.raw(value)), ArraySet(storage)]);
                                     }
-                                    code.push(ArraySet(storage));
-                                    locals.push_boxed(&mut code, arguments[2]);
-                                } else {
-                                    code.extend([LocalGet(array), Br(0)]);
+                                    (_, unboxed::Repr::Boxed) => {
+                                        match kind {
+                                            2 => {
+                                                code.extend([LocalGet(boxed), RefTestNonNull(i31), I32Eqz, BrIf(0)]);
+                                                code.extend(element);
+                                                code.extend([LocalGet(boxed), RefCastNonNull(i31), I31GetS, ArraySet(storage)]);
+                                            }
+                                            4 => {
+                                                code.extend([LocalGet(boxed), RefTestNonNull(i31), If(BlockType::Result(ValType::I64)),
+                                                    LocalGet(boxed), RefCastNonNull(i31), I31GetS, I64ExtendI32S, Else,
+                                                    LocalGet(boxed), RefTestNonNull(HeapType::Concrete(runtime_abi::LONG)), I32Eqz, BrIf(1),
+                                                    LocalGet(boxed), RefCastNonNull(HeapType::Concrete(runtime_abi::LONG)),
+                                                    StructGet { struct_type_index: runtime_abi::LONG, field_index: 0 }, End,
+                                                    LocalSet(wide)]);
+                                                code.extend(element);
+                                                code.extend([LocalGet(wide), ArraySet(storage)]);
+                                            }
+                                            _ => {
+                                                code.extend([LocalGet(boxed), RefTestNonNull(HeapType::Concrete(runtime_abi::NUMBER)), I32Eqz, BrIf(0)]);
+                                                code.extend(element);
+                                                code.extend([LocalGet(boxed), RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
+                                                    StructGet { struct_type_index: runtime_abi::NUMBER, field_index: 0 }, ArraySet(storage)]);
+                                            }
+                                        }
+                                    }
+                                    // Any other raw value takes the generic path.
+                                    _ => code.push(Br(0)),
                                 }
-                            } else if set {
-                                let value = arguments[2].0 as u32 + offset;
-                                // The value as the element: an i31 for int and
-                                // long, an i31 or a long box for long, an i31
-                                // or a double box for double.
-                                match kind {
-                                    2 => {
-                                        code.extend(element.clone());
-                                        code.extend([LocalGet(value), cast(i31), I31GetS, ArraySet(storage), LocalGet(value)]);
+                                if !matches!(code.last(), Some(Br(0))) {
+                                    if raw_result {
+                                        code.push(LocalGet(locals.raw(value)));
+                                    } else {
+                                        locals.push_boxed(&mut code, value);
                                     }
-                                    4 => {
-                                        code.extend(element.clone());
-                                        code.extend([LocalGet(value), RefTestNonNull(i31), If(BlockType::Result(ValType::I64)),
-                                            LocalGet(value), RefCastNonNull(i31), I31GetS, I64ExtendI32S, Else,
-                                            LocalGet(value), cast_out(1, HeapType::Concrete(runtime_abi::LONG)),
-                                            StructGet { struct_type_index: runtime_abi::LONG, field_index: 0 }, End,
-                                            ArraySet(storage), LocalGet(value)]);
-                                    }
-                                    _ => {
-                                        code.extend(element.clone());
-                                        code.extend([LocalGet(value), cast(HeapType::Concrete(runtime_abi::NUMBER)),
-                                            StructGet { struct_type_index: runtime_abi::NUMBER, field_index: 0 }, ArraySet(storage), LocalGet(value)]);
-                                    }
+                                    code.push(Br(1));
                                 }
                             } else {
-                                code.extend(element.clone());
+                                code.extend(element);
+                                code.push(match kind {
+                                    0 | 1 => ArrayGetS(storage),
+                                    _ => ArrayGet(storage),
+                                });
                                 match kind {
-                                    0 | 1 => { code.extend([ArrayGetS(storage), I64ExtendI32S]); boxed_wide(&mut code); }
-                                    2 => { code.extend([ArrayGet(storage), I64ExtendI32S]); boxed_wide(&mut code); }
-                                    3 => code.extend([ArrayGet(storage), F64PromoteF32, StructNew(runtime_abi::NUMBER)]),
-                                    4 => { code.push(ArrayGet(storage)); boxed_wide(&mut code); }
-                                    _ => code.extend([ArrayGet(storage), StructNew(runtime_abi::NUMBER)]),
+                                    0 | 1 | 2 => code.push(I64ExtendI32S),
+                                    3 => code.push(F64PromoteF32),
+                                    _ => {}
+                                }
+                                code.push(Br(1));
+                            }
+                            code.push(End);
+                            // The generic path: an index it converts, or one it
+                            // reports. A packed array's element is a long or a
+                            // double, by kind.
+                            for argument in arguments {
+                                locals.push_boxed(&mut code, *argument);
+                            }
+                            code.push(Call(index(if set { "packed-array-set-3" } else { "packed-array-get-2" })));
+                            if raw_result {
+                                code.extend([Drop, LocalGet(locals.raw(arguments[2]))]);
+                            }
+                            if !set {
+                                if floating {
+                                    code.extend([RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
+                                        StructGet { struct_type_index: runtime_abi::NUMBER, field_index: 0 }]);
+                                } else {
+                                    code.extend([LocalTee(method_local), RefTestNonNull(i31), If(BlockType::Result(ValType::I64)),
+                                        LocalGet(method_local), RefCastNonNull(i31), I31GetS, I64ExtendI32S, Else,
+                                        LocalGet(method_local), RefCastNonNull(HeapType::Concrete(runtime_abi::LONG)),
+                                        StructGet { struct_type_index: runtime_abi::LONG, field_index: 0 }, End]);
                                 }
                             }
-                            code.extend([Br(1), End, Drop,
-                                LocalGet(array), RefTestNonNull(HeapType::Concrete(runtime_abi::PACKED)), If(BlockType::Result(VALUE))]);
-                            for argument in arguments {
-                                locals.push_boxed(&mut code, *argument);
+                            // Out of the cast's block; a wrong hint throws.
+                            code.extend([End, Br(1), End, Drop]);
+                            code.extend(message.encode_utf16().map(|unit| I32Const(i32::from(unit))));
+                            code.extend([ArrayNewFixed { array_type_index: runtime_abi::STRING, array_size: message.encode_utf16().count() as u32 },
+                                Call(index("language-error-new")), Throw(0), End]);
+                            if !set && locals.of(inst.result) == unboxed::Repr::Boxed {
+                                // Resumable functions keep values boxed.
+                                if floating {
+                                    code.push(StructNew(runtime_abi::NUMBER));
+                                } else {
+                                    code.extend(runtime_abi::long_box_in(wide));
+                                }
                             }
-                            code.extend([Call(index(if set { "packed-array-set-3" } else { "packed-array-get-2" })), Else]);
-                            for argument in arguments {
-                                locals.push_boxed(&mut code, *argument);
-                            }
-                            code.extend([Call(index(if set { "source-array-set-3" } else { "source-array-get-2" })), End, End]);
                             for instruction in code {
                                 function.instruction(&instruction);
                             }

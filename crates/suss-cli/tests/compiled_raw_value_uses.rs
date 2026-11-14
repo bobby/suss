@@ -1,8 +1,9 @@
 //! Raw longs and doubles in value uses (#387, #389): a hash, `identical?`,
 //! `=` of small integers, `bit-and`/`bit-or`/`bit-xor` of longs, and a hinted
-//! array access's index and stored value read their operands unboxed. Each
-//! case's value is the one the boxed paths gave before, including at the i31
-//! boundary, for longs outside it, NaN, wrong hints and failing operations.
+//! array access's index, element and stored value are raw. Each case's value
+//! is the one the boxed paths gave before, including at the i31 boundary, for
+//! longs outside it, NaN and failing operations, except that a wrong array
+//! hint now throws, as Clojure's checked cast does (#389).
 //! Operands derive from the argument `n`, 0, so nothing folds at compile
 //! time.
 use std::process::Command;
@@ -36,8 +37,30 @@ const CASES: &[(&str, &str, i64)] = &[
     ("aset-int-raw-overflow", "(try (aset ^ints (int-array 2) 0 (+ n 5000000000)) (catch :default e -1))", -1),
     ("aset-double-raw", "(let [a (double-array 2)] (aset ^doubles a 1 (* (+ n 1.5) 2)) (long (* 2 (aget a 1))))", 6),
     ("aset-double-raw-long", "(let [a (double-array 2)] (aset ^doubles a 1 (+ n 3)) (long (* 2 (aget a 1))))", 6),
-    ("aset-wrong-hint", "(let [a (object-array 2)] (aset ^longs a 0 (+ n 7)) (aget a 0))", 7),
-    ("aget-wrong-hint", "(let [a (object-array [9])] (aget ^longs a (bit-and n 1)))", 9),
+    // A wrong hint throws, as Clojure's checked cast does (#389). These two
+    // cases read and wrote the object array before #389.
+    ("aset-wrong-hint", "(try (let [a (object-array 2)] (aset ^longs a 0 (+ n 7)) (aget a 0)) (catch :default e (if (= (ex-message e) \"aset ^longs requires a long array\") -2 -3)))", -2),
+    ("aget-wrong-hint", "(try (let [a (object-array [9])] (aget ^longs a (bit-and n 1))) (catch :default e (if (= (ex-message e) \"aget ^longs requires a long array\") -2 -3)))", -2),
+    ("aget-longs-on-doubles", "(try (aget ^longs (double-array 2) (bit-and n 1)) (catch :default e (if (= (ex-message e) \"aget ^longs requires a long array\") -2 -3)))", -2),
+    ("aget-doubles-on-longs", "(try (aget ^doubles (long-array 2) (bit-and n 1)) (catch :default e (if (= (ex-message e) \"aget ^doubles requires a double array\") -2 -3)))", -2),
+    ("aget-ints-on-longs", "(try (aget ^ints (long-array 2) n) (catch :default e (if (= (ex-message e) \"aget ^ints requires an int array\") -2 -3)))", -2),
+    ("aget-longs-on-vector", "(try (let [v [1 2]] (aget ^longs v n)) (catch :default e (if (= (ex-message e) \"aget ^longs requires a long array\") -2 -3)))", -2),
+    ("aget-longs-on-nil", "(try (let [a (when (pos? n) 1)] (aget ^longs a n)) (catch :default e (if (= (ex-message e) \"aget ^longs requires a long array\") -2 -3)))", -2),
+    ("aset-doubles-on-longs", "(try (aset ^doubles (long-array 2) n 1.5) (catch :default e (if (= (ex-message e) \"aset ^doubles requires a double array\") -2 -3)))", -2),
+    ("aset-ints-on-objects", "(try (aset ^ints (object-array 2) n (+ n 1)) (catch :default e (if (= (ex-message e) \"aset ^ints requires an int array\") -2 -3)))", -2),
+    // The array is cast before the index is used: a bad index on a wrong
+    // array reports the hint.
+    ("aget-wrong-hint-bad-index", "(try (aget ^longs (double-array 2) (+ n 9)) (catch :default e (if (= (ex-message e) \"aget ^longs requires a long array\") -2 -3)))", -2),
+    // Raw elements of each kind, and raw stores of literals.
+    ("aget-double-raw", "(let [a (double-array [1.5 2.25])] (loop [i n s 0.0] (if (< i 2) (recur (inc i) (+ s (aget ^doubles a i))) (long (* 4 s)))))", 15),
+    ("aget-float", "(long (* 2 (aget ^floats (float-array [1.5]) n)))", 3),
+    ("aget-byte", "(aget ^bytes (byte-array [-3]) n)", -3),
+    ("aget-double-index", "(aget ^longs (long-array [7 8]) (+ n 1.0))", 8),
+    ("aset-double-literal", "(let [a (double-array 2)] (long (* 2 (+ (aset ^doubles a (+ n 1) 2.5) (aget a 1)))))", 10),
+    ("aset-long-literal", "(let [a (long-array 2)] (+ (aset ^longs a n 5000000000) (aget a 0)))", 10000000000),
+    ("aset-long-into-doubles", "(let [a (double-array 2)] (long (* 2 (aset ^doubles a n (+ n 3)))))", 6),
+    ("aset-double-into-longs", "(let [a (long-array 2)] (aset ^longs a n (+ n 2.5)) (aget a 0))", 2),
+    ("aget-bad-index-message", "(try (aget ^longs (long-array 2) (+ n 5)) (catch :default e (if (= (ex-message e) \"Index 5 out of bounds for length 2\") -2 -3)))", -2),
 ];
 
 #[test]

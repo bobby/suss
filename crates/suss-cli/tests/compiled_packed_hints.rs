@@ -1,8 +1,9 @@
 //! An `aget` or `aset` with one index into an array tagged with a packed
 //! element type, by a hint such as `^longs` or by a local bound to
-//! `(long-array …)`, reads and writes the element inline (#389). Anything else,
-//! including a wrong hint, takes the generic path with the same result. Each
-//! case's AOT result must equal the REPL's, and some fixed expected values.
+//! `(long-array …)`, reads and writes the element inline (#389). A hint is a
+//! checked cast, as in Clojure: a wrong one throws. An index the inline path
+//! can't use takes the generic path with the same result. Each case's AOT
+//! result must equal the REPL's, and some fixed expected values.
 //! Operands derive from the argument `n`, 0.
 use std::process::Command;
 use suss_cli::portable_session::Session;
@@ -18,7 +19,8 @@ const CASES: &[(&str, &str)] = &[
     ("hinted-get", "[(aget ^longs la (+ n 1)) (aget ^longs la 2) (aget ^longs la 3) (aget ^ints ia 1) (aget ^doubles da 1) (aget ^bytes ba 1) (aget ^floats fa 1)]"),
     ("local-get", "(let [a (long-array 4) d (double-array 2)] (aset a 2 (+ n 9)) (aset d 1 2.5) [(aget a 2) (aget a 0) (aget d 1)])"),
     ("hinted-set", "(let [l (long-array 2) i (int-array 1) d (double-array 2)] [(aset ^longs l 0 (+ n 7)) (aget l 0) (aset ^longs l 1 4000000000) (aget l 1) (aset ^ints i 0 (- n 8)) (aget i 0) (aset ^doubles d 0 3.25) (aset ^doubles d 1 (+ n 2)) (vec d)])"),
-    ("wrong-hint", "[(aget ^longs da 0) (aget ^doubles la 2) (aget ^longs oa 1) (aget ^ints la 3)]"),
+    // Before #389's checked cast these read the element: [1.5 3000000000 :y -4].
+    ("wrong-hint", "[(safe (fn [] (aget ^longs da 0))) (safe (fn [] (aget ^doubles la 2))) (safe (fn [] (aget ^longs oa 1))) (safe (fn [] (aget ^ints la 3))) (safe (fn [] (aset ^longs da 0 1))) (try (aget ^doubles la (+ n 9)) (catch :default e (ex-message e)))]"),
     ("bounds", "[(safe (fn [] (aget ^longs la 4))) (safe (fn [] (aget ^longs la -1))) (safe (fn [] (aset ^longs la 9 1))) (safe (fn [] (aget ^doubles da (+ n 2))))]"),
     ("index-kinds", "[(aget ^longs la 1.0) (safe (fn [] (aget ^longs la nil))) (aget ^ints ia (long 2))]"),
     ("int-range", "(let [i (int-array [5 6]) l (long-array [1])] [(safe (fn [] (aset ^ints i 1 3000000000))) (aget i 1) (safe (fn [] (aset ^longs l 0 1.5))) (aget l 0)])"),
@@ -66,7 +68,7 @@ fn packed_array_hints_match_the_repl() {
         let expected = match *name {
             "hinted-get" => Some("[2 3000000000 -4 6 2.5 -2 1.25]"),
             "local-get" => Some("[9 0 2.5]"),
-            "wrong-hint" => Some("[1.5 3000000000 :y -4]"),
+            "wrong-hint" => Some("[:error :error :error :error :error \"aget ^doubles requires a double array\"]"),
             "hinted-set" => Some("[7 7 4000000000 4000000000 -8 -8 3.25 2.0 [3.25 2.0]]"),
             _ => None,
         };

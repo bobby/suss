@@ -184,6 +184,10 @@ pub fn long_box_in(scratch: u32) -> Vec<Instruction<'static>> {
     code
 }
 pub(crate) use longs::hash_long_in;
+/// A packed array kind's element name, as `^longs` names `long` (#389).
+pub(crate) fn packed_kind_name(kind: usize) -> &'static str {
+    packed_arrays::KINDS[kind].0
+}
 pub(crate) fn boolean() -> [Instruction<'static>; 5] {
     boolean_in(FALSE_GLOBAL)
 }
