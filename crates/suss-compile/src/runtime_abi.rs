@@ -183,6 +183,7 @@ pub fn long_box_in(scratch: u32) -> Vec<Instruction<'static>> {
     ]);
     code
 }
+pub(crate) use longs::hash_long_in;
 pub(crate) fn boolean() -> [Instruction<'static>; 5] {
     boolean_in(FALSE_GLOBAL)
 }

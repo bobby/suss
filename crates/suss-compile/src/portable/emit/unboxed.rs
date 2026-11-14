@@ -8,7 +8,7 @@
 //! call or a return. Overflow and other errors take the boxed runtime path, so
 //! messages and exceptions match it exactly.
 use super::super::{
-    hir::{Arithmetic, Comparison, Literal},
+    hir::{Arithmetic, Bitwise, Comparison, Literal},
     ir::{self, Function, Operation, Terminator, ValueId},
 };
 use crate::runtime_abi;
@@ -109,6 +109,27 @@ fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool) -> La
     }
 }
 
+/// Clojure's `bit-and`, `bit-or` and `bit-xor` of two longs are a long
+/// (#387); anything else takes the runtime operation, which throws for a
+/// double as Clojure does.
+pub(super) fn raw_bitwise(operation: Bitwise, count: usize) -> Option<Instruction<'static>> {
+    match operation {
+        Bitwise::And if count == 2 => Some(Instruction::I64And),
+        Bitwise::Or if count == 2 => Some(Instruction::I64Or),
+        Bitwise::Xor if count == 2 => Some(Instruction::I64Xor),
+        _ => None,
+    }
+}
+fn bitwise(operation: Bitwise, arguments: &[Lattice]) -> Lattice {
+    if raw_bitwise(operation, arguments.len()).is_some()
+        && arguments.iter().all(|argument| matches!(argument, Lattice::Top | Lattice::Known(Repr::Long)))
+    {
+        if arguments.iter().all(|argument| *argument == Lattice::Top) { Lattice::Top } else { Lattice::Known(Repr::Long) }
+    } else {
+        Lattice::Known(Repr::Boxed)
+    }
+}
+
 fn comparison(operation: Comparison, arguments: &[Lattice]) -> Lattice {
     if relation(operation).is_none() || arguments.len() != 2 {
         return Lattice::Known(Repr::Boxed);
@@ -156,6 +177,8 @@ pub(super) fn infer(function: &Function, resumable: bool) -> Vec<Repr> {
             match &instruction.operation {
                 Operation::Nominal { operation: super::super::hir::Nominal::LongCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Long),
                 Operation::Nominal { operation: super::super::hir::Nominal::DoubleCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Double),
+                // A hash is a raw long (#387).
+                Operation::Nominal { operation: super::super::hir::Nominal::NumberHash, .. } => state[instruction.result.0] = Lattice::Known(Repr::Long),
                 _ => {}
             }
         }
@@ -167,6 +190,7 @@ pub(super) fn infer(function: &Function, resumable: bool) -> Vec<Repr> {
                 Operation::Literal(Literal::Long(_) | Literal::Number(_))
                     | Operation::Arithmetic { .. }
                     | Operation::Comparison { .. }
+                    | Operation::Bitwise { .. }
             ) {
                 state[instruction.result.0] = Lattice::Top;
                 seeded[instruction.result.0] = true;
@@ -211,6 +235,7 @@ pub(super) fn infer(function: &Function, resumable: bool) -> Vec<Repr> {
                         Operation::Comparison { operation, arguments } => {
                             comparison(*operation, &operands(arguments))
                         }
+                        Operation::Bitwise { operation, arguments } => bitwise(*operation, &operands(arguments)),
                         _ => unreachable!("seeded numeric instruction"),
                     };
                     if next != state[instruction.result.0] {
@@ -250,7 +275,10 @@ pub(super) fn infer(function: &Function, resumable: bool) -> Vec<Repr> {
     for block in &function.blocks {
         for instruction in &block.instructions {
             if repr[instruction.result.0] != Repr::Boxed
-                && matches!(instruction.operation, Operation::Arithmetic { .. } | Operation::Comparison { .. })
+                && matches!(
+                    instruction.operation,
+                    Operation::Arithmetic { .. } | Operation::Comparison { .. } | Operation::Bitwise { .. }
+                )
             {
                 for argument in ir::operands(&instruction.operation) {
                     raw_use[argument.0] = true;
@@ -529,6 +557,117 @@ impl Locals {
         ]);
     }
 
+    /// `identical?` with a raw operand (#387), without boxing it. A long is
+    /// identical to a long of the same value, an i31 or a long box, and a
+    /// double to a boxed double that compares equal, as `identical-value`
+    /// answers for two boxed numbers; a long is never a double.
+    pub(super) fn identical(&self, code: &mut Vec<Instruction<'static>>, arguments: &[ValueId], result: ValueId) {
+        use Instruction::*;
+        let (x, y) = (arguments[0], arguments[1]);
+        let (rx, ry) = (self.of(x), self.of(y));
+        match (rx, ry) {
+            (Repr::Long, Repr::Long) => code.extend([LocalGet(self.raw(x)), LocalGet(self.raw(y)), I64Eq]),
+            (Repr::Double, Repr::Double) => code.extend([LocalGet(self.raw(x)), LocalGet(self.raw(y)), F64Eq]),
+            (Repr::Long, Repr::Boxed) | (Repr::Boxed, Repr::Long) => {
+                let (raw, other) = if rx == Repr::Long { (x, y) } else { (y, x) };
+                let (raw, other) = (self.raw(raw), self.boxed(other));
+                code.extend([
+                    LocalGet(other), RefTestNonNull(HeapType::I31),
+                    If(BlockType::Result(ValType::I32)),
+                    LocalGet(other), RefCastNonNull(HeapType::I31), I31GetS, I64ExtendI32S, LocalGet(raw), I64Eq,
+                    Else,
+                    LocalGet(other), RefTestNonNull(HeapType::Concrete(runtime_abi::LONG)),
+                    If(BlockType::Result(ValType::I32)),
+                    LocalGet(other), RefCastNonNull(HeapType::Concrete(runtime_abi::LONG)),
+                    StructGet { struct_type_index: runtime_abi::LONG, field_index: 0 }, LocalGet(raw), I64Eq,
+                    Else, I32Const(0), End,
+                    End,
+                ]);
+            }
+            (Repr::Double, Repr::Boxed) | (Repr::Boxed, Repr::Double) => {
+                let (raw, other) = if rx == Repr::Double { (x, y) } else { (y, x) };
+                let (raw, other) = (self.raw(raw), self.boxed(other));
+                code.extend([
+                    LocalGet(other), RefTestNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
+                    If(BlockType::Result(ValType::I32)),
+                    LocalGet(other), RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
+                    StructGet { struct_type_index: runtime_abi::NUMBER, field_index: 0 }, LocalGet(raw), F64Eq,
+                    Else, I32Const(0), End,
+                ]);
+            }
+            // A long and a double, raw.
+            _ => code.push(I32Const(0)),
+        }
+        if self.of(result) == Repr::Flag {
+            code.push(LocalSet(self.raw(result)));
+        } else {
+            code.extend(runtime_abi::boolean_in(self.sentinels));
+            code.push(LocalSet(self.boxed(result)));
+        }
+    }
+
+    /// Pushes whether a raw long fits an i31.
+    fn push_fits(&self, code: &mut Vec<Instruction<'static>>, value: ValueId) {
+        use Instruction::*;
+        code.extend([LocalGet(self.raw(value)), I64Const(1 << 30), I64Add, I64Const(1 << 31), I64LtU]);
+    }
+    /// A small-integer or same-reference test of raw longs and GC values
+    /// (`raw_small`). A raw long is an i31 exactly when it fits one, and two
+    /// i31s are the same reference exactly when equal; a long outside i31
+    /// would box afresh, the same reference as nothing.
+    pub(super) fn small(&self, code: &mut Vec<Instruction<'static>>, same: bool, arguments: &[ValueId], result: ValueId) {
+        use Instruction::*;
+        if same {
+            let (x, y) = (arguments[0], arguments[1]);
+            if self.of(x) == Repr::Long && self.of(y) == Repr::Long {
+                self.push_fits(code, x);
+                code.extend([LocalGet(self.raw(x)), LocalGet(self.raw(y)), I64Eq, I32And]);
+            } else {
+                let (raw, other) = if self.of(x) == Repr::Long { (x, y) } else { (y, x) };
+                let other = self.boxed(other);
+                code.extend([
+                    LocalGet(other), RefTestNonNull(HeapType::I31),
+                    If(BlockType::Result(ValType::I32)),
+                    LocalGet(other), RefCastNonNull(HeapType::I31), I31GetS, I64ExtendI32S, LocalGet(self.raw(raw)), I64Eq,
+                    Else, I32Const(0), End,
+                ]);
+            }
+        } else {
+            for (k, argument) in arguments.iter().enumerate() {
+                if self.of(*argument) == Repr::Long {
+                    self.push_fits(code, *argument);
+                } else {
+                    code.extend([LocalGet(self.boxed(*argument)), RefTestNonNull(HeapType::I31)]);
+                }
+                if k > 0 {
+                    code.push(I32And);
+                }
+            }
+        }
+        if self.of(result) == Repr::Flag {
+            code.push(LocalSet(self.raw(result)));
+        } else {
+            code.extend(runtime_abi::boolean_in(self.sentinels));
+            code.push(LocalSet(self.boxed(result)));
+        }
+    }
+    /// A raw long's hash into the raw result, with `h` as scratch.
+    pub(super) fn hash(&self, code: &mut Vec<Instruction<'static>>, argument: ValueId, result: ValueId, h: u32) {
+        code.extend(runtime_abi::hash_long_in(self.raw(argument), h));
+        code.extend([Instruction::I64ExtendI32S, Instruction::LocalSet(self.raw(result))]);
+    }
+
+    /// A raw long bitwise operation (`raw_bitwise`), which can't fail.
+    pub(super) fn bitwise(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId) {
+        let op = raw_bitwise(operation, arguments.len()).expect("raw bitwise");
+        code.extend([
+            Instruction::LocalGet(self.raw(arguments[0])),
+            Instruction::LocalGet(self.raw(arguments[1])),
+            op,
+            Instruction::LocalSet(self.raw(result)),
+        ]);
+    }
+
     pub(super) fn literal(&self, code: &mut Vec<Instruction<'static>>, literal: &Literal, result: ValueId) {
         let value = match literal {
             Literal::Long(value) => Instruction::I64Const(*value),
@@ -540,11 +679,42 @@ impl Locals {
 }
 const VALUE: ValType = ValType::Ref(wasm_encoder::RefType::EQREF);
 
+/// Whether an instruction is an `identical?` of a raw number (#387), which
+/// `Locals::identical` emits without boxing it.
+pub(super) fn raw_identical(locals: &Locals, instruction: &ir::Instruction) -> bool {
+    match &instruction.operation {
+        Operation::Nominal { operation: super::super::hir::Nominal::Identical, arguments } => {
+            arguments.len() == 2 && arguments.iter().any(|argument| locals.of(*argument).numeric())
+        }
+        _ => false,
+    }
+}
+
+/// Whether an instruction is a small-integer test, a same-reference test or
+/// a hash with a raw long operand and no raw double (#387), which emission
+/// reads raw rather than boxing the operand.
+pub(super) fn raw_small(locals: &Locals, instruction: &ir::Instruction) -> bool {
+    use super::super::hir::Nominal;
+    let Operation::Nominal { operation, arguments } = &instruction.operation else { return false };
+    let long = arguments.iter().any(|argument| locals.of(*argument) == Repr::Long);
+    let double = arguments.iter().any(|argument| locals.of(*argument) == Repr::Double);
+    long && !double
+        && match operation {
+            Nominal::AllSmallIntegers => true,
+            Nominal::SameReference => arguments.len() == 2,
+            Nominal::NumberHash => locals.of(instruction.result) == Repr::Long,
+            _ => false,
+        }
+}
+
 /// Whether an instruction is emitted inline on raw values.
 pub(super) fn inline(locals: &Locals, instruction: &ir::Instruction) -> bool {
     locals.of(instruction.result) != Repr::Boxed
         && matches!(
             instruction.operation,
-            Operation::Literal(_) | Operation::Arithmetic { .. } | Operation::Comparison { .. }
+            Operation::Literal(_)
+                | Operation::Arithmetic { .. }
+                | Operation::Comparison { .. }
+                | Operation::Bitwise { .. }
         )
 }

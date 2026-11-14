@@ -1014,6 +1014,56 @@ fn mix_h1(h: u32) -> [Instruction<'static>; 9] {
     ]
 }
 
+/// Murmur3's `hashLong` of the raw long in local `long`, as an i32 on the
+/// stack, with `h` as the hash's scratch i32 local: what `number-hash`
+/// computes for a long, for inline use on an unboxed long (#387).
+pub(crate) fn hash_long_in(long: u32, h: u32) -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let mut code = vec![
+        LocalGet(long),
+        I64Eqz,
+        If(BlockType::Result(ValType::I32)),
+        I32Const(0),
+        Else,
+        I32Const(0),
+        LocalSet(h),
+        LocalGet(long),
+        I32WrapI64,
+    ];
+    code.extend(mix_k1());
+    code.extend(mix_h1(h));
+    code.extend([LocalGet(long), I64Const(32), I64ShrU, I32WrapI64]);
+    code.extend(mix_k1());
+    code.extend(mix_h1(h));
+    code.extend([
+        // fmix(h1, 8)
+        LocalGet(h),
+        I32Const(8),
+        I32Xor,
+        LocalTee(h),
+        LocalGet(h),
+        I32Const(16),
+        I32ShrU,
+        I32Xor,
+        I32Const(0x85ebca6b_u32 as i32),
+        I32Mul,
+        LocalTee(h),
+        LocalGet(h),
+        I32Const(13),
+        I32ShrU,
+        I32Xor,
+        I32Const(0xc2b2ae35_u32 as i32),
+        I32Mul,
+        LocalTee(h),
+        LocalGet(h),
+        I32Const(16),
+        I32ShrU,
+        I32Xor,
+        End,
+    ]);
+    code
+}
+
 /// `number-hash`: Clojure's `hasheq` of a number. A long hashes as Murmur3's
 /// `hashLong`; a double as `Double.hashCode`, with NaN's canonical bits and
 /// -0.0 hashing as 0.0 does, as `Numbers.hasheq` makes it.
