@@ -136,8 +136,8 @@ impl wasmtime::component::StreamConsumer<()> for CaptureStream {
         _: bool,
     ) -> Poll<wasmtime::Result<wasmtime::component::StreamResult>> {
         let mut source = source.as_direct(store);
-        let count = source.remaining().len();
-        self.0.lock().unwrap().extend_from_slice(source.remaining());
+        let count = source.remaining().unwrap().len();
+        self.0.lock().unwrap().extend_from_slice(source.remaining().unwrap());
         source.mark_read(count);
         // This bounded consumer closes after the expected three bytes. EOF and
         // backpressure are separate gates, not certified by this transport test.
@@ -409,7 +409,7 @@ impl wasmtime::component::StreamProducer<()> for BoundedByteProducer {
         finish: bool,
     ) -> Poll<wasmtime::Result<wasmtime::component::StreamResult>> {
         assert!(!finish, "ordinary reads must not request cancellation");
-        assert_eq!(destination.remaining(&mut store), Some(1));
+        assert_eq!(destination.remaining(&mut store).unwrap(), Some(1));
         if !self.waiting {
             self.waiting = true;
             context.waker().wake_by_ref();
@@ -418,11 +418,11 @@ impl wasmtime::component::StreamProducer<()> for BoundedByteProducer {
         self.waiting = false;
         self.delivered.lock().unwrap().push(self.index);
         let mut destination = destination.as_direct(store, 1);
-        assert_eq!(destination.remaining().len(), 1);
+        assert_eq!(destination.remaining().unwrap().len(), 1);
         if self.index == 3 {
             Poll::Ready(Ok(wasmtime::component::StreamResult::Dropped))
         } else {
-            destination.remaining()[0] = [0, 255, 42][self.index];
+            destination.remaining().unwrap()[0] = [0, 255, 42][self.index];
             destination.mark_written(1);
             self.index += 1;
             Poll::Ready(Ok(wasmtime::component::StreamResult::Completed))
@@ -507,7 +507,7 @@ impl wasmtime::component::StreamProducer<()> for CancelledProducer {
         destination: wasmtime::component::Destination<'_, u8, Self::Buffer>,
         finish: bool,
     ) -> Poll<wasmtime::Result<wasmtime::component::StreamResult>> {
-        assert_eq!(destination.remaining(&mut store), Some(1));
+        assert_eq!(destination.remaining(&mut store).unwrap(), Some(1));
         self.0.lock().unwrap().push(finish);
         if finish {
             Poll::Ready(Ok(wasmtime::component::StreamResult::Cancelled))

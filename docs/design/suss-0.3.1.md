@@ -360,7 +360,8 @@ Bind all capabilities in the WASI 0.3.1 release package graph, including CLI,
 filesystem, clocks, random, sockets, HTTP service/middleware and async I/O. Use
 host-granted capabilities with explicit configuration. Probe every actual import
 and feature; a version string alone is not proof. Candidate toolchain: Wasmtime
-49.0.1 with its matching wasm-tools libraries (0.258.0) and wit-bindgen (0.61.1).
+51.0.0-rc.1 (#403: its component type builder accepts concrete GC heap types in
+core module types), with wasm-tools libraries 0.258.0 and wit-bindgen 0.61.1.
 These are candidates until M0 probes pass; the existing prototype uses older
 versions. Lock the tested versions and WIT content hashes, not floating branches.
 

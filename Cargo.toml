@@ -43,8 +43,8 @@ rustyline = "14"
 
 # Testing
 pretty_assertions = "1.4"
-wasmtime = "=49.0.1"
-wasmtime-wasi = "=49.0.1"
+wasmtime = "=51.0.0-rc.1"
+wasmtime-wasi = "=51.0.0-rc.1"
 tempfile = "3"
 
 # Wasmtime/Cranelift debug information can exhaust a small development volume.
