@@ -576,6 +576,11 @@ fn host_io(error: io::Error) -> SessionError {
 }
 
 impl<Out: Write, Err: Write> FrontendHost for NativeReplHost<Out, Err> {
+    fn consume_interrupt(&mut self) {
+        let (runtime, macros) = self.interrupt_handles();
+        runtime.clear();
+        macros.clear();
+    }
     type RootResult = CompiledValue;
     type Error = SessionError;
     fn submit(&mut self, source: &str) -> Result<Submission<CompiledValue>, SessionError> {

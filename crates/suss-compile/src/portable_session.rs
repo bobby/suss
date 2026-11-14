@@ -61,6 +61,12 @@ pub struct InterruptHandle {
     requested: Arc<AtomicBool>,
 }
 impl InterruptHandle {
+    /// Withdraw a request no guest code has consumed yet (#410): a SIGINT
+    /// received while the REPL waits for input is that input's interrupt,
+    /// not the next guest turn's.
+    pub fn clear(&self) {
+        self.requested.store(false, Ordering::SeqCst);
+    }
     pub fn interrupt(&self) {
         self.requested.store(true, Ordering::SeqCst);
         // Every Store on this engine checks its own request at the next epoch;
