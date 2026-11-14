@@ -1035,6 +1035,8 @@ fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
 }
 struct Analyzer<'a> {
     suspendable: bool,
+    /// The next fixed fn's WIT export parameter hints (#385), taken by it.
+    pending_param_hints: Option<Vec<Option<bool>>>,
     /// Analyzing compiler-authored source, which may access built-in type
     /// internals (design decision 2026-10-25).
     privileged: bool,
@@ -2211,7 +2213,18 @@ impl Analyzer<'_> {
         };
         let outer_scope_count = self.function_scopes.len();
         let suspendable = std::mem::replace(&mut self.suspendable, false);
+        // A WIT export's numeric parameters are primitive (#385): its method
+        // of that arity takes the hints; nested fns never see them.
+        let outer_hints = self.pending_param_hints.take();
+        self.pending_param_hints = name_hint.and_then(|hint| match &hint.kind {
+            Kind::Symbol(symbol) if symbol.namespace.is_none() && !self.privileged => self
+                .environment
+                .export_param_hints(self.environment.current_namespace(self.phase), &symbol.name)
+                .cloned(),
+            _ => None,
+        });
         let result = self.function_inner(form, args, bootstrap_macro, name_hint);
+        self.pending_param_hints = outer_hints;
         self.suspendable = suspendable;
         if result.is_ok() {
             let name = self.function_scopes.get(outer_scope_count).cloned();
@@ -2691,8 +2704,13 @@ impl Analyzer<'_> {
         // fns: its name in the body is the checked cast of the argument, a
         // raw i64 or f64, so arithmetic and loops seeded from it stay raw.
         let mut casts = Vec::new();
-        for parameter in parameters.iter().skip(usize::from(receiver_type.is_some())) {
-            let Some(cast) = primitive_hint(parameter)? else { continue };
+        // An exported fn's numeric WIT parameters, when its arity matches. The
+        // body's own fns don't see them; another arity still can.
+        let pending = self.pending_param_hints.take();
+        let exported = pending.clone().filter(|hints| receiver_type.is_none() && rest_parameter.is_none() && hints.len() == parameters.len());
+        for (position, parameter) in parameters.iter().enumerate().skip(usize::from(receiver_type.is_some())) {
+            let export = exported.as_ref().and_then(|hints| hints[position]).map(|long| if long { Nominal::LongCast } else { Nominal::DoubleCast });
+            let Some(cast) = primitive_hint(parameter)?.or(export) else { continue };
             // The name's current binding: the method's loop binding, which
             // recur rebinds, not the entry parameter.
             let current = self.locals.get(&parameter.name).map_or(parameter.id, |binding| binding.id);
@@ -2709,6 +2727,9 @@ impl Analyzer<'_> {
             super::AnalysisContext::Return,
             true,
         )?;
+        if exported.is_none() {
+            self.pending_param_hints = pending;
+        }
         let inner_body = if casts.is_empty() {
             inner_body
         } else {
@@ -3942,6 +3963,7 @@ pub(crate) fn prepare_with_origin(
 ) -> Result<(Hir, Environment), Diagnostic> {
     let mut analyzer = Analyzer {
         suspendable: false,
+        pending_param_hints: None,
         privileged: origin.is_some_and(|origin| origin.is_privileged()),
         expander,
         origin: origin.cloned(),

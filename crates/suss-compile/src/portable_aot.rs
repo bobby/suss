@@ -306,7 +306,8 @@ pub(crate) fn compile_inputs_with_options(
     if options.async_imports.is_empty() {
         portable::aot::validate_boundary(&resolve, world)
             .map_err(|error| CompileError::Unsupported(error.to_string()))?;
-        let fragments = prepare_inputs_with_command(inputs, source_paths, false, options.compile_fuel)
+        let hints = export_param_hints(&resolve, world, &options.exports);
+        let fragments = prepare_inputs_with_hints(inputs, source_paths, false, &[], options.compile_fuel, true, hints)
             .map_err(|error| CompileError::Semantic(error.to_string()))?;
         let mappings =
             portable::aot::source_export_mappings(&fragments, &resolve, world, &options.exports)
@@ -522,6 +523,44 @@ fn prepare_inputs_with_imports(
     compile_fuel: Option<u64>,
     direct_linking: bool,
 ) -> Result<Vec<PreparedFragment>, SessionError> {
+    prepare_inputs_with_hints(inputs, source_paths, command, imports, compile_fuel, direct_linking, Default::default())
+}
+
+/// The numeric parameters of each explicitly mapped WIT export function, by
+/// its var (#385): integers are `^long` and floats `^double` in its fn.
+fn export_param_hints(
+    resolve: &portable::aot::Resolve,
+    world: portable::aot::WorldId,
+    exports: &[(String, Symbol)],
+) -> std::collections::BTreeMap<(String, String), Vec<Option<bool>>> {
+    use wit_parser::{Type, WorldItem};
+    let mut hints = std::collections::BTreeMap::new();
+    for (key, item) in &resolve.worlds[world].exports {
+        let WorldItem::Function(function) = item else { continue };
+        let name = resolve.name_world_key(key);
+        let Some((_, symbol)) = exports.iter().find(|(export, _)| *export == name) else { continue };
+        let Some(namespace) = symbol.namespace.clone() else { continue };
+        let kinds = function.params.iter().map(|parameter| match parameter.ty {
+            Type::U8 | Type::S8 | Type::U16 | Type::S16 | Type::U32 | Type::S32 | Type::S64 => Some(true),
+            Type::F32 | Type::F64 => Some(false),
+            _ => None,
+        }).collect::<Vec<_>>();
+        if kinds.iter().any(Option::is_some) {
+            hints.insert((namespace, symbol.name.clone()), kinds);
+        }
+    }
+    hints
+}
+
+fn prepare_inputs_with_hints(
+    inputs: &[SourceInput],
+    source_paths: &[PathBuf],
+    command: bool,
+    imports: &[Symbol],
+    compile_fuel: Option<u64>,
+    direct_linking: bool,
+    param_hints: std::collections::BTreeMap<(String, String), Vec<Option<bool>>>,
+) -> Result<Vec<PreparedFragment>, SessionError> {
     let mut core = portable::bootstrap::shipped(Phase::Runtime)
         .map_err(SessionError::Compile)?
         .clone();
@@ -552,6 +591,7 @@ fn prepare_inputs_with_imports(
     // AOT builds direct-link user code (#360); sessions and the REPL don't.
     let mut environment = core.environment.clone();
     environment.set_direct_linking(direct_linking);
+    environment.set_export_param_hints(param_hints);
     let mut snapshot = CompilationSnapshot::new(
         environment,
         Phase::Runtime,

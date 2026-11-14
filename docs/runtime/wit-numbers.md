@@ -23,6 +23,17 @@ what crosses nor what is rejected.
   once, as `float` does, not through a double.
 - Options and lists of these types follow the same rules for each element.
 
+## Primitive export parameters
+
+An exported function's numeric parameters are primitive in its fn (#385), as if it were written with Clojure's hints. Integer types (`u8` to `u32`, `s8` to `s64`) are `^long`, and `f32` and `f64` are `^double`. The method of the WIT function's arity binds each such parameter to the checked cast of its argument, a raw long or double, so arithmetic and loops seeded from it stay unboxed beyond i31, with no long box per iteration. An explicit `^long` or `^double` hint on a parameter takes precedence. `u64`, whose values above `Long/MAX_VALUE` need BigInt, stays boxed.
+
+Calls through the WIT boundary always pass numbers of the declared kind, so they see no difference. Calls from other Suss code coerce as Clojure's primitive fns do:
+- a double passed to an integer parameter truncates, as `(long 2.5)` does, and throws when out of range;
+- a long passed to a float parameter becomes a double;
+- a non-number throws.
+
+A fn nested inside the export takes no hints.
+
 ## Lists
 
 `list<T>` of a numeric `T` enters Suss as a persistent vector. Leaving Suss,
