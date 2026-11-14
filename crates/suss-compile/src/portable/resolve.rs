@@ -321,6 +321,10 @@ pub struct Environment {
     /// Each keyword cell's number (#387): a fragment caches the interned
     /// keyword its literals read in one global per number.
     keyword_caches: BTreeMap<Global, usize>,
+    /// A WIT export's numeric parameters (#385), by its var's namespace and
+    /// name: per parameter, Some(true) for an integer, Some(false) for a
+    /// float. Its single-arity fn treats them as `^long` and `^double`.
+    export_param_hints: BTreeMap<(String, String), Vec<Option<bool>>>,
 }
 /// Namespace of a qualified symbol, as the pinned analyzer's resolve-var and
 /// resolve-macro-var resolve it: `clojure.core` names `cljs.core` (`suss.core`)
@@ -467,6 +471,7 @@ impl Environment {
             direct_slots: BTreeMap::new(),
             direct_link_count: 0,
             keyword_caches: BTreeMap::new(),
+            export_param_hints: BTreeMap::new(),
         };
         for phase in [Phase::Runtime, Phase::Macro] {
             env.scopes.insert(
@@ -1126,6 +1131,13 @@ impl Environment {
             self.bind(global.clone(), Binding::InternalCell(global.clone()));
         }
         global
+    }
+    /// Records the AOT build's exported functions' numeric parameters (#385).
+    pub(crate) fn set_export_param_hints(&mut self, hints: BTreeMap<(String, String), Vec<Option<bool>>>) {
+        self.export_param_hints = hints;
+    }
+    pub(crate) fn export_param_hints(&self, namespace: &str, name: &str) -> Option<&Vec<Option<bool>>> {
+        self.export_param_hints.get(&(namespace.to_owned(), name.to_owned()))
     }
     /// The number of a keyword cell's per-fragment cache (#387).
     pub(crate) fn keyword_cache(&mut self, cell: &Global) -> usize {
