@@ -42,6 +42,9 @@ pub enum AsyncErrorDisposition {
 pub trait FrontendHost {
     type RootResult;
     type Error;
+    /// Withdraw a guest interrupt the input's interrupt already represents
+    /// (#410), before any guest code runs for this turn.
+    fn consume_interrupt(&mut self) {}
     fn submit(&mut self, source: &str) -> Result<Submission<Self::RootResult>, Self::Error>;
     /// Fresh post-evaluation observation failure; never consult an earlier
     /// async-turn recovery receipt to decide whether this submission is usable.
@@ -87,6 +90,11 @@ pub trait FrontendHost {
 }
 pub trait FrontendInput {
     fn poll(&mut self, timeout: Duration) -> io::Result<Option<InputEvent>>;
+    /// Whether a signal's interrupt is waiting to be read (#410), without
+    /// reading it or any other input.
+    fn interrupt_pending(&mut self) -> bool {
+        false
+    }
     fn prompt(&mut self, text: &str) -> io::Result<()>;
     fn redraw(&mut self) -> io::Result<()>;
     fn before_output(&mut self) -> io::Result<()> {
@@ -94,6 +102,9 @@ pub trait FrontendInput {
     }
 }
 impl<W: Write> FrontendInput for TerminalInput<'_, W> {
+    fn interrupt_pending(&mut self) -> bool {
+        TerminalInput::interrupt_pending(self)
+    }
     fn poll(&mut self, timeout: Duration) -> io::Result<Option<InputEvent>> {
         TerminalInput::poll(self, timeout)
     }
@@ -202,6 +213,14 @@ pub fn run<H: FrontendHost, I: FrontendInput>(
         .prompt(&host.prompt(false))
         .map_err(LoopError::Input)?;
     'turn: loop {
+        // A SIGINT that arrived while the loop waited for input, whose wake an
+        // interrupted poll may not have read, is the input's interrupt, which
+        // a later poll delivers. Withdraw its guest request before running
+        // guest code, which would otherwise trap on it outside any evaluation
+        // (#410). No input is read here.
+        if input.interrupt_pending() || buffered.iter().any(|event| matches!(event, InputEvent::Interrupt)) {
+            host.consume_interrupt();
+        }
         if let Err(error) = host.poll_completions() {
             if host.observation_interrupted(&error) {
                 await_observation_interrupt(host, input, &mut source, &mut buffered)?;
@@ -327,6 +346,8 @@ pub fn run<H: FrontendHost, I: FrontendInput>(
         };
         match event {
             InputEvent::Interrupt => {
+                // Cancellation runs guest code; the signal is this input's.
+                host.consume_interrupt();
                 source.clear();
                 input.before_output().map_err(LoopError::Input)?;
                 host.report(HostReport::Interrupted);

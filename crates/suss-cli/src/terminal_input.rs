@@ -106,6 +106,14 @@ impl<'fd, W: Write> TerminalInput<'fd, W> {
         }
         Ok(())
     }
+    /// Whether the signal wake pipe holds an unread interrupt (#410). Reads
+    /// nothing: the next poll still delivers it as an input event.
+    pub fn interrupt_pending(&self) -> bool {
+        let Some(wake) = self.wake else { return false };
+        let mut descriptor = libc::pollfd { fd: wake.as_raw_fd(), events: libc::POLLIN, revents: 0 };
+        let ready = unsafe { libc::poll(&mut descriptor, 1, 0) };
+        ready > 0 && descriptor.revents & libc::POLLIN != 0
+    }
     pub fn poll(&mut self, timeout: Duration) -> io::Result<Option<InputEvent>> {
         if let Some(event) = self.events.pop_front() {
             return Ok(Some(event));

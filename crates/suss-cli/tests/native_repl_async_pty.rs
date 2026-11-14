@@ -141,6 +141,26 @@ impl PtyRepl {
             }
         }
     }
+    /// Waits until the child sleeps, blocked waiting for input, across several
+    /// consecutive samples (#410). A signal sent then reaches the REPL between
+    /// guest turns, as a user's Ctrl-C at an idle prompt does, rather than in
+    /// the middle of the async turns that follow a definition, where an
+    /// interrupt is deliberately not recoverable.
+    fn wait_idle(&mut self) {
+        let deadline = Instant::now() + DEADLINE;
+        let mut sleeping = 0;
+        while sleeping < 5 {
+            self.observe();
+            let state = std::process::Command::new("ps")
+                .args(["-o", "state=", "-p", &self.child.id().to_string()])
+                .output()
+                .expect("ps");
+            let state = String::from_utf8_lossy(&state.stdout);
+            sleeping = if state.trim_start().starts_with('S') { sleeping + 1 } else { 0 };
+            assert!(Instant::now() < deadline, "child never went idle: {state}");
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
     fn wait_after(&mut self, start: usize, needle: &[u8]) {
         let deadline = Instant::now() + DEADLINE;
         loop {
@@ -271,6 +291,7 @@ fn session_lifecycle_interactive_utf8_redraw_history_and_pending_sigint_cleanup_
     // kernel queue and lives in the editor's decoded partial-line state.
     repl.wait_after(before_decoded, b"(def must-not-publish \"\xe2\x82\xac");
     let before_interrupt = repl.transcript.len();
+    repl.wait_idle();
     // External SIGINT exercises the actual handler/self-pipe wake rather than
     // trusting an editor mock's Ctrl-C event. The child is in a real tty session.
     assert_eq!(
@@ -286,6 +307,8 @@ fn session_lifecycle_interactive_utf8_redraw_history_and_pending_sigint_cleanup_
     // Stop acknowledgement proves these bytes cannot have reached the editor.
     repl.line(&format!("(def unread-task (future (try (await (suss.io/read-byte {})) (finally (set! cleaned (+ cleaned 1)) (await (suss.io/read-byte {})) (set! cleaned (+ cleaned 1))))))", literal(&body), literal(&cleanup)));
     repl.query("(+ 10000 cleaned)", "10002");
+    // The new future's first turn has parked it on its read before the stop.
+    repl.wait_idle();
     assert_eq!(
         unsafe { libc::kill(repl.child.id() as i32, libc::SIGSTOP) },
         0
