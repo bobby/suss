@@ -968,6 +968,28 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &[(1, typed(7)), (1, typed(ARGS)), (1, typed(ARGS)), (1, typed(ARGS)), (1, typed(STRING)), (1, VALUE)],
         &body,
     );
+    // `vector-array-element(a, j)` (#378): element j of a vector's object
+    // array, read directly, or source-array-element's answer for anything
+    // else. Locals: 2 the storage, 3 the same as an object array's.
+    let source_element = element;
+    let element = b.function_with_locals(
+        "vector-array-element",
+        &[VALUE, ValType::I32],
+        &[VALUE],
+        &[(1, VALUE), (1, typed(ARGS))],
+        &[
+            Block(BlockType::Empty),
+            LocalGet(0), RefTestNonNull(HeapType::Concrete(PACKED)), I32Eqz, BrIf(0),
+            LocalGet(0), RefCastNonNull(HeapType::Concrete(PACKED)),
+            StructGet { struct_type_index: PACKED, field_index: 0 },
+            LocalTee(2), RefTestNonNull(HeapType::Concrete(ARGS)), I32Eqz, BrIf(0),
+            LocalGet(2), RefCastNonNull(HeapType::Concrete(ARGS)), LocalSet(3),
+            LocalGet(1), LocalGet(3), ArrayLen, I32GeU, BrIf(0),
+            LocalGet(3), LocalGet(1), ArrayGet(ARGS), Return,
+            End,
+            LocalGet(0), LocalGet(1), Call(source_element),
+        ],
+    );
     // `vector-nth(v, n)` (#378): element n of PersistentVector v, walking
     // its trie as unchecked-array-for does, or undefined for anything that
     // isn't that shape, an index that isn't an i31 in range, or a slot
@@ -990,10 +1012,59 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             LocalTee(2), ArrayLen, I32Const(2), I32LtU, BrIf(1),
             LocalGet(2), I32Const(1), ArrayGet(ARGS), LocalSet(6)]);
     };
+    // `vector-type-register(v)`: core names PersistentVector by its empty
+    // vector, once the type is defined, and gets v back.
+    b.function(
+        "vector-type-register",
+        &[VALUE],
+        &[VALUE],
+        &[
+            LocalGet(0), RefCastNonNull(HeapType::Concrete(7)),
+            StructGet { struct_type_index: 7, field_index: 0 },
+            GlobalSet(VECTOR_DESCRIPTOR_GLOBAL),
+            LocalGet(0),
+        ],
+    );
+    // `vector-count(v)`: a PersistentVector's cnt field, or undefined for
+    // anything else.
+    b.function(
+        "vector-count",
+        &[VALUE],
+        &[VALUE],
+        &[
+            Block(BlockType::Empty),
+            LocalGet(0), RefTestNonNull(HeapType::Concrete(7)), I32Eqz, BrIf(0),
+            LocalGet(0), RefCastNonNull(HeapType::Concrete(7)),
+            StructGet { struct_type_index: 7, field_index: 0 },
+            GlobalGet(VECTOR_DESCRIPTOR_GLOBAL), RefEq, I32Eqz, BrIf(0),
+            LocalGet(0), RefCastNonNull(HeapType::Concrete(7)),
+            StructGet { struct_type_index: 7, field_index: 1 },
+            I32Const(1), ArrayGet(ARGS), Return,
+            End,
+            sentinel_value(UNDEFINED),
+        ],
+    );
+    // `[array, index] -> [element]`, inline: an object array's element read
+    // directly, anything else as vector-array-element answers it. Locals:
+    // 8 the array, 9 the index, 10 its storage, 11 the same, typed.
+    let read = |body: &mut Vec<Instruction<'static>>| {
+        body.extend([LocalSet(9), LocalSet(8), Block(BlockType::Result(VALUE)), Block(BlockType::Empty),
+            LocalGet(8), RefTestNonNull(HeapType::Concrete(PACKED)), I32Eqz, BrIf(0),
+            LocalGet(8), RefCastNonNull(HeapType::Concrete(PACKED)),
+            StructGet { struct_type_index: PACKED, field_index: 0 },
+            LocalTee(10), RefTestNonNull(HeapType::Concrete(ARGS)), I32Eqz, BrIf(0),
+            LocalGet(10), RefCastNonNull(HeapType::Concrete(ARGS)), LocalTee(11),
+            ArrayLen, LocalGet(9), I32LeU, BrIf(0),
+            LocalGet(11), LocalGet(9), ArrayGet(ARGS), Br(1), End,
+            LocalGet(8), LocalGet(9), Call(element), End]);
+    };
     let mut body = vec![Block(BlockType::Empty)];
     body.extend([LocalGet(1), RefTestNonNull(HeapType::I31), I32Eqz, BrIf(0),
         LocalGet(1), RefCastNonNull(HeapType::I31), I31GetS, LocalSet(3),
         LocalGet(0), RefTestNonNull(HeapType::Concrete(7)), I32Eqz, BrIf(0),
+        // Only PersistentVector, by its registered descriptor.
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 0 },
+        GlobalGet(VECTOR_DESCRIPTOR_GLOBAL), RefEq, I32Eqz, BrIf(0),
         LocalGet(0), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 1 },
         LocalTee(2), ArrayLen, I32Const(6), I32LtU, BrIf(0)]);
     field(&mut body, 1);
@@ -1022,18 +1093,20 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(6), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 1 },
         LocalTee(2), ArrayLen, I32Const(2), I32LtU, BrIf(3),
         LocalGet(2), I32Const(1), ArrayGet(ARGS),
-        LocalGet(3), LocalGet(5), I32ShrU, I32Const(31), I32And,
-        Call(element), LocalTee(6), sentinel_value(UNDEFINED), RefEq, BrIf(3),
+        LocalGet(3), LocalGet(5), I32ShrU, I32Const(31), I32And]);
+    read(&mut body);
+    body.extend([LocalTee(6), sentinel_value(UNDEFINED), RefEq, BrIf(3),
         LocalGet(5), I32Const(5), I32Sub, LocalSet(5), Br(0), End, End]);
     node_array(&mut body);
     body.push(End);
-    body.extend([LocalGet(6), LocalGet(3), I32Const(31), I32And, Call(element), Return, End,
-        sentinel_value(UNDEFINED)]);
+    body.extend([LocalGet(6), LocalGet(3), I32Const(31), I32And]);
+    read(&mut body);
+    body.extend([Return, End, sentinel_value(UNDEFINED)]);
     b.function_with_locals(
         "vector-nth",
         &[VALUE, VALUE],
         &[VALUE],
-        &[(1, typed(ARGS)), (3, ValType::I32), (1, VALUE), (1, VALUE)],
+        &[(1, typed(ARGS)), (3, ValType::I32), (1, VALUE), (1, VALUE), (1, VALUE), (1, ValType::I32), (1, VALUE), (1, typed(ARGS))],
         &body,
     );
     // Macro and first-class variants share explicit sequential nested traversal.

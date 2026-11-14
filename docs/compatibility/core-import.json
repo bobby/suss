@@ -2588,15 +2588,15 @@
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "69e9260295d2260596a8c602715debdacbe3dce557b2ba53d488945d04f765de"
+      "sha256": "a3c21cdaf2bc088b1b6575a1fcd3b794d9a460f40547bf59b5df788001a8840d"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "ebe20ba6120963aa7564b161c6522a893bf2c76435b47a580705a4e65376c14f"
+      "sha256": "e7d43a566e45ff085d2401734da0766d7c690bfe10cc8a971103ecbcc821018e"
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "b140434488afc50a764ce460fb0dfc150ea2de0e5a76206497dc91c1563dc8b1"
+      "sha256": "3a52f69d3d296482b381643672deddf06af0d2e98852a079c4b783ce2da16430"
     }
   }
 }

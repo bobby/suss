@@ -48,6 +48,12 @@ const CASES: &[(&str, &str, i64)] = &[
     ("aget-longs-on-nil", "(try (let [a (when (pos? n) 1)] (aget ^longs a n)) (catch :default e (if (= (ex-message e) \"aget ^longs requires a long array\") -2 -3)))", -2),
     ("aset-doubles-on-longs", "(try (aset ^doubles (long-array 2) n 1.5) (catch :default e (if (= (ex-message e) \"aset ^doubles requires a double array\") -2 -3)))", -2),
     ("aset-ints-on-objects", "(try (aset ^ints (object-array 2) n (+ n 1)) (catch :default e (if (= (ex-message e) \"aset ^ints requires an int array\") -2 -3)))", -2),
+    // ^objects on an object array, on a source array (to-array, until #425)
+    // and, as a wrong hint, on a long array (#378).
+    ("aget-objects", "(let [a (object-array 3)] (aset ^objects a (+ n 1) 40) (+ (aget ^objects a (+ n 1)) (if (nil? (aget ^objects a n)) 2 0)))", 42),
+    ("aget-objects-on-source", "(let [a (to-array [5 6])] (aset ^objects a n 7) (+ (aget ^objects a n) (aget ^objects a (+ n 1))))", 13),
+    ("aget-objects-on-longs", "(try (aget ^objects (long-array 2) n) (catch :default e (if (= (ex-message e) \"aget ^objects requires an object array\") -2 -3)))", -2),
+    ("aset-objects-on-longs", "(try (aset ^objects (long-array 2) n :x) (catch :default e (if (= (ex-message e) \"aset ^objects requires an object array\") -2 -3)))", -2),
     // The array is cast before the index is used: a bad index on a wrong
     // array reports the hint.
     ("aget-wrong-hint-bad-index", "(try (aget ^longs (double-array 2) (+ n 9)) (catch :default e (if (= (ex-message e) \"aget ^longs requires a long array\") -2 -3)))", -2),

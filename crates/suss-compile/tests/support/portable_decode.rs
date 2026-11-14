@@ -762,6 +762,17 @@ impl Decoder {
             }
             Ok(array)
         }
+        // An object array (#378): a packed array whose storage holds values.
+        if let Some(packed) = non_null_ref(value)?.as_struct(&*store)? {
+            let fields = packed.fields(&mut *store)?.collect::<Vec<_>>();
+            if let [Val::AnyRef(Some(storage)), _] = fields.as_slice() {
+                if let Some(storage) = storage.as_array(&*store)? {
+                    if matches!(storage.ty(&*store)?.element_type(), StorageType::ValType(wasmtime::ValType::Ref(_))) {
+                        return Ok(storage.elems(&mut *store)?.collect());
+                    }
+                }
+            }
+        }
         let (class, data) = self.object(store, value)?;
         if class != Class::SourceArray {
             return Err(wasmtime::Error::msg("Expected canonical source array"));
@@ -1010,6 +1021,24 @@ impl Decoder {
             [Val::AnyRef(Some(storage)), _] => storage.as_array(&*store)?,
             _ => None,
         };
+        // An object array's elements are values (#378).
+        if let Some(storage) = packed.as_ref().filter(|storage| {
+            matches!(storage.ty(&*store).map(|ty| ty.element_type()), Ok(StorageType::ValType(wasmtime::ValType::Ref(_))))
+        }) {
+            let length = storage.len(&*store)? as usize;
+            if index > length || length - index > self.remaining {
+                return Err(wasmtime::Error::msg(
+                    "ABI2 decoder indexed bounds/traversal limit",
+                ));
+            }
+            self.spend(length - index)?;
+            let elements = storage.elems(&mut *store)?.collect::<Vec<_>>();
+            return elements[index..]
+                .iter()
+                .map(|item| self.value(store, item, depth + 1))
+                .collect::<wasmtime::Result<Vec<_>>>()
+                .map(Observation::List);
+        }
         if let Some(storage) = packed {
             let element = storage.ty(&*store)?.element_type();
             let length = storage.len(&*store)? as usize;

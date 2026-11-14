@@ -5,11 +5,16 @@
 //! an element as a long or double; `aset` converts its value with the cast of
 //! the element type, so a narrow integer array checks the range, while core's
 //! constructors store with the unchecked casts, as Java's `Number` methods do.
+//!
+//! `object-array` and a vector's arrays are the seventh kind (#378): Clojure's
+//! `Object[]`, a fixed-length array of values, nil-filled, with no holes,
+//! properties or methods. Its storage is `ARGS`, `(array (mut eqref))`.
 use super::*;
 
-/// Element types, in `PACKED_STORAGE` order: name, checked cast and unchecked
-/// cast, as `bitwise::CASTS` names them, and the JVM's array class name.
-pub(crate) const KINDS: [(&str, &str, &str, &str); 6] = [
+/// Element types, in `PACKED_STORAGE` order, then objects: name, checked
+/// cast and unchecked cast, as `bitwise::CASTS` names them (none for
+/// objects), and the JVM's array class name.
+pub(crate) const KINDS: [(&str, &str, &str, &str); 7] = [
     ("byte", "byte", "unchecked-byte", "[B"),
     ("short", "short", "unchecked-short", "[S"),
     ("int", "int", "unchecked-int", "[I"),
@@ -17,10 +22,18 @@ pub(crate) const KINDS: [(&str, &str, &str, &str); 6] = [
     ("float", "unchecked-float", "unchecked-float", "[F"),
     ("long", "long", "unchecked-long", "[J"),
     ("double", "double", "double", "[D"),
+    ("object", "", "", "[Ljava.lang.Object;"),
 ];
+/// The object kind (#378).
+pub(crate) const OBJECTS: usize = 6;
 
-pub(super) fn storage(kind: usize) -> u32 {
-    PACKED_STORAGE + kind as u32
+/// The storage type of an element kind.
+pub(crate) fn storage(kind: usize) -> u32 {
+    if kind == OBJECTS {
+        ARGS
+    } else {
+        PACKED_STORAGE + kind as u32
+    }
 }
 pub(super) fn string(text: &str) -> Vec<Instruction<'static>> {
     let units = text.encode_utf16().collect::<Vec<_>>();
@@ -110,6 +123,7 @@ fn element(b: &Builder, kind: usize) -> Vec<Instruction<'static>> {
         2 => vec![ArrayGet(ty), I64ExtendI32S, Call(b.names["long-box"])],
         3 => vec![ArrayGet(ty), F64PromoteF32, Call(b.names["number-box"])],
         4 => vec![ArrayGet(ty), Call(b.names["long-box"])],
+        OBJECTS => vec![ArrayGet(ty)],
         _ => vec![ArrayGet(ty), Call(b.names["number-box"])],
     }
 }
@@ -121,6 +135,7 @@ fn operand(b: &Builder, kind: usize) -> Vec<Instruction<'static>> {
         // Already rounded to binary32, so the demotion is exact.
         3 => vec![Call(b.names["number-unbox"]), F32DemoteF64],
         4 => vec![Call(b.names["long-unbox"])],
+        OBJECTS => vec![],
         _ => vec![Call(b.names["number-unbox"])],
     }
 }
@@ -170,6 +185,23 @@ pub(super) fn functions(b: &mut Builder) {
     let mut body = vec![LocalGet(0), RefTestNonNull(HeapType::Concrete(PACKED))];
     body.extend(boolean());
     b.function("packed-array-test", &[VALUE], &[VALUE], &body);
+    // An object array (#378): a packed array whose storage holds values.
+    let mut body = vec![
+        Block(BlockType::Result(ValType::I32)),
+        I32Const(0),
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(PACKED)),
+        I32Eqz,
+        BrIf(0),
+        Drop,
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(PACKED)),
+        StructGet { struct_type_index: PACKED, field_index: 0 },
+        RefTestNonNull(HeapType::Concrete(ARGS)),
+        End,
+    ];
+    body.extend(boolean());
+    b.function("object-array-test", &[VALUE], &[VALUE], &body);
     // A new zeroed array: element kind and length, as core's constructors
     // pass them. The length is `(int n)`, so 2.5 makes two elements.
     let mut body = vec![
@@ -194,8 +226,13 @@ pub(super) fn functions(b: &mut Builder) {
             I32Const(kind as i32),
             I32Eq,
             If(BlockType::Empty),
-            LocalGet(2),
-            ArrayNewDefault(storage(kind)),
+        ]);
+        if kind == OBJECTS {
+            body.extend([sentinel_value(NIL), LocalGet(2), ArrayNew(ARGS)]);
+        } else {
+            body.extend([LocalGet(2), ArrayNewDefault(storage(kind))]);
+        }
+        body.extend([
             I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(PACKED),
@@ -211,6 +248,21 @@ pub(super) fn functions(b: &mut Builder) {
         &[(2, ValType::I32)],
         &body,
     );
+    // Object arrays (#378). `(array a b ...)` in a collection literal: the
+    // fresh argument array becomes the storage, with no copy.
+    b.function(
+        "object-array-new",
+        &[VALUE],
+        &[VALUE],
+        &[
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(ARGS)),
+            I32Const(0), // Identity UID, unassigned.
+            RefI31,
+            StructNew(PACKED),
+        ],
+    );
+
     let mut body = data(1).to_vec();
     each_kind(&mut body, 1, |kind| {
         let mut code = cast_storage(kind, 1).to_vec();
@@ -243,7 +295,9 @@ pub(super) fn functions(b: &mut Builder) {
             let (_, checked_cast, unchecked_cast, _) = KINDS[kind];
             let cast = if checked { checked_cast } else { unchecked_cast };
             let mut code = index(b, kind, 3, 4, 5, 6);
-            code.extend([LocalGet(2), Call(b.names[&format!("number-cast-{cast}")]), LocalSet(2)]);
+            if kind != OBJECTS {
+                code.extend([LocalGet(2), Call(b.names[&format!("number-cast-{cast}")]), LocalSet(2)]);
+            }
             code.extend(cast_storage(kind, 3));
             code.extend([LocalGet(4), LocalGet(2)]);
             code.extend(operand(b, kind));
@@ -265,7 +319,7 @@ pub(super) fn functions(b: &mut Builder) {
     // error, takes packed-array-get or packed-array-set.
     // Kinds in order of likely use, each cast once (br_on_cast_fail) into its
     // own typed local. Locals: 2 storage, 3 index, then one per kind.
-    const ORDER: [usize; 6] = [4, 5, 2, 0, 1, 3];
+    const ORDER: [usize; 7] = [OBJECTS, 4, 5, 2, 0, 1, 3];
     let typed = |base: u32, kind: usize| base + kind as u32;
     let locals = |base: usize| {
         let mut locals = vec![(1, VALUE), (1, ValType::I32)];
@@ -309,11 +363,13 @@ pub(super) fn functions(b: &mut Builder) {
     // long (4) and int (2) storage take an i31 value as it is; double (5) an
     // i31, converted exactly, or a boxed double as it is. The result is the
     // stored value, as aset's casts give. Other kinds and values fall through.
-    for kind in [4, 5, 2] {
+    for kind in [OBJECTS, 4, 5, 2] {
         let local = typed(5, kind);
         cast_to(&mut body, 3, local, kind);
         body.extend([LocalGet(4), LocalGet(local), ArrayLen, I32GeU, BrIf(1)]);
-        if kind == 5 {
+        if kind == OBJECTS {
+            body.extend([LocalGet(local), LocalGet(4), LocalGet(2), ArraySet(ARGS), LocalGet(2), Return]);
+        } else if kind == 5 {
             body.extend([LocalGet(2), RefTestNonNull(HeapType::I31), If(BlockType::Empty)]);
             body.extend([LocalGet(local), LocalGet(4), LocalGet(2), RefCastNonNull(HeapType::I31), I31GetS, F64ConvertI32S, ArraySet(storage(5))]);
             body.extend([LocalGet(local), LocalGet(4), ArrayGet(storage(5)), Call(b.names["number-box"]), Return, End]);

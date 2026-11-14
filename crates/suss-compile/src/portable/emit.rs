@@ -214,8 +214,17 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::VectorNth => { names.insert("vector-nth"); }
                         Nominal::LongCast => { names.insert("number-cast-long"); }
                         Nominal::DoubleCast => { names.insert("number-cast-double"); }
-                        Nominal::PackedGet(_) => { names.insert("packed-array-get-2"); names.insert("language-error-new"); }
-                        Nominal::PackedSet(_) => { names.insert("packed-array-set-3"); names.insert("language-error-new"); }
+                        // ^objects also reaches source arrays (#378).
+                        Nominal::PackedGet(kind) => {
+                            names.insert("packed-array-get-2");
+                            names.insert("language-error-new");
+                            if *kind == 6 { names.insert("source-array-get-2"); }
+                        }
+                        Nominal::PackedSet(kind) => {
+                            names.insert("packed-array-set-3");
+                            names.insert("language-error-new");
+                            if *kind == 6 { names.insert("source-array-set-3"); }
+                        }
                         Nominal::ValueAdd => { names.insert("value-add"); }
                         Nominal::IsBoolean => {}
                         Nominal::Identical => { names.insert("identical-value"); }
@@ -602,6 +611,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "number-hash"
             | "owned-descriptor-prototype"
             | "source-array-new"
+            | "object-array-new"
             | "source-array-make"
             | "source-array-make-literal"
             | "source-array-length-args"
@@ -628,7 +638,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
             | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit"
-            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string-hash" | "number-cast-long" | "number-cast-double" | "packed-array-test" => {
+            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string-hash" | "number-cast-long" | "number-cast-double" | "packed-array-test" | "object-array-test" | "vector-type-register" | "vector-count" => {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
@@ -1486,10 +1496,11 @@ fn emit_function(
     declarations.push((3, ValType::I64));
     // An inline packed access's storage, one local per kind (#387).
     let storage_locals = callee + 6;
-    for kind in 0..6 {
+    // An object array's storage is the args array (#378).
+    for kind in 0..7 {
         declarations.push((1, ValType::Ref(wasm_encoder::RefType {
             nullable: false,
-            heap_type: HeapType::Concrete(runtime_abi::PACKED_STORAGE + kind),
+            heap_type: HeapType::Concrete(if kind == 6 { runtime_abi::ARGS } else { runtime_abi::PACKED_STORAGE + kind }),
         })));
     }
     let mut function = Function::new(declarations);
@@ -2456,7 +2467,8 @@ fn emit_function(
                             let kind = *kind;
                             let array = arguments[0].0 as u32 + offset;
                             let position = arguments[1];
-                            let storage = runtime_abi::PACKED_STORAGE + kind as u32;
+                            // An object array's storage is the args array (#378).
+                            let storage = if kind == 6 { runtime_abi::ARGS } else { runtime_abi::PACKED_STORAGE + kind as u32 };
                             let typed = storage_locals + kind as u32;
                             let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
                             let cast = |heap_type| BrOnCastFail {
@@ -2467,7 +2479,9 @@ fn emit_function(
                             let [wide, _, _] = long_locals;
                             // Doubles and floats read as doubles; the rest as longs.
                             let floating = matches!(kind, 3 | 5);
-                            let element_type = if floating { ValType::F64 } else { ValType::I64 };
+                            // An object array's element is a value (#378).
+                            let object = kind == 6;
+                            let element_type = if object { VALUE } else if floating { ValType::F64 } else { ValType::I64 };
                             let name = runtime_abi::packed_kind_name(kind);
                             let article = if name.starts_with(['a', 'e', 'i', 'o', 'u']) { "an" } else { "a" };
                             let message = format!("{} ^{name}s requires {article} {name} array", if set { "aset" } else { "aget" });
@@ -2508,6 +2522,12 @@ fn emit_function(
                                 let repr = locals.of(value);
                                 let boxed = value.0 as u32 + offset;
                                 match (kind, repr) {
+                                    // An object array takes any value (#378).
+                                    (6, _) => {
+                                        code.extend(element);
+                                        locals.push_boxed(&mut code, value);
+                                        code.push(ArraySet(storage));
+                                    }
                                     // A raw value of the element's kind; an
                                     // int takes only an i31's worth inline,
                                     // as a boxed value does.
@@ -2581,7 +2601,7 @@ fn emit_function(
                             if raw_result {
                                 code.extend([Drop, LocalGet(locals.raw(arguments[2]))]);
                             }
-                            if !set {
+                            if !set && !object {
                                 if floating {
                                     code.extend([RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
                                         StructGet { struct_type_index: runtime_abi::NUMBER, field_index: 0 }]);
@@ -2594,10 +2614,28 @@ fn emit_function(
                             }
                             // Out of the cast's block; a wrong hint throws.
                             code.extend([End, Br(1), End, Drop]);
-                            code.extend(message.encode_utf16().map(|unit| I32Const(i32::from(unit))));
-                            code.extend([ArrayNewFixed { array_type_index: runtime_abi::STRING, array_size: message.encode_utf16().count() as u32 },
-                                Call(index("language-error-new")), Throw(0), End]);
-                            if !set && locals.of(inst.result) == unboxed::Repr::Boxed {
+                            let error = |code: &mut Vec<Instruction<'static>>| {
+                                code.extend(message.encode_utf16().map(|unit| I32Const(i32::from(unit))));
+                                code.extend([ArrayNewFixed { array_type_index: runtime_abi::STRING, array_size: message.encode_utf16().count() as u32 },
+                                    Call(index("language-error-new")), Throw(0)]);
+                            };
+                            if object {
+                                // make-array, to-array and (array ...) still
+                                // build source arrays until #425; ^objects
+                                // takes them through the source-array path. A
+                                // packed array of another kind throws.
+                                code.extend([LocalGet(array), RefTestNonNull(HeapType::Concrete(runtime_abi::PACKED)), I32Eqz, If(BlockType::Result(VALUE))]);
+                                for argument in arguments {
+                                    locals.push_boxed(&mut code, *argument);
+                                }
+                                code.extend([Call(index(if set { "source-array-set-3" } else { "source-array-get-2" })), Else]);
+                                error(&mut code);
+                                code.push(End);
+                            } else {
+                                error(&mut code);
+                            }
+                            code.push(End);
+                            if !set && !object && locals.of(inst.result) == unboxed::Repr::Boxed {
                                 // Resumable functions keep values boxed.
                                 if floating {
                                     code.push(StructNew(runtime_abi::NUMBER));
