@@ -454,6 +454,19 @@ pub enum Nominal {
     IsNumber,
     /// Whether the operand is a long: an i31 or a boxed long (#388).
     IsLongValue,
+    /// `(aget a i)` of an array tagged with a packed element type, its kind
+    /// in `packed_arrays::KINDS` order (#389): the element read inline when
+    /// `a` is such an array and `i` an i31 in range, else the generic path.
+    PackedGet(usize),
+    /// `(aset a i v)` likewise, for int, long and double arrays (#389).
+    PackedSet(usize),
+    /// `hash` of a string (#409): Murmur3's `hashInt` of its Java
+    /// `hashCode`, `h = 31h + unit` over its UTF-16 units in int32
+    /// arithmetic, as ClojureScript's `(m3-hash-int (hash-string* s))`.
+    StringHash,
+    /// Element n of a PersistentVector, walked by the runtime, or undefined
+    /// for the general path (#378).
+    VectorNth,
     /// A string, the first operand, followed by the digits of a long, the
     /// second (#388).
     StringAppendLong,
@@ -620,7 +633,9 @@ impl Nominal {
                 Self::AllSmallIntegers => count >= 1,
                 Self::NumberHash => count == 1,
                 Self::IsObject | Self::IsDescriptor => count == 1,
-                Self::IsLongValue => count == 1,
+                Self::IsLongValue | Self::StringHash => count == 1,
+                Self::PackedGet(_) | Self::VectorNth => count == 2,
+                Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
                 Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit => count == 1,
@@ -2976,6 +2991,8 @@ impl Analyzer<'_> {
                 "coerce-string" => Some(Nominal::CoerceString),
                 "object-coerce-string" => Some(Nominal::ObjectCoerceString),
                 "concat-string" => Some(Nominal::ConcatString),
+                "string-hash" => Some(Nominal::StringHash),
+                "vector-nth" => Some(Nominal::VectorNth),
                 "string-index-of" => Some(Nominal::StringIndexOf),
                 "string-slice" => Some(Nominal::StringSlice),
                 "string-from-unit" => Some(Nominal::StringFromUnit),

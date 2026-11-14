@@ -4,7 +4,7 @@ pub(super) fn primitives(b: &mut Builder) {
     use Instruction::*;
     let mut code = vec![
         LocalGet(0),
-        Call(b.names["native-object-fields"]),
+        Call(b.names["native-object-table"]),
         Drop,
         LocalGet(1),
         sentinel_value(NIL),
@@ -581,7 +581,7 @@ fn legacy_functions(b: &mut Builder, resolve: u32) {
     use Instruction::*;
     let mut code = vec![
         LocalGet(0),
-        Call(b.names["native-object-fields"]),
+        Call(b.names["native-object-table"]),
         Drop,
         LocalGet(2),
         RefTestNonNull(HeapType::Concrete(4)),
@@ -673,7 +673,7 @@ fn legacy_functions(b: &mut Builder, resolve: u32) {
     );
     code = vec![
         LocalGet(0),
-        Call(b.names["native-object-fields"]),
+        Call(b.names["native-object-table"]),
         Drop,
         LocalGet(2),
         I32Const(1),
