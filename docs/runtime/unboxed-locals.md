@@ -28,6 +28,25 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   runtime. A raw long compared with any other value checks whether that value
   is an i31 and compares inline if so; otherwise it asks the runtime.
 
+- **Bitwise operations.** `bit-and`, `bit-or` and `bit-xor` of two longs give a
+  raw long (#387). Any other operand takes the runtime operation, which throws
+  for a double as Clojure does.
+- **Hashes and identity.** `hash` of a long gives a raw long: an i31 or raw long
+  is hashed inline, as `number-hash` hashes it, and core's `hash`, which always
+  returns an integer, is cast to a long (#387). `identical?`, `=` of small
+  integers and the small-integer test read raw operands without boxing them:
+  a raw long is identical to an i31 or long box of its value, and a raw
+  double to a boxed double that compares equal.
+- **Hinted arrays.** `(aget ^longs a i)` and `(aset ^longs a i v)`, and the
+  other packed hints, cast `a` to a packed array of the hinted kind (#389).
+  That's a checked cast, as Clojure's hint is: a wrong hint throws a language
+  error such as "aget ^longs requires a long array", as a `^long` parameter's
+  cast does (#385). The element is then a raw long, or a raw double for
+  `^doubles` and `^floats`. A raw long index and a raw stored value of the
+  element's kind are used directly, and `aset` returns a raw stored value raw.
+  An index the inline path can't use takes the generic path, which converts
+  it or reports it as before.
+
 A function's parameters, values read from vars, and results of calls are
 boxed. Functions that suspend (async continuations) keep every value boxed,
 because their locals are saved as GC values across a suspension.

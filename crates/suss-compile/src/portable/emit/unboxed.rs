@@ -8,7 +8,7 @@
 //! call or a return. Overflow and other errors take the boxed runtime path, so
 //! messages and exceptions match it exactly.
 use super::super::{
-    hir::{Arithmetic, Bitwise, Comparison, Literal},
+    hir::{Arithmetic, Bitwise, Comparison, Literal, Nominal},
     ir::{self, Function, Operation, Terminator, ValueId},
 };
 use crate::runtime_abi;
@@ -27,7 +27,7 @@ impl Repr {
     fn numeric(self) -> bool {
         matches!(self, Self::Long | Self::Double)
     }
-    fn val_type(self) -> Option<ValType> {
+    pub(super) fn val_type(self) -> Option<ValType> {
         match self {
             Self::Boxed => None,
             Self::Long => Some(ValType::I64),
@@ -177,6 +177,10 @@ pub(super) fn infer(function: &Function, resumable: bool) -> Vec<Repr> {
             match &instruction.operation {
                 Operation::Nominal { operation: super::super::hir::Nominal::LongCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Long),
                 Operation::Nominal { operation: super::super::hir::Nominal::DoubleCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Double),
+                // A hinted aget's element, behind its checked cast (#389).
+                Operation::Nominal { operation: super::super::hir::Nominal::PackedGet(kind), .. } => {
+                    state[instruction.result.0] = Lattice::Known(if matches!(kind, 3 | 5) { Repr::Double } else { Repr::Long })
+                }
                 // A hash is a raw long (#387).
                 Operation::Nominal { operation: super::super::hir::Nominal::NumberHash, .. } => state[instruction.result.0] = Lattice::Known(Repr::Long),
                 _ => {}
@@ -292,11 +296,37 @@ pub(super) fn infer(function: &Function, resumable: bool) -> Vec<Repr> {
                 }
             }
         }
+        // A hinted array access reads a long index and stores a value of its
+        // element's kind raw (#389).
+        for instruction in &block.instructions {
+            if let Operation::Nominal { operation: Nominal::PackedGet(kind) | Nominal::PackedSet(kind), arguments } =
+                &instruction.operation
+            {
+                if repr[arguments[1].0] == Repr::Long {
+                    raw_use[arguments[1].0] = true;
+                }
+                if let Some(value) = arguments.get(2)
+                    && Some(repr[value.0]) == stored(*kind)
+                {
+                    raw_use[value.0] = true;
+                }
+            }
+        }
     }
     for block in &function.blocks {
         for instruction in &block.instructions {
             if matches!(instruction.operation, Operation::Literal(_)) && !raw_use[instruction.result.0] {
                 repr[instruction.result.0] = Repr::Boxed;
+            }
+        }
+    }
+    // A hinted aset returns its raw value raw (#389).
+    for block in &function.blocks {
+        for instruction in &block.instructions {
+            if let Operation::Nominal { operation: Nominal::PackedSet(kind), arguments } = &instruction.operation
+                && Some(repr[arguments[2].0]) == stored(*kind)
+            {
+                repr[instruction.result.0] = repr[arguments[2].0];
             }
         }
     }
@@ -311,6 +341,16 @@ pub(super) fn infer(function: &Function, resumable: bool) -> Vec<Repr> {
         }
     }
     repr
+}
+
+/// The raw kind a hinted aset of a packed `kind` stores inline (#389): a
+/// long into a long or int array, a double into a double array.
+pub(super) fn stored(kind: usize) -> Option<Repr> {
+    match kind {
+        2 | 4 => Some(Repr::Long),
+        5 => Some(Repr::Double),
+        _ => None,
+    }
 }
 
 /// Whether the operation computes an i32 truth value that emission boxes.
