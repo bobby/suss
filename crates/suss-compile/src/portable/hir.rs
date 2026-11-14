@@ -3286,7 +3286,8 @@ impl Analyzer<'_> {
         // ignores IEquiv on numbers. So both test their operands inline and
         // call core only for anything else.
         if args.len() == 2 && self.linked_core_call(&resolved, "=") {
-            return self.small_integer_call(form, items, |this, form, locals| this.nominal(form, Nominal::Identical, locals));
+            // Two i31s are equal exactly when they're the same reference.
+            return self.small_integer_call(form, items, |this, form, locals| this.nominal(form, Nominal::SameReference, locals));
         }
         if (2..=8).contains(&args.len()) && self.linked_core_call(&resolved, "str") {
             return self.str_call(form, items);
