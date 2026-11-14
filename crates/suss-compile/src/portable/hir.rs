@@ -1909,6 +1909,17 @@ impl Analyzer<'_> {
         items: &[Form],
         fast: impl FnOnce(&mut Self, &Form, Vec<Hir>) -> Hir,
     ) -> Result<Hir, Diagnostic> {
+        self.typed_small_integer_call(form, items, fast, None)
+    }
+    /// The same, with the call's result through `cast`, for a callee whose
+    /// result is always of the cast's kind, so both branches join raw (#387).
+    fn typed_small_integer_call(
+        &mut self,
+        form: &Form,
+        items: &[Form],
+        fast: impl FnOnce(&mut Self, &Form, Vec<Hir>) -> Hir,
+        cast: Option<Nominal>,
+    ) -> Result<Hir, Diagnostic> {
         let mut bindings = Vec::with_capacity(items.len() - 1);
         for item in &items[1..] {
             let value = self.form(item)?;
@@ -1944,6 +1955,10 @@ impl Analyzer<'_> {
                 callee: Box::new(self.prepare_source_callee(form, callee, locals.len())?),
                 arguments: locals.clone(),
             }),
+        };
+        let call = match cast {
+            Some(cast) => self.nominal(form, cast, vec![call]),
+            None => call,
         };
         let test = self.nominal(form, Nominal::AllSmallIntegers, locals.clone());
         let fast = fast(self, form, locals);
@@ -3293,7 +3308,15 @@ impl Analyzer<'_> {
             return self.str_call(form, items);
         }
         if args.len() == 1 && self.linked_core_call(&resolved, "hash") {
-            return self.small_integer_call(form, items, |this, form, locals| this.nominal(form, Nominal::NumberHash, locals));
+            // Core's `hash` always returns an integer (`hash-combine`'s
+            // `bit-xor`s, literals or `number-hash`), so its result is cast
+            // to a long and the hash joins raw.
+            return self.typed_small_integer_call(
+                form,
+                items,
+                |this, form, locals| this.nominal(form, Nominal::NumberHash, locals),
+                Some(Nominal::LongCast),
+            );
         }
         // A protocol method call dispatches at its own site (#378), as
         // Clojure's compiler emits a class test and an interface call at each

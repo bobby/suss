@@ -83,7 +83,8 @@ fn a_global_read_reads_a_static_root_inline_and_asks_binding_get_otherwise() {
     // Exactly bound (CELL_BOUND, not CELL_DYNAMIC): the root, inline.
     assert_eq!(operators[at + 1..at + 3], ["I32Const { value: 1 }", "I32Eq"]);
     assert!(operators[at + 3].starts_with("If"));
-    assert_eq!(operators[at + 6], field(0));
-    assert!(operators[at + 7] == "Else", "{:?}", &operators[at..]);
+    // The cell's global is already a binding reference, so it isn't cast.
+    assert_eq!(operators[at + 4..at + 6], ["GlobalGet { global_index: 0 }".to_string(), field(0)]);
+    assert!(operators[at + 6] == "Else", "{:?}", &operators[at..]);
     assert!(operators[at + 7..].iter().any(|op| op.starts_with("Call")), "a dynamic read calls binding-get");
 }
