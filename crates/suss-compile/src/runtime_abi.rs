@@ -1196,6 +1196,7 @@ fn build_module() -> Vec<u8> {
     longs::arithmetic(&mut b);
     longs::string(&mut b);
     longs::append(&mut b);
+    longs::string_hash(&mut b);
     longs::functions(&mut b);
     longs::parse(&mut b);
     b.function(
