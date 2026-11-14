@@ -3,7 +3,8 @@
 //! initializers. No public core dispatcher is used to inspect boundary values.
 pub(super) const SOURCE: &str = r#"
 (let [identical suss.core/identical?
-      allocate suss.core/make-array
+      ;; A vector's arrays are object arrays (#378).
+      allocate (fn [n] (suss.bootstrap/packed-array 6 n))
       array suss.core/array
       get suss.core/aget
       put suss.core/aset

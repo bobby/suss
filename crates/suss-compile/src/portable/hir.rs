@@ -145,6 +145,8 @@ impl NativeKind {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ArrayOperation {
     Literal,
+    /// A collection literal's elements as an object array (#378).
+    Objects,
     Make,
     MakeLiteral,
     Length,
@@ -155,6 +157,7 @@ impl ArrayOperation {
     pub(crate) fn export(self) -> &'static str {
         match self {
             Self::Literal => "source-array-new",
+            Self::Objects => "object-array-new",
             Self::Make => "source-array-make",
             Self::MakeLiteral => "source-array-make-literal",
             Self::Length => "source-array-length-args",
@@ -165,7 +168,7 @@ impl ArrayOperation {
     pub(crate) fn valid(self, count: usize) -> bool {
         count <= i32::MAX as usize
             && match self {
-                Self::Literal => true,
+                Self::Literal | Self::Objects => true,
                 Self::Make => count >= 1,
                 Self::MakeLiteral | Self::Length => count == 1,
                 Self::Get => count >= 2,
@@ -296,6 +299,12 @@ pub enum Bitwise {
     PackedNew,
     PackedStore,
     PackedTest,
+    /// Whether a value is an object array (#378).
+    ObjectsTest,
+    /// Register PersistentVector's type, by its empty vector (#378).
+    VectorType,
+    /// A PersistentVector's count, or undefined for anything else (#378).
+    VectorCount,
     /// Copy a range between packed arrays of one element kind (#350).
     PackedCopy,
 }
@@ -385,6 +394,9 @@ impl Bitwise {
             Self::PackedNew => "packed-array-new",
             Self::PackedStore => "packed-array-store",
             Self::PackedTest => "packed-array-test",
+            Self::ObjectsTest => "object-array-test",
+            Self::VectorType => "vector-type-register",
+            Self::VectorCount => "vector-count",
             Self::PackedCopy => "packed-array-copy",
         }
     }
@@ -408,7 +420,10 @@ impl Bitwise {
             | Self::DoubleTest
             | Self::ToLong
             | Self::HashNumber
-            | Self::PackedTest => 1,
+            | Self::PackedTest
+            | Self::ObjectsTest
+            | Self::VectorType
+            | Self::VectorCount => 1,
             Self::PackedCopy => 5,
             Self::ParseLong => 4,
             Self::RangeCount | Self::PackedStore => 3,
@@ -437,9 +452,10 @@ impl Bitwise {
                 | Self::DoubleTest
                 | Self::Equiv
                 | Self::PackedTest
+                | Self::ObjectsTest
         ) {
             Type::Bool
-        } else if matches!(self, Self::ParseLong | Self::RangeCount | Self::PackedNew | Self::PackedStore | Self::PackedCopy) {
+        } else if matches!(self, Self::ParseLong | Self::RangeCount | Self::PackedNew | Self::PackedStore | Self::PackedCopy | Self::VectorType | Self::VectorCount) {
             Type::Value
         } else {
             Type::Number
@@ -3114,6 +3130,9 @@ impl Analyzer<'_> {
                 "packed-array" => Some(Bitwise::PackedNew),
                 "packed-store" => Some(Bitwise::PackedStore),
                 "packed-array?" => Some(Bitwise::PackedTest),
+                "object-array?" => Some(Bitwise::ObjectsTest),
+                "vector-type!" => Some(Bitwise::VectorType),
+                "vector-count" => Some(Bitwise::VectorCount),
                 "packed-copy" => Some(Bitwise::PackedCopy),
                 _ => None,
             };

@@ -1822,6 +1822,20 @@ impl Session {
         &mut self,
         values: &[&SessionValue],
     ) -> Result<SessionValue, SessionError> {
+        self.data_array_of(values, "source-array-new")
+    }
+    /// An object array (#378) of already rooted values, as vectors hold.
+    pub(crate) fn data_object_array(
+        &mut self,
+        values: &[&SessionValue],
+    ) -> Result<SessionValue, SessionError> {
+        self.data_array_of(values, "object-array-new")
+    }
+    fn data_array_of(
+        &mut self,
+        values: &[&SessionValue],
+        constructor: &str,
+    ) -> Result<SessionValue, SessionError> {
         let length = i32::try_from(values.len()).map_err(|_| {
             SessionError::Host(wasmtime::Error::msg(
                 "Compiler data array exceeds runtime length",
@@ -1848,8 +1862,8 @@ impl Session {
         }
         let function = self
             .runtime
-            .get_func(&mut scope, "source-array-new")
-            .expect("shared runtime source array constructor");
+            .get_func(&mut scope, constructor)
+            .expect("shared runtime array constructor");
         call(
             &mut scope,
             self.runtime,

@@ -178,7 +178,8 @@ pub(super) fn infer(function: &Function, resumable: bool) -> Vec<Repr> {
                 Operation::Nominal { operation: super::super::hir::Nominal::LongCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Long),
                 Operation::Nominal { operation: super::super::hir::Nominal::DoubleCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Double),
                 // A hinted aget's element, behind its checked cast (#389).
-                Operation::Nominal { operation: super::super::hir::Nominal::PackedGet(kind), .. } => {
+                // An object array's element is a value (#378).
+                Operation::Nominal { operation: super::super::hir::Nominal::PackedGet(kind), .. } if *kind != 6 => {
                     state[instruction.result.0] = Lattice::Known(if matches!(kind, 3 | 5) { Repr::Double } else { Repr::Long })
                 }
                 // A hash is a raw long (#387).

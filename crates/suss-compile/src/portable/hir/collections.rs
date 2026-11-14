@@ -32,13 +32,18 @@ impl Analyzer<'_> {
     }
 
     fn collection_array(&self, form: &Form, arguments: Vec<Hir>) -> Hir {
+        self.collection_array_of(form, ArrayOperation::Literal, arguments)
+    }
+
+    /// A vector's elements are an object array, as its nodes are (#378).
+    fn collection_array_of(&self, form: &Form, operation: ArrayOperation, arguments: Vec<Hir>) -> Hir {
         Hir {
             source: None,
             span: form.span.clone(),
             metadata: vec![],
             ty: Type::Value,
             kind: std::sync::Arc::new(Expression::Array {
-                operation: ArrayOperation::Literal,
+                operation,
                 arguments,
             }),
         }
@@ -103,7 +108,7 @@ impl Analyzer<'_> {
         }
         let constructor = self.collection_class(form, "PersistentVector")?;
         let count = entries.len();
-        let array = self.collection_array(form, entries);
+        let array = self.collection_array_of(form, ArrayOperation::Objects, entries);
         if count >= 32 {
             let no_clone = self.literal_form(form, Literal::Bool(true));
             return self.collection_method(

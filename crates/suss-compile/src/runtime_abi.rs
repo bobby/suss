@@ -647,6 +647,9 @@ pub(crate) const KEYWORD_DESCRIPTOR_GLOBAL: u32 = KEYWORDS_GLOBAL + 1;
 /// Bumped by every protocol method table write; a call site's method cache
 /// holds only while it is unchanged (#355). Exported as `protocol-epoch`.
 pub(crate) const PROTOCOL_EPOCH_GLOBAL: u32 = KEYWORD_DESCRIPTOR_GLOBAL + 1;
+/// PersistentVector's descriptor, which core registers once it is defined, or
+/// nil before (#378): `vector-nth` and `vector-count` read only that type.
+pub(crate) const VECTOR_DESCRIPTOR_GLOBAL: u32 = PROTOCOL_EPOCH_GLOBAL + 1;
 const KEYWORD_BUCKETS: i32 = 4096;
 
 /// `keyword-intern(keyword)`: the first keyword interned with the same full
@@ -2170,6 +2173,11 @@ fn build_module() -> Vec<u8> {
     globals.global(
         GlobalType { val_type: ValType::I32, mutable: true, shared: false },
         &ConstExpr::i32_const(0),
+    );
+    assert_eq!(globals.len(), VECTOR_DESCRIPTOR_GLOBAL);
+    globals.global(
+        GlobalType { val_type: VALUE, mutable: true, shared: false },
+        &ConstExpr::extended([sentinel_value(NIL)]),
     );
     b.exports.export("protocol-epoch", ExportKind::Global, PROTOCOL_EPOCH_GLOBAL);
     b.exports.export("array-join-active", ExportKind::Global, array_join::ACTIVE);

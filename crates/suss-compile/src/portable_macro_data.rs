@@ -248,6 +248,13 @@ impl FormBridge {
     ) -> Result<SessionValue, SessionError> {
         session.data_array(values)
     }
+    fn object_array(
+        &self,
+        session: &mut Session,
+        values: &[&SessionValue],
+    ) -> Result<SessionValue, SessionError> {
+        session.data_object_array(values)
+    }
     fn seed(
         &self,
         _session: &mut Session,
@@ -679,7 +686,7 @@ impl FormBridge {
         } else {
             ((items.len() - 1) / 32) * 32
         };
-        let tail = self.array(session, &items[tail_offset..].iter().collect::<Vec<_>>())?;
+        let tail = self.object_array(session, &items[tail_offset..].iter().collect::<Vec<_>>())?;
         let mut shift = 5u32;
         while (tail_offset / 32) > (1usize << shift) {
             shift += 5;
@@ -710,7 +717,7 @@ impl FormBridge {
                 fields[index] = self.vector_node(session, chunk, shift - 5, nil)?;
             }
         }
-        let array = self.array(session, &fields.iter().collect::<Vec<_>>())?;
+        let array = self.object_array(session, &fields.iter().collect::<Vec<_>>())?;
         self.construct(session,
             Class::VectorNode,
             &[nil, &array],
@@ -1993,7 +2000,11 @@ fn append_indexed<T: DatumTarget>(
         if index > f64::from(u32::MAX) {
             return Err(error("IndexedSeq index exceeds source array storage"));
         }
-        let values = source_array_suffix(store, &data[0], classes, index as u32, budget)?;
+        let values = match object_array_elements(store, &data[0], budget)? {
+            Some(elements) if index <= elements.len() as f64 => elements[index as usize..].to_vec(),
+            Some(_) => return Err(error("IndexedSeq index exceeds backing storage")),
+            None => source_array_suffix(store, &data[0], classes, index as u32, budget)?,
+        };
         for value in values {
             items.push(decode_datum(
                 store,
@@ -2049,7 +2060,38 @@ fn source_elements(
     classes: &BTreeMap<i64, (Class, SessionValue)>,
     budget: &mut Budget,
 ) -> wasmtime::Result<Vec<Val>> {
+    if let Some(elements) = object_array_elements(store, value, budget)? {
+        return Ok(elements);
+    }
     source_array_suffix(store, value, classes, 0, budget)
+}
+
+/// The elements of an object array (#378): a packed array, `{storage, uid}`,
+/// whose storage is an array of references. None for any other value.
+fn object_array_elements(
+    store: &mut StoreContextMut<'_, ()>,
+    value: &Val,
+    budget: &mut Budget,
+) -> wasmtime::Result<Option<Vec<Val>>> {
+    let Some(object) = value.anyref().flatten().map(|value| value.as_struct(&*store)).transpose()?.flatten() else {
+        return Ok(None);
+    };
+    if object.ty(&*store)?.fields().len() != 2 {
+        return Ok(None);
+    }
+    let storage = object.field(&mut *store, 0)?;
+    let Some(storage) = storage.anyref().flatten().map(|value| value.as_array(&*store)).transpose()?.flatten() else {
+        return Ok(None);
+    };
+    if !matches!(
+        storage.ty(&*store)?.element_type(),
+        wasmtime::StorageType::ValType(wasmtime::ValType::Ref(_))
+    ) {
+        return Ok(None);
+    }
+    let length = storage.len(&*store)?;
+    charge_read_work(store, u64::from(length), budget)?;
+    Ok(Some(storage.elems(&mut *store)?.collect()))
 }
 
 // Read the current sparse source-array ABI directly. Never execute guest code or

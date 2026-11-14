@@ -85,6 +85,10 @@
 ;; these, defined in core's appendix (#336).
 (declare to-array ^:private packed-array-string ^:private pr-packed-array)
 
+;; first, count, nth and get read a persistent vector directly (#378): the
+;; runtime reads only the type that core registers below, and answers
+;; undefined, which nil? matches, for anything else.
+
 ;; pr-writer prints through print-method and print-dup, which need MultiFn and
 ;; are defined in core's appendix (#302).
 (declare ^:private print-method-for)
@@ -715,12 +719,17 @@
   "Returns the first item in the collection. Calls seq on its
   argument. If coll is nil, returns nil."
   (fn [coll]
-  (when-not (suss.bootstrap/nil? coll)
-    (if (implements? ISeq coll)
-      (-first coll)
-      (let [s (seq coll)]
-        (when-not (suss.bootstrap/nil? s)
-          (-first s)))))))
+  ;; A vector's first element, read directly (#378); a miss, or a nil
+  ;; element, takes the general path.
+  (let [x (suss.bootstrap/vector-nth coll 0)]
+    (if-not (suss.bootstrap/nil? x)
+      x
+      (when-not (suss.bootstrap/nil? coll)
+        (if (implements? ISeq coll)
+          (-first coll)
+          (let [s (seq coll)]
+            (when-not (suss.bootstrap/nil? s)
+              (-first s)))))))))
 
 (def ^seq rest
   "Returns a possibly empty seq of the items after the first. Calls seq on its
@@ -790,6 +799,10 @@
   "Returns the number of items in the collection. (count nil) returns
   0.  Also works on strings, arrays, and Maps"
   (fn [coll]
+  ;; A vector's count is its field (#378).
+  (let [n (suss.bootstrap/vector-count coll)]
+  (if-not (suss.bootstrap/nil? n)
+    n
   (if-not (nil? coll)
     (cond
       (implements? ICounted coll)
@@ -805,7 +818,7 @@
       (accumulating-seq-count coll)
 
       :else (-count coll))
-    0)))
+    0)))))
 
 (def empty-ordered-hash
   (mix-collection-hash 1 0))
@@ -1145,6 +1158,11 @@
   also works for strings, arrays, regex Matchers and Lists, and,
   in O(n) time, for sequences."
   (fn ([coll n]
+    ;; A vector's element, read directly (#378); a miss, or a nil element,
+    ;; takes the general path.
+    (let [x (suss.bootstrap/vector-nth coll n)]
+    (if-not (suss.bootstrap/nil? x)
+      x
     (cond
       (not (number? n))
       (throw (suss.bootstrap/error "Index argument to nth must be a number"))
@@ -1176,7 +1194,7 @@
 
       :else
       (throw (suss.bootstrap/error (str_ "nth not supported on this type "
-                          (type->str (type coll)))))))
+                          (type->str (type coll)))))))))
   ([coll n not-found]
     (cond
       (not (number? n))
@@ -1405,7 +1423,7 @@
 
 (def pv-fresh-node
   (fn [edit]
-  (VectorNode. edit (make-array 32))))
+  (VectorNode. edit (suss.bootstrap/packed-array 6 32))))
 
 (def pv-aget
   (fn [node idx]
@@ -1418,6 +1436,19 @@
 (def pv-clone-node
   (fn [node]
   (VectorNode. (.-edit node) (aclone (.-arr node)))))
+
+;; A vector's arrays are object arrays, kind 6 of suss.bootstrap/packed-array
+;; (#378). The first n elements of one, copied by range.
+(def pv-prefix
+  (fn [arr n]
+  (if (suss.bootstrap/object-array? arr)
+    (suss.bootstrap/packed-copy arr 0 (suss.bootstrap/packed-array 6 n) 0 n)
+    ;; An array .fromArray aliased.
+    (let [a (suss.bootstrap/packed-array 6 n)]
+      (loop [i 0]
+        (if (< i n)
+          (do (aset a i (aget arr i)) (recur (inc i)))
+          a))))))
 
 (def tail-off
   (fn [pv]
@@ -2032,7 +2063,7 @@
      (zero? cnt) (throw (suss.bootstrap/error "Can't pop empty vector"))
      (== 1 cnt) (-with-meta (.-EMPTY PersistentVector) meta)
      (< 1 (- cnt (tail-off coll)))
-      (PersistentVector. meta (dec cnt) shift root (.slice tail 0 -1) nil)
+      (PersistentVector. meta (dec cnt) shift root (pv-prefix tail (dec (alength tail))) nil)
       :else (let [new-tail (unchecked-array-for coll (- cnt 2))
                   nr (pop-tail coll shift root)
                   new-root (if (nil? nr) (.-EMPTY_NODE PersistentVector) nr)
@@ -2045,7 +2076,7 @@
   (-conj [coll o]
     (if (< (- cnt (tail-off coll)) 32)
       (let [len (alength tail)
-            new-tail (make-array (inc len))]
+            new-tail (suss.bootstrap/packed-array 6 (inc len))]
         (loop [i 0]
           (when (< i len)
             (aset new-tail i (aget tail i))
@@ -2060,7 +2091,8 @@
                            (pv-aset n-r 1 (new-path nil shift (VectorNode. nil tail)))
                            n-r)
                        (push-tail coll shift root (VectorNode. nil tail)))]
-        (PersistentVector. meta (inc cnt) new-shift new-root (array o) nil))))
+        (PersistentVector. meta (inc cnt) new-shift new-root
+          (let [t (suss.bootstrap/packed-array 6 1)] (aset t 0 o) t) nil))))
 
   IEmptyableCollection
   (-empty [coll] (-with-meta (.-EMPTY PersistentVector) meta))
@@ -2250,7 +2282,7 @@
 
 (def tv-editable-tail
   (fn [tl]
-(let [ret (make-array 32)]
+(let [ret (suss.bootstrap/packed-array 6 32)]
     (array-copy tl 0 ret 0 (alength tl))
     ret)))
 
@@ -2310,12 +2342,12 @@
             (set! cnt (inc cnt))
             tcoll)
         (let [tail-node (VectorNode. (.-edit root) tail)
-              new-tail  (make-array 32)]
+              new-tail  (suss.bootstrap/packed-array 6 32)]
           (aset new-tail 0 o)
           (set! tail new-tail)
           (if (> (bit-shift-right-zero-fill cnt 5)
                  (bit-shift-left 1 shift))
-            (let [new-root-array (make-array 32)
+            (let [new-root-array (suss.bootstrap/packed-array 6 32)
                   new-shift      (+ shift 5)]
               (aset new-root-array 0 root)
               (aset new-root-array 1 (new-path (.-edit root) shift tail-node))
@@ -2333,7 +2365,7 @@
     (if ^boolean (.-edit root)
       (do (set! (.-edit root) nil)
           (let [len (- cnt (tail-off tcoll))
-                trimmed-tail (make-array len)]
+                trimmed-tail (suss.bootstrap/packed-array 6 len)]
             (array-copy tail 0 trimmed-tail 0 len)
             (PersistentVector. nil cnt shift root trimmed-tail nil)))
       (throw (suss.bootstrap/error "persistent! called twice"))))
@@ -2384,7 +2416,7 @@
               new-root (let [nr (tv-pop-tail tcoll shift root)]
                          (if-not (nil? nr)
                            nr
-                           (VectorNode. (.-edit root) (make-array 32))))]
+                           (VectorNode. (.-edit root) (suss.bootstrap/packed-array 6 32))))]
           (if (and (< 5 shift) (nil? (pv-aget new-root 1)))
             (let [new-root (tv-ensure-editable (.-edit root) (pv-aget new-root 0))]
               (set! root  new-root)
@@ -2482,6 +2514,11 @@
 
 (def get
   (fn ([o k]
+    ;; A vector's element, read directly (#378); a miss, or a nil element,
+    ;; takes the general path.
+    (let [x (suss.bootstrap/vector-nth o k)]
+    (if-not (suss.bootstrap/nil? x)
+      x
     (when-not (nil? o)
       (cond
         (implements? ILookup o)
@@ -2498,7 +2535,7 @@
         (native-satisfies? ILookup o)
         (-lookup o k)
 
-        :else nil)))
+        :else nil)))))
 ([o k not-found]
     (if-not (nil? o)
       (cond
@@ -8888,13 +8925,18 @@ reduces them without incurring seq initialization"
                    (recur (inc i) (next s)))
                a)))))))
 
-(def object-array "Creates an array of objects. Does not coerce array, provided for compatibility
-  with Clojure." (fn ([size-or-seq]
+(def object-array "Creates an array of objects: Clojure's Object[], fixed-length and
+  nil-filled (#378)." (fn ([size-or-seq]
      (if (number? size-or-seq)
        (object-array size-or-seq nil)
-       (into-array size-or-seq)))
+       (let [s (seq size-or-seq)
+             a (suss.bootstrap/packed-array 6 (count s))]
+         (loop [i 0 s s]
+           (if s
+             (do (aset a i (first s)) (recur (inc i) (next s)))
+             a)))))
   ([size init-val-or-seq]
-     (let [a (make-array size)]
+     (let [a (suss.bootstrap/packed-array 6 size)]
        (if (seq? init-val-or-seq)
          (let [s (seq init-val-or-seq)]
            (loop [i 0 s s]
@@ -9418,18 +9460,30 @@ reduces them without incurring seq initialization"
       0
       (suss.bootstrap/identity-uid o))))
 
-(set! (.-EMPTY_NODE PersistentVector) (VectorNode. nil (make-array 32)))
+(set! (.-EMPTY_NODE PersistentVector) (VectorNode. nil (suss.bootstrap/packed-array 6 32)))
 
 (set! (.-EMPTY PersistentVector)
-  (PersistentVector. nil 0 5 (.-EMPTY_NODE PersistentVector) (array) empty-ordered-hash))
+  (PersistentVector. nil 0 5 (.-EMPTY_NODE PersistentVector) (suss.bootstrap/packed-array 6 0) empty-ordered-hash))
+
+(suss.bootstrap/vector-type! (.-EMPTY PersistentVector))
 
 (set! (.-fromArray PersistentVector)
   (fn [xs ^boolean no-clone]
+    ;; A vector's arrays are object arrays (#378). The array is aliased when
+    ;; no-clone is true, as the pinned fromArray does, and otherwise copied
+    ;; into one.
     (let [l (alength xs)
-          xs (if no-clone xs (aclone xs))]
+          xs (cond
+               no-clone xs
+               (suss.bootstrap/object-array? xs) (aclone xs)
+               :else (let [a (suss.bootstrap/packed-array 6 l)]
+                       (loop [i 0]
+                         (if (< i l)
+                           (do (aset a i (aget xs i)) (recur (inc i)))
+                           a))))]
       (if (< l 32)
         (PersistentVector. nil l 5 (.-EMPTY_NODE PersistentVector) xs nil)
-        (let [node (.slice xs 0 32)
+        (let [node (pv-prefix xs 32)
               v (PersistentVector. nil 32 5 (.-EMPTY_NODE PersistentVector) node nil)]
           (loop [i 32 out (-as-transient v)]
             (if (< i l)

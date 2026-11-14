@@ -27,7 +27,7 @@ impl Analyzer<'_> {
             // hinted aget and aset, read and write the element inline.
             let kind = packed_kind(&current);
             let simple = if operation == ArrayOperation::Get { args.len() == 2 } else { args.len() == 3 };
-            if let Some(kind) = kind.filter(|kind| simple && (operation == ArrayOperation::Get || matches!(kind, 2 | 4 | 5))) {
+            if let Some(kind) = kind.filter(|kind| simple && (operation == ArrayOperation::Get || matches!(kind, 2 | 4 | 5 | 6))) {
                 let mut operands = vec![current];
                 for argument in &args[1..] {
                     operands.push(self.form(argument)?);
@@ -167,6 +167,8 @@ fn packed_kind(array: &Hir) -> Option<usize> {
         "floats" => 3,
         "longs" => 4,
         "doubles" => 5,
+        // Clojure's Object[] (#378).
+        "objects" => 6,
         _ => return None,
     })
 }
