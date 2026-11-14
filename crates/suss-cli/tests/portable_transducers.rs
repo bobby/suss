@@ -239,6 +239,9 @@ fn clojure_int_array(id: &str) -> Option<Value> {
         "int-array-source" | "int-array-false-fill" | "int-array-short-seq" => {
             json!({"id": id, "status": "exception", "effects": []})
         }
+        // An object array is Clojure's Object[], with no JS properties, so
+        // `.hasOwnProperty` throws, as it does on a packed array (#378).
+        "object-array-short-seq" => json!({"id": id, "status": "exception", "effects": []}),
         _ => return None,
     })
 }

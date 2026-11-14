@@ -74,6 +74,10 @@
 ;; these, defined in core's appendix (#336).
 (declare to-array ^:private packed-array-string ^:private pr-packed-array)
 
+;; first, count, nth and get read a persistent vector directly (#378): the
+;; runtime reads only the type that core registers below, and answers
+;; undefined, which nil? matches, for anything else.
+
 ;; pr-writer prints through print-method and print-dup, which need MultiFn and
 ;; are defined in core's appendix (#302).
 (declare ^:private print-method-for)
@@ -115,3 +119,16 @@
     (or (identical? current read)
         (if (identical? current current) false (if (identical? read read) false true))
         (and (keyword? current) (keyword-identical? current read)))))
+
+;; A vector's arrays are object arrays, kind 6 of suss.bootstrap/packed-array
+;; (#378). The first n elements of one, copied by range.
+(def pv-prefix
+  (fn [arr n]
+  (if (suss.bootstrap/object-array? arr)
+    (suss.bootstrap/packed-copy arr 0 (suss.bootstrap/packed-array 6 n) 0 n)
+    ;; An array .fromArray aliased.
+    (let [a (suss.bootstrap/packed-array 6 n)]
+      (loop [i 0]
+        (if (< i n)
+          (do (aset a i (aget arr i)) (recur (inc i)))
+          a))))))

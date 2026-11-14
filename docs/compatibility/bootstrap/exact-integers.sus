@@ -2024,3 +2024,7 @@
            (VecOf. kind 0 [] (suss.bootstrap/packed-array kind 0) nil nil)))
     ([t & elements]
      (reduce conj (vector-of t) elements))))
+
+;; PersistentVector's type, registered so the runtime's vector-nth and
+;; vector-count read vectors directly (#378).
+(suss.bootstrap/vector-type! (.-EMPTY PersistentVector))

@@ -28,18 +28,28 @@
       0
       (suss.bootstrap/identity-uid o))))
 
-(set! (.-EMPTY_NODE PersistentVector) (VectorNode. nil (make-array 32)))
+(set! (.-EMPTY_NODE PersistentVector) (VectorNode. nil (suss.bootstrap/packed-array 6 32)))
 
 (set! (.-EMPTY PersistentVector)
-  (PersistentVector. nil 0 5 (.-EMPTY_NODE PersistentVector) (array) empty-ordered-hash))
+  (PersistentVector. nil 0 5 (.-EMPTY_NODE PersistentVector) (suss.bootstrap/packed-array 6 0) empty-ordered-hash))
 
 (set! (.-fromArray PersistentVector)
   (fn [xs ^boolean no-clone]
+    ;; A vector's arrays are object arrays (#378). The array is aliased when
+    ;; no-clone is true, as the pinned fromArray does, and otherwise copied
+    ;; into one.
     (let [l (alength xs)
-          xs (if no-clone xs (aclone xs))]
+          xs (cond
+               no-clone xs
+               (suss.bootstrap/object-array? xs) (aclone xs)
+               :else (let [a (suss.bootstrap/packed-array 6 l)]
+                       (loop [i 0]
+                         (if (< i l)
+                           (do (aset a i (aget xs i)) (recur (inc i)))
+                           a))))]
       (if (< l 32)
         (PersistentVector. nil l 5 (.-EMPTY_NODE PersistentVector) xs nil)
-        (let [node (.slice xs 0 32)
+        (let [node (pv-prefix xs 32)
               v (PersistentVector. nil 32 5 (.-EMPTY_NODE PersistentVector) node nil)]
           (loop [i 32 out (-as-transient v)]
             (if (< i l)
