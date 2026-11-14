@@ -141,6 +141,13 @@ CASES = [
     ("long-aset", "(aset la (bit-and i 1023) i)", "index-control", 1),
     ("double-aset", "(aset da (bit-and i 1023) 1.5)", "index-control", 1),
     ("object-aset", "(aset oa (bit-and i 1023) i)", "index-control", 100),
+    # The same with Clojure's array hints, which compile to direct element
+    # access on both sides (#389): Suss's inline packed path, the JVM's laload.
+    ("long-aget-hinted", "(aget ^longs la (bit-and i 1023))", "index-control", 1),
+    ("int-aget-hinted", "(aget ^ints ia (bit-and i 1023))", "index-control", 1),
+    ("double-aget-hinted", "(aget ^doubles da (bit-and i 1023))", "index-control", 1),
+    ("long-aset-hinted", "(aset ^longs la (bit-and i 1023) i)", "index-control", 1),
+    ("double-aset-hinted", "(aset ^doubles da (bit-and i 1023) 1.5)", "index-control", 1),
     # Persistent collections of 1024 entries, and a small keyword map.
     ("vector-conj", "(conj v i)", "long-control", 1),
     # vector-of :long (#350), against the vector cases above.
