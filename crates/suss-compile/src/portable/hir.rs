@@ -467,6 +467,10 @@ pub enum Nominal {
     /// Element n of a PersistentVector, walked by the runtime, or undefined
     /// for the general path (#378).
     VectorNth,
+    /// A `^long` or `^double` parameter's value (#385): Clojure's checked
+    /// longCast or doubleCast of the argument, kept as a raw i64 or f64.
+    LongCast,
+    DoubleCast,
     /// A string, the first operand, followed by the digits of a long, the
     /// second (#388).
     StringAppendLong,
@@ -633,7 +637,7 @@ impl Nominal {
                 Self::AllSmallIntegers => count >= 1,
                 Self::NumberHash => count == 1,
                 Self::IsObject | Self::IsDescriptor => count == 1,
-                Self::IsLongValue | Self::StringHash => count == 1,
+                Self::IsLongValue | Self::StringHash | Self::LongCast | Self::DoubleCast => count == 1,
                 Self::PackedGet(_) | Self::VectorNth => count == 2,
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
@@ -2683,6 +2687,21 @@ impl Analyzer<'_> {
         }
         // Field reads occur at the original use, including in nested closures;
         // unreferenced fields must not introduce checks or effects before a body.
+        // A `^long` or `^double` parameter (#385), as Clojure's primitive
+        // fns: its name in the body is the checked cast of the argument, a
+        // raw i64 or f64, so arithmetic and loops seeded from it stay raw.
+        let mut casts = Vec::new();
+        for parameter in parameters.iter().skip(usize::from(receiver_type.is_some())) {
+            let Some(cast) = primitive_hint(parameter)? else { continue };
+            // The name's current binding: the method's loop binding, which
+            // recur rebinds, not the entry parameter.
+            let current = self.locals.get(&parameter.name).map_or(parameter.id, |binding| binding.id);
+            let read = self.local(form, current);
+            let value = self.nominal(form, cast, vec![read]);
+            let binding = self.fresh_binding(form, value);
+            self.remap_local(&parameter.name, binding.id, Type::Value);
+            casts.push(binding);
+        }
         self.method_recurrence.push((target, false));
         let inner_body = self.analyzed_body(
             &args[1..],
@@ -2690,6 +2709,17 @@ impl Analyzer<'_> {
             super::AnalysisContext::Return,
             true,
         )?;
+        let inner_body = if casts.is_empty() {
+            inner_body
+        } else {
+            Hir {
+                source: None,
+                span: inner_body.span.clone(),
+                metadata: Vec::new(),
+                ty: inner_body.ty,
+                kind: std::sync::Arc::new(Expression::Let { bindings: casts, body: Box::new(inner_body) }),
+            }
+        };
         let (method_target, recurred) = self
             .method_recurrence
             .pop()
@@ -3989,4 +4019,27 @@ pub(crate) fn link_pair(slot: usize, definition: usize) -> usize {
 }
 pub(crate) fn link_parts(link: usize) -> (usize, usize) {
     (link >> 32, link & 0xffff_ffff)
+}
+
+/// The cast a parameter's `^long` or `^double` tag asks for (#385).
+fn primitive_hint(parameter: &Parameter) -> Result<Option<Nominal>, Diagnostic> {
+    if parameter.metadata.is_empty() {
+        return Ok(None);
+    }
+    let carrier = Form { span: parameter.span.clone(), metadata: parameter.metadata.clone(), kind: Kind::Nil };
+    let pairs = quotes::reader_metadata_pairs(&carrier)?;
+    for index in (0..pairs.len()).step_by(2) {
+        if matches!(&pairs[index].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "tag") {
+            if let Kind::Symbol(tag) = &pairs[index + 1].kind {
+                if tag.namespace.is_none() {
+                    return Ok(match tag.name.as_str() {
+                        "long" => Some(Nominal::LongCast),
+                        "double" => Some(Nominal::DoubleCast),
+                        _ => None,
+                    });
+                }
+            }
+        }
+    }
+    Ok(None)
 }
