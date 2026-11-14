@@ -913,8 +913,10 @@ mod tests {
     }
 }
 
-/// Embedded core modules at least this large are lifted into imports (#403).
-const LIFT_THRESHOLD: usize = 256 << 10;
+/// Embedded core modules at least this large are lifted into imports (#403):
+/// the runtime and the core image, which every program shares. A program's own
+/// module above it is lifted too, harmlessly: it is cached by its bytes.
+const LIFT_THRESHOLD: usize = 64 << 10;
 
 /// The component with each large top-level core module replaced, in place, by
 /// a core module type and an import of that type, and the import names and
