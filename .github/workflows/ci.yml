@@ -57,12 +57,13 @@ jobs:
       # every test program shares); per-form modules and components are cheap
       # to rebuild and would make the cache several GB (#403). Entries are keyed
       # by module bytes and wasmtime's compatibility hash, so a stale entry is
-      # only a miss.
+      # only a miss. A cancelled job, or one that left nothing, saves nothing, so
+      # it can't shadow a useful entry.
       - name: Keep only large compiled modules
-        if: always()
+        if: ${{ !cancelled() }}
         run: find target/suss/cache/v1/native-module -type f -size -1M -delete 2>/dev/null || true
       - name: Save compiled core images
-        if: always()
+        if: ${{ !cancelled() && hashFiles('target/suss/cache/v1/native-module/**') != '' }}
         uses: actions/cache/save@v4
         with:
           path: target/suss/cache/v1/native-module
@@ -98,12 +99,13 @@ jobs:
       # every test program shares); per-form modules and components are cheap
       # to rebuild and would make the cache several GB (#403). Entries are keyed
       # by module bytes and wasmtime's compatibility hash, so a stale entry is
-      # only a miss.
+      # only a miss. A cancelled job, or one that left nothing, saves nothing, so
+      # it can't shadow a useful entry.
       - name: Keep only large compiled modules
-        if: always()
+        if: ${{ !cancelled() }}
         run: find target/suss/cache/v1/native-module -type f -size -1M -delete 2>/dev/null || true
       - name: Save compiled core images
-        if: always()
+        if: ${{ !cancelled() && hashFiles('target/suss/cache/v1/native-module/**') != '' }}
         uses: actions/cache/save@v4
         with:
           path: target/suss/cache/v1/native-module
