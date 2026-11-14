@@ -2910,7 +2910,41 @@ fn emit_function(
                                 .instruction(&Call(index("object-field-set")))
                                 .instruction(&LocalGet(arguments[1].0 as u32 + offset));
                         }
-                        Nominal::Field(field) | Nominal::Key(field) => {
+                        Nominal::Field(field) => {
+                            // Inline (#378): an object's field in range is read
+                            // from its fields array; anything else, with its
+                            // errors, takes object-field-get.
+                            let object = arguments[0].0 as u32 + offset;
+                            let fields = |function: &mut Function| {
+                                function
+                                    .instruction(&LocalGet(object))
+                                    .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+                                    .instruction(&StructGet { struct_type_index: 7, field_index: 1 });
+                            };
+                            function
+                                .instruction(&LocalGet(object))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(7)))
+                                .instruction(&If(BlockType::Result(ValType::I32)));
+                            fields(&mut function);
+                            function
+                                .instruction(&ArrayLen)
+                                .instruction(&I32Const(*field as i32))
+                                .instruction(&I32GtU)
+                                .instruction(&Else)
+                                .instruction(&I32Const(0))
+                                .instruction(&End)
+                                .instruction(&If(BlockType::Result(VALUE)));
+                            fields(&mut function);
+                            function
+                                .instruction(&I32Const(*field as i32))
+                                .instruction(&ArrayGet(runtime_abi::ARGS))
+                                .instruction(&Else)
+                                .instruction(&LocalGet(object))
+                                .instruction(&I32Const(*field as i32))
+                                .instruction(&Call(index("object-field-get")))
+                                .instruction(&End);
+                        }
+                        Nominal::Key(field) => {
                             function
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                 .instruction(&I32Const(*field as i32))
