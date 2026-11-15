@@ -6,7 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn vreset!
-  "Sets the value of volatile to newval without regard for the
-   current value. Returns newval."
-  [vol newval]  (-vreset! vol newval))
+(defprotocol INamed
+  "Protocol for adding a name."
+  (^string -name [x]
+    "Returns the name String of x.")
+  ( ^{:tag #{string clj-nil}}-namespace [x]
+    "Returns the namespace String of x."))

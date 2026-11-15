@@ -104,7 +104,7 @@ fn instance_checks_keep_their_answers() {
         session.set_operation_fuel(100_000_000);
         for (source, expected) in [
             ("[(instance? js/Object 1) (instance? Reduced 1) (instance? js/Object 1.5) (instance? js/Object 3000000000) (instance? js/Object \"a\") (instance? js/Object nil)]", "[false false false false false false]"),
-            ("[(instance? js/Object (js-obj)) (instance? js/Object [1]) (instance? Reduced (reduced 1)) (instance? js/Error 1) (instance? js/Error (js/Error. \"x\"))]", "[true true true false true]"),
+            ("[(instance? js/Object [1]) (instance? Reduced (reduced 1)) (instance? js/Error 1) (instance? js/Error (js/Error. \"x\"))]", "[true true false true]"),
             ("[(reduced? 5) (reduced? (reduced 5)) (reduce (fn [a x] (if (> x 5) (reduced a) (+ a x))) 0 (range 100))]", "[false true 15]"),
             ("(instance? 5 1)", r#"[:error "Invalid nominal operation"]"#),
             ("(instance? (fn [] 1) 1)", r#"[:error "Invalid nominal operation"]"#),

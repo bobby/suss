@@ -6,14 +6,24 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- compare-keywords [a b]
-  (cond
-   (identical? (.-fqn a) (.-fqn b)) 0
-   (and (not (.-ns a)) (.-ns b)) -1
-   (.-ns a) (if-not (.-ns b)
-              1
-              (let [nsc (garray/defaultCompare (.-ns a) (.-ns b))]
-                (if (== 0 nsc)
-                  (garray/defaultCompare (.-name a) (.-name b))
-                  nsc)))
-   :default (garray/defaultCompare (.-name a) (.-name b))))
+(defn- balance-right [key val left ins]
+  (if (instance? RedNode ins)
+    (cond
+      (instance? RedNode (.-right ins))
+      (RedNode. (.-key ins) (.-val ins)
+                (BlackNode. key val left (.-left ins) nil)
+                (.blacken (.-right ins))
+                nil)
+
+      (instance? RedNode (.-left ins))
+      (RedNode. (.. ins -left -key) (.. ins -left -val)
+                (BlackNode. key val left (.. ins -left -left) nil)
+                (BlackNode. (.-key ins) (.-val ins)
+                            (.. ins -left -right)
+                            (.-right ins)
+                            nil)
+                nil)
+
+      :else
+      (BlackNode. key val left ins nil))
+    (BlackNode. key val left ins nil)))

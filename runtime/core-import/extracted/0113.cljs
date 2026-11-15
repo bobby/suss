@@ -6,19 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn atom
-  "Creates and returns an Atom with an initial value of x and zero or
-  more options (in any order):
-
-  :meta metadata-map
-
-  :validator validate-fn
-
-  If metadata-map is supplied, it will become the metadata on the
-  atom. validate-fn must be nil or a side-effect-free fn of one
-  argument, which will be passed the intended new state on any state
-  change. If the new state is unacceptable, the validate-fn should
-  return false or throw an Error.  If either of these error conditions
-  occur, then the value of the atom will not change."
-  ([x] (Atom. x nil nil nil))
-  ([x & {:keys [meta validator]}] (Atom. x meta validator nil)))
+(defn reset!
+  "Sets the value of atom to newval without regard for the
+  current value. Returns new-value."
+  [a new-value]
+  (if (instance? Atom a)
+    (let [validate (.-validator a)]
+      (when-not (nil? validate)
+        (when-not (validate new-value)
+          (throw (js/Error. "Validator rejected reference state"))))
+      (let [old-value (.-state a)]
+        (set! (.-state a) new-value)
+        (when-not (nil? (.-watches a))
+          (-notify-watches a old-value new-value))
+        new-value))
+    (-reset! a new-value)))

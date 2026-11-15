@@ -9,7 +9,7 @@
 (def before-redefinition
   [(suss.bootstrap/same-nominal-type? a b)
    (suss.bootstrap/same-nominal-type? a (fn [] 17))
-   (suss.bootstrap/same-nominal-type? a (js-obj))
+   (suss.bootstrap/same-nominal-type? a (reify))
    (suss.bootstrap/same-nominal-type? a nil)
    (suss.bootstrap/same-nominal-type? a false)
    (suss.bootstrap/same-nominal-type? a 17)

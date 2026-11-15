@@ -6,6 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn make-hierarchy
-  "Creates a hierarchy object for use with derive, isa? etc."
-  [] {:parents {} :descendants {} :ancestors {}})
+(defn- get-global-hierarchy []
+  (when (nil? -global-hierarchy)
+    (set! -global-hierarchy (atom (make-hierarchy))))
+  -global-hierarchy)

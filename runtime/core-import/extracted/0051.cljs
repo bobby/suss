@@ -6,13 +6,15 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn first
-  "Returns the first item in the collection. Calls seq on its
-  argument. If coll is nil, returns nil."
+(defn ^seq rest
+  "Returns a possibly empty seq of the items after the first. Calls seq on its
+  argument."
   [coll]
-  (when-not (nil? coll)
+  (if-not (nil? coll)
     (if (implements? ISeq coll)
-      (-first coll)
+      (-rest coll)
       (let [s (seq coll)]
-        (when-not (nil? s)
-          (-first s))))))
+        (if s
+          (-rest ^not-native s)
+          ())))
+    ()))

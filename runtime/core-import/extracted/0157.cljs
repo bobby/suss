@@ -6,10 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- array-copy
-  ([from i to j len]
-    (loop [i i j j len len]
-       (if (zero? len)
-         to
-         (do (aset to j (aget from i))
-             (recur (inc i) (inc j) (dec len)))))))
+(defn- tv-ensure-editable [edit node]
+  (if (identical? edit (.-edit node))
+    node
+    (VectorNode. edit (aclone (.-arr node)))))

@@ -6,61 +6,19 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Iterate [meta f prev-seed ^:mutable seed ^:mutable next]
-  Object
-  (toString [coll]
-    (pr-str* coll))
-
-  IPending
-  (-realized? [coll]
-    (not (identical? seed UNREALIZED-SEED)))
-
-  IWithMeta
-  (-with-meta [coll new-meta]
-    (if (identical? new-meta meta)
-      coll
-      (Iterate. new-meta f prev-seed seed next)))
-
-  IMeta
-  (-meta [coll] meta)
-
-  ISeq
-  (-first [coll]
-    (when (identical? UNREALIZED-SEED seed)
-      (set! seed (f prev-seed)))
-    seed)
-  (-rest [coll]
-    (when (nil? next)
-      (set! next (Iterate. nil f (-first coll) UNREALIZED-SEED nil)))
-    next)
-
-  INext
-  (-next [coll]
-    (-rest coll))
-
-  ICollection
-  (-conj [coll o] (cons o coll))
-
-  IEmptyableCollection
-  (-empty [coll] (.-EMPTY List))
-
-  ISequential
-  ISeqable
-  (-seq [coll] coll)
-
-  IReduce
-  (-reduce [coll rf]
-    (let [first (-first coll)
-          v     (f first)]
-      (loop [ret (rf first v) v v]
-        (if (reduced? ret)
-          @ret
-          (let [v (f v)]
-            (recur (rf ret v) v))))))
-  (-reduce [coll rf start]
-    (let [v (-first coll)]
-      (loop [ret (rf start v) v v]
-        (if (reduced? ret)
-          @ret
-          (let [v (f v)]
-            (recur (rf ret v) v)))))))
+(defn replace
+  "Given a map of replacement pairs and a vector/collection, returns a
+  vector/seq with any elements = a key in smap replaced with the
+  corresponding val in smap.  Returns a transducer when no collection
+  is provided."
+  ([smap]
+     (map #(if-let [e (find smap %)] (val e) %)))
+  ([smap coll]
+     (if (vector? coll)
+       (let [n (count coll)]
+         (reduce (fn [v i]
+                   (if-let [e (find smap (nth v i))]
+                     (assoc v i (second e))
+                     v))
+           coll (take n (iterate inc 0))))
+       (map #(if-let [e (find smap %)] (second e) %) coll))))

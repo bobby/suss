@@ -6,13 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IMultiFn
-  (-reset [mf])
-  (-add-method [mf dispatch-val method])
-  (-remove-method [mf dispatch-val])
-  (-prefer-method [mf dispatch-val dispatch-val-y])
-  (-get-method [mf dispatch-val])
-  (-methods [mf])
-  (-prefers [mf])
-  (-default-dispatch-val [mf])
-  (-dispatch-fn [mf]))
+(defn- dominates
+  [x y prefer-table hierarchy]
+  (or (prefers* x y prefer-table) (isa? hierarchy x y)))

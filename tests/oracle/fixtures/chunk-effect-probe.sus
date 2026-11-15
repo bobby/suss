@@ -20,10 +20,10 @@
         (let [s (seq input)]
           (if s
             (if (chunked-seq? s)
-              (let [c (chunk-first s) n (count c) output (array)]
+              (let [c (chunk-first s) n (count c) output (make-array n)]
                 (loop [i 0]
                   (if (< i n)
-                    (do (.push output (chunk-effect-record (nth c i)))
+                    (do (aset output i (chunk-effect-record (nth c i)))
                         (recur (inc i)))
                     nil))
                 (chunk-cons (array-chunk output)

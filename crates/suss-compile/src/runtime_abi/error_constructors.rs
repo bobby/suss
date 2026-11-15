@@ -117,27 +117,9 @@ pub(super) fn callback(b: &mut Builder) -> u32 {
         LocalSet(5),
         End,
         Else,
-        LocalGet(3),
-        Call(b.names["source-array?"]),
-        If(BlockType::Empty),
-        LocalGet(3),
-    ]);
-    text(&mut code, "cause");
-    code.extend([
-        Call(b.names["source-array-property-has"]),
-        If(BlockType::Empty),
-        LocalGet(3),
-    ]);
-    text(&mut code, "cause");
-    code.extend([
-        Call(b.names["source-array-property-get"]),
-        LocalSet(4),
-        LocalGet(5),
-        I32Const(1),
-        I32Or,
-        LocalSet(5),
-        End,
-        Else,
+        // A block where source arrays' branch was (#425); its End follows
+        // the remaining alternatives.
+        Block(BlockType::Empty),
         LocalGet(3),
         RefTestNonNull(HeapType::Concrete(7)),
         If(BlockType::Empty),

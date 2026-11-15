@@ -27,6 +27,13 @@
 ;; tokens and sentinels are Uniques, where the JVM uses a new Object.
 (deftype Unique [])
 
+;; Original Suss (#425): an IndexedSeq and array-reduce read an array or a
+;; string, as ClojureScript's do; aget and alength read only arrays.
+(def ^:private indexed-get
+  (fn [a i] (if (suss.bootstrap/string? a) (.charAt a i) (aget a i))))
+(def ^:private indexed-length
+  (fn [a] (if (suss.bootstrap/string? a) (.-length a) (alength a))))
+
 (deftype BootstrapDate [milliseconds]
   Object
   (valueOf [_] milliseconds))
@@ -77,13 +84,10 @@
 ;; Full default printer dependency still pending; no fabricated fallback.
 (declare pr-writer-impl)
 
-;; Default printer dependencies, defined in core's appendix (#304). The #js
-;; object printer's own helpers are still pending: calls to them raise a
-;; visible language exception, never a placeholder result.
-(declare ^:private pr-constructor-writer ^:private pr-object-map
-         ^:private pr-object-keyword? ^:private pr-function-name
+;; Default printer dependencies, defined in core's appendix (#304).
+(declare ^:private pr-constructor-writer ^:private pr-function-name
          ^:private pr-tagged-object ^:private deref-as-map ^:private pr-throwable
-         js-keys print-map keyword)
+         print-map keyword)
 
 ;; vec, str and the default printer convert packed primitive arrays with
 ;; these, defined in core's appendix (#336).
@@ -396,8 +400,6 @@
       (bit-shift-left seed 6)
       (bit-shift-right seed 2)))))
 
-(def js-obj (suss.bootstrap/object-factory))
-
 (deftype List [meta first rest count ^:mutable __hash]
   Object
   (toString [coll]
@@ -612,7 +614,7 @@
 
   ISeqable
   (-seq [this]
-    (when (< i (alength arr))
+    (when (< i (indexed-length arr))
       this))
 
   IMeta
@@ -625,38 +627,38 @@
 
   ASeq
   ISeq
-  (-first [_] (aget arr i))
-  (-rest [_] (if (< (inc i) (alength arr))
+  (-first [_] (indexed-get arr i))
+  (-rest [_] (if (< (inc i) (indexed-length arr))
                (IndexedSeq. arr (inc i) nil)
                ()))
 
   INext
-  (-next [_] (if (< (inc i) (alength arr))
+  (-next [_] (if (< (inc i) (indexed-length arr))
                (IndexedSeq. arr (inc i) nil)
                nil))
 
   IDrop
   (-drop [coll n]
     (if (pos? n)
-      (if (< (+ i n) (alength arr))
+      (if (< (+ i n) (indexed-length arr))
         (IndexedSeq. arr (+ i n) nil)
         nil)
       coll))
 
   ICounted
   (-count [_]
-    (let [remaining (- (alength arr) i)] (if (> 0 remaining) 0 remaining)))
+    (let [remaining (- (indexed-length arr) i)] (if (> 0 remaining) 0 remaining)))
 
   IIndexed
   (-nth [coll n]
     (let [i (+ n i)]
-      (if (and (<= 0 i) (< i (alength arr)))
-        (aget arr i)
+      (if (and (<= 0 i) (< i (indexed-length arr)))
+        (indexed-get arr i)
         (throw (suss.bootstrap/error "Index out of bounds")))))
   (-nth [coll n not-found]
     (let [i (+ n i)]
-      (if (and (<= 0 i) (< i (alength arr)))
-        (aget arr i)
+      (if (and (<= 0 i) (< i (indexed-length arr)))
+        (indexed-get arr i)
         not-found)))
 
   ISequential
@@ -675,7 +677,7 @@
 
   IReduce
   (-reduce [coll f]
-    (array-reduce arr f (aget arr i) (inc i)))
+    (array-reduce arr f (indexed-get arr i) (inc i)))
   (-reduce [coll f start]
     (array-reduce arr f start i))
 
@@ -822,7 +824,7 @@
 (def list
   "Creates a new list containing the items."
   (fn [& xs]
-  (if (and (instance? IndexedSeq xs) (zero? (.-i xs)))
+  (if (and (instance? IndexedSeq xs) (zero? (.-i xs)) (suss.bootstrap/object-array? (.-arr xs)))
     (let [arr (.-arr xs)]
       (loop [i (alength arr) r ()]
         (if (> i 0)
@@ -914,30 +916,30 @@
 
 (def array-reduce
   (fn ([arr f]
-     (let [cnt (alength arr)]
-       (if (zero? (alength arr))
+     (let [cnt (indexed-length arr)]
+       (if (zero? (indexed-length arr))
          (f)
-         (loop [val (aget arr 0), n 1]
+         (loop [val (indexed-get arr 0), n 1]
            (if (< n cnt)
-             (let [nval (f val (aget arr n))]
+             (let [nval (f val (indexed-get arr n))]
                (if (reduced? nval)
                  @nval
                  (recur nval (inc n))))
              val)))))
   ([arr f val]
-     (let [cnt (alength arr)]
+     (let [cnt (indexed-length arr)]
        (loop [val val, n 0]
          (if (< n cnt)
-           (let [nval (f val (aget arr n))]
+           (let [nval (f val (indexed-get arr n))]
              (if (reduced? nval)
                @nval
                (recur nval (inc n))))
            val))))
   ([arr f val idx]
-     (let [cnt (alength arr)]
+     (let [cnt (indexed-length arr)]
        (loop [val val, n idx]
          (if (< n cnt)
-           (let [nval (f val (aget arr n))]
+           (let [nval (f val (indexed-get arr n))]
              (if (reduced? nval)
                @nval
                (recur nval (inc n))))
@@ -1037,9 +1039,9 @@
 (deftype IndexedSeqIterator [arr ^:mutable i]
   Object
   (hasNext [_]
-    (< i (alength arr)))
+    (< i (indexed-length arr)))
   (next [_]
-    (let [ret (aget arr i)]
+    (let [ret (indexed-get arr i)]
       (set! i (inc i))
       ret)))
 
@@ -1176,7 +1178,7 @@
 
       (string? coll)
       (if (and (< -1 n (.-length coll)))
-        (aget coll (int n))
+        (.charAt coll (int n))
         (throw (suss.bootstrap/error "Index out of bounds")))
 
       (or (implements? ISeq coll)
@@ -1209,7 +1211,7 @@
 
       (string? coll)
       (if (and (< -1 n (.-length coll)))
-        (aget coll (int n))
+        (.charAt coll (int n))
         not-found)
 
       (or (implements? ISeq coll)
@@ -4802,7 +4804,8 @@
       (cond
         (nil? in) #{}
 
-        (and (instance? IndexedSeq in) (zero? (.-i in)))
+        ;; An IndexedSeq may read a string (#425); only an array's is taken.
+        (and (instance? IndexedSeq in) (zero? (.-i in)) (suss.bootstrap/object-array? (.-arr in)))
         (.createAsIfByAssoc PersistentHashSet (.-arr in))
 
         :else
@@ -5063,8 +5066,9 @@
     (vector? coll)
     (with-meta coll nil)
 
-    ;; A packed primitive array is copied, as Clojure's vec of one is (#336).
-    (suss.bootstrap/packed-array? coll)
+    ;; A packed primitive array is copied, as Clojure's vec of one is (#336);
+    ;; an object array is aliased, as Clojure's vec of an Object[] is (#425).
+    (and (suss.bootstrap/packed-array? coll) (not (suss.bootstrap/object-array? coll)))
     (.fromArray PersistentVector (to-array coll) true)
 
     (array? coll)
@@ -5704,16 +5708,6 @@
   (binding [*print-readably* false]
     (prn-str-with-opts objs nil))))
 
-(def object?
-  "Returns true if x's constructor is Object"
-  (fn [x]
-  (if-not (nil? x)
-    (if (suss.bootstrap/native-object? x)
-      (identical? (suss.bootstrap/object-get x "constructor")
-                  (suss.bootstrap/object-get (suss.bootstrap/object-default-prototype) "constructor"))
-      false)
-    false)))
-
 (def ^:private pr-writer-impl
   (fn [obj writer opts]
   (cond
@@ -5751,25 +5745,9 @@
             (identical? obj ##-Inf) "##-Inf"
             :else (str_ obj)))
 
-        (object? obj)
-        (do
-          (-write writer "#js ")
-          (print-map
-            (pr-object-map
-              (js-keys obj)
-              (fn [k]
-                (MapEntry.
-                  (if (pr-object-keyword? k) (keyword k) k)
-                  (unchecked-get obj k)
-                  nil)))
-            pr-writer writer opts))
-
         ;; A packed primitive array prints as Clojure prints a Java array (#336).
         (suss.bootstrap/packed-array? obj)
         (pr-packed-array obj writer opts)
-
-        (array? obj)
-        (pr-sequential-writer writer pr-writer "#js [" " " "]" opts obj)
 
         (string? obj)
         (if (or (pr-opts-dup opts) (pr-opts-readably opts))
@@ -5860,7 +5838,7 @@
     (keyword nil (name named)))))
 
 (def ^:private lift-ns
-  "Returns #js [lifted-ns lifted-map] or nil if m can't be lifted."
+  "Returns an array of lifted-ns and lifted-map, or nil if m can't be lifted."
   (fn [m]
   (when *print-namespace-maps*
     (let [initial-cursor (seq m)
@@ -6505,8 +6483,8 @@
   "Creates a new vector containing the args."
   (fn [& args]
   (if (and (instance? IndexedSeq args) (zero? (.-i args))
-           (not (suss.bootstrap/packed-array? (.-arr args))))
-    (.fromArray PersistentVector (.-arr args) (not (array? (.-arr args))))
+           (suss.bootstrap/object-array? (.-arr args)))
+    (.fromArray PersistentVector (.-arr args) false)
     (vec args))))
 
 (def some
@@ -9695,8 +9673,6 @@ reduces them without incurring seq initialization"
 (set! (.-EMPTY PersistentTreeSet)
   (PersistentTreeSet. nil (.-EMPTY PersistentTreeMap) empty-unordered-hash))
 
-;; Complete pinned ExceptionInfo Error ancestry parent; EPL notice above.
-(set! (.-__proto__ (.-prototype ExceptionInfo)) (.-prototype js/Error))
 
 ;; Complete retained transducer setup parents; EPL-1.0, see ../transducers/provenance.json.
 ;; The JS iteration protocol's ITER_SYMBOL methods are not retained (#425).
@@ -9753,15 +9729,9 @@ reduces them without incurring seq initialization"
       (suss.bootstrap/concat-string "@" (hex-string (hash value))))))
 
 ;; Original Suss: the default toString of types and records defined outside
-;; core. It is object-string unless the program has set the prototype's parent
-;; to one other than Object's, as JS interop may; then the parent's toString
-;; applies, as it would to a type with no toString of its own (#304).
+;; core, as java.lang.Object's (#304, #425).
 (def ^:private source-object-string
-  (fn [value]
-    (let [parent (.-__proto__ (.-prototype (type value)))]
-      (if (identical? parent (.-prototype js/Object))
-        (object-string value)
-        (.call (.-toString parent) value)))))
+  (fn [value] (object-string value)))
 
 ;; Copyright The Closure Library Authors.
 ;; SPDX-License-Identifier: Apache-2.0
@@ -9769,19 +9739,22 @@ reduces them without incurring seq initialization"
 ;; file. Native owned storage replaces the Closure prototype buffer slot.
 ;; All constructor and method branches remain; this is not JS prototype interop.
 (def bootstrap-buffer-to-array to-array)
+;; An argument, or nil past the last (#425): arrays have no missing slots.
+(def ^:private bootstrap-buffer-arg
+  (fn [args i] (if (< i (alength args)) (aget args i) nil)))
 (deftype BootstrapStringBuffer [^:mutable buffer_]
   Object
   (set [this & values]
-    (let [args (bootstrap-buffer-to-array values) s (aget args 0)]
+    (let [args (bootstrap-buffer-to-array values) s (bootstrap-buffer-arg args 0)]
       (set! buffer_ (suss.bootstrap/value-add "" s))
       nil))
   (append [this & values]
     (let [args (bootstrap-buffer-to-array values)
           old buffer_
-          first-value (aget args 0)
+          first-value (bootstrap-buffer-arg args 0)
           converted (suss.bootstrap/coerce-string first-value)]
       (set! buffer_ (suss.bootstrap/value-add old converted))
-      (if (suss.bootstrap/nil? (aget args 1))
+      (if (suss.bootstrap/nil? (bootstrap-buffer-arg args 1))
         nil
         (loop [i 1]
           (if (< i (alength args))
@@ -9798,7 +9771,7 @@ reduces them without incurring seq initialization"
 (def bootstrap-string-buffer
   (fn [& values]
     (let [args (bootstrap-buffer-to-array values) sb (BootstrapStringBuffer. "")]
-      (if (suss.bootstrap/nil? (aget args 0))
+      (if (suss.bootstrap/nil? (bootstrap-buffer-arg args 0))
         nil
         (.apply (.-append sb) sb args))
       sb)))
@@ -10502,7 +10475,6 @@ reduces them without incurring seq initialization"
 (def ^:private reader-var-symbol 'var)
 (def ^:private reader-fn-symbol 'fn*)
 (def ^:private reader-amp-symbol '&)
-(def ^:private reader-js-obj-symbol 'js-obj)
 (def ^:private reader-deref-symbol 'clojure.core/deref)
 (def ^:private reader-unquote-symbol 'clojure.core/unquote)
 (def ^:private reader-unquote-splicing-symbol 'clojure.core/unquote-splicing)
@@ -10704,27 +10676,6 @@ reduces them without incurring seq initialization"
                   (reader-queue-tag? tag) (reader-queue st start value)
                   (some? *default-data-reader-fn*) (*default-data-reader-fn* tag value)
                   :else (reader-fail st start (str "No reader function for tag " tag) false))))))))))
-;; #js {...} reads as the compiler's reader reads it: a js-obj call.
-(def ^:private reader-js
-  (fn [st s n start]
-    (let [i (reader-skip s n (+ start 3))]
-      (if (if (< i n) (== (.charCodeAt s i) 123) false)
-        nil
-        (do (aset st 1 (if (< i n) (inc i) n)) (reader-fail st start "#js requires a map literal" false)))
-      (aset st 1 (inc i))
-      (let [entries (persistent! (reader-items st start 125 0 (transient [])))
-            size (count entries)]
-        (if (odd? size) (reader-fail st start "#js map requires an even number of forms" false) nil)
-        (loop [k 0 call (transient [reader-js-obj-symbol])]
-          (if (< k size)
-            (let [key (nth entries k)
-                  key (cond
-                        (keyword? key) (if (nil? (namespace key)) (name key) (str (namespace key) "/" (name key)))
-                        (symbol? key) (str key)
-                        (string? key) key
-                        :else (reader-fail st start "#js keys must be keywords, symbols, or strings" false))]
-              (recur (+ k 2) (conj! (conj! call key) (nth entries (inc k)))))
-            (reader-list (persistent! call))))))))
 
 ;; Reader conditionals, as Clojure reads them with :read-cond. :allow reads
 ;; the first clause whose feature is enabled, or nothing; the other clauses
@@ -11017,17 +10968,7 @@ reduces them without incurring seq initialization"
 (def ^:private reader-tag-or-js
   (fn [st start]
     (let [s (aget st 0) n (aget st 2)]
-      (if (if (aget st 3)
-            false
-            (if (== (.charCodeAt s (inc start)) 106)
-              (if (< (+ start 2) n)
-                (if (== (.charCodeAt s (+ start 2)) 115)
-                  (if (< (+ start 3) n) (reader-delimiter? (.charCodeAt s (+ start 3))) true)
-                  false)
-                false)
-              false))
-        (reader-js st s n start)
-        (reader-tagged st s n start)))))
+      (reader-tagged st s n start))))
 (def ^:private reader-token
   (fn [st start]
     (let [s (aget st 0) n (aget st 2) c (.charCodeAt s start) end (reader-token-end s n start) length (- end start)]
@@ -11284,10 +11225,10 @@ reduces them without incurring seq initialization"
 ;; with print-method. Suss's types have no supertypes, so the built-in printer
 ;; takes the part of Clojure's methods for its own types and Object, and
 ;; prints a value whose type has no method.
-;; Suss can't take the type of a function, a type, a #js object, a future or
-;; a stream yet (docs/runtime/type-names.md), so they dispatch to :default.
+;; Suss can't take the type of a function, a type, a future or a stream yet
+;; (docs/runtime/type-names.md), so they dispatch to :default.
 (def ^:private untyped-printable?
-  (fn [x] (or (js-fn? x) (suss.bootstrap/type-constructor? x) (object? x)
+  (fn [x] (or (js-fn? x) (suss.bootstrap/type-constructor? x)
               (some? (suss.bootstrap/display-leaf x)))))
 (def print-simple
   (fn [o w]
@@ -11735,3 +11676,8 @@ reduces them without incurring seq initialization"
 ;; PersistentVector's type, registered so the runtime's vector-nth and
 ;; vector-count read vectors directly (#378).
 (suss.bootstrap/vector-type! (.-EMPTY PersistentVector))
+
+;; Original Suss (#425): ExceptionInfo is an error, as Clojure's is an
+;; Exception, so suss.bootstrap/error? and the error printer take it. Its
+;; prototype's parent is the runtime error type's prototype.
+(set! (.-__proto__ (.-prototype ExceptionInfo)) (.-prototype (type (suss.bootstrap/error ""))))

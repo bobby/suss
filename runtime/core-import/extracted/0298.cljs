@@ -6,9 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IWriter
-  "Protocol for writing. Currently only implemented by StringBufferWriter."
-  (-write [writer s]
-    "Writes s with writer and returns the result.")
-  (-flush [writer]
-    "Flush writer."))
+(def
+  ^{:dynamic true
+    :doc "When set to true, output will be flushed whenever a newline is printed.
+
+  Defaults to true."}
+  *flush-on-newline* true)

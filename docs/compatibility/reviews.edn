@@ -367,7 +367,7 @@
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/printing-object-predicate.json"
    :alternative nil
-   :tests ["crates/suss-compile/tests/compiled_printing.rs" "tests/oracle/printing-cases.json" "tests/oracle/object-predicate-cases.json"]}
+   :tests ["crates/suss-compile/tests/compiled_printing.rs" "tests/oracle/printing-cases.json"]}
   "runtime:pr-writer-impl:10445"
   {:source-sha256 "31496dfe26493383aa9bd1ac4c8147dc8ce517ce59a7775ed393327d8ac485cf"
    :visibility :private
@@ -378,7 +378,7 @@
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/printing-pr-writer-impl.json"
    :alternative nil
-   :tests ["crates/suss-cli/tests/object_printing.rs" "crates/suss-compile/tests/compiled_printing.rs" "tests/oracle/printing-cases.json" "tests/oracle/object-predicate-cases.json" "crates/suss-cli/tests/printer_options.rs" "crates/suss-cli/tests/repl_value_display.rs" "crates/suss-compile/tests/session_future_display.rs"]}
+   :tests ["crates/suss-cli/tests/object_printing.rs" "crates/suss-compile/tests/compiled_printing.rs" "tests/oracle/printing-cases.json" "crates/suss-cli/tests/printer_options.rs" "crates/suss-cli/tests/repl_value_display.rs" "crates/suss-compile/tests/session_future_display.rs"]}
   "runtime:empty?:2210"
   {:source-sha256 "4c72ac8a5d69d042a99a6ca275728e2dd705145de71eb9881888fea962ba7213"
    :visibility :public
@@ -1366,10 +1366,10 @@
   {:source-sha256 "b1552e35064f6a9a3b05998abe4180dab3afe2cc108c76f515088b977e516fba" :visibility :public
    :arities nil
    :dependencies ["runtime:alength" "runtime:aget" "runtime:inc:1505" "literal Object methods and mutable fields"]
-   :classification :portable
-   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods. Fresh pinned/native iterator and reverse-view execution with strict decoding and GC; historical named length-write rejection is superseded by supported length assignment, with the unchanged pinned false-after-shrink native observation pending revalidation; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
+   :classification :adapted
+   :rationale "Complete pinned iterator/reverse sequence source retained, including all type methods; reads an array or a string through indexed-get and indexed-length, since Suss's aget and alength read only arrays (#425). Fresh pinned/native iterator and reverse-view execution with strict decoding and GC; historical named length-write rejection is superseded by supported length assignment, with the unchanged pinned false-after-shrink native observation pending revalidation; full hashing/printing/index helpers, other persistent types and compiled macros remain unfinished."
    :status :in-progress
-   :adaptation-path nil
+   :adaptation-path "docs/compatibility/patches/sequence-IndexedSeqIterator.json"
    :alternative nil
    :tests ["crates/suss-cli/tests/portable_iteration.rs" "tests/oracle/iteration-cases.json" "docs/runtime/sequence-iteration.md"]}
   "runtime:RSeq:1768"
@@ -1721,7 +1721,7 @@
    :status :in-progress
    :adaptation-path "docs/runtime/arrays.md"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_arrays.rs" "crates/suss-compile/tests/portable_arrays.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/array-cases.json" "crates/suss-cli/tests/portable_indexed_strings.rs" "tests/oracle/indexed-string-cases.json"]}
+   :tests ["crates/suss-cli/tests/portable_arrays.rs" "crates/suss-compile/tests/portable_arrays.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/array-cases.json" "crates/suss-cli/tests/portable_indexed_strings.rs"]}
   "runtime:aset:545"
   {:source-sha256 "7e3c6fbfcefbe31ac061e641fb0e6942d8dd1a41d45a5cf6e7d54aae9cd43299" :visibility :public
    :arities {:fixed [3] :variadic-min 3}
@@ -1741,7 +1741,7 @@
    :status :in-progress
    :adaptation-path "docs/runtime/arrays.md"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_arrays.rs" "crates/suss-compile/tests/portable_arrays.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/array-cases.json" "crates/suss-cli/tests/portable_indexed_strings.rs" "tests/oracle/indexed-string-cases.json"]}
+   :tests ["crates/suss-cli/tests/portable_arrays.rs" "crates/suss-compile/tests/portable_arrays.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/array-cases.json" "crates/suss-cli/tests/portable_indexed_strings.rs"]}
   "macro:array:2635"
   {:source-sha256 "7ffb6cf9424a1dadc1f30489b405c14fd96ad0fbf9ad0ec2317ac41abdda4161" :visibility :public
    :arities {:fixed [] :variadic-min 0}
@@ -1771,7 +1771,7 @@
    :status :in-progress
    :adaptation-path "docs/runtime/arrays.md"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_arrays.rs" "crates/suss-compile/tests/portable_arrays.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/array-cases.json" "crates/suss-cli/tests/portable_indexed_strings.rs" "tests/oracle/indexed-string-cases.json"]}
+   :tests ["crates/suss-cli/tests/portable_arrays.rs" "crates/suss-compile/tests/portable_arrays.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/array-cases.json" "crates/suss-cli/tests/portable_indexed_strings.rs"]}
   "macro:aset:1056"
   {:source-sha256 "c95028d204020700e718532cf0d6d07f4581e18ce4aaf51b131044fe565bf332" :visibility :public
    :arities {:fixed [3] :variadic-min 3}
@@ -1791,7 +1791,7 @@
    :status :in-progress
    :adaptation-path "docs/runtime/arrays.md"
    :alternative nil
-   :tests ["crates/suss-cli/tests/portable_arrays.rs" "crates/suss-compile/tests/portable_arrays.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/array-cases.json" "crates/suss-cli/tests/portable_indexed_strings.rs" "tests/oracle/indexed-string-cases.json"]}
+   :tests ["crates/suss-cli/tests/portable_arrays.rs" "crates/suss-compile/tests/portable_arrays.rs" "crates/suss-compile/tests/runtime_abi.rs" "tests/oracle/array-cases.json" "crates/suss-cli/tests/portable_indexed_strings.rs"]}
   "runtime:native-satisfies?:322"
   {:source-sha256 "7b9335769e4222111766bbccd557e2fce96620266b129e3fb5230c947a96cfce" :visibility :public
    :arities {:fixed [2] :variadic-min nil}

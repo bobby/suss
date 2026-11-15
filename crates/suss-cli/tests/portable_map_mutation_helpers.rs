@@ -132,14 +132,6 @@ fn retained_hash_map_quotient_dependencies_preserve_numeric_boundaries_and_recov
             );
             assert_eq!(number(&mut session, "(quot 7 3)"), 2.0);
         }
-        session.eval("(def ceil-hook-count 0)").unwrap();
-        assert!(matches!(
-            session.eval("(suss.bootstrap/f64-ceil (js-obj \"valueOf\" (fn [] (set! ceil-hook-count (+ ceil-hook-count 1)) 1.75) \"toString\" (fn [] (set! ceil-hook-count (+ ceil-hook-count 10)) \"1.75\")))"),
-            Err(SessionError::Language(_))
-        ));
-        session.collect().unwrap();
-        assert_eq!(number(&mut session, "ceil-hook-count"), 0.0);
-        assert_eq!(number(&mut session, "(quot 7 3)"), 2.0);
         for source in [
             "(suss.bootstrap/f64-ceil)",
             "(suss.bootstrap/f64-ceil 1 2)",
@@ -165,30 +157,3 @@ fn retained_transient_array_map_removal_uses_owned_pop_storage() {
     }
 }
 
-#[test]
-fn source_array_pop_preserves_aliases_empty_undefined_and_physical_call_receiver() {
-    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
-        session
-            .eval("(def a (array 7 11)) (def alias a) (def pop (.-pop a)) (def other (array 13))")
-            .unwrap();
-        assert_eq!(
-            number(&mut session, "(.pop a (do (aset other 0 17) 999))"),
-            11.0
-        );
-        session.collect().unwrap();
-        assert_eq!(number(&mut session, "(alength alias)"), 1.0);
-        assert_eq!(number(&mut session, "(aget other 0)"), 17.0);
-        assert_eq!(number(&mut session, "(.call pop other)"), 17.0);
-        assert_eq!(number(&mut session, "(alength other)"), 0.0);
-        assert_eq!(number(&mut session, "(.apply pop alias (array))"), 7.0);
-        assert_eq!(number(&mut session, "(if (undefined? (.pop a)) 1 0)"), 1.0);
-        assert_eq!(number(&mut session, "(alength alias)"), 0.0);
-        for source in ["(pop)", "(.call pop nil)", "(.call pop {:length 0})"] {
-            assert!(
-                matches!(session.eval(source), Err(SessionError::Language(_))),
-                "{source}"
-            );
-            assert_eq!(number(&mut session, "(alength a)"), 0.0);
-        }
-    }
-}

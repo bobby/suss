@@ -83,30 +83,6 @@
       }
     },
     {
-      "id": "symbol-identity-skips-fields",
-      "source": "(= (compare-symbols (js-obj \"str\" \"same\") (js-obj \"str\" \"same\")) 0)",
-      "expected": {
-        "tag": "bool",
-        "value": true
-      }
-    },
-    {
-      "id": "symbol-repeated-conversion-order",
-      "source": "(let [trace (atom []) a (js-obj \"str\" \"a\" \"ns\" nil \"name\" (js-obj \"valueOf\" (fn [] (swap! trace conj 1) \"a\"))) b (js-obj \"str\" \"b\" \"ns\" nil \"name\" (js-obj \"valueOf\" (fn [] (swap! trace conj 2) \"b\")))] (and (= (compare-symbols a b) -1) (= @trace [1 2 1 2])))",
-      "expected": {
-        "tag": "bool",
-        "value": true
-      }
-    },
-    {
-      "id": "symbol-conversion-throw-stops-right",
-      "source": "(let [trace (atom []) a (js-obj \"str\" \"a\" \"ns\" nil \"name\" (js-obj \"valueOf\" (fn [] (swap! trace conj 1) (throw 73)))) b (js-obj \"str\" \"b\" \"ns\" nil \"name\" (js-obj \"valueOf\" (fn [] (swap! trace conj 2) \"b\")))] (try (compare-symbols a b) false (catch :default e (and (= e 73) (= @trace [1])))))",
-      "expected": {
-        "tag": "bool",
-        "value": true
-      }
-    },
-    {
       "id": "keyword-identity",
       "source": "(= (compare-keywords (keyword \"n\" \"a\") (keyword \"n\" \"a\")) 0)",
       "expected": {
@@ -187,30 +163,6 @@
       }
     },
     {
-      "id": "keyword-identity-skips-fields",
-      "source": "(= (compare-keywords (js-obj \"fqn\" \"same\") (js-obj \"fqn\" \"same\")) 0)",
-      "expected": {
-        "tag": "bool",
-        "value": true
-      }
-    },
-    {
-      "id": "keyword-repeated-conversion-order",
-      "source": "(let [trace (atom []) a (js-obj \"fqn\" \"a\" \"ns\" nil \"name\" (js-obj \"valueOf\" (fn [] (swap! trace conj 1) \"a\"))) b (js-obj \"fqn\" \"b\" \"ns\" nil \"name\" (js-obj \"valueOf\" (fn [] (swap! trace conj 2) \"b\")))] (and (= (compare-keywords a b) -1) (= @trace [1 2 1 2])))",
-      "expected": {
-        "tag": "bool",
-        "value": true
-      }
-    },
-    {
-      "id": "keyword-conversion-throw-stops-right",
-      "source": "(let [trace (atom []) a (js-obj \"fqn\" \"a\" \"ns\" nil \"name\" (js-obj \"valueOf\" (fn [] (swap! trace conj 1) (throw 73)))) b (js-obj \"fqn\" \"b\" \"ns\" nil \"name\" (js-obj \"valueOf\" (fn [] (swap! trace conj 2) \"b\")))] (try (compare-keywords a b) false (catch :default e (and (= e 73) (= @trace [1])))))",
-      "expected": {
-        "tag": "bool",
-        "value": true
-      }
-    },
-    {
       "id": "ci-empty-no-init",
       "source": "(let [calls (atom 0)] (and (= (ci-reduce [] (fn [] (swap! calls inc) 17)) 17) (= @calls 1)))",
       "expected": {
@@ -236,7 +188,7 @@
     },
     {
       "id": "ci-empty-init-identity",
-      "source": "(let [x (js-obj)] (identical? (ci-reduce [] (fn [_ _] (throw 73)) x) x))",
+      "source": "(let [x (reify)] (identical? (ci-reduce [] (fn [_ _] (throw 73)) x) x))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -333,38 +285,6 @@
     {
       "id": "ci-typed-nth-ignores-public-rebind",
       "source": "(let [saved -nth calls (atom 0)] (try (set! -nth (fn ([xs n] (swap! calls inc) 17) ([xs n nf] (swap! calls inc) nf))) (and (= (ci-reduce [23] (fn [_ _] (throw 73))) 23) (= @calls 0)) (finally (set! -nth saved))))",
-      "expected": {
-        "tag": "bool",
-        "value": true
-      }
-    },
-    {
-      "id": "symbol-namespace-difference-skips-name",
-      "source": "(= (compare-symbols (js-obj \"str\" \"a\" \"ns\" \"a\" \"name\" (js-obj \"valueOf\" (fn [] (throw 73)))) (js-obj \"str\" \"b\" \"ns\" \"b\" \"name\" (js-obj \"valueOf\" (fn [] (throw 74))))) -1)",
-      "expected": {
-        "tag": "bool",
-        "value": true
-      }
-    },
-    {
-      "id": "symbol-namespace-tie-conversion-before-name",
-      "source": "(let [trace (atom []) mk (fn [n s] (js-obj \"valueOf\" (fn [] (swap! trace conj n) s))) a (js-obj \"str\" \"a\" \"ns\" (mk 1 \"n\") \"name\" (mk 3 \"a\")) b (js-obj \"str\" \"b\" \"ns\" (mk 2 \"n\") \"name\" (mk 4 \"b\"))] (and (= (compare-symbols a b) -1) (= @trace [1 2 1 2 3 4 3 4])))",
-      "expected": {
-        "tag": "bool",
-        "value": true
-      }
-    },
-    {
-      "id": "keyword-namespace-difference-skips-name",
-      "source": "(= (compare-keywords (js-obj \"fqn\" \"a\" \"ns\" \"a\" \"name\" (js-obj \"valueOf\" (fn [] (throw 73)))) (js-obj \"fqn\" \"b\" \"ns\" \"b\" \"name\" (js-obj \"valueOf\" (fn [] (throw 74))))) -1)",
-      "expected": {
-        "tag": "bool",
-        "value": true
-      }
-    },
-    {
-      "id": "keyword-namespace-tie-conversion-before-name",
-      "source": "(let [trace (atom []) mk (fn [n s] (js-obj \"valueOf\" (fn [] (swap! trace conj n) s))) a (js-obj \"fqn\" \"a\" \"ns\" (mk 1 \"n\") \"name\" (mk 3 \"a\")) b (js-obj \"fqn\" \"b\" \"ns\" (mk 2 \"n\") \"name\" (mk 4 \"b\"))] (and (= (compare-keywords a b) -1) (= @trace [1 2 1 2 3 4 3 4])))",
       "expected": {
         "tag": "bool",
         "value": true

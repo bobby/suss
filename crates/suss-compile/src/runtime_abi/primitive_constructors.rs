@@ -141,10 +141,18 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         ]);
         b.function(export, &[], &[VALUE], &body);
     }
-    let invoke = callback(
-        b,
-        &[LocalGet(1), Call(b.names["source-array-constructor-args"])],
-    );
+    // Suss has no JS arrays (#425): an array type is not a constructor.
+    let mut body = vec![GlobalGet(nominal::ERROR_GLOBAL)];
+    body.extend(packed_arrays::string("An array type cannot be called; use its array function"));
+    body.extend([
+        sentinel_value(NIL),
+        sentinel_value(NIL),
+        I32Const(0), // Identity UID, unassigned.
+        RefI31,
+        StructNew(8),
+        Throw(0),
+    ]);
+    let invoke = callback(b, &body);
     declared.push(invoke);
     let mut body = vec![
         GlobalGet(ARRAY_ROOT),

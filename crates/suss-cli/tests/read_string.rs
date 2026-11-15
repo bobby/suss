@@ -248,7 +248,7 @@ fn read_string_follows_clojure() {
             "(= '(clojure.core/unquote x) (read-string \"~x\"))",
             "(= '(clojure.core/unquote-splicing x) (read-string \"~@x\"))",
             "(= '(var x) (read-string \"#'x\"))",
-            "(= '(js-obj \"a\" 1 \"b/c\" 2) (read-string \"#js {:a 1 b/c 2}\"))",
+            "(= \"No reader function for tag js\" (try (read-string \"#js {:a 1}\") (catch :default e (ex-message e))))",
             // Auto-resolved keywords resolve against *ns*.
             "(= :user.reading/k (read-string \"::k\"))",
             "(= :suss.edn/k (read-string \"::edn/k\"))",

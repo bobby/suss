@@ -6,7 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IEditableCollection
-  "Protocol for collections which can transformed to transients."
-  (^clj -as-transient [coll]
-    "Returns a new, transient version of the collection, in constant time."))
+(defprotocol APersistentVector
+  "Marker protocol")

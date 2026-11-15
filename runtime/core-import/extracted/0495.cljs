@@ -6,20 +6,30 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- prefers*
-  [x y prefer-table]
-  (let [xprefs (@prefer-table x)]
-    (or
-     (when (and xprefs (xprefs y))
-       true)
-     (loop [ps (parents y)]
-       (when (pos? (count ps))
-         (when (prefers* x (first ps) prefer-table)
-           true)
-         (recur (rest ps))))
-     (loop [ps (parents x)]
-       (when (pos? (count ps))
-         (when (prefers* (first ps) y prefer-table)
-           true)
-         (recur (rest ps))))
-     false)))
+(defn- find-and-cache-best-method
+  [name dispatch-val hierarchy method-table prefer-table method-cache cached-hierarchy default-dispatch-val]
+  (let [best-entry (reduce (fn [be [k _ :as e]]
+                             (if (isa? @hierarchy dispatch-val k)
+                               (let [be2 (if (or (nil? be) (dominates k (first be) prefer-table @hierarchy))
+                                           e
+                                           be)]
+                                 (when-not (dominates (first be2) k prefer-table @hierarchy)
+                                   (throw (js/Error.
+                                            (str_ "Multiple methods in multimethod '" name
+                                              "' match dispatch value: " dispatch-val " -> " k
+                                              " and " (first be2) ", and neither is preferred"))))
+                                 be2)
+                               be))
+                     nil @method-table)
+        best-entry (if-let [entry (and (nil? best-entry) (@method-table default-dispatch-val))]
+                     [default-dispatch-val entry]
+                     best-entry)]
+    (when best-entry
+      (if (= @cached-hierarchy @hierarchy)
+        (do
+          (swap! method-cache assoc dispatch-val (second best-entry))
+          (second best-entry))
+        (do
+          (reset-cache method-cache method-table cached-hierarchy hierarchy)
+          (find-and-cache-best-method name dispatch-val hierarchy method-table prefer-table
+            method-cache cached-hierarchy default-dispatch-val))))))

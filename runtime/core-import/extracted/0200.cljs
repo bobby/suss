@@ -6,7 +6,26 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IChunkedNext
-  "Protocol for accessing the chunks of a collection."
-  (-chunked-next [coll]
-    "Returns a new collection of coll without the first chunk."))
+(deftype ArrayChunk [arr off end]
+  ICounted
+  (-count [_] (- end off))
+
+  IIndexed
+  (-nth [coll i]
+    (aget arr (+ off i)))
+  (-nth [coll i not-found]
+    (if (and (>= i 0) (< i (- end off)))
+      (aget arr (+ off i))
+      not-found))
+
+  IChunk
+  (-drop-first [coll]
+    (if (== off end)
+      (throw (js/Error. "-drop-first of empty chunk"))
+      (ArrayChunk. arr (inc off) end)))
+
+  IReduce
+  (-reduce [coll f]
+    (array-reduce arr f (aget arr off) (inc off)))
+  (-reduce [coll f start]
+    (array-reduce arr f start off)))

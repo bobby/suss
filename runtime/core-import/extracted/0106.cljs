@@ -6,16 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- pop-tail [pv level node]
-  (let [subidx (bit-and (bit-shift-right-zero-fill (- (.-cnt pv) 2) level) 0x01f)]
-    (cond
-     (> level 5) (let [new-child (pop-tail pv (- level 5) (pv-aget node subidx))]
-                   (if (and (nil? new-child) (zero? subidx))
-                     nil
-                     (let [ret (pv-clone-node node)]
-                       (pv-aset ret subidx new-child)
-                       ret)))
-     (zero? subidx) nil
-     :else (let [ret (pv-clone-node node)]
-             (pv-aset ret subidx nil)
-             ret))))
+(defprotocol IWatchable
+  "Protocol for types that can be watched. Currently only implemented by Atom."
+  (-notify-watches [this oldval newval]
+    "Calls all watchers with this, oldval and newval.")
+  (-add-watch [this key f]
+    "Adds a watcher function f to this. Keys must be unique per reference,
+     and can be used to remove the watch with -remove-watch.")
+  (-remove-watch [this key]
+    "Removes watcher that corresponds to key from this."))

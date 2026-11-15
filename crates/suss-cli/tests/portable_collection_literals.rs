@@ -82,7 +82,7 @@ fn vector_literal_normalizes_entries_once_before_constructor_invocation() {
     // Original development-only constructor fixture for the compiler boundary.
     // This is not a production PersistentVector implementation or M4 acceptance.
     session.enter_namespace("suss.core").unwrap();
-    session.eval("(deftype PersistentVector [meta cnt shift root tail __hash]) (set! (.-EMPTY_NODE PersistentVector) (js-obj))").unwrap();
+    session.eval("(deftype PersistentVector [meta cnt shift root tail __hash]) (set! (.-EMPTY_NODE PersistentVector) (reify))").unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def literal-order 0)").unwrap();
     session.eval("(def literal-result [(do (set! literal-order (+ (* literal-order 10) 1)) 17) (do (set! literal-order (+ (* literal-order 10) 2)) 19)])").unwrap();

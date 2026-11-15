@@ -6,31 +6,19 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn filter
-  "Returns a lazy sequence of the items in coll for which
-  (pred item) returns logical true. pred must be free of side-effects.
-  Returns a transducer when no collection is provided."
-  ([pred]
-    (fn [rf]
-      (fn
-        ([] (rf))
-        ([result] (rf result))
-        ([result input]
-           (if (pred input)
-             (rf result input)
-             result)))))
-  ([pred coll]
-   (lazy-seq
-    (when-let [s (seq coll)]
-      (if (chunked-seq? s)
-        (let [c (chunk-first s)
-              size (count c)
-              b (chunk-buffer size)]
-          (dotimes [i size]
-              (when (pred (-nth c i))
-                (chunk-append b (-nth c i))))
-          (chunk-cons (chunk b) (filter pred (chunk-rest s))))
-        (let [f (first s) r (rest s)]
-          (if (pred f)
-            (cons f (filter pred r))
-            (filter pred r))))))))
+(defprotocol ISorted
+  "Protocol for a collection which can represent their items
+  in a sorted manner. "
+  (^clj -sorted-seq [coll ascending?]
+    "Returns a sorted seq from coll in either ascending or descending order.")
+  (^clj -sorted-seq-from [coll k ascending?]
+    "Returns a sorted seq from coll in either ascending or descending order.
+     If ascending is true, the result should contain all items which are > or >=
+     than k. If ascending is false, the result should contain all items which
+     are < or <= than k, e.g.
+     (-sorted-seq-from (sorted-set 1 2 3 4 5) 3 true) => (3 4 5)
+     (-sorted-seq-from (sorted-set 1 2 3 4 5) 3 false) => (3 2 1)")
+  (-entry-key [coll entry]
+    "Returns the key for entry.")
+  (-comparator [coll]
+    "Returns the comparator for coll."))

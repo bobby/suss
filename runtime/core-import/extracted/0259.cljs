@@ -6,8 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn keys
-  "Returns a sequence of the map's keys, in the same order as (seq map)."
-  [map]
-  (when-let [mseq (seq map)]
-    (KeySeq. mseq nil)))
+(defn set?
+  "Returns true if x satisfies ISet"
+  [x]
+  (if (nil? x)
+    false
+    (satisfies? ISet x)))

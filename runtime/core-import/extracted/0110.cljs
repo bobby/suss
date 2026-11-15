@@ -6,8 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IVolatile
-  "Protocol for adding volatile functionality."
-  (-vreset! [o new-value]
-    "Sets the value of volatile o to new-value without regard for the
-     current value. Returns new-value."))
+(defprotocol IAtom
+  "Marker protocol indicating an atom.")

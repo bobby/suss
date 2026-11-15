@@ -6,24 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn partition
-  "Returns a lazy sequence of lists of n items each, at offsets step
-  apart. If step is not supplied, defaults to n, i.e. the partitions
-  do not overlap. If a pad collection is supplied, use its elements as
-  necessary to complete last partition up to n items. In case there are
-  not enough padding elements, return a partition with less than n items."
-  ([n coll]
-     (partition n n coll))
-  ([n step coll]
-     (lazy-seq
-       (when-let [s (seq coll)]
-         (let [p (take n s)]
-           (when (== n (count p))
-             (cons p (partition n step (drop step s))))))))
-  ([n step pad coll]
-     (lazy-seq
-       (when-let [s (seq coll)]
-         (let [p (take n s)]
-           (if (== n (count p))
-             (cons p (partition n step pad (drop step s)))
-             (list (take n (concat p pad)))))))))
+(defn completing
+  "Takes a reducing function f of 2 args and returns a fn suitable for
+  transduce by adding an arity-1 signature that calls cf (default -
+  identity) on the result argument."
+  ([f] (completing f identity))
+  ([f cf]
+    (fn
+      ([] (f))
+      ([x] (cf x))
+      ([x y] (f x y)))))

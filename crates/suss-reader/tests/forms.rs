@@ -317,28 +317,6 @@ fn quote_discard_collections_and_terminating_character_literals() {
     }
 }
 
-#[test]
-fn javascript_object_literals_lower_to_ordered_js_obj_calls() {
-    let forms = read_forms("#js {:get 1 \"configurable\" true answer 42}").unwrap();
-    let Kind::List(items) = &forms[0].kind else {
-        panic!()
-    };
-    assert!(matches!(&items[0].kind, Kind::Symbol(symbol) if symbol.name == "js-obj"));
-    assert_eq!(items[1].kind, Kind::String("get".encode_utf16().collect()));
-    assert_eq!(items[2].kind, Kind::Long(1));
-    assert_eq!(
-        items[3].kind,
-        Kind::String("configurable".encode_utf16().collect())
-    );
-    assert_eq!(items[4].kind, Kind::Bool(true));
-    assert_eq!(
-        items[5].kind,
-        Kind::String("answer".encode_utf16().collect())
-    );
-    assert_eq!(items[6].kind, Kind::Long(42));
-    assert!(read_forms("#js {:odd}").is_err());
-    assert!(read_forms("#js {1 :value}").is_err());
-}
 
 fn resolved(source: &str) -> Result<Vec<suss_reader::forms::Form>, suss_reader::ParseError> {
     resolve_conditionals(read_forms(source)?)
@@ -370,8 +348,6 @@ fn queue_literals_read_as_tagged_vectors_after_selection() {
     assert_eq!(forms[0].metadata.len(), 1);
     let Kind::Vector(items) = &forms[1].kind else { panic!() };
     assert!(matches!(items[0].kind, Kind::Tagged { .. }));
-    // `#js` keeps its own dispatch.
-    assert!(matches!(&resolved("#js {}").unwrap()[0].kind, Kind::List(_)));
 }
 
 #[test]
@@ -383,6 +359,7 @@ fn tagged_literals_fail_as_clojure_does_without_a_reader() {
         ("#unknown 1", "No reader function for tag unknown", "#unknown 1"),
         ("#my/tag [1]", "No reader function for tag my/tag", "#my/tag [1]"),
         ("#inst \"2020\"", "No reader function for tag inst", "#inst \"2020\""),
+        ("#js {}", "No reader function for tag js", "#js {}"),
         ("#jsx {}", "No reader function for tag jsx", "#jsx {}"),
         ("#object[Foo 0x1 \"x\"]", "No reader function for tag object", "#object[Foo 0x1 \"x\"]"),
     ] {

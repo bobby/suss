@@ -20,7 +20,7 @@
     },
     {
       "id": "shallow-clone",
-      "source": "(let [e (js-obj) c (js-obj) n (suss.core/pv-fresh-node e) _ (suss.core/pv-aset n 0 c) r (suss.core/pv-clone-node n)] (and (identical? (.-edit r) e) (identical? (suss.core/pv-aget r 0) c) (not (identical? (.-arr n) (.-arr r))) (= (suss.core/pv-aset r 0 17) 17) (identical? (suss.core/pv-aget n 0) c)))",
+      "source": "(let [e (reify) c (reify) n (suss.core/pv-fresh-node e) _ (suss.core/pv-aset n 0 c) r (suss.core/pv-clone-node n)] (and (identical? (.-edit r) e) (identical? (suss.core/pv-aget r 0) c) (not (identical? (.-arr n) (.-arr r))) (= (suss.core/pv-aset r 0 17) 17) (identical? (suss.core/pv-aget n 0) c)))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -84,7 +84,7 @@
     },
     {
       "id": "path-5",
-      "source": "(let [e (js-obj) n (suss.core/pv-fresh-node nil) r (suss.core/new-path e 5 n)] (and (identical? (.-edit r) e) (identical? (suss.core/pv-aget r 0) n) (not (identical? r n)) (nil? (suss.core/pv-aget r 1))))",
+      "source": "(let [e (reify) n (suss.core/pv-fresh-node nil) r (suss.core/new-path e 5 n)] (and (identical? (.-edit r) e) (identical? (suss.core/pv-aget r 0) n) (not (identical? r n)) (nil? (suss.core/pv-aget r 1))))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -92,7 +92,7 @@
     },
     {
       "id": "path-10",
-      "source": "(let [e (js-obj) n (suss.core/pv-fresh-node nil) r (suss.core/new-path e 10 n)] (and (identical? (.-edit r) e) (identical? (suss.core/pv-aget (suss.core/pv-aget r 0) 0) n) (not (identical? r n)) (nil? (suss.core/pv-aget r 1))))",
+      "source": "(let [e (reify) n (suss.core/pv-fresh-node nil) r (suss.core/new-path e 10 n)] (and (identical? (.-edit r) e) (identical? (suss.core/pv-aget (suss.core/pv-aget r 0) 0) n) (not (identical? r n)) (nil? (suss.core/pv-aget r 1))))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -100,7 +100,7 @@
     },
     {
       "id": "path-15",
-      "source": "(let [e (js-obj) n (suss.core/pv-fresh-node nil) r (suss.core/new-path e 15 n)] (and (identical? (.-edit r) e) (identical? (suss.core/pv-aget (suss.core/pv-aget (suss.core/pv-aget r 0) 0) 0) n) (not (identical? r n)) (nil? (suss.core/pv-aget r 1))))",
+      "source": "(let [e (reify) n (suss.core/pv-fresh-node nil) r (suss.core/new-path e 15 n)] (and (identical? (.-edit r) e) (identical? (suss.core/pv-aget (suss.core/pv-aget (suss.core/pv-aget r 0) 0) 0) n) (not (identical? r n)) (nil? (suss.core/pv-aget r 1))))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -196,7 +196,7 @@
     },
     {
       "id": "pop-keeps-recursive-child",
-      "source": "(let [e (js-obj) a (suss.core/pv-fresh-node e) b (suss.core/pv-fresh-node e) c (suss.core/pv-fresh-node e) root (suss.core/pv-fresh-node e) _ (suss.core/pv-aset c 0 a) _ (suss.core/pv-aset c 1 b) _ (suss.core/pv-aset root 0 c) r (suss.core/pop-tail (VectorFixture. 65) 10 root) rc (suss.core/pv-aget r 0)] (and (not (identical? r root)) (not (identical? rc c)) (identical? (.-edit r) e) (identical? (.-edit rc) e) (identical? (suss.core/pv-aget rc 0) a) (nil? (suss.core/pv-aget rc 1)) (identical? (suss.core/pv-aget c 1) b)))",
+      "source": "(let [e (reify) a (suss.core/pv-fresh-node e) b (suss.core/pv-fresh-node e) c (suss.core/pv-fresh-node e) root (suss.core/pv-fresh-node e) _ (suss.core/pv-aset c 0 a) _ (suss.core/pv-aset c 1 b) _ (suss.core/pv-aset root 0 c) r (suss.core/pop-tail (VectorFixture. 65) 10 root) rc (suss.core/pv-aget r 0)] (and (not (identical? r root)) (not (identical? rc c)) (identical? (.-edit r) e) (identical? (.-edit rc) e) (identical? (suss.core/pv-aget rc 0) a) (nil? (suss.core/pv-aget rc 1)) (identical? (suss.core/pv-aget c 1) b)))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -228,7 +228,7 @@
     },
     {
       "id": "push-new-path-nil-edit",
-      "source": "(let [e (js-obj) tail (suss.core/pv-fresh-node e) root (suss.core/pv-fresh-node e) r (suss.core/push-tail (VectorFixture. 1057) 10 root tail)] (and (identical? (.-edit r) e) (nil? (.-edit (suss.core/pv-aget r 1))) (identical? (suss.core/pv-aget (suss.core/pv-aget r 1) 0) tail)))",
+      "source": "(let [e (reify) tail (suss.core/pv-fresh-node e) root (suss.core/pv-fresh-node e) r (suss.core/push-tail (VectorFixture. 1057) 10 root tail)] (and (identical? (.-edit r) e) (nil? (.-edit (suss.core/pv-aget r 1))) (identical? (suss.core/pv-aget (suss.core/pv-aget r 1) 0) tail)))",
       "expected": {
         "tag": "bool",
         "value": true

@@ -6,7 +6,7 @@ import sys
 from cljs_inventory import Scanner
 ROOT = Path(__file__).resolve().parents[1]
 PIN = 'c4295f303100bbf5afac449242d30bca1126f1a1'
-CASE_IDS = ['identity-object', 'nil-order', 'distinct-nil-undefined', 'number-nan', 'number-infinity', 'numeric-order', 'utf16-order', 'boolean-order', 'arrays-lexical', 'array-holes-nil-undefined', 'array-nested-cycle', 'comparable-return-not-normalized', 'comparable-identity-no-call', 'comparable-original-false', 'numeric-before-comparable', 'array-reconvert-both-relations', 'array-first-relation-only', 'array-conversion-changes-between-tests', 'array-override-valueOf', 'array-type-constructor-nil', 'array-type-constructor-false', 'array-type-constructor-mismatch', 'live-type-mixed', 'live-array-predicate', 'public-primitive-predicate-rebind', 'wrapper-number-unchanged', 'wrapper-truthy-empty', 'wrapper-false-nil-undefined', 'wrapper-reverse-zero-truthy', 'wrapper-reverse-nan-truthy', 'wrapper-reverse-effects', 'wrapper-number-once', 'wrapper-first-throw-no-reverse', 'wrapper-reverse-throw', 'wrapper-live-compare', 'wrapper-equality-changes-compare', 'indexed-length-first', 'indexed-four-arity', 'indexed-stops-first-difference', 'indexed-live-compare', 'format-toString-object-fallback', 'format-noncallable-toString', 'format-order', 'format-throw-stops-second', 'format-live-str', 'str-nil-single-variadic-rebind', 'str-second-lookup-after-first', 'str-nonprimitive-both-throw', 'format-live-str-results-convert-after-calls']
+CASE_IDS = ['identity-object', 'nil-order', 'distinct-nil-undefined', 'number-nan', 'number-infinity', 'numeric-order', 'utf16-order', 'boolean-order', 'comparable-return-not-normalized', 'comparable-identity-no-call', 'comparable-original-false', 'numeric-before-comparable', 'live-type-mixed', 'live-array-predicate', 'public-primitive-predicate-rebind', 'wrapper-number-unchanged', 'wrapper-truthy-empty', 'wrapper-false-nil-undefined', 'wrapper-reverse-zero-truthy', 'wrapper-reverse-nan-truthy', 'wrapper-reverse-effects', 'wrapper-number-once', 'wrapper-first-throw-no-reverse', 'wrapper-reverse-throw', 'wrapper-live-compare', 'wrapper-equality-changes-compare', 'indexed-length-first', 'indexed-four-arity', 'indexed-stops-first-difference', 'indexed-live-compare', 'format-order', 'format-throw-stops-second', 'format-live-str', 'str-nil-single-variadic-rebind', 'format-live-str-results-convert-after-calls']
 
 def unique(pairs):
     result = {}
@@ -60,6 +60,11 @@ def check():
 def compare(path=None):
     actual = read(path or ROOT / 'tests/oracle/out/comparator-observations.json')
     expected = [{'id': c['id'], 'value': True} for c in cases()]
+    # Recorded evidence may hold cases since removed, such as those of JS
+    # array comparison (#425); only the current cases are compared.
+    current = {e['id'] for e in expected}
+    if isinstance(actual, list):
+        actual = [a for a in actual if not isinstance(a, dict) or a.get('id') in current]
     if not isinstance(actual, list) or len(actual) != len(expected):
         raise ValueError('observation count')
     if any(not isinstance(row, dict) or set(row) != {'id', 'value'} or type(row['id']) is not str or type(row['value']) is not bool for row in actual):

@@ -1109,7 +1109,7 @@ impl Reader<'_, '_, '_> {
                         _ => return Err(self.fail(start, "Unknown symbolic numeric literal")),
                     })
                 }
-                Some(c) if c.is_alphabetic() && !self.js_dispatch(start) => {
+                Some(c) if c.is_alphabetic() => {
                     // Clojure's reader: a letter after `#` starts a tag symbol.
                     self.offset = start + 1;
                     let token = self.token();
@@ -1124,53 +1124,6 @@ impl Reader<'_, '_, '_> {
                         tag,
                         form: Box::new(self.required()?),
                     }
-                }
-                Some('j') => {
-                    self.take();
-                    self.padding();
-                    if self.take() != Some('{') {
-                        return Err(self.fail(start, "#js requires a map literal"));
-                    }
-                    let mut entries = self.items(start, '}')?;
-                    if entries.len() % 2 != 0 {
-                        return Err(self.fail(start, "#js map requires an even number of forms"));
-                    }
-                    for key in entries.iter_mut().step_by(2) {
-                        let spelling = match &key.kind {
-                            Kind::Keyword(keyword) => match &keyword.namespace {
-                                Some(namespace) => format!("{namespace}/{}", keyword.name),
-                                None => keyword.name.clone(),
-                            },
-                            Kind::Symbol(symbol) => match &symbol.namespace {
-                                Some(namespace) => format!("{namespace}/{}", symbol.name),
-                                None => symbol.name.clone(),
-                            },
-                            Kind::String(units) => String::from_utf16(units).map_err(|_| {
-                                self.fail(key.span.start, "#js key is not valid UTF-16")
-                            })?,
-                            _ => {
-                                return Err(error(
-                                    key.span.clone(),
-                                    "#js keys must be keywords, symbols, or strings",
-                                ));
-                            }
-                        };
-                        key.kind = Kind::String(spelling.encode_utf16().collect());
-                        key.metadata.clear();
-                    }
-                    let operator = Form {
-                        span: start..(start + 3).min(self.offset),
-                        metadata: Vec::new(),
-                        kind: Kind::Symbol(Symbol::new("js-obj")),
-                    };
-                    let mut call = Vec::with_capacity(entries.len() + 1);
-                    call.push(operator);
-                    call.extend(entries);
-                    return Ok(Some(Form {
-                        span: start..self.offset,
-                        metadata: Vec::new(),
-                        kind: Kind::List(call),
-                    }));
                 }
                 _ => return Err(self.fail(start, "Unsupported reader dispatch")),
             },
@@ -1226,11 +1179,6 @@ impl Reader<'_, '_, '_> {
         }
         if let Some(capture)=&mut self.capture {capture.finish(capture_slot,&form,self.meter)?;}
         Ok(Some(form))
-    }
-    /// Whether `#` at `start` begins the `#js` map dispatch rather than a tag.
-    fn js_dispatch(&self, start: usize) -> bool {
-        let rest = &self.source[start + 1..];
-        rest.starts_with("js") && rest[2..].chars().next().is_none_or(delimiter)
     }
     fn wrapper(&mut self, start: usize, name: &str) -> Result<Kind, ParseError> {
         let prefix = Form {

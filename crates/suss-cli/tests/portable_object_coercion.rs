@@ -1,16 +1,14 @@
-//! Execute object conversion order through public source, in both caller phases.
+//! Arithmetic rejects non-numbers without converting them, in both caller phases.
 use suss_cli::portable_session::Session;
 #[test]
-fn ordinary_object_coercion_preserves_hints_order_and_primitive_results() {
+fn arithmetic_rejects_objects_without_converting_them() {
     // Clojure arithmetic, comparison and bit operations reject objects before
-    // converting them (#286, #336); array keys keep ToPropertyKey's order.
+    // converting them (#286, #336).
     let cases = [
-        "(let [trace (atom []) x (js-obj \"valueOf\" (fn [] (swap! trace conj :x) 2))] (and (= \"bit operation not supported for a non-number\" (try (bit-or x 0) nil (catch :default e (ex-message e)))) (= @trace [])))",
-        "(let [trace (atom []) x (js-obj \"valueOf\" (fn [] (swap! trace conj :x) 2)) y (js-obj \"valueOf\" (fn [] (swap! trace conj :y) 3))] (and (= \"bit operation not supported for a non-number\" (try (bit-or x y) nil (catch :default e (ex-message e)))) (= @trace [])))",
-        "(let [trace (atom []) a (array) key (js-obj \"toString\" (fn [] (swap! trace conj :string) \"label\") \"valueOf\" (fn [] (swap! trace conj :number) 7))] (aset a key 23) (and (= (aget a \"label\") 23) (= @trace [:string])))",
-        "(let [a (array) key (js-obj \"toString\" 17 \"valueOf\" (fn [] 7))] (aset a key 23) (= (aget a 7) 23))",
-        "(let [trace (atom []) x (js-obj \"valueOf\" (fn [] (swap! trace conj :x) 2))] (and (= \"< requires number operands\" (try (< x 3) nil (catch :default e (ex-message e)))) (= @trace [])))",
-        "(let [trace (atom []) x (js-obj \"valueOf\" (fn [] (swap! trace conj :x) \"2\"))] (and (= \"+ requires number operands\" (try (+ x 3) nil (catch :default e (ex-message e)))) (= @trace [])))",
+        "(let [trace (atom []) x (reify Object (toString [_] (swap! trace conj :x) \"2\"))] (and (= \"bit operation not supported for a non-number\" (try (bit-or x 0) nil (catch :default e (ex-message e)))) (= @trace [])))",
+        "(let [trace (atom []) x (reify Object (toString [_] (swap! trace conj :x) \"2\")) y (reify Object (toString [_] (swap! trace conj :y) \"3\"))] (and (= \"bit operation not supported for a non-number\" (try (bit-or x y) nil (catch :default e (ex-message e)))) (= @trace [])))",
+        "(let [trace (atom []) x (reify Object (toString [_] (swap! trace conj :x) \"2\"))] (and (= \"< requires number operands\" (try (< x 3) nil (catch :default e (ex-message e)))) (= @trace [])))",
+        "(let [trace (atom []) x (reify Object (toString [_] (swap! trace conj :x) \"2\"))] (and (= \"+ requires number operands\" (try (+ x 3) nil (catch :default e (ex-message e)))) (= @trace [])))",
     ];
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.set_operation_fuel(100_000_000);
@@ -33,31 +31,3 @@ fn ordinary_object_coercion_preserves_hints_order_and_primitive_results() {
     }
 }
 
-#[test]
-fn array_length_assignment_converts_object_rhs_twice_in_order() {
-    let cases = [
-        "(let [n (atom 0) a (array 7 8 9) rhs (js-obj \"valueOf\" (fn [] (swap! n inc)))] (try (aset a \"length\" rhs) false (catch :default e (and (= (.-message e) \"Invalid array length\") (= @n 2) (= (alength a) 3)))))",
-        "(let [n (atom 0) a (array 7 8 9) rhs (js-obj \"valueOf\" (fn [] (if (= (swap! n inc) 1) 1 (throw 17))))] (try (aset a \"length\" rhs) false (catch :default e (and (= e 17) (= @n 2) (= (alength a) 3)))))",
-        "(let [n (atom 0) a (array 7 8 9) rhs (js-obj \"valueOf\" (fn [] (swap! n inc) (if (= @n 1) (do (.push a 23) 1) 1)))] (aset a \"length\" rhs) (and (= @n 2) (= (alength a) 1) (= (aget a 0) 7) (not (.hasOwnProperty a \"3\"))))",
-        "(let [n (atom 0) a (array 7 8 9) rhs (js-obj \"valueOf\" (fn [] (if (= (swap! n inc) 1) 4294967297 1)))] (aset a \"length\" rhs) (and (= @n 2) (= (alength a) 1)))",
-    ];
-    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
-        session.set_operation_fuel(100_000_000);
-        for source in cases {
-            let value = session
-                .eval(source)
-                .unwrap_or_else(|error| panic!("{source}: {error}"));
-            session.collect().unwrap();
-            session
-                .inspect(&value, |mut store, value| {
-                    assert_eq!(
-                        suss_cli::portable_session::sentinel_tag(&mut store, &value)?.expect("Boolean ABI"),
-                        4,
-                        "{source}"
-                    );
-                    Ok(())
-                })
-                .unwrap();
-        }
-    }
-}

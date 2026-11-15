@@ -6,21 +6,17 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn take-while
-  "Returns a lazy sequence of successive items from coll while
-  (pred item) returns logical true. pred must be free of side-effects.
-  Returns a transducer when no collection is provided."
-  ([pred]
-     (fn [rf]
-       (fn
-         ([] (rf))
-         ([result] (rf result))
-         ([result input]
-            (if (pred input)
-              (rf result input)
-              (reduced result))))))
-  ([pred coll]
-     (lazy-seq
-       (when-let [s (seq coll)]
-         (when (pred (first s))
-           (cons (first s) (take-while pred (rest s))))))))
+(defn subseq
+  "sc must be a sorted collection, test(s) one of <, <=, > or
+  >=. Returns a seq of those entries with keys ek for
+  which (test (.. sc comparator (compare ek key)) 0) is true"
+  ([sc test key]
+     (let [include (mk-bound-fn sc test key)]
+       (if (#{> >=} test)
+         (when-let [[e :as s] (-sorted-seq-from sc key true)]
+           (if (include e) s (next s)))
+         (take-while include (-sorted-seq sc true)))))
+  ([sc start-test start-key end-test end-key]
+     (when-let [[e :as s] (-sorted-seq-from sc start-key true)]
+       (take-while (mk-bound-fn sc end-test end-key)
+                   (if ((mk-bound-fn sc start-test start-key) e) s (next s))))))

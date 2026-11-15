@@ -21,7 +21,7 @@ fn default_hash_matches_pinned_identity_and_root_relations() {
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 28);
+    assert_eq!(cases.len(), 27);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -112,7 +112,7 @@ fn captured_default_dispatch_observes_root_redefinition_across_gc_fragments() {
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
-    session.eval("(def review-root-provider suss.core/root-obj) (def review-root (review-root-provider)) (def review-hash -hash) (def review-owner ((let [factory js-obj] factory))) (def review-owner-id (review-hash review-owner))").unwrap();
+    session.eval("(def review-root-provider suss.core/root-obj) (def review-root (review-root-provider)) (def review-hash -hash) (def review-owner (reify)) (def review-owner-id (review-hash review-owner))").unwrap();
     session.collect().unwrap();
     session
         .eval("(set! suss.core/root-obj (fn [] review-owner))")

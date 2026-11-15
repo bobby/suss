@@ -275,14 +275,6 @@
       }
     },
     {
-      "id": "reduce-array-captured-length",
-      "source": "(let [a (array 1 2)] (reduce (fn [v x] (aset a 2 99) (+ v x)) 0 a))",
-      "expected": {
-        "tag": "f64",
-        "bits": "4008000000000000"
-      }
-    },
-    {
       "id": "reduce-array-live-elements",
       "source": "(let [a (array 1 2)] (reduce (fn [v x] (aset a 1 9) (+ v x)) 0 a))",
       "expected": {
@@ -488,14 +480,6 @@
       "expected": {
         "tag": "bool",
         "value": true
-      }
-    },
-    {
-      "id": "array-reduce-index-captured-length",
-      "source": "(let [a (array 99 1 2)] (array-reduce a (fn [v x] (aset a 3 7) (+ v x)) 17 1))",
-      "expected": {
-        "tag": "f64",
-        "bits": "4034000000000000"
       }
     },
     {

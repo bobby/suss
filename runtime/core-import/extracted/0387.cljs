@@ -6,27 +6,21 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- balance-left [key val ins right]
-  (if (instance? RedNode ins)
-    (cond
-      (instance? RedNode (.-left ins))
-      (RedNode. (.-key ins) (.-val ins)
-              (.blacken (.-left ins))
-              (BlackNode. key val (.-right ins) right nil)
+(defn- balance-left-del [key val del right]
+  (cond
+    (instance? RedNode del)
+    (RedNode. key val (.blacken del) right nil)
+
+    (instance? BlackNode right)
+    (balance-right key val del (.redden right))
+
+    (and (instance? RedNode right) (instance? BlackNode (.-left right)))
+    (RedNode. (.. right -left -key) (.. right -left -val)
+              (BlackNode. key val del (.. right -left -left) nil)
+              (balance-right (.-key right) (.-val right)
+                             (.. right -left -right)
+                             (.redden (.-right right)))
               nil)
 
-      (instance? RedNode (.-right ins))
-      (RedNode. (.. ins -right -key) (.. ins -right -val)
-                (BlackNode. (.-key ins) (.-val ins)
-                            (.-left ins)
-                            (.. ins -right -left)
-                            nil)
-                (BlackNode. key val
-                            (.. ins -right -right)
-                            right
-                            nil)
-                nil)
-
-      :else
-      (BlackNode. key val ins right nil))
-    (BlackNode. key val ins right nil)))
+    :else
+    (throw (js/Error. "red-black tree invariant violation"))))

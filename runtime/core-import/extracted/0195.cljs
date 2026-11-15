@@ -6,8 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- ^boolean pam-dupes? [arr]
-  (loop [i 0]
+(defn- pam-new-size [arr]
+  (loop [i 0 n 0]
     (if (< i (alength arr))
       (let [dupe? (loop [j 0]
                     (if (< j i)
@@ -15,5 +15,5 @@
                         (key-test (aget arr i) (aget arr j))
                         (recur (+ 2 j)))
                       false))]
-        (or dupe? (recur (+ 2 i))))
-      false)))
+        (recur (+ 2 i) (if dupe? n (+ n 2))))
+      n)))

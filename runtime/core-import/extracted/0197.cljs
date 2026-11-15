@@ -6,15 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- pam-grow-seed-array [seed trailing]
-  (let [seed-cnt  (dec (alength seed))
-        extra-kvs (seq trailing)
-        ret       (make-array (+ seed-cnt (* 2 (count extra-kvs))))
-        ret       (array-copy seed 0 ret 0 seed-cnt)]
-    (loop [i seed-cnt extra-kvs extra-kvs]
-      (if extra-kvs
-        (let [kv (first extra-kvs)]
-          (aset ret i (-key kv))
-          (aset ret (inc i) (-val kv))
-          (recur (+ 2 i) (next extra-kvs)))
-        ret))))
+(defprotocol IChunk
+  "Protocol for accessing the items of a chunk."
+  (-drop-first [coll]
+    "Return a new chunk of coll with the first item removed."))

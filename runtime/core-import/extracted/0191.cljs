@@ -6,6 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn persistent-array-map-seq [arr i _meta]
-  (when (<= i (- (alength arr) 2))
-    (PersistentArrayMapSeq. arr i _meta)))
+(deftype PersistentArrayMapIterator [arr ^:mutable i cnt]
+  Object
+  (hasNext [_]
+    (< i cnt))
+  (next [_]
+    (let [ret (MapEntry. (aget arr i) (aget arr (inc i)) nil)]
+      (set! i (+ i 2))
+      ret)))

@@ -6,9 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ranged-iterator [v start end]
-  (let [i start]
-    (RangedIterator. i (- i (js-mod i 32))
-      (when (< start (count v))
-        (unchecked-array-for v i))
-      v start end)))
+(defn- pv-reduce
+  ([pv f start end]
+   (if (< start end)
+     (pv-reduce pv f (nth pv start) (inc start) end)
+     (f)))
+  ([pv f init start end]
+   (loop [acc init i start arr (unchecked-array-for pv start)]
+     (if (< i end)
+       (let [j (bit-and i 0x01f)
+             arr (if (zero? j) (unchecked-array-for pv i) arr)
+             nacc (f acc (aget arr j))]
+         (if (reduced? nacc)
+           @nacc
+           (recur nacc (inc i) arr)))
+       acc))))

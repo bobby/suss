@@ -6,5 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- pv-fresh-node [edit]
-  (VectorNode. edit (make-array 32)))
+(defn- pv-aget [node idx]
+  (aget (.-arr node) idx))

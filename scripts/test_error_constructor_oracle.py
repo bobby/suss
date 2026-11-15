@@ -8,7 +8,7 @@ import error_constructor_oracle as oracle
 class ErrorConstructorOracleTests(unittest.TestCase):
     def test_closed_cases_driver_and_retained_observations(self):
         oracle.check()
-        self.assertEqual(len(oracle.cases()),151)
+        self.assertEqual(len(oracle.cases()),112)
         oracle.compare(oracle.ROOT/'docs/compatibility/error-constructors/evidence/observations.json')
 
     def test_reject_order_class_masks_bits_and_extra_keys(self):

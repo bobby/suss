@@ -6,30 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Keyword [ns name fqn ^:mutable _hash]
-  Object
-  (toString [_] (str_ ":" fqn))
-  (equiv [this other]
-    (-equiv this other))
-
-  IEquiv
-  (-equiv [_ other]
-    (if (instance? Keyword other)
-      (identical? fqn (.-fqn other))
-      false))
-  IFn
-  (-invoke [kw coll]
-    (get coll kw))
-  (-invoke [kw coll not-found]
-    (get coll kw not-found))
-
-  IHash
-  (-hash [this]
-    (caching-hash this hash-keyword _hash))
-
-  INamed
-  (-name [_] name)
-  (-namespace [_] ns)
-
-  IPrintWithWriter
-  (-pr-writer [o writer _] (-write writer (str_ ":" fqn))))
+(defn ^boolean symbol?
+  "Return true if x is a Symbol"
+  [x]
+  (instance? Symbol x))

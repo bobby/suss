@@ -6,8 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn cycle
-  "Returns a lazy (infinite!) sequence of repetitions of the items in coll."
-  [coll] (if-let [vals (seq coll)]
-           (Cycle. nil vals nil vals nil)
-           (.-EMPTY List)))
+(defn repeat
+  "Returns a lazy (infinite!, or length n if supplied) sequence of xs."
+  ([x] (Repeat. nil -1 x nil nil))
+  ([n x] (if (pos? n)
+           (Repeat. nil n x nil nil)
+           (.-EMPTY List))))

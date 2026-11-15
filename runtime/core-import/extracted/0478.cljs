@@ -6,6 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn delay?
-  "returns true if x is a Delay created with delay"
-  [x] (instance? Delay x))
+(defn ^boolean realized?
+  "Returns true if a value has been produced for a delay or lazy sequence."
+  [x]
+  (-realized? x))

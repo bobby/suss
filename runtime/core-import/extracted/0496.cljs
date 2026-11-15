@@ -6,6 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- dominates
-  [x y prefer-table hierarchy]
-  (or (prefers* x y prefer-table) (isa? hierarchy x y)))
+(defn- throw-no-method-error [name dispatch-val]
+  (throw (js/Error. (str_ "No method in multimethod '" name "' for dispatch value: " dispatch-val))))

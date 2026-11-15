@@ -6,10 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Volatile [^:mutable state]
-  IVolatile
-  (-vreset! [_ new-state]
-    (set! state new-state))
-
-  IDeref
-  (-deref [_] state))
+(defn volatile!
+  "Creates and returns a Volatile with an initial value of val."
+  [val]
+  (Volatile. val))

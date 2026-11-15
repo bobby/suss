@@ -44,7 +44,7 @@ fn genuine_char_at_and_complete_get_match_raw_pin_after_gc_and_recover() {
     ))
     .unwrap();
     let rows = corpus["cases"].as_array().unwrap();
-    assert_eq!(rows.len(), 74);
+    assert_eq!(rows.len(), 66);
     let mut ids = std::collections::BTreeSet::new();
     for row in rows {
         assert!(ids.insert(row["id"].as_str().unwrap()));

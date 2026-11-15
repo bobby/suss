@@ -6,5 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn string-iter [x]
-  (StringIter. x 0))
+(defn array-iter [x]
+  (ArrayIter. x 0))

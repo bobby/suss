@@ -6,7 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn transient
-  "Returns a new, transient version of the collection, in constant time."
-  [coll]
-  (-as-transient coll))
+(defn persistent!
+  "Returns a new, persistent version of the transient collection, in
+  constant time. The transient collection cannot be used after this
+  call, any such use will throw an exception."
+  [tcoll]
+  (-persistent! tcoll))

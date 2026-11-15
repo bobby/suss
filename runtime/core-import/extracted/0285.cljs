@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^number abs
-  {:doc "Returns the absolute value of a."
-   :added "1.11.10"}
-  [a] (Math/abs a))
+(defn NaN?
+  "Returns true if num is NaN, else false"
+  [val]
+  (js/isNaN val))

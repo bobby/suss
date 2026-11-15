@@ -242,7 +242,7 @@ fn printer_constructor_guard_tracks_owned_type_values_across_redefinition() {
              (suss.bootstrap/type-constructor? PrinterGuardProtocol)
              (suss.bootstrap/type-constructor? (fn [] nil))
              (suss.bootstrap/type-constructor? (array 1))
-             (suss.bootstrap/type-constructor? (js-obj))
+             (suss.bootstrap/type-constructor? (reify))
              (suss.bootstrap/type-constructor? nil)
              (suss.bootstrap/type-constructor? true)
              (suss.bootstrap/type-constructor? 42)
@@ -283,63 +283,6 @@ fn printer_constructor_guard_tracks_owned_type_values_across_redefinition() {
     }
 }
 
-#[test]
-fn public_object_predicate_observes_constructor_identity_and_shadowing() {
-    let corpus: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../tests/oracle/object-predicate-cases.json"
-    ))
-    .unwrap();
-    assert_eq!(corpus["schema"], 1);
-    assert_eq!(
-        corpus["upstream"],
-        "c4295f303100bbf5afac449242d30bca1126f1a1"
-    );
-    let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 1);
-    let case = &cases[0];
-    assert_eq!(case["id"], "object-constructor-identity");
-    assert_eq!(case["expected"]["tag"], "vector");
-    let items = case["expected"]["items"].as_array().unwrap();
-    assert_eq!(items.len(), 17);
-    for macro_phase in [false, true] {
-        let mut session = if macro_phase {
-            Session::new_macro().unwrap()
-        } else {
-            Session::new_repl().unwrap()
-        };
-        let mut decoder = Decoder::capture(&mut session, 100_000).unwrap();
-        let mut macros = CompiledMacros::new().unwrap();
-        session
-            .enter_namespace("suss-oracle.object-predicate-cases")
-            .unwrap();
-        let value = session
-            .eval_with_macros(case["source"].as_str().unwrap(), &mut macros)
-            .unwrap_or_else(|error| panic!("phase {macro_phase}: {error}"));
-        session.collect().unwrap();
-        let expected = items
-            .iter()
-            .map(|item| match item["tag"].as_str().unwrap() {
-                "bool" => Observation::Bool(item["value"].as_bool().unwrap()),
-                // Pinned from ClojureScript; the integral counts are Clojure longs.
-                "f64" => {
-                    let bits = u64::from_str_radix(item["bits"].as_str().unwrap(), 16).unwrap();
-                    let value = f64::from_bits(bits);
-                    if value.is_finite() && value.fract() == 0.0 && bits != (-0.0f64).to_bits() {
-                        Observation::Long(value as i64)
-                    } else {
-                        Observation::Number(bits)
-                    }
-                }
-                tag => panic!("unexpected object-predicate observation {tag}"),
-            })
-            .collect();
-        assert_eq!(
-            decoder.decode_session(&mut session, &value).unwrap(),
-            Observation::Vector(expected),
-            "phase {macro_phase}"
-        );
-    }
-}
 
 #[test]
 fn shared_pinned_printing_corpus_matches_both_phases_after_gc() {

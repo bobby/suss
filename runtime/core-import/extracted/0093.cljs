@@ -6,40 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn hash
-  "Returns the hash code of its argument. Note this is the hash code
-   consistent with =."
-  [o]
-  (cond
-    (implements? IHash o)
-    (bit-xor (-hash o) 0)
-
-    (number? o)
-    (if (js/isFinite o)
-      (if-not (.isSafeInteger js/Number o)
-        (hash-double o)
-        (js-mod (Math/floor o) 2147483647))
-      (case o
-        ##Inf
-        2146435072
-        ##-Inf
-        -1048576
-        2146959360))
-
-    ;; note: mirrors Clojure's behavior on the JVM, where the hashCode is
-    ;; 1231 for true and 1237 for false
-    ;; http://docs.oracle.com/javase/7/docs/api/java/lang/Boolean.html#hashCode%28%29
-    (true? o) 1231
-
-    (false? o) 1237
-
-    (string? o)
-    (m3-hash-int (hash-string o))
-
-    (instance? js/Date o)
-    (bit-xor (.valueOf o) 0)
-
-    (nil? o) 0
-
-    :else
-    (bit-xor (-hash o) 0)))
+(defn ^number hash-ordered-coll
+  "Returns the hash code, consistent with =, for an external ordered
+   collection implementing Iterable.
+   See http://clojure.org/data_structures#hash for full algorithms."
+  [coll]
+  (loop [n 0 hash-code 1 coll (seq coll)]
+    (if-not (nil? coll)
+      (recur (inc n) (bit-or (+ (imul 31 hash-code) (hash (first coll))) 0)
+        (next coll))
+      (mix-collection-hash hash-code n))))

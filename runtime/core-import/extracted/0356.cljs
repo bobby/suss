@@ -6,8 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IComparable
-  "Protocol for values that can be compared."
-  (^number -compare [x y]
-    "Returns a negative number, zero, or a positive number when x is logically
-     'less than', 'equal to', or 'greater than' y."))
+(defn not-empty
+  "If coll is empty, returns nil, else coll"
+  [coll] (when (seq coll) coll))

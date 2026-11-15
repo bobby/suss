@@ -25,7 +25,6 @@ enum Class {
     EmptyList,
     Cons,
     IndexedSeq,
-    SourceArray,
     PersistentVector,
     VectorNode,
     PersistentArrayMap,
@@ -316,27 +315,6 @@ impl FormBridge {
             constructors.insert(class, roots.len());
             roots.push(value);
         }
-        // Source arrays have a private runtime descriptor rather than a public
-        // class constructor. Capture its actual identity from one owned sample.
-        let value = session.eval("(suss.core/array)")?;
-        let id = session.inspect(&value, |mut store, value| {
-            let owner = fields(&mut store, &value, 4)?;
-            let descriptor = fields(&mut store, &owner[0], 6)?;
-            match descriptor[0] {
-                Val::I64(id) => Ok(id),
-                _ => Err(error("Invalid source array descriptor identity")),
-            }
-        })?;
-        let descriptor = session.data_descriptor(&value, false)?;
-        if classes
-            .insert(id, (Class::SourceArray, descriptor))
-            .is_some()
-        {
-            return Err(SessionError::Host(error(
-                "Duplicate macro data array identity",
-            )));
-        }
-        roots.push(value);
         let mut factories = BTreeMap::new();
         for (name, source) in [
             ("hash", "suss.core/hash"),
@@ -1105,7 +1083,7 @@ fn array(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<V
         .ok_or_else(|| error("Expected field array"))?;
     // Every array read here is a descriptor owner, nominal field vector, or
     // sparse-array node. Their pinned ABI widths are at most six; source
-    // elements are traversed through source_array_suffix instead.
+    // elements are traversed through object_array_elements instead.
     if array.len(&*store)? > 6 {
         return Err(error("Nominal field array exceeds ABI layout"));
     }
@@ -1532,7 +1510,6 @@ fn decode_datum_inner<T: DatumTarget>(
                     DecodedKind::List(sequence(store, value, classes, span, depth, budget)?)
                 }
                 Class::VectorNode => return Err(unsupported_datum(budget, "Vector trie nodes")),
-                Class::SourceArray => return Err(unsupported_datum(budget, "Raw source arrays")),
                 Class::List | Class::Cons | Class::EmptyList | Class::IndexedSeq => {
                     DecodedKind::List(sequence(store, value, classes, span, depth, budget)?)
                 }
@@ -2003,7 +1980,7 @@ fn append_indexed<T: DatumTarget>(
         let values = match object_array_elements(store, &data[0], budget)? {
             Some(elements) if index <= elements.len() as f64 => elements[index as usize..].to_vec(),
             Some(_) => return Err(error("IndexedSeq index exceeds backing storage")),
-            None => source_array_suffix(store, &data[0], classes, index as u32, budget)?,
+            None => return Err(error("IndexedSeq needs an object array")),
         };
         for value in values {
             items.push(decode_datum(
@@ -2063,7 +2040,8 @@ fn source_elements(
     if let Some(elements) = object_array_elements(store, value, budget)? {
         return Ok(elements);
     }
-    source_array_suffix(store, value, classes, 0, budget)
+    let _ = classes;
+    Err(error("Expected an object array"))
 }
 
 /// The elements of an object array (#378): a packed array, `{storage, uid}`,
@@ -2096,103 +2074,6 @@ fn object_array_elements(
 
 // Read the current sparse source-array ABI directly. Never execute guest code or
 // invent nil for an absent index; undefined remains invalid macro syntax.
-fn source_array_suffix(
-    store: &mut StoreContextMut<'_, ()>,
-    value: &Val,
-    classes: &BTreeMap<i64, (Class, SessionValue)>,
-    start: u32,
-    budget: &mut Budget,
-) -> wasmtime::Result<Vec<Val>> {
-    fn uint32(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Result<u32> {
-        let Some(n) = number(store, value)? else {
-            return Err(error("Invalid source array uint32"));
-        };
-        if !n.is_finite() || n < 0.0 || n > f64::from(u32::MAX) || n.fract() != 0.0 {
-            return Err(error("Invalid source array uint32"));
-        }
-        Ok(n as u32)
-    }
-    let (class, owner) = object(store, value, classes)?;
-    if !matches!(class, Class::SourceArray) || owner.len() != 2 {
-        return Err(error("Expected canonical sparse source array owner"));
-    }
-    let backing = array(store, &owner[0])?;
-    if backing.len() != 4 {
-        return Err(error("Invalid source array backing layout"));
-    }
-    let length = uint32(store, &backing[0])?;
-    if start > length {
-        return Err(error("Source array index exceeds logical length"));
-    }
-    let count = (length - start) as usize;
-    charge_read_work(store, count as u64, budget)?;
-    let dense = reference(&backing[2])?
-        .as_array(&*store)?
-        .ok_or_else(|| error("Invalid dense source array storage"))?;
-    let mask = reference(&backing[3])?
-        .as_array(&*store)?
-        .ok_or_else(|| error("Invalid source array presence mask"))?;
-    if !matches!(
-        dense.ty(&*store)?.element_type(),
-        wasmtime::StorageType::ValType(wasmtime::ValType::Ref(_))
-    ) || !matches!(mask.ty(&*store)?.element_type(), wasmtime::StorageType::I16)
-        || dense.len(&*store)? != mask.len(&*store)?
-    {
-        return Err(error("Invalid source array dense/presence layout"));
-    }
-    let mask_len = mask.len(&*store)?;
-    charge_read_work(store, mask_len as u64, budget)?;
-    // `None` is a hole, which reads as undefined: invalid macro syntax.
-    let mut result: Vec<Option<Val>> = vec![None; count];
-    let undefined = budget.undefined.clone();
-    for index in 0..mask_len {
-        let flag = mask.get(&mut *store, index)?.unwrap_i32();
-        // Push growth leaves capacity past the length (#348), always absent.
-        if !(0..=1).contains(&flag) || (flag == 1 && index >= length) {
-            return Err(error("Invalid source array presence bit"));
-        }
-        if flag == 1 && index >= start {
-            result[(index - start) as usize] = Some(dense.get(&mut *store, index)?);
-        }
-    }
-    let mut next = backing[1].clone();
-    let mut seen: Vec<Val> = Vec::new();
-    let mut previous = None;
-    while !nil(store, &next)? {
-        spend(store, budget)?;
-        for prior in &seen {
-            charge_read_work(store, 1, budget)?;
-            if Rooted::ref_eq(&*store, reference(prior)?, reference(&next)?)? {
-                return Err(error("Cyclic source array sparse chain"));
-            }
-        }
-        seen.push(next.clone());
-        let node = array(store, &next)?;
-        if node.len() != 3 {
-            return Err(error("Invalid source array sparse node"));
-        }
-        let key = uint32(store, &node[0])?;
-        if previous.is_some_and(|previous| key <= previous) || (key != u32::MAX && key >= length) {
-            return Err(error("Invalid source array sparse key order/range"));
-        }
-        if key < mask.len(&*store)? {
-            return Err(error("Duplicate dense/sparse source array key"));
-        }
-        if key != u32::MAX && key >= start {
-            result[(key - start) as usize] = Some(node[1].clone());
-        }
-        previous = Some(key);
-        next = node[2].clone();
-    }
-    result
-        .into_iter()
-        .map(|value| {
-            value
-                .or_else(|| undefined.clone())
-                .ok_or_else(|| error("Unknown language sentinel"))
-        })
-        .collect()
-}
 
 fn node_elements(
     store: &mut StoreContextMut<'_, ()>,

@@ -23,18 +23,12 @@ def recipes():
  add('get-suite-13','(get "ab" 0)')
  add('get-suite-28','(get "ab" 0 :not-found)')
  def tick(n):return '(set! char-effects (+ (* char-effects 10) '+str(n)+'))'
- obj='(js-obj "valueOf" (fn [] '+tick(1)+' 1.5) "toString" (fn [] '+tick(2)+' "0"))'
- for operation,expression in [('char-at','(.charAt "ab" INDEX)'),('get-two','(get "ab" INDEX)'),('get-three','(get "ab" INDEX false)')]:
-  add(operation+'-object-index',expression.replace('INDEX',obj))
-  add(operation+'-throw-index',expression.replace('INDEX','(js-obj "valueOf" (fn [] '+tick(1)+' (throw 705)) "toString" (fn [] '+tick(2)+' "0"))'))
  add('char-at-default-index','(.charAt "ab")')
  add('char-at-extra-argument','(.charAt "ab" 1 (do '+tick(7)+' 9))')
  add('char-at-ordered-receiver-index','(.charAt (do '+tick(1)+' "ab") (do '+tick(2)+' 1))')
  add('get-three-default-eager','(get "ab" 0 (do '+tick(3)+' false))')
  add('char-at-borrow-number','(.call (.-charAt "ab") 17 1)')
  add('char-at-borrow-false','(.call (.-charAt "ab") false 1)')
- add('char-at-borrow-object-ordered','(.call (.-charAt "ab") (js-obj "toString" (fn [] '+tick(2)+' "ab") "valueOf" (fn [] '+tick(1)+' 17)) '+obj+')')
- add('char-at-borrow-receiver-throw','(.call (.-charAt "ab") (js-obj "toString" (fn [] '+tick(2)+' (throw 706))) '+obj+')')
  add('char-at-method-identity','(identical? (.-charAt "a") (.-charAt "b"))')
  for row in rows:
   if len(Scanner(row['source']).all())!=1:raise ValueError('one complete expression required')
@@ -59,6 +53,10 @@ def generate():
 
 def observations(path=RAW):
  values=json.loads(path.read_text())
+ # Recorded evidence may hold cases since removed, such as those of JS
+ # object indexes (#425); only the current cases are compared.
+ current={r['id'] for r in recipes()}
+ if isinstance(values,list):values=[v for v in values if not isinstance(v,dict) or v.get('id') in current]
  if not isinstance(values,list) or [v['id'] for v in values]!=[r['id'] for r in recipes()]:raise ValueError('complete ordered raw IDs')
  for v in values:
   if set(v)!={'id','value'}:raise ValueError('closed envelope')

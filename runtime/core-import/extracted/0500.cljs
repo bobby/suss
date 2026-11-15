@@ -6,7 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn remove-all-methods
-  "Removes all of the methods of multimethod."
- [multifn]
- (-reset multifn))
+(defn prefer-method
+  "Causes the multimethod to prefer matches of dispatch-val-x over dispatch-val-y
+   when there is a conflict"
+  [multifn dispatch-val-x dispatch-val-y]
+  (-prefer-method multifn dispatch-val-x dispatch-val-y))

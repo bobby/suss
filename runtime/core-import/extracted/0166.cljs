@@ -6,9 +6,15 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn persistent!
-  "Returns a new, persistent version of the transient collection, in
-  constant time. The transient collection cannot be used after this
-  call, any such use will throw an exception."
-  [tcoll]
-  (-persistent! tcoll))
+(defn conj!
+  "Adds val to the transient collection, and return tcoll. The 'addition'
+  may happen at different 'places' depending on the concrete type."
+  ([] (transient []))
+  ([tcoll] tcoll)
+  ([tcoll val]
+    (-conj! tcoll val))
+  ([tcoll val & vals]
+    (let [ntcoll (-conj! tcoll val)]
+      (if vals
+        (recur ntcoll (first vals) (next vals))
+        ntcoll))))

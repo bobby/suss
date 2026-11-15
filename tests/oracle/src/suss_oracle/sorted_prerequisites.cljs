@@ -26,9 +26,6 @@
 #js {:id "symbol-empty-name" :value (= (compare-symbols (symbol "n" "") (symbol "n" "a")) -1)}
 #js {:id "symbol-utf16" :value (= (compare-symbols (symbol "n" "\ud83d\ude00") (symbol "n" "\ue000")) -1)}
 #js {:id "symbol-no-public-comparator" :value (let [c compare gt > lt <] (try (set! compare (fn [_ _] (throw 71))) (set! > (fn ([x] (throw 72)) ([x y] (throw 72)) ([x y & more] (throw 72)))) (set! < (fn ([x] (throw 73)) ([x y] (throw 73)) ([x y & more] (throw 73)))) (= (compare-symbols (symbol "n" "a") (symbol "n" "b")) -1) (finally (set! compare c) (set! > gt) (set! < lt))))}
-#js {:id "symbol-identity-skips-fields" :value (= (compare-symbols (js-obj "str" "same") (js-obj "str" "same")) 0)}
-#js {:id "symbol-repeated-conversion-order" :value (let [trace (atom []) a (js-obj "str" "a" "ns" nil "name" (js-obj "valueOf" (fn [] (swap! trace conj 1) "a"))) b (js-obj "str" "b" "ns" nil "name" (js-obj "valueOf" (fn [] (swap! trace conj 2) "b")))] (and (= (compare-symbols a b) -1) (= @trace [1 2 1 2])))}
-#js {:id "symbol-conversion-throw-stops-right" :value (let [trace (atom []) a (js-obj "str" "a" "ns" nil "name" (js-obj "valueOf" (fn [] (swap! trace conj 1) (throw 73)))) b (js-obj "str" "b" "ns" nil "name" (js-obj "valueOf" (fn [] (swap! trace conj 2) "b")))] (try (compare-symbols a b) false (catch :default e (and (= e 73) (= @trace [1])))))}
 #js {:id "keyword-identity" :value (= (compare-keywords (keyword "n" "a") (keyword "n" "a")) 0)}
 #js {:id "keyword-no-namespace" :value (= (compare-keywords (keyword "a") (keyword "b")) -1)}
 #js {:id "keyword-left-namespace-absent" :value (= (compare-keywords (keyword "z") (keyword "n" "a")) -1)}
@@ -39,13 +36,10 @@
 #js {:id "keyword-empty-name" :value (= (compare-keywords (keyword "n" "") (keyword "n" "a")) -1)}
 #js {:id "keyword-utf16" :value (= (compare-keywords (keyword "n" "\ud83d\ude00") (keyword "n" "\ue000")) -1)}
 #js {:id "keyword-no-public-comparator" :value (let [c compare gt > lt <] (try (set! compare (fn [_ _] (throw 71))) (set! > (fn ([x] (throw 72)) ([x y] (throw 72)) ([x y & more] (throw 72)))) (set! < (fn ([x] (throw 73)) ([x y] (throw 73)) ([x y & more] (throw 73)))) (= (compare-keywords (keyword "n" "a") (keyword "n" "b")) -1) (finally (set! compare c) (set! > gt) (set! < lt))))}
-#js {:id "keyword-identity-skips-fields" :value (= (compare-keywords (js-obj "fqn" "same") (js-obj "fqn" "same")) 0)}
-#js {:id "keyword-repeated-conversion-order" :value (let [trace (atom []) a (js-obj "fqn" "a" "ns" nil "name" (js-obj "valueOf" (fn [] (swap! trace conj 1) "a"))) b (js-obj "fqn" "b" "ns" nil "name" (js-obj "valueOf" (fn [] (swap! trace conj 2) "b")))] (and (= (compare-keywords a b) -1) (= @trace [1 2 1 2])))}
-#js {:id "keyword-conversion-throw-stops-right" :value (let [trace (atom []) a (js-obj "fqn" "a" "ns" nil "name" (js-obj "valueOf" (fn [] (swap! trace conj 1) (throw 73)))) b (js-obj "fqn" "b" "ns" nil "name" (js-obj "valueOf" (fn [] (swap! trace conj 2) "b")))] (try (compare-keywords a b) false (catch :default e (and (= e 73) (= @trace [1])))))}
 #js {:id "ci-empty-no-init" :value (let [calls (atom 0)] (and (= (ci-reduce [] (fn [] (swap! calls inc) 17)) 17) (= @calls 1)))}
 #js {:id "ci-single-seed-no-call" :value (= (ci-reduce [17] (fn [_ _] (throw 73))) 17)}
 #js {:id "ci-no-init-ordered" :value (let [trace (atom []) p (SortedIndexedProbe. [1 2 3] trace)] (and (= (ci-reduce p (fn [a b] (swap! trace conj :reduce) (+ a b))) 6) (= @trace [:count 0 1 :reduce 2 :reduce])))}
-#js {:id "ci-empty-init-identity" :value (let [x (js-obj)] (identical? (ci-reduce [] (fn [_ _] (throw 73)) x) x))}
+#js {:id "ci-empty-init-identity" :value (let [x (reify)] (identical? (ci-reduce [] (fn [_ _] (throw 73)) x) x))}
 #js {:id "ci-init-ordered" :value (let [trace (atom []) p (SortedIndexedProbe. [2 3] trace)] (and (= (ci-reduce p (fn [a b] (swap! trace conj :reduce) (+ a b)) 10) 15) (= @trace [:count 0 :reduce 1 :reduce])))}
 #js {:id "ci-reduced-no-init" :value (let [trace (atom []) p (SortedIndexedProbe. [1 2 3] trace)] (and (= (ci-reduce p (fn [_ _] (swap! trace conj :reduce) (reduced 17))) 17) (= @trace [:count 0 1 :reduce])))}
 #js {:id "ci-reduced-init-false" :value (let [trace (atom []) p (SortedIndexedProbe. [1 2] trace)] (and (false? (ci-reduce p (fn [_ _] (swap! trace conj :reduce) (reduced false)) 10)) (= @trace [:count 0 :reduce])))}
@@ -58,10 +52,6 @@
 #js {:id "ci-seed-nil" :value (nil? (ci-reduce [nil] (fn [_ _] (throw 73))))}
 #js {:id "ci-typed-count-ignores-public-rebind" :value (let [saved -count calls (atom 0)] (try (set! -count (fn [_] (swap! calls inc) 1)) (and (= (ci-reduce [17 23] +) 40) (= @calls 0)) (finally (set! -count saved))))}
 #js {:id "ci-typed-nth-ignores-public-rebind" :value (let [saved -nth calls (atom 0)] (try (set! -nth (fn ([xs n] (swap! calls inc) 17) ([xs n nf] (swap! calls inc) nf))) (and (= (ci-reduce [23] (fn [_ _] (throw 73))) 23) (= @calls 0)) (finally (set! -nth saved))))}
-#js {:id "symbol-namespace-difference-skips-name" :value (= (compare-symbols (js-obj "str" "a" "ns" "a" "name" (js-obj "valueOf" (fn [] (throw 73)))) (js-obj "str" "b" "ns" "b" "name" (js-obj "valueOf" (fn [] (throw 74))))) -1)}
-#js {:id "symbol-namespace-tie-conversion-before-name" :value (let [trace (atom []) mk (fn [n s] (js-obj "valueOf" (fn [] (swap! trace conj n) s))) a (js-obj "str" "a" "ns" (mk 1 "n") "name" (mk 3 "a")) b (js-obj "str" "b" "ns" (mk 2 "n") "name" (mk 4 "b"))] (and (= (compare-symbols a b) -1) (= @trace [1 2 1 2 3 4 3 4])))}
-#js {:id "keyword-namespace-difference-skips-name" :value (= (compare-keywords (js-obj "fqn" "a" "ns" "a" "name" (js-obj "valueOf" (fn [] (throw 73)))) (js-obj "fqn" "b" "ns" "b" "name" (js-obj "valueOf" (fn [] (throw 74))))) -1)}
-#js {:id "keyword-namespace-tie-conversion-before-name" :value (let [trace (atom []) mk (fn [n s] (js-obj "valueOf" (fn [] (swap! trace conj n) s))) a (js-obj "fqn" "a" "ns" (mk 1 "n") "name" (mk 3 "a")) b (js-obj "fqn" "b" "ns" (mk 2 "n") "name" (mk 4 "b"))] (and (= (compare-keywords a b) -1) (= @trace [1 2 1 2 3 4 3 4])))}
 #js {:id "ci-immutable-macro-paths" :value (let [i inc z zero? lt <] (try (set! inc (fn [_] (throw 71))) (set! zero? (fn [_] true)) (set! < (fn ([x] (throw 72)) ([x y] (throw 72)) ([x y & more] (throw 72)))) (= (ci-reduce [1 2 3] + 0) 6) (finally (set! inc i) (set! zero? z) (set! < lt))))}
 ])))
 (set! *main-cli-fn* -main)

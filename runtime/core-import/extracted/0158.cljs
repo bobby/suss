@@ -6,7 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- tv-ensure-editable [edit node]
-  (if (identical? edit (.-edit node))
-    node
-    (VectorNode. edit (aclone (.-arr node)))))
+(defn- tv-editable-root [node]
+  (VectorNode. (js-obj) (aclone (.-arr node))))

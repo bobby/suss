@@ -148,7 +148,6 @@ pub enum ArrayOperation {
     /// A collection literal's elements as an object array (#378).
     Objects,
     Make,
-    MakeLiteral,
     Length,
     Get,
     Set,
@@ -156,13 +155,13 @@ pub enum ArrayOperation {
 impl ArrayOperation {
     pub(crate) fn export(self) -> &'static str {
         match self {
-            Self::Literal => "source-array-new",
-            Self::Objects => "object-array-new",
-            Self::Make => "source-array-make",
-            Self::MakeLiteral => "source-array-make-literal",
-            Self::Length => "source-array-length-args",
-            Self::Get => "source-array-get-indices",
-            Self::Set => "source-array-set-or-property",
+            // Clojure's object arrays (#425): `(array ...)` wraps its fresh
+            // argument array, and `make-array` fills one with nil.
+            Self::Literal | Self::Objects => "object-array-new",
+            Self::Make => "object-array-make-args",
+            Self::Length => "array-length-args",
+            Self::Get => "array-get-indices",
+            Self::Set => "array-set-indices",
         }
     }
     pub(crate) fn valid(self, count: usize) -> bool {
@@ -170,7 +169,7 @@ impl ArrayOperation {
             && match self {
                 Self::Literal | Self::Objects => true,
                 Self::Make => count >= 1,
-                Self::MakeLiteral | Self::Length => count == 1,
+                Self::Length => count == 1,
                 Self::Get => count >= 2,
                 Self::Set => count >= 3,
             }

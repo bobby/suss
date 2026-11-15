@@ -38,8 +38,6 @@ const SEALED: &[(&str, &str)] = &[
 
 /// Routes that already reject built-in owners on `main`.
 const ALREADY_REJECTED: &[(&str, &str)] = &[
-    ("unchecked-get on built-in", "(unchecked-get :k \"_hash\")"),
-    ("unchecked-set on built-in", "(unchecked-set :k \"_hash\" 91)"),
     ("aget on built-in", "(aget {:a 1} \"arr\")"),
 ];
 

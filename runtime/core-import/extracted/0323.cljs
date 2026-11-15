@@ -6,7 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn pr-str
-  "pr to a string, returning it. Fundamental entrypoint to IPrintWithWriter."
-  [& objs]
-  (pr-str-with-opts objs nil))
+(defn prn-str-with-opts
+  "Same as pr-str-with-opts followed by (newline)"
+  [objs opts]
+  (if (empty? objs)
+    "\n"
+    (let [sb (pr-sb-with-opts objs opts)]
+      (.append sb \newline)
+      (str_ sb))))

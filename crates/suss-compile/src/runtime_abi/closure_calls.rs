@@ -83,7 +83,7 @@ pub(super) fn functions(b: &mut Builder) -> (u32, u32) {
                 I32Eqz,
                 If(BlockType::Empty),
                 LocalGet(3),
-                Call(b.names["source-array-storage"]),
+                Call(b.names["array-storage"]),
                 LocalSet(4),
                 End,
                 End,

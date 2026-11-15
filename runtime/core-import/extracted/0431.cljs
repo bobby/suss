@@ -6,9 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn repeat
-  "Returns a lazy (infinite!, or length n if supplied) sequence of xs."
-  ([x] (Repeat. nil -1 x nil nil))
-  ([n x] (if (pos? n)
-           (Repeat. nil n x nil nil)
-           (.-EMPTY List))))
+(deftype RangeIterator [^:mutable i end step]
+  Object
+  (hasNext [_]
+    (if (pos? step)
+      (< i end)
+      (> i end)))
+  (next [_]
+    (let [ret i]
+      (set! i (+ i step))
+      ret)))

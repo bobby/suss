@@ -6,14 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^number min
-  "Returns the least of the nums."
-  ([x] x)
-  ([x y]
-   (cond
-     (NaN? x) x
-     (NaN? y) y
-     (< x y) x
-     :else y))
-  ([x y & more]
-   (reduce min (cljs.core/min x y) more)))
+(defn even?
+  "Returns true if n is even, throws an exception if n is not an integer"
+   [n] (if (integer? n)
+         (zero? (bit-and n 1))
+         (throw (js/Error. (str_ "Argument must be an integer: " n)))))

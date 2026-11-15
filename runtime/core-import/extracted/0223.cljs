@@ -6,7 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- ^number fix [q]
-  (if (>= q 0)
-    (Math/floor q)
-    (Math/ceil q)))
+(defn quot
+  "quot[ient] of dividing numerator by denominator."
+  [n d]
+  (let [rem (js-mod n d)]
+    (fix (/ (- n rem) d))))

@@ -6,11 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn spread
-  [arglist]
-  (when-not (nil? arglist)
-    (let [n (next arglist)]
-      (if (nil? n)
-        (seq (first arglist))
-        (cons (first arglist)
-              (spread n))))))
+(defn list*
+  "Creates a new list containing the items prepended to the rest, the
+  last of which will be treated as a sequence."
+  ([args] (seq args))
+  ([a args] (cons a args))
+  ([a b args] (cons a (cons b args)))
+  ([a b c args] (cons a (cons b (cons c args))))
+  ([a b c d & more]
+     (cons a (cons b (cons c (cons d (spread more)))))))

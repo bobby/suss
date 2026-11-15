@@ -4,7 +4,7 @@
 use super::*;
 use Instruction::*;
 
-const ROOT: u32 = array_join::ACTIVE + 4;
+const ROOT: u32 = arrays::RETIRED_JOIN_ACTIVE + 4;
 pub(super) const TYPE_ERROR_GLOBAL: u32 = ROOT + 7;
 pub(super) const OBJECT_DESCRIPTOR: u32 = ROOT + 6;
 pub(super) const OBJECT_CONSTRUCTOR: u32 = ROOT + 8;

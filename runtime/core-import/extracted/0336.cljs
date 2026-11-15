@@ -6,6 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn simple-keyword?
-  "Return true if x is a keyword without a namespace"
-  [x] (and (keyword? x) (nil? (namespace x))))
+(defn- strip-ns
+  [named]
+  (if (symbol? named)
+    (symbol nil (name named))
+    (keyword nil (name named))))

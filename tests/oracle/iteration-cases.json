@@ -43,22 +43,6 @@
       }
     },
     {
-      "id": "iterator-exhausted-next-nil",
-      "source": "(let [it (-iterator (seq (array 1)))] (.next it) (nil? (.next it)))",
-      "expected": {
-        "tag": "bool",
-        "value": true
-      }
-    },
-    {
-      "id": "iterator-array-growth",
-      "source": "(let [a (array 1) it (-iterator (seq a))] (.next it) (aset a 1 9) (.hasNext it))",
-      "expected": {
-        "tag": "bool",
-        "value": true
-      }
-    },
-    {
       "id": "iterator-utf16-first",
       "source": "(identical? \"\\ud83d\" (.next (-iterator (seq \"😀\"))))",
       "expected": {
@@ -400,14 +384,6 @@
       "expected": {
         "tag": "f64",
         "bits": "4022000000000000"
-      }
-    },
-    {
-      "id": "rseq-fixed-count-after-growth",
-      "source": "(let [a (array 1 2) r (rseq (seq a))] (aset a 2 9) (count r))",
-      "expected": {
-        "tag": "f64",
-        "bits": "4000000000000000"
       }
     },
     {

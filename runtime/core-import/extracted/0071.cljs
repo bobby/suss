@@ -6,7 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn unreduced
-  "If x is reduced?, returns (deref x), else returns x"
-  [x]
-  (if (reduced? x) (deref x) x))
+(defn deref
+  "Also reader macro: @var/@atom/@delay. Returns the
+   most-recently-committed value of ref. When applied to a var
+   or atom, returns its current state. When applied to a delay, forces
+   it if not already forced. See also - realized?."
+  [o]
+  (-deref o))

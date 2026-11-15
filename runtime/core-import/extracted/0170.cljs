@@ -6,5 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IRecord
-  "Marker interface indicating a record object")
+(defn map?
+  "Return true if x satisfies IMap"
+  [x]
+  (if (nil? x)
+    false
+    (satisfies? IMap x)))

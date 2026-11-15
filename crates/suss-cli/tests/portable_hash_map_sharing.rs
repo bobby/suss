@@ -96,101 +96,26 @@ fn is_nil(store: &mut wasmtime::StoreContextMut<'_, ()>, value: &Val) -> wasmtim
     Ok(sentinel_tag(&mut *store, value)? == Some(0))
 }
 
-// Validate the private source-array owner and unsparse its exact backing.
-// Missing dense slots remain absent; sparse entries are range/order checked.
+/// A node's array: an object array (#425), `{storage, uid}`, whose storage
+/// holds the slots.
 fn source_array(
     store: &mut wasmtime::StoreContextMut<'_, ()>,
     value: &Val,
-    source_array_class: &Canonical,
-    undefined: &OwnedRooted<AnyRef>,
+    _source_array_class: &Canonical,
+    _undefined: &OwnedRooted<AnyRef>,
 ) -> wasmtime::Result<Vec<Val>> {
     let owner = value.unwrap_anyref().unwrap().as_struct(&*store)?
-        .ok_or_else(|| wasmtime::Error::msg("expected source-array owner"))?;
-    if !wasmtime::StructType::eq(&owner.ty(&*store)?, &source_array_class.ty)
-        || owner.fields(&mut *store)?.count() != 4
-    {
-        return Err(wasmtime::Error::msg("invalid source-array owner layout"));
+        .ok_or_else(|| wasmtime::Error::msg("expected object array"))?;
+    if owner.fields(&mut *store)?.count() != 2 {
+        return Err(wasmtime::Error::msg("invalid object array layout"));
     }
-    let descriptor_value = owner.field(&mut *store, 0)?;
-    let descriptor = descriptor_value.unwrap_anyref().unwrap();
-    if !Rooted::ref_eq(&*store, &source_array_class.descriptor, descriptor)? {
-        return Err(wasmtime::Error::msg("noncanonical source-array descriptor"));
+    let storage = owner.field(&mut *store, 0)?;
+    let storage = storage.unwrap_anyref().unwrap().as_array(&*store)?
+        .ok_or_else(|| wasmtime::Error::msg("invalid object array storage"))?;
+    if storage.len(&*store)? > 4096 {
+        return Err(wasmtime::Error::msg("object array exceeds test bound"));
     }
-    // SourceArray.field1 is a two-element wrapper [raw-backing, flag]. The
-    // first item is the four-field backing; field1 must be the exact zero flag.
-    let wrapper_value = owner.field(&mut *store, 1)?;
-    let wrapper = wrapper_value.unwrap_anyref().unwrap().as_array(&*store)?
-        .ok_or_else(|| wasmtime::Error::msg("invalid source-array wrapper"))?;
-    if wrapper.len(&*store)? != 2
-        || !matches!(wrapper.ty(&*store)?.element_type(), StorageType::ValType(wasmtime::ValType::Ref(_)))
-    {
-        return Err(wasmtime::Error::msg("invalid source-array wrapper layout"));
-    }
-    let wrapped = wrapper.elems(&mut *store)?.collect::<Vec<_>>();
-    if sentinel_tag(&mut *store, &wrapped[1])? != Some(0) {
-        return Err(wasmtime::Error::msg("invalid source-array wrapper flag"));
-    }
-    let backing = wrapped[0].unwrap_anyref().unwrap().as_array(&*store)?
-        .ok_or_else(|| wasmtime::Error::msg("invalid source-array raw backing"))?;
-    if backing.len(&*store)? != 4 {
-        return Err(wasmtime::Error::msg("invalid source-array backing fields"));
-    }
-    let backing = backing.elems(&mut *store)?.collect::<Vec<_>>();
-    let len = uint32_number(store, &backing[0])? as usize;
-    if len > 4096 {
-        return Err(wasmtime::Error::msg("scratch inspector source-array bound"));
-    }
-    let dense = backing[2].unwrap_anyref().unwrap().as_array(&*store)?
-        .ok_or_else(|| wasmtime::Error::msg("invalid dense array"))?;
-    let mask = backing[3].unwrap_anyref().unwrap().as_array(&*store)?
-        .ok_or_else(|| wasmtime::Error::msg("invalid dense presence mask"))?;
-    if dense.len(&*store)? != mask.len(&*store)?
-        || dense.len(&*store)? > len as u32
-        || !matches!(dense.ty(&*store)?.element_type(), StorageType::ValType(wasmtime::ValType::Ref(_)))
-        || !matches!(mask.ty(&*store)?.element_type(), StorageType::I16)
-    {
-        return Err(wasmtime::Error::msg("invalid dense source-array storage"));
-    }
-    let undefined = Val::AnyRef(Some(undefined.to_rooted(&mut *store)));
-    let mut result = vec![undefined; len];
-    for index in 0..dense.len(&*store)? {
-        match mask.get(&mut *store, index)?.unwrap_i32() {
-            0 => (),
-            1 => result[index as usize] = dense.get(&mut *store, index)?,
-            _ => return Err(wasmtime::Error::msg("invalid source-array presence bit")),
-        }
-    }
-    let mut next = backing[1].clone();
-    let mut previous = None;
-    let mut visited = Vec::<OwnedRooted<AnyRef>>::new();
-    while !is_nil(store, &next)? {
-        if visited.len() >= 4096 {
-            return Err(wasmtime::Error::msg("source-array sparse-chain bound"));
-        }
-        let current = next.unwrap_anyref().unwrap();
-        for prior in &visited {
-            if Rooted::ref_eq(&*store, prior, current)? {
-                return Err(wasmtime::Error::msg("cyclic source-array sparse chain"));
-            }
-        }
-        visited.push(current.to_owned_rooted(&mut *store)?);
-        let node = current.as_array(&*store)?.ok_or_else(|| wasmtime::Error::msg("invalid sparse node"))?;
-        if node.len(&*store)? != 3 {
-            return Err(wasmtime::Error::msg("invalid sparse node fields"));
-        }
-        let node = node.elems(&mut *store)?.collect::<Vec<_>>();
-        let key = uint32_number(store, &node[0])?;
-        if previous.is_some_and(|old| key <= old) || key as usize >= len {
-            return Err(wasmtime::Error::msg("invalid sparse key order/range"));
-        }
-        if key < dense.len(&*store)? {
-            return Err(wasmtime::Error::msg("dense/sparse overlap"));
-        }
-        result[key as usize] = node[1].clone();
-        previous = Some(key);
-        next = node[2].clone();
-    }
-    Ok(result)
+    Ok(storage.elems(&mut *store)?.collect())
 }
 
 fn map_root(
@@ -271,16 +196,14 @@ fn persistent_hamt_update_copies_selected_path_and_retains_unrelated_child_after
         // load and no test-specific fuel override.
         session.eval(FIXTURE).unwrap();
         let mut decoder = Decoder::capture(&mut session, 256).unwrap();
-        // SourceArray is private and has no nominal field-name schema to copy:
-        // capture its exact descriptor/type root, then validate its actual
-        // four-field owner and two-slot wrapper in source_array().
-        let source_array_class = canonical(&mut session, "(suss.core/array)", &[]);
+        // A node's array is an object array, read in source_array().
+        let source_array_class = canonical(&mut session, "[]", &["meta", "cnt", "shift", "root", "tail", "__hash"]);
         let map_class = canonical(&mut session, "share-old", &["meta", "cnt", "root", "has_nil_QMARK_", "nil_val", "__hash"]);
         let bitmap_class = canonical(&mut session, "(new suss.core/BitmapIndexedNode nil 0 (array))", &["edit", "bitmap", "arr"]);
         let collision_class = canonical(&mut session, "(new suss.core/HashCollisionNode nil 0 0 (array))", &["edit", "collision_hash", "cnt", "arr"]);
         // ABI v3 undefined is the runtime's singleton sentinel struct; capture
         // the canonical one so source-array holes decode exactly as undefined.
-        let undefined_anchor = session.eval("(aget (array) 0)").unwrap();
+        let undefined_anchor = session.eval("js/undefined").unwrap();
         let undefined = session
             .inspect(&undefined_anchor, |mut store, value| {
                 assert_eq!(sentinel_tag(&mut store, &value)?, Some(6), "undefined ABI");

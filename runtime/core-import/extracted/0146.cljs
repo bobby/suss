@@ -6,5 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- vector-index-out-of-bounds [i cnt]
-  (throw (js/Error. (str_ "No item " i " in vector of length " cnt))))
+(defn- first-array-for-longvec [pv]
+  ;; invariants: (count pv) > 32.
+  (loop [node (.-root pv)
+         level (.-shift pv)]
+    (if (pos? level)
+      (recur (pv-aget node 0) (- level 5))
+      (.-arr node))))

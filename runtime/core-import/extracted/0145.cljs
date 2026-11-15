@@ -6,5 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol APersistentVector
-  "Marker protocol")
+(defn- vector-index-out-of-bounds [i cnt]
+  (throw (js/Error. (str_ "No item " i " in vector of length " cnt))))

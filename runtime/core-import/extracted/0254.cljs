@@ -6,17 +6,22 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn transduce
-  "reduce with a transformation of f (xf). If init is not
-  supplied, (f) will be called to produce it. f should be a reducing
-  step function that accepts both 1 and 2 arguments, if it accepts
-  only 2 you can add the arity-1 with 'completing'. Returns the result
-  of applying (the transformed) xf to init and the first item in coll,
-  then applying xf to that result and the 2nd item, etc. If coll
-  contains no items, returns init and f is not called. Note that
-  certain transforms may inject or skip items."
-  ([xform f coll] (transduce xform f (f) coll))
-  ([xform f init coll]
-     (let [f (xform f)
-           ret (reduce f init coll)]
-       (f ret))))
+(defn into
+  "Returns a new coll consisting of to-coll with all of the items of
+  from-coll conjoined. A transducer may be supplied."
+  ([] [])
+  ([to] to)
+  ([to from]
+     (if-not (nil? to)
+       (if (implements? IEditableCollection to)
+         (-with-meta (persistent! (reduce -conj! (transient to) from)) (meta to))
+         (reduce -conj to from))
+       (reduce conj to from)))
+  ([to xform from]
+     (if (implements? IEditableCollection to)
+       (let [tm (meta to)
+             rf (fn
+                  ([coll] (-> (persistent! coll) (-with-meta tm)))
+                  ([coll v] (conj! coll v)))]
+         (transduce xform rf (transient to) from))
+       (transduce xform conj to from))))

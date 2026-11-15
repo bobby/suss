@@ -30,34 +30,6 @@ fn exact_number(store: impl wasmtime::AsContextMut, value: &wasmtime::Val) -> wa
         },
     )
 }
-/// Whether `actual` matches a pinned `f64` observation. The ClojureScript
-/// corpus cannot distinguish longs: an integral observation is a Clojure long,
-/// or an integral double when the source has a double operand.
-fn matches_pinned(actual: Number, expected: &serde_json::Value, source: &str) -> bool {
-    let bits = u64::from_str_radix(expected["bits"].as_str().unwrap(), 16).unwrap();
-    match actual {
-        Number::Long(_) => actual == num(f64::from_bits(bits)),
-        Number::Double(actual) => {
-            actual == bits
-                && (num(f64::from_bits(bits)) == Number::Double(bits)
-                    || source.contains("##")
-                    || source.as_bytes().windows(3).any(|w| {
-                        w[0].is_ascii_digit()
-                            && (w[1] == b'.' || w[1] == b'e')
-                            && (w[2].is_ascii_digit() || w[2] == b'-')
-                    }))
-        }
-    }
-}
-/// The pinned observation when `actual` matches it, otherwise a distinct value.
-fn number_observation(actual: Number, expected: &serde_json::Value, source: &str) -> serde_json::Value {
-    if matches_pinned(actual, expected, source) {
-        expected.clone()
-    } else {
-        serde_json::json!({ "tag": "number", "actual": format!("{actual:?}") })
-    }
-}
-
 fn number(session: &mut Session, value: &SessionValue) -> Number {
     session
         .inspect(value, |mut store, value| {
@@ -69,69 +41,36 @@ fn eval_number(session: &mut Session, source: &str) -> Number {
     let value = session.eval(source).unwrap();
     number(session, &value)
 }
-fn eval_bool(session: &mut Session, source: &str) -> bool {
-    let value = session.eval(source).unwrap();
-    session
+/// The string that `source` evaluates to.
+fn eval_string(session: &mut Session, source: &str) -> Result<String, String> {
+    let value = session.eval(source).map_err(|error| error.to_string())?;
+    let units = session
         .inspect(&value, |mut store, value| {
-            match suss_cli::portable_session::sentinel_tag(&mut store, &value)?.unwrap()
-            {
-                2 => Ok(false),
-                4 => Ok(true),
-                other => panic!("Boolean {other}"),
-            }
+            let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
+            Ok(array.elems(&mut store)?.map(|v| v.unwrap_i32() as u16).collect::<Vec<_>>())
         })
-        .unwrap()
+        .unwrap();
+    Ok(String::from_utf16(&units).unwrap())
 }
 
-fn check_array_cases(range: std::ops::Range<usize>) {
+/// Suss's arrays are Clojure's (#425): each case prints as JVM Clojure 1.12
+/// printed it, as `scripts/jvm_array_oracle.py` recorded.
+#[test]
+fn arrays_match_jvm_clojure() {
     let corpus: serde_json::Value =
-        serde_json::from_str(include_str!("../../../tests/oracle/array-cases.json")).unwrap();
-    let mut session = Session::new().unwrap();
-    let mut ids = std::collections::BTreeSet::new();
-    for case in &corpus["cases"].as_array().unwrap()[range.clone()] {
-        assert!(ids.insert(case["id"].as_str().unwrap()));
+        serde_json::from_str(include_str!("../../../tests/oracle/jvm-array-cases.json")).unwrap();
+    let mut session = Session::new_repl().unwrap();
+    let mut failures = vec![];
+    for case in corpus["cases"].as_array().unwrap() {
         let source = case["source"].as_str().unwrap();
-        let actual = match case["expected"]["tag"].as_str().unwrap() {
-            "bool" => serde_json::json!({"tag":"bool", "value":eval_bool(&mut session, source)}),
-            "f64" => {
-                number_observation(eval_number(&mut session, source), &case["expected"], source)
-            }
-            tag => panic!("unexpected tag {tag}"),
-        };
-        assert_eq!(actual, case["expected"], "{source}");
+        let expected = case["expected"].as_str().unwrap();
+        match eval_string(&mut session, &format!("(pr-str (do {source}))")) {
+            Ok(actual) if actual == expected => {}
+            actual => failures.push(format!("{}: {source}\n  JVM:  {expected}\n  Suss: {actual:?}", case["id"])),
+        }
         session.collect().unwrap();
     }
-    assert_eq!(ids.len(), range.len());
-}
-
-#[test]
-fn arrays_match_independently_encoded_primary_corpus() {
-    check_array_cases(0..56);
-}
-#[test]
-fn array_scalar_storage_identity_and_missing_slots() {
-    check_array_cases(0..11);
-}
-#[test]
-fn array_mutation_growth_and_shallow_clone() {
-    check_array_cases(11..20);
-}
-#[test]
-fn array_make_literal_dynamic_and_nested_dimensions() {
-    check_array_cases(20..29);
-}
-#[test]
-fn array_first_class_functions_and_native_protocols() {
-    check_array_cases(29..36);
-}
-#[test]
-fn array_argument_order_and_retained_function_values() {
-    check_array_cases(36..40);
-}
-
-#[test]
-fn array_macro_allocation_and_error_effects() {
-    check_array_cases(40..56);
+    assert!(failures.is_empty(), "{} of {} cases differ:\n{}", failures.len(), corpus["cases"].as_array().unwrap().len(), failures.join("\n"));
 }
 
 #[test]
@@ -174,7 +113,11 @@ fn array_bounds_arity_and_errors_preserve_session_recovery() {
         "(let [f aget] (f (array)))",
         "(let [f aset] (f (array) 0))",
         "(let [n -1] (make-array n))",
-        "(make-array nil 2000 2000 2000)",
+        "(make-array -1)",
+        "(aget (array 1) 1)",
+        "(aset (array 1) 1 2)",
+        // A negative inner size throws though the outer one is empty, as on the JVM.
+        "(make-array nil 0 -1)",
     ] {
         assert!(
             matches!(session.eval(source), Err(SessionError::Language(_))),
@@ -182,64 +125,46 @@ fn array_bounds_arity_and_errors_preserve_session_recovery() {
         );
         assert_eq!(eval_number(&mut session, "7"), num(7.0));
     }
-    assert_eq!(eval_number(&mut session, "(let [n 1000001] (alength (make-array n)))"), num(1_000_001.0));
+    // Any int length is allowed, as on the JVM.
+    assert_eq!(eval_number(&mut session, "(let [n 3000000] (alength (make-array n)))"), num(3_000_000.0));
     for source in [
         "(alength)",
         "(aget (array))",
         "(aset (array) 0)",
         "(make-array)",
-        "(make-array 1000001)",
     ] {
         assert!(
             matches!(session.eval(source), Err(SessionError::Compile(_))),
             "{source}"
         );
     }
-    // An outer empty dimension does not allocate or validate inaccessible leaves.
-    assert_eq!(
-        eval_number(&mut session, "(alength (make-array nil 0 -1))"),
-        num(0.0)
-    );
+    assert_eq!(eval_number(&mut session, "(alength (make-array 1000001))"), num(1_000_001.0));
 }
 
 #[test]
-fn qualified_array_macros_and_clone_aliases_survive_gc_and_growth() {
+fn qualified_array_macros_and_clone_aliases_survive_gc() {
     let mut session = Session::new().unwrap();
     session
         .eval("(ns review.arrays (:require [cljs.core :as c]))")
         .unwrap();
-    session.eval("(def a (c/array (c/array 7)))").unwrap();
+    session.eval("(def a (c/array (c/array 7) nil))").unwrap();
     session.eval("(def copy (aclone a))").unwrap();
     session.eval("(def alias a)").unwrap();
     session.eval("(def a nil)").unwrap();
     session.collect().unwrap();
-    assert_eq!(
-        eval_number(&mut session, "(c/aset alias 3 42)"),
-        num(42.0)
-    );
-    assert_eq!(
-        eval_number(&mut session, "(c/alength alias)"),
-        num(4.0)
-    );
-    assert_eq!(
-        eval_number(&mut session, "(c/alength copy)"),
-        num(1.0)
-    );
-    assert!(eval_bool(&mut session, "(undefined? (c/aget alias 2))"));
+    assert_eq!(eval_number(&mut session, "(c/aset alias 1 42)"), num(42.0));
+    assert_eq!(eval_number(&mut session, "(c/alength alias)"), num(2.0));
+    assert_eq!(eval_number(&mut session, "(c/alength copy)"), num(2.0));
+    assert_eq!(eval_number(&mut session, "(if (nil? (c/aget copy 1)) 1 0)"), num(1.0));
+    // The clone is shallow: both arrays hold the same inner array.
     session.eval("(c/aset copy 0 0 19)").unwrap();
     session.collect().unwrap();
-    assert_eq!(
-        eval_number(&mut session, "(c/aget alias 0 0)"),
-        num(19.0)
-    );
+    assert_eq!(eval_number(&mut session, "(c/aget alias 0 0)"), num(19.0));
+    // Arrays don't grow.
+    assert_eq!(eval_number(&mut session, "(try (c/aset alias 2 1) (catch :default e 5))"), num(5.0));
+    assert_eq!(eval_number(&mut session, "(c/alength alias)"), num(2.0));
     // A local runtime var hides only the unqualified auto-referred macro.
     session.eval("(def alength (fn [a] 99))").unwrap();
-    assert_eq!(
-        eval_number(&mut session, "(alength alias)"),
-        num(99.0)
-    );
-    assert_eq!(
-        eval_number(&mut session, "(c/alength alias)"),
-        num(4.0)
-    );
+    assert_eq!(eval_number(&mut session, "(alength alias)"), num(99.0));
+    assert_eq!(eval_number(&mut session, "(c/alength alias)"), num(2.0));
 }

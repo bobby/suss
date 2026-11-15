@@ -6,31 +6,19 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Atom [state meta validator watches]
-  Object
-  (equiv [this other]
-    (-equiv this other))
+(defn atom
+  "Creates and returns an Atom with an initial value of x and zero or
+  more options (in any order):
 
-  IAtom
+  :meta metadata-map
 
-  IEquiv
-  (-equiv [o other] (identical? o other))
+  :validator validate-fn
 
-  IDeref
-  (-deref [_] state)
-
-  IMeta
-  (-meta [_] meta)
-
-  IWatchable
-  (-notify-watches [this oldval newval]
-    (doseq [[key f] watches]
-      (f key this oldval newval)))
-  (-add-watch [this key f]
-    (set! (.-watches this) (assoc watches key f))
-    this)
-  (-remove-watch [this key]
-    (set! (.-watches this) (dissoc watches key)))
-
-  IHash
-  (-hash [this] (goog/getUid this)))
+  If metadata-map is supplied, it will become the metadata on the
+  atom. validate-fn must be nil or a side-effect-free fn of one
+  argument, which will be passed the intended new state on any state
+  change. If the new state is unacceptable, the validate-fn should
+  return false or throw an Error.  If either of these error conditions
+  occur, then the value of the atom will not change."
+  ([x] (Atom. x nil nil nil))
+  ([x & {:keys [meta validator]}] (Atom. x meta validator nil)))

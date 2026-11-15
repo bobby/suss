@@ -6,19 +6,19 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn assoc
-  "assoc[iate]. When applied to a map, returns a new map of the
-   same (hashed/sorted) type, that contains the mapping of key(s) to
-   val(s). When applied to a vector, returns a new vector that
-   contains val at index. Note - index must be <= (count vector)."
-  ([coll k v]
-   (if (implements? IAssociative coll)
-     (-assoc coll k v)
-     (if-not (nil? coll)
-       (-assoc coll k v)
-       {k v})))
-  ([coll k v & kvs]
-     (let [ret (assoc coll k v)]
-       (if kvs
-         (recur ret (first kvs) (second kvs) (nnext kvs))
-         ret))))
+(defn conj
+  "conj[oin]. Returns a new collection with the xs
+  'added'. (conj nil item) returns (item).
+  (conj coll) returns coll. (conj) returns [].
+  The 'addition' may happen at different 'places' depending
+  on the concrete type."
+  ([] [])
+  ([coll] coll)
+  ([coll x]
+    (if-not (nil? coll)
+      (-conj coll x)
+      (list x)))
+  ([coll x & xs]
+    (if xs
+      (recur (conj coll x) (first xs) (next xs))
+      (conj coll x))))

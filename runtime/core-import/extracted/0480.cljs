@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^boolean realized?
-  "Returns true if a value has been produced for a delay or lazy sequence."
-  [x]
-  (-realized? x))
+(defn tagged-literal?
+  "Return true if the value is the data representation of a tagged literal"
+  [value]
+  (instance? TaggedLiteral value))

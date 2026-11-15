@@ -8,8 +8,8 @@
 
 (def
   ^{:dynamic true
-    :doc "If set to logical true, when printing an object, its metadata will also
-  be printed in a form that can be read back by the reader.
+    :doc "When set to logical true, objects will be printed in a way that preserves
+  their type when read in later.
 
   Defaults to false."}
-  *print-meta* false)
+  *print-dup* false)

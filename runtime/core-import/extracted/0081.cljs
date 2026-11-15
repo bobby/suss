@@ -6,8 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^seq rseq
-  "Returns, in constant time, a seq of the items in rev (which
-  can be a vector or sorted-map), in reverse order. If rev is empty returns nil"
-  [rev]
-  (-rseq rev))
+(defn indexed?
+  "Returns true if coll implements nth in constant time"
+  [x] (satisfies? IIndexed x))

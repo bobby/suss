@@ -6,16 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- create-array-node-seq
-  ([nodes] (create-array-node-seq nodes 0 nil))
-  ([nodes i s]
-     (if (nil? s)
-       (let [len (alength nodes)]
-         (loop [j i]
-           (if (< j len)
-             (if-let [nj (aget nodes j)]
-               (if-let [ns (.inode-seq nj)]
-                 (ArrayNodeSeq. nil nodes (inc j) ns nil)
-                 (recur (inc j)))
-               (recur (inc j))))))
-       (ArrayNodeSeq. nil nodes i s nil))))
+(deftype HashMapIter [nil-val root-iter ^:mutable seen]
+  Object
+  (hasNext [_]
+    (or (not ^boolean seen) ^boolean (.hasNext root-iter)))
+  (next [_]
+    (if-not ^boolean seen
+      (do
+        (set! seen true)
+        (MapEntry. nil nil-val nil))
+      (.next root-iter)))
+  (remove [_] (js/Error. "Unsupported operation")))

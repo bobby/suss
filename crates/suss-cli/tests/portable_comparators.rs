@@ -44,20 +44,10 @@ const IDS: &[&str] = &[
     "numeric-order",
     "utf16-order",
     "boolean-order",
-    "arrays-lexical",
-    "array-holes-nil-undefined",
-    "array-nested-cycle",
     "comparable-return-not-normalized",
     "comparable-identity-no-call",
     "comparable-original-false",
     "numeric-before-comparable",
-    "array-reconvert-both-relations",
-    "array-first-relation-only",
-    "array-conversion-changes-between-tests",
-    "array-override-valueOf",
-    "array-type-constructor-nil",
-    "array-type-constructor-false",
-    "array-type-constructor-mismatch",
     "live-type-mixed",
     "live-array-predicate",
     "public-primitive-predicate-rebind",
@@ -76,14 +66,10 @@ const IDS: &[&str] = &[
     "indexed-four-arity",
     "indexed-stops-first-difference",
     "indexed-live-compare",
-    "format-toString-object-fallback",
-    "format-noncallable-toString",
     "format-order",
     "format-throw-stops-second",
     "format-live-str",
     "str-nil-single-variadic-rebind",
-    "str-second-lookup-after-first",
-    "str-nonprimitive-both-throw",
     "format-live-str-results-convert-after-calls",
 ];
 /// Pinned ClojureScript observations that rebinding a core var changes core's
@@ -198,7 +184,7 @@ fn comparator_numeric_return_bits_errors_and_retained_capture_after_gc() {
         for (source, message) in [
             ("(compare 1 \"x\")", "Cannot compare 1 to x"),
             ("(compare false 0)", "Cannot compare false to 0"),
-            ("(compare (array 1 2) \"x\")", "Cannot compare 1,2 to x"),
+            ("(compare [1 2] \"x\")", "Cannot compare [1 2] to x"),
         ] {
             let Err(SessionError::Language(payload)) = session.eval(source) else {
                 panic!("language Error required: {source}")

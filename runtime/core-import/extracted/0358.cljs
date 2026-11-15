@@ -6,6 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn not-empty
-  "If coll is empty, returns nil, else coll"
-  [coll] (when (seq coll) coll))
+(defn vary-meta
+ "Returns an object of the same type and value as obj, with
+  (apply f (meta obj) args) as its metadata."
+  ([obj f]
+   (with-meta obj (f (meta obj))))
+  ([obj f a]
+   (with-meta obj (f (meta obj) a)))
+  ([obj f a b]
+   (with-meta obj (f (meta obj) a b)))
+  ([obj f a b c]
+   (with-meta obj (f (meta obj) a b c)))
+  ([obj f a b c d]
+   (with-meta obj (f (meta obj) a b c d)))
+  ([obj f a b c d & args]
+   (with-meta obj (apply f (meta obj) a b c d args))))

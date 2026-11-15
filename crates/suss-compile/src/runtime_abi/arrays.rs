@@ -1,6 +1,24 @@
-//! Original GC-owned mutable array storage for adapted collection foundations.
+//! The array functions and vector reads (#378, #425). Suss's arrays are
+//! Clojure's: the packed arrays of `packed_arrays`, fixed-length, with no
+//! holes, properties or methods. `aget`, `aset` and `alength` of anything
+//! else throw.
 use super::*;
+/// A global slot that source arrays used, kept so that later globals keep
+/// their indices (#425).
 pub(super) const TAG_GLOBAL: u32 = closure_properties::TAG_GLOBAL + 1;
+/// The slot of the removed JS array methods' root, kept likewise.
+pub(super) const RETIRED_METHOD_ROOT: u32 = native_objects::TAG_GLOBAL + 2;
+/// The removed array join stack's slot, kept likewise.
+pub(super) const RETIRED_JOIN_ACTIVE: u32 = range_errors::DESCRIPTOR_GLOBAL + 6;
+/// `count` mutable nil globals in the slots of removed features.
+pub(super) fn append_retired_globals(globals: &mut GlobalSection, count: usize) {
+    for _ in 0..count {
+        globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::extended([sentinel_value(NIL)]),
+        );
+    }
+}
 // Keep malformed storage/unsupported properties in the language exception path.
 fn error(body: &mut Vec<Instruction<'static>>) {
     use Instruction::*;
@@ -22,7 +40,8 @@ fn error(body: &mut Vec<Instruction<'static>>) {
         Throw(0),
     ]);
 }
-// Bootstrap resource bound: limits are diagnostics, never allocator/trap failures.
+// Bootstrap resource bound for named and native object tables: limits are
+// diagnostics, never allocator/trap failures.
 pub(super) const MAX_LENGTH: i32 = 1_000_000;
 fn array(body: &mut Vec<Instruction<'static>>, local: u32) {
     body.extend([
@@ -72,906 +91,64 @@ fn factory(
 
 pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     use Instruction::*;
-    let mut body = vec![
-        LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(7)),
-        I32Eqz,
-        If(BlockType::Empty),
-        I32Const(0),
-        Return,
-        End,
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(7)),
-        StructGet {
-            struct_type_index: 7,
-            field_index: 0,
-        },
-        GlobalGet(TAG_GLOBAL),
-        RefEq,
-    ];
-    let is_array = b.function("source-array?", &[VALUE], &[ValType::I32], &body);
-    body = vec![LocalGet(0), Call(is_array), I32Eqz, If(BlockType::Empty)];
-    error(&mut body);
-    body.extend([
-        End,
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(7)),
-        StructGet {
-            struct_type_index: 7,
-            field_index: 1,
-        },
-        LocalSet(1),
-    ]);
-    body.extend([
-        LocalGet(1),
-        RefTestNonNull(HeapType::Concrete(ARGS)),
-        I32Eqz,
-        If(BlockType::Empty),
-    ]);
-    error(&mut body);
-    body.push(End);
-    array(&mut body, 1);
-    body.extend([ArrayLen, I32Const(2), I32Ne, If(BlockType::Empty)]);
-    error(&mut body);
-    body.extend([End, LocalGet(1)]);
-    let fields = b.function_with_locals(
-        "source-array-fields",
-        &[VALUE],
-        &[VALUE],
-        &[(1, VALUE)],
-        &body,
-    );
-    body = vec![
-        LocalGet(0),
-        Call(fields),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        I32Const(0),
-        ArrayGet(ARGS),
-        Call(b.names["source-array-sparse-fields"]),
-    ];
-    b.function("source-array-backing", &[VALUE], &[VALUE], &body);
-    // These owner adapters call a checked sparse operation immediately after
-    // extracting field zero. Validate owner shape here and backing in that
-    // operation once, rather than walking the same sparse chain twice.
-    b.function(
-        "source-array-storage",
-        &[VALUE],
-        &[VALUE],
-        &[
-            LocalGet(0),
-            Call(fields),
-            RefCastNonNull(HeapType::Concrete(ARGS)),
-            I32Const(0),
-            ArrayGet(ARGS),
-            Call(b.names["source-array-sparse-to-args"]),
-        ],
-    );
-    array_properties::functions(b);
-    let wrap = b.function(
-        "source-array-from-backing",
-        &[VALUE],
-        &[VALUE],
-        &[
-            GlobalGet(TAG_GLOBAL),
-            LocalGet(0),
-            Call(b.names["source-array-sparse-fields"]),
-            sentinel_value(NIL),
-            ArrayNewFixed {
-                array_type_index: ARGS,
-                array_size: 2,
-            },
-            sentinel_value(NIL),
-            I32Const(0), // Identity UID, unassigned.
-            RefI31,
-            StructNew(7),
-        ],
-    );
-    let create = b.function(
-        "source-array-new",
-        &[VALUE],
-        &[VALUE],
-        &[
-            LocalGet(0),
-            Call(b.names["source-array-sparse-from-args"]),
-            Call(wrap),
-        ],
-    );
-    b.function(
-        "source-array-holes-new",
-        &[ValType::I32],
-        &[VALUE],
-        &[
-            LocalGet(0),
-            Call(b.names["source-array-sparse-new"]),
-            Call(wrap),
-        ],
-    );
-    body = vec![
-        LocalGet(0),
-        Call(b.names["packed-array?"]),
-        If(BlockType::Empty),
-        LocalGet(0),
-        Call(b.names["packed-array-length"]),
-        Return,
-        End,
-        LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(STRING)),
-        If(BlockType::Empty),
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(STRING)),
-        ArrayLen,
-        Call(b.names["long-box-u32"]),
-        Return,
-        End,
-        LocalGet(0),
-        Call(fields),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        I32Const(0),
-        ArrayGet(ARGS),
-        Call(b.names["source-array-sparse-length"]),
-        Call(b.names["long-box-u32"]),
-    ];
-    let length = b.function("source-array-length", &[VALUE], &[VALUE], &body);
-    // Numeric indexed access. Other host-property coercions remain a typed boundary.
-    body = vec![
-        LocalGet(0),
-        Call(b.names["number-test"]),
-        I32Eqz,
-        If(BlockType::Empty),
-    ];
-    error(&mut body);
-    body.extend([
-        End,
-        LocalGet(0),
-        Call(b.names["number-unbox"]),
-        LocalSet(1),
-        LocalGet(1),
-        F64Const(0.0.into()),
-        F64Lt,
-        LocalGet(1),
-        F64Const(4294967294.0.into()),
-        F64Gt,
-        I32Or,
-        LocalGet(1),
-        LocalGet(1),
-        F64Trunc,
-        F64Ne,
-        I32Or,
-        If(BlockType::Empty),
-        I32Const(-1),
-        Return,
-        End,
-        LocalGet(1),
-        I32TruncSatF64U,
-    ]);
-    let index = b.function_with_locals(
-        "source-array-index",
-        &[VALUE],
-        &[ValType::I32],
-        &[(1, ValType::F64)],
-        &body,
-    );
-    let mut property_body = vec![
-        LocalGet(0),
-        Call(b.names["number-test"]),
-        I32Eqz,
-        If(BlockType::Empty),
-    ];
-    property_body.extend([
-        LocalGet(0),
-        Call(b.names["coerce-string"]),
-        Call(b.names["source-array-own-key-index"]),
-        Return,
-    ]);
-    property_body.extend([
-        End,
-        LocalGet(0),
-        Call(b.names["number-unbox"]),
-        LocalSet(1),
-        LocalGet(1),
-        F64Const(0.0.into()),
-        F64Lt,
-        LocalGet(1),
-        F64Const(4294967295.0.into()),
-        F64Gt,
-        I32Or,
-        LocalGet(1),
-        LocalGet(1),
-        F64Trunc,
-        F64Ne,
-        I32Or,
-        If(BlockType::Empty),
-        I64Const(-1),
-        Return,
-        End,
-        LocalGet(1),
-        I64TruncSatF64U,
-    ]);
-    let property_index = b.function_with_locals(
-        "source-array-property-index",
-        &[VALUE],
-        &[ValType::I64],
-        &[(1, ValType::F64)],
-        &property_body,
-    );
-    body = vec![
-        // A packed primitive array's elements are longs or doubles (#336).
-        LocalGet(0),
-        Call(b.names["packed-array?"]),
-        If(BlockType::Empty),
-        LocalGet(0),
-        LocalGet(1),
-        Call(b.names["packed-array-get"]),
-        Return,
-        End,
-        // IndexedSeq uses the same numeric access for array and UTF-16 owners.
-        // A string read allocates a one-unit string, including lone surrogates.
-        LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(STRING)),
-        If(BlockType::Empty),
-        LocalGet(1),
-        Call(index),
-        LocalSet(3),
-        LocalGet(3),
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(STRING)),
-        ArrayLen,
-        I32GeU,
-        If(BlockType::Empty),
-        sentinel_value(UNDEFINED),
-        Return,
-        End,
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(STRING)),
-        LocalGet(3),
-        ArrayGetU(STRING),
-        ArrayNewFixed {
-            array_type_index: STRING,
-            array_size: 1,
-        },
-        Return,
-        End,
-        // Canonical numeric index keys have no observable string conversion.
-        // Avoid formatting/parsing every internal vector/sequence array read.
-        LocalGet(1),
-        Call(b.names["number-test"]),
-        If(BlockType::Empty),
-        LocalGet(1),
-        Call(property_index),
-        LocalTee(4),
-        I64Const(0),
-        I64GeS,
-        If(BlockType::Empty),
-        LocalGet(0),
-        Call(fields),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        I32Const(0),
-        ArrayGet(ARGS),
-        LocalGet(4),
-        I32WrapI64,
-        Call(b.names["source-array-sparse-get"]),
-        Return,
-        End,
-        End,
-        LocalGet(1),
-        Call(b.names["property-key"]),
-        LocalSet(1),
-        LocalGet(1),
-        Call(b.names["source-array-length-key?"]),
-        If(BlockType::Empty),
-        LocalGet(0),
-        Call(length),
-        Return,
-        End,
-        LocalGet(1),
-        Call(property_index),
-        LocalTee(4),
-        I64Const(0),
-        I64LtS,
-        If(BlockType::Empty),
-        LocalGet(0),
-        LocalGet(1),
-        Call(b.names["source-array-property-get"]),
-        Return,
-        End,
-        LocalGet(0),
-        Call(fields),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        I32Const(0),
-        ArrayGet(ARGS),
-        LocalGet(4),
-        I32WrapI64,
-        Call(b.names["source-array-sparse-get"]),
-    ];
-    let get = b.function_with_locals(
-        "source-array-get",
-        &[VALUE, VALUE],
-        &[VALUE],
-        &[(1, VALUE), (1, ValType::I32), (1, ValType::I64)],
-        &body,
-    );
-    body = vec![
-        LocalGet(0),
-        Call(b.names["packed-array?"]),
-        If(BlockType::Empty),
-        LocalGet(0),
-        LocalGet(1),
-        LocalGet(2),
-        Call(b.names["packed-array-set"]),
-        Return,
-        End,
-        // Non-index numbers and effectful object keys still take the ordinary
-        // checked string-hint property route exactly once.
-        LocalGet(1),
-        Call(b.names["number-test"]),
-        If(BlockType::Empty),
-        LocalGet(1),
-        Call(property_index),
-        LocalTee(3),
-        I64Const(0),
-        I64GeS,
-        If(BlockType::Empty),
-        LocalGet(0),
-        Call(fields),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        I32Const(0),
-        ArrayGet(ARGS),
-        LocalGet(3),
-        I32WrapI64,
-        LocalGet(2),
-        Call(b.names["source-array-sparse-set"]),
-        Return,
-        End,
-        End,
-        LocalGet(1),
-        Call(b.names["property-key"]),
-        LocalSet(1),
-        LocalGet(1),
-        Call(b.names["source-array-length-key?"]),
-        If(BlockType::Empty),
-        // ArraySetLength performs separate conversions, even for the same
-        // object RHS. First conversion wraps to uint32; second may mutate/throw.
-        LocalGet(2),
-        Call(b.names["coerce-int32"]),
-        F64ConvertI32U,
-        LocalSet(4),
-        LocalGet(2),
-        Call(b.names["coerce-number"]),
-        LocalSet(5),
-        LocalGet(4),
-        LocalGet(5),
-        F64Ne,
-        If(BlockType::Empty),
-    ];
-    range_errors::invalid_length(&mut body);
-    body.extend([
-        End,
-        LocalGet(0),
-        Call(fields),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        I32Const(0),
-        ArrayGet(ARGS),
-        LocalGet(4),
-        I32TruncSatF64U,
-        Call(b.names["source-array-sparse-set-length"]),
-        LocalGet(2),
-        Return,
-        End,
-        LocalGet(1),
-        Call(property_index),
-        LocalTee(3),
-        I64Const(0),
-        I64LtS,
-        If(BlockType::Empty),
-        LocalGet(0),
-        LocalGet(1),
-        LocalGet(2),
-        Call(b.names["source-array-property-set"]),
-        Return,
-    ]);
-    body.extend([
-        End,
-        LocalGet(0),
-        Call(fields),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        I32Const(0),
-        ArrayGet(ARGS),
-        LocalGet(3),
-        I32WrapI64,
-        LocalGet(2),
-        Call(b.names["source-array-sparse-set"]),
-    ]);
-    let set = b.function_with_locals(
-        "source-array-set",
-        &[VALUE, VALUE, VALUE],
-        &[VALUE],
-        &[(1, ValType::I64), (2, ValType::F64)],
-        &body,
-    );
-    // Copy mutable backing directly; materialization would turn holes into values.
-    body = vec![
-        LocalGet(0),
-        Call(b.names["packed-array?"]),
-        If(BlockType::Empty),
-        LocalGet(0),
-        Call(b.names["packed-array-clone"]),
-        Return,
-        End,
-        LocalGet(0),
-        Call(fields),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        I32Const(0),
-        ArrayGet(ARGS),
-        Call(b.names["source-array-sparse-clone"]),
-        Call(wrap),
-    ];
-    let clone = b.function("source-array-clone", &[VALUE], &[VALUE], &body);
-    let mut body = vec![
-        LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(ARGS)),
-        I32Eqz,
-        If(BlockType::Empty),
-    ];
-    error(&mut body);
-    body.extend([
-        End,
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        ArrayLen,
-        I32Const(1),
-        I32Eq,
-        If(BlockType::Empty),
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        I32Const(0),
-        ArrayGet(ARGS),
-        LocalTee(1),
-        Call(b.names["number-test"]),
-        If(BlockType::Empty),
-        LocalGet(1),
-        Call(b.names["number-unbox"]),
-        LocalSet(2),
-        LocalGet(2),
-        F64Const(0.0.into()),
-        F64Lt,
-        LocalGet(2),
-        F64Const(4294967295.0.into()),
-        F64Gt,
-        I32Or,
-        LocalGet(2),
-        LocalGet(2),
-        F64Trunc,
-        F64Ne,
-        I32Or,
-        If(BlockType::Empty),
-    ]);
-    range_errors::invalid_length(&mut body);
-    body.extend([
-        End,
-        LocalGet(2),
-        I32TruncSatF64U,
-        Call(b.names["source-array-holes-new"]),
-        Return,
-        End,
-        End,
-        LocalGet(0),
-        Call(create),
-    ]);
-    b.function_with_locals(
-        "source-array-constructor-args",
-        &[VALUE],
-        &[VALUE],
-        &[(1, VALUE), (1, ValType::F64)],
-        &body,
-    );
-    // Effective Array constructor length used for container budgeting. A sole
-    // nonnumeric argument is one element, not a numeric length conversion.
-    body = vec![
-        LocalGet(0),
-        Call(b.names["number-test"]),
-        I32Eqz,
-        If(BlockType::Empty),
-        I32Const(1),
-        Return,
-        End,
-        LocalGet(0),
-        Call(b.names["number-unbox"]),
-        LocalSet(1),
-        LocalGet(1),
-        F64Const(0.0.into()),
-        F64Lt,
-        LocalGet(1),
-        F64Const(4294967295.0.into()),
-        F64Gt,
-        I32Or,
-        LocalGet(1),
-        LocalGet(1),
-        F64Trunc,
-        F64Ne,
-        I32Or,
-        If(BlockType::Empty),
-    ];
-    range_errors::invalid_length(&mut body);
-    body.extend([End, LocalGet(1), I32TruncSatF64U]);
-    let dimension = b.function_with_locals(
-        "source-array-dimension-size",
-        &[VALUE],
-        &[ValType::I32],
-        &[(1, ValType::F64)],
-        &body,
-    );
-    // All dimensions use the runtime holes convention. Literal one-dimensional
-    // macro allocation selects fill=nil through a separate entry point below.
-    // Bound total cells in a multidimensional allocation, not just each leaf.
-    // Stop at an empty dimension: later invalid sizes are never used by the pin.
-    body = vec![
-        LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(ARGS)),
-        I32Eqz,
-        If(BlockType::Empty),
-    ];
-    error(&mut body);
-    body.push(End);
-    array(&mut body, 0);
-    body.extend([
-        ArrayLen,
-        LocalSet(2),
-        LocalGet(1),
-        LocalGet(2),
-        I32GeU,
-        LocalGet(2),
-        I32Const(64),
-        I32GtU,
-        I32Or,
-        If(BlockType::Empty),
-    ]);
-    error(&mut body);
-    body.push(End);
-    body.extend([
-        I64Const(1),
-        LocalSet(4),
-        I64Const(0),
-        LocalSet(5),
-        Block(BlockType::Empty),
-        Loop(BlockType::Empty),
-        LocalGet(1),
-        LocalGet(2),
-        I32Const(1),
-        I32Sub,
-        I32GeU,
-        BrIf(1),
-    ]);
-    array(&mut body, 0);
-    body.extend([
-        LocalGet(1),
-        ArrayGet(ARGS),
-        Call(dimension),
-        LocalSet(3),
-        LocalGet(4),
-        LocalGet(3),
-        I64ExtendI32U,
-        I64Mul,
-        LocalTee(4),
-        I64Eqz,
-        BrIf(1),
-        LocalGet(5),
-        LocalGet(4),
-        I64Add,
-        LocalTee(5),
-        I64Const(i64::from(MAX_LENGTH)),
-        I64GtU,
-        If(BlockType::Empty),
-    ]);
-    error(&mut body);
-    body.push(End);
-    body.extend([
-        LocalGet(1),
-        I32Const(1),
-        I32Add,
-        LocalSet(1),
-        Br(0),
-        End,
-        End,
-    ]);
-    let check_dimensions = b.function_with_locals(
-        "source-array-check-dimensions",
-        &[VALUE, ValType::I32],
-        &[],
-        &[(2, ValType::I32), (2, ValType::I64)],
-        &body,
-    );
-    let make_index = b.count;
-    body = vec![
-        LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(ARGS)),
-        I32Eqz,
-        If(BlockType::Empty),
-    ];
-    error(&mut body);
-    body.push(End);
-    array(&mut body, 0);
-    body.extend([ArrayLen, I32Const(64), I32GtU, If(BlockType::Empty)]);
-    error(&mut body);
-    body.push(End);
-    body.push(LocalGet(1));
-    array(&mut body, 0);
-    body.extend([ArrayLen, I32GeU, If(BlockType::Empty)]);
-    error(&mut body);
-    body.push(End);
-    body.extend([
-        // Fill sentinel: NIL (literal) or UNDEFINED (holes).
-        LocalGet(2),
-        I32Const(NIL),
-        I32Ne,
-        LocalGet(2),
-        I32Const(UNDEFINED),
-        I32Ne,
-        I32And,
-        If(BlockType::Empty),
-    ]);
-    error(&mut body);
-    body.push(End);
-    // Runtime leaf allocation uses canonical Array construction: holes and the
-    // full uint32 length domain. Literal nil-filled allocation stays bounded.
-    body.extend([
-        LocalGet(2),
-        I32Const(UNDEFINED),
-        I32Eq,
-        LocalGet(1),
-        I32Const(1),
-        I32Add,
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        ArrayLen,
-        I32Eq,
-        I32And,
-        If(BlockType::Empty),
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        LocalGet(1),
-        ArrayGet(ARGS),
-        ArrayNewFixed {
-            array_type_index: ARGS,
-            array_size: 1,
-        },
-        Call(b.names["source-array-constructor-args"]),
-        Return,
-        End,
-        LocalGet(0),
-        LocalGet(1),
-        Call(check_dimensions),
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        LocalGet(1),
-        ArrayGet(ARGS),
-        LocalSet(3),
-        LocalGet(3),
-        Call(dimension),
-        LocalSet(4),
-        LocalGet(4),
-        I32Const(MAX_LENGTH),
-        I32GtU,
-        If(BlockType::Empty),
-    ]);
-    error(&mut body);
-    body.push(End);
-    body.extend([
-        LocalGet(2),
-        I32Const(UNDEFINED),
-        I32Eq,
-        If(BlockType::Result(VALUE)),
-        LocalGet(4),
-        Call(b.names["source-array-holes-new"]),
-        Else,
-        // Holes are UNDEFINED, taken above; any other fill code is nil.
-        sentinel_value(NIL),
-        LocalGet(4),
-        ArrayNew(ARGS),
-        Call(create),
-        End,
-        LocalSet(5),
-        LocalGet(1),
-        I32Const(1),
-        I32Add,
-        LocalSet(6),
-    ]);
-    array(&mut body, 0);
-    body.extend([
-        ArrayLen,
-        LocalGet(6),
-        I32GtU,
-        If(BlockType::Empty),
-        I32Const(0),
-        LocalSet(7),
-        Block(BlockType::Empty),
-        Loop(BlockType::Empty),
-        LocalGet(7),
-        LocalGet(4),
-        I32GeU,
-        BrIf(1),
-        LocalGet(5),
-        LocalGet(7),
-        Call(b.names["long-box-u32"]),
-        LocalGet(0),
-        LocalGet(6),
-        I32Const(UNDEFINED),
-        Call(make_index),
-        Call(set),
-        Drop,
-        LocalGet(7),
-        I32Const(1),
-        I32Add,
-        LocalSet(7),
-        Br(0),
-        End,
-        End,
-        End,
-        LocalGet(5),
-    ]);
-    let make = b.function_with_locals(
-        "source-array-make-dimensions",
-        &[VALUE, ValType::I32, ValType::I32],
-        &[VALUE],
-        &[(1, VALUE), (1, ValType::I32), (1, VALUE), (2, ValType::I32)],
-        &body,
-    );
-    body = vec![
-        LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(ARGS)),
-        I32Eqz,
-        If(BlockType::Empty),
-    ];
+    let packed = |body: &mut Vec<Instruction<'static>>, local: u32| {
+        body.extend([LocalGet(local), RefTestNonNull(HeapType::Concrete(PACKED)), I32Eqz, If(BlockType::Empty)]);
+        error(body);
+        body.push(End);
+    };
+    // `array-get(a, i)` and `array-set(a, i, v)`: one index of an array.
+    let mut body = vec![];
+    packed(&mut body, 0);
+    body.extend([LocalGet(0), LocalGet(1), Call(b.names["packed-array-get-2"])]);
+    let get = b.function("array-get", &[VALUE, VALUE], &[VALUE], &body);
+    let mut body = vec![];
+    packed(&mut body, 0);
+    body.extend([LocalGet(0), LocalGet(1), LocalGet(2), Call(b.names["packed-array-set-3"])]);
+    let set = b.function("array-set", &[VALUE, VALUE, VALUE], &[VALUE], &body);
+    // `array-length-args([a])`: alength.
+    let mut body = vec![LocalGet(0), RefTestNonNull(HeapType::Concrete(ARGS)), I32Eqz, If(BlockType::Empty)];
     error(&mut body);
     body.push(End);
     array(&mut body, 0);
     body.extend([ArrayLen, I32Const(1), I32Ne, If(BlockType::Empty)]);
     error(&mut body);
-    body.extend([End, LocalGet(0), I32Const(0), I32Const(NIL), Call(make)]);
-    b.function("source-array-make-literal", &[VALUE], &[VALUE], &body);
-    let mut body = vec![
-        LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(ARGS)),
-        I32Eqz,
-        If(BlockType::Empty),
-    ];
+    body.extend([End, LocalGet(0), RefCastNonNull(HeapType::Concrete(ARGS)), I32Const(0), ArrayGet(ARGS), LocalSet(1)]);
+    packed(&mut body, 1);
+    body.extend([LocalGet(1), Call(b.names["packed-array-length"])]);
+    let length = b.function_with_locals("array-length-args", &[VALUE], &[VALUE], &[(1, VALUE)], &body);
+    // `array-storage(a)`: an object array's elements as a fresh argument
+    // array, as `.apply` and the call paths spread them.
+    let mut body = vec![LocalGet(0), Call(b.names["object-array-elements"]), BrOnNonNull(0)];
     error(&mut body);
-    body.push(End);
-    array(&mut body, 0);
-    body.extend([ArrayLen, I32Const(0), I32Eq, If(BlockType::Empty)]);
-    error(&mut body);
-    body.extend([End, LocalGet(0)]);
-    array(&mut body, 0);
-    body.extend([
-        ArrayLen,
-        I32Const(1),
-        I32GtU,
-        I32Const(UNDEFINED),
-        Call(make),
-    ]);
-    let make_args = b.function("source-array-make", &[VALUE], &[VALUE], &body);
-    let mut body = vec![
-        LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(ARGS)),
-        I32Eqz,
-        If(BlockType::Empty),
-    ];
-    error(&mut body);
-    body.push(End);
-    array(&mut body, 0);
-    body.extend([ArrayLen, I32Const(1), I32Ne, If(BlockType::Empty)]);
-    error(&mut body);
-    body.push(End);
-    array(&mut body, 0);
-    body.extend([I32Const(0), ArrayGet(ARGS), Call(length)]);
-    b.function("source-array-length-args", &[VALUE], &[VALUE], &body);
+    b.function("array-storage", &[VALUE], &[VALUE], &body);
     let mut declared = vec![];
     declared.push(factory(
         b,
         "array-function",
         0,
         -1,
-        &[LocalGet(1), Call(create)],
+        // Clojure's object array of the arguments (#425).
+        &[LocalGet(1), Call(b.names["object-array-copy"])],
     ));
+    // Every packed array is an array.
     let mut body = vec![];
-    // Packed primitive arrays are arrays too, though not JS arrays.
     arg(&mut body, 0);
-    body.push(Call(is_array));
-    arg(&mut body, 0);
-    body.extend([Call(b.names["packed-array?"]), I32Or]);
+    body.push(Call(b.names["packed-array?"]));
     body.extend(boolean());
     declared.push(factory(b, "array-predicate-function", 1, 1, &body));
-    for (name, primitive) in [
-        ("array-length-function", length),
-        ("array-clone-function", clone),
-    ] {
-        let mut body = vec![];
-        arg(&mut body, 0);
-        body.push(Call(primitive));
-        declared.push(factory(b, name, 1, 1, &body));
-    }
-    // `(aget a i)` with one index (#361): a present element of a source
-    // array's dense prefix at an i31 index is read directly, with no index
-    // array and no generic key conversion. Anything else, including any
-    // malformed backing, takes `source-array-get`. Locals: 2 sparse backing,
-    // then dense prefix; 3 presence mask; 4 index.
-    // Locals (#389): 2 the object, 3 its fields, 4 the sparse backing, 5 the
-    // dense prefix, 6 the presence mask, each typed so that it is cast once;
-    // 7 a value under test; 8 the index. The array test is inline.
+    let mut body = vec![LocalGet(1), Call(length)];
+    declared.push(factory(b, "array-length-function", 1, 1, &body));
+    body = vec![];
+    arg(&mut body, 0);
+    body.extend([LocalSet(2)]);
+    packed(&mut body, 2);
+    body.extend([LocalGet(2), Call(b.names["packed-array-clone"])]);
+    declared.push(clone_factory(b, &body));
     let typed = |ty: u32| ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(ty) });
-    let take = |body: &mut Vec<Instruction<'static>>, ty: u32, local: u32| {
-        body.extend([LocalTee(7), RefTestNonNull(HeapType::Concrete(ty)), I32Eqz, BrIf(0),
-            LocalGet(7), RefCastNonNull(HeapType::Concrete(ty)), LocalSet(local)]);
-    };
-    let mut body = vec![Block(BlockType::Empty)];
-    body.extend([LocalGet(1), RefTestNonNull(HeapType::I31), I32Eqz, BrIf(0)]);
-    body.extend([LocalGet(0), RefTestNonNull(HeapType::Concrete(7)), I32Eqz, BrIf(0)]);
-    body.extend([
-        LocalGet(0), RefCastNonNull(HeapType::Concrete(7)), LocalTee(2),
-        StructGet { struct_type_index: 7, field_index: 0 }, GlobalGet(TAG_GLOBAL), RefEq, I32Eqz, BrIf(0),
-        LocalGet(2), StructGet { struct_type_index: 7, field_index: 1 }, LocalTee(3),
-        ArrayLen, I32Const(2), I32Ne, BrIf(0),
-        LocalGet(3), I32Const(0), ArrayGet(ARGS),
-    ]);
-    take(&mut body, ARGS, 4);
-    body.extend([LocalGet(4), ArrayLen, I32Const(4), I32LtU, BrIf(0), LocalGet(4), I32Const(3), ArrayGet(ARGS)]);
-    take(&mut body, STRING, 6);
-    body.extend([LocalGet(4), I32Const(2), ArrayGet(ARGS)]);
-    take(&mut body, ARGS, 5);
-    body.extend([
-        LocalGet(1), RefCastNonNull(HeapType::I31), I31GetS, LocalTee(8),
-        LocalGet(5), ArrayLen, I32GeU, BrIf(0),
-        LocalGet(8), LocalGet(6), ArrayLen, I32GeU, BrIf(0),
-        LocalGet(6), LocalGet(8), ArrayGetU(STRING), I32Const(1), I32Ne, BrIf(0),
-        LocalGet(5), LocalGet(8), ArrayGet(ARGS), Return, End,
-    ]);
-    body.extend([LocalGet(0), LocalGet(1), ReturnCall(get)]);
-    b.function_with_locals(
-        "source-array-get-2",
-        &[VALUE, VALUE],
-        &[VALUE],
-        &[(1, typed(7)), (1, typed(ARGS)), (1, typed(ARGS)), (1, typed(ARGS)), (1, typed(STRING)), (1, VALUE), (1, ValType::I32)],
-        &body,
-    );
-    // `source-array-element(a, j)` (#378): source array a's present element
-    // at index j of its dense prefix, or undefined for anything else, which
-    // a caller answers with the general path. Locals: 2 the object, 3 its
-    // fields, 4 the backing, 5 the dense prefix, 6 the mask, 7 a value.
-    let take = |body: &mut Vec<Instruction<'static>>, ty: u32, local: u32| {
-        body.extend([LocalTee(7), RefTestNonNull(HeapType::Concrete(ty)), I32Eqz, BrIf(0),
-            LocalGet(7), RefCastNonNull(HeapType::Concrete(ty)), LocalSet(local)]);
-    };
-    let mut body = vec![Block(BlockType::Empty)];
-    body.extend([LocalGet(0), RefTestNonNull(HeapType::Concrete(7)), I32Eqz, BrIf(0)]);
-    body.extend([
-        LocalGet(0), RefCastNonNull(HeapType::Concrete(7)), LocalTee(2),
-        StructGet { struct_type_index: 7, field_index: 0 }, GlobalGet(TAG_GLOBAL), RefEq, I32Eqz, BrIf(0),
-        LocalGet(2), StructGet { struct_type_index: 7, field_index: 1 }, LocalTee(3),
-        ArrayLen, I32Const(2), I32Ne, BrIf(0),
-        LocalGet(3), I32Const(0), ArrayGet(ARGS),
-    ]);
-    take(&mut body, ARGS, 4);
-    body.extend([LocalGet(4), ArrayLen, I32Const(4), I32LtU, BrIf(0), LocalGet(4), I32Const(3), ArrayGet(ARGS)]);
-    take(&mut body, STRING, 6);
-    body.extend([LocalGet(4), I32Const(2), ArrayGet(ARGS)]);
-    take(&mut body, ARGS, 5);
-    body.extend([
-        LocalGet(1), LocalGet(5), ArrayLen, I32GeU, BrIf(0),
-        LocalGet(1), LocalGet(6), ArrayLen, I32GeU, BrIf(0),
-        LocalGet(6), LocalGet(1), ArrayGetU(STRING), I32Const(1), I32Ne, BrIf(0),
-        LocalGet(5), LocalGet(1), ArrayGet(ARGS), Return, End,
-        sentinel_value(UNDEFINED),
-    ]);
-    let element = b.function_with_locals(
-        "source-array-element",
-        &[VALUE, ValType::I32],
-        &[VALUE],
-        &[(1, typed(7)), (1, typed(ARGS)), (1, typed(ARGS)), (1, typed(ARGS)), (1, typed(STRING)), (1, VALUE)],
-        &body,
-    );
     // `vector-array-element(a, j)` (#378): element j of a vector's object
-    // array, read directly, or source-array-element's answer for anything
-    // else. Locals: 2 the storage, 3 the same as an object array's.
-    let source_element = element;
+    // array, read directly, or undefined for anything else, which a caller
+    // answers with the general path. Locals: 2 the storage, 3 the same as
+    // an object array's.
     let element = b.function_with_locals(
         "vector-array-element",
         &[VALUE, ValType::I32],
@@ -987,7 +164,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             LocalGet(1), LocalGet(3), ArrayLen, I32GeU, BrIf(0),
             LocalGet(3), LocalGet(1), ArrayGet(ARGS), Return,
             End,
-            LocalGet(0), LocalGet(1), Call(source_element),
+            sentinel_value(UNDEFINED),
         ],
     );
     // `vector-nth(v, n)` (#378): element n of PersistentVector v, walking
@@ -1056,7 +233,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             LocalGet(10), RefCastNonNull(HeapType::Concrete(ARGS)), LocalTee(11),
             ArrayLen, LocalGet(9), I32LeU, BrIf(0),
             LocalGet(11), LocalGet(9), ArrayGet(ARGS), Br(1), End,
-            LocalGet(8), LocalGet(9), Call(element), End]);
+            LocalGet(8), LocalGet(9), Call(b.names["vector-array-element"]), End]);
     };
     let mut body = vec![Block(BlockType::Empty)];
     body.extend([LocalGet(1), RefTestNonNull(HeapType::I31), I32Eqz, BrIf(0),
@@ -1109,60 +286,29 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &[(1, typed(ARGS)), (3, ValType::I32), (1, VALUE), (1, VALUE), (1, VALUE), (1, ValType::I32), (1, VALUE), (1, typed(ARGS))],
         &body,
     );
-    // Macro and first-class variants share explicit sequential nested traversal.
-    for (name, writing) in [
-        ("source-array-get-indices", false),
-        ("source-array-set-indices", true),
-    ] {
-        let mut body = vec![
-            LocalGet(0),
-            RefTestNonNull(HeapType::Concrete(ARGS)),
-            I32Eqz,
-            If(BlockType::Empty),
-        ];
+    // `aget` and `aset` with any number of indices walk the nested arrays,
+    // as Clojure's do.
+    for (name, writing) in [("array-get-indices", false), ("array-set-indices", true)] {
+        let mut body = vec![LocalGet(0), RefTestNonNull(HeapType::Concrete(ARGS)), I32Eqz, If(BlockType::Empty)];
+        error(&mut body);
+        body.push(End);
+        array(&mut body, 0);
+        body.extend([ArrayLen, LocalSet(1), LocalGet(1), I32Const(if writing { 3 } else { 2 }), I32LtU, If(BlockType::Empty)]);
         error(&mut body);
         body.push(End);
         array(&mut body, 0);
         body.extend([
-            ArrayLen,
-            LocalSet(1),
-            LocalGet(1),
-            I32Const(if writing { 3 } else { 2 }),
-            I32LtU,
-            If(BlockType::Empty),
-        ]);
-        error(&mut body);
-        body.push(End);
-        array(&mut body, 0);
-        body.extend([
-            I32Const(0),
-            ArrayGet(ARGS),
-            LocalSet(2),
-            I32Const(1),
-            LocalSet(3),
-            Block(BlockType::Empty),
-            Loop(BlockType::Empty),
-            LocalGet(3),
-            LocalGet(1),
-            I32Const(if writing { 2 } else { 0 }),
-            I32Sub,
-            I32GeU,
-            BrIf(1),
+            I32Const(0), ArrayGet(ARGS), LocalSet(2),
+            I32Const(1), LocalSet(3),
+            Block(BlockType::Empty), Loop(BlockType::Empty),
+            LocalGet(3), LocalGet(1), I32Const(if writing { 2 } else { 0 }), I32Sub, I32GeU, BrIf(1),
             LocalGet(2),
         ]);
         array(&mut body, 0);
         body.extend([
-            LocalGet(3),
-            ArrayGet(ARGS),
-            Call(get),
-            LocalSet(2),
-            LocalGet(3),
-            I32Const(1),
-            I32Add,
-            LocalSet(3),
-            Br(0),
-            End,
-            End,
+            LocalGet(3), ArrayGet(ARGS), Call(get), LocalSet(2),
+            LocalGet(3), I32Const(1), I32Add, LocalSet(3),
+            Br(0), End, End,
             LocalGet(2),
         ]);
         if writing {
@@ -1180,11 +326,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         );
         declared.push(factory(
             b,
-            if writing {
-                "array-set-function"
-            } else {
-                "array-get-function"
-            },
+            if writing { "array-set-function" } else { "array-get-function" },
             if writing { 3 } else { 2 },
             -1,
             &[LocalGet(1), Call(primitive)],
@@ -1195,99 +337,20 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         "array-make-function",
         1,
         -1,
-        &[LocalGet(1), Call(make_args)],
+        &[LocalGet(1), Call(b.names["object-array-make-args"])],
     ));
     declared
 }
 
-pub(super) fn set_or_property(b: &mut Builder) {
+/// `aclone`'s first-class function; its callback has a local for the array.
+fn clone_factory(b: &mut Builder, body: &[Instruction<'static>]) -> u32 {
     use Instruction::*;
-    let mut body = vec![
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        I32Const(0),
-        ArrayGet(ARGS),
-        LocalSet(1),
-        LocalGet(1),
-        Call(b.names["native-object?"]),
-        If(BlockType::Result(VALUE)),
-        LocalGet(1),
-    ];
-    array(&mut body, 0);
-    body.extend([I32Const(1), ArrayGet(ARGS)]);
-    array(&mut body, 0);
-    body.extend([
-        I32Const(2),
-        ArrayGet(ARGS),
-        Call(b.names["native-object-property-set"]),
-        Else,
-        LocalGet(0),
-        Call(b.names["source-array-set-indices"]),
-        End,
-    ]);
-    let set_or_property = b.function_with_locals(
-        "source-array-set-or-property",
+    let f = callback(b, &[(1, VALUE)], body);
+    b.function(
+        "array-clone-function",
+        &[],
         &[VALUE],
-        &[VALUE],
-        &[(1, VALUE)],
-        &body,
+        &[sentinel_value(NIL), RefFunc(f), I32Const(1), I32Const(1), Call(b.names["closure-new"])],
     );
-    // `(aset a i v)` with one index (#350): a write to a source array's dense
-    // prefix at an i31 index inside its logical length stores directly and
-    // marks the slot present, as `source-array-sparse-set` does there, with no
-    // index array and no generic key conversion. Anything else, including any
-    // malformed backing, takes `source-array-set-or-property`. Locals
-    // (#389): 3 the object, 4 its fields, 5 the sparse backing, 6 the dense
-    // prefix, 7 the presence mask, each typed so that it is cast once; 8 a
-    // value under test; 9 the index. The array test is inline.
-    let typed = |ty: u32| ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(ty) });
-    let take = |body: &mut Vec<Instruction<'static>>, ty: u32, local: u32| {
-        body.extend([LocalTee(8), RefTestNonNull(HeapType::Concrete(ty)), I32Eqz, BrIf(0),
-            LocalGet(8), RefCastNonNull(HeapType::Concrete(ty)), LocalSet(local)]);
-    };
-    let mut body = vec![Block(BlockType::Empty)];
-    body.extend([LocalGet(1), RefTestNonNull(HeapType::I31), I32Eqz, BrIf(0)]);
-    body.extend([LocalGet(0), RefTestNonNull(HeapType::Concrete(7)), I32Eqz, BrIf(0)]);
-    body.extend([
-        LocalGet(0), RefCastNonNull(HeapType::Concrete(7)), LocalTee(3),
-        StructGet { struct_type_index: 7, field_index: 0 }, GlobalGet(TAG_GLOBAL), RefEq, I32Eqz, BrIf(0),
-        LocalGet(3), StructGet { struct_type_index: 7, field_index: 1 }, LocalTee(4),
-        ArrayLen, I32Const(2), I32Ne, BrIf(0),
-        LocalGet(4), I32Const(0), ArrayGet(ARGS),
-    ]);
-    take(&mut body, ARGS, 5);
-    body.extend([LocalGet(5), ArrayLen, I32Const(4), I32LtU, BrIf(0), LocalGet(5), I32Const(3), ArrayGet(ARGS)]);
-    take(&mut body, STRING, 7);
-    body.extend([LocalGet(5), I32Const(2), ArrayGet(ARGS)]);
-    take(&mut body, ARGS, 6);
-    // The logical length, an i31 for any array this small.
-    body.extend([LocalGet(5), I32Const(0), ArrayGet(ARGS), LocalTee(8), RefTestNonNull(HeapType::I31), I32Eqz, BrIf(0)]);
-    body.extend([
-        LocalGet(1), RefCastNonNull(HeapType::I31), I31GetS, LocalTee(9),
-        LocalGet(8), RefCastNonNull(HeapType::I31), I31GetS, I32GeU, BrIf(0),
-        LocalGet(9), LocalGet(6), ArrayLen, I32GeU, BrIf(0),
-        LocalGet(9), LocalGet(7), ArrayLen, I32GeU, BrIf(0),
-        // A presence bit other than 0 or 1 is malformed.
-        LocalGet(7), LocalGet(9), ArrayGetU(STRING), I32Const(1), I32GtU, BrIf(0),
-        LocalGet(6), LocalGet(9), LocalGet(2), ArraySet(ARGS),
-        LocalGet(7), LocalGet(9), I32Const(1), ArraySet(STRING),
-        LocalGet(2), Return, End,
-    ]);
-    body.extend([
-        LocalGet(0),
-        LocalGet(1),
-        LocalGet(2),
-        ArrayNewFixed {
-            array_type_index: ARGS,
-            array_size: 3,
-        },
-        ReturnCall(set_or_property),
-    ]);
-    b.function_with_locals(
-        "source-array-set-3",
-        &[VALUE, VALUE, VALUE],
-        &[VALUE],
-        &[(1, typed(7)), (1, typed(ARGS)), (1, typed(ARGS)), (1, typed(ARGS)), (1, typed(STRING)), (1, VALUE), (1, ValType::I32)],
-        &body,
-    );
+    f
 }

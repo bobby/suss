@@ -6,20 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Delay [^:mutable f ^:mutable value]
-  IDeref
-  (-deref [_]
-    (when f
-      (set! value (f))
-      (set! f nil))
-    value)
-
-  IPending
-  (-realized? [x]
-    (not f))
-
-  IPrintWithWriter
-  (-pr-writer [x writer opts]
-    (-write writer "#object[cljs.core.Delay ")
-    (pr-writer {:status (if (nil? f) :ready :pending), :val value} writer opts)
-    (-write writer "]")))
+(defn force
+  "If x is a Delay, returns the (possibly cached) value of its expression, else returns x"
+  [x]
+  (if (delay? x)
+    (deref x)
+    x))

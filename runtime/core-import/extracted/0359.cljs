@@ -6,14 +6,25 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype RecordIter [^:mutable i record base-count fields ext-map-iter]
-  Object
-  (hasNext [_]
-    (or (< i base-count) (.hasNext ext-map-iter)))
-  (next [_]
-    (if (< i base-count)
-      (let [k (nth fields i)]
-        (set! i (inc i))
-        (MapEntry. k (-lookup record k) nil))
-      (.next ext-map-iter)))
-  (remove [_] (js/Error. "Unsupported operation")))
+(defn fnil
+  "Takes a function f, and returns a function that calls f, replacing
+  a nil first argument to f with the supplied value x. Higher arity
+  versions can replace arguments in the second and third
+  positions (y, z). Note that the function f can take any number of
+  arguments, not just the one(s) being nil-patched."
+  ([f x]
+   (fn
+     ([a] (f (if (nil? a) x a)))
+     ([a b] (f (if (nil? a) x a) b))
+     ([a b c] (f (if (nil? a) x a) b c))
+     ([a b c & ds] (apply f (if (nil? a) x a) b c ds))))
+  ([f x y]
+   (fn
+     ([a b] (f (if (nil? a) x a) (if (nil? b) y b)))
+     ([a b c] (f (if (nil? a) x a) (if (nil? b) y b) c))
+     ([a b c & ds] (apply f (if (nil? a) x a) (if (nil? b) y b) c ds))))
+  ([f x y z]
+   (fn
+     ([a b] (f (if (nil? a) x a) (if (nil? b) y b)))
+     ([a b c] (f (if (nil? a) x a) (if (nil? b) y b) (if (nil? c) z c)))
+     ([a b c & ds] (apply f (if (nil? a) x a) (if (nil? b) y b) (if (nil? c) z c) ds)))))

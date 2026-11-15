@@ -6,18 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- push-tail [pv level parent tailnode]
-  (let [ret (pv-clone-node parent)
-        subidx (bit-and (bit-shift-right-zero-fill (dec (.-cnt pv)) level) 0x01f)]
-    (if (== 5 level)
+(defn- do-assoc [pv level node i val]
+  (let [ret (pv-clone-node node)]
+    (if (zero? level)
       (do
-        (pv-aset ret subidx tailnode)
+        (pv-aset ret (bit-and i 0x01f) val)
         ret)
-      (let [child (pv-aget parent subidx)]
-        (if-not (nil? child)
-          (let [node-to-insert (push-tail pv (- level 5) child tailnode)]
-            (pv-aset ret subidx node-to-insert)
-            ret)
-          (let [node-to-insert (new-path nil (- level 5) tailnode)]
-            (pv-aset ret subidx node-to-insert)
-            ret))))))
+      (let [subidx (bit-and (bit-shift-right-zero-fill i level) 0x01f)]
+        (pv-aset ret subidx (do-assoc pv (- level 5) (pv-aget node subidx) i val))
+        ret))))

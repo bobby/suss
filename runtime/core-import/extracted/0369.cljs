@@ -6,18 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn update
-  "'Updates' a value in an associative structure, where k is a
-  key and f is a function that will take the old value
-  and any supplied args and return the new value, and returns a new
-  structure.  If the key does not exist, nil is passed as the old value."
-  ([m k f]
-   (assoc m k (f (get m k))))
-  ([m k f x]
-   (assoc m k (f (get m k) x)))
-  ([m k f x y]
-   (assoc m k (f (get m k) x y)))
-  ([m k f x y z]
-   (assoc m k (f (get m k) x y z)))
-  ([m k f x y z & more]
-   (assoc m k (apply f (get m k) x y z more))))
+(defn zipmap
+  "Returns a map with the keys mapped to the corresponding vals."
+  [keys vals]
+    (loop [map (transient {})
+           ks (seq keys)
+           vs (seq vals)]
+      (if (and ks vs)
+        (recur (assoc! map (first ks) (first vs))
+               (next ks)
+               (next vs))
+        (persistent! map))))

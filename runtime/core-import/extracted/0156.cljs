@@ -6,9 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol ITransientVector
-  "Protocol for adding vector functionality to transient collections."
-  (^clj -assoc-n! [tcoll n val]
-    "Returns tcoll with value val added at position n.")
-  (^clj -pop! [tcoll]
-    "Returns tcoll with the last item removed from it."))
+(defn- array-copy
+  ([from i to j len]
+    (loop [i i j j len len]
+       (if (zero? len)
+         to
+         (do (aset to j (aget from i))
+             (recur (inc i) (inc j) (dec len)))))))

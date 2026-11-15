@@ -6,12 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn seqable?
-  "Return true if the seq function is supported for s"
-  [s]
-  (or
-    (nil? s)
-    (satisfies? ISeqable s)
-    (js-iterable? s)
-    (array? s)
-    (string? s)))
+(defn ifind?
+ "Returns true if coll implements IFind"
+  [x] (satisfies? IFind x))

@@ -48,15 +48,15 @@ fn constructors_store_elements_with_the_unchecked_casts() {
           (vec (long-array 3 [1 2])) (vec (long-array 2 7)) (vec (int-array 2 7.9))
           (vec (long-array 1 [1 2 3])) (vec (long-array nil)) (alength (long-array 2.5))
           (vec (byte-array 2)) (vec (double-array 2)) (vec (int-array (range 5)))
-          (alength (long-array 4294967297)) (alength (long-array ##NaN))]",
+          (alength (long-array 4294967297)) (alength (long-array ##NaN)) (alength (double-array 2000001))]",
         "[[-56 1 127] [4464] [2147483647 -1294967296] [1 9223372036854775807] [1.0 2.5] \
-         [##Inf 3.0] [1 2 0] [7 7] [7 7] [1] [] 2 [0 0] [0.0 0.0] [0 1 2 3 4] 1 0]",
+         [##Inf 3.0] [1 2 0] [7 7] [7 7] [1] [] 2 [0 0] [0.0 0.0] [0 1 2 3 4] 1 0 2000001]",
     );
     for (source, message) in [
         ("(long-array -1)", "-1"),
         ("(int-array -3 0)", "-3"),
-        // A lone size is Number.intValue; one with a fill is RT.intCast.
-        ("(long-array 3e10)", "Array length out of range: 2147483647"),
+        // A lone size is Number.intValue, so 3e10 asks for Integer/MAX_VALUE
+        // longs, more than the GC heap holds; one with a fill is RT.intCast.
         ("(int-array 4294967297 0)", "integer overflow"),
         ("(long-array [:a])", "unchecked-long requires a number operand"),
     ] {
@@ -102,7 +102,7 @@ fn core_reads_packed_arrays_as_arrays() {
         "[(seq (long-array [1 2])) (seq (long-array 0)) (count (int-array 4))
           (nth (double-array [1 2]) 1) (reduce + (int-array [1 2 3])) (get (long-array [5 6]) 1)
           (contains? (long-array [5 6]) 1) (into [] (short-array [1 2])) (first (float-array [1.5]))
-          (array? (long-array 1)) (.-length (double-array 3)) (alength (byte-array 5))
+          (array? (long-array 1)) (alength (double-array 3)) (alength (byte-array 5))
           (some even? (int-array [1 2 3 4])) (= (long-array 1) (long-array 1))
           (let [a (long-array 1)] (= (hash a) (hash a))) (vec (to-array (long-array [1 2])))]",
         "[(1 2) nil 4 2.0 6 6 true [1 2] 1.5 true 3 5 true false true [1 2]]",

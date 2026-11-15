@@ -177,7 +177,7 @@ fn error_message_property_observes_actual_typed_error_after_gc() {
             );
         }
         let held = session
-            .eval(r#"(def held-error (suss.bootstrap/error (aget "😀" 0)))"#)
+            .eval(r#"(def held-error (suss.bootstrap/error "\uD83D"))"#)
             .unwrap();
         session.collect().unwrap();
         let message = session.eval("(.-message held-error)").unwrap();

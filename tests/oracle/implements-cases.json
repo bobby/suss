@@ -60,7 +60,7 @@
     },
     {
       "id": "undefined-negative",
-      "source": "(implements? ImplementProbe (aget (array) 0))",
+      "source": "(implements? ImplementProbe js/undefined)",
       "expected": {
         "tag": "bool",
         "value": false

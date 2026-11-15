@@ -6,144 +6,119 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype PersistentHashMap [meta cnt root ^boolean has-nil? nil-val ^:mutable __hash]
+(deftype TransientHashMap [^:mutable ^boolean edit
+                           ^:mutable root
+                           ^:mutable count
+                           ^:mutable ^boolean has-nil?
+                           ^:mutable nil-val]
   Object
-  (toString [coll]
-    (pr-str* coll))
-  (equiv [this other]
-    (-equiv this other))
-  (keys [coll]
-    (es6-iterator (keys coll)))
-  (entries [coll]
-    (es6-entries-iterator (seq coll)))
-  (values [coll]
-    (es6-iterator (vals coll)))
-  (has [coll k]
-    (contains? coll k))
-  (get [coll k not-found]
-    (-lookup coll k not-found))
-  (forEach [coll f]
-    (doseq [[k v] coll]
-      (f v k)))
+  (conj! [tcoll o]
+    (if edit
+      (cond
+        (map-entry? o)
+        (.assoc! tcoll (key o) (val o))
 
-  ICloneable
-  (-clone [_] (PersistentHashMap. meta cnt root has-nil? nil-val __hash))
+        (vector? o)
+        (.assoc! tcoll (o 0) (o 1))
 
-  IIterable
-  (-iterator [coll]
-    (let [root-iter (if ^boolean root (-iterator root) (nil-iter))]
-      (if has-nil?
-        (HashMapIter. nil-val root-iter false)
-        root-iter)))
+        :else
+        (loop [es (seq o) tcoll tcoll]
+          (if-let [e (first es)]
+            (recur (next es)
+                   (.assoc! tcoll (key e) (val e)))
+            tcoll)))
+      (throw (js/Error. "conj! after persistent"))))
 
-  IWithMeta
-  (-with-meta [coll new-meta]
-    (if (identical? new-meta meta)
-      coll
-      (PersistentHashMap. new-meta cnt root has-nil? nil-val __hash)))
+  (assoc! [tcoll k v]
+    (if edit
+      (if (nil? k)
+        (do (if (identical? nil-val v)
+              nil
+              (set! nil-val v))
+            (if has-nil?
+              nil
+              (do (set! count (inc count))
+                  (set! has-nil? true)))
+            tcoll)
+        (let [added-leaf? (Box. false)
+              node        (-> (if (nil? root)
+                                (.-EMPTY BitmapIndexedNode)
+                                root)
+                              (.inode-assoc! edit 0 (hash k) k v added-leaf?))]
+          (if (identical? node root)
+            nil
+            (set! root node))
+          ;; FIXME: can we figure out something better here?
+          (if ^boolean (.-val added-leaf?)
+            (set! count (inc count)))
+          tcoll))
+      (throw (js/Error. "assoc! after persistent!"))))
 
-  IMeta
-  (-meta [coll] meta)
-
-  ICollection
-  (-conj [coll entry]
-    (if (vector? entry)
-      (-assoc coll (-nth entry 0) (-nth entry 1))
-      (loop [ret coll es (seq entry)]
-        (if (nil? es)
-          ret
-          (let [e (first es)]
-            (if (vector? e)
-              (recur (-assoc ret (-nth e 0) (-nth e 1))
-                     (next es))
-              (throw (js/Error. "conj on a map takes map entries or seqables of map entries"))))))))
-
-  IEmptyableCollection
-  (-empty [coll] (-with-meta (.-EMPTY PersistentHashMap) meta))
-
-  IEquiv
-  (-equiv [coll other] (equiv-map coll other))
-
-  IHash
-  (-hash [coll] (caching-hash coll hash-unordered-coll __hash))
-
-  ISeqable
-  (-seq [coll]
-    (when (pos? cnt)
-      (let [s (if-not (nil? root) (.inode-seq root))]
+  (without! [tcoll k]
+    (if edit
+      (if (nil? k)
         (if has-nil?
-          (cons (MapEntry. nil nil-val nil) s)
-          s))))
+          (do (set! has-nil? false)
+              (set! nil-val nil)
+              (set! count (dec count))
+              tcoll)
+          tcoll)
+        (if (nil? root)
+          tcoll
+          (let [removed-leaf? (Box. false)
+                node (.inode-without! root edit 0 (hash k) k removed-leaf?)]
+            (if (identical? node root)
+              nil
+              (set! root node))
+            ;; FIXME: can we figure out something better here?
+            (if ^boolean (.-val removed-leaf?)
+              (set! count (dec count)))
+            tcoll)))
+      (throw (js/Error. "dissoc! after persistent!"))))
+
+  (persistent! [tcoll]
+    (if edit
+      (do (set! edit nil)
+          (PersistentHashMap. nil count root has-nil? nil-val nil))
+      (throw (js/Error. "persistent! called twice"))))
 
   ICounted
-  (-count [coll] cnt)
+  (-count [coll]
+    (if edit
+      count
+      (throw (js/Error. "count after persistent!"))))
 
   ILookup
-  (-lookup [coll k]
-    (-lookup coll k nil))
-
-  (-lookup [coll k not-found]
-    (cond (nil? k)    (if has-nil?
-                        nil-val
-                        not-found)
-          (nil? root) not-found
-          :else       (.inode-lookup root 0 (hash k) k not-found)))
-
-  IAssociative
-  (-assoc [coll k v]
+  (-lookup [tcoll k]
     (if (nil? k)
-      (if (and has-nil? (identical? v nil-val))
-        coll
-        (PersistentHashMap. meta (if has-nil? cnt (inc cnt)) root true v nil))
-      (let [added-leaf? (Box. false)
-            new-root    (-> (if (nil? root)
-                              (.-EMPTY BitmapIndexedNode)
-                              root)
-                            (.inode-assoc 0 (hash k) k v added-leaf?))]
-        (if (identical? new-root root)
-          coll
-          (PersistentHashMap. meta (if ^boolean (.-val added-leaf?) (inc cnt) cnt) new-root has-nil? nil-val nil)))))
+      (if has-nil?
+        nil-val)
+      (if (nil? root)
+        nil
+        (.inode-lookup root 0 (hash k) k))))
 
-  (-contains-key? [coll k]
-    (cond (nil? k)    has-nil?
-          (nil? root) false
-          :else       (not (identical? (.inode-lookup root 0 (hash k) k lookup-sentinel)
-                                       lookup-sentinel))))
+  (-lookup [tcoll k not-found]
+    (if (nil? k)
+      (if has-nil?
+        nil-val
+        not-found)
+      (if (nil? root)
+        not-found
+        (.inode-lookup root 0 (hash k) k not-found))))
 
-  IFind
-  (-find [coll k]
-    (cond
-      (nil? k) (when has-nil? (MapEntry. nil nil-val nil))
-      (nil? root) nil
-      :else (.inode-find root 0 (hash k) k nil)))
+  ITransientCollection
+  (-conj! [tcoll val] (.conj! tcoll val))
 
-  IMap
-  (-dissoc [coll k]
-    (cond (nil? k)    (if has-nil?
-                        (PersistentHashMap. meta (dec cnt) root false nil nil)
-                        coll)
-          (nil? root) coll
-          :else
-          (let [new-root (.inode-without root 0 (hash k) k)]
-            (if (identical? new-root root)
-              coll
-              (PersistentHashMap. meta (dec cnt) new-root has-nil? nil-val nil)))))
+  (-persistent! [tcoll] (.persistent! tcoll))
 
-  IKVReduce
-  (-kv-reduce [coll f init]
-    (let [init (if has-nil? (f init nil nil-val) init)]
-      (cond
-        (reduced? init)          @init
-        (not (nil? root)) (unreduced (.kv-reduce root f init))
-        :else                    init)))
+  ITransientAssociative
+  (-assoc! [tcoll key val] (.assoc! tcoll key val))
+
+  ITransientMap
+  (-dissoc! [tcoll key] (.without! tcoll key))
 
   IFn
-  (-invoke [coll k]
-    (-lookup coll k))
-
-  (-invoke [coll k not-found]
-    (-lookup coll k not-found))
-
-  IEditableCollection
-  (-as-transient [coll]
-    (TransientHashMap. (js-obj) root cnt has-nil? nil-val)))
+  (-invoke [tcoll key]
+    (-lookup tcoll key))
+  (-invoke [tcoll key not-found]
+    (-lookup tcoll key not-found)))

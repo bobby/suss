@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn key
-  "Returns the key of the map entry."
+(defn val
+  "Returns the value in the map entry."
   [map-entry]
-  (-key map-entry))
+  (-val map-entry))

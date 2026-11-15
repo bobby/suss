@@ -6,5 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- bitpos [hash shift]
-  (bit-shift-left 1 (mask hash shift)))
+(defn- edit-and-set
+  ([inode edit i a]
+     (let [editable (.ensure-editable inode edit)]
+       (aset (.-arr editable) i a)
+       editable))
+  ([inode edit i a j b]
+     (let [editable (.ensure-editable inode edit)]
+       (aset (.-arr editable) i a)
+       (aset (.-arr editable) j b)
+       editable)))

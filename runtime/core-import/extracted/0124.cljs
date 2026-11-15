@@ -6,7 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn volatile!
-  "Creates and returns a Volatile with an initial value of val."
-  [val]
-  (Volatile. val))
+(defn volatile?
+  "Returns true if x is a volatile."
+  [x] (instance? Volatile x))

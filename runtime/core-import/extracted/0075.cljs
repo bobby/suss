@@ -6,25 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- iter-reduce
-  ([coll f]
-   (let [iter (-iterator coll)]
-     (if (.hasNext iter)
-       (let [init (.next iter)]
-         (loop [acc init]
-           (if ^boolean (.hasNext iter)
-             (let [nacc (f acc (.next iter))]
-               (if (reduced? nacc)
-                 @nacc
-                 (recur nacc)))
-             acc)))
-       (f))))
-  ([coll f init]
-   (let [iter (-iterator coll)]
-     (loop [acc init]
-       (if ^boolean (.hasNext iter)
-         (let [nacc (f acc (.next iter))]
-           (if (reduced? nacc)
-             @nacc
-             (recur nacc)))
-         acc)))))
+(defn- seq-reduce
+  ([f coll]
+    (if-let [s (seq coll)]
+      (reduce f (first s) (next s))
+      (f)))
+  ([f val coll]
+    (loop [val val, coll (seq coll)]
+      (if coll
+        (let [nval (f val (first coll))]
+          (if (reduced? nval)
+            @nval
+            (recur nval (next coll))))
+        val))))

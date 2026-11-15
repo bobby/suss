@@ -260,7 +260,7 @@
     },
     {
       "id": "index-of-string-unit",
-      "source": "(.indexOf (seq \"\ud83d\ude00A\") \"\\ude00\")",
+      "source": "(.indexOf (seq \"😀A\") \"\\ude00\")",
       "expected": {
         "tag": "f64",
         "bits": "3ff0000000000000"
@@ -300,7 +300,7 @@
     },
     {
       "id": "nth-string-utf16",
-      "source": "(identical? (nth \"\ud83d\ude00\" 0) \"\\ud83d\")",
+      "source": "(identical? (nth \"😀\" 0) \"\\ud83d\")",
       "expected": {
         "tag": "bool",
         "value": true
@@ -316,7 +316,7 @@
     },
     {
       "id": "nth-indexed-fraction",
-      "source": "(nil? (nth (seq (array 1 2)) 0.5))",
+      "source": "(= 1 (nth (seq (array 1 2)) 0.5))",
       "expected": {
         "tag": "bool",
         "value": true

@@ -7,7 +7,7 @@ from sorted_tree_oracle import observation as scalar_observation
 from cljs_inventory import Scanner
 ROOT=Path(__file__).resolve().parents[1]
 PIN='c4295f303100bbf5afac449242d30bca1126f1a1'
-COUNT=151
+COUNT=112
 
 def read(path):return json.loads(path.read_text(),object_pairs_hook=unique)
 def observation(v,depth=0):
@@ -64,16 +64,21 @@ def driver():
     return header+'(defn -main [] (println (.stringify js/JSON #js [\n'+'\n'.join(rows)+'\n])))\n(set! *main-cli-fn* -main)\n'
 def check():
     if (ROOT/'tests/oracle/src/suss_oracle/error_constructors.cljs').read_text()!=driver():raise ValueError('driver')
-    print('PASS 151 closed Error cases/driver; native pending')
+    print('PASS '+str(COUNT)+' closed Error cases/driver; native pending')
 def compare(path=None):
     actual=read(path or ROOT/'tests/oracle/out/error-constructors.json')
     expected=[dict(id=c['id'],mode=c['mode'],**c['expected']) for c in cases()]
+    # Recorded evidence may hold cases since removed, such as those of JS
+    # option objects and property descriptors (#425); only the current cases
+    # are compared.
+    current={e['id'] for e in expected}
+    if isinstance(actual,list):actual=[a for a in actual if not isinstance(a,dict) or a.get('id') in current]
     if not isinstance(actual,list) or len(actual)!=COUNT:raise ValueError('ordered observation count')
     for a,e in zip(actual,expected):
         if not isinstance(a,dict) or set(a)!={'id','mode','value','trace'}:raise ValueError('result schema')
         observation(a['value']);observation(a['trace'])
         if a!=e:raise ValueError('Error observation mismatch '+e['id']+'\nactual='+json.dumps(a)+'\nexpected='+json.dumps(e))
-    print('PASS 151 exact pinned Error constructor/ancestry/effect observations')
+    print('PASS '+str(COUNT)+' exact pinned Error constructor/ancestry/effect observations')
 if __name__=='__main__':
     if sys.argv[1]=='generate':(ROOT/'tests/oracle/src/suss_oracle/error_constructors.cljs').write_text(driver())
     elif sys.argv[1]=='check':check()

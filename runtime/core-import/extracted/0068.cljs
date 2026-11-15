@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn reduced
-  "Wraps x in a way such that a reduce will terminate with the value x"
-  [x]
-  (Reduced. x))
+(defn reduced?
+  "Returns true if x is the result of a call to reduced"
+  [r]
+  (instance? Reduced r))

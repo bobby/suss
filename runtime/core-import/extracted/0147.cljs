@@ -6,10 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- first-array-for-longvec [pv]
-  ;; invariants: (count pv) > 32.
-  (loop [node (.-root pv)
-         level (.-shift pv)]
-    (if (pos? level)
-      (recur (pv-aget node 0) (- level 5))
-      (.-arr node))))
+(defn- unchecked-array-for [pv i]
+  ;; invariant: i is a valid index of pv (use array-for if unknown).
+  (if (>= i (tail-off pv))
+      (.-tail pv)
+      (loop [node (.-root pv)
+             level (.-shift pv)]
+        (if (pos? level)
+          (recur (pv-aget node (bit-and (bit-shift-right-zero-fill i level) 0x01f))
+                 (- level 5))
+          (.-arr node)))))

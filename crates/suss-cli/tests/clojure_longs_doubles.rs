@@ -133,14 +133,6 @@ fn rest_arguments_count_from_long_zero() {
     );
 }
 
-#[test]
-fn integral_double_property_keys_name_the_long_property() {
-    assert_printed(
-        "(let [o (js-obj)] (unchecked-set o -0.0 7) (unchecked-set o 1.0 8)
-           [(unchecked-get o 0) (unchecked-get o \"1\")])",
-        "[7 8]",
-    );
-}
 
 #[test]
 fn macro_data_preserves_longs_and_doubles() {

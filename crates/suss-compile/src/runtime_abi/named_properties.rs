@@ -148,12 +148,6 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     let mut callbacks = object_methods::functions(b, equal);
     callbacks.extend(string_methods::functions(b));
     callbacks.extend(string_char_at::functions(b));
-    callbacks.extend(array_methods::functions(b));
-    callbacks.extend(array_push::functions(b));
-    callbacks.extend(array_pop::functions(b));
-    callbacks.extend(array_shift::functions(b));
-    callbacks.extend(array_own_properties::functions(b, equal));
-    callbacks.extend(array_join::functions(b));
     let (call, apply) = closure_calls::functions(b);
     callbacks.extend([call, apply]);
 
@@ -890,29 +884,16 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         }
         body.push(End);
 
-        // A packed primitive array has only its length (#336).
+        // An array has no named properties, as Clojure's have none (#425):
+        // alength reads its length.
         body.extend([
             LocalGet(0),
             Call(b.names["packed-array?"]),
             If(BlockType::Empty),
         ]);
-        if writing {
-            nominal::error(&mut body);
-        } else {
-            body.push(LocalGet(1));
-            name(&mut body, "length");
-            body.extend([
-                Call(equal),
-                If(BlockType::Empty),
-                LocalGet(0),
-                Call(b.names["packed-array-length"]),
-                Return,
-                End,
-            ]);
-            nominal::error(&mut body);
-        }
+        nominal::error(&mut body);
         body.push(End);
-        // Strings and source arrays provide their actual UTF-16/indexed length.
+        // A string provides its UTF-16 length.
         body.extend([
             LocalGet(0),
             RefTestNonNull(HeapType::Concrete(STRING)),
@@ -927,11 +908,9 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
                 Call(equal),
                 If(BlockType::Empty),
                 LocalGet(0),
-                ArrayNewFixed {
-                    array_type_index: ARGS,
-                    array_size: 1,
-                },
-                Call(b.names["source-array-length-args"]),
+                RefCastNonNull(HeapType::Concrete(STRING)),
+                ArrayLen,
+                Call(b.names["long-box-u32"]),
                 Return,
                 End,
             ]);
@@ -963,110 +942,6 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             RefTestNonNull(HeapType::Concrete(7)),
             If(BlockType::Empty),
         ]);
-        structure(&mut body, 0, 7, 0);
-        body.extend([GlobalGet(arrays::TAG_GLOBAL), RefEq, If(BlockType::Empty)]);
-        if writing {
-            body.extend([
-                LocalGet(0),
-                LocalGet(1),
-                LocalGet(2),
-                Call(b.names["source-array-set"]),
-                Return,
-            ]);
-        } else {
-            body.extend([
-                LocalGet(0),
-                LocalGet(1),
-                Call(b.names["source-array-property-has"]),
-                If(BlockType::Empty),
-                LocalGet(0),
-                LocalGet(1),
-                Call(b.names["source-array-property-get"]),
-                Return,
-                End,
-            ]);
-            body.push(LocalGet(1));
-            name(&mut body, "length");
-            body.extend([
-                Call(equal),
-                If(BlockType::Empty),
-                LocalGet(0),
-                ArrayNewFixed {
-                    array_type_index: ARGS,
-                    array_size: 1,
-                },
-                Call(b.names["source-array-length-args"]),
-                Return,
-                End,
-            ]);
-            body.push(LocalGet(1));
-            name(&mut body, "pop");
-            body.extend([
-                Call(equal),
-                If(BlockType::Empty),
-                Call(b.names["source-array-pop-method"]),
-                Return,
-                End,
-            ]);
-            body.push(LocalGet(1));
-            name(&mut body, "push");
-            body.extend([
-                Call(equal),
-                If(BlockType::Empty),
-                Call(b.names["source-array-push-method"]),
-                Return,
-                End,
-            ]);
-            body.push(LocalGet(1));
-            name(&mut body, "shift");
-            body.extend([
-                Call(equal),
-                If(BlockType::Empty),
-                Call(b.names["source-array-shift-method"]),
-                Return,
-                End,
-            ]);
-            body.push(LocalGet(1));
-            name(&mut body, "slice");
-            body.extend([
-                Call(equal),
-                If(BlockType::Empty),
-                Call(b.names["source-array-slice-method"]),
-                Return,
-                End,
-            ]);
-            body.push(LocalGet(1));
-            name(&mut body, "hasOwnProperty");
-            body.extend([
-                Call(equal),
-                If(BlockType::Empty),
-                Call(b.names["source-array-has-own-method"]),
-                Return,
-                End,
-            ]);
-            for (name_value, export) in [
-                ("join", "source-array-join-method"),
-                ("valueOf", "source-array-valueOf-method"),
-                ("toString", "source-array-toString-method"),
-            ] {
-                body.push(LocalGet(1));
-                name(&mut body, name_value);
-                body.extend([
-                    Call(equal),
-                    If(BlockType::Empty),
-                    Call(b.names[export]),
-                    Return,
-                    End,
-                ]);
-            }
-            body.extend([
-                LocalGet(0),
-                LocalGet(1),
-                Call(b.names["source-array-get"]),
-                Return,
-            ]);
-        }
-        body.push(End);
         structure(&mut body, 0, 7, 1);
         body.push(LocalSet(payload));
         structure(&mut body, 0, 7, 0);

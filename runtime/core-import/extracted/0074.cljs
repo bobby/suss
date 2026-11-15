@@ -6,7 +6,25 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn iterable?
-  "Return true if x implements IIterable protocol."
-  [x]
-  (satisfies? IIterable x))
+(defn- iter-reduce
+  ([coll f]
+   (let [iter (-iterator coll)]
+     (if (.hasNext iter)
+       (let [init (.next iter)]
+         (loop [acc init]
+           (if ^boolean (.hasNext iter)
+             (let [nacc (f acc (.next iter))]
+               (if (reduced? nacc)
+                 @nacc
+                 (recur nacc)))
+             acc)))
+       (f))))
+  ([coll f init]
+   (let [iter (-iterator coll)]
+     (loop [acc init]
+       (if ^boolean (.hasNext iter)
+         (let [nacc (f acc (.next iter))]
+           (if (reduced? nacc)
+             @nacc
+             (recur nacc)))
+         acc)))))

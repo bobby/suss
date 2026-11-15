@@ -6,13 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn completing
-  "Takes a reducing function f of 2 args and returns a fn suitable for
-  transduce by adding an arity-1 signature that calls cf (default -
-  identity) on the result argument."
-  ([f] (completing f identity))
-  ([f cf]
-    (fn
-      ([] (f))
-      ([x] (cf x))
-      ([x y] (f x y)))))
+(deftype Many [vals]
+  Object
+  (add [this o]
+    (.push vals o)
+    this)
+  (remove [this]
+    (.shift vals))
+  (isEmpty [this]
+    (zero? (.-length vals)))
+  (toString [this]
+    (str_ "Many: " vals)))

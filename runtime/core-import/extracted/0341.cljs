@@ -6,10 +6,17 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn print-map [m print-one writer opts]
-  (let [ns&lift-map (when (map? m)
-                      (lift-ns m))
-        ns (some-> ns&lift-map (aget 0))]
-    (if ns
-      (print-prefix-map (str_ "#:" ns) (aget ns&lift-map 1) print-one writer opts)
-      (print-prefix-map nil m print-one writer opts))))
+(deftype PersistentQueueIter [^:mutable fseq riter]
+  Object
+  (hasNext [_]
+    (or (and (some? fseq) (seq fseq)) (and (some? riter) (.hasNext riter))))
+  (next [_]
+    (cond
+      (some? fseq)
+      (let [ret (first fseq)]
+        (set! fseq (next fseq))
+        ret)
+      (and (some? riter) ^boolean (.hasNext riter))
+      (.next riter)
+      :else (throw (js/Error. "No such element"))))
+  (remove [_] (js/Error. "Unsupported operation")))

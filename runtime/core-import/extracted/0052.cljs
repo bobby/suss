@@ -6,15 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^seq rest
-  "Returns a possibly empty seq of the items after the first. Calls seq on its
-  argument."
+(defn ^seq next
+  "Returns a seq of the items after the first. Calls seq on its
+  argument.  If there are no more items, returns nil"
   [coll]
-  (if-not (nil? coll)
-    (if (implements? ISeq coll)
-      (-rest coll)
-      (let [s (seq coll)]
-        (if s
-          (-rest ^not-native s)
-          ())))
-    ()))
+  (when-not (nil? coll)
+    (if (implements? INext coll)
+      (-next coll)
+      (seq (rest coll)))))

@@ -6,18 +6,17 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn interleave
-  "Returns a lazy seq of the first item in each coll, then the second etc."
-  ([] ())
-  ([c1] (lazy-seq c1))
-  ([c1 c2]
-     (lazy-seq
-      (let [s1 (seq c1) s2 (seq c2)]
-        (when (and s1 s2)
-          (cons (first s1) (cons (first s2)
-                                 (interleave (rest s1) (rest s2))))))))
-  ([c1 c2 & colls]
-     (lazy-seq
-      (let [ss (map seq (conj colls c2 c1))]
-        (when (every? identity ss)
-          (concat (map first ss) (apply interleave (map rest ss))))))))
+(defn tree-seq
+  "Returns a lazy sequence of the nodes in a tree, via a depth-first walk.
+  branch? must be a fn of one arg that returns true if passed a node
+  that can have children (but may not).  children must be a fn of one
+  arg that returns a sequence of the children. Will only be called on
+  nodes for which branch? returns true. Root is the root node of the
+  tree."
+   [branch? children root]
+   (let [walk (fn walk [node]
+                (lazy-seq
+                 (cons node
+                  (when (branch? node)
+                    (mapcat walk (children node))))))]
+     (walk root)))

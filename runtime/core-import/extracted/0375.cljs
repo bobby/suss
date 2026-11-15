@@ -6,12 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn to-array
-  "Returns an array containing the contents of coll."
+(defn reverse
+  "Returns a seq of the items in coll in reverse order. Not lazy."
   [coll]
-  (let [ary (array)]
-    (loop [s (seq coll)]
-      (if-not (nil? s)
-        (do (. ary push (first s))
-            (recur (next s)))
-        ary))))
+  (if (reversible? coll)
+    (or (rseq coll) ())
+    (reduce conj () coll)))

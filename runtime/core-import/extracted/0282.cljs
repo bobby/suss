@@ -6,14 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- build-subvec [meta v start end __hash]
-  (if (instance? Subvec v)
-    (recur meta (.-v v) (+ (.-start v) start) (+ (.-start v) end) __hash)
-    (do
-      (when-not (vector? v)
-        (throw (js/Error. "v must satisfy IVector")))
-      (when (or (neg? start)
-                (< end start)
-                (> end (count v)))
-        (throw (js/Error. "Index out of bounds")))
-      (Subvec. meta v start end __hash))))
+(defn subvec
+  "Returns a persistent vector of the items in vector from
+  start (inclusive) to end (exclusive).  If end is not supplied,
+  defaults to (count vector). This operation is O(1) and very fast, as
+  the resulting vector shares structure with the original and no
+  trimming is done."
+  ([v start]
+   (subvec v start (count v)))
+  ([v start end]
+   (assert (and (not (nil? start)) (not (nil? end))))
+   (build-subvec nil v (int start) (int end) nil)))

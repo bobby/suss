@@ -874,7 +874,7 @@ fn raw_tree_shapes_comparison_bits_errors_and_traces_match_fresh_pinned_observat
             });
         }
         // Decoder rejection controls are authored, not yet executed natively.
-        let unknown = s.eval_privileged("(js-obj)").unwrap();
+        let unknown = s.eval_privileged("(reify)").unwrap();
         assert!(
             s.inspect(&unknown, |mut store, value| raw_tree_decode(
                 &mut store,

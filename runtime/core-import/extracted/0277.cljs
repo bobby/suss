@@ -6,22 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn vec
-  "Creates a new vector containing the contents of coll. JavaScript arrays
-  will be aliased and should not be modified."
-  [coll]
-  (cond
-    (map-entry? coll)
-    [(key coll) (val coll)]
-
-    (vector? coll)
-    (with-meta coll nil)
-
-    (array? coll)
-    (.fromArray PersistentVector coll true)
-
-    :else
-    (-persistent!
-      (reduce -conj!
-        (-as-transient (.-EMPTY PersistentVector))
-        coll))))
+(defn hash-map
+  "keyval => key val
+  Returns a new hash map with supplied mappings."
+  [& keyvals]
+  (loop [in (seq keyvals), out (transient (.-EMPTY PersistentHashMap))]
+    (if in
+      (let [in' (next in)]
+        (if (nil? in')
+          (throw (js/Error. (str_ "No value supplied for key: " (first in))))
+          (recur (next in') (assoc! out (first in) (first in')) )))
+      (persistent! out))))

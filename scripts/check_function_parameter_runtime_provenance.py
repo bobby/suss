@@ -30,11 +30,15 @@ def adapt(raw, name):
                 .replace('(let [ary (array)]\n    (loop [s (seq coll)]', '(let [s (seq coll) ary (make-array (count s))]\n    (loop [s s i 0]')
                 .replace('(. ary push (first s))\n            (recur (next s)))', '(aset ary i (first s))\n            (recur (next s) (inc i)))'))
     if name == 'vector':
-        # Arguments applied from a packed primitive array take the vec path (#336).
+        # Only an object array's arguments are copied directly (#336, #425):
+        # a primitive array or a string takes the vec path.
         before = '(if (and (instance? IndexedSeq args) (zero? (.-i args)))'
-        after = '(if (and (instance? IndexedSeq args) (zero? (.-i args))\n           (not (suss.bootstrap/packed-array? (.-arr args))))'
+        after = '(if (and (instance? IndexedSeq args) (zero? (.-i args))\n           (suss.bootstrap/object-array? (.-arr args)))'
         if body.count(before) != 1: raise ValueError('exact IndexedSeq reuse site')
         body = body.replace(before, after)
+        clone = '(.fromArray PersistentVector (.-arr args) (not (array? (.-arr args))))'
+        if body.count(clone) != 1: raise ValueError('exact fromArray clone site')
+        body = body.replace(clone, '(.fromArray PersistentVector (.-arr args) false)')
     if name == 'some':
         before = '(when-let [s (seq coll)]\n    (or (pred (first s)) (recur pred (next s))))'
         after = '(let [some_seq_once__ (seq coll)]\n    (when some_seq_once__\n      (let [s some_seq_once__]\n        (or (pred (first s)) (recur pred (next s))))))'

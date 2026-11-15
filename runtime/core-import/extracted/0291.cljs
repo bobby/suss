@@ -6,6 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn odd?
-  "Returns true if n is odd, throws an exception if n is not an integer"
-  [n] (not (even? n)))
+(defn peek
+  "For a list or queue, same as first, for a vector, same as, but much
+  more efficient than, last. If the collection is empty, returns nil."
+  [coll]
+  (when-not (nil? coll)
+    (-peek coll)))

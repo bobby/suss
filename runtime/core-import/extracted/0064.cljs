@@ -6,20 +6,17 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^boolean =
-  "Equality. Returns true if x equals y, false if not. Compares
-  numbers and collections in a type-independent manner.  Clojure's immutable data
-  structures define -equiv (and thus =) as a value, not an identity,
-  comparison."
-  ([x] true)
-  ([x y]
-    (if (nil? x)
-      (nil? y)
-      (or (identical? x y)
-        ^boolean (-equiv x y))))
-  ([x y & more]
-     (if (= x y)
-       (if (next more)
-         (recur y (first more) (next more))
-         (= y (first more)))
-       false)))
+(defn- equiv-sequential
+  "Assumes x is sequential. Returns true if x equals y, otherwise
+  returns false."
+  [x y]
+  (boolean
+    (when (sequential? y)
+      (if (and (counted? x) (counted? y)
+               (not (== (count x) (count y))))
+        false
+        (loop [xs (seq x) ys (seq y)]
+          (cond (nil? xs) (nil? ys)
+            (nil? ys) false
+            (= (first xs) (first ys)) (recur (next xs) (next ys))
+            :else false))))))

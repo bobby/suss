@@ -6,7 +6,21 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn sorted-set
-  "Returns a new sorted set with supplied keys."
-  ([& keys]
-   (reduce -conj (.-EMPTY PersistentTreeSet) keys)))
+(defn take-while
+  "Returns a lazy sequence of successive items from coll while
+  (pred item) returns logical true. pred must be free of side-effects.
+  Returns a transducer when no collection is provided."
+  ([pred]
+     (fn [rf]
+       (fn
+         ([] (rf))
+         ([result] (rf result))
+         ([result input]
+            (if (pred input)
+              (rf result input)
+              (reduced result))))))
+  ([pred coll]
+     (lazy-seq
+       (when-let [s (seq coll)]
+         (when (pred (first s))
+           (cons (first s) (take-while pred (rest s))))))))

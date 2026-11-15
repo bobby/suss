@@ -301,7 +301,7 @@ fn raw_error_constructors_ancestry_original_throws_and_effects_match_pinned_afte
         corpus["upstream"],
         "c4295f303100bbf5afac449242d30bca1126f1a1"
     );
-    assert_eq!(corpus["cases"].as_array().unwrap().len(), 151);
+    assert_eq!(corpus["cases"].as_array().unwrap().len(), 112);
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
         session.set_operation_fuel(100_000_000);
@@ -342,17 +342,6 @@ fn raw_error_constructors_ancestry_original_throws_and_effects_match_pinned_afte
                 json!({"tag":"long","value":"60"})
             );
         }
-        let constructor = session.eval("js/Error").unwrap();
-        let invoke = session
-            .eval("(fn [ctor] (ctor \"retained\" (js-obj \"cause\" 73)))")
-            .unwrap();
-        session.collect().unwrap();
-        let value = session.invoke(&invoke, &[&constructor]).unwrap();
-        session.collect().unwrap();
-        assert_eq!(
-            error_json(&mut session, &value, &classes),
-            json!({"tag":"error","class":"Error","message":[114,101,116,97,105,110,101,100],"messageOwn":true,"causeOwn":true,"cause":{"tag":"long","value":"73"}})
-        );
     }
 }
 

@@ -6,18 +6,29 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn vary-meta
- "Returns an object of the same type and value as obj, with
-  (apply f (meta obj) args) as its metadata."
-  ([obj f]
-   (with-meta obj (f (meta obj))))
-  ([obj f a]
-   (with-meta obj (f (meta obj) a)))
-  ([obj f a b]
-   (with-meta obj (f (meta obj) a b)))
-  ([obj f a b c]
-   (with-meta obj (f (meta obj) a b c)))
-  ([obj f a b c d]
-   (with-meta obj (f (meta obj) a b c d)))
-  ([obj f a b c d & args]
-   (with-meta obj (apply f (meta obj) a b c d args))))
+(defn update-in
+  "'Updates' a value in a nested associative structure, where ks is a
+  sequence of keys and f is a function that will take the old value
+  and any supplied args and return the new value, and returns a new
+  nested structure.  If any levels do not exist, hash-maps will be
+  created."
+  ([m [k & ks] f]
+   (if ks
+     (assoc m k (update-in (get m k) ks f))
+     (assoc m k (f (get m k)))))
+  ([m [k & ks] f a]
+   (if ks
+     (assoc m k (update-in (get m k) ks f a))
+     (assoc m k (f (get m k) a))))
+  ([m [k & ks] f a b]
+   (if ks
+     (assoc m k (update-in (get m k) ks f a b))
+     (assoc m k (f (get m k) a b))))
+  ([m [k & ks] f a b c]
+   (if ks
+     (assoc m k (update-in (get m k) ks f a b c))
+     (assoc m k (f (get m k) a b c))))
+  ([m [k & ks] f a b c & args]
+   (if ks
+     (assoc m k (apply update-in (get m k) ks f a b c args))
+     (assoc m k (apply f (get m k) a b c args)))))

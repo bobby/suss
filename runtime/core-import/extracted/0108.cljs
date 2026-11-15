@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IReset
-  "Protocol for adding resetting functionality."
-  (-reset! [o new-value]
-    "Sets the value of o to new-value."))
+(defprotocol ISwap
+  "Protocol for adding swapping functionality."
+  (-swap! [o f] [o f a] [o f a b] [o f a b xs]
+    "Swaps the value of o to be (apply f current-value-of-atom args)."))

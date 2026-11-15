@@ -7,8 +7,8 @@ use std::process::Command;
 use suss_cli::portable_session::Session;
 
 const DEFINITIONS: &str = "(def log (atom []))
-(def tracked (fn [tag v] (swap! log conj [:eval tag]) (js-obj \"toString\" (fn [] (swap! log conj [:str tag]) v))))
-(def boom (fn [tag] (js-obj \"toString\" (fn [] (swap! log conj [:str tag]) (throw (ex-info \"boom\" {:tag tag}))))))";
+(def tracked (fn [tag v] (swap! log conj [:eval tag]) (reify Object (toString [_] (swap! log conj [:str tag]) v))))
+(def boom (fn [tag] (reify Object (toString [_] (swap! log conj [:str tag]) (throw (ex-info \"boom\" {:tag tag}))))))";
 const CASES: &[(&str, &str)] = &[
     ("two", "[(str \"a\" n) (str n \"a\") (str nil n) (str n nil) (str :k 'sym)]"),
     ("three", "[(str \"a\" n \"b\") (str nil nil nil) (str 1.5 (+ n 7) true)]"),

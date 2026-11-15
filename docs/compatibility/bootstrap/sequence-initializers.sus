@@ -353,8 +353,6 @@
 (set! (.-EMPTY PersistentTreeSet)
   (PersistentTreeSet. nil (.-EMPTY PersistentTreeMap) empty-unordered-hash))
 
-;; Complete pinned ExceptionInfo Error ancestry parent; EPL notice above.
-(set! (.-__proto__ (.-prototype ExceptionInfo)) (.-prototype js/Error))
 
 ;; Complete retained transducer setup parents; EPL-1.0, see ../transducers/provenance.json.
 ;; The JS iteration protocol's ITER_SYMBOL methods are not retained (#425).

@@ -6,10 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn merge
-  "Returns a map that consists of the rest of the maps conj-ed onto
-  the first.  If a key occurs in more than one map, the mapping from
-  the latter (left-to-right) will be the mapping in the result."
-  [& maps]
-  (when (some identity maps)
-    (reduce #(conj (or %1 {}) %2) maps)))
+(defn update
+  "'Updates' a value in an associative structure, where k is a
+  key and f is a function that will take the old value
+  and any supplied args and return the new value, and returns a new
+  structure.  If the key does not exist, nil is passed as the old value."
+  ([m k f]
+   (assoc m k (f (get m k))))
+  ([m k f x]
+   (assoc m k (f (get m k) x)))
+  ([m k f x y]
+   (assoc m k (f (get m k) x y)))
+  ([m k f x y z]
+   (assoc m k (f (get m k) x y z)))
+  ([m k f x y z & more]
+   (assoc m k (apply f (get m k) x y z more))))

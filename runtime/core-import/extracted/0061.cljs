@@ -6,23 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn count
-  "Returns the number of items in the collection. (count nil) returns
-  0.  Also works on strings, arrays, and Maps"
-  [coll]
-  (if-not (nil? coll)
-    (cond
-      (implements? ICounted coll)
-      (-count coll)
-
-      (array? coll)
-      (alength coll)
-
-      (string? coll)
-      ^number (.-length coll)
-
-      (implements? ISeqable coll)
-      (accumulating-seq-count coll)
-
-      :else (-count coll))
-    0))
+(def ^:private empty-ordered-hash
+  (mix-collection-hash 1 0))

@@ -230,11 +230,6 @@
       "patch": "docs/compatibility/patches/hash-combine.json"
     },
     {
-      "id": "runtime:js-obj:2284",
-      "source-sha256": "ac50f5ef05cbceeec7227d1284b2f9f7ddbce55b06cd374f9dd8a43458cff19e",
-      "patch": "docs/compatibility/patches/js-object-factory.json"
-    },
-    {
       "id": "runtime:List:3209",
       "source-sha256": "fe672cdb199ee851650e4805624585d3780aafeae1aa9be45ef34ec1cc95e465",
       "patch": null
@@ -397,7 +392,7 @@
     {
       "id": "runtime:IndexedSeqIterator:1644",
       "source-sha256": "b1552e35064f6a9a3b05998abe4180dab3afe2cc108c76f515088b977e516fba",
-      "patch": null
+      "patch": "docs/compatibility/patches/sequence-IndexedSeqIterator.json"
     },
     {
       "id": "runtime:RSeq:1768",
@@ -1645,11 +1640,6 @@
       "patch": "docs/compatibility/patches/printing-println-str.json"
     },
     {
-      "id": "runtime:object?:300",
-      "source-sha256": "acab7c2acbe084165c99e7acb72e58dfa754981c2eaa98a37ef64b7265caf43b",
-      "patch": "docs/compatibility/patches/printing-object-predicate.json"
-    },
-    {
       "id": "runtime:pr-writer-impl:10445",
       "source-sha256": "31496dfe26493383aa9bd1ac4c8147dc8ce517ce59a7775ed393327d8ac485cf",
       "patch": "docs/compatibility/patches/printing-pr-writer-impl.json"
@@ -2538,15 +2528,15 @@
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "7e8b201f46cc00f484266f56bbac5bb921ab11207d898df2758140bbb3c82e0b"
+      "sha256": "dc8d2bbe26f40cecc900104ab7f934d4ad03b92fcf7f848b9870d631e9061cdb"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
-      "sha256": "c9f5b019f60c4c43f34fb2d2103b2cac2596a7e67848efa2c8a7ea874bfc7b25"
+      "sha256": "103e0a72593a8ca21ccb771df1a947295054feb7e84ea9be70311c9d86f735b5"
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "72c706fb313d45a954dc1e561c329ba3d1a44dbff3e9b4705707af197044f7b2"
+      "sha256": "1b96b96a2b4abafffdadb628dc07d48f225e5cab7e4f0194b1d6b6661d927b9a"
     }
   }
 }

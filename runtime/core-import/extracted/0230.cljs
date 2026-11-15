@@ -6,11 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- clone-and-set
-  ([arr i a]
-     (doto (aclone arr)
-       (aset i a)))
-  ([arr i a j b]
-     (doto (aclone arr)
-       (aset i a)
-       (aset j b))))
+(defn- remove-pair [arr i]
+  (let [new-arr (make-array (- (alength arr) 2))]
+    (array-copy arr 0 new-arr 0 (* 2 i))
+    (array-copy arr (* 2 (inc i)) new-arr (* 2 i) (- (alength new-arr) (* 2 i)))
+    new-arr))

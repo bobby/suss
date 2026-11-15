@@ -6,6 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn associative?
- "Returns true if coll implements IAssociative"
-  [x] (satisfies? IAssociative x))
+(defn find
+  "Returns the map entry for key, or nil if key not present."
+  [coll k]
+  (if (ifind? coll)
+    (-find coll k)
+    (when (and (not (nil? coll))
+            (associative? coll)
+            (contains? coll k))
+      (MapEntry. k (get coll k) nil))))

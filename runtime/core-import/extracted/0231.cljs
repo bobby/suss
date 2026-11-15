@@ -6,8 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- remove-pair [arr i]
-  (let [new-arr (make-array (- (alength arr) 2))]
-    (array-copy arr 0 new-arr 0 (* 2 i))
-    (array-copy arr (* 2 (inc i)) new-arr (* 2 i) (- (alength new-arr) (* 2 i)))
-    new-arr))
+(defn- bitmap-indexed-node-index [bitmap bit]
+  (bit-count (bit-and bitmap (dec bit))))

@@ -6,11 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn with-meta
-  "Returns an object of the same type and value as obj, with
-  map m as its metadata."
-  [o meta]
-  (if (js-fn? o)
-    (MetaFn. o meta)
-    (when-not (nil? o)
-      (-with-meta o meta))))
+(defn meta
+  "Returns the metadata of obj, returns nil if there is no metadata."
+  [o]
+  (when (and (not (nil? o))
+             (satisfies? IMeta o))
+    (-meta o)))

@@ -6,8 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol ITransientAssociative
-  "Protocol for adding associativity to transient collections."
-  (^clj -assoc! [tcoll key val]
-    "Returns a new transient collection of tcoll with a mapping from key to
-     val added to it."))
+(defprotocol ITransientVector
+  "Protocol for adding vector functionality to transient collections."
+  (^clj -assoc-n! [tcoll n val]
+    "Returns tcoll with value val added at position n.")
+  (^clj -pop! [tcoll]
+    "Returns tcoll with the last item removed from it."))

@@ -6,7 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn remove-method
-  "Removes the method of multimethod associated with dispatch-value."
- [multifn dispatch-val]
- (-remove-method multifn dispatch-val))
+(defn methods
+  "Given a multimethod, returns a map of dispatch values -> dispatch fns"
+  [multifn] (-methods multifn))

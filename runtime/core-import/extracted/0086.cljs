@@ -6,19 +6,19 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- -indexOf
+(defn- -lastIndexOf
   ([coll x]
-   (-indexOf coll x 0))
+   (-lastIndexOf coll x (count coll)))
   ([coll x start]
    (let [len (count coll)]
-     (if (>= start len)
-       -1
-       (loop [idx (cond
-                    (pos? start) start
-                    (neg? start) (unchecked-max 0 (+ start len))
-                    :else start)]
-         (if (< idx len)
-           (if (= (nth coll idx) x)
-             idx
-             (recur (inc idx)))
-           -1))))))
+    (if (zero? len)
+      -1
+      (loop [idx (cond
+                   (pos? start) (unchecked-min (dec len) start)
+                   (neg? start) (+ len start)
+                   :else start)]
+        (if (>= idx 0)
+          (if (= (nth coll idx) x)
+            idx
+            (recur (dec idx)))
+          -1))))))
