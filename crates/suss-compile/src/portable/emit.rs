@@ -1497,6 +1497,59 @@ fn emit_function(
             heap_type: HeapType::Concrete(if kind == 6 { runtime_abi::ARGS } else { runtime_abi::PACKED_STORAGE + kind }),
         })));
     }
+    // Loop-invariant array views (#389): an inline aget or aset in a loop,
+    // of an array defined before the loop, casts the array to its storage
+    // once, at the end of the block that enters the loop, into a nullable
+    // local of that storage type; null if the array isn't of that kind. In
+    // the loop, the access reads the local instead of casting the array.
+    // Each access takes its innermost such loop.
+    let first_view = storage_locals + 7;
+    let mut view_of: std::collections::HashMap<u32, u32> = std::collections::HashMap::new();
+    let mut view_inits: Vec<(usize, u32, usize, u32)> = Vec::new();
+    if continuation.is_none() {
+        let mut defined = vec![usize::MAX; ir.values.len()];
+        for (index, block) in ir.blocks.iter().enumerate() {
+            for parameter in &block.parameters {
+                defined[parameter.0] = index;
+            }
+            for inst in &block.instructions {
+                defined[inst.result.0] = index;
+            }
+        }
+        let mut loops = ir::single_entry_loops(ir);
+        loops.sort_by_key(|(_, blocks)| blocks.len());
+        let mut keys: std::collections::HashMap<(usize, u32, usize), u32> = std::collections::HashMap::new();
+        for (entry_block, blocks) in &loops {
+            let inside = blocks.iter().copied().collect::<std::collections::HashSet<_>>();
+            for block in blocks {
+                for inst in &ir.blocks[*block].instructions {
+                    let (Operation::Nominal { operation: Nominal::PackedGet(kind) | Nominal::PackedSet(kind), arguments }) = &inst.operation else { continue };
+                    let result = inst.result.0 as u32;
+                    if view_of.contains_key(&result) || arguments.is_empty() {
+                        continue;
+                    }
+                    let array = arguments[0];
+                    let home = defined.get(array.0).copied().unwrap_or(usize::MAX);
+                    if home == usize::MAX || inside.contains(&home) {
+                        continue;
+                    }
+                    let key = (*entry_block, array.0 as u32, *kind);
+                    let local = *keys.entry(key).or_insert_with(|| {
+                        let local = first_view + view_inits.len() as u32;
+                        view_inits.push((*entry_block, array.0 as u32, *kind, local));
+                        local
+                    });
+                    view_of.insert(result, local);
+                }
+            }
+        }
+        for (_, _, kind, _) in &view_inits {
+            declarations.push((1, ValType::Ref(wasm_encoder::RefType {
+                nullable: true,
+                heap_type: HeapType::Concrete(if *kind == 6 { runtime_abi::ARGS } else { runtime_abi::PACKED_STORAGE + *kind as u32 }),
+            })));
+        }
+    }
     let mut function = Function::new(declarations);
     use Instruction::*;
     if continuation.is_none() {
@@ -2505,10 +2558,18 @@ fn emit_function(
                             };
                             // The access runs inside the cast's success block,
                             // where the storage local, non-nullable, is set.
-                            let mut code = vec![Block(BlockType::Result(result)), Block(BlockType::Result(VALUE)), LocalGet(array),
-                                cast(HeapType::Concrete(runtime_abi::PACKED)),
-                                StructGet { struct_type_index: runtime_abi::PACKED, field_index: 0 },
-                                cast(HeapType::Concrete(storage)), LocalSet(typed)];
+                            let mut code = vec![Block(BlockType::Result(result)), Block(BlockType::Result(VALUE))];
+                            if let Some(view) = view_of.get(&(inst.result.0 as u32)) {
+                                // The loop's view of the array (#389): null
+                                // when it isn't of this kind, which throws.
+                                code.extend([LocalGet(*view), RefIsNull, If(BlockType::Empty), LocalGet(array), Br(1), End,
+                                    LocalGet(*view), RefAsNonNull, LocalSet(typed)]);
+                            } else {
+                                code.extend([LocalGet(array),
+                                    cast(HeapType::Concrete(runtime_abi::PACKED)),
+                                    StructGet { struct_type_index: runtime_abi::PACKED, field_index: 0 },
+                                    cast(HeapType::Concrete(storage)), LocalSet(typed)]);
+                            }
                             // The inline path, or out to the generic one.
                             code.extend([Block(BlockType::Result(result)), Block(BlockType::Empty)]);
                             match locals.of(position) {
@@ -3216,6 +3277,29 @@ fn emit_function(
             Terminator::Branch { .. } => {}
         }
         for instruction in code.drain(..) { function.instruction(&instruction); }
+        for (_, array, kind, local) in view_inits.iter().filter(|(entry_block, ..)| *entry_block == block_id) {
+            let storage = if *kind == 6 { runtime_abi::ARGS } else { runtime_abi::PACKED_STORAGE + *kind as u32 };
+            function
+                .instruction(&Block(BlockType::Empty))
+                .instruction(&RefNull(HeapType::Concrete(storage)))
+                .instruction(&LocalSet(*local))
+                .instruction(&LocalGet(*array + offset))
+                .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::PACKED)))
+                .instruction(&I32Eqz)
+                .instruction(&BrIf(0))
+                .instruction(&LocalGet(*array + offset))
+                .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::PACKED)))
+                .instruction(&StructGet { struct_type_index: runtime_abi::PACKED, field_index: 0 })
+                // The method local is free between instructions.
+                .instruction(&LocalTee(method_local))
+                .instruction(&RefTestNonNull(HeapType::Concrete(storage)))
+                .instruction(&I32Eqz)
+                .instruction(&BrIf(0))
+                .instruction(&LocalGet(method_local))
+                .instruction(&RefCastNonNull(HeapType::Concrete(storage)))
+                .instruction(&LocalSet(*local))
+                .instruction(&End);
+        }
         match &block.terminator {
             Terminator::Throw(value) => {
                 if let Some(plan) = continuation {
