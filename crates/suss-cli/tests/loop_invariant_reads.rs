@@ -45,6 +45,25 @@ fn loops_read_vars_once_only_when_nothing_can_change_them() {
         ] {
             assert_eq!(printed(&mut session, source), expected, "{source}");
         }
+        // A loop casts an array defined before it once (#389): the wrong kind
+        // or nil still throws the hint's error, and writes land in the array.
+        session
+            .eval(
+                "(def as-ints (fn [a] (loop [i 0 acc 0] (if (< i 2) (recur (inc i) (+ acc (aget ^ints a i))) acc))))
+                 (def fill (fn [a] (loop [i 0] (if (< i (alength a)) (do (aset ^longs a i (* i i)) (recur (inc i))) a))))
+                 (def objects (fn [a] (loop [i 0 acc []] (if (< i (alength a)) (recur (inc i) (conj acc (aget ^objects a i))) acc))))",
+            )
+            .unwrap();
+        for (source, expected) in [
+            ("(as-ints (int-array [3 4]))", "7"),
+            ("(try (as-ints (long-array [3 4])) (catch :default e (ex-message e)))", "\"aget ^ints requires an int array\""),
+            ("(try (as-ints nil) (catch :default e (ex-message e)))", "\"aget ^ints requires an int array\""),
+            ("(vec (fill (long-array 4)))", "[0 1 4 9]"),
+            ("(objects (object-array [:a nil 3]))", "[:a nil 3]"),
+            ("(try (objects (long-array 1)) (catch :default e (ex-message e)))", "\"aget ^objects requires an object array\""),
+        ] {
+            assert_eq!(printed(&mut session, source), expected, "{source}");
+        }
         // Redefining the var between calls is seen by the next call.
         session.eval("(def x 7)").unwrap();
         assert_eq!(printed(&mut session, "(sum-x 2)"), "14");

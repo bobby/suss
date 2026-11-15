@@ -1207,50 +1207,7 @@ pub(crate) fn hoist_loop_invariant_reads(function: &mut Function) {
             }
         }
     }
-    let count = function.blocks.len();
-    let successors = |block: &Block| -> Vec<usize> {
-        match &block.terminator {
-            Terminator::Jump { target, .. } => vec![*target],
-            Terminator::Branch { consequent, alternative, .. } => vec![*consequent, *alternative],
-            Terminator::Throw(_) | Terminator::Return(_) => vec![],
-        }
-    };
-    let mut predecessors = vec![Vec::new(); count];
-    for (index, block) in function.blocks.iter().enumerate() {
-        for successor in successors(block) {
-            if successor < count {
-                predecessors[successor].push(index);
-            }
-        }
-    }
-    // Back edges: a jump to an earlier block, whose natural loop is every
-    // block that reaches the latch without passing through the header.
-    let mut back_edges = Vec::new();
-    for (index, block) in function.blocks.iter().enumerate() {
-        if let Terminator::Jump { target, .. } = &block.terminator {
-            if *target <= index {
-                back_edges.push((index, *target));
-            }
-        }
-    }
-    for (latch, header) in back_edges {
-        let mut inside = vec![false; count];
-        inside[header] = true;
-        let mut stack = vec![latch];
-        while let Some(block) = stack.pop() {
-            if inside[block] {
-                continue;
-            }
-            inside[block] = true;
-            stack.extend(predecessors[block].iter().copied());
-        }
-        // One entry from outside, by a plain jump.
-        let outside = predecessors[header].iter().copied().filter(|block| !inside[*block]).collect::<Vec<_>>();
-        let [entry] = outside[..] else { continue };
-        if !matches!(function.blocks[entry].terminator, Terminator::Jump { target, .. } if target == header) {
-            continue;
-        }
-        let blocks = (0..count).filter(|block| inside[*block]).collect::<Vec<_>>();
+    for (entry, blocks) in single_entry_loops(function) {
         let safe = blocks.iter().all(|block| {
             function.blocks[*block].instructions.iter().all(|instruction| loop_safe(&instruction.operation))
         });
@@ -1271,6 +1228,53 @@ pub(crate) fn hoist_loop_invariant_reads(function: &mut Function) {
         }
         function.blocks[entry].instructions.extend(hoisted);
     }
+}
+
+/// The natural loops of `function` that have one entry from outside, by a
+/// plain jump to the header: each loop's entry block and its blocks, in
+/// order. A loop is every block that reaches a back edge's latch without
+/// passing through its header.
+pub(crate) fn single_entry_loops(function: &Function) -> Vec<(usize, Vec<usize>)> {
+    let count = function.blocks.len();
+    let successors = |block: &Block| -> Vec<usize> {
+        match &block.terminator {
+            Terminator::Jump { target, .. } => vec![*target],
+            Terminator::Branch { consequent, alternative, .. } => vec![*consequent, *alternative],
+            Terminator::Throw(_) | Terminator::Return(_) => vec![],
+        }
+    };
+    let mut predecessors = vec![Vec::new(); count];
+    for (index, block) in function.blocks.iter().enumerate() {
+        for successor in successors(block) {
+            if successor < count {
+                predecessors[successor].push(index);
+            }
+        }
+    }
+    let mut loops = Vec::new();
+    for (latch, block) in function.blocks.iter().enumerate() {
+        let Terminator::Jump { target: header, .. } = block.terminator else { continue };
+        if header > latch {
+            continue;
+        }
+        let mut inside = vec![false; count];
+        inside[header] = true;
+        let mut stack = vec![latch];
+        while let Some(block) = stack.pop() {
+            if inside[block] {
+                continue;
+            }
+            inside[block] = true;
+            stack.extend(predecessors[block].iter().copied());
+        }
+        let outside = predecessors[header].iter().copied().filter(|block| !inside[*block]).collect::<Vec<_>>();
+        let [entry] = outside[..] else { continue };
+        if !matches!(function.blocks[entry].terminator, Terminator::Jump { target, .. } if target == header) {
+            continue;
+        }
+        loops.push((entry, (0..count).filter(|block| inside[*block]).collect()));
+    }
+    loops
 }
 
 /// Whether an operation in a loop runs no user code and writes no var, so
