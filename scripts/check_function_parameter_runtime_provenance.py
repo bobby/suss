@@ -44,7 +44,9 @@ def adapt(raw, name):
         after = '(let [some_seq_once__ (seq coll)]\n    (when some_seq_once__\n      (let [s some_seq_once__]\n        (or (pred (first s)) (recur pred (next s))))))'
         if body.count(before) != 1: raise ValueError('exact complete when-let site')
         body = body.replace(before, after)
-    return '(def ' + name + '\n' + ('  ' + raw[nodes[2].start:nodes[2].end] + '\n' if doc else '') + '  (fn ' + body + '))'
+    # to-array's result is an Object[], tagged as Clojure's is (#389).
+    tag = '^objects ' if name == 'to-array' else ''
+    return '(def ' + tag + name + '\n' + ('  ' + raw[nodes[2].start:nodes[2].end] + '\n' if doc else '') + '  (fn ' + body + '))'
 
 def verify(recipe=None, patches=None):
     if recipe is None: recipe = json.loads((ROOT / 'docs/compatibility/core-import.json').read_text())

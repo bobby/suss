@@ -2199,7 +2199,21 @@ fn emit_function(
                         // boxed numbers and strings.
                         Nominal::Identical => {
                             let [a, b] = [arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset];
+                            // A long in i31 range has no other representation,
+                            // so when either operand is one, identity is the
+                            // reference's (#389).
+                            let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
                             function
+                                .instruction(&LocalGet(a))
+                                .instruction(&RefTestNonNull(i31))
+                                .instruction(&LocalGet(b))
+                                .instruction(&RefTestNonNull(i31))
+                                .instruction(&I32Or)
+                                .instruction(&If(BlockType::Result(ValType::I32)))
+                                .instruction(&LocalGet(a))
+                                .instruction(&LocalGet(b))
+                                .instruction(&RefEq)
+                                .instruction(&Else)
                                 .instruction(&LocalGet(a))
                                 .instruction(&LocalGet(b))
                                 .instruction(&RefEq)
@@ -2241,6 +2255,7 @@ fn emit_function(
                                 .instruction(&RefEq)
                                 .instruction(&Else)
                                 .instruction(&I32Const(0))
+                                .instruction(&End)
                                 .instruction(&End)
                                 .instruction(&End)
                                 .instruction(&End);

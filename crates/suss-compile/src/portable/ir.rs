@@ -1183,7 +1183,127 @@ pub fn lower_metered(
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<Function, Diagnostic> {
     verify_recurrence(hir, &mut Vec::new(), false, meter)?;
-    Lowerer::new(hir.span.clone(), meter)?.finish(hir)
+    let mut function = Lowerer::new(hir.span.clone(), meter)?.finish(hir)?;
+    hoist_loop_invariant_reads(&mut function);
+    Ok(function)
+}
+
+/// Loop-invariant var reads (#389): in a loop whose body runs no user code
+/// and writes no var, a var's value can't change between iterations, so its
+/// reads move to the block that enters the loop and happen once. A read has
+/// no effect, so reading before a loop that runs no iterations is harmless.
+/// Closures' bodies are visited too; async continuations are left alone.
+pub(crate) fn hoist_loop_invariant_reads(function: &mut Function) {
+    for block in &mut function.blocks {
+        for instruction in &mut block.instructions {
+            match &mut instruction.operation {
+                Operation::MakeClosure { body, .. } => hoist_loop_invariant_reads(&mut body.function),
+                Operation::MakeGeneralClosure { body, .. } => {
+                    for method in &mut body.methods {
+                        hoist_loop_invariant_reads(&mut method.function);
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+    let count = function.blocks.len();
+    let successors = |block: &Block| -> Vec<usize> {
+        match &block.terminator {
+            Terminator::Jump { target, .. } => vec![*target],
+            Terminator::Branch { consequent, alternative, .. } => vec![*consequent, *alternative],
+            Terminator::Throw(_) | Terminator::Return(_) => vec![],
+        }
+    };
+    let mut predecessors = vec![Vec::new(); count];
+    for (index, block) in function.blocks.iter().enumerate() {
+        for successor in successors(block) {
+            if successor < count {
+                predecessors[successor].push(index);
+            }
+        }
+    }
+    // Back edges: a jump to an earlier block, whose natural loop is every
+    // block that reaches the latch without passing through the header.
+    let mut back_edges = Vec::new();
+    for (index, block) in function.blocks.iter().enumerate() {
+        if let Terminator::Jump { target, .. } = &block.terminator {
+            if *target <= index {
+                back_edges.push((index, *target));
+            }
+        }
+    }
+    for (latch, header) in back_edges {
+        let mut inside = vec![false; count];
+        inside[header] = true;
+        let mut stack = vec![latch];
+        while let Some(block) = stack.pop() {
+            if inside[block] {
+                continue;
+            }
+            inside[block] = true;
+            stack.extend(predecessors[block].iter().copied());
+        }
+        // One entry from outside, by a plain jump.
+        let outside = predecessors[header].iter().copied().filter(|block| !inside[*block]).collect::<Vec<_>>();
+        let [entry] = outside[..] else { continue };
+        if !matches!(function.blocks[entry].terminator, Terminator::Jump { target, .. } if target == header) {
+            continue;
+        }
+        let blocks = (0..count).filter(|block| inside[*block]).collect::<Vec<_>>();
+        let safe = blocks.iter().all(|block| {
+            function.blocks[*block].instructions.iter().all(|instruction| loop_safe(&instruction.operation))
+        });
+        if !safe {
+            continue;
+        }
+        let mut hoisted = Vec::new();
+        for block in &blocks {
+            let instructions = &mut function.blocks[*block].instructions;
+            let mut index = 0;
+            while index < instructions.len() {
+                if matches!(instructions[index].operation, Operation::GlobalRead(_)) {
+                    hoisted.push(instructions.remove(index));
+                } else {
+                    index += 1;
+                }
+            }
+        }
+        function.blocks[entry].instructions.extend(hoisted);
+    }
+}
+
+/// Whether an operation in a loop runs no user code and writes no var, so
+/// that the loop's var reads are invariant. Anything not known is unsafe.
+fn loop_safe(operation: &Operation) -> bool {
+    use super::hir::Comparison as C;
+    match operation {
+        Operation::Literal(_)
+        | Operation::GlobalRead(_)
+        | Operation::GlobalCell(_)
+        | Operation::GlobalBound(_)
+        | Operation::NilTest(_)
+        | Operation::Bitwise { .. }
+        | Operation::Array { .. }
+        | Operation::MakeClosure { .. }
+        | Operation::MakeGeneralClosure { .. } => true,
+        Operation::Comparison { operation, .. } => !matches!(operation, C::Less | C::LessEqual | C::Greater | C::GreaterEqual),
+        Operation::Arithmetic { coercing, .. } => !coercing,
+        Operation::Nominal { operation, .. } => {
+            use super::hir::Nominal as N;
+            matches!(
+                operation,
+                N::IsNumber | N::IsLongValue | N::PackedGet(_) | N::PackedSet(_) | N::StringHash
+                    | N::VectorNth | N::LongCast | N::DoubleCast | N::StringAppendLong | N::IsKeyword
+                    | N::IsString | N::IsBoolean | N::Identical | N::AllSmallIntegers | N::NumberHash
+                    | N::IsObject | N::SameReference | N::IsDescriptor | N::IsClosure | N::Array
+                    | N::Instance | N::SameNominalType | N::Field(_) | N::FieldSet(_)
+                    | N::IsNativeObject | N::IsTypeConstructor | N::IsLanguageError | N::LanguageError
+                    | N::StringIndexOf | N::StringSlice | N::StringFromUnit | N::ConcatString
+            )
+        }
+        _ => false,
+    }
 }
 
 fn lower_charge(
