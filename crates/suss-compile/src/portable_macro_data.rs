@@ -316,27 +316,6 @@ impl FormBridge {
             constructors.insert(class, roots.len());
             roots.push(value);
         }
-        // Source arrays have a private runtime descriptor rather than a public
-        // class constructor. Capture its actual identity from one owned sample.
-        let value = session.eval("(suss.core/array)")?;
-        let id = session.inspect(&value, |mut store, value| {
-            let owner = fields(&mut store, &value, 4)?;
-            let descriptor = fields(&mut store, &owner[0], 6)?;
-            match descriptor[0] {
-                Val::I64(id) => Ok(id),
-                _ => Err(error("Invalid source array descriptor identity")),
-            }
-        })?;
-        let descriptor = session.data_descriptor(&value, false)?;
-        if classes
-            .insert(id, (Class::SourceArray, descriptor))
-            .is_some()
-        {
-            return Err(SessionError::Host(error(
-                "Duplicate macro data array identity",
-            )));
-        }
-        roots.push(value);
         let mut factories = BTreeMap::new();
         for (name, source) in [
             ("hash", "suss.core/hash"),

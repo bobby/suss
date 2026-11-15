@@ -1816,13 +1816,13 @@ impl Session {
             }
         }
     }
-    /// Build a language source array from already rooted values. The runtime
-    /// clones the internal argument buffer, preserving element identities.
+    /// Build a language array, an object array (#425), from already rooted
+    /// values, preserving element identities.
     pub(crate) fn data_array(
         &mut self,
         values: &[&SessionValue],
     ) -> Result<SessionValue, SessionError> {
-        self.data_array_of(values, "source-array-new")
+        self.data_array_of(values, "object-array-new")
     }
     /// An object array (#378) of already rooted values, as vectors hold.
     pub(crate) fn data_object_array(
@@ -2847,7 +2847,7 @@ mod tests {
             .eval("(def effects 0) (def join-effects 0) (def ^:dynamic *value* 1)")
             .unwrap();
         let resume = session.eval(
-            "(fn [c] (do (set! effects (+ effects 1)) (binding [*value* 7] (.join (array (js-obj \"toString\" (fn [] (set! join-effects (+ join-effects 1)) (loop [] (recur)))))))))",
+            "(fn [c] (do (set! effects (+ effects 1)) (binding [*value* 7] (str (js-obj \"toString\" (fn [] (set! join-effects (+ join-effects 1)) (loop [] (recur))))))))",
         ).unwrap();
         let runtime = session.runtime;
         let (producer, token, caller) = {

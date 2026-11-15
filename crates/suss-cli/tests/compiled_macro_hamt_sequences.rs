@@ -247,7 +247,7 @@ fn compiled_macro_hamt_sequences_reject_corrupt_cursors_and_cycles_with_location
         let entry = serde_json::json!({"tag":"seq", "items":[{"tag":"vector", "items":[{"tag":"f64", "bits":"401c000000000000"}, {"tag":"f64", "bits":"4020000000000000"}]}]});
         assert_eq!(tagged(&decoded), serde_json::json!({"tag":"vector", "items":[entry.clone(), entry]}));
         let sparse = session
-            .eval_privileged("(NodeSeq. nil (array 7 8 nil (aget (array) 0)) 0 nil nil)")
+            .eval_privileged("(NodeSeq. nil (array 7 8 nil js/undefined) 0 nil nil)")
             .unwrap();
         session.collect().unwrap();
         let decoded = bridge.read(&mut session, &sparse, 70..80).unwrap();
@@ -255,7 +255,7 @@ fn compiled_macro_hamt_sequences_reject_corrupt_cursors_and_cycles_with_location
             tagged(&decoded),
             serde_json::json!({"tag":"seq", "items":[{"tag":"vector", "items":[{"tag":"f64", "bits":"401c000000000000"}, {"tag":"f64", "bits":"4020000000000000"}]}]})
         );
-        let undefined = session.eval("(aget (array) 0)").unwrap();
+        let undefined = session.eval("js/undefined").unwrap();
         assert!(bridge.read(&mut session, &undefined, 70..80).is_err());
     }
 }

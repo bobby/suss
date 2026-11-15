@@ -122,13 +122,13 @@ fn persistent_session_command_repl_reports_malformed_and_incomplete_input() {
 
 #[test]
 fn persistent_session_command_repl_displays_arrays_as_pr_str_prints_them() {
-    // Displayed with core's printer since #288, as `#js [...]`.
+    // Displayed with core's printer since #288, as Clojure prints an Object[] (#425).
     let output = repl("(array)\n(array 1 \"a\")\n42\n");
     assert!(output.status.success(), "{output:?}");
     assert_eq!(String::from_utf8(output.stderr).unwrap(), "");
     assert_eq!(
         String::from_utf8(output.stdout).unwrap(),
-        "#js []\n#js [1 \"a\"]\n42\n"
+        "#object[\"[Ljava.lang.Object;\" 0x1 \"[Ljava.lang.Object;@1\"]\n#object[\"[Ljava.lang.Object;\" 0x2 \"[Ljava.lang.Object;@2\"]\n42\n"
     );
 }
 

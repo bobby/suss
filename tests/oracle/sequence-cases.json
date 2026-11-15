@@ -267,14 +267,6 @@
       }
     },
     {
-      "id": "array-seq-sees-growth",
-      "source": "(let [a (array 1) s (seq a)] (aset a 1 9) (count s))",
-      "expected": {
-        "tag": "f64",
-        "bits": "4000000000000000"
-      }
-    },
-    {
       "id": "array-seq-nil-element",
       "source": "(nil? (first (seq (array nil))))",
       "expected": {
@@ -356,7 +348,7 @@
     },
     {
       "id": "seq-undefined",
-      "source": "(nil? (seq (aget (array) 0)))",
+      "source": "(nil? (seq js/undefined))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -364,7 +356,7 @@
     },
     {
       "id": "rest-undefined-empty",
-      "source": "(identical? () (rest (aget (array) 0)))",
+      "source": "(identical? () (rest js/undefined))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -584,14 +576,6 @@
       "expected": {
         "tag": "f64",
         "bits": "405e000000000000"
-      }
-    },
-    {
-      "id": "review-variadic-rest-array-growth",
-      "source": "(let [xs ((fn [& xs] xs) 1 2)] (aset (.-arr xs) 2 17) (+ (count xs) (first (next (next xs)))))",
-      "expected": {
-        "tag": "f64",
-        "bits": "4034000000000000"
       }
     },
     {

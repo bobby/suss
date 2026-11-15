@@ -217,8 +217,7 @@ pub(super) fn functions(b: &mut Builder) {
     ];
     // Java's NegativeArraySizeException message is the length alone.
     body.extend(raise(b, &[Ok(""), Err(1)]));
-    body.extend([End, LocalGet(2), I32Const(arrays::MAX_LENGTH), I32GtS, If(BlockType::Empty)]);
-    body.extend(raise(b, &[Ok("Array length out of range: "), Err(1)]));
+    // Any int length is allowed, as on the JVM: (int n) bounds it.
     body.extend([End, LocalGet(0), Call(b.names["long-unbox"]), I32WrapI64, LocalSet(3)]);
     for kind in 0..KINDS.len() {
         body.extend([
@@ -260,6 +259,202 @@ pub(super) fn functions(b: &mut Builder) {
             I32Const(0), // Identity UID, unassigned.
             RefI31,
             StructNew(PACKED),
+        ],
+    );
+    // `(array a b ...)` called as a function (#425): the arguments' array may
+    // be the caller's, so the object array holds a copy.
+    b.function_with_locals(
+        "object-array-copy",
+        &[VALUE],
+        &[VALUE],
+        &[(1, ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(ARGS) })), (1, ValType::I32)],
+        &[
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(ARGS)),
+            ArrayLen,
+            LocalTee(2),
+            ArrayNewDefault(ARGS),
+            LocalSet(1),
+            LocalGet(1),
+            I32Const(0),
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(ARGS)),
+            I32Const(0),
+            LocalGet(2),
+            ArrayCopy { array_type_index_dst: ARGS, array_type_index_src: ARGS },
+            LocalGet(1),
+            RefAsNonNull,
+            I32Const(0), // Identity UID, unassigned.
+            RefI31,
+            StructNew(PACKED),
+        ],
+    );
+    // `(make-array n)`, `(make-array type n)` and `(make-array type n & dims)`
+    // (#425): Clojure's nil-filled object array. With more dimensions each
+    // element is a new array of the next, as the JVM's multi-dimensional
+    // arrays are. Its argument holds the sizes, outermost first; the type is
+    // not evaluated. Params: 0 the sizes, 1 the dimension. Locals: 2 the
+    // array, 3 its storage, 4 the index.
+    let dimension = b.count;
+    let mut body = vec![
+        I32Const(OBJECTS as i32),
+        RefI31,
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        LocalGet(1),
+        ArrayGet(ARGS),
+        Call(b.names["packed-array-new"]),
+        LocalSet(2),
+        LocalGet(1),
+        I32Const(1),
+        I32Add,
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        ArrayLen,
+        I32LtU,
+        If(BlockType::Empty),
+    ];
+    body.extend([
+        LocalGet(2),
+        RefCastNonNull(HeapType::Concrete(PACKED)),
+        StructGet { struct_type_index: PACKED, field_index: 0 },
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        LocalSet(3),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(4),
+        LocalGet(3),
+        ArrayLen,
+        I32GeU,
+        BrIf(1),
+        LocalGet(3),
+        LocalGet(4),
+        LocalGet(0),
+        LocalGet(1),
+        I32Const(1),
+        I32Add,
+        Call(dimension),
+        ArraySet(ARGS),
+        LocalGet(4),
+        I32Const(1),
+        I32Add,
+        LocalSet(4),
+        Br(0),
+        End,
+        End,
+        End,
+        LocalGet(2),
+    ]);
+    b.function_with_locals(
+        "object-array-dimension",
+        &[VALUE, ValType::I32],
+        &[VALUE],
+        &[(1, VALUE), (1, ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(ARGS) })), (1, ValType::I32)],
+        &body,
+    );
+    let mut body = vec![
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        ArrayLen,
+        I32Eqz,
+        If(BlockType::Empty),
+    ];
+    body.extend(raise(b, &[Ok("make-array requires a size")]));
+    // Every size is checked first, as the JVM checks them: with an empty
+    // outer dimension, a negative inner size still throws. Locals: 1 the
+    // index, 2 a size.
+    body.extend([
+        End,
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(1),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        ArrayLen,
+        I32GeU,
+        BrIf(1),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        LocalGet(1),
+        ArrayGet(ARGS),
+        Call(b.names["number-cast-int"]),
+        LocalTee(2),
+        Call(b.names["long-unbox"]),
+        I64Const(0),
+        I64LtS,
+        If(BlockType::Empty),
+    ]);
+    // Java's NegativeArraySizeException message is the size alone.
+    body.extend(raise(b, &[Ok(""), Err(2)]));
+    body.extend([
+        End,
+        LocalGet(1),
+        I32Const(1),
+        I32Add,
+        LocalSet(1),
+        Br(0),
+        End,
+        End,
+        LocalGet(0),
+        I32Const(0),
+        Call(dimension),
+    ]);
+    let make = b.function_with_locals("object-array-make", &[VALUE], &[VALUE], &[(1, ValType::I32), (1, VALUE)], &body);
+    // make-array called as a function: its first argument, when there are
+    // more, is the type, which is not used. Locals: 1 the sizes.
+    let args = || [LocalGet(0), RefCastNonNull(HeapType::Concrete(ARGS))];
+    let mut body = args().to_vec();
+    body.extend([ArrayLen, I32Const(2), I32LtU, If(BlockType::Empty), LocalGet(0), Call(make), Return, End]);
+    body.extend(args());
+    body.extend([ArrayLen, I32Const(1), I32Sub, ArrayNewDefault(ARGS), LocalTee(1), I32Const(0)]);
+    body.extend(args());
+    body.extend([I32Const(1), LocalGet(1), ArrayLen, ArrayCopy { array_type_index_dst: ARGS, array_type_index_src: ARGS }]);
+    body.extend([LocalGet(1), Call(make)]);
+    b.function_with_locals(
+        "object-array-make-args",
+        &[VALUE],
+        &[VALUE],
+        &[(1, ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(ARGS) }))],
+        &body,
+    );
+    // An object array's elements as a fresh argument array, as `.apply`
+    // spreads them (#425), or null for any other value.
+    b.function_with_locals(
+        "object-array-elements",
+        &[VALUE],
+        &[ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(ARGS) })],
+        &[(2, ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(ARGS) })), (1, VALUE)],
+        &[
+            LocalGet(0),
+            RefTestNonNull(HeapType::Concrete(PACKED)),
+            I32Eqz,
+            If(BlockType::Empty),
+            RefNull(HeapType::Concrete(ARGS)),
+            Return,
+            End,
+            LocalGet(0),
+            RefCastNonNull(HeapType::Concrete(PACKED)),
+            StructGet { struct_type_index: PACKED, field_index: 0 },
+            LocalTee(3),
+            RefTestNonNull(HeapType::Concrete(ARGS)),
+            I32Eqz,
+            If(BlockType::Empty),
+            RefNull(HeapType::Concrete(ARGS)),
+            Return,
+            End,
+            LocalGet(3),
+            RefCastNonNull(HeapType::Concrete(ARGS)),
+            LocalTee(1),
+            ArrayLen,
+            ArrayNewDefault(ARGS),
+            LocalTee(2),
+            I32Const(0),
+            LocalGet(1),
+            I32Const(0),
+            LocalGet(1),
+            ArrayLen,
+            ArrayCopy { array_type_index_dst: ARGS, array_type_index_src: ARGS },
+            LocalGet(2),
         ],
     );
 

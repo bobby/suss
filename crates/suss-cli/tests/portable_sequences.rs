@@ -22,7 +22,7 @@ fn number(session: &mut Session, value: &SessionValue) -> RuntimeNumber {
         .unwrap()
 }
 fn eval_number(session: &mut Session, source: &str) -> RuntimeNumber {
-    let value = session.eval(source).unwrap();
+    let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error:?}"));
     number(session, &value)
 }
 
@@ -66,7 +66,7 @@ fn sequence_foundations_match_independently_encoded_primary_observations() {
     let corpus: serde_json::Value =
         serde_json::from_str(include_str!("../../../tests/oracle/sequence-cases.json")).unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 137);
+    assert_eq!(cases.len(), 135);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -148,7 +148,7 @@ fn retained_concrete_sequence_types_execute_fields_tails_metadata_and_gc() {
         session.collect().unwrap();
     }
     session
-        .eval("(aset retained-array 0 31) (aset retained-array 2 41)")
+        .eval("(aset retained-array 0 31) (aset retained-array 1 41)")
         .unwrap();
     session.collect().unwrap();
     assert_eq!(
@@ -157,7 +157,7 @@ fn retained_concrete_sequence_types_execute_fields_tails_metadata_and_gc() {
     );
     assert_eq!(
         eval_number(&mut session, "(count retained-view)"),
-        RuntimeNumber::Long(3)
+        RuntimeNumber::Long(2)
     );
     assert!(eval_bool(&mut session, "(nil? (seq (array)))"));
     assert!(eval_bool(&mut session, "(nil? (seq \"\"))"));

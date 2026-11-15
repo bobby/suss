@@ -87,7 +87,21 @@ pub(super) fn functions(
             End,
         ]);
     }
+    // An object array is the array kind (#425), as a source array was:
+    // `extend-type array` extends Clojure's Object[].
     body.extend([
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(PACKED)),
+        If(BlockType::Empty),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(PACKED)),
+        StructGet { struct_type_index: PACKED, field_index: 0 },
+        RefTestNonNull(HeapType::Concrete(ARGS)),
+        If(BlockType::Empty),
+        I32Const(6),
+        Return,
+        End,
+        End,
         LocalGet(0),
         Call(b.names["source-array?"]),
         If(BlockType::Empty),

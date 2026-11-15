@@ -59,49 +59,15 @@ fn queue_versions_share_front_and_rear_storage_and_sole_handle_survives_gc() {
         session.collect().unwrap();
         session
             .inspect(&storage, |mut store, value| {
-                let source_array = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-                assert_eq!(source_array.fields(&mut store)?.count(), 4);
-                let array_fields = source_array
-                    .field(&mut store, 1)?
+                // An object array (#425): {storage, uid}, its storage the values.
+                let object_array = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
+                assert_eq!(object_array.fields(&mut store)?.count(), 2);
+                let versions = object_array
+                    .field(&mut store, 0)?
                     .unwrap_anyref()
                     .unwrap()
                     .as_array(&store)?
                     .unwrap();
-                assert_eq!(array_fields.len(&store)?, 2);
-                assert_eq!(
-                    {
-                        let metadata = array_fields.get(&mut store, 1)?;
-                        sentinel_tag(&mut store, &metadata)?.unwrap()
-                    },
-                    0
-                );
-                let backing = array_fields
-                    .get(&mut store, 0)?
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_array(&store)?
-                    .unwrap();
-                assert_eq!(backing.len(&store)?, 4);
-                let length = backing.get(&mut store, 0)?;
-                assert_eq!(runtime_number(&mut store, &length)?, Some(Long(4)));
-                let sparse_value = backing.get(&mut store, 1)?;
-                assert_eq!(sentinel_tag(&mut store, &sparse_value)?.unwrap(), 0);
-                let versions = backing
-                    .get(&mut store, 2)?
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_array(&store)?
-                    .unwrap();
-                let mask = backing
-                    .get(&mut store, 3)?
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_array(&store)?
-                    .unwrap();
-                assert_eq!(mask.len(&store)?, 4);
-                for index in 0..4 {
-                    assert_eq!(mask.get(&mut store, index)?.unwrap_i32(), 1);
-                }
                 assert_eq!(versions.len(&store)?, 4);
                 let mut fronts = Vec::new();
                 let mut rears = Vec::new();

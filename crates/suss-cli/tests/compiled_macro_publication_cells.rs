@@ -26,10 +26,10 @@ fn publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc() {
             ("(def publication-value nil)", true),
             ("(def publication-value false)", true),
             ("(def publication-value 0)", true),
-            // Pinned literal make-array expands to a present nil slot, not a hole.
+            // make-array fills with nil, a present value (#425).
             ("(def publication-value (aget (make-array 1) 0))", true),
             (
-                "(def publication-value (let [make make-array] (aget (make 1) 0)))",
+                "(def publication-value js/undefined)",
                 false,
             ),
             (
@@ -48,7 +48,7 @@ fn publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc() {
         let actual = bridge.read(&mut session, &effects, 0..0).unwrap();
         assert!(matches!(&actual.kind, Kind::Long(0)));
         let result = session
-            .eval("(binding [publication-value (let [make make-array] (aget (make 1) 0))] (suss.compiler/cell-defined? user/publication-value))");
+            .eval("(binding [publication-value js/undefined] (suss.compiler/cell-defined? user/publication-value))");
         // Preserve the existing binding kernel's selected dynamic value.
         boolean(&mut session, &result.unwrap(), false);
         let result = session.invoke(&probe, &[]).unwrap();
@@ -71,7 +71,7 @@ fn publication_probe_sees_later_class_and_dynamic_overrides_without_replaying() 
         session
             .eval("(def ^:dynamic publication-dynamic nil)")
             .unwrap();
-        let result = session.eval("(binding [publication-dynamic (let [make make-array] (aget (make 1) 0))] (suss.compiler/cell-defined? user/publication-dynamic))").unwrap();
+        let result = session.eval("(binding [publication-dynamic js/undefined] (suss.compiler/cell-defined? user/publication-dynamic))").unwrap();
         boolean(&mut session, &result, false);
         let result = session
             .eval("(suss.compiler/cell-defined? user/publication-dynamic)")

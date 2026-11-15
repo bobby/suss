@@ -133,11 +133,15 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     // These owner adapters call a checked sparse operation immediately after
     // extracting field zero. Validate owner shape here and backing in that
     // operation once, rather than walking the same sparse chain twice.
+    // An object array's elements come first (#425): `.apply` spreads them.
     b.function(
         "source-array-storage",
         &[VALUE],
         &[VALUE],
         &[
+            LocalGet(0),
+            Call(b.names["object-array-elements"]),
+            BrOnNonNull(0),
             LocalGet(0),
             Call(fields),
             RefCastNonNull(HeapType::Concrete(ARGS)),
@@ -870,7 +874,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         "array-function",
         0,
         -1,
-        &[LocalGet(1), Call(create)],
+        // Clojure's object array of the arguments (#425).
+        &[LocalGet(1), Call(b.names["object-array-copy"])],
     ));
     let mut body = vec![];
     // Packed primitive arrays are arrays too, though not JS arrays.
@@ -1195,7 +1200,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         "array-make-function",
         1,
         -1,
-        &[LocalGet(1), Call(make_args)],
+        &[LocalGet(1), Call(b.names["object-array-make-args"])],
     ));
     declared
 }

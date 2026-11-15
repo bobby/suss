@@ -214,55 +214,10 @@ fn handed_chunk_preserves_actual_backing_array_identity_after_gc() {
         session
             .inspect(&storage, |mut store, value| {
                 let outer = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-                let fields = outer
-                    .field(&mut store, 1)?
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_array(&store)?
-                    .unwrap();
-                assert_eq!(
-                    fields.len(&store)?,
-                    2,
-                    "array owner and ordinary properties"
-                );
-                let fields_nil = fields.get(&mut store, 1)?;
-                assert_eq!(
-                    suss_cli::portable_session::sentinel_tag(&mut store, &fields_nil)?.unwrap(),
-                    0
-                );
-                let backing_storage = fields
-                    .get(&mut store, 0)?
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_array(&store)?
-                    .unwrap();
-                assert_eq!(
-                    backing_storage.len(&store)?,
-                    4,
-                    "length, sparse chain, dense values, presence"
-                );
-                let length = backing_storage.get(&mut store, 0)?;
-                assert_eq!(
-                    suss_cli::portable_session::runtime_number(&mut store, &length)?,
-                    Some(suss_cli::portable_session::RuntimeNumber::Long(2))
-                );
-                let backing_storage_nil = backing_storage.get(&mut store, 1)?;
-                assert_eq!(
-                    suss_cli::portable_session::sentinel_tag(&mut store, &backing_storage_nil)?.unwrap(),
-                    0
-                );
-                let presence = backing_storage
-                    .get(&mut store, 3)?
-                    .unwrap_anyref()
-                    .unwrap()
-                    .as_array(&store)?
-                    .unwrap();
-                assert_eq!(presence.len(&store)?, 2);
-                for index in 0..2 {
-                    assert_eq!(presence.get(&mut store, index)?.unwrap_i32(), 1);
-                }
-                let items = backing_storage
-                    .get(&mut store, 2)?
+                // The outer array is an object array (#425): {storage, uid}.
+                assert_eq!(outer.fields(&mut store)?.count(), 2, "object array");
+                let items = outer
+                    .field(&mut store, 0)?
                     .unwrap_anyref()
                     .unwrap()
                     .as_array(&store)?

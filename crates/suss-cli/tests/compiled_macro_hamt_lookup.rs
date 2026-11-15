@@ -37,7 +37,7 @@ fn compiled_macro_transient_hash_map_omitted_lookup_preserves_undefined() {
 fn compiled_macro_transient_hash_map_rejects_lookup_after_persistence() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.set_operation_fuel(100_000_000);
-        session.eval_privileged("(def lookup-map (transient (assoc (PersistentHashMap. nil 0 nil false nil nil) 1 101))) (def captured-lookup (fn [k] (get lookup-map k))) (def saved-map (persistent! lookup-map)) (def seen (array))").unwrap();
+        session.eval_privileged("(def lookup-map (transient (assoc (PersistentHashMap. nil 0 nil false nil nil) 1 101))) (def captured-lookup (fn [k] (get lookup-map k))) (def saved-map (persistent! lookup-map)) (def seen (object-array 2))").unwrap();
         session.collect().unwrap();
         for source in [
             "(get lookup-map 1)",
@@ -49,7 +49,7 @@ fn compiled_macro_transient_hash_map_rejects_lookup_after_persistence() {
             "(lookup-map 1)",
             "(lookup-map 2 909)",
             "(captured-lookup 1)",
-            "(get lookup-map (do (.push seen 1) 1) (do (.push seen 2) 909))",
+            "(get lookup-map (do (aset seen 0 1) 1) (do (aset seen 1 2) 909))",
         ] {
             assert!(
                 matches!(

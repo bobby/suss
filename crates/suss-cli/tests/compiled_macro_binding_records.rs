@@ -143,10 +143,10 @@ fn compiler_catch_private_payload_name_avoids_the_user_catch_alias() {
 fn compiler_macro_binding_records_preserve_initializer_shadow_scope_and_once_only_effects() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut host = Observe::default();
-        let source = r#"(def effects (array)) (def result (let [^:private x (do (.push effects 1) 41)] (checkpoint "outer" x) (let [x (+ x 1)] (checkpoint "inner" x)) (checkpoint "restored" x)))"#;
+        let source = r#"(def effects (object-array 1)) (def result (let [^:private x (do (aset effects 0 1) 41)] (checkpoint "outer" x) (let [x (+ x 1)] (checkpoint "inner" x)) (checkpoint "restored" x)))"#;
         session.eval_with_macros(&source, &mut host).unwrap();
         assert_eq!(scalar(&mut session, "result"), 41);
-        assert_eq!(scalar(&mut session, "(alength effects)"), 1);
+        assert_eq!(scalar(&mut session, "(aget effects 0)"), 1);
         let outer = &snapshot(&host, "outer")["x"];
         let inner = &snapshot(&host, "inner")["x"];
         let restored = &snapshot(&host, "restored")["x"];
@@ -168,7 +168,7 @@ fn compiler_macro_binding_records_preserve_initializer_shadow_scope_and_once_onl
         assert_eq!(analyzed.phase, session.phase());
         assert_eq!(analyzed.namespace, "user");
         assert_eq!(analyzed.origin.as_ref().unwrap().text(), source);
-        assert_eq!(&source[analyzed.form.span.clone()], "(do (.push effects 1) 41)");
+        assert_eq!(&source[analyzed.form.span.clone()], "(do (aset effects 0 1) 41)");
         let Kind::List(parts) = &analyzed.form.kind else { panic!("actual do syntax") };
         assert!(matches!(&parts[0].kind, Kind::Symbol(name) if name.name == "do"));
         let Expression::Do(children) = &*outer.initializer.as_ref().unwrap().kind else { unreachable!() };
