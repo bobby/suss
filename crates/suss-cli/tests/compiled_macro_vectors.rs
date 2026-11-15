@@ -161,38 +161,6 @@ fn compiled_macro_vectors_quote_nested_data_and_reject_malformed_storage() {
     }
 }
 
-#[test]
-fn compiled_macro_array_slice_clamps_bounds_and_owns_copied_storage() {
-    let mut session = Session::new_macro().unwrap();
-    session
-        .eval("(def a (array 10 20 30 40)) (def copy (.slice a 1 -1)) (aset copy 0 99)")
-        .unwrap();
-    for source in [
-        "(and (== (alength copy) 2) (== (aget copy 0) 99) (== (aget a 1) 20))",
-        "(== (alength (.slice a -99 99)) 4)",
-        "(== (alength (.slice a 3 1)) 0)",
-        "(== (alength (.slice a 1.9 3.9)) 2)",
-        "(== (alength (.slice a ##NaN ##Inf)) 4)",
-        "(== (alength (.slice a ##-Inf ##-Inf)) 0)",
-        "(== (alength (.slice a 0 nil)) 0)",
-        "(== (alength (.slice a)) 4)",
-        "(identical? (.-slice a) (.-slice copy))",
-    ] {
-        let value = session
-            .eval(source)
-            .unwrap_or_else(|error| panic!("{source}: {error:?}"));
-        assert!(
-            session
-                .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()
-                    == 4))
-                .unwrap(),
-            "{source}"
-        );
-    }
-    session.eval("(def detached (.-slice a))").unwrap();
-    assert!(session.eval("(detached 0 1)").is_err());
-    assert!(session.eval("(.slice a 0 1 2)").is_err());
-}
 
 #[test]
 fn compiled_macro_vectors_large_literals_use_retained_transient_factory() {
@@ -256,7 +224,7 @@ fn compiled_macro_vectors_match_fresh_pinned_scalar_observations_in_both_phases(
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 91);
+    assert_eq!(cases.len(), 82);
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         // Equality/hash observations traverse complete 1,057-element vectors.
         // Measured whole-eval cost is 248,329,586 fuel in both phases,

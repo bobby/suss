@@ -123,14 +123,6 @@
       }
     },
     {
-      "id": "array-property-length-after-growth",
-      "source": "(do (def property-array (array 1)) (aset property-array 3 7) (.-length property-array))",
-      "expected": {
-        "tag": "f64",
-        "bits": "4010000000000000"
-      }
-    },
-    {
       "id": "property-get-owner-once",
       "source": "(do (def property-effects (array 0)) (def property-mark (fn [n x] (do (aset property-effects 0 (+ (* (aget property-effects 0) 10) n)) x))) (.-EMPTY (property-mark 1 PropertyProbe)) (aget property-effects 0))",
       "expected": {

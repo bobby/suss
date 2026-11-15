@@ -182,15 +182,10 @@
         "tag": "string",
         "units": [
           97,
+          110,
           117,
-          110,
-          100,
-          101,
-          102,
-          105,
-          110,
-          101,
-          100
+          108,
+          108
         ]
       }
     },
@@ -575,7 +570,7 @@
     },
     {
       "id": "buffer-undefined-second-suppresses-rest",
-      "source": "(let [b (make-buffer)] (.append b \"a\" (aget (array) 0) \"ignored\") (.toString b))",
+      "source": "(let [b (make-buffer)] (.append b \"a\" js/undefined \"ignored\") (.toString b))",
       "expected": {
         "tag": "string",
         "units": [
@@ -589,15 +584,10 @@
       "expected": {
         "tag": "string",
         "units": [
+          110,
           117,
-          110,
-          100,
-          101,
-          102,
-          105,
-          110,
-          101,
-          100
+          108,
+          108
         ]
       }
     },

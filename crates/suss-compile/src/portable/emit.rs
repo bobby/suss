@@ -172,7 +172,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.extend(runtime_abi::ARITY_ERROR_EXPORTS);
                         if let Some(factory) = &body.rest_class {
                             globals.insert(factory.clone());
-                            names.extend(["binding-get", "invoke", "source-array-new", "constructor-descriptor", "source-constructor-new"]);
+                            names.extend(["binding-get", "invoke", "object-array-new", "constructor-descriptor", "source-constructor-new"]);
                         }
                     }
                     Operation::MakeClosure { .. } => {
@@ -612,8 +612,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "owned-descriptor-prototype"
             | "source-array-new"
             | "object-array-new"
-            | "source-array-make"
-            | "source-array-make-literal"
+            | "object-array-make-args"
             | "source-array-length-args"
             | "source-array-get-indices"
             | "source-array-set-indices"
@@ -1316,7 +1315,7 @@ fn closure_type(nullable: bool) -> ValType {
 }
 /// `[] -> [eqref]`: a variadic method's rest seq over the values in the
 /// `ARGS` local `surplus`, an `IndexedSeq` from index 0, built as the pinned
-/// wrapper builds it over a fresh source array; Internal Args never becomes the
+/// wrapper builds it over a fresh object array (#425); Internal Args never becomes the
 /// language rest sequence.
 fn emit_rest(function: &mut Function, definition: &Definition, surplus: u32, context: &Context) {
     use Instruction::*;
@@ -1330,7 +1329,7 @@ fn emit_rest(function: &mut Function, definition: &Definition, surplus: u32, con
         .instruction(&Call(import("constructor-descriptor")))
         .instruction(&Call(import("source-constructor-new")))
         .instruction(&LocalGet(surplus))
-        .instruction(&Call(import("source-array-new")))
+        .instruction(&Call(import("object-array-new")))
         .instruction(&I32Const(0))
         .instruction(&RefI31)
         .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, context.globals.len() as u32))

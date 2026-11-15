@@ -51,7 +51,7 @@ fn iteration_contract_match_independently_encoded_primary_observations() {
     let corpus: serde_json::Value =
         serde_json::from_str(include_str!("../../../tests/oracle/iteration-cases.json")).unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 59);
+    assert_eq!(cases.len(), 56);
     let mut session = Session::new().unwrap();
     session
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
@@ -100,21 +100,6 @@ fn retained_iterators_and_reverse_views_survive_gc_and_explicit_adapter_errors()
         eval_number(&mut session, "(first retained-reverse)"),
         RuntimeNumber::Long(19)
     );
-    let boundary: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../tests/oracle/iteration-length-boundary.json"
-    ))
-    .unwrap();
-    let cases = boundary["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 1);
-    assert_eq!(cases[0]["id"], "iterator-array-shrink");
-    assert_eq!(
-        cases[0]["expected"],
-        serde_json::json!({"tag":"bool","value":false})
-    );
-    // Observe the retained iterator's live length against the pinned boundary.
-    let shrunk = session.eval(cases[0]["source"].as_str().unwrap()).unwrap();
-    session.collect().unwrap();
-    assert!(!boolean(&mut session, &shrunk));
     for source in ["(rseq)"] {
         assert!(
             matches!(session.eval(source), Err(SessionError::Language(_))),
@@ -131,7 +116,7 @@ fn retained_iterators_and_reverse_views_survive_gc_and_explicit_adapter_errors()
         );
     }
     session
-        .eval("(aset iteration-array 1 23) (aset iteration-array 2 29)")
+        .eval("(aset iteration-array 1 23)")
         .unwrap();
     session.collect().unwrap();
     assert_eq!(
@@ -139,8 +124,9 @@ fn retained_iterators_and_reverse_views_survive_gc_and_explicit_adapter_errors()
         RuntimeNumber::Long(23)
     );
     assert_eq!(
-        eval_number(&mut session, "(.next retained-iterator)"),
-        RuntimeNumber::Long(29)
+        // Arrays don't grow (#425): the iterator has read both elements.
+        eval_number(&mut session, "(if (.hasNext retained-iterator) 1 0)"),
+        RuntimeNumber::Long(0)
     );
     assert_eq!(
         eval_number(&mut session, "(count retained-reverse)"),

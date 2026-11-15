@@ -163,14 +163,6 @@
       }
     },
     {
-      "id": "slice-copy",
-      "source": "(let [a (array 10 20 30 40) b (.slice a 1 -1) _ (aset b 0 99)] (and (= (aget a 1) 20) (= (aget b 0) 99)))",
-      "expected": {
-        "tag": "bool",
-        "value": true
-      }
-    },
-    {
       "id": "lookup-default",
       "source": "(-lookup [10 20] :missing 91)",
       "expected": {
@@ -232,70 +224,6 @@
       "expected": {
         "tag": "bool",
         "value": true
-      }
-    },
-    {
-      "id": "slice-29",
-      "source": "(alength (.slice (array 10 20 30 40) 1 -1))",
-      "expected": {
-        "tag": "f64",
-        "bits": "4000000000000000"
-      }
-    },
-    {
-      "id": "slice-30",
-      "source": "(alength (.slice (array 10 20 30 40) -99 99))",
-      "expected": {
-        "tag": "f64",
-        "bits": "4010000000000000"
-      }
-    },
-    {
-      "id": "slice-31",
-      "source": "(alength (.slice (array 10 20 30 40) 3 1))",
-      "expected": {
-        "tag": "f64",
-        "bits": "0000000000000000"
-      }
-    },
-    {
-      "id": "slice-32",
-      "source": "(alength (.slice (array 10 20 30 40) 1.9 3.9))",
-      "expected": {
-        "tag": "f64",
-        "bits": "4000000000000000"
-      }
-    },
-    {
-      "id": "slice-33",
-      "source": "(alength (.slice (array 10 20 30 40) ##NaN ##Inf))",
-      "expected": {
-        "tag": "f64",
-        "bits": "4010000000000000"
-      }
-    },
-    {
-      "id": "slice-34",
-      "source": "(alength (.slice (array 10 20 30 40) ##-Inf ##-Inf))",
-      "expected": {
-        "tag": "f64",
-        "bits": "0000000000000000"
-      }
-    },
-    {
-      "id": "slice-35",
-      "source": "(alength (.slice (array 10 20 30 40) 0 nil))",
-      "expected": {
-        "tag": "f64",
-        "bits": "0000000000000000"
-      }
-    },
-    {
-      "id": "slice-36",
-      "source": "(alength (.slice (array 10 20 30 40) ))",
-      "expected": {
-        "tag": "f64",
-        "bits": "4010000000000000"
       }
     },
     {

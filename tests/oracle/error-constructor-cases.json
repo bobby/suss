@@ -788,7 +788,7 @@
     },
     {
       "id": "array-cause",
-      "source": "(let [o (array)] (aset o \"cause\" false) (js/Error. \"array\" o))",
+      "source": "(let [o (js-obj \"cause\" false)] (js/Error. \"array\" o))",
       "mode": "return",
       "expected": {
         "value": {

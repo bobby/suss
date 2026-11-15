@@ -59,9 +59,9 @@ fn collections_seqs_records_types_and_arrays_display_as_pr_str_prints_them() {
             "user.T\n",
             "user.T\n",
             "#queue [1]\n",
-            "#js [1 2]\n",
+            "#object[\"[Ljava.lang.Object;\" 0x1 \"[Ljava.lang.Object;@1\"]\n",
             "Pr\n",
-            "#object[suss.core.Atom 0x1 {:status :ready, :val 1}]\n",
+            "#object[suss.core.Atom 0x2 {:status :ready, :val 1}]\n",
             "\"a\\nb\"\n",
             "\"\\b\"\n",
         )

@@ -14,7 +14,6 @@ fn array_hir_ir_reject_bad_arity_type_and_non_dominating_operands() {
     };
     for operation in [
         ArrayOperation::Make,
-        ArrayOperation::MakeLiteral,
         ArrayOperation::Length,
         ArrayOperation::Get,
         ArrayOperation::Set,
