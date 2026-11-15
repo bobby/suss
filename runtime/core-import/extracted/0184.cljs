@@ -6,16 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn array-index-of [arr k]
-  (cond
-    (keyword? k) (array-index-of-keyword? arr k)
-
-    (or (string? k) (number? k))
-    (array-index-of-identical? arr k)
-
-    (symbol? k) (array-index-of-symbol? arr k)
-
-    (nil? k)
-    (array-index-of-nil? arr)
-
-    :else (array-index-of-equiv? arr k)))
+(defn- array-map-index-of [m k]
+  (array-index-of (.-arr m) k))

@@ -6,56 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype ArrayNodeSeq [meta nodes i s ^:mutable __hash]
-  Object
-  (toString [coll]
-    (pr-str* coll))
-  (equiv [this other]
-    (-equiv this other))
-  (indexOf [coll x]
-    (-indexOf coll x 0))
-  (indexOf [coll x start]
-    (-indexOf coll x start))
-  (lastIndexOf [coll x]
-    (-lastIndexOf coll x (count coll)))
-  (lastIndexOf [coll x start]
-    (-lastIndexOf coll x start))
-
-  IMeta
-  (-meta [coll] meta)
-
-  IWithMeta
-  (-with-meta [coll new-meta]
-    (if (identical? new-meta meta)
-      coll
-      (ArrayNodeSeq. new-meta nodes i s __hash)))
-
-  ICollection
-  (-conj [coll o] (cons o coll))
-
-  IEmptyableCollection
-  (-empty [coll] (.-EMPTY List))
-
-  ISequential
-  ISeq
-  (-first [coll] (first s))
-  (-rest  [coll]
-    (let [ret (create-array-node-seq nodes i (next s))]
-      (if-not (nil? ret) ret ())))
-
-  INext
-  (-next [coll]
-    (create-array-node-seq nodes i (next s)))
-
-  ISeqable
-  (-seq [this] this)
-
-  IEquiv
-  (-equiv [coll other] (equiv-sequential coll other))
-
-  IHash
-  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
-
-  IReduce
-  (-reduce [coll f] (seq-reduce f coll))
-  (-reduce [coll f start] (seq-reduce f start coll)))
+(defn- create-array-node-seq
+  ([nodes] (create-array-node-seq nodes 0 nil))
+  ([nodes i s]
+     (if (nil? s)
+       (let [len (alength nodes)]
+         (loop [j i]
+           (if (< j len)
+             (if-let [nj (aget nodes j)]
+               (if-let [ns (.inode-seq nj)]
+                 (ArrayNodeSeq. nil nodes (inc j) ns nil)
+                 (recur (inc j)))
+               (recur (inc j))))))
+       (ArrayNodeSeq. nil nodes i s nil))))

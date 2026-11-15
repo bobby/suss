@@ -6,39 +6,21 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype TransientHashSet [^:mutable transient-map]
-  ITransientCollection
-  (-conj! [tcoll o]
-    (set! transient-map (assoc! transient-map o nil))
-    tcoll)
+(defn set
+  "Returns a set of the distinct elements of coll."
+  [coll]
+  (if (set? coll)
+    (with-meta coll nil)
+    (let [in (seq coll)]
+      (cond
+        (nil? in) #{}
 
-  (-persistent! [tcoll]
-    (PersistentHashSet. nil (persistent! transient-map) nil))
+        (and (instance? IndexedSeq in) (zero? (.-i in)))
+        (.createAsIfByAssoc PersistentHashSet (.-arr in))
 
-  ITransientSet
-  (-disjoin! [tcoll v]
-    (set! transient-map (dissoc! transient-map v))
-    tcoll)
-
-  ICounted
-  (-count [tcoll] (count transient-map))
-
-  ILookup
-  (-lookup [tcoll v]
-    (-lookup tcoll v nil))
-
-  (-lookup [tcoll v not-found]
-    (if (identical? (-lookup transient-map v lookup-sentinel) lookup-sentinel)
-      not-found
-      v))
-
-  IFn
-  (-invoke [tcoll k]
-    (if (identical? (-lookup transient-map k lookup-sentinel) lookup-sentinel)
-      nil
-      k))
-
-  (-invoke [tcoll k not-found]
-    (if (identical? (-lookup transient-map k lookup-sentinel) lookup-sentinel)
-      not-found
-      k)))
+        :else
+        (loop [^not-native in  in
+               ^not-native out (-as-transient #{})]
+          (if-not (nil? in)
+            (recur (next in) (-conj! out (-first in)))
+            (persistent! out)))))))

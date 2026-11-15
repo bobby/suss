@@ -6,5 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- bitmap-indexed-node-index [bitmap bit]
-  (bit-count (bit-and bitmap (dec bit))))
+(defn- bitpos [hash shift]
+  (bit-shift-left 1 (mask hash shift)))

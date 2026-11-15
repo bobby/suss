@@ -652,7 +652,7 @@
     },
     {
       "id": "blacknode-comparable-rejection-format-order",
-      "source": "(let [n (BlackNode. 7 9 nil nil nil) saved str_ trace (atom [])] (set! str_ (fn [x] (swap! trace conj x) (js-obj \"toString\" (fn [] (swap! trace conj 17) \"z\")))) (try (try (compare n \"x\") false (catch :default e (and (= (.-message e) \"Cannot compare z to z\") (= @trace [n \"x\" 17 17])))) (finally (set! str_ saved))))",
+      "source": "(let [n (BlackNode. 7 9 nil nil nil) saved str_ trace (atom [])] (set! str_ (fn [x] (swap! trace conj x) (reify Object (toString [_] (swap! trace conj 17) \"z\")))) (try (try (compare n \"x\") false (catch :default e (and (= (.-message e) \"Cannot compare z to z\") (= @trace [n \"x\" 17 17])))) (finally (set! str_ saved))))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -684,7 +684,7 @@
     },
     {
       "id": "rednode-comparable-rejection-format-order",
-      "source": "(let [n (RedNode. 7 9 nil nil nil) saved str_ trace (atom [])] (set! str_ (fn [x] (swap! trace conj x) (js-obj \"toString\" (fn [] (swap! trace conj 17) \"z\")))) (try (try (compare n \"x\") false (catch :default e (and (= (.-message e) \"Cannot compare z to z\") (= @trace [n \"x\" 17 17])))) (finally (set! str_ saved))))",
+      "source": "(let [n (RedNode. 7 9 nil nil nil) saved str_ trace (atom [])] (set! str_ (fn [x] (swap! trace conj x) (reify Object (toString [_] (swap! trace conj 17) \"z\")))) (try (try (compare n \"x\") false (catch :default e (and (= (.-message e) \"Cannot compare z to z\") (= @trace [n \"x\" 17 17])))) (finally (set! str_ saved))))",
       "expected": {
         "tag": "bool",
         "value": true

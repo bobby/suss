@@ -46,7 +46,7 @@ const CASES_JSON: &str = r#"[
   },
   {
     "id": "object",
-    "source": "(empty (js-obj))",
+    "source": "(empty (reify))",
     "expected": {
       "tag": "nil"
     }
@@ -278,7 +278,7 @@ fn empty_preserves_throw_payloads_arity_and_recovery_after_gc() {
         truth(&mut session, "(= empty-trace 3)");
         truth(&mut session, "(= (count (empty [1])) 0)");
         session
-            .eval("(def empty-reference (js-obj)) (set! empty-trace 0)")
+            .eval("(def empty-reference (reify)) (set! empty-trace 0)")
             .unwrap();
         let reference = session.eval("empty-reference").unwrap();
         let root = session

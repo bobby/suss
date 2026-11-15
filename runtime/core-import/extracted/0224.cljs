@@ -6,8 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn quot
-  "quot[ient] of dividing numerator by denominator."
-  [n d]
-  (let [rem (js-mod n d)]
-    (fix (/ (- n rem) d))))
+(defn- array-copy-downward
+  ([from i to j len]
+     (loop [i (+ i (dec len)) j (+ j (dec len)) len len]
+       (if (zero? len)
+         to
+         (do (aset to j (aget from i))
+             (recur (dec i) (dec j) (dec len)))))))

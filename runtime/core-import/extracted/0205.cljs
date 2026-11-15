@@ -6,7 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn js-mod
-  "Modulus of num and div with original javascript behavior. i.e. bug for negative numbers"
-  [n d]
-  (cljs.core/js-mod n d))
+(defn bounded-count
+  "If coll is counted? returns its count, else will count at most the first n
+   elements of coll using its seq"
+  {:added "1.9"}
+  [n coll]
+  (if (counted? coll)
+    (count coll)
+    (loop [i 0 s (seq coll)]
+      (if (and (not (nil? s)) (< i n))
+        (recur (inc i) (next s))
+        i))))

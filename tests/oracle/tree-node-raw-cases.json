@@ -1860,7 +1860,7 @@
     },
     {
       "id": "Symbol-rejection-order",
-      "source": "(let [saved str_] (set! str_ (fn [x] (set! raw-tree-trace (+ (* raw-tree-trace 10) 1)) (js-obj \"toString\" (fn [] (set! raw-tree-trace (+ (* raw-tree-trace 10) 2)) \"z\")))) (try (-compare (symbol \"a\") \"x\") (finally (set! str_ saved))))",
+      "source": "(let [saved str_] (set! str_ (fn [x] (set! raw-tree-trace (+ (* raw-tree-trace 10) 1)) (reify Object (toString [_] (set! raw-tree-trace (+ (* raw-tree-trace 10) 2)) \"z\")))) (try (-compare (symbol \"a\") \"x\") (finally (set! str_ saved))))",
       "mode": "throw",
       "expected": {
         "value": {
@@ -1898,7 +1898,7 @@
     },
     {
       "id": "Keyword-rejection-order",
-      "source": "(let [saved str_] (set! str_ (fn [x] (set! raw-tree-trace (+ (* raw-tree-trace 10) 1)) (js-obj \"toString\" (fn [] (set! raw-tree-trace (+ (* raw-tree-trace 10) 2)) \"z\")))) (try (-compare :a \"x\") (finally (set! str_ saved))))",
+      "source": "(let [saved str_] (set! str_ (fn [x] (set! raw-tree-trace (+ (* raw-tree-trace 10) 1)) (reify Object (toString [_] (set! raw-tree-trace (+ (* raw-tree-trace 10) 2)) \"z\")))) (try (-compare :a \"x\") (finally (set! str_ saved))))",
       "mode": "throw",
       "expected": {
         "value": {
@@ -1936,7 +1936,7 @@
     },
     {
       "id": "Subvec-rejection-order",
-      "source": "(let [saved str_] (set! str_ (fn [x] (set! raw-tree-trace (+ (* raw-tree-trace 10) 1)) (js-obj \"toString\" (fn [] (set! raw-tree-trace (+ (* raw-tree-trace 10) 2)) \"z\")))) (try (-compare (subvec [0 7 9] 1) \"x\") (finally (set! str_ saved))))",
+      "source": "(let [saved str_] (set! str_ (fn [x] (set! raw-tree-trace (+ (* raw-tree-trace 10) 1)) (reify Object (toString [_] (set! raw-tree-trace (+ (* raw-tree-trace 10) 2)) \"z\")))) (try (-compare (subvec [0 7 9] 1) \"x\") (finally (set! str_ saved))))",
       "mode": "throw",
       "expected": {
         "value": {
@@ -1974,7 +1974,7 @@
     },
     {
       "id": "PersistentVector-rejection-order",
-      "source": "(let [saved str_] (set! str_ (fn [x] (set! raw-tree-trace (+ (* raw-tree-trace 10) 1)) (js-obj \"toString\" (fn [] (set! raw-tree-trace (+ (* raw-tree-trace 10) 2)) \"z\")))) (try (-compare [7 9] \"x\") (finally (set! str_ saved))))",
+      "source": "(let [saved str_] (set! str_ (fn [x] (set! raw-tree-trace (+ (* raw-tree-trace 10) 1)) (reify Object (toString [_] (set! raw-tree-trace (+ (* raw-tree-trace 10) 2)) \"z\")))) (try (-compare [7 9] \"x\") (finally (set! str_ saved))))",
       "mode": "throw",
       "expected": {
         "value": {
@@ -2012,7 +2012,7 @@
     },
     {
       "id": "MapEntry-rejection-order",
-      "source": "(let [saved str_] (set! str_ (fn [x] (set! raw-tree-trace (+ (* raw-tree-trace 10) 1)) (js-obj \"toString\" (fn [] (set! raw-tree-trace (+ (* raw-tree-trace 10) 2)) \"z\")))) (try (-compare (MapEntry. 7 9 nil) \"x\") (finally (set! str_ saved))))",
+      "source": "(let [saved str_] (set! str_ (fn [x] (set! raw-tree-trace (+ (* raw-tree-trace 10) 1)) (reify Object (toString [_] (set! raw-tree-trace (+ (* raw-tree-trace 10) 2)) \"z\")))) (try (-compare (MapEntry. 7 9 nil) \"x\") (finally (set! str_ saved))))",
       "mode": "throw",
       "expected": {
         "value": {
@@ -2050,7 +2050,7 @@
     },
     {
       "id": "BlackNode-rejection-order",
-      "source": "(let [saved str_] (set! str_ (fn [x] (set! raw-tree-trace (+ (* raw-tree-trace 10) 1)) (js-obj \"toString\" (fn [] (set! raw-tree-trace (+ (* raw-tree-trace 10) 2)) \"z\")))) (try (-compare (BlackNode. 7 9 nil nil nil) \"x\") (finally (set! str_ saved))))",
+      "source": "(let [saved str_] (set! str_ (fn [x] (set! raw-tree-trace (+ (* raw-tree-trace 10) 1)) (reify Object (toString [_] (set! raw-tree-trace (+ (* raw-tree-trace 10) 2)) \"z\")))) (try (-compare (BlackNode. 7 9 nil nil nil) \"x\") (finally (set! str_ saved))))",
       "mode": "throw",
       "expected": {
         "value": {
@@ -2088,7 +2088,7 @@
     },
     {
       "id": "RedNode-rejection-order",
-      "source": "(let [saved str_] (set! str_ (fn [x] (set! raw-tree-trace (+ (* raw-tree-trace 10) 1)) (js-obj \"toString\" (fn [] (set! raw-tree-trace (+ (* raw-tree-trace 10) 2)) \"z\")))) (try (-compare (RedNode. 7 9 nil nil nil) \"x\") (finally (set! str_ saved))))",
+      "source": "(let [saved str_] (set! str_ (fn [x] (set! raw-tree-trace (+ (* raw-tree-trace 10) 1)) (reify Object (toString [_] (set! raw-tree-trace (+ (* raw-tree-trace 10) 2)) \"z\")))) (try (-compare (RedNode. 7 9 nil nil nil) \"x\") (finally (set! str_ saved))))",
       "mode": "throw",
       "expected": {
         "value": {

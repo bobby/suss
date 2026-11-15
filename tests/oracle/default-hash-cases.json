@@ -11,14 +11,6 @@
       }
     },
     {
-      "id": "object-prototype-zero",
-      "source": "(let [f js-obj o (f)] (= (-hash (.-__proto__ o)) 0))",
-      "expected": {
-        "tag": "bool",
-        "value": true
-      }
-    },
-    {
       "id": "function-stable",
       "source": "(let [f (fn [] 17)] (= (-hash f) (-hash f)))",
       "expected": {
@@ -84,7 +76,7 @@
     },
     {
       "id": "native-object-distinct",
-      "source": "(let [f js-obj] (not (= (-hash (f)) (-hash (f)))))",
+      "source": "(not (= (-hash (reify)) (-hash (reify))))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -140,7 +132,7 @@
     },
     {
       "id": "source-default-live-root",
-      "source": "(let [f js-obj o (f)] (with-redefs [cljs.core/root-obj (fn [] o)] (= (-hash o) 0)))",
+      "source": "(let [o (reify)] (with-redefs [cljs.core/root-obj (fn [] o)] (= (-hash o) 0)))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -156,7 +148,7 @@
     },
     {
       "id": "captured-dispatch-live-root",
-      "source": "(let [h -hash f js-obj o (f)] (with-redefs [cljs.core/root-obj (fn [] o)] (= (h o) 0)))",
+      "source": "(let [h -hash o (reify)] (with-redefs [cljs.core/root-obj (fn [] o)] (= (h o) 0)))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -180,7 +172,7 @@
     },
     {
       "id": "root-restored-after-redefinition",
-      "source": "(let [r (rootobj) f js-obj o (f)] (with-redefs [cljs.core/root-obj (fn [] o)] (-hash o)) (= (-hash r) 0))",
+      "source": "(let [r (rootobj) o (reify)] (with-redefs [cljs.core/root-obj (fn [] o)] (-hash o)) (= (-hash r) 0))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -188,7 +180,7 @@
     },
     {
       "id": "default-root-called-once",
-      "source": "(let [f js-obj o (f) calls (array 0)] (with-redefs [cljs.core/root-obj (fn [] (aset calls 0 (inc (aget calls 0))) o)] (and (= (-hash o) 0) (= (aget calls 0) 1))))",
+      "source": "(let [o (reify) calls (array 0)] (with-redefs [cljs.core/root-obj (fn [] (aset calls 0 (inc (aget calls 0))) o)] (and (= (-hash o) 0) (= (aget calls 0) 1))))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -196,7 +188,7 @@
     },
     {
       "id": "argument-before-root-effects",
-      "source": "(let [f js-obj o (f) effects (array 0)] (with-redefs [cljs.core/root-obj (fn [] (aset effects 0 (+ (* (aget effects 0) 10) 2)) o)] (-hash (do (aset effects 0 1) o)) (= (aget effects 0) 12)))",
+      "source": "(let [o (reify) effects (array 0)] (with-redefs [cljs.core/root-obj (fn [] (aset effects 0 (+ (* (aget effects 0) 10) 2)) o)] (-hash (do (aset effects 0 1) o)) (= (aget effects 0) 12)))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -204,7 +196,7 @@
     },
     {
       "id": "root-throws-and-recovers",
-      "source": "(let [f js-obj o (f)] (try (with-redefs [cljs.core/root-obj (fn [] (throw (error \"root\")))] (-hash o)) (catch :default e nil)) (= (-hash o) (uid o)))",
+      "source": "(let [o (reify)] (try (with-redefs [cljs.core/root-obj (fn [] (throw (error \"root\")))] (-hash o)) (catch :default e nil)) (= (-hash o) (uid o)))",
       "expected": {
         "tag": "bool",
         "value": true

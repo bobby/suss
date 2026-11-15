@@ -6,33 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn drop
-  "Returns a laziness-preserving sequence of all but the first n items in coll.
-  Returns a stateful transducer when no collection is provided."
-  ([n]
-   {:pre [(number? n)]}
-     (fn [rf]
-       (let [na (volatile! n)]
-         (fn
-           ([] (rf))
-           ([result] (rf result))
-           ([result input]
-              (let [n @na]
-                (vswap! na dec)
-                (if (pos? n)
-                  result
-                  (rf result input))))))))
+(defn doall
+  "When lazy sequences are produced via functions that have side
+  effects, any effects other than those needed to produce the first
+  element in the seq do not occur until the seq is consumed. doall can
+  be used to force any effects. Walks through the successive nexts of
+  the seq, retains the head and returns it, thus causing the entire
+  seq to reside in memory at one time."
+  ([coll]
+   (dorun coll)
+   coll)
   ([n coll]
-   {:pre [(number? n)]}
-     (if (implements? IDrop coll)
-       (or
-         (if (pos? n)
-           (-drop coll (Math/ceil n))
-           (seq coll))
-         ())
-       (let [step (fn [n coll]
-                    (let [s (seq coll)]
-                      (if (and (pos? n) s)
-                        (recur (dec n) (rest s))
-                        s)))]
-         (lazy-seq (step n coll))))))
+   (dorun n coll)
+   coll))

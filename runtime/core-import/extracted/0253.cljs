@@ -6,19 +6,17 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn conj
-  "conj[oin]. Returns a new collection with the xs
-  'added'. (conj nil item) returns (item).
-  (conj coll) returns coll. (conj) returns [].
-  The 'addition' may happen at different 'places' depending
-  on the concrete type."
-  ([] [])
-  ([coll] coll)
-  ([coll x]
-    (if-not (nil? coll)
-      (-conj coll x)
-      (list x)))
-  ([coll x & xs]
-    (if xs
-      (recur (conj coll x) (first xs) (next xs))
-      (conj coll x))))
+(defn transduce
+  "reduce with a transformation of f (xf). If init is not
+  supplied, (f) will be called to produce it. f should be a reducing
+  step function that accepts both 1 and 2 arguments, if it accepts
+  only 2 you can add the arity-1 with 'completing'. Returns the result
+  of applying (the transformed) xf to init and the first item in coll,
+  then applying xf to that result and the 2nd item, etc. If coll
+  contains no items, returns init and f is not called. Note that
+  certain transforms may inject or skip items."
+  ([xform f coll] (transduce xform f (f) coll))
+  ([xform f init coll]
+     (let [f (xform f)
+           ret (reduce f init coll)]
+       (f ret))))

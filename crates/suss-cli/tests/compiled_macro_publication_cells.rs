@@ -32,21 +32,13 @@ fn publication_cell_distinguishes_unbound_undefined_nil_and_false_after_gc() {
                 "(def publication-value js/undefined)",
                 false,
             ),
-            (
-                "(def publication-effects 0) (def publication-value (js-obj \"valueOf\" (fn [] (set! publication-effects 99))))",
-                true,
-            ),
+            ("(def publication-value (reify))", true),
         ] {
             session.eval(source).unwrap();
             session.collect().unwrap();
             let result = session.invoke(&probe, &[]).unwrap();
             boolean(&mut session, &result, expected);
         }
-        let effects = session.eval("publication-effects").unwrap();
-        session.collect().unwrap();
-        let bridge = FormBridge::new(&mut session).unwrap();
-        let actual = bridge.read(&mut session, &effects, 0..0).unwrap();
-        assert!(matches!(&actual.kind, Kind::Long(0)));
         let result = session
             .eval("(binding [publication-value js/undefined] (suss.compiler/cell-defined? user/publication-value))");
         // Preserve the existing binding kernel's selected dynamic value.

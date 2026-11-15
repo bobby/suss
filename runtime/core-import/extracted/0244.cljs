@@ -6,64 +6,19 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype NodeSeq [meta nodes i s ^:mutable __hash]
-  Object
-  (toString [coll]
-    (pr-str* coll))
-  (equiv [this other]
-    (-equiv this other))
-  (indexOf [coll x]
-    (-indexOf coll x 0))
-  (indexOf [coll x start]
-    (-indexOf coll x start))
-  (lastIndexOf [coll x]
-    (-lastIndexOf coll x (count coll)))
-  (lastIndexOf [coll x start]
-    (-lastIndexOf coll x start))
-
-  IMeta
-  (-meta [coll] meta)
-
-  IWithMeta
-  (-with-meta [coll new-meta]
-    (if (identical? new-meta meta)
-      coll
-      (NodeSeq. new-meta nodes i s __hash)))
-
-  ICollection
-  (-conj [coll o] (cons o coll))
-
-  IEmptyableCollection
-  (-empty [coll] (.-EMPTY List))
-
-  ISequential
-  ISeq
-  (-first [coll]
-    (if (nil? s)
-      (MapEntry. (aget nodes i) (aget nodes (inc i)) nil)
-      (first s)))
-
-  (-rest [coll]
-    (let [ret (if (nil? s)
-                (create-inode-seq nodes (+ i 2) nil)
-                (create-inode-seq nodes i (next s)))]
-      (if-not (nil? ret) ret ())))
-
-  INext
-  (-next [coll]
-    (if (nil? s)
-      (create-inode-seq nodes (+ i 2) nil)
-      (create-inode-seq nodes i (next s))))
-
-  ISeqable
-  (-seq [this] this)
-
-  IEquiv
-  (-equiv [coll other] (equiv-sequential coll other))
-
-  IHash
-  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
-
-  IReduce
-  (-reduce [coll f] (seq-reduce f coll))
-  (-reduce [coll f start] (seq-reduce f start coll)))
+(defn- create-inode-seq
+  ([nodes]
+     (create-inode-seq nodes 0 nil))
+  ([nodes i s]
+     (if (nil? s)
+       (let [len (alength nodes)]
+         (loop [j i]
+           (if (< j len)
+             (if-not (nil? (aget nodes j))
+               (NodeSeq. nil nodes j nil nil)
+               (if-let [node (aget nodes (inc j))]
+                 (if-let [node-seq (.inode-seq node)]
+                   (NodeSeq. nil nodes (+ j 2) node-seq nil)
+                   (recur (+ j 2)))
+                 (recur (+ j 2)))))))
+       (NodeSeq. nil nodes i s nil))))

@@ -2,7 +2,7 @@
 //! Receiver conversion precedes index conversion; one UTF16 code unit is returned.
 use super::*;
 use Instruction::*;
-const METHOD_ROOT: u32 = array_join::ACTIVE + 1;
+const METHOD_ROOT: u32 = arrays::RETIRED_JOIN_ACTIVE + 1;
 
 pub(super) fn append_globals(globals: &mut GlobalSection) {
     globals.global(

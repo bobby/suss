@@ -6,71 +6,21 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype PersistentTreeMapSeq [meta stack ^boolean ascending? cnt ^:mutable __hash]
-  Object
-  (toString [coll]
-    (pr-str* coll))
-  (equiv [this other]
-    (-equiv this other))
-  (indexOf [coll x]
-    (-indexOf coll x 0))
-  (indexOf [coll x start]
-    (-indexOf coll x start))
-  (lastIndexOf [coll x]
-    (-lastIndexOf coll x (count coll)))
-  (lastIndexOf [coll x start]
-    (-lastIndexOf coll x start))
+(defn- tree-map-add [comp tree k v found]
+  (if (nil? tree)
+    (RedNode. k v nil nil nil)
+    (let [c (comp k (.-key tree))]
+      (cond
+        (zero? c)
+        (do (aset found 0 tree)
+            nil)
 
-  ISeqable
-  (-seq [this] this)
+        (neg? c)
+        (let [ins (tree-map-add comp (.-left tree) k v found)]
+          (if-not (nil? ins)
+            (.add-left tree ins)))
 
-  ISequential
-  ISeq
-  (-first [this] (peek stack))
-  (-rest [this]
-    (let [t (first stack)
-          next-stack (tree-map-seq-push (if ascending? (.-right t) (.-left t))
-                                        (next stack)
-                                        ascending?)]
-      (if-not (nil? next-stack)
-        (PersistentTreeMapSeq. nil next-stack ascending? (dec cnt) nil)
-        ())))
-  INext
-  (-next [this]
-    (let [t (first stack)
-          next-stack (tree-map-seq-push (if ascending? (.-right t) (.-left t))
-                                        (next stack)
-                                        ascending?)]
-      (when-not (nil? next-stack)
-        (PersistentTreeMapSeq. nil next-stack ascending? (dec cnt) nil))))
-
-  ICounted
-  (-count [coll]
-    (if (neg? cnt)
-      (inc (count (next coll)))
-      cnt))
-
-  IEquiv
-  (-equiv [coll other] (equiv-sequential coll other))
-
-  ICollection
-  (-conj [coll o] (cons o coll))
-
-  IEmptyableCollection
-  (-empty [coll] (.-EMPTY List))
-
-  IHash
-  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
-
-  IMeta
-  (-meta [coll] meta)
-
-  IWithMeta
-  (-with-meta [coll new-meta]
-    (if (identical? new-meta meta)
-      coll
-      (PersistentTreeMapSeq. new-meta stack ascending? cnt __hash)))
-
-  IReduce
-  (-reduce [coll f] (seq-reduce f coll))
-  (-reduce [coll f start] (seq-reduce f start coll)))
+        :else
+        (let [ins (tree-map-add comp (.-right tree) k v found)]
+          (if-not (nil? ins)
+            (.add-right tree ins)))))))

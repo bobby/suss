@@ -6,12 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(def ^:private char-escapes
-  (js-obj
-    "\"" "\\\""
-    "\\" "\\\\"
-    "\b" "\\b"
-    "\f" "\\f"
-    "\n" "\\n"
-    "\r" "\\r"
-    "\t" "\\t"))
+(defn ^:private quote-string
+  [s]
+  (str_ \"
+       (.replace s (js/RegExp "[\\\\\"\b\f\n\r\t]" "g")
+         (fn [match] (unchecked-get char-escapes match)))
+       \"))

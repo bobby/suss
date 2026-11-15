@@ -18,9 +18,8 @@ fn seqable_predicate_covers_portable_values_in_both_phases_after_gc() {
         ("number", "(seqable? 1)", false),
         ("false", "(seqable? false)", false),
         ("keyword", "(seqable? :k)", false),
-        // Foreign JavaScript iterator interop is excluded by the portable
-        // profile; a foreign value must be wrapped in ISeqable/IIterable.
-        ("plain-js-object", "(seqable? (js-obj))", false),
+        // An opaque value is not seqable without ISeqable/IIterable.
+        ("opaque-object", "(seqable? (reify))", false),
     ];
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();

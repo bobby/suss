@@ -46,7 +46,7 @@ fn compiled_macro_metadata_keeps_maps_on_returned_sequence_kinds_and_rejects_inv
     }
     for source in [
         "(with-meta '(x) 1)",
-        "(with-meta [1] (js-obj))",
+        "(with-meta [1] (reify))",
         "(cons 1 (with-meta '(x) 1))",
     ] {
         let value = session.eval(source).unwrap();
@@ -220,7 +220,7 @@ fn compiled_macro_metadata_transports_real_vector_chunk_sequences_across_trie_bo
             "(suss.core/ChunkedSeq. source-vector (array) 0 0 nil nil)",
             "(suss.core/ChunkedSeq. source-vector (array 1) 65 0 nil nil)",
             "(suss.core/ChunkedSeq. source-vector (array 1) 0 2 nil nil)",
-            "(suss.core/ChunkedSeq. (js-obj) (array 1) 0 0 nil nil)",
+            "(suss.core/ChunkedSeq. (reify) (array 1) 0 0 nil nil)",
             "(suss.core/ChunkedSeq. (suss.core/PersistentVector. nil 1 5 nil (array 1) nil) (array 1) 0 0 nil nil)",
         ] {
             let value = session.eval_privileged(source).unwrap();
@@ -273,46 +273,6 @@ fn compiled_macro_remainder_preserves_operand_order_arity_errors_and_recovers_af
             .is_err()
     );
     let value = session.eval("(== trace 3)").unwrap();
-    assert!(
-        session
-            .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()
-                == 4))
-            .unwrap()
-    );
-    // Ordinary object conversion is supported: the default object string is
-    // nonnumeric, so the remainder is NaN rather than an unsupported error.
-    let value = session.eval("(js-mod (js-obj) 3)").unwrap();
-    session.collect().unwrap();
-    let bits = session
-        .inspect(&value, |mut store, value| {
-            let number = value.unwrap_anyref().unwrap().as_struct(&store)?.unwrap();
-            let fields = number.fields(&mut store)?.collect::<Vec<_>>();
-            let [wasmtime::Val::F64(bits)] = fields.as_slice() else {
-                panic!("expected independently decoded boxed Number")
-            };
-            Ok(*bits)
-        })
-        .unwrap();
-    assert!(f64::from_bits(bits).is_nan());
-
-    // A conversion throw still stops the later operand's conversion. Both
-    // operand expressions run before the arithmetic operation converts them.
-    session.eval("(def trace 0)").unwrap();
-    let Err(suss_cli::portable_session::SessionError::Language(payload)) = session.eval(
-        "(js-mod (do (set! trace 1) (js-obj \"valueOf\" (fn [] (set! trace (+ (* trace 10) 3)) (throw 73)))) (do (set! trace (+ (* trace 10) 2)) (js-obj \"valueOf\" (fn [] (set! trace 999) 3))))",
-    ) else {
-        panic!("expected original conversion throw")
-    };
-    session.collect().unwrap();
-    let thrown = session
-        .inspect(&payload, |store, value| runtime_number(store, &value))
-        .unwrap();
-    assert_eq!(
-        thrown,
-        Some(RuntimeNumber::Long(73)),
-        "expected original numeric throw payload"
-    );
-    let value = session.eval("(== trace 123)").unwrap();
     assert!(
         session
             .inspect(&value, |mut store, value| Ok(sentinel_tag(&mut store, &value)?.unwrap()

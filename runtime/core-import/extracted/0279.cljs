@@ -6,13 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn array-map
-  "keyval => key val
-  Returns a new array map with supplied mappings."
-  [& keyvals]
-  (let [arr (if (and (instance? IndexedSeq keyvals) (zero? (.-i keyvals)))
-              (.-arr keyvals)
-              (into-array keyvals))]
-    (if (odd? (alength arr))
-      (throw (js/Error. (str_ "No value supplied for key: " (last arr))))
-      (.createAsIfByAssoc PersistentArrayMap arr))))
+(defn seq?
+  "Return true if s satisfies ISeq"
+  [s]
+  (if (nil? s)
+    false
+    (satisfies? ISeq s)))

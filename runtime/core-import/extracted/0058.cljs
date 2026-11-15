@@ -6,7 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn list?
-  "Returns true if x implements IList"
-  [x]
-  (satisfies? IList x))
+(defn sequential?
+  "Returns true if coll satisfies ISequential"
+  [x] (satisfies? ISequential x))

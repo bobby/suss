@@ -45,15 +45,9 @@
       (suss.bootstrap/concat-string "@" (hex-string (hash value))))))
 
 ;; Original Suss: the default toString of types and records defined outside
-;; core. It is object-string unless the program has set the prototype's parent
-;; to one other than Object's, as JS interop may; then the parent's toString
-;; applies, as it would to a type with no toString of its own (#304).
+;; core, as java.lang.Object's (#304, #425).
 (def ^:private source-object-string
-  (fn [value]
-    (let [parent (.-__proto__ (.-prototype (type value)))]
-      (if (identical? parent (.-prototype js/Object))
-        (object-string value)
-        (.call (.-toString parent) value)))))
+  (fn [value] (object-string value)))
 
 ;; Copyright The Closure Library Authors.
 ;; SPDX-License-Identifier: Apache-2.0
@@ -797,7 +791,6 @@
 (def ^:private reader-var-symbol 'var)
 (def ^:private reader-fn-symbol 'fn*)
 (def ^:private reader-amp-symbol '&)
-(def ^:private reader-js-obj-symbol 'js-obj)
 (def ^:private reader-deref-symbol 'clojure.core/deref)
 (def ^:private reader-unquote-symbol 'clojure.core/unquote)
 (def ^:private reader-unquote-splicing-symbol 'clojure.core/unquote-splicing)
@@ -999,27 +992,6 @@
                   (reader-queue-tag? tag) (reader-queue st start value)
                   (some? *default-data-reader-fn*) (*default-data-reader-fn* tag value)
                   :else (reader-fail st start (str "No reader function for tag " tag) false))))))))))
-;; #js {...} reads as the compiler's reader reads it: a js-obj call.
-(def ^:private reader-js
-  (fn [st s n start]
-    (let [i (reader-skip s n (+ start 3))]
-      (if (if (< i n) (== (.charCodeAt s i) 123) false)
-        nil
-        (do (aset st 1 (if (< i n) (inc i) n)) (reader-fail st start "#js requires a map literal" false)))
-      (aset st 1 (inc i))
-      (let [entries (persistent! (reader-items st start 125 0 (transient [])))
-            size (count entries)]
-        (if (odd? size) (reader-fail st start "#js map requires an even number of forms" false) nil)
-        (loop [k 0 call (transient [reader-js-obj-symbol])]
-          (if (< k size)
-            (let [key (nth entries k)
-                  key (cond
-                        (keyword? key) (if (nil? (namespace key)) (name key) (str (namespace key) "/" (name key)))
-                        (symbol? key) (str key)
-                        (string? key) key
-                        :else (reader-fail st start "#js keys must be keywords, symbols, or strings" false))]
-              (recur (+ k 2) (conj! (conj! call key) (nth entries (inc k)))))
-            (reader-list (persistent! call))))))))
 
 ;; Reader conditionals, as Clojure reads them with :read-cond. :allow reads
 ;; the first clause whose feature is enabled, or nothing; the other clauses
@@ -1312,17 +1284,7 @@
 (def ^:private reader-tag-or-js
   (fn [st start]
     (let [s (aget st 0) n (aget st 2)]
-      (if (if (aget st 3)
-            false
-            (if (== (.charCodeAt s (inc start)) 106)
-              (if (< (+ start 2) n)
-                (if (== (.charCodeAt s (+ start 2)) 115)
-                  (if (< (+ start 3) n) (reader-delimiter? (.charCodeAt s (+ start 3))) true)
-                  false)
-                false)
-              false))
-        (reader-js st s n start)
-        (reader-tagged st s n start)))))
+      (reader-tagged st s n start))))
 (def ^:private reader-token
   (fn [st start]
     (let [s (aget st 0) n (aget st 2) c (.charCodeAt s start) end (reader-token-end s n start) length (- end start)]
@@ -1579,10 +1541,10 @@
 ;; with print-method. Suss's types have no supertypes, so the built-in printer
 ;; takes the part of Clojure's methods for its own types and Object, and
 ;; prints a value whose type has no method.
-;; Suss can't take the type of a function, a type, a #js object, a future or
-;; a stream yet (docs/runtime/type-names.md), so they dispatch to :default.
+;; Suss can't take the type of a function, a type, a future or a stream yet
+;; (docs/runtime/type-names.md), so they dispatch to :default.
 (def ^:private untyped-printable?
-  (fn [x] (or (js-fn? x) (suss.bootstrap/type-constructor? x) (object? x)
+  (fn [x] (or (js-fn? x) (suss.bootstrap/type-constructor? x)
               (some? (suss.bootstrap/display-leaf x)))))
 (def print-simple
   (fn [o w]
@@ -2030,3 +1992,8 @@
 ;; PersistentVector's type, registered so the runtime's vector-nth and
 ;; vector-count read vectors directly (#378).
 (suss.bootstrap/vector-type! (.-EMPTY PersistentVector))
+
+;; Original Suss (#425): ExceptionInfo is an error, as Clojure's is an
+;; Exception, so suss.bootstrap/error? and the error printer take it. Its
+;; prototype's parent is the runtime error type's prototype.
+(set! (.-__proto__ (.-prototype ExceptionInfo)) (.-prototype (type (suss.bootstrap/error ""))))

@@ -6,12 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- do-assoc [pv level node i val]
-  (let [ret (pv-clone-node node)]
-    (if (zero? level)
-      (do
-        (pv-aset ret (bit-and i 0x01f) val)
-        ret)
-      (let [subidx (bit-and (bit-shift-right-zero-fill i level) 0x01f)]
-        (pv-aset ret subidx (do-assoc pv (- level 5) (pv-aget node subidx) i val))
-        ret))))
+(defn- pop-tail [pv level node]
+  (let [subidx (bit-and (bit-shift-right-zero-fill (- (.-cnt pv) 2) level) 0x01f)]
+    (cond
+     (> level 5) (let [new-child (pop-tail pv (- level 5) (pv-aget node subidx))]
+                   (if (and (nil? new-child) (zero? subidx))
+                     nil
+                     (let [ret (pv-clone-node node)]
+                       (pv-aset ret subidx new-child)
+                       ret)))
+     (zero? subidx) nil
+     :else (let [ret (pv-clone-node node)]
+             (pv-aset ret subidx nil)
+             ret))))

@@ -13,7 +13,7 @@
   (-compare [_ other] (throw false)))
 
 (defn -main [] (println (.stringify js/JSON #js [
-#js {:id "identity-object" :value (let [x (js-obj "toString" (fn [] (throw 17)))] (= (compare x x) 0))}
+#js {:id "identity-object" :value (let [x (reify Object (toString [_] (throw 17)))] (= (compare x x) 0))}
 #js {:id "nil-order" :value (and (= (compare nil false) -1) (= (compare false nil) 1) (= (compare nil nil) 0))}
 #js {:id "distinct-nil-undefined" :value (let [u js/undefined] (and (= (compare nil u) -1) (= (compare u nil) -1) (= (compare u u) 0)))}
 #js {:id "number-nan" :value (and (= (compare ##NaN ##NaN) 0) (= (compare ##NaN 2) 0) (= (compare 2 ##NaN) 0))}
@@ -43,14 +43,10 @@
 #js {:id "indexed-four-arity" :value (and (= (compare-indexed [99 2 3] [0 2 10] 3 1) -1) (= (compare-indexed [2 3] [2 10]) -1))}
 #js {:id "indexed-stops-first-difference" :value (let [trace (atom 0) saved nth] (try (set! nth (fn ([xs n] (reset! trace (+ (* @trace 10) (inc n))) (-nth xs n)) ([xs n nf] (-nth xs n nf)))) (and (= (compare-indexed [1 9] [2 0]) -1) (= @trace 11)) (finally (set! nth saved))))}
 #js {:id "indexed-live-compare" :value (let [saved compare trace (atom [])] (try (set! compare (fn [x y] (swap! trace conj x y) 17)) (and (= (compare-indexed [1] [2]) 17) (= @trace [1 2])) (finally (set! compare saved))))}
-#js {:id "format-toString-object-fallback" :value (let [trace (atom []) x (js-obj "toString" (fn [] (swap! trace conj :string) (js-obj)) "valueOf" (fn [] (swap! trace conj :value) "left"))] (try (compare x "right") false (catch :default e (and (= (.-message e) "Cannot compare left to right") (= @trace [:string :value])))))}
-#js {:id "format-noncallable-toString" :value (let [x (js-obj "toString" 17 "valueOf" (fn [] "left"))] (try (compare x "right") false (catch :default e (= (.-message e) "Cannot compare left to right"))))}
-#js {:id "format-order" :value (let [trace (atom []) x (js-obj "toString" (fn [] (swap! trace conj 1) "left")) y (js-obj "toString" (fn [] (swap! trace conj 2) "right"))] (try (compare x y) false (catch :default e (and (= (.-message e) "Cannot compare left to right") (= @trace [1 2])))))}
-#js {:id "format-throw-stops-second" :value (let [trace (atom []) x (js-obj "toString" (fn [] (swap! trace conj 1) (throw 73))) y (js-obj "toString" (fn [] (swap! trace conj 2) "right"))] (try (compare x y) false (catch :default e (and (= e 73) (= @trace [1])))))}
+#js {:id "format-order" :value (let [trace (atom []) x (reify Object (toString [_] (swap! trace conj 1) "left")) y (reify Object (toString [_] (swap! trace conj 2) "right"))] (try (compare x y) false (catch :default e (and (= (.-message e) "Cannot compare left to right") (= @trace [1 2])))))}
+#js {:id "format-throw-stops-second" :value (let [trace (atom []) x (reify Object (toString [_] (swap! trace conj 1) (throw 73))) y (reify Object (toString [_] (swap! trace conj 2) "right"))] (try (compare x y) false (catch :default e (and (= e 73) (= @trace [1])))))}
 #js {:id "format-live-str" :value (let [saved cljs.core/str_ trace (atom [])] (try (set! cljs.core/str_ (fn [x] (swap! trace conj x) "z")) (try (compare 1 "x") false (catch :default e (and (= (.-message e) "Cannot compare z to z") (= @trace [1 "x"])))) (finally (set! cljs.core/str_ saved))))}
 #js {:id "str-nil-single-variadic-rebind" :value (let [saved nil?] (try (set! nil? (fn [_] false)) (and (= (str_ nil) "") (= (str_ nil "ignored") "") (= (str_ "x" nil "y") "xy")) (finally (set! nil? saved))))}
-#js {:id "str-second-lookup-after-first" :value (let [trace (atom []) x (js-obj)] (set! (.-toString x) (fn [] (swap! trace conj 1) (set! (.-valueOf x) (fn [] (swap! trace conj 2) "ok")) (js-obj))) (and (= (str_ x) "ok") (= @trace [1 2])))}
-#js {:id "str-nonprimitive-both-throw" :value (let [trace (atom []) x (js-obj "toString" (fn [] (swap! trace conj 1) (js-obj)) "valueOf" (fn [] (swap! trace conj 2) (js-obj)))] (try (str_ x) false (catch :default e (= @trace [1 2]))))}
-#js {:id "format-live-str-results-convert-after-calls" :value (let [saved cljs.core/str_ trace (atom [])] (try (set! cljs.core/str_ (fn [x] (swap! trace conj x) (js-obj "toString" (fn [] (swap! trace conj 17) "z")))) (try (compare 1 "x") false (catch :default e (and (= (.-message e) "Cannot compare z to z") (= @trace [1 "x" 17 17])))) (finally (set! cljs.core/str_ saved))))}
+#js {:id "format-live-str-results-convert-after-calls" :value (let [saved cljs.core/str_ trace (atom [])] (try (set! cljs.core/str_ (fn [x] (swap! trace conj x) (reify Object (toString [_] (swap! trace conj 17) "z")))) (try (compare 1 "x") false (catch :default e (and (= (.-message e) "Cannot compare z to z") (= @trace [1 "x" 17 17])))) (finally (set! cljs.core/str_ saved))))}
 ])))
 (set! *main-cli-fn* -main)

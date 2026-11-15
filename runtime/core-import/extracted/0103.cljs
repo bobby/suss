@@ -6,12 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- new-path [edit level node]
-  (loop [ll level
-         ret node]
-    (if (zero? ll)
-      ret
-      (let [embed ret
-            r (pv-fresh-node edit)
-            _ (pv-aset r 0 embed)]
-        (recur (- ll 5) r)))))
+(defn- push-tail [pv level parent tailnode]
+  (let [ret (pv-clone-node parent)
+        subidx (bit-and (bit-shift-right-zero-fill (dec (.-cnt pv)) level) 0x01f)]
+    (if (== 5 level)
+      (do
+        (pv-aset ret subidx tailnode)
+        ret)
+      (let [child (pv-aget parent subidx)]
+        (if-not (nil? child)
+          (let [node-to-insert (push-tail pv (- level 5) child tailnode)]
+            (pv-aset ret subidx node-to-insert)
+            ret)
+          (let [node-to-insert (new-path nil (- level 5) tailnode)]
+            (pv-aset ret subidx node-to-insert)
+            ret))))))

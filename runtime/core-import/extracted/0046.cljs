@@ -6,10 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype List [meta first rest count ^:mutable __hash]
+(deftype EmptyList [meta]
   Object
-  (toString [coll]
-    (pr-str* coll))
+  (toString [coll] "()")
   (equiv [this other]
     (-equiv this other))
   (indexOf [coll x]
@@ -17,60 +16,57 @@
   (indexOf [coll x start]
     (-indexOf coll x start))
   (lastIndexOf [coll x]
-    (-lastIndexOf coll x count))
+    (-lastIndexOf coll x (count coll)))
   (lastIndexOf [coll x start]
     (-lastIndexOf coll x start))
 
   IList
 
   ICloneable
-  (-clone [_] (List. meta first rest count __hash))
+  (-clone [_] (EmptyList. meta))
 
   IWithMeta
   (-with-meta [coll new-meta]
     (if (identical? new-meta meta)
       coll
-      (List. new-meta first rest count __hash)))
+      (EmptyList. new-meta)))
 
   IMeta
   (-meta [coll] meta)
 
-  ASeq
   ISeq
-  (-first [coll] first)
-  (-rest [coll]
-    (if (== count 1)
-      ()
-      rest))
+  (-first [coll] nil)
+  (-rest [coll] ())
 
   INext
-  (-next [coll]
-    (if (== count 1)
-      nil
-      rest))
+  (-next [coll] nil)
 
   IStack
-  (-peek [coll] first)
-  (-pop [coll] (-rest coll))
+  (-peek [coll] nil)
+  (-pop [coll] (throw (js/Error. "Can't pop empty list")))
 
   ICollection
-  (-conj [coll o] (List. meta o coll (inc count) nil))
+  (-conj [coll o] (List. meta o nil 1 nil))
 
   IEmptyableCollection
-  (-empty [coll] (-with-meta (.-EMPTY List) meta))
+  (-empty [coll] coll)
 
   ISequential
   IEquiv
-  (-equiv [coll other] (equiv-sequential coll other))
+  (-equiv [coll other]
+    (if (or (list? other)
+            (sequential? other))
+      (nil? (seq other))
+      false))
 
   IHash
-  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
+  (-hash [coll] empty-ordered-hash)
 
   ISeqable
-  (-seq [coll] coll)
+  (-seq [coll] nil)
 
   ICounted
-  (-count [coll] count)
+  (-count [coll] 0)
 
   IReduce
   (-reduce [coll f] (seq-reduce f coll))

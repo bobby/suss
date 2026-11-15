@@ -459,7 +459,6 @@ fn own<C: AsContextMut<Data = ()>>(
 // Either root may be nil (None) when no frame or join is active.
 struct DynamicCheckpoint {
     frame: Option<OwnedRooted<AnyRef>>,
-    array_join: Option<OwnedRooted<AnyRef>>,
 }
 // Snapshot the caller's rooted dynamic context, including native interop calls.
 fn dynamic_checkpoint<C: AsContextMut<Data = ()>>(
@@ -475,16 +474,7 @@ fn dynamic_checkpoint<C: AsContextMut<Data = ()>>(
         .ok_or_else(|| wasmtime::Error::msg("Dynamic frame root is not a reference"))?
         .map(|frame| frame.to_owned_rooted(&mut *scope))
         .transpose()?;
-    let array_join = runtime
-        .get_global(&mut *scope, "array-join-active")
-        .ok_or_else(|| wasmtime::Error::msg("Missing Array join context"))?
-        .get(&mut *scope);
-    let array_join = array_join
-        .anyref()
-        .ok_or_else(|| wasmtime::Error::msg("Array join context is not a reference"))?
-        .map(|join| join.to_owned_rooted(&mut *scope))
-        .transpose()?;
-    Ok(DynamicCheckpoint { frame, array_join })
+    Ok(DynamicCheckpoint { frame })
 }
 fn restore_dynamic<C: AsContextMut<Data = ()>>(
     scope: &mut RootScope<C>,
@@ -492,11 +482,6 @@ fn restore_dynamic<C: AsContextMut<Data = ()>>(
     checkpoint: &DynamicCheckpoint,
 ) -> Result<(), SessionError> {
     // Host restoration also covers uncatchable Wasm fuel/cancellation traps.
-    let join = checkpoint.array_join.as_ref().map(|join| join.to_rooted(&mut *scope));
-    runtime
-        .get_global(&mut *scope, "array-join-active")
-        .ok_or_else(|| wasmtime::Error::msg("Missing Array join context"))?
-        .set(&mut *scope, Val::AnyRef(join))?;
     let global = runtime
         .get_global(&mut *scope, "dynamic-frame")
         .ok_or_else(|| wasmtime::Error::msg("Missing dynamic frame root"))?;
@@ -2847,33 +2832,11 @@ mod tests {
             .eval("(def effects 0) (def join-effects 0) (def ^:dynamic *value* 1)")
             .unwrap();
         let resume = session.eval(
-            "(fn [c] (do (set! effects (+ effects 1)) (binding [*value* 7] (str (js-obj \"toString\" (fn [] (set! join-effects (+ join-effects 1)) (loop [] (recur))))))))",
+            "(fn [c] (do (set! effects (+ effects 1)) (binding [*value* 7] (str (reify Object (toString [_] (set! join-effects (+ join-effects 1)) (loop [] (recur))))))))",
         ).unwrap();
         let runtime = session.runtime;
         let (producer, token, caller) = {
             let mut scope = RootScope::new(&mut session.store);
-            // Model a native caller already inside a different Array join.
-            let owner = value(
-                &mut scope,
-                runtime,
-                "source-array-holes-new",
-                &[Val::I32(0)],
-            );
-            let nil = value(&mut scope, runtime, "nil", &[]);
-            let active = value(&mut scope, runtime, "args-new", &[Val::I32(2)]);
-            let fields = active
-                .unwrap_anyref()
-                .unwrap()
-                .as_array(&scope)
-                .unwrap()
-                .unwrap();
-            fields.set(&mut scope, 0, owner).unwrap();
-            fields.set(&mut scope, 1, nil).unwrap();
-            runtime
-                .get_global(&mut scope, "array-join-active")
-                .unwrap()
-                .set(&mut scope, active)
-                .unwrap();
             let caller = dynamic_checkpoint(&mut scope, runtime).unwrap();
             let producer = value(&mut scope, runtime, "future-pending-new", &[]);
             let slots = value(&mut scope, runtime, "args-new", &[Val::I32(0)]);
@@ -2946,7 +2909,6 @@ mod tests {
             let current = dynamic_checkpoint(&mut scope, runtime).unwrap();
             // Either root may be nil; two nils are the same root.
             for (current, caller) in [
-                (&current.array_join, &caller.array_join),
                 (&current.frame, &caller.frame),
             ] {
                 let current = current.as_ref().map(|root| root.to_rooted(&mut scope));

@@ -6,12 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- array-index-of-symbol? [arr k]
-  (let [len  (alength arr)
-        kstr (.-str k)]
+(defn- array-index-of-identical? [arr k]
+  (let [len (alength arr)]
     (loop [i 0]
       (cond
         (<= len i) -1
-        (and (symbol? (aget arr i))
-             (identical? kstr (.-str (aget arr i)))) i
+        (identical? k (aget arr i)) i
         :else (recur (+ i 2))))))

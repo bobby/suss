@@ -6,15 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn conj!
-  "Adds val to the transient collection, and return tcoll. The 'addition'
-  may happen at different 'places' depending on the concrete type."
-  ([] (transient []))
-  ([tcoll] tcoll)
-  ([tcoll val]
-    (-conj! tcoll val))
-  ([tcoll val & vals]
-    (let [ntcoll (-conj! tcoll val)]
-      (if vals
-        (recur ntcoll (first vals) (next vals))
-        ntcoll))))
+(defprotocol IMap
+  "Protocol for adding mapping functionality to collections."
+  #_(-assoc-ex [coll k v])
+  (^clj -dissoc [coll k]
+    "Returns a new collection of coll without the mapping for key k."))

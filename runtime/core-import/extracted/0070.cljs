@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ensure-reduced
-  "If x is already reduced?, returns it, else returns (reduced x)"
+(defn unreduced
+  "If x is reduced?, returns (deref x), else returns x"
   [x]
-  (if (reduced? x) x (reduced x)))
+  (if (reduced? x) (deref x) x))

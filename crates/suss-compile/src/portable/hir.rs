@@ -159,9 +159,9 @@ impl ArrayOperation {
             // argument array, and `make-array` fills one with nil.
             Self::Literal | Self::Objects => "object-array-new",
             Self::Make => "object-array-make-args",
-            Self::Length => "source-array-length-args",
-            Self::Get => "source-array-get-indices",
-            Self::Set => "source-array-set-or-property",
+            Self::Length => "array-length-args",
+            Self::Get => "array-get-indices",
+            Self::Set => "array-set-indices",
         }
     }
     pub(crate) fn valid(self, count: usize) -> bool {

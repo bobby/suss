@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- pr-opts-readably [opts]
+(defn- pr-opts-meta [opts]
   (if-not (nil? opts)
-    (:readably opts)
-    *print-readably*))
+    (:meta opts)
+    *print-meta*))

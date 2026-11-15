@@ -6,8 +6,23 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- accumulating-seq-count [coll]
-  (loop [s (seq coll) acc 0]
-    (if (counted? s) ; assumes nil is counted, which it currently is
-      (+ acc (-count s))
-      (recur (next s) (inc acc)))))
+(defn count
+  "Returns the number of items in the collection. (count nil) returns
+  0.  Also works on strings, arrays, and Maps"
+  [coll]
+  (if-not (nil? coll)
+    (cond
+      (implements? ICounted coll)
+      (-count coll)
+
+      (array? coll)
+      (alength coll)
+
+      (string? coll)
+      ^number (.-length coll)
+
+      (implements? ISeqable coll)
+      (accumulating-seq-count coll)
+
+      :else (-count coll))
+    0))

@@ -6,9 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn sorted-set-by
-  "Returns a new sorted set with supplied keys, using the supplied comparator."
-  ([comparator & keys]
-   (reduce -conj
-           (PersistentTreeSet. nil (sorted-map-by comparator) 0)
-           keys)))
+(defn mk-bound-fn
+  [sc test key]
+  (fn [e]
+    (let [comp (-comparator sc)]
+      (test (comp (-entry-key sc e) key) 0))))

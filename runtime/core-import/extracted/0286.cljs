@@ -6,7 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn NaN?
-  "Returns true if num is NaN, else false"
-  [val]
-  (js/isNaN val))
+(defn integer?
+  "Returns true if n is a JavaScript number with no decimal part."
+  [n]
+  (and (number? n)
+       (not (js/isNaN n))
+       (not (identical? n js/Infinity))
+       (== (js/parseFloat n) (js/parseInt n 10))))

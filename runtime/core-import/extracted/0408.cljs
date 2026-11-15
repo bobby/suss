@@ -6,59 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- tree-map-append [left right]
-  (cond
-    (nil? left)
-    right
-
-    (nil? right)
-    left
-
-    (instance? RedNode left)
-    (if (instance? RedNode right)
-      (let [app (tree-map-append (.-right left) (.-left right))]
-        (if (instance? RedNode app)
-          (RedNode. (.-key app) (.-val app)
-                    (RedNode. (.-key left) (.-val left)
-                              (.-left left)
-                              (.-left app)
-                              nil)
-                    (RedNode. (.-key right) (.-val right)
-                              (.-right app)
-                              (.-right right)
-                              nil)
-                    nil)
-          (RedNode. (.-key left) (.-val left)
-                    (.-left left)
-                    (RedNode. (.-key right) (.-val right) app (.-right right) nil)
-                    nil)))
-      (RedNode. (.-key left) (.-val left)
-                (.-left left)
-                (tree-map-append (.-right left) right)
-                nil))
-
-    (instance? RedNode right)
-    (RedNode. (.-key right) (.-val right)
-              (tree-map-append left (.-left right))
-              (.-right right)
-              nil)
-
-    :else
-    (let [app (tree-map-append (.-right left) (.-left right))]
-      (if (instance? RedNode app)
-        (RedNode. (.-key app) (.-val app)
-                  (BlackNode. (.-key left) (.-val left)
-                              (.-left left)
-                              (.-left app)
-                              nil)
-                  (BlackNode. (.-key right) (.-val right)
-                              (.-right app)
-                              (.-right right)
-                              nil)
-                  nil)
-        (balance-left-del (.-key left) (.-val left)
-                          (.-left left)
-                          (BlackNode. (.-key right) (.-val right)
-                                      app
-                                      (.-right right)
-                                      nil))))))
+(defn- tree-map-replace [comp tree k v]
+  (let [tk (.-key tree)
+        c  (comp k tk)]
+    (cond (zero? c) (.replace tree tk v (.-left tree) (.-right tree))
+          (neg? c)  (.replace tree tk (.-val tree) (tree-map-replace comp (.-left tree) k v) (.-right tree))
+          :else     (.replace tree tk (.-val tree) (.-left tree) (tree-map-replace comp (.-right tree) k v)))))

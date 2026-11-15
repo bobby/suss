@@ -6,14 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- tv-push-tail [tv level parent tail-node]
-  (let [ret    (tv-ensure-editable (.. tv -root -edit) parent)
-        subidx (bit-and (bit-shift-right-zero-fill (dec (.-cnt tv)) level) 0x01f)]
-    (pv-aset ret subidx
-             (if (== level 5)
-               tail-node
-               (let [child (pv-aget ret subidx)]
-                 (if-not (nil? child)
-                   (tv-push-tail tv (- level 5) child tail-node)
-                   (new-path (.. tv -root -edit) (- level 5) tail-node)))))
-    ret))
+(defn- tv-pop-tail [tv level node]
+  (let [node   (tv-ensure-editable (.. tv -root -edit) node)
+        subidx (bit-and (bit-shift-right-zero-fill (- (.-cnt tv) 2) level) 0x01f)]
+    (cond
+      (> level 5) (let [new-child (tv-pop-tail
+                                   tv (- level 5) (pv-aget node subidx))]
+                    (if (and (nil? new-child) (zero? subidx))
+                      nil
+                      (do (pv-aset node subidx new-child)
+                          node)))
+      (zero? subidx) nil
+      :else (do (pv-aset node subidx nil)
+                node))))

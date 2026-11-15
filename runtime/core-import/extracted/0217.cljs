@@ -6,12 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn dissoc!
-  "Returns a transient map that doesn't contain a mapping for key(s)."
-  ([tcoll key]
-    (-dissoc! tcoll key))
-  ([tcoll key & ks]
-    (let [ntcoll (-dissoc! tcoll key)]
-      (if ks
-        (recur ntcoll (first ks) (next ks))
-        ntcoll))))
+(defn reduce-kv
+  "Reduces an associative collection. f should be a function of 3
+  arguments. Returns the result of applying f to init, the first key
+  and the first value in coll, then applying f to that result and the
+  2nd key and value, etc. If coll contains no entries, returns init
+  and f is not called. Note that reduce-kv is supported on vectors,
+  where the keys will be the ordinals."
+  ([f init coll]
+    (if (satisfies? IKVReduce coll)
+      (-kv-reduce coll f init)
+      (reduce (fn [ret me]
+                (f ret (-key me) (-val me)))
+        init coll))))

@@ -1,129 +1,13 @@
-//! Original first-class variadic factory for adapted js-obj. Invocation arguments
-//! have already been evaluated; odd pairs fail here, not during source analysis.
+//! The private native object factory, `suss.bootstrap/object-factory`: a
+//! first-class variadic function of keys and values, evaluated already; odd
+//! pairs fail here, not during source analysis.
 use super::*;
 pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     use Instruction::*;
-    // Walk stable array owner identities; Args snapshots are produced only
-    // after traversal ends, otherwise identity-based cycle detection is unsound.
+    // The arguments are the keys and values, in pairs (#425: no nested
+    // arrays of pairs).
     let mut code = vec![
-        LocalGet(0),
-        Call(b.names["source-array?"]),
-        If(BlockType::Empty),
-        LocalGet(0),
-        Call(b.names["source-array-backing"]),
-        LocalSet(1),
         LocalGet(1),
-        Call(b.names["source-array-sparse-length"]),
-        I32Const(1),
-        I32Eq,
-        If(BlockType::Empty),
-        LocalGet(1),
-        I32Const(0),
-        Call(b.names["source-array-sparse-get"]),
-        LocalTee(1),
-        Call(b.names["source-array?"]),
-        If(BlockType::Empty),
-        LocalGet(1),
-        Return,
-        End,
-        End,
-        sentinel_value(NIL),
-        Return,
-        End,
-        LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(ARGS)),
-        I32Eqz,
-        If(BlockType::Empty),
-    ];
-    nominal::error(&mut code);
-    code.extend([
-        End,
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        ArrayLen,
-        I32Const(1),
-        I32Eq,
-        If(BlockType::Empty),
-        LocalGet(0),
-        RefCastNonNull(HeapType::Concrete(ARGS)),
-        I32Const(0),
-        ArrayGet(ARGS),
-        LocalTee(1),
-        Call(b.names["source-array?"]),
-        If(BlockType::Empty),
-        LocalGet(1),
-        Return,
-        End,
-        End,
-        sentinel_value(NIL),
-    ]);
-    let next = b.function_with_locals(
-        "native-object-factory-next",
-        &[VALUE],
-        &[VALUE],
-        &[(1, VALUE)],
-        &code,
-    );
-    let mut code = vec![
-        LocalGet(0),
-        RefTestNonNull(HeapType::Concrete(ARGS)),
-        I32Eqz,
-        If(BlockType::Empty),
-    ];
-    nominal::error(&mut code);
-    code.extend([
-        End,
-        LocalGet(0),
-        LocalSet(1),
-        LocalGet(0),
-        LocalSet(2),
-        Block(BlockType::Empty),
-        Loop(BlockType::Empty),
-        LocalGet(1),
-        Call(next),
-        LocalTee(3),
-        sentinel_value(NIL),
-        RefEq,
-        If(BlockType::Empty),
-        LocalGet(1),
-        Call(b.names["source-array?"]),
-        If(BlockType::Result(VALUE)),
-        LocalGet(1),
-        Call(b.names["source-array-storage"]),
-        Else,
-        LocalGet(1),
-        End,
-        Return,
-        End,
-        LocalGet(3),
-        LocalSet(1),
-    ]);
-    for _ in 0..2 {
-        code.extend([
-            LocalGet(2),
-            sentinel_value(NIL),
-            RefEq,
-            I32Eqz,
-            If(BlockType::Empty),
-            LocalGet(2),
-            Call(next),
-            LocalSet(2),
-            End,
-        ]);
-    }
-    code.extend([LocalGet(1), LocalGet(2), RefEq, If(BlockType::Empty)]);
-    nominal::error(&mut code);
-    code.extend([End, Br(0), End, End, LocalGet(1)]);
-    let flatten = b.function_with_locals(
-        "native-object-factory-flatten",
-        &[VALUE],
-        &[VALUE],
-        &[(3, VALUE)],
-        &code,
-    );
-    code = vec![
-        LocalGet(1),
-        Call(flatten),
         LocalSet(2),
         LocalGet(2),
         RefCastNonNull(HeapType::Concrete(ARGS)),

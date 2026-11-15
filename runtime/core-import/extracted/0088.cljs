@@ -6,30 +6,55 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IFn
-  "Protocol for adding the ability to invoke an object as a function.
-  For example, a vector can also be used to look up a value:
-  ([1 2 3 4] 1) => 2"
-  (-invoke
-    [this]
-    [this a]
-    [this a b]
-    [this a b c]
-    [this a b c d]
-    [this a b c d e]
-    [this a b c d e f]
-    [this a b c d e f g]
-    [this a b c d e f g h]
-    [this a b c d e f g h i]
-    [this a b c d e f g h i j]
-    [this a b c d e f g h i j k]
-    [this a b c d e f g h i j k l]
-    [this a b c d e f g h i j k l m]
-    [this a b c d e f g h i j k l m n]
-    [this a b c d e f g h i j k l m n o]
-    [this a b c d e f g h i j k l m n o p]
-    [this a b c d e f g h i j k l m n o p q]
-    [this a b c d e f g h i j k l m n o p q r]
-    [this a b c d e f g h i j k l m n o p q r s]
-    [this a b c d e f g h i j k l m n o p q r s t]
-    [this a b c d e f g h i j k l m n o p q r s t rest]))
+(deftype MetaFn [afn meta]
+  IMeta
+  (-meta [_] meta)
+  IWithMeta
+  (-with-meta [_ new-meta]
+    (MetaFn. afn new-meta))
+  Fn
+  IFn
+  (-invoke [_]
+    (afn))
+  (-invoke [_ a]
+    (afn a))
+  (-invoke [_ a b]
+    (afn a b))
+  (-invoke [_ a b c]
+    (afn a b c))
+  (-invoke [_ a b c d]
+    (afn a b c d))
+  (-invoke [_ a b c d e]
+    (afn a b c d e))
+  (-invoke [_ a b c d e f]
+    (afn a b c d e f))
+  (-invoke [_ a b c d e f g]
+    (afn a b c d e f g))
+  (-invoke [_ a b c d e f g h]
+    (afn a b c d e f g h))
+  (-invoke [_ a b c d e f g h i]
+    (afn a b c d e f g h i))
+  (-invoke [_ a b c d e f g h i j]
+    (afn a b c d e f g h i j))
+  (-invoke [_ a b c d e f g h i j k]
+    (afn a b c d e f g h i j k))
+  (-invoke [_ a b c d e f g h i j k l]
+    (afn a b c d e f g h i j k l))
+  (-invoke [_ a b c d e f g h i j k l m]
+    (afn a b c d e f g h i j k l m))
+  (-invoke [_ a b c d e f g h i j k l m n]
+    (afn a b c d e f g h i j k l m n))
+  (-invoke [_ a b c d e f g h i j k l m n o]
+    (afn a b c d e f g h i j k l m n o))
+  (-invoke [_ a b c d e f g h i j k l m n o p]
+    (afn a b c d e f g h i j k l m n o p))
+  (-invoke [_ a b c d e f g h i j k l m n o p q]
+    (afn a b c d e f g h i j k l m n o p q))
+  (-invoke [_ a b c d e f g h i j k l m n o p q r]
+    (afn a b c d e f g h i j k l m n o p q r))
+  (-invoke [_ a b c d e f g h i j k l m n o p q r s]
+    (afn a b c d e f g h i j k l m n o p q r s))
+  (-invoke [_ a b c d e f g h i j k l m n o p q r s t]
+    (afn a b c d e f g h i j k l m n o p q r s t))
+  (-invoke [_ a b c d e f g h i j k l m n o p q r s t rest]
+    (apply afn a b c d e f g h i j k l m n o p q r s t rest)))

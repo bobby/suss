@@ -6,13 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- array-extend-kv [arr k v]
-  (let [l (alength arr)
-        narr (make-array (+ l 2))]
-    (loop [i 0]
-      (when (< i l)
-        (aset narr i (aget arr i))
-        (recur (inc i))))
-    (aset narr l k)
-    (aset narr (inc l) v)
-    narr))
+(defn- array-map-extend-kv [m k v]
+  (array-extend-kv (.-arr m) k v))

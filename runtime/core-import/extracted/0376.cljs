@@ -6,19 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn --destructure-map [gmap]
-  (if ^boolean LITE_MODE
-    (if (implements? ISeq gmap)
-      (if (next gmap)
-        (.createAsIfByAssoc ObjMap (to-array gmap))
-        (if (seq gmap)
-          (first gmap)
-          (.-EMPTY ObjMap)))
-      gmap)
-    (if (implements? ISeq gmap)
-      (if (next gmap)
-        (.createAsIfByAssoc PersistentArrayMap (to-array gmap))
-        (if (seq gmap)
-          (first gmap)
-          (.-EMPTY PersistentArrayMap)))
-      gmap)))
+(defn vector
+  "Creates a new vector containing the args."
+  [& args]
+  (if (and (instance? IndexedSeq args) (zero? (.-i args)))
+    (.fromArray PersistentVector (.-arr args) (not (array? (.-arr args))))
+    (vec args)))

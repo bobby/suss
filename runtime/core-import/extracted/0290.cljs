@@ -6,8 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn even?
-  "Returns true if n is even, throws an exception if n is not an integer"
-   [n] (if (integer? n)
-         (zero? (bit-and n 1))
-         (throw (js/Error. (str_ "Argument must be an integer: " n)))))
+(defn odd?
+  "Returns true if n is odd, throws an exception if n is not an integer"
+  [n] (not (even? n)))

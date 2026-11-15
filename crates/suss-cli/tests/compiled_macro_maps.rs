@@ -76,7 +76,7 @@ fn compiled_macro_maps_reject_foreign_and_malformed_storage_and_recover() {
         "(suss.core/PersistentArrayMap. nil 2 (array :a 1) nil)",
         "(suss.core/PersistentArrayMap. nil -1 (array) nil)",
         "(suss.core/PersistentArrayMap. nil 1.5 (array :a 1) nil)",
-        "(suss.core/PersistentArrayMap. nil 1 (js-obj) nil)",
+        "(suss.core/PersistentArrayMap. nil 1 (reify) nil)",
         "(suss.core/PersistentArrayMap. true 1 (array :a 1) nil)",
         "(suss.core/PersistentArrayMapSeq. (array :a 1) 1 nil)",
         "(suss.core/PersistentArrayMapSeq. (array :a 1) 2 nil)",

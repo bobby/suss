@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn second
-  "Same as (first (next x))"
+(defn nnext
+  "Same as (next (next x))"
   [coll]
-  (first (next coll)))
+  (next (next coll)))

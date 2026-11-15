@@ -6,14 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn hash-map
+(defn array-map
   "keyval => key val
-  Returns a new hash map with supplied mappings."
+  Returns a new array map with supplied mappings."
   [& keyvals]
-  (loop [in (seq keyvals), out (transient (.-EMPTY PersistentHashMap))]
-    (if in
-      (let [in' (next in)]
-        (if (nil? in')
-          (throw (js/Error. (str_ "No value supplied for key: " (first in))))
-          (recur (next in') (assoc! out (first in) (first in')) )))
-      (persistent! out))))
+  (let [arr (if (and (instance? IndexedSeq keyvals) (zero? (.-i keyvals)))
+              (.-arr keyvals)
+              (into-array keyvals))]
+    (if (odd? (alength arr))
+      (throw (js/Error. (str_ "No value supplied for key: " (last arr))))
+      (.createAsIfByAssoc PersistentArrayMap arr))))

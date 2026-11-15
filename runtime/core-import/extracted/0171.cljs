@@ -6,9 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn map?
-  "Return true if x satisfies IMap"
+(defn record?
+  "Return true if x satisfies IRecord"
   [x]
-  (if (nil? x)
-    false
-    (satisfies? IMap x)))
+  (satisfies? IRecord x))

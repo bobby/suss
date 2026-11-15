@@ -6,5 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- tv-editable-root [node]
-  (VectorNode. (js-obj) (aclone (.-arr node))))
+(defn- tv-editable-tail [tl]
+  (let [ret (make-array 32)]
+    (array-copy tl 0 ret 0 (alength tl))
+    ret))

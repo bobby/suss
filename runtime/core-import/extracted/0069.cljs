@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn reduced?
-  "Returns true if x is the result of a call to reduced"
-  [r]
-  (instance? Reduced r))
+(defn ensure-reduced
+  "If x is already reduced?, returns it, else returns (reduced x)"
+  [x]
+  (if (reduced? x) x (reduced x)))

@@ -6,36 +6,30 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Symbol [ns name str ^:mutable _hash _meta]
+(deftype Keyword [ns name fqn ^:mutable _hash]
   Object
-  (toString [_] str)
-  (equiv [this other] (-equiv this other))
+  (toString [_] (str_ ":" fqn))
+  (equiv [this other]
+    (-equiv this other))
 
   IEquiv
   (-equiv [_ other]
-    (if (instance? Symbol other)
-      (identical? str (.-str other))
+    (if (instance? Keyword other)
+      (identical? fqn (.-fqn other))
       false))
-
   IFn
-  (-invoke [sym coll]
-    (get coll sym))
-  (-invoke [sym coll not-found]
-    (get coll sym not-found))
-
-  IMeta
-  (-meta [_] _meta)
-
-  IWithMeta
-  (-with-meta [_ new-meta] (Symbol. ns name str _hash new-meta))
+  (-invoke [kw coll]
+    (get coll kw))
+  (-invoke [kw coll not-found]
+    (get coll kw not-found))
 
   IHash
-  (-hash [sym]
-    (caching-hash sym hash-symbol _hash))
+  (-hash [this]
+    (caching-hash this hash-keyword _hash))
 
   INamed
   (-name [_] name)
   (-namespace [_] ns)
 
   IPrintWithWriter
-  (-pr-writer [o writer _] (-write writer str)))
+  (-pr-writer [o writer _] (-write writer (str_ ":" fqn))))

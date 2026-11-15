@@ -6,9 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn reset!
-  "Sets the value of atom to newval without regard for the
-  current value. Returns new-value."
+(defn reset-vals!
+  "Sets the value of atom to newval. Returns [old new], the value of the
+   atom before and after the reset."
+  {:added "1.9"}
   [a new-value]
   (if (instance? Atom a)
     (let [validate (.-validator a)]
@@ -19,5 +20,5 @@
         (set! (.-state a) new-value)
         (when-not (nil? (.-watches a))
           (-notify-watches a old-value new-value))
-        new-value))
-    (-reset! a new-value)))
+        [old-value new-value]))
+    [(-deref a) (-reset! a new-value)]))

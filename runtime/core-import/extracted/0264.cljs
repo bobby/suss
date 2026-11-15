@@ -6,21 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn set
-  "Returns a set of the distinct elements of coll."
-  [coll]
-  (if (set? coll)
-    (with-meta coll nil)
-    (let [in (seq coll)]
-      (cond
-        (nil? in) #{}
-
-        (and (instance? IndexedSeq in) (zero? (.-i in)))
-        (.createAsIfByAssoc PersistentHashSet (.-arr in))
-
-        :else
-        (loop [^not-native in  in
-               ^not-native out (-as-transient #{})]
-          (if-not (nil? in)
-            (recur (next in) (-conj! out (-first in)))
-            (persistent! out)))))))
+(defn hash-set
+  "Returns a new hash set with supplied keys.  Any equal keys are
+  handled as if by repeated uses of conj."
+  ([] #{})
+  ([& keys] (set keys)))

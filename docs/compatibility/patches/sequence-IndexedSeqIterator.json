@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "b1552e35064f6a9a3b05998abe4180dab3afe2cc108c76f515088b977e516fba",
+  "replacement": "(deftype IndexedSeqIterator [arr ^:mutable i]\n  Object\n  (hasNext [_]\n    (< i (indexed-length arr)))\n  (next [_]\n    (let [ret (indexed-get arr i)]\n      (set! i (inc i))\n      ret)))",
+  "rationale": "Suss's aget and alength read only arrays (#425); an IndexedSeq over a string reads it with indexed-get and indexed-length, as ClojureScript's aget reads a string. No other change."
+}

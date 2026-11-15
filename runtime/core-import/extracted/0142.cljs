@@ -6,7 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IVector
-  "Protocol for adding vector functionality to collections."
-  (^clj -assoc-n [coll n val]
-    "Returns a new vector with value val added at position n."))
+(defprotocol IKVReduce
+  "Protocol for associative types that can reduce themselves
+  via a function of key and val. Called by cljs.core/reduce-kv."
+  (-kv-reduce [coll f init]
+    "Reduces an associative collection and returns the result. f should be
+     a function that takes three arguments."))

@@ -1271,7 +1271,7 @@ fn adapter(
     if list_schema {
         for (index, (name, params)) in [
             ("object-array-new", vec![VALUE]),
-            ("source-array-set", vec![VALUE; 3]),
+            ("array-set", vec![VALUE; 3]),
         ]
         .into_iter()
         .enumerate()

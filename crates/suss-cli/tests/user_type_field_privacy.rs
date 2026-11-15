@@ -106,9 +106,7 @@ fn mutable_fields_are_private_outside_their_type() {
         }
         // Dynamic property access never reaches a user type's fields.
         for source in [
-            "(unchecked-get (Cell. 1 2) \"v\")",
             "(aget (Cell. 1 2) \"v\")",
-            "(let [c (Cell. 1 2)] (unchecked-set c \"v\" 5) c)",
             "(let [c (Cell. 1 2)] (aset c \"v\" 5) c)",
         ] {
             assert!(matches!(caught(&mut session, source), Observation::String(_)), "{phase}: {source}");

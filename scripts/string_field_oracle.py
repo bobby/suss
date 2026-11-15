@@ -5,7 +5,7 @@ import json
 import sys
 import portable_oracle as oracle
 from cljs_inventory import Scanner
-CASE_IDS = ['str-empty', 'str-scalars', 'str-many', 'str-raw-number-return', 'str-raw-nil-return', 'str-conversion-order', 'str-conversion-throw', 'buffer-zero-nil-first', 'buffer-second-nil-suppresses-rest', 'buffer-append-empty', 'buffer-append-self', 'buffer-clear-set', 'buffer-first-string-later-default-hints', 'buffer-set-default-hint', 'buffer-conversion-mutation-captured-left', 'field-collision-constructor-read-write', 'field-hyphen-callback', 'object-variadic-receiver-rest', 'field-borrowed-callback', 'str-live-recursive-var', 'str-immutable-nil-macro', 'buffer-captured-to-array', 'field-collision-protocol-read-write', 'object-fixed-rest-overlap', 'reserved-field-storage', 'buffer-append-nil', 'buffer-undefined-second-suppresses-rest', 'buffer-set-missing', 'buffer-utf16-length-and-ignored-effects']
+CASE_IDS = ['str-empty', 'str-scalars', 'str-many', 'str-conversion-order', 'str-conversion-throw', 'buffer-zero-nil-first', 'buffer-second-nil-suppresses-rest', 'buffer-append-empty', 'buffer-append-self', 'buffer-clear-set', 'buffer-conversion-mutation-captured-left', 'field-collision-constructor-read-write', 'field-hyphen-callback', 'object-variadic-receiver-rest', 'str-live-recursive-var', 'str-immutable-nil-macro', 'buffer-captured-to-array', 'field-collision-protocol-read-write', 'object-fixed-rest-overlap', 'reserved-field-storage', 'buffer-append-nil', 'buffer-undefined-second-suppresses-rest', 'buffer-set-missing', 'buffer-utf16-length-and-ignored-effects']
 
 CORPUS = oracle.ROOT / 'tests/oracle/string-field-cases.json'
 OBSERVATIONS = oracle.ROOT / 'tests/oracle/out/string-field-observations.json'

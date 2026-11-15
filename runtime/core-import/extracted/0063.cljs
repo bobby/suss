@@ -6,19 +6,20 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn list
-  "Creates a new list containing the items."
-  [& xs]
-  (let [arr (if (and (instance? IndexedSeq xs) (zero? (.-i xs)))
-              (.-arr xs)
-              (let [arr (array)]
-                (loop [^not-native xs xs]
-                  (if-not (nil? xs)
-                    (do
-                      (.push arr (-first xs))
-                      (recur (-next xs)))
-                    arr))))]
-    (loop [i (alength arr) r ()]
-      (if (> i 0)
-        (recur (dec i) (-conj r (aget arr (dec i))))
-        r))))
+(defn ^boolean =
+  "Equality. Returns true if x equals y, false if not. Compares
+  numbers and collections in a type-independent manner.  Clojure's immutable data
+  structures define -equiv (and thus =) as a value, not an identity,
+  comparison."
+  ([x] true)
+  ([x y]
+    (if (nil? x)
+      (nil? y)
+      (or (identical? x y)
+        ^boolean (-equiv x y))))
+  ([x y & more]
+     (if (= x y)
+       (if (next more)
+         (recur y (first more) (next more))
+         (= y (first more)))
+       false)))

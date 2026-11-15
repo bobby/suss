@@ -6,10 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- array-index-of-nil? [arr]
-  (let [len (alength arr)]
+(defn- array-index-of-keyword? [arr k]
+  (let [len  (alength arr)
+        kstr (.-fqn k)]
     (loop [i 0]
       (cond
         (<= len i) -1
-        (nil? (aget arr i)) i
+        (and (keyword? (aget arr i))
+             (identical? kstr (.-fqn (aget arr i)))) i
         :else (recur (+ i 2))))))

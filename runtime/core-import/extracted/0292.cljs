@@ -6,9 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn peek
-  "For a list or queue, same as first, for a vector, same as, but much
-  more efficient than, last. If the collection is empty, returns nil."
+(defn pop
+  "For a list or queue, returns a new list/queue without the first
+  item, for a vector, returns a new vector without the last item.
+  Note - not the same as next/butlast."
   [coll]
   (when-not (nil? coll)
-    (-peek coll)))
+    (-pop coll)))

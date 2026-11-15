@@ -6,7 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn prn-str
-  "Same as pr-str followed by (newline)"
+(defn print-str
+  "print to a string, returning it"
   [& objs]
-  (prn-str-with-opts objs nil))
+  (binding [*print-readably* false]
+    (pr-str-with-opts objs nil)))

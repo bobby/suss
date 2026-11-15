@@ -6,9 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol ITransientCollection
-  "Protocol for adding basic functionality to transient collections."
-  (^clj -conj! [tcoll val]
-    "Adds value val to tcoll and returns tcoll.")
-  (^clj -persistent! [tcoll]
-    "Creates a persistent data structure from tcoll and returns it."))
+(defprotocol ITransientAssociative
+  "Protocol for adding associativity to transient collections."
+  (^clj -assoc! [tcoll key val]
+    "Returns a new transient collection of tcoll with a mapping from key to
+     val added to it."))

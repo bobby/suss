@@ -6,7 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn chunk-cons [chunk rest]
-  (if (zero? (-count chunk))
-    rest
-    (ChunkedCons. chunk rest nil nil)))
+(defn chunk-first [s]
+  (-chunked-first s))

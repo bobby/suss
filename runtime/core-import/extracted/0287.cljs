@@ -6,10 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn integer?
-  "Returns true if n is a JavaScript number with no decimal part."
-  [n]
-  (and (number? n)
-       (not (js/isNaN n))
-       (not (identical? n js/Infinity))
-       (== (js/parseFloat n) (js/parseInt n 10))))
+(defn ^number max
+  "Returns the greatest of the nums."
+  ([x] x)
+  ([x y]
+   (cond
+     (NaN? x) x
+     (NaN? y) y
+     (> x y) x
+     :else y))
+  ([x y & more]
+   (reduce max (cljs.core/max x y) more)))

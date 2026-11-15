@@ -6,6 +6,20 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn qualified-keyword?
-  "Return true if x is a keyword with a namespace"
-  [x] (boolean (and (keyword? x) (namespace x) true)))
+(defn- lift-ns
+  "Returns #js [lifted-ns lifted-map] or nil if m can't be lifted."
+  [m]
+  (when *print-namespace-maps*
+    (let [lm #js []]
+      (loop [ns nil
+             [[k v :as entry] & entries] (seq m)]
+        (if entry
+          (when (or (keyword? k) (symbol? k))
+            (if ns
+              (when (= ns (namespace k))
+                (.push lm (MapEntry. (strip-ns k) v nil))
+                (recur ns entries))
+              (when-let [new-ns (namespace k)]
+                (.push lm (MapEntry. (strip-ns k) v nil))
+                (recur new-ns entries))))
+          #js [ns lm])))))

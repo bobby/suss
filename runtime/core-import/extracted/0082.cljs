@@ -6,6 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn indexed?
-  "Returns true if coll implements nth in constant time"
-  [x] (satisfies? IIndexed x))
+(defn ^boolean neg?
+  "Returns true if num is less than zero, else false"
+  [x] (cljs.core/neg? x))

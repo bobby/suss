@@ -6,16 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- tv-pop-tail [tv level node]
-  (let [node   (tv-ensure-editable (.. tv -root -edit) node)
-        subidx (bit-and (bit-shift-right-zero-fill (- (.-cnt tv) 2) level) 0x01f)]
-    (cond
-      (> level 5) (let [new-child (tv-pop-tail
-                                   tv (- level 5) (pv-aget node subidx))]
-                    (if (and (nil? new-child) (zero? subidx))
-                      nil
-                      (do (pv-aset node subidx new-child)
-                          node)))
-      (zero? subidx) nil
-      :else (do (pv-aset node subidx nil)
-                node))))
+(defn- unchecked-editable-array-for [tv i]
+  ;; invariant: i is a valid index of tv.
+  (if (>= i (tail-off tv))
+    (.-tail tv)
+    (let [root (.-root tv)]
+      (loop [node  root
+             level (.-shift tv)]
+        (if (pos? level)
+          (recur (tv-ensure-editable
+                   (.-edit root)
+                   (pv-aget node
+                            (bit-and (bit-shift-right-zero-fill i level)
+                                     0x01f)))
+                 (- level 5))
+          (.-arr node))))))

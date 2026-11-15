@@ -6,11 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn sorted-map
-  "keyval => key val
-  Returns a new sorted map with supplied mappings."
-  ([& keyvals]
-     (loop [in (seq keyvals) out (.-EMPTY PersistentTreeMap)]
-       (if in
-         (recur (nnext in) (assoc out (first in) (second in)))
-         out))))
+(defn sorted-set
+  "Returns a new sorted set with supplied keys."
+  ([& keys]
+   (reduce -conj (.-EMPTY PersistentTreeSet) keys)))

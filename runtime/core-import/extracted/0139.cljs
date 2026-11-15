@@ -6,8 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol ILookup
-  "Protocol for looking up a value in a data structure."
-  (-lookup [o k] [o k not-found]
-    "Use k to look up a value in o. If not-found is supplied and k is not
-     a valid value that can be used for look up, not-found is returned."))
+(defprotocol IAssociative
+  "Protocol for adding associativity to collections."
+  (^boolean -contains-key? [coll k]
+    "Returns true if k is a key in coll.")
+  #_(-entry-at [coll k])
+  (^clj -assoc [coll k v]
+    "Returns a new collection of coll with a mapping from key k to
+     value v added to it."))

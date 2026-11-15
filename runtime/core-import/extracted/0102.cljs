@@ -6,8 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- tail-off [pv]
-  (let [cnt (.-cnt pv)]
-    (if (< cnt 32)
-      0
-      (bit-shift-left (bit-shift-right-zero-fill (dec cnt) 5) 5))))
+(defn- new-path [edit level node]
+  (loop [ll level
+         ret node]
+    (if (zero? ll)
+      ret
+      (let [embed ret
+            r (pv-fresh-node edit)
+            _ (pv-aset r 0 embed)]
+        (recur (- ll 5) r)))))

@@ -292,7 +292,7 @@
     },
     {
       "id": "object-stable",
-      "source": "(let [o (js-obj)] (= (hash o) (hash o)))",
+      "source": "(let [o (reify)] (= (hash o) (hash o)))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -300,7 +300,7 @@
     },
     {
       "id": "object-distinct",
-      "source": "(not (= (hash (js-obj)) (hash (js-obj))))",
+      "source": "(not (= (hash (reify)) (hash (reify))))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -324,7 +324,7 @@
     },
     {
       "id": "string-composition",
-      "source": "(= (hash \"a\ud83d\ude00\") (m3-hash-int (hash-string* \"a\ud83d\ude00\")))",
+      "source": "(= (hash \"a😀\") (m3-hash-int (hash-string* \"a😀\")))",
       "expected": {
         "tag": "bool",
         "value": true

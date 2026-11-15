@@ -6,15 +6,22 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- pack-array-node [array-node edit idx]
-  (let [arr     (.-arr array-node)
-        len     (alength arr)
-        new-arr (make-array (* 2 (dec (.-cnt array-node))))]
-    (loop [i 0 j 1 bitmap 0]
-      (if (< i len)
-        (if (and (not (== i idx))
-                 (not (nil? (aget arr i))))
-          (do (aset new-arr j (aget arr i))
-              (recur (inc i) (+ j 2) (bit-or bitmap (bit-shift-left 1 i))))
-          (recur (inc i) j bitmap))
-        (BitmapIndexedNode. edit bitmap new-arr)))))
+(deftype ArrayNodeIterator [arr ^:mutable i ^:mutable next-iter]
+  Object
+  (hasNext [this]
+    (let [len (alength arr)]
+      (loop []
+        (if-not (and  (some? next-iter) ^boolean (.hasNext next-iter))
+          (if (< i len)
+            (let [node (aget arr i)]
+              (set! i (inc i))
+              (when (some? node)
+                (set! next-iter (-iterator node)))
+              (recur))
+            false)
+          true))))
+  (next [this]
+    (if ^boolean (.hasNext this)
+      (.next next-iter)
+      (throw (js/Error. "No such element"))))
+  (remove [_] (js/Error. "Unsupported operation")))

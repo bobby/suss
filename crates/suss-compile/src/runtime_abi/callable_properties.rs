@@ -56,7 +56,7 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
                 LocalGet(1),
                 I32Const(1),
                 ArrayGet(ARGS),
-                Call(b.names["source-array-storage"]),
+                Call(b.names["array-storage"]),
                 LocalSet(4),
             ]);
             array(&mut code, 4);

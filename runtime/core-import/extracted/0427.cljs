@@ -6,7 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn type->str [ty]
-  (if-let [s (.-cljs$lang$ctorStr ty)]
-    s
-    (str_ ty)))
+(defn cycle
+  "Returns a lazy (infinite!) sequence of repetitions of the items in coll."
+  [coll] (if-let [vals (seq coll)]
+           (Cycle. nil vals nil vals nil)
+           (.-EMPTY List)))

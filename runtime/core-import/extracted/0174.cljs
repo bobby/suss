@@ -6,45 +6,22 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn get
-  "Returns the value mapped to key, not-found or nil if key not present
-  in associative collection, set, string, array, or ILookup instance."
-  ([o k]
-    (when-not (nil? o)
-      (cond
-        (implements? ILookup o)
-        (-lookup o k)
+(defn ^boolean contains?
+  "Returns true if key is present in the given collection, otherwise
+  returns false.  Note that for numerically indexed collections like
+  vectors and arrays, this tests if the numeric key is within the
+  range of indexes. 'contains?' operates constant or logarithmic time;
+  it will not perform a linear search for a value.  See also 'some'."
+  [coll v]
+  (cond
+    (implements? IAssociative coll)
+    (-contains-key? coll v)
 
-        (array? o)
-        (when (and (some? k) (< k (.-length o)))
-          (aget o (int k)))
+    (native-satisfies? IAssociative coll)
+    (-contains-key? coll v)
 
-        (string? o)
-        (when (and (some? k) (< -1 k (.-length o)))
-          (.charAt o (int k)))
+    (identical? (get coll v lookup-sentinel) lookup-sentinel)
+    false
 
-        (native-satisfies? ILookup o)
-        (-lookup o k)
-
-        :else nil)))
-  ([o k not-found]
-    (if-not (nil? o)
-      (cond
-        (implements? ILookup o)
-        (-lookup o k not-found)
-
-        (array? o)
-        (if (and (some? k) (< -1 k (.-length o)))
-          (aget o (int k))
-          not-found)
-
-        (string? o)
-        (if (and (some? k) (< -1 k (.-length o)))
-          (.charAt o (int k))
-          not-found)
-
-        (native-satisfies? ILookup o)
-        (-lookup o k not-found)
-
-        :else not-found)
-      not-found)))
+    :else
+    true))

@@ -309,7 +309,6 @@ fn staged_type_returns_retained_nominal_constructors_in_both_phases() {
         // An array's type is not a constructor (#425); values whose
         // constructor boundary is unsupported remain here.
         for source in [
-            "(retained-type (js-obj))",
             "(retained-type (fn [x] x))",
         ] {
             let error = session.eval(source).unwrap_err();

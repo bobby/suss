@@ -1,42 +1,14 @@
-# UTF-16 indexed storage for source sequences
+# Strings in indexed sequences
 
-The pinned IndexedSeq source uses alength and aget for array and string owners.
-These operations now accept the shared UTF-16 string layout as well as the
-existing GC-owned mutable array owner. Length counts code units. An in-range
-numeric indexed read produces a new one-unit string; astral characters therefore
-yield their separate surrogate units. NUL and lone surrogates remain exact.
-Missing integer, negative, fractional, NaN and infinite numeric keys yield
-internal undefined; signed zero indexes the first unit.
+The pinned `IndexedSeq` reads an array or a string through `aget` and `alength`, as ClojureScript's `aget` reads a string's UTF-16 units. Suss's `aget`, `aset`, `alength` and `aclone` read only arrays, as on the JVM, and throw for a string (#425).
 
-Macro and first-class calls use the existing checked HIR/IR and universal
-invocation path. Nested indexing preserves ordered intermediate reads and
-exception recovery. No helper/global/type index, recursive layout or ABI version
-is added. Array storage, growth, clone and ownership behavior is unchanged.
+Core therefore reads an `IndexedSeq`'s backing, and `array-reduce`'s, through two private helpers:
 
-The source reference remains ClojureScript c4295f303100bbf5afac449242d30bca1126f1a1:
-core.cljs aget538/alength553, core.cljc aget1043/alength2748, and IndexedSeq1653.
-Four existing hash-bound reviews record this original Rust adaptation; no new
-upstream form is copied. Generated core artifacts retain their source and EPL
-packaging with an updated review hash. These reviews remain in progress.
+- `indexed-get` returns a string's one-unit substring at an index, or an array's element;
+- `indexed-length` returns a string's UTF-16 length, or an array's length.
 
-The separate 31-case corpus uses fresh compiled/executed primary observations and
-independent native decoding of binary64, exact Boolean sentinels and UTF-16
-arrays. Native GC runs between cases, including retained string owners and old
-first-class aget/alength functions after public runtime redefinition. Explicit
-qualified macros still use primitive storage behavior. Before implementation,
-the native regression failed with a language error on astral string length.
-Independent review adds large unsigned index boundaries and nested read/throw/
-finally effects. A separate native guard verifies unsupported properties, writes,
-clones and wrong runtime arities are language errors, followed by successful
-lone-surrogate reads after GC; it does not claim compatibility for those domains.
+`(seq "😀")` is two one-unit strings: the lone surrogates `"\uD83D"` and `"\uDE00"`.
 
-```sh
-CARGO_BUILD_JOBS=2 sh scripts/test-indexed-string-oracle.sh
-```
+The fast paths of `list`, `vector` and `set` take an `IndexedSeq`'s backing directly only when it is an object array. A string's sequence takes the general path.
 
-This is a prerequisite for source IndexedSeq, not persistent sequence acceptance.
-String writes, host named/coerced property keys, checked-array compiler modes,
-compiled upstream macros and full source sequence/core integration remain
-unfinished. Unsupported property inputs follow the typed language error path,
-not Wasm casts or out-of-bounds traps. Complete UTF-16 slicing/hashing/printing
-and persistent collection protocols still require their own acceptance evidence.
+`crates/suss-cli/tests/portable_indexed_strings.rs` checks that the array functions reject strings. `portable_iteration.rs`, `portable_sequences.rs` and `portable_reduction.rs` cover string sequences.

@@ -4,13 +4,6 @@
 use std::borrow::Cow;
 use wasm_encoder::*;
 mod arithmetic;
-mod array_join;
-mod array_methods;
-mod array_own_properties;
-mod array_pop;
-mod array_shift;
-mod array_properties;
-mod array_push;
 mod arrays;
 mod r#async;
 mod async_library;
@@ -44,7 +37,6 @@ mod owned_prototypes;
 mod predicates;
 mod primitive_constructors;
 mod range_errors;
-mod sparse_arrays;
 mod streams;
 mod string_methods;
 mod string_char_at;
@@ -1571,7 +1563,6 @@ fn build_module() -> Vec<u8> {
     let bitwise_functions = bitwise::functions(&mut b);
     packed_arrays::functions(&mut b);
     let mut arithmetic_functions = arithmetic::functions(&mut b, primitives);
-    sparse_arrays::functions(&mut b);
     arithmetic_functions.extend(arrays::functions(&mut b));
     arithmetic_functions.extend(nominal::functions(&mut b, generic_invoke));
     // The out-of-line call path (ADR-0004). A closure is invoked; any other
@@ -1764,7 +1755,6 @@ fn build_module() -> Vec<u8> {
     native_object_properties::functions(&mut b);
     // After named-property-get, which native_object_properties defines.
     named_site_get(&mut b);
-    arrays::set_or_property(&mut b);
     arithmetic_functions.extend(native_object_methods::functions(&mut b));
     arithmetic_functions.extend(native_object_factory::functions(&mut b));
     r#async::intrinsics(&mut b);
@@ -2104,9 +2094,12 @@ fn build_module() -> Vec<u8> {
     type_values::append_globals(&mut globals);
     primitive_constructors::append_globals(&mut globals);
     range_errors::append_globals(&mut globals);
-    array_own_properties::append_globals(&mut globals);
+    // The removed JS array methods' slots (#425), kept so later globals and
+    // descriptors keep their indices: one own-property root, then below the
+    // join stack and three method roots.
+    arrays::append_retired_globals(&mut globals, 1);
     coercions::append_globals(&mut globals, coercion_types, coercion_functions);
-    array_join::append_globals(&mut globals);
+    arrays::append_retired_globals(&mut globals, 4);
     string_char_at::append_globals(&mut globals);
     owned_prototypes::append_globals(
         &mut globals,
@@ -2180,7 +2173,6 @@ fn build_module() -> Vec<u8> {
         &ConstExpr::extended([sentinel_value(NIL)]),
     );
     b.exports.export("protocol-epoch", ExportKind::Global, PROTOCOL_EPOCH_GLOBAL);
-    b.exports.export("array-join-active", ExportKind::Global, array_join::ACTIVE);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);
     b.exports

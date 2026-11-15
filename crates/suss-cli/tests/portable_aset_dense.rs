@@ -36,7 +36,6 @@ fn aset_assigns_inside_the_array_and_returns_the_value() {
             ("(let [a (long-array 2)] (aset a 1 5) (vec a))", "[0 5]"),
             ("(let [a (int-array 1)] (aset a 0 1.5) (vec a))", "[1]"),
             ("(let [a (array (array 1 2))] (aset a 0 1 :n) (aget a 0 1))", ":n"),
-            (r#"(let [o (js-obj)] (aset o "k" 1) (aget o "k"))"#, r#"[:error "Invalid or unsupported array operation"]"#),
             ("(aset nil 0 1)", r#"[:error "Invalid or unsupported array operation"]"#),
             ("(let [t (transient [])] (count (persistent! (reduce conj! t (range 70)))))", "70"),
         ] {

@@ -6,11 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn name
-  "Returns the name String of a string, symbol or keyword."
+(defn namespace
+  "Returns the namespace String of a symbol or keyword, or nil if not present."
   [x]
   (if (implements? INamed x)
-    (-name x)
-    (if (string? x)
-      x
-      (throw (js/Error. (str_ "Doesn't support name: " x))))))
+    (-namespace x)
+    (throw (js/Error. (str_ "Doesn't support namespace: " x)))))

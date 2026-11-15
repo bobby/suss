@@ -6,9 +6,4 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype NeverEquiv []
-  Object
-  (equiv [this other]
-    (-equiv this other))
-  IEquiv
-  (-equiv [o other] false))
+(def ^:private never-equiv (NeverEquiv.))

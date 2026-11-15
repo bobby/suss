@@ -6,31 +6,38 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn comp
-  "Takes a set of functions and returns a fn that is the composition
-  of those fns.  The returned fn takes a variable number of args,
-  applies the rightmost of fns to the args, the next
-  fn (right-to-left) to the result, etc."
-  ([] identity)
-  ([f] f)
+(defn juxt
+  "Takes a set of functions and returns a fn that is the juxtaposition
+  of those fns.  The returned fn takes a variable number of args, and
+  returns a vector containing the result of applying each fn to the
+  args (left-to-right).
+  ((juxt a b c) x) => [(a x) (b x) (c x)]"
+  ([f]
+     (fn
+       ([] (vector (f)))
+       ([x] (vector (f x)))
+       ([x y] (vector (f x y)))
+       ([x y z] (vector (f x y z)))
+       ([x y z & args] (vector (apply f x y z args)))))
   ([f g]
      (fn
-       ([] (f (g)))
-       ([x] (f (g x)))
-       ([x y] (f (g x y)))
-       ([x y z] (f (g x y z)))
-       ([x y z & args] (f (apply g x y z args)))))
+       ([] (vector (f) (g)))
+       ([x] (vector (f x) (g x)))
+       ([x y] (vector (f x y) (g x y)))
+       ([x y z] (vector (f x y z) (g x y z)))
+       ([x y z & args] (vector (apply f x y z args) (apply g x y z args)))))
   ([f g h]
      (fn
-       ([] (f (g (h))))
-       ([x] (f (g (h x))))
-       ([x y] (f (g (h x y))))
-       ([x y z] (f (g (h x y z))))
-       ([x y z & args] (f (g (apply h x y z args))))))
-  ([f1 f2 f3 & fs]
-    (let [fs (reverse (list* f1 f2 f3 fs))]
-      (fn [& args]
-        (loop [ret (apply (first fs) args) fs (next fs)]
-          (if fs
-            (recur ((first fs) ret) (next fs))
-            ret))))))
+       ([] (vector (f) (g) (h)))
+       ([x] (vector (f x) (g x) (h x)))
+       ([x y] (vector (f x y) (g x y) (h x y)))
+       ([x y z] (vector (f x y z) (g x y z) (h x y z)))
+       ([x y z & args] (vector (apply f x y z args) (apply g x y z args) (apply h x y z args)))))
+  ([f g h & fs]
+     (let [fs (list* f g h fs)]
+       (fn
+         ([] (reduce #(conj %1 (%2)) [] fs))
+         ([x] (reduce #(conj %1 (%2 x)) [] fs))
+         ([x y] (reduce #(conj %1 (%2 x y)) [] fs))
+         ([x y z] (reduce #(conj %1 (%2 x y z)) [] fs))
+         ([x y z & args] (reduce #(conj %1 (apply %2 x y z args)) [] fs))))))

@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn mod
-  "Modulus of num and div. Truncates toward negative infinity."
-  [n d]
-  (js-mod (+ (js-mod n d) d) d))
+(defn ^number abs
+  {:doc "Returns the absolute value of a."
+   :added "1.11.10"}
+  [a] (Math/abs a))

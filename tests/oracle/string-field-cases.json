@@ -74,23 +74,8 @@
       }
     },
     {
-      "id": "str-raw-number-return",
-      "source": "(let [f str] (f (js-obj \"toString\" (fn [] 23))))",
-      "expected": {
-        "tag": "f64",
-        "bits": "4037000000000000"
-      }
-    },
-    {
-      "id": "str-raw-nil-return",
-      "source": "(let [f str] (f (js-obj \"toString\" (fn [] nil))))",
-      "expected": {
-        "tag": "nil"
-      }
-    },
-    {
       "id": "str-conversion-order",
-      "source": "(let [t (atom []) a (js-obj \"toString\" (fn [] (swap! t conj 1) \"a\")) b (js-obj \"toString\" (fn [] (swap! t conj 2) \"b\"))] [(str a b) @t])",
+      "source": "(let [t (atom []) a (reify Object (toString [_] (swap! t conj 1) \"a\")) b (reify Object (toString [_] (swap! t conj 2) \"b\"))] [(str a b) @t])",
       "expected": {
         "tag": "vector",
         "items": [
@@ -119,7 +104,7 @@
     },
     {
       "id": "str-conversion-throw",
-      "source": "(let [t (atom []) a (js-obj \"toString\" (fn [] (swap! t conj 1) (throw 73))) b (js-obj \"toString\" (fn [] (swap! t conj 2) \"b\"))] [(try (str a b) (catch :default e e)) @t])",
+      "source": "(let [t (atom []) a (reify Object (toString [_] (swap! t conj 1) (throw 73))) b (reify Object (toString [_] (swap! t conj 2) \"b\"))] [(try (str a b) (catch :default e e)) @t])",
       "expected": {
         "tag": "vector",
         "items": [
@@ -243,61 +228,8 @@
       }
     },
     {
-      "id": "buffer-first-string-later-default-hints",
-      "source": "(let [t (atom []) o (js-obj \"toString\" (fn [] (swap! t conj 1) \"s\") \"valueOf\" (fn [] (swap! t conj 2) \"v\")) b (make-buffer o o)] [(.toString b) @t])",
-      "expected": {
-        "tag": "vector",
-        "items": [
-          {
-            "tag": "string",
-            "units": [
-              115,
-              118
-            ]
-          },
-          {
-            "tag": "vector",
-            "items": [
-              {
-                "tag": "f64",
-                "bits": "3ff0000000000000"
-              },
-              {
-                "tag": "f64",
-                "bits": "4000000000000000"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "id": "buffer-set-default-hint",
-      "source": "(let [t (atom []) o (js-obj \"toString\" (fn [] (swap! t conj 1) \"s\") \"valueOf\" (fn [] (swap! t conj 2) 7)) b (make-buffer)] (.set b o) [(.toString b) @t])",
-      "expected": {
-        "tag": "vector",
-        "items": [
-          {
-            "tag": "string",
-            "units": [
-              55
-            ]
-          },
-          {
-            "tag": "vector",
-            "items": [
-              {
-                "tag": "f64",
-                "bits": "4000000000000000"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
       "id": "buffer-conversion-mutation-captured-left",
-      "source": "(let [b (make-buffer \"old\") o (js-obj \"toString\" (fn [] (.set b \"mutated\") \"x\"))] (.append b o) (.toString b))",
+      "source": "(let [b (make-buffer \"old\") o (reify Object (toString [_] (.set b \"mutated\") \"x\"))] (.append b o) (.toString b))",
       "expected": {
         "tag": "string",
         "units": [
@@ -427,14 +359,6 @@
             ]
           }
         ]
-      }
-    },
-    {
-      "id": "field-borrowed-callback",
-      "source": "(do (deftype Borrowed [x-y] Object (read [this] x-y)) (let [a (Borrowed. 7) other (js-obj \"x_y\" 29)] (.call (.-read a) other)))",
-      "expected": {
-        "tag": "f64",
-        "bits": "403d000000000000"
       }
     },
     {

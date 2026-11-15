@@ -6,36 +6,50 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- apply-to-simple
-  "Internal. DO NOT USE!
-  Assumes args was already called with seq beforehand!"
-  ([f ^seq args]
-   (if (nil? args)
-     (if (.-cljs$core$IFn$_invoke$arity$0 f)
-       (.cljs$core$IFn$_invoke$arity$0 f)
-       (.call f f))
-     (apply-to-simple f (-first args) (next* args))))
-  ([f a0 ^seq args]
-   (if (nil? args)
-     (if (.-cljs$core$IFn$_invoke$arity$1 f)
-       (.cljs$core$IFn$_invoke$arity$1 f a0)
-       (.call f f a0))
-     (apply-to-simple f a0 (-first args) (next* args))))
-  ([f a0 a1 ^seq args]
-   (if (nil? args)
-     (if (.-cljs$core$IFn$_invoke$arity$2 f)
-       (.cljs$core$IFn$_invoke$arity$2 f a0 a1)
-       (.call f f a0 a1))
-     (apply-to-simple f a0 a1 (-first args) (next* args))))
-  ([f a0 a1 a2 ^seq args]
-   (if (nil? args)
-     (if (.-cljs$core$IFn$_invoke$arity$3 f)
-       (.cljs$core$IFn$_invoke$arity$3 f a0 a1 a2)
-       (.call f f a0 a1 a2))
-     (apply-to-simple f a0 a1 a2 (-first args) (next* args))))
-  ([f a0 a1 a2 a3 ^seq args]
-   (if (nil? args)
-     (if (.-cljs$core$IFn$_invoke$arity$4 f)
-       (.cljs$core$IFn$_invoke$arity$4 f a0 a1 a2 a3)
-       (.call f f a0 a1 a2 a3))
-     (gen-apply-to-simple f 4 args))))
+(defn apply
+  "Applies fn f to the argument list formed by prepending intervening arguments to args."
+  ([f args]
+   (if (.-cljs$lang$applyTo f)
+     (let [fixed-arity (.-cljs$lang$maxFixedArity f)
+           bc (bounded-count (inc fixed-arity) args)]
+       (if (<= bc fixed-arity)
+         (apply-to f bc args)
+         (.cljs$lang$applyTo f args)))
+     (apply-to-simple f (seq args))))
+  ([f x args]
+   (if (.-cljs$lang$applyTo f)
+     (let [arglist (list* x args)
+           fixed-arity (.-cljs$lang$maxFixedArity f)
+           bc (inc (bounded-count fixed-arity args))]
+       (if (<= bc fixed-arity)
+         (apply-to f bc arglist)
+         (.cljs$lang$applyTo f arglist)))
+     (apply-to-simple f x (seq args))))
+  ([f x y args]
+   (if (.-cljs$lang$applyTo f)
+     (let [arglist (list* x y args)
+           fixed-arity (.-cljs$lang$maxFixedArity f)
+           bc (+ 2 (bounded-count (dec fixed-arity) args))]
+       (if (<= bc fixed-arity)
+         (apply-to f bc arglist)
+         (.cljs$lang$applyTo f arglist)))
+     (apply-to-simple f x y (seq args))))
+  ([f x y z args]
+   (if (.-cljs$lang$applyTo f)
+     (let [arglist (list* x y z args)
+           fixed-arity (.-cljs$lang$maxFixedArity f)
+           bc (+ 3 (bounded-count (- fixed-arity 2) args))]
+       (if (<= bc fixed-arity)
+         (apply-to f bc arglist)
+         (.cljs$lang$applyTo f arglist)))
+     (apply-to-simple f x y z (seq args))))
+  ([f a b c d & args]
+   (if (.-cljs$lang$applyTo f)
+     (let [spread-args (spread args)
+           arglist (cons a (cons b (cons c (cons d spread-args))))
+           fixed-arity (.-cljs$lang$maxFixedArity f)
+           bc (+ 4 (bounded-count (- fixed-arity 3) spread-args))]
+       (if (<= bc fixed-arity)
+         (apply-to f bc arglist)
+         (.cljs$lang$applyTo f arglist)))
+     (apply-to-simple f a b c d (spread args)))))

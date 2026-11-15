@@ -6,9 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn namespace
-  "Returns the namespace String of a symbol or keyword, or nil if not present."
-  [x]
-  (if (implements? INamed x)
-    (-namespace x)
-    (throw (js/Error. (str_ "Doesn't support namespace: " x)))))
+(defn keyword-identical?
+  "Efficient test to determine that two keywords are identical."
+  [x y]
+  (if (identical? x y)
+    true
+    (if (and (keyword? x) (keyword? y))
+      (identical? (.-fqn x) (.-fqn y))
+      false)))

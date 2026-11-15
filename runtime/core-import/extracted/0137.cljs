@@ -6,11 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn keyword-identical?
-  "Efficient test to determine that two keywords are identical."
+(defn symbol-identical?
+  "Efficient test to determine that two symbols are identical."
   [x y]
   (if (identical? x y)
     true
-    (if (and (keyword? x) (keyword? y))
-      (identical? (.-fqn x) (.-fqn y))
+    (if (and (symbol? x) (symbol? y))
+      (identical? (.-str x) (.-str y))
       false)))

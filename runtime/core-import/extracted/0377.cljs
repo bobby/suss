@@ -6,9 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn reverse
-  "Returns a seq of the items in coll in reverse order. Not lazy."
-  [coll]
-  (if (reversible? coll)
-    (or (rseq coll) ())
-    (reduce conj () coll)))
+(defn some
+  "Returns the first logical true value of (pred x) for any x in coll,
+  else nil.  One common idiom is to use a set as pred, for example
+  this will return :fred if :fred is in the sequence, otherwise nil:
+  (some #{:fred} coll)"
+  [pred coll]
+  (when-let [s (seq coll)]
+    (or (pred (first s)) (recur pred (next s)))))

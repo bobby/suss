@@ -6,13 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn disj!
-  "disj[oin]. Returns a transient set of the same (hashed/sorted) type, that
-  does not contain key(s)."
-  ([tcoll val]
-    (-disjoin! tcoll val))
-  ([tcoll val & vals]
-    (let [ntcoll (-disjoin! tcoll val)]
-      (if vals
-        (recur ntcoll (first vals) (next vals))
-        ntcoll))))
+(defprotocol IPending
+  "Protocol for types which can have a deferred realization. Currently only
+  implemented by Delay and LazySeq."
+  (^boolean -realized? [x]
+    "Returns true if a value for x has been produced, false otherwise."))

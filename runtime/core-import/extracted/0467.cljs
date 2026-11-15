@@ -6,18 +6,39 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype MultiIterator [iters]
+(deftype TransformerIterator [^:mutable buffer ^:mutable _next ^:mutable completed ^:mutable xf sourceIter multi]
   Object
-  (hasNext [_]
-    (loop [iters (seq iters)]
-      (if-not (nil? iters)
-        (let [iter (first iters)]
-          (if-not ^boolean (.hasNext iter)
-            false
-            (recur (next iters))))
-        true)))
-  (next [_]
-    (let [nexts (array)]
-      (dotimes [i (alength iters)]
-        (aset nexts i (.next (aget iters i))))
-      (prim-seq nexts 0))))
+  (step [this]
+    (if-not (identical? _next NONE)
+      true
+      (loop []
+        (if (identical? _next NONE)
+          (if ^boolean (.isEmpty buffer)
+            (if ^boolean completed
+              false
+              (if ^boolean (.hasNext sourceIter)
+                (let [iter (if ^boolean multi
+                             (apply xf (cons nil (.next sourceIter)))
+                             (xf nil (.next sourceIter)))]
+                  (when (reduced? iter)
+                    (xf nil)
+                    (set! completed true))
+                  (recur))
+                (do
+                  (xf nil)
+                  (set! completed true)
+                  (recur))))
+            (do
+              (set! _next (.remove buffer))
+              (recur)))
+          true))))
+  (hasNext [this]
+    (.step this))
+  (next [this]
+    (if ^boolean (.hasNext this)
+      (let [ret _next]
+        (set! _next NONE)
+        ret)
+      (throw (js/Error. "No such element"))))
+  (remove [_]
+    (js/Error. "Unsupported operation")))

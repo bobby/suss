@@ -6,7 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol ISwap
-  "Protocol for adding swapping functionality."
-  (-swap! [o f] [o f a] [o f a b] [o f a b xs]
-    "Swaps the value of o to be (apply f current-value-of-atom args)."))
+(defprotocol IVolatile
+  "Protocol for adding volatile functionality."
+  (-vreset! [o new-value]
+    "Sets the value of volatile o to new-value without regard for the
+     current value. Returns new-value."))

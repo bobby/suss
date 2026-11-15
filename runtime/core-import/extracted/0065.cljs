@@ -6,17 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- equiv-sequential
-  "Assumes x is sequential. Returns true if x equals y, otherwise
-  returns false."
-  [x y]
-  (boolean
-    (when (sequential? y)
-      (if (and (counted? x) (counted? y)
-               (not (== (count x) (count y))))
-        false
-        (loop [xs (seq x) ys (seq y)]
-          (cond (nil? xs) (nil? ys)
-            (nil? ys) false
-            (= (first xs) (first ys)) (recur (next xs) (next ys))
-            :else false))))))
+(defprotocol IDeref
+  "Protocol for adding dereference functionality to a reference."
+  (-deref [o]
+    "Returns the value of the reference o."))

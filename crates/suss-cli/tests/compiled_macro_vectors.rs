@@ -149,7 +149,7 @@ fn compiled_macro_vectors_quote_nested_data_and_reject_malformed_storage() {
         "(PersistentVector. nil 2 5 (VectorNode. nil (make-array 32)) (array 1) nil)",
         "(PersistentVector. nil 1 6 (VectorNode. nil (make-array 32)) (array 1) nil)",
         "(PersistentVector. 1 0 5 (VectorNode. nil (make-array 32)) (array) nil)",
-        "(PersistentVector. nil 0 5 (VectorNode. (js-obj) (make-array 32)) (array) nil)",
+        "(PersistentVector. nil 0 5 (VectorNode. (reify) (make-array 32)) (array) nil)",
         "(PersistentVector. nil 0 5 (VectorNode. nil (make-array 31)) (array) nil)",
         "(deftype ForeignVector [meta cnt shift root tail hash]) (ForeignVector. nil 0 5 nil (array) nil)",
     ] {

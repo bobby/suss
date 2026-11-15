@@ -6,11 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^seq next
-  "Returns a seq of the items after the first. Calls seq on its
-  argument.  If there are no more items, returns nil"
-  [coll]
-  (when-not (nil? coll)
-    (if (implements? INext coll)
-      (-next coll)
-      (seq (rest coll)))))
+(defn prim-seq
+  "Create seq from a primitive JavaScript Array-like."
+  ([prim]
+     (prim-seq prim 0))
+  ([prim i]
+     (when (< i (alength prim))
+       (IndexedSeq. prim i nil))))

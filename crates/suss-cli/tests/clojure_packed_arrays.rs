@@ -102,7 +102,7 @@ fn core_reads_packed_arrays_as_arrays() {
         "[(seq (long-array [1 2])) (seq (long-array 0)) (count (int-array 4))
           (nth (double-array [1 2]) 1) (reduce + (int-array [1 2 3])) (get (long-array [5 6]) 1)
           (contains? (long-array [5 6]) 1) (into [] (short-array [1 2])) (first (float-array [1.5]))
-          (array? (long-array 1)) (.-length (double-array 3)) (alength (byte-array 5))
+          (array? (long-array 1)) (alength (double-array 3)) (alength (byte-array 5))
           (some even? (int-array [1 2 3 4])) (= (long-array 1) (long-array 1))
           (let [a (long-array 1)] (= (hash a) (hash a))) (vec (to-array (long-array [1 2])))]",
         "[(1 2) nil 4 2.0 6 6 true [1 2] 1.5 true 3 5 true false true [1 2]]",

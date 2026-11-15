@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol ITransientMap
-  "Protocol for adding mapping functionality to transient collections."
-  (^clj -dissoc! [tcoll key]
-    "Returns a new transient collection of tcoll without the mapping for key."))
+(defn second
+  "Same as (first (next x))"
+  [coll]
+  (first (next coll)))

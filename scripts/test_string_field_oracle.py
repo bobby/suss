@@ -28,11 +28,5 @@ class StringFieldOracleTests(unittest.TestCase):
                 raise RuntimeError('failure')
         self.assertEqual((helper.oracle.CORPUS, helper.oracle.OBSERVATIONS), old)
 
-    def test_raw_returns_have_exact_types(self):
-        cases = {case['id']: case for case in helper.corpus()['cases']}
-        self.assertEqual(cases['str-raw-number-return']['expected']['tag'], 'f64')
-        self.assertEqual(cases['str-raw-nil-return']['expected'], {'tag': 'nil'})
-        self.assertIn('(let [f str]', cases['str-raw-number-return']['source'])
-
 if __name__ == '__main__':
     unittest.main()

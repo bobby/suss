@@ -6,7 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(def
-  ^{:private true
-    :jsdoc ["@type {*}"]}
-  -global-hierarchy nil)
+(defn- swap-global-hierarchy! [f & args]
+  (apply swap! (get-global-hierarchy) f args))

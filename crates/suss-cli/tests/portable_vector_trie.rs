@@ -41,7 +41,7 @@ fn vector_node_clone_owns_outer_array_and_preserves_edit_and_child() {
         .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
-    session.eval("(def trie-edit (js-obj)) (def trie-child (js-obj)) (def trie-node (suss.core/pv-fresh-node trie-edit)) (suss.core/pv-aset trie-node 0 trie-child) (def trie-copy (suss.core/pv-clone-node trie-node))").unwrap();
+    session.eval("(def trie-edit (reify)) (def trie-child (reify)) (def trie-node (suss.core/pv-fresh-node trie-edit)) (suss.core/pv-aset trie-node 0 trie-child) (def trie-copy (suss.core/pv-clone-node trie-node))").unwrap();
     session.collect().unwrap();
     assert!(boolean(&mut session,"(and (identical? (.-edit trie-copy) trie-edit) (identical? (suss.core/pv-aget trie-copy 0) trie-child) (not (identical? (.-arr trie-node) (.-arr trie-copy))))"));
     session.eval("(suss.core/pv-aset trie-copy 0 17)").unwrap();

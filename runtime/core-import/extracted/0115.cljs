@@ -6,19 +6,24 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn reset-vals!
-  "Sets the value of atom to newval. Returns [old new], the value of the
-   atom before and after the reset."
-  {:added "1.9"}
-  [a new-value]
-  (if (instance? Atom a)
-    (let [validate (.-validator a)]
-      (when-not (nil? validate)
-        (when-not (validate new-value)
-          (throw (js/Error. "Validator rejected reference state"))))
-      (let [old-value (.-state a)]
-        (set! (.-state a) new-value)
-        (when-not (nil? (.-watches a))
-          (-notify-watches a old-value new-value))
-        [old-value new-value]))
-    [(-deref a) (-reset! a new-value)]))
+(defn swap!
+  "Atomically swaps the value of atom to be:
+  (apply f current-value-of-atom args). Note that f may be called
+  multiple times, and thus should be free of side effects.  Returns
+  the value that was swapped in."
+  ([a f]
+   (if (instance? Atom a)
+     (reset! a (f (.-state a)))
+     (-swap! a f)))
+  ([a f x]
+   (if (instance? Atom a)
+     (reset! a (f (.-state a) x))
+     (-swap! a f x)))
+  ([a f x y]
+   (if (instance? Atom a)
+     (reset! a (f (.-state a) x y))
+     (-swap! a f x y)))
+  ([a f x y & more]
+   (if (instance? Atom a)
+     (reset! a (apply f (.-state a) x y more))
+     (-swap! a f x y more))))

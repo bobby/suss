@@ -6,13 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- edit-and-set
-  ([inode edit i a]
-     (let [editable (.ensure-editable inode edit)]
-       (aset (.-arr editable) i a)
-       editable))
-  ([inode edit i a j b]
-     (let [editable (.ensure-editable inode edit)]
-       (aset (.-arr editable) i a)
-       (aset (.-arr editable) j b)
-       editable)))
+(defn- inode-kv-reduce [arr f init]
+  (let [len (alength arr)]
+    (loop [i 0 init init]
+      (if (< i len)
+        (let [init (let [k (aget arr i)]
+                     (if-not (nil? k)
+                       (f init k (aget arr (inc i)))
+                       (let [node (aget arr (inc i))]
+                         (if-not (nil? node)
+                           (.kv-reduce node f init)
+                           init))))]
+          (if (reduced? init)
+            init
+            (recur (+ i 2) init)))
+        init))))

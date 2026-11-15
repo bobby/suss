@@ -6,12 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn list*
-  "Creates a new list containing the items prepended to the rest, the
-  last of which will be treated as a sequence."
-  ([args] (seq args))
-  ([a args] (cons a args))
-  ([a b args] (cons a (cons b args)))
-  ([a b c args] (cons a (cons b (cons c args))))
-  ([a b c d & more]
-     (cons a (cons b (cons c (cons d (spread more)))))))
+(defn- ^seq next*
+  "Internal. DO NOT USE! Next without the nil? check."
+  [coll]
+  (if (implements? INext coll)
+    (-next ^not-native coll)
+    (seq (rest coll))))

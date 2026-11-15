@@ -6,9 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IChunkedSeq
-  "Protocol for accessing a collection as sequential chunks."
-  (-chunked-first [coll]
-    "Returns the first chunk in coll.")
-  (-chunked-rest [coll]
-    "Return a new collection of coll with the first chunk removed."))
+(defprotocol IChunkedNext
+  "Protocol for accessing the chunks of a collection."
+  (-chunked-next [coll]
+    "Returns a new collection of coll without the first chunk."))

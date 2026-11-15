@@ -6,5 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- throw-no-method-error [name dispatch-val]
-  (throw (js/Error. (str_ "No method in multimethod '" name "' for dispatch value: " dispatch-val))))
+(defn remove-all-methods
+  "Removes all of the methods of multimethod."
+ [multifn]
+ (-reset multifn))

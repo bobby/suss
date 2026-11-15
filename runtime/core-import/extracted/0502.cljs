@@ -6,8 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn prefer-method
-  "Causes the multimethod to prefer matches of dispatch-val-x over dispatch-val-y
-   when there is a conflict"
-  [multifn dispatch-val-x dispatch-val-y]
-  (-prefer-method multifn dispatch-val-x dispatch-val-y))
+(defn get-method
+  "Given a multimethod and a dispatch value, returns the dispatch fn
+  that would apply to that value, or nil if none apply and no default"
+  [multifn dispatch-val] (-get-method multifn dispatch-val))

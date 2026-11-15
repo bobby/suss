@@ -6,8 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn key-test [key other]
-  (cond
-    (identical? key other) true
-    (keyword-identical? key other) true
-    :else (= key other)))
+(defn- ^boolean pam-dupes? [arr]
+  (loop [i 0]
+    (if (< i (alength arr))
+      (let [dupe? (loop [j 0]
+                    (if (< j i)
+                      (or
+                        (key-test (aget arr i) (aget arr j))
+                        (recur (+ 2 j)))
+                      false))]
+        (or dupe? (recur (+ 2 i))))
+      false)))

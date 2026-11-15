@@ -6,9 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn meta
-  "Returns the metadata of obj, returns nil if there is no metadata."
-  [o]
-  (when (and (not (nil? o))
-             (satisfies? IMeta o))
-    (-meta o)))
+(defn- root-obj
+  []
+  (->> js/Function
+    (.getPrototypeOf js/Object)
+    (.getPrototypeOf js/Object)))

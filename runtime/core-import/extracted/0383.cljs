@@ -6,16 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^:private fn->comparator
-  "Given a fn that might be boolean valued or a comparator,
-   return a fn that is a comparator."
-  [f]
-  (if (= f compare)
-    compare
-    (fn [x y]
-      (let [r (f x y)]
-        (if (number? r)
-          r
-          (if r
-            -1
-            (if (f y x) 1 0)))))))
+(defn- compare-symbols [a b]
+  (cond
+   (identical? (.-str a) (.-str b)) 0
+   (and (not (.-ns a)) (.-ns b)) -1
+   (.-ns a) (if-not (.-ns b)
+              1
+              (let [nsc (garray/defaultCompare (.-ns a) (.-ns b))]
+                (if (== 0 nsc)
+                  (garray/defaultCompare (.-name a) (.-name b))
+                  nsc)))
+   :default (garray/defaultCompare (.-name a) (.-name b))))

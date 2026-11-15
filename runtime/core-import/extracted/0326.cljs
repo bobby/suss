@@ -6,8 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn print-str
-  "print to a string, returning it"
+(defn println-str
+  "println to a string, returning it"
   [& objs]
   (binding [*print-readably* false]
-    (pr-str-with-opts objs nil)))
+    (prn-str-with-opts objs nil)))

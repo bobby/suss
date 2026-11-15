@@ -6,10 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IPrintWithWriter
-  "The old IPrintable protocol's implementation consisted of building a giant
-   list of strings to concatenate.  This involved lots of concat calls,
-   intermediate vectors, and lazy-seqs, and was very slow in some older JS
-   engines.  IPrintWithWriter implements printing via the IWriter protocol, so it
-   be implemented efficiently in terms of e.g. a StringBuffer append."
-  (-pr-writer [o writer opts]))
+(defn- hash-symbol [sym]
+  (hash-combine
+    (m3-hash-unencoded-chars (.-name sym))
+    (hash-string (.-ns sym))))

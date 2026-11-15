@@ -6,6 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn qualified-symbol?
-  "Return true if x is a symbol with a namespace"
-  [x] (boolean (and (symbol? x) (namespace x) true)))
+(defn qualified-keyword?
+  "Return true if x is a keyword with a namespace"
+  [x] (boolean (and (keyword? x) (namespace x) true)))

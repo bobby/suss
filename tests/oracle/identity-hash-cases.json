@@ -92,7 +92,7 @@
     },
     {
       "id": "native-object-distinct",
-      "source": "(let [f js-obj x (f) y (f)] (not (= (uid x) (uid y))))",
+      "source": "(let [x (reify) y (reify)] (not (= (uid x) (uid y))))",
       "expected": {
         "tag": "bool",
         "value": true

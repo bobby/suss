@@ -16,6 +16,13 @@
 ;; tokens and sentinels are Uniques, where the JVM uses a new Object.
 (deftype Unique [])
 
+;; Original Suss (#425): an IndexedSeq and array-reduce read an array or a
+;; string, as ClojureScript's do; aget and alength read only arrays.
+(def ^:private indexed-get
+  (fn [a i] (if (suss.bootstrap/string? a) (.charAt a i) (aget a i))))
+(def ^:private indexed-length
+  (fn [a] (if (suss.bootstrap/string? a) (.-length a) (alength a))))
+
 (deftype BootstrapDate [milliseconds]
   Object
   (valueOf [_] milliseconds))
@@ -66,13 +73,10 @@
 ;; Full default printer dependency still pending; no fabricated fallback.
 (declare pr-writer-impl)
 
-;; Default printer dependencies, defined in core's appendix (#304). The #js
-;; object printer's own helpers are still pending: calls to them raise a
-;; visible language exception, never a placeholder result.
-(declare ^:private pr-constructor-writer ^:private pr-object-map
-         ^:private pr-object-keyword? ^:private pr-function-name
+;; Default printer dependencies, defined in core's appendix (#304).
+(declare ^:private pr-constructor-writer ^:private pr-function-name
          ^:private pr-tagged-object ^:private deref-as-map ^:private pr-throwable
-         js-keys print-map keyword)
+         print-map keyword)
 
 ;; vec, str and the default printer convert packed primitive arrays with
 ;; these, defined in core's appendix (#336).

@@ -66,14 +66,10 @@ const IDS: &[&str] = &[
     "indexed-four-arity",
     "indexed-stops-first-difference",
     "indexed-live-compare",
-    "format-toString-object-fallback",
-    "format-noncallable-toString",
     "format-order",
     "format-throw-stops-second",
     "format-live-str",
     "str-nil-single-variadic-rebind",
-    "str-second-lookup-after-first",
-    "str-nonprimitive-both-throw",
     "format-live-str-results-convert-after-calls",
 ];
 /// Pinned ClojureScript observations that rebinding a core var changes core's

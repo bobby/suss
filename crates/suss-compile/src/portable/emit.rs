@@ -190,11 +190,11 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert(operation.export());
                     }
                     Operation::Array { operation: ArrayOperation::Get, arguments } if arguments.len() == 2 => {
-                        names.insert("source-array-get-2");
+                        names.insert("array-get");
                         names.insert("packed-array-get-2");
                     }
                     Operation::Array { operation: ArrayOperation::Set, arguments } if arguments.len() == 3 => {
-                        names.insert("source-array-set-3");
+                        names.insert("array-set");
                         names.insert("packed-array-set-3");
                     }
                     Operation::Array { operation, .. } => {
@@ -214,16 +214,13 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::VectorNth => { names.insert("vector-nth"); }
                         Nominal::LongCast => { names.insert("number-cast-long"); }
                         Nominal::DoubleCast => { names.insert("number-cast-double"); }
-                        // ^objects also reaches source arrays (#378).
-                        Nominal::PackedGet(kind) => {
+                        Nominal::PackedGet(_) => {
                             names.insert("packed-array-get-2");
                             names.insert("language-error-new");
-                            if *kind == 6 { names.insert("source-array-get-2"); }
                         }
-                        Nominal::PackedSet(kind) => {
+                        Nominal::PackedSet(_) => {
                             names.insert("packed-array-set-3");
                             names.insert("language-error-new");
-                            if *kind == 6 { names.insert("source-array-set-3"); }
                         }
                         Nominal::ValueAdd => { names.insert("value-add"); }
                         Nominal::IsBoolean => {}
@@ -610,13 +607,11 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             ),
             "number-hash"
             | "owned-descriptor-prototype"
-            | "source-array-new"
             | "object-array-new"
             | "object-array-make-args"
-            | "source-array-length-args"
-            | "source-array-get-indices"
-            | "source-array-set-indices"
-            | "source-array-set-or-property" => (vec![VALUE], vec![VALUE]),
+            | "array-length-args"
+            | "array-get-indices"
+            | "array-set-indices" => (vec![VALUE], vec![VALUE]),
             "predicate-number" | "predicate-string" | "arity-error" | "native-object-factory-function" | "native-object-default-prototype" | "current-this" => (vec![], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
             "closure-source-name-initialize" => (vec![VALUE, VALUE], vec![]),
@@ -643,7 +638,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "binding-set" => (vec![VALUE, VALUE], vec![]),
             "number-parse-long" => (vec![VALUE; 4], vec![VALUE]),
             "packed-array-copy" => (vec![VALUE; 5], vec![VALUE]),
-            "number-range-count" | "packed-array-store" | "source-array-set-3" | "packed-array-set-3" => (vec![VALUE; 3], vec![VALUE]),
+            "number-range-count" | "packed-array-store" | "array-set" | "packed-array-set-3" => (vec![VALUE; 3], vec![VALUE]),
             "string-slice" | "callable-property-get" | "named-property-set" | "user-field-get-guard" | "user-field-set-guard" | "object-method-set" | "object-method-invoke" | "native-object-property-set" | "native-object-property-set-strict" => {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])
             }
@@ -2143,7 +2138,7 @@ fn emit_function(
                         .instruction(&Else)
                         .instruction(&LocalGet(array))
                         .instruction(&LocalGet(arguments[1].0 as u32 + offset))
-                        .instruction(&Call(index("source-array-get-2")))
+                        .instruction(&Call(index("array-get")))
                         .instruction(&End)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
@@ -2164,7 +2159,7 @@ fn emit_function(
                         function.instruction(&LocalGet(argument.0 as u32 + offset));
                     }
                     function
-                        .instruction(&Call(index("source-array-set-3")))
+                        .instruction(&Call(index("array-set")))
                         .instruction(&End)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
@@ -2618,21 +2613,7 @@ fn emit_function(
                                 code.extend([ArrayNewFixed { array_type_index: runtime_abi::STRING, array_size: message.encode_utf16().count() as u32 },
                                     Call(index("language-error-new")), Throw(0)]);
                             };
-                            if object {
-                                // make-array, to-array and (array ...) still
-                                // build source arrays until #425; ^objects
-                                // takes them through the source-array path. A
-                                // packed array of another kind throws.
-                                code.extend([LocalGet(array), RefTestNonNull(HeapType::Concrete(runtime_abi::PACKED)), I32Eqz, If(BlockType::Result(VALUE))]);
-                                for argument in arguments {
-                                    locals.push_boxed(&mut code, *argument);
-                                }
-                                code.extend([Call(index(if set { "source-array-set-3" } else { "source-array-get-2" })), Else]);
-                                error(&mut code);
-                                code.push(End);
-                            } else {
-                                error(&mut code);
-                            }
+                            error(&mut code);
                             code.push(End);
                             if !set && !object && locals.of(inst.result) == unboxed::Repr::Boxed {
                                 // Resumable functions keep values boxed.

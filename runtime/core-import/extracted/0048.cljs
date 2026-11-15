@@ -6,10 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Cons [meta first rest ^:mutable __hash]
+(deftype IndexedSeq [arr i meta]
   Object
   (toString [coll]
-    (pr-str* coll))
+   (pr-str* coll))
   (equiv [this other]
     (-equiv this other))
   (indexOf [coll x]
@@ -21,45 +21,83 @@
   (lastIndexOf [coll x start]
     (-lastIndexOf coll x start))
 
-  IList
-
   ICloneable
-  (-clone [_] (Cons. meta first rest __hash))
+  (-clone [_] (IndexedSeq. arr i meta))
 
+  ISeqable
+  (-seq [this]
+    (when (< i (alength arr))
+      this))
+
+  IMeta
+  (-meta [coll] meta)
   IWithMeta
   (-with-meta [coll new-meta]
     (if (identical? new-meta meta)
       coll
-      (Cons. new-meta first rest __hash)))
-
-  IMeta
-  (-meta [coll] meta)
+      (IndexedSeq. arr i new-meta)))
 
   ASeq
   ISeq
-  (-first [coll] first)
-  (-rest [coll] (if (nil? rest) () rest))
+  (-first [_] (aget arr i))
+  (-rest [_] (if (< (inc i) (alength arr))
+               (IndexedSeq. arr (inc i) nil)
+               ()))
 
   INext
-  (-next [coll]
-    (if (nil? rest) nil (seq rest)))
+  (-next [_] (if (< (inc i) (alength arr))
+               (IndexedSeq. arr (inc i) nil)
+               nil))
 
-  ICollection
-  (-conj [coll o] (Cons. nil o coll nil))
+  IDrop
+  (-drop [coll n]
+    (if (pos? n)
+      (if (< (+ i n) (alength arr))
+        (IndexedSeq. arr (+ i n) nil)
+        nil)
+      coll))
 
-  IEmptyableCollection
-  (-empty [coll] (.-EMPTY List))
+  ICounted
+  (-count [_]
+    (unchecked-max 0 (- (alength arr) i)))
+
+  IIndexed
+  (-nth [coll n]
+    (let [i (+ n i)]
+      (if (and (<= 0 i) (< i (alength arr)))
+        (aget arr i)
+        (throw (js/Error. "Index out of bounds")))))
+  (-nth [coll n not-found]
+    (let [i (+ n i)]
+      (if (and (<= 0 i) (< i (alength arr)))
+        (aget arr i)
+        not-found)))
 
   ISequential
   IEquiv
   (-equiv [coll other] (equiv-sequential coll other))
 
-  IHash
-  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
+  IIterable
+  (-iterator [coll]
+    (IndexedSeqIterator. arr i))
 
-  ISeqable
-  (-seq [coll] coll)
+  ICollection
+  (-conj [coll o] (cons o coll))
+
+  IEmptyableCollection
+  (-empty [coll] (.-EMPTY List))
 
   IReduce
-  (-reduce [coll f] (seq-reduce f coll))
-  (-reduce [coll f start] (seq-reduce f start coll)))
+  (-reduce [coll f]
+    (array-reduce arr f (aget arr i) (inc i)))
+  (-reduce [coll f start]
+    (array-reduce arr f start i))
+
+  IHash
+  (-hash [coll] (hash-ordered-coll coll))
+
+  IReversible
+  (-rseq [coll]
+    (let [c (-count coll)]
+      (if (pos? c)
+        (RSeq. coll (dec c) nil)))))

@@ -6,27 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn concat
-  "Returns a lazy seq representing the concatenation of the elements in the supplied colls."
-  ([] (lazy-seq nil))
-  ([x] (lazy-seq x))
-  ([x y]
-    (lazy-seq
-      (let [s (seq x)]
-        (if s
-          (if (chunked-seq? s)
-            (chunk-cons (chunk-first s) (concat (chunk-rest s) y))
-            (cons (first s) (concat (rest s) y)))
-          y))))
-  ([x y & zs]
-     (let [cat (fn cat [xys zs]
-                 (lazy-seq
-                   (let [xys (seq xys)]
-                     (if xys
-                       (if (chunked-seq? xys)
-                         (chunk-cons (chunk-first xys)
-                                     (cat (chunk-rest xys) zs))
-                         (cons (first xys) (cat (rest xys) zs)))
-                       (when zs
-                         (cat (first zs) (next zs)))))))]
-       (cat (concat x y) zs))))
+(defn ^array into-array
+  "Returns an array with components set to the values in aseq. Optional type
+  argument accepted for compatibility with Clojure."
+  ([aseq]
+     (into-array nil aseq))
+  ([type aseq]
+     (reduce (fn [a x] (.push a x) a) (array) aseq)))
