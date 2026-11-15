@@ -168,6 +168,16 @@ Without one prerequisite repair, the published name lists would have added about
 300 KB to the bootstrap. The compiler used to emit a string literal longer than
 64 code units as one `array.set` per unit, about 10 bytes of code per character.
 It now emits such literals from passive data segments with `array.new_data`,
-deduplicated per module. Literals of 64 units or fewer keep the inline
-`array.new_fixed` form. Each evaluation still allocates its own array. The
-runtime ABI version and the shared GC types are unchanged.
+deduplicated per module. The runtime ABI version and the shared GC types are
+unchanged.
+
+Each distinct literal is now one global of its module (#442), so evaluating a
+literal reads that global instead of allocating a string. Core's field reads
+and method calls pass their names as literals, so before this every
+`(.-arr m)` allocated its name. A literal of 64 units or fewer is an immutable
+global whose constant initializer is `array.new_fixed`. A longer one is a
+mutable global, filled from its data segment by `array.new_data` on its first
+evaluation. Evaluations of one literal share its string, so
+`(identical? s s)` holds for two evaluations of the same literal. Strings are
+written only while they're built (`string-new` and `string-set-unit`, in the
+host adapters), never afterwards.

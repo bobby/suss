@@ -3,7 +3,6 @@
 mod portable_decode;
 use portable_decode::{Decoder, Observation};
 use suss_compile::portable_session::{Session, SessionValue};
-use wasmtime::Val;
 
 fn units(session: &mut Session, value: &SessionValue) -> Vec<u16> {
     session.collect().unwrap();
@@ -14,34 +13,34 @@ fn units(session: &mut Session, value: &SessionValue) -> Vec<u16> {
         }
     }).unwrap()
 }
-fn alter_first_unit(session: &mut Session, value: &SessionValue) {
-    // Private host inspection distinguishes fresh arrays without relying on
-    // language string equality (which intentionally compares contents).
-    session.inspect(value, |mut store, value| {
-        value.unwrap_anyref().unwrap().as_array(&store)?.unwrap()
-            .set(&mut store, 0, Val::I32(66))?;
-        Ok(())
-    }).unwrap();
+fn truth(session: &mut Session, source: &str) -> bool {
+    let value = session.eval(source).unwrap();
+    session.inspect(&value, |mut store, value| match Decoder::new(16).decode(&mut store, &value)? {
+        Observation::Bool(truth) => Ok(truth),
+        other => panic!("expected a boolean, got {other:?}"),
+    }).unwrap()
 }
+// Each literal is one string per module (#442), as the JVM interns a literal:
+// every evaluation returns it, with all its units, at both allocation sizes.
 #[test]
-fn literals_preserve_all_units_and_fresh_storage_at_both_allocation_sizes() {
+fn literals_preserve_all_units_and_share_one_string_at_both_allocation_sizes() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         for length in [0, 1, 60, 61, 4096] {
             let text = "A".repeat(length);
-            session.eval(&format!("(def fresh (fn [] \"{text}\\uD800😀\\uDC00\"))")).unwrap();
-            let first = session.eval("(fresh)").unwrap();
+            session.eval(&format!("(def shared (fn [] \"{text}\\uD800😀\\uDC00\"))")).unwrap();
+            let first = session.eval("(shared)").unwrap();
             let expected = [text.encode_utf16().collect::<Vec<_>>(), vec![0xd800, 0xd83d, 0xde00, 0xdc00]].concat();
             assert_eq!(units(&mut session, &first), expected);
-            alter_first_unit(&mut session, &first);
-            let second = session.eval("(fresh)").unwrap();
-            assert_eq!(units(&mut session, &second), expected, "fresh storage at {length}");
+            let second = session.eval("(shared)").unwrap();
+            assert_eq!(units(&mut session, &second), expected, "second evaluation at {length}");
+            assert!(truth(&mut session, "(identical? (shared) (shared))"), "one string at {length}");
         }
         let empty = session.eval("\"\"").unwrap();
         assert_eq!(units(&mut session, &empty), Vec::<u16>::new());
     }
 }
 #[test]
-fn fixed_and_multi_arity_closures_eagerly_keep_fresh_long_source_names() {
+fn fixed_and_multi_arity_closures_eagerly_keep_long_source_names() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         for name in ["short".to_owned(), "n".repeat(4096)] {
             for body in ["[x] x", "([x] x) ([x y] y)"] {
@@ -50,7 +49,6 @@ fn fixed_and_multi_arity_closures_eagerly_keep_fresh_long_source_names() {
                 let b = session.eval("(suss.bootstrap/function-name b)").unwrap();
                 let expected = format!("user$make_named_$_{name}").encode_utf16().collect::<Vec<_>>();
                 assert_eq!(units(&mut session, &a), expected);
-                alter_first_unit(&mut session, &a);
                 assert_eq!(units(&mut session, &b), expected);
             }
         }

@@ -73,39 +73,58 @@ impl LiteralData {
         index
     }
 }
+/// The longest string literal whose global has a constant initializer, kept on
+/// a bounded operand stack; a longer one comes from a passive data segment.
+const SMALL_LITERAL: usize = 64;
 // Literal units and indices are compiler-checked, unlike public mutable string
-// storage calls. Keep small literals on a bounded operand stack; larger values
-// come from a passive data segment. Each evaluation allocates its own array.
+// storage calls. Each distinct literal is one global of its fragment (#442), so
+// evaluating it reads the global instead of allocating a string: a small
+// literal's global is immutable, and a larger one's is filled on its first
+// evaluation. Strings are written only while they're built (`string-new`,
+// `string-set-unit`), never after, so evaluations can share one.
 fn emit_utf16_literal(
     function: &mut Function,
     data: &mut LiteralData,
+    literals: &std::collections::HashMap<Vec<u16>, u32>,
     units: &[u16],
     local: u32,
     span: &std::ops::Range<usize>,
 ) -> Result<(), Diagnostic> {
     use Instruction::*;
-    let length = i32::try_from(units.len()).map_err(|_| Diagnostic {
-        span: span.clone(),
-        message: "UTF16 literal exceeds signed runtime length".into(),
-    })?;
-    if units.len() <= 64 {
-        for unit in units {
-            function.instruction(&I32Const(i32::from(*unit)));
-        }
-        function.instruction(&ArrayNewFixed {
-            array_type_index: runtime_abi::STRING,
-            array_size: length as u32,
-        }).instruction(&LocalSet(local));
-    } else {
-        function.instruction(&I32Const(0))
+    let fail = |message: &str| Diagnostic { span: span.clone(), message: message.into() };
+    let length = i32::try_from(units.len()).map_err(|_| fail("UTF16 literal exceeds signed runtime length"))?;
+    let global = *literals.get(units).ok_or_else(|| fail("uncollected string literal"))?;
+    if units.len() > SMALL_LITERAL {
+        function
+            .instruction(&GlobalGet(global))
+            .instruction(&RefIsNull)
+            .instruction(&If(BlockType::Empty))
+            .instruction(&I32Const(0))
             .instruction(&I32Const(length))
             .instruction(&ArrayNewData {
                 array_type_index: runtime_abi::STRING,
                 array_data_index: data.segment(units),
             })
-            .instruction(&LocalSet(local));
+            .instruction(&GlobalSet(global))
+            .instruction(&End);
     }
+    function.instruction(&GlobalGet(global)).instruction(&LocalSet(local));
     Ok(())
+}
+/// A string literal's global: immutable with a constant initializer for a small
+/// literal, or null until its first evaluation fills it.
+fn literal_global(units: &[u16]) -> (GlobalType, ConstExpr) {
+    let string = |nullable| ValType::Ref(RefType { nullable, heap_type: HeapType::Concrete(runtime_abi::STRING) });
+    if units.len() <= SMALL_LITERAL {
+        let mut init: Vec<_> = units.iter().map(|unit| Instruction::I32Const(i32::from(*unit))).collect();
+        init.push(Instruction::ArrayNewFixed { array_type_index: runtime_abi::STRING, array_size: units.len() as u32 });
+        (GlobalType { val_type: string(false), mutable: false, shared: false }, ConstExpr::extended(init))
+    } else {
+        (
+            GlobalType { val_type: string(true), mutable: true, shared: false },
+            ConstExpr::ref_null(HeapType::Concrete(runtime_abi::STRING)),
+        )
+    }
 }
 pub fn emit(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     ir::verify(ir)?;
@@ -825,6 +844,27 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let keyword_caches = keyword_cache_list.iter().enumerate()
         .map(|(index, cache)| (*cache, first_keyword_cache + index as u32))
         .collect::<std::collections::HashMap<_, _>>();
+    // String literals and closure display names (#442): one global per
+    // distinct value, after the keyword caches.
+    let mut literal_list = std::collections::BTreeSet::new();
+    for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
+        .chain(futures.iter().map(|body| &body.continuation.function))
+    {
+        for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
+            match &inst.operation {
+                Operation::Literal(Literal::String(units)) => {
+                    literal_list.insert(units.clone());
+                }
+                Operation::MakeClosure { body, .. } => literal_list.extend(body.display_name.clone()),
+                Operation::MakeGeneralClosure { body, .. } => literal_list.extend(body.display_name.clone()),
+                _ => {}
+            }
+        }
+    }
+    let first_literal = first_keyword_cache + keyword_cache_list.len() as u32;
+    let literals = literal_list.iter().enumerate()
+        .map(|(index, units)| (units.clone(), first_literal + index as u32))
+        .collect::<std::collections::HashMap<_, _>>();
     for (index, definition) in imported_definitions.iter().enumerate() {
         links.codes.insert(*definition, first_imported_link + imported_slots.len() as u32 + index as u32);
         let entries = (0..=runtime_abi::MAX_FIXED).map(|k| {
@@ -850,7 +890,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let mut data = LiteralData::default();
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
         dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites, length_sites: &length_sites,
-        method_sites: &method_sites, instance_sites: &instance_sites, call_sites: &call_sites, keyword_caches: &keyword_caches, epoch_global };
+        method_sites: &method_sites, instance_sites: &instance_sites, call_sites: &call_sites, keyword_caches: &keyword_caches,
+        literals: &literals, epoch_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -975,6 +1016,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             &ConstExpr::ref_null(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }),
         );
     }
+    for units in &literal_list {
+        let (ty, init) = literal_global(units);
+        code_globals.global(ty, &init);
+    }
     for (definition, global) in &defined_code {
         exports.export(&format!("link.{definition}.code"), ExportKind::Global, *global);
         for (k, entry) in links.entries[definition].iter().enumerate() {
@@ -995,7 +1040,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .section(&types)
         .section(&imports)
         .section(&functions);
-    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() || !keyword_cache_list.is_empty() {
+    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() || !keyword_cache_list.is_empty() || !literal_list.is_empty() {
         module.section(&code_globals);
     }
     module.section(&exports);
@@ -1083,6 +1128,8 @@ struct Context<'a> {
     length_sites: &'a std::collections::HashSet<(usize, u32)>,
     /// Keyword literal caches, by keyword cell number: their global (#387).
     keyword_caches: &'a std::collections::HashMap<usize, u32>,
+    /// String literals, by their units: their global (#442).
+    literals: &'a std::collections::HashMap<Vec<u16>, u32>,
     /// Cached closure call sites: their first global (#378).
     call_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     /// Cached `instance?` sites: their first global (#378).
@@ -1440,7 +1487,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
-    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, call_sites, keyword_caches, epoch_global } = *context;
+    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, call_sites, keyword_caches, literals, epoch_global } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -1731,7 +1778,7 @@ fn emit_function(
                     function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Literal(Literal::String(units)) => {
-                    emit_utf16_literal(&mut function, data, units, inst.result.0 as u32 + offset, &ir.span)?;
+                    emit_utf16_literal(&mut function, data, literals, units, inst.result.0 as u32 + offset, &ir.span)?;
                 }
                 Operation::GlobalCell(global) => {
                     let index_global = globals
@@ -1950,7 +1997,7 @@ fn emit_function(
                     emit_closure(&mut function, definition, captures.iter().map(|value| value.0 as u32 + offset));
                     function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                     if let Some(name) = &body.display_name {
-                        emit_utf16_literal(&mut function, data, name, scratch, &ir.span)?;
+                        emit_utf16_literal(&mut function, data, literals, name, scratch, &ir.span)?;
                         function.instruction(&LocalGet(inst.result.0 as u32 + offset))
                             .instruction(&LocalGet(scratch))
                             .instruction(&Call(index("closure-source-name-initialize")));
@@ -1961,7 +2008,7 @@ fn emit_function(
                     emit_closure(&mut function, definition, captures.iter().map(|value| value.0 as u32 + offset));
                     function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                     if let Some(name) = &body.display_name {
-                        emit_utf16_literal(&mut function, data, name, scratch, &ir.span)?;
+                        emit_utf16_literal(&mut function, data, literals, name, scratch, &ir.span)?;
                         function.instruction(&LocalGet(inst.result.0 as u32 + offset))
                             .instruction(&LocalGet(scratch))
                             .instruction(&Call(index("closure-source-name-initialize")));
