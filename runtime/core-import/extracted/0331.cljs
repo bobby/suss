@@ -6,8 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn println-str
-  "println to a string, returning it"
-  [& objs]
-  (binding [*print-readably* false]
-    (prn-str-with-opts objs nil)))
+(defn ident?
+  "Return true if x is a symbol or keyword"
+  [x] (or (keyword? x) (symbol? x)))

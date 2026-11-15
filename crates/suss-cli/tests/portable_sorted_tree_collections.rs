@@ -123,7 +123,7 @@ fn complete_sorted_values_iterator_returns_and_range_arities_match_pinned_raw_va
         "c4295f303100bbf5afac449242d30bca1126f1a1"
     );
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 142);
+    assert_eq!(cases.len(), 132);
     assert!(LIVE_CORE_REBINDING.iter().all(|id| cases.iter().any(|case| case["id"] == *id)));
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = setup(phase);

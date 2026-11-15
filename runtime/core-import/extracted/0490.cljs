@@ -6,7 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^boolean realized?
-  "Returns true if a value has been produced for a delay or lazy sequence."
-  [x]
-  (-realized? x))
+(defn ancestors
+  "Returns the immediate and indirect parents of tag, either via a JavaScript type
+  inheritance relationship or a relationship established via derive. h
+  must be a hierarchy obtained from make-hierarchy, if not supplied
+  defaults to the global hierarchy"
+  ([tag] (ancestors @(get-global-hierarchy) tag))
+  ([h tag]
+   (not-empty
+     (let [ta (get (:ancestors h) tag)]
+       (if (js-fn? tag)
+         (let [superclasses (set (supers tag))]
+           (reduce into superclasses
+             (cons ta
+               (map #(get (:ancestors h) %) superclasses))))
+         ta)))))

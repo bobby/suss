@@ -6,11 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn compare-and-set!
-  "Atomically sets the value of atom to newval if and only if the
-  current value of the atom is equal to oldval. Returns true if
-  set happened, else false."
-  [^not-native a oldval newval]
-  (if (= (-deref a) oldval)
-    (do (reset! a newval) true)
-    false))
+(defn remove-watch
+  "Removes a watch (set by add-watch) from a reference"
+  [iref key]
+  (-remove-watch iref key)
+  iref)

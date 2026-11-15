@@ -6,15 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^seq rest
-  "Returns a possibly empty seq of the items after the first. Calls seq on its
-  argument."
-  [coll]
-  (if-not (nil? coll)
-    (if (implements? ISeq coll)
-      (-rest coll)
-      (let [s (seq coll)]
-        (if s
-          (-rest ^not-native s)
-          ())))
-    ()))
+(defn cons
+  "Returns a new seq where x is the first element and coll is the rest."
+  [x coll]
+  (cond
+    (nil? coll)             (List. nil x nil 1 nil)
+    (implements? ISeq coll) (Cons. nil x coll nil)
+    :default                (Cons. nil x (seq coll) nil)))

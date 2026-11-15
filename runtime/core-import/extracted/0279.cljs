@@ -6,27 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn concat
-  "Returns a lazy seq representing the concatenation of the elements in the supplied colls."
-  ([] (lazy-seq nil))
-  ([x] (lazy-seq x))
-  ([x y]
-    (lazy-seq
-      (let [s (seq x)]
-        (if s
-          (if (chunked-seq? s)
-            (chunk-cons (chunk-first s) (concat (chunk-rest s) y))
-            (cons (first s) (concat (rest s) y)))
-          y))))
-  ([x y & zs]
-     (let [cat (fn cat [xys zs]
-                 (lazy-seq
-                   (let [xys (seq xys)]
-                     (if xys
-                       (if (chunked-seq? xys)
-                         (chunk-cons (chunk-first xys)
-                                     (cat (chunk-rest xys) zs))
-                         (cons (first xys) (cat (rest xys) zs)))
-                       (when zs
-                         (cat (first zs) (next zs)))))))]
-       (cat (concat x y) zs))))
+(defn array-map
+  "keyval => key val
+  Returns a new array map with supplied mappings."
+  [& keyvals]
+  (let [arr (if (and (instance? IndexedSeq keyvals) (zero? (.-i keyvals)))
+              (.-arr keyvals)
+              (into-array keyvals))]
+    (if (odd? (alength arr))
+      (throw (js/Error. (str_ "No value supplied for key: " (last arr))))
+      (.createAsIfByAssoc PersistentArrayMap arr))))

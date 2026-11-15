@@ -6,9 +6,36 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol INamed
-  "Protocol for adding a name."
-  (^string -name [x]
-    "Returns the name String of x.")
-  ( ^{:tag #{string clj-nil}}-namespace [x]
-    "Returns the namespace String of x."))
+(deftype Symbol [ns name str ^:mutable _hash _meta]
+  Object
+  (toString [_] str)
+  (equiv [this other] (-equiv this other))
+
+  IEquiv
+  (-equiv [_ other]
+    (if (instance? Symbol other)
+      (identical? str (.-str other))
+      false))
+
+  IFn
+  (-invoke [sym coll]
+    (get coll sym))
+  (-invoke [sym coll not-found]
+    (get coll sym not-found))
+
+  IMeta
+  (-meta [_] _meta)
+
+  IWithMeta
+  (-with-meta [_ new-meta] (Symbol. ns name str _hash new-meta))
+
+  IHash
+  (-hash [sym]
+    (caching-hash sym hash-symbol _hash))
+
+  INamed
+  (-name [_] name)
+  (-namespace [_] ns)
+
+  IPrintWithWriter
+  (-pr-writer [o writer _] (-write writer str)))

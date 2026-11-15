@@ -6,14 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn nthrest
-  "Returns the nth rest of coll, coll when n is 0."
-  [coll n]
-    (if (implements? IDrop coll)
-      (if (pos? n)
-        (or (-drop coll (Math/ceil n)) ())
-        coll)
-      (loop [n n xs coll]
-        (if-let [xs (and (pos? n) (seq xs))]
-          (recur (dec n) (rest xs))
-          xs))))
+(deftype MultiIterator [iters]
+  Object
+  (hasNext [_]
+    (loop [iters (seq iters)]
+      (if-not (nil? iters)
+        (let [iter (first iters)]
+          (if-not ^boolean (.hasNext iter)
+            false
+            (recur (next iters))))
+        true)))
+  (next [_]
+    (let [nexts (array)]
+      (dotimes [i (alength iters)]
+        (aset nexts i (.next (aget iters i))))
+      (prim-seq nexts 0))))

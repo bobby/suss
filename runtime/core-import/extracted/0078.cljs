@@ -6,7 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn iterable?
-  "Return true if x implements IIterable protocol."
-  [x]
-  (satisfies? IIterable x))
+(deftype IndexedSeqIterator [arr ^:mutable i]
+  Object
+  (hasNext [_]
+    (< i (alength arr)))
+  (next [_]
+    (let [ret (aget arr i)]
+      (set! i (inc i))
+      ret)))

@@ -6,68 +6,92 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype KeySeq [^not-native mseq _meta]
+(deftype PersistentHashSet [meta hash-map ^:mutable __hash]
   Object
   (toString [coll]
     (pr-str* coll))
   (equiv [this other]
     (-equiv this other))
-  (indexOf [coll x]
-    (-indexOf coll x 0))
-  (indexOf [coll x start]
-    (-indexOf coll x start))
-  (lastIndexOf [coll x]
-    (-lastIndexOf coll x (count coll)))
-  (lastIndexOf [coll x start]
-    (-lastIndexOf coll x start))
+  (keys [coll]
+    (es6-iterator (seq coll)))
+  (entries [coll]
+    (es6-set-entries-iterator (seq coll)))
+  (values [coll]
+    (es6-iterator (seq coll)))
+  (has [coll k]
+    (contains? coll k))
+  (forEach [coll f]
+    (doseq [[k v] coll]
+      (f v k)))
 
-  IMeta
-  (-meta [coll] _meta)
+  ICloneable
+  (-clone [_] (PersistentHashSet. meta hash-map __hash))
+
+  IIterable
+  (-iterator [coll]
+    (HashSetIter. (-iterator hash-map)))
 
   IWithMeta
   (-with-meta [coll new-meta]
-    (if (identical? new-meta _meta)
+    (if (identical? new-meta meta)
       coll
-      (KeySeq. mseq new-meta)))
+      (PersistentHashSet. new-meta hash-map __hash)))
 
-  ISeqable
-  (-seq [coll] coll)
-
-  ISequential
-  IEquiv
-  (-equiv [coll other] (equiv-sequential coll other))
+  IMeta
+  (-meta [coll] meta)
 
   ICollection
   (-conj [coll o]
-    (cons o coll))
+    (let [m (-assoc hash-map o nil)]
+      (if (identical? m hash-map)
+        coll
+        (PersistentHashSet. meta m nil))))
 
   IEmptyableCollection
-  (-empty [coll] (.-EMPTY List))
+  (-empty [coll] (-with-meta (.-EMPTY PersistentHashSet) meta))
+
+  IEquiv
+  (-equiv [coll other]
+    (and
+     (set? other)
+     (== (count coll) (count other))
+     ^boolean
+     (try
+       (reduce-kv
+         #(or (contains? other %2) (reduced false))
+         true hash-map)
+       (catch js/Error ex
+         false))))
 
   IHash
-  (-hash [coll] (hash-ordered-coll coll))
+  (-hash [coll] (caching-hash coll hash-unordered-coll __hash))
 
-  ISeq
-  (-first [coll]
-    (let [^not-native me (-first mseq)]
-      (-key me)))
+  ISeqable
+  (-seq [coll] (keys hash-map))
 
-  (-rest [coll]
-    (let [nseq (if (satisfies? INext mseq)
-                 (-next mseq)
-                 (next mseq))]
-      (if-not (nil? nseq)
-        (KeySeq. nseq nil)
-        ())))
+  ICounted
+  (-count [coll] (-count hash-map))
 
-  INext
-  (-next [coll]
-    (let [nseq (if (satisfies? INext mseq)
-                 (-next mseq)
-                 (next mseq))]
-      (when-not (nil? nseq)
-        (KeySeq. nseq nil))))
+  ILookup
+  (-lookup [coll v]
+    (-lookup coll v nil))
+  (-lookup [coll v not-found]
+    (if-let [entry (-find hash-map v)]
+      (key entry)
+      not-found))
 
-  IReduce
-  (-reduce [coll f] (seq-reduce f coll))
-  (-reduce [coll f start] (seq-reduce f start coll)))
+  ISet
+  (-disjoin [coll v]
+    (let [m (-dissoc hash-map v)]
+      (if (identical? m hash-map)
+        coll
+        (PersistentHashSet. meta m nil))))
+
+  IFn
+  (-invoke [coll k]
+    (-lookup coll k))
+  (-invoke [coll k not-found]
+    (-lookup coll k not-found))
+
+  IEditableCollection
+  (-as-transient [coll] (TransientHashSet. (-as-transient hash-map))))

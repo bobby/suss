@@ -6,6 +6,19 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn sequential?
-  "Returns true if coll satisfies ISequential"
-  [x] (satisfies? ISequential x))
+(defn list
+  "Creates a new list containing the items."
+  [& xs]
+  (let [arr (if (and (instance? IndexedSeq xs) (zero? (.-i xs)))
+              (.-arr xs)
+              (let [arr (array)]
+                (loop [^not-native xs xs]
+                  (if-not (nil? xs)
+                    (do
+                      (.push arr (-first xs))
+                      (recur (-next xs)))
+                    arr))))]
+    (loop [i (alength arr) r ()]
+      (if (> i 0)
+        (recur (dec i) (-conj r (aget arr (dec i))))
+        r))))

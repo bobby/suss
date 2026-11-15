@@ -64,7 +64,9 @@
       "source": "clojurescript/src/main/cljs/cljs/core.cljs",
       "line": 7082,
       "end-line": 7082,
-      "sha256": "8b175171b1c779b69e713066d12836225117c8149e9e9d0310a5825198797f57"
+      "sha256": "8b175171b1c779b69e713066d12836225117c8149e9e9d0310a5825198797f57",
+      "patch": "docs/compatibility/patches/array-map-empty.json",
+      "patch-sha256": "53ebf0293a87fcfd214ce28ba23cc9a7cb558baf86bcc1bf717bf25500111a3c"
     },
     {
       "source": "clojurescript/src/main/cljs/cljs/core.cljs",
@@ -170,7 +172,7 @@
       "end-line": 10854,
       "sha256": "95b269ad270220dd84f6a25b3c2ec48f0307a90a18d7bc7626aa04939d398f03",
       "patch": "docs/compatibility/patches/sorted-node-full-IComparable.json",
-      "patch-sha256": "54709b068281a3ca2d546e943a4b4eff56c6ce9015368927885290462045860a"
+      "patch-sha256": "1acdf24e5f3e6bb9996687804d55691043dd75bad606307efdc8d4b5681dcbc8"
     },
     {
       "source": "clojurescript/src/main/cljs/cljs/core.cljs",
@@ -194,22 +196,6 @@
     },
     {
       "source": "clojurescript/src/main/cljs/cljs/core.cljs",
-      "line": 372,
-      "end-line": 375,
-      "sha256": "608c90da5868524bc4244e82b34cfe0db3473b59d2539170b40da91e681676bd",
-      "patch": "docs/compatibility/transducers/setup-372-patch.json",
-      "patch-sha256": "9c0b5aeee25d0af8930877a967415e4afe7f010c4c7af72afc692b513c420a22"
-    },
-    {
-      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
-      "line": 4372,
-      "end-line": 4372,
-      "sha256": "0e937671e103b26ccaeebf9ef0e5c2b5de8322d3d361547d347ad79f5d68d3df",
-      "patch": "docs/compatibility/transducers/setup-4372-patch.json",
-      "patch-sha256": "9cb5250b9a53369baa5c84f334240d0ba1f2a5f4b15705e524c0d6b9459af1e5"
-    },
-    {
-      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
       "line": 4386,
       "end-line": 4388,
       "sha256": "1d8275dd8ae9890a4337f069450b26d49dcb0e986ae2de7277323e3d44f4f67e",
@@ -223,14 +209,6 @@
       "sha256": "840feac243a3adc6ec55dacedbb2d809e9f03716321b7145aa38c9cfb0a86498",
       "patch": "docs/compatibility/transducers/setup-4390-patch.json",
       "patch-sha256": "f3056513e520072c6a9ff46f811f1e78178085b0a24e76919f4a7732128de0d8"
-    },
-    {
-      "source": "clojurescript/src/main/cljs/cljs/core.cljs",
-      "line": 11051,
-      "end-line": 11051,
-      "sha256": "b14c839345687c4429d30ced802808447e83344fadaf57916d64c3f4326a9083",
-      "patch": "docs/compatibility/transducers/setup-11051-patch.json",
-      "patch-sha256": "982020df0509ce8b58ce2bb04277ae3d013b867531d184a5c7beb2b6a310bbdc"
     }
   ]
 }

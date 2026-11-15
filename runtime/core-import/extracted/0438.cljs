@@ -6,63 +6,33 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Cycle [meta all prev ^:mutable current ^:mutable _next]
-  Object
-  (toString [coll]
-    (pr-str* coll))
-  (currentval [coll]
-    (when-not ^seq current
-      (if-let [c (next prev)]
-        (set! current c)
-        (set! current all)))
-    current)
-
-  IPending
-  (-realized? [coll]
-    (some? current))
-
-  IWithMeta
-  (-with-meta [coll new-meta]
-    (if (identical? new-meta meta)
-      coll
-      (Cycle. new-meta all prev current _next)))
-
-  IMeta
-  (-meta [coll] meta)
-
-  ISeq
-  (-first [coll]
-    (first (.currentval coll)))
-  (-rest [coll]
-    (when (nil? _next)
-      (set! _next (Cycle. nil all (.currentval coll) nil nil)))
-    _next)
-
-  INext
-  (-next [coll]
-    (-rest coll))
-
-  ICollection
-  (-conj [coll o] (cons o coll))
-
-  IEmptyableCollection
-  (-empty [coll] (.-EMPTY List))
-
-  ISequential
-  ISeqable
-  (-seq [coll] coll)
-
-  IReduce
-  (-reduce [coll f]
-    (loop [s (.currentval coll) ret (first s)]
-      (let [s   (or (next s) all)
-            ret (f ret (first s))]
-        (if (reduced? ret)
-          @ret
-          (recur s ret)))))
-  (-reduce [coll f start]
-    (loop [s (.currentval coll) ret start]
-      (let [ret (f ret (first s))]
-        (if (reduced? ret)
-          @ret
-          (recur (or (next s) all) ret))))))
+(defn drop
+  "Returns a laziness-preserving sequence of all but the first n items in coll.
+  Returns a stateful transducer when no collection is provided."
+  ([n]
+   {:pre [(number? n)]}
+     (fn [rf]
+       (let [na (volatile! n)]
+         (fn
+           ([] (rf))
+           ([result] (rf result))
+           ([result input]
+              (let [n @na]
+                (vswap! na dec)
+                (if (pos? n)
+                  result
+                  (rf result input))))))))
+  ([n coll]
+   {:pre [(number? n)]}
+     (if (implements? IDrop coll)
+       (or
+         (if (pos? n)
+           (-drop coll (Math/ceil n))
+           (seq coll))
+         ())
+       (let [step (fn [n coll]
+                    (let [s (seq coll)]
+                      (if (and (pos? n) s)
+                        (recur (dec n) (rest s))
+                        s)))]
+         (lazy-seq (step n coll))))))

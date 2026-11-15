@@ -6,7 +6,12 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn print-meta? [opts obj]
-  (and (boolean (pr-opts-meta opts))
-       (implements? IMeta obj)
-       (not (nil? (meta obj)))))
+(defn pr-str*
+  "Support so that collections can implement toString without
+   loading all the printing machinery."
+  [^not-native obj]
+  (let [sb (StringBuffer.)
+        writer (StringBufferWriter. sb)]
+    (-pr-writer obj writer nil)
+    (-flush writer)
+    (.toString sb)))

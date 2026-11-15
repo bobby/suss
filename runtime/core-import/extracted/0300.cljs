@@ -6,7 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn var?
-  "Returns true if v is of type cljs.core.Var"
-  [v]
-  (instance? cljs.core.Var v))
+(def
+  ^{:dynamic true
+    :doc "When set to logical false, strings and characters will be printed with
+  non-alphanumeric characters converted to the appropriate escape sequences.
+
+  Defaults to true"}
+  *print-readably* true)

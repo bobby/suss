@@ -6,18 +6,15 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- unchecked-editable-array-for [tv i]
-  ;; invariant: i is a valid index of tv.
-  (if (>= i (tail-off tv))
-    (.-tail tv)
-    (let [root (.-root tv)]
-      (loop [node  root
-             level (.-shift tv)]
-        (if (pos? level)
-          (recur (tv-ensure-editable
-                   (.-edit root)
-                   (pv-aget node
-                            (bit-and (bit-shift-right-zero-fill i level)
-                                     0x01f)))
-                 (- level 5))
-          (.-arr node))))))
+(defn conj!
+  "Adds val to the transient collection, and return tcoll. The 'addition'
+  may happen at different 'places' depending on the concrete type."
+  ([] (transient []))
+  ([tcoll] tcoll)
+  ([tcoll val]
+    (-conj! tcoll val))
+  ([tcoll val & vals]
+    (let [ntcoll (-conj! tcoll val)]
+      (if vals
+        (recur ntcoll (first vals) (next vals))
+        ntcoll))))

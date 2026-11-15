@@ -6,74 +6,55 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn nth
-  "Returns the value at the index. get returns nil if index out of
-  bounds, nth throws an exception unless not-found is supplied.  nth
-  also works for strings, arrays, regex Matchers and Lists, and,
-  in O(n) time, for sequences."
-  ([coll n]
-    (cond
-      (not (number? n))
-      (throw (js/Error. "Index argument to nth must be a number"))
-
-      (nil? coll)
-      coll
-
-      (implements? IIndexed coll)
-      (-nth coll n)
-
-      (array? coll)
-      (if (and (< -1 n (.-length coll)))
-        (aget coll (int n))
-        (throw (js/Error. "Index out of bounds")))
-
-      (string? coll)
-      (if (and (< -1 n (.-length coll)))
-        (.charAt coll (int n))
-        (throw (js/Error. "Index out of bounds")))
-
-      (or (implements? ISeq coll)
-          (implements? ISequential coll))
-      (if (neg? n)
-        (throw (js/Error. "Index out of bounds"))
-        (linear-traversal-nth coll n))
-
-      (native-satisfies? IIndexed coll)
-      (-nth coll n)
-
-      :else
-      (throw (js/Error. (str_ "nth not supported on this type "
-                          (type->str (type coll)))))))
-  ([coll n not-found]
-    (cond
-      (not (number? n))
-      (throw (js/Error. "Index argument to nth must be a number."))
-
-      (nil? coll)
-      not-found
-
-      (implements? IIndexed coll)
-      (-nth coll n not-found)
-
-      (array? coll)
-      (if (and (< -1 n (.-length coll)))
-        (aget coll (int n))
-        not-found)
-
-      (string? coll)
-      (if (and (< -1 n (.-length coll)))
-        (.charAt coll (int n))
-        not-found)
-
-      (or (implements? ISeq coll)
-          (implements? ISequential coll))
-      (if (neg? n)
-        not-found
-        (linear-traversal-nth coll n not-found))
-
-      (native-satisfies? IIndexed coll)
-      (-nth coll n not-found)
-
-      :else
-      (throw (js/Error. (str_ "nth not supported on this type "
-                          (type->str (type coll))))))))
+(deftype MetaFn [afn meta]
+  IMeta
+  (-meta [_] meta)
+  IWithMeta
+  (-with-meta [_ new-meta]
+    (MetaFn. afn new-meta))
+  Fn
+  IFn
+  (-invoke [_]
+    (afn))
+  (-invoke [_ a]
+    (afn a))
+  (-invoke [_ a b]
+    (afn a b))
+  (-invoke [_ a b c]
+    (afn a b c))
+  (-invoke [_ a b c d]
+    (afn a b c d))
+  (-invoke [_ a b c d e]
+    (afn a b c d e))
+  (-invoke [_ a b c d e f]
+    (afn a b c d e f))
+  (-invoke [_ a b c d e f g]
+    (afn a b c d e f g))
+  (-invoke [_ a b c d e f g h]
+    (afn a b c d e f g h))
+  (-invoke [_ a b c d e f g h i]
+    (afn a b c d e f g h i))
+  (-invoke [_ a b c d e f g h i j]
+    (afn a b c d e f g h i j))
+  (-invoke [_ a b c d e f g h i j k]
+    (afn a b c d e f g h i j k))
+  (-invoke [_ a b c d e f g h i j k l]
+    (afn a b c d e f g h i j k l))
+  (-invoke [_ a b c d e f g h i j k l m]
+    (afn a b c d e f g h i j k l m))
+  (-invoke [_ a b c d e f g h i j k l m n]
+    (afn a b c d e f g h i j k l m n))
+  (-invoke [_ a b c d e f g h i j k l m n o]
+    (afn a b c d e f g h i j k l m n o))
+  (-invoke [_ a b c d e f g h i j k l m n o p]
+    (afn a b c d e f g h i j k l m n o p))
+  (-invoke [_ a b c d e f g h i j k l m n o p q]
+    (afn a b c d e f g h i j k l m n o p q))
+  (-invoke [_ a b c d e f g h i j k l m n o p q r]
+    (afn a b c d e f g h i j k l m n o p q r))
+  (-invoke [_ a b c d e f g h i j k l m n o p q r s]
+    (afn a b c d e f g h i j k l m n o p q r s))
+  (-invoke [_ a b c d e f g h i j k l m n o p q r s t]
+    (afn a b c d e f g h i j k l m n o p q r s t))
+  (-invoke [_ a b c d e f g h i j k l m n o p q r s t rest]
+    (apply afn a b c d e f g h i j k l m n o p q r s t rest)))

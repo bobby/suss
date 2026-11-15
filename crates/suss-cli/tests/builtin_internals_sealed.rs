@@ -177,7 +177,7 @@ fn core_primitives_and_recursion_are_direct_linked_and_private_helpers_hidden() 
         assert_eq!(observe(&mut session, captured), Observation::Long(2), "{phase}");
         assert_eq!(observe(&mut session, "(empty? @seen)"), Observation::Bool(true), "{phase}");
         // Upstream defn- helpers are private to suss.core.
-        for source in ["(suss.core/do-assoc [1] 5 nil 0 nil)", "(suss.core/pv-aset (array) 0 1)", "(suss.core/push-tail [1] 5 nil nil)", "suss.core/string-hash-cache"] {
+        for source in ["(suss.core/do-assoc [1] 5 nil 0 nil)", "(suss.core/pv-aset (array) 0 1)", "(suss.core/push-tail [1] 5 nil nil)", "suss.core/pv-fresh-node"] {
             let error = session.eval(source).map(|_| ()).expect_err(source).to_string();
             assert!(error.contains("is private to suss.core"), "{phase} {source}: {error}");
         }

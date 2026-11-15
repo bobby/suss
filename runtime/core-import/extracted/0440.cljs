@@ -6,107 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Repeat [meta count val ^:mutable next ^:mutable __hash]
-  Object
-  (toString [coll]
-    (pr-str* coll))
-  (equiv [this other]
-    (-equiv this other))
-  (indexOf [coll x]
-    (-indexOf coll x 0))
-  (indexOf [coll x start]
-    (-indexOf coll x start))
-  (lastIndexOf [coll x]
-    (-lastIndexOf coll x count))
-  (lastIndexOf [coll x start]
-    (-lastIndexOf coll x start))
-
-  IPending
-  (-realized? [coll] false)
-
-  IWithMeta
-  (-with-meta [coll new-meta]
-    (if (identical? new-meta meta)
-      coll
-      (Repeat. new-meta count val next nil)))
-
-  IMeta
-  (-meta [coll] meta)
-
-  ISeq
-  (-first [coll]
-    val)
-  (-rest [coll]
-    (if (nil? next)
-      (if (> count 1)
-        (do
-          (set! next (Repeat. nil (dec count) val nil nil))
-          next)
-        (if (== -1 count)
-          coll
-          ()))
-      next))
-
-  INext
-  (-next [coll]
-    (if (nil? next)
-      (if (> count 1)
-        (do
-          (set! next (Repeat. nil (dec count) val nil nil))
-          next)
-        (if (== -1 count)
-          coll
-          nil))
-      next))
-
-  ICollection
-  (-conj [coll o] (cons o coll))
-
-  IDrop
-  (-drop [coll n]
-    (if (== count -1)
-      coll
-      (let [dropped-count (- count n)]
-        (when (pos? dropped-count)
-          (Repeat. nil dropped-count val nil nil)))))
-
-  IEmptyableCollection
-  (-empty [coll] (.-EMPTY List))
-
-  IHash
-  (-hash [coll] (caching-hash coll hash-ordered-coll __hash))
-
-  ISequential
-  ISeqable
-  (-seq [coll] coll)
-
-  IEquiv
-  (-equiv [coll other] (equiv-sequential coll other))
-
-  IReduce
-  (-reduce [coll f]
-    (if (== count -1)
-      (loop [ret (f val val)]
-        (if (reduced? ret)
-          @ret
-          (recur (f ret val))))
-      (loop [i 1 ret val]
-        (if (< i count)
-          (let [ret (f ret val)]
-            (if (reduced? ret)
-              @ret
-              (recur (inc i) ret)))
-          ret))))
-  (-reduce [coll f start]
-    (if (== count -1)
-      (loop [ret (f start val)]
-        (if (reduced? ret)
-          @ret
-          (recur (f ret val))))
-      (loop [i 0 ret start]
-        (if (< i count)
-          (let [ret (f ret val)]
-            (if (reduced? ret)
-              @ret
-              (recur (inc i) ret)))
-          ret)))))
+(defn doall
+  "When lazy sequences are produced via functions that have side
+  effects, any effects other than those needed to produce the first
+  element in the seq do not occur until the seq is consumed. doall can
+  be used to force any effects. Walks through the successive nexts of
+  the seq, retains the head and returns it, thus causing the entire
+  seq to reside in memory at one time."
+  ([coll]
+   (dorun coll)
+   coll)
+  ([n coll]
+   (dorun n coll)
+   coll))

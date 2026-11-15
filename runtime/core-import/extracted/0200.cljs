@@ -6,14 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- pam-new-size [arr]
-  (loop [i 0 n 0]
-    (if (< i (alength arr))
-      (let [dupe? (loop [j 0]
-                    (if (< j i)
-                      (or
-                        (key-test (aget arr i) (aget arr j))
-                        (recur (+ 2 j)))
-                      false))]
-        (recur (+ 2 i) (if dupe? n (+ n 2))))
-      n)))
+(defprotocol IChunkedNext
+  "Protocol for accessing the chunks of a collection."
+  (-chunked-next [coll]
+    "Returns a new collection of coll without the first chunk."))

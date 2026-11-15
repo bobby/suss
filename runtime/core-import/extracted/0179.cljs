@@ -6,22 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^boolean contains?
-  "Returns true if key is present in the given collection, otherwise
-  returns false.  Note that for numerically indexed collections like
-  vectors and arrays, this tests if the numeric key is within the
-  range of indexes. 'contains?' operates constant or logarithmic time;
-  it will not perform a linear search for a value.  See also 'some'."
-  [coll v]
-  (cond
-    (implements? IAssociative coll)
-    (-contains-key? coll v)
-
-    (native-satisfies? IAssociative coll)
-    (-contains-key? coll v)
-
-    (identical? (get coll v lookup-sentinel) lookup-sentinel)
-    false
-
-    :else
-    true))
+(defn- array-index-of-nil? [arr]
+  (let [len (alength arr)]
+    (loop [i 0]
+      (cond
+        (<= len i) -1
+        (nil? (aget arr i)) i
+        :else (recur (+ i 2))))))

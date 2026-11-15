@@ -6,13 +6,70 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- array-extend-kv [arr k v]
-  (let [l (alength arr)
-        narr (make-array (+ l 2))]
-    (loop [i 0]
-      (when (< i l)
-        (aset narr i (aget arr i))
-        (recur (inc i))))
-    (aset narr l k)
-    (aset narr (inc l) v)
-    narr))
+(deftype PersistentArrayMapSeq [arr i _meta]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  IMeta
+  (-meta [coll] _meta)
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta _meta)
+      coll
+      (PersistentArrayMapSeq. arr i new-meta)))
+
+  ICounted
+  (-count [coll]
+    (/ (- (alength arr) i) 2))
+
+  ISeqable
+  (-seq [coll] coll)
+
+  ISequential
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  ICollection
+  (-conj [coll o]
+    (cons o coll))
+
+  IEmptyableCollection
+  (-empty [coll] (.-EMPTY List))
+
+  IHash
+  (-hash [coll] (hash-ordered-coll coll))
+
+  ISeq
+  (-first [coll]
+    (MapEntry. (aget arr i) (aget arr (inc i)) nil))
+
+  (-rest [coll]
+    (if (< i (- (alength arr) 2))
+      (PersistentArrayMapSeq. arr (+ i 2) nil)
+      ()))
+
+  INext
+  (-next [coll]
+    (when (< i (- (alength arr) 2))
+      (PersistentArrayMapSeq. arr (+ i 2) nil)))
+
+  IDrop
+  (-drop [coll n]
+    (when (< n (-count coll))
+      (PersistentArrayMapSeq. arr (+ i (* 2 n)) nil)))
+
+  IReduce
+  (-reduce [coll f] (seq-reduce f coll))
+  (-reduce [coll f start] (seq-reduce f start coll)))

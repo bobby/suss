@@ -6,8 +6,15 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- strip-ns
-  [named]
-  (if (symbol? named)
-    (symbol nil (name named))
-    (keyword nil (name named))))
+(defn empty
+  "Returns an empty collection of the same category as coll, or nil"
+  [coll]
+  (when-not (nil? coll)
+    (cond
+      (implements? IEmptyableCollection coll)
+      (-empty coll)
+
+      (satisfies? IEmptyableCollection coll)
+      (-empty coll)
+
+      :else nil)))

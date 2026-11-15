@@ -8,7 +8,8 @@
 
 (def
   ^{:dynamic true
-    :doc "When set to true, output will be flushed whenever a newline is printed.
+    :doc "*print-namespace-maps* controls whether the printer will print
+  namespace map literal syntax.
 
-  Defaults to true."}
-  *flush-on-newline* true)
+  Defaults to false, but the REPL binds it to true."}
+  *print-namespace-maps* false)

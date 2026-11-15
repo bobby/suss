@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn record?
-  "Return true if x satisfies IRecord"
-  [x]
-  (satisfies? IRecord x))
+(defn key
+  "Returns the key of the map entry."
+  [map-entry]
+  (-key map-entry))

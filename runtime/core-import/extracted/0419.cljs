@@ -6,24 +6,21 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- tree-map-remove [comp tree k found]
-  (if-not (nil? tree)
-    (let [c (comp k (.-key tree))]
-      (cond
-        (zero? c)
-        (do (aset found 0 tree)
-            (tree-map-append (.-left tree) (.-right tree)))
-
-        (neg? c)
-        (let [del (tree-map-remove comp (.-left tree) k found)]
-          (if (or (not (nil? del)) (not (nil? (aget found 0))))
-            (if (instance? BlackNode (.-left tree))
-              (balance-left-del (.-key tree) (.-val tree) del (.-right tree))
-              (RedNode. (.-key tree) (.-val tree) del (.-right tree) nil))))
-
-        :else
-        (let [del (tree-map-remove comp (.-right tree) k found)]
-          (if (or (not (nil? del)) (not (nil? (aget found 0))))
-            (if (instance? BlackNode (.-right tree))
-              (balance-right-del (.-key tree) (.-val tree) (.-left tree) del)
-              (RedNode. (.-key tree) (.-val tree) (.-left tree) del nil))))))))
+(defn take-while
+  "Returns a lazy sequence of successive items from coll while
+  (pred item) returns logical true. pred must be free of side-effects.
+  Returns a transducer when no collection is provided."
+  ([pred]
+     (fn [rf]
+       (fn
+         ([] (rf))
+         ([result] (rf result))
+         ([result input]
+            (if (pred input)
+              (rf result input)
+              (reduced result))))))
+  ([pred coll]
+     (lazy-seq
+       (when-let [s (seq coll)]
+         (when (pred (first s))
+           (cons (first s) (take-while pred (rest s))))))))

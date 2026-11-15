@@ -6,9 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IKVReduce
-  "Protocol for associative types that can reduce themselves
-  via a function of key and val. Called by cljs.core/reduce-kv."
-  (-kv-reduce [coll f init]
-    "Reduces an associative collection and returns the result. f should be
-     a function that takes three arguments."))
+(defn- first-array-for-longvec [pv]
+  ;; invariants: (count pv) > 32.
+  (loop [node (.-root pv)
+         level (.-shift pv)]
+    (if (pos? level)
+      (recur (pv-aget node 0) (- level 5))
+      (.-arr node))))

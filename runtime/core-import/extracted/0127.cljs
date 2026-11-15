@@ -6,10 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Volatile [^:mutable state]
-  IVolatile
-  (-vreset! [_ new-state]
-    (set! state new-state))
-
-  IDeref
-  (-deref [_] state))
+(defprotocol INamed
+  "Protocol for adding a name."
+  (^string -name [x]
+    "Returns the name String of x.")
+  ( ^{:tag #{string clj-nil}}-namespace [x]
+    "Returns the namespace String of x."))

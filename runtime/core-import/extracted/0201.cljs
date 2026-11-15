@@ -6,15 +6,26 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- pam-grow-seed-array [seed trailing]
-  (let [seed-cnt  (dec (alength seed))
-        extra-kvs (seq trailing)
-        ret       (make-array (+ seed-cnt (* 2 (count extra-kvs))))
-        ret       (array-copy seed 0 ret 0 seed-cnt)]
-    (loop [i seed-cnt extra-kvs extra-kvs]
-      (if extra-kvs
-        (let [kv (first extra-kvs)]
-          (aset ret i (-key kv))
-          (aset ret (inc i) (-val kv))
-          (recur (+ 2 i) (next extra-kvs)))
-        ret))))
+(deftype ArrayChunk [arr off end]
+  ICounted
+  (-count [_] (- end off))
+
+  IIndexed
+  (-nth [coll i]
+    (aget arr (+ off i)))
+  (-nth [coll i not-found]
+    (if (and (>= i 0) (< i (- end off)))
+      (aget arr (+ off i))
+      not-found))
+
+  IChunk
+  (-drop-first [coll]
+    (if (== off end)
+      (throw (js/Error. "-drop-first of empty chunk"))
+      (ArrayChunk. arr (inc off) end)))
+
+  IReduce
+  (-reduce [coll f]
+    (array-reduce arr f (aget arr off) (inc off)))
+  (-reduce [coll f start]
+    (array-reduce arr f start off)))

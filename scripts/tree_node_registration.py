@@ -4,7 +4,7 @@ TARGETS = ['Symbol', 'Keyword', 'Subvec', 'PersistentVector', 'MapEntry', 'Black
 ERROR = '(throw (js/Error. (str_ "Cannot compare " x " to " y)))'
 PORTABLE_ERROR = '''(let [compare-x-text__ (str_ x) compare-y-text__ (str_ y)]
       (throw (suss.bootstrap/error
-        (.join (cljs.core/array "Cannot compare " compare-x-text__ " to " compare-y-text__) ""))))'''
+        (str_ "Cannot compare " compare-x-text__ " to " compare-y-text__))))'''
 
 def expand(text):
     forms = Scanner(text).all()

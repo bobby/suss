@@ -6,11 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- clone-and-set
-  ([arr i a]
-     (doto (aclone arr)
-       (aset i a)))
-  ([arr i a j b]
-     (doto (aclone arr)
-       (aset i a)
-       (aset j b))))
+(defn- edit-and-set
+  ([inode edit i a]
+     (let [editable (.ensure-editable inode edit)]
+       (aset (.-arr editable) i a)
+       editable))
+  ([inode edit i a j b]
+     (let [editable (.ensure-editable inode edit)]
+       (aset (.-arr editable) i a)
+       (aset (.-arr editable) j b)
+       editable)))

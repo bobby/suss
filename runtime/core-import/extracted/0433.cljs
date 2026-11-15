@@ -6,12 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn seqable?
-  "Return true if the seq function is supported for s"
-  [s]
-  (or
-    (nil? s)
-    (satisfies? ISeqable s)
-    (js-iterable? s)
-    (array? s)
-    (string? s)))
+(deftype RangeIterator [^:mutable i end step]
+  Object
+  (hasNext [_]
+    (if (pos? step)
+      (< i end)
+      (> i end)))
+  (next [_]
+    (let [ret i]
+      (set! i (+ i step))
+      ret)))

@@ -6,10 +6,16 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn deref
-  "Also reader macro: @var/@atom/@delay. Returns the
-   most-recently-committed value of ref. When applied to a var
-   or atom, returns its current state. When applied to a delay, forces
-   it if not already forced. See also - realized?."
-  [o]
-  (-deref o))
+(defn- seq-reduce
+  ([f coll]
+    (if-let [s (seq coll)]
+      (reduce f (first s) (next s))
+      (f)))
+  ([f val coll]
+    (loop [val val, coll (seq coll)]
+      (if coll
+        (let [nval (f val (first coll))]
+          (if (reduced? nval)
+            @nval
+            (recur nval (next coll))))
+        val))))

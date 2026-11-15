@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IDeref
-  "Protocol for adding dereference functionality to a reference."
-  (-deref [o]
-    "Returns the value of the reference o."))
+(defn ensure-reduced
+  "If x is already reduced?, returns it, else returns (reduced x)"
+  [x]
+  (if (reduced? x) x (reduced x)))

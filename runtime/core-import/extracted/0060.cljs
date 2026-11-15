@@ -6,10 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn cons
-  "Returns a new seq where x is the first element and coll is the rest."
-  [x coll]
-  (cond
-    (nil? coll)             (List. nil x nil 1 nil)
-    (implements? ISeq coll) (Cons. nil x coll nil)
-    :default                (Cons. nil x (seq coll) nil)))
+(defn- accumulating-seq-count [coll]
+  (loop [s (seq coll) acc 0]
+    (if (counted? s) ; assumes nil is counted, which it currently is
+      (+ acc (-count s))
+      (recur (next s) (inc acc)))))

@@ -6,7 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- get-global-hierarchy []
-  (when (nil? -global-hierarchy)
-    (set! -global-hierarchy (atom (make-hierarchy))))
-  -global-hierarchy)
+(defn- dominates
+  [x y prefer-table hierarchy]
+  (or (prefers* x y prefer-table) (isa? hierarchy x y)))

@@ -6,25 +6,25 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn swap-vals!
-  "Atomically swaps the value of atom to be:
-  (apply f current-value-of-atom args). Note that f may be called
-  multiple times, and thus should be free of side effects.
-  Returns [old new], the value of the atom before and after the swap."
-  {:added "1.9"}
-  ([a f]
-   (if (instance? Atom a)
-     (reset-vals! a (f (.-state a)))
-     [(-deref a) (-swap! a f)]))
-  ([a f x]
-   (if (instance? Atom a)
-     (reset-vals! a (f (.-state a) x))
-     [(-deref a) (-swap! a f x)]))
-  ([a f x y]
-   (if (instance? Atom a)
-     (reset-vals! a (f (.-state a) x y))
-     [(-deref a) (-swap! a f x y)]))
-  ([a f x y & more]
-   (if (instance? Atom a)
-     (reset-vals! a (apply f (.-state a) x y more))
-     [(-deref a) (-swap! a f x y more)])))
+(defn add-watch
+  "Adds a watch function to an atom reference. The watch fn must be a
+  fn of 4 args: a key, the reference, its old-state, its
+  new-state. Whenever the reference's state might have been changed,
+  any registered watches will have their functions called. The watch
+  fn will be called synchronously. Note that an atom's state
+  may have changed again prior to the fn call, so use old/new-state
+  rather than derefing the reference. Keys must be unique per
+  reference, and can be used to remove the watch with remove-watch,
+  but are otherwise considered opaque by the watch mechanism.  Bear in
+  mind that regardless of the result or action of the watch fns the
+  atom's value will change.  Example:
+
+      (def a (atom 0))
+      (add-watch a :inc (fn [k r o n] (assert (== 0 n))))
+      (swap! a inc)
+      ;; Assertion Error
+      (deref a)
+      ;=> 1"
+  [iref key f]
+  (-add-watch iref key f)
+  iref)

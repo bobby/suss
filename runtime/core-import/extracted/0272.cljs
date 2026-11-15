@@ -6,8 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IPending
-  "Protocol for types which can have a deferred realization. Currently only
-  implemented by Delay and LazySeq."
-  (^boolean -realized? [x]
-    "Returns true if a value for x has been produced, false otherwise."))
+(defn chunk-first [s]
+  (-chunked-first s))

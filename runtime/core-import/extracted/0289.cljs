@@ -6,7 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ^number abs
-  {:doc "Returns the absolute value of a."
-   :added "1.11.10"}
-  [a] (Math/abs a))
+(defn ^number min
+  "Returns the least of the nums."
+  ([x] x)
+  ([x y]
+   (cond
+     (NaN? x) x
+     (NaN? y) y
+     (< x y) x
+     :else y))
+  ([x y & more]
+   (reduce min (cljs.core/min x y) more)))

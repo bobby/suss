@@ -6,5 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn hash-keyword [k]
-  (int (+ (hash-symbol k) 0x9e3779b9)))
+(defn keyword?
+  "Return true if x is a Keyword"
+  [x]
+  (instance? Keyword x))

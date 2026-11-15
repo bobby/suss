@@ -6,9 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol ITransientVector
-  "Protocol for adding vector functionality to transient collections."
-  (^clj -assoc-n! [tcoll n val]
-    "Returns tcoll with value val added at position n.")
-  (^clj -pop! [tcoll]
-    "Returns tcoll with the last item removed from it."))
+(defn- tv-editable-tail [tl]
+  (let [ret (make-array 32)]
+    (array-copy tl 0 ret 0 (alength tl))
+    ret))

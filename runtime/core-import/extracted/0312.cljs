@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- pr-opts-meta [opts]
-  (if-not (nil? opts)
-    (:meta opts)
-    *print-meta*))
+(deftype StringBufferWriter [sb]
+  IWriter
+  (-write [_ s] (.append sb s))
+  (-flush [_] nil))

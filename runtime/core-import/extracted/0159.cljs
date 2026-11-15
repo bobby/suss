@@ -6,8 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol ITransientAssociative
-  "Protocol for adding associativity to transient collections."
-  (^clj -assoc! [tcoll key val]
-    "Returns a new transient collection of tcoll with a mapping from key to
-     val added to it."))
+(defn- tv-editable-root [node]
+  (VectorNode. (js-obj) (aclone (.-arr node))))

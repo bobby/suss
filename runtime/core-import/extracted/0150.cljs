@@ -6,5 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- vector-index-out-of-bounds [i cnt]
-  (throw (js/Error. (str_ "No item " i " in vector of length " cnt))))
+(deftype RangedIterator [^:mutable i ^:mutable base ^:mutable arr v start end]
+  Object
+  (hasNext [this]
+    (< i end))
+  (next [this]
+    (when (== (- i base) 32)
+      (set! arr (unchecked-array-for v i))
+      (set! base (+ base 32)))
+    (let [ret (aget arr (bit-and i 0x01f))]
+      (set! i (inc i))
+      ret)))

@@ -6,19 +6,11 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- -indexOf
-  ([coll x]
-   (-indexOf coll x 0))
-  ([coll x start]
-   (let [len (count coll)]
-     (if (>= start len)
-       -1
-       (loop [idx (cond
-                    (pos? start) start
-                    (neg? start) (unchecked-max 0 (+ start len))
-                    :else start)]
-         (if (< idx len)
-           (if (= (nth coll idx) x)
-             idx
-             (recur (inc idx)))
-           -1))))))
+(defn with-meta
+  "Returns an object of the same type and value as obj, with
+  map m as its metadata."
+  [o meta]
+  (if (js-fn? o)
+    (MetaFn. o meta)
+    (when-not (nil? o)
+      (-with-meta o meta))))

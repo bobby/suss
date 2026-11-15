@@ -6,7 +6,13 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IEditableCollection
-  "Protocol for collections which can transformed to transients."
-  (^clj -as-transient [coll]
-    "Returns a new, transient version of the collection, in constant time."))
+(defn- unchecked-array-for [pv i]
+  ;; invariant: i is a valid index of pv (use array-for if unknown).
+  (if (>= i (tail-off pv))
+      (.-tail pv)
+      (loop [node (.-root pv)
+             level (.-shift pv)]
+        (if (pos? level)
+          (recur (pv-aget node (bit-and (bit-shift-right-zero-fill i level) 0x01f))
+                 (- level 5))
+          (.-arr node)))))

@@ -6,17 +6,68 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn transduce
-  "reduce with a transformation of f (xf). If init is not
-  supplied, (f) will be called to produce it. f should be a reducing
-  step function that accepts both 1 and 2 arguments, if it accepts
-  only 2 you can add the arity-1 with 'completing'. Returns the result
-  of applying (the transformed) xf to init and the first item in coll,
-  then applying xf to that result and the 2nd item, etc. If coll
-  contains no items, returns init and f is not called. Note that
-  certain transforms may inject or skip items."
-  ([xform f coll] (transduce xform f (f) coll))
-  ([xform f init coll]
-     (let [f (xform f)
-           ret (reduce f init coll)]
-       (f ret))))
+(deftype KeySeq [^not-native mseq _meta]
+  Object
+  (toString [coll]
+    (pr-str* coll))
+  (equiv [this other]
+    (-equiv this other))
+  (indexOf [coll x]
+    (-indexOf coll x 0))
+  (indexOf [coll x start]
+    (-indexOf coll x start))
+  (lastIndexOf [coll x]
+    (-lastIndexOf coll x (count coll)))
+  (lastIndexOf [coll x start]
+    (-lastIndexOf coll x start))
+
+  IMeta
+  (-meta [coll] _meta)
+
+  IWithMeta
+  (-with-meta [coll new-meta]
+    (if (identical? new-meta _meta)
+      coll
+      (KeySeq. mseq new-meta)))
+
+  ISeqable
+  (-seq [coll] coll)
+
+  ISequential
+  IEquiv
+  (-equiv [coll other] (equiv-sequential coll other))
+
+  ICollection
+  (-conj [coll o]
+    (cons o coll))
+
+  IEmptyableCollection
+  (-empty [coll] (.-EMPTY List))
+
+  IHash
+  (-hash [coll] (hash-ordered-coll coll))
+
+  ISeq
+  (-first [coll]
+    (let [^not-native me (-first mseq)]
+      (-key me)))
+
+  (-rest [coll]
+    (let [nseq (if (satisfies? INext mseq)
+                 (-next mseq)
+                 (next mseq))]
+      (if-not (nil? nseq)
+        (KeySeq. nseq nil)
+        ())))
+
+  INext
+  (-next [coll]
+    (let [nseq (if (satisfies? INext mseq)
+                 (-next mseq)
+                 (next mseq))]
+      (when-not (nil? nseq)
+        (KeySeq. nseq nil))))
+
+  IReduce
+  (-reduce [coll f] (seq-reduce f coll))
+  (-reduce [coll f start] (seq-reduce f start coll)))

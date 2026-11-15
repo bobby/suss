@@ -6,12 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype HashSetIter [iter]
-  Object
-  (hasNext [_]
-    (.hasNext iter))
-  (next [_]
-    (if ^boolean (.hasNext iter)
-      (.-key (.next iter))
-      (throw (js/Error. "No such element"))))
-  (remove [_] (js/Error. "Unsupported operation")))
+(defn hash-set
+  "Returns a new hash set with supplied keys.  Any equal keys are
+  handled as if by repeated uses of conj."
+  ([] #{})
+  ([& keys] (set keys)))

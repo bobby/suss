@@ -217,7 +217,7 @@
     },
     {
       "id": "buffer-clear-set",
-      "source": "(let [b (make-buffer \"ab\")] [(.getLength b) (undefined? (.clear b)) (.toString b) (undefined? (.set b 17)) (.toString b)])",
+      "source": "(let [b (make-buffer \"ab\")] [(.getLength b) (nil? (.clear b)) (.toString b) (nil? (.set b 17)) (.toString b)])",
       "expected": {
         "tag": "vector",
         "items": [

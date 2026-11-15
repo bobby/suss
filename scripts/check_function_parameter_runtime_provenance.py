@@ -25,7 +25,10 @@ def adapt(raw, name):
     body = raw[nodes[3 if doc else 2].start:tree.end-1]
     if name == 'to-array':
         if body.count('(nil? s)') != 1 or body.count('(. ary push (first s))') != 1: raise ValueError('exact primitive macro/dot sites')
-        body = body.replace('(nil? s)', '(suss.bootstrap/nil? s)').replace('(. ary push (first s))', '(.push ary (first s))')
+        # Suss arrays don't grow (#425): count the seq, then fill the array.
+        body = (body.replace('(nil? s)', '(suss.bootstrap/nil? s)')
+                .replace('(let [ary (array)]\n    (loop [s (seq coll)]', '(let [s (seq coll) ary (make-array (count s))]\n    (loop [s s i 0]')
+                .replace('(. ary push (first s))\n            (recur (next s)))', '(aset ary i (first s))\n            (recur (next s) (inc i)))'))
     if name == 'vector':
         # Arguments applied from a packed primitive array take the vec path (#336).
         before = '(if (and (instance? IndexedSeq args) (zero? (.-i args)))'

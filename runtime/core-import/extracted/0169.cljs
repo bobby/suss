@@ -6,7 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn transient
-  "Returns a new, transient version of the collection, in constant time."
-  [coll]
-  (-as-transient coll))
+(defprotocol IMapEntry
+  "Protocol for examining a map entry."
+  (-key [coll]
+    "Returns the key of the map entry.")
+  (-val [coll]
+    "Returns the value of the map entry."))

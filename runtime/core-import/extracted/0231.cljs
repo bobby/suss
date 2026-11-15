@@ -6,9 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- array->transient-hash-map [len arr]
-  (loop [out (transient (.-EMPTY PersistentHashMap))
-         i   0]
-    (if (< i len)
-      (recur (assoc! out (aget arr i) (aget arr (inc i))) (+ i 2))
-      out)))
+(defn- remove-pair [arr i]
+  (let [new-arr (make-array (- (alength arr) 2))]
+    (array-copy arr 0 new-arr 0 (* 2 i))
+    (array-copy arr (* 2 (inc i)) new-arr (* 2 i) (- (alength new-arr) (* 2 i)))
+    new-arr))

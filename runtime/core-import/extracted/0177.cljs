@@ -6,6 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn vector?
-  "Return true if x satisfies IVector"
-  [x] (satisfies? IVector x))
+(defn val
+  "Returns the value in the map entry."
+  [map-entry]
+  (-val map-entry))

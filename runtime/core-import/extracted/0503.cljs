@@ -6,23 +6,6 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn underive
-  "Removes a parent/child relationship between parent and
-  tag. h must be a hierarchy obtained from make-hierarchy, if not
-  supplied defaults to, and modifies, the global hierarchy."
-  ([tag parent]
-    (swap-global-hierarchy! underive tag parent)
-    nil)
-  ([h tag parent]
-    (let [parentMap (:parents h)
-          childsParents (if (parentMap tag)
-                          (disj (parentMap tag) parent) #{})
-          newParents (if (not-empty childsParents)
-                      (assoc parentMap tag childsParents)
-                      (dissoc parentMap tag))
-          deriv-seq (flatten (map #(cons (first %) (interpose (first %) (second %)))
-                                  (seq newParents)))]
-      (if (contains? (parentMap tag) parent)
-        (reduce #(apply derive %1 %2) (make-hierarchy)
-                (partition 2 deriv-seq))
-        h))))
+(defn methods
+  "Given a multimethod, returns a map of dispatch values -> dispatch fns"
+  [multifn] (-methods multifn))

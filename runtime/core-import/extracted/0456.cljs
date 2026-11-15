@@ -6,7 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn iterate
-  "Returns a lazy sequence of x, (f x), (f (f x)) etc. f must be free of side-effects"
-  {:added "1.0"}
-  [f x] (Iterate. nil f nil x nil))
+(defn flatten
+  "Takes any nested combination of sequential things (lists, vectors,
+  etc.) and returns their contents as a single, flat sequence.
+  (flatten nil) returns nil."
+  [x]
+  (filter #(not (sequential? %))
+          (rest (tree-seq sequential? seq x))))

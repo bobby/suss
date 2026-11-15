@@ -6,6 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype Reduced [val]
-  IDeref
-  (-deref [o] val))
+(defn unreduced
+  "If x is reduced?, returns (deref x), else returns x"
+  [x]
+  (if (reduced? x) (deref x) x))

@@ -6,9 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn ranged-iterator [v start end]
-  (let [i start]
-    (RangedIterator. i (- i (js-mod i 32))
-      (when (< start (count v))
-        (unchecked-array-for v i))
-      v start end)))
+(defprotocol ITransientAssociative
+  "Protocol for adding associativity to transient collections."
+  (^clj -assoc! [tcoll key val]
+    "Returns a new transient collection of tcoll with a mapping from key to
+     val added to it."))

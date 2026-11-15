@@ -6,4 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(def ^:private never-equiv (NeverEquiv.))
+(defn- array-copy-downward
+  ([from i to j len]
+     (loop [i (+ i (dec len)) j (+ j (dec len)) len len]
+       (if (zero? len)
+         to
+         (do (aset to j (aget from i))
+             (recur (dec i) (dec j) (dec len)))))))

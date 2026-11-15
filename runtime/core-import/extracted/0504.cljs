@@ -6,13 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IMultiFn
-  (-reset [mf])
-  (-add-method [mf dispatch-val method])
-  (-remove-method [mf dispatch-val])
-  (-prefer-method [mf dispatch-val dispatch-val-y])
-  (-get-method [mf dispatch-val])
-  (-methods [mf])
-  (-prefers [mf])
-  (-default-dispatch-val [mf])
-  (-dispatch-fn [mf]))
+(defn get-method
+  "Given a multimethod and a dispatch value, returns the dispatch fn
+  that would apply to that value, or nil if none apply and no default"
+  [multifn dispatch-val] (-get-method multifn dispatch-val))

@@ -6,7 +6,5 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defprotocol IVector
-  "Protocol for adding vector functionality to collections."
-  (^clj -assoc-n [coll n val]
-    "Returns a new vector with value val added at position n."))
+(defn- vector-index-out-of-bounds [i cnt]
+  (throw (js/Error. (str_ "No item " i " in vector of length " cnt))))

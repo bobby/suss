@@ -6,14 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype RangedIterator [^:mutable i ^:mutable base ^:mutable arr v start end]
-  Object
-  (hasNext [this]
-    (< i end))
-  (next [this]
-    (when (== (- i base) 32)
-      (set! arr (unchecked-array-for v i))
-      (set! base (+ base 32)))
-    (let [ret (aget arr (bit-and i 0x01f))]
-      (set! i (inc i))
-      ret)))
+(defprotocol ITransientCollection
+  "Protocol for adding basic functionality to transient collections."
+  (^clj -conj! [tcoll val]
+    "Adds value val to tcoll and returns tcoll.")
+  (^clj -persistent! [tcoll]
+    "Creates a persistent data structure from tcoll and returns it."))

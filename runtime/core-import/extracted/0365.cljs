@@ -6,25 +6,31 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn fnil
-  "Takes a function f, and returns a function that calls f, replacing
-  a nil first argument to f with the supplied value x. Higher arity
-  versions can replace arguments in the second and third
-  positions (y, z). Note that the function f can take any number of
-  arguments, not just the one(s) being nil-patched."
-  ([f x]
+(defn partial
+  "Takes a function f and fewer than the normal arguments to f, and
+  returns a fn that takes a variable number of additional args. When
+  called, the returned function calls f with args + additional args."
+  ([f] f)
+  ([f arg1]
    (fn
-     ([a] (f (if (nil? a) x a)))
-     ([a b] (f (if (nil? a) x a) b))
-     ([a b c] (f (if (nil? a) x a) b c))
-     ([a b c & ds] (apply f (if (nil? a) x a) b c ds))))
-  ([f x y]
+     ([] (f arg1))
+     ([x] (f arg1 x))
+     ([x y] (f arg1 x y))
+     ([x y z] (f arg1 x y z))
+     ([x y z & args] (apply f arg1 x y z args))))
+  ([f arg1 arg2]
    (fn
-     ([a b] (f (if (nil? a) x a) (if (nil? b) y b)))
-     ([a b c] (f (if (nil? a) x a) (if (nil? b) y b) c))
-     ([a b c & ds] (apply f (if (nil? a) x a) (if (nil? b) y b) c ds))))
-  ([f x y z]
+     ([] (f arg1 arg2))
+     ([x] (f arg1 arg2 x))
+     ([x y] (f arg1 arg2 x y))
+     ([x y z] (f arg1 arg2 x y z))
+     ([x y z & args] (apply f arg1 arg2 x y z args))))
+  ([f arg1 arg2 arg3]
    (fn
-     ([a b] (f (if (nil? a) x a) (if (nil? b) y b)))
-     ([a b c] (f (if (nil? a) x a) (if (nil? b) y b) (if (nil? c) z c)))
-     ([a b c & ds] (apply f (if (nil? a) x a) (if (nil? b) y b) (if (nil? c) z c) ds)))))
+     ([] (f arg1 arg2 arg3))
+     ([x] (f arg1 arg2 arg3 x))
+     ([x y] (f arg1 arg2 arg3 x y))
+     ([x y z] (f arg1 arg2 arg3 x y z))
+     ([x y z & args] (apply f arg1 arg2 arg3 x y z args))))
+  ([f arg1 arg2 arg3 & more]
+   (fn [& args] (apply f arg1 arg2 arg3 (concat more args)))))

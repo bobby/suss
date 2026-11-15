@@ -6,32 +6,14 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype TaggedLiteral [tag form]
-  Object
-  (toString [coll]
-    (pr-str* coll))
-
-  IEquiv
-  (-equiv [this other]
-    (and (instance? TaggedLiteral other)
-         (= tag (.-tag other))
-         (= form (.-form other))))
-
-  IHash
-  (-hash [this]
-    (+ (* 31 (hash tag))
-       (hash form)))
-
-  ILookup
-  (-lookup [this v]
-    (-lookup this v nil))
-  (-lookup [this v not-found]
-    (case v
-      :tag tag
-      :form form
-      not-found))
-
-  IPrintWithWriter
-  (-pr-writer [o writer opts]
-    (-write writer (str_ "#" tag " "))
-    (pr-writer form writer opts)))
+(defn descendants
+  "Returns the immediate and indirect children of tag, through a
+  relationship established via derive. h must be a hierarchy obtained
+  from make-hierarchy, if not supplied defaults to the global
+  hierarchy. Note: does not work on JavaScript type inheritance
+  relationships."
+  ([tag] (descendants @(get-global-hierarchy) tag))
+  ([h tag]
+   (if (js-fn? tag)
+     (throw (js/Error. "Can't get descendants of constructors"))
+     (not-empty (get (:descendants h) tag)))))

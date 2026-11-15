@@ -6,5 +6,10 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn chunk-first [s]
-  (-chunked-first s))
+(defn ^array into-array
+  "Returns an array with components set to the values in aseq. Optional type
+  argument accepted for compatibility with Clojure."
+  ([aseq]
+     (into-array nil aseq))
+  ([type aseq]
+     (reduce (fn [a x] (.push a x) a) (array) aseq)))

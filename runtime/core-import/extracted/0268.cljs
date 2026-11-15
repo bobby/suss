@@ -6,21 +6,8 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn set
-  "Returns a set of the distinct elements of coll."
-  [coll]
-  (if (set? coll)
-    (with-meta coll nil)
-    (let [in (seq coll)]
-      (cond
-        (nil? in) #{}
-
-        (and (instance? IndexedSeq in) (zero? (.-i in)))
-        (.createAsIfByAssoc PersistentHashSet (.-arr in))
-
-        :else
-        (loop [^not-native in  in
-               ^not-native out (-as-transient #{})]
-          (if-not (nil? in)
-            (recur (next in) (-conj! out (-first in)))
-            (persistent! out)))))))
+(defprotocol IPending
+  "Protocol for types which can have a deferred realization. Currently only
+  implemented by Delay and LazySeq."
+  (^boolean -realized? [x]
+    "Returns true if a value for x has been produced, false otherwise."))

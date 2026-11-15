@@ -48,7 +48,7 @@ def cases():
     if set(c) != {'schema', 'upstream', 'cases'} or type(c['schema']) is not int or c['schema'] != 1 or c['upstream'] != PIN:
         raise ValueError('pin/schema')
     rows = c['cases']
-    if not isinstance(rows, list) or len(rows) != 142 or len({x['id'] for x in rows}) != 142:
+    if not isinstance(rows, list) or len(rows) != 132 or len({x['id'] for x in rows}) != 132:
         raise ValueError('closed count/unique IDs')
     for row in rows:
         if set(row) != {'id', 'source', 'mode', 'expected'} or row['mode'] not in ('return', 'throw') or type(row['id']) is not str or type(row['source']) is not str:
@@ -84,7 +84,7 @@ if(v instanceof Error&&v.constructor===Error)return {tag:'error',class:'Error',m
 throw Error('unsupported raw value');})(~{},~{},~{},~{},0,[])'''
 
 def driver():
-    header = '(ns suss-oracle.sorted-tree)\n' + ''.join('(def '+x+' cljs.core/'+x+')\n' for x in ['BlackNode','RedNode','MapEntry','balance-left','balance-right','balance-left-del','balance-right-del','tree-map-kv-reduce','nil-iter','seq-iter','iter','es6-iterator','es6-entries-iterator','es6-set-entries-iterator'])
+    header = '(ns suss-oracle.sorted-tree)\n' + ''.join('(def '+x+' cljs.core/'+x+')\n' for x in ['BlackNode','RedNode','MapEntry','balance-left','balance-right','balance-left-del','balance-right-del','tree-map-kv-reduce','nil-iter','seq-iter','iter'])
     header += '(def sorted-effects 0)\n(defn decode-raw [v] (js* '+json.dumps(JS)+' v cljs.core/BlackNode cljs.core/RedNode cljs.core/Reduced))\n'
     rows = []
     for c in cases():
@@ -97,11 +97,16 @@ def generate():
 def check():
     if (ROOT / 'tests/oracle/src/suss_oracle/sorted_tree.cljs').read_text() != driver():
         raise ValueError('stale driver')
-    print('PASS 142 closed sorted tree cases/driver; not executed')
+    print('PASS 132 closed sorted tree cases/driver; not executed')
 
 def compare(path=None):
     actual = read(path or ROOT / 'tests/oracle/out/sorted-tree-observations.json')
     expected = [dict(id=c['id'], mode=c['mode'], **c['expected']) for c in cases()]
+    # Recorded evidence may hold cases since removed, such as the ES6
+    # iterators (#425); only the current cases are compared.
+    current = {e['id'] for e in expected}
+    if isinstance(actual, list):
+        actual = [a for a in actual if not isinstance(a, dict) or a.get('id') in current]
     if not isinstance(actual, list) or len(actual) != len(expected):
         raise ValueError('observation count')
     for a, e in zip(actual, expected):
@@ -110,7 +115,7 @@ def compare(path=None):
         observation(a['value']); observation(a['trace'])
         if a != e:
             raise ValueError('raw mismatch '+e['id']+': '+json.dumps(a))
-    print('PASS 142 independent pinned sorted tree observations')
+    print('PASS 132 independent pinned sorted tree observations')
 
 if __name__ == '__main__':
     {'generate': generate, 'check': check, 'compare': compare}[sys.argv[1]]()

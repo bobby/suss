@@ -6,7 +6,7 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn get-validator
-  "Gets the validator-fn for a var/ref/agent/atom."
-  [iref]
-  (.-validator iref))
+(defn volatile!
+  "Creates and returns a Volatile with an initial value of val."
+  [val]
+  (Volatile. val))

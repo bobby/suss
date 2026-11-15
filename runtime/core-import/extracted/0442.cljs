@@ -6,23 +6,23 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(deftype IntegerRangeChunk [start step count]
-  ICounted
-  (-count [coll] count)
-
-  ISeq
-  (-first [coll] start)
-
-  IIndexed
-  (-nth [coll i]
-    (+ start (* i step)))
-  (-nth [coll i not-found]
-    (if (and (>= i 0) (< i count))
-      (+ start (* i step))
-      not-found))
-
-  IChunk
-  (-drop-first [coll]
-    (if (<= count 1)
-      (throw (js/Error. "-drop-first of empty chunk"))
-      (IntegerRangeChunk. (+ start step) step (dec count)))))
+(defn take-nth
+  "Returns a lazy seq of every nth item in coll.  Returns a stateful
+  transducer when no collection is provided."
+  ([n]
+   {:pre [(number? n)]}
+     (fn [rf]
+       (let [ia (volatile! -1)]
+         (fn
+           ([] (rf))
+           ([result] (rf result))
+           ([result input]
+              (let [i (vswap! ia inc)]
+                (if (zero? (rem i n))
+                  (rf result input)
+                  result)))))))
+  ([n coll]
+   {:pre [(number? n)]}
+     (lazy-seq
+       (when-let [s (seq coll)]
+         (cons (first s) (take-nth n (drop n s)))))))

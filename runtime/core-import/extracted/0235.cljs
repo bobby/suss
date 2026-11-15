@@ -6,8 +6,18 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- remove-pair [arr i]
-  (let [new-arr (make-array (- (alength arr) 2))]
-    (array-copy arr 0 new-arr 0 (* 2 i))
-    (array-copy arr (* 2 (inc i)) new-arr (* 2 i) (- (alength new-arr) (* 2 i)))
-    new-arr))
+(defn- inode-kv-reduce [arr f init]
+  (let [len (alength arr)]
+    (loop [i 0 init init]
+      (if (< i len)
+        (let [init (let [k (aget arr i)]
+                     (if-not (nil? k)
+                       (f init k (aget arr (inc i)))
+                       (let [node (aget arr (inc i))]
+                         (if-not (nil? node)
+                           (.kv-reduce node f init)
+                           init))))]
+          (if (reduced? init)
+            init
+            (recur (+ i 2) init)))
+        init))))

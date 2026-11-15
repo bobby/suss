@@ -6,7 +6,9 @@
 ;   the terms of this license.
 ;   You must not remove this notice, or any other, from this software.
 
-(defn- pr-opts-len [opts]
-  (if-not (nil? opts)
-    (:print-length opts)
-    *print-length*))
+(defn ^:private quote-string
+  [s]
+  (str_ \"
+       (.replace s (js/RegExp "[\\\\\"\b\f\n\r\t]" "g")
+         (fn [match] (unchecked-get char-escapes match)))
+       \"))
