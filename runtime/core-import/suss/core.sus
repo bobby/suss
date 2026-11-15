@@ -5049,7 +5049,7 @@
                          (cat (first zs) (next zs)))))) nil nil))]
        (cat (concat x y) zs)))))
 
-(def ^array into-array "Returns an array with components set to the values in aseq. Optional type
+(def ^objects into-array "Returns an array with components set to the values in aseq. Optional type
   argument accepted for compatibility with Clojure."
   (fn ([aseq]
      (into-array nil aseq))
@@ -6444,7 +6444,7 @@
     :jsdoc ["@type {boolean}"]}
   LITE_MODE false)
 
-(def to-array
+(def ^objects to-array
   "Returns an array containing the contents of coll."
   (fn [coll]
   (let [s (seq coll) ary (make-array (count s))]
@@ -8787,7 +8787,7 @@ reduces them without incurring seq initialization"
 
 (def constantly "Returns a function that takes any number of arguments and returns x." (fn [x] (fn [& args] x)))
 
-(def int-array "Creates an array of ints"
+(def ^ints int-array "Creates an array of ints"
   (fn ([size-or-seq]
        (if (number? size-or-seq)
          (suss.bootstrap/packed-array 2 (suss.bootstrap/cast size-or-seq 5))
@@ -8813,7 +8813,7 @@ reduces them without incurring seq initialization"
                    (recur (inc i) (next s)))
                a)))))))
 
-(def object-array "Creates an array of objects: Clojure's Object[], fixed-length and
+(def ^objects object-array "Creates an array of objects: Clojure's Object[], fixed-length and
   nil-filled (#378)." (fn ([size-or-seq]
      (if (number? size-or-seq)
        (object-array size-or-seq nil)
