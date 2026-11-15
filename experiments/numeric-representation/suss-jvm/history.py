@@ -26,6 +26,7 @@ RUNS = [
     ("M15-09 keyword interning, fast paths", "06783f4d", "run_m15_09.txt"),
     ("M15-10–12 Binaryen, vector-of, dense aset", "ebda997f", "run_m15_final.txt"),
     ("M15-13 string cache, hints", "d4ca6b92", "run_m15_13.txt"),
+    ("M15-14 raw values, object arrays, wasmtime 51", "de6b1925", "run_m15_14.txt"),
 ]
 # A time is a number or ≈ 0, below the run-to-run spread; runs before the bench
 # printed ≈ 0 could show negative times, which are below it too.
