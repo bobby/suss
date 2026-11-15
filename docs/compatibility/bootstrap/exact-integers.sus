@@ -252,7 +252,7 @@
 (def ns-name
   (fn [ns] (.-name (the-ns ns))))
 (def all-ns
-  (fn [] (seq (aclone namespace-registry))))
+  (fn [] (seq namespace-registry)))
 ;; The compiler also records each required namespace under its own name;
 ;; Clojure lists only the aliases a namespace declares.
 (def ns-aliases

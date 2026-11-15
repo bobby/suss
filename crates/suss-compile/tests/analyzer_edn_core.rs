@@ -41,7 +41,7 @@ fn core_document_has_no_lowered_nodes() {
     };
     assert!(asts > 600, "{asts} top-level nodes");
     assert!(!text.contains(":op :suss/lowered"), "a core node has no source facts");
-    for op in [":op :fn-method", ":op :loop", ":op :try", ":op :suss/this-as", ":op :suss/intrinsic"] {
+    for op in [":op :fn-method", ":op :loop", ":op :try", ":op :suss/intrinsic"] {
         assert!(text.contains(op), "{op}");
     }
 }

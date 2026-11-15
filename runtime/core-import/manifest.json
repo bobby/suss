@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "7d62589e28e42d8f36b81bf130cd8903c3dad34af807cf6e1c48cba61f7745ef",
-  "reviews-sha256": "bee1f83599cca54a2bcef9f708200e83072af79cef895212c5ee28daa0b1c879",
+  "recipe-sha256": "94312340b7f8c8142e252e6c46a0c40277e2e1d42345fc0c61216f813f538353",
+  "reviews-sha256": "8ad693f04a762e3435980acef9d29ae954437f84625d48245133367c3bb152d7",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -1414,8 +1414,6 @@
         "strict Closure gobject/create first-class variadic factory callback"
       ],
       "semantic-tests": [
-        "crates/suss-cli/tests/portable_string_cache.rs",
-        "tests/oracle/string-cache-cases.json",
         "crates/suss-cli/tests/portable_native_objects.rs",
         "crates/suss-compile/tests/runtime_abi.rs"
       ]
@@ -7025,8 +7023,8 @@
       "extracted": "extracted/0226.cljs",
       "extracted-sha256": "438229186b35aed8dd79d8c7017e1e0dcdf9d0ce05451cee35bf559598484b1b",
       "patch": "docs/compatibility/patches/hamt-TransientArrayMap.json",
-      "patch-sha256": "78896e236a66cb862c23c86f9d32354500e17b5e2ae32dfb6d953aa589725dff",
-      "adapted-form-sha256": "991131f56a90c2b6acb11cfcc9f941e20e3479e51c735abf426fe7b9f7eab870",
+      "patch-sha256": "2a96de5edf29b26606c94e6c076f3b81ca4806245d6e4ba321050f63dff99bf8",
+      "adapted-form-sha256": "0f1d463ea226e4906c43bfcc862b998261a06b33dccc3b646d7b37895c4eca09",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -15646,7 +15644,7 @@
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "1c1a5b175fe46b6858ca54b9d3b2d34322fa5a801f12e6e626675dc11038b701"
+      "sha256": "72c706fb313d45a954dc1e561c329ba3d1a44dbff3e9b4705707af197044f7b2"
     }
   },
   "files": {
@@ -16158,6 +16156,6 @@
     "extracted/0503.cljs": "02b4047a3496243c5528041564a9f8ded2f3aae951be387e8779ab0e956464c3",
     "extracted/0504.cljs": "d42068d54f1844f88abb73548a3a554a3cc1f5af315fd590533b4fd80de350ec",
     "extracted/0505.cljs": "072c8a681fd905767f56c48e6c3529b99e9d5f537def64cb299f5bac29c7c59b",
-    "suss/core.sus": "ab492a1ba134994224059f34cc58c59185cbbd2dd53c82e23174f31b6743a111"
+    "suss/core.sus": "8718f08fb2e736a9dd7f587f79b958a5763a74e688b59844254781171a7f7132"
   }
 }

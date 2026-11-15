@@ -99,7 +99,6 @@ const CORE_PRIVATE: &[&str] = &[
     "inode-kv-reduce", "pack-array-node", "hash-collision-node-find-index", "bitmap-indexed-node-index",
     "balance-left", "balance-left-del", "balance-right", "balance-right-del", "tree-map-add", "tree-map-append",
     "tree-map-remove", "tree-map-replace", "tree-map-kv-reduce", "tree-map-seq-push", "create-tree-map-seq",
-    "string-hash-cache", "string-hash-cache-count",
 ];
 pub(crate) fn is_core_private(name: &str) -> bool {
     CORE_PRIVATE.contains(&name)

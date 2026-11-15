@@ -324,7 +324,7 @@
     },
     {
       "id": "string-composition",
-      "source": "(= (hash \"a\ud83d\ude00\") (m3-hash-int (hash-string \"a\ud83d\ude00\")))",
+      "source": "(= (hash \"a\ud83d\ude00\") (m3-hash-int (hash-string* \"a\ud83d\ude00\")))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -332,7 +332,7 @@
     },
     {
       "id": "lone-surrogate-composition",
-      "source": "(= (hash \"\\uD800\") (m3-hash-int (hash-string \"\\uD800\")))",
+      "source": "(= (hash \"\\uD800\") (m3-hash-int (hash-string* \"\\uD800\")))",
       "expected": {
         "tag": "bool",
         "value": true
@@ -356,7 +356,7 @@
     },
     {
       "id": "review-captured-live-string-helpers",
-      "source": "(let [f hash] (with-redefs [hash-string (fn [_] 17) m3-hash-int (fn [x] (+ x 2))] (f \"review\")))",
+      "source": "(let [f hash] (with-redefs [hash-string* (fn [_] 17) m3-hash-int (fn [x] (+ x 2))] (f \"review\")))",
       "expected": {
         "tag": "f64",
         "bits": "4033000000000000"

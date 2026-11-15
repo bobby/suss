@@ -3475,7 +3475,7 @@
 
   (-lookup [tcoll k not-found]
     (if editable_QMARK_
-      (let [idx (array-map-index-of tcoll k)]
+      (let [idx (array-index-of arr k)]
         (if (== idx -1)
           not-found
           (aget arr (inc idx))))
@@ -3506,7 +3506,7 @@
   ITransientAssociative
   (-assoc! [tcoll key val]
     (if editable_QMARK_
-      (let [idx (array-map-index-of tcoll key)]
+      (let [idx (array-index-of arr key)]
         (if (== idx -1)
           (if (<= (+ len 2) (* 2 (.-HASHMAP_THRESHOLD PersistentArrayMap)))
             (do (set! len (+ len 2))
@@ -3522,7 +3522,7 @@
   ITransientMap
   (-dissoc! [tcoll key]
     (if editable_QMARK_
-      (let [idx (array-map-index-of tcoll key)]
+      (let [idx (array-index-of arr key)]
         (when (>= idx 0)
           (aset arr idx (aget arr (- len 2)))
           (aset arr (inc idx) (aget arr (dec len)))
@@ -9960,7 +9960,7 @@ reduces them without incurring seq initialization"
 (def ns-name
   (fn [ns] (.-name (the-ns ns))))
 (def all-ns
-  (fn [] (seq (aclone namespace-registry))))
+  (fn [] (seq namespace-registry)))
 ;; The compiler also records each required namespace under its own name;
 ;; Clojure lists only the aliases a namespace declares.
 (def ns-aliases
