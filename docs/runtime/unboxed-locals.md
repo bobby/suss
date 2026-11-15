@@ -46,9 +46,18 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   element's kind are used directly, and `aset` returns a raw stored value raw.
   An index the inline path can't use takes the generic path, which converts
   it or reports it as before.
+- **Hinted parameters.** A parameter tagged `^long` or `^double` is, in the
+  body, Clojure's checked `longCast` or `doubleCast` of the argument (#385): an
+  i31 or a boxed number of that kind is read inline, and anything else goes
+  through the runtime's `number-cast-long` or `number-cast-double`, which
+  converts a double in range or throws. The result is a raw `i64` or `f64`, so
+  arithmetic and loops seeded from it stay unboxed beyond i31, and `recur`
+  rebinds it. A WIT export's numeric parameters are treated as hinted
+  ([WIT numbers](wit-numbers.md), "Primitive export parameters").
 
-A function's parameters, values read from vars, and results of calls are
-boxed. Functions that suspend (async continuations) keep every value boxed,
+Unhinted parameters, values read from vars, and results of calls are boxed.
+The argument to a hinted parameter is boxed by its caller too, and cast back
+in the body. Functions that suspend (async continuations) keep every value boxed,
 because their locals are saved as GC values across a suspension.
 
 ## Where values are boxed
@@ -69,15 +78,18 @@ operands, which throws "long overflow" exactly as the boxed path does.
 
 ## Not yet
 
-These parts of #337 aren't done yet:
+These parts of #337, #448 and #351 aren't done yet:
 
-- **Hints.** Clojure's `^long` and `^double` on parameters and `let` locals.
-  On the JVM, a hinted `let` local converts at each primitive use:
-  `(let [^long x (identity 5.5)] [x (+ x 1)])` is `[5.5 6]`. A hinted
-  parameter converts on entry: `((fn [^long n] n) 1.5)` is 1.
+- **Hinted `let` locals.** On the JVM, a hinted `let` local converts at each
+  primitive use: `(let [^long x (identity 5.5)] [x (+ x 1)])` is `[5.5 6]`.
+- **Return hints.** A `^long` or `^double` return hint is accepted, but the
+  result is boxed (#448).
 - **Known core results.** Calls such as `(long x)` and `(double x)` aren't yet
-  treated as raw.
-- **Primitive entry points.** These wait for the calling convention in #353.
+  treated as raw, so `(double i)` calls core and allocates a box (#448).
+- **Primitive entry points.** A hinted function has no typed entry yet, so its
+  callers box arguments and results. ADR-0004 designs them as subtypes of
+  `$code`; their dependencies #353 and #360 are done (#448).
+- **Box reuse across blocks.** See "Where values are boxed" above (#351).
 
 ## Evidence
 
