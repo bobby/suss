@@ -104,7 +104,7 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
             code.extend([
                 I32Const(20),
                 LocalGet(5),
-                Call(b.names["source-array-new"]),
+                Call(b.names["object-array-new"]),
                 ArraySet(ARGS),
                 LocalGet(6),
                 LocalSet(4),

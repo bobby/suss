@@ -3447,7 +3447,7 @@ mod sharing_tests {
     fn declaration_metadata_rebuilds_repeat_hash_callbacks_in_source_order() {
         let mut session = Session::new_macro().unwrap();
         session.enter_namespace("cljs.core").unwrap();
-        session.eval("(def metadata-hash-log (array)) (def metadata-original-hash suss.core/hash) (def hash (fn [key] (do (if (number? key) (aset metadata-hash-log (alength metadata-hash-log) key) nil) (metadata-original-hash key))))").unwrap();
+        session.eval("(def metadata-hash-log []) (def metadata-original-hash suss.core/hash) (def hash (fn [key] (do (if (number? key) (set! metadata-hash-log (conj metadata-hash-log key)) nil) (metadata-original-hash key))))").unwrap();
         session.eval("(def ^{:audit #{101 102 103 104 105 106 107 108 109}} review-callback-metadata 0)").unwrap();
         let bridge = FormBridge::new(&mut session).unwrap();
         let snapshot = session.compilation_snapshot();
@@ -3457,7 +3457,7 @@ mod sharing_tests {
             .map(|(global, source)| (global.clone(), source.clone())).unwrap();
         let mut baseline: Option<Vec<f64>> = None;
         for _ in 0..2 {
-            session.eval("(set! metadata-hash-log (array))").unwrap();
+            session.eval("(set! metadata-hash-log [])").unwrap();
             let value = {
                 let _request = session.operation_budget_scope().unwrap();
                 let mut graph = AnalysisGraph::new(&bridge, &mut session);

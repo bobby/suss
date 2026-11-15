@@ -1,0 +1,381 @@
+{
+  "schema": 1,
+  "clojure": "1.12.6",
+  "cases": [
+    {
+      "id": "empty-array-length",
+      "source": "(alength (array))",
+      "expected": "0"
+    },
+    {
+      "id": "array-length",
+      "source": "(alength (array 1 nil false 4))",
+      "expected": "4"
+    },
+    {
+      "id": "array-number",
+      "source": "(aget (array 7 8) 1)",
+      "expected": "8"
+    },
+    {
+      "id": "array-nil",
+      "source": "(nil? (aget (array 7 nil) 1))",
+      "expected": "true"
+    },
+    {
+      "id": "array-false",
+      "source": "(false? (aget (array false) 0))",
+      "expected": "true"
+    },
+    {
+      "id": "array-identity",
+      "source": "(let [a (array 1)] (identical? a a))",
+      "expected": "true"
+    },
+    {
+      "id": "arrays-distinct",
+      "source": "(identical? (array 1) (array 1))",
+      "expected": "false"
+    },
+    {
+      "id": "array-fractional-index",
+      "source": "(aget (array 1 2) 1.5)",
+      "expected": "2"
+    },
+    {
+      "id": "aget-past-end",
+      "source": "(try (aget (array 1) 5) (catch :default e [:threw (ex-message e)]))",
+      "expected": "[:threw \"Index 5 out of bounds for length 1\"]"
+    },
+    {
+      "id": "aget-negative",
+      "source": "(try (aget (array 1) -1) (catch :default e [:threw (ex-message e)]))",
+      "expected": "[:threw \"Index -1 out of bounds for length 1\"]"
+    },
+    {
+      "id": "aget-empty",
+      "source": "(try (aget (array) 0) (catch :default e [:threw (ex-message e)]))",
+      "expected": "[:threw \"Index 0 out of bounds for length 0\"]"
+    },
+    {
+      "id": "aset-past-end",
+      "source": "(try (aset (array 1) 3 7) (catch :default e [:threw (ex-message e)]))",
+      "expected": "[:threw \"Index 3 out of bounds for length 1\"]"
+    },
+    {
+      "id": "aset-past-end-keeps-length",
+      "source": "(let [a (array 1)] (try (aset a 3 7) (catch :default e :threw)) (alength a))",
+      "expected": "1"
+    },
+    {
+      "id": "aget-nil",
+      "source": "(try (let [a (identity nil)] (aget a 0)) (catch :default e :threw))",
+      "expected": ":threw"
+    },
+    {
+      "id": "aset-nil",
+      "source": "(try (let [a (identity nil)] (aset a 0 1)) (catch :default e :threw))",
+      "expected": ":threw"
+    },
+    {
+      "id": "alength-nil",
+      "source": "(try (let [a (identity nil)] (alength a)) (catch :default e :threw))",
+      "expected": ":threw"
+    },
+    {
+      "id": "alength-number",
+      "source": "(try (let [a (identity 5)] (alength a)) (catch :default e :threw))",
+      "expected": ":threw"
+    },
+    {
+      "id": "array-mutation-return",
+      "source": "(let [a (array 1)] (aset a 0 9))",
+      "expected": "9"
+    },
+    {
+      "id": "array-mutation-alias",
+      "source": "(let [a (array 1) b a] (aset a 0 9) (aget b 0))",
+      "expected": "9"
+    },
+    {
+      "id": "array-holds-any-value",
+      "source": "(let [a (array 1)] (aset a 0 \"x\") (aset a 0 :k) (aget a 0))",
+      "expected": ":k"
+    },
+    {
+      "id": "clone-length",
+      "source": "(alength (aclone (array 1 2 3)))",
+      "expected": "3"
+    },
+    {
+      "id": "clone-distinct",
+      "source": "(let [a (array 1)] (identical? a (aclone a)))",
+      "expected": "false"
+    },
+    {
+      "id": "clone-isolated",
+      "source": "(let [a (array 1) b (aclone a)] (aset b 0 9) (aget a 0))",
+      "expected": "1"
+    },
+    {
+      "id": "clone-shallow",
+      "source": "(let [inner (array 7) a (array inner) b (aclone a)] (identical? (aget a 0) (aget b 0)))",
+      "expected": "true"
+    },
+    {
+      "id": "make-array-length",
+      "source": "(alength (make-array 3))",
+      "expected": "3"
+    },
+    {
+      "id": "make-array-nil-filled",
+      "source": "(vec (make-array 3))",
+      "expected": "[nil nil nil]"
+    },
+    {
+      "id": "make-array-dynamic-nil-filled",
+      "source": "(let [n 2] (vec (make-array n)))",
+      "expected": "[nil nil]"
+    },
+    {
+      "id": "make-array-type-ignored",
+      "source": "(alength (make-array nil 2))",
+      "expected": "2"
+    },
+    {
+      "id": "make-array-first-class",
+      "source": "(let [f make-array] (vec (f 2)))",
+      "expected": "[nil nil]"
+    },
+    {
+      "id": "make-array-first-class-type",
+      "source": "(let [f make-array] (alength (f nil 4)))",
+      "expected": "4"
+    },
+    {
+      "id": "make-array-zero",
+      "source": "(alength (make-array 0))",
+      "expected": "0"
+    },
+    {
+      "id": "make-array-fractional",
+      "source": "(alength (make-array 1.5))",
+      "expected": "1"
+    },
+    {
+      "id": "make-array-dynamic-fractional",
+      "source": "(let [n 2.5] (alength (make-array n)))",
+      "expected": "2"
+    },
+    {
+      "id": "make-array-negative",
+      "source": "(try (make-array -2) (catch :default e [:threw (ex-message e)]))",
+      "expected": "[:threw \"-2\"]"
+    },
+    {
+      "id": "make-array-dynamic-negative",
+      "source": "(try (let [n -1] (make-array n)) (catch :default e [:threw (ex-message e)]))",
+      "expected": "[:threw \"-1\"]"
+    },
+    {
+      "id": "make-array-dimensions",
+      "source": "(let [a (make-array nil 2 3)] [(alength a) (alength (aget a 0)) (vec (aget a 1))])",
+      "expected": "[2 3 [nil nil nil]]"
+    },
+    {
+      "id": "make-array-dimensions-distinct",
+      "source": "(let [a (make-array nil 2 3)] (identical? (aget a 0) (aget a 1)))",
+      "expected": "false"
+    },
+    {
+      "id": "make-array-three-dimensions",
+      "source": "(let [a (make-array nil 2 1 3)] [(alength (aget a 1)) (alength (aget a 1 0)) (aget a 1 0 2)])",
+      "expected": "[1 3 nil]"
+    },
+    {
+      "id": "make-array-dimension-negative",
+      "source": "(try (make-array nil 2 -1) (catch :default e [:threw (ex-message e)]))",
+      "expected": "[:threw \"-1\"]"
+    },
+    {
+      "id": "make-array-outer-negative",
+      "source": "(try (make-array nil -2 3) (catch :default e [:threw (ex-message e)]))",
+      "expected": "[:threw \"-2\"]"
+    },
+    {
+      "id": "make-array-empty-outer",
+      "source": "(alength (make-array nil 0 3))",
+      "expected": "0"
+    },
+    {
+      "id": "make-array-empty-outer-negative-inner",
+      "source": "(try (make-array nil 0 -1) (catch :default e [:threw (ex-message e)]))",
+      "expected": "[:threw \"-1\"]"
+    },
+    {
+      "id": "make-array-first-negative-dimension",
+      "source": "(try (make-array nil -3 -1) (catch :default e [:threw (ex-message e)]))",
+      "expected": "[:threw \"-3\"]"
+    },
+    {
+      "id": "nested-get",
+      "source": "(aget (array (array 1 2)) 0 1)",
+      "expected": "2"
+    },
+    {
+      "id": "nested-set",
+      "source": "(let [a (array (array 1 2))] [(aset a 0 1 9) (aget a 0 1)])",
+      "expected": "[9 9]"
+    },
+    {
+      "id": "nested-get-past-end",
+      "source": "(try (aget (array (array 1 2)) 0 2) (catch :default e :threw))",
+      "expected": ":threw"
+    },
+    {
+      "id": "array-first-class",
+      "source": "(let [f array] (vec (f 1 2 3)))",
+      "expected": "[1 2 3]"
+    },
+    {
+      "id": "aget-first-class",
+      "source": "(let [f aget] (f (array 5 6) 1))",
+      "expected": "6"
+    },
+    {
+      "id": "aset-first-class",
+      "source": "(let [f aset a (array 1)] (f a 0 8) (aget a 0))",
+      "expected": "8"
+    },
+    {
+      "id": "alength-first-class",
+      "source": "(let [f alength] (f (array 1 2)))",
+      "expected": "2"
+    },
+    {
+      "id": "aclone-first-class",
+      "source": "(let [f aclone] (vec (f (array 1 2))))",
+      "expected": "[1 2]"
+    },
+    {
+      "id": "array-once-order",
+      "source": "(let [n (atom 0) tick (fn [] (swap! n inc))] (let [a (array (tick) (tick))] [(vec a) @n]))",
+      "expected": "[[1 2] 2]"
+    },
+    {
+      "id": "aget-once-order",
+      "source": "(let [n (atom []) tick (fn [x v] (swap! n conj x) v)] [(aget (tick :a (array 7 8)) (tick :i 1)) @n])",
+      "expected": "[8 [:a :i]]"
+    },
+    {
+      "id": "aset-once-order",
+      "source": "(let [n (atom []) tick (fn [x v] (swap! n conj x) v) a (array 0)] [(aset (tick :a a) (tick :i 0) (tick :v 5)) @n])",
+      "expected": "[5 [:a :i :v]]"
+    },
+    {
+      "id": "make-array-dimensions-order",
+      "source": "(let [n (atom []) tick (fn [x v] (swap! n conj x) v)] (make-array (tick :t nil) (tick :a 2) (tick :b 2)) @n)",
+      "expected": "[:t :a :b]"
+    },
+    {
+      "id": "array-function-value-survives",
+      "source": "(let [f (fn [x] (+ x 1)) a (array f)] ((aget a 0) 7))",
+      "expected": "8"
+    },
+    {
+      "id": "to-array-vector",
+      "source": "(vec (to-array [1 2 3]))",
+      "expected": "[1 2 3]"
+    },
+    {
+      "id": "to-array-nil",
+      "source": "(alength (to-array nil))",
+      "expected": "0"
+    },
+    {
+      "id": "to-array-seq",
+      "source": "(vec (to-array (map inc (range 3))))",
+      "expected": "[1 2 3]"
+    },
+    {
+      "id": "to-array-fresh",
+      "source": "(let [v [1 2] a (to-array v)] (aset a 0 9) [v (vec a)])",
+      "expected": "[[1 2] [9 2]]"
+    },
+    {
+      "id": "into-array",
+      "source": "(vec (into-array [1 2]))",
+      "expected": "[1 2]"
+    },
+    {
+      "id": "object-array-size",
+      "source": "(vec (object-array 2))",
+      "expected": "[nil nil]"
+    },
+    {
+      "id": "object-array-seq",
+      "source": "(vec (object-array [1 2]))",
+      "expected": "[1 2]"
+    },
+    {
+      "id": "array-seq",
+      "source": "(seq (array 1 2))",
+      "expected": "(1 2)"
+    },
+    {
+      "id": "array-empty-seq",
+      "source": "(seq (array))",
+      "expected": "nil"
+    },
+    {
+      "id": "array-count",
+      "source": "(count (array 1 2 3))",
+      "expected": "3"
+    },
+    {
+      "id": "array-nth",
+      "source": "(nth (array 1 2 3) 2)",
+      "expected": "3"
+    },
+    {
+      "id": "array-nth-past-end",
+      "source": "(try (nth (array 1) 4) (catch :default e :threw))",
+      "expected": ":threw"
+    },
+    {
+      "id": "array-nth-not-found",
+      "source": "(nth (array 1) 4 :none)",
+      "expected": ":none"
+    },
+    {
+      "id": "array-get",
+      "source": "[(get (array 1 2) 1) (get (array 1 2) 5) (get (array 1 2) 5 :none)]",
+      "expected": "[2 nil :none]"
+    },
+    {
+      "id": "array-reduce",
+      "source": "(reduce + (array 1 2 3))",
+      "expected": "6"
+    },
+    {
+      "id": "array-into-vector",
+      "source": "(into [] (array 1 2))",
+      "expected": "[1 2]"
+    },
+    {
+      "id": "array-apply",
+      "source": "(apply + (array 1 2 3))",
+      "expected": "6"
+    },
+    {
+      "id": "vec-aliases-array",
+      "source": "(let [a (array 1 2) v (vec a)] (aset a 0 9) v)",
+      "expected": "[9 2]"
+    },
+    {
+      "id": "array-equality",
+      "source": "[(= (array 1) (array 1)) (let [a (array 1)] (= a a))]",
+      "expected": "[false true]"
+    }
+  ]
+}

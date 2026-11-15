@@ -39,7 +39,7 @@ fn named_properties_match_independently_decoded_primary_observations_after_gc() 
     ))
     .unwrap();
     let cases = corpus["cases"].as_array().unwrap();
-    assert_eq!(cases.len(), 64);
+    assert_eq!(cases.len(), 63);
     let mut session = Session::new().unwrap();
     // Ported core reads other types' private fields, so it runs as core (#278).
     session
@@ -175,28 +175,6 @@ fn malformed_or_unsupported_named_forms_preserve_session_and_recover() {
             "{source}"
         );
     }
-    session.eval("(def named-array (array 7 8))").unwrap();
-    for source in ["(set! (.-length named-array) 0)", "(.-length named-array)"] {
-        let value = session.eval(source).unwrap();
-        session.collect().unwrap();
-        session
-            .inspect(&value, |mut store, value| {
-                assert_eq!(long(&mut store, &value)?, 0);
-                Ok(())
-            })
-            .unwrap();
-    }
-    let removed = session.eval("(aget named-array 0)").unwrap();
-    session.collect().unwrap();
-    session
-        .inspect(&removed, |mut store, value| {
-            assert_eq!(
-                sentinel_tag(&mut store, &value)?.unwrap(),
-                6
-            );
-            Ok(())
-        })
-        .unwrap();
     let result = session
         .eval("(+ (named-owner 2) (.-cache named-owner) (.-value named-instance))")
         .unwrap();

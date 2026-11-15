@@ -24,8 +24,6 @@ fn number(session: &mut Session, source: &str) -> f64 {
 fn private_object_factory_and_properties_execute_ordered_source_after_gc() {
     let mut session = Session::new().unwrap();
     assert_eq!(number(&mut session, "(let [f (suss.bootstrap/object-factory) o (f \"x\" 7)] (suss.bootstrap/object-get o \"x\"))"), 7.0);
-    assert_eq!(number(&mut session, "(let [f (suss.bootstrap/object-factory) o (f (array \"x\" 9))] (suss.bootstrap/object-get o \"x\"))"), 9.0);
-    assert_eq!(number(&mut session, "(let [f (suss.bootstrap/object-factory) o (f (array (array \"x\" 11)))] (suss.bootstrap/object-get o \"x\"))"), 11.0);
     assert_eq!(number(&mut session, "(do (def object_effects 0) (def object_factory (suss.bootstrap/object-factory)) (let [o (object_factory (do (set! object_effects 1) \"x\") (do (set! object_effects (+ (* object_effects 10) 2)) 7))] (suss.bootstrap/object-set (do (set! object_effects (+ (* object_effects 10) 3)) o) (do (set! object_effects (+ (* object_effects 10) 4)) \"x\") (do (set! object_effects (+ (* object_effects 10) 5)) 9))) object_effects)"), 12345.0);
     assert_eq!(number(&mut session, "(let [f object_factory o (f) p (f \"answer\" 13)] (suss.bootstrap/object-set o \"__proto__\" p) (suss.bootstrap/object-get o \"answer\"))"), 13.0);
     assert_eq!(number(&mut session, "(let [f object_factory o (f)] (suss.bootstrap/object-set o -0.0 17) (suss.bootstrap/object-get o 0))"), 17.0);

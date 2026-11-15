@@ -112,7 +112,7 @@ impl Decoder {
                 "(new suss.core/VectorNode nil (suss.core/make-array 32))",
                 Class::Node,
             ),
-            ("(suss.core/array)", Class::SourceArray),
+            // No source array sample: `array` makes object arrays (#425).
             ("(new suss.core/List nil 1 nil 1 nil)", Class::List),
             ("(new suss.core/EmptyList nil)", Class::EmptyList),
             ("(new suss.core/Cons nil 1 nil nil)", Class::Cons),
@@ -1624,50 +1624,6 @@ fn signed_word(store: &mut StoreContextMut<'_, ()>, value: &Val) -> wasmtime::Re
 #[cfg(test)]
 mod adversarial_owner {
     use super::*;
-    #[test]
-    fn sparse_array_decoder_rejects_corrupt_mask_cycles_and_range_then_recovers() {
-        let mut session = Session::new_repl().unwrap();
-        let decoder = Decoder::capture(&mut session, 4096).unwrap();
-        let dense = session.eval("(array 7)").unwrap();
-        let sparse = session.eval("(let [a (array)] (aset a 1 7) a)").unwrap();
-        session.collect().unwrap();
-        session
-            .inspect(&dense, |mut store, value| {
-                let (_, owner) = decoder.object(&mut store, &value)?;
-                let backing = non_null_ref(&owner[0])?.as_array(&store)?.unwrap();
-                let mask = non_null_ref(&backing.get(&mut store, 3)?)?
-                    .as_array(&store)?
-                    .unwrap();
-                mask.set(&mut store, 0, Val::I32(2))?;
-                assert!(decoder.raw_array(&mut store, &value).is_err());
-                mask.set(&mut store, 0, Val::I32(1))?;
-                assert_eq!(decoder.raw_array(&mut store, &value)?.len(), 1);
-                Ok(())
-            })
-            .unwrap();
-        session
-            .inspect(&sparse, |mut store, value| {
-                let (_, owner) = decoder.object(&mut store, &value)?;
-                let backing = non_null_ref(&owner[0])?.as_array(&store)?.unwrap();
-                let head = backing.get(&mut store, 1)?;
-                let node = non_null_ref(&head)?.as_array(&store)?.unwrap();
-                let old_next = node.get(&mut store, 2)?;
-                node.set(&mut store, 2, head.clone())?;
-                assert!(decoder.raw_array(&mut store, &value).is_err());
-                node.set(&mut store, 2, old_next)?;
-                let old_key = node.get(&mut store, 0)?;
-                let length = backing.get(&mut store, 0)?;
-                node.set(&mut store, 0, length)?;
-                assert!(decoder.raw_array(&mut store, &value).is_err());
-                node.set(&mut store, 0, old_key)?;
-                let slots = decoder.raw_array(&mut store, &value)?;
-                assert_eq!(slots.len(), 2);
-                assert_eq!(sentinel(&mut store, &slots[0])?, Some(6));
-                assert_eq!(number_bits(&mut store, &slots[1])?, 7.0_f64.to_bits());
-                Ok(())
-            })
-            .unwrap();
-    }
     #[test]
     fn indexed_string_rejects_immutable_utf16_backing() {
         let mut session = Session::new_repl().unwrap();

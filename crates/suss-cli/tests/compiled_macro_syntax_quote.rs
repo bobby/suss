@@ -356,7 +356,7 @@ fn compiled_macro_lazy_metadata_is_validated_before_thunk_effects() {
 fn compiled_macro_lazy_undefined_sequence_tail_is_empty() {
     let mut macros = CompiledMacros::new().unwrap();
     macros
-        .define("(defmacro absent-data [] (concat (aget (array) 0)))")
+        .define("(defmacro absent-data [] (concat js/undefined))")
         .unwrap();
     for mut runtime in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         assert_eq!(
