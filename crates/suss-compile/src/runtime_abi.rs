@@ -20,6 +20,7 @@ mod exception_info;
 mod exceptions;
 mod identity_hash;
 mod longs;
+mod maps;
 mod named_properties;
 mod native_object_factory;
 mod native_object_methods;
@@ -642,6 +643,15 @@ pub(crate) const PROTOCOL_EPOCH_GLOBAL: u32 = KEYWORD_DESCRIPTOR_GLOBAL + 1;
 /// PersistentVector's descriptor, which core registers once it is defined, or
 /// nil before (#378): `vector-nth` and `vector-count` read only that type.
 pub(crate) const VECTOR_DESCRIPTOR_GLOBAL: u32 = PROTOCOL_EPOCH_GLOBAL + 1;
+/// PersistentArrayMap's descriptor, which core registers once it is
+/// defined, or nil before (#442): `array-map-get` reads only that type.
+pub(crate) const ARRAY_MAP_DESCRIPTOR_GLOBAL: u32 = VECTOR_DESCRIPTOR_GLOBAL + 1;
+/// The descriptors of PersistentHashMap, BitmapIndexedNode, ArrayNode and
+/// PersistentHashSet, which core registers, or nil before (#442).
+pub(crate) const HASH_MAP_DESCRIPTOR_GLOBAL: u32 = ARRAY_MAP_DESCRIPTOR_GLOBAL + 1;
+pub(crate) const BITMAP_NODE_DESCRIPTOR_GLOBAL: u32 = HASH_MAP_DESCRIPTOR_GLOBAL + 1;
+pub(crate) const ARRAY_NODE_DESCRIPTOR_GLOBAL: u32 = BITMAP_NODE_DESCRIPTOR_GLOBAL + 1;
+pub(crate) const HASH_SET_DESCRIPTOR_GLOBAL: u32 = ARRAY_NODE_DESCRIPTOR_GLOBAL + 1;
 const KEYWORD_BUCKETS: i32 = 4096;
 
 /// `keyword-intern(keyword)`: the first keyword interned with the same full
@@ -1564,6 +1574,7 @@ fn build_module() -> Vec<u8> {
     packed_arrays::functions(&mut b);
     let mut arithmetic_functions = arithmetic::functions(&mut b, primitives);
     arithmetic_functions.extend(arrays::functions(&mut b));
+    maps::functions(&mut b);
     arithmetic_functions.extend(nominal::functions(&mut b, generic_invoke));
     // The out-of-line call path (ADR-0004). A closure is invoked; any other
     // callee is bound through IFn's `-invoke` key for its signature arity,
@@ -2172,6 +2183,13 @@ fn build_module() -> Vec<u8> {
         GlobalType { val_type: VALUE, mutable: true, shared: false },
         &ConstExpr::extended([sentinel_value(NIL)]),
     );
+    assert_eq!(globals.len(), ARRAY_MAP_DESCRIPTOR_GLOBAL);
+    for _ in ARRAY_MAP_DESCRIPTOR_GLOBAL..=HASH_SET_DESCRIPTOR_GLOBAL {
+        globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::extended([sentinel_value(NIL)]),
+        );
+    }
     b.exports.export("protocol-epoch", ExportKind::Global, PROTOCOL_EPOCH_GLOBAL);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);
