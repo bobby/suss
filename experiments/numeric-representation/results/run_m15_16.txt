@@ -1,0 +1,86 @@
+6952319c release suss, wasmtime 51.0.0-rc.1; JVM Clojure 1.12.6 on OpenJDK 21.0.13; i7-1165G7, 8 threads; load 5.64, 4.82, 5.10 at start, 3.30, 4.50, 5.23 at end; run under load (1-minute load mean 5.49, peak 11.00), so times are unreliable; instruction counts are not affected
+n = 5000000, best of 3; Suss times are slopes between loop counts at least 0.5 s of work apart
+
+Nanoseconds and user-space instructions per operation, less its control
+loop; a control's row is the whole loop iteration. ≈ 0 is a time no larger
+than its run-to-run spread. Bytes are allocated per operation, measured
+under the null collector; ≈ 0 is below 1 MiB between the two counts.
+
+| Case | Suss ns | Suss instructions | Suss bytes | JVM ns | Ratio |
+| --- | --- | --- | --- | --- | --- |
+| `i` (control) | 1.2 | 25 | ≈ 0 | 7.58 | 0× |
+| `(identity i)` | 3.5 | 52 | ≈ 0 | ≈ 0 |  |
+| `(f0)` | ≈ 0 | 52 | ≈ 0 | ≈ 0 |  |
+| `(f1 i)` | ≈ 0 | 59 | ≈ 0 | ≈ 0 |  |
+| `(f2 i i)` | 4.1 | 60 | ≈ 0 | ≈ 0 |  |
+| `(f3 i i i)` | 4.1 | 61 | ≈ 0 | ≈ 0 |  |
+| `(fv i)` | 4.0 | 71 | ≈ 0 | ≈ 0 |  |
+| `(g i)` in `(let [g (fn [x] x)] …)` | 3.0 | 50 | ≈ 0 | ≈ 0 |  |
+| `(identity i)` in `(binding [*d* 1] (binding [*d* 2] (binding [*d* 3] …)))` | 4.0 | 64 | ≈ 0 | ≈ 0 |  |
+| `(ident b)` | 9.3 | 167 | ≈ 0 | ≈ 0 |  |
+| `(-equiv i 7)` | 76.4 | 1,188 | ≈ 0 | ≈ 0 |  |
+| `(apply f2 i [i])` | 3,125.6 | 34,962 | 2,707 | 57.96 | 54× |
+| `(area sq)` | ≈ 0 | 15,597 | 240 | 11.00 |  |
+| `(identical? i 7)` | ≈ 0 | 13 | ≈ 0 | ≈ 0 |  |
+| `(nil? i)` | ≈ 0 | 25 | ≈ 0 | ≈ 0 |  |
+| `(= :a :b)` | 2.2 | 30 | ≈ 0 | ≈ 0 |  |
+| `(= i 7)` | ≈ 0 | 32 | ≈ 0 | ≈ 0 |  |
+| `(= i 7.5)` | 26.6 | 376 | 16 | 2.28 | 12× |
+| `(== i 7)` | ≈ 0 | 10 | ≈ 0 | ≈ 0 |  |
+| `(+ i 7)` | ≈ 0 | 6 | ≈ 0 | 0.50 |  |
+| `(hash i)` | ≈ 0 | 51 | ≈ 0 | 3.11 |  |
+| `(str "a" i)` | ≈ 0 | 883 | 32 | 45.25 |  |
+| `(double i)` (control) | 25.4 | 315 | 16 | 7.94 | 3× |
+| `(= (double i) 7.5)` | 30.8 | 439 | 16 | ≈ 0 |  |
+| `(+ (double i) 0.5)` | ≈ 0 | 456 | 32 | ≈ 0 |  |
+| `(hash (double i))` | ≈ 0 | 342 | 8 | 11.81 |  |
+| `(bit-and i 1023)` (control) | 1.8 | 26 | ≈ 0 | 7.98 | 0× |
+| `(aget la (bit-and i 1023))` | ≈ 0 | 39 | ≈ 0 | ≈ 0 |  |
+| `(aget ia (bit-and i 1023))` | ≈ 0 | 39 | ≈ 0 | ≈ 0 |  |
+| `(aget da (bit-and i 1023))` | 1.6 | 40 | ≈ 0 | ≈ 0 |  |
+| `(aget oa (bit-and i 1023))` | ≈ 0 | 39 | ≈ 0 | ≈ 0 |  |
+| `(nth v (bit-and i 1023))` | 42.2 | 548 | ≈ 0 | ≈ 0 |  |
+| `(aset la (bit-and i 1023) i)` | ≈ 0 | 39 | ≈ 0 | ≈ 0 |  |
+| `(aset da (bit-and i 1023) 1.5)` | ≈ 0 | 40 | ≈ 0 | ≈ 0 |  |
+| `(aset oa (bit-and i 1023) i)` | 4.2 | 59 | ≈ 0 | 11.19 | 0× |
+| `(aget ^longs la (bit-and i 1023))` | ≈ 0 | 39 | ≈ 0 | ≈ 0 |  |
+| `(aget ^ints ia (bit-and i 1023))` | ≈ 0 | 39 | ≈ 0 | ≈ 0 |  |
+| `(aget ^doubles da (bit-and i 1023))` | ≈ 0 | 40 | ≈ 0 | ≈ 0 |  |
+| `(aset ^longs la (bit-and i 1023) i)` | 6.7 | 39 | ≈ 0 | ≈ 0 |  |
+| `(aset ^doubles da (bit-and i 1023) 1.5)` | ≈ 0 | 40 | ≈ 0 | ≈ 0 |  |
+| `(conj v i)` | ≈ 0 | 14,160 | 591 | 26.74 |  |
+| `(nth vl (bit-and i 1023))` | 101.9 | 1,455 | ≈ 0 | 4.54 | 22× |
+| `(conj vl i)` | ≈ 0 | 26,065 | 552 | 28.79 |  |
+| `(get m (bit-and i 1023))` | ≈ 0 | 5,967 | 43 | 28.61 |  |
+| `(assoc m (bit-and i 1023) i)` | ≈ 0 | 27,731 | 1,051 | 69.76 |  |
+| `(:b km)` | 447.5 | 6,188 | 119 | 2.68 | 167× |
+| `(contains? s (bit-and i 1023))` | ≈ 0 | 11,525 | 179 | 25.89 |  |
+
+Per element of 1024, the loop step included:
+
+| Case | Suss ns | Suss instructions | Suss bytes | JVM ns | Ratio |
+| --- | --- | --- | --- | --- | --- |
+| `(reduce + la)` | 73.8 | 1,202 | 25 | 17.02 | 4× |
+| `(reduce + da)` | 202.9 | 2,953 | 56 | 22.54 | 9× |
+| `(reduce + oa)` | 73.4 | 1,164 | 25 | 21.82 | 3× |
+| `(reduce + v)` | 82.4 | 1,223 | 24 | 7.37 | 11× |
+| `(reduce + vl)` | 77.8 | 1,258 | 24 | 16.48 | 5× |
+
+Programs, microseconds and instructions per run, the loop step included:
+
+| Case | Suss µs | Suss instructions | Suss bytes | JVM µs | Ratio |
+| --- | --- | --- | --- | --- | --- |
+| fib: `(fib 20)` | 111.4 | 2,068,712 | ≈ 0 | 108.71 | 1× |
+| word-frequencies: `(reduce (fn [acc w] (assoc acc w (inc (get acc w 0)))) {} words)` | 2,875.2 | 31,446,647 | 841,236 | 57.26 | 50× |
+| transduce: `(transduce (comp (map inc) (filter even?)) + 0 v)` | 122.5 | 1,493,403 | 26,209 | 10.85 | 11× |
+| lazy-pipeline: `(reduce + (map inc (filter even? v)))` | 902.3 | 12,133,436 | 191,748 | 28.49 | 32× |
+| into-vector: `(into [] (map inc) v)` | 414.7 | 4,959,124 | 16,399 | 15.59 | 27× |
+| into-map: `(into {} (map (fn [x] [x x])) v)` | 5,154.6 | 55,235,464 | 848,937 | 100.80 | 51× |
+| string-build: `(apply str (map str v))` | 1,605.6 | 16,505,673 | 3,256,566 | 45.29 | 35× |
+
+Whole loops, per iteration:
+
+| Loop | Suss ns | Suss instructions | Suss bytes | JVM ns | Ratio |
+| --- | --- | --- | --- | --- | --- |
+| `(loop [i 0 acc 0] (if (< i n) (recur (inc i) (+ acc i)) acc))` | 1.6 | 21 | ≈ 0 | 0.71 | 2× |
+| `(loop [i 0 acc 0.0] (if (< i n) (recur (inc i) (+ acc 0.5)) acc))` | ≈ 0 | 14 | ≈ 0 | 1.18 |  |
