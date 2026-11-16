@@ -231,9 +231,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::StringAppendLong => { names.insert("string-append-long"); }
                         Nominal::StringHash => { names.insert("string-hash"); }
                         Nominal::VectorNth => { names.insert("vector-nth"); }
-                        Nominal::ArrayMapGet => { names.insert("map-get"); }
-                        Nominal::MapContains => { names.insert("map-contains"); }
-                        Nominal::MapGetOr => { names.insert("map-get-or"); }
+                        Nominal::ArrayMapGet | Nominal::MapContains | Nominal::MapGetOr => { names.insert("map-lookup"); }
                         Nominal::HashMapTypes => { names.insert("hash-map-type-register"); }
                         Nominal::LongCast => { names.insert("number-cast-long"); }
                         Nominal::DoubleCast => { names.insert("number-cast-double"); }
@@ -661,7 +659,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "binding-set" => (vec![VALUE, VALUE], vec![]),
             "number-parse-long" | "hash-map-type-register" => (vec![VALUE; 4], vec![VALUE]),
             "packed-array-copy" => (vec![VALUE; 5], vec![VALUE]),
-            "number-range-count" | "packed-array-store" | "array-set" | "packed-array-set-3" | "map-get-or" => (vec![VALUE; 3], vec![VALUE]),
+            "number-range-count" | "packed-array-store" | "array-set" | "packed-array-set-3" => (vec![VALUE; 3], vec![VALUE]),
+            "map-lookup" => (vec![VALUE, VALUE, ValType::I32, VALUE], vec![VALUE]),
             "string-slice" | "callable-property-get" | "named-property-set" | "user-field-get-guard" | "user-field-set-guard" | "object-method-set" | "object-method-invoke" | "native-object-property-set" | "native-object-property-set-strict" => {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])
             }
@@ -2874,16 +2873,24 @@ fn emit_function(
                                 .instruction(&LocalGet(arguments[1].0 as u32 + offset))
                                 .instruction(&Call(index("vector-nth")));
                         }
-                        Nominal::ArrayMapGet | Nominal::MapContains | Nominal::MapGetOr | Nominal::HashMapTypes => {
+                        // A lookup calls map-lookup itself, with its mode and
+                        // the value for an absent key (#442).
+                        Nominal::ArrayMapGet | Nominal::MapContains | Nominal::MapGetOr => {
+                            function
+                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&LocalGet(arguments[1].0 as u32 + offset))
+                                .instruction(&I32Const(i32::from(matches!(operation, Nominal::MapContains))));
+                            match arguments.get(2) {
+                                Some(not_found) => function.instruction(&LocalGet(not_found.0 as u32 + offset)),
+                                None => function.instruction(&RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq })),
+                            };
+                            function.instruction(&Call(index("map-lookup")));
+                        }
+                        Nominal::HashMapTypes => {
                             for argument in arguments {
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
                             }
-                            function.instruction(&Call(index(match operation {
-                                Nominal::ArrayMapGet => "map-get",
-                                Nominal::MapContains => "map-contains",
-                                Nominal::MapGetOr => "map-get-or",
-                                _ => "hash-map-type-register",
-                            })));
+                            function.instruction(&Call(index("hash-map-type-register")));
                         }
                         Nominal::StringHash => {
                             function

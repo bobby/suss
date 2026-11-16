@@ -2015,11 +2015,11 @@ impl Analyzer<'_> {
             }),
         })
     }
-    /// `(get m :k)` and `(get m :k not-found)` in direct-linked code (#442):
-    /// the runtime reads a map's value for the keyword directly, nil or
-    /// not-found when it's absent; for anything else its undefined answer
-    /// calls core's get. Operands evaluate once, in order.
-    fn keyword_get_call(&mut self, form: &Form, items: &[Form]) -> Result<Hir, Diagnostic> {
+    /// `(get m k)`, `(get m k not-found)` and `(contains? m k)` in
+    /// direct-linked code (#442): the runtime answers for a map or set and a
+    /// keyword or small-integer key without a call; for anything else its
+    /// undefined answer calls core's function. Operands evaluate once, in order.
+    fn lookup_call(&mut self, form: &Form, items: &[Form], operation: Nominal) -> Result<Hir, Diagnostic> {
         let mut bindings = Vec::with_capacity(items.len() - 1);
         for item in &items[1..] {
             let value = self.form(item)?;
@@ -2060,7 +2060,6 @@ impl Analyzer<'_> {
             },
             Type::Value,
         );
-        let operation = if locals.len() == 3 { Nominal::MapGetOr } else { Nominal::ArrayMapGet };
         let fast = self.nominal(form, operation, locals);
         let answer = self.fresh_binding(form, fast);
         let read = self.local(form, answer.id);
@@ -3395,11 +3394,12 @@ impl Analyzer<'_> {
         if let Some(ResolvedBinding::BootstrapControl { operation, .. }) = &resolved {
             return self.control_form(form, args, *operation, context, tail);
         }
-        if (2..=3).contains(&args.len())
-            && matches!(args[1].kind, Kind::Keyword(_) | Kind::AutoKeyword(_))
-            && self.linked_core_call(&resolved, "get")
-        {
-            return self.keyword_get_call(form, items);
+        if (2..=3).contains(&args.len()) && self.linked_core_call(&resolved, "get") {
+            let operation = if args.len() == 3 { Nominal::MapGetOr } else { Nominal::ArrayMapGet };
+            return self.lookup_call(form, items, operation);
+        }
+        if args.len() == 2 && self.linked_core_call(&resolved, "contains?") {
+            return self.lookup_call(form, items, Nominal::MapContains);
         }
         // `(= :k y)` in direct-linked user code (#360, #361): core's `=`
         // answers `(identical? x y)` when x is a keyword, as Clojure's
