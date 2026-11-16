@@ -286,6 +286,19 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &[(1, typed(ARGS)), (3, ValType::I32), (1, VALUE), (1, VALUE), (1, VALUE), (1, ValType::I32), (1, VALUE), (1, typed(ARGS))],
         &body,
     );
+    // `array-map-type-register(m)` (#442): core names PersistentArrayMap by
+    // its empty map, once the type is defined, and gets m back.
+    b.function(
+        "array-map-type-register",
+        &[VALUE],
+        &[VALUE],
+        &[
+            LocalGet(0), RefCastNonNull(HeapType::Concrete(7)),
+            StructGet { struct_type_index: 7, field_index: 0 },
+            GlobalSet(ARRAY_MAP_DESCRIPTOR_GLOBAL),
+            LocalGet(0),
+        ],
+    );
     // `aget` and `aset` with any number of indices walk the nested arrays,
     // as Clojure's do.
     for (name, writing) in [("array-get-indices", false), ("array-set-indices", true)] {

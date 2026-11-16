@@ -302,6 +302,7 @@ pub enum Bitwise {
     ObjectsTest,
     /// Register PersistentVector's type, by its empty vector (#378).
     VectorType,
+    ArrayMapType,
     /// A PersistentVector's count, or undefined for anything else (#378).
     VectorCount,
     /// Copy a range between packed arrays of one element kind (#350).
@@ -395,6 +396,7 @@ impl Bitwise {
             Self::PackedTest => "packed-array-test",
             Self::ObjectsTest => "object-array-test",
             Self::VectorType => "vector-type-register",
+            Self::ArrayMapType => "array-map-type-register",
             Self::VectorCount => "vector-count",
             Self::PackedCopy => "packed-array-copy",
         }
@@ -422,6 +424,7 @@ impl Bitwise {
             | Self::PackedTest
             | Self::ObjectsTest
             | Self::VectorType
+            | Self::ArrayMapType
             | Self::VectorCount => 1,
             Self::PackedCopy => 5,
             Self::ParseLong => 4,
@@ -482,6 +485,15 @@ pub enum Nominal {
     /// Element n of a PersistentVector, walked by the runtime, or undefined
     /// for the general path (#378).
     VectorNth,
+    /// `map-get(m, k)` (#442): a map's value for a key only its reference
+    /// equals, nil when absent, or undefined.
+    ArrayMapGet,
+    /// `map-contains(m, k)` (#442): true or false, or undefined.
+    MapContains,
+    /// `map-get-or(m, k, not-found)` (#442): as map-get, not-found when absent.
+    MapGetOr,
+    /// `hash-map-types!(m, bitmap-node, array-node, set)` (#442).
+    HashMapTypes,
     /// A `^long` or `^double` parameter's value (#385): Clojure's checked
     /// longCast or doubleCast of the argument, kept as a raw i64 or f64.
     LongCast,
@@ -494,6 +506,8 @@ pub enum Nominal {
     IsKeyword,
     IsString,
     IsBoolean,
+    /// The runtime's undefined, a fast path's "not here" answer (#442).
+    IsUndefined,
     /// Inline `identical?` (#356): a reference test, with the runtime's test
     /// only for two boxed or string operands that aren't the same reference.
     Identical,
@@ -622,6 +636,7 @@ impl Nominal {
             | Self::IsKeyword
             | Self::IsString
             | Self::IsBoolean
+            | Self::IsUndefined
             | Self::Identical
             | Self::SameReference
             | Self::AllSmallIntegers
@@ -653,10 +668,12 @@ impl Nominal {
                 Self::NumberHash => count == 1,
                 Self::IsObject | Self::IsDescriptor => count == 1,
                 Self::IsLongValue | Self::StringHash | Self::LongCast | Self::DoubleCast => count == 1,
-                Self::PackedGet(_) | Self::VectorNth => count == 2,
+                Self::PackedGet(_) | Self::VectorNth | Self::ArrayMapGet | Self::MapContains => count == 2,
+                Self::HashMapTypes => count == 4,
+                Self::MapGetOr => count == 3,
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
-                Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
+                Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
@@ -1998,6 +2015,63 @@ impl Analyzer<'_> {
             }),
         })
     }
+    /// `(get m :k)` and `(get m :k not-found)` in direct-linked code (#442):
+    /// the runtime reads a map's value for the keyword directly, nil or
+    /// not-found when it's absent; for anything else its undefined answer
+    /// calls core's get. Operands evaluate once, in order.
+    fn keyword_get_call(&mut self, form: &Form, items: &[Form]) -> Result<Hir, Diagnostic> {
+        let mut bindings = Vec::with_capacity(items.len() - 1);
+        for item in &items[1..] {
+            let value = self.form(item)?;
+            bindings.push(self.fresh_binding(item, value));
+        }
+        let locals = bindings
+            .iter()
+            .map(|binding| {
+                let mut local = self.local(form, binding.id);
+                local.ty = binding.value.ty;
+                local
+            })
+            .collect::<Vec<_>>();
+        let callee = self.form(&items[0])?;
+        let callee = match &*callee.kind {
+            Expression::Global(global) => match self.direct_link(global) {
+                Some(link) => self.nominal(&items[0], Nominal::DirectLinkRead(link), vec![]),
+                None => callee,
+            },
+            _ => callee,
+        };
+        *self.source_nodes.last_mut().expect("source node fact slot") =
+            Some(std::sync::Arc::new(SourceNode::Invoke {
+                callee: std::sync::Arc::new(callee.clone()),
+                arguments: bindings.iter().map(|binding| binding.value.clone()).collect::<Vec<_>>().into(),
+            }));
+        let node = |kind: Expression, ty: Type| Hir {
+            source: None,
+            span: form.span.clone(),
+            metadata: form.metadata.clone(),
+            ty,
+            kind: std::sync::Arc::new(kind),
+        };
+        let call = node(
+            Expression::Call {
+                callee: Box::new(self.prepare_source_callee(form, callee, locals.len())?),
+                arguments: locals.clone(),
+            },
+            Type::Value,
+        );
+        let operation = if locals.len() == 3 { Nominal::MapGetOr } else { Nominal::ArrayMapGet };
+        let fast = self.nominal(form, operation, locals);
+        let answer = self.fresh_binding(form, fast);
+        let read = self.local(form, answer.id);
+        let missing = self.nominal(form, Nominal::IsUndefined, vec![read.clone()]);
+        let choose = node(
+            Expression::If { condition: Box::new(missing), consequent: Box::new(call), alternative: Box::new(read) },
+            Type::Value,
+        );
+        bindings.push(answer);
+        Ok(node(Expression::Let { bindings, body: Box::new(choose) }, Type::Value))
+    }
     fn call(&mut self, form: &Form, items: &[Form]) -> Result<Hir, Diagnostic> {
         let mut callee = Box::new(self.form(&items[0])?);
         // A call of a direct-linked var calls its current definition (#360).
@@ -2858,6 +2932,26 @@ impl Analyzer<'_> {
         name_hint: Option<&Form>,
     ) -> Result<Hir, Diagnostic> {
         let Kind::Symbol(symbol) = &items[0].kind else {
+            // `(:k m)` and `(:k m not-found)` are core's `get`, as Clojure's
+            // Keyword.invoke is (#442): the keyword is a constant, so the
+            // operands still evaluate once, in order. Core itself keeps the
+            // keyword call, since it may invoke keywords before get exists.
+            if !self.privileged
+                && matches!(items[0].kind, Kind::Keyword(_) | Kind::AutoKeyword(_))
+                && (2..=3).contains(&items.len())
+            {
+                let mut call = form.clone();
+                let get = Form {
+                    span: items[0].span.clone(),
+                    metadata: vec![],
+                    kind: Kind::Symbol(suss_reader::Symbol { namespace: Some("suss.core".into()), name: "get".into() }),
+                };
+                let mut rewritten = vec![get, items[1].clone(), items[0].clone()];
+                rewritten.extend(items[2..].iter().cloned());
+                call.kind = Kind::List(rewritten);
+                let Kind::List(rewritten) = &call.kind else { unreachable!() };
+                return self.list(&call, rewritten, context, tail, name_hint);
+            }
             return self.call(form, items);
         };
         let args = &items[1..];
@@ -3057,8 +3151,11 @@ impl Analyzer<'_> {
             let operation = match symbol.name.as_str() {
                 "number?" => Some(Nominal::IsNumber),
                 "keyword?" => Some(Nominal::IsKeyword),
+                // Reference identity alone, as for interned keywords (#442).
+                "same-reference?" => Some(Nominal::SameReference),
                 "string?" => Some(Nominal::IsString),
                 "boolean?" => Some(Nominal::IsBoolean),
+                "undefined?" => Some(Nominal::IsUndefined),
                 "value-add" => Some(Nominal::ValueAdd),
                 "object-factory" => Some(Nominal::NativeObjectFactory),
                 "native-object?" => Some(Nominal::IsNativeObject),
@@ -3074,6 +3171,10 @@ impl Analyzer<'_> {
                 "concat-string" => Some(Nominal::ConcatString),
                 "string-hash" => Some(Nominal::StringHash),
                 "vector-nth" => Some(Nominal::VectorNth),
+                "map-get" => Some(Nominal::ArrayMapGet),
+                "map-contains" => Some(Nominal::MapContains),
+                "map-get-or" => Some(Nominal::MapGetOr),
+                "hash-map-types!" => Some(Nominal::HashMapTypes),
                 "string-index-of" => Some(Nominal::StringIndexOf),
                 "string-slice" => Some(Nominal::StringSlice),
                 "string-from-unit" => Some(Nominal::StringFromUnit),
@@ -3131,6 +3232,7 @@ impl Analyzer<'_> {
                 "packed-array?" => Some(Bitwise::PackedTest),
                 "object-array?" => Some(Bitwise::ObjectsTest),
                 "vector-type!" => Some(Bitwise::VectorType),
+                "array-map-type!" => Some(Bitwise::ArrayMapType),
                 "vector-count" => Some(Bitwise::VectorCount),
                 "packed-copy" => Some(Bitwise::PackedCopy),
                 _ => None,
@@ -3292,6 +3394,12 @@ impl Analyzer<'_> {
         };
         if let Some(ResolvedBinding::BootstrapControl { operation, .. }) = &resolved {
             return self.control_form(form, args, *operation, context, tail);
+        }
+        if (2..=3).contains(&args.len())
+            && matches!(args[1].kind, Kind::Keyword(_) | Kind::AutoKeyword(_))
+            && self.linked_core_call(&resolved, "get")
+        {
+            return self.keyword_get_call(form, items);
         }
         // `(= :k y)` in direct-linked user code (#360, #361): core's `=`
         // answers `(identical? x y)` when x is a keyword, as Clojure's

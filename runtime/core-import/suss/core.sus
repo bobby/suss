@@ -2499,10 +2499,15 @@
 
 (def get
   (fn ([o k]
-    ;; A vector's element, read directly (#378); a miss, or a nil element,
-    ;; takes the general path.
+    ;; A vector's element, read directly (#378), unless a miss or a nil
+    ;; element; then an array or hash map's value for a keyword or small long
+    ;; key, which is nil when absent (#442). Anything else takes the general
+    ;; path.
     (let [x (suss.bootstrap/vector-nth o k)]
     (if-not (suss.bootstrap/nil? x)
+      x
+    (let [x (suss.bootstrap/map-get o k)]
+    (if-not (suss.bootstrap/undefined? x)
       x
     (when-not (nil? o)
       (cond
@@ -2520,8 +2525,13 @@
         (native-satisfies? ILookup o)
         (-lookup o k)
 
-        :else nil)))))
+        :else nil)))))))
 ([o k not-found]
+    ;; A map's value for a keyword or small long key, read directly, or
+    ;; not-found when absent (#442); anything else takes the general path.
+    (let [x (suss.bootstrap/map-get-or o k not-found)]
+    (if-not (suss.bootstrap/undefined? x)
+      x
     (if-not (nil? o)
       (cond
         (implements? ILookup o)
@@ -2541,10 +2551,15 @@
         (-lookup o k not-found)
 
         :else not-found)
-      not-found))))
+      not-found))))))
 
 (def contains?
   (fn [coll v]
+  ;; A map or set's answer for a keyword or small long key, read directly
+  ;; (#442); undefined for anything else, which takes the general path.
+  (let [x (suss.bootstrap/map-contains coll v)]
+  (if-not (suss.bootstrap/undefined? x)
+    x
 (cond
     (implements? IAssociative coll)
     (-contains-key? coll v)
@@ -2556,7 +2571,7 @@
     false
 
     :else
-    true)))
+    true)))))
 
 (def key
   (fn [map-entry]
@@ -2569,7 +2584,7 @@
 (def lookup-sentinel (Unique.))
 
 (def array-index-of-nil?
-  (fn [arr]
+  (fn [^objects arr]
 (let [len (alength arr)]
     (loop [i 0]
       (cond
@@ -2578,18 +2593,18 @@
         :else (recur (+ i 2)))))))
 
 (def array-index-of-keyword?
-  (fn [arr k]
-(let [len  (alength arr)
-        kstr (.-fqn k)]
+  (fn [^objects arr k]
+  ;; Keywords are interned (#361): one of the same name is the same value,
+  ;; so the scan compares identity, as JVM Clojure's does (#442).
+  (let [len (alength arr)]
     (loop [i 0]
       (cond
         (<= len i) -1
-        (and (keyword? (aget arr i))
-             (identical? kstr (.-fqn (aget arr i)))) i
+        (suss.bootstrap/same-reference? k (aget arr i)) i
         :else (recur (+ i 2)))))))
 
 (def array-index-of-symbol?
-  (fn [arr k]
+  (fn [^objects arr k]
 (let [len  (alength arr)
         kstr (.-str k)]
     (loop [i 0]
@@ -2600,7 +2615,7 @@
         :else (recur (+ i 2)))))))
 
 (def array-index-of-identical?
-  (fn [arr k]
+  (fn [^objects arr k]
 (let [len (alength arr)]
     (loop [i 0]
       (cond
@@ -2609,7 +2624,7 @@
         :else (recur (+ i 2)))))))
 
 (def array-index-of-equiv?
-  (fn [arr k]
+  (fn [^objects arr k]
 (let [len (alength arr)]
     (loop [i 0]
       (cond
@@ -2620,9 +2635,10 @@
 (def array-index-of
   (fn [arr k]
 (cond
-    (keyword? k) (array-index-of-keyword? arr k)
+    ;; The runtime's tests, not the public predicates' calls (#442).
+    (suss.bootstrap/keyword? k) (array-index-of-keyword? arr k)
 
-    (or (string? k) (number? k))
+    (or (suss.bootstrap/string? k) (suss.bootstrap/number? k))
     (array-index-of-identical? arr k)
 
     (symbol? k) (array-index-of-symbol? arr k)
@@ -2927,14 +2943,14 @@
     (-lookup coll k nil))
 
   (-lookup [coll k not-found]
-    (let [idx (array-map-index-of coll k)]
+    (let [idx (array-index-of arr k)]
       (if (== idx -1)
         not-found
         (aget arr (inc idx)))))
 
   IAssociative
   (-assoc [coll k v]
-    (let [idx (array-map-index-of coll k)]
+    (let [idx (array-index-of arr k)]
       (cond
         (== idx -1)
         (if (< cnt (.-HASHMAP_THRESHOLD PersistentArrayMap))
@@ -2954,17 +2970,17 @@
           (PersistentArrayMap. meta cnt arr nil)))))
 
   (-contains-key? [coll k]
-    (not (== (array-map-index-of coll k) -1)))
+    (not (== (array-index-of arr k) -1)))
 
   IFind
   (-find [coll k]
-    (let [idx (array-map-index-of coll k)]
+    (let [idx (array-index-of arr k)]
       (when-not (== idx -1)
         (MapEntry. (aget arr idx) (aget arr (inc idx)) nil))))
 
   IMap
   (-dissoc [coll k]
-    (let [idx (array-map-index-of coll k)]
+    (let [idx (array-index-of arr k)]
       (if (>= idx 0)
         (let [len     (alength arr)
               new-len (- len 2)]
@@ -11676,6 +11692,12 @@ reduces them without incurring seq initialization"
 ;; PersistentVector's type, registered so the runtime's vector-nth and
 ;; vector-count read vectors directly (#378).
 (suss.bootstrap/vector-type! (.-EMPTY PersistentVector))
+;; PersistentArrayMap's type, registered so the runtime's array-map-get
+;; reads array maps directly (#442).
+(suss.bootstrap/array-map-type! (.-EMPTY PersistentArrayMap))
+;; The hash map's, its nodes' and the hash set's types, likewise (#442).
+(suss.bootstrap/hash-map-types! (.-EMPTY PersistentHashMap) (.-EMPTY BitmapIndexedNode)
+  (ArrayNode. nil 0 (make-array 32)) (.-EMPTY PersistentHashSet))
 
 ;; Original Suss (#425): ExceptionInfo is an error, as Clojure's is an
 ;; Exception, so suss.bootstrap/error? and the error printer take it. Its

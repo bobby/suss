@@ -231,6 +231,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::StringAppendLong => { names.insert("string-append-long"); }
                         Nominal::StringHash => { names.insert("string-hash"); }
                         Nominal::VectorNth => { names.insert("vector-nth"); }
+                        Nominal::ArrayMapGet => { names.insert("map-get"); }
+                        Nominal::MapContains => { names.insert("map-contains"); }
+                        Nominal::MapGetOr => { names.insert("map-get-or"); }
+                        Nominal::HashMapTypes => { names.insert("hash-map-type-register"); }
                         Nominal::LongCast => { names.insert("number-cast-long"); }
                         Nominal::DoubleCast => { names.insert("number-cast-double"); }
                         Nominal::PackedGet(_) => {
@@ -242,7 +246,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                             names.insert("language-error-new");
                         }
                         Nominal::ValueAdd => { names.insert("value-add"); }
-                        Nominal::IsBoolean => {}
+                        Nominal::IsBoolean | Nominal::IsUndefined => {}
                         Nominal::Identical => { names.insert("identical-value"); }
                         Nominal::AllSmallIntegers | Nominal::IsLongValue | Nominal::IsObject | Nominal::IsDescriptor | Nominal::SameReference => {}
                         Nominal::NumberHash => { names.insert("number-hash"); }
@@ -651,13 +655,13 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
             | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit"
-            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string-hash" | "number-cast-long" | "number-cast-double" | "packed-array-test" | "object-array-test" | "vector-type-register" | "vector-count" => {
+            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string-hash" | "number-cast-long" | "number-cast-double" | "packed-array-test" | "object-array-test" | "vector-type-register" | "array-map-type-register" | "vector-count" => {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
-            "number-parse-long" => (vec![VALUE; 4], vec![VALUE]),
+            "number-parse-long" | "hash-map-type-register" => (vec![VALUE; 4], vec![VALUE]),
             "packed-array-copy" => (vec![VALUE; 5], vec![VALUE]),
-            "number-range-count" | "packed-array-store" | "array-set" | "packed-array-set-3" => (vec![VALUE; 3], vec![VALUE]),
+            "number-range-count" | "packed-array-store" | "array-set" | "packed-array-set-3" | "map-get-or" => (vec![VALUE; 3], vec![VALUE]),
             "string-slice" | "callable-property-get" | "named-property-set" | "user-field-get-guard" | "user-field-set-guard" | "object-method-set" | "object-method-invoke" | "native-object-property-set" | "native-object-property-set-strict" => {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])
             }
@@ -2264,6 +2268,40 @@ fn emit_function(
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Array {
+                    operation: ArrayOperation::Length,
+                    arguments,
+                } if arguments.len() == 1 => {
+                    // alength of a packed array reads its storage's length
+                    // inline (#442), as an i31 long when it fits; anything
+                    // else asks the runtime, which boxes or reports it.
+                    let array = arguments[0].0 as u32 + offset;
+                    function
+                        .instruction(&Block(BlockType::Result(VALUE)))
+                        .instruction(&Block(BlockType::Empty))
+                        .instruction(&LocalGet(array))
+                        .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::PACKED)))
+                        .instruction(&I32Eqz)
+                        .instruction(&BrIf(0))
+                        .instruction(&LocalGet(array))
+                        .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::PACKED)))
+                        .instruction(&StructGet { struct_type_index: runtime_abi::PACKED, field_index: 0 })
+                        .instruction(&RefCastNonNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Array }))
+                        .instruction(&ArrayLen)
+                        .instruction(&LocalTee(field_index_local))
+                        .instruction(&I32Const(1 << 30))
+                        .instruction(&I32GeU)
+                        .instruction(&BrIf(0))
+                        .instruction(&LocalGet(field_index_local))
+                        .instruction(&RefI31)
+                        .instruction(&Br(1))
+                        .instruction(&End)
+                        .instruction(&LocalGet(array))
+                        .instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: 1 })
+                        .instruction(&Call(index(ArrayOperation::Length.export())))
+                        .instruction(&End)
+                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
+                Operation::Array {
                     operation,
                     arguments,
                 } => {
@@ -2283,6 +2321,11 @@ fn emit_function(
                     arguments,
                 } => {
                     match operation {
+                        Nominal::IsUndefined => {
+                            function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels))
+                                .instruction(&RefEq);
+                        }
                         Nominal::IsBoolean => {
                             for sentinel in [runtime_abi::FALSE, runtime_abi::TRUE] {
                                 function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
@@ -2299,10 +2342,25 @@ fn emit_function(
                         // boxed numbers and strings.
                         Nominal::Identical => {
                             let [a, b] = [arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset];
-                            // A long in i31 range has no other representation,
-                            // so when either operand is one, identity is the
-                            // reference's (#389).
+                            // Tests that usually succeed come first: a failed
+                            // cast to a concrete type is wasmtime's slow
+                            // subtype check (#442). A long in i31 range has no
+                            // other representation, so with one, identity is
+                            // the reference's (#389). The same reference is
+                            // identical unless a boxed double, which compares
+                            // by value (NaN isn't identical to itself).
+                            // Distinct nominal objects, keywords among them,
+                            // aren't; only boxed longs, doubles and strings
+                            // compare by value (#361).
                             let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
+                            let by_value = |function: &mut Function| {
+                                function
+                                    .instruction(&LocalGet(a))
+                                    .instruction(&LocalGet(b))
+                                    .instruction(&Call(index("identical-value")))
+                                    .instruction(&runtime_abi::sentinel_in(runtime_abi::TRUE, sentinels))
+                                    .instruction(&RefEq);
+                            };
                             function
                                 .instruction(&LocalGet(a))
                                 .instruction(&RefTestNonNull(i31))
@@ -2317,26 +2375,26 @@ fn emit_function(
                                 .instruction(&LocalGet(a))
                                 .instruction(&LocalGet(b))
                                 .instruction(&RefEq)
+                                .instruction(&If(BlockType::Result(ValType::I32)))
                                 .instruction(&LocalGet(a))
                                 .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::NUMBER)))
-                                .instruction(&I32Eqz)
-                                .instruction(&I32And)
-                                .instruction(&If(BlockType::Result(ValType::I32)))
-                                .instruction(&I32Const(1))
-                                .instruction(&Else);
-                            for local in [a, b] {
-                                function
-                                    .instruction(&LocalGet(local))
-                                    .instruction(&RefIsNull)
-                                    .instruction(&LocalGet(local))
-                                    .instruction(&RefTestNonNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 }))
-                                    .instruction(&I32Or);
-                            }
-                            // Only two boxed longs, doubles or strings compare by
-                            // value; distinct references of any other type aren't
-                            // identical (#361).
+                                .instruction(&If(BlockType::Result(ValType::I32)));
+                            by_value(&mut function);
                             function
+                                .instruction(&Else)
+                                .instruction(&I32Const(1))
+                                .instruction(&End)
+                                .instruction(&Else)
+                                .instruction(&LocalGet(a))
+                                .instruction(&RefIsNull)
+                                .instruction(&LocalGet(b))
+                                .instruction(&RefIsNull)
                                 .instruction(&I32Or)
+                                .instruction(&If(BlockType::Result(ValType::I32)))
+                                .instruction(&I32Const(0))
+                                .instruction(&Else)
+                                .instruction(&LocalGet(a))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(7)))
                                 .instruction(&If(BlockType::Result(ValType::I32)))
                                 .instruction(&I32Const(0))
                                 .instruction(&Else);
@@ -2346,15 +2404,12 @@ fn emit_function(
                                     function.instruction(&I32Or);
                                 }
                             }
+                            function.instruction(&If(BlockType::Result(ValType::I32)));
+                            by_value(&mut function);
                             function
-                                .instruction(&If(BlockType::Result(ValType::I32)))
-                                .instruction(&LocalGet(a))
-                                .instruction(&LocalGet(b))
-                                .instruction(&Call(index("identical-value")))
-                                .instruction(&runtime_abi::sentinel_in(runtime_abi::TRUE, sentinels))
-                                .instruction(&RefEq)
                                 .instruction(&Else)
                                 .instruction(&I32Const(0))
+                                .instruction(&End)
                                 .instruction(&End)
                                 .instruction(&End)
                                 .instruction(&End)
@@ -2818,6 +2873,17 @@ fn emit_function(
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                 .instruction(&LocalGet(arguments[1].0 as u32 + offset))
                                 .instruction(&Call(index("vector-nth")));
+                        }
+                        Nominal::ArrayMapGet | Nominal::MapContains | Nominal::MapGetOr | Nominal::HashMapTypes => {
+                            for argument in arguments {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function.instruction(&Call(index(match operation {
+                                Nominal::ArrayMapGet => "map-get",
+                                Nominal::MapContains => "map-contains",
+                                Nominal::MapGetOr => "map-get-or",
+                                _ => "hash-map-type-register",
+                            })));
                         }
                         Nominal::StringHash => {
                             function
