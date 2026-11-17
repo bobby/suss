@@ -653,7 +653,8 @@ pub(crate) const BITMAP_NODE_DESCRIPTOR_GLOBAL: u32 = HASH_MAP_DESCRIPTOR_GLOBAL
 pub(crate) const ARRAY_NODE_DESCRIPTOR_GLOBAL: u32 = BITMAP_NODE_DESCRIPTOR_GLOBAL + 1;
 pub(crate) const HASH_SET_DESCRIPTOR_GLOBAL: u32 = ARRAY_NODE_DESCRIPTOR_GLOBAL + 1;
 /// The code structs of the `+`, `-`, `*` and `/` closures, in that order
-/// (#444): the universal entries, but direct ones for one and two arguments.
+/// (#444): the universal entries, but direct ones for one and two arguments,
+/// and for none to `+` and `*`.
 pub(crate) const ARITHMETIC_CODE_GLOBAL: u32 = HASH_SET_DESCRIPTOR_GLOBAL + 1;
 const KEYWORD_BUCKETS: i32 = 4096;
 
@@ -2197,8 +2198,8 @@ fn build_module() -> Vec<u8> {
     for name in ["add", "subtract", "multiply", "divide"] {
         let mut code = vec![sentinel_value(NIL)];
         code.extend(universal_entries.iter().enumerate().map(|(k, entry)| {
-            RefFunc(match k {
-                1 | 2 => b.names[&format!("arithmetic-{name}-{k}")],
+            RefFunc(match b.names.get(&format!("arithmetic-{name}-{k}")) {
+                Some(direct) if k <= 2 => *direct,
                 _ => *entry,
             })
         }));
