@@ -3050,13 +3050,31 @@ fn emit_function(
                                 .instruction(&Call(index("source-construct-from-plan")));
                         }
                         Nominal::Instance => {
-                            // The site's cached test (#378).
+                            // The site's cached test (#378). An i31 is no
+                            // instance, which is answered inline once the site
+                            // holds this constructor, as the test would answer
+                            // it (#444); a cold or other site takes the test.
                             let cache = instance_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            let (constructor, value) = (arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset);
                             function
+                                .instruction(&Block(BlockType::Result(ValType::I32)))
+                                .instruction(&LocalGet(value))
+                                .instruction(&RefTestNonNull(HeapType::I31))
+                                .instruction(&If(BlockType::Empty))
                                 .instruction(&GlobalGet(cache))
-                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
-                                .instruction(&LocalGet(arguments[1].0 as u32 + offset))
-                                .instruction(&Call(index("instance-site-test")));
+                                .instruction(&StructGet { struct_type_index: runtime_abi::NAMED_SITE, field_index: runtime_abi::SITE_DESCRIPTOR })
+                                .instruction(&LocalGet(constructor))
+                                .instruction(&RefEq)
+                                .instruction(&If(BlockType::Empty))
+                                .instruction(&I32Const(0))
+                                .instruction(&Br(2))
+                                .instruction(&End)
+                                .instruction(&End)
+                                .instruction(&GlobalGet(cache))
+                                .instruction(&LocalGet(constructor))
+                                .instruction(&LocalGet(value))
+                                .instruction(&Call(index("instance-site-test")))
+                                .instruction(&End);
                         }
                         Nominal::Set | Nominal::Marker => {
                             function

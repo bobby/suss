@@ -108,16 +108,53 @@ pub(super) fn functions(b: &mut Builder, primitives: [u32; 7]) -> Vec<u32> {
         b.code.function(&function);
         b.count += 1;
         declared.push(invoke);
+        // Direct entries for one and two arguments (#444): they call the
+        // primitive without packing an arguments array for invoke. The
+        // closure's code struct, ARITHMETIC_CODE_GLOBAL's, holds them with the
+        // universal entries for the other counts.
+        let unary = match operator {
+            1 => vec![LocalGet(1), Call(primitives[4])],
+            3 => vec![I32Const(1), RefI31, LocalGet(1), Call(primitive)],
+            0 => vec![LocalGet(1), Call(primitives[5])],
+            _ => vec![LocalGet(1), Call(primitives[6])],
+        };
+        let one = b.typed(CALL + 1, &[], &unary);
+        // Two i31 longs add or subtract in i32 without overflow; the result
+        // is an i31 when it fits, as the primitive would box it.
+        let mut body = vec![];
+        if operator < 2 {
+            body.extend([
+                LocalGet(1), RefTestNonNull(HeapType::I31), LocalGet(2), RefTestNonNull(HeapType::I31), I32And,
+                If(BlockType::Empty),
+                LocalGet(1), RefCastNonNull(HeapType::I31), I31GetS,
+                LocalGet(2), RefCastNonNull(HeapType::I31), I31GetS,
+                if operator == 0 { I32Add } else { I32Sub },
+                LocalTee(3), I32Const(0x4000_0000), I32Add, I32Const(0), I32GeS,
+                If(BlockType::Empty), LocalGet(3), RefI31, Return, End,
+                End,
+            ]);
+        }
+        body.extend([LocalGet(1), LocalGet(2), Call(primitive)]);
+        let two = b.typed(CALL + 2, &[(1, ValType::I32)], &body);
+        b.names.insert(format!("arithmetic-{name}-1"), one);
+        b.names.insert(format!("arithmetic-{name}-2"), two);
+        declared.extend([one, two]);
+        // A universal closure, as closure-new makes, with this operator's
+        // code struct.
         b.function(
             &format!("arithmetic-{name}"),
             &[],
             &[VALUE],
             &[
+                GlobalGet(ARITHMETIC_CODE_GLOBAL + operator),
+                sentinel_value(NIL),
+                I32Const(0), // Identity UID: private unassigned marker.
+                RefI31,
                 sentinel_value(NIL),
                 RefFunc(invoke),
                 I32Const(minimum),
                 I32Const(-1),
-                Call(b.names["closure-new"]),
+                StructNew(UNIVERSAL),
             ],
         );
     }
