@@ -2015,13 +2015,23 @@ impl Analyzer<'_> {
             }),
         })
     }
-    /// `(get m k)`, `(get m k not-found)` and `(contains? m k)` in
-    /// direct-linked code (#442): the runtime answers for a map or set and a
-    /// keyword or small-integer key without a call; for anything else its
-    /// undefined answer calls core's function. Operands evaluate once, in order.
-    fn lookup_call(&mut self, form: &Form, items: &[Form], operation: Nominal) -> Result<Hir, Diagnostic> {
-        let mut bindings = Vec::with_capacity(items.len() - 1);
-        for item in &items[1..] {
+    /// A call of core's `get`, `contains?`, `nth` or `first` in direct-linked
+    /// code (#442, #433): the runtime's `operation` answers for the
+    /// collections and keys it reads directly, and its undefined answer, for
+    /// anything else, calls core's function. The operation takes the call's
+    /// first `taken` operands, then `extra`, a constant (first's index 0).
+    /// Operands evaluate once, in order.
+    fn lookup_call(
+        &mut self,
+        form: &Form,
+        items: &[Form],
+        operation: Nominal,
+        taken: usize,
+        extra: Option<Form>,
+    ) -> Result<Hir, Diagnostic> {
+        let count = items.len() - 1;
+        let mut bindings = Vec::with_capacity(items.len());
+        for item in items[1..].iter().chain(extra.as_ref()) {
             let value = self.form(item)?;
             bindings.push(self.fresh_binding(item, value));
         }
@@ -2044,7 +2054,7 @@ impl Analyzer<'_> {
         *self.source_nodes.last_mut().expect("source node fact slot") =
             Some(std::sync::Arc::new(SourceNode::Invoke {
                 callee: std::sync::Arc::new(callee.clone()),
-                arguments: bindings.iter().map(|binding| binding.value.clone()).collect::<Vec<_>>().into(),
+                arguments: bindings[..count].iter().map(|binding| binding.value.clone()).collect::<Vec<_>>().into(),
             }));
         let node = |kind: Expression, ty: Type| Hir {
             source: None,
@@ -2055,12 +2065,13 @@ impl Analyzer<'_> {
         };
         let call = node(
             Expression::Call {
-                callee: Box::new(self.prepare_source_callee(form, callee, locals.len())?),
-                arguments: locals.clone(),
+                callee: Box::new(self.prepare_source_callee(form, callee, count)?),
+                arguments: locals[..count].to_vec(),
             },
             Type::Value,
         );
-        let fast = self.nominal(form, operation, locals);
+        let operands = locals[..taken].iter().chain(&locals[count..]).cloned().collect();
+        let fast = self.nominal(form, operation, operands);
         let answer = self.fresh_binding(form, fast);
         let read = self.local(form, answer.id);
         let missing = self.nominal(form, Nominal::IsUndefined, vec![read.clone()]);
@@ -3396,10 +3407,19 @@ impl Analyzer<'_> {
         }
         if (2..=3).contains(&args.len()) && self.linked_core_call(&resolved, "get") {
             let operation = if args.len() == 3 { Nominal::MapGetOr } else { Nominal::ArrayMapGet };
-            return self.lookup_call(form, items, operation);
+            return self.lookup_call(form, items, operation, args.len(), None);
         }
         if args.len() == 2 && self.linked_core_call(&resolved, "contains?") {
-            return self.lookup_call(form, items, Nominal::MapContains);
+            return self.lookup_call(form, items, Nominal::MapContains, 2, None);
+        }
+        // nth and first read a vector's element inline (#433); its undefined
+        // answer, out of range or not a vector, is core's to give.
+        if (2..=3).contains(&args.len()) && self.linked_core_call(&resolved, "nth") {
+            return self.lookup_call(form, items, Nominal::VectorNth, 2, None);
+        }
+        if args.len() == 1 && self.linked_core_call(&resolved, "first") {
+            let zero = Form { span: form.span.clone(), metadata: vec![], kind: Kind::Long(0) };
+            return self.lookup_call(form, items, Nominal::VectorNth, 1, Some(zero));
         }
         // `(= :k y)` in direct-linked user code (#360, #361): core's `=`
         // answers `(identical? x y)` when x is a keyword, as Clojure's

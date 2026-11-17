@@ -1,7 +1,8 @@
 //! Direct reads of core's persistent maps and sets (#442).
 //!
 //! `map-lookup(m, k, mode)` answers a lookup in a PersistentArrayMap, a
-//! PersistentHashMap or a PersistentHashSet without calling into core, when
+//! PersistentHashMap or a PersistentHashSet, and `get` on a PersistentVector
+//! through vector-nth, without calling into core, when
 //! the key is one that only its own reference equals: a long in i31 range or
 //! an interned keyword whose hash is cached. Then reference identity decides
 //! the lookup exactly, as `=` would. Mode 0 answers the key's value, or the
@@ -104,6 +105,12 @@ pub(super) fn functions(b: &mut Builder) {
     let mut body = vec![Block(BlockType::Empty)];
     // Depth 0 here is the miss block.
     nominal(&mut body, 0, 0);
+    // A vector's get is its nth (#433): vector-nth answers it, undefined for
+    // an index out of range or any other key, which core answers.
+    body.extend([
+        LocalGet(14), GlobalGet(VECTOR_DESCRIPTOR_GLOBAL), RefEq, LocalGet(2), I32Eqz, I32And,
+        If(BlockType::Empty), LocalGet(0), LocalGet(1), ReturnCall(b.names["vector-nth"]), End,
+    ]);
     // The key: an i31 long or an interned keyword, kept in local 16. Only a
     // hash map needs its hash, which is computed there.
     body.extend([LocalGet(1), RefTestNonNull(HeapType::I31), I32Eqz, If(BlockType::Empty)]);

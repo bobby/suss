@@ -145,28 +145,6 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     body.extend([LocalGet(2), Call(b.names["packed-array-clone"])]);
     declared.push(clone_factory(b, &body));
     let typed = |ty: u32| ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(ty) });
-    // `vector-array-element(a, j)` (#378): element j of a vector's object
-    // array, read directly, or undefined for anything else, which a caller
-    // answers with the general path. Locals: 2 the storage, 3 the same as
-    // an object array's.
-    let element = b.function_with_locals(
-        "vector-array-element",
-        &[VALUE, ValType::I32],
-        &[VALUE],
-        &[(1, VALUE), (1, typed(ARGS))],
-        &[
-            Block(BlockType::Empty),
-            LocalGet(0), RefTestNonNull(HeapType::Concrete(PACKED)), I32Eqz, BrIf(0),
-            LocalGet(0), RefCastNonNull(HeapType::Concrete(PACKED)),
-            StructGet { struct_type_index: PACKED, field_index: 0 },
-            LocalTee(2), RefTestNonNull(HeapType::Concrete(ARGS)), I32Eqz, BrIf(0),
-            LocalGet(2), RefCastNonNull(HeapType::Concrete(ARGS)), LocalSet(3),
-            LocalGet(1), LocalGet(3), ArrayLen, I32GeU, BrIf(0),
-            LocalGet(3), LocalGet(1), ArrayGet(ARGS), Return,
-            End,
-            sentinel_value(UNDEFINED),
-        ],
-    );
     // `vector-nth(v, n)` (#378): element n of PersistentVector v, walking
     // its trie as unchecked-array-for does, or undefined for anything that
     // isn't that shape, an index that isn't an i31 in range, or a slot
@@ -175,20 +153,6 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     // [edit arr]; every step is tested, so another shape only misses.
     // Locals: 2 the fields, 3 the index, 4 the count, 5 the level, 6 the
     // node or array, 7 a value.
-    let field = |body: &mut Vec<Instruction<'static>>, index: i32| {
-        body.extend([LocalGet(2), I32Const(index), ArrayGet(ARGS)]);
-    };
-    let small = |body: &mut Vec<Instruction<'static>>, local: u32| {
-        body.extend([LocalTee(7), RefTestNonNull(HeapType::I31), I32Eqz, BrIf(0),
-            LocalGet(7), RefCastNonNull(HeapType::I31), I31GetS, LocalSet(local)]);
-    };
-    // A VectorNode's arr, from the node in local 6, back into local 6.
-    let node_array = |body: &mut Vec<Instruction<'static>>| {
-        body.extend([LocalGet(6), RefTestNonNull(HeapType::Concrete(7)), I32Eqz, BrIf(1),
-            LocalGet(6), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 1 },
-            LocalTee(2), ArrayLen, I32Const(2), I32LtU, BrIf(1),
-            LocalGet(2), I32Const(1), ArrayGet(ARGS), LocalSet(6)]);
-    };
     // `vector-type-register(v)`: core names PersistentVector by its empty
     // vector, once the type is defined, and gets v back.
     b.function(
@@ -221,31 +185,64 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             sentinel_value(UNDEFINED),
         ],
     );
-    // `[array, index] -> [element]`, inline: an object array's element read
-    // directly, anything else as vector-array-element answers it. Locals:
-    // 8 the array, 9 the index, 10 its storage, 11 the same, typed.
-    let read = |body: &mut Vec<Instruction<'static>>| {
-        body.extend([LocalSet(9), LocalSet(8), Block(BlockType::Result(VALUE)), Block(BlockType::Empty),
-            LocalGet(8), RefTestNonNull(HeapType::Concrete(PACKED)), I32Eqz, BrIf(0),
-            LocalGet(8), RefCastNonNull(HeapType::Concrete(PACKED)),
-            StructGet { struct_type_index: PACKED, field_index: 0 },
-            LocalTee(10), RefTestNonNull(HeapType::Concrete(ARGS)), I32Eqz, BrIf(0),
-            LocalGet(10), RefCastNonNull(HeapType::Concrete(ARGS)), LocalTee(11),
-            ArrayLen, LocalGet(9), I32LeU, BrIf(0),
-            LocalGet(11), LocalGet(9), ArrayGet(ARGS), Br(1), End,
-            LocalGet(8), LocalGet(9), Call(b.names["vector-array-element"]), End]);
+    // Locals: 2 the fields, 3 the index, 4 the count, 5 the level, 6 the
+    // node or array, 7 a value, 8 an object array's storage, 9 the vector.
+    let exact = |ty: u32| RefType { nullable: false, heap_type: HeapType::Concrete(ty) };
+    // A cast that takes `miss` (a depth outside the cast's own block) when the
+    // value on the stack isn't of type `ty`, and leaves it cast otherwise.
+    let cast = |ty: u32, miss: u32| {
+        [BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF, to_ref_type: exact(ty) }, Drop, Br(miss + 1)]
+    };
+    let field = |body: &mut Vec<Instruction<'static>>, index: i32| {
+        body.extend([LocalGet(2), I32Const(index), ArrayGet(ARGS)]);
+    };
+    // The i31 on the stack into `local`; a miss for anything else.
+    let small = |body: &mut Vec<Instruction<'static>>, local: u32, miss: u32| {
+        body.extend([LocalTee(7), RefTestNonNull(HeapType::I31), I32Eqz, BrIf(miss),
+            LocalGet(7), RefCastNonNull(HeapType::I31), I31GetS, LocalSet(local)]);
+    };
+    // The storage of the object array in local 6, into local 8.
+    let storage = |body: &mut Vec<Instruction<'static>>, miss: u32| {
+        body.extend([
+            Block(BlockType::Result(ValType::Ref(exact(ARGS)))),
+            Block(BlockType::Result(ValType::Ref(exact(PACKED)))),
+            LocalGet(6),
+        ]);
+        body.extend(cast(PACKED, miss + 1));
+        body.extend([End, StructGet { struct_type_index: PACKED, field_index: 0 }]);
+        body.extend(cast(ARGS, miss));
+        body.extend([End, LocalSet(8)]);
+    };
+    // A VectorNode's arr, from the node in local 6, back into local 6.
+    let node_array = |body: &mut Vec<Instruction<'static>>, miss: u32| {
+        body.extend([Block(BlockType::Result(ValType::Ref(exact(7)))), LocalGet(6)]);
+        body.extend(cast(7, miss));
+        body.extend([End, StructGet { struct_type_index: 7, field_index: 1 },
+            LocalTee(2), ArrayLen, I32Const(2), I32LtU, BrIf(miss),
+            LocalGet(2), I32Const(1), ArrayGet(ARGS), LocalSet(6)]);
+    };
+    // Element `index & 31` of the object array in local 6, onto the stack.
+    let element = |body: &mut Vec<Instruction<'static>>, shift: Option<u32>, miss: u32| {
+        storage(body, miss);
+        body.push(LocalGet(3));
+        if let Some(level) = shift {
+            body.extend([LocalGet(level), I32ShrU]);
+        }
+        body.extend([I32Const(31), I32And, LocalTee(4), LocalGet(8), ArrayLen, I32GeU, BrIf(miss),
+            LocalGet(8), LocalGet(4), ArrayGet(ARGS)]);
     };
     let mut body = vec![Block(BlockType::Empty)];
     body.extend([LocalGet(1), RefTestNonNull(HeapType::I31), I32Eqz, BrIf(0),
         LocalGet(1), RefCastNonNull(HeapType::I31), I31GetS, LocalSet(3),
-        LocalGet(0), RefTestNonNull(HeapType::Concrete(7)), I32Eqz, BrIf(0),
-        // Only PersistentVector, by its registered descriptor.
-        LocalGet(0), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 0 },
+        Block(BlockType::Result(ValType::Ref(exact(7)))), LocalGet(0)]);
+    body.extend(cast(7, 0));
+    // Only PersistentVector, by its registered descriptor.
+    body.extend([End, LocalTee(9), StructGet { struct_type_index: 7, field_index: 0 },
         GlobalGet(VECTOR_DESCRIPTOR_GLOBAL), RefEq, I32Eqz, BrIf(0),
-        LocalGet(0), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 1 },
+        LocalGet(9), StructGet { struct_type_index: 7, field_index: 1 },
         LocalTee(2), ArrayLen, I32Const(6), I32LtU, BrIf(0)]);
     field(&mut body, 1);
-    small(&mut body, 4);
+    small(&mut body, 4, 0);
     // 0 <= n < cnt, as an unsigned comparison.
     body.extend([LocalGet(3), LocalGet(4), I32GeU, BrIf(0)]);
     // n >= tail-off: the tail, which is the cnt < 32 case too.
@@ -258,32 +255,25 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     ]);
     field(&mut body, 4);
     body.extend([LocalSet(6), Else]);
-    field(&mut body, 2);
     // Within this If, branch depth 1 is the outer block.
-    body.extend([LocalTee(7), RefTestNonNull(HeapType::I31), I32Eqz, BrIf(1),
-        LocalGet(7), RefCastNonNull(HeapType::I31), I31GetS, LocalSet(5)]);
+    field(&mut body, 2);
+    small(&mut body, 5, 1);
     field(&mut body, 3);
     body.extend([LocalSet(6), Block(BlockType::Empty), Loop(BlockType::Empty),
         LocalGet(5), I32Const(0), I32LeS, BrIf(1)]);
     // Inside block, loop: the outer miss block is depth 3.
-    body.extend([LocalGet(6), RefTestNonNull(HeapType::Concrete(7)), I32Eqz, BrIf(3),
-        LocalGet(6), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 1 },
-        LocalTee(2), ArrayLen, I32Const(2), I32LtU, BrIf(3),
-        LocalGet(2), I32Const(1), ArrayGet(ARGS),
-        LocalGet(3), LocalGet(5), I32ShrU, I32Const(31), I32And]);
-    read(&mut body);
-    body.extend([LocalTee(6), sentinel_value(UNDEFINED), RefEq, BrIf(3),
-        LocalGet(5), I32Const(5), I32Sub, LocalSet(5), Br(0), End, End]);
-    node_array(&mut body);
+    node_array(&mut body, 3);
+    element(&mut body, Some(5), 3);
+    body.extend([LocalSet(6), LocalGet(5), I32Const(5), I32Sub, LocalSet(5), Br(0), End, End]);
+    node_array(&mut body, 1);
     body.push(End);
-    body.extend([LocalGet(6), LocalGet(3), I32Const(31), I32And]);
-    read(&mut body);
+    element(&mut body, None, 0);
     body.extend([Return, End, sentinel_value(UNDEFINED)]);
     b.function_with_locals(
         "vector-nth",
         &[VALUE, VALUE],
         &[VALUE],
-        &[(1, typed(ARGS)), (3, ValType::I32), (1, VALUE), (1, VALUE), (1, VALUE), (1, ValType::I32), (1, VALUE), (1, typed(ARGS))],
+        &[(1, typed(ARGS)), (3, ValType::I32), (1, VALUE), (1, VALUE), (1, typed(ARGS)), (1, typed(7))],
         &body,
     );
     // `array-map-type-register(m)` (#442): core names PersistentArrayMap by
