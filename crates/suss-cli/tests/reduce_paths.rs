@@ -42,6 +42,7 @@ fn reductions_answer_as_clojure_does() {
             ("[(reduce str \"abc\") (reduce str \"x\" \"bc\") (reduce + (double-array [0.5 0.25]))]", "[\"abc\" \"xbc\" 0.75]"),
             ("(reduce (fn [a x] (if (= x 3) (reduced :stop) a)) 0 (long-array [1 2 3 4]))", ":stop"),
             ("(reduce (fn [a x] (reduced [a x])) :init (object-array [:a :b]))", "[:init :a]"),
+            ("[(reduce + 2 (long-array [1 2 3])) (reduce + 1 (object-array 0)) (reduce * (long-array 0)) (reduce str \"\")]", "[8 1 1 \"\"]"),
             // First-class arithmetic: each count, i31 bounds and overflow.
             ("(let [p (identity +) m (identity -) t (identity *)] [(p) (p 4) (p 1 2) (p 1 2 3) (m 5) (m 5 3) (m 9 3 2) (t 3 4) (t)])", "[0 4 3 6 -5 2 4 12 1]"),
             ("(let [p (identity +) m (identity -)] [(p 1073741823 1) (m -1073741824 1) (p -1073741824 -1) (p 1 2.5) (m 1.5 1)])", "[1073741824 -1073741825 -1073741825 3.5 0.5]"),

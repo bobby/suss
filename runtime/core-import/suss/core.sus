@@ -915,31 +915,29 @@
   (-deref o)))
 
 (def array-reduce
-  (let [from (fn [arr f val idx]
-               (let [cnt (indexed-length arr)]
-                 (if (suss.bootstrap/string? arr)
-                   (loop [val val, n idx]
-                     (if (< n cnt)
-                       (let [nval (f val (.charAt arr n))]
-                         (if (instance? Reduced nval)
-                           @nval
-                           (recur nval (inc n))))
-                       val))
-                   (loop [val val, n idx]
-                     (if (< n cnt)
-                       (let [nval (f val (aget arr n))]
-                         (if (instance? Reduced nval)
-                           @nval
-                           (recur nval (inc n))))
-                       val)))))]
-    (fn ([arr f]
-       (if (zero? (indexed-length arr))
-         (f)
-         (from arr f (indexed-get arr 0) 1)))
-    ([arr f val]
-       (from arr f val 0))
-    ([arr f val idx]
-       (from arr f val idx)))))
+  (fn ([arr f]
+     (if (zero? (indexed-length arr))
+       (f)
+       (array-reduce arr f (indexed-get arr 0) 1)))
+  ([arr f val]
+     (array-reduce arr f val 0))
+  ([arr f val idx]
+     (let [cnt (indexed-length arr)]
+       (if (suss.bootstrap/string? arr)
+         (loop [val val, n idx]
+           (if (< n cnt)
+             (let [nval (f val (.charAt arr n))]
+               (if (instance? Reduced nval)
+                 @nval
+                 (recur nval (inc n))))
+             val))
+         (loop [val val, n idx]
+           (if (< n cnt)
+             (let [nval (f val (aget arr n))]
+               (if (instance? Reduced nval)
+                 @nval
+                 (recur nval (inc n))))
+             val)))))))
 
 (def iterable?
   "Return true if x implements IIterable protocol."
