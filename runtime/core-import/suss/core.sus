@@ -2064,11 +2064,7 @@
   (-conj [coll o]
     (if (< (- cnt (tail-off coll)) 32)
       (let [len (alength tail)
-            new-tail (suss.bootstrap/packed-array 6 (inc len))]
-        (loop [i 0]
-          (when (< i len)
-            (aset new-tail i (aget tail i))
-            (recur (inc i))))
+            new-tail (suss.bootstrap/packed-copy tail 0 (suss.bootstrap/packed-array 6 (inc len)) 0 len)]
         (aset new-tail len o)
         (PersistentVector. meta (inc cnt) shift root new-tail nil))
       (let [root-overflow? (> (bit-shift-right-zero-fill cnt 5) (bit-shift-left 1 shift))

@@ -447,4 +447,56 @@ pub(super) fn functions(b: &mut Builder, callback: u32) {
             End,
         ],
     );
+    // Construction sites cache a type they can build directly (#443): one
+    // whose plan is its own descriptor, whose schema has the site's argument
+    // count and whose field names are distinct. Its object is then the
+    // site's fresh arguments as fields, with nothing to pad, truncate or
+    // merge. A schema never changes, so the answer holds for the descriptor.
+    // Params: 0 the descriptor, 1 the count. Locals: 2 the schema, 3 and 4
+    // indexes, 5 the length, 6 and 7 names, 8 a unit index, 9 a name length.
+    let mut code = vec![
+        LocalGet(0), RefTestNonNull(HeapType::Concrete(DESCRIPTOR)), I32Eqz,
+        If(BlockType::Empty), RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }), Return, End,
+        LocalGet(0), Call(b.names["source-constructor-plan"]), LocalGet(0), RefEq, I32Eqz,
+        If(BlockType::Empty), RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }), Return, End,
+        LocalGet(0), RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
+        StructGet { struct_type_index: DESCRIPTOR, field_index: 1 },
+        LocalTee(2), RefCastNonNull(HeapType::Concrete(ARGS)), ArrayLen, LocalTee(5), LocalGet(1), I32Ne,
+        If(BlockType::Empty), RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }), Return, End,
+        I32Const(0), LocalSet(3),
+        Block(BlockType::Empty), Loop(BlockType::Empty),
+        LocalGet(3), LocalGet(5), I32GeU, BrIf(1),
+        LocalGet(2), RefCastNonNull(HeapType::Concrete(ARGS)), LocalGet(3), ArrayGet(ARGS), LocalTee(6),
+        RefTestNonNull(HeapType::Concrete(STRING)), If(BlockType::Empty),
+        LocalGet(3), I32Const(1), I32Add, LocalSet(4),
+        Block(BlockType::Empty), Loop(BlockType::Empty),
+        LocalGet(4), LocalGet(5), I32GeU, BrIf(1),
+        LocalGet(2), RefCastNonNull(HeapType::Concrete(ARGS)), LocalGet(4), ArrayGet(ARGS), LocalTee(7),
+        RefTestNonNull(HeapType::Concrete(STRING)), If(BlockType::Empty),
+        LocalGet(6), RefCastNonNull(HeapType::Concrete(STRING)), ArrayLen, LocalTee(9),
+        LocalGet(7), RefCastNonNull(HeapType::Concrete(STRING)), ArrayLen, I32Eq,
+        If(BlockType::Empty),
+        I32Const(0), LocalSet(8),
+        Block(BlockType::Empty), Loop(BlockType::Empty),
+        // Equal names: this type takes the general path.
+        LocalGet(8), LocalGet(9), I32GeU,
+        If(BlockType::Empty), RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }), Return, End,
+        LocalGet(6), RefCastNonNull(HeapType::Concrete(STRING)), LocalGet(8), ArrayGetU(STRING),
+        LocalGet(7), RefCastNonNull(HeapType::Concrete(STRING)), LocalGet(8), ArrayGetU(STRING),
+        I32Ne, BrIf(1),
+        LocalGet(8), I32Const(1), I32Add, LocalSet(8), Br(0),
+        End, End,
+        End,
+        End,
+        LocalGet(4), I32Const(1), I32Add, LocalSet(4), Br(0),
+        End, End,
+        End,
+        LocalGet(3), I32Const(1), I32Add, LocalSet(3), Br(0),
+        End, End,
+        LocalGet(0),
+    ];
+    b.function_with_locals(
+        "construct-site-admit", &[VALUE, ValType::I32], &[VALUE],
+        &[(1, VALUE), (3, ValType::I32), (2, VALUE), (2, ValType::I32)], &code,
+    );
 }

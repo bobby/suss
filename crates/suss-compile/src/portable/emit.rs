@@ -346,6 +346,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                             names.insert("constructor-descriptor");
                             names.insert("source-constructor-plan");
                             names.insert("source-construct-from-plan");
+                            names.insert("construct-site-admit");
+                            names.insert("owned-descriptor-prototype");
                         }
                         Nominal::SameNominalType => {
                             names.insert("object-same-descriptor");
@@ -494,6 +496,19 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }
         }
     }
+    // Construction sites cache a type they build directly (#443), as
+    // construct-site-admit decides: its constructor, descriptor and prototype,
+    // which is created once.
+    let mut construct_site_list = vec![];
+    for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
+        .chain(futures.iter().map(|body| &body.continuation.function))
+    {
+        for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
+            if let Operation::Nominal { operation: Nominal::Construct, .. } = &inst.operation {
+                construct_site_list.push((function as *const IrFunction as usize, inst.result.0 as u32));
+            }
+        }
+    }
     // Closure call sites cache their last callee and its entry (#378): a
     // closure's code never changes, and an entry held in a global calls
     // without wasmtime's out-of-line function-reference read from a struct.
@@ -619,6 +634,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "constructor-descriptor"
             | "object-descriptor"
             | "protocol-dispatcher-new" => (vec![VALUE], vec![VALUE]),
+            "construct-site-admit" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "source-construct-from-plan" => (
                 vec![VALUE, ValType::Ref(RefType {
                     nullable: false,
@@ -628,6 +644,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             ),
             "number-hash"
             | "owned-descriptor-prototype"
+            | "array-clone"
             | "object-array-new"
             | "object-array-make-args"
             | "array-length-args"
@@ -868,6 +885,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let literals = literal_list.iter().enumerate()
         .map(|(index, units)| (units.clone(), first_literal + index as u32))
         .collect::<std::collections::HashMap<_, _>>();
+    let first_construct_site = first_literal + literal_list.len() as u32;
+    let construct_sites = construct_site_list.iter().enumerate()
+        .map(|(index, site)| (*site, first_construct_site + 3 * index as u32))
+        .collect::<std::collections::HashMap<_, _>>();
     for (index, definition) in imported_definitions.iter().enumerate() {
         links.codes.insert(*definition, first_imported_link + imported_slots.len() as u32 + index as u32);
         let entries = (0..=runtime_abi::MAX_FIXED).map(|k| {
@@ -894,7 +915,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
         dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites, length_sites: &length_sites,
         method_sites: &method_sites, instance_sites: &instance_sites, call_sites: &call_sites, keyword_caches: &keyword_caches,
-        literals: &literals, epoch_global };
+        literals: &literals, construct_sites: &construct_sites, epoch_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -1023,6 +1044,12 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         let (ty, init) = literal_global(units);
         code_globals.global(ty, &init);
     }
+    for _ in 0..3 * construct_site_list.len() {
+        code_globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::ref_null(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }),
+        );
+    }
     for (definition, global) in &defined_code {
         exports.export(&format!("link.{definition}.code"), ExportKind::Global, *global);
         for (k, entry) in links.entries[definition].iter().enumerate() {
@@ -1043,7 +1070,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .section(&types)
         .section(&imports)
         .section(&functions);
-    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() || !keyword_cache_list.is_empty() || !literal_list.is_empty() {
+    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() || !keyword_cache_list.is_empty() || !literal_list.is_empty() || !construct_site_list.is_empty() {
         module.section(&code_globals);
     }
     module.section(&exports);
@@ -1137,6 +1164,7 @@ struct Context<'a> {
     call_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     /// Cached `instance?` sites: their first global (#378).
     instance_sites: &'a std::collections::HashMap<(usize, u32), u32>,
+    construct_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     /// Cached protocol method lookup sites: their first global; the epoch.
     method_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     epoch_global: u32,
@@ -1490,7 +1518,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
-    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, call_sites, keyword_caches, literals, epoch_global } = *context;
+    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, construct_sites, call_sites, keyword_caches, literals, epoch_global } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -2301,6 +2329,15 @@ fn emit_function(
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Array {
+                    operation: ArrayOperation::Clone,
+                    arguments,
+                } => {
+                    function
+                        .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                        .instruction(&Call(index(ArrayOperation::Clone.export())))
+                        .instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
+                Operation::Array {
                     operation,
                     arguments,
                 } => {
@@ -3031,23 +3068,65 @@ fn emit_function(
                             }
                         }
                         Nominal::Construct => {
-                            // Operands are already evaluated SSA locals. Select the
-                            // live plan at the original constructor-selection point.
-                            // Plain descriptors share runtime construction directly;
-                            // special constructor closures retain generic invocation.
+                            // Operands are already evaluated SSA locals. A site
+                            // holding this constructor builds its object inline
+                            // from the fresh arguments, as object-new would
+                            // (#443): the descriptor, the fields, a prototype
+                            // cell and an unassigned identity UID. Otherwise
+                            // the site asks construct-site-admit whether to hold
+                            // it, then selects the live plan at the original
+                            // constructor-selection point: plain descriptors
+                            // share runtime construction directly, and special
+                            // constructor closures retain generic invocation.
+                            let site = construct_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            let constructor = arguments[0].0 as u32 + offset;
+                            let count = arguments.len() as u32 - 1;
+                            let none = HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq };
                             function
-                                .instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&LocalGet(constructor))
+                                .instruction(&GlobalGet(site))
+                                .instruction(&RefEq)
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&GlobalGet(site + 1))
+                                .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::DESCRIPTOR)));
+                            for argument in &arguments[1..] {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function
+                                .instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: count })
+                                .instruction(&GlobalGet(site + 2))
+                                .instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: 1 })
+                                .instruction(&I32Const(0))
+                                .instruction(&RefI31)
+                                .instruction(&StructNew(runtime_abi::OBJECT))
+                                .instruction(&Else)
+                                .instruction(&LocalGet(constructor))
+                                .instruction(&Call(index("constructor-descriptor")))
+                                .instruction(&I32Const(count as i32))
+                                .instruction(&Call(index("construct-site-admit")))
+                                .instruction(&GlobalSet(site + 1))
+                                .instruction(&GlobalGet(site + 1))
+                                .instruction(&RefIsNull)
+                                .instruction(&If(BlockType::Empty))
+                                .instruction(&RefNull(none))
+                                .instruction(&GlobalSet(site))
+                                .instruction(&Else)
+                                .instruction(&GlobalGet(site + 1))
+                                .instruction(&Call(index("owned-descriptor-prototype")))
+                                .instruction(&GlobalSet(site + 2))
+                                .instruction(&LocalGet(constructor))
+                                .instruction(&GlobalSet(site))
+                                .instruction(&End)
+                                .instruction(&LocalGet(constructor))
                                 .instruction(&Call(index("constructor-descriptor")))
                                 .instruction(&Call(index("source-constructor-plan")));
                             for argument in &arguments[1..] {
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
                             }
                             function
-                                .instruction(&ArrayNewFixed {
-                                    array_type_index: runtime_abi::ARGS,
-                                    array_size: arguments.len() as u32 - 1,
-                                })
-                                .instruction(&Call(index("source-construct-from-plan")));
+                                .instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: count })
+                                .instruction(&Call(index("source-construct-from-plan")))
+                                .instruction(&End);
                         }
                         Nominal::Instance => {
                             // The site's cached test (#378). An i31 is no

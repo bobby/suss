@@ -151,6 +151,8 @@ pub enum ArrayOperation {
     Length,
     Get,
     Set,
+    /// `(aclone a)`, inline as Clojure's :inline aclone (#443).
+    Clone,
 }
 impl ArrayOperation {
     pub(crate) fn export(self) -> &'static str {
@@ -162,6 +164,7 @@ impl ArrayOperation {
             Self::Length => "array-length-args",
             Self::Get => "array-get-indices",
             Self::Set => "array-set-indices",
+            Self::Clone => "array-clone",
         }
     }
     pub(crate) fn valid(self, count: usize) -> bool {
@@ -172,6 +175,7 @@ impl ArrayOperation {
                 Self::Length => count == 1,
                 Self::Get => count >= 2,
                 Self::Set => count >= 3,
+                Self::Clone => count == 1,
             }
     }
 }
@@ -3865,6 +3869,20 @@ impl Analyzer<'_> {
                         ("predicate-string", 1) if core_image => Some(Some(Nominal::IsString)),
                         _ => None,
                     };
+                    // aclone is :inline in Clojure, so one array's copy is
+                    // the runtime's directly, not a call of its closure (#443).
+                    if *export == "array-clone-function" && args.len() == 1 {
+                        return Ok(Hir {
+                            source: None,
+                            span: form.span.clone(),
+                            metadata: form.metadata.clone(),
+                            ty: Type::Value,
+                            kind: std::sync::Arc::new(Expression::Array {
+                                operation: ArrayOperation::Clone,
+                                arguments: vec![self.form(&args[0])?],
+                            }),
+                        });
+                    }
                     if let Some(predicate) = predicate {
                         let callee = self.form(&items[0])?;
                         let arguments = args
