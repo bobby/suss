@@ -116,6 +116,11 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     packed(&mut body, 1);
     body.extend([LocalGet(1), Call(b.names["packed-array-length"])]);
     let length = b.function_with_locals("array-length-args", &[VALUE], &[VALUE], &[(1, VALUE)], &body);
+    // `array-clone(a)`: `(aclone a)` inline (#443), as the closure answers.
+    let mut body = vec![];
+    packed(&mut body, 0);
+    body.extend([LocalGet(0), Call(b.names["packed-array-clone"])]);
+    b.function("array-clone", &[VALUE], &[VALUE], &body);
     // `array-storage(a)`: an object array's elements as a fresh argument
     // array, as `.apply` and the call paths spread them.
     let mut body = vec![LocalGet(0), Call(b.names["object-array-elements"]), BrOnNonNull(0)];

@@ -197,7 +197,9 @@ pub(crate) const BINDING: u32 = 5;
 /// a read of a bound, never-bound-dynamically cell is its root (#354).
 pub(crate) const CELL_BOUND: i32 = 1;
 pub(crate) const CELL_DYNAMIC: i32 = 2;
-const DESCRIPTOR: u32 = 6;
+pub(crate) const DESCRIPTOR: u32 = 6;
+/// A source object: `{descriptor, fields, prototype cell, uid}`.
+pub(crate) const OBJECT: u32 = 7;
 pub const SENTINEL: u32 = 10;
 pub const LONG: u32 = 11;
 /// Packed primitive array storage, one type per element type, in
