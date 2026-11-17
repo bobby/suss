@@ -652,6 +652,9 @@ pub(crate) const HASH_MAP_DESCRIPTOR_GLOBAL: u32 = ARRAY_MAP_DESCRIPTOR_GLOBAL +
 pub(crate) const BITMAP_NODE_DESCRIPTOR_GLOBAL: u32 = HASH_MAP_DESCRIPTOR_GLOBAL + 1;
 pub(crate) const ARRAY_NODE_DESCRIPTOR_GLOBAL: u32 = BITMAP_NODE_DESCRIPTOR_GLOBAL + 1;
 pub(crate) const HASH_SET_DESCRIPTOR_GLOBAL: u32 = ARRAY_NODE_DESCRIPTOR_GLOBAL + 1;
+/// The code structs of the `+`, `-`, `*` and `/` closures, in that order
+/// (#444): the universal entries, but direct ones for one and two arguments.
+pub(crate) const ARITHMETIC_CODE_GLOBAL: u32 = HASH_SET_DESCRIPTOR_GLOBAL + 1;
 const KEYWORD_BUCKETS: i32 = 4096;
 
 /// `keyword-intern(keyword)`: the first keyword interned with the same full
@@ -2188,6 +2191,21 @@ fn build_module() -> Vec<u8> {
         globals.global(
             GlobalType { val_type: VALUE, mutable: true, shared: false },
             &ConstExpr::extended([sentinel_value(NIL)]),
+        );
+    }
+    assert_eq!(globals.len(), ARITHMETIC_CODE_GLOBAL);
+    for name in ["add", "subtract", "multiply", "divide"] {
+        let mut code = vec![sentinel_value(NIL)];
+        code.extend(universal_entries.iter().enumerate().map(|(k, entry)| {
+            RefFunc(match k {
+                1 | 2 => b.names[&format!("arithmetic-{name}-{k}")],
+                _ => *entry,
+            })
+        }));
+        code.extend([I32Const(0), I32Const(-1), StructNew(CODE)]);
+        globals.global(
+            GlobalType { val_type: reference(CODE), mutable: false, shared: false },
+            &ConstExpr::extended(code),
         );
     }
     b.exports.export("protocol-epoch", ExportKind::Global, PROTOCOL_EPOCH_GLOBAL);
