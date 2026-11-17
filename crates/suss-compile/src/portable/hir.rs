@@ -311,6 +311,8 @@ pub enum Bitwise {
     VectorCount,
     /// Copy a range between packed arrays of one element kind (#350).
     PackedCopy,
+    /// The set bits of a value's int32, as core's `bit-count` (#443).
+    BitCount,
 }
 impl Bitwise {
     pub(crate) fn from_name(name: &str) -> Option<Self> {
@@ -403,6 +405,7 @@ impl Bitwise {
             Self::ArrayMapType => "array-map-type-register",
             Self::VectorCount => "vector-count",
             Self::PackedCopy => "packed-array-copy",
+            Self::BitCount => "int32-bit-count",
         }
     }
     pub(crate) fn arity(self) -> usize {
@@ -429,7 +432,8 @@ impl Bitwise {
             | Self::ObjectsTest
             | Self::VectorType
             | Self::ArrayMapType
-            | Self::VectorCount => 1,
+            | Self::VectorCount
+            | Self::BitCount => 1,
             Self::PackedCopy => 5,
             Self::ParseLong => 4,
             Self::RangeCount | Self::PackedStore => 3,
@@ -496,6 +500,9 @@ pub enum Nominal {
     MapContains,
     /// `map-get-or(m, k, not-found)` (#442): as map-get, not-found when absent.
     MapGetOr,
+    /// `map-assoc(m, k, v)` (#443): a hash map with k's value replaced, or
+    /// undefined.
+    MapAssoc,
     /// `hash-map-types!(m, bitmap-node, array-node, set)` (#442).
     HashMapTypes,
     /// A `^long` or `^double` parameter's value (#385): Clojure's checked
@@ -674,7 +681,7 @@ impl Nominal {
                 Self::IsLongValue | Self::StringHash | Self::LongCast | Self::DoubleCast => count == 1,
                 Self::PackedGet(_) | Self::VectorNth | Self::ArrayMapGet | Self::MapContains => count == 2,
                 Self::HashMapTypes => count == 4,
-                Self::MapGetOr => count == 3,
+                Self::MapGetOr | Self::MapAssoc => count == 3,
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
                 Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
@@ -3249,6 +3256,7 @@ impl Analyzer<'_> {
                 "array-map-type!" => Some(Bitwise::ArrayMapType),
                 "vector-count" => Some(Bitwise::VectorCount),
                 "packed-copy" => Some(Bitwise::PackedCopy),
+                "bit-count" => Some(Bitwise::BitCount),
                 _ => None,
             };
             if let Some(operation) = operation {
@@ -3412,6 +3420,11 @@ impl Analyzer<'_> {
         if (2..=3).contains(&args.len()) && self.linked_core_call(&resolved, "get") {
             let operation = if args.len() == 3 { Nominal::MapGetOr } else { Nominal::ArrayMapGet };
             return self.lookup_call(form, items, operation, args.len(), None);
+        }
+        // assoc replaces a hash map's value inline (#443); a new key, or
+        // anything else, is core's.
+        if args.len() == 3 && self.linked_core_call(&resolved, "assoc") {
+            return self.lookup_call(form, items, Nominal::MapAssoc, 3, None);
         }
         if args.len() == 2 && self.linked_core_call(&resolved, "contains?") {
             return self.lookup_call(form, items, Nominal::MapContains, 2, None);

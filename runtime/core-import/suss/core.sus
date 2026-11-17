@@ -300,9 +300,7 @@
 (def bit-count
   "Counts the number of bits set in n"
   (fn [v]
-  (let [v (- v (bit-and (bit-shift-right v 1) 0x55555555))
-        v (+ (bit-and v 0x33333333) (bit-and (bit-shift-right v 2) 0x33333333))]
-    (bit-shift-right (* (bit-and (+ v (bit-shift-right v 4)) 0xF0F0F0F) 0x1010101) 24))))
+  (suss.bootstrap/bit-count v)))
 
 (def ^boolean zero?
   "Returns true if num is zero, else false"
@@ -11599,7 +11597,9 @@ reduces them without incurring seq initialization"
         (VecOf. kind (inc cnt) chunks t meta nil))
       (let [t (suss.bootstrap/packed-array kind 1)]
         (aset t 0 o)
-        (VecOf. kind (inc cnt) (conj chunks tail) t meta nil))))
+        ;; -conj, not conj: conj's own -conj site sees this VecOf, and a
+        ;; site of its own sees only the chunks vector (#443).
+        (VecOf. kind (inc cnt) (-conj chunks tail) t meta nil))))
 
   IEmptyableCollection
   (-empty [coll] (VecOf. kind 0 [] (suss.bootstrap/packed-array kind 0) meta nil))

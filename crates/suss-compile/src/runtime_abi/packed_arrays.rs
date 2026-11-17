@@ -204,13 +204,24 @@ pub(super) fn functions(b: &mut Builder) {
     b.function("object-array-test", &[VALUE], &[VALUE], &body);
     // A new zeroed array: element kind and length, as core's constructors
     // pass them. The length is `(int n)`, so 2.5 makes two elements.
+    // An i31 kind and length, as core passes them, are read directly
+    // (#443); anything else converts as `(int n)` and long-unbox do.
+    let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
     let mut body = vec![
+        LocalGet(1), RefTestNonNull(i31), LocalGet(0), RefTestNonNull(i31), I32And,
+        If(BlockType::Empty),
+        LocalGet(1), RefCastNonNull(i31), I31GetS, LocalSet(2),
+        LocalGet(0), RefCastNonNull(i31), I31GetS, LocalSet(3),
+        Else,
         LocalGet(1),
         Call(b.names["number-cast-int"]),
         LocalTee(1),
         Call(b.names["long-unbox"]),
         I32WrapI64,
-        LocalTee(2),
+        LocalSet(2),
+        LocalGet(0), Call(b.names["long-unbox"]), I32WrapI64, LocalSet(3),
+        End,
+        LocalGet(2),
         I32Const(0),
         I32LtS,
         If(BlockType::Empty),
@@ -218,7 +229,7 @@ pub(super) fn functions(b: &mut Builder) {
     // Java's NegativeArraySizeException message is the length alone.
     body.extend(raise(b, &[Ok(""), Err(1)]));
     // Any int length is allowed, as on the JVM: (int n) bounds it.
-    body.extend([End, LocalGet(0), Call(b.names["long-unbox"]), I32WrapI64, LocalSet(3)]);
+    body.push(End);
     for kind in 0..KINDS.len() {
         body.extend([
             LocalGet(3),
