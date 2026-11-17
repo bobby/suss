@@ -108,7 +108,7 @@ pub(super) fn functions(b: &mut Builder, primitives: [u32; 7]) -> Vec<u32> {
         b.code.function(&function);
         b.count += 1;
         declared.push(invoke);
-        // Direct entries for one and two arguments (#444): they call the
+        // Direct entries for one and two arguments, and none for + and * (#444): they call the
         // primitive without packing an arguments array for invoke. The
         // closure's code struct, ARITHMETIC_CODE_GLOBAL's, holds them with the
         // universal entries for the other counts.
@@ -136,6 +136,12 @@ pub(super) fn functions(b: &mut Builder, primitives: [u32; 7]) -> Vec<u32> {
         }
         body.extend([LocalGet(1), LocalGet(2), Call(primitive)]);
         let two = b.typed(CALL + 2, &[(1, ValType::I32)], &body);
+        // (+) is 0 and (*) is 1 without invoke; (-) and (/) keep its throw.
+        if minimum == 0 {
+            let zero = b.typed(CALL, &[], &[I32Const(if operator == 0 { 0 } else { 1 }), RefI31]);
+            b.names.insert(format!("arithmetic-{name}-0"), zero);
+            declared.push(zero);
+        }
         b.names.insert(format!("arithmetic-{name}-1"), one);
         b.names.insert(format!("arithmetic-{name}-2"), two);
         declared.extend([one, two]);
