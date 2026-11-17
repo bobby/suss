@@ -232,6 +232,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::StringHash => { names.insert("string-hash"); }
                         Nominal::VectorNth => { names.insert("vector-nth"); }
                         Nominal::ArrayMapGet | Nominal::MapContains | Nominal::MapGetOr => { names.insert("map-lookup"); }
+                        Nominal::MapAssoc => { names.insert("map-assoc"); }
                         Nominal::HashMapTypes => { names.insert("hash-map-type-register"); }
                         Nominal::LongCast => { names.insert("number-cast-long"); }
                         Nominal::DoubleCast => { names.insert("number-cast-double"); }
@@ -584,7 +585,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "object-instance" | "object-same-descriptor" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
             }
-            "primitive-int" | "primitive-bit-not" | "int32-int" => (vec![VALUE], vec![VALUE]),
+            "primitive-int" | "primitive-bit-not" | "int32-int" | "int32-bit-count" => (vec![VALUE], vec![VALUE]),
             "primitive-bit-and"
             | "primitive-bit-or"
             | "primitive-bit-xor"
@@ -676,7 +677,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "binding-set" => (vec![VALUE, VALUE], vec![]),
             "number-parse-long" | "hash-map-type-register" => (vec![VALUE; 4], vec![VALUE]),
             "packed-array-copy" => (vec![VALUE; 5], vec![VALUE]),
-            "number-range-count" | "packed-array-store" | "array-set" | "packed-array-set-3" => (vec![VALUE; 3], vec![VALUE]),
+            "number-range-count" | "packed-array-store" | "array-set" | "packed-array-set-3" | "map-assoc" => (vec![VALUE; 3], vec![VALUE]),
             "map-lookup" => (vec![VALUE, VALUE, ValType::I32, VALUE], vec![VALUE]),
             "string-slice" | "callable-property-get" | "named-property-set" | "user-field-get-guard" | "user-field-set-guard" | "object-method-set" | "object-method-invoke" | "native-object-property-set" | "native-object-property-set-strict" => {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])
@@ -1087,6 +1088,46 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             segments.passive(segment.iter().copied());
         }
         module.section(&segments);
+    }
+    // Function names for profilers and backtraces, only when asked for
+    // (SUSS_FUNCTION_NAMES): imports by export, then eval, closure bodies by
+    // their arity names, dispatchers, futures and the layout's extras (#443).
+    if runtime_abi::function_names_wanted() {
+        let mut map = wasm_encoder::NameMap::new();
+        let text = |units: &Option<Vec<u16>>| units.as_ref().map(|units| String::from_utf16_lossy(units));
+        let mut index = 0u32;
+        for name in &names {
+            map.append(index, &format!("suss.runtime/{name}"));
+            index += 1;
+        }
+        map.append(index, "eval");
+        index += 1;
+        for (position, body) in bodies.iter().enumerate() {
+            let name = text(&body.arity_name).or_else(|| text(&body.display_name)).unwrap_or_else(|| format!("fn#{position}"));
+            map.append(index, &format!("{name}/{}{}", body.arity, if body.variadic { "+" } else { "" }));
+            index += 1;
+        }
+        for (position, dispatcher) in dispatchers.iter().enumerate() {
+            let name = text(&dispatcher.arity_name).or_else(|| text(&dispatcher.display_name)).unwrap_or_else(|| format!("fn#{position}"));
+            map.append(index, &format!("{name}/spread"));
+            index += 1;
+        }
+        for position in 0..futures.len() {
+            map.append(index, &format!("future#{position}"));
+            index += 1;
+        }
+        for extra in &layout.extras {
+            let (definition, label) = match *extra {
+                Extra::Spread(definition) => (definition, "spread".to_string()),
+                Extra::Adapter { definition, arity } => (definition, format!("adapter{arity}")),
+            };
+            let name = text(&layout.definitions[definition].name).unwrap_or_else(|| format!("def#{definition}"));
+            map.append(index, &format!("{name}/{label}"));
+            index += 1;
+        }
+        let mut section = wasm_encoder::NameSection::new();
+        section.functions(&map);
+        module.section(&section);
     }
     let bytes = module.finish();
     runtime_abi::verify_artifact(&bytes, &runtime_abi::Manifest::default()).map_err(|message| {
@@ -2923,6 +2964,12 @@ fn emit_function(
                             };
                             function.instruction(&Call(index("map-lookup")));
                         }
+                        Nominal::MapAssoc => {
+                            for argument in arguments {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function.instruction(&Call(index("map-assoc")));
+                        }
                         Nominal::HashMapTypes => {
                             for argument in arguments {
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
@@ -3395,7 +3442,46 @@ fn emit_function(
                         _ => None,
                     }
                     .filter(|_| arguments.len() == 2);
-                    let fast = inline.is_some();
+                    // Two i31 longs multiply inline too (#443): their i64
+                    // product can't overflow, and is an i31 when it fits or
+                    // a boxed long, as the runtime's product of two longs.
+                    let multiply = matches!(name, "number-multiply" | "checked-multiply" | "value-multiply")
+                        && arguments.len() == 2;
+                    let fast = inline.is_some() || multiply;
+                    if multiply {
+                        let [a, b] = [arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset];
+                        let [_, _, r] = long_locals;
+                        let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
+                        function.instruction(&Block(BlockType::Empty));
+                        i31_operands(&mut function, a, b);
+                        function
+                            .instruction(&If(BlockType::Empty))
+                            .instruction(&LocalGet(a))
+                            .instruction(&RefCastNonNull(i31))
+                            .instruction(&I31GetS)
+                            .instruction(&I64ExtendI32S)
+                            .instruction(&LocalGet(b))
+                            .instruction(&RefCastNonNull(i31))
+                            .instruction(&I31GetS)
+                            .instruction(&I64ExtendI32S)
+                            .instruction(&I64Mul)
+                            .instruction(&LocalTee(r))
+                            .instruction(&I64Const(1 << 30))
+                            .instruction(&I64Add)
+                            .instruction(&I64Const(1 << 31))
+                            .instruction(&I64LtU)
+                            .instruction(&If(BlockType::Result(VALUE)))
+                            .instruction(&LocalGet(r))
+                            .instruction(&I32WrapI64)
+                            .instruction(&RefI31)
+                            .instruction(&Else)
+                            .instruction(&LocalGet(r))
+                            .instruction(&StructNew(runtime_abi::LONG))
+                            .instruction(&End)
+                            .instruction(&LocalSet(inst.result.0 as u32 + offset))
+                            .instruction(&Br(1))
+                            .instruction(&End);
+                    }
                     // block: the fast path's result skips the runtime call.
                     if let Some(op) = inline {
                         let [a, b] = [arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset];

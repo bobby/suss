@@ -251,6 +251,12 @@ pub fn named_site_initializer() -> Vec<Instruction<'static>> {
 }
 const VALUE: ValType = ValType::Ref(RefType::EQREF);
 
+/// Whether to name functions in the runtime and emitted modules, for
+/// profilers (#443): SUSS_FUNCTION_NAMES set to anything but empty or 0.
+pub(crate) fn function_names_wanted() -> bool {
+    std::env::var("SUSS_FUNCTION_NAMES").is_ok_and(|value| !value.is_empty() && value != "0")
+}
+
 /// `named-site-get(site, object, name)` (#378): a core named read through its
 /// site's cache. An object with the site's descriptor reads the cached field,
 /// or the cached method while the protocol epoch is unchanged; the second
@@ -2234,5 +2240,18 @@ fn build_module() -> Vec<u8> {
         .section(&b.code)
         .section(&helper.data)
         .section(&Manifest::default().section());
+    // Function names for profilers, as emitted modules give them (#443).
+    if function_names_wanted() {
+        let mut named: Vec<_> = b.names.iter().map(|(name, index)| (*index, name.clone())).collect();
+        named.sort();
+        named.dedup_by_key(|(index, _)| *index);
+        let mut map = wasm_encoder::NameMap::new();
+        for (index, name) in &named {
+            map.append(*index, name);
+        }
+        let mut section = wasm_encoder::NameSection::new();
+        section.functions(&map);
+        runtime.section(&section);
+    }
     runtime.finish()
 }

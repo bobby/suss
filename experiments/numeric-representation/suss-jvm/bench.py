@@ -9,7 +9,8 @@ between its best run at a loop count and its best run at twice that count, so
 process startup cancels; the count grows until the two differ by at least
 MIN_WORK seconds, so startup's run-to-run jitter stays small beside the work.
 The JVM side runs the same forms in one process, timed with System/nanoTime
-after warm-up. Each JVM iteration stores its result in a sink array, so the JIT
+after warm-up, and reports bytes allocated per iteration from the thread's
+allocation counter, ThreadMXBean.getThreadAllocatedBytes (#443). Each JVM iteration stores its result in a sink array, so the JIT
 can't drop the operation; the control loop stores too. Each Suss iteration
 compares its result with `sentinel`, a var the compiler can't fold the test
 against, whatever the result's type.
@@ -320,19 +321,24 @@ def jvm_times(work):
     lines.append("(defn sink! [x] (aset ^objects sink-array 0 x))")
     lines.append("(defmacro timed [n expr] `(fn [] (let [t# (System/nanoTime)] "
                  "(~expr ~n) (/ (- (System/nanoTime) t#) 1e9))))")
+    lines.append("(def ^com.sun.management.ThreadMXBean thread-mx "
+                 "(java.lang.management.ManagementFactory/getThreadMXBean))")
+    lines.append("(defn allocated ^long [] (.getThreadAllocatedBytes thread-mx (.getId (Thread/currentThread))))")
+    lines.append("(defmacro bytes-of [n expr] `(fn [] (let [a# (allocated)] (~expr ~n) (- (allocated) a#))))")
     entries = []
     for name, expr, count in counted():
         lines.append(f"(defn case-{name} [^long n] {loop(name, hinted(expr), 'n', sink=True)})")
-        entries.append(f'["{name}" {count} (timed {count} case-{name})]')
+        entries.append(f'["{name}" {count} (timed {count} case-{name}) (bytes-of {count} case-{name})]')
     for name, body, _ in LOOPS:
         lines.append(f"(defn case-{name} [^long n] {body})")
-        entries.append(f'["{name}" {N} (timed {N} case-{name})]')
+        entries.append(f'["{name}" {N} (timed {N} case-{name}) (bytes-of {N} case-{name})]')
     lines.append(f"(def cases [{' '.join(entries)}])")
     # Warm up every case, then take the best of REPS runs.
     lines.append("(doseq [[_ _ f] cases] (dotimes [_ 3] (f)))")
-    # Seconds per iteration, best and worst.
-    lines.append(f"(doseq [[name count f] cases] (let [ts (repeatedly {REPS} f)] "
-                 "(println name (/ (apply min ts) count) (/ (apply max ts) count))))")
+    # Seconds per iteration, best and worst, and the fewest bytes allocated
+    # per iteration in a run.
+    lines.append(f"(doseq [[name count f b] cases] (let [ts (doall (repeatedly {REPS} f)) bs (doall (repeatedly {REPS} b))] "
+                 "(println name (/ (apply min ts) count) (/ (apply max ts) count) (double (/ (apply min bs) count)))))")
     path = os.path.join(work, "bench.clj")
     with open(path, "w") as file:
         file.write("\n".join(lines) + "\n")
@@ -343,14 +349,16 @@ def jvm_times(work):
     reflection = [line for line in output.stderr.splitlines() if "Reflection warning" in line]
     if reflection:
         sys.exit("\n".join(reflection))
-    # Name -> (seconds per iteration, run-to-run spread).
-    times = {}
-    for name, best, worst in (line.split() for line in output.stdout.splitlines()):
+    # Name -> (seconds per iteration, run-to-run spread), and bytes per
+    # iteration.
+    times, allocated = {}, {}
+    for name, best, worst, size in (line.split() for line in output.stdout.splitlines()):
         times[name] = (float(best), float(worst) - float(best))
-    return times
+        allocated[name] = float(size)
+    return times, allocated
 
 
-def table(suss, instructions, allocated, jvm):
+def table(suss, instructions, allocated, jvm, jvm_allocated):
     def per_op(values, name, control, scale):
         # A case's time less its control's, and the two runs' spreads together.
         value, spread = values[name]
@@ -364,14 +372,20 @@ def table(suss, instructions, allocated, jvm):
         value, spread = time
         return value if value > spread else None
 
-    def row(label, s, i, b, j):
+    def row(label, s, i, b, j, jb):
         s, j = measured(s), measured(j)
         ratio = f"{s / j:.0f}×" if s is not None and j is not None and j >= 0.05 else ""
         count = "" if i is None else f"{i:,.0f}"
         size = "≈ 0" if b is None or b < 0.5 else f"{b:,.0f}"
+        jvm_size = "≈ 0" if jb is None or jb < 0.5 else f"{jb:,.0f}"
         suss_time = "≈ 0" if s is None else f"{s:,.1f}"
         jvm_time = "≈ 0" if j is None else f"{j:,.2f}"
-        return f"| {label} | {suss_time} | {count} | {size} | {jvm_time} | {ratio} |"
+        return f"| {label} | {suss_time} | {count} | {size} | {jvm_time} | {jvm_size} | {ratio} |"
+
+    def jvm_bytes(name, control, scale=1.0):
+        # JVM bytes per operation less the control's.
+        value = jvm_allocated[name] - (jvm_allocated[control] if control else 0.0)
+        return value * scale
 
     def bytes_of(name, control, scale=1.0):
         # Bytes per operation less the control's, None where below resolution.
@@ -384,8 +398,8 @@ def table(suss, instructions, allocated, jvm):
         value, spread = values[name]
         return value * scale, spread * scale
 
-    header = ["| Case | Suss ns | Suss instructions | Suss bytes | JVM ns | Ratio |",
-              "| --- | --- | --- | --- | --- | --- |"]
+    header = ["| Case | Suss ns | Suss instructions | Suss bytes | JVM ns | JVM bytes | Ratio |",
+              "| --- | --- | --- | --- | --- | --- | --- |"]
     print(f"n = {N}, best of {REPS}; Suss times are slopes between loop counts at least "
           f"{MIN_WORK} s of work apart\n")
     print("Nanoseconds and user-space instructions per operation, less its control")
@@ -401,33 +415,33 @@ def table(suss, instructions, allocated, jvm):
         if instructions:
             count = instructions[name] - (instructions[control] if control else 0.0)
         print(row(label, per_op(suss, name, control, 1e9), count, bytes_of(name, control),
-                  per_op(jvm, name, control, 1e9)))
+                  per_op(jvm, name, control, 1e9), jvm_bytes(name, control)))
     print("\nPer element of 1024, the loop step included:\n")
     print("\n".join(header))
     for name, expr, _ in REDUCTIONS:
         count = instructions[name] / 1024 if instructions else None
         print(row(f"`{expr}`", scaled(suss, name, 1e9 / 1024), count, bytes_of(name, None, 1 / 1024),
-                  scaled(jvm, name, 1e9 / 1024)))
+                  scaled(jvm, name, 1e9 / 1024), jvm_bytes(name, None, 1 / 1024)))
     print("\nPrograms, microseconds and instructions per run, the loop step included:\n")
     print("\n".join(h.replace(" ns", " µs") for h in header))
     for name, expr in PROGRAMS:
         count = instructions[name] if instructions else None
         print(row(f"{name}: `{expr}`", scaled(suss, name, 1e6), count, bytes_of(name, None),
-                  scaled(jvm, name, 1e6)))
+                  scaled(jvm, name, 1e6), jvm_bytes(name, None)))
     print("\nWhole loops, per iteration:\n")
-    print("| Loop | Suss ns | Suss instructions | Suss bytes | JVM ns | Ratio |")
-    print("| --- | --- | --- | --- | --- | --- |")
+    print("| Loop | Suss ns | Suss instructions | Suss bytes | JVM ns | JVM bytes | Ratio |")
+    print("| --- | --- | --- | --- | --- | --- | --- |")
     for name, body, _ in LOOPS:
         count = instructions[name] if instructions else None
         print(row(f"`{body}`", scaled(suss, name, 1e9), count, bytes_of(name, None),
-                  scaled(jvm, name, 1e9)))
+                  scaled(jvm, name, 1e9), jvm_bytes(name, None)))
 
 
 if __name__ == "__main__":
     work = tempfile.mkdtemp(prefix="suss-numeric-bench-")
     try:
-        jvm = jvm_times(work)
+        jvm, jvm_allocated = jvm_times(work)
         suss, instructions, allocated = suss_times(work)
-        table(suss, instructions, allocated, jvm)
+        table(suss, instructions, allocated, jvm, jvm_allocated)
     finally:
         shutil.rmtree(work)

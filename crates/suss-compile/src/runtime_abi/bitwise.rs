@@ -325,6 +325,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         ("bit-shift-right", 2),
         ("unsigned-bit-shift-right", 2),
         ("imul", 2),
+        ("bit-count", 1),
     ] {
         // An i31 or boxed long operand's int32 is read inline (#387): an
         // i31 is already one, and a long's ToInt32 is its low 32 bits.
@@ -355,6 +356,8 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
             "bit-shift-right" => body.push(I32ShrS),
             "unsigned-bit-shift-right" => body.push(I32ShrU),
             "imul" => body.push(I32Mul),
+            // Core's bit-count is the popcount of its int32 (#443).
+            "bit-count" => body.push(I32Popcnt),
             _ => unreachable!(),
         }
         // The result, boxed inline (#387): an i31 when it fits, else a long.
