@@ -10,8 +10,12 @@ process startup cancels; the count grows until the two differ by at least
 MIN_WORK seconds, so startup's run-to-run jitter stays small beside the work.
 The JVM side runs the same forms in one process, timed with System/nanoTime
 after warm-up, and reports bytes allocated per iteration from the thread's
-allocation counter, ThreadMXBean.getThreadAllocatedBytes (#443). Each JVM iteration stores its result in a sink array, so the JIT
-can't drop the operation; the control loop stores too. Each Suss iteration
+allocation counter, ThreadMXBean.getThreadAllocatedBytes (#443). Each JVM
+iteration stores its result in a sink array, so the JIT can't drop the
+operation; the control loop stores too, but a Long or Double it reads from a
+preallocated table, so it boxes nothing (#447). A case that returns a cached
+value, such as `(nil? i)`, then costs more than its control, not less, and a
+case that boxes its result pays for that box. Each Suss iteration
 compares its result with `sentinel`, a var the compiler can't fold the test
 against, whatever the result's type.
 
@@ -22,7 +26,9 @@ be meaningful.
 
 Where `perf` is installed, each Suss case also reports user-space
 instructions per iteration from `perf stat -e instructions:u`, the slope
-between the same two counts, which unlike time doesn't depend on machine load.
+between the same two counts, which unlike time doesn't depend on machine load. The table prints each
+case's count both less its control's and with it (#447): a change to the
+control moves every net count, but not the counts with the control.
 
 Each Suss case also reports bytes allocated per iteration (#386). wasmtime
 exposes no allocation counter, so the bench runs the case under the null
@@ -31,6 +37,10 @@ peak RSS, grows by every byte allocated. The slope of peak RSS between two
 loop counts is the case's allocation per iteration. Counts grow until the two
 runs differ by ALLOC_WORK bytes; a difference below ALLOC_RESOLUTION prints
 as ≈ 0.
+
+The bench samples the load average while it runs and prints its mean and
+peak above the tables, with a warning when the peak exceeds LOAD_WARNING:
+times are then unreliable, though instruction counts are not.
 
 Usage: bench.py [n] [reps]   (from the repository root, after building a
 release suss)
@@ -41,6 +51,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 5_000_000
@@ -58,6 +69,10 @@ MAX_COUNT = 2**30 - 1
 ALLOC_WORK = 32 << 20
 ALLOC_RESOLUTION = 1 << 20
 ALLOC_COUNTS = 16
+# Seconds between load-average samples, and the 1-minute load above which the
+# run's times are flagged as unreliable; the bench itself adds about 1.
+LOAD_INTERVAL = 5
+LOAD_WARNING = 1.5
 
 # The loop's operands: `i` is the loop counter, a long, and `m` is it masked
 # to an index. Arrays have 1024 elements. JVM forms add the type hints
@@ -195,6 +210,10 @@ JVM = {
     "(-equiv i 7)": "(clojure.lang.Util/equiv i 7)",
     "(= i 7.5)": "(= (num i) 7.5)",
     "(aset oa (bit-and i 1023) i)": "(aset oa (bit-and i 1023) (num i))",
+    # Controls sink a preallocated box rather than boxing a fresh one (#447).
+    "i": "(aget ^objects boxed-longs (bit-and i 1023))",
+    "(bit-and i 1023)": "(aget ^objects boxed-longs (bit-and i 1023))",
+    "(double i)": "(aget ^objects boxed-doubles (bit-and i 1023))",
 }
 
 
@@ -212,6 +231,14 @@ def hinted(expr):
         if hint:
             expr = expr.replace(f" {name} ", f" {hint} {name} ").replace(f" {name})", f" {hint} {name})")
     return expr
+
+
+def label(name, expr, control):
+    # A case's row label, which history.py also uses.
+    text = f"`{expr}`" + ("" if control else " (control)")
+    if name in WRAP:
+        text += f" in `{WRAP[name].format('…')}`"
+    return text
 
 
 def counted():
@@ -264,8 +291,12 @@ def suss_times(work):
         # grows until the best runs differ by MIN_WORK seconds.
         short, long = run(name, count), run(name, 2 * count)
         while long[0] - short[0] < MIN_WORK and count < MAX_COUNT // 2:
-            work = max(long[0] - short[0], MIN_WORK / 64)
-            count = min(count * max(2, math.ceil(MIN_WORK / work)), MAX_COUNT // 2)
+            # A difference no larger than zero is startup jitter, not a
+            # measure of the work, so the count only doubles: growing it 64×
+            # on noise ran a millisecond program 409,600 times a run (#447).
+            work = long[0] - short[0]
+            growth = 2 if work <= 0 else min(64, max(2, math.ceil(MIN_WORK / work)))
+            count = min(count * growth, MAX_COUNT // 2)
             short, long = run(name, count), run(name, 2 * count)
         shorts, longs = [short], [long]
         for _ in range(REPS - 1):
@@ -318,6 +349,8 @@ def jvm_times(work):
     lines = ["(set! *warn-on-reflection* true)"]
     lines += [f"(def {name} {init})" for name, init, _ in SETUP] + DEFS
     lines.append("(def sink-array (object-array 1))")
+    lines.append("(def boxed-longs (object-array (range 1024)))")
+    lines.append("(def boxed-doubles (object-array (map double (range 1024))))")
     lines.append("(defn sink! [x] (aset ^objects sink-array 0 x))")
     lines.append("(defmacro timed [n expr] `(fn [] (let [t# (System/nanoTime)] "
                  "(~expr ~n) (/ (- (System/nanoTime) t#) 1e9))))")
@@ -372,10 +405,14 @@ def table(suss, instructions, allocated, jvm, jvm_allocated):
         value, spread = time
         return value if value > spread else None
 
-    def row(label, s, i, b, j, jb):
+    def row(label, s, i, b, j, jb, gross=False):
+        # gross: the count with its control's, a column only the operations
+        # table has; None where the case has no control.
         s, j = measured(s), measured(j)
         ratio = f"{s / j:.0f}×" if s is not None and j is not None and j >= 0.05 else ""
         count = "" if i is None else f"{i:,.0f}"
+        if gross is not False:
+            count += " | " + ("" if gross is None else f"{gross:,.0f}")
         size = "≈ 0" if b is None or b < 0.5 else f"{b:,.0f}"
         jvm_size = "≈ 0" if jb is None or jb < 0.5 else f"{jb:,.0f}"
         suss_time = "≈ 0" if s is None else f"{s:,.1f}"
@@ -404,18 +441,20 @@ def table(suss, instructions, allocated, jvm, jvm_allocated):
           f"{MIN_WORK} s of work apart\n")
     print("Nanoseconds and user-space instructions per operation, less its control")
     print("loop; a control's row is the whole loop iteration. ≈ 0 is a time no larger")
-    print("than its run-to-run spread. Bytes are allocated per operation, measured")
-    print(f"under the null collector; ≈ 0 is below {ALLOC_RESOLUTION >> 20} MiB between the two counts.\n")
-    print("\n".join(header))
+    print("than its run-to-run spread. \"With control\" is the instruction count of the")
+    print("whole loop iteration, the control's included. Bytes are allocated per")
+    print("operation, measured under the null collector; ≈ 0 is below")
+    print(f"{ALLOC_RESOLUTION >> 20} MiB between the two counts.\n")
+    print("| Case | Suss ns | Suss instructions | With control | Suss bytes | JVM ns | JVM bytes | Ratio |")
+    print("| --- | --- | --- | --- | --- | --- | --- | --- |")
     for name, expr, control, _ in CASES:
-        label = f"`{expr}`" + ("" if control else " (control)")
-        if name in WRAP:
-            label += f" in `{WRAP[name].format('…')}`"
-        count = None
+        count = gross = None
         if instructions:
             count = instructions[name] - (instructions[control] if control else 0.0)
-        print(row(label, per_op(suss, name, control, 1e9), count, bytes_of(name, control),
-                  per_op(jvm, name, control, 1e9), jvm_bytes(name, control)))
+            gross = instructions[name] if control else None
+        print(row(label(name, expr, control), per_op(suss, name, control, 1e9), count,
+                  bytes_of(name, control), per_op(jvm, name, control, 1e9), jvm_bytes(name, control),
+                  gross=gross))
     print("\nPer element of 1024, the loop step included:\n")
     print("\n".join(header))
     for name, expr, _ in REDUCTIONS:
@@ -437,11 +476,38 @@ def table(suss, instructions, allocated, jvm, jvm_allocated):
                   scaled(jvm, name, 1e9), jvm_bytes(name, None)))
 
 
+class Load(threading.Thread):
+    # Samples the 1-minute load average every LOAD_INTERVAL seconds until
+    # stopped.
+    def __init__(self):
+        super().__init__(daemon=True)
+        self.start_average, self.samples, self.done = os.getloadavg(), [], threading.Event()
+
+    def run(self):
+        while not self.done.wait(LOAD_INTERVAL):
+            self.samples.append(os.getloadavg()[0])
+
+    def report(self):
+        self.done.set()
+        end, samples = os.getloadavg(), self.samples or [os.getloadavg()[0]]
+        mean, peak = sum(samples) / len(samples), max(samples)
+        averages = lambda a: ", ".join(f"{x:.2f}" for x in a)
+        print(f"Load: 1-minute mean {mean:.2f}, peak {peak:.2f}; "
+              f"{averages(self.start_average)} at start, {averages(end)} at end")
+        if peak > LOAD_WARNING:
+            print(f"Warning: the load peaked above {LOAD_WARNING}, so times are unreliable; "
+                  "instruction counts are not affected")
+        print()
+
+
 if __name__ == "__main__":
     work = tempfile.mkdtemp(prefix="suss-numeric-bench-")
+    load = Load()
+    load.start()
     try:
         jvm, jvm_allocated = jvm_times(work)
         suss, instructions, allocated = suss_times(work)
+        load.report()
         table(suss, instructions, allocated, jvm, jvm_allocated)
     finally:
         shutil.rmtree(work)
