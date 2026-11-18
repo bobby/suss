@@ -1719,6 +1719,32 @@ fn emit_function(
             })));
         }
     }
+    // Parameter field arrays (#445): a parameter that two or more field reads
+    // take as their object, in a function no branch re-enters at its first
+    // block, has its object's fields array read once on entry, into a
+    // nullable local of the args type: null when it isn't an object.
+    let mut fields_of: std::collections::HashMap<u32, u32> = std::collections::HashMap::new();
+    if continuation.is_none() && ir.blocks.first().is_some()
+        && !ir.blocks.iter().any(|block| match &block.terminator {
+            Terminator::Jump { target, .. } => *target == 0,
+            Terminator::Branch { consequent, alternative, .. } => *consequent == 0 || *alternative == 0,
+            _ => false,
+        })
+    {
+        let mut reads: std::collections::HashMap<u32, usize> = std::collections::HashMap::new();
+        for inst in ir.blocks.iter().flat_map(|block| &block.instructions) {
+            if let Operation::Nominal { operation: Nominal::Field(_), arguments } = &inst.operation {
+                *reads.entry(arguments[0].0 as u32).or_default() += 1;
+            }
+        }
+        for parameter in &ir.blocks[0].parameters {
+            if reads.get(&(parameter.0 as u32)).is_some_and(|count| *count >= 2) {
+                let local = pc + 1 + declarations.iter().skip(2).map(|(count, _)| count).sum::<u32>();
+                fields_of.insert(parameter.0 as u32, local);
+                declarations.push((1, ValType::Ref(wasm_encoder::RefType { nullable: true, heap_type: HeapType::Concrete(runtime_abi::ARGS) })));
+            }
+        }
+    }
     let mut function = Function::new(declarations);
     use Instruction::*;
     if continuation.is_none() {
@@ -1744,6 +1770,19 @@ fn emit_function(
             function.instruction(&LocalSet(value.0 as u32 + offset));
         }
     }
+    }
+    for (value, local) in &fields_of {
+        function
+            .instruction(&LocalGet(value + offset))
+            .instruction(&RefTestNonNull(HeapType::Concrete(7)))
+            .instruction(&If(BlockType::Result(ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(runtime_abi::ARGS) }))))
+            .instruction(&LocalGet(value + offset))
+            .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+            .instruction(&StructGet { struct_type_index: 7, field_index: 1 })
+            .instruction(&Else)
+            .instruction(&RefNull(HeapType::Concrete(runtime_abi::ARGS)))
+            .instruction(&End)
+            .instruction(&LocalSet(*local));
     }
     // Callees known statically (ADR-0004): closures this function makes, and
     // a method's own closure, its self reference. A call to one calls its
@@ -2696,12 +2735,38 @@ fn emit_function(
                                     .instruction(&End)
                                     .instruction(&Else);
                             }
-                            // The site's struct and the runtime's cached read (#378).
-                            function
-                                .instruction(&GlobalGet(cache))
-                                .instruction(&LocalGet(object))
-                                .instruction(&LocalGet(name))
-                                .instruction(&Call(index("named-site-get")));
+                            // The site's cached field, read inline when the
+                            // object has the site's descriptor (#445), as
+                            // named-site-get reads it; anything else, a
+                            // method among them, takes the runtime's read
+                            // (#378).
+                            let storage = storage_locals + 6;
+                            let site = |field| [GlobalGet(cache), StructGet { struct_type_index: runtime_abi::NAMED_SITE, field_index: field }];
+                            let object_type = RefType { nullable: false, heap_type: HeapType::Concrete(7) };
+                            let mut code = vec![
+                                Block(BlockType::Result(VALUE)),
+                                Block(BlockType::Empty),
+                                Block(BlockType::Result(ValType::Ref(object_type))),
+                                LocalGet(object),
+                                BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF, to_ref_type: object_type },
+                                Drop,
+                                Br(1),
+                                End,
+                                StructGet { struct_type_index: 7, field_index: 1 },
+                                LocalSet(storage),
+                                LocalGet(object),
+                                RefCastNonNull(HeapType::Concrete(7)),
+                                StructGet { struct_type_index: 7, field_index: 0 },
+                            ];
+                            code.extend(site(runtime_abi::SITE_DESCRIPTOR));
+                            code.extend([RefEq, I32Eqz, BrIf(0)]);
+                            code.extend(site(runtime_abi::SITE_SLOT));
+                            code.extend([LocalTee(field_index_local), I32Const(0), I32LtS, BrIf(0)]);
+                            code.extend([LocalGet(storage), LocalGet(field_index_local), ArrayGet(runtime_abi::ARGS), Br(1), End]);
+                            code.extend([GlobalGet(cache), LocalGet(object), LocalGet(name), Call(index("named-site-get")), End]);
+                            for instruction in &code {
+                                function.instruction(instruction);
+                            }
                             if length {
                                 function.instruction(&End);
                             }
@@ -3353,12 +3418,33 @@ fn emit_function(
                             // held in the args storage local (#445).
                             let object = arguments[0].0 as u32 + offset;
                             let storage = storage_locals + 6;
+                            let cached = fields_of.get(&(arguments[0].0 as u32)).copied();
                             let slow = |function: &mut Function| {
                                 function
                                     .instruction(&LocalGet(object))
                                     .instruction(&I32Const(*field as i32))
                                     .instruction(&Call(index("object-field-get")));
                             };
+                            if let Some(fields) = cached {
+                                // The parameter's fields array, read on entry.
+                                function
+                                    .instruction(&Block(BlockType::Result(VALUE)))
+                                    .instruction(&Block(BlockType::Empty))
+                                    .instruction(&LocalGet(fields))
+                                    .instruction(&BrOnNull(0))
+                                    .instruction(&LocalTee(storage))
+                                    .instruction(&ArrayLen)
+                                    .instruction(&I32Const(*field as i32))
+                                    .instruction(&I32LeU)
+                                    .instruction(&BrIf(0))
+                                    .instruction(&LocalGet(storage))
+                                    .instruction(&I32Const(*field as i32))
+                                    .instruction(&ArrayGet(runtime_abi::ARGS))
+                                    .instruction(&Br(1))
+                                    .instruction(&End);
+                                slow(&mut function);
+                                function.instruction(&End);
+                            } else {
                             function
                                 .instruction(&Block(BlockType::Result(VALUE)))
                                 .instruction(&Block(BlockType::Result(ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(7) }))))
@@ -3385,6 +3471,7 @@ fn emit_function(
                                 .instruction(&Else);
                             slow(&mut function);
                             function.instruction(&End).instruction(&End);
+                            }
                         }
                         Nominal::Key(field) => {
                             function
