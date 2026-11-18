@@ -34,6 +34,11 @@ pub(super) fn primitives(b: &mut Builder) {
         LocalGet(1),
         Call(b.names["native-object-prototype-set"]),
         Drop,
+        // As setPrototypeOf: `instance?` sites cache chains' answers (#446).
+        GlobalGet(PROTOCOL_EPOCH_GLOBAL),
+        I32Const(1),
+        I32Add,
+        GlobalSet(PROTOCOL_EPOCH_GLOBAL),
         Else,
         LocalGet(1),
         Call(b.names["property-key"]),

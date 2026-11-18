@@ -448,8 +448,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         }
     }
     // Core field reads by a plain literal name get an inline cache (#361):
-    // a site's last descriptor and its field's index, in two globals.
+    // a site's last descriptor and its field's index, in two globals. So do
+    // core field writes (#446).
     let mut field_site_list = vec![];
+    let mut write_site = false;
     // Of those, the `.-length` reads, which test for a string first.
     let mut length_sites = std::collections::HashSet::new();
     for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
@@ -462,10 +464,15 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             })
             .collect::<std::collections::HashMap<_, _>>();
         for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
-            if let Operation::Nominal { operation: Nominal::CoreNamedGet, arguments } = &inst.operation
+            if let Operation::Nominal { operation: operation @ (Nominal::CoreNamedGet | Nominal::CoreNamedSet), arguments } = &inst.operation
                 && literals.get(&arguments[1]).is_some_and(|units| plain_field_name(units))
             {
                 let site = (function as *const IrFunction as usize, inst.result.0 as u32);
+                if *operation == Nominal::CoreNamedSet {
+                    write_site = true;
+                    field_site_list.push(site);
+                    continue;
+                }
                 if literals[&arguments[1]].iter().copied().eq("length".encode_utf16()) {
                     length_sites.insert(site);
                 }
@@ -475,6 +482,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     }
     if !field_site_list.is_empty() {
         names.insert("named-site-get");
+    }
+    if write_site {
+        names.insert("named-site-set");
     }
     // Protocol method lookups get an inline cache (#355): the last
     // descriptor, its method and the protocol epoch it was found at.
@@ -710,6 +720,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }
             "named-site-get" => (
                 vec![ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::NAMED_SITE) }), VALUE, VALUE],
+                vec![VALUE],
+            ),
+            "named-site-set" => (
+                vec![ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::NAMED_SITE) }), VALUE, VALUE, VALUE],
                 vec![VALUE],
             ),
             name if name.starts_with("object-method-invoke-") => {
@@ -2691,6 +2705,15 @@ fn emit_function(
                             if length {
                                 function.instruction(&End);
                             }
+                        }
+                        Nominal::CoreNamedSet if field_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
+                            // The site's struct and the runtime's cached write (#446).
+                            let cache = field_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            function.instruction(&GlobalGet(cache));
+                            for argument in arguments {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function.instruction(&Call(index("named-site-set")));
                         }
                         Nominal::IsKeyword => {
                             function

@@ -356,15 +356,16 @@ fn named_site_get(b: &mut Builder) {
     b.function_with_locals("named-site-get", &[reference(NAMED_SITE), VALUE, VALUE], &[VALUE], &[(1, VALUE), (1, ValType::I32), (1, VALUE), (1, ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(7) }))], &code);
 }
 
-/// `instance-site-test(site, constructor, value)` (#378): `instance?` through
-/// its site's cache, a `NAMED_SITE` struct whose descriptor, method and
-/// second-descriptor fields hold the last constructor, its descriptor and its
-/// prototype, valid at the protocol epoch. The constructor is checked first;
-/// an i31 is never an instance; an object of the descriptor other than its
-/// prototype is one; anything else takes `object-instance`.
-fn instance_site_test(b: &mut Builder) {
+/// `named-site-set(site, object, name, value)` (#446): a core named write,
+/// `(set! (.-field object) value)`, through its site's cache. An object with
+/// the site's descriptor writes the cached field and returns the value.
+/// Anything else takes `named-property-set`, which checks and writes; after
+/// it, a source object that isn't native caches its descriptor and the
+/// field's slot, which another object of that descriptor writes the same way.
+fn named_site_set(b: &mut Builder) {
     use Instruction::*;
-    // Params: 0 site, 1 constructor, 2 value.
+    // Params: 0 site, 1 object, 2 name, 3 value. Locals: 4 the slot, 5
+    // named-property-set's result.
     let site = |field| [LocalGet(0), StructGet { struct_type_index: NAMED_SITE, field_index: field }];
     let set = |field: u32, value: Vec<Instruction<'static>>| {
         let mut code = vec![LocalGet(0)];
@@ -372,6 +373,69 @@ fn instance_site_test(b: &mut Builder) {
         code.push(StructSet { struct_type_index: NAMED_SITE, field_index: field });
         code
     };
+    let descriptor = || [LocalGet(1), RefCastNonNull(HeapType::Concrete(OBJECT)), StructGet { struct_type_index: OBJECT, field_index: 0 }];
+    let mut code = vec![LocalGet(1), RefTestNonNull(HeapType::Concrete(OBJECT)), If(BlockType::Empty)];
+    code.extend(descriptor());
+    code.extend(site(SITE_DESCRIPTOR));
+    code.extend([RefEq, If(BlockType::Empty)]);
+    code.extend(site(SITE_SLOT));
+    code.extend([LocalTee(4), I32Const(0), I32GeS, If(BlockType::Empty)]);
+    code.extend([
+        LocalGet(1),
+        RefCastNonNull(HeapType::Concrete(OBJECT)),
+        StructGet { struct_type_index: OBJECT, field_index: 1 },
+        LocalGet(4),
+        LocalGet(3),
+        ArraySet(ARGS),
+        LocalGet(3),
+        Return,
+        End,
+        End,
+        End,
+    ]);
+    code.extend([LocalGet(1), LocalGet(2), LocalGet(3), Call(b.names["named-property-set"]), LocalSet(5)]);
+    code.extend([LocalGet(1), RefTestNonNull(HeapType::Concrete(OBJECT)), If(BlockType::Empty)]);
+    code.extend([LocalGet(1), Call(b.names["native-object?"]), I32Eqz, If(BlockType::Empty)]);
+    code.extend([LocalGet(1), LocalGet(2), Call(b.names["named-field-slot"]), LocalTee(4), I32Const(0), I32GeS, If(BlockType::Empty)]);
+    code.extend(set(SITE_DESCRIPTOR, descriptor().to_vec()));
+    code.extend(set(SITE_SLOT, vec![LocalGet(4)]));
+    code.extend([End, End, End, LocalGet(5)]);
+    b.function_with_locals(
+        "named-site-set",
+        &[reference(NAMED_SITE), VALUE, VALUE, VALUE],
+        &[VALUE],
+        &[(1, ValType::I32), (1, VALUE)],
+        &code,
+    );
+}
+
+/// `instance-site-test(site, constructor, value)` (#378): `instance?` through
+/// its site's cache, a `NAMED_SITE` struct whose descriptor, method and
+/// second-descriptor fields hold the last constructor, its descriptor and its
+/// prototype, valid at the protocol epoch. The constructor is checked first;
+/// an i31 is never an instance; an object of the descriptor other than its
+/// prototype is one; anything else takes `object-instance`.
+///
+/// The owner and owner-epoch fields hold a negative answer (#446): the
+/// prototype of a source object of another descriptor that `object-instance`
+/// found not to be an instance. Such an object's answer depends only on its
+/// prototype's chain, which changes only with the epoch (setPrototypeOf and
+/// `__proto__` writes advance it), so another object of the same kind with
+/// that prototype isn't one either. Native objects, error backings and the
+/// Error family's own test are left to `object-instance`.
+fn instance_site_test(b: &mut Builder) {
+    use Instruction::*;
+    // Params: 0 site, 1 constructor, 2 value. Locals: 3 the value's
+    // prototype, if it is a plain source object of another descriptor, else
+    // null; 4 the answer.
+    let site = |field| [LocalGet(0), StructGet { struct_type_index: NAMED_SITE, field_index: field }];
+    let set = |field: u32, value: Vec<Instruction<'static>>| {
+        let mut code = vec![LocalGet(0)];
+        code.extend(value);
+        code.push(StructSet { struct_type_index: NAMED_SITE, field_index: field });
+        code
+    };
+    let object = || [LocalGet(2), RefCastNonNull(HeapType::Concrete(OBJECT))];
     let (constructor, descriptor, prototype) = (SITE_DESCRIPTOR, SITE_METHOD, SITE_DESCRIPTOR_2);
     let mut code = vec![LocalGet(1)];
     code.extend(site(constructor));
@@ -382,17 +446,66 @@ fn instance_site_test(b: &mut Builder) {
     code.extend(set(prototype, [site(descriptor).to_vec(), vec![Call(b.names["owned-descriptor-prototype"])]].concat()));
     code.extend(set(constructor, vec![LocalGet(1)]));
     code.extend(set(SITE_EPOCH, vec![GlobalGet(PROTOCOL_EPOCH_GLOBAL)]));
+    code.extend(set(SITE_OWNER_EPOCH, vec![I32Const(-1)]));
     code.push(End);
     code.extend([LocalGet(2), RefTestNonNull(HeapType::I31), If(BlockType::Empty), I32Const(0), Return, End]);
-    code.extend([LocalGet(2), RefTestNonNull(HeapType::Concrete(7)), If(BlockType::Empty)]);
-    code.extend([LocalGet(2), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 0 }]);
+    code.extend([LocalGet(2), RefTestNonNull(HeapType::Concrete(OBJECT)), If(BlockType::Empty)]);
+    code.extend(object());
+    code.push(StructGet { struct_type_index: OBJECT, field_index: 0 });
     code.extend(site(descriptor));
     code.extend([RefEq, LocalGet(2)]);
     code.extend(site(prototype));
-    code.extend([RefEq, I32Eqz, I32And, If(BlockType::Empty), I32Const(1), Return, End, End]);
+    code.extend([RefEq, I32Eqz, I32And, If(BlockType::Empty), I32Const(1), Return, End]);
+    // A plain source object of another descriptor: one whose descriptor is
+    // neither the site's nor the native objects', with a one-element
+    // prototype cell, and a site whose constructor isn't Error's.
+    code.extend(object());
+    code.push(StructGet { struct_type_index: OBJECT, field_index: 0 });
     code.extend(site(descriptor));
-    code.extend([LocalGet(2), Call(b.names["object-instance"])]);
-    b.function("instance-site-test", &[reference(NAMED_SITE), VALUE, VALUE], &[ValType::I32], &code);
+    code.push(RefEq);
+    code.extend(object());
+    code.extend([StructGet { struct_type_index: OBJECT, field_index: 0 }, GlobalGet(native_objects::TAG_GLOBAL), RefEq, I32Or]);
+    code.extend(site(descriptor));
+    code.extend([GlobalGet(nominal::ERROR_GLOBAL), RefEq, I32Or, I32Eqz, If(BlockType::Empty)]);
+    code.extend(object());
+    code.extend([StructGet { struct_type_index: OBJECT, field_index: 2 }, RefTestNonNull(HeapType::Concrete(ARGS)), If(BlockType::Empty)]);
+    code.extend(object());
+    code.extend([
+        StructGet { struct_type_index: OBJECT, field_index: 2 },
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        ArrayLen,
+        I32Const(1),
+        I32Eq,
+        If(BlockType::Empty),
+    ]);
+    code.extend(object());
+    code.extend([
+        StructGet { struct_type_index: OBJECT, field_index: 2 },
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(0),
+        ArrayGet(ARGS),
+        LocalTee(3),
+    ]);
+    code.extend(site(SITE_OWNER));
+    code.push(RefEq);
+    code.extend(site(SITE_OWNER_EPOCH));
+    code.extend([GlobalGet(PROTOCOL_EPOCH_GLOBAL), I32Eq, I32And, If(BlockType::Empty), I32Const(0), Return, End]);
+    code.extend([End, End, End, End]);
+    code.extend(site(descriptor));
+    code.extend([LocalGet(2), Call(b.names["object-instance"]), LocalTee(4)]);
+    // Only a plain source object's prototype is cached, at the epoch the
+    // site was checked at: a change during the test leaves it stale.
+    code.extend([I32Eqz, LocalGet(3), RefIsNull, I32Eqz, I32And, If(BlockType::Empty)]);
+    code.extend(set(SITE_OWNER, vec![LocalGet(3)]));
+    code.extend(set(SITE_OWNER_EPOCH, site(SITE_EPOCH).to_vec()));
+    code.extend([End, LocalGet(4)]);
+    b.function_with_locals(
+        "instance-site-test",
+        &[reference(NAMED_SITE), VALUE, VALUE],
+        &[ValType::I32],
+        &[(1, VALUE), (1, ValType::I32)],
+        &code,
+    );
 }
 
 /// Closure call sites (#378) hold their last callee and its entry for k
@@ -1884,6 +1997,7 @@ fn build_module() -> Vec<u8> {
     native_object_properties::functions(&mut b);
     // After named-property-get, which native_object_properties defines.
     named_site_get(&mut b);
+    named_site_set(&mut b);
     arithmetic_functions.extend(native_object_methods::functions(&mut b));
     arithmetic_functions.extend(native_object_factory::functions(&mut b));
     r#async::intrinsics(&mut b);
