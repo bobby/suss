@@ -1303,7 +1303,7 @@ fn loop_safe(operation: &Operation) -> bool {
                     | N::IsObject | N::SameReference | N::IsDescriptor | N::IsClosure | N::Array
                     | N::Instance | N::SameNominalType | N::Field(_) | N::FieldSet(_)
                     | N::IsNativeObject | N::IsTypeConstructor | N::IsLanguageError | N::LanguageError
-                    | N::StringIndexOf | N::StringSlice | N::StringFromUnit | N::ConcatString
+                    | N::StringIndexOf | N::StringSlice | N::StringFromUnit | N::ConcatString | N::JoinStrings
             )
         }
         _ => false,

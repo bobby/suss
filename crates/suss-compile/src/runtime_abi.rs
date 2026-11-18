@@ -409,6 +409,62 @@ fn named_site_set(b: &mut Builder) {
     );
 }
 
+/// `string-join(array)` (#446): the concatenation of an object array's
+/// strings, in order, as one allocation: `str`'s variadic arity, which
+/// concatenated pairwise and so copied its result once per argument. Every
+/// element is a string, as `str` makes them.
+fn string_join(b: &mut Builder) {
+    use Instruction::*;
+    // Param 0 the array. Locals: 1 its storage, 2 index, 3 length so far,
+    // 4 the result, 5 an element.
+    let string = HeapType::Concrete(STRING);
+    let element = [LocalGet(1), LocalGet(2), ArrayGet(ARGS), RefCastNonNull(string)];
+    let each = |body: Vec<Instruction<'static>>| {
+        let mut code = vec![I32Const(0), LocalSet(2), Block(BlockType::Empty), Loop(BlockType::Empty)];
+        code.extend([LocalGet(2), LocalGet(1), ArrayLen, I32GeU, BrIf(1)]);
+        code.extend(body);
+        code.extend([LocalGet(2), I32Const(1), I32Add, LocalSet(2), Br(0), End, End]);
+        code
+    };
+    let mut code = vec![
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(PACKED)),
+        StructGet { struct_type_index: PACKED, field_index: 0 },
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        LocalSet(1),
+    ];
+    let mut total = element.to_vec();
+    total.extend([ArrayLen, LocalGet(3), I32Add, LocalSet(3)]);
+    code.extend(each(total));
+    code.extend([LocalGet(3), ArrayNewDefault(STRING), LocalSet(4), I32Const(0), LocalSet(3)]);
+    let mut copy = element.to_vec();
+    copy.extend([
+        LocalSet(5),
+        LocalGet(4),
+        LocalGet(3),
+        LocalGet(5),
+        I32Const(0),
+        LocalGet(5),
+        ArrayLen,
+        ArrayCopy { array_type_index_dst: STRING, array_type_index_src: STRING },
+        LocalGet(3),
+        LocalGet(5),
+        ArrayLen,
+        I32Add,
+        LocalSet(3),
+    ]);
+    code.extend(each(copy));
+    code.push(LocalGet(4));
+    let nullable = |heap_type| ValType::Ref(RefType { nullable: true, heap_type });
+    b.function_with_locals(
+        "string-join",
+        &[VALUE],
+        &[VALUE],
+        &[(1, nullable(HeapType::Concrete(ARGS))), (2, ValType::I32), (2, nullable(string))],
+        &code,
+    );
+}
+
 /// `instance-site-test(site, constructor, value)` (#378): `instance?` through
 /// its site's cache, a `NAMED_SITE` struct whose descriptor, method and
 /// second-descriptor fields hold the last constructor, its descriptor and its
@@ -1998,6 +2054,7 @@ fn build_module() -> Vec<u8> {
     // After named-property-get, which native_object_properties defines.
     named_site_get(&mut b);
     named_site_set(&mut b);
+    string_join(&mut b);
     arithmetic_functions.extend(native_object_methods::functions(&mut b));
     arithmetic_functions.extend(native_object_factory::functions(&mut b));
     r#async::intrinsics(&mut b);

@@ -228,6 +228,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::CoerceString => { names.insert("coerce-string"); }
                         Nominal::ObjectCoerceString => { names.insert("object-coerce-string"); }
                         Nominal::ConcatString => { names.insert("string-concat"); }
+                        Nominal::JoinStrings => { names.insert("string-join"); }
                         Nominal::StringAppendLong => { names.insert("string-append-long"); }
                         Nominal::StringHash => { names.insert("string-hash"); }
                         Nominal::VectorNth => { names.insert("vector-nth"); }
@@ -697,7 +698,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "binding-get" | "binding-bound" | "number-negate" | "value-negate"
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
-            | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit"
+            | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit" | "string-join"
             | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string-hash" | "number-cast-long" | "number-cast-double" | "packed-array-test" | "object-array-test" | "vector-type-register" | "array-map-type-register" | "vector-count" => {
                 (vec![VALUE], vec![VALUE])
             }
@@ -1452,6 +1453,47 @@ fn i31_values(function: &mut Function, a: u32, b: u32) {
             .instruction(&Instruction::RefCastNonNull(i31))
             .instruction(&Instruction::I31GetS);
     }
+}
+/// The inline start of an unhinted aget or aset (#446): opens the result
+/// block and the generic path's block inside it. An object array, a packed
+/// array of kind 6, and an i31 index in its range set `storage` and `slot`
+/// and fall through, for the caller to access the element and branch out of
+/// the result block; anything else branches to the generic path, which the
+/// caller ends with two `End`s.
+fn object_array_element(array: u32, position: u32, storage: u32, slot: u32) -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
+    let packed = RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::PACKED) };
+    let args = RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::ARGS) };
+    vec![
+        Block(BlockType::Result(VALUE)),
+        Block(BlockType::Empty),
+        Block(BlockType::Result(ValType::Ref(args))),
+        Block(BlockType::Result(ValType::Ref(packed))),
+        LocalGet(array),
+        BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF, to_ref_type: packed },
+        Drop,
+        Br(2),
+        End,
+        StructGet { struct_type_index: runtime_abi::PACKED, field_index: 0 },
+        BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF, to_ref_type: args },
+        Drop,
+        Br(1),
+        End,
+        LocalSet(storage),
+        LocalGet(position),
+        RefTestNonNull(i31),
+        I32Eqz,
+        BrIf(0),
+        LocalGet(position),
+        RefCastNonNull(i31),
+        I31GetS,
+        LocalTee(slot),
+        LocalGet(storage),
+        ArrayLen,
+        I32GeU,
+        BrIf(0),
+    ]
 }
 fn plain_field_name(units: &[u16]) -> bool {
     !units.is_empty()
@@ -2387,9 +2429,20 @@ fn emit_function(
                     arguments,
                 } if arguments.len() == 2 => {
                     // A packed array reads its storage (#389); anything
-                    // else, the source array's dense prefix (#361).
+                    // else, the source array's dense prefix (#361). An
+                    // object array at an i31 index in range reads inline, as
+                    // a hinted one does (#446).
                     let array = arguments[0].0 as u32 + offset;
+                    let storage = storage_locals + 6;
+                    for instruction in object_array_element(array, arguments[1].0 as u32 + offset, storage, field_index_local) {
+                        function.instruction(&instruction);
+                    }
                     function
+                        .instruction(&LocalGet(storage))
+                        .instruction(&LocalGet(field_index_local))
+                        .instruction(&ArrayGet(runtime_abi::ARGS))
+                        .instruction(&Br(1))
+                        .instruction(&End)
                         .instruction(&LocalGet(array))
                         .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::PACKED)))
                         .instruction(&If(BlockType::Result(VALUE)))
@@ -2401,14 +2454,27 @@ fn emit_function(
                         .instruction(&LocalGet(arguments[1].0 as u32 + offset))
                         .instruction(&Call(index("array-get")))
                         .instruction(&End)
+                        .instruction(&End)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Array {
                     operation: ArrayOperation::Set,
                     arguments,
                 } if arguments.len() == 3 => {
-                    // As for one-index reads (#389).
+                    // As for one-index reads (#389, #446).
+                    let storage = storage_locals + 6;
+                    let value = arguments[2].0 as u32 + offset;
+                    for instruction in object_array_element(arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset, storage, field_index_local) {
+                        function.instruction(&instruction);
+                    }
                     function
+                        .instruction(&LocalGet(storage))
+                        .instruction(&LocalGet(field_index_local))
+                        .instruction(&LocalGet(value))
+                        .instruction(&ArraySet(runtime_abi::ARGS))
+                        .instruction(&LocalGet(value))
+                        .instruction(&Br(1))
+                        .instruction(&End)
                         .instruction(&LocalGet(arguments[0].0 as u32 + offset))
                         .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::PACKED)))
                         .instruction(&If(BlockType::Result(VALUE)));
@@ -2421,6 +2487,7 @@ fn emit_function(
                     }
                     function
                         .instruction(&Call(index("array-set")))
+                        .instruction(&End)
                         .instruction(&End)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
@@ -3510,6 +3577,7 @@ fn emit_function(
                         | Nominal::BindingDefined
                         | Nominal::CoerceString
                         | Nominal::ConcatString
+                        | Nominal::JoinStrings
                         | Nominal::ValueAdd
                         | Nominal::StringIndexOf
                         | Nominal::StringSlice
@@ -3587,6 +3655,7 @@ fn emit_function(
                                 Nominal::CoerceString => "coerce-string",
                                 Nominal::ObjectCoerceString => "object-coerce-string",
                                 Nominal::ConcatString => "string-concat",
+                                Nominal::JoinStrings => "string-join",
                                 Nominal::ValueAdd => "value-add",
                                 Nominal::StringIndexOf => "string-index-of",
                                 Nominal::StringSlice => "string-slice",

@@ -53,6 +53,9 @@
 
 (declare ArrayChunk array-chunk ChunkedSeq chunked-seq)
 
+;; seq-reduce reduces a chunked seq a chunk at a time (#446).
+(declare chunked-seq? chunk-first chunk-rest)
+
 ;; BEGIN pinned apply bootstrap v1
 (declare apply-to)
 ;; END pinned apply bootstrap v1
@@ -971,12 +974,29 @@
       (reduce f (first s) (next s))
       (f)))
   ([f val coll]
+    ;; A chunked seq reduces a chunk at a time, as Clojure's InternalReduce
+    ;; does, rather than allocating a seq per element (#446). A chunk's
+    ;; elements are read by index to its count: a filter's chunk is shorter
+    ;; than its array. A reduced value ends the reduction.
     (loop [val val, coll (seq coll)]
       (if coll
-        (let [nval (f val (first coll))]
-          (if (reduced? nval)
-            @nval
-            (recur nval (next coll))))
+        (if (chunked-seq? coll)
+          (let [c (chunk-first coll)
+                n (-count c)
+                nval (loop [i 0 val val]
+                       (if (< i n)
+                         (let [nval (f val (-nth c i))]
+                           (if (reduced? nval)
+                             nval
+                             (recur (inc i) nval)))
+                         val))]
+            (if (reduced? nval)
+              @nval
+              (recur nval (seq (chunk-rest coll)))))
+          (let [nval (f val (first coll))]
+            (if (reduced? nval)
+              @nval
+              (recur nval (next coll)))))
         val)))))
 
 (def reduce
@@ -6545,12 +6565,24 @@
                (.toString x))))))
   ;; Each value's str, concatenated in order (#388): the same result as the
   ;; pinned StringBuffer, whose append concatenates, without its source
-  ;; array, method lookups and dynamic calls.
+  ;; array, method lookups and dynamic calls. The strs are collected in an
+  ;; array, which doubles as it fills, and joined in one allocation (#446):
+  ;; concatenating pairwise copied the result once per argument. Each value
+  ;; is realized and converted in turn, as before.
   ([x & ys]
-   (loop [s (str x) ys ys]
-     (if ys
-       (recur (suss.bootstrap/concat-string s (str (first ys))) (next ys))
-       s)))))
+   (let [a (suss.bootstrap/packed-array 6 8)]
+     (aset a 0 (str x))
+     (loop [a a n 1 ys ys]
+       (if ys
+         (let [a (if (< n (alength a))
+                   a
+                   (suss.bootstrap/packed-copy a 0 (suss.bootstrap/packed-array 6 (* 2 n)) 0 n))]
+           (aset a n (str (first ys)))
+           (recur a (inc n) (next ys)))
+         (suss.bootstrap/join-strings
+          (if (== n (alength a))
+            a
+            (suss.bootstrap/packed-copy a 0 (suss.bootstrap/packed-array 6 n) 0 n)))))))))
 
 (def ^number compare
   "Comparator. Returns a negative number, zero, or a positive number

@@ -42,6 +42,9 @@
 
 (declare ArrayChunk array-chunk ChunkedSeq chunked-seq)
 
+;; seq-reduce reduces a chunked seq a chunk at a time (#446).
+(declare chunked-seq? chunk-first chunk-rest)
+
 ;; BEGIN pinned apply bootstrap v1
 (declare apply-to)
 ;; END pinned apply bootstrap v1
