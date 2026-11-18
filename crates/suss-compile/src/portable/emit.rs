@@ -371,6 +371,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::MethodGet => {
                             names.insert("protocol-method-get");
                         }
+                        Nominal::NativeMethodGet => {
+                            names.insert("protocol-native-kind");
+                            names.insert("protocol-native-method");
+                        }
                         Nominal::Dispatcher => {
                             names.insert("protocol-dispatcher-new");
                         }
@@ -510,6 +514,18 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }
         }
     }
+    // Native protocol sites cache their protocol fn, the receiver's kind, the
+    // protocol epoch and the implementation found (#445).
+    let mut native_site_list = vec![];
+    for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
+        .chain(futures.iter().map(|body| &body.continuation.function))
+    {
+        for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
+            if let Operation::Nominal { operation: Nominal::NativeMethodGet, .. } = &inst.operation {
+                native_site_list.push((function as *const IrFunction as usize, inst.result.0 as u32));
+            }
+        }
+    }
     // Closure call sites cache their last callee and its entry (#378): a
     // closure's code never changes, and an entry held in a global calls
     // without wasmtime's out-of-line function-reference read from a struct.
@@ -635,7 +651,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "constructor-descriptor"
             | "object-descriptor"
             | "protocol-dispatcher-new" => (vec![VALUE], vec![VALUE]),
-            "construct-site-admit" => (vec![VALUE, ValType::I32], vec![VALUE]),
+            "construct-site-admit" | "protocol-native-method" => (vec![VALUE, ValType::I32], vec![VALUE]),
+            "protocol-native-kind" => (vec![VALUE], vec![ValType::I32]),
             "source-construct-from-plan" => (
                 vec![VALUE, ValType::Ref(RefType {
                     nullable: false,
@@ -767,7 +784,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     }
     // The protocol epoch follows the imported link globals. Field sites also
     // cache methods under it (#378).
-    let epoch_used = !method_site_list.is_empty() || !field_site_list.is_empty() || !instance_site_list.is_empty();
+    let epoch_used = !method_site_list.is_empty() || !field_site_list.is_empty() || !instance_site_list.is_empty() || !native_site_list.is_empty();
     if epoch_used {
         imports.import(
             "suss.runtime",
@@ -890,6 +907,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let construct_sites = construct_site_list.iter().enumerate()
         .map(|(index, site)| (*site, first_construct_site + 3 * index as u32))
         .collect::<std::collections::HashMap<_, _>>();
+    let first_native_site = first_construct_site + 3 * construct_site_list.len() as u32;
+    let native_sites = native_site_list.iter().enumerate()
+        .map(|(index, site)| (*site, first_native_site + 4 * index as u32))
+        .collect::<std::collections::HashMap<_, _>>();
     for (index, definition) in imported_definitions.iter().enumerate() {
         links.codes.insert(*definition, first_imported_link + imported_slots.len() as u32 + index as u32);
         let entries = (0..=runtime_abi::MAX_FIXED).map(|k| {
@@ -916,7 +937,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
         dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites, length_sites: &length_sites,
         method_sites: &method_sites, instance_sites: &instance_sites, call_sites: &call_sites, keyword_caches: &keyword_caches,
-        literals: &literals, construct_sites: &construct_sites, epoch_global };
+        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, epoch_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -1051,6 +1072,20 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             &ConstExpr::ref_null(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }),
         );
     }
+    for _ in &native_site_list {
+        // Protocol fn, kind, epoch, implementation; null matches no fn.
+        code_globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::ref_null(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }),
+        );
+        for _ in 0..2 {
+            code_globals.global(GlobalType { val_type: ValType::I32, mutable: true, shared: false }, &ConstExpr::i32_const(-1));
+        }
+        code_globals.global(
+            GlobalType { val_type: VALUE, mutable: true, shared: false },
+            &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
+        );
+    }
     for (definition, global) in &defined_code {
         exports.export(&format!("link.{definition}.code"), ExportKind::Global, *global);
         for (k, entry) in links.entries[definition].iter().enumerate() {
@@ -1071,7 +1106,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .section(&types)
         .section(&imports)
         .section(&functions);
-    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() || !keyword_cache_list.is_empty() || !literal_list.is_empty() || !construct_site_list.is_empty() {
+    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() || !keyword_cache_list.is_empty() || !literal_list.is_empty() || !construct_site_list.is_empty() || !native_site_list.is_empty() {
         module.section(&code_globals);
     }
     module.section(&exports);
@@ -1206,6 +1241,7 @@ struct Context<'a> {
     /// Cached `instance?` sites: their first global (#378).
     instance_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     construct_sites: &'a std::collections::HashMap<(usize, u32), u32>,
+    native_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     /// Cached protocol method lookup sites: their first global; the epoch.
     method_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     epoch_global: u32,
@@ -1559,7 +1595,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
-    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, construct_sites, call_sites, keyword_caches, literals, epoch_global } = *context;
+    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, construct_sites, native_sites, call_sites, keyword_caches, literals, epoch_global } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -2577,6 +2613,44 @@ fn emit_function(
                                 .instruction(&GlobalGet(cache + 1))
                                 .instruction(&End);
                         }
+                        Nominal::NativeMethodGet => {
+                            // Inline cache (#445): the same protocol fn and
+                            // receiver kind at the same protocol epoch have
+                            // the same implementation; extending a kind writes
+                            // a closure property, which bumps the epoch.
+                            let cache = native_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            let (protocol, receiver) = (arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset);
+                            function
+                                .instruction(&LocalGet(receiver))
+                                .instruction(&Call(index("protocol-native-kind")))
+                                .instruction(&LocalSet(field_index_local))
+                                .instruction(&LocalGet(protocol))
+                                .instruction(&GlobalGet(cache))
+                                .instruction(&RefEq)
+                                .instruction(&LocalGet(field_index_local))
+                                .instruction(&GlobalGet(cache + 1))
+                                .instruction(&I32Eq)
+                                .instruction(&I32And)
+                                .instruction(&GlobalGet(cache + 2))
+                                .instruction(&GlobalGet(epoch_global))
+                                .instruction(&I32Eq)
+                                .instruction(&I32And)
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&GlobalGet(cache + 3))
+                                .instruction(&Else)
+                                .instruction(&LocalGet(protocol))
+                                .instruction(&LocalGet(field_index_local))
+                                .instruction(&Call(index("protocol-native-method")))
+                                .instruction(&GlobalSet(cache + 3))
+                                .instruction(&LocalGet(protocol))
+                                .instruction(&GlobalSet(cache))
+                                .instruction(&LocalGet(field_index_local))
+                                .instruction(&GlobalSet(cache + 1))
+                                .instruction(&GlobalGet(epoch_global))
+                                .instruction(&GlobalSet(cache + 2))
+                                .instruction(&GlobalGet(cache + 3))
+                                .instruction(&End);
+                        }
                         Nominal::CoreNamedGet if field_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
                             // Inline cache (#361): the same descriptor as last
                             // time reads the cached field; another looks its
@@ -3195,7 +3269,25 @@ fn emit_function(
                                 .instruction(&I32Const(0))
                                 .instruction(&Br(2))
                                 .instruction(&End)
-                                .instruction(&End)
+                                .instruction(&End);
+                            // An object of the site's descriptor, other than
+                            // its prototype, at the site's epoch, is an
+                            // instance, as the test answers (#445).
+                            let site = |field| [GlobalGet(cache), StructGet { struct_type_index: runtime_abi::NAMED_SITE, field_index: field }];
+                            let mut code = vec![LocalGet(value), RefTestNonNull(HeapType::Concrete(7)), If(BlockType::Empty)];
+                            code.extend(site(runtime_abi::SITE_DESCRIPTOR));
+                            code.extend([LocalGet(constructor), RefEq]);
+                            code.extend(site(runtime_abi::SITE_EPOCH));
+                            code.extend([GlobalGet(epoch_global), I32Eq, I32And]);
+                            code.extend([LocalGet(value), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 0 }]);
+                            code.extend(site(runtime_abi::SITE_METHOD));
+                            code.extend([RefEq, I32And, LocalGet(value)]);
+                            code.extend(site(runtime_abi::SITE_DESCRIPTOR_2));
+                            code.extend([RefEq, I32Eqz, I32And, If(BlockType::Empty), I32Const(1), Br(2), End, End]);
+                            for instruction in &code {
+                                function.instruction(instruction);
+                            }
+                            function
                                 .instruction(&GlobalGet(cache))
                                 .instruction(&LocalGet(constructor))
                                 .instruction(&LocalGet(value))
@@ -3233,36 +3325,43 @@ fn emit_function(
                         Nominal::Field(field) => {
                             // Inline (#378): an object's field in range is read
                             // from its fields array; anything else, with its
-                            // errors, takes object-field-get.
+                            // errors, takes object-field-get. One type test,
+                            // which casts, and one read of the fields array,
+                            // held in the args storage local (#445).
                             let object = arguments[0].0 as u32 + offset;
-                            let fields = |function: &mut Function| {
+                            let storage = storage_locals + 6;
+                            let slow = |function: &mut Function| {
                                 function
                                     .instruction(&LocalGet(object))
-                                    .instruction(&RefCastNonNull(HeapType::Concrete(7)))
-                                    .instruction(&StructGet { struct_type_index: 7, field_index: 1 });
+                                    .instruction(&I32Const(*field as i32))
+                                    .instruction(&Call(index("object-field-get")));
                             };
                             function
+                                .instruction(&Block(BlockType::Result(VALUE)))
+                                .instruction(&Block(BlockType::Result(ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(7) }))))
                                 .instruction(&LocalGet(object))
-                                .instruction(&RefTestNonNull(HeapType::Concrete(7)))
-                                .instruction(&If(BlockType::Result(ValType::I32)));
-                            fields(&mut function);
+                                .instruction(&BrOnCast {
+                                    relative_depth: 0,
+                                    from_ref_type: RefType::EQREF,
+                                    to_ref_type: RefType { nullable: false, heap_type: HeapType::Concrete(7) },
+                                })
+                                .instruction(&Drop);
+                            slow(&mut function);
                             function
+                                .instruction(&Br(1))
+                                .instruction(&End)
+                                .instruction(&StructGet { struct_type_index: 7, field_index: 1 })
+                                .instruction(&LocalTee(storage))
                                 .instruction(&ArrayLen)
                                 .instruction(&I32Const(*field as i32))
                                 .instruction(&I32GtU)
-                                .instruction(&Else)
-                                .instruction(&I32Const(0))
-                                .instruction(&End)
-                                .instruction(&If(BlockType::Result(VALUE)));
-                            fields(&mut function);
-                            function
+                                .instruction(&If(BlockType::Result(VALUE)))
+                                .instruction(&LocalGet(storage))
                                 .instruction(&I32Const(*field as i32))
                                 .instruction(&ArrayGet(runtime_abi::ARGS))
-                                .instruction(&Else)
-                                .instruction(&LocalGet(object))
-                                .instruction(&I32Const(*field as i32))
-                                .instruction(&Call(index("object-field-get")))
-                                .instruction(&End);
+                                .instruction(&Else);
+                            slow(&mut function);
+                            function.instruction(&End).instruction(&End);
                         }
                         Nominal::Key(field) => {
                             function

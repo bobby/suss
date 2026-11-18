@@ -565,6 +565,10 @@ pub enum Nominal {
     BindingDefined,
     ObjectDescriptor,
     MethodGet,
+    /// A non-object receiver's native or default implementation of a
+    /// protocol method (#445): the protocol fn read at the site and the
+    /// receiver; the implementation, or nil.
+    NativeMethodGet,
     LiveDispatcher,
     IFnLiveDispatcher,
     NativeMarker(NativeKind),
@@ -688,7 +692,7 @@ impl Nominal {
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
-                Self::BindCallable | Self::MethodGet | Self::CallableKeyRegister => count == 2,
+                Self::BindCallable | Self::MethodGet | Self::NativeMethodGet | Self::CallableKeyRegister => count == 2,
                 Self::DirectLinkDefine(_) | Self::DirectLinkSet(_) | Self::KeywordIntern | Self::KeywordCacheSet(_) => count == 1,
                 Self::DirectLinkRead(_) | Self::KeywordCacheGet(_) | Self::KeywordCacheEmpty(_) => count == 0,
                 Self::NativeObjectGet => count == 2,
@@ -1831,6 +1835,7 @@ impl Analyzer<'_> {
                 }),
             })
         };
+        let native = self.nominal(form, Nominal::NativeMethodGet, vec![callee.clone(), locals[0].clone()]);
         let slow = call(self, callee)?;
         let node = |kind: Expression, ty: Type| Hir {
             source: None,
@@ -1840,7 +1845,9 @@ impl Analyzer<'_> {
             kind: std::sync::Arc::new(kind),
         };
         // The method: an object's, from its descriptor through the site's
-        // cache, or nil. The protocol fn is called in one place, for nil.
+        // cache; any other receiver's native or default one, through the
+        // protocol fn's tables and a second cache (#445); or nil. The protocol
+        // fn is called in one place, for nil, to raise its error.
         // The site reads the method's key without creating it: only a method
         // definition creates a key (`stable_key`), so while it is unbound no
         // type has the method, and a definition bumps the protocol epoch.
@@ -1862,7 +1869,7 @@ impl Analyzer<'_> {
             Expression::If {
                 condition: Box::new(test),
                 consequent: Box::new(lookup),
-                alternative: Box::new(nil()),
+                alternative: Box::new(native),
             },
             Type::Value,
         );

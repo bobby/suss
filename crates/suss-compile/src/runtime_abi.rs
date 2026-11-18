@@ -664,6 +664,17 @@ pub(crate) const HASH_SET_DESCRIPTOR_GLOBAL: u32 = ARRAY_NODE_DESCRIPTOR_GLOBAL 
 /// (#444): the universal entries, but direct ones for one and two arguments,
 /// and for none to `+` and `*`.
 pub(crate) const ARITHMETIC_CODE_GLOBAL: u32 = HASH_SET_DESCRIPTOR_GLOBAL + 1;
+/// `call-k`'s cache of object callees' `-invoke` methods (#445), for k below
+/// MAX_FIXED: per k, OBJECT_CALL_WAYS ways of [descriptor, protocol epoch,
+/// method, the method's entry for k + 1], then the next way to replace. An
+/// entry held in a global calls without wasmtime's out-of-line function
+/// reference read from a struct.
+pub(crate) const OBJECT_CALL_CACHE_GLOBAL: u32 = ARITHMETIC_CODE_GLOBAL + 4;
+const OBJECT_CALL_WAYS: u32 = 4;
+const OBJECT_CALL_STRIDE: u32 = 4 * OBJECT_CALL_WAYS + 1;
+fn object_call_way(k: u32, way: u32) -> u32 {
+    OBJECT_CALL_CACHE_GLOBAL + k * OBJECT_CALL_STRIDE + 4 * way
+}
 const KEYWORD_BUCKETS: i32 = 4096;
 
 /// `keyword-intern(keyword)`: the first keyword interned with the same full
@@ -1633,10 +1644,105 @@ fn build_module() -> Vec<u8> {
         ReturnCall(generic_invoke),
     ];
     let call_spread = b.function_with_locals("call-spread", &[VALUE, VALUE], &[VALUE], &[(1, ValType::I32), (1, VALUE)], &body);
+    let method_get = b.names["protocol-method-get"];
     for k in 0..=MAX_FIXED {
-        let mut body: Vec<_> = (0..=k).map(LocalGet).collect();
+        let mut body = vec![];
+        let mut locals = vec![];
+        if k < MAX_FIXED {
+            // An object callee (#445): its type's `-invoke` method for k + 1
+            // operands, from the cache while the protocol epoch holds, is
+            // called with the object and the arguments, as `callable-bind`
+            // and `invoke` would call it, with no argument array or bound
+            // closure. Anything else, or an object with no such method,
+            // takes the spread path and its errors.
+            let (descriptor, method, entry) = (k + 1, k + 2, k + 3);
+            let entry_type = RefType { nullable: true, heap_type: HeapType::Concrete(CALL + k + 1) };
+            locals = vec![(2, VALUE), (1, ValType::Ref(entry_type))];
+            body.extend([
+                Block(BlockType::Empty),
+                LocalGet(0),
+                RefTestNonNull(HeapType::Concrete(OBJECT)),
+                I32Eqz,
+                BrIf(0),
+                LocalGet(0),
+                RefCastNonNull(HeapType::Concrete(OBJECT)),
+                StructGet { struct_type_index: OBJECT, field_index: 0 },
+                LocalSet(descriptor),
+            ]);
+            for way in 0..OBJECT_CALL_WAYS {
+                let base = object_call_way(k, way);
+                body.extend([
+                    GlobalGet(base),
+                    LocalGet(descriptor),
+                    RefEq,
+                    GlobalGet(base + 1),
+                    GlobalGet(PROTOCOL_EPOCH_GLOBAL),
+                    I32Eq,
+                    I32And,
+                    If(BlockType::Empty),
+                    GlobalGet(base + 2),
+                ]);
+                body.extend((0..=k).map(LocalGet));
+                body.extend([GlobalGet(base + 3), RefAsNonNull, ReturnCallRef(CALL + k + 1), End]);
+            }
+            body.extend([
+                GlobalGet(keys),
+                RefIsNull,
+                BrIf(0),
+                GlobalGet(keys),
+                RefCastNonNull(HeapType::Concrete(ARGS)),
+                I32Const(k as i32 + 1),
+                ArrayGet(ARGS),
+                LocalTee(method),
+                RefIsNull,
+                BrIf(0),
+                LocalGet(descriptor),
+                LocalGet(method),
+                Call(method_get),
+                LocalTee(method),
+                RefTestNonNull(HeapType::Concrete(CLOSURE)),
+                I32Eqz,
+                BrIf(0),
+                LocalGet(method),
+                RefCastNonNull(HeapType::Concrete(CLOSURE)),
+                StructGet { struct_type_index: CLOSURE, field_index: CLOSURE_CODE },
+                StructGet { struct_type_index: CODE, field_index: CODE_ENTRY + k + 1 },
+                LocalSet(entry),
+            ]);
+            let next = object_call_way(k, OBJECT_CALL_WAYS);
+            for way in 0..OBJECT_CALL_WAYS {
+                let base = object_call_way(k, way);
+                body.extend([
+                    GlobalGet(next),
+                    I32Const(way as i32),
+                    I32Eq,
+                    If(BlockType::Empty),
+                    LocalGet(descriptor),
+                    GlobalSet(base),
+                    GlobalGet(PROTOCOL_EPOCH_GLOBAL),
+                    GlobalSet(base + 1),
+                    LocalGet(method),
+                    GlobalSet(base + 2),
+                    LocalGet(entry),
+                    GlobalSet(base + 3),
+                    End,
+                ]);
+            }
+            body.extend([
+                GlobalGet(next),
+                I32Const(1),
+                I32Add,
+                I32Const(OBJECT_CALL_WAYS as i32 - 1),
+                I32And,
+                GlobalSet(next),
+                LocalGet(method),
+            ]);
+            body.extend((0..=k).map(LocalGet));
+            body.extend([LocalGet(entry), RefAsNonNull, ReturnCallRef(CALL + k + 1), End]);
+        }
+        body.extend((0..=k).map(LocalGet));
         body.extend([ArrayNewFixed { array_type_index: ARGS, array_size: k }, ReturnCall(call_spread)]);
-        b.function(CALL_EXPORTS[k as usize], &vec![VALUE; k as usize + 1], &[VALUE], &body);
+        b.function_with_locals(CALL_EXPORTS[k as usize], &vec![VALUE; k as usize + 1], &[VALUE], &locals, &body);
     }
     // `(defprotocol IFn …)` registers `-invoke`'s key for each signature arity.
     body = vec![
@@ -2216,6 +2322,17 @@ fn build_module() -> Vec<u8> {
             GlobalType { val_type: reference(CODE), mutable: false, shared: false },
             &ConstExpr::extended(code),
         );
+    }
+    assert_eq!(globals.len(), OBJECT_CALL_CACHE_GLOBAL);
+    for k in 0..MAX_FIXED {
+        for _ in 0..OBJECT_CALL_WAYS {
+            globals.global(GlobalType { val_type: VALUE, mutable: true, shared: false }, &ConstExpr::extended([sentinel_value(NIL)]));
+            globals.global(GlobalType { val_type: ValType::I32, mutable: true, shared: false }, &ConstExpr::i32_const(-1));
+            globals.global(GlobalType { val_type: VALUE, mutable: true, shared: false }, &ConstExpr::extended([sentinel_value(NIL)]));
+            let entry = RefType { nullable: true, heap_type: HeapType::Concrete(CALL + k + 1) };
+            globals.global(GlobalType { val_type: ValType::Ref(entry), mutable: true, shared: false }, &ConstExpr::ref_null(entry.heap_type));
+        }
+        globals.global(GlobalType { val_type: ValType::I32, mutable: true, shared: false }, &ConstExpr::i32_const(0));
     }
     b.exports.export("protocol-epoch", ExportKind::Global, PROTOCOL_EPOCH_GLOBAL);
     b.exports

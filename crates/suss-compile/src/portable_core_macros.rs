@@ -143,7 +143,7 @@ pub(crate) const DEFMULTI: &str = r##"
          (when-not (instance? MultiFn ~(symbol (str *ns*) (name mm-name)))
            (def ~mm-name
                 (new MultiFn ~(name mm-name) ~dispatch-fn ~default ~hierarchy
-                     (hash-map) (hash-map) (hash-map) nil)))))))
+                     (hash-map) (hash-map) (hash-map) nil nil nil)))))))
 "##;
 
 // defmethod: Clojure's, calling the protocol method where Clojure calls
