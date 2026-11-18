@@ -3303,40 +3303,52 @@
 (def apply
  "Applies fn f to the argument list formed by prepending intervening arguments to args."
  (fn ([f args]
-   (if (.-cljs$lang$applyTo f)
+   (let [n (suss.bootstrap/vector-count args)]
+     (if (and (not (suss.bootstrap/nil? n)) (<= n 4))
+     (cond (== n 0) (f) (== n 1) (f (nth args 0)) (== n 2) (f (nth args 0) (nth args 1)) (== n 3) (f (nth args 0) (nth args 1) (nth args 2)) :else (f (nth args 0) (nth args 1) (nth args 2) (nth args 3)))
+     (if (.-cljs$lang$applyTo f)
      (let [fixed-arity (.-cljs$lang$maxFixedArity f)
            bc (bounded-count (inc fixed-arity) args)]
        (if (<= bc fixed-arity)
          (apply-to f bc args)
          (.cljs$lang$applyTo f args)))
-     (apply-to-simple f (seq args))))
+     (apply-to-simple f (seq args))))))
  ([f x args]
-   (if (.-cljs$lang$applyTo f)
+   (let [n (suss.bootstrap/vector-count args)]
+     (if (and (not (suss.bootstrap/nil? n)) (<= n 4))
+     (cond (== n 0) (f x) (== n 1) (f x (nth args 0)) (== n 2) (f x (nth args 0) (nth args 1)) (== n 3) (f x (nth args 0) (nth args 1) (nth args 2)) :else (f x (nth args 0) (nth args 1) (nth args 2) (nth args 3)))
+     (if (.-cljs$lang$applyTo f)
      (let [arglist (list* x args)
            fixed-arity (.-cljs$lang$maxFixedArity f)
            bc (inc (bounded-count fixed-arity args))]
        (if (<= bc fixed-arity)
          (apply-to f bc arglist)
          (.cljs$lang$applyTo f arglist)))
-     (apply-to-simple f x (seq args))))
+     (apply-to-simple f x (seq args))))))
  ([f x y args]
-   (if (.-cljs$lang$applyTo f)
+   (let [n (suss.bootstrap/vector-count args)]
+     (if (and (not (suss.bootstrap/nil? n)) (<= n 4))
+     (cond (== n 0) (f x y) (== n 1) (f x y (nth args 0)) (== n 2) (f x y (nth args 0) (nth args 1)) (== n 3) (f x y (nth args 0) (nth args 1) (nth args 2)) :else (f x y (nth args 0) (nth args 1) (nth args 2) (nth args 3)))
+     (if (.-cljs$lang$applyTo f)
      (let [arglist (list* x y args)
            fixed-arity (.-cljs$lang$maxFixedArity f)
            bc (+ 2 (bounded-count (dec fixed-arity) args))]
        (if (<= bc fixed-arity)
          (apply-to f bc arglist)
          (.cljs$lang$applyTo f arglist)))
-     (apply-to-simple f x y (seq args))))
+     (apply-to-simple f x y (seq args))))))
  ([f x y z args]
-   (if (.-cljs$lang$applyTo f)
+   (let [n (suss.bootstrap/vector-count args)]
+     (if (and (not (suss.bootstrap/nil? n)) (<= n 4))
+     (cond (== n 0) (f x y z) (== n 1) (f x y z (nth args 0)) (== n 2) (f x y z (nth args 0) (nth args 1)) (== n 3) (f x y z (nth args 0) (nth args 1) (nth args 2)) :else (f x y z (nth args 0) (nth args 1) (nth args 2) (nth args 3)))
+     (if (.-cljs$lang$applyTo f)
      (let [arglist (list* x y z args)
            fixed-arity (.-cljs$lang$maxFixedArity f)
            bc (+ 3 (bounded-count (- fixed-arity 2) args))]
        (if (<= bc fixed-arity)
          (apply-to f bc arglist)
          (.cljs$lang$applyTo f arglist)))
-     (apply-to-simple f x y z (seq args))))
+     (apply-to-simple f x y z (seq args))))))
  ([f a b c d & args]
    (if (.-cljs$lang$applyTo f)
      (let [spread-args (spread args)
@@ -9107,131 +9119,218 @@ reduces them without incurring seq initialization"
 
 (deftype MultiFn [name dispatch-fn default-dispatch-val hierarchy
                   ^:mutable method-table ^:mutable prefer-table
-                  ^:mutable method-cache ^:mutable cached-hierarchy]
+                  ^:mutable method-cache ^:mutable cached-hierarchy
+                  ^:mutable last-dispatch-val ^:mutable last-method]
   IFn
   (-invoke [mf]
     (let [dispatch-val (dispatch-fn)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn)))
   (-invoke [mf a]
-    (let [dispatch-val (dispatch-fn a)
-          target-fn (-get-method mf dispatch-val)]
+    (let [df dispatch-fn
+          dispatch-val (if (suss.bootstrap/keyword? df) (get a df) (df a))
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a)))
   (-invoke [mf a b]
-    (let [dispatch-val (dispatch-fn a b)
-          target-fn (-get-method mf dispatch-val)]
+    (let [df dispatch-fn
+          dispatch-val (if (suss.bootstrap/keyword? df) (get a df b) (df a b))
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b)))
   (-invoke [mf a b c]
     (let [dispatch-val (dispatch-fn a b c)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c)))
   (-invoke [mf a b c d]
     (let [dispatch-val (dispatch-fn a b c d)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c d)))
   (-invoke [mf a b c d e]
     (let [dispatch-val (dispatch-fn a b c d e)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c d e)))
   (-invoke [mf a b c d e f]
     (let [dispatch-val (dispatch-fn a b c d e f)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c d e f)))
   (-invoke [mf a b c d e f g]
     (let [dispatch-val (dispatch-fn a b c d e f g)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c d e f g)))
   (-invoke [mf a b c d e f g h]
     (let [dispatch-val (dispatch-fn a b c d e f g h)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c d e f g h)))
   (-invoke [mf a b c d e f g h i]
     (let [dispatch-val (dispatch-fn a b c d e f g h i)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c d e f g h i)))
   (-invoke [mf a b c d e f g h i j]
     (let [dispatch-val (dispatch-fn a b c d e f g h i j)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c d e f g h i j)))
   (-invoke [mf a b c d e f g h i j k]
     (let [dispatch-val (dispatch-fn a b c d e f g h i j k)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c d e f g h i j k)))
   (-invoke [mf a b c d e f g h i j k l]
     (let [dispatch-val (dispatch-fn a b c d e f g h i j k l)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c d e f g h i j k l)))
   (-invoke [mf a b c d e f g h i j k l m]
     (let [dispatch-val (dispatch-fn a b c d e f g h i j k l m)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c d e f g h i j k l m)))
   (-invoke [mf a b c d e f g h i j k l m n]
     (let [dispatch-val (dispatch-fn a b c d e f g h i j k l m n)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c d e f g h i j k l m n)))
   (-invoke [mf a b c d e f g h i j k l m n o]
     (let [dispatch-val (dispatch-fn a b c d e f g h i j k l m n o)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c d e f g h i j k l m n o)))
   (-invoke [mf a b c d e f g h i j k l m n o p]
     (let [dispatch-val (dispatch-fn a b c d e f g h i j k l m n o p)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c d e f g h i j k l m n o p)))
   (-invoke [mf a b c d e f g h i j k l m n o p q]
     (let [dispatch-val (dispatch-fn a b c d e f g h i j k l m n o p q)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c d e f g h i j k l m n o p q)))
   (-invoke [mf a b c d e f g h i j k l m n o p q r]
     (let [dispatch-val (dispatch-fn a b c d e f g h i j k l m n o p q r)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c d e f g h i j k l m n o p q r)))
   (-invoke [mf a b c d e f g h i j k l m n o p q r s]
     (let [dispatch-val (dispatch-fn a b c d e f g h i j k l m n o p q r s)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c d e f g h i j k l m n o p q r s)))
   (-invoke [mf a b c d e f g h i j k l m n o p q r s t]
     (let [dispatch-val (dispatch-fn a b c d e f g h i j k l m n o p q r s t)
-          target-fn (-get-method mf dispatch-val)]
+          h hierarchy
+          target-fn (or (when (and (identical? dispatch-val last-dispatch-val)
+                                   (identical? cached-hierarchy (if (instance? Atom h) (.-state h) @h)))
+                          last-method)
+                        (-get-method mf dispatch-val))]
       (when-not target-fn
         (throw-no-method-error name dispatch-val))
       (target-fn a b c d e f g h i j k l m n o p q r s t)))
@@ -9245,44 +9344,49 @@ reduces them without incurring seq initialization"
   IMultiFn
   (-reset [mf]
     (set! method-table (.-EMPTY PersistentHashMap))
-    (set! method-cache method-table)
+    (do (set! last-method nil) (set! method-cache method-table))
     (set! prefer-table (.-EMPTY PersistentHashMap))
     (set! cached-hierarchy nil)
     mf)
 
   (-add-method [mf dispatch-val method]
     (set! method-table (assoc method-table dispatch-val method))
-    (set! method-cache method-table)
+    (do (set! last-method nil) (set! method-cache method-table))
     (set! cached-hierarchy @hierarchy)
     mf)
 
   (-remove-method [mf dispatch-val]
     (set! method-table (dissoc method-table dispatch-val))
-    (set! method-cache method-table)
+    (do (set! last-method nil) (set! method-cache method-table))
     (set! cached-hierarchy @hierarchy)
     mf)
 
   (-get-method [mf dispatch-val]
-    (when-not (identical? cached-hierarchy @hierarchy)
-      (set! method-cache method-table)
-      (set! cached-hierarchy @hierarchy))
-    (let [target-fn (get method-cache dispatch-val)]
-      (if (nil? target-fn)
-        (loop []
-          (let [mt method-table
-                pt prefer-table
-                ch cached-hierarchy
-                best (find-and-cache-best-method name dispatch-val ch mt pt default-dispatch-val)]
-            (cond
-              (nil? best) nil
-              (and (identical? mt method-table) (identical? pt prefer-table)
-                   (identical? ch cached-hierarchy) (identical? cached-hierarchy @hierarchy))
-              (do (set! method-cache (assoc method-cache dispatch-val best))
-                  best)
-              :else (do (set! method-cache method-table)
-                        (set! cached-hierarchy @hierarchy)
-                        (recur)))))
-        target-fn)))
+    (let [h (let [h hierarchy] (if (instance? Atom h) (.-state h) @h))]
+      (when-not (identical? cached-hierarchy h)
+        (do (set! last-method nil) (set! method-cache method-table))
+        (set! cached-hierarchy h)))
+    (if (and (identical? dispatch-val last-dispatch-val) (some? last-method))
+      last-method
+      (let [target-fn (get method-cache dispatch-val)]
+        (if (nil? target-fn)
+          (loop []
+            (let [mt method-table
+                  pt prefer-table
+                  ch cached-hierarchy
+                  best (find-and-cache-best-method name dispatch-val ch mt pt default-dispatch-val)]
+              (cond
+                (nil? best) nil
+                (and (identical? mt method-table) (identical? pt prefer-table)
+                     (identical? ch cached-hierarchy) (identical? cached-hierarchy @hierarchy))
+                (do (do (set! last-method nil) (set! method-cache (assoc method-cache dispatch-val best)))
+                    best)
+                :else (do (do (set! last-method nil) (set! method-cache method-table))
+                          (set! cached-hierarchy @hierarchy)
+                          (recur)))))
+          (do (set! last-dispatch-val dispatch-val)
+              (set! last-method target-fn)
+              target-fn)))))
 
   (-prefer-method [mf dispatch-val-x dispatch-val-y]
     (when (prefers* @hierarchy dispatch-val-y dispatch-val-x prefer-table)
@@ -9294,7 +9398,7 @@ reduces them without incurring seq initialization"
           (assoc prefer-table dispatch-val-x
                  (conj (get prefer-table dispatch-val-x (.-EMPTY PersistentHashSet))
                        dispatch-val-y)))
-    (set! method-cache method-table)
+    (do (set! last-method nil) (set! method-cache method-table))
     (set! cached-hierarchy @hierarchy)
     mf)
 
@@ -11280,12 +11384,12 @@ reduces them without incurring seq initialization"
           (untyped-printable? x) :default
           :else (type x))))
     :default (get-global-hierarchy) print-method-table (hash-map) print-method-table
-    (deref (get-global-hierarchy))))
+    (deref (get-global-hierarchy)) nil nil))
 (def print-dup
   (new MultiFn "print-dup"
     (fn [x writer] (if (untyped-printable? x) :default (type x)))
     :default (get-global-hierarchy) print-dup-table (hash-map) print-dup-table
-    (deref (get-global-hierarchy))))
+    (deref (get-global-hierarchy)) nil nil))
 ;; mf's method for obj, given obj's :type t, or nil when the built-in printer
 ;; prints obj with the caller's options. builtin is mf's first table. A type's value never reaches a
 ;; :default method, as in Clojure, where Object's method catches every class.

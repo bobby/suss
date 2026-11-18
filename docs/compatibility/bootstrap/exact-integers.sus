@@ -1583,12 +1583,12 @@
           (untyped-printable? x) :default
           :else (type x))))
     :default (get-global-hierarchy) print-method-table (hash-map) print-method-table
-    (deref (get-global-hierarchy))))
+    (deref (get-global-hierarchy)) nil nil))
 (def print-dup
   (new MultiFn "print-dup"
     (fn [x writer] (if (untyped-printable? x) :default (type x)))
     :default (get-global-hierarchy) print-dup-table (hash-map) print-dup-table
-    (deref (get-global-hierarchy))))
+    (deref (get-global-hierarchy)) nil nil))
 ;; mf's method for obj, given obj's :type t, or nil when the built-in printer
 ;; prints obj with the caller's options. builtin is mf's first table. A type's value never reaches a
 ;; :default method, as in Clojure, where Object's method catches every class.

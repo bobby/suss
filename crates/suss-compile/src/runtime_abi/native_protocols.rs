@@ -171,6 +171,43 @@ pub(super) fn functions(
     );
     let property_get = b.names["closure-property-get"];
     let property_set = b.names["closure-property-set"];
+    // `protocol-native-method(protocol fn, kind)` (#445): the fn's
+    // implementation for a native kind, else its default, as the dispatcher
+    // finds them; nil when there is none, it is not a closure, or the value
+    // called is not a closure (a redefined var), so the site calls the value.
+    let mut body = vec![
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(CLOSURE)),
+        I32Eqz,
+        If(BlockType::Empty),
+        sentinel_value(NIL),
+        Return,
+        End,
+        LocalGet(0),
+        LocalGet(1),
+        Call(property_get),
+        LocalTee(2),
+        sentinel_value(NIL),
+        RefEq,
+        LocalGet(2),
+        sentinel_value(UNDEFINED),
+        RefEq,
+        I32Or,
+        If(BlockType::Empty),
+        LocalGet(0),
+        I32Const(7),
+        Call(property_get),
+        LocalSet(2),
+        End,
+        LocalGet(2),
+        RefTestNonNull(HeapType::Concrete(CLOSURE)),
+        If(BlockType::Result(VALUE)),
+        LocalGet(2),
+        Else,
+        sentinel_value(NIL),
+        End,
+    ];
+    b.function_with_locals("protocol-native-method", &[VALUE, ValType::I32], &[VALUE], &[(1, VALUE)], &body);
     let mut body = vec![
         LocalGet(0),
         LocalGet(1),
@@ -440,7 +477,7 @@ pub(super) fn functions(
     // entry for k operands directly, with no argument array or `invoke`.
     // Params: 0 dispatcher, 1..=k operands; locals: environment, then impl.
     for k in 1..=MAX_FIXED {
-        let (environment, implementation, typed) = (k + 1, k + 2, k + 3);
+        let (environment, implementation, typed, bound, native_kind) = (k + 1, k + 2, k + 3, k + 4, k + 5);
         let mut body = vec![
             LocalGet(0),
             RefCastNonNull(HeapType::Concrete(UNIVERSAL)),
@@ -499,14 +536,43 @@ pub(super) fn functions(
         ]);
         tail_entry_checked(&mut body, implementation, typed, k);
         body.push(End);
+        // A native receiver (#445): the dispatcher also caches the protocol
+        // value it read, the receiver's kind and the method found, valid
+        // while the protocol epoch is unchanged (environment slots 5 to 8).
+        // Extending a native kind writes a closure property, which advances
+        // the epoch; redefining the protocol changes the value read.
         cast_array(&mut body, environment);
         body.extend([
             I32Const(1),
             ArrayGet(ARGS),
             Call(b.names["binding-get"]),
-            LocalTee(environment),
+            LocalSet(bound),
             LocalGet(1),
             Call(kind),
+            LocalSet(native_kind),
+        ]);
+        cast_array(&mut body, environment);
+        body.extend([I32Const(5), ArrayGet(ARGS), LocalGet(bound), RefEq]);
+        cast_array(&mut body, environment);
+        body.extend([I32Const(6), ArrayGet(ARGS), RefCastNonNull(HeapType::I31), I31GetS, LocalGet(native_kind), I32Eq, I32And]);
+        cast_array(&mut body, environment);
+        body.extend([
+            I32Const(8),
+            ArrayGet(ARGS),
+            RefCastNonNull(HeapType::I31),
+            I31GetS,
+            GlobalGet(PROTOCOL_EPOCH_GLOBAL),
+            I32Eq,
+            I32And,
+            If(BlockType::Result(VALUE)),
+        ]);
+        cast_array(&mut body, environment);
+        body.extend([
+            I32Const(7),
+            ArrayGet(ARGS),
+            Else,
+            LocalGet(bound),
+            LocalGet(native_kind),
             Call(property_get),
             LocalTee(implementation),
             sentinel_value(NIL),
@@ -516,17 +582,44 @@ pub(super) fn functions(
             RefEq,
             I32Or,
             If(BlockType::Empty),
-            LocalGet(environment),
+            LocalGet(bound),
             I32Const(7),
             Call(property_get),
             LocalSet(implementation),
             End,
+            // Only an implementation is cached; a miss reaches the error
+            // below on every call.
+            LocalGet(implementation),
+            RefTestNonNull(HeapType::Concrete(CLOSURE)),
+            If(BlockType::Empty),
+        ]);
+        for (slot, value) in [(5, LocalGet(bound)), (6, LocalGet(native_kind)), (7, LocalGet(implementation))] {
+            cast_array(&mut body, environment);
+            body.push(I32Const(slot));
+            body.push(value);
+            if slot == 6 {
+                body.push(RefI31);
+            }
+            body.push(ArraySet(ARGS));
+        }
+        cast_array(&mut body, environment);
+        body.extend([
+            I32Const(8),
+            GlobalGet(PROTOCOL_EPOCH_GLOBAL),
+            I32Const(0x3fff_ffff),
+            I32And,
+            RefI31,
+            ArraySet(ARGS),
+            End,
+            LocalGet(implementation),
+            End,
+            LocalSet(implementation),
         ]);
         tail_entry_checked(&mut body, implementation, typed, k);
         error(&mut body);
         let index = b.typed(
             CALL + k,
-            &[(2, VALUE), (1, ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(CLOSURE) }))],
+            &[(2, VALUE), (1, ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(CLOSURE) })), (1, VALUE), (1, ValType::I32)],
             &body,
         );
         b.names.insert(format!("protocol-dispatch-{k}"), index);
@@ -612,12 +705,14 @@ pub(super) fn functions(
             let operands = body.split_off(body.len() - 2);
             body.extend([GlobalGet(DISPATCH_CODE_GLOBAL), sentinel_value(NIL), I32Const(0), RefI31]);
             body.extend(operands);
-            // Cache slots: descriptor, method, epoch (none yet).
+            // Cache slots: descriptor, method, epoch (none yet); then for a
+            // native receiver, protocol value, kind, method, epoch (#445).
             body.extend([sentinel_value(NIL), sentinel_value(NIL), I32Const(-1), RefI31]);
+            body.extend([sentinel_value(NIL), I32Const(-1), RefI31, sentinel_value(NIL), I32Const(-1), RefI31]);
             body.extend([
                 ArrayNewFixed {
                     array_type_index: ARGS,
-                    array_size: count + 3,
+                    array_size: count + 7,
                 },
                 RefFunc(dispatch),
                 LocalGet(arity_local),
