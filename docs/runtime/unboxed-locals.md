@@ -74,6 +74,12 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   conversion (`1.0e30` becomes `Long/MAX_VALUE`), whereas a long parameter
   rejects an out-of-range double. Both reject a non-number. These results are
   still boxed at the generic entry's return.
+- **Primitive bodies.** A function with source numeric parameter or return
+  tags has a typed Wasm entry, retained in a signature-specific subtype of its
+  code struct (ABI 7). The ordinary entry checks its arguments, calls that
+  body and boxes a primitive result. Numeric operands and results inside the
+  typed body stay raw; captures retain the ordinary closure representation.
+  Variadic and spread adapters still reach the checked ordinary entry.
 
 Unhinted parameters, values read from vars, and results of calls are boxed.
 The argument to a hinted parameter is boxed by its caller too, and cast back
@@ -102,9 +108,9 @@ These parts of #337, #448 and #351 aren't done yet:
 
 - **Hinted `let` locals.** On the JVM, a hinted `let` local converts at each
   primitive use: `(let [^long x (identity 5.5)] [x (+ x 1)])` is `[5.5 6]`.
-- **Primitive entry points.** A hinted function has no typed entry yet, so its
-  callers box arguments and results. ADR-0004 designs them as subtypes of
-  `$code`; their dependencies #353 and #360 are done (#448).
+- **Typed call sites.** Primitive bodies and their checked ordinary bridges
+  exist, but callers still box arguments and results. Signature propagation,
+  direct typed calls and guarded live-var fallback remain necessary (#448).
 - **Box reuse across blocks.** See "Where values are boxed" above (#351).
 
 ## Evidence

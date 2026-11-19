@@ -150,7 +150,7 @@ fn comparison(operation: Comparison, arguments: &[Lattice]) -> Lattice {
 
 /// Each value's representation. Resumable functions, whose locals are spilled
 /// as GC values across suspensions, keep every value boxed.
-pub(super) fn infer(function: &Function, resumable: bool) -> Vec<Repr> {
+pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, Repr)], result: Option<Repr>) -> Vec<Repr> {
     let count = function.values.len();
     if resumable {
         return vec![Repr::Boxed; count];
@@ -170,6 +170,7 @@ pub(super) fn infer(function: &Function, resumable: bool) -> Vec<Repr> {
         }
     }
     let mut state = vec![Lattice::Known(Repr::Boxed); count];
+    for (value, repr) in entries { state[value.0] = Lattice::Known(*repr); }
     let mut seeded = vec![false; count];
     // A `^long` or `^double` parameter's cast is raw (#385).
     for block in &function.blocks {
@@ -279,6 +280,11 @@ pub(super) fn infer(function: &Function, resumable: bool) -> Vec<Repr> {
     let mut raw_use = vec![false; count];
     for block in &function.blocks {
         for instruction in &block.instructions {
+            if let Operation::Nominal { operation: Nominal::LongCast | Nominal::UncheckedLongCast | Nominal::DoubleCast, arguments } = &instruction.operation
+                && repr[arguments[0].0].numeric()
+            {
+                raw_use[arguments[0].0] = true;
+            }
             if repr[instruction.result.0] != Repr::Boxed
                 && matches!(
                     instruction.operation,
@@ -296,6 +302,11 @@ pub(super) fn infer(function: &Function, resumable: bool) -> Vec<Repr> {
                     raw_use[argument.0] = true;
                 }
             }
+        }
+        if let Terminator::Return(value) = &block.terminator
+            && result == Some(repr[value.0])
+        {
+            raw_use[value.0] = true;
         }
         // A hinted array access reads a long index and stores a value of its
         // element's kind raw (#389).

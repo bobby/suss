@@ -284,6 +284,27 @@ Table indices and one final closure type remain the alternatives considered
 above. #395 measured them against wasmtime 49, 50 and 51; neither upgrade
 changes these costs.
 
+### Implementation amendment: extensible code structs (2026-11-19, #448)
+
+Primitive entries require `$code` to be non-final, as the accepted primitive
+entry decision specifies. ABI 6 accidentally encoded it as final. Making it
+non-final changes the shared recursive group's canonical identity, so this is
+**runtime ABI 7**, with the existing early mismatch check rejecting ABI 6
+artifacts. Recompile fragments, core images and components together.
+
+A primitive code subtype keeps the complete immutable `$code` prefix and adds
+one immutable typed function reference per primitive method, sorted by formal
+arity and variadic status. Its identity includes every such method's parameter
+and result kinds, including boxed positions. Entry function types take `eqref`
+for the closure, as in the ABI 6 amendment, followed by raw `i64`/`f64` or boxed
+parameters. Captures remain in the function's final closure subtype.
+
+The ordinary entry checks the hinted arguments, calls the primitive body, and
+boxes its result at the generic boundary. The primitive body preserves the
+source parameter conversions on recurrence and the completed-body return
+conversion. It does not tail-call boxed entries with a primitive result type.
+The generic fixed-arity, variadic and spread interfaces remain present.
+
 ## Consequences
 
 - **Cost.** A direct-linked or otherwise known call costs 9 instructions on

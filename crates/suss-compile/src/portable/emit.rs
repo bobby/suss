@@ -2,6 +2,7 @@
 mod r#async;
 mod structured;
 mod unboxed;
+mod primitive;
 use super::{
     hir::{Arithmetic, ArrayOperation, Literal, Nominal, Type},
     ir::{self, ClosureBody, Function as IrFunction, GeneralClosureBody, FutureBody, Operation, Terminator},
@@ -161,6 +162,17 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let all_functions = std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
         .chain(futures.iter().map(|body| &body.continuation.function));
     let mut names = BTreeSet::new();
+    for body in &bodies {
+        if let Some(signature) = &body.primitive {
+            for kind in &signature.parameters {
+                match kind {
+                    super::primitive::Kind::Long => { names.insert("number-cast-long"); },
+                    super::primitive::Kind::Double => { names.insert("number-cast-double"); },
+                    _ => {},
+                }
+            }
+        }
+    }
     let mut throws = !futures.is_empty();
     if !futures.is_empty() { names.extend(r#async::IMPORTS.iter().copied()); }
     if futures.iter().any(|body| !body.continuation.backedges.is_empty()) { names.insert("async-task-yield"); }
@@ -922,6 +934,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             },
         });
     }
+    let primitive = primitive::Types::new(&mut types, next_type + u32::from(!read_links.is_empty()), &bodies, &layout);
     // Each slot's global, and each called definition's code struct global and
     // entries: imported, or this fragment's.
     let first_imported_link = globals.len() as u32 + 3;
@@ -1001,7 +1014,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         };
         links.codes.insert(*definition, layout.definitions[index].global);
         links.entries.insert(*definition, layout.definitions[index].entries.to_vec());
-        defined_code.push((*definition, layout.definitions[index].global));
+        defined_code.push((*definition, layout.definitions[index].global, index));
     }
     let mut functions = FunctionSection::new();
     functions.function(eval_type);
@@ -1012,11 +1025,12 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
         dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites, length_sites: &length_sites,
         method_sites: &method_sites, instance_sites: &instance_sites, call_sites: &call_sites, keyword_caches: &keyword_caches,
-        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, object_call_sites: &object_call_sites, epoch_global };
+        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, object_call_sites: &object_call_sites, primitive: &primitive, epoch_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
-        code.function(&emit_function(&body.function, Entry::Method(index), &context, None, &mut data)?);
+        code.function(&if body.primitive.is_some() { primitive::bridge(index, &context) }
+            else { emit_function(&body.function, Entry::Method(index), &context, None, &mut data)? });
     }
     for dispatcher in &dispatchers {
         let definition = layout.general(dispatcher);
@@ -1038,12 +1052,16 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 functions.function(runtime_abi::CALL + arity as u32);
                 code.function(&emit_adapter(&layout.definitions[definition], arity, &context));
             }
+            Extra::Primitive(body) => {
+                functions.function(primitive.entries[bodies[body].primitive.as_ref().expect("primitive entry")]);
+                code.function(&emit_function(&bodies[body].function, Entry::Primitive(body), &context, None, &mut data)?);
+            }
         }
     }
     // Each definition's code struct: an immutable global with a constant
     // initializer, after the imported cells and sentinels (ADR-0004).
     let mut code_globals = GlobalSection::new();
-    for definition in &layout.definitions {
+    for (definition_index, definition) in layout.definitions.iter().enumerate() {
         let mut init = match &definition.name {
             Some(name) => {
                 let mut init: Vec<_> = name.iter().map(|unit| Instruction::I32Const(i32::from(*unit))).collect();
@@ -1063,8 +1081,13 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             Instruction::RefFunc(definition.spread),
             Instruction::I32Const(minimum as i32),
             Instruction::I32Const(maximum),
-            Instruction::StructNew(runtime_abi::CODE),
         ]);
+        for method in &primitive.shapes[definition_index].0 {
+            let body = definition.methods.iter().find(|(_, arity, variadic)|
+                *arity == method.signature.parameters.len() && *variadic == method.variadic).expect("primitive method").0;
+            init.push(Instruction::RefFunc(layout.primitive_entries[body].expect("primitive entry")));
+        }
+        init.push(Instruction::StructNew(primitive.code_type(definition_index)));
         code_globals.global(
             GlobalType { val_type: runtime_abi::code_type(), mutable: false, shared: false },
             &ConstExpr::extended(init),
@@ -1179,10 +1202,15 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             &ConstExpr::ref_null(HeapType::Concrete(runtime_abi::CALL + n + 1)),
         );
     }
-    for (definition, global) in &defined_code {
+    for (definition, global, layout_index) in &defined_code {
         exports.export(&format!("link.{definition}.code"), ExportKind::Global, *global);
         for (k, entry) in links.entries[definition].iter().enumerate() {
             exports.export(&format!("link.{definition}.{k}"), ExportKind::Func, *entry);
+        }
+        for (body, arity, variadic) in &layout.definitions[*layout_index].methods {
+            if !*variadic && let Some(entry) = layout.primitive_entries[*body] {
+                exports.export(&format!("link.{definition}.{arity}.typed"), ExportKind::Func, entry);
+            }
         }
     }
     let mut elements = ElementSection::new();
@@ -1248,6 +1276,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             let (definition, label) = match *extra {
                 Extra::Spread(definition) => (definition, "spread".to_string()),
                 Extra::Adapter { definition, arity } => (definition, format!("adapter{arity}")),
+                Extra::Primitive(body) => (layout.body_definitions[body], format!("primitive{}", bodies[body].arity)),
             };
             let name = text(&layout.definitions[definition].name).unwrap_or_else(|| format!("def#{definition}"));
             map.append(index, &format!("{name}/{label}"));
@@ -1312,6 +1341,7 @@ enum Entry {
     Eval,
     Future,
     Method(usize),
+    Primitive(usize),
 }
 /// What every function in one fragment needs to know about the others.
 struct Context<'a> {
@@ -1340,6 +1370,7 @@ struct Context<'a> {
     /// Cached protocol method lookup sites: their first global; the epoch.
     method_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     epoch_global: u32,
+    primitive: &'a primitive::Types,
 }
 /// One function definition (`fn`): its closures' capture struct, its code
 /// struct global and its entries (ADR-0004).
@@ -1361,6 +1392,7 @@ struct Definition {
 enum Extra {
     Spread(usize),
     Adapter { definition: usize, arity: usize },
+    Primitive(usize),
 }
 struct Layout {
     definitions: Vec<Definition>,
@@ -1371,6 +1403,7 @@ struct Layout {
     /// Per body: its function type, and its definition.
     body_types: Vec<u32>,
     body_definitions: Vec<usize>,
+    primitive_entries: Vec<Option<u32>>,
     extras: Vec<Extra>,
 }
 impl Layout {
@@ -1393,6 +1426,7 @@ impl Layout {
         let mut layout = Layout {
             definitions: vec![], generals: vec![], singles: vec![],
             body_types: vec![0; bodies.len()], body_definitions: vec![0; bodies.len()], extras: vec![],
+            primitive_entries: vec![None; bodies.len()],
         };
         let mut sources = vec![];
         layout.generals = dispatchers.iter().map(|general| *general as *const GeneralClosureBody).collect();
@@ -1444,6 +1478,10 @@ impl Layout {
                 big += 1;
                 big - 1
             };
+            if body.primitive.is_some() {
+                layout.primitive_entries[index] = Some(function(extras_base + layout.extras.len())?);
+                layout.extras.push(Extra::Primitive(index));
+            }
         }
         Ok(layout)
     }
@@ -1731,7 +1769,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
-    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, construct_sites, native_sites, object_call_sites, call_sites, keyword_caches, literals, epoch_global } = *context;
+    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, construct_sites, native_sites, object_call_sites, call_sites, keyword_caches, literals, primitive: _, epoch_global } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -1743,7 +1781,7 @@ fn emit_function(
     let offset = match entry {
         Entry::Eval => 0,
         Entry::Future => 2,
-        Entry::Method(body) => 1 + u32::try_from(bodies[body].arity).map_err(|_| fail("Too many parameters"))?,
+        Entry::Method(body) | Entry::Primitive(body) => 1 + u32::try_from(bodies[body].arity).map_err(|_| fail("Too many parameters"))?,
     };
     let scratch = count
         .checked_add(offset)
@@ -1764,7 +1802,27 @@ fn emit_function(
     // extra typed locals after the dispatcher (#337).
     let structured = if continuation.is_none() { structured::plan(ir) } else { None };
     let dispatch = structured.is_none();
-    let locals = unboxed::Locals::new(unboxed::infer(ir, continuation.is_some()), pc + 1, offset, sentinels);
+    let signature = match entry {
+        Entry::Primitive(body) => bodies[body].primitive.as_ref(), _ => None,
+    };
+    let mut entry_reprs = Vec::new();
+    if let Entry::Primitive(body) = entry {
+        for (value, kind) in ir.blocks[0].parameters.iter().skip(bodies[body].capture_types.len())
+            .zip(&signature.expect("primitive body").parameters)
+        {
+            if *kind != super::primitive::Kind::Boxed { entry_reprs.push((*value, primitive::repr(*kind))); }
+        }
+    }
+    let raw_result = signature.filter(|signature| signature.result != super::primitive::Kind::Boxed)
+        .map(|signature| primitive::repr(signature.result));
+    let locals = unboxed::Locals::new(unboxed::infer(ir, continuation.is_some(), &entry_reprs, raw_result), pc + 1, offset, sentinels);
+    if let Some(expected) = raw_result {
+        for block in &ir.blocks {
+            if let Terminator::Return(value) = block.terminator && locals.of(value) != expected {
+                return Err(fail("IR primitive entry result kind mismatch"));
+            }
+        }
+    }
     let mut declarations = vec![(count + 14, VALUE), (1, ValType::I32)];
     declarations.extend(locals.declarations.iter().copied());
     // A call site's callee, once it is known to be a closure.
@@ -1873,7 +1931,7 @@ fn emit_function(
     let mut function = Function::new(declarations);
     use Instruction::*;
     if continuation.is_none() {
-    if let Entry::Method(body) = entry {
+    if let Entry::Method(body) | Entry::Primitive(body) = entry {
         // Captures are fields of the closure's own struct; a general closure's
         // self reference is the closure; arguments are parameters (ADR-0004).
         let definition = &layout.definitions[layout.body_definitions[body]];
@@ -1892,7 +1950,9 @@ fn emit_function(
             } else {
                 function.instruction(&LocalGet(1 + (index - environment) as u32));
             }
-            function.instruction(&LocalSet(value.0 as u32 + offset));
+            function.instruction(&LocalSet(if index >= environment && locals.of(*value) != unboxed::Repr::Boxed {
+                locals.raw(*value)
+            } else { value.0 as u32 + offset }));
         }
     }
     }
@@ -1931,7 +1991,7 @@ fn emit_function(
             }
         }
     }
-    if let Entry::Method(body) = entry {
+    if let Entry::Method(body) | Entry::Primitive(body) = entry {
         let definition = &layout.definitions[layout.body_definitions[body]];
         if definition.self_capture {
             let value = ir.blocks[0].parameters[definition.captures];
@@ -2257,7 +2317,7 @@ fn emit_function(
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Call { operands } => {
-                    let tail = continuation.is_none() && block.instructions.last().is_some_and(|last| std::ptr::eq(last, inst))
+                    let tail = continuation.is_none() && !matches!(entry, Entry::Primitive(_)) && block.instructions.last().is_some_and(|last| std::ptr::eq(last, inst))
                         && returns_unchanged(ir, &block.terminator, inst.result);
                     let arguments = &operands[1..];
                     let callee_local = operands[0].0 as u32 + offset;
@@ -4108,6 +4168,7 @@ fn emit_function(
         }
         let target_state = |target: usize| continuation.map_or(target, |plan| plan.block_entries[target]);
         match &block.terminator {
+            Terminator::Return(_) if raw_result.is_some() => {},
             Terminator::Throw(value) | Terminator::Return(value) => locals.materialize(&mut code, &[*value], &mut boxed),
             Terminator::Branch { condition, .. } if locals.of(*condition) != unboxed::Repr::Flag => {
                 locals.materialize(&mut code, &[*condition], &mut boxed);
@@ -4157,7 +4218,8 @@ fn emit_function(
                 if continuation.is_some() {
                     r#async::complete(&mut function, 1, *value, &slots, &index);
                 } else {
-                    function.instruction(&LocalGet(value.0 as u32 + offset)).instruction(&Return);
+                    function.instruction(&LocalGet(if raw_result.is_some() { locals.raw(*value) }
+                        else { value.0 as u32 + offset })).instruction(&Return);
                 }
             }
             Terminator::Jump { target, arguments } => {

@@ -43,7 +43,7 @@ mod string_methods;
 mod string_char_at;
 mod type_values;
 
-pub const VERSION: u32 = 6;
+pub const VERSION: u32 = 7;
 // The language sentinels. Every i31 is a long (ADR-0003); nil is a null
 // eqref, and false, true and undefined are SENTINEL structs held in runtime
 // globals that fragments import. Code names a sentinel with these and builds
@@ -779,12 +779,7 @@ pub fn prelude() -> TypeSection {
     group.push(structure(vec![field(VALUE, false), field(VALUE, true)]));
     // ABI 4 (ADR-0004): the code struct, the entry types and the runtime's
     // universal closure, appended so no earlier index moves.
-    let mut code = vec![field(VALUE, false)];
-    code.extend((0..=MAX_FIXED).map(|k| field(reference(CALL + k), false)));
-    code.push(field(reference(SPREAD), false));
-    // The arity range, for JavaScript-convention method calls only.
-    code.extend([field(ValType::I32, false), field(ValType::I32, false)]);
-    group.push(structure(code));
+    group.push(structure(code_fields()));
     // ABI 6 (#378): an entry takes its closure as eqref and casts it to its
     // own type, which is final, so a call site that holds the entry calls it
     // with no cast to the non-final `$closure`.
@@ -815,9 +810,8 @@ pub fn prelude() -> TypeSection {
     types.ty().rec(group.into_iter().enumerate().map(|(index, inner)| {
         let index = index as u32;
         SubType {
-            // Only `$closure` has subtypes: the universal closure here, and
-            // each compiled function's capture struct in its fragment.
-            is_final: index != CLOSURE,
+            // Closures add captures; code subtypes add primitive entries.
+            is_final: index != CLOSURE && index != CODE,
             supertype_idx: (index == UNIVERSAL).then_some(CLOSURE),
             composite_type: CompositeType {
                 inner,
@@ -837,6 +831,14 @@ pub(crate) fn closure_fields() -> Vec<FieldType> {
         field(VALUE, true),
         field(VALUE, true),
     ]
+}
+/// `$code`'s immutable prefix. Primitive signature subtypes append their entries.
+pub(crate) fn code_fields() -> Vec<FieldType> {
+    let mut fields = vec![field(VALUE, false)];
+    fields.extend((0..=MAX_FIXED).map(|k| field(reference(CALL + k), false)));
+    fields.push(field(reference(SPREAD), false));
+    fields.extend([field(ValType::I32, false), field(ValType::I32, false)]);
+    fields
 }
 /// Fields of `$closure` and of the universal closure.
 pub(crate) const CLOSURE_CODE: u32 = 0;

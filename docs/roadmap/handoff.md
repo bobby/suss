@@ -29821,3 +29821,36 @@ signature propagation to callers are separate remaining implementation work.
 In particular a guarded fallback must preserve a redefinition's changed value
 kind rather than reinterpret it using an old signature. These focused results
 do not establish a full workspace baseline or final-head CI for the changes.
+
+## Primitive bodies and ordinary-entry bridges (2026-11-19)
+
+Functions with source numeric tags now have typed Wasm bodies and ordinary
+cast/call/box bridges. Code structs extend the shared code prefix with typed
+function references; making that previously final shared type extensible
+requires ABI 7. ABI 5 and 6 artifacts are explicitly rejected. Numeric formal
+parameters are raw at entry only when their actual source entry cast exists;
+this excludes a nominal receiver whose numeric metadata does not cause a cast.
+Recurrence retains its checked conversions, return conversions follow the body,
+and primitive bodies do not tail-call boxed entries.
+
+The focused command added `--test portable_primitive_entries` and
+`--test portable_calling_convention` to the coercion, primitive-parameter and
+unboxed-local targets. Across those five targets, 14 tests passed with no skips:
+the 10 execution/ABI tests in `target/probe/pr470-entry-first3.log`, and the
+four code-generation tests in `target/probe/pr470-entry-codegen-final.log`.
+The first attempt exposed a bridge that popped a long before the boxing helper
+consumed it; the corrected bridge preserves the stack operand. A subsequent
+code-generation fixture referenced unavailable core `double` in a bare compiler
+environment; it now exercises mixed raw arithmetic directly.
+
+CI run 44602975111 on the preceding checkpoint reports a changed jank baseline:
+zero-argument `/` now throws at runtime instead of preventing its namespace from
+loading. Actual newly executed observations are being captured by
+`cargo +stable test --workspace --locked --test clojure_test_suite
+clojure_test_suite_matches_reviewed_baseline -- --exact --test-threads=2`,
+with SUSS_CLOJURE_TEST_SUITE_CAPTURE and TMPDIR under target/probe, in an 8 GiB
+scope (`target/probe/pr470-suite-abi7-workspace.log`). An initial package-only
+invocation unnecessarily rebuilt dependency features and was stopped before
+running tests; it is not a test result. Callers still use ordinary entries;
+typed call propagation, guarded fallback, measurements and the full validation
+gates remain to be established.

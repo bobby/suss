@@ -7,6 +7,7 @@ pub mod analysis_record;
 pub mod analyzer_edn;
 pub mod hir;
 pub mod ir;
+pub mod primitive;
 pub mod modules;
 pub mod resolve;
 pub mod persistent;

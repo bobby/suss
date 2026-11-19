@@ -1,6 +1,6 @@
 //! The compiled form of ADR-0004's calling convention (#353): call sites with
 //! no argument array or runtime `invoke`, static calls of known callees, and
-//! runtime ABI 6 artifacts.
+//! runtime ABI 7 artifacts.
 use suss_compile::portable::{
     self,
     resolve::{Environment, Phase},
@@ -85,10 +85,10 @@ fn known_callees_are_static_calls() {
 }
 
 #[test]
-fn artifacts_record_runtime_abi_6_and_abi_5_is_rejected() {
-    // ABI 6 (#378): entries take their closure as eqref, so a call site calls
-    // its cached entry with no cast.
-    assert_eq!(runtime_abi::VERSION, 6);
+fn artifacts_record_runtime_abi_7_and_prior_abis_are_rejected() {
+    // ABI 7 (#448) makes CODE extensible for primitive signature subtypes;
+    // ABI 6's eqref closure parameter and call-site caches remain.
+    assert_eq!(runtime_abi::VERSION, 7);
     let module = |abi| {
         let mut module = wasm_encoder::Module::new();
         module
@@ -97,7 +97,9 @@ fn artifacts_record_runtime_abi_6_and_abi_5_is_rejected() {
         module.finish()
     };
     let expected = runtime_abi::Manifest::default();
-    assert_eq!(runtime_abi::verify_artifact(&module(6), &expected), Ok(()));
-    let error = runtime_abi::verify_artifact(&module(5), &expected).unwrap_err();
-    assert!(error.starts_with("runtime ABI version mismatch"), "{error}");
+    assert_eq!(runtime_abi::verify_artifact(&module(7), &expected), Ok(()));
+    for abi in [5, 6] {
+        let error = runtime_abi::verify_artifact(&module(abi), &expected).unwrap_err();
+        assert!(error.starts_with("runtime ABI version mismatch"), "{error}");
+    }
 }

@@ -170,6 +170,8 @@ pub struct ClosureBody {
     pub variadic: bool,
     pub capture_types: Vec<Type>,
     pub arity: usize,
+    /// The raw entry, when source parameters or the return have primitive tags.
+    pub primitive: Option<super::primitive::Signature>,
     pub function: Function,
 }
 #[derive(Debug, Clone)]
@@ -576,6 +578,7 @@ impl<'a> Lowerer<'a> {
                 }
                 let function = inner.finish(body)?;
                 let display_name = self.display_name(hir)?;
+                let primitive = super::primitive::signature(parameters, body, &mut *self.meter)?;
                 self.emit(
                     Operation::MakeClosure {
                         body: Box::new(ClosureBody {
@@ -584,6 +587,7 @@ impl<'a> Lowerer<'a> {
                             variadic: false,
                             capture_types,
                             arity: parameters.len(),
+                            primitive,
                             function,
                         }),
                         captures: captured,
@@ -619,6 +623,7 @@ impl<'a> Lowerer<'a> {
                             .saturating_add(usize::from(self_binding.is_some())),
                         &method.body.span,
                     )?;
+                    let primitive = super::primitive::signature(&method.parameters, &method.body, &mut *self.meter)?;
                     let mut inner =
                         Lowerer::new(method.body.span.clone(), &mut *self.meter)?;
                     for (id, ty) in captures.iter().zip(&capture_types) {
@@ -639,6 +644,7 @@ impl<'a> Lowerer<'a> {
                         variadic: method.variadic,
                         capture_types: environment_types,
                         arity: method.parameters.len(),
+                        primitive,
                         function: inner.finish(&method.body)?,
                     });
                 }
@@ -1702,6 +1708,9 @@ fn verify_function_inner(
                         .len()
                         .checked_add(body.arity)
                         .ok_or_else(|| fail("IR closure entry count overflow"))?;
+                    if body.primitive.as_ref().is_some_and(|signature| signature.parameters.len() != body.arity) {
+                        return Err(fail("IR primitive entry arity mismatch"));
+                    }
                     if !body
                         .function
                         .blocks
@@ -1760,6 +1769,9 @@ fn verify_function_inner(
                             .len()
                             .checked_add(method.arity)
                             .ok_or_else(|| fail("IR closure entry count overflow"))?;
+                        if method.primitive.as_ref().is_some_and(|signature| signature.parameters.len() != method.arity) {
+                            return Err(fail("IR primitive entry arity mismatch"));
+                        }
                         if !method
                             .function
                             .blocks
