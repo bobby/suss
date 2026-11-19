@@ -29854,3 +29854,13 @@ invocation unnecessarily rebuilt dependency features and was stopped before
 running tests; it is not a test result. Callers still use ordinary entries;
 typed call propagation, guarded fallback, measurements and the full validation
 gates remain to be established.
+
+The ABI 7 body/bridge corpus capture completed in 195.84 s. Division's
+namespace loaded and executed 160 assertions: 59 passed and 101 reported
+actual assertion errors (their thrown values are opaque in the capture).
+The reviewed known-failure file removes only the old namespace diagnostic
+and lists those 101 errors individually; all other entries and the JVM
+recording are unchanged. The independent audit is
+`target/probe/pr470-review-baseline-audit.log`. This is not evidence of ratio
+support or of complete division conformance. The recorded observations compare
+successfully after that baseline update.
