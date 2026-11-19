@@ -43,6 +43,9 @@ fn maps_and_sets_called_as_functions() {
             // The same calls through the var's own invoke paths.
             ("[(km :a) (km :z 0) (hm 3) (st 1) (st 3 :x) ({} :a) (#{} :a :x)]", "[1 0 30 1 :x nil :x]"),
             ("(try ({:a 1}) (catch :default e :threw))", ":threw"),
+            // Other callables at the same call sites miss the direct lookup.
+            ("[(call1 [10 20] 1) (try (call1 [10 20] 5) (catch :default e :threw)) (call1 :a {:a 9}) (call2 :b {:a 9} :nf)]", "[20 :threw 9 :nf]"),
+            ("(do (deftype Fn1 [] IFn (-invoke [_ k] [:called k])) [(call1 (Fn1.) :a) (call1 km :a) (call1 (Fn1.) 1)])", "[[:called :a] 1 [:called 1]]"),
         ] {
             assert_eq!(printed(&mut session, source), expected, "{source}");
         }
