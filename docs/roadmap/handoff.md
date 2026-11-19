@@ -30041,5 +30041,23 @@ logged at `pr470-workspace-reviewed.log`, with TMPDIR and
 SUSS_CLOJURE_TEST_SUITE_CAPTURE under target/probe. The reviewed release build
 completed in 8m52s (`pr470-reviewed-release-build.log`); its executable and
 SHA256 receipt are retained as pr470-suss-reviewed and
-pr470-reviewed-executable.sha256. The same focused benchmark is running on
-this reviewed source in pr470-reviewed-bench.log to confirm the earlier data.
+pr470-reviewed-executable.sha256. The same focused benchmark completed on
+this reviewed production source, 0bbbd7c8 (unchanged by the test-only
+e2bc9559 correction), in pr470-reviewed-bench.log. Retained inputs and raw data
+are in target/probe/pr470-reviewed-bench/measurements.json. Gross instructions
+per iteration confirm the earlier result: long control 25, double control 26,
+double add 26, typed long call 153, typed double call 119, typed long sum 108,
+and typed double sum 68. The plain sum controls remain 21 and 14.
+
+The call-only rows allocate approximately 16 bytes per iteration (15.954 long,
+16.065 double), while the controls, double add and sum loops are below RSS
+resolution. These are the same boxed-result-consumer and raw-loop boundaries
+described above; no zero-allocation claim relies solely on RSS. Mean machine
+load was 16.14 with a peak of 17.79. The harness flagged walltimes as unreliable;
+they are not evidence for the quiet-machine or 5× program-ratio criteria.
+
+The full workspace invocation at this checkpoint uses the reviewed production
+source and the corrected pipeline test, with no other source changes during
+execution. Its terminal outcome and final-head CI evidence belong on #448 and
+#470; read the actual log rather than interpreting the earlier interrupted runs
+as passes. The independent implementation review does not replace either gate.
