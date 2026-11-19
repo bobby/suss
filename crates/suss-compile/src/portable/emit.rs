@@ -2014,12 +2014,39 @@ fn emit_function(
             }
             // A coercion of a raw value to a raw result (#448): a long stays
             // a long and widens to a double, and unchecked-long truncates a
-            // double as Java's cast does. A checked long of a double, which
-            // can be out of range, takes the cast below.
+            // double as Java's cast does. A checked long of a double first
+            // checks its range, keeping only the error path boxed.
             if let Operation::Nominal { operation: operation @ (Nominal::LongCast | Nominal::UncheckedLongCast | Nominal::DoubleCast), arguments } = &inst.operation
                 && locals.of(inst.result) != unboxed::Repr::Boxed
             {
                 let from = locals.of(arguments[0]);
+                if *operation == Nominal::LongCast && from == unboxed::Repr::Double {
+                    // RT.longCast(double) checks the original double before
+                    // truncating. NaN converts to zero; the rounded upper
+                    // boundary, 2^63, saturates to Long/MAX_VALUE. Box only
+                    // the out-of-range operand, for the runtime diagnostic.
+                    let argument = arguments[0];
+                    function
+                        .instruction(&LocalGet(locals.raw(argument)))
+                        .instruction(&F64Const((-9_223_372_036_854_775_808.0).into()))
+                        .instruction(&F64Lt)
+                        .instruction(&LocalGet(locals.raw(argument)))
+                        .instruction(&F64Const(9_223_372_036_854_775_808.0.into()))
+                        .instruction(&F64Gt)
+                        .instruction(&I32Or)
+                        .instruction(&If(BlockType::Empty));
+                    locals.push_boxed(&mut code, argument);
+                    for instruction in code.drain(..) { function.instruction(&instruction); }
+                    function
+                        .instruction(&Call(index("number-cast-long")))
+                        .instruction(&Drop)
+                        .instruction(&Unreachable)
+                        .instruction(&End)
+                        .instruction(&LocalGet(locals.raw(argument)))
+                        .instruction(&I64TruncSatF64S)
+                        .instruction(&LocalSet(locals.raw(inst.result)));
+                    continue;
+                }
                 let convert = match (operation, from) {
                     (Nominal::LongCast | Nominal::UncheckedLongCast, unboxed::Repr::Long) | (Nominal::DoubleCast, unboxed::Repr::Double) => Some(None),
                     (Nominal::DoubleCast, unboxed::Repr::Long) => Some(Some(F64ConvertI64S)),

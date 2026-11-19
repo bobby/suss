@@ -8,6 +8,8 @@
 // See docs/compatibility/compiled-defn-provenance.json and runtime/core-import/epl-v10.html.
 // Native fn arity dispatch replaces JavaScript function properties. Expansion
 // executes in the compiled Macro Store; this is not a Rust macro evaluator.
+// Return tags follow Clojure 1.12.6 core.clj's defn: :rettag belongs on the
+// fn form, not on arbitrary initializers of a var tagged by def.
 pub(crate) const SOURCE: &str = r#"
 (defmacro defn [name & declarations]
   (if (symbol? name) nil
@@ -35,5 +37,8 @@ pub(crate) const SOURCE: &str = r#"
         attributes (conj (if (meta name) (meta name) {}) attributes)]
     (if (seq signatures) nil
       (throw (ex-info "defn requires at least one signature" {})))
-    (list 'def (with-meta name attributes) (cons 'suss.core/fn (seq signatures)))))
+    (list 'def (with-meta name attributes)
+      (if (:tag attributes)
+        (with-meta (cons 'suss.core/fn (seq signatures)) {:rettag (:tag attributes)})
+        (cons 'suss.core/fn (seq signatures))))))
 "#;

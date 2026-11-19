@@ -54,6 +54,26 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   arithmetic and loops seeded from it stay unboxed beyond i31, and `recur`
   rebinds it. A WIT export's numeric parameters are treated as hinted
   ([WIT numbers](wit-numbers.md), "Primitive export parameters").
+- **Core coercions.** `long`, `double`, `unchecked-long` and
+  `unchecked-double` produce raw results. A raw long stays raw or widens to
+  a double; a raw double narrows with Wasm's saturating conversion. Checked
+  `long` first compares the original double against the long range, and boxes
+  only an out-of-range operand to produce the runtime's error. NaN becomes
+  zero, and the rounded upper boundary, 2^63, becomes `Long/MAX_VALUE`, as in
+  Clojure 1.12.6. Other values take the runtime cast's checks.
+- **Return hints.** A `^long` or `^double` on an argument vector converts the
+  completed body, including through the boxed entry. A tag on a `defn` name
+  supplies its arities' default return kind; a vector's tag overrides it.
+  Nested functions have their own tags. Return conversion happens outside the
+  function's recurrence loop. A body already primitive in the source must
+  match the declared kind (an int may widen to long); an opposite primitive
+  kind is a compile error. This check uses source hints, not WIT specialization
+  or optimizer facts. Boxed bodies, including `try`, can unbox afterward.
+  Clojure's primitive return unboxing differs from
+  its parameter casts: a long return narrows a double with Java's saturating
+  conversion (`1.0e30` becomes `Long/MAX_VALUE`), whereas a long parameter
+  rejects an out-of-range double. Both reject a non-number. These results are
+  still boxed at the generic entry's return.
 
 Unhinted parameters, values read from vars, and results of calls are boxed.
 The argument to a hinted parameter is boxed by its caller too, and cast back
@@ -82,10 +102,6 @@ These parts of #337, #448 and #351 aren't done yet:
 
 - **Hinted `let` locals.** On the JVM, a hinted `let` local converts at each
   primitive use: `(let [^long x (identity 5.5)] [x (+ x 1)])` is `[5.5 6]`.
-- **Return hints.** A `^long` or `^double` return hint is accepted, but the
-  result is boxed (#448).
-- **Known core results.** Calls such as `(long x)` and `(double x)` aren't yet
-  treated as raw, so `(double i)` calls core and allocates a box (#448).
 - **Primitive entry points.** A hinted function has no typed entry yet, so its
   callers box arguments and results. ADR-0004 designs them as subtypes of
   `$code`; their dependencies #353 and #360 are done (#448).
@@ -102,6 +118,13 @@ These parts of #337, #448 and #351 aren't done yet:
   form of `(loop [i 0 acc 0] (if (< i 1234567) (recur (inc i) (+ acc i)) acc))`.
   Its only calls are the two overflow paths, and its only allocations box the
   operands for those paths or box the returned sum.
+- `compiled_core_casts.rs` compares raw checked-double-to-long conversions
+  with calls through core's var, including exact long boundaries and error
+  messages. Its Runtime/Macro return tests and `compiled_primitive_params.rs`'s
+  compiled components check return tags, multi-arity and named declarations,
+  NaN, signed zero, conversion errors and recurrence against JVM observations.
+  They also check primitive return mismatches and that WIT specialization of
+  an unhinted source parameter does not create such a mismatch.
 - `experiments/numeric-representation/suss-jvm/bench.py` times whole loops
   summing longs and doubles. Its README compares them with the unboxed `i64`
   kernel `d_i64_checked`.

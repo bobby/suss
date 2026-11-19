@@ -29766,3 +29766,58 @@ document's 2026-10-25 decision now records all three outcomes.
 - Test: `compiled_aot_direct_linking.rs` checks results against JVM Clojure 1.12.6 with `-Dclojure.compiler.direct-linking=true`: later `defn` seen, `with-redefs` not seen, `^:redef`/`^:dynamic` live, value use live, recursion, a required namespace. It also checks that the REPL stays live.
 - Calls (`calls_bench.py`-style loops, release, M3 Pro): `(f1 i)` 23 → 1.6 ns, `(f3 i i i)` 25 → 1.9 ns, variadic 32 → 2.1 ns, `(fib 27)` 1029 → 449 µs. No `perf` here, so #360's under-50-instructions target still needs the Linux machine.
 - Not linked: core functions from user code (`identity`), since shipped core is one prebuilt module with its own link cells; a redefinition to a function with captures (earlier calls keep the old function); calls with more than 8 arguments.
+
+## Primitive return conversion and source typing probes (2026-11-19)
+
+JVM Clojure 1.12.6 returns 1 from `((fn ^long [x] x) 1.75)`; the
+previous Suss binary returned 1.75. Return unboxing uses Number.longValue
+(saturating for doubles), unlike checked primitive parameter conversion.
+Return conversion now follows the completed recurrence loop and lies outside
+body exception handlers. `defn` carries a declaration tag as fn-form `:rettag`;
+that compiler metadata is consumed without a runtime with-meta wrapper. A plain
+`def` tag does not alter its initializer function. EPL provenance and the
+Clojure core.clj source digest/range are in compiled-defn-provenance.json.
+
+Source primitive return checks precede backend representation inference. They
+use user parameter hints, literal/local kinds, explicit arglists, and source
+call rules; WIT-only parameter specialization and raw hash optimizations do
+not make source Object returns primitive. Throwing if branches and try remain
+boxed; source loop kinds settle over recur inputs. Known opposite primitive
+kinds produce Clojure's mismatch diagnostic. Checked long of a raw double
+checks its original range and boxes only on the error path, with NaN -> 0 and
+2^63 -> Long/MAX_VALUE. Zero-argument - and / reach runtime arity errors.
+
+Use `cargo +stable` (tested rustc 1.99.1), CARGO_BUILD_JOBS=2, and
+CARGO_TARGET_DIR=/home/bobby/Work/code/bobby/suss/.claude/worktrees/performance/target.
+The default rustup 1.96 cannot build the pinned Wasmtime 51. User scope commands
+need XDG_RUNTIME_DIR=/run/user/1000 and
+DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus in this worktree.
+The frozen-source focused command was:
+
+```sh
+systemd-run --user --scope -p MemoryMax=8G cargo +stable test --workspace --locked \
+  --test compiled_core_casts --test compiled_primitive_params \
+  --test portable_unboxed_locals --test compiled_aot_direct_linking \
+  -- --test-threads=2
+```
+
+Result: 13 passed, 0 failed, 0 ignored across four targets;
+`target/probe/pr470-focused-final7.log`. This includes executing Runtime/Macro,
+compiled-component redefinition and return cases, WIT specialization checks,
+and generated-code checks for allocation-free successful conversions. The
+independent preliminary semantic review's JVM matrices are under
+`target/probe/pr470-review-*.log`. Earlier attempts retain their actual failures:
+a Session-only fixture using defn, the incorrect plain-def tag conversion,
+and a structural assertion scanning past Return into an unrelated else arm.
+
+The ClojureScript submodule was initially uninitialized in this worktree;
+`git submodule update --init --recursive` restored reviewed c4295f303100.
+After restoration, all 347 Python tests and the CI foundation scripts passed
+in a 2 GiB user scope (`target/probe/pr470-foundation-final.log`). No failures were
+skipped. Keep further probe output under target/probe, not /tmp.
+
+Generic call entries still box arguments/results; primitive typed entries and
+signature propagation to callers are separate remaining implementation work.
+In particular a guarded fallback must preserve a redefinition's changed value
+kind rather than reinterpret it using an old signature. These focused results
+do not establish a full workspace baseline or final-head CI for the changes.

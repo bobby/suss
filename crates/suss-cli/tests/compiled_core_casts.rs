@@ -72,3 +72,93 @@ fn raw_operands_coerce_inline() {
         }
     }
 }
+
+#[test]
+fn primitive_return_hints_cast_after_the_body_in_both_phases() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval("(def ret-long (fn ^long [x] x))
+                      (def ret-double (fn ^double [x] x))
+                      (def ret-multi (fn (^long [x] x) (^double [x y] (+ x y))))
+                      (def ret-recur (fn again ^long [n x] (if (zero? n) x (recur (dec n) x))))
+                      (def ^long ret-plain (fn [x] x))
+                      (def outcome (fn [f] (try (f) (catch :default e :threw))))").unwrap();
+        for (source, expected) in [
+            ("[(ret-long 1.75) (apply ret-long [1.75]) (ret-double 3) (apply ret-double [3])]", "[1 1 3.0 3.0]"),
+            ("[(ret-multi 2.75) (ret-multi 2 3) (ret-recur 10000 4.75)]", "[2 5.0 4]"),
+            ("(apply ret-plain [1.75])", "1.75"),
+            ("[(ret-double -0.0) (ret-double ##NaN) (ret-double ##Inf) (ret-long 9223372036854775807)]", "[-0.0 ##NaN ##Inf 9223372036854775807]"),
+            ("[(ret-long 1.0e30) (ret-long -1.0e30) (ret-long ##Inf) (ret-long ##-Inf) (ret-long ##NaN)]", "[9223372036854775807 -9223372036854775808 9223372036854775807 -9223372036854775808 0]"),
+            ("[(outcome (fn [] (ret-long nil))) (outcome (fn [] (ret-double :k))) (outcome (fn [] ((fn [^long x] x) 1.0e30)))]", "[:threw :threw :threw]"),
+            // A return conversion runs only after the body has completed.
+            ("(let [a (atom [])] [(outcome (fn [] ((fn ^long [] (swap! a conj :body) nil)))) @a])", "[:threw [:body]]"),
+            // The body's handler does not catch a later return conversion.
+            ("(outcome (fn [] ((fn ^long [] (try nil (catch :default e 7))))))", ":threw"),
+        ] {
+            assert_eq!(printed(&mut session, source), expected, "{source}");
+        }
+    }
+}
+
+#[test]
+fn checked_long_of_a_raw_double_matches_the_boxed_cast() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval("(def raw-long (fn [^double x] (long x)))
+                      (def outcome (fn [f x] (try (f x) (catch :default e (.-message e)))))").unwrap();
+        // JVM Clojure 1.12.6: NaN -> 0, 2^63 -> MAX, and comparisons
+        // against the original double reject the next value on either side.
+        for value in ["1.75", "-1.75", "0.0", "-0.0", "##NaN",
+                      "9223372036854775808.0", "-9223372036854775808.0",
+                      "9223372036854777856.0", "-9223372036854777856.0",
+                      "##Inf", "##-Inf", "1.0e30", "-1.0e30"] {
+            assert_eq!(printed(&mut session, &format!("(outcome raw-long {value})")),
+                       printed(&mut session, &format!("(outcome (fn [x] (apply long [x])) {value})")), "{value}");
+        }
+    }
+}
+
+#[test]
+fn return_hints_reject_opposite_source_primitives_but_unbox_objects() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        // defn's declaration facts without requiring macro expansion in Session.
+        session.eval("(def ^{:tag long :arglists '([])} primitive-global-long (fn ^long [] 1))
+                      (def ^{:tag double :arglists '([])} primitive-global-double (fn ^double [] 1.0))
+                      (def plain-global-long (fn ^long [] 1))").unwrap();
+        for source in [
+            "(fn ^long [] 1.75)", "(fn ^double [] 1)",
+            "(fn ^long [^double x] x)", "(fn ^double [^long x] x)",
+            "(fn ^long [] (let [x 1.75] x))",
+            "(fn ^long [x] (+ x 0.5))", "(fn ^long [x] (+ x 1 0.5))",
+            "(fn ^long [x] (double x))", "(fn ^double [x] (long x))",
+            "(fn ^long [x] (nil? x))", "(fn ^long [x] (zero? x))",
+            "(fn ^double [x] (count x))",
+            "(fn ^double [] (primitive-global-long))", "(fn ^long [] (primitive-global-double))",
+            "(fn ^double [^longs a] (aget a 0))", "(fn ^long [^doubles a] (aget a 0))",
+            "(fn ^double [b] (loop [i 0] (if b (recur (int i)) i)))",
+            "(fn ^double [b] (loop [i (int 0)] (if b (recur (long i)) i)))",
+        ] {
+            let error = session.eval(source).err().unwrap_or_else(|| panic!("accepted {source}"));
+            assert!(error.to_string().contains("Mismatched primitive return"), "{source}: {error}");
+        }
+        for (source, expected) in [
+            ("((fn ^long [] (identity 1.75)))", "1"),
+            ("((fn ^double [] (identity 1)))", "1.0"),
+            ("((fn ^long [] (if (identity true) 1.75 nil)))", "1"),
+            ("((fn ^long [] (try 1.75 (catch :default e 2.75))))", "1"),
+            ("((fn ^double [] (try 1 (catch :default e 2))))", "1.0"),
+            ("((fn ^long [^double x] (+ x)) 1.75)", "1"),
+            ("((fn ^long [x] (quot x 0.5)) 1.75)", "3"),
+            ("((fn ^double [] (let [^double x (identity 3)] x)))", "3.0"),
+            ("(double? ((fn ^double [x] (hash x)) 7))", "true"),
+            ("((fn ^double [] (plain-global-long)))", "1.0"),
+            ("((fn ^long [b] (if b (throw 7) 1.5)) false)", "1"),
+            ("((fn ^double [b] (if b 1 (throw 7))) true)", "1.0"),
+            ("((fn ^double [n] (loop [i 0 x 0] (if (< i n) (recur (inc i) (+ x 0.5)) x))) 3)", "1.5"),
+            ("((fn ^long [n] (loop [i 0 x 0.5] (if (< i n) (recur (inc i) (inc i)) x))) 3)", "3"),
+            ("(try ((fn ^double [] (-))) (catch :default e :arity))", ":arity"),
+            ("(try ((fn ^double [] (/))) (catch :default e :arity))", ":arity"),
+            ("((fn ^double [a] (aget a 0)) (long-array [3]))", "3.0"),
+        ] {
+            assert_eq!(printed(&mut session, source), expected, "{source}");
+        }
+    }
+}
