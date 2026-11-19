@@ -29922,3 +29922,105 @@ pr470-name-call-correction.log, before restarting the full baseline.
 That focused run passed all 11 tests with no failures or skips. The corrected
 full workspace baseline uses the same required command and scope, logged at
 `target/probe/pr470-workspace-baseline-final.log`.
+
+## Primitive-call release measurements (2026-11-19)
+
+The focused bench.py runs compare exact main df4342dd with source 3e825a18,
+both built using `cargo +stable build --release --locked -p suss-cli`,
+CARGO_BUILD_JOBS=2, SUSS_FUNCTION_NAMES=1 and MemoryMax=8G. The detached baseline
+worktree and both copied executables remain under target/probe, with SHA256
+receipts. Reusing the release target across worktrees initially selected a
+generator with the wrong source fingerprint; the existing assertion rejected
+it. `cargo +stable clean --release -p suss-compile-generator` rebuilt that
+affected release package; the second build passed without bypassing the check
+(`pr470-after-build.log`, `pr470-release-generator-rebuild.log`,
+`pr470-after-build2.log`). The before build took 11m52s, and the corrected after
+build took 3m25s. The latter includes rebuilding the generator.
+
+`target/probe/pr470-focused-bench.py` loads bench.py with N=1,000,000 and
+REPS=3, selects long-control, call-long, call-double, double-control and
+double-add plus all four whole-loop cases, and calls its unchanged
+jvm_times/suss_times/table routines. Each invocation supplies the copied binary,
+the retained work directory and the commit label. Both runs use scoped 8 GiB,
+TMPDIR and SUSS_BUILD_DIR under target/probe, and SUSS_FUNCTION_NAMES=1 at
+compile time. `mise exec -- clojure ... (clojure-version)` in the probe work
+directory reports 1.12.6. Instructions use perf stat instructions:u, allocation
+uses the null-collector RSS slope, and the first control warms native code.
+
+Gross instructions per iteration, including each control:
+
+| Case | Before | After | Bytes before → after |
+| --- | ---: | ---: | ---: |
+| long control | 25 | 25 | ≈0 → ≈0 |
+| `(double i)` | 314 | 26 | 16 → ≈0 |
+| `(+ (double i) 0.5)` | 772 | 26 | 49 → ≈0 |
+| `(typed-long (+ i 3000000000))` | 226 | 150 | 32 → 16 |
+| `(typed-double (double i))` | 439 | 119 | 32 → 16 |
+| typed long sum | 308 | 108 | 48 → ≈0 |
+| typed double sum | 809 | 68 | 48 → ≈0 |
+
+The call-only rows materialize their guarded result for the benchmark's
+identity test, accounting for the remaining result box; the typed sum loops
+keep results raw through arithmetic and recurrence. The plain long and double
+sum controls remain 21 and 14 instructions, respectively, with ≈0 allocation.
+Approximately zero means below the harness's RSS resolution, not a fabricated
+zero measurement; generated-code checks separately verify no normal-path boxes
+around typed calls and in the raw coercions/bodies.
+
+Logs and retained inputs/raw measurements are `pr470-before-bench.log`,
+`pr470-after-bench.log`, corresponding before/after-bench directories and
+`pr470-bench-comparison.json`. Machine load exceeded the harness threshold, so
+walltimes and ratios are not used as performance acceptance evidence. This is
+a focused instruction/allocation comparison, not the quiet full benchmark run
+needed for the JVM-noise and program-ratio criteria. The full workspace
+baseline, independent final review and final-head CI remain separate gates.
+
+## Independent source-kind review corrections (2026-11-19)
+
+The final issue-wide independent review found source-kind gaps: bootstrap
+inc/dec arithmetic, abs and unchecked arithmetic, boxed public bit operations,
+and narrow primitive-array elements. The corrected checker distinguishes
+Byte/Short/Int/Long/Float/Double independently of physical storage. Long returns
+accept Int, double returns accept Float; byte and short require explicit
+conversion. Int and float loop initializers widen to Long and Double, and a
+Float recur can retain a Double loop local. Only genuinely primitive integral
+bit operations are Long; bit-test/clear/flip/set remain boxed source calls.
+
+Source-known array lengths are Int; unknown reflective lengths remain boxed.
+Array-class facts come from source hints, supported known constructors and
+retained immutable initializer records, including loop object classes. If
+joins preserve an array class alongside literal nil, and differing array
+classes remain unknown. Queries memoize immutable Hir identities and charge
+lookups/inserts so a shared initializer DAG is not expanded repeatedly.
+
+The retained JVM oracle matrices cover 160 compiler observations, plus loop,
+bitwise and alength cases: acceptance means compilation acceptance, not proof
+that a later runtime unboxing succeeds. See pr470-final-review-summary.md and
+pr470-final-review-*-jvm.log under target/probe. The reviewer approved the final
+implementation at primitive_returns.rs SHA256
+d3796e1b95e25347d70f9b37a455282d996d61e4c14f6a288dedc7fb48055928,
+with no concrete residual defect found in callers, ABI, flags or source-kind
+handling. This sign-off is separate from passing validation gates.
+
+Focused verification after the complete correction passed **19 tests, 0
+failures, 0 ignored** across compiled_core_casts (11), compiled_primitive_params
+(2), portable_primitive_entries (3) and portable_unboxed_locals (3), in the
+usual stable, two-job/two-test-thread, 8 GiB scope with TMPDIR under target/probe.
+Log: `target/probe/pr470-final-review-fixes4.log`. This includes the executing
+28-layer shared-initializer regression, accepted/rejected source-kind matrices
+in Runtime/Macro, ordinary and packed stores, boxed bit results, array/nil
+joins and loop reference classes. Original assertions remain in place.
+
+Earlier focused logs retain real failures: fixes1 had seven passes and two
+failures because bootstrap inc/dec lacked Invoke nodes and byte/short/float
+stores used ordinary Array nodes. The corrected wiring passed all 17 tests
+in fixes2; alength additions passed all 18 in fixes3; the final resource/loop/nil
+cases passed in fixes4. A proposed file-mode DAG resource probe at 1,000,000
+compile fuel failed during macro argument transport in both before/fixes3,
+so it is not evidence of a measured array-query regression. Memoization follows
+the static traversal analysis, with the bare-fn executing test as its guard.
+
+The full source-3e825a18 workspace run was stopped for the concrete review
+corrections while its completed targets had no observed failures; it is not a
+passing full baseline. The required full command will now be rerun against the
+reviewed source, with raw corpus capture and temporary files under target/probe.

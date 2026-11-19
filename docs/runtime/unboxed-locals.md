@@ -66,7 +66,7 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   supplies its arities' default return kind; a vector's tag overrides it.
   Nested functions have their own tags. Return conversion happens outside the
   function's recurrence loop. A body already primitive in the source must
-  match the declared kind (an int may widen to long); an opposite primitive
+  match the declared kind (an int may widen to long, a float to double); an opposite primitive
   kind is a compile error. This check uses source hints, not WIT specialization
   or optimizer facts. Boxed bodies, including `try`, can unbox afterward.
   Clojure's primitive return unboxing differs from
@@ -74,6 +74,12 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   conversion (`1.0e30` becomes `Long/MAX_VALUE`), whereas a long parameter
   rejects an out-of-range double. Both reject a non-number. These results are
   still boxed at the generic entry's return.
+  The source checker keeps byte, short, int and float array elements distinct
+  from their physical i64/f64 representation. Unary and unchecked arithmetic
+  follow the JVM overload's source result. Public bit-test/clear/flip/set stay
+  boxed source calls. Array length is primitive int for a source-known array
+  class, while an unhinted reflective call stays boxed. Immutable initializer
+  facts are cached within an array-class query to bound shared-graph work.
 - **Primitive bodies.** A function with source numeric parameter or return
   tags has a typed Wasm entry, retained in a signature-specific subtype of its
   code struct (ABI 7). The ordinary entry checks its arguments, calls that
@@ -151,3 +157,11 @@ These parts of #337, #448 and #351 aren't done yet:
 - `experiments/numeric-representation/suss-jvm/bench.py` times whole loops
   summing longs and doubles. Its README compares them with the unboxed `i64`
   kernel `d_i64_checked`.
+- Its primitive sum loops compare exact main df4342dd with 3e825a18: the long
+  loop drops from 308 to 108 instructions per iteration, and the double loop
+  from 809 to 68; allocation drops from approximately 48 bytes to below the
+  RSS measurement resolution in both. `(double i)` drops from 314 to 26
+  instructions including the control, and approximately 16 bytes to below
+  resolution. Code-generation and Runtime/Macro/component tests verify raw
+  calls and coercions separately. Loaded-machine walltimes are not used for
+  the program-ratio targets; commands and limitations are in the handoff.

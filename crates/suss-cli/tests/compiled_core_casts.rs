@@ -194,3 +194,123 @@ fn guarded_primitive_calls_preserve_replacement_values_and_numeric_joins() {
         assert_eq!(printed(&mut session, "[(pair-pass) (apply typed-pair [2 3])]"), "[[2 (3)] [2 (3)]]");
     }
 }
+
+// JVM Clojure 1.12.6 source kinds, independent of the backend's i64/f64
+// representation. The review's full oracle matrix is retained in target/probe.
+fn primitive_source_case(session: &mut Session, parameters: &str, body: &str, accepted: [bool; 2]) {
+    for (tag, accepted) in ["long", "double"].into_iter().zip(accepted) {
+        let source = format!("(fn ^{tag} [{parameters}] {body})");
+        let result = session.eval(&source);
+        if accepted { result.unwrap_or_else(|error| panic!("{source}: {error}")); }
+        else {
+            let error = result.err().unwrap_or_else(|| panic!("accepted {source}"));
+            assert!(error.to_string().contains("Mismatched primitive return"), "{source}: {error}");
+        }
+    }
+}
+
+#[test]
+fn unary_and_unchecked_source_results_follow_clojure_overloads() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        for operation in ["inc", "dec", "abs", "unchecked-inc", "unchecked-dec", "unchecked-negate"] {
+            for (operand, accepted) in [
+                ("x", [true, true]), ("(long x)", [true, false]),
+                ("(int x)", [true, false]), ("(double x)", [false, true]),
+                ("(float x)", [false, true]),
+            ] {
+                primitive_source_case(&mut session, "x", &format!("({operation} {operand})"), accepted);
+            }
+        }
+        for operation in ["unchecked-add", "unchecked-subtract", "unchecked-multiply"] {
+            for (operands, accepted) in [
+                ("x y", [true, true]), ("(long x) y", [true, true]),
+                ("x (long y)", [true, true]), ("(double x) y", [false, true]),
+                ("x (double y)", [false, true]), ("(long x) (long y)", [true, false]),
+                ("(int x) (int y)", [true, false]), ("(float x) (float y)", [false, true]),
+            ] {
+                primitive_source_case(&mut session, "x y", &format!("({operation} {operands})"), accepted);
+            }
+        }
+        // Boxed operands remain boxed source calls, even when execution
+        // happens to return a double or a long before return unboxing.
+        assert_eq!(printed(&mut session, "[((fn ^long [x] (inc x)) 2.75) ((fn ^double [x] (abs x)) -3) ((fn ^double [x y] (unchecked-add x y)) 2 3)]"), "[3 3.0 5.0]");
+    }
+}
+
+#[test]
+fn packed_array_source_kinds_are_distinct_from_backend_representations() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        for (hint, cast, accepted, loop_accepted) in [
+            ("bytes", "byte", [false, false], [false, false]),
+            ("shorts", "short", [false, false], [false, false]),
+            ("ints", "int", [true, false], [true, false]),
+            ("floats", "float", [false, true], [false, true]),
+            ("longs", "long", [true, false], [true, false]),
+            ("doubles", "double", [false, true], [false, true]),
+            ("objects", "identity", [true, true], [true, true]),
+        ] {
+            let parameters = format!("^{hint} a");
+            primitive_source_case(&mut session, &parameters, "(aget a 0)", accepted);
+            primitive_source_case(&mut session, &parameters, &format!("(aset a 0 ({cast} 3))"), accepted);
+            primitive_source_case(&mut session, &parameters, "(let [x (aget a 0)] x)", accepted);
+            primitive_source_case(&mut session, &parameters, "(loop [x (aget a 0)] x)", loop_accepted);
+            primitive_source_case(&mut session, &parameters, "(identity (aget a 0))", [true, true]);
+        }
+        primitive_source_case(&mut session, "^floats a b", "(loop [x (aget a 0)] (if b (recur (aget a 0)) x))", [false, true]);
+        primitive_source_case(&mut session, "^floats a b", "(loop [x (aget a 0)] (if b (recur (double x)) x))", [false, true]);
+        primitive_source_case(&mut session, "^floats a b", "(loop [x 0.0] (if b (recur (aget a 0)) x))", [false, true]);
+        primitive_source_case(&mut session, "^ints a b", "(loop [x (aget a 0)] (if b (recur (aget a 0)) x))", [true, false]);
+        assert_eq!(printed(&mut session, "[((fn ^long [^ints a] (aget a 0)) (int-array [3])) ((fn ^double [^floats a] (aget a 0)) (float-array [3]))]"), "[3 3.0]");
+    }
+}
+
+#[test]
+fn boxed_bit_functions_do_not_inherit_backend_primitive_kinds() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        primitive_source_case(&mut session, "x", "(bit-test x 1)", [true, true]);
+        for operation in ["bit-clear", "bit-flip", "bit-set"] {
+            primitive_source_case(&mut session, "x", &format!("({operation} x 1)"), [true, true]);
+            primitive_source_case(&mut session, "^long x", &format!("({operation} x 1)"), [true, true]);
+        }
+        primitive_source_case(&mut session, "x", "(bit-and x 1)", [true, false]);
+        primitive_source_case(&mut session, "x", "(bit-or x 1)", [true, false]);
+        primitive_source_case(&mut session, "x", "(bit-shift-left x 1)", [true, false]);
+        assert_eq!(printed(&mut session, "[(try ((fn ^long [x] (bit-test x 1)) 3) (catch :default e :threw)) (try ((fn ^double [x] (bit-test x 1)) 3) (catch :default e :threw))]"), "[:threw :threw]");
+        assert_eq!(printed(&mut session, "[((fn ^double [^long x] (bit-clear x 1)) 4) ((fn ^double [^long x] (bit-flip x 1)) 4) ((fn ^double [^long x] (bit-set x 1)) 4)]"), "[4.0 6.0 6.0]");
+    }
+}
+
+#[test]
+fn array_length_source_results_require_a_known_array_class() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        primitive_source_case(&mut session, "a", "(alength a)", [true, true]);
+        primitive_source_case(&mut session, "^ints a", "(alength a)", [true, false]);
+        primitive_source_case(&mut session, "^objects a", "(alength a)", [true, false]);
+        primitive_source_case(&mut session, "a", "(alength ^ints a)", [true, false]);
+        primitive_source_case(&mut session, "", "(alength (int-array 3))", [true, false]);
+        primitive_source_case(&mut session, "", "(alength (object-array 3))", [true, false]);
+        primitive_source_case(&mut session, "", "(let [a (int-array 3)] (alength a))", [true, false]);
+        primitive_source_case(&mut session, "", "(loop [a (int-array 3)] (alength a))", [true, false]);
+        primitive_source_case(&mut session, "b", "(loop [a (int-array 3)] (if b (recur (object-array 3)) (alength a)))", [true, false]);
+        primitive_source_case(&mut session, "b", "(loop [a (int-array 3)] (if b (recur :changed) (alength a)))", [true, false]);
+        primitive_source_case(&mut session, "b", "(alength (if b (int-array 3) nil))", [true, false]);
+        primitive_source_case(&mut session, "b", "(alength (if b nil (int-array 3)))", [true, false]);
+        primitive_source_case(&mut session, "b", "(alength (if b (int-array 3) (int-array 4)))", [true, false]);
+        primitive_source_case(&mut session, "b", "(alength (if b (int-array 3) (object-array 3)))", [true, true]);
+        primitive_source_case(&mut session, "", "(alength (identity (int-array 3)))", [true, true]);
+        assert_eq!(printed(&mut session, "[((fn ^long [^ints a] (alength a)) (int-array 3)) ((fn ^double [a] (alength a)) (int-array 3))]"), "[3 3.0]");
+    }
+}
+
+#[test]
+fn shared_array_initializers_do_not_expand_source_kind_work_exponentially() {
+    let mut body = "(let [a0 (int-array 3)".to_owned();
+    for i in 1..=28 { body.push_str(&format!(" a{i} (if b a{} a{})", i - 1, i - 1)); }
+    body.push_str("] (alength a28))");
+    let source = format!("(let [f (fn ^long [b] {body})] [(f true) (f false)])");
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        // Default compilation fuel; the linear-size shared graph must not
+        // require visiting its 2^28 expanded initializer paths.
+        assert_eq!(printed(&mut session, &source), "[3 3]");
+    }
+}

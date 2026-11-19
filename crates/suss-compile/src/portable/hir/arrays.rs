@@ -64,7 +64,7 @@ impl Analyzer<'_> {
 
 /// The packed element kind, in `packed_arrays::KINDS` order, that an array
 /// expression's source tag names (#389).
-fn packed_kind(array: &Hir) -> Option<usize> {
+pub(super) fn packed_kind(array: &Hir) -> Option<usize> {
     let source = array.source.as_ref()?;
     // The inferred tag already gives a hint precedence over the operand's own.
     let tag = source.tags.inferred.as_ref().or(source.tags.tag.as_ref())?;
