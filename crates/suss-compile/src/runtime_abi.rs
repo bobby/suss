@@ -356,6 +356,71 @@ fn named_site_get(b: &mut Builder) {
     b.function_with_locals("named-site-get", &[reference(NAMED_SITE), VALUE, VALUE], &[VALUE], &[(1, VALUE), (1, ValType::I32), (1, VALUE), (1, ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(7) }))], &code);
 }
 
+/// `user-named-site-get(site, owner, name, caller)` (#462): a user named
+/// read, `(.-field obj)` or a method call's lookup, through its site's cache.
+/// The built-in-internals and field-privacy guards answer by the owner's
+/// descriptor, the name and the caller alone, so a source object of a
+/// descriptor the site holds, for the caller the site was filled for, reads
+/// the cached field or method as `named-site-get` does, without them.
+/// Anything else runs both guards, then, for a source object, `named-site-get`,
+/// which fills the cache; any other owner takes `named-property-get`. The
+/// owner-value field holds the caller; another caller clears the descriptors.
+fn user_named_site_get(b: &mut Builder) {
+    use Instruction::*;
+    // Params: 0 site, 1 owner, 2 name, 3 caller. Locals: 4 descriptor, 5 slot.
+    let site = |field| [LocalGet(0), StructGet { struct_type_index: NAMED_SITE, field_index: field }];
+    let set = |field: u32, value: Vec<Instruction<'static>>| {
+        let mut code = vec![LocalGet(0)];
+        code.extend(value);
+        code.push(StructSet { struct_type_index: NAMED_SITE, field_index: field });
+        code
+    };
+    let null = || RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq });
+    let epoch = || [GlobalGet(PROTOCOL_EPOCH_GLOBAL)];
+    let mut code = vec![LocalGet(1), RefTestNonNull(HeapType::Concrete(OBJECT)), LocalGet(3)];
+    code.extend(site(SITE_OWNER_VALUE));
+    code.extend([RefEq, I32And, If(BlockType::Empty)]);
+    code.extend([LocalGet(1), RefCastNonNull(HeapType::Concrete(OBJECT)), StructGet { struct_type_index: OBJECT, field_index: 0 }, LocalTee(4)]);
+    code.extend(site(SITE_DESCRIPTOR));
+    code.extend([RefEq, If(BlockType::Empty)]);
+    code.extend(site(SITE_SLOT));
+    code.extend([LocalTee(5), I32Const(0), I32GeS, If(BlockType::Empty)]);
+    code.extend([LocalGet(1), RefCastNonNull(HeapType::Concrete(OBJECT)), StructGet { struct_type_index: OBJECT, field_index: 1 },
+        LocalGet(5), ArrayGet(ARGS), Return, End]);
+    code.extend(site(SITE_EPOCH));
+    code.extend(epoch());
+    code.extend([I32Eq, If(BlockType::Empty)]);
+    code.extend(site(SITE_METHOD));
+    code.extend([Return, End, End, LocalGet(4)]);
+    code.extend(site(SITE_DESCRIPTOR_2));
+    code.push(RefEq);
+    code.extend(site(SITE_EPOCH_2));
+    code.extend(epoch());
+    code.extend([I32Eq, I32And, If(BlockType::Empty)]);
+    code.extend(site(SITE_METHOD_2));
+    code.extend([Return, End, End]);
+    code.extend([
+        LocalGet(1), LocalGet(2), Call(b.names["builtin-internal-get-guard"]),
+        LocalGet(2), LocalGet(3), Call(b.names["user-field-get-guard"]), Drop,
+        LocalGet(1), RefTestNonNull(HeapType::Concrete(OBJECT)), If(BlockType::Empty),
+        LocalGet(3),
+    ]);
+    code.extend(site(SITE_OWNER_VALUE));
+    code.extend([RefEq, I32Eqz, If(BlockType::Empty)]);
+    code.extend(set(SITE_DESCRIPTOR, vec![null()]));
+    code.extend(set(SITE_DESCRIPTOR_2, vec![null()]));
+    code.extend(set(SITE_OWNER_VALUE, vec![LocalGet(3)]));
+    code.extend([End, LocalGet(0), LocalGet(1), LocalGet(2), Call(b.names["named-site-get"]), Return, End]);
+    code.extend([LocalGet(1), LocalGet(2), Call(b.names["named-property-get"])]);
+    b.function_with_locals(
+        "user-named-site-get",
+        &[reference(NAMED_SITE), VALUE, VALUE, VALUE],
+        &[VALUE],
+        &[(1, VALUE), (1, ValType::I32)],
+        &code,
+    );
+}
+
 /// `named-site-set(site, object, name, value)` (#446): a core named write,
 /// `(set! (.-field object) value)`, through its site's cache. An object with
 /// the site's descriptor writes the cached field and returns the value.
@@ -2007,14 +2072,21 @@ fn build_module() -> Vec<u8> {
         I32Const(-1),
         Return,
         End,
-        Block(BlockType::Empty),
-        Loop(BlockType::Empty),
-        LocalGet(3),
+        // From the last field: names that munge alike share the last
+        // declaration's slot, as property-find answers (#462).
         LocalGet(2),
         RefCastNonNull(HeapType::Concrete(ARGS)),
         ArrayLen,
-        I32GeU,
+        LocalSet(3),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(3),
+        I32Eqz,
         BrIf(1),
+        LocalGet(3),
+        I32Const(1),
+        I32Sub,
+        LocalSet(3),
         LocalGet(2),
         RefCastNonNull(HeapType::Concrete(ARGS)),
         LocalGet(3),
@@ -2025,10 +2097,6 @@ fn build_module() -> Vec<u8> {
         LocalGet(3),
         Return,
         End,
-        LocalGet(3),
-        I32Const(1),
-        I32Add,
-        LocalSet(3),
         Br(0),
         End,
         End,
@@ -2063,6 +2131,7 @@ fn build_module() -> Vec<u8> {
     native_object_properties::functions(&mut b);
     // After named-property-get, which native_object_properties defines.
     named_site_get(&mut b);
+    user_named_site_get(&mut b);
     named_site_set(&mut b);
     string_join(&mut b);
     arithmetic_functions.extend(native_object_methods::functions(&mut b));
