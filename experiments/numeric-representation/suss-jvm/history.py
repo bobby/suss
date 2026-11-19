@@ -33,6 +33,7 @@ RUNS = [
     ("M15-14 raw values, object arrays, wasmtime 51", "de6b1925", "run_m15_14.txt"),
     ("M15-15 Clojure arrays, loop-invariant var reads", "bacdb2fb", "run_m15_15.txt"),
     ("M15-16 array views, string literal globals", "6952319c", "run_m15_16.txt"),
+    ("M15-17 program paths, bench controls", "1a6d16e3", "run_m15_17.txt"),
 ]
 # Each table names its columns in its header: runs since #386 have Suss bytes,
 # since #443 JVM bytes, and since #447 "With control", the count with the
