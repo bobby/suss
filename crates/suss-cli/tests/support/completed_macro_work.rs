@@ -6,7 +6,10 @@ fn cumulative_exhaustion_follows_multiple_completed_guest_helpers_and_recovers()
     for mut caller in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let caller_fuel = caller.options().fuel_per_operation;
         let mut macros = CompiledMacros::new().unwrap();
-        macros.define("(defmacro tick [] (do (defonce completed-helper-count (atom 0)) (reset! completed-helper-count (+ @completed-helper-count 1)) 1))").unwrap();
+        // Each helper does a fixed amount of guest work, so the guest, not
+        // the host's analysis charge between expansions, exhausts the budget
+        // as guest code gets cheaper (#446).
+        macros.define("(defmacro tick [] (do (defonce completed-helper-count (atom 0)) (reset! completed-helper-count (+ @completed-helper-count 1)) (reduce + (range 8)) 1))").unwrap();
         macros
             .define("(defmacro completed-count [] @completed-helper-count)")
             .unwrap();

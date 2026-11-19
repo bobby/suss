@@ -641,6 +641,12 @@ pub(super) fn functions(b: &mut Builder) -> (Vec<u32>, u32) {
         LocalGet(3),
         Call(b.names["native-object-prototype-set"]),
         Drop,
+        // An existing object's new prototype changes the chains that
+        // `instance?` sites cache answers for (#446).
+        GlobalGet(PROTOCOL_EPOCH_GLOBAL),
+        I32Const(1),
+        I32Add,
+        GlobalSet(PROTOCOL_EPOCH_GLOBAL),
         LocalGet(2),
     ]);
     let set_proto = callback(b, &[(3, VALUE)], &code);

@@ -356,15 +356,18 @@ fn named_site_get(b: &mut Builder) {
     b.function_with_locals("named-site-get", &[reference(NAMED_SITE), VALUE, VALUE], &[VALUE], &[(1, VALUE), (1, ValType::I32), (1, VALUE), (1, ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(7) }))], &code);
 }
 
-/// `instance-site-test(site, constructor, value)` (#378): `instance?` through
-/// its site's cache, a `NAMED_SITE` struct whose descriptor, method and
-/// second-descriptor fields hold the last constructor, its descriptor and its
-/// prototype, valid at the protocol epoch. The constructor is checked first;
-/// an i31 is never an instance; an object of the descriptor other than its
-/// prototype is one; anything else takes `object-instance`.
-fn instance_site_test(b: &mut Builder) {
+/// `user-named-site-get(site, owner, name, caller)` (#462): a user named
+/// read, `(.-field obj)` or a method call's lookup, through its site's cache.
+/// The built-in-internals and field-privacy guards answer by the owner's
+/// descriptor, the name and the caller alone, so a source object of a
+/// descriptor the site holds, for the caller the site was filled for, reads
+/// the cached field or method as `named-site-get` does, without them.
+/// Anything else runs both guards, then, for a source object, `named-site-get`,
+/// which fills the cache; any other owner takes `named-property-get`. The
+/// owner-value field holds the caller; another caller clears the descriptors.
+fn user_named_site_get(b: &mut Builder) {
     use Instruction::*;
-    // Params: 0 site, 1 constructor, 2 value.
+    // Params: 0 site, 1 owner, 2 name, 3 caller. Locals: 4 descriptor, 5 slot.
     let site = |field| [LocalGet(0), StructGet { struct_type_index: NAMED_SITE, field_index: field }];
     let set = |field: u32, value: Vec<Instruction<'static>>| {
         let mut code = vec![LocalGet(0)];
@@ -372,6 +375,195 @@ fn instance_site_test(b: &mut Builder) {
         code.push(StructSet { struct_type_index: NAMED_SITE, field_index: field });
         code
     };
+    let null = || RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq });
+    let epoch = || [GlobalGet(PROTOCOL_EPOCH_GLOBAL)];
+    let mut code = vec![LocalGet(1), RefTestNonNull(HeapType::Concrete(OBJECT)), LocalGet(3)];
+    code.extend(site(SITE_OWNER_VALUE));
+    code.extend([RefEq, I32And, If(BlockType::Empty)]);
+    code.extend([LocalGet(1), RefCastNonNull(HeapType::Concrete(OBJECT)), StructGet { struct_type_index: OBJECT, field_index: 0 }, LocalTee(4)]);
+    code.extend(site(SITE_DESCRIPTOR));
+    code.extend([RefEq, If(BlockType::Empty)]);
+    code.extend(site(SITE_SLOT));
+    code.extend([LocalTee(5), I32Const(0), I32GeS, If(BlockType::Empty)]);
+    code.extend([LocalGet(1), RefCastNonNull(HeapType::Concrete(OBJECT)), StructGet { struct_type_index: OBJECT, field_index: 1 },
+        LocalGet(5), ArrayGet(ARGS), Return, End]);
+    code.extend(site(SITE_EPOCH));
+    code.extend(epoch());
+    code.extend([I32Eq, If(BlockType::Empty)]);
+    code.extend(site(SITE_METHOD));
+    code.extend([Return, End, End, LocalGet(4)]);
+    code.extend(site(SITE_DESCRIPTOR_2));
+    code.push(RefEq);
+    code.extend(site(SITE_EPOCH_2));
+    code.extend(epoch());
+    code.extend([I32Eq, I32And, If(BlockType::Empty)]);
+    code.extend(site(SITE_METHOD_2));
+    code.extend([Return, End, End]);
+    code.extend([
+        LocalGet(1), LocalGet(2), Call(b.names["builtin-internal-get-guard"]),
+        LocalGet(2), LocalGet(3), Call(b.names["user-field-get-guard"]), Drop,
+        LocalGet(1), RefTestNonNull(HeapType::Concrete(OBJECT)), If(BlockType::Empty),
+        LocalGet(3),
+    ]);
+    code.extend(site(SITE_OWNER_VALUE));
+    code.extend([RefEq, I32Eqz, If(BlockType::Empty)]);
+    code.extend(set(SITE_DESCRIPTOR, vec![null()]));
+    code.extend(set(SITE_DESCRIPTOR_2, vec![null()]));
+    code.extend(set(SITE_OWNER_VALUE, vec![LocalGet(3)]));
+    code.extend([End, LocalGet(0), LocalGet(1), LocalGet(2), Call(b.names["named-site-get"]), Return, End]);
+    code.extend([LocalGet(1), LocalGet(2), Call(b.names["named-property-get"])]);
+    b.function_with_locals(
+        "user-named-site-get",
+        &[reference(NAMED_SITE), VALUE, VALUE, VALUE],
+        &[VALUE],
+        &[(1, VALUE), (1, ValType::I32)],
+        &code,
+    );
+}
+
+/// `named-site-set(site, object, name, value)` (#446): a core named write,
+/// `(set! (.-field object) value)`, through its site's cache. An object with
+/// the site's descriptor writes the cached field and returns the value.
+/// Anything else takes `named-property-set`, which checks and writes; after
+/// it, a source object that isn't native caches its descriptor and the
+/// field's slot, which another object of that descriptor writes the same way.
+fn named_site_set(b: &mut Builder) {
+    use Instruction::*;
+    // Params: 0 site, 1 object, 2 name, 3 value. Locals: 4 the slot, 5
+    // named-property-set's result.
+    let site = |field| [LocalGet(0), StructGet { struct_type_index: NAMED_SITE, field_index: field }];
+    let set = |field: u32, value: Vec<Instruction<'static>>| {
+        let mut code = vec![LocalGet(0)];
+        code.extend(value);
+        code.push(StructSet { struct_type_index: NAMED_SITE, field_index: field });
+        code
+    };
+    let descriptor = || [LocalGet(1), RefCastNonNull(HeapType::Concrete(OBJECT)), StructGet { struct_type_index: OBJECT, field_index: 0 }];
+    let mut code = vec![LocalGet(1), RefTestNonNull(HeapType::Concrete(OBJECT)), If(BlockType::Empty)];
+    code.extend(descriptor());
+    code.extend(site(SITE_DESCRIPTOR));
+    code.extend([RefEq, If(BlockType::Empty)]);
+    code.extend(site(SITE_SLOT));
+    code.extend([LocalTee(4), I32Const(0), I32GeS, If(BlockType::Empty)]);
+    code.extend([
+        LocalGet(1),
+        RefCastNonNull(HeapType::Concrete(OBJECT)),
+        StructGet { struct_type_index: OBJECT, field_index: 1 },
+        LocalGet(4),
+        LocalGet(3),
+        ArraySet(ARGS),
+        LocalGet(3),
+        Return,
+        End,
+        End,
+        End,
+    ]);
+    code.extend([LocalGet(1), LocalGet(2), LocalGet(3), Call(b.names["named-property-set"]), LocalSet(5)]);
+    code.extend([LocalGet(1), RefTestNonNull(HeapType::Concrete(OBJECT)), If(BlockType::Empty)]);
+    code.extend([LocalGet(1), Call(b.names["native-object?"]), I32Eqz, If(BlockType::Empty)]);
+    code.extend([LocalGet(1), LocalGet(2), Call(b.names["named-field-slot"]), LocalTee(4), I32Const(0), I32GeS, If(BlockType::Empty)]);
+    code.extend(set(SITE_DESCRIPTOR, descriptor().to_vec()));
+    code.extend(set(SITE_SLOT, vec![LocalGet(4)]));
+    code.extend([End, End, End, LocalGet(5)]);
+    b.function_with_locals(
+        "named-site-set",
+        &[reference(NAMED_SITE), VALUE, VALUE, VALUE],
+        &[VALUE],
+        &[(1, ValType::I32), (1, VALUE)],
+        &code,
+    );
+}
+
+/// `string-join(array)` (#446): the concatenation of an object array's
+/// strings, in order, as one allocation: `str`'s variadic arity, which
+/// concatenated pairwise and so copied its result once per argument. An
+/// element that isn't a string throws, as `string-concat` does.
+fn string_join(b: &mut Builder) {
+    use Instruction::*;
+    // Param 0 the array. Locals: 1 its storage, 2 index, 3 length so far,
+    // 4 the result, 5 an element, 6 the next length.
+    let string = HeapType::Concrete(STRING);
+    let element = [LocalGet(1), LocalGet(2), ArrayGet(ARGS), RefCastNonNull(string)];
+    let each = |body: Vec<Instruction<'static>>| {
+        let mut code = vec![I32Const(0), LocalSet(2), Block(BlockType::Empty), Loop(BlockType::Empty)];
+        code.extend([LocalGet(2), LocalGet(1), ArrayLen, I32GeU, BrIf(1)]);
+        code.extend(body);
+        code.extend([LocalGet(2), I32Const(1), I32Add, LocalSet(2), Br(0), End, End]);
+        code
+    };
+    let mut code = vec![
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(PACKED)),
+        StructGet { struct_type_index: PACKED, field_index: 0 },
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        LocalSet(1),
+    ];
+    // A part that isn't a string, as a toString may return, throws as
+    // string-concat's operand check does; so does a total past i32.
+    let mut total = vec![LocalGet(1), LocalGet(2), ArrayGet(ARGS), RefTestNonNull(string), I32Eqz, If(BlockType::Empty)];
+    total.extend(numeric::error("String concatenation requires string operands", 4));
+    total.push(End);
+    total.extend(element.clone());
+    total.extend([ArrayLen, LocalGet(3), I32Add, LocalTee(6), LocalGet(3), I32LtU, If(BlockType::Empty)]);
+    total.extend(numeric::error("Numeric conversion scratch allocation failed", 5));
+    total.extend([End, LocalGet(6), LocalSet(3)]);
+    code.extend(each(total));
+    code.extend([LocalGet(3), ArrayNewDefault(STRING), LocalSet(4), I32Const(0), LocalSet(3)]);
+    let mut copy = element.to_vec();
+    copy.extend([
+        LocalSet(5),
+        LocalGet(4),
+        LocalGet(3),
+        LocalGet(5),
+        I32Const(0),
+        LocalGet(5),
+        ArrayLen,
+        ArrayCopy { array_type_index_dst: STRING, array_type_index_src: STRING },
+        LocalGet(3),
+        LocalGet(5),
+        ArrayLen,
+        I32Add,
+        LocalSet(3),
+    ]);
+    code.extend(each(copy));
+    code.push(LocalGet(4));
+    let nullable = |heap_type| ValType::Ref(RefType { nullable: true, heap_type });
+    b.function_with_locals(
+        "string-join",
+        &[VALUE],
+        &[VALUE],
+        &[(1, nullable(HeapType::Concrete(ARGS))), (2, ValType::I32), (2, nullable(string)), (1, ValType::I32)],
+        &code,
+    );
+}
+
+/// `instance-site-test(site, constructor, value)` (#378): `instance?` through
+/// its site's cache, a `NAMED_SITE` struct whose descriptor, method and
+/// second-descriptor fields hold the last constructor, its descriptor and its
+/// prototype, valid at the protocol epoch. The constructor is checked first;
+/// an i31 is never an instance; an object of the descriptor other than its
+/// prototype is one; anything else takes `object-instance`.
+///
+/// The owner, owner-value and owner-epoch fields hold a negative answer
+/// (#446): the prototype and descriptor of a source object of another
+/// descriptor that `object-instance` found not to be an instance. Such an object's answer depends only on its
+/// prototype's chain, which changes only with the epoch (setPrototypeOf and
+/// `__proto__` writes advance it), so another object of the same kind with
+/// that prototype isn't one either. Native objects, error backings and the
+/// Error family's own test are left to `object-instance`.
+fn instance_site_test(b: &mut Builder) {
+    use Instruction::*;
+    // Params: 0 site, 1 constructor, 2 value. Locals: 3 the value's
+    // prototype, if it is a plain source object of another descriptor, else
+    // null; 4 the answer.
+    let site = |field| [LocalGet(0), StructGet { struct_type_index: NAMED_SITE, field_index: field }];
+    let set = |field: u32, value: Vec<Instruction<'static>>| {
+        let mut code = vec![LocalGet(0)];
+        code.extend(value);
+        code.push(StructSet { struct_type_index: NAMED_SITE, field_index: field });
+        code
+    };
+    let object = || [LocalGet(2), RefCastNonNull(HeapType::Concrete(OBJECT))];
     let (constructor, descriptor, prototype) = (SITE_DESCRIPTOR, SITE_METHOD, SITE_DESCRIPTOR_2);
     let mut code = vec![LocalGet(1)];
     code.extend(site(constructor));
@@ -382,17 +574,69 @@ fn instance_site_test(b: &mut Builder) {
     code.extend(set(prototype, [site(descriptor).to_vec(), vec![Call(b.names["owned-descriptor-prototype"])]].concat()));
     code.extend(set(constructor, vec![LocalGet(1)]));
     code.extend(set(SITE_EPOCH, vec![GlobalGet(PROTOCOL_EPOCH_GLOBAL)]));
+    code.extend(set(SITE_OWNER_EPOCH, vec![I32Const(-1)]));
     code.push(End);
     code.extend([LocalGet(2), RefTestNonNull(HeapType::I31), If(BlockType::Empty), I32Const(0), Return, End]);
-    code.extend([LocalGet(2), RefTestNonNull(HeapType::Concrete(7)), If(BlockType::Empty)]);
-    code.extend([LocalGet(2), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 0 }]);
+    code.extend([LocalGet(2), RefTestNonNull(HeapType::Concrete(OBJECT)), If(BlockType::Empty)]);
+    code.extend(object());
+    code.push(StructGet { struct_type_index: OBJECT, field_index: 0 });
     code.extend(site(descriptor));
     code.extend([RefEq, LocalGet(2)]);
     code.extend(site(prototype));
-    code.extend([RefEq, I32Eqz, I32And, If(BlockType::Empty), I32Const(1), Return, End, End]);
+    code.extend([RefEq, I32Eqz, I32And, If(BlockType::Empty), I32Const(1), Return, End]);
+    // A plain source object of another descriptor: one whose descriptor is
+    // neither the site's nor the native objects', with a one-element
+    // prototype cell, and a site whose constructor isn't Error's.
+    code.extend(object());
+    code.push(StructGet { struct_type_index: OBJECT, field_index: 0 });
     code.extend(site(descriptor));
-    code.extend([LocalGet(2), Call(b.names["object-instance"])]);
-    b.function("instance-site-test", &[reference(NAMED_SITE), VALUE, VALUE], &[ValType::I32], &code);
+    code.push(RefEq);
+    code.extend(object());
+    code.extend([StructGet { struct_type_index: OBJECT, field_index: 0 }, GlobalGet(native_objects::TAG_GLOBAL), RefEq, I32Or]);
+    code.extend(site(descriptor));
+    code.extend([GlobalGet(nominal::ERROR_GLOBAL), RefEq, I32Or, I32Eqz, If(BlockType::Empty)]);
+    code.extend(object());
+    code.extend([StructGet { struct_type_index: OBJECT, field_index: 2 }, RefTestNonNull(HeapType::Concrete(ARGS)), If(BlockType::Empty)]);
+    code.extend(object());
+    code.extend([
+        StructGet { struct_type_index: OBJECT, field_index: 2 },
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        ArrayLen,
+        I32Const(1),
+        I32Eq,
+        If(BlockType::Empty),
+    ]);
+    code.extend(object());
+    code.extend([
+        StructGet { struct_type_index: OBJECT, field_index: 2 },
+        RefCastNonNull(HeapType::Concrete(ARGS)),
+        I32Const(0),
+        ArrayGet(ARGS),
+        LocalTee(3),
+    ]);
+    code.extend(site(SITE_OWNER));
+    code.push(RefEq);
+    code.extend(site(SITE_OWNER_EPOCH));
+    code.extend([GlobalGet(PROTOCOL_EPOCH_GLOBAL), I32Eq, I32And, If(BlockType::Empty), I32Const(0), Return, End]);
+    code.extend([End, End, End, End]);
+    code.extend(site(descriptor));
+    code.extend([LocalGet(2), Call(b.names["object-instance"]), LocalTee(4)]);
+    // Only a plain source object's prototype is cached, at the epoch the
+    // site was checked at: a change during the test leaves it stale.
+    code.extend([I32Eqz, LocalGet(3), RefIsNull, I32Eqz, I32And, If(BlockType::Empty)]);
+    code.extend(set(SITE_OWNER, vec![LocalGet(3)]));
+    // And its descriptor, which emitted sites compare inline (#457): an
+    // object of that descriptor and prototype is plain as this one was.
+    code.extend(set(SITE_OWNER_VALUE, [object().to_vec(), vec![StructGet { struct_type_index: OBJECT, field_index: 0 }]].concat()));
+    code.extend(set(SITE_OWNER_EPOCH, site(SITE_EPOCH).to_vec()));
+    code.extend([End, LocalGet(4)]);
+    b.function_with_locals(
+        "instance-site-test",
+        &[reference(NAMED_SITE), VALUE, VALUE],
+        &[ValType::I32],
+        &[(1, VALUE), (1, ValType::I32)],
+        &code,
+    );
 }
 
 /// Closure call sites (#378) hold their last callee and its entry for k
@@ -1828,14 +2072,21 @@ fn build_module() -> Vec<u8> {
         I32Const(-1),
         Return,
         End,
-        Block(BlockType::Empty),
-        Loop(BlockType::Empty),
-        LocalGet(3),
+        // From the last field: names that munge alike share the last
+        // declaration's slot, as property-find answers (#462).
         LocalGet(2),
         RefCastNonNull(HeapType::Concrete(ARGS)),
         ArrayLen,
-        I32GeU,
+        LocalSet(3),
+        Block(BlockType::Empty),
+        Loop(BlockType::Empty),
+        LocalGet(3),
+        I32Eqz,
         BrIf(1),
+        LocalGet(3),
+        I32Const(1),
+        I32Sub,
+        LocalSet(3),
         LocalGet(2),
         RefCastNonNull(HeapType::Concrete(ARGS)),
         LocalGet(3),
@@ -1846,10 +2097,6 @@ fn build_module() -> Vec<u8> {
         LocalGet(3),
         Return,
         End,
-        LocalGet(3),
-        I32Const(1),
-        I32Add,
-        LocalSet(3),
         Br(0),
         End,
         End,
@@ -1884,6 +2131,9 @@ fn build_module() -> Vec<u8> {
     native_object_properties::functions(&mut b);
     // After named-property-get, which native_object_properties defines.
     named_site_get(&mut b);
+    user_named_site_get(&mut b);
+    named_site_set(&mut b);
+    string_join(&mut b);
     arithmetic_functions.extend(native_object_methods::functions(&mut b));
     arithmetic_functions.extend(native_object_factory::functions(&mut b));
     r#async::intrinsics(&mut b);

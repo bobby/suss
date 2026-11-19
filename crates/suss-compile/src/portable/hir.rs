@@ -626,6 +626,9 @@ pub enum Nominal {
     CoerceString,
     ObjectCoerceString,
     ConcatString,
+    /// The concatenation of an object array's strings, in one allocation
+    /// (#446): `str`'s variadic arity.
+    JoinStrings,
     ValueAdd,
     StringIndexOf,
     StringSlice,
@@ -644,7 +647,7 @@ pub enum Nominal {
 impl Nominal {
     pub fn result(self) -> Type {
         match self {
-            Self::CoerceString | Self::ObjectCoerceString | Self::ConcatString | Self::StringSlice | Self::StringFromUnit => Type::String,
+            Self::CoerceString | Self::ObjectCoerceString | Self::ConcatString | Self::JoinStrings | Self::StringSlice | Self::StringFromUnit => Type::String,
             Self::StringIndexOf => Type::Number,
             Self::BindingDefined
             | Self::IsNumber
@@ -689,7 +692,7 @@ impl Nominal {
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
                 Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
-                Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit => count == 1,
+                Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
                 Self::BindCallable | Self::MethodGet | Self::NativeMethodGet | Self::CallableKeyRegister => count == 2,
@@ -3197,6 +3200,7 @@ impl Analyzer<'_> {
                 "coerce-string" => Some(Nominal::CoerceString),
                 "object-coerce-string" => Some(Nominal::ObjectCoerceString),
                 "concat-string" => Some(Nominal::ConcatString),
+                "join-strings" => Some(Nominal::JoinStrings),
                 "string-hash" => Some(Nominal::StringHash),
                 "vector-nth" => Some(Nominal::VectorNth),
                 "map-get" => Some(Nominal::ArrayMapGet),
@@ -3871,6 +3875,27 @@ impl Analyzer<'_> {
                 )
             }
             _ => {
+                // `reduced?` compiles inline, as its Clojure :inline definition
+                // does (#457): an `instance?` site on core's Reduced, so a
+                // reduction step tests its result without a call. Another
+                // arity stays a call, which raises the arity error.
+                if args.len() == 1
+                    && let Some(ResolvedBinding::Cell(global)) = &resolved
+                    && let var = global.core_var_of_link().unwrap_or_else(|| global.clone())
+                    && var.namespace() == "suss.core"
+                    && var.name() == "reduced?"
+                {
+                    let reduced = Form {
+                        kind: Kind::Symbol(suss_reader::Symbol {
+                            namespace: Some("suss.core".into()),
+                            name: "Reduced".into(),
+                        }),
+                        span: items[0].span.clone(),
+                        metadata: vec![],
+                    };
+                    let arguments = vec![self.form(&reduced)?, self.form(&args[0])?];
+                    return Ok(self.nominal(form, Nominal::Instance, arguments));
+                }
                 if let Some(ResolvedBinding::Core { export, .. }) = &resolved {
                     // `nil?` and `identical?` compile inline (#356), as their
                     // Clojure :inline definitions do, so a call compiled before

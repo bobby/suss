@@ -19,6 +19,21 @@ fn object_method_invoke_name(n: usize) -> &'static str {
     ];
     NAMES[n]
 }
+/// `object-method-site-N` and `object-method-call-N` (#462), as above.
+fn object_method_site_name(n: usize) -> &'static str {
+    const NAMES: [&str; runtime_abi::MAX_FIXED as usize] = [
+        "object-method-site-0", "object-method-site-1", "object-method-site-2", "object-method-site-3",
+        "object-method-site-4", "object-method-site-5", "object-method-site-6", "object-method-site-7",
+    ];
+    NAMES[n]
+}
+fn object_method_call_name(n: usize) -> &'static str {
+    const NAMES: [&str; runtime_abi::MAX_FIXED as usize] = [
+        "object-method-call-0", "object-method-call-1", "object-method-call-2", "object-method-call-3",
+        "object-method-call-4", "object-method-call-5", "object-method-call-6", "object-method-call-7",
+    ];
+    NAMES[n]
+}
 
 /// Globals per cached named-read site: its immutable `NAMED_SITE` struct (#378).
 const FIELD_SITE_GLOBALS: u32 = 1;
@@ -228,6 +243,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::CoerceString => { names.insert("coerce-string"); }
                         Nominal::ObjectCoerceString => { names.insert("object-coerce-string"); }
                         Nominal::ConcatString => { names.insert("string-concat"); }
+                        Nominal::JoinStrings => { names.insert("string-join"); }
                         Nominal::StringAppendLong => { names.insert("string-append-long"); }
                         Nominal::StringHash => { names.insert("string-hash"); }
                         Nominal::VectorNth => { names.insert("vector-nth"); }
@@ -448,8 +464,11 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         }
     }
     // Core field reads by a plain literal name get an inline cache (#361):
-    // a site's last descriptor and its field's index, in two globals.
+    // a site's last descriptor and its field's index, in two globals. So do
+    // core field writes (#446).
     let mut field_site_list = vec![];
+    let mut write_site = false;
+    let mut user_site = false;
     // Of those, the `.-length` reads, which test for a string first.
     let mut length_sites = std::collections::HashSet::new();
     for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
@@ -462,10 +481,23 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             })
             .collect::<std::collections::HashMap<_, _>>();
         for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
-            if let Operation::Nominal { operation: Nominal::CoreNamedGet, arguments } = &inst.operation
+            if let Operation::Nominal { operation: operation @ (Nominal::CoreNamedGet | Nominal::CoreNamedSet | Nominal::NamedGet), arguments } = &inst.operation
                 && literals.get(&arguments[1]).is_some_and(|units| plain_field_name(units))
             {
                 let site = (function as *const IrFunction as usize, inst.result.0 as u32);
+                // User reads, with their caller operand, too (#462).
+                if *operation == Nominal::NamedGet {
+                    if arguments.len() == 3 {
+                        user_site = true;
+                        field_site_list.push(site);
+                    }
+                    continue;
+                }
+                if *operation == Nominal::CoreNamedSet {
+                    write_site = true;
+                    field_site_list.push(site);
+                    continue;
+                }
                 if literals[&arguments[1]].iter().copied().eq("length".encode_utf16()) {
                     length_sites.insert(site);
                 }
@@ -475,6 +507,12 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     }
     if !field_site_list.is_empty() {
         names.insert("named-site-get");
+    }
+    if write_site {
+        names.insert("named-site-set");
+    }
+    if user_site {
+        names.insert("user-named-site-get");
     }
     // Protocol method lookups get an inline cache (#355): the last
     // descriptor, its method and the protocol epoch it was found at.
@@ -547,6 +585,24 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 && !static_callees.contains(&operands[0])
             {
                 call_site_list.push(((function as *const IrFunction as usize, inst.result.0 as u32), operands.len() as u32 - 1));
+            }
+        }
+    }
+    // Method call sites, `(.m obj …)`, cache their last method, its function
+    // and its entry (#462), as closure call sites do: three globals each.
+    let mut object_call_site_list = vec![];
+    for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
+        .chain(futures.iter().map(|body| &body.continuation.function))
+    {
+        for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
+            if let Operation::Nominal { operation: Nominal::ObjectInvoke, arguments } = &inst.operation
+                && arguments.len() >= 2
+                && arguments.len() - 2 < runtime_abi::MAX_FIXED as usize
+            {
+                let n = arguments.len() - 2;
+                names.insert(object_method_site_name(n));
+                names.insert(object_method_call_name(n));
+                object_call_site_list.push(((function as *const IrFunction as usize, inst.result.0 as u32), n as u32));
             }
         }
     }
@@ -687,7 +743,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "binding-get" | "binding-bound" | "number-negate" | "value-negate"
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
-            | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit"
+            | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit" | "string-join"
             | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string-hash" | "number-cast-long" | "number-cast-double" | "packed-array-test" | "object-array-test" | "vector-type-register" | "array-map-type-register" | "vector-count" => {
                 (vec![VALUE], vec![VALUE])
             }
@@ -712,6 +768,20 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 vec![ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::NAMED_SITE) }), VALUE, VALUE],
                 vec![VALUE],
             ),
+            "named-site-set" | "user-named-site-get" => (
+                vec![ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::NAMED_SITE) }), VALUE, VALUE, VALUE],
+                vec![VALUE],
+            ),
+            name if name.starts_with("object-method-site-") => {
+                let n: usize = name["object-method-site-".len()..].parse().expect("object-method-site-N");
+                (vec![VALUE; n + 2], vec![VALUE])
+            }
+            name if name.starts_with("object-method-call-") => {
+                let n: u32 = name["object-method-call-".len()..].parse().expect("object-method-call-N");
+                let mut params = vec![VALUE, ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::CALL + n + 1) })];
+                params.extend(vec![VALUE; n as usize + 1]);
+                (params, vec![VALUE])
+            }
             name if name.starts_with("object-method-invoke-") => {
                 let n: usize = name["object-method-invoke-".len()..].parse().expect("object-method-invoke-N");
                 (vec![VALUE; n + 2], vec![VALUE])
@@ -908,6 +978,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .map(|(index, site)| (*site, first_construct_site + 3 * index as u32))
         .collect::<std::collections::HashMap<_, _>>();
     let first_native_site = first_construct_site + 3 * construct_site_list.len() as u32;
+    let first_object_call_site = first_native_site + 4 * native_site_list.len() as u32;
+    let object_call_sites = object_call_site_list.iter().enumerate()
+        .map(|(index, (site, _))| (*site, first_object_call_site + 3 * index as u32))
+        .collect::<std::collections::HashMap<_, _>>();
     let native_sites = native_site_list.iter().enumerate()
         .map(|(index, site)| (*site, first_native_site + 4 * index as u32))
         .collect::<std::collections::HashMap<_, _>>();
@@ -937,7 +1011,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
         dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites, length_sites: &length_sites,
         method_sites: &method_sites, instance_sites: &instance_sites, call_sites: &call_sites, keyword_caches: &keyword_caches,
-        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, epoch_global };
+        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, object_call_sites: &object_call_sites, epoch_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -1086,6 +1160,24 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
         );
     }
+    for (_, n) in &object_call_site_list {
+        // The site's last method and its function, null to match none, and
+        // that function's entry for this, then n arguments (#462).
+        for _ in 0..2 {
+            code_globals.global(
+                GlobalType { val_type: VALUE, mutable: true, shared: false },
+                &ConstExpr::ref_null(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }),
+            );
+        }
+        code_globals.global(
+            GlobalType {
+                val_type: ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(runtime_abi::CALL + n + 1) }),
+                mutable: true,
+                shared: false,
+            },
+            &ConstExpr::ref_null(HeapType::Concrete(runtime_abi::CALL + n + 1)),
+        );
+    }
     for (definition, global) in &defined_code {
         exports.export(&format!("link.{definition}.code"), ExportKind::Global, *global);
         for (k, entry) in links.entries[definition].iter().enumerate() {
@@ -1106,7 +1198,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .section(&types)
         .section(&imports)
         .section(&functions);
-    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() || !keyword_cache_list.is_empty() || !literal_list.is_empty() || !construct_site_list.is_empty() || !native_site_list.is_empty() {
+    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() || !keyword_cache_list.is_empty() || !literal_list.is_empty() || !construct_site_list.is_empty() || !native_site_list.is_empty() || !object_call_site_list.is_empty() {
         module.section(&code_globals);
     }
     module.section(&exports);
@@ -1242,6 +1334,8 @@ struct Context<'a> {
     instance_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     construct_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     native_sites: &'a std::collections::HashMap<(usize, u32), u32>,
+    /// Cached method call sites: their first global (#462).
+    object_call_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     /// Cached protocol method lookup sites: their first global; the epoch.
     method_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     epoch_global: u32,
@@ -1439,6 +1533,47 @@ fn i31_values(function: &mut Function, a: u32, b: u32) {
             .instruction(&Instruction::I31GetS);
     }
 }
+/// The inline start of an unhinted aget or aset (#446): opens the result
+/// block and the generic path's block inside it. An object array, a packed
+/// array of kind 6, and an i31 index in its range set `storage` and `slot`
+/// and fall through, for the caller to access the element and branch out of
+/// the result block; anything else branches to the generic path, which the
+/// caller ends with two `End`s.
+fn object_array_element(array: u32, position: u32, storage: u32, slot: u32) -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
+    let packed = RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::PACKED) };
+    let args = RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::ARGS) };
+    vec![
+        Block(BlockType::Result(VALUE)),
+        Block(BlockType::Empty),
+        Block(BlockType::Result(ValType::Ref(args))),
+        Block(BlockType::Result(ValType::Ref(packed))),
+        LocalGet(array),
+        BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF, to_ref_type: packed },
+        Drop,
+        Br(2),
+        End,
+        StructGet { struct_type_index: runtime_abi::PACKED, field_index: 0 },
+        BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF, to_ref_type: args },
+        Drop,
+        Br(1),
+        End,
+        LocalSet(storage),
+        LocalGet(position),
+        RefTestNonNull(i31),
+        I32Eqz,
+        BrIf(0),
+        LocalGet(position),
+        RefCastNonNull(i31),
+        I31GetS,
+        LocalTee(slot),
+        LocalGet(storage),
+        ArrayLen,
+        I32GeU,
+        BrIf(0),
+    ]
+}
 fn plain_field_name(units: &[u16]) -> bool {
     !units.is_empty()
         && !(units[0] >= b'0' as u16 && units[0] <= b'9' as u16)
@@ -1595,7 +1730,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
-    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, construct_sites, native_sites, call_sites, keyword_caches, literals, epoch_global } = *context;
+    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, construct_sites, native_sites, object_call_sites, call_sites, keyword_caches, literals, epoch_global } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -1652,13 +1787,16 @@ fn emit_function(
             heap_type: HeapType::Concrete(if kind == 6 { runtime_abi::ARGS } else { runtime_abi::PACKED_STORAGE + kind }),
         })));
     }
+    // A source object, cast once for an `instance?` site's inline tests (#457).
+    let object_local = storage_locals + 7;
+    declarations.push((1, ValType::Ref(wasm_encoder::RefType { nullable: true, heap_type: HeapType::Concrete(7) })));
     // Loop-invariant array views (#389): an inline aget or aset in a loop,
     // of an array defined before the loop, casts the array to its storage
     // once, at the end of the block that enters the loop, into a nullable
     // local of that storage type; null if the array isn't of that kind. In
     // the loop, the access reads the local instead of casting the array.
     // Each access takes its innermost such loop.
-    let first_view = storage_locals + 7;
+    let first_view = storage_locals + 8;
     let mut view_of: std::collections::HashMap<u32, u32> = std::collections::HashMap::new();
     let mut view_inits: Vec<(usize, u32, usize, u32)> = Vec::new();
     if continuation.is_none() {
@@ -1705,6 +1843,32 @@ fn emit_function(
             })));
         }
     }
+    // Parameter field arrays (#445): a parameter that two or more field reads
+    // take as their object, in a function no branch re-enters at its first
+    // block, has its object's fields array read once on entry, into a
+    // nullable local of the args type: null when it isn't an object.
+    let mut fields_of: std::collections::HashMap<u32, u32> = std::collections::HashMap::new();
+    if continuation.is_none() && ir.blocks.first().is_some()
+        && !ir.blocks.iter().any(|block| match &block.terminator {
+            Terminator::Jump { target, .. } => *target == 0,
+            Terminator::Branch { consequent, alternative, .. } => *consequent == 0 || *alternative == 0,
+            _ => false,
+        })
+    {
+        let mut reads: std::collections::HashMap<u32, usize> = std::collections::HashMap::new();
+        for inst in ir.blocks.iter().flat_map(|block| &block.instructions) {
+            if let Operation::Nominal { operation: Nominal::Field(_), arguments } = &inst.operation {
+                *reads.entry(arguments[0].0 as u32).or_default() += 1;
+            }
+        }
+        for parameter in &ir.blocks[0].parameters {
+            if reads.get(&(parameter.0 as u32)).is_some_and(|count| *count >= 2) {
+                let local = pc + 1 + declarations.iter().skip(2).map(|(count, _)| count).sum::<u32>();
+                fields_of.insert(parameter.0 as u32, local);
+                declarations.push((1, ValType::Ref(wasm_encoder::RefType { nullable: true, heap_type: HeapType::Concrete(runtime_abi::ARGS) })));
+            }
+        }
+    }
     let mut function = Function::new(declarations);
     use Instruction::*;
     if continuation.is_none() {
@@ -1730,6 +1894,19 @@ fn emit_function(
             function.instruction(&LocalSet(value.0 as u32 + offset));
         }
     }
+    }
+    for (value, local) in &fields_of {
+        function
+            .instruction(&LocalGet(value + offset))
+            .instruction(&RefTestNonNull(HeapType::Concrete(7)))
+            .instruction(&If(BlockType::Result(ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(runtime_abi::ARGS) }))))
+            .instruction(&LocalGet(value + offset))
+            .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+            .instruction(&StructGet { struct_type_index: 7, field_index: 1 })
+            .instruction(&Else)
+            .instruction(&RefNull(HeapType::Concrete(runtime_abi::ARGS)))
+            .instruction(&End)
+            .instruction(&LocalSet(*local));
     }
     // Callees known statically (ADR-0004): closures this function makes, and
     // a method's own closure, its self reference. A call to one calls its
@@ -2334,9 +2511,20 @@ fn emit_function(
                     arguments,
                 } if arguments.len() == 2 => {
                     // A packed array reads its storage (#389); anything
-                    // else, the source array's dense prefix (#361).
+                    // else, the source array's dense prefix (#361). An
+                    // object array at an i31 index in range reads inline, as
+                    // a hinted one does (#446).
                     let array = arguments[0].0 as u32 + offset;
+                    let storage = storage_locals + 6;
+                    for instruction in object_array_element(array, arguments[1].0 as u32 + offset, storage, field_index_local) {
+                        function.instruction(&instruction);
+                    }
                     function
+                        .instruction(&LocalGet(storage))
+                        .instruction(&LocalGet(field_index_local))
+                        .instruction(&ArrayGet(runtime_abi::ARGS))
+                        .instruction(&Br(1))
+                        .instruction(&End)
                         .instruction(&LocalGet(array))
                         .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::PACKED)))
                         .instruction(&If(BlockType::Result(VALUE)))
@@ -2348,14 +2536,27 @@ fn emit_function(
                         .instruction(&LocalGet(arguments[1].0 as u32 + offset))
                         .instruction(&Call(index("array-get")))
                         .instruction(&End)
+                        .instruction(&End)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
                 Operation::Array {
                     operation: ArrayOperation::Set,
                     arguments,
                 } if arguments.len() == 3 => {
-                    // As for one-index reads (#389).
+                    // As for one-index reads (#389, #446).
+                    let storage = storage_locals + 6;
+                    let value = arguments[2].0 as u32 + offset;
+                    for instruction in object_array_element(arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset, storage, field_index_local) {
+                        function.instruction(&instruction);
+                    }
                     function
+                        .instruction(&LocalGet(storage))
+                        .instruction(&LocalGet(field_index_local))
+                        .instruction(&LocalGet(value))
+                        .instruction(&ArraySet(runtime_abi::ARGS))
+                        .instruction(&LocalGet(value))
+                        .instruction(&Br(1))
+                        .instruction(&End)
                         .instruction(&LocalGet(arguments[0].0 as u32 + offset))
                         .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::PACKED)))
                         .instruction(&If(BlockType::Result(VALUE)));
@@ -2368,6 +2569,7 @@ fn emit_function(
                     }
                     function
                         .instruction(&Call(index("array-set")))
+                        .instruction(&End)
                         .instruction(&End)
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
@@ -2682,15 +2884,89 @@ fn emit_function(
                                     .instruction(&End)
                                     .instruction(&Else);
                             }
-                            // The site's struct and the runtime's cached read (#378).
-                            function
-                                .instruction(&GlobalGet(cache))
-                                .instruction(&LocalGet(object))
-                                .instruction(&LocalGet(name))
-                                .instruction(&Call(index("named-site-get")));
+                            // The site's cached field, read inline when the
+                            // object has the site's descriptor (#445), as
+                            // named-site-get reads it; anything else, a
+                            // method among them, takes the runtime's read
+                            // (#378).
+                            let storage = storage_locals + 6;
+                            let site = |field| [GlobalGet(cache), StructGet { struct_type_index: runtime_abi::NAMED_SITE, field_index: field }];
+                            let object_type = RefType { nullable: false, heap_type: HeapType::Concrete(7) };
+                            let mut code = vec![
+                                Block(BlockType::Result(VALUE)),
+                                Block(BlockType::Empty),
+                                Block(BlockType::Result(ValType::Ref(object_type))),
+                                LocalGet(object),
+                                BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF, to_ref_type: object_type },
+                                Drop,
+                                Br(1),
+                                End,
+                                StructGet { struct_type_index: 7, field_index: 1 },
+                                LocalSet(storage),
+                                LocalGet(object),
+                                RefCastNonNull(HeapType::Concrete(7)),
+                                StructGet { struct_type_index: 7, field_index: 0 },
+                            ];
+                            code.extend(site(runtime_abi::SITE_DESCRIPTOR));
+                            code.extend([RefEq, I32Eqz, BrIf(0)]);
+                            code.extend(site(runtime_abi::SITE_SLOT));
+                            code.extend([LocalTee(field_index_local), I32Const(0), I32LtS, BrIf(0)]);
+                            code.extend([LocalGet(storage), LocalGet(field_index_local), ArrayGet(runtime_abi::ARGS), Br(1), End]);
+                            code.extend([GlobalGet(cache), LocalGet(object), LocalGet(name), Call(index("named-site-get")), End]);
+                            for instruction in &code {
+                                function.instruction(instruction);
+                            }
                             if length {
                                 function.instruction(&End);
                             }
+                        }
+                        Nominal::NamedGet if field_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
+                            // A user read (#462): a source object of the site's
+                            // descriptor, for the caller the site was filled
+                            // for, reads its cached field, or its method at the
+                            // site's epoch, inline; anything else takes the
+                            // runtime's cached read, which runs the guards.
+                            let cache = field_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            let [owner, name, caller] = [0, 1, 2].map(|i| arguments[i].0 as u32 + offset);
+                            let site = |field| [GlobalGet(cache), StructGet { struct_type_index: runtime_abi::NAMED_SITE, field_index: field }];
+                            let object_type = RefType { nullable: false, heap_type: HeapType::Concrete(7) };
+                            let mut code = vec![
+                                Block(BlockType::Result(VALUE)),
+                                Block(BlockType::Empty),
+                                Block(BlockType::Result(ValType::Ref(object_type))),
+                                LocalGet(owner),
+                                BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF, to_ref_type: object_type },
+                                Drop,
+                                Br(1),
+                                End,
+                                LocalSet(object_local),
+                                LocalGet(caller),
+                            ];
+                            code.extend(site(runtime_abi::SITE_OWNER_VALUE));
+                            code.extend([RefEq, I32Eqz, BrIf(0), LocalGet(object_local), StructGet { struct_type_index: 7, field_index: 0 }]);
+                            code.extend(site(runtime_abi::SITE_DESCRIPTOR));
+                            code.extend([RefEq, I32Eqz, BrIf(0)]);
+                            code.extend(site(runtime_abi::SITE_SLOT));
+                            code.extend([LocalTee(field_index_local), I32Const(0), I32GeS, If(BlockType::Empty),
+                                LocalGet(object_local), StructGet { struct_type_index: 7, field_index: 1 },
+                                LocalGet(field_index_local), ArrayGet(runtime_abi::ARGS), Br(2), End]);
+                            code.extend(site(runtime_abi::SITE_EPOCH));
+                            code.extend([GlobalGet(epoch_global), I32Ne, BrIf(0)]);
+                            code.extend(site(runtime_abi::SITE_METHOD));
+                            code.extend([Br(1), End, GlobalGet(cache), LocalGet(owner), LocalGet(name), LocalGet(caller),
+                                Call(index("user-named-site-get")), End]);
+                            for instruction in &code {
+                                function.instruction(instruction);
+                            }
+                        }
+                        Nominal::CoreNamedSet if field_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
+                            // The site's struct and the runtime's cached write (#446).
+                            let cache = field_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            function.instruction(&GlobalGet(cache));
+                            for argument in arguments {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function.instruction(&Call(index("named-site-set")));
                         }
                         Nominal::IsKeyword => {
                             function
@@ -3270,20 +3546,43 @@ fn emit_function(
                                 .instruction(&Br(2))
                                 .instruction(&End)
                                 .instruction(&End);
-                            // An object of the site's descriptor, other than
-                            // its prototype, at the site's epoch, is an
-                            // instance, as the test answers (#445).
-                            let site = |field| [GlobalGet(cache), StructGet { struct_type_index: runtime_abi::NAMED_SITE, field_index: field }];
-                            let mut code = vec![LocalGet(value), RefTestNonNull(HeapType::Concrete(7)), If(BlockType::Empty)];
+                            let site =|field| [GlobalGet(cache), StructGet { struct_type_index: runtime_abi::NAMED_SITE, field_index: field }];
+                            let object = || [LocalGet(object_local), StructGet { struct_type_index: 7, field_index: 0 }];
+                            // A source object, cast once; anything else takes the test.
+                            let object_type = RefType { nullable: false, heap_type: HeapType::Concrete(7) };
+                            let mut code = vec![Block(BlockType::Empty), Block(BlockType::Result(ValType::Ref(object_type))), LocalGet(value),
+                                BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF, to_ref_type: object_type },
+                                Drop, Br(1), End, LocalSet(object_local)];
+                            // The site's constructor at its epoch: an object of
+                            // its descriptor, other than its prototype, is an
+                            // instance (#445); one of the descriptor and
+                            // prototype the test found not to be an instance
+                            // isn't (#457). Its one-element prototype cell is
+                            // read in the args local.
+                            let storage = storage_locals + 6;
                             code.extend(site(runtime_abi::SITE_DESCRIPTOR));
                             code.extend([LocalGet(constructor), RefEq]);
                             code.extend(site(runtime_abi::SITE_EPOCH));
-                            code.extend([GlobalGet(epoch_global), I32Eq, I32And]);
-                            code.extend([LocalGet(value), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 0 }]);
+                            code.extend([GlobalGet(epoch_global), I32Eq, I32And, If(BlockType::Empty)]);
+                            code.extend(object());
                             code.extend(site(runtime_abi::SITE_METHOD));
-                            code.extend([RefEq, I32And, LocalGet(value)]);
+                            code.extend([RefEq, If(BlockType::Empty), LocalGet(value)]);
                             code.extend(site(runtime_abi::SITE_DESCRIPTOR_2));
-                            code.extend([RefEq, I32Eqz, I32And, If(BlockType::Empty), I32Const(1), Br(2), End, End]);
+                            code.extend([RefEq, I32Eqz, If(BlockType::Empty), I32Const(1), Br(4), End, Else]);
+                            code.extend(object());
+                            code.extend(site(runtime_abi::SITE_OWNER_VALUE));
+                            code.push(RefEq);
+                            code.extend(site(runtime_abi::SITE_OWNER_EPOCH));
+                            code.extend([GlobalGet(epoch_global), I32Eq, I32And, If(BlockType::Empty)]);
+                            let args = RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::ARGS) };
+                            code.extend([Block(BlockType::Empty), Block(BlockType::Result(ValType::Ref(args))),
+                                LocalGet(object_local), StructGet { struct_type_index: 7, field_index: 2 },
+                                BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF, to_ref_type: args },
+                                Drop, Br(1), End,
+                                LocalTee(storage), ArrayLen, I32Const(1), I32Ne, BrIf(0),
+                                LocalGet(storage), I32Const(0), ArrayGet(runtime_abi::ARGS)]);
+                            code.extend(site(runtime_abi::SITE_OWNER));
+                            code.extend([RefEq, If(BlockType::Empty), I32Const(0), Br(6), End, End, End, End, End, End]);
                             for instruction in &code {
                                 function.instruction(instruction);
                             }
@@ -3330,12 +3629,33 @@ fn emit_function(
                             // held in the args storage local (#445).
                             let object = arguments[0].0 as u32 + offset;
                             let storage = storage_locals + 6;
+                            let cached = fields_of.get(&(arguments[0].0 as u32)).copied();
                             let slow = |function: &mut Function| {
                                 function
                                     .instruction(&LocalGet(object))
                                     .instruction(&I32Const(*field as i32))
                                     .instruction(&Call(index("object-field-get")));
                             };
+                            if let Some(fields) = cached {
+                                // The parameter's fields array, read on entry.
+                                function
+                                    .instruction(&Block(BlockType::Result(VALUE)))
+                                    .instruction(&Block(BlockType::Empty))
+                                    .instruction(&LocalGet(fields))
+                                    .instruction(&BrOnNull(0))
+                                    .instruction(&LocalTee(storage))
+                                    .instruction(&ArrayLen)
+                                    .instruction(&I32Const(*field as i32))
+                                    .instruction(&I32LeU)
+                                    .instruction(&BrIf(0))
+                                    .instruction(&LocalGet(storage))
+                                    .instruction(&I32Const(*field as i32))
+                                    .instruction(&ArrayGet(runtime_abi::ARGS))
+                                    .instruction(&Br(1))
+                                    .instruction(&End);
+                                slow(&mut function);
+                                function.instruction(&End);
+                            } else {
                             function
                                 .instruction(&Block(BlockType::Result(VALUE)))
                                 .instruction(&Block(BlockType::Result(ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(7) }))))
@@ -3362,6 +3682,7 @@ fn emit_function(
                                 .instruction(&Else);
                             slow(&mut function);
                             function.instruction(&End).instruction(&End);
+                            }
                         }
                         Nominal::Key(field) => {
                             function
@@ -3374,6 +3695,69 @@ fn emit_function(
                                         "protocol-key"
                                     },
                                 )));
+                        }
+                        Nominal::ObjectInvoke if object_call_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
+                            // A method call site (#462): the method it last saw
+                            // calls the entry it holds; another asks the
+                            // runtime for an Object wrapper's function, which
+                            // the site then holds with its entry. A method
+                            // that isn't one is held with a null function, and
+                            // it and any other take object-method-invoke-N.
+                            let first = object_call_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            let (method_global, function_global, entry_global) = (first, first + 1, first + 2);
+                            let n = arguments.len() - 2;
+                            let k = n as u32 + 1;
+                            let method = arguments[0].0 as u32 + offset;
+                            let operands = |function: &mut Function, from: usize| {
+                                for argument in &arguments[from..] {
+                                    function.instruction(&LocalGet(argument.0 as u32 + offset));
+                                }
+                            };
+                            let cached_call = |function: &mut Function| {
+                                function.instruction(&GlobalGet(function_global)).instruction(&GlobalGet(entry_global)).instruction(&RefAsNonNull);
+                                operands(function, 1);
+                                function.instruction(&Call(index(object_method_call_name(n))));
+                            };
+                            let uncached = |function: &mut Function| {
+                                operands(function, 0);
+                                function.instruction(&Call(index(object_method_invoke_name(n))));
+                            };
+                            function
+                                .instruction(&Block(BlockType::Result(VALUE)))
+                                .instruction(&Block(BlockType::Empty))
+                                .instruction(&LocalGet(method))
+                                .instruction(&GlobalGet(method_global))
+                                .instruction(&RefEq)
+                                .instruction(&I32Eqz)
+                                .instruction(&BrIf(0))
+                                .instruction(&GlobalGet(function_global))
+                                .instruction(&RefIsNull)
+                                .instruction(&If(BlockType::Result(VALUE)));
+                            uncached(&mut function);
+                            function.instruction(&Else);
+                            cached_call(&mut function);
+                            function.instruction(&End).instruction(&Br(1)).instruction(&End);
+                            operands(&mut function, 0);
+                            function
+                                .instruction(&Call(index(object_method_site_name(n))))
+                                .instruction(&LocalSet(method_local))
+                                .instruction(&LocalGet(method))
+                                .instruction(&GlobalSet(method_global))
+                                .instruction(&LocalGet(method_local))
+                                .instruction(&GlobalSet(function_global))
+                                .instruction(&LocalGet(method_local))
+                                .instruction(&RefIsNull)
+                                .instruction(&If(BlockType::Result(VALUE)));
+                            uncached(&mut function);
+                            function
+                                .instruction(&Else)
+                                .instruction(&LocalGet(method_local))
+                                .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::CLOSURE)))
+                                .instruction(&StructGet { struct_type_index: runtime_abi::CLOSURE, field_index: runtime_abi::CLOSURE_CODE })
+                                .instruction(&StructGet { struct_type_index: runtime_abi::CODE, field_index: runtime_abi::CODE_ENTRY + k })
+                                .instruction(&GlobalSet(entry_global));
+                            cached_call(&mut function);
+                            function.instruction(&End).instruction(&End);
                         }
                         Nominal::ObjectInvoke if arguments.len() - 2 < runtime_abi::MAX_FIXED as usize => {
                             // No argument array (#378): object-method-invoke-N.
@@ -3400,6 +3784,7 @@ fn emit_function(
                         | Nominal::BindingDefined
                         | Nominal::CoerceString
                         | Nominal::ConcatString
+                        | Nominal::JoinStrings
                         | Nominal::ValueAdd
                         | Nominal::StringIndexOf
                         | Nominal::StringSlice
@@ -3477,6 +3862,7 @@ fn emit_function(
                                 Nominal::CoerceString => "coerce-string",
                                 Nominal::ObjectCoerceString => "object-coerce-string",
                                 Nominal::ConcatString => "string-concat",
+                                Nominal::JoinStrings => "string-join",
                                 Nominal::ValueAdd => "value-add",
                                 Nominal::StringIndexOf => "string-index-of",
                                 Nominal::StringSlice => "string-slice",
