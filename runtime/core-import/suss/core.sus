@@ -3031,11 +3031,16 @@
     (iter-reduce coll f start))
 
   IFn
+  ;; Called as a function, a map reads a keyword or small long key as get
+  ;; does, through the runtime's direct lookup (#467); undefined for
+  ;; anything else, which takes -lookup.
   (-invoke [coll k]
-    (-lookup coll k))
+    (let [x (suss.bootstrap/map-get coll k)]
+      (if-not (suss.bootstrap/undefined? x) x (-lookup coll k))))
 
   (-invoke [coll k not-found]
-    (-lookup coll k not-found))
+    (let [x (suss.bootstrap/map-get-or coll k not-found)]
+      (if-not (suss.bootstrap/undefined? x) x (-lookup coll k not-found))))
 
   IEditableCollection
   (-as-transient [coll]
@@ -4420,11 +4425,16 @@
         :else                    init)))
 
   IFn
+  ;; Called as a function, a map reads a keyword or small long key as get
+  ;; does, through the runtime's direct lookup (#467); undefined for
+  ;; anything else, which takes -lookup.
   (-invoke [coll k]
-    (-lookup coll k))
+    (let [x (suss.bootstrap/map-get coll k)]
+      (if-not (suss.bootstrap/undefined? x) x (-lookup coll k))))
 
   (-invoke [coll k not-found]
-    (-lookup coll k not-found))
+    (let [x (suss.bootstrap/map-get-or coll k not-found)]
+      (if-not (suss.bootstrap/undefined? x) x (-lookup coll k not-found))))
 
   IEditableCollection
   (-as-transient [coll]
@@ -4795,10 +4805,15 @@
         (PersistentHashSet. meta m nil))))
 
   IFn
+  ;; Called as a function, a set answers a keyword or small long key as
+  ;; contains? does, through the runtime's direct test (#467): its element
+  ;; is then the key itself. Anything else takes -lookup.
   (-invoke [coll k]
-    (-lookup coll k))
+    (let [x (suss.bootstrap/map-contains coll k)]
+      (if (suss.bootstrap/undefined? x) (-lookup coll k) (if x k nil))))
   (-invoke [coll k not-found]
-    (-lookup coll k not-found))
+    (let [x (suss.bootstrap/map-contains coll k)]
+      (if (suss.bootstrap/undefined? x) (-lookup coll k not-found) (if x k not-found))))
 
   IEditableCollection
   (-as-transient [coll] (TransientHashSet. (-as-transient hash-map))))
