@@ -19,6 +19,21 @@ fn object_method_invoke_name(n: usize) -> &'static str {
     ];
     NAMES[n]
 }
+/// `object-method-site-N` and `object-method-call-N` (#462), as above.
+fn object_method_site_name(n: usize) -> &'static str {
+    const NAMES: [&str; runtime_abi::MAX_FIXED as usize] = [
+        "object-method-site-0", "object-method-site-1", "object-method-site-2", "object-method-site-3",
+        "object-method-site-4", "object-method-site-5", "object-method-site-6", "object-method-site-7",
+    ];
+    NAMES[n]
+}
+fn object_method_call_name(n: usize) -> &'static str {
+    const NAMES: [&str; runtime_abi::MAX_FIXED as usize] = [
+        "object-method-call-0", "object-method-call-1", "object-method-call-2", "object-method-call-3",
+        "object-method-call-4", "object-method-call-5", "object-method-call-6", "object-method-call-7",
+    ];
+    NAMES[n]
+}
 
 /// Globals per cached named-read site: its immutable `NAMED_SITE` struct (#378).
 const FIELD_SITE_GLOBALS: u32 = 1;
@@ -585,8 +600,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 && arguments.len() - 2 < runtime_abi::MAX_FIXED as usize
             {
                 let n = arguments.len() - 2;
-                names.insert(Box::leak(format!("object-method-site-{n}").into_boxed_str()));
-                names.insert(Box::leak(format!("object-method-call-{n}").into_boxed_str()));
+                names.insert(object_method_site_name(n));
+                names.insert(object_method_call_name(n));
                 object_call_site_list.push(((function as *const IrFunction as usize, inst.result.0 as u32), n as u32));
             }
         }
@@ -3685,8 +3700,9 @@ fn emit_function(
                             // A method call site (#462): the method it last saw
                             // calls the entry it holds; another asks the
                             // runtime for an Object wrapper's function, which
-                            // the site then holds with its entry, or calls
-                            // object-method-invoke-N as before.
+                            // the site then holds with its entry. A method
+                            // that isn't one is held with a null function, and
+                            // it and any other take object-method-invoke-N.
                             let first = object_call_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
                             let (method_global, function_global, entry_global) = (first, first + 1, first + 2);
                             let n = arguments.len() - 2;
@@ -3700,7 +3716,11 @@ fn emit_function(
                             let cached_call = |function: &mut Function| {
                                 function.instruction(&GlobalGet(function_global)).instruction(&GlobalGet(entry_global)).instruction(&RefAsNonNull);
                                 operands(function, 1);
-                                function.instruction(&Call(index(&format!("object-method-call-{n}"))));
+                                function.instruction(&Call(index(object_method_call_name(n))));
+                            };
+                            let uncached = |function: &mut Function| {
+                                operands(function, 0);
+                                function.instruction(&Call(index(object_method_invoke_name(n))));
                             };
                             function
                                 .instruction(&Block(BlockType::Result(VALUE)))
@@ -3709,23 +3729,28 @@ fn emit_function(
                                 .instruction(&GlobalGet(method_global))
                                 .instruction(&RefEq)
                                 .instruction(&I32Eqz)
-                                .instruction(&BrIf(0));
-                            cached_call(&mut function);
-                            function.instruction(&Br(1)).instruction(&End);
-                            operands(&mut function, 0);
-                            function
-                                .instruction(&Call(index(&format!("object-method-site-{n}"))))
-                                .instruction(&LocalTee(method_local))
+                                .instruction(&BrIf(0))
+                                .instruction(&GlobalGet(function_global))
                                 .instruction(&RefIsNull)
                                 .instruction(&If(BlockType::Result(VALUE)));
+                            uncached(&mut function);
+                            function.instruction(&Else);
+                            cached_call(&mut function);
+                            function.instruction(&End).instruction(&Br(1)).instruction(&End);
                             operands(&mut function, 0);
                             function
-                                .instruction(&Call(index(object_method_invoke_name(n))))
-                                .instruction(&Else)
+                                .instruction(&Call(index(object_method_site_name(n))))
+                                .instruction(&LocalSet(method_local))
                                 .instruction(&LocalGet(method))
                                 .instruction(&GlobalSet(method_global))
                                 .instruction(&LocalGet(method_local))
                                 .instruction(&GlobalSet(function_global))
+                                .instruction(&LocalGet(method_local))
+                                .instruction(&RefIsNull)
+                                .instruction(&If(BlockType::Result(VALUE)));
+                            uncached(&mut function);
+                            function
+                                .instruction(&Else)
                                 .instruction(&LocalGet(method_local))
                                 .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::CLOSURE)))
                                 .instruction(&StructGet { struct_type_index: runtime_abi::CLOSURE, field_index: runtime_abi::CLOSURE_CODE })
