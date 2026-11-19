@@ -70,9 +70,16 @@ ALLOC_WORK = 32 << 20
 ALLOC_RESOLUTION = 1 << 20
 ALLOC_COUNTS = 16
 # Seconds between load-average samples, and the 1-minute load above which the
-# run's times are flagged as unreliable; the bench itself adds about 1.
+# run's times are flagged as unreliable. The bench itself, with the JVM's
+# compiler and collector threads, peaked at 2.35 on an otherwise idle machine.
 LOAD_INTERVAL = 5
-LOAD_WARNING = 1.5
+LOAD_WARNING = 3
+# The JVM side's loops run JVM_SCALE times the Suss count, JVM_REPS times
+# each, and a time's spread is its median less its best: a JIT-compiled
+# operation can cost under a nanosecond, which a short loop's run-to-run
+# jitter, or one slow run, would hide (#447).
+JVM_SCALE = 4
+JVM_REPS = 7
 
 # The loop's operands: `i` is the loop counter, a long, and `m` is it masked
 # to an index. Arrays have 1024 elements. JVM forms add the type hints
@@ -360,18 +367,19 @@ def jvm_times(work):
     lines.append("(defmacro bytes-of [n expr] `(fn [] (let [a# (allocated)] (~expr ~n) (- (allocated) a#))))")
     entries = []
     for name, expr, count in counted():
+        count *= JVM_SCALE
         lines.append(f"(defn case-{name} [^long n] {loop(name, hinted(expr), 'n', sink=True)})")
         entries.append(f'["{name}" {count} (timed {count} case-{name}) (bytes-of {count} case-{name})]')
     for name, body, _ in LOOPS:
         lines.append(f"(defn case-{name} [^long n] {body})")
-        entries.append(f'["{name}" {N} (timed {N} case-{name}) (bytes-of {N} case-{name})]')
+        entries.append(f'["{name}" {N * JVM_SCALE} (timed {N * JVM_SCALE} case-{name}) (bytes-of {N * JVM_SCALE} case-{name})]')
     lines.append(f"(def cases [{' '.join(entries)}])")
-    # Warm up every case, then take the best of REPS runs.
+    # Warm up every case, then take the best of JVM_REPS runs.
     lines.append("(doseq [[_ _ f] cases] (dotimes [_ 3] (f)))")
-    # Seconds per iteration, best and worst, and the fewest bytes allocated
+    # Seconds per iteration, best and median, and the fewest bytes allocated
     # per iteration in a run.
-    lines.append(f"(doseq [[name count f b] cases] (let [ts (doall (repeatedly {REPS} f)) bs (doall (repeatedly {REPS} b))] "
-                 "(println name (/ (apply min ts) count) (/ (apply max ts) count) (double (/ (apply min bs) count)))))")
+    lines.append(f"(doseq [[name count f b] cases] (let [ts (sort (repeatedly {JVM_REPS} f)) bs (doall (repeatedly {REPS} b))] "
+                 f"(println name (/ (first ts) count) (/ (nth ts {JVM_REPS // 2}) count) (double (/ (apply min bs) count)))))")
     path = os.path.join(work, "bench.clj")
     with open(path, "w") as file:
         file.write("\n".join(lines) + "\n")
@@ -385,8 +393,8 @@ def jvm_times(work):
     # Name -> (seconds per iteration, run-to-run spread), and bytes per
     # iteration.
     times, allocated = {}, {}
-    for name, best, worst, size in (line.split() for line in output.stdout.splitlines()):
-        times[name] = (float(best), float(worst) - float(best))
+    for name, best, median, size in (line.split() for line in output.stdout.splitlines()):
+        times[name] = (float(best), float(median) - float(best))
         allocated[name] = float(size)
     return times, allocated
 
@@ -438,7 +446,8 @@ def table(suss, instructions, allocated, jvm, jvm_allocated):
     header = ["| Case | Suss ns | Suss instructions | Suss bytes | JVM ns | JVM bytes | Ratio |",
               "| --- | --- | --- | --- | --- | --- | --- |"]
     print(f"n = {N}, best of {REPS}; Suss times are slopes between loop counts at least "
-          f"{MIN_WORK} s of work apart\n")
+          f"{MIN_WORK} s of work apart; JVM loops run {JVM_SCALE}·n, best of {JVM_REPS}, "
+          "with the median as the spread\n")
     print("Nanoseconds and user-space instructions per operation, less its control")
     print("loop; a control's row is the whole loop iteration. ≈ 0 is a time no larger")
     print("than its run-to-run spread. \"With control\" is the instruction count of the")
