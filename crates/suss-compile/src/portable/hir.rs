@@ -614,6 +614,9 @@ pub enum Nominal {
     BuiltinConstructGuard,
     NativeObjectFactory,
     IsNativeObject,
+    /// `suss.bootstrap/fixed-arity-fn?` (#466): a fn whose arities are all
+    /// fixed, as its code struct's maximum arity says.
+    FixedArityFn,
     IsTypeConstructor,
     ValueConstructor,
     /// Type value -> its name string, or nil (#304).
@@ -666,6 +669,7 @@ impl Nominal {
             | Self::IsDescriptor
             | Self::IsClosure
             | Self::IsNativeObject
+            | Self::FixedArityFn
             | Self::IsTypeConstructor
             | Self::IsLanguageError
             | Self::Instance
@@ -695,7 +699,7 @@ impl Nominal {
                 Self::MapGetOr | Self::MapAssoc => count == 3,
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
-                Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
+                Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
@@ -3227,6 +3231,7 @@ impl Analyzer<'_> {
                 "value-add" => Some(Nominal::ValueAdd),
                 "object-factory" => Some(Nominal::NativeObjectFactory),
                 "native-object?" => Some(Nominal::IsNativeObject),
+                "fixed-arity-fn?" => Some(Nominal::FixedArityFn),
                 "same-nominal-type?" => Some(Nominal::SameNominalType),
                 "type-constructor?" => Some(Nominal::IsTypeConstructor),
                 "value-constructor" => Some(Nominal::ValueConstructor),

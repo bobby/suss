@@ -218,7 +218,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.extend(runtime_abi::ARITY_ERROR_EXPORTS);
                         if let Some(factory) = &body.rest_class {
                             globals.insert(factory.clone());
-                            names.extend(["binding-get", "invoke", "object-array-new", "constructor-descriptor", "source-constructor-new"]);
+                            names.extend(["binding-get", "invoke", "object-array-new", "constructor-descriptor", "source-constructor-plan", "source-construct-from-plan"]);
                         }
                     }
                     Operation::MakeClosure { .. } => {
@@ -297,6 +297,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::IsLanguageError => { names.insert("language-error-is"); }
                         Nominal::NativeObjectFactory => { names.insert("native-object-factory-function"); }
                         Nominal::IsNativeObject => { names.insert("native-object?"); }
+                        Nominal::FixedArityFn => { names.insert("fn-fixed-arity?"); }
                         Nominal::IsTypeConstructor => { names.insert("class-value-is"); }
                         Nominal::ValueConstructor => { names.insert("value-constructor"); }
                         Nominal::TypeName => { names.insert("class-value-name"); }
@@ -704,7 +705,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "protocol-native-marker-set" => (vec![VALUE, ValType::I32], vec![ValType::I32]),
             "protocol-native-method-set" => (vec![VALUE, ValType::I32, VALUE], vec![VALUE]),
             "try-invoke" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
-            "binding-defined" | "language-error-is" | "native-object?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
+            "binding-defined" | "language-error-is" | "native-object?" | "fn-fixed-arity?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
             "identical-value" => (vec![VALUE, VALUE], vec![VALUE]),
             "object-instance" | "object-same-descriptor" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
@@ -1703,18 +1704,20 @@ fn emit_rest(function: &mut Function, definition: &Definition, surplus: u32, con
         .binary_search(definition.rest_class.as_ref().expect("verified rest class"))
         .expect("collected rest class") as u32;
     let import = |name: &str| context.names.iter().position(|candidate| *candidate == name).expect("collected import") as u32;
+    // As a construction site's own path builds `(IndexedSeq. arr 0 nil)`
+    // (#443), not through the constructor's generic invoke (#466).
     function
         .instruction(&GlobalGet(factory))
         .instruction(&Call(import("binding-get")))
         .instruction(&Call(import("constructor-descriptor")))
-        .instruction(&Call(import("source-constructor-new")))
+        .instruction(&Call(import("source-constructor-plan")))
         .instruction(&LocalGet(surplus))
         .instruction(&Call(import("object-array-new")))
         .instruction(&I32Const(0))
         .instruction(&RefI31)
         .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, context.globals.len() as u32))
         .instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: 3 })
-        .instruction(&Call(import("invoke")));
+        .instruction(&Call(import("source-construct-from-plan")));
 }
 /// The spread entry, `(closure, args, rest)`: calls the method that takes
 /// `args`' length, as the arity dispatcher did, or throws the arity error.
@@ -3983,6 +3986,7 @@ fn emit_function(
                         | Nominal::LanguageError
                         | Nominal::IsLanguageError
                         | Nominal::IsNativeObject
+                        | Nominal::FixedArityFn
                         | Nominal::IsTypeConstructor
                         | Nominal::ValueConstructor
                         | Nominal::TypeName
@@ -4062,6 +4066,7 @@ fn emit_function(
                                 Nominal::IsLanguageError => "language-error-is",
                                 Nominal::NativeObjectFactory => "native-object-factory-function",
                                 Nominal::IsNativeObject => "native-object?",
+                                Nominal::FixedArityFn => "fn-fixed-arity?",
                                 Nominal::IsTypeConstructor => "class-value-is",
                                 Nominal::ValueConstructor => "value-constructor",
                                 Nominal::TypeName => "class-value-name",

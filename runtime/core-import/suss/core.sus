@@ -3331,51 +3331,60 @@
    (let [n (suss.bootstrap/vector-count args)]
      (if (and (not (suss.bootstrap/nil? n)) (<= n 4))
      (cond (== n 0) (f) (== n 1) (f (nth args 0)) (== n 2) (f (nth args 0) (nth args 1)) (== n 3) (f (nth args 0) (nth args 1) (nth args 2)) :else (f (nth args 0) (nth args 1) (nth args 2) (nth args 3)))
-     (if (.-cljs$lang$applyTo f)
+     (if (and (not (suss.bootstrap/fixed-arity-fn? f)) (.-cljs$lang$applyTo f))
      (let [fixed-arity (.-cljs$lang$maxFixedArity f)
            bc (bounded-count (inc fixed-arity) args)]
        (if (<= bc fixed-arity)
          (apply-to f bc args)
          (.cljs$lang$applyTo f args)))
-     (apply-to-simple f (seq args))))))
+     ;; Without applyTo, f has fixed arities only, or isn't a fn: up to
+     ;; twenty arguments, counted as Clojure's applyToHelper counts them,
+     ;; are a call with that many (#466), without apply-to-simple's arity
+     ;; property reads; more take it, as before, which reaches arities past
+     ;; twenty.
+     (let [bc (bounded-count 21 args)]
+       (if (<= bc 20) (apply-to f bc args) (apply-to-simple f (seq args))))))))
  ([f x args]
    (let [n (suss.bootstrap/vector-count args)]
      (if (and (not (suss.bootstrap/nil? n)) (<= n 4))
      (cond (== n 0) (f x) (== n 1) (f x (nth args 0)) (== n 2) (f x (nth args 0) (nth args 1)) (== n 3) (f x (nth args 0) (nth args 1) (nth args 2)) :else (f x (nth args 0) (nth args 1) (nth args 2) (nth args 3)))
-     (if (.-cljs$lang$applyTo f)
+     (if (and (not (suss.bootstrap/fixed-arity-fn? f)) (.-cljs$lang$applyTo f))
      (let [arglist (list* x args)
            fixed-arity (.-cljs$lang$maxFixedArity f)
            bc (inc (bounded-count fixed-arity args))]
        (if (<= bc fixed-arity)
          (apply-to f bc arglist)
          (.cljs$lang$applyTo f arglist)))
-     (apply-to-simple f x (seq args))))))
+     (let [bc (inc (bounded-count 20 args))]
+       (if (<= bc 20) (apply-to f bc (cons x args)) (apply-to-simple f x (seq args))))))))
  ([f x y args]
    (let [n (suss.bootstrap/vector-count args)]
      (if (and (not (suss.bootstrap/nil? n)) (<= n 4))
      (cond (== n 0) (f x y) (== n 1) (f x y (nth args 0)) (== n 2) (f x y (nth args 0) (nth args 1)) (== n 3) (f x y (nth args 0) (nth args 1) (nth args 2)) :else (f x y (nth args 0) (nth args 1) (nth args 2) (nth args 3)))
-     (if (.-cljs$lang$applyTo f)
+     (if (and (not (suss.bootstrap/fixed-arity-fn? f)) (.-cljs$lang$applyTo f))
      (let [arglist (list* x y args)
            fixed-arity (.-cljs$lang$maxFixedArity f)
            bc (+ 2 (bounded-count (dec fixed-arity) args))]
        (if (<= bc fixed-arity)
          (apply-to f bc arglist)
          (.cljs$lang$applyTo f arglist)))
-     (apply-to-simple f x y (seq args))))))
+     (let [bc (+ 2 (bounded-count 19 args))]
+       (if (<= bc 20) (apply-to f bc (list* x y args)) (apply-to-simple f x y (seq args))))))))
  ([f x y z args]
    (let [n (suss.bootstrap/vector-count args)]
      (if (and (not (suss.bootstrap/nil? n)) (<= n 4))
      (cond (== n 0) (f x y z) (== n 1) (f x y z (nth args 0)) (== n 2) (f x y z (nth args 0) (nth args 1)) (== n 3) (f x y z (nth args 0) (nth args 1) (nth args 2)) :else (f x y z (nth args 0) (nth args 1) (nth args 2) (nth args 3)))
-     (if (.-cljs$lang$applyTo f)
+     (if (and (not (suss.bootstrap/fixed-arity-fn? f)) (.-cljs$lang$applyTo f))
      (let [arglist (list* x y z args)
            fixed-arity (.-cljs$lang$maxFixedArity f)
            bc (+ 3 (bounded-count (- fixed-arity 2) args))]
        (if (<= bc fixed-arity)
          (apply-to f bc arglist)
          (.cljs$lang$applyTo f arglist)))
-     (apply-to-simple f x y z (seq args))))))
+     (let [bc (+ 3 (bounded-count 18 args))]
+       (if (<= bc 20) (apply-to f bc (list* x y z args)) (apply-to-simple f x y z (seq args))))))))
  ([f a b c d & args]
-   (if (.-cljs$lang$applyTo f)
+   (if (and (not (suss.bootstrap/fixed-arity-fn? f)) (.-cljs$lang$applyTo f))
      (let [spread-args (spread args)
            arglist (cons a (cons b (cons c (cons d spread-args))))
            fixed-arity (.-cljs$lang$maxFixedArity f)
@@ -3383,7 +3392,11 @@
        (if (<= bc fixed-arity)
          (apply-to f bc arglist)
          (.cljs$lang$applyTo f arglist)))
-     (apply-to-simple f a b c d (spread args))))))
+     (let [spread-args (spread args)
+           bc (+ 4 (bounded-count 17 spread-args))]
+       (if (<= bc 20)
+         (apply-to f bc (cons a (cons b (cons c (cons d spread-args)))))
+         (apply-to-simple f a b c d spread-args)))))))
 
 (defprotocol ITransientMap
   "Protocol for adding mapping functionality to transient collections."
