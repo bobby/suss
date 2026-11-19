@@ -175,7 +175,7 @@ pub(super) fn infer(function: &Function, resumable: bool) -> Vec<Repr> {
     for block in &function.blocks {
         for instruction in &block.instructions {
             match &instruction.operation {
-                Operation::Nominal { operation: super::super::hir::Nominal::LongCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Long),
+                Operation::Nominal { operation: super::super::hir::Nominal::LongCast | super::super::hir::Nominal::UncheckedLongCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Long),
                 Operation::Nominal { operation: super::super::hir::Nominal::DoubleCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Double),
                 // A hinted aget's element, behind its checked cast (#389).
                 // An object array's element is a value (#378).

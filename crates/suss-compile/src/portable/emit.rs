@@ -251,6 +251,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::MapAssoc => { names.insert("map-assoc"); }
                         Nominal::HashMapTypes => { names.insert("hash-map-type-register"); }
                         Nominal::LongCast => { names.insert("number-cast-long"); }
+                        Nominal::UncheckedLongCast => { names.insert("number-cast-unchecked-long"); }
                         Nominal::DoubleCast => { names.insert("number-cast-double"); }
                         Nominal::PackedGet(_) => {
                             names.insert("packed-array-get-2");
@@ -744,7 +745,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
             | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit" | "string-join"
-            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string-hash" | "number-cast-long" | "number-cast-double" | "packed-array-test" | "object-array-test" | "vector-type-register" | "array-map-type-register" | "vector-count" => {
+            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string-hash" | "number-cast-long" | "number-cast-double" | "number-cast-unchecked-long" | "packed-array-test" | "object-array-test" | "vector-type-register" | "array-map-type-register" | "vector-count" => {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
@@ -2011,6 +2012,29 @@ fn emit_function(
                 for instruction in code.drain(..) { function.instruction(&instruction); }
                 continue;
             }
+            // A coercion of a raw value to a raw result (#448): a long stays
+            // a long and widens to a double, and unchecked-long truncates a
+            // double as Java's cast does. A checked long of a double, which
+            // can be out of range, takes the cast below.
+            if let Operation::Nominal { operation: operation @ (Nominal::LongCast | Nominal::UncheckedLongCast | Nominal::DoubleCast), arguments } = &inst.operation
+                && locals.of(inst.result) != unboxed::Repr::Boxed
+            {
+                let from = locals.of(arguments[0]);
+                let convert = match (operation, from) {
+                    (Nominal::LongCast | Nominal::UncheckedLongCast, unboxed::Repr::Long) | (Nominal::DoubleCast, unboxed::Repr::Double) => Some(None),
+                    (Nominal::DoubleCast, unboxed::Repr::Long) => Some(Some(F64ConvertI64S)),
+                    (Nominal::UncheckedLongCast, unboxed::Repr::Double) => Some(Some(I64TruncSatF64S)),
+                    _ => None,
+                };
+                if let Some(convert) = convert {
+                    function.instruction(&LocalGet(locals.raw(arguments[0])));
+                    if let Some(convert) = convert {
+                        function.instruction(&convert);
+                    }
+                    function.instruction(&LocalSet(locals.raw(inst.result)));
+                    continue;
+                }
+            }
             // A packed access boxes its raw operands itself, only where the
             // generic path needs them (#387).
             if !matches!(inst.operation, Operation::Nominal { operation: Nominal::PackedGet(_) | Nominal::PackedSet(_), .. }) {
@@ -3232,12 +3256,17 @@ fn emit_function(
                                 function.instruction(&instruction);
                             }
                         }
-                        Nominal::LongCast | Nominal::DoubleCast => {
+                        Nominal::LongCast | Nominal::DoubleCast | Nominal::UncheckedLongCast => {
                             // The checked cast (#385): an i31 or a boxed long
                             // (or double) inline, anything else through the
                             // runtime's cast, which converts or throws. The
                             // value is raw when its local is.
-                            let long = matches!(operation, Nominal::LongCast);
+                            let long = !matches!(operation, Nominal::DoubleCast);
+                            let fallback = match operation {
+                                Nominal::LongCast => "number-cast-long",
+                                Nominal::UncheckedLongCast => "number-cast-unchecked-long",
+                                _ => "number-cast-double",
+                            };
                             let value = arguments[0].0 as u32 + offset;
                             let i31 = HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 };
                             let boxed = if long { runtime_abi::LONG } else { runtime_abi::NUMBER };
@@ -3264,7 +3293,7 @@ fn emit_function(
                             function
                                 .instruction(&Else)
                                 .instruction(&LocalGet(value))
-                                .instruction(&Call(index(if long { "number-cast-long" } else { "number-cast-double" })));
+                                .instruction(&Call(index(fallback)));
                             if long {
                                 // The cast's result is an i31 or a long box.
                                 function

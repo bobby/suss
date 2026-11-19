@@ -509,6 +509,9 @@ pub enum Nominal {
     /// longCast or doubleCast of the argument, kept as a raw i64 or f64.
     LongCast,
     DoubleCast,
+    /// Core's `unchecked-long` (#448): a raw i64 as LongCast, through its own
+    /// cast for anything but a long.
+    UncheckedLongCast,
     /// A string, the first operand, followed by the digits of a long, the
     /// second (#388).
     StringAppendLong,
@@ -685,7 +688,7 @@ impl Nominal {
                 Self::AllSmallIntegers => count >= 1,
                 Self::NumberHash => count == 1,
                 Self::IsObject | Self::IsDescriptor => count == 1,
-                Self::IsLongValue | Self::StringHash | Self::LongCast | Self::DoubleCast => count == 1,
+                Self::IsLongValue | Self::StringHash | Self::LongCast | Self::DoubleCast | Self::UncheckedLongCast => count == 1,
                 Self::PackedGet(_) | Self::VectorNth | Self::ArrayMapGet | Self::MapContains => count == 2,
                 Self::HashMapTypes => count == 4,
                 Self::MapGetOr | Self::MapAssoc => count == 3,
@@ -3879,12 +3882,27 @@ impl Analyzer<'_> {
                 // does (#457): an `instance?` site on core's Reduced, so a
                 // reduction step tests its result without a call. Another
                 // arity stays a call, which raises the arity error.
-                if args.len() == 1
-                    && let Some(ResolvedBinding::Cell(global)) = &resolved
-                    && let var = global.core_var_of_link().unwrap_or_else(|| global.clone())
-                    && var.namespace() == "suss.core"
-                    && var.name() == "reduced?"
-                {
+                let core_var = match &resolved {
+                    Some(ResolvedBinding::Cell(global)) if args.len() == 1 => {
+                        let var = global.core_var_of_link().unwrap_or_else(|| global.clone());
+                        (var.namespace() == "suss.core").then(|| var.name().to_string())
+                    }
+                    _ => None,
+                };
+                // So do core's numeric coercions, which are :inline in Clojure
+                // too (#448): a raw long or double, with the checks of each
+                // one's cast.
+                let cast = match core_var.as_deref() {
+                    Some("long") => Some(Nominal::LongCast),
+                    Some("double" | "unchecked-double") => Some(Nominal::DoubleCast),
+                    Some("unchecked-long") => Some(Nominal::UncheckedLongCast),
+                    _ => None,
+                };
+                if let Some(cast) = cast {
+                    let argument = self.form(&args[0])?;
+                    return Ok(self.nominal(form, cast, vec![argument]));
+                }
+                if core_var.as_deref() == Some("reduced?") {
                     let reduced = Form {
                         kind: Kind::Symbol(suss_reader::Symbol {
                             namespace: Some("suss.core".into()),
