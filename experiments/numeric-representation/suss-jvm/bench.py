@@ -15,7 +15,9 @@ iteration stores its result in a sink array, so the JIT can't drop the
 operation; the control loop stores too, but a Long or Double it reads from a
 preallocated table, so it boxes nothing (#447). A case that returns a cached
 value, such as `(nil? i)`, then costs more than its control, not less, and a
-case that boxes its result pays for that box. Each Suss iteration
+case that boxes its result pays for that box. The control's table read, a
+mask and an aget most cases don't do, is subtracted from them too, so a JVM
+time is low by about that read, a nanosecond or less. Each Suss iteration
 compares its result with `sentinel`, a var the compiler can't fold the test
 against, whatever the result's type.
 
@@ -80,6 +82,11 @@ LOAD_WARNING = 3
 # jitter, or one slow run, would hide (#447).
 JVM_SCALE = 4
 JVM_REPS = 7
+# Calls of each JVM loop before timing, so its method, not only an on-stack
+# replacement, is compiled; and runs of a control, which every case's time
+# depends on, as a multiple of JVM_REPS.
+JVM_WARMUP = 10
+JVM_CONTROL_REPS = 3
 
 # The loop's operands: `i` is the loop counter, a long, and `m` is it masked
 # to an index. Arrays have 1024 elements. JVM forms add the type hints
@@ -366,20 +373,22 @@ def jvm_times(work):
     lines.append("(defn allocated ^long [] (.getThreadAllocatedBytes thread-mx (.getId (Thread/currentThread))))")
     lines.append("(defmacro bytes-of [n expr] `(fn [] (let [a# (allocated)] (~expr ~n) (- (allocated) a#))))")
     entries = []
+    controls = {name for name, _, control, _ in CASES if control is None}
     for name, expr, count in counted():
         count *= JVM_SCALE
         lines.append(f"(defn case-{name} [^long n] {loop(name, hinted(expr), 'n', sink=True)})")
-        entries.append(f'["{name}" {count} (timed {count} case-{name}) (bytes-of {count} case-{name})]')
+        reps = JVM_REPS * (JVM_CONTROL_REPS if name in controls else 1)
+        entries.append(f'["{name}" {count} (timed {count} case-{name}) (bytes-of {count} case-{name}) {reps}]')
     for name, body, _ in LOOPS:
         lines.append(f"(defn case-{name} [^long n] {body})")
-        entries.append(f'["{name}" {N * JVM_SCALE} (timed {N * JVM_SCALE} case-{name}) (bytes-of {N * JVM_SCALE} case-{name})]')
+        entries.append(f'["{name}" {N * JVM_SCALE} (timed {N * JVM_SCALE} case-{name}) (bytes-of {N * JVM_SCALE} case-{name}) {JVM_REPS}]')
     lines.append(f"(def cases [{' '.join(entries)}])")
     # Warm up every case, then take the best of JVM_REPS runs.
-    lines.append("(doseq [[_ _ f] cases] (dotimes [_ 3] (f)))")
+    lines.append(f"(doseq [[_ _ f] cases] (dotimes [_ {JVM_WARMUP}] (f)))")
     # Seconds per iteration, best and median, and the fewest bytes allocated
     # per iteration in a run.
-    lines.append(f"(doseq [[name count f b] cases] (let [ts (sort (repeatedly {JVM_REPS} f)) bs (doall (repeatedly {REPS} b))] "
-                 f"(println name (/ (first ts) count) (/ (nth ts {JVM_REPS // 2}) count) (double (/ (apply min bs) count)))))")
+    lines.append(f"(doseq [[name count f b reps] cases] (let [ts (sort (repeatedly reps f)) bs (doall (repeatedly {REPS} b))] "
+                 "(println name (/ (first ts) count) (/ (nth ts (quot reps 2)) count) (double (/ (apply min bs) count)))))")
     path = os.path.join(work, "bench.clj")
     with open(path, "w") as file:
         file.write("\n".join(lines) + "\n")

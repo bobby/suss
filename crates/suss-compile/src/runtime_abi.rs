@@ -411,12 +411,12 @@ fn named_site_set(b: &mut Builder) {
 
 /// `string-join(array)` (#446): the concatenation of an object array's
 /// strings, in order, as one allocation: `str`'s variadic arity, which
-/// concatenated pairwise and so copied its result once per argument. Every
-/// element is a string, as `str` makes them.
+/// concatenated pairwise and so copied its result once per argument. An
+/// element that isn't a string throws, as `string-concat` does.
 fn string_join(b: &mut Builder) {
     use Instruction::*;
     // Param 0 the array. Locals: 1 its storage, 2 index, 3 length so far,
-    // 4 the result, 5 an element.
+    // 4 the result, 5 an element, 6 the next length.
     let string = HeapType::Concrete(STRING);
     let element = [LocalGet(1), LocalGet(2), ArrayGet(ARGS), RefCastNonNull(string)];
     let each = |body: Vec<Instruction<'static>>| {
@@ -433,8 +433,15 @@ fn string_join(b: &mut Builder) {
         RefCastNonNull(HeapType::Concrete(ARGS)),
         LocalSet(1),
     ];
-    let mut total = element.to_vec();
-    total.extend([ArrayLen, LocalGet(3), I32Add, LocalSet(3)]);
+    // A part that isn't a string, as a toString may return, throws as
+    // string-concat's operand check does; so does a total past i32.
+    let mut total = vec![LocalGet(1), LocalGet(2), ArrayGet(ARGS), RefTestNonNull(string), I32Eqz, If(BlockType::Empty)];
+    total.extend(numeric::error("String concatenation requires string operands", 4));
+    total.push(End);
+    total.extend(element.clone());
+    total.extend([ArrayLen, LocalGet(3), I32Add, LocalTee(6), LocalGet(3), I32LtU, If(BlockType::Empty)]);
+    total.extend(numeric::error("Numeric conversion scratch allocation failed", 5));
+    total.extend([End, LocalGet(6), LocalSet(3)]);
     code.extend(each(total));
     code.extend([LocalGet(3), ArrayNewDefault(STRING), LocalSet(4), I32Const(0), LocalSet(3)]);
     let mut copy = element.to_vec();
@@ -460,7 +467,7 @@ fn string_join(b: &mut Builder) {
         "string-join",
         &[VALUE],
         &[VALUE],
-        &[(1, nullable(HeapType::Concrete(ARGS))), (2, ValType::I32), (2, nullable(string))],
+        &[(1, nullable(HeapType::Concrete(ARGS))), (2, ValType::I32), (2, nullable(string)), (1, ValType::I32)],
         &code,
     );
 }

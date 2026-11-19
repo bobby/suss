@@ -44,6 +44,7 @@ fn instance_sites_answer_as_before() {
             ("(let [reduced? (fn [x] :local)] (reduced? 1))", ":local"),
             ("(do (def ^:private reduced? (fn [x] :mine)) (reduced? 1))", ":mine"),
             ("(try (apply reduced? [1 2]) (catch :default e :threw))", ":threw"),
+            ("(try (reduced? 1 2) (catch :default e :threw))", ":threw"),
             // reduced? on accumulators of several types.
             ("(reduce (fn [a x] (if (= x 5) (reduced a) (conj a x))) [] (range 10))", "[0 1 2 3 4]"),
             ("(persistent! (reduce (fn [a x] (if (= x 3) (reduced a) (conj! a x))) (transient []) (range 10)))", "[0 1 2]"),
@@ -140,6 +141,9 @@ fn chunked_reductions_answer_as_before() {
             ("(reduce + 0 (rest (map inc (vec (range 40)))))", "819"),
             ("(transduce (comp (map inc) (filter even?)) + 0 (vec (range 100)))", "2550"),
             ("(apply str (map str (vec (range 12))))", "\"01234567891011\""),
+            // A toString that isn't a string throws, catchably, as before.
+            ("(do (deftype Odd [] Object (toString [_] 5)) (try (str (Odd.) \"a\") (catch :default e :threw)))", ":threw"),
+            ("(str \"a\" nil 1 :k \"b\")", "\"a1:kb\""),
         ] {
             assert_eq!(printed(&mut session, source), expected, "{source}");
         }
