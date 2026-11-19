@@ -44,6 +44,12 @@ fn apply_over_seqs_answers_as_before() {
             // A variadic call's rest is an IndexedSeq over its arguments.
             ("(let [xs ((fn [& xs] xs) 1 2 3)] [xs (count xs) (rest xs) (list? xs) (seq? xs)])", "[(1 2 3) 3 (2 3) false true]"),
             ("[(list 1) (list 1 2 3) (list? (list 1 2)) (count (list 1 2 3))]", "[(1) (1 2 3) true 3]"),
+            // list's fixed arities and its variadic one build the same lists.
+            ("[(list) (list? (list)) (list nil) (list 1 nil 3) (list 1 2 3 4 5) (count (list 1 2 3 4 5)) (list? (list 1 2 3 4))]",
+             "[() true (nil) (1 nil 3) (1 2 3 4 5) 5 true]"),
+            ("[(= (list 1 2) (apply list [1 2])) (= (list 1 2 3 4) (apply list (range 1 5))) (peek (list 1 2)) (pop (list 1 2 3))]",
+             "[true true 1 (2 3)]"),
+            ("[(meta (list 1)) (meta (with-meta (list 1 2) {:a 1})) (conj (list 2 3) 1)]", "[nil {:a 1} (1 2 3)]"),
         ] {
             assert_eq!(printed(&mut session, source), expected, "{source}");
         }
