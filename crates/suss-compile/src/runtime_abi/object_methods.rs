@@ -286,6 +286,16 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
         body.extend([I32Const(k as i32), I32GtS, BrIf(1)]);
         code(&mut body, CODE_MAX);
         body.extend([I32Const(k as i32), I32LtS, BrIf(1)]);
+        // `object-method-site-N(method)` (#462): the same tests, answering the
+        // wrapper's function when the call would take its entry, else null.
+        // An Object wrapper's function never changes, so a call site can
+        // hold the method, the function and its entry, and call through
+        // `object-method-call-N` while it sees the same method.
+        let mut site = body.clone();
+        site.extend([LocalGet(typed), Return, End, Drop, End, RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq })]);
+        let site_name: &'static str = Box::leak(format!("object-method-site-{n}").into_boxed_str());
+        let closure = ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(CLOSURE) });
+        b.function_with_locals(site_name, &vec![VALUE; n as usize + 2], &[VALUE], &[(5, VALUE), (1, closure)], &site);
         body.extend([
             GlobalGet(CURRENT_THIS),
             LocalSet(saved),
@@ -329,8 +339,46 @@ pub(super) fn functions(b: &mut Builder, equal: u32) -> Vec<u32> {
         }
         body.extend([ArrayNewFixed { array_type_index: ARGS, array_size: n }, Call(invoke)]);
         let name: &'static str = Box::leak(format!("object-method-invoke-{n}").into_boxed_str());
-        let closure = ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(CLOSURE) });
         b.function_with_locals(name, &vec![VALUE; n as usize + 2], &[VALUE], &[(5, VALUE), (1, closure)], &body);
+        // `object-method-call-N(function, entry, this, a1 … aN)` (#462): the
+        // call object-method-invoke-N makes, through an entry its site holds.
+        // Locals: saved this, result, payload.
+        let (saved, result, payload) = (n + 3, n + 4, n + 5);
+        let mut call = vec![
+            GlobalGet(CURRENT_THIS),
+            LocalSet(saved),
+            LocalGet(2),
+            GlobalSet(CURRENT_THIS),
+            Block(BlockType::Empty),
+            Block(BlockType::Result(VALUE)),
+            TryTable(BlockType::Empty, Cow::Owned(vec![wasm_encoder::Catch::One { tag: 0, label: 0 }])),
+            LocalGet(0),
+        ];
+        for operand in 2..k + 2 {
+            call.push(LocalGet(operand));
+        }
+        call.extend([
+            LocalGet(1),
+            CallRef(CALL + k),
+            LocalSet(result),
+            Br(2),
+            End,
+            Unreachable,
+            End,
+            LocalSet(payload),
+            LocalGet(saved),
+            GlobalSet(CURRENT_THIS),
+            LocalGet(payload),
+            Throw(0),
+            End,
+            LocalGet(saved),
+            GlobalSet(CURRENT_THIS),
+            LocalGet(result),
+        ]);
+        let mut params = vec![VALUE, ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(CALL + k) })];
+        params.extend(vec![VALUE; k as usize]);
+        let call_name: &'static str = Box::leak(format!("object-method-call-{n}").into_boxed_str());
+        b.function_with_locals(call_name, &params, &[VALUE], &[(3, VALUE)], &call);
     }
     // A plain detached call uses the non-strict portable realm's implicit this.
     // Rebuild the wrapper from its already unwrapped callback environment.

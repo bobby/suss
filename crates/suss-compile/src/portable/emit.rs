@@ -453,6 +453,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     // core field writes (#446).
     let mut field_site_list = vec![];
     let mut write_site = false;
+    let mut user_site = false;
     // Of those, the `.-length` reads, which test for a string first.
     let mut length_sites = std::collections::HashSet::new();
     for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
@@ -465,10 +466,18 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             })
             .collect::<std::collections::HashMap<_, _>>();
         for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
-            if let Operation::Nominal { operation: operation @ (Nominal::CoreNamedGet | Nominal::CoreNamedSet), arguments } = &inst.operation
+            if let Operation::Nominal { operation: operation @ (Nominal::CoreNamedGet | Nominal::CoreNamedSet | Nominal::NamedGet), arguments } = &inst.operation
                 && literals.get(&arguments[1]).is_some_and(|units| plain_field_name(units))
             {
                 let site = (function as *const IrFunction as usize, inst.result.0 as u32);
+                // User reads, with their caller operand, too (#462).
+                if *operation == Nominal::NamedGet {
+                    if arguments.len() == 3 {
+                        user_site = true;
+                        field_site_list.push(site);
+                    }
+                    continue;
+                }
                 if *operation == Nominal::CoreNamedSet {
                     write_site = true;
                     field_site_list.push(site);
@@ -486,6 +495,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     }
     if write_site {
         names.insert("named-site-set");
+    }
+    if user_site {
+        names.insert("user-named-site-get");
     }
     // Protocol method lookups get an inline cache (#355): the last
     // descriptor, its method and the protocol epoch it was found at.
@@ -558,6 +570,24 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 && !static_callees.contains(&operands[0])
             {
                 call_site_list.push(((function as *const IrFunction as usize, inst.result.0 as u32), operands.len() as u32 - 1));
+            }
+        }
+    }
+    // Method call sites, `(.m obj …)`, cache their last method, its function
+    // and its entry (#462), as closure call sites do: three globals each.
+    let mut object_call_site_list = vec![];
+    for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
+        .chain(futures.iter().map(|body| &body.continuation.function))
+    {
+        for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
+            if let Operation::Nominal { operation: Nominal::ObjectInvoke, arguments } = &inst.operation
+                && arguments.len() >= 2
+                && arguments.len() - 2 < runtime_abi::MAX_FIXED as usize
+            {
+                let n = arguments.len() - 2;
+                names.insert(Box::leak(format!("object-method-site-{n}").into_boxed_str()));
+                names.insert(Box::leak(format!("object-method-call-{n}").into_boxed_str()));
+                object_call_site_list.push(((function as *const IrFunction as usize, inst.result.0 as u32), n as u32));
             }
         }
     }
@@ -723,10 +753,20 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 vec![ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::NAMED_SITE) }), VALUE, VALUE],
                 vec![VALUE],
             ),
-            "named-site-set" => (
+            "named-site-set" | "user-named-site-get" => (
                 vec![ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::NAMED_SITE) }), VALUE, VALUE, VALUE],
                 vec![VALUE],
             ),
+            name if name.starts_with("object-method-site-") => {
+                let n: usize = name["object-method-site-".len()..].parse().expect("object-method-site-N");
+                (vec![VALUE; n + 2], vec![VALUE])
+            }
+            name if name.starts_with("object-method-call-") => {
+                let n: u32 = name["object-method-call-".len()..].parse().expect("object-method-call-N");
+                let mut params = vec![VALUE, ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::CALL + n + 1) })];
+                params.extend(vec![VALUE; n as usize + 1]);
+                (params, vec![VALUE])
+            }
             name if name.starts_with("object-method-invoke-") => {
                 let n: usize = name["object-method-invoke-".len()..].parse().expect("object-method-invoke-N");
                 (vec![VALUE; n + 2], vec![VALUE])
@@ -923,6 +963,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .map(|(index, site)| (*site, first_construct_site + 3 * index as u32))
         .collect::<std::collections::HashMap<_, _>>();
     let first_native_site = first_construct_site + 3 * construct_site_list.len() as u32;
+    let first_object_call_site = first_native_site + 4 * native_site_list.len() as u32;
+    let object_call_sites = object_call_site_list.iter().enumerate()
+        .map(|(index, (site, _))| (*site, first_object_call_site + 3 * index as u32))
+        .collect::<std::collections::HashMap<_, _>>();
     let native_sites = native_site_list.iter().enumerate()
         .map(|(index, site)| (*site, first_native_site + 4 * index as u32))
         .collect::<std::collections::HashMap<_, _>>();
@@ -952,7 +996,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
         dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites, length_sites: &length_sites,
         method_sites: &method_sites, instance_sites: &instance_sites, call_sites: &call_sites, keyword_caches: &keyword_caches,
-        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, epoch_global };
+        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, object_call_sites: &object_call_sites, epoch_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -1101,6 +1145,24 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
         );
     }
+    for (_, n) in &object_call_site_list {
+        // The site's last method and its function, null to match none, and
+        // that function's entry for this, then n arguments (#462).
+        for _ in 0..2 {
+            code_globals.global(
+                GlobalType { val_type: VALUE, mutable: true, shared: false },
+                &ConstExpr::ref_null(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }),
+            );
+        }
+        code_globals.global(
+            GlobalType {
+                val_type: ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(runtime_abi::CALL + n + 1) }),
+                mutable: true,
+                shared: false,
+            },
+            &ConstExpr::ref_null(HeapType::Concrete(runtime_abi::CALL + n + 1)),
+        );
+    }
     for (definition, global) in &defined_code {
         exports.export(&format!("link.{definition}.code"), ExportKind::Global, *global);
         for (k, entry) in links.entries[definition].iter().enumerate() {
@@ -1121,7 +1183,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .section(&types)
         .section(&imports)
         .section(&functions);
-    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() || !keyword_cache_list.is_empty() || !literal_list.is_empty() || !construct_site_list.is_empty() || !native_site_list.is_empty() {
+    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() || !keyword_cache_list.is_empty() || !literal_list.is_empty() || !construct_site_list.is_empty() || !native_site_list.is_empty() || !object_call_site_list.is_empty() {
         module.section(&code_globals);
     }
     module.section(&exports);
@@ -1257,6 +1319,8 @@ struct Context<'a> {
     instance_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     construct_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     native_sites: &'a std::collections::HashMap<(usize, u32), u32>,
+    /// Cached method call sites: their first global (#462).
+    object_call_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     /// Cached protocol method lookup sites: their first global; the epoch.
     method_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     epoch_global: u32,
@@ -1651,7 +1715,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
-    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, construct_sites, native_sites, call_sites, keyword_caches, literals, epoch_global } = *context;
+    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, construct_sites, native_sites, object_call_sites, call_sites, keyword_caches, literals, epoch_global } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -2841,6 +2905,45 @@ fn emit_function(
                                 function.instruction(&End);
                             }
                         }
+                        Nominal::NamedGet if field_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
+                            // A user read (#462): a source object of the site's
+                            // descriptor, for the caller the site was filled
+                            // for, reads its cached field, or its method at the
+                            // site's epoch, inline; anything else takes the
+                            // runtime's cached read, which runs the guards.
+                            let cache = field_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            let [owner, name, caller] = [0, 1, 2].map(|i| arguments[i].0 as u32 + offset);
+                            let site = |field| [GlobalGet(cache), StructGet { struct_type_index: runtime_abi::NAMED_SITE, field_index: field }];
+                            let object_type = RefType { nullable: false, heap_type: HeapType::Concrete(7) };
+                            let mut code = vec![
+                                Block(BlockType::Result(VALUE)),
+                                Block(BlockType::Empty),
+                                Block(BlockType::Result(ValType::Ref(object_type))),
+                                LocalGet(owner),
+                                BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF, to_ref_type: object_type },
+                                Drop,
+                                Br(1),
+                                End,
+                                LocalSet(object_local),
+                                LocalGet(caller),
+                            ];
+                            code.extend(site(runtime_abi::SITE_OWNER_VALUE));
+                            code.extend([RefEq, I32Eqz, BrIf(0), LocalGet(object_local), StructGet { struct_type_index: 7, field_index: 0 }]);
+                            code.extend(site(runtime_abi::SITE_DESCRIPTOR));
+                            code.extend([RefEq, I32Eqz, BrIf(0)]);
+                            code.extend(site(runtime_abi::SITE_SLOT));
+                            code.extend([LocalTee(field_index_local), I32Const(0), I32GeS, If(BlockType::Empty),
+                                LocalGet(object_local), StructGet { struct_type_index: 7, field_index: 1 },
+                                LocalGet(field_index_local), ArrayGet(runtime_abi::ARGS), Br(2), End]);
+                            code.extend(site(runtime_abi::SITE_EPOCH));
+                            code.extend([GlobalGet(epoch_global), I32Ne, BrIf(0)]);
+                            code.extend(site(runtime_abi::SITE_METHOD));
+                            code.extend([Br(1), End, GlobalGet(cache), LocalGet(owner), LocalGet(name), LocalGet(caller),
+                                Call(index("user-named-site-get")), End]);
+                            for instruction in &code {
+                                function.instruction(instruction);
+                            }
+                        }
                         Nominal::CoreNamedSet if field_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
                             // The site's struct and the runtime's cached write (#446).
                             let cache = field_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
@@ -3577,6 +3680,59 @@ fn emit_function(
                                         "protocol-key"
                                     },
                                 )));
+                        }
+                        Nominal::ObjectInvoke if object_call_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
+                            // A method call site (#462): the method it last saw
+                            // calls the entry it holds; another asks the
+                            // runtime for an Object wrapper's function, which
+                            // the site then holds with its entry, or calls
+                            // object-method-invoke-N as before.
+                            let first = object_call_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            let (method_global, function_global, entry_global) = (first, first + 1, first + 2);
+                            let n = arguments.len() - 2;
+                            let k = n as u32 + 1;
+                            let method = arguments[0].0 as u32 + offset;
+                            let operands = |function: &mut Function, from: usize| {
+                                for argument in &arguments[from..] {
+                                    function.instruction(&LocalGet(argument.0 as u32 + offset));
+                                }
+                            };
+                            let cached_call = |function: &mut Function| {
+                                function.instruction(&GlobalGet(function_global)).instruction(&GlobalGet(entry_global)).instruction(&RefAsNonNull);
+                                operands(function, 1);
+                                function.instruction(&Call(index(&format!("object-method-call-{n}"))));
+                            };
+                            function
+                                .instruction(&Block(BlockType::Result(VALUE)))
+                                .instruction(&Block(BlockType::Empty))
+                                .instruction(&LocalGet(method))
+                                .instruction(&GlobalGet(method_global))
+                                .instruction(&RefEq)
+                                .instruction(&I32Eqz)
+                                .instruction(&BrIf(0));
+                            cached_call(&mut function);
+                            function.instruction(&Br(1)).instruction(&End);
+                            operands(&mut function, 0);
+                            function
+                                .instruction(&Call(index(&format!("object-method-site-{n}"))))
+                                .instruction(&LocalTee(method_local))
+                                .instruction(&RefIsNull)
+                                .instruction(&If(BlockType::Result(VALUE)));
+                            operands(&mut function, 0);
+                            function
+                                .instruction(&Call(index(object_method_invoke_name(n))))
+                                .instruction(&Else)
+                                .instruction(&LocalGet(method))
+                                .instruction(&GlobalSet(method_global))
+                                .instruction(&LocalGet(method_local))
+                                .instruction(&GlobalSet(function_global))
+                                .instruction(&LocalGet(method_local))
+                                .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::CLOSURE)))
+                                .instruction(&StructGet { struct_type_index: runtime_abi::CLOSURE, field_index: runtime_abi::CLOSURE_CODE })
+                                .instruction(&StructGet { struct_type_index: runtime_abi::CODE, field_index: runtime_abi::CODE_ENTRY + k })
+                                .instruction(&GlobalSet(entry_global));
+                            cached_call(&mut function);
+                            function.instruction(&End).instruction(&End);
                         }
                         Nominal::ObjectInvoke if arguments.len() - 2 < runtime_abi::MAX_FIXED as usize => {
                             // No argument array (#378): object-method-invoke-N.
