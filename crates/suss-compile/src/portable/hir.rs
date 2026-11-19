@@ -4270,12 +4270,23 @@ pub(crate) fn prepare_with_origin(
 /// A function expression with no captures, as a top-level `fn` is, also
 /// inside the callable-signature wrapper: a direct-linkable definition (#360).
 fn capture_free_function(hir: &Hir) -> bool {
+    capture_free_result(hir, &[])
+}
+/// Whether `hir`'s value is a capture-free fn, made there or bound by one of
+/// the enclosing lets in `scope`, as a named or multi-arity fn's lowering
+/// answers one of its bindings. A fn that captures a binding (#460), as in
+/// `(let [g (fn …)] (fn [x] (g x)))`, isn't one: callers' links can't call it.
+fn capture_free_result<'a>(hir: &'a Hir, scope: &[&'a Binding]) -> bool {
     match &*hir.kind {
         Expression::Function { captures, .. } | Expression::GeneralFunction { captures, .. } => captures.is_empty(),
-        Expression::Let { bindings, .. } => bindings.first().is_some_and(|binding| {
-            matches!(&*binding.value.kind,
-                Expression::Function { captures, .. } | Expression::GeneralFunction { captures, .. } if captures.is_empty())
-        }),
+        Expression::Local(id) => scope.iter().rev().find(|binding| binding.id == *id)
+            .is_some_and(|binding| capture_free_result(&binding.value, &[])),
+        Expression::Do(items) => items.last().is_some_and(|last| capture_free_result(last, scope)),
+        Expression::Let { bindings, body } => {
+            let mut inner = scope.to_vec();
+            inner.extend(bindings.iter());
+            capture_free_result(body, &inner)
+        }
         _ => false,
     }
 }
