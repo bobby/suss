@@ -549,7 +549,7 @@ fn verifier_rejects_malformed_closure_shapes_calls_and_capture_facts() {
             .iter_mut()
             .find(|instruction| matches!(instruction.operation, Operation::Call { .. }))
             .unwrap();
-        let Operation::Call { operands } = &mut call.operation else {
+        let Operation::Call { operands, .. } = &mut call.operation else {
             unreachable!()
         };
         match mutation {

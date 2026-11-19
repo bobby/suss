@@ -20,9 +20,74 @@ pub struct Method {
 }
 
 /// The additional fields of a code subtype, sorted by formal arity. Including
-/// every primitive method makes the shape canonical across compiled fragments.
+/// every fixed primitive method makes the shape canonical across fragments.
+/// A variadic body's final formal is a rest seq, not one fixed argument;
+/// only its ordinary adapters may call it until typed adapters exist.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Shape(pub Vec<Method>);
+
+impl Shape {
+    pub fn fixed(&self, arity: usize) -> Option<&Signature> {
+        self.0.iter().find(|method| !method.variadic && method.signature.parameters.len() == arity)
+            .map(|method| &method.signature)
+    }
+}
+
+/// An actual initializer's entry shape. Follow only value-preserving lexical
+/// wrappers; source call declarations never promise a future var's value.
+fn shape<'a>(hir: &'a Hir, scope: &[&'a hir::Binding], meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Shape, Diagnostic> {
+    meter(1)?;
+    stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
+        Ok(match &*hir.kind {
+            hir::Expression::Function { parameters, body, .. } => Shape(signature(parameters, body, meter)?
+                .into_iter().map(|signature| Method { variadic: false, signature }).collect()),
+            hir::Expression::GeneralFunction { methods, .. } => {
+                let mut result = Vec::new();
+                for method in methods {
+                    if method.variadic { continue; }
+                    if let Some(signature) = signature(&method.parameters, &method.body, meter)? {
+                        result.push(Method { variadic: method.variadic, signature });
+                    }
+                }
+                result.sort_by_key(|method| (method.signature.parameters.len(), method.variadic));
+                Shape(result)
+            }
+            hir::Expression::Local(id) => match scope.iter().rev().find(|binding| binding.id == *id) {
+                Some(binding) => shape(&binding.value, &[], meter)?, None => Shape(Vec::new()),
+            },
+            hir::Expression::Do(items) => match items.last() {
+                Some(last) => shape(last, scope, meter)?, None => Shape(Vec::new()),
+            },
+            hir::Expression::Let { bindings, body } => {
+                meter(scope.len().saturating_add(bindings.len()) as u64)?;
+                let mut inner = scope.to_vec();
+                inner.extend(bindings);
+                shape(body, &inner, meter)?
+            }
+            _ => Shape(Vec::new()),
+        })
+    })
+}
+
+pub(crate) fn call_shape(hir: &Hir, callee: &Hir, meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>) -> Result<Option<Shape>, Diagnostic> {
+    let source = hir.source.as_ref().or(callee.source.as_ref());
+    let Some(hir::SourceBinding::Global { declaration: Some(info), .. }) = source.and_then(|source| source.resolved.as_ref()) else {
+        return Ok(None);
+    };
+    // Live calls require arglist hints, as Clojure's IFn primitive invocation
+    // does. Direct links can use the actual initializer's signature directly.
+    if !matches!(&*callee.kind, hir::Expression::Nominal { operation: Nominal::DirectLinkRead(_), .. }) {
+        let declaration = super::clone_form_metered(&info.declaration, meter)?;
+        let pairs = hir::reader_metadata_pairs_metered(&declaration, meter)?;
+        if !pairs.chunks_exact(2).any(|pair| matches!(&pair[0].kind,
+            FormKind::Keyword(key) if key.namespace.is_none() && key.name == "arglists")) {
+            return Ok(None);
+        }
+    }
+    let Some(initializer) = &info.initializer else { return Ok(None) };
+    let result = shape(initializer, &[], meter)?;
+    Ok((!result.0.is_empty()).then_some(result))
+}
 
 pub(crate) fn signature(
     parameters: &[Parameter], body: &Hir,

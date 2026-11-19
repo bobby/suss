@@ -293,8 +293,8 @@ non-final changes the shared recursive group's canonical identity, so this is
 artifacts. Recompile fragments, core images and components together.
 
 A primitive code subtype keeps the complete immutable `$code` prefix and adds
-one immutable typed function reference per primitive method, sorted by formal
-arity and variadic status. Its identity includes every such method's parameter
+one immutable typed function reference per fixed primitive method, sorted by
+arity. Its identity includes every such method's parameter
 and result kinds, including boxed positions. Entry function types take `eqref`
 for the closure, as in the ABI 6 amendment, followed by raw `i64`/`f64` or boxed
 parameters. Captures remain in the function's final closure subtype.
@@ -304,6 +304,10 @@ boxes its result at the generic boundary. The primitive body preserves the
 source parameter conversions on recurrence and the completed-body return
 conversion. It does not tail-call boxed entries with a primitive result type.
 The generic fixed-arity, variadic and spread interfaces remain present.
+Variadic bodies keep internal primitive entries called by their ordinary
+bridges. They do not occupy fixed-entry fields: Wasm structural type identity
+must not confuse a variadic body's rest-seq formal with a fixed argument of
+the same type. Typed variadic adapters require their own signatures.
 
 ## Consequences
 

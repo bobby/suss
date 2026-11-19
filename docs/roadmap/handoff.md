@@ -29864,3 +29864,45 @@ recording are unchanged. The independent audit is
 `target/probe/pr470-review-baseline-audit.log`. This is not evidence of ratio
 support or of complete division conformance. The recorded observations compare
 successfully after that baseline update.
+
+## Guarded primitive calls and raw result joins (2026-11-19)
+
+IR calls retain canonical fixed-method signatures from the initializer behind
+a direct link, a live var's arglists, or an immutable local closure. The IR
+artifact key includes them. Direct links export/import `link.D.K.typed` and
+call it after the existing exact code guard. Live sites refresh a nullable
+typed reference alongside their ordinary entry when the callee changes; hits
+read the global rather than the code struct's function reference.
+
+A typed hit stores its numeric result raw, while a miss stores the arbitrary
+boxed result and clears its flag. Arithmetic, matching loop/branch joins,
+primitive arguments and casts preserve these alternatives. Collection/capture
+and ordinary-call consumers materialize the selected value. Loop transfers
+push every raw/boxed/flag replacement before assigning any parameter. Async
+continuations, wide calls and variadic adapters keep their ordinary interface.
+Fixed-entry code shapes exclude variadic bodies: an identical Wasm formal type
+does not mean a variadic rest seq can be supplied as one fixed argument.
+
+`target/probe/pr470-calls-focused-final2.log` records **35 passed, 0 failed,
+0 ignored** across compiled_aot_direct_linking (3), compiled_core_casts (6),
+compiled_primitive_params (2), portable_closures (14), portable_hir_resources
+(7) and portable_primitive_entries (3). Tests execute Runtime/Macro and compiled
+components, preserve source operand order, and cover replacement values of
+another kind, arithmetic/loop joins, escaping captures and a fixed-to-variadic
+replacement. Code-generation checks verify static typed calls with raw
+arguments/results and cached typed live-var calls.
+
+The full required command is running in an 8 GiB scope:
+`cargo +stable test --workspace --locked -- --test-threads=2`, logged at
+`target/probe/pr470-workspace-baseline.log`. Final foundation checks are logged
+at `target/probe/pr470-calls-foundation.log`: all 347 Python tests and all
+foundation scripts passed. The full workspace command has not yet completed.
+A detached main df4342dd worktree under
+target/probe/pr470-before-source supplies a release measurement baseline;
+its stable build uses SUSS_FUNCTION_NAMES=1 and an 8 GiB scope, logged in
+pr470-before-build.log. New bench.py typed-call and typed-sum rows exercise
+longs beyond i31 and doubles. JVM vector result hints validate successfully;
+the initial name-tagged spelling produced a JVM AbstractMethodError, retained
+in pr470-bench-jvm-validation.log for investigation. The corrected fixture is
+in pr470-bench-jvm-validation2.log. This small JVM validation is not a timing
+measurement. Benchmark work and JVM error reports now stay under target/probe.

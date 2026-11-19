@@ -19,19 +19,27 @@ pub(super) enum Repr {
     Boxed,
     Long,
     Double,
+    /// A guarded typed call can produce a raw number or an arbitrary boxed
+    /// replacement value. Keep both slots and a flag until the value escapes.
+    MaybeLong,
+    MaybeDouble,
     /// An i32 truth value, from a numeric comparison, a nil test or a
     /// boolean nominal test (#387).
     Flag,
 }
 impl Repr {
+    pub(super) fn maybe(self) -> bool { matches!(self, Self::MaybeLong | Self::MaybeDouble) }
+    pub(super) fn definite(self) -> Self {
+        match self { Self::MaybeLong => Self::Long, Self::MaybeDouble => Self::Double, other => other }
+    }
     fn numeric(self) -> bool {
         matches!(self, Self::Long | Self::Double)
     }
     pub(super) fn val_type(self) -> Option<ValType> {
         match self {
             Self::Boxed => None,
-            Self::Long => Some(ValType::I64),
-            Self::Double => Some(ValType::F64),
+            Self::Long | Self::MaybeLong => Some(ValType::I64),
+            Self::Double | Self::MaybeDouble => Some(ValType::F64),
             Self::Flag => Some(ValType::I32),
         }
     }
@@ -67,6 +75,8 @@ fn meet(a: Lattice, b: Lattice) -> Lattice {
     match (a, b) {
         (Lattice::Top, other) | (other, Lattice::Top) => other,
         (Lattice::Known(x), Lattice::Known(y)) if x == y => a,
+        (Lattice::Known(x), Lattice::Known(y)) if x.definite() == y.definite() && (x.maybe() || y.maybe()) =>
+            Lattice::Known(if x.maybe() { x } else { y }),
         _ => Lattice::Known(Repr::Boxed),
     }
 }
@@ -74,6 +84,16 @@ fn meet(a: Lattice, b: Lattice) -> Lattice {
 /// The representation of an arithmetic result from its operands', optimistic
 /// about operands not yet known.
 fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool) -> Lattice {
+    if arguments.iter().any(|argument| matches!(argument, Lattice::Known(repr) if repr.maybe())) {
+        let definite = arguments.iter().map(|argument| match argument {
+            Lattice::Known(repr) => Lattice::Known(repr.definite()), other => *other,
+        }).collect::<Vec<_>>();
+        return match arithmetic(operator, &definite, coercing) {
+            Lattice::Known(Repr::Long) => Lattice::Known(Repr::MaybeLong),
+            Lattice::Known(Repr::Double) => Lattice::Known(Repr::MaybeDouble),
+            other => other,
+        };
+    }
     // Shipped core keeps its coercing JavaScript arithmetic boxed.
     if coercing || arguments.is_empty() || arguments.len() > 2 {
         return Lattice::Known(Repr::Boxed);
@@ -176,6 +196,15 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
     for block in &function.blocks {
         for instruction in &block.instructions {
             match &instruction.operation {
+                Operation::Call { operands, primitive: Some(shape) } if operands.len() <= 9 => {
+                    if let Some(signature) = shape.fixed(operands.len() - 1) {
+                        state[instruction.result.0] = Lattice::Known(match signature.result {
+                            super::super::primitive::Kind::Long => Repr::MaybeLong,
+                            super::super::primitive::Kind::Double => Repr::MaybeDouble,
+                            _ => Repr::Boxed,
+                        });
+                    }
+                }
                 Operation::Nominal { operation: super::super::hir::Nominal::LongCast | super::super::hir::Nominal::UncheckedLongCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Long),
                 Operation::Nominal { operation: super::super::hir::Nominal::DoubleCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Double),
                 // A hinted aget's element, behind its checked cast (#389).
@@ -280,8 +309,18 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
     let mut raw_use = vec![false; count];
     for block in &function.blocks {
         for instruction in &block.instructions {
+            if let Operation::Call { operands, primitive: Some(shape) } = &instruction.operation
+                && operands.len() <= 9
+                && let Some(signature) = shape.fixed(operands.len() - 1)
+            {
+                for (value, kind) in operands[1..].iter().zip(&signature.parameters) {
+                    if *kind != super::super::primitive::Kind::Boxed && repr[value.0].definite().numeric() {
+                        raw_use[value.0] = true;
+                    }
+                }
+            }
             if let Operation::Nominal { operation: Nominal::LongCast | Nominal::UncheckedLongCast | Nominal::DoubleCast, arguments } = &instruction.operation
-                && repr[arguments[0].0].numeric()
+                && repr[arguments[0].0].definite().numeric()
             {
                 raw_use[arguments[0].0] = true;
             }
@@ -378,6 +417,7 @@ pub(super) fn flag_test(operation: &Operation) -> bool {
 pub(super) struct Locals {
     pub repr: Vec<Repr>,
     raw: Vec<Option<u32>>,
+    valid: Vec<Option<u32>>,
     pub declarations: Vec<(u32, ValType)>,
     /// GC locals are `value + offset`.
     offset: u32,
@@ -388,7 +428,7 @@ impl Locals {
         let mut raw = vec![None; repr.len()];
         let mut declarations = Vec::new();
         let mut next = base;
-        for kind in [Repr::Long, Repr::Double, Repr::Flag] {
+        for kind in [Repr::Long, Repr::Double, Repr::Flag, Repr::MaybeLong, Repr::MaybeDouble] {
             let mut count = 0;
             for (value, item) in repr.iter().enumerate() {
                 if *item == kind {
@@ -401,21 +441,37 @@ impl Locals {
                 declarations.push((count, kind.val_type().expect("raw kind")));
             }
         }
-        Self { repr, raw, declarations, offset, sentinels }
+        let mut valid = vec![None; repr.len()];
+        let start = next;
+        for (value, item) in repr.iter().enumerate() {
+            if item.maybe() { valid[value] = Some(next); next += 1; }
+        }
+        if next > start { declarations.push((next - start, ValType::I32)); }
+        Self { repr, raw, valid, declarations, offset, sentinels }
     }
     pub(super) fn of(&self, value: ValueId) -> Repr {
         self.repr[value.0]
     }
+    pub(super) fn offset(&self) -> u32 { self.offset }
     pub(super) fn raw(&self, value: ValueId) -> u32 {
         self.raw[value.0].expect("raw local")
     }
+    pub(super) fn valid(&self, value: ValueId) -> u32 { self.valid[value.0].expect("guarded numeric local") }
     fn boxed(&self, value: ValueId) -> u32 {
         value.0 as u32 + self.offset
     }
     /// Pushes `value` as a GC value, boxing a raw one.
     pub(super) fn push_boxed(&self, code: &mut Vec<Instruction<'static>>, value: ValueId) {
+        self.push_kind_boxed(code, value, self.of(value));
+    }
+    fn push_kind_boxed(&self, code: &mut Vec<Instruction<'static>>, value: ValueId, kind: Repr) {
         use Instruction::*;
-        match self.of(value) {
+        match kind {
+            Repr::MaybeLong | Repr::MaybeDouble => {
+                code.extend([LocalGet(self.valid(value)), If(BlockType::Result(VALUE))]);
+                self.push_kind_boxed(code, value, kind.definite());
+                code.extend([Else, LocalGet(self.boxed(value)), End]);
+            }
             Repr::Boxed => code.push(LocalGet(self.boxed(value))),
             Repr::Long => {
                 let raw = self.raw(value);
@@ -459,7 +515,7 @@ impl Locals {
     /// Pushes a numeric operand as the given raw kind.
     fn push_as(&self, code: &mut Vec<Instruction<'static>>, value: ValueId, kind: Repr) {
         code.push(Instruction::LocalGet(self.raw(value)));
-        if kind == Repr::Double && self.of(value) == Repr::Long {
+        if kind == Repr::Double && self.of(value).definite() == Repr::Long {
             code.push(Instruction::F64ConvertI64S);
         }
     }
@@ -476,6 +532,24 @@ impl Locals {
     ) {
         use Instruction::*;
         let kind = self.of(result);
+        if kind.maybe() {
+            let inputs = arguments.iter().filter(|value| self.of(**value).maybe()).collect::<Vec<_>>();
+            for (i, input) in inputs.iter().enumerate() {
+                code.push(LocalGet(self.valid(**input)));
+                if i > 0 { code.push(I32And); }
+            }
+            code.push(If(BlockType::Empty));
+            self.arithmetic_raw(code, operator, arguments, result, slow);
+            code.extend([I32Const(1), LocalSet(self.valid(result)), Else]);
+            for argument in arguments { self.push_boxed(code, *argument); }
+            code.extend([Call(slow), LocalSet(self.boxed(result)), I32Const(0), LocalSet(self.valid(result)), End]);
+            return;
+        }
+        self.arithmetic_raw(code, operator, arguments, result, slow);
+    }
+    fn arithmetic_raw(&self, code: &mut Vec<Instruction<'static>>, operator: Arithmetic, arguments: &[ValueId], result: ValueId, slow: u32) {
+        use Instruction::*;
+        let kind = self.of(result).definite();
         let target = self.raw(result);
         if arguments.len() == 1 && operator != Arithmetic::Negate {
             code.extend([LocalGet(self.raw(arguments[0])), LocalSet(target)]);
@@ -734,6 +808,7 @@ const VALUE: ValType = ValType::Ref(wasm_encoder::RefType::EQREF);
 /// Whether an instruction is an `identical?` of a raw number (#387), which
 /// `Locals::identical` emits without boxing it.
 pub(super) fn raw_identical(locals: &Locals, instruction: &ir::Instruction) -> bool {
+    if ir::operands(&instruction.operation).iter().any(|value| locals.of(*value).maybe()) { return false; }
     match &instruction.operation {
         Operation::Nominal { operation: super::super::hir::Nominal::Identical, arguments } => {
             arguments.len() == 2 && arguments.iter().any(|argument| locals.of(*argument).numeric())
@@ -746,6 +821,7 @@ pub(super) fn raw_identical(locals: &Locals, instruction: &ir::Instruction) -> b
 /// a hash with a raw long operand and no raw double (#387), which emission
 /// reads raw rather than boxing the operand.
 pub(super) fn raw_small(locals: &Locals, instruction: &ir::Instruction) -> bool {
+    if ir::operands(&instruction.operation).iter().any(|value| locals.of(*value).maybe()) { return false; }
     use super::super::hir::Nominal;
     let Operation::Nominal { operation, arguments } = &instruction.operation else { return false };
     let long = arguments.iter().any(|argument| locals.of(*argument) == Repr::Long);

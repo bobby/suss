@@ -1,5 +1,5 @@
-//! Shared GC ABI v2. The legacy backend has not migrated to this ABI.
-//! All ordinary numbers are boxed binary64; strings store UTF-16 units.
+//! Shared GC ABI v7. Longs and doubles have distinct boxed representations;
+//! typed primitive entries keep numeric arguments/results raw. Strings use UTF-16.
 //! Construction indices below are implementation details, not artifact ABI IDs.
 use std::borrow::Cow;
 use wasm_encoder::*;

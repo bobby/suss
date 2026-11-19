@@ -80,10 +80,19 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   body and boxes a primitive result. Numeric operands and results inside the
   typed body stay raw; captures retain the ordinary closure representation.
   Variadic and spread adapters still reach the checked ordinary entry.
+- **Fixed primitive calls.** Calls of a known local function, direct-linked
+  definition or a var with numeric arglists can use the typed entry. Direct
+  links retain their exact code-identity guard. Live var sites cache the typed
+  reference alongside the ordinary entry, and refresh both when the callee
+  changes. A typed hit keeps its numeric result raw. A guard miss can return
+  any boxed replacement value, so the result keeps a raw slot, a boxed slot
+  and a flag until a consumer needs it. Arithmetic and matching loop joins
+  propagate those alternatives; numeric casts check the boxed alternative.
+  The fallback never coerces a replacement merely because of an old hint.
 
-Unhinted parameters, values read from vars, and results of calls are boxed.
-The argument to a hinted parameter is boxed by its caller too, and cast back
-in the body. Functions that suspend (async continuations) keep every value boxed,
+Unhinted parameters, values read from vars, and ordinary call results are boxed.
+Calls without a known primitive signature use the ordinary entry and box their
+arguments. Functions that suspend (async continuations) keep every value boxed,
 because their locals are saved as GC values across a suspension.
 
 ## Where values are boxed
@@ -108,9 +117,14 @@ These parts of #337, #448 and #351 aren't done yet:
 
 - **Hinted `let` locals.** On the JVM, a hinted `let` local converts at each
   primitive use: `(let [^long x (identity 5.5)] [x (+ x 1)])` is `[5.5 6]`.
-- **Typed call sites.** Primitive bodies and their checked ordinary bridges
-  exist, but callers still box arguments and results. Signature propagation,
-  direct typed calls and guarded live-var fallback remain necessary (#448).
+- **Additional typed call forms.** Variadic adapters, calls wider than the
+  eight fixed entries, and async calls keep the ordinary interface. Primitive
+  bodies themselves exist for all source-hinted methods. A live-var guard's
+  fixed-entry shape excludes variadic bodies, whose final formal is a rest seq
+  rather than a fixed argument; Wasm structural identity must distinguish them.
+- **More raw consumers of guarded results.** Comparisons, identity tests and
+  bitwise operations currently materialize guarded numeric results. Arithmetic,
+  matching loop joins, primitive arguments and casts retain their raw hit.
 - **Box reuse across blocks.** See "Where values are boxed" above (#351).
 
 ## Evidence

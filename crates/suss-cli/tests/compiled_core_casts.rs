@@ -162,3 +162,33 @@ fn return_hints_reject_opposite_source_primitives_but_unbox_objects() {
         }
     }
 }
+
+#[test]
+fn guarded_primitive_calls_preserve_replacement_values_and_numeric_joins() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval("(def ^{:arglists '(^long [^long x])} typed-live (fn ^long [^long x] (* x 2)))
+                      (def live-pass (fn [^long n] (typed-live n)))
+                      (def live-add (fn [^long n] (+ 1 (typed-live n))))
+                      (def live-loop (fn [^long n] (loop [i 0 acc 0] (if (< i n) (recur (inc i) (+ acc (typed-live i))) acc))))
+                      (def live-capture (fn [^long n] (let [x (typed-live n)] (fn [] x))))
+                      (def live-cast (fn ^double [^long n] (double (typed-live n))))
+                      (def saved-capture (live-capture 3000000000))").unwrap();
+        assert_eq!(printed(&mut session, "[(live-pass 3000000000) (live-add 3000000000) (live-loop 4) (saved-capture) (live-cast 3)]"),
+            "[6000000000 6000000001 12 6000000000 6.0]");
+        session.eval("(def typed-live (fn [x] (+ x 0.5)))").unwrap();
+        assert_eq!(printed(&mut session, "[(live-pass 3) (live-add 3) (live-loop 4) ((live-capture 3)) (saved-capture) (live-cast 3)]"),
+            "[3.5 4.5 8.0 3.5 6000000000 3.5]");
+        session.eval("(def typed-live (fn [x] [:changed x]))").unwrap();
+        assert_eq!(printed(&mut session, "[(live-pass 3) ((live-capture 3)) (try (live-add 3) (catch :default e :threw))]"),
+            "[[:changed 3] [:changed 3] :threw]");
+        session.eval("(def typed-live (fn ^long [^long x] (* x 3)))").unwrap();
+        assert_eq!(printed(&mut session, "[(live-pass 3) (live-add 3) (live-loop 4)]"), "[9 10 18]");
+        session.eval("(def ^{:arglists '([^long x y])} typed-pair (fn [^long x y] [x y]))
+                      (def pair-pass (fn [] (typed-pair 2 3)))").unwrap();
+        assert_eq!(printed(&mut session, "(pair-pass)"), "[2 3]");
+        // A variadic body has the same raw formal types, but its last formal
+        // is a seq. The old fixed site must go through the new adapter.
+        session.eval("(def typed-pair (fn [^long x & more] [x more]))").unwrap();
+        assert_eq!(printed(&mut session, "[(pair-pass) (apply typed-pair [2 3])]"), "[[2 (3)] [2 (3)]]");
+    }
+}

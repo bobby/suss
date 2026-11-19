@@ -225,9 +225,20 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.extend(["closure-source-name-initialize", "arity-throw"]);
                         names.extend(runtime_abi::ARITY_ERROR_EXPORTS);
                     }
-                    Operation::Call { operands } => match runtime_abi::CALL_EXPORTS.get(operands.len() - 1) {
-                        Some(name) => { names.insert(name); }
-                        None => { names.insert("call-spread"); }
+                    Operation::Call { operands, primitive } => {
+                        match runtime_abi::CALL_EXPORTS.get(operands.len() - 1) {
+                            Some(name) => { names.insert(name); }
+                            None => { names.insert("call-spread"); }
+                        }
+                        if let Some(signature) = primitive.as_ref().and_then(|shape| shape.fixed(operands.len() - 1)) {
+                            for kind in &signature.parameters {
+                                match kind {
+                                    super::primitive::Kind::Long => { names.insert("number-cast-long"); },
+                                    super::primitive::Kind::Double => { names.insert("number-cast-double"); },
+                                    _ => {},
+                                }
+                            }
+                        }
                     },
                     Operation::Bitwise { operation, .. } => {
                         names.insert(operation.export());
@@ -583,6 +594,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     // Callees the function makes or direct-links call their entries
     // statically.
     let mut call_site_list = vec![];
+    let mut primitive_site_list = vec![];
     for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
         .chain(futures.iter().map(|body| &body.continuation.function))
     {
@@ -593,11 +605,14 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             .map(|inst| inst.result)
             .collect::<std::collections::HashSet<_>>();
         for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
-            if let Operation::Call { operands } = &inst.operation
+            if let Operation::Call { operands, primitive } = &inst.operation
                 && operands.len() - 1 <= runtime_abi::MAX_FIXED as usize
                 && !static_callees.contains(&operands[0])
             {
                 call_site_list.push(((function as *const IrFunction as usize, inst.result.0 as u32), operands.len() as u32 - 1));
+                if let Some(shape) = primitive && shape.fixed(operands.len() - 1).is_some() {
+                    primitive_site_list.push(((function as *const IrFunction as usize, inst.result.0 as u32), shape, operands.len() - 1));
+                }
             }
         }
     }
@@ -640,6 +655,30 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     for definition in &imported_definitions {
         for k in 0..=runtime_abi::MAX_FIXED {
             names.insert(Box::leak(format!("link.{definition}.{k}").into_boxed_str()));
+        }
+    }
+    let mut typed_links = std::collections::BTreeMap::new();
+    let mut call_shapes = Vec::new();
+    for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
+        .chain(futures.iter().map(|body| &body.continuation.function))
+    {
+        let linked = function.blocks.iter().flat_map(|block| &block.instructions).filter_map(|instruction|
+            match instruction.operation {
+                Operation::Nominal { operation: Nominal::DirectLinkRead(link), .. } => Some((instruction.result, link)),
+                _ => None,
+            }).collect::<std::collections::HashMap<_, _>>();
+        for instruction in function.blocks.iter().flat_map(|block| &block.instructions) {
+            if let Operation::Call { operands, primitive: Some(shape) } = &instruction.operation {
+                call_shapes.push(shape);
+                if let Some(link) = linked.get(&operands[0])
+                    && imported_definitions.contains(&super::hir::link_parts(*link).1)
+                    && let Some(signature) = shape.fixed(operands.len() - 1)
+                {
+                    let name: &'static str = Box::leak(format!("link.{}.{}.typed", super::hir::link_parts(*link).1, operands.len() - 1).into_boxed_str());
+                    typed_links.insert(name, signature);
+                    names.insert(name);
+                }
+            }
         }
     }
     let names = names.into_iter().collect::<Vec<_>>();
@@ -811,6 +850,11 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         } else {
             (params, results)
         };
+        let (params, results) = if let Some(signature) = typed_links.get(name) {
+            let mut parameters = vec![VALUE];
+            parameters.extend(signature.parameters.iter().copied().map(primitive::value_type));
+            (parameters, vec![primitive::value_type(signature.result)])
+        } else { (params, results) };
         types.ty().function(params, results);
         // An arity error or a call fallback is an entry, of the shared
         // group's `$callk` type.
@@ -820,7 +864,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             Some(k) => runtime_abi::CALL + k as u32,
             None => type_count + i as u32,
         };
-        if let Some((link, k)) = link_entry(name) {
+        if let Some((link, _)) = name.strip_suffix(".typed").and_then(link_entry) {
+            imports.import(&format!("suss.link.{link}"), name, EntityType::Function(ty));
+        } else if let Some((link, k)) = link_entry(name) {
             imports.import(&format!("suss.link.{link}"), name, EntityType::Function(runtime_abi::CALL + k));
         } else {
             imports.import("suss.runtime", name, EntityType::Function(ty));
@@ -934,7 +980,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             },
         });
     }
-    let primitive = primitive::Types::new(&mut types, next_type + u32::from(!read_links.is_empty()), &bodies, &layout);
+    let primitive = primitive::Types::new(&mut types, next_type + u32::from(!read_links.is_empty()), &bodies, &layout, &call_shapes);
     // Each slot's global, and each called definition's code struct global and
     // entries: imported, or this fragment's.
     let first_imported_link = globals.len() as u32 + 3;
@@ -999,6 +1045,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let native_sites = native_site_list.iter().enumerate()
         .map(|(index, site)| (*site, first_native_site + 4 * index as u32))
         .collect::<std::collections::HashMap<_, _>>();
+    let first_primitive_site = first_object_call_site + 3 * object_call_site_list.len() as u32;
+    let primitive_sites = primitive_site_list.iter().enumerate().map(|(index, (site, _, _))|
+        (*site, first_primitive_site + index as u32)).collect::<std::collections::HashMap<_, _>>();
     for (index, definition) in imported_definitions.iter().enumerate() {
         links.codes.insert(*definition, first_imported_link + imported_slots.len() as u32 + index as u32);
         let entries = (0..=runtime_abi::MAX_FIXED).map(|k| {
@@ -1025,7 +1074,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
         dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites, length_sites: &length_sites,
         method_sites: &method_sites, instance_sites: &instance_sites, call_sites: &call_sites, keyword_caches: &keyword_caches,
-        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, object_call_sites: &object_call_sites, primitive: &primitive, epoch_global };
+        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, object_call_sites: &object_call_sites, primitive: &primitive, primitive_sites: &primitive_sites, epoch_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -1202,6 +1251,12 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             &ConstExpr::ref_null(HeapType::Concrete(runtime_abi::CALL + n + 1)),
         );
     }
+    for (_, shape, arity) in &primitive_site_list {
+        let entry = primitive.entries[shape.fixed(*arity).expect("primitive call signature")];
+        code_globals.global(GlobalType { val_type: ValType::Ref(RefType { nullable: true,
+            heap_type: HeapType::Concrete(entry) }), mutable: true, shared: false },
+            &ConstExpr::ref_null(HeapType::Concrete(entry)));
+    }
     for (definition, global, layout_index) in &defined_code {
         exports.export(&format!("link.{definition}.code"), ExportKind::Global, *global);
         for (k, entry) in links.entries[definition].iter().enumerate() {
@@ -1371,6 +1426,7 @@ struct Context<'a> {
     method_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     epoch_global: u32,
     primitive: &'a primitive::Types,
+    primitive_sites: &'a std::collections::HashMap<(usize, u32), u32>,
 }
 /// One function definition (`fn`): its closures' capture struct, its code
 /// struct global and its entries (ADR-0004).
@@ -1769,7 +1825,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
-    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, construct_sites, native_sites, object_call_sites, call_sites, keyword_caches, literals, primitive: _, epoch_global } = *context;
+    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, construct_sites, native_sites, object_call_sites, call_sites, keyword_caches, literals, primitive: _, primitive_sites: _, epoch_global } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -2040,6 +2096,17 @@ fn emit_function(
         let mut boxed = std::collections::HashSet::new();
         let mut code = Vec::new();
         for inst in instructions {
+            if continuation.is_none()
+                && let Operation::Call { operands, primitive: Some(shape) } = &inst.operation
+                && let Some(signature) = shape.fixed(operands.len() - 1)
+                && operands.len() - 1 <= runtime_abi::MAX_FIXED as usize
+            {
+                primitive::call(&mut code, operands, shape, signature, inst.result, ir, context, &locals,
+                    known.get(&(operands[0].0 as u32)).copied(), linked.get(&(operands[0].0 as u32)).copied(),
+                    method_local, long_locals[0], &index);
+                for instruction in code.drain(..) { function.instruction(&instruction); }
+                continue;
+            }
             if unboxed::inline(&locals, inst) {
                 match &inst.operation {
                     Operation::Literal(literal) => locals.literal(&mut code, literal, inst.result),
@@ -2080,6 +2147,14 @@ fn emit_function(
                 && locals.of(inst.result) != unboxed::Repr::Boxed
             {
                 let from = locals.of(arguments[0]);
+                if from.maybe() {
+                    primitive::argument(&mut code, &locals, arguments[0],
+                        if *operation == Nominal::DoubleCast { super::primitive::Kind::Double } else { super::primitive::Kind::Long },
+                        *operation == Nominal::LongCast, method_local, &index);
+                    code.push(LocalSet(locals.raw(inst.result)));
+                    for instruction in code.drain(..) { function.instruction(&instruction); }
+                    continue;
+                }
                 if *operation == Nominal::LongCast && from == unboxed::Repr::Double {
                     // RT.longCast(double) checks the original double before
                     // truncating. NaN converts to zero; the rounded upper
@@ -2316,7 +2391,7 @@ fn emit_function(
                         .instruction(&LocalGet(value.0 as u32 + offset))
                         .instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
-                Operation::Call { operands } => {
+                Operation::Call { operands, .. } => {
                     let tail = continuation.is_none() && !matches!(entry, Entry::Primitive(_)) && block.instructions.last().is_some_and(|last| std::ptr::eq(last, inst))
                         && returns_unchanged(ir, &block.terminator, inst.result);
                     let arguments = &operands[1..];
@@ -4225,12 +4300,25 @@ fn emit_function(
             Terminator::Jump { target, arguments } => {
                 // Push every replacement value before any parameter assignment.
                 for (parameter, argument) in ir.blocks[*target].parameters.iter().zip(arguments) {
+                    if locals.of(*parameter).maybe() {
+                        function.instruction(&LocalGet(locals.raw(*argument)))
+                            .instruction(&LocalGet(argument.0 as u32 + offset));
+                        if locals.of(*argument).maybe() { function.instruction(&LocalGet(locals.valid(*argument))); }
+                        else { function.instruction(&I32Const(1)); }
+                        continue;
+                    }
                     function.instruction(&LocalGet(match locals.of(*parameter) {
                         unboxed::Repr::Boxed => argument.0 as u32 + offset,
                         _ => locals.raw(*argument),
                     }));
                 }
                 for parameter in ir.blocks[*target].parameters.iter().rev() {
+                    if locals.of(*parameter).maybe() {
+                        function.instruction(&LocalSet(locals.valid(*parameter)))
+                            .instruction(&LocalSet(parameter.0 as u32 + offset))
+                            .instruction(&LocalSet(locals.raw(*parameter)));
+                        continue;
+                    }
                     function.instruction(&LocalSet(match locals.of(*parameter) {
                         unboxed::Repr::Boxed => parameter.0 as u32 + offset,
                         _ => locals.raw(*parameter),
