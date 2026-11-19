@@ -1902,6 +1902,24 @@ fn build_module() -> Vec<u8> {
             let (descriptor, method, entry) = (k + 1, k + 2, k + 3);
             let entry_type = RefType { nullable: true, heap_type: HeapType::Concrete(CALL + k + 1) };
             locals = vec![(2, VALUE), (1, ValType::Ref(entry_type))];
+            // A map called with a key, or a key and a not-found value, reads
+            // as `get` does, through `map-lookup` (#467); anything it doesn't
+            // answer, undefined, takes the object call below.
+            if k == 1 || k == 2 {
+                body.extend([LocalGet(0), LocalGet(1), I32Const(0)]);
+                body.push(if k == 1 { sentinel_value(NIL) } else { LocalGet(2) });
+                body.extend([
+                    Call(b.names["map-lookup"]),
+                    LocalTee(descriptor),
+                    sentinel_value(UNDEFINED),
+                    RefEq,
+                    I32Eqz,
+                    If(BlockType::Empty),
+                    LocalGet(descriptor),
+                    Return,
+                    End,
+                ]);
+            }
             body.extend([
                 Block(BlockType::Empty),
                 LocalGet(0),
