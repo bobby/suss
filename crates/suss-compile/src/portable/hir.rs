@@ -3875,6 +3875,27 @@ impl Analyzer<'_> {
                 )
             }
             _ => {
+                // `reduced?` compiles inline, as its Clojure :inline definition
+                // does (#457): an `instance?` site on core's Reduced, so a
+                // reduction step tests its result without a call. Another
+                // arity stays a call, which raises the arity error.
+                if args.len() == 1
+                    && let Some(ResolvedBinding::Cell(global)) = &resolved
+                    && let var = global.core_var_of_link().unwrap_or_else(|| global.clone())
+                    && var.namespace() == "suss.core"
+                    && var.name() == "reduced?"
+                {
+                    let reduced = Form {
+                        kind: Kind::Symbol(suss_reader::Symbol {
+                            namespace: Some("suss.core".into()),
+                            name: "Reduced".into(),
+                        }),
+                        span: items[0].span.clone(),
+                        metadata: vec![],
+                    };
+                    let arguments = vec![self.form(&reduced)?, self.form(&args[0])?];
+                    return Ok(self.nominal(form, Nominal::Instance, arguments));
+                }
                 if let Some(ResolvedBinding::Core { export, .. }) = &resolved {
                     // `nil?` and `identical?` compile inline (#356), as their
                     // Clojure :inline definitions do, so a call compiled before

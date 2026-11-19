@@ -37,6 +37,13 @@ fn instance_sites_answer_as_before() {
             // other types before and after (#457).
             ("(let [info? (fn [x] (instance? ExceptionInfo x))] (mapv info? [(A.) (ex-info \"a\" {}) (B.) (ex-info \"b\" {}) (A.)]))",
              "[false true false true false]"),
+            // reduced? compiles inline (#457): its answers, a local or user
+            // var of that name, and a wrong arity, which still throws.
+            ("[(reduced? (reduced 1)) (reduced? 1) (reduced? nil) (reduced? {:a 1}) (reduced? (A.)) (reduced? @(reduced (reduced 2)))]",
+             "[true false false false false true]"),
+            ("(let [reduced? (fn [x] :local)] (reduced? 1))", ":local"),
+            ("(do (def ^:private reduced? (fn [x] :mine)) (reduced? 1))", ":mine"),
+            ("(try (apply reduced? [1 2]) (catch :default e :threw))", ":threw"),
             // reduced? on accumulators of several types.
             ("(reduce (fn [a x] (if (= x 5) (reduced a) (conj a x))) [] (range 10))", "[0 1 2 3 4]"),
             ("(persistent! (reduce (fn [a x] (if (= x 3) (reduced a) (conj! a x))) (transient []) (range 10)))", "[0 1 2]"),
