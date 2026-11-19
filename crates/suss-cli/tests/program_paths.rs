@@ -33,6 +33,10 @@ fn instance_sites_answer_as_before() {
             // and values that aren't source objects.
             ("(mapv b? [(A.) (B.) (A.) (C.) (B.) (A.) nil 1 :k \"s\" [] (ex-info \"e\" {})])",
              "[false true false false true false false false false false false false]"),
+            // ExceptionInfo, whose prototype has a parent, at a site that sees
+            // other types before and after (#457).
+            ("(let [info? (fn [x] (instance? ExceptionInfo x))] (mapv info? [(A.) (ex-info \"a\" {}) (B.) (ex-info \"b\" {}) (A.)]))",
+             "[false true false true false]"),
             // reduced? on accumulators of several types.
             ("(reduce (fn [a x] (if (= x 5) (reduced a) (conj a x))) [] (range 10))", "[0 1 2 3 4]"),
             ("(persistent! (reduce (fn [a x] (if (= x 3) (reduced a) (conj! a x))) (transient []) (range 10)))", "[0 1 2]"),

@@ -472,9 +472,9 @@ fn string_join(b: &mut Builder) {
 /// an i31 is never an instance; an object of the descriptor other than its
 /// prototype is one; anything else takes `object-instance`.
 ///
-/// The owner and owner-epoch fields hold a negative answer (#446): the
-/// prototype of a source object of another descriptor that `object-instance`
-/// found not to be an instance. Such an object's answer depends only on its
+/// The owner, owner-value and owner-epoch fields hold a negative answer
+/// (#446): the prototype and descriptor of a source object of another
+/// descriptor that `object-instance` found not to be an instance. Such an object's answer depends only on its
 /// prototype's chain, which changes only with the epoch (setPrototypeOf and
 /// `__proto__` writes advance it), so another object of the same kind with
 /// that prototype isn't one either. Native objects, error backings and the
@@ -553,6 +553,9 @@ fn instance_site_test(b: &mut Builder) {
     // site was checked at: a change during the test leaves it stale.
     code.extend([I32Eqz, LocalGet(3), RefIsNull, I32Eqz, I32And, If(BlockType::Empty)]);
     code.extend(set(SITE_OWNER, vec![LocalGet(3)]));
+    // And its descriptor, which emitted sites compare inline (#457): an
+    // object of that descriptor and prototype is plain as this one was.
+    code.extend(set(SITE_OWNER_VALUE, [object().to_vec(), vec![StructGet { struct_type_index: OBJECT, field_index: 0 }]].concat()));
     code.extend(set(SITE_OWNER_EPOCH, site(SITE_EPOCH).to_vec()));
     code.extend([End, LocalGet(4)]);
     b.function_with_locals(

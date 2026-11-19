@@ -1708,13 +1708,16 @@ fn emit_function(
             heap_type: HeapType::Concrete(if kind == 6 { runtime_abi::ARGS } else { runtime_abi::PACKED_STORAGE + kind }),
         })));
     }
+    // A source object, cast once for an `instance?` site's inline tests (#457).
+    let object_local = storage_locals + 7;
+    declarations.push((1, ValType::Ref(wasm_encoder::RefType { nullable: true, heap_type: HeapType::Concrete(7) })));
     // Loop-invariant array views (#389): an inline aget or aset in a loop,
     // of an array defined before the loop, casts the array to its storage
     // once, at the end of the block that enters the loop, into a nullable
     // local of that storage type; null if the array isn't of that kind. In
     // the loop, the access reads the local instead of casting the array.
     // Each access takes its innermost such loop.
-    let first_view = storage_locals + 7;
+    let first_view = storage_locals + 8;
     let mut view_of: std::collections::HashMap<u32, u32> = std::collections::HashMap::new();
     let mut view_inits: Vec<(usize, u32, usize, u32)> = Vec::new();
     if continuation.is_none() {
@@ -3425,20 +3428,43 @@ fn emit_function(
                                 .instruction(&Br(2))
                                 .instruction(&End)
                                 .instruction(&End);
-                            // An object of the site's descriptor, other than
-                            // its prototype, at the site's epoch, is an
-                            // instance, as the test answers (#445).
-                            let site = |field| [GlobalGet(cache), StructGet { struct_type_index: runtime_abi::NAMED_SITE, field_index: field }];
-                            let mut code = vec![LocalGet(value), RefTestNonNull(HeapType::Concrete(7)), If(BlockType::Empty)];
+                            let site =|field| [GlobalGet(cache), StructGet { struct_type_index: runtime_abi::NAMED_SITE, field_index: field }];
+                            let object = || [LocalGet(object_local), StructGet { struct_type_index: 7, field_index: 0 }];
+                            // A source object, cast once; anything else takes the test.
+                            let object_type = RefType { nullable: false, heap_type: HeapType::Concrete(7) };
+                            let mut code = vec![Block(BlockType::Empty), Block(BlockType::Result(ValType::Ref(object_type))), LocalGet(value),
+                                BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF, to_ref_type: object_type },
+                                Drop, Br(1), End, LocalSet(object_local)];
+                            // The site's constructor at its epoch: an object of
+                            // its descriptor, other than its prototype, is an
+                            // instance (#445); one of the descriptor and
+                            // prototype the test found not to be an instance
+                            // isn't (#457). Its one-element prototype cell is
+                            // read in the args local.
+                            let storage = storage_locals + 6;
                             code.extend(site(runtime_abi::SITE_DESCRIPTOR));
                             code.extend([LocalGet(constructor), RefEq]);
                             code.extend(site(runtime_abi::SITE_EPOCH));
-                            code.extend([GlobalGet(epoch_global), I32Eq, I32And]);
-                            code.extend([LocalGet(value), RefCastNonNull(HeapType::Concrete(7)), StructGet { struct_type_index: 7, field_index: 0 }]);
+                            code.extend([GlobalGet(epoch_global), I32Eq, I32And, If(BlockType::Empty)]);
+                            code.extend(object());
                             code.extend(site(runtime_abi::SITE_METHOD));
-                            code.extend([RefEq, I32And, LocalGet(value)]);
+                            code.extend([RefEq, If(BlockType::Empty), LocalGet(value)]);
                             code.extend(site(runtime_abi::SITE_DESCRIPTOR_2));
-                            code.extend([RefEq, I32Eqz, I32And, If(BlockType::Empty), I32Const(1), Br(2), End, End]);
+                            code.extend([RefEq, I32Eqz, If(BlockType::Empty), I32Const(1), Br(4), End, Else]);
+                            code.extend(object());
+                            code.extend(site(runtime_abi::SITE_OWNER_VALUE));
+                            code.push(RefEq);
+                            code.extend(site(runtime_abi::SITE_OWNER_EPOCH));
+                            code.extend([GlobalGet(epoch_global), I32Eq, I32And, If(BlockType::Empty)]);
+                            let args = RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::ARGS) };
+                            code.extend([Block(BlockType::Empty), Block(BlockType::Result(ValType::Ref(args))),
+                                LocalGet(object_local), StructGet { struct_type_index: 7, field_index: 2 },
+                                BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF, to_ref_type: args },
+                                Drop, Br(1), End,
+                                LocalTee(storage), ArrayLen, I32Const(1), I32Ne, BrIf(0),
+                                LocalGet(storage), I32Const(0), ArrayGet(runtime_abi::ARGS)]);
+                            code.extend(site(runtime_abi::SITE_OWNER));
+                            code.extend([RefEq, If(BlockType::Empty), I32Const(0), Br(6), End, End, End, End, End, End]);
                             for instruction in &code {
                                 function.instruction(instruction);
                             }
