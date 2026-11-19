@@ -30061,3 +30061,106 @@ source and the corrected pipeline test, with no other source changes during
 execution. Its terminal outcome and final-head CI evidence belong on #448 and
 #470; read the actual log rather than interpreting the earlier interrupted runs
 as passes. The independent implementation review does not replace either gate.
+
+## JVM apply traversal and lazy-error probes (2026-11-19)
+
+Release production source c2e94c0a was rebuilt with stable Cargo,
+SUSS_FUNCTION_NAMES=1, two build jobs and a 6 GiB systemd user scope, using the
+shared Cargo target. The build completed in 4m06s. The copied executable,
+SHA256 receipt and build log are retained in the original workspace under
+`target/probe/pr474-suss-before`, `pr474-before-executable.sha256` and
+`pr474-before-build.log`. The isolated source checkout is
+`target/probe/pr474-source`; release verification leaves the separate running
+primitive-entry debug baseline's binaries untouched.
+
+Fresh JVM Clojure 1.12.6 probes ran in 2 GiB systemd scopes, with an explicit
+512 MiB JVM heap, `-J-Dclojure.main.report=stderr` and `-M`. Inputs and logs:
+
+- `pr474-apply-realization-jvm.clj` and its `-bounded.log`: fixed AFn apply
+  traverses an infinite lazy tail until an explicit throwing sentinel at index
+  40. An earlier unbounded probe exhausted its bounded JVM heap; its original
+  log is retained. This does not establish the earlier handoff's claim that
+  such an apply throws a bounded arity error. Variadic zero-required apply
+  realizes indices 0 and 1; a two-required function consuming its first rest
+  value realizes indices 0 through 3.
+- `pr474-apply-iseq-jvm.{clj,log}`: callbacks on a custom ISeq expose the bounded
+  traversal before extraction. A two-required variadic method uses next after
+  its final fixed argument, not rest. Fixed finite calls have a next-only
+  preflight, then first/next extraction; the >20 path also counts and extracts
+  the remainder. These are observable callback effects, not a requirement to
+  copy the JVM's physical sequence representation.
+- Independent read-only design review added
+  `pr474-review-counted-iseq-jvm.log` and `pr474-review-rt-javap.log`. Counted
+  ISeqs still receive the JVM's next-only RestFn preflight, with no count call.
+  Public bounded-count has a Counted fast path and cannot be reused literally
+  for that private preflight. Preserve public bounded-count's behavior.
+- `pr474-apply-numeric-map-jvm.{clj,log}`: unchunked map over iterate with a bad
+  operand at 0 causes +, -, *, / and bit-and to realize only indices 0..3
+  before the type error. A bad operand at 5 realizes 0..5. The equivalent
+  explicit-lazy-seq probe is retained in pr474-apply-numeric-error-jvm2.log;
+  its first run omitted IllegalArgumentException for bitwise errors and is
+  preserved separately rather than counted as a complete run.
+
+New focused source regressions reproduce the extra seq callback and eager
+numeric realization against c2e94c0a. The original apply regression passes.
+`cargo +stable test --release --workspace --locked --test apply_fixed_arity --
+--test-threads=2`, in a 6 GiB scope, reports one passing original regression and
+failing new regressions (`pr474-apply-oracle-red.log`). The first numeric
+fixture used an unavailable Session macro; its corrected map/iterate fixture
+executes and fails with actual effects 0..10 against expected 0..3
+(`pr474-numeric-oracle-red2.log`). Runtime failure stops these new tests before
+Macro execution, so Macro behavior is not certified by these runs. No ignores,
+expected-value weakening or production fix is implied.
+
+An additive runtime callback registry and generated source spread entries are
+viable per the independent design review, with these constraints: keep the
+ordinary nil-tail IndexedSeq path, initialize rooted callback values and cached
+entries consistently before use, preserve exact next-only preflight and
+extraction order, and check array growth arithmetic across callbacks. Native
+arithmetic and bitwise variadics need lazy spread handling. UNIVERSAL includes
+arithmetic and receiver-bound wrappers; neither UNIVERSAL nor non-closure IFn
+by itself justifies eagerly realizing all arguments. Eager realization would
+retain the observed premature-consumption bug. No production implementation of
+this proposed route has been made in these probes.
+
+`pr474-instructions.py` uses the unchanged bench.py loop and the same f2
+(return its first argument), a warm-up export before sampling, and three perf
+stat instructions:u runs each at N and 0. It retains the component, source,
+raw counts and JSON under `pr474-before-instructions/`. Net instructions after
+subtracting the 25-instruction control are approximately: list 687, apply over
+that constructed list 2,466, and apply over a prebuilt list 1,811. The apply
+range 10/20/40 rows are 24,550 / 37,783 / 124,416; those sizes cross different
+arity paths and are not an asymptotic linearity proof. Walltimes were not
+measured. These results do not satisfy the under-2,000 or property-free
+variadic acceptance criteria.
+
+Perf-map output is hardcoded by Wasmtime to /tmp. The profile commands use
+bwrap with a private bind from `target/probe/pr474-perf-tmp` onto /tmp for both
+perf record and perf report, keeping physical output on the workspace disk.
+The initial apply-list instruction profile includes substantial native compiler
+startup and cannot be interpreted as the generated-code hot-path breakdown.
+Raw data and its report are retained as pr474-apply-list.instructions.data and
+pr474-apply-list-profile-report.txt; the delayed hot-loop capture uses
+pr474-apply-list-hot.instructions.data.
+
+The corrected combined regression run is `pr474-oracle-regressions.log`: the
+original test passes and both new regressions fail on actual Runtime effects,
+with no compile-fixture failure and no ignored cases. Further Counted/Macro
+assertions remain guarded by fixing those first failures, not presumed passes.
+
+The delayed profile completed after a ten-second recording delay over
+50,000,000 apply-list iterations, using instructions:u at period 100003 and a
+6 GiB scope. The hot report (`pr474-apply-list-hot-profile-report.txt`) has no
+native compiler entries above its 0.5% threshold. Core seq/first/next account
+for approximately 8.5%/7.7%/7.4% of samples, object-descriptor 6.5%, and
+fn-fixed-arity? 3%; Wasmtime subtype-cache work is also visible. object-new is
+absent above that threshold, so the earlier construction-cost handoff is not a
+sufficient explanation of this current short-list apply path. These are flat
+instruction samples for this microbenchmark, not the time/cycle proportions of
+the whole-program benchmarks.
+
+The fixed-apply throwing-sentinel regression at mapper index 40 passed in both
+Runtime and Macro (`pr474-fixed-remainder-regression.log`, one test, no failures
+or ignored cases). It guards against replacing the observed unbounded remainder
+traversal with an early wrong-arity exception. The separate sequence-callback
+and numeric-error regressions remain genuine failures awaiting implementation.

@@ -55,3 +55,123 @@ fn apply_over_seqs_answers_as_before() {
         }
     }
 }
+
+#[test]
+fn apply_sequence_callbacks_follow_clojure_1_12_6() {
+    // Fresh JVM oracle: target/probe/pr474-apply-iseq-jvm.{clj,log}.
+    // first, next and rest are observable on an ISeq. In particular, a
+    // variadic apply counts a bounded prefix before reading its arguments,
+    // then advances with next, including after the last required argument.
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval(r#"
+            (def apply-trace [])
+            (deftype ApplyTraceSeq [n stop]
+              ISeqable
+              (-seq [this] (do (set! apply-trace (conj apply-trace [:seq n])) this))
+              ISeq
+              (-first [_] (do (set! apply-trace (conj apply-trace [:first n])) n))
+              (-rest [_] (do (set! apply-trace (conj apply-trace [:rest n]))
+                            (if (< (inc n) stop) (ApplyTraceSeq. (inc n) stop) ())))
+              INext
+              (-next [_] (do (set! apply-trace (conj apply-trace [:next n]))
+                            (when (< (inc n) stop) (ApplyTraceSeq. (inc n) stop)))))
+            (def trace-apply
+              (fn [f stop]
+                (set! apply-trace [])
+                (let [answer (try (apply f (ApplyTraceSeq. 0 stop))
+                                  (catch :default e :arity))]
+                  [answer apply-trace])))
+        "#).unwrap();
+        for (source, expected) in [
+            ("(trace-apply (fn [& xs] :ok) 3)",
+             "[:ok [[:seq 0] [:next 0]]]"),
+            ("(trace-apply (fn [a b & xs] [a b]) 3)",
+             "[[0 1] [[:seq 0] [:next 0] [:next 1] [:next 2] [:first 0] [:next 0] [:first 1] [:next 1]]]"),
+            ("(trace-apply (fn [a b] [a b]) 2)",
+             "[[0 1] [[:seq 0] [:next 0] [:next 1] [:first 0] [:next 0] [:first 1]]]"),
+            ("(trace-apply (fn [a b] [a b]) 3)",
+             "[:arity [[:seq 0] [:next 0] [:next 1] [:next 2] [:first 0] [:next 0] [:first 1] [:next 1] [:first 2]]]"),
+            ("(trace-apply (fn [a b] [a b]) 4)",
+             "[:arity [[:seq 0] [:next 0] [:next 1] [:next 2] [:next 3] [:first 0] [:next 0] [:first 1] [:next 1] [:first 2] [:next 2] [:first 3]]]"),
+        ] {
+            assert_eq!(printed(&mut session, source), expected, "{source}");
+        }
+        // RT.boundedLength also walks next for a Counted ISeq. Public
+        // bounded-count has different semantics and must keep its fast path.
+        session.eval(r#"
+            (extend-type ApplyTraceSeq
+              ICounted
+              (-count [this]
+                (set! apply-trace (conj apply-trace [:count (.-n this)]))
+                (- (.-stop this) (.-n this))))
+        "#).unwrap();
+        assert_eq!(
+            printed(&mut session, "(trace-apply (fn [a b & xs] [a b]) 3)"),
+            "[[0 1] [[:seq 0] [:next 0] [:next 1] [:next 2] [:first 0] [:next 0] [:first 1] [:next 1]]]"
+        );
+        assert_eq!(
+            printed(&mut session, "(do (set! apply-trace []) [(bounded-count 1 (ApplyTraceSeq. 0 3)) apply-trace])"),
+            "[3 [[:count 0]]]"
+        );
+    }
+}
+
+#[test]
+fn numeric_apply_stops_realizing_at_the_conversion_error() {
+    // JVM 1.12.6: pr474-apply-numeric-map-jvm.log. The bounded arity
+    // probe realizes indices 0..3; the arithmetic fold then realizes only as
+    // far as the bad operand. Realizing the whole input before calling a
+    // universal native arithmetic closure changes observable effects.
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval(r#"
+            (def numeric-apply-events [])
+            (def numeric-apply-input
+              (fn [bad]
+                (map (fn [i]
+                       (set! numeric-apply-events (conj numeric-apply-events i))
+                       (when (>= i 10) (throw (ex-info "realization limit" {})))
+                       (if (= i bad) :bad (inc i)))
+                     (iterate inc 0))))
+            (def trace-numeric-apply
+              (fn [f bad]
+                (set! numeric-apply-events [])
+                (let [answer (try (apply f (numeric-apply-input bad))
+                                  (catch :default e :threw))]
+                  [answer numeric-apply-events])))
+        "#).unwrap();
+        for name in ["+", "-", "*", "/", "bit-and"] {
+            for (bad, expected) in [
+                (0, "[:threw [0 1 2 3]]"),
+                (5, "[:threw [0 1 2 3 4 5]]"),
+            ] {
+                let source = format!("(trace-numeric-apply {name} {bad})");
+                assert_eq!(printed(&mut session, &source), expected, "{source}");
+            }
+        }
+    }
+}
+
+#[test]
+fn fixed_apply_reaches_an_error_in_the_unbounded_remainder() {
+    // JVM 1.12.6 reaches the throwing sentinel at index 40. It does not
+    // replace this traversal with an early bounded wrong-arity exception.
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        assert_eq!(printed(&mut session, r#"
+            (do
+              (def fixed-apply-events [])
+              (def fixed-apply-limit false)
+              (let [answer
+                    (try
+                      (apply (fn [a b] a)
+                             (map (fn [i]
+                                    (set! fixed-apply-events (conj fixed-apply-events i))
+                                    (when (= i 40)
+                                      (set! fixed-apply-limit true)
+                                      (throw (ex-info "realization limit" {})))
+                                    i)
+                                  (iterate inc 0)))
+                      (catch :default e :threw))]
+                [answer fixed-apply-limit (count fixed-apply-events)]))
+        "#), "[:threw true 41]");
+    }
+}
