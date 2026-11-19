@@ -145,6 +145,9 @@ These parts of #337, #448 and #351 aren't done yet:
   NaN, signed zero, conversion errors and recurrence against JVM observations.
   They also check primitive return mismatches and that WIT specialization of
   an unhinted source parameter does not create such a mismatch.
+  Only a matching arglist vector's result tag makes a var invocation a source
+  primitive result; a name-only default tag still converts the callee's body
+  without imposing that source primitive kind on callers.
 - `experiments/numeric-representation/suss-jvm/bench.py` times whole loops
   summing longs and doubles. Its README compares them with the unboxed `i64`
   kernel `d_i64_checked`.

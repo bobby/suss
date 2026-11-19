@@ -168,7 +168,6 @@ fn declared_return(
             }
         } else { None }
     });
-    let default = tag(&pairs).unwrap_or(Primitive::Boxed);
     let Some(quoted) = pairs.chunks_exact(2).find_map(|pair| {
         matches!(&pair[0].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "arglists")
             .then_some(&pair[1])
@@ -184,7 +183,9 @@ fn declared_return(
         if parameters.len() == arity && !parameters.iter().any(|parameter|
             matches!(&parameter.kind, Kind::Symbol(symbol) if symbol.name == "&" && symbol.namespace.is_none()))
         {
-            return Ok(tag(&reader_metadata_pairs_metered(arglist, meter)?).unwrap_or(default));
+            // The name's :rettag converts the body, but only an arglist's
+            // own result tag declares a primitive var invocation to Clojure.
+            return Ok(tag(&reader_metadata_pairs_metered(arglist, meter)?).unwrap_or(Primitive::Boxed));
         }
     }
     Ok(Primitive::Boxed)

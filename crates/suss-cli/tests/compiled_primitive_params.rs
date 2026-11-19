@@ -34,10 +34,12 @@ const DEFINITIONS: &str = "(def safe (fn [f] (try (f) (catch :default e :error))
 const NAMED_DEFINITIONS: &str = "(defn ^long ret-named [x] x)
 (defn ^double ret-named-multi ([x] x) ([x y] (+ x y)))
 (defn ^long ret-nested [] (let [f (fn [] 1.75)] (if (= (f) 1.75) 2.75 nil)))
+(defn ret-name-call ^double [x] (ret-named x))
 (defn ^long ret-override ^double [x] x)";
 const NAMED_EQUIVALENTS: &str = "(def ret-named (fn ^long [x] x))
 (def ret-named-multi (fn (^double [x] x) (^double [x y] (+ x y))))
 (def ret-nested (fn ^long [] (let [f (fn [] 1.75)] (if (= (f) 1.75) 2.75 nil))))
+(def ret-name-call (fn ^double [x] (ret-named x)))
 (def ret-override (fn ^double [x] x))";
 const CASES: &[(&str, &str)] = &[
     ("casts", "[(ident (+ n 5)) (ident 3000000000) (ident 2.7) (ident -2.7) (ident 9223372036854775807) (dbl (+ n 3)) (dbl 1.5) (dbl 3000000000)]"),
@@ -50,7 +52,7 @@ const CASES: &[(&str, &str)] = &[
     ("return-special", "[(ret-double -0.0) (ret-double ##NaN) (ret-double ##Inf) (ret-long 1.0e30) (ret-long -1.0e30) (ret-long ##NaN) (safe (fn [] (ret-long nil))) (safe (fn [] (ret-double :k)))]"),
     ("cast-order", "(let [effects (atom [])] [(safe (fn [] (checked-pair (do (swap! effects conj :first) :bad) (do (swap! effects conj :second) 2)))) @effects])"),
     ("redefinition", "[(before-redefinition (+ n 3)) (before-kind-change (+ n 3))]"),
-    ("return-names", "[(ret-named 1.75) (ret-named-multi 2) (ret-named-multi 2 3) (ret-nested) (ret-override 4) (apply ret-plain [1.75])]"),
+    ("return-names", "[(ret-named 1.75) (ret-named-multi 2) (ret-named-multi 2 3) (ret-nested) (ret-override 4) (apply ret-plain [1.75]) (ret-name-call 3.75)]"),
 ];
 
 #[test]
@@ -104,7 +106,7 @@ fn primitive_parameter_hints_match_the_repl() {
             "return-special" => Some("[-0.0 ##NaN ##Inf 9223372036854775807 -9223372036854775808 0 :error :error]"),
             "cast-order" => Some("[:error [:first :second]]"),
             "redefinition" => Some("[[:changed 3] 3.5]"),
-            "return-names" => Some("[1 2.0 5.0 2 4.0 1.75]"),
+            "return-names" => Some("[1 2.0 5.0 2 4.0 1.75 3.0]"),
             _ => None,
         };
         if let Some(expected) = expected {

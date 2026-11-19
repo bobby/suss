@@ -29906,3 +29906,19 @@ the initial name-tagged spelling produced a JVM AbstractMethodError, retained
 in pr470-bench-jvm-validation.log for investigation. The corrected fixture is
 in pr470-bench-jvm-validation2.log. This small JVM validation is not a timing
 measurement. Benchmark work and JVM error reports now stay under target/probe.
+
+The independent JVM name-tag investigation found a source-checking distinction:
+a name-only default return tag converts the callee's body, but does not declare
+a primitive invocation result to the caller. Only the matching arglist vector's
+own result tag does that. The checker now uses the vector tag for call-result
+classification. Negative fixtures retain their intended mismatch assertions
+with accurately tagged arglist vectors; new Runtime/Macro and compiled-component
+cases cover a double caller unboxing a name-tagged long callee's boxed result.
+The name-default body conversion tests remain. Evidence is
+pr470-review-name-return-hints-jvm.log. The first full workspace baseline above
+was stopped during compilation after this concrete review finding; it has no
+test result. The focused correction command is logged in
+pr470-name-call-correction.log, before restarting the full baseline.
+That focused run passed all 11 tests with no failures or skips. The corrected
+full workspace baseline uses the same required command and scope, logged at
+`target/probe/pr470-workspace-baseline-final.log`.

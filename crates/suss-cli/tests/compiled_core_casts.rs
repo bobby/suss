@@ -120,8 +120,9 @@ fn checked_long_of_a_raw_double_matches_the_boxed_cast() {
 fn return_hints_reject_opposite_source_primitives_but_unbox_objects() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         // defn's declaration facts without requiring macro expansion in Session.
-        session.eval("(def ^{:tag long :arglists '([])} primitive-global-long (fn ^long [] 1))
-                      (def ^{:tag double :arglists '([])} primitive-global-double (fn ^double [] 1.0))
+        session.eval("(def ^{:tag long :arglists '(^long [])} primitive-global-long (fn ^long [] 1))
+                      (def ^{:tag double :arglists '(^double [])} primitive-global-double (fn ^double [] 1.0))
+                      (def ^{:tag long :arglists '([x])} name-default-long (fn ^long [x] x))
                       (def plain-global-long (fn ^long [] 1))").unwrap();
         for source in [
             "(fn ^long [] 1.75)", "(fn ^double [] 1)",
@@ -140,6 +141,7 @@ fn return_hints_reject_opposite_source_primitives_but_unbox_objects() {
             assert!(error.to_string().contains("Mismatched primitive return"), "{source}: {error}");
         }
         for (source, expected) in [
+            ("((fn ^double [x] (name-default-long x)) 3.75)", "3.0"),
             ("((fn ^long [] (identity 1.75)))", "1"),
             ("((fn ^double [] (identity 1)))", "1.0"),
             ("((fn ^long [] (if (identity true) 1.75 nil)))", "1"),
