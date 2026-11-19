@@ -3343,7 +3343,12 @@
      ;; property reads; more take it, as before, which reaches arities past
      ;; twenty.
      (let [bc (bounded-count 21 args)]
-       (if (<= bc 20) (apply-to f bc args) (apply-to-simple f (seq args))))))))
+       ;; A few arguments call f directly, without apply-to's seq walk.
+       (cond (== bc 0) (f)
+             (== bc 1) (f (first args))
+             (== bc 2) (let [s (seq args)] (f (first s) (first (next s))))
+             (<= bc 20) (apply-to f bc args)
+             :else (apply-to-simple f (seq args))))))))
  ([f x args]
    (let [n (suss.bootstrap/vector-count args)]
      (if (and (not (suss.bootstrap/nil? n)) (<= n 4))
@@ -3356,7 +3361,11 @@
          (apply-to f bc arglist)
          (.cljs$lang$applyTo f arglist)))
      (let [bc (inc (bounded-count 20 args))]
-       (if (<= bc 20) (apply-to f bc (cons x args)) (apply-to-simple f x (seq args))))))))
+       (cond (== bc 1) (f x)
+             (== bc 2) (f x (first args))
+             (== bc 3) (let [s (seq args)] (f x (first s) (first (next s))))
+             (<= bc 20) (apply-to f bc (cons x args))
+             :else (apply-to-simple f x (seq args))))))))
  ([f x y args]
    (let [n (suss.bootstrap/vector-count args)]
      (if (and (not (suss.bootstrap/nil? n)) (<= n 4))

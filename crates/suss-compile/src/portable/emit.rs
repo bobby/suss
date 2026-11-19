@@ -173,6 +173,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }
         }
     }
+    // Whether a variadic fn here builds a rest seq (#466).
+    let mut rest_site_used = false;
     let mut throws = !futures.is_empty();
     if !futures.is_empty() { names.extend(r#async::IMPORTS.iter().copied()); }
     if futures.iter().any(|body| !body.continuation.backedges.is_empty()) { names.insert("async-task-yield"); }
@@ -218,7 +220,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.extend(runtime_abi::ARITY_ERROR_EXPORTS);
                         if let Some(factory) = &body.rest_class {
                             globals.insert(factory.clone());
-                            names.extend(["binding-get", "invoke", "object-array-new", "constructor-descriptor", "source-constructor-plan", "source-construct-from-plan"]);
+                            names.extend(["binding-get", "invoke", "object-array-new", "constructor-descriptor", "source-constructor-plan", "source-construct-from-plan",
+                                "construct-site-admit", "owned-descriptor-prototype"]);
+                            rest_site_used = true;
                         }
                     }
                     Operation::MakeClosure { .. } => {
@@ -1043,6 +1047,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let object_call_sites = object_call_site_list.iter().enumerate()
         .map(|(index, (site, _))| (*site, first_object_call_site + 3 * index as u32))
         .collect::<std::collections::HashMap<_, _>>();
+    // The module's variadic rest seqs share one construction site (#466).
+    let rest_site = rest_site_used.then_some(first_object_call_site + 3 * object_call_site_list.len() as u32 + primitive_site_list.len() as u32);
     let native_sites = native_site_list.iter().enumerate()
         .map(|(index, site)| (*site, first_native_site + 4 * index as u32))
         .collect::<std::collections::HashMap<_, _>>();
@@ -1075,7 +1081,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
         dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites, length_sites: &length_sites,
         method_sites: &method_sites, instance_sites: &instance_sites, call_sites: &call_sites, keyword_caches: &keyword_caches,
-        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, object_call_sites: &object_call_sites, primitive: &primitive, primitive_sites: &primitive_sites, epoch_global };
+        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, object_call_sites: &object_call_sites, rest_site, primitive: &primitive, primitive_sites: &primitive_sites, epoch_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -1258,6 +1264,16 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             heap_type: HeapType::Concrete(entry) }), mutable: true, shared: false },
             &ConstExpr::ref_null(HeapType::Concrete(entry)));
     }
+    if rest_site.is_some() {
+        // The rest seq's constructor, null to match none, its admitted
+        // descriptor and its prototype (#466).
+        for _ in 0..3 {
+            code_globals.global(
+                GlobalType { val_type: VALUE, mutable: true, shared: false },
+                &ConstExpr::ref_null(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }),
+            );
+        }
+    }
     for (definition, global, layout_index) in &defined_code {
         exports.export(&format!("link.{definition}.code"), ExportKind::Global, *global);
         for (k, entry) in links.entries[definition].iter().enumerate() {
@@ -1283,7 +1299,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .section(&types)
         .section(&imports)
         .section(&functions);
-    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() || !keyword_cache_list.is_empty() || !literal_list.is_empty() || !construct_site_list.is_empty() || !native_site_list.is_empty() || !object_call_site_list.is_empty() {
+    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() || !keyword_cache_list.is_empty() || !literal_list.is_empty() || !construct_site_list.is_empty() || !native_site_list.is_empty() || !object_call_site_list.is_empty() || rest_site_used {
         module.section(&code_globals);
     }
     module.section(&exports);
@@ -1423,6 +1439,8 @@ struct Context<'a> {
     native_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     /// Cached method call sites: their first global (#462).
     object_call_sites: &'a std::collections::HashMap<(usize, u32), u32>,
+    /// The module's rest-seq construction site: its first global (#466).
+    rest_site: Option<u32>,
     /// Cached protocol method lookup sites: their first global; the epoch.
     method_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     epoch_global: u32,
@@ -1704,20 +1722,40 @@ fn emit_rest(function: &mut Function, definition: &Definition, surplus: u32, con
         .binary_search(definition.rest_class.as_ref().expect("verified rest class"))
         .expect("collected rest class") as u32;
     let import = |name: &str| context.names.iter().position(|candidate| *candidate == name).expect("collected import") as u32;
-    // As a construction site's own path builds `(IndexedSeq. arr 0 nil)`
-    // (#443), not through the constructor's generic invoke (#466).
-    function
-        .instruction(&GlobalGet(factory))
-        .instruction(&Call(import("binding-get")))
-        .instruction(&Call(import("constructor-descriptor")))
-        .instruction(&Call(import("source-constructor-plan")))
-        .instruction(&LocalGet(surplus))
-        .instruction(&Call(import("object-array-new")))
-        .instruction(&I32Const(0))
-        .instruction(&RefI31)
-        .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, context.globals.len() as u32))
-        .instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: 3 })
-        .instruction(&Call(import("source-construct-from-plan")));
+    // `(IndexedSeq. arr 0 nil)` through the module's construction site, as a
+    // construction site builds it (#443): inline while the site holds the
+    // constructor, else admitted or built by the constructor's plan (#466).
+    let site = context.rest_site.expect("rest site");
+    let nil = runtime_abi::sentinel_in(runtime_abi::NIL, context.globals.len() as u32);
+    let constructor = [GlobalGet(factory), Call(import("binding-get"))];
+    let fields = [LocalGet(surplus), Call(import("object-array-new")), I32Const(0), RefI31, nil,
+        ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: 3 }];
+    let mut code = constructor.to_vec();
+    // nil is null, as an empty site is: only a held constructor matches.
+    code.extend([GlobalGet(site), RefEq, GlobalGet(site), RefIsNull, I32Eqz, I32And, If(BlockType::Result(VALUE)),
+        GlobalGet(site + 1), RefCastNonNull(HeapType::Concrete(runtime_abi::DESCRIPTOR))]);
+    code.extend(fields.clone());
+    code.extend([GlobalGet(site + 2), ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: 1 },
+        I32Const(0), RefI31, StructNew(runtime_abi::OBJECT), Else]);
+    // Only a closure, a type's constructor, is admitted; anything else the
+    // var holds takes the plan's path and its error, as before.
+    code.extend(constructor.clone());
+    code.extend([RefTestNonNull(HeapType::Concrete(runtime_abi::CLOSURE)), If(BlockType::Result(VALUE))]);
+    code.extend(constructor.clone());
+    code.extend([Call(import("constructor-descriptor")), I32Const(3), Call(import("construct-site-admit")),
+        Else, RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }), End,
+        GlobalSet(site + 1), GlobalGet(site + 1), RefIsNull, If(BlockType::Empty),
+        RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }), GlobalSet(site), Else,
+        GlobalGet(site + 1), Call(import("owned-descriptor-prototype")), GlobalSet(site + 2)]);
+    code.extend(constructor.clone());
+    code.extend([GlobalSet(site), End]);
+    code.extend(constructor);
+    code.extend([Call(import("constructor-descriptor")), Call(import("source-constructor-plan"))]);
+    code.extend(fields);
+    code.extend([Call(import("source-construct-from-plan")), End]);
+    for instruction in &code {
+        function.instruction(instruction);
+    }
 }
 /// The spread entry, `(closure, args, rest)`: calls the method that takes
 /// `args`' length, as the arity dispatcher did, or throws the arity error.
@@ -1828,7 +1866,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
-    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, construct_sites, native_sites, object_call_sites, call_sites, keyword_caches, literals, primitive: _, primitive_sites: _, epoch_global } = *context;
+    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, construct_sites, native_sites, object_call_sites, call_sites, keyword_caches, literals, epoch_global, .. } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
