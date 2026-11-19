@@ -30024,3 +30024,22 @@ The full source-3e825a18 workspace run was stopped for the concrete review
 corrections while its completed targets had no observed failures; it is not a
 passing full baseline. The required full command will now be rerun against the
 reviewed source, with raw corpus capture and temporary files under target/probe.
+
+CI run 44613493918 on the preceding source-3e checkpoint failed only the
+portable_pipeline expectation that zero-argument `/` and `-` fail compilation.
+Those calls now compile and throw their runtime arity errors, matching the
+earlier JVM observation and the newly loadable division corpus. The test now
+asserts compilation succeeds and that execution throws a language exception
+rather than a Wasm trap; the remaining invalid-form and metadata/span assertions
+are unchanged. Its focused run passed (one test, no failures/ignored), logged
+in `target/probe/pr470-zero-arity-regression.log`. This is a test-only correction;
+the independently reviewed production source remains unchanged.
+
+Reviewed-source foundation checks again passed all 347 Python tests and all
+foundation scripts (`pr470-reviewed-foundation.log`). The full workspace run is
+logged at `pr470-workspace-reviewed.log`, with TMPDIR and
+SUSS_CLOJURE_TEST_SUITE_CAPTURE under target/probe. The reviewed release build
+completed in 8m52s (`pr470-reviewed-release-build.log`); its executable and
+SHA256 receipt are retained as pr470-suss-reviewed and
+pr470-reviewed-executable.sha256. The same focused benchmark is running on
+this reviewed source in pr470-reviewed-bench.log to confirm the earlier data.

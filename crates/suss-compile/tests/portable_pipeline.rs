@@ -484,7 +484,11 @@ fn hir_retains_binding_identity_metadata_and_located_diagnostics() {
     // A known closure called with another count compiles, as in Clojure, and
     // throws its arity error at run time (ADR-0004).
     assert!(portable::compile("(let [+ (fn [x] x)] (+ 2 3))").is_ok());
-    for source in ["(/)", "(-)", "(if 1)", "(let [x] x)", "(recur 1)"] {
+    for source in ["(/)", "(-)"] {
+        assert!(portable::compile(source).is_ok(), "{source}");
+        assert!(throws_language_exception(source), "{source} must throw its runtime arity error");
+    }
+    for source in ["(if 1)", "(let [x] x)", "(recur 1)"] {
         assert!(portable::compile(source).is_err(), "{source}");
     }
 }
