@@ -185,9 +185,27 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         LocalGet(0), LocalGet(1), LocalGet(2), Call(b.names["apply-arguments"]),
         ReturnCall(b.names["apply-to-seq"])];
     b.function_with_locals("apply", &[VALUE, reference(ARGS), VALUE], &[VALUE], &[(1, nullable(ARGS))], &code);
-    code = vec![LocalGet(0), LocalGet(1), Call(b.names["apply-fixed-arguments"]),
-        ReturnCall(b.names["call-spread"])];
-    b.function("apply-fixed", &[VALUE, VALUE], &[VALUE], &code);
+    // Non-closure IFn uses Java's twenty scalar parameters plus Object[]
+    // convention above twenty arguments. Source closures retain their own
+    // spread dispatcher and full argument counts, including wider methods.
+    code = vec![LocalGet(1), Call(b.names["apply-fixed-arguments"]),
+        RefCastNonNull(HeapType::Concrete(ARGS)), LocalSet(2),
+        LocalGet(2), RefAsNonNull, ArrayLen, LocalTee(3), I32Const(20), I32GtU,
+        If(BlockType::Empty), LocalGet(3), I32Const(20), I32Sub,
+        ArrayNewDefault(ARGS), LocalSet(4),
+        LocalGet(4), RefAsNonNull, I32Const(0), LocalGet(2), RefAsNonNull,
+        I32Const(20), LocalGet(3), I32Const(20), I32Sub,
+        ArrayCopy { array_type_index_dst: ARGS, array_type_index_src: ARGS },
+        I32Const(21), ArrayNewDefault(ARGS), LocalSet(5),
+        LocalGet(5), RefAsNonNull, I32Const(0), LocalGet(2), RefAsNonNull,
+        I32Const(0), I32Const(20),
+        ArrayCopy { array_type_index_dst: ARGS, array_type_index_src: ARGS },
+        LocalGet(5), RefAsNonNull, I32Const(20), LocalGet(4),
+        Call(b.names["object-array-new"]), ArraySet(ARGS),
+        LocalGet(5), LocalSet(2), End,
+        LocalGet(0), LocalGet(2), RefAsNonNull, ReturnCall(b.names["call-spread"])];
+    b.function_with_locals("apply-fixed", &[VALUE, VALUE], &[VALUE],
+        &[(1, nullable(ARGS)), (1, ValType::I32), (2, nullable(ARGS))], &code);
 
     // Opaque native families retain their ordinary realized-argument callback.
     // Public RestFn families install their own lazy spread entries separately.

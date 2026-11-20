@@ -30403,3 +30403,52 @@ get independent follow-up review and green final-head CI before promotion.
 The separate proposed Reduced counterexample was withdrawn after confirming
 that shipped bitwise folds use the accepted private core-linked reducer; it
 was not reproduced on candidate source and was not used to weaken any test.
+
+
+## IFn wide-apply encoding correction (2026-11-19)
+
+Final-head CI run44657185352 at145e157 passed foundation and integration0-4,
+6-7, but integration5 failed the existing core_state multimethod case:
+`(apply va (range 22))` raised Not callable instead of231. The same debug
+artifact reproduced the failure locally (pr474-multifn22-red.log). The active
+serial baseline was stopped only after that concrete failure, by terminating
+its owned scope run-p1071585-i80730332.scope; terminal143 and the partial
+pr474-workspace-final.log are not a baseline pass.
+
+AFn/IFn's final overload receives twenty scalar arguments and an Object[]
+tail. Fresh JVM1.12.6 reify/AFn/MultiFn probes confirm packing at21/22/25,
+complete input traversal before dispatch, and an arity21 error for invalid
+fixed dispatch/target functions. Primary evidence is
+pr474-review-ifn-pack-jvm.log, pr474-review-afn-packing-jvm.log and the saved
+IFn/AFn/MultiFn javap logs. Suss previously passed the entire realized array
+to call-spread, whose callable-object protocol keys expect the encoded21
+parameters. Only the nonclosure apply-fixed path now packs this tail into a
+fresh object array; all arrays remain rooted in typed locals. Source/native
+spreads retain full arguments. Failed source dispatch reports21 above20 when
+all methods have Clojure-valid required arities, preserving the existing wider
+method extension's full counts.
+
+`cargo +stable test --release --workspace --locked --test core_state
+--test apply_fixed_arity --test portable_source_apply -- --test-threads=2`
+passes all38 tests (21/12/5), no failures or ignores, under a6GiB scope:
+pr474-ifn-packing-focused-second.log. New Runtime/Macro cases exercise
+multimethod success at20/21/22/25, wrong dispatch/target arities at21/22/25,
+and dispatch effects before target errors. Both independent ABI/rooting and semantic reviewers approve the three-file
+delta30d4c8b5922fa0112e6d9d82a004105b7e07cef251272457139d485852da575e.
+
+A fresh stable named release executable is retained as pr474-suss-ifn-final,
+with SHA256 receipt and source delta. Re-running the same scoped instruction
+harness gives net list878.028, apply-list1,614.701, prebuilt758.357, and
+range10/20/40/80/160:20,581 /31,231 /55,720 /101,508 /193,291. All raw counts,
+source and component remain in pr474-ifn-final-instructions/. The full command
+is `SUSS_FUNCTION_NAMES=1 systemd-run --user --scope -p MemoryMax=3G python3
+../pr474-candidate-instructions.py ../pr474-suss-ifn-final
+../pr474-ifn-final-instructions 145e157-plus-ifn-packing`; the harness uses
+perf stat instructions:u, warm-up then median3 N-minus-zero observations.
+No walltime claim is made. Build also used SUSS_FUNCTION_NAMES=1 and stable.
+
+The required `cargo +stable test --workspace --locked -- --test-threads=2`
+is running in its own6GiB scope with CARGO_BUILD_JOBS=2 and the shared Cargo
+target; pr474-workspace-ifn-final.log records its output and scope. Both it and
+green CI on the corrected final head remain required verification. Probe
+TMPDIR is the workspace target/probe directory throughout.

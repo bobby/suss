@@ -1841,7 +1841,18 @@ fn emit_spread(definition: &Definition, context: &Context) -> Function {
             .instruction(&End);
     }
     let error = names.iter().position(|name| *name == "arity-throw").expect("arity helper");
-    function.instruction(&LocalGet(0)).instruction(&LocalGet(3)).instruction(&Call(error as u32)).instruction(&End);
+    function.instruction(&LocalGet(0));
+    // AFn's final invoke overload is twenty scalars plus Object[] and reports
+    // arity21, even when that array contains more than one argument. Retain
+    // full counts for Suss's existing wider-arity extension methods.
+    if definition.methods.iter().all(|&(_, arity, variadic)| arity - usize::from(variadic) <= 20) {
+        function.instruction(&LocalGet(3)).instruction(&I32Const(20)).instruction(&I32GtU)
+            .instruction(&If(BlockType::Result(ValType::I32))).instruction(&I32Const(21))
+            .instruction(&Else).instruction(&LocalGet(3)).instruction(&End);
+    } else {
+        function.instruction(&LocalGet(3));
+    }
+    function.instruction(&Call(error as u32)).instruction(&End);
     function
 }
 /// A variadic method's entry for `arity` arguments: its required arguments,

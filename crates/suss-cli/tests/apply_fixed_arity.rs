@@ -372,6 +372,38 @@ fn callable_apply_preserves_meta_var_and_multifn_traversal_after_gc() {
         assert_eq!(printed(&mut session,
             "(let [[answer events] (trace-lazy-callable lazy-callable-multi)]
                [answer (count events) (last events)])"), "[:threw 41 40]");
+        session.eval("(-add-method lazy-callable-multi :chosen (fn [& args] (count args)))").unwrap();
+        for count in [20, 21, 22, 25] {
+            assert_eq!(printed(&mut session, &format!("(apply lazy-callable-multi (range {count}))")), count.to_string());
+        }
+    }
+}
+
+#[test]
+fn wide_apply_reports_jvm_twenty_one_argument_errors_after_dispatch() {
+    // JVM 1.12.6 AFn's final invoke overload receives twenty scalars and an
+    // Object[] tail and reports21, irrespective of the tail's length.
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval_privileged(r#"
+            (def wide-dispatch-events [])
+            (def wide-bad-dispatch
+              (MultiFn. "bad-dispatch" (fn [x] (set! wide-dispatch-events [:dispatch]) :chosen)
+                        :default (atom (make-hierarchy)) {} {} {} nil nil nil))
+            (-add-method wide-bad-dispatch :chosen (fn [& xs] :unused))
+            (def wide-bad-target
+              (MultiFn. "bad-target" (fn [& xs] (set! wide-dispatch-events [:dispatch]) :chosen)
+                        :default (atom (make-hierarchy)) {} {} {} nil nil nil))
+            (-add-method wide-bad-target :chosen (fn [x] :unused))
+        "#).unwrap();
+        for count in [21, 22, 25] {
+            for (callee, events) in [("(fn [x] x)", "[]"), ("wide-bad-dispatch", "[]"), ("wide-bad-target", "[:dispatch]")] {
+                session.eval("(set! wide-dispatch-events [])").unwrap();
+                let actual = printed(&mut session, &format!(
+                    "(try (apply {callee} (range {count})) (catch :default e (ex-message e)))"));
+                assert!(actual.starts_with("\"Wrong number of args (21) passed to: "), "{callee}, {count}: {actual}");
+                assert_eq!(printed(&mut session, "wide-dispatch-events"), events);
+            }
+        }
     }
 }
 
