@@ -2264,7 +2264,9 @@ fn emit_function(
                     Operation::Comparison { operation, arguments } => locals.comparison(
                         &mut code, *operation, arguments, inst.result, index(operation.export()),
                     ),
-                    Operation::Bitwise { operation, arguments } => locals.bitwise(&mut code, *operation, arguments, inst.result),
+                    Operation::Bitwise { operation, arguments } => locals.bitwise(
+                        &mut code, *operation, arguments, inst.result, index(operation.export()),
+                    ),
                     _ => unreachable!("inline numeric instruction"),
                 }
                 for instruction in code.drain(..) { function.instruction(&instruction); }
@@ -2770,21 +2772,8 @@ fn emit_function(
                         // Core's int32 helper has completed the original
                         // operand conversions and returned a long. Reuse its
                         // GC value while keeping subsequent numeric uses raw.
-                        let value = inst.result.0 as u32 + offset;
-                        function
-                            .instruction(&LocalGet(value))
-                            .instruction(&RefTestNonNull(HeapType::I31))
-                            .instruction(&If(BlockType::Result(ValType::I64)))
-                            .instruction(&LocalGet(value))
-                            .instruction(&RefCastNonNull(HeapType::I31))
-                            .instruction(&I31GetS)
-                            .instruction(&I64ExtendI32S)
-                            .instruction(&Else)
-                            .instruction(&LocalGet(value))
-                            .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::LONG)))
-                            .instruction(&StructGet { struct_type_index: runtime_abi::LONG, field_index: 0 })
-                            .instruction(&End)
-                            .instruction(&LocalSet(locals.raw(inst.result)));
+                        locals.unbox_long(&mut code, inst.result);
+                        for instruction in code.drain(..) { function.instruction(&instruction); }
                         boxed.insert(inst.result.0);
                     }
                 }

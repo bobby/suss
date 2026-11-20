@@ -369,7 +369,7 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
             let boxed_int32 = matches!(&instruction.operation,
                 Operation::Bitwise { operation, arguments }
                 if raw_int32(*operation, arguments.len()).is_some()
-                    && arguments.iter().any(|argument| repr[argument.0] != Repr::Long));
+                    && arguments.iter().any(|argument| repr[argument.0].definite() != Repr::Long));
             if repr[instruction.result.0] != Repr::Boxed && !boxed_int32
                 && matches!(
                     instruction.operation,
@@ -505,6 +505,17 @@ impl Locals {
     pub(super) fn valid(&self, value: ValueId) -> u32 { self.valid[value.0].expect("guarded numeric local") }
     fn boxed(&self, value: ValueId) -> u32 {
         value.0 as u32 + self.offset
+    }
+    /// Read an already-boxed result whose operation guarantees a long.
+    pub(super) fn unbox_long(&self, code: &mut Vec<Instruction<'static>>, value: ValueId) {
+        use Instruction::*;
+        let boxed = self.boxed(value);
+        code.extend([LocalGet(boxed), RefTestNonNull(HeapType::I31),
+            If(BlockType::Result(ValType::I64)), LocalGet(boxed),
+            RefCastNonNull(HeapType::I31), I31GetS, I64ExtendI32S,
+            Else, LocalGet(boxed), RefCastNonNull(HeapType::Concrete(runtime_abi::LONG)),
+            StructGet { struct_type_index: runtime_abi::LONG, field_index: 0 },
+            End, LocalSet(self.raw(value))]);
     }
     /// Pushes `value` as a GC value, boxing a raw one.
     pub(super) fn push_boxed(&self, code: &mut Vec<Instruction<'static>>, value: ValueId) {
@@ -856,7 +867,28 @@ impl Locals {
 
     /// A raw long bitwise operation, which can't fail. bit-test produces a
     /// flag; Wasm masks the shift count to six bits, as Java's long shift does.
-    pub(super) fn bitwise(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId) {
+    pub(super) fn bitwise(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId, slow: u32) {
+        use Instruction::*;
+        if raw_int32(operation, arguments.len()).is_some() {
+            let inputs = arguments.iter().filter(|value| self.of(**value).maybe()).collect::<Vec<_>>();
+            if !inputs.is_empty() {
+                for (i, input) in inputs.iter().enumerate() {
+                    code.push(LocalGet(self.valid(**input)));
+                    if i > 0 { code.push(I32And); }
+                }
+                code.push(If(BlockType::Empty));
+                self.bitwise_raw(code, operation, arguments, result);
+                code.push(Else);
+                for argument in arguments { self.push_boxed(code, *argument); }
+                code.extend([Call(slow), LocalSet(self.boxed(result))]);
+                self.unbox_long(code, result);
+                code.push(End);
+                return;
+            }
+        }
+        self.bitwise_raw(code, operation, arguments, result);
+    }
+    fn bitwise_raw(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId) {
         if let Some(operation_code) = raw_int32(operation, arguments.len()) {
             for argument in arguments {
                 code.extend([Instruction::LocalGet(self.raw(*argument)), Instruction::I32WrapI64]);
@@ -928,7 +960,7 @@ pub(super) fn raw_small(locals: &Locals, instruction: &ir::Instruction) -> bool 
 pub(super) fn inline(locals: &Locals, instruction: &ir::Instruction) -> bool {
     if let Operation::Bitwise { operation, arguments } = &instruction.operation
         && raw_int32(*operation, arguments.len()).is_some()
-        && arguments.iter().any(|argument| locals.of(*argument) != Repr::Long)
+        && arguments.iter().any(|argument| locals.of(*argument).definite() != Repr::Long)
     {
         return false;
     }

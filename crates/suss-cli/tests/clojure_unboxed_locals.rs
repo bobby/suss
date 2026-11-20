@@ -198,14 +198,48 @@ fn core_int32_operations_keep_low_bits_shift_masks_and_signed_results() {
         session.eval("(ns suss.core)").unwrap();
         session.eval(&format!(
             "(def core-bits-raw (fn [^long x ^long y] {body}))
-             (def core-bits-boxed (fn [x y] {body}))",
+             (def core-bits-boxed (fn [x y] {body}))
+             (def core-bits-calls (atom []))
+             (def ^{{:arglists '(^long [x])}} core-bits-left
+               (fn ^long [x] (swap! core-bits-calls conj :left) x))
+             (def ^{{:arglists '(^long [x])}} core-bits-right
+               (fn ^long [x] (swap! core-bits-calls conj :right) x))
+             (def core-bits-guarded (fn [x y]
+               (let [x (core-bits-left x) y (core-bits-right y)] {body})))",
         )).unwrap();
     }
-    for name in ["core-bits-raw", "core-bits-boxed"] {
+    for name in ["core-bits-raw", "core-bits-boxed", "core-bits-guarded"] {
         assert_eq!(outcome(&mut sessions,
             &format!("(mapv (fn [p] ({name} (nth p 0) (nth p 1))) {pairs})")),
             expected, "{name}");
     }
+    assert_eq!(outcome(&mut sessions,
+        "(do (reset! core-bits-calls []) (core-bits-guarded 1 31) @core-bits-calls)"),
+        "[:left :right]");
+    for session in &mut sessions {
+        session.eval("(def core-bits-left
+          (fn [x] (swap! core-bits-calls conj :left) \"4294967295\"))").unwrap();
+        session.collect().unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-bits-guarded 0 1)"),
+        "[-1 1 -1 -2 -2 -1 2147483647 -1 32]");
+    for session in &mut sessions {
+        session.eval("(def core-bits-left
+          (fn ^double [x] (swap! core-bits-calls conj :left) x))").unwrap();
+        session.collect().unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-bits-guarded 1.5 1)"),
+        "[1 1 1 0 2 0 0 1 1]");
+    for session in &mut sessions {
+        session.eval("(def core-bits-right
+          (fn [x] (swap! core-bits-calls conj :right) \"-1\"))").unwrap();
+        session.collect().unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-bits-guarded 1.5 0)"),
+        "[1 1 -1 -2 -2147483648 0 0 -1 1]");
+    assert_eq!(outcome(&mut sessions,
+        "(do (reset! core-bits-calls []) (core-bits-guarded 1.5 0) @core-bits-calls)"),
+        "[:left :right]");
     assert_eq!(outcome(&mut sessions,
         "[(let [x (if (identity true) 1.5 1)] (bit-and x 3))
           (let [x (if (identity true) -1.5 1)] (bit-and x 3))
