@@ -1,0 +1,24 @@
+{
+  "word_reduction_percent": 6.066845544237487,
+  "per_run_before": {
+    "warm": 24.997636,
+    "fib": 2068714.951,
+    "word-frequencies": 3412017.489,
+    "transduce": 676996.954,
+    "lazy-pipeline": 984887.391,
+    "into-vector": 1114938.063,
+    "into-map": 3963291.844,
+    "string-build": 1343685.213
+  },
+  "per_run_after": {
+    "warm": 25.00059,
+    "fib": 2068709.308,
+    "word-frequencies": 3205015.658,
+    "transduce": 677011.999,
+    "lazy-pipeline": 984878.748,
+    "into-vector": 1114939.733,
+    "into-map": 3963291.484,
+    "string-build": 1343691.756
+  },
+  "note": "Unchanged benchmark forms, warm-up first, median3 instructions:u at1000 minus0. Counts are not quiet walltime acceptance."
+}

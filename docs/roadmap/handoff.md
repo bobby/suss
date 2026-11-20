@@ -30966,3 +30966,34 @@ admitted offsets with proved bounds use unchecked raw addition. Ordinary source
 core keeps checked arithmetic and declines privileged storage helpers. Shared
 ABI7 types and existing runtime globals are unchanged. Require a new final-head
 quiet benchmark and complete correctness CI before treating this as acceptance.
+
+
+## Persistent-map allocation probes (2026-11-20)
+
+`results/m15-map-prototype-share-20261120` retains exact measured source/executable
+hashes, full instruction observations, JVM 1.12.6 forms/results and local check logs.
+Native persistent copies retain their existing read-only private prototype holder,
+with the same prototype snapshot and live referent. The holder itself is never
+published to source or mutated for nominal objects. Native-object prototype setters
+operate on a different descriptor, which this helper never admits. A one-element
+holder is required before admission; generic/custom/malformed domains keep source
+fallback. Shared ABI7 layouts and runtime-global offsets are unchanged.
+
+Warm-first median-three instructions:u at 1000 less 0 on unchanged bench.py forms
+measure word-frequencies 3,412,017.489 ->3,205,015.658 (6.066846% fewer). Counts are
+not quiet timing acceptance. Both fixed-array clone variants were slower and are
+excluded, with their raw attempts retained under target/probe/m15-map-copy-*.
+A separately verified native-cache/disassembly matches all 641 runtime function
+addresses/sizes in the instruction profile; cycles show node copy39.48%, lookup
+16.42%, association9.57%, startup included. Raw profiles/receipts are under
+target/probe/m15-storage-word-frequencies-20261120-{profile,cycles}.
+
+Eleven focused tests across map_lookups, portable_hash_map_sharing,
+portable_object_methods and program_paths pass, including snapshot metadata,
+complete value checks, nil/false/wide longs, retained closures and GC in both
+phases. Fresh JVM 1.12.6 matches the public matrix. All 361 Python and CI foundation
+checks pass; stable-pinned Java-free release bootstrap reproduction is byte-exact
+in both phases and four execution tests pass. Build/test/probe commands remain in
+MemoryMax4G user scopes with two jobs/threads, cargo +stable, named build/compile
+and TMPDIR/output under target/probe. New final-head quiet/correctness CI remains
+required; this evidence does not by itself establish the5× time criterion.

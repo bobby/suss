@@ -1,0 +1,8 @@
+{
+  "source_head": "e1e463413977c3bb077a037ecd9942a2b4a3d08f",
+  "source_dirty": " M crates/suss-compile/src/runtime_abi/maps.rs\n",
+  "executable_sha256": "e5d99d061a6740f7c7f5b8e7bb993d3379fcda3a53703a1dd6ac16c4e1233fd6",
+  "tracked_patch_sha256": "4e180e40dc739a7a11ae21171715f3ae5bb176394558a76e96df55743c71f015",
+  "core_sha256": "0ee6e6559b6007669c725bf37053f008356a02afebe6ab2ddd26f48fc5b014f2",
+  "note": "Share read-only private prototype holders only in guarded persistent map/node copies, requiring shape1.10 existing focused tests pass across4 targets, includes2 decoder adversarial tests. First interrupted build log incomplete; missing handle/inactive scope/no compiler process verified before resuming. No quiet timing acceptance."
+}
