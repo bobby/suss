@@ -32,6 +32,9 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   is an i31 and compares inline if so; otherwise it asks the runtime.
   Core's coercing comparisons use this route for two raw numeric operands;
   strings and other representations retain the coercing helper.
+  A guarded primitive call's numeric hit can also compare raw. If either
+  input instead holds a boxed replacement result, the comparison uses its
+  original runtime helper, including its coercions or errors.
 
 - **Bitwise operations.** `bit-and`, `bit-or` and `bit-xor` of two longs give a
   raw long (#387). `bit-test` of two raw longs gives a raw truth value; the
@@ -108,7 +111,7 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   reference alongside the ordinary entry, and refresh both when the callee
   changes. A typed hit keeps its numeric result raw. A guard miss can return
   any boxed replacement value, so the result keeps a raw slot, a boxed slot
-  and a flag until a consumer needs it. Arithmetic and matching loop joins
+  and a flag until a consumer needs it. Arithmetic, comparisons and matching loop joins
   propagate those alternatives; numeric casts check the boxed alternative.
   The fallback never coerces a replacement merely because of an old hint.
 

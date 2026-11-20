@@ -99,6 +99,29 @@ followed by arithmetic/comparisons and repeated boxed uses; input coercions
 still run through the original helper. Compare all seven unchanged programs
 after changing these result facts, not just typed kernels.
 
+Guarded arithmetic/comparison probes use target/probe/m15-core-guarded-math-*
+and m15-core-guarded-compare-final-*. Live var guard cases need explicit
+:arglists metadata: fn body hints alone do not declare primitive var calls.
+The corrected m15-guarded-comparison-declared-{before,after}-kernels use the
+same hinted declarations and retain executable/source receipts. On source
+611def0b, the whole comparison loop costs 133.0016 instructions/iteration
+against 377.10987 before; its control stays at 89. The earlier undeclared kernels
+exercise generic var calls and are not guard-path measurements. JVM Clojure 1.12.6
+numeric/evaluation-order observations are m15-guarded-comparison-jvm.{clj,log}.
+The final focused log records 40 passes across 8 CLI targets; the final
+foundation log records 347 Python passes and every source check. These are
+separate from full workspace CI, whose final-head evidence belongs on the PR.
+The initial command naming a compiler test in the CLI package failed before
+execution; focused2 completed its 40 CLI cases, then its supplementary compiler
+entry check was stopped during dependency compilation. Neither is a full pass.
+
+Return-only hints on mask, bitpos and bit-count were measured at 070379a3:
+into-map instructions rose 2.0939%. Adding guarded comparisons at 5401d7eb still
+left a 1.7919% regression. Those hints were reverted; the unchanged core bytes
+are verified by the frozen 611def0b receipt. Its unchanged seven-program probe
+measures into-map 12,744,622 and into-vector 1,659,672 instructions/run; these are
+instruction observations, not evidence for the quiet-machine 5x time target.
+
 Reviewed native file/WIT selection and explicit mappings, shared compiled source/
 macro staging, scalar parsing/result handling, exact nested export invocation,
 command-mode separation and documented remaining frontend modes at855d281.
