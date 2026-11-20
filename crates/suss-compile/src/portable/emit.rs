@@ -3284,13 +3284,37 @@ fn emit_function(
                             }
                         }
                         Nominal::CoreNamedSet if field_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
-                            // The site's struct and the runtime's cached write (#446).
+                            // The runtime's admitted descriptor/slot hit, inline.
+                            // Operands have already run, including a RHS that
+                            // can reenter this site and replace its cache.
                             let cache = field_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
-                            function.instruction(&GlobalGet(cache));
-                            for argument in arguments {
-                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            let [object, name, value] = [0, 1, 2].map(|i| arguments[i].0 as u32 + offset);
+                            let site = |field| [GlobalGet(cache), StructGet { struct_type_index: runtime_abi::NAMED_SITE, field_index: field }];
+                            let object_type = RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::OBJECT) };
+                            let mut code = vec![Block(BlockType::Result(VALUE)), Block(BlockType::Empty)];
+                            if let Some(descriptor) = descriptors_of.get(&(arguments[0].0 as u32)) {
+                                code.extend([LocalGet(fields_of[&(arguments[0].0 as u32)]),
+                                    BrOnNull(0), LocalSet(storage_locals + 6), LocalGet(*descriptor)]);
+                            } else {
+                                code.extend([Block(BlockType::Result(ValType::Ref(object_type))),
+                                    LocalGet(object),
+                                    BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF, to_ref_type: object_type },
+                                    Drop, Br(1), End, LocalSet(object_local),
+                                    LocalGet(object_local), StructGet { struct_type_index: runtime_abi::OBJECT, field_index: 0 }]);
                             }
-                            function.instruction(&Call(index("named-site-set")));
+                            code.extend(site(runtime_abi::SITE_DESCRIPTOR));
+                            code.extend([RefEq, I32Eqz, BrIf(0)]);
+                            code.extend(site(runtime_abi::SITE_SLOT));
+                            code.extend([LocalTee(field_index_local), I32Const(0), I32LtS, BrIf(0)]);
+                            if descriptors_of.contains_key(&(arguments[0].0 as u32)) {
+                                code.push(LocalGet(storage_locals + 6));
+                            } else {
+                                code.extend([LocalGet(object_local), StructGet { struct_type_index: runtime_abi::OBJECT, field_index: 1 }]);
+                            }
+                            code.extend([LocalGet(field_index_local), LocalGet(value), ArraySet(runtime_abi::ARGS),
+                                LocalGet(value), Br(1), End, GlobalGet(cache), LocalGet(object),
+                                LocalGet(name), LocalGet(value), Call(index("named-site-set")), End]);
+                            for instruction in code { function.instruction(&instruction); }
                         }
                         Nominal::IsKeyword => {
                             function
