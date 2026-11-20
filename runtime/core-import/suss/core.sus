@@ -1001,10 +1001,10 @@
                        (if (< i n)
                          (let [nval (f val (if (suss.bootstrap/undefined? input-array)
                                               (-nth c i)
-                                              (aget input-array (+ input-offset i))))]
+                                              (aget input-array (suss.bootstrap/long-add input-offset i))))]
                            (if (reduced? nval)
                              nval
-                             (recur (inc i) nval)))
+                             (recur (suss.bootstrap/long-add i 1) nval)))
                          val))]
             (if (reduced? nval)
               @nval
@@ -6178,9 +6178,9 @@
             (when (cljs.core/< i size)
               (let [v (if (suss.bootstrap/undefined? input-array)
                            (-nth c i)
-                           (aget input-array (+ input-offset i)))]
+                           (aget input-array (suss.bootstrap/long-add input-offset i)))]
                 (aset b i (f v)))
-              (recur (cljs.core/inc i))))
+              (recur (suss.bootstrap/long-add i 1))))
           (chunk-cons (array-chunk b 0 size) (map f (chunk-rest s))))
         (cons (f (first s)) (map f (rest s))))) nil))) nil nil)) ([f c1 c2]
    (new LazySeq nil (fn* [] (let [s1 (seq c1) s2 (seq c2)]
@@ -6220,11 +6220,11 @@
                      (if (cljs.core/< i size)
                        (let [v (if (suss.bootstrap/undefined? input-array)
                            (-nth c i)
-                           (aget input-array (+ input-offset i)))]
+                           (aget input-array (suss.bootstrap/long-add input-offset i)))]
                          (if (pred v)
                            (do (aset b j v)
-                               (recur (cljs.core/inc i) (cljs.core/inc j)))
-                           (recur (cljs.core/inc i) j)))
+                               (recur (suss.bootstrap/long-add i 1) (suss.bootstrap/long-add j 1)))
+                           (recur (suss.bootstrap/long-add i 1) j)))
                        j))]
           (chunk-cons (array-chunk b 0 kept) (filter pred (chunk-rest s))))
         (let [f (first s) r (rest s)]
@@ -6646,9 +6646,9 @@
                            (if (< i size)
                              (let [^objects a (if (< n (alength a))
                                                 a
-                                                (suss.bootstrap/packed-copy a 0 (suss.bootstrap/packed-array 6 (* 2 n)) 0 n))]
-                               (aset a n (str (aget input-array (+ off i))))
-                               (recur a (inc n) (inc i)))
+                                                (suss.bootstrap/packed-copy a 0 (suss.bootstrap/packed-array 6 (suss.bootstrap/long-add n n)) 0 n))]
+                               (aset a n (str (aget input-array (suss.bootstrap/long-add off i))))
+                               (recur a (suss.bootstrap/long-add n 1) (suss.bootstrap/long-add i 1)))
                              [a n]))]
                ;; Core ChunkedCons.next calls -seq on more exactly when
                ;; its current chunk is exhausted. Preserve that boundary.
@@ -6658,9 +6658,9 @@
              ;; Custom sequence/chunk methods retain first/next traversal.
              (let [^objects a (if (< n (alength a))
                                 a
-                                (suss.bootstrap/packed-copy a 0 (suss.bootstrap/packed-array 6 (* 2 n)) 0 n))]
+                                (suss.bootstrap/packed-copy a 0 (suss.bootstrap/packed-array 6 (suss.bootstrap/long-add n n)) 0 n))]
                (aset a n (str (first ys)))
-               (recur a (inc n) (next ys)))))
+               (recur a (suss.bootstrap/long-add n 1) (next ys)))))
          (suss.bootstrap/join-strings
           (if (== n (alength a))
             a

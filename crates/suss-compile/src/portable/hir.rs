@@ -3246,6 +3246,27 @@ impl Analyzer<'_> {
             return Ok(self.nominal(form, Nominal::BindingDefined, vec![cell]));
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
+            if symbol.name == "long-add" {
+                if !self.privileged {
+                    return Err(fail(form.span.clone(), "Private chunk adapters require compiled core"));
+                }
+                if args.len() != 2 {
+                    return Err(fail(form.span.clone(), "long-add requires two operands"));
+                }
+                // These core loop counters and offsets are longs. Keep their
+                // addition in the existing checked raw arithmetic route,
+                // rather than core's legacy coercing/boxed arithmetic.
+                let mut arguments = Vec::new();
+                for argument in args {
+                    let value = self.form(argument)?;
+                    arguments.push(self.nominal(argument, Nominal::LongCast, vec![value]));
+                }
+                return Ok(Hir { source: None, span: form.span.clone(),
+                    metadata: form.metadata.clone(), ty: Type::Number,
+                    kind: std::sync::Arc::new(Expression::Arithmetic {
+                        operator: Arithmetic::Add, arguments, coercing: false,
+                    }) });
+            }
             let operation = match symbol.name.as_str() {
                 "apply-sequence-ops!" => Some(Nominal::ApplySequenceOps),
                 "list-function" => Some(Nominal::ListFunction),
@@ -3302,6 +3323,11 @@ impl Analyzer<'_> {
                 _ => None,
             };
             if let Some(operation) = operation {
+                if matches!(operation, Nominal::ChunkTypes | Nominal::ChunkNth | Nominal::ChunkAppend
+                    | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq | Nominal::LongCast)
+                    && !self.privileged {
+                    return Err(fail(form.span.clone(), "Private chunk adapters require compiled core"));
+                }
                 if matches!(operation, Nominal::ApplySequenceOps | Nominal::ApplyCallee
                     | Nominal::ApplySpread | Nominal::ApplyToSeq | Nominal::ApplyFixed | Nominal::ListFunction)
                     && !self.privileged && self.environment.current_namespace(self.phase) != "suss.core" {

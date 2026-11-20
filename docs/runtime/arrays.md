@@ -152,6 +152,11 @@ references are hoisted; each element is read immediately before its callback.
 The early core definitions precede the public long var, so explicit conversions
 use the private long-cast word, which emits the existing inline LongCast operation.
 Numeric local tags alone do not insert a physical conversion.
+The private long-add word uses the existing checked, non-coercing arithmetic
+route for offsets, loop increments and output-array growth. These counters
+remain longs without a boxed arithmetic call on each element. Chunk adapters
+and these words require trusted compilation; changing the source namespace to
+suss.core does not grant access to backing arrays or descriptor registration.
 
 Map/filter fill an owned Object[] directly and publish its ArrayChunk after
 the ordered callbacks complete. Their output buffer is private to the thunk;

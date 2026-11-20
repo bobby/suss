@@ -185,3 +185,57 @@ fn invalid_chunk_windows_keep_callbacks_before_the_first_bad_read() {
              [threw @events])]"#), "[[true [1 2]] [true [1 2]] [true [1 2]]]");
     }
 }
+
+#[test]
+fn chunk_adapters_are_private_and_registration_is_atomic() {
+    use suss_cli::portable_session::SessionError;
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        for source in [
+            "(suss.bootstrap/chunk-types! nil nil nil)",
+            "(suss.bootstrap/chunk-nth nil 0)",
+            "(suss.bootstrap/chunk-append nil 0)",
+            "(suss.bootstrap/chunk-array nil)",
+            "(suss.bootstrap/chunk-offset nil)",
+            "(suss.bootstrap/chunk-seq nil)",
+            "(suss.bootstrap/long-cast 0)",
+            "(suss.bootstrap/long-add 0 1)",
+        ] {
+            let Err(SessionError::Compile(error)) = session.eval(source) else {
+                panic!("private chunk adapter was not rejected: {source}");
+            };
+            assert_eq!(error.message, "Private chunk adapters require compiled core");
+        }
+        // A storage view must not let ordinary source mutate vector internals.
+        assert!(matches!(session.eval("(let [v (vec (range 40))]
+            (aset (suss.bootstrap/chunk-array (chunk-first (seq v))) 0 99))"),
+            Err(SessionError::Compile(_))));
+        session.eval("(ns suss.core)").unwrap();
+        assert!(matches!(session.eval("(suss.bootstrap/chunk-array nil)"),
+            Err(SessionError::Compile(_))));
+        session.eval("(ns user)").unwrap();
+        session.eval_privileged(r#"
+          (deftype WrongChunkWitness [])
+          (def wrong-chunk-witness (WrongChunkWitness.))"#).unwrap();
+        assert!(session.eval_privileged(
+            "(suss.bootstrap/chunk-types! wrong-chunk-witness wrong-chunk-witness nil)")
+            .is_err());
+        session.collect().unwrap();
+        assert_eq!(printed_in(&mut session, r#"
+          [(let [a (object-array [7]) c (array-chunk a)]
+             (identical? a (suss.bootstrap/chunk-array c)))
+           (let [b (chunk-buffer 1)]
+             [(nil? (suss.bootstrap/chunk-append b 7)) (count b)])]"#, true),
+          "[true [true 1]]");
+    }
+}
+
+#[test]
+fn chunk_long_arithmetic_keeps_checked_overflow_and_wide_results() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        assert_eq!(printed_in(&mut session, r#"
+          [(suss.bootstrap/long-add 3000000000 4)
+           (try (suss.bootstrap/long-add 9223372036854775807 1)
+                :missed-overflow (catch :default e :overflow))]"#, true),
+          "[3000000004 :overflow]");
+    }
+}
