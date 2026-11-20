@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "source-sha256": "4f9dd4efda472e60440872e13b01070e0367709ba61c81e8125ec41373e39680",
+  "replacement": "(deftype ChunkBuffer [^:mutable buf ^:mutable end]\n  Object\n  (add [_ o]\n    (let [a buf i end]\n      (set! end (inc end))\n      (aset a i o)\n      nil))\n\n  (chunk [_]\n    (let [ret (ArrayChunk. buf 0 end)]\n      (set! buf nil)\n      ret))\n\n  ICounted\n  (-count [_] end))",
+  "rationale": "Preserve both mutable fields, chunk storage publication/clearing and ICounted. Adapt add to JVM Clojure 1.12.6 ChunkBuffer behavior: read buffer/index, advance end before the store (including failed bounds/null stores), and return nil after success. Executed JVM/Suss probes establish the return/effect-order differences; ClojureScript is the licensed implementation reference, not the behavior oracle. Retain the original EPL notice and source provenance."
+}

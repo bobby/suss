@@ -1737,7 +1737,7 @@
     {
       "id": "runtime:ChunkBuffer:3673",
       "source-sha256": "4f9dd4efda472e60440872e13b01070e0367709ba61c81e8125ec41373e39680",
-      "patch": null
+      "patch": "docs/compatibility/patches/lazy-ChunkBuffer.json"
     },
     {
       "id": "runtime:chunk-buffer:3687",
