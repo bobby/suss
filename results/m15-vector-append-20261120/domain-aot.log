@@ -1,0 +1,16 @@
+Running as unit: run-p3063328-i82751600.scope; invocation ID: 8ffd65fd47624b038891e9d301bf0414
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-vector-append-source/crates/suss-cli)
+    Finished `release` profile [optimized] target(s) in 1.92s
+     Running tests/transient_vector_append.rs (target/probe/m15-hamt-target/release/deps/transient_vector_append-7cb43885395e3781)
+
+running 7 tests
+test appended_values_keep_aliases_and_closures_after_gc ... ok
+test generic_receivers_and_invalidated_transients_keep_argument_effects ... ok
+test native_tail_admission_declines_before_any_mutation_at_full_tails ... ok
+test private_adapters_cannot_register_or_mutate_from_ordinary_source ... ok
+test public_growth_preserves_snapshots_across_tail_and_root_boundaries ... ok
+test unsupported_counts_and_tail_storage_decline_without_writes ... ok
+test aot_vector_growth_uses_the_same_public_values ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 16.88s
+

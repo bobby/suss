@@ -516,6 +516,9 @@ pub enum Nominal {
     ChunkArray,
     ChunkOffset,
     ChunkSeq,
+    /// Owned transient-vector/root/edit witnesses and a guarded tail append.
+    TransientVectorTypes,
+    TransientVectorAppend,
     /// A `^long` or `^double` parameter's value (#385): Clojure's checked
     /// longCast or doubleCast of the argument, kept as a raw i64 or f64.
     LongCast,
@@ -723,9 +726,9 @@ impl Nominal {
                 Self::PackedGet(_) | Self::VectorNth | Self::ArrayMapGet | Self::MapContains => count == 2,
                 Self::ObjectArrayCopy(_) => count == 5,
                 Self::HashMapTypes => count == 4,
-                Self::ChunkTypes => count == 3,
+                Self::ChunkTypes | Self::TransientVectorTypes => count == 3,
+                Self::ChunkNth | Self::ChunkAppend | Self::TransientVectorAppend => count == 2,
                 Self::ChunkLongSum => count == 6,
-                Self::ChunkNth | Self::ChunkAppend => count == 2,
                 Self::ChunkArray | Self::ChunkOffset | Self::ChunkSeq => count == 1,
                 Self::MapGetOr | Self::MapAssoc => count == 3,
                 Self::PackedSet(_) => count == 3,
@@ -3325,6 +3328,8 @@ impl Analyzer<'_> {
                 "hash-map-types!" => Some(Nominal::HashMapTypes),
                 "chunk-types!" => Some(Nominal::ChunkTypes),
                 "chunk-long-sum" => Some(Nominal::ChunkLongSum),
+                "transient-vector-types!" => Some(Nominal::TransientVectorTypes),
+                "transient-vector-append" => Some(Nominal::TransientVectorAppend),
                 "chunk-nth" => Some(Nominal::ChunkNth),
                 "chunk-append" => Some(Nominal::ChunkAppend),
                 "chunk-array" => Some(Nominal::ChunkArray),
@@ -3347,6 +3352,10 @@ impl Analyzer<'_> {
                     | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq);
                 let ordinary_core = !self.privileged
                     && self.environment.current_namespace(self.phase) == "suss.core";
+                let transient_vector = matches!(operation, Nominal::TransientVectorTypes | Nominal::TransientVectorAppend);
+                if transient_vector && !self.privileged && !ordinary_core {
+                    return Err(fail(form.span.clone(), "Private transient vector adapters require compiled core"));
+                }
                 if (chunk || operation == Nominal::LongCast) && !self.privileged && !ordinary_core {
                     return Err(fail(form.span.clone(), "Private chunk adapters require compiled core"));
                 }
@@ -3365,12 +3374,12 @@ impl Analyzer<'_> {
                     .iter()
                     .map(|argument| self.form(argument))
                     .collect::<Result<Vec<_>, _>>()?;
-                if chunk && ordinary_core {
+                if (chunk || transient_vector) && ordinary_core {
                     // Direct source loading keeps user-extensible descriptors.
                     // It cannot register them as canonical or access native
                     // storage, even when its namespace is suss.core. Evaluate
                     // operands in order, then take the existing source fallback.
-                    let value = if operation == Nominal::ChunkTypes { Literal::Nil } else { Literal::Undefined };
+                    let value = if matches!(operation, Nominal::ChunkTypes | Nominal::TransientVectorTypes) { Literal::Nil } else { Literal::Undefined };
                     operands.push(self.literal_form(form, value));
                     return Ok(Hir { source: None, span: form.span.clone(),
                         metadata: form.metadata.clone(), ty: Type::Value,

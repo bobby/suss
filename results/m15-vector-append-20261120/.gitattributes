@@ -1,0 +1,4 @@
+# Preserve exact raw observations and patch context, including trailing spaces.
+*.log -whitespace
+measured-source.patch -whitespace
+jvm-oracle.clj -whitespace

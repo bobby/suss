@@ -1,0 +1,43 @@
+Running as unit: run-p3038432-i82704733.scope; invocation ID: c5f36414b0994ec2afbaa6092e8681a8
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-vector-append-source/crates/suss-cli)
+    Finished `release` profile [optimized] target(s) in 1.92s
+     Running tests/transient_vector_append.rs (target/probe/m15-hamt-target/release/deps/transient_vector_append-7cb43885395e3781)
+
+running 5 tests
+test appended_values_keep_aliases_and_closures_after_gc ... ok
+test generic_receivers_and_invalidated_transients_keep_argument_effects ... ok
+test native_tail_admission_declines_before_any_mutation_at_full_tails ... FAILED
+test private_adapters_cannot_register_or_mutate_from_ordinary_source ... FAILED
+test public_growth_preserves_snapshots_across_tail_and_root_boundaries ... ok
+
+failures:
+
+---- native_tail_admission_declines_before_any_mutation_at_full_tails stdout ----
+
+thread 'native_tail_admission_declines_before_any_mutation_at_full_tails' (3038952) panicked at crates/suss-cli/tests/transient_vector_append.rs:15:33:
+(pr-str 
+          (mapv (fn [n]
+            (let [before (vec (range n)) t (transient before)
+                  result (suss.bootstrap/transient-vector-append t :added)
+                  declined (suss.bootstrap/undefined? result)
+                  after (persistent! t)]
+              [n declined (or declined (identical? t result))
+               (= after (if declined before (conj before :added)))]))
+            [0 1 30 31 32 33 63 64 65 1023 1024 1055 1056 1057])): Unresolved Runtime name suss.bootstrap/transient-vector-append at bytes 121..159
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- private_adapters_cannot_register_or_mutate_from_ordinary_source stdout ----
+
+thread 'private_adapters_cannot_register_or_mutate_from_ordinary_source' (3038953) panicked at crates/suss-cli/tests/transient_vector_append.rs:123:13:
+assertion `left == right` failed
+  left: "Unresolved Runtime name suss.bootstrap/transient-vector-types!"
+ right: "Private transient vector adapters require compiled core"
+
+
+failures:
+    native_tail_admission_declines_before_any_mutation_at_full_tails
+    private_adapters_cannot_register_or_mutate_from_ordinary_source
+
+test result: FAILED. 3 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.56s
+
+error: test failed, to rerun pass `-p suss-cli --test transient_vector_append`

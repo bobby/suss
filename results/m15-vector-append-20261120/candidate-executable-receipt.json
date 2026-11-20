@@ -1,0 +1,14 @@
+{
+  "source_head": "bae3f971634da6530ad86fa71cf0ccefe3443b45",
+  "source_dirty": " M crates/suss-compile/src/portable/emit.rs\n M crates/suss-compile/src/portable/hir.rs\n M crates/suss-compile/src/runtime_abi.rs\n M crates/suss-compile/src/runtime_abi/chunks.rs\n M docs/compatibility/bootstrap/exact-integers.sus\n M docs/compatibility/core-import.json\n M docs/compatibility/patches/vector-conj-bang.json\n M runtime/core-import/manifest.json\n M runtime/core-import/suss/core.sus\n?? crates/suss-cli/tests/transient_vector_append.rs\n?? crates/suss-compile/src/runtime_abi/transient_vectors.rs\n",
+  "executable_sha256": "bf0db09ae71429dc41fbdb2b8859c615134f4e5173eaa4e8598172e59790122a",
+  "tracked_patch_sha256": "9c1ca6d3622d1dea3f92eebe43a979ee018219b466b5242ce692f1288a7a9781",
+  "untracked_sha256": {
+    "crates/suss-cli/tests/transient_vector_append.rs": "d7da9833b04b1c54e8adb2c54d2e84a751033506c798d78d471a8661d485677b",
+    "crates/suss-compile/src/runtime_abi/transient_vectors.rs": "ed39e18cf6e65e2f21feb32cdcd7e5ef0026188eca71f34f9c46feb72e9d42bb"
+  },
+  "core_sha256": "e26113177d5f4e503b232703393c60f2619928032b7dfbee54ec551ccd1640cf",
+  "focused_passed": 20,
+  "focused_targets": 3,
+  "note": "Isolated uncommitted canonical-vector append for #487; source snapshot retained; no walltime acceptance"
+}

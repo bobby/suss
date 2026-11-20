@@ -1,5 +1,37 @@
 ## Independent PR177 review — typed invocation before guest initialization
 
+## Canonical transient-vector append probes (2026-11-20)
+
+For #487, the current-tail storage adapter admits only owned transient-vector,
+root and live edit-token descriptors, a supported nonnegative i31 count and a
+32-slot Object[] tail with room. All admission checks precede writes. Full tails,
+root growth, invalid lifetimes, unsupported storage and custom receivers use the
+original source protocol path. Registration stages every descriptor before
+publication; ordinary source-core loading retains generic fallbacks. ABI7's
+shared layouts and previous runtime-global offsets stay unchanged.
+
+Edit vector-conj-bang.json and the owned exact-integers.sus loader, refresh its
+input SHA256 in core-import.json, run python3 scripts/core_import.py and
+python3 scripts/apply_bootstrap.py --check. Build/test using cargo +stable,
+SUSS_FUNCTION_NAMES=1, two jobs/test threads, target/probe/m15-hamt-target and
+bounded user scopes. Run release targets transient_vector_append,
+clojure_chunk_effects and portable_core_receiver_layout. Their 22 distinct tests
+pass, including actual AOT, full ordinary core loading, snapshots, lifecycle,
+GC, privacy/atomic registration and decline-before-write cases. Fresh executed
+JVM1.12.6 public values/effects match. Stable-pinned Java-free verification
+reproduces both bootstrap phase artifacts and passes four execution tests.
+All359 Python tests, foundation checks and actionlint1.7.12 pass.
+
+results/m15-vector-append-20261120 retains exact measured patch/new-file hashes,
+raw observations and failed attempts. Warm-first median3 N1000-minus0 changes
+into-vector from1,659,615.439 to1,114,965.632 instructions/run (32.817832% fewer).
+Into-map increases0.498200%; other program counts are essentially unchanged.
+Counts do not establish the unchanged5x JVM timing criterion. All seven unchanged
+programs must still be measured after separate idle commands. The additional
+performance-vector-build label requires into-vector<=5x and retains every other
+failed program target, all-program regression and string-allocation checks.
+Full final-head correctness CI and quiet timing remain separate evidence on #487.
+
 ## Raw integer predicate and parity probe commands (2026-11-20)
 
 Implementation2ad0c15d keeps the existing nominal long test's Bool result raw
