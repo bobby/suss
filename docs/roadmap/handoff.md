@@ -43,6 +43,13 @@ JVM Clojure 1.12.6 checks both long limits, values beyond binary64's exact integ
 range, noninteger rejection and single argument evaluation. Instruction deltas
 remain separate from the quiet full-run timing gate.
 
+Chunk loop comparison probes use target/probe/m15-chunk-raw-less-*. The
+m15-chunk-raw-less-jvm.clj oracle checks exact long ordering beyond binary64's
+integer range and at both long limits. long-less uses the existing checked
+numeric relation; core's public/string/array coercing comparisons keep their
+separate behavior. Regenerate core and rerun the chunk/source/parity/cache suites
+and foundation checks after changing its private counter operations.
+
 Reviewed native file/WIT selection and explicit mappings, shared compiled source/
 macro staging, scalar parsing/result handling, exact nested export invocation,
 command-mode separation and documented remaining frontend modes at855d281.

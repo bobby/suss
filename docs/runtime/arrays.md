@@ -153,8 +153,10 @@ The early core definitions precede the public long var, so explicit conversions
 use the private long-cast word, which emits the existing inline LongCast operation.
 Numeric local tags alone do not insert a physical conversion.
 The private long-add word uses the existing checked, non-coercing arithmetic
-route for offsets, loop increments and output-array growth. These counters
-remain longs without a boxed arithmetic call on each element. Native chunk
+route for offsets, loop increments and output-array growth. The private
+long-less word uses checked long operands and the existing raw numeric relation.
+These counters remain longs without a boxed arithmetic or comparison call on
+each element. Native chunk
 access and registration require trusted compilation. Ordinary source-loaded
 core retains the generic protocol/method paths: its chunk words evaluate
 their operands, then decline, and its registration word has no native effect.

@@ -998,7 +998,7 @@
                                      0
                                      (suss.bootstrap/long-cast (suss.bootstrap/chunk-offset c)))
                 nval (loop [i 0 val val]
-                       (if (< i n)
+                       (if (suss.bootstrap/long-less i n)
                          (let [nval (f val (if (suss.bootstrap/undefined? input-array)
                                               (-nth c i)
                                               (aget input-array (suss.bootstrap/long-add input-offset i))))]
@@ -6175,7 +6175,7 @@
                                    (suss.bootstrap/long-cast (suss.bootstrap/chunk-offset c)))
               ^objects b (suss.bootstrap/packed-array 6 size)]
           (loop [i 0]
-            (when (cljs.core/< i size)
+            (when (suss.bootstrap/long-less i size)
               (let [v (if (suss.bootstrap/undefined? input-array)
                            (-nth c i)
                            (aget input-array (suss.bootstrap/long-add input-offset i)))]
@@ -6217,7 +6217,7 @@
                                    (suss.bootstrap/long-cast (suss.bootstrap/chunk-offset c)))
               ^objects b (suss.bootstrap/packed-array 6 size)
               kept (loop [i 0 j 0]
-                     (if (cljs.core/< i size)
+                     (if (suss.bootstrap/long-less i size)
                        (let [v (if (suss.bootstrap/undefined? input-array)
                            (-nth c i)
                            (aget input-array (suss.bootstrap/long-add input-offset i)))]
@@ -6643,8 +6643,8 @@
              (let [size (suss.bootstrap/long-cast (count c))
                    off (suss.bootstrap/long-cast (suss.bootstrap/chunk-offset c))
                    state (loop [^objects a a n n i 0]
-                           (if (< i size)
-                             (let [^objects a (if (< n (alength a))
+                           (if (suss.bootstrap/long-less i size)
+                             (let [^objects a (if (suss.bootstrap/long-less n (alength a))
                                                 a
                                                 (suss.bootstrap/packed-copy a 0 (suss.bootstrap/packed-array 6 (suss.bootstrap/long-add n n)) 0 n))]
                                (aset a n (str (aget input-array (suss.bootstrap/long-add off i))))
@@ -6656,7 +6656,7 @@
                       (let [more (-chunked-next ys)]
                         (if (suss.bootstrap/nil? more) nil (-seq more)))))
              ;; Custom sequence/chunk methods retain first/next traversal.
-             (let [^objects a (if (< n (alength a))
+             (let [^objects a (if (suss.bootstrap/long-less n (alength a))
                                 a
                                 (suss.bootstrap/packed-copy a 0 (suss.bootstrap/packed-array 6 (suss.bootstrap/long-add n n)) 0 n))]
                (aset a n (str (first ys)))

@@ -199,6 +199,7 @@ fn chunk_adapters_are_private_and_registration_is_atomic() {
             "(suss.bootstrap/chunk-seq nil)",
             "(suss.bootstrap/long-cast 0)",
             "(suss.bootstrap/long-add 0 1)",
+            "(suss.bootstrap/long-less 0 1)",
         ] {
             let Err(SessionError::Compile(error)) = session.eval(source) else {
                 panic!("private chunk adapter was not rejected: {source}");
@@ -267,7 +268,11 @@ fn chunk_long_arithmetic_keeps_checked_overflow_and_wide_results() {
         assert_eq!(printed_in(&mut session, r#"
           [(suss.bootstrap/long-add 3000000000 4)
            (try (suss.bootstrap/long-add 9223372036854775807 1)
-                :missed-overflow (catch :default e :overflow))]"#, true),
-          "[3000000004 :overflow]");
+                :missed-overflow (catch :default e :overflow))
+           (suss.bootstrap/long-less 9007199254740992 9007199254740993)
+           (suss.bootstrap/long-less 9007199254740993 9007199254740992)
+           (suss.bootstrap/long-less -9223372036854775808 9223372036854775807)
+           (suss.bootstrap/long-less 9223372036854775807 9223372036854775807)]"#, true),
+          "[3000000004 :overflow true false true false]");
     }
 }

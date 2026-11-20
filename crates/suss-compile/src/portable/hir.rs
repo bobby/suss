@@ -3246,20 +3246,27 @@ impl Analyzer<'_> {
             return Ok(self.nominal(form, Nominal::BindingDefined, vec![cell]));
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
-            if symbol.name == "long-add" {
+            if matches!(symbol.name.as_str(), "long-add" | "long-less") {
                 if !self.privileged && self.environment.current_namespace(self.phase) != "suss.core" {
                     return Err(fail(form.span.clone(), "Private chunk adapters require compiled core"));
                 }
                 if args.len() != 2 {
-                    return Err(fail(form.span.clone(), "long-add requires two operands"));
+                    return Err(fail(form.span.clone(), format!("{} requires two operands", symbol.name)));
                 }
                 // These core loop counters and offsets are longs. Keep their
-                // addition in the existing checked raw arithmetic route,
-                // rather than core's legacy coercing/boxed arithmetic.
+                // addition and comparison in the existing checked raw route,
+                // rather than core's legacy coercing/boxed operations.
                 let mut arguments = Vec::new();
                 for argument in args {
                     let value = self.form(argument)?;
                     arguments.push(self.nominal(argument, Nominal::LongCast, vec![value]));
+                }
+                if symbol.name == "long-less" {
+                    return Ok(Hir { source: None, span: form.span.clone(),
+                        metadata: form.metadata.clone(), ty: Type::Bool,
+                        kind: std::sync::Arc::new(Expression::Comparison {
+                            operation: Comparison::NumberLess, arguments,
+                        }) });
                 }
                 return Ok(Hir { source: None, span: form.span.clone(),
                     metadata: form.metadata.clone(), ty: Type::Number,
