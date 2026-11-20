@@ -328,12 +328,14 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::MapAssoc => { names.insert("map-assoc"); }
                         Nominal::HashMapTypes => { names.insert("hash-map-type-register"); }
                         Nominal::ChunkTypes => { names.insert("chunk-types-register"); }
+                        Nominal::ChunkLongSum => { names.insert("chunk-long-sum"); }
                         Nominal::ChunkNth => { names.insert("chunk-nth"); }
                         Nominal::ChunkAppend => { names.insert("chunk-buffer-append"); }
                         Nominal::ChunkArray => { names.insert("chunk-array"); }
                         Nominal::ChunkOffset => { names.insert("chunk-offset"); }
                         Nominal::ChunkSeq => { names.insert("chunk-seq"); }
                         Nominal::LongCast => { names.insert("number-cast-long"); }
+                        Nominal::ChunkIndexAdd => {},
                         Nominal::UncheckedLongCast => { names.insert("number-cast-unchecked-long"); }
                         Nominal::DoubleCast => { names.insert("number-cast-double"); }
                         Nominal::PackedGet(_) => {
@@ -876,6 +878,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "binding-set" => (vec![VALUE, VALUE], vec![]),
             "number-parse-long" | "hash-map-type-register" => (vec![VALUE; 4], vec![VALUE]),
             "chunk-types-register" => (vec![VALUE; 3], vec![VALUE]),
+            "chunk-long-sum" => (vec![VALUE; 6], vec![VALUE]),
             "chunk-nth" | "chunk-buffer-append" => (vec![VALUE; 2], vec![VALUE]),
             "chunk-array" | "chunk-offset" | "chunk-seq" => (vec![VALUE], vec![VALUE]),
             "packed-array-copy" | "object-array-copy-forward" | "object-array-copy-backward" => (vec![VALUE; 5], vec![VALUE]),
@@ -2307,6 +2310,14 @@ fn emit_function(
                 for instruction in code.drain(..) { function.instruction(&instruction); }
                 continue;
             }
+            if let Operation::Nominal { operation: Nominal::ChunkIndexAdd, arguments } = &inst.operation
+                && locals.of(inst.result) == unboxed::Repr::Long
+            {
+                code.extend([LocalGet(locals.raw(arguments[0])), LocalGet(locals.raw(arguments[1])),
+                    I64Add, LocalSet(locals.raw(inst.result))]);
+                for instruction in code.drain(..) { function.instruction(&instruction); }
+                continue;
+            }
             // A coercion of a raw value to a raw result (#448): a long stays
             // a long and widens to a double, and unchecked-long truncates a
             // double as Java's cast does. A checked long of a double first
@@ -3583,6 +3594,15 @@ fn emit_function(
                                 function.instruction(&instruction);
                             }
                         }
+                        Nominal::ChunkIndexAdd => {
+                            // Resumable code keeps checked long operands boxed.
+                            // The owned caller's bounds proof still applies.
+                            let mut code = runtime_abi::long_to_i64(arguments[0].0 as u32 + offset);
+                            code.extend(runtime_abi::long_to_i64(arguments[1].0 as u32 + offset));
+                            code.push(I64Add);
+                            code.extend(runtime_abi::long_box_in(long_locals[0]));
+                            for instruction in code { function.instruction(&instruction); }
+                        }
                         Nominal::LongCast | Nominal::DoubleCast | Nominal::UncheckedLongCast => {
                             // The checked cast (#385): an i31 or a boxed long
                             // (or double) inline, anything else through the
@@ -3682,13 +3702,14 @@ fn emit_function(
                             }
                             function.instruction(&Call(index("hash-map-type-register")));
                         }
-                        Nominal::ChunkTypes | Nominal::ChunkNth | Nominal::ChunkAppend | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq => {
+                        Nominal::ChunkLongSum | Nominal::ChunkTypes | Nominal::ChunkNth | Nominal::ChunkAppend | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq => {
                             let mut code = vec![];
                             for argument in arguments {
                                 locals.push_boxed(&mut code, *argument);
                             }
                             code.push(Call(index(match operation {
                                 Nominal::ChunkTypes => "chunk-types-register",
+                                Nominal::ChunkLongSum => "chunk-long-sum",
                                 Nominal::ChunkNth => "chunk-nth",
                                 Nominal::ChunkArray => "chunk-array",
                                 Nominal::ChunkOffset => "chunk-offset",

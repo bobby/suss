@@ -48,6 +48,7 @@ fn declined(code: &mut Vec<Instruction<'static>>) {
 }
 
 pub(super) fn functions(b: &mut Builder) {
+    long_sum(b);
     // Stage all descriptors before publication. The instances are only
     // witnesses supplied by the owned core loader; they need not be retained.
     let mut code = vec![];
@@ -141,4 +142,56 @@ pub(super) fn functions(b: &mut Builder) {
     declined(&mut code);
     b.function_with_locals("chunk-buffer-append", &[VALUE; 2], &[VALUE],
         &[(1, nullable(OBJECT)), (2, nullable(ARGS)), (1, ValType::I32)], &code);
+}
+
+
+// The owned caller supplies its immutable canonical + value. A different
+// reducer declines; this helper never invokes arbitrary user code. It may
+// recompute a pure long prefix on fallback, but never writes existing storage.
+fn long_sum(b: &mut Builder) {
+    // Params reducer/canonical +/array/offset/count/initial. Locals6 storage,
+    // 7 offset,8 count,9 end,10 index,11 element,12 accumulator,13 operand,
+    // 14 sum,15 boxing scratch. Bounds are checked before any element load.
+    let i31 = HeapType::I31;
+    let mut code = vec![LocalGet(0), LocalGet(1), RefEq, I32Eqz];
+    decline_if(&mut code);
+    code.extend([Block(BlockType::Result(VALUE)),
+        LocalGet(2), cast(HeapType::Concrete(PACKED)),
+        StructGet { struct_type_index: PACKED, field_index: 0 },
+        cast(HeapType::Concrete(ARGS)), LocalSet(6),
+        LocalGet(3), cast(i31), I31GetS, LocalSet(7),
+        LocalGet(4), cast(i31), I31GetS, LocalSet(8),
+        LocalGet(7), LocalGet(8), I32Or, I32Const(0), I32LtS]);
+    decline_if(&mut code);
+    code.extend([LocalGet(7), LocalGet(8), I32Add, LocalTee(9),
+        LocalGet(6), RefAsNonNull, ArrayLen, I32GtU]);
+    decline_if(&mut code);
+    code.extend([LocalGet(8), I32Eqz, If(BlockType::Empty), LocalGet(5), Return, End,
+        LocalGet(5), LocalSet(11)]);
+    let unbox = |code: &mut Vec<Instruction<'static>>, destination: u32, depth: u32| {
+        code.extend([LocalGet(11), RefTestNonNull(i31), If(BlockType::Result(ValType::I64)),
+            LocalGet(11), RefCastNonNull(i31), I31GetS, I64ExtendI32S,
+            Else, LocalGet(11), BrOnCastFail { relative_depth: depth + 1,
+                from_ref_type: RefType::EQREF,
+                to_ref_type: RefType { nullable: false, heap_type: HeapType::Concrete(LONG) } },
+            StructGet { struct_type_index: LONG, field_index: 0 }, End, LocalSet(destination)]);
+    };
+    unbox(&mut code, 12, 0);
+    code.extend([LocalGet(7), LocalSet(10), Loop(BlockType::Empty),
+        LocalGet(10), LocalGet(9), I32GeU, If(BlockType::Empty), LocalGet(12)]);
+    code.extend(long_box_in(15));
+    code.extend([Return, End, LocalGet(6), RefAsNonNull, LocalGet(10), ArrayGet(ARGS), LocalSet(11)]);
+    unbox(&mut code, 13, 1);
+    // Preserve checked prefix overflow, including before a later unsupported
+    // value. The existing numeric helper supplies the exact language error.
+    code.extend([LocalGet(12), LocalGet(13), I64Add, LocalTee(14), LocalGet(12), I64Xor,
+        LocalGet(14), LocalGet(13), I64Xor, I64And, I64Const(0), I64LtS,
+        If(BlockType::Empty), LocalGet(12)]);
+    code.extend(long_box_in(15));
+    code.extend([LocalGet(11), Call(b.names["number-add"]), Return, End,
+        LocalGet(14), LocalSet(12), LocalGet(10), I32Const(1), I32Add, LocalSet(10), Br(0),
+        End, Unreachable]);
+    declined(&mut code);
+    b.function_with_locals("chunk-long-sum", &[VALUE; 6], &[VALUE],
+        &[(1, nullable(ARGS)), (4, ValType::I32), (1, VALUE), (4, ValType::I64)], &code);
 }

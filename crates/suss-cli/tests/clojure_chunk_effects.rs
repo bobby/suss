@@ -199,6 +199,8 @@ fn chunk_adapters_are_private_and_registration_is_atomic() {
             "(suss.bootstrap/chunk-seq nil)",
             "(suss.bootstrap/long-cast 0)",
             "(suss.bootstrap/long-add 0 1)",
+            "(suss.bootstrap/chunk-index-add 0 1)",
+            "(suss.bootstrap/chunk-long-sum + + nil 0 0 0)",
             "(suss.bootstrap/long-less 0 1)",
         ] {
             let Err(SessionError::Compile(error)) = session.eval(source) else {
@@ -274,5 +276,90 @@ fn chunk_long_arithmetic_keeps_checked_overflow_and_wide_results() {
            (suss.bootstrap/long-less -9223372036854775808 9223372036854775807)
            (suss.bootstrap/long-less 9223372036854775807 9223372036854775807)]"#, true),
           "[3000000004 :overflow true false true false]");
+    }
+}
+
+#[test]
+fn bounded_chunk_index_add_keeps_checked_conversions_and_source_fallback() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        assert_eq!(printed_in(&mut session, r#"
+          [(suss.bootstrap/chunk-index-add 0 1)
+           (suss.bootstrap/chunk-index-add 1073741823 1)
+           (suss.bootstrap/chunk-index-add 3000000000 4)
+           (suss.bootstrap/chunk-index-add 9007199254740992 1)
+           (suss.bootstrap/chunk-index-add 9223372036854775806 1)
+           (try (suss.bootstrap/chunk-index-add nil 1) (catch :default e :threw))
+           (try (suss.bootstrap/chunk-index-add 1.0e30 1) (catch :default e :threw))]"#, true),
+          "[1 1073741824 3000000004 9007199254740993 9223372036854775807 :threw :threw]");
+        session.eval("(ns suss.core)").unwrap();
+        assert_eq!(printed(&mut session, r#"
+          [(suss.bootstrap/chunk-index-add 9007199254740992 1)
+           (try (suss.bootstrap/chunk-index-add 9223372036854775807 1)
+             :missing (catch :default e :threw))]"#), "[9007199254740993 :threw]");
+    }
+}
+
+#[test]
+fn chunk_sum_preserves_wide_values_mixed_numbers_and_prefix_overflow() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        assert_eq!(printed(&mut session, r#"
+          [(reduce + 0 (chunk-cons (array-chunk (object-array [9007199254740992 1])) nil))
+           (reduce + 0 (chunk-cons (array-chunk (object-array [1 2.5 3])) nil))
+           (reduce + 7 (chunk-cons (array-chunk (object-array [99 -3 4 99]) 1 3) nil))
+           (try (reduce + 0 (chunk-cons
+                  (array-chunk (object-array [9223372036854775807 1 0.5])) nil))
+                :missing (catch :default e (ex-message e)))
+           (try (reduce + 0 (chunk-cons
+                  (array-chunk (object-array [-9223372036854775808 -1 0.5])) nil))
+                :missing (catch :default e (ex-message e)))
+           (try (reduce + 0 (chunk-cons (array-chunk (object-array [1 nil])) nil))
+                :missing (catch :default e :threw))]"#),
+          "[9007199254740993 6.5 8 \"long overflow\" \"long overflow\" :threw]");
+    }
+}
+
+#[test]
+fn chunk_sum_keeps_custom_reducers_redefinitions_and_reduced_demand() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        assert_eq!(printed(&mut session, r#"
+          [(let [events (atom []) a (object-array [1 2 3])]
+             [(reduce (fn [acc x] (swap! events conj x)
+                        (when (= x 1) (aset a 1 20)) (+ acc x))
+                      0 (chunk-cons (array-chunk a) nil)) @events])
+           (let [events (atom []) more (LazySeq. nil
+                        (fn [] (swap! events conj :tail) (list 9)) nil nil)]
+             [(reduce (fn [acc x] (swap! events conj x)
+                        (if (= x 2) (reduced acc) (+ acc x)))
+                      0 (chunk-cons (array-chunk (object-array [1 2 3])) more)) @events])
+           (let [events (atom []) original +]
+             (with-redefs [+ (fn [a b] (swap! events conj b) (original a b))]
+               [(reduce + 0 (chunk-cons (array-chunk (object-array [1 2 3])) nil))
+                @events]))]"#), "[[24 [1 20 3]] [1 [1 2]] [6 [1 2 3]]]");
+    }
+}
+
+#[test]
+fn private_chunk_sum_declines_without_calls_or_mutation_and_keeps_operand_order() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        assert_eq!(printed_in(&mut session, r#"
+          (let [events (atom []) f (fn [a b] (swap! events conj :called) 0)
+                a (object-array [1 2 3])]
+            [(suss.bootstrap/undefined? (suss.bootstrap/chunk-long-sum f + a 0 3 0))
+             (suss.bootstrap/undefined? (suss.bootstrap/chunk-long-sum + + a -1 2 0))
+             (suss.bootstrap/undefined? (suss.bootstrap/chunk-long-sum + + a 0 4 0))
+             (suss.bootstrap/undefined? (suss.bootstrap/chunk-long-sum + + a 0.5 2 0))
+             (suss.bootstrap/undefined? (suss.bootstrap/chunk-long-sum + +
+                                          (long-array [1 2]) 0 2 0))
+             (suss.bootstrap/undefined? (suss.bootstrap/chunk-long-sum + +
+                                          (object-array [1 nil]) 0 2 0))
+             (suss.bootstrap/chunk-long-sum + + a 3 0 :initial)
+             @events (vec a)])"#, true),
+          "[true true true true true true :initial [] [1 2 3]]");
+        session.eval("(ns suss.core)").unwrap();
+        assert_eq!(printed(&mut session, r#"
+          (let [events (atom []) mark (fn [x] (swap! events conj x) x)]
+            [(suss.bootstrap/undefined? (suss.bootstrap/chunk-long-sum
+               (mark 0) (mark 1) (mark 2) (mark 3) (mark 4) (mark 5))) @events])"#),
+          "[true [0 1 2 3 4 5]]");
     }
 }

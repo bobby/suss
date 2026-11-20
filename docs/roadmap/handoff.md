@@ -30871,3 +30871,31 @@ records 349 passes and every source check in m15-bench-foundation.log.
 Initialize the pinned submodule in new worktrees first with
 `git submodule update --init clojurescript`; an initial uninitialized-worktree
 foundation failure is retained as m15-bench-foundation-uninitialized.log.
+
+
+## Checked canonical chunk sum probes (2026-11-20)
+
+`results/m15-chunk-sum-20261120` retains the exact measured dirty source patch,
+source/executable/core hashes, fresh JVM1.12.6 forms/results and raw instructions.
+Build and compile with SUSS_FUNCTION_NAMES=1, cargo+stable, two Cargo jobs, and
+MemoryMax4G user scopes. Run the retained program_instructions.py with source,
+frozen executable and a fresh target/probe output directory. It uses unchanged
+bench.py expressions, warm-up first, then median-three instructions:u at1000
+less0. Lazy-pipeline measures984,880.429 instructions/run,7.035581% fewer than
+1,059,416.537 in the published predecessor. This is not quiet timing acceptance.
+
+Focused release tests clojure_chunk_effects, compiled_core_casts and
+portable_lazy_transformations pass30 cases; the public wide/mixed/overflow and
+custom/redefined-reducer cases match fresh JVM1.12.6. All358 Python tests and
+CI foundation/source/provenance checks pass. The stable-pinned Java-free
+release-profile bootstrap check reproduces both phases byte-for-byte and passes
+four execution tests. All logs/temp files remain under target/probe.
+
+The native sum recognizes the owned immutable + function, checks its Object[]
+window, and sums long prefixes with checked overflow at the same element.
+Unsupported values/reducers fall back without writes or duplicated callbacks.
+Canonical input-array branches move outside map/filter loops; only counters and
+admitted offsets with proved bounds use unchecked raw addition. Ordinary source
+core keeps checked arithmetic and declines privileged storage helpers. Shared
+ABI7 types and existing runtime globals are unchanged. Require a new final-head
+quiet benchmark and complete correctness CI before treating this as acceptance.

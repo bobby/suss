@@ -1,0 +1,511 @@
+diff --git c/crates/suss-cli/tests/clojure_chunk_effects.rs w/crates/suss-cli/tests/clojure_chunk_effects.rs
+index 1f95045c..a6241226 100644
+--- c/crates/suss-cli/tests/clojure_chunk_effects.rs
++++ w/crates/suss-cli/tests/clojure_chunk_effects.rs
+@@ -199,6 +199,8 @@ fn chunk_adapters_are_private_and_registration_is_atomic() {
+             "(suss.bootstrap/chunk-seq nil)",
+             "(suss.bootstrap/long-cast 0)",
+             "(suss.bootstrap/long-add 0 1)",
++            "(suss.bootstrap/chunk-index-add 0 1)",
++            "(suss.bootstrap/chunk-long-sum + + nil 0 0 0)",
+             "(suss.bootstrap/long-less 0 1)",
+         ] {
+             let Err(SessionError::Compile(error)) = session.eval(source) else {
+@@ -276,3 +278,88 @@ fn chunk_long_arithmetic_keeps_checked_overflow_and_wide_results() {
+           "[3000000004 :overflow true false true false]");
+     }
+ }
++
++#[test]
++fn bounded_chunk_index_add_keeps_checked_conversions_and_source_fallback() {
++    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
++        assert_eq!(printed_in(&mut session, r#"
++          [(suss.bootstrap/chunk-index-add 0 1)
++           (suss.bootstrap/chunk-index-add 1073741823 1)
++           (suss.bootstrap/chunk-index-add 3000000000 4)
++           (suss.bootstrap/chunk-index-add 9007199254740992 1)
++           (suss.bootstrap/chunk-index-add 9223372036854775806 1)
++           (try (suss.bootstrap/chunk-index-add nil 1) (catch :default e :threw))
++           (try (suss.bootstrap/chunk-index-add 1.0e30 1) (catch :default e :threw))]"#, true),
++          "[1 1073741824 3000000004 9007199254740993 9223372036854775807 :threw :threw]");
++        session.eval("(ns suss.core)").unwrap();
++        assert_eq!(printed(&mut session, r#"
++          [(suss.bootstrap/chunk-index-add 9007199254740992 1)
++           (try (suss.bootstrap/chunk-index-add 9223372036854775807 1)
++             :missing (catch :default e :threw))]"#), "[9007199254740993 :threw]");
++    }
++}
++
++#[test]
++fn chunk_sum_preserves_wide_values_mixed_numbers_and_prefix_overflow() {
++    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
++        assert_eq!(printed(&mut session, r#"
++          [(reduce + 0 (chunk-cons (array-chunk (object-array [9007199254740992 1])) nil))
++           (reduce + 0 (chunk-cons (array-chunk (object-array [1 2.5 3])) nil))
++           (reduce + 7 (chunk-cons (array-chunk (object-array [99 -3 4 99]) 1 3) nil))
++           (try (reduce + 0 (chunk-cons
++                  (array-chunk (object-array [9223372036854775807 1 0.5])) nil))
++                :missing (catch :default e (ex-message e)))
++           (try (reduce + 0 (chunk-cons
++                  (array-chunk (object-array [-9223372036854775808 -1 0.5])) nil))
++                :missing (catch :default e (ex-message e)))
++           (try (reduce + 0 (chunk-cons (array-chunk (object-array [1 nil])) nil))
++                :missing (catch :default e :threw))]"#),
++          "[9007199254740993 6.5 8 \"long overflow\" \"long overflow\" :threw]");
++    }
++}
++
++#[test]
++fn chunk_sum_keeps_custom_reducers_redefinitions_and_reduced_demand() {
++    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
++        assert_eq!(printed(&mut session, r#"
++          [(let [events (atom []) a (object-array [1 2 3])]
++             [(reduce (fn [acc x] (swap! events conj x)
++                        (when (= x 1) (aset a 1 20)) (+ acc x))
++                      0 (chunk-cons (array-chunk a) nil)) @events])
++           (let [events (atom []) more (LazySeq. nil
++                        (fn [] (swap! events conj :tail) (list 9)) nil nil)]
++             [(reduce (fn [acc x] (swap! events conj x)
++                        (if (= x 2) (reduced acc) (+ acc x)))
++                      0 (chunk-cons (array-chunk (object-array [1 2 3])) more)) @events])
++           (let [events (atom []) original +]
++             (with-redefs [+ (fn [a b] (swap! events conj b) (original a b))]
++               [(reduce + 0 (chunk-cons (array-chunk (object-array [1 2 3])) nil))
++                @events]))]"#), "[[24 [1 20 3]] [1 [1 2]] [6 [1 2 3]]]");
++    }
++}
++
++#[test]
++fn private_chunk_sum_declines_without_calls_or_mutation_and_keeps_operand_order() {
++    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
++        assert_eq!(printed_in(&mut session, r#"
++          (let [events (atom []) f (fn [a b] (swap! events conj :called) 0)
++                a (object-array [1 2 3])]
++            [(suss.bootstrap/undefined? (suss.bootstrap/chunk-long-sum f + a 0 3 0))
++             (suss.bootstrap/undefined? (suss.bootstrap/chunk-long-sum + + a -1 2 0))
++             (suss.bootstrap/undefined? (suss.bootstrap/chunk-long-sum + + a 0 4 0))
++             (suss.bootstrap/undefined? (suss.bootstrap/chunk-long-sum + + a 0.5 2 0))
++             (suss.bootstrap/undefined? (suss.bootstrap/chunk-long-sum + +
++                                          (long-array [1 2]) 0 2 0))
++             (suss.bootstrap/undefined? (suss.bootstrap/chunk-long-sum + +
++                                          (object-array [1 nil]) 0 2 0))
++             (suss.bootstrap/chunk-long-sum + + a 3 0 :initial)
++             @events (vec a)])"#, true),
++          "[true true true true true true :initial [] [1 2 3]]");
++        session.eval("(ns suss.core)").unwrap();
++        assert_eq!(printed(&mut session, r#"
++          (let [events (atom []) mark (fn [x] (swap! events conj x) x)]
++            [(suss.bootstrap/undefined? (suss.bootstrap/chunk-long-sum
++               (mark 0) (mark 1) (mark 2) (mark 3) (mark 4) (mark 5))) @events])"#),
++          "[true [0 1 2 3 4 5]]");
++    }
++}
+diff --git c/crates/suss-compile/src/portable/emit.rs w/crates/suss-compile/src/portable/emit.rs
+index 9930735d..747e9a89 100644
+--- c/crates/suss-compile/src/portable/emit.rs
++++ w/crates/suss-compile/src/portable/emit.rs
+@@ -328,12 +328,14 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
+                         Nominal::MapAssoc => { names.insert("map-assoc"); }
+                         Nominal::HashMapTypes => { names.insert("hash-map-type-register"); }
+                         Nominal::ChunkTypes => { names.insert("chunk-types-register"); }
++                        Nominal::ChunkLongSum => { names.insert("chunk-long-sum"); }
+                         Nominal::ChunkNth => { names.insert("chunk-nth"); }
+                         Nominal::ChunkAppend => { names.insert("chunk-buffer-append"); }
+                         Nominal::ChunkArray => { names.insert("chunk-array"); }
+                         Nominal::ChunkOffset => { names.insert("chunk-offset"); }
+                         Nominal::ChunkSeq => { names.insert("chunk-seq"); }
+                         Nominal::LongCast => { names.insert("number-cast-long"); }
++                        Nominal::ChunkIndexAdd => {},
+                         Nominal::UncheckedLongCast => { names.insert("number-cast-unchecked-long"); }
+                         Nominal::DoubleCast => { names.insert("number-cast-double"); }
+                         Nominal::PackedGet(_) => {
+@@ -876,6 +878,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
+             "binding-set" => (vec![VALUE, VALUE], vec![]),
+             "number-parse-long" | "hash-map-type-register" => (vec![VALUE; 4], vec![VALUE]),
+             "chunk-types-register" => (vec![VALUE; 3], vec![VALUE]),
++            "chunk-long-sum" => (vec![VALUE; 6], vec![VALUE]),
+             "chunk-nth" | "chunk-buffer-append" => (vec![VALUE; 2], vec![VALUE]),
+             "chunk-array" | "chunk-offset" | "chunk-seq" => (vec![VALUE], vec![VALUE]),
+             "packed-array-copy" | "object-array-copy-forward" | "object-array-copy-backward" => (vec![VALUE; 5], vec![VALUE]),
+@@ -2307,6 +2310,14 @@ fn emit_function(
+                 for instruction in code.drain(..) { function.instruction(&instruction); }
+                 continue;
+             }
++            if let Operation::Nominal { operation: Nominal::ChunkIndexAdd, arguments } = &inst.operation
++                && locals.of(inst.result) == unboxed::Repr::Long
++            {
++                code.extend([LocalGet(locals.raw(arguments[0])), LocalGet(locals.raw(arguments[1])),
++                    I64Add, LocalSet(locals.raw(inst.result))]);
++                for instruction in code.drain(..) { function.instruction(&instruction); }
++                continue;
++            }
+             // A coercion of a raw value to a raw result (#448): a long stays
+             // a long and widens to a double, and unchecked-long truncates a
+             // double as Java's cast does. A checked long of a double first
+@@ -3583,6 +3594,15 @@ fn emit_function(
+                                 function.instruction(&instruction);
+                             }
+                         }
++                        Nominal::ChunkIndexAdd => {
++                            // Resumable code keeps checked long operands boxed.
++                            // The owned caller's bounds proof still applies.
++                            let mut code = runtime_abi::long_to_i64(arguments[0].0 as u32 + offset);
++                            code.extend(runtime_abi::long_to_i64(arguments[1].0 as u32 + offset));
++                            code.push(I64Add);
++                            code.extend(runtime_abi::long_box_in(long_locals[0]));
++                            for instruction in code { function.instruction(&instruction); }
++                        }
+                         Nominal::LongCast | Nominal::DoubleCast | Nominal::UncheckedLongCast => {
+                             // The checked cast (#385): an i31 or a boxed long
+                             // (or double) inline, anything else through the
+@@ -3682,13 +3702,14 @@ fn emit_function(
+                             }
+                             function.instruction(&Call(index("hash-map-type-register")));
+                         }
+-                        Nominal::ChunkTypes | Nominal::ChunkNth | Nominal::ChunkAppend | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq => {
++                        Nominal::ChunkLongSum | Nominal::ChunkTypes | Nominal::ChunkNth | Nominal::ChunkAppend | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq => {
+                             let mut code = vec![];
+                             for argument in arguments {
+                                 locals.push_boxed(&mut code, *argument);
+                             }
+                             code.push(Call(index(match operation {
+                                 Nominal::ChunkTypes => "chunk-types-register",
++                                Nominal::ChunkLongSum => "chunk-long-sum",
+                                 Nominal::ChunkNth => "chunk-nth",
+                                 Nominal::ChunkArray => "chunk-array",
+                                 Nominal::ChunkOffset => "chunk-offset",
+diff --git c/crates/suss-compile/src/portable/emit/unboxed.rs w/crates/suss-compile/src/portable/emit/unboxed.rs
+index bcc6d4cf..462c41cc 100644
+--- c/crates/suss-compile/src/portable/emit/unboxed.rs
++++ w/crates/suss-compile/src/portable/emit/unboxed.rs
+@@ -247,7 +247,7 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
+                         });
+                     }
+                 }
+-                Operation::Nominal { operation: super::super::hir::Nominal::LongCast | super::super::hir::Nominal::UncheckedLongCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Long),
++                Operation::Nominal { operation: super::super::hir::Nominal::LongCast | super::super::hir::Nominal::UncheckedLongCast | super::super::hir::Nominal::ChunkIndexAdd, .. } => state[instruction.result.0] = Lattice::Known(Repr::Long),
+                 Operation::Nominal { operation: super::super::hir::Nominal::DoubleCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Double),
+                 // A hinted aget's element, behind its checked cast (#389).
+                 // An object array's element is a value (#378).
+@@ -361,6 +361,9 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
+                     }
+                 }
+             }
++            if let Operation::Nominal { operation: Nominal::ChunkIndexAdd, arguments } = &instruction.operation {
++                for argument in arguments { raw_use[argument.0] = true; }
++            }
+             if let Operation::Nominal { operation: Nominal::LongCast | Nominal::UncheckedLongCast | Nominal::DoubleCast, arguments } = &instruction.operation
+                 && repr[arguments[0].0].definite().numeric()
+             {
+diff --git c/crates/suss-compile/src/portable/hir.rs w/crates/suss-compile/src/portable/hir.rs
+index d82c3c13..887fa7bb 100644
+--- c/crates/suss-compile/src/portable/hir.rs
++++ w/crates/suss-compile/src/portable/hir.rs
+@@ -519,6 +519,10 @@ pub enum Nominal {
+     /// A `^long` or `^double` parameter's value (#385): Clojure's checked
+     /// longCast or doubleCast of the argument, kept as a raw i64 or f64.
+     LongCast,
++    /// Private addition after an owned loop proves its counters/offsets bounded.
++    ChunkIndexAdd,
++    /// Owned canonical + over a checked Object[] chunk, or undefined.
++    ChunkLongSum,
+     DoubleCast,
+     /// Core's `unchecked-long` (#448): a raw i64 as LongCast, through its own
+     /// cast for anything but a long.
+@@ -672,7 +676,7 @@ impl Nominal {
+     pub fn result(self) -> Type {
+         match self {
+             Self::CoerceString | Self::ObjectCoerceString | Self::ConcatString | Self::JoinStrings | Self::StringSlice | Self::StringFromUnit => Type::String,
+-            Self::StringIndexOf => Type::Number,
++            Self::StringIndexOf | Self::ChunkIndexAdd => Type::Number,
+             Self::BindingDefined
+             | Self::IsNumber
+             | Self::IsKeyword
+@@ -711,7 +715,7 @@ impl Nominal {
+                 Self::ApplyToSeq | Self::ApplyFixed => count == 2,
+                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
+                 Self::CurrentThis => count == 0,
+-                Self::Identical | Self::SameReference => count == 2,
++                Self::Identical | Self::SameReference | Self::ChunkIndexAdd => count == 2,
+                 Self::AllSmallIntegers => count >= 1,
+                 Self::NumberHash => count == 1,
+                 Self::IsObject | Self::IsDescriptor => count == 1,
+@@ -720,6 +724,7 @@ impl Nominal {
+                 Self::ObjectArrayCopy(_) => count == 5,
+                 Self::HashMapTypes => count == 4,
+                 Self::ChunkTypes => count == 3,
++                Self::ChunkLongSum => count == 6,
+                 Self::ChunkNth | Self::ChunkAppend => count == 2,
+                 Self::ChunkArray | Self::ChunkOffset | Self::ChunkSeq => count == 1,
+                 Self::MapGetOr | Self::MapAssoc => count == 3,
+@@ -3246,7 +3251,7 @@ impl Analyzer<'_> {
+             return Ok(self.nominal(form, Nominal::BindingDefined, vec![cell]));
+         }
+         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
+-            if matches!(symbol.name.as_str(), "long-add" | "long-less") {
++            if matches!(symbol.name.as_str(), "long-add" | "long-less" | "chunk-index-add") {
+                 if !self.privileged && self.environment.current_namespace(self.phase) != "suss.core" {
+                     return Err(fail(form.span.clone(), "Private chunk adapters require compiled core"));
+                 }
+@@ -3261,6 +3266,13 @@ impl Analyzer<'_> {
+                     let value = self.form(argument)?;
+                     arguments.push(self.nominal(argument, Nominal::LongCast, vec![value]));
+                 }
++                if symbol.name == "chunk-index-add" && self.privileged {
++                    // Only owned chunk loops use this: i starts at zero and
++                    // advances while i<size; a compacted output j<=i. Admitted
++                    // chunk offsets plus i are bounded by immutable storage.
++                    // Ordinary source-core loading keeps checked addition.
++                    return Ok(self.nominal(form, Nominal::ChunkIndexAdd, arguments));
++                }
+                 if symbol.name == "long-less" {
+                     return Ok(Hir { source: None, span: form.span.clone(),
+                         metadata: form.metadata.clone(), ty: Type::Bool,
+@@ -3312,6 +3324,7 @@ impl Analyzer<'_> {
+                 "map-get-or" => Some(Nominal::MapGetOr),
+                 "hash-map-types!" => Some(Nominal::HashMapTypes),
+                 "chunk-types!" => Some(Nominal::ChunkTypes),
++                "chunk-long-sum" => Some(Nominal::ChunkLongSum),
+                 "chunk-nth" => Some(Nominal::ChunkNth),
+                 "chunk-append" => Some(Nominal::ChunkAppend),
+                 "chunk-array" => Some(Nominal::ChunkArray),
+@@ -3330,7 +3343,7 @@ impl Analyzer<'_> {
+                 _ => None,
+             };
+             if let Some(operation) = operation {
+-                let chunk = matches!(operation, Nominal::ChunkTypes | Nominal::ChunkNth | Nominal::ChunkAppend
++                let chunk = matches!(operation, Nominal::ChunkLongSum | Nominal::ChunkTypes | Nominal::ChunkNth | Nominal::ChunkAppend
+                     | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq);
+                 let ordinary_core = !self.privileged
+                     && self.environment.current_namespace(self.phase) == "suss.core";
+diff --git c/crates/suss-compile/src/runtime_abi/chunks.rs w/crates/suss-compile/src/runtime_abi/chunks.rs
+index aeb893ec..02eae00b 100644
+--- c/crates/suss-compile/src/runtime_abi/chunks.rs
++++ w/crates/suss-compile/src/runtime_abi/chunks.rs
+@@ -48,6 +48,7 @@ fn declined(code: &mut Vec<Instruction<'static>>) {
+ }
+ 
+ pub(super) fn functions(b: &mut Builder) {
++    long_sum(b);
+     // Stage all descriptors before publication. The instances are only
+     // witnesses supplied by the owned core loader; they need not be retained.
+     let mut code = vec![];
+@@ -142,3 +143,55 @@ pub(super) fn functions(b: &mut Builder) {
+     b.function_with_locals("chunk-buffer-append", &[VALUE; 2], &[VALUE],
+         &[(1, nullable(OBJECT)), (2, nullable(ARGS)), (1, ValType::I32)], &code);
+ }
++
++
++// The owned caller supplies its immutable canonical + value. A different
++// reducer declines; this helper never invokes arbitrary user code. It may
++// recompute a pure long prefix on fallback, but never writes existing storage.
++fn long_sum(b: &mut Builder) {
++    // Params reducer/canonical +/array/offset/count/initial. Locals6 storage,
++    // 7 offset,8 count,9 end,10 index,11 element,12 accumulator,13 operand,
++    // 14 sum,15 boxing scratch. Bounds are checked before any element load.
++    let i31 = HeapType::I31;
++    let mut code = vec![LocalGet(0), LocalGet(1), RefEq, I32Eqz];
++    decline_if(&mut code);
++    code.extend([Block(BlockType::Result(VALUE)),
++        LocalGet(2), cast(HeapType::Concrete(PACKED)),
++        StructGet { struct_type_index: PACKED, field_index: 0 },
++        cast(HeapType::Concrete(ARGS)), LocalSet(6),
++        LocalGet(3), cast(i31), I31GetS, LocalSet(7),
++        LocalGet(4), cast(i31), I31GetS, LocalSet(8),
++        LocalGet(7), LocalGet(8), I32Or, I32Const(0), I32LtS]);
++    decline_if(&mut code);
++    code.extend([LocalGet(7), LocalGet(8), I32Add, LocalTee(9),
++        LocalGet(6), RefAsNonNull, ArrayLen, I32GtU]);
++    decline_if(&mut code);
++    code.extend([LocalGet(8), I32Eqz, If(BlockType::Empty), LocalGet(5), Return, End,
++        LocalGet(5), LocalSet(11)]);
++    let unbox = |code: &mut Vec<Instruction<'static>>, destination: u32, depth: u32| {
++        code.extend([LocalGet(11), RefTestNonNull(i31), If(BlockType::Result(ValType::I64)),
++            LocalGet(11), RefCastNonNull(i31), I31GetS, I64ExtendI32S,
++            Else, LocalGet(11), BrOnCastFail { relative_depth: depth + 1,
++                from_ref_type: RefType::EQREF,
++                to_ref_type: RefType { nullable: false, heap_type: HeapType::Concrete(LONG) } },
++            StructGet { struct_type_index: LONG, field_index: 0 }, End, LocalSet(destination)]);
++    };
++    unbox(&mut code, 12, 0);
++    code.extend([LocalGet(7), LocalSet(10), Loop(BlockType::Empty),
++        LocalGet(10), LocalGet(9), I32GeU, If(BlockType::Empty), LocalGet(12)]);
++    code.extend(long_box_in(15));
++    code.extend([Return, End, LocalGet(6), RefAsNonNull, LocalGet(10), ArrayGet(ARGS), LocalSet(11)]);
++    unbox(&mut code, 13, 1);
++    // Preserve checked prefix overflow, including before a later unsupported
++    // value. The existing numeric helper supplies the exact language error.
++    code.extend([LocalGet(12), LocalGet(13), I64Add, LocalTee(14), LocalGet(12), I64Xor,
++        LocalGet(14), LocalGet(13), I64Xor, I64And, I64Const(0), I64LtS,
++        If(BlockType::Empty), LocalGet(12)]);
++    code.extend(long_box_in(15));
++    code.extend([LocalGet(11), Call(b.names["number-add"]), Return, End,
++        LocalGet(14), LocalSet(12), LocalGet(10), I32Const(1), I32Add, LocalSet(10), Br(0),
++        End, Unreachable]);
++    declined(&mut code);
++    b.function_with_locals("chunk-long-sum", &[VALUE; 6], &[VALUE],
++        &[(1, nullable(ARGS)), (4, ValType::I32), (1, VALUE), (4, ValType::I64)], &code);
++}
+diff --git c/docs/compatibility/patches/lazy-filter.json w/docs/compatibility/patches/lazy-filter.json
+index 00291f63..52543b38 100644
+--- c/docs/compatibility/patches/lazy-filter.json
++++ w/docs/compatibility/patches/lazy-filter.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": 1,
+   "source-sha256": "149b4f72e71e76f158efb21f6f4dbcdad44f341429b91b3109305c7f2faa2911",
+-  "replacement": "(def filter \"Returns a lazy sequence of the items in coll for which\n  (pred item) returns logical true. pred must be free of side-effects.\n  Returns a transducer when no collection is provided.\" (fn ([pred]\n    (fn [rf]\n      (fn\n        ([] (rf))\n        ([result] (rf result))\n        ([result input]\n           (if (pred input)\n             (rf result input)\n             result))))) ([pred coll]\n   (new LazySeq nil (fn* [] (let [lazy-when-value__420 (seq coll)] (if lazy-when-value__420 (let [s lazy-when-value__420] (if (chunked-seq? s)\n        (let [c (chunk-first s)\n              size (suss.bootstrap/long-cast (count c))\n              ^objects input-array (suss.bootstrap/chunk-array c)\n              input-offset (if (suss.bootstrap/undefined? input-array)\n                                   0\n                                   (suss.bootstrap/long-cast (suss.bootstrap/chunk-offset c)))\n              ^objects b (suss.bootstrap/packed-array 6 size)\n              kept (loop [i 0 j 0]\n                     (if (suss.bootstrap/long-less i size)\n                       (let [v (if (suss.bootstrap/undefined? input-array)\n                           (-nth c i)\n                           (aget input-array (suss.bootstrap/long-add input-offset i)))]\n                         (if (pred v)\n                           (do (aset b j v)\n                               (recur (suss.bootstrap/long-add i 1) (suss.bootstrap/long-add j 1)))\n                           (recur (suss.bootstrap/long-add i 1) j)))\n                       j))]\n          (chunk-cons (array-chunk b 0 kept) (filter pred (chunk-rest s))))\n        (let [f (first s) r (rest s)]\n          (if (pred f)\n            (cons f (filter pred r))\n            (filter pred r))))) nil))) nil nil))))",
+-  "rationale": "Retain the pinned documentation, arities, transducer and generic-sequence branches and existing def/lazy-seq/when-let/dotimes scaffolding. Adapt the chunk loop to JVM Clojure 1.12.6 filter: read each indexed value once before pred, then append that same captured value. A predicate changing the backing array must not change the item already read. Preserve ordered chunk filling, bounded comparison/inc and the original ClojureScript/EPL provenance; the old repeated-read implementation is not the behavior oracle. Executed JVM/Suss alias-effect probes and focused regressions record the difference. Canonical ArrayChunk indexed reads try a guarded callback-free Object[] helper, retaining the original -nth call for other receivers/storage/indices. The local chunk count is a raw long, widening the JVM ICounted int result once before the loop without adding a primitive function-call boundary. Source callback order and generic fallbacks are retained. Use an owned Object[] output buffer directly: it is private to the thunk and never exposed to callbacks, so the per-item ChunkBuffer count and method dispatch are unobservable. Map writes the corresponding index; filter tracks its compacted output index, retaining the value captured before the predicate. Construct the published ArrayChunk only after the ordered callbacks/stores complete. A canonical well-formed Object[] input chunk admits a loop-invariant typed array view and immutable offset, with each element read in its original callback order; unsupported chunks retain one -nth call per item. Only storage/immutable metadata are hoisted, never element values. Numeric local metadata alone does not insert a physical conversion. Use explicit inline long casts for the ICounted result and admitted immutable offset, and for str loop state read back from its temporary pair, so the IR carries raw longs through arithmetic/array indexing without adding a primitive function entry. Early core definitions precede the public long var; the private long-cast word emits the same existing checked LongCast operation. The private long-add compiler word uses the existing checked non-coercing raw arithmetic for bounded long offsets/counters and geometric output growth; legacy coercing core arithmetic would otherwise box these operations. Values are evaluated in order and overflow still follows the existing checked arithmetic route. All chunk/native storage words require trusted compilation, including when ordinary source selects the suss.core namespace. Validated long loop counters compare through the private checked long-less lowering, avoiding core's legacy coercing comparison and per-iteration boxing; custom receiver fallback and callback order stay in the same branches."
++  "replacement": "(def filter \"Returns a lazy sequence of the items in coll for which\n  (pred item) returns logical true. pred must be free of side-effects.\n  Returns a transducer when no collection is provided.\" (fn ([pred]\n    (fn [rf]\n      (fn\n        ([] (rf))\n        ([result] (rf result))\n        ([result input]\n           (if (pred input)\n             (rf result input)\n             result))))) ([pred coll]\n   (new LazySeq nil (fn* [] (let [lazy-when-value__420 (seq coll)] (if lazy-when-value__420 (let [s lazy-when-value__420] (if (chunked-seq? s)\n        (let [c (chunk-first s)\n              size (suss.bootstrap/long-cast (count c))\n              ^objects input-array (suss.bootstrap/chunk-array c)\n              input-offset (if (suss.bootstrap/undefined? input-array)\n                                   0\n                                   (suss.bootstrap/long-cast (suss.bootstrap/chunk-offset c)))\n              ^objects b (suss.bootstrap/packed-array 6 size)\n              kept (if (suss.bootstrap/undefined? input-array)\n              (loop [i 0 j 0]\n                     (if (suss.bootstrap/long-less i size)\n                       (let [v (-nth c i)]\n                         (if (pred v)\n                           (do (aset b j v)\n                               (recur (suss.bootstrap/chunk-index-add i 1) (suss.bootstrap/chunk-index-add j 1)))\n                           (recur (suss.bootstrap/chunk-index-add i 1) j)))\n                       j))\n              (loop [i 0 j 0]\n                     (if (suss.bootstrap/long-less i size)\n                       (let [v (aget input-array (suss.bootstrap/chunk-index-add input-offset i))]\n                         (if (pred v)\n                           (do (aset b j v)\n                               (recur (suss.bootstrap/chunk-index-add i 1) (suss.bootstrap/chunk-index-add j 1)))\n                           (recur (suss.bootstrap/chunk-index-add i 1) j)))\n                       j)))]\n          (chunk-cons (array-chunk b 0 kept) (filter pred (chunk-rest s))))\n        (let [f (first s) r (rest s)]\n          (if (pred f)\n            (cons f (filter pred r))\n            (filter pred r))))) nil))) nil nil))))",
++  "rationale": "Retain the pinned documentation, arities, transducer and generic-sequence branches and existing def/lazy-seq/when-let/dotimes scaffolding. Adapt the chunk loop to JVM Clojure 1.12.6 filter: read each indexed value once before pred, then append that same captured value. A predicate changing the backing array must not change the item already read. Preserve ordered chunk filling, bounded comparison/inc and the original ClojureScript/EPL provenance; the old repeated-read implementation is not the behavior oracle. Executed JVM/Suss alias-effect probes and focused regressions record the difference. Canonical ArrayChunk indexed reads try a guarded callback-free Object[] helper, retaining the original -nth call for other receivers/storage/indices. The local chunk count is a raw long, widening the JVM ICounted int result once before the loop without adding a primitive function-call boundary. Source callback order and generic fallbacks are retained. Use an owned Object[] output buffer directly: it is private to the thunk and never exposed to callbacks, so the per-item ChunkBuffer count and method dispatch are unobservable. Map writes the corresponding index; filter tracks its compacted output index, retaining the value captured before the predicate. Construct the published ArrayChunk only after the ordered callbacks/stores complete. A canonical well-formed Object[] input chunk admits a loop-invariant typed array view and immutable offset, with each element read in its original callback order; unsupported chunks retain one -nth call per item. Only storage/immutable metadata are hoisted, never element values. Numeric local metadata alone does not insert a physical conversion. Use explicit inline long casts for the ICounted result and admitted immutable offset, and for str loop state read back from its temporary pair, so the IR carries raw longs through arithmetic/array indexing without adding a primitive function entry. Early core definitions precede the public long var; the private long-cast word emits the same existing checked LongCast operation. The private long-add compiler word uses the existing checked non-coercing raw arithmetic for bounded long offsets/counters and geometric output growth; legacy coercing core arithmetic would otherwise box these operations. Values are evaluated in order and overflow still follows the existing checked arithmetic route. All chunk/native storage words require trusted compilation, including when ordinary source selects the suss.core namespace. Validated long loop counters compare through the private checked long-less lowering, avoiding core's legacy coercing comparison and per-iteration boxing; custom receiver fallback and callback order stay in the same branches. Bounded chunk counters use a private raw i64 addition: i starts at zero and advances only while i<size for a checked long size, and filter output j never exceeds i. For an admitted canonical input view, offset+i is below its validated immutable end/storage length; custom/unsupported input windows retain -nth and do not add offsets. Thus these additions cannot overflow a long, including zero/negative custom counts. This is limited to these loops; geometric string growth and general arithmetic remain checked. Operand long casts remain checked, and ordinary source-core loading lowers the private word through the original checked addition. Test the immutable input view once before entering either complete loop, preserving the identical custom -nth loop and canonical live-array loop. This moves no element read, callback, store, tail realization or error; each element is still read immediately before its callback, with the filter value retained before the predicate. The input-view identity cannot change in the loop."
+ }
+diff --git c/docs/compatibility/patches/lazy-map.json w/docs/compatibility/patches/lazy-map.json
+index 42cbb7d6..6403250e 100644
+--- c/docs/compatibility/patches/lazy-map.json
++++ w/docs/compatibility/patches/lazy-map.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": 1,
+   "source-sha256": "bca949770a7855d7b73a3558d845f393f8dda41e3b8fa5a79e89e8f62b7f5e32",
+-  "replacement": "(def map \"Returns a lazy sequence consisting of the result of applying f to\n  the set of first items of each coll, followed by applying f to the\n  set of second items in each coll, until any one of the colls is\n  exhausted.  Any remaining items in other colls are ignored. Function\n  f should accept number-of-colls arguments. Returns a transducer when\n  no collection is provided.\" (fn ([f]\n    (fn [rf]\n      (fn\n        ([] (rf))\n        ([result] (rf result))\n        ([result input]\n           (rf result (f input)))\n        ([result input & inputs]\n           (rf result (apply f input inputs)))))) ([f coll]\n   (new LazySeq nil (fn* [] (let [lazy-when-value__635 (seq coll)] (if lazy-when-value__635 (let [s lazy-when-value__635] (if (chunked-seq? s)\n        (let [c (chunk-first s)\n              size (suss.bootstrap/long-cast (count c))\n              ^objects input-array (suss.bootstrap/chunk-array c)\n              input-offset (if (suss.bootstrap/undefined? input-array)\n                                   0\n                                   (suss.bootstrap/long-cast (suss.bootstrap/chunk-offset c)))\n              ^objects b (suss.bootstrap/packed-array 6 size)]\n          (loop [i 0]\n            (when (suss.bootstrap/long-less i size)\n              (let [v (if (suss.bootstrap/undefined? input-array)\n                           (-nth c i)\n                           (aget input-array (suss.bootstrap/long-add input-offset i)))]\n                (aset b i (f v)))\n              (recur (suss.bootstrap/long-add i 1))))\n          (chunk-cons (array-chunk b 0 size) (map f (chunk-rest s))))\n        (cons (f (first s)) (map f (rest s))))) nil))) nil nil)) ([f c1 c2]\n   (new LazySeq nil (fn* [] (let [s1 (seq c1) s2 (seq c2)]\n      (when (and s1 s2)\n        (cons (f (first s1) (first s2))\n              (map f (rest s1) (rest s2)))))) nil nil)) ([f c1 c2 c3]\n   (new LazySeq nil (fn* [] (let [s1 (seq c1) s2 (seq c2) s3 (seq c3)]\n      (when (and  s1 s2 s3)\n        (cons (f (first s1) (first s2) (first s3))\n              (map f (rest s1) (rest s2) (rest s3)))))) nil nil)) ([f c1 c2 c3 & colls]\n   (let [step (fn step [cs]\n                 (new LazySeq nil (fn* [] (let [ss (map seq cs)]\n                    (when (every? identity ss)\n                      (cons (map first ss) (step (map rest ss)))))) nil nil))]\n     (map (fn* [lazy-map-inputs__] (apply f lazy-map-inputs__)) (step (conj colls c3 c2 c1)))))))",
+-  "rationale": "Preserve the complete pinned declaration, documentation, every arity and every branch. Expand defn to def/fn, lazy-seq to the pinned owned LazySeq constructor with fn*, when-let to a once-only temporary and conditional inner binding, and dotimes to its exact bounded let/loop/when algorithm with qualified comparison/inc calls. Keep transducer initialization/completion/variadic reducer arities, multi-input shortest-sequence behavior, named step recursion, ordered chunk filling and repeated nth reads. Existing portable owned-array macro/nominal adapters are dependencies, not full make-array extraction evidence. Native execution, pinned value/effect observations and final acceptance are required; this adaptation remains in progress. Expand the single pinned shorthand #(apply f %) to an explicit one-parameter fn* preserving its captured f and live apply; this is not general reader support. Canonical ArrayChunk indexed reads try a guarded callback-free Object[] helper, retaining the original -nth call for other receivers/storage/indices. The local chunk count is a raw long, widening the JVM ICounted int result once before the loop without adding a primitive function-call boundary. Source callback order and generic fallbacks are retained. Use an owned Object[] output buffer directly: it is private to the thunk and never exposed to callbacks, so the per-item ChunkBuffer count and method dispatch are unobservable. Map writes the corresponding index; filter tracks its compacted output index, retaining the value captured before the predicate. Construct the published ArrayChunk only after the ordered callbacks/stores complete. A canonical well-formed Object[] input chunk admits a loop-invariant typed array view and immutable offset, with each element read in its original callback order; unsupported chunks retain one -nth call per item. Only storage/immutable metadata are hoisted, never element values. Numeric local metadata alone does not insert a physical conversion. Use explicit inline long casts for the ICounted result and admitted immutable offset, and for str loop state read back from its temporary pair, so the IR carries raw longs through arithmetic/array indexing without adding a primitive function entry. Early core definitions precede the public long var; the private long-cast word emits the same existing checked LongCast operation. The private long-add compiler word uses the existing checked non-coercing raw arithmetic for bounded long offsets/counters and geometric output growth; legacy coercing core arithmetic would otherwise box these operations. Values are evaluated in order and overflow still follows the existing checked arithmetic route. All chunk/native storage words require trusted compilation, including when ordinary source selects the suss.core namespace. Validated long loop counters compare through the private checked long-less lowering, avoiding core's legacy coercing comparison and per-iteration boxing; custom receiver fallback and callback order stay in the same branches."
++  "replacement": "(def map \"Returns a lazy sequence consisting of the result of applying f to\n  the set of first items of each coll, followed by applying f to the\n  set of second items in each coll, until any one of the colls is\n  exhausted.  Any remaining items in other colls are ignored. Function\n  f should accept number-of-colls arguments. Returns a transducer when\n  no collection is provided.\" (fn ([f]\n    (fn [rf]\n      (fn\n        ([] (rf))\n        ([result] (rf result))\n        ([result input]\n           (rf result (f input)))\n        ([result input & inputs]\n           (rf result (apply f input inputs)))))) ([f coll]\n   (new LazySeq nil (fn* [] (let [lazy-when-value__635 (seq coll)] (if lazy-when-value__635 (let [s lazy-when-value__635] (if (chunked-seq? s)\n        (let [c (chunk-first s)\n              size (suss.bootstrap/long-cast (count c))\n              ^objects input-array (suss.bootstrap/chunk-array c)\n              input-offset (if (suss.bootstrap/undefined? input-array)\n                                   0\n                                   (suss.bootstrap/long-cast (suss.bootstrap/chunk-offset c)))\n              ^objects b (suss.bootstrap/packed-array 6 size)]\n          (if (suss.bootstrap/undefined? input-array)\n              (loop [i 0]\n            (when (suss.bootstrap/long-less i size)\n              (let [v (-nth c i)]\n                (aset b i (f v)))\n              (recur (suss.bootstrap/chunk-index-add i 1))))\n              (loop [i 0]\n            (when (suss.bootstrap/long-less i size)\n              (let [v (aget input-array (suss.bootstrap/chunk-index-add input-offset i))]\n                (aset b i (f v)))\n              (recur (suss.bootstrap/chunk-index-add i 1)))))\n          (chunk-cons (array-chunk b 0 size) (map f (chunk-rest s))))\n        (cons (f (first s)) (map f (rest s))))) nil))) nil nil)) ([f c1 c2]\n   (new LazySeq nil (fn* [] (let [s1 (seq c1) s2 (seq c2)]\n      (when (and s1 s2)\n        (cons (f (first s1) (first s2))\n              (map f (rest s1) (rest s2)))))) nil nil)) ([f c1 c2 c3]\n   (new LazySeq nil (fn* [] (let [s1 (seq c1) s2 (seq c2) s3 (seq c3)]\n      (when (and  s1 s2 s3)\n        (cons (f (first s1) (first s2) (first s3))\n              (map f (rest s1) (rest s2) (rest s3)))))) nil nil)) ([f c1 c2 c3 & colls]\n   (let [step (fn step [cs]\n                 (new LazySeq nil (fn* [] (let [ss (map seq cs)]\n                    (when (every? identity ss)\n                      (cons (map first ss) (step (map rest ss)))))) nil nil))]\n     (map (fn* [lazy-map-inputs__] (apply f lazy-map-inputs__)) (step (conj colls c3 c2 c1)))))))",
++  "rationale": "Preserve the complete pinned declaration, documentation, every arity and every branch. Expand defn to def/fn, lazy-seq to the pinned owned LazySeq constructor with fn*, when-let to a once-only temporary and conditional inner binding, and dotimes to its exact bounded let/loop/when algorithm with qualified comparison/inc calls. Keep transducer initialization/completion/variadic reducer arities, multi-input shortest-sequence behavior, named step recursion, ordered chunk filling and repeated nth reads. Existing portable owned-array macro/nominal adapters are dependencies, not full make-array extraction evidence. Native execution, pinned value/effect observations and final acceptance are required; this adaptation remains in progress. Expand the single pinned shorthand #(apply f %) to an explicit one-parameter fn* preserving its captured f and live apply; this is not general reader support. Canonical ArrayChunk indexed reads try a guarded callback-free Object[] helper, retaining the original -nth call for other receivers/storage/indices. The local chunk count is a raw long, widening the JVM ICounted int result once before the loop without adding a primitive function-call boundary. Source callback order and generic fallbacks are retained. Use an owned Object[] output buffer directly: it is private to the thunk and never exposed to callbacks, so the per-item ChunkBuffer count and method dispatch are unobservable. Map writes the corresponding index; filter tracks its compacted output index, retaining the value captured before the predicate. Construct the published ArrayChunk only after the ordered callbacks/stores complete. A canonical well-formed Object[] input chunk admits a loop-invariant typed array view and immutable offset, with each element read in its original callback order; unsupported chunks retain one -nth call per item. Only storage/immutable metadata are hoisted, never element values. Numeric local metadata alone does not insert a physical conversion. Use explicit inline long casts for the ICounted result and admitted immutable offset, and for str loop state read back from its temporary pair, so the IR carries raw longs through arithmetic/array indexing without adding a primitive function entry. Early core definitions precede the public long var; the private long-cast word emits the same existing checked LongCast operation. The private long-add compiler word uses the existing checked non-coercing raw arithmetic for bounded long offsets/counters and geometric output growth; legacy coercing core arithmetic would otherwise box these operations. Values are evaluated in order and overflow still follows the existing checked arithmetic route. All chunk/native storage words require trusted compilation, including when ordinary source selects the suss.core namespace. Validated long loop counters compare through the private checked long-less lowering, avoiding core's legacy coercing comparison and per-iteration boxing; custom receiver fallback and callback order stay in the same branches. Bounded chunk counters use a private raw i64 addition: i starts at zero and advances only while i<size for a checked long size, and filter output j never exceeds i. For an admitted canonical input view, offset+i is below its validated immutable end/storage length; custom/unsupported input windows retain -nth and do not add offsets. Thus these additions cannot overflow a long, including zero/negative custom counts. This is limited to these loops; geometric string growth and general arithmetic remain checked. Operand long casts remain checked, and ordinary source-core loading lowers the private word through the original checked addition. Test the immutable input view once before entering either complete loop, preserving the identical custom -nth loop and canonical live-array loop. This moves no element read, callback, store, tail realization or error; each element is still read immediately before its callback, with the filter value retained before the predicate. The input-view identity cannot change in the loop."
+ }
+diff --git c/docs/compatibility/patches/sequence-seq-reduce.json w/docs/compatibility/patches/sequence-seq-reduce.json
+index d902e169..a836a0e7 100644
+--- c/docs/compatibility/patches/sequence-seq-reduce.json
++++ w/docs/compatibility/patches/sequence-seq-reduce.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": 1,
+   "source-sha256": "c8d84fa3b05a5f38edbe1a20625bce686ea8213e6277957ec95db98a4fdc037e",
+-  "replacement": "(def seq-reduce\n  (fn ([f coll]\n    (if-let [s (seq coll)]\n      (reduce f (first s) (next s))\n      (f)))\n  ([f val coll]\n    ;; A chunked seq reduces a chunk at a time, as Clojure's InternalReduce\n    ;; does, rather than allocating a seq per element (#446). A chunk's\n    ;; elements are read by index to its count: a filter's chunk is shorter\n    ;; than its array. A reduced value ends the reduction.\n    (loop [val val, coll (seq coll)]\n      (if coll\n        (if (chunked-seq? coll)\n          (let [c (chunk-first coll)\n                n (suss.bootstrap/long-cast (-count c))\n                ^objects input-array (suss.bootstrap/chunk-array c)\n                input-offset (if (suss.bootstrap/undefined? input-array)\n                                     0\n                                     (suss.bootstrap/long-cast (suss.bootstrap/chunk-offset c)))\n                nval (loop [i 0 val val]\n                       (if (suss.bootstrap/long-less i n)\n                         (let [nval (f val (if (suss.bootstrap/undefined? input-array)\n                                              (-nth c i)\n                                              (aget input-array (suss.bootstrap/long-add input-offset i))))]\n                           (if (reduced? nval)\n                             nval\n                             (recur (suss.bootstrap/long-add i 1) nval)))\n                         val))]\n            (if (reduced? nval)\n              @nval\n              (recur nval (seq (chunk-rest coll)))))\n          (let [nval (f val (first coll))]\n            (if (reduced? nval)\n              @nval\n              (recur nval (next coll)))))\n        val)))))",
+-  "rationale": "Explicit defn-to-def/fn bootstrap retains metadata, docstring, arities and reduction algorithm, including reduced termination and source order. Full upstream defn and private runtime Var metadata remain unfinished. A chunked seq's 3-arity reduction reads each chunk by index, as Clojure's InternalReduce for chunked seqs does, with reduced termination and source order kept (#446). A canonical well-formed Object[] chunk admits a loop-invariant typed storage view and immutable offset. Each element is still read immediately before its reducer call; custom chunks and unsupported windows/storage keep the original indexed protocol call. Widen the ICounted int result once to a raw long local, preserving reduced short-circuiting and chunk-boundary realization. Numeric local metadata alone does not insert a physical conversion. Use explicit inline long casts for the ICounted result and admitted immutable offset, and for str loop state read back from its temporary pair, so the IR carries raw longs through arithmetic/array indexing without adding a primitive function entry. Early core definitions precede the public long var; the private long-cast word emits the same existing checked LongCast operation. The private long-add compiler word uses the existing checked non-coercing raw arithmetic for bounded long offsets/counters and geometric output growth; legacy coercing core arithmetic would otherwise box these operations. Values are evaluated in order and overflow still follows the existing checked arithmetic route. All chunk/native storage words require trusted compilation, including when ordinary source selects the suss.core namespace. Validated long loop counters compare through the private checked long-less lowering, avoiding core's legacy coercing comparison and per-iteration boxing; custom receiver fallback and callback order stay in the same branches."
++  "replacement": "(def seq-reduce\n  (fn ([f coll]\n    (if-let [s (seq coll)]\n      (reduce f (first s) (next s))\n      (f)))\n  ([f val coll]\n    ;; A chunked seq reduces a chunk at a time, as Clojure's InternalReduce\n    ;; does, rather than allocating a seq per element (#446). A chunk's\n    ;; elements are read by index to its count: a filter's chunk is shorter\n    ;; than its array. A reduced value ends the reduction.\n    (loop [val val, coll (seq coll)]\n      (if coll\n        (if (chunked-seq? coll)\n          (let [c (chunk-first coll)\n                n (suss.bootstrap/long-cast (-count c))\n                ^objects input-array (suss.bootstrap/chunk-array c)\n                input-offset (if (suss.bootstrap/undefined? input-array)\n                                     0\n                                     (suss.bootstrap/long-cast (suss.bootstrap/chunk-offset c)))\n                summed (suss.bootstrap/chunk-long-sum f + input-array input-offset n val)\n                nval (if (suss.bootstrap/undefined? summed)\n                       (loop [i 0 val val]\n                       (if (suss.bootstrap/long-less i n)\n                         (let [nval (f val (if (suss.bootstrap/undefined? input-array)\n                                              (-nth c i)\n                                              (aget input-array (suss.bootstrap/long-add input-offset i))))]\n                           (if (reduced? nval)\n                             nval\n                             (recur (suss.bootstrap/long-add i 1) nval)))\n                         val))\n                       summed)]\n            (if (reduced? nval)\n              @nval\n              (recur nval (seq (chunk-rest coll)))))\n          (let [nval (f val (first coll))]\n            (if (reduced? nval)\n              @nval\n              (recur nval (next coll)))))\n        val)))))",
++  "rationale": "Explicit defn-to-def/fn bootstrap retains metadata, docstring, arities and reduction algorithm, including reduced termination and source order. Full upstream defn and private runtime Var metadata remain unfinished. A chunked seq's 3-arity reduction reads each chunk by index, as Clojure's InternalReduce for chunked seqs does, with reduced termination and source order kept (#446). A canonical well-formed Object[] chunk admits a loop-invariant typed storage view and immutable offset. Each element is still read immediately before its reducer call; custom chunks and unsupported windows/storage keep the original indexed protocol call. Widen the ICounted int result once to a raw long local, preserving reduced short-circuiting and chunk-boundary realization. Numeric local metadata alone does not insert a physical conversion. Use explicit inline long casts for the ICounted result and admitted immutable offset, and for str loop state read back from its temporary pair, so the IR carries raw longs through arithmetic/array indexing without adding a primitive function entry. Early core definitions precede the public long var; the private long-cast word emits the same existing checked LongCast operation. The private long-add compiler word uses the existing checked non-coercing raw arithmetic for bounded long offsets/counters and geometric output growth; legacy coercing core arithmetic would otherwise box these operations. Values are evaluated in order and overflow still follows the existing checked arithmetic route. All chunk/native storage words require trusted compilation, including when ordinary source selects the suss.core namespace. Validated long loop counters compare through the private checked long-less lowering, avoiding core's legacy coercing comparison and per-iteration boxing; custom receiver fallback and callback order stay in the same branches. An original guarded storage reduction recognizes the exact immutable owned + value and a well-formed Object[] window. It accumulates checked long prefixes without per-element calls; unsupported reducers, storage, bounds, initial values or elements decline without writes to the complete source loop. Recomputing a pure long prefix after a later unsupported element is unobservable. Prefix long overflow is raised at the same element through the existing numeric helper, before inspecting later values. Custom reducers, callbacks, reduced demand and mixed numeric paths retain the original loop; ordinary source-core compilation always declines the private helper. The owned/public + function values were observed identical in both phases; identity is an admission check, not a Clojure identity requirement."
+ }
+diff --git c/runtime/core-import/manifest.json w/runtime/core-import/manifest.json
+index c068e587..56783d8a 100644
+--- c/runtime/core-import/manifest.json
++++ w/runtime/core-import/manifest.json
+@@ -2482,8 +2482,8 @@
+       "extracted": "extracted/0075.cljs",
+       "extracted-sha256": "f4428e8a87eb52cac5b41c36451a899e55ae6b721d9a5bc9b4820441b43c4177",
+       "patch": "docs/compatibility/patches/sequence-seq-reduce.json",
+-      "patch-sha256": "13a8850c33fa817de22ea25c30c5ec76e15a37b85c7edf15cb1bc5d597dbf210",
+-      "adapted-form-sha256": "6d221dfbfce94cbf007eab382e99bf2112d1bb9e7f427e2d3a2e2962be14b487",
++      "patch-sha256": "97d4bb374eba2d6c9ee8ea412467a270c8e4b3b89f78b2cc4379e5214cc58a3c",
++      "adapted-form-sha256": "3a5010abe4f1134df1b6d22160364144aaf9881db5f42a8f8665c4276ce99519",
+       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+       "review-classification": ":adapted",
+       "review-status": ":in-progress",
+@@ -10783,8 +10783,8 @@
+       "extracted": "extracted/0350.cljs",
+       "extracted-sha256": "675024866fc83041f393dccad216a15167e895fc955e25160b82d8daac7b39bf",
+       "patch": "docs/compatibility/patches/lazy-map.json",
+-      "patch-sha256": "f4ad1560144c8fa59d06f6ee5391b3919eba887982d96c71c41ac4adae737715",
+-      "adapted-form-sha256": "58a5414ad83c32e4cfc414c9e392f89e3d04412304b7fd7d39fcd66db7846df7",
++      "patch-sha256": "267ba13d38e5da83bf2bfef50066e3453c5610a1c81508efcf0923a3b8cdc6d1",
++      "adapted-form-sha256": "a7293414930a4632a70bf90f448ac5bde94f04fbb9a8221b1a66027fc2ddcbb0",
+       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+       "review-classification": ":adapted",
+       "review-status": ":in-progress",
+@@ -10821,8 +10821,8 @@
+       "extracted": "extracted/0351.cljs",
+       "extracted-sha256": "867d62d6b4ffba862da2554053db4d3ced54c4983fa0fb12f2a50eba17ee27f1",
+       "patch": "docs/compatibility/patches/lazy-filter.json",
+-      "patch-sha256": "2180bc8c7b936648ac858a50606111f5fc052ac8839fac00227a6d4f67e4cdfe",
+-      "adapted-form-sha256": "9581d7db3631f4088655178ca858ddff3f4ef1e06ebd9a8cf5196b0c6ebc9124",
++      "patch-sha256": "33096b9958f5c638693cfdc58e98ee7c8497a4da71e5dec53fdf7dc029d2ff76",
++      "adapted-form-sha256": "3154572c61048887ebcb0bb2e7fdfa63e203acc6044eaea1b3d82621bc20ac85",
+       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+       "review-classification": ":adapted",
+       "review-status": ":in-progress",
+@@ -16093,6 +16093,6 @@
+     "extracted/0501.cljs": "02b4047a3496243c5528041564a9f8ded2f3aae951be387e8779ab0e956464c3",
+     "extracted/0502.cljs": "d42068d54f1844f88abb73548a3a554a3cc1f5af315fd590533b4fd80de350ec",
+     "extracted/0503.cljs": "072c8a681fd905767f56c48e6c3529b99e9d5f537def64cb299f5bac29c7c59b",
+-    "suss/core.sus": "76eca6b91b6e04114c49926228d1900f47b5a1fc24c41e0acf84273c9ae733d6"
++    "suss/core.sus": "fa81c275ed67f30c9e8cd9e9e4e6acc532599eb319fdd741ae2cfd0d079eb4c7"
+   }
+ }
+diff --git c/runtime/core-import/suss/core.sus w/runtime/core-import/suss/core.sus
+index b11334df..1da824af 100644
+--- c/runtime/core-import/suss/core.sus
++++ w/runtime/core-import/suss/core.sus
+@@ -997,7 +997,9 @@
+                 input-offset (if (suss.bootstrap/undefined? input-array)
+                                      0
+                                      (suss.bootstrap/long-cast (suss.bootstrap/chunk-offset c)))
+-                nval (loop [i 0 val val]
++                summed (suss.bootstrap/chunk-long-sum f + input-array input-offset n val)
++                nval (if (suss.bootstrap/undefined? summed)
++                       (loop [i 0 val val]
+                        (if (suss.bootstrap/long-less i n)
+                          (let [nval (f val (if (suss.bootstrap/undefined? input-array)
+                                               (-nth c i)
+@@ -1005,7 +1007,8 @@
+                            (if (reduced? nval)
+                              nval
+                              (recur (suss.bootstrap/long-add i 1) nval)))
+-                         val))]
++                         val))
++                       summed)]
+             (if (reduced? nval)
+               @nval
+               (recur nval (seq (chunk-rest coll)))))
+@@ -6174,13 +6177,17 @@
+                                    0
+                                    (suss.bootstrap/long-cast (suss.bootstrap/chunk-offset c)))
+               ^objects b (suss.bootstrap/packed-array 6 size)]
+-          (loop [i 0]
++          (if (suss.bootstrap/undefined? input-array)
++              (loop [i 0]
+             (when (suss.bootstrap/long-less i size)
+-              (let [v (if (suss.bootstrap/undefined? input-array)
+-                           (-nth c i)
+-                           (aget input-array (suss.bootstrap/long-add input-offset i)))]
++              (let [v (-nth c i)]
+                 (aset b i (f v)))
+-              (recur (suss.bootstrap/long-add i 1))))
++              (recur (suss.bootstrap/chunk-index-add i 1))))
++              (loop [i 0]
++            (when (suss.bootstrap/long-less i size)
++              (let [v (aget input-array (suss.bootstrap/chunk-index-add input-offset i))]
++                (aset b i (f v)))
++              (recur (suss.bootstrap/chunk-index-add i 1)))))
+           (chunk-cons (array-chunk b 0 size) (map f (chunk-rest s))))
+         (cons (f (first s)) (map f (rest s))))) nil))) nil nil)) ([f c1 c2]
+    (new LazySeq nil (fn* [] (let [s1 (seq c1) s2 (seq c2)]
+@@ -6216,16 +6223,23 @@
+                                    0
+                                    (suss.bootstrap/long-cast (suss.bootstrap/chunk-offset c)))
+               ^objects b (suss.bootstrap/packed-array 6 size)
+-              kept (loop [i 0 j 0]
++              kept (if (suss.bootstrap/undefined? input-array)
++              (loop [i 0 j 0]
+                      (if (suss.bootstrap/long-less i size)
+-                       (let [v (if (suss.bootstrap/undefined? input-array)
+-                           (-nth c i)
+-                           (aget input-array (suss.bootstrap/long-add input-offset i)))]
++                       (let [v (-nth c i)]
+                          (if (pred v)
+                            (do (aset b j v)
+-                               (recur (suss.bootstrap/long-add i 1) (suss.bootstrap/long-add j 1)))
+-                           (recur (suss.bootstrap/long-add i 1) j)))
+-                       j))]
++                               (recur (suss.bootstrap/chunk-index-add i 1) (suss.bootstrap/chunk-index-add j 1)))
++                           (recur (suss.bootstrap/chunk-index-add i 1) j)))
++                       j))
++              (loop [i 0 j 0]
++                     (if (suss.bootstrap/long-less i size)
++                       (let [v (aget input-array (suss.bootstrap/chunk-index-add input-offset i))]
++                         (if (pred v)
++                           (do (aset b j v)
++                               (recur (suss.bootstrap/chunk-index-add i 1) (suss.bootstrap/chunk-index-add j 1)))
++                           (recur (suss.bootstrap/chunk-index-add i 1) j)))
++                       j)))]
+           (chunk-cons (array-chunk b 0 kept) (filter pred (chunk-rest s))))
+         (let [f (first s) r (rest s)]
+           (if (pred f)

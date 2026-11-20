@@ -247,7 +247,7 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
                         });
                     }
                 }
-                Operation::Nominal { operation: super::super::hir::Nominal::LongCast | super::super::hir::Nominal::UncheckedLongCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Long),
+                Operation::Nominal { operation: super::super::hir::Nominal::LongCast | super::super::hir::Nominal::UncheckedLongCast | super::super::hir::Nominal::ChunkIndexAdd, .. } => state[instruction.result.0] = Lattice::Known(Repr::Long),
                 Operation::Nominal { operation: super::super::hir::Nominal::DoubleCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Double),
                 // A hinted aget's element, behind its checked cast (#389).
                 // An object array's element is a value (#378).
@@ -360,6 +360,9 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
                         raw_use[value.0] = true;
                     }
                 }
+            }
+            if let Operation::Nominal { operation: Nominal::ChunkIndexAdd, arguments } = &instruction.operation {
+                for argument in arguments { raw_use[argument.0] = true; }
             }
             if let Operation::Nominal { operation: Nominal::LongCast | Nominal::UncheckedLongCast | Nominal::DoubleCast, arguments } = &instruction.operation
                 && repr[arguments[0].0].definite().numeric()
