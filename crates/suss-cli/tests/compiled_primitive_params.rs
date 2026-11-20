@@ -16,6 +16,7 @@ const DEFINITIONS: &str = "(def safe (fn [f] (try (f) (catch :default e :error))
 (def variadic (fn [^long a & more] [(inc a) more]))
 (def mixed (fn [^long a {:keys [b]}] (+ a b)))
 (def capture (fn [^long a] (fn [] (+ a 1))))
+(def bits (fn [^long x ^long i] (let [b (bit-test x i)] [b (if b :yes :no) ((fn [] b))])))
 (def ret (fn ^long [^long a] (* a 2)))
 (def ret-long (fn ^long [x] x))
 (def ret-double (fn ^double [x] x))
@@ -48,6 +49,7 @@ const CASES: &[(&str, &str)] = &[
     ("recur", "(down (+ n 4) [])"),
     ("arities", "[(arities (+ n 1)) (arities 2 0.5) (variadic (+ n 1) 2 3) (variadic 0) (mixed 2 {:b 3})]"),
     ("closures", "[((capture (+ n 4))) ((capture 3000000000)) (ret (+ n 21))]"),
+    ("bit-tests", "[(bits (+ n -9223372036854775808) (+ n 63)) (bits (+ n 9223372036854775807) (+ n 63)) (bits 1 (+ n 64)) (safe (fn [] (bit-test 1.0 0)))]"),
     ("returns", "[(ret-long 2.75) (apply ret-long [2.75]) (ret-double (+ n 3)) (apply ret-double [3]) (ret-recur 10000 4.75) (ret-multi 5.75) (ret-multi 2 3)]"),
     ("return-special", "[(ret-double -0.0) (ret-double ##NaN) (ret-double ##Inf) (ret-long 1.0e30) (ret-long -1.0e30) (ret-long ##NaN) (safe (fn [] (ret-long nil))) (safe (fn [] (ret-double :k)))]"),
     ("cast-order", "(let [effects (atom [])] [(safe (fn [] (checked-pair (do (swap! effects conj :first) :bad) (do (swap! effects conj :second) 2)))) @effects])"),
@@ -102,6 +104,7 @@ fn primitive_parameter_hints_match_the_repl() {
             "recur" => Some("[4 3 2 1]"),
             "arities" => Some("[[:one 2] [:two 2.5] [2 (2 3)] [1 nil] 5]"),
             "closures" => Some("[5 3000000001 42]"),
+            "bit-tests" => Some("[[true :yes true] [false :no false] [true :yes true] :error]"),
             "returns" => Some("[2 2 3.0 3.0 4 5 5.0]"),
             "return-special" => Some("[-0.0 ##NaN ##Inf 9223372036854775807 -9223372036854775808 0 :error :error]"),
             "cast-order" => Some("[:error [:first :second]]"),

@@ -50,6 +50,15 @@ numeric relation; core's public/string/array coercing comparisons keep their
 separate behavior. Regenerate core and rerun the chunk/source/parity/cache suites
 and foundation checks after changing its private counter operations.
 
+Typed bit-test probes use target/probe/m15-typed-bits-*; the executed JVM
+Clojure 1.12.6 inputs are m15-typed-bit-test-jvm.clj and
+m15-typed-bit-test-aot-jvm.clj. Run clojure_unboxed_locals,
+clojure_equality_bitwise, compiled_primitive_params and compiled_call_sites
+alongside the chunk/source suites. Check negative/wide shift counts, boolean
+escapes into collections/closures, mixed loop values and boxed error effects.
+Physical flag locals leave source-kind checking and ABI 7 unchanged. Compare
+unchanged-form instruction counts separately from quiet-machine timing.
+
 Reviewed native file/WIT selection and explicit mappings, shared compiled source/
 macro staging, scalar parsing/result handling, exact nested export invocation,
 command-mode separation and documented remaining frontend modes at855d281.
