@@ -4,6 +4,7 @@
 //! once per runtime instance; the runtime roots their closures and typed
 //! entries, as ordinary compiled call sites do. No arity property is read.
 use super::*;
+mod list;
 
 const BASE: u32 = OBJECT_CALL_CACHE_GLOBAL + MAX_FIXED * OBJECT_CALL_STRIDE;
 const ARITIES: [u32; 9] = [1, 1, 1, 2, 1, 2, 1, 2, 3];
@@ -67,6 +68,7 @@ pub(super) fn append_globals(globals: &mut GlobalSection, b: &Builder, universal
     assert_eq!(globals.len(), LIST_DESCRIPTOR);
     globals.global(GlobalType { val_type: VALUE, mutable: true, shared: false },
         &ConstExpr::extended([sentinel_value(NIL)]));
+    list::append_globals(globals, b, universal_entries);
 }
 
 pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
@@ -197,6 +199,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     b.names.insert("universal-spread".into(), spread);
     let mut declared = vec![spread];
     declared.extend(native_entries(b));
+    declared.extend(list::functions(b));
     declared
 }
 

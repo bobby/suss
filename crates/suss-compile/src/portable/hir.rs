@@ -619,6 +619,7 @@ pub enum Nominal {
     FixedArityFn,
     /// Private core sequence callbacks and the native apply boundary (#466).
     ApplySequenceOps,
+    ListFunction,
     ApplyCallee,
     ApplySpread,
     ApplyToSeq,
@@ -694,6 +695,7 @@ impl Nominal {
             && match self {
                 Self::Array => true,
                 Self::ApplySequenceOps => count == 10,
+                Self::ListFunction => count == 5,
                 Self::ApplyCallee => count == 1,
                 Self::ApplySpread => count >= 2,
                 Self::ApplyToSeq | Self::ApplyFixed => count == 2,
@@ -3232,6 +3234,7 @@ impl Analyzer<'_> {
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
             let operation = match symbol.name.as_str() {
                 "apply-sequence-ops!" => Some(Nominal::ApplySequenceOps),
+                "list-function" => Some(Nominal::ListFunction),
                 "apply-callee" => Some(Nominal::ApplyCallee),
                 "apply-spread" => Some(Nominal::ApplySpread),
                 "apply-to-seq" => Some(Nominal::ApplyToSeq),
@@ -3276,7 +3279,7 @@ impl Analyzer<'_> {
             };
             if let Some(operation) = operation {
                 if matches!(operation, Nominal::ApplySequenceOps | Nominal::ApplyCallee
-                    | Nominal::ApplySpread | Nominal::ApplyToSeq | Nominal::ApplyFixed)
+                    | Nominal::ApplySpread | Nominal::ApplyToSeq | Nominal::ApplyFixed | Nominal::ListFunction)
                     && !self.privileged && self.environment.current_namespace(self.phase) != "suss.core" {
                     return Err(fail(form.span.clone(), "Private apply adapters require compiled core"));
                 }

@@ -30340,3 +30340,66 @@ Next validation is the strengthened registration regression, every earlier CI
 failure, full required serial workspace baseline, independent final review and
 final-head CI. The instruction target alone does not promote a draft or prove
 the wider M15 program-time criteria.
+
+
+## Independent list traversal correction (2026-11-19)
+
+Independent semantic review found a real blocker inherited from the earlier
+sequence-list patch: fixed0..3 plus variadic required3 changes apply list's
+preflight. JVM1.12.6 PersistentList.Primordial requires0. Its generic body also
+calls seq once and reads first before next, whereas the old fallback evaluated
+next first. The first review's general ABI/rooting approval did not certify this
+source-body detail; promotion remains gated on correcting the finding.
+
+Primary evidence is pr474-review-list-oracle.log,
+pr474-review-list-traversal-jvm.{clj,log}, and the saved Primordial/PersistentList
+javap logs. Counted/custom ISeq inputs have identical callback order, including
+25 elements with no AFn remainder/count path. Prefixes0..5 and first/next/second
+seq errors are recorded. Executing the saved e159 release binary against a next1
+throwing sequence reproduces the Suss bug: seq0,next0,next1, with first0 absent
+(pr474-list-oracle-red.{sus,log}). No source-only inference is counted as a
+passing regression.
+
+The source list function is again a zero-required variadic and its generic body
+normalizes once then reads first before next. The array path handles nonzero
+IndexedSeq starting offsets. A private native list-function wrapper captures
+that original closure and four ordinary short helper closures. Its CODE_MAX is
+-1; spread forwards the original closure and normalized rest, and larger
+ordinary calls forward realized args with nil rest. Only ordinary entries0..3
+use helper entries, cached with their captured owner identities. Old wrappers
+therefore retain old helpers and original captures across later cache changes.
+Malformed owner/environment layouts raise language errors. No source function
+arity validation was relaxed and no shared ABI7 type changed. The original
+ClojureScript provenance remains, with EPL notice and the inspected JVM class
+SHA256 added to the adaptation rationale.
+
+pr474-list-oracle-focused-first.log: all10 existing/newly extended apply tests
+pass, Runtime and Macro, including list callback order, prefixes, a next1
+throwing input and Counted size25. pr474-list-oracle-focused-second.log: all71
+focused tests across15 targets pass, with no failures or ignored cases,
+including every previously selected CI failure. A wrapper test alternates two
+owners across GC, checks ordinary arities0..3, ordinary4/9 and apply delegation.
+It was strengthened to capture actual mutable atoms in the original closures;
+that follow-up passes separately (pr474-list-wrapper-captures.log).
+All347 Python tests and every CI foundation source check pass after this core
+adaptation (pr474-list-oracle-foundation.log).
+
+The copied release binary pr474-suss-list-oracle plus SHA256 receipt and
+pr474-list-oracle-source.patch identify the measured production source (e159
+plus that patch; later test-only capture strengthening does not change it).
+pr474-list-oracle-instructions/ retains all raw component/source/count evidence.
+Net instructions: list878.036, apply list1,615.710, prebuilt-list apply759.354.
+Range10/20/40/80/160:20,581 /31,231 /55,719 /101,508 /193,291. Larger sizes retain
+linear growth and the list case remains below2,000. No walltime acceptance is
+claimed. Both build/compile use names and stable Rust, with bounded scopes.
+
+The e159 full serial baseline was deliberately stopped after the independent
+source blocker was confirmed, using SIGTERM only on its verified live scope
+run-p1006690-i80680142.scope. The driver had completed its focused gate and
+started cargo +stable test --workspace --locked -- --test-threads=2. Its terminal
+exit is143; the workspace log is pr474-workspace-candidate.log. This is not a
+completed baseline pass. Run a new full serial baseline on corrected source;
+get independent follow-up review and green final-head CI before promotion.
+The separate proposed Reduced counterexample was withdrawn after confirming
+that shipped bitwise folds use the accepted private core-linked reducer; it
+was not reproduced on candidate source and was not used to weaken any test.

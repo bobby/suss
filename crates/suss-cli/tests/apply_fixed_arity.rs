@@ -72,6 +72,7 @@ fn apply_sequence_callbacks_follow_clojure_1_12_6() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         session.eval(r#"
             (def apply-trace [])
+            (def apply-fail-next nil)
             (deftype ApplyTraceSeq [n stop]
               ISeqable
               (-seq [this] (do (set! apply-trace (conj apply-trace [:seq n])) this))
@@ -81,6 +82,7 @@ fn apply_sequence_callbacks_follow_clojure_1_12_6() {
                             (if (< (inc n) stop) (ApplyTraceSeq. (inc n) stop) ())))
               INext
               (-next [_] (do (set! apply-trace (conj apply-trace [:next n]))
+                            (when (= n apply-fail-next) (throw (ex-info "next limit" {})))
                             (when (< (inc n) stop) (ApplyTraceSeq. (inc n) stop)))))
             (def trace-apply
               (fn [f stop]
@@ -90,6 +92,8 @@ fn apply_sequence_callbacks_follow_clojure_1_12_6() {
                   [answer apply-trace])))
         "#).unwrap();
         for (source, expected) in [
+            ("(trace-apply list 3)",
+             "[(0 1 2) [[:seq 0] [:next 0] [:seq 0] [:first 0] [:next 0] [:first 1] [:next 1] [:first 2] [:next 2]]]"),
             ("(trace-apply (fn [& xs] :ok) 3)",
              "[:ok [[:seq 0] [:next 0]]]"),
             ("(trace-apply (fn [a b & xs] [a b]) 3)",
@@ -102,6 +106,34 @@ fn apply_sequence_callbacks_follow_clojure_1_12_6() {
              "[:arity [[:seq 0] [:next 0] [:next 1] [:next 2] [:next 3] [:first 0] [:next 0] [:first 1] [:next 1] [:first 2] [:next 2] [:first 3]]]"),
         ] {
             assert_eq!(printed(&mut session, source), expected, "{source}");
+        }
+        session.eval("(set! apply-fail-next 1)").unwrap();
+        assert_eq!(printed(&mut session, "(trace-apply list 3)"),
+            "[:arity [[:seq 0] [:next 0] [:seq 0] [:first 0] [:next 0] [:first 1] [:next 1]]]");
+        session.eval("(set! apply-fail-next nil)").unwrap();
+        session.eval(r#"
+            (def trace-list-prefix
+              (fn [prefix]
+                (set! apply-trace [])
+                (let [s (ApplyTraceSeq. 0 3)
+                      answer (case prefix
+                               1 (apply list 10 s)
+                               2 (apply list 10 11 s)
+                               3 (apply list 10 11 12 s)
+                               4 (apply list 10 11 12 13 s)
+                               5 (apply list 10 11 12 13 14 s)
+                               (throw (ex-info "unexpected prefix" {})))]
+                  [answer apply-trace])))
+        "#).unwrap();
+        for (prefix, answer, opening) in [
+            (1, "(10 0 1 2)", "[:seq 0] [:seq 0]"),
+            (2, "(10 11 0 1 2)", "[:seq 0]"),
+            (3, "(10 11 12 0 1 2)", "[:seq 0]"),
+            (4, "(10 11 12 13 0 1 2)", "[:seq 0] [:seq 0]"),
+            (5, "(10 11 12 13 14 0 1 2)", "[:seq 0] [:seq 0]"),
+        ] {
+            let expected = format!("[{answer} [{opening} [:first 0] [:next 0] [:first 1] [:next 1] [:first 2] [:next 2]]]");
+            assert_eq!(printed(&mut session, &format!("(trace-list-prefix {prefix})")), expected);
         }
         // AFn's >20 path reads the first twenty, counts the remainder
         // without first, then extracts it. JVM size25 has 51 next calls.
@@ -121,6 +153,14 @@ fn apply_sequence_callbacks_follow_clojure_1_12_6() {
                 (set! apply-trace (conj apply-trace [:count (.-n this)]))
                 (- (.-stop this) (.-n this))))
         "#).unwrap();
+        assert_eq!(printed(&mut session, r#"
+            (let [[answer events] (trace-apply list 25)]
+              [(count answer) (first answer) (last answer)
+               (count (filter (fn [event] (= (first event) :seq)) events))
+               (count (filter (fn [event] (= (first event) :next)) events))
+               (count (filter (fn [event] (= (first event) :first)) events))
+               (count (filter (fn [event] (= (first event) :count)) events))])
+        "#), "[25 0 24 2 26 25 0]");
         assert_eq!(
             printed(&mut session, "(trace-apply (fn [a b & xs] [a b]) 3)"),
             "[[0 1] [[:seq 0] [:next 0] [:next 1] [:next 2] [:first 0] [:next 0] [:first 1] [:next 1]]]"
@@ -342,6 +382,7 @@ fn apply_callback_registration_is_private_and_publishes_atomically() {
         for source in [
             "(suss.bootstrap/apply-sequence-ops! identity identity identity identity identity identity identity identity identity)",
             "(suss.bootstrap/apply-to-seq identity nil)",
+            "(suss.bootstrap/list-function identity identity identity identity identity)",
         ] {
             let Err(SessionError::Compile(error)) = session.eval(source) else {
                 panic!("private helper was not rejected: {source}");
@@ -367,5 +408,39 @@ fn apply_callback_registration_is_private_and_publishes_atomically() {
         session.collect().unwrap();
         assert_eq!(printed(&mut session, "(apply (fn [a b] (+ a b)) (seq [17 25]))"), "42");
         assert_eq!(printed(&mut session, "(apply (fn [a b] (+ a b)) (list 17 25))"), "42");
+    }
+}
+
+#[test]
+fn list_wrapper_retains_original_and_helper_captures_across_cache_changes() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval_privileged(r#"
+            (def list-owner-a
+              (suss.bootstrap/list-function
+                (let [tag (atom :original-a)] (fn [& xs] [@tag (list? xs) xs]))
+                (fn [] :a0)
+                (fn [a] [:a1 a])
+                (fn [a b] [:a2 a b])
+                (fn [a b c] [:a3 a b c])))
+            (def list-owner-b
+              (suss.bootstrap/list-function
+                (let [tag (atom :original-b)] (fn [& xs] [@tag (list? xs) xs]))
+                (fn [] :b0)
+                (fn [a] [:b1 a])
+                (fn [a b] [:b2 a b])
+                (fn [a b c] [:b3 a b c])))
+        "#).unwrap();
+        for owner in ["a", "b", "a", "b"] {
+            session.collect().unwrap();
+            let source = format!("[(list-owner-{owner}) (list-owner-{owner} 1) (list-owner-{owner} 1 2) (list-owner-{owner} 1 2 3)]");
+            let expected = format!("[:{owner}0 [:{owner}1 1] [:{owner}2 1 2] [:{owner}3 1 2 3]]");
+            assert_eq!(printed(&mut session, &source), expected);
+            assert_eq!(printed(&mut session, &format!("(list-owner-{owner} 1 2 3 4)")),
+                format!("[:original-{owner} false (1 2 3 4)]"));
+            assert_eq!(printed(&mut session, &format!("(list-owner-{owner} 1 2 3 4 5 6 7 8 9)")),
+                format!("[:original-{owner} false (1 2 3 4 5 6 7 8 9)]"));
+            assert_eq!(printed(&mut session, &format!("(apply list-owner-{owner} (list 1 2))")),
+                format!("[:original-{owner} true (1 2)]"));
+        }
     }
 }

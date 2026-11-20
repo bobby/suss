@@ -822,29 +822,32 @@
 (def empty-ordered-hash
   (mix-collection-hash 1 0))
 
-(def list
+(def ^{:arglists '([& items])} list
   "Creates a new list containing the items."
-  ;; A few items are conjoined onto () directly, with no rest seq (#466): the
-  ;; same PersistentList the variadic arity builds.
-  (fn ([] ())
-  ([a] (-conj () a))
-  ([a b] (-conj (-conj () b) a))
-  ([a b c] (-conj (-conj (-conj () c) b) a))
-  ([a b c & more]
-  (let [xs (cons a (cons b (cons c more)))]
-  (if (and (instance? IndexedSeq xs) (zero? (.-i xs)) (suss.bootstrap/object-array? (.-arr xs)))
-    (let [arr (.-arr xs)]
-      (loop [i (alength arr) r ()]
-        (if (> i 0)
-          (recur (dec i) (-conj r (aget arr (dec i))))
-          r)))
-    (loop [^not-native xs xs reversed ()]
-      (if-not (nil? xs)
-        (recur (-next xs) (-conj reversed (-first xs)))
-        (loop [s (seq reversed) r ()]
+  ;; Clojure 1.12.6 PersistentList.Primordial: required arity zero;
+  ;; its generic body calls seq once and reads first before next.
+  ;; Copyright Rich Hickey, EPL-1.0; see runtime/core-import/LICENSE.
+  (suss.bootstrap/list-function
+    (fn [& xs]
+      (if (and (instance? IndexedSeq xs) (suss.bootstrap/object-array? (.-arr xs)))
+        (let [arr (.-arr xs) begin (.-i xs)]
+          (loop [i (alength arr) r ()]
+            (if (> i begin)
+              (recur (dec i) (-conj r (aget arr (dec i))))
+              r)))
+        (loop [s (seq xs) reversed ()]
           (if (nil? s)
-            r
-            (recur (next s) (-conj r (first s))))))))))))
+            (loop [s (seq reversed) r ()]
+              (if (nil? s)
+                r
+                (let [value (-first s) r (-conj r value)]
+                  (recur (next s) r))))
+            (let [value (-first s) reversed (-conj reversed value)]
+              (recur (next s) reversed))))))
+    (fn [] ())
+    (fn [a] (-conj () a))
+    (fn [a b] (-conj (-conj () b) a))
+    (fn [a b c] (-conj (-conj (-conj () c) b) a))))
 
 (def ^boolean =
   "Equality. Returns true if x equals y, false if not. Compares

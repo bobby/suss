@@ -305,6 +305,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::IsNativeObject => { names.insert("native-object?"); }
                         Nominal::FixedArityFn => { names.insert("fn-fixed-arity?"); }
                         Nominal::ApplySequenceOps => { names.insert("apply-sequence-ops"); }
+                        Nominal::ListFunction => { names.insert("list-function"); }
                         Nominal::ApplyCallee => { names.insert("apply-callee"); }
                         Nominal::ApplySpread => { names.insert("apply"); }
                         Nominal::ApplyToSeq => { names.insert("apply-to-seq"); }
@@ -718,6 +719,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "try-invoke" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
             "binding-defined" | "language-error-is" | "native-object?" | "fn-fixed-arity?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
             "apply-sequence-ops" => (vec![VALUE; 10], vec![VALUE]),
+            "list-function" => (vec![VALUE; 5], vec![VALUE]),
             "apply-callee" | "apply-first" | "apply-next" | "apply-fixed-arguments" => (vec![VALUE], vec![VALUE]),
             "apply-to-seq" | "apply-fixed" => (vec![VALUE; 2], vec![VALUE]),
             "apply-join" => (vec![ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::ARGS) }), VALUE], vec![VALUE]),
@@ -4068,6 +4070,7 @@ fn emit_function(
                         | Nominal::IsNativeObject
                         | Nominal::FixedArityFn
                         | Nominal::ApplySequenceOps
+                        | Nominal::ListFunction
                         | Nominal::ApplyCallee
                         | Nominal::ApplyToSeq
                         | Nominal::ApplyFixed
@@ -4152,6 +4155,7 @@ fn emit_function(
                                 Nominal::IsNativeObject => "native-object?",
                                 Nominal::FixedArityFn => "fn-fixed-arity?",
                                 Nominal::ApplySequenceOps => "apply-sequence-ops",
+                                Nominal::ListFunction => "list-function",
                                 Nominal::ApplyCallee => "apply-callee",
                                 Nominal::ApplyToSeq => "apply-to-seq",
                                 Nominal::ApplyFixed => "apply-fixed",
