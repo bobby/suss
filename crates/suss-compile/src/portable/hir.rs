@@ -520,8 +520,6 @@ pub enum Nominal {
     /// longCast or doubleCast of the argument, kept as a raw i64 or f64.
     LongCast,
     DoubleCast,
-    /// Identity, with a guarded raw view when its value is already a long.
-    LongView,
     /// Core's `unchecked-long` (#448): a raw i64 as LongCast, through its own
     /// cast for anything but a long.
     UncheckedLongCast,
@@ -717,7 +715,7 @@ impl Nominal {
                 Self::AllSmallIntegers => count >= 1,
                 Self::NumberHash => count == 1,
                 Self::IsObject | Self::IsDescriptor => count == 1,
-                Self::IsLongValue | Self::StringHash | Self::LongCast | Self::DoubleCast | Self::UncheckedLongCast | Self::LongView => count == 1,
+                Self::IsLongValue | Self::StringHash | Self::LongCast | Self::DoubleCast | Self::UncheckedLongCast => count == 1,
                 Self::PackedGet(_) | Self::VectorNth | Self::ArrayMapGet | Self::MapContains => count == 2,
                 Self::ObjectArrayCopy(_) => count == 5,
                 Self::HashMapTypes => count == 4,
@@ -3321,7 +3319,6 @@ impl Analyzer<'_> {
                 "chunk-seq" => Some(Nominal::ChunkSeq),
                 // Core's early definitions precede its public long var.
                 "long-cast" => Some(Nominal::LongCast),
-                "long-view" => Some(Nominal::LongView),
                 "string-index-of" => Some(Nominal::StringIndexOf),
                 "string-slice" => Some(Nominal::StringSlice),
                 "string-from-unit" => Some(Nominal::StringFromUnit),
@@ -3337,9 +3334,6 @@ impl Analyzer<'_> {
                     | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq);
                 let ordinary_core = !self.privileged
                     && self.environment.current_namespace(self.phase) == "suss.core";
-                if operation == Nominal::LongView && !self.privileged && !ordinary_core {
-                    return Err(fail(form.span.clone(), "Private numeric views require compiled core"));
-                }
                 if (chunk || operation == Nominal::LongCast) && !self.privileged && !ordinary_core {
                     return Err(fail(form.span.clone(), "Private chunk adapters require compiled core"));
                 }

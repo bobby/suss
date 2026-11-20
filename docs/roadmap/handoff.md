@@ -162,6 +162,52 @@ probe matches fresh JVM Clojure 1.12.6 exactly in
 m15-edit-reference-public-oracle.json. These counts do not establish quiet
 walltime acceptance; issue comments hold current acceptance and next work.
 
+Guarded long-view experiments are retained under target/probe/m15-long-view-*,
+m15-hamt-long-view-* and m15-constant-multiply-*. The private identity primitive
+was exercised in both phases, including original references/capture roots and
+boxed fallbacks. Its first emitter attempt failed stack validation; the fixed
+focused run passes. Adding six cached bitmap indices and three popcounts to
+BitmapIndexedNode at 60bedef0 regressed into-map instructions 0.931%. Exact
+literal-factor overflow bounds at c459687d reduce that regression to 0.311%;
+a single unsigned interval check at 5daacdfe makes it approximately neutral
+(12,703,205 versus 12,702,210 on dab36209). The core placements and private
+long-view primitive are removed; do not restore them on kernel expectations.
+The compiler's constant-product bounds and guarded array-index consumption
+remain independent of that experiment. Their regressions use existing primitive
+entry declarations with explicit :arglists, including unhinted replacements.
+The exact JVM 1.12.6 long multiplication matrix matches c459687d; factor zero,
+both signs and both long limits are included. Bounds are computed with i128 at
+compile time; the generated unsigned interval test replaces runtime division.
+Nonconstant products, double products and original overflow helpers stay live.
+inc/dec already lower through BootstrapControl; adding another inline path is
+redundant (m15-inc-dec-inline-jvm.log and the unbuilt, removed sketch).
+
+Immutable receiver-layout probes use target/probe/m15-receiver-layout-*.
+Core functions with at least three named reads of an entry parameter retain
+its descriptor and field-array reference, sharing the existing field-array
+initialization. Every field element and site descriptor is read at the original
+use. Nonobjects, methods and misses keep the existing runtime lookup; resumable
+functions and entry-block backedges are excluded. No shared ABI or source-kind
+change is involved. At c0d190e0, 42 tests across eight CLI targets and all 347
+Python/foundation checks pass. The mutation/class-layout adapter executes on
+JVM Clojure 1.12.6 using methods for its private mutable fields; the native test
+uses trusted core access. Method extension, strings, nil/false skip branches,
+alternating layouts, old instances and GC are covered. The first fixture tried
+private field access from ordinary source and correctly failed; focused2.log
+contains the corrected passing run. Field privacy assertions remain unchanged.
+
+The unchanged seven-program instruction probe at c0d190e0 gives into-map
+12,241,424 (3.64% below 5daacdfe), word-frequencies 3,416,578,
+lazy-pipeline 1,156,608 and string-build 1,365,882; the other rows are essentially
+unchanged. The executable/core hashes are m15-receiver-layout-suss.json. Repeat
+the reduced source without long views with the m15-receiver-only-* probes and
+run clojure_unboxed_locals, portable_core_receiver_layout, the chunk/primitive,
+map/sharing/numeric and named-field/privacy targets in bounded stable release
+scopes, --test-threads=2. These instruction observations do not establish quiet
+walltime acceptance. The standalone idle gate for the frozen db4abbcb executable
+remains separate from bench.py; unrelated machine load has not met its 0.75
+threshold. Current issue acceptance and next work belong on GitHub.
+
 Reviewed native file/WIT selection and explicit mappings, shared compiled source/
 macro staging, scalar parsing/result handling, exact nested export invocation,
 command-mode separation and documented remaining frontend modes at855d281.

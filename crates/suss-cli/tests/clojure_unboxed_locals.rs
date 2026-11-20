@@ -35,88 +35,40 @@ fn sessions() -> [Session; 2] {
 }
 
 #[test]
-fn long_views_keep_original_values_references_and_capture_roots() {
-    let mut sessions = sessions();
-    for session in &mut sessions {
-        let error = session.eval("(suss.bootstrap/long-view 1)").unwrap_err().to_string();
-        assert!(error.contains("Private numeric views require compiled core"), "{error}");
-        session.eval("(ns suss.core)
-          (def view-values [nil false true 0 1073741824 3000000000 -9223372036854775808
-                            1.5 ##NaN ##Inf \"v\" :k [] {} (atom 1)])
-          (def view-id (fn [x] (suss.bootstrap/long-view x)))
-          (def view-capture (fn [x] (let [v (suss.bootstrap/long-view x)] (fn [] v))))").unwrap();
-    }
-    assert_eq!(outcome(&mut sessions,
-        "(mapv (fn [x] (suss.bootstrap/same-reference? x (view-id x))) view-values)"),
-        "[true true true true true true true true true true true true true true true]");
-    assert_eq!(outcome(&mut sessions,
-        "(mapv (fn [x] (suss.bootstrap/same-reference? x ((view-capture x)))) view-values)"),
-        "[true true true true true true true true true true true true true true true]");
-    for session in &mut sessions {
-        session.eval("(def view-original (identity 3000000000))
-            (def view-root (view-capture view-original))
-            (def view-double (fn ^double [^long x] (suss.bootstrap/long-view x)))").unwrap();
-        session.collect().unwrap();
-    }
-    assert_eq!(outcome(&mut sessions,
-        "[(suss.bootstrap/same-reference? view-original (view-root)) (view-double 2)]"),
-        "[true 2.0]");
-}
-
-#[test]
-fn long_view_consumers_keep_numeric_hits_and_boxed_fallback_effects() {
-    let mut sessions = sessions();
-    let operations = "[(try (+ a b) (catch :default e (ex-message e)))
-                       (try (* a b) (catch :default e (ex-message e)))
-                       (< a b) (bit-and a b)]";
-    for session in &mut sessions {
-        session.eval("(ns suss.core)").unwrap();
-        session.eval(&format!(
-            "(def viewed (fn [x y] (let [a (suss.bootstrap/long-view x)
-                                        b (suss.bootstrap/long-view y)] {operations})))
-             (def unviewed (fn [a b] {operations}))"
-        )).unwrap();
-    }
-    for pair in ["[6 2]", "[3000000000 4]", "[9223372036854775807 2]",
-                 "[1.5 2.0]", "[##NaN 1]", "[\"x\" 2]", "[false 2]", "[nil 2]"] {
-        let expected = outcome(&mut sessions, &format!("(unviewed (nth {pair} 0) (nth {pair} 1))"));
-        assert_eq!(outcome(&mut sessions, &format!("(viewed (nth {pair} 0) (nth {pair} 1))")), expected);
-    }
-    assert_eq!(outcome(&mut sessions,
-        "(let [seen (atom [])]
-           [(+ (suss.bootstrap/long-view (do (swap! seen conj :left) 2))
-               (suss.bootstrap/long-view (do (swap! seen conj :right) 3))) @seen])"),
-        "[5 [:left :right]]");
-    assert_eq!(outcome(&mut sessions,
-        "(loop [x (suss.bootstrap/long-view 0) i 0]
-           (if (< i 1) (recur (suss.bootstrap/long-view \"x\") (inc i)) (+ x 1)))"),
-        "\"x1\"");
-}
-
-#[test]
-fn long_view_array_indices_keep_aliases_bounds_and_fallbacks() {
+fn guarded_array_indices_keep_aliases_bounds_and_boxed_fallbacks() {
     let mut sessions = sessions();
     for session in &mut sessions {
         session.eval("(ns suss.core)
-            (def view-array (object-array [10 20 30]))
-            (def view-longs (long-array [10 20 30]))
-            (def view-read (fn [a i] (aget ^objects a (suss.bootstrap/long-view i))))
+            (def ^{:arglists '(^long [x])} array-index (fn ^long [x] x))
+            (def index-array (object-array [10 20 30]))
+            (def index-longs (long-array [10 20 30]))
+            (def index-read (fn [a i] (aget ^objects a (array-index i))))
             (def plain-read (fn [a i] (aget ^objects a i)))
-            (def view-read-long (fn [a i] (aget ^longs a (suss.bootstrap/long-view i))))
+            (def index-read-long (fn [a i] (aget ^longs a (array-index i))))
             (def plain-read-long (fn [a i] (aget ^longs a i)))
-            (def view-write (fn [a i x] (aset ^objects a (suss.bootstrap/long-view i) x)))").unwrap();
+            (def index-write (fn [a i x] (aset ^objects a (array-index i) x)))").unwrap();
     }
-    for index in ["0", "2", "-1", "3", "4294967296", "1.0", "1.5", "\"1\"", "nil"] {
-        for (view, plain, array) in [("view-read", "plain-read", "view-array"),
-                                     ("view-read-long", "plain-read-long", "view-longs")] {
-            let expected = outcome(&mut sessions, &format!("({plain} {array} {index})"));
-            assert_eq!(outcome(&mut sessions, &format!("({view} {array} {index})")), expected);
+    for fallback in [false, true] {
+        if fallback {
+            for session in &mut sessions {
+                session.eval("(def array-index (fn [x] x))").unwrap();
+                session.collect().unwrap();
+            }
         }
+        let indices = if fallback {
+            vec!["0", "2", "-1", "3", "4294967296", "1.0", "1.5", "\"1\"", "nil"]
+        } else { vec!["0", "2", "-1", "3", "4294967296"] };
+        for index in indices {
+            for (guarded, plain, array) in [("index-read", "plain-read", "index-array"),
+                                           ("index-read-long", "plain-read-long", "index-longs")] {
+                let expected = outcome(&mut sessions, &format!("({plain} {array} {index})"));
+                assert_eq!(outcome(&mut sessions, &format!("({guarded} {array} {index})")), expected);
+            }
+        }
+        assert_eq!(outcome(&mut sessions,
+            "[(index-write index-array 1 :changed) (index-read index-array 1)]"),
+            "[:changed :changed]");
     }
-    for session in &mut sessions { session.collect().unwrap(); }
-    assert_eq!(outcome(&mut sessions,
-        "[(view-write view-array 1 :changed) (view-read view-array 1)]"),
-        "[:changed :changed]");
 }
 
 #[test]
@@ -135,8 +87,9 @@ fn constant_long_products_keep_both_operand_orders_and_exact_overflow() {
     for factor in [0_i64, 1, -1, 2, -2, 3, -3, 4294967297, i64::MIN, i64::MAX] {
         for session in &mut sessions {
             session.eval(&format!(
-                "(def multiply-left (fn [x] (try (* {factor} (suss.bootstrap/long-view x)) (catch :default e (ex-message e)))))
-                 (def multiply-right (fn [x] (try (* (suss.bootstrap/long-view x) {factor}) (catch :default e (ex-message e)))))
+                "(def ^{{:arglists '(^long [x])}} multiply-input (fn ^long [x] x))
+                 (def multiply-left (fn [x] (try (* {factor} (multiply-input x)) (catch :default e (ex-message e)))))
+                 (def multiply-right (fn [x] (try (* (multiply-input x) {factor}) (catch :default e (ex-message e)))))
                  (def multiply-typed (fn [^long x] (try (* x {factor}) (catch :default e (ex-message e)))))"
             )).unwrap();
         }
@@ -145,6 +98,10 @@ fn constant_long_products_keep_both_operand_orders_and_exact_overflow() {
         for name in ["multiply-left", "multiply-right", "multiply-typed"] {
             assert_eq!(outcome(&mut sessions, &format!("(mapv {name} {values})")), expected,
                 "factor {factor}, {name}");
+        }
+        for session in &mut sessions {
+            session.eval("(def multiply-input (fn [x] x))").unwrap();
+            session.collect().unwrap();
         }
         let boxed = "[1.5 -0.0 ##NaN ##Inf \"2\" nil false]";
         let expected = outcome(&mut sessions,
@@ -155,7 +112,7 @@ fn constant_long_products_keep_both_operand_orders_and_exact_overflow() {
     }
     assert_eq!(outcome(&mut sessions,
         "(let [seen (atom [])]
-           [(* 0 (suss.bootstrap/long-view (do (swap! seen conj :operand) 2))) @seen])"),
+           [(* 0 (long (do (swap! seen conj :operand) 2))) @seen])"),
         "[0 [:operand]]");
 }
 
