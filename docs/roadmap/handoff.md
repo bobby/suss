@@ -25,6 +25,8 @@ Java-free bootstrap verification, with stable pinned for nested Cargo calls,
 reproduces both phase artifacts byte-for-byte, verifies compiler identities
 and passes all four release bootstrap execution tests. After updating the
 stacked base to6a91566f, all356 Python tests and core/bootstrap checks pass.
+After incorporating main eb9942b1 (#481 history reporting), all358 Python tests
+and core/bootstrap checks pass; Rust/runtime/bench.py inputs are unchanged.
 
 ## M15 chunk adapter commands
 

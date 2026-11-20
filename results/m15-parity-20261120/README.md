@@ -42,3 +42,7 @@ Java-free bootstrap verification, with stable pinned for nested Cargo calls,
 reproduces both phase artifacts byte-for-byte, verifies compiler identities
 and passes all four release bootstrap execution tests. After updating the
 stacked base to6a91566f, all356 Python tests and core/bootstrap checks pass.
+
+After incorporating main eb9942b1 (the merged #481 history report/fixtures),
+all358 Python tests and core/bootstrap checks pass; compiler/runtime/bench.py
+inputs remain byte-identical to implementation2ad0c15d.
