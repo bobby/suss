@@ -3289,6 +3289,8 @@ impl Analyzer<'_> {
                 "chunk-array" => Some(Nominal::ChunkArray),
                 "chunk-offset" => Some(Nominal::ChunkOffset),
                 "chunk-seq" => Some(Nominal::ChunkSeq),
+                // Core's early definitions precede its public long var.
+                "long-cast" => Some(Nominal::LongCast),
                 "string-index-of" => Some(Nominal::StringIndexOf),
                 "string-slice" => Some(Nominal::StringSlice),
                 "string-from-unit" => Some(Nominal::StringFromUnit),

@@ -149,6 +149,9 @@ the immutable offset. Map/filter and seq-reduce use these once per chunk to
 obtain a typed storage view and primitive loop bounds. An unsupported window
 uses its original indexed protocol reads. Only immutable metadata and storage
 references are hoisted; each element is read immediately before its callback.
+The early core definitions precede the public long var, so explicit conversions
+use the private long-cast word, which emits the existing inline LongCast operation.
+Numeric local tags alone do not insert a physical conversion.
 
 Map/filter fill an owned Object[] directly and publish its ArrayChunk after
 the ordered callbacks complete. Their output buffer is private to the thunk;

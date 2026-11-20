@@ -992,11 +992,11 @@
       (if coll
         (if (chunked-seq? coll)
           (let [c (chunk-first coll)
-                ^long n (-count c)
+                n (suss.bootstrap/long-cast (-count c))
                 ^objects input-array (suss.bootstrap/chunk-array c)
-                ^long input-offset (if (suss.bootstrap/undefined? input-array)
+                input-offset (if (suss.bootstrap/undefined? input-array)
                                      0
-                                     (suss.bootstrap/chunk-offset c))
+                                     (suss.bootstrap/long-cast (suss.bootstrap/chunk-offset c)))
                 nval (loop [i 0 val val]
                        (if (< i n)
                          (let [nval (f val (if (suss.bootstrap/undefined? input-array)
@@ -6168,11 +6168,11 @@
            (rf result (apply f input inputs)))))) ([f coll]
    (new LazySeq nil (fn* [] (let [lazy-when-value__635 (seq coll)] (if lazy-when-value__635 (let [s lazy-when-value__635] (if (chunked-seq? s)
         (let [c (chunk-first s)
-              ^long size (count c)
+              size (suss.bootstrap/long-cast (count c))
               ^objects input-array (suss.bootstrap/chunk-array c)
-              ^long input-offset (if (suss.bootstrap/undefined? input-array)
+              input-offset (if (suss.bootstrap/undefined? input-array)
                                    0
-                                   (suss.bootstrap/chunk-offset c))
+                                   (suss.bootstrap/long-cast (suss.bootstrap/chunk-offset c)))
               ^objects b (suss.bootstrap/packed-array 6 size)]
           (loop [i 0]
             (when (cljs.core/< i size)
@@ -6210,11 +6210,11 @@
              result))))) ([pred coll]
    (new LazySeq nil (fn* [] (let [lazy-when-value__420 (seq coll)] (if lazy-when-value__420 (let [s lazy-when-value__420] (if (chunked-seq? s)
         (let [c (chunk-first s)
-              ^long size (count c)
+              size (suss.bootstrap/long-cast (count c))
               ^objects input-array (suss.bootstrap/chunk-array c)
-              ^long input-offset (if (suss.bootstrap/undefined? input-array)
+              input-offset (if (suss.bootstrap/undefined? input-array)
                                    0
-                                   (suss.bootstrap/chunk-offset c))
+                                   (suss.bootstrap/long-cast (suss.bootstrap/chunk-offset c)))
               ^objects b (suss.bootstrap/packed-array 6 size)
               kept (loop [i 0 j 0]
                      (if (cljs.core/< i size)
@@ -6632,7 +6632,7 @@
   ([x & ys]
    (let [^objects a (suss.bootstrap/packed-array 6 8)]
      (aset a 0 (str x))
-     (loop [^objects a a ^long n 1 ys ys]
+     (loop [^objects a a n 1 ys ys]
        (if ys
          (let [c (suss.bootstrap/chunk-seq ys)
                ^objects input-array (if (suss.bootstrap/undefined? c)
@@ -6640,9 +6640,9 @@
                                       (suss.bootstrap/chunk-array c))]
            (if (and (not (suss.bootstrap/undefined? input-array))
                     (> (count c) 0))
-             (let [^long size (count c)
-                   ^long off (suss.bootstrap/chunk-offset c)
-                   state (loop [^objects a a ^long n n i 0]
+             (let [size (suss.bootstrap/long-cast (count c))
+                   off (suss.bootstrap/long-cast (suss.bootstrap/chunk-offset c))
+                   state (loop [^objects a a n n i 0]
                            (if (< i size)
                              (let [^objects a (if (< n (alength a))
                                                 a
@@ -6652,7 +6652,7 @@
                              [a n]))]
                ;; Core ChunkedCons.next calls -seq on more exactly when
                ;; its current chunk is exhausted. Preserve that boundary.
-               (recur (nth state 0) (nth state 1)
+               (recur (nth state 0) (suss.bootstrap/long-cast (nth state 1))
                       (let [more (-chunked-next ys)]
                         (if (suss.bootstrap/nil? more) nil (-seq more)))))
              ;; Custom sequence/chunk methods retain first/next traversal.
