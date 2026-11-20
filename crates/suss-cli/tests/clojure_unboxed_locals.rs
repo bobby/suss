@@ -228,14 +228,24 @@ fn guarded_numeric_comparisons_keep_redefinitions_and_evaluation_order() {
     let mut sessions = sessions();
     for session in &mut sessions {
         session.eval("(def comparison-trace (atom []))
-          (def comparison-left (fn ^long [x] (swap! comparison-trace conj :left) x))
-          (def comparison-right (fn ^double [x] (swap! comparison-trace conj :right) x))
+          (def ^{:arglists '(^long [x])} comparison-left (fn ^long [x] (swap! comparison-trace conj :left) x))
+          (def ^{:arglists '(^double [x])} comparison-right (fn ^double [x] (swap! comparison-trace conj :right) x))
           (def comparison-pair (fn [x y]
             (let [a (comparison-left x) b (comparison-right y)]
               [(< a b) (<= a b) (> a b) (>= a b) (== a b)])))").unwrap();
     }
     assert_eq!(outcome(&mut sessions, "[(comparison-pair 2 2.5) @comparison-trace]"),
         "[[true true false false false] [:left :right]]");
+    assert_eq!(outcome(&mut sessions, "(comparison-pair 2 ##NaN)"),
+        "[false false false false false]");
+    assert_eq!(outcome(&mut sessions, "(comparison-pair 0 -0.0)"),
+        "[false true false true true]");
+    for session in &mut sessions {
+        session.eval("(def comparison-wide (fn [x y]
+            (< (comparison-left x) (comparison-left y))))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions,
+        "(comparison-wide 9007199254740992 9007199254740993)"), "true");
     for session in &mut sessions {
         session.eval("(def comparison-left (fn [x] (swap! comparison-trace conj :left) \"v\"))").unwrap();
     }
@@ -295,7 +305,7 @@ fn core_known_numeric_math_keeps_overflow_nan_zero_and_coercing_fallbacks() {
           (loop [x 0 i 0] (if (< i 1) (recur \"x\" (inc i)) (+ x 1)))]"),
         "[\"x1\" true 1.0 2.0 false \"x1\"]");
     for session in &mut sessions {
-        session.eval("(def core-hinted-result (fn ^long [^long x] (+ x 1)))
+        session.eval("(def ^{:arglists '(^long [^long x])} core-hinted-result (fn ^long [^long x] (+ x 1)))
             (def core-use-hinted-result (fn [x] (+ (core-hinted-result x) 1)))
             (def core-compare-hinted-result (fn [x]
               (let [n (core-hinted-result x)]
@@ -319,8 +329,8 @@ fn core_known_numeric_math_keeps_overflow_nan_zero_and_coercing_fallbacks() {
     assert_eq!(outcome(&mut sessions, "(core-use-hinted-result 2)"), "1.0");
     assert_eq!(outcome(&mut sessions, "(core-compare-hinted-result 2)"), "[true false true false false]");
     for session in &mut sessions {
-        session.eval("(def core-hinted-left (fn ^long [x] x))
-          (def core-hinted-right (fn ^double [x] x))
+        session.eval("(def ^{:arglists '(^long [x])} core-hinted-left (fn ^long [x] x))
+          (def ^{:arglists '(^double [x])} core-hinted-right (fn ^double [x] x))
           (def core-compare-two-hints (fn [x y] (< (core-hinted-left x) (core-hinted-right y))))").unwrap();
     }
     assert_eq!(outcome(&mut sessions, "(core-compare-two-hints 1 2.0)"), "true");
