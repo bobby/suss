@@ -164,9 +164,13 @@ fn raw_int32(operation: Bitwise, count: usize) -> Option<Instruction<'static>> {
     })
 }
 fn bitwise(operation: Bitwise, arguments: &[Lattice]) -> Lattice {
+    // ToInt32 produces a long or throws even when its input is boxed. Keep
+    // that result fact without bypassing the boxed operand conversions.
+    if raw_int32(operation, arguments.len()).is_some() {
+        return Lattice::Known(Repr::Long);
+    }
     let test = operation == Bitwise::Test && arguments.len() == 2;
-    if (test || raw_bitwise(operation, arguments.len()).is_some()
-        || raw_int32(operation, arguments.len()).is_some())
+    if (test || raw_bitwise(operation, arguments.len()).is_some())
         && arguments.iter().all(|argument| matches!(argument, Lattice::Top | Lattice::Known(Repr::Long)))
     {
         if arguments.iter().all(|argument| *argument == Lattice::Top) {
@@ -362,7 +366,11 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
             {
                 raw_use[arguments[0].0] = true;
             }
-            if repr[instruction.result.0] != Repr::Boxed
+            let boxed_int32 = matches!(&instruction.operation,
+                Operation::Bitwise { operation, arguments }
+                if raw_int32(*operation, arguments.len()).is_some()
+                    && arguments.iter().any(|argument| repr[argument.0] != Repr::Long));
+            if repr[instruction.result.0] != Repr::Boxed && !boxed_int32
                 && matches!(
                     instruction.operation,
                     Operation::Arithmetic { .. } | Operation::Comparison { .. } | Operation::Bitwise { .. }
@@ -893,6 +901,12 @@ pub(super) fn raw_small(locals: &Locals, instruction: &ir::Instruction) -> bool 
 
 /// Whether an instruction is emitted inline on raw values.
 pub(super) fn inline(locals: &Locals, instruction: &ir::Instruction) -> bool {
+    if let Operation::Bitwise { operation, arguments } = &instruction.operation
+        && raw_int32(*operation, arguments.len()).is_some()
+        && arguments.iter().any(|argument| locals.of(*argument) != Repr::Long)
+    {
+        return false;
+    }
     locals.of(instruction.result) != Repr::Boxed
         && matches!(
             instruction.operation,

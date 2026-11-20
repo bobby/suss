@@ -212,6 +212,15 @@ fn core_int32_operations_keep_low_bits_shift_masks_and_signed_results() {
           (bit-and ##NaN 3) (bit-shift-right-zero-fill ##Inf 1)
           (loop [x 4294967297 i 0] (if (< i 2) (recur (bit-shift-left x 1) (inc i)) x))]"),
         "[1 3 0 0 4]");
+    for session in &mut sessions {
+        session.eval("(def core-boxed-chain (fn [x]
+            (let [a (bit-shift-right-zero-fill x 0) b (+ a 1)]
+              [(< a b) (bit-and b 255) a b a])))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions,
+        "(mapv core-boxed-chain [4294967295 9007199254740993 1.5 ##NaN \"2\"] )"),
+        "[[true 0 4294967295 4294967296 4294967295] \
+          [true 2 1 2 1] [true 2 1 2 1] [true 1 0 1 0] [true 3 2 3 2]]");
 }
 
 #[test]
