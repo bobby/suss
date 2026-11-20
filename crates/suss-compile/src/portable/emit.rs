@@ -3404,8 +3404,11 @@ fn emit_function(
                             // The inline path, or out to the generic one.
                             code.extend([Block(BlockType::Result(result)), Block(BlockType::Empty)]);
                             match locals.of(position) {
-                                unboxed::Repr::Long => {
+                                unboxed::Repr::Long | unboxed::Repr::MaybeLong => {
                                     // Unsigned, so a negative index is out of range.
+                                    if locals.of(position).maybe() {
+                                        code.extend([LocalGet(locals.valid(position)), I32Eqz, BrIf(0)]);
+                                    }
                                     let raw = locals.raw(position);
                                     code.extend([LocalGet(raw), I32WrapI64, LocalSet(field_index_local),
                                         LocalGet(typed), ArrayLen, I64ExtendI32U, LocalGet(raw), I64LeU, BrIf(0)]);
@@ -3537,7 +3540,7 @@ fn emit_function(
                         Nominal::LongView => {
                             let input = arguments[0].0 as u32 + offset;
                             let output = inst.result.0 as u32 + offset;
-                            function.instruction(&LocalGet(input)).instruction(&LocalSet(output));
+                            function.instruction(&LocalGet(input)).instruction(&LocalTee(output));
                             if locals.of(inst.result).maybe() {
                                 code.extend([LocalGet(output), RefTestNonNull(HeapType::I31),
                                     If(BlockType::Empty), LocalGet(output), RefCastNonNull(HeapType::I31),

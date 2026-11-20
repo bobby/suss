@@ -38,6 +38,8 @@ fn sessions() -> [Session; 2] {
 fn long_views_keep_original_values_references_and_capture_roots() {
     let mut sessions = sessions();
     for session in &mut sessions {
+        let error = session.eval("(suss.bootstrap/long-view 1)").unwrap_err().to_string();
+        assert!(error.contains("Private numeric views require compiled core"), "{error}");
         session.eval("(ns suss.core)
           (def view-values [nil false true 0 1073741824 3000000000 -9223372036854775808
                             1.5 ##NaN ##Inf \"v\" :k [] {} (atom 1)])
@@ -89,6 +91,32 @@ fn long_view_consumers_keep_numeric_hits_and_boxed_fallback_effects() {
         "(loop [x (suss.bootstrap/long-view 0) i 0]
            (if (< i 1) (recur (suss.bootstrap/long-view \"x\") (inc i)) (+ x 1)))"),
         "\"x1\"");
+}
+
+#[test]
+fn long_view_array_indices_keep_aliases_bounds_and_fallbacks() {
+    let mut sessions = sessions();
+    for session in &mut sessions {
+        session.eval("(ns suss.core)
+            (def view-array (object-array [10 20 30]))
+            (def view-longs (long-array [10 20 30]))
+            (def view-read (fn [a i] (aget ^objects a (suss.bootstrap/long-view i))))
+            (def plain-read (fn [a i] (aget ^objects a i)))
+            (def view-read-long (fn [a i] (aget ^longs a (suss.bootstrap/long-view i))))
+            (def plain-read-long (fn [a i] (aget ^longs a i)))
+            (def view-write (fn [a i x] (aset ^objects a (suss.bootstrap/long-view i) x)))").unwrap();
+    }
+    for index in ["0", "2", "-1", "3", "4294967296", "1.0", "1.5", "\"1\"", "nil"] {
+        for (view, plain, array) in [("view-read", "plain-read", "view-array"),
+                                     ("view-read-long", "plain-read-long", "view-longs")] {
+            let expected = outcome(&mut sessions, &format!("({plain} {array} {index})"));
+            assert_eq!(outcome(&mut sessions, &format!("({view} {array} {index})")), expected);
+        }
+    }
+    for session in &mut sessions { session.collect().unwrap(); }
+    assert_eq!(outcome(&mut sessions,
+        "[(view-write view-array 1 :changed) (view-read view-array 1)]"),
+        "[:changed :changed]");
 }
 
 /// Each `(unboxed, boxed, expected)` case gives `expected` on both paths.
