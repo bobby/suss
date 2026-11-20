@@ -3621,7 +3621,7 @@
 
 (deftype Box [^:mutable val])
 
-(def ^:private mask (fn [hash shift]
+(def ^:private mask (fn ^long [hash shift]
   (bit-and (bit-shift-right-zero-fill hash shift) 0x01f)))
 
 (def ^:private clone-and-set

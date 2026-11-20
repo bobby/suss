@@ -240,6 +240,13 @@ fn core_int32_operations_keep_low_bits_shift_masks_and_signed_results() {
     assert_eq!(outcome(&mut sessions,
         "(do (reset! core-bits-calls []) (core-bits-guarded 1.5 0) @core-bits-calls)"),
         "[:left :right]");
+    for session in &mut sessions {
+        session.eval("(def core-bits-left
+          (fn ^long [x] (swap! core-bits-calls conj :left) x))").unwrap();
+        session.collect().unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-bits-guarded 4294967295 0)"),
+        "[-1 -1 -1 0 -2147483648 -1 1 1 32]");
     assert_eq!(outcome(&mut sessions,
         "[(let [x (if (identity true) 1.5 1)] (bit-and x 3))
           (let [x (if (identity true) -1.5 1)] (bit-and x 3))
