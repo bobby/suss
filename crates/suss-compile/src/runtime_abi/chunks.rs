@@ -5,10 +5,11 @@ use Instruction::*;
 
 const ARRAY_CHUNK: u32 = apply::GLOBAL_LIMIT;
 const CHUNK_BUFFER: u32 = ARRAY_CHUNK + 1;
+const CHUNKED_CONS: u32 = CHUNK_BUFFER + 1;
 
 pub(super) fn append_globals(globals: &mut GlobalSection) {
     assert_eq!(globals.len(), ARRAY_CHUNK);
-    for _ in 0..2 {
+    for _ in 0..3 {
         globals.global(GlobalType { val_type: VALUE, mutable: true, shared: false },
             &ConstExpr::extended([sentinel_value(NIL)]));
     }
@@ -47,15 +48,27 @@ fn declined(code: &mut Vec<Instruction<'static>>) {
 }
 
 pub(super) fn functions(b: &mut Builder) {
-    // Stage both descriptors before publication. The instances are only
+    // Stage all descriptors before publication. The instances are only
     // witnesses supplied by the owned core loader; they need not be retained.
     let mut code = vec![];
-    for i in 0..2 {
+    for i in 0..3 {
         code.extend([LocalGet(i), RefCastNonNull(HeapType::Concrete(OBJECT)),
-            StructGet { struct_type_index: OBJECT, field_index: 0 }, LocalSet(i + 2)]);
+            StructGet { struct_type_index: OBJECT, field_index: 0 }, LocalSet(i + 3)]);
     }
-    code.extend([LocalGet(2), GlobalSet(ARRAY_CHUNK), LocalGet(3), GlobalSet(CHUNK_BUFFER), sentinel_value(NIL)]);
-    b.function_with_locals("chunk-types-register", &[VALUE; 2], &[VALUE], &[(2, VALUE)], &code);
+    code.extend([LocalGet(3), GlobalSet(ARRAY_CHUNK), LocalGet(4), GlobalSet(CHUNK_BUFFER),
+        LocalGet(5), GlobalSet(CHUNKED_CONS), sentinel_value(NIL)]);
+    b.function_with_locals("chunk-types-register", &[VALUE; 3], &[VALUE], &[(3, VALUE)], &code);
+
+    // Admit the core sequence wrapper before using chunk APIs in str.
+    // A user IChunkedSeq may expose different first/next effects; it must
+    // retain the generic traversal even if its chunk is an ArrayChunk.
+    code = vec![Block(BlockType::Result(VALUE))];
+    fields(&mut code, CHUNKED_CONS, 4);
+    field(&mut code, 0);
+    code.push(Return);
+    declined(&mut code);
+    b.function_with_locals("chunk-seq", &[VALUE], &[VALUE],
+        &[(1, VALUE), (1, nullable(OBJECT)), (1, nullable(ARGS))], &code);
 
     // Parameters: chunk/index. Locals: object, fields, Object[] storage,
     // index, offset and their sum. No callbacks or allocations intervene.
@@ -77,6 +90,38 @@ pub(super) fn functions(b: &mut Builder) {
     declined(&mut code);
     b.function_with_locals("chunk-nth", &[VALUE; 2], &[VALUE],
         &[(1, nullable(OBJECT)), (2, nullable(ARGS)), (3, ValType::I32)], &code);
+
+    // A canonical, well-formed Object[] window can use a loop-invariant
+    // typed array view. Its storage and offset/end fields are immutable;
+    // element reads stay inside the loop, after the preceding callback.
+    code = vec![Block(BlockType::Result(VALUE))];
+    fields(&mut code, ARRAY_CHUNK, 3);
+    field(&mut code, 1);
+    code.extend([cast(i31), I31GetS, LocalSet(5)]);
+    field(&mut code, 2);
+    code.extend([cast(i31), I31GetS, LocalSet(6),
+        LocalGet(5), LocalGet(6), I32Or, I32Const(0), I32LtS]);
+    decline_if(&mut code);
+    code.extend([LocalGet(5), LocalGet(6), I32GtU]);
+    decline_if(&mut code);
+    storage(&mut code);
+    code.extend([LocalGet(6), LocalGet(4), RefAsNonNull, ArrayLen, I32GtU]);
+    decline_if(&mut code);
+    field(&mut code, 0);
+    code.push(Return);
+    declined(&mut code);
+    b.function_with_locals("chunk-array", &[VALUE], &[VALUE],
+        &[(1, VALUE), (1, nullable(OBJECT)), (2, nullable(ARGS)), (2, ValType::I32)], &code);
+
+    // Called once after chunk-array admits a window. Keep independent
+    // private calls checked too, without invoking a protocol or callback.
+    code = vec![Block(BlockType::Result(VALUE))];
+    fields(&mut code, ARRAY_CHUNK, 3);
+    field(&mut code, 1);
+    code.extend([cast(i31), Return]);
+    declined(&mut code);
+    b.function_with_locals("chunk-offset", &[VALUE], &[VALUE],
+        &[(1, VALUE), (1, nullable(OBJECT)), (1, nullable(ARGS))], &code);
 
     // Parameters: buffer/value. Same three rooted references, then its end.
     // A failed range declines before writes; source add increments before

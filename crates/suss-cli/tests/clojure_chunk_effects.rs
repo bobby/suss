@@ -120,3 +120,68 @@ fn native_chunk_roots_and_shallow_elements_survive_gc() {
           "[true 1]");
     }
 }
+
+#[test]
+fn chunk_views_read_future_elements_after_callbacks_and_keep_reduced_demand() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        assert_eq!(printed(&mut session, r#"
+          [(let [a (object-array [99 nil 2 3]) events (atom [])]
+             [(vec (map (fn [x] (swap! events conj x)
+                                   (when (nil? x) (aset a 2 20)) x)
+                        (chunk-cons (array-chunk a 1 4) nil))) @events])
+           (let [a (object-array [99 nil 2 3]) events (atom [])]
+             [(vec (filter (fn [x] (swap! events conj x)
+                                      (when (nil? x) (aset a 2 20)) true)
+                           (chunk-cons (array-chunk a 1 4) nil))) @events])
+           (let [a (object-array [99 nil 2 3]) events (atom [])
+                 more (LazySeq. nil (fn [] (swap! events conj :tail) (list 999)) nil nil)]
+             [(reduce (fn [acc x] (swap! events conj x)
+                                  (when (nil? x) (aset a 2 20))
+                                  (if (= x 20) (reduced (conj acc x)) (conj acc x)))
+                      [] (chunk-cons (array-chunk a 1 4) more)) @events])]"#),
+          "[[[nil 20 3] [nil 20 3]] [[nil 20 3] [nil 20 3]] [[nil 20] [nil 20]]]");
+    }
+}
+
+#[test]
+fn chunk_storage_views_decline_unsupported_windows_and_keep_aliases_after_gc() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval("(def view-array (object-array [0 nil 2]))
+                      (def view-chunk (array-chunk view-array 1 2))").unwrap();
+        session.collect().unwrap();
+        assert_eq!(printed_in(&mut session, r#"
+          [(identical? (suss.bootstrap/chunk-array view-chunk) view-array)
+           (suss.bootstrap/chunk-offset view-chunk)
+           (aget (suss.bootstrap/chunk-array view-chunk) 1)
+           (suss.bootstrap/undefined? (suss.bootstrap/chunk-array nil))
+           (suss.bootstrap/undefined? (suss.bootstrap/chunk-array
+                                       (array-chunk (long-array [1 2]))))
+           (suss.bootstrap/undefined? (suss.bootstrap/chunk-array
+                                       (array-chunk view-array -1 2)))
+           (suss.bootstrap/undefined? (suss.bootstrap/chunk-array
+                                       (array-chunk view-array 1 4)))]"#, true),
+          "[true 1 nil true true true true]");
+    }
+}
+
+#[test]
+fn invalid_chunk_windows_keep_callbacks_before_the_first_bad_read() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        assert_eq!(printed(&mut session, r#"
+          [(let [events (atom []) c (array-chunk (object-array [1 2]) 0 3)
+                 threw (try (vec (map (fn [x] (swap! events conj x) x)
+                                      (chunk-cons c nil)))
+                            false (catch :default e true))]
+             [threw @events])
+           (let [events (atom []) c (array-chunk (object-array [1 2]) 0 3)
+                 threw (try (vec (filter (fn [x] (swap! events conj x) true)
+                                         (chunk-cons c nil)))
+                            false (catch :default e true))]
+             [threw @events])
+           (let [events (atom []) c (array-chunk (object-array [1 2]) 0 3)
+                 threw (try (reduce (fn [acc x] (swap! events conj x) (conj acc x))
+                                    [] (chunk-cons c nil))
+                            false (catch :default e true))]
+             [threw @events])]"#), "[[true [1 2]] [true [1 2]] [true [1 2]]]");
+    }
+}

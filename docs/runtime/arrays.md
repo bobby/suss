@@ -121,18 +121,18 @@ those inputs. All source arguments are still evaluated once, left to right.
 
 ## Canonical chunk adapters
 
-The owned loader registers ArrayChunk and ChunkBuffer descriptor witnesses after
-core definitions exist. Two private globals are appended after existing runtime
+The owned loader registers ArrayChunk, ChunkBuffer and ChunkedCons descriptor
+witnesses after core definitions exist. Three private globals follow existing runtime
 globals; shared ABI 7 types and prior global offsets are unchanged. Registration
-stages both descriptors before publishing either.
+stages all descriptors before publishing any.
 
 `chunk-nth(chunk, index)` reads canonical ArrayChunk Object[] storage when its
 index/offset are nonnegative i31s and their sum is within the underlying array.
 Two-argument indexed access deliberately uses the array bounds rather than the
 chunk end, matching JVM ArrayChunk. Nil is a successful element, not a cache miss.
-Unsupported receivers, storage, indices or ranges return internal undefined;
-map/filter then perform their original protocol read. Custom chunk effects and
-primitive-backed implementation paths remain on that fallback.
+Unsupported receivers, storage, indices or ranges return internal undefined.
+Custom chunk effects and primitive-backed implementation paths retain source
+protocol dispatch.
 
 `chunk-buffer-append(buffer, value)` admits a canonical buffer with Object[]
 storage, an in-bounds nonnegative i31 end and an increment representable as i31.
@@ -142,8 +142,27 @@ including incrementing before bounds/null errors. Typed locals root the object,
 fields and storage; neither adapter allocates or invokes a callback between its
 checks and access. Existing globals are never relocated or reused.
 
-Map/filter widen their chunk count to a primitive local long once before the
-loop. This uses the JVM Counted integer contract without adding a primitive
-function entry at every helper call. Filter captures an item before its predicate
-and appends that same value; helper admission does not move reads across user
-callbacks. Core direct-linking and built-in ownership rules remain in force.
+`chunk-array(chunk)` admits only a canonical ArrayChunk with Object[] storage
+and nonnegative i31 offset/end satisfying `offset <= end <= array length`.
+It returns the original packed array, not a copy. `chunk-offset(chunk)` reads
+the immutable offset. Map/filter and seq-reduce use these once per chunk to
+obtain a typed storage view and primitive loop bounds. An unsupported window
+uses its original indexed protocol reads. Only immutable metadata and storage
+references are hoisted; each element is read immediately before its callback.
+
+Map/filter fill an owned Object[] directly and publish its ArrayChunk after
+the ordered callbacks complete. Their output buffer is private to the thunk;
+no callback can observe a ChunkBuffer instance or its intermediate count.
+Filter captures an item before its predicate, then stores that same value at
+its compacted output index. Seq-reduce retains reduced short-circuiting.
+
+`chunk-seq(seq)` admits a canonical ChunkedCons and returns its chunk. Str's
+variadic traversal uses the array window only after both this receiver guard
+and chunk-array succeed, with a nonempty window. At the boundary it calls
+`-seq` on more, as ChunkedCons.next does. Custom sequence/chunk receivers and
+unsupported windows keep first/next traversal, including their method effects.
+Geometric output growth and the final single string join remain; one temporary
+pair per admitted chunk replaces per-element chunk/sequence wrappers.
+
+Typed array views, references and loop state remain GC roots across callbacks.
+Core direct-linking and built-in ownership rules remain in force.

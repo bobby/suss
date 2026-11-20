@@ -12,7 +12,9 @@ shared probe reduces chunk-cons, since JVM ArrayChunk itself is not seqable.
 Core changes belong in replacement JSON or the owned loader source, followed by
 core_import.py and apply_bootstrap.py --check. The focused release suites are
 clojure_chunk_effects, apply_fixed_arity, portable_chunk_effects,
-portable_lazy_transformations and portable_lazy_sequences. Use cargo +stable,
+portable_lazy_transformations, portable_lazy_sequences and portable_str_concat.
+The mutation/bounds/custom-sequence JVM adapter is
+target/probe/m15-chunk-next-mutation-oracle.clj. Use cargo +stable,
 CARGO_BUILD_JOBS=2, --test-threads=2 and a 4GiB systemd scope; the isolated Cargo
 target is target/probe/m15-hamt-target. Named builds and compiles both need
 SUSS_FUNCTION_NAMES=1. Keep TMPDIR and probe output under target/probe.
