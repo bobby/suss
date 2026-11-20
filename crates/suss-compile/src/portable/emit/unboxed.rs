@@ -719,17 +719,12 @@ impl Locals {
         let (lower, upper) = if c > 0 { (min / c, max / c) } else { (max / c, min / c) };
         let (lower, upper) = (lower.max(min) as i64, upper.min(max) as i64);
         let raw = self.raw(value);
-        let mut checks = 0;
-        if lower != i64::MIN {
-            code.extend([LocalGet(raw), I64Const(lower), I64LtS]);
-            checks += 1;
-        }
-        if upper != i64::MAX {
-            code.extend([LocalGet(raw), I64Const(upper), I64GtS]);
-            if checks > 0 { code.push(I32Or); }
-            checks += 1;
-        }
-        if checks > 0 {
+        if lower != i64::MIN || upper != i64::MAX {
+            // Translate the inclusive signed interval into an unsigned one.
+            // Wasm's wrapping subtraction also places every value below the
+            // lower bound above its width, so one comparison checks both ends.
+            code.extend([LocalGet(raw), I64Const(lower), I64Sub,
+                I64Const((upper as i128 - lower as i128) as i64), I64GtU]);
             code.push(If(BlockType::Empty));
             self.slow(code, arguments, slow);
             code.push(End);
