@@ -249,6 +249,7 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
                 }
                 Operation::Nominal { operation: super::super::hir::Nominal::LongCast | super::super::hir::Nominal::UncheckedLongCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Long),
                 Operation::Nominal { operation: super::super::hir::Nominal::DoubleCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Double),
+                Operation::Nominal { operation: Nominal::LongView, .. } => state[instruction.result.0] = Lattice::Known(Repr::MaybeLong),
                 // A hinted aget's element, behind its checked cast (#389).
                 // An object array's element is a value (#378).
                 Operation::Nominal { operation: super::super::hir::Nominal::PackedGet(kind), .. } if *kind != 6 => {
@@ -464,13 +465,23 @@ pub(super) struct Locals {
     pub repr: Vec<Repr>,
     raw: Vec<Option<u32>>,
     valid: Vec<Option<u32>>,
+    /// Identity views retain their original GC value on both guard arms.
+    preboxed: Vec<bool>,
     pub declarations: Vec<(u32, ValType)>,
     /// GC locals are `value + offset`.
     offset: u32,
     sentinels: u32,
 }
 impl Locals {
-    pub(super) fn new(repr: Vec<Repr>, base: u32, offset: u32, sentinels: u32) -> Self {
+    pub(super) fn new(repr: Vec<Repr>, function: &Function, base: u32, offset: u32, sentinels: u32) -> Self {
+        let mut preboxed = vec![false; repr.len()];
+        for block in &function.blocks {
+            for instruction in &block.instructions {
+                if matches!(instruction.operation, Operation::Nominal { operation: Nominal::LongView, .. }) {
+                    preboxed[instruction.result.0] = true;
+                }
+            }
+        }
         let mut raw = vec![None; repr.len()];
         let mut declarations = Vec::new();
         let mut next = base;
@@ -493,7 +504,7 @@ impl Locals {
             if item.maybe() { valid[value] = Some(next); next += 1; }
         }
         if next > start { declarations.push((next - start, ValType::I32)); }
-        Self { repr, raw, valid, declarations, offset, sentinels }
+        Self { repr, raw, valid, preboxed, declarations, offset, sentinels }
     }
     pub(super) fn of(&self, value: ValueId) -> Repr {
         self.repr[value.0]
@@ -519,6 +530,10 @@ impl Locals {
     }
     /// Pushes `value` as a GC value, boxing a raw one.
     pub(super) fn push_boxed(&self, code: &mut Vec<Instruction<'static>>, value: ValueId) {
+        if self.preboxed[value.0] {
+            code.push(Instruction::LocalGet(self.boxed(value)));
+            return;
+        }
         self.push_kind_boxed(code, value, self.of(value));
     }
     fn push_kind_boxed(&self, code: &mut Vec<Instruction<'static>>, value: ValueId, kind: Repr) {
@@ -563,6 +578,7 @@ impl Locals {
         done: &mut std::collections::HashSet<usize>,
     ) {
         for value in operands {
+            if self.preboxed[value.0] { done.insert(value.0); continue; }
             if self.of(*value) != Repr::Boxed && done.insert(value.0) {
                 self.push_boxed(code, *value);
                 code.push(Instruction::LocalSet(self.boxed(*value)));

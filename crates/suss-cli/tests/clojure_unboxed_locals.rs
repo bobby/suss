@@ -33,6 +33,64 @@ fn outcome(sessions: &mut [Session; 2], source: &str) -> String {
 fn sessions() -> [Session; 2] {
     [Session::new_repl().unwrap(), Session::new_macro().unwrap()]
 }
+
+#[test]
+fn long_views_keep_original_values_references_and_capture_roots() {
+    let mut sessions = sessions();
+    for session in &mut sessions {
+        session.eval("(ns suss.core)
+          (def view-values [nil false true 0 1073741824 3000000000 -9223372036854775808
+                            1.5 ##NaN ##Inf \"v\" :k [] {} (atom 1)])
+          (def view-id (fn [x] (suss.bootstrap/long-view x)))
+          (def view-capture (fn [x] (let [v (suss.bootstrap/long-view x)] (fn [] v))))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions,
+        "(mapv (fn [x] (suss.bootstrap/same-reference? x (view-id x))) view-values)"),
+        "[true true true true true true true true true true true true true true true]");
+    assert_eq!(outcome(&mut sessions,
+        "(mapv (fn [x] (suss.bootstrap/same-reference? x ((view-capture x)))) view-values)"),
+        "[true true true true true true true true true true true true true true true]");
+    for session in &mut sessions {
+        session.eval("(def view-original (identity 3000000000))
+            (def view-root (view-capture view-original))
+            (def view-double (fn ^double [^long x] (suss.bootstrap/long-view x)))").unwrap();
+        session.collect().unwrap();
+    }
+    assert_eq!(outcome(&mut sessions,
+        "[(suss.bootstrap/same-reference? view-original (view-root)) (view-double 2)]"),
+        "[true 2.0]");
+}
+
+#[test]
+fn long_view_consumers_keep_numeric_hits_and_boxed_fallback_effects() {
+    let mut sessions = sessions();
+    let operations = "[(try (+ a b) (catch :default e (ex-message e)))
+                       (try (* a b) (catch :default e (ex-message e)))
+                       (< a b) (bit-and a b)]";
+    for session in &mut sessions {
+        session.eval("(ns suss.core)").unwrap();
+        session.eval(&format!(
+            "(def viewed (fn [x y] (let [a (suss.bootstrap/long-view x)
+                                        b (suss.bootstrap/long-view y)] {operations})))
+             (def unviewed (fn [a b] {operations}))"
+        )).unwrap();
+    }
+    for pair in ["[6 2]", "[3000000000 4]", "[9223372036854775807 2]",
+                 "[1.5 2.0]", "[##NaN 1]", "[\"x\" 2]", "[false 2]", "[nil 2]"] {
+        let expected = outcome(&mut sessions, &format!("(unviewed (nth {pair} 0) (nth {pair} 1))"));
+        assert_eq!(outcome(&mut sessions, &format!("(viewed (nth {pair} 0) (nth {pair} 1))")), expected);
+    }
+    assert_eq!(outcome(&mut sessions,
+        "(let [seen (atom [])]
+           [(+ (suss.bootstrap/long-view (do (swap! seen conj :left) 2))
+               (suss.bootstrap/long-view (do (swap! seen conj :right) 3))) @seen])"),
+        "[5 [:left :right]]");
+    assert_eq!(outcome(&mut sessions,
+        "(loop [x (suss.bootstrap/long-view 0) i 0]
+           (if (< i 1) (recur (suss.bootstrap/long-view \"x\") (inc i)) (+ x 1)))"),
+        "\"x1\"");
+}
+
 /// Each `(unboxed, boxed, expected)` case gives `expected` on both paths.
 fn check(cases: &[(&str, &str, &str)]) {
     let mut sessions = sessions();

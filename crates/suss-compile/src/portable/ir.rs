@@ -1328,7 +1328,7 @@ fn loop_safe(operation: &Operation) -> bool {
                 N::IsNumber | N::IsLongValue | N::PackedGet(_) | N::PackedSet(_) | N::StringHash
                     | N::VectorNth | N::ArrayMapGet | N::MapContains | N::MapGetOr | N::MapAssoc | N::LongCast | N::DoubleCast | N::UncheckedLongCast | N::StringAppendLong | N::IsKeyword
                     | N::IsString | N::IsBoolean | N::IsUndefined | N::Identical | N::AllSmallIntegers | N::NumberHash
-                    | N::IsObject | N::SameReference | N::IsDescriptor | N::IsClosure | N::Array
+                    | N::IsObject | N::SameReference | N::IsDescriptor | N::IsClosure | N::Array | N::LongView
                     | N::Instance | N::SameNominalType | N::Field(_) | N::FieldSet(_)
                     | N::IsNativeObject | N::IsTypeConstructor | N::IsLanguageError | N::LanguageError
                     | N::StringIndexOf | N::StringSlice | N::StringFromUnit | N::ConcatString | N::JoinStrings

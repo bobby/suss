@@ -336,6 +336,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::LongCast => { names.insert("number-cast-long"); }
                         Nominal::UncheckedLongCast => { names.insert("number-cast-unchecked-long"); }
                         Nominal::DoubleCast => { names.insert("number-cast-double"); }
+                        Nominal::LongView => {}
                         Nominal::PackedGet(_) => {
                             names.insert("packed-array-get-2");
                             names.insert("language-error-new");
@@ -2018,7 +2019,7 @@ fn emit_function(
     }
     let raw_result = signature.filter(|signature| signature.result != super::primitive::Kind::Boxed)
         .map(|signature| primitive::repr(signature.result));
-    let locals = unboxed::Locals::new(unboxed::infer(ir, continuation.is_some(), &entry_reprs, raw_result), pc + 1, offset, sentinels);
+    let locals = unboxed::Locals::new(unboxed::infer(ir, continuation.is_some(), &entry_reprs, raw_result), ir, pc + 1, offset, sentinels);
     if let Some(expected) = raw_result {
         for block in &ir.blocks {
             if let Terminator::Return(value) = block.terminator && locals.of(value) != expected {
@@ -3531,6 +3532,26 @@ fn emit_function(
                             }
                             for instruction in code {
                                 function.instruction(&instruction);
+                            }
+                        }
+                        Nominal::LongView => {
+                            let input = arguments[0].0 as u32 + offset;
+                            let output = inst.result.0 as u32 + offset;
+                            function.instruction(&LocalGet(input)).instruction(&LocalSet(output));
+                            if locals.of(inst.result).maybe() {
+                                code.extend([LocalGet(output), RefTestNonNull(HeapType::I31),
+                                    If(BlockType::Empty), LocalGet(output), RefCastNonNull(HeapType::I31),
+                                    I31GetS, I64ExtendI32S, LocalSet(locals.raw(inst.result)),
+                                    I32Const(1), LocalSet(locals.valid(inst.result)), Else,
+                                    LocalGet(output), RefTestNonNull(HeapType::Concrete(runtime_abi::LONG)),
+                                    If(BlockType::Empty), LocalGet(output),
+                                    RefCastNonNull(HeapType::Concrete(runtime_abi::LONG)),
+                                    StructGet { struct_type_index: runtime_abi::LONG, field_index: 0 },
+                                    LocalSet(locals.raw(inst.result)), I32Const(1),
+                                    LocalSet(locals.valid(inst.result)), Else, I32Const(0),
+                                    LocalSet(locals.valid(inst.result)), End, End]);
+                                for instruction in code.drain(..) { function.instruction(&instruction); }
+                                boxed.insert(inst.result.0);
                             }
                         }
                         Nominal::LongCast | Nominal::DoubleCast | Nominal::UncheckedLongCast => {
