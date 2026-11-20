@@ -28,6 +28,38 @@ fn assert_printed(source: &str, expected: &str) {
         assert_eq!(actual, expected, "{source}");
     }
 }
+
+/// Executed JVM Clojure 1.12.6 observations. Parity cannot round a wide
+/// long through binary64, accept an integral double, or evaluate twice.
+#[test]
+fn parity_keeps_wide_longs_rejects_nonintegers_and_evaluates_once() {
+    assert_printed(
+        "(mapv (fn [n] [(even? n) (odd? n)])
+            [0 1 -1 2 -2 1073741823 1073741824 -1073741825
+             3000000000 3000000001 9007199254740991 9007199254740992
+             9007199254740993 -9007199254740993
+             9223372036854775806 9223372036854775807 -9223372036854775808])",
+        "[[true false] [false true] [false true] [true false] [true false] \
+          [false true] [true false] [false true] [true false] [false true] \
+          [false true] [true false] [false true] [false true] [true false] \
+          [false true] [true false]]",
+    );
+    assert_printed(
+        "(mapv (fn [n] [(try (even? n) :accepted (catch :default _ :rejected))
+                       (try (odd? n) :accepted (catch :default _ :rejected))])
+            [nil true false \"2\" :k [] {} 0.0 -0.0 2.0 2.5 ##NaN ##Inf ##-Inf])",
+        "[[:rejected :rejected] [:rejected :rejected] [:rejected :rejected] \
+          [:rejected :rejected] [:rejected :rejected] [:rejected :rejected] \
+          [:rejected :rejected] [:rejected :rejected] [:rejected :rejected] \
+          [:rejected :rejected] [:rejected :rejected] [:rejected :rejected] \
+          [:rejected :rejected] [:rejected :rejected]]",
+    );
+    assert_printed(
+        "(let [calls (atom []) f (fn [n] (swap! calls conj n) n)]
+           [(even? (f 3)) (odd? (f 4)) @calls])",
+        "[false false [3 4]]",
+    );
+}
 /// The message of the error `source` throws.
 fn thrown(source: &str) -> String {
     let [first, second] = printed(&format!(

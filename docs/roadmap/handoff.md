@@ -35,6 +35,14 @@ trees in the shared Cargo target, a stale generator is refreshed with
 cargo +stable clean --release -p suss-compile-generator; never bypass its
 compiler-source hash assertion.
 
+Protocol-cache and parity probes use the target/probe/m15-protocol-pair-* and
+m15-chunk-parity-* evidence families. Run protocol_call_caches,
+compiled_protocol_sites and clojure_equality_bitwise alongside the chunk/source
+suites when changing those paths. The parity oracle is m15-parity-oracle.clj:
+JVM Clojure 1.12.6 checks both long limits, values beyond binary64's exact integer
+range, noninteger rejection and single argument evaluation. Instruction deltas
+remain separate from the quiet full-run timing gate.
+
 Reviewed native file/WIT selection and explicit mappings, shared compiled source/
 macro staging, scalar parsing/result handling, exact nested export invocation,
 command-mode separation and documented remaining frontend modes at855d281.

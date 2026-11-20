@@ -50,6 +50,14 @@ with the runtime. Without a key, `invoke` reports Clojure's unbound-fn error
 or "Not callable". The callable is bound after its arguments are evaluated, as
 Clojure's `invoke` dispatches.
 
+Compiled protocol lookup and direct marker sites retain two receiver descriptors,
+each with its answer and protocol epoch. A site tests its first descriptor before
+the second. A miss performs the lookup, moves the previous first entry to the
+second, and publishes the new first entry. Method-table writes invalidate both
+answers through the existing epoch. This lets alternating sequence types reuse
+their answers while preserving the first-entry hit path. The cache uses six
+private globals per site; it adds no shared ABI types or runtime exports.
+
 A call to a closure made in the same function, or a method's call to its own
 self reference, is a static `call` of the entry.
 
