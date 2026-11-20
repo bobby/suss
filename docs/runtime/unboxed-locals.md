@@ -15,8 +15,10 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
 - **Arithmetic.** `+`, `-` and `*` of longs give a raw long; any double operand
   gives a raw double. `/` gives a raw double when an operand is a double; a
   quotient of two longs stays boxed, since only an exact one is a long. `inc`
-  and `dec` are `+` and `-` of 1. Shipped core's coercing arithmetic stays
-  boxed.
+  and `dec` are `+` and `-` of 1. Core's coercing `+`, `-` and `*` also keep
+  two known numeric operands raw, matching the helpers' checked numeric route.
+  Unknown operands, guarded replacement results, unary coercions and core's
+  division retain their original boxed path.
 - **`let` and `loop`.** A `let` binding is the value it's bound to. A `loop`
   local, and an `if` result that joins branches, are raw when every value
   reaching them is the same raw kind. A local that a `recur` gives another
@@ -27,6 +29,8 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   longs compare exactly; a long and a double compare as doubles, as in the
   runtime. A raw long compared with any other value checks whether that value
   is an i31 and compares inline if so; otherwise it asks the runtime.
+  Core's coercing comparisons use this route for two raw numeric operands;
+  strings and other representations retain the coercing helper.
 
 - **Bitwise operations.** `bit-and`, `bit-or` and `bit-xor` of two longs give a
   raw long (#387). `bit-test` of two raw longs gives a raw truth value; the
@@ -34,6 +38,10 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   long shift does. The truth value is boxed where it escapes. Other operand
   representations take the runtime operation, which throws for a double as
   Clojure does.
+  Core's private 32-bit operations also stay raw for long operands, using their
+  low 32 bits, five-bit shift counts and the original signed result extension
+  (unsigned for zero-fill right shift). Unknown operands keep their existing
+  ToInt32 conversion path.
 - **Hashes and identity.** `hash` of a long gives a raw long: an i31 or raw long
   is hashed inline, as `number-hash` hashes it, and core's `hash`, which always
   returns an integer, is cast to a long (#387). `identical?`, `=` of small

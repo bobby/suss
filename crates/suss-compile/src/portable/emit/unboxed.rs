@@ -56,11 +56,11 @@ pub(super) enum Relation {
 }
 pub(super) fn relation(operation: Comparison) -> Option<Relation> {
     Some(match operation {
-        Comparison::NumberLess | Comparison::NumberNegative => Relation::Less,
-        Comparison::NumberLessEqual => Relation::LessEqual,
-        Comparison::NumberGreater | Comparison::NumberPositive => Relation::Greater,
-        Comparison::NumberGreaterEqual => Relation::GreaterEqual,
-        Comparison::NumberEqual | Comparison::NumberZero => Relation::Equal,
+        Comparison::Less | Comparison::NumberLess | Comparison::NumberNegative => Relation::Less,
+        Comparison::LessEqual | Comparison::NumberLessEqual => Relation::LessEqual,
+        Comparison::Greater | Comparison::NumberGreater | Comparison::NumberPositive => Relation::Greater,
+        Comparison::GreaterEqual | Comparison::NumberGreaterEqual => Relation::GreaterEqual,
+        Comparison::StrictEqual | Comparison::NumberEqual | Comparison::NumberZero => Relation::Equal,
         _ => return None,
     })
 }
@@ -84,6 +84,13 @@ fn meet(a: Lattice, b: Lattice) -> Lattice {
 /// The representation of an arithmetic result from its operands', optimistic
 /// about operands not yet known.
 fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool) -> Lattice {
+    // value-* takes exactly the checked number-* route for two numbers.
+    // Keep unknown/redefined primitive results and unary coercions boxed.
+    if coercing && (arguments.len() != 2 || operator == Arithmetic::Divide || arguments.iter()
+        .any(|argument| matches!(argument, Lattice::Known(repr) if repr.maybe())))
+    {
+        return Lattice::Known(Repr::Boxed);
+    }
     if arguments.iter().any(|argument| matches!(argument, Lattice::Known(repr) if repr.maybe())) {
         let definite = arguments.iter().map(|argument| match argument {
             Lattice::Known(repr) => Lattice::Known(repr.definite()), other => *other,
@@ -94,8 +101,7 @@ fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool) -> La
             other => other,
         };
     }
-    // Shipped core keeps its coercing JavaScript arithmetic boxed.
-    if coercing || arguments.is_empty() || arguments.len() > 2 {
+    if arguments.is_empty() || arguments.len() > 2 {
         return Lattice::Known(Repr::Boxed);
     }
     if arguments.len() == 1 && !matches!(operator, Arithmetic::Negate) {
@@ -178,6 +184,15 @@ fn comparison(operation: Comparison, arguments: &[Lattice]) -> Lattice {
         return Lattice::Known(Repr::Boxed);
     }
     let raw = |argument: &Lattice| matches!(argument, Lattice::Top | Lattice::Known(Repr::Long | Repr::Double));
+    // Core's legacy comparisons also compare two numbers numerically. Only
+    // use that fact for two raw numeric operands; strings, objects and other
+    // values retain the original coercing helper and its effects.
+    if matches!(operation, Comparison::Less | Comparison::LessEqual
+        | Comparison::Greater | Comparison::GreaterEqual | Comparison::StrictEqual)
+        && !arguments.iter().all(raw)
+    {
+        return Lattice::Known(Repr::Boxed);
+    }
     let long = |argument: &Lattice| matches!(argument, Lattice::Top | Lattice::Known(Repr::Long));
     let boxed = |argument: &Lattice| *argument == Lattice::Known(Repr::Boxed);
     // Two numbers, or a long and a value that may be a small long.

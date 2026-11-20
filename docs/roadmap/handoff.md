@@ -84,6 +84,16 @@ escapes into collections/closures, mixed loop values and boxed error effects.
 Physical flag locals leave source-kind checking and ABI 7 unchanged. Compare
 unchanged-form instruction counts separately from quiet-machine timing.
 
+Core arithmetic/32-bit probes use target/probe/m15-core-int32-* and
+m15-core-numeric-*. The explicit JVM 1.12.6 adapters are m15-core-int32-jvm.clj
+and m15-core-numeric-hinted-jvm.clj. Compare each typed kernel with its same
+baseline form; unary and binary kernels have different argument overhead, so
+their separate control is not a context-free operation cost. Run
+clojure_unboxed_locals, clojure_equality_bitwise and hash/map/vector suites in
+both phases. Boxed versus primitive zero-divisor double division differs on the
+JVM; the frozen Suss mismatch and failed initial unhinted oracle are recorded
+on #484. Core division is excluded from the known-numeric arithmetic lowering.
+
 Reviewed native file/WIT selection and explicit mappings, shared compiled source/
 macro staging, scalar parsing/result handling, exact nested export invocation,
 command-mode separation and documented remaining frontend modes at855d281.

@@ -213,3 +213,49 @@ fn core_int32_operations_keep_low_bits_shift_masks_and_signed_results() {
           (loop [x 4294967297 i 0] (if (< i 2) (recur (bit-shift-left x 1) (inc i)) x))]"),
         "[1 3 0 0 4]");
 }
+
+#[test]
+fn core_known_numeric_math_keeps_overflow_nan_zero_and_coercing_fallbacks() {
+    let longs = "[(try (+ x y) (catch :default e (if (= (ex-message e) \"long overflow\") :overflow [:unexpected (ex-message e)])))
+                  (try (- x y) (catch :default e (if (= (ex-message e) \"long overflow\") :overflow [:unexpected (ex-message e)])))
+                  (try (* x y) (catch :default e (if (= (ex-message e) \"long overflow\") :overflow [:unexpected (ex-message e)])))
+                  (< x y) (<= x y) (> x y) (>= x y) (== x y)]";
+    // Division is deliberately separate: JVM boxed/primitive zero-divisor
+    // overloads differ, and the boxed path has an independently tracked gap.
+    let doubles = "[(+ x y) (- x y) (* x y) (< x y) (<= x y) (> x y) (>= x y) (== x y)]";
+    let mut sessions = sessions();
+    for session in &mut sessions {
+        session.eval("(ns suss.core)").unwrap();
+        session.eval(&format!(
+            "(def core-math-longs (fn [^long x ^long y] {longs}))
+             (def core-math-doubles (fn [^double x ^double y] {doubles}))
+             (def core-math-boxed-longs (fn [x y] {longs}))
+             (def core-math-boxed-doubles (fn [x y] {doubles}))",
+        )).unwrap();
+    }
+    for name in ["core-math-longs", "core-math-boxed-longs"] {
+        assert_eq!(outcome(&mut sessions, &format!(
+            "(mapv (fn [p] ({name} (nth p 0) (nth p 1)))
+               [[6 2] [3000000000 4] [9007199254740992 9007199254740993]
+                [9223372036854775807 1] [-9223372036854775808 -1]])")),
+            "[[8 4 12 false false true true false] \
+              [3000000004 2999999996 12000000000 false false true true false] \
+              [18014398509481985 -1 :overflow true true false false false] \
+              [:overflow 9223372036854775806 9223372036854775807 false false true true false] \
+              [:overflow -9223372036854775807 :overflow true true false false false]]");
+    }
+    for name in ["core-math-doubles", "core-math-boxed-doubles"] {
+        assert_eq!(outcome(&mut sessions, &format!(
+            "(mapv (fn [p] ({name} (nth p 0) (nth p 1)))
+               [[1.5 2.0] [0.0 -0.0] [##NaN 1.0] [##Inf 0.0]])")),
+            "[[3.5 -0.5 3.0 true true false false false] \
+              [0.0 0.0 -0.0 false true false true true] \
+              [##NaN ##NaN ##NaN false false false false false] \
+              [##Inf ##Inf ##NaN false false true true false]]");
+    }
+    assert_eq!(outcome(&mut sessions,
+        "[(+ \"x\" 1) (< \"10\" \"2\") (+ nil 1) (+ true 1)
+          (< (identity \"10\") (identity 2))
+          (loop [x 0 i 0] (if (< i 1) (recur \"x\" (inc i)) (+ x 1)))]"),
+        "[\"x1\" true 1.0 2.0 false \"x1\"]");
+}
