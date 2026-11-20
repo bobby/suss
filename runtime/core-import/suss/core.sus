@@ -3711,9 +3711,9 @@
   Object
   (inode_assoc [inode shift hash key val added-leaf?]
     (let [bit (bitpos hash shift)
-          idx (bitmap-indexed-node-index bitmap bit)]
+          idx (suss.bootstrap/long-view (bitmap-indexed-node-index bitmap bit))]
       (if (zero? (bit-and bitmap bit))
-        (let [n (bit-count bitmap)]
+        (let [n (suss.bootstrap/long-view (bit-count bitmap))]
           (if (>= n 16)
             (let [nodes (make-array 32)
                   jdx   (mask hash shift)]
@@ -3759,7 +3759,7 @@
     (let [bit (bitpos hash shift)]
       (if (zero? (bit-and bitmap bit))
         inode
-        (let [idx         (bitmap-indexed-node-index bitmap bit)
+        (let [idx         (suss.bootstrap/long-view (bitmap-indexed-node-index bitmap bit))
               key-or-nil  (aget ^objects arr (* 2 idx))
               val-or-node (aget ^objects arr (inc (* 2 idx)))]
           (cond (nil? key-or-nil)
@@ -3778,7 +3778,7 @@
     (let [bit (bitpos hash shift)]
       (if (zero? (bit-and bitmap bit))
         not-found
-        (let [idx         (bitmap-indexed-node-index bitmap bit)
+        (let [idx         (suss.bootstrap/long-view (bitmap-indexed-node-index bitmap bit))
               key-or-nil  (aget ^objects arr (* 2 idx))
               val-or-node (aget ^objects arr (inc (* 2 idx)))]
           (cond (nil? key-or-nil)  (.inode_lookup val-or-node (+ shift 5) hash key not-found)
@@ -3789,7 +3789,7 @@
     (let [bit (bitpos hash shift)]
       (if (zero? (bit-and bitmap bit))
         not-found
-        (let [idx         (bitmap-indexed-node-index bitmap bit)
+        (let [idx         (suss.bootstrap/long-view (bitmap-indexed-node-index bitmap bit))
               key-or-nil  (aget ^objects arr (* 2 idx))
               val-or-node (aget ^objects arr (inc (* 2 idx)))]
           (cond (nil? key-or-nil) (.inode_find val-or-node (+ shift 5) hash key not-found)
@@ -3802,7 +3802,7 @@
   (ensure_editable [inode e]
     (if (suss.bootstrap/same-reference? e edit)
       inode
-      (let [n       (bit-count bitmap)
+      (let [n       (suss.bootstrap/long-view (bit-count bitmap))
             new-arr (make-array (if (neg? n) 4 (* 2 (inc n))))]
         (array-copy arr 0 new-arr 0 (* 2 n))
         (BitmapIndexedNode. e bitmap new-arr))))
@@ -3823,9 +3823,9 @@
 
   (inode_assoc_BANG_ [inode edit shift hash key val added-leaf?]
     (let [bit (bitpos hash shift)
-          idx (bitmap-indexed-node-index bitmap bit)]
+          idx (suss.bootstrap/long-view (bitmap-indexed-node-index bitmap bit))]
       (if (zero? (bit-and bitmap bit))
-        (let [n (bit-count bitmap)]
+        (let [n (suss.bootstrap/long-view (bit-count bitmap))]
           (cond
             (< (* 2 n) (alength arr))
             (let [editable (.ensure_editable inode edit)
@@ -3888,7 +3888,7 @@
     (let [bit (bitpos hash shift)]
       (if (zero? (bit-and bitmap bit))
         inode
-        (let [idx         (bitmap-indexed-node-index bitmap bit)
+        (let [idx         (suss.bootstrap/long-view (bitmap-indexed-node-index bitmap bit))
               key-or-nil  (aget ^objects arr (* 2 idx))
               val-or-node (aget ^objects arr (inc (* 2 idx)))]
           (cond (nil? key-or-nil)
