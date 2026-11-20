@@ -24,6 +24,20 @@ median three N=1000-minus-0 observations. Timing acceptance requires a separate
 idle-wait command before bench.py; counts alone do not establish the 5x gate.
 Private perfmap /tmp bindings must point to target/probe-backed directories.
 
+The opt-in quiet-performance workflow uses the performance-benchmark PR label.
+It freezes release executables from the PR base and head, then runs the unchanged
+full bench.py functions serially on one fresh runner. Each has a separate
+performance_bench.py wait command (load <=0.75 for 60 seconds) before its run.
+The runner uses cargo +stable, bounded user scopes, probe-backed TMPDIR, JVM
+Clojure 1.12.6/Temurin 21 and the existing n=5,000,000/reps=3 settings. Results,
+sources, receipts and failed attempts are uploaded from target/probe/performance.
+Optional unavailable PMU counters are explicitly recorded, never filled with
+counts. The comparison rejects noisy/incomplete runs, ratios above5x, string
+allocation >=200,000 bytes and other-program regressions beyond both measured
+spreads. Output/linearity correctness remains separately required. Seven driver
+regressions, all354 Python/foundation checks and actionlint1.7.12 pass locally;
+the workflow itself still needs execution on its runner.
+
 Source-reload coverage additionally uses compiled_source_macros,
 portable_callable_metadata, portable_error_constructors,
 portable_hash_numeric_boundaries and portable_public_hash. Ordinary core source
