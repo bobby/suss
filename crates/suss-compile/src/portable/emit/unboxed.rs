@@ -187,7 +187,7 @@ fn comparison(operation: Comparison, arguments: &[Lattice]) -> Lattice {
     if relation(operation).is_none() || arguments.len() != 2 {
         return Lattice::Known(Repr::Boxed);
     }
-    let raw = |argument: &Lattice| matches!(argument, Lattice::Top | Lattice::Known(Repr::Long | Repr::Double));
+    let raw = |argument: &Lattice| matches!(argument, Lattice::Top | Lattice::Known(Repr::Long | Repr::Double | Repr::MaybeLong | Repr::MaybeDouble));
     // Core's legacy comparisons also compare two numbers numerically. Only
     // use that fact for two raw numeric operands; strings, objects and other
     // values retain the original coercing helper and its effects.
@@ -682,10 +682,35 @@ impl Locals {
         slow: u32,
     ) {
         use Instruction::*;
+        let inputs = arguments.iter().filter(|value| self.of(**value).maybe()).collect::<Vec<_>>();
+        if !inputs.is_empty() {
+            for (i, input) in inputs.iter().enumerate() {
+                code.push(LocalGet(self.valid(**input)));
+                if i > 0 { code.push(I32And); }
+            }
+            code.push(If(BlockType::Empty));
+            self.comparison_raw(code, operation, arguments, result, slow);
+            code.push(Else);
+            for argument in arguments { self.push_boxed(code, *argument); }
+            code.extend([Call(slow), runtime_abi::sentinel_in(runtime_abi::TRUE, self.sentinels),
+                RefEq, LocalSet(self.raw(result)), End]);
+            return;
+        }
+        self.comparison_raw(code, operation, arguments, result, slow);
+    }
+    fn comparison_raw(
+        &self,
+        code: &mut Vec<Instruction<'static>>,
+        operation: Comparison,
+        arguments: &[ValueId],
+        result: ValueId,
+        slow: u32,
+    ) {
+        use Instruction::*;
         let relation = relation(operation).expect("inline relation");
         let target = self.raw(result);
         let (x, y) = (arguments[0], arguments[1]);
-        let (rx, ry) = (self.of(x), self.of(y));
+        let (rx, ry) = (self.of(x).definite(), self.of(y).definite());
         let exact = match relation {
             Relation::Less => I64LtS,
             Relation::LessEqual => I64LeS,

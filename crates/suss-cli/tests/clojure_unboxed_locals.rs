@@ -224,6 +224,33 @@ fn core_int32_operations_keep_low_bits_shift_masks_and_signed_results() {
 }
 
 #[test]
+fn guarded_numeric_comparisons_keep_redefinitions_and_evaluation_order() {
+    let mut sessions = sessions();
+    for session in &mut sessions {
+        session.eval("(def comparison-trace (atom []))
+          (def comparison-left (fn ^long [x] (swap! comparison-trace conj :left) x))
+          (def comparison-right (fn ^double [x] (swap! comparison-trace conj :right) x))
+          (def comparison-pair (fn [x y]
+            (let [a (comparison-left x) b (comparison-right y)]
+              [(< a b) (<= a b) (> a b) (>= a b) (== a b)])))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "[(comparison-pair 2 2.5) @comparison-trace]"),
+        "[[true true false false false] [:left :right]]");
+    for session in &mut sessions {
+        session.eval("(def comparison-left (fn [x] (swap! comparison-trace conj :left) \"v\"))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(do (reset! comparison-trace [])
+        [(try (comparison-pair 2 2.5) (catch :default e :bad)) @comparison-trace])"),
+        "[:bad [:left :right]]");
+    for session in &mut sessions {
+        session.eval("(def comparison-left (fn ^double [x] (swap! comparison-trace conj :left) x))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(do (reset! comparison-trace [])
+        [(comparison-pair 2.75 2.5) @comparison-trace])"),
+        "[[false false true true false] [:left :right]]");
+}
+
+#[test]
 fn core_known_numeric_math_keeps_overflow_nan_zero_and_coercing_fallbacks() {
     let longs = "[(try (+ x y) (catch :default e (if (= (ex-message e) \"long overflow\") :overflow [:unexpected (ex-message e)])))
                   (try (- x y) (catch :default e (if (= (ex-message e) \"long overflow\") :overflow [:unexpected (ex-message e)])))
@@ -269,19 +296,40 @@ fn core_known_numeric_math_keeps_overflow_nan_zero_and_coercing_fallbacks() {
         "[\"x1\" true 1.0 2.0 false \"x1\"]");
     for session in &mut sessions {
         session.eval("(def core-hinted-result (fn ^long [^long x] (+ x 1)))
-            (def core-use-hinted-result (fn [x] (+ (core-hinted-result x) 1)))").unwrap();
+            (def core-use-hinted-result (fn [x] (+ (core-hinted-result x) 1)))
+            (def core-compare-hinted-result (fn [x]
+              (let [n (core-hinted-result x)]
+                [(< n 5) (> n 1) (<= n 3) (>= n 3) (== n 3)])))").unwrap();
     }
     assert_eq!(outcome(&mut sessions, "(core-use-hinted-result 2)"), "4");
+    assert_eq!(outcome(&mut sessions, "(core-compare-hinted-result 2)"), "[true true true true true]");
     for session in &mut sessions {
         session.eval("(def core-hinted-result (fn [x] \"v\"))").unwrap();
     }
     assert_eq!(outcome(&mut sessions, "(core-use-hinted-result 2)"), "\"v1\"");
+    assert_eq!(outcome(&mut sessions, "(core-compare-hinted-result 2)"), "[false false false false false]");
     for session in &mut sessions {
         session.eval("(def core-hinted-result (fn ^double [x] (+ x 0.5)))").unwrap();
     }
     assert_eq!(outcome(&mut sessions, "(core-use-hinted-result 2)"), "3.5");
+    assert_eq!(outcome(&mut sessions, "(core-compare-hinted-result 2)"), "[true true true false false]");
     for session in &mut sessions {
         session.eval("(def core-hinted-result (fn [x] false))").unwrap();
     }
     assert_eq!(outcome(&mut sessions, "(core-use-hinted-result 2)"), "1.0");
+    assert_eq!(outcome(&mut sessions, "(core-compare-hinted-result 2)"), "[true false true false false]");
+    for session in &mut sessions {
+        session.eval("(def core-hinted-left (fn ^long [x] x))
+          (def core-hinted-right (fn ^double [x] x))
+          (def core-compare-two-hints (fn [x y] (< (core-hinted-left x) (core-hinted-right y))))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-compare-two-hints 1 2.0)"), "true");
+    for session in &mut sessions {
+        session.eval("(def core-hinted-right (fn [x] \"0\"))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-compare-two-hints 1 2.0)"), "false");
+    for session in &mut sessions {
+        session.eval("(def core-hinted-left (fn [x] \"-1\"))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-compare-two-hints 1 2.0)"), "true");
 }
