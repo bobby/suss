@@ -144,3 +144,34 @@ fn non_numbers_throw_as_on_the_boxed_path() {
         assert_eq!(outcome(&mut sessions, unboxed), expected, "{unboxed}");
     }
 }
+
+#[test]
+fn bit_tests_keep_shift_masking_flags_and_boxed_fallbacks() {
+    check(&[
+        (
+            "[(bit-test -9223372036854775808 63) (bit-test 9223372036854775807 63) (bit-test 1 64) (bit-test -1 -1) (bit-test 2 65)]",
+            "[(bit-test (identity -9223372036854775808) 63) (bit-test (identity 9223372036854775807) 63) (bit-test (identity 1) 64) (bit-test (identity -1) -1) (bit-test (identity 2) 65)]",
+            "[true false true true true]",
+        ),
+        (
+            "(let [x -9223372036854775808 y 63 p (bit-test x y) q (bit-test 0 y)] [p q (if p :yes :no) (not q) ((fn [] p)) (loop [b p i 0] (if (< i 2) (recur (not b) (inc i)) b))])",
+            "(let [x (identity -9223372036854775808) y (identity 63) p (bit-test x y) q (bit-test 0 y)] [p q (if p :yes :no) (not q) ((fn [] p)) (loop [b p i 0] (if (< i 2) (recur (not b) (inc i)) b))])",
+            "[true false :yes true true true]",
+        ),
+        (
+            "(let [x 1 n 0 b (bit-test x n)] (loop [b b i 0] (if (< i 1) (recur :replacement (inc i)) b)))",
+            "(let [x (identity 1) n (identity 0) b (bit-test x n)] (loop [b b i 0] (if (< i 1) (recur :replacement (inc i)) b)))",
+            ":replacement",
+        ),
+    ]);
+    let mut sessions = sessions();
+    for source in [
+        "(bit-test 1.0 0)", "(bit-test 1 0.0)", "(bit-test 1 nil)",
+        "(let [x (if (identity true) 1.0 1)] (bit-test x 0))",
+    ] {
+        assert!(outcome(&mut sessions, source).starts_with("[:error "), "{source}");
+    }
+    assert_eq!(outcome(&mut sessions,
+        "(let [seen (atom [])] [(try (bit-test (do (swap! seen conj :left) 1.0) (do (swap! seen conj :right) 0)) (catch :default _ :rejected)) @seen])"),
+        "[:rejected [:left :right]]");
+}

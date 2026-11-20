@@ -141,10 +141,15 @@ pub(super) fn raw_bitwise(operation: Bitwise, count: usize) -> Option<Instructio
     }
 }
 fn bitwise(operation: Bitwise, arguments: &[Lattice]) -> Lattice {
-    if raw_bitwise(operation, arguments.len()).is_some()
+    let test = operation == Bitwise::Test && arguments.len() == 2;
+    if (test || raw_bitwise(operation, arguments.len()).is_some())
         && arguments.iter().all(|argument| matches!(argument, Lattice::Top | Lattice::Known(Repr::Long)))
     {
-        if arguments.iter().all(|argument| *argument == Lattice::Top) { Lattice::Top } else { Lattice::Known(Repr::Long) }
+        if arguments.iter().all(|argument| *argument == Lattice::Top) {
+            Lattice::Top
+        } else {
+            Lattice::Known(if test { Repr::Flag } else { Repr::Long })
+        }
     } else {
         Lattice::Known(Repr::Boxed)
     }
@@ -783,15 +788,20 @@ impl Locals {
         code.extend([Instruction::I64ExtendI32S, Instruction::LocalSet(self.raw(result))]);
     }
 
-    /// A raw long bitwise operation (`raw_bitwise`), which can't fail.
+    /// A raw long bitwise operation, which can't fail. bit-test produces a
+    /// flag; Wasm masks the shift count to six bits, as Java's long shift does.
     pub(super) fn bitwise(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId) {
-        let op = raw_bitwise(operation, arguments.len()).expect("raw bitwise");
         code.extend([
             Instruction::LocalGet(self.raw(arguments[0])),
             Instruction::LocalGet(self.raw(arguments[1])),
-            op,
-            Instruction::LocalSet(self.raw(result)),
         ]);
+        if operation == Bitwise::Test {
+            code.extend([Instruction::I64ShrU, Instruction::I64Const(1),
+                Instruction::I64And, Instruction::I32WrapI64]);
+        } else {
+            code.push(raw_bitwise(operation, arguments.len()).expect("raw bitwise"));
+        }
+        code.push(Instruction::LocalSet(self.raw(result)));
     }
 
     pub(super) fn literal(&self, code: &mut Vec<Instruction<'static>>, literal: &Literal, result: ValueId) {
