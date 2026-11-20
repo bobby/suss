@@ -140,9 +140,27 @@ pub(super) fn raw_bitwise(operation: Bitwise, count: usize) -> Option<Instructio
         _ => None,
     }
 }
+
+/// Core's ToInt32 operations consume a long's low 32 bits. The result is
+/// signed except for zero-fill right shift, exactly as their boxed helpers.
+fn raw_int32(operation: Bitwise, count: usize) -> Option<Instruction<'static>> {
+    Some(match (operation, count) {
+        (Bitwise::Int32, 1) => Instruction::Nop,
+        (Bitwise::BitCount, 1) => Instruction::I32Popcnt,
+        (Bitwise::Int32And, 2) => Instruction::I32And,
+        (Bitwise::Int32Or, 2) => Instruction::I32Or,
+        (Bitwise::Int32Xor, 2) => Instruction::I32Xor,
+        (Bitwise::Int32Left, 2) => Instruction::I32Shl,
+        (Bitwise::Int32Right, 2) => Instruction::I32ShrS,
+        (Bitwise::Int32Unsigned, 2) => Instruction::I32ShrU,
+        (Bitwise::Imul, 2) => Instruction::I32Mul,
+        _ => return None,
+    })
+}
 fn bitwise(operation: Bitwise, arguments: &[Lattice]) -> Lattice {
     let test = operation == Bitwise::Test && arguments.len() == 2;
-    if (test || raw_bitwise(operation, arguments.len()).is_some())
+    if (test || raw_bitwise(operation, arguments.len()).is_some()
+        || raw_int32(operation, arguments.len()).is_some())
         && arguments.iter().all(|argument| matches!(argument, Lattice::Top | Lattice::Known(Repr::Long)))
     {
         if arguments.iter().all(|argument| *argument == Lattice::Top) {
@@ -791,6 +809,19 @@ impl Locals {
     /// A raw long bitwise operation, which can't fail. bit-test produces a
     /// flag; Wasm masks the shift count to six bits, as Java's long shift does.
     pub(super) fn bitwise(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId) {
+        if let Some(operation_code) = raw_int32(operation, arguments.len()) {
+            for argument in arguments {
+                code.extend([Instruction::LocalGet(self.raw(*argument)), Instruction::I32WrapI64]);
+            }
+            code.push(operation_code);
+            code.push(if operation == Bitwise::Int32Unsigned {
+                Instruction::I64ExtendI32U
+            } else {
+                Instruction::I64ExtendI32S
+            });
+            code.push(Instruction::LocalSet(self.raw(result)));
+            return;
+        }
         code.extend([
             Instruction::LocalGet(self.raw(arguments[0])),
             Instruction::LocalGet(self.raw(arguments[1])),

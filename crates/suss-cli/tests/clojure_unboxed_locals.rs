@@ -175,3 +175,41 @@ fn bit_tests_keep_shift_masking_flags_and_boxed_fallbacks() {
         "(let [seen (atom [])] [(try (bit-test (do (swap! seen conj :left) 1.0) (do (swap! seen conj :right) 0)) (catch :default _ :rejected)) @seen])"),
         "[:rejected [:left :right]]");
 }
+
+/// Core's private 32-bit storage operations, compared with explicit JVM
+/// unchecked-int/Integer.bitCount calculations, not public 64-bit bit ops.
+#[test]
+fn core_int32_operations_keep_low_bits_shift_masks_and_signed_results() {
+    let body = "[(int x) (bit-and x y) (bit-or x y) (bit-xor x y)
+                 (bit-shift-left x y) (bit-shift-right x y)
+                 (bit-shift-right-zero-fill x y) (imul x y)
+                 (suss.bootstrap/bit-count x)]";
+    let pairs = "[[0 0] [1 31] [-1 1] [2147483648 32] [4294967295 -1]
+                  [4294967297 33] [9007199254740993 65]
+                  [9223372036854775807 63] [-9223372036854775808 -9223372036854775808]]";
+    let expected = "[[0 0 0 0 0 0 0 0 0] [1 1 31 30 -2147483648 0 0 31 1] \
+        [-1 1 -1 -2 -2 -1 2147483647 -1 32] \
+        [-2147483648 0 -2147483616 -2147483616 -2147483648 -2147483648 2147483648 0 1] \
+        [-1 -1 -1 0 -2147483648 -1 1 1 32] [1 1 33 32 2 0 0 33 1] \
+        [1 1 65 64 2 0 0 65 1] [-1 63 -1 -64 -2147483648 -1 1 -63 32] \
+        [0 0 0 0 0 0 0 0 0]]";
+    let mut sessions = sessions();
+    for session in &mut sessions {
+        session.eval("(ns suss.core)").unwrap();
+        session.eval(&format!(
+            "(def core-bits-raw (fn [^long x ^long y] {body}))
+             (def core-bits-boxed (fn [x y] {body}))",
+        )).unwrap();
+    }
+    for name in ["core-bits-raw", "core-bits-boxed"] {
+        assert_eq!(outcome(&mut sessions,
+            &format!("(mapv (fn [p] ({name} (nth p 0) (nth p 1))) {pairs})")),
+            expected, "{name}");
+    }
+    assert_eq!(outcome(&mut sessions,
+        "[(let [x (if (identity true) 1.5 1)] (bit-and x 3))
+          (let [x (if (identity true) -1.5 1)] (bit-and x 3))
+          (bit-and ##NaN 3) (bit-shift-right-zero-fill ##Inf 1)
+          (loop [x 4294967297 i 0] (if (< i 2) (recur (bit-shift-left x 1) (inc i)) x))]"),
+        "[1 3 0 0 4]");
+}
