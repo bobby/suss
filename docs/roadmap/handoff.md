@@ -1,5 +1,31 @@
 ## Independent PR177 review — typed invocation before guest initialization
 
+## Raw integer predicate and parity probe commands (2026-11-20)
+
+Implementation2ad0c15d keeps the existing nominal long test's Bool result raw
+and inverts even?'s checked low bit by a direct conditional. Keep the integer
+guard, original errors and source operand order. Edit expression-even-predicate.json,
+then core_import.py and apply_bootstrap.py --check; ABI7/source-kind rules stay.
+
+results/m15-parity-20261120 retains unchanged benchmark inputs, all raw
+instruction observations, executable/patch hashes and fresh JVM1.12.6 results.
+Median3 N1000-minus0, warm-up first: lazy-pipeline1,059,416.537 instructions,
+transduce677,006.787, reductions7.633554%/11.452611% from b676b991's unchanged
+b137ae4c implementation. Other five programs are essentially unchanged.
+These counts do not establish the5x walltime target.
+
+Run cargo +stable release targets clojure_equality_bitwise, compiled_core_casts,
+compiled_primitive_params and compiled_call_sites, --test-threads=2; the combined
+run has21passes and0failures/ignores. Use target/probe/m15-hamt-target,
+CARGO_BUILD_JOBS=2, SUSS_FUNCTION_NAMES=1 at build/compile time and4GiB user scopes.
+TMPDIR/output stays under target/probe. Logs use target/probe/m15-long-test-*.
+The predicate-only comparison stays separate from the combined parity probe.
+
+Java-free bootstrap verification, with stable pinned for nested Cargo calls,
+reproduces both phase artifacts byte-for-byte, verifies compiler identities
+and passes all four release bootstrap execution tests. After updating the
+stacked base to6a91566f, all356 Python tests and core/bootstrap checks pass.
+
 ## M15 chunk adapter commands
 
 Current measurements, limitations and the next unblocked work are recorded on
