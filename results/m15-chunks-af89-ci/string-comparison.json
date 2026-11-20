@@ -1,0 +1,55 @@
+{
+  "timing_and_allocation_pass": true,
+  "failures": [],
+  "required_programs": [
+    "string-build"
+  ],
+  "ratios": {
+    "fib": 0.9654804444155355,
+    "word-frequencies": 5.1500627942259545,
+    "transduce": 5.569035826291708,
+    "lazy-pipeline": 5.471700228079975,
+    "into-vector": 6.130349453750446,
+    "into-map": 14.619763797467378,
+    "string-build": 2.3959116721750195
+  },
+  "unresolved_ratios": [],
+  "unmet_program_targets": [
+    "word-frequencies",
+    "transduce",
+    "lazy-pipeline",
+    "into-vector",
+    "into-map"
+  ],
+  "string_bytes_per_run": 61440.0,
+  "program_comparisons": {
+    "fib": {
+      "delta_seconds": -1.0464364825822994e-06,
+      "combined_spread": 1.758219435508634e-06
+    },
+    "word-frequencies": {
+      "delta_seconds": -5.784145958334067e-07,
+      "combined_spread": 9.07935507560372e-06
+    },
+    "transduce": {
+      "delta_seconds": -8.479407458338525e-06,
+      "combined_spread": 3.838373770832959e-06
+    },
+    "lazy-pipeline": {
+      "delta_seconds": -7.481364773436639e-05,
+      "combined_spread": 4.30515289068012e-06
+    },
+    "into-vector": {
+      "delta_seconds": 8.675017708033777e-07,
+      "combined_spread": 3.0124534374920134e-06
+    },
+    "into-map": {
+      "delta_seconds": -4.929563637935458e-07,
+      "combined_spread": 2.831741780303701e-05
+    },
+    "string-build": {
+      "delta_seconds": -0.0001561950985083153,
+      "combined_spread": 8.583551479108564e-06
+    }
+  }
+}

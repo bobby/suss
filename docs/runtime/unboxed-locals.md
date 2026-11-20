@@ -29,8 +29,11 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   is an i31 and compares inline if so; otherwise it asks the runtime.
 
 - **Bitwise operations.** `bit-and`, `bit-or` and `bit-xor` of two longs give a
-  raw long (#387). Any other operand takes the runtime operation, which throws
-  for a double as Clojure does.
+  raw long (#387). `bit-test` of two raw longs gives a raw truth value; the
+  shift count uses its low six bits, including for negative counts, as Java's
+  long shift does. The truth value is boxed where it escapes. Other operand
+  representations take the runtime operation, which throws for a double as
+  Clojure does.
 - **Hashes and identity.** `hash` of a long gives a raw long: an i31 or raw long
   is hashed inline, as `number-hash` hashes it, and core's `hash`, which always
   returns an integer, is cast to a long (#387). `identical?`, `=` of small
@@ -77,7 +80,8 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   The source checker keeps byte, short, int and float array elements distinct
   from their physical i64/f64 representation. Unary and unchecked arithmetic
   follow the JVM overload's source result. Public bit-test/clear/flip/set stay
-  boxed source calls. Array length is primitive int for a source-known array
+  boxed for source-kind checking, even when the optimizer keeps a bit-test
+  result in a raw local. Array length is primitive int for a source-known array
   class, while an unhinted reflective call stays boxed. Immutable initializer
   facts are cached within an array-class query to bound shared-graph work.
 - **Primitive bodies.** A function with source numeric parameter or return

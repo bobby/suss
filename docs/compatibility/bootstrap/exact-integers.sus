@@ -2011,6 +2011,11 @@
 (suss.bootstrap/hash-map-types! (.-EMPTY PersistentHashMap) (.-EMPTY BitmapIndexedNode)
   (ArrayNode. nil 0 (make-array 32)) (.-EMPTY PersistentHashSet))
 
+;; Canonical chunks are owned core types; user IChunk implementations retain
+;; their protocol path. Register witnesses after all core definitions exist.
+(suss.bootstrap/chunk-types! (ArrayChunk. (make-array 0) 0 0) (chunk-buffer 0)
+                             (ChunkedCons. nil nil nil nil))
+
 ;; Original Suss (#425): ExceptionInfo is an error, as Clojure's is an
 ;; Exception, so suss.bootstrap/error? and the error printer take it. Its
 ;; prototype's parent is the runtime error type's prototype.

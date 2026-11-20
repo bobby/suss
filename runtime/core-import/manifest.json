@@ -8,8 +8,8 @@
   "scanner-sha256": "f0f4150ddd151dfa4e1377ca74db691dcaff417a35dd8c5f10c66911352a03a7",
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
-  "recipe-sha256": "001156d1080af5d0f53acedd4b3be6f8dc62f6cdb94cb280aba189dc9a738d8e",
-  "reviews-sha256": "b5ed6a9949bb299254a6a355368bf5f191eaee67aa020e6cbac54a8b7ec59144",
+  "recipe-sha256": "aff220ec20f4c75f0dc5ca80f89e71363e8c0129aaefc65724cbf512130582c0",
+  "reviews-sha256": "fefd947d0ea5a257a7202f046a8c847926f7ebd1e6b93d3044b25027be3f05ca",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -2482,8 +2482,8 @@
       "extracted": "extracted/0075.cljs",
       "extracted-sha256": "f4428e8a87eb52cac5b41c36451a899e55ae6b721d9a5bc9b4820441b43c4177",
       "patch": "docs/compatibility/patches/sequence-seq-reduce.json",
-      "patch-sha256": "5b7ac4835d65c27235fc3deb334898dab11f35619679dbcf43bc28a602da9a69",
-      "adapted-form-sha256": "c5e467bdf4b0fc16babb9ab8702bdab6769ea94f56dcfbfe831b98564effc4c1",
+      "patch-sha256": "13a8850c33fa817de22ea25c30c5ec76e15a37b85c7edf15cb1bc5d597dbf210",
+      "adapted-form-sha256": "6d221dfbfce94cbf007eab382e99bf2112d1bb9e7f427e2d3a2e2962be14b487",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -8965,8 +8965,8 @@
       "extracted": "extracted/0289.cljs",
       "extracted-sha256": "74a5ec26180a4c0602cb22924af93447919032e92fa6a8fe683e48530761b17c",
       "patch": "docs/compatibility/patches/expression-even-predicate.json",
-      "patch-sha256": "f62a80f0f53c8fa8ad063f0931a554396ed414feec58514fe5f5fc0c6fc85896",
-      "adapted-form-sha256": "2b525931f85430048074d4f08d548071653e200cc6b26b039ce2c61a8c09df4d",
+      "patch-sha256": "7235e04f1c1aaacb575fb3fc01e3b0e1ec8ce8e4df13ab0e33d05ec1355d8ce1",
+      "adapted-form-sha256": "ed7381c11bbc6fd337d25c95c32b72c03cf64395f158d2e24d4ed4ccf55baacc",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -10652,11 +10652,11 @@
       "source-sha256": "4f9dd4efda472e60440872e13b01070e0367709ba61c81e8125ec41373e39680",
       "extracted": "extracted/0346.cljs",
       "extracted-sha256": "f9e270ce4007e474fc2aca5beb8942b5d9d31079b718ebbcba2162171065ed31",
-      "patch": null,
-      "patch-sha256": null,
-      "adapted-form-sha256": "4f9dd4efda472e60440872e13b01070e0367709ba61c81e8125ec41373e39680",
+      "patch": "docs/compatibility/patches/lazy-ChunkBuffer.json",
+      "patch-sha256": "ca4c9a2d721c07a1916904daf757084182a54a27b8f6c88fde577b0421488f47",
+      "adapted-form-sha256": "52a8762b616d2eeb98bfd387ee1d7b881d25e886083606529937c0bfecef4a65",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
-      "review-classification": ":portable",
+      "review-classification": ":adapted",
       "review-status": ":in-progress",
       "dependencies": [
         "runtime:ArrayChunk:3690",
@@ -10668,7 +10668,8 @@
       "semantic-tests": [
         "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)",
         "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)",
-        "scripts/test-lazy-transformation-oracle.sh"
+        "scripts/test-lazy-transformation-oracle.sh",
+        "crates/suss-cli/tests/clojure_chunk_effects.rs (JVM Clojure 1.12.6 return/effect-order and filter capture regressions)"
       ]
     },
     {
@@ -10720,8 +10721,8 @@
       "extracted": "extracted/0348.cljs",
       "extracted-sha256": "7fcabd9b17652802692da1614146d1a4006050d47dfb5de98a1dd49c50f0f108",
       "patch": "docs/compatibility/patches/lazy-chunk-append.json",
-      "patch-sha256": "da0c276e365f099c26f53621192d1171c3aa9555dd49fb6fde15163a40e3a488",
-      "adapted-form-sha256": "53777a1833c2998e88ec49601177cd71eb2dcb842602712bbc38b48149015cfd",
+      "patch-sha256": "cebe432e5fbc50f88bb2cd1d238eaec17a3a1ba3e80f8d7387802948dde87362",
+      "adapted-form-sha256": "03a3ec50e28250177861d360b8b0f1d7947416b35ca738a275f441878d8a9195",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -10782,8 +10783,8 @@
       "extracted": "extracted/0350.cljs",
       "extracted-sha256": "675024866fc83041f393dccad216a15167e895fc955e25160b82d8daac7b39bf",
       "patch": "docs/compatibility/patches/lazy-map.json",
-      "patch-sha256": "370e13b622b8432ad11febf0a9da5aba251d3f995dc28a1f31f53298f2cee497",
-      "adapted-form-sha256": "876dab87d9b8e289c0cefb646613f27cda753bf3900b3a83f149fd69f904b2dc",
+      "patch-sha256": "f4ad1560144c8fa59d06f6ee5391b3919eba887982d96c71c41ac4adae737715",
+      "adapted-form-sha256": "58a5414ad83c32e4cfc414c9e392f89e3d04412304b7fd7d39fcd66db7846df7",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -10820,8 +10821,8 @@
       "extracted": "extracted/0351.cljs",
       "extracted-sha256": "867d62d6b4ffba862da2554053db4d3ced54c4983fa0fb12f2a50eba17ee27f1",
       "patch": "docs/compatibility/patches/lazy-filter.json",
-      "patch-sha256": "42e2ae9a6b4de5cea8ef163446489ae317c305d3edfdb104dd525fd47c4385e9",
-      "adapted-form-sha256": "083918bd36e37d441dda9661d66e2ade6f08dd05380345df3ff31a13b7b18e66",
+      "patch-sha256": "2180bc8c7b936648ac858a50606111f5fc052ac8839fac00227a6d4f67e4cdfe",
+      "adapted-form-sha256": "9581d7db3631f4088655178ca858ddff3f4ef1e06ebd9a8cf5196b0c6ebc9124",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -10839,7 +10840,8 @@
       "semantic-tests": [
         "tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)",
         "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)",
-        "scripts/test-lazy-transformation-oracle.sh"
+        "scripts/test-lazy-transformation-oracle.sh",
+        "crates/suss-cli/tests/clojure_chunk_effects.rs (JVM Clojure 1.12.6 return/effect-order and filter capture regressions)"
       ]
     },
     {
@@ -11714,8 +11716,8 @@
       "extracted": "extracted/0378.cljs",
       "extracted-sha256": "575cab19d08f2a144dea3ecf5abf8d917afcb3fda13f3dea4ee8a4be02b2a1db",
       "patch": "docs/compatibility/patches/record-public-str.json",
-      "patch-sha256": "eb0bb1021f7d497ba5d22f7bf5cb6d47320268164b73452715bfc64943ec5655",
-      "adapted-form-sha256": "4e7fc0e2ad7ef932da82c0d1dcd656eb2460a726c9146619d5af90dda0798cc2",
+      "patch-sha256": "e8e24e390f49b42f9c3f9f6042ecbeabce6a40811dbfd153a446e4b10a0e13a0",
+      "adapted-form-sha256": "0011322b3b33c10b1e115b09b065e987cbdf91a71781a96116f5b3e98fa628a0",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -15581,7 +15583,7 @@
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "ecf52c7f291796c35aa0a769ef440f4e9d7e8c2f1086407651311fbe5fe75a65"
+      "sha256": "d9f8a25c3745cf32dff319c344ee24a80feee7465e5048dd36dc531a486aec40"
     }
   },
   "files": {
@@ -16091,6 +16093,6 @@
     "extracted/0501.cljs": "02b4047a3496243c5528041564a9f8ded2f3aae951be387e8779ab0e956464c3",
     "extracted/0502.cljs": "d42068d54f1844f88abb73548a3a554a3cc1f5af315fd590533b4fd80de350ec",
     "extracted/0503.cljs": "072c8a681fd905767f56c48e6c3529b99e9d5f537def64cb299f5bac29c7c59b",
-    "suss/core.sus": "8b4db753eaa744239cd82ea059116211ca0110bca5a3cdf9914d8c95756f6a79"
+    "suss/core.sus": "f76e35f455f72da4c751552ff7b9014228578284dd3fc1e4535bfca3ff8099ef"
   }
 }

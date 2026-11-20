@@ -1,0 +1,248 @@
+{
+  "source_head": "af89e33e9c8339ec41b36d4d97874017fe691639",
+  "executable": "/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/pr483-af89-quiet-ci/quiet-performance-af89e33e9c8339ec41b36d4d97874017fe691639/bin/candidate",
+  "sha256": "f24d2606fd1523e77c02d5ffeaa576f9d0176090ee76e55cd1d93cddddbcab75",
+  "bench_sha256": "3233839717bcd149bef5fd690dd1fc2dfa482d4d1135cb0d641393c217419624",
+  "cases": [
+    [
+      "warm",
+      "i",
+      1000000
+    ],
+    [
+      "range-1024",
+      "(apply str (map str range-1024))",
+      1000
+    ],
+    [
+      "range-10240",
+      "(apply str (map str range-10240))",
+      1000
+    ],
+    [
+      "fixed-1024",
+      "(apply str (map str fixed-1024))",
+      1000
+    ],
+    [
+      "fixed-10240",
+      "(apply str (map str fixed-10240))",
+      1000
+    ]
+  ],
+  "warmup": {
+    "n": 0,
+    "instructions": 339671766,
+    "stdout": "0\n",
+    "stderr": "339671766,,instructions:u,156798165,100.00,,\n"
+  },
+  "raw": {
+    "warm": [
+      {
+        "n": 0,
+        "instructions": 339667700,
+        "stdout": "0\n",
+        "stderr": "339667700,,instructions:u,149819457,100.00,,\n"
+      },
+      {
+        "n": 1000000,
+        "instructions": 364661730,
+        "stdout": "0\n",
+        "stderr": "364661730,,instructions:u,143168836,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 339671432,
+        "stdout": "0\n",
+        "stderr": "339671432,,instructions:u,144806398,100.00,,\n"
+      },
+      {
+        "n": 1000000,
+        "instructions": 364681335,
+        "stdout": "0\n",
+        "stderr": "364681335,,instructions:u,145138841,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 339668016,
+        "stdout": "0\n",
+        "stderr": "339668016,,instructions:u,151940547,100.00,,\n"
+      },
+      {
+        "n": 1000000,
+        "instructions": 364684094,
+        "stdout": "0\n",
+        "stderr": "364684094,,instructions:u,156552446,100.00,,\n"
+      }
+    ],
+    "range-1024": [
+      {
+        "n": 0,
+        "instructions": 339666076,
+        "stdout": "0\n",
+        "stderr": "339666076,,instructions:u,147936567,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 1713481165,
+        "stdout": "0\n",
+        "stderr": "1713481165,,instructions:u,471178356,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 339674052,
+        "stdout": "0\n",
+        "stderr": "339674052,,instructions:u,164298893,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 1713477331,
+        "stdout": "0\n",
+        "stderr": "1713477331,,instructions:u,478165478,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 339672041,
+        "stdout": "0\n",
+        "stderr": "339672041,,instructions:u,150664282,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 1713480998,
+        "stdout": "0\n",
+        "stderr": "1713480998,,instructions:u,465090165,100.00,,\n"
+      }
+    ],
+    "range-10240": [
+      {
+        "n": 0,
+        "instructions": 339675311,
+        "stdout": "0\n",
+        "stderr": "339675311,,instructions:u,159222197,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 14635359607,
+        "stdout": "0\n",
+        "stderr": "14635359607,,instructions:u,2750863865,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 339661188,
+        "stdout": "0\n",
+        "stderr": "339661188,,instructions:u,143791066,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 14635343758,
+        "stdout": "0\n",
+        "stderr": "14635343758,,instructions:u,2655300616,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 339665194,
+        "stdout": "0\n",
+        "stderr": "339665194,,instructions:u,134145143,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 14635344283,
+        "stdout": "0\n",
+        "stderr": "14635344283,,instructions:u,2623757080,100.00,,\n"
+      }
+    ],
+    "fixed-1024": [
+      {
+        "n": 0,
+        "instructions": 339669029,
+        "stdout": "0\n",
+        "stderr": "339669029,,instructions:u,149862813,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 1603995402,
+        "stdout": "0\n",
+        "stderr": "1603995402,,instructions:u,386594678,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 339662062,
+        "stdout": "0\n",
+        "stderr": "339662062,,instructions:u,140158835,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 1603997261,
+        "stdout": "0\n",
+        "stderr": "1603997261,,instructions:u,386389392,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 339667581,
+        "stdout": "0\n",
+        "stderr": "339667581,,instructions:u,144056659,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 1603994215,
+        "stdout": "0\n",
+        "stderr": "1603994215,,instructions:u,428150027,100.00,,\n"
+      }
+    ],
+    "fixed-10240": [
+      {
+        "n": 0,
+        "instructions": 339662273,
+        "stdout": "0\n",
+        "stderr": "339662273,,instructions:u,149414410,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 13252767664,
+        "stdout": "0\n",
+        "stderr": "13252767664,,instructions:u,2562675353,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 339672766,
+        "stdout": "0\n",
+        "stderr": "339672766,,instructions:u,152810433,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 13252774267,
+        "stdout": "0\n",
+        "stderr": "13252774267,,instructions:u,2690961805,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 339667346,
+        "stdout": "0\n",
+        "stderr": "339667346,,instructions:u,153201658,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 13252772502,
+        "stdout": "0\n",
+        "stderr": "13252772502,,instructions:u,2536584988,100.00,,\n"
+      }
+    ]
+  },
+  "per_run": {
+    "warm": 25.013319,
+    "range-1024": 1373808.957,
+    "range-10240": 14295679.089,
+    "fixed-1024": 1264327.821,
+    "fixed-10240": 12913105.156
+  },
+  "load_start": [
+    23.29931640625,
+    21.77490234375,
+    19.64892578125
+  ],
+  "load_end": [
+    23.3447265625,
+    21.93994140625,
+    19.861328125
+  ]
+}

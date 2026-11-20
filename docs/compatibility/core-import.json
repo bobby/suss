@@ -1737,7 +1737,7 @@
     {
       "id": "runtime:ChunkBuffer:3673",
       "source-sha256": "4f9dd4efda472e60440872e13b01070e0367709ba61c81e8125ec41373e39680",
-      "patch": null
+      "patch": "docs/compatibility/patches/lazy-ChunkBuffer.json"
     },
     {
       "id": "runtime:chunk-buffer:3687",
@@ -2536,7 +2536,7 @@
     },
     "original": {
       "path": "docs/compatibility/bootstrap/exact-integers.sus",
-      "sha256": "ecf52c7f291796c35aa0a769ef440f4e9d7e8c2f1086407651311fbe5fe75a65"
+      "sha256": "d9f8a25c3745cf32dff319c344ee24a80feee7465e5048dd36dc531a486aec40"
     }
   }
 }

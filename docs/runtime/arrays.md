@@ -117,3 +117,65 @@ exception order. Primitive/mixed array kinds and non-i31 indices retain the
 original loop. An empty copy with i31 indices returns the receiver before array
 checks; the backward loop's preparatory i-1 and j-1 cannot overflow a long for
 those inputs. All source arguments are still evaluated once, left to right.
+
+
+## Canonical chunk adapters
+
+The owned loader registers ArrayChunk, ChunkBuffer and ChunkedCons descriptor
+witnesses after core definitions exist. Three private globals follow existing runtime
+globals; shared ABI 7 types and prior global offsets are unchanged. Registration
+stages all descriptors before publishing any.
+
+`chunk-nth(chunk, index)` reads canonical ArrayChunk Object[] storage when its
+index/offset are nonnegative i31s and their sum is within the underlying array.
+Two-argument indexed access deliberately uses the array bounds rather than the
+chunk end, matching JVM ArrayChunk. Nil is a successful element, not a cache miss.
+Unsupported receivers, storage, indices or ranges return internal undefined.
+Custom chunk effects and primitive-backed implementation paths retain source
+protocol dispatch.
+
+`chunk-buffer-append(buffer, value)` admits a canonical buffer with Object[]
+storage, an in-bounds nonnegative i31 end and an increment representable as i31.
+It increments the private end before storing the element and returns nil. A
+miss performs no writes: the source add method retains JVM failed-store effects,
+including incrementing before bounds/null errors. Typed locals root the object,
+fields and storage; neither adapter allocates or invokes a callback between its
+checks and access. Existing globals are never relocated or reused.
+
+`chunk-array(chunk)` admits only a canonical ArrayChunk with Object[] storage
+and nonnegative i31 offset/end satisfying `offset <= end <= array length`.
+It returns the original packed array, not a copy. `chunk-offset(chunk)` reads
+the immutable offset. Map/filter and seq-reduce use these once per chunk to
+obtain a typed storage view and primitive loop bounds. An unsupported window
+uses its original indexed protocol reads. Only immutable metadata and storage
+references are hoisted; each element is read immediately before its callback.
+The early core definitions precede the public long var, so explicit conversions
+use the private long-cast word, which emits the existing inline LongCast operation.
+Numeric local tags alone do not insert a physical conversion.
+The private long-add word uses the existing checked, non-coercing arithmetic
+route for offsets, loop increments and output-array growth. The private
+long-less word uses checked long operands and the existing raw numeric relation.
+These counters remain longs without a boxed arithmetic or comparison call on
+each element. Native chunk
+access and registration require trusted compilation. Ordinary source-loaded
+core retains the generic protocol/method paths: its chunk words evaluate
+their operands, then decline, and its registration word has no native effect.
+Checked numeric words remain available to those core definitions. Selecting
+the suss.core namespace never grants backing-array access or registration.
+
+Map/filter fill an owned Object[] directly and publish its ArrayChunk after
+the ordered callbacks complete. Their output buffer is private to the thunk;
+no callback can observe a ChunkBuffer instance or its intermediate count.
+Filter captures an item before its predicate, then stores that same value at
+its compacted output index. Seq-reduce retains reduced short-circuiting.
+
+`chunk-seq(seq)` admits a canonical ChunkedCons and returns its chunk. Str's
+variadic traversal uses the array window only after both this receiver guard
+and chunk-array succeed, with a nonempty window. At the boundary it calls
+`-seq` on more, as ChunkedCons.next does. Custom sequence/chunk receivers and
+unsupported windows keep first/next traversal, including their method effects.
+Geometric output growth and the final single string join remain; one temporary
+pair per admitted chunk replaces per-element chunk/sequence wrappers.
+
+Typed array views, references and loop state remain GC roots across callbacks.
+Core direct-linking and built-in ownership rules remain in force.

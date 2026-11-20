@@ -1,0 +1,1 @@
+package bench:programs; world bench { export case-warm: func(n: u32) -> u32; export case-range-1024: func(n: u32) -> u32; export case-range-10240: func(n: u32) -> u32; export case-fixed-1024: func(n: u32) -> u32; export case-fixed-10240: func(n: u32) -> u32; }

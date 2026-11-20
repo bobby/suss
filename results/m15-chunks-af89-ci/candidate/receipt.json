@@ -1,0 +1,675 @@
+{
+  "source_head": "af89e33e9c8339ec41b36d4d97874017fe691639",
+  "source_dirty": "",
+  "clojure_version": "1.12.6",
+  "java_version": "Picked up JAVA_TOOL_OPTIONS: -Xmx512m\nopenjdk version \"21.0.13\" 2026-10-20 LTS\nOpenJDK Runtime Environment Temurin-21.0.13+9 (build 21.0.13+9-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.13+9 (build 21.0.13+9-LTS, mixed mode, sharing)\n",
+  "executable_sha256": "f24d2606fd1523e77c02d5ffeaa576f9d0176090ee76e55cd1d93cddddbcab75",
+  "bench_sha256": "3233839717bcd149bef5fd690dd1fc2dfa482d4d1135cb0d641393c217419624",
+  "core_sha256": "f76e35f455f72da4c751552ff7b9014228578284dd3fc1e4535bfca3ff8099ef",
+  "n": 5000000,
+  "reps": 3,
+  "cases": [
+    [
+      "long-control",
+      "i",
+      null,
+      1
+    ],
+    [
+      "long-identity",
+      "(identity i)",
+      "long-control",
+      1
+    ],
+    [
+      "call-0",
+      "(f0)",
+      "long-control",
+      1
+    ],
+    [
+      "call-1",
+      "(f1 i)",
+      "long-control",
+      1
+    ],
+    [
+      "call-2",
+      "(f2 i i)",
+      "long-control",
+      1
+    ],
+    [
+      "call-3",
+      "(f3 i i i)",
+      "long-control",
+      1
+    ],
+    [
+      "call-long",
+      "(typed-long (+ i 3000000000))",
+      "long-control",
+      1
+    ],
+    [
+      "call-double",
+      "(typed-double (double i))",
+      "double-control",
+      1
+    ],
+    [
+      "call-variadic",
+      "(fv i)",
+      "long-control",
+      1
+    ],
+    [
+      "call-local",
+      "(g i)",
+      "long-control",
+      1
+    ],
+    [
+      "call-bound",
+      "(identity i)",
+      "long-control",
+      1
+    ],
+    [
+      "call-protocol",
+      "(ident b)",
+      "long-control",
+      1
+    ],
+    [
+      "call-protocol-native",
+      "(-equiv i 7)",
+      "long-control",
+      1
+    ],
+    [
+      "call-apply",
+      "(apply f2 i [i])",
+      "long-control",
+      1
+    ],
+    [
+      "call-multimethod",
+      "(area sq)",
+      "long-control",
+      1
+    ],
+    [
+      "long-identical",
+      "(identical? i 7)",
+      "long-control",
+      1
+    ],
+    [
+      "long-nil",
+      "(nil? i)",
+      "long-control",
+      1
+    ],
+    [
+      "keyword-eq",
+      "(= :a :b)",
+      "long-control",
+      1
+    ],
+    [
+      "long-eq",
+      "(= i 7)",
+      "long-control",
+      1
+    ],
+    [
+      "long-eq-double",
+      "(= i 7.5)",
+      "long-control",
+      1
+    ],
+    [
+      "long-num-eq",
+      "(== i 7)",
+      "long-control",
+      1
+    ],
+    [
+      "long-add",
+      "(+ i 7)",
+      "long-control",
+      1
+    ],
+    [
+      "long-hash",
+      "(hash i)",
+      "long-control",
+      1
+    ],
+    [
+      "long-str",
+      "(str \"a\" i)",
+      "long-control",
+      1
+    ],
+    [
+      "double-control",
+      "(double i)",
+      null,
+      1
+    ],
+    [
+      "double-eq",
+      "(= (double i) 7.5)",
+      "double-control",
+      1
+    ],
+    [
+      "double-add",
+      "(+ (double i) 0.5)",
+      "double-control",
+      1
+    ],
+    [
+      "double-hash",
+      "(hash (double i))",
+      "double-control",
+      1
+    ],
+    [
+      "index-control",
+      "(bit-and i 1023)",
+      null,
+      1
+    ],
+    [
+      "long-aget",
+      "(aget la (bit-and i 1023))",
+      "index-control",
+      1
+    ],
+    [
+      "int-aget",
+      "(aget ia (bit-and i 1023))",
+      "index-control",
+      1
+    ],
+    [
+      "double-aget",
+      "(aget da (bit-and i 1023))",
+      "index-control",
+      1
+    ],
+    [
+      "object-aget",
+      "(aget oa (bit-and i 1023))",
+      "index-control",
+      100
+    ],
+    [
+      "vector-nth",
+      "(nth v (bit-and i 1023))",
+      "index-control",
+      1
+    ],
+    [
+      "long-aset",
+      "(aset la (bit-and i 1023) i)",
+      "index-control",
+      1
+    ],
+    [
+      "double-aset",
+      "(aset da (bit-and i 1023) 1.5)",
+      "index-control",
+      1
+    ],
+    [
+      "object-aset",
+      "(aset oa (bit-and i 1023) i)",
+      "index-control",
+      100
+    ],
+    [
+      "long-aget-hinted",
+      "(aget ^longs la (bit-and i 1023))",
+      "index-control",
+      1
+    ],
+    [
+      "int-aget-hinted",
+      "(aget ^ints ia (bit-and i 1023))",
+      "index-control",
+      1
+    ],
+    [
+      "double-aget-hinted",
+      "(aget ^doubles da (bit-and i 1023))",
+      "index-control",
+      1
+    ],
+    [
+      "long-aset-hinted",
+      "(aset ^longs la (bit-and i 1023) i)",
+      "index-control",
+      1
+    ],
+    [
+      "double-aset-hinted",
+      "(aset ^doubles da (bit-and i 1023) 1.5)",
+      "index-control",
+      1
+    ],
+    [
+      "vector-conj",
+      "(conj v i)",
+      "long-control",
+      1
+    ],
+    [
+      "vector-of-nth",
+      "(nth vl (bit-and i 1023))",
+      "index-control",
+      1
+    ],
+    [
+      "vector-of-conj",
+      "(conj vl i)",
+      "long-control",
+      1
+    ],
+    [
+      "map-get",
+      "(get m (bit-and i 1023))",
+      "index-control",
+      1
+    ],
+    [
+      "map-assoc",
+      "(assoc m (bit-and i 1023) i)",
+      "index-control",
+      1
+    ],
+    [
+      "keyword-get",
+      "(:b km)",
+      "long-control",
+      1
+    ],
+    [
+      "set-contains",
+      "(contains? s (bit-and i 1023))",
+      "index-control",
+      1
+    ]
+  ],
+  "reductions": [
+    [
+      "long-array-reduce",
+      "(reduce + la)",
+      1
+    ],
+    [
+      "double-array-reduce",
+      "(reduce + da)",
+      1
+    ],
+    [
+      "object-array-reduce",
+      "(reduce + oa)",
+      100
+    ],
+    [
+      "vector-reduce",
+      "(reduce + v)",
+      1
+    ],
+    [
+      "vector-of-reduce",
+      "(reduce + vl)",
+      1
+    ]
+  ],
+  "programs": [
+    [
+      "fib",
+      "(fib 20)"
+    ],
+    [
+      "word-frequencies",
+      "(reduce (fn [acc w] (assoc acc w (inc (get acc w 0)))) {} words)"
+    ],
+    [
+      "transduce",
+      "(transduce (comp (map inc) (filter even?)) + 0 v)"
+    ],
+    [
+      "lazy-pipeline",
+      "(reduce + (map inc (filter even? v)))"
+    ],
+    [
+      "into-vector",
+      "(into [] (map inc) v)"
+    ],
+    [
+      "into-map",
+      "(into {} (map (fn [x] [x x])) v)"
+    ],
+    [
+      "string-build",
+      "(apply str (map str v))"
+    ]
+  ],
+  "loops": [
+    [
+      "long-sum",
+      "(loop [i 0 acc 0] (if (< i n) (recur (inc i) (+ acc i)) acc))",
+      "s64"
+    ],
+    [
+      "double-sum",
+      "(loop [i 0 acc 0.0] (if (< i n) (recur (inc i) (+ acc 0.5)) acc))",
+      "f64"
+    ],
+    [
+      "typed-long-sum",
+      "(loop [i 0 acc 0] (if (< i n) (recur (inc i) (+ acc (typed-long (+ i 3000000000)))) acc))",
+      "s64"
+    ],
+    [
+      "typed-double-sum",
+      "(loop [i 0 acc 0.0] (if (< i n) (recur (inc i) (+ acc (typed-double (double i)))) acc))",
+      "f64"
+    ]
+  ],
+  "idle_receipt": {
+    "ready": true,
+    "threshold": 0.75,
+    "required_seconds": 60,
+    "time": 1795187564.1307976,
+    "samples": [
+      {
+        "time": 1795187474.1257126,
+        "load": [
+          1.14306640625,
+          1.10546875,
+          1.0
+        ]
+      },
+      {
+        "time": 1795187484.1260679,
+        "load": [
+          1.04052734375,
+          1.0849609375,
+          0.99462890625
+        ]
+      },
+      {
+        "time": 1795187494.126595,
+        "load": [
+          0.88037109375,
+          1.048828125,
+          0.98388671875
+        ]
+      },
+      {
+        "time": 1795187504.1270964,
+        "load": [
+          0.74462890625,
+          1.013671875,
+          0.97314453125
+        ]
+      },
+      {
+        "time": 1795187514.1278484,
+        "load": [
+          0.62939453125,
+          0.97998046875,
+          0.96240234375
+        ]
+      },
+      {
+        "time": 1795187524.1284418,
+        "load": [
+          0.5322265625,
+          0.947265625,
+          0.95166015625
+        ]
+      },
+      {
+        "time": 1795187534.1289933,
+        "load": [
+          0.44970703125,
+          0.91552734375,
+          0.94091796875
+        ]
+      },
+      {
+        "time": 1795187544.1296859,
+        "load": [
+          0.38037109375,
+          0.884765625,
+          0.93017578125
+        ]
+      },
+      {
+        "time": 1795187554.1302476,
+        "load": [
+          0.3212890625,
+          0.85498046875,
+          0.91943359375
+        ]
+      },
+      {
+        "time": 1795187564.130795,
+        "load": [
+          0.271484375,
+          0.826171875,
+          0.90869140625
+        ]
+      }
+    ]
+  },
+  "start_time": 1795187564.1841063,
+  "start_load": [
+    0.271484375,
+    0.826171875,
+    0.90869140625
+  ],
+  "machine": {
+    "system": "Linux",
+    "node": "ip-10-0-136-30",
+    "release": "7.0.0-1014-aws",
+    "version": "#14~24.04.1-Ubuntu SMP PREEMPT Fri Sep 18 21:24:59 UTC 2026",
+    "machine": "x86_64",
+    "processor": "x86_64"
+  },
+  "cpus": 4,
+  "java_tool_options": "-Xmx512m",
+  "perf_probe": {
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "Error:\nNo supported events found.\nAccess to performance monitoring and observability operations is limited.\nConsider adjusting /proc/sys/kernel/perf_event_paranoid setting to open\naccess to performance monitoring and observability operations for processes\nwithout CAP_PERFMON, CAP_SYS_PTRACE or CAP_SYS_ADMIN Linux capability.\nMore information can be found at 'Perf events and tool security' document:\nhttps://www.kernel.org/doc/html/latest/admin-guide/perf-security.html\nperf_event_paranoid setting is 4:\n  -1: Allow use of (almost) all events by all users\n      Ignore mlock limit after perf_event_mlock_kb without CAP_IPC_LOCK\n>= 0: Disallow raw and ftrace function tracepoint access\n>= 1: Disallow CPU event access\n>= 2: Disallow kernel profiling\nTo make the adjusted perf_event_paranoid setting permanent preserve it\nin /etc/sysctl.conf (e.g. kernel.perf_event_paranoid = <setting>)\n"
+  },
+  "instructions_available": false,
+  "completed": true,
+  "end_time": 1795188416.4597232,
+  "end_load": [
+    1.0732421875,
+    1.08984375,
+    1.01220703125
+  ],
+  "load_samples": [
+    0.3837890625,
+    0.43359375,
+    0.47900390625,
+    0.52099609375,
+    0.5595703125,
+    0.59521484375,
+    0.6279296875,
+    0.658203125,
+    0.68603515625,
+    0.71142578125,
+    0.73486328125,
+    0.75634765625,
+    0.77587890625,
+    0.8740234375,
+    0.88427734375,
+    0.8935546875,
+    0.90234375,
+    0.91064453125,
+    0.91796875,
+    0.9248046875,
+    0.93115234375,
+    0.93701171875,
+    0.9423828125,
+    0.947265625,
+    0.95166015625,
+    0.95556640625,
+    0.95947265625,
+    0.962890625,
+    0.96630859375,
+    0.96923828125,
+    0.97216796875,
+    0.974609375,
+    0.97705078125,
+    0.97900390625,
+    0.98095703125,
+    0.98291015625,
+    0.984375,
+    0.98583984375,
+    0.9873046875,
+    0.98876953125,
+    0.98974609375,
+    0.99072265625,
+    0.99169921875,
+    0.99267578125,
+    1.07373046875,
+    1.0673828125,
+    1.30224609375,
+    1.5185546875,
+    1.71728515625,
+    1.900390625,
+    1.828125,
+    1.76171875,
+    1.70068359375,
+    1.64453125,
+    1.5927734375,
+    1.544921875,
+    1.5009765625,
+    1.46044921875,
+    1.42333984375,
+    1.38916015625,
+    1.35791015625,
+    1.3291015625,
+    1.302734375,
+    1.2783203125,
+    1.255859375,
+    1.2353515625,
+    1.21630859375,
+    1.19873046875,
+    1.1826171875,
+    1.16796875,
+    1.154296875,
+    1.1416015625,
+    1.21044921875,
+    1.193359375,
+    1.177734375,
+    1.1630859375,
+    1.14990234375,
+    1.1376953125,
+    1.12646484375,
+    1.1162109375,
+    1.1064453125,
+    1.09765625,
+    1.08935546875,
+    1.08203125,
+    1.0751953125,
+    1.06884765625,
+    1.1435546875,
+    1.1318359375,
+    1.12109375,
+    1.111328125,
+    1.10205078125,
+    1.09375,
+    1.0859375,
+    1.2392578125,
+    1.2197265625,
+    1.20166015625,
+    1.18505859375,
+    1.169921875,
+    1.15625,
+    1.1435546875,
+    1.1318359375,
+    1.12109375,
+    1.111328125,
+    1.10205078125,
+    1.17431640625,
+    1.16015625,
+    1.14697265625,
+    1.134765625,
+    1.12353515625,
+    1.11328125,
+    1.10400390625,
+    1.09521484375,
+    1.08740234375,
+    1.080078125,
+    1.0732421875,
+    1.06689453125,
+    1.0615234375,
+    1.05615234375,
+    1.05126953125,
+    1.046875,
+    1.04296875,
+    1.0390625,
+    1.03564453125,
+    1.03271484375,
+    1.02978515625,
+    1.02734375,
+    1.10546875,
+    1.0966796875,
+    1.0888671875,
+    1.08154296875,
+    1.07470703125,
+    1.068359375,
+    1.0625,
+    1.05712890625,
+    1.05224609375,
+    1.0478515625,
+    1.0439453125,
+    1.0400390625,
+    1.03662109375,
+    1.033203125,
+    1.0302734375,
+    1.02783203125,
+    1.025390625,
+    1.02294921875,
+    1.02099609375,
+    1.01904296875,
+    1.01708984375,
+    1.09619140625,
+    1.08837890625,
+    1.0810546875,
+    1.15478515625,
+    1.14208984375,
+    1.2109375,
+    1.19384765625,
+    1.17822265625,
+    1.244140625,
+    1.22412109375,
+    1.2060546875,
+    1.189453125,
+    1.173828125,
+    1.15966796875,
+    1.146484375,
+    1.13427734375,
+    1.123046875,
+    1.11279296875,
+    1.103515625,
+    1.09521484375,
+    1.08740234375,
+    1.080078125,
+    1.0732421875
+  ]
+}

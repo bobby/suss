@@ -39,3 +39,49 @@ fn str_keeps_its_results() {
         }
     }
 }
+
+#[test]
+fn str_keeps_first_next_for_a_custom_chunked_sequence() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval(r#"
+          (deftype DisagreeSeq [n]
+            ASeq
+            ISeqable (-seq [this] this)
+            ISeq
+            (-first [_] "r")
+            (-rest [_] (if (< n 16) (DisagreeSeq. (inc n)) ()))
+            INext (-next [_] (when (< n 16) (DisagreeSeq. (inc n))))
+            IChunkedSeq
+            (-chunked-first [_] (array-chunk (object-array ["WRONG"])))
+            (-chunked-rest [_] ())
+            IChunkedNext (-chunked-next [_] nil))"#).unwrap();
+        session.collect().unwrap();
+        assert_eq!(printed(&mut session, "(apply str \"prefix\" (DisagreeSeq. 0))"),
+          r#""prefixrrrrrrrrrrrrrrrrr""#);
+    }
+}
+
+#[test]
+fn str_reads_each_chunk_value_after_conversion_and_realizes_more_at_the_boundary() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
+        session.eval(r#"
+          (deftype ChunkText [n events a]
+            Object
+            (toString [_]
+              (swap! events conj n)
+              (when (= n 10) (aset a 11 (ChunkText. 99 events a)))
+              (str n)))
+          (def str-events (atom []))
+          (def str-elements (object-array (repeat 32 nil)))
+          (loop [i 0] (when (< i 32)
+                        (aset str-elements i (ChunkText. i str-events str-elements))
+                        (recur (inc i))))
+          (def str-more (LazySeq. nil (fn [] (swap! str-events conj :tail)
+                                      (list (ChunkText. 32 str-events str-elements))) nil nil))
+          (def str-chunk (chunk-cons (array-chunk str-elements 0 32) str-more))"#).unwrap();
+        session.collect().unwrap();
+        assert_eq!(printed(&mut session, "[(apply str \"prefix\" str-chunk) @str-events]"),
+          r#"["prefix01234567891099121314151617181920212223242526272829303132" [0 1 2 3 4 5 6 7 8 9 10 99 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 :tail 32]]"#);
+    }
+}

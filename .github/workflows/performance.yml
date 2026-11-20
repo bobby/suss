@@ -1,0 +1,118 @@
+name: quiet-performance
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quiet-performance-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  compare:
+    if: contains(github.event.pull_request.labels.*.name, 'performance-benchmark') || contains(github.event.pull_request.labels.*.name, 'performance-string-build')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      CARGO_BUILD_JOBS: 2
+      SUSS_FUNCTION_NAMES: 1
+      JAVA_TOOL_OPTIONS: -Xmx512m
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target/probe/performance-build
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      REQUIRED_PROGRAMS: ${{ contains(github.event.pull_request.labels.*.name, 'performance-benchmark') && 'lazy-pipeline string-build' || 'string-build' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          submodules: true
+      - name: Prepare probe storage and user scopes
+        run: |
+          mkdir -p target/probe/performance/bin
+          bench_uid=$(id -u)
+          sudo loginctl enable-linger "$USER"
+          sudo systemctl start "user@${bench_uid}.service"
+          echo "XDG_RUNTIME_DIR=/run/user/${bench_uid}" >> "$GITHUB_ENV"
+          echo "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/${bench_uid}/bus" >> "$GITHUB_ENV"
+          echo "TMPDIR=$PWD/target/probe" >> "$GITHUB_ENV"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: jdx/mise-action@v2
+        with:
+          install: false
+      - name: Install and warm the pinned Clojure oracle
+        run: |
+          mise use --global clojure@1.12.6.1673
+          systemd-run --user --scope -p MemoryMax=1G mise exec -- clojure -M -e \
+            '(assert (= "1.12.6" (clojure-version)))'
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: performance-release
+          workspaces: . -> target/probe/performance-build
+      - name: Build and freeze both revisions
+        run: |
+          set -e
+          bench_root="$PWD"
+          git worktree add --detach target/probe/performance-baseline "$BASE_SHA"
+          git -C target/probe/performance-baseline submodule update --init \
+            --reference "$bench_root/clojurescript" clojurescript
+          for revision in baseline candidate; do
+            if [ "$revision" = baseline ]; then
+              cd "$bench_root/target/probe/performance-baseline"
+            else
+              cd "$bench_root"
+            fi
+            systemd-run --user --scope -p MemoryMax=6G \
+              cargo +stable clean --release -p suss-compile-generator
+            systemd-run --user --scope -p MemoryMax=6G \
+              cargo +stable build --release -p suss-cli --locked
+            cp "$CARGO_TARGET_DIR/release/suss" "$bench_root/target/probe/performance/bin/$revision"
+            git rev-parse HEAD > "$bench_root/target/probe/performance/$revision-source.txt"
+          done
+      # Waiting and measuring deliberately remain separate commands/steps.
+      - name: Wait for an idle baseline host
+        run: |
+          systemd-run --user --scope -p MemoryMax=256M python3 scripts/performance_bench.py wait \
+            --output target/probe/performance/baseline-idle.json
+      - name: Measure the unchanged baseline benchmark
+        run: |
+          systemd-run --user --scope -p MemoryMax=3G python3 scripts/performance_bench.py run \
+            --source target/probe/performance-baseline \
+            --executable target/probe/performance/bin/baseline \
+            --output target/probe/performance/baseline \
+            --idle target/probe/performance/baseline-idle.json \
+            > target/probe/performance/baseline.log 2>&1
+      - name: Wait for an idle candidate host
+        run: |
+          systemd-run --user --scope -p MemoryMax=256M python3 scripts/performance_bench.py wait \
+            --output target/probe/performance/candidate-idle.json
+      - name: Measure the unchanged candidate benchmark
+        run: |
+          systemd-run --user --scope -p MemoryMax=3G python3 scripts/performance_bench.py run \
+            --source . --executable target/probe/performance/bin/candidate \
+            --output target/probe/performance/candidate \
+            --idle target/probe/performance/candidate-idle.json \
+            > target/probe/performance/candidate.log 2>&1
+      - name: Check timing, allocation and other program regressions
+        run: |
+          read -r -a programs <<< "$REQUIRED_PROGRAMS"
+          required_args=()
+          for program in "${programs[@]}"; do
+            required_args+=(--require-program "$program")
+          done
+          systemd-run --user --scope -p MemoryMax=512M python3 scripts/performance_bench.py compare \
+            --baseline target/probe/performance/baseline \
+            --candidate target/probe/performance/candidate \
+            --output target/probe/performance/comparison.json "${required_args[@]}"
+      - name: Retain raw benchmark evidence, including failed attempts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quiet-performance-${{ github.event.pull_request.head.sha }}
+          path: target/probe/performance
+          retention-days: 30

@@ -509,6 +509,13 @@ pub enum Nominal {
     MapAssoc,
     /// `hash-map-types!(m, bitmap-node, array-node, set)` (#442).
     HashMapTypes,
+    /// Canonical core chunk witnesses and guarded indexed read/append (#482).
+    ChunkTypes,
+    ChunkNth,
+    ChunkAppend,
+    ChunkArray,
+    ChunkOffset,
+    ChunkSeq,
     /// A `^long` or `^double` parameter's value (#385): Clojure's checked
     /// longCast or doubleCast of the argument, kept as a raw i64 or f64.
     LongCast,
@@ -712,6 +719,9 @@ impl Nominal {
                 Self::PackedGet(_) | Self::VectorNth | Self::ArrayMapGet | Self::MapContains => count == 2,
                 Self::ObjectArrayCopy(_) => count == 5,
                 Self::HashMapTypes => count == 4,
+                Self::ChunkTypes => count == 3,
+                Self::ChunkNth | Self::ChunkAppend => count == 2,
+                Self::ChunkArray | Self::ChunkOffset | Self::ChunkSeq => count == 1,
                 Self::MapGetOr | Self::MapAssoc => count == 3,
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
@@ -3236,6 +3246,34 @@ impl Analyzer<'_> {
             return Ok(self.nominal(form, Nominal::BindingDefined, vec![cell]));
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
+            if matches!(symbol.name.as_str(), "long-add" | "long-less") {
+                if !self.privileged && self.environment.current_namespace(self.phase) != "suss.core" {
+                    return Err(fail(form.span.clone(), "Private chunk adapters require compiled core"));
+                }
+                if args.len() != 2 {
+                    return Err(fail(form.span.clone(), format!("{} requires two operands", symbol.name)));
+                }
+                // These core loop counters and offsets are longs. Keep their
+                // addition and comparison in the existing checked raw route,
+                // rather than core's legacy coercing/boxed operations.
+                let mut arguments = Vec::new();
+                for argument in args {
+                    let value = self.form(argument)?;
+                    arguments.push(self.nominal(argument, Nominal::LongCast, vec![value]));
+                }
+                if symbol.name == "long-less" {
+                    return Ok(Hir { source: None, span: form.span.clone(),
+                        metadata: form.metadata.clone(), ty: Type::Bool,
+                        kind: std::sync::Arc::new(Expression::Comparison {
+                            operation: Comparison::NumberLess, arguments,
+                        }) });
+                }
+                return Ok(Hir { source: None, span: form.span.clone(),
+                    metadata: form.metadata.clone(), ty: Type::Number,
+                    kind: std::sync::Arc::new(Expression::Arithmetic {
+                        operator: Arithmetic::Add, arguments, coercing: false,
+                    }) });
+            }
             let operation = match symbol.name.as_str() {
                 "apply-sequence-ops!" => Some(Nominal::ApplySequenceOps),
                 "list-function" => Some(Nominal::ListFunction),
@@ -3273,6 +3311,14 @@ impl Analyzer<'_> {
                 "map-contains" => Some(Nominal::MapContains),
                 "map-get-or" => Some(Nominal::MapGetOr),
                 "hash-map-types!" => Some(Nominal::HashMapTypes),
+                "chunk-types!" => Some(Nominal::ChunkTypes),
+                "chunk-nth" => Some(Nominal::ChunkNth),
+                "chunk-append" => Some(Nominal::ChunkAppend),
+                "chunk-array" => Some(Nominal::ChunkArray),
+                "chunk-offset" => Some(Nominal::ChunkOffset),
+                "chunk-seq" => Some(Nominal::ChunkSeq),
+                // Core's early definitions precede its public long var.
+                "long-cast" => Some(Nominal::LongCast),
                 "string-index-of" => Some(Nominal::StringIndexOf),
                 "string-slice" => Some(Nominal::StringSlice),
                 "string-from-unit" => Some(Nominal::StringFromUnit),
@@ -3284,6 +3330,13 @@ impl Analyzer<'_> {
                 _ => None,
             };
             if let Some(operation) = operation {
+                let chunk = matches!(operation, Nominal::ChunkTypes | Nominal::ChunkNth | Nominal::ChunkAppend
+                    | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq);
+                let ordinary_core = !self.privileged
+                    && self.environment.current_namespace(self.phase) == "suss.core";
+                if (chunk || operation == Nominal::LongCast) && !self.privileged && !ordinary_core {
+                    return Err(fail(form.span.clone(), "Private chunk adapters require compiled core"));
+                }
                 if matches!(operation, Nominal::ApplySequenceOps | Nominal::ApplyCallee
                     | Nominal::ApplySpread | Nominal::ApplyToSeq | Nominal::ApplyFixed | Nominal::ListFunction)
                     && !self.privileged && self.environment.current_namespace(self.phase) != "suss.core" {
@@ -3295,10 +3348,21 @@ impl Analyzer<'_> {
                         "Invalid private native object adapter arity",
                     ));
                 }
-                let operands = args
+                let mut operands = args
                     .iter()
                     .map(|argument| self.form(argument))
                     .collect::<Result<Vec<_>, _>>()?;
+                if chunk && ordinary_core {
+                    // Direct source loading keeps user-extensible descriptors.
+                    // It cannot register them as canonical or access native
+                    // storage, even when its namespace is suss.core. Evaluate
+                    // operands in order, then take the existing source fallback.
+                    let value = if operation == Nominal::ChunkTypes { Literal::Nil } else { Literal::Undefined };
+                    operands.push(self.literal_form(form, value));
+                    return Ok(Hir { source: None, span: form.span.clone(),
+                        metadata: form.metadata.clone(), ty: Type::Value,
+                        kind: std::sync::Arc::new(Expression::Do(operands)) });
+                }
                 return Ok(self.nominal(form, operation, operands));
             }
         }

@@ -1,0 +1,20 @@
+{
+  "measured_ci_run": 44756810859,
+  "measured_head": "af89e33e9c8339ec41b36d4d97874017fe691639",
+  "measured_executable_sha256": "f24d2606fd1523e77c02d5ffeaa576f9d0176090ee76e55cd1d93cddddbcab75",
+  "jvm": "1.12.6",
+  "input_sizes": [
+    1024,
+    10240
+  ],
+  "full_output_exact_match": true,
+  "full_output_utf8_bytes": 43098,
+  "full_output_sha256": "bc7d4219264892d6bd713a76c28f03f10c43f70f50498efcc292095e38bd23b1",
+  "runtime_fuel": null,
+  "compile_fuel": 100000000,
+  "instruction_scaling": {
+    "range": 10.4058712211468,
+    "fixed": 10.213415335420354
+  },
+  "note": "Exact downloaded CI executable; local instruction/output probes only, not additional walltime acceptance. Combined quiet gate remains failed for lazy-pipeline; string-only comparison retains all observed unmet time targets."
+}

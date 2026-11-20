@@ -17,6 +17,7 @@ const CACHED_SPREAD: u32 = CACHED_CLOSURE + 1;
 pub(super) const EMPTY_ARGUMENTS: u32 = CACHED_CLOSURE + 2;
 pub(super) const GLOBAL_END: u32 = CACHED_CLOSURE + 3;
 const LIST_DESCRIPTOR: u32 = GLOBAL_END + FAMILIES.len() as u32;
+pub(super) const GLOBAL_LIMIT: u32 = list::GLOBAL_END;
 pub(super) const FAMILIES: [&str; 13] = [
     "bit-and", "bit-or", "bit-xor", "bit-and-not",
     "comparison-less", "comparison-less-equal", "comparison-greater", "comparison-greater-equal",
@@ -69,6 +70,7 @@ pub(super) fn append_globals(globals: &mut GlobalSection, b: &Builder, universal
     globals.global(GlobalType { val_type: VALUE, mutable: true, shared: false },
         &ConstExpr::extended([sentinel_value(NIL)]));
     list::append_globals(globals, b, universal_entries);
+    assert_eq!(globals.len(), GLOBAL_LIMIT);
 }
 
 pub(super) fn functions(b: &mut Builder) -> Vec<u32> {

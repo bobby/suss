@@ -183,12 +183,12 @@
    :visibility :public
    :arities nil
    :dependencies ["runtime:ArrayChunk:3690" "macro:aset:1056" "runtime:inc:1505" "macro:inc:1192" "owned mutable nominal fields/Object method dispatch"]
-   :classification :portable
-   :rationale "Retain the entire unchanged pinned ChunkBuffer type, both mutable fields, both Object methods and ICounted method. add performs aset before incrementing end; chunk captures storage before clearing buf. No field, method or effect is omitted. Imported extraction is not native proof; actual value/effect, sharing and post-chunk failures remain required."
+   :classification :adapted
+   :rationale "Preserve both mutable fields, chunk storage publication/clearing and ICounted. Adapt add to JVM Clojure 1.12.6 ChunkBuffer behavior: read buffer/index, advance end before the store (including failed bounds/null stores), and return nil after success. Executed JVM/Suss probes establish the return/effect-order differences; ClojureScript is the licensed implementation reference, not the behavior oracle. Retain the original EPL notice and source provenance."
    :status :in-progress
-   :adaptation-path nil
+   :adaptation-path "docs/compatibility/patches/lazy-ChunkBuffer.json"
    :alternative nil
-   :tests ["tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)" "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)" "scripts/test-lazy-transformation-oracle.sh"]}
+   :tests ["tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)" "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)" "scripts/test-lazy-transformation-oracle.sh" "crates/suss-cli/tests/clojure_chunk_effects.rs (JVM Clojure 1.12.6 return/effect-order and filter capture regressions)"]}
   "runtime:chunk-buffer:3687"
   {:source-sha256 "2a70931729b2d2d1f92bd6c7998df902beae7a1aaca8f3d49072382ebe7775ef"
    :visibility :public
@@ -239,11 +239,11 @@
    :arities {:fixed [1 2] :variadic-min nil}
    :dependencies ["macro:defn:3364" "macro:lazy-seq:2285" "macro:when-let:412" "macro:dotimes:2781" "runtime:chunk-buffer:3687" "runtime:chunk-append:3800" "runtime:chunk:3803" "chunked and nonchunked sequences" "live callback/protocol dependencies"]
    :classification :adapted
-   :rationale "Preserve the complete pinned declaration, documentation, every arity and every branch. Expand defn to def/fn, lazy-seq to the pinned owned LazySeq constructor with fn*, when-let to a once-only temporary and conditional inner binding, and dotimes to its exact bounded let/loop/when algorithm with qualified comparison/inc calls. Keep transducer initialization/completion/variadic reducer arities, multi-input shortest-sequence behavior, named step recursion, ordered chunk filling and repeated nth reads. Existing portable owned-array macro/nominal adapters are dependencies, not full make-array extraction evidence. Native execution, pinned value/effect observations and final acceptance are required; this adaptation remains in progress."
+   :rationale "Retain the pinned documentation, arities, transducer and generic-sequence branches and existing def/lazy-seq/when-let/dotimes scaffolding. Adapt the chunk loop to JVM Clojure 1.12.6 filter: read each indexed value once before pred, then append that same captured value. A predicate changing the backing array must not change the item already read. Preserve ordered chunk filling, bounded comparison/inc and the original ClojureScript/EPL provenance; the old repeated-read implementation is not the behavior oracle. Executed JVM/Suss alias-effect probes and focused regressions record the difference."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/lazy-filter.json"
    :alternative nil
-   :tests ["tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)" "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)" "scripts/test-lazy-transformation-oracle.sh"]}
+   :tests ["tests/oracle/lazy-transformation-cases.json (41 fresh pinned primary and independent native observations pass)" "crates/suss-cli/tests/portable_lazy_transformations.rs (4 tests pass in Runtime/Macro after GC; 0 failed/ignored/filtered)" "scripts/test-lazy-transformation-oracle.sh" "crates/suss-cli/tests/clojure_chunk_effects.rs (JVM Clojure 1.12.6 return/effect-order and filter capture regressions)"]}
 
   "runtime:ISorted:782"
   {:source-sha256 "b1e207d553f428b54033a078b2093aa2b18babcd27020f13607938b070b0c7d1"

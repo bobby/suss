@@ -1,5 +1,89 @@
 ## Independent PR177 review — typed invocation before guest initialization
 
+## M15 chunk adapter commands
+
+Current measurements, limitations and the next unblocked work are recorded on
+[issue #482](https://github.com/bobby/suss/issues/482), with the implementation in
+[PR #483](https://github.com/bobby/suss/pull/483). The JVM Clojure 1.12.6 probes and
+before/after artifacts use the target/probe/m15-chunk-* evidence families.
+ArrayChunk factory probes use a JVM ArrayChunk constructor adapter; the successful
+shared probe reduces chunk-cons, since JVM ArrayChunk itself is not seqable.
+
+Core changes belong in replacement JSON or the owned loader source, followed by
+core_import.py and apply_bootstrap.py --check. The focused release suites are
+clojure_chunk_effects, apply_fixed_arity, portable_chunk_effects,
+portable_lazy_transformations, portable_lazy_sequences and portable_str_concat.
+The mutation/bounds/custom-sequence JVM adapter is
+target/probe/m15-chunk-next-mutation-oracle.clj. Use cargo +stable,
+CARGO_BUILD_JOBS=2, --test-threads=2 and a 4GiB systemd scope; the isolated Cargo
+target is target/probe/m15-hamt-target. Named builds and compiles both need
+SUSS_FUNCTION_NAMES=1. Keep TMPDIR and probe output under target/probe.
+
+Per-run instructions use m15-program-instructions.py with a warm-up case and
+median three N=1000-minus-0 observations. Timing acceptance requires a separate
+idle-wait command before bench.py; counts alone do not establish the 5x gate.
+Private perfmap /tmp bindings must point to target/probe-backed directories.
+
+The opt-in quiet-performance workflow uses performance-benchmark for both
+lazy-pipeline/string-build issue gates, or performance-string-build for #450.
+Both modes measure every unchanged bench.py program on the base and head;
+the latter still records every program above5x and never certifies #482.
+Executables run serially on one fresh runner. Each has a separate
+performance_bench.py wait command (load <=0.75 for60seconds) before its run.
+Use cargo +stable, bounded user scopes, probe-backed TMPDIR, JVM Clojure
+1.12.6/Temurin21 and n=5,000,000/reps=3. Preserve noisy/incomplete/failed runs.
+Reject selected ratios above5x, string allocation >=200,000bytes and any other
+program's regression beyond the sum of measured spreads. Unavailable PMU
+counters remain explicitly unavailable. Output/linearity require separate probes.
+
+The paired af89e33e CI measurements and complete logs are retained permanently
+in results/m15-chunks-af89-ci, with source/binary receipts, both runtime JSON
+files, generated sources, and the original failed combined comparison.
+String-build measured2.395912x JVM and61,440bytes/run; lazy-pipeline measured
+5.471700x and fails the original combined5x gate. Both measured executions
+followed standalone idle gates; peak loads1.625/1.901. No other program regressed
+beyond summed observed spreads. The exact downloaded candidate executable
+f24d2606fd1523e77c02d5ffeaa576f9d0176090ee76e55cd1d93cddddbcab75
+also matches full JVM output at1024/10240 and gives instruction scaling
+10.405871x (numeric) and10.213415x (fixed strings). See that directory's README
+for commands, unrounded values and the explicit separation of #450/#482 gates.
+Those local instruction/output checks make no new walltime claim.
+
+Source-reload coverage additionally uses compiled_source_macros,
+portable_callable_metadata, portable_error_constructors,
+portable_hash_numeric_boundaries and portable_public_hash. Ordinary core source
+uses generic chunk fallbacks without native layout access or registration.
+The pre-PR source-mode vec/private-field limitation and working chunk/list
+pipeline are recorded by the isolated source_core_probe example and
+target/probe/m15-source-core-baseline-host-expanded.log. After switching source
+trees in the shared Cargo target, a stale generator is refreshed with
+cargo +stable clean --release -p suss-compile-generator; never bypass its
+compiler-source hash assertion.
+
+Protocol-cache and parity probes use the target/probe/m15-protocol-pair-* and
+m15-chunk-parity-* evidence families. Run protocol_call_caches,
+compiled_protocol_sites and clojure_equality_bitwise alongside the chunk/source
+suites when changing those paths. The parity oracle is m15-parity-oracle.clj:
+JVM Clojure 1.12.6 checks both long limits, values beyond binary64's exact integer
+range, noninteger rejection and single argument evaluation. Instruction deltas
+remain separate from the quiet full-run timing gate.
+
+Chunk loop comparison probes use target/probe/m15-chunk-raw-less-*. The
+m15-chunk-raw-less-jvm.clj oracle checks exact long ordering beyond binary64's
+integer range and at both long limits. long-less uses the existing checked
+numeric relation; core's public/string/array coercing comparisons keep their
+separate behavior. Regenerate core and rerun the chunk/source/parity/cache suites
+and foundation checks after changing its private counter operations.
+
+Typed bit-test probes use target/probe/m15-typed-bits-*; the executed JVM
+Clojure 1.12.6 inputs are m15-typed-bit-test-jvm.clj and
+m15-typed-bit-test-aot-jvm.clj. Run clojure_unboxed_locals,
+clojure_equality_bitwise, compiled_primitive_params and compiled_call_sites
+alongside the chunk/source suites. Check negative/wide shift counts, boolean
+escapes into collections/closures, mixed loop values and boxed error effects.
+Physical flag locals leave source-kind checking and ABI 7 unchanged. Compare
+unchanged-form instruction counts separately from quiet-machine timing.
+
 Reviewed native file/WIT selection and explicit mappings, shared compiled source/
 macro staging, scalar parsing/result handling, exact nested export invocation,
 command-mode separation and documented remaining frontend modes at855d281.
