@@ -331,6 +331,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ChunkLongSum => { names.insert("chunk-long-sum"); }
                         Nominal::TransientVectorTypes => { names.insert("transient-vector-types-register"); }
                         Nominal::TransientVectorAppend => { names.insert("transient-vector-append"); }
+                        Nominal::TransientMapTypes => { names.insert("transient-map-types-register"); }
+                        Nominal::TransientMapAssoc => { names.insert("transient-map-assoc"); }
+                        Nominal::TransientMapConj => { names.insert("transient-map-conj"); }
                         Nominal::ChunkNth => { names.insert("chunk-nth"); }
                         Nominal::ChunkAppend => { names.insert("chunk-buffer-append"); }
                         Nominal::ChunkArray => { names.insert("chunk-array"); }
@@ -880,11 +883,11 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "binding-set" => (vec![VALUE, VALUE], vec![]),
             "number-parse-long" | "hash-map-type-register" => (vec![VALUE; 4], vec![VALUE]),
             "chunk-types-register" | "transient-vector-types-register" => (vec![VALUE; 3], vec![VALUE]),
-            "chunk-nth" | "chunk-buffer-append" | "transient-vector-append" => (vec![VALUE; 2], vec![VALUE]),
+            "chunk-nth" | "chunk-buffer-append" | "transient-vector-append" | "transient-map-conj" => (vec![VALUE; 2], vec![VALUE]),
             "chunk-long-sum" => (vec![VALUE; 6], vec![VALUE]),
             "chunk-array" | "chunk-offset" | "chunk-seq" => (vec![VALUE], vec![VALUE]),
-            "packed-array-copy" | "object-array-copy-forward" | "object-array-copy-backward" => (vec![VALUE; 5], vec![VALUE]),
-            "number-range-count" | "packed-array-store" | "array-set" | "packed-array-set-3" | "map-assoc" => (vec![VALUE; 3], vec![VALUE]),
+            "transient-map-types-register" | "packed-array-copy" | "object-array-copy-forward" | "object-array-copy-backward" => (vec![VALUE; 5], vec![VALUE]),
+            "number-range-count" | "packed-array-store" | "array-set" | "packed-array-set-3" | "map-assoc" | "transient-map-assoc" => (vec![VALUE; 3], vec![VALUE]),
             "map-lookup" => (vec![VALUE, VALUE, ValType::I32, VALUE], vec![VALUE]),
             "string-slice" | "callable-property-get" | "named-property-set" | "user-field-get-guard" | "user-field-set-guard" | "object-method-set" | "object-method-invoke" | "native-object-property-set" | "native-object-property-set-strict" => {
                 (vec![VALUE, VALUE, VALUE], vec![VALUE])
@@ -3704,7 +3707,7 @@ fn emit_function(
                             }
                             function.instruction(&Call(index("hash-map-type-register")));
                         }
-                        Nominal::ChunkLongSum | Nominal::ChunkTypes | Nominal::ChunkNth | Nominal::ChunkAppend | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq | Nominal::TransientVectorTypes | Nominal::TransientVectorAppend => {
+                        Nominal::ChunkLongSum | Nominal::ChunkTypes | Nominal::ChunkNth | Nominal::ChunkAppend | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq | Nominal::TransientVectorTypes | Nominal::TransientVectorAppend | Nominal::TransientMapTypes | Nominal::TransientMapAssoc | Nominal::TransientMapConj => {
                             let mut code = vec![];
                             for argument in arguments {
                                 locals.push_boxed(&mut code, *argument);
@@ -3714,6 +3717,9 @@ fn emit_function(
                                 Nominal::ChunkLongSum => "chunk-long-sum",
                                 Nominal::TransientVectorTypes => "transient-vector-types-register",
                                 Nominal::TransientVectorAppend => "transient-vector-append",
+                                Nominal::TransientMapTypes => "transient-map-types-register",
+                                Nominal::TransientMapAssoc => "transient-map-assoc",
+                                Nominal::TransientMapConj => "transient-map-conj",
                                 Nominal::ChunkNth => "chunk-nth",
                                 Nominal::ChunkArray => "chunk-array",
                                 Nominal::ChunkOffset => "chunk-offset",

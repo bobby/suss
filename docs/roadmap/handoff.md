@@ -1,5 +1,40 @@
 ## Independent PR177 review — typed invocation before guest initialization
 
+## Canonical transient-map storage probes (2026-11-20)
+
+For #446, the guarded map helpers use a private atomically registered set of
+TransientHashMap/BitmapIndexedNode/ArrayNode/Unique/PersistentVector witnesses.
+Every traversed node must have the live map edit token. i31 keys use the existing
+Clojure long hash. Admitted operations update/insert a leaf, create missing
+children, split distinct integer hashes or promote a full bitmap only after
+preflighting its old keys. All existing storage writes follow admission and
+necessary private allocation. COW, noninteger keys, full hash collisions,
+unsupported layouts and custom entries/receivers retain source handling.
+Ordinary source-core adapters decline; existing ABI7 layouts/global offsets stay.
+
+Edit replacement JSON and the owned loader, refresh its input SHA256, regenerate
+with core_import.py, then apply_bootstrap.py --check. Use cargo +stable release
+with SUSS_FUNCTION_NAMES=1 at build/compile, two jobs/test threads, bounded4GiB
+user scopes and target/probe-backed TMPDIR/output. Run transient_map_storage,
+transient_vector_append and clojure_chunk_effects:28 distinct tests pass, including
+actual AOT, GC, snapshots/COW, private admission/decline, full collisions, atomic
+registration, errors and custom nil returns. Fresh JVM Clojure1.12.6 public
+values/effects match; -51283/37831 are unequal keys with the same hash.
+All361 Python tests, foundation checks and actionlint1.7.12 pass. Java-free
+verification pins stable throughout, reproduces both phase artifacts byte-for-byte,
+verifies compiler identities and passes four bootstrap execution tests.
+
+results/m15-transient-map-20261120 retains exact frozen source/executable receipts,
+all raw instruction observations and failed attempts. Median3 N1000-minus0,
+warm-first unchanged forms: into-map11,978,597.640 to3,963,274.075 instructions/run
+(66.913706% fewer); vector remains1,114,941 and the other five are essentially
+unchanged. Earlier leaf-only/new-child variants remain separately identified.
+Counts do not establish the5x walltime target. performance-programs requires all
+seven original limits plus string allocation and no material regressions, after
+separate baseline/candidate idle commands. Existing partial issue modes retain
+their behavior. Actual quiet timing and final-head CI remain separate evidence
+on #446; do not infer their result from this local count reduction.
+
 ## Canonical transient-vector append probes (2026-11-20)
 
 For #487, the current-tail storage adapter admits only owned transient-vector,

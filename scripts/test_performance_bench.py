@@ -100,6 +100,23 @@ class PerformanceEvidenceTests(unittest.TestCase):
         self.assertEqual(result["required_programs"], ["into-vector"])
         self.assertIn("lazy-pipeline", result["unmet_program_targets"])
 
+    def test_complete_program_gate_requires_every_original_five_times_limit(self):
+        self.assertTrue(evaluate(measured(), measured(), all_programs=True)["timing_and_allocation_pass"])
+        for name in PROGRAMS:
+            baseline, candidate = measured(), measured()
+            baseline["suss"]["times"][name][0] = 6.1e-5
+            candidate["suss"]["times"][name][0] = 6e-5
+            result = evaluate(baseline, candidate, all_programs=True)
+            self.assertEqual(result["required_programs"], list(PROGRAMS))
+            self.assertFalse(result["timing_and_allocation_pass"], name)
+            self.assertIn(name, result["unmet_program_targets"])
+            self.assertEqual(result["failures"], [name + " exceeds 5x JVM"])
+
+    def test_complete_program_gate_cannot_be_combined_with_partial_selection(self):
+        for required in [[], ["string-build"], list(PROGRAMS)]:
+            with self.assertRaises(ValueError):
+                evaluate(measured(), measured(), required, all_programs=True)
+
 
 if __name__ == "__main__":
     unittest.main()

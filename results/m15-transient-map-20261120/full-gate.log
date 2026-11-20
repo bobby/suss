@@ -1,0 +1,18 @@
+Running as unit: run-p3133465-i82813228.scope; invocation ID: d915f36afd1f414b9775b24c5846e26f
+test_allocation_limit_and_unknown_measurements_fail_closed (test_performance_bench.PerformanceEvidenceTests.test_allocation_limit_and_unknown_measurements_fail_closed) ... ok
+test_complete_program_gate_cannot_be_combined_with_partial_selection (test_performance_bench.PerformanceEvidenceTests.test_complete_program_gate_cannot_be_combined_with_partial_selection) ... ok
+test_complete_program_gate_requires_every_original_five_times_limit (test_performance_bench.PerformanceEvidenceTests.test_complete_program_gate_requires_every_original_five_times_limit) ... ok
+test_exact_five_x_limit_does_not_use_a_rounded_table_ratio (test_performance_bench.PerformanceEvidenceTests.test_exact_five_x_limit_does_not_use_a_rounded_table_ratio) ... ok
+test_idle_duration_resets_on_busy_samples_and_includes_threshold (test_performance_bench.PerformanceEvidenceTests.test_idle_duration_resets_on_busy_samples_and_includes_threshold) ... ok
+test_missing_or_unrelated_issue_gates_cannot_report_success (test_performance_bench.PerformanceEvidenceTests.test_missing_or_unrelated_issue_gates_cannot_report_success) ... ok
+test_noisy_incomplete_dirty_or_wrong_oracle_never_passes (test_performance_bench.PerformanceEvidenceTests.test_noisy_incomplete_dirty_or_wrong_oracle_never_passes) ... ok
+test_other_program_regressions_use_both_spreads (test_performance_bench.PerformanceEvidenceTests.test_other_program_regressions_use_both_spreads) ... ok
+test_passing_data_keeps_exact_ratios_and_measured_spreads (test_performance_bench.PerformanceEvidenceTests.test_passing_data_keeps_exact_ratios_and_measured_spreads) ... ok
+test_string_issue_gate_retains_the_failed_lazy_target (test_performance_bench.PerformanceEvidenceTests.test_string_issue_gate_retains_the_failed_lazy_target) ... ok
+test_vector_issue_gate_requires_its_limit_and_keeps_other_failed_targets (test_performance_bench.PerformanceEvidenceTests.test_vector_issue_gate_requires_its_limit_and_keeps_other_failed_targets) ... ok
+test_zero_below_resolution_and_nonfinite_times_never_pass (test_performance_bench.PerformanceEvidenceTests.test_zero_below_resolution_and_nonfinite_times_never_pass) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.004s
+
+OK

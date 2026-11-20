@@ -1,0 +1,43 @@
+Running as unit: run-p3117358-i82782503.scope; invocation ID: 6f3c49a18e1b4b8aa8e5516477b47ee0
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-transient-map-source/crates/suss-cli)
+    Finished `release` profile [optimized] target(s) in 1.77s
+     Running tests/transient_map_storage.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/transient_map_storage-9287f7d068a43264)
+
+running 4 tests
+test native_leaf_insert_and_update_are_atomic_and_keep_edit_lifetime ... FAILED
+test fallback_keys_values_gc_and_argument_effects_match_clojure ... ok
+test private_registration_is_atomic_and_ordinary_core_declines ... FAILED
+test public_builds_updates_and_snapshots_keep_all_hash_trie_boundaries ... ok
+
+failures:
+
+---- native_leaf_insert_and_update_are_atomic_and_keep_edit_lifetime stdout ----
+
+thread 'native_leaf_insert_and_update_are_atomic_and_keep_edit_lifetime' (3117431) panicked at crates/suss-cli/tests/transient_map_storage.rs:13:33:
+(pr-str 
+          (let [e (Unique.) arr (object-array (repeat 8 nil))
+                node (BitmapIndexedNode. e 0 arr)
+                t (TransientHashMap. e node 0 false nil)
+                added (suss.bootstrap/transient-map-assoc t 1 :first)
+                updated (suss.bootstrap/transient-map-assoc t 1 :second)
+                p (persistent! t)
+                after (suss.bootstrap/transient-map-assoc t 1 :third)]
+            [(identical? t added) (identical? t updated) (= p {1 :second})
+             (suss.bootstrap/undefined? after) (= p {1 :second})])): Unresolved Runtime name suss.bootstrap/transient-map-assoc at bytes 201..235
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- private_registration_is_atomic_and_ordinary_core_declines stdout ----
+
+thread 'private_registration_is_atomic_and_ordinary_core_declines' (3117434) panicked at crates/suss-cli/tests/transient_map_storage.rs:95:13:
+assertion `left == right` failed
+  left: "Unresolved Runtime name suss.bootstrap/transient-map-types!"
+ right: "Private transient map adapters require compiled core"
+
+
+failures:
+    native_leaf_insert_and_update_are_atomic_and_keep_edit_lifetime
+    private_registration_is_atomic_and_ordinary_core_declines
+
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.12s
+
+error: test failed, to rerun pass `-p suss-cli --test transient_map_storage`

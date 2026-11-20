@@ -6,6 +6,7 @@ use Instruction::*;
 const VECTOR: u32 = chunks::GLOBAL_LIMIT;
 const NODE: u32 = VECTOR + 1;
 const EDIT: u32 = NODE + 1;
+pub(super) const GLOBAL_LIMIT: u32 = EDIT + 1;
 
 pub(super) fn append_globals(globals: &mut GlobalSection) {
     assert_eq!(globals.len(), VECTOR);

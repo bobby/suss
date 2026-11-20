@@ -1,0 +1,9 @@
+Running as unit: run-p3128629-i82783852.scope; invocation ID: 92a64eec7f0c492b9b4b811ef612d154
+warm 24.998842 instructions per loop iteration; no walltime measurement
+fib 2068710.43 instructions per loop iteration; no walltime measurement
+word-frequencies 3412036.346 instructions per loop iteration; no walltime measurement
+transduce 677007.959 instructions per loop iteration; no walltime measurement
+lazy-pipeline 1059445.464 instructions per loop iteration; no walltime measurement
+into-vector 1114944.132 instructions per loop iteration; no walltime measurement
+into-map 5571876.721 instructions per loop iteration; no walltime measurement
+string-build 1361061.533 instructions per loop iteration; no walltime measurement

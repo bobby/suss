@@ -1,0 +1,380 @@
+{
+  "source_head": "eb85bacf80a744f8e74f476da04d48e77f1051e4",
+  "executable": "/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-transient-map-new-nodes-suss",
+  "sha256": "0a90412a6d7e67785d2fe71072601d65eecc47210a943075f8a5b0fade08e7c7",
+  "bench_sha256": "3233839717bcd149bef5fd690dd1fc2dfa482d4d1135cb0d641393c217419624",
+  "cases": [
+    [
+      "warm",
+      "i",
+      1000000
+    ],
+    [
+      "fib",
+      "(fib 20)",
+      1000
+    ],
+    [
+      "word-frequencies",
+      "(reduce (fn [acc w] (assoc acc w (inc (get acc w 0)))) {} words)",
+      1000
+    ],
+    [
+      "transduce",
+      "(transduce (comp (map inc) (filter even?)) + 0 v)",
+      1000
+    ],
+    [
+      "lazy-pipeline",
+      "(reduce + (map inc (filter even? v)))",
+      1000
+    ],
+    [
+      "into-vector",
+      "(into [] (map inc) v)",
+      1000
+    ],
+    [
+      "into-map",
+      "(into {} (map (fn [x] [x x])) v)",
+      1000
+    ],
+    [
+      "string-build",
+      "(apply str (map str v))",
+      1000
+    ]
+  ],
+  "warmup": {
+    "n": 0,
+    "instructions": 90771621359,
+    "stdout": "0\n",
+    "stderr": "90771621359,,instructions:u,23197057092,100.00,,\n"
+  },
+  "raw": {
+    "warm": [
+      {
+        "n": 0,
+        "instructions": 289596837,
+        "stdout": "0\n",
+        "stderr": "289596837,,instructions:u,73697705,100.00,,\n"
+      },
+      {
+        "n": 1000000,
+        "instructions": 314599351,
+        "stdout": "0\n",
+        "stderr": "314599351,,instructions:u,81277028,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 289616412,
+        "stdout": "0\n",
+        "stderr": "289616412,,instructions:u,76104061,100.00,,\n"
+      },
+      {
+        "n": 1000000,
+        "instructions": 314604486,
+        "stdout": "0\n",
+        "stderr": "314604486,,instructions:u,73936186,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 289604462,
+        "stdout": "0\n",
+        "stderr": "289604462,,instructions:u,73191473,100.00,,\n"
+      },
+      {
+        "n": 1000000,
+        "instructions": 314603304,
+        "stdout": "0\n",
+        "stderr": "314603304,,instructions:u,74728535,100.00,,\n"
+      }
+    ],
+    "fib": [
+      {
+        "n": 0,
+        "instructions": 289600759,
+        "stdout": "0\n",
+        "stderr": "289600759,,instructions:u,73956613,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 2358313145,
+        "stdout": "0\n",
+        "stderr": "2358313145,,instructions:u,187511957,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 289616853,
+        "stdout": "0\n",
+        "stderr": "289616853,,instructions:u,79365847,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 2358318234,
+        "stdout": "0\n",
+        "stderr": "2358318234,,instructions:u,228332957,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 289607804,
+        "stdout": "0\n",
+        "stderr": "289607804,,instructions:u,74502640,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 2358329268,
+        "stdout": "0\n",
+        "stderr": "2358329268,,instructions:u,226217177,100.00,,\n"
+      }
+    ],
+    "word-frequencies": [
+      {
+        "n": 0,
+        "instructions": 289601036,
+        "stdout": "0\n",
+        "stderr": "289601036,,instructions:u,80775903,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 3701638117,
+        "stdout": "0\n",
+        "stderr": "3701638117,,instructions:u,406575975,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 289601771,
+        "stdout": "0\n",
+        "stderr": "289601771,,instructions:u,73103604,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 3701636674,
+        "stdout": "0\n",
+        "stderr": "3701636674,,instructions:u,468464952,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 289603159,
+        "stdout": "0\n",
+        "stderr": "289603159,,instructions:u,74071192,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 3701650342,
+        "stdout": "0\n",
+        "stderr": "3701650342,,instructions:u,469910330,100.00,,\n"
+      }
+    ],
+    "transduce": [
+      {
+        "n": 0,
+        "instructions": 289609168,
+        "stdout": "0\n",
+        "stderr": "289609168,,instructions:u,74205713,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 966617760,
+        "stdout": "0\n",
+        "stderr": "966617760,,instructions:u,137693938,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 289602031,
+        "stdout": "0\n",
+        "stderr": "289602031,,instructions:u,72343779,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 966612359,
+        "stdout": "0\n",
+        "stderr": "966612359,,instructions:u,120958921,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 289621830,
+        "stdout": "0\n",
+        "stderr": "289621830,,instructions:u,70595902,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 966617127,
+        "stdout": "0\n",
+        "stderr": "966617127,,instructions:u,139482452,100.00,,\n"
+      }
+    ],
+    "lazy-pipeline": [
+      {
+        "n": 0,
+        "instructions": 289600700,
+        "stdout": "0\n",
+        "stderr": "289600700,,instructions:u,81507558,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 1349049677,
+        "stdout": "0\n",
+        "stderr": "1349049677,,instructions:u,185889455,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 289607600,
+        "stdout": "0\n",
+        "stderr": "289607600,,instructions:u,73641722,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 1349045351,
+        "stdout": "0\n",
+        "stderr": "1349045351,,instructions:u,212427187,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 289591118,
+        "stdout": "0\n",
+        "stderr": "289591118,,instructions:u,74563641,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 1349046164,
+        "stdout": "0\n",
+        "stderr": "1349046164,,instructions:u,213340598,100.00,,\n"
+      }
+    ],
+    "into-vector": [
+      {
+        "n": 0,
+        "instructions": 289601222,
+        "stdout": "0\n",
+        "stderr": "289601222,,instructions:u,75598998,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 1404546445,
+        "stdout": "0\n",
+        "stderr": "1404546445,,instructions:u,155297416,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 289606216,
+        "stdout": "0\n",
+        "stderr": "289606216,,instructions:u,78045718,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 1404550648,
+        "stdout": "0\n",
+        "stderr": "1404550648,,instructions:u,181987963,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 289602313,
+        "stdout": "0\n",
+        "stderr": "289602313,,instructions:u,73770142,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 1404542289,
+        "stdout": "0\n",
+        "stderr": "1404542289,,instructions:u,152175752,100.00,,\n"
+      }
+    ],
+    "into-map": [
+      {
+        "n": 0,
+        "instructions": 289589340,
+        "stdout": "0\n",
+        "stderr": "289589340,,instructions:u,74082395,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 5861472969,
+        "stdout": "0\n",
+        "stderr": "5861472969,,instructions:u,612653901,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 289603026,
+        "stdout": "0\n",
+        "stderr": "289603026,,instructions:u,77186737,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 5861487883,
+        "stdout": "0\n",
+        "stderr": "5861487883,,instructions:u,658210345,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 289597240,
+        "stdout": "0\n",
+        "stderr": "289597240,,instructions:u,80743370,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 5861473961,
+        "stdout": "0\n",
+        "stderr": "5861473961,,instructions:u,607063496,100.00,,\n"
+      }
+    ],
+    "string-build": [
+      {
+        "n": 0,
+        "instructions": 289596022,
+        "stdout": "0\n",
+        "stderr": "289596022,,instructions:u,78295241,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 1650664162,
+        "stdout": "0\n",
+        "stderr": "1650664162,,instructions:u,200278446,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 289603629,
+        "stdout": "0\n",
+        "stderr": "289603629,,instructions:u,76751697,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 1650665125,
+        "stdout": "0\n",
+        "stderr": "1650665125,,instructions:u,201322453,100.00,,\n"
+      },
+      {
+        "n": 0,
+        "instructions": 289603592,
+        "stdout": "0\n",
+        "stderr": "289603592,,instructions:u,77344020,100.00,,\n"
+      },
+      {
+        "n": 1000,
+        "instructions": 1650677141,
+        "stdout": "0\n",
+        "stderr": "1650677141,,instructions:u,200059640,100.00,,\n"
+      }
+    ]
+  },
+  "per_run": {
+    "warm": 24.998842,
+    "fib": 2068710.43,
+    "word-frequencies": 3412036.346,
+    "transduce": 677007.959,
+    "lazy-pipeline": 1059445.464,
+    "into-vector": 1114944.132,
+    "into-map": 5571876.721,
+    "string-build": 1361061.533
+  },
+  "load_start": [
+    3.3740234375,
+    3.63525390625,
+    2.3173828125
+  ],
+  "load_end": [
+    3.263671875,
+    3.60791015625,
+    2.3154296875
+  ]
+}

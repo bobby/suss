@@ -519,6 +519,9 @@ pub enum Nominal {
     /// Owned transient-vector/root/edit witnesses and a guarded tail append.
     TransientVectorTypes,
     TransientVectorAppend,
+    TransientMapTypes,
+    TransientMapAssoc,
+    TransientMapConj,
     /// A `^long` or `^double` parameter's value (#385): Clojure's checked
     /// longCast or doubleCast of the argument, kept as a raw i64 or f64.
     LongCast,
@@ -726,6 +729,9 @@ impl Nominal {
                 Self::PackedGet(_) | Self::VectorNth | Self::ArrayMapGet | Self::MapContains => count == 2,
                 Self::ObjectArrayCopy(_) => count == 5,
                 Self::HashMapTypes => count == 4,
+                Self::TransientMapTypes => count == 5,
+                Self::TransientMapAssoc => count == 3,
+                Self::TransientMapConj => count == 2,
                 Self::ChunkTypes | Self::TransientVectorTypes => count == 3,
                 Self::ChunkNth | Self::ChunkAppend | Self::TransientVectorAppend => count == 2,
                 Self::ChunkLongSum => count == 6,
@@ -3329,6 +3335,9 @@ impl Analyzer<'_> {
                 "chunk-types!" => Some(Nominal::ChunkTypes),
                 "chunk-long-sum" => Some(Nominal::ChunkLongSum),
                 "transient-vector-types!" => Some(Nominal::TransientVectorTypes),
+                "transient-map-types!" => Some(Nominal::TransientMapTypes),
+                "transient-map-assoc" => Some(Nominal::TransientMapAssoc),
+                "transient-map-conj" => Some(Nominal::TransientMapConj),
                 "transient-vector-append" => Some(Nominal::TransientVectorAppend),
                 "chunk-nth" => Some(Nominal::ChunkNth),
                 "chunk-append" => Some(Nominal::ChunkAppend),
@@ -3353,6 +3362,10 @@ impl Analyzer<'_> {
                 let ordinary_core = !self.privileged
                     && self.environment.current_namespace(self.phase) == "suss.core";
                 let transient_vector = matches!(operation, Nominal::TransientVectorTypes | Nominal::TransientVectorAppend);
+                let transient_map = matches!(operation, Nominal::TransientMapTypes | Nominal::TransientMapAssoc | Nominal::TransientMapConj);
+                if transient_map && !self.privileged && !ordinary_core {
+                    return Err(fail(form.span.clone(), "Private transient map adapters require compiled core"));
+                }
                 if transient_vector && !self.privileged && !ordinary_core {
                     return Err(fail(form.span.clone(), "Private transient vector adapters require compiled core"));
                 }
@@ -3374,12 +3387,12 @@ impl Analyzer<'_> {
                     .iter()
                     .map(|argument| self.form(argument))
                     .collect::<Result<Vec<_>, _>>()?;
-                if (chunk || transient_vector) && ordinary_core {
+                if (chunk || transient_vector || transient_map) && ordinary_core {
                     // Direct source loading keeps user-extensible descriptors.
                     // It cannot register them as canonical or access native
                     // storage, even when its namespace is suss.core. Evaluate
                     // operands in order, then take the existing source fallback.
-                    let value = if matches!(operation, Nominal::ChunkTypes | Nominal::TransientVectorTypes) { Literal::Nil } else { Literal::Undefined };
+                    let value = if matches!(operation, Nominal::ChunkTypes | Nominal::TransientVectorTypes | Nominal::TransientMapTypes) { Literal::Nil } else { Literal::Undefined };
                     operands.push(self.literal_form(form, value));
                     return Ok(Hir { source: None, span: form.span.clone(),
                         metadata: form.metadata.clone(), ty: Type::Value,

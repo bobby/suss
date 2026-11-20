@@ -1,0 +1,56 @@
+Running as unit: run-p3116372-i82790549.scope; invocation ID: 9c89a2a7c3f041bda840370362626b25
+     Removed 20 files, 52.8MiB total
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-transient-map-source/crates/suss-core)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-transient-map-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-transient-map-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-transient-map-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-transient-map-source/crates/suss-cli)
+    Finished `release` profile [optimized] target(s) in 1m 36s
+     Running tests/transient_map_storage.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/transient_map_storage-9287f7d068a43264)
+
+running 4 tests
+test native_leaf_insert_and_update_are_atomic_and_keep_edit_lifetime ... FAILED
+test private_registration_is_atomic_and_ordinary_core_declines ... FAILED
+test fallback_keys_values_gc_and_argument_effects_match_clojure ... ok
+test public_builds_updates_and_snapshots_keep_all_hash_trie_boundaries ... FAILED
+
+failures:
+
+---- native_leaf_insert_and_update_are_atomic_and_keep_edit_lifetime stdout ----
+
+thread 'native_leaf_insert_and_update_are_atomic_and_keep_edit_lifetime' (3117117) panicked at crates/suss-cli/tests/transient_map_storage.rs:13:33:
+(pr-str 
+          (let [e (Unique.) arr (object-array (repeat 8 nil))
+                node (BitmapIndexedNode. e 0 arr)
+                t (TransientHashMap. e node 0 false nil)
+                added (suss.bootstrap/transient-map-assoc t 1 :first)
+                updated (suss.bootstrap/transient-map-assoc t 1 :second)
+                p (persistent! t)
+                after (suss.bootstrap/transient-map-assoc t 1 :third)]
+            [(identical? t added) (identical? t updated) (= p {1 :second})
+             (suss.bootstrap/undefined? after) (= p {1 :second})])): Unresolved Runtime name suss.bootstrap/transient-map-assoc at bytes 201..235
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- private_registration_is_atomic_and_ordinary_core_declines stdout ----
+
+thread 'private_registration_is_atomic_and_ordinary_core_declines' (3117155) panicked at crates/suss-cli/tests/transient_map_storage.rs:95:13:
+assertion `left == right` failed
+  left: "Unresolved Runtime name suss.bootstrap/transient-map-types!"
+ right: "Private transient map adapters require compiled core"
+
+---- public_builds_updates_and_snapshots_keep_all_hash_trie_boundaries stdout ----
+
+thread 'public_builds_updates_and_snapshots_keep_all_hash_trie_boundaries' (3117156) panicked at crates/suss-cli/tests/transient_map_storage.rs:25:9:
+assertion `left == right` failed
+  left: "[[0 true false false] [1 true false false] [7 true false false] [8 true false false] [15 true true true] [16 true true true] [31 true true true] [32 true true true] [63 true true true] [64 true true true] [255 true true true] [256 true true true] [1023 true true true] [1024 true true true]]"
+ right: "[[0 true true true] [1 true true true] [7 true true true] [8 true true true] [15 true true true] [16 true true true] [31 true true true] [32 true true true] [63 true true true] [64 true true true] [255 true true true] [256 true true true] [1023 true true true] [1024 true true true]]"
+
+
+failures:
+    native_leaf_insert_and_update_are_atomic_and_keep_edit_lifetime
+    private_registration_is_atomic_and_ordinary_core_declines
+    public_builds_updates_and_snapshots_keep_all_hash_trie_boundaries
+
+test result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.17s
+
+error: test failed, to rerun pass `-p suss-cli --test transient_map_storage`

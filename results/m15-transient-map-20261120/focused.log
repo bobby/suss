@@ -1,0 +1,48 @@
+Running as unit: run-p3117752-i82797822.scope; invocation ID: 130fe4a89b3d4d1791fcf30346be7ce4
+508 core import files written
+bounded apply bootstrap v1 and four complete licensed generators verified
+     Removed 20 files, 52.8MiB total
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-transient-map-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-transient-map-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-transient-map-source/crates/suss-cli)
+    Finished `release` profile [optimized] target(s) in 1m 34s
+     Running tests/clojure_chunk_effects.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/clojure_chunk_effects-9c74cb758560a432)
+
+running 11 tests
+test chunk_buffer_matches_jvm_returns_and_failed_store_order ... ok
+test chunk_long_arithmetic_keeps_checked_overflow_and_wide_results ... ok
+test chunk_storage_views_decline_unsupported_windows_and_keep_aliases_after_gc ... ok
+test chunk_adapters_are_private_and_registration_is_atomic ... ok
+test chunk_views_read_future_elements_after_callbacks_and_keep_reduced_demand ... ok
+test chunked_filter_keeps_the_value_read_before_its_predicate ... ok
+test invalid_chunk_windows_keep_callbacks_before_the_first_bad_read ... ok
+test custom_chunks_keep_their_indexed_protocol_effects ... ok
+test native_chunk_admission_keeps_nil_end_bounds_and_decline_effects ... ok
+test native_chunk_roots_and_shallow_elements_survive_gc ... ok
+test ordinary_source_core_keeps_generic_chunks_without_native_layout_access ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 22.80s
+
+     Running tests/transient_map_storage.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/transient_map_storage-9287f7d068a43264)
+
+running 4 tests
+test native_leaf_insert_and_update_are_atomic_and_keep_edit_lifetime ... ok
+test fallback_keys_values_gc_and_argument_effects_match_clojure ... ok
+test public_builds_updates_and_snapshots_keep_all_hash_trie_boundaries ... ok
+test private_registration_is_atomic_and_ordinary_core_declines ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.30s
+
+     Running tests/transient_vector_append.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/transient_vector_append-7cb43885395e3781)
+
+running 7 tests
+test appended_values_keep_aliases_and_closures_after_gc ... ok
+test generic_receivers_and_invalidated_transients_keep_argument_effects ... ok
+test native_tail_admission_declines_before_any_mutation_at_full_tails ... ok
+test private_adapters_cannot_register_or_mutate_from_ordinary_source ... ok
+test public_growth_preserves_snapshots_across_tail_and_root_boundaries ... ok
+test unsupported_counts_and_tail_storage_decline_without_writes ... ok
+test aot_vector_growth_uses_the_same_public_values ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.83s
+
