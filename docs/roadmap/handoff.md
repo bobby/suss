@@ -1,5 +1,33 @@
 ## Independent PR177 review — typed invocation before guest initialization
 
+## Raw integer predicate and parity probe commands (2026-11-20)
+
+Implementation2ad0c15d keeps the existing nominal long test's Bool result raw
+and inverts even?'s checked low bit by a direct conditional. Keep the integer
+guard, original errors and source operand order. Edit expression-even-predicate.json,
+then core_import.py and apply_bootstrap.py --check; ABI7/source-kind rules stay.
+
+results/m15-parity-20261120 retains unchanged benchmark inputs, all raw
+instruction observations, executable/patch hashes and fresh JVM1.12.6 results.
+Median3 N1000-minus0, warm-up first: lazy-pipeline1,059,416.537 instructions,
+transduce677,006.787, reductions7.633554%/11.452611% from b676b991's unchanged
+b137ae4c implementation. Other five programs are essentially unchanged.
+These counts do not establish the5x walltime target.
+
+Run cargo +stable release targets clojure_equality_bitwise, compiled_core_casts,
+compiled_primitive_params and compiled_call_sites, --test-threads=2; the combined
+run has21passes and0failures/ignores. Use target/probe/m15-hamt-target,
+CARGO_BUILD_JOBS=2, SUSS_FUNCTION_NAMES=1 at build/compile time and4GiB user scopes.
+TMPDIR/output stays under target/probe. Logs use target/probe/m15-long-test-*.
+The predicate-only comparison stays separate from the combined parity probe.
+
+Java-free bootstrap verification, with stable pinned for nested Cargo calls,
+reproduces both phase artifacts byte-for-byte, verifies compiler identities
+and passes all four release bootstrap execution tests. After updating the
+stacked base to6a91566f, all356 Python tests and core/bootstrap checks pass.
+After incorporating main eb9942b1 (#481 history reporting), all358 Python tests
+and core/bootstrap checks pass; Rust/runtime/bench.py inputs are unchanged.
+
 ## M15 chunk adapter commands
 
 Current measurements, limitations and the next unblocked work are recorded on
@@ -83,6 +111,186 @@ alongside the chunk/source suites. Check negative/wide shift counts, boolean
 escapes into collections/closures, mixed loop values and boxed error effects.
 Physical flag locals leave source-kind checking and ABI 7 unchanged. Compare
 unchanged-form instruction counts separately from quiet-machine timing.
+
+Core arithmetic/32-bit probes use target/probe/m15-core-int32-* and
+m15-core-numeric-*. The explicit JVM 1.12.6 adapters are m15-core-int32-jvm.clj
+and m15-core-numeric-hinted-jvm.clj. Compare each typed kernel with its same
+baseline form; unary and binary kernels have different argument overhead, so
+their separate control is not a context-free operation cost. Run
+clojure_unboxed_locals, clojure_equality_bitwise and hash/map/vector suites in
+both phases. Boxed versus primitive zero-divisor double division differs on the
+JVM; the frozen Suss mismatch and failed initial unhinted oracle are recorded
+on #484. Core division is excluded from the known-numeric arithmetic lowering.
+Integer-result propagation probes use target/probe/m15-core-int32-results-*.
+Exercise boxed inputs whose normalized unsigned result exceeds the i31 range,
+followed by arithmetic/comparisons and repeated boxed uses; input coercions
+still run through the original helper. Compare all seven unchanged programs
+after changing these result facts, not just typed kernels.
+
+Guarded arithmetic/comparison probes use target/probe/m15-core-guarded-math-*
+and m15-core-guarded-compare-final-*. Live var guard cases need explicit
+:arglists metadata: fn body hints alone do not declare primitive var calls.
+The corrected m15-guarded-comparison-declared-{before,after}-kernels use the
+same hinted declarations and retain executable/source receipts. On source
+611def0b, the whole comparison loop costs 133.0016 instructions/iteration
+against 377.10987 before; its control stays at 89. The earlier undeclared kernels
+exercise generic var calls and are not guard-path measurements. JVM Clojure 1.12.6
+numeric/evaluation-order observations are m15-guarded-comparison-jvm.{clj,log}.
+The final focused log records 40 passes across 8 CLI targets; the final
+foundation log records 347 Python passes and every source check. These are
+separate from full workspace CI, whose final-head evidence belongs on the PR.
+The initial command naming a compiler test in the CLI package failed before
+execution; focused2 completed its 40 CLI cases, then its supplementary compiler
+entry check was stopped during dependency compilation. Neither is a full pass.
+
+Return-only hints on mask, bitpos and bit-count were measured at 070379a3:
+into-map instructions rose 2.0939%. Adding guarded comparisons at 5401d7eb still
+left a 1.7919% regression. Those hints were reverted; the unchanged core bytes
+are verified by the frozen 611def0b receipt. Its unchanged seven-program probe
+measures into-map 12,744,622 and into-vector 1,659,672 instructions/run; these are
+instruction observations, not evidence for the quiet-machine 5x time target.
+
+Guarded int32 probes use target/probe/m15-core-guarded-int32-* and
+m15-guarded-int32-*. Explicit arglists exercise one or both guarded long
+inputs; replacements returning strings/doubles retain the original ToInt32
+path. GC runs between replacements, including a right-only miss after the
+left replacement again has the original primitive shape. Whole-loop kernel
+counts are 263.02 to 143.02 for and, 194.05 to 141.97 for popcount and 280.79 to 183.95
+for unsigned shift, with a control about 89. This alone leaves the seven
+unchanged program counts essentially unchanged. The successful local run
+records 57 passes over 10 CLI targets, separately from full workspace CI.
+
+The mask-only return-hint experiment cfcdefba is retained under
+target/probe/m15-mask-return-*. Into-map rose 0.036% while word-frequencies
+fell 0.065%; the hint was removed. WAT extracts confirm bitpos really used the
+typed mask entry and a raw guarded shift. The standalone printer and its
+35MiB WAT artifacts are under target/probe/m15-print-wasm* and each program
+probe's bench.wat. Extract a function through its own closing line rather
+than through the next function, which can cross data sections.
+
+The source-mapped instructions:u profile at
+target/probe/m15-into-map-c4-instructions/ uses a private mount namespace whose
+/tmp is bound to a probe-backed perfmap directory. Its receipt identifies the
+c4b3c6d1 executable and both core/benchmark sources; startup is included.
+51,380 samples, none lost, place 21.57% in BitmapIndexedNode.inode_assoc!,
+7.27% in TransientHashMap.assoc!, 4.84% in ensure_editable, and about 8% in named
+field reads/writes. wasm[33] fn#2 maps to the benchmark's [x x] closure rather
+than core; keep module-specific source attribution in the receipt.
+
+Four HAMT ensure-editable guards compare private Unique edit tokens or nil
+with the existing same-reference? primitive. Their field reads and branch
+positions stay in source order. On dab36209, the 12-target focused run gives
+70 passes, no failures/ignores; 347 Python tests and all foundation checks
+pass. The first local command was stopped before tests to add the required
+--test-threads=2; use m15-edit-reference-focused2.log. The frozen executable
+and core hashes are m15-edit-reference-suss.json. The unchanged program probe
+gives into-map 12,702,210 instructions, 0.333% below c4b3c6d1, with other rows
+essentially unchanged. The public growth/collision/snapshot/numeric/transient
+probe matches fresh JVM Clojure 1.12.6 exactly in
+m15-edit-reference-public-oracle.json. These counts do not establish quiet
+walltime acceptance; issue comments hold current acceptance and next work.
+
+Guarded long-view experiments are retained under target/probe/m15-long-view-*,
+m15-hamt-long-view-* and m15-constant-multiply-*. The private identity primitive
+was exercised in both phases, including original references/capture roots and
+boxed fallbacks. Its first emitter attempt failed stack validation; the fixed
+focused run passes. Adding six cached bitmap indices and three popcounts to
+BitmapIndexedNode at 60bedef0 regressed into-map instructions 0.931%. Exact
+literal-factor overflow bounds at c459687d reduce that regression to 0.311%;
+a single unsigned interval check at 5daacdfe makes it approximately neutral
+(12,703,205 versus 12,702,210 on dab36209). The core placements and private
+long-view primitive are removed; do not restore them on kernel expectations.
+The compiler's constant-product bounds and guarded array-index consumption
+remain independent of that experiment. Their regressions use existing primitive
+entry declarations with explicit :arglists, including unhinted replacements.
+The exact JVM 1.12.6 long multiplication matrix matches c459687d; factor zero,
+both signs and both long limits are included. Bounds are computed with i128 at
+compile time; the generated unsigned interval test replaces runtime division.
+Nonconstant products, double products and original overflow helpers stay live.
+inc/dec already lower through BootstrapControl; adding another inline path is
+redundant (m15-inc-dec-inline-jvm.log and the unbuilt, removed sketch).
+
+Immutable receiver-layout probes use target/probe/m15-receiver-layout-*.
+Core functions with at least three named reads of an entry parameter retain
+its descriptor and field-array reference, sharing the existing field-array
+initialization. Every field element and site descriptor is read at the original
+use. Nonobjects, methods and misses keep the existing runtime lookup; resumable
+functions and entry-block backedges are excluded. No shared ABI or source-kind
+change is involved. At c0d190e0, 42 tests across eight CLI targets and all 347
+Python/foundation checks pass. The mutation/class-layout adapter executes on
+JVM Clojure 1.12.6 using methods for its private mutable fields; the native test
+uses trusted core access. Method extension, strings, nil/false skip branches,
+alternating layouts, old instances and GC are covered. The first fixture tried
+private field access from ordinary source and correctly failed; focused2.log
+contains the corrected passing run. Field privacy assertions remain unchanged.
+
+The unchanged seven-program instruction probe at c0d190e0 gives into-map
+12,241,424 (3.64% below 5daacdfe), word-frequencies 3,416,578,
+lazy-pipeline 1,156,608 and string-build 1,365,882; the other rows are essentially
+unchanged. The executable/core hashes are m15-receiver-layout-suss.json. Repeat
+the reduced source without long views with the m15-receiver-only-* probes and
+run clojure_unboxed_locals, portable_core_receiver_layout, the chunk/primitive,
+map/sharing/numeric and named-field/privacy targets in bounded stable release
+scopes, --test-threads=2. These instruction observations do not establish quiet
+walltime acceptance. The standalone idle gate for the frozen db4abbcb executable
+remains separate from bench.py; unrelated machine load has not met its 0.75
+threshold. Current issue acceptance and next work belong on GitHub.
+
+The reduced implementation at 4aa830fc passes 88 focused tests across eighteen
+CLI targets, no failures/ignores, plus 347 Python tests and all foundation checks.
+The core/manifest are byte-identical to ae0e5ac7 after removing long views.
+Its frozen executable SHA256 is
+12d2df51a630c69581ee85ee0421e0ef7ab329a5298afacf59c6c239e0d9d959;
+the m15-receiver-only-suss.json receipt names the exact clean source and core.
+The current multiplication matrix and public growth/collision/snapshot/numeric/
+transient probe match the executed JVM 1.12.6 results exactly; see
+m15-receiver-only-oracles.log and m15-receiver-only-oracle-comparison.json.
+The compiler's raw numeric changes preserve checked overflow and operand order;
+guarded array hits retain full-width bounds and boxed misses retain conversion.
+
+m15-receiver-only-program-instructions/ gives fib 2,068,709,
+word-frequencies 3,417,190, transduce 764,564, lazy-pipeline 1,156,600,
+into-vector 1,659,681, into-map 12,235,065 and string-build 1,365,877.
+Into-map is 3.678% below the published dab36209/ae0e5ac7 measurement;
+other rows change by less than 0.4%. Counts remain separate from timing gates.
+The refreshed instructions:u profile under m15-into-map-receiver-only-instructions/
+uses the same 4,000 iterations, private probe-backed /tmp mount and sample period
+1,000,000. Its 49,340 whole-process samples include startup, none lost. Source-mapped
+rows place bitmap-node association at 19.20%, transient-map assoc! 6.25%, named
+writes 4.86%, ensure-editable 4.79%, ArrayNode association 4.19%, subtype checks
+3.89%, transient-map conj! 3.52%, vector-nth/named reads 3.28% each. The receipt
+records component/executable/core/benchmark hashes and module-specific spans.
+
+Named-write probes use target/probe/m15-named-write-* and source worktree
+m15-named-write-source. The b137ae4c emitter performs named-site-set's admitted
+object/descriptor/nonnegative-slot hit inline; any miss calls the original
+helper. Existing retained parameter layouts are reused when available. All
+operands finish first, so a reentrant RHS can replace the site's cache before
+the outer write checks it. The returned value remains the actual assigned
+value, including nil/false; absent fields and closure-property writes retain
+the runtime path and epoch effects. No runtime export, shared ABI, source-kind
+or core-source change is involved.
+
+The new four-test receiver suite passes on both the original implementation
+(standalone baseline harness before-tests2) and the optimized emitter. The first
+baseline fixture incorrectly expected an absent object field to install a
+method; its real failure is retained in before-tests.log. The corrected cases
+cover successful warm/cold writes, distinct/redefined/old layouts, reentrant
+RHS order, nullable values, bad receivers, throws, closure properties and GC.
+All37 focused tests across nine targets and347 Python/foundation checks pass.
+The fresh public HAMT probe matches JVM Clojure1.12.6 exactly in
+m15-named-write-public-oracle.json. The frozen executable SHA256 is
+1efc8da7286d143e2ec9361a30aa44ca816b7619713eabf39cf89a30ab1262c4;
+its receipt identifies the clean source and unchanged dc834ca6 core bytes.
+
+The unchanged seven-program probe gives into-map11,919,216 instructions,
+2.582% below4aa830fc; lazy-pipeline1,146,971 (0.833% fewer), string-build
+1,361,066 (0.352% fewer) and word-frequencies3,411,899 (0.155% fewer).
+Fib/transduce/into-vector are essentially unchanged. This is instruction
+work reduction, not quiet walltime acceptance. Use the existing bounded stable
+release commands, --test-threads=2 and m15-program-instructions.py, with a
+warm-up first and median three N=1000-minus-0 observations. Source, raw counts,
+negative fixture and successful tests remain separately retained.
 
 Reviewed native file/WIT selection and explicit mappings, shared compiled source/
 macro staging, scalar parsing/result handling, exact nested export invocation,
@@ -30663,3 +30871,31 @@ records 349 passes and every source check in m15-bench-foundation.log.
 Initialize the pinned submodule in new worktrees first with
 `git submodule update --init clojurescript`; an initial uninitialized-worktree
 foundation failure is retained as m15-bench-foundation-uninitialized.log.
+
+
+## Checked canonical chunk sum probes (2026-11-20)
+
+`results/m15-chunk-sum-20261120` retains the exact measured dirty source patch,
+source/executable/core hashes, fresh JVM1.12.6 forms/results and raw instructions.
+Build and compile with SUSS_FUNCTION_NAMES=1, cargo+stable, two Cargo jobs, and
+MemoryMax4G user scopes. Run the retained program_instructions.py with source,
+frozen executable and a fresh target/probe output directory. It uses unchanged
+bench.py expressions, warm-up first, then median-three instructions:u at1000
+less0. Lazy-pipeline measures984,880.429 instructions/run,7.035581% fewer than
+1,059,416.537 in the published predecessor. This is not quiet timing acceptance.
+
+Focused release tests clojure_chunk_effects, compiled_core_casts and
+portable_lazy_transformations pass30 cases; the public wide/mixed/overflow and
+custom/redefined-reducer cases match fresh JVM1.12.6. All358 Python tests and
+CI foundation/source/provenance checks pass. The stable-pinned Java-free
+release-profile bootstrap check reproduces both phases byte-for-byte and passes
+four execution tests. All logs/temp files remain under target/probe.
+
+The native sum recognizes the owned immutable + function, checks its Object[]
+window, and sums long prefixes with checked overflow at the same element.
+Unsupported values/reducers fall back without writes or duplicated callbacks.
+Canonical input-array branches move outside map/filter loops; only counters and
+admitted offsets with proved bounds use unchecked raw addition. Ordinary source
+core keeps checked arithmetic and declines privileged storage helpers. Shared
+ABI7 types and existing runtime globals are unchanged. Require a new final-head
+quiet benchmark and complete correctness CI before treating this as acceptance.

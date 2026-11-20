@@ -33,6 +33,89 @@ fn outcome(sessions: &mut [Session; 2], source: &str) -> String {
 fn sessions() -> [Session; 2] {
     [Session::new_repl().unwrap(), Session::new_macro().unwrap()]
 }
+
+#[test]
+fn guarded_array_indices_keep_aliases_bounds_and_boxed_fallbacks() {
+    let mut sessions = sessions();
+    for session in &mut sessions {
+        session.eval("(ns suss.core)
+            (def ^{:arglists '(^long [x])} array-index (fn ^long [x] x))
+            (def index-array (object-array [10 20 30]))
+            (def index-longs (long-array [10 20 30]))
+            (def index-read (fn [a i] (aget ^objects a (array-index i))))
+            (def plain-read (fn [a i] (aget ^objects a i)))
+            (def index-read-long (fn [a i] (aget ^longs a (array-index i))))
+            (def plain-read-long (fn [a i] (aget ^longs a i)))
+            (def index-write (fn [a i x] (aset ^objects a (array-index i) x)))").unwrap();
+    }
+    for fallback in [false, true] {
+        if fallback {
+            for session in &mut sessions {
+                session.eval("(def array-index (fn [x] x))").unwrap();
+                session.collect().unwrap();
+            }
+        }
+        let indices = if fallback {
+            vec!["0", "2", "-1", "3", "4294967296", "1.0", "1.5", "\"1\"", "nil"]
+        } else { vec!["0", "2", "-1", "3", "4294967296"] };
+        for index in indices {
+            for (guarded, plain, array) in [("index-read", "plain-read", "index-array"),
+                                           ("index-read-long", "plain-read-long", "index-longs")] {
+                let expected = outcome(&mut sessions, &format!("({plain} {array} {index})"));
+                assert_eq!(outcome(&mut sessions, &format!("({guarded} {array} {index})")), expected);
+            }
+        }
+        assert_eq!(outcome(&mut sessions,
+            "[(index-write index-array 1 :changed) (index-read index-array 1)]"),
+            "[:changed :changed]");
+    }
+}
+
+#[test]
+fn constant_long_products_keep_both_operand_orders_and_exact_overflow() {
+    let values = "[-9223372036854775808 -9223372036854775807
+        -4611686018427387905 -4611686018427387904 -4611686018427387903
+        -3074457345618258603 -3074457345618258602 -3 -2 -1 0 1 2 3
+        3074457345618258602 3074457345618258603
+        4611686018427387903 4611686018427387904 4611686018427387905
+        9223372036854775806 9223372036854775807]";
+    let mut sessions = sessions();
+    for session in &mut sessions {
+        session.eval("(ns suss.core)
+          (def multiply-dynamic (fn [a b] (try (* a b) (catch :default e (ex-message e)))))").unwrap();
+    }
+    for factor in [0_i64, 1, -1, 2, -2, 3, -3, 4294967297, i64::MIN, i64::MAX] {
+        for session in &mut sessions {
+            session.eval(&format!(
+                "(def ^{{:arglists '(^long [x])}} multiply-input (fn ^long [x] x))
+                 (def multiply-left (fn [x] (try (* {factor} (multiply-input x)) (catch :default e (ex-message e)))))
+                 (def multiply-right (fn [x] (try (* (multiply-input x) {factor}) (catch :default e (ex-message e)))))
+                 (def multiply-typed (fn [^long x] (try (* x {factor}) (catch :default e (ex-message e)))))"
+            )).unwrap();
+        }
+        let expected = outcome(&mut sessions,
+            &format!("(mapv (fn [x] (multiply-dynamic x {factor})) {values})"));
+        for name in ["multiply-left", "multiply-right", "multiply-typed"] {
+            assert_eq!(outcome(&mut sessions, &format!("(mapv {name} {values})")), expected,
+                "factor {factor}, {name}");
+        }
+        for session in &mut sessions {
+            session.eval("(def multiply-input (fn [x] x))").unwrap();
+            session.collect().unwrap();
+        }
+        let boxed = "[1.5 -0.0 ##NaN ##Inf \"2\" nil false]";
+        let expected = outcome(&mut sessions,
+            &format!("(mapv (fn [x] (multiply-dynamic x {factor})) {boxed})"));
+        for name in ["multiply-left", "multiply-right"] {
+            assert_eq!(outcome(&mut sessions, &format!("(mapv {name} {boxed})")), expected);
+        }
+    }
+    assert_eq!(outcome(&mut sessions,
+        "(let [seen (atom [])]
+           [(* 0 (long (do (swap! seen conj :operand) 2))) @seen])"),
+        "[0 [:operand]]");
+}
+
 /// Each `(unboxed, boxed, expected)` case gives `expected` on both paths.
 fn check(cases: &[(&str, &str, &str)]) {
     let mut sessions = sessions();
@@ -174,4 +257,213 @@ fn bit_tests_keep_shift_masking_flags_and_boxed_fallbacks() {
     assert_eq!(outcome(&mut sessions,
         "(let [seen (atom [])] [(try (bit-test (do (swap! seen conj :left) 1.0) (do (swap! seen conj :right) 0)) (catch :default _ :rejected)) @seen])"),
         "[:rejected [:left :right]]");
+}
+
+/// Core's private 32-bit storage operations, compared with explicit JVM
+/// unchecked-int/Integer.bitCount calculations, not public 64-bit bit ops.
+#[test]
+fn core_int32_operations_keep_low_bits_shift_masks_and_signed_results() {
+    let body = "[(int x) (bit-and x y) (bit-or x y) (bit-xor x y)
+                 (bit-shift-left x y) (bit-shift-right x y)
+                 (bit-shift-right-zero-fill x y) (imul x y)
+                 (suss.bootstrap/bit-count x)]";
+    let pairs = "[[0 0] [1 31] [-1 1] [2147483648 32] [4294967295 -1]
+                  [4294967297 33] [9007199254740993 65]
+                  [9223372036854775807 63] [-9223372036854775808 -9223372036854775808]]";
+    let expected = "[[0 0 0 0 0 0 0 0 0] [1 1 31 30 -2147483648 0 0 31 1] \
+        [-1 1 -1 -2 -2 -1 2147483647 -1 32] \
+        [-2147483648 0 -2147483616 -2147483616 -2147483648 -2147483648 2147483648 0 1] \
+        [-1 -1 -1 0 -2147483648 -1 1 1 32] [1 1 33 32 2 0 0 33 1] \
+        [1 1 65 64 2 0 0 65 1] [-1 63 -1 -64 -2147483648 -1 1 -63 32] \
+        [0 0 0 0 0 0 0 0 0]]";
+    let mut sessions = sessions();
+    for session in &mut sessions {
+        session.eval("(ns suss.core)").unwrap();
+        session.eval(&format!(
+            "(def core-bits-raw (fn [^long x ^long y] {body}))
+             (def core-bits-boxed (fn [x y] {body}))
+             (def core-bits-calls (atom []))
+             (def ^{{:arglists '(^long [x])}} core-bits-left
+               (fn ^long [x] (swap! core-bits-calls conj :left) x))
+             (def ^{{:arglists '(^long [x])}} core-bits-right
+               (fn ^long [x] (swap! core-bits-calls conj :right) x))
+             (def core-bits-guarded (fn [x y]
+               (let [x (core-bits-left x) y (core-bits-right y)] {body})))",
+        )).unwrap();
+    }
+    for name in ["core-bits-raw", "core-bits-boxed", "core-bits-guarded"] {
+        assert_eq!(outcome(&mut sessions,
+            &format!("(mapv (fn [p] ({name} (nth p 0) (nth p 1))) {pairs})")),
+            expected, "{name}");
+    }
+    assert_eq!(outcome(&mut sessions,
+        "(do (reset! core-bits-calls []) (core-bits-guarded 1 31) @core-bits-calls)"),
+        "[:left :right]");
+    for session in &mut sessions {
+        session.eval("(def core-bits-left
+          (fn [x] (swap! core-bits-calls conj :left) \"4294967295\"))").unwrap();
+        session.collect().unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-bits-guarded 0 1)"),
+        "[-1 1 -1 -2 -2 -1 2147483647 -1 32]");
+    for session in &mut sessions {
+        session.eval("(def core-bits-left
+          (fn ^double [x] (swap! core-bits-calls conj :left) x))").unwrap();
+        session.collect().unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-bits-guarded 1.5 1)"),
+        "[1 1 1 0 2 0 0 1 1]");
+    for session in &mut sessions {
+        session.eval("(def core-bits-right
+          (fn [x] (swap! core-bits-calls conj :right) \"-1\"))").unwrap();
+        session.collect().unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-bits-guarded 1.5 0)"),
+        "[1 1 -1 -2 -2147483648 0 0 -1 1]");
+    assert_eq!(outcome(&mut sessions,
+        "(do (reset! core-bits-calls []) (core-bits-guarded 1.5 0) @core-bits-calls)"),
+        "[:left :right]");
+    for session in &mut sessions {
+        session.eval("(def core-bits-left
+          (fn ^long [x] (swap! core-bits-calls conj :left) x))").unwrap();
+        session.collect().unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-bits-guarded 4294967295 0)"),
+        "[-1 -1 -1 0 -2147483648 -1 1 1 32]");
+    assert_eq!(outcome(&mut sessions,
+        "[(let [x (if (identity true) 1.5 1)] (bit-and x 3))
+          (let [x (if (identity true) -1.5 1)] (bit-and x 3))
+          (bit-and ##NaN 3) (bit-shift-right-zero-fill ##Inf 1)
+          (loop [x 4294967297 i 0] (if (< i 2) (recur (bit-shift-left x 1) (inc i)) x))]"),
+        "[1 3 0 0 4]");
+    for session in &mut sessions {
+        session.eval("(def core-boxed-chain (fn [x]
+            (let [a (bit-shift-right-zero-fill x 0) b (+ a 1)]
+              [(< a b) (bit-and b 255) a b a])))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions,
+        "(mapv core-boxed-chain [4294967295 9007199254740993 1.5 ##NaN \"2\"] )"),
+        "[[true 0 4294967295 4294967296 4294967295] \
+          [true 2 1 2 1] [true 2 1 2 1] [true 1 0 1 0] [true 3 2 3 2]]");
+}
+
+#[test]
+fn guarded_numeric_comparisons_keep_redefinitions_and_evaluation_order() {
+    let mut sessions = sessions();
+    for session in &mut sessions {
+        session.eval("(def comparison-trace (atom []))
+          (def ^{:arglists '(^long [x])} comparison-left (fn ^long [x] (swap! comparison-trace conj :left) x))
+          (def ^{:arglists '(^double [x])} comparison-right (fn ^double [x] (swap! comparison-trace conj :right) x))
+          (def comparison-pair (fn [x y]
+            (let [a (comparison-left x) b (comparison-right y)]
+              [(< a b) (<= a b) (> a b) (>= a b) (== a b)])))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "[(comparison-pair 2 2.5) @comparison-trace]"),
+        "[[true true false false false] [:left :right]]");
+    assert_eq!(outcome(&mut sessions, "(comparison-pair 2 ##NaN)"),
+        "[false false false false false]");
+    assert_eq!(outcome(&mut sessions, "(comparison-pair 0 -0.0)"),
+        "[false true false true true]");
+    for session in &mut sessions {
+        session.eval("(def comparison-wide (fn [x y]
+            (< (comparison-left x) (comparison-left y))))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions,
+        "(comparison-wide 9007199254740992 9007199254740993)"), "true");
+    for session in &mut sessions {
+        session.eval("(def comparison-left (fn [x] (swap! comparison-trace conj :left) \"v\"))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(do (reset! comparison-trace [])
+        [(try (comparison-pair 2 2.5) (catch :default e :bad)) @comparison-trace])"),
+        "[:bad [:left :right]]");
+    for session in &mut sessions {
+        session.eval("(def comparison-left (fn ^double [x] (swap! comparison-trace conj :left) x))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(do (reset! comparison-trace [])
+        [(comparison-pair 2.75 2.5) @comparison-trace])"),
+        "[[false false true true false] [:left :right]]");
+}
+
+#[test]
+fn core_known_numeric_math_keeps_overflow_nan_zero_and_coercing_fallbacks() {
+    let longs = "[(try (+ x y) (catch :default e (if (= (ex-message e) \"long overflow\") :overflow [:unexpected (ex-message e)])))
+                  (try (- x y) (catch :default e (if (= (ex-message e) \"long overflow\") :overflow [:unexpected (ex-message e)])))
+                  (try (* x y) (catch :default e (if (= (ex-message e) \"long overflow\") :overflow [:unexpected (ex-message e)])))
+                  (< x y) (<= x y) (> x y) (>= x y) (== x y)]";
+    // Division is deliberately separate: JVM boxed/primitive zero-divisor
+    // overloads differ, and the boxed path has an independently tracked gap.
+    let doubles = "[(+ x y) (- x y) (* x y) (< x y) (<= x y) (> x y) (>= x y) (== x y)]";
+    let mut sessions = sessions();
+    for session in &mut sessions {
+        session.eval("(ns suss.core)").unwrap();
+        session.eval(&format!(
+            "(def core-math-longs (fn [^long x ^long y] {longs}))
+             (def core-math-doubles (fn [^double x ^double y] {doubles}))
+             (def core-math-boxed-longs (fn [x y] {longs}))
+             (def core-math-boxed-doubles (fn [x y] {doubles}))",
+        )).unwrap();
+    }
+    for name in ["core-math-longs", "core-math-boxed-longs"] {
+        assert_eq!(outcome(&mut sessions, &format!(
+            "(mapv (fn [p] ({name} (nth p 0) (nth p 1)))
+               [[6 2] [3000000000 4] [9007199254740992 9007199254740993]
+                [9223372036854775807 1] [-9223372036854775808 -1]])")),
+            "[[8 4 12 false false true true false] \
+              [3000000004 2999999996 12000000000 false false true true false] \
+              [18014398509481985 -1 :overflow true true false false false] \
+              [:overflow 9223372036854775806 9223372036854775807 false false true true false] \
+              [:overflow -9223372036854775807 :overflow true true false false false]]");
+    }
+    for name in ["core-math-doubles", "core-math-boxed-doubles"] {
+        assert_eq!(outcome(&mut sessions, &format!(
+            "(mapv (fn [p] ({name} (nth p 0) (nth p 1)))
+               [[1.5 2.0] [0.0 -0.0] [##NaN 1.0] [##Inf 0.0]])")),
+            "[[3.5 -0.5 3.0 true true false false false] \
+              [0.0 0.0 -0.0 false true false true true] \
+              [##NaN ##NaN ##NaN false false false false false] \
+              [##Inf ##Inf ##NaN false false true true false]]");
+    }
+    assert_eq!(outcome(&mut sessions,
+        "[(+ \"x\" 1) (< \"10\" \"2\") (+ nil 1) (+ true 1)
+          (< (identity \"10\") (identity 2))
+          (loop [x 0 i 0] (if (< i 1) (recur \"x\" (inc i)) (+ x 1)))]"),
+        "[\"x1\" true 1.0 2.0 false \"x1\"]");
+    for session in &mut sessions {
+        session.eval("(def ^{:arglists '(^long [^long x])} core-hinted-result (fn ^long [^long x] (+ x 1)))
+            (def core-use-hinted-result (fn [x] (+ (core-hinted-result x) 1)))
+            (def core-compare-hinted-result (fn [x]
+              (let [n (core-hinted-result x)]
+                [(< n 5) (> n 1) (<= n 3) (>= n 3) (== n 3)])))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-use-hinted-result 2)"), "4");
+    assert_eq!(outcome(&mut sessions, "(core-compare-hinted-result 2)"), "[true true true true true]");
+    for session in &mut sessions {
+        session.eval("(def core-hinted-result (fn [x] \"v\"))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-use-hinted-result 2)"), "\"v1\"");
+    assert_eq!(outcome(&mut sessions, "(core-compare-hinted-result 2)"), "[false false false false false]");
+    for session in &mut sessions {
+        session.eval("(def core-hinted-result (fn ^double [x] (+ x 0.5)))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-use-hinted-result 2)"), "3.5");
+    assert_eq!(outcome(&mut sessions, "(core-compare-hinted-result 2)"), "[true true true false false]");
+    for session in &mut sessions {
+        session.eval("(def core-hinted-result (fn [x] false))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-use-hinted-result 2)"), "1.0");
+    assert_eq!(outcome(&mut sessions, "(core-compare-hinted-result 2)"), "[true false true false false]");
+    for session in &mut sessions {
+        session.eval("(def ^{:arglists '(^long [x])} core-hinted-left (fn ^long [x] x))
+          (def ^{:arglists '(^double [x])} core-hinted-right (fn ^double [x] x))
+          (def core-compare-two-hints (fn [x y] (< (core-hinted-left x) (core-hinted-right y))))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-compare-two-hints 1 2.0)"), "true");
+    for session in &mut sessions {
+        session.eval("(def core-hinted-right (fn [x] \"0\"))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-compare-two-hints 1 2.0)"), "false");
+    for session in &mut sessions {
+        session.eval("(def core-hinted-left (fn [x] \"-1\"))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-compare-two-hints 1 2.0)"), "true");
 }

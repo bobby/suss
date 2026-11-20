@@ -15,8 +15,11 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
 - **Arithmetic.** `+`, `-` and `*` of longs give a raw long; any double operand
   gives a raw double. `/` gives a raw double when an operand is a double; a
   quotient of two longs stays boxed, since only an exact one is a long. `inc`
-  and `dec` are `+` and `-` of 1. Shipped core's coercing arithmetic stays
-  boxed.
+  and `dec` are `+` and `-` of 1. Core's coercing `+`, `-` and `*` also keep
+  two known numeric operands raw, matching the helpers' checked numeric route.
+  Guarded primitive results keep their numeric hit raw and their original
+  coercing helper on a boxed fallback. Unknown operands, unary coercions and
+  core's division retain their original boxed path.
 - **`let` and `loop`.** A `let` binding is the value it's bound to. A `loop`
   local, and an `if` result that joins branches, are raw when every value
   reaching them is the same raw kind. A local that a `recur` gives another
@@ -27,6 +30,11 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   longs compare exactly; a long and a double compare as doubles, as in the
   runtime. A raw long compared with any other value checks whether that value
   is an i31 and compares inline if so; otherwise it asks the runtime.
+  Core's coercing comparisons use this route for two raw numeric operands;
+  strings and other representations retain the coercing helper.
+  A guarded primitive call's numeric hit can also compare raw. If either
+  input instead holds a boxed replacement result, the comparison uses its
+  original runtime helper, including its coercions or errors.
 
 - **Bitwise operations.** `bit-and`, `bit-or` and `bit-xor` of two longs give a
   raw long (#387). `bit-test` of two raw longs gives a raw truth value; the
@@ -34,6 +42,16 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   long shift does. The truth value is boxed where it escapes. Other operand
   representations take the runtime operation, which throws for a double as
   Clojure does.
+  Core's private 32-bit operations also stay raw for long operands, using their
+  low 32 bits, five-bit shift counts and the original signed result extension
+  (unsigned for zero-fill right shift). Unknown operands keep their existing
+  ToInt32 conversion path. Those helpers also guarantee a long result: the
+  compiler extracts it once for subsequent raw uses and caches the existing
+  GC value for uses that need it boxed. Literals used only by the boxed path
+  keep their existing constant representation.
+  Guarded long inputs also take the raw path when every input hits its
+  primitive entry. On a miss, the original int32 helper converts the boxed
+  replacement values and supplies the guaranteed long result.
 - **Hashes and identity.** `hash` of a long gives a raw long: an i31 or raw long
   is hashed inline, as `number-hash` hashes it, and core's `hash`, which always
   returns an integer, is cast to a long (#387). `identical?`, `=` of small
@@ -96,7 +114,7 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   reference alongside the ordinary entry, and refresh both when the callee
   changes. A typed hit keeps its numeric result raw. A guard miss can return
   any boxed replacement value, so the result keeps a raw slot, a boxed slot
-  and a flag until a consumer needs it. Arithmetic and matching loop joins
+  and a flag until a consumer needs it. Arithmetic, comparisons and matching loop joins
   propagate those alternatives; numeric casts check the boxed alternative.
   The fallback never coerces a replacement merely because of an old hint.
 

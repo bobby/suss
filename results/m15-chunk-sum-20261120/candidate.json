@@ -1,0 +1,8 @@
+{
+  "source_head": "11b57332f30e05970010d6d28d021b03a5839019",
+  "source_dirty": " M crates/suss-cli/tests/clojure_chunk_effects.rs\n M crates/suss-compile/src/portable/emit.rs\n M crates/suss-compile/src/portable/emit/unboxed.rs\n M crates/suss-compile/src/portable/hir.rs\n M crates/suss-compile/src/runtime_abi/chunks.rs\n M docs/compatibility/patches/lazy-filter.json\n M docs/compatibility/patches/lazy-map.json\n M docs/compatibility/patches/sequence-seq-reduce.json\n M runtime/core-import/manifest.json\n M runtime/core-import/suss/core.sus\n",
+  "executable_sha256": "ea4d87aa3d2145a959cd3f84c2afba0e96ccb2f16ad05e150ac7172ca49c47a3",
+  "tracked_patch_sha256": "12a7e05f90633d7deb2bab26d77b9bf5f559ec204277c46646f78d1aaa58ddbb",
+  "core_sha256": "fa81c275ed67f30c9e8cd9e9e4e6acc532599eb319fdd741ae2cfd0d079eb4c7",
+  "note": "Bounded chunk counters, split canonical input loops, guarded checked canonical + long chunk reduction. 30 focused tests pass; public cases match fresh JVM1.12.6. No quiet timing acceptance."
+}

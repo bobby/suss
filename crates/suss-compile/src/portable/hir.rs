@@ -519,6 +519,10 @@ pub enum Nominal {
     /// A `^long` or `^double` parameter's value (#385): Clojure's checked
     /// longCast or doubleCast of the argument, kept as a raw i64 or f64.
     LongCast,
+    /// Private addition after an owned loop proves its counters/offsets bounded.
+    ChunkIndexAdd,
+    /// Owned canonical + over a checked Object[] chunk, or undefined.
+    ChunkLongSum,
     DoubleCast,
     /// Core's `unchecked-long` (#448): a raw i64 as LongCast, through its own
     /// cast for anything but a long.
@@ -672,7 +676,7 @@ impl Nominal {
     pub fn result(self) -> Type {
         match self {
             Self::CoerceString | Self::ObjectCoerceString | Self::ConcatString | Self::JoinStrings | Self::StringSlice | Self::StringFromUnit => Type::String,
-            Self::StringIndexOf => Type::Number,
+            Self::StringIndexOf | Self::ChunkIndexAdd => Type::Number,
             Self::BindingDefined
             | Self::IsNumber
             | Self::IsKeyword
@@ -711,7 +715,7 @@ impl Nominal {
                 Self::ApplyToSeq | Self::ApplyFixed => count == 2,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::CurrentThis => count == 0,
-                Self::Identical | Self::SameReference => count == 2,
+                Self::Identical | Self::SameReference | Self::ChunkIndexAdd => count == 2,
                 Self::AllSmallIntegers => count >= 1,
                 Self::NumberHash => count == 1,
                 Self::IsObject | Self::IsDescriptor => count == 1,
@@ -720,6 +724,7 @@ impl Nominal {
                 Self::ObjectArrayCopy(_) => count == 5,
                 Self::HashMapTypes => count == 4,
                 Self::ChunkTypes => count == 3,
+                Self::ChunkLongSum => count == 6,
                 Self::ChunkNth | Self::ChunkAppend => count == 2,
                 Self::ChunkArray | Self::ChunkOffset | Self::ChunkSeq => count == 1,
                 Self::MapGetOr | Self::MapAssoc => count == 3,
@@ -3246,7 +3251,7 @@ impl Analyzer<'_> {
             return Ok(self.nominal(form, Nominal::BindingDefined, vec![cell]));
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
-            if matches!(symbol.name.as_str(), "long-add" | "long-less") {
+            if matches!(symbol.name.as_str(), "long-add" | "long-less" | "chunk-index-add") {
                 if !self.privileged && self.environment.current_namespace(self.phase) != "suss.core" {
                     return Err(fail(form.span.clone(), "Private chunk adapters require compiled core"));
                 }
@@ -3260,6 +3265,13 @@ impl Analyzer<'_> {
                 for argument in args {
                     let value = self.form(argument)?;
                     arguments.push(self.nominal(argument, Nominal::LongCast, vec![value]));
+                }
+                if symbol.name == "chunk-index-add" && self.privileged {
+                    // Only owned chunk loops use this: i starts at zero and
+                    // advances while i<size; a compacted output j<=i. Admitted
+                    // chunk offsets plus i are bounded by immutable storage.
+                    // Ordinary source-core loading keeps checked addition.
+                    return Ok(self.nominal(form, Nominal::ChunkIndexAdd, arguments));
                 }
                 if symbol.name == "long-less" {
                     return Ok(Hir { source: None, span: form.span.clone(),
@@ -3312,6 +3324,7 @@ impl Analyzer<'_> {
                 "map-get-or" => Some(Nominal::MapGetOr),
                 "hash-map-types!" => Some(Nominal::HashMapTypes),
                 "chunk-types!" => Some(Nominal::ChunkTypes),
+                "chunk-long-sum" => Some(Nominal::ChunkLongSum),
                 "chunk-nth" => Some(Nominal::ChunkNth),
                 "chunk-append" => Some(Nominal::ChunkAppend),
                 "chunk-array" => Some(Nominal::ChunkArray),
@@ -3330,7 +3343,7 @@ impl Analyzer<'_> {
                 _ => None,
             };
             if let Some(operation) = operation {
-                let chunk = matches!(operation, Nominal::ChunkTypes | Nominal::ChunkNth | Nominal::ChunkAppend
+                let chunk = matches!(operation, Nominal::ChunkLongSum | Nominal::ChunkTypes | Nominal::ChunkNth | Nominal::ChunkAppend
                     | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq);
                 let ordinary_core = !self.privileged
                     && self.environment.current_namespace(self.phase) == "suss.core";

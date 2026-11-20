@@ -328,12 +328,14 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::MapAssoc => { names.insert("map-assoc"); }
                         Nominal::HashMapTypes => { names.insert("hash-map-type-register"); }
                         Nominal::ChunkTypes => { names.insert("chunk-types-register"); }
+                        Nominal::ChunkLongSum => { names.insert("chunk-long-sum"); }
                         Nominal::ChunkNth => { names.insert("chunk-nth"); }
                         Nominal::ChunkAppend => { names.insert("chunk-buffer-append"); }
                         Nominal::ChunkArray => { names.insert("chunk-array"); }
                         Nominal::ChunkOffset => { names.insert("chunk-offset"); }
                         Nominal::ChunkSeq => { names.insert("chunk-seq"); }
                         Nominal::LongCast => { names.insert("number-cast-long"); }
+                        Nominal::ChunkIndexAdd => {},
                         Nominal::UncheckedLongCast => { names.insert("number-cast-unchecked-long"); }
                         Nominal::DoubleCast => { names.insert("number-cast-double"); }
                         Nominal::PackedGet(_) => {
@@ -876,6 +878,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "binding-set" => (vec![VALUE, VALUE], vec![]),
             "number-parse-long" | "hash-map-type-register" => (vec![VALUE; 4], vec![VALUE]),
             "chunk-types-register" => (vec![VALUE; 3], vec![VALUE]),
+            "chunk-long-sum" => (vec![VALUE; 6], vec![VALUE]),
             "chunk-nth" | "chunk-buffer-append" => (vec![VALUE; 2], vec![VALUE]),
             "chunk-array" | "chunk-offset" | "chunk-seq" => (vec![VALUE], vec![VALUE]),
             "packed-array-copy" | "object-array-copy-forward" | "object-array-copy-backward" => (vec![VALUE; 5], vec![VALUE]),
@@ -2018,7 +2021,7 @@ fn emit_function(
     }
     let raw_result = signature.filter(|signature| signature.result != super::primitive::Kind::Boxed)
         .map(|signature| primitive::repr(signature.result));
-    let locals = unboxed::Locals::new(unboxed::infer(ir, continuation.is_some(), &entry_reprs, raw_result), pc + 1, offset, sentinels);
+    let locals = unboxed::Locals::new(unboxed::infer(ir, continuation.is_some(), &entry_reprs, raw_result), ir, pc + 1, offset, sentinels);
     if let Some(expected) = raw_result {
         for block in &ir.blocks {
             if let Terminator::Return(value) = block.terminator && locals.of(value) != expected {
@@ -2110,6 +2113,7 @@ fn emit_function(
     // block, has its object's fields array read once on entry, into a
     // nullable local of the args type: null when it isn't an object.
     let mut fields_of: std::collections::HashMap<u32, u32> = std::collections::HashMap::new();
+    let mut descriptors_of: std::collections::HashMap<u32, u32> = std::collections::HashMap::new();
     if continuation.is_none() && ir.blocks.first().is_some()
         && !ir.blocks.iter().any(|block| match &block.terminator {
             Terminator::Jump { target, .. } => *target == 0,
@@ -2118,16 +2122,25 @@ fn emit_function(
         })
     {
         let mut reads: std::collections::HashMap<u32, usize> = std::collections::HashMap::new();
+        let mut named_reads: std::collections::HashMap<u32, usize> = std::collections::HashMap::new();
         for inst in ir.blocks.iter().flat_map(|block| &block.instructions) {
             if let Operation::Nominal { operation: Nominal::Field(_), arguments } = &inst.operation {
                 *reads.entry(arguments[0].0 as u32).or_default() += 1;
             }
+            if let Operation::Nominal { operation: Nominal::CoreNamedGet, arguments } = &inst.operation {
+                *named_reads.entry(arguments[0].0 as u32).or_default() += 1;
+            }
         }
         for parameter in &ir.blocks[0].parameters {
-            if reads.get(&(parameter.0 as u32)).is_some_and(|count| *count >= 2) {
+            let named = named_reads.get(&(parameter.0 as u32)).is_some_and(|count| *count >= 3);
+            if reads.get(&(parameter.0 as u32)).is_some_and(|count| *count >= 2) || named {
                 let local = pc + 1 + declarations.iter().skip(2).map(|(count, _)| count).sum::<u32>();
                 fields_of.insert(parameter.0 as u32, local);
                 declarations.push((1, ValType::Ref(wasm_encoder::RefType { nullable: true, heap_type: HeapType::Concrete(runtime_abi::ARGS) })));
+                if named {
+                    descriptors_of.insert(parameter.0 as u32, local + 1);
+                    declarations.push((1, VALUE));
+                }
             }
         }
     }
@@ -2163,8 +2176,17 @@ fn emit_function(
         function
             .instruction(&LocalGet(value + offset))
             .instruction(&RefTestNonNull(HeapType::Concrete(7)))
-            .instruction(&If(BlockType::Result(ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(runtime_abi::ARGS) }))))
-            .instruction(&LocalGet(value + offset))
+            .instruction(&If(BlockType::Result(ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(runtime_abi::ARGS) }))));
+        // Only the immutable layout is retained. Field array elements and
+        // site descriptors are still read at each original use, after any
+        // callbacks, mutations, protocol extension or garbage collection.
+        if let Some(descriptor) = descriptors_of.get(value) {
+            function.instruction(&LocalGet(value + offset))
+                .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+                .instruction(&StructGet { struct_type_index: 7, field_index: 0 })
+                .instruction(&LocalSet(*descriptor));
+        }
+        function.instruction(&LocalGet(value + offset))
             .instruction(&RefCastNonNull(HeapType::Concrete(7)))
             .instruction(&StructGet { struct_type_index: 7, field_index: 1 })
             .instruction(&Else)
@@ -2264,7 +2286,9 @@ fn emit_function(
                     Operation::Comparison { operation, arguments } => locals.comparison(
                         &mut code, *operation, arguments, inst.result, index(operation.export()),
                     ),
-                    Operation::Bitwise { operation, arguments } => locals.bitwise(&mut code, *operation, arguments, inst.result),
+                    Operation::Bitwise { operation, arguments } => locals.bitwise(
+                        &mut code, *operation, arguments, inst.result, index(operation.export()),
+                    ),
                     _ => unreachable!("inline numeric instruction"),
                 }
                 for instruction in code.drain(..) { function.instruction(&instruction); }
@@ -2283,6 +2307,14 @@ fn emit_function(
             if unboxed::raw_identical(&locals, inst) {
                 let Operation::Nominal { arguments, .. } = &inst.operation else { unreachable!("identical") };
                 locals.identical(&mut code, arguments, inst.result);
+                for instruction in code.drain(..) { function.instruction(&instruction); }
+                continue;
+            }
+            if let Operation::Nominal { operation: Nominal::ChunkIndexAdd, arguments } = &inst.operation
+                && locals.of(inst.result) == unboxed::Repr::Long
+            {
+                code.extend([LocalGet(locals.raw(arguments[0])), LocalGet(locals.raw(arguments[1])),
+                    I64Add, LocalSet(locals.raw(inst.result))]);
                 for instruction in code.drain(..) { function.instruction(&instruction); }
                 continue;
             }
@@ -2766,6 +2798,14 @@ fn emit_function(
                             .instruction(&Call(index(operation.export())))
                             .instruction(&LocalSet(inst.result.0 as u32 + offset));
                     }
+                    if locals.of(inst.result) == unboxed::Repr::Long {
+                        // Core's int32 helper has completed the original
+                        // operand conversions and returned a long. Reuse its
+                        // GC value while keeping subsequent numeric uses raw.
+                        locals.unbox_long(&mut code, inst.result);
+                        for instruction in code.drain(..) { function.instruction(&instruction); }
+                        boxed.insert(inst.result.0);
+                    }
                 }
                 Operation::Comparison {
                     operation,
@@ -3183,9 +3223,12 @@ fn emit_function(
                             let storage = storage_locals + 6;
                             let site = |field| [GlobalGet(cache), StructGet { struct_type_index: runtime_abi::NAMED_SITE, field_index: field }];
                             let object_type = RefType { nullable: false, heap_type: HeapType::Concrete(7) };
-                            let mut code = vec![
-                                Block(BlockType::Result(VALUE)),
-                                Block(BlockType::Empty),
+                            let mut code = vec![Block(BlockType::Result(VALUE)), Block(BlockType::Empty)];
+                            if let Some(descriptor) = descriptors_of.get(&(arguments[0].0 as u32)) {
+                                code.extend([LocalGet(fields_of[&(arguments[0].0 as u32)]),
+                                    BrOnNull(0), LocalSet(storage), LocalGet(*descriptor)]);
+                            } else {
+                            code.extend([
                                 Block(BlockType::Result(ValType::Ref(object_type))),
                                 LocalGet(object),
                                 BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF, to_ref_type: object_type },
@@ -3197,7 +3240,8 @@ fn emit_function(
                                 LocalGet(object),
                                 RefCastNonNull(HeapType::Concrete(7)),
                                 StructGet { struct_type_index: 7, field_index: 0 },
-                            ];
+                            ]);
+                            }
                             code.extend(site(runtime_abi::SITE_DESCRIPTOR));
                             code.extend([RefEq, I32Eqz, BrIf(0)]);
                             code.extend(site(runtime_abi::SITE_SLOT));
@@ -3251,13 +3295,37 @@ fn emit_function(
                             }
                         }
                         Nominal::CoreNamedSet if field_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
-                            // The site's struct and the runtime's cached write (#446).
+                            // The runtime's admitted descriptor/slot hit, inline.
+                            // Operands have already run, including a RHS that
+                            // can reenter this site and replace its cache.
                             let cache = field_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
-                            function.instruction(&GlobalGet(cache));
-                            for argument in arguments {
-                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            let [object, name, value] = [0, 1, 2].map(|i| arguments[i].0 as u32 + offset);
+                            let site = |field| [GlobalGet(cache), StructGet { struct_type_index: runtime_abi::NAMED_SITE, field_index: field }];
+                            let object_type = RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::OBJECT) };
+                            let mut code = vec![Block(BlockType::Result(VALUE)), Block(BlockType::Empty)];
+                            if let Some(descriptor) = descriptors_of.get(&(arguments[0].0 as u32)) {
+                                code.extend([LocalGet(fields_of[&(arguments[0].0 as u32)]),
+                                    BrOnNull(0), LocalSet(storage_locals + 6), LocalGet(*descriptor)]);
+                            } else {
+                                code.extend([Block(BlockType::Result(ValType::Ref(object_type))),
+                                    LocalGet(object),
+                                    BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF, to_ref_type: object_type },
+                                    Drop, Br(1), End, LocalSet(object_local),
+                                    LocalGet(object_local), StructGet { struct_type_index: runtime_abi::OBJECT, field_index: 0 }]);
                             }
-                            function.instruction(&Call(index("named-site-set")));
+                            code.extend(site(runtime_abi::SITE_DESCRIPTOR));
+                            code.extend([RefEq, I32Eqz, BrIf(0)]);
+                            code.extend(site(runtime_abi::SITE_SLOT));
+                            code.extend([LocalTee(field_index_local), I32Const(0), I32LtS, BrIf(0)]);
+                            if descriptors_of.contains_key(&(arguments[0].0 as u32)) {
+                                code.push(LocalGet(storage_locals + 6));
+                            } else {
+                                code.extend([LocalGet(object_local), StructGet { struct_type_index: runtime_abi::OBJECT, field_index: 1 }]);
+                            }
+                            code.extend([LocalGet(field_index_local), LocalGet(value), ArraySet(runtime_abi::ARGS),
+                                LocalGet(value), Br(1), End, GlobalGet(cache), LocalGet(object),
+                                LocalGet(name), LocalGet(value), Call(index("named-site-set")), End]);
+                            for instruction in code { function.instruction(&instruction); }
                         }
                         Nominal::IsKeyword => {
                             function
@@ -3393,8 +3461,11 @@ fn emit_function(
                             // The inline path, or out to the generic one.
                             code.extend([Block(BlockType::Result(result)), Block(BlockType::Empty)]);
                             match locals.of(position) {
-                                unboxed::Repr::Long => {
+                                unboxed::Repr::Long | unboxed::Repr::MaybeLong => {
                                     // Unsigned, so a negative index is out of range.
+                                    if locals.of(position).maybe() {
+                                        code.extend([LocalGet(locals.valid(position)), I32Eqz, BrIf(0)]);
+                                    }
                                     let raw = locals.raw(position);
                                     code.extend([LocalGet(raw), I32WrapI64, LocalSet(field_index_local),
                                         LocalGet(typed), ArrayLen, I64ExtendI32U, LocalGet(raw), I64LeU, BrIf(0)]);
@@ -3523,6 +3594,15 @@ fn emit_function(
                                 function.instruction(&instruction);
                             }
                         }
+                        Nominal::ChunkIndexAdd => {
+                            // Resumable code keeps checked long operands boxed.
+                            // The owned caller's bounds proof still applies.
+                            let mut code = runtime_abi::long_to_i64(arguments[0].0 as u32 + offset);
+                            code.extend(runtime_abi::long_to_i64(arguments[1].0 as u32 + offset));
+                            code.push(I64Add);
+                            code.extend(runtime_abi::long_box_in(long_locals[0]));
+                            for instruction in code { function.instruction(&instruction); }
+                        }
                         Nominal::LongCast | Nominal::DoubleCast | Nominal::UncheckedLongCast => {
                             // The checked cast (#385): an i31 or a boxed long
                             // (or double) inline, anything else through the
@@ -3622,13 +3702,14 @@ fn emit_function(
                             }
                             function.instruction(&Call(index("hash-map-type-register")));
                         }
-                        Nominal::ChunkTypes | Nominal::ChunkNth | Nominal::ChunkAppend | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq => {
+                        Nominal::ChunkLongSum | Nominal::ChunkTypes | Nominal::ChunkNth | Nominal::ChunkAppend | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq => {
                             let mut code = vec![];
                             for argument in arguments {
                                 locals.push_boxed(&mut code, *argument);
                             }
                             code.push(Call(index(match operation {
                                 Nominal::ChunkTypes => "chunk-types-register",
+                                Nominal::ChunkLongSum => "chunk-long-sum",
                                 Nominal::ChunkNth => "chunk-nth",
                                 Nominal::ChunkArray => "chunk-array",
                                 Nominal::ChunkOffset => "chunk-offset",

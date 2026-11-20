@@ -56,11 +56,11 @@ pub(super) enum Relation {
 }
 pub(super) fn relation(operation: Comparison) -> Option<Relation> {
     Some(match operation {
-        Comparison::NumberLess | Comparison::NumberNegative => Relation::Less,
-        Comparison::NumberLessEqual => Relation::LessEqual,
-        Comparison::NumberGreater | Comparison::NumberPositive => Relation::Greater,
-        Comparison::NumberGreaterEqual => Relation::GreaterEqual,
-        Comparison::NumberEqual | Comparison::NumberZero => Relation::Equal,
+        Comparison::Less | Comparison::NumberLess | Comparison::NumberNegative => Relation::Less,
+        Comparison::LessEqual | Comparison::NumberLessEqual => Relation::LessEqual,
+        Comparison::Greater | Comparison::NumberGreater | Comparison::NumberPositive => Relation::Greater,
+        Comparison::GreaterEqual | Comparison::NumberGreaterEqual => Relation::GreaterEqual,
+        Comparison::StrictEqual | Comparison::NumberEqual | Comparison::NumberZero => Relation::Equal,
         _ => return None,
     })
 }
@@ -84,6 +84,13 @@ fn meet(a: Lattice, b: Lattice) -> Lattice {
 /// The representation of an arithmetic result from its operands', optimistic
 /// about operands not yet known.
 fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool) -> Lattice {
+    // value-* takes exactly the checked number-* route for two numbers.
+    // A guarded primitive result retains the original coercing helper on a
+    // boxed fallback. Unary coercions and core division stay boxed.
+    if coercing && (arguments.len() != 2 || operator == Arithmetic::Divide)
+    {
+        return Lattice::Known(Repr::Boxed);
+    }
     if arguments.iter().any(|argument| matches!(argument, Lattice::Known(repr) if repr.maybe())) {
         let definite = arguments.iter().map(|argument| match argument {
             Lattice::Known(repr) => Lattice::Known(repr.definite()), other => *other,
@@ -94,8 +101,7 @@ fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool) -> La
             other => other,
         };
     }
-    // Shipped core keeps its coercing JavaScript arithmetic boxed.
-    if coercing || arguments.is_empty() || arguments.len() > 2 {
+    if arguments.is_empty() || arguments.len() > 2 {
         return Lattice::Known(Repr::Boxed);
     }
     if arguments.len() == 1 && !matches!(operator, Arithmetic::Negate) {
@@ -140,7 +146,29 @@ pub(super) fn raw_bitwise(operation: Bitwise, count: usize) -> Option<Instructio
         _ => None,
     }
 }
+
+/// Core's ToInt32 operations consume a long's low 32 bits. The result is
+/// signed except for zero-fill right shift, exactly as their boxed helpers.
+fn raw_int32(operation: Bitwise, count: usize) -> Option<Instruction<'static>> {
+    Some(match (operation, count) {
+        (Bitwise::Int32, 1) => Instruction::Nop,
+        (Bitwise::BitCount, 1) => Instruction::I32Popcnt,
+        (Bitwise::Int32And, 2) => Instruction::I32And,
+        (Bitwise::Int32Or, 2) => Instruction::I32Or,
+        (Bitwise::Int32Xor, 2) => Instruction::I32Xor,
+        (Bitwise::Int32Left, 2) => Instruction::I32Shl,
+        (Bitwise::Int32Right, 2) => Instruction::I32ShrS,
+        (Bitwise::Int32Unsigned, 2) => Instruction::I32ShrU,
+        (Bitwise::Imul, 2) => Instruction::I32Mul,
+        _ => return None,
+    })
+}
 fn bitwise(operation: Bitwise, arguments: &[Lattice]) -> Lattice {
+    // ToInt32 produces a long or throws even when its input is boxed. Keep
+    // that result fact without bypassing the boxed operand conversions.
+    if raw_int32(operation, arguments.len()).is_some() {
+        return Lattice::Known(Repr::Long);
+    }
     let test = operation == Bitwise::Test && arguments.len() == 2;
     if (test || raw_bitwise(operation, arguments.len()).is_some())
         && arguments.iter().all(|argument| matches!(argument, Lattice::Top | Lattice::Known(Repr::Long)))
@@ -159,7 +187,16 @@ fn comparison(operation: Comparison, arguments: &[Lattice]) -> Lattice {
     if relation(operation).is_none() || arguments.len() != 2 {
         return Lattice::Known(Repr::Boxed);
     }
-    let raw = |argument: &Lattice| matches!(argument, Lattice::Top | Lattice::Known(Repr::Long | Repr::Double));
+    let raw = |argument: &Lattice| matches!(argument, Lattice::Top | Lattice::Known(Repr::Long | Repr::Double | Repr::MaybeLong | Repr::MaybeDouble));
+    // Core's legacy comparisons also compare two numbers numerically. Only
+    // use that fact for two raw numeric operands; strings, objects and other
+    // values retain the original coercing helper and its effects.
+    if matches!(operation, Comparison::Less | Comparison::LessEqual
+        | Comparison::Greater | Comparison::GreaterEqual | Comparison::StrictEqual)
+        && !arguments.iter().all(raw)
+    {
+        return Lattice::Known(Repr::Boxed);
+    }
     let long = |argument: &Lattice| matches!(argument, Lattice::Top | Lattice::Known(Repr::Long));
     let boxed = |argument: &Lattice| *argument == Lattice::Known(Repr::Boxed);
     // Two numbers, or a long and a value that may be a small long.
@@ -210,7 +247,7 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
                         });
                     }
                 }
-                Operation::Nominal { operation: super::super::hir::Nominal::LongCast | super::super::hir::Nominal::UncheckedLongCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Long),
+                Operation::Nominal { operation: super::super::hir::Nominal::LongCast | super::super::hir::Nominal::UncheckedLongCast | super::super::hir::Nominal::ChunkIndexAdd, .. } => state[instruction.result.0] = Lattice::Known(Repr::Long),
                 Operation::Nominal { operation: super::super::hir::Nominal::DoubleCast, .. } => state[instruction.result.0] = Lattice::Known(Repr::Double),
                 // A hinted aget's element, behind its checked cast (#389).
                 // An object array's element is a value (#378).
@@ -324,12 +361,19 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
                     }
                 }
             }
+            if let Operation::Nominal { operation: Nominal::ChunkIndexAdd, arguments } = &instruction.operation {
+                for argument in arguments { raw_use[argument.0] = true; }
+            }
             if let Operation::Nominal { operation: Nominal::LongCast | Nominal::UncheckedLongCast | Nominal::DoubleCast, arguments } = &instruction.operation
                 && repr[arguments[0].0].definite().numeric()
             {
                 raw_use[arguments[0].0] = true;
             }
-            if repr[instruction.result.0] != Repr::Boxed
+            let boxed_int32 = matches!(&instruction.operation,
+                Operation::Bitwise { operation, arguments }
+                if raw_int32(*operation, arguments.len()).is_some()
+                    && arguments.iter().any(|argument| repr[argument.0].definite() != Repr::Long));
+            if repr[instruction.result.0] != Repr::Boxed && !boxed_int32
                 && matches!(
                     instruction.operation,
                     Operation::Arithmetic { .. } | Operation::Comparison { .. } | Operation::Bitwise { .. }
@@ -423,13 +467,22 @@ pub(super) struct Locals {
     pub repr: Vec<Repr>,
     raw: Vec<Option<u32>>,
     valid: Vec<Option<u32>>,
+    long_literals: Vec<Option<i64>>,
     pub declarations: Vec<(u32, ValType)>,
     /// GC locals are `value + offset`.
     offset: u32,
     sentinels: u32,
 }
 impl Locals {
-    pub(super) fn new(repr: Vec<Repr>, base: u32, offset: u32, sentinels: u32) -> Self {
+    pub(super) fn new(repr: Vec<Repr>, function: &Function, base: u32, offset: u32, sentinels: u32) -> Self {
+        let mut long_literals = vec![None; repr.len()];
+        for block in &function.blocks {
+            for instruction in &block.instructions {
+                if let Operation::Literal(Literal::Long(value)) = &instruction.operation {
+                    long_literals[instruction.result.0] = Some(*value);
+                }
+            }
+        }
         let mut raw = vec![None; repr.len()];
         let mut declarations = Vec::new();
         let mut next = base;
@@ -452,7 +505,7 @@ impl Locals {
             if item.maybe() { valid[value] = Some(next); next += 1; }
         }
         if next > start { declarations.push((next - start, ValType::I32)); }
-        Self { repr, raw, valid, declarations, offset, sentinels }
+        Self { repr, raw, valid, long_literals, declarations, offset, sentinels }
     }
     pub(super) fn of(&self, value: ValueId) -> Repr {
         self.repr[value.0]
@@ -464,6 +517,17 @@ impl Locals {
     pub(super) fn valid(&self, value: ValueId) -> u32 { self.valid[value.0].expect("guarded numeric local") }
     fn boxed(&self, value: ValueId) -> u32 {
         value.0 as u32 + self.offset
+    }
+    /// Read an already-boxed result whose operation guarantees a long.
+    pub(super) fn unbox_long(&self, code: &mut Vec<Instruction<'static>>, value: ValueId) {
+        use Instruction::*;
+        let boxed = self.boxed(value);
+        code.extend([LocalGet(boxed), RefTestNonNull(HeapType::I31),
+            If(BlockType::Result(ValType::I64)), LocalGet(boxed),
+            RefCastNonNull(HeapType::I31), I31GetS, I64ExtendI32S,
+            Else, LocalGet(boxed), RefCastNonNull(HeapType::Concrete(runtime_abi::LONG)),
+            StructGet { struct_type_index: runtime_abi::LONG, field_index: 0 },
+            End, LocalSet(self.raw(value))]);
     }
     /// Pushes `value` as a GC value, boxing a raw one.
     pub(super) fn push_boxed(&self, code: &mut Vec<Instruction<'static>>, value: ValueId) {
@@ -586,6 +650,9 @@ impl Locals {
             code.extend([End, I64Const(0), LocalGet(x), I64Sub, LocalSet(target)]);
             return;
         }
+        if operator == Arithmetic::Multiply && self.multiply_constant(code, arguments, target, slow) {
+            return;
+        }
         let (x, y) = (self.raw(arguments[0]), self.raw(arguments[1]));
         let overflow: Vec<Instruction<'static>> = match operator {
             // Signs of both operands differ from the result's.
@@ -621,6 +688,41 @@ impl Locals {
         self.slow(code, arguments, slow);
         code.push(End);
     }
+    /// A constant factor gives exact signed bounds without a runtime divide.
+    /// Operands have already been evaluated; overflow still calls the original
+    /// helper with their original order and values.
+    fn multiply_constant(&self, code: &mut Vec<Instruction<'static>>, arguments: &[ValueId], target: u32, slow: u32) -> bool {
+        use Instruction::*;
+        let (constant, value) = if let Some(c) = self.long_literals[arguments[0].0] {
+            (c, arguments[1])
+        } else if let Some(c) = self.long_literals[arguments[1].0] {
+            (c, arguments[0])
+        } else {
+            return false;
+        };
+        if constant == 0 {
+            code.extend([I64Const(0), LocalSet(target)]);
+            return true;
+        }
+        let (min, max, c) = (i64::MIN as i128, i64::MAX as i128, constant as i128);
+        // Each lower quotient is nonpositive (truncation is ceiling), and
+        // each upper quotient is nonnegative (truncation is floor).
+        let (lower, upper) = if c > 0 { (min / c, max / c) } else { (max / c, min / c) };
+        let (lower, upper) = (lower.max(min) as i64, upper.min(max) as i64);
+        let raw = self.raw(value);
+        if lower != i64::MIN || upper != i64::MAX {
+            // Translate the inclusive signed interval into an unsigned one.
+            // Wasm's wrapping subtraction also places every value below the
+            // lower bound above its width, so one comparison checks both ends.
+            code.extend([LocalGet(raw), I64Const(lower), I64Sub,
+                I64Const((upper as i128 - lower as i128) as i64), I64GtU]);
+            code.push(If(BlockType::Empty));
+            self.slow(code, arguments, slow);
+            code.push(End);
+        }
+        code.extend([LocalGet(raw), I64Const(constant), I64Mul, LocalSet(target)]);
+        true
+    }
     /// The boxed runtime operation, which throws; it never returns here.
     fn slow(&self, code: &mut Vec<Instruction<'static>>, arguments: &[ValueId], callee: u32) {
         for argument in arguments {
@@ -641,10 +743,35 @@ impl Locals {
         slow: u32,
     ) {
         use Instruction::*;
+        let inputs = arguments.iter().filter(|value| self.of(**value).maybe()).collect::<Vec<_>>();
+        if !inputs.is_empty() {
+            for (i, input) in inputs.iter().enumerate() {
+                code.push(LocalGet(self.valid(**input)));
+                if i > 0 { code.push(I32And); }
+            }
+            code.push(If(BlockType::Empty));
+            self.comparison_raw(code, operation, arguments, result, slow);
+            code.push(Else);
+            for argument in arguments { self.push_boxed(code, *argument); }
+            code.extend([Call(slow), runtime_abi::sentinel_in(runtime_abi::TRUE, self.sentinels),
+                RefEq, LocalSet(self.raw(result)), End]);
+            return;
+        }
+        self.comparison_raw(code, operation, arguments, result, slow);
+    }
+    fn comparison_raw(
+        &self,
+        code: &mut Vec<Instruction<'static>>,
+        operation: Comparison,
+        arguments: &[ValueId],
+        result: ValueId,
+        slow: u32,
+    ) {
+        use Instruction::*;
         let relation = relation(operation).expect("inline relation");
         let target = self.raw(result);
         let (x, y) = (arguments[0], arguments[1]);
-        let (rx, ry) = (self.of(x), self.of(y));
+        let (rx, ry) = (self.of(x).definite(), self.of(y).definite());
         let exact = match relation {
             Relation::Less => I64LtS,
             Relation::LessEqual => I64LeS,
@@ -790,7 +917,41 @@ impl Locals {
 
     /// A raw long bitwise operation, which can't fail. bit-test produces a
     /// flag; Wasm masks the shift count to six bits, as Java's long shift does.
-    pub(super) fn bitwise(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId) {
+    pub(super) fn bitwise(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId, slow: u32) {
+        use Instruction::*;
+        if raw_int32(operation, arguments.len()).is_some() {
+            let inputs = arguments.iter().filter(|value| self.of(**value).maybe()).collect::<Vec<_>>();
+            if !inputs.is_empty() {
+                for (i, input) in inputs.iter().enumerate() {
+                    code.push(LocalGet(self.valid(**input)));
+                    if i > 0 { code.push(I32And); }
+                }
+                code.push(If(BlockType::Empty));
+                self.bitwise_raw(code, operation, arguments, result);
+                code.push(Else);
+                for argument in arguments { self.push_boxed(code, *argument); }
+                code.extend([Call(slow), LocalSet(self.boxed(result))]);
+                self.unbox_long(code, result);
+                code.push(End);
+                return;
+            }
+        }
+        self.bitwise_raw(code, operation, arguments, result);
+    }
+    fn bitwise_raw(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId) {
+        if let Some(operation_code) = raw_int32(operation, arguments.len()) {
+            for argument in arguments {
+                code.extend([Instruction::LocalGet(self.raw(*argument)), Instruction::I32WrapI64]);
+            }
+            code.push(operation_code);
+            code.push(if operation == Bitwise::Int32Unsigned {
+                Instruction::I64ExtendI32U
+            } else {
+                Instruction::I64ExtendI32S
+            });
+            code.push(Instruction::LocalSet(self.raw(result)));
+            return;
+        }
         code.extend([
             Instruction::LocalGet(self.raw(arguments[0])),
             Instruction::LocalGet(self.raw(arguments[1])),
@@ -847,6 +1008,12 @@ pub(super) fn raw_small(locals: &Locals, instruction: &ir::Instruction) -> bool 
 
 /// Whether an instruction is emitted inline on raw values.
 pub(super) fn inline(locals: &Locals, instruction: &ir::Instruction) -> bool {
+    if let Operation::Bitwise { operation, arguments } = &instruction.operation
+        && raw_int32(*operation, arguments.len()).is_some()
+        && arguments.iter().any(|argument| locals.of(*argument).definite() != Repr::Long)
+    {
+        return false;
+    }
     locals.of(instruction.result) != Repr::Boxed
         && matches!(
             instruction.operation,

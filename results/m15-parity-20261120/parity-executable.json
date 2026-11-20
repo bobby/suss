@@ -1,0 +1,12 @@
+{
+  "source_head": "b676b991781d9f3c81edeb6e37b57d7ce14cffa3",
+  "source_dirty": " M crates/suss-cli/tests/clojure_equality_bitwise.rs\n M crates/suss-compile/src/portable/ir.rs\n M docs/compatibility/patches/expression-even-predicate.json\n M runtime/core-import/manifest.json\n M runtime/core-import/suss/core.sus\n",
+  "executable_sha256": "f4d8d30f791afdc440152b1806e757df2cfd77fff55c4b91ad1a7bdec991510a",
+  "tracked_patch_sha256": "b3a41508a43409069f87bcd20eb3332cc7e5394edec57fa675e0e8505df60f29",
+  "core_sha256": "76eca6b91b6e04114c49926228d1900f47b5a1fc24c41e0acf84273c9ae733d6",
+  "focused_passed": 21,
+  "focused_targets": 4,
+  "note": "Uncommitted raw-long-test/direct parity conditional candidate; exact patch retained; no walltime acceptance",
+  "published_implementation_head": "2ad0c15d2b9ee9231401214dd7a720f409f028f5",
+  "published_patch_exact_match": true
+}

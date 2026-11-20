@@ -1,0 +1,51 @@
+Running as unit: run-p3207746-i82899188.scope; invocation ID: a88fc292b77545aca27abf1cfc16abf1
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-chunk-index-source/crates/suss-cli)
+    Finished `release` profile [optimized] target(s) in 4.08s
+     Running tests/clojure_chunk_effects.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/clojure_chunk_effects-9c74cb758560a432)
+
+running 15 tests
+test bounded_chunk_index_add_keeps_checked_conversions_and_source_fallback ... ok
+test chunk_buffer_matches_jvm_returns_and_failed_store_order ... ok
+test chunk_adapters_are_private_and_registration_is_atomic ... ok
+test chunk_long_arithmetic_keeps_checked_overflow_and_wide_results ... ok
+test chunk_storage_views_decline_unsupported_windows_and_keep_aliases_after_gc ... ok
+test chunk_sum_keeps_custom_reducers_redefinitions_and_reduced_demand ... ok
+test chunk_sum_preserves_wide_values_mixed_numbers_and_prefix_overflow ... ok
+test chunk_views_read_future_elements_after_callbacks_and_keep_reduced_demand ... ok
+test chunked_filter_keeps_the_value_read_before_its_predicate ... ok
+test custom_chunks_keep_their_indexed_protocol_effects ... ok
+test invalid_chunk_windows_keep_callbacks_before_the_first_bad_read ... ok
+test native_chunk_admission_keeps_nil_end_bounds_and_decline_effects ... ok
+test native_chunk_roots_and_shallow_elements_survive_gc ... ok
+test private_chunk_sum_declines_without_calls_or_mutation_and_keeps_operand_order ... ok
+test ordinary_source_core_keeps_generic_chunks_without_native_layout_access ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.90s
+
+     Running tests/compiled_core_casts.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/compiled_core_casts-3c6e6e9c6c8cd553)
+
+running 11 tests
+test boxed_bit_functions_do_not_inherit_backend_primitive_kinds ... ok
+test array_length_source_results_require_a_known_array_class ... ok
+test coercions_answer_as_calls_do ... ok
+test guarded_primitive_calls_preserve_replacement_values_and_numeric_joins ... ok
+test checked_long_of_a_raw_double_matches_the_boxed_cast ... ok
+test primitive_return_hints_cast_after_the_body_in_both_phases ... ok
+test raw_operands_coerce_inline ... ok
+test return_hints_reject_opposite_source_primitives_but_unbox_objects ... ok
+test packed_array_source_kinds_are_distinct_from_backend_representations ... ok
+test shared_array_initializers_do_not_expand_source_kind_work_exponentially ... ok
+test unary_and_unchecked_source_results_follow_clojure_overloads ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.36s
+
+     Running tests/portable_lazy_transformations.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/portable_lazy_transformations-16ee9c672a8f03bf)
+
+running 4 tests
+test handed_chunk_preserves_actual_backing_array_identity_after_gc ... ok
+test unforced_transformations_keep_callbacks_and_captures_across_gc_and_fragments ... ok
+test unforced_transformations_survive_with_only_host_handles ... ok
+test lazy_transformations_match_complete_pinned_observations_in_both_phases_after_gc ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.88s
+
