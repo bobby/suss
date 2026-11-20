@@ -233,6 +233,37 @@ writes 4.86%, ensure-editable 4.79%, ArrayNode association 4.19%, subtype checks
 3.89%, transient-map conj! 3.52%, vector-nth/named reads 3.28% each. The receipt
 records component/executable/core/benchmark hashes and module-specific spans.
 
+Named-write probes use target/probe/m15-named-write-* and source worktree
+m15-named-write-source. The b137ae4c emitter performs named-site-set's admitted
+object/descriptor/nonnegative-slot hit inline; any miss calls the original
+helper. Existing retained parameter layouts are reused when available. All
+operands finish first, so a reentrant RHS can replace the site's cache before
+the outer write checks it. The returned value remains the actual assigned
+value, including nil/false; absent fields and closure-property writes retain
+the runtime path and epoch effects. No runtime export, shared ABI, source-kind
+or core-source change is involved.
+
+The new four-test receiver suite passes on both the original implementation
+(standalone baseline harness before-tests2) and the optimized emitter. The first
+baseline fixture incorrectly expected an absent object field to install a
+method; its real failure is retained in before-tests.log. The corrected cases
+cover successful warm/cold writes, distinct/redefined/old layouts, reentrant
+RHS order, nullable values, bad receivers, throws, closure properties and GC.
+All37 focused tests across nine targets and347 Python/foundation checks pass.
+The fresh public HAMT probe matches JVM Clojure1.12.6 exactly in
+m15-named-write-public-oracle.json. The frozen executable SHA256 is
+1efc8da7286d143e2ec9361a30aa44ca816b7619713eabf39cf89a30ab1262c4;
+its receipt identifies the clean source and unchanged dc834ca6 core bytes.
+
+The unchanged seven-program probe gives into-map11,919,216 instructions,
+2.582% below4aa830fc; lazy-pipeline1,146,971 (0.833% fewer), string-build
+1,361,066 (0.352% fewer) and word-frequencies3,411,899 (0.155% fewer).
+Fib/transduce/into-vector are essentially unchanged. This is instruction
+work reduction, not quiet walltime acceptance. Use the existing bounded stable
+release commands, --test-threads=2 and m15-program-instructions.py, with a
+warm-up first and median three N=1000-minus-0 observations. Source, raw counts,
+negative fixture and successful tests remain separately retained.
+
 Reviewed native file/WIT selection and explicit mappings, shared compiled source/
 macro staging, scalar parsing/result handling, exact nested export invocation,
 command-mode separation and documented remaining frontend modes at855d281.
