@@ -17,8 +17,9 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   quotient of two longs stays boxed, since only an exact one is a long. `inc`
   and `dec` are `+` and `-` of 1. Core's coercing `+`, `-` and `*` also keep
   two known numeric operands raw, matching the helpers' checked numeric route.
-  Unknown operands, guarded replacement results, unary coercions and core's
-  division retain their original boxed path.
+  Guarded primitive results keep their numeric hit raw and their original
+  coercing helper on a boxed fallback. Unknown operands, unary coercions and
+  core's division retain their original boxed path.
 - **`let` and `loop`.** A `let` binding is the value it's bound to. A `loop`
   local, and an `if` result that joins branches, are raw when every value
   reaching them is the same raw kind. A local that a `recur` gives another

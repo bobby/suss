@@ -85,9 +85,9 @@ fn meet(a: Lattice, b: Lattice) -> Lattice {
 /// about operands not yet known.
 fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool) -> Lattice {
     // value-* takes exactly the checked number-* route for two numbers.
-    // Keep unknown/redefined primitive results and unary coercions boxed.
-    if coercing && (arguments.len() != 2 || operator == Arithmetic::Divide || arguments.iter()
-        .any(|argument| matches!(argument, Lattice::Known(repr) if repr.maybe())))
+    // A guarded primitive result retains the original coercing helper on a
+    // boxed fallback. Unary coercions and core division stay boxed.
+    if coercing && (arguments.len() != 2 || operator == Arithmetic::Divide)
     {
         return Lattice::Known(Repr::Boxed);
     }

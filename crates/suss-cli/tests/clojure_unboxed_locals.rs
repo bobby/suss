@@ -267,4 +267,21 @@ fn core_known_numeric_math_keeps_overflow_nan_zero_and_coercing_fallbacks() {
           (< (identity \"10\") (identity 2))
           (loop [x 0 i 0] (if (< i 1) (recur \"x\" (inc i)) (+ x 1)))]"),
         "[\"x1\" true 1.0 2.0 false \"x1\"]");
+    for session in &mut sessions {
+        session.eval("(def core-hinted-result (fn ^long [^long x] (+ x 1)))
+            (def core-use-hinted-result (fn [x] (+ (core-hinted-result x) 1)))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-use-hinted-result 2)"), "4");
+    for session in &mut sessions {
+        session.eval("(def core-hinted-result (fn [x] \"v\"))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-use-hinted-result 2)"), "\"v1\"");
+    for session in &mut sessions {
+        session.eval("(def core-hinted-result (fn ^double [x] (+ x 0.5)))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-use-hinted-result 2)"), "3.5");
+    for session in &mut sessions {
+        session.eval("(def core-hinted-result (fn [x] false))").unwrap();
+    }
+    assert_eq!(outcome(&mut sessions, "(core-use-hinted-result 2)"), "1.0");
 }
