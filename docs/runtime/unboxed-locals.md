@@ -49,6 +49,9 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   compiler extracts it once for subsequent raw uses and caches the existing
   GC value for uses that need it boxed. Literals used only by the boxed path
   keep their existing constant representation.
+  Guarded long inputs also take the raw path when every input hits its
+  primitive entry. On a miss, the original int32 helper converts the boxed
+  replacement values and supplies the guaranteed long result.
 - **Hashes and identity.** `hash` of a long gives a raw long: an i31 or raw long
   is hashed inline, as `number-hash` hashes it, and core's `hash`, which always
   returns an integer, is cast to a long (#387). `identical?`, `=` of small

@@ -122,6 +122,46 @@ are verified by the frozen 611def0b receipt. Its unchanged seven-program probe
 measures into-map 12,744,622 and into-vector 1,659,672 instructions/run; these are
 instruction observations, not evidence for the quiet-machine 5x time target.
 
+Guarded int32 probes use target/probe/m15-core-guarded-int32-* and
+m15-guarded-int32-*. Explicit arglists exercise one or both guarded long
+inputs; replacements returning strings/doubles retain the original ToInt32
+path. GC runs between replacements, including a right-only miss after the
+left replacement again has the original primitive shape. Whole-loop kernel
+counts are 263.02 to 143.02 for and, 194.05 to 141.97 for popcount and 280.79 to 183.95
+for unsigned shift, with a control about 89. This alone leaves the seven
+unchanged program counts essentially unchanged. The successful local run
+records 57 passes over 10 CLI targets, separately from full workspace CI.
+
+The mask-only return-hint experiment cfcdefba is retained under
+target/probe/m15-mask-return-*. Into-map rose 0.036% while word-frequencies
+fell 0.065%; the hint was removed. WAT extracts confirm bitpos really used the
+typed mask entry and a raw guarded shift. The standalone printer and its
+35MiB WAT artifacts are under target/probe/m15-print-wasm* and each program
+probe's bench.wat. Extract a function through its own closing line rather
+than through the next function, which can cross data sections.
+
+The source-mapped instructions:u profile at
+target/probe/m15-into-map-c4-instructions/ uses a private mount namespace whose
+/tmp is bound to a probe-backed perfmap directory. Its receipt identifies the
+c4b3c6d1 executable and both core/benchmark sources; startup is included.
+51,380 samples, none lost, place 21.57% in BitmapIndexedNode.inode_assoc!,
+7.27% in TransientHashMap.assoc!, 4.84% in ensure_editable, and about 8% in named
+field reads/writes. wasm[33] fn#2 maps to the benchmark's [x x] closure rather
+than core; keep module-specific source attribution in the receipt.
+
+Four HAMT ensure-editable guards compare private Unique edit tokens or nil
+with the existing same-reference? primitive. Their field reads and branch
+positions stay in source order. On dab36209, the 12-target focused run gives
+70 passes, no failures/ignores; 347 Python tests and all foundation checks
+pass. The first local command was stopped before tests to add the required
+--test-threads=2; use m15-edit-reference-focused2.log. The frozen executable
+and core hashes are m15-edit-reference-suss.json. The unchanged program probe
+gives into-map 12,702,210 instructions, 0.333% below c4b3c6d1, with other rows
+essentially unchanged. The public growth/collision/snapshot/numeric/transient
+probe matches fresh JVM Clojure 1.12.6 exactly in
+m15-edit-reference-public-oracle.json. These counts do not establish quiet
+walltime acceptance; issue comments hold current acceptance and next work.
+
 Reviewed native file/WIT selection and explicit mappings, shared compiled source/
 macro staging, scalar parsing/result handling, exact nested export invocation,
 command-mode separation and documented remaining frontend modes at855d281.
