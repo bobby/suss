@@ -41,7 +41,10 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   Core's private 32-bit operations also stay raw for long operands, using their
   low 32 bits, five-bit shift counts and the original signed result extension
   (unsigned for zero-fill right shift). Unknown operands keep their existing
-  ToInt32 conversion path.
+  ToInt32 conversion path. Those helpers also guarantee a long result: the
+  compiler extracts it once for subsequent raw uses and caches the existing
+  GC value for uses that need it boxed. Literals used only by the boxed path
+  keep their existing constant representation.
 - **Hashes and identity.** `hash` of a long gives a raw long: an i31 or raw long
   is hashed inline, as `number-hash` hashes it, and core's `hash`, which always
   returns an integer, is cast to a long (#387). `identical?`, `=` of small

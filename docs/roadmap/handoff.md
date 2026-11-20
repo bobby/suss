@@ -93,6 +93,11 @@ clojure_unboxed_locals, clojure_equality_bitwise and hash/map/vector suites in
 both phases. Boxed versus primitive zero-divisor double division differs on the
 JVM; the frozen Suss mismatch and failed initial unhinted oracle are recorded
 on #484. Core division is excluded from the known-numeric arithmetic lowering.
+Integer-result propagation probes use target/probe/m15-core-int32-results-*.
+Exercise boxed inputs whose normalized unsigned result exceeds the i31 range,
+followed by arithmetic/comparisons and repeated boxed uses; input coercions
+still run through the original helper. Compare all seven unchanged programs
+after changing these result facts, not just typed kernels.
 
 Reviewed native file/WIT selection and explicit mappings, shared compiled source/
 macro staging, scalar parsing/result handling, exact nested export invocation,
