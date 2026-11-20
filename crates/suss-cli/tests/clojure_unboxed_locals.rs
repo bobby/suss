@@ -119,6 +119,46 @@ fn long_view_array_indices_keep_aliases_bounds_and_fallbacks() {
         "[:changed :changed]");
 }
 
+#[test]
+fn constant_long_products_keep_both_operand_orders_and_exact_overflow() {
+    let values = "[-9223372036854775808 -9223372036854775807
+        -4611686018427387905 -4611686018427387904 -4611686018427387903
+        -3074457345618258603 -3074457345618258602 -3 -2 -1 0 1 2 3
+        3074457345618258602 3074457345618258603
+        4611686018427387903 4611686018427387904 4611686018427387905
+        9223372036854775806 9223372036854775807]";
+    let mut sessions = sessions();
+    for session in &mut sessions {
+        session.eval("(ns suss.core)
+          (def multiply-dynamic (fn [a b] (try (* a b) (catch :default e (ex-message e)))))").unwrap();
+    }
+    for factor in [0_i64, 1, -1, 2, -2, 3, -3, 4294967297, i64::MIN, i64::MAX] {
+        for session in &mut sessions {
+            session.eval(&format!(
+                "(def multiply-left (fn [x] (try (* {factor} (suss.bootstrap/long-view x)) (catch :default e (ex-message e)))))
+                 (def multiply-right (fn [x] (try (* (suss.bootstrap/long-view x) {factor}) (catch :default e (ex-message e)))))
+                 (def multiply-typed (fn [^long x] (try (* x {factor}) (catch :default e (ex-message e)))))"
+            )).unwrap();
+        }
+        let expected = outcome(&mut sessions,
+            &format!("(mapv (fn [x] (multiply-dynamic x {factor})) {values})"));
+        for name in ["multiply-left", "multiply-right", "multiply-typed"] {
+            assert_eq!(outcome(&mut sessions, &format!("(mapv {name} {values})")), expected,
+                "factor {factor}, {name}");
+        }
+        let boxed = "[1.5 -0.0 ##NaN ##Inf \"2\" nil false]";
+        let expected = outcome(&mut sessions,
+            &format!("(mapv (fn [x] (multiply-dynamic x {factor})) {boxed})"));
+        for name in ["multiply-left", "multiply-right"] {
+            assert_eq!(outcome(&mut sessions, &format!("(mapv {name} {boxed})")), expected);
+        }
+    }
+    assert_eq!(outcome(&mut sessions,
+        "(let [seen (atom [])]
+           [(* 0 (suss.bootstrap/long-view (do (swap! seen conj :operand) 2))) @seen])"),
+        "[0 [:operand]]");
+}
+
 /// Each `(unboxed, boxed, expected)` case gives `expected` on both paths.
 fn check(cases: &[(&str, &str, &str)]) {
     let mut sessions = sessions();

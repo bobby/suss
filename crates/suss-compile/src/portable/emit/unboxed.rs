@@ -467,6 +467,7 @@ pub(super) struct Locals {
     valid: Vec<Option<u32>>,
     /// Identity views retain their original GC value on both guard arms.
     preboxed: Vec<bool>,
+    long_literals: Vec<Option<i64>>,
     pub declarations: Vec<(u32, ValType)>,
     /// GC locals are `value + offset`.
     offset: u32,
@@ -475,8 +476,12 @@ pub(super) struct Locals {
 impl Locals {
     pub(super) fn new(repr: Vec<Repr>, function: &Function, base: u32, offset: u32, sentinels: u32) -> Self {
         let mut preboxed = vec![false; repr.len()];
+        let mut long_literals = vec![None; repr.len()];
         for block in &function.blocks {
             for instruction in &block.instructions {
+                if let Operation::Literal(Literal::Long(value)) = &instruction.operation {
+                    long_literals[instruction.result.0] = Some(*value);
+                }
                 if matches!(instruction.operation, Operation::Nominal { operation: Nominal::LongView, .. }) {
                     preboxed[instruction.result.0] = true;
                 }
@@ -504,7 +509,7 @@ impl Locals {
             if item.maybe() { valid[value] = Some(next); next += 1; }
         }
         if next > start { declarations.push((next - start, ValType::I32)); }
-        Self { repr, raw, valid, preboxed, declarations, offset, sentinels }
+        Self { repr, raw, valid, preboxed, long_literals, declarations, offset, sentinels }
     }
     pub(super) fn of(&self, value: ValueId) -> Repr {
         self.repr[value.0]
@@ -654,6 +659,9 @@ impl Locals {
             code.extend([End, I64Const(0), LocalGet(x), I64Sub, LocalSet(target)]);
             return;
         }
+        if operator == Arithmetic::Multiply && self.multiply_constant(code, arguments, target, slow) {
+            return;
+        }
         let (x, y) = (self.raw(arguments[0]), self.raw(arguments[1]));
         let overflow: Vec<Instruction<'static>> = match operator {
             // Signs of both operands differ from the result's.
@@ -688,6 +696,46 @@ impl Locals {
         code.push(If(BlockType::Empty));
         self.slow(code, arguments, slow);
         code.push(End);
+    }
+    /// A constant factor gives exact signed bounds without a runtime divide.
+    /// Operands have already been evaluated; overflow still calls the original
+    /// helper with their original order and values.
+    fn multiply_constant(&self, code: &mut Vec<Instruction<'static>>, arguments: &[ValueId], target: u32, slow: u32) -> bool {
+        use Instruction::*;
+        let (constant, value) = if let Some(c) = self.long_literals[arguments[0].0] {
+            (c, arguments[1])
+        } else if let Some(c) = self.long_literals[arguments[1].0] {
+            (c, arguments[0])
+        } else {
+            return false;
+        };
+        if constant == 0 {
+            code.extend([I64Const(0), LocalSet(target)]);
+            return true;
+        }
+        let (min, max, c) = (i64::MIN as i128, i64::MAX as i128, constant as i128);
+        // Each lower quotient is nonpositive (truncation is ceiling), and
+        // each upper quotient is nonnegative (truncation is floor).
+        let (lower, upper) = if c > 0 { (min / c, max / c) } else { (max / c, min / c) };
+        let (lower, upper) = (lower.max(min) as i64, upper.min(max) as i64);
+        let raw = self.raw(value);
+        let mut checks = 0;
+        if lower != i64::MIN {
+            code.extend([LocalGet(raw), I64Const(lower), I64LtS]);
+            checks += 1;
+        }
+        if upper != i64::MAX {
+            code.extend([LocalGet(raw), I64Const(upper), I64GtS]);
+            if checks > 0 { code.push(I32Or); }
+            checks += 1;
+        }
+        if checks > 0 {
+            code.push(If(BlockType::Empty));
+            self.slow(code, arguments, slow);
+            code.push(End);
+        }
+        code.extend([LocalGet(raw), I64Const(constant), I64Mul, LocalSet(target)]);
+        true
     }
     /// The boxed runtime operation, which throws; it never returns here.
     fn slow(&self, code: &mut Vec<Instruction<'static>>, arguments: &[ValueId], callee: u32) {
