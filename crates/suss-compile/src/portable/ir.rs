@@ -79,6 +79,8 @@ pub enum Operation {
     /// Callee is the first operand; all arguments are already evaluated values.
     Call {
         operands: Vec<ValueId>,
+        /// Known entry layout, guarded against arbitrary var replacements.
+        primitive: Option<super::primitive::Shape>,
     },
     Arithmetic {
         operator: Arithmetic,
@@ -170,6 +172,8 @@ pub struct ClosureBody {
     pub variadic: bool,
     pub capture_types: Vec<Type>,
     pub arity: usize,
+    /// The raw entry, when source parameters or the return have primitive tags.
+    pub primitive: Option<super::primitive::Signature>,
     pub function: Function,
 }
 #[derive(Debug, Clone)]
@@ -186,6 +190,7 @@ struct Lowerer<'a> {
     function: Function,
     current: usize,
     bindings: HashMap<BindingId, ValueId>,
+    callables: HashMap<ValueId, super::primitive::Shape>,
     targets: HashMap<LoopId, (usize, usize)>,
     meter: &'a mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 }
@@ -204,6 +209,7 @@ impl<'a> Lowerer<'a> {
             },
             current: 0,
             bindings: HashMap::new(),
+            callables: HashMap::new(),
             targets: HashMap::new(),
             meter,
         };
@@ -297,6 +303,19 @@ impl<'a> Lowerer<'a> {
     fn emit(&mut self, operation: Operation, ty: Type, span: Range<usize>) -> Result<ValueId, Diagnostic> {
         self.charge(1usize.saturating_add(operands(&operation).len()), &span)?;
         let result = self.value(ty, span.clone())?;
+        let signatures: Vec<_> = match &operation {
+            Operation::MakeClosure { body, .. } => body.primitive.iter().map(|signature| (false, signature)).collect(),
+            Operation::MakeGeneralClosure { body, .. } => body.methods.iter().filter(|method| !method.variadic).filter_map(|method|
+                method.primitive.as_ref().map(|signature| (method.variadic, signature))).collect(),
+            _ => Vec::new(),
+        };
+        if !signatures.is_empty() {
+            self.charge(signatures.iter().map(|(_, signature)| signature.parameters.len() + 1).sum(), &span)?;
+            let mut methods = signatures.into_iter().map(|(variadic, signature)|
+                super::primitive::Method { variadic, signature: signature.clone() }).collect::<Vec<_>>();
+            methods.sort_by_key(|method| (method.signature.parameters.len(), method.variadic));
+            self.callables.insert(result, super::primitive::Shape(methods));
+        }
         self.function.blocks[self.current]
             .instructions
             .push(Instruction {
@@ -542,11 +561,16 @@ impl<'a> Lowerer<'a> {
                 message: "HIR references an undefined binding".into(),
             })?,
             Expression::Call { callee, arguments } => {
+                let mut primitive = super::primitive::call_shape(hir, callee, &mut *self.meter)?;
                 let mut operands = vec![operand!(callee)];
                 for argument in arguments {
                     operands.push(operand!(argument));
                 }
-                self.emit(Operation::Call { operands }, Type::Value, hir.span.clone())?
+                if primitive.is_none() && let Some(shape) = self.callables.get(&operands[0]) {
+                    lower_charge(&mut *self.meter, shape.0.iter().map(|method| method.signature.parameters.len() + 1).sum(), &hir.span)?;
+                    primitive = Some(shape.clone());
+                }
+                self.emit(Operation::Call { operands, primitive }, Type::Value, hir.span.clone())?
             }
             Expression::Function {
                 parameters,
@@ -576,6 +600,7 @@ impl<'a> Lowerer<'a> {
                 }
                 let function = inner.finish(body)?;
                 let display_name = self.display_name(hir)?;
+                let primitive = super::primitive::signature(parameters, body, &mut *self.meter)?;
                 self.emit(
                     Operation::MakeClosure {
                         body: Box::new(ClosureBody {
@@ -584,6 +609,7 @@ impl<'a> Lowerer<'a> {
                             variadic: false,
                             capture_types,
                             arity: parameters.len(),
+                            primitive,
                             function,
                         }),
                         captures: captured,
@@ -619,6 +645,7 @@ impl<'a> Lowerer<'a> {
                             .saturating_add(usize::from(self_binding.is_some())),
                         &method.body.span,
                     )?;
+                    let primitive = super::primitive::signature(&method.parameters, &method.body, &mut *self.meter)?;
                     let mut inner =
                         Lowerer::new(method.body.span.clone(), &mut *self.meter)?;
                     for (id, ty) in captures.iter().zip(&capture_types) {
@@ -639,6 +666,7 @@ impl<'a> Lowerer<'a> {
                         variadic: method.variadic,
                         capture_types: environment_types,
                         arity: method.parameters.len(),
+                        primitive,
                         function: inner.finish(&method.body)?,
                     });
                 }
@@ -1298,7 +1326,7 @@ fn loop_safe(operation: &Operation) -> bool {
             matches!(
                 operation,
                 N::IsNumber | N::IsLongValue | N::PackedGet(_) | N::PackedSet(_) | N::StringHash
-                    | N::VectorNth | N::ArrayMapGet | N::MapContains | N::MapGetOr | N::MapAssoc | N::LongCast | N::DoubleCast | N::StringAppendLong | N::IsKeyword
+                    | N::VectorNth | N::ArrayMapGet | N::MapContains | N::MapGetOr | N::MapAssoc | N::LongCast | N::DoubleCast | N::UncheckedLongCast | N::StringAppendLong | N::IsKeyword
                     | N::IsString | N::IsBoolean | N::IsUndefined | N::Identical | N::AllSmallIntegers | N::NumberHash
                     | N::IsObject | N::SameReference | N::IsDescriptor | N::IsClosure | N::Array
                     | N::Instance | N::SameNominalType | N::Field(_) | N::FieldSet(_)
@@ -1380,7 +1408,7 @@ pub(super) fn operands(operation: &Operation) -> &[ValueId] {
         | Operation::MakeClosure { captures, .. }
         | Operation::MakeGeneralClosure { captures, .. } => captures,
         Operation::RegionPush { dynamic, .. } => dynamic,
-        Operation::Call { operands } | Operation::DynamicScope { operands, .. }
+        Operation::Call { operands, .. } | Operation::DynamicScope { operands, .. }
         | Operation::AsyncDynamicEnter { operands, .. } => operands,
         Operation::Try { regions } => regions,
     }
@@ -1702,6 +1730,9 @@ fn verify_function_inner(
                         .len()
                         .checked_add(body.arity)
                         .ok_or_else(|| fail("IR closure entry count overflow"))?;
+                    if body.primitive.as_ref().is_some_and(|signature| signature.parameters.len() != body.arity) {
+                        return Err(fail("IR primitive entry arity mismatch"));
+                    }
                     if !body
                         .function
                         .blocks
@@ -1760,6 +1791,9 @@ fn verify_function_inner(
                             .len()
                             .checked_add(method.arity)
                             .ok_or_else(|| fail("IR closure entry count overflow"))?;
+                        if method.primitive.as_ref().is_some_and(|signature| signature.parameters.len() != method.arity) {
+                            return Err(fail("IR primitive entry arity mismatch"));
+                        }
                         if !method
                             .function
                             .blocks
@@ -1774,9 +1808,21 @@ fn verify_function_inner(
                         verify_function(&method.function, &entry, meter)?;
                     }
                 }
-                Operation::Call { operands } => {
+                Operation::Call { operands, primitive } => {
                     if operands.is_empty() || result_ty != Type::Value {
                         return Err(fail("IR call requires callee and dynamic result"));
+                    }
+                    if let Some(shape) = primitive {
+                        let mut previous = None;
+                        for method in &shape.0 {
+                            verification_work(meter, method.signature.parameters.len().saturating_add(1), &inst.span)?;
+                            let key = (method.signature.parameters.len(), method.variadic);
+                            if method.variadic { return Err(fail("IR primitive calls require fixed adapter signatures")); }
+                            if previous.is_some_and(|last| last >= key) {
+                                return Err(fail("IR primitive call methods must have unique canonical arities"));
+                            }
+                            previous = Some(key);
+                        }
                     }
                 }
                 Operation::Await { .. } => {

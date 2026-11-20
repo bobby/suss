@@ -42,6 +42,60 @@ fn a_long_sum_loop_allocates_only_its_result() {
     }
 }
 
+#[test]
+fn core_double_coercion_in_a_loop_does_not_call_or_allocate() {
+    let source = "(defn ^:export sum-casts []
+      (loop [i 0 acc 0.0]
+        (if (< i 1234569)
+          (recur (inc i) (+ acc (+ (double i) 0.5)))
+          acc)))";
+    let wit = "package test:casts; world api { export sum-casts: func() -> f64; }";
+    let bytes = Compiler::new().compile(source, wit).unwrap();
+    for operators in functions_with(&bytes, 1234569) {
+        assert!(operators.iter().any(|op| matches!(op, Operator::F64ConvertI64S)));
+        let calls = (0..operators.len())
+            .filter(|&index| matches!(operators[index], Operator::Call { .. }))
+            .collect::<Vec<_>>();
+        assert_eq!(calls.len(), 1, "only inc's overflow path calls: {operators:?}");
+        assert!(throwing_call(&operators, calls[0]), "{operators:?}");
+        // A double box is needed only for the final boxed entry result.
+        let mut returned = 0;
+        for (index, op) in operators.iter().enumerate() {
+            if !matches!(op, Operator::StructNew { .. }) { continue; }
+            let end = operators[index..].iter()
+                .position(|op| matches!(op, Operator::Call { .. } | Operator::Return))
+                .map(|distance| index + distance)
+                .expect("every allocation reaches an error call or the return");
+            assert!(!operators[index..end].iter().any(|op| matches!(op, Operator::Br { .. } | Operator::BrIf { .. })), "no box is carried around the loop: {operators:?}");
+            if matches!(operators[end], Operator::Return) {
+                returned += 1;
+            } else {
+                assert!(throwing_call(&operators, end), "{operators:?}");
+            }
+        }
+        assert_eq!(returned, 1, "only the result is boxed: {operators:?}");
+    }
+}
+
+#[test]
+fn checked_long_of_a_raw_double_calls_only_when_out_of_range() {
+    let source = "(defn ^:export sum-longs []
+      (loop [i 0 d 0.25 acc 0]
+        (if (< i 1234571)
+          (recur (inc i) (+ d 1.0) (+ acc (long d)))
+          acc)))";
+    let wit = "package test:casts; world api { export sum-longs: func() -> s64; }";
+    let bytes = Compiler::new().compile(source, wit).unwrap();
+    for operators in functions_with(&bytes, 1234571) {
+        let calls = (0..operators.len())
+            .filter(|&index| matches!(operators[index], Operator::Call { .. }))
+            .collect::<Vec<_>>();
+        assert_eq!(calls.len(), 3, "two overflow paths and one conversion error: {operators:?}");
+        assert!(calls.iter().all(|&index| throwing_call(&operators, index)), "{operators:?}");
+        assert!(operators.iter().any(|op| matches!(op, Operator::I64TruncSatF64S)));
+    }
+}
+
 fn check_sum_loop(operators: &[Operator]) {
     // The loop's two additions each have a throwing path; nothing else calls.
     let calls = (0..operators.len())

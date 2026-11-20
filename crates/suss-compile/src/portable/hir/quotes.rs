@@ -295,6 +295,37 @@ impl Analyzer<'_> {
         let entries = merged_metadata_pairs_metered(form, false, &mut |work| {
             self.expander.charge_expansion_work(work, form.span.clone())
         })?;
+        self.attach_metadata_entries(form, value, entries)
+    }
+    pub(super) fn attach_function_metadata(
+        &mut self,
+        form: &Form,
+        value: Hir,
+    ) -> Result<Hir, Diagnostic> {
+        let entries = merged_metadata_pairs_metered(form, false, &mut |work| {
+            self.expander.charge_expansion_work(work, form.span.clone())
+        })?;
+        // :rettag is consumed by fn compilation, as in Clojure. It is not
+        // runtime function metadata and must not evaluate the tag symbol or
+        // wrap an otherwise capture-free closure in a with-meta call.
+        let mut runtime_entries = Vec::new();
+        let mut entries = entries.into_iter();
+        while let Some(key) = entries.next() {
+            let value = entries.next().expect("merged metadata pairs");
+            self.expander.charge_expansion_work(1, form.span.clone())?;
+            if !matches!(&key.kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "rettag") {
+                runtime_entries.push(key);
+                runtime_entries.push(value);
+            }
+        }
+        self.attach_metadata_entries(form, value, runtime_entries)
+    }
+    fn attach_metadata_entries(
+        &mut self,
+        form: &Form,
+        value: Hir,
+        entries: Vec<Form>,
+    ) -> Result<Hir, Diagnostic> {
         if entries.is_empty() {
             return Ok(value);
         }

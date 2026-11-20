@@ -29766,3 +29766,298 @@ document's 2026-10-25 decision now records all three outcomes.
 - Test: `compiled_aot_direct_linking.rs` checks results against JVM Clojure 1.12.6 with `-Dclojure.compiler.direct-linking=true`: later `defn` seen, `with-redefs` not seen, `^:redef`/`^:dynamic` live, value use live, recursion, a required namespace. It also checks that the REPL stays live.
 - Calls (`calls_bench.py`-style loops, release, M3 Pro): `(f1 i)` 23 → 1.6 ns, `(f3 i i i)` 25 → 1.9 ns, variadic 32 → 2.1 ns, `(fib 27)` 1029 → 449 µs. No `perf` here, so #360's under-50-instructions target still needs the Linux machine.
 - Not linked: core functions from user code (`identity`), since shipped core is one prebuilt module with its own link cells; a redefinition to a function with captures (earlier calls keep the old function); calls with more than 8 arguments.
+
+## Primitive return conversion and source typing probes (2026-11-19)
+
+JVM Clojure 1.12.6 returns 1 from `((fn ^long [x] x) 1.75)`; the
+previous Suss binary returned 1.75. Return unboxing uses Number.longValue
+(saturating for doubles), unlike checked primitive parameter conversion.
+Return conversion now follows the completed recurrence loop and lies outside
+body exception handlers. `defn` carries a declaration tag as fn-form `:rettag`;
+that compiler metadata is consumed without a runtime with-meta wrapper. A plain
+`def` tag does not alter its initializer function. EPL provenance and the
+Clojure core.clj source digest/range are in compiled-defn-provenance.json.
+
+Source primitive return checks precede backend representation inference. They
+use user parameter hints, literal/local kinds, explicit arglists, and source
+call rules; WIT-only parameter specialization and raw hash optimizations do
+not make source Object returns primitive. Throwing if branches and try remain
+boxed; source loop kinds settle over recur inputs. Known opposite primitive
+kinds produce Clojure's mismatch diagnostic. Checked long of a raw double
+checks its original range and boxes only on the error path, with NaN -> 0 and
+2^63 -> Long/MAX_VALUE. Zero-argument - and / reach runtime arity errors.
+
+Use `cargo +stable` (tested rustc 1.99.1), CARGO_BUILD_JOBS=2, and
+CARGO_TARGET_DIR=/home/bobby/Work/code/bobby/suss/.claude/worktrees/performance/target.
+The default rustup 1.96 cannot build the pinned Wasmtime 51. User scope commands
+need XDG_RUNTIME_DIR=/run/user/1000 and
+DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus in this worktree.
+The frozen-source focused command was:
+
+```sh
+systemd-run --user --scope -p MemoryMax=8G cargo +stable test --workspace --locked \
+  --test compiled_core_casts --test compiled_primitive_params \
+  --test portable_unboxed_locals --test compiled_aot_direct_linking \
+  -- --test-threads=2
+```
+
+Result: 13 passed, 0 failed, 0 ignored across four targets;
+`target/probe/pr470-focused-final7.log`. This includes executing Runtime/Macro,
+compiled-component redefinition and return cases, WIT specialization checks,
+and generated-code checks for allocation-free successful conversions. The
+independent preliminary semantic review's JVM matrices are under
+`target/probe/pr470-review-*.log`. Earlier attempts retain their actual failures:
+a Session-only fixture using defn, the incorrect plain-def tag conversion,
+and a structural assertion scanning past Return into an unrelated else arm.
+
+The ClojureScript submodule was initially uninitialized in this worktree;
+`git submodule update --init --recursive` restored reviewed c4295f303100.
+After restoration, all 347 Python tests and the CI foundation scripts passed
+in a 2 GiB user scope (`target/probe/pr470-foundation-final.log`). No failures were
+skipped. Keep further probe output under target/probe, not /tmp.
+
+Generic call entries still box arguments/results; primitive typed entries and
+signature propagation to callers are separate remaining implementation work.
+In particular a guarded fallback must preserve a redefinition's changed value
+kind rather than reinterpret it using an old signature. These focused results
+do not establish a full workspace baseline or final-head CI for the changes.
+
+## Primitive bodies and ordinary-entry bridges (2026-11-19)
+
+Functions with source numeric tags now have typed Wasm bodies and ordinary
+cast/call/box bridges. Code structs extend the shared code prefix with typed
+function references; making that previously final shared type extensible
+requires ABI 7. ABI 5 and 6 artifacts are explicitly rejected. Numeric formal
+parameters are raw at entry only when their actual source entry cast exists;
+this excludes a nominal receiver whose numeric metadata does not cause a cast.
+Recurrence retains its checked conversions, return conversions follow the body,
+and primitive bodies do not tail-call boxed entries.
+
+The focused command added `--test portable_primitive_entries` and
+`--test portable_calling_convention` to the coercion, primitive-parameter and
+unboxed-local targets. Across those five targets, 14 tests passed with no skips:
+the 10 execution/ABI tests in `target/probe/pr470-entry-first3.log`, and the
+four code-generation tests in `target/probe/pr470-entry-codegen-final.log`.
+The first attempt exposed a bridge that popped a long before the boxing helper
+consumed it; the corrected bridge preserves the stack operand. A subsequent
+code-generation fixture referenced unavailable core `double` in a bare compiler
+environment; it now exercises mixed raw arithmetic directly.
+
+CI run 44602975111 on the preceding checkpoint reports a changed jank baseline:
+zero-argument `/` now throws at runtime instead of preventing its namespace from
+loading. Actual newly executed observations are being captured by
+`cargo +stable test --workspace --locked --test clojure_test_suite
+clojure_test_suite_matches_reviewed_baseline -- --exact --test-threads=2`,
+with SUSS_CLOJURE_TEST_SUITE_CAPTURE and TMPDIR under target/probe, in an 8 GiB
+scope (`target/probe/pr470-suite-abi7-workspace.log`). An initial package-only
+invocation unnecessarily rebuilt dependency features and was stopped before
+running tests; it is not a test result. Callers still use ordinary entries;
+typed call propagation, guarded fallback, measurements and the full validation
+gates remain to be established.
+
+The ABI 7 body/bridge corpus capture completed in 195.84 s. Division's
+namespace loaded and executed 160 assertions: 59 passed and 101 reported
+actual assertion errors (their thrown values are opaque in the capture).
+The reviewed known-failure file removes only the old namespace diagnostic
+and lists those 101 errors individually; all other entries and the JVM
+recording are unchanged. The independent audit is
+`target/probe/pr470-review-baseline-audit.log`. This is not evidence of ratio
+support or of complete division conformance. The recorded observations compare
+successfully after that baseline update.
+
+## Guarded primitive calls and raw result joins (2026-11-19)
+
+IR calls retain canonical fixed-method signatures from the initializer behind
+a direct link, a live var's arglists, or an immutable local closure. The IR
+artifact key includes them. Direct links export/import `link.D.K.typed` and
+call it after the existing exact code guard. Live sites refresh a nullable
+typed reference alongside their ordinary entry when the callee changes; hits
+read the global rather than the code struct's function reference.
+
+A typed hit stores its numeric result raw, while a miss stores the arbitrary
+boxed result and clears its flag. Arithmetic, matching loop/branch joins,
+primitive arguments and casts preserve these alternatives. Collection/capture
+and ordinary-call consumers materialize the selected value. Loop transfers
+push every raw/boxed/flag replacement before assigning any parameter. Async
+continuations, wide calls and variadic adapters keep their ordinary interface.
+Fixed-entry code shapes exclude variadic bodies: an identical Wasm formal type
+does not mean a variadic rest seq can be supplied as one fixed argument.
+
+`target/probe/pr470-calls-focused-final2.log` records **35 passed, 0 failed,
+0 ignored** across compiled_aot_direct_linking (3), compiled_core_casts (6),
+compiled_primitive_params (2), portable_closures (14), portable_hir_resources
+(7) and portable_primitive_entries (3). Tests execute Runtime/Macro and compiled
+components, preserve source operand order, and cover replacement values of
+another kind, arithmetic/loop joins, escaping captures and a fixed-to-variadic
+replacement. Code-generation checks verify static typed calls with raw
+arguments/results and cached typed live-var calls.
+
+The full required command is running in an 8 GiB scope:
+`cargo +stable test --workspace --locked -- --test-threads=2`, logged at
+`target/probe/pr470-workspace-baseline.log`. Final foundation checks are logged
+at `target/probe/pr470-calls-foundation.log`: all 347 Python tests and all
+foundation scripts passed. The full workspace command has not yet completed.
+A detached main df4342dd worktree under
+target/probe/pr470-before-source supplies a release measurement baseline;
+its stable build uses SUSS_FUNCTION_NAMES=1 and an 8 GiB scope, logged in
+pr470-before-build.log. New bench.py typed-call and typed-sum rows exercise
+longs beyond i31 and doubles. JVM vector result hints validate successfully;
+the initial name-tagged spelling produced a JVM AbstractMethodError, retained
+in pr470-bench-jvm-validation.log for investigation. The corrected fixture is
+in pr470-bench-jvm-validation2.log. This small JVM validation is not a timing
+measurement. Benchmark work and JVM error reports now stay under target/probe.
+
+The independent JVM name-tag investigation found a source-checking distinction:
+a name-only default return tag converts the callee's body, but does not declare
+a primitive invocation result to the caller. Only the matching arglist vector's
+own result tag does that. The checker now uses the vector tag for call-result
+classification. Negative fixtures retain their intended mismatch assertions
+with accurately tagged arglist vectors; new Runtime/Macro and compiled-component
+cases cover a double caller unboxing a name-tagged long callee's boxed result.
+The name-default body conversion tests remain. Evidence is
+pr470-review-name-return-hints-jvm.log. The first full workspace baseline above
+was stopped during compilation after this concrete review finding; it has no
+test result. The focused correction command is logged in
+pr470-name-call-correction.log, before restarting the full baseline.
+That focused run passed all 11 tests with no failures or skips. The corrected
+full workspace baseline uses the same required command and scope, logged at
+`target/probe/pr470-workspace-baseline-final.log`.
+
+## Primitive-call release measurements (2026-11-19)
+
+The focused bench.py runs compare exact main df4342dd with source 3e825a18,
+both built using `cargo +stable build --release --locked -p suss-cli`,
+CARGO_BUILD_JOBS=2, SUSS_FUNCTION_NAMES=1 and MemoryMax=8G. The detached baseline
+worktree and both copied executables remain under target/probe, with SHA256
+receipts. Reusing the release target across worktrees initially selected a
+generator with the wrong source fingerprint; the existing assertion rejected
+it. `cargo +stable clean --release -p suss-compile-generator` rebuilt that
+affected release package; the second build passed without bypassing the check
+(`pr470-after-build.log`, `pr470-release-generator-rebuild.log`,
+`pr470-after-build2.log`). The before build took 11m52s, and the corrected after
+build took 3m25s. The latter includes rebuilding the generator.
+
+`target/probe/pr470-focused-bench.py` loads bench.py with N=1,000,000 and
+REPS=3, selects long-control, call-long, call-double, double-control and
+double-add plus all four whole-loop cases, and calls its unchanged
+jvm_times/suss_times/table routines. Each invocation supplies the copied binary,
+the retained work directory and the commit label. Both runs use scoped 8 GiB,
+TMPDIR and SUSS_BUILD_DIR under target/probe, and SUSS_FUNCTION_NAMES=1 at
+compile time. `mise exec -- clojure ... (clojure-version)` in the probe work
+directory reports 1.12.6. Instructions use perf stat instructions:u, allocation
+uses the null-collector RSS slope, and the first control warms native code.
+
+Gross instructions per iteration, including each control:
+
+| Case | Before | After | Bytes before → after |
+| --- | ---: | ---: | ---: |
+| long control | 25 | 25 | ≈0 → ≈0 |
+| `(double i)` | 314 | 26 | 16 → ≈0 |
+| `(+ (double i) 0.5)` | 772 | 26 | 49 → ≈0 |
+| `(typed-long (+ i 3000000000))` | 226 | 150 | 32 → 16 |
+| `(typed-double (double i))` | 439 | 119 | 32 → 16 |
+| typed long sum | 308 | 108 | 48 → ≈0 |
+| typed double sum | 809 | 68 | 48 → ≈0 |
+
+The call-only rows materialize their guarded result for the benchmark's
+identity test, accounting for the remaining result box; the typed sum loops
+keep results raw through arithmetic and recurrence. The plain long and double
+sum controls remain 21 and 14 instructions, respectively, with ≈0 allocation.
+Approximately zero means below the harness's RSS resolution, not a fabricated
+zero measurement; generated-code checks separately verify no normal-path boxes
+around typed calls and in the raw coercions/bodies.
+
+Logs and retained inputs/raw measurements are `pr470-before-bench.log`,
+`pr470-after-bench.log`, corresponding before/after-bench directories and
+`pr470-bench-comparison.json`. Machine load exceeded the harness threshold, so
+walltimes and ratios are not used as performance acceptance evidence. This is
+a focused instruction/allocation comparison, not the quiet full benchmark run
+needed for the JVM-noise and program-ratio criteria. The full workspace
+baseline, independent final review and final-head CI remain separate gates.
+
+## Independent source-kind review corrections (2026-11-19)
+
+The final issue-wide independent review found source-kind gaps: bootstrap
+inc/dec arithmetic, abs and unchecked arithmetic, boxed public bit operations,
+and narrow primitive-array elements. The corrected checker distinguishes
+Byte/Short/Int/Long/Float/Double independently of physical storage. Long returns
+accept Int, double returns accept Float; byte and short require explicit
+conversion. Int and float loop initializers widen to Long and Double, and a
+Float recur can retain a Double loop local. Only genuinely primitive integral
+bit operations are Long; bit-test/clear/flip/set remain boxed source calls.
+
+Source-known array lengths are Int; unknown reflective lengths remain boxed.
+Array-class facts come from source hints, supported known constructors and
+retained immutable initializer records, including loop object classes. If
+joins preserve an array class alongside literal nil, and differing array
+classes remain unknown. Queries memoize immutable Hir identities and charge
+lookups/inserts so a shared initializer DAG is not expanded repeatedly.
+
+The retained JVM oracle matrices cover 160 compiler observations, plus loop,
+bitwise and alength cases: acceptance means compilation acceptance, not proof
+that a later runtime unboxing succeeds. See pr470-final-review-summary.md and
+pr470-final-review-*-jvm.log under target/probe. The reviewer approved the final
+implementation at primitive_returns.rs SHA256
+d3796e1b95e25347d70f9b37a455282d996d61e4c14f6a288dedc7fb48055928,
+with no concrete residual defect found in callers, ABI, flags or source-kind
+handling. This sign-off is separate from passing validation gates.
+
+Focused verification after the complete correction passed **19 tests, 0
+failures, 0 ignored** across compiled_core_casts (11), compiled_primitive_params
+(2), portable_primitive_entries (3) and portable_unboxed_locals (3), in the
+usual stable, two-job/two-test-thread, 8 GiB scope with TMPDIR under target/probe.
+Log: `target/probe/pr470-final-review-fixes4.log`. This includes the executing
+28-layer shared-initializer regression, accepted/rejected source-kind matrices
+in Runtime/Macro, ordinary and packed stores, boxed bit results, array/nil
+joins and loop reference classes. Original assertions remain in place.
+
+Earlier focused logs retain real failures: fixes1 had seven passes and two
+failures because bootstrap inc/dec lacked Invoke nodes and byte/short/float
+stores used ordinary Array nodes. The corrected wiring passed all 17 tests
+in fixes2; alength additions passed all 18 in fixes3; the final resource/loop/nil
+cases passed in fixes4. A proposed file-mode DAG resource probe at 1,000,000
+compile fuel failed during macro argument transport in both before/fixes3,
+so it is not evidence of a measured array-query regression. Memoization follows
+the static traversal analysis, with the bare-fn executing test as its guard.
+
+The full source-3e825a18 workspace run was stopped for the concrete review
+corrections while its completed targets had no observed failures; it is not a
+passing full baseline. The required full command will now be rerun against the
+reviewed source, with raw corpus capture and temporary files under target/probe.
+
+CI run 44613493918 on the preceding source-3e checkpoint failed only the
+portable_pipeline expectation that zero-argument `/` and `-` fail compilation.
+Those calls now compile and throw their runtime arity errors, matching the
+earlier JVM observation and the newly loadable division corpus. The test now
+asserts compilation succeeds and that execution throws a language exception
+rather than a Wasm trap; the remaining invalid-form and metadata/span assertions
+are unchanged. Its focused run passed (one test, no failures/ignored), logged
+in `target/probe/pr470-zero-arity-regression.log`. This is a test-only correction;
+the independently reviewed production source remains unchanged.
+
+Reviewed-source foundation checks again passed all 347 Python tests and all
+foundation scripts (`pr470-reviewed-foundation.log`). The full workspace run is
+logged at `pr470-workspace-reviewed.log`, with TMPDIR and
+SUSS_CLOJURE_TEST_SUITE_CAPTURE under target/probe. The reviewed release build
+completed in 8m52s (`pr470-reviewed-release-build.log`); its executable and
+SHA256 receipt are retained as pr470-suss-reviewed and
+pr470-reviewed-executable.sha256. The same focused benchmark completed on
+this reviewed production source, 0bbbd7c8 (unchanged by the test-only
+e2bc9559 correction), in pr470-reviewed-bench.log. Retained inputs and raw data
+are in target/probe/pr470-reviewed-bench/measurements.json. Gross instructions
+per iteration confirm the earlier result: long control 25, double control 26,
+double add 26, typed long call 153, typed double call 119, typed long sum 108,
+and typed double sum 68. The plain sum controls remain 21 and 14.
+
+The call-only rows allocate approximately 16 bytes per iteration (15.954 long,
+16.065 double), while the controls, double add and sum loops are below RSS
+resolution. These are the same boxed-result-consumer and raw-loop boundaries
+described above; no zero-allocation claim relies solely on RSS. Mean machine
+load was 16.14 with a peak of 17.79. The harness flagged walltimes as unreliable;
+they are not evidence for the quiet-machine or 5× program-ratio criteria.
+
+The full workspace invocation at this checkpoint uses the reviewed production
+source and the corrected pipeline test, with no other source changes during
+execution. Its terminal outcome and final-head CI evidence belong on #448 and
+#470; read the actual log rather than interpreting the earlier interrupted runs
+as passes. The independent implementation review does not replace either gate.

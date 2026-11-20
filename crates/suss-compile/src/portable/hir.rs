@@ -16,6 +16,7 @@ mod namespaces;
 mod exceptions;
 mod nominal;
 mod quotes;
+mod primitive_returns;
 mod source_tags;
 use super::{
     Diagnostic,
@@ -509,6 +510,9 @@ pub enum Nominal {
     /// longCast or doubleCast of the argument, kept as a raw i64 or f64.
     LongCast,
     DoubleCast,
+    /// Core's `unchecked-long` (#448): a raw i64 as LongCast, through its own
+    /// cast for anything but a long.
+    UncheckedLongCast,
     /// A string, the first operand, followed by the digits of a long, the
     /// second (#388).
     StringAppendLong,
@@ -685,7 +689,7 @@ impl Nominal {
                 Self::AllSmallIntegers => count >= 1,
                 Self::NumberHash => count == 1,
                 Self::IsObject | Self::IsDescriptor => count == 1,
-                Self::IsLongValue | Self::StringHash | Self::LongCast | Self::DoubleCast => count == 1,
+                Self::IsLongValue | Self::StringHash | Self::LongCast | Self::DoubleCast | Self::UncheckedLongCast => count == 1,
                 Self::PackedGet(_) | Self::VectorNth | Self::ArrayMapGet | Self::MapContains => count == 2,
                 Self::HashMapTypes => count == 4,
                 Self::MapGetOr | Self::MapAssoc => count == 3,
@@ -1087,6 +1091,9 @@ struct Analyzer<'a> {
     suspendable: bool,
     /// The next fixed fn's WIT export parameter hints (#385), taken by it.
     pending_param_hints: Option<Vec<Option<bool>>>,
+    /// The current function declaration's default primitive return tag.
+    /// Each fn shadows it, including an anonymous fn without a tag.
+    pending_return_hint: Option<Nominal>,
     /// Analyzing compiler-authored source, which may access built-in type
     /// internals (design decision 2026-10-25).
     privileged: bool,
@@ -2358,7 +2365,13 @@ impl Analyzer<'_> {
                 .cloned(),
             _ => None,
         });
+        // defn carries its declaration's return tag on the fn form, as
+        // Clojure's :rettag. A plain def's :tag describes the var value and
+        // must not change an initializer function's return behavior.
+        let return_hint = primitive_tag_key(form, "rettag")?;
+        let outer_return_hint = std::mem::replace(&mut self.pending_return_hint, return_hint);
         let result = self.function_inner(form, args, bootstrap_macro, name_hint);
+        self.pending_return_hint = outer_return_hint;
         self.pending_param_hints = outer_hints;
         self.suspendable = suspendable;
         if result.is_ok() {
@@ -2839,19 +2852,28 @@ impl Analyzer<'_> {
         // fns: its name in the body is the checked cast of the argument, a
         // raw i64 or f64, so arithmetic and loops seeded from it stay raw.
         let mut casts = Vec::new();
+        let mut source_primitives = HashMap::new();
+        let return_hint = primitive_tag(&args[0])?
+            .or(if receiver_type.is_none() { self.pending_return_hint } else { None });
         // An exported fn's numeric WIT parameters, when its arity matches. The
         // body's own fns don't see them; another arity still can.
         let pending = self.pending_param_hints.take();
         let exported = pending.clone().filter(|hints| receiver_type.is_none() && rest_parameter.is_none() && hints.len() == parameters.len());
         for (position, parameter) in parameters.iter().enumerate().skip(usize::from(receiver_type.is_some())) {
             let export = exported.as_ref().and_then(|hints| hints[position]).map(|long| if long { Nominal::LongCast } else { Nominal::DoubleCast });
-            let Some(cast) = primitive_hint(parameter)?.or(export) else { continue };
+            let declared = primitive_hint(parameter)?;
+            let Some(cast) = declared.or(export) else { continue };
             // The name's current binding: the method's loop binding, which
             // recur rebinds, not the entry parameter.
             let current = self.locals.get(&parameter.name).map_or(parameter.id, |binding| binding.id);
             let read = self.local(form, current);
             let value = self.nominal(form, cast, vec![read]);
             let binding = self.fresh_binding(form, value);
+            if let Some(declared) = declared {
+                source_primitives.insert(binding.id, if declared == Nominal::LongCast {
+                    primitive_returns::Primitive::Long
+                } else { primitive_returns::Primitive::Double });
+            }
             self.remap_local(&parameter.name, binding.id, Type::Value);
             casts.push(binding);
         }
@@ -2862,6 +2884,10 @@ impl Analyzer<'_> {
             super::AnalysisContext::Return,
             true,
         )?;
+        if let Some(hint) = return_hint {
+            primitive_returns::validate(&inner_body, hint, &mut source_primitives,
+                &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
+        }
         if exported.is_none() {
             self.pending_param_hints = pending;
         }
@@ -2906,6 +2932,17 @@ impl Analyzer<'_> {
                 body: Box::new(inner_body),
             }),
         });
+        // Clojure's boxed invoke delegates to invokePrim: a primitive return
+        // tag converts the completed body on either entry. Keep this outside
+        // the recurrence loop so recur remains a tail transfer and does not
+        // convert intermediate values.
+        let body = match return_hint {
+            // Compiler primitive return unboxing uses Number.longValue,
+            // unlike the checked RT.longCast used for parameters.
+            Some(Nominal::LongCast) => Box::new(self.nominal(form, Nominal::UncheckedLongCast, vec![*body])),
+            Some(cast) => Box::new(self.nominal(form, cast, vec![*body])),
+            None => body,
+        };
         self.locals = outer;
         self.fields = outer_fields;
         let bound = parameters.iter().map(|parameter| parameter.id).collect();
@@ -3694,7 +3731,7 @@ impl Analyzer<'_> {
                 matches!(resolved, Some(ResolvedBinding::BootstrapFn(_))),
                 name_hint,
             )?;
-            return self.attach_literal_metadata(form, value);
+            return self.attach_function_metadata(form, value);
         }
         let (kind, ty) = match (bare, symbol.name.as_str()) {
             (true, "do") => {
@@ -3879,12 +3916,27 @@ impl Analyzer<'_> {
                 // does (#457): an `instance?` site on core's Reduced, so a
                 // reduction step tests its result without a call. Another
                 // arity stays a call, which raises the arity error.
-                if args.len() == 1
-                    && let Some(ResolvedBinding::Cell(global)) = &resolved
-                    && let var = global.core_var_of_link().unwrap_or_else(|| global.clone())
-                    && var.namespace() == "suss.core"
-                    && var.name() == "reduced?"
-                {
+                let core_var = match &resolved {
+                    Some(ResolvedBinding::Cell(global)) if args.len() == 1 => {
+                        let var = global.core_var_of_link().unwrap_or_else(|| global.clone());
+                        (var.namespace() == "suss.core").then(|| var.name().to_string())
+                    }
+                    _ => None,
+                };
+                // So do core's numeric coercions, which are :inline in Clojure
+                // too (#448): a raw long or double, with the checks of each
+                // one's cast.
+                let cast = match core_var.as_deref() {
+                    Some("long") => Some(Nominal::LongCast),
+                    Some("double" | "unchecked-double") => Some(Nominal::DoubleCast),
+                    Some("unchecked-long") => Some(Nominal::UncheckedLongCast),
+                    _ => None,
+                };
+                if let Some(cast) = cast {
+                    let argument = self.form(&args[0])?;
+                    return Ok(self.nominal(form, cast, vec![argument]));
+                }
+                if core_var.as_deref() == Some("reduced?") {
                     let reduced = Form {
                         kind: Kind::Symbol(suss_reader::Symbol {
                             namespace: Some("suss.core".into()),
@@ -3958,10 +4010,10 @@ impl Analyzer<'_> {
                 };
                 if args.is_empty() && matches!(operator, Arithmetic::Subtract | Arithmetic::Divide)
                 {
-                    return Err(fail(
-                        form.span.clone(),
-                        "Arithmetic call requires at least one argument",
-                    ));
+                    // No inline method exists for this arity. Keep a call,
+                    // whose shared arity-error entry runs when invoked, as
+                    // in Clojure (including inside a primitive-return fn).
+                    return self.call(form, items);
                 }
                 let callee = self.form(&items[0])?;
                 let arguments = args
@@ -4197,6 +4249,7 @@ pub(crate) fn prepare_with_origin(
     let mut analyzer = Analyzer {
         suspendable: false,
         pending_param_hints: None,
+        pending_return_hint: None,
         privileged: origin.is_some_and(|origin| origin.is_privileged()),
         expander,
         origin: origin.cloned(),
@@ -4289,13 +4342,18 @@ pub(crate) fn link_parts(link: usize) -> (usize, usize) {
 
 /// The cast a parameter's `^long` or `^double` tag asks for (#385).
 fn primitive_hint(parameter: &Parameter) -> Result<Option<Nominal>, Diagnostic> {
-    if parameter.metadata.is_empty() {
+    primitive_tag(&Form { span: parameter.span.clone(), metadata: parameter.metadata.clone(), kind: Kind::Nil })
+}
+fn primitive_tag(carrier: &Form) -> Result<Option<Nominal>, Diagnostic> {
+    primitive_tag_key(carrier, "tag")
+}
+fn primitive_tag_key(carrier: &Form, metadata_key: &str) -> Result<Option<Nominal>, Diagnostic> {
+    if carrier.metadata.is_empty() {
         return Ok(None);
     }
-    let carrier = Form { span: parameter.span.clone(), metadata: parameter.metadata.clone(), kind: Kind::Nil };
-    let pairs = quotes::reader_metadata_pairs(&carrier)?;
+    let pairs = quotes::reader_metadata_pairs(carrier)?;
     for index in (0..pairs.len()).step_by(2) {
-        if matches!(&pairs[index].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == "tag") {
+        if matches!(&pairs[index].kind, Kind::Keyword(key) if key.namespace.is_none() && key.name == metadata_key) {
             if let Kind::Symbol(tag) = &pairs[index + 1].kind {
                 if tag.namespace.is_none() {
                     return Ok(match tag.name.as_str() {

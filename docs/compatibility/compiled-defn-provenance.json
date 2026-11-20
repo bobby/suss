@@ -9,18 +9,26 @@
   ],
   "upstream-range-sha256": "fa3aeae65314942683a95b0f692b2bed4d437723e83edd8048a2fdfafa918cc8",
   "adapted-source": "crates/suss-compile/src/portable_defn.rs",
-  "adapted-file-sha256": "1a63de269b3fa0a99899de633629cfe333483cdc80f76c19907eed78c83c23b0",
+  "adapted-file-sha256": "82f4e0bfb8d388d81c116dc6937ae1c70e407b3d1e7f5377023397000e1bb36e",
   "license": "EPL-1.0",
   "adaptations": [
     "Execute macro as compiled Suss in the isolated native Macro Store.",
     "Use existing native fn multi-arity/variadic lowering instead of JavaScript function properties and jsdoc.",
     "Accumulate signatures/arglists through retained sequence/vector operations instead of compiler-specific sigs helper.",
-    "Use language ex-info for invalid definition diagnostics; upstream uses JavaScript Error."
+    "Use language ex-info for invalid definition diagnostics; upstream uses JavaScript Error.",
+    "Carry a defn declaration's :tag as fn-form :rettag, as Clojure 1.12.6 defn does; a plain def tag does not convert its initializer function's result."
   ],
   "status": "in-progress; selected public component regressions execute; complete portable defn acceptance remains open",
   "license-file": "runtime/core-import/epl-v10.html",
   "executing-tests": [
     "crates/suss-compile/tests/public_compiled_pipeline.rs::compiled_defn_preserves_docs_attributes_arities_and_lexical_shadowing",
-    "crates/suss-compile/tests/public_compiled_pipeline.rs::public_compiler_function_recur_uses_bounded_stack_and_simultaneous_rebinding"
+    "crates/suss-compile/tests/public_compiled_pipeline.rs::public_compiler_function_recur_uses_bounded_stack_and_simultaneous_rebinding",
+    "crates/suss-cli/tests/compiled_primitive_params.rs::primitive_parameter_hints_match_the_repl"
+  ],
+  "clojure-return-tag-reference": "https://github.com/clojure/clojure/blob/clojure-1.12.6/src/clj/clojure/core.clj",
+  "clojure-return-tag-source-sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+  "clojure-return-tag-lines": [
+    333,
+    336
   ]
 }

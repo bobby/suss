@@ -111,6 +111,8 @@ DEFS = [
     "(defn f1 [x] x)",
     "(defn f2 [x y] x)",
     "(defn f3 [x y z] x)",
+    "(defn typed-long ^long [^long x] (* x 2))",
+    "(defn typed-double ^double [^double x] (* x 0.5))",
     "(defn fv [x & more] x)",
     "(def ^:dynamic *d* 0)",
     "(defprotocol Ident (ident [x]))",
@@ -141,6 +143,10 @@ CASES = [
     ("call-1", "(f1 i)", "long-control", 1),
     ("call-2", "(f2 i i)", "long-control", 1),
     ("call-3", "(f3 i i i)", "long-control", 1),
+    # Raw arguments/results across a primitive entry (#448). The long lives
+    # beyond i31 so an accidental generic boundary allocates a real box.
+    ("call-long", "(typed-long (+ i 3000000000))", "long-control", 1),
+    ("call-double", "(typed-double (double i))", "double-control", 1),
     ("call-variadic", "(fv i)", "long-control", 1),
     ("call-local", "(g i)", "long-control", 1),
     ("call-bound", "(identity i)", "long-control", 1),
@@ -213,6 +219,8 @@ PROGRAM_DIVISOR = 100_000
 LOOPS = [
     ("long-sum", "(loop [i 0 acc 0] (if (< i n) (recur (inc i) (+ acc i)) acc))", "s64"),
     ("double-sum", "(loop [i 0 acc 0.0] (if (< i n) (recur (inc i) (+ acc 0.5)) acc))", "f64"),
+    ("typed-long-sum", "(loop [i 0 acc 0] (if (< i n) (recur (inc i) (+ acc (typed-long (+ i 3000000000)))) acc))", "s64"),
+    ("typed-double-sum", "(loop [i 0 acc 0.0] (if (< i n) (recur (inc i) (+ acc (typed-double (double i)))) acc))", "f64"),
 ]
 
 
@@ -392,8 +400,8 @@ def jvm_times(work):
     path = os.path.join(work, "bench.clj")
     with open(path, "w") as file:
         file.write("\n".join(lines) + "\n")
-    output = subprocess.run(["mise", "exec", "--", "clojure", "-M", path],
-                            cwd="/tmp", capture_output=True, text=True)
+    output = subprocess.run(["mise", "exec", "--", "clojure", "-J-Dclojure.main.report=stderr", "-M", path],
+                            cwd=work, capture_output=True, text=True)
     if output.returncode:
         sys.exit(output.stderr[-3000:])
     reflection = [line for line in output.stderr.splitlines() if "Reflection warning" in line]
@@ -519,7 +527,8 @@ class Load(threading.Thread):
 
 
 if __name__ == "__main__":
-    work = tempfile.mkdtemp(prefix="suss-numeric-bench-")
+    os.makedirs("target/probe", exist_ok=True)
+    work = os.path.abspath(tempfile.mkdtemp(prefix="suss-numeric-bench-", dir="target/probe"))
     load = Load()
     load.start()
     try:
