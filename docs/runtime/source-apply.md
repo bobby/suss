@@ -1,5 +1,25 @@
 # Retained source apply
 
+The M15 adaptation (2026-11-19) routes non-vector apply through ABI spread
+entries and private rooted sequence operations. Source spreads preserve the
+JVM's next-only RestFn/AFn preflight and extraction; ordinary nil-tail calls
+retain their IndexedSeq adapters. Native numeric/bitwise tails use a private
+chunk-aware fold. Distinct comparison and array traversal remains separately
+verified work; a generic eager argument collector is insufficient for those
+public variadics.
+
+The paragraphs below record the earlier implementation and ClojureScript
+recordings. The retained 22-case test now asserts 19 historical matches and
+three explicit JVM boundaries: fixed arity, vector arity, and sequence forcing.
+The ClojureScript effect count of 124 remains recorded without alteration;
+JVM Clojure 1.12.6 produces 25 (three preflight next calls plus two first and
+two extraction next calls). Zero-prefix forcing remains 11. Fresh primary
+callback/weighted evidence is retained under target/probe and described in the
+handoff. A recording from the implementation reference does not override the
+Clojure behavior oracle.
+
+## Earlier implementation and evidence
+
 M3 prerequisite: complete pinned `bounded-count`, `spread`, `list*`, private `next*`,
 `apply-to-simple` and `apply` retain all signatures and branches. The bounded v1
 bootstrap reproduces `gen-apply-to`/`gen-apply-to-simple`, including the 20-argument

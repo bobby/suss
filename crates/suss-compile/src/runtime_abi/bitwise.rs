@@ -512,17 +512,20 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         b.code.function(&function);
         b.count += 1;
         declared.push(callback);
+        let mut factory = vec![];
+        if variadic {
+            factory.extend([GlobalGet(apply::native_code(name)), sentinel_value(NIL), I32Const(0), RefI31]);
+        }
+        factory.extend([
+            if variadic { LocalGet(0) } else { sentinel_value(NIL) },
+            RefFunc(callback), I32Const(arity as i32),
+            I32Const(if variadic { -1 } else { arity as i32 }),
+            if variadic { StructNew(UNIVERSAL) } else { Call(b.names["closure-new"]) },
+        ]);
         b.function(
             &format!("primitive-{name}-function"),
             if variadic { &[VALUE] } else { &[] },
-            &[VALUE],
-            &[
-                if variadic { LocalGet(0) } else { sentinel_value(NIL) },
-                RefFunc(callback),
-                I32Const(arity as i32),
-                I32Const(if variadic { -1 } else { arity as i32 }),
-                Call(b.names["closure-new"]),
-            ],
+            &[VALUE], &factory,
         );
     }
     declared

@@ -74,18 +74,19 @@ fn factory(
 ) -> u32 {
     use Instruction::*;
     let f = callback(b, &[], body);
-    b.function(
-        name,
-        &[],
-        &[VALUE],
-        &[
-            sentinel_value(NIL),
-            RefFunc(f),
-            I32Const(minimum),
-            I32Const(maximum),
-            Call(b.names["closure-new"]),
-        ],
-    );
+    let family = match name {
+        "array-get-function" => Some("array-get"),
+        "array-set-function" => Some("array-set"),
+        "array-make-function" => Some("array-make"),
+        _ => None,
+    };
+    let mut factory = vec![];
+    if let Some(family) = family {
+        factory.extend([GlobalGet(apply::native_code(family)), sentinel_value(NIL), I32Const(0), RefI31]);
+    }
+    factory.extend([sentinel_value(NIL), RefFunc(f), I32Const(minimum), I32Const(maximum),
+        if family.is_some() { StructNew(UNIVERSAL) } else { Call(b.names["closure-new"]) }]);
+    b.function(name, &[], &[VALUE], &factory);
     f
 }
 

@@ -4,6 +4,7 @@
 use std::borrow::Cow;
 use wasm_encoder::*;
 mod arithmetic;
+mod apply;
 mod arrays;
 mod r#async;
 mod async_library;
@@ -472,6 +473,38 @@ fn named_site_set(b: &mut Builder) {
         &[(1, ValType::I32), (1, VALUE)],
         &code,
     );
+}
+
+/// `fn-fixed-arity?(value)` (#466): whether the value is a fn whose arities
+/// are all fixed, as its code struct's maximum arity, -1 for a variadic one,
+/// says. A universal closure keeps its range elsewhere and answers false, as
+/// does anything that isn't a closure.
+fn fn_fixed_arity(b: &mut Builder) {
+    use Instruction::*;
+    let code = vec![
+        LocalGet(0),
+        RefTestNonNull(HeapType::Concrete(CLOSURE)),
+        If(BlockType::Result(ValType::I32)),
+        LocalGet(0),
+        RefCastNonNull(HeapType::Concrete(CLOSURE)),
+        StructGet { struct_type_index: CLOSURE, field_index: CLOSURE_CODE },
+        LocalTee(1),
+        GlobalGet(UNIVERSAL_CODE_GLOBAL),
+        RefEq,
+        If(BlockType::Result(ValType::I32)),
+        I32Const(0),
+        Else,
+        LocalGet(1),
+        StructGet { struct_type_index: CODE, field_index: CODE_MAX },
+        I32Const(0),
+        I32GeS,
+        End,
+        Else,
+        I32Const(0),
+        End,
+    ];
+    let code_type = ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(CODE) });
+    b.function_with_locals("fn-fixed-arity?", &[VALUE], &[ValType::I32], &[(1, code_type)], &code);
 }
 
 /// `string-join(array)` (#446): the concatenation of an object array's
@@ -2154,6 +2187,7 @@ fn build_module() -> Vec<u8> {
     user_named_site_get(&mut b);
     named_site_set(&mut b);
     string_join(&mut b);
+    fn_fixed_arity(&mut b);
     arithmetic_functions.extend(native_object_methods::functions(&mut b));
     arithmetic_functions.extend(native_object_factory::functions(&mut b));
     r#async::intrinsics(&mut b);
@@ -2171,6 +2205,8 @@ fn build_module() -> Vec<u8> {
     let prototype_functions = owned_prototypes::functions(&mut b);
     instance_site_test(&mut b);
     arithmetic_functions.extend(call_site_functions(&mut b));
+    arithmetic_functions.extend(apply::functions(&mut b));
+    *universal_entries.last_mut().expect("universal spread") = b.names["universal-spread"];
     arithmetic_functions.extend(prototype_functions);
     let coercion_functions = coercions::functions(&mut b);
     arithmetic_functions.extend(coercion_functions);
@@ -2584,6 +2620,7 @@ fn build_module() -> Vec<u8> {
         code.extend(universal_entries.iter().enumerate().map(|(k, entry)| {
             RefFunc(match b.names.get(&format!("arithmetic-{name}-{k}")) {
                 Some(direct) if k <= 2 => *direct,
+                _ if k == MAX_FIXED as usize + 1 => b.names[&format!("apply-{name}-spread")],
                 _ => *entry,
             })
         }));
@@ -2604,6 +2641,7 @@ fn build_module() -> Vec<u8> {
         }
         globals.global(GlobalType { val_type: ValType::I32, mutable: true, shared: false }, &ConstExpr::i32_const(0));
     }
+    apply::append_globals(&mut globals, &b, &universal_entries);
     b.exports.export("protocol-epoch", ExportKind::Global, PROTOCOL_EPOCH_GLOBAL);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

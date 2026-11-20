@@ -173,6 +173,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }
         }
     }
+    // Whether a variadic fn here builds a rest seq (#466).
+    let mut rest_site_used = false;
     let mut throws = !futures.is_empty();
     if !futures.is_empty() { names.extend(r#async::IMPORTS.iter().copied()); }
     if futures.iter().any(|body| !body.continuation.backedges.is_empty()) { names.insert("async-task-yield"); }
@@ -215,14 +217,18 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     }
                     Operation::MakeGeneralClosure { body, .. } => {
                         names.extend(["closure-source-name-initialize", "arity-throw"]);
+                        names.extend(["apply-join", "apply-bounded-length", "apply-first", "apply-next", "apply-fixed-arguments"]);
                         names.extend(runtime_abi::ARITY_ERROR_EXPORTS);
                         if let Some(factory) = &body.rest_class {
                             globals.insert(factory.clone());
-                            names.extend(["binding-get", "invoke", "object-array-new", "constructor-descriptor", "source-constructor-new"]);
+                            names.extend(["binding-get", "invoke", "object-array-new", "constructor-descriptor", "source-constructor-plan", "source-construct-from-plan",
+                                "construct-site-admit", "owned-descriptor-prototype"]);
+                            rest_site_used = true;
                         }
                     }
                     Operation::MakeClosure { .. } => {
                         names.extend(["closure-source-name-initialize", "arity-throw"]);
+                        names.extend(["apply-join", "apply-fixed-arguments"]);
                         names.extend(runtime_abi::ARITY_ERROR_EXPORTS);
                     }
                     Operation::Call { operands, primitive } => {
@@ -297,6 +303,13 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::IsLanguageError => { names.insert("language-error-is"); }
                         Nominal::NativeObjectFactory => { names.insert("native-object-factory-function"); }
                         Nominal::IsNativeObject => { names.insert("native-object?"); }
+                        Nominal::FixedArityFn => { names.insert("fn-fixed-arity?"); }
+                        Nominal::ApplySequenceOps => { names.insert("apply-sequence-ops"); }
+                        Nominal::ListFunction => { names.insert("list-function"); }
+                        Nominal::ApplyCallee => { names.insert("apply-callee"); }
+                        Nominal::ApplySpread => { names.insert("apply"); }
+                        Nominal::ApplyToSeq => { names.insert("apply-to-seq"); }
+                        Nominal::ApplyFixed => { names.insert("apply-fixed"); }
                         Nominal::IsTypeConstructor => { names.insert("class-value-is"); }
                         Nominal::ValueConstructor => { names.insert("value-constructor"); }
                         Nominal::TypeName => { names.insert("class-value-name"); }
@@ -704,7 +717,14 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "protocol-native-marker-set" => (vec![VALUE, ValType::I32], vec![ValType::I32]),
             "protocol-native-method-set" => (vec![VALUE, ValType::I32, VALUE], vec![VALUE]),
             "try-invoke" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
-            "binding-defined" | "language-error-is" | "native-object?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
+            "binding-defined" | "language-error-is" | "native-object?" | "fn-fixed-arity?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
+            "apply-sequence-ops" => (vec![VALUE; 10], vec![VALUE]),
+            "list-function" => (vec![VALUE; 5], vec![VALUE]),
+            "apply-callee" | "apply-first" | "apply-next" | "apply-fixed-arguments" => (vec![VALUE], vec![VALUE]),
+            "apply-to-seq" | "apply-fixed" => (vec![VALUE; 2], vec![VALUE]),
+            "apply-join" => (vec![ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::ARGS) }), VALUE], vec![VALUE]),
+            "apply" => (vec![VALUE, ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::ARGS) }), VALUE], vec![VALUE]),
+            "apply-bounded-length" => (vec![VALUE, ValType::I32], vec![ValType::I32]),
             "identical-value" => (vec![VALUE, VALUE], vec![VALUE]),
             "object-instance" | "object-same-descriptor" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
@@ -1042,6 +1062,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let object_call_sites = object_call_site_list.iter().enumerate()
         .map(|(index, (site, _))| (*site, first_object_call_site + 3 * index as u32))
         .collect::<std::collections::HashMap<_, _>>();
+    // The module's variadic rest seqs share one construction site (#466).
+    let rest_site = rest_site_used.then_some(first_object_call_site + 3 * object_call_site_list.len() as u32 + primitive_site_list.len() as u32);
     let native_sites = native_site_list.iter().enumerate()
         .map(|(index, site)| (*site, first_native_site + 4 * index as u32))
         .collect::<std::collections::HashMap<_, _>>();
@@ -1074,7 +1096,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let context = Context { names: &names, globals: &globals, bodies: &bodies,
         dispatchers: &dispatchers, futures: &futures, layout: &layout, links: &links, field_sites: &field_sites, length_sites: &length_sites,
         method_sites: &method_sites, instance_sites: &instance_sites, call_sites: &call_sites, keyword_caches: &keyword_caches,
-        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, object_call_sites: &object_call_sites, primitive: &primitive, primitive_sites: &primitive_sites, epoch_global };
+        literals: &literals, construct_sites: &construct_sites, native_sites: &native_sites, object_call_sites: &object_call_sites, rest_site, primitive: &primitive, primitive_sites: &primitive_sites, epoch_global };
     code.function(&emit_function(ir, Entry::Eval, &context, None, &mut data)?);
     for (index, body) in bodies.iter().enumerate() {
         functions.function(layout.body_types[index]);
@@ -1257,6 +1279,16 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             heap_type: HeapType::Concrete(entry) }), mutable: true, shared: false },
             &ConstExpr::ref_null(HeapType::Concrete(entry)));
     }
+    if rest_site.is_some() {
+        // The rest seq's constructor, null to match none, its admitted
+        // descriptor and its prototype (#466).
+        for _ in 0..3 {
+            code_globals.global(
+                GlobalType { val_type: VALUE, mutable: true, shared: false },
+                &ConstExpr::ref_null(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }),
+            );
+        }
+    }
     for (definition, global, layout_index) in &defined_code {
         exports.export(&format!("link.{definition}.code"), ExportKind::Global, *global);
         for (k, entry) in links.entries[definition].iter().enumerate() {
@@ -1282,7 +1314,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .section(&types)
         .section(&imports)
         .section(&functions);
-    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() || !keyword_cache_list.is_empty() || !literal_list.is_empty() || !construct_site_list.is_empty() || !native_site_list.is_empty() || !object_call_site_list.is_empty() {
+    if !layout.definitions.is_empty() || !field_site_list.is_empty() || !method_site_list.is_empty() || !instance_site_list.is_empty() || !call_site_list.is_empty() || !keyword_cache_list.is_empty() || !literal_list.is_empty() || !construct_site_list.is_empty() || !native_site_list.is_empty() || !object_call_site_list.is_empty() || rest_site_used {
         module.section(&code_globals);
     }
     module.section(&exports);
@@ -1422,6 +1454,8 @@ struct Context<'a> {
     native_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     /// Cached method call sites: their first global (#462).
     object_call_sites: &'a std::collections::HashMap<(usize, u32), u32>,
+    /// The module's rest-seq construction site: its first global (#466).
+    rest_site: Option<u32>,
     /// Cached protocol method lookup sites: their first global; the epoch.
     method_sites: &'a std::collections::HashMap<(usize, u32), u32>,
     epoch_global: u32,
@@ -1703,18 +1737,40 @@ fn emit_rest(function: &mut Function, definition: &Definition, surplus: u32, con
         .binary_search(definition.rest_class.as_ref().expect("verified rest class"))
         .expect("collected rest class") as u32;
     let import = |name: &str| context.names.iter().position(|candidate| *candidate == name).expect("collected import") as u32;
-    function
-        .instruction(&GlobalGet(factory))
-        .instruction(&Call(import("binding-get")))
-        .instruction(&Call(import("constructor-descriptor")))
-        .instruction(&Call(import("source-constructor-new")))
-        .instruction(&LocalGet(surplus))
-        .instruction(&Call(import("object-array-new")))
-        .instruction(&I32Const(0))
-        .instruction(&RefI31)
-        .instruction(&runtime_abi::sentinel_in(runtime_abi::NIL, context.globals.len() as u32))
-        .instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: 3 })
-        .instruction(&Call(import("invoke")));
+    // `(IndexedSeq. arr 0 nil)` through the module's construction site, as a
+    // construction site builds it (#443): inline while the site holds the
+    // constructor, else admitted or built by the constructor's plan (#466).
+    let site = context.rest_site.expect("rest site");
+    let nil = runtime_abi::sentinel_in(runtime_abi::NIL, context.globals.len() as u32);
+    let constructor = [GlobalGet(factory), Call(import("binding-get"))];
+    let fields = [LocalGet(surplus), Call(import("object-array-new")), I32Const(0), RefI31, nil,
+        ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: 3 }];
+    let mut code = constructor.to_vec();
+    // nil is null, as an empty site is: only a held constructor matches.
+    code.extend([GlobalGet(site), RefEq, GlobalGet(site), RefIsNull, I32Eqz, I32And, If(BlockType::Result(VALUE)),
+        GlobalGet(site + 1), RefCastNonNull(HeapType::Concrete(runtime_abi::DESCRIPTOR))]);
+    code.extend(fields.clone());
+    code.extend([GlobalGet(site + 2), ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: 1 },
+        I32Const(0), RefI31, StructNew(runtime_abi::OBJECT), Else]);
+    // Only a closure, a type's constructor, is admitted; anything else the
+    // var holds takes the plan's path and its error, as before.
+    code.extend(constructor.clone());
+    code.extend([RefTestNonNull(HeapType::Concrete(runtime_abi::CLOSURE)), If(BlockType::Result(VALUE))]);
+    code.extend(constructor.clone());
+    code.extend([Call(import("constructor-descriptor")), I32Const(3), Call(import("construct-site-admit")),
+        Else, RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }), End,
+        GlobalSet(site + 1), GlobalGet(site + 1), RefIsNull, If(BlockType::Empty),
+        RefNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::Eq }), GlobalSet(site), Else,
+        GlobalGet(site + 1), Call(import("owned-descriptor-prototype")), GlobalSet(site + 2)]);
+    code.extend(constructor.clone());
+    code.extend([GlobalSet(site), End]);
+    code.extend(constructor);
+    code.extend([Call(import("constructor-descriptor")), Call(import("source-constructor-plan"))]);
+    code.extend(fields);
+    code.extend([Call(import("source-construct-from-plan")), End]);
+    for instruction in &code {
+        function.instruction(instruction);
+    }
 }
 /// The spread entry, `(closure, args, rest)`: calls the method that takes
 /// `args`' length, as the arity dispatcher did, or throws the arity error.
@@ -1722,12 +1778,32 @@ fn emit_spread(definition: &Definition, context: &Context) -> Function {
     use Instruction::*;
     let names = context.names;
     let method = |body: usize| (names.len() + 1 + body) as u32;
-    // Locals: 3 the argument count, 4 the surplus array.
-    let mut function = Function::new([(1, ValType::I32), (1, VALUE)]);
-    // An unrealized rest comes only from `apply`, which realizes it first.
+    // Locals: 3 the argument count, 4 the surplus array, 5 the apply seq.
+    let mut function = Function::new([(1, ValType::I32), (2, VALUE)]);
+    let import = |name: &str| names.iter().position(|candidate| *candidate == name).expect("apply import") as u32;
+    // Ordinary calls keep their existing realized-array/IndexedSeq path. Apply
+    // passes an already normalized rest: never seq that value a second time.
     function
         .instruction(&LocalGet(2)).instruction(&RefIsNull).instruction(&I32Eqz)
-        .instruction(&If(BlockType::Empty)).instruction(&Unreachable).instruction(&End)
+        .instruction(&If(BlockType::Empty))
+        .instruction(&LocalGet(1)).instruction(&LocalGet(2)).instruction(&Call(import("apply-join")))
+        .instruction(&LocalSet(5));
+    if let Some(&(body, arity, _)) = definition.methods.iter().find(|method| method.2) {
+        let required = arity - 1;
+        function.instruction(&LocalGet(5)).instruction(&I32Const(required as i32))
+            .instruction(&Call(import("apply-bounded-length")))
+            .instruction(&I32Const(required as i32)).instruction(&I32GtU)
+            .instruction(&If(BlockType::Empty)).instruction(&LocalGet(0));
+        for _ in 0..required {
+            function.instruction(&LocalGet(5)).instruction(&Call(import("apply-first")))
+                .instruction(&LocalGet(5)).instruction(&Call(import("apply-next")))
+                .instruction(&LocalSet(5));
+        }
+        function.instruction(&LocalGet(5)).instruction(&ReturnCall(method(body))).instruction(&End);
+    }
+    function.instruction(&LocalGet(5)).instruction(&Call(import("apply-fixed-arguments")))
+        .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS))).instruction(&LocalSet(1))
+        .instruction(&End)
         .instruction(&LocalGet(1)).instruction(&ArrayLen).instruction(&LocalSet(3));
     for &(body, arity, _) in definition.methods.iter().filter(|method| !method.2) {
         function
@@ -1765,7 +1841,18 @@ fn emit_spread(definition: &Definition, context: &Context) -> Function {
             .instruction(&End);
     }
     let error = names.iter().position(|name| *name == "arity-throw").expect("arity helper");
-    function.instruction(&LocalGet(0)).instruction(&LocalGet(3)).instruction(&Call(error as u32)).instruction(&End);
+    function.instruction(&LocalGet(0));
+    // AFn's final invoke overload is twenty scalars plus Object[] and reports
+    // arity21, even when that array contains more than one argument. Retain
+    // full counts for Suss's existing wider-arity extension methods.
+    if definition.methods.iter().all(|&(_, arity, variadic)| arity - usize::from(variadic) <= 20) {
+        function.instruction(&LocalGet(3)).instruction(&I32Const(20)).instruction(&I32GtU)
+            .instruction(&If(BlockType::Result(ValType::I32))).instruction(&I32Const(21))
+            .instruction(&Else).instruction(&LocalGet(3)).instruction(&End);
+    } else {
+        function.instruction(&LocalGet(3));
+    }
+    function.instruction(&Call(error as u32)).instruction(&End);
     function
 }
 /// A variadic method's entry for `arity` arguments: its required arguments,
@@ -1825,7 +1912,7 @@ fn emit_function(
     continuation: Option<&ir::r#async::Continuation>,
     data: &mut LiteralData,
 ) -> Result<Function, Diagnostic> {
-    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, construct_sites, native_sites, object_call_sites, call_sites, keyword_caches, literals, primitive: _, primitive_sites: _, epoch_global } = *context;
+    let Context { names, globals, bodies, dispatchers, futures, layout, links, field_sites, length_sites, method_sites, instance_sites, construct_sites, native_sites, object_call_sites, call_sites, keyword_caches, literals, epoch_global, .. } = *context;
     let fail = |message: &str| Diagnostic {
         span: ir.span.clone(),
         message: message.into(),
@@ -3610,6 +3697,15 @@ fn emit_function(
                                 },
                             )));
                         }
+                        Nominal::ApplySpread => {
+                            function.instruction(&LocalGet(arguments[0].0 as u32 + offset));
+                            for argument in &arguments[1..arguments.len() - 1] {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: arguments.len() as u32 - 2 })
+                                .instruction(&LocalGet(arguments.last().unwrap().0 as u32 + offset))
+                                .instruction(&Call(index("apply")));
+                        }
                         Nominal::Array | Nominal::Descriptor(_) | Nominal::CoreDescriptor | Nominal::CoreStaticsDescriptor | Nominal::CoreClosedDescriptor | Nominal::CoreConstructibleDescriptor => {
                             let mutable = match operation {
                                 Nominal::Descriptor(mutable) => *mutable,
@@ -3983,6 +4079,12 @@ fn emit_function(
                         | Nominal::LanguageError
                         | Nominal::IsLanguageError
                         | Nominal::IsNativeObject
+                        | Nominal::FixedArityFn
+                        | Nominal::ApplySequenceOps
+                        | Nominal::ListFunction
+                        | Nominal::ApplyCallee
+                        | Nominal::ApplyToSeq
+                        | Nominal::ApplyFixed
                         | Nominal::IsTypeConstructor
                         | Nominal::ValueConstructor
                         | Nominal::TypeName
@@ -4062,6 +4164,12 @@ fn emit_function(
                                 Nominal::IsLanguageError => "language-error-is",
                                 Nominal::NativeObjectFactory => "native-object-factory-function",
                                 Nominal::IsNativeObject => "native-object?",
+                                Nominal::FixedArityFn => "fn-fixed-arity?",
+                                Nominal::ApplySequenceOps => "apply-sequence-ops",
+                                Nominal::ListFunction => "list-function",
+                                Nominal::ApplyCallee => "apply-callee",
+                                Nominal::ApplyToSeq => "apply-to-seq",
+                                Nominal::ApplyFixed => "apply-fixed",
                                 Nominal::IsTypeConstructor => "class-value-is",
                                 Nominal::ValueConstructor => "value-constructor",
                                 Nominal::TypeName => "class-value-name",

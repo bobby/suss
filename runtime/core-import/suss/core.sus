@@ -822,22 +822,32 @@
 (def empty-ordered-hash
   (mix-collection-hash 1 0))
 
-(def list
+(def ^{:arglists '([& items])} list
   "Creates a new list containing the items."
-  (fn [& xs]
-  (if (and (instance? IndexedSeq xs) (zero? (.-i xs)) (suss.bootstrap/object-array? (.-arr xs)))
-    (let [arr (.-arr xs)]
-      (loop [i (alength arr) r ()]
-        (if (> i 0)
-          (recur (dec i) (-conj r (aget arr (dec i))))
-          r)))
-    (loop [^not-native xs xs reversed ()]
-      (if-not (nil? xs)
-        (recur (-next xs) (-conj reversed (-first xs)))
-        (loop [s (seq reversed) r ()]
+  ;; Clojure 1.12.6 PersistentList.Primordial: required arity zero;
+  ;; its generic body calls seq once and reads first before next.
+  ;; Copyright Rich Hickey, EPL-1.0; see runtime/core-import/LICENSE.
+  (suss.bootstrap/list-function
+    (fn [& xs]
+      (if (and (instance? IndexedSeq xs) (suss.bootstrap/object-array? (.-arr xs)))
+        (let [arr (.-arr xs) begin (.-i xs)]
+          (loop [i (alength arr) r ()]
+            (if (> i begin)
+              (recur (dec i) (-conj r (aget arr (dec i))))
+              r)))
+        (loop [s (seq xs) reversed ()]
           (if (nil? s)
-            r
-            (recur (next s) (-conj r (first s))))))))))
+            (loop [s (seq reversed) r ()]
+              (if (nil? s)
+                r
+                (let [value (-first s) r (-conj r value)]
+                  (recur (next s) r))))
+            (let [value (-first s) reversed (-conj reversed value)]
+              (recur (next s) reversed))))))
+    (fn [] ())
+    (fn [a] (-conj () a))
+    (fn [a b] (-conj (-conj () b) a))
+    (fn [a b c] (-conj (-conj (-conj () c) b) a))))
 
 (def ^boolean =
   "Equality. Returns true if x equals y, false if not. Compares
@@ -3130,9 +3140,9 @@
 
   IReduce
   (-reduce [coll f]
-    (array-reduce arr f (aget arr off) (inc off)))
+    (ci-reduce coll f))
   (-reduce [coll f start]
-    (array-reduce arr f start off)))
+    (ci-reduce coll f start)))
 
 (def array-chunk
   (fn ([arr]
@@ -3325,65 +3335,64 @@
        (.call f f a0 a1 a2 a3))
      (let [a4 (cljs.core/-first args) next_4 (cljs.core/next args)] (if (nil? next_4) (if (.-cljs$core$IFn$_invoke$arity$5 f) (.cljs$core$IFn$_invoke$arity$5 f a0 a1 a2 a3 a4) (.call f f a0 a1 a2 a3 a4)) (let [a5 (cljs.core/-first next_4) next_5 (cljs.core/next next_4)] (if (nil? next_5) (if (.-cljs$core$IFn$_invoke$arity$6 f) (.cljs$core$IFn$_invoke$arity$6 f a0 a1 a2 a3 a4 a5) (.call f f a0 a1 a2 a3 a4 a5)) (let [a6 (cljs.core/-first next_5) next_6 (cljs.core/next next_5)] (if (nil? next_6) (if (.-cljs$core$IFn$_invoke$arity$7 f) (.cljs$core$IFn$_invoke$arity$7 f a0 a1 a2 a3 a4 a5 a6) (.call f f a0 a1 a2 a3 a4 a5 a6)) (let [a7 (cljs.core/-first next_6) next_7 (cljs.core/next next_6)] (if (nil? next_7) (if (.-cljs$core$IFn$_invoke$arity$8 f) (.cljs$core$IFn$_invoke$arity$8 f a0 a1 a2 a3 a4 a5 a6 a7) (.call f f a0 a1 a2 a3 a4 a5 a6 a7)) (let [a8 (cljs.core/-first next_7) next_8 (cljs.core/next next_7)] (if (nil? next_8) (if (.-cljs$core$IFn$_invoke$arity$9 f) (.cljs$core$IFn$_invoke$arity$9 f a0 a1 a2 a3 a4 a5 a6 a7 a8) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8)) (let [a9 (cljs.core/-first next_8) next_9 (cljs.core/next next_8)] (if (nil? next_9) (if (.-cljs$core$IFn$_invoke$arity$10 f) (.cljs$core$IFn$_invoke$arity$10 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)) (let [a10 (cljs.core/-first next_9) next_10 (cljs.core/next next_9)] (if (nil? next_10) (if (.-cljs$core$IFn$_invoke$arity$11 f) (.cljs$core$IFn$_invoke$arity$11 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)) (let [a11 (cljs.core/-first next_10) next_11 (cljs.core/next next_10)] (if (nil? next_11) (if (.-cljs$core$IFn$_invoke$arity$12 f) (.cljs$core$IFn$_invoke$arity$12 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11)) (let [a12 (cljs.core/-first next_11) next_12 (cljs.core/next next_11)] (if (nil? next_12) (if (.-cljs$core$IFn$_invoke$arity$13 f) (.cljs$core$IFn$_invoke$arity$13 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12)) (let [a13 (cljs.core/-first next_12) next_13 (cljs.core/next next_12)] (if (nil? next_13) (if (.-cljs$core$IFn$_invoke$arity$14 f) (.cljs$core$IFn$_invoke$arity$14 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13)) (let [a14 (cljs.core/-first next_13) next_14 (cljs.core/next next_13)] (if (nil? next_14) (if (.-cljs$core$IFn$_invoke$arity$15 f) (.cljs$core$IFn$_invoke$arity$15 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14)) (let [a15 (cljs.core/-first next_14) next_15 (cljs.core/next next_14)] (if (nil? next_15) (if (.-cljs$core$IFn$_invoke$arity$16 f) (.cljs$core$IFn$_invoke$arity$16 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15)) (let [a16 (cljs.core/-first next_15) next_16 (cljs.core/next next_15)] (if (nil? next_16) (if (.-cljs$core$IFn$_invoke$arity$17 f) (.cljs$core$IFn$_invoke$arity$17 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16)) (let [a17 (cljs.core/-first next_16) next_17 (cljs.core/next next_16)] (if (nil? next_17) (if (.-cljs$core$IFn$_invoke$arity$18 f) (.cljs$core$IFn$_invoke$arity$18 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17)) (let [a18 (cljs.core/-first next_17) next_18 (cljs.core/next next_17)] (if (nil? next_18) (if (.-cljs$core$IFn$_invoke$arity$19 f) (.cljs$core$IFn$_invoke$arity$19 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18)) (let [a19 (cljs.core/-first next_18) next_19 (cljs.core/next next_18)] (if (nil? next_19) (if (.-cljs$core$IFn$_invoke$arity$20 f) (.cljs$core$IFn$_invoke$arity$20 f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19) (.call f f a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19)) (.apply f f (to-array (cons a0 (cons a1 (cons a2 (cons a3 args)))))))))))))))))))))))))))))))))))))))))))
 
-(def apply
- "Applies fn f to the argument list formed by prepending intervening arguments to args."
- (fn ([f args]
-   (let [n (suss.bootstrap/vector-count args)]
-     (if (and (not (suss.bootstrap/nil? n)) (<= n 4))
-     (cond (== n 0) (f) (== n 1) (f (nth args 0)) (== n 2) (f (nth args 0) (nth args 1)) (== n 3) (f (nth args 0) (nth args 1) (nth args 2)) :else (f (nth args 0) (nth args 1) (nth args 2) (nth args 3)))
-     (if (.-cljs$lang$applyTo f)
-     (let [fixed-arity (.-cljs$lang$maxFixedArity f)
-           bc (bounded-count (inc fixed-arity) args)]
-       (if (<= bc fixed-arity)
-         (apply-to f bc args)
-         (.cljs$lang$applyTo f args)))
-     (apply-to-simple f (seq args))))))
- ([f x args]
-   (let [n (suss.bootstrap/vector-count args)]
-     (if (and (not (suss.bootstrap/nil? n)) (<= n 4))
-     (cond (== n 0) (f x) (== n 1) (f x (nth args 0)) (== n 2) (f x (nth args 0) (nth args 1)) (== n 3) (f x (nth args 0) (nth args 1) (nth args 2)) :else (f x (nth args 0) (nth args 1) (nth args 2) (nth args 3)))
-     (if (.-cljs$lang$applyTo f)
-     (let [arglist (list* x args)
-           fixed-arity (.-cljs$lang$maxFixedArity f)
-           bc (inc (bounded-count fixed-arity args))]
-       (if (<= bc fixed-arity)
-         (apply-to f bc arglist)
-         (.cljs$lang$applyTo f arglist)))
-     (apply-to-simple f x (seq args))))))
- ([f x y args]
-   (let [n (suss.bootstrap/vector-count args)]
-     (if (and (not (suss.bootstrap/nil? n)) (<= n 4))
-     (cond (== n 0) (f x y) (== n 1) (f x y (nth args 0)) (== n 2) (f x y (nth args 0) (nth args 1)) (== n 3) (f x y (nth args 0) (nth args 1) (nth args 2)) :else (f x y (nth args 0) (nth args 1) (nth args 2) (nth args 3)))
-     (if (.-cljs$lang$applyTo f)
-     (let [arglist (list* x y args)
-           fixed-arity (.-cljs$lang$maxFixedArity f)
-           bc (+ 2 (bounded-count (dec fixed-arity) args))]
-       (if (<= bc fixed-arity)
-         (apply-to f bc arglist)
-         (.cljs$lang$applyTo f arglist)))
-     (apply-to-simple f x y (seq args))))))
- ([f x y z args]
-   (let [n (suss.bootstrap/vector-count args)]
-     (if (and (not (suss.bootstrap/nil? n)) (<= n 4))
-     (cond (== n 0) (f x y z) (== n 1) (f x y z (nth args 0)) (== n 2) (f x y z (nth args 0) (nth args 1)) (== n 3) (f x y z (nth args 0) (nth args 1) (nth args 2)) :else (f x y z (nth args 0) (nth args 1) (nth args 2) (nth args 3)))
-     (if (.-cljs$lang$applyTo f)
-     (let [arglist (list* x y z args)
-           fixed-arity (.-cljs$lang$maxFixedArity f)
-           bc (+ 3 (bounded-count (- fixed-arity 2) args))]
-       (if (<= bc fixed-arity)
-         (apply-to f bc arglist)
-         (.cljs$lang$applyTo f arglist)))
-     (apply-to-simple f x y z (seq args))))))
- ([f a b c d & args]
-   (if (.-cljs$lang$applyTo f)
-     (let [spread-args (spread args)
-           arglist (cons a (cons b (cons c (cons d spread-args))))
-           fixed-arity (.-cljs$lang$maxFixedArity f)
-           bc (+ 4 (bounded-count (- fixed-arity 3) spread-args))]
-       (if (<= bc fixed-arity)
-         (apply-to f bc arglist)
-         (.cljs$lang$applyTo f arglist)))
-     (apply-to-simple f a b c d (spread args))))))
+(def ^{:arglists '([f args] [f x args] [f x y args] [f x y z args] [f a b c d & args])} apply
+  "Applies fn f to the argument list formed by prepending intervening arguments to args."
+  (do
+  ;; Sequence folding is adapted from Clojure 1.12.6 clojure/core.clj reduce1.
+  ;; Copyright (c) Rich Hickey. EPL-1.0; see runtime/core-import/LICENSE.
+  (declare Var)
+  (suss.bootstrap/apply-sequence-ops!
+    seq
+    (fn [s] (-first s))
+    (fn [s] (if (implements? INext s) (-next s) (seq (-rest s))))
+    cons
+    (fn [f] (satisfies? IFn f))
+    (fn [f args]
+      (cond
+        (instance? MetaFn f)
+        (suss.bootstrap/apply-to-seq (.-afn f) args)
+        (and (suss.compiler/cell-defined? suss.core/Var) (instance? Var f))
+        (suss.bootstrap/apply-to-seq ((.-val f)) args)
+        :else (suss.bootstrap/apply-fixed f args)))
+    count
+    nth
+    (fn [f initial remaining]
+      (loop [value initial remaining remaining]
+        (let [s (seq remaining)]
+          (if (nil? s)
+            value
+            (if (implements? IChunkedSeq s)
+              (recur (-reduce (-chunked-first s) f value)
+                     (if (implements? IChunkedNext s)
+                       (-chunked-next s)
+                       (seq (-chunked-rest s))))
+              (recur (f value (-first s))
+                     (if (implements? INext s) (-next s) (seq (-rest s)))))))))
+    (List. nil nil nil 1 nil))
+    (fn
+      ([f args]
+        (let [n (suss.bootstrap/vector-count args)]
+          (if (and (not (suss.bootstrap/nil? n)) (<= n 4))
+            (cond (== n 0) (f) (== n 1) (f (nth args 0)) (== n 2) (f (nth args 0) (nth args 1)) (== n 3) (f (nth args 0) (nth args 1) (nth args 2)) :else (f (nth args 0) (nth args 1) (nth args 2) (nth args 3)))
+            (suss.bootstrap/apply-spread f args))))
+      ([f x args]
+        (let [n (suss.bootstrap/vector-count args)]
+          (if (and (not (suss.bootstrap/nil? n)) (<= n 4))
+            (cond (== n 0) (f x) (== n 1) (f x (nth args 0)) (== n 2) (f x (nth args 0) (nth args 1)) (== n 3) (f x (nth args 0) (nth args 1) (nth args 2)) :else (f x (nth args 0) (nth args 1) (nth args 2) (nth args 3)))
+            (suss.bootstrap/apply-spread f x args))))
+      ([f x y args]
+        (let [n (suss.bootstrap/vector-count args)]
+          (if (and (not (suss.bootstrap/nil? n)) (<= n 4))
+            (cond (== n 0) (f x y) (== n 1) (f x y (nth args 0)) (== n 2) (f x y (nth args 0) (nth args 1)) (== n 3) (f x y (nth args 0) (nth args 1) (nth args 2)) :else (f x y (nth args 0) (nth args 1) (nth args 2) (nth args 3)))
+            (suss.bootstrap/apply-spread f x y args))))
+      ([f x y z args]
+        (let [n (suss.bootstrap/vector-count args)]
+          (if (and (not (suss.bootstrap/nil? n)) (<= n 4))
+            (cond (== n 0) (f x y z) (== n 1) (f x y z (nth args 0)) (== n 2) (f x y z (nth args 0) (nth args 1)) (== n 3) (f x y z (nth args 0) (nth args 1) (nth args 2)) :else (f x y z (nth args 0) (nth args 1) (nth args 2) (nth args 3)))
+            (suss.bootstrap/apply-spread f x y z args))))
+      ([f a b c d & args]
+        (let [f (suss.bootstrap/apply-callee f)]
+          (suss.bootstrap/apply-spread f a b c d (spread args)))))))
 
 (defprotocol ITransientMap
   "Protocol for adding mapping functionality to transient collections."
@@ -8057,6 +8066,12 @@ reduces them without incurring seq initialization"
     (if (and (>= i 0) (< i count))
       (suss.bootstrap/unchecked-add start (suss.bootstrap/unchecked-multiply i step))
       not-found))
+
+  ;; JVM IChunk supplies reduction as well as indexed access. Suss represents
+  ;; that operation with IReduce, as ArrayChunk does, for core's private fold.
+  IReduce
+  (-reduce [coll f] (ci-reduce coll f))
+  (-reduce [coll f init] (ci-reduce coll f init))
 
   IChunk
   (-drop-first [coll]

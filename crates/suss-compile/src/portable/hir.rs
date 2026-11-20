@@ -614,6 +614,16 @@ pub enum Nominal {
     BuiltinConstructGuard,
     NativeObjectFactory,
     IsNativeObject,
+    /// `suss.bootstrap/fixed-arity-fn?` (#466): a fn whose arities are all
+    /// fixed, as its code struct's maximum arity says.
+    FixedArityFn,
+    /// Private core sequence callbacks and the native apply boundary (#466).
+    ApplySequenceOps,
+    ListFunction,
+    ApplyCallee,
+    ApplySpread,
+    ApplyToSeq,
+    ApplyFixed,
     IsTypeConstructor,
     ValueConstructor,
     /// Type value -> its name string, or nil (#304).
@@ -666,6 +676,7 @@ impl Nominal {
             | Self::IsDescriptor
             | Self::IsClosure
             | Self::IsNativeObject
+            | Self::FixedArityFn
             | Self::IsTypeConstructor
             | Self::IsLanguageError
             | Self::Instance
@@ -683,6 +694,11 @@ impl Nominal {
         count <= i32::MAX as usize
             && match self {
                 Self::Array => true,
+                Self::ApplySequenceOps => count == 10,
+                Self::ListFunction => count == 5,
+                Self::ApplyCallee => count == 1,
+                Self::ApplySpread => count >= 2,
+                Self::ApplyToSeq | Self::ApplyFixed => count == 2,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::CurrentThis => count == 0,
                 Self::Identical | Self::SameReference => count == 2,
@@ -695,7 +711,7 @@ impl Nominal {
                 Self::MapGetOr | Self::MapAssoc => count == 3,
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
-                Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
+                Self::IsNumber | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
@@ -3217,6 +3233,12 @@ impl Analyzer<'_> {
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
             let operation = match symbol.name.as_str() {
+                "apply-sequence-ops!" => Some(Nominal::ApplySequenceOps),
+                "list-function" => Some(Nominal::ListFunction),
+                "apply-callee" => Some(Nominal::ApplyCallee),
+                "apply-spread" => Some(Nominal::ApplySpread),
+                "apply-to-seq" => Some(Nominal::ApplyToSeq),
+                "apply-fixed" => Some(Nominal::ApplyFixed),
                 "number?" => Some(Nominal::IsNumber),
                 "keyword?" => Some(Nominal::IsKeyword),
                 // Reference identity alone, as for interned keywords (#442).
@@ -3227,6 +3249,7 @@ impl Analyzer<'_> {
                 "value-add" => Some(Nominal::ValueAdd),
                 "object-factory" => Some(Nominal::NativeObjectFactory),
                 "native-object?" => Some(Nominal::IsNativeObject),
+                "fixed-arity-fn?" => Some(Nominal::FixedArityFn),
                 "same-nominal-type?" => Some(Nominal::SameNominalType),
                 "type-constructor?" => Some(Nominal::IsTypeConstructor),
                 "value-constructor" => Some(Nominal::ValueConstructor),
@@ -3255,6 +3278,11 @@ impl Analyzer<'_> {
                 _ => None,
             };
             if let Some(operation) = operation {
+                if matches!(operation, Nominal::ApplySequenceOps | Nominal::ApplyCallee
+                    | Nominal::ApplySpread | Nominal::ApplyToSeq | Nominal::ApplyFixed | Nominal::ListFunction)
+                    && !self.privileged && self.environment.current_namespace(self.phase) != "suss.core" {
+                    return Err(fail(form.span.clone(), "Private apply adapters require compiled core"));
+                }
                 if !operation.valid(&vec![Type::Value; args.len()]) {
                     return Err(fail(
                         form.span.clone(),

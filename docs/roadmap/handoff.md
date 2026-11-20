@@ -30061,3 +30061,394 @@ source and the corrected pipeline test, with no other source changes during
 execution. Its terminal outcome and final-head CI evidence belong on #448 and
 #470; read the actual log rather than interpreting the earlier interrupted runs
 as passes. The independent implementation review does not replace either gate.
+
+## JVM apply traversal and lazy-error probes (2026-11-19)
+
+Release production source c2e94c0a was rebuilt with stable Cargo,
+SUSS_FUNCTION_NAMES=1, two build jobs and a 6 GiB systemd user scope, using the
+shared Cargo target. The build completed in 4m06s. The copied executable,
+SHA256 receipt and build log are retained in the original workspace under
+`target/probe/pr474-suss-before`, `pr474-before-executable.sha256` and
+`pr474-before-build.log`. The isolated source checkout is
+`target/probe/pr474-source`; release verification leaves the separate running
+primitive-entry debug baseline's binaries untouched.
+
+Fresh JVM Clojure 1.12.6 probes ran in 2 GiB systemd scopes, with an explicit
+512 MiB JVM heap, `-J-Dclojure.main.report=stderr` and `-M`. Inputs and logs:
+
+- `pr474-apply-realization-jvm.clj` and its `-bounded.log`: fixed AFn apply
+  traverses an infinite lazy tail until an explicit throwing sentinel at index
+  40. An earlier unbounded probe exhausted its bounded JVM heap; its original
+  log is retained. This does not establish the earlier handoff's claim that
+  such an apply throws a bounded arity error. Variadic zero-required apply
+  realizes indices 0 and 1; a two-required function consuming its first rest
+  value realizes indices 0 through 3.
+- `pr474-apply-iseq-jvm.{clj,log}`: callbacks on a custom ISeq expose the bounded
+  traversal before extraction. A two-required variadic method uses next after
+  its final fixed argument, not rest. Fixed finite calls have a next-only
+  preflight, then first/next extraction; the >20 path also counts and extracts
+  the remainder. These are observable callback effects, not a requirement to
+  copy the JVM's physical sequence representation.
+- Independent read-only design review added
+  `pr474-review-counted-iseq-jvm.log` and `pr474-review-rt-javap.log`. Counted
+  ISeqs still receive the JVM's next-only RestFn preflight, with no count call.
+  Public bounded-count has a Counted fast path and cannot be reused literally
+  for that private preflight. Preserve public bounded-count's behavior.
+- `pr474-apply-numeric-map-jvm.{clj,log}`: unchunked map over iterate with a bad
+  operand at 0 causes +, -, *, / and bit-and to realize only indices 0..3
+  before the type error. A bad operand at 5 realizes 0..5. The equivalent
+  explicit-lazy-seq probe is retained in pr474-apply-numeric-error-jvm2.log;
+  its first run omitted IllegalArgumentException for bitwise errors and is
+  preserved separately rather than counted as a complete run.
+
+New focused source regressions reproduce the extra seq callback and eager
+numeric realization against c2e94c0a. The original apply regression passes.
+`cargo +stable test --release --workspace --locked --test apply_fixed_arity --
+--test-threads=2`, in a 6 GiB scope, reports one passing original regression and
+failing new regressions (`pr474-apply-oracle-red.log`). The first numeric
+fixture used an unavailable Session macro; its corrected map/iterate fixture
+executes and fails with actual effects 0..10 against expected 0..3
+(`pr474-numeric-oracle-red2.log`). Runtime failure stops these new tests before
+Macro execution, so Macro behavior is not certified by these runs. No ignores,
+expected-value weakening or production fix is implied.
+
+An additive runtime callback registry and generated source spread entries are
+viable per the independent design review, with these constraints: keep the
+ordinary nil-tail IndexedSeq path, initialize rooted callback values and cached
+entries consistently before use, preserve exact next-only preflight and
+extraction order, and check array growth arithmetic across callbacks. Native
+arithmetic and bitwise variadics need lazy spread handling. UNIVERSAL includes
+arithmetic and receiver-bound wrappers; neither UNIVERSAL nor non-closure IFn
+by itself justifies eagerly realizing all arguments. Eager realization would
+retain the observed premature-consumption bug. No production implementation of
+this proposed route has been made in these probes.
+
+`pr474-instructions.py` uses the unchanged bench.py loop and the same f2
+(return its first argument), a warm-up export before sampling, and three perf
+stat instructions:u runs each at N and 0. It retains the component, source,
+raw counts and JSON under `pr474-before-instructions/`. Net instructions after
+subtracting the 25-instruction control are approximately: list 687, apply over
+that constructed list 2,466, and apply over a prebuilt list 1,811. The apply
+range 10/20/40 rows are 24,550 / 37,783 / 124,416; those sizes cross different
+arity paths and are not an asymptotic linearity proof. Walltimes were not
+measured. These results do not satisfy the under-2,000 or property-free
+variadic acceptance criteria.
+
+Perf-map output is hardcoded by Wasmtime to /tmp. The profile commands use
+bwrap with a private bind from `target/probe/pr474-perf-tmp` onto /tmp for both
+perf record and perf report, keeping physical output on the workspace disk.
+The initial apply-list instruction profile includes substantial native compiler
+startup and cannot be interpreted as the generated-code hot-path breakdown.
+Raw data and its report are retained as pr474-apply-list.instructions.data and
+pr474-apply-list-profile-report.txt; the delayed hot-loop capture uses
+pr474-apply-list-hot.instructions.data.
+
+The corrected combined regression run is `pr474-oracle-regressions.log`: the
+original test passes and both new regressions fail on actual Runtime effects,
+with no compile-fixture failure and no ignored cases. Further Counted/Macro
+assertions remain guarded by fixing those first failures, not presumed passes.
+
+The delayed profile completed after a ten-second recording delay over
+50,000,000 apply-list iterations, using instructions:u at period 100003 and a
+6 GiB scope. The hot report (`pr474-apply-list-hot-profile-report.txt`) has no
+native compiler entries above its 0.5% threshold. Core seq/first/next account
+for approximately 8.5%/7.7%/7.4% of samples, object-descriptor 6.5%, and
+fn-fixed-arity? 3%; Wasmtime subtype-cache work is also visible. object-new is
+absent above that threshold, so the earlier construction-cost handoff is not a
+sufficient explanation of this current short-list apply path. These are flat
+instruction samples for this microbenchmark, not the time/cycle proportions of
+the whole-program benchmarks.
+
+The fixed-apply throwing-sentinel regression at mapper index 40 passed in both
+Runtime and Macro (`pr474-fixed-remainder-regression.log`, one test, no failures
+or ignored cases). It guards against replacing the observed unbounded remainder
+traversal with an early wrong-arity exception. The separate sequence-callback
+and numeric-error regressions remain genuine failures awaiting implementation.
+
+
+## Sequence-aware spread execution and numeric folding (2026-11-19)
+
+The #474 working source introduces a private per-instance sequence callback
+registry, rooted callback closures and typed entries, a closure/spread cache,
+and generated source spread handling with next-only RestFn/AFn preflight.
+Public apply uses the runtime boundary for non-vector tails. Ordinary nil-tail
+calls retain their existing realized-array/IndexedSeq adapters. MetaFn and
+MultiFn delegation uses the already-normalized seq. Native +, -, *, / and the
+four variadic bit operations have separate lazy fold entries. The fold adapts
+Clojure 1.12.6 reduce1, with EPL provenance in the patch/source. Comparisons and
+array families still need their distinct lazy entries; they are not certified
+by numeric success. This source is isolated from the reviewed #470 branch.
+
+Commands use cargo +stable, SUSS_FUNCTION_NAMES=1, CARGO_BUILD_JOBS=2 and the
+shared performance target, inside systemd-run --user --scope -p MemoryMax=6G;
+TMPDIR and all logs are in target/probe. The first executable build exposed an
+early unresolved ifn? reference; the callback now checks the already-declared
+IFn protocol. The generator must finish after core_import before Cargo starts.
+The first successful sequence regression is pr474-source-spread-third.log:
+one test passed, exercising Runtime and Macro, including Counted ISeq and the
+separate public bounded-count behavior.
+
+pr474-native-fold-first.log reproduced a fixture case-default compile error
+and a genuine normal range-sum failure. The corrected fixture and separately
+printed successful cases distinguish them (pr474-native-fold-second.log).
+The numeric lazy-error regression already passed in both phases. IntegerRangeChunk
+lacked reduction, unlike JVM IChunk; adding its existing indexed reducer makes
+the private chunk fold work. pr474-native-fold-third.log then reports all five
+tests passed in both phases, no failures or ignores: existing apply values,
+callback traces, numeric error effects, invalid-callee ordering and the fixed
+infinite-remainder throwing sentinel. Fresh callee-order JVM evidence is in
+pr474-callee-order3-jvm.log: nil normalizes the seq before failing, whereas
+other non-callables fail before normalization, including prefixed forms.
+
+347 Python tests passed (pr474-foundation-python.log), and all CI source checks
+passed (pr474-foundation-checks.log), before the final chunk changes. Re-run
+these checks after subsequent core edits. No full workspace pass or final-head
+CI is claimed for this source.
+
+A further JVM 1.12.6 probe, pr474-chunk-bounds-jvm.{clj,log}, returns 6 for a
+three-value ArrayChunk whose backing array has a bad fourth value. The new
+focused regression fails on actual Suss execution (pr474-chunk-bounds-red.log).
+ArrayChunk's old reducer ignored its end field. Its patch now uses the logical
+count/indexed reducer; this correction still needs execution after rebasing.
+
+GitHub main advanced to ccfb63a4 through the user-side merge of #470. Rebase
+#474 onto that ABI 7 base before collecting new instruction or acceptance
+measurements. Next work: verify chunk boundaries on that base, implement the
+remaining native traversal families, measure the list target below 2,000 and
+variadic linearity/property-free dispatch, then complete the required baseline,
+independent final review and final-head CI. No #474 acceptance or promotion is
+claimed by these partial probes.
+
+
+## ABI 7 rebase and native apply families (2026-11-19)
+
+Rebased #474 onto ccfb63a4 after GitHub reported #470 merged. Reconciled the
+emitter's primitive-call globals and variadic rest site: primitive entry globals
+are emitted first, then the three rest-site globals. A mixed typed-var/rest
+regression exercises repeated hits and arbitrary boxed var replacements in both
+phases. The first fixture incorrectly used defn with Session::eval, which does
+not expand macros; replacing that fixture with equivalent hinted fn forms
+preserves the check (pr474-abi7-focused-first/second.log).
+
+The chunk boundary correction passes in Runtime and Macro. The >20 fixed-path
+callback regression additionally matches the JVM trace at size25: one seq,
+51 next, 25 first, no rest (77 total callbacks). The new native family test
+first reproduced eager comparison realization through the throwing sentinel
+(pr474-abi7-focused-second.log), then passed with specialized comparison,
+aget/aset recursion and make-array dimension traversal. Native code factories
+use separate spread entries while retaining their ordinary min/max guards.
+Arithmetic/bitwise use a chunk-aware numeric fold; comparisons retain their
+observable next-before-first/repeated-next traversal. Recursive array access
+performs the current access before its next apply. make-array retains its
+existing object-array/type adaptation, while its spread path performs count,
+repeated nth and per-dimension int conversion in that order.
+
+pr474-native-families-first.log records eight apply regressions and both
+compiled primitive-parameter tests passing, then four real fixture compilation
+failures in portable_apply_sequences: loading the trusted core source through
+ordinary eval now rejects private apply setup. Only exact embedded-core loads
+were changed to eval_privileged (31 files, 67 calls), leaving user-program eval
+and assertions unchanged. Separate tests verify ordinary callers cannot invoke
+the private helpers and rejected callback registration publishes none of its
+staged values; both passed in pr474-native-families-second.log.
+
+Fresh JVM probes corrected the earlier proposed callable-object design:
+pr474-callable-rest-var-jvm.log and pr474-callable-applyto-javap.log show that
+MetaFn and Var delegate already-normalized argument seqs, while MultiFn inherits
+AFn.applyTo and consumes the input. A sentinel at40 is reached for MultiFn;
+metadata/Var calls return0 after realizing only0..2. The private callback now
+follows those separate routes. The first added callable fixture directly
+constructed core internals with ordinary eval and was rejected, correctly
+(pr474-callable-fixture-diagnostic.log). Its internal setup now uses the trusted
+host API, with ordinary public apply and a GC boundary used for the actual
+observations. Current complete focused confirmation is recorded separately in
+pr474-native-families-third.log; do not infer its outcome from earlier logs.
+
+The retained source-apply effect count124 is a ClojureScript recording, not the
+behavior oracle. Fresh JVM1.12.6 weighted next/first callbacks produce25
+(pr474-weighted-next-jvm.log). Tests retain the recording intact and assert
+19 matches plus three explicit JVM boundaries, including this traversal.
+The source-apply documentation distinguishes this from its earlier evidence.
+
+347 Python tests and every CI source check pass on the updated core
+(pr474-candidate-foundation.log); apply_bootstrap and core_import checks also
+pass separately. These do not substitute for the required workspace baseline,
+independent final implementation review, final-head CI or instruction criteria.
+
+
+## Short built-in List apply and restored core-loading semantics (2026-11-19)
+
+Fresh release measurements of cd9be85f exposed a regression: net list apply
+7,542 instructions and prebuilt list6,887. Range10/20/40/80/160 was roughly
+20,559 /31,209 /55,699 /101,488 /193,273, consistent with linear growth at the
+larger sizes. The delayed hot instruction profile attributed24.7% to
+protocol-method-get. Raw artifacts are pr474-candidate-instructions/,
+pr474-suss-candidate plus SHA256 receipt, and pr474-candidate-list-hot*.
+This was genuine non-acceptance evidence, not a successful target result.
+
+The new guarded path recognizes core's original immutable List descriptor,
+registered alongside the sequence callbacks. For a fixed source closure and
+no more than eight total arguments, it copies the realized prefix and private
+List fields into the ordinary argument buffer. It does not use this route for
+variadic closures, custom seqs, native variadics or callable objects; their
+original rest representation and observable callbacks remain intact. Guards
+check descriptor, storage shape and bounded small count. The descriptor and all
+callback entries stage before publication. Only private runtime globals change;
+the ABI7 shared types remain main's. This follows the existing nominal vector
+read approach, not an engine-specific representation.
+
+The first registration sample used list nil while bootstrap literal roots were
+not yet published; all ten Session initialization attempts threw real language
+errors (pr474-short-list-focused-first.log). The sample now constructs the
+compiler-owned List directly, avoiding dependence on bootstrap literal roots.
+No failed run is counted as execution success.
+
+CI on cd9be85f additionally exposed why changing whole-core fixture eval to
+eval_privileged was incorrect: it froze live hash references and marked test
+core types private. Those 67 edits across31 files are reverted. Private apply
+intrinsics instead admit an actual core compilation context (privileged host
+or suss.core namespace), like existing core-only operand adaptations; ordinary
+user namespaces remain rejected. Tests retain their original evaluation and
+all original assertions. CI job logs136006053516/136006053454/136006053450
+under target/probe capture the actual regressions; no expected values were
+weakened. Further CI failures still require inspection before any final claim.
+
+pr474-short-list-focused-second.log completed successfully:37 tests passed,
+zero failures/ignores across apply_fixed_arity, compiled_primitive_params,
+portable_apply_sequences, portable_error_constructors, portable_public_hash,
+portable_source_apply, portable_string_hash and portable_primitive_entries.
+This includes the selected CI failures, exact custom-sequence callbacks,
+variadic List rest identity and checked primitive arguments through List apply.
+The callback publication test was then strengthened to reject a bad final layout
+sample after staging all nine callback closures, and to exercise generic
+IndexedSeq apply as well as fast List apply after GC; that follow-up needs its
+own test result.
+
+The copied release executable pr474-suss-short-list, its SHA256 receipt, and
+pr474-short-list-source.patch identify the measured implementation (cd9be85f
+plus that patch). pr474-short-list-instructions/ retains the component/source
+and all three perf stat instructions:u measurements at N and0, with a warm-up
+case before sampling. Net instructions after subtracting the25-instruction
+control: list687.027, list apply1,424.706, prebuilt-list apply759.353; range
+10/20/40/80/160:20,582 /31,232 /55,722 /101,511 /193,296. Larger-size incremental
+cost is about1,145–1,147 per element. No walltime measurement or whole-program
+5x claim is made. Stable release names were enabled for build and compile;
+scopes were6GiB for tests/build and3GiB for instruction runs. All output is in
+target/probe, including perf maps through the private bwrap /tmp bind.
+
+Next validation is the strengthened registration regression, every earlier CI
+failure, full required serial workspace baseline, independent final review and
+final-head CI. The instruction target alone does not promote a draft or prove
+the wider M15 program-time criteria.
+
+
+## Independent list traversal correction (2026-11-19)
+
+Independent semantic review found a real blocker inherited from the earlier
+sequence-list patch: fixed0..3 plus variadic required3 changes apply list's
+preflight. JVM1.12.6 PersistentList.Primordial requires0. Its generic body also
+calls seq once and reads first before next, whereas the old fallback evaluated
+next first. The first review's general ABI/rooting approval did not certify this
+source-body detail; promotion remains gated on correcting the finding.
+
+Primary evidence is pr474-review-list-oracle.log,
+pr474-review-list-traversal-jvm.{clj,log}, and the saved Primordial/PersistentList
+javap logs. Counted/custom ISeq inputs have identical callback order, including
+25 elements with no AFn remainder/count path. Prefixes0..5 and first/next/second
+seq errors are recorded. Executing the saved e159 release binary against a next1
+throwing sequence reproduces the Suss bug: seq0,next0,next1, with first0 absent
+(pr474-list-oracle-red.{sus,log}). No source-only inference is counted as a
+passing regression.
+
+The source list function is again a zero-required variadic and its generic body
+normalizes once then reads first before next. The array path handles nonzero
+IndexedSeq starting offsets. A private native list-function wrapper captures
+that original closure and four ordinary short helper closures. Its CODE_MAX is
+-1; spread forwards the original closure and normalized rest, and larger
+ordinary calls forward realized args with nil rest. Only ordinary entries0..3
+use helper entries, cached with their captured owner identities. Old wrappers
+therefore retain old helpers and original captures across later cache changes.
+Malformed owner/environment layouts raise language errors. No source function
+arity validation was relaxed and no shared ABI7 type changed. The original
+ClojureScript provenance remains, with EPL notice and the inspected JVM class
+SHA256 added to the adaptation rationale.
+
+pr474-list-oracle-focused-first.log: all10 existing/newly extended apply tests
+pass, Runtime and Macro, including list callback order, prefixes, a next1
+throwing input and Counted size25. pr474-list-oracle-focused-second.log: all71
+focused tests across15 targets pass, with no failures or ignored cases,
+including every previously selected CI failure. A wrapper test alternates two
+owners across GC, checks ordinary arities0..3, ordinary4/9 and apply delegation.
+It was strengthened to capture actual mutable atoms in the original closures;
+that follow-up passes separately (pr474-list-wrapper-captures.log).
+All347 Python tests and every CI foundation source check pass after this core
+adaptation (pr474-list-oracle-foundation.log).
+
+The copied release binary pr474-suss-list-oracle plus SHA256 receipt and
+pr474-list-oracle-source.patch identify the measured production source (e159
+plus that patch; later test-only capture strengthening does not change it).
+pr474-list-oracle-instructions/ retains all raw component/source/count evidence.
+Net instructions: list878.036, apply list1,615.710, prebuilt-list apply759.354.
+Range10/20/40/80/160:20,581 /31,231 /55,719 /101,508 /193,291. Larger sizes retain
+linear growth and the list case remains below2,000. No walltime acceptance is
+claimed. Both build/compile use names and stable Rust, with bounded scopes.
+
+The e159 full serial baseline was deliberately stopped after the independent
+source blocker was confirmed, using SIGTERM only on its verified live scope
+run-p1006690-i80680142.scope. The driver had completed its focused gate and
+started cargo +stable test --workspace --locked -- --test-threads=2. Its terminal
+exit is143; the workspace log is pr474-workspace-candidate.log. This is not a
+completed baseline pass. Run a new full serial baseline on corrected source;
+get independent follow-up review and green final-head CI before promotion.
+The separate proposed Reduced counterexample was withdrawn after confirming
+that shipped bitwise folds use the accepted private core-linked reducer; it
+was not reproduced on candidate source and was not used to weaken any test.
+
+
+## IFn wide-apply encoding correction (2026-11-19)
+
+Final-head CI run44657185352 at145e157 passed foundation and integration0-4,
+6-7, but integration5 failed the existing core_state multimethod case:
+`(apply va (range 22))` raised Not callable instead of231. The same debug
+artifact reproduced the failure locally (pr474-multifn22-red.log). The active
+serial baseline was stopped only after that concrete failure, by terminating
+its owned scope run-p1071585-i80730332.scope; terminal143 and the partial
+pr474-workspace-final.log are not a baseline pass.
+
+AFn/IFn's final overload receives twenty scalar arguments and an Object[]
+tail. Fresh JVM1.12.6 reify/AFn/MultiFn probes confirm packing at21/22/25,
+complete input traversal before dispatch, and an arity21 error for invalid
+fixed dispatch/target functions. Primary evidence is
+pr474-review-ifn-pack-jvm.log, pr474-review-afn-packing-jvm.log and the saved
+IFn/AFn/MultiFn javap logs. Suss previously passed the entire realized array
+to call-spread, whose callable-object protocol keys expect the encoded21
+parameters. Only the nonclosure apply-fixed path now packs this tail into a
+fresh object array; all arrays remain rooted in typed locals. Source/native
+spreads retain full arguments. Failed source dispatch reports21 above20 when
+all methods have Clojure-valid required arities, preserving the existing wider
+method extension's full counts.
+
+`cargo +stable test --release --workspace --locked --test core_state
+--test apply_fixed_arity --test portable_source_apply -- --test-threads=2`
+passes all38 tests (21/12/5), no failures or ignores, under a6GiB scope:
+pr474-ifn-packing-focused-second.log. New Runtime/Macro cases exercise
+multimethod success at20/21/22/25, wrong dispatch/target arities at21/22/25,
+and dispatch effects before target errors. Both independent ABI/rooting and semantic reviewers approve the three-file
+delta30d4c8b5922fa0112e6d9d82a004105b7e07cef251272457139d485852da575e.
+
+A fresh stable named release executable is retained as pr474-suss-ifn-final,
+with SHA256 receipt and source delta. Re-running the same scoped instruction
+harness gives net list878.028, apply-list1,614.701, prebuilt758.357, and
+range10/20/40/80/160:20,581 /31,231 /55,720 /101,508 /193,291. All raw counts,
+source and component remain in pr474-ifn-final-instructions/. The full command
+is `SUSS_FUNCTION_NAMES=1 systemd-run --user --scope -p MemoryMax=3G python3
+../pr474-candidate-instructions.py ../pr474-suss-ifn-final
+../pr474-ifn-final-instructions 145e157-plus-ifn-packing`; the harness uses
+perf stat instructions:u, warm-up then median3 N-minus-zero observations.
+No walltime claim is made. Build also used SUSS_FUNCTION_NAMES=1 and stable.
+
+The required `cargo +stable test --workspace --locked -- --test-threads=2`
+is running in its own6GiB scope with CARGO_BUILD_JOBS=2 and the shared Cargo
+target; pr474-workspace-ifn-final.log records its output and scope. Both it and
+green CI on the corrected final head remain required verification. Probe
+TMPDIR is the workspace target/probe directory throughout.

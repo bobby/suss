@@ -268,11 +268,10 @@ pub(super) fn functions(b: &mut Builder, coercion_types: coercions::Types) -> Ve
             &[],
             &[VALUE],
             &[
-                sentinel_value(NIL),
-                RefFunc(callback),
-                I32Const(1),
-                I32Const(-1),
-                Call(b.names["closure-new"]),
+                GlobalGet(apply::native_code(&format!("comparison-{name}"))),
+                sentinel_value(NIL), I32Const(0), RefI31,
+                sentinel_value(NIL), RefFunc(callback), I32Const(1), I32Const(-1),
+                StructNew(UNIVERSAL),
             ],
         );
     }

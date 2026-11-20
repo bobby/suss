@@ -100,7 +100,10 @@ fn source_apply_high_arity_and_sequence_tail_are_preserved() {
         eval_number(&mut session, "(apply (fn [x y & more] x) (ApplySeq. 0))"),
         RuntimeNumber::Long(0)
     );
-    assert_eq!(eval_number(&mut session, "seq-effects"), RuntimeNumber::Long(124));
+    // JVM 1.12.6's next-only preflight/extraction: three next calls,
+    // two first calls and two extraction next calls (3 + 20 + 2).
+    // Primary probe: target/probe/pr474-weighted-next-jvm.log.
+    assert_eq!(eval_number(&mut session, "seq-effects"), RuntimeNumber::Long(25));
     session.collect().unwrap();
     assert_eq!(
         eval_number(
@@ -112,7 +115,7 @@ fn source_apply_high_arity_and_sequence_tail_are_preserved() {
 }
 
 #[test]
-fn source_apply_corpus_matches_in_both_phases_with_explicit_strict_arity_boundary() {
+fn source_apply_corpus_matches_in_both_phases_with_explicit_jvm_boundaries() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let _bridge = suss_cli::portable_macro_data::FormBridge::new(&mut session).unwrap();
         session.enter_namespace("user").unwrap();
@@ -155,11 +158,17 @@ fn source_apply_corpus_matches_in_both_phases_with_explicit_strict_arity_boundar
                     "accepted design requires strict vector arity"
                 );
                 boundaries += 1;
+            } else if case["id"] == "sequence-forcing" {
+                // Keep the historical CLJS recording intact. Clojure 1.12.6
+                // advances the final required argument with next, not rest.
+                assert_eq!(primary, RuntimeNumber::Long(124));
+                assert_eq!(actual, RuntimeNumber::Long(25), "JVM apply traversal");
+                boundaries += 1;
             } else {
                 assert_eq!(actual, primary, "{}", case["id"]);
                 matching += 1;
             }
         }
-        assert_eq!((matching, boundaries), (20, 2));
+        assert_eq!((matching, boundaries), (19, 3));
     }
 }
