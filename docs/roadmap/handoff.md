@@ -24,6 +24,17 @@ median three N=1000-minus-0 observations. Timing acceptance requires a separate
 idle-wait command before bench.py; counts alone do not establish the 5x gate.
 Private perfmap /tmp bindings must point to target/probe-backed directories.
 
+Source-reload coverage additionally uses compiled_source_macros,
+portable_callable_metadata, portable_error_constructors,
+portable_hash_numeric_boundaries and portable_public_hash. Ordinary core source
+uses generic chunk fallbacks without native layout access or registration.
+The pre-PR source-mode vec/private-field limitation and working chunk/list
+pipeline are recorded by the isolated source_core_probe example and
+target/probe/m15-source-core-baseline-host-expanded.log. After switching source
+trees in the shared Cargo target, a stale generator is refreshed with
+cargo +stable clean --release -p suss-compile-generator; never bypass its
+compiler-source hash assertion.
+
 Reviewed native file/WIT selection and explicit mappings, shared compiled source/
 macro staging, scalar parsing/result handling, exact nested export invocation,
 command-mode separation and documented remaining frontend modes at855d281.

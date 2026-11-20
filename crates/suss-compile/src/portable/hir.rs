@@ -3247,7 +3247,7 @@ impl Analyzer<'_> {
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
             if symbol.name == "long-add" {
-                if !self.privileged {
+                if !self.privileged && self.environment.current_namespace(self.phase) != "suss.core" {
                     return Err(fail(form.span.clone(), "Private chunk adapters require compiled core"));
                 }
                 if args.len() != 2 {
@@ -3323,9 +3323,11 @@ impl Analyzer<'_> {
                 _ => None,
             };
             if let Some(operation) = operation {
-                if matches!(operation, Nominal::ChunkTypes | Nominal::ChunkNth | Nominal::ChunkAppend
-                    | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq | Nominal::LongCast)
-                    && !self.privileged {
+                let chunk = matches!(operation, Nominal::ChunkTypes | Nominal::ChunkNth | Nominal::ChunkAppend
+                    | Nominal::ChunkArray | Nominal::ChunkOffset | Nominal::ChunkSeq);
+                let ordinary_core = !self.privileged
+                    && self.environment.current_namespace(self.phase) == "suss.core";
+                if (chunk || operation == Nominal::LongCast) && !self.privileged && !ordinary_core {
                     return Err(fail(form.span.clone(), "Private chunk adapters require compiled core"));
                 }
                 if matches!(operation, Nominal::ApplySequenceOps | Nominal::ApplyCallee
@@ -3339,10 +3341,21 @@ impl Analyzer<'_> {
                         "Invalid private native object adapter arity",
                     ));
                 }
-                let operands = args
+                let mut operands = args
                     .iter()
                     .map(|argument| self.form(argument))
                     .collect::<Result<Vec<_>, _>>()?;
+                if chunk && ordinary_core {
+                    // Direct source loading keeps user-extensible descriptors.
+                    // It cannot register them as canonical or access native
+                    // storage, even when its namespace is suss.core. Evaluate
+                    // operands in order, then take the existing source fallback.
+                    let value = if operation == Nominal::ChunkTypes { Literal::Nil } else { Literal::Undefined };
+                    operands.push(self.literal_form(form, value));
+                    return Ok(Hir { source: None, span: form.span.clone(),
+                        metadata: form.metadata.clone(), ty: Type::Value,
+                        kind: std::sync::Arc::new(Expression::Do(operands)) });
+                }
                 return Ok(self.nominal(form, operation, operands));
             }
         }

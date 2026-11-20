@@ -210,8 +210,16 @@ fn chunk_adapters_are_private_and_registration_is_atomic() {
             (aset (suss.bootstrap/chunk-array (chunk-first (seq v))) 0 99))"),
             Err(SessionError::Compile(_))));
         session.eval("(ns suss.core)").unwrap();
-        assert!(matches!(session.eval("(suss.bootstrap/chunk-array nil)"),
-            Err(SessionError::Compile(_))));
+        session.eval("(def source-namespace-vector (vec (range 40)))").unwrap();
+        assert_eq!(printed(&mut session,
+            "(suss.bootstrap/undefined? (suss.bootstrap/chunk-array (chunk-first (seq source-namespace-vector))))"),
+            "true");
+        assert!(session.eval("(aset (suss.bootstrap/chunk-array
+            (chunk-first (seq source-namespace-vector))) 0 99)").is_err());
+        assert_eq!(printed(&mut session, "(nth source-namespace-vector 0)"), "0");
+        // Ordinary core source may evaluate its loader, but it cannot
+        // replace trusted registrations with user-extensible descriptors.
+        session.eval("(suss.bootstrap/chunk-types! nil nil nil)").unwrap();
         session.eval("(ns user)").unwrap();
         session.eval_privileged(r#"
           (deftype WrongChunkWitness [])
@@ -226,6 +234,30 @@ fn chunk_adapters_are_private_and_registration_is_atomic() {
            (let [b (chunk-buffer 1)]
              [(nil? (suss.bootstrap/chunk-append b 7)) (count b)])]"#, true),
           "[true [true 1]]");
+    }
+}
+
+#[test]
+fn ordinary_source_core_keeps_generic_chunks_without_native_layout_access() {
+    use suss_cli::portable_session::SessionOptions;
+    use suss_compile::portable::resolve::Phase;
+    for phase in [Phase::Runtime, Phase::Macro] {
+        let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
+        session.set_operation_fuel(100_000_000);
+        session.eval(include_str!("../../../runtime/core-import/suss/core.sus")).unwrap();
+        session.enter_namespace("user").unwrap();
+        assert_eq!(printed(&mut session, r#"
+          (try
+            (let [s (chunk-cons (array-chunk (object-array [0 1 2 3 4 5])) nil)]
+              [(apply list (map inc s)) (apply list (filter even? s))
+               (reduce + s) (apply str (map str s))])
+            (catch :default e [:unexpected-error (ex-message e)]))"#),
+            "[(1 2 3 4 5 6) (0 2 4) 15 \"012345\"]");
+        session.eval("(def source-loaded-chunk (array-chunk (object-array [7 8])))").unwrap();
+        session.collect().unwrap();
+        assert_eq!(printed_in(&mut session,
+            "(suss.bootstrap/undefined? (suss.bootstrap/chunk-array source-loaded-chunk))", true),
+            "true");
     }
 }
 

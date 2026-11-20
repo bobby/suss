@@ -154,9 +154,12 @@ use the private long-cast word, which emits the existing inline LongCast operati
 Numeric local tags alone do not insert a physical conversion.
 The private long-add word uses the existing checked, non-coercing arithmetic
 route for offsets, loop increments and output-array growth. These counters
-remain longs without a boxed arithmetic call on each element. Chunk adapters
-and these words require trusted compilation; changing the source namespace to
-suss.core does not grant access to backing arrays or descriptor registration.
+remain longs without a boxed arithmetic call on each element. Native chunk
+access and registration require trusted compilation. Ordinary source-loaded
+core retains the generic protocol/method paths: its chunk words evaluate
+their operands, then decline, and its registration word has no native effect.
+Checked numeric words remain available to those core definitions. Selecting
+the suss.core namespace never grants backing-array access or registration.
 
 Map/filter fill an owned Object[] directly and publish its ArrayChunk after
 the ordered callbacks complete. Their output buffer is private to the thunk;
