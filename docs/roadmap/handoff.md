@@ -1,5 +1,27 @@
 ## Independent PR177 review — typed invocation before guest initialization
 
+## M15 chunk adapter commands
+
+Current measurements, limitations and the next unblocked work are recorded on
+[issue #482](https://github.com/bobby/suss/issues/482), with the implementation in
+[PR #483](https://github.com/bobby/suss/pull/483). The JVM Clojure 1.12.6 probes and
+before/after artifacts use the target/probe/m15-chunk-* evidence families.
+ArrayChunk factory probes use a JVM ArrayChunk constructor adapter; the successful
+shared probe reduces chunk-cons, since JVM ArrayChunk itself is not seqable.
+
+Core changes belong in replacement JSON or the owned loader source, followed by
+core_import.py and apply_bootstrap.py --check. The focused release suites are
+clojure_chunk_effects, apply_fixed_arity, portable_chunk_effects,
+portable_lazy_transformations and portable_lazy_sequences. Use cargo +stable,
+CARGO_BUILD_JOBS=2, --test-threads=2 and a 4GiB systemd scope; the isolated Cargo
+target is target/probe/m15-hamt-target. Named builds and compiles both need
+SUSS_FUNCTION_NAMES=1. Keep TMPDIR and probe output under target/probe.
+
+Per-run instructions use m15-program-instructions.py with a warm-up case and
+median three N=1000-minus-0 observations. Timing acceptance requires a separate
+idle-wait command before bench.py; counts alone do not establish the 5x gate.
+Private perfmap /tmp bindings must point to target/probe-backed directories.
+
 Reviewed native file/WIT selection and explicit mappings, shared compiled source/
 macro staging, scalar parsing/result handling, exact nested export invocation,
 command-mode separation and documented remaining frontend modes at855d281.
@@ -30579,63 +30601,3 @@ records 349 passes and every source check in m15-bench-foundation.log.
 Initialize the pinned submodule in new worktrees first with
 `git submodule update --init clojurescript`; an initial uninitialized-worktree
 foundation failure is retained as m15-bench-foundation-uninitialized.log.
-
-## Chunk return and callback effects (2026-11-20 UTC)
-
-Named stable cycles profiles on a46c0c4e use the immutable executable
-m15-hamt-suss-rebased, the matching generated core and private target/probe-backed
-perfmap directories, with SUSS_PROFILE=perfmap and SUSS_FUNCTION_NAMES=1.
-The lazy profile command records 20,000 iterations:
-
-```sh
-profile_dir="$PWD/target/probe/m15-lazy-a46-cycles"
-systemd-run --user --scope -p MemoryMax=3G bwrap --bind / / \
-  --bind "$profile_dir/perfmap" /tmp \
-  perf record -e cycles:u -o "$profile_dir/perf.data" -- \
-  "$PWD/target/probe/m15-hamt-suss-rebased" run \
-  "$PWD/target/probe/m15-hamt-rebased-instructions/bench.wasm" \
-  --invoke case-lazy-pipeline -- 20000
-```
-
-The into-map profile uses its separate directory and 4,000 iterations. Full data/reports, compact symbol rows,
-source bodies and hashes remain under m15-{lazy,into-map}-a46-cycles/. These are
-whole-process samples including startup, not N-minus-zero percentages.
-ArrayChunk.-nth is 20.40% and ChunkBuffer.add 10.28% of lazy cycles; protocol lookup
-is 5.03%, named read/write 6.21% and object-descriptor 3.40%. After bulk copying,
-BitmapIndexedNode.inode_assoc! remains 22.72% of into-map cycles, TransientHashMap
-assoc! 6.32%, ArrayNode.inode_assoc! 4.80% and ensure_editable 4.07%.
-
-Fresh executed JVM Clojure 1.12.6 observations are in m15-chunk-public-jvm.log;
-main 67c76c2a and a46c0c4e both disagree in five cases, recorded explicitly as
-matches=false in m15-chunk-public-baseline-mismatch.json. Successful append
-returns nil on the JVM, not the new count. A failing append advances end before
-the bounds/null store error, including after chunk publication. JVM filter
-captures each value once before pred, so a predicate replacing that backing-array
-slot still emits the original item. Nonzero chunk offset/end and unchecked nth
-observations already agree. The JVM adapter constructs clojure.lang.ArrayChunk
-for Suss's implementation-only array-chunk factory, with no identity assertions.
-Initial probes using unavailable array-chunk/println or reducing a non-seqable
-JVM chunk directly remain retained failures; the successful paired probe uses
-an aggregate result vector and reduces chunk-cons instead.
-
-The ChunkBuffer replacement now captures buffer/index, advances end before aset,
-and returns nil. Filter binds the indexed value once before its predicate.
-The new class patch has a updated adaptation/recipe entry and retained EPL
-provenance; core_import.py regenerated 508 files and apply_bootstrap.py --check
-passes. clojure_chunk_effects.rs adds Runtime/Macro regressions using the actual
-JVM values, with GC after evaluation. The focused release command is:
-
-```sh
-cargo +stable test --release --locked -p suss-cli \
-  --test clojure_chunk_effects --test portable_chunk_effects \
-  --test portable_lazy_transformations --test portable_lazy_sequences \
-  -- --test-threads=2
-```
-
-It passes 12 tests across 4 targets, with zero failures/ignores. The two Cargo jobs
-and named build run in a 4GiB scope, reusing the isolated m15-hamt-target directory;
-the immutable reviewed executables are separate copies. The complete Python and
-foundation run passes 347 tests and every source check in its 2GiB scope; logs are
-m15-chunk-effects-{focused,foundation,import}.log. These correctness changes do
-not by themselves establish the program timing targets; use fresh execution and
-quiet measurements for subsequent optimizations.

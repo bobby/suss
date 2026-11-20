@@ -6142,7 +6142,7 @@
 
 (def chunk-buffer (fn [capacity] (ChunkBuffer. (make-array capacity) 0)))
 
-(def chunk-append (fn [b x] (.add b x)))
+(def chunk-append (fn [b x] (let [result (suss.bootstrap/chunk-append b x)] (if (suss.bootstrap/undefined? result) (.add b x) result))))
 
 (def chunk (fn [b] (.chunk b)))
 
@@ -6162,9 +6162,9 @@
            (rf result (apply f input inputs)))))) ([f coll]
    (new LazySeq nil (fn* [] (let [lazy-when-value__635 (seq coll)] (if lazy-when-value__635 (let [s lazy-when-value__635] (if (chunked-seq? s)
         (let [c (chunk-first s)
-              size (count c)
+              ^long size (count c)
               b (chunk-buffer size)]
-          (let [lazy-dotimes-limit__795 size] (loop [i 0] (when (cljs.core/< i lazy-dotimes-limit__795) (chunk-append b (f (-nth c i))) (recur (cljs.core/inc i)))))
+          (let [lazy-dotimes-limit__795 size] (loop [i 0] (when (cljs.core/< i lazy-dotimes-limit__795) (chunk-append b (f (let [chunk-value (suss.bootstrap/chunk-nth c i)] (if (suss.bootstrap/undefined? chunk-value) (-nth c i) chunk-value)))) (recur (cljs.core/inc i)))))
           (chunk-cons (chunk b) (map f (chunk-rest s))))
         (cons (f (first s)) (map f (rest s))))) nil))) nil nil)) ([f c1 c2]
    (new LazySeq nil (fn* [] (let [s1 (seq c1) s2 (seq c2)]
@@ -6194,9 +6194,9 @@
              result))))) ([pred coll]
    (new LazySeq nil (fn* [] (let [lazy-when-value__420 (seq coll)] (if lazy-when-value__420 (let [s lazy-when-value__420] (if (chunked-seq? s)
         (let [c (chunk-first s)
-              size (count c)
+              ^long size (count c)
               b (chunk-buffer size)]
-          (let [lazy-dotimes-limit__580 size] (loop [i 0] (when (cljs.core/< i lazy-dotimes-limit__580) (let [v (-nth c i)]
+          (let [lazy-dotimes-limit__580 size] (loop [i 0] (when (cljs.core/< i lazy-dotimes-limit__580) (let [v (let [chunk-value (suss.bootstrap/chunk-nth c i)] (if (suss.bootstrap/undefined? chunk-value) (-nth c i) chunk-value))]
               (when (pred v)
                 (chunk-append b v))) (recur (cljs.core/inc i)))))
           (chunk-cons (chunk b) (filter pred (chunk-rest s))))
@@ -11882,6 +11882,10 @@ reduces them without incurring seq initialization"
 ;; The hash map's, its nodes' and the hash set's types, likewise (#442).
 (suss.bootstrap/hash-map-types! (.-EMPTY PersistentHashMap) (.-EMPTY BitmapIndexedNode)
   (ArrayNode. nil 0 (make-array 32)) (.-EMPTY PersistentHashSet))
+
+;; Canonical chunks are owned core types; user IChunk implementations retain
+;; their protocol path. Register witnesses after all core definitions exist.
+(suss.bootstrap/chunk-types! (ArrayChunk. (make-array 0) 0 0) (chunk-buffer 0))
 
 ;; Original Suss (#425): ExceptionInfo is an error, as Clojure's is an
 ;; Exception, so suss.bootstrap/error? and the error printer take it. Its

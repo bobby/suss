@@ -282,6 +282,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::ArrayMapGet | Nominal::MapContains | Nominal::MapGetOr => { names.insert("map-lookup"); }
                         Nominal::MapAssoc => { names.insert("map-assoc"); }
                         Nominal::HashMapTypes => { names.insert("hash-map-type-register"); }
+                        Nominal::ChunkTypes => { names.insert("chunk-types-register"); }
+                        Nominal::ChunkNth => { names.insert("chunk-nth"); }
+                        Nominal::ChunkAppend => { names.insert("chunk-buffer-append"); }
                         Nominal::LongCast => { names.insert("number-cast-long"); }
                         Nominal::UncheckedLongCast => { names.insert("number-cast-unchecked-long"); }
                         Nominal::DoubleCast => { names.insert("number-cast-double"); }
@@ -824,6 +827,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
             "number-parse-long" | "hash-map-type-register" => (vec![VALUE; 4], vec![VALUE]),
+            "chunk-types-register" | "chunk-nth" | "chunk-buffer-append" => (vec![VALUE; 2], vec![VALUE]),
             "packed-array-copy" | "object-array-copy-forward" | "object-array-copy-backward" => (vec![VALUE; 5], vec![VALUE]),
             "number-range-count" | "packed-array-store" | "array-set" | "packed-array-set-3" | "map-assoc" => (vec![VALUE; 3], vec![VALUE]),
             "map-lookup" => (vec![VALUE, VALUE, ValType::I32, VALUE], vec![VALUE]),
@@ -3607,6 +3611,18 @@ fn emit_function(
                                 function.instruction(&LocalGet(argument.0 as u32 + offset));
                             }
                             function.instruction(&Call(index("hash-map-type-register")));
+                        }
+                        Nominal::ChunkTypes | Nominal::ChunkNth | Nominal::ChunkAppend => {
+                            let mut code = vec![];
+                            for argument in arguments {
+                                locals.push_boxed(&mut code, *argument);
+                            }
+                            code.push(Call(index(match operation {
+                                Nominal::ChunkTypes => "chunk-types-register",
+                                Nominal::ChunkNth => "chunk-nth",
+                                _ => "chunk-buffer-append",
+                            })));
+                            for instruction in code { function.instruction(&instruction); }
                         }
                         Nominal::StringHash => {
                             function

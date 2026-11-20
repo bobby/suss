@@ -4,6 +4,7 @@
 use super::*;
 
 const CODE_GLOBAL: u32 = LIST_DESCRIPTOR + 1;
+pub(super) const GLOBAL_END: u32 = CODE_GLOBAL + 9;
 fn owner(arity: u32) -> u32 { CODE_GLOBAL + 1 + 2 * arity }
 fn entry(arity: u32) -> u32 { owner(arity) + 1 }
 

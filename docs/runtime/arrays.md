@@ -117,3 +117,33 @@ exception order. Primitive/mixed array kinds and non-i31 indices retain the
 original loop. An empty copy with i31 indices returns the receiver before array
 checks; the backward loop's preparatory i-1 and j-1 cannot overflow a long for
 those inputs. All source arguments are still evaluated once, left to right.
+
+
+## Canonical chunk adapters
+
+The owned loader registers ArrayChunk and ChunkBuffer descriptor witnesses after
+core definitions exist. Two private globals are appended after existing runtime
+globals; shared ABI 7 types and prior global offsets are unchanged. Registration
+stages both descriptors before publishing either.
+
+`chunk-nth(chunk, index)` reads canonical ArrayChunk Object[] storage when its
+index/offset are nonnegative i31s and their sum is within the underlying array.
+Two-argument indexed access deliberately uses the array bounds rather than the
+chunk end, matching JVM ArrayChunk. Nil is a successful element, not a cache miss.
+Unsupported receivers, storage, indices or ranges return internal undefined;
+map/filter then perform their original protocol read. Custom chunk effects and
+primitive-backed implementation paths remain on that fallback.
+
+`chunk-buffer-append(buffer, value)` admits a canonical buffer with Object[]
+storage, an in-bounds nonnegative i31 end and an increment representable as i31.
+It increments the private end before storing the element and returns nil. A
+miss performs no writes: the source add method retains JVM failed-store effects,
+including incrementing before bounds/null errors. Typed locals root the object,
+fields and storage; neither adapter allocates or invokes a callback between its
+checks and access. Existing globals are never relocated or reused.
+
+Map/filter widen their chunk count to a primitive local long once before the
+loop. This uses the JVM Counted integer contract without adding a primitive
+function entry at every helper call. Filter captures an item before its predicate
+and appends that same value; helper admission does not move reads across user
+callbacks. Core direct-linking and built-in ownership rules remain in force.

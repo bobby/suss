@@ -22,6 +22,7 @@ mod exceptions;
 mod identity_hash;
 mod longs;
 mod maps;
+mod chunks;
 mod named_properties;
 mod native_object_factory;
 mod native_object_methods;
@@ -1877,6 +1878,7 @@ fn build_module() -> Vec<u8> {
     let mut arithmetic_functions = arithmetic::functions(&mut b, primitives);
     arithmetic_functions.extend(arrays::functions(&mut b));
     maps::functions(&mut b);
+    chunks::functions(&mut b);
     arithmetic_functions.extend(nominal::functions(&mut b, generic_invoke));
     // The out-of-line call path (ADR-0004). A closure is invoked; any other
     // callee is bound through IFn's `-invoke` key for its signature arity,
@@ -2642,6 +2644,7 @@ fn build_module() -> Vec<u8> {
         globals.global(GlobalType { val_type: ValType::I32, mutable: true, shared: false }, &ConstExpr::i32_const(0));
     }
     apply::append_globals(&mut globals, &b, &universal_entries);
+    chunks::append_globals(&mut globals);
     b.exports.export("protocol-epoch", ExportKind::Global, PROTOCOL_EPOCH_GLOBAL);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

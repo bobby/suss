@@ -509,6 +509,10 @@ pub enum Nominal {
     MapAssoc,
     /// `hash-map-types!(m, bitmap-node, array-node, set)` (#442).
     HashMapTypes,
+    /// Canonical core chunk witnesses and guarded indexed read/append (#482).
+    ChunkTypes,
+    ChunkNth,
+    ChunkAppend,
     /// A `^long` or `^double` parameter's value (#385): Clojure's checked
     /// longCast or doubleCast of the argument, kept as a raw i64 or f64.
     LongCast,
@@ -712,6 +716,7 @@ impl Nominal {
                 Self::PackedGet(_) | Self::VectorNth | Self::ArrayMapGet | Self::MapContains => count == 2,
                 Self::ObjectArrayCopy(_) => count == 5,
                 Self::HashMapTypes => count == 4,
+                Self::ChunkTypes | Self::ChunkNth | Self::ChunkAppend => count == 2,
                 Self::MapGetOr | Self::MapAssoc => count == 3,
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
@@ -3273,6 +3278,9 @@ impl Analyzer<'_> {
                 "map-contains" => Some(Nominal::MapContains),
                 "map-get-or" => Some(Nominal::MapGetOr),
                 "hash-map-types!" => Some(Nominal::HashMapTypes),
+                "chunk-types!" => Some(Nominal::ChunkTypes),
+                "chunk-nth" => Some(Nominal::ChunkNth),
+                "chunk-append" => Some(Nominal::ChunkAppend),
                 "string-index-of" => Some(Nominal::StringIndexOf),
                 "string-slice" => Some(Nominal::StringSlice),
                 "string-from-unit" => Some(Nominal::StringFromUnit),
