@@ -2111,6 +2111,7 @@ fn emit_function(
     // block, has its object's fields array read once on entry, into a
     // nullable local of the args type: null when it isn't an object.
     let mut fields_of: std::collections::HashMap<u32, u32> = std::collections::HashMap::new();
+    let mut descriptors_of: std::collections::HashMap<u32, u32> = std::collections::HashMap::new();
     if continuation.is_none() && ir.blocks.first().is_some()
         && !ir.blocks.iter().any(|block| match &block.terminator {
             Terminator::Jump { target, .. } => *target == 0,
@@ -2119,16 +2120,25 @@ fn emit_function(
         })
     {
         let mut reads: std::collections::HashMap<u32, usize> = std::collections::HashMap::new();
+        let mut named_reads: std::collections::HashMap<u32, usize> = std::collections::HashMap::new();
         for inst in ir.blocks.iter().flat_map(|block| &block.instructions) {
             if let Operation::Nominal { operation: Nominal::Field(_), arguments } = &inst.operation {
                 *reads.entry(arguments[0].0 as u32).or_default() += 1;
             }
+            if let Operation::Nominal { operation: Nominal::CoreNamedGet, arguments } = &inst.operation {
+                *named_reads.entry(arguments[0].0 as u32).or_default() += 1;
+            }
         }
         for parameter in &ir.blocks[0].parameters {
-            if reads.get(&(parameter.0 as u32)).is_some_and(|count| *count >= 2) {
+            let named = named_reads.get(&(parameter.0 as u32)).is_some_and(|count| *count >= 3);
+            if reads.get(&(parameter.0 as u32)).is_some_and(|count| *count >= 2) || named {
                 let local = pc + 1 + declarations.iter().skip(2).map(|(count, _)| count).sum::<u32>();
                 fields_of.insert(parameter.0 as u32, local);
                 declarations.push((1, ValType::Ref(wasm_encoder::RefType { nullable: true, heap_type: HeapType::Concrete(runtime_abi::ARGS) })));
+                if named {
+                    descriptors_of.insert(parameter.0 as u32, local + 1);
+                    declarations.push((1, VALUE));
+                }
             }
         }
     }
@@ -2164,8 +2174,17 @@ fn emit_function(
         function
             .instruction(&LocalGet(value + offset))
             .instruction(&RefTestNonNull(HeapType::Concrete(7)))
-            .instruction(&If(BlockType::Result(ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(runtime_abi::ARGS) }))))
-            .instruction(&LocalGet(value + offset))
+            .instruction(&If(BlockType::Result(ValType::Ref(RefType { nullable: true, heap_type: HeapType::Concrete(runtime_abi::ARGS) }))));
+        // Only the immutable layout is retained. Field array elements and
+        // site descriptors are still read at each original use, after any
+        // callbacks, mutations, protocol extension or garbage collection.
+        if let Some(descriptor) = descriptors_of.get(value) {
+            function.instruction(&LocalGet(value + offset))
+                .instruction(&RefCastNonNull(HeapType::Concrete(7)))
+                .instruction(&StructGet { struct_type_index: 7, field_index: 0 })
+                .instruction(&LocalSet(*descriptor));
+        }
+        function.instruction(&LocalGet(value + offset))
             .instruction(&RefCastNonNull(HeapType::Concrete(7)))
             .instruction(&StructGet { struct_type_index: 7, field_index: 1 })
             .instruction(&Else)
@@ -3194,9 +3213,12 @@ fn emit_function(
                             let storage = storage_locals + 6;
                             let site = |field| [GlobalGet(cache), StructGet { struct_type_index: runtime_abi::NAMED_SITE, field_index: field }];
                             let object_type = RefType { nullable: false, heap_type: HeapType::Concrete(7) };
-                            let mut code = vec![
-                                Block(BlockType::Result(VALUE)),
-                                Block(BlockType::Empty),
+                            let mut code = vec![Block(BlockType::Result(VALUE)), Block(BlockType::Empty)];
+                            if let Some(descriptor) = descriptors_of.get(&(arguments[0].0 as u32)) {
+                                code.extend([LocalGet(fields_of[&(arguments[0].0 as u32)]),
+                                    BrOnNull(0), LocalSet(storage), LocalGet(*descriptor)]);
+                            } else {
+                            code.extend([
                                 Block(BlockType::Result(ValType::Ref(object_type))),
                                 LocalGet(object),
                                 BrOnCast { relative_depth: 0, from_ref_type: RefType::EQREF, to_ref_type: object_type },
@@ -3208,7 +3230,8 @@ fn emit_function(
                                 LocalGet(object),
                                 RefCastNonNull(HeapType::Concrete(7)),
                                 StructGet { struct_type_index: 7, field_index: 0 },
-                            ];
+                            ]);
+                            }
                             code.extend(site(runtime_abi::SITE_DESCRIPTOR));
                             code.extend([RefEq, I32Eqz, BrIf(0)]);
                             code.extend(site(runtime_abi::SITE_SLOT));
