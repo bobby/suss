@@ -3337,7 +3337,7 @@
   (do
   ;; Sequence folding is adapted from Clojure 1.12.6 clojure/core.clj reduce1.
   ;; Copyright (c) Rich Hickey. EPL-1.0; see runtime/core-import/LICENSE.
-  (declare MultiFn -get-method ^:private throw-no-method-error)
+  (declare Var)
   (suss.bootstrap/apply-sequence-ops!
     seq
     (fn [s] (-first s))
@@ -3348,12 +3348,8 @@
       (cond
         (instance? MetaFn f)
         (suss.bootstrap/apply-to-seq (.-afn f) args)
-        (and (suss.compiler/cell-defined? suss.core/MultiFn) (instance? MultiFn f))
-        (let [dispatch-val (suss.bootstrap/apply-to-seq (.-dispatch-fn f) args)
-              method (-get-method f dispatch-val)]
-          (if (nil? method)
-            (throw-no-method-error (.-name f) dispatch-val)
-            (suss.bootstrap/apply-to-seq method args)))
+        (and (suss.compiler/cell-defined? suss.core/Var) (instance? Var f))
+        (suss.bootstrap/apply-to-seq ((.-val f)) args)
         :else (suss.bootstrap/apply-fixed f args)))
     count
     nth

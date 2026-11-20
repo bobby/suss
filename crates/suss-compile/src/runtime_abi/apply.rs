@@ -221,18 +221,22 @@ fn fixed_arguments(b: &mut Builder) {
 }
 
 fn native_entries(b: &mut Builder) -> Vec<u32> {
-    // Native family bodies are wired independently of source closure spreads.
-    // Keep the ordinary callback route while those bodies are installed.
+    // Public native RestFn families have their own required arities and
+    // traversal rules; accepted min/max counts cannot describe those rules.
     let mut declared = vec![];
     for name in ["add", "subtract", "multiply", "divide"] {
         declared.push(fold_spread(b, name, false));
     }
     for name in FAMILIES {
-        if name.starts_with("bit-") {
-            declared.push(fold_spread(b, name, true));
-        } else {
-            b.names.insert(format!("apply-{name}-spread"), b.names["universal-spread"]);
-        }
+        let spread = match name {
+            name if name.starts_with("bit-") => fold_spread(b, name, true),
+            name if name.starts_with("comparison-") => comparison_spread(b, name),
+            "array-get" => array_access_spread(b, false),
+            "array-set" => array_access_spread(b, true),
+            "array-make" => array_make_spread(b),
+            _ => unreachable!("native apply family"),
+        };
+        declared.push(spread);
     }
     declared
 }
@@ -245,17 +249,7 @@ fn fold_spread(b: &mut Builder, name: &str, bitwise: bool) -> u32 {
     use Instruction::*;
     // 0 closure, 1 realized prefix, 2 normalized rest; 3 joined seq,
     // 4 first argument, 5 second argument, 6 accumulator, 7 reducer.
-    let mut code = vec![LocalGet(2), RefIsNull, If(BlockType::Empty),
-        LocalGet(0), LocalGet(1), ReturnCall(b.names["invoke"]), End,
-        LocalGet(1), LocalGet(2), Call(b.names["apply-join"]), LocalSet(3),
-        LocalGet(3), I32Const(2), Call(b.names["apply-bounded-length"]),
-        I32Const(2), I32LeU, If(BlockType::Empty),
-        LocalGet(0), LocalGet(3), Call(b.names["apply-fixed-arguments"]),
-        RefCastNonNull(HeapType::Concrete(ARGS)), ReturnCall(b.names["invoke"]), End];
-    for target in [4, 5] {
-        code.extend([LocalGet(3), Call(b.names["apply-first"]), LocalSet(target),
-            LocalGet(3), Call(b.names["apply-next"]), LocalSet(3)]);
-    }
+    let mut code = restfn_arguments(b, 2);
     if bitwise {
         code.extend([LocalGet(4), LocalGet(5), Call(b.names[&format!("primitive-{name}")]),
             LocalSet(6), LocalGet(0), RefCastNonNull(HeapType::Concrete(UNIVERSAL)),
@@ -269,5 +263,83 @@ fn fold_spread(b: &mut Builder, name: &str, bitwise: bool) -> u32 {
     code.extend([LocalGet(7), LocalGet(6), LocalGet(3), ReturnCall(b.names["apply-fold"])]);
     let spread = b.typed(SPREAD, &[(5, VALUE)], &code);
     b.names.insert(format!("apply-{name}-spread"), spread);
+    spread
+}
+
+fn restfn_arguments(b: &Builder, required: u32) -> Vec<Instruction<'static>> {
+    use Instruction::*;
+    let mut code = vec![LocalGet(2), RefIsNull, If(BlockType::Empty),
+        LocalGet(0), LocalGet(1), ReturnCall(b.names["invoke"]), End,
+        LocalGet(1), LocalGet(2), Call(b.names["apply-join"]), LocalSet(3),
+        LocalGet(3), I32Const(required as i32), Call(b.names["apply-bounded-length"]),
+        I32Const(required as i32), I32LeU, If(BlockType::Empty),
+        LocalGet(0), LocalGet(3), Call(b.names["apply-fixed-arguments"]),
+        RefCastNonNull(HeapType::Concrete(ARGS)), ReturnCall(b.names["invoke"]), End];
+    for target in 4..4 + required {
+        code.extend([LocalGet(3), Call(b.names["apply-first"]), LocalSet(target),
+            LocalGet(3), Call(b.names["apply-next"]), LocalSet(3)]);
+    }
+    code
+}
+
+fn comparison_spread(b: &mut Builder, family: &str) -> u32 {
+    use Instruction::*;
+    let operation = family.strip_prefix("comparison-").unwrap();
+    let operation = if operation == "strict-equal" { "equal" } else { operation };
+    let helper = b.names[&format!("comparison-number-{operation}")];
+    let mut code = restfn_arguments(b, 2);
+    // core.clj tests the first pair before touching more. On a true pair,
+    // next(more) precedes first(more), and the recursive path calls next
+    // again. These calls are observable even on a Counted ISeq.
+    code.extend([Loop(BlockType::Empty), LocalGet(4), LocalGet(5), Call(helper),
+        sentinel_value(FALSE), RefEq, If(BlockType::Empty), sentinel_value(FALSE), Return, End,
+        LocalGet(3), Call(b.names["apply-next"]), RefIsNull, If(BlockType::Empty),
+        LocalGet(5), LocalGet(3), Call(b.names["apply-first"]), ReturnCall(helper), End,
+        LocalGet(5), LocalSet(4), LocalGet(3), Call(b.names["apply-first"]), LocalSet(5),
+        LocalGet(3), Call(b.names["apply-next"]), LocalSet(3), Br(0), End, Unreachable]);
+    let spread = b.typed(SPREAD, &[(3, VALUE)], &code);
+    b.names.insert(format!("apply-{family}-spread"), spread);
+    spread
+}
+
+fn array_access_spread(b: &mut Builder, writing: bool) -> u32 {
+    use Instruction::*;
+    let mut code = restfn_arguments(b, if writing { 3 } else { 2 });
+    // Each recursive source apply does its own list* and RestFn preflight.
+    // Access this array before looking at the subsequent recursive arguments.
+    code.extend([LocalGet(0), LocalGet(4), LocalGet(5), Call(b.names["array-get"])]);
+    if writing { code.push(LocalGet(6)); }
+    code.extend([ArrayNewFixed { array_type_index: ARGS, array_size: if writing { 2 } else { 1 } },
+        LocalGet(3), ReturnCall(b.names["apply"])]);
+    let spread = b.typed(SPREAD, &[(4, VALUE)], &code);
+    b.names.insert(format!("apply-array-{}-spread", if writing { "set" } else { "get" }), spread);
+    spread
+}
+
+fn array_make_spread(b: &mut Builder) -> u32 {
+    use Instruction::*;
+    // 3 remaining, 4 type, 5 first size, 6 dimension seq, 7 count, 8 index,
+    // 9 realized arguments. Preserve count followed by repeated nth, including
+    // conversion after each nth. The existing native body owns allocation.
+    let mut code = restfn_arguments(b, 2);
+    code.extend([LocalGet(5), LocalGet(3), Call(b.names["apply-cons"]), LocalSet(6),
+        LocalGet(6), Call(b.names["apply-count"]), Call(b.names["number-cast-int"]),
+        Call(b.names["long-unbox"]), I32WrapI64, LocalTee(7), I32Const(arrays::MAX_LENGTH - 1), I32GtU]);
+    fail_if(&mut code);
+    code.extend([LocalGet(7), I32Const(1), I32Add, ArrayNewDefault(ARGS), LocalSet(9)]);
+    code.extend(cast_args(9));
+    code.extend([I32Const(0), LocalGet(4), ArraySet(ARGS),
+        I32Const(0), LocalSet(8), Block(BlockType::Empty), Loop(BlockType::Empty),
+        LocalGet(8), LocalGet(7), I32GeU, BrIf(1)]);
+    code.extend(cast_args(9));
+    code.extend([LocalGet(8), I32Const(1), I32Add, LocalGet(6),
+        LocalGet(8), I64ExtendI32U, Call(b.names["long-box"]), Call(b.names["apply-nth"]),
+        Call(b.names["number-cast-int"]), ArraySet(ARGS),
+        LocalGet(8), I32Const(1), I32Add, LocalSet(8), Br(0), End, End,
+        LocalGet(0)]);
+    code.extend(cast_args(9));
+    code.push(ReturnCall(b.names["invoke"]));
+    let spread = b.typed(SPREAD, &[(4, VALUE), (2, ValType::I32), (1, VALUE)], &code);
+    b.names.insert("apply-array-make-spread".into(), spread);
     spread
 }

@@ -99,6 +99,15 @@ fn apply_sequence_callbacks_follow_clojure_1_12_6() {
         ] {
             assert_eq!(printed(&mut session, source), expected, "{source}");
         }
+        // AFn's >20 path reads the first twenty, counts the remainder
+        // without first, then extracts it. JVM size25 has 51 next calls.
+        assert_eq!(printed(&mut session, r#"
+            (let [[answer events] (trace-apply (fn [a b] [a b]) 25)]
+              [answer (count events)
+               (count (filter (fn [event] (= (first event) :next)) events))
+               (count (filter (fn [event] (= (first event) :first)) events))
+               (count (filter (fn [event] (= (first event) :rest)) events))])
+        "#), "[:arity 77 51 25 0]");
         // RT.boundedLength also walks next for a Counted ISeq. Public
         // bounded-count has different semantics and must keep its fast path.
         session.eval(r#"
@@ -220,5 +229,127 @@ fn numeric_apply_respects_chunk_end_boundaries() {
         assert_eq!(printed(&mut session,
             "(try (apply + (chunk-cons (array-chunk (array 1 2 3 :bad) 0 3) nil))
                   (catch :default e [:error (ex-message e)]))"), "6");
+    }
+}
+
+#[test]
+fn primitive_var_calls_and_variadic_rests_coexist_after_redefinition() {
+    // The ABI 7 primitive call caches and variadic rest construction both
+    // live in this fragment. Exercise repeated hits and arbitrary var misses.
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval(r#"
+            (def mixed-typed-step (fn ^long [^long n] (unchecked-inc n)))
+            (def mixed-call-and-rest (fn [n]
+              [(mixed-typed-step n) ((fn [& xs] xs) 7 8 9) (mixed-typed-step n)]))
+        "#).unwrap();
+        for _ in 0..2 {
+            assert_eq!(printed(&mut session, "(mixed-call-and-rest 1099511627776)"),
+                "[1099511627777 (7 8 9) 1099511627777]");
+        }
+        session.eval("(def mixed-typed-step (fn [n] :replacement))").unwrap();
+        assert_eq!(printed(&mut session, "(mixed-call-and-rest 1099511627776)"),
+            "[:replacement (7 8 9) :replacement]");
+    }
+}
+
+#[test]
+fn native_apply_families_keep_their_own_lazy_error_boundaries() {
+    // Clojure 1.12.6: pr474-review-native-variadics-jvm.log. Comparison
+    // lookahead and recursive aget/aset apply have different forcing limits.
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval(r#"
+            (def native-apply-events [])
+            (def native-apply-array (let [a (object-array 1)] (aset a 0 a) a))
+            (def trace-native-apply
+              (fn [f values]
+                (set! native-apply-events [])
+                (let [answer (try
+                               (apply f (map (fn [n]
+                                               (set! native-apply-events (conj native-apply-events n))
+                                               (when (= n 12) (throw (ex-info "limit" {})))
+                                               (nth values n 0))
+                                             (iterate inc 0)))
+                               (catch :default e :threw))]
+                  [answer native-apply-events])))
+        "#).unwrap();
+        for (source, expected) in [
+            ("(trace-native-apply < [2 1])", "[false [0 1 2 3]]"),
+            ("(trace-native-apply <= [2 1])", "[false [0 1 2 3]]"),
+            ("(trace-native-apply > [1 2])", "[false [0 1 2 3]]"),
+            ("(trace-native-apply >= [1 2])", "[false [0 1 2 3]]"),
+            ("(trace-native-apply == [1 2])", "[false [0 1 2 3]]"),
+            ("(trace-native-apply < [0 1 2 3 4 :bad])", "[:threw [0 1 2 3 4 5 6]]"),
+            ("(trace-native-apply == [1 1 1 1 1 :bad])", "[:threw [0 1 2 3 4 5 6]]"),
+            ("(trace-native-apply aget [nil 0])", "[:threw [0 1 2 3]]"),
+            ("(trace-native-apply aget [native-apply-array :bad])", "[:threw [0 1 2 3]]"),
+            ("(trace-native-apply aget [native-apply-array 0 0 0 0 :bad])", "[:threw [0 1 2 3 4 5 6 7]]"),
+            ("(trace-native-apply aset [nil 0 0])", "[:threw [0 1 2 3 4]]"),
+            ("(trace-native-apply aset [native-apply-array :bad 0])", "[:threw [0 1 2 3 4]]"),
+            ("(trace-native-apply aset [native-apply-array 0 0 0 0 :bad])", "[:threw [0 1 2 3 4 5 6 7 8]]"),
+            ("(trace-native-apply make-array [:bad 1 :bad])", "[:threw [0 1 2 3 4 5 6 7 8 9 10 11 12]]"),
+        ] {
+            assert_eq!(printed(&mut session, source), expected, "{source}");
+        }
+    }
+}
+
+#[test]
+fn callable_apply_preserves_meta_var_and_multifn_traversal_after_gc() {
+    // JVM 1.12.6: pr474-callable-rest-var-jvm.log and callable-applyto-javap.
+    // Metadata wrappers and Vars delegate; MultiFn inherits AFn.applyTo.
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        // Session::eval does not expand defmulti. Only this internal fixture
+        // constructs core Var/MultiFn values with the trusted host API.
+        session.eval_privileged(r#"
+            (def lazy-callable-events [])
+            (def lazy-callable-meta (with-meta (fn [a & args] a) {:doc 7}))
+            (def lazy-callable-target (fn [a & args] a))
+            (def lazy-callable-var (Var. (fn [] lazy-callable-target) 'lazy-callable-target nil))
+            (def lazy-callable-multi
+              (MultiFn. "lazy-multi" (fn [a & args] :chosen) :default
+                        (atom (make-hierarchy)) {} {} {} nil nil nil))
+            (-add-method lazy-callable-multi :chosen (fn [a & args] a))
+            (def trace-lazy-callable
+              (fn [f]
+                (set! lazy-callable-events [])
+                (let [answer (try
+                               (apply f (map (fn [n]
+                                               (set! lazy-callable-events (conj lazy-callable-events n))
+                                               (when (= n 40) (throw (ex-info "limit" {}))) n)
+                                             (iterate inc 0)))
+                               (catch :default e :threw))]
+                  [answer lazy-callable-events])))
+        "#).unwrap();
+        session.collect().unwrap();
+        for callee in ["lazy-callable-meta", "lazy-callable-var"] {
+            assert_eq!(printed(&mut session, &format!("(trace-lazy-callable {callee})")),
+                "[0 [0 1 2]]", "{callee}");
+        }
+        assert_eq!(printed(&mut session,
+            "(let [[answer events] (trace-lazy-callable lazy-callable-multi)]
+               [answer (count events) (last events)])"), "[:threw 41 40]");
+    }
+}
+
+#[test]
+fn apply_callback_registration_is_private_and_publishes_atomically() {
+    use suss_cli::portable_session::SessionError;
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        for source in [
+            "(suss.bootstrap/apply-sequence-ops! identity identity identity identity identity identity identity identity identity)",
+            "(suss.bootstrap/apply-to-seq identity nil)",
+        ] {
+            let Err(SessionError::Compile(error)) = session.eval(source) else {
+                panic!("private helper was not rejected: {source}");
+            };
+            assert_eq!(error.message, "Private apply adapters require compiled core");
+        }
+        // The host is trusted to compile core. A rejected replacement must
+        // not publish its first valid callback before checking the others.
+        let value = session.eval_privileged(
+            "(try (suss.bootstrap/apply-sequence-ops! (fn [s] :corrupt) nil nil nil nil nil nil nil nil)
+                  (catch :default e :rejected))").unwrap();
+        drop(value);
+        assert_eq!(printed(&mut session, "(apply (fn [a b] (+ a b)) (list 17 25))"), "42");
     }
 }

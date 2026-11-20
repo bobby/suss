@@ -25,7 +25,7 @@ fn seqable_predicate_covers_portable_values_in_both_phases_after_gc() {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
         session.set_operation_fuel(100_000_000);
         session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("user").unwrap();
         session

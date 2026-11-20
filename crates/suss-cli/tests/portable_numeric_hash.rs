@@ -33,7 +33,7 @@ fn numeric_hash_match_independently_decoded_primary_observations_after_gc() {
     assert_eq!(cases.len(), 72);
     let mut session = Session::new().unwrap();
     session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session
         .enter_namespace("suss-oracle.numeric-hash-cases")
@@ -135,7 +135,7 @@ fn numeric_hash_errors_are_located_atomic_or_typed_and_recover_after_gc() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
     session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     for body in [
         "(suss.bootstrap/f64-coerce)",
@@ -176,7 +176,7 @@ fn numeric_hash_aliases_and_private_adapters_validate_in_both_phases() {
     };
     let mut session = Session::new().unwrap();
     session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session
         .eval("(ns numeric.alias (:require [cljs.core :as c]))")

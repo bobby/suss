@@ -213,7 +213,7 @@ fn compiled_source_macro_file_metadata_uses_the_loaded_source_path() {
         )
         .unwrap();
         session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("user").unwrap();
         let mut macros = CompiledMacros::new().unwrap();

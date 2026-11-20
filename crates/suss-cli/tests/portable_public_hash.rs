@@ -36,7 +36,7 @@ fn clojure_number(expected: &serde_json::Value) -> serde_json::Value {
 fn public_hash_retains_scalar_branches_and_captured_callable_after_gc() {
     let mut session = Session::new().unwrap();
     session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def captured-hash hash)").unwrap();
@@ -78,7 +78,7 @@ fn date_hash_normalizes_numeric_milliseconds_and_keeps_protocol_priority() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
     session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     for (milliseconds, stored, hash) in [
@@ -144,7 +144,7 @@ fn public_hash_matches_independently_decoded_primary_observations() {
     assert_eq!(cases.len(), 47);
     let mut session = Session::new().unwrap();
     session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session

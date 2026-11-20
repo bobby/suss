@@ -105,7 +105,7 @@ fn repeated_declare_keeps_existing_snapshot_catalog_and_runtime_bindings() {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
         session.set_operation_fuel(100_000_000);
         session
-            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("declaration-review").unwrap();
         let mut macros = CompiledMacros::new().unwrap();

@@ -46,7 +46,7 @@ fn murmur_hash_match_independently_decoded_primary_observations_after_gc() {
     assert_eq!(cases.len(), 73);
     let mut session = Session::new().unwrap();
     session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session
         .enter_namespace("suss-oracle.murmur-hash-cases")
@@ -222,7 +222,7 @@ fn threading_aliases_exclusions_and_phase_are_explicit() {
 fn retained_murmur_functions_observe_live_globals_and_old_values_survive_gc() {
     let mut session = Session::new().unwrap();
     session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session
         .eval("(def saved_murmur m3-mix-K1) (def saved_zero zero?)")

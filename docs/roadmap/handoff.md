@@ -30218,3 +30218,59 @@ remaining native traversal families, measure the list target below 2,000 and
 variadic linearity/property-free dispatch, then complete the required baseline,
 independent final review and final-head CI. No #474 acceptance or promotion is
 claimed by these partial probes.
+
+
+## ABI 7 rebase and native apply families (2026-11-19)
+
+Rebased #474 onto ccfb63a4 after GitHub reported #470 merged. Reconciled the
+emitter's primitive-call globals and variadic rest site: primitive entry globals
+are emitted first, then the three rest-site globals. A mixed typed-var/rest
+regression exercises repeated hits and arbitrary boxed var replacements in both
+phases. The first fixture incorrectly used defn with Session::eval, which does
+not expand macros; replacing that fixture with equivalent hinted fn forms
+preserves the check (pr474-abi7-focused-first/second.log).
+
+The chunk boundary correction passes in Runtime and Macro. The >20 fixed-path
+callback regression additionally matches the JVM trace at size25: one seq,
+51 next, 25 first, no rest (77 total callbacks). The new native family test
+first reproduced eager comparison realization through the throwing sentinel
+(pr474-abi7-focused-second.log), then passed with specialized comparison,
+aget/aset recursion and make-array dimension traversal. Native code factories
+use separate spread entries while retaining their ordinary min/max guards.
+Arithmetic/bitwise use a chunk-aware numeric fold; comparisons retain their
+observable next-before-first/repeated-next traversal. Recursive array access
+performs the current access before its next apply. make-array retains its
+existing object-array/type adaptation, while its spread path performs count,
+repeated nth and per-dimension int conversion in that order.
+
+pr474-native-families-first.log records eight apply regressions and both
+compiled primitive-parameter tests passing, then four real fixture compilation
+failures in portable_apply_sequences: loading the trusted core source through
+ordinary eval now rejects private apply setup. Only exact embedded-core loads
+were changed to eval_privileged (31 files, 67 calls), leaving user-program eval
+and assertions unchanged. Separate tests verify ordinary callers cannot invoke
+the private helpers and rejected callback registration publishes none of its
+staged values; both passed in pr474-native-families-second.log.
+
+Fresh JVM probes corrected the earlier proposed callable-object design:
+pr474-callable-rest-var-jvm.log and pr474-callable-applyto-javap.log show that
+MetaFn and Var delegate already-normalized argument seqs, while MultiFn inherits
+AFn.applyTo and consumes the input. A sentinel at40 is reached for MultiFn;
+metadata/Var calls return0 after realizing only0..2. The private callback now
+follows those separate routes. The first added callable fixture directly
+constructed core internals with ordinary eval and was rejected, correctly
+(pr474-callable-fixture-diagnostic.log). Its internal setup now uses the trusted
+host API, with ordinary public apply and a GC boundary used for the actual
+observations. Current complete focused confirmation is recorded separately in
+pr474-native-families-third.log; do not infer its outcome from earlier logs.
+
+The retained source-apply effect count124 is a ClojureScript recording, not the
+behavior oracle. Fresh JVM1.12.6 weighted next/first callbacks produce25
+(pr474-weighted-next-jvm.log). Tests retain the recording intact and assert
+19 matches plus three explicit JVM boundaries, including this traversal.
+The source-apply documentation distinguishes this from its earlier evidence.
+
+347 Python tests and every CI source check pass on the updated core
+(pr474-candidate-foundation.log); apply_bootstrap and core_import checks also
+pass separately. These do not substitute for the required workspace baseline,
+independent final implementation review, final-head CI or instruction criteria.

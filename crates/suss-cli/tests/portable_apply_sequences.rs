@@ -64,7 +64,7 @@ fn eval_number(session: &mut Session, source: &str) -> Number {
 fn session() -> Session {
     let mut session = Session::new().unwrap();
     session
-        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session
