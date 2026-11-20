@@ -70,6 +70,22 @@ class PerformanceEvidenceTests(unittest.TestCase):
         candidate["suss"]["times"]["fib"][0] = 4.3e-5
         self.assertFalse(evaluate(baseline, candidate)["timing_and_allocation_pass"])
 
+    def test_string_issue_gate_retains_the_failed_lazy_target(self):
+        baseline, candidate = measured(), measured()
+        baseline["suss"]["times"]["lazy-pipeline"][0] = 6e-5
+        candidate["suss"]["times"]["lazy-pipeline"][0] = 5.5e-5
+        self.assertFalse(evaluate(baseline, candidate)["timing_and_allocation_pass"])
+        result = evaluate(baseline, candidate, ["string-build"])
+        self.assertTrue(result["timing_and_allocation_pass"])
+        self.assertEqual(result["required_programs"], ["string-build"])
+        self.assertIn("lazy-pipeline", result["unmet_program_targets"])
+        self.assertGreater(result["ratios"]["lazy-pipeline"], 5)
+
+    def test_missing_or_unrelated_issue_gates_cannot_report_success(self):
+        for required in [[], ["fib"], ["string-build", "unmeasured"]]:
+            with self.assertRaises(ValueError):
+                evaluate(measured(), measured(), required)
+
 
 if __name__ == "__main__":
     unittest.main()

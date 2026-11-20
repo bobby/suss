@@ -112,8 +112,12 @@ def run(source, executable, output, idle):
         save(output / "receipt.json", receipt)
 
 
-def evaluate(baseline, candidate):
+def evaluate(baseline, candidate, required_programs=None):
+    required = list(required_programs if required_programs is not None else ["lazy-pipeline", "string-build"])
+    if not required or any(name not in ["lazy-pipeline", "string-build"] for name in required):
+        raise ValueError("Only the existing lazy-pipeline/string-build issue gates may be selected")
     failures, ratios, regressions = [], {}, {}
+    unresolved = []
     for label, data in [("baseline", baseline), ("candidate", candidate)]:
         receipt = data["receipt"]
         if not receipt.get("completed") or receipt.get("source_dirty"):
@@ -130,13 +134,15 @@ def evaluate(baseline, candidate):
             failures.append(label + " host was not quiet")
     if baseline["receipt"]["bench_sha256"] != candidate["receipt"]["bench_sha256"]:
         failures.append("Benchmark source differs between revisions")
-    for name in ["lazy-pipeline", "string-build"]:
+    for name in PROGRAMS:
         suss, jvm = candidate["suss"]["times"][name], candidate["jvm"]["times"][name]
         if not all(math.isfinite(x) for x in [*suss, *jvm]) or not (suss[0] > suss[1] >= 0 and jvm[0] > jvm[1] >= 0):
-            failures.append(name + " timing is below resolution or invalid")
+            unresolved.append(name)
+            if name in required:
+                failures.append(name + " timing is below resolution or invalid")
             continue
         ratios[name] = suss[0] / jvm[0]
-        if ratios[name] > 5:
+        if name in required and ratios[name] > 5:
             failures.append(name + " exceeds 5x JVM")
     size = candidate["suss"]["allocated"].get("string-build")
     if size is None or not math.isfinite(size) or not 0 <= size < 200000:
@@ -151,7 +157,9 @@ def evaluate(baseline, candidate):
         if after[0] - before[0] > before[1] + after[1]:
             failures.append(name + " regresses beyond both measured spreads")
     return {"timing_and_allocation_pass": not failures, "failures": failures,
-            "ratios": ratios, "string_bytes_per_run": size, "program_comparisons": regressions}
+            "required_programs": required, "ratios": ratios, "unresolved_ratios": unresolved,
+            "unmet_program_targets": [name for name, ratio in ratios.items() if ratio > 5],
+            "string_bytes_per_run": size, "program_comparisons": regressions}
 
 
 def main():
@@ -166,6 +174,7 @@ def main():
     compare = commands.add_parser("compare")
     for name in ["baseline", "candidate", "output"]:
         compare.add_argument("--" + name, type=Path, required=True)
+    compare.add_argument("--require-program", action="append", choices=["lazy-pipeline", "string-build"])
     args = parser.parse_args()
     if args.command == "wait":
         wait_idle(args.output, args.timeout)
@@ -174,7 +183,7 @@ def main():
     else:
         runs = [{name: json.loads((directory / (name + ".json")).read_text())
                  for name in ["receipt", "suss", "jvm"]} for directory in [args.baseline, args.candidate]]
-        result = evaluate(*runs)
+        result = evaluate(*runs, args.require_program)
         save(args.output, result)
         print(json.dumps(result, indent=2))
         if result["failures"]:

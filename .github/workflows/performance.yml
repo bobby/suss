@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   compare:
-    if: contains(github.event.pull_request.labels.*.name, 'performance-benchmark')
+    if: contains(github.event.pull_request.labels.*.name, 'performance-benchmark') || contains(github.event.pull_request.labels.*.name, 'performance-string-build')
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     env:
@@ -21,6 +21,7 @@ jobs:
       JAVA_TOOL_OPTIONS: -Xmx512m
       CARGO_TARGET_DIR: ${{ github.workspace }}/target/probe/performance-build
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      REQUIRED_PROGRAMS: ${{ contains(github.event.pull_request.labels.*.name, 'performance-benchmark') && 'lazy-pipeline string-build' || 'string-build' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -99,10 +100,15 @@ jobs:
             > target/probe/performance/candidate.log 2>&1
       - name: Check timing, allocation and other program regressions
         run: |
+          read -r -a programs <<< "$REQUIRED_PROGRAMS"
+          required_args=()
+          for program in "${programs[@]}"; do
+            required_args+=(--require-program "$program")
+          done
           systemd-run --user --scope -p MemoryMax=512M python3 scripts/performance_bench.py compare \
             --baseline target/probe/performance/baseline \
             --candidate target/probe/performance/candidate \
-            --output target/probe/performance/comparison.json
+            --output target/probe/performance/comparison.json "${required_args[@]}"
       - name: Retain raw benchmark evidence, including failed attempts
         if: always()
         uses: actions/upload-artifact@v4

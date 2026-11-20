@@ -24,19 +24,30 @@ median three N=1000-minus-0 observations. Timing acceptance requires a separate
 idle-wait command before bench.py; counts alone do not establish the 5x gate.
 Private perfmap /tmp bindings must point to target/probe-backed directories.
 
-The opt-in quiet-performance workflow uses the performance-benchmark PR label.
-It freezes release executables from the PR base and head, then runs the unchanged
-full bench.py functions serially on one fresh runner. Each has a separate
-performance_bench.py wait command (load <=0.75 for 60 seconds) before its run.
-The runner uses cargo +stable, bounded user scopes, probe-backed TMPDIR, JVM
-Clojure 1.12.6/Temurin 21 and the existing n=5,000,000/reps=3 settings. Results,
-sources, receipts and failed attempts are uploaded from target/probe/performance.
-Optional unavailable PMU counters are explicitly recorded, never filled with
-counts. The comparison rejects noisy/incomplete runs, ratios above5x, string
-allocation >=200,000 bytes and other-program regressions beyond both measured
-spreads. Output/linearity correctness remains separately required. Seven driver
-regressions, all354 Python/foundation checks and actionlint1.7.12 pass locally;
-the workflow itself still needs execution on its runner.
+The opt-in quiet-performance workflow uses performance-benchmark for both
+lazy-pipeline/string-build issue gates, or performance-string-build for #450.
+Both modes measure every unchanged bench.py program on the base and head;
+the latter still records every program above5x and never certifies #482.
+Executables run serially on one fresh runner. Each has a separate
+performance_bench.py wait command (load <=0.75 for60seconds) before its run.
+Use cargo +stable, bounded user scopes, probe-backed TMPDIR, JVM Clojure
+1.12.6/Temurin21 and n=5,000,000/reps=3. Preserve noisy/incomplete/failed runs.
+Reject selected ratios above5x, string allocation >=200,000bytes and any other
+program's regression beyond the sum of measured spreads. Unavailable PMU
+counters remain explicitly unavailable. Output/linearity require separate probes.
+
+The paired af89e33e CI measurements and complete logs are retained permanently
+in results/m15-chunks-af89-ci, with source/binary receipts, both runtime JSON
+files, generated sources, and the original failed combined comparison.
+String-build measured2.395912x JVM and61,440bytes/run; lazy-pipeline measured
+5.471700x and fails the original combined5x gate. Both measured executions
+followed standalone idle gates; peak loads1.625/1.901. No other program regressed
+beyond summed observed spreads. The exact downloaded candidate executable
+f24d2606fd1523e77c02d5ffeaa576f9d0176090ee76e55cd1d93cddddbcab75
+also matches full JVM output at1024/10240 and gives instruction scaling
+10.405871x (numeric) and10.213415x (fixed strings). See that directory's README
+for commands, unrounded values and the explicit separation of #450/#482 gates.
+Those local instruction/output checks make no new walltime claim.
 
 Source-reload coverage additionally uses compiled_source_macros,
 portable_callable_metadata, portable_error_constructors,

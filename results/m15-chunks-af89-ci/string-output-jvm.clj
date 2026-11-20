@@ -1,0 +1,2 @@
+(println (clojure-version))
+(prn (mapv (fn [n] [n (apply str (map str (vec (range n))))]) [1024 10240]))
