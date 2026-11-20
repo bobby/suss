@@ -256,7 +256,7 @@ fn compiled_source_macros_pass_env_through_renamed_and_rewritten_helper_expansio
     )
     .unwrap();
     runtime
-        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     runtime
         .eval_with_macros("(ns user (:require-macros [tools :as t]))", &mut macros)

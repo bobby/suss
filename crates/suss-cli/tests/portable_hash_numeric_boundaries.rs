@@ -95,7 +95,7 @@ fn hash_numeric_boundaries_match_independently_encoded_primary_observations() {
     assert_eq!(cases.len(), 75);
     let mut session = Session::new().unwrap();
     session
-        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     let mut identities = std::collections::BTreeSet::new();

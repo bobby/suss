@@ -64,7 +64,7 @@ fn indexing_contract_match_independently_encoded_primary_observations() {
     assert_eq!(cases.len(), 61);
     let mut session = Session::new().unwrap();
     session
-        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     let mut identities = std::collections::BTreeSet::new();
@@ -92,7 +92,7 @@ fn indexing_errors_preserve_messages_effects_and_gc_recovery() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
     session
-        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session
@@ -186,7 +186,7 @@ fn indexing_macros_resolve_aliases_exclusions_shadowing_and_both_phases() {
     };
     let mut session = Session::new().unwrap();
     session
-        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session
         .eval("(ns indexing.alias (:require [cljs.core :as c :refer [inc dec neg?]]))")

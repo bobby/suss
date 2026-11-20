@@ -30274,3 +30274,69 @@ The source-apply documentation distinguishes this from its earlier evidence.
 (pr474-candidate-foundation.log); apply_bootstrap and core_import checks also
 pass separately. These do not substitute for the required workspace baseline,
 independent final implementation review, final-head CI or instruction criteria.
+
+
+## Short built-in List apply and restored core-loading semantics (2026-11-19)
+
+Fresh release measurements of cd9be85f exposed a regression: net list apply
+7,542 instructions and prebuilt list6,887. Range10/20/40/80/160 was roughly
+20,559 /31,209 /55,699 /101,488 /193,273, consistent with linear growth at the
+larger sizes. The delayed hot instruction profile attributed24.7% to
+protocol-method-get. Raw artifacts are pr474-candidate-instructions/,
+pr474-suss-candidate plus SHA256 receipt, and pr474-candidate-list-hot*.
+This was genuine non-acceptance evidence, not a successful target result.
+
+The new guarded path recognizes core's original immutable List descriptor,
+registered alongside the sequence callbacks. For a fixed source closure and
+no more than eight total arguments, it copies the realized prefix and private
+List fields into the ordinary argument buffer. It does not use this route for
+variadic closures, custom seqs, native variadics or callable objects; their
+original rest representation and observable callbacks remain intact. Guards
+check descriptor, storage shape and bounded small count. The descriptor and all
+callback entries stage before publication. Only private runtime globals change;
+the ABI7 shared types remain main's. This follows the existing nominal vector
+read approach, not an engine-specific representation.
+
+The first registration sample used list nil while bootstrap literal roots were
+not yet published; all ten Session initialization attempts threw real language
+errors (pr474-short-list-focused-first.log). The sample now constructs the
+compiler-owned List directly, avoiding dependence on bootstrap literal roots.
+No failed run is counted as execution success.
+
+CI on cd9be85f additionally exposed why changing whole-core fixture eval to
+eval_privileged was incorrect: it froze live hash references and marked test
+core types private. Those 67 edits across31 files are reverted. Private apply
+intrinsics instead admit an actual core compilation context (privileged host
+or suss.core namespace), like existing core-only operand adaptations; ordinary
+user namespaces remain rejected. Tests retain their original evaluation and
+all original assertions. CI job logs136006053516/136006053454/136006053450
+under target/probe capture the actual regressions; no expected values were
+weakened. Further CI failures still require inspection before any final claim.
+
+pr474-short-list-focused-second.log completed successfully:37 tests passed,
+zero failures/ignores across apply_fixed_arity, compiled_primitive_params,
+portable_apply_sequences, portable_error_constructors, portable_public_hash,
+portable_source_apply, portable_string_hash and portable_primitive_entries.
+This includes the selected CI failures, exact custom-sequence callbacks,
+variadic List rest identity and checked primitive arguments through List apply.
+The callback publication test was then strengthened to reject a bad final layout
+sample after staging all nine callback closures, and to exercise generic
+IndexedSeq apply as well as fast List apply after GC; that follow-up needs its
+own test result.
+
+The copied release executable pr474-suss-short-list, its SHA256 receipt, and
+pr474-short-list-source.patch identify the measured implementation (cd9be85f
+plus that patch). pr474-short-list-instructions/ retains the component/source
+and all three perf stat instructions:u measurements at N and0, with a warm-up
+case before sampling. Net instructions after subtracting the25-instruction
+control: list687.027, list apply1,424.706, prebuilt-list apply759.353; range
+10/20/40/80/160:20,582 /31,232 /55,722 /101,511 /193,296. Larger-size incremental
+cost is about1,145–1,147 per element. No walltime measurement or whole-program
+5x claim is made. Stable release names were enabled for build and compile;
+scopes were6GiB for tests/build and3GiB for instruction runs. All output is in
+target/probe, including perf maps through the private bwrap /tmp bind.
+
+Next validation is the strengthened registration regression, every earlier CI
+failure, full required serial workspace baseline, independent final review and
+final-head CI. The instruction target alone does not promote a draft or prove
+the wider M15 program-time criteria.

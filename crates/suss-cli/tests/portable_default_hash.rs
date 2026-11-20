@@ -24,7 +24,7 @@ fn default_hash_matches_pinned_identity_and_root_relations() {
     assert_eq!(cases.len(), 27);
     let mut session = Session::new().unwrap();
     session
-        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def rootobj (fn [] (suss.core/root-obj))) (def uid (fn [x] (suss.bootstrap/identity-uid x))) (def error (fn [message] (suss.bootstrap/error message)))").unwrap();
@@ -44,7 +44,7 @@ fn default_hash_errors_preserve_effects_and_private_adapter_is_checked() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
     session
-        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session
@@ -109,7 +109,7 @@ fn default_hash_errors_preserve_effects_and_private_adapter_is_checked() {
 fn captured_default_dispatch_observes_root_redefinition_across_gc_fragments() {
     let mut session = Session::new().unwrap();
     session
-        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def review-root-provider suss.core/root-obj) (def review-root (review-root-provider)) (def review-hash -hash) (def review-owner (reify)) (def review-owner-id (review-hash review-owner))").unwrap();

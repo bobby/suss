@@ -39,7 +39,7 @@ fn owned_error_ancestry_retains_actual_constructor_and_instance_prototype_refere
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
         session.set_operation_fuel(100_000_000);
         session
-            .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("user").unwrap();
         let error = session.eval("(.-prototype js/Error)").unwrap();
@@ -306,7 +306,7 @@ fn raw_error_constructors_ancestry_original_throws_and_effects_match_pinned_afte
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
         session.set_operation_fuel(100_000_000);
         session
-            .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("user").unwrap();
         session.eval("(def error-effects 0) (def error-step (fn [n] (set! error-effects (+ (* error-effects 10) n))))").unwrap();
@@ -351,7 +351,7 @@ fn owned_error_mutation_retains_backing_and_rejects_invalid_presence_masks_after
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
         session.set_operation_fuel(100_000_000);
         session
-            .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("user").unwrap();
         let anchors = classes(&mut session);

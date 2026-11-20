@@ -693,7 +693,7 @@ impl Nominal {
         count <= i32::MAX as usize
             && match self {
                 Self::Array => true,
-                Self::ApplySequenceOps => count == 9,
+                Self::ApplySequenceOps => count == 10,
                 Self::ApplyCallee => count == 1,
                 Self::ApplySpread => count >= 2,
                 Self::ApplyToSeq | Self::ApplyFixed => count == 2,
@@ -3276,7 +3276,8 @@ impl Analyzer<'_> {
             };
             if let Some(operation) = operation {
                 if matches!(operation, Nominal::ApplySequenceOps | Nominal::ApplyCallee
-                    | Nominal::ApplySpread | Nominal::ApplyToSeq | Nominal::ApplyFixed) && !self.privileged {
+                    | Nominal::ApplySpread | Nominal::ApplyToSeq | Nominal::ApplyFixed)
+                    && !self.privileged && self.environment.current_namespace(self.phase) != "suss.core" {
                     return Err(fail(form.span.clone(), "Private apply adapters require compiled core"));
                 }
                 if !operation.valid(&vec![Type::Value; args.len()]) {

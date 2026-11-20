@@ -717,7 +717,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "protocol-native-method-set" => (vec![VALUE, ValType::I32, VALUE], vec![VALUE]),
             "try-invoke" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
             "binding-defined" | "language-error-is" | "native-object?" | "fn-fixed-arity?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
-            "apply-sequence-ops" => (vec![VALUE; 9], vec![VALUE]),
+            "apply-sequence-ops" => (vec![VALUE; 10], vec![VALUE]),
             "apply-callee" | "apply-first" | "apply-next" | "apply-fixed-arguments" => (vec![VALUE], vec![VALUE]),
             "apply-to-seq" | "apply-fixed" => (vec![VALUE; 2], vec![VALUE]),
             "apply-join" => (vec![ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::ARGS) }), VALUE], vec![VALUE]),

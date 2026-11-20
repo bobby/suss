@@ -42,7 +42,7 @@ fn object_methods_match_independently_decoded_primary_observations_after_gc() {
     assert_eq!(cases.len(), 52);
     let mut session = Session::new().unwrap();
     session
-        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session
         .enter_namespace("suss-oracle.object-method-cases")

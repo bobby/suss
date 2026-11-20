@@ -3364,7 +3364,8 @@
                        (-chunked-next s)
                        (seq (-chunked-rest s))))
               (recur (f value (-first s))
-                     (if (implements? INext s) (-next s) (seq (-rest s))))))))))
+                     (if (implements? INext s) (-next s) (seq (-rest s)))))))))
+    (List. nil nil nil 1 nil))
     (fn
       ([f args]
         (let [n (suss.bootstrap/vector-count args)]

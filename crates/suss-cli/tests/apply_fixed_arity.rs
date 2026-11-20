@@ -44,6 +44,10 @@ fn apply_over_seqs_answers_as_before() {
             ("(try (apply + (range 10)) (catch :default e [:error (ex-message e)]))", "45"),
             ("(apply + 1 2 (range 3))", "6"),
             ("(first (apply (fn [& xs] xs) (iterate inc 0)))", "0"),
+            ("[(apply (fn [& xs] [(list? xs) xs]) (list 1 2)) (apply (fn [a & xs] [(list? xs) xs]) 0 (list 1 2))]", "[[true (1 2)] [true (1 2)]]"),
+            ("(apply (fn [^long a ^long b] (+ a b)) (list 3000000000 1))", "3000000001"),
+            ("(try (apply (fn [^long a ^long b] (+ a b)) (list :bad 1)) (catch :default e :threw))", ":threw"),
+
             // A variadic call's rest is an IndexedSeq over its arguments.
             ("(let [xs ((fn [& xs] xs) 1 2 3)] [xs (count xs) (rest xs) (list? xs) (seq? xs)])", "[(1 2 3) 3 (2 3) false true]"),
             ("[(list 1) (list 1 2 3) (list? (list 1 2)) (count (list 1 2 3))]", "[(1) (1 2 3) true 3]"),
@@ -346,10 +350,22 @@ fn apply_callback_registration_is_private_and_publishes_atomically() {
         }
         // The host is trusted to compile core. A rejected replacement must
         // not publish its first valid callback before checking the others.
-        let value = session.eval_privileged(
-            "(try (suss.bootstrap/apply-sequence-ops! (fn [s] :corrupt) nil nil nil nil nil nil nil nil)
-                  (catch :default e :rejected))").unwrap();
-        drop(value);
+        session.eval_privileged(
+            "(def registration-result
+               (try (suss.bootstrap/apply-sequence-ops! (fn [s] :corrupt) nil nil nil nil nil nil nil nil (list nil))
+                    (catch :default e :rejected)))").unwrap();
+        assert_eq!(printed(&mut session, "registration-result"), ":rejected");
+        assert_eq!(printed(&mut session, "(apply (fn [a b] (+ a b)) (seq [17 25]))"), "42");
+        // Reject an invalid final layout sample after every callback has
+        // been staged. A fast List call alone would not exercise those roots.
+        session.eval_privileged(
+            "(def registration-result
+               (let [bad (fn [& args] :corrupt)]
+                 (try (suss.bootstrap/apply-sequence-ops! bad bad bad bad bad bad bad bad bad nil)
+                      (catch :default e :rejected))))").unwrap();
+        assert_eq!(printed(&mut session, "registration-result"), ":rejected");
+        session.collect().unwrap();
+        assert_eq!(printed(&mut session, "(apply (fn [a b] (+ a b)) (seq [17 25]))"), "42");
         assert_eq!(printed(&mut session, "(apply (fn [a b] (+ a b)) (list 17 25))"), "42");
     }
 }

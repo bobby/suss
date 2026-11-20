@@ -125,7 +125,7 @@ fn compiled_argument_lists_preserve_quoted_data_and_actual_file_positions() {
         )
         .unwrap();
         session
-            .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         let mut macros = CompiledMacros::new().unwrap();
         macros.define(DEFINITION).unwrap();

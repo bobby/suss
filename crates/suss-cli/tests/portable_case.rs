@@ -85,7 +85,7 @@ fn scalar_case_matches_independently_decoded_pinned_observations() {
     assert_eq!(cases.len(), 40);
     let mut session = Session::new().unwrap();
     session
-        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     for case in cases {
@@ -136,7 +136,7 @@ fn case_errors_and_namespace_guards_keep_effects_and_recover_after_gc() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
     session
-        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def case-effects 0)").unwrap();
@@ -203,7 +203,7 @@ fn generic_case_throw_restores_equality_and_bounds_are_located() {
     use suss_cli::portable_session::SessionError;
     let mut session = Session::new().unwrap();
     session
-        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     session.enter_namespace("user").unwrap();
     session.eval("(def case-review-effects 0)").unwrap();

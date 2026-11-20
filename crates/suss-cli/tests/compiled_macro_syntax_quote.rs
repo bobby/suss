@@ -393,7 +393,7 @@ fn compiled_syntax_quote_splices_inside_defn_helpers_of_macro_namespaces() {
     )
     .unwrap();
     session
-        .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+        .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
         .unwrap();
     let mut macros = suss_cli::portable_macros::CompiledMacros::new().unwrap();
     session

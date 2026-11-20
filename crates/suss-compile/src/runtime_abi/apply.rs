@@ -15,6 +15,7 @@ const CACHED_CLOSURE: u32 = BASE + 2 * ARITIES.len() as u32;
 const CACHED_SPREAD: u32 = CACHED_CLOSURE + 1;
 pub(super) const EMPTY_ARGUMENTS: u32 = CACHED_CLOSURE + 2;
 pub(super) const GLOBAL_END: u32 = CACHED_CLOSURE + 3;
+const LIST_DESCRIPTOR: u32 = GLOBAL_END + FAMILIES.len() as u32;
 pub(super) const FAMILIES: [&str; 13] = [
     "bit-and", "bit-or", "bit-xor", "bit-and-not",
     "comparison-less", "comparison-less-equal", "comparison-greater", "comparison-greater-equal",
@@ -63,6 +64,9 @@ pub(super) fn append_globals(globals: &mut GlobalSection, b: &Builder, universal
         globals.global(GlobalType { val_type: reference(CODE), mutable: false, shared: false },
             &ConstExpr::extended(code));
     }
+    assert_eq!(globals.len(), LIST_DESCRIPTOR);
+    globals.global(GlobalType { val_type: VALUE, mutable: true, shared: false },
+        &ConstExpr::extended([sentinel_value(NIL)]));
 }
 
 pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
@@ -73,15 +77,25 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     for (slot, arity) in ARITIES.into_iter().enumerate() {
         code.extend([LocalGet(slot as u32), RefTestNonNull(HeapType::Concrete(CLOSURE)), I32Eqz]);
         fail_if(&mut code);
-        code.extend([LocalGet(slot as u32), Call(b.names[CALL_ENTRY_EXPORTS[arity as usize]]), LocalSet(ARITIES.len() as u32 + slot as u32)]);
+        code.extend([LocalGet(slot as u32), Call(b.names[CALL_ENTRY_EXPORTS[arity as usize]]), LocalSet(ARITIES.len() as u32 + 1 + slot as u32)]);
     }
+    // Core supplies an actual List instance. Its fixed private layout is
+    // registered like the vector layout; admission precedes all publication.
+    code.extend([LocalGet(9), RefTestNonNull(HeapType::Concrete(OBJECT)), I32Eqz]);
+    fail_if(&mut code);
+    code.extend([LocalGet(9), RefCastNonNull(HeapType::Concrete(OBJECT)),
+        StructGet { struct_type_index: OBJECT, field_index: 1 }, ArrayLen, I32Const(5), I32LtU]);
+    fail_if(&mut code);
+    code.extend([LocalGet(9), RefCastNonNull(HeapType::Concrete(OBJECT)),
+        StructGet { struct_type_index: OBJECT, field_index: 0 }, LocalSet(19)]);
     for slot in 0..ARITIES.len() {
         code.extend([LocalGet(slot as u32), GlobalSet(owner(slot)),
-            LocalGet(ARITIES.len() as u32 + slot as u32), RefAsNonNull, GlobalSet(entry(slot))]);
+            LocalGet(ARITIES.len() as u32 + 1 + slot as u32), RefAsNonNull, GlobalSet(entry(slot))]);
     }
-    code.push(sentinel_value(NIL));
-    let locals = ARITIES.iter().map(|arity| (1, nullable(CALL + arity))).collect::<Vec<_>>();
-    b.function_with_locals("apply-sequence-ops", &[VALUE; ARITIES.len()], &[VALUE], &locals, &code);
+    code.extend([LocalGet(19), GlobalSet(LIST_DESCRIPTOR), sentinel_value(NIL)]);
+    let mut locals = ARITIES.iter().map(|arity| (1, nullable(CALL + arity))).collect::<Vec<_>>();
+    locals.push((1, VALUE));
+    b.function_with_locals("apply-sequence-ops", &[VALUE; ARITIES.len() + 1], &[VALUE], &locals, &code);
     for (slot, arity) in ARITIES.into_iter().enumerate() {
         let mut code = vec![GlobalGet(owner(slot))];
         code.extend((0..arity).map(LocalGet));
@@ -116,6 +130,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         &[(1, ValType::I32), (1, VALUE)], &code);
 
     fixed_arguments(b);
+    list_arguments(b);
 
     // A closure and its immutable spread entry are cached as typed references.
     // An object callee is checked using core's actual IFn predicate, never an
@@ -151,9 +166,23 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         ReturnCallRef(SPREAD), End,
         LocalGet(0), LocalGet(1), ReturnCall(b.names["apply-object"])];
     b.function("apply-to-seq", &[VALUE, VALUE], &[VALUE], &code);
-    code = vec![LocalGet(0), Call(b.names["apply-callee"]), LocalGet(1), LocalGet(2),
-        Call(b.names["apply-arguments"]), ReturnCall(b.names["apply-to-seq"])];
-    b.function("apply", &[VALUE, reference(ARGS), VALUE], &[VALUE], &code);
+    // A short immutable built-in List has no user sequence callbacks. Only
+    // fixed source closures may use realized arguments here: variadic rests
+    // must retain their original seq representation, even for a short list.
+    code = vec![LocalGet(0), Call(b.names["apply-callee"]), Drop,
+        LocalGet(0), GlobalGet(CACHED_CLOSURE), RefEq,
+        GlobalGet(CACHED_SPREAD), RefIsNull, I32Eqz, I32And,
+        If(BlockType::Empty), GlobalGet(CACHED_CLOSURE), RefAsNonNull,
+        StructGet { struct_type_index: CLOSURE, field_index: CLOSURE_CODE },
+        StructGet { struct_type_index: CODE, field_index: CODE_MAX }, I32Const(0), I32GeS,
+        If(BlockType::Empty), LocalGet(1), LocalGet(2), Call(b.names["apply-list-arguments"]),
+        LocalTee(3), RefIsNull, I32Eqz, If(BlockType::Empty),
+        GlobalGet(CACHED_CLOSURE), RefAsNonNull, LocalGet(3), RefAsNonNull,
+        sentinel_value(NIL), GlobalGet(CACHED_SPREAD), RefAsNonNull, ReturnCallRef(SPREAD),
+        End, End, End,
+        LocalGet(0), LocalGet(1), LocalGet(2), Call(b.names["apply-arguments"]),
+        ReturnCall(b.names["apply-to-seq"])];
+    b.function_with_locals("apply", &[VALUE, reference(ARGS), VALUE], &[VALUE], &[(1, nullable(ARGS))], &code);
     code = vec![LocalGet(0), LocalGet(1), Call(b.names["apply-fixed-arguments"]),
         ReturnCall(b.names["call-spread"])];
     b.function("apply-fixed", &[VALUE, VALUE], &[VALUE], &code);
@@ -342,4 +371,52 @@ fn array_make_spread(b: &mut Builder) -> u32 {
     let spread = b.typed(SPREAD, &[(4, VALUE), (2, ValType::I32), (1, VALUE)], &code);
     b.names.insert("apply-array-make-spread".into(), spread);
     spread
+}
+
+fn list_arguments(b: &mut Builder) {
+    use Instruction::*;
+    // 0 realized prefix, 1 raw tail; 2 fields, 3 tail count, 4 output index,
+    // 5 output arguments, 6 current List. A miss has no observable effects.
+    fn miss_if(code: &mut Vec<Instruction<'static>>) {
+        code.extend([If(BlockType::Empty), RefNull(HeapType::Concrete(ARGS)), Return, End]);
+    }
+    fn fields(code: &mut Vec<Instruction<'static>>) {
+        code.extend([LocalGet(6), RefTestNonNull(HeapType::Concrete(OBJECT)), I32Eqz]);
+        miss_if(code);
+        code.extend([LocalGet(6), RefCastNonNull(HeapType::Concrete(OBJECT)),
+            StructGet { struct_type_index: OBJECT, field_index: 0 },
+            GlobalGet(LIST_DESCRIPTOR), RefEq, I32Eqz]);
+        miss_if(code);
+        code.extend([LocalGet(6), RefCastNonNull(HeapType::Concrete(OBJECT)),
+            StructGet { struct_type_index: OBJECT, field_index: 1 }, LocalTee(2),
+            ArrayLen, I32Const(5), I32LtU]);
+        miss_if(code);
+    }
+    let mut code = vec![LocalGet(1), LocalSet(6)];
+    fields(&mut code);
+    code.extend([LocalGet(2), RefAsNonNull, I32Const(3), ArrayGet(ARGS),
+        RefTestNonNull(HeapType::I31), I32Eqz]);
+    miss_if(&mut code);
+    code.extend([LocalGet(2), RefAsNonNull, I32Const(3), ArrayGet(ARGS),
+        RefCastNonNull(HeapType::I31), I31GetS, LocalTee(3), I32Const(1), I32Sub,
+        I32Const(MAX_FIXED as i32), I32GeU]);
+    miss_if(&mut code);
+    code.extend([LocalGet(0), ArrayLen, I32Const(MAX_FIXED as i32), I32GtU]);
+    miss_if(&mut code);
+    code.extend([LocalGet(0), ArrayLen, LocalGet(3), I32Add, I32Const(MAX_FIXED as i32), I32GtU]);
+    miss_if(&mut code);
+    code.extend([LocalGet(0), ArrayLen, LocalGet(3), I32Add, ArrayNewDefault(ARGS), LocalSet(5),
+        LocalGet(5), RefAsNonNull, I32Const(0), LocalGet(0), I32Const(0), LocalGet(0), ArrayLen,
+        ArrayCopy { array_type_index_dst: ARGS, array_type_index_src: ARGS },
+        LocalGet(0), ArrayLen, LocalSet(4), Loop(BlockType::Empty),
+        LocalGet(5), RefAsNonNull, LocalGet(4),
+        LocalGet(2), RefAsNonNull, I32Const(1), ArrayGet(ARGS), ArraySet(ARGS),
+        LocalGet(3), I32Const(1), I32Sub, LocalTee(3), I32Eqz,
+        If(BlockType::Empty), LocalGet(5), Return, End,
+        LocalGet(4), I32Const(1), I32Add, LocalSet(4),
+        LocalGet(2), RefAsNonNull, I32Const(2), ArrayGet(ARGS), LocalSet(6)]);
+    fields(&mut code);
+    code.extend([Br(0), End, Unreachable]);
+    b.function_with_locals("apply-list-arguments", &[reference(ARGS), VALUE], &[nullable(ARGS)],
+        &[(1, nullable(ARGS)), (2, ValType::I32), (1, nullable(ARGS)), (1, VALUE)], &code);
 }

@@ -49,7 +49,7 @@ fn declaration_metadata_merge_and_tag_precedence_match_pinned_analyzer() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
         session
-            .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("user").unwrap();
         let mut macros = CompiledMacros::new().unwrap();
@@ -138,7 +138,7 @@ fn raw_function_metadata_is_preserved_before_completed_callable_overlays() {
     for phase in [Phase::Runtime, Phase::Macro] {
         let mut session = Session::with_options_in(SessionOptions::default(), phase).unwrap();
         session
-            .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         session.enter_namespace("user").unwrap();
         let mut macros = CompiledMacros::new().unwrap();
@@ -451,7 +451,7 @@ fn compiled_declaration_records_match_actual_primary_snapshot_and_catalog_fields
         )
         .unwrap();
         session
-            .eval_privileged(include_str!("../../../runtime/core-import/suss/core.sus"))
+            .eval(include_str!("../../../runtime/core-import/suss/core.sus"))
             .unwrap();
         let mut macros = CompiledMacros::new().unwrap();
         // The observer constructs up to 12 records of 18 three-element field
