@@ -487,6 +487,9 @@ pub enum Nominal {
     PackedGet(usize),
     /// `(aset a i v)` likewise, for int, long and double arrays (#389).
     PackedSet(usize),
+    /// Copy a valid object-array range when bulk copying preserves core's
+    /// loop direction, otherwise return undefined for the original loop.
+    ObjectArrayCopy(bool),
     /// `hash` of a string (#409): Murmur3's `hashInt` of its Java
     /// `hashCode`, `h = 31h + unit` over its UTF-16 units in int32
     /// arithmetic, as ClojureScript's `(m3-hash-int (hash-string* s))`.
@@ -707,6 +710,7 @@ impl Nominal {
                 Self::IsObject | Self::IsDescriptor => count == 1,
                 Self::IsLongValue | Self::StringHash | Self::LongCast | Self::DoubleCast | Self::UncheckedLongCast => count == 1,
                 Self::PackedGet(_) | Self::VectorNth | Self::ArrayMapGet | Self::MapContains => count == 2,
+                Self::ObjectArrayCopy(_) => count == 5,
                 Self::HashMapTypes => count == 4,
                 Self::MapGetOr | Self::MapAssoc => count == 3,
                 Self::PackedSet(_) => count == 3,
@@ -3263,6 +3267,8 @@ impl Analyzer<'_> {
                 "join-strings" => Some(Nominal::JoinStrings),
                 "string-hash" => Some(Nominal::StringHash),
                 "vector-nth" => Some(Nominal::VectorNth),
+                "object-array-copy-forward" => Some(Nominal::ObjectArrayCopy(false)),
+                "object-array-copy-backward" => Some(Nominal::ObjectArrayCopy(true)),
                 "map-get" => Some(Nominal::ArrayMapGet),
                 "map-contains" => Some(Nominal::MapContains),
                 "map-get-or" => Some(Nominal::MapGetOr),

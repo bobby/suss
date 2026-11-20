@@ -1,6 +1,6 @@
 {
   "schema": 1,
   "source-sha256": "3f15a3d83e91cf683252e81b6f16640403ccb062823adee70ee2741d8ee2c196",
-  "replacement": "(def ^:private array-copy-downward (fn\n  ([from i to j len]\n     (loop [i (+ i (dec len)) j (+ j (dec len)) len len]\n       (if (zero? len)\n         to\n         (do (aset to j (aget from i))\n             (recur (dec i) (dec j) (dec len))))))))",
-  "rationale": "Explicit defn bootstrap retains complete pinned reverse overlapping array copy, original direction, loop bindings and returned owner. Full HAMT acceptance remains unfinished."
+  "replacement": "(def ^:private array-copy-downward (fn\n  ([from i to j len]\n     (let [copied (suss.bootstrap/object-array-copy-backward from i to j len)]\n       (if (suss.bootstrap/undefined? copied)\n         (loop [i (+ i (dec len)) j (+ j (dec len)) len len]\n       (if (zero? len)\n         to\n         (do (aset to j (aget from i))\n             (recur (dec i) (dec j) (dec len)))))\n         copied)))))",
+  "rationale": "Explicit defn bootstrap retains complete pinned reverse overlapping array copy, original direction, loop bindings and returned owner. Full HAMT acceptance remains unfinished. A guarded Object[] bulk-copy path uses WasmGC array.copy for complete in-bounds i31 ranges whose aliasing agrees with this loop direction; empty copies with i31 indices return the receiver without inspecting storage, as the original loops do; the complete original loop remains for other arrays/indices, propagating overlaps and partial-write errors (#479)."
 }

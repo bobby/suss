@@ -2276,11 +2276,14 @@
 
 (def array-copy
   (fn ([from i to j len]
-    (loop [i i j j len len]
+    (let [copied (suss.bootstrap/object-array-copy-forward from i to j len)]
+       (if (suss.bootstrap/undefined? copied)
+         (loop [i i j j len len]
        (if (zero? len)
          to
          (do (aset to j (aget from i))
-             (recur (inc i) (inc j) (dec len))))))))
+             (recur (inc i) (inc j) (dec len)))))
+         copied)))))
 
 (def tv-ensure-editable
   (fn [edit node]
@@ -3515,11 +3518,14 @@
 
 (def ^:private array-copy-downward (fn
   ([from i to j len]
-     (loop [i (+ i (dec len)) j (+ j (dec len)) len len]
+     (let [copied (suss.bootstrap/object-array-copy-backward from i to j len)]
+       (if (suss.bootstrap/undefined? copied)
+         (loop [i (+ i (dec len)) j (+ j (dec len)) len len]
        (if (zero? len)
          to
          (do (aset to j (aget from i))
-             (recur (dec i) (dec j) (dec len))))))))
+             (recur (dec i) (dec j) (dec len)))))
+         copied)))))
 
 (deftype TransientArrayMap [^:mutable ^boolean editable_QMARK_
                             ^:mutable len
@@ -3614,9 +3620,9 @@
 
 (def ^:private clone-and-set
   (fn ([arr i a]
-     (let [hamt-bootstrap-doto-3 (aclone arr)] (aset hamt-bootstrap-doto-3 i a) hamt-bootstrap-doto-3))
+     (let [hamt-bootstrap-doto-3 (aclone arr)] (aset ^objects hamt-bootstrap-doto-3 i a) hamt-bootstrap-doto-3))
   ([arr i a j b]
-     (let [hamt-bootstrap-doto-4 (aclone arr)] (aset hamt-bootstrap-doto-4 i a) (aset hamt-bootstrap-doto-4 j b) hamt-bootstrap-doto-4))))
+     (let [hamt-bootstrap-doto-4 (aclone arr)] (aset ^objects hamt-bootstrap-doto-4 i a) (aset ^objects hamt-bootstrap-doto-4 j b) hamt-bootstrap-doto-4))))
 
 (def ^:private remove-pair (fn [arr i]
   (let [new-arr (make-array (- (alength arr) 2))]
@@ -3633,12 +3639,12 @@
 (def ^:private edit-and-set
   (fn ([inode edit i a]
      (let [editable (.ensure_editable inode edit)]
-       (aset (.-arr editable) i a)
+       (aset ^objects (.-arr editable) i a)
        editable))
   ([inode edit i a j b]
      (let [editable (.ensure_editable inode edit)]
-       (aset (.-arr editable) i a)
-       (aset (.-arr editable) j b)
+       (aset ^objects (.-arr editable) i a)
+       (aset ^objects (.-arr editable) j b)
        editable))))
 
 (def ^:private inode-kv-reduce (fn [arr f init]
@@ -3705,27 +3711,27 @@
           (if (>= n 16)
             (let [nodes (make-array 32)
                   jdx   (mask hash shift)]
-              (aset nodes jdx (.inode_assoc (.-EMPTY BitmapIndexedNode) (+ shift 5) hash key val added-leaf?))
+              (aset ^objects nodes jdx (.inode_assoc (.-EMPTY BitmapIndexedNode) (+ shift 5) hash key val added-leaf?))
               (loop [i 0 j 0]
                 (if (< i 32)
                   (if (zero? (bit-and (bit-shift-right-zero-fill bitmap i) 1))
                     (recur (inc i) j)
-                    (do (aset nodes i
-                              (if-not (nil? (aget arr j))
+                    (do (aset ^objects nodes i
+                              (if-not (nil? (aget ^objects arr j))
                                 (.inode_assoc (.-EMPTY BitmapIndexedNode)
-                                              (+ shift 5) (cljs.core/hash (aget arr j)) (aget arr j) (aget arr (inc j)) added-leaf?)
-                                (aget arr (inc j))))
+                                              (+ shift 5) (cljs.core/hash (aget ^objects arr j)) (aget ^objects arr j) (aget ^objects arr (inc j)) added-leaf?)
+                                (aget ^objects arr (inc j))))
                         (recur (inc i) (+ j 2))))))
               (ArrayNode. nil (inc n) nodes))
             (let [new-arr (make-array (* 2 (inc n)))]
               (array-copy arr 0 new-arr 0 (* 2 idx))
-              (aset new-arr (* 2 idx) key)
-              (aset new-arr (inc (* 2 idx)) val)
+              (aset ^objects new-arr (* 2 idx) key)
+              (aset ^objects new-arr (inc (* 2 idx)) val)
               (array-copy arr (* 2 idx) new-arr (* 2 (inc idx)) (* 2 (- n idx)))
               (set! (.-val added-leaf?) true)
               (BitmapIndexedNode. nil (bit-or bitmap bit) new-arr))))
-        (let [key-or-nil  (aget arr (* 2 idx))
-              val-or-node (aget arr (inc (* 2 idx)))]
+        (let [key-or-nil  (aget ^objects arr (* 2 idx))
+              val-or-node (aget ^objects arr (inc (* 2 idx)))]
           (cond (nil? key-or-nil)
                 (let [n (.inode_assoc val-or-node (+ shift 5) hash key val added-leaf?)]
                   (if (identical? n val-or-node)
@@ -3748,8 +3754,8 @@
       (if (zero? (bit-and bitmap bit))
         inode
         (let [idx         (bitmap-indexed-node-index bitmap bit)
-              key-or-nil  (aget arr (* 2 idx))
-              val-or-node (aget arr (inc (* 2 idx)))]
+              key-or-nil  (aget ^objects arr (* 2 idx))
+              val-or-node (aget ^objects arr (inc (* 2 idx)))]
           (cond (nil? key-or-nil)
                 (let [n (.inode_without val-or-node (+ shift 5) hash key)]
                   (cond (identical? n val-or-node) inode
@@ -3767,8 +3773,8 @@
       (if (zero? (bit-and bitmap bit))
         not-found
         (let [idx         (bitmap-indexed-node-index bitmap bit)
-              key-or-nil  (aget arr (* 2 idx))
-              val-or-node (aget arr (inc (* 2 idx)))]
+              key-or-nil  (aget ^objects arr (* 2 idx))
+              val-or-node (aget ^objects arr (inc (* 2 idx)))]
           (cond (nil? key-or-nil)  (.inode_lookup val-or-node (+ shift 5) hash key not-found)
                 (key-test key key-or-nil) val-or-node
                 :else not-found)))))
@@ -3778,8 +3784,8 @@
       (if (zero? (bit-and bitmap bit))
         not-found
         (let [idx         (bitmap-indexed-node-index bitmap bit)
-              key-or-nil  (aget arr (* 2 idx))
-              val-or-node (aget arr (inc (* 2 idx)))]
+              key-or-nil  (aget ^objects arr (* 2 idx))
+              val-or-node (aget ^objects arr (inc (* 2 idx)))]
           (cond (nil? key-or-nil) (.inode_find val-or-node (+ shift 5) hash key not-found)
                 (key-test key key-or-nil)          (MapEntry. key-or-nil val-or-node nil)
                 :else not-found)))))
@@ -3805,8 +3811,8 @@
         (array-copy earr (* 2 (inc i))
                     earr (* 2 i)
                     (- len (* 2 (inc i))))
-        (aset earr (- len 2) nil)
-        (aset earr (dec len) nil)
+        (aset ^objects earr (- len 2) nil)
+        (aset ^objects earr (dec len) nil)
         editable)))
 
   (inode_assoc_BANG_ [inode edit shift hash key val added-leaf?]
@@ -3822,40 +3828,40 @@
               (array-copy-downward earr (* 2 idx)
                                    earr (* 2 (inc idx))
                                    (* 2 (- n idx)))
-              (aset earr (* 2 idx) key)
-              (aset earr (inc (* 2 idx)) val)
+              (aset ^objects earr (* 2 idx) key)
+              (aset ^objects earr (inc (* 2 idx)) val)
               (set! (.-bitmap editable) (bit-or (.-bitmap editable) bit))
               editable)
 
             (>= n 16)
             (let [nodes (make-array 32)
                   jdx   (mask hash shift)]
-              (aset nodes jdx (.inode_assoc_BANG_ (.-EMPTY BitmapIndexedNode) edit (+ shift 5) hash key val added-leaf?))
+              (aset ^objects nodes jdx (.inode_assoc_BANG_ (.-EMPTY BitmapIndexedNode) edit (+ shift 5) hash key val added-leaf?))
               (loop [i 0 j 0]
                 (if (< i 32)
                   (if (zero? (bit-and (bit-shift-right-zero-fill bitmap i) 1))
                     (recur (inc i) j)
-                    (do (aset nodes i
-                              (if-not (nil? (aget arr j))
+                    (do (aset ^objects nodes i
+                              (if-not (nil? (aget ^objects arr j))
                                 (.inode_assoc_BANG_ (.-EMPTY BitmapIndexedNode)
-                                               edit (+ shift 5) (cljs.core/hash (aget arr j)) (aget arr j) (aget arr (inc j)) added-leaf?)
-                                (aget arr (inc j))))
+                                               edit (+ shift 5) (cljs.core/hash (aget ^objects arr j)) (aget ^objects arr j) (aget ^objects arr (inc j)) added-leaf?)
+                                (aget ^objects arr (inc j))))
                         (recur (inc i) (+ j 2))))))
               (ArrayNode. edit (inc n) nodes))
 
             :else
             (let [new-arr (make-array (* 2 (+ n 4)))]
               (array-copy arr 0 new-arr 0 (* 2 idx))
-              (aset new-arr (* 2 idx) key)
-              (aset new-arr (inc (* 2 idx)) val)
+              (aset ^objects new-arr (* 2 idx) key)
+              (aset ^objects new-arr (inc (* 2 idx)) val)
               (array-copy arr (* 2 idx) new-arr (* 2 (inc idx)) (* 2 (- n idx)))
               (set! (.-val added-leaf?) true)
               (let [editable (.ensure_editable inode edit)]
                 (set! (.-arr editable) new-arr)
                 (set! (.-bitmap editable) (bit-or (.-bitmap editable) bit))
                 editable))))
-        (let [key-or-nil  (aget arr (* 2 idx))
-              val-or-node (aget arr (inc (* 2 idx)))]
+        (let [key-or-nil  (aget ^objects arr (* 2 idx))
+              val-or-node (aget ^objects arr (inc (* 2 idx)))]
           (cond (nil? key-or-nil)
                 (let [n (.inode_assoc_BANG_ val-or-node edit (+ shift 5) hash key val added-leaf?)]
                   (if (identical? n val-or-node)
@@ -3877,8 +3883,8 @@
       (if (zero? (bit-and bitmap bit))
         inode
         (let [idx         (bitmap-indexed-node-index bitmap bit)
-              key-or-nil  (aget arr (* 2 idx))
-              val-or-node (aget arr (inc (* 2 idx)))]
+              key-or-nil  (aget ^objects arr (* 2 idx))
+              val-or-node (aget ^objects arr (inc (* 2 idx)))]
           (cond (nil? key-or-nil)
                 (let [n (.inode_without_BANG_ val-or-node edit (+ shift 5) hash key removed-leaf?)]
                   (cond (identical? n val-or-node) inode
@@ -3934,7 +3940,7 @@
   Object
   (inode_assoc [inode shift hash key val added-leaf?]
     (let [idx  (mask hash shift)
-          node (aget arr idx)]
+          node (aget ^objects arr idx)]
       (if (nil? node)
         (ArrayNode. nil (inc cnt) (clone-and-set arr idx (.inode_assoc (.-EMPTY BitmapIndexedNode) (+ shift 5) hash key val added-leaf?)))
         (let [n (.inode_assoc node (+ shift 5) hash key val added-leaf?)]
@@ -3944,7 +3950,7 @@
 
   (inode_without [inode shift hash key]
     (let [idx  (mask hash shift)
-          node (aget arr idx)]
+          node (aget ^objects arr idx)]
       (if-not (nil? node)
         (let [n (.inode_without node (+ shift 5) hash key)]
           (cond
@@ -3962,14 +3968,14 @@
 
   (inode_lookup [inode shift hash key not-found]
     (let [idx  (mask hash shift)
-          node (aget arr idx)]
+          node (aget ^objects arr idx)]
       (if-not (nil? node)
         (.inode_lookup node (+ shift 5) hash key not-found)
         not-found)))
 
   (inode_find [inode shift hash key not-found]
     (let [idx  (mask hash shift)
-          node (aget arr idx)]
+          node (aget ^objects arr idx)]
       (if-not (nil? node)
         (.inode_find node (+ shift 5) hash key not-found)
         not-found)))
@@ -3984,7 +3990,7 @@
 
   (inode_assoc_BANG_ [inode edit shift hash key val added-leaf?]
     (let [idx  (mask hash shift)
-          node (aget arr idx)]
+          node (aget ^objects arr idx)]
       (if (nil? node)
         (let [editable (edit-and-set inode edit idx (.inode_assoc_BANG_ (.-EMPTY BitmapIndexedNode) edit (+ shift 5) hash key val added-leaf?))]
           (set! (.-cnt editable) (inc (.-cnt editable)))
@@ -3996,7 +4002,7 @@
 
   (inode_without_BANG_ [inode edit shift hash key removed-leaf?]
     (let [idx  (mask hash shift)
-          node (aget arr idx)]
+          node (aget ^objects arr idx)]
       (if (nil? node)
         inode
         (let [n (.inode_without_BANG_ node edit (+ shift 5) hash key removed-leaf?)]
@@ -4018,7 +4024,7 @@
     (let [len (alength arr)]           ; actually 32
       (loop [i 0 init init]
         (if (< i len)
-          (let [node (aget arr i)]
+          (let [node (aget ^objects arr i)]
             (if-not (nil? node)
               (let [init (.kv_reduce node f init)]
                 (if (reduced? init)
@@ -4052,11 +4058,11 @@
           (let [len     (* 2 cnt)
                 new-arr (make-array (+ len 2))]
             (array-copy arr 0 new-arr 0 len)
-            (aset new-arr len key)
-            (aset new-arr (inc len) val)
+            (aset ^objects new-arr len key)
+            (aset ^objects new-arr (inc len) val)
             (set! (.-val added-leaf?) true)
             (HashCollisionNode. nil collision_hash (inc cnt) new-arr))
-          (if (= (aget arr (inc idx)) val)
+          (if (= (aget ^objects arr (inc idx)) val)
             inode
             (HashCollisionNode. nil collision_hash cnt (clone-and-set arr (inc idx) val)))))
       (.inode_assoc (BitmapIndexedNode. nil (bitpos collision_hash shift) (array nil inode))
@@ -4071,12 +4077,12 @@
   (inode_lookup [inode shift hash key not-found]
     (let [idx (hash-collision-node-find-index arr cnt key)]
       (cond (< idx 0) not-found
-            :else     (aget arr (inc idx)))))
+            :else     (aget ^objects arr (inc idx)))))
 
   (inode_find [inode shift hash key not-found]
     (let [idx (hash-collision-node-find-index arr cnt key)]
       (cond (< idx 0) not-found
-            :else     (MapEntry. (aget arr idx) (aget arr (inc idx)) nil))))
+            :else     (MapEntry. (aget ^objects arr idx) (aget ^objects arr (inc idx)) nil))))
 
   (inode_seq [inode]
     (create-inode-seq arr))
@@ -4107,11 +4113,11 @@
             (let [len     (alength arr)
                   new-arr (make-array (+ len 2))]
               (array-copy arr 0 new-arr 0 len)
-              (aset new-arr len key)
-              (aset new-arr (inc len) val)
+              (aset ^objects new-arr len key)
+              (aset ^objects new-arr (inc len) val)
               (set! (.-val added-leaf?) true)
               (.ensure_editable_array inode edit (inc cnt) new-arr)))
-          (if (identical? (aget arr (inc idx)) val)
+          (if (identical? (aget ^objects arr (inc idx)) val)
             inode
             (edit-and-set inode edit (inc idx) val))))
       (.inode_assoc_BANG_ (BitmapIndexedNode. edit (bitpos collision_hash shift) (array nil inode nil nil))
@@ -4126,10 +4132,10 @@
               nil
               (let [editable (.ensure_editable inode edit)
                     earr     (.-arr editable)]
-                (aset earr idx (aget earr (- (* 2 cnt) 2)))
-                (aset earr (inc idx) (aget earr (dec (* 2 cnt))))
-                (aset earr (dec (* 2 cnt)) nil)
-                (aset earr (- (* 2 cnt) 2) nil)
+                (aset ^objects earr idx (aget ^objects earr (- (* 2 cnt) 2)))
+                (aset ^objects earr (inc idx) (aget ^objects earr (dec (* 2 cnt))))
+                (aset ^objects earr (dec (* 2 cnt)) nil)
+                (aset ^objects earr (- (* 2 cnt) 2) nil)
                 (set! (.-cnt editable) (dec (.-cnt editable)))
                 editable))))))
 

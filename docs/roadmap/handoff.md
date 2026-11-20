@@ -30452,3 +30452,65 @@ is running in its own6GiB scope with CARGO_BUILD_JOBS=2 and the shared Cargo
 target; pr474-workspace-ifn-final.log records its output and scope. Both it and
 green CI on the corrected final head remain required verification. Probe
 TMPDIR is the workspace target/probe directory throughout.
+
+
+## Guarded core array copies (2026-11-19)
+
+Worktree target/probe/m15-hamt-source, branch codex/m15-hamt, initially started from
+mainccfb63a4. It was rebased onto67c76c2a after the apply change landed,
+retaining both handoff histories and regenerating core/manifest from both sets
+of replacement patches. Repeat execution on that rebased head; the earlier
+measurements identify their own executable/source snapshots. Its Cargo target is an isolated
+Btrfs reflink of the shared release target at target/probe/m15-hamt-target;
+CARGO_BUILD_JOBS=2, stable Rust, named builds/compiles,4GiB build/test scopes.
+The existing serial apply baseline remains in its original scope/log; no source
+or build artifacts of that run were replaced. Probe TMPDIR/output stays under
+target/probe. Timing acceptance is not inferred under this test load.
+
+Paired baseline and apply-candidate program instruction runs use the unchanged
+bench.py forms/setup/loop, warm-up first and median3 N1000-minus0 observations.
+Reviewed598c7f24 and mainccfb63a4 have identical trees. Into-map costs14,471,324
+instructions on main; the apply candidate14,473,322. Source hashes, copied
+executable SHA256 and every raw run remain in m15-programs-{main-ccfb,6dae}-
+instructions/. Optional Wasm profiling names now include anonymous IR source
+ranges, without changing language-visible names. The mapped main profile puts
+BitmapIndexedNode.inode_assoc_BANG_ near19%, TransientHashMap.assoc_BANG_6%,
+and the forward/backward copy loops together9%; these whole-process samples
+include startup and serve qualitative attribution only.
+
+The64-access ^objects experiment passed25 focused checks and347 Python plus
+foundation checks, but only reduced into-map to14,406,194 instructions. Private
+primitive helper hints then passed27 focused checks but regressed it to15,826,024;
+those hints were removed. An earlier (long ...) loop failed bootstrap generation
+with Unresolved Runtime name long (defined later); that exit101 is retained in
+m15-hamt-typed-focused.log and is not a passing test. Do not restore either
+experiment on an assumption that a typed entry is automatically faster.
+
+Core's two copy helpers now try additive guarded runtime exports. Complete
+in-bounds Object[] ranges use array.copy only when aliasing agrees with the
+original iteration direction. Invalid ranges, propagation-sensitive overlaps,
+other storage kinds and non-i31 indices retain the complete source loop,
+including partial writes and exception order. Empty i31-index copies return the
+original destination without touching arrays; backward preparation cannot
+overflow a long for those operands. Shared ABI7 layouts and public arities stay
+unchanged. Object[] hints remain only in known HAMT storage accesses; the
+generic copy fallbacks are unhinted so primitive arrays keep working.
+
+m15-hamt-bulk-focused.log records28 passes; m15-hamt-bulk-empty-focused.log
+records29 passes, zero failures/ignores, Runtime/Macro including direct native
+admission/decline, both overlap directions, partial-write errors, primitive
+fallbacks, empty copies, shallow element identity, GC and argument effects.
+Stable named release builds and the m15-program-instructions.py harness run in
+bounded scopes. m15-hamt-bulk-empty-instructions/ gives into-map12,922,256,
+word-frequencies3,436,594, into-vector1,688,806; other program rows are essentially
+unchanged. Main into-map14.471M to12.922M is about10.7% fewer instructions.
+Raw observations, executable SHA256/source patches and all earlier negative
+experiments remain under their m15-hamt-* evidence families. No walltime claim.
+
+The public growth/collision/removal/snapshot/nil/mixed Long-Double/wide-long
+probe matches fresh JVM Clojure1.12.6 exactly (m15-hamt-bulk-public-oracle.json).
+The original probe's1N literal is unsupported on both main and candidate;
+actual negative sources/logs remain. This is not BigInt coverage. Existing
+focused sharing/lifecycle cases force GC in both phases. Complete foundation
+checks, independent review and final-head CI remain required for the submitted
+source; the isolated release tests do not replace broader verification.
