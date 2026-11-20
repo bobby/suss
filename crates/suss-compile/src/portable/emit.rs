@@ -276,6 +276,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::StringAppendLong => { names.insert("string-append-long"); }
                         Nominal::StringHash => { names.insert("string-hash"); }
                         Nominal::VectorNth => { names.insert("vector-nth"); }
+                        Nominal::ObjectArrayCopy(backward) => {
+                            names.insert(if *backward { "object-array-copy-backward" } else { "object-array-copy-forward" });
+                        }
                         Nominal::ArrayMapGet | Nominal::MapContains | Nominal::MapGetOr => { names.insert("map-lookup"); }
                         Nominal::MapAssoc => { names.insert("map-assoc"); }
                         Nominal::HashMapTypes => { names.insert("hash-map-type-register"); }
@@ -821,7 +824,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
             "number-parse-long" | "hash-map-type-register" => (vec![VALUE; 4], vec![VALUE]),
-            "packed-array-copy" => (vec![VALUE; 5], vec![VALUE]),
+            "packed-array-copy" | "object-array-copy-forward" | "object-array-copy-backward" => (vec![VALUE; 5], vec![VALUE]),
             "number-range-count" | "packed-array-store" | "array-set" | "packed-array-set-3" | "map-assoc" => (vec![VALUE; 3], vec![VALUE]),
             "map-lookup" => (vec![VALUE, VALUE, ValType::I32, VALUE], vec![VALUE]),
             "string-slice" | "callable-property-get" | "named-property-set" | "user-field-get-guard" | "user-field-set-guard" | "object-method-set" | "object-method-invoke" | "native-object-property-set" | "native-object-property-set-strict" => {
@@ -1346,7 +1349,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         map.append(index, "eval");
         index += 1;
         for (position, body) in bodies.iter().enumerate() {
-            let name = text(&body.arity_name).or_else(|| text(&body.display_name)).unwrap_or_else(|| format!("fn#{position}"));
+            let name = text(&body.arity_name).or_else(|| text(&body.display_name)).filter(|name| !name.is_empty())
+                .unwrap_or_else(|| format!("fn#{position}@{}..{}", body.function.span.start, body.function.span.end));
             map.append(index, &format!("{name}/{}{}", body.arity, if body.variadic { "+" } else { "" }));
             index += 1;
         }
@@ -3608,6 +3612,14 @@ fn emit_function(
                             function
                                 .instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                 .instruction(&Call(index("string-hash")));
+                        }
+                        Nominal::ObjectArrayCopy(backward) => {
+                            for argument in arguments {
+                                let mut code = vec![];
+                                locals.push_boxed(&mut code, *argument);
+                                for instruction in code { function.instruction(&instruction); }
+                            }
+                            function.instruction(&Call(index(if *backward { "object-array-copy-backward" } else { "object-array-copy-forward" })));
                         }
                         Nominal::StringAppendLong => {
                             function

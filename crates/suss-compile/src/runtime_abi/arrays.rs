@@ -3,6 +3,7 @@
 //! holes, properties or methods. `aget`, `aset` and `alength` of anything
 //! else throw.
 use super::*;
+mod bulk_copy;
 /// A global slot that source arrays used, kept so that later globals keep
 /// their indices (#425).
 pub(super) const TAG_GLOBAL: u32 = closure_properties::TAG_GLOBAL + 1;
@@ -92,6 +93,7 @@ fn factory(
 
 pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
     use Instruction::*;
+    bulk_copy::functions(b);
     let packed = |body: &mut Vec<Instruction<'static>>, local: u32| {
         body.extend([LocalGet(local), RefTestNonNull(HeapType::Concrete(PACKED)), I32Eqz, If(BlockType::Empty)]);
         error(body);

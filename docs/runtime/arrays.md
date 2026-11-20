@@ -98,3 +98,22 @@ integration remain unfinished. Review statuses remain in progress, not exclusion
 or compatibility completions. Persistent collection acceptance and issues #9/#11/
 #17 remain open. Next port source-backed sequence/list foundations and variadic
 rest/apply using these validated storage and dispatch boundaries.
+
+
+## Core copy loops
+
+Core's `array-copy` and private `array-copy-downward` first try the runtime's
+`object-array-copy-forward` and `object-array-copy-backward` (#479). The helpers
+return the original destination or undefined for the complete source loop.
+Object-array storage and nonnegative i31 ranges are checked before `array.copy`.
+Both storages remain rooted in typed locals, and no callback or allocation can
+change their lengths during admission/copying. The shared ABI layout is unchanged.
+
+Wasm's bulk copy has memmove semantics. A forward loop propagates values when
+its destination starts inside its source; a backward loop has the opposite
+hazard. Those cases fall back, comparing storage identity rather than wrapper
+identity. Invalid full ranges also fall back, preserving partial writes and
+exception order. Primitive/mixed array kinds and non-i31 indices retain the
+original loop. An empty copy with i31 indices returns the receiver before array
+checks; the backward loop's preparatory i-1 and j-1 cannot overflow a long for
+those inputs. All source arguments are still evaluated once, left to right.
