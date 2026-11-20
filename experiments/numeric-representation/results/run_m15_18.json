@@ -1,0 +1,1452 @@
+{
+  "format_version": 1,
+  "receipt": {
+    "source_head": "67c76c2ae36d66b50b7b39a53328f88ebed16ad1",
+    "source_dirty": "",
+    "bench_sha256": "3233839717bcd149bef5fd690dd1fc2dfa482d4d1135cb0d641393c217419624",
+    "suss_path": "pr474-suss-ifn-final",
+    "suss_sha256": "0d93055bed8dfdc1817d574750e506466e4ecd1e7223bcad64d9637e81cec618",
+    "n": 5000000,
+    "reps": 3,
+    "cases": [
+      [
+        "long-control",
+        "i",
+        null,
+        1
+      ],
+      [
+        "long-identity",
+        "(identity i)",
+        "long-control",
+        1
+      ],
+      [
+        "call-0",
+        "(f0)",
+        "long-control",
+        1
+      ],
+      [
+        "call-1",
+        "(f1 i)",
+        "long-control",
+        1
+      ],
+      [
+        "call-2",
+        "(f2 i i)",
+        "long-control",
+        1
+      ],
+      [
+        "call-3",
+        "(f3 i i i)",
+        "long-control",
+        1
+      ],
+      [
+        "call-long",
+        "(typed-long (+ i 3000000000))",
+        "long-control",
+        1
+      ],
+      [
+        "call-double",
+        "(typed-double (double i))",
+        "double-control",
+        1
+      ],
+      [
+        "call-variadic",
+        "(fv i)",
+        "long-control",
+        1
+      ],
+      [
+        "call-local",
+        "(g i)",
+        "long-control",
+        1
+      ],
+      [
+        "call-bound",
+        "(identity i)",
+        "long-control",
+        1
+      ],
+      [
+        "call-protocol",
+        "(ident b)",
+        "long-control",
+        1
+      ],
+      [
+        "call-protocol-native",
+        "(-equiv i 7)",
+        "long-control",
+        1
+      ],
+      [
+        "call-apply",
+        "(apply f2 i [i])",
+        "long-control",
+        1
+      ],
+      [
+        "call-multimethod",
+        "(area sq)",
+        "long-control",
+        1
+      ],
+      [
+        "long-identical",
+        "(identical? i 7)",
+        "long-control",
+        1
+      ],
+      [
+        "long-nil",
+        "(nil? i)",
+        "long-control",
+        1
+      ],
+      [
+        "keyword-eq",
+        "(= :a :b)",
+        "long-control",
+        1
+      ],
+      [
+        "long-eq",
+        "(= i 7)",
+        "long-control",
+        1
+      ],
+      [
+        "long-eq-double",
+        "(= i 7.5)",
+        "long-control",
+        1
+      ],
+      [
+        "long-num-eq",
+        "(== i 7)",
+        "long-control",
+        1
+      ],
+      [
+        "long-add",
+        "(+ i 7)",
+        "long-control",
+        1
+      ],
+      [
+        "long-hash",
+        "(hash i)",
+        "long-control",
+        1
+      ],
+      [
+        "long-str",
+        "(str \"a\" i)",
+        "long-control",
+        1
+      ],
+      [
+        "double-control",
+        "(double i)",
+        null,
+        1
+      ],
+      [
+        "double-eq",
+        "(= (double i) 7.5)",
+        "double-control",
+        1
+      ],
+      [
+        "double-add",
+        "(+ (double i) 0.5)",
+        "double-control",
+        1
+      ],
+      [
+        "double-hash",
+        "(hash (double i))",
+        "double-control",
+        1
+      ],
+      [
+        "index-control",
+        "(bit-and i 1023)",
+        null,
+        1
+      ],
+      [
+        "long-aget",
+        "(aget la (bit-and i 1023))",
+        "index-control",
+        1
+      ],
+      [
+        "int-aget",
+        "(aget ia (bit-and i 1023))",
+        "index-control",
+        1
+      ],
+      [
+        "double-aget",
+        "(aget da (bit-and i 1023))",
+        "index-control",
+        1
+      ],
+      [
+        "object-aget",
+        "(aget oa (bit-and i 1023))",
+        "index-control",
+        100
+      ],
+      [
+        "vector-nth",
+        "(nth v (bit-and i 1023))",
+        "index-control",
+        1
+      ],
+      [
+        "long-aset",
+        "(aset la (bit-and i 1023) i)",
+        "index-control",
+        1
+      ],
+      [
+        "double-aset",
+        "(aset da (bit-and i 1023) 1.5)",
+        "index-control",
+        1
+      ],
+      [
+        "object-aset",
+        "(aset oa (bit-and i 1023) i)",
+        "index-control",
+        100
+      ],
+      [
+        "long-aget-hinted",
+        "(aget ^longs la (bit-and i 1023))",
+        "index-control",
+        1
+      ],
+      [
+        "int-aget-hinted",
+        "(aget ^ints ia (bit-and i 1023))",
+        "index-control",
+        1
+      ],
+      [
+        "double-aget-hinted",
+        "(aget ^doubles da (bit-and i 1023))",
+        "index-control",
+        1
+      ],
+      [
+        "long-aset-hinted",
+        "(aset ^longs la (bit-and i 1023) i)",
+        "index-control",
+        1
+      ],
+      [
+        "double-aset-hinted",
+        "(aset ^doubles da (bit-and i 1023) 1.5)",
+        "index-control",
+        1
+      ],
+      [
+        "vector-conj",
+        "(conj v i)",
+        "long-control",
+        1
+      ],
+      [
+        "vector-of-nth",
+        "(nth vl (bit-and i 1023))",
+        "index-control",
+        1
+      ],
+      [
+        "vector-of-conj",
+        "(conj vl i)",
+        "long-control",
+        1
+      ],
+      [
+        "map-get",
+        "(get m (bit-and i 1023))",
+        "index-control",
+        1
+      ],
+      [
+        "map-assoc",
+        "(assoc m (bit-and i 1023) i)",
+        "index-control",
+        1
+      ],
+      [
+        "keyword-get",
+        "(:b km)",
+        "long-control",
+        1
+      ],
+      [
+        "set-contains",
+        "(contains? s (bit-and i 1023))",
+        "index-control",
+        1
+      ]
+    ],
+    "reductions": [
+      [
+        "long-array-reduce",
+        "(reduce + la)",
+        1
+      ],
+      [
+        "double-array-reduce",
+        "(reduce + da)",
+        1
+      ],
+      [
+        "object-array-reduce",
+        "(reduce + oa)",
+        100
+      ],
+      [
+        "vector-reduce",
+        "(reduce + v)",
+        1
+      ],
+      [
+        "vector-of-reduce",
+        "(reduce + vl)",
+        1
+      ]
+    ],
+    "programs": [
+      [
+        "fib",
+        "(fib 20)"
+      ],
+      [
+        "word-frequencies",
+        "(reduce (fn [acc w] (assoc acc w (inc (get acc w 0)))) {} words)"
+      ],
+      [
+        "transduce",
+        "(transduce (comp (map inc) (filter even?)) + 0 v)"
+      ],
+      [
+        "lazy-pipeline",
+        "(reduce + (map inc (filter even? v)))"
+      ],
+      [
+        "into-vector",
+        "(into [] (map inc) v)"
+      ],
+      [
+        "into-map",
+        "(into {} (map (fn [x] [x x])) v)"
+      ],
+      [
+        "string-build",
+        "(apply str (map str v))"
+      ]
+    ],
+    "loops": [
+      [
+        "long-sum",
+        "(loop [i 0 acc 0] (if (< i n) (recur (inc i) (+ acc i)) acc))",
+        "s64"
+      ],
+      [
+        "double-sum",
+        "(loop [i 0 acc 0.0] (if (< i n) (recur (inc i) (+ acc 0.5)) acc))",
+        "f64"
+      ],
+      [
+        "typed-long-sum",
+        "(loop [i 0 acc 0] (if (< i n) (recur (inc i) (+ acc (typed-long (+ i 3000000000)))) acc))",
+        "s64"
+      ],
+      [
+        "typed-double-sum",
+        "(loop [i 0 acc 0.0] (if (< i n) (recur (inc i) (+ acc (typed-double (double i)))) acc))",
+        "f64"
+      ]
+    ],
+    "start_time": 1795152085.0692358,
+    "start_load": [
+      0.19580078125,
+      3.11181640625,
+      6.6708984375
+    ],
+    "java_tool_options": "-Xmx512m",
+    "clojure_version": "1.12.6",
+    "end_time": 1795153058.0892982,
+    "end_load": [
+      1.22998046875,
+      1.2626953125,
+      3.10595703125
+    ],
+    "load_samples": [
+      0.26025390625,
+      0.31982421875,
+      0.37451171875,
+      0.4248046875,
+      0.47119140625,
+      0.513671875,
+      0.552734375,
+      0.5888671875,
+      0.6220703125,
+      0.8125,
+      0.82763671875,
+      0.841796875,
+      0.8544921875,
+      0.8662109375,
+      0.876953125,
+      0.88720703125,
+      0.896484375,
+      0.98486328125,
+      0.986328125,
+      0.98779296875,
+      0.9892578125,
+      0.990234375,
+      0.9912109375,
+      0.9921875,
+      1.0732421875,
+      1.1474609375,
+      1.2958984375,
+      1.3525390625,
+      1.32421875,
+      1.2978515625,
+      1.3544921875,
+      1.32568359375,
+      1.29931640625,
+      1.27490234375,
+      1.25244140625,
+      1.392578125,
+      1.36083984375,
+      1.33154296875,
+      1.3046875,
+      1.2802734375,
+      1.2578125,
+      1.23681640625,
+      1.2177734375,
+      1.2001953125,
+      1.18408203125,
+      1.1689453125,
+      1.1552734375,
+      1.22314453125,
+      1.28564453125,
+      1.2626953125,
+      1.2412109375,
+      1.2216796875,
+      1.20361328125,
+      1.18701171875,
+      1.171875,
+      1.15771484375,
+      1.7861328125,
+      1.72314453125,
+      2.22607421875,
+      2.12744140625,
+      2.037109375,
+      1.95361328125,
+      1.876953125,
+      1.806640625,
+      1.74169921875,
+      1.68212890625,
+      1.62744140625,
+      1.5771484375,
+      1.53076171875,
+      1.48779296875,
+      1.44873046875,
+      1.41259765625,
+      1.37939453125,
+      1.3486328125,
+      1.3203125,
+      1.29443359375,
+      1.2705078125,
+      1.3291015625,
+      1.302734375,
+      1.2783203125,
+      1.255859375,
+      1.2353515625,
+      1.21630859375,
+      1.19873046875,
+      1.1826171875,
+      1.16796875,
+      1.154296875,
+      1.1416015625,
+      1.21044921875,
+      1.193359375,
+      1.177734375,
+      1.1630859375,
+      1.14990234375,
+      1.1376953125,
+      1.20703125,
+      1.1904296875,
+      1.1748046875,
+      1.16064453125,
+      1.1474609375,
+      1.13525390625,
+      1.1240234375,
+      1.1943359375,
+      1.1787109375,
+      1.1640625,
+      1.2314453125,
+      1.212890625,
+      1.19580078125,
+      1.26025390625,
+      1.2392578125,
+      1.2197265625,
+      1.20166015625,
+      1.18505859375,
+      1.169921875,
+      1.15625,
+      1.1435546875,
+      1.1318359375,
+      1.20166015625,
+      1.18505859375,
+      1.169921875,
+      1.15625,
+      1.1435546875,
+      1.1318359375,
+      1.12109375,
+      1.111328125,
+      1.10205078125,
+      1.25439453125,
+      1.23388671875,
+      1.21484375,
+      1.197265625,
+      1.18115234375,
+      1.16650390625,
+      1.15283203125,
+      1.14013671875,
+      1.12890625,
+      1.27880859375,
+      1.25634765625,
+      1.2353515625,
+      1.21630859375,
+      1.359375,
+      1.33056640625,
+      1.3037109375,
+      1.279296875,
+      1.2568359375,
+      1.23583984375,
+      1.29736328125,
+      1.35400390625,
+      1.3251953125,
+      1.298828125,
+      1.2744140625,
+      1.251953125,
+      1.2314453125,
+      1.212890625,
+      1.19580078125,
+      1.1796875,
+      1.1650390625,
+      1.1513671875,
+      1.13916015625,
+      1.1279296875,
+      1.11767578125,
+      1.10791015625,
+      1.09912109375,
+      1.17138671875,
+      1.23779296875,
+      1.21875,
+      1.201171875,
+      1.18505859375,
+      1.169921875,
+      1.15625,
+      1.1435546875,
+      1.1318359375,
+      1.12109375,
+      1.111328125,
+      1.10205078125,
+      1.09375,
+      1.0859375,
+      1.07861328125,
+      1.072265625,
+      1.06640625,
+      1.06103515625,
+      1.13623046875,
+      1.125,
+      1.11474609375,
+      1.10546875,
+      1.0966796875,
+      1.0888671875,
+      1.162109375,
+      1.14892578125,
+      1.13671875,
+      1.12548828125,
+      1.115234375,
+      1.10595703125,
+      1.09716796875,
+      1.08935546875,
+      1.16259765625
+    ]
+  },
+  "binary_source": {
+    "main_head": "67c76c2ae36d66b50b7b39a53328f88ebed16ad1",
+    "binary_source_head": "6dae4878c00a88ef88087ff03ef4f228ba393452",
+    "source_tree": "0687c78bb77feff829a5c0cbcd6674f80551e564",
+    "tree_equal": true,
+    "executable": "pr474-suss-ifn-final",
+    "sha256": "0d93055bed8dfdc1817d574750e506466e4ecd1e7223bcad64d9637e81cec618"
+  },
+  "idle_gate": {
+    "threshold": 0.75,
+    "required_seconds": 60,
+    "ready": true,
+    "final_sample": {
+      "time": 1795152066.3339627,
+      "load": [
+        0.27392578125,
+        3.32861328125,
+        6.81689453125
+      ]
+    }
+  },
+  "host": {
+    "platform": "Linux-7.2.8-9-omarchy-x86_64-with-glibc2.44",
+    "cpu_count": 8,
+    "cpu_model": "11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz"
+  },
+  "scope": {
+    "memory_max_bytes": 3221225472,
+    "jvm_max_heap_bytes": 536870912
+  },
+  "jvm": {
+    "times": {
+      "long-control": [
+        2.67508095e-09,
+        1.2597334999999996e-10
+      ],
+      "long-identity": [
+        7.295133850000001e-09,
+        4.8392299999999157e-11
+      ],
+      "call-0": [
+        6.856440349999999e-09,
+        7.977065000000106e-11
+      ],
+      "call-1": [
+        6.8317020000000005e-09,
+        4.679638999999997e-10
+      ],
+      "call-2": [
+        6.880868549999999e-09,
+        7.791588500000001e-10
+      ],
+      "call-3": [
+        6.992579799999999e-09,
+        1.303334999999973e-11
+      ],
+      "call-long": [
+        7.3795018000000006e-09,
+        1.412363000000003e-10
+      ],
+      "call-double": [
+        7.672792e-09,
+        1.5217100000000187e-11
+      ],
+      "call-variadic": [
+        6.8786277e-09,
+        3.497259499999993e-10
+      ],
+      "call-local": [
+        7.058388999999999e-09,
+        1.2212230000000113e-10
+      ],
+      "call-bound": [
+        6.969829349999999e-09,
+        3.779849000000003e-10
+      ],
+      "call-protocol": [
+        6.62402275e-09,
+        3.1865550000000044e-11
+      ],
+      "call-protocol-native": [
+        6.56752825e-09,
+        3.993482499999993e-10
+      ],
+      "call-apply": [
+        6.208651870000001e-08,
+        2.1549270499999926e-09
+      ],
+      "call-multimethod": [
+        1.628114755e-08,
+        1.3278745000000117e-10
+      ],
+      "long-identical": [
+        6.9519312e-09,
+        1.8919149999999908e-11
+      ],
+      "long-nil": [
+        6.250218150000001e-09,
+        7.933479999999944e-11
+      ],
+      "keyword-eq": [
+        6.22080765e-09,
+        2.1021450000000044e-11
+      ],
+      "long-eq": [
+        6.283174e-09,
+        8.579300000000175e-12
+      ],
+      "long-eq-double": [
+        9.3918715e-09,
+        9.149003000000016e-10
+      ],
+      "long-num-eq": [
+        6.17521965e-09,
+        1.1778479999999986e-10
+      ],
+      "long-add": [
+        6.999435099999999e-09,
+        2.3414260000000143e-10
+      ],
+      "long-hash": [
+        1.04882687e-08,
+        5.1321599999999874e-11
+      ],
+      "long-str": [
+        4.459723845e-08,
+        2.2512988000000007e-09
+      ],
+      "double-control": [
+        2.06112475e-09,
+        1.5164050000000234e-11
+      ],
+      "double-eq": [
+        6.3793574e-09,
+        6.043850000000102e-12
+      ],
+      "double-add": [
+        6.86623405e-09,
+        2.074634999999995e-10
+      ],
+      "double-hash": [
+        1.73334436e-08,
+        5.138574499999989e-10
+      ],
+      "index-control": [
+        2.9966356e-09,
+        6.800274999999981e-11
+      ],
+      "long-aget": [
+        8.0247217e-09,
+        5.682014999999986e-11
+      ],
+      "int-aget": [
+        7.08969065e-09,
+        1.5171715000000113e-10
+      ],
+      "double-aget": [
+        7.03002885e-09,
+        7.462569000000005e-10
+      ],
+      "object-aget": [
+        2.26451e-09,
+        7.06500000000012e-12
+      ],
+      "vector-nth": [
+        7.0458455e-09,
+        3.0685799999999514e-11
+      ],
+      "long-aset": [
+        6.96095325e-09,
+        8.481972999999996e-10
+      ],
+      "double-aset": [
+        6.859626300000001e-09,
+        7.361894999999991e-10
+      ],
+      "object-aset": [
+        1.3217089999999999e-08,
+        1.301100000000005e-10
+      ],
+      "long-aget-hinted": [
+        7.3912702e-09,
+        3.850161e-10
+      ],
+      "int-aget-hinted": [
+        6.842492799999999e-09,
+        1.4993695000000027e-10
+      ],
+      "double-aget-hinted": [
+        7.066510199999999e-09,
+        1.5376800000001464e-11
+      ],
+      "long-aset-hinted": [
+        7.09283405e-09,
+        3.2429699999998726e-11
+      ],
+      "double-aset-hinted": [
+        7.029680350000001e-09,
+        2.605214499999995e-10
+      ],
+      "vector-conj": [
+        3.128284585e-08,
+        1.9251177500000027e-09
+      ],
+      "vector-of-nth": [
+        1.026959835e-08,
+        3.267706999999999e-10
+      ],
+      "vector-of-conj": [
+        3.39684213e-08,
+        6.783502500000012e-10
+      ],
+      "map-get": [
+        3.36608905e-08,
+        1.4613263499999963e-09
+      ],
+      "map-assoc": [
+        7.903963134999999e-08,
+        2.3864273999999996e-09
+      ],
+      "keyword-get": [
+        9.671038149999999e-09,
+        7.980375000000086e-11
+      ],
+      "set-contains": [
+        3.055585115e-08,
+        1.3153785499999963e-09
+      ],
+      "long-array-reduce": [
+        2.2436227160999592e-05,
+        9.436380581728806e-07
+      ],
+      "double-array-reduce": [
+        2.2545155110610406e-05,
+        1.4385469070053252e-06
+      ],
+      "object-array-reduce": [
+        2.0566348958333332e-05,
+        9.330208333333353e-07
+      ],
+      "vector-reduce": [
+        4.344547572716099e-06,
+        3.852655673904141e-07
+      ],
+      "vector-of-reduce": [
+        1.434342293117575e-05,
+        8.122255223269146e-07
+      ],
+      "fib": [
+        9.020665500000001e-05,
+        4.979999999999807e-07
+      ],
+      "word-frequencies": [
+        4.9690205e-05,
+        5.811170000000001e-06
+      ],
+      "transduce": [
+        9.258330000000001e-06,
+        1.437599999999991e-07
+      ],
+      "lazy-pipeline": [
+        1.7113775e-05,
+        4.902950000000007e-07
+      ],
+      "into-vector": [
+        1.4457545e-05,
+        4.100900000000007e-07
+      ],
+      "into-map": [
+        8.334552e-05,
+        1.0753915e-05
+      ],
+      "string-build": [
+        4.3321735e-05,
+        5.951650000000016e-07
+      ],
+      "long-sum": [
+        7.580781e-10,
+        1.0520999999999885e-11
+      ],
+      "double-sum": [
+        8.755800500000001e-10,
+        9.711599999999952e-12
+      ],
+      "typed-long-sum": [
+        1.8034495e-09,
+        1.7081549999999778e-11
+      ],
+      "typed-double-sum": [
+        2.0367852499999997e-09,
+        1.1944900000000179e-11
+      ]
+    },
+    "allocated": {
+      "long-control": 0.0,
+      "long-identity": 23.9998464,
+      "call-0": 0.0,
+      "call-1": 23.9998464,
+      "call-2": 23.9998464,
+      "call-3": 23.9998464,
+      "call-long": 24.0,
+      "call-double": 24.0,
+      "call-variadic": 23.9998464,
+      "call-local": 23.9998464,
+      "call-bound": 23.9999604,
+      "call-protocol": 0.0,
+      "call-protocol-native": 0.0,
+      "call-apply": 183.9996928,
+      "call-multimethod": 0.0,
+      "long-identical": 23.9998464,
+      "long-nil": 0.0,
+      "keyword-eq": 0.0,
+      "long-eq": 0.0,
+      "long-eq-double": 47.9998464,
+      "long-num-eq": 0.0,
+      "long-add": 23.9998548,
+      "long-hash": 39.999844,
+      "long-str": 219.9998464,
+      "double-control": 0.0,
+      "double-eq": 0.0,
+      "double-add": 24.0,
+      "double-hash": 63.9999992,
+      "index-control": 0.0,
+      "long-aget": 24.0,
+      "int-aget": 13.9999232,
+      "double-aget": 24.0,
+      "object-aget": 0.0,
+      "vector-nth": 0.0,
+      "long-aset": 23.9998464,
+      "double-aset": 24.0,
+      "object-aset": 23.98464,
+      "long-aget-hinted": 24.0,
+      "int-aget-hinted": 13.9999232,
+      "double-aget-hinted": 24.0,
+      "long-aset-hinted": 23.9998464,
+      "double-aset-hinted": 24.0,
+      "vector-conj": 279.9998464,
+      "vector-of-nth": 20.9998848,
+      "vector-of-conj": 279.9998464,
+      "map-get": 20.9998848,
+      "map-assoc": 509.0984484,
+      "keyword-get": 0.0,
+      "set-contains": 20.9998848,
+      "long-array-reduce": 81896.0,
+      "double-array-reduce": 81896.0,
+      "object-array-reduce": 57320.0,
+      "vector-reduce": 24192.0,
+      "vector-of-reduce": 45744.0,
+      "fib": 2112.0,
+      "word-frequencies": 290744.0,
+      "transduce": 33696.0,
+      "lazy-pipeline": 43264.0,
+      "into-vector": 27352.0,
+      "into-map": 150448.0,
+      "string-build": 130400.0,
+      "long-sum": 1.2e-06,
+      "double-sum": 1.2e-06,
+      "typed-long-sum": 1.2e-06,
+      "typed-double-sum": 1.2e-06
+    }
+  },
+  "suss": {
+    "times": {
+      "long-control": [
+        1.198134234684107e-09,
+        3.5846464578759716e-10
+      ],
+      "long-identity": [
+        4.2899479280765116e-09,
+        3.8624173030257223e-10
+      ],
+      "call-0": [
+        3.532021748082292e-09,
+        1.5119330837361273e-09
+      ],
+      "call-1": [
+        4.1602285392582414e-09,
+        1.068349778652191e-09
+      ],
+      "call-2": [
+        5.323607507827026e-09,
+        5.331033009237477e-10
+      ],
+      "call-3": [
+        4.541986292371383e-09,
+        1.2412840178093085e-09
+      ],
+      "call-long": [
+        1.011443348682445e-08,
+        1.2563789101398509e-09
+      ],
+      "call-double": [
+        8.739659816704012e-09,
+        1.1987649158320643e-09
+      ],
+      "call-variadic": [
+        5.093944034623829e-09,
+        1.7882793549109588e-09
+      ],
+      "call-local": [
+        4.7819111030548814e-09,
+        8.050442673265934e-10
+      ],
+      "call-bound": [
+        4.979677112182466e-09,
+        1.43737182384584e-09
+      ],
+      "call-protocol": [
+        8.095582032745535e-09,
+        1.960611284117807e-09
+      ],
+      "call-protocol-native": [
+        1.4130259258672596e-08,
+        1.6942559648305177e-09
+      ],
+      "call-apply": [
+        7.115249978378415e-08,
+        1.2193285161629318e-08
+      ],
+      "call-multimethod": [
+        6.496122153475881e-08,
+        3.831080595652262e-09
+      ],
+      "long-identical": [
+        1.7801125868572854e-09,
+        3.8087135180830953e-10
+      ],
+      "long-nil": [
+        2.0409691544180667e-09,
+        5.167659923986152e-10
+      ],
+      "keyword-eq": [
+        2.5738392869243396e-09,
+        7.030226872302591e-10
+      ],
+      "long-eq": [
+        2.257772697610598e-09,
+        8.645689206234381e-10
+      ],
+      "long-eq-double": [
+        2.3044018801301718e-08,
+        7.671596687287092e-09
+      ],
+      "long-num-eq": [
+        1.5954042002558707e-09,
+        6.767200399190187e-10
+      ],
+      "long-add": [
+        1.3615529096568934e-09,
+        4.2393107287352904e-10
+      ],
+      "long-hash": [
+        5.196469832056513e-09,
+        9.037627877357105e-10
+      ],
+      "long-str": [
+        6.145826878491789e-08,
+        1.1570855113677681e-08
+      ],
+      "double-control": [
+        1.1355151874671048e-09,
+        3.002792967790991e-10
+      ],
+      "double-eq": [
+        3.686899918441971e-08,
+        7.921773691972097e-09
+      ],
+      "double-add": [
+        1.178569441285872e-09,
+        1.9347921478102744e-10
+      ],
+      "double-hash": [
+        2.7603722712956368e-08,
+        7.338930480182171e-09
+      ],
+      "index-control": [
+        1.1533477961539434e-09,
+        4.3568105714786476e-10
+      ],
+      "long-aget": [
+        2.717585239692458e-09,
+        6.785133587462561e-10
+      ],
+      "int-aget": [
+        2.5874821658362633e-09,
+        6.517197369248606e-10
+      ],
+      "double-aget": [
+        2.9487517579562135e-09,
+        5.7627624935574e-10
+      ],
+      "object-aget": [
+        3.0058900301810353e-09,
+        5.335721848845983e-10
+      ],
+      "vector-nth": [
+        2.7712797443382443e-08,
+        8.10658112168312e-09
+      ],
+      "long-aset": [
+        2.4471866545846335e-09,
+        6.656776761283746e-10
+      ],
+      "double-aset": [
+        2.9391538637179522e-09,
+        9.160897664485439e-10
+      ],
+      "object-aset": [
+        4.001188508482301e-09,
+        5.119025786370912e-10
+      ],
+      "long-aget-hinted": [
+        2.8853750307462176e-09,
+        7.536736404290423e-10
+      ],
+      "int-aget-hinted": [
+        2.3661763696321126e-09,
+        1.0189792799667037e-09
+      ],
+      "double-aget-hinted": [
+        3.4578559221699833e-09,
+        5.757862301025953e-10
+      ],
+      "long-aset-hinted": [
+        2.5511294643840065e-09,
+        1.0298530854608702e-09
+      ],
+      "double-aset-hinted": [
+        2.887929431744851e-09,
+        3.1767299660714343e-10
+      ],
+      "vector-conj": [
+        2.43815038446337e-07,
+        2.883852096274495e-08
+      ],
+      "vector-of-nth": [
+        8.407396809197962e-08,
+        6.8563451059162616e-09
+      ],
+      "vector-of-conj": [
+        2.2906378787010908e-07,
+        4.217190109193325e-08
+      ],
+      "map-get": [
+        5.4370144195854667e-08,
+        1.2189541384577752e-08
+      ],
+      "map-assoc": [
+        2.893403366208076e-07,
+        4.104779055342078e-08
+      ],
+      "keyword-get": [
+        1.5791529479126134e-08,
+        2.136796317063272e-09
+      ],
+      "set-contains": [
+        6.457260521128774e-08,
+        4.2497940873727206e-08
+      ],
+      "long-array-reduce": [
+        1.8879292193809367e-05,
+        4.352806738357638e-06
+      ],
+      "double-array-reduce": [
+        0.0001373204893086507,
+        4.033308080559698e-05
+      ],
+      "object-array-reduce": [
+        9.693031610627908e-06,
+        1.9904757447788836e-06
+      ],
+      "vector-reduce": [
+        1.0512884531135029e-05,
+        4.141133973761838e-06
+      ],
+      "vector-of-reduce": [
+        1.9045853737431903e-05,
+        2.562015965796125e-06
+      ],
+      "fib": [
+        0.00010371403288445436,
+        2.3698100994806738e-05
+      ],
+      "word-frequencies": [
+        0.00030850166361778977,
+        6.760507798753679e-05
+      ],
+      "transduce": [
+        5.197568782023154e-05,
+        2.1627365349559113e-05
+      ],
+      "lazy-pipeline": [
+        0.00020351057178638084,
+        5.149324523641708e-05
+      ],
+      "into-vector": [
+        0.0001010287582903402,
+        2.4892158471629955e-05
+      ],
+      "into-map": [
+        0.0014084246195852756,
+        0.00014954420660311977
+      ],
+      "string-build": [
+        0.00028885958634097787,
+        0.00010082030038842384
+      ],
+      "long-sum": [
+        1.234710926080741e-09,
+        1.1305372110933816e-10
+      ],
+      "double-sum": [
+        9.25107877444235e-10,
+        3.524775382652936e-10
+      ],
+      "typed-long-sum": [
+        4.946770510800621e-09,
+        7.947091451462577e-10
+      ],
+      "typed-double-sum": [
+        4.310979880392551e-09,
+        5.505351582542061e-10
+      ]
+    },
+    "instructions": {
+      "long-control": 25.000013882294322,
+      "long-identity": 75.00000465263157,
+      "call-0": 75.00000267741936,
+      "call-1": 81.999974512,
+      "call-2": 82.9999985,
+      "call-3": 84.00004576923077,
+      "call-long": 153.0974189826087,
+      "call-double": 118.96252105454545,
+      "call-variadic": 94.00002618181819,
+      "call-local": 73.00003617272728,
+      "call-bound": 85.0000233609756,
+      "call-protocol": 190.00004343636363,
+      "call-protocol-native": 218.00006826,
+      "call-apply": 1322.8056554,
+      "call-multimethod": 1036.9999230666667,
+      "long-identical": 37.000001759375,
+      "long-nil": 48.000001785185184,
+      "keyword-eq": 56.000005753125,
+      "long-eq": 52.999988529411766,
+      "long-eq-double": 400.22178708,
+      "long-num-eq": 33.999993868,
+      "long-add": 31.0000009875,
+      "long-hash": 75.999982575,
+      "long-str": 908.3325708,
+      "double-control": 26.000000532716513,
+      "double-eq": 544.6648929333334,
+      "double-add": 26.00001371838155,
+      "double-hash": 451.8426399,
+      "index-control": 26.000009777024406,
+      "long-aget": 65.00002667857143,
+      "int-aget": 65.000008159375,
+      "double-aget": 66.00003070666666,
+      "object-aget": 66.00003001802885,
+      "vector-nth": 385.9375703,
+      "long-aset": 64.99994361621621,
+      "double-aset": 65.99999338709678,
+      "object-aset": 85.000011875,
+      "long-aget-hinted": 64.999993421875,
+      "int-aget-hinted": 65.00001094482758,
+      "double-aget-hinted": 65.99999006944445,
+      "long-aset-hinted": 65.00000692173913,
+      "double-aset-hinted": 65.999977659375,
+      "vector-conj": 3343.715125,
+      "vector-of-nth": 1430.1560026,
+      "vector-of-conj": 3229.60235,
+      "map-get": 585.0095046,
+      "map-assoc": 3376.0414648,
+      "keyword-get": 293.0000011166667,
+      "set-contains": 630.0096921,
+      "long-array-reduce": 315869.9396251536,
+      "double-array-reduce": 2206893.119213437,
+      "object-array-reduce": 192983.04144577752,
+      "vector-reduce": 202566.03744367062,
+      "vector-of-reduce": 333299.0642922982,
+      "fib": 2068710.2590625,
+      "word-frequencies": 3521416.063,
+      "transduce": 935898.7048958334,
+      "lazy-pipeline": 2950618.7668085108,
+      "into-vector": 1706369.535625,
+      "into-map": 14469698.218333334,
+      "string-build": 4755776.980588235,
+      "long-sum": 21.000012909993554,
+      "double-sum": 14.000007389113321,
+      "typed-long-sum": 108.000044,
+      "typed-double-sum": 68.00005697222223
+    },
+    "allocated": {
+      "long-control": null,
+      "long-identity": null,
+      "call-0": null,
+      "call-1": null,
+      "call-2": null,
+      "call-3": null,
+      "call-long": 15.792,
+      "call-double": 15.812,
+      "call-variadic": null,
+      "call-local": null,
+      "call-bound": null,
+      "call-protocol": null,
+      "call-protocol-native": null,
+      "call-apply": 111.887,
+      "call-multimethod": null,
+      "long-identical": null,
+      "long-nil": null,
+      "keyword-eq": null,
+      "long-eq": null,
+      "long-eq-double": 16.012,
+      "long-num-eq": null,
+      "long-add": null,
+      "long-hash": null,
+      "long-str": 32.127,
+      "double-control": null,
+      "double-eq": 47.788,
+      "double-add": null,
+      "double-hash": 40.017,
+      "index-control": null,
+      "long-aget": null,
+      "int-aget": null,
+      "double-aget": null,
+      "object-aget": null,
+      "vector-nth": null,
+      "long-aset": null,
+      "double-aset": null,
+      "object-aset": null,
+      "long-aget-hinted": null,
+      "int-aget-hinted": null,
+      "double-aget-hinted": null,
+      "long-aset-hinted": null,
+      "double-aset-hinted": null,
+      "vector-conj": 404.992,
+      "vector-of-nth": null,
+      "vector-of-conj": 356.44404631802735,
+      "map-get": null,
+      "map-assoc": 665.28,
+      "keyword-get": null,
+      "set-contains": null,
+      "long-array-reduce": null,
+      "double-array-reduce": 32444.416,
+      "object-array-reduce": null,
+      "vector-reduce": null,
+      "vector-of-reduce": null,
+      "fib": null,
+      "word-frequencies": 435212.96202531643,
+      "transduce": null,
+      "lazy-pipeline": 31175.68,
+      "into-vector": null,
+      "into-map": 383870.5287356322,
+      "string-build": 193689.6,
+      "long-sum": null,
+      "double-sum": null,
+      "typed-long-sum": null,
+      "typed-double-sum": null
+    }
+  },
+  "acceptance": {
+    "source_head": "67c76c2ae36d66b50b7b39a53328f88ebed16ad1",
+    "suss_sha256": "0d93055bed8dfdc1817d574750e506466e4ecd1e7223bcad64d9637e81cec618",
+    "operations": 49,
+    "jvm_zero_rows": [
+      {
+        "name": "object-aget",
+        "expr": "(aget oa (bit-and i 1023))",
+        "net_ns": -0.7321255999999998,
+        "spread_ns": 0.07506774999999993,
+        "control": "index-control"
+      }
+    ],
+    "other_jvm_zero_rows": [],
+    "programs": [
+      {
+        "name": "fib",
+        "suss_us": 103.71403288445435,
+        "suss_spread_us": 23.698100994806737,
+        "jvm_us": 90.20665500000001,
+        "jvm_spread_us": 0.4979999999999807,
+        "ratio": 1.14973815273889,
+        "within_five": true,
+        "instructions": 2068710.2590625,
+        "bytes": null
+      },
+      {
+        "name": "word-frequencies",
+        "suss_us": 308.50166361778975,
+        "suss_spread_us": 67.60507798753679,
+        "jvm_us": 49.690205,
+        "jvm_spread_us": 5.811170000000001,
+        "ratio": 6.2085005207321995,
+        "within_five": false,
+        "instructions": 3521416.063,
+        "bytes": 435212.96202531643
+      },
+      {
+        "name": "transduce",
+        "suss_us": 51.97568782023154,
+        "suss_spread_us": 21.627365349559113,
+        "jvm_us": 9.25833,
+        "jvm_spread_us": 0.1437599999999991,
+        "ratio": 5.6139376993725145,
+        "within_five": false,
+        "instructions": 935898.7048958334,
+        "bytes": null
+      },
+      {
+        "name": "lazy-pipeline",
+        "suss_us": 203.51057178638084,
+        "suss_spread_us": 51.49324523641708,
+        "jvm_us": 17.113775,
+        "jvm_spread_us": 0.4902950000000007,
+        "ratio": 11.891623664935459,
+        "within_five": false,
+        "instructions": 2950618.7668085108,
+        "bytes": 31175.68
+      },
+      {
+        "name": "into-vector",
+        "suss_us": 101.02875829034019,
+        "suss_spread_us": 24.892158471629955,
+        "jvm_us": 14.457545,
+        "jvm_spread_us": 0.4100900000000007,
+        "ratio": 6.987960839156316,
+        "within_five": false,
+        "instructions": 1706369.535625,
+        "bytes": null
+      },
+      {
+        "name": "into-map",
+        "suss_us": 1408.4246195852757,
+        "suss_spread_us": 149.54420660311976,
+        "jvm_us": 83.34552000000001,
+        "jvm_spread_us": 10.753915,
+        "ratio": 16.89862418022319,
+        "within_five": false,
+        "instructions": 14469698.218333334,
+        "bytes": 383870.5287356322
+      },
+      {
+        "name": "string-build",
+        "suss_us": 288.85958634097784,
+        "suss_spread_us": 100.82030038842385,
+        "jvm_us": 43.321735,
+        "jvm_spread_us": 0.5951650000000016,
+        "ratio": 6.6677751096759605,
+        "within_five": false,
+        "instructions": 4755776.980588235,
+        "bytes": 193689.6
+      }
+    ],
+    "load_mean": 1.188806278189433,
+    "load_peak": 2.22607421875
+  }
+}
