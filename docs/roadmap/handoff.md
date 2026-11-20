@@ -30514,3 +30514,68 @@ actual negative sources/logs remain. This is not BigInt coverage. Existing
 focused sharing/lifecycle cases force GC in both phases. Complete foundation
 checks, independent review and final-head CI remain required for the submitted
 source; the isolated release tests do not replace broader verification.
+
+
+## Quiet benchmark evidence (2026-11-20 UTC)
+
+The serial workspace command on frozen 6dae4878 completed with exit 0:
+`cargo +stable test --workspace --locked -- --test-threads=2`, 2,191 passed,
+0 failed and 14 existing ignores across 322 summaries. Its tree is identical to
+main 67c76c2a. The terminal log/receipt are
+`target/probe/pr474-workspace-ifn-final.{log,json}`. This command ran in its existing 6GiB scope with two Cargo jobs.
+
+A separate idle command then waited for load <=0.75 for 60 seconds; launch load
+was 0.20. The full unmodified bench.py functions ran against main 67c76c2a,
+with a copied named stable release executable built from the identical 6dae tree.
+SUSS_FUNCTION_NAMES=1 was set at build and compile, JAVA_TOOL_OPTIONS=-Xmx512m;
+the following command retained sources, components and exact numbers:
+
+```sh
+systemd-run --user --scope -p MemoryMax=3G python3 target/probe/m15-full-bench.py \
+  --source-root target/probe/m15-main-source \
+  --suss target/probe/pr474-suss-ifn-final \
+  --output target/probe/m15-main-quiet-bench
+```
+
+TMPDIR/output remained under target/probe. The wrapper verifies JVM
+Clojure 1.12.6 in that exact directory and calls the unchanged functions/settings,
+n=5,000,000/reps 3. Native-code warm-up runs precede timed cases. The idle
+command was not chained to the benchmark command. Terminal exit 0, duration
+16.22 minutes, load mean 1.19/peak 2.23.
+
+JVM controls allocate 0 bytes. One of 49 operation rows is approximately zero:
+object-aget 2.26451 ns versus index-control 2.9966356 ns, before subtraction. Both
+perform a masked Object[] read, so the control already measures that operation;
+the negative difference is below the method's resolution. Their loop counts
+are 200,000 and 20,000,000 respectively. No JVM reduction/program/loop row is zero.
+`results/run_m15_18.{txt,json}` retains the full table and precise numbers;
+`history.py` includes this run and regenerates both gross/net history tables.
+
+| Program | Suss us/run | JVM us/run | Exact ratio (rounded here) |
+| --- | ---: | ---: | ---: |
+| fib | 103.714 | 90.207 | 1.150 |
+| word-frequencies | 308.502 | 49.690 | 6.209 |
+| transduce | 51.976 | 9.258 | 5.614 |
+| lazy-pipeline | 203.511 | 17.114 | 11.892 |
+| into-vector | 101.029 | 14.458 | 6.988 |
+| into-map | 1408.425 | 83.346 | 16.899 |
+| string-build | 288.860 | 43.322 | 6.668 |
+
+String-build allocates 193,689.6 bytes/run in this measurement. A null/approximately
+zero allocation in the other rows means below peak-RSS resolution, not proof of
+no allocation. Suss timing spreads and all raw values remain in the JSON;
+rounded table ratios must not be used to decide the 5x threshold. The executable
+SHA256 is 0d93055bed8dfdc1817d574750e506466e4ecd1e7223bcad64d9637e81cec618.
+
+History validation uses all 16 checked-in run fixtures: all 65 rows in the new
+run appear in both control-inclusive and control-subtracted tables. The parser
+now restores the nanosecond-per-iteration unit at the whole-loop section; a
+regression using run_m15_17.txt failed before that correction and passes after
+it. Published f0 values from runs 13/14/15 retain net/gross counts 29/124,
+62/101 and 52/77. History generation exactly reproduces the checked-in file.
+The focused command is `python3 -m unittest discover -s scripts
+-p test_bench_history.py -v` (2 passes); the complete Python/foundation run
+records 349 passes and every source check in m15-bench-foundation.log.
+Initialize the pinned submodule in new worktrees first with
+`git submodule update --init clojurescript`; an initial uninitialized-worktree
+foundation failure is retained as m15-bench-foundation-uninitialized.log.

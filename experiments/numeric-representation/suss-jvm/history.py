@@ -13,6 +13,7 @@ control doesn't show as a change to every case (#447); the second, less it.
 Usage: history.py > experiments/numeric-representation/results/m15_history.md
 """
 import os
+from pathlib import Path
 
 import bench
 
@@ -34,6 +35,7 @@ RUNS = [
     ("M15-15 Clojure arrays, loop-invariant var reads", "bacdb2fb", "run_m15_15.txt"),
     ("M15-16 array views, string literal globals", "6952319c", "run_m15_16.txt"),
     ("M15-17 program paths, bench controls", "1a6d16e3", "run_m15_17.txt"),
+    ("M15-18 primitive entries, Clojure apply", "67c76c2a", "run_m15_18.txt"),
 ]
 # Each table names its columns in its header: runs since #386 have Suss bytes,
 # since #443 JVM bytes, and since #447 "With control", the count with the
@@ -56,12 +58,14 @@ def rows(path):
     # control, JVM time), in order; a time is None where it's below the
     # bench's resolution, and a count None where the run has none.
     section, columns, found = "ns per operation", {}, {}
-    for line in open(path):
+    for line in Path(path).read_text().splitlines():
         line = line.strip()
         if line.startswith("Per element"):
             section = "ns per element"
         elif line.startswith("Programs"):
             section = "µs per run"
+        elif line.startswith("Whole loops"):
+            section = "ns per iteration"
         if not line.startswith("| ") or line.startswith("| ---"):
             continue
         cells = [cell.strip() for cell in line[1:-1].split(" | ")]
