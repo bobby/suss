@@ -302,7 +302,7 @@
 
 (def bit-count
   "Counts the number of bits set in n"
-  (fn [v]
+  (fn ^long [v]
   (suss.bootstrap/bit-count v)))
 
 (def ^boolean zero?
@@ -3621,7 +3621,7 @@
 
 (deftype Box [^:mutable val])
 
-(def ^:private mask (fn [hash shift]
+(def ^:private mask (fn ^long [hash shift]
   (bit-and (bit-shift-right-zero-fill hash shift) 0x01f)))
 
 (def ^:private clone-and-set
@@ -3639,7 +3639,7 @@
 (def ^:private bitmap-indexed-node-index (fn [bitmap bit]
   (bit-count (bit-and bitmap (dec bit)))))
 
-(def ^:private bitpos (fn [hash shift]
+(def ^:private bitpos (fn ^long [hash shift]
   (bit-shift-left 1 (mask hash shift))))
 
 (def ^:private edit-and-set

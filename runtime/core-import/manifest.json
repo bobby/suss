@@ -908,8 +908,8 @@
       "extracted": "extracted/0029.cljs",
       "extracted-sha256": "38f07a298d067e816376d80682f184592339d6f01492353770281e24e454dd56",
       "patch": "docs/compatibility/patches/bit-count.json",
-      "patch-sha256": "1292742ec0d17c6379e4eb802b999f46dbf39b952ed9de764704bd8a7adf5ef7",
-      "adapted-form-sha256": "69a93f1cdd630c8dc16bb40bb8bb7dbfd8193ee12ec2a62a703963a67fbf3f48",
+      "patch-sha256": "1b1ca4da65324be3eac7859b31b531907053b44bce727edeb30e59cb630c6f50",
+      "adapted-form-sha256": "016085364eee666a28b780b7a0a6ee647e0e051874eacb242c490da627142aa0",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -7086,8 +7086,8 @@
       "extracted": "extracted/0228.cljs",
       "extracted-sha256": "50c4df412e7725574efeb4c73ced20203008914c3c5a7f2caaffe93f621af2d7",
       "patch": "docs/compatibility/patches/hamt-mask.json",
-      "patch-sha256": "30a2ec68dca39ce4dfba6f078bb42c53e279f3e936ba2f75ab356a69f098fad0",
-      "adapted-form-sha256": "ff40e4d8f5bf4bda5ce1a74e3b96136eb4a25d8632af9add14880a9a753b862d",
+      "patch-sha256": "18f3700e70e9c67e5371efe470cf654ee47662b3a9f10f332c638ea341ca20cf",
+      "adapted-form-sha256": "80f51017943fe5ead2e714605707652c60019c8edd14d617b308cf89674e911d",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -7210,8 +7210,8 @@
       "extracted": "extracted/0232.cljs",
       "extracted-sha256": "2dbda4fdd87a4ac3efb627d9333fea624e7a9c75c6d5d60dfd6291a76d5b87f8",
       "patch": "docs/compatibility/patches/hamt-bitpos.json",
-      "patch-sha256": "ed3afa5deb842100e74fd0d5591c9d38def12bcb91c600718b6d173607be7547",
-      "adapted-form-sha256": "d6ba67c1c59ae8e944a4e9b7345da740db94c1cd074279f16f38c150b78f3f0f",
+      "patch-sha256": "f3ba47753fc21c0620396c5e0a15beb205b6113aa4d920b9cda113d5e749c575",
+      "adapted-form-sha256": "9ecf91d18514b787505af1f2c83553918c752c0db47314c8b761dd279a70ba5e",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
@@ -16093,6 +16093,6 @@
     "extracted/0501.cljs": "02b4047a3496243c5528041564a9f8ded2f3aae951be387e8779ab0e956464c3",
     "extracted/0502.cljs": "d42068d54f1844f88abb73548a3a554a3cc1f5af315fd590533b4fd80de350ec",
     "extracted/0503.cljs": "072c8a681fd905767f56c48e6c3529b99e9d5f537def64cb299f5bac29c7c59b",
-    "suss/core.sus": "f76e35f455f72da4c751552ff7b9014228578284dd3fc1e4535bfca3ff8099ef"
+    "suss/core.sus": "123ddbaa0e7b8cd98617c3e2d8158451454c5cb469fdaa358238277066188444"
   }
 }

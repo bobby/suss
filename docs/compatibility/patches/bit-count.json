@@ -1,6 +1,6 @@
 {
   "schema": 1,
   "source-sha256": "5a63ed40c2b2e92aa6bfacdf5b6d53fb120f490d57a161448d3e627bf37edba7",
-  "replacement": "(def bit-count\n  \"Counts the number of bits set in n\"\n  (fn [v]\n  (suss.bootstrap/bit-count v)))",
-  "rationale": "Explicit fixed defn bootstrap adaptation retains the original algorithm, metadata and docstring. Bitwise macros lower to checked scalar primitives; complete compiled macros remain unfinished. Original Suss (#443): the count is one popcount of the value's int32, as the pin's shifts, masks and multiply compute it, without boxing their 32-bit masks."
+  "replacement": "(def bit-count\n  \"Counts the number of bits set in n\"\n  (fn ^long [v]\n  (suss.bootstrap/bit-count v)))",
+  "rationale": "Explicit fixed defn bootstrap adaptation retains the original algorithm, metadata and docstring. Bitwise macros lower to checked scalar primitives; complete compiled macros remain unfinished. Original Suss (#443): the count is one popcount of the value's int32, as the pin's shifts, masks and multiply compute it, without boxing their 32-bit masks. Original Suss: a return-only long hint exposes the existing guaranteed int32 result to primitive callers, without narrowing the boxed operands or changing ToInt32 conversion."
 }
