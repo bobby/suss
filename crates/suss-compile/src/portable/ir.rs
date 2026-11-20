@@ -858,12 +858,20 @@ impl<'a> Lowerer<'a> {
                 for argument in arguments {
                     values.push(operand!(argument));
                 }
-                self.emit(
+                // This predicate is exactly the existing nominal long test.
+                // Preserve its Bool type, and let branches consume a raw flag
+                // instead of calling and unboxing the runtime's boolean.
+                let operation = if *operation == Bitwise::LongTest {
+                    Operation::Nominal { operation: Nominal::IsLongValue, arguments: values }
+                } else {
                     Operation::Bitwise {
                         operation: *operation,
                         arguments: values,
-                    },
-                    operation.result(),
+                    }
+                };
+                self.emit(
+                    operation,
+                    hir.ty,
                     hir.span.clone(),
                 )?
             }

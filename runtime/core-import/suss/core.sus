@@ -5399,7 +5399,7 @@
 (def even?
 "Returns true if n is even, throws an exception if n is not an integer"
 (fn [n] (if (integer? n)
-         (not (bit-test (suss.bootstrap/long-cast n) 0))
+         (if (bit-test (suss.bootstrap/long-cast n) 0) false true)
          (throw (suss.bootstrap/error (str_ "Argument must be an integer: " n))))))
 
 (def odd?

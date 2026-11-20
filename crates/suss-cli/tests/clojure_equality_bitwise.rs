@@ -29,6 +29,26 @@ fn assert_printed(source: &str, expected: &str) {
     }
 }
 
+#[test]
+fn integer_predicate_keeps_boolean_escapes_branches_and_single_evaluation() {
+    assert_printed(
+        "(mapv integer? [nil true false 0 -1 1073741824 -1073741825
+                         3000000000 9007199254740993 9223372036854775807
+                         -9223372036854775808 0.0 -0.0 2.0 ##NaN ##Inf
+                         \"2\" :k [] {}])",
+        "[false false false true true true true true true true true \
+          false false false false false false false false false]",
+    );
+    assert_printed(
+        "(let [calls (atom 0)
+               yes (integer? (do (swap! calls inc) 3000000000))
+               no (integer? (do (swap! calls inc) 2.0))
+               f (fn [] [yes no])]
+           [(if yes :long :other) (if no :long :other) (f) @calls])",
+        "[:long :other [true false] 2]",
+    );
+}
+
 /// Executed JVM Clojure 1.12.6 observations. Parity cannot round a wide
 /// long through binary64, accept an integral double, or evaluate twice.
 #[test]
