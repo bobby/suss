@@ -39,6 +39,51 @@ fn object_method_call_name(n: usize) -> &'static str {
 /// Globals per cached named-read site: its immutable `NAMED_SITE` struct (#378).
 const FIELD_SITE_GLOBALS: u32 = 1;
 
+// Two descriptors at a protocol site cover the LazySeq/ChunkedCons pair
+// used by chunked pipelines without changing the monomorphic hit path.
+const METHOD_SITE_GLOBALS: u32 = 6;
+
+fn protocol_site_lookup(
+    function: &mut Function,
+    cache: u32,
+    epoch: u32,
+    descriptor: &[Instruction<'_>],
+    lookup: &[Instruction<'_>],
+) {
+    use Instruction::*;
+    for way in [cache, cache + 3] {
+        for instruction in descriptor {
+            function.instruction(instruction);
+        }
+        for instruction in [
+            GlobalGet(way), RefEq, GlobalGet(way + 2), GlobalGet(epoch),
+            I32Eq, I32And, If(BlockType::Result(VALUE)),
+            GlobalGet(way + 1), Else,
+        ] {
+            function.instruction(&instruction);
+        }
+    }
+    // Evaluate the lookup before changing the cache. Its result stays on
+    // the stack while the previous first entry moves to the second way.
+    for instruction in lookup {
+        function.instruction(instruction);
+    }
+    for field in 0..3 {
+        function.instruction(&GlobalGet(cache + field));
+        function.instruction(&GlobalSet(cache + 3 + field));
+    }
+    function.instruction(&GlobalSet(cache + 1));
+    for instruction in descriptor {
+        function.instruction(instruction);
+    }
+    for instruction in [
+        GlobalSet(cache), GlobalGet(epoch), GlobalSet(cache + 2),
+        GlobalGet(cache + 1), End, End,
+    ] {
+        function.instruction(&instruction);
+    }
+}
+
 fn arithmetic_name(
     operator: Arithmetic,
     arguments: &[ir::ValueId],
@@ -560,8 +605,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     if user_site {
         names.insert("user-named-site-get");
     }
-    // Protocol method lookups get an inline cache (#355): the last
-    // descriptor, its method and the protocol epoch it was found at.
+    // Protocol method lookups cache two descriptors (#355), each with its
+    // method and the protocol epoch it was found at.
     let mut method_site_list = vec![];
     for function in std::iter::once(ir).chain(bodies.iter().map(|body| &body.function))
         .chain(futures.iter().map(|body| &body.continuation.function))
@@ -1030,9 +1075,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .collect::<std::collections::HashMap<_, _>>();
     let first_method_site = first_field_site + FIELD_SITE_GLOBALS * field_site_list.len() as u32;
     let method_sites = method_site_list.iter().enumerate()
-        .map(|(index, site)| (*site, first_method_site + 3 * index as u32))
+        .map(|(index, site)| (*site, first_method_site + METHOD_SITE_GLOBALS * index as u32))
         .collect::<std::collections::HashMap<_, _>>();
-    let first_instance_site = first_method_site + 3 * method_site_list.len() as u32;
+    let first_instance_site = first_method_site + METHOD_SITE_GLOBALS * method_site_list.len() as u32;
     let instance_sites = instance_site_list.iter().enumerate()
         .map(|(index, site)| (*site, first_instance_site + index as u32))
         .collect::<std::collections::HashMap<_, _>>();
@@ -1197,16 +1242,18 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         );
     }
     for _ in &method_site_list {
-        for ty in [VALUE, VALUE] {
+        for _ in 0..2 {
+            for ty in [VALUE, VALUE] {
+                code_globals.global(
+                    GlobalType { val_type: ty, mutable: true, shared: false },
+                    &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
+                );
+            }
             code_globals.global(
-                GlobalType { val_type: ty, mutable: true, shared: false },
-                &ConstExpr::extended([runtime_abi::sentinel_in(runtime_abi::NIL, 0)]),
+                GlobalType { val_type: ValType::I32, mutable: true, shared: false },
+                &ConstExpr::i32_const(-1),
             );
         }
-        code_globals.global(
-            GlobalType { val_type: ValType::I32, mutable: true, shared: false },
-            &ConstExpr::i32_const(-1),
-        );
     }
     for _ in &instance_site_list {
         // The site's cache, a NAMED_SITE struct (#378).
@@ -3027,46 +3074,22 @@ fn emit_function(
                         Nominal::Satisfies if method_sites.contains_key(&(ir as *const IrFunction as usize, inst.result.0 as u32)) => {
                             // Inline cache (#361): a user object's marker test
                             // depends only on its descriptor and the protocol
-                            // epoch, so a site keeps its last descriptor and
-                            // answer. Other values take the runtime's test.
+                            // epoch, so a site keeps two descriptors and
+                            // answers. Other values take the runtime's test.
                             let cache = method_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
                             let (marker, object) = (arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset);
-                            let descriptor = |function: &mut Function| {
-                                function
-                                    .instruction(&LocalGet(object))
-                                    .instruction(&RefCastNonNull(HeapType::Concrete(7)))
-                                    .instruction(&StructGet { struct_type_index: 7, field_index: 0 });
-                            };
+                            let descriptor = [LocalGet(object), RefCastNonNull(HeapType::Concrete(7)),
+                                StructGet { struct_type_index: 7, field_index: 0 }];
                             function
                                 .instruction(&LocalGet(object))
                                 .instruction(&RefTestNonNull(HeapType::Concrete(7)))
                                 .instruction(&If(BlockType::Result(ValType::I32)));
-                            descriptor(&mut function);
+                            protocol_site_lookup(&mut function, cache, epoch_global, &descriptor,
+                                &[LocalGet(marker), LocalGet(object),
+                                    Call(index("protocol-marker-satisfies")), RefI31]);
                             function
-                                .instruction(&GlobalGet(cache))
-                                .instruction(&RefEq)
-                                .instruction(&GlobalGet(cache + 2))
-                                .instruction(&GlobalGet(epoch_global))
-                                .instruction(&I32Eq)
-                                .instruction(&I32And)
-                                .instruction(&If(BlockType::Result(ValType::I32)))
-                                .instruction(&GlobalGet(cache + 1))
-                                .instruction(&RefCastNonNull(HeapType::Abstract { shared: false, ty: AbstractHeapType::I31 }))
+                                .instruction(&RefCastNonNull(HeapType::I31))
                                 .instruction(&I31GetU)
-                                .instruction(&Else)
-                                .instruction(&LocalGet(marker))
-                                .instruction(&LocalGet(object))
-                                .instruction(&Call(index("protocol-marker-satisfies")))
-                                .instruction(&LocalTee(field_index_local))
-                                .instruction(&RefI31)
-                                .instruction(&GlobalSet(cache + 1));
-                            descriptor(&mut function);
-                            function
-                                .instruction(&GlobalSet(cache))
-                                .instruction(&GlobalGet(epoch_global))
-                                .instruction(&GlobalSet(cache + 2))
-                                .instruction(&LocalGet(field_index_local))
-                                .instruction(&End)
                                 .instruction(&Else)
                                 .instruction(&LocalGet(marker))
                                 .instruction(&LocalGet(object))
@@ -3079,27 +3102,9 @@ fn emit_function(
                             // method table write since bumps the epoch.
                             let cache = method_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
                             let (descriptor, key) = (arguments[0].0 as u32 + offset, arguments[1].0 as u32 + offset);
-                            function
-                                .instruction(&LocalGet(descriptor))
-                                .instruction(&GlobalGet(cache))
-                                .instruction(&RefEq)
-                                .instruction(&GlobalGet(cache + 2))
-                                .instruction(&GlobalGet(epoch_global))
-                                .instruction(&I32Eq)
-                                .instruction(&I32And)
-                                .instruction(&If(BlockType::Result(VALUE)))
-                                .instruction(&GlobalGet(cache + 1))
-                                .instruction(&Else)
-                                .instruction(&LocalGet(descriptor))
-                                .instruction(&LocalGet(key))
-                                .instruction(&Call(index("protocol-method-get")))
-                                .instruction(&GlobalSet(cache + 1))
-                                .instruction(&LocalGet(descriptor))
-                                .instruction(&GlobalSet(cache))
-                                .instruction(&GlobalGet(epoch_global))
-                                .instruction(&GlobalSet(cache + 2))
-                                .instruction(&GlobalGet(cache + 1))
-                                .instruction(&End);
+                            protocol_site_lookup(&mut function, cache, epoch_global,
+                                &[LocalGet(descriptor)], &[LocalGet(descriptor), LocalGet(key),
+                                    Call(index("protocol-method-get"))]);
                         }
                         Nominal::NativeMethodGet => {
                             // Inline cache (#445): the same protocol fn and

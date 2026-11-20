@@ -73,3 +73,45 @@ fn extending_after_a_cached_marker_test_takes_effect_at_that_site() {
         );
     }
 }
+
+#[test]
+fn alternating_protocol_receivers_keep_both_live_methods_after_gc_and_extension() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval(
+            "(deftype A [] IIndexed (-nth [_ i] nil) (-nth [_ i nf] nil))
+             (deftype B [] IIndexed (-nth [_ i] false) (-nth [_ i nf] false))
+             (deftype C [] IIndexed (-nth [_ i] :c) (-nth [_ i nf] :c))
+             (def a (A.)) (def b (B.)) (def c (C.))
+             (def at (fn [x] [(nth x 0) (nth x 0 :missing)]))",
+        ).unwrap();
+        assert_eq!(printed(&mut session, "(mapv at [a b a b c a b c])"),
+            "[[nil nil] [false false] [nil nil] [false false] [:c :c] [nil nil] [false false] [:c :c]]");
+        // Warm both retained receiver types, then invalidate both answers.
+        session.eval("(at a) (at b)").unwrap();
+        session.collect().unwrap();
+        session.eval(
+            "(extend-type A IIndexed (-nth ([_ i] :a2) ([_ i nf] :a3)))
+             (extend-type B IIndexed (-nth ([_ i] :b2) ([_ i nf] :b3)))",
+        ).unwrap();
+        assert_eq!(printed(&mut session, "(mapv at [a b a b c a b])"),
+            "[[:a2 :a3] [:b2 :b3] [:a2 :a3] [:b2 :b3] [:c :c] [:a2 :a3] [:b2 :b3]]");
+    }
+}
+
+#[test]
+fn alternating_marker_receivers_invalidate_negative_answers_together() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval(
+            "(defprotocol P (p [x]))
+             (deftype A []) (deftype B [] P (p [_] :b)) (deftype C [])
+             (def a (A.)) (def b (B.)) (def c (C.))
+             (def probe (fn [x] (implements? P x)))",
+        ).unwrap();
+        assert_eq!(printed(&mut session, "(mapv probe [a b a b c a c])"),
+            "[false true false true false false false]");
+        session.collect().unwrap();
+        session.eval("(extend-type A P (p [_] :a)) (extend-type C P (p [_] :c))").unwrap();
+        assert_eq!(printed(&mut session, "(mapv probe [a c a c b a c nil 1])"),
+            "[true true true true true true true false false]");
+    }
+}
