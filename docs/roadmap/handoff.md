@@ -208,6 +208,31 @@ walltime acceptance. The standalone idle gate for the frozen db4abbcb executable
 remains separate from bench.py; unrelated machine load has not met its 0.75
 threshold. Current issue acceptance and next work belong on GitHub.
 
+The reduced implementation at 4aa830fc passes 88 focused tests across eighteen
+CLI targets, no failures/ignores, plus 347 Python tests and all foundation checks.
+The core/manifest are byte-identical to ae0e5ac7 after removing long views.
+Its frozen executable SHA256 is
+12d2df51a630c69581ee85ee0421e0ef7ab329a5298afacf59c6c239e0d9d959;
+the m15-receiver-only-suss.json receipt names the exact clean source and core.
+The current multiplication matrix and public growth/collision/snapshot/numeric/
+transient probe match the executed JVM 1.12.6 results exactly; see
+m15-receiver-only-oracles.log and m15-receiver-only-oracle-comparison.json.
+The compiler's raw numeric changes preserve checked overflow and operand order;
+guarded array hits retain full-width bounds and boxed misses retain conversion.
+
+m15-receiver-only-program-instructions/ gives fib 2,068,709,
+word-frequencies 3,417,190, transduce 764,564, lazy-pipeline 1,156,600,
+into-vector 1,659,681, into-map 12,235,065 and string-build 1,365,877.
+Into-map is 3.678% below the published dab36209/ae0e5ac7 measurement;
+other rows change by less than 0.4%. Counts remain separate from timing gates.
+The refreshed instructions:u profile under m15-into-map-receiver-only-instructions/
+uses the same 4,000 iterations, private probe-backed /tmp mount and sample period
+1,000,000. Its 49,340 whole-process samples include startup, none lost. Source-mapped
+rows place bitmap-node association at 19.20%, transient-map assoc! 6.25%, named
+writes 4.86%, ensure-editable 4.79%, ArrayNode association 4.19%, subtype checks
+3.89%, transient-map conj! 3.52%, vector-nth/named reads 3.28% each. The receipt
+records component/executable/core/benchmark hashes and module-specific spans.
+
 Reviewed native file/WIT selection and explicit mappings, shared compiled source/
 macro staging, scalar parsing/result handling, exact nested export invocation,
 command-mode separation and documented remaining frontend modes at855d281.
