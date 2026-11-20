@@ -3621,7 +3621,7 @@
 
 (deftype Box [^:mutable val])
 
-(def ^:private mask (fn ^long [hash shift]
+(def ^:private mask (fn [hash shift]
   (bit-and (bit-shift-right-zero-fill hash shift) 0x01f)))
 
 (def ^:private clone-and-set
@@ -3800,7 +3800,7 @@
     (create-inode-seq arr))
 
   (ensure_editable [inode e]
-    (if (identical? e edit)
+    (if (suss.bootstrap/same-reference? e edit)
       inode
       (let [n       (bit-count bitmap)
             new-arr (make-array (if (neg? n) 4 (* 2 (inc n))))]
@@ -3990,7 +3990,7 @@
     (create-array-node-seq arr))
 
   (ensure_editable [inode e]
-    (if (identical? e edit)
+    (if (suss.bootstrap/same-reference? e edit)
       inode
       (ArrayNode. e cnt (aclone arr))))
 
@@ -4094,14 +4094,14 @@
     (create-inode-seq arr))
 
   (ensure_editable [inode e]
-    (if (identical? e edit)
+    (if (suss.bootstrap/same-reference? e edit)
       inode
       (let [new-arr (make-array (* 2 (inc cnt)))]
         (array-copy arr 0 new-arr 0 (* 2 cnt))
         (HashCollisionNode. e collision_hash cnt new-arr))))
 
   (ensure_editable_array [inode e count array]
-    (if (identical? e edit)
+    (if (suss.bootstrap/same-reference? e edit)
       (do (set! arr array)
           (set! cnt count)
           inode)
