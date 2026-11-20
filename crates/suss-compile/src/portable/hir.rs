@@ -617,6 +617,12 @@ pub enum Nominal {
     /// `suss.bootstrap/fixed-arity-fn?` (#466): a fn whose arities are all
     /// fixed, as its code struct's maximum arity says.
     FixedArityFn,
+    /// Private core sequence callbacks and the native apply boundary (#466).
+    ApplySequenceOps,
+    ApplyCallee,
+    ApplySpread,
+    ApplyToSeq,
+    ApplyFixed,
     IsTypeConstructor,
     ValueConstructor,
     /// Type value -> its name string, or nil (#304).
@@ -687,6 +693,10 @@ impl Nominal {
         count <= i32::MAX as usize
             && match self {
                 Self::Array => true,
+                Self::ApplySequenceOps => count == 9,
+                Self::ApplyCallee => count == 1,
+                Self::ApplySpread => count >= 2,
+                Self::ApplyToSeq | Self::ApplyFixed => count == 2,
                 Self::NativeObjectFactory | Self::NativeObjectDefaultPrototype => count == 0,
                 Self::CurrentThis => count == 0,
                 Self::Identical | Self::SameReference => count == 2,
@@ -3221,6 +3231,11 @@ impl Analyzer<'_> {
         }
         if symbol.namespace.as_deref() == Some("suss.bootstrap") {
             let operation = match symbol.name.as_str() {
+                "apply-sequence-ops!" => Some(Nominal::ApplySequenceOps),
+                "apply-callee" => Some(Nominal::ApplyCallee),
+                "apply-spread" => Some(Nominal::ApplySpread),
+                "apply-to-seq" => Some(Nominal::ApplyToSeq),
+                "apply-fixed" => Some(Nominal::ApplyFixed),
                 "number?" => Some(Nominal::IsNumber),
                 "keyword?" => Some(Nominal::IsKeyword),
                 // Reference identity alone, as for interned keywords (#442).
@@ -3260,6 +3275,10 @@ impl Analyzer<'_> {
                 _ => None,
             };
             if let Some(operation) = operation {
+                if matches!(operation, Nominal::ApplySequenceOps | Nominal::ApplyCallee
+                    | Nominal::ApplySpread | Nominal::ApplyToSeq | Nominal::ApplyFixed) && !self.privileged {
+                    return Err(fail(form.span.clone(), "Private apply adapters require compiled core"));
+                }
                 if !operation.valid(&vec![Type::Value; args.len()]) {
                     return Err(fail(
                         form.span.clone(),

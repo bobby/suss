@@ -217,6 +217,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     }
                     Operation::MakeGeneralClosure { body, .. } => {
                         names.extend(["closure-source-name-initialize", "arity-throw"]);
+                        names.extend(["apply-join", "apply-bounded-length", "apply-first", "apply-next", "apply-fixed-arguments"]);
                         names.extend(runtime_abi::ARITY_ERROR_EXPORTS);
                         if let Some(factory) = &body.rest_class {
                             globals.insert(factory.clone());
@@ -227,6 +228,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     }
                     Operation::MakeClosure { .. } => {
                         names.extend(["closure-source-name-initialize", "arity-throw"]);
+                        names.extend(["apply-join", "apply-fixed-arguments"]);
                         names.extend(runtime_abi::ARITY_ERROR_EXPORTS);
                     }
                     Operation::Call { operands, primitive } => {
@@ -302,6 +304,11 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::NativeObjectFactory => { names.insert("native-object-factory-function"); }
                         Nominal::IsNativeObject => { names.insert("native-object?"); }
                         Nominal::FixedArityFn => { names.insert("fn-fixed-arity?"); }
+                        Nominal::ApplySequenceOps => { names.insert("apply-sequence-ops"); }
+                        Nominal::ApplyCallee => { names.insert("apply-callee"); }
+                        Nominal::ApplySpread => { names.insert("apply"); }
+                        Nominal::ApplyToSeq => { names.insert("apply-to-seq"); }
+                        Nominal::ApplyFixed => { names.insert("apply-fixed"); }
                         Nominal::IsTypeConstructor => { names.insert("class-value-is"); }
                         Nominal::ValueConstructor => { names.insert("value-constructor"); }
                         Nominal::TypeName => { names.insert("class-value-name"); }
@@ -710,6 +717,12 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "protocol-native-method-set" => (vec![VALUE, ValType::I32, VALUE], vec![VALUE]),
             "try-invoke" => (vec![VALUE, VALUE, VALUE], vec![VALUE]),
             "binding-defined" | "language-error-is" | "native-object?" | "fn-fixed-arity?" | "class-value-is" => (vec![VALUE], vec![ValType::I32]),
+            "apply-sequence-ops" => (vec![VALUE; 9], vec![VALUE]),
+            "apply-callee" | "apply-first" | "apply-next" | "apply-fixed-arguments" => (vec![VALUE], vec![VALUE]),
+            "apply-to-seq" | "apply-fixed" => (vec![VALUE; 2], vec![VALUE]),
+            "apply-join" => (vec![ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::ARGS) }), VALUE], vec![VALUE]),
+            "apply" => (vec![VALUE, ValType::Ref(RefType { nullable: false, heap_type: HeapType::Concrete(runtime_abi::ARGS) }), VALUE], vec![VALUE]),
+            "apply-bounded-length" => (vec![VALUE, ValType::I32], vec![ValType::I32]),
             "identical-value" => (vec![VALUE, VALUE], vec![VALUE]),
             "object-instance" | "object-same-descriptor" | "protocol-marker-satisfies" | "protocol-native-satisfies" => {
                 (vec![VALUE, VALUE], vec![ValType::I32])
@@ -1763,12 +1776,32 @@ fn emit_spread(definition: &Definition, context: &Context) -> Function {
     use Instruction::*;
     let names = context.names;
     let method = |body: usize| (names.len() + 1 + body) as u32;
-    // Locals: 3 the argument count, 4 the surplus array.
-    let mut function = Function::new([(1, ValType::I32), (1, VALUE)]);
-    // An unrealized rest comes only from `apply`, which realizes it first.
+    // Locals: 3 the argument count, 4 the surplus array, 5 the apply seq.
+    let mut function = Function::new([(1, ValType::I32), (2, VALUE)]);
+    let import = |name: &str| names.iter().position(|candidate| *candidate == name).expect("apply import") as u32;
+    // Ordinary calls keep their existing realized-array/IndexedSeq path. Apply
+    // passes an already normalized rest: never seq that value a second time.
     function
         .instruction(&LocalGet(2)).instruction(&RefIsNull).instruction(&I32Eqz)
-        .instruction(&If(BlockType::Empty)).instruction(&Unreachable).instruction(&End)
+        .instruction(&If(BlockType::Empty))
+        .instruction(&LocalGet(1)).instruction(&LocalGet(2)).instruction(&Call(import("apply-join")))
+        .instruction(&LocalSet(5));
+    if let Some(&(body, arity, _)) = definition.methods.iter().find(|method| method.2) {
+        let required = arity - 1;
+        function.instruction(&LocalGet(5)).instruction(&I32Const(required as i32))
+            .instruction(&Call(import("apply-bounded-length")))
+            .instruction(&I32Const(required as i32)).instruction(&I32GtU)
+            .instruction(&If(BlockType::Empty)).instruction(&LocalGet(0));
+        for _ in 0..required {
+            function.instruction(&LocalGet(5)).instruction(&Call(import("apply-first")))
+                .instruction(&LocalGet(5)).instruction(&Call(import("apply-next")))
+                .instruction(&LocalSet(5));
+        }
+        function.instruction(&LocalGet(5)).instruction(&ReturnCall(method(body))).instruction(&End);
+    }
+    function.instruction(&LocalGet(5)).instruction(&Call(import("apply-fixed-arguments")))
+        .instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::ARGS))).instruction(&LocalSet(1))
+        .instruction(&End)
         .instruction(&LocalGet(1)).instruction(&ArrayLen).instruction(&LocalSet(3));
     for &(body, arity, _) in definition.methods.iter().filter(|method| !method.2) {
         function
@@ -3651,6 +3684,15 @@ fn emit_function(
                                 },
                             )));
                         }
+                        Nominal::ApplySpread => {
+                            function.instruction(&LocalGet(arguments[0].0 as u32 + offset));
+                            for argument in &arguments[1..arguments.len() - 1] {
+                                function.instruction(&LocalGet(argument.0 as u32 + offset));
+                            }
+                            function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::ARGS, array_size: arguments.len() as u32 - 2 })
+                                .instruction(&LocalGet(arguments.last().unwrap().0 as u32 + offset))
+                                .instruction(&Call(index("apply")));
+                        }
                         Nominal::Array | Nominal::Descriptor(_) | Nominal::CoreDescriptor | Nominal::CoreStaticsDescriptor | Nominal::CoreClosedDescriptor | Nominal::CoreConstructibleDescriptor => {
                             let mutable = match operation {
                                 Nominal::Descriptor(mutable) => *mutable,
@@ -4025,6 +4067,10 @@ fn emit_function(
                         | Nominal::IsLanguageError
                         | Nominal::IsNativeObject
                         | Nominal::FixedArityFn
+                        | Nominal::ApplySequenceOps
+                        | Nominal::ApplyCallee
+                        | Nominal::ApplyToSeq
+                        | Nominal::ApplyFixed
                         | Nominal::IsTypeConstructor
                         | Nominal::ValueConstructor
                         | Nominal::TypeName
@@ -4105,6 +4151,10 @@ fn emit_function(
                                 Nominal::NativeObjectFactory => "native-object-factory-function",
                                 Nominal::IsNativeObject => "native-object?",
                                 Nominal::FixedArityFn => "fn-fixed-arity?",
+                                Nominal::ApplySequenceOps => "apply-sequence-ops",
+                                Nominal::ApplyCallee => "apply-callee",
+                                Nominal::ApplyToSeq => "apply-to-seq",
+                                Nominal::ApplyFixed => "apply-fixed",
                                 Nominal::IsTypeConstructor => "class-value-is",
                                 Nominal::ValueConstructor => "value-constructor",
                                 Nominal::TypeName => "class-value-name",

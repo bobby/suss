@@ -4,6 +4,7 @@
 use std::borrow::Cow;
 use wasm_encoder::*;
 mod arithmetic;
+mod apply;
 mod arrays;
 mod r#async;
 mod async_library;
@@ -2204,6 +2205,8 @@ fn build_module() -> Vec<u8> {
     let prototype_functions = owned_prototypes::functions(&mut b);
     instance_site_test(&mut b);
     arithmetic_functions.extend(call_site_functions(&mut b));
+    arithmetic_functions.extend(apply::functions(&mut b));
+    *universal_entries.last_mut().expect("universal spread") = b.names["universal-spread"];
     arithmetic_functions.extend(prototype_functions);
     let coercion_functions = coercions::functions(&mut b);
     arithmetic_functions.extend(coercion_functions);
@@ -2617,6 +2620,7 @@ fn build_module() -> Vec<u8> {
         code.extend(universal_entries.iter().enumerate().map(|(k, entry)| {
             RefFunc(match b.names.get(&format!("arithmetic-{name}-{k}")) {
                 Some(direct) if k <= 2 => *direct,
+                _ if k == MAX_FIXED as usize + 1 => b.names[&format!("apply-{name}-spread")],
                 _ => *entry,
             })
         }));
@@ -2637,6 +2641,7 @@ fn build_module() -> Vec<u8> {
         }
         globals.global(GlobalType { val_type: ValType::I32, mutable: true, shared: false }, &ConstExpr::i32_const(0));
     }
+    apply::append_globals(&mut globals, &b, &universal_entries);
     b.exports.export("protocol-epoch", ExportKind::Global, PROTOCOL_EPOCH_GLOBAL);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

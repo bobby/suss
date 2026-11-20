@@ -30164,3 +30164,57 @@ Runtime and Macro (`pr474-fixed-remainder-regression.log`, one test, no failures
 or ignored cases). It guards against replacing the observed unbounded remainder
 traversal with an early wrong-arity exception. The separate sequence-callback
 and numeric-error regressions remain genuine failures awaiting implementation.
+
+
+## Sequence-aware spread execution and numeric folding (2026-11-19)
+
+The #474 working source introduces a private per-instance sequence callback
+registry, rooted callback closures and typed entries, a closure/spread cache,
+and generated source spread handling with next-only RestFn/AFn preflight.
+Public apply uses the runtime boundary for non-vector tails. Ordinary nil-tail
+calls retain their existing realized-array/IndexedSeq adapters. MetaFn and
+MultiFn delegation uses the already-normalized seq. Native +, -, *, / and the
+four variadic bit operations have separate lazy fold entries. The fold adapts
+Clojure 1.12.6 reduce1, with EPL provenance in the patch/source. Comparisons and
+array families still need their distinct lazy entries; they are not certified
+by numeric success. This source is isolated from the reviewed #470 branch.
+
+Commands use cargo +stable, SUSS_FUNCTION_NAMES=1, CARGO_BUILD_JOBS=2 and the
+shared performance target, inside systemd-run --user --scope -p MemoryMax=6G;
+TMPDIR and all logs are in target/probe. The first executable build exposed an
+early unresolved ifn? reference; the callback now checks the already-declared
+IFn protocol. The generator must finish after core_import before Cargo starts.
+The first successful sequence regression is pr474-source-spread-third.log:
+one test passed, exercising Runtime and Macro, including Counted ISeq and the
+separate public bounded-count behavior.
+
+pr474-native-fold-first.log reproduced a fixture case-default compile error
+and a genuine normal range-sum failure. The corrected fixture and separately
+printed successful cases distinguish them (pr474-native-fold-second.log).
+The numeric lazy-error regression already passed in both phases. IntegerRangeChunk
+lacked reduction, unlike JVM IChunk; adding its existing indexed reducer makes
+the private chunk fold work. pr474-native-fold-third.log then reports all five
+tests passed in both phases, no failures or ignores: existing apply values,
+callback traces, numeric error effects, invalid-callee ordering and the fixed
+infinite-remainder throwing sentinel. Fresh callee-order JVM evidence is in
+pr474-callee-order3-jvm.log: nil normalizes the seq before failing, whereas
+other non-callables fail before normalization, including prefixed forms.
+
+347 Python tests passed (pr474-foundation-python.log), and all CI source checks
+passed (pr474-foundation-checks.log), before the final chunk changes. Re-run
+these checks after subsequent core edits. No full workspace pass or final-head
+CI is claimed for this source.
+
+A further JVM 1.12.6 probe, pr474-chunk-bounds-jvm.{clj,log}, returns 6 for a
+three-value ArrayChunk whose backing array has a bad fourth value. The new
+focused regression fails on actual Suss execution (pr474-chunk-bounds-red.log).
+ArrayChunk's old reducer ignored its end field. Its patch now uses the logical
+count/indexed reducer; this correction still needs execution after rebasing.
+
+GitHub main advanced to ccfb63a4 through the user-side merge of #470. Rebase
+#474 onto that ABI 7 base before collecting new instruction or acceptance
+measurements. Next work: verify chunk boundaries on that base, implement the
+remaining native traversal families, measure the list target below 2,000 and
+variadic linearity/property-free dispatch, then complete the required baseline,
+independent final review and final-head CI. No #474 acceptance or promotion is
+claimed by these partial probes.

@@ -39,7 +39,10 @@ fn apply_over_seqs_answers_as_before() {
             // fixed parameters (portable_source_apply.rs).
             // Callables that aren't fns, and variadic fns, as before.
             ("[(apply :a (list {:a 1})) (apply {:a 1} (list :a)) (apply #{3} (list 3)) (apply str (list 1 2 3))]", "[1 1 3 \"123\"]"),
-            ("[(apply fv (list 1)) (apply fv 1 (list 2 3)) (apply + (range 10)) (apply + 1 2 (range 3))]", "[[1 nil] [1 (2 3)] 45 6]"),
+            ("(apply fv (list 1))", "[1 nil]"),
+            ("(apply fv 1 (list 2 3))", "[1 (2 3)]"),
+            ("(try (apply + (range 10)) (catch :default e [:error (ex-message e)]))", "45"),
+            ("(apply + 1 2 (range 3))", "6"),
             ("(first (apply (fn [& xs] xs) (iterate inc 0)))", "0"),
             // A variadic call's rest is an IndexedSeq over its arguments.
             ("(let [xs ((fn [& xs] xs) 1 2 3)] [xs (count xs) (rest xs) (list? xs) (seq? xs)])", "[(1 2 3) 3 (2 3) false true]"),
@@ -173,5 +176,49 @@ fn fixed_apply_reaches_an_error_in_the_unbounded_remainder() {
                       (catch :default e :threw))]
                 [answer fixed-apply-limit (count fixed-apply-events)]))
         "#), "[:threw true 41]");
+    }
+}
+
+#[test]
+fn apply_checks_non_null_callees_before_normalizing_the_tail() {
+    // JVM 1.12.6: pr474-callee-order3-jvm.log. Nil passes checkcast;
+    // other non-callables fail before the seq conversion in apply's body.
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval(r#"
+            (def apply-callee-events [])
+            (deftype ApplyCalleeTail []
+              ISeqable
+              (-seq [_] (set! apply-callee-events (conj apply-callee-events :seq)) nil))
+            (def trace-apply-callee
+              (fn [f prefix]
+                (set! apply-callee-events [])
+                (let [result (try
+                               (case prefix
+                                 0 (apply f (ApplyCalleeTail.))
+                                 1 (apply f 0 (ApplyCalleeTail.))
+                                 5 (apply f 0 1 2 3 4 (ApplyCalleeTail.))
+                                 (throw (ex-info "unexpected prefix" {})))
+                               (catch :default e :threw))]
+                  [result apply-callee-events])))
+        "#).unwrap();
+        for prefix in [0, 1, 5] {
+            assert_eq!(printed(&mut session, &format!("(trace-apply-callee nil {prefix})")),
+                "[:threw [:seq]]");
+            for callee in ["42", "false", "\"x\""] {
+                assert_eq!(printed(&mut session, &format!("(trace-apply-callee {callee} {prefix})")),
+                    "[:threw []]", "callee {callee}, prefix {prefix}");
+            }
+        }
+    }
+}
+
+#[test]
+fn numeric_apply_respects_chunk_end_boundaries() {
+    // JVM 1.12.6: pr474-chunk-bounds-jvm.log. The backing array may
+    // contain values beyond the logical end of this chunk.
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        assert_eq!(printed(&mut session,
+            "(try (apply + (chunk-cons (array-chunk (array 1 2 3 :bad) 0 3) nil))
+                  (catch :default e [:error (ex-message e)]))"), "6");
     }
 }
