@@ -814,7 +814,10 @@ fn clojure_correction(id: &str, source: &str) -> Option<Option<String>> {
         "primitive-coercion-7" => Some(Some(format!("(- {} 1)", number("\" 2 \"")))),
         "primitive-coercion-8" => Some(Some(format!("(* {} 3)", number("\"2\"")))),
         "primitive-coercion-9" => Some(Some(format!("(* {} 3)", number("false")))),
-        "primitive-coercion-10" => Some(Some(format!("(/ {})", number("nil")))),
+        // The pinned case is IEEE reciprocal after ToNumber(nil). Unary
+        // Clojure / is generic and checks zero; a literal double numerator
+        // explicitly selects the primitive source overload for this retarget.
+        "primitive-coercion-10" => Some(Some(format!("(/ 1.0 {})", number("nil")))),
         "primitive-coercion-11" => Some(Some(format!("(- {} 1)", number("\"bogus\"")))),
         "primitive-concat-surrogates" => add("\"\\uD800\" \"😀\""),
         "primitive-concat-null" => add("nil \"x\""),

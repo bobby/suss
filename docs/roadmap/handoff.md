@@ -1,3 +1,22 @@
+## Explicit IEEE coercion fixture retarget (2026-11-21)
+
+CI44958675908 shard5 on926fde51 found one stale pipeline fixture. Its recorded
+ClojureScript (/ nil) case was retargeted to unary / of f64-coerce nil and still
+expected infinity. Generic Clojure unary division must check that boxed zero.
+The retarget now uses a literal double numerator1.0, explicitly selecting the
+binary primitive overload. The original (/ nil) error assertion remains.
+Expected oracle values, all397 cases and the142 correction count are unchanged.
+Production code is unchanged.
+
+The exact portable_pipeline compiled_source_cases_match_the_pinned_compiler_observations
+test passes1, zero failed/ignored,18 unrelated tests filtered,459.02s. Its test
+body executes all397 corpus cases and asserts142 corrections. Commands, patch,
+CI failure and log hash are in results/m12-division-overloads/pipeline-retarget.json.
+Use stable Rust, two jobs/threads, MemoryMax4G and the existing print target/cache.
+The frozen926fde51 full baseline was interrupted with SIGINT/exit130 specifically
+for this verified fixture correction; its raw log/hash is retained and is not a
+pass. New final-head CI, re-review and a corrected full local run remain required.
+
 ## Arithmetic fixture foundation check (2026-11-21)
 
 CI run44956667953 on9471688d failed to compile the async IR unit-test fixture:
