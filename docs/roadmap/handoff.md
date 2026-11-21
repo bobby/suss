@@ -47,8 +47,14 @@ two-thread Rust baseline, independent review or final-head CI. No full local
 workspace baseline or native adoption evidence is claimed. CI on a586ab7e had
 passed foundation and four integration shards at inspection, with four shards
 still running; a later documentation push needs its own final-head CI result.
-The draft remains a reference, without promotion or merge. Reopening either
-adoption stage requires a new explicit decision before implementation.
+Independent subagent review of 418d7463 found no actionable issues: the
+documentation-only diff preserves accepted semantics, keeps the candidate
+contracts unaccepted, and accurately bounds the evidence. The reviewer also
+verified the 35 links/fences, tracking IDs and logged 16-test result. Readiness
+still requires successful CI on the final published head; post that result on
+the issue/PR rather than making an adoption claim. No merge is authorized.
+Reopening either adoption stage requires a new explicit decision before
+implementation.
 
 ## Independent PR177 review — typed invocation before guest initialization
 
