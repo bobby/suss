@@ -1,3 +1,23 @@
+## Primitive local hint oracle and negative control (2026-11-21)
+
+Fresh JVM Clojure1.12.6 passes15 source-string rows in
+results/m12-local-hints/oracle.clj, preserving ^long/^double metadata. The
+command cargo +stable test -p suss-cli --locked --test clojure_local_numeric_hints
+-- --test-threads=2 fails both test targets on9471688d. Runtime returns6.5 where
+JVM Clojure returns6 for (+ x 1) when ^long x holds(identity5.5); actual AOT
+reports the same first-row mismatch. Runtime fails before Macro and AOT stops
+at its first export, so the remaining Suss rows are not established. Commands,
+compiler identity, logs and hashes are in results/m12-local-hints/baseline.json.
+
+Use stable Rust, two jobs/threads, MemoryMax4G, target/probe/m12-hints-target
+and the original M11 target/suss native cache. The separate hints target is a
+btrfs reflink of the print target; Cargo rechecks source paths and executable
+environment dependencies. Nine additional fresh JVM contexts establish alias,
+use-site override and generic-vs-inline behavior, including nary comparison
+ignoring local hints and early arithmetic casts preventing later effects.
+These observations guide the remaining local-hint conversions and box reuse;
+no local-hint implementation or full workspace pass is inferred from the oracle.
+
 ## Explicit IEEE coercion fixture retarget (2026-11-21)
 
 CI44958675908 shard5 on926fde51 found one stale pipeline fixture. Its recorded
