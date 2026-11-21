@@ -69,3 +69,25 @@ fn writer_conversion_keeps_the_prefix_captured_before_reentrant_write() {
             Kind::String(units) if units.iter().copied().eq("oldx!".encode_utf16())));
     }
 }
+
+#[test]
+fn long_quoted_strings_preserve_escapes_and_unpaired_utf16_after_gc() {
+    use suss_reader::forms::Form;
+    let pattern = [97, 34, 92, 10, 0x03bb, 0xd800, 120, 0xdc00];
+    let escaped = [97, 92, 34, 92, 92, 92, 110, 0x03bb, 0xd800, 120, 0xdc00];
+    let mut expected = vec![34];
+    expected.extend(escaped.repeat(4096));
+    expected.push(34);
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.set_operation_fuel(100_000_000);
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let input = bridge.quote(&mut session, Form {
+            span: 0..0, metadata: vec![], kind: Kind::String(pattern.repeat(4096)),
+        }).unwrap();
+        let printer = session.eval("pr-str").unwrap();
+        let value = session.invoke(&printer, &[&input]).unwrap();
+        session.collect().unwrap();
+        assert!(matches!(&bridge.read(&mut session, &value, 0..0).unwrap().kind,
+            Kind::String(units) if units == &expected));
+    }
+}

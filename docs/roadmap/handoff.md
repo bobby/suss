@@ -1,3 +1,34 @@
+## Long-string quoting review correction (2026-11-21)
+
+Independent review of 79fecdcf found one P2: quote-string still concatenates its
+prefix for every UTF-16 unit. Thus the nested-data results validate the outer
+buffer fix, not universal linear printing of a single long string. The review
+verified historical component/bootstrap receipts, both full output digests,
+provenance and the current call-size test, with no other finding. A throw/reentry
+probe timed out and produced no runtime evidence; its behavior was assessed
+statically, not claimed as an executed pass.
+
+The quote-string adaptation now scans the complete escape table in source order,
+accumulates unchanged runs and escaped units in the printer-only buffer, and
+joins once. Each input unit is examined once; runs are copied once. Pinned source
+hash and notices remain. A new actual guest-string case covers long escaped
+strings with unpaired UTF-16 surrogates after GC in both phases. The example's
+optional --string mode scales a single escaped string at the requested 80/160
+sizes. The frozen buffer-only executable is
+`target/probe/m11-quote-bench-before`; its first long-string sample is 2.450s at
+80 blocks / 122,882 printed units. The paired baseline driver is live in
+`m11-quote-baseline-driver.log`.
+
+The old 79fecdcf full current-source run was explicitly stopped for this material
+source correction, scope run-p815221-i84693426.scope, not for an observation
+ timeout. `m11-print-workspace.log` remains incomplete; do not count it as a pass.
+The independent old namespace 3f218510 baseline is unchanged and still live.
+Replacement focused source execution logs to `m11-quote-focused.log`, and Python
+checks to `m11-quote-python.log`. The first Python launch had a typo in the log
+path and executed nothing; the corrected launch uses the actual root path.
+Restart full verification only after the corrected source is frozen. Review
+promotion and final-head CI remain pending; no merge is authorized.
+
 ## Executed printing and call-site receipts (2026-11-21)
 
 Corrected printer execution passes 33 focused cases across collection_printing,

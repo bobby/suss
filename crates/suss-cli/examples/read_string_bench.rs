@@ -3,6 +3,7 @@
 //! `pr-str` of the same data for reference. Run in the profile being
 //! measured, for example
 //! `cargo run --release -p suss-cli --example read_string_bench -- 200 [--print]`.
+//! Add `--string` to scale one escaped string rather than many nested maps.
 use std::collections::BTreeMap;
 use std::time::Instant;
 use suss_cli::portable_session::{runtime_number, Session, SessionOptions, SessionValue};
@@ -44,7 +45,12 @@ fn best(session: &mut Session, runs: usize, source: &str) -> (f64, SessionValue)
 
 fn main() {
     let roots: usize = std::env::args().nth(1).map_or(200, |n| n.parse().unwrap());
-    let document = Value::Vector((0..roots).map(|i| node(i, 3)).collect());
+    let single_string = std::env::args().any(|argument| argument == "--string");
+    let document = if single_string {
+        Value::String("abc\"\\\nλ🙂".repeat(roots * 128))
+    } else {
+        Value::Vector((0..roots).map(|i| node(i, 3)).collect())
+    };
     let text = edn::print(&document).unwrap();
     let units = text.encode_utf16().count() as f64;
     let mut session = Session::new_repl_with_options(SessionOptions {
@@ -70,7 +76,8 @@ fn main() {
     } else {
         (f64::NAN, f64::NAN)
     };
-    println!("{roots} roots, {:.3} M UTF-16 units ({:.2} MB)", units / 1e6, text.len() as f64 / 1e6);
+    let shape = if single_string { "string blocks" } else { "roots" };
+    println!("{roots} {shape}, {:.3} M UTF-16 units ({:.2} MB)", units / 1e6, text.len() as f64 / 1e6);
     for (label, time) in [("read-string", code), ("suss.edn/read-string", data), ("pr-str", printed)] {
         let work = if label == "pr-str" { printed_units } else { units };
         println!("{label}: {time:.3} s, {:.3} M units/s", work / time / 1e6);
