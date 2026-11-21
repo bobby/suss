@@ -3107,6 +3107,29 @@ impl<'a> AnalysisGraph<'a> {
 mod sharing_tests {
     use super::*;
     #[test]
+    fn binding_index_transport_preserves_delimiters_empty_names_and_utf16_offsets() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let mut names = ["\u{e000}", "a b", "\u{10000}", "a\0b", ""];
+        let value = {
+            let _budget = session.operation_budget_scope().unwrap();
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            let root = graph.name_index(&mut names).unwrap();
+            graph.materialize(root).unwrap()
+        };
+        session.collect().unwrap();
+        let actual = bridge.read(&mut session, &value, 0..0).unwrap();
+        let Kind::Vector(parts) = &actual.kind else { panic!("packed index") };
+        assert_eq!(parts.len(), 2);
+        assert!(matches!(&parts[0].kind, Kind::String(units)
+            if units == &[97, 0, 98, 97, 32, 98, 0xd800, 0xdc00, 0xe000]));
+        let Kind::Vector(offsets) = &parts[1].kind else { panic!("UTF-16 boundaries") };
+        assert_eq!(offsets.iter().map(|form| match form.kind {
+            Kind::Long(value) => value,
+            _ => panic!("exact integral offset"),
+        }).collect::<Vec<_>>(), [0, 0, 3, 6, 8, 9]);
+    }
+    #[test]
     fn binding_index_sort_uses_guest_string_order_and_stops_on_budget_error() {
         let mut names = ["\u{e000}", "z", "\u{10000}", "a b", "a\0b", ""];
         let mut scratch = names;

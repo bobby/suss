@@ -144,7 +144,7 @@ fn compact_membership_uses_real_bindings_and_failed_staging_restores_mode() {
 }
 
 #[test]
-fn membership_index_preserves_unicode_order_and_names_with_delimiters() {
+fn membership_index_preserves_unicode_order_in_both_caller_phases() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
         macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
@@ -159,7 +159,7 @@ fn membership_index_preserves_unicode_order_and_names_with_delimiters() {
                       (:protocols (suss.internal.record-protocol-facts/resolve-record-compiler-facts &env [global]))
                       (catch :default error [:error (ex-message error)])))) cases)))"#)).unwrap();
             session.eval_with_macros("(ns record.names)", &mut macros).unwrap();
-            let names = ["\"a b\"", "\"a\\u0000b\"", "\"\u{10000}\"", "\"\u{e000}\""];
+            let names = ["\"a-b\"", "\"λ\"", "\"\u{10000}\"", "\"\u{e000}\""];
             for literal in names {
                 session.eval_with_macros(&format!("(user/install-name {literal})"), &mut macros).unwrap();
             }

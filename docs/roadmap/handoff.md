@@ -1,3 +1,20 @@
+## Index format boundary regression (2026-11-21)
+
+`m11-record-final-focused.log` passes all three process cases (including the
+four-million complete-request bound) and both existing phase/policy projection
+cases, then fails while defining a generated space-containing binding. The
+compiler's existing `valid_name` reparses binding names; this fails before index
+lookup. No result for NUL binding acceptance was established by that failed run.
+The corrected end-to-end case uses accepted ASCII/Unicode names, retaining the
+astral/BMP comparison, qualified/own lookups and exact absent-binding errors.
+Spaces, NUL and empty names are instead verified in actual guest index transport
+with explicit UTF-16 offsets. Both native index units pass in
+`m11-record-index-units.log` (2 passed). The replacement seven-case focused run
+is `m11-record-current-focused.log`; its two explicit filters avoid repeating the
+already-passed full-catalog phase/policy cases after test-only source changes.
+Final-head CI still executes every case. Inspect the terminal result before
+claiming the replacement run passes.
+
 ## Record projection measurements and isolated probes (2026-11-21)
 
 `results/m11-record-budget` retains same-source default eval/script comparisons,
