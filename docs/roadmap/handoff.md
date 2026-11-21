@@ -1,3 +1,51 @@
+## Printer chunk-buffer probes (2026-11-21)
+
+The dedicated `BootstrapPrinterStringBuffer` keeps already-converted strings in
+immutable chunks and performs one final UTF-16 join. The retained public Closure
+StringBuffer adapter is separate. Pinned complete pr-str*/pr-sb-with-opts patches
+change only their buffer constructor; upstream source hashes/licenses remain.
+Owned prefix, recipe hash, generated loader and manifest are regenerated through
+`apply_bootstrap.py` and `core_import.py`.
+
+The initial strict-string chunk prototype passes two actual cases (wide escaped
+UTF-16/empty chunks/earlier outputs after GC, nested print-method ordering) in
+`m11-print-focused.log`. A separate writer-conversion regression then fails in
+`m11-print-reentry-initial.log`. Frozen before execution returns "17" for a
+numeric writer argument and "oldx!" when conversion reenters the same writer.
+The corrected append captures the old immutable chunk list before coerce-string,
+then appends the converted text to that snapshot. This preserves prior writer
+conversion and discarded inner writes. Conversion order is attributed to the
+retained Apache-2.0 Closure adapter; chunk storage is original Suss.
+
+`m11-print-corrected-focused.log` runs the three new cases plus collection_printing,
+object_printing, printer_options and portable_string_fields. Inspect its terminal
+result before claiming the corrected implementation passes. The first 358 Python
+checks pass; the corrected-source rerun logs separately to
+`m11-print-corrected-python.log`. No full workspace pass is claimed for this source.
+
+The exact release baseline is retained in `results/m11-printing`: unchanged
+80/160-root commands report 25.670s / 359.376s for pr-str, at reported input
+sizes 0.524M / 1.056M UTF-16 units. These are best-of-three wall times under the
+same 3GiB bound, with concurrent bounded build/test load; they do not establish
+an exact asymptotic exponent. The benchmark now also retains its actual count
+result to report printed output units, outside the measured interval.
+The output-only harness captures full UTF-16 bytes independently, using the same
+node fixture and actual read-string/pr-str pipeline. Before captures use the
+frozen `target/probe/m11-print-output-before` executable; an 80-root capture is
+live. After release compilation uses the shared print-release target, but keeps
+the original before executables frozen. Compare actual output bytes/digests
+before making any unchanged-output claim.
+
+Current source worktree: `target/probe/m11-print-after-source`, branch
+codex/m11-printing, fast-forwarded to parent d39310af before adding the printer
+changes. Its pinned ClojureScript checkout is a detached submodule worktree at
+c4295f303100bbf5afac449242d30bca1126f1a1. Debug target is
+`target/probe/m11-print-after-target`; release target is
+`target/probe/m11-print-release-target`. Use the root `target/suss` native cache,
+absolute paths, stable toolchain, one Cargo job and 3–4GiB user scopes. No Rust
+flags are overridden. The three required followups are corrected native results,
+80/160 after timings with actual printed sizes, and full output comparison.
+
 ## Index format boundary regression (2026-11-21)
 
 `m11-record-final-focused.log` passes all three process cases (including the

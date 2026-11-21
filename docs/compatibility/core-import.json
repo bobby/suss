@@ -2528,7 +2528,7 @@
   "loader": {
     "before": {
       "path": "docs/compatibility/bootstrap/sequence-forward-declarations.sus",
-      "sha256": "d66ae7c60ddf022548d146b2a3f688906f6c71c5d0a8895447856c733bab88be"
+      "sha256": "e175098f0e5a497c1df321e7df6811f35719c67915e8fd6360d588522baea345"
     },
     "after": {
       "path": "docs/compatibility/bootstrap/sequence-initializers.sus",
