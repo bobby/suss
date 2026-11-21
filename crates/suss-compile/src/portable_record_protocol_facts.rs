@@ -130,16 +130,31 @@ pub(crate) const SOURCE: &str = r####"
         (symbol "js" "Object")
         nil))))
 
+(def ^:private namespace-binding?
+  (fn [facts local]
+    ;; The private record projection transports actual membership as sorted
+    ;; strings. Building a guest hash set of every compiler binding costs more
+    ;; than the record expansion. Full compiler &env retains its definition map.
+    (let [index (get facts :suss/binding-index)]
+      (if index
+        (let [target (name local)]
+          (loop [lo 0 hi (count index)]
+            (if (< lo hi)
+              (let [mid (quot (+ lo hi) 2)
+                    order (compare target (nth index mid))]
+                (if (zero? order) true
+                  (if (< order 0) (recur lo mid) (recur (inc mid) hi))))
+              false)))
+        (contains? (or (get facts :suss/binding-names) (get facts :defs)) local)))))
+
 (def ^:private binding-present?
   (fn [live current namespaces signatures global]
     (let [global (canonical-global global)]
       (if (contains? signatures global)
         true
         (let [namespace-name (namespace global)
-              facts (namespace-facts live current namespaces namespace-name)
-              definitions (or (get facts :suss/binding-names) (get facts :defs))]
-          (and definitions
-               (contains? definitions (symbol (name global)))))))))
+              facts (namespace-facts live current namespaces namespace-name)]
+          (namespace-binding? facts (symbol (name global))))))))
 
 (def ^:private require-binding
   (fn [live current namespaces signatures global original]
@@ -166,12 +181,10 @@ pub(crate) const SOURCE: &str = r####"
           refers (get live :suss/refers)
           exclusions (get live :excludes)
           own-namespace (canonical-namespace (name source-namespace))
-          ;; Extract actual definition maps once from the same catalog snapshot.
+          ;; Extract actual membership once from the same catalog snapshot.
           ;; Signature membership still admits provisional protocol declarations.
           own-facts (namespace-facts live current namespaces own-namespace)
-          own-definitions (or (get own-facts :suss/binding-names) (get own-facts :defs))
           core-facts (namespace-facts live current namespaces "suss.core")
-          core-definitions (or (get core-facts :suss/binding-names) (get core-facts :defs))
           ;; Experiment: faithful namespace/local -> global projection from
           ;; actual phase-filtered Environment.protocols, never metadata :name.
           signature-index (get compiler :protocol-globals-by-namespace)
@@ -221,7 +234,7 @@ pub(crate) const SOURCE: &str = r####"
               referred (get refers local)]
           (if referred
             (require-binding live current namespaces signatures referred protocol-symbol)
-            (let [declaration (and own-definitions (contains? own-definitions local))
+            (let [declaration (namespace-binding? own-facts local)
                   signature (get own-signatures local)]
               (if (or declaration signature)
                 (if signature signature (symbol own-namespace symbol-name))
@@ -232,7 +245,7 @@ pub(crate) const SOURCE: &str = r####"
                   (let [declared-core (get core-signatures local)
                         core (if declared-core declared-core (symbol "suss.core" symbol-name))]
                     (if (or declared-core
-                            (and core-definitions (contains? core-definitions local))
+                            (namespace-binding? core-facts local)
                             (contains? signatures core))
                       core
                       (record-facts-error

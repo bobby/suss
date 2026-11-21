@@ -34,6 +34,46 @@ use raw_keys::{Interner, KeyId, Plan};
 type Value = usize;
 type Result<T> = std::result::Result<T, SessionError>;
 
+// Guest string comparison uses UTF-16, including the ordering of astral names
+// relative to BMP private-use names. Keep sorting fallible so fuel exhaustion
+// or cancellation stops native work without violating a sort comparator's
+// total-order contract.
+fn sort_binding_names<'a>(
+    names: &mut [&'a str],
+    scratch: &mut [&'a str],
+    charge: &mut impl FnMut(usize) -> Result<()>,
+) -> Result<()> {
+    if names.len() < 2 {
+        return Ok(());
+    }
+    let mid = names.len() / 2;
+    sort_binding_names(&mut names[..mid], &mut scratch[..mid], charge)?;
+    sort_binding_names(&mut names[mid..], &mut scratch[mid..], charge)?;
+    charge(names.len().saturating_mul(2))?;
+    let (mut left, mut right) = (0, mid);
+    for slot in scratch.iter_mut() {
+        let take_left = if left == mid {
+            false
+        } else if right == names.len() {
+            true
+        } else {
+            charge(names[left].len().min(names[right].len()).saturating_add(1))?;
+            names[left].encode_utf16().cmp(names[right].encode_utf16()) != Ordering::Greater
+        };
+        *slot = if take_left {
+            let value = names[left];
+            left += 1;
+            value
+        } else {
+            let value = names[right];
+            right += 1;
+            value
+        };
+    }
+    names.copy_from_slice(scratch);
+    Ok(())
+}
+
 fn charge_origin_work(
     session: &mut Session,
     span: std::ops::Range<usize>,
@@ -1419,18 +1459,24 @@ impl<'a> AnalysisGraph<'a> {
             .map(|name| self.symbol(name))
             .collect::<Result<Vec<_>>>()?;
         let exclusions = self.recipe(Recipe::Set(exclusions))?;
-        let names = namespace
+        self.charge(namespace.identities.len().saturating_mul(2))?;
+        let mut names = namespace
             .identities
             .iter()
-            .map(|global| self.symbol(global.name()))
+            .map(|global| global.name())
+            .collect::<Vec<_>>();
+        let mut scratch = names.clone();
+        sort_binding_names(&mut names, &mut scratch, &mut |work| self.charge(work))?;
+        let names = names.into_iter()
+            .map(|name| self.text(name))
             .collect::<Result<Vec<_>>>()?;
-        let names = self.recipe(Recipe::Set(names))?;
+        let names = self.vector(&names)?;
         self.map(vec![
             ("name", name),
             ("requires", aliases),
             ("suss/refers", refers),
             ("excludes", exclusions),
-            ("suss/binding-names", names),
+            ("suss/binding-index", names),
         ])
     }
     fn namespace(&mut self, namespace: &Arc<SourceNamespace>, depth: usize) -> Result<Value> {
@@ -3012,6 +3058,22 @@ impl<'a> AnalysisGraph<'a> {
 #[cfg(all(test, not(suss_generator)))]
 mod sharing_tests {
     use super::*;
+    #[test]
+    fn binding_index_sort_uses_guest_string_order_and_stops_on_budget_error() {
+        let mut names = ["\u{e000}", "z", "\u{10000}", "a b", "a\0b", ""];
+        let mut scratch = names;
+        let mut charged = 0;
+        sort_binding_names(&mut names, &mut scratch, &mut |work| { charged += work; Ok(()) }).unwrap();
+        assert_eq!(names, ["", "a\0b", "a b", "z", "\u{10000}", "\u{e000}"]);
+        assert!(charged > names.len());
+        let mut comparisons = 0;
+        let error = sort_binding_names(&mut names, &mut scratch, &mut |_| {
+            comparisons += 1;
+            Err(SessionError::Host(wasmtime::Error::msg("budget sentinel")))
+        }).unwrap_err();
+        assert_eq!(error.to_string(), "budget sentinel");
+        assert_eq!(comparisons, 1);
+    }
     fn number(bits: u64) -> Form {
         Form {
             span: 0..0,

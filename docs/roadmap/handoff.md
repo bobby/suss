@@ -1,3 +1,26 @@
+## Record helper membership index probes (2026-11-21)
+
+`SUSS_MACRO_FUEL_TRACE=1 target/probe/m11-suss-before repl --compile-fuel
+200000000 < target/probe/m11-record-fuel-input.sus` measures caller-environment
+transport at 14,638,260 and 14,654,648 fuel for consecutive public records. The
+unattended 10,000,000 default fails before expansion. Raw logs remain in
+`target/probe/m11-record-fuel-repl-before.log` and
+`target/probe/m11-default-record-before.log`.
+
+The private record catalog now represents actual namespace identities as a
+UTF-16-sorted string vector, with a metered native merge sort and compiled binary
+search. Ordinary macro analysis and full compiler catalogs retain their schema.
+The helper still accepts legacy membership sets and full definition maps.
+Focused commands: `cargo +stable test -p suss-cli --locked --test
+compiled_record_default_budget -- --test-threads=1 --nocapture`, then
+`compiled_record_protocol_projection` and `repl_default_budgets`. The first probe
+logs to `target/probe/m11-record-default-after.log`; inspect its result before
+claiming a pass. Tests cover real default-budget processes and bound consecutive
+record membership transport to less than 1,000,000 fuel each. Additional probes
+exercise UTF-16 ordering, delimiter names, phase and resolution behavior. No
+shipped budget is raised. The namespace full baseline continues separately from
+its frozen source worktree.
+
 ## AOT catalog reuse and scope markers (2026-11-21)
 
 Independent review of 8cb125a0 found one P2: the private ordered-loading flag

@@ -81,7 +81,7 @@ fn compact_membership_uses_real_bindings_and_failed_staging_restores_mode() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
         macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
-        macros.define("(defmacro ^{:suss/compiler-catalog :record-bindings} membership [global] (let [view (:suss/catalog &env) facts (suss.internal.record-protocol-facts/resolve-record-compiler-facts &env [global])] (list 'quote [(:suss/projection &env) (contains? view :defs) (contains? (:suss/binding-names view) 'ordinary) (:protocols facts)])))").unwrap();
+        macros.define("(defmacro ^{:suss/compiler-catalog :record-bindings} membership [global] (let [view (:suss/catalog &env) facts (suss.internal.record-protocol-facts/resolve-record-compiler-facts &env [global])] (list 'quote [(:suss/projection &env) (contains? view :defs) (boolean (some (fn [x] (= x \"ordinary\")) (:suss/binding-index view))) (:protocols facts) (vector? (:suss/binding-index view))])))").unwrap();
         session
             .eval_with_macros(
                 "(ns record.provider) (def ^{:name forged/Name} ordinary 17)",
@@ -113,6 +113,7 @@ fn compact_membership_uses_real_bindings_and_failed_staging_restores_mode() {
             panic!("actual membership result")
         };
         assert_eq!(protocols.len(), 1);
+        assert!(matches!(&parts[4].kind, Kind::Bool(true)), "private membership index is a vector");
         assert!(
             matches!(&protocols[0].kind, Kind::Symbol(symbol) if symbol.namespace.as_deref() == Some("record.provider") && symbol.name == "ordinary")
         );
@@ -141,5 +142,41 @@ fn compact_membership_uses_real_bindings_and_failed_staging_restores_mode() {
             matches!(&value.kind, Kind::Nil),
             "successful full-mode replacement must publish"
         );
+    }
+}
+
+#[test]
+fn membership_index_preserves_unicode_order_and_names_with_delimiters() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
+        macros.define("(defmacro install-name [text] (list 'def (symbol text) 17))").unwrap();
+        for mode in ["true", ":record-bindings"] {
+            macros.define(&format!(r#"(defmacro ^{{:suss/compiler-catalog {mode}}} resolve-name [text qualified]
+              (let [global (if qualified (symbol "record.names" text) (symbol text))
+                    facts (suss.internal.record-protocol-facts/resolve-record-compiler-facts &env [global])]
+                (list 'quote (:protocols facts))))"#)).unwrap();
+            session.eval_with_macros("(ns record.names)", &mut macros).unwrap();
+            for literal in ["\"a b\"", "\"a\\u0000b\"", "\"\u{10000}\"", "\"\u{e000}\""] {
+                session.eval_with_macros(&format!("(user/install-name {literal})"), &mut macros).unwrap();
+            }
+            let bridge = FormBridge::new(&mut session).unwrap();
+            for literal in ["\"a b\"", "\"a\\u0000b\"", "\"\u{10000}\"", "\"\u{e000}\""] {
+                for qualified in [false, true] {
+                    let value = session.eval_with_macros(&format!("(user/resolve-name {literal} {qualified})"), &mut macros).unwrap();
+                    let actual = bridge.read(&mut session, &value, 0..0).unwrap();
+                    let expected = read_forms(literal).unwrap().remove(0);
+                    let Kind::String(expected) = expected.kind else { panic!("name string") };
+                    let Kind::Set(protocols) = actual.kind else { panic!("resolved identities") };
+                    assert_eq!(protocols.len(), 1);
+                    assert!(matches!(&protocols[0].kind, Kind::Symbol(symbol)
+                        if symbol.namespace.as_deref() == Some("record.names")
+                        && symbol.name.encode_utf16().eq(expected)), "{protocols:?}");
+                }
+            }
+            for qualified in [false, true] {
+                assert!(session.eval_with_macros(&format!("(user/resolve-name \"absent\" {qualified})"), &mut macros).is_err());
+            }
+        }
     }
 }
