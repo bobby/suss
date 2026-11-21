@@ -1,0 +1,5 @@
+"(let [^long x (identity 5.5)] [(max x 1) (min x 1) (max x) (min x) (max x 1 2)])" [:value [5 1 5.5 5.5 5]]
+"(let [^long x (identity 5.5)] [(unchecked-inc x) (unchecked-dec x) (unchecked-negate x) (unchecked-add x 1)])" [:value [6 4 -5 6]]
+"(let [^long x (identity 5.5)] [(max x (identity 6)) (min x (identity 6))])" [:value [6 5]]
+"(fn ^double [] (max 1 2))" [:error "Syntax error compiling fn* at (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-hints-numeric-core-jvm.clj:2:1)." "Mismatched primitive return, expected: double, had: long"]
+"(fn ^long [] (max (identity 1) 2.0))" [:value #object[user$eval159$fn__160 0x51671b08 "user$eval159$fn__160@51671b08"]]

@@ -12,6 +12,7 @@ mod collections;
 mod comparisons;
 mod controls;
 mod division_overloads;
+mod local_hints;
 mod dynamic;
 mod namespaces;
 mod exceptions;
@@ -2900,7 +2901,7 @@ impl Analyzer<'_> {
         // fns: its name in the body is the checked cast of the argument, a
         // raw i64 or f64, so arithmetic and loops seeded from it stay raw.
         let mut casts = Vec::new();
-        let mut source_primitives = HashMap::new();
+        let mut source_primitives = primitive_returns::SourceFacts::default();
         let return_hint = primitive_tag(&args[0])?
             .or(if receiver_type.is_none() { self.pending_return_hint } else { None });
         // An exported fn's numeric WIT parameters, when its arity matches. The

@@ -20,6 +20,22 @@ const CASES: &[(&str, &str)] = &[
     ("(let [^long x (identity 5.5)] [(if true x 1) (do x) x])", "[5.5 5.5 5.5]"),
     ("(let [^long x (identity 5.5) y (if true x 1)] [x y])", "[5.5 5.5]"),
     ("(let [^long x (identity 5.5)] ((fn ^double [] x)))", "5.5"),
+    ("(let [^long x (identity 5.5) y (if true x 1)] [x y (+ y 1)])", "[5.5 5.5 6]"),
+    ("(let [^long x (identity 5.5) y (do x)] [x y (+ y 1)])", "[5.5 5.5 6]"),
+    ("(let [x (identity 5.5)] [x (+ ^long x 1) x])", "[5.5 6 5.5]"),
+    ("(let [^long x (identity 5.5)] [(+ ^double x 1) x])", "[6.5 5.5]"),
+    ("(let [^double x (identity 5)] [(quot x 2) (rem x 2) (mod x 2) (abs x)])", "[2.0 1.0 1 5.0]"),
+    ("(let [^long x (identity 5.5)] [(long x) (unchecked-long x) (byte x) (short x)])", "[5 5 5 5]"),
+    ("(let [^long x (identity 5.5) y (if true x 1.0)] [y (+ y 1)])", "[5.5 6.5]"),
+    ("(let [^long x (identity 1.0E30) events (atom [])] [(try (+ x 1 (do (swap! events conj :later) 1)) (catch :default e :cast-error)) @events])", "[:cast-error []]"),
+    ("(let [^long x (identity 1.0E30) events (atom [])] [(try (< x 1 (do (swap! events conj :later) 1)) (catch :default e :cast-error)) @events])", "[false [:later]]"),
+    ("(let [^double x (identity -0.0)] [x (+ x 0) (/ 1 x)])", "[-0.0 0.0 ##-Inf]"),
+    ("(let [^double x (identity ##NaN)] [(double? (+ x 1)) (= x x) (zero? x)])", "[true false false]"),
+    ("(let [y (loop [^long x (identity 5.5)] x)] [y (+ y 1)])", "[5.5 6.5]"),
+    ("(let [x 1] ^long x)", "1"),
+    ("(let [^long x (loop [i 0] (if (< i 1) (recur (inc i)) 5.5))] [x (+ x 1)])", "[5.5 6]"),
+    ("(let [^double x (identity 1)] (/ x (identity 0)))", "##Inf"),
+    ("(let [^long x (identity 1.0)] (try (/ x (identity 0.0)) (catch :default e :zero-error)))", ":zero-error"),
 ];
 
 fn observed(source: &str) -> String {
@@ -70,5 +86,42 @@ fn aot_preserves_local_hint_semantics() {
             .output().unwrap();
         assert!(output.status.success(), "{expression}: {}", String::from_utf8_lossy(&output.stderr));
         assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "1", "{expression}");
+    }
+}
+
+const DECLARATION_ERRORS: &[(&str, &str)] = &[
+    ("(let [^long x 1] (+ x 1))", "Can't type hint a local with a primitive initializer"),
+    ("(let [^double x 1.0] (+ x 1))", "Can't type hint a local with a primitive initializer"),
+    ("(let [x (double 1) ^long y x] y)", "Can't type hint a local with a primitive initializer"),
+    ("(let [x 1] ^double x)", "Can't type hint a primitive local with a different type"),
+    ("(loop [x 1.0 n 0] (if (zero? n) (recur (identity x) 1) (let [^long y x] y)))", "Can't type hint a local with a primitive initializer"),
+    ("(loop [x 1.0 n 0] (let [f (fn [] (let [^long y x] y))] (if (zero? n) (recur (identity x) 1) (f))))", "Can't type hint a local with a primitive initializer"),
+    ("(loop [x 1.0 n 0] (let [f (fn [] ^long x)] (if (zero? n) (recur (identity x) 1) (f))))", "Can't type hint a primitive local with a different type"),
+];
+
+#[test]
+fn hint_diagnostics_use_initial_source_types_before_loop_reanalysis() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        for (source, expected) in DECLARATION_ERRORS {
+            let error = session.eval(source).err().unwrap_or_else(|| panic!("accepted {source}"));
+            assert!(error.to_string().contains(expected), "{source}: {error}");
+        }
+    }
+}
+
+#[test]
+fn aot_rejects_invalid_local_hint_declarations() {
+    use std::process::Command;
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(root.path().join("invalid.wit"),
+        "package test:invalid-hints; world w { export check: func() -> u32; }").unwrap();
+    for (source, expected) in DECLARATION_ERRORS {
+        std::fs::write(root.path().join("invalid.sus"),
+            format!("(ns invalid) (def check (fn [] {source} 1))")).unwrap();
+        let output = Command::new(env!("CARGO_BIN_EXE_suss")).current_dir(root.path())
+            .args(["compile", "invalid.sus", "-w", "invalid.wit", "-o", "invalid.wasm", "--export", "check=invalid/check"])
+            .output().unwrap();
+        assert!(!output.status.success(), "accepted {source}");
+        assert!(String::from_utf8_lossy(&output.stderr).contains(expected), "{source}: {}", String::from_utf8_lossy(&output.stderr));
     }
 }

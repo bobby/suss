@@ -14,10 +14,11 @@
     "SUSS_BUILD_DIR": "original M11 worktree/target/suss"
   },
   "sha256": {
-    "oracle.clj": "d37d069d76984747ad153a29a1eb88df18068e38913863457ccff8e3bb78704a",
-    "oracle.log": "dd17286cdfcd972ad426d3049d9b2d95b3430c50afa65b177d9009f82910aafb",
     "baseline.log": "db70f426a7c31fd21dc9ccb0674313a72648398d81a3c101705c45d50550e0e6",
     "contexts-oracle.clj": "b3cb417b7d2ee8285d7559d5269e9e12ffbbd109b623af324a3052baed67d3c5",
-    "contexts-oracle.log": "d16352a08551e1ebc45dc35c2e6da500968f397b01228d8a714c4e650187b05a"
-  }
+    "contexts-oracle.log": "d16352a08551e1ebc45dc35c2e6da500968f397b01228d8a714c4e650187b05a",
+    "baseline-oracle.clj": "d37d069d76984747ad153a29a1eb88df18068e38913863457ccff8e3bb78704a",
+    "baseline-oracle.log": "dd17286cdfcd972ad426d3049d9b2d95b3430c50afa65b177d9009f82910aafb"
+  },
+  "oracle_relocation": "Original 15-row oracle contents are retained unchanged under baseline-oracle.*; oracle.clj now holds the expanded matrix."
 }

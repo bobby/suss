@@ -1,0 +1,4 @@
+"(let [y (loop [^long x (identity 5.5)] x)] [y (+ y 1)])" [:value [5.5 6.5]]
+"(loop [x 1.0 n 0] (let [f (fn [] (let [^long y x] y))] (if (zero? n) (recur (identity x) 1) (f))))" [:error "Syntax error compiling let* at (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-hints-loop-class-jvm.clj:2:1)." "Can't type hint a local with a primitive initializer"]
+"(loop [x 1.0 n 0] (let [f (fn [] ^long x)] (if (zero? n) (recur (identity x) 1) (f))))" [:error "Syntax error compiling at (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-hints-loop-class-jvm.clj:2:1)." "Can't type hint a primitive local with a different type"]
+"(let [^long x (identity 5.5)] (let [y (if true x (long 1))] [y (+ y 1)]))" [:value [5.5 6]]

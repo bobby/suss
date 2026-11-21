@@ -979,8 +979,8 @@ impl<'a> Lowerer<'a> {
                         message: "HIR arithmetic arity mismatch".into(),
                     });
                 }
-                if *operator == Arithmetic::Divide && arguments.len() > 1 {
-                    // Clojure inlines a nested left fold. A division error
+                if !coercing && arguments.len() > 1 {
+                    // Clojure inlines a nested left fold. An arithmetic error
                     // stops before evaluating a later source operand.
                     let mut result = operand!(&arguments[0]);
                     for (index, argument) in arguments[1..].iter().enumerate() {

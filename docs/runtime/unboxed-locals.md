@@ -79,6 +79,18 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   arithmetic and loops seeded from it stay unboxed beyond i31, and `recur`
   rebinds it. A WIT export's numeric parameters are treated as hinted
   ([WIT numbers](wit-numbers.md), "Primitive export parameters").
+- **Hinted locals.** A `^long` or `^double` let/loop local retains its
+  original Object value. Its hint supplies a numeric class at primitive uses:
+  `(let [^long x (identity 5.5)] [x (+ x 1)])` returns `[5.5 6]`.
+  Arithmetic, binary numeric comparisons/predicates, bitwise inline operations,
+  quot/rem/abs and numeric casts consume these hints; ordinary function calls
+  and equality retain the Object. Aliases and captures keep the same source
+  class. Nary comparisons are ordinary calls and ignore local hints. A use-site
+  hint overrides an Object local's declaration; a contradictory hint on a
+  genuine primitive local is an error. A hinted binding with a primitive
+  initializer is also an error, diagnosed before loop boxing/reanalysis.
+  Source classes and primitive expression kinds are independent of the
+  backend's raw storage inference.
 - **Core coercions.** `long`, `double`, `unchecked-long` and
   `unchecked-double` produce raw results. A raw long stays raw or widens to
   a double; a raw double narrows with Wasm's saturating conversion. Checked
@@ -147,8 +159,9 @@ operands, which throws "long overflow" exactly as the boxed path does.
 
 These parts of #337, #448 and #351 aren't done yet:
 
-- **Hinted `let` locals.** On the JVM, a hinted `let` local converts at each
-  primitive use: `(let [^long x (identity 5.5)] [x (+ x 1)])` is `[5.5 6]`.
+- **Other numeric inline functions.** `max`/`min` and `unchecked-inc`/
+  `unchecked-dec` still need their source inline local-hint treatment; fresh
+  JVM observations are retained in results/m12-local-hints/numeric-core-oracle.log.
 - **Additional typed call forms.** Variadic adapters, calls wider than the
   eight fixed entries, and async calls keep the ordinary interface. Primitive
   bodies themselves exist for all source-hinted methods. A live-var guard's

@@ -1,3 +1,33 @@
+## Primitive local hint conversion evidence (2026-11-21)
+
+Fresh JVM1.12.6 verifies31 value rows and seven compile-time diagnostic rows in
+results/m12-local-hints/oracle.clj. All31 values execute in Runtime, Macro and
+actual AOT. All seven diagnostics are rejected in both phases and actual AOT,
+including captured fn bodies before loop reanalysis. Eight focused targets pass45
+tests, zero failures or ignores, including the38-row division matrix and complete
+M11 record requests at the unchanged default budget. Generated long-sum and cast
+loops still pass their no-allocation/call checks. These are focused checks,
+not a full-workspace pass. The separate frozen926fde51 full workspace command
+continues in target/probe/m12-source/target/probe/m12-division-full-workspace.log.
+
+The source pass tracks primitive expression kinds separately from numeric Java
+classes. Hinted Object locals keep their values for reads, escapes and function
+arguments; inline numeric uses insert the existing checked casts. Initial
+validation preserves Clojure's diagnostic order before settled loop rewriting.
+Nary arithmetic keeps nested left-fold exceptions/effects. Nary comparison uses
+Object temporaries and does not consume local hints. Rewritten shared nodes
+retain both kind and type. One combined metered feature query avoids doubling
+full-tree scans; no fuel budget or ABI is raised.
+
+Commands use stable Rust, two jobs/threads, MemoryMax4G, m12-hints-target and the
+shared native cache. results/m12-local-hints retains exact source/CLI identities,
+all logs and the initial wrong-typed cast-node failure. The intermediate15-row
+pass is distinct from the final expanded source. The original failing15-row
+oracle is retained unchanged as baseline-oracle.*. Numeric-core JVM probes still
+show missing max/min and unchecked-inc/dec inline handling; cross-block box reuse
+and its allocation/performance evidence also remain required. No issue closure
+or promotion follows from the focused hint matrix alone.
+
 ## Primitive local hint oracle and negative control (2026-11-21)
 
 Fresh JVM Clojure1.12.6 passes15 source-string rows in
