@@ -7,6 +7,42 @@ use suss_reader::Symbol;
 use wasm_encoder::*;
 
 pub(super) const MODULE: &str = "suss.load";
+const SCOPE_SECTION: &str = "suss.aot-load-scope";
+
+/// The body requires its assembler's load binding. Add before the source
+/// identity is sealed, so that the execution requirement is integrity checked.
+pub(super) fn mark(mut wasm: Vec<u8>) -> Vec<u8> {
+    wasm.push(0);
+    CustomSection {
+        name: Cow::Borrowed(SCOPE_SECTION),
+        data: Cow::Borrowed(&[1]),
+    }
+    .encode(&mut wasm);
+    wasm
+}
+
+fn requires_load(wasm: &[u8]) -> Result<bool, Diagnostic> {
+    let error = |message| Diagnostic {
+        span: 0..0,
+        message,
+    };
+    let mut marked = false;
+    for payload in wasmparser::Parser::new(0).parse_all(wasm) {
+        let payload =
+            payload.map_err(|failure| error(format!("Invalid AOT load artifact: {failure}")))?;
+        if let wasmparser::Payload::CustomSection(section) = payload
+            && section.name() == SCOPE_SECTION
+        {
+            if marked || section.data() != [1] {
+                return Err(error(
+                    "Invalid or duplicate AOT load scope marker".to_owned(),
+                ));
+            }
+            marked = true;
+        }
+    }
+    Ok(marked)
+}
 
 pub(super) struct Plan {
     pub names: Vec<String>,
@@ -19,9 +55,10 @@ impl Plan {
     /// They retain their own frames and are excluded from the shared load.
     pub fn new(fragments: &[PreparedFragment], schema_count: usize) -> Result<Self, Diagnostic> {
         let source_count = fragments.len() - schema_count;
-        let ordered = fragments
-            .iter()
-            .any(|fragment| fragment.environment.ordered_namespace_initialization);
+        let mut ordered = false;
+        for fragment in fragments {
+            ordered |= requires_load(&fragment.wasm)?;
+        }
         if !ordered {
             return Ok(Self {
                 names: (0..fragments.len())
@@ -177,6 +214,23 @@ mod tests {
     use super::*;
     use crate::portable_session::{RuntimeNumber, runtime_number};
     use wasmtime::{AsContextMut, Config, Engine, Instance, Linker, Module, Rooted, Store, Val};
+
+    #[test]
+    fn scope_marker_is_versioned_and_unique() {
+        let plain = wasm_encoder::Module::new().finish();
+        assert!(!requires_load(&plain).unwrap());
+        let marked = mark(plain.clone());
+        assert!(requires_load(&marked).unwrap());
+        assert!(requires_load(&mark(marked)).is_err());
+        let mut unknown = plain;
+        unknown.push(0);
+        CustomSection {
+            name: Cow::Borrowed(SCOPE_SECTION),
+            data: Cow::Borrowed(&[2]),
+        }
+        .encode(&mut unknown);
+        assert!(requires_load(&unknown).is_err());
+    }
 
     #[test]
     fn failed_ordered_load_restores_namespace_and_retains_only_prior_effects() {

@@ -17,6 +17,12 @@ const APP: &str = r#"(ns app)
 (defn maps [n] (get (zipmap (range n) (range 100 (+ 100 n))) (dec n) -1))
 (defn helper [x] (* 2 x))
 (defn linked [n] (+ (helper n) (helper (inc n))))
+(def loaded-ns (str *ns*))
+(ns other)
+(def loaded-ns (str *ns*))
+(ns app)
+(defn namespaces [n]
+  (if (and (= loaded-ns "app") (= other/loaded-ns "other") (= (str *ns*) "suss.core")) n -99))
 "#;
 const CASES: &[&str] = &[
     "arith",
@@ -28,6 +34,7 @@ const CASES: &[&str] = &[
     "errors",
     "maps",
     "linked",
+    "namespaces",
 ];
 
 fn binaryen_installed() -> bool {
@@ -102,6 +109,9 @@ fn optimized_components_match_unoptimized_ones() {
             };
             let plain = run("plain.wasm");
             assert!(plain.0, "{name} {n} failed unoptimized");
+            if *name == "namespaces" {
+                assert_eq!(plain.1, n, "load and export namespaces must be preserved");
+            }
             assert_eq!(run("optimized.wasm"), plain, "{name} {n}");
         }
     }

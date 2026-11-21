@@ -307,6 +307,8 @@ pub struct Environment {
     /// AOT initializes every prepared Runtime fragment in order, aborting on
     /// failure. A later fragment can rely on an earlier namespace publication.
     /// Sessions leave this off: preparation does not imply execution there.
+    /// This policy is transient; published catalogs clear it and AOT artifacts
+    /// carry their own sealed load-scope requirement.
     pub(crate) ordered_namespace_initialization: bool,
     /// Analyzing the shipped core image itself, whose capture-free functions
     /// call each other directly (#360, #361). Only the bootstrap catalog sets

@@ -124,6 +124,12 @@ from `hir/namespaces.rs`, without a host import:
   Ordered AOT fragments instead read this cell and update the loader's shared
   binding. Prepared AOT source fragments must be initialized as an ordered batch
   through the AOT assemblers, which provide that scope.
+  This execution requirement is recorded in a versioned custom section covered
+  by the artifact's integrity hash. Assembly rejects malformed or duplicate
+  markers. Returned AOT and analyzer catalogs clear the transient preparation
+  policy: reusing either catalog with `prepare_fragment` or `compile_in` prepares
+  an independent frame, including recovery when the original AOT source never
+  ran. Catalog facts do not impose an execution scope on later inputs.
 - **Macros.** The macro host sets `*ns*`'s root in the macro store to the
   namespace being compiled before it calls a macro. It interns namespace objects
   once and caches them; `suss.core` and `user` are interned when the macro

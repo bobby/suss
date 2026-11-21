@@ -1,0 +1,11 @@
+Running as unit: run-p547568-i84408838.scope; invocation ID: ec6a4c522e1f4c308b16ef02ba56a3fe
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 0.78s
+     Running tests/compiled_optimize.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-target/debug/deps/compiled_optimize-295d75ba74344062)
+
+running 2 tests
+test optimize_rejects_command_components ... ok
+test optimized_components_match_unoptimized_ones ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 50.52s
+

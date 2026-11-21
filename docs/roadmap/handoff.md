@@ -1,3 +1,56 @@
+## AOT catalog reuse and scope markers (2026-11-21)
+
+Independent review of 8cb125a0 found one P2: the private ordered-loading flag
+escaped through public AOT and analyzer catalogs. Reusing either catalog for
+ordinary preparation could write root `*ns*` without owning a binding. The
+before-fix regression fails its root-identity check after a language throw
+(`target/probe/m11-catalog-reuse-before.log`). The 8cb125a0 full workspace run
+was canceled specifically for this fix (exit 143); its incomplete log is
+`target/probe/m11-binding-workspace.log`, not a passing baseline.
+
+The corrected producer seals a versioned `suss.aot-load-scope` marker into each
+ordered source artifact, clears transient policy from returned catalogs and
+analysis records, and has assembly validate all markers before initialization.
+Public `prepare_fragment` and `compile_in` now own independent frames when
+given either catalog. The current compiler identity is
+9d7af5ccdece62402636525462eb7dc6d2b31f03732610714cb50e1b2c0da02a.
+
+`m11-catalog-marker-final.log` records 2 passing unit cases (failed-load cleanup
+and malformed/duplicate marker rejection) plus the expanded public-catalog case.
+It executes both public preparation APIs against both catalogs, including a
+namespace whose original AOT batch never ran, exact payload, GC identity and
+frame cleanup. `m11-catalog-marker-cli-final.log` records 27 passes across
+aot_source_preparation, runtime_namespaces, compiled_aot_async_command,
+compiled_official_command and compiled_optimize. Together these cover 29 distinct
+focused cases, none failed or ignored. The public-catalog case is rerun in the
+CLI suite. All 358 Python tests and source/inventory checks pass again in
+`m11-catalog-marker-foundation.log`. Earlier 8cb125a0 boundary results identify their
+own source; they are not a final-head workspace pass.
+
+Actual optimized execution uses official Binaryen 133, installed only under
+`target/probe/m11-binaryen`. The release archive SHA256 is
+2dc9c7813f5375db93d96ead4b78222fcc3e2677bbb832297af4797782a37489,
+verified against the release metadata. Set `SUSS_WASM_OPT` to its absolute
+`binaryen-version_133/bin/wasm-opt` path (wasm-merge is beside it). The expanded
+optimization case checks source app/other namespaces and root `suss.core` at
+exports. The earlier optimization test run without the tool returned early;
+its reported pass never established optimized execution.
+
+The marker adds 23 data bytes per source fragment. Complete-component slopes
+are now 3,824.6 bytes/form in both scope fixtures; executable overhead remains
+96 bytes/form against the grouped control. Bounds remain 3,900 total and 128
+extra code bytes/form. Current and intermediate measurements, exact sources,
+compiler/executable/component digests, Binaryen receipts and negative controls
+remain under `results/m11-namespace-frames`. All logs above live in the root
+`target/probe`; `m11-frame-code-marker` retains the current CLI probe artifacts.
+
+For replacement broad verification use the isolated source/Cargo target below,
+`RUSTUP_TOOLCHAIN=stable`, two Cargo jobs, a 6GiB user scope and the configured
+Binaryen path, then `cargo test --workspace --locked -- --test-threads=2`.
+Log separately to `target/probe/m11-catalog-marker-workspace.log`. Inspect its
+actual process/terminal result before claiming a full pass. Re-review and
+passing final-head CI remain required before promotion; no merge is authorized.
+
 ## Shared AOT load binding probes (2026-11-21)
 
 The isolated source worktree is `target/probe/m11-binding-source`, with a

@@ -1,0 +1,64 @@
+Running as unit: run-p567336-i84451459.scope; invocation ID: 2ac8b6cfbfb244caa8adc3efee78a298
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 9.07s
+     Running tests/aot_source_preparation.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-target/debug/deps/aot_source_preparation-ee0e2def41547983)
+
+running 6 tests
+test ordered_namespace_initialization_keeps_scopes_and_dynamic_bindings ... ok
+test compiled_source_macro_executes_through_a_versioned_exported_interface has been running for over 60 seconds
+test compiled_source_macro_executes_through_a_versioned_exported_interface ... ok
+test source_macro_and_runtime_dependency_feed_the_same_component_pipeline ... ok
+test published_catalogs_prepare_independent_fragments_with_namespace_recovery has been running for over 60 seconds
+test published_catalogs_prepare_independent_fragments_with_namespace_recovery ... ok
+test source_preparation_deduplicates_diamond_dependencies_and_isolates_macro_state ... ok
+test source_preparation_defers_runtime_throw_until_component_instantiation ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 133.65s
+
+     Running tests/compiled_aot_async_command.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-target/debug/deps/compiled_aot_async_command-18fe59ba7a45fd15)
+
+running 2 tests
+test async_input_validation_precedes_guest_initializers ... ok
+test native_async_invocation_executes_compiled_macros_and_validates_inputs ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.60s
+
+     Running tests/compiled_official_command.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-target/debug/deps/compiled_official_command-b291494b7d545089)
+
+running 7 tests
+test invalid_official_command_shape_is_rejected_before_guest_initialization ... ok
+test main_compile_fuel_preserves_failed_output_and_executes_explicit_budget ... ok
+test explicit_exit_uses_u8_status_and_invalid_values_are_catchable_language_errors ... ok
+test main_receives_only_user_strings_in_order_and_uncaught_exception_fails ... ok
+test main_emits_official_async_result_and_normal_number_completion_succeeds ... ok
+test main_uses_compiled_macros_source_paths_and_preflights_selection_before_output ... ok
+test runtime_exit_capability_is_unavailable_to_compiled_macro_phase ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 31.98s
+
+     Running tests/compiled_optimize.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-target/debug/deps/compiled_optimize-295d75ba74344062)
+
+running 2 tests
+test optimize_rejects_command_components ... ok
+test optimized_components_match_unoptimized_ones ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 37.62s
+
+     Running tests/runtime_namespaces.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-target/debug/deps/runtime_namespaces-1021007877323199)
+
+running 10 tests
+test a_namespace_whose_dependency_failed_to_load_recovers ... ok
+test component_exports_see_the_root_namespace ... ok
+test core_names_added_before_the_first_resolution_resolve_to_core ... ok
+component bytes: plain 3218017/3294509, scoped 3222284/3298776; bytes/form: 3824/3824
+code growth: split 5500, grouped 3580; extra bytes per split form: 96
+test aot_namespace_frame_size_is_bounded_per_form ... ok
+test macros_see_the_namespace_being_compiled ... ok
+test namespace_functions_follow_clojure ... ok
+test ns_is_bound_while_loading_and_rebindable ... ok
+test runtime_resolution_agrees_with_syntax_quote ... ok
+test script_files_start_in_user ... ok
+test the_repl_starts_in_user_and_follows_ns_and_in_ns ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 22.11s
+

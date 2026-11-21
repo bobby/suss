@@ -71,12 +71,14 @@ pub(super) fn fragment(
         return;
     }
     let forms = PENDING.with(|p| p.borrow_mut().take()).unwrap_or_default();
+    let mut environment = environment.clone();
+    environment.ordered_namespace_initialization = false;
     let fragment = RecordedFragment {
         phase,
         origin: origin.cloned(),
         namespace_directive: namespace_directive.cloned(),
         forms,
-        environment: environment.clone(),
+        environment,
     };
     RECORDING.with(|r| {
         if let Some(fragments) = r.borrow_mut().as_mut() {

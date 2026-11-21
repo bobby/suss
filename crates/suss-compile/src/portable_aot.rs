@@ -450,6 +450,9 @@ pub(crate) fn compile_inputs_with_options(
 /// Prepare a complete source input and its Runtime dependencies without running
 /// any Runtime initializer. Only compiled Macro-phase code executes in the host.
 /// The returned catalogs are compiler facts, not reconstructed raw-Wasm metadata.
+/// Initialize the complete artifact batch through the AOT assemblers: its
+/// source fragments require the shared load scope. The catalogs themselves
+/// remain reusable by ordinary independent fragment preparation.
 pub fn prepare_source(
     source: &str,
     path: Option<PathBuf>,
@@ -692,6 +695,11 @@ fn prepare_inputs_with_hints(
             }
             fragments.push(input.fragment);
         }
+    }
+    // Catalogs remain reusable by ordinary incremental preparation. Assembly
+    // reads the sealed artifact markers, not a sticky catalog policy (#312).
+    for fragment in &mut fragments {
+        fragment.environment.ordered_namespace_initialization = false;
     }
     Ok(fragments)
 }

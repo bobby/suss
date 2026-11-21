@@ -1,5 +1,6 @@
 //! Source preparation shares the script pipeline without host Runtime execution.
 use std::sync::OnceLock;
+use std::path::Path;
 use suss_cli::portable_aot::prepare_source;
 use suss_compile::portable;
 use suss_reader::Symbol;
@@ -151,6 +152,51 @@ fn ordered_namespace_initialization_keeps_scopes_and_dynamic_bindings() {
     let output = run.call(&mut store, ()).unwrap().0;
     run.post_return(&mut store).unwrap();
     assert_eq!(output, "[first first/map second [dep/x dep/x first/filter] first first suss.core]");
+}
+
+#[test]
+fn published_catalogs_prepare_independent_fragments_with_namespace_recovery() {
+    use suss_compile::{portable_analyze::analyze_source, portable_session::{RuntimeNumber, runtime_number}, runtime_abi};
+    use wasmtime::{Instance as CoreInstance, Linker as CoreLinker, Module, Rooted, Val as CoreVal};
+    let source = "(ns catalog.app) (def kept 7)";
+    let prepared = prepare_source(source, None, &[]).unwrap();
+    let analysis = analyze_source(source, Path::new("catalog.sus"), &[], None, None).unwrap();
+    for environment in [prepared.last().unwrap().environment.clone(), analysis.last().unwrap().environment.clone()] {
+        // Neither catalog's AOT source has run. Ordinary preparation must
+        // publish the missing namespace and own its binding, including errors.
+        let fragment = portable::prepare_fragment("(throw 17)", &environment, portable::resolve::Phase::Runtime).unwrap();
+        let bindings = portable::core_bindings::compile_with_cells(portable::resolve::Phase::Runtime, &fragment.cells).unwrap();
+        let engine = engine();
+        let mut store = Store::new(&engine, ());
+        store.set_fuel(100_000_000).unwrap();
+        let runtime = CoreInstance::new(&mut store, &Module::new(&engine, runtime_abi::module()).unwrap(), &[]).unwrap();
+        let mut linker = CoreLinker::new(&engine);
+        linker.instance(&mut store, "suss.runtime", runtime).unwrap();
+        let bindings = linker.instantiate(&mut store, &Module::new(&engine, bindings.wasm).unwrap()).unwrap();
+        linker.instance(&mut store, "suss.bindings.runtime", bindings).unwrap();
+        let core = linker.instantiate(&mut store, &Module::new(&engine, &prepared[0].wasm).unwrap()).unwrap();
+        let mut result = [CoreVal::null_any_ref()];
+        core.get_func(&mut store, "eval").unwrap().call(&mut store, &[], &mut result).unwrap();
+        let global = environment.resolve(portable::resolve::Phase::Runtime,
+            &Symbol::namespaced("suss.core", "*ns*"), 0..0).unwrap().global().clone();
+        let cell = bindings.get_global(&mut store, &global.import_name()).unwrap().get(&mut store);
+        let get = runtime.get_func(&mut store, "binding-get").unwrap();
+        get.call(&mut store, &[cell], &mut result).unwrap();
+        let before = result[0];
+        let compiled = portable::compile_in("(throw 17)", &environment, portable::resolve::Phase::Runtime).unwrap();
+        for wasm in [fragment.wasm, compiled] {
+            let instance = linker.instantiate(&mut store, &Module::new(&engine, wasm).unwrap()).unwrap();
+            assert!(instance.get_func(&mut store, "eval").unwrap().call(&mut store, &[], &mut result).is_err());
+            let exception = store.as_context_mut().take_pending_exception().expect("language throw");
+            let fields = exception.fields(&mut store).unwrap().collect::<Vec<_>>();
+            assert_eq!(runtime_number(&mut store, &fields[0]).unwrap(), Some(RuntimeNumber::Long(17)), "catalog cannot leak AOT execution policy");
+            store.gc(None).unwrap();
+            get.call(&mut store, &[cell], &mut result).unwrap();
+            assert!(Rooted::ref_eq(&store, before.unwrap_anyref().unwrap(), result[0].unwrap_anyref().unwrap()).unwrap());
+            runtime.get_func(&mut store, "dynamic-save").unwrap().call(&mut store, &[], &mut result).unwrap();
+            assert!(result[0].unwrap_anyref().is_none());
+        }
+    }
 }
 
 #[test]
