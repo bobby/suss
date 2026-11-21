@@ -70,3 +70,28 @@ raw capture. This is one test with ten unrelated harness tests filtered, not
 proof that every upstream assertion passes. All361 Python checks and the
 vendored source lock also pass. Neither the JVM reference nor the reviewed
 known-failure JSON is changed to obtain these results.
+
+## Loop source-kind review correction
+
+Independent review of354cbfd4 found one P2: a loop's primitive initializer was
+used to select IEEE division even when an Object-valued recur boxes that local.
+The frozen before CLI returns ##Inf instead of the JVM's Divide by zero error;
+its executable identity and the actual negative output remain in loop-fix.json
+and before-loop.log. A later loop initializer is also reanalyzed when an earlier
+local becomes boxed, as the fresh loop-initializers-jvm.log confirms.
+
+The correction annotates source division after HIR analysis. It settles loop
+source kinds against recur, then visits initializers, dependent aliases and
+captured bodies under those settled facts. Primitive-compatible loops remain
+primitive. Presence and rewrite memoization retain sharing; expression IDs stay
+alive while shallow copies are made. Source inference and backend representation
+remain separate, and all work is metered.
+
+loop-oracle.clj verifies38 JVM1.12.6 rows, all executed in Runtime, Macro and
+actual AOT. loop-focused.log passes the same41 focused tests with no failures
+or ignores. Java-free two-build reproduction and four bootstrap tests pass,
+both actual Binaryen133 optimized-component tests pass, all361 Python checks
+and 508-file source/provenance checks pass. The reviewed suite baseline still
+compares unchanged on the corrected source; raw capture identity is retained.
+These are focused gates, not a terminal full-workspace pass. Re-review and
+passing exact final-head CI remain required.

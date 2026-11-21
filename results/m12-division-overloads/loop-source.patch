@@ -1,0 +1,381 @@
+diff --git c/crates/suss-cli/tests/clojure_division_overloads.rs w/crates/suss-cli/tests/clojure_division_overloads.rs
+index 0adb1e26..df2cf3cb 100644
+--- c/crates/suss-cli/tests/clojure_division_overloads.rs
++++ w/crates/suss-cli/tests/clojure_division_overloads.rs
+@@ -36,6 +36,16 @@ const CASES: &[(&str, &str)] = &[
+     ("(let [events (atom [])] [(try (/ (do (swap! events conj :a) (identity 1.0)) (do (swap! events conj :b) (identity 0.0))) (catch :default e :division-error)) @events])", "[:division-error [:a :b]]"),
+     ("(let [events (atom [])] [(try (/ (do (swap! events conj :a) 1) (do (swap! events conj :b) 0) (do (swap! events conj :c) 1.0)) (catch :default e :division-error)) @events])", "[:division-error [:a :b]]"),
+     ("(do (def active-div (fn [x y] (/ x y))) (let [old active-div] (def active-div (fn [x y] (/ (double x) y))) [(try (old 1.0 0.0) (catch :default e :division-error)) (active-div 1.0 0.0)]))", "[:division-error ##Inf]"),
++    ("(loop [x 1.0 n 0] (if (zero? n) (recur (identity x) 1) (/ x (identity 0.0))))", "[:division-error \"Divide by zero\"]"),
++    ("(loop [x 1.0 n 0] (if (zero? n) (recur 1 (inc n)) (/ x (identity 0.0))))", "[:division-error \"Divide by zero\"]"),
++    ("(loop [x 1.0 n 0] (if (zero? n) (/ x (identity 0.0)) (recur 1 (inc n))))", "[:division-error \"Divide by zero\"]"),
++    ("(loop [x 1.0 n 0] (let [alias x] (if (zero? n) (recur (identity x) 1) (/ alias (identity 0.0)))))", "[:division-error \"Divide by zero\"]"),
++    ("(loop [x 1.0 n 0] (let [f (fn [y] (/ x y))] (if (zero? n) (recur (identity x) 1) (f 0.0))))", "[:division-error \"Divide by zero\"]"),
++    ("(loop [x 1.0 n 0] (if (zero? n) (recur (identity x) 1) (loop [alias x] (/ alias (identity 0.0)))))", "[:division-error \"Divide by zero\"]"),
++    ("(loop [x 1.0 n 0] (if (zero? n) (recur 2.0 1) (/ x (identity 0.0))))", "##Inf"),
++    ("(loop [x (float 1.0) n 0] (if (zero? n) (recur (float 2.0) 1) (/ x (identity 0.0))))", "##Inf"),
++    ("(loop [x 1.0 y (/ x (identity 0.0)) n 0] (if (zero? n) (recur (identity x) y 1) y))", "[:division-error \"Divide by zero\"]"),
++    ("(loop [x 1.0 y (/ x (identity 0.0)) n 0] (if (zero? n) (recur 2.0 y 1) y))", "##Inf"),
+ ];
+ 
+ fn observed(source: &str) -> String {
+diff --git c/crates/suss-compile/src/portable/hir.rs w/crates/suss-compile/src/portable/hir.rs
+index 3e2a6d68..e17beb1b 100644
+--- c/crates/suss-compile/src/portable/hir.rs
++++ w/crates/suss-compile/src/portable/hir.rs
+@@ -11,6 +11,7 @@ mod cases;
+ mod collections;
+ mod comparisons;
+ mod controls;
++mod division_overloads;
+ mod dynamic;
+ mod namespaces;
+ mod exceptions;
+@@ -1174,7 +1175,6 @@ struct Analyzer<'a> {
+     catch_aliases: Vec<(Form, std::sync::Arc<LocalBinding>)>,
+     target: Option<(LoopId, usize)>,
+     method_recurrence: Vec<(LoopId, bool)>,
+-    source_numeric: HashMap<BindingId, primitive_returns::Primitive>,
+ }
+ impl Analyzer<'_> {
+     fn capture_source_namespace(&mut self) -> std::sync::Arc<SourceNamespace> {
+@@ -2917,9 +2917,6 @@ impl Analyzer<'_> {
+             let read = self.local(form, current);
+             let value = self.nominal(form, cast, vec![read]);
+             let binding = self.fresh_binding(form, value);
+-            self.source_numeric.insert(binding.id, if cast == Nominal::LongCast {
+-                primitive_returns::Primitive::Long
+-            } else { primitive_returns::Primitive::Double });
+             if let Some(declared) = declared {
+                 source_primitives.insert(binding.id, if declared == Nominal::LongCast {
+                     primitive_returns::Primitive::Long
+@@ -4006,9 +4003,6 @@ impl Analyzer<'_> {
+                     }
+                     source_bindings.push(self.locals[&name.name].clone());
+                     if alias.is_none() {
+-                        let kind = primitive_returns::kind(&value, &mut self.source_numeric,
+-                            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
+-                        self.source_numeric.insert(id, kind);
+                         bindings.push(Binding {
+                             id,
+                             name: name.name.clone(),
+@@ -4170,21 +4164,6 @@ impl Analyzer<'_> {
+                         arguments: arguments.clone().into(),
+                     }));
+                 let types = arguments.iter().map(|arg| arg.ty).collect::<Vec<_>>();
+-                let mut division_primitives = Vec::new();
+-                if operator == Arithmetic::Divide && arguments.len() > 1 && !self.coercing_operands() {
+-                    use primitive_returns::Primitive::{Double, Float, Boxed};
+-                    let mut kinds = Vec::with_capacity(arguments.len());
+-                    for argument in &arguments {
+-                        kinds.push(primitive_returns::kind(argument, &mut self.source_numeric,
+-                            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?);
+-                    }
+-                    let mut previous = kinds[0];
+-                    for kind in &kinds[1..] {
+-                        let primitive = matches!(previous, Double | Float) || matches!(kind, Double | Float);
+-                        division_primitives.push(primitive);
+-                        previous = if primitive { Double } else { Boxed };
+-                    }
+-                }
+                 let ty = arithmetic_type(operator, &types, self.coercing_operands()).ok_or_else(|| {
+                     let operand = arguments
+                         .iter()
+@@ -4200,7 +4179,7 @@ impl Analyzer<'_> {
+                         operator,
+                         arguments,
+                         coercing: self.coercing_operands(),
+-                        division_primitives,
++                        division_primitives: vec![],
+                     },
+                     ty,
+                 )
+@@ -4433,7 +4412,6 @@ pub(crate) fn prepare_with_origin(
+         catch_aliases: Vec::new(),
+         target: None,
+         method_recurrence: Vec::new(),
+-        source_numeric: HashMap::new(),
+     };
+     // The frame's own forms take the fragment's extent, not the source's, so
+     // a fragment's IR and cache key do not change with the rest of its file.
+@@ -4441,7 +4419,10 @@ pub(crate) fn prepare_with_origin(
+         (Some(first), Some(last)) => first.span.start..last.span.end,
+         _ => span.clone(),
+     };
+-    let hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
++    let mut hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
++    let source_span = hir.span.clone();
++    division_overloads::annotate(&mut hir,
++        &mut |work| analyzer.expander.charge_expansion_work(work, source_span.clone()))?;
+     if let Expression::Do(items) = &*hir.kind {
+         super::analysis_record::analyzed_forms(origin, items);
+     }
+diff --git c/crates/suss-compile/src/portable/hir/division_overloads.rs w/crates/suss-compile/src/portable/hir/division_overloads.rs
+new file mode 100644
+index 00000000..eb81f21c
+--- /dev/null
++++ w/crates/suss-compile/src/portable/hir/division_overloads.rs
+@@ -0,0 +1,173 @@
++//! Select numeric overloads after lexical and loop source kinds settle.
++//! Physical raw/boxed storage inference is a later, independent operation.
++use super::*;
++use primitive_returns::Primitive;
++use std::sync::Arc;
++
++pub(super) fn annotate(
++    hir: &mut Hir,
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++) -> Result<(), Diagnostic> {
++    // Keep original expression addresses alive while the memoized rewrite
++    // makes shallow copies. Analyzer BindingIds are unique within this HIR,
++    // so every shared expression has one settled lexical source context.
++    let original = hir.clone();
++    let result = Pass { needed: HashMap::new(), rewritten: HashMap::new(), meter }
++        .walk(hir, &mut HashMap::new());
++    drop(original);
++    result
++}
++
++struct Pass<'a> {
++    needed: HashMap<usize, bool>,
++    rewritten: HashMap<usize, Arc<Expression>>,
++    meter: &'a mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++}
++
++impl Pass<'_> {
++    fn any<'a>(&mut self, children: impl IntoIterator<Item = &'a Hir>) -> Result<bool, Diagnostic> {
++        for child in children {
++            if self.has_division(child)? { return Ok(true); }
++        }
++        Ok(false)
++    }
++
++    fn has_division(&mut self, hir: &Hir) -> Result<bool, Diagnostic> {
++        (self.meter)(1)?;
++        let key = Arc::as_ptr(&hir.kind) as usize;
++        if let Some(needed) = self.needed.get(&key) { return Ok(*needed); }
++        let needed = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
++            use Expression::*;
++            match &*hir.kind {
++                Arithmetic { operator: super::Arithmetic::Divide, coercing: false, .. } => Ok(true),
++                Arithmetic { arguments, .. } | Bitwise { arguments, .. }
++                | Comparison { arguments, .. } | Array { arguments, .. }
++                | Nominal { arguments, .. } | Recur { arguments, .. } | Do(arguments) => self.any(arguments),
++                Let { bindings, body } | Loop { bindings, body, .. } =>
++                    self.any(bindings.iter().map(|binding| &binding.value).chain(std::iter::once(body.as_ref()))),
++                Function { body, .. } | Future { body, .. } => self.has_division(body),
++                GeneralFunction { methods, .. } => self.any(methods.iter().map(|method| method.body.as_ref())),
++                DynamicScope { bindings, body } | AsyncDynamicScope { bindings, body } =>
++                    self.any(bindings.iter().map(|(_, value)| value).chain(std::iter::once(body.as_ref()))),
++                AsyncTry { body, handler, cleanup, .. } => self.any(std::iter::once(body.as_ref())
++                    .chain(handler.iter().map(Box::as_ref)).chain(cleanup.iter().map(Box::as_ref))),
++                Try { regions } => self.any(regions.iter().map(Box::as_ref)),
++                If { condition, consequent, alternative } => self.any([condition.as_ref(), consequent, alternative]),
++                Call { callee, arguments } => self.any(std::iter::once(callee.as_ref()).chain(arguments)),
++                Definition { initializer, .. } => self.any(initializer.iter().map(Box::as_ref)),
++                Assign { value, .. } | Throw(value) | NilTest(value) | Await { value } => self.has_division(value),
++                Literal(_) | Local(_) | Global(_) | GlobalOrFallback { .. } | GlobalCell(_) => Ok(false),
++            }
++        })?;
++        self.needed.insert(key, needed);
++        Ok(needed)
++    }
++
++    fn walk(&mut self, hir: &mut Hir, facts: &mut HashMap<BindingId, Primitive>) -> Result<(), Diagnostic> {
++        (self.meter)(1)?;
++        if !self.has_division(hir)? { return Ok(()); }
++        let key = Arc::as_ptr(&hir.kind) as usize;
++        if let Some(rewritten) = self.rewritten.get(&key) {
++            hir.kind = rewritten.clone();
++            return Ok(());
++        }
++        stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
++            use Expression::*;
++            match hir.kind_mut() {
++                Let { bindings, body } => {
++                    let mut previous = Vec::with_capacity(bindings.len());
++                    for binding in bindings {
++                        self.walk(&mut binding.value, facts)?;
++                        let kind = primitive_returns::kind(&binding.value, facts, self.meter)?;
++                        previous.push((binding.id, facts.insert(binding.id, kind)));
++                    }
++                    let result = self.walk(body, facts);
++                    restore(facts, previous);
++                    result?;
++                }
++                Loop { target, bindings, body } => {
++                    // Settle recur inputs before visiting even the later
++                    // initializers: Clojure reanalyzes those when boxing an
++                    // earlier loop local. Aliases and closures then see the
++                    // same final source kind as direct reads of the local.
++                    let kinds = primitive_returns::loop_kinds(*target, bindings, body, facts, self.meter)?;
++                    let mut previous = Vec::with_capacity(bindings.len());
++                    for (binding, kind) in bindings.iter_mut().zip(kinds) {
++                        self.walk(&mut binding.value, facts)?;
++                        previous.push((binding.id, facts.insert(binding.id, kind)));
++                    }
++                    let result = self.walk(body, facts);
++                    restore(facts, previous);
++                    result?;
++                }
++                Function { parameters, body, .. } => {
++                    let previous = parameters.iter().map(|parameter|
++                        (parameter.id, facts.insert(parameter.id, Primitive::Boxed))).collect();
++                    let result = self.walk(body, facts);
++                    restore(facts, previous);
++                    result?;
++                }
++                GeneralFunction { methods, .. } => {
++                    for method in methods {
++                        let previous = method.parameters.iter().map(|parameter|
++                            (parameter.id, facts.insert(parameter.id, Primitive::Boxed))).collect();
++                        let result = self.walk(&mut method.body, facts);
++                        restore(facts, previous);
++                        result?;
++                    }
++                }
++                Arithmetic { operator, arguments, coercing, division_primitives } => {
++                    for argument in arguments.iter_mut() { self.walk(argument, facts)?; }
++                    division_primitives.clear();
++                    if *operator == super::Arithmetic::Divide && !*coercing && arguments.len() > 1 {
++                        use Primitive::{Boxed, Double, Float};
++                        let mut previous = primitive_returns::kind(&arguments[0], facts, self.meter)?;
++                        for argument in &arguments[1..] {
++                            let kind = primitive_returns::kind(argument, facts, self.meter)?;
++                            let primitive = matches!(previous, Double | Float) || matches!(kind, Double | Float);
++                            division_primitives.push(primitive);
++                            previous = if primitive { Double } else { Boxed };
++                        }
++                    }
++                }
++                Bitwise { arguments, .. } | Comparison { arguments, .. } | Array { arguments, .. }
++                | Nominal { arguments, .. } | Recur { arguments, .. } | Do(arguments) => {
++                    for argument in arguments { self.walk(argument, facts)?; }
++                }
++                DynamicScope { bindings, body } | AsyncDynamicScope { bindings, body } => {
++                    for (_, value) in bindings { self.walk(value, facts)?; }
++                    self.walk(body, facts)?;
++                }
++                AsyncTry { body, handler, cleanup, .. } => {
++                    self.walk(body, facts)?;
++                    for region in handler.iter_mut().chain(cleanup) { self.walk(region, facts)?; }
++                }
++                Try { regions } => { for region in regions { self.walk(region, facts)?; } }
++                If { condition, consequent, alternative } => {
++                    self.walk(condition, facts)?;
++                    self.walk(consequent, facts)?;
++                    self.walk(alternative, facts)?;
++                }
++                Call { callee, arguments } => {
++                    self.walk(callee, facts)?;
++                    for argument in arguments { self.walk(argument, facts)?; }
++                }
++                Definition { initializer, .. } => {
++                    if let Some(value) = initializer { self.walk(value, facts)?; }
++                }
++                Assign { value, .. } | Throw(value) | NilTest(value) | Await { value }
++                | Future { body: value, .. } => self.walk(value, facts)?,
++                Literal(_) | Local(_) | Global(_) | GlobalOrFallback { .. } | GlobalCell(_) => {}
++            }
++            Ok(())
++        })?;
++        self.rewritten.insert(key, hir.kind.clone());
++        Ok(())
++    }
++}
++
++fn restore(facts: &mut HashMap<BindingId, Primitive>, previous: Vec<(BindingId, Option<Primitive>)>) {
++    for (id, old) in previous.into_iter().rev() {
++        match old { Some(kind) => { facts.insert(id, kind); }, None => { facts.remove(&id); } }
++    }
++}
+diff --git c/crates/suss-compile/src/portable/hir/primitive_returns.rs w/crates/suss-compile/src/portable/hir/primitive_returns.rs
+index 7cb68ab2..d3465c19 100644
+--- c/crates/suss-compile/src/portable/hir/primitive_returns.rs
++++ w/crates/suss-compile/src/portable/hir/primitive_returns.rs
+@@ -130,33 +130,8 @@ fn infer(
+                 }
+                 result?
+             }
+-            Expression::Loop { target, bindings: locals, body } => {
+-                let mut previous = Vec::with_capacity(locals.len());
+-                let mut kinds = Vec::with_capacity(locals.len());
+-                for binding in locals {
+-                    // Clojure widens int/float loop initializers, while byte
+-                    // and short retain their distinct primitive source kind.
+-                    let kind = match infer(&binding.value, bindings, meter, loops)? {
+-                        Int => Long, Float => Double, kind => kind,
+-                    };
+-                    kinds.push(kind);
+-                    previous.push((binding.id, bindings.insert(binding.id, kind)));
+-                }
+-                let result = loop {
+-                    for (binding, kind) in locals.iter().zip(&kinds) { bindings.insert(binding.id, *kind); }
+-                    loops.push(LoopInputs { target: *target, kinds: kinds.clone() });
+-                    let result = infer(body, bindings, meter, loops);
+-                    let next = loops.pop().expect("source loop inference").kinds;
+-                    if result.is_err() || next == kinds { break result; }
+-                    // Each binding can only lose its primitive kind once.
+-                    // Revisit uses after a mixed recur makes a local boxed.
+-                    kinds = next;
+-                };
+-                for (id, old) in previous.into_iter().rev() {
+-                    match old { Some(kind) => { bindings.insert(id, kind); }, None => { bindings.remove(&id); } }
+-                }
+-                result?
+-            }
++            Expression::Loop { target, bindings: locals, body } =>
++                loop_analysis(*target, locals, body, bindings, meter, loops)?.0,
+             Expression::If { consequent, alternative, .. } => {
+                 let a = infer(consequent, bindings, meter, loops)?;
+                 let b = infer(alternative, bindings, meter, loops)?;
+@@ -325,3 +300,49 @@ fn numeric(name: &str, kinds: &[Primitive]) -> Primitive {
+     if kinds.iter().any(|kind| kind.floating()) { return Double; }
+     if all_numeric && name != "/" { Long } else { Boxed }
+ }
++
++/// Loop source types settle before any use, including later initializers.
++/// Clojure reanalyzes a loop when a mismatched recur boxes an earlier local.
++/// Each local can lose its primitive source type once, so this terminates.
++pub(super) fn loop_kinds(
++    target: LoopId, locals: &[Binding], body: &Hir,
++    bindings: &mut HashMap<BindingId, Primitive>,
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++) -> Result<Vec<Primitive>, Diagnostic> {
++    Ok(loop_analysis(target, locals, body, bindings, meter, &mut Vec::new())?.1)
++}
++
++fn loop_analysis(
++    target: LoopId, locals: &[Binding], body: &Hir,
++    bindings: &mut HashMap<BindingId, Primitive>,
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++    loops: &mut Vec<LoopInputs>,
++) -> Result<(Primitive, Vec<Primitive>), Diagnostic> {
++    use Primitive::*;
++    let widen = |kind| match kind { Int => Long, Float => Double, kind => kind };
++    let mut previous = Vec::with_capacity(locals.len());
++    let mut kinds = Vec::with_capacity(locals.len());
++    for binding in locals {
++        let kind = widen(infer(&binding.value, bindings, meter, loops)?);
++        kinds.push(kind);
++        previous.push((binding.id, bindings.insert(binding.id, kind)));
++    }
++    let result = loop {
++        let before = kinds.clone();
++        // An earlier local's lost primitive type also affects the source
++        // type of any later initializer which reads it.
++        for (binding, kind) in locals.iter().zip(&mut kinds) {
++            let initializer = widen(infer(&binding.value, bindings, meter, loops)?);
++            if *kind != initializer { *kind = Boxed; }
++            bindings.insert(binding.id, *kind);
++        }
++        loops.push(LoopInputs { target, kinds: kinds.clone() });
++        let result = infer(body, bindings, meter, loops);
++        kinds = loops.pop().expect("source loop inference").kinds;
++        if result.is_err() || kinds == before { break result; }
++    };
++    for (id, old) in previous.into_iter().rev() {
++        match old { Some(kind) => { bindings.insert(id, kind); }, None => { bindings.remove(&id); } }
++    }
++    Ok((result?, kinds))
++}

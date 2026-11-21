@@ -1,3 +1,24 @@
+## Settled loop source kinds for division (2026-11-21)
+
+Independent review of354cbfd4 reproduced generic zero division incorrectly
+using a loop initializer's primitive kind after Object-valued recur. Fresh JVM
+observations also show later initializers reanalyzed when an earlier local is
+boxed. The correction uses a metered, memoized source pass after HIR analysis,
+settling loop kinds before initializers, aliases and captured bodies. It keeps
+primitive-compatible loop controls primitive. The original review negative and
+pre-fix executable identity remain in results/m12-division-overloads.
+
+The expanded loop oracle verifies38 JVM1.12.6 rows; all38 execute in Runtime,
+Macro and actual AOT. The seven focused targets still pass41 tests, zero failures
+or ignores, including complete default-budget record requests. Java-free
+bootstrap reproduction +4 execution tests, actual Binaryen133 optimized2,
+Python361, core import508 and bootstrap source checks pass on this correction.
+The complete vendored-suite known-failure comparison passes unchanged (one test,
+ten unrelated harness tests filtered); no full compatibility claim. Source patch,
+all logs, exact executable and raw-suite capture identities are retained in
+loop-fix.json. Re-review and exact final-head CI remain required; no full local
+workspace pass is inferred from these results.
+
 ## Division suite comparison (2026-11-21)
 
 On b8be026d, `cargo +stable test --workspace --locked --test clojure_test_suite

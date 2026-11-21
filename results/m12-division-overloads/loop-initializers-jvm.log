@@ -1,0 +1,2 @@
+(loop [x 1.0 y (/ x (identity 0.0)) n 0] (if (zero? n) (recur (identity x) y 1) y)) [:division-error "Divide by zero"]
+(loop [x 1.0 y (/ x (identity 0.0)) n 0] (if (zero? n) (recur 2.0 y 1) y)) ##Inf

@@ -36,6 +36,16 @@ const CASES: &[(&str, &str)] = &[
     ("(let [events (atom [])] [(try (/ (do (swap! events conj :a) (identity 1.0)) (do (swap! events conj :b) (identity 0.0))) (catch :default e :division-error)) @events])", "[:division-error [:a :b]]"),
     ("(let [events (atom [])] [(try (/ (do (swap! events conj :a) 1) (do (swap! events conj :b) 0) (do (swap! events conj :c) 1.0)) (catch :default e :division-error)) @events])", "[:division-error [:a :b]]"),
     ("(do (def active-div (fn [x y] (/ x y))) (let [old active-div] (def active-div (fn [x y] (/ (double x) y))) [(try (old 1.0 0.0) (catch :default e :division-error)) (active-div 1.0 0.0)]))", "[:division-error ##Inf]"),
+    ("(loop [x 1.0 n 0] (if (zero? n) (recur (identity x) 1) (/ x (identity 0.0))))", "[:division-error \"Divide by zero\"]"),
+    ("(loop [x 1.0 n 0] (if (zero? n) (recur 1 (inc n)) (/ x (identity 0.0))))", "[:division-error \"Divide by zero\"]"),
+    ("(loop [x 1.0 n 0] (if (zero? n) (/ x (identity 0.0)) (recur 1 (inc n))))", "[:division-error \"Divide by zero\"]"),
+    ("(loop [x 1.0 n 0] (let [alias x] (if (zero? n) (recur (identity x) 1) (/ alias (identity 0.0)))))", "[:division-error \"Divide by zero\"]"),
+    ("(loop [x 1.0 n 0] (let [f (fn [y] (/ x y))] (if (zero? n) (recur (identity x) 1) (f 0.0))))", "[:division-error \"Divide by zero\"]"),
+    ("(loop [x 1.0 n 0] (if (zero? n) (recur (identity x) 1) (loop [alias x] (/ alias (identity 0.0)))))", "[:division-error \"Divide by zero\"]"),
+    ("(loop [x 1.0 n 0] (if (zero? n) (recur 2.0 1) (/ x (identity 0.0))))", "##Inf"),
+    ("(loop [x (float 1.0) n 0] (if (zero? n) (recur (float 2.0) 1) (/ x (identity 0.0))))", "##Inf"),
+    ("(loop [x 1.0 y (/ x (identity 0.0)) n 0] (if (zero? n) (recur (identity x) y 1) y))", "[:division-error \"Divide by zero\"]"),
+    ("(loop [x 1.0 y (/ x (identity 0.0)) n 0] (if (zero? n) (recur 2.0 y 1) y))", "##Inf"),
 ];
 
 fn observed(source: &str) -> String {
