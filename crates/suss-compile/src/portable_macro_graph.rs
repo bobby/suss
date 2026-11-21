@@ -1467,10 +1467,19 @@ impl<'a> AnalysisGraph<'a> {
             .collect::<Vec<_>>();
         let mut scratch = names.clone();
         sort_binding_names(&mut names, &mut scratch, &mut |work| self.charge(work))?;
-        let names = names.into_iter()
-            .map(|name| self.text(name))
-            .collect::<Result<Vec<_>>>()?;
-        let names = self.vector(&names)?;
+        // One owned string avoids a guest allocation for every name. Explicit
+        // UTF-16 boundaries preserve empty names and every delimiter verbatim.
+        let mut text = Vec::new();
+        let mut offsets = Vec::with_capacity(names.len().saturating_add(1));
+        for name in names {
+            self.charge(name.len().saturating_add(1))?;
+            offsets.push(self.number(text.len())?);
+            text.extend(name.encode_utf16());
+        }
+        offsets.push(self.number(text.len())?);
+        let text = self.scalar(Literal::String(text))?;
+        let offsets = self.vector(&offsets)?;
+        let names = self.vector(&[text, offsets])?;
         self.map(vec![
             ("name", name),
             ("requires", aliases),

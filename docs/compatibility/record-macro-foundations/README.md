@@ -212,8 +212,10 @@ This transport alone is not public `defrecord` acceptance.
 The compiled public record helper requests `:suss/compiler-catalog :record-bindings`.
 This projection carries the genuine caller snapshot and live namespace resolution
 views, each with name, aliases, refers, exclusions, and `:suss/binding-index` from
-actual phase-specific nonhidden identities. The index is a vector of strings sorted
-by UTF-16 comparison, searched by the compiled helper. It avoids constructing a
+actual phase-specific nonhidden identities. The index contains one string of names
+sorted by UTF-16 comparison and a vector of boundary offsets, searched by the compiled
+helper. Offsets preserve empty names, spaces and NUL without delimiter escaping.
+It avoids constructing a
 guest symbol hash set for the complete namespace on every invocation. Native index
 construction and comparison remain fuel metered. It carries actual protocol signatures,
 namespace/global indexes, resolved unqualified bindings, and the typed native Object

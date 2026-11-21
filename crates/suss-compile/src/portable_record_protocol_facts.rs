@@ -132,16 +132,17 @@ pub(crate) const SOURCE: &str = r####"
 
 (def ^:private namespace-binding?
   (fn [facts local]
-    ;; The private record projection transports actual membership as sorted
-    ;; strings. Building a guest hash set of every compiler binding costs more
+    ;; The private record projection packs sorted names into one UTF-16 string
+    ;; plus boundary offsets. Building a guest hash set of every binding costs more
     ;; than the record expansion. Full compiler &env retains its definition map.
     (let [index (get facts :suss/binding-index)]
       (if index
-        (let [target (name local)]
-          (loop [lo 0 hi (count index)]
+        (let [target (name local) text (nth index 0) offsets (nth index 1)]
+          (loop [lo 0 hi (dec (count offsets))]
             (if (< lo hi)
               (let [mid (quot (+ lo hi) 2)
-                    order (compare target (nth index mid))]
+                    candidate (suss.bootstrap/string-slice text (nth offsets mid) (nth offsets (inc mid)))
+                    order (compare target candidate)]
                 (if (zero? order) true
                   (if (< order 0) (recur lo mid) (recur (inc mid) hi))))
               false)))

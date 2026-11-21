@@ -81,7 +81,7 @@ fn compact_membership_uses_real_bindings_and_failed_staging_restores_mode() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
         macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
-        macros.define("(defmacro ^{:suss/compiler-catalog :record-bindings} membership [global] (let [view (:suss/catalog &env) facts (suss.internal.record-protocol-facts/resolve-record-compiler-facts &env [global])] (list 'quote [(:suss/projection &env) (contains? view :defs) (boolean (some (fn [x] (= x \"ordinary\")) (:suss/binding-index view))) (:protocols facts) (vector? (:suss/binding-index view))])))").unwrap();
+        macros.define("(defmacro ^{:suss/compiler-catalog :record-bindings} membership [global] (let [view (:suss/catalog &env) facts (suss.internal.record-protocol-facts/resolve-record-compiler-facts &env [global])] (list 'quote [(:suss/projection &env) (contains? view :defs) (contains? view :suss/binding-names) (:protocols facts) (and (string? (first (:suss/binding-index view))) (vector? (second (:suss/binding-index view))))])))").unwrap();
         session
             .eval_with_macros(
                 "(ns record.provider) (def ^{:name forged/Name} ordinary 17)",
@@ -107,13 +107,13 @@ fn compact_membership_uses_real_bindings_and_failed_staging_restores_mode() {
         );
         assert!(
             matches!(&parts[2].kind, Kind::Bool(false)),
-            "provider binding is not an own binding"
+            "compact view must not allocate the legacy symbol set"
         );
         let Kind::Set(protocols) = &parts[3].kind else {
             panic!("actual membership result")
         };
         assert_eq!(protocols.len(), 1);
-        assert!(matches!(&parts[4].kind, Kind::Bool(true)), "private membership index is a vector");
+        assert!(matches!(&parts[4].kind, Kind::Bool(true)), "private membership index contains packed names and offsets");
         assert!(
             matches!(&protocols[0].kind, Kind::Symbol(symbol) if symbol.namespace.as_deref() == Some("record.provider") && symbol.name == "ordinary")
         );

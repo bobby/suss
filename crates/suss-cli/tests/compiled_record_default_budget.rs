@@ -12,7 +12,7 @@ fn successful(output: Output) -> String {
 
 #[test]
 fn eval_and_script_records_fit_default_compilation_budget() {
-    let source = format!("{DEFINITIONS}(println {VALUE})");
+    let source = format!("{DEFINITIONS}{VALUE}");
     let root = tempfile::tempdir().unwrap();
     std::fs::write(root.path().join("records.sus"), &source).unwrap();
     for args in [vec!["-e", source.as_str()], vec!["records.sus"]] {

@@ -5,9 +5,9 @@
   "sources": [
     {
       "path": "crates/suss-compile/src/portable_record_protocol_facts.rs",
-      "sha256": "154a2588df77767c85d3b4031ea304adfea50239d9c1fa99a01198a0a1ff02c4",
+      "sha256": "c126ee977ebb9b1d0f46f12b36525bca462d1cf1072138bbe5f0ac167797c5d1",
       "compiled-sources": {
-        "SOURCE": "a1af0a425f2e7fa00f6387ab6080282098248fe08a27d73cd8711895e1b7758e"
+        "SOURCE": "f243dd48cc2b63cfad37d3aaa82412c6f482ddfc2ba78398517461740c924cd7"
       }
     },
     {

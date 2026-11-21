@@ -8,13 +8,20 @@ unattended 10,000,000 default fails before expansion. Raw logs remain in
 `target/probe/m11-default-record-before.log`.
 
 The private record catalog now represents actual namespace identities as a
-UTF-16-sorted string vector, with a metered native merge sort and compiled binary
+UTF-16-sorted packed string and boundary offsets, with a metered native merge sort and compiled binary
 search. Ordinary macro analysis and full compiler catalogs retain their schema.
 The helper still accepts legacy membership sets and full definition maps.
-Focused commands: `cargo +stable test -p suss-cli --locked --test
+The initial per-name string probe passes AOT execution but costs 2,821,708 and
+2,840,044 membership fuel, exceeding the 1,000,000 regression bound. Its eval
+fixture also incorrectly used unavailable `println`; the corrected test checks
+the CLI result. Preserve `m11-record-default-after.log` as that failed probe.
+Packing removes individual name string allocations and retains exact boundaries.
+The first Python run has 357 passes and one stale helper-provenance hash error;
+the corrected three-case provenance suite passes, with upstream pin/licenses
+unchanged. Focused commands: `cargo +stable test -p suss-cli --locked --test
 compiled_record_default_budget -- --test-threads=1 --nocapture`, then
-`compiled_record_protocol_projection` and `repl_default_budgets`. The first probe
-logs to `target/probe/m11-record-default-after.log`; inspect its result before
+`compiled_record_protocol_projection` and `repl_default_budgets`. The packed probe
+logs to `target/probe/m11-record-packed-focused.log`; inspect its result before
 claiming a pass. Tests cover real default-budget processes and bound consecutive
 record membership transport to less than 1,000,000 fuel each. Additional probes
 exercise UTF-16 ordering, delimiter names, phase and resolution behavior. No
@@ -27827,7 +27834,14 @@ Additional raw failures and current regression source: `docs/roadmap/evidence/m4
 
 Existing authenticated memo validation now checks the live method layout without requiring the original implementation identity. New receipt minting and write-domain checks still require the initial canonical implementation. Descriptor/key/table/schema and exact memo reference/bits checks remain. No replacement method is invoked during inspection.
 
-Focused commands: `cargo test -p suss-compile --lib --locked receipt_tests -- --test-threads=2`; `cargo test -p suss-cli --locked --test compiled_macro_cumulative_fuel -- --test-threads=2 --nocapture`; `cargo test -p suss-cli --locked --test compiled_macro_cross_invocation_identity_probe -- --test-threads=2`. Task target directory and two Cargo jobs used.
+The initial per-name string probe passes AOT execution but costs 2,821,708 and
+2,840,044 membership fuel, exceeding the 1,000,000 regression bound. Its eval
+fixture also incorrectly used unavailable `println`; the corrected test checks
+the CLI result. Preserve `m11-record-default-after.log` as that failed probe.
+Packing removes individual name string allocations and retains exact boundaries.
+The first Python run has 357 passes and one stale helper-provenance hash error;
+the corrected three-case provenance suite passes, with upstream pin/licenses
+unchanged. Focused commands: `cargo test -p suss-compile --lib --locked receipt_tests -- --test-threads=2`; `cargo test -p suss-cli --locked --test compiled_macro_cumulative_fuel -- --test-threads=2 --nocapture`; `cargo test -p suss-cli --locked --test compiled_macro_cross_invocation_identity_probe -- --test-threads=2`. Task target directory and two Cargo jobs used.
 
 Native receipts: 7 passed. Cumulative target: 9 passed, 1 retained cold-custom-hash identity failure. Warm-before replacement now passes both caller phases and both replacement variants; forgery, poison, fuel, interruption and malformed protocol recovery checks pass. Unchanged cross-invocation identity result: {'name': 'identity', 'command': ['cargo', 'test', '-p', 'suss-cli', '--locked', '--test', 'compiled_macro_cross_invocation_identity_probe', '--', '--test-threads=2'], 'exit': 0, 'seconds': 106.64803385734558} . Source hashes unchanged across focused execution.
 
