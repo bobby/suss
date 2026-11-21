@@ -1,3 +1,24 @@
+## Division source-overload regressions (2026-11-21)
+
+On main 50681542, fresh JVM Clojure1.12.6 passes all 23 division rows in
+results/m12-division-overloads/oracle.clj. The initial oracle's NaN/boxed-zero
+expectation failed and is retained; the corrected oracle explicitly propagates
+NaN before the zero check. The checked-in baseline command
+`cargo +stable test -p suss-cli --locked --test clojure_division_overloads -- --test-threads=2`
+fails both targets on generic-div 1.0 0.0: actual Runtime returns ##Inf and an
+actual AOT component observes the mismatch. The first Runtime failure precedes
+Macro execution, and AOT stops at its first export; do not claim the remaining
+Suss rows executed. Both phases and every AOT row remain required after the fix.
+
+Worktree target/probe/m12-source starts from the integrated main source, branch
+codex/m12-division-overloads. Use stable Rust, CARGO_BUILD_JOBS=2, MemoryMax4G,
+the original M11 workspace's target/probe/m11-print-after-target and target/suss
+native cache. Test/oracle logs remain under the worktree's target/probe; retained
+receipts and exact commands are in results/m12-division-overloads. The existing
+uncommitted hints/helper inputs in the user's old compiler/primitive-hints
+checkout are preserved independently in target/probe/m12-inputs. New source
+primitive overload selection must not depend on backend storage inference.
+
 ## Stack 495 rebase verification (2026-11-21)
 
 Rebase commands: `gh stack checkout 495`, `gh stack rebase`, then

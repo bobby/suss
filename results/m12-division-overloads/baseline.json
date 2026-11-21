@@ -1,0 +1,8 @@
+{
+  "baseline_commit": "50681542c126268da35a44435c5861595455b064",
+  "jvm_version": "1.12.6",
+  "oracle_rows": 23,
+  "baseline_targets_passed": 0,
+  "baseline_targets_failed": 2,
+  "test_source_sha256": "4ccd96e6ce7e26fada965cbdad81c3a3493e9a4d42cf39e9795cea0bf4f21319"
+}

@@ -1,0 +1,34 @@
+Running as unit: run-p2489735-i86357717.scope; invocation ID: f81da7da4f114c96bca0f8488b1fecb6
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 0.83s
+     Running tests/clojure_division_overloads.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-after-target/debug/deps/clojure_division_overloads-d7739722c627dad8)
+
+running 2 tests
+test runtime_and_macro_preserve_source_division_overloads ... FAILED
+test aot_wrappers_keep_the_inner_helpers_hinted_or_generic ... FAILED
+
+failures:
+
+---- runtime_and_macro_preserve_source_division_overloads stdout ----
+
+thread 'runtime_and_macro_preserve_source_division_overloads' (2489826) panicked at crates/suss-cli/tests/clojure_division_overloads.rs:51:13:
+assertion `left == right` failed: (generic-div 1.0 0.0)
+  left: "##Inf"
+ right: "[:division-error \"Divide by zero\"]"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- aot_wrappers_keep_the_inner_helpers_hinted_or_generic stdout ----
+
+thread 'aot_wrappers_keep_the_inner_helpers_hinted_or_generic' (2489825) panicked at crates/suss-cli/tests/clojure_division_overloads.rs:83:9:
+assertion `left == right` failed: (generic-div 1.0 0.0)
+  left: "0"
+ right: "1"
+
+
+failures:
+    aot_wrappers_keep_the_inner_helpers_hinted_or_generic
+    runtime_and_macro_preserve_source_division_overloads
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.62s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_division_overloads`
