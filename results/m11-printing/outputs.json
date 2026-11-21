@@ -1,0 +1,26 @@
+{
+  "format": "UTF-16 little endian, no BOM",
+  "rows": [
+    {
+      "roots": 80,
+      "utf16_units": 509474,
+      "before_sha256": "91111eaad5bd7a5b7a06a1b3682c21c179d371e8c8185ed2dcc96c10820a4c1d",
+      "after_sha256": "91111eaad5bd7a5b7a06a1b3682c21c179d371e8c8185ed2dcc96c10820a4c1d",
+      "equal": true,
+      "compressed": "output-80.utf16le.gz"
+    },
+    {
+      "roots": 160,
+      "utf16_units": 1026955,
+      "before_sha256": "28866f6ff8c3179e81be6bcdeaa70c72fb6c2800106e2a4923d35efae026a776",
+      "after_sha256": "28866f6ff8c3179e81be6bcdeaa70c72fb6c2800106e2a4923d35efae026a776",
+      "equal": true,
+      "compressed": "output-160.utf16le.gz"
+    }
+  ],
+  "harness_sha256": "c5dda975995d8bf24bd7a4223a8c6eb85584e07a5c47d2dfe8da6c4120149312",
+  "executables": {
+    "before": "7852d0d5fa876e482d14e142210df4a519ab1575b1813bd8d87d75fda89dc46b",
+    "after": "bb3aab7a192a9410f55be6b1c8c5ee7ebd26e9abfb60b901872ba6380d750536"
+  }
+}

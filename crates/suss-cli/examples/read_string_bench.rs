@@ -3,9 +3,10 @@
 //! `pr-str` of the same data for reference. Run in the profile being
 //! measured, for example
 //! `cargo run --release -p suss-cli --example read_string_bench -- 200 [--print]`.
+//! Add `--string` to scale one escaped string rather than many nested maps.
 use std::collections::BTreeMap;
 use std::time::Instant;
-use suss_cli::portable_session::{Session, SessionOptions};
+use suss_cli::portable_session::{runtime_number, Session, SessionOptions, SessionValue};
 use suss_reader::edn::{self, Value};
 use suss_reader::Symbol;
 
@@ -32,19 +33,24 @@ fn node(id: usize, depth: usize) -> Value {
 }
 
 /// The best of `runs` timings of evaluating `source`, in seconds.
-fn best(session: &mut Session, runs: usize, source: &str) -> f64 {
+fn best(session: &mut Session, runs: usize, source: &str) -> (f64, SessionValue) {
     (0..runs)
         .map(|_| {
             let start = Instant::now();
-            session.eval(source).unwrap_or_else(|error| panic!("{source}: {error:?}"));
-            start.elapsed().as_secs_f64()
+            let value = session.eval(source).unwrap_or_else(|error| panic!("{source}: {error:?}"));
+            (start.elapsed().as_secs_f64(), value)
         })
-        .fold(f64::INFINITY, f64::min)
+        .min_by(|a, b| a.0.total_cmp(&b.0)).expect("at least one sample")
 }
 
 fn main() {
     let roots: usize = std::env::args().nth(1).map_or(200, |n| n.parse().unwrap());
-    let document = Value::Vector((0..roots).map(|i| node(i, 3)).collect());
+    let single_string = std::env::args().any(|argument| argument == "--string");
+    let document = if single_string {
+        Value::String("abc\"\\\nλ🙂".repeat(roots * 128))
+    } else {
+        Value::Vector((0..roots).map(|i| node(i, 3)).collect())
+    };
     let text = edn::print(&document).unwrap();
     let units = text.encode_utf16().count() as f64;
     let mut session = Session::new_repl_with_options(SessionOptions {
@@ -55,18 +61,25 @@ fn main() {
     let literal = text.replace('\\', "\\\\").replace('"', "\\\"");
     session.eval(&format!("(def text \"{literal}\")")).unwrap();
     session.eval("(def readers {'suss/binding identity})").unwrap();
-    let baseline = best(&mut session, 5, "(count text)");
-    let code = best(&mut session, 3, "(count (binding [*data-readers* readers] (read-string text)))") - baseline;
-    let data = best(&mut session, 3, "(count (suss.core/read-edn-string {:readers readers} text))") - baseline;
-    // pr-str, for reference, only when asked: it grows faster than linearly.
-    let printed = if std::env::args().any(|argument| argument == "--print") {
+    let baseline = best(&mut session, 5, "(count text)").0;
+    let code = best(&mut session, 3, "(count (binding [*data-readers* readers] (read-string text)))").0 - baseline;
+    let data = best(&mut session, 3, "(count (suss.core/read-edn-string {:readers readers} text))").0 - baseline;
+    // Report the actual printed size, so scaling is measured against output.
+    let (printed, printed_units) = if std::env::args().any(|argument| argument == "--print") {
         session.eval("(def value (binding [*data-readers* readers] (read-string text)))").unwrap();
-        best(&mut session, 3, "(count (pr-str value))") - baseline
+        let (time, count) = best(&mut session, 3, "(count (pr-str value))");
+        let units = session.inspect(&count, |mut store, value| {
+            Ok(runtime_number(&mut store, &value)?.expect("printed unit count").as_f64())
+        }).unwrap();
+        println!("pr-str output: {units:.0} UTF-16 units");
+        (time - baseline, units)
     } else {
-        f64::NAN
+        (f64::NAN, f64::NAN)
     };
-    println!("{roots} roots, {:.3} M UTF-16 units ({:.2} MB)", units / 1e6, text.len() as f64 / 1e6);
+    let shape = if single_string { "string blocks" } else { "roots" };
+    println!("{roots} {shape}, {:.3} M UTF-16 units ({:.2} MB)", units / 1e6, text.len() as f64 / 1e6);
     for (label, time) in [("read-string", code), ("suss.edn/read-string", data), ("pr-str", printed)] {
-        println!("{label}: {time:.3} s, {:.3} M units/s", units / time / 1e6);
+        let work = if label == "pr-str" { printed_units } else { units };
+        println!("{label}: {time:.3} s, {:.3} M units/s", work / time / 1e6);
     }
 }

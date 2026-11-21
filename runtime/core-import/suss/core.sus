@@ -17,7 +17,7 @@
   counted? list? sequential? seqable? accumulating-seq-count empty-ordered-hash
   Reduced reduced reduced? ensure-reduced unreduced deref iterable? iter-reduce reduce
   pr-str* -indexOf -lastIndexOf equiv-sequential = hash-ordered-coll seq-reduce
-  array-reduce IndexedSeqIterator RSeq indexed? neg? linear-traversal-nth nth str_ type type->str MetaFn apply with-meta meta Symbol Keyword hash-symbol hash-keyword get -write)
+  array-reduce IndexedSeqIterator RSeq to-array indexed? neg? linear-traversal-nth nth str_ type type->str MetaFn apply with-meta meta Symbol Keyword hash-symbol hash-keyword get -write)
 
 
 ;; Original portable numeric-Date storage, not copied upstream source.
@@ -71,15 +71,23 @@
 ;; Original declarations for retained subvector mutual references.
 (declare Subvec build-subvec subvec seq-iter)
 
-;; Original GC-owned UTF-16 storage for the retained printer's string writes.
-;; This is not an implementation of Closure's general interop StringBuffer API.
-;; The writer retains its actual buffer result, not an atom or a host-side ID.
-(deftype BootstrapStringBuffer [^:mutable contents]
+;; Original printer-only GC-owned chunks. Each append copies only its incoming
+;; string; one final join allocates the complete UTF-16 result. Preserve the
+;; writer adapter's captured prefix across argument conversion and reentry.
+;; Conversion order follows append in the retained Apache-2.0 Closure adapter
+;; (docs/compatibility/string-buffer/adapter.sus); chunk storage is original Suss.
+(deftype BootstrapPrinterStringBuffer [^:mutable chunks]
   Object
   (append [this text]
-    (set! (.-contents this) (suss.bootstrap/concat-string contents text))
+    (let [old chunks text (suss.bootstrap/coerce-string text)]
+      (set! chunks (cons text old)))
     this)
-  (toString [_] contents))
+  (toString [_]
+    (let [ordered (loop [remaining chunks result nil]
+                    (if (suss.bootstrap/nil? remaining)
+                      result
+                      (recur (next remaining) (cons (first remaining) result))))]
+      (suss.bootstrap/join-strings (to-array ordered)))))
 
 ;; Mutual printer reference, uninitialized until the retained implementation loads.
 (declare pr-writer)
@@ -5670,13 +5678,27 @@
 
 (def ^:private quote-string
   (fn [s]
-    (loop [i 0 result "\""]
-      (if (< i (.-length s))
-        (let [unit (suss.bootstrap/string-slice s i (inc i))
-              escaped (get char-escapes unit)]
-          (recur (inc i)
-                 (suss.bootstrap/concat-string result (if escaped escaped unit))))
-        (suss.bootstrap/concat-string result "\"")))))
+    (let [buffer (BootstrapPrinterStringBuffer. nil)
+          length (.-length s)]
+      (.append buffer "\"")
+      (loop [i 0 start 0]
+        (if (< i length)
+          (let [unit (suss.bootstrap/string-slice s i (inc i))
+                escaped (get char-escapes unit)]
+            (if escaped
+              (do
+                (if (< start i)
+                  (.append buffer (suss.bootstrap/string-slice s start i))
+                  nil)
+                (.append buffer escaped)
+                (recur (inc i) (inc i)))
+              (recur (inc i) start)))
+          (do
+            (if (< start length)
+              (.append buffer (suss.bootstrap/string-slice s start length))
+              nil)
+            (.append buffer "\"")
+            (.toString buffer)))))))
 
 (def pr-sequential-writer
   (fn [writer print-one begin sep end opts coll]
@@ -5744,7 +5766,7 @@
   "Support so that collections can implement toString without
    loading all the printing machinery."
   (fn [^not-native obj]
-  (let [sb (BootstrapStringBuffer. "")
+  (let [sb (BootstrapPrinterStringBuffer. nil)
         writer (StringBufferWriter. sb)]
     (pr-writer obj writer nil)
     (-flush writer)
@@ -5752,7 +5774,7 @@
 
 (def ^:private pr-sb-with-opts
   (fn [objs opts]
-  (let [sb (BootstrapStringBuffer. "")
+  (let [sb (BootstrapPrinterStringBuffer. nil)
         writer (StringBufferWriter. sb)]
     (pr-seq-writer objs writer opts)
     (-flush writer)

@@ -1,0 +1,34 @@
+[
+  {
+    "commit": "53958035c9b8f92b89edf64edeb5b3c5ba809d14",
+    "path": "runtime/bootstrap/runtime.wasm",
+    "bytes": 2493556,
+    "code_bytes": 2315666,
+    "bodies": 3204,
+    "sha256": "c0c8a353596d0682adf9970be5b764c3d6a8b2a50c19f8bc53047a30148dfd89"
+  },
+  {
+    "commit": "53958035c9b8f92b89edf64edeb5b3c5ba809d14",
+    "path": "runtime/bootstrap/macro.wasm",
+    "bytes": 2489492,
+    "code_bytes": 2315666,
+    "bodies": 3204,
+    "sha256": "1c6bf8051be4d2a59ae10eb15fe6fad3d29ca67302191e0ea7d6b675adf19591"
+  },
+  {
+    "commit": "7f849c7c7eea3cd92b2470424ad1e76d6f2418af",
+    "path": "runtime/bootstrap/runtime.wasm",
+    "bytes": 1905352,
+    "code_bytes": 1556333,
+    "bodies": 5995,
+    "sha256": "8830bb94c6013d59e3bf34d374234c5fbb3de4c1c39ec5431f4668d9286e17f9"
+  },
+  {
+    "commit": "7f849c7c7eea3cd92b2470424ad1e76d6f2418af",
+    "path": "runtime/bootstrap/macro.wasm",
+    "bytes": 1901288,
+    "code_bytes": 1556333,
+    "bodies": 5995,
+    "sha256": "2caf4654baaff6e2527013df08d7c91738fa9fb91f5ff8b7ddae6611b4607848"
+  }
+]

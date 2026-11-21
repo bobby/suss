@@ -1,0 +1,7 @@
+Running as unit: run-p676454-i84528826.scope; invocation ID: 8be164337ae1490a976e1b71e64c82fd
+    Finished `release` profile [optimized] target(s) in 0.27s
+     Running `target/probe/m11-print-release-target/release/examples/read_string_bench 80 --print`
+80 roots, 0.524 M UTF-16 units (0.53 MB)
+read-string: 3.284 s, 0.160 M units/s
+suss.edn/read-string: 2.481 s, 0.211 M units/s
+pr-str: 25.670 s, 0.020 M units/s

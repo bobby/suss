@@ -1,0 +1,23 @@
+Running as unit: run-p794485-i84669486.scope; invocation ID: 311ce644dd6d43d28fbf189ae83e58d9
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-after-source/crates/suss-reader)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-after-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-after-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 2m 59s
+     Running tests/portable_call_site_size.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-after-target/debug/deps/portable_call_site_size-f4ad59a231d7d6ad)
+
+running 1 test
+test global_call_sites_stay_small_with_real_ifn_dispatch ... arity 0: 536 code bytes for eight additional calls
+arity 4: 792 code bytes for eight additional calls
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 106.12s
+
+     Running tests/portable_calling_convention.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-after-target/debug/deps/portable_calling_convention-6136ee739ee6ed12)
+
+running 3 tests
+test artifacts_record_runtime_abi_7_and_prior_abis_are_rejected ... ok
+test call_sites_call_the_entry_without_an_argument_array ... ok
+test known_callees_are_static_calls ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

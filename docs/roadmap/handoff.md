@@ -1,3 +1,176 @@
+## Stack 495 rebase verification (2026-11-21)
+
+Rebase commands: `gh stack checkout 495`, `gh stack rebase`, then
+`gh stack rebase --continue` after each generated-manifest conflict. The base is
+main 6b794ea04b686432bfc11cdf75b524a3cd9ff375. Preserve both main's M15 entries
+and the M11 entries in this handoff. Regenerate the manifest from combined owned
+sources with `python3 scripts/apply_bootstrap.py` and
+`python3 scripts/core_import.py`; do not choose either parent's stale digest.
+The printer range-diff against its original five commits changes only generated
+recipe/core hashes. Original benchmark and negative-control receipts remain
+byte-for-byte unchanged and retain their original measured source identities.
+No timings are relabeled as measurements of this rebased source.
+
+`python3 scripts/core_import.py --check` verifies 508 files, and
+`python3 scripts/apply_bootstrap.py --check` passes. The complete command
+`python3 -m unittest discover -s scripts -p 'test_*.py'` passes 361 tests on the
+rebased worktree; log `target/probe/m11-stack495-python-current.log` in the
+original M11 workspace. Source/documentation diff whitespace checks pass; raw
+historical logs retain their original whitespace. All four focused printer regressions pass in both phases (zero failures or
+ignores), including long unpaired UTF-16/GC and reentrant conversion. Execution is
+recorded separately in `target/probe/m11-stack495-printer.log`, using stable Rust,
+two Cargo jobs, MemoryMax4G, the shared native cache and existing print target:
+`cargo +stable test -p suss-cli --locked --test printing_chunks -- --test-threads=2`.
+Do not infer a full rebased workspace pass from focused or historical evidence;
+new-head CI must verify the pushed stack. Publish with `gh stack push`.
+
+## Final quote correction receipts (2026-11-21)
+
+Corrected source 0242d5cc passes 34 focused printing cases, all 358 Python checks,
+and both actual Binaryen133 optimized-component cases. Logs are retained under
+`results/m11-printing/m11-quote-*.log`. The full final UTF-16 outputs at 80/160
+roots match the original streams byte-for-byte, SHA256 91111eaa… / 28866f6f… .
+`quote-fix.json` records compiler source 4ffe980c… separately from core source
+6efaa32c… and the exact implementation commit; older buffer-only receipts are
+historical, not relabeled.
+
+Final CPU-pinned nested measurements are 0.560s / 1.162s for 509,474 / 1,026,955
+printed units (2.075x time / 2.016x output), versus original 25.670s / 359.376s.
+One escaped string at 122,882 / 245,762 printed units takes 2.450s / 7.296s in
+the buffer-only executable and 0.073s / 0.231s after the quote fix. Concurrent
+final observations (nested 0.512s / 1.941s, string 0.415s / 0.367s) remain retained.
+GC and host effects prevent an exact exponent fit. Source uses a bounded unit
+scan, disjoint unchanged runs, and a final chunk join. Owned background thread
+affinities were restored. Commands and all raw samples are in the results README.
+
+The old 79fecdcf full run was stopped for this material fix and is incomplete.
+The replacement uses frozen corrected source, stable toolchain, two Cargo jobs,
+MemoryMax6G, actual Binaryen133, shared native cache, and
+`cargo test --workspace --locked -- --test-threads=2`; log
+`target/probe/m11-quote-workspace.log`. Evidence-only commits need no restart.
+Independent final-head re-review and CI remain required; no merge is authorized.
+
+## Long-string quoting review correction (2026-11-21)
+
+Independent review of 79fecdcf found one P2: quote-string still concatenates its
+prefix for every UTF-16 unit. Thus the nested-data results validate the outer
+buffer fix, not universal linear printing of a single long string. The review
+verified historical component/bootstrap receipts, both full output digests,
+provenance and the current call-size test, with no other finding. A throw/reentry
+probe timed out and produced no runtime evidence; its behavior was assessed
+statically, not claimed as an executed pass.
+
+The quote-string adaptation now scans the complete escape table in source order,
+accumulates unchanged runs and escaped units in the printer-only buffer, and
+joins once. Each input unit is examined once; runs are copied once. Pinned source
+hash and notices remain. A new actual guest-string case covers long escaped
+strings with unpaired UTF-16 surrogates after GC in both phases. The example's
+optional --string mode scales a single escaped string at the requested 80/160
+sizes. The frozen buffer-only executable is
+`target/probe/m11-quote-bench-before`; its first long-string sample is 2.450s at
+80 blocks / 122,882 printed units. The paired baseline driver is live in
+`m11-quote-baseline-driver.log`.
+
+The old 79fecdcf full current-source run was explicitly stopped for this material
+source correction, scope run-p815221-i84693426.scope, not for an observation
+ timeout. `m11-print-workspace.log` remains incomplete; do not count it as a pass.
+The independent old namespace 3f218510 baseline is unchanged and still live.
+Replacement focused source execution logs to `m11-quote-focused.log`, and Python
+checks to `m11-quote-python.log`. The first Python launch had a typo in the log
+path and executed nothing; the corrected launch uses the actual root path.
+Restart full verification only after the corrected source is frozen. Review
+promotion and final-head CI remain pending; no merge is authorized.
+
+## Executed printing and call-site receipts (2026-11-21)
+
+Corrected printer execution passes 33 focused cases across collection_printing,
+object_printing, portable_string_fields, printer_options and printing_chunks in
+`m11-print-corrected-focused.log`. All 358 corrected Python checks pass. Both
+80/160 complete UTF-16 outputs match frozen before execution byte-for-byte;
+compressed outputs, digests, harness and raw logs are retained under
+`results/m11-printing`. Output sizes are 509,474 and 1,026,955 UTF-16 units.
+Initial release after timings are 0.545s and 0.999s, versus 25.670s / 359.376s
+before. All later samples, including a compilation-overlap pair and CPU-pinned
+pair, are also retained. Do not fit an exact exponent to noisy wall times.
+Temporary affinity changes to the two owned background runs were restored.
+The new record-budget cross-check passes at four-million per input, environment
+982,377 / 991,474 fuel (`m11-print-record-budget.log`). No shipped budget changes.
+
+The call-site audit in `results/m11-call-sites` executes all sixteen full-core
+historical components, with actual effects proving every requested call count.
+Before/after #370 first-call code is 225→84 bytes at arity zero and 289→124 at
+arity four; complete component/bootstrap sizes and exact source/artifact hashes
+are retained. Bare-Environment controls are explicitly excluded from the ordinary
+IFn comparison. The current ABI 7 regression executes four more components and
+measures 67 / 99 bytes per added dynamic-var call, under the 160 / 220 bounds.
+That case plus all three structural convention cases pass in
+`m11-calls-current-size.log`. All three JVM-referenced convention cases pass in
+`m11-calls-clojure-focused.log`. The first attempt selected the CLI test from the
+wrong package and executed nothing; `m11-calls-current-focused.log` preserves
+that Cargo error separately. No validation is inferred from it.
+
+Full current-source verification is live from `target/probe/m11-print-after-source`,
+with root Cargo target `target/probe/m11-print-after-target`: stable toolchain,
+two Cargo jobs, 6GiB scope, actual Binaryen, and
+`cargo test --workspace --locked -- --test-threads=2`. Log:
+`target/probe/m11-print-workspace.log`, Cargo PID815221, scope
+run-p815221-i84693426.scope. Do not cancel/restart it merely for observation
+timeouts or evidence-only commits. The old 3f218510 source baseline remains live
+separately under PID588514; neither live log is claimed as a completed pass.
+
+Namespace 3f218510 and record d39310af have clean independent reviews and complete
+passing final-head CI (44885511940 and 44889735350). Promotion/issue state lives
+in GitHub. The printer/call-size source still requires independent review and
+passing final-head CI before promotion. No merge is authorized.
+
+## Printer chunk-buffer probes (2026-11-21)
+
+The dedicated `BootstrapPrinterStringBuffer` keeps already-converted strings in
+immutable chunks and performs one final UTF-16 join. The retained public Closure
+StringBuffer adapter is separate. Pinned complete pr-str*/pr-sb-with-opts patches
+change only their buffer constructor; upstream source hashes/licenses remain.
+Owned prefix, recipe hash, generated loader and manifest are regenerated through
+`apply_bootstrap.py` and `core_import.py`.
+
+The initial strict-string chunk prototype passes two actual cases (wide escaped
+UTF-16/empty chunks/earlier outputs after GC, nested print-method ordering) in
+`m11-print-focused.log`. A separate writer-conversion regression then fails in
+`m11-print-reentry-initial.log`. Frozen before execution returns "17" for a
+numeric writer argument and "oldx!" when conversion reenters the same writer.
+The corrected append captures the old immutable chunk list before coerce-string,
+then appends the converted text to that snapshot. This preserves prior writer
+conversion and discarded inner writes. Conversion order is attributed to the
+retained Apache-2.0 Closure adapter; chunk storage is original Suss.
+
+`m11-print-corrected-focused.log` runs the three new cases plus collection_printing,
+object_printing, printer_options and portable_string_fields. Inspect its terminal
+result before claiming the corrected implementation passes. The first 358 Python
+checks pass; the corrected-source rerun logs separately to
+`m11-print-corrected-python.log`. No full workspace pass is claimed for this source.
+
+The exact release baseline is retained in `results/m11-printing`: unchanged
+80/160-root commands report 25.670s / 359.376s for pr-str, at reported input
+sizes 0.524M / 1.056M UTF-16 units. These are best-of-three wall times under the
+same 3GiB bound, with concurrent bounded build/test load; they do not establish
+an exact asymptotic exponent. The benchmark now also retains its actual count
+result to report printed output units, outside the measured interval.
+The output-only harness captures full UTF-16 bytes independently, using the same
+node fixture and actual read-string/pr-str pipeline. Before captures use the
+frozen `target/probe/m11-print-output-before` executable; an 80-root capture is
+live. After release compilation uses the shared print-release target, but keeps
+the original before executables frozen. Compare actual output bytes/digests
+before making any unchanged-output claim.
+
+Current source worktree: `target/probe/m11-print-after-source`, branch
+codex/m11-printing, fast-forwarded to parent d39310af before adding the printer
+changes. Its pinned ClojureScript checkout is a detached submodule worktree at
+c4295f303100bbf5afac449242d30bca1126f1a1. Debug target is
+`target/probe/m11-print-after-target`; release target is
+`target/probe/m11-print-release-target`. Use the root `target/suss` native cache,
+absolute paths, stable toolchain, one Cargo job and 3–4GiB user scopes. No Rust
+flags are overridden. The three required followups are corrected native results,
+80/160 after timings with actual printed sizes, and full output comparison.
+
 ## Index format boundary regression (2026-11-21)
 
 `m11-record-final-focused.log` passes all three process cases (including the
