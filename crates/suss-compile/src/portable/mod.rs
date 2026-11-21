@@ -22,6 +22,7 @@ pub mod core_bindings;
 pub mod compiler_facts;
 pub mod compiler_names;
 pub mod aot;
+mod initialization;
 pub mod command;
 pub use origin::{SourceOrigin, SourcePosition};
 pub(crate) use origin::clone_form_metered;
@@ -215,6 +216,8 @@ pub(crate) fn compile_verified_ir(function: &ir::Function) -> Result<Vec<u8>, Di
 /// A validated fragment and staged compiler state. Install cells in one shared
 /// runtime before execution; reuse existing cells by Global identity. A compiler
 /// error never changes the supplied Environment. This does not load source files.
+/// AOT source artifacts may require their assembler's shared load scope; that
+/// requirement is sealed into the Wasm, not retained in the reusable catalog.
 #[derive(Clone)]
 pub struct PreparedFragment {
     pub wasm: Vec<u8>,
@@ -329,6 +332,9 @@ pub(crate) fn prepare_selected_fragment_with_origin(
         request.charge_expansion_work(work, analyzed.hir.span.clone())
     })?;
     let wasm = request.emit_fragment(&function, phase, &forms, origin)?;
+    let wasm = if analyzed.environment.ordered_namespace_initialization {
+        initialization::mark(wasm)
+    } else { wasm };
     let dependencies = request.artifact_dependencies();
     let wasm = artifact_identity::annotate_source(&wasm, phase, origin, dependencies.as_deref())
         .map_err(|message| Diagnostic { span: function.span.clone(), message })?;

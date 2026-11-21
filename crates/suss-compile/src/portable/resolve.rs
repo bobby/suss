@@ -304,6 +304,12 @@ pub struct Environment {
     /// Direct linking of user code (#360): set for AOT builds, off for the
     /// REPL and source sessions, whose calls read live cells.
     pub(crate) direct_linking: bool,
+    /// AOT initializes every prepared Runtime fragment in order, aborting on
+    /// failure. A later fragment can rely on an earlier namespace publication.
+    /// Sessions leave this off: preparation does not imply execution there.
+    /// This policy is transient; published catalogs clear it and AOT artifacts
+    /// carry their own sealed load-scope requirement.
+    pub(crate) ordered_namespace_initialization: bool,
     /// Analyzing the shipped core image itself, whose capture-free functions
     /// call each other directly (#360, #361). Only the bootstrap catalog sets
     /// it: privileged code compiled elsewhere, such as a session's core
@@ -466,6 +472,7 @@ impl Environment {
             protocols: BTreeMap::new(),
             core_protocols: BTreeSet::new(),
             direct_linking: false,
+            ordered_namespace_initialization: false,
             core_image_links: false,
             direct_links: BTreeMap::new(),
             direct_slots: BTreeMap::new(),

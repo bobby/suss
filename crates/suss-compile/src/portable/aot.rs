@@ -705,9 +705,11 @@ pub fn component_with(
         export.params.iter().any(|(_, ty)| ty.uses_memory())
             || export.result.is_some_and(Boundary::uses_memory)
     });
+    let initialization = super::initialization::Plan::new(&fragments, usize::from(option_schema) + usize::from(list_schema))?;
+    let load_count = u32::from(initialization.module.is_some());
     let adapter = adapter(
         &exports,
-        fragments.len(),
+        &initialization.names,
         option_schema,
         list_schema,
     )?;
@@ -759,6 +761,7 @@ pub fn component_with(
         .chain(fragments.iter().enumerate().map(|(index, fragment)| {
             (format!("suss.fragment.{index}"), fragment.wasm.clone())
         }))
+        .chain(initialization.module.iter().map(|module| (super::initialization::MODULE.to_owned(), module.clone())))
         .chain(std::iter::once(("suss.aot".to_owned(), adapter)))
         .collect::<Vec<_>>();
     // ADR-0005 (#357): optimizing merges these into one module, which keeps
@@ -824,6 +827,11 @@ pub fn component_with(
             }));
             instances.instantiate(2 + index as u32, args);
         }
+        if load_count != 0 {
+            let load = 2 + fragments.len() as u32;
+            instances.instantiate(load, initialization.arguments(0, 1, 2));
+            args.push((super::initialization::MODULE.to_owned(), ModuleArg::Instance(load)));
+        }
         args.push(("suss.runtime".to_owned(), ModuleArg::Instance(0)));
         args.push(("suss.bindings.runtime".to_owned(), ModuleArg::Instance(1)));
         args.extend((0..fragments.len()).map(|index| {
@@ -833,7 +841,7 @@ pub fn component_with(
             )
         }));
     }
-    let first_own = if separate { 2 + fragments.len() as u32 } else { 0 };
+    let first_own = if separate { 2 + fragments.len() as u32 + load_count } else { 0 };
     if has_memory {
         instances.instantiate(memory_module, std::iter::empty::<(&str, ModuleArg)>());
         args.push(("suss.memory".to_owned(), ModuleArg::Instance(first_own)));
@@ -1204,10 +1212,11 @@ fn async_adapter(exports: &[&Export], dynamic_memory: bool) -> Vec<u8> {
 
 fn adapter(
     exports: &[Export],
-    fragment_count: usize,
+    initializers: &[String],
     option_schema: bool,
     list_schema: bool,
 ) -> Result<Vec<u8>, Diagnostic> {
+    let fragment_count = initializers.len();
     let has_memory = exports.iter().any(|export| {
         export.params.iter().any(|(_, ty)| ty.uses_memory())
             || export.result.is_some_and(Boundary::uses_memory)
@@ -1294,9 +1303,9 @@ fn adapter(
         }),
     );
     types.ty().function([], [VALUE]);
-    for index in 0..fragment_count {
+    for name in initializers {
         imports.import(
-            &format!("suss.fragment.{index}"),
+            name,
             "eval",
             EntityType::Function(runtime_abi::TYPE_COUNT + helpers + 1),
         );

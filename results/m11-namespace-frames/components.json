@@ -1,0 +1,38 @@
+{
+  "before": {
+    "forms": [
+      4,
+      24
+    ],
+    "plain_bytes": [
+      3222401,
+      3320537
+    ],
+    "scoped_bytes": [
+      3243737,
+      3427213
+    ],
+    "plain_growth_bytes": 98136,
+    "scoped_growth_bytes": 183476,
+    "additional_forms": 20,
+    "raw_log": "logs/m11-namespace-size-before.log"
+  },
+  "after": {
+    "forms": [
+      4,
+      24
+    ],
+    "plain_bytes": [
+      3218017,
+      3294509
+    ],
+    "scoped_bytes": [
+      3222284,
+      3298776
+    ],
+    "plain_growth_bytes": 76492,
+    "scoped_growth_bytes": 76492,
+    "additional_forms": 20,
+    "raw_log": "logs/m11-catalog-marker-cli-final.log"
+  }
+}

@@ -236,11 +236,14 @@ impl Analyzer<'_> {
             effects.push(definition(self.form(&deferred)?));
         } else if changed {
             effects.push(definition(self.form(&full_call)?));
-        } else if core {
+        } else if core || self.environment.ordered_namespace_initialization {
             // Core's bootstrap always publishes core first, so a later core
             // fragment only adds to it. Its full lists would otherwise be
             // copied into every core macro and definition compiled from
-            // source.
+            // source. AOT also initializes all prepared fragments in order and
+            // aborts if an earlier one fails. Its first/changed scope already
+            // publishes in full, so later fragments need only their additions.
+            // Keep the recovery branch below for independently run fragments.
             if !added.is_empty() {
                 effects.push(definition(self.form(&call(nil(), list(added)))?));
             }
@@ -283,6 +286,17 @@ impl Analyzer<'_> {
         }
         let target = symbol(&span, Symbol::namespaced("suss.core", "*ns*"));
         let global = self.assignment_target(&target)?;
+        if self.environment.ordered_namespace_initialization {
+            // The AOT loader owns one binding for the complete ordered load.
+            // Every fragment selects its namespace after publishing its scope.
+            effects.push(Hir {
+                source: None, span: span.clone(), metadata: Vec::new(), ty: Type::Value,
+                kind: std::sync::Arc::new(Expression::Assign { global, value: Box::new(read(&span)), linked: None }),
+            });
+            effects.push(body);
+            return Ok(Hir { source: None, span, metadata: Vec::new(), ty: Type::Value,
+                kind: std::sync::Arc::new(Expression::Do(effects)) });
+        }
         let body = self.exception_region(&target, vec![], body);
         effects.push(Hir {
             source: None,

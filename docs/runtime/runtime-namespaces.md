@@ -95,6 +95,20 @@ from `hir/namespaces.rs`, without a host import:
     publishes `suss.core` first, so a later core fragment, such as a core
     macro compiled from source, only adds its own declarations and does not
     carry core's full lists.
+  - AOT source preparation initializes every prepared Runtime fragment in
+    order, aborting initialization on an exception. In this mode a namespace's
+    first fragment publishes its full scope, and subsequent fragments publish
+    only changed scopes or newly relevant declarations. They omit the unbound
+    recovery branch and its duplicate scope tables. Independently executed
+    session fragments retain that branch, including recovery after a dependency
+    failed before a prepared fragment could run.
+  - Ordered AOT assembly runs all source initializers under one `*ns*` binding
+    in a small shared loader module. Each fragment selects its namespace by
+    assigning that binding after publication, rather than constructing a thunk
+    and a new binding frame. The existing `dynamic-invoke` helper restores the
+    original binding on both normal return and a language exception. Core runs
+    first; schema factories are captured before user initializers. Component,
+    official command and async assembly use the same loader plan.
   - The scope travels as an array in slot order, with nil for an empty part,
     and a long name list as an array of bucket strings. A quoted map would
     cost far more to build than the publication itself, and a vector longer
@@ -104,9 +118,18 @@ from `hir/namespaces.rs`, without a host import:
     IR, and its cache key, do not change when another form in its file
     changes.
 - **Where the object lives.** The namespace object is held in an internal cell,
-  `suss.internal.namespaces/<ns>`. Every fragment runs inside
+  `suss.internal.namespaces/<ns>`. Each independent session fragment runs inside
   `(binding [*ns* <cell>] ...)`, so a fragment that publishes nothing costs a
   check that the cell is bound, a cell read and a binding, about 700 fuel.
+  Ordered AOT fragments instead read this cell and update the loader's shared
+  binding. Prepared AOT source fragments must be initialized as an ordered batch
+  through the AOT assemblers, which provide that scope.
+  This execution requirement is recorded in a versioned custom section covered
+  by the artifact's integrity hash. Assembly rejects malformed or duplicate
+  markers. Returned AOT and analyzer catalogs clear the transient preparation
+  policy: reusing either catalog with `prepare_fragment` or `compile_in` prepares
+  an independent frame, including recovery when the original AOT source never
+  ran. Catalog facts do not impose an execution scope on later inputs.
 - **Macros.** The macro host sets `*ns*`'s root in the macro store to the
   namespace being compiled before it calls a macro. It interns namespace objects
   once and caches them; `suss.core` and `user` are interned when the macro
@@ -129,8 +152,9 @@ from `hir/namespaces.rs`, without a host import:
   reader-name lists omit names core declares, because the declarations are
   checked first and give the same answer.
 
-The bootstrap and cached or AOT-compiled modules contain the same publication
-code, so they restore the same data.
+Bootstrap, cached and AOT-compiled modules restore the same namespace data.
+The ordered AOT preparation policy is separate from direct linking; analyzer
+preparation uses it too, while Macro sessions retain independent execution.
 
 ## Costs
 

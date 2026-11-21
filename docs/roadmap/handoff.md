@@ -1,3 +1,164 @@
+## AOT catalog reuse and scope markers (2026-11-21)
+
+Independent review of 8cb125a0 found one P2: the private ordered-loading flag
+escaped through public AOT and analyzer catalogs. Reusing either catalog for
+ordinary preparation could write root `*ns*` without owning a binding. The
+before-fix regression fails its root-identity check after a language throw
+(`target/probe/m11-catalog-reuse-before.log`). The 8cb125a0 full workspace run
+was canceled specifically for this fix (exit 143); its incomplete log is
+`target/probe/m11-binding-workspace.log`, not a passing baseline.
+
+The corrected producer seals a versioned `suss.aot-load-scope` marker into each
+ordered source artifact, clears transient policy from returned catalogs and
+analysis records, and has assembly validate all markers before initialization.
+Public `prepare_fragment` and `compile_in` now own independent frames when
+given either catalog. The current compiler identity is
+9d7af5ccdece62402636525462eb7dc6d2b31f03732610714cb50e1b2c0da02a.
+
+`m11-catalog-marker-final.log` records 2 passing unit cases (failed-load cleanup
+and malformed/duplicate marker rejection) plus the expanded public-catalog case.
+It executes both public preparation APIs against both catalogs, including a
+namespace whose original AOT batch never ran, exact payload, GC identity and
+frame cleanup. `m11-catalog-marker-cli-final.log` records 27 passes across
+aot_source_preparation, runtime_namespaces, compiled_aot_async_command,
+compiled_official_command and compiled_optimize. Together these cover 29 distinct
+focused cases, none failed or ignored. The public-catalog case is rerun in the
+CLI suite. All 358 Python tests and source/inventory checks pass again in
+`m11-catalog-marker-foundation.log`. Earlier 8cb125a0 boundary results identify their
+own source; they are not a final-head workspace pass.
+
+Actual optimized execution uses official Binaryen 133, installed only under
+`target/probe/m11-binaryen`. The release archive SHA256 is
+2dc9c7813f5375db93d96ead4b78222fcc3e2677bbb832297af4797782a37489,
+verified against the release metadata. Set `SUSS_WASM_OPT` to its absolute
+`binaryen-version_133/bin/wasm-opt` path (wasm-merge is beside it). The expanded
+optimization case checks source app/other namespaces and root `suss.core` at
+exports. The earlier optimization test run without the tool returned early;
+its reported pass never established optimized execution.
+
+The marker adds 23 data bytes per source fragment. Complete-component slopes
+are now 3,824.6 bytes/form in both scope fixtures; executable overhead remains
+96 bytes/form against the grouped control. Bounds remain 3,900 total and 128
+extra code bytes/form. Current and intermediate measurements, exact sources,
+compiler/executable/component digests, Binaryen receipts and negative controls
+remain under `results/m11-namespace-frames`. All logs above live in the root
+`target/probe`; `m11-frame-code-marker` retains the current CLI probe artifacts.
+
+For replacement broad verification use the isolated source/Cargo target below,
+`RUSTUP_TOOLCHAIN=stable`, two Cargo jobs, a 6GiB user scope and the configured
+Binaryen path, then `cargo test --workspace --locked -- --test-threads=2`.
+Log separately to `target/probe/m11-catalog-marker-workspace.log`. Inspect its
+actual process/terminal result before claiming a full pass. Re-review and
+passing final-head CI remain required before promotion; no merge is authorized.
+
+## Shared AOT load binding probes (2026-11-21)
+
+The isolated source worktree is `target/probe/m11-binding-source`, with a
+reflinked Cargo target at `target/probe/m11-binding-target`. It starts at
+96b2caf9 so the earlier full-baseline source could stay unchanged. The old
+`target/probe/m11-workspace.log` run was deliberately stopped as superseded
+(exit 143); it is incomplete, not a full pass. Its user scope was
+run-p371244-i84236304.scope. Preserve that log separately from replacement runs.
+
+The shared loader uses the existing `dynamic-invoke` and universal closure ABI,
+without a runtime layout change. Core initializes before it; schema factories
+are captured before any user initializer. Each ordered source fragment publishes
+its scope as needed, then updates the loader's `*ns*` binding. Incremental and
+Macro sessions retain independent namespace frames and recovery.
+
+`m11-binding-focused2.log` records 24 passes across CLI runtime_namespaces,
+aot_source_preparation, compiled_aot_async_command and compiled_official_command,
+none failed or ignored. Run with `cargo +stable test -p suss-cli --locked` and
+those four `--test` targets, `-- --nocapture --test-threads=2`. Use one Cargo job,
+a 4GiB user scope, the isolated Cargo target and the root `target/suss` build
+cache. Explicit `*ns*` assignment in one form is reset for the next form.
+
+The complete-component sizes for 4/24 definitions are
+3,217,902/3,293,934 bytes with an empty scope, and
+3,222,169/3,298,201 with 100 exclusions. Both slopes are 3,801.6 bytes/form
+(the test prints integer division). The grouped-form control keeps the same
+definitions in one top-level `do`: code growth is 5,500 bytes when split versus
+3,580 when grouped, or 96 extra code bytes per split form, including its eval
+function and loader call. The unchanged ef882633 executable measures
+15,360/3,580 bytes, or 589 extra bytes per split form. The regressions bound
+total growth at 3,900 bytes/form and the extra executable code at 128.
+The earlier exploratory 3,000-byte total bound failed at 3,801 and is preserved
+in `m11-binding-size.log`; total fragment type/artifact data is distinct from
+the measured namespace-frame code. The first grouped-code helper did not
+compile (`Range<u64>` has no len); `as_bytes().len()` supplies its actual bytes.
+
+The new `portable::initialization::tests::failed_ordered_load_restores_namespace_and_retains_only_prior_effects`
+executes real emitted fragments against the shared runtime. It checks the exact
+throw payload, retained effects before the throw, absent later effects, original
+namespace identity after GC and an empty dynamic frame chain. Its corrected
+run passes in `m11-binding-boundaries2.log`; the first boundaries build failed
+on test-only function signatures and an extra reference in the identity check.
+That run did not execute tests. The corrected command exits 0 with 1 unit,
+7 compiled_async_import_file and 16 portable_aot_options passes. The selected
+list-schema redefinition and mixed option/list layout cases also pass in
+`m11-binding-schema-mixed.log`. Together with the CLI run these are 50 focused
+passes, with no failures or ignores. A subsequent --no-run rebuild refreshes
+the CLI executable after the test-only compiler source fixes.
+
+`results/m11-namespace-frames` retains raw measurements, unchanged source
+fixtures, executable/compiler/component hashes, focused logs and the independent
+CLI code-body probe. Before/after code growth agrees with the Rust regression.
+The after compiler identity is
+7558bfb75df8fb4b212017db8d1c31659d4178f8e2fb692e81f057d5d58af6fa.
+
+All 358 Python tests, inventory (1,065 declarations), review overlay,
+core-import and bootstrap source checks pass in `m11-binding-foundation.log`.
+Initialize the submodule in the isolated worktree before those checks.
+No final-head CI or complete workspace pass is established by these focused
+results. The replacement full command remains `cargo +stable test --workspace
+--locked -- --test-threads=2`, with two Cargo jobs and a 6GiB user scope.
+All probe logs named above live under the root `target/probe` directory.
+
+## Ordered AOT namespace publication probes (2026-11-21)
+
+Run focused namespace checks with `CARGO_BUILD_JOBS=2 cargo +stable test
+-p suss-cli --locked --test runtime_namespaces --test aot_source_preparation
+-- --nocapture --test-threads=2`. Use a 5GiB user scope; this environment needs
+`XDG_RUNTIME_DIR=/run/user/1000` for `systemd-run --user --scope` (the first
+launch without it failed before Cargo ran). The installed stable toolchain is
+Cargo 1.99.1, whereas the default is 1.96.0; the first stable run rebuilt the
+dependencies. Do not mix that build time with compiler performance observations.
+
+On compiler source ef882633, the new validated-component size regression fails:
+4/24 plain definitions produce 3,222,401/3,320,537 bytes (4,906 bytes per added
+form); with 100 excluded names, 3,243,737/3,427,213 bytes (9,173 bytes per form).
+The test adds ordinary `(def fN (fn [a b] a))` forms. Its log is
+`target/probe/m11-namespace-size-before.log`. The retained baseline executable
+`target/probe/m11-suss-before` has SHA256
+cd9a645d9820acb2f3b56e18d6972a6ca5d0d45182a9b49e9a7aee8585b020ab.
+The candidate focused command on 7cfa112c completed with exit 0: 5 AOT source
+preparation tests and 10 runtime namespace tests passed, none failed or ignored.
+`target/probe/m11-namespaces-focused.log` retains the results. Plain components
+measure 3,218,921/3,299,657 bytes; scoped components 3,223,189/3,303,925 bytes.
+Both slopes are 4,036 bytes/form, saving 870 bytes/form for empty scopes and
+5,137 for the larger scope. The regression also bounds the absolute slope at
+4,200 bytes/form. No full workspace or CI pass is established by these focused
+tests.
+
+`target/probe/m11-namespace-size-final.log` confirms the additional absolute
+bound passes (1 test, no failures/ignores), with the same measured sizes.
+The broad verification command is `CARGO_BUILD_JOBS=2 cargo +stable test
+--workspace --locked -- --test-threads=2`, in a 6GiB user scope, logging to
+`target/probe/m11-workspace.log`. Inspect the live Cargo handle and terminal
+log before claiming completion; the focused results do not substitute for it.
+
+The AOT environment explicitly records ordered initialization independently of
+direct linking. First/changed scopes publish fully; later unchanged scopes only
+publish newly relevant declarations. Session compilation still emits the full
+unbound-cell recovery path. Per-fragment dynamic bindings remain and should be
+measured separately from the removed duplicate publication tables.
+
+The retained baseline's `SUSS_MACRO_FUEL_TRACE=1 ... -e '(defrecord R [a b])
+(deftype T [a b]) (= 3 (:a (->R 3 4)))'` fails while transporting `&env` for the
+first defrecord under the unchanged 10M default. It does not reach deftype.
+`target/probe/m11-default-record-before.log` retains the exact fuel trace and
+trap; it is not successful default-budget coverage.
+
 ## Independent PR177 review — typed invocation before guest initialization
 
 ## Canonical transient-map storage probes (2026-11-20)

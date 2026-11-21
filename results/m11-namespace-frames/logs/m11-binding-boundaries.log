@@ -1,0 +1,137 @@
+Running as unit: run-p432068-i84305118.scope; invocation ID: 7ec6f3187b074266b080569645da2182
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-reader)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-compile)
+error[E0277]: the trait bound `&Rooted<wasmtime::AnyRef>: RootedGcRef<Rooted<wasmtime::AnyRef>>` is not satisfied
+    --> crates/suss-compile/src/portable/initialization.rs:288:17
+     |
+ 286 |             Rooted::ref_eq(
+     |             -------------- required by a bound introduced by this call
+ 287 |                 &store,
+ 288 |                 &before.unwrap_anyref().unwrap(),
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+     |
+     = help: the trait `wasmtime::runtime::gc::enabled::rooting::sealed::RootedGcRefImpl<Rooted<wasmtime::AnyRef>>` is not implemented for `&Rooted<wasmtime::AnyRef>`
+help: the trait `wasmtime::runtime::gc::enabled::rooting::sealed::RootedGcRefImpl<T>` is implemented for `Rooted<T>`
+    --> /home/bobby/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmtime-51.0.0-rc.1/src/runtime/gc/enabled/rooting.rs:961:1
+     |
+ 961 | impl<T: GcRef> RootedGcRefImpl<T> for Rooted<T> {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = note: required for `&Rooted<wasmtime::AnyRef>` to implement `RootedGcRef<Rooted<wasmtime::AnyRef>>`
+note: required by a bound in `Rooted::<T>::ref_eq`
+    --> /home/bobby/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmtime-51.0.0-rc.1/src/runtime/gc/enabled/rooting.rs:1174:18
+     |
+1172 |     pub fn ref_eq(
+     |            ------ required by a bound in this associated function
+1173 |         store: impl AsContext,
+1174 |         a: &impl RootedGcRef<T>,
+     |                  ^^^^^^^^^^^^^^ required by this bound in `Rooted::<T>::ref_eq`
+
+error[E0277]: the trait bound `Rooted<wasmtime::AnyRef>: wasmtime::runtime::gc::enabled::rooting::sealed::GcRefImpl` is not satisfied
+   --> crates/suss-compile/src/portable/initialization.rs:286:13
+    |
+286 |             Rooted::ref_eq(
+    |             ^^^^^^ the trait `wasmtime::runtime::gc::enabled::rooting::sealed::GcRefImpl` is not implemented for `Rooted<wasmtime::AnyRef>`
+    |
+    = help: the following other types implement trait `wasmtime::runtime::gc::enabled::rooting::sealed::GcRefImpl`:
+              ArrayRef
+              EqRef
+              StructRef
+              wasmtime::AnyRef
+              wasmtime::ExnRef
+              wasmtime::ExternRef
+    = note: required for `Rooted<wasmtime::AnyRef>` to implement `GcRef`
+note: required by a bound in `Rooted`
+   --> /home/bobby/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmtime-51.0.0-rc.1/src/runtime/gc/enabled/rooting.rs:938:22
+    |
+938 | pub struct Rooted<T: GcRef> {
+    |                      ^^^^^ required by this bound in `Rooted`
+
+error[E0277]: the trait bound `&Rooted<wasmtime::AnyRef>: RootedGcRef<Rooted<wasmtime::AnyRef>>` is not satisfied
+    --> crates/suss-compile/src/portable/initialization.rs:289:17
+     |
+ 286 |             Rooted::ref_eq(
+     |             -------------- required by a bound introduced by this call
+...
+ 289 |                 &after.unwrap_anyref().unwrap()
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+     |
+     = help: the trait `wasmtime::runtime::gc::enabled::rooting::sealed::RootedGcRefImpl<Rooted<wasmtime::AnyRef>>` is not implemented for `&Rooted<wasmtime::AnyRef>`
+help: the trait `wasmtime::runtime::gc::enabled::rooting::sealed::RootedGcRefImpl<T>` is implemented for `Rooted<T>`
+    --> /home/bobby/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmtime-51.0.0-rc.1/src/runtime/gc/enabled/rooting.rs:961:1
+     |
+ 961 | impl<T: GcRef> RootedGcRefImpl<T> for Rooted<T> {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = note: required for `&Rooted<wasmtime::AnyRef>` to implement `RootedGcRef<Rooted<wasmtime::AnyRef>>`
+note: required by a bound in `Rooted::<T>::ref_eq`
+    --> /home/bobby/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmtime-51.0.0-rc.1/src/runtime/gc/enabled/rooting.rs:1175:18
+     |
+1172 |     pub fn ref_eq(
+     |            ------ required by a bound in this associated function
+...
+1175 |         b: &impl RootedGcRef<T>,
+     |                  ^^^^^^^^^^^^^^ required by this bound in `Rooted::<T>::ref_eq`
+
+error[E0277]: the trait bound `&Rooted<wasmtime::AnyRef>: RootedGcRef<Rooted<wasmtime::AnyRef>>` is not satisfied
+    --> crates/suss-compile/src/portable/initialization.rs:289:17
+     |
+ 286 |             Rooted::ref_eq(
+     |             -------------- required by a bound introduced by this call
+...
+ 289 |                 &after.unwrap_anyref().unwrap()
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `wasmtime::runtime::gc::enabled::rooting::sealed::GcRefImpl` is not implemented for `Rooted<wasmtime::AnyRef>`
+     |
+     = help: the following other types implement trait `wasmtime::runtime::gc::enabled::rooting::sealed::GcRefImpl`:
+               ArrayRef
+               EqRef
+               StructRef
+               wasmtime::AnyRef
+               wasmtime::ExnRef
+               wasmtime::ExternRef
+     = note: required for `Rooted<wasmtime::AnyRef>` to implement `GcRef`
+     = note: required for `&Rooted<wasmtime::AnyRef>` to implement `RootedGcRef<Rooted<wasmtime::AnyRef>>`
+note: required by a bound in `Rooted::<T>::ref_eq`
+    --> /home/bobby/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmtime-51.0.0-rc.1/src/runtime/gc/enabled/rooting.rs:1175:18
+     |
+1172 |     pub fn ref_eq(
+     |            ------ required by a bound in this associated function
+...
+1175 |         b: &impl RootedGcRef<T>,
+     |                  ^^^^^^^^^^^^^^ required by this bound in `Rooted::<T>::ref_eq`
+
+error[E0308]: mismatched types
+   --> crates/suss-compile/src/portable/command/adapter.rs:403:80
+    |
+403 |         let module = super::module(&resolve, arguments, run, binding.global(), 1).unwrap();
+    |                      ------------- arguments to this function are incorrect    ^ expected `&[String]`, found integer
+    |
+    = note: expected reference `&[std::string::String]`
+                    found type `{integer}`
+note: function defined here
+   --> crates/suss-compile/src/portable/command/adapter.rs:31:15
+    |
+ 31 | pub(super) fn module(
+    |               ^^^^^^
+...
+ 36 |     initializers: &[String],
+    |     -----------------------
+
+error[E0308]: mismatched types
+   --> crates/suss-compile/src/portable/command/async_component_entry_tests.rs:49:56
+    |
+ 49 |             driver: Module::new(&engine, driver(&main, 1)).unwrap(),
+    |                                          ------        ^ expected `&[String]`, found integer
+    |                                          |
+    |                                          arguments to this function are incorrect
+    |
+    = note: expected reference `&[std::string::String]`
+                    found type `{integer}`
+note: function defined here
+   --> crates/suss-compile/src/portable/command/async_component.rs:274:4
+    |
+274 | fn driver(main: &Global, initializers: &[String]) -> Vec<u8> {
+    |    ^^^^^^                -----------------------
+
+Some errors have detailed explanations: E0277, E0308.
+For more information about an error, try `rustc --explain E0277`.
+error: could not compile `suss-compile` (lib test) due to 6 previous errors

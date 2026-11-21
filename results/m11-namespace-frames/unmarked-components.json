@@ -1,0 +1,38 @@
+{
+  "before": {
+    "forms": [
+      4,
+      24
+    ],
+    "plain_bytes": [
+      3222401,
+      3320537
+    ],
+    "scoped_bytes": [
+      3243737,
+      3427213
+    ],
+    "plain_growth_bytes": 98136,
+    "scoped_growth_bytes": 183476,
+    "additional_forms": 20,
+    "raw_log": "logs/m11-namespace-size-before.log"
+  },
+  "after": {
+    "forms": [
+      4,
+      24
+    ],
+    "plain_bytes": [
+      3217902,
+      3293934
+    ],
+    "scoped_bytes": [
+      3222169,
+      3298201
+    ],
+    "plain_growth_bytes": 76032,
+    "scoped_growth_bytes": 76032,
+    "additional_forms": 20,
+    "raw_log": "logs/m11-binding-focused2.log"
+  }
+}

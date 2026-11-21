@@ -1,0 +1,25 @@
+Running as unit: run-p391990-i84253244.scope; invocation ID: 015453b7f8974d62ad78b81a4b2ea122
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-core)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 6m 17s
+     Running tests/runtime_namespaces.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-target/debug/deps/runtime_namespaces-1021007877323199)
+
+running 1 test
+component bytes: plain 3217902/3293934, scoped 3222169/3298201; bytes/form: 3801/3801
+
+thread 'aot_namespace_frame_size_is_bounded_per_form' (407599) panicked at crates/suss-cli/tests/runtime_namespaces.rs:365:5:
+AOT per-form size regressed: 3801 bytes
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test aot_namespace_frame_size_is_bounded_per_form ... FAILED
+
+failures:
+
+failures:
+    aot_namespace_frame_size_is_bounded_per_form
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 9 filtered out; finished in 24.49s
+
+error: test failed, to rerun pass `-p suss-cli --test runtime_namespaces`

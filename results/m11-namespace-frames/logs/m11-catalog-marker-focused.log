@@ -1,0 +1,47 @@
+Running as unit: run-p523848-i84396026.scope; invocation ID: 0849284f1fd5464ab59700f216778715
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3m 32s
+     Running tests/aot_source_preparation.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-target/debug/deps/aot_source_preparation-ee0e2def41547983)
+
+running 6 tests
+test compiled_source_macro_executes_through_a_versioned_exported_interface has been running for over 60 seconds
+test ordered_namespace_initialization_keeps_scopes_and_dynamic_bindings has been running for over 60 seconds
+test ordered_namespace_initialization_keeps_scopes_and_dynamic_bindings ... ok
+test compiled_source_macro_executes_through_a_versioned_exported_interface ... ok
+test source_macro_and_runtime_dependency_feed_the_same_component_pipeline ... ok
+test published_catalogs_prepare_independent_fragments_with_namespace_recovery has been running for over 60 seconds
+test source_preparation_deduplicates_diamond_dependencies_and_isolates_macro_state ... ok
+test published_catalogs_prepare_independent_fragments_with_namespace_recovery ... ok
+test source_preparation_defers_runtime_throw_until_component_instantiation ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 145.70s
+
+     Running tests/compiled_optimize.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-target/debug/deps/compiled_optimize-295d75ba74344062)
+
+running 2 tests
+skipped: no wasm-opt
+test optimized_components_match_unoptimized_ones ... ok
+test optimize_rejects_command_components ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/runtime_namespaces.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-target/debug/deps/runtime_namespaces-1021007877323199)
+
+running 10 tests
+test a_namespace_whose_dependency_failed_to_load_recovers ... ok
+component bytes: plain 3218017/3294509, scoped 3222284/3298776; bytes/form: 3824/3824
+code growth: split 5500, grouped 3580; extra bytes per split form: 96
+test aot_namespace_frame_size_is_bounded_per_form ... ok
+test core_names_added_before_the_first_resolution_resolve_to_core ... ok
+test macros_see_the_namespace_being_compiled ... ok
+test component_exports_see_the_root_namespace ... ok
+test namespace_functions_follow_clojure ... ok
+test runtime_resolution_agrees_with_syntax_quote ... ok
+test ns_is_bound_while_loading_and_rebindable ... ok
+test the_repl_starts_in_user_and_follows_ns_and_in_ns ... ok
+test script_files_start_in_user ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 31.44s
+

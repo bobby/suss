@@ -1,0 +1,23 @@
+Running as unit: run-p553205-i84405263.scope; invocation ID: 25ba76d0489b48c5a09a17e3dad89cc4
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 1m 52s
+     Running unittests src/lib.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-target/debug/deps/suss_compile-1fa5c4d601d83553)
+
+running 2 tests
+test portable::initialization::tests::scope_marker_is_versioned_and_unique ... ok
+test portable::initialization::tests::failed_ordered_load_restores_namespace_and_retains_only_prior_effects ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 208 filtered out; finished in 50.38s
+
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 41s
+     Running tests/aot_source_preparation.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-target/debug/deps/aot_source_preparation-ee0e2def41547983)
+
+running 1 test
+test published_catalogs_prepare_independent_fragments_with_namespace_recovery ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 49.49s
+

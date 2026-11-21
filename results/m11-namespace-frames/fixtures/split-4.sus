@@ -1,0 +1,5 @@
+(ns size (:refer-clojure :exclude []))
+(def f0 (fn [a b] a))
+(def f1 (fn [a b] a))
+(def f2 (fn [a b] a))
+(def f3 (fn [a b] a))

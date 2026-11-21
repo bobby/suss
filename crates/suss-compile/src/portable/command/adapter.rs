@@ -33,8 +33,9 @@ pub(super) fn module(
     arguments: &wit_parser::Function,
     run: &wit_parser::Function,
     main: &Global,
-    fragments: usize,
+    initializers: &[String],
 ) -> Result<Vec<u8>, Diagnostic> {
+    let fragments = initializers.len();
     use Instruction::*;
     let arguments_abi = resolve.wasm_signature(AbiVariant::GuestImport, arguments);
     let run_abi = resolve.wasm_signature(AbiVariant::GuestExportAsync, run);
@@ -101,9 +102,9 @@ pub(super) fn module(
         }),
     );
     types.ty().function([], [VALUE]);
-    for index in 0..fragments {
+    for name in initializers {
         imports.import(
-            &format!("suss.fragment.{index}"),
+            name,
             "eval",
             EntityType::Function(runtime_abi::TYPE_COUNT + 6),
         );
@@ -399,7 +400,7 @@ mod tests {
             .environment
             .resolve(Phase::Runtime, &Symbol::namespaced("app", "-main"), 0..0)
             .unwrap();
-        let module = super::module(&resolve, arguments, run, binding.global(), 1).unwrap();
+        let module = super::module(&resolve, arguments, run, binding.global(), &["suss.fragment.0".into()]).unwrap();
         wasmparser::Validator::new_with_features(wasmparser::WasmFeatures::all())
             .validate_all(&module)
             .unwrap();

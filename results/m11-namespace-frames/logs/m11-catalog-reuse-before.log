@@ -1,0 +1,21 @@
+Running as unit: run-p514046-i84369397.scope; invocation ID: 033f5c99c9864e5d8b85ad17b6e08d51
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2.33s
+     Running tests/aot_source_preparation.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-target/debug/deps/aot_source_preparation-ee0e2def41547983)
+
+running 1 test
+
+thread 'published_catalogs_prepare_independent_fragments_with_namespace_recovery' (514167) panicked at crates/suss-cli/tests/aot_source_preparation.rs:193:9:
+assertion failed: Rooted::ref_eq(&store, before.unwrap_anyref().unwrap(),
+        result[0].unwrap_anyref().unwrap()).unwrap()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test published_catalogs_prepare_independent_fragments_with_namespace_recovery ... FAILED
+
+failures:
+
+failures:
+    published_catalogs_prepare_independent_fragments_with_namespace_recovery
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 5 filtered out; finished in 14.37s
+
+error: test failed, to rerun pass `-p suss-cli --test aot_source_preparation`

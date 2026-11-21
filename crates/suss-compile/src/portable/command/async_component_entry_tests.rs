@@ -46,7 +46,7 @@ fn fixture() -> &'static Fixture {
             runtime: Module::new(&engine, runtime_abi::module()).unwrap(),
             bindings: Module::new(&engine, bindings.wasm).unwrap(),
             source: Module::new(&engine, prepared.wasm).unwrap(),
-            driver: Module::new(&engine, driver(&main, 1)).unwrap(),
+            driver: Module::new(&engine, driver(&main, &["suss.fragment.0".into()])).unwrap(),
             cells: bindings.cells, dependency, engine,
         }
     })
