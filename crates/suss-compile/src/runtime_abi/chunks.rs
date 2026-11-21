@@ -6,6 +6,7 @@ use Instruction::*;
 const ARRAY_CHUNK: u32 = apply::GLOBAL_LIMIT;
 const CHUNK_BUFFER: u32 = ARRAY_CHUNK + 1;
 const CHUNKED_CONS: u32 = CHUNK_BUFFER + 1;
+pub(super) const GLOBAL_LIMIT: u32 = CHUNKED_CONS + 1;
 
 pub(super) fn append_globals(globals: &mut GlobalSection) {
     assert_eq!(globals.len(), ARRAY_CHUNK);

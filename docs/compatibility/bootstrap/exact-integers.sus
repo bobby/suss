@@ -2011,6 +2011,11 @@
 (suss.bootstrap/hash-map-types! (.-EMPTY PersistentHashMap) (.-EMPTY BitmapIndexedNode)
   (ArrayNode. nil 0 (make-array 32)) (.-EMPTY PersistentHashSet))
 
+;; Canonical transient-vector tail append; all witnesses are constructed
+;; here rather than exposing mutable root fields during ordinary source loading.
+(suss.bootstrap/transient-vector-types! (transient [])
+  (VectorNode. nil (make-array 0)) (Unique.))
+
 ;; Canonical chunks are owned core types; user IChunk implementations retain
 ;; their protocol path. Register witnesses after all core definitions exist.
 (suss.bootstrap/chunk-types! (ArrayChunk. (make-array 0) 0 0) (chunk-buffer 0)

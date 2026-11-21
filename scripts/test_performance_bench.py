@@ -86,6 +86,20 @@ class PerformanceEvidenceTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 evaluate(measured(), measured(), required)
 
+    def test_vector_issue_gate_requires_its_limit_and_keeps_other_failed_targets(self):
+        baseline, candidate = measured(), measured()
+        baseline["suss"]["times"]["into-vector"][0] = 8e-5
+        candidate["suss"]["times"]["into-vector"][0] = 6e-5
+        self.assertTrue(evaluate(baseline, candidate)["timing_and_allocation_pass"])
+        self.assertFalse(evaluate(baseline, candidate, ["into-vector"])["timing_and_allocation_pass"])
+        candidate["suss"]["times"]["into-vector"][0] = 4e-5
+        baseline["suss"]["times"]["lazy-pipeline"][0] = 6e-5
+        candidate["suss"]["times"]["lazy-pipeline"][0] = 5.5e-5
+        result = evaluate(baseline, candidate, ["into-vector"])
+        self.assertTrue(result["timing_and_allocation_pass"])
+        self.assertEqual(result["required_programs"], ["into-vector"])
+        self.assertIn("lazy-pipeline", result["unmet_program_targets"])
+
 
 if __name__ == "__main__":
     unittest.main()

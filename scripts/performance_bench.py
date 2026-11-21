@@ -14,6 +14,7 @@ import time
 
 PROGRAMS = ("fib", "word-frequencies", "transduce", "lazy-pipeline",
             "into-vector", "into-map", "string-build")
+ISSUE_PROGRAMS = ("lazy-pipeline", "string-build", "into-vector")
 
 
 def save(path, value):
@@ -114,8 +115,8 @@ def run(source, executable, output, idle):
 
 def evaluate(baseline, candidate, required_programs=None):
     required = list(required_programs if required_programs is not None else ["lazy-pipeline", "string-build"])
-    if not required or any(name not in ["lazy-pipeline", "string-build"] for name in required):
-        raise ValueError("Only the existing lazy-pipeline/string-build issue gates may be selected")
+    if not required or any(name not in ISSUE_PROGRAMS for name in required):
+        raise ValueError("Only the existing lazy-pipeline/string-build/into-vector issue gates may be selected")
     failures, ratios, regressions = [], {}, {}
     unresolved = []
     for label, data in [("baseline", baseline), ("candidate", candidate)]:
@@ -174,7 +175,7 @@ def main():
     compare = commands.add_parser("compare")
     for name in ["baseline", "candidate", "output"]:
         compare.add_argument("--" + name, type=Path, required=True)
-    compare.add_argument("--require-program", action="append", choices=["lazy-pipeline", "string-build"])
+    compare.add_argument("--require-program", action="append", choices=ISSUE_PROGRAMS)
     args = parser.parse_args()
     if args.command == "wait":
         wait_idle(args.output, args.timeout)

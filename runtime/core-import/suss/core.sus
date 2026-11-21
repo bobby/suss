@@ -2499,7 +2499,10 @@
   (fn ([] (transient []))
 ([tcoll] tcoll)
 ([tcoll val]
-    (-conj! tcoll val))
+    (let [appended (suss.bootstrap/transient-vector-append tcoll val)]
+      (if (suss.bootstrap/undefined? appended)
+        (-conj! tcoll val)
+        appended)))
 ([tcoll val & vals]
     (let [ntcoll (-conj! tcoll val)]
       (if vals
@@ -11945,6 +11948,11 @@ reduces them without incurring seq initialization"
 ;; The hash map's, its nodes' and the hash set's types, likewise (#442).
 (suss.bootstrap/hash-map-types! (.-EMPTY PersistentHashMap) (.-EMPTY BitmapIndexedNode)
   (ArrayNode. nil 0 (make-array 32)) (.-EMPTY PersistentHashSet))
+
+;; Canonical transient-vector tail append; all witnesses are constructed
+;; here rather than exposing mutable root fields during ordinary source loading.
+(suss.bootstrap/transient-vector-types! (transient [])
+  (VectorNode. nil (make-array 0)) (Unique.))
 
 ;; Canonical chunks are owned core types; user IChunk implementations retain
 ;; their protocol path. Register witnesses after all core definitions exist.

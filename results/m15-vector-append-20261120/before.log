@@ -1,0 +1,78 @@
+Running as unit: run-p3029147-i82701513.scope; invocation ID: 5c8982a7a52744f1a6f8fe4fc5204464
+     Removed 20 files, 52.7MiB total
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-vector-append-source/crates/suss-core)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-vector-append-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-vector-append-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-vector-append-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-vector-append-source/crates/suss-cli)
+    Finished `release` profile [optimized] target(s) in 1m 38s
+     Running tests/transient_vector_append.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/transient_vector_append-7cb43885395e3781)
+
+running 5 tests
+test appended_values_keep_aliases_and_closures_after_gc ... FAILED
+test native_tail_admission_declines_before_any_mutation_at_full_tails ... FAILED
+test generic_receivers_and_invalidated_transients_keep_argument_effects ... ok
+test private_adapters_cannot_register_or_mutate_from_ordinary_source ... FAILED
+test public_growth_preserves_snapshots_across_tail_and_root_boundaries ... FAILED
+
+failures:
+
+---- appended_values_keep_aliases_and_closures_after_gc stdout ----
+
+thread 'appended_values_keep_aliases_and_closures_after_gc' (3032747) panicked at crates/suss-cli/tests/transient_vector_append.rs:98:42:
+called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 141..146, message: "Unresolved Runtime name doseq" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- native_tail_admission_declines_before_any_mutation_at_full_tails stdout ----
+
+thread 'native_tail_admission_declines_before_any_mutation_at_full_tails' (3033126) panicked at crates/suss-cli/tests/transient_vector_append.rs:7:33:
+(pr-str 
+          (mapv (fn [n]
+            (let [before (vec (range n)) t (transient before)
+                  result (suss.bootstrap/transient-vector-append t :added)
+                  declined (suss.bootstrap/undefined? result)
+                  after (persistent! t)]
+              [n declined (or declined (identical? t result))
+               (= after (if declined before (conj before :added)))]))
+            [0 1 30 31 32 33 63 64 65 1023 1024 1055 1056 1057])): Unresolved Runtime name suss.bootstrap/transient-vector-append at bytes 121..159
+
+---- private_adapters_cannot_register_or_mutate_from_ordinary_source stdout ----
+
+thread 'private_adapters_cannot_register_or_mutate_from_ordinary_source' (3033130) panicked at crates/suss-cli/tests/transient_vector_append.rs:116:13:
+assertion `left == right` failed
+  left: "Unresolved Runtime name suss.bootstrap/transient-vector-types!"
+ right: "Private transient vector adapters require compiled core"
+
+---- public_growth_preserves_snapshots_across_tail_and_root_boundaries stdout ----
+
+thread 'public_growth_preserves_snapshots_across_tail_and_root_boundaries' (3033131) panicked at crates/suss-cli/tests/transient_vector_append.rs:7:33:
+(pr-str 
+          (mapv (fn [n]
+            (let [before (vec (range n))
+                  after (persistent! (reduce conj! (transient before) (range n (+ n 70))))]
+              [n (count after) (nth after n) (peek after)
+               (= before (vec (range n))) (= after (vec (range (+ n 70))))]))
+            [0 1 30 31 32 33 63 64 65 1023 1024 1055 1056 1057])): Runtime trap: error while executing at wasm backtrace:
+    0:  0x18131 - <unknown>!comparison-strict-equal
+    1: 0x106cff - <unknown>!fn#433@60850..61044/1
+    2:  0x18df0 - <unknown>!object-method-call-0
+    3: 0x10b523 - <unknown>!fn#453@64547..65021/2
+    4:   0x14d7 - <unknown>!fn#1@25..301/1
+    5: 0x1a12e5 - <unknown>!fn#1418@197232..197258/2
+    6: 0x10d706 - <unknown>!fn#467@67184..67719/3
+    7: 0x1a1213 - <unknown>!fn#1417@197196..197281/2
+    8:    0xf9d - <unknown>!fn#0@0..367/0
+    9:  0x17424 - <unknown>!try-invoke
+   10:  0x17aaa - <unknown>!dynamic-invoke
+   11:    0xd51 - <unknown>!eval: wasm trap: all fuel consumed by WebAssembly
+
+
+failures:
+    appended_values_keep_aliases_and_closures_after_gc
+    native_tail_admission_declines_before_any_mutation_at_full_tails
+    private_adapters_cannot_register_or_mutate_from_ordinary_source
+    public_growth_preserves_snapshots_across_tail_and_root_boundaries
+
+test result: FAILED. 1 passed; 4 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.18s
+
+error: test failed, to rerun pass `-p suss-cli --test transient_vector_append`

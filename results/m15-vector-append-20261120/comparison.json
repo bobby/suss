@@ -1,0 +1,42 @@
+{
+  "warm": {
+    "before": 25.002434,
+    "after": 25.001328,
+    "reduction_percent": 0.004423569321287957
+  },
+  "fib": {
+    "before": 2068711.506,
+    "after": 2068710.566,
+    "reduction_percent": 4.543891196640004e-05
+  },
+  "word-frequencies": {
+    "before": 3411910.507,
+    "after": 3411957.837,
+    "reduction_percent": -0.0013871993389757975
+  },
+  "transduce": {
+    "before": 677006.787,
+    "after": 677008.494,
+    "reduction_percent": -0.0002521392743259909
+  },
+  "lazy-pipeline": {
+    "before": 1059416.537,
+    "after": 1059414.458,
+    "reduction_percent": 0.00019624009323093716
+  },
+  "into-vector": {
+    "before": 1659615.439,
+    "after": 1114965.632,
+    "reduction_percent": 32.81783202307267
+  },
+  "into-map": {
+    "before": 11919216.105,
+    "after": 11978597.64,
+    "reduction_percent": -0.49820000306135537
+  },
+  "string-build": {
+    "before": 1361058.356,
+    "after": 1361073.79,
+    "reduction_percent": -0.0011339704820256813
+  }
+}

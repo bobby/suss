@@ -1,0 +1,10 @@
+Running as unit: run-p3043716-i82716668.scope; invocation ID: f5354ebba5624ee48611a06294637a7d
+Traceback (most recent call last):
+  File "/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-vector-append-source/scripts/core_import.py", line 273, in <module>
+    main()
+    ~~~~^^
+  File "/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-vector-append-source/scripts/core_import.py", line 256, in main
+    outputs = build()
+  File "/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-vector-append-source/scripts/core_import.py", line 205, in build
+    raise ValueError(f'stale loader input hash: {stage}')
+ValueError: stale loader input hash: original
