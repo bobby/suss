@@ -1,3 +1,45 @@
+## Executed printing and call-site receipts (2026-11-21)
+
+Corrected printer execution passes 33 focused cases across collection_printing,
+object_printing, portable_string_fields, printer_options and printing_chunks in
+`m11-print-corrected-focused.log`. All 358 corrected Python checks pass. Both
+80/160 complete UTF-16 outputs match frozen before execution byte-for-byte;
+compressed outputs, digests, harness and raw logs are retained under
+`results/m11-printing`. Output sizes are 509,474 and 1,026,955 UTF-16 units.
+Initial release after timings are 0.545s and 0.999s, versus 25.670s / 359.376s
+before. All later samples, including a compilation-overlap pair and CPU-pinned
+pair, are also retained. Do not fit an exact exponent to noisy wall times.
+Temporary affinity changes to the two owned background runs were restored.
+The new record-budget cross-check passes at four-million per input, environment
+982,377 / 991,474 fuel (`m11-print-record-budget.log`). No shipped budget changes.
+
+The call-site audit in `results/m11-call-sites` executes all sixteen full-core
+historical components, with actual effects proving every requested call count.
+Before/after #370 first-call code is 225→84 bytes at arity zero and 289→124 at
+arity four; complete component/bootstrap sizes and exact source/artifact hashes
+are retained. Bare-Environment controls are explicitly excluded from the ordinary
+IFn comparison. The current ABI 7 regression executes four more components and
+measures 67 / 99 bytes per added dynamic-var call, under the 160 / 220 bounds.
+That case plus all three structural convention cases pass in
+`m11-calls-current-size.log`. All three JVM-referenced convention cases pass in
+`m11-calls-clojure-focused.log`. The first attempt selected the CLI test from the
+wrong package and executed nothing; `m11-calls-current-focused.log` preserves
+that Cargo error separately. No validation is inferred from it.
+
+Full current-source verification is live from `target/probe/m11-print-after-source`,
+with root Cargo target `target/probe/m11-print-after-target`: stable toolchain,
+two Cargo jobs, 6GiB scope, actual Binaryen, and
+`cargo test --workspace --locked -- --test-threads=2`. Log:
+`target/probe/m11-print-workspace.log`, Cargo PID815221, scope
+run-p815221-i84693426.scope. Do not cancel/restart it merely for observation
+timeouts or evidence-only commits. The old 3f218510 source baseline remains live
+separately under PID588514; neither live log is claimed as a completed pass.
+
+Namespace 3f218510 and record d39310af have clean independent reviews and complete
+passing final-head CI (44885511940 and 44889735350). Promotion/issue state lives
+in GitHub. The printer/call-size source still requires independent review and
+passing final-head CI before promotion. No merge is authorized.
+
 ## Printer chunk-buffer probes (2026-11-21)
 
 The dedicated `BootstrapPrinterStringBuffer` keeps already-converted strings in

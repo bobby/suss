@@ -1,0 +1,86 @@
+Running as unit: run-p724026-i84595502.scope; invocation ID: 6b026472c35d42fe97719caba675a8d1
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-call-history-source/crates/suss-compile)
+    Finished `dev` profile [unoptimized] target(s) in 18.29s
+     Running `target/probe/m11-call-history-target/debug/examples/m11_call_size /home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-call-history-full-before`
+[
+  {
+    "arity": 0,
+    "bytes": 2798704,
+    "calls": 0,
+    "code_bytes": 2460089,
+    "component_sha256": "dac75226cdee61b1782f457049733861e054ce26bc4f256ad2f66b0a6e094b0b",
+    "result": 0.0,
+    "source": "(ns calls) (def effects 0) (def f (fn [] (set! effects (+ effects 1)))) (def run (fn [] (do effects)))",
+    "source_sha256": "96d31c02ab5dc07bcc9400924f955dad121a6af6abc6cf4cb2f4dd7cca96d1c6"
+  },
+  {
+    "arity": 0,
+    "bytes": 2799035,
+    "calls": 1,
+    "code_bytes": 2460314,
+    "component_sha256": "d593b9e084f4c272b7f4877e8f68fa6cc6a291fa9f67e093620790a963017538",
+    "result": 1.0,
+    "source": "(ns calls) (def effects 0) (def f (fn [] (set! effects (+ effects 1)))) (def run (fn [] (do (f) effects)))",
+    "source_sha256": "86de148b3c81878cf8f8cf300be30fa94ebff97a314f9975464742c929073622"
+  },
+  {
+    "arity": 0,
+    "bytes": 2799260,
+    "calls": 2,
+    "code_bytes": 2460539,
+    "component_sha256": "6e55d1ca8386d7386e9c81a7ddb01de0d351dbb541cf3fe53daf6d6a928ac019",
+    "result": 2.0,
+    "source": "(ns calls) (def effects 0) (def f (fn [] (set! effects (+ effects 1)))) (def run (fn [] (do (f) (f) effects)))",
+    "source_sha256": "11ad34d921775123af74f5da27f9610c867dee2255ac04d81a7676750ce44927"
+  },
+  {
+    "arity": 0,
+    "bytes": 2801071,
+    "calls": 10,
+    "code_bytes": 2462350,
+    "component_sha256": "1ab8e162a4e7115590a1c57aa4a042a43f80cbd41195ced67216114d46136227",
+    "result": 10.0,
+    "source": "(ns calls) (def effects 0) (def f (fn [] (set! effects (+ effects 1)))) (def run (fn [] (do (f) (f) (f) (f) (f) (f) (f) (f) (f) (f) effects)))",
+    "source_sha256": "728430f91a075d623611845aa5be12590e814966e9817deeb1aad91ebd53d184"
+  },
+  {
+    "arity": 4,
+    "bytes": 2798751,
+    "calls": 0,
+    "code_bytes": 2460135,
+    "component_sha256": "fdc50a0dcca8052a8b655983528090364fbacbe94d623e5f63ed143ee9f3183d",
+    "result": 0.0,
+    "source": "(ns calls) (def effects 0) (def f (fn [a b c d] (set! effects (+ effects a)))) (def run (fn [] (do effects)))",
+    "source_sha256": "fe248f5658403ceb03ff65634a03e71c89ac87db300c28f6f7c3627721870c84"
+  },
+  {
+    "arity": 4,
+    "bytes": 2799146,
+    "calls": 1,
+    "code_bytes": 2460424,
+    "component_sha256": "31bc8274312412f46d71f693662ed0f38368ea11f112b1745b2f02cc704a0f82",
+    "result": 1.0,
+    "source": "(ns calls) (def effects 0) (def f (fn [a b c d] (set! effects (+ effects a)))) (def run (fn [] (do (f 1 2 3 4) effects)))",
+    "source_sha256": "590f05a9eb921c8d45779183e285ad59e1f6696eec114e1dc897501f05ab512d"
+  },
+  {
+    "arity": 4,
+    "bytes": 2799435,
+    "calls": 2,
+    "code_bytes": 2460713,
+    "component_sha256": "e693c0dde29d50490c79f0c0948fdd3389b5c37b5b8cf24a5614f1cb0dfcee2c",
+    "result": 2.0,
+    "source": "(ns calls) (def effects 0) (def f (fn [a b c d] (set! effects (+ effects a)))) (def run (fn [] (do (f 1 2 3 4) (f 1 2 3 4) effects)))",
+    "source_sha256": "08cffa1bc808f15a17e7adc0beae77f224964f03ad1f43cd5f674e79ab0099dd"
+  },
+  {
+    "arity": 4,
+    "bytes": 2801930,
+    "calls": 10,
+    "code_bytes": 2463208,
+    "component_sha256": "ab6f4e5e386e85fd5041bf3f86aabd8c75fd9673ceb75280f509602085d1c031",
+    "result": 10.0,
+    "source": "(ns calls) (def effects 0) (def f (fn [a b c d] (set! effects (+ effects a)))) (def run (fn [] (do (f 1 2 3 4) (f 1 2 3 4) (f 1 2 3 4) (f 1 2 3 4) (f 1 2 3 4) (f 1 2 3 4) (f 1 2 3 4) (f 1 2 3 4) (f 1 2 3 4) (f 1 2 3 4) effects)))",
+    "source_sha256": "64293a14f29d347ee06ba722c35b41325bc7080f99f341ef6c1c279ffd320616"
+  }
+]

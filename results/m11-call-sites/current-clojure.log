@@ -1,0 +1,12 @@
+Running as unit: run-p808204-i84663166.scope; invocation ID: 5fe3d5de1fb44759bec0dbbe09d1bb2c
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2.93s
+     Running tests/clojure_calling_convention.rs (target/debug/deps/clojure_calling_convention-b17c96b388b3c7a9)
+
+running 3 tests
+test arity_errors_are_clojures_for_every_entry ... ok
+test entries_adapters_and_spread_take_every_argument_count ... ok
+test values_that_arent_closures_are_called_out_of_line ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.50s
+

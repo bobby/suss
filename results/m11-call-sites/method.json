@@ -1,0 +1,13 @@
+{
+  "before_commit": "53958035c9b8f92b89edf64edeb5b3c5ba809d14",
+  "after_commit": "7f849c7c7eea3cd92b2470424ad1e76d6f2418af",
+  "wasmtime": "49.0.1",
+  "compiler_profile": "dev",
+  "wasm_opt_level": "none",
+  "fuel_per_component": 20000000,
+  "memory_scope_bytes": 3221225472,
+  "harness_sha256": "7475fb9f332d8d7e0180b8eeb8d8a39cb50fe1be44abb609751548930ac84d55",
+  "execution": "Every component validates, instantiates with an empty host linker, and returns exactly its source call count after post_return.",
+  "size_definition": "Whole component bytes, and sum of CodeSectionEntry body byte lengths over embedded modules.",
+  "limitation": "Not a runtime timing benchmark. Per-call code includes var reads, operands and IR locals, not only closure check/invoke."
+}

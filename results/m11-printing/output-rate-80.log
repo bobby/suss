@@ -1,0 +1,9 @@
+Running as unit: run-p796551-i84661770.scope; invocation ID: c081e2a3928a48be9e2832aa7051f1fb
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-after-source/crates/suss-cli)
+    Finished `release` profile [optimized] target(s) in 6.72s
+     Running `/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-release-target/release/examples/read_string_bench 80 --print`
+pr-str output: 509474 UTF-16 units
+80 roots, 0.524 M UTF-16 units (0.53 MB)
+read-string: 1.101 s, 0.476 M units/s
+suss.edn/read-string: 1.097 s, 0.478 M units/s
+pr-str: 0.417 s, 1.223 M units/s

@@ -59,19 +59,20 @@ fn main() {
     let code = best(&mut session, 3, "(count (binding [*data-readers* readers] (read-string text)))").0 - baseline;
     let data = best(&mut session, 3, "(count (suss.core/read-edn-string {:readers readers} text))").0 - baseline;
     // Report the actual printed size, so scaling is measured against output.
-    let printed = if std::env::args().any(|argument| argument == "--print") {
+    let (printed, printed_units) = if std::env::args().any(|argument| argument == "--print") {
         session.eval("(def value (binding [*data-readers* readers] (read-string text)))").unwrap();
         let (time, count) = best(&mut session, 3, "(count (pr-str value))");
         let units = session.inspect(&count, |mut store, value| {
             Ok(runtime_number(&mut store, &value)?.expect("printed unit count").as_f64())
         }).unwrap();
         println!("pr-str output: {units:.0} UTF-16 units");
-        time - baseline
+        (time - baseline, units)
     } else {
-        f64::NAN
+        (f64::NAN, f64::NAN)
     };
     println!("{roots} roots, {:.3} M UTF-16 units ({:.2} MB)", units / 1e6, text.len() as f64 / 1e6);
     for (label, time) in [("read-string", code), ("suss.edn/read-string", data), ("pr-str", printed)] {
-        println!("{label}: {time:.3} s, {:.3} M units/s", units / time / 1e6);
+        let work = if label == "pr-str" { printed_units } else { units };
+        println!("{label}: {time:.3} s, {:.3} M units/s", work / time / 1e6);
     }
 }

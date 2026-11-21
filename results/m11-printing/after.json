@@ -1,0 +1,66 @@
+{
+  "compiler_source_sha256": "4ffe980c5afcd44e91961a58c1e33a4be97cbc4979944439318a0ef71e2464e6",
+  "implementation_commit": "a4e980ae",
+  "memory_scope_bytes": 3221225472,
+  "profile": "release",
+  "sample_policy": "best of three less count-text baseline",
+  "samples": [
+    {
+      "label": "initial",
+      "condition": "unrestricted, bounded concurrent work",
+      "rows": [
+        {
+          "roots": 80,
+          "output_utf16_units": 509474,
+          "pr_str_seconds": 0.545
+        },
+        {
+          "roots": 160,
+          "output_utf16_units": 1026955,
+          "pr_str_seconds": 0.999
+        }
+      ],
+      "output_ratio": 2.0157162092668126,
+      "time_ratio": 1.8330275229357798
+    },
+    {
+      "label": "output-rate",
+      "condition": "unrestricted; full-workspace compilation started between sizes",
+      "rows": [
+        {
+          "roots": 80,
+          "output_utf16_units": 509474,
+          "pr_str_seconds": 0.417
+        },
+        {
+          "roots": 160,
+          "output_utf16_units": 1026955,
+          "pr_str_seconds": 1.474
+        }
+      ],
+      "output_ratio": 2.0157162092668126,
+      "time_ratio": 3.534772182254197
+    },
+    {
+      "label": "cpu-pinned",
+      "condition": "benchmark CPU 0; owned background jobs excluded from sibling CPUs 0/1",
+      "rows": [
+        {
+          "roots": 80,
+          "output_utf16_units": 509474,
+          "pr_str_seconds": 0.912
+        },
+        {
+          "roots": 160,
+          "output_utf16_units": 1026955,
+          "pr_str_seconds": 0.972
+        }
+      ],
+      "output_ratio": 2.0157162092668126,
+      "time_ratio": 1.0657894736842104
+    }
+  ],
+  "benchmark_executable_sha256": "54e2a106985dc0b5b9b1fbd133652c6ac5c956f35296b58734fde289f3fb90ed",
+  "benchmark_source_sha256": "9af55339521806d20e168d9653127651fd9b95c63dacc356d2bb7cd05eff1204",
+  "limitation": "All observations retained. Wall time includes scheduler/GC/host effects; do not fit an exact exponent from these pairs. The full-compilation-overlap pair is not a controlled scaling comparison."
+}

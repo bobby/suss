@@ -1,0 +1,68 @@
+Running as unit: run-p738906-i84608764.scope; invocation ID: 0c72d6e5fd4342c1bcdd75fddbce852f
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-after-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-after-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-after-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 5m 03s
+     Running tests/collection_printing.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-after-target/debug/deps/collection_printing-8fe9f845ff437d28)
+
+running 3 tests
+test pr_str_and_prn_str_print_every_shipped_type ... ok
+test print_str_and_str_print_collections_without_quoting ... ok
+test str_of_a_record_is_its_label_and_hash_as_clojure_records_inherit ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 52.77s
+
+     Running tests/object_printing.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-after-target/debug/deps/object_printing-785028889e3056c1)
+
+running 7 tests
+test components_print_objects_and_no_hidden_imports ... ok
+test exceptions_print_as_clojure_errors ... ok
+test objects_print_as_tagged_objects ... ok
+test printed_objects_do_not_read_back ... ok
+test records_print_and_read_back_under_their_class_names ... ok
+test references_print_their_state ... ok
+test type_values_print_their_class_names ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 123.00s
+
+     Running tests/portable_string_fields.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-after-target/debug/deps/portable_string_fields-1fa3d512924e09bd)
+
+running 2 tests
+test sole_host_callable_retains_buffer_and_captured_values_across_gc ... ok
+test string_buffer_fields_and_str_match_raw_pin_in_both_phases_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.32s
+
+     Running tests/printer_options.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-after-target/debug/deps/printer_options-f103779534134059)
+
+running 18 tests
+test components_print_with_options_and_no_hidden_imports ... ok
+test every_printer_and_str_observe_the_options ... ok
+test flush_on_newline_is_a_dynamic_option ... ok
+test functions_and_types_print_while_methods_exist ... ok
+test print_dup_falls_back_to_print_method_for_core_types ... ok
+test print_dup_methods_print_under_print_dup ... ok
+test print_dup_prints_everything_and_records_positionally ... ok
+test print_length_bounds_how_much_of_a_lazy_seq_is_realized ... ok
+test print_length_limits_every_collection ... ok
+test print_level_hides_deep_collections ... ok
+test print_meta_output_reads_back_with_equal_metadata ... ok
+test print_meta_prints_metadata_readably ... ok
+test print_method_defaults_and_removal_follow_clojure ... ok
+test print_method_dispatches_on_a_keyword_type ... ok
+test print_method_observes_length_and_level ... ok
+test print_method_prints_user_types_and_records ... ok
+test print_readably_and_namespace_maps_follow_clojure ... ok
+test user_printers_observe_the_options ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 189.99s
+
+     Running tests/printing_chunks.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-after-target/debug/deps/printing_chunks-5fd87aa351396960)
+
+running 3 tests
+test nested_print_method_keeps_outer_write_and_callback_order ... ok
+test wide_utf16_output_and_empty_chunks_keep_earlier_strings_after_gc ... ok
+test writer_conversion_keeps_the_prefix_captured_before_reentrant_write ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.10s
+
