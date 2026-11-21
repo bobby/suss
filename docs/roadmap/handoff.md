@@ -1,3 +1,35 @@
+## ADR-0001 contract review commands (2026-11-20)
+
+The linked milestone is GitHub milestone 11 (ADR-0001), distinct from roadmap
+M11 (GitHub milestone 13). Start from #50's separately gated tactical and
+strategic decisions. The review proposal is
+`docs/design/result-option-panic.md`; accepted semantics remain in
+`docs/design/suss-0.3.1.md`. No source/runtime/bootstrap contract is changed by
+this documentation patch. Proposed fixtures have no executing passing count.
+
+Inspection commands: `gh api repos/bobby/suss/milestones/11`,
+`gh issue list --repo bobby/suss --milestone 11 --state all --limit 100
+--json number,title,state,url,body`, and
+`gh api repos/bobby/suss/issues/50/comments`. Read runtime ABI VERSION and
+Manifest in `runtime_abi.rs`, the source artifact profile in
+`portable/artifact_identity.rs`, and executing tagged-vector option fixtures
+in `tests/portable_aot_options.rs`; none proves nominal outcome support.
+
+Validation: `git diff --check` passes. A local Python link/fence check over the
+three changed contract/index documents resolves all 16 relative links and finds
+balanced fences. The initial `python3 scripts/cljs_reviews.py` failed because
+the fresh worktree's clojurescript submodule was uninitialized (Git reported the
+parent revision instead of the pinned upstream revision); initialize it with
+`git submodule update --init clojurescript` before repeating inventory checks.
+After initialization, `python3 scripts/cljs_inventory.py --check` verifies 1,065
+declarations and `python3 scripts/cljs_reviews.py` verifies 638 reviewed / 427
+unassessed declarations. Neither inventory nor overlay changed.
+Documentation checks do not replace focused execution, the full locked
+two-thread Rust baseline, independent review or final-head CI. No runtime tests
+or native adoption evidence are claimed here. Review the proposed adoption
+decisions before implementing either stage; explicit strategic acceptance is
+required before the nil/exception migration.
+
 ## Independent PR177 review — typed invocation before guest initialization
 
 ## Raw integer predicate and parity probe commands (2026-11-20)

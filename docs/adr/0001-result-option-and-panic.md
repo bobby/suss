@@ -3,6 +3,10 @@
 Status: **Proposed**. Neither stage is accepted or implemented by this ADR.
 Date: 2026-09-29.
 
+The [2026-11-20 contract draft](../design/result-option-panic.md) supplies concrete
+API, propagation, cleanup, profile and migration decisions for separate tactical
+and strategic review. It does not accept either stage or change shipped behavior.
+
 ## Context
 
 The [accepted design](../design/suss-0.3.1.md) targets Clojure semantics,
@@ -269,10 +273,11 @@ Alternatives considered: tagged vectors (collisions), merely renaming nil to Non
 and permanent Result/Option libraries with unchanged native core semantics (useful
 tactically, but does not achieve the strategic goal).
 
-Open decisions: final API/reader syntax; Error protocol signatures; propagation
-form names; cleanup-failure policy and panic isolation; compatibility lifetime and
-profile linking; detailed core/destructuring contracts; diagnostics for unused
-results; external-null representation; and command/export entrypoint policies.
+The [contract draft](../design/result-option-panic.md) proposes resolutions for
+API/reader syntax, Error signatures, propagation forms, cleanup-failure policy,
+panic isolation, compatibility lifetime/profile linking, core/destructuring,
+unused-result tooling limits, external null and target outcomes. These resolutions
+require explicit review; until then they remain proposed choices, not guarantees.
 
 ## References
 

@@ -22,6 +22,10 @@ Creating these issues does not accept either proposal stage. Implementation is
 gated by the relevant decisions and design, and native migration additionally
 requires explicit strategic acceptance.
 
+The [concrete contract draft](../design/result-option-panic.md) presents the two
+adoption decisions separately, with API, runtime, migration and executing fixture
+contracts for review. It is a proposal and does not change the accepted design.
+
 | ID | Work package | Dependencies |
 | --- | --- | --- |
 | ADR1-01 | [Decide tactical and strategic adoption](https://github.com/bobby/suss/issues/50) | None |
