@@ -1,3 +1,111 @@
+## Index format boundary regression (2026-11-21)
+
+`m11-record-final-focused.log` passes all three process cases (including the
+four-million complete-request bound) and both existing phase/policy projection
+cases, then fails while defining a generated space-containing binding. The
+compiler's existing `valid_name` reparses binding names; this fails before index
+lookup. No result for NUL binding acceptance was established by that failed run.
+The corrected end-to-end case uses accepted ASCII/Unicode names, retaining the
+astral/BMP comparison, qualified/own lookups and exact absent-binding errors.
+Spaces, NUL and empty names are instead verified in actual guest index transport
+with explicit UTF-16 offsets. Both native index units pass in
+`m11-record-index-units.log` (2 passed). The replacement seven-case focused run
+is `m11-record-current-focused.log`; its two explicit filters avoid repeating the
+already-passed full-catalog phase/policy cases after test-only source changes.
+Final-head CI still executes every case. Inspect the terminal result before
+claiming the replacement run passes.
+
+## Record projection measurements and isolated probes (2026-11-21)
+
+`results/m11-record-budget` retains same-source default eval/script comparisons,
+executable/source digests, complete stage traces and input fixtures. Both frozen
+before processes fail on fuel; both after processes return 17. Consecutive caller
+environments fall from 14,638,260 / 14,654,648 to 977,581 / 992,352 fuel. Record
+invocation through decoding falls to 2,774,977 / 2,090,371; this excludes later
+expansion analysis. The actual REPL process completes both requests at a 4,000,000
+cap (`m11-record-four-million-profile.log`), and the strengthened CLI regression
+also passes at that cap, together with default eval/script and AOT compile/run.
+No shipped allowance changes. Those measurements identify source fingerprint
+389966c686cbe697e6bdab21613e8f49196e374060cbe98d314d3ff0801f0ac8.
+
+The first focused protocol-index run was deliberately stopped after its three
+process passes and successful complete phase/shadow/rename comparison, to batch
+new name lookups instead of repeatedly transporting the full catalog. Preserve
+`m11-record-protocol-index-focused.log` as incomplete (SIGTERM), not a suite pass.
+The replacement `m11-record-final-focused.log` runs all nine cases, including a
+single full/private environment per phase for all Unicode/delimiter lookups and
+exact absent-binding messages. Inspect its terminal result; it is still live.
+The sort unit originally expected the inner Host message without its wrapper;
+matching the typed variant corrects that test. `m11-record-sort-corrected.log`
+records one pass. That test-only source correction changes the fingerprint to
+a3a7a52dc6d4259c412ce258322fccabb878f3dcc068825fa5c072adbe13a225; earlier
+measurements keep their own identity. Public adaptation provenance passes again
+in `m11-record-protocol-provenance.log`.
+
+Namespace head 3f218510 has passing foundation, all eight integration shards and
+aggregate test CI in run 44885511940, plus a clean exact-head independent review.
+Its separate local workspace run remains live in the frozen binding worktree;
+no terminal local pass is claimed. GitHub holds acceptance/promotion state.
+
+A release printing baseline is isolated at `target/probe/m11-print-before-source`
+(detached 3f218510), target `target/probe/m11-print-release-target`. Build with
+`RUSTUP_TOOLCHAIN=stable`, one job, a 3GiB user scope and the shared native cache
+`SUSS_BUILD_DIR=<root>/target/suss`. Actual `cargo run --release --locked -p
+suss-cli --example read_string_bench -- 80 --print` reports 0.524M UTF-16 units
+and 25.670s for pr-str; the 160-root run is live. Logs use `m11-print-before-*`.
+The manifest path selects the frozen source. No printing implementation change
+has been made yet.
+
+The call-size audit has a detached historical worktree at
+`target/probe/m11-call-history-source`, Cargo target `m11-call-history-target`.
+An untracked `m11_call_size` example executes every measured component, with a
+counter proving 0/1/2/10 calls at arities 0 and 4. The initial bare-Environment
+control omits core/IFn and is not representative of ordinary compiled programs;
+its before/after artifacts remain under `m11-call-history-before` / `-after`.
+The revised harness includes the actual shipped core and its real IFn catalog.
+It is running at the #370 merge 7f849c7c in `m11-call-history-full-after.log`;
+repeat unchanged at 53958035 for the full before comparison. The harness is
+outside src, so historical compiler sources and lockfiles remain unchanged.
+Native Wasmtime caching is local to `target/probe/m11-call-native-cache`.
+
+## Record helper membership index probes (2026-11-21)
+
+`SUSS_MACRO_FUEL_TRACE=1 target/probe/m11-suss-before repl --compile-fuel
+200000000 < target/probe/m11-record-fuel-input.sus` measures caller-environment
+transport at 14,638,260 and 14,654,648 fuel for consecutive public records. The
+unattended 10,000,000 default fails before expansion. Raw logs remain in
+`target/probe/m11-record-fuel-repl-before.log` and
+`target/probe/m11-default-record-before.log`.
+
+The private record catalog now represents actual namespace identities as a
+UTF-16-sorted packed string and boundary offsets, with a metered native merge sort and compiled binary
+search. Ordinary macro analysis and full compiler catalogs retain their schema.
+The helper still accepts legacy membership sets and full definition maps.
+The initial per-name string probe passes AOT execution but costs 2,821,708 and
+2,840,044 membership fuel, exceeding the 1,000,000 regression bound. Its eval
+fixture also incorrectly used unavailable `println`; the corrected test checks
+the CLI result. Preserve `m11-record-default-after.log` as that failed probe.
+Packing retains exact boundaries but alone measures 2,881,175 and 2,896,184 fuel;
+that failed probe remains `m11-record-packed-corrected.log`. Both default eval/script
+and actual AOT compile/run pass there, while the one-million transport bound fails.
+The preceding packed log stopped on two test-only Form/Drop move errors; corrected
+through `into_parts`. The current private projection additionally transports protocol
+identity and resolved-binding indexes, omitting unused method/arity maps. Full
+catalogs retain complete signature maps. The next focused log is
+`target/probe/m11-record-protocol-index-focused.log`.
+The first Python run has 357 passes and one stale helper-provenance hash error;
+the corrected three-case provenance suite passes, with upstream pin/licenses
+unchanged. A subsequent complete 358-case run passes in
+`target/probe/m11-record-packed-python.log`. Focused commands: `cargo +stable test -p suss-cli --locked --test
+compiled_record_default_budget -- --test-threads=1 --nocapture`, then
+`compiled_record_protocol_projection` and `repl_default_budgets`. The packed probe
+logs to `target/probe/m11-record-packed-focused.log`; inspect its result before
+claiming a pass. Tests cover real default-budget processes and bound consecutive
+record membership transport to less than 1,000,000 fuel each. Additional probes
+exercise UTF-16 ordering, delimiter names, phase and resolution behavior. No
+shipped budget is raised. The namespace full baseline continues separately from
+its frozen source worktree.
+
 ## AOT catalog reuse and scope markers (2026-11-21)
 
 Independent review of 8cb125a0 found one P2: the private ordered-loading flag
@@ -27804,7 +27912,22 @@ Additional raw failures and current regression source: `docs/roadmap/evidence/m4
 
 Existing authenticated memo validation now checks the live method layout without requiring the original implementation identity. New receipt minting and write-domain checks still require the initial canonical implementation. Descriptor/key/table/schema and exact memo reference/bits checks remain. No replacement method is invoked during inspection.
 
-Focused commands: `cargo test -p suss-compile --lib --locked receipt_tests -- --test-threads=2`; `cargo test -p suss-cli --locked --test compiled_macro_cumulative_fuel -- --test-threads=2 --nocapture`; `cargo test -p suss-cli --locked --test compiled_macro_cross_invocation_identity_probe -- --test-threads=2`. Task target directory and two Cargo jobs used.
+The initial per-name string probe passes AOT execution but costs 2,821,708 and
+2,840,044 membership fuel, exceeding the 1,000,000 regression bound. Its eval
+fixture also incorrectly used unavailable `println`; the corrected test checks
+the CLI result. Preserve `m11-record-default-after.log` as that failed probe.
+Packing retains exact boundaries but alone measures 2,881,175 and 2,896,184 fuel;
+that failed probe remains `m11-record-packed-corrected.log`. Both default eval/script
+and actual AOT compile/run pass there, while the one-million transport bound fails.
+The preceding packed log stopped on two test-only Form/Drop move errors; corrected
+through `into_parts`. The current private projection additionally transports protocol
+identity and resolved-binding indexes, omitting unused method/arity maps. Full
+catalogs retain complete signature maps. The next focused log is
+`target/probe/m11-record-protocol-index-focused.log`.
+The first Python run has 357 passes and one stale helper-provenance hash error;
+the corrected three-case provenance suite passes, with upstream pin/licenses
+unchanged. A subsequent complete 358-case run passes in
+`target/probe/m11-record-packed-python.log`. Focused commands: `cargo test -p suss-compile --lib --locked receipt_tests -- --test-threads=2`; `cargo test -p suss-cli --locked --test compiled_macro_cumulative_fuel -- --test-threads=2 --nocapture`; `cargo test -p suss-cli --locked --test compiled_macro_cross_invocation_identity_probe -- --test-threads=2`. Task target directory and two Cargo jobs used.
 
 Native receipts: 7 passed. Cumulative target: 9 passed, 1 retained cold-custom-hash identity failure. Warm-before replacement now passes both caller phases and both replacement variants; forgery, poison, fuel, interruption and malformed protocol recovery checks pass. Unchanged cross-invocation identity result: {'name': 'identity', 'command': ['cargo', 'test', '-p', 'suss-cli', '--locked', '--test', 'compiled_macro_cross_invocation_identity_probe', '--', '--test-threads=2'], 'exit': 0, 'seconds': 106.64803385734558} . Source hashes unchanged across focused execution.
 

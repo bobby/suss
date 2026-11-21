@@ -1,0 +1,10 @@
+Error: Compiled macro expansion failed during caller &env input transport: Runtime trap: error while executing at wasm backtrace:
+    0:   0x8a90 - <unknown>!<wasm function 23>
+    1:   0x8f10 - <unknown>!<wasm function 35>
+    2:   0xc358 - <unknown>!<wasm function 118>
+    3:  0xd2104 - <unknown>!<wasm function 257>
+    4:  0xd247e - <unknown>!<wasm function 261>
+    5:  0xd3326 - <unknown>!<wasm function 267>
+    6: 0x1029f2 - <unknown>!<wasm function 605>
+    7: 0x1034be - <unknown>!<wasm function 614>
+    8:  0xf5089 - <unknown>!<wasm function 520>: wasm trap: all fuel consumed by WebAssembly at bytes 0..19

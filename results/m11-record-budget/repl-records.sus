@@ -1,0 +1,2 @@
+(defrecord R [a b])
+(defrecord S [x])

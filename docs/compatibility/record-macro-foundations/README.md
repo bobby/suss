@@ -211,15 +211,23 @@ This transport alone is not public `defrecord` acceptance.
 
 The compiled public record helper requests `:suss/compiler-catalog :record-bindings`.
 This projection carries the genuine caller snapshot and live namespace resolution
-views, each with name, aliases, refers, exclusions, and `:suss/binding-names` from
-actual phase-specific nonhidden identities. It carries actual protocol signatures,
-namespace/global indexes, resolved unqualified bindings, and the typed native Object
-fact. It does not create placeholder definition records or serialized ASTs.
+views, each with name, aliases, refers, exclusions, and `:suss/binding-index` from
+actual phase-specific nonhidden identities. The index contains one string of names
+sorted by UTF-16 comparison and a vector of boundary offsets, searched by the compiled
+helper. Offsets preserve empty names, spaces and NUL without delimiter escaping.
+It avoids constructing a
+guest symbol hash set for the complete namespace on every invocation. Native index
+construction and comparison remain fuel metered. The private projection carries a
+packed index of actual phase-filtered protocol identities, indexed resolved unqualified
+bindings, and the typed native Object fact. It omits method signature maps, which the
+record helper never reads; the full catalog retains those maps. Protocol membership
+still admits genuine provisional declarations, without inferring identity from metadata. It does not create placeholder definition records or serialized ASTs.
 
 Boolean `true` retains the full compiler catalog and ordinary analysis graph;
 false/nil retain ordinary macro transport. The selected mode is checkpointed with
 the source macro binding and included through its declaration source identity.
-The record resolver accepts membership sets and the existing full definition maps,
+The record resolver accepts the private index, earlier membership sets and the
+existing full definition maps,
 while preserving caller phase, own shadows, refers, exclusions, qualified aliases,
 and provisional protocol declarations. Numeric graph and fuel limits are unchanged.
 

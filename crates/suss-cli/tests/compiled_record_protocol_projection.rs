@@ -20,16 +20,14 @@ fn actual_protocol_indexes_preserve_caller_phase_and_own_identity() {
                  (get (:unqualified-protocol-bindings c) 'IHash)
                  (get (:unqualified-protocol-bindings c) 'IMeta)])))"#;
         macros.define(full_source).unwrap();
-        macros
-            .define(
-                &full_source
-                    .replace(
-                        ":suss/compiler-catalog true",
-                        ":suss/compiler-catalog :record-bindings",
-                    )
-                    .replace("protocol-index", "protocol-index-record"),
-            )
-            .unwrap();
+        macros.define(r#"(defmacro ^{:suss/compiler-catalog :record-bindings} protocol-index-record []
+          (let [resolve (fn [global]
+                          (try (first (:protocols
+                            (suss.internal.record-protocol-facts/resolve-record-compiler-facts &env [global])))
+                            (catch :default error
+                              (if (= (ex-message error) "Record protocol symbol is unresolved in the caller namespace")
+                                nil (throw error)))))]
+            (list 'quote [(resolve 'suss.core/IHash) (resolve 'IHash) (resolve 'IMeta)])))"#).unwrap();
         for (case, source, expected) in [
             (
                 "own-metadata",
@@ -81,7 +79,7 @@ fn compact_membership_uses_real_bindings_and_failed_staging_restores_mode() {
     for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
         let mut macros = CompiledMacros::new().unwrap();
         macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
-        macros.define("(defmacro ^{:suss/compiler-catalog :record-bindings} membership [global] (let [view (:suss/catalog &env) facts (suss.internal.record-protocol-facts/resolve-record-compiler-facts &env [global])] (list 'quote [(:suss/projection &env) (contains? view :defs) (contains? (:suss/binding-names view) 'ordinary) (:protocols facts)])))").unwrap();
+        macros.define("(defmacro ^{:suss/compiler-catalog :record-bindings} membership [global] (let [view (:suss/catalog &env) facts (suss.internal.record-protocol-facts/resolve-record-compiler-facts &env [global])] (list 'quote [(:suss/projection &env) (contains? view :defs) (contains? view :suss/binding-names) (:protocols facts) (and (string? (first (:suss/binding-index view))) (vector? (second (:suss/binding-index view))))])))").unwrap();
         session
             .eval_with_macros(
                 "(ns record.provider) (def ^{:name forged/Name} ordinary 17)",
@@ -107,12 +105,13 @@ fn compact_membership_uses_real_bindings_and_failed_staging_restores_mode() {
         );
         assert!(
             matches!(&parts[2].kind, Kind::Bool(false)),
-            "provider binding is not an own binding"
+            "compact view must not allocate the legacy symbol set"
         );
         let Kind::Set(protocols) = &parts[3].kind else {
             panic!("actual membership result")
         };
         assert_eq!(protocols.len(), 1);
+        assert!(matches!(&parts[4].kind, Kind::Bool(true)), "private membership index contains packed names and offsets");
         assert!(
             matches!(&protocols[0].kind, Kind::Symbol(symbol) if symbol.namespace.as_deref() == Some("record.provider") && symbol.name == "ordinary")
         );
@@ -141,5 +140,62 @@ fn compact_membership_uses_real_bindings_and_failed_staging_restores_mode() {
             matches!(&value.kind, Kind::Nil),
             "successful full-mode replacement must publish"
         );
+    }
+}
+
+#[test]
+fn membership_index_preserves_unicode_order_in_both_caller_phases() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        let mut macros = CompiledMacros::new().unwrap();
+        macros.set_operation_fuel(compilation_fuel::COMPILATION_FUEL);
+        macros.define("(defmacro install-name [text] (list 'def (symbol text) 17))").unwrap();
+        for mode in ["true", ":record-bindings"] {
+            macros.define(&format!(r#"(defmacro ^{{:suss/compiler-catalog {mode}}} resolve-names [cases]
+              (list 'quote
+                (mapv (fn [entry]
+                  (let [text (first entry) qualified (second entry)
+                        global (if qualified (symbol "record.names" text) (symbol text))]
+                    (try
+                      (:protocols (suss.internal.record-protocol-facts/resolve-record-compiler-facts &env [global]))
+                      (catch :default error [:error (ex-message error)])))) cases)))"#)).unwrap();
+            session.eval_with_macros("(ns record.names)", &mut macros).unwrap();
+            let names = ["\"a-b\"", "\"λ\"", "\"\u{10000}\"", "\"\u{e000}\""];
+            for literal in names {
+                session.eval_with_macros(&format!("(user/install-name {literal})"), &mut macros).unwrap();
+            }
+            // Materialize each full/private caller environment once. All lookups
+            // still execute in compiled Suss against that exact phase/snapshot.
+            let cases = names.into_iter().flat_map(|name| [(name, false), (name, true)])
+                .chain([("\"absent\"", false), ("\"absent\"", true)]).collect::<Vec<_>>();
+            let inputs = cases.iter().map(|(name, qualified)| format!("[{name} {qualified}]"))
+                .collect::<Vec<_>>().join(" ");
+            let value = session.eval_with_macros(&format!("(user/resolve-names [{inputs}])"), &mut macros).unwrap();
+            session.collect().unwrap();
+            let bridge = FormBridge::new(&mut session).unwrap();
+            let actual = bridge.read(&mut session, &value, 0..0).unwrap();
+            let Kind::Vector(results) = actual.into_parts().2 else { panic!("batch of real lookups") };
+            assert_eq!(results.len(), cases.len());
+            for ((literal, qualified), actual) in cases.into_iter().zip(results) {
+                if literal != "\"absent\"" {
+                    let expected = read_forms(literal).unwrap().remove(0);
+                    let Kind::String(expected) = expected.into_parts().2 else { panic!("name string") };
+                    let Kind::Set(protocols) = actual.into_parts().2 else { panic!("resolved identities") };
+                    assert_eq!(protocols.len(), 1);
+                    assert!(matches!(&protocols[0].kind, Kind::Symbol(symbol)
+                        if symbol.namespace.as_deref() == Some("record.names")
+                        && symbol.name.encode_utf16().eq(expected)), "{protocols:?}");
+                } else {
+                    let Kind::Vector(parts) = &actual.kind else { panic!("exact missing-binding error: {actual:?}") };
+                    assert!(matches!(&parts[0].kind, Kind::Keyword(key) if key.name == "error"));
+                    let Kind::String(message) = &parts[1].kind else { panic!("error message") };
+                    let expected = if qualified {
+                        "Record protocol symbol does not resolve to an actual caller-phase binding"
+                    } else {
+                        "Record protocol symbol is unresolved in the caller namespace"
+                    };
+                    assert_eq!(String::from_utf16(message).unwrap(), expected);
+                }
+            }
+        }
     }
 }

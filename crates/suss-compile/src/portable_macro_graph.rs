@@ -34,6 +34,46 @@ use raw_keys::{Interner, KeyId, Plan};
 type Value = usize;
 type Result<T> = std::result::Result<T, SessionError>;
 
+// Guest string comparison uses UTF-16, including the ordering of astral names
+// relative to BMP private-use names. Keep sorting fallible so fuel exhaustion
+// or cancellation stops native work without violating a sort comparator's
+// total-order contract.
+fn sort_binding_names<'a>(
+    names: &mut [&'a str],
+    scratch: &mut [&'a str],
+    charge: &mut impl FnMut(usize) -> Result<()>,
+) -> Result<()> {
+    if names.len() < 2 {
+        return Ok(());
+    }
+    let mid = names.len() / 2;
+    sort_binding_names(&mut names[..mid], &mut scratch[..mid], charge)?;
+    sort_binding_names(&mut names[mid..], &mut scratch[mid..], charge)?;
+    charge(names.len().saturating_mul(2))?;
+    let (mut left, mut right) = (0, mid);
+    for slot in scratch.iter_mut() {
+        let take_left = if left == mid {
+            false
+        } else if right == names.len() {
+            true
+        } else {
+            charge(names[left].len().min(names[right].len()).saturating_add(1))?;
+            names[left].encode_utf16().cmp(names[right].encode_utf16()) != Ordering::Greater
+        };
+        *slot = if take_left {
+            let value = names[left];
+            left += 1;
+            value
+        } else {
+            let value = names[right];
+            right += 1;
+            value
+        };
+    }
+    names.copy_from_slice(scratch);
+    Ok(())
+}
+
 fn charge_origin_work(
     session: &mut Session,
     span: std::ops::Range<usize>,
@@ -1238,6 +1278,7 @@ impl<'a> AnalysisGraph<'a> {
             }
             let namespaces = self.map_values(namespaces)?;
             let mut protocols = Vec::new();
+            let mut protocol_identity_names = Vec::new();
             // Faithful lookup projection of the same phase-filtered protocol
             // identities. Helpers use local keys without rebuilding an index
             // inside each macro invocation. Metadata never supplies identity.
@@ -1246,6 +1287,12 @@ impl<'a> AnalysisGraph<'a> {
             let mut protocol_names = std::collections::BTreeSet::new();
             for (global, methods) in &context.environment.protocols {
                 if global.phase() != context.phase {
+                    continue;
+                }
+                self.charge(global.name().len().saturating_add(global.namespace().len()).saturating_add(1))?;
+                protocol_names.insert(global.name().to_owned());
+                if record_bindings {
+                    protocol_identity_names.push(format!("{}/{}", global.namespace(), global.name()));
                     continue;
                 }
                 let mut signatures = Vec::new();
@@ -1260,37 +1307,64 @@ impl<'a> AnalysisGraph<'a> {
                 let signatures = self.map_values(signatures)?;
                 let identity = self.symbol(&format!("{}/{}", global.namespace(), global.name()))?;
                 let local = self.symbol(global.name())?;
-                protocol_names.insert(global.name().to_owned());
                 protocol_globals_by_namespace
                     .entry(global.namespace().to_owned())
                     .or_default()
                     .push((local, identity));
                 protocols.push((identity, signatures));
             }
-            let protocols = self.map_values(protocols)?;
+            let protocols = if record_bindings {
+                let mut names = protocol_identity_names.iter().map(String::as_str).collect::<Vec<_>>();
+                self.name_index(&mut names)?
+            } else {
+                self.map_values(protocols)?
+            };
             let mut protocol_namespaces = Vec::new();
             for (namespace, globals) in protocol_globals_by_namespace {
                 let namespace = self.text(&namespace)?;
                 let globals = self.map_values(globals)?;
                 protocol_namespaces.push((namespace, globals));
             }
-            let protocol_globals_by_namespace = self.map_values(protocol_namespaces)?;
+            let protocol_globals_by_namespace = if record_bindings {
+                protocols
+            } else {
+                self.map_values(protocol_namespaces)?
+            };
             // Resolve candidate names using the actual compiler scope. Preserve
             // refers/own/exclusions/core precedence; no metadata or signature
             // entry is treated as a resolved binding.
             let mut unqualified_protocol_bindings = Vec::new();
+            let mut indexed_bindings = BTreeMap::new();
             for name in protocol_names {
                 let local = suss_reader::Symbol::new(&name);
                 if let Ok(portable::resolve::Binding::Cell(global)) =
                     context.environment.resolve(context.phase, &local, 0..0)
                 {
-                    let local = self.symbol(&name)?;
                     let identity =
                         self.symbol(&format!("{}/{}", global.namespace(), global.name()))?;
-                    unqualified_protocol_bindings.push((local, identity));
+                    if record_bindings {
+                        indexed_bindings.insert(name, identity);
+                    } else {
+                        let local = self.symbol(&name)?;
+                        unqualified_protocol_bindings.push((local, identity));
+                    }
                 }
             }
-            let unqualified_protocol_bindings = self.map_values(unqualified_protocol_bindings)?;
+            let unqualified_protocol_bindings = if record_bindings {
+                self.charge(indexed_bindings.len().saturating_mul(2))?;
+                let mut names = indexed_bindings.keys().map(String::as_str).collect::<Vec<_>>();
+                let index = self.name_index(&mut names)?;
+                let mut values = Vec::with_capacity(names.len());
+                for name in names {
+                    self.charge(name.len().saturating_add(1).saturating_mul(
+                        (indexed_bindings.len().max(1).ilog2() as usize).saturating_add(1)))?;
+                    values.push(indexed_bindings[name]);
+                }
+                let values = self.vector(&values)?;
+                self.vector(&[index, values])?
+            } else {
+                self.map_values(unqualified_protocol_bindings)?
+            };
             let mut native_interfaces = Vec::new();
             for fact in &compiler.native_interfaces {
                 let global = self.symbol(&format!(
@@ -1326,7 +1400,7 @@ impl<'a> AnalysisGraph<'a> {
                 ("phase", phase),
                 ("current", current),
                 ("namespaces", namespaces),
-                ("protocol-signatures", protocols),
+                (if record_bindings { "suss/protocol-binding-index" } else { "protocol-signatures" }, protocols),
                 (
                     "protocol-globals-by-namespace",
                     protocol_globals_by_namespace,
@@ -1398,6 +1472,25 @@ impl<'a> AnalysisGraph<'a> {
             ("fn-scope", scopes),
         ])
     }
+    fn name_index(&mut self, names: &mut [&str]) -> Result<Value> {
+        self.charge(names.len())?;
+        let mut scratch = names.to_vec();
+        sort_binding_names(names, &mut scratch, &mut |work| self.charge(work))?;
+        // One owned string avoids a guest allocation for every name. Explicit
+        // UTF-16 boundaries preserve empty names and every delimiter verbatim.
+        let mut text = Vec::new();
+        let mut offsets = Vec::with_capacity(names.len().saturating_add(1));
+        for name in names.iter().copied() {
+            self.charge(name.len().saturating_add(1))?;
+            offsets.push(self.number(text.len())?);
+            text.extend(name.encode_utf16());
+        }
+        offsets.push(self.number(text.len())?);
+        let text = self.scalar(Literal::String(text))?;
+        let offsets = self.vector(&offsets)?;
+        self.vector(&[text, offsets])
+
+    }
     fn namespace_membership(&mut self, namespace: &SourceNamespace) -> Result<Value> {
         let name = self.symbol(&namespace.namespace)?;
         let mut aliases = Vec::new();
@@ -1419,18 +1512,19 @@ impl<'a> AnalysisGraph<'a> {
             .map(|name| self.symbol(name))
             .collect::<Result<Vec<_>>>()?;
         let exclusions = self.recipe(Recipe::Set(exclusions))?;
-        let names = namespace
+        self.charge(namespace.identities.len().saturating_mul(2))?;
+        let mut names = namespace
             .identities
             .iter()
-            .map(|global| self.symbol(global.name()))
-            .collect::<Result<Vec<_>>>()?;
-        let names = self.recipe(Recipe::Set(names))?;
+            .map(|global| global.name())
+            .collect::<Vec<_>>();
+        let names = self.name_index(&mut names)?;
         self.map(vec![
             ("name", name),
             ("requires", aliases),
             ("suss/refers", refers),
             ("excludes", exclusions),
-            ("suss/binding-names", names),
+            ("suss/binding-index", names),
         ])
     }
     fn namespace(&mut self, namespace: &Arc<SourceNamespace>, depth: usize) -> Result<Value> {
@@ -3012,6 +3106,46 @@ impl<'a> AnalysisGraph<'a> {
 #[cfg(all(test, not(suss_generator)))]
 mod sharing_tests {
     use super::*;
+    #[test]
+    fn binding_index_transport_preserves_delimiters_empty_names_and_utf16_offsets() {
+        let mut session = Session::new_macro().unwrap();
+        let bridge = FormBridge::new(&mut session).unwrap();
+        let mut names = ["\u{e000}", "a b", "\u{10000}", "a\0b", ""];
+        let value = {
+            let _budget = session.operation_budget_scope().unwrap();
+            let mut graph = AnalysisGraph::new(&bridge, &mut session);
+            let root = graph.name_index(&mut names).unwrap();
+            graph.materialize(root).unwrap()
+        };
+        session.collect().unwrap();
+        let actual = bridge.read(&mut session, &value, 0..0).unwrap();
+        let Kind::Vector(parts) = &actual.kind else { panic!("packed index") };
+        assert_eq!(parts.len(), 2);
+        assert!(matches!(&parts[0].kind, Kind::String(units)
+            if units == &[97, 0, 98, 97, 32, 98, 0xd800, 0xdc00, 0xe000]));
+        let Kind::Vector(offsets) = &parts[1].kind else { panic!("UTF-16 boundaries") };
+        assert_eq!(offsets.iter().map(|form| match form.kind {
+            Kind::Long(value) => value,
+            _ => panic!("exact integral offset"),
+        }).collect::<Vec<_>>(), [0, 0, 3, 6, 8, 9]);
+    }
+    #[test]
+    fn binding_index_sort_uses_guest_string_order_and_stops_on_budget_error() {
+        let mut names = ["\u{e000}", "z", "\u{10000}", "a b", "a\0b", ""];
+        let mut scratch = names;
+        let mut charged = 0;
+        sort_binding_names(&mut names, &mut scratch, &mut |work| { charged += work; Ok(()) }).unwrap();
+        assert_eq!(names, ["", "a\0b", "a b", "z", "\u{10000}", "\u{e000}"]);
+        assert!(charged > names.len());
+        let mut comparisons = 0;
+        let error = sort_binding_names(&mut names, &mut scratch, &mut |_| {
+            comparisons += 1;
+            Err(SessionError::Host(wasmtime::Error::msg("budget sentinel")))
+        }).unwrap_err();
+        let SessionError::Host(error) = error else { panic!("original typed host error") };
+        assert_eq!(error.to_string(), "budget sentinel");
+        assert_eq!(comparisons, 1);
+    }
     fn number(bits: u64) -> Form {
         Form {
             span: 0..0,

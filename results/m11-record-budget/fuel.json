@@ -1,0 +1,73 @@
+{
+  "before": {
+    "repl_compile_fuel_per_input": 200000000,
+    "records": [
+      {
+        "stages": {
+          "start": 199999923,
+          "provenance": 199996351,
+          "caller-form": 199996350,
+          "caller-environment": 185358090,
+          "arguments": 185330084,
+          "invoked": 183983391,
+          "decoded": 183654575
+        },
+        "environment_fuel": 14638260,
+        "invocation_through_decode_fuel": 16345348
+      },
+      {
+        "stages": {
+          "start": 199999932,
+          "provenance": 199996425,
+          "caller-form": 199996424,
+          "caller-environment": 185341776,
+          "arguments": 185320019,
+          "invoked": 184613727,
+          "decoded": 184339579
+        },
+        "environment_fuel": 14654648,
+        "invocation_through_decode_fuel": 15660353
+      }
+    ],
+    "stage_log": "before-stages.log",
+    "raw_log": "target/probe/m11-record-fuel-repl-before.log",
+    "compiler_commit": "ef8826334b42392ecf1a02c62db29f59d73cc871"
+  },
+  "after": {
+    "repl_compile_fuel_per_input": 4000000,
+    "records": [
+      {
+        "stages": {
+          "start": 3999923,
+          "provenance": 3996351,
+          "caller-form": 3996350,
+          "caller-environment": 3018769,
+          "arguments": 2990763,
+          "invoked": 1553762,
+          "decoded": 1224946
+        },
+        "environment_fuel": 977581,
+        "invocation_through_decode_fuel": 2774977
+      },
+      {
+        "stages": {
+          "start": 3999932,
+          "provenance": 3996425,
+          "caller-form": 3996424,
+          "caller-environment": 3004072,
+          "arguments": 2982315,
+          "invoked": 2183709,
+          "decoded": 1909561
+        },
+        "environment_fuel": 992352,
+        "invocation_through_decode_fuel": 2090371
+      }
+    ],
+    "stage_log": "after-stages.log",
+    "raw_log": "target/probe/m11-record-four-million-profile.log",
+    "compiler_source_sha256": "389966c686cbe697e6bdab21613e8f49196e374060cbe98d314d3ff0801f0ac8",
+    "executable_sha256": "64ff9ee552941d9ad9bc71df6434b3db73b087d48f5fb0c0ab4f14fd41396ba6"
+  },
+  "source_sha256": "15383b32f67bac4f843804b41c58d3abd3b37c2146cd992f2d005e340c307e0b",
+  "limitation": "Invocation-through-decode excludes subsequent expansion analysis and nested macros; complete REPL requests are bounded by the actual four-million process run."
+}
