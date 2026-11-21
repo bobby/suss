@@ -1,0 +1,24 @@
+{
+  "source_commit": "3f218510f7f07cfe17ff3660d5a31ceb65da784c",
+  "compiler_source_sha256": "9d7af5ccdece62402636525462eb7dc6d2b31f03732610714cb50e1b2c0da02a",
+  "benchmark_executable_sha256": "9376027e5959403b50f31c2b3863f5cc0c76c4e0383daf57b85e0fe925650842",
+  "benchmark_source_sha256": "79c49e78e3372675992775d9b5b1690a5832e3fdd484f4154c5cf86539571c32",
+  "wasmtime_version": "51.0.0-rc.1",
+  "profile": "release",
+  "memory_scope_bytes": 3221225472,
+  "build_jobs": 1,
+  "sample_policy": "best of three, less five-sample count-text baseline",
+  "ambient_load": "Concurrent bounded compiler/tests; these are observed wall times, not isolated CPU-cycle measurements.",
+  "rows": [
+    {
+      "roots": 80,
+      "reported_input_m_utf16_units": 0.524,
+      "pr_str_seconds": 25.67
+    },
+    {
+      "roots": 160,
+      "reported_input_m_utf16_units": 1.056,
+      "pr_str_seconds": 359.376
+    }
+  ]
+}
