@@ -1,3 +1,18 @@
+## Arithmetic fixture foundation check (2026-11-21)
+
+CI run44956667953 on9471688d failed to compile the async IR unit-test fixture:
+its Add operation omitted the new division_primitive field. The fixture now
+explicitly sets false; production code is unchanged. Source patch, CI failure
+location, commands, log hashes and results are retained in
+results/m12-division-overloads/foundation-fixture.json.
+
+With stable Rust, two Cargo jobs, MemoryMax4G and the existing print target/native
+cache, cargo +stable test --workspace --locked --lib -- --test-threads=2 passes
+256 tests; --bins --examples passes36. The --doc command succeeds with zero
+executed examples and two existing ignored examples. This is the local foundation
+subset, not a complete workspace baseline. Independent review of9471688d was
+clean; the fixture correction and exact final-head CI still need verification.
+
 ## Settled loop source kinds for division (2026-11-21)
 
 Independent review of354cbfd4 reproduced generic zero division incorrectly
