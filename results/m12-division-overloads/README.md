@@ -63,3 +63,10 @@ and [core.clj](https://github.com/clojure/clojure/blob/clojure-1.12.6/src/clj/cl
 This is original Suss lowering of observed numeric semantics; no JVM source or
 Java dependency is shipped. Full new-head checks and independent review remain
 required; the prior known-failure suite baseline is not a compatibility pass.
+
+The vendored suite's reviewed known-failure comparison passes unchanged on
+b8be026d (suite-baseline.log); suite-baseline.json identifies the complete local
+raw capture. This is one test with ten unrelated harness tests filtered, not
+proof that every upstream assertion passes. All361 Python checks and the
+vendored source lock also pass. Neither the JVM reference nor the reviewed
+known-failure JSON is changed to obtain these results.

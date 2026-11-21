@@ -1,3 +1,15 @@
+## Division suite comparison (2026-11-21)
+
+On b8be026d, `cargo +stable test --workspace --locked --test clojure_test_suite
+clojure_test_suite_matches_reviewed_baseline -- --exact --test-threads=2` passes:
+1 passed, 10 unrelated tests filtered, 0 failed/ignored, 161.84s. It uses the
+same source-frozen 4GiB/two-job setup and SUSS_CLOJURE_TEST_SUITE_CAPTURE pointing
+to target/probe/m12-division-suite-capture. The full raw observations SHA256 and
+path are retained in results/m12-division-overloads/suite-baseline.json. The
+reviewed known-failure baseline and JVM reference are unchanged. This means
+no changed failures in the executed suite, not complete upstream compatibility.
+The earlier focused41 and import-trace1 passes remain separate evidence.
+
 ## Division overload and source-order focused evidence (2026-11-21)
 
 The corrected JVM1.12.6 oracle verifies 28 rows. All rows execute in Runtime,
