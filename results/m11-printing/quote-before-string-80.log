@@ -1,0 +1,5 @@
+pr-str output: 122882 UTF-16 units
+80 string blocks, 0.123 M UTF-16 units (0.15 MB)
+read-string: 0.820 s, 0.150 M units/s
+suss.edn/read-string: 0.746 s, 0.165 M units/s
+pr-str: 2.450 s, 0.050 M units/s

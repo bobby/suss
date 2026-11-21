@@ -1,0 +1,7 @@
+    Finished `release` profile [optimized] target(s) in 0.15s
+     Running `/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-release-target/release/examples/read_string_bench 160 --print`
+pr-str output: 1026955 UTF-16 units
+160 roots, 1.056 M UTF-16 units (1.06 MB)
+read-string: 2.835 s, 0.372 M units/s
+suss.edn/read-string: 4.852 s, 0.218 M units/s
+pr-str: 1.941 s, 0.529 M units/s

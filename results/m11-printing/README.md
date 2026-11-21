@@ -1,5 +1,8 @@
 # Printer buffer measurements
 
+The buffer-only measurements below precede the quote-string review correction.
+Final corrected-source receipts and results follow at the end.
+
 The printer now prepends already-converted strings to immutable chunks and
 joins them once. Append costs constant storage work plus argument conversion;
 reversal, array construction and the final UTF-16 copy are linear in the writes
@@ -52,3 +55,43 @@ The inherited record requests still fit 4,000,000 fuel, with environment costs
 
 A full workspace command with two test threads and actual Binaryen is running
 separately; the focused receipts are not a terminal full-workspace result.
+
+## Long-string review correction
+
+Independent review of 79fecdcf identified one remaining quadratic loop:
+quote-string copied its accumulated prefix once per UTF-16 unit. Commit
+0242d5cc replaces that loop with one unit scan, appending unchanged runs and
+escaped units to the same private buffer and joining once. The complete pinned
+seven-entry escape table and source notices remain. The new actual guest-string
+regression preserves long escaped text and unpaired surrogates after GC in both
+Runtime and Macro phases.
+
+Final-source receipts are in `quote-fix.json`. All 34 focused printing cases and
+358 Python checks pass; both optimized-component tests execute with actual
+Binaryen 133 and pass. Full final output at both nested-data sizes still matches
+the before bytes and digests above. `m11-quote-outputs-driver.log` records the
+captures; these are correctness probes, not timing samples.
+
+| Mode | Roots or blocks | Printed UTF-16 units | Buffer-only before quoting fix | Final CPU-pinned |
+| --- | ---: | ---: | ---: | ---: |
+| Nested | 80 | 509,474 | see historical table | 0.560 s |
+| Nested | 160 | 1,026,955 | see historical table | 1.162 s |
+| Single escaped string | 80 | 122,882 | 2.450 s | 0.073 s |
+| Single escaped string | 160 | 245,762 | 7.296 s | 0.231 s |
+
+The final nested pair grows 2.075x in time for 2.016x output. Commands add
+`--string` to the unchanged `--print` benchmark to exercise one large escaped
+string. Each pair uses the release profile, best of three less count-text
+baseline, and a 3 GiB process bound. Final quiet samples pin the benchmark to
+CPU 0 and exclude owned background work from sibling CPUs 0/1; affinities were
+restored afterward. All additional final-source samples remain visible:
+0.512/1.941s nested and 0.415/0.367s single-string, captured while bounded work
+including optimized verification ran. These timings include GC, scheduler and
+host effects; neither long-string pair supports an exact exponent fit. The
+source removes both prefix-copy loops; do not infer an exact exponent from
+these small noisy samples.
+
+The 79fecdcf local full run was stopped for this material source correction and
+is incomplete. A replacement final-source workspace run is separate from the
+focused logs. Independent re-review and exact final-head CI are required for
+promotion. No local full-workspace pass is inferred from focused tests.

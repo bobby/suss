@@ -1,0 +1,97 @@
+{
+  "implementation_commit": "0242d5cc2fe000f7c3c1d25d717d3e2aecfd1e2c",
+  "compiler_source_sha256": "4ffe980c5afcd44e91961a58c1e33a4be97cbc4979944439318a0ef71e2464e6",
+  "core_source_sha256": "6efaa32cb87deb5bfd5d1fe3408c5c3ebe6f030984b5bf9f6fa4b7abfce1d171",
+  "samples": [
+    {
+      "condition": "concurrent bounded work including optimized-component verification",
+      "mode": "nested",
+      "rows": [
+        {
+          "roots_or_blocks": 80,
+          "output_utf16_units": 509474,
+          "pr_str_seconds": 0.512
+        },
+        {
+          "roots_or_blocks": 160,
+          "output_utf16_units": 1026955,
+          "pr_str_seconds": 1.941
+        }
+      ]
+    },
+    {
+      "condition": "concurrent bounded work including optimized-component verification",
+      "mode": "string",
+      "rows": [
+        {
+          "roots_or_blocks": 80,
+          "output_utf16_units": 122882,
+          "pr_str_seconds": 0.415
+        },
+        {
+          "roots_or_blocks": 160,
+          "output_utf16_units": 245762,
+          "pr_str_seconds": 0.367
+        }
+      ]
+    },
+    {
+      "condition": "benchmark pinned to CPU 0; owned background excluded from sibling CPUs 0/1",
+      "mode": "nested",
+      "rows": [
+        {
+          "roots_or_blocks": 80,
+          "output_utf16_units": 509474,
+          "pr_str_seconds": 0.56
+        },
+        {
+          "roots_or_blocks": 160,
+          "output_utf16_units": 1026955,
+          "pr_str_seconds": 1.162
+        }
+      ]
+    },
+    {
+      "condition": "benchmark pinned to CPU 0; owned background excluded from sibling CPUs 0/1",
+      "mode": "string",
+      "rows": [
+        {
+          "roots_or_blocks": 80,
+          "output_utf16_units": 122882,
+          "pr_str_seconds": 0.073
+        },
+        {
+          "roots_or_blocks": 160,
+          "output_utf16_units": 245762,
+          "pr_str_seconds": 0.231
+        }
+      ]
+    }
+  ],
+  "final_outputs": {
+    "80": "91111eaad5bd7a5b7a06a1b3682c21c179d371e8c8185ed2dcc96c10820a4c1d",
+    "160": "28866f6ff8c3179e81be6bcdeaa70c72fb6c2800106e2a4923d35efae026a776"
+  },
+  "limitation": "Retain all samples. Scheduler, host compilation and GC effects prevent an exact exponent fit; the implementation itself has one bounded unit scan and linear run/chunk copies.",
+  "executables_sha256": {
+    "m11-quote-bench-before": "2e4e3ddc992a368aa7535f07ed73c58f48420b4fb13d6d535e95d32994a6c563",
+    "m11-print-bench-quote-fixed": "fd140e7cf2695a0889eb391a803e22a5e8b9f9a160f23c4ea72dbcde5e39925b",
+    "m11-print-output-quote-fixed": "8a075e0d2713042ac73124c58aa4b940f386b54eef927ac7698284baf57e72bf"
+  },
+  "benchmark_source_sha256": "42d3a16ef5e59ab9669c6bdb2d07b59a101120dc51b195101369bca7f83ddc02",
+  "memory_scope_bytes": 3221225472,
+  "profile": "release",
+  "sample_policy": "best of three less count-text baseline",
+  "string_before": [
+    {
+      "blocks": 80,
+      "output_utf16_units": 122882,
+      "seconds": 2.45
+    },
+    {
+      "blocks": 160,
+      "output_utf16_units": 245762,
+      "seconds": 7.296
+    }
+  ]
+}

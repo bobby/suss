@@ -1,3 +1,29 @@
+## Final quote correction receipts (2026-11-21)
+
+Corrected source 0242d5cc passes 34 focused printing cases, all 358 Python checks,
+and both actual Binaryen133 optimized-component cases. Logs are retained under
+`results/m11-printing/m11-quote-*.log`. The full final UTF-16 outputs at 80/160
+roots match the original streams byte-for-byte, SHA256 91111eaa… / 28866f6f… .
+`quote-fix.json` records compiler source 4ffe980c… separately from core source
+6efaa32c… and the exact implementation commit; older buffer-only receipts are
+historical, not relabeled.
+
+Final CPU-pinned nested measurements are 0.560s / 1.162s for 509,474 / 1,026,955
+printed units (2.075x time / 2.016x output), versus original 25.670s / 359.376s.
+One escaped string at 122,882 / 245,762 printed units takes 2.450s / 7.296s in
+the buffer-only executable and 0.073s / 0.231s after the quote fix. Concurrent
+final observations (nested 0.512s / 1.941s, string 0.415s / 0.367s) remain retained.
+GC and host effects prevent an exact exponent fit. Source uses a bounded unit
+scan, disjoint unchanged runs, and a final chunk join. Owned background thread
+affinities were restored. Commands and all raw samples are in the results README.
+
+The old 79fecdcf full run was stopped for this material fix and is incomplete.
+The replacement uses frozen corrected source, stable toolchain, two Cargo jobs,
+MemoryMax6G, actual Binaryen133, shared native cache, and
+`cargo test --workspace --locked -- --test-threads=2`; log
+`target/probe/m11-quote-workspace.log`. Evidence-only commits need no restart.
+Independent final-head re-review and CI remain required; no merge is authorized.
+
 ## Long-string quoting review correction (2026-11-21)
 
 Independent review of 79fecdcf found one P2: quote-string still concatenates its
