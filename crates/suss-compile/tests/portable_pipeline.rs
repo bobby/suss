@@ -406,7 +406,7 @@ fn arithmetic_import_trace_observes_once_only_source_order_and_short_circuit() {
         .instance(&mut store, "suss.runtime", runtime)
         .unwrap();
     linker.allow_shadowing(true);
-    for name in ["number-add", "number-multiply", "number-divide"] {
+    for name in ["number-add", "number-multiply", "checked-divide"] {
         let function = runtime.get_func(&mut store, name).unwrap();
         let ty = function.ty(&store);
         let wrapper = Func::new(&mut store, ty, move |mut caller, args, results| {
@@ -436,10 +436,10 @@ fn arithmetic_import_trace_observes_once_only_source_order_and_short_circuit() {
     assert_eq!(
         store.data(),
         &[
-            "number-divide",
-            "number-divide",
-            "number-divide",
-            "number-divide",
+            "checked-divide",
+            "checked-divide",
+            "checked-divide",
+            "checked-divide",
         ]
     );
     store.gc(None).unwrap();
@@ -650,6 +650,7 @@ fn edge_parameter_replacements_are_parallel_in_executed_ir() {
                         operator: Arithmetic::Subtract,
                         arguments: vec![ValueId(3), ValueId(4)],
                         coercing: false,
+                        division_primitive: false,
                     },
                     span: 0..1,
                 }],
@@ -925,6 +926,7 @@ fn public_hir_negation_executes_and_malformed_arithmetic_is_rejected() {
                 })
                 .collect(),
             coercing: false,
+            division_primitives: vec![],
         }),
     };
     let ir = portable::ir::lower(&make(Arithmetic::Negate, 1)).unwrap();

@@ -83,7 +83,12 @@ fn meet(a: Lattice, b: Lattice) -> Lattice {
 
 /// The representation of an arithmetic result from its operands', optimistic
 /// about operands not yet known.
-fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool) -> Lattice {
+fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool, division_primitive: bool) -> Lattice {
+    if operator == Arithmetic::Divide && !coercing && !division_primitive {
+        // A physical double cannot turn a source Object overload into IEEE
+        // division. Its generic runtime path retains NaN/zero semantics.
+        return Lattice::Known(Repr::Boxed);
+    }
     // value-* takes exactly the checked number-* route for two numbers.
     // A guarded primitive result retains the original coercing helper on a
     // boxed fallback. Unary coercions and core division stay boxed.
@@ -95,7 +100,7 @@ fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool) -> La
         let definite = arguments.iter().map(|argument| match argument {
             Lattice::Known(repr) => Lattice::Known(repr.definite()), other => *other,
         }).collect::<Vec<_>>();
-        return match arithmetic(operator, &definite, coercing) {
+        return match arithmetic(operator, &definite, coercing, division_primitive) {
             Lattice::Known(Repr::Long) => Lattice::Known(Repr::MaybeLong),
             Lattice::Known(Repr::Double) => Lattice::Known(Repr::MaybeDouble),
             other => other,
@@ -306,8 +311,8 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
                     let next = match &instruction.operation {
                         Operation::Literal(Literal::Long(_)) => Lattice::Known(Repr::Long),
                         Operation::Literal(_) => Lattice::Known(Repr::Double),
-                        Operation::Arithmetic { operator, arguments, coercing } => {
-                            arithmetic(*operator, &operands(arguments), *coercing)
+                        Operation::Arithmetic { operator, arguments, coercing, division_primitive } => {
+                            arithmetic(*operator, &operands(arguments), *coercing, *division_primitive)
                         }
                         Operation::Comparison { operation, arguments } => {
                             comparison(*operation, &operands(arguments))

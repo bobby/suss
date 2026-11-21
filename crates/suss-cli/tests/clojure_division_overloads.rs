@@ -31,6 +31,11 @@ const CASES: &[(&str, &str)] = &[
     ("(/ 1.0 0.0 1.0)", "##Inf"),
     ("(/ 1.0 2.0 0.0)", "##Inf"),
     ("(/ 1 (identity 0.0))", "[:division-error \"Divide by zero\"]"),
+    ("(let [x 1.0 f (fn [y] (/ x y))] (f 0.0))", "##Inf"),
+    ("(let [x (try 1.0) y (try 0.0)] (/ x y))", "[:division-error \"Divide by zero\"]"),
+    ("(let [events (atom [])] [(try (/ (do (swap! events conj :a) (identity 1.0)) (do (swap! events conj :b) (identity 0.0))) (catch :default e :division-error)) @events])", "[:division-error [:a :b]]"),
+    ("(let [events (atom [])] [(try (/ (do (swap! events conj :a) 1) (do (swap! events conj :b) 0) (do (swap! events conj :c) 1.0)) (catch :default e :division-error)) @events])", "[:division-error [:a :b]]"),
+    ("(do (def active-div (fn [x y] (/ x y))) (let [old active-div] (def active-div (fn [x y] (/ (double x) y))) [(try (old 1.0 0.0) (catch :default e :division-error)) (active-div 1.0 0.0)]))", "[:division-error ##Inf]"),
 ];
 
 fn observed(source: &str) -> String {

@@ -1,0 +1,17 @@
+{
+  "source_base": "b8a341bd",
+  "source_patch_sha256": "799e2d3c539c8cff54c56196b9c1aa407c4b317b4dbaf350f38fad9789b1594f",
+  "cli_sha256": "32508f7801374bc0fb9beaef911eb7b35c44cff5faf73527695f6dbe47a80aca",
+  "toolchain": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+  "jvm_oracle_rows": 28,
+  "focused_tests_passed": 41,
+  "focused_tests_failed": 0,
+  "focused_tests_ignored": 0,
+  "separate_import_trace": "1 passed, 18 unrelated tests filtered; not a complete pipeline result",
+  "limits": {
+    "memory_bytes": 4294967296,
+    "cargo_jobs": 2,
+    "test_threads": 2
+  },
+  "limitations": "Prior partial pipeline stopped for material source-order correction. Complete jank capture, final-head correctness CI and independent review remain separate required evidence."
+}

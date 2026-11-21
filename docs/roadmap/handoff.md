@@ -1,3 +1,30 @@
+## Division overload and source-order focused evidence (2026-11-21)
+
+The corrected JVM1.12.6 oracle verifies 28 rows. All rows execute in Runtime,
+Macro and real AOT components. Seven focused targets pass 41 tests with zero
+failures/ignores: clojure_division_overloads, clojure_unboxed_locals,
+compiled_core_casts, compiled_macro_cumulative_fuel, compiled_primitive_params,
+portable_primitive_entries and portable_unboxed_locals. The separate pipeline
+arithmetic import-trace case passes (18 unrelated tests filtered). All 361
+Python tests and the vendored-suite source lock pass. Exact commands, logs,
+source patch and executable identities are in results/m12-division-overloads.
+
+Generic division propagates NaN then checks boxed zero; primitive double source
+overloads keep IEEE behavior. HIR/IR carry source overload facts separately from
+backend boxing. Nary division is a nested left fold: a zero error prevents
+later effects. A frozen pre-order-fix executable produced an extra :c effect;
+the JVM and corrected cases stop after :b. The older raw/boxed zero fixture
+retains its inputs with distinct source-overload expectations. No budget is raised;
+M11's bounded complete record requests still pass.
+
+An initial cargo check saw a generator/source mismatch during edits and failed;
+the subsequent source-frozen build executes the 41 passing tests above. The
+first-fix pipeline log is incomplete, stopped for the material source-order
+correction after its new matrix passed and its old import-name fixture failed.
+The full jank capture is a separate live process in target/probe/m12-division-suite.log.
+Do not claim a terminal suite/full-workspace pass or final-head CI from focused
+results. Independent review and exact-head CI remain required for promotion.
+
 ## Division source-overload regressions (2026-11-21)
 
 On main 50681542, fresh JVM Clojure1.12.6 passes all 23 division rows in

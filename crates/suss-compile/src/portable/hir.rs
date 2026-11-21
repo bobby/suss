@@ -1123,6 +1123,9 @@ pub enum Expression {
         /// Shipped core keeps JavaScript coercion internally; source arithmetic
         /// rejects non-numbers as Clojure does (#286).
         coercing: bool,
+        /// Source overload for each binary division in the left fold. This
+        /// is independent of the backend's raw/boxed storage inference.
+        division_primitives: Vec<bool>,
     },
 }
 fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
@@ -1171,6 +1174,7 @@ struct Analyzer<'a> {
     catch_aliases: Vec<(Form, std::sync::Arc<LocalBinding>)>,
     target: Option<(LoopId, usize)>,
     method_recurrence: Vec<(LoopId, bool)>,
+    source_numeric: HashMap<BindingId, primitive_returns::Primitive>,
 }
 impl Analyzer<'_> {
     fn capture_source_namespace(&mut self) -> std::sync::Arc<SourceNamespace> {
@@ -2913,6 +2917,9 @@ impl Analyzer<'_> {
             let read = self.local(form, current);
             let value = self.nominal(form, cast, vec![read]);
             let binding = self.fresh_binding(form, value);
+            self.source_numeric.insert(binding.id, if cast == Nominal::LongCast {
+                primitive_returns::Primitive::Long
+            } else { primitive_returns::Primitive::Double });
             if let Some(declared) = declared {
                 source_primitives.insert(binding.id, if declared == Nominal::LongCast {
                     primitive_returns::Primitive::Long
@@ -3293,6 +3300,7 @@ impl Analyzer<'_> {
                     metadata: form.metadata.clone(), ty: Type::Number,
                     kind: std::sync::Arc::new(Expression::Arithmetic {
                         operator: Arithmetic::Add, arguments, coercing: false,
+                        division_primitives: vec![],
                     }) });
             }
             let operation = match symbol.name.as_str() {
@@ -3998,6 +4006,9 @@ impl Analyzer<'_> {
                     }
                     source_bindings.push(self.locals[&name.name].clone());
                     if alias.is_none() {
+                        let kind = primitive_returns::kind(&value, &mut self.source_numeric,
+                            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
+                        self.source_numeric.insert(id, kind);
                         bindings.push(Binding {
                             id,
                             name: name.name.clone(),
@@ -4159,6 +4170,21 @@ impl Analyzer<'_> {
                         arguments: arguments.clone().into(),
                     }));
                 let types = arguments.iter().map(|arg| arg.ty).collect::<Vec<_>>();
+                let mut division_primitives = Vec::new();
+                if operator == Arithmetic::Divide && arguments.len() > 1 && !self.coercing_operands() {
+                    use primitive_returns::Primitive::{Double, Float, Boxed};
+                    let mut kinds = Vec::with_capacity(arguments.len());
+                    for argument in &arguments {
+                        kinds.push(primitive_returns::kind(argument, &mut self.source_numeric,
+                            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?);
+                    }
+                    let mut previous = kinds[0];
+                    for kind in &kinds[1..] {
+                        let primitive = matches!(previous, Double | Float) || matches!(kind, Double | Float);
+                        division_primitives.push(primitive);
+                        previous = if primitive { Double } else { Boxed };
+                    }
+                }
                 let ty = arithmetic_type(operator, &types, self.coercing_operands()).ok_or_else(|| {
                     let operand = arguments
                         .iter()
@@ -4174,6 +4200,7 @@ impl Analyzer<'_> {
                         operator,
                         arguments,
                         coercing: self.coercing_operands(),
+                        division_primitives,
                     },
                     ty,
                 )
@@ -4406,6 +4433,7 @@ pub(crate) fn prepare_with_origin(
         catch_aliases: Vec::new(),
         target: None,
         method_recurrence: Vec::new(),
+        source_numeric: HashMap::new(),
     };
     // The frame's own forms take the fragment's extent, not the source's, so
     // a fragment's IR and cache key do not change with the rest of its file.

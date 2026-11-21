@@ -30,3 +30,36 @@ select primitive overloads, and unhinted generic calls check boxed zero. The
 corpus includes signed zeros, NaN/Infinity, ordinary division and arity controls.
 The complete issue acceptance also requires effect/redefinition controls,
 existing-test review, full correctness checks and independent review/CI.
+
+## Corrected source and effect controls
+
+`controls-oracle.clj` independently verifies 28 JVM1.12.6 rows. It translates
+only Suss's `catch :default` spelling to ArithmeticException in the JVM input.
+The added rows cover captured primitive locals, Object-typed try joins,
+left-to-right argument effects, an early error stopping a later operand, and
+captured versus redefined helper functions. `before-order.log` executes the
+frozen first-fix CLI and records an incorrect extra :c effect; its exact source
+is baseline b8a341bd plus first-fix.patch. The corrected lowering stops after :b.
+
+`focused.log` passes 41 tests, zero failures or ignores across overloads,
+unboxed locals, casts, default macro fuel, primitive parameters and entries.
+Every one of the 28 overload rows executes in Runtime, Macro and actual AOT.
+The separate import-trace case passes; the runtime helper name changed from
+number-divide to checked-divide, with all four calls and effects still asserted.
+The older zero-division equal-path fixture now explicitly distinguishes source
+Object division from source primitive division, retaining both original inputs.
+
+`focused.json` and focused-source.patch identify the measured dirty source and
+executable. The initial check failed because the generator and compiler saw
+source edits at different times; its complete log is retained locally as
+`target/probe/m12-division-check.log`, not counted as a semantic or passing test.
+The first-fix pipeline run remains explicitly incomplete: it was stopped for
+the material nary-order correction and updated tests, after the 23-row overload
+suite passed and its import-name fixture failed. Do not count it as a full pass.
+
+Primary implementation references are Clojure1.12.6
+[Numbers.java](https://github.com/clojure/clojure/blob/clojure-1.12.6/src/jvm/clojure/lang/Numbers.java)
+and [core.clj](https://github.com/clojure/clojure/blob/clojure-1.12.6/src/clj/clojure/core.clj).
+This is original Suss lowering of observed numeric semantics; no JVM source or
+Java dependency is shipped. Full new-head checks and independent review remain
+required; the prior known-failure suite baseline is not a compatibility pass.

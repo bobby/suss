@@ -1,0 +1,360 @@
+diff --git i/crates/suss-compile/src/portable/emit.rs w/crates/suss-compile/src/portable/emit.rs
+index 0112d218..e908a7e9 100644
+--- i/crates/suss-compile/src/portable/emit.rs
++++ w/crates/suss-compile/src/portable/emit.rs
+@@ -88,8 +88,12 @@ fn arithmetic_name(
+     operator: Arithmetic,
+     arguments: &[ir::ValueId],
+     coercing: bool,
++    division_primitive: bool,
+     function: &IrFunction,
+ ) -> &'static str {
++    if operator == Arithmetic::Divide && !coercing {
++        return if division_primitive { "checked-divide-primitive" } else { "checked-divide" };
++    }
+     let numeric = arguments
+         .iter()
+         .all(|arg| function.values[arg.0].ty == Type::Number);
+@@ -511,8 +515,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
+                         operator,
+                         arguments,
+                         coercing,
++                        division_primitive,
+                     } => {
+-                        names.insert(arithmetic_name(*operator, arguments, *coercing, function));
++                        names.insert(arithmetic_name(*operator, arguments, *coercing, *division_primitive, function));
+                     }
+                     _ => {}
+                 }
+@@ -2284,9 +2289,9 @@ fn emit_function(
+             if unboxed::inline(&locals, inst) {
+                 match &inst.operation {
+                     Operation::Literal(literal) => locals.literal(&mut code, literal, inst.result),
+-                    Operation::Arithmetic { operator, arguments, coercing } => locals.arithmetic(
++                    Operation::Arithmetic { operator, arguments, coercing, division_primitive } => locals.arithmetic(
+                         &mut code, *operator, arguments, inst.result,
+-                        index(arithmetic_name(*operator, arguments, *coercing, ir)),
++                        index(arithmetic_name(*operator, arguments, *coercing, *division_primitive, ir)),
+                     ),
+                     Operation::Comparison { operation, arguments } => locals.comparison(
+                         &mut code, *operation, arguments, inst.result, index(operation.export()),
+@@ -4346,8 +4351,9 @@ fn emit_function(
+                     operator,
+                     arguments,
+                     coercing,
++                    division_primitive,
+                 } => {
+-                    let name = arithmetic_name(*operator, arguments, *coercing, ir);
++                    let name = arithmetic_name(*operator, arguments, *coercing, *division_primitive, ir);
+                     // Two i31 longs add or subtract inline (#361) while the
+                     // result is an i31; the runtime boxes a larger one.
+                     let inline = match name {
+diff --git i/crates/suss-compile/src/portable/emit/unboxed.rs w/crates/suss-compile/src/portable/emit/unboxed.rs
+index 462c41cc..0f11c543 100644
+--- i/crates/suss-compile/src/portable/emit/unboxed.rs
++++ w/crates/suss-compile/src/portable/emit/unboxed.rs
+@@ -83,7 +83,12 @@ fn meet(a: Lattice, b: Lattice) -> Lattice {
+ 
+ /// The representation of an arithmetic result from its operands', optimistic
+ /// about operands not yet known.
+-fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool) -> Lattice {
++fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool, division_primitive: bool) -> Lattice {
++    if operator == Arithmetic::Divide && !coercing && !division_primitive {
++        // A physical double cannot turn a source Object overload into IEEE
++        // division. Its generic runtime path retains NaN/zero semantics.
++        return Lattice::Known(Repr::Boxed);
++    }
+     // value-* takes exactly the checked number-* route for two numbers.
+     // A guarded primitive result retains the original coercing helper on a
+     // boxed fallback. Unary coercions and core division stay boxed.
+@@ -95,7 +100,7 @@ fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool) -> La
+         let definite = arguments.iter().map(|argument| match argument {
+             Lattice::Known(repr) => Lattice::Known(repr.definite()), other => *other,
+         }).collect::<Vec<_>>();
+-        return match arithmetic(operator, &definite, coercing) {
++        return match arithmetic(operator, &definite, coercing, division_primitive) {
+             Lattice::Known(Repr::Long) => Lattice::Known(Repr::MaybeLong),
+             Lattice::Known(Repr::Double) => Lattice::Known(Repr::MaybeDouble),
+             other => other,
+@@ -306,8 +311,8 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
+                     let next = match &instruction.operation {
+                         Operation::Literal(Literal::Long(_)) => Lattice::Known(Repr::Long),
+                         Operation::Literal(_) => Lattice::Known(Repr::Double),
+-                        Operation::Arithmetic { operator, arguments, coercing } => {
+-                            arithmetic(*operator, &operands(arguments), *coercing)
++                        Operation::Arithmetic { operator, arguments, coercing, division_primitive } => {
++                            arithmetic(*operator, &operands(arguments), *coercing, *division_primitive)
+                         }
+                         Operation::Comparison { operation, arguments } => {
+                             comparison(*operation, &operands(arguments))
+diff --git i/crates/suss-compile/src/portable/hir.rs w/crates/suss-compile/src/portable/hir.rs
+index ea6ee64f..3e2a6d68 100644
+--- i/crates/suss-compile/src/portable/hir.rs
++++ w/crates/suss-compile/src/portable/hir.rs
+@@ -1123,6 +1123,9 @@ pub enum Expression {
+         /// Shipped core keeps JavaScript coercion internally; source arithmetic
+         /// rejects non-numbers as Clojure does (#286).
+         coercing: bool,
++        /// Source overload for each binary division in the left fold. This
++        /// is independent of the backend's raw/boxed storage inference.
++        division_primitives: Vec<bool>,
+     },
+ }
+ fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
+@@ -1171,6 +1174,7 @@ struct Analyzer<'a> {
+     catch_aliases: Vec<(Form, std::sync::Arc<LocalBinding>)>,
+     target: Option<(LoopId, usize)>,
+     method_recurrence: Vec<(LoopId, bool)>,
++    source_numeric: HashMap<BindingId, primitive_returns::Primitive>,
+ }
+ impl Analyzer<'_> {
+     fn capture_source_namespace(&mut self) -> std::sync::Arc<SourceNamespace> {
+@@ -2913,6 +2917,9 @@ impl Analyzer<'_> {
+             let read = self.local(form, current);
+             let value = self.nominal(form, cast, vec![read]);
+             let binding = self.fresh_binding(form, value);
++            self.source_numeric.insert(binding.id, if cast == Nominal::LongCast {
++                primitive_returns::Primitive::Long
++            } else { primitive_returns::Primitive::Double });
+             if let Some(declared) = declared {
+                 source_primitives.insert(binding.id, if declared == Nominal::LongCast {
+                     primitive_returns::Primitive::Long
+@@ -3293,6 +3300,7 @@ impl Analyzer<'_> {
+                     metadata: form.metadata.clone(), ty: Type::Number,
+                     kind: std::sync::Arc::new(Expression::Arithmetic {
+                         operator: Arithmetic::Add, arguments, coercing: false,
++                        division_primitives: vec![],
+                     }) });
+             }
+             let operation = match symbol.name.as_str() {
+@@ -3998,6 +4006,9 @@ impl Analyzer<'_> {
+                     }
+                     source_bindings.push(self.locals[&name.name].clone());
+                     if alias.is_none() {
++                        let kind = primitive_returns::kind(&value, &mut self.source_numeric,
++                            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
++                        self.source_numeric.insert(id, kind);
+                         bindings.push(Binding {
+                             id,
+                             name: name.name.clone(),
+@@ -4159,6 +4170,21 @@ impl Analyzer<'_> {
+                         arguments: arguments.clone().into(),
+                     }));
+                 let types = arguments.iter().map(|arg| arg.ty).collect::<Vec<_>>();
++                let mut division_primitives = Vec::new();
++                if operator == Arithmetic::Divide && arguments.len() > 1 && !self.coercing_operands() {
++                    use primitive_returns::Primitive::{Double, Float, Boxed};
++                    let mut kinds = Vec::with_capacity(arguments.len());
++                    for argument in &arguments {
++                        kinds.push(primitive_returns::kind(argument, &mut self.source_numeric,
++                            &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?);
++                    }
++                    let mut previous = kinds[0];
++                    for kind in &kinds[1..] {
++                        let primitive = matches!(previous, Double | Float) || matches!(kind, Double | Float);
++                        division_primitives.push(primitive);
++                        previous = if primitive { Double } else { Boxed };
++                    }
++                }
+                 let ty = arithmetic_type(operator, &types, self.coercing_operands()).ok_or_else(|| {
+                     let operand = arguments
+                         .iter()
+@@ -4174,6 +4200,7 @@ impl Analyzer<'_> {
+                         operator,
+                         arguments,
+                         coercing: self.coercing_operands(),
++                        division_primitives,
+                     },
+                     ty,
+                 )
+@@ -4406,6 +4433,7 @@ pub(crate) fn prepare_with_origin(
+         catch_aliases: Vec::new(),
+         target: None,
+         method_recurrence: Vec::new(),
++        source_numeric: HashMap::new(),
+     };
+     // The frame's own forms take the fragment's extent, not the source's, so
+     // a fragment's IR and cache key do not change with the rest of its file.
+diff --git i/crates/suss-compile/src/portable/hir/controls.rs w/crates/suss-compile/src/portable/hir/controls.rs
+index 1dc584ce..20608051 100644
+--- i/crates/suss-compile/src/portable/hir/controls.rs
++++ w/crates/suss-compile/src/portable/hir/controls.rs
+@@ -68,7 +68,7 @@ impl Analyzer<'_> {
+                     span: form.span.clone(),
+                     metadata: form.metadata.clone(),
+                     ty,
+-                    kind: std::sync::Arc::new(Expression::Arithmetic { operator, arguments, coercing: self.coercing_operands() }),
++                    kind: std::sync::Arc::new(Expression::Arithmetic { operator, arguments, coercing: self.coercing_operands(), division_primitives: vec![] }),
+                 })
+             }
+             ControlForm::Zero | ControlForm::Positive | ControlForm::Negative => {
+diff --git i/crates/suss-compile/src/portable/hir/primitive_returns.rs w/crates/suss-compile/src/portable/hir/primitive_returns.rs
+index c2e11f74..7cb68ab2 100644
+--- i/crates/suss-compile/src/portable/hir/primitive_returns.rs
++++ w/crates/suss-compile/src/portable/hir/primitive_returns.rs
+@@ -38,6 +38,15 @@ pub(super) fn validate(
+ 
+ struct LoopInputs { target: LoopId, kinds: Vec<Primitive> }
+ 
++/// A genuine Clojure source kind; physical boxing must not select overloads.
++pub(super) fn kind(
++    hir: &Hir,
++    bindings: &mut HashMap<BindingId, Primitive>,
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++) -> Result<Primitive, Diagnostic> {
++    infer(hir, bindings, meter, &mut Vec::new())
++}
++
+ fn infer(
+     hir: &Hir,
+     bindings: &mut HashMap<BindingId, Primitive>,
+@@ -95,7 +104,7 @@ fn infer(
+             Expression::Literal(Literal::Number(_)) => Double,
+             // Bootstrap inc/dec expand to arithmetic without an Invoke node.
+             // Infer from source operands, never the backend's numeric facts.
+-            Expression::Arithmetic { operator, arguments, coercing } => {
++            Expression::Arithmetic { operator, arguments, coercing, .. } => {
+                 if *coercing { Boxed } else {
+                     let mut kinds = Vec::with_capacity(arguments.len());
+                     for argument in arguments { kinds.push(infer(argument, bindings, meter, loops)?); }
+diff --git i/crates/suss-compile/src/portable/ir.rs w/crates/suss-compile/src/portable/ir.rs
+index 1028404e..bfe5685e 100644
+--- i/crates/suss-compile/src/portable/ir.rs
++++ w/crates/suss-compile/src/portable/ir.rs
+@@ -87,6 +87,8 @@ pub enum Operation {
+         arguments: Vec<ValueId>,
+         /// JavaScript coercion for shipped core; checked Numbers otherwise.
+         coercing: bool,
++        /// A source double overload, never inferred from physical storage.
++        division_primitive: bool,
+     },
+ }
+ #[derive(Debug, Clone)]
+@@ -958,7 +960,15 @@ impl<'a> Lowerer<'a> {
+                 operator,
+                 arguments,
+                 coercing,
++                division_primitives,
+             } => {
++                if !division_primitives.is_empty()
++                    && (*operator != Arithmetic::Divide || *coercing
++                        || division_primitives.len() != arguments.len().saturating_sub(1))
++                {
++                    return Err(Diagnostic { span: hir.span.clone(),
++                        message: "HIR division overload shape mismatch".into() });
++                }
+                 // Public HIR can represent Negate directly or malformed call arities.
+                 if (*operator == Arithmetic::Negate && arguments.len() != 1)
+                     || (matches!(operator, Arithmetic::Subtract | Arithmetic::Divide)
+@@ -989,6 +999,7 @@ impl<'a> Lowerer<'a> {
+                                 operator: *operator,
+                                 arguments: values,
+                                 coercing: false,
++                                division_primitive: false,
+                             },
+                             Type::Number,
+                             hir.span.clone(),
+@@ -1002,6 +1013,7 @@ impl<'a> Lowerer<'a> {
+                                 operator: Arithmetic::Negate,
+                                 arguments: values,
+                                 coercing: *coercing,
++                                division_primitive: false,
+                             },
+                             Type::Number,
+                             hir.span.clone(),
+@@ -1014,13 +1026,14 @@ impl<'a> Lowerer<'a> {
+                                 operator: *operator,
+                                 arguments: vec![one, result],
+                                 coercing: *coercing,
++                                division_primitive: false,
+                             },
+                             Type::Number,
+                             hir.span.clone(),
+                         )?));
+                     }
+                 }
+-                for value in &values[1..] {
++                for (index, value) in values[1..].iter().enumerate() {
+                     let ty = arithmetic_type(
+                         *operator,
+                         &[
+@@ -1038,6 +1051,7 @@ impl<'a> Lowerer<'a> {
+                             operator: *operator,
+                             arguments: vec![result, *value],
+                             coercing: *coercing,
++                            division_primitive: division_primitives.get(index).copied().unwrap_or(false),
+                         },
+                         ty,
+                         hir.span.clone(),
+@@ -1880,7 +1894,11 @@ fn verify_function_inner(
+                     operator,
+                     arguments,
+                     coercing,
++                    division_primitive,
+                 } => {
++                    if *division_primitive && (*operator != Arithmetic::Divide || *coercing) {
++                        return Err(fail("IR source division overload mismatch"));
++                    }
+                     let arity = match operator {
+                         Arithmetic::Negate => 1..=1,
+                         // Unary + and * check a non-Number operand.
+diff --git i/crates/suss-compile/src/runtime_abi/numeric_operands.rs w/crates/suss-compile/src/runtime_abi/numeric_operands.rs
+index f295a8ca..fd9d2eb0 100644
+--- i/crates/suss-compile/src/runtime_abi/numeric_operands.rs
++++ w/crates/suss-compile/src/runtime_abi/numeric_operands.rs
+@@ -41,6 +41,23 @@ pub(super) fn intrinsics(b: &mut Builder) -> [u32; 7] {
+             code.extend(longs::long_arithmetic_fast_path(name == "add", 4, 5, 6));
+         }
+         require_numbers(b, &mut code, symbol, 2);
++        if name == "divide" {
++            // Generic Clojure division propagates a NaN operand before its
++            // zero test. Primitive double overloads below keep IEEE division.
++            for operand in 0..2 {
++                let double = HeapType::Concrete(NUMBER);
++                code.extend([LocalGet(operand), RefTestNonNull(double), If(BlockType::Empty)]);
++                for _ in 0..2 {
++                    code.extend([LocalGet(operand), RefCastNonNull(double),
++                        StructGet { struct_type_index: NUMBER, field_index: 0 }]);
++                }
++                code.extend([F64Ne, If(BlockType::Empty), LocalGet(operand), Return, End, End]);
++            }
++            code.extend([LocalGet(1), Call(b.names["number-unbox"]), F64Const(0.0.into()),
++                F64Eq, If(BlockType::Empty)]);
++            code.extend(numeric::error("Divide by zero", nominal::ERROR_GLOBAL));
++            code.push(End);
++        }
+         code.extend([LocalGet(0), LocalGet(1), Call(operation)]);
+         checked.push(b.function_with_locals(
+             &format!("checked-{name}"),
+@@ -51,6 +68,11 @@ pub(super) fn intrinsics(b: &mut Builder) -> [u32; 7] {
+         ));
+     }
+     let mut code = vec![];
++    require_numbers(b, &mut code, "/", 2);
++    code.extend([LocalGet(0), Call(b.names["number-unbox"]),
++        LocalGet(1), Call(b.names["number-unbox"]), F64Div, StructNew(NUMBER)]);
++    b.function("checked-divide-primitive", &[VALUE, VALUE], &[VALUE], &code);
++    let mut code = vec![];
+     require_numbers(b, &mut code, "-", 1);
+     code.extend([LocalGet(0), Call(b.names["number-negate"])]);
+     checked.push(b.function("checked-negate", &[VALUE], &[VALUE], &code));
+diff --git i/crates/suss-compile/tests/portable_pipeline.rs w/crates/suss-compile/tests/portable_pipeline.rs
+index e9085aa3..6bef91c4 100644
+--- i/crates/suss-compile/tests/portable_pipeline.rs
++++ w/crates/suss-compile/tests/portable_pipeline.rs
+@@ -650,6 +650,7 @@ fn edge_parameter_replacements_are_parallel_in_executed_ir() {
+                         operator: Arithmetic::Subtract,
+                         arguments: vec![ValueId(3), ValueId(4)],
+                         coercing: false,
++                        division_primitive: false,
+                     },
+                     span: 0..1,
+                 }],
+@@ -925,6 +926,7 @@ fn public_hir_negation_executes_and_malformed_arithmetic_is_rejected() {
+                 })
+                 .collect(),
+             coercing: false,
++            division_primitives: vec![],
+         }),
+     };
+     let ir = portable::ir::lower(&make(Arithmetic::Negate, 1)).unwrap();

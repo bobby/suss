@@ -1,0 +1,114 @@
+[
+  [
+    "(generic-div 1.0 0.0)",
+    "[:division-error \"Divide by zero\"]"
+  ],
+  [
+    "(generic-div -1.0 -0.0)",
+    "[:division-error \"Divide by zero\"]"
+  ],
+  [
+    "(generic-div 0.0 0.0)",
+    "[:division-error \"Divide by zero\"]"
+  ],
+  [
+    "(generic-div ##NaN 0.0)",
+    "##NaN"
+  ],
+  [
+    "(generic-div ##Inf -0.0)",
+    "[:division-error \"Divide by zero\"]"
+  ],
+  [
+    "(primitive-div 1.0 0.0)",
+    "##Inf"
+  ],
+  [
+    "(primitive-div -1.0 0.0)",
+    "##-Inf"
+  ],
+  [
+    "(primitive-div -1.0 -0.0)",
+    "##Inf"
+  ],
+  [
+    "(primitive-div 0.0 0.0)",
+    "##NaN"
+  ],
+  [
+    "(primitive-div ##NaN 0.0)",
+    "##NaN"
+  ],
+  [
+    "(/ 1.0 (identity 0.0))",
+    "##Inf"
+  ],
+  [
+    "(/ (identity 1.0) 0.0)",
+    "##Inf"
+  ],
+  [
+    "(let [x (identity 1.0) y (identity 0.0)] (/ x y))",
+    "[:division-error \"Divide by zero\"]"
+  ],
+  [
+    "(let [x (if true 1.0 2.0) y 0.0] (/ x y))",
+    "##Inf"
+  ],
+  [
+    "(generic-div 1.0 2.0)",
+    "0.5"
+  ],
+  [
+    "(primitive-div 1.0 2.0)",
+    "0.5"
+  ],
+  [
+    "(generic-div -0.0 1.0)",
+    "-0.0"
+  ],
+  [
+    "(generic-div ##NaN 1.0)",
+    "##NaN"
+  ],
+  [
+    "(generic-div ##Inf 2.0)",
+    "##Inf"
+  ],
+  [
+    "(/ 0.0)",
+    "[:division-error \"Divide by zero\"]"
+  ],
+  [
+    "(/ 1.0 0.0 1.0)",
+    "##Inf"
+  ],
+  [
+    "(/ 1.0 2.0 0.0)",
+    "##Inf"
+  ],
+  [
+    "(/ 1 (identity 0.0))",
+    "[:division-error \"Divide by zero\"]"
+  ],
+  [
+    "(let [x 1.0 f (fn [y] (/ x y))] (f 0.0))",
+    "##Inf"
+  ],
+  [
+    "(let [x (try 1.0) y (try 0.0)] (/ x y))",
+    "[:division-error \"Divide by zero\"]"
+  ],
+  [
+    "(let [events (atom [])] [(try (/ (do (swap! events conj :a) (identity 1.0)) (do (swap! events conj :b) (identity 0.0))) (catch :default e :division-error)) @events])",
+    "[:division-error [:a :b]]"
+  ],
+  [
+    "(let [events (atom [])] [(try (/ (do (swap! events conj :a) 1) (do (swap! events conj :b) 0) (do (swap! events conj :c) 1.0)) (catch :default e :division-error)) @events])",
+    "[:division-error [:a :b]]"
+  ],
+  [
+    "(do (def active-div (fn [x y] (/ x y))) (let [old active-div] (def active-div (fn [x y] (/ (double x) y))) [(try (old 1.0 0.0) (catch :default e :division-error)) (active-div 1.0 0.0)]))",
+    "[:division-error ##Inf]"
+  ]
+]

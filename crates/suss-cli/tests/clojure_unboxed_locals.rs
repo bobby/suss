@@ -161,11 +161,6 @@ fn doubles_keep_nan_and_signed_zero() {
             "(let [x (identity -5)] [(zero? x) (pos? x) (neg? x) (zero? (identity 0.0)) (neg? (identity -0.0)) (zero? (identity -0.0))])",
             "[false false true true false true]",
         ),
-        (
-            "(let [x 7.0 y 0 z -7.0 w 0.0] [(/ x y) (/ z w) (/ w w)])",
-            "(let [x (identity 7.0) y (identity 0) z (identity -7.0) w (identity 0.0)] [(/ x y) (/ z w) (/ w w)])",
-            "[##Inf ##-Inf ##NaN]",
-        ),
     ]);
 }
 
@@ -466,4 +461,17 @@ fn core_known_numeric_math_keeps_overflow_nan_zero_and_coercing_fallbacks() {
         session.eval("(def core-hinted-left (fn [x] \"-1\"))").unwrap();
     }
     assert_eq!(outcome(&mut sessions, "(core-compare-two-hints 1 2.0)"), "true");
+}
+
+#[test]
+fn double_zero_division_keeps_source_overloads_separate_from_storage() {
+    let mut sessions = sessions();
+    assert_eq!(outcome(&mut sessions,
+        "(let [x 7.0 y 0 z -7.0 w 0.0] [(/ x y) (/ z w) (/ w w)])"),
+        "[##Inf ##-Inf ##NaN]");
+    // These locals have Object source types, so Clojure chooses generic
+    // division even when all their actual values are longs and doubles.
+    assert_eq!(outcome(&mut sessions,
+        "(let [x (identity 7.0) y (identity 0) z (identity -7.0) w (identity 0.0)] [(/ x y) (/ z w) (/ w w)])"),
+        "[:error \"Divide by zero\"]");
 }

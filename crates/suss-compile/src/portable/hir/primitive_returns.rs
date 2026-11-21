@@ -38,6 +38,15 @@ pub(super) fn validate(
 
 struct LoopInputs { target: LoopId, kinds: Vec<Primitive> }
 
+/// A genuine Clojure source kind; physical boxing must not select overloads.
+pub(super) fn kind(
+    hir: &Hir,
+    bindings: &mut HashMap<BindingId, Primitive>,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Primitive, Diagnostic> {
+    infer(hir, bindings, meter, &mut Vec::new())
+}
+
 fn infer(
     hir: &Hir,
     bindings: &mut HashMap<BindingId, Primitive>,
@@ -95,7 +104,7 @@ fn infer(
             Expression::Literal(Literal::Number(_)) => Double,
             // Bootstrap inc/dec expand to arithmetic without an Invoke node.
             // Infer from source operands, never the backend's numeric facts.
-            Expression::Arithmetic { operator, arguments, coercing } => {
+            Expression::Arithmetic { operator, arguments, coercing, .. } => {
                 if *coercing { Boxed } else {
                     let mut kinds = Vec::with_capacity(arguments.len());
                     for argument in arguments { kinds.push(infer(argument, bindings, meter, loops)?); }

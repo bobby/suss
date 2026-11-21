@@ -41,6 +41,23 @@ pub(super) fn intrinsics(b: &mut Builder) -> [u32; 7] {
             code.extend(longs::long_arithmetic_fast_path(name == "add", 4, 5, 6));
         }
         require_numbers(b, &mut code, symbol, 2);
+        if name == "divide" {
+            // Generic Clojure division propagates a NaN operand before its
+            // zero test. Primitive double overloads below keep IEEE division.
+            for operand in 0..2 {
+                let double = HeapType::Concrete(NUMBER);
+                code.extend([LocalGet(operand), RefTestNonNull(double), If(BlockType::Empty)]);
+                for _ in 0..2 {
+                    code.extend([LocalGet(operand), RefCastNonNull(double),
+                        StructGet { struct_type_index: NUMBER, field_index: 0 }]);
+                }
+                code.extend([F64Ne, If(BlockType::Empty), LocalGet(operand), Return, End, End]);
+            }
+            code.extend([LocalGet(1), Call(b.names["number-unbox"]), F64Const(0.0.into()),
+                F64Eq, If(BlockType::Empty)]);
+            code.extend(numeric::error("Divide by zero", nominal::ERROR_GLOBAL));
+            code.push(End);
+        }
         code.extend([LocalGet(0), LocalGet(1), Call(operation)]);
         checked.push(b.function_with_locals(
             &format!("checked-{name}"),
@@ -50,6 +67,11 @@ pub(super) fn intrinsics(b: &mut Builder) -> [u32; 7] {
             &code,
         ));
     }
+    let mut code = vec![];
+    require_numbers(b, &mut code, "/", 2);
+    code.extend([LocalGet(0), Call(b.names["number-unbox"]),
+        LocalGet(1), Call(b.names["number-unbox"]), F64Div, StructNew(NUMBER)]);
+    b.function("checked-divide-primitive", &[VALUE, VALUE], &[VALUE], &code);
     let mut code = vec![];
     require_numbers(b, &mut code, "-", 1);
     code.extend([LocalGet(0), Call(b.names["number-negate"])]);
