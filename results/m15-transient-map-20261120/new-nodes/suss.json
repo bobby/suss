@@ -1,0 +1,12 @@
+{
+  "source_head": "eb85bacf80a744f8e74f476da04d48e77f1051e4",
+  "source_dirty": " M crates/suss-compile/src/portable/emit.rs\n M crates/suss-compile/src/portable/hir.rs\n M crates/suss-compile/src/runtime_abi.rs\n M crates/suss-compile/src/runtime_abi/transient_vectors.rs\n M docs/compatibility/bootstrap/exact-integers.sus\n M docs/compatibility/core-import.json\n M docs/compatibility/patches/hash-map-assoc-bang.json\n M docs/compatibility/patches/vector-conj-bang.json\n M runtime/core-import/manifest.json\n M runtime/core-import/suss/core.sus\n?? crates/suss-cli/tests/transient_map_storage.rs\n?? crates/suss-compile/src/runtime_abi/transient_maps.rs\n",
+  "executable_sha256": "0a90412a6d7e67785d2fe71072601d65eecc47210a943075f8a5b0fade08e7c7",
+  "tracked_patch_sha256": "7b773392e2bffac4f29c15f1ace7f6851df1bd6a15f7463b941e0fa6b9a9dbb6",
+  "untracked_sha256": {
+    "crates/suss-compile/src/runtime_abi/transient_maps.rs": "0f0c70f9c0987ca297deea38195624c0bd1b7e605a1f9664c2b2c6628f75bbe7",
+    "crates/suss-cli/tests/transient_map_storage.rs": "97377d5c5d0ed427b48d42eb1ea853b36de2a06b9e5edfdd897489919262a4f1"
+  },
+  "core_sha256": "05402cd86bc17c90e8c4d222ddda3ec18ac389f917420d1bd3ffd4061820aa79",
+  "note": "Preflighted editable integer-key HAMT storage including new child nodes and leaf splitting; 22 focused tests; no quiet timing acceptance"
+}

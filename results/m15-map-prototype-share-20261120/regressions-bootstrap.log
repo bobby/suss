@@ -1,0 +1,55 @@
+Running as unit: run-p3245580-i82913493.scope; invocation ID: baeac3c3e1d147d8aa9762b1bb0b373f
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-map-prototype-share-source/crates/suss-cli)
+    Finished `release` profile [optimized] target(s) in 1.76s
+     Running tests/map_lookups.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/map_lookups-70afb1ff6d316457)
+
+running 2 tests
+test persistent_keyword_updates_keep_snapshots_metadata_and_values_after_gc ... ok
+test lookups_answer_as_clojure_does ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.20s
+
+     Running tests/portable_hash_map_sharing.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/portable_hash_map_sharing-cc161a38a9e07e69)
+
+running 3 tests
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test persistent_hamt_update_copies_selected_path_and_retains_unrelated_child_after_gc ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.22s
+
+     Running tests/portable_object_methods.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/portable_object_methods-e3abfb95a777d173)
+
+running 2 tests
+test malformed_object_methods_fail_atomically_and_session_recovers ... ok
+test object_methods_match_independently_decoded_primary_observations_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.90s
+
+     Running tests/program_paths.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/program_paths-d954f95649416a0a)
+
+running 4 tests
+test core_field_writes_answer_as_before ... ok
+test chunked_reductions_answer_as_before ... ok
+test instance_sites_answer_as_before ... ok
+test unhinted_array_access_answers_as_before ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.32s
+
+    Finished `release` profile [optimized] target(s) in 0.10s
+     Running `/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/suss-bootstrap /home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/tmp.LpWJSNHoCx/first`
+    Finished `release` profile [optimized] target(s) in 0.10s
+     Running `/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/suss-bootstrap /home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/tmp.LpWJSNHoCx/second`
+compiled build-script identity: checkout-independent; embedded libraries, numeric assets and pinned command WIT graph invalidate
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-map-prototype-share-source/crates/suss-cli)
+    Finished `release` profile [optimized] target(s) in 2.16s
+     Running tests/compiled_bootstrap.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/compiled_bootstrap-63a60dda609c52f7)
+
+running 4 tests
+test compiled_bootstrap_executes_macro_syntax_quote_without_host_evaluation ... ok
+test compiled_bootstrap_catalog_cache_never_shares_guest_state ... ok
+test compiled_bootstrap_rejects_changed_identity_and_corruption ... ok
+test compiled_bootstrap_images_are_reproducible_and_phase_specific ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.69s
+

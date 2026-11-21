@@ -113,9 +113,11 @@ def run(source, executable, output, idle):
         save(output / "receipt.json", receipt)
 
 
-def evaluate(baseline, candidate, required_programs=None):
-    required = list(required_programs if required_programs is not None else ["lazy-pipeline", "string-build"])
-    if not required or any(name not in ISSUE_PROGRAMS for name in required):
+def evaluate(baseline, candidate, required_programs=None, *, all_programs=False):
+    if all_programs and required_programs is not None:
+        raise ValueError("The complete program gate cannot be combined with a partial issue gate")
+    required = list(PROGRAMS if all_programs else required_programs if required_programs is not None else ["lazy-pipeline", "string-build"])
+    if not required or (not all_programs and any(name not in ISSUE_PROGRAMS for name in required)):
         raise ValueError("Only the existing lazy-pipeline/string-build/into-vector issue gates may be selected")
     failures, ratios, regressions = [], {}, {}
     unresolved = []
@@ -176,6 +178,7 @@ def main():
     for name in ["baseline", "candidate", "output"]:
         compare.add_argument("--" + name, type=Path, required=True)
     compare.add_argument("--require-program", action="append", choices=ISSUE_PROGRAMS)
+    compare.add_argument("--all-programs", action="store_true")
     args = parser.parse_args()
     if args.command == "wait":
         wait_idle(args.output, args.timeout)
@@ -184,7 +187,7 @@ def main():
     else:
         runs = [{name: json.loads((directory / (name + ".json")).read_text())
                  for name in ["receipt", "suss", "jvm"]} for directory in [args.baseline, args.candidate]]
-        result = evaluate(*runs, args.require_program)
+        result = evaluate(*runs, args.require_program, all_programs=args.all_programs)
         save(args.output, result)
         print(json.dumps(result, indent=2))
         if result["failures"]:

@@ -2501,7 +2501,8 @@
 ([tcoll val]
     (let [appended (suss.bootstrap/transient-vector-append tcoll val)]
       (if (suss.bootstrap/undefined? appended)
-        (-conj! tcoll val)
+        (let [associated (suss.bootstrap/transient-map-conj tcoll val)]
+          (if (suss.bootstrap/undefined? associated) (-conj! tcoll val) associated))
         appended)))
 ([tcoll val & vals]
     (let [ntcoll (-conj! tcoll val)]
@@ -3447,7 +3448,8 @@
   Note - index must be <= (count vector). Returns coll."
  (fn
  ([tcoll key val]
-    (-assoc! tcoll key val))
+    (let [associated (suss.bootstrap/transient-map-assoc tcoll key val)]
+      (if (suss.bootstrap/undefined? associated) (-assoc! tcoll key val) associated)))
   ([tcoll key val & kvs]
     (let [ntcoll (-assoc! tcoll key val)]
       (if kvs
@@ -11953,6 +11955,12 @@ reduces them without incurring seq initialization"
 ;; here rather than exposing mutable root fields during ordinary source loading.
 (suss.bootstrap/transient-vector-types! (transient [])
   (VectorNode. nil (make-array 0)) (Unique.))
+
+;; Checked map edits use a separate private registry for every admitted layout.
+(suss.bootstrap/transient-map-types!
+  (TransientHashMap. (Unique.) nil 0 false nil)
+  (BitmapIndexedNode. nil 0 (make-array 0))
+  (ArrayNode. nil 0 (make-array 32)) (Unique.) [nil nil])
 
 ;; Canonical chunks are owned core types; user IChunk implementations retain
 ;; their protocol path. Register witnesses after all core definitions exist.

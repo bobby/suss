@@ -1,0 +1,24 @@
+Running as unit: run-p3141760-i82804473.scope; invocation ID: f4b6fa63b46b4e2a80b5e19ffcfad6a1
+508 core import files written
+bounded apply bootstrap v1 and four complete licensed generators verified
+     Removed 20 files, 53.2MiB total
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-transient-map-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-transient-map-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-transient-map-source/crates/suss-cli)
+    Finished `release` profile [optimized] target(s) in 1m 37s
+     Running `/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/suss-bootstrap /home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/tmp.cgxN6D0VyG/first`
+    Finished `release` profile [optimized] target(s) in 0.11s
+     Running `/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/suss-bootstrap /home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/tmp.cgxN6D0VyG/second`
+compiled build-script identity: checkout-independent; embedded libraries, numeric assets and pinned command WIT graph invalidate
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-transient-map-source/crates/suss-cli)
+    Finished `release` profile [optimized] target(s) in 28.51s
+     Running tests/compiled_bootstrap.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/compiled_bootstrap-63a60dda609c52f7)
+
+running 4 tests
+test compiled_bootstrap_executes_macro_syntax_quote_without_host_evaluation ... ok
+test compiled_bootstrap_catalog_cache_never_shares_guest_state ... ok
+test compiled_bootstrap_rejects_changed_identity_and_corruption ... ok
+test compiled_bootstrap_images_are_reproducible_and_phase_specific ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.96s
+

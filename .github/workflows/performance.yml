@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   compare:
-    if: contains(github.event.pull_request.labels.*.name, 'performance-benchmark') || contains(github.event.pull_request.labels.*.name, 'performance-string-build') || contains(github.event.pull_request.labels.*.name, 'performance-vector-build')
+    if: contains(github.event.pull_request.labels.*.name, 'performance-benchmark') || contains(github.event.pull_request.labels.*.name, 'performance-string-build') || contains(github.event.pull_request.labels.*.name, 'performance-vector-build') || contains(github.event.pull_request.labels.*.name, 'performance-programs')
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     env:
@@ -21,6 +21,7 @@ jobs:
       JAVA_TOOL_OPTIONS: -Xmx512m
       CARGO_TARGET_DIR: ${{ github.workspace }}/target/probe/performance-build
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      REQUIRE_ALL_PROGRAMS: ${{ contains(github.event.pull_request.labels.*.name, 'performance-programs') }}
       REQUIRED_PROGRAMS: ${{ format('{0} {1}', contains(github.event.pull_request.labels.*.name, 'performance-benchmark') && 'lazy-pipeline string-build' || contains(github.event.pull_request.labels.*.name, 'performance-string-build') && 'string-build' || '', contains(github.event.pull_request.labels.*.name, 'performance-vector-build') && 'into-vector' || '') }}
     steps:
       - uses: actions/checkout@v4
@@ -102,9 +103,13 @@ jobs:
         run: |
           read -r -a programs <<< "$REQUIRED_PROGRAMS"
           required_args=()
-          for program in "${programs[@]}"; do
-            required_args+=(--require-program "$program")
-          done
+          if [ "$REQUIRE_ALL_PROGRAMS" = true ]; then
+            required_args+=(--all-programs)
+          else
+            for program in "${programs[@]}"; do
+              required_args+=(--require-program "$program")
+            done
+          fi
           systemd-run --user --scope -p MemoryMax=512M python3 scripts/performance_bench.py compare \
             --baseline target/probe/performance/baseline \
             --candidate target/probe/performance/candidate \

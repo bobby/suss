@@ -1,0 +1,19 @@
+Running as unit: run-p3141240-i82804402.scope; invocation ID: 5b6045a680034672ae3e1d1ece967c46
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-transient-map-source/crates/suss-cli)
+    Finished `release` profile [optimized] target(s) in 5.77s
+     Running tests/transient_map_storage.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/transient_map_storage-9287f7d068a43264)
+
+running 10 tests
+test custom_protocol_return_values_and_operand_effects_are_preserved ... ok
+test fallback_keys_values_gc_and_argument_effects_match_clojure ... ok
+test full_hash_collisions_and_unsupported_domains_decline_before_writes ... ok
+test native_child_creation_and_integer_leaf_split_preserve_values ... ok
+test native_full_bitmap_promotion_retains_all_keys_and_replaces_root ... ok
+test native_leaf_insert_and_update_are_atomic_and_keep_edit_lifetime ... ok
+test native_leaf_values_and_closures_remain_rooted_after_collection ... ok
+test private_registration_is_atomic_and_ordinary_core_declines ... ok
+test public_builds_updates_and_snapshots_keep_all_hash_trie_boundaries ... ok
+test aot_map_construction_preserves_public_counts_and_values ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.29s
+

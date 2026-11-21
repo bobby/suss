@@ -1,0 +1,4 @@
+# Exact raw observations and patch context retain their original whitespace.
+*.log -whitespace
+*.patch -whitespace
+*.clj -whitespace

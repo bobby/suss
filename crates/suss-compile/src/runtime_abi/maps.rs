@@ -244,8 +244,10 @@ pub(super) fn functions(b: &mut Builder) {
 /// copied and `v` in its place; `m` itself when `v` is already its value, as
 /// core answers. Anything else answers undefined, for core's assoc: another
 /// collection or key, a new key, a collision node or an unexpected shape.
-/// Each new node is built as object-new builds it, with the old node's
-/// descriptor and a copy of its prototype cell.
+/// Each new node retains the old descriptor and prototype snapshot. Canonical
+/// nominal objects never expose or mutate the private one-element prototype
+/// container, so a persistent copy can retain that container as well as its
+/// contents. The underlying prototype object remains live and shared as before.
 fn assoc_functions(b: &mut Builder) {
     use Instruction::*;
     let miss = || [sentinel_value(UNDEFINED), Return];
@@ -266,6 +268,13 @@ fn assoc_functions(b: &mut Builder) {
             If(BlockType::Empty),
         ]);
         body.extend(miss());
+        body.extend([
+            End,
+            LocalGet(obj), StructGet { struct_type_index: 7, field_index: 2 },
+            RefCastNonNull(HeapType::Concrete(ARGS)), ArrayLen, I32Const(1), I32Ne,
+            If(BlockType::Empty),
+        ]);
+        body.extend(miss());
         body.push(End);
     };
     // A new object of `obj`'s type and prototype with the fields on the stack.
@@ -274,9 +283,11 @@ fn assoc_functions(b: &mut Builder) {
             LocalSet(fields),
             LocalGet(desc), RefAsNonNull,
             LocalGet(fields), RefAsNonNull,
-            LocalGet(obj), StructGet { struct_type_index: 7, field_index: 2 }, RefCastNonNull(HeapType::Concrete(ARGS)),
-            I32Const(0), ArrayGet(ARGS),
-            ArrayNewFixed { array_type_index: ARGS, array_size: 1 },
+            // Source operations read the prototype through this container but
+            // cannot obtain the container itself. Only native-object backing
+            // stores support prototype replacement; their descriptor is never
+            // admitted by this persistent-map/node helper.
+            LocalGet(obj), StructGet { struct_type_index: 7, field_index: 2 },
             I32Const(0), RefI31, // Identity UID, unassigned.
             StructNew(7),
         ]);

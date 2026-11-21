@@ -1,0 +1,35 @@
+Running as unit: run-p3141773-i82811471.scope; invocation ID: d599b68095b94a2f97faf4eecfac302f
+.........................................................................................................................................................................................................................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 361 tests in 31.658s
+
+OK
+PASS 112 closed Error cases/driver; native pending
+PASS 112 exact pinned Error constructor/ancestry/effect observations
+38 pinned portable source observations match exactly
+PASS 41 queue value cases and 11 complete ordered iterator observations
+PASS 33 pinned record helper observations
+PASS 14 pinned record iterator/not-empty observations
+PASS 7 pinned reify prerequisite observations
+PASS 132 closed sorted tree cases/driver; not executed
+PASS 132 independent pinned sorted tree observations
+PASS 132 independent pinned sorted tree observations
+66 raw pin matches
+45 pinned portable source observations match exactly
+PASS 52 closed raw tree cases/driver; not executed
+PASS 52 independent pinned raw tree observations
+PASS 52 independent pinned raw tree observations
+1065 upstream declarations; inventory verified
+Review overlay verified: 638 reviewed, 427 unassessed declarations
+508 core import files verified
+reader core namespace catalog verified
+bounded apply bootstrap v1 and four complete licensed generators verified
+28 complete licensed sequence setup forms verified
+14 complete transducer declarations, 3 dependencies and public lazy-seq source verified; runtime acceptance remains separate
+when-let source provenance, adaptation, retained oracle bytes and receipts match; no Suss execution implied
+conditional imul pin, file hash and complete source region verified
+Verified 15 WIT files and 6 official packages
+Numeric source/artifact manifest verified
+75 JVM Clojure array cases current
+clojure-test-suite lock: 251 files at 95d4a9112cfc; 26 classified js/ references
+legacy overlap: {'cases': 201, 'with-suite-coverage': 171, 'legacy-only': 30}

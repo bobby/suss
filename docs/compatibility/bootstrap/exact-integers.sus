@@ -2016,6 +2016,12 @@
 (suss.bootstrap/transient-vector-types! (transient [])
   (VectorNode. nil (make-array 0)) (Unique.))
 
+;; Checked map edits use a separate private registry for every admitted layout.
+(suss.bootstrap/transient-map-types!
+  (TransientHashMap. (Unique.) nil 0 false nil)
+  (BitmapIndexedNode. nil 0 (make-array 0))
+  (ArrayNode. nil 0 (make-array 32)) (Unique.) [nil nil])
+
 ;; Canonical chunks are owned core types; user IChunk implementations retain
 ;; their protocol path. Register witnesses after all core definitions exist.
 (suss.bootstrap/chunk-types! (ArrayChunk. (make-array 0) 0 0) (chunk-buffer 0)

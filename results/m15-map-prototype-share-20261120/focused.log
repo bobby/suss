@@ -1,0 +1,39 @@
+Running as unit: run-p3243436-i82916612.scope; invocation ID: a9bfd4d92e8241b1b4d4bccc9b084e6a
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-map-prototype-share-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-map-prototype-share-source/crates/suss-cli)
+    Finished `release` profile [optimized] target(s) in 1m 37s
+     Running tests/map_lookups.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/map_lookups-70afb1ff6d316457)
+
+running 1 test
+test lookups_answer_as_clojure_does ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.06s
+
+     Running tests/portable_hash_map_sharing.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/portable_hash_map_sharing-cc161a38a9e07e69)
+
+running 3 tests
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test persistent_hamt_update_copies_selected_path_and_retains_unrelated_child_after_gc ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.37s
+
+     Running tests/portable_object_methods.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/portable_object_methods-e3abfb95a777d173)
+
+running 2 tests
+test malformed_object_methods_fail_atomically_and_session_recovers ... ok
+test object_methods_match_independently_decoded_primary_observations_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.95s
+
+     Running tests/program_paths.rs (/home/bobby/.codex-workspaces/worktrees/ios-84001573-c91f-4024-ad94-a1fbeeb1d939/suss/target/probe/m15-hamt-target/release/deps/program_paths-d954f95649416a0a)
+
+running 4 tests
+test core_field_writes_answer_as_before ... ok
+test chunked_reductions_answer_as_before ... ok
+test instance_sites_answer_as_before ... ok
+test unhinted_array_access_answers_as_before ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.75s
+
+    Finished `release` profile [optimized] target(s) in 0.14s

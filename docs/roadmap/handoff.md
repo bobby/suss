@@ -1,5 +1,40 @@
 ## Independent PR177 review — typed invocation before guest initialization
 
+## Canonical transient-map storage probes (2026-11-20)
+
+For #446, the guarded map helpers use a private atomically registered set of
+TransientHashMap/BitmapIndexedNode/ArrayNode/Unique/PersistentVector witnesses.
+Every traversed node must have the live map edit token. i31 keys use the existing
+Clojure long hash. Admitted operations update/insert a leaf, create missing
+children, split distinct integer hashes or promote a full bitmap only after
+preflighting its old keys. All existing storage writes follow admission and
+necessary private allocation. COW, noninteger keys, full hash collisions,
+unsupported layouts and custom entries/receivers retain source handling.
+Ordinary source-core adapters decline; existing ABI7 layouts/global offsets stay.
+
+Edit replacement JSON and the owned loader, refresh its input SHA256, regenerate
+with core_import.py, then apply_bootstrap.py --check. Use cargo +stable release
+with SUSS_FUNCTION_NAMES=1 at build/compile, two jobs/test threads, bounded4GiB
+user scopes and target/probe-backed TMPDIR/output. Run transient_map_storage,
+transient_vector_append and clojure_chunk_effects:28 distinct tests pass, including
+actual AOT, GC, snapshots/COW, private admission/decline, full collisions, atomic
+registration, errors and custom nil returns. Fresh JVM Clojure1.12.6 public
+values/effects match; -51283/37831 are unequal keys with the same hash.
+All361 Python tests, foundation checks and actionlint1.7.12 pass. Java-free
+verification pins stable throughout, reproduces both phase artifacts byte-for-byte,
+verifies compiler identities and passes four bootstrap execution tests.
+
+results/m15-transient-map-20261120 retains exact frozen source/executable receipts,
+all raw instruction observations and failed attempts. Median3 N1000-minus0,
+warm-first unchanged forms: into-map11,978,597.640 to3,963,274.075 instructions/run
+(66.913706% fewer); vector remains1,114,941 and the other five are essentially
+unchanged. Earlier leaf-only/new-child variants remain separately identified.
+Counts do not establish the5x walltime target. performance-programs requires all
+seven original limits plus string allocation and no material regressions, after
+separate baseline/candidate idle commands. Existing partial issue modes retain
+their behavior. Actual quiet timing and final-head CI remain separate evidence
+on #446; do not infer their result from this local count reduction.
+
 ## Canonical transient-vector append probes (2026-11-20)
 
 For #487, the current-tail storage adapter admits only owned transient-vector,
@@ -30931,3 +30966,34 @@ admitted offsets with proved bounds use unchecked raw addition. Ordinary source
 core keeps checked arithmetic and declines privileged storage helpers. Shared
 ABI7 types and existing runtime globals are unchanged. Require a new final-head
 quiet benchmark and complete correctness CI before treating this as acceptance.
+
+
+## Persistent-map allocation probes (2026-11-20)
+
+`results/m15-map-prototype-share-20261120` retains exact measured source/executable
+hashes, full instruction observations, JVM 1.12.6 forms/results and local check logs.
+Native persistent copies retain their existing read-only private prototype holder,
+with the same prototype snapshot and live referent. The holder itself is never
+published to source or mutated for nominal objects. Native-object prototype setters
+operate on a different descriptor, which this helper never admits. A one-element
+holder is required before admission; generic/custom/malformed domains keep source
+fallback. Shared ABI7 layouts and runtime-global offsets are unchanged.
+
+Warm-first median-three instructions:u at 1000 less 0 on unchanged bench.py forms
+measure word-frequencies 3,412,017.489 ->3,205,015.658 (6.066846% fewer). Counts are
+not quiet timing acceptance. Both fixed-array clone variants were slower and are
+excluded, with their raw attempts retained under target/probe/m15-map-copy-*.
+A separately verified native-cache/disassembly matches all 641 runtime function
+addresses/sizes in the instruction profile; cycles show node copy39.48%, lookup
+16.42%, association9.57%, startup included. Raw profiles/receipts are under
+target/probe/m15-storage-word-frequencies-20261120-{profile,cycles}.
+
+Eleven focused tests across map_lookups, portable_hash_map_sharing,
+portable_object_methods and program_paths pass, including snapshot metadata,
+complete value checks, nil/false/wide longs, retained closures and GC in both
+phases. Fresh JVM 1.12.6 matches the public matrix. All 361 Python and CI foundation
+checks pass; stable-pinned Java-free release bootstrap reproduction is byte-exact
+in both phases and four execution tests pass. Build/test/probe commands remain in
+MemoryMax4G user scopes with two jobs/threads, cargo +stable, named build/compile
+and TMPDIR/output under target/probe. New final-head quiet/correctness CI remains
+required; this evidence does not by itself establish the5× time criterion.

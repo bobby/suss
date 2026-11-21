@@ -66,3 +66,34 @@ fn lookups_answer_as_clojure_does() {
         }
     }
 }
+
+#[test]
+fn persistent_keyword_updates_keep_snapshots_metadata_and_values_after_gc() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        session.eval(r#"
+          (def retained-map-readers
+            (mapv (fn [n]
+              (let [ks (vec (map (fn [i] (keyword (str "copy" i))) (range n)))
+                    original (with-meta (zipmap ks (range n)) {:stamp :old})
+                    changed (reduce (fn [m i]
+                              (assoc m (nth ks i) [i 9007199254740993])) original (range n))
+                    final (assoc changed (nth ks 0) nil (nth ks (dec n)) false :new :added)]
+                (fn []
+                  (let [expected (vec (map (fn [i] [i 9007199254740993]) (range n)))]
+                    [(count original) (count changed) (count final) (meta final)
+                     (= (vec (map (fn [k] (get original k :missing)) ks)) (vec (range n)))
+                     (= (vec (map (fn [k] (get changed k :missing)) ks)) expected)
+                     (= (vec (map (fn [k] (get final k :missing)) ks))
+                        (assoc expected 0 nil (dec n) false))
+                     (get final :new) (map? final)])))) [1 9 37 129]))"#).unwrap();
+        session.collect().unwrap();
+        // Full value comparisons happen before returning this bounded result.
+        // The same public forms execute on JVM Clojure 1.12.6; no compiler
+        // data or built-in internal identity is used as the behavior oracle.
+        assert_eq!(printed(&mut session, "(mapv (fn [f] (f)) retained-map-readers)"),
+          "[[1 1 2 {:stamp :old} true true true :added true] [9 9 10 {:stamp :old} true true true :added true] [37 37 38 {:stamp :old} true true true :added true] [129 129 130 {:stamp :old} true true true :added true]]");
+        session.collect().unwrap();
+        assert_eq!(printed(&mut session,
+            "(let [f (nth retained-map-readers 2)] (= (f) (f)))"), "true");
+    }
+}
