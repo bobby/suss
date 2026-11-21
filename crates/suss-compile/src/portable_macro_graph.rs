@@ -1278,6 +1278,7 @@ impl<'a> AnalysisGraph<'a> {
             }
             let namespaces = self.map_values(namespaces)?;
             let mut protocols = Vec::new();
+            let mut protocol_identity_names = Vec::new();
             // Faithful lookup projection of the same phase-filtered protocol
             // identities. Helpers use local keys without rebuilding an index
             // inside each macro invocation. Metadata never supplies identity.
@@ -1286,6 +1287,12 @@ impl<'a> AnalysisGraph<'a> {
             let mut protocol_names = std::collections::BTreeSet::new();
             for (global, methods) in &context.environment.protocols {
                 if global.phase() != context.phase {
+                    continue;
+                }
+                self.charge(global.name().len().saturating_add(global.namespace().len()).saturating_add(1))?;
+                protocol_names.insert(global.name().to_owned());
+                if record_bindings {
+                    protocol_identity_names.push(format!("{}/{}", global.namespace(), global.name()));
                     continue;
                 }
                 let mut signatures = Vec::new();
@@ -1300,37 +1307,64 @@ impl<'a> AnalysisGraph<'a> {
                 let signatures = self.map_values(signatures)?;
                 let identity = self.symbol(&format!("{}/{}", global.namespace(), global.name()))?;
                 let local = self.symbol(global.name())?;
-                protocol_names.insert(global.name().to_owned());
                 protocol_globals_by_namespace
                     .entry(global.namespace().to_owned())
                     .or_default()
                     .push((local, identity));
                 protocols.push((identity, signatures));
             }
-            let protocols = self.map_values(protocols)?;
+            let protocols = if record_bindings {
+                let mut names = protocol_identity_names.iter().map(String::as_str).collect::<Vec<_>>();
+                self.name_index(&mut names)?
+            } else {
+                self.map_values(protocols)?
+            };
             let mut protocol_namespaces = Vec::new();
             for (namespace, globals) in protocol_globals_by_namespace {
                 let namespace = self.text(&namespace)?;
                 let globals = self.map_values(globals)?;
                 protocol_namespaces.push((namespace, globals));
             }
-            let protocol_globals_by_namespace = self.map_values(protocol_namespaces)?;
+            let protocol_globals_by_namespace = if record_bindings {
+                protocols
+            } else {
+                self.map_values(protocol_namespaces)?
+            };
             // Resolve candidate names using the actual compiler scope. Preserve
             // refers/own/exclusions/core precedence; no metadata or signature
             // entry is treated as a resolved binding.
             let mut unqualified_protocol_bindings = Vec::new();
+            let mut indexed_bindings = BTreeMap::new();
             for name in protocol_names {
                 let local = suss_reader::Symbol::new(&name);
                 if let Ok(portable::resolve::Binding::Cell(global)) =
                     context.environment.resolve(context.phase, &local, 0..0)
                 {
-                    let local = self.symbol(&name)?;
                     let identity =
                         self.symbol(&format!("{}/{}", global.namespace(), global.name()))?;
-                    unqualified_protocol_bindings.push((local, identity));
+                    if record_bindings {
+                        indexed_bindings.insert(name, identity);
+                    } else {
+                        let local = self.symbol(&name)?;
+                        unqualified_protocol_bindings.push((local, identity));
+                    }
                 }
             }
-            let unqualified_protocol_bindings = self.map_values(unqualified_protocol_bindings)?;
+            let unqualified_protocol_bindings = if record_bindings {
+                self.charge(indexed_bindings.len().saturating_mul(2))?;
+                let mut names = indexed_bindings.keys().map(String::as_str).collect::<Vec<_>>();
+                let index = self.name_index(&mut names)?;
+                let mut values = Vec::with_capacity(names.len());
+                for name in names {
+                    self.charge(name.len().saturating_add(1).saturating_mul(
+                        (indexed_bindings.len().max(1).ilog2() as usize).saturating_add(1)))?;
+                    values.push(indexed_bindings[name]);
+                }
+                let values = self.vector(&values)?;
+                self.vector(&[index, values])?
+            } else {
+                self.map_values(unqualified_protocol_bindings)?
+            };
             let mut native_interfaces = Vec::new();
             for fact in &compiler.native_interfaces {
                 let global = self.symbol(&format!(
@@ -1366,7 +1400,7 @@ impl<'a> AnalysisGraph<'a> {
                 ("phase", phase),
                 ("current", current),
                 ("namespaces", namespaces),
-                ("protocol-signatures", protocols),
+                (if record_bindings { "suss/protocol-binding-index" } else { "protocol-signatures" }, protocols),
                 (
                     "protocol-globals-by-namespace",
                     protocol_globals_by_namespace,
@@ -1438,6 +1472,25 @@ impl<'a> AnalysisGraph<'a> {
             ("fn-scope", scopes),
         ])
     }
+    fn name_index(&mut self, names: &mut [&str]) -> Result<Value> {
+        self.charge(names.len())?;
+        let mut scratch = names.to_vec();
+        sort_binding_names(names, &mut scratch, &mut |work| self.charge(work))?;
+        // One owned string avoids a guest allocation for every name. Explicit
+        // UTF-16 boundaries preserve empty names and every delimiter verbatim.
+        let mut text = Vec::new();
+        let mut offsets = Vec::with_capacity(names.len().saturating_add(1));
+        for name in names.iter().copied() {
+            self.charge(name.len().saturating_add(1))?;
+            offsets.push(self.number(text.len())?);
+            text.extend(name.encode_utf16());
+        }
+        offsets.push(self.number(text.len())?);
+        let text = self.scalar(Literal::String(text))?;
+        let offsets = self.vector(&offsets)?;
+        self.vector(&[text, offsets])
+
+    }
     fn namespace_membership(&mut self, namespace: &SourceNamespace) -> Result<Value> {
         let name = self.symbol(&namespace.namespace)?;
         let mut aliases = Vec::new();
@@ -1465,21 +1518,7 @@ impl<'a> AnalysisGraph<'a> {
             .iter()
             .map(|global| global.name())
             .collect::<Vec<_>>();
-        let mut scratch = names.clone();
-        sort_binding_names(&mut names, &mut scratch, &mut |work| self.charge(work))?;
-        // One owned string avoids a guest allocation for every name. Explicit
-        // UTF-16 boundaries preserve empty names and every delimiter verbatim.
-        let mut text = Vec::new();
-        let mut offsets = Vec::with_capacity(names.len().saturating_add(1));
-        for name in names {
-            self.charge(name.len().saturating_add(1))?;
-            offsets.push(self.number(text.len())?);
-            text.extend(name.encode_utf16());
-        }
-        offsets.push(self.number(text.len())?);
-        let text = self.scalar(Literal::String(text))?;
-        let offsets = self.vector(&offsets)?;
-        let names = self.vector(&[text, offsets])?;
+        let names = self.name_index(&mut names)?;
         self.map(vec![
             ("name", name),
             ("requires", aliases),

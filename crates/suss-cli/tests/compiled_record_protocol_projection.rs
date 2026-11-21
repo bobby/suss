@@ -20,16 +20,12 @@ fn actual_protocol_indexes_preserve_caller_phase_and_own_identity() {
                  (get (:unqualified-protocol-bindings c) 'IHash)
                  (get (:unqualified-protocol-bindings c) 'IMeta)])))"#;
         macros.define(full_source).unwrap();
-        macros
-            .define(
-                &full_source
-                    .replace(
-                        ":suss/compiler-catalog true",
-                        ":suss/compiler-catalog :record-bindings",
-                    )
-                    .replace("protocol-index", "protocol-index-record"),
-            )
-            .unwrap();
+        macros.define(r#"(defmacro ^{:suss/compiler-catalog :record-bindings} protocol-index-record []
+          (let [resolve (fn [global]
+                          (try (first (:protocols
+                            (suss.internal.record-protocol-facts/resolve-record-compiler-facts &env [global])))
+                            (catch :default _ nil)))]
+            (list 'quote [(resolve 'suss.core/IHash) (resolve 'IHash) (resolve 'IMeta)])))"#).unwrap();
         for (case, source, expected) in [
             (
                 "own-metadata",
@@ -166,8 +162,8 @@ fn membership_index_preserves_unicode_order_and_names_with_delimiters() {
                     let value = session.eval_with_macros(&format!("(user/resolve-name {literal} {qualified})"), &mut macros).unwrap();
                     let actual = bridge.read(&mut session, &value, 0..0).unwrap();
                     let expected = read_forms(literal).unwrap().remove(0);
-                    let Kind::String(expected) = expected.kind else { panic!("name string") };
-                    let Kind::Set(protocols) = actual.kind else { panic!("resolved identities") };
+                    let Kind::String(expected) = expected.into_parts().2 else { panic!("name string") };
+                    let Kind::Set(protocols) = actual.into_parts().2 else { panic!("resolved identities") };
                     assert_eq!(protocols.len(), 1);
                     assert!(matches!(&protocols[0].kind, Kind::Symbol(symbol)
                         if symbol.namespace.as_deref() == Some("record.names")

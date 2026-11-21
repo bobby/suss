@@ -217,9 +217,11 @@ sorted by UTF-16 comparison and a vector of boundary offsets, searched by the co
 helper. Offsets preserve empty names, spaces and NUL without delimiter escaping.
 It avoids constructing a
 guest symbol hash set for the complete namespace on every invocation. Native index
-construction and comparison remain fuel metered. It carries actual protocol signatures,
-namespace/global indexes, resolved unqualified bindings, and the typed native Object
-fact. It does not create placeholder definition records or serialized ASTs.
+construction and comparison remain fuel metered. The private projection carries a
+packed index of actual phase-filtered protocol identities, indexed resolved unqualified
+bindings, and the typed native Object fact. It omits method signature maps, which the
+record helper never reads; the full catalog retains those maps. Protocol membership
+still admits genuine provisional declarations, without inferring identity from metadata. It does not create placeholder definition records or serialized ASTs.
 
 Boolean `true` retains the full compiler catalog and ordinary analysis graph;
 false/nil retain ordinary macro transport. The selected mode is checkpointed with

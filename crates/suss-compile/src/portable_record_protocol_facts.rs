@@ -99,7 +99,7 @@ pub(crate) const SOURCE: &str = r####"
           phase (get compiler :phase)
           current (get compiler :current)
           namespaces (get compiler :namespaces)
-          signatures (get compiler :protocol-signatures)]
+          signatures (or (get compiler :suss/protocol-binding-index) (get compiler :protocol-signatures))]
       (if (and caller live compiler phase current namespaces signatures
                (= (get caller :name) current)
                (= (get live :name) current))
@@ -130,6 +130,24 @@ pub(crate) const SOURCE: &str = r####"
         (symbol "js" "Object")
         nil))))
 
+(def ^:private index-position
+  (fn [index target]
+    (let [text (nth index 0) offsets (nth index 1)]
+      (loop [lo 0 hi (dec (count offsets))]
+        (if (< lo hi)
+          (let [mid (quot (+ lo hi) 2)
+                candidate (suss.bootstrap/string-slice text (nth offsets mid) (nth offsets (inc mid)))
+                order (compare target candidate)]
+            (if (zero? order) mid
+              (if (< order 0) (recur lo mid) (recur (inc mid) hi))))
+          nil)))))
+
+(def ^:private protocol-binding?
+  (fn [signatures global]
+    (if (vector? signatures)
+      (some? (index-position signatures (str global)))
+      (contains? signatures global))))
+
 (def ^:private namespace-binding?
   (fn [facts local]
     ;; The private record projection packs sorted names into one UTF-16 string
@@ -137,21 +155,13 @@ pub(crate) const SOURCE: &str = r####"
     ;; than the record expansion. Full compiler &env retains its definition map.
     (let [index (get facts :suss/binding-index)]
       (if index
-        (let [target (name local) text (nth index 0) offsets (nth index 1)]
-          (loop [lo 0 hi (dec (count offsets))]
-            (if (< lo hi)
-              (let [mid (quot (+ lo hi) 2)
-                    candidate (suss.bootstrap/string-slice text (nth offsets mid) (nth offsets (inc mid)))
-                    order (compare target candidate)]
-                (if (zero? order) true
-                  (if (< order 0) (recur lo mid) (recur (inc mid) hi))))
-              false)))
+        (some? (index-position index (name local)))
         (contains? (or (get facts :suss/binding-names) (get facts :defs)) local)))))
 
 (def ^:private binding-present?
   (fn [live current namespaces signatures global]
     (let [global (canonical-global global)]
-      (if (contains? signatures global)
+      (if (protocol-binding? signatures global)
         true
         (let [namespace-name (namespace global)
               facts (namespace-facts live current namespaces namespace-name)]
@@ -189,10 +199,11 @@ pub(crate) const SOURCE: &str = r####"
           ;; Experiment: faithful namespace/local -> global projection from
           ;; actual phase-filtered Environment.protocols, never metadata :name.
           signature-index (get compiler :protocol-globals-by-namespace)
-          own-signatures (get signature-index own-namespace)
-          core-signatures (get signature-index "suss.core")
+          own-signatures (if (map? signature-index) (get signature-index own-namespace) nil)
+          core-signatures (if (map? signature-index) (get signature-index "suss.core") nil)
           resolved-bindings (get compiler :unqualified-protocol-bindings)]
-      (when-not (and (map? signature-index) (map? resolved-bindings))
+      (when-not (or (and (map? signature-index) (map? resolved-bindings))
+                    (and (vector? signature-index) (vector? resolved-bindings)))
         (record-facts-error "Record protocol resolution requires its actual protocol namespace index"
           {:phase phase :current current}))
       (fn [protocol-symbol]
@@ -229,25 +240,34 @@ pub(crate) const SOURCE: &str = r####"
                   "js/Object resolution requires its genuine typed compiler fact"
                   {:symbol protocol-symbol :phase phase})))
             (require-binding live current namespaces signatures target protocol-symbol)))
-        (let [captured (get resolved-bindings protocol-symbol)]
+        (let [captured (if (vector? resolved-bindings)
+                         (let [position (index-position (nth resolved-bindings 0) symbol-name)]
+                           (if (some? position) (nth (nth resolved-bindings 1) position) nil))
+                         (get resolved-bindings protocol-symbol))]
           (if captured captured
         (let [local protocol-symbol
               referred (get refers local)]
           (if referred
             (require-binding live current namespaces signatures referred protocol-symbol)
             (let [declaration (namespace-binding? own-facts local)
-                  signature (get own-signatures local)]
+                  own-global (symbol own-namespace symbol-name)
+                  signature (if (vector? signature-index)
+                              (if (protocol-binding? signatures own-global) own-global nil)
+                              (get own-signatures local))]
               (if (or declaration signature)
                 (if signature signature (symbol own-namespace symbol-name))
                 (if (contains? exclusions local)
                   (record-facts-error
                     "Record protocol symbol is unresolved in the caller namespace"
                     {:symbol protocol-symbol :phase phase :current current})
-                  (let [declared-core (get core-signatures local)
+                  (let [core-global (symbol "suss.core" symbol-name)
+                        declared-core (if (vector? signature-index)
+                                        (if (protocol-binding? signatures core-global) core-global nil)
+                                        (get core-signatures local))
                         core (if declared-core declared-core (symbol "suss.core" symbol-name))]
                     (if (or declared-core
                             (namespace-binding? core-facts local)
-                            (contains? signatures core))
+                            (protocol-binding? signatures core))
                       core
                       (record-facts-error
                         "Record protocol symbol is unresolved in the caller namespace"
