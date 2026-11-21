@@ -362,6 +362,7 @@ fn aot_namespace_frame_size_is_bounded_per_form() {
     let per_form = (large - small) / 20;
     let scoped_per_form = (scoped_large - scoped_small) / 20;
     eprintln!("component bytes: plain {small}/{large}, scoped {scoped_small}/{scoped_large}; bytes/form: {per_form}/{scoped_per_form}");
+    assert!(per_form <= 4_200, "AOT per-form size regressed: {per_form} bytes");
     assert!(scoped_per_form <= per_form + 32,
         "namespace scope repeated per form: {per_form} plain, {scoped_per_form} scoped");
 }

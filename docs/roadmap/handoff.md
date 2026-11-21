@@ -15,9 +15,21 @@ The test adds ordinary `(def fN (fn [a b] a))` forms. Its log is
 `target/probe/m11-namespace-size-before.log`. The retained baseline executable
 `target/probe/m11-suss-before` has SHA256
 cd9a645d9820acb2f3b56e18d6972a6ca5d0d45182a9b49e9a7aee8585b020ab.
-The candidate focused command writes `target/probe/m11-namespaces-focused.log`;
-check its terminal result before citing it. No full workspace or CI pass is
-established by the size-only negative control.
+The candidate focused command on 7cfa112c completed with exit 0: 5 AOT source
+preparation tests and 10 runtime namespace tests passed, none failed or ignored.
+`target/probe/m11-namespaces-focused.log` retains the results. Plain components
+measure 3,218,921/3,299,657 bytes; scoped components 3,223,189/3,303,925 bytes.
+Both slopes are 4,036 bytes/form, saving 870 bytes/form for empty scopes and
+5,137 for the larger scope. The regression also bounds the absolute slope at
+4,200 bytes/form. No full workspace or CI pass is established by these focused
+tests.
+
+`target/probe/m11-namespace-size-final.log` confirms the additional absolute
+bound passes (1 test, no failures/ignores), with the same measured sizes.
+The broad verification command is `CARGO_BUILD_JOBS=2 cargo +stable test
+--workspace --locked -- --test-threads=2`, in a 6GiB user scope, logging to
+`target/probe/m11-workspace.log`. Inspect the live Cargo handle and terminal
+log before claiming completion; the focused results do not substitute for it.
 
 The AOT environment explicitly records ordered initialization independently of
 direct linking. First/changed scopes publish fully; later unchanged scopes only
