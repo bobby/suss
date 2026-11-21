@@ -95,6 +95,13 @@ from `hir/namespaces.rs`, without a host import:
     publishes `suss.core` first, so a later core fragment, such as a core
     macro compiled from source, only adds its own declarations and does not
     carry core's full lists.
+  - AOT source preparation initializes every prepared Runtime fragment in
+    order, aborting initialization on an exception. In this mode a namespace's
+    first fragment publishes its full scope, and subsequent fragments publish
+    only changed scopes or newly relevant declarations. They omit the unbound
+    recovery branch and its duplicate scope tables. Independently executed
+    session fragments retain that branch, including recovery after a dependency
+    failed before a prepared fragment could run.
   - The scope travels as an array in slot order, with nil for an empty part,
     and a long name list as an array of bucket strings. A quoted map would
     cost far more to build than the publication itself, and a vector longer
@@ -129,8 +136,9 @@ from `hir/namespaces.rs`, without a host import:
   reader-name lists omit names core declares, because the declarations are
   checked first and give the same answer.
 
-The bootstrap and cached or AOT-compiled modules contain the same publication
-code, so they restore the same data.
+Bootstrap, cached and AOT-compiled modules restore the same namespace data.
+The ordered AOT preparation policy is separate from direct linking; analyzer
+preparation uses it too, while Macro sessions retain independent execution.
 
 ## Costs
 

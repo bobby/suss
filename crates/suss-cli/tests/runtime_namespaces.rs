@@ -332,3 +332,36 @@ fn core_names_added_before_the_first_resolution_resolve_to_core() {
         );
     }
 }
+
+/// Measure the shipped, validated component, including the namespace frame on
+/// every top-level definition. A large scope must be paid for once, rather
+/// than copied into every fragment's recovery branch (#312).
+#[test]
+fn aot_namespace_frame_size_is_bounded_per_form() {
+    use suss_cli::portable_aot::prepare_source;
+    use suss_compile::portable;
+    let mut resolve = portable::aot::Resolve::new();
+    let package = resolve.push_str("size.wit", "package test:size; world w {}").unwrap();
+    let world = *resolve.packages[package].worlds.values().next().unwrap();
+    let measure = |count: usize, excluded: usize| {
+        let exclusions = (0..excluded).map(|n| format!("excluded-name-{n:03}")).collect::<Vec<_>>().join(" ");
+        let mut source = format!("(ns size (:refer-clojure :exclude [{exclusions}]))\n");
+        for n in 0..count {
+            source.push_str(&format!("(def f{n} (fn [a b] a))\n"));
+        }
+        let fragments = prepare_source(&source, None, &[]).unwrap();
+        let bytes = portable::aot::component(&fragments, &resolve, world, &[]).unwrap();
+        wasmparser::Validator::new_with_features(wasmparser::WasmFeatures::all())
+            .validate_all(&bytes).unwrap();
+        bytes.len()
+    };
+    let small = measure(4, 0);
+    let large = measure(24, 0);
+    let scoped_small = measure(4, 100);
+    let scoped_large = measure(24, 100);
+    let per_form = (large - small) / 20;
+    let scoped_per_form = (scoped_large - scoped_small) / 20;
+    eprintln!("component bytes: plain {small}/{large}, scoped {scoped_small}/{scoped_large}; bytes/form: {per_form}/{scoped_per_form}");
+    assert!(scoped_per_form <= per_form + 32,
+        "namespace scope repeated per form: {per_form} plain, {scoped_per_form} scoped");
+}

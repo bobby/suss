@@ -1,3 +1,36 @@
+## Ordered AOT namespace publication probes (2026-11-21)
+
+Run focused namespace checks with `CARGO_BUILD_JOBS=2 cargo +stable test
+-p suss-cli --locked --test runtime_namespaces --test aot_source_preparation
+-- --nocapture --test-threads=2`. Use a 5GiB user scope; this environment needs
+`XDG_RUNTIME_DIR=/run/user/1000` for `systemd-run --user --scope` (the first
+launch without it failed before Cargo ran). The installed stable toolchain is
+Cargo 1.99.1, whereas the default is 1.96.0; the first stable run rebuilt the
+dependencies. Do not mix that build time with compiler performance observations.
+
+On compiler source ef882633, the new validated-component size regression fails:
+4/24 plain definitions produce 3,222,401/3,320,537 bytes (4,906 bytes per added
+form); with 100 excluded names, 3,243,737/3,427,213 bytes (9,173 bytes per form).
+The test adds ordinary `(def fN (fn [a b] a))` forms. Its log is
+`target/probe/m11-namespace-size-before.log`. The retained baseline executable
+`target/probe/m11-suss-before` has SHA256
+cd9a645d9820acb2f3b56e18d6972a6ca5d0d45182a9b49e9a7aee8585b020ab.
+The candidate focused command writes `target/probe/m11-namespaces-focused.log`;
+check its terminal result before citing it. No full workspace or CI pass is
+established by the size-only negative control.
+
+The AOT environment explicitly records ordered initialization independently of
+direct linking. First/changed scopes publish fully; later unchanged scopes only
+publish newly relevant declarations. Session compilation still emits the full
+unbound-cell recovery path. Per-fragment dynamic bindings remain and should be
+measured separately from the removed duplicate publication tables.
+
+The retained baseline's `SUSS_MACRO_FUEL_TRACE=1 ... -e '(defrecord R [a b])
+(deftype T [a b]) (= 3 (:a (->R 3 4)))'` fails while transporting `&env` for the
+first defrecord under the unchanged 10M default. It does not reach deftype.
+`target/probe/m11-default-record-before.log` retains the exact fuel trace and
+trap; it is not successful default-budget coverage.
+
 ## Independent PR177 review — typed invocation before guest initialization
 
 ## Canonical transient-map storage probes (2026-11-20)

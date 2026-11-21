@@ -591,6 +591,7 @@ fn prepare_inputs_with_hints(
     // AOT builds direct-link user code (#360); sessions and the REPL don't.
     let mut environment = core.environment.clone();
     environment.set_direct_linking(direct_linking);
+    environment.ordered_namespace_initialization = true;
     environment.set_export_param_hints(param_hints);
     let mut snapshot = CompilationSnapshot::new(
         environment,
