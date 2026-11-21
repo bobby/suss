@@ -24,7 +24,9 @@ fn actual_protocol_indexes_preserve_caller_phase_and_own_identity() {
           (let [resolve (fn [global]
                           (try (first (:protocols
                             (suss.internal.record-protocol-facts/resolve-record-compiler-facts &env [global])))
-                            (catch :default _ nil)))]
+                            (catch :default error
+                              (if (= (ex-message error) "Record protocol symbol is unresolved in the caller namespace")
+                                nil (throw error)))))]
             (list 'quote [(resolve 'suss.core/IHash) (resolve 'IHash) (resolve 'IMeta)])))"#).unwrap();
         for (case, source, expected) in [
             (
@@ -149,9 +151,12 @@ fn membership_index_preserves_unicode_order_and_names_with_delimiters() {
         macros.define("(defmacro install-name [text] (list 'def (symbol text) 17))").unwrap();
         for mode in ["true", ":record-bindings"] {
             macros.define(&format!(r#"(defmacro ^{{:suss/compiler-catalog {mode}}} resolve-name [text qualified]
-              (let [global (if qualified (symbol "record.names" text) (symbol text))
-                    facts (suss.internal.record-protocol-facts/resolve-record-compiler-facts &env [global])]
-                (list 'quote (:protocols facts))))"#)).unwrap();
+              (let [global (if qualified (symbol "record.names" text) (symbol text))]
+                (try
+                  (list 'quote (:protocols
+                    (suss.internal.record-protocol-facts/resolve-record-compiler-facts &env [global])))
+                  (catch :default error
+                    (list 'quote [:error (ex-message error)])))))"#)).unwrap();
             session.eval_with_macros("(ns record.names)", &mut macros).unwrap();
             for literal in ["\"a b\"", "\"a\\u0000b\"", "\"\u{10000}\"", "\"\u{e000}\""] {
                 session.eval_with_macros(&format!("(user/install-name {literal})"), &mut macros).unwrap();
@@ -171,7 +176,17 @@ fn membership_index_preserves_unicode_order_and_names_with_delimiters() {
                 }
             }
             for qualified in [false, true] {
-                assert!(session.eval_with_macros(&format!("(user/resolve-name \"absent\" {qualified})"), &mut macros).is_err());
+                let value = session.eval_with_macros(&format!("(user/resolve-name \"absent\" {qualified})"), &mut macros).unwrap();
+                let actual = bridge.read(&mut session, &value, 0..0).unwrap();
+                let Kind::Vector(parts) = &actual.kind else { panic!("exact missing-binding error: {actual:?}") };
+                assert!(matches!(&parts[0].kind, Kind::Keyword(key) if key.name == "error"));
+                let Kind::String(message) = &parts[1].kind else { panic!("error message") };
+                let expected = if qualified {
+                    "Record protocol symbol does not resolve to an actual caller-phase binding"
+                } else {
+                    "Record protocol symbol is unresolved in the caller namespace"
+                };
+                assert_eq!(String::from_utf16(message).unwrap(), expected);
             }
         }
     }

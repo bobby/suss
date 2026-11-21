@@ -40,9 +40,9 @@ fn aot_records_fit_default_budget_and_execute() {
 }
 
 #[test]
-fn repeated_repl_records_keep_membership_transport_below_one_tenth_of_default() {
+fn repeated_repl_records_fit_four_million_and_keep_membership_below_one_tenth_default() {
     let mut child = Command::new(env!("CARGO_BIN_EXE_suss"))
-        .arg("repl").env("SUSS_MACRO_FUEL_TRACE", "1")
+        .args(["repl", "--compile-fuel", "4000000"]).env("SUSS_MACRO_FUEL_TRACE", "1")
         .stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped())
         .spawn().unwrap();
     child.stdin.take().unwrap().write_all(format!("{DEFINITIONS}{VALUE}\n").as_bytes()).unwrap();
