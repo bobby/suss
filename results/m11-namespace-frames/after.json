@@ -1,0 +1,85 @@
+{
+  "executable": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-suss-binding",
+  "executable_sha256": "c035b0e8f8e94b22f995722b83ed5674c21118070915924778d1e64b4bd4567e",
+  "rows": {
+    "split-4": {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-suss-binding",
+        "--no-cache",
+        "compile",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-after/split-4.sus",
+        "-w",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-after/size.wit",
+        "-o",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-after/split-4.wasm"
+      ],
+      "exit_code": 0,
+      "source_sha256": "a2386f34ea820b18c3cbb2b9205a038102d72ba7cbaa97a32f1ca67e6739f8d8",
+      "compiler_source_sha256": "7558bfb75df8fb4b212017db8d1c31659d4178f8e2fb692e81f057d5d58af6fa",
+      "bytes": 3218552,
+      "code_bytes": 2402070,
+      "bodies": 6874,
+      "wasm_sha256": "be5a9fbbb99ade276c0b90e10b0b18034eceece546998267f1474c6ca3a0770f"
+    },
+    "split-24": {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-suss-binding",
+        "--no-cache",
+        "compile",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-after/split-24.sus",
+        "-w",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-after/size.wit",
+        "-o",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-after/split-24.wasm"
+      ],
+      "exit_code": 0,
+      "source_sha256": "a5f3a4aaa2fd7cf4fa24d670a0145f49c9450c7a737ab4fa2dc1b01fcaf71d33",
+      "compiler_source_sha256": "7558bfb75df8fb4b212017db8d1c31659d4178f8e2fb692e81f057d5d58af6fa",
+      "bytes": 3297209,
+      "code_bytes": 2407570,
+      "bodies": 6934,
+      "wasm_sha256": "fa070bc2b7410fdd56cff787e2e6052c8b206bdce8d7fad6a715681db72037c8"
+    },
+    "grouped-4": {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-suss-binding",
+        "--no-cache",
+        "compile",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-after/grouped-4.sus",
+        "-w",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-after/size.wit",
+        "-o",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-after/grouped-4.wasm"
+      ],
+      "exit_code": 0,
+      "source_sha256": "5dbd9b603f335d9d19abcb683f86b4ec23284efa446132cc01f123e0e54a735b",
+      "compiler_source_sha256": "7558bfb75df8fb4b212017db8d1c31659d4178f8e2fb692e81f057d5d58af6fa",
+      "bytes": 3208231,
+      "code_bytes": 2401782,
+      "bodies": 6871,
+      "wasm_sha256": "ee3f0ef3fd803831915cba9489e17816998700237fc0b850f99a665b130dd23d"
+    },
+    "grouped-24": {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-suss-binding",
+        "--no-cache",
+        "compile",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-after/grouped-24.sus",
+        "-w",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-after/size.wit",
+        "-o",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-after/grouped-24.wasm"
+      ],
+      "exit_code": 0,
+      "source_sha256": "bb862686c8836f579a905630001a7a7a6aa1e8f8d5aafa96c0b9afac2913c9c3",
+      "compiler_source_sha256": "7558bfb75df8fb4b212017db8d1c31659d4178f8e2fb692e81f057d5d58af6fa",
+      "bytes": 3217978,
+      "code_bytes": 2405362,
+      "bodies": 6911,
+      "wasm_sha256": "6c680c0ed904815a9559d130b79e2089bafaa10abb06d7537f5d018c5a3070f6"
+    }
+  },
+  "split_code_growth": 5500,
+  "grouped_code_growth": 3580,
+  "extra_code_bytes_per_split_form": 96.0
+}

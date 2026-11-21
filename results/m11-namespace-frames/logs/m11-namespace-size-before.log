@@ -1,0 +1,139 @@
+Running as unit: run-p320365-i84194556.scope; invocation ID: d84d33438b074cbd8633fabf7fa4ad38
+   Compiling syn v2.0.111
+   Compiling wasmtime-internal-core v51.0.0-rc.1
+   Compiling libc v0.2.191
+   Compiling rustix v1.1.5
+   Compiling linux-raw-sys v0.12.1
+   Compiling synstructure v0.13.2
+   Compiling stable_deref_trait v1.2.1
+   Compiling writeable v0.6.2
+   Compiling litemap v0.8.1
+   Compiling dirs-sys v0.5.0
+   Compiling icu_normalizer_data v2.1.1
+   Compiling icu_properties_data v2.1.2
+   Compiling thiserror v1.0.69
+   Compiling directories v6.0.0
+   Compiling wasmtime v51.0.0-rc.1
+   Compiling bytes v1.12.1
+   Compiling leb128 v0.2.5
+   Compiling wast v35.0.2
+   Compiling wasmtime-internal-jit-debug v51.0.0-rc.1
+   Compiling memfd v0.6.5
+   Compiling object v0.40.0
+   Compiling serde_derive v1.0.228
+   Compiling thiserror-impl v2.0.17
+   Compiling thiserror v2.0.17
+   Compiling cobs v0.3.0
+   Compiling zerofrom-derive v0.1.6
+   Compiling serde v1.0.228
+   Compiling smallvec v1.15.1
+   Compiling cranelift-bitset v0.138.0-rc.1
+   Compiling wasmparser v0.263.0
+   Compiling zerofrom v0.1.6
+   Compiling cranelift-entity v0.138.0-rc.1
+   Compiling yoke-derive v0.8.1
+   Compiling cranelift-bforest v0.138.0-rc.1
+   Compiling wasm-encoder v0.263.0
+   Compiling yoke v0.8.1
+   Compiling pulley-interpreter v51.0.0-rc.1
+   Compiling postcard v1.1.3
+   Compiling zerovec-derive v0.11.2
+   Compiling cranelift-codegen-meta v0.138.0-rc.1
+   Compiling zerovec v0.11.5
+   Compiling displaydoc v0.2.5
+   Compiling wasmprinter v0.263.0
+   Compiling cranelift-codegen v0.138.0-rc.1
+   Compiling regalloc2 v0.15.2
+   Compiling wasmtime-environ v51.0.0-rc.1
+   Compiling wasm-metadata v0.263.0
+   Compiling tinystr v0.8.2
+   Compiling wit-parser v0.263.0
+   Compiling wasmparser v0.258.0
+   Compiling wit-component v0.263.0
+   Compiling icu_locale_core v2.1.1
+   Compiling zerotrie v0.2.3
+   Compiling potential_utf v0.1.4
+   Compiling wast v263.0.0
+   Compiling wat v1.263.0
+   Compiling icu_collections v2.1.1
+   Compiling icu_provider v2.1.1
+   Compiling wasmtime-internal-wit-bindgen v51.0.0-rc.1
+   Compiling wasm-encoder v0.258.0
+   Compiling wasmtime-internal-unwinder v51.0.0-rc.1
+   Compiling cranelift-native v0.138.0-rc.1
+   Compiling cranelift-frontend v0.138.0-rc.1
+   Compiling thiserror-impl v1.0.69
+   Compiling wasmtime-internal-cranelift v51.0.0-rc.1
+   Compiling wasm-metadata v0.258.0
+   Compiling wasmtime-internal-component-macro v51.0.0-rc.1
+   Compiling wasm-compose v0.263.0
+   Compiling wit-parser v0.258.0
+   Compiling wasmtime-internal-cache v51.0.0-rc.1
+   Compiling wasmtime-internal-fiber v51.0.0-rc.1
+   Compiling wasmtime-internal-jit-icache-coherence v51.0.0-rc.1
+   Compiling fxprof-processed-profile v0.8.1
+   Compiling async-trait v0.1.89
+   Compiling getrandom v0.4.3
+   Compiling gimli v0.33.0
+   Compiling rand_core v0.10.1
+   Compiling wit-component v0.258.0
+   Compiling witx v0.9.1
+   Compiling icu_properties v2.1.2
+   Compiling icu_normalizer v2.1.1
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/crates/suss-reader)
+   Compiling tracing-attributes v0.1.31
+   Compiling tracing-core v0.1.36
+   Compiling cfg_aliases v0.1.1
+   Compiling wiggle-macro v51.0.0-rc.1
+   Compiling nix v0.28.0
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/crates/suss-compile-generator)
+   Compiling tracing v0.1.44
+   Compiling idna_adapter v1.2.1
+   Compiling wiggle-generate v51.0.0-rc.1
+   Compiling stacker v0.1.22
+   Compiling cpufeatures v0.3.1
+   Compiling utf8_iter v1.0.4
+   Compiling percent-encoding v2.3.2
+   Compiling form_urlencoded v1.2.2
+   Compiling idna v1.1.0
+   Compiling chacha20 v0.10.2
+   Compiling chumsky v1.0.0-alpha.8
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/crates/suss-compile)
+   Compiling nibble_vec v0.1.0
+   Compiling mio v1.2.3
+   Compiling socket2 v0.6.5
+   Compiling endian-type v0.1.2
+   Compiling radix_trie v0.2.1
+   Compiling tokio v1.53.1
+   Compiling wiggle v51.0.0-rc.1
+   Compiling rand v0.10.3
+   Compiling url v2.5.7
+   Compiling wasmtime-wasi-io v51.0.0-rc.1
+   Compiling rustix-linux-procfs v0.1.1
+   Compiling fd-lock v4.0.4
+   Compiling utf8parse v0.2.2
+   Compiling home v0.5.12
+   Compiling rustyline v14.0.0
+   Compiling wasmtime-wasi v51.0.0-rc.1
+   Compiling lexopt v0.3.1
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/crates/suss-cli)
+   Compiling tempfile v3.27.0
+    Finished `test` profile [optimized] target(s) in 11m 53s
+     Running tests/runtime_namespaces.rs (target/debug/deps/runtime_namespaces-1021007877323199)
+
+running 1 test
+component bytes: plain 3222401/3320537, scoped 3243737/3427213; bytes/form: 4906/9173
+
+thread 'aot_namespace_frame_size_is_bounded_per_form' (352572) panicked at crates/suss-cli/tests/runtime_namespaces.rs:365:5:
+namespace scope repeated per form: 4906 plain, 9173 scoped
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test aot_namespace_frame_size_is_bounded_per_form ... FAILED
+
+failures:
+
+failures:
+    aot_namespace_frame_size_is_bounded_per_form
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 9 filtered out; finished in 10.66s
+
+error: test failed, to rerun pass `-p suss-cli --test runtime_namespaces`

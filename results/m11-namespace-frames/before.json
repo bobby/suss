@@ -1,0 +1,85 @@
+{
+  "executable": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-suss-before",
+  "executable_sha256": "cd9a645d9820acb2f3b56e18d6972a6ca5d0d45182a9b49e9a7aee8585b020ab",
+  "rows": {
+    "split-4": {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-suss-before",
+        "--no-cache",
+        "compile",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-before/split-4.sus",
+        "-w",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-before/size.wit",
+        "-o",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-before/split-4.wasm"
+      ],
+      "exit_code": 0,
+      "source_sha256": "a2386f34ea820b18c3cbb2b9205a038102d72ba7cbaa97a32f1ca67e6739f8d8",
+      "bytes": 3223056,
+      "code_bytes": 2404170,
+      "bodies": 6882,
+      "wasm_sha256": "aa664de6da405fc64a35b0ebf49db061a0f194da43739bbb5bf673fcb1d796c2",
+      "compiler_source_sha256": "881f78aacbe31461a25699afb8bd4d0a2ab95063631c8d0c7b3c89c8967a1b1f"
+    },
+    "split-24": {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-suss-before",
+        "--no-cache",
+        "compile",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-before/split-24.sus",
+        "-w",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-before/size.wit",
+        "-o",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-before/split-24.wasm"
+      ],
+      "exit_code": 0,
+      "source_sha256": "a5f3a4aaa2fd7cf4fa24d670a0145f49c9450c7a737ab4fa2dc1b01fcaf71d33",
+      "bytes": 3323837,
+      "code_bytes": 2419530,
+      "bodies": 6982,
+      "wasm_sha256": "e5d33b8f353034dc038c19891a2b6fde41ca3779a56daca1f257469e5e3deae5",
+      "compiler_source_sha256": "881f78aacbe31461a25699afb8bd4d0a2ab95063631c8d0c7b3c89c8967a1b1f"
+    },
+    "grouped-4": {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-suss-before",
+        "--no-cache",
+        "compile",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-before/grouped-4.sus",
+        "-w",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-before/size.wit",
+        "-o",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-before/grouped-4.wasm"
+      ],
+      "exit_code": 0,
+      "source_sha256": "5dbd9b603f335d9d19abcb683f86b4ec23284efa446132cc01f123e0e54a735b",
+      "bytes": 3209414,
+      "code_bytes": 2402403,
+      "bodies": 6873,
+      "wasm_sha256": "abf3053f47741ea607c123353ff1fda74fd8ae1203c178a01d5eadc2b54cfebe",
+      "compiler_source_sha256": "881f78aacbe31461a25699afb8bd4d0a2ab95063631c8d0c7b3c89c8967a1b1f"
+    },
+    "grouped-24": {
+      "command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-suss-before",
+        "--no-cache",
+        "compile",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-before/grouped-24.sus",
+        "-w",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-before/size.wit",
+        "-o",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-frame-code-before/grouped-24.wasm"
+      ],
+      "exit_code": 0,
+      "source_sha256": "bb862686c8836f579a905630001a7a7a6aa1e8f8d5aafa96c0b9afac2913c9c3",
+      "bytes": 3219161,
+      "code_bytes": 2405983,
+      "bodies": 6913,
+      "wasm_sha256": "3e524bcca7202fd015ef9ad82919fbf16ee11a011c8f806d28c34f04c5a8aea4",
+      "compiler_source_sha256": "881f78aacbe31461a25699afb8bd4d0a2ab95063631c8d0c7b3c89c8967a1b1f"
+    }
+  },
+  "split_code_growth": 15360,
+  "grouped_code_growth": 3580,
+  "extra_code_bytes_per_split_form": 589.0
+}

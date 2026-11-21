@@ -108,10 +108,12 @@ pub fn component(
     cells.dedup();
     let bindings = core_bindings::compile_with_cells(Phase::Runtime, &cells)?;
     let bridge = async_bridge::module(resolve, import.function, import.global)?;
-    let driver = driver(export.global, fragments.len());
+    let initialization = crate::portable::initialization::Plan::new(fragments, 0)?;
+    let load_count = u32::from(initialization.module.is_some());
+    let driver = driver(export.global, &initialization.names);
     let count =
         u32::try_from(fragments.len()).map_err(|_| diagnostic("Too many async fragments"))?;
-    let shim = 3 + count;
+    let shim = 3 + count + load_count;
     let context_instance = shim + 1;
     let bridge_instance = shim + 2;
     let driver_instance = shim + 3;
@@ -134,6 +136,7 @@ pub fn component(
         bindings.wasm,
     ];
     modules.extend(fragments.iter().map(|fragment| fragment.wasm.clone()));
+    modules.extend(initialization.module.iter().cloned());
     modules.extend([async_bridge::context_module(), bridge, driver]);
     for bytes in modules {
         component.section(&RawSection {
@@ -153,6 +156,9 @@ pub fn component(
                 ("suss.bindings.runtime", ModuleArg::Instance(2)),
             ],
         );
+    }
+    if load_count != 0 {
+        instances.instantiate(3 + count, initialization.arguments(0, 2, 3));
     }
     component.section(&instances);
     let mut aliases = ComponentAliasSection::new();
@@ -195,9 +201,9 @@ pub fn component(
         ("return", ExportKind::Func, 10),
         ("task-cancel", ExportKind::Func, 11),
     ]);
-    instances.instantiate(3 + count, [("suss.canonical", ModuleArg::Instance(shim))]);
+    instances.instantiate(shim, [("suss.canonical", ModuleArg::Instance(shim))]);
     instances.instantiate(
-        4 + count,
+        shim + 1,
         [
             ("suss.runtime", ModuleArg::Instance(0)),
             ("suss.bindings.runtime", ModuleArg::Instance(2)),
@@ -225,8 +231,11 @@ pub fn component(
             ModuleArg::Instance(3 + index),
         ));
     }
+    if load_count != 0 {
+        driver_args.push((crate::portable::initialization::MODULE.to_owned(), ModuleArg::Instance(3 + count)));
+    }
     instances.instantiate(
-        5 + count,
+        shim + 2,
         driver_args
             .iter()
             .map(|(name, argument)| (name.as_str(), *argument)),
@@ -262,7 +271,7 @@ pub fn component(
         .map_err(|error| diagnostic(format!("Invalid generated async component: {error}")))?;
     Ok(bytes)
 }
-fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
+fn driver(main: &Global, initializers: &[String]) -> Vec<u8> {
     use Instruction::*;
     let value = ValType::Ref(RefType::EQREF);
     let mut types = runtime_abi::prelude();
@@ -355,10 +364,10 @@ fn driver(main: &Global, fragment_count: usize) -> Vec<u8> {
         vec![ValType::I32],
         vec![],
     );
-    let initializers: Vec<_> = (0..fragment_count)
-        .map(|index| {
+    let initializers: Vec<_> = initializers.iter()
+        .map(|name| {
             add(
-                &format!("suss.fragment.{index}"),
+                name,
                 "eval",
                 vec![],
                 vec![value],

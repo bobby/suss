@@ -1,0 +1,51 @@
+Running as unit: run-p436720-i84305632.scope; invocation ID: d8968789c67e4afd8258a0153b198d74
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 2m 02s
+     Running unittests src/lib.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-target/debug/deps/suss_compile-1fa5c4d601d83553)
+
+running 1 test
+test portable::initialization::tests::failed_ordered_load_restores_namespace_and_retains_only_prior_effects ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 208 filtered out; finished in 22.32s
+
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 1m 20s
+     Running tests/compiled_async_import_file.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-target/debug/deps/compiled_async_import_file-815356b6d864c26a)
+
+running 7 tests
+test file_async_broken_host_source_link_is_not_treated_as_absent_source ... ok
+test file_async_host_namespace_ambiguity_is_not_treated_as_absent_source ... ok
+test file_async_mapping_cannot_redirect_literal_import_or_export_through_alias ... ok
+test file_async_mapping_rejects_source_owned_host_namespace_before_preparation ... ok
+test file_async_mappings_reject_core_spellings_before_macro_analysis ... ok
+test file_async_mapping_rejects_import_overwrite_and_uninitialized_export ... ok
+test public_file_async_import_uses_macros_and_initializes_dependencies_once ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.06s
+
+     Running tests/portable_aot_options.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binding-target/debug/deps/portable_aot_options-269e90da61449baf)
+
+running 16 tests
+test asynchronous_option_float_results_preserve_canonical_bits ... ok
+test asynchronous_option_arguments_preserve_none_and_false ... ok
+test eight_optional_parameters_preserve_the_last_flattened_payload ... ok
+test mixed_async_option_exports_use_distinct_completion_signatures ... ok
+test mixed_scalar_and_optional_exports_use_their_actual_component_type_indices ... ok
+test malformed_option_results_are_language_errors_not_none has been running for over 60 seconds
+test option_boundary_uses_tagged_vectors_in_source ... ok
+test option_schema_ignores_user_namespace_function_shadows ... ok
+test option_schema_survives_core_function_and_constructor_redefinition ... ok
+test optional_f32_results_preserve_signed_zero_and_payload_alignment ... ok
+test optional_float_results_preserve_bits_and_release_canonical_return_state ... ok
+test malformed_option_results_are_language_errors_not_none ... ok
+test optional_integer_parameters_preserve_none_some_and_argument_order ... ok
+test optional_results_distinguish_nil_false_and_true_across_repeated_calls ... ok
+test optional_integer_results_preserve_alignment_sign_and_unsigned_ranges has been running for over 60 seconds
+test optional_small_integer_result_rejects_invalid_payload_with_language_exception has been running for over 60 seconds
+test optional_small_integer_result_rejects_invalid_payload_with_language_exception ... ok
+test unsupported_option_shapes_fail_before_effectful_source_macros ... ok
+test optional_integer_results_preserve_alignment_sign_and_unsigned_ranges ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 317.95s
+

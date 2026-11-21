@@ -1,3 +1,66 @@
+## Shared AOT load binding probes (2026-11-21)
+
+The isolated source worktree is `target/probe/m11-binding-source`, with a
+reflinked Cargo target at `target/probe/m11-binding-target`. It starts at
+96b2caf9 so the earlier full-baseline source could stay unchanged. The old
+`target/probe/m11-workspace.log` run was deliberately stopped as superseded
+(exit 143); it is incomplete, not a full pass. Its user scope was
+run-p371244-i84236304.scope. Preserve that log separately from replacement runs.
+
+The shared loader uses the existing `dynamic-invoke` and universal closure ABI,
+without a runtime layout change. Core initializes before it; schema factories
+are captured before any user initializer. Each ordered source fragment publishes
+its scope as needed, then updates the loader's `*ns*` binding. Incremental and
+Macro sessions retain independent namespace frames and recovery.
+
+`m11-binding-focused2.log` records 24 passes across CLI runtime_namespaces,
+aot_source_preparation, compiled_aot_async_command and compiled_official_command,
+none failed or ignored. Run with `cargo +stable test -p suss-cli --locked` and
+those four `--test` targets, `-- --nocapture --test-threads=2`. Use one Cargo job,
+a 4GiB user scope, the isolated Cargo target and the root `target/suss` build
+cache. Explicit `*ns*` assignment in one form is reset for the next form.
+
+The complete-component sizes for 4/24 definitions are
+3,217,902/3,293,934 bytes with an empty scope, and
+3,222,169/3,298,201 with 100 exclusions. Both slopes are 3,801.6 bytes/form
+(the test prints integer division). The grouped-form control keeps the same
+definitions in one top-level `do`: code growth is 5,500 bytes when split versus
+3,580 when grouped, or 96 extra code bytes per split form, including its eval
+function and loader call. The unchanged ef882633 executable measures
+15,360/3,580 bytes, or 589 extra bytes per split form. The regressions bound
+total growth at 3,900 bytes/form and the extra executable code at 128.
+The earlier exploratory 3,000-byte total bound failed at 3,801 and is preserved
+in `m11-binding-size.log`; total fragment type/artifact data is distinct from
+the measured namespace-frame code. The first grouped-code helper did not
+compile (`Range<u64>` has no len); `as_bytes().len()` supplies its actual bytes.
+
+The new `portable::initialization::tests::failed_ordered_load_restores_namespace_and_retains_only_prior_effects`
+executes real emitted fragments against the shared runtime. It checks the exact
+throw payload, retained effects before the throw, absent later effects, original
+namespace identity after GC and an empty dynamic frame chain. Its corrected
+run passes in `m11-binding-boundaries2.log`; the first boundaries build failed
+on test-only function signatures and an extra reference in the identity check.
+That run did not execute tests. The corrected command exits 0 with 1 unit,
+7 compiled_async_import_file and 16 portable_aot_options passes. The selected
+list-schema redefinition and mixed option/list layout cases also pass in
+`m11-binding-schema-mixed.log`. Together with the CLI run these are 50 focused
+passes, with no failures or ignores. A subsequent --no-run rebuild refreshes
+the CLI executable after the test-only compiler source fixes.
+
+`results/m11-namespace-frames` retains raw measurements, unchanged source
+fixtures, executable/compiler/component hashes, focused logs and the independent
+CLI code-body probe. Before/after code growth agrees with the Rust regression.
+The after compiler identity is
+7558bfb75df8fb4b212017db8d1c31659d4178f8e2fb692e81f057d5d58af6fa.
+
+All 358 Python tests, inventory (1,065 declarations), review overlay,
+core-import and bootstrap source checks pass in `m11-binding-foundation.log`.
+Initialize the submodule in the isolated worktree before those checks.
+No final-head CI or complete workspace pass is established by these focused
+results. The replacement full command remains `cargo +stable test --workspace
+--locked -- --test-threads=2`, with two Cargo jobs and a 6GiB user scope.
+All probe logs named above live under the root `target/probe` directory.
+
 ## Ordered AOT namespace publication probes (2026-11-21)
 
 Run focused namespace checks with `CARGO_BUILD_JOBS=2 cargo +stable test

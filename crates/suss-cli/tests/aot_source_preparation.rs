@@ -135,7 +135,9 @@ fn ordered_namespace_initialization_keeps_scopes_and_dynamic_bindings() {
                         (suss.core/reader-resolve-symbol 'filter)])\n\
          (def caught (try (binding [*ns* (the-ns 'second)] (throw 1))\n\
                           (catch :default e (ns-name *ns*))))\n\
-         (def run (fn [] (pr-str [initial shadow second/loaded resolved caught (ns-name *ns*)])))",
+         (set! *ns* (the-ns 'user))\n\
+         (def rebound (ns-name *ns*))\n\
+         (def run (fn [] (pr-str [initial shadow second/loaded resolved caught rebound (ns-name *ns*)])))",
         None,
         &[root.path().to_owned()],
     ).unwrap();
@@ -148,7 +150,7 @@ fn ordered_namespace_initialization_keeps_scopes_and_dynamic_bindings() {
     let run = instance.get_typed_func::<(), (String,)>(&mut store, "run").unwrap();
     let output = run.call(&mut store, ()).unwrap().0;
     run.post_return(&mut store).unwrap();
-    assert_eq!(output, "[first first/map second [dep/x dep/x first/filter] first suss.core]");
+    assert_eq!(output, "[first first/map second [dep/x dep/x first/filter] first first suss.core]");
 }
 
 #[test]

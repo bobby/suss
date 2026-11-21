@@ -343,26 +343,44 @@ fn aot_namespace_frame_size_is_bounded_per_form() {
     let mut resolve = portable::aot::Resolve::new();
     let package = resolve.push_str("size.wit", "package test:size; world w {}").unwrap();
     let world = *resolve.packages[package].worlds.values().next().unwrap();
-    let measure = |count: usize, excluded: usize| {
+    let measure = |count: usize, excluded: usize, grouped: bool| {
         let exclusions = (0..excluded).map(|n| format!("excluded-name-{n:03}")).collect::<Vec<_>>().join(" ");
         let mut source = format!("(ns size (:refer-clojure :exclude [{exclusions}]))\n");
+        if grouped { source.push_str("(do\n"); }
         for n in 0..count {
             source.push_str(&format!("(def f{n} (fn [a b] a))\n"));
         }
+        if grouped { source.push(')'); }
         let fragments = prepare_source(&source, None, &[]).unwrap();
         let bytes = portable::aot::component(&fragments, &resolve, world, &[]).unwrap();
         wasmparser::Validator::new_with_features(wasmparser::WasmFeatures::all())
             .validate_all(&bytes).unwrap();
-        bytes.len()
+        let code_bytes = wasmparser::Parser::new(0).parse_all(&bytes).map(|payload| {
+            match payload.unwrap() {
+                wasmparser::Payload::CodeSectionEntry(body) => body.as_bytes().len(),
+                _ => 0,
+            }
+        }).sum::<usize>();
+        (bytes.len(), code_bytes)
     };
-    let small = measure(4, 0);
-    let large = measure(24, 0);
-    let scoped_small = measure(4, 100);
-    let scoped_large = measure(24, 100);
+    let (small, small_code) = measure(4, 0, false);
+    let (large, large_code) = measure(24, 0, false);
+    let (scoped_small, _) = measure(4, 100, false);
+    let (scoped_large, _) = measure(24, 100, false);
+    let (_, grouped_small_code) = measure(4, 0, true);
+    let (_, grouped_large_code) = measure(24, 0, true);
     let per_form = (large - small) / 20;
     let scoped_per_form = (scoped_large - scoped_small) / 20;
     eprintln!("component bytes: plain {small}/{large}, scoped {scoped_small}/{scoped_large}; bytes/form: {per_form}/{scoped_per_form}");
-    assert!(per_form <= 4_200, "AOT per-form size regressed: {per_form} bytes");
+    let split_code_growth = large_code - small_code;
+    let grouped_code_growth = grouped_large_code - grouped_small_code;
+    let frame_code = split_code_growth.checked_sub(grouped_code_growth)
+        .expect("grouped control grew more code than split forms") / 20;
+    eprintln!("code growth: split {split_code_growth}, grouped {grouped_code_growth}; extra bytes per split form: {frame_code}");
+    assert!(per_form <= 3_900, "AOT per-form size regressed: {per_form} bytes");
+    // The same definitions in one top-level do pay for one frame. This
+    // differential includes each split eval function and its loader call too.
+    assert!(frame_code <= 128, "namespace frame code repeated per form: {frame_code} bytes");
     assert!(scoped_per_form <= per_form + 32,
         "namespace scope repeated per form: {per_form} plain, {scoped_per_form} scoped");
 }

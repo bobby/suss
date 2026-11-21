@@ -102,6 +102,13 @@ from `hir/namespaces.rs`, without a host import:
     recovery branch and its duplicate scope tables. Independently executed
     session fragments retain that branch, including recovery after a dependency
     failed before a prepared fragment could run.
+  - Ordered AOT assembly runs all source initializers under one `*ns*` binding
+    in a small shared loader module. Each fragment selects its namespace by
+    assigning that binding after publication, rather than constructing a thunk
+    and a new binding frame. The existing `dynamic-invoke` helper restores the
+    original binding on both normal return and a language exception. Core runs
+    first; schema factories are captured before user initializers. Component,
+    official command and async assembly use the same loader plan.
   - The scope travels as an array in slot order, with nil for an empty part,
     and a long name list as an array of bucket strings. A quoted map would
     cost far more to build than the publication itself, and a vector longer
@@ -111,9 +118,12 @@ from `hir/namespaces.rs`, without a host import:
     IR, and its cache key, do not change when another form in its file
     changes.
 - **Where the object lives.** The namespace object is held in an internal cell,
-  `suss.internal.namespaces/<ns>`. Every fragment runs inside
+  `suss.internal.namespaces/<ns>`. Each independent session fragment runs inside
   `(binding [*ns* <cell>] ...)`, so a fragment that publishes nothing costs a
   check that the cell is bound, a cell read and a binding, about 700 fuel.
+  Ordered AOT fragments instead read this cell and update the loader's shared
+  binding. Prepared AOT source fragments must be initialized as an ordered batch
+  through the AOT assemblers, which provide that scope.
 - **Macros.** The macro host sets `*ns*`'s root in the macro store to the
   namespace being compiled before it calls a macro. It interns namespace objects
   once and caches them; `suss.core` and `user` are interned when the macro

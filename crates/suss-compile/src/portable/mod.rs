@@ -22,6 +22,7 @@ pub mod core_bindings;
 pub mod compiler_facts;
 pub mod compiler_names;
 pub mod aot;
+mod initialization;
 pub mod command;
 pub use origin::{SourceOrigin, SourcePosition};
 pub(crate) use origin::clone_form_metered;

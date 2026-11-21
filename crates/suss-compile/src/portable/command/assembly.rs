@@ -115,7 +115,10 @@ fn assemble(
         cells.push(cell.clone());
     }
     let bindings = core_bindings::compile_with_cells(Phase::Runtime, &cells)?;
-    let adapter = adapter::module(&resolve, arguments, run, binding.global(), fragments.len())?;
+    let initialization = crate::portable::initialization::Plan::new(fragments, 0)?;
+    let load_count = u32::from(initialization.module.is_some());
+    let adapter_module = 3 + fragments.len() as u32 + load_count;
+    let adapter = adapter::module(&resolve, arguments, run, binding.global(), &initialization.names)?;
     let mut types = shape::Types::new(&resolve);
     let arguments_type = types.function(arguments)?;
     let run_type = types.function(run)?;
@@ -173,6 +176,7 @@ fn assemble(
     let modules = [runtime_abi::module(), memory::module(), bindings.wasm]
         .into_iter()
         .chain(fragments.iter().map(|f| f.wasm.clone()))
+        .chain(initialization.module.iter().cloned())
         .chain(std::iter::once(adapter))
         .chain(exit_module);
     for module in modules {
@@ -193,6 +197,9 @@ fn assemble(
                 ("suss.bindings.runtime", ModuleArg::Instance(2)),
             ],
         );
+    }
+    if load_count != 0 {
+        instances.instantiate(3 + fragments.len() as u32, initialization.arguments(0, 2, 3));
     }
     component.section(&instances);
     let mut aliases = ComponentAliasSection::new();
@@ -226,7 +233,7 @@ fn assemble(
     }
     canonical.task_return(Some(completion_type), []);
     component.section(&canonical);
-    let shim = 3 + fragments.len() as u32;
+    let shim = adapter_module;
     let adapter_instance = shim + 1 + exit_count;
     let mut instances = InstanceSection::new();
     let mut shim_exports = vec![
@@ -241,7 +248,7 @@ fn assemble(
     instances.export_items(shim_exports);
     if exit.is_some() {
         instances.instantiate(
-            4 + fragments.len() as u32,
+            adapter_module + 1,
             [
                 ("suss.runtime", ModuleArg::Instance(0)),
                 ("suss.bindings.runtime", ModuleArg::Instance(2)),
@@ -261,7 +268,10 @@ fn assemble(
             ModuleArg::Instance(3 + index as u32),
         )
     }));
-    instances.instantiate(3 + fragments.len() as u32, args);
+    if load_count != 0 {
+        args.push((crate::portable::initialization::MODULE.to_owned(), ModuleArg::Instance(3 + fragments.len() as u32)));
+    }
+    instances.instantiate(adapter_module, args);
     component.section(&instances);
     let mut aliases = ComponentAliasSection::new();
     aliases.alias(Alias::CoreInstanceExport {
