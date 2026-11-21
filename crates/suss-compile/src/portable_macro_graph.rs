@@ -3119,6 +3119,7 @@ mod sharing_tests {
             comparisons += 1;
             Err(SessionError::Host(wasmtime::Error::msg("budget sentinel")))
         }).unwrap_err();
+        let SessionError::Host(error) = error else { panic!("original typed host error") };
         assert_eq!(error.to_string(), "budget sentinel");
         assert_eq!(comparisons, 1);
     }

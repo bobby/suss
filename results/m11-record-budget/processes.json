@@ -1,0 +1,44 @@
+{
+  "rows": [
+    {
+      "phase": "before",
+      "mode": "eval",
+      "executable": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-suss-before",
+      "executable_sha256": "cd9a645d9820acb2f3b56e18d6972a6ca5d0d45182a9b49e9a7aee8585b020ab",
+      "source_sha256": "82a1e0a00025867c06896d85606c46010ad913af163993be35098f34d199f5c9",
+      "exit_code": 1,
+      "stdout_file": "before-eval.stdout",
+      "stderr_file": "before-eval.stderr"
+    },
+    {
+      "phase": "before",
+      "mode": "script",
+      "executable": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-suss-before",
+      "executable_sha256": "cd9a645d9820acb2f3b56e18d6972a6ca5d0d45182a9b49e9a7aee8585b020ab",
+      "source_sha256": "82a1e0a00025867c06896d85606c46010ad913af163993be35098f34d199f5c9",
+      "exit_code": 1,
+      "stdout_file": "before-script.stdout",
+      "stderr_file": "before-script.stderr"
+    },
+    {
+      "phase": "after",
+      "mode": "eval",
+      "executable": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-suss-record-protocol-index",
+      "executable_sha256": "64ff9ee552941d9ad9bc71df6434b3db73b087d48f5fb0c0ab4f14fd41396ba6",
+      "source_sha256": "82a1e0a00025867c06896d85606c46010ad913af163993be35098f34d199f5c9",
+      "exit_code": 0,
+      "stdout_file": "after-eval.stdout",
+      "stderr_file": "after-eval.stderr"
+    },
+    {
+      "phase": "after",
+      "mode": "script",
+      "executable": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-suss-record-protocol-index",
+      "executable_sha256": "64ff9ee552941d9ad9bc71df6434b3db73b087d48f5fb0c0ab4f14fd41396ba6",
+      "source_sha256": "82a1e0a00025867c06896d85606c46010ad913af163993be35098f34d199f5c9",
+      "exit_code": 0,
+      "stdout_file": "after-script.stdout",
+      "stderr_file": "after-script.stderr"
+    }
+  ]
+}

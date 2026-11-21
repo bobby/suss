@@ -1,3 +1,56 @@
+## Record projection measurements and isolated probes (2026-11-21)
+
+`results/m11-record-budget` retains same-source default eval/script comparisons,
+executable/source digests, complete stage traces and input fixtures. Both frozen
+before processes fail on fuel; both after processes return 17. Consecutive caller
+environments fall from 14,638,260 / 14,654,648 to 977,581 / 992,352 fuel. Record
+invocation through decoding falls to 2,774,977 / 2,090,371; this excludes later
+expansion analysis. The actual REPL process completes both requests at a 4,000,000
+cap (`m11-record-four-million-profile.log`), and the strengthened CLI regression
+also passes at that cap, together with default eval/script and AOT compile/run.
+No shipped allowance changes. Those measurements identify source fingerprint
+389966c686cbe697e6bdab21613e8f49196e374060cbe98d314d3ff0801f0ac8.
+
+The first focused protocol-index run was deliberately stopped after its three
+process passes and successful complete phase/shadow/rename comparison, to batch
+new name lookups instead of repeatedly transporting the full catalog. Preserve
+`m11-record-protocol-index-focused.log` as incomplete (SIGTERM), not a suite pass.
+The replacement `m11-record-final-focused.log` runs all nine cases, including a
+single full/private environment per phase for all Unicode/delimiter lookups and
+exact absent-binding messages. Inspect its terminal result; it is still live.
+The sort unit originally expected the inner Host message without its wrapper;
+matching the typed variant corrects that test. `m11-record-sort-corrected.log`
+records one pass. That test-only source correction changes the fingerprint to
+a3a7a52dc6d4259c412ce258322fccabb878f3dcc068825fa5c072adbe13a225; earlier
+measurements keep their own identity. Public adaptation provenance passes again
+in `m11-record-protocol-provenance.log`.
+
+Namespace head 3f218510 has passing foundation, all eight integration shards and
+aggregate test CI in run 44885511940, plus a clean exact-head independent review.
+Its separate local workspace run remains live in the frozen binding worktree;
+no terminal local pass is claimed. GitHub holds acceptance/promotion state.
+
+A release printing baseline is isolated at `target/probe/m11-print-before-source`
+(detached 3f218510), target `target/probe/m11-print-release-target`. Build with
+`RUSTUP_TOOLCHAIN=stable`, one job, a 3GiB user scope and the shared native cache
+`SUSS_BUILD_DIR=<root>/target/suss`. Actual `cargo run --release --locked -p
+suss-cli --example read_string_bench -- 80 --print` reports 0.524M UTF-16 units
+and 25.670s for pr-str; the 160-root run is live. Logs use `m11-print-before-*`.
+The manifest path selects the frozen source. No printing implementation change
+has been made yet.
+
+The call-size audit has a detached historical worktree at
+`target/probe/m11-call-history-source`, Cargo target `m11-call-history-target`.
+An untracked `m11_call_size` example executes every measured component, with a
+counter proving 0/1/2/10 calls at arities 0 and 4. The initial bare-Environment
+control omits core/IFn and is not representative of ordinary compiled programs;
+its before/after artifacts remain under `m11-call-history-before` / `-after`.
+The revised harness includes the actual shipped core and its real IFn catalog.
+It is running at the #370 merge 7f849c7c in `m11-call-history-full-after.log`;
+repeat unchanged at 53958035 for the full before comparison. The harness is
+outside src, so historical compiler sources and lockfiles remain unchanged.
+Native Wasmtime caching is local to `target/probe/m11-call-native-cache`.
+
 ## Record helper membership index probes (2026-11-21)
 
 `SUSS_MACRO_FUEL_TRACE=1 target/probe/m11-suss-before repl --compile-fuel
