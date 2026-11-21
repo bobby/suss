@@ -1,5 +1,11 @@
 ## ADR-0001 contract review commands (2026-11-20)
 
+The user requested revision before adoption and asked whether ADR-0001 can wait.
+The contract now recommends deferring both stages, with separate reconsideration
+conditions; its detailed candidate design remains for reference. This is a
+recommendation awaiting the user's disposition, not acceptance or a changed
+language contract. The existing M5/release gates do not depend on ADR-0001.
+
 The linked milestone is GitHub milestone 11 (ADR-0001), distinct from roadmap
 M11 (GitHub milestone 13). Start from #50's separately gated tactical and
 strategic decisions. The review proposal is

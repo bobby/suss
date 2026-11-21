@@ -8,14 +8,28 @@ Examples and fixture names below are acceptance targets, not supported APIs.
 
 ## Decisions requested
 
-Review these decisions separately. Accepting the tactical stage does not accept
-the strategic stage. Acceptance records must name the reviewer, date, scope,
-and any amendments in #50 and in dated accepted-design decisions.
+Recommendation: **defer both stages** while generic WIT interoperability and
+the accepted Clojure contract are developed. ADR-0001 is not a prerequisite for
+the existing release gates: their accepted boundary representation is tagged
+vectors, and their language contract includes nil and exceptions. Deferral does
+not require implementing nominal values or a second semantic profile first.
+
+Review the two dispositions separately in #50. The recommendation is not itself
+an accepted deferral. A decision record must name the reviewer, date, scope and
+any amendments. Accepting the tactical stage later does not accept the strategic
+stage; actual contract changes additionally require dated accepted-design entries.
 
 | Stage | Proposed decision | Rationale and release condition |
 | --- | --- | --- |
-| Tactical | Accept nominal Result/Option/Unit, explicit composition and conversions, and versioned nominal WIT bindings; preserve Clojure source behavior | Prevent domain-data collisions at typed boundaries without changing compatible core. Ship only after value, WIT and compatibility evidence passes. Panic has its own later execution gate. |
-| Strategic | Accept the native migration target, initially behind an explicit experimental profile | Make failure, absence, completion and null distinct throughout native programs. This deliberately gives up Clojure source compatibility in that profile. No native release until the complete core, macro, resource, async and target gates pass. |
+| Tactical | Defer nominal Result/Option/Unit and the nominal WIT binding change | Establish generic bidirectional WIT/schema/resource evidence under the current contract first. Revisit when concrete boundary use cases justify the representation change and migration cost. |
+| Strategic | Defer the native nil/exception migration and semantic profiles | Preserve the accepted Clojure target. Revisit only with an explicit product decision, a complete migration assessment and evidence that the departure is worth its core, tooling and target costs. |
+
+The remaining sections preserve a candidate design **if adoption is revisited**;
+they are not work required to finish deferral. Reopening either stage requires a
+separate explicit decision. Deferral is not rejection, implementation completion,
+or authorization to silently change the tagged-vector boundary later. Record the
+disposition and dependent-issue consequences in GitHub; retain the proposal for
+reference without reporting unexecuted fixtures as passing evidence.
 
 The proposed default remains the Clojure-compatible profile throughout tactical
 delivery and native preview. A future default switch needs a separate release
