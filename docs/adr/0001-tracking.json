@@ -1,7 +1,7 @@
 {
   "repository": "bobby/suss",
   "adr": "ADR-0001",
-  "status": "proposed",
+  "status": "deferred",
   "milestone": {
     "number": 11,
     "url": "https://github.com/bobby/suss/milestone/11",

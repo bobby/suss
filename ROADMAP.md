@@ -13,6 +13,8 @@ strategic adoption of Result/Option/panic semantics. Its
 [dedicated milestone and work packages](docs/adr/README.md#adr-0001-work-tracking)
 track decisions, design, implementation, and acceptance separately from M0–M9.
 The proposal has not changed this roadmap's accepted semantics or release gates.
+Both stages are deferred by the [ADR disposition](docs/adr/0001-result-option-and-panic.md#disposition);
+neither is a prerequisite for the existing gates.
 
 | Milestone | Depends on | Exit gate |
 | --- | --- | --- |

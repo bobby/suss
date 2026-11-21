@@ -7,7 +7,9 @@ not features already implemented.** Implementation status lives in
 
 [ADR-0001](../adr/0001-result-option-and-panic.md) proposes a staged move to nominal
 Result/Option types and eventually native semantics without nil or throw/catch.
-It is **not accepted** and does not supersede this contract.
+Both stages are **deferred** by the 2026-11-21 UTC disposition, are not accepted,
+and do not supersede this contract. Nil, truthiness, language exceptions and the
+tagged-vector WIT mapping remain as specified below.
 
 This supersedes earlier architecture claims in README, ROADMAP, CLAUDE and
 METADATA_DESIGN. Changes to this contract require a dated decision entry below.

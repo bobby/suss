@@ -1,25 +1,27 @@
 # Result, Option, and panic contract for ADR-0001
 
-Status: **proposed for review**, 2026-11-20. This is a concrete design for
+Status: **unaccepted candidate design retained after deferral**. Both adoption
+stages were explicitly deferred by the repository owner on 2026-11-21 UTC
+(2026-11-20 US/Central). Originally drafted 2026-11-20 for
 [ADR1-01](https://github.com/bobby/suss/issues/50) and
-[ADR1-02](https://github.com/bobby/suss/issues/51), not acceptance or executing
-evidence. [The accepted design](suss-0.3.1.md) continues to govern shipped code.
+[ADR1-02](https://github.com/bobby/suss/issues/51), this document is neither
+adoption acceptance nor executing evidence.
+[The accepted design](suss-0.3.1.md) continues to govern shipped code.
 Examples and fixture names below are acceptance targets, not supported APIs.
 
-## Decisions requested
+## Disposition and future reconsideration
 
-Recommendation: **defer both stages** while generic WIT interoperability and
-the accepted Clojure contract are developed. ADR-0001 is not a prerequisite for
+The repository owner's decision is **"Defer both"**, recorded in the
+[ADR disposition](../adr/0001-result-option-and-panic.md#disposition).
+ADR-0001 is not a prerequisite for
 the existing release gates: their accepted boundary representation is tagged
 vectors, and their language contract includes nil and exceptions. Deferral does
 not require implementing nominal values or a second semantic profile first.
 
-Review the two dispositions separately in #50. The recommendation is not itself
-an accepted deferral. A decision record must name the reviewer, date, scope and
-any amendments. Accepting the tactical stage later does not accept the strategic
-stage; actual contract changes additionally require dated accepted-design entries.
+Accepting the tactical stage later would not accept the strategic stage;
+actual contract changes would additionally require dated accepted-design entries.
 
-| Stage | Proposed decision | Rationale and release condition |
+| Stage | Decision | Rationale and reconsideration |
 | --- | --- | --- |
 | Tactical | Defer nominal Result/Option/Unit and the nominal WIT binding change | Establish generic bidirectional WIT/schema/resource evidence under the current contract first. Revisit when concrete boundary use cases justify the representation change and migration cost. |
 | Strategic | Defer the native nil/exception migration and semantic profiles | Preserve the accepted Clojure target. Revisit only with an explicit product decision, a complete migration assessment and evidence that the departure is worth its core, tooling and target costs. |
@@ -27,9 +29,9 @@ stage; actual contract changes additionally require dated accepted-design entrie
 The remaining sections preserve a candidate design **if adoption is revisited**;
 they are not work required to finish deferral. Reopening either stage requires a
 separate explicit decision. Deferral is not rejection, implementation completion,
-or authorization to silently change the tagged-vector boundary later. Record the
-disposition and dependent-issue consequences in GitHub; retain the proposal for
-reference without reporting unexecuted fixtures as passing evidence.
+or authorization to silently change the tagged-vector boundary later. The
+following API, profile, compatibility-lifetime and native-truthiness choices
+remain unaccepted proposals; no compatibility sunset or native profile is adopted.
 
 The proposed default remains the Clojure-compatible profile throughout tactical
 delivery and native preview. A future default switch needs a separate release

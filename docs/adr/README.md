@@ -7,7 +7,7 @@ roadmap, compatibility contracts, and executing evidence.
 
 | ID | Proposal | Status |
 | --- | --- | --- |
-| ADR-0001 | [Nominal results and options, explicit absence, and panic](0001-result-option-and-panic.md) | Proposed |
+| ADR-0001 | [Nominal results and options, explicit absence, and panic](0001-result-option-and-panic.md) | Both stages deferred, 2026-11-21 UTC |
 | ADR-0002 | [Defer MLIR compiler adoption after the bounded evaluation](0002-defer-mlir-adoption.md) | Accepted — defer adoption |
 | ADR-0003 | [Clojure's numeric tower](0003-clojure-numeric-tower.md) | Accepted 2026-11-06 |
 | ADR-0004 | [Calling convention](0004-calling-convention.md) | Accepted 2026-11-10 |
@@ -22,9 +22,11 @@ Creating these issues does not accept either proposal stage. Implementation is
 gated by the relevant decisions and design, and native migration additionally
 requires explicit strategic acceptance.
 
-The [concrete contract draft](../design/result-option-panic.md) presents the two
-adoption decisions separately, with API, runtime, migration and executing fixture
-contracts for review. It is a proposal and does not change the accepted design.
+Both stages were explicitly deferred by the repository owner on 2026-11-21 UTC.
+The [candidate contract](../design/result-option-panic.md) retains API, runtime,
+migration and executing fixture targets for future review. Those choices are
+unaccepted and do not change the accepted design; reopening either stage requires
+a new explicit decision. Issue completion remains tracked only in GitHub.
 
 | ID | Work package | Dependencies |
 | --- | --- | --- |

@@ -1,11 +1,33 @@
 # ADR-0001: Nominal results and options, explicit absence, and panic
 
-Status: **Proposed**. Neither stage is accepted or implemented by this ADR.
+Status: **Deferred — tactical and strategic stages** by the repository owner on
+2026-11-21 UTC (2026-11-20 US/Central). Neither stage is accepted or implemented
+by this ADR.
 Date: 2026-09-29.
 
 The [2026-11-20 contract draft](../design/result-option-panic.md) supplies concrete
-API, propagation, cleanup, profile and migration decisions for separate tactical
-and strategic review. It does not accept either stage or change shipped behavior.
+candidate API, propagation, cleanup, profile and migration contracts for future
+review. It does not accept either stage or change shipped behavior.
+
+## Disposition
+
+The repository owner explicitly instructed: **"Defer both"**. Record and review
+the disposition on [ADR1-01 (#50)](https://github.com/bobby/suss/issues/50), with
+dependent work tracked in the linked issues. The dispositions are separate:
+
+| Stage | Decision | Rationale and reconsideration |
+| --- | --- | --- |
+| Tactical nominal Result/Option/Unit and WIT adoption | Deferred | Establish generic WIT interoperability under the current contract first; revisit when concrete boundary needs justify nominal values and binding migration. |
+| Strategic removal of nil and application throw/catch | Deferred | Preserve the accepted Clojure target; reconsider only through an explicit product decision and complete core/tooling/target migration assessment. |
+
+There is no compatibility sunset, accepted native profile, default switch or
+native truthiness decision. Clojure's nil-and-false truthiness and exception
+semantics remain the contract; WIT options/results retain the accepted
+tagged-vector mapping. The candidate false-only native semantics and profile
+design below are unaccepted alternatives, not scheduled changes. Existing
+release/compatibility gates and stable M0–M9 issue IDs are unchanged. Neither
+stage is a prerequisite for those gates. Reopening either stage requires a new
+explicit decision; deferral does not certify implementation or adoption.
 
 ## Context
 

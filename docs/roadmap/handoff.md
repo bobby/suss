@@ -1,10 +1,11 @@
 ## ADR-0001 contract review commands (2026-11-20)
 
-The user requested revision before adoption and asked whether ADR-0001 can wait.
-The contract now recommends deferring both stages, with separate reconsideration
-conditions; its detailed candidate design remains for reference. This is a
-recommendation awaiting the user's disposition, not acceptance or a changed
-language contract. The existing M5/release gates do not depend on ADR-0001.
+After requesting revision and asking whether ADR-0001 can wait, the repository
+owner explicitly instructed "Defer both" on 2026-11-21 UTC (2026-11-20
+US/Central). See the separate tactical/strategic disposition in ADR-0001.
+Its detailed candidate design remains an unaccepted reference. The existing
+M5/release gates do not depend on ADR-0001. No nil/exception, truthiness,
+compatibility-lifetime, profile or WIT contract changes are accepted.
 
 The linked milestone is GitHub milestone 11 (ADR-0001), distinct from roadmap
 M11 (GitHub milestone 13). Start from #50's separately gated tactical and
@@ -21,20 +22,33 @@ Manifest in `runtime_abi.rs`, the source artifact profile in
 `portable/artifact_identity.rs`, and executing tagged-vector option fixtures
 in `tests/portable_aot_options.rs`; none proves nominal outcome support.
 
-Validation: `git diff --check` passes. A local Python link/fence check over the
-three changed contract/index documents resolves all 16 relative links and finds
-balanced fences. The initial `python3 scripts/cljs_reviews.py` failed because
+Validation: `git diff --check` passes. The initial local Python link/fence check
+over three contract/index documents resolved all 16 relative links. After the
+disposition update, the five roadmap/design/ADR documents resolve all 35 relative
+links and have balanced fences; JSON parsing verifies the deferred ADR status
+and unchanged ADR1-01–ADR1-08 issue IDs. The initial
+`python3 scripts/cljs_reviews.py` failed because
 the fresh worktree's clojurescript submodule was uninitialized (Git reported the
 parent revision instead of the pinned upstream revision); initialize it with
 `git submodule update --init clojurescript` before repeating inventory checks.
 After initialization, `python3 scripts/cljs_inventory.py --check` verifies 1,065
 declarations and `python3 scripts/cljs_reviews.py` verifies 638 reviewed / 427
 unassessed declarations. Neither inventory nor overlay changed.
-Documentation checks do not replace focused execution, the full locked
-two-thread Rust baseline, independent review or final-head CI. No runtime tests
-or native adoption evidence are claimed here. Review the proposed adoption
-decisions before implementing either stage; explicit strategic acceptance is
-required before the nil/exception migration.
+The existing tagged-vector baseline command,
+`CARGO_BUILD_JOBS=2 cargo +stable test -p suss-compile --locked --test
+portable_aot_options -- --test-threads=2`, completed with 16 passed, 0 failed,
+0 ignored; the test phase took 272.54s after a fresh 7m57s build. Log:
+`target/probe/adr1-options-baseline.log`. This run spans documentation-only
+commits 118574b7/a586ab7e with unchanged runtime/test sources. It proves bounded
+existing option behavior, not nominal Result/Option adoption.
+
+Documentation checks and this focused baseline do not replace the full locked
+two-thread Rust baseline, independent review or final-head CI. No full local
+workspace baseline or native adoption evidence is claimed. CI on a586ab7e had
+passed foundation and four integration shards at inspection, with four shards
+still running; a later documentation push needs its own final-head CI result.
+The draft remains a reference, without promotion or merge. Reopening either
+adoption stage requires a new explicit decision before implementation.
 
 ## Independent PR177 review — typed invocation before guest initialization
 
