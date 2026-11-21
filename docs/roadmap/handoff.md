@@ -1,3 +1,29 @@
+## Stack 495 rebase verification (2026-11-21)
+
+Rebase commands: `gh stack checkout 495`, `gh stack rebase`, then
+`gh stack rebase --continue` after each generated-manifest conflict. The base is
+main 6b794ea04b686432bfc11cdf75b524a3cd9ff375. Preserve both main's M15 entries
+and the M11 entries in this handoff. Regenerate the manifest from combined owned
+sources with `python3 scripts/apply_bootstrap.py` and
+`python3 scripts/core_import.py`; do not choose either parent's stale digest.
+The printer range-diff against its original five commits changes only generated
+recipe/core hashes. Original benchmark and negative-control receipts remain
+byte-for-byte unchanged and retain their original measured source identities.
+No timings are relabeled as measurements of this rebased source.
+
+`python3 scripts/core_import.py --check` verifies 508 files, and
+`python3 scripts/apply_bootstrap.py --check` passes. The complete command
+`python3 -m unittest discover -s scripts -p 'test_*.py'` passes 361 tests on the
+rebased worktree; log `target/probe/m11-stack495-python-current.log` in the
+original M11 workspace. Source/documentation diff whitespace checks pass; raw
+historical logs retain their original whitespace. All four focused printer regressions pass in both phases (zero failures or
+ignores), including long unpaired UTF-16/GC and reentrant conversion. Execution is
+recorded separately in `target/probe/m11-stack495-printer.log`, using stable Rust,
+two Cargo jobs, MemoryMax4G, the shared native cache and existing print target:
+`cargo +stable test -p suss-cli --locked --test printing_chunks -- --test-threads=2`.
+Do not infer a full rebased workspace pass from focused or historical evidence;
+new-head CI must verify the pushed stack. Publish with `gh stack push`.
+
 ## Final quote correction receipts (2026-11-21)
 
 Corrected source 0242d5cc passes 34 focused printing cases, all 358 Python checks,
