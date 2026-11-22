@@ -32338,3 +32338,17 @@ CI/fixture attempts remain. The complete unfiltered command remains
 `cargo test --workspace --locked -- --test-threads=2`; its future/live receipt
 must be checked independently before claiming success. Final-head CI and the
 remaining WIT/helper/Decimal/API acceptance still apply.
+
+
+## Analyzer corpus loading after exact division (2026-11-22)
+
+`results/m12-ratio-workspace/command.json` retains the required unfiltered
+workspace command at5ee8a0d7, terminal101 after606.88 seconds with frozen inputs
+unchanged. It stops at the analyzer corpus fixture: its native EDN loader
+rejects the corrected1/2 expectation before extracting source expressions.
+The fixture now uses the analyzer's forms-to-tooling boundary and retains all
+expressions/setup, skips and round-trip assertions. The complete focused
+`cargo test -p suss-cli --locked --test analyzer_edn -- --test-threads=2`
+passes9 tests. This does not implement raw exact values in native tooling EDN.
+A separate full workspace retry is required; the failed invocation certifies
+no later targets.

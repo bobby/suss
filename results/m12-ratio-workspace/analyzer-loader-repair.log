@@ -1,0 +1,18 @@
+Running as unit: run-p954879-i89026706.scope; invocation ID: bb7155c3959542a48f7f8fd71ebeea54
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2.78s
+     Running tests/analyzer_edn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-target/debug/deps/analyzer_edn-68e7b87aacd37105)
+
+running 9 tests
+test conformance_corpus_round_trips ... ok
+test emitted_forms_follow_edited_nodes ... ok
+test cli_prints_documents_that_suss_reads ... ok
+test recur_targets_the_innermost_loop ... ok
+test namespace_mode_prints_only_the_selected_namespace ... ok
+test special_forms_have_tools_analyzer_shapes ... ok
+test samples_round_trip ... ok
+test swapped_branches_compare_unequal ... ok
+test user_forms_round_trip ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 55.58s
+

@@ -53,7 +53,12 @@ fn conformance_corpus_round_trips() {
     let mut count = 0;
     for file in ["core", "collections", "benchmarks"] {
         let text = std::fs::read_to_string(root().join(format!("reference/cljs-tests/{file}.sus"))).unwrap();
-        let cases = suss_reader::edn::read_one(&text, &suss_reader::edn::Options::default()).unwrap();
+        // Only source expressions/setup are consumed here. The corpus also
+        // contains exact numeric expectations, so use the forms-to-tooling
+        // boundary rather than the native EDN model's narrower numeric reader.
+        let forms = suss_reader::forms::read_forms(&text).unwrap();
+        assert_eq!(forms.len(), 1, "{file}: one corpus vector");
+        let cases = suss_reader::edn::source::form_to_value(&forms[0]).unwrap();
         let suss_reader::edn::Value::Vector(cases) = cases else { panic!("{file}: not a vector") };
         for case in cases {
             let suss_reader::edn::Value::Map(case) = case else { panic!("{file}: not a map") };
