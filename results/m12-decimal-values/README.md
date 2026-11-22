@@ -44,3 +44,8 @@ not implement those operations: existing fallback paths can narrow Decimal to
 Double, and the old case-literal boundary must be replaced. This local prototype
 is not published as usable Decimal arithmetic. Complete original issue criteria,
 suite evidence and final-head validation remain required on GitHub.
+
+The rebased data/conversion source b6d4beb1 also passes all4 scoped tests,
+zero failed/ignored, in104.52s with frozen input hashes unchanged. It includes
+#499's4cf2c6d4 printer/operand fixes. Pre-rebase receipts are preserved separately.
+This does not expand the verified semantic scope described above.

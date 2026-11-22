@@ -1,5 +1,11 @@
 ## Immutable Decimal artifact probes (2026-11-22)
 
+The data/conversion prototype is rebased on4cf2c6d4. Resolving handoff and
+regenerating the manifest preserves both the printer repair and Decimal forms.
+The complete scoped target onb6d4beb1 again passes4 tests, zero failed/ignored,
+in104.52s (12.22s actual execution), with frozen input hashes unchanged. The
+original pre-rebase receipts remain as pre-rebase-command.json and run.log.
+
 The independent Decimal value prototype appends immutable unscaled-BigInt and
 i32-scale fields as ABI11. Compiler literals/data and macro transport carry
 those exact fields; the original no_std formatter returns scale-preserving
