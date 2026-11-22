@@ -1296,3 +1296,14 @@ passes, including vector and parameter controls. Measured MapEntry allocation
 falls from about136 bytes per iteration to below RSS resolution, and5579 to180
 instructions; vector/control/closure measurements remain explicit. This is
 bounded storage evidence, not complete escape support or quiet timing acceptance.
+
+
+[Numeric capture receipts](../../results/m12-numeric-captures/README.md) add18
+fresh JVM pairs executed in Runtime/Macro and actual AOT. The five-target run
+passes24 tests, including raw-field and maker-allocation checks. Private closure
+fields keep proven numeric-only captures raw while source overload facts stay
+unchanged; shared object uses retain object fields. The measured named-closure
+sample removes one numeric box (about920 to904 bytes per iteration), while
+closure/source-signature allocations remain. Instructions fall8547.45 to8463.61;
+object and direct controls remain explicit. These bounded observations do not
+establish letfn support, complete escape coverage or quiet timing acceptance.

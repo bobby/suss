@@ -1,3 +1,43 @@
+## Numeric-only closure capture fields (2026-11-22)
+
+results/m12-numeric-captures retains five-input reconstruction from5b40654f,
+18 fresh JVM pairs and actual Runtime/Macro/AOT execution (54 observations).
+The five-target command passes24 tests, zero failed/ignored, including three
+code-generation checks. The raw-field regression fails against the immutable
+parent compiler. Original inference/fixture/JVM assertion failures remain.
+Source classes and generic entry types stay unchanged. Numeric-only captures
+use private immutable i64/f64 fields; object uses, alias joins, unknown numeric
+alternatives and resumable makers stay conservative. A backward SSA demand
+worklist handles all captures of a method together. Named/general/variadic
+closures can use raw fields while their closure objects still allocate.
+
+SUSS_CAPTURE_TARGET=<m12-letfn-target> python3
+results/m12-numeric-captures/measure.py asserts24 RSS/12 perf runs and12 warm
+checks against frozen5b40654f, with immutable executable/component identities.
+The numeric capture loop estimates920 to904 bytes per iteration and8547.45 to
+8463.61 instructions. The object-return control remains about920 bytes/8661
+instructions; direct arithmetic remains below RSS resolution/about18. Source
+signature wrappers and named closure allocations dominate this sample. No
+quiet timing or elimination of the closure object is claimed.
+
+python3 results/m12-numeric-captures/run-gates.py is active on the frozen five
+inputs:39 focused targets, Java-free bootstrap, Binaryen133, reviewed-suite
+comparison, then cargo test --workspace --locked -- --test-threads=2. Use stable
+Rust, two jobs/threads, MemoryMax4G, m12-letfn-target and outer target/suss.
+The focused stage writes broad-focused.log; terminal stage receipts accumulate
+in commands.json. Do not infer a full pass before the process terminates.
+
+The parent vector snapshot finishes169 passes across36 targets; the MapEntry
+snapshot finishes172 across37. Both also pass Java-free bootstrap (4 tests),
+Binaryen133 (2 tests) and reviewed-suite comparison. These comparisons preserve
+known failures; they are not complete Clojure conformance. The original frozen
+f5056ffe full command terminates101 after8781.84s on
+portable_calling_convention::known_callees_are_static_calls. That stale call
+shape assertion is repaired on the current branch and passes in the parent
+focused run. The raw original full log/receipt remains in results/m12-escape;
+it does not prove the current full baseline. letfn and numeric-tower work
+remain outside these bounded observations; GitHub owns acceptance state.
+
 ## Canonical MapEntry scalar probes (2026-11-22)
 
 results/m12-mapentries retains16 fresh JVM Clojure1.12.6 assertions, both-phase

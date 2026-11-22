@@ -49,3 +49,11 @@ Binaryen133 and reviewed-suite comparison. It is active; inspect terminal
 statuses before treating the broader run as passed. Final-head CI remains a
 separate gate. One aggregate per function, unsupported letfn, the existing NaN
 identity difference and unfinished numeric-tower work remain explicit limits.
+
+
+The frozen gate now terminates successfully: 172 tests across 37 focused
+targets, zero failed/ignored, Java-free bootstrap (4 tests), Binaryen 133
+(2 tests), and reviewed-suite comparison (1 test). Terminal commands and raw
+logs are retained here, together with the actual suite observations. The suite
+comparison preserves reviewed known failures; it is not full conformance.
+Use --reconstructed-only for this historical package after later source changes.

@@ -1,0 +1,33 @@
+Running as unit: run-p39608-i88088473.scope; invocation ID: 0e2b881b3a7e45a9a9befe30c8771663
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 3m 00s
+     Running tests/portable_numeric_captures.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-target/debug/deps/portable_numeric_captures-863c73090cff2a93)
+
+running 2 tests
+test numeric_only_captures_use_raw_fields_in_ordinary_named_and_general_closures ... FAILED
+test capture_object_uses_and_join_aliases_keep_the_shared_box ... FAILED
+
+failures:
+
+---- numeric_only_captures_use_raw_fields_in_ordinary_named_and_general_closures stdout ----
+
+thread 'numeric_only_captures_use_raw_fields_in_ordinary_named_and_general_closures' (50682) panicked at crates/suss-compile/tests/portable_numeric_captures.rs:6:43:
+called `Result::unwrap()` on an `Err` value: Diagnostic { span: 39..40, message: "Unresolved Runtime name =" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- capture_object_uses_and_join_aliases_keep_the_shared_box stdout ----
+
+thread 'capture_object_uses_and_join_aliases_keep_the_shared_box' (50681) panicked at crates/suss-compile/tests/portable_numeric_captures.rs:47:9:
+assertion `left == right` failed: (let [x 3000000000] (fn ([] (+ x 1)) ([a] x)))
+  left: [Val(Ref(eqref)), Val(I64), Val(Ref(eqref))]
+ right: [Val(Ref(eqref))]
+
+
+failures:
+    capture_object_uses_and_join_aliases_keep_the_shared_box
+    numeric_only_captures_use_raw_fields_in_ordinary_named_and_general_closures
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p suss-compile --test portable_numeric_captures`

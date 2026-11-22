@@ -1,0 +1,19 @@
+
+running 1 test
+test numeric_only_captures_use_raw_fields_in_ordinary_named_and_general_closures ... FAILED
+
+failures:
+
+---- numeric_only_captures_use_raw_fields_in_ordinary_named_and_general_closures stdout ----
+
+thread 'numeric_only_captures_use_raw_fields_in_ordinary_named_and_general_closures' (65965) panicked at /home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-source/crates/suss-compile/tests/portable_numeric_captures.rs:39:9:
+(let [x 3000000000] (fn [] (+ x 7)))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    numeric_only_captures_use_raw_fields_in_ordinary_named_and_general_closures
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+

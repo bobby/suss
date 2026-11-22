@@ -1,0 +1,14 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--workspace",
+    "--locked",
+    "--",
+    "--test-threads=2"
+  ],
+  "source_inputs": "source-inputs.json",
+  "source_commit": "f5056ffefdbeb196768c4135d8f6a4769c05977e",
+  "exit_code": 101,
+  "seconds": 8781.841921329498
+}

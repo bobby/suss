@@ -45,3 +45,11 @@ Java-free bootstrap reproduction, Binaryen133 and the reviewed suite. Inspect
 its terminal status before claiming the broader gate passed. The initial
 36-target run failed and did not reach those later stages. Final-head CI and
 the terminal unfiltered workspace result remain separate requirements.
+
+
+The frozen gate now terminates successfully: 169 tests across 36 focused
+targets, zero failed/ignored, Java-free bootstrap (4 tests), Binaryen 133
+(2 tests), and reviewed-suite comparison (1 test). Terminal commands and raw
+logs are retained here, together with the actual suite observations. The suite
+comparison preserves reviewed known failures; it is not full conformance.
+Use --reconstructed-only for this historical package after later source changes.

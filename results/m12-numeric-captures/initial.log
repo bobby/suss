@@ -1,0 +1,37 @@
+Running as unit: run-p22301-i88086471.scope; invocation ID: 0807cbaf10d94e6392584d706297b6e3
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-source/crates/suss-core)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 3m 30s
+     Running tests/portable_numeric_captures.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-letfn-target/debug/deps/portable_numeric_captures-863c73090cff2a93)
+
+running 2 tests
+test numeric_only_captures_use_raw_fields_in_ordinary_named_and_general_closures ... FAILED
+test capture_object_uses_and_join_aliases_keep_the_shared_box ... FAILED
+
+failures:
+
+---- numeric_only_captures_use_raw_fields_in_ordinary_named_and_general_closures stdout ----
+
+thread 'numeric_only_captures_use_raw_fields_in_ordinary_named_and_general_closures' (35362) panicked at crates/suss-compile/tests/portable_numeric_captures.rs:34:9:
+assertion `left == right` failed: (let [x 3000000000] (fn [] (+ x 7)))
+  left: [Val(Ref(eqref))]
+ right: [Val(I64)]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- capture_object_uses_and_join_aliases_keep_the_shared_box stdout ----
+
+thread 'capture_object_uses_and_join_aliases_keep_the_shared_box' (35361) panicked at crates/suss-compile/tests/portable_numeric_captures.rs:47:9:
+assertion `left == right` failed: (let [x 3000000000] (fn ([] (+ x 1)) ([a] x)))
+  left: [Val(Ref(eqref)), Val(Ref(eqref)), Val(Ref(eqref))]
+ right: [Val(Ref(eqref))]
+
+
+failures:
+    capture_object_uses_and_join_aliases_keep_the_shared_box
+    numeric_only_captures_use_raw_fields_in_ordinary_named_and_general_closures
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p suss-compile --test portable_numeric_captures`

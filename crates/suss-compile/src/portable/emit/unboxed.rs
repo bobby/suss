@@ -249,7 +249,7 @@ fn bitwise_inline_inputs(operation: Bitwise, arguments: &[Repr], cast: Option<us
 
 /// Each value's representation. Resumable functions, whose locals are spilled
 /// as GC values across suspensions, keep every value boxed.
-pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, Repr)], result: Option<Repr>) -> Vec<Repr> {
+pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, Repr)], result: Option<Repr>, raw_captures: &[ValueId]) -> Vec<Repr> {
     let count = function.values.len();
     let literals = long_literals(function);
     if resumable {
@@ -388,6 +388,7 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
     // A literal that only ever escapes stays a boxed constant. Its users are
     // then not inline, so no other value's representation depends on it.
     let mut raw_use = vec![false; count];
+    for value in raw_captures { raw_use[value.0] = true; }
     for block in &function.blocks {
         for instruction in &block.instructions {
             if let Operation::Call { operands, primitive: Some(shape) } = &instruction.operation

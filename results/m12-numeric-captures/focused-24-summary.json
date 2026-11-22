@@ -1,0 +1,30 @@
+{
+  "source": "terminal result and captured tool output from run-focused.py, before broad gate reused the log path",
+  "targets": {
+    "captured_fn_calls": {
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0
+    },
+    "clojure_numeric_captures": {
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0
+    },
+    "portable_closures": {
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0
+    },
+    "portable_numeric_captures": {
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    "portable_primitive_entries": {
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    }
+  }
+}

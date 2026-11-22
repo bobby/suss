@@ -164,7 +164,8 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   tags has a typed Wasm entry, retained in a signature-specific subtype of its
   code struct (ABI 7). The ordinary entry checks its arguments, calls that
   body and boxes a primitive result. Numeric operands and results inside the
-  typed body stay raw; closures which remain materialized retain ordinary captures.
+  typed body stay raw. Materialized closures can keep numeric-only captures in
+  raw fields as described below.
   Variadic and spread adapters still reach the checked ordinary entry.
 - **Fixed primitive calls.** Calls of a known local function, direct-linked
   definition or a var with numeric arglists can use the typed entry. Direct
@@ -176,6 +177,16 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   propagate those alternatives; numeric casts check the boxed alternative.
   The fallback never coerces a replacement merely because of an old hint.
 
+
+- **Numeric capture fields.** A final closure subtype can use immutable i64/f64
+  fields for captures whose complete uses in every method are inline numeric
+  operations. Entry inference receives the field representation without changing
+  the source class or parameter types. Literal captures count as raw uses at
+  their maker. Returning, throwing, identity, nested capture and unknown uses
+  retain shared object fields, including through CFG aliases. Guarded numeric
+  alternatives and resumable makers stay conservative. Named, multiple-arity
+  and variadic closures use the same layout decision; the closure itself can
+  still allocate. See `results/m12-numeric-captures` for source and observations.
 
 - **Locally called closures.** After source overload/return/recur checks, a
   fixed-arity closure whose complete use set is correctly sized calls can be

@@ -1,0 +1,30 @@
+{
+  "command": [
+    "cargo",
+    "+stable",
+    "test",
+    "--workspace",
+    "--locked",
+    "--test",
+    "portable_numeric_captures",
+    "--test",
+    "clojure_numeric_captures",
+    "--test",
+    "captured_fn_calls",
+    "--test",
+    "portable_closures",
+    "--test",
+    "portable_primitive_entries",
+    "--",
+    "--test-threads=2"
+  ],
+  "source": {
+    "crates/suss-compile/src/portable/emit.rs": "132c04e56a49bf9ac2fa00a3db70a45d56bedaea55aec23af4617e6d67390b32",
+    "crates/suss-compile/src/portable/emit/captures.rs": "5a78fafeb216d4c63ff75a8a7cea198c9c9603d9d807e578c33e30af91235a73",
+    "crates/suss-compile/tests/portable_numeric_captures.rs": "2fd4617c68789ccc96b138761691c9166ed2d505524a051adbd1692eb755c00f",
+    "crates/suss-compile/src/portable/emit/unboxed.rs": "4b2154212a53118c35e923ee089b19900bd960c8e3b708d6dde1be1d20604571",
+    "crates/suss-cli/tests/clojure_numeric_captures.rs": "f5e6e7c8d3c9723e4f7595d5e08ec48608e536b271b9e7163dbb6553c708d511"
+  },
+  "exit_code": 101,
+  "seconds": 31.72873067855835
+}

@@ -1,0 +1,21 @@
+(ns capturebench)
+(def case-raw (fn [n]
+  (loop [i 0 acc 0.0]
+    (if (< i n)
+      (let [x (+ (double i) 0.25)
+            f (fn keep [] (+ x 1.0))]
+        (recur (inc i) (+ acc (f))))
+      acc))))
+(def case-boxed (fn [n]
+  (loop [i 0 acc 0.0]
+    (if (< i n)
+      (let [x (+ (double i) 0.25)
+            f (fn keep [] x)]
+        (recur (inc i) (+ acc (+ (f) 1.0))))
+      acc))))
+(def case-direct (fn [n]
+  (loop [i 0 acc 0.0]
+    (if (< i n)
+      (let [x (+ (double i) 0.25)]
+        (recur (inc i) (+ acc (+ x 1.0))))
+      acc))))
