@@ -1,0 +1,5 @@
+package test:letfn;
+world api {
+  export case-group: func(n: u32) -> f64;
+  export case-direct: func(n: u32) -> f64;
+}

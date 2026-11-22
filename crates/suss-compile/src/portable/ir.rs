@@ -194,6 +194,7 @@ struct Lowerer<'a> {
     function: Function,
     current: usize,
     bindings: HashMap<BindingId, ValueId>,
+    recursive: HashMap<BindingId, (ValueId, usize)>,
     callables: HashMap<ValueId, super::primitive::Shape>,
     targets: HashMap<LoopId, (usize, usize)>,
     meter: &'a mut dyn FnMut(u64) -> Result<(), Diagnostic>,
@@ -213,6 +214,7 @@ impl<'a> Lowerer<'a> {
             },
             current: 0,
             bindings: HashMap::new(),
+            recursive: HashMap::new(),
             callables: HashMap::new(),
             targets: HashMap::new(),
             meter,
@@ -357,14 +359,14 @@ impl<'a> Lowerer<'a> {
                 let mut captured = Vec::new();
                 let mut typed = Vec::new();
                 for id in captures {
-                    let value = *self.bindings.get(id).ok_or_else(|| Diagnostic {
+                    let value = self.recursive.get(id).map(|(group, _)| *group).or_else(|| self.bindings.get(id).copied()).ok_or_else(|| Diagnostic {
                         span: hir.span.clone(), message: "Undefined HIR future capture".into(),
                     })?;
                     captured.push(value);
                     typed.push((*id, self.function.values[value.0].ty));
                 }
                 let continuation =
-                    r#async::lower_metered(body, &typed, &mut *self.meter)?;
+                    r#async::lower_recursive_metered(body, &typed, &self.recursive, &mut *self.meter)?;
                 self.emit(Operation::MakeFuture {
                     body: Box::new(FutureBody {
                         capture_types: typed.iter().map(|(_, ty)| *ty).collect(), continuation,
@@ -560,10 +562,16 @@ impl<'a> Lowerer<'a> {
                     self.literal(Literal::Nil, hir.span.clone())?
                 }
             }
-            Expression::Local(id) => *self.bindings.get(id).ok_or_else(|| Diagnostic {
-                span: hir.span.clone(),
-                message: "HIR references an undefined binding".into(),
-            })?,
+            Expression::Local(id) => {
+                if let Some((group, slot)) = self.recursive.get(id).copied() {
+                    let index = self.literal(Literal::Long(slot as i64), hir.span.clone())?;
+                    self.emit(Operation::Array { operation: ArrayOperation::Get, arguments: vec![group, index] }, Type::Value, hir.span.clone())?
+                } else {
+                    *self.bindings.get(id).ok_or_else(|| Diagnostic {
+                        span: hir.span.clone(), message: "HIR references an undefined binding".into(),
+                    })?
+                }
+            },
             Expression::Call { callee, arguments } => {
                 let mut primitive = super::primitive::call_shape(hir, callee, &mut *self.meter)?;
                 let mut operands = vec![operand!(callee)];
@@ -586,7 +594,7 @@ impl<'a> Lowerer<'a> {
                 let mut capture_types = Vec::new();
                 let mut inner_parameters = Vec::with_capacity(captures.len() + parameters.len());
                 for id in captures {
-                    let value = *self.bindings.get(id).ok_or_else(|| Diagnostic {
+                    let value = self.recursive.get(id).map(|(group, _)| *group).or_else(|| self.bindings.get(id).copied()).ok_or_else(|| Diagnostic {
                         span: hir.span.clone(),
                         message: "Undefined HIR capture".into(),
                     })?;
@@ -601,6 +609,9 @@ impl<'a> Lowerer<'a> {
                 let mut inner = Lowerer::new(body.span.clone(), &mut *self.meter)?;
                 for (id, ty, span) in inner_parameters {
                     inner.parameter(id, ty, span)?;
+                    if let Some((_, slot)) = self.recursive.get(&id) {
+                        inner.recursive.insert(id, (inner.bindings[&id], *slot));
+                    }
                 }
                 let function = inner.finish(body)?;
                 let display_name = self.display_name(hir)?;
@@ -632,7 +643,7 @@ impl<'a> Lowerer<'a> {
                 let mut captured = Vec::new();
                 let mut capture_types = Vec::new();
                 for id in captures {
-                    let value = *self.bindings.get(id).ok_or_else(|| Diagnostic {
+                    let value = self.recursive.get(id).map(|(group, _)| *group).or_else(|| self.bindings.get(id).copied()).ok_or_else(|| Diagnostic {
                         span: hir.span.clone(),
                         message: "Undefined HIR capture".into(),
                     })?;
@@ -654,6 +665,9 @@ impl<'a> Lowerer<'a> {
                         Lowerer::new(method.body.span.clone(), &mut *self.meter)?;
                     for (id, ty) in captures.iter().zip(&capture_types) {
                         inner.parameter(*id, *ty, hir.span.clone())?;
+                        if let Some((_, slot)) = self.recursive.get(id) {
+                            inner.recursive.insert(*id, (inner.bindings[id], *slot));
+                        }
                     }
                     inner.charge(capture_types.len(), &method.body.span)?;
                     let mut environment_types = capture_types.clone();
@@ -769,6 +783,31 @@ impl<'a> Lowerer<'a> {
                     arguments: values,
                 };
                 return Ok(None);
+            }
+            Expression::LetFn { bindings, body } => {
+                let nil = self.literal(Literal::Nil, hir.span.clone())?;
+                self.charge(bindings.len(), &hir.span)?;
+                let group = self.emit(Operation::Array { operation: ArrayOperation::Objects,
+                    arguments: vec![nil; bindings.len()] }, Type::Value, hir.span.clone())?;
+                for (slot, binding) in bindings.iter().enumerate() {
+                    self.charge(1, &binding.span)?;
+                    self.recursive.insert(binding.id, (group, slot));
+                }
+                let mut values = Vec::with_capacity(bindings.len());
+                for (slot, binding) in bindings.iter().enumerate() {
+                    let value = operand!(&binding.value);
+                    let index = self.literal(Literal::Long(slot as i64), binding.span.clone())?;
+                    self.emit(Operation::Array { operation: ArrayOperation::Set,
+                        arguments: vec![group, index, value] }, Type::Value, binding.span.clone())?;
+                    values.push(value);
+                }
+                for (binding, value) in bindings.iter().zip(values) {
+                    self.recursive.remove(&binding.id);
+                    if self.bindings.insert(binding.id, value).is_some() {
+                        return Err(Diagnostic { span: binding.span.clone(), message: "HIR binding identity is defined twice".into() });
+                    }
+                }
+                return self.expression(body);
             }
             Expression::Let { bindings, body } => {
                 // Binding identities, rather than names, distinguish shadowed values.
@@ -1190,7 +1229,7 @@ fn verify_recurrence_inner(
                 verify_recurrence(&method.body, &mut Vec::new(), true, meter)?;
             }
         }
-        Expression::Let { bindings, body } => {
+        Expression::Let { bindings, body } | Expression::LetFn { bindings, body } => {
             for binding in bindings {
                 verify_recurrence(&binding.value, targets, false, meter)?;
             }

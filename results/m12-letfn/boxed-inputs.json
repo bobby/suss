@@ -1,0 +1,22 @@
+{
+  "base_commit": "e8d0ed9f5459cb154c55d3ab1755f771221562c4",
+  "files": {
+    "crates/suss-cli/tests/clojure_letfn.rs": "7cfd856483e2816b7687d5db656edd97d19e61cd48e5bed24b6b9f373e62de0a",
+    "crates/suss-cli/tests/compiled_macro_letfn_source.rs": "8159e8d0967e2c2ee6a3f57c76e31f8cf191a4e4f92abae2126cd233a1f86590",
+    "crates/suss-compile/src/portable/analyzer_edn.rs": "778c24915f086e8806c28321004575c8303acfcccfd8518381b1eb841786678f",
+    "crates/suss-compile/src/portable/hir.rs": "36287c3838925885dfca123a9a5f29ffb800780f4e7cd9ef16a77f65b645ab24",
+    "crates/suss-compile/src/portable/hir/division_overloads.rs": "55982445b8a9128fc6266ed0ccca9391ea0a962c9920688928c6b05279a40c23",
+    "crates/suss-compile/src/portable/hir/letfn.rs": "132478d163e4d848b03ea0f80f19c6c42aacc56d928b9b5dc20e42d67bca8ae6",
+    "crates/suss-compile/src/portable/hir/local_bindings.rs": "9df0ded2507e098885945e58a479f725ac37be902040d4f0158ae6563ed29dde",
+    "crates/suss-compile/src/portable/hir/primitive_returns.rs": "8e633de12ea6c0f3dc662913a9bb8295b33e4f9a666354f18398a145bdcaa906",
+    "crates/suss-compile/src/portable/hir/source_tags.rs": "6161ba6d9a2733ae2cf070351089b14fbaf64fd85b151df102e99dead34b3937",
+    "crates/suss-compile/src/portable/ir.rs": "6416b9e6644261fd38fd16f3b51d80d8e57b51fccbcfdc5669d64770e8df2cb9",
+    "crates/suss-compile/src/portable/ir/async.rs": "c0daf0f2df13c767c8783c6ce6d74a37a683ceb8b2e129c8c62be89c4c849f4b",
+    "crates/suss-compile/src/portable/primitive.rs": "06e8a19afc7e1aed4bd16c84ffabb4dc4adf169ca4b5c367dfc9513f608cc530",
+    "crates/suss-compile/src/portable/resolve.rs": "6ecbb67844f4668b0493359283936f9fdfbf5a05bfab3b3caa065d0f22fc75e5",
+    "crates/suss-compile/src/portable_macro_graph.rs": "d3a24a49620457508b66de3d6b3414b353693d282be8f0ffcd28cd98e83ab80d",
+    "crates/suss-compile/tests/portable_async_execution.rs": "8e038424b5d5f0cf70649a4863b522f464ee7f1b037ff8b53bd98db48b6c33ee",
+    "crates/suss-compile/tests/portable_letfn.rs": "5eb7dbecdea3928a13f86e3f70dd8c0470be90aa6a900d97c2702805ec087760",
+    "crates/suss-compile/src/portable/emit.rs": "95e0ffd27720934ea1820643fd8c5325516e42c2fd7c30748ae8935461ccd893"
+  }
+}

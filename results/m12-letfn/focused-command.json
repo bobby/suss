@@ -1,0 +1,22 @@
+{
+  "command": [
+    "cargo",
+    "+stable",
+    "test",
+    "--workspace",
+    "--locked",
+    "--no-fail-fast",
+    "--test",
+    "portable_letfn",
+    "--test",
+    "clojure_letfn",
+    "--test",
+    "compiled_macro_letfn_source",
+    "--test",
+    "portable_async_execution",
+    "--",
+    "--test-threads=2"
+  ],
+  "exit_code": 0,
+  "seconds": 28.90404176712036
+}

@@ -1,0 +1,12 @@
+Running as unit: run-p169731-i88230402.scope; invocation ID: 341c3f16a53747c7a643590580d5ef45
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 0.66s
+     Running tests/clojure_letfn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-target/debug/deps/clojure_letfn-df2bf4c980dad2f1)
+
+running 3 tests
+test recursive_groups_and_nested_captures_survive_gc_in_both_phases ... ok
+test runtime_and_macro_preserve_letfn ... ok
+test aot_preserves_letfn ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.62s
+

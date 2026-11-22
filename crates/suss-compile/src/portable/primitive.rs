@@ -58,7 +58,7 @@ fn shape<'a>(hir: &'a Hir, scope: &[&'a hir::Binding], meter: &mut dyn FnMut(u64
             hir::Expression::Do(items) => match items.last() {
                 Some(last) => shape(last, scope, meter)?, None => Shape(Vec::new()),
             },
-            hir::Expression::Let { bindings, body } => {
+            hir::Expression::Let { bindings, body } | hir::Expression::LetFn { bindings, body } => {
                 meter(scope.len().saturating_add(bindings.len()) as u64)?;
                 let mut inner = scope.to_vec();
                 inner.extend(bindings);

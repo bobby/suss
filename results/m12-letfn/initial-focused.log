@@ -1,0 +1,42 @@
+Running as unit: run-p134158-i88207380.scope; invocation ID: 16ea069d6da84495a448b441aab4f106
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/crates/suss-core)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 09s
+     Running tests/clojure_letfn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-target/debug/deps/clojure_letfn-df2bf4c980dad2f1)
+
+running 3 tests
+test recursive_groups_and_nested_captures_survive_gc_in_both_phases ... FAILED
+test runtime_and_macro_preserve_letfn ... FAILED
+test aot_preserves_letfn ... FAILED
+
+failures:
+
+---- recursive_groups_and_nested_captures_survive_gc_in_both_phases stdout ----
+
+thread 'recursive_groups_and_nested_captures_survive_gc_in_both_phases' (143568) panicked at crates/suss-cli/tests/clojure_letfn.rs:39:107:
+called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 31..36, message: "Unresolved Runtime name letfn*" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- runtime_and_macro_preserve_letfn stdout ----
+
+thread 'runtime_and_macro_preserve_letfn' (144449) panicked at crates/suss-cli/tests/clojure_letfn.rs:61:37:
+(letfn [(f [] 1) (f [] 2)] (f)): Unresolved Runtime name letfn* at bytes 14..19
+
+---- aot_preserves_letfn stdout ----
+
+thread 'aot_preserves_letfn' (143567) panicked at crates/suss-cli/tests/clojure_letfn.rs:108:5:
+Compilation error: Semantic error: While compiling localhints.sus: Unresolved Runtime name letfn* at bytes 61..66
+
+
+
+failures:
+    aot_preserves_letfn
+    recursive_groups_and_nested_captures_survive_gc_in_both_phases
+    runtime_and_macro_preserve_letfn
+
+test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 22.23s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_letfn`

@@ -1,0 +1,4 @@
+Running as unit: run-p122395-i88195245.scope; invocation ID: d67718e77a804421a5bf122de8545c4c
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/crates/suss-compile)
+    Finished `dev` profile [unoptimized] target(s) in 30.82s

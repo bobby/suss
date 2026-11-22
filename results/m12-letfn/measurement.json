@@ -1,0 +1,525 @@
+{
+  "source_inputs": "source-inputs.json",
+  "before_source_inputs": "boxed-inputs.json",
+  "before_note": "Same letfn implementation with capture-field planning disabled only in the documented development reference",
+  "benchmark_sha256": "e7849f4300a5c67f82ac25dae52aeb049f2ca5096962392841f267f641251199",
+  "wit_sha256": "241411fde004380714680c6f2f220bd4c152f6c739ff6159713df002094eb969",
+  "runs": {
+    "before": {
+      "compiler_sha256": "f430495c2a4c2d6cbb143033d2d8ed209a2e4f222bf4c08797f20a01de00c4d8",
+      "cases": {
+        "group": {
+          "rss": [
+            {
+              "count": 200000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-group",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "peak_bytes": 416329728,
+              "stdout": "20000150000\n",
+              "stderr": ""
+            },
+            {
+              "count": 400000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-group",
+                "--",
+                "400000"
+              ],
+              "status": 0,
+              "peak_bytes": 782876672,
+              "stdout": "80000300000\n",
+              "stderr": ""
+            },
+            {
+              "count": 200000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-group",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "peak_bytes": 416276480,
+              "stdout": "20000150000\n",
+              "stderr": ""
+            },
+            {
+              "count": 400000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-group",
+                "--",
+                "400000"
+              ],
+              "status": 0,
+              "peak_bytes": 782635008,
+              "stdout": "80000300000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-group",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 2046954991,
+              "stdout": "5000075000\n",
+              "stderr": "2046954991,,instructions:u,300542066,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-group",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 3842651023,
+              "stdout": "20000150000\n",
+              "stderr": "3842651023,,instructions:u,499885334,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            1832.73472,
+            1831.79264
+          ],
+          "instructions_per_iteration": 17956.96032
+        },
+        "direct": {
+          "rss": [
+            {
+              "count": 200000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-direct",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "peak_bytes": 92860416,
+              "stdout": "20000150000\n",
+              "stderr": ""
+            },
+            {
+              "count": 400000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-direct",
+                "--",
+                "400000"
+              ],
+              "status": 0,
+              "peak_bytes": 92860416,
+              "stdout": "80000300000\n",
+              "stderr": ""
+            },
+            {
+              "count": 200000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-direct",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "peak_bytes": 92860416,
+              "stdout": "20000150000\n",
+              "stderr": ""
+            },
+            {
+              "count": 400000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-direct",
+                "--",
+                "400000"
+              ],
+              "status": 0,
+              "peak_bytes": 92860416,
+              "stdout": "80000300000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-direct",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 270810577,
+              "stdout": "5000075000\n",
+              "stderr": "270810577,,instructions:u,80909724,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-direct",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 272606003,
+              "stdout": "20000150000\n",
+              "stderr": "272606003,,instructions:u,82621713,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            0.0,
+            0.0
+          ],
+          "instructions_per_iteration": 17.95426
+        }
+      },
+      "compile_command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/before-suss",
+        "compile",
+        "bench.sus",
+        "-w",
+        "bench.wit",
+        "-o",
+        "before.wasm",
+        "--export",
+        "case-group=letfnbench/case-group",
+        "--export",
+        "case-direct=letfnbench/case-direct"
+      ],
+      "compile_exit_code": 0,
+      "component_sha256": "2bd91ccdfbd54e858629cc70c1faa7bcf4a9ab2b123719a9a4da87e04e183435"
+    },
+    "after": {
+      "compiler_sha256": "aafdd165dee850b75b6d17e225cb41b28cd295c784321ac5a621044d454433db",
+      "cases": {
+        "group": {
+          "rss": [
+            {
+              "count": 200000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-group",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "peak_bytes": 420495360,
+              "stdout": "20000150000\n",
+              "stderr": ""
+            },
+            {
+              "count": 400000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-group",
+                "--",
+                "400000"
+              ],
+              "status": 0,
+              "peak_bytes": 783437824,
+              "stdout": "80000300000\n",
+              "stderr": ""
+            },
+            {
+              "count": 200000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-group",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "peak_bytes": 420003840,
+              "stdout": "20000150000\n",
+              "stderr": ""
+            },
+            {
+              "count": 400000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-group",
+                "--",
+                "400000"
+              ],
+              "status": 0,
+              "peak_bytes": 783257600,
+              "stdout": "80000300000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-group",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 1999935352,
+              "stdout": "5000075000\n",
+              "stderr": "1999935352,,instructions:u,293278803,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-group",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 3748607586,
+              "stdout": "20000150000\n",
+              "stderr": "3748607586,,instructions:u,469069195,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            1814.71232,
+            1816.2688
+          ],
+          "instructions_per_iteration": 17486.72234
+        },
+        "direct": {
+          "rss": [
+            {
+              "count": 200000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-direct",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "peak_bytes": 92860416,
+              "stdout": "20000150000\n",
+              "stderr": ""
+            },
+            {
+              "count": 400000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-direct",
+                "--",
+                "400000"
+              ],
+              "status": 0,
+              "peak_bytes": 92860416,
+              "stdout": "80000300000\n",
+              "stderr": ""
+            },
+            {
+              "count": 200000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-direct",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "peak_bytes": 92860416,
+              "stdout": "20000150000\n",
+              "stderr": ""
+            },
+            {
+              "count": 400000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-direct",
+                "--",
+                "400000"
+              ],
+              "status": 0,
+              "peak_bytes": 92860416,
+              "stdout": "80000300000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-direct",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 270831347,
+              "stdout": "5000075000\n",
+              "stderr": "270831347,,instructions:u,84375284,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-direct",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 272632156,
+              "stdout": "20000150000\n",
+              "stderr": "272632156,,instructions:u,83626454,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            0.0,
+            0.0
+          ],
+          "instructions_per_iteration": 18.00809
+        }
+      },
+      "compile_command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/target/probe/m12-letfn-bench/after-suss",
+        "compile",
+        "bench.sus",
+        "-w",
+        "bench.wit",
+        "-o",
+        "after.wasm",
+        "--export",
+        "case-group=letfnbench/case-group",
+        "--export",
+        "case-direct=letfnbench/case-direct"
+      ],
+      "compile_exit_code": 0,
+      "component_sha256": "2cc84dde037ff9f6b56770b38540ffddbf1a2c1472306ae51c84b6a93f366fb6"
+    }
+  }
+}

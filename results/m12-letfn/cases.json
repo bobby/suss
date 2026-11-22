@@ -1,0 +1,114 @@
+[
+  [
+    "(letfn [(^double f [] 127.1)] (try (byte (f)) (catch :default e :error)))",
+    "127"
+  ],
+  [
+    "(letfn [(f ^double [] 127.1)] (try (byte (f)) (catch :default e :error)))",
+    "127"
+  ],
+  [
+    "((fn ^long [] (letfn [(^double f [] 1.5)] (f))))",
+    "1"
+  ],
+  [
+    "(letfn [(f [] 1) (f [] 2)] (f))",
+    "2"
+  ],
+  [
+    "(let [x 3000000000] (letfn [(f [n] (if (zero? n) (+ x 1) (g (dec n)))) (g [n] (if (zero? n) (+ x 2) (f (dec n))))] [(f 0) (f 1) (g 1)]))",
+    "[3000000001 3000000002 3000000001]"
+  ],
+  [
+    "(letfn [(f [] g) (g [] 9)] [((f)) (identical? (f) g)])",
+    "[9 true]"
+  ],
+  [
+    "(letfn [(factorial [n] (if (zero? n) 1 (* n (factorial (dec n)))))] (factorial 6))",
+    "720"
+  ],
+  [
+    "(let [f (fn [] :outer)] (letfn [(g [] (f)) (f [] :inner)] [(g) (f)]))",
+    "[:inner :inner]"
+  ],
+  [
+    "(let [events (atom []) x (do (swap! events conj :capture) 1.5)] (letfn [(f [] (+ x 1.0)) (g [] (+ x 2.0))] [(f) (g) @events]))",
+    "[2.5 3.5 [:capture]]"
+  ],
+  [
+    "(letfn [(f ([] (g 2)) ([x] (+ x 1))) (g [x] (f x))] [(f) (g 4)])",
+    "[3 5]"
+  ],
+  [
+    "(let [x 3000000000] (letfn [(f [& xs] (+ x (count xs))) (g [] (f :a :b))] [(f) (g)]))",
+    "[3000000000 3000000002]"
+  ],
+  [
+    "(letfn [(f [[x y]] (+ x y)) (g [] (f [3 4]))] (g))",
+    "7"
+  ],
+  [
+    "(letfn [] 7)",
+    "7"
+  ],
+  [
+    "(letfn [])",
+    "nil"
+  ],
+  [
+    "(loop [i 0 acc 0] (if (< i 5) (letfn [(f [x] (+ x 1))] (recur (inc i) (+ acc (f i)))) acc))",
+    "15"
+  ],
+  [
+    "(letfn* [f (fn [n] (if (zero? n) 7 (g (dec n)))) g (fn [n] (if (zero? n) 8 (f (dec n))))] [(f 1) (g 1)])",
+    "[8 7]"
+  ],
+  [
+    "(let [pair (letfn [(f [] g) (g [] f)] [f g]) f (nth pair 0) g (nth pair 1)] [(identical? (f) g) (identical? (g) f)])",
+    "[true true]"
+  ],
+  [
+    "(let [x (identity 3000000000)] (letfn [(f [] x) (g [] (identical? (f) (f)))] [(f) (g)]))",
+    "[3000000000 true]"
+  ],
+  [
+    "(let [x -0.0] (letfn [(f [] (* x 2.0)) (g [] (/ 1.0 (f)))] [(f) (g)]))",
+    "[-0.0 ##-Inf]"
+  ],
+  [
+    "(let [x ##NaN] (letfn [(f [] (+ x 1.0)) (g [] (let [a (f) b (f)] [(= a b) (== a b) (identical? a b)]))] (g)))",
+    "[false false false]"
+  ],
+  [
+    "(let [x 9223372036854775807] (letfn [(f [] (+ x 1)) (g [] (f))] (try (g) (catch :default e (ex-message e)))))",
+    "\"long overflow\""
+  ],
+  [
+    "(let [x 127.1] (letfn [(f [] x) (g [] (byte (f)))] (g)))",
+    "127"
+  ],
+  [
+    "(let [x 2147483648.0] (letfn [(f [] (+ x 0.0)) (g [] (int (f)))] (try (g) (catch :default e :error))))",
+    ":error"
+  ],
+  [
+    "(letfn [(f [x] (+ x 1)) (g [] (f 2))] [(g) (try (f) (catch :default e :arity)) (g)])",
+    "[3 :arity 3]"
+  ],
+  [
+    "(letfn [(f [] (throw (ex-info \"bad\" {:x 1}))) (g [] (try (f) (catch :default e (ex-message e))))] (g))",
+    "\"bad\""
+  ],
+  [
+    "(let [letfn (fn [x] x)] (letfn 7))",
+    "7"
+  ],
+  [
+    "(letfn [(f [x] (loop [n x acc 0] (if (zero? n) acc (recur (dec n) (+ acc n))))) (g [] (f 5))] (g))",
+    "15"
+  ],
+  [
+    "(letfn [(^long f [^long x] (+ x 1)) (g [] (f 3))] (g))",
+    "4"
+  ]
+]

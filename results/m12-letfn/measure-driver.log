@@ -1,0 +1,8 @@
+Running as unit: run-p192710-i88253931.scope; invocation ID: 002e81ceae594984ad4e318c30d64eec
+All16 input files match the reconstructed source byte-for-byte.
+All17 reconstructed inputs match their frozen hashes.
+before group [1832.73472, 1831.79264] 17956.96032
+before direct [0.0, 0.0] 17.95426
+after group [1814.71232, 1816.2688] 17486.72234
+after direct [0.0, 0.0] 18.00809
+All16 input files match the reconstructed source byte-for-byte.

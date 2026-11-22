@@ -2145,6 +2145,11 @@ impl<'a> AnalysisGraph<'a> {
             SourceRole::MethodArgument { index, rest } => format!("method-arg:{index}:{rest}"),
             SourceRole::MethodThis { .. } => "method-this".into(),
         };
+        // Recursive declarations have a genuine predeclaration snapshot and
+        // a later initializer snapshot with the same lexical identity.
+        let role = if binding.kind == hir::LocalKind::LetFn {
+            format!("{role}:init:{}", binding.initializer.as_ref().map_or(0, |value| Arc::as_ptr(value) as usize))
+        } else { role };
         let key = (Arc::as_ptr(&binding.identity) as usize, binding.id.0, role);
         self.charge(key.2.len().saturating_add(1))?;
         if let Some((_, value)) = self.locals.get(&key) {
@@ -2158,6 +2163,7 @@ impl<'a> AnalysisGraph<'a> {
         let name = self.form(&binding.declaration, depth + 1)?;
         let kind = self.keyword(match binding.source_kind() {
             hir::LocalKind::Let => "let",
+            hir::LocalKind::LetFn => "letfn",
             hir::LocalKind::Loop => "loop",
             hir::LocalKind::Argument { .. } => "arg",
             hir::LocalKind::FunctionName => "fn",
@@ -2581,11 +2587,12 @@ impl<'a> AnalysisGraph<'a> {
         if let Some(node) = &source.node
             && let hir::SourceNode::Bindings {
                 is_loop,
+                is_letfn,
                 bindings,
                 body,
             } = node.as_ref()
         {
-            field_push!(self, fields; ("op", self.keyword(if *is_loop { "loop" } else { "let" })?));
+            field_push!(self, fields; ("op", self.keyword(if *is_letfn { "letfn" } else if *is_loop { "loop" } else { "let" })?));
             let mut records = Vec::new();
             for binding in bindings.iter() {
                 records.push(self.local(binding, depth + 1)?);
@@ -2782,6 +2789,7 @@ impl<'a> AnalysisGraph<'a> {
                 field_push!(self, fields; ("local",
                     self.keyword(match binding.source_kind() {
                         hir::LocalKind::Let => "let",
+            hir::LocalKind::LetFn => "letfn",
                         hir::LocalKind::Loop => "loop",
                         hir::LocalKind::Argument { .. } => "arg",
                         hir::LocalKind::FunctionName => "fn",
@@ -3003,6 +3011,10 @@ impl<'a> AnalysisGraph<'a> {
             Expression::Definition { initializer, .. } => (
                 "definition",
                 initializer.iter().map(|value| value.as_ref()).collect(),
+            ),
+            Expression::LetFn { bindings, body } => (
+                "letfn", bindings.iter().map(|binding| &binding.value)
+                    .chain(std::iter::once(body.as_ref())).collect(),
             ),
             Expression::Let { bindings, body } => (
                 "let",

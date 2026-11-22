@@ -1307,3 +1307,12 @@ sample removes one numeric box (about920 to904 bytes per iteration), while
 closure/source-signature allocations remain. Instructions fall8547.45 to8463.61;
 object and direct controls remain explicit. These bounded observations do not
 establish letfn support, complete escape coverage or quiet timing acceptance.
+
+
+[Recursive lexical function receipts](../../results/m12-letfn/README.md) retain28
+fresh JVM values executed in Runtime/Macro and actual AOT. letfn/letfn* support
+forward references and mutual recursion, with explicit last-duplicate behavior.
+The focused checks also execute escaped groups after GC, a peer captured by a
+suspended future, and genuine macro binding/source snapshots. Numeric-only
+captures remain raw; recursive group/closure objects still allocate. These
+bounded observations do not establish complete escape or numeric-tower coverage.

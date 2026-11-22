@@ -1,0 +1,12 @@
+{
+  "command": [
+    "cargo",
+    "+stable",
+    "check",
+    "-p",
+    "suss-compile",
+    "--locked"
+  ],
+  "exit_code": 0,
+  "seconds": 30.872252702713013
+}

@@ -1,0 +1,50 @@
+Running as unit: run-p161312-i88221341.scope; invocation ID: 6f882108727144dca2de6e703561098d
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1.65s
+     Running tests/clojure_letfn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-target/debug/deps/clojure_letfn-df2bf4c980dad2f1)
+
+running 3 tests
+test recursive_groups_and_nested_captures_survive_gc_in_both_phases ... ok
+test runtime_and_macro_preserve_letfn ... ok
+test aot_preserves_letfn ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.14s
+
+     Running tests/compiled_macro_letfn_source.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-target/debug/deps/compiled_macro_letfn_source-2f0472457515ab61)
+
+running 1 test
+test staged_recursive_bindings_and_complete_initializers_have_distinct_snapshots ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.89s
+
+     Running tests/portable_async_execution.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-target/debug/deps/portable_async_execution-bd06649e26b2facd)
+
+running 14 tests
+test actual_pending_await_preserves_capture_and_resumes_after_gc ... ok
+test a_future_created_inside_letfn_keeps_its_peer_group_across_await_and_gc ... ok
+test body_throw_is_caught_but_cleanup_throw_overrides_the_pending_result_once ... ok
+test cancellation_during_pending_finally_preserves_remaining_cleanup_and_override ... ok
+test cancelled_dependency_is_catchable_and_suspended_finally_completes_once ... ok
+test failed_dependency_enters_handler_then_pending_cleanup_and_keeps_payload ... ok
+test cpu_backedges_yield_to_completed_dependency_and_preserve_loop_state ... ok
+test nested_future_and_consecutive_awaits_execute_compiled_states ... ok
+test invalid_await_registration_throws_to_catch_and_finally_executes_once ... ok
+test own_cancel_before_first_turn_does_not_execute_body_or_enter_finally ... ok
+test own_cancel_bypasses_catch_and_waits_for_finally_before_terminal_cancel ... ok
+test owner_cancellation_waits_for_cleanup_and_retires_old_dependency ... ok
+test pending_nested_try_binding_and_finally_await_preserve_roots_and_caller ... ok
+test yields_preserve_catch_payload_cleanup_outcome_and_dynamic_frame ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.05s
+
+     Running tests/portable_letfn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-target/debug/deps/portable_letfn-b139b5cd8b7c4b38)
+
+running 4 tests
+test malformed_groups_are_located_diagnostics ... ok
+test recursive_group_keeps_numeric_captures_in_raw_fields ... ok
+test source_bindings_describe_letfn_and_real_function_initializers ... ok
+test forward_references_and_nested_captures_verify_and_validate ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

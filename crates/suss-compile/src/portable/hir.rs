@@ -1,5 +1,6 @@
 //! Source-aware HIR for the replacement pipeline. No EDN conversion occurs.
 mod arrays;
+mod letfn;
 mod local_bindings;
 pub use local_bindings::{FieldBinding, FunctionScope, LocalBinding, LocalKind, SourceRole};
 mod function_parameters;
@@ -958,6 +959,7 @@ pub enum SourceNode {
     },
     Bindings {
         is_loop: bool,
+        is_letfn: bool,
         bindings: std::sync::Arc<[LocalBinding]>,
         body: std::sync::Arc<Hir>,
     },
@@ -1138,6 +1140,11 @@ pub enum Expression {
         linked: Option<Global>,
     },
     Let {
+        bindings: Vec<Binding>,
+        body: Box<Hir>,
+    },
+    /// All names are in scope for every function initializer and the body.
+    LetFn {
         bindings: Vec<Binding>,
         body: Box<Hir>,
     },
@@ -1459,13 +1466,15 @@ impl Analyzer<'_> {
                     // recording source facts; lexical callees stay untouched.
                     let primitive =
                         match self.environment.resolve_bootstrap_macro(self.phase, symbol) {
-                            Some(ResolvedBinding::BootstrapLet(_)) => Some("let*"),
+                            Some(ResolvedBinding::BootstrapLet(global)) => Some(if global.name() == "letfn" { "letfn*" } else { "let*" }),
                             Some(ResolvedBinding::BootstrapLoop(_)) => Some("loop*"),
                             _ => None,
                         };
                     if let Some(primitive) = primitive {
                         let mut expanded = if primitive == "let*" {
                             self.destructured_let(form)?
+                        } else if primitive == "letfn*" {
+                            self.letfn_expansion(form)?
                         } else {
                             form.clone()
                         };
@@ -3186,6 +3195,7 @@ impl Analyzer<'_> {
             *self.source_nodes.last_mut().expect("source node fact slot") = Some(
                 std::sync::Arc::new(SourceNode::Bindings {
                     is_loop: false,
+                    is_letfn: false,
                     bindings: vec![source_binding].into(),
                     body: std::sync::Arc::new(body.as_ref().clone()),
                 }),
@@ -3660,7 +3670,7 @@ impl Analyzer<'_> {
         let resolved = if bare
             && matches!(
                 symbol.name.as_str(),
-                "if" | "do" | "fn*" | "def" | "let*" | "loop*" | "recur" | "throw" | "try" | "set!"
+                "if" | "do" | "fn*" | "def" | "let*" | "letfn*" | "loop*" | "recur" | "throw" | "try" | "set!"
             ) {
             None
         } else {
@@ -3969,6 +3979,7 @@ impl Analyzer<'_> {
             return self.attach_function_metadata(form, value);
         }
         let (kind, ty) = match (bare, symbol.name.as_str()) {
+            (true, "letfn*") => return self.recursive_functions(form, args, context, tail),
             (true, "do") => {
                 let mut body = self.body(args, form.span.clone(), context, tail)?;
                 let Expression::Do(children) = &*body.kind else {
@@ -4127,6 +4138,7 @@ impl Analyzer<'_> {
                 *self.source_nodes.last_mut().expect("source node fact slot") =
                     Some(std::sync::Arc::new(SourceNode::Bindings {
                         is_loop,
+                        is_letfn: false,
                         bindings: source_bindings.into(),
                         body: std::sync::Arc::new(body.as_ref().clone()),
                     }));
@@ -4344,6 +4356,12 @@ fn free_bindings(hir: &Hir, bound: &BTreeSet<BindingId>, free: &mut BTreeSet<Bin
                     free.insert(*id);
                 }
             }
+        }
+        Expression::LetFn { bindings, body } => {
+            let mut bound = bound.clone();
+            bound.extend(bindings.iter().map(|binding| binding.id));
+            for binding in bindings { free_bindings(&binding.value, &bound, free); }
+            free_bindings(body, &bound, free);
         }
         Expression::Let { bindings, body } | Expression::Loop { bindings, body, .. } => {
             let mut bound = bound.clone();

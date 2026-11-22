@@ -188,6 +188,15 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   and variadic closures use the same layout decision; the closure itself can
   still allocate. See `results/m12-numeric-captures` for source and observations.
 
+- **Recursive local groups.** letfn/letfn* declare all function names before
+  analyzing initializers. A private object array is filled with their closures
+  before the body runs. Captures refer to a group/slot for forward calls, including
+  through nested functions and suspended futures. The source binding remains a
+  function; its runtime group is not a new source primitive class. Numeric-only
+  captures use the same raw-field analysis. Group arrays and recursive closure
+  objects still allocate. See `results/m12-letfn` for JVM, GC, async and source
+  snapshot observations.
+
 - **Locally called closures.** After source overload/return/recur checks, a
   fixed-arity closure whose complete use set is correctly sized calls can be
   removed. Its body moves into each call site; captures and evaluated arguments

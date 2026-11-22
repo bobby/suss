@@ -1,3 +1,47 @@
+## Recursive lexical function probes (2026-11-22)
+
+results/m12-letfn retains28 fresh JVM Clojure1.12.6 pairs and actual Runtime,
+Macro and AOT execution (84 observations), including duplicate names, forward
+references, mutual recursion, variadic/destructured signatures, Object casts,
+primitive hints, overflow, NaN, signed zero, arity and exception recovery. The
+four-target command passes22 tests, zero failed/ignored, on the earlier25-pair
+fixture; the expanded28-pair command passes all3 execution/GC tests. Source
+snapshots and original errors remain. An actual pending future retains a peer
+group across await/GC and returns42 after resolution; all14 async tests pass.
+Macro transport checks provisional and complete binding snapshots separately.
+
+Public letfn expands through genuine core fn forms into letfn*. All names are
+visible before initializer analysis; the JVM-confirmed last duplicate wins.
+The IR fills a private object array with function values before the body runs.
+Closures/futures carry a group reference for peer lookup, while ordinary
+numeric-only captures retain raw fields. The array is absent from source facts.
+No shared ABI layout or shipped dependency changes. Group/closure allocations
+remain; these observations do not claim full escape acceptance.
+
+python3 results/m12-letfn/source-check.py reconstructs16 exact inputs frome8d0ed9f.
+python3 results/m12-letfn/run-gates.py is active:48 focused targets, Java-free
+bootstrap, Binaryen133 and reviewed-suite comparison. Use stable Rust, two
+jobs/threads, MemoryMax4G, m12-recursive-target and outer target/suss. The source
+inputs stay frozen while gates run; terminal stage records accumulate in
+commands.json and the focused log is broad-focused.log.
+
+A separate documented boxed development reference disables only capture-field
+planning. boxed-source.patch/boxed-inputs.json reconstruct17 inputs; run-boxed.py
+executes the same28-case fixture there. The original published compiler cannot
+execute letfn, so it is not reported as a measured before success. Inspect the
+boxed command's terminal result: it passes all3 tests on the28-pair fixture.
+measure.py verifies both snapshots and identical group/direct benchmark sources.
+All16 RSS/8 perf/8 warm sums pass. The group estimates1832 to1816 bytes per
+iteration (one numeric box), with17956.96 to17486.72 instructions. Direct
+arithmetic stays below RSS resolution/about18. Group, closure and signature
+allocations dominate the remaining roughly1.8KB; these are not quiet timings.
+
+The earlier e8d0ed9f capture source now passes177 tests across39 targets, zero
+failed/ignored, Java-free bootstrap, Binaryen and reviewed-suite comparison.
+Its required unfiltered workspace command is active in m12-letfn-target, still
+frozen separately. It does not establish the full baseline for the letfn source.
+GitHub owns issue acceptance; BigInt/Ratio and BigDecimal remain required work.
+
 ## Numeric-only closure capture fields (2026-11-22)
 
 results/m12-numeric-captures retains five-input reconstruction from5b40654f,

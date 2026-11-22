@@ -75,10 +75,22 @@ pub(crate) fn lower_metered(
     captures: &[(BindingId, Type)],
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<Continuation, Diagnostic> {
+    lower_recursive_metered(body, captures, &std::collections::HashMap::new(), meter)
+}
+
+pub(super) fn lower_recursive_metered(
+    body: &Hir,
+    captures: &[(BindingId, Type)],
+    recursive: &std::collections::HashMap<BindingId, (ValueId, usize)>,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Continuation, Diagnostic> {
     let mut lowerer = Lowerer::new(body.span.clone(), meter)?;
     lowerer.suspendable = true;
     for (id, ty) in captures {
         lowerer.parameter(*id, *ty, body.span.clone())?;
+        if let Some((_, slot)) = recursive.get(id) {
+            lowerer.recursive.insert(*id, (lowerer.bindings[id], *slot));
+        }
     }
     let function = lowerer.finish(body)?;
     normalize_metered(function, meter)

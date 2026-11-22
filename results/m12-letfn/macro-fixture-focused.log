@@ -1,0 +1,34 @@
+Running as unit: run-p150134-i88205593.scope; invocation ID: c630e2fd343a4bc8a8e3fba2a0fc079c
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 2m 14s
+     Running tests/clojure_letfn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-target/debug/deps/clojure_letfn-df2bf4c980dad2f1)
+
+running 3 tests
+test recursive_groups_and_nested_captures_survive_gc_in_both_phases ... ok
+test runtime_and_macro_preserve_letfn ... ok
+test aot_preserves_letfn ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 48.05s
+
+     Running tests/compiled_macro_letfn_source.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-recursive-target/debug/deps/compiled_macro_letfn_source-2f0472457515ab61)
+
+running 1 test
+test staged_recursive_bindings_and_complete_initializers_have_distinct_snapshots ... FAILED
+
+failures:
+
+---- staged_recursive_bindings_and_complete_initializers_have_distinct_snapshots stdout ----
+
+thread 'staged_recursive_bindings_and_complete_initializers_have_distinct_snapshots' (157902) panicked at crates/suss-cli/tests/compiled_macro_letfn_source.rs:17:172:
+called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1..9, message: "Unresolved Runtime name defmacro" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    staged_recursive_bindings_and_complete_initializers_have_distinct_snapshots
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.59s
+
+error: test failed, to rerun pass `-p suss-cli --test compiled_macro_letfn_source`

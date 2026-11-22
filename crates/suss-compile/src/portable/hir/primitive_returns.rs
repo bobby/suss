@@ -104,6 +104,13 @@ fn class_in(
                 let b = class_in(alternative, facts, meter, loops)?;
                 Ok(if a == Never { b } else if b == Never || a == b { a } else { Boxed })
             }
+            Expression::LetFn { bindings, body } => {
+                let previous = bindings.iter().map(|binding|
+                    (binding.id, facts.insert(binding.id, Primitive::Boxed))).collect();
+                let result = class_in(body, facts, meter, loops);
+                restore(facts, previous);
+                result
+            }
             Expression::Let { bindings, body } => {
                 let mut previous = Vec::new();
                 for binding in bindings {
@@ -285,6 +292,13 @@ fn infer(
             Expression::Do(items) => match items.last() {
                 Some(last) => infer(last, bindings, meter, loops)?, None => Boxed,
             },
+            Expression::LetFn { bindings: locals, body } => {
+                let previous = locals.iter().map(|binding|
+                    (binding.id, bindings.insert(binding.id, Primitive::Boxed))).collect();
+                let result = infer(body, bindings, meter, loops);
+                restore(bindings, previous);
+                result?
+            }
             Expression::Let { bindings: locals, body } => {
                 let mut previous = Vec::with_capacity(locals.len());
                 for binding in locals {
@@ -408,7 +422,7 @@ fn array_kind_cached(
         }
         Ok(match &*hir.kind {
             Expression::Do(items) => match items.last() { Some(last) => array_kind_cached(last, meter, memo)?, None => None },
-            Expression::Let { body, .. } => array_kind_cached(body, meter, memo)?,
+            Expression::Let { body, .. } | Expression::LetFn { body, .. } => array_kind_cached(body, meter, memo)?,
             Expression::If { consequent, alternative, .. } => {
                 let a = array_kind_cached(consequent, meter, memo)?;
                 let b = array_kind_cached(alternative, meter, memo)?;

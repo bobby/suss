@@ -80,7 +80,7 @@ impl Pass<'_> {
                 }
                 Comparison { arguments, .. } | Array { arguments, .. }
                 | Nominal { arguments, .. } | Recur { arguments, .. } | Do(arguments) => self.any(arguments),
-                Let { bindings, body } | Loop { bindings, body, .. } => {
+                Let { bindings, body } | LetFn { bindings, body } | Loop { bindings, body, .. } => {
                     let mut features = self.any(bindings.iter().map(|binding| &binding.value).chain(std::iter::once(body.as_ref())))?;
                     for binding in bindings {
                         features.hints |= primitive_returns::numeric_hint(&binding.metadata, &binding.span, self.meter)?.is_some();
@@ -130,6 +130,16 @@ impl Pass<'_> {
             let source_comparison = hir.source.is_some();
             use Expression::*;
             match hir.kind_mut() {
+                LetFn { bindings, body } => {
+                    let previous = bindings.iter().map(|binding|
+                        (binding.id, facts.insert(binding.id, Primitive::Boxed))).collect();
+                    let result = (|| {
+                        for binding in bindings { self.walk(&mut binding.value, facts)?; }
+                        self.walk(body, facts)
+                    })();
+                    restore(facts, previous);
+                    result?;
+                }
                 Let { bindings, body } => {
                     let mut previous = Vec::with_capacity(bindings.len());
                     for binding in bindings {

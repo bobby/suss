@@ -83,3 +83,8 @@ reviewed-suite comparison and the exact unfiltered workspace command with
 stable Rust, two jobs/threads and a 4G memory scope. Inspect terminal receipts;
 a started gate is not a pass. `commands.json` is written only after each stage
 terminates. The code inputs must stay frozen while this process is live.
+
+The frozen capture gate now records177 passing tests across39 targets, zero
+failed/ignored, bootstrap4, Binaryen2 and reviewed-suite comparison1. The actual
+2758 observations retain2407 pass/305 error/46 fail, losslessly compressed with
+an uncompressed hash. Its unfiltered workspace stage is still active separately.
