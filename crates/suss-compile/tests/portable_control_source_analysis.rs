@@ -99,6 +99,7 @@ fn binding_children_share_real_declarations_and_analyzed_body_scope() {
             let initializer = host.initializer.unwrap();
             let hir::SourceNode::Bindings {
                 is_loop,
+                is_letfn: false,
                 bindings,
                 body,
             } = initializer.node.as_ref().unwrap().as_ref()
@@ -501,6 +502,7 @@ fn try_source_regions_are_analyzed_once_in_pinned_visitation_order() {
         );
         let hir::SourceNode::Bindings {
             is_loop,
+            is_letfn: false,
             bindings,
             body: catch_body,
         } = handler

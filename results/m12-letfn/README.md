@@ -77,3 +77,19 @@ about one16-byte numeric box disappears. Instruction deltas fall17956.96 to
 17486.72 per iteration. Direct arithmetic stays below RSS resolution/about18
 instructions. Recursive group, closure and source-signature allocations still
 dominate the roughly1.8KB group sample; this does not eliminate those objects.
+
+
+## CI compilation and namespace review
+
+The original CI shard0/2 logs are retained in ci. Two existing exhaustive test
+helpers were updated explicitly for LetFn/is_letfn; both targets pass14 tests.
+The original suite comparison fails because every? becomes executable. The
+new capture has2789 assertions: all2758 old observations are unchanged, and31
+new every? assertions pass against the primary oracle. A fresh JVM run of the
+unchanged upstream namespace independently reports31 passes. Only two namespace
+failure records change; not-every? remains an unsupported-function failure.
+All other failure/skip fields remain unchanged. ci/review.json records those
+checks and the new capture hash; the actual old baseline and new capture are
+losslessly compressed. The initial JVM fixture assertion omitted the :type
+summary field; that failed fixture and the corrected select-keys check both
+remain. No suite-wide conformance is inferred from the updated baseline match.

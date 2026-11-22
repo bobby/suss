@@ -1,0 +1,17 @@
+{
+  "command": [
+    "cargo",
+    "+stable",
+    "test",
+    "--workspace",
+    "--locked",
+    "--test",
+    "compiled_macro_method_roles",
+    "--test",
+    "portable_control_source_analysis",
+    "--",
+    "--test-threads=2"
+  ],
+  "exit_code": 0,
+  "seconds": 3.899390935897827
+}

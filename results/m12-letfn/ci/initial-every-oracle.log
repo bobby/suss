@@ -1,0 +1,11 @@
+
+Testing clojure.core-test.every-qmark
+
+Ran 1 tests containing 31 assertions.
+0 failures, 0 errors.
+{:test 1, :pass 31, :fail 0, :error 0, :type :summary}
+Execution error (AssertionError) at user/eval315 (every-oracle.clj:5).
+Assert failed: (= {:test 1, :pass 31, :fail 0, :error 0} result)
+
+Full report at:
+/tmp/clojure-2976806115639138379.edn

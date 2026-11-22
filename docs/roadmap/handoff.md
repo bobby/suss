@@ -1,3 +1,21 @@
+## Letfn CI helper and suite review (2026-11-22)
+
+CI exposed two old test helpers with exhaustive matches on the previous
+binding/node shape. The method-role helper now maps LetFn explicitly, and
+both control-source patterns require is_letfn=false. The two targets pass14
+tests, zero failed/ignored; production compiler inputs and measurements stay
+unchanged. Original shard0/2 logs remain in results/m12-letfn/ci.
+
+The reviewed-suite run on1ae534da terminates101 because letfn unlocks the every?
+namespace. Its2789 actual assertions retain all2758 prior observations exactly
+and add31 passing every? assertions, independently rerun on JVM1.12.6 with
+zero failures/errors. Only two namespace failure records change: every? is
+removed, and not-every? now reports its own unsupported function rather than
+its previously blocked dependency. Assertion/test/skip failure records stay
+byte-equivalent as JSON values. The guarded compare/write and compare command
+passes; raw old baseline and new capture remain losslessly compressed. No
+unknown result becomes success and the not-every? failure stays explicit.
+
 ## Recursive lexical function probes (2026-11-22)
 
 results/m12-letfn retains28 fresh JVM Clojure1.12.6 pairs and actual Runtime,

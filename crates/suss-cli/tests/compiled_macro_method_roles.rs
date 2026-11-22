@@ -9,6 +9,7 @@ use suss_reader::forms::{Form, Kind};
 fn local_role(binding: &LocalBinding) -> serde_json::Value {
     let (kind, argument) = match binding.source_kind() {
         LocalKind::Let => ("let", None),
+        LocalKind::LetFn => ("letfn", None),
         LocalKind::Loop => ("loop", None),
         LocalKind::Argument { index, .. } => ("arg", Some(index)),
         LocalKind::FunctionName => ("fn", None),
