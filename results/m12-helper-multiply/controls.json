@@ -1,0 +1,64 @@
+{
+  "inputs": {
+    "crates/suss-compile/src/runtime_abi.rs": "edcb8a2b95584a8f51ba9471300aba284c512fc80adc8e3df5553a84c389dfd2",
+    "crates/suss-compile/src/runtime_abi/bigints.rs": "dabb3d23d60462627ae7ad593deb293bf2f9324ac82e19596f225044d5e0d81c",
+    "crates/suss-compile/src/runtime_abi/numeric.rs": "db2872546e093e86724f258ff1e5d722de577ea7e3742f7cbf7b3f3142bb5b79",
+    "runtime/numeric/NOTICE": "5ef1e8a2b52dfb0aee22d2f59de736d377f671ec8a75b01b8802085bba8f27ee",
+    "runtime/numeric/artifact/manifest.json": "ec7ead112c42785f65d12db6b2aea5ce137d443e1b5c2e39360c4500bb5a0f85",
+    "runtime/numeric/artifact/numeric.wasm": "96d7a4887d821a25d95dfc40c4d909c971a3906619f94300d5ccd2864a9116bc",
+    "runtime/numeric/src/lib.rs": "c25cad2c49e72a852068304bf82a2265d291f71b4e347e988e76e4a36bbead9c",
+    "crates/suss-compile/tests/bigint_helper.rs": "a0d7cd8c07159f59baf1b7c33ac9b942b676cfeec57da505b694dd3075ab3152",
+    "results/m12-helper-multiply/cases.json": "c2746fc29a993d01356e957797f213ee30ee58d6bbbc9f05dc4bc156753ee681"
+  },
+  "commands": [
+    {
+      "label": "abi",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-compile",
+        "--locked",
+        "--test",
+        "runtime_abi",
+        "--test",
+        "portable_calling_convention",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 132.92904496192932
+    },
+    {
+      "label": "numeric",
+      "command": [
+        "cargo",
+        "test",
+        "-p",
+        "suss-cli",
+        "--locked",
+        "--test",
+        "clojure_bigints",
+        "--test",
+        "clojure_bigint_integers",
+        "--test",
+        "clojure_ratios",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 390.37521290779114
+    },
+    {
+      "label": "numeric-rebuild",
+      "command": [
+        "python3",
+        "scripts/numeric_runtime.py",
+        "--rebuild-check"
+      ],
+      "exit_code": 1,
+      "seconds": 0.6485936641693115
+    }
+  ],
+  "complete": false
+}

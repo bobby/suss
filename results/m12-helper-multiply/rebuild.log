@@ -1,0 +1,4 @@
+   Compiling ryu-js v1.0.3
+   Compiling suss-numeric-intrinsics v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/runtime/numeric)
+    Finished `release` profile [optimized] target(s) in 2.03s
+Numeric artifact rebuilt and recorded; review the diff

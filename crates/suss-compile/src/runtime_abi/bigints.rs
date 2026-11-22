@@ -314,7 +314,7 @@ pub(super) fn representation(b: &mut Builder) {
     );
 }
 
-pub(super) fn arithmetic(b: &mut Builder) {
+pub(super) fn arithmetic(b: &mut Builder, helper: numeric::Info) {
     // A long or BigInt as a BigInt. Source type and physical raw-local facts
     // stay separate; this is only used by runtime integer dispatch.
     b.function(
@@ -638,6 +638,12 @@ pub(super) fn arithmetic(b: &mut Builder) {
         code.extend(get(local, field));
         code.push(LocalSet(target));
     }
+    // Match the measured short-outer-loop policy on either operand order.
+    code.extend([
+        LocalGet(4), LocalGet(5), I32GtU, If(BlockType::Empty),
+        LocalGet(2), LocalGet(3), LocalSet(2), LocalSet(3),
+        LocalGet(4), LocalGet(5), LocalSet(4), LocalSet(5), End,
+    ]);
     code.extend([
         LocalGet(4),
         LocalGet(5),
@@ -721,7 +727,7 @@ pub(super) fn arithmetic(b: &mut Builder) {
         Call(b.names["bigint-new"]),
     ]);
     b.function_with_locals(
-        "bigint-multiply",
+        "bigint-multiply-gc",
         &[VALUE, VALUE],
         &[VALUE],
         &[
@@ -732,6 +738,85 @@ pub(super) fn arithmetic(b: &mut Builder) {
             (2, ValType::I64),
         ],
         &code,
+    );
+    multiplication_bridge(b, helper);
+}
+
+/// Copy private magnitudes into bounded numeric scratch and copy the complete
+/// product back into GC-owned storage. No linear-memory owner can escape, and
+/// no guest call or callback occurs while scratch is live.
+fn multiplication_bridge(b: &mut Builder, helper: numeric::Info) {
+    let array = ValType::Ref(RefType {
+        nullable: true,
+        heap_type: HeapType::Concrete(LIMBS),
+    });
+    let word = MemArg { offset: 0, align: 2, memory_index: 0 };
+    let mut code = Vec::new();
+    // Locals: 2/3 input arrays, 4/5 used lengths, 6 scratch base, 7 B pointer,
+    // 8 output pointer, 9 capacity, 10 index, 11 normalized length, 12 result.
+    for (local, target, field) in [(0, 2, 1), (1, 3, 1), (0, 4, 2), (1, 5, 2)] {
+        code.extend(get(local, field));
+        code.push(LocalSet(target));
+    }
+    code.extend([
+        // Inputs plus output need 8*(la+lb) bytes. Widen before adding or
+        // multiplying; numeric-reserve checks memory32 capacity before growth.
+        LocalGet(4), I64ExtendI32U, LocalGet(5), I64ExtendI32U, I64Add,
+        I64Const(8), I64Mul, Call(b.names["numeric-reserve"]), LocalSet(6),
+        LocalGet(4), LocalGet(5), I32Add, LocalSet(9),
+        LocalGet(6), LocalGet(4), I32Const(4), I32Mul, I32Add, LocalSet(7),
+        LocalGet(7), LocalGet(5), I32Const(4), I32Mul, I32Add, LocalSet(8),
+    ]);
+    for (input, length, pointer) in [(2, 4, 6), (3, 5, 7)] {
+        code.extend([
+            I32Const(0), LocalSet(10), Block(BlockType::Empty), Loop(BlockType::Empty),
+            LocalGet(10), LocalGet(length), I32GeU, BrIf(1),
+            LocalGet(pointer), LocalGet(10), I32Const(4), I32Mul, I32Add,
+            LocalGet(input), LocalGet(10), ArrayGet(LIMBS), I32Store(word),
+            LocalGet(10), I32Const(1), I32Add, LocalSet(10), Br(0), End, End,
+        ]);
+    }
+    code.extend([
+        I32Const(helper.stack_top), GlobalSet(helper.stack_global),
+        LocalGet(6), LocalGet(4), LocalGet(7), LocalGet(5), LocalGet(8),
+        Call(helper.multiply), LocalSet(11),
+        LocalGet(9), ArrayNewDefault(LIMBS), LocalSet(12),
+        I32Const(0), LocalSet(10), Block(BlockType::Empty), Loop(BlockType::Empty),
+        LocalGet(10), LocalGet(9), I32GeU, BrIf(1),
+        LocalGet(12), LocalGet(10),
+        LocalGet(8), LocalGet(10), I32Const(4), I32Mul, I32Add, I32Load(word),
+        ArraySet(LIMBS),
+        LocalGet(10), I32Const(1), I32Add, LocalSet(10), Br(0), End, End,
+    ]);
+    code.extend(get(0, 0));
+    code.extend(get(1, 0));
+    code.extend([I32Mul, LocalGet(12), LocalGet(11), Call(b.names["bigint-new"])]);
+    b.function_with_locals(
+        "bigint-multiply-helper", &[VALUE, VALUE], &[VALUE],
+        &[(2, array), (8, ValType::I32), (1, array)], &code,
+    );
+
+    // Initial crossover from the magnitude probe: never bridge one-limb
+    // products, and leave the small balanced products in GC. Production
+    // wrapper measurements must validate/refine this boundary.
+    let mut code = get(0, 2).to_vec();
+    code.push(LocalSet(2));
+    code.extend(get(1, 2));
+    code.extend([
+        LocalSet(3),
+        LocalGet(2), I32Const(2), I32GeU,
+        LocalGet(3), I32Const(2), I32GeU, I32And,
+        LocalGet(2), I64ExtendI32U, LocalGet(3), I64ExtendI32U, I64Mul,
+        I64Const(16), I64GeU, I32And,
+        If(BlockType::Result(VALUE)),
+        LocalGet(0), LocalGet(1), Call(b.names["bigint-multiply-helper"]),
+        Else,
+        LocalGet(0), LocalGet(1), Call(b.names["bigint-multiply-gc"]),
+        End,
+    ]);
+    b.function_with_locals(
+        "bigint-multiply", &[VALUE, VALUE], &[VALUE],
+        &[(2, ValType::I32)], &code,
     );
 }
 

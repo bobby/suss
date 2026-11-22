@@ -32373,3 +32373,27 @@ in the receipts. Corrected fixtures use [:some value]. Run
 adapter, ABI, parameter-hint and Java-free bootstrap checks; those gates are
 still running at this publication. The separate full workspace retry at
 d7d2919b predates these WIT production changes and cannot certify them.
+
+
+## Production BigInt multiplication bridge probes (2026-11-22)
+
+`results/m12-helper-multiply` retains a source-pinned allocator-free multiply
+kernel and GC-owned value bridge. The independent field tests pass204 signed
+path observations from17 fresh JVM magnitude products, plus typed allocation
+failure, scratch reuse and GC retention. The scoped ABI targets pass63 tests
+and numeric CLI targets pass11 tests. The subsequent rebuild check fails
+because stable1.99.1 overrides the numeric helper's pinned1.98.0; its original
+failure is retained and bootstrap is unexecuted by that command. Clear only
+RUSTUP_TOOLCHAIN for the pinned check; developer RUSTFLAGS remain untouched.
+
+The actual-wrapper profiler verifies250 complete observations across auto/null
+GC and retains400 instruction samples and20 allocation samples. Large products
+favor the copied helper; full result storage measures about40+4*capacity bytes.
+The conservative initial crossover remains provisional. Cache the GC outer
+limb and refine the crossover from new wrapper measurements, then run the
+compiled Suss bench.py instruction/byte columns. Division/GCD remain GC kernels.
+
+The a21a715d CI record membership failure is independently reproduced at fuel
+992401/1003928. Preserve its one-million acceptance gate and remove redundant
+numeric fallback checks rather than adjusting the threshold. These probes do
+not establish full numeric API/suite/tooling or final-head CI acceptance.

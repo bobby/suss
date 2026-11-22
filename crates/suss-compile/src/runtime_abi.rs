@@ -1522,7 +1522,8 @@ fn build_module() -> Vec<u8> {
     bigints::representation(&mut b);
     let ratio_double_type = ratios::declare(&mut b);
     longs::intrinsics(&mut b);
-    bigints::arithmetic(&mut b);
+    numeric::reserve_scratch(&mut b, numeric_info);
+    bigints::arithmetic(&mut b, numeric_info);
     bigints::integer_functions(&mut b);
     bigints::division(&mut b);
     bigints::string(&mut b);

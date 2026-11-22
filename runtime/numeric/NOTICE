@@ -1,6 +1,9 @@
-Suss numeric conversion helper
+Suss numeric helper
 
-The parser and GC integration are original Suss code, licensed MIT OR Apache-2.0.
+The parser, BigInt schoolbook magnitude kernel and GC integration are original
+Suss code, licensed MIT OR Apache-2.0. The kernel derives from the original
+experiments/numeric-representation/bigint-helper placement probe; no upstream
+arbitrary-precision implementation body is copied.
 The helper links ryu-js 1.0.3, a Rust implementation of Ulf Adams' Ryū algorithm
 adapted for ECMAScript formatting by the boa-dev project. Upstream repository:
 https://github.com/boa-dev/ryu-js (crate registry checksum is in Cargo.lock and

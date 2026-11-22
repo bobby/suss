@@ -343,3 +343,33 @@ pub unsafe extern "C" fn suss_format_number(value: f64, output: *mut u8) -> usiz
     unsafe { core::ptr::copy_nonoverlapping(java_text.as_ptr(), output, length) };
     length
 }
+
+
+// Original Suss schoolbook magnitude kernel, measured in the BigInt placement
+// experiment. The GC bridge owns distinct aligned input/output scratch regions.
+/// `out` = `a` × `b`; returns the result's length without leading zeros.
+///
+/// # Safety
+/// The slices are valid and `out` holds `la + lb` limbs.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn suss_bigint_multiply(a: *const u32, la: usize, b: *const u32, lb: usize, out: *mut u32) -> usize {
+    let (a, b) = unsafe { (core::slice::from_raw_parts(a, la), core::slice::from_raw_parts(b, lb)) };
+    let out = unsafe { core::slice::from_raw_parts_mut(out, la + lb) };
+    // Short outer loop amortizes row setup and the invariant input-limb read.
+    let (a, b) = if la <= lb { (a, b) } else { (b, a) };
+    out.fill(0);
+    for (i, &x) in a.iter().enumerate() {
+        let mut carry = 0u64;
+        for (j, &y) in b.iter().enumerate() {
+            let t = out[i + j] as u64 + x as u64 * y as u64 + carry;
+            out[i + j] = t as u32;
+            carry = t >> 32;
+        }
+        out[i + b.len()] = carry as u32;
+    }
+    trim(out)
+}
+
+fn trim(out: &[u32]) -> usize {
+    out.iter().rposition(|&limb| limb != 0).map_or(0, |last| last + 1)
+}

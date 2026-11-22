@@ -1,0 +1,3 @@
+Running as unit: run-p1000811-i89067991.scope; invocation ID: 011587a053d547e89c675e97bf4e217d
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 2.71s
