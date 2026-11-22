@@ -1,3 +1,42 @@
+## Canonical MapEntry scalar probes (2026-11-22)
+
+results/m12-mapentries retains16 fresh JVM Clojure1.12.6 assertions, both-phase
+and actual AOT execution, generated-source checks and14-input reconstruction
+from9596dce6. The combined MapEntry/vector/parameter/IR command passes9 tests,
+zero failed/ignored; the earlier pre-rebase snapshot passes5 separately. Existing
+39-case parameter coverage remains, with the two explicit JVM corrections.
+The portable three-field constructor uses JVM MapEntry/create as its oracle
+adapter. No copied core body or shipped Java dependency is introduced.
+
+Core registers a canonical MapEntry witness in the original-Suss bootstrap
+extension. The private global is appended, preserving existing global indices
+and shared type group. Native reads require the registered descriptor, a valid
+three-field owner and indices0/1. A non-escaping constructor can keep key/value
+scalars through generic SSA parameters; key/value/hash effects remain once-only
+and ordered. Only the admitted public MapEntry construction guard disappears;
+private vector construction still keeps its protection. Constructor misses and
+unknown indices use the original guarded path. Copying stays source-relative;
+normalized async/future graphs stay conservative. One aggregate per function
+remains the current bound. Generated recipe/manifest/source checks pass.
+
+SUSS_MAPENTRY_TARGET=<m12-mapentry-target> python3
+results/m12-mapentries/measure.py compares the actual frozen9596dce6 executable
+with the combined source. All48 measured sums plus16 warm checks pass. MapEntry
+RSS slopes at1M/2M estimate135.12/136.37 bytes per iteration before and below
+resolution after; instruction deltas at100K/200K fall5578.89 to179.98. Vector
+remains about449 instructions and below resolution; control/closure about28
+and below resolution. These are not quiet walltimes. Raw source/component/
+compiler hashes, commands, unsuccessful import attempt and exact outputs remain.
+
+python3 results/m12-mapentries/run-gates.py is running37 focused targets, then
+Java-free bootstrap, Binaryen133 and reviewed-suite comparison. It uses stable
+Rust, two jobs/threads, MemoryMax4G scopes, m12-mapentry-target and outer
+ target/suss. Inspect terminal outcomes before claiming a broader pass. The
+parent vector/inline-nth gate runs separately in m12-aggregate-target; the
+required old full baseline remains frozen on f5056ffe. Final-head CI and
+independent review remain required before any draft promotion. letfn and the
+remaining numeric tower still need work; no complete escape result is inferred.
+
 ## Inline nth fallback and primary parameter traces (2026-11-22)
 
 The36-target vector gate failed on live-nth-order: Suss9 versus pinned

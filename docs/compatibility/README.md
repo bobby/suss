@@ -1286,3 +1286,13 @@ source AST. The expanded21-value JVM matrix covers sequence/string/default and
 MapEntry rebinding in Runtime/Macro/AOT. MapEntry now returns JVM's3 in that
 probe; the older14 observation remains archived, not treated as conformance.
 The existing aliased-NaN difference remains a negative observation.
+
+
+[MapEntry scalar receipts](../../results/m12-mapentries/README.md) add16 fresh
+JVM assertions, executed in both phases and actual AOT. Canonical indexed reads
+and a guarded scalar continuation preserve Object conversions, field-expression
+effects and public/private constructor distinctions. The combined9-test gate
+passes, including vector and parameter controls. Measured MapEntry allocation
+falls from about136 bytes per iteration to below RSS resolution, and5579 to180
+instructions; vector/control/closure measurements remain explicit. This is
+bounded storage evidence, not complete escape support or quiet timing acceptance.

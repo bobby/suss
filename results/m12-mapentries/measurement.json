@@ -1,0 +1,1008 @@
+{
+  "source_inputs": "source-inputs.json",
+  "before_source_commit": "9596dce64e4fd4f94054c2b78cb689f32e22d7cf",
+  "benchmark_sha256": "20b614749127396ab8cf9dedaa9e498ff5747ad32cc4044f5ae153079c84da16",
+  "wit_sha256": "e10a21dabac8f17cc882fc48f63f07f01723b6c4bdf75b01f12217f2891fdd35",
+  "runs": {
+    "before": {
+      "compiler_sha256": "cdb3d91f8bdbec8b8255c534d1afc2e8d24d3bdf52687a618dfa89514841f6c5",
+      "cases": {
+        "control": {
+          "rss": [
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 272516546,
+              "stdout": "300009999900000\n",
+              "stderr": "272516546,,instructions:u,147426246,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 275319889,
+              "stdout": "600039999800000\n",
+              "stderr": "275319889,,instructions:u,145368025,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            0.0,
+            0.0
+          ],
+          "instructions_per_iteration": 28.03343
+        },
+        "vector": {
+          "rss": [
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 314612484,
+              "stdout": "300009999900000\n",
+              "stderr": "314612484,,instructions:u,156600589,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 359522343,
+              "stdout": "600039999800000\n",
+              "stderr": "359522343,,instructions:u,163127888,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            0.0,
+            0.0
+          ],
+          "instructions_per_iteration": 449.09859
+        },
+        "entry": {
+          "rss": [
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 188915712,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 324038656,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 187768832,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 324141056,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 809836363,
+              "stdout": "300009999900000\n",
+              "stderr": "809836363,,instructions:u,305216253,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 1367725551,
+              "stdout": "600039999800000\n",
+              "stderr": "1367725551,,instructions:u,499856225,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            135.122944,
+            136.372224
+          ],
+          "instructions_per_iteration": 5578.89188
+        },
+        "closure": {
+          "rss": [
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 272514607,
+              "stdout": "300009999900000\n",
+              "stderr": "272514607,,instructions:u,139866943,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+                "run",
+                "before.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 275319796,
+              "stdout": "600039999800000\n",
+              "stderr": "275319796,,instructions:u,137805000,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            0.0,
+            0.0
+          ],
+          "instructions_per_iteration": 28.05189
+        }
+      },
+      "compile_command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/before-suss",
+        "compile",
+        "bench.sus",
+        "-w",
+        "bench.wit",
+        "-o",
+        "before.wasm",
+        "--export",
+        "case-control=escapebench/case-control",
+        "--export",
+        "case-vector=escapebench/case-vector",
+        "--export",
+        "case-entry=escapebench/case-entry",
+        "--export",
+        "case-closure=escapebench/case-closure"
+      ],
+      "compile_exit_code": 0,
+      "component_sha256": "0d90a41671c3041f7d4f823d5edd4f78ded55fa3b719848d256f5a7cf389f310"
+    },
+    "after": {
+      "compiler_sha256": "3fd0c51b2973ea15abe4226aca03a657df541d4b78d5b00848836b578feb179d",
+      "cases": {
+        "control": {
+          "rss": [
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 272491168,
+              "stdout": "300009999900000\n",
+              "stderr": "272491168,,instructions:u,138265166,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-control",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 275289663,
+              "stdout": "600039999800000\n",
+              "stderr": "275289663,,instructions:u,142696051,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            0.0,
+            0.0
+          ],
+          "instructions_per_iteration": 27.98495
+        },
+        "vector": {
+          "rss": [
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 314609116,
+              "stdout": "300009999900000\n",
+              "stderr": "314609116,,instructions:u,142678826,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-vector",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 359484028,
+              "stdout": "600039999800000\n",
+              "stderr": "359484028,,instructions:u,148514160,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            0.0,
+            0.0
+          ],
+          "instructions_per_iteration": 448.74912
+        },
+        "entry": {
+          "rss": [
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 287684947,
+              "stdout": "300009999900000\n",
+              "stderr": "287684947,,instructions:u,138246207,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-entry",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 305682821,
+              "stdout": "600039999800000\n",
+              "stderr": "305682821,,instructions:u,144714376,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            0.0,
+            0.0
+          ],
+          "instructions_per_iteration": 179.97874
+        },
+        "closure": {
+          "rss": [
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 1000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "1000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "3000999999000000\n",
+              "stderr": ""
+            },
+            {
+              "count": 2000000,
+              "command": [
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "2000000"
+              ],
+              "status": 0,
+              "peak_bytes": 92758016,
+              "stdout": "6003999998000000\n",
+              "stderr": ""
+            }
+          ],
+          "perf": [
+            {
+              "count": 100000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "100000"
+              ],
+              "status": 0,
+              "instructions": 272490577,
+              "stdout": "300009999900000\n",
+              "stderr": "272490577,,instructions:u,140333456,100.00,,\n"
+            },
+            {
+              "count": 200000,
+              "command": [
+                "perf",
+                "stat",
+                "-x,",
+                "-e",
+                "instructions:u",
+                "--",
+                "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+                "run",
+                "after.wasm",
+                "--invoke",
+                "case-closure",
+                "--",
+                "200000"
+              ],
+              "status": 0,
+              "instructions": 275279674,
+              "stdout": "600039999800000\n",
+              "stderr": "275279674,,instructions:u,137549970,100.00,,\n"
+            }
+          ],
+          "bytes_per_iteration": [
+            0.0,
+            0.0
+          ],
+          "instructions_per_iteration": 27.89097
+        }
+      },
+      "compile_command": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/target/probe/m12-mapentries-bench/after-suss",
+        "compile",
+        "bench.sus",
+        "-w",
+        "bench.wit",
+        "-o",
+        "after.wasm",
+        "--export",
+        "case-control=escapebench/case-control",
+        "--export",
+        "case-vector=escapebench/case-vector",
+        "--export",
+        "case-entry=escapebench/case-entry",
+        "--export",
+        "case-closure=escapebench/case-closure"
+      ],
+      "compile_exit_code": 0,
+      "component_sha256": "f62afb4e6318abbd581f62769175db1078ab97922fa06740d51f0abf353fd89d"
+    }
+  }
+}

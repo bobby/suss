@@ -323,3 +323,11 @@ strings and missing/default indices therefore keep the same inline behavior as
 native hits. The source AST preserves the public var; lexical/unknown calls and
 aliases remain ordinary calls. [Inline nth evidence](../../results/m12-vector-nth-oracle/README.md)
 keeps the original pinned ClojureScript traces and explicit JVM corrections.
+
+
+The same guarded continuation also handles a non-escaping `(MapEntry. k v nil)`
+with constant indexed projections. Key/value/hash effects remain ordered and
+its public construction guard can disappear only after canonical MapEntry
+admission. Core appends one private descriptor registry without moving existing
+global/type indices. The [MapEntry receipts](../../results/m12-mapentries/README.md)
+retain source reconstruction, execution and allocation/instruction evidence.
