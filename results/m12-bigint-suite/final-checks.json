@@ -1,0 +1,33 @@
+{
+  "inputs": {
+    "crates/suss-reader/src/edn/source.rs": "a292727c0068c4b436c9b0cd89afbbbd77eb37f912c833a6204a56f323ed1708",
+    "crates/suss-compile/tests/clojure_test_suite.rs": "543b6c6a34cc650991b403946ca44f25d3d1c9f95c9dd0dd2e83dad4db6b04e3",
+    "crates/suss-compile/tests/oracle.rs": "c45a3971c7c3e58fced9341ef01238343a23942d2b6c44a6da35f9d5fe84973d",
+    "crates/suss-compile/tests/portable_value_decoder.rs": "1266f446b7da6aae51bdca72cc39b60245eb874d4653deabe3c93a77c040d906",
+    "crates/suss-compile/tests/support/portable_decode.rs": "9793c03b842ddcecd7d6d15bd8ffe69317eeb4f2fcb56a160afa98789cdf779c",
+    "scripts/clojure_test_suite.py": "616189dd110bc1915ceea63f44c531ed2237f80167afc5019146490c706e1251",
+    "scripts/test_clojure_test_suite.py": "751248959e317b4fd757033bf4a80b49be883b7041e2e255d0aaa2713504d607",
+    "tests/oracle/clojure-test-suite-known-failures.json": "4fd684c12daff9cadd9bef51698d7db1599f29d5e1f96abd0e19439324a1031d"
+  },
+  "terminal_checks": [
+    {
+      "command": "cargo test -p suss-reader --locked edn::source::tests::exact_number_tooling_data_emits_numeric_source_tokens -- --exact --test-threads=2",
+      "log": "source-reader.log",
+      "exit_code": 0,
+      "passed": 1
+    },
+    {
+      "command": "cargo test -p suss-compile --locked --test analyzer_edn_core --test portable_value_decoder -- --test-threads=2",
+      "log": "decoder-analyzer.log",
+      "exit_code": 0,
+      "passed": 26
+    },
+    {
+      "command": "python3 -m unittest discover -s scripts -p test_clojure_test_suite.py",
+      "log": "python-tests.log",
+      "exit_code": 0,
+      "passed": 34
+    }
+  ],
+  "limitations": "Captured runtime observations precede the source-printer-only correction. The initial capture and harness rerun fail on the old known-failure baseline as recorded; the offline per-assertion review accepts the new baseline. Final-head CI remains required."
+}

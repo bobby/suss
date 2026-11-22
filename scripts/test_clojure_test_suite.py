@@ -51,6 +51,14 @@ class SuiteMatches(unittest.TestCase):
         self.assertTrue(suite.suite_matches({'tag': 'long', 'value': big}, {'tag': 'long', 'value': big}))
         self.assertFalse(suite.suite_matches({'tag': 'long', 'value': big}, {'tag': 'f64', 'bits': '4340000000000000'}))
 
+    def test_bigints_match_only_equal_exact_integer_observations(self):
+        for value in ['0', '1', '-1', str(2**512+1), str(-(2**512+1))]:
+            expected = {'tag': 'bigint', 'value': value}
+            self.assertTrue(suite.suite_matches(expected, dict(expected)))
+            self.assertFalse(suite.suite_matches(expected, {'tag':'bigint', 'value':str(int(value)+1)}))
+            self.assertFalse(suite.suite_matches(expected, {'tag':'long', 'value':value}))
+            self.assertFalse(suite.suite_matches(expected, NUMBER_ONE))
+
     def test_exact_types_never_match(self):
         for tag in ({'tag': 'bigint', 'value': '1'}, {'tag': 'ratio', 'numerator': '1', 'denominator': '2'},
                     {'tag': 'decimal', 'unscaled': '1', 'scale': 0}):

@@ -130,6 +130,12 @@ pub fn value_to_form(value: &Value) -> Form {
                         units.iter().map(|u| match u { Value::Long(n) => *n as u16, _ => 0 }).collect(),
                     ))
                 }
+                (Some("suss"), EXACT_NUMBER_TAG, Value::String(text)) => {
+                    match crate::forms::number(text) {
+                        Ok(crate::forms::NumberToken::Exact(number)) => form(Kind::Exact(number)),
+                        _ => form(Kind::Tagged { tag: tag.clone(), form: Box::new(value_to_form(inner)) }),
+                    }
+                }
                 _ => form(Kind::Tagged { tag: tag.clone(), form: Box::new(value_to_form(inner)) }),
             },
             Value::Meta(inner, meta) => {
@@ -175,6 +181,17 @@ fn write_form(form: &Form, out: &mut String) -> Result<(), Error> {
             Kind::Vector(forms) => items("[", forms, ']', out),
             Kind::Set(forms) => items("#{", forms, '}', out),
             Kind::Map(forms) => items("{", forms, '}', out),
+            Kind::Exact(number) => {
+                // The transport tag is tooling data; emitted source uses the
+                // validated numeric token, retaining spelling and category.
+                match crate::forms::number(&number.text) {
+                    Ok(crate::forms::NumberToken::Exact(parsed)) if parsed.value == number.value => {
+                        out.push_str(&number.text);
+                        Ok(())
+                    }
+                    _ => Err(Error::new("Invalid exact-number source token")),
+                }
+            }
             Kind::Tagged { tag, form } => {
                 out.push('#');
                 out.push_str(&super::print(&Value::Symbol(tag.clone()))?);
@@ -315,6 +332,21 @@ mod tests {
             assert_eq!(print(&value).unwrap(), print(&expected.unwrap()).unwrap(), "{source}");
             assert_eq!(form_to_value(&value_to_form(&value)).unwrap(), value, "{source}");
         }
+    }
+
+    #[test]
+    fn exact_number_tooling_data_emits_numeric_source_tokens() {
+        for source in ["1N", "-18446744073709551617N", "1/3", "2/4", "1.50M", "^{:tag number} [1N 1/3 1.50M]"] {
+            let form = read(source);
+            let value = form_to_value(&form).unwrap();
+            let restored = value_to_form(&value);
+            let emitted = print_form(&restored).unwrap();
+            assert!(!emitted.contains("#suss/exact-number"), "{source}: {emitted}");
+            assert_eq!(form_to_value(&read(&emitted)).unwrap(), value, "{source}");
+        }
+        let invalid = Value::Tagged(Symbol { namespace: Some("suss".into()), name: EXACT_NUMBER_TAG.into() },
+            Box::new(Value::String("1N) (unexpected)".into())));
+        assert!(matches!(value_to_form(&invalid).kind, Kind::Tagged { .. }));
     }
 
     #[test]

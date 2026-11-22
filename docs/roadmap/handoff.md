@@ -32247,3 +32247,25 @@ remain unimplemented here. GC multiplication/division are reference kernels;
 the measured helper bridge/crossover and full numeric API acceptance remain.
 The changed reviewed-suite observations require an explicit primary-oracle
 audit before any known-failure baseline update.
+
+
+## BigInt observation decoding and exact source emission (2026-11-22)
+
+[Suite receipts](../../results/m12-bigint-suite/README.md) retain complete
+compressed raw captures and a lossless per-assertion primary-oracle audit.
+Independent host decoding reads canonical BigInt storage and validates its
+metadata/magnitudes without guest printing, equality or arithmetic. The audit
+verifies73 new host-judged passes and preserves15 newly executing but incorrect
+exact-division assertions as failures. Namespace/test/skip failures are unchanged;
+no opaque or guest-only result is promoted to success. Run
+`python3 results/m12-bigint-suite/review.py` to reproduce all88 changed rows.
+
+CI also exposed numeric transport tags escaping into emitted source.
+EDN-to-form conversion now restores validated exact tokens; source printing
+retains their spellings/categories. Malformed tagged text stays tagged.
+The reader regression passes; `cargo test -p suss-compile --locked --test
+analyzer_edn_core --test portable_value_decoder -- --test-threads=2` passes26
+tests, including both core phases and canonical/adversarial decoder checks.
+All34 Python suite-comparison checks pass. Capture command statuses retain the
+old-baseline comparison failures; the primary reference is unchanged. These
+scoped observations do not replace final-head CI or a full workspace baseline.

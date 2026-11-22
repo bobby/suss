@@ -17,6 +17,7 @@ pub enum Observation {
     /// A double's bits.
     Number(u64),
     Long(i64),
+    BigInt(String),
     String(Vec<u16>),
     Keyword(Option<Vec<u16>>, Vec<u16>),
     Symbol(Option<Vec<u16>>, Vec<u16>),
@@ -78,6 +79,7 @@ struct Canonical {
 pub struct Decoder {
     remaining: usize,
     canonical: Vec<Canonical>,
+    integer_type: Option<wasmtime::StructType>,
 }
 
 impl Decoder {
@@ -90,6 +92,7 @@ impl Decoder {
         Self {
             remaining,
             canonical: Vec::new(),
+            integer_type: None,
         }
     }
 
@@ -156,6 +159,11 @@ impl Decoder {
         ] {
             decoder.capture_class(session, source, class)?;
         }
+        let integer = session.eval_probe("1N")?;
+        decoder.integer_type = Some(session.inspect(&integer, |store, value| {
+            non_null_ref(&value)?.as_struct(&store)?
+                .ok_or_else(|| wasmtime::Error::msg("Missing canonical BigInt"))?.ty(&store)
+        })?);
         Ok(decoder)
     }
 
@@ -350,6 +358,22 @@ impl Decoder {
             let fields = structure.fields(&mut *store)?.collect::<Vec<_>>();
             if let [Val::F64(_)] = fields.as_slice() {
                 return Ok(Observation::Number(number_bits(store, value)?));
+            }
+            if self.integer_type.as_ref().is_some_and(|canonical|
+                wasmtime::StructType::eq(&structure.ty(&*store).expect("live structure type"), canonical)) {
+                let [Val::I32(sign), Val::AnyRef(Some(limbs)), Val::I32(used), Val::I32(display)] = fields.as_slice() else {
+                    return Err(wasmtime::Error::msg("Malformed BigInt storage"));
+                };
+                let limbs = limbs.as_array(&*store)?.ok_or_else(|| wasmtime::Error::msg("Malformed BigInt limbs"))?;
+                if !(-1..=1).contains(sign) || *used < 0 || *used as u32 > limbs.len(&*store)?
+                    || !(0..=1).contains(display) || (*used==0) != (*sign==0) {
+                    return Err(wasmtime::Error::msg("Malformed BigInt metadata"));
+                }
+                self.spend(*used as usize)?;
+                let mut words = Vec::with_capacity(*used as usize);
+                for index in 0..*used as u32 { words.push(limbs.get(&mut *store, index)?.unwrap_i32() as u32); }
+                if words.last()==Some(&0) { return Err(wasmtime::Error::msg("Unnormalized BigInt magnitude")); }
+                return Ok(Observation::BigInt(integer_decimal(*sign, &words)));
             }
             if fields.len() == 4 {
                 let (class, args) = self.object(store, value)?;
@@ -1690,4 +1714,23 @@ mod adversarial_owner {
             })
             .unwrap();
     }
+}
+
+/// Independent host conversion, using base 10^9 digits and u64 intermediates.
+/// Never calls a guest printer, comparison, hash, or arithmetic function.
+fn integer_decimal(sign: i32, words: &[u32]) -> String {
+    let mut decimal = vec![0_u32];
+    for word in words.iter().rev() {
+        let mut carry = u64::from(*word);
+        for digit in &mut decimal {
+            let value = (u64::from(*digit) << 32) + carry;
+            *digit = (value % 1_000_000_000) as u32;
+            carry = value / 1_000_000_000;
+        }
+        while carry != 0 { decimal.push((carry % 1_000_000_000) as u32); carry /= 1_000_000_000; }
+    }
+    let mut text = if sign<0 { "-".to_owned() } else { String::new() };
+    text.push_str(&decimal.pop().unwrap().to_string());
+    for digit in decimal.iter().rev() { use std::fmt::Write; write!(&mut text, "{digit:09}").unwrap(); }
+    text
 }

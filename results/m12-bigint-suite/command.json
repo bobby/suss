@@ -1,0 +1,28 @@
+{
+  "head": "11610506227e4793fbe0f3b2f6f1d64f6c1792be",
+  "command": [
+    "cargo",
+    "test",
+    "-p",
+    "suss-compile",
+    "--locked",
+    "--test",
+    "portable_value_decoder",
+    "--test",
+    "clojure_test_suite",
+    "--",
+    "--nocapture",
+    "--test-threads=2"
+  ],
+  "complete": true,
+  "changed_inputs": {
+    "crates/suss-compile/tests/clojure_test_suite.rs": "543b6c6a34cc650991b403946ca44f25d3d1c9f95c9dd0dd2e83dad4db6b04e3",
+    "crates/suss-compile/tests/oracle.rs": "c45a3971c7c3e58fced9341ef01238343a23942d2b6c44a6da35f9d5fe84973d",
+    "crates/suss-compile/tests/portable_value_decoder.rs": "1266f446b7da6aae51bdca72cc39b60245eb874d4653deabe3c93a77c040d906",
+    "crates/suss-compile/tests/support/portable_decode.rs": "9793c03b842ddcecd7d6d15bd8ffe69317eeb4f2fcb56a160afa98789cdf779c",
+    "scripts/clojure_test_suite.py": "616189dd110bc1915ceea63f44c531ed2237f80167afc5019146490c706e1251",
+    "scripts/test_clojure_test_suite.py": "751248959e317b4fd757033bf4a80b49be883b7041e2e255d0aaa2713504d607"
+  },
+  "exit_code": 101,
+  "seconds": 236.24165797233582
+}

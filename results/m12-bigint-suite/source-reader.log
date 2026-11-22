@@ -1,0 +1,34 @@
+Running as unit: run-p663145-i88717884.scope; invocation ID: 17f8bed38c7e4cd9938a2bb7e099ad7a
+   Compiling proc-macro2 v1.0.103
+   Compiling quote v1.0.42
+   Compiling serde_core v1.0.228
+   Compiling serde v1.0.228
+   Compiling syn v2.0.111
+   Compiling serde_derive v1.0.228
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-integer-source/crates/suss-reader)
+    Finished `test` profile [optimized] target(s) in 52.87s
+     Running unittests src/lib.rs (../m12-integer-target/debug/deps/suss_reader-10c228a0d621537c)
+
+running 1 test
+test edn::source::tests::exact_number_tooling_data_emits_numeric_source_tokens ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 30 filtered out; finished in 0.00s
+
+     Running tests/edn.rs (../m12-integer-target/debug/deps/edn-e4e5deba504b0800)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s
+
+     Running tests/forms.rs (../m12-integer-target/debug/deps/forms-0fd72a6941cabfa3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 22 filtered out; finished in 0.00s
+
+     Running tests/portable_dispatch.rs (../m12-integer-target/debug/deps/portable_dispatch-08907ba7c5894e34)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
