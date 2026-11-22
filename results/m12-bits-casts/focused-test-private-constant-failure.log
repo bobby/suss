@@ -1,0 +1,17 @@
+Running as unit: run-p3533271-i87406082.scope; invocation ID: 8ae2df6a788947dcb16e61e39017d127
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile)
+error[E0603]: constant `NUMBER` is private
+   --> crates/suss-compile/tests/portable_unboxed_locals.rs:393:62
+    |
+393 |                         assert!(![suss_compile::runtime_abi::NUMBER, suss_compile::runtime_abi::LONG].contains(&struct_type_index),
+    |                                                              ^^^^^^ private constant
+    |
+note: the constant `NUMBER` is defined here
+   --> crates/suss-compile/src/runtime_abi.rs:196:1
+    |
+196 | pub(crate) const NUMBER: u32 = 0;
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For more information about this error, try `rustc --explain E0603`.
+error: could not compile `suss-compile` (test "portable_unboxed_locals") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

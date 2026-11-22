@@ -1,0 +1,7 @@
+{
+  "production_revision": "48f23809d2dcb6d2989b77bb4f68620314cd8ef7",
+  "compiler_sha256": "9d9bdc0e2282262547b58b8c8ae8200bb072f6424549ab4b07a14aab362ccec6",
+  "cli_failed": 2,
+  "codegen_failed": 3,
+  "codegen_note": "Original bit-loop fixture incorrectly required ordinary bit functions to inline; retained unchanged as exploratory negative. Final no-call fixture covers source inline forms."
+}

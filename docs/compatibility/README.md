@@ -1231,6 +1231,15 @@ recorded separately. Two inspected long/double loop components execute with no
 normal-path helper calls or loop-carried boxes and match fresh JVM loop results.
 These observations cover the listed operations, not every numeric core call.
 
+[Bitwise/cast evidence](../../results/m12-bits-casts/README.md) adds30 passing
+fresh JVM value assertions plus4 separate Suss replacement controls. Three
+exact inspected loop components execute;33 raw-return helper exports have scalar
+signatures and no numeric boxes. Ordinary bit functions observe var replacements,
+and source float(long) preserves direct rounding. A separate additional probe
+retains6 existing cast-overload mismatches and2 matching controls in both frozen
+before/current AOT. Those failures are outside the passing matrix and do not
+establish complete conversion conformance.
+
 Lazy numeric GC copies now span blocks where materializations can repeat without
 redefinition. Checked sum bodies remain byte-identical and generated allocation
 checks pass. The [box reuse receipts](../../results/m12-box-reuse/README.md) retain

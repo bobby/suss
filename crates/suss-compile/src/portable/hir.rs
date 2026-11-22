@@ -347,6 +347,33 @@ impl Bitwise {
             _ => return None,
         })
     }
+    /// A raw result from the same checked/coercing boxed operand helper.
+    pub(crate) fn raw_export(self) -> Option<&'static str> {
+        Some(match self {
+            Self::And => "primitive-bit-and-raw",
+            Self::Or => "primitive-bit-or-raw",
+            Self::Xor => "primitive-bit-xor-raw",
+            Self::AndNot => "primitive-bit-and-not-raw",
+            Self::Not => "primitive-bit-not-raw",
+            Self::Clear => "primitive-bit-clear-raw",
+            Self::Flip => "primitive-bit-flip-raw",
+            Self::Set => "primitive-bit-set-raw",
+            Self::Test => "primitive-bit-test-raw",
+            Self::Left => "primitive-bit-shift-left-raw",
+            Self::Right => "primitive-bit-shift-right-raw",
+            Self::Unsigned => "primitive-unsigned-bit-shift-right-raw",
+            Self::Int32 => "int32-int-raw",
+            Self::Int32And => "int32-bit-and-raw",
+            Self::Int32Or => "int32-bit-or-raw",
+            Self::Int32Xor => "int32-bit-xor-raw",
+            Self::Int32Left => "int32-bit-shift-left-raw",
+            Self::Int32Right => "int32-bit-shift-right-raw",
+            Self::Int32Unsigned => "int32-unsigned-bit-shift-right-raw",
+            Self::Imul => "int32-imul-raw",
+            Self::BitCount => "int32-bit-count-raw",
+            _ => return None,
+        })
+    }
     /// Shipped core's 32-bit form of an inline bit operation.
     pub(crate) fn int32(self) -> Self {
         match self {
@@ -3698,6 +3725,16 @@ impl Analyzer<'_> {
             return self.protocol_site_call(form, items, &protocol);
         }
         if let Some(ResolvedBinding::BootstrapBitwise { operation, .. }) = &resolved {
+            if !self.privileged && matches!(operation, Bitwise::Clear | Bitwise::Flip | Bitwise::Set | Bitwise::Test) {
+                let callee = self.form(&items[0])?;
+                let arguments = args.iter().map(|arg| self.form(arg)).collect::<Result<Vec<_>, _>>()?;
+                *self.source_nodes.last_mut().expect("source node fact slot") =
+                    Some(std::sync::Arc::new(SourceNode::Invoke {
+                        callee: std::sync::Arc::new(callee.clone()), arguments: arguments.clone().into(),
+                    }));
+                return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
+                    ty: Type::Value, kind: std::sync::Arc::new(Expression::Call { callee: Box::new(callee), arguments }) });
+            }
             return self.bitwise_form(form, args, *operation);
         }
         if let Some(ResolvedBinding::BootstrapComparison { operation, .. }) = &resolved {

@@ -1,0 +1,6 @@
+package test:castrebind; world w {
+export case0: func() -> u32;
+export case1: func() -> u32;
+export case2: func() -> u32;
+export case3: func() -> u32;
+}

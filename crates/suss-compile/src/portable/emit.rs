@@ -297,6 +297,10 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     },
                     Operation::Bitwise { operation, .. } => {
                         names.insert(operation.export());
+                        if let Some(raw) = operation.raw_export() { names.insert(raw); }
+                        if matches!(operation, super::hir::Bitwise::Cast | super::hir::Bitwise::Int) {
+                            names.extend(runtime_abi::CAST_RAW_EXPORTS);
+                        }
                     }
                     Operation::Comparison { operation, .. } => {
                         names.insert(operation.export());
@@ -767,6 +771,14 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     let type_count = runtime_abi::TYPE_COUNT;
     for (i, name) in names.iter().enumerate() {
         let (params, results) = match *name {
+            name if name.starts_with("number-cast-") && name.ends_with("-raw") =>
+                (vec![VALUE], vec![if name.contains("float") || name.contains("double") { ValType::F64 } else { ValType::I64 }]),
+            name if name.starts_with("primitive-bit-") && name.ends_with("-raw") =>
+                (vec![VALUE; if name == "primitive-bit-not-raw" { 1 } else { 2 }],
+                    vec![if name == "primitive-bit-test-raw" { ValType::I32 } else { ValType::I64 }]),
+            name if name == "primitive-unsigned-bit-shift-right-raw" => (vec![VALUE; 2], vec![ValType::I64]),
+            name if name.starts_with("int32-") && name.ends_with("-raw") =>
+                (vec![VALUE; if matches!(name, "int32-int-raw" | "int32-bit-count-raw") { 1 } else { 2 }], vec![ValType::I64]),
             "future-pending-new" | "dynamic-fork" | "dynamic-save" => (vec![], vec![VALUE]),
             "async-continuation-new" | "async-continuation-snapshot" | "dynamic-push" => (vec![VALUE], vec![VALUE]),
             "async-continuation-commit" | "async-task-start" | "async-task-yield" => (vec![VALUE, VALUE], vec![VALUE]),
@@ -2289,6 +2301,14 @@ fn emit_function(
                 for instruction in code.drain(..) { function.instruction(&instruction); }
                 continue;
             }
+            if !unboxed::inline(&locals, inst)
+                && let Some((export, arguments)) = unboxed::raw_helper(&locals, inst)
+            {
+                for argument in arguments { locals.push_boxed(&mut code, argument); }
+                code.extend([Call(index(export)), LocalSet(locals.raw(inst.result))]);
+                for instruction in code.drain(..) { function.instruction(&instruction); }
+                continue;
+            }
             if unboxed::inline(&locals, inst) {
                 match &inst.operation {
                     Operation::Literal(literal) => locals.literal(&mut code, literal, inst.result),
@@ -2301,6 +2321,7 @@ fn emit_function(
                     ),
                     Operation::Bitwise { operation, arguments } => locals.bitwise(
                         &mut code, *operation, arguments, inst.result, index(operation.export()),
+                        unboxed::raw_helper(&locals, inst).map(|(export, _)| index(export)),
                     ),
                     _ => unreachable!("inline numeric instruction"),
                 }
@@ -2811,11 +2832,11 @@ fn emit_function(
                             .instruction(&Call(index(operation.export())))
                             .instruction(&LocalSet(inst.result.0 as u32 + offset));
                     }
-                    if locals.of(inst.result) == unboxed::Repr::Long {
-                        // Core's int32 helper has completed the original
+                    if matches!(locals.of(inst.result), unboxed::Repr::Long | unboxed::Repr::Double | unboxed::Repr::Flag) {
+                        // A checked numeric helper has completed the original
                         // operand conversions and returned a long. Reuse its
                         // GC value while keeping subsequent numeric uses raw.
-                        locals.unbox_long(&mut code, inst.result);
+                        locals.unbox_result(&mut code, inst.result);
                         for instruction in code.drain(..) { function.instruction(&instruction); }
                         boxed.insert(inst.result.0);
                     }

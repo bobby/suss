@@ -259,3 +259,160 @@ fn known_double_core_results_stay_raw_and_execute() {
     assert_eq!(run.call(&mut store, ()).unwrap().0.to_bits(), expected.to_bits());
     run.post_return(&mut store).unwrap();
 }
+
+mod raw_bits_and_casts {
+    use super::*;
+    fn check(operators: &[Operator]) {
+        for (i, op) in operators.iter().enumerate() {
+            match op {
+                Operator::Call { .. } => assert!(throwing_call(operators, i), "normal path calls: {operators:?}"),
+                Operator::CallRef { .. } | Operator::ReturnCall { .. } | Operator::ReturnCallRef { .. } =>
+                    panic!("normal path calls: {operators:?}"),
+                Operator::StructNew { .. } => {
+                    let end = operators[i..].iter().position(|op| matches!(op, Operator::Call { .. } | Operator::Return))
+                        .map(|offset| i + offset).unwrap();
+                    assert!(!operators[i..end].iter().any(|op| matches!(op, Operator::Br { .. } | Operator::BrIf { .. })));
+                    assert!(matches!(operators[end], Operator::Return) || throwing_call(operators, end));
+                }
+                _ => {}
+            }
+        }
+    }
+    #[test]
+    fn long_bits_execute_without_normal_calls_or_boxes() {
+        let source = "(defn ^:export bound [] (loop [i 0 acc 0]
+          (if (< i 1234581)
+            (recur (inc i) (unchecked-add acc
+              (bit-xor (bit-and-not (bit-not i) 255)
+                (bit-shift-right (bit-shift-left i i) i)
+                (unsigned-bit-shift-right -1 i)))) acc)))";
+        let bytes = Compiler::new().compile(source,
+            "package test:raw-bits; world api { export bound: func() -> s64; }").unwrap();
+        for operators in functions_with(&bytes, 1234581) {
+            check(&operators);
+            assert!(operators.iter().any(|op| matches!(op, Operator::I64Shl)));
+            assert!(operators.iter().any(|op| matches!(op, Operator::I64ShrS)));
+            assert!(operators.iter().any(|op| matches!(op, Operator::I64ShrU)));
+        }
+        let expected = (0..1234581_i64).fold(0_i64, |sum, i| {
+            let shift = i as u32;
+            let a = !i & !255_i64;
+            let c = i.wrapping_shl(shift).wrapping_shr(shift);
+            let d = ((-1_i64 as u64).wrapping_shr(shift)) as i64;
+            sum.wrapping_add(a ^ c ^ d)
+        });
+        let (mut store, instance) = extrema_component(&bytes);
+        let run = instance.get_typed_func::<(), (i64,)>(&mut store, "bound").unwrap();
+        assert_eq!(run.call(&mut store, ()).unwrap().0, expected);
+        run.post_return(&mut store).unwrap();
+    }
+    #[test]
+    fn narrow_integer_casts_execute_without_normal_calls_or_boxes() {
+        let source = "(defn ^:export bound [] (loop [i 0 acc 0]
+          (if (< i 1234583) (recur (inc i) (unchecked-add acc
+            (+ (byte (bit-and i 63)) (short (bit-and i 1023)) (int i)
+              (unchecked-byte i) (unchecked-short i) (unchecked-int i)))) acc)))";
+        let bytes = Compiler::new().compile(source,
+            "package test:raw-casts; world api { export bound: func() -> s64; }").unwrap();
+        for operators in functions_with(&bytes, 1234583) { check(&operators); }
+        let expected: i64 = (0..1234583_i64).map(|i|
+            (i & 63) + (i & 1023) + i + i as i8 as i64 + i as i16 as i64 + i as i32 as i64).sum();
+        let (mut store, instance) = extrema_component(&bytes);
+        let run = instance.get_typed_func::<(), (i64,)>(&mut store, "bound").unwrap();
+        assert_eq!(run.call(&mut store, ()).unwrap().0, expected);
+        run.post_return(&mut store).unwrap();
+    }
+    #[test]
+    fn float_casts_execute_without_normal_calls_or_boxes() {
+        let source = "(defn ^:export bound [] (loop [i 0 acc 0.0]
+          (if (< i 1234585) (recur (inc i)
+            (unchecked-add acc (double (float (unchecked-float i))))) acc)))";
+        let bytes = Compiler::new().compile(source,
+            "package test:raw-floats; world api { export bound: func() -> f64; }").unwrap();
+        for operators in functions_with(&bytes, 1234585) {
+            check(&operators);
+            assert!(operators.iter().any(|op| matches!(op, Operator::F32ConvertI64S)));
+            assert!(operators.iter().any(|op| matches!(op, Operator::F32DemoteF64)));
+        }
+        let expected = (1234585_i64 * 1234584 / 2) as f64;
+        let (mut store, instance) = extrema_component(&bytes);
+        let run = instance.get_typed_func::<(), (f64,)>(&mut store, "bound").unwrap();
+        assert_eq!(run.call(&mut store, ()).unwrap().0.to_bits(), expected.to_bits());
+        run.post_return(&mut store).unwrap();
+    }
+}
+
+#[test]
+fn raw_numeric_helpers_return_scalars_without_numeric_boxes() {
+    use std::collections::BTreeMap;
+    let bytes = suss_compile::runtime_abi::module();
+    wasmparser::Validator::new().validate_all(&bytes).unwrap();
+    let mut exports = BTreeMap::new();
+    let mut boxes = Vec::new();
+    let mut results = Vec::new();
+    let mut functions = Vec::new();
+    for payload in Parser::new(0).parse_all(&bytes) {
+        match payload.unwrap() {
+            Payload::ImportSection(reader) => assert_eq!(reader.count(), 0),
+            Payload::TypeSection(reader) => for group in reader {
+                for ty in group.unwrap().into_types() {
+                    results.push(match ty.composite_type.inner {
+                        wasmparser::CompositeInnerType::Func(ty) => ty.results().first().copied(), _ => None,
+                    });
+                }
+            },
+            Payload::FunctionSection(reader) => for ty in reader { functions.push(ty.unwrap()); },
+            Payload::ExportSection(reader) => for export in reader {
+                let export = export.unwrap();
+                if matches!(export.name, "number-box" | "long-box") { boxes.push(export.index); }
+                if export.kind == wasmparser::ExternalKind::Func && export.name.ends_with("-raw")
+                    && (export.name.starts_with("number-cast-") || export.name.starts_with("primitive-") || export.name.starts_with("int32-"))
+                {
+                    exports.insert(export.index, export.name.to_string());
+                }
+            },
+            _ => {}
+        }
+    }
+    assert_eq!(exports.len(), 33);
+    assert_eq!(boxes.len(), 2);
+    for (index, name) in &exports {
+        let result = results[functions[*index as usize] as usize].unwrap();
+        assert!(matches!(result, wasmparser::ValType::I64 | wasmparser::ValType::I32 | wasmparser::ValType::F64), "{name}: {result:?}");
+    }
+    // Discover numeric box layouts from their actual exported constructors.
+    // Internal type indices are not a public artifact contract.
+    let mut numeric_types = Vec::new();
+    let mut function = 0;
+    for payload in Parser::new(0).parse_all(&bytes) {
+        if let Payload::CodeSectionEntry(body) = payload.unwrap() {
+            if boxes.contains(&function) {
+                for op in body.get_operators_reader().unwrap().into_iter() {
+                    if let Operator::StructNew { struct_type_index } = op.unwrap() {
+                        if !numeric_types.contains(&struct_type_index) { numeric_types.push(struct_type_index); }
+                    }
+                }
+            }
+            function += 1;
+        }
+    }
+    assert_eq!(numeric_types.len(), 2);
+    let mut function = 0;
+    for payload in Parser::new(0).parse_all(&bytes) {
+        if let Payload::CodeSectionEntry(body) = payload.unwrap() {
+            if let Some(name) = exports.get(&function) {
+                for op in body.get_operators_reader().unwrap().into_iter() {
+                    let op = op.unwrap();
+                    if let Operator::Call { function_index } = op {
+                        assert!(!boxes.contains(&function_index), "raw helper {name} calls a numeric boxer");
+                    }
+                    if let Operator::StructNew { struct_type_index } = op {
+                        assert!(!numeric_types.contains(&struct_type_index),
+                            "raw helper {name} must not construct a numeric box");
+                    }
+                }
+            }
+            function += 1;
+        }
+    }
+}

@@ -15,6 +15,8 @@ use crate::runtime_abi;
 use wasm_encoder::{BlockType, HeapType, Instruction, ValType};
 
 mod numeric_core;
+mod numeric_casts;
+mod long_bitwise;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum Repr {
@@ -142,18 +144,6 @@ fn arithmetic(operator: Arithmetic, arguments: &[Lattice], coercing: bool, divis
     }
 }
 
-/// Clojure's `bit-and`, `bit-or` and `bit-xor` of two longs are a long
-/// (#387); anything else takes the runtime operation, which throws for a
-/// double as Clojure does.
-pub(super) fn raw_bitwise(operation: Bitwise, count: usize) -> Option<Instruction<'static>> {
-    match operation {
-        Bitwise::And if count == 2 => Some(Instruction::I64And),
-        Bitwise::Or if count == 2 => Some(Instruction::I64Or),
-        Bitwise::Xor if count == 2 => Some(Instruction::I64Xor),
-        _ => None,
-    }
-}
-
 /// Core's ToInt32 operations consume a long's low 32 bits. The result is
 /// signed except for zero-fill right shift, exactly as their boxed helpers.
 fn raw_int32(operation: Bitwise, count: usize) -> Option<Instruction<'static>> {
@@ -170,7 +160,11 @@ fn raw_int32(operation: Bitwise, count: usize) -> Option<Instruction<'static>> {
         _ => return None,
     })
 }
-fn bitwise(operation: Bitwise, arguments: &[Lattice]) -> Lattice {
+fn bitwise(operation: Bitwise, arguments: &[Lattice], cast: Option<usize>) -> Lattice {
+    if let Some(index) = cast { return Lattice::Known(numeric_casts::result(index)); }
+    if long_bitwise::accepts(operation, arguments.len()) {
+        return Lattice::Known(if operation == Bitwise::Test { Repr::Flag } else { Repr::Long });
+    }
     if numeric_core::accepts(operation, arguments.len()) {
         return arithmetic(Arithmetic::Add, arguments, false, false);
     }
@@ -201,18 +195,7 @@ fn bitwise(operation: Bitwise, arguments: &[Lattice]) -> Lattice {
     if raw_int32(operation, arguments.len()).is_some() {
         return Lattice::Known(Repr::Long);
     }
-    let test = operation == Bitwise::Test && arguments.len() == 2;
-    if (test || raw_bitwise(operation, arguments.len()).is_some())
-        && arguments.iter().all(|argument| matches!(argument, Lattice::Top | Lattice::Known(Repr::Long)))
-    {
-        if arguments.iter().all(|argument| *argument == Lattice::Top) {
-            Lattice::Top
-        } else {
-            Lattice::Known(if test { Repr::Flag } else { Repr::Long })
-        }
-    } else {
-        Lattice::Known(Repr::Boxed)
-    }
+    Lattice::Known(Repr::Boxed)
 }
 
 fn comparison(operation: Comparison, arguments: &[Lattice]) -> Lattice {
@@ -242,10 +225,33 @@ fn comparison(operation: Comparison, arguments: &[Lattice]) -> Lattice {
     }
 }
 
+fn long_literals(function: &Function) -> Vec<Option<i64>> {
+    let mut values = vec![None; function.values.len()];
+    for block in &function.blocks {
+        for instruction in &block.instructions {
+            if let Operation::Literal(Literal::Long(value)) = instruction.operation {
+                values[instruction.result.0] = Some(value);
+            }
+        }
+    }
+    values
+}
+fn bitwise_inline_inputs(operation: Bitwise, arguments: &[Repr], cast: Option<usize>) -> bool {
+    if cast.is_some() { return arguments[0].definite().numeric(); }
+    if raw_int32(operation, arguments.len()).is_some() || long_bitwise::accepts(operation, arguments.len()) {
+        return arguments.iter().all(|kind| kind.definite() == Repr::Long);
+    }
+    if matches!(operation, Bitwise::DoubleMax | Bitwise::DoubleMin) {
+        return arguments.iter().all(|kind| kind.definite() == Repr::Double);
+    }
+    true
+}
+
 /// Each value's representation. Resumable functions, whose locals are spilled
 /// as GC values across suspensions, keep every value boxed.
 pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, Repr)], result: Option<Repr>) -> Vec<Repr> {
     let count = function.values.len();
+    let literals = long_literals(function);
     if resumable {
         return vec![Repr::Boxed; count];
     }
@@ -344,7 +350,8 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
                         Operation::Comparison { operation, arguments } => {
                             comparison(*operation, &operands(arguments))
                         }
-                        Operation::Bitwise { operation, arguments } => bitwise(*operation, &operands(arguments)),
+                        Operation::Bitwise { operation, arguments } => bitwise(*operation, &operands(arguments),
+                            numeric_casts::index(*operation, arguments, &literals)),
                         _ => unreachable!("seeded numeric instruction"),
                     };
                     if next != state[instruction.result.0] {
@@ -401,11 +408,11 @@ pub(super) fn infer(function: &Function, resumable: bool, entries: &[(ValueId, R
             {
                 raw_use[arguments[0].0] = true;
             }
-            let boxed_int32 = matches!(&instruction.operation,
+            let boxed_bitwise = matches!(&instruction.operation,
                 Operation::Bitwise { operation, arguments }
-                if raw_int32(*operation, arguments.len()).is_some()
-                    && arguments.iter().any(|argument| repr[argument.0].definite() != Repr::Long));
-            if repr[instruction.result.0] != Repr::Boxed && !boxed_int32
+                if !bitwise_inline_inputs(*operation, &arguments.iter().map(|value| repr[value.0]).collect::<Vec<_>>(),
+                    numeric_casts::index(*operation, arguments, &literals)));
+            if repr[instruction.result.0] != Repr::Boxed && !boxed_bitwise
                 && matches!(
                     instruction.operation,
                     Operation::Arithmetic { .. } | Operation::Comparison { .. } | Operation::Bitwise { .. }
@@ -509,14 +516,7 @@ pub(super) struct Locals {
 }
 impl Locals {
     pub(super) fn new(repr: Vec<Repr>, function: &Function, base: u32, offset: u32, sentinels: u32) -> Self {
-        let mut long_literals = vec![None; repr.len()];
-        for block in &function.blocks {
-            for instruction in &block.instructions {
-                if let Operation::Literal(Literal::Long(value)) = &instruction.operation {
-                    long_literals[instruction.result.0] = Some(*value);
-                }
-            }
-        }
+        let long_literals = long_literals(function);
         let mut raw = vec![None; repr.len()];
         let mut declarations = Vec::new();
         let mut next = base;
@@ -622,15 +622,29 @@ impl Locals {
         value.0 as u32 + self.offset
     }
     /// Read an already-boxed result whose operation guarantees a long.
-    pub(super) fn unbox_long(&self, code: &mut Vec<Instruction<'static>>, value: ValueId) {
+    pub(super) fn unbox_result(&self, code: &mut Vec<Instruction<'static>>, value: ValueId) {
         use Instruction::*;
         let boxed = self.boxed(value);
+        match self.of(value) {
+            Repr::Long => {
         code.extend([LocalGet(boxed), RefTestNonNull(HeapType::I31),
             If(BlockType::Result(ValType::I64)), LocalGet(boxed),
             RefCastNonNull(HeapType::I31), I31GetS, I64ExtendI32S,
             Else, LocalGet(boxed), RefCastNonNull(HeapType::Concrete(runtime_abi::LONG)),
             StructGet { struct_type_index: runtime_abi::LONG, field_index: 0 },
             End, LocalSet(self.raw(value))]);
+            }
+            Repr::Double => code.extend([LocalGet(boxed), RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
+                StructGet { struct_type_index: runtime_abi::NUMBER, field_index: 0 }, LocalSet(self.raw(value))]),
+            Repr::Flag => {
+                code.push(LocalGet(boxed));
+                code.push(runtime_abi::sentinel_in(runtime_abi::TRUE, self.sentinels));
+                code.extend([RefEq, LocalSet(self.raw(value))]);
+            }
+            _ => unreachable!("guaranteed helper result"),
+        }
+        if let Some(flag) = self.cached[value.0] { code.extend([I32Const(1), LocalSet(flag)]); }
+
     }
     /// A block parameter or instruction result is a new dynamic value each
     /// time its defining block executes. Invariants defined in another block
@@ -1039,11 +1053,13 @@ impl Locals {
 
     /// A raw long bitwise operation, which can't fail. bit-test produces a
     /// flag; Wasm masks the shift count to six bits, as Java's long shift does.
-    pub(super) fn bitwise(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId, slow: u32) {
+    pub(super) fn bitwise(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId, slow: u32, raw_slow: Option<u32>) {
         use Instruction::*;
         if raw_int32(operation, arguments.len()).is_some()
             || matches!(operation, Bitwise::DoubleMax | Bitwise::DoubleMin)
             || numeric_core::accepts(operation, arguments.len())
+            || long_bitwise::accepts(operation, arguments.len())
+            || numeric_casts::index(operation, arguments, &self.long_literals).is_some()
         {
             let inputs = arguments.iter().filter(|value| self.of(**value).maybe()).collect::<Vec<_>>();
             if !inputs.is_empty() {
@@ -1055,11 +1071,19 @@ impl Locals {
                 self.bitwise_raw(code, operation, arguments, result, slow);
                 if self.of(result).maybe() { code.extend([I32Const(1), LocalSet(self.valid(result))]); }
                 code.push(Else);
+                if let Some(raw_slow) = raw_slow {
+                    let inputs = if numeric_casts::index(operation, arguments, &self.long_literals).is_some() {
+                        &arguments[..1]
+                    } else { arguments };
+                    for argument in inputs { self.push_boxed(code, *argument); }
+                    code.extend([Call(raw_slow), LocalSet(self.raw(result)), End]);
+                    return;
+                }
                 for argument in arguments { self.push_boxed(code, *argument); }
                 code.extend([Call(slow), LocalSet(self.boxed(result))]);
                 if self.of(result).maybe() {
                     code.extend([I32Const(0), LocalSet(self.valid(result))]);
-                } else { self.unbox_long(code, result); }
+                } else { self.unbox_result(code, result); }
                 code.push(End);
                 return;
             }
@@ -1068,6 +1092,14 @@ impl Locals {
     }
     fn bitwise_raw(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId, slow: u32) {
         use Instruction::*;
+        if let Some(index) = numeric_casts::index(operation, arguments, &self.long_literals) {
+            self.numeric_cast_raw(code, index, arguments, result, slow);
+            return;
+        }
+        if long_bitwise::accepts(operation, arguments.len()) {
+            self.long_bitwise_raw(code, operation, arguments, result);
+            return;
+        }
         if numeric_core::accepts(operation, arguments.len()) {
             self.numeric_core_raw(code, operation, arguments, result, slow);
             return;
@@ -1113,17 +1145,7 @@ impl Locals {
             code.push(Instruction::LocalSet(self.raw(result)));
             return;
         }
-        code.extend([
-            Instruction::LocalGet(self.raw(arguments[0])),
-            Instruction::LocalGet(self.raw(arguments[1])),
-        ]);
-        if operation == Bitwise::Test {
-            code.extend([Instruction::I64ShrU, Instruction::I64Const(1),
-                Instruction::I64And, Instruction::I32WrapI64]);
-        } else {
-            code.push(raw_bitwise(operation, arguments.len()).expect("raw bitwise"));
-        }
-        code.push(Instruction::LocalSet(self.raw(result)));
+        unreachable!("raw bitwise operation");
     }
 
     pub(super) fn literal(&self, code: &mut Vec<Instruction<'static>>, literal: &Literal, result: ValueId) {
@@ -1169,15 +1191,10 @@ pub(super) fn raw_small(locals: &Locals, instruction: &ir::Instruction) -> bool 
 
 /// Whether an instruction is emitted inline on raw values.
 pub(super) fn inline(locals: &Locals, instruction: &ir::Instruction) -> bool {
-    if let Operation::Bitwise { operation: Bitwise::DoubleMax | Bitwise::DoubleMin, arguments } = &instruction.operation
-        && arguments.iter().any(|argument| locals.of(*argument).definite() != Repr::Double)
-    { return false; }
     if let Operation::Bitwise { operation, arguments } = &instruction.operation
-        && raw_int32(*operation, arguments.len()).is_some()
-        && arguments.iter().any(|argument| locals.of(*argument).definite() != Repr::Long)
-    {
-        return false;
-    }
+        && !bitwise_inline_inputs(*operation, &arguments.iter().map(|value| locals.of(*value)).collect::<Vec<_>>(),
+            numeric_casts::index(*operation, arguments, &locals.long_literals))
+    { return false; }
     locals.of(instruction.result) != Repr::Boxed
         && matches!(
             instruction.operation,
@@ -1186,4 +1203,14 @@ pub(super) fn inline(locals: &Locals, instruction: &ir::Instruction) -> bool {
                 | Operation::Comparison { .. }
                 | Operation::Bitwise { .. }
         )
+}
+
+/// Checked numeric helpers can supply a raw result even with unknown inputs.
+pub(super) fn raw_helper(locals: &Locals, instruction: &ir::Instruction) -> Option<(&'static str, Vec<ValueId>)> {
+    if locals.of(instruction.result) == Repr::Boxed { return None; }
+    let Operation::Bitwise { operation, arguments } = &instruction.operation else { return None };
+    if let Some(index) = numeric_casts::index(*operation, arguments, &locals.long_literals) {
+        return Some((runtime_abi::CAST_RAW_EXPORTS[index], vec![arguments[0]]));
+    }
+    operation.raw_export().map(|export| (export, arguments.clone()))
 }

@@ -1,3 +1,47 @@
+## Bitwise and narrow-cast source/storage probes (2026-11-21)
+
+The working probe in results/m12-bits-casts retains30 fresh JVM1.12.6 value
+assertions, source patches and raw failures. Direct bit-clear/flip/set/test use
+ordinary calls and observe var replacements. Genuine inline bit forms keep raw
+64-bit operations and Java's masked shift counts. Checked float(long) rounds
+straight to binary32; boxed float(Object) retains its double intermediate. The
+private float-long cast mode preserves checked Double replacements on a signature
+miss. Source kinds remain separate from physical numeric storage.
+
+Checked/unchecked casts and strict/private-int32 helpers now offer raw-return
+entries for boxed operands; a helper need not allocate a temporary numeric result.
+An artifact check discovers numeric box types from the actual constructors and
+checks33 helper exports for scalar results and absence of numeric box construction.
+The first iteration's CLI2/code-generation10 tests pass, including three exact
+new loop executions. The expanded matrix adds four separately labeled Suss
+ADR-0004 replacement controls; all34 values pass in Runtime/Macro and actual AOT.
+The same four controls also match frozen-before/current component execution.
+
+Run python3 target/probe/m12-bits-casts-run-gates.py in m12-hints-source. It uses
+cargo +stable test --workspace --locked with14 --test targets and
+-- --test-threads=2, then Java-free bootstrap reproduction, actual Binaryen133 and
+the reviewed-suite comparison. Logs/exit receipts are written under
+results/m12-bits-casts. Final focused checks pass74 across14 targets, zero
+failed/ignored. Java-free bootstrap reproduction passes both phases byte-exact
+plus4 execution tests; actual Binaryen133 passes2. The reviewed-suite comparison
+passes1 (222.27s),10 unrelated harness tests filtered, with known failures retained. Use stable Rust, two jobs/threads, MemoryMax4G, m12-hints-target and
+outer target/suss. The initial bit-loop fixture incorrectly required ordinary bit
+functions to inline; its exact original failure remains, while the final no-call
+fixture tests genuine inline forms and separate value cases test ordinary calls.
+The raw-helper argument wiring and a test's reference to a private type constant
+also have retained compile failures, followed by their corrections.
+
+An additional fresh JVM/AOT probe is separate from the passing30-case matrix:
+2 controls match and6 overload cases fail in both frozen-before/current Suss.
+Object byte/short/int casts truncate before narrowing; primitive float identity
+and float-to-int upper-bound handling differ from primitive Double. Exact source,
+expected values, all16 exported checks and component/compiler hashes are retained
+in additional-observations.json. These failures are not successes or regressions
+introduced by the current change. They remain outside this bounded evidence.
+
+These probes do not establish complete numeric-tower/escape coverage, a new quiet
+ratio or a current full-workspace baseline. No Java implementation is shipped.
+
 ## Raw numeric core result probes (2026-11-21)
 
 results/m12-raw-core retains22 fresh JVM Clojure1.12.6 value assertions,26 native

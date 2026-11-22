@@ -15,7 +15,9 @@ pub(super) fn numeric_call(hir: &Hir) -> bool {
     let SourceNode::Invoke { arguments, .. } = node.as_ref() else { return false };
     global.namespace() == "suss.core" && matches!((global.name(), arguments.len()),
         ("quot" | "rem" | "unchecked-add" | "unchecked-subtract" | "unchecked-multiply", 2)
-        | ("abs" | "unchecked-negate" | "unchecked-inc" | "unchecked-dec", 1))
+        | ("abs" | "unchecked-negate" | "unchecked-inc" | "unchecked-dec"
+            | "byte" | "short" | "int" | "float" | "unchecked-byte" | "unchecked-short"
+            | "unchecked-int" | "unchecked-float", 1))
 }
 
 /// These Clojure core functions have :inline primitive implementations. An
@@ -93,7 +95,8 @@ pub(super) fn inline(
     }
     if arguments.len() != 1 { return Ok(()); }
     let index = match global.name() {
-        "byte" => 3, "short" => 2, "int" => 1, "float" => 8,
+        "byte" => 3, "short" => 2, "int" => 1,
+        "float" => if primitive_returns::class(&arguments[0], facts, meter)? == Primitive::Long { 11 } else { 8 },
         "unchecked-byte" => 7, "unchecked-short" => 6, "unchecked-int" => 5, "unchecked-float" => 9,
         _ => return Ok(()),
     };

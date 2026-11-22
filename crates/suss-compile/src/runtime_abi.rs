@@ -1,6 +1,8 @@
 //! Shared GC ABI v7. Longs and doubles have distinct boxed representations;
 //! typed primitive entries keep numeric arguments/results raw. Strings use UTF-16.
 //! Construction indices below are implementation details, not artifact ABI IDs.
+pub(crate) use bitwise::CAST_RAW_EXPORTS;
+
 use std::borrow::Cow;
 use wasm_encoder::*;
 mod arithmetic;
