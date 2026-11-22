@@ -1,0 +1,16 @@
+{
+  "head": "a5c59e8317d7a606d5551b76ba71aa79df191370",
+  "command": "cargo test -p suss-compile --locked --test clojure_test_suite clojure_test_suite_matches_reviewed_baseline -- --exact --nocapture --test-threads=2",
+  "environment": {
+    "CARGO_TARGET_DIR": "../m12-integer-target",
+    "CARGO_BUILD_JOBS": "2",
+    "RUSTUP_TOOLCHAIN": "stable",
+    "scope": "MemoryMax=4G"
+  },
+  "capture_relative_to_test_working_directory": "crates/suss-compile/results/m12-bigint-final-suite/suite-observations.json",
+  "capture_sha256": "463f5d04152dc7c8d1a8e9ed7e3a3a8141c68a190f1f6ae9b5f06c72714f2a89",
+  "complete": true,
+  "exit_code": 0,
+  "tests_passed": 1,
+  "test_seconds": 396.41
+}
