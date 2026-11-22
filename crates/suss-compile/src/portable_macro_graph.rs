@@ -799,6 +799,10 @@ impl<'a> AnalysisGraph<'a> {
                 self.charge(numerator.len() + denominator.len())?;
                 Kind::Exact(suss_reader::forms::ExactNumber::ratio(*negative, numerator.clone(), denominator.clone()))
             }
+            Literal::Decimal { negative, unscaled, scale } => {
+                self.charge(unscaled.len())?;
+                Kind::Exact(suss_reader::forms::ExactNumber::decimal(*negative, unscaled.clone(), *scale))
+            }
             Literal::String(value) => {
                 self.charge(value.len())?;
                 Kind::String(value.clone())

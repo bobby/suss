@@ -5856,6 +5856,9 @@
         (suss.bootstrap/bigint? obj)
         (-write writer (suss.bootstrap/concat-string (str_ obj) "N"))
 
+        (suss.bootstrap/decimal? obj)
+        (-write writer (suss.bootstrap/concat-string (str_ obj) "M"))
+
         (number? obj)
         (-write writer
           (cond
@@ -12113,7 +12116,8 @@ reduces them without incurring seq initialization"
 
 ;; Original exact rational API; the runtime owns normalization and magnitudes.
 (def ratio? (fn [x] (suss.bootstrap/ratio? x)))
-(def rational? (fn [x] (or (integer? x) (suss.bootstrap/ratio? x))))
+(def decimal? (fn [x] (suss.bootstrap/decimal? x)))
+(def rational? (fn [x] (or (integer? x) (suss.bootstrap/ratio? x) (suss.bootstrap/decimal? x))))
 (def numerator (fn [x] (suss.bootstrap/ratio-numerator x)))
 (def denominator (fn [x] (suss.bootstrap/ratio-denominator x)))
 ;; Clojure rationalizes a double's shortest decimal spelling, not its exact

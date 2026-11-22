@@ -251,6 +251,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert("number-box");
                     }
                     Operation::Literal(Literal::Ratio { .. }) => { names.insert("bigint-new"); names.insert("ratio-literal"); }
+                    Operation::Literal(Literal::Decimal { .. }) => { names.insert("bigint-new"); names.insert("decimal-literal"); }
                     Operation::Literal(Literal::String(_)) => {}
                     Operation::Literal(Literal::BigInt { big_integer, .. }) => { names.insert("bigint-new"); if *big_integer { names.insert("integer-biginteger"); } }
                     Operation::GlobalCell(global) => {
@@ -321,7 +322,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert(operation.export());
                     }
                     Operation::Nominal { operation, arguments } => match operation {
-                        Nominal::IsNumber | Nominal::IsRatio | Nominal::IsBigInt | Nominal::IsBigInteger | Nominal::IsString | Nominal::Array => {}
+                        Nominal::IsNumber | Nominal::IsRatio | Nominal::IsDecimal | Nominal::IsBigInt | Nominal::IsBigInteger | Nominal::IsString | Nominal::Array => {}
                         Nominal::IsKeyword => { names.insert("keyword-test"); }
                         Nominal::DirectLinkDefine(_) | Nominal::DirectLinkRead(_) | Nominal::DirectLinkSet(_)
                         | Nominal::KeywordCacheGet(_) | Nominal::KeywordCacheSet(_) | Nominal::KeywordCacheEmpty(_) => {}
@@ -889,6 +890,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "map-entry-type-register" => (vec![VALUE], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
             "ratio-new" | "ratio-literal" => (vec![VALUE, VALUE], vec![VALUE]),
+            "decimal-literal" => (vec![VALUE, ValType::I32], vec![VALUE]),
             "bigint-new" => (vec![ValType::I32, ValType::Ref(RefType {
                 nullable: true, heap_type: HeapType::Concrete(runtime_abi::PACKED_STORAGE + 2),
             }), ValType::I32], vec![VALUE]),
@@ -2605,6 +2607,15 @@ fn emit_function(
                     }
                     function.instruction(&Call(index("ratio-literal"))).instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
+                Operation::Literal(Literal::Decimal { negative, unscaled, scale }) => {
+                    function.instruction(&I32Const(if unscaled.is_empty() { 0 } else if *negative { -1 } else { 1 }));
+                    for limb in unscaled { function.instruction(&I32Const(*limb as i32)); }
+                    function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::PACKED_STORAGE + 2,
+                        array_size: u32::try_from(unscaled.len()).map_err(|_| Diagnostic { span: ir.span.clone(), message: "Decimal literal exceeds Wasm array length".into() })? });
+                    function.instruction(&I32Const(unscaled.len() as i32)).instruction(&Call(index("bigint-new")));
+                    function.instruction(&I32Const(*scale)).instruction(&Call(index("decimal-literal")));
+                    function.instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
                 Operation::Literal(Literal::String(units)) => {
                     emit_utf16_literal(&mut function, data, literals, units, inst.result.0 as u32 + offset, &ir.span)?;
                 }
@@ -3260,6 +3271,10 @@ fn emit_function(
                         Nominal::IsRatio => {
                             function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                 .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::RATIO)));
+                        }
+                        Nominal::IsDecimal => {
+                            function.instruction(&LocalGet(arguments[0].0 as u32 + offset));
+                            function.instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::DECIMAL)));
                         }
                         Nominal::IsBigInt => {
                             function.instruction(&LocalGet(arguments[0].0 as u32 + offset))

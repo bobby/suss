@@ -373,3 +373,65 @@ pub unsafe extern "C" fn suss_bigint_multiply(a: *const u32, la: usize, b: *cons
 fn trim(out: &[u32]) -> usize {
     out.iter().rposition(|&limb| limb != 0).map_or(0, |last| last + 1)
 }
+
+/// Original scale-preserving decimal formatting, matching BigDecimal.toString.
+/// The caller supplies normalized signed integer digits and nonoverlapping
+/// output storage of at least `length + 16` bytes. A null output measures only.
+/// No scale-sized allocation or zero run is needed for scientific notation.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn suss_format_decimal(
+    input: *const u8,
+    length: usize,
+    scale: i32,
+    output: *mut u8,
+) -> usize {
+    let text = unsafe { core::slice::from_raw_parts(input, length) };
+    let negative = text.first() == Some(&b'-');
+    let digits = &text[usize::from(negative)..];
+    assert!(!digits.is_empty());
+    let adjusted = digits.len() as i64 - i64::from(scale) - 1;
+    let mut written = 0usize;
+    let mut push = |byte| {
+        if !output.is_null() {
+            unsafe { output.add(written).write(byte) };
+        }
+        written += 1;
+    };
+    if negative { push(b'-'); }
+    if scale >= 0 && adjusted >= -6 {
+        if scale == 0 {
+            for &byte in digits { push(byte); }
+        } else {
+            let whole = digits.len() as i64 - i64::from(scale);
+            if whole <= 0 {
+                push(b'0'); push(b'.');
+                for _ in 0..-whole { push(b'0'); }
+                for &byte in digits { push(byte); }
+            } else {
+                for (index, &byte) in digits.iter().enumerate() {
+                    if index as i64 == whole { push(b'.'); }
+                    push(byte);
+                }
+            }
+        }
+    } else {
+        push(digits[0]);
+        if digits.len() > 1 {
+            push(b'.');
+            for &byte in &digits[1..] { push(byte); }
+        }
+        push(b'E');
+        push(if adjusted < 0 { b'-' } else { b'+' });
+        let mut magnitude = adjusted.unsigned_abs();
+        let mut exponent = [0u8; 20];
+        let mut width = 0;
+        loop {
+            exponent[width] = b'0' + (magnitude % 10) as u8;
+            width += 1;
+            magnitude /= 10;
+            if magnitude == 0 { break; }
+        }
+        for index in (0..width).rev() { push(exponent[index]); }
+    }
+    written
+}

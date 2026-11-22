@@ -1,0 +1,5 @@
+Running as unit: run-p1297277-i89360367.scope; invocation ID: 8eb40ae849db47cd8f5fd8dba016c803
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-values-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-values-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 1m 24s
+  Executable tests/decimal_values.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-values-target/debug/deps/decimal_values-b2f1d4a8fd56099e)

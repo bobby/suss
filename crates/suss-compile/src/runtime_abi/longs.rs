@@ -40,6 +40,7 @@ pub(super) fn number_test(local: u32) -> Vec<Instruction<'static>> {
         I32Or,
         LocalGet(local), RefTestNonNull(HeapType::Concrete(BIGINT)), I32Or,
         LocalGet(local), RefTestNonNull(HeapType::Concrete(RATIO)), I32Or,
+        LocalGet(local), RefTestNonNull(HeapType::Concrete(DECIMAL)), I32Or,
     ].to_vec()
 }
 
@@ -126,8 +127,10 @@ pub(super) fn intrinsics(b: &mut Builder) {
             LocalGet(0), Call(b.names["bigint-double"]), Else,
             LocalGet(0), Call(b.names["ratio-test"]), If(BlockType::Result(ValType::F64)),
             LocalGet(0), Call(b.names["ratio-double"]), Else,
+            LocalGet(0), Call(b.names["decimal-test"]), If(BlockType::Result(ValType::F64)),
+            LocalGet(0), Call(b.names["decimal-double"]), Else,
             LocalGet(0), Call(long_unbox), F64ConvertI64S,
-            End, End, End,
+            End, End, End, End,
         ],
     );
     // A runtime count, index or code unit computed as an integral double.

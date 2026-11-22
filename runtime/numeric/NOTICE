@@ -1,7 +1,9 @@
 Suss numeric helper
 
 The parser, BigInt schoolbook magnitude kernel and GC integration are original
-Suss code, licensed MIT OR Apache-2.0. The kernel derives from the original
+Suss code, licensed MIT OR Apache-2.0. The scale-preserving decimal formatter
+is also original Suss code; no Java BigDecimal implementation body is copied.
+The kernel derives from the original
 experiments/numeric-representation/bigint-helper placement probe; no upstream
 arbitrary-precision implementation body is copied.
 The helper links ryu-js 1.0.3, a Rust implementation of Ulf Adams' Ryū algorithm

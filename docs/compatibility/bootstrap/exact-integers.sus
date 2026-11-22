@@ -2135,7 +2135,8 @@
 
 ;; Original exact rational API; the runtime owns normalization and magnitudes.
 (def ratio? (fn [x] (suss.bootstrap/ratio? x)))
-(def rational? (fn [x] (or (integer? x) (suss.bootstrap/ratio? x))))
+(def decimal? (fn [x] (suss.bootstrap/decimal? x)))
+(def rational? (fn [x] (or (integer? x) (suss.bootstrap/ratio? x) (suss.bootstrap/decimal? x))))
 (def numerator (fn [x] (suss.bootstrap/ratio-numerator x)))
 (def denominator (fn [x] (suss.bootstrap/ratio-denominator x)))
 ;; Clojure rationalizes a double's shortest decimal spelling, not its exact

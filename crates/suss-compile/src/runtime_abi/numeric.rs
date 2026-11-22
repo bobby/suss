@@ -33,6 +33,7 @@ pub(super) struct Helper {
     pub parse: u32,
     pub format: u32,
     pub multiply: u32,
+    pub decimal_format: u32,
     pub stack_global: u32,
     pub stack_top: i32,
     pub scratch_base: i32,
@@ -42,9 +43,10 @@ pub(super) struct Helper {
 
 #[derive(Clone, Copy)]
 pub(super) struct Info {
-    parse: u32,
+    pub parse: u32,
     format: u32,
     pub multiply: u32,
+    pub decimal_format: u32,
     pub stack_global: u32,
     pub stack_top: i32,
     scratch_base: i32,
@@ -55,6 +57,7 @@ impl Helper {
             parse: self.parse,
             format: self.format,
             multiply: self.multiply,
+            decimal_format: self.decimal_format,
             stack_global: self.stack_global,
             stack_top: self.stack_top,
             scratch_base: self.scratch_base,
@@ -75,6 +78,7 @@ fn helper_from(bytes: &[u8]) -> Helper {
         parse: u32::MAX,
         format: u32::MAX,
         multiply: u32::MAX,
+        decimal_format: u32::MAX,
         stack_global: u32::MAX,
         stack_top: 0,
         scratch_base: 0,
@@ -147,14 +151,16 @@ fn helper_from(bytes: &[u8]) -> Helper {
                 for export in reader {
                     let export = export.unwrap();
                     match export.name {
-                        "suss_parse_number" | "suss_format_number" | "suss_bigint_multiply" => {
+                        "suss_parse_number" | "suss_format_number" | "suss_bigint_multiply" | "suss_format_decimal" => {
                             assert_eq!(export.kind, wasmparser::ExternalKind::Func);
                             if export.name == "suss_parse_number" {
                                 result.parse = export.index;
                             } else if export.name == "suss_format_number" {
                                 result.format = export.index;
-                            } else {
+                            } else if export.name == "suss_bigint_multiply" {
                                 result.multiply = export.index;
+                            } else {
+                                result.decimal_format = export.index;
                             }
                         }
                         "memory" => {
@@ -205,6 +211,7 @@ fn helper_from(bytes: &[u8]) -> Helper {
     assert_ne!(result.parse, u32::MAX);
     assert_ne!(result.format, u32::MAX);
     assert_ne!(result.multiply, u32::MAX);
+    assert_ne!(result.decimal_format, u32::MAX);
     assert_ne!(result.stack_global, u32::MAX);
     assert!(result.stack_top > 0 && result.stack_top < result.scratch_base);
     for (function, params, results) in [
@@ -219,6 +226,7 @@ fn helper_from(bytes: &[u8]) -> Helper {
             vec![wasmparser::ValType::I32],
         ),
         (result.multiply, vec![wasmparser::ValType::I32; 5], vec![wasmparser::ValType::I32]),
+        (result.decimal_format, vec![wasmparser::ValType::I32; 4], vec![wasmparser::ValType::I32]),
     ] {
         let ty = &types[functions[function as usize] as usize];
         assert_eq!(ty.params(), params);
@@ -539,6 +547,8 @@ pub(super) fn intrinsics(
         LocalGet(0), ReturnCall(b.names["bigint-string"]), End]);
     to_string.extend([LocalGet(0), Call(b.names["ratio-test"]), If(BlockType::Empty),
         LocalGet(0), ReturnCall(b.names["ratio-string"]), End]);
+    to_string.extend([LocalGet(0), Call(b.names["decimal-test"]), If(BlockType::Empty),
+        LocalGet(0), ReturnCall(b.names["decimal-string"]), End]);
     for (sentinel, value) in [
         (NIL, "null"),
         (FALSE, "false"),

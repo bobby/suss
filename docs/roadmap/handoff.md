@@ -1,3 +1,32 @@
+## Immutable Decimal artifact probes (2026-11-22)
+
+The independent Decimal value prototype appends immutable unscaled-BigInt and
+i32-scale fields as ABI11. Compiler literals/data and macro transport carry
+those exact fields; the original no_std formatter returns scale-preserving
+text through checked scratch copies into owned GC UTF-16. Numeric unboxing
+parses exact Decimal text once to binary64. No shipped Java dependency is added.
+
+python3 results/m12-decimal-values/oracle.py obtains159 fresh JVM1.12.6/Java
+BigDecimal format/Double pairs, through1024 unscaled digits and both scale
+endpoints. The original source/stdout/command/JAR hashes remain. python3
+results/m12-decimal-values/run.py terminates0 in110.14s, with4 tests passing,
+zero failed/ignored and frozen source/fixture hashes verified unchanged. Actual
+compiled literals retain full unscaled fields and scale after GC, and all159
+text/Double pairs match. Raw helper sizing/input/output-boundary checks and
+both adversarial decoder tests also pass. Use isolated m12-decimal-values-target,
+stable Rust, two jobs/threads and MemoryMax4G. The pinned1.98.0 helper rebuild
+check and core-import manifests terminate0. The original compiler/test/signature
+failures remain; the same target/fixture onf9 fails two tests, passes two. Its
+old raw literal path fails linking js/Error, not an observed language diagnostic.
+
+These are data/conversion observations only. Decimal arithmetic, equality/hash/
+order/casts, readers/bigdec, scale-sensitive case handling and dynamic precision
+remain required. Current unextended numeric fallback can still narrow Decimal
+to Double and the old case boundary is unsuitable once literals have values.
+Do not publish this prototype as usable Decimal arithmetic. Public both-phase/
+AOT, full suite and complete workspace acceptance remain unverified. The separate
+forty-case decimal oracle records expected behavior, not passing Suss evidence.
+
 ## Quoted-string fuel and exact operand observations (2026-11-22)
 
 results/m12-printing-fuel retains the unchanged f9 long-string regression's

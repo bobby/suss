@@ -1,4 +1,4 @@
-//! Shared GC ABI v10. Longs, doubles and BigInts have distinct representations;
+//! Shared GC ABI v11. Longs, doubles and BigInts have distinct representations;
 //! typed primitive entries keep numeric arguments/results raw. Strings use UTF-16.
 //! Construction indices below are implementation details, not artifact ABI IDs.
 pub(crate) use bitwise::CAST_RAW_EXPORTS;
@@ -26,6 +26,7 @@ mod identity_hash;
 mod longs;
 mod bigints;
 mod ratios;
+mod decimals;
 mod maps;
 mod chunks;
 mod transient_vectors;
@@ -53,7 +54,7 @@ mod string_char_at;
 mod type_values;
 pub(crate) mod numeric_classes;
 
-pub const VERSION: u32 = 10;
+pub const VERSION: u32 = 11;
 // The language sentinels. Every i31 is a long (ADR-0003); nil is a null
 // eqref, and false, true and undefined are SENTINEL structs held in runtime
 // globals that fragments import. Code names a sentinel with these and builds
@@ -242,7 +243,8 @@ pub const NAMED_SITE: u32 = UNIVERSAL + 1;
 /// ABI 8: immutable sign, GC-owned u32 limbs, normalized used length.
 pub const BIGINT: u32 = NAMED_SITE + 1;
 pub const RATIO: u32 = BIGINT + 1;
-pub const TYPE_COUNT: u32 = RATIO + 1;
+pub const DECIMAL: u32 = RATIO + 1;
+pub const TYPE_COUNT: u32 = DECIMAL + 1;
 /// `NAMED_SITE` fields.
 pub(crate) const SITE_DESCRIPTOR: u32 = 0;
 pub(crate) const SITE_SLOT: u32 = 1;
@@ -860,6 +862,7 @@ pub fn prelude() -> TypeSection {
     ]));
     group.push(structure(vec![field(ValType::I32, false), field(reference(PACKED_STORAGE + 2), false), field(ValType::I32, false), field(ValType::I32, false)]));
     group.push(structure(vec![field(reference(BIGINT), false), field(reference(BIGINT), false)]));
+    group.push(structure(vec![field(reference(BIGINT), false), field(ValType::I32, false)]));
     debug_assert_eq!(group.len() as u32, TYPE_COUNT);
     types.ty().rec(group.into_iter().enumerate().map(|(index, inner)| {
         let index = index as u32;
@@ -1529,6 +1532,7 @@ fn build_module() -> Vec<u8> {
     );
     bigints::representation(&mut b);
     let ratio_double_type = ratios::declare(&mut b);
+    let decimal_double_type = decimals::declare(&mut b);
     longs::intrinsics(&mut b);
     numeric::reserve_scratch(&mut b, numeric_info);
     bigints::arithmetic(&mut b, numeric_info);
@@ -1536,6 +1540,7 @@ fn build_module() -> Vec<u8> {
     bigints::division(&mut b);
     bigints::string(&mut b);
     ratios::functions(&mut b);
+    let decimal_double = decimals::functions(&mut b, numeric_info);
     longs::arithmetic(&mut b);
     longs::string(&mut b);
     longs::append(&mut b);
@@ -2692,6 +2697,7 @@ fn build_module() -> Vec<u8> {
         &ConstExpr::extended([sentinel_value(NIL)]),
     );
     ratios::append_global(&mut globals, ratio_double_type, ratio_double);
+    decimals::append_global(&mut globals, decimal_double_type, decimal_double);
     b.exports.export("protocol-epoch", ExportKind::Global, PROTOCOL_EPOCH_GLOBAL);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

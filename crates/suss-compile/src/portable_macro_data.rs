@@ -906,13 +906,11 @@ impl FormBridge {
                             let suss_reader::forms::ExactValue::Ratio { numerator, denominator } = &value.value else { unreachable!() };
                             self.scalar(session, &Literal::Ratio { negative: num_traits::Signed::is_negative(numerator), numerator: numerator.to_u32_digits().1, denominator: denominator.to_u32_digits().1 })?
                         }
-                        Kind::Exact(value) => self.identifier(
-                            session,
-                            Some(suss_reader::forms::EXACT_NUMBER_NAMESPACE),
-                            &value.text,
-                            false,
-                            None,
-                        )?,
+                        Kind::Exact(value) => {
+                            let suss_reader::forms::ExactValue::Decimal { unscaled, scale } = &value.value else { unreachable!() };
+                            self.scalar(session, &Literal::Decimal { negative: num_traits::Signed::is_negative(unscaled),
+                                unscaled: unscaled.to_u32_digits().1, scale: *scale })?
+                        }
                         Kind::String(value) => {
                             self.scalar(session, &Literal::String(value.clone()))?
                         }
@@ -1362,6 +1360,12 @@ fn decode_datum_inner<T: DatumTarget>(
                 return Err(error("Invalid normalized Ratio"));
             }
             DecodedKind::Plain(Kind::Exact(suss_reader::forms::ExactNumber::ratio(num_traits::Signed::is_negative(&numerator), numerator.to_u32_digits().1, denominator.to_u32_digits().1)))
+        } else if let [Val::AnyRef(Some(_)), Val::I32(scale)] = values.as_slice() {
+            let integer = decode(store, &values[0], classes, span, depth+1, budget)?;
+            let Kind::Exact(number) = &integer.kind else { return Err(error("Invalid Decimal unscaled integer")); };
+            let suss_reader::forms::ExactValue::Integer { value, .. } = &number.value else { return Err(error("Invalid Decimal unscaled integer")); };
+            DecodedKind::Plain(Kind::Exact(suss_reader::forms::ExactNumber::decimal(
+                num_traits::Signed::is_negative(value), value.to_u32_digits().1, *scale)))
         } else if let [Val::I32(sign), Val::AnyRef(Some(limbs)), Val::I32(used), Val::I32(display)] = values.as_slice() {
             if !(-1..=1).contains(sign) || *used < 0 || !(0..=1).contains(display) { return Err(error("Invalid BigInt metadata")); }
             let array = limbs.as_array(&*store)?.ok_or_else(|| error("Invalid BigInt magnitude"))?;

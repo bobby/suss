@@ -1776,7 +1776,7 @@ mod adversarial_owner {
 
 /// Independent host conversion, using base 10^9 digits and u64 intermediates.
 /// Never calls a guest printer, comparison, hash, or arithmetic function.
-fn integer_decimal(sign: i32, words: &[u32]) -> String {
+pub fn integer_decimal(sign: i32, words: &[u32]) -> String {
     let mut decimal = vec![0_u32];
     for word in words.iter().rev() {
         let mut carry = u64::from(*word);

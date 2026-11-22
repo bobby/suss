@@ -1,0 +1,28 @@
+Running as unit: run-p1303287-i89353949.scope; invocation ID: d6a16146a029454ba31cd96f6ff2e18b
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-decimal-values-source/crates/suss-compile)
+error[E0433]: cannot find module or crate `num_bigint` in this scope
+  --> crates/suss-compile/tests/decimal_values.rs:73:21
+   |
+73 |         let integer=num_bigint::BigInt::new(if sign<0 {num_bigint::Sign::Minus} else {num_bigint::Sign::Plus},words);
+   |                     ^^^^^^^^^^ use of unresolved module or unlinked crate `num_bigint`
+   |
+   = help: if you wanted to use a crate named `num_bigint`, use `cargo add num_bigint` to add it to your `Cargo.toml`
+
+error[E0433]: cannot find module or crate `num_bigint` in this scope
+  --> crates/suss-compile/tests/decimal_values.rs:73:56
+   |
+73 |         let integer=num_bigint::BigInt::new(if sign<0 {num_bigint::Sign::Minus} else {num_bigint::Sign::Plus},words);
+   |                                                        ^^^^^^^^^^ use of unresolved module or unlinked crate `num_bigint`
+   |
+   = help: if you wanted to use a crate named `num_bigint`, use `cargo add num_bigint` to add it to your `Cargo.toml`
+
+error[E0433]: cannot find module or crate `num_bigint` in this scope
+  --> crates/suss-compile/tests/decimal_values.rs:73:87
+   |
+73 |         let integer=num_bigint::BigInt::new(if sign<0 {num_bigint::Sign::Minus} else {num_bigint::Sign::Plus},words);
+   |                                                                                       ^^^^^^^^^^ use of unresolved module or unlinked crate `num_bigint`
+   |
+   = help: if you wanted to use a crate named `num_bigint`, use `cargo add num_bigint` to add it to your `Cargo.toml`
+
+For more information about this error, try `rustc --explain E0433`.
+error: could not compile `suss-compile` (test "decimal_values") due to 3 previous errors

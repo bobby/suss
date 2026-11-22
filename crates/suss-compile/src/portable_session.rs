@@ -1730,6 +1730,9 @@ impl Session {
             let denominator = self.data_scalar(&Literal::BigInt { negative: false, limbs: denominator.clone(), big_integer: false })?;
             Some((numerator, denominator))
         } else { None };
+        let decimal = if let Literal::Decimal { negative, unscaled, .. } = literal {
+            Some(self.data_scalar(&Literal::BigInt { negative: *negative, limbs: unscaled.clone(), big_integer: true })?)
+        } else { None };
         self.budget()?;
         let interrupt = self.host_work_interrupt();
         let mut scope = RootScope::new(&mut self.store);
@@ -1781,6 +1784,12 @@ impl Session {
                     Val::AnyRef(Some(denominator.object()?.to_rooted(&mut scope)))];
                 let function = self.runtime.get_func(&mut scope, "ratio-literal").expect("Ratio literal constructor");
                 call(&mut scope, self.runtime, function, &arguments, self.identity, &self.handles)
+            }
+            Literal::Decimal { scale, .. } => {
+                let unscaled = decimal.expect("prebuilt Decimal child");
+                let argument = Val::AnyRef(Some(unscaled.object()?.to_rooted(&mut scope)));
+                let function = self.runtime.get_func(&mut scope, "decimal-literal").expect("Decimal literal constructor");
+                call(&mut scope, self.runtime, function, &[argument, Val::I32(*scale)], self.identity, &self.handles)
             }
             Literal::BigInt { negative, limbs, big_integer } => {
                 let length = i32::try_from(limbs.len()).map_err(|_| SessionError::Host(wasmtime::Error::msg("Compiler data BigInt exceeds runtime length")))?;

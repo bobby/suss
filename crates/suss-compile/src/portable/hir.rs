@@ -60,6 +60,7 @@ pub enum Literal {
     Long(i64),
     BigInt { negative: bool, limbs: Vec<u32>, big_integer: bool },
     Ratio { negative: bool, numerator: Vec<u32>, denominator: Vec<u32> },
+    Decimal { negative: bool, unscaled: Vec<u32>, scale: i32 },
     String(Vec<u16>),
 }
 impl Literal {
@@ -68,7 +69,7 @@ impl Literal {
             Self::Nil => Type::Nil,
             Self::Undefined => Type::Value,
             Self::Bool(_) => Type::Bool,
-            Self::Number(_) | Self::Long(_) | Self::BigInt { .. } | Self::Ratio { .. } => Type::Number,
+            Self::Number(_) | Self::Long(_) | Self::BigInt { .. } | Self::Ratio { .. } | Self::Decimal { .. } => Type::Number,
             Self::String(_) => Type::String,
         }
     }
@@ -544,6 +545,7 @@ pub enum Nominal {
     IsNumber,
     IsBigInt,
     IsRatio,
+    IsDecimal,
     IsBigInteger,
     /// Whether the operand is a long: an i31 or a boxed long (#388).
     IsLongValue,
@@ -763,6 +765,7 @@ impl Nominal {
             | Self::IsBigInt
             | Self::IsRatio
             | Self::IsBigInteger
+            | Self::IsDecimal
             | Self::IsKeyword
             | Self::IsString
             | Self::IsBoolean
@@ -821,7 +824,7 @@ impl Nominal {
                 Self::MapGetOr | Self::MapAssoc => count == 3,
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
-                Self::IsNumber | Self::IsRatio | Self::IsBigInt | Self::IsBigInteger | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::CheckNumericCallee | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
+                Self::IsNumber | Self::IsRatio | Self::IsDecimal | Self::IsBigInt | Self::IsBigInteger | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::CheckNumericCallee | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
@@ -1320,9 +1323,7 @@ impl Analyzer<'_> {
             kind: std::sync::Arc::new(Expression::Do(items)),
         })
     }
-    /// BigInt and Ratio literals retain their exact values. Decimal literals
-    /// still throw at evaluation until their runtime type arrives;
-    /// unselected forms can load without silently rounding their values.
+    /// Exact literals retain their integer fields and Decimal's signed scale.
     fn exact_literal(&mut self, form: &Form, number: &suss_reader::forms::ExactNumber) -> Result<Hir, Diagnostic> {
         if let suss_reader::forms::ExactValue::Integer { value, big } = &number.value {
             let (_, limbs) = value.to_u32_digits();
@@ -1338,19 +1339,11 @@ impl Analyzer<'_> {
                     denominator: denominator.to_u32_digits().1,
                 })) });
         }
-        let at = |kind| Form { span: form.span.clone(), metadata: vec![], kind };
-        let symbol = |namespace: Option<&str>, name: &str| {
-            at(Kind::Symbol(suss_reader::Symbol {
-                namespace: namespace.map(str::to_owned),
-                name: name.to_owned(),
-            }))
-        };
-        let error = at(Kind::List(vec![
-            symbol(None, "new"),
-            symbol(Some("js"), "Error"),
-            at(Kind::String(number.unsupported_message().encode_utf16().collect())),
-        ]));
-        self.form(&at(Kind::List(vec![symbol(None, "throw"), error])))
+        let suss_reader::forms::ExactValue::Decimal { unscaled, scale } = &number.value else { unreachable!() };
+        Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
+            ty: Type::Number, kind: std::sync::Arc::new(Expression::Literal(Literal::Decimal {
+                negative: num_traits::Signed::is_negative(unscaled), unscaled: unscaled.to_u32_digits().1, scale: *scale,
+            })) })
     }
     fn form(&mut self, form: &Form) -> Result<Hir, Diagnostic> {
         self.form_in(form, super::AnalysisContext::Expression, false)
@@ -3490,6 +3483,7 @@ impl Analyzer<'_> {
                 "apply-fixed" => Some(Nominal::ApplyFixed),
                 "number?" => Some(Nominal::IsNumber),
                 "ratio?" => Some(Nominal::IsRatio),
+                "decimal?" => Some(Nominal::IsDecimal),
                 "bigint?" => Some(Nominal::IsBigInt),
                 "biginteger?" => Some(Nominal::IsBigInteger),
                 "keyword?" => Some(Nominal::IsKeyword),
