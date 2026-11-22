@@ -1,0 +1,18 @@
+{
+  "constructor_replacements": {
+    "(MapEntry. 3000000000 1.5 nil)": "(clojure.lang.MapEntry/create 3000000000 1.5)",
+    "(MapEntry. 2147483648.0 0 nil)": "(clojure.lang.MapEntry/create 2147483648.0 0)",
+    "(MapEntry. 127.1 0 nil)": "(clojure.lang.MapEntry/create 127.1 0)",
+    "(MapEntry. -0.0 0 nil)": "(clojure.lang.MapEntry/create -0.0 0)",
+    "(MapEntry. ##NaN 0 nil)": "(clojure.lang.MapEntry/create ##NaN 0)",
+    "(MapEntry. 9223372036854775807 1 nil)": "(clojure.lang.MapEntry/create 9223372036854775807 1)",
+    "(MapEntry. (do (swap! events conj :a) 3000000000) (do (swap! events conj :b) 1.5) nil)": "(clojure.lang.MapEntry/create (do (swap! events conj :a) 3000000000) (do (swap! events conj :b) 1.5))",
+    "(MapEntry. 1 2 nil)": "(clojure.lang.MapEntry/create 1 2)",
+    "(MapEntry. nil false nil)": "(clojure.lang.MapEntry/create nil false)",
+    "(MapEntry. 3000000000 0 nil)": "(clojure.lang.MapEntry/create 3000000000 0)",
+    "(MapEntry. (fn [x] (+ x 1)) nil nil)": "(clojure.lang.MapEntry/create (fn [x] (+ x 1)) nil)",
+    "(MapEntry. x x nil)": "(clojure.lang.MapEntry/create x x)",
+    "(MapEntry. (do (swap! events conj :a) (throw (ex-info \"boom\" {}))) (swap! events conj :b) nil)": "(clojure.lang.MapEntry/create (do (swap! events conj :a) (throw (ex-info \"boom\" {}))) (swap! events conj :b))"
+  },
+  "catch_adapter": "Throwable replaces :default"
+}

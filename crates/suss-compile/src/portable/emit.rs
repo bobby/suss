@@ -330,6 +330,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::StringHash => { names.insert("string-hash"); }
                         Nominal::VectorNth => { names.insert("vector-nth"); }
                         Nominal::ScalarVectorGuard => { names.insert("scalar-vector-guard"); }
+                        Nominal::ScalarMapEntryGuard => { names.insert("scalar-map-entry-guard"); }
+                        Nominal::MapEntryType => { names.insert("map-entry-type-register"); }
                         Nominal::ObjectArrayCopy(backward) => {
                             names.insert(if *backward { "object-array-copy-backward" } else { "object-array-copy-forward" });
                         }
@@ -655,7 +657,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .chain(futures.iter().map(|body| &body.continuation.function))
     {
         for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
-            if let Operation::Nominal { operation: Nominal::Construct | Nominal::ScalarVectorGuard, .. } = &inst.operation {
+            if let Operation::Nominal { operation: Nominal::Construct | Nominal::ScalarVectorGuard | Nominal::ScalarMapEntryGuard, .. } = &inst.operation {
                 construct_site_list.push((function as *const IrFunction as usize, inst.result.0 as u32));
             }
         }
@@ -877,7 +879,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "array-get-indices"
             | "array-set-indices" => (vec![VALUE], vec![VALUE]),
             "predicate-number" | "predicate-string" | "arity-error" | "native-object-factory-function" | "native-object-default-prototype" | "current-this" => (vec![], vec![VALUE]),
-            "scalar-vector-guard" => (vec![VALUE, VALUE], vec![ValType::I32]),
+            "scalar-vector-guard" | "scalar-map-entry-guard" => (vec![VALUE, VALUE], vec![ValType::I32]),
+            "map-entry-type-register" => (vec![VALUE], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
             "closure-source-name-initialize" => (vec![VALUE, VALUE], vec![]),
             "closure-source-name" => (vec![VALUE], vec![VALUE]),
@@ -3068,7 +3071,11 @@ fn emit_function(
                     arguments,
                 } => {
                     match operation {
-                        Nominal::ScalarVectorGuard => {
+                        Nominal::MapEntryType => {
+                            function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&Call(index("map-entry-type-register")));
+                        }
+                        Nominal::ScalarVectorGuard | Nominal::ScalarMapEntryGuard => {
                             // Reuse the construction-site cache allocation; a
                             // scalar guard needs only its first slot. Store only
                             // successful admissions. The helper rechecks current
@@ -3076,7 +3083,7 @@ fn emit_function(
                             let site = construct_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
                             let ctor = arguments[0].0 as u32 + offset;
                             function.instruction(&LocalGet(ctor)).instruction(&GlobalGet(site))
-                                .instruction(&Call(index("scalar-vector-guard")))
+                                .instruction(&Call(index(if *operation == Nominal::ScalarVectorGuard { "scalar-vector-guard" } else { "scalar-map-entry-guard" })))
                                 .instruction(&If(BlockType::Result(ValType::I32)))
                                 .instruction(&LocalGet(ctor)).instruction(&GlobalSet(site))
                                 .instruction(&I32Const(1)).instruction(&Else)

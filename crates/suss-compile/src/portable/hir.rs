@@ -546,6 +546,9 @@ pub enum Nominal {
     VectorNth,
     /// Internal precondition for virtual literal-vector storage.
     ScalarVectorGuard,
+    /// Canonical MapEntry admission/registration (#351).
+    ScalarMapEntryGuard,
+    MapEntryType,
     /// `map-get(m, k)` (#442): a map's value for a key only its reference
     /// equals, nil when absent, or undefined.
     ArrayMapGet,
@@ -754,6 +757,7 @@ impl Nominal {
             | Self::NativeSatisfies
             | Self::IsLongValue
             | Self::ScalarVectorGuard
+            | Self::ScalarMapEntryGuard
             | Self::NativeMarker(_)
             | Self::KeywordCacheEmpty(_) => Type::Bool,
             _ => Type::Value,
@@ -774,7 +778,8 @@ impl Nominal {
                 Self::Identical | Self::SameReference | Self::ChunkIndexAdd => count == 2,
                 Self::AllSmallIntegers => count >= 1,
                 Self::NumberHash => count == 1,
-                Self::IsObject | Self::IsDescriptor | Self::ScalarVectorGuard => count == 1,
+                Self::IsObject | Self::IsDescriptor | Self::ScalarVectorGuard
+            | Self::ScalarMapEntryGuard | Self::MapEntryType => count == 1,
                 Self::IsLongValue | Self::StringHash | Self::LongCast | Self::DoubleCast | Self::UncheckedLongCast => count == 1,
                 Self::PackedGet(_) | Self::VectorNth | Self::ArrayMapGet | Self::MapContains => count == 2,
                 Self::ObjectArrayCopy(_) => count == 5,
@@ -3408,6 +3413,7 @@ impl Analyzer<'_> {
                 "map-get" => Some(Nominal::ArrayMapGet),
                 "map-contains" => Some(Nominal::MapContains),
                 "map-get-or" => Some(Nominal::MapGetOr),
+                "map-entry-type!" => Some(Nominal::MapEntryType),
                 "hash-map-types!" => Some(Nominal::HashMapTypes),
                 "chunk-types!" => Some(Nominal::ChunkTypes),
                 "chunk-long-sum" => Some(Nominal::ChunkLongSum),

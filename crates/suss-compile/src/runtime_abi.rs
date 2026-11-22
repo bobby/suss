@@ -955,6 +955,8 @@ pub(crate) const ARITHMETIC_CODE_GLOBAL: u32 = HASH_SET_DESCRIPTOR_GLOBAL + 1;
 /// entry held in a global calls without wasmtime's out-of-line function
 /// reference read from a struct.
 pub(crate) const OBJECT_CALL_CACHE_GLOBAL: u32 = ARITHMETIC_CODE_GLOBAL + 4;
+/// Canonical MapEntry, appended after existing private registries (#351).
+pub(crate) const MAP_ENTRY_DESCRIPTOR_GLOBAL: u32 = transient_maps::GLOBAL_LIMIT;
 const OBJECT_CALL_WAYS: u32 = 4;
 const OBJECT_CALL_STRIDE: u32 = 4 * OBJECT_CALL_WAYS + 1;
 fn object_call_way(k: u32, way: u32) -> u32 {
@@ -2655,6 +2657,11 @@ fn build_module() -> Vec<u8> {
     chunks::append_globals(&mut globals);
     transient_vectors::append_globals(&mut globals);
     transient_maps::append_globals(&mut globals);
+    assert_eq!(globals.len(), MAP_ENTRY_DESCRIPTOR_GLOBAL);
+    globals.global(
+        GlobalType { val_type: VALUE, mutable: true, shared: false },
+        &ConstExpr::extended([sentinel_value(NIL)]),
+    );
     b.exports.export("protocol-epoch", ExportKind::Global, PROTOCOL_EPOCH_GLOBAL);
     b.exports
         .export("dynamic-frame", ExportKind::Global, dynamic::CURRENT);

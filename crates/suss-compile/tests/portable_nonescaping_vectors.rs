@@ -8,7 +8,7 @@ use suss_compile::portable::{
 
 fn lower(source: &str) -> ir::Function {
     let mut env = Environment::default();
-    for name in ["PersistentVector", "nth"] {
+    for name in ["PersistentVector", "MapEntry", "nth"] {
         env.declare_cell(Phase::Runtime, "suss.core", name).unwrap();
     }
     env.set_direct_linking(true);
@@ -25,7 +25,7 @@ fn guards(graph: &ir::Function) -> usize {
         .flat_map(|b| &b.instructions)
         .map(|inst| match &inst.operation {
             Operation::Nominal {
-                operation: Nominal::ScalarVectorGuard,
+                operation: Nominal::ScalarVectorGuard | Nominal::ScalarMapEntryGuard,
                 ..
             } => 1,
             Operation::MakeClosure { body, .. } => guards(&body.function),
@@ -55,6 +55,24 @@ fn escaping_or_unknown_vector_projections_retain_materialization() {
         "(fn [i] (let [v [3000000000 1.5]] (nth v i nil)))",
         "(let [v [3000000000 1.5]] (nth v 2 nil))",
         "(let [v [3000000000 1.5] a (nth v 0 nil)] (if a v nil))",
+    ] {
+        assert_eq!(guards(&lower(source)), 0, "{source}");
+    }
+}
+
+#[test]
+fn map_entry_public_guards_and_constant_projections_get_scalar_storage() {
+    for source in [
+        "(let [e (MapEntry. 3000000000 1.5 nil) a (nth e 0 nil) b (nth e 1 nil)] (+ a b))",
+        "(fn [] (let [e (MapEntry. 3000000000 1.5 nil) a (nth e 0 nil)] a))",
+        "(loop [i 0 acc 0.0] (if (< i 4) (let [e (MapEntry. 3000000000 1.5 nil) a (nth e 0 nil) b (nth e 1 nil)] (recur (+ i 1) (+ acc (+ a b)))) acc))",
+    ] {
+        assert_eq!(guards(&lower(source)), 1, "{source}");
+    }
+    for source in [
+        "(let [e (MapEntry. 3000000000 1.5 nil)] e)",
+        "(fn [i] (let [e (MapEntry. 3000000000 1.5 nil)] (nth e i nil)))",
+        "(let [e (MapEntry. 3000000000 1.5 nil)] (nth e 2 nil))",
     ] {
         assert_eq!(guards(&lower(source)), 0, "{source}");
     }

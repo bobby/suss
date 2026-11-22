@@ -1,0 +1,15 @@
+Running as unit: run-p4110708-i87990339.scope; invocation ID: 6f3d0bb52d2741238f4eef26e14c5f33
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/crates/suss-core)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 3m 36s
+     Running tests/portable_nonescaping_vectors.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-mapentry-target/debug/deps/portable_nonescaping_vectors-e2027da2ea48d9d0)
+
+running 3 tests
+test known_vector_projections_get_a_guarded_scalar_continuation ... ok
+test escaping_or_unknown_vector_projections_retain_materialization ... ok
+test map_entry_public_guards_and_constant_projections_get_scalar_storage ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

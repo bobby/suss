@@ -1,12 +1,33 @@
-//! Virtual literal-vector storage after source typing (#351).
+//! Virtual vector/MapEntry storage after source typing (#351).
 //! A guarded continuation keeps scalar elements on the fast path; the original
 //! construction and lookup paths remain available when a precondition misses.
 use super::*;
 
+#[derive(Clone, Copy)]
+enum Kind {
+    Vector { array: ValueId },
+    MapEntry,
+}
+impl Kind {
+    fn array(self) -> Option<ValueId> {
+        match self {
+            Self::Vector { array } => Some(array),
+            Self::MapEntry => None,
+        }
+    }
+    fn guard(self) -> Nominal {
+        match self {
+            Self::Vector { .. } => Nominal::ScalarVectorGuard,
+            Self::MapEntry => Nominal::ScalarMapEntryGuard,
+        }
+    }
+}
+
 struct Plan {
     block: usize,
     instruction: usize,
-    array: ValueId,
+    kind: Kind,
+    checked: Option<ValueId>,
     elements: Vec<ValueId>,
     reads: HashMap<ValueId, ValueId>,
     conditions: HashSet<ValueId>,
@@ -111,49 +132,80 @@ fn analyze(
             else {
                 continue;
             };
-            if arguments.len() != 7
-                || !nil(arguments[1])
-                || !nil(arguments[6])
-                || !literal(arguments[3], 5)
-            {
+            let Some(ctor) = arguments.first() else {
                 continue;
-            }
-            let Some(Operation::GlobalRead(global)) = operation(arguments[0]) else {
+            };
+            let Some(Operation::GlobalRead(global)) = operation(*ctor) else {
                 continue;
             };
             let global = global.core_var_of_link().unwrap_or_else(|| global.clone());
-            if global.namespace() != "suss.core" || global.name() != "PersistentVector" {
+            if global.namespace() != "suss.core" {
                 continue;
             }
-            let array = arguments[5];
-            let Some(Operation::Array {
-                operation: ArrayOperation::Objects,
-                arguments: elements,
-            }) = operation(array)
-            else {
-                continue;
+            let (kind, elements) = match global.name() {
+                "PersistentVector" => {
+                    if arguments.len() != 7
+                        || !nil(arguments[1])
+                        || !nil(arguments[6])
+                        || !literal(arguments[3], 5)
+                    {
+                        continue;
+                    }
+                    let array = arguments[5];
+                    let Some(Operation::Array {
+                        operation: ArrayOperation::Objects,
+                        arguments: elements,
+                    }) = operation(array)
+                    else {
+                        continue;
+                    };
+                    if elements.is_empty()
+                        || elements.len() >= 32
+                        || !literal(arguments[2], elements.len() as i64)
+                    {
+                        continue;
+                    }
+                    (Kind::Vector { array }, elements.clone())
+                }
+                "MapEntry" if arguments.len() == 4 => (Kind::MapEntry, arguments[1..3].to_vec()),
+                _ => continue,
             };
-            if elements.is_empty()
-                || elements.len() >= 32
-                || !literal(arguments[2], elements.len() as i64)
-            {
-                continue;
-            }
             let value = inst.result;
+            // MapEntry's public construction guard is an identity on the
+            // canonical admitted type. Private vector construction must still
+            // keep its guard/error, so only the public pair can virtualize it.
+            let checked = if matches!(kind, Kind::MapEntry) {
+                block
+                    .instructions
+                    .get(i + 1)
+                    .and_then(|next| match &next.operation {
+                        Operation::Nominal {
+                            operation: Nominal::BuiltinConstructGuard,
+                            arguments,
+                        } if arguments == &[value] => Some(next.result),
+                        _ => None,
+                    })
+            } else {
+                None
+            };
+            let virtuals = |v: ValueId| v == value || Some(v) == checked;
+            let observed = checked.unwrap_or(value);
             let mut reads = HashMap::new();
             let mut array_uses = 0;
             for other in function.blocks.iter().flat_map(|b| &b.instructions) {
                 charge(meter, 1 + operands(&other.operation).len(), &other.span)?;
-                array_uses += operands(&other.operation)
-                    .iter()
-                    .filter(|v| **v == array)
-                    .count();
+                if let Some(array) = kind.array() {
+                    array_uses += operands(&other.operation)
+                        .iter()
+                        .filter(|v| **v == array)
+                        .count();
+                }
                 if let Operation::Nominal {
                     operation: Nominal::VectorNth,
                     arguments: args,
                 } = &other.operation
                 {
-                    if args[0] != value {
+                    if args[0] != observed {
                         continue;
                     }
                     if let Some(Operation::Literal(Literal::Long(index))) = operation(args[1]) {
@@ -174,6 +226,9 @@ fn analyze(
                     },
                     &inst.span,
                 )?;
+                let Some(array) = kind.array() else {
+                    continue;
+                };
                 array_uses += match &block.terminator {
                     Terminator::Jump { arguments, .. } => {
                         arguments.iter().filter(|v| **v == array).count()
@@ -184,7 +239,7 @@ fn analyze(
                     }
                 };
             }
-            if array_uses != 1 || reads.is_empty() {
+            if (kind.array().is_some() && array_uses != 1) || reads.is_empty() {
                 continue;
             }
             let mut conditions = HashSet::new();
@@ -214,7 +269,10 @@ fn analyze(
                 for other in &block.instructions[start..] {
                     charge(meter, 1 + operands(&other.operation).len(), &other.span)?;
                     for input in operands(&other.operation) {
-                        if *input == value && !reads.contains_key(&other.result) {
+                        if virtuals(*input)
+                            && !reads.contains_key(&other.result)
+                            && Some(other.result) != checked
+                        {
                             valid = false;
                         }
                         if reads.contains_key(input)
@@ -239,7 +297,7 @@ fn analyze(
                 };
                 match &block.terminator {
                     Terminator::Jump { target, arguments } => {
-                        if arguments.contains(&value) {
+                        if arguments.iter().any(|v| virtuals(*v)) {
                             valid = false;
                         }
                         edge(*target);
@@ -249,7 +307,7 @@ fn analyze(
                         consequent,
                         alternative,
                     } => {
-                        if *condition == value || reads.contains_key(condition) {
+                        if virtuals(*condition) || reads.contains_key(condition) {
                             valid = false;
                         }
                         if !conditions.contains(condition) {
@@ -258,7 +316,7 @@ fn analyze(
                         edge(*alternative);
                     }
                     Terminator::Return(v) | Terminator::Throw(v) => {
-                        if *v == value || reads.contains_key(v) {
+                        if virtuals(*v) || reads.contains_key(v) {
                             valid = false;
                         }
                     }
@@ -300,8 +358,9 @@ fn analyze(
             return Ok(Some(Plan {
                 block: b,
                 instruction: i,
-                array,
-                elements: elements.clone(),
+                kind,
+                checked,
+                elements,
                 reads,
                 conditions,
                 region: seen
@@ -370,7 +429,7 @@ fn transform(
             let mut inst = inst.clone();
             let old = inst.result;
             inst.result = ids[old.0];
-            if plan.reads.contains_key(&old) {
+            if plan.reads.contains_key(&old) || Some(old) == plan.checked {
                 inst.operation = Operation::Literal(Literal::Nil);
                 function.values[inst.result.0].ty = Type::Nil;
             } else if plan.conditions.contains(&old) {
@@ -427,28 +486,30 @@ fn transform(
     };
     let ctor = arguments[0];
     let span = constructor.span.clone();
-    let array = ValueId(function.values.len());
-    function.values.push(Value {
-        ty: Type::Value,
-        span: span.clone(),
-    });
-    arguments[5] = array;
-    let mut instructions = vec![
-        Instruction {
+    let mut instructions = Vec::new();
+    if plan.kind.array().is_some() {
+        let array = ValueId(function.values.len());
+        function.values.push(Value {
+            ty: Type::Value,
+            span: span.clone(),
+        });
+        arguments[5] = array;
+        instructions.push(Instruction {
             result: array,
             span: span.clone(),
             operation: Operation::Array {
                 operation: ArrayOperation::Objects,
                 arguments: plan.elements,
             },
-        },
-        constructor,
-    ];
+        });
+    }
+    let constructor_result = constructor.result;
+    instructions.push(constructor);
     instructions.append(&mut suffix);
     let slow = function.blocks.len();
     let terminator = std::mem::replace(
         &mut function.blocks[root].terminator,
-        Terminator::Return(array),
+        Terminator::Return(constructor_result),
     );
     function.blocks.push(Block {
         parameters: vec![],
@@ -457,7 +518,7 @@ fn transform(
     });
     for block in &mut function.blocks[..original_blocks] {
         for inst in &mut block.instructions {
-            if inst.result == plan.array {
+            if Some(inst.result) == plan.kind.array() {
                 inst.operation = Operation::Literal(Literal::Nil);
                 function.values[inst.result.0].ty = Type::Nil;
             }
@@ -492,7 +553,7 @@ fn transform(
         function.blocks.push(Block {
             parameters: vec![],
             instructions: vec![],
-            terminator: Terminator::Return(array),
+            terminator: Terminator::Return(constructor_result),
         });
         current = next;
     }
@@ -505,7 +566,7 @@ fn transform(
         result,
         span,
         operation: Operation::Nominal {
-            operation: Nominal::ScalarVectorGuard,
+            operation: plan.kind.guard(),
             arguments: vec![ctor],
         },
     });

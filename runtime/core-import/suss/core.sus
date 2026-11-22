@@ -11952,6 +11952,8 @@ reduces them without incurring seq initialization"
 ;; PersistentVector's type, registered so the runtime's vector-nth and
 ;; vector-count read vectors directly (#378).
 (suss.bootstrap/vector-type! (.-EMPTY PersistentVector))
+;; MapEntry has closed indexed storage too; register its canonical descriptor (#351).
+(suss.bootstrap/map-entry-type! (MapEntry. nil nil nil))
 ;; PersistentArrayMap's type, registered so the runtime's array-map-get
 ;; reads array maps directly (#442).
 (suss.bootstrap/array-map-type! (.-EMPTY PersistentArrayMap))
