@@ -1,3 +1,43 @@
+## Source-selected cast overload probes (2026-11-21)
+
+results/m12-cast-overloads retains48 fresh JVM Clojure1.12.6 assertions, executed
+in Runtime/Macro and actual AOT, plus4 separately labeled Suss redefinition
+controls. Object byte/short/int casts truncate before narrowing while genuine
+double casts check the original value; byte/short failures still print the
+original operand. Source float identity and int(float)'s rounded upper bound
+have separate modes. Generic aliases use Object conversions. Source kinds
+remain independent of physical raw storage and int retains its primitive source
+kind. Final review limits source-class queries to the affected casts.
+
+The original eight additional AOT checks now all pass, correcting the six
+failures preserved at the predecessor snapshots. Two extra AOT probes pass:
+source float locals versus Object int conversion match JVM, while boxed Float
+infinity follows ADR-0003's explicit double-valued float contract. The latter
+is separately labeled, not counted as a JVM value match. Both initial incorrect
+oracle expectations and their fresh JVM corrections remain as exact source/logs.
+No Float value type or Java implementation is introduced.
+
+Run python3 results/m12-cast-overloads/run-gates.py from m12-hints-source. It
+uses cargo +stable test --workspace --locked with14 named --test targets and
+-- --test-threads=2:75 passed, zero failed/ignored. Java-free bootstrap reproduction
+passes both phases byte-exact plus4 execution tests; actual Binaryen133 passes2;
+the reviewed-suite comparison passes1 in210.85s,10 unrelated tests filtered,
+known failures retained. Commands use stable Rust, two jobs/threads, MemoryMax4G,
+m12-hints-target and outer target/suss. No RUSTFLAGS are set. The intermediate
+source/gates are retained separately; all gates reexecute the final source.
+Nine production/test inputs reconstruct byte-for-byte with source-check.py.
+
+The new inspected loop executes1,234,587 iterations and matches fresh JVM's
+5302551397102356, with no normal-path calls or loop-carried boxes. The library
+artifact verifies exact scalar signatures and no numeric box construction for
+all37 raw helper exports, including integer-valued int-float. Actual original/
+additional component and compiler hashes, full raw logs and compressed suite
+observations are retained. These probes do not establish a current unfiltered
+full-workspace baseline, a new quiet ratio or complete numeric-tower/escape
+coverage. Next investigate temporary vector/MapEntry and local closure numeric
+storage; a preliminary analyze probe reports unresolved Runtime name letfn, so
+that example's support must be addressed explicitly rather than skipped.
+
 ## Bitwise and narrow-cast source/storage probes (2026-11-21)
 
 The working probe in results/m12-bits-casts retains30 fresh JVM1.12.6 value

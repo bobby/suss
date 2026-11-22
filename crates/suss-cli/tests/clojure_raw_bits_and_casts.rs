@@ -39,6 +39,25 @@ const CASES: &[(&str, &str)] = &[
     ("[(== (double (float (identity 18014399583223809))) 1.8014398509481984E16) (== (double (unchecked-float (identity 18014399583223809))) 1.8014400656965632E16)]", "[true true]"),
     ("(let [x (loop [] 18014399583223809)] [(== (double (float x)) 1.8014398509481984E16) (== (double (unchecked-float x)) 1.8014400656965632E16)])", "[true true]"),
     ("(let [^long x (identity 18014399583223809)] [(== (double (float x)) 1.8014400656965632E16) (== (double (unchecked-float x)) 1.8014400656965632E16)])", "[true true]"),
+    ("(double (float (unchecked-float ##Inf)))", "##Inf"),
+    ("(int (unchecked-float 2147483648.0))", "2147483647"),
+    ("(byte (identity 127.1))", "127"),
+    ("(short (identity 32767.1))", "32767"),
+    ("(int (identity 2147483647.9))", "2147483647"),
+    ("(try (long (identity 1.0E300)) (catch :default e :error))", ":error"),
+    ("(byte (identity ##NaN))", "0"),
+    ("(try (int (unchecked-float ##Inf)) (catch :default e :error))", ":error"),
+    ("[(byte (identity -128.9)) (short (identity -32768.9)) (int (identity -2147483648.9)) (short (identity ##NaN)) (int (identity ##NaN))]", "[-128 -32768 -2147483648 0 0]"),
+    ("[(try (byte (identity 128.9)) (catch :default e (ex-message e))) (try (short (identity -32769.9)) (catch :default e (ex-message e))) (try (int (identity 2147483648.1)) (catch :default e (ex-message e)))]", "[\"Value out of range for byte: 128.9\" \"Value out of range for short: -32769.9\" \"integer overflow\"]"),
+    ("[(try (byte 127.1) (catch :default e :error)) (try (short 32767.1) (catch :default e :error)) (try (int 2147483647.9) (catch :default e :error)) (try (byte ##NaN) (catch :default e :error))]", "[:error :error :error :error]"),
+    ("[(int (unchecked-float -2147483648.0)) (int (unchecked-float ##NaN)) (double (float (unchecked-float ##-Inf)))]", "[-2147483648 0 ##-Inf]"),
+    ("[(try (int (unchecked-float 2147483904.0)) (catch :default e :error)) (try (int (unchecked-float -2147483904.0)) (catch :default e :error))]", "[:error :error]"),
+    ("[(byte (loop [] 127.1)) (short (loop [] 32767.1)) (int (loop [] 2147483647.9))]", "[127 32767 2147483647]"),
+    ("[(try ((identity byte) 127.1) (catch :default e :error)) (try ((identity short) 32767.1) (catch :default e :error)) (try ((identity int) 2147483647.9) (catch :default e :error))]", "[127 32767 2147483647]"),
+    ("(let [^double x (identity 127.1)] [(try (byte x) (catch :default e :error)) ((identity byte) x)])", "[:error 127]"),
+    ("(let [events (atom [])] [(byte (do (swap! events conj :value) (identity 127.1))) @events])", "[127 [:value]]"),
+    ("(let [events (atom [])] [(try (byte (do (swap! events conj :value) (identity 128.9))) (catch :default e :error)) @events])", "[:error [:value]]"),
+
 ];
 
 // Suss ADR-0004 fallback controls; these are not JVM numeric value matches.

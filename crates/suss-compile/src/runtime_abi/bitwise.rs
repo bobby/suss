@@ -9,7 +9,7 @@
 use super::*;
 
 /// `number-cast`'s kinds, as core's coercions pass them.
-pub(crate) const CASTS: [(&str, Cast); 12] = [
+pub(crate) const CASTS: [(&str, Cast); 16] = [
     ("long", Cast::Checked(64)),
     ("int", Cast::Checked(32)),
     ("short", Cast::Checked(16)),
@@ -22,8 +22,12 @@ pub(crate) const CASTS: [(&str, Cast); 12] = [
     ("unchecked-float", Cast::Float(false)),
     ("double", Cast::Double),
     ("float-long", Cast::FloatLong),
+    ("int-object", Cast::ObjectChecked(32)),
+    ("short-object", Cast::ObjectChecked(16)),
+    ("byte-object", Cast::ObjectChecked(8)),
+    ("int-float", Cast::IntFloat),
 ];
-pub(crate) const CAST_RAW_EXPORTS: [&str; 12] = [
+pub(crate) const CAST_RAW_EXPORTS: [&str; 16] = [
     "number-cast-long-raw",
     "number-cast-int-raw",
     "number-cast-short-raw",
@@ -36,11 +40,20 @@ pub(crate) const CAST_RAW_EXPORTS: [&str; 12] = [
     "number-cast-unchecked-float-raw",
     "number-cast-double-raw",
     "number-cast-float-long-raw",
+    "number-cast-int-object-raw",
+    "number-cast-short-object-raw",
+    "number-cast-byte-object-raw",
+    "number-cast-int-float-raw",
 ];
 #[derive(Clone, Copy)]
 pub(crate) enum Cast {
     /// A long in range, or a double truncated toward zero; out of range throws.
     Checked(u32),
+    /// Object overloads narrow Number.longValue(), retaining the original
+    /// operand for byte/short range diagnostics.
+    ObjectChecked(u32),
+    /// float's comparison rounds Integer/MAX_VALUE to 2^31 before checking.
+    IntFloat,
     /// The low bits of a long; a double truncated and saturated, as Java's
     /// primitive casts.
     Unchecked(u32),
@@ -163,7 +176,10 @@ pub(super) fn intrinsics(b: &mut Builder) {
 /// an f64.
 fn cast(b: &Builder, name: &str, kind: Cast, raw: bool) -> Vec<Instruction<'static>> {
     use Instruction::*;
-    let name = if name == "float-long" { "float" } else { name };
+    let name = match name {
+        "float-long" => "float", "int-float" => "int",
+        other => other.strip_suffix("-object").unwrap_or(other),
+    };
     let long = b.names["long-test"];
     let unbox = b.names["long-unbox"];
     let boxed = b.names["long-box"];
@@ -238,6 +254,30 @@ fn cast(b: &Builder, name: &str, kind: Cast, raw: bool) -> Vec<Instruction<'stat
             code.push(If(BlockType::Empty));
             code.extend(throw_with_value(b, &range, 0));
             code.extend([End, LocalGet(2), I64TruncSatF64S]);
+            if !raw { code.push(Call(boxed)); }
+        }
+        Cast::ObjectChecked(bits) => {
+            code.extend([LocalGet(0), Call(long), If(BlockType::Result(ValType::I64)),
+                LocalGet(0), Call(unbox), Else, LocalGet(0), Call(double), I64TruncSatF64S,
+                End, LocalSet(1)]);
+            let shift = I64Const(i64::from(64 - bits));
+            code.extend([LocalGet(1), shift.clone(), I64Shl, shift, I64ShrS,
+                LocalGet(1), I64Ne, If(BlockType::Empty)]);
+            if bits == 32 {
+                code.extend(numeric::error("integer overflow", nominal::ERROR_GLOBAL));
+            } else {
+                code.extend(throw_with_value(b, &range, 0));
+            }
+            code.extend([End, LocalGet(1)]);
+            if !raw { code.push(Call(boxed)); }
+        }
+        Cast::IntFloat => {
+            code.extend([LocalGet(0), Call(double), LocalSet(2),
+                LocalGet(2), F64Const((-2147483648.0).into()), F64Lt,
+                LocalGet(2), F64Const(2147483648.0.into()), F64Gt, I32Or,
+                If(BlockType::Empty)]);
+            code.extend(throw_with_value(b, &range, 0));
+            code.extend([End, LocalGet(2), I32TruncSatF64S, I64ExtendI32S]);
             if !raw { code.push(Call(boxed)); }
         }
         Cast::Unchecked(bits) => {
@@ -320,7 +360,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         ));
         let raw_body = cast(b, name, kind, true);
         b.function_with_locals(CAST_RAW_EXPORTS[index], &[VALUE],
-            &[if index < 8 { ValType::I64 } else { ValType::F64 }],
+            &[if (8..=11).contains(&index) { ValType::F64 } else { ValType::I64 }],
             &[(1, ValType::I64), (1, ValType::F64)], &raw_body);
     }
     let mut dispatch = vec![LocalGet(1), Call(b.names["long-test"]), I32Eqz, If(BlockType::Empty)];
@@ -432,7 +472,7 @@ pub(super) fn functions(b: &mut Builder) -> Vec<u32> {
         Call(b.names["binding-get"]),
     ]);
     let reducer = b.function("bitwise-current-reducer", &[VALUE], &[VALUE], &reducer_body);
-    let int_cast = b.names["number-cast-int"];
+    let int_cast = b.names["number-cast-int-object"];
     let mut declared = Vec::new();
     for (name, arity, variadic) in [
         ("int", 1, false),

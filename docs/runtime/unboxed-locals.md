@@ -132,9 +132,12 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   Raw-return helpers accept boxed operands without a temporary numeric result
   box, while the original boxed entries remain available. Checked float(long)
   has a separate source-selected mode to preserve its single rounding;
-  float(Object) retains the double intermediate. The additional Object/primitive
-  Float overload counterexamples in `results/m12-bits-casts` remain explicit
-  limits; this lowering does not establish every conversion's source semantics.
+  float(Object) retains the double intermediate. Source float(float) permits
+  infinities. Object byte/short/int casts narrow the truncated Number.longValue(),
+  while genuine double casts compare the original value. Byte/short errors still
+  print the original Object. Source int(float) compares against the rounded 2^31
+  upper bound and saturates to Integer/MAX_VALUE there. These modes are selected
+  before consuming a local hint and independently of raw storage.
 - **Return hints.** A `^long` or `^double` on an argument vector converts the
   completed body, including through the boxed entry. A tag on a `defn` name
   supplies its arities' default return kind; a vector's tag overrides it.
@@ -221,13 +224,14 @@ Some source and calling paths retain the following behavior:
 
 ## Evidence
 
-- `clojure_raw_bits_and_casts.rs` executes30 fresh JVM value assertions and4
+- `clojure_raw_bits_and_casts.rs` executes48 fresh JVM value assertions and4
   separately labeled Suss redefinition controls in both phases and actual AOT.
-  Three exact inspected loop components execute and match independent JVM results.
-  The library regression verifies33 raw-return helper signatures and rejects
-  numeric box construction. `results/m12-bits-casts` also retains6 existing
-  overload mismatches and2 controls in frozen-before/current AOT; those cases
-  remain separate from the passing matrix.
+  `results/m12-cast-overloads` extends the original30 cases with Object/float
+  boundaries, NaN, errors, ordinary aliases, hints and evaluation order. The
+  original six mismatches and two controls remain in the frozen
+  `results/m12-bits-casts` receipts; the new regressions cover their corrections.
+  Raw helper artifact checks require exact scalar result types and reject
+  numeric box construction.
 - `crates/suss-cli/tests/clojure_raw_numeric_core.rs` matches22 fresh JVM
   value assertions in Runtime/Macro and actual AOT, plus4 separately labeled
   Suss redefinition controls matching the frozen before compiler. The two new

@@ -95,11 +95,13 @@ pub(super) fn inline(
     }
     if arguments.len() != 1 { return Ok(()); }
     let index = match global.name() {
-        "byte" => 3, "short" => 2, "int" => 1,
-        "float" => if primitive_returns::class(&arguments[0], facts, meter)? == Primitive::Long { 11 } else { 8 },
+        "byte" => 3, "short" => 2, "int" => 1, "float" => 8,
         "unchecked-byte" => 7, "unchecked-short" => 6, "unchecked-int" => 5, "unchecked-float" => 9,
         _ => return Ok(()),
     };
+    let index = if matches!(index, 1 | 2 | 3 | 8) {
+        cast_index(index, primitive_returns::class(&arguments[0], facts, meter)?)
+    } else { index };
     let index = Hir { source: None, span: hir.span.clone(), metadata: Vec::new(), ty: Type::Number,
         kind: std::sync::Arc::new(Expression::Literal(Literal::Long(index))) };
     hir.kind = std::sync::Arc::new(Expression::Bitwise { operation: Bitwise::Cast, arguments: vec![arguments[0].clone(), index] });
@@ -153,5 +155,41 @@ pub(super) fn operand(
     let value = hir.clone();
     *hir = Hir { source: None, span: value.span.clone(), metadata: Vec::new(), ty: operation.result(),
         kind: std::sync::Arc::new(Expression::Nominal { operation, arguments: vec![value] }) };
+    Ok(())
+}
+
+/// Select from source class, before a hinted Object is converted or a raw
+/// storage representation is inferred. The added modes are idempotent.
+fn cast_index(index: i64, class: Primitive) -> i64 {
+    match (index, class) {
+        (1, Primitive::Boxed | Primitive::Boolean) => 12,
+        (2, Primitive::Boxed | Primitive::Boolean) => 13,
+        (3, Primitive::Boxed | Primitive::Boolean) => 14,
+        (1, Primitive::Float) => 15,
+        (8, Primitive::Long) => 11,
+        (8, Primitive::Float) => 9,
+        _ => index,
+    }
+}
+
+/// Private bootstrap coercions also appear in generic first-class core
+/// functions. Their Object parameters need the same source overload selection.
+pub(super) fn cast_overload(
+    operation: &mut Bitwise, arguments: &mut [Hir], facts: &mut SourceFacts,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<(), Diagnostic> {
+    if !matches!(operation, Bitwise::Int | Bitwise::Cast) || arguments.is_empty() { return Ok(()); }
+    let class = primitive_returns::class(&arguments[0], facts, meter)?;
+    if *operation == Bitwise::Int {
+        *operation = match class {
+            Primitive::Boxed | Primitive::Boolean => Bitwise::Int,
+            Primitive::Float => Bitwise::IntFloat, _ => Bitwise::IntPrimitive,
+        };
+    } else if let Some(selector) = arguments.get_mut(1) {
+        if let Expression::Literal(Literal::Long(index)) = &*selector.kind {
+            let selected = cast_index(*index, class);
+            if selected != *index { selector.kind = std::sync::Arc::new(Expression::Literal(Literal::Long(selected))); }
+        }
+    }
     Ok(())
 }

@@ -1,12 +1,17 @@
 //! Checked/unchecked casts on raw values; slow paths preserve original errors.
 use super::*;
 pub(super) fn index(operation: Bitwise, arguments: &[ValueId], literals: &[Option<i64>]) -> Option<usize> {
-    if operation == Bitwise::Int && arguments.len() == 1 { return Some(1); }
+    if arguments.len() == 1 {
+        match operation {
+            Bitwise::Int => return Some(12), Bitwise::IntPrimitive => return Some(1),
+            Bitwise::IntFloat => return Some(15), _ => {}
+        }
+    }
     if operation != Bitwise::Cast || arguments.len() != 2 { return None; }
-    literals[arguments[1].0].filter(|index| (0..=11).contains(index)).map(|index| index as usize)
+    literals[arguments[1].0].filter(|index| (0..=15).contains(index)).map(|index| index as usize)
 }
 pub(super) fn result(index: usize) -> Repr {
-    if index < 8 { Repr::Long } else { Repr::Double }
+    if (8..=11).contains(&index) { Repr::Double } else { Repr::Long }
 }
 impl Locals {
     pub(super) fn numeric_cast_raw(&self, code: &mut Vec<Instruction<'static>>, index: usize,
@@ -42,6 +47,27 @@ impl Locals {
                     self.slow(code, arguments, slow);
                     code.extend([End, LocalGet(raw), I64TruncSatF64S]);
                 }
+            }
+            12..=14 => {
+                let bits = [32, 16, 8][index - 12];
+                let converted = self.raw(result);
+                code.push(LocalGet(raw));
+                if from == Repr::Double { code.push(I64TruncSatF64S); }
+                code.extend([LocalSet(converted), LocalGet(converted), I64Const(64 - bits),
+                    I64Shl, I64Const(64 - bits), I64ShrS, LocalGet(converted), I64Ne,
+                    If(BlockType::Empty)]);
+                self.slow(code, arguments, slow);
+                code.extend([End, LocalGet(converted)]);
+            }
+            15 => {
+                self.push_as(code, value, Repr::Double);
+                code.extend([F64Const((-2147483648.0).into()), F64Lt]);
+                self.push_as(code, value, Repr::Double);
+                code.extend([F64Const(2147483648.0.into()), F64Gt, I32Or, If(BlockType::Empty)]);
+                self.slow(code, arguments, slow);
+                code.push(End);
+                self.push_as(code, value, Repr::Double);
+                code.extend([I32TruncSatF64S, I64ExtendI32S]);
             }
             4..=7 => {
                 let bits = [64, 32, 16, 8][index - 4];

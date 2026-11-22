@@ -73,8 +73,12 @@ impl Pass<'_> {
                     features.division |= *operator == super::Arithmetic::Divide && !*coercing;
                     Ok(features)
                 }
-                Bitwise { arguments, .. }
-                | Comparison { arguments, .. } | Array { arguments, .. }
+                Bitwise { operation, arguments } => {
+                    let mut features = self.any(arguments)?;
+                    features.numeric_core |= matches!(operation, super::Bitwise::Int | super::Bitwise::Cast);
+                    Ok(features)
+                }
+                Comparison { arguments, .. } | Array { arguments, .. }
                 | Nominal { arguments, .. } | Recur { arguments, .. } | Do(arguments) => self.any(arguments),
                 Let { bindings, body } | Loop { bindings, body, .. } => {
                     let mut features = self.any(bindings.iter().map(|binding| &binding.value).chain(std::iter::once(body.as_ref())))?;
@@ -208,10 +212,11 @@ impl Pass<'_> {
                     }
                 }
                 Bitwise { operation, arguments } => {
+                    if !self.validate_only { local_hints::cast_overload(operation, arguments, facts, self.meter)?; }
                     let long_only = matches!(operation, super::Bitwise::And | super::Bitwise::Or | super::Bitwise::Xor
                         | super::Bitwise::AndNot | super::Bitwise::Not | super::Bitwise::Left | super::Bitwise::Right
                         | super::Bitwise::Unsigned);
-                    let numeric = matches!(operation, super::Bitwise::Int | super::Bitwise::Cast | super::Bitwise::Quot
+                    let numeric = matches!(operation, super::Bitwise::Int | super::Bitwise::IntPrimitive | super::Bitwise::IntFloat | super::Bitwise::Cast | super::Bitwise::Quot
                         | super::Bitwise::Rem | super::Bitwise::Abs | super::Bitwise::UncheckedAdd
                         | super::Bitwise::UncheckedSubtract | super::Bitwise::UncheckedMultiply | super::Bitwise::UncheckedNegate);
                     let inline = (numeric && self.hints && !self.validate_only

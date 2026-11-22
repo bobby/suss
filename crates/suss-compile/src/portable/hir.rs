@@ -241,6 +241,9 @@ impl Comparison {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Bitwise {
     Int,
+    /// Source-selected primitive overloads; all three retain source int kind.
+    IntPrimitive,
+    IntFloat,
     And,
     Or,
     Xor,
@@ -377,7 +380,7 @@ impl Bitwise {
     /// Shipped core's 32-bit form of an inline bit operation.
     pub(crate) fn int32(self) -> Self {
         match self {
-            Self::Int => Self::Int32,
+            Self::Int | Self::IntPrimitive | Self::IntFloat => Self::Int32,
             Self::And => Self::Int32And,
             Self::Or => Self::Int32Or,
             Self::Xor => Self::Int32Xor,
@@ -390,6 +393,8 @@ impl Bitwise {
     pub(crate) fn export(self) -> &'static str {
         match self {
             Self::Int => "primitive-int",
+            Self::IntPrimitive => "number-cast-int",
+            Self::IntFloat => "number-cast-int-float",
             Self::And => "primitive-bit-and",
             Self::Or => "primitive-bit-or",
             Self::Xor => "primitive-bit-xor",
@@ -453,7 +458,7 @@ impl Bitwise {
     }
     pub(crate) fn arity(self) -> usize {
         match self {
-            Self::Int
+            Self::Int | Self::IntPrimitive | Self::IntFloat
             | Self::Int32
             | Self::Not
             | Self::F64Coerce

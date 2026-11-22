@@ -345,7 +345,7 @@ fn infer(
             Expression::Bitwise { operation, arguments } => match operation {
                 Bitwise::LongMax | Bitwise::LongMin => Long,
                 Bitwise::DoubleMax | Bitwise::DoubleMin => Double,
-                Bitwise::Int => Int,
+                Bitwise::Int | Bitwise::IntPrimitive | Bitwise::IntFloat => Int,
                 Bitwise::And | Bitwise::Or | Bitwise::Xor | Bitwise::AndNot | Bitwise::Not
                 | Bitwise::Left | Bitwise::Right | Bitwise::Unsigned =>
                     bitwise_result(arguments, bindings, meter, loops)?,

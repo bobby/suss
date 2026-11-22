@@ -1,0 +1,13 @@
+(ns additional)
+(def case0 (fn [] (if (= (pr-str (try (double (float (unchecked-float ##Inf))) (catch :default e :error))) "##Inf") 1 0)))
+(def case1 (fn [] (if (= (pr-str (try (int (unchecked-float 2147483648.0)) (catch :default e :error))) "2147483647") 1 0)))
+(def case2 (fn [] (if (= (pr-str (try (try (byte (identity 127.1)) (catch :default e :error)) (catch :default e :error))) "127") 1 0)))
+(def case3 (fn [] (if (= (pr-str (try (try (short (identity 32767.1)) (catch :default e :error)) (catch :default e :error))) "32767") 1 0)))
+(def case4 (fn [] (if (= (pr-str (try (try (int (identity 2147483647.9)) (catch :default e :error)) (catch :default e :error))) "2147483647") 1 0)))
+(def case5 (fn [] (if (= (pr-str (try (try (long (identity 1.0E300)) (catch :default e :error)) (catch :default e :error))) ":error") 1 0)))
+(def case6 (fn [] (if (= (pr-str (try (try (byte (identity ##NaN)) (catch :default e :error)) (catch :default e :error))) "0") 1 0)))
+(def case7 (fn [] (if (= (pr-str (try (try (int (unchecked-float ##Inf)) (catch :default e :error)) (catch :default e :error))) ":error") 1 0)))
+
+(def case8 (fn [] (if (= (pr-str (try (let [x (unchecked-float 2147483648.0)] [(int x) (try (int (identity x)) (catch :default e :error))]) (catch :default e :error))) "[2147483647 :error]") 1 0)))
+
+(def case9 (fn [] (if (= (pr-str (try [(double (float (unchecked-float ##Inf))) (try (float (identity (unchecked-float ##Inf))) (catch :default e :error)) (try ((identity float) (unchecked-float ##Inf)) (catch :default e :error))] (catch :default e :error))) "[##Inf :error :error]") 1 0)))

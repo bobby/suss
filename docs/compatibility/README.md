@@ -1236,9 +1236,13 @@ fresh JVM value assertions plus4 separate Suss replacement controls. Three
 exact inspected loop components execute;33 raw-return helper exports have scalar
 signatures and no numeric boxes. Ordinary bit functions observe var replacements,
 and source float(long) preserves direct rounding. A separate additional probe
-retains6 existing cast-overload mismatches and2 matching controls in both frozen
-before/current AOT. Those failures are outside the passing matrix and do not
-establish complete conversion conformance.
+retains6 cast-overload mismatches and2 matching controls in its frozen before/
+current snapshots. [Cast overload evidence](../../results/m12-cast-overloads/README.md)
+extends the JVM matrix to48 passing values, executed in Runtime/Macro and actual
+AOT, including those six corrections. Object conversions, original error values,
+primitive float identity and float-to-int bounds remain distinct from source
+double conversions. These bounded observations do not establish complete conversion
+conformance.
 
 Lazy numeric GC copies now span blocks where materializations can repeat without
 redefinition. Checked sum bodies remain byte-identical and generated allocation

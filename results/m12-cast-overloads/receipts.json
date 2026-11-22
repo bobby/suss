@@ -1,0 +1,63 @@
+{
+  "source_inputs": "source-inputs.json",
+  "oracle_assertions": 48,
+  "suss_only_redefinition_controls": 4,
+  "focused": {
+    "groups": 14,
+    "passed": 75,
+    "failed": 0,
+    "ignored": 0
+  },
+  "bootstrap": {
+    "passed": 4,
+    "byte_exact_phases": 2
+  },
+  "binaryen": {
+    "passed": 2,
+    "version": 133
+  },
+  "reviewed_suite": {
+    "passed": 1,
+    "failed": 0,
+    "ignored": 0,
+    "filtered_out": 10,
+    "seconds": 210.85,
+    "observations_sha256": "5523272bb015af2c328e82baeb4251e03867081657ea03767d9e9bebec68db52",
+    "gzip_sha256": "a9f4b7efbfd74c703c28cee2ab0df4a1fcc7745c8a71fef44c1912222eebc9a2",
+    "assertion_observations": 2758,
+    "unchanged_observation_sections": [
+      "assertions",
+      "namespaces",
+      "skips",
+      "test-failures"
+    ],
+    "compared_to": "../m12-bits-casts/suite-observations.json.gz"
+  },
+  "before": {
+    "source_base": "128a673efa58889cc29c315e25c979914846b4fb",
+    "test": "before-tested.rs",
+    "exit_code": 101,
+    "passed": 0,
+    "failed": 2
+  },
+  "intermediate": "intermediate retains the prior successful gates before limiting source-class queries to affected casts; final gates reexecute the corrected source",
+  "unverified": [
+    "current unfiltered full workspace",
+    "new quiet timing ratio",
+    "complete numeric tower",
+    "collection/closure escape elimination"
+  ],
+  "whitespace_check": {
+    "command": [
+      "git",
+      "diff",
+      "--cached",
+      "--check",
+      "--",
+      ".",
+      ":(exclude)results/m12-cast-overloads/*.log",
+      ":(exclude)results/m12-cast-overloads/*.patch"
+    ],
+    "reason": "Raw logs preserve trailing blank lines; generated unified patches preserve required blank context lines. Source, tests, docs, scripts and JSON use the default whitespace checks."
+  }
+}

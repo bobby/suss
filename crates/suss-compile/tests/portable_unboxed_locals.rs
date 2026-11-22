@@ -340,6 +340,26 @@ mod raw_bits_and_casts {
         assert_eq!(run.call(&mut store, ()).unwrap().0.to_bits(), expected.to_bits());
         run.post_return(&mut store).unwrap();
     }
+    #[test]
+    fn object_and_float_overloads_execute_without_normal_calls_or_boxes() {
+        let source = "(defn ^:export bound [] (loop [i 0 acc 0]
+          (if (< i 1234587) (recur (inc i) (unchecked-add acc
+            (+ (byte (loop [] (+ 127.1 (* 0.0 (double i)))))
+               (short (loop [] 32767.1)) (int (loop [] 2147483647.9))
+               (int (unchecked-float 2147483648.0))))) acc)))";
+        let bytes = Compiler::new().compile(source,
+            "package test:cast-overloads; world api { export bound: func() -> s64; }").unwrap();
+        for operators in functions_with(&bytes, 1234587) {
+            check(&operators);
+            assert!(operators.iter().any(|op| matches!(op, Operator::I64TruncSatF64S)));
+            assert!(operators.iter().any(|op| matches!(op, Operator::I32TruncSatF64S)));
+        }
+        let (mut store, instance) = extrema_component(&bytes);
+        let run = instance.get_typed_func::<(), (i64,)>(&mut store, "bound").unwrap();
+        assert_eq!(run.call(&mut store, ()).unwrap().0, 5302551397102356);
+        run.post_return(&mut store).unwrap();
+    }
+
 }
 
 #[test]
@@ -374,11 +394,15 @@ fn raw_numeric_helpers_return_scalars_without_numeric_boxes() {
             _ => {}
         }
     }
-    assert_eq!(exports.len(), 33);
+    assert_eq!(exports.len(), 37);
     assert_eq!(boxes.len(), 2);
     for (index, name) in &exports {
         let result = results[functions[*index as usize] as usize].unwrap();
-        assert!(matches!(result, wasmparser::ValType::I64 | wasmparser::ValType::I32 | wasmparser::ValType::F64), "{name}: {result:?}");
+        let expected = if name == "primitive-bit-test-raw" { wasmparser::ValType::I32 }
+            else if matches!(name.as_str(), "number-cast-float-raw" | "number-cast-unchecked-float-raw"
+                | "number-cast-double-raw" | "number-cast-float-long-raw") { wasmparser::ValType::F64 }
+            else { wasmparser::ValType::I64 };
+        assert_eq!(result, expected, "{name}");
     }
     // Discover numeric box layouts from their actual exported constructors.
     // Internal type indices are not a public artifact contract.

@@ -37,3 +37,7 @@ rounds to 2^31. The same8 checks execute in actual frozen-before/current AOT, bo
 `additional-overloads.*`, `additional-observations.json` and compile/run logs keep
 the exact JVM/current evidence. The four ADR-0004 controls separately match frozen
 before/current execution; component/compiler hashes are in rebind-observations.json.
+
+Later correction: [cast overload receipts](../m12-cast-overloads/README.md) retain
+new source and execution for these counterexamples. The observations above
+remain the original frozen source results.

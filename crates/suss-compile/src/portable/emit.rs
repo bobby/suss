@@ -298,7 +298,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     Operation::Bitwise { operation, .. } => {
                         names.insert(operation.export());
                         if let Some(raw) = operation.raw_export() { names.insert(raw); }
-                        if matches!(operation, super::hir::Bitwise::Cast | super::hir::Bitwise::Int) {
+                        if matches!(operation, super::hir::Bitwise::Cast | super::hir::Bitwise::Int | super::hir::Bitwise::IntPrimitive | super::hir::Bitwise::IntFloat) {
                             names.extend(runtime_abi::CAST_RAW_EXPORTS);
                         }
                     }
@@ -772,7 +772,8 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
     for (i, name) in names.iter().enumerate() {
         let (params, results) = match *name {
             name if name.starts_with("number-cast-") && name.ends_with("-raw") =>
-                (vec![VALUE], vec![if name.contains("float") || name.contains("double") { ValType::F64 } else { ValType::I64 }]),
+                (vec![VALUE], vec![if runtime_abi::CAST_RAW_EXPORTS.iter().position(|export| *export == name)
+                    .is_some_and(|index| (8..=11).contains(&index)) { ValType::F64 } else { ValType::I64 }]),
             name if name.starts_with("primitive-bit-") && name.ends_with("-raw") =>
                 (vec![VALUE; if name == "primitive-bit-not-raw" { 1 } else { 2 }],
                     vec![if name == "primitive-bit-test-raw" { ValType::I32 } else { ValType::I64 }]),
@@ -894,7 +895,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
             | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit" | "string-join"
-            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string-hash" | "number-cast-long" | "number-cast-double" | "number-cast-unchecked-long" | "packed-array-test" | "object-array-test" | "vector-type-register" | "array-map-type-register" | "vector-count" => {
+            | "number-abs" | "number-unchecked-negate" | "number-long?" | "number-double?" | "number-to-long" | "number-hash" | "string-hash" | "number-cast-int" | "number-cast-int-float" | "number-cast-long" | "number-cast-double" | "number-cast-unchecked-long" | "packed-array-test" | "object-array-test" | "vector-type-register" | "array-map-type-register" | "vector-count" => {
                 (vec![VALUE], vec![VALUE])
             }
             "binding-set" => (vec![VALUE, VALUE], vec![]),
