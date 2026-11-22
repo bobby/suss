@@ -1,3 +1,29 @@
+## Closure optimization CI fixture checks (2026-11-22)
+
+CI run44990307919, integration6 on f5056ffe, found two code-shape expectations
+invalidated by local closure elimination: portable_calling_convention expected a
+static call for a fully local closure, and portable_inline_predicates expected a
+call for a locally defined shadow of nil?. The captured failure log is under
+results/m12-closure-ci. The static-call fixture now returns its closure so that
+it escapes, preserving the original static/direct-entry assertions. A separate
+fixture checks that a fully local call is removed. An unknown lexical nil?
+parameter retains the ordinary-call shadowing check; locally defined nil? and
+identical? execute their own bodies in Runtime and Macro after GC, with no
+accidental identical-value lowering. Wrong-arity, live core-predicate, recursive
+static-call and ABI rejection assertions remain.
+
+While the original unfiltered Cargo baseline continues on its frozen f5056ffe
+checkout, run SUSS_EXISTING_TARGET=<m12-hints-target> python3
+results/m12-closure-ci/run-existing-compiler.py in the isolated repair checkout.
+This compiles the two repaired tests with stable rustc against that Cargo-built
+compiler, selecting exact direct dependencies from Cargo fingerprints; it does
+not rebuild or overwrite the running baseline's libraries or suss executable.
+commands.json records the commands and source/library hashes. All6 tests pass
+(4 calling-convention, 2 predicate), with zero failed or ignored. This is focused
+validation, not a Cargo full-baseline result; current-head CI and the terminal
+status of the original full run must be inspected separately. Aggregate scalar
+replacement remains isolated exploratory source and is not part of this repair.
+
 ## Local closure scalar storage probes (2026-11-21)
 
 results/m12-escape retains30 fresh JVM Clojure1.12.6 value assertions, executed

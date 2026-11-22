@@ -1,0 +1,123 @@
+{
+  "compiler_source_commit": "f5056ffefdbeb196768c4135d8f6a4769c05977e",
+  "libraries": {
+    "suss_compile": {
+      "path": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/libsuss_compile-2874475a5bbbffec.rlib",
+      "sha256": "50cdb7d8a9345dee0f6e99f9cb5c56a548b363d81ffe77fc3fae4ee34cda65a5"
+    },
+    "wasmparser": {
+      "path": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/libwasmparser-595a3b9373360848.rlib",
+      "sha256": "940400d480d24de109d0e76e21ceaa3f2ad9fbbe7759a4e310b75af4eece6f8c"
+    },
+    "wasm_encoder": {
+      "path": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/libwasm_encoder-f3e4340810580be2.rlib",
+      "sha256": "e6d2657ac393d6142d50528c3b1e0b65280c3faa781481181e3a7e2712cb1d9e"
+    }
+  },
+  "tests": [
+    {
+      "source": "crates/suss-compile/tests/portable_calling_convention.rs",
+      "sha256": "5103080082754a05bc5398aa6403ef649b9a8adb0f3916b2465d08675e5bde3e",
+      "compile": [
+        "rustup",
+        "run",
+        "stable",
+        "rustc",
+        "--edition=2024",
+        "--test",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-closure-ci-source/crates/suss-compile/tests/portable_calling_convention.rs",
+        "-L",
+        "dependency=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/ittapi-sys-af3edab9573ad7ab/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/ittapi-sys-c27a1f4a19b516df/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/psm-a54e190f8049c334/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/psm-b71bd53d6104d00d/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/psm-c0a75e4c9aeac366/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/wasmtime-ae9a6963fe79805c/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/wasmtime-ca5e76a35dc74282/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/wasmtime-dd93141727963422/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/wasmtime-internal-jit-debug-4817df6d63ff8c82/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/wasmtime-internal-jit-debug-a68e70ea90770a20/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/zstd-sys-6ba5941bb2e1981a/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/zstd-sys-a64027c75eb5d2b6/out",
+        "--extern",
+        "suss_compile=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/libsuss_compile-2874475a5bbbffec.rlib",
+        "--extern",
+        "wasmparser=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/libwasmparser-595a3b9373360848.rlib",
+        "--extern",
+        "wasm_encoder=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/libwasm_encoder-f3e4340810580be2.rlib",
+        "-o",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-closure-ci-source/target/probe/closure-ci/portable_calling_convention"
+      ],
+      "run": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-closure-ci-source/target/probe/closure-ci/portable_calling_convention",
+        "--test-threads=2"
+      ],
+      "exit_code": 0
+    },
+    {
+      "source": "crates/suss-compile/tests/portable_inline_predicates.rs",
+      "sha256": "8ac61a2cf16103460cd8ffcf1914314d7df64dd14a49e370d586efd1bdb20ebb",
+      "compile": [
+        "rustup",
+        "run",
+        "stable",
+        "rustc",
+        "--edition=2024",
+        "--test",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-closure-ci-source/crates/suss-compile/tests/portable_inline_predicates.rs",
+        "-L",
+        "dependency=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/ittapi-sys-af3edab9573ad7ab/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/ittapi-sys-c27a1f4a19b516df/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/psm-a54e190f8049c334/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/psm-b71bd53d6104d00d/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/psm-c0a75e4c9aeac366/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/wasmtime-ae9a6963fe79805c/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/wasmtime-ca5e76a35dc74282/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/wasmtime-dd93141727963422/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/wasmtime-internal-jit-debug-4817df6d63ff8c82/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/wasmtime-internal-jit-debug-a68e70ea90770a20/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/zstd-sys-6ba5941bb2e1981a/out",
+        "-L",
+        "native=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/build/zstd-sys-a64027c75eb5d2b6/out",
+        "--extern",
+        "suss_compile=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/libsuss_compile-2874475a5bbbffec.rlib",
+        "--extern",
+        "wasmparser=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/libwasmparser-595a3b9373360848.rlib",
+        "--extern",
+        "wasm_encoder=/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/libwasm_encoder-f3e4340810580be2.rlib",
+        "-o",
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-closure-ci-source/target/probe/closure-ci/portable_inline_predicates"
+      ],
+      "run": [
+        "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-closure-ci-source/target/probe/closure-ci/portable_inline_predicates",
+        "--test-threads=2"
+      ],
+      "exit_code": 0
+    }
+  ]
+}

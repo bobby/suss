@@ -6,7 +6,7 @@ use suss_compile::portable::{
     resolve::{Environment, Phase},
 };
 use suss_compile::runtime_abi;
-use wasmparser::{Operator, Parser, Payload, TypeRef};
+use wasmparser::{Parser, Payload, TypeRef};
 
 /// Per defined function: its operators, as debug strings; and the names of
 /// the fragment's function imports, by index.
@@ -44,7 +44,12 @@ fn calls(body: &[String], imports: &[String]) -> Vec<String> {
                 .trim_end_matches(" }")
                 .parse()
                 .unwrap();
-            Some(imports.get(index).cloned().unwrap_or_else(|| "defined".into()))
+            Some(
+                imports
+                    .get(index)
+                    .cloned()
+                    .unwrap_or_else(|| "defined".into()),
+            )
         })
         .collect()
 }
@@ -57,13 +62,26 @@ fn call_sites_call_the_entry_without_an_argument_array() {
     // The site calls the entry it cached in a global for its last callee
     // (ABI 6, #378), with no cast to `$closure` and no read of a function
     // reference from a struct.
-    assert!(!method.iter().any(|op| op.starts_with("StructGet")), "{method:?}");
-    assert!(!method.iter().any(|op| op.starts_with("BrOnCastFail") || op.starts_with("RefCast")), "{method:?}");
     assert!(
-        method.iter().any(|op| *op == format!("ReturnCallRef {{ type_index: {} }}", runtime_abi::CALL + 1)),
+        !method.iter().any(|op| op.starts_with("StructGet")),
         "{method:?}"
     );
-    assert!(!method.iter().any(|op| op.starts_with("ArrayNewFixed")), "{method:?}");
+    assert!(
+        !method
+            .iter()
+            .any(|op| op.starts_with("BrOnCastFail") || op.starts_with("RefCast")),
+        "{method:?}"
+    );
+    assert!(
+        method
+            .iter()
+            .any(|op| *op == format!("ReturnCallRef {{ type_index: {} }}", runtime_abi::CALL + 1)),
+        "{method:?}"
+    );
+    assert!(
+        !method.iter().any(|op| op.starts_with("ArrayNewFixed")),
+        "{method:?}"
+    );
     // Its only call finds a new callee's entry, and no call site uses `invoke`.
     assert_eq!(calls(method, &imports), ["call-entry-1"]);
     assert!(!imports.iter().any(|name| name == "invoke"), "{imports:?}");
@@ -72,16 +90,41 @@ fn call_sites_call_the_entry_without_an_argument_array() {
 #[test]
 fn known_callees_are_static_calls() {
     for source in [
-        "(fn [] (let [k (fn [x] x)] (k 1)))",
+        // Returning k makes its identity observable and retains a real call.
+        "(fn [] (let [k (fn [x] x)] (do (k 1) k)))",
         "(fn self [n] (self n))",
     ] {
         let (bodies, imports) = functions(source);
         // The first method, after `eval`: it calls the known callee's entry.
         let caller = &bodies[1];
-        assert!(calls(caller, &imports).iter().any(|call| call == "defined"), "{source}: {caller:?}");
-        assert!(!caller.iter().any(|op| op.starts_with("CallRef") || op.starts_with("ReturnCallRef")), "{source}");
-        assert!(!caller.iter().any(|op| op.starts_with("BrOnCastFail")), "{source}");
+        assert!(
+            calls(caller, &imports).iter().any(|call| call == "defined"),
+            "{source}: {caller:?}"
+        );
+        assert!(
+            !caller
+                .iter()
+                .any(|op| op.starts_with("CallRef") || op.starts_with("ReturnCallRef")),
+            "{source}"
+        );
+        assert!(
+            !caller.iter().any(|op| op.starts_with("BrOnCastFail")),
+            "{source}"
+        );
     }
+}
+
+#[test]
+fn a_locally_called_closure_needs_no_call_entry() {
+    let (bodies, imports) = functions("(fn [] (let [k (fn [x] x)] (k 1)))");
+    let caller = &bodies[1];
+    assert!(calls(caller, &imports).is_empty(), "{caller:?}");
+    assert!(
+        !caller
+            .iter()
+            .any(|op| op.starts_with("CallRef") || op.starts_with("ReturnCallRef")),
+        "{caller:?}"
+    );
 }
 
 #[test]
@@ -92,7 +135,13 @@ fn artifacts_record_runtime_abi_7_and_prior_abis_are_rejected() {
     let module = |abi| {
         let mut module = wasm_encoder::Module::new();
         module
-            .section(&runtime_abi::Manifest { runtime_abi: abi, ..Default::default() }.section())
+            .section(
+                &runtime_abi::Manifest {
+                    runtime_abi: abi,
+                    ..Default::default()
+                }
+                .section(),
+            )
             .section(&runtime_abi::prelude());
         module.finish()
     };

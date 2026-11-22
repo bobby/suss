@@ -40,7 +40,9 @@ fn calls(source: &str) -> bool {
                     }
                 }
             }
-            Payload::FunctionSection(section) => types.extend(section.into_iter().map(Result::unwrap)),
+            Payload::FunctionSection(section) => {
+                types.extend(section.into_iter().map(Result::unwrap))
+            }
             Payload::CodeSectionEntry(code) => {
                 let spread = types[body] == suss_compile::runtime_abi::SPREAD;
                 body += 1;
@@ -50,9 +52,10 @@ fn calls(source: &str) -> bool {
                 for operator in code.get_operators_reader().unwrap() {
                     found |= match operator.unwrap() {
                         Operator::CallRef { .. } | Operator::ReturnCallRef { .. } => true,
-                        Operator::Call { function_index } | Operator::ReturnCall { function_index } => {
-                            imports.get(function_index as usize).is_none_or(|name| name.starts_with("call-"))
-                        }
+                        Operator::Call { function_index }
+                        | Operator::ReturnCall { function_index } => imports
+                            .get(function_index as usize)
+                            .is_none_or(|name| name.starts_with("call-")),
                         _ => false,
                     };
                 }
@@ -74,9 +77,9 @@ fn nil_and_identical_compile_inline_unless_shadowed_or_of_another_arity() {
     ] {
         assert!(!call(source), "{source} calls");
     }
-    // Clojure inlines only these two: other predicates stay live calls.
+    // Unknown lexical functions, wrong arities and other predicates retain calls.
     for source in [
-        "(fn [x] (let [nil? (fn [y] 1)] (nil? x)))",
+        "(fn [nil? x] (nil? x))",
         "(fn [x] (nil? x x))",
         "(fn [x] (true? x))",
         "(fn [x] ((fn [f] (f x x)) identical?))",
@@ -84,5 +87,33 @@ fn nil_and_identical_compile_inline_unless_shadowed_or_of_another_arity() {
         assert!(call(source), "{source} doesn't call");
     }
     // Only distinct boxed numbers or strings reach the runtime's test.
-    assert!(imports("(fn [x y] (identical? x y))").iter().any(|name| name == "identical-value"));
+    assert!(
+        imports("(fn [x y] (identical? x y))")
+            .iter()
+            .any(|name| name == "identical-value")
+    );
+}
+
+#[test]
+fn eliminated_local_predicate_calls_preserve_shadowing() {
+    use suss_compile::portable_session::{RuntimeNumber, Session, runtime_number};
+    for mut session in [Session::new().unwrap(), Session::new_macro().unwrap()] {
+        for (source, expected) in [
+            ("(let [nil? (fn [y] 7)] (nil? nil))", 7),
+            ("(let [identical? (fn [x y] 9)] (identical? nil nil))", 9),
+            ("((fn [nil? x] (nil? x)) (fn [y] 11) nil)", 11),
+        ] {
+            let result = session.eval(source).unwrap();
+            session.collect().unwrap();
+            let found = session
+                .inspect(&result, |store, value| runtime_number(store, &value))
+                .unwrap();
+            assert_eq!(found, Some(RuntimeNumber::Long(expected)), "{source}");
+        }
+    }
+    let source = "(fn [x] (let [nil? (fn [y] 1)] (nil? x)))";
+    assert!(!calls(source));
+    let source = "(fn [x y] (let [identical? (fn [a b] 9)] (identical? x y)))";
+    assert!(!calls(source));
+    assert!(!imports(source).iter().any(|name| name == "identical-value"));
 }

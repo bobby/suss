@@ -1,0 +1,9 @@
+
+running 4 tests
+test artifacts_record_runtime_abi_7_and_prior_abis_are_rejected ... ok
+test call_sites_call_the_entry_without_an_argument_array ... ok
+test a_locally_called_closure_needs_no_call_entry ... ok
+test known_callees_are_static_calls ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
