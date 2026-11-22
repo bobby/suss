@@ -1,0 +1,48 @@
+Running as unit: run-p3072242-i86936196.scope; invocation ID: 26769569a9e5420fa93b6d76866e291f
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3.82s
+     Running tests/clojure_numeric_extrema.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_numeric_extrema-5cef05d5f0fdf811)
+
+running 4 tests
+test aot_rejects_invalid_extrema_return_types ... FAILED
+test aot_preserves_numeric_extrema_semantics ... FAILED
+test extrema_source_return_types_and_initializers_are_checked ... FAILED
+test runtime_and_macro_preserve_numeric_extrema_semantics ... FAILED
+
+failures:
+
+---- aot_rejects_invalid_extrema_return_types stdout ----
+
+thread 'aot_rejects_invalid_extrema_return_types' (3072441) panicked at crates/suss-cli/tests/clojure_numeric_extrema.rs:108:9:
+accepted (fn ^double [] (max 1 2))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- aot_preserves_numeric_extrema_semantics stdout ----
+
+thread 'aot_preserves_numeric_extrema_semantics' (3072440) panicked at crates/suss-cli/tests/clojure_numeric_extrema.rs:75:9:
+assertion `left == right` failed: (let [^long x (identity 5.5)] [x (max x 1) (min x 1) (max x) (min x) (max x 1 2)])
+  left: "0"
+ right: "1"
+
+---- extrema_source_return_types_and_initializers_are_checked stdout ----
+
+thread 'extrema_source_return_types_and_initializers_are_checked' (3072591) panicked at crates/suss-cli/tests/clojure_numeric_extrema.rs:90:70:
+accepted (fn ^double [] (max 1 2))
+
+---- runtime_and_macro_preserve_numeric_extrema_semantics stdout ----
+
+thread 'runtime_and_macro_preserve_numeric_extrema_semantics' (3072709) panicked at crates/suss-cli/tests/clojure_numeric_extrema.rs:43:13:
+assertion `left == right` failed: (let [^long x (identity 5.5)] [x (max x 1) (min x 1) (max x) (min x) (max x 1 2)])
+  left: "[5.5 5.5 1 5.5 5.5 5.5]"
+ right: "[5.5 5 1 5.5 5.5 5]"
+
+
+failures:
+    aot_preserves_numeric_extrema_semantics
+    aot_rejects_invalid_extrema_return_types
+    extrema_source_return_types_and_initializers_are_checked
+    runtime_and_macro_preserve_numeric_extrema_semantics
+
+test result: FAILED. 0 passed; 4 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.54s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_numeric_extrema`

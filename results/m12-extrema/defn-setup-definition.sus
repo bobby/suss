@@ -1,0 +1,1 @@
+(defn ^:redef extrema-guard ^double [] (identity 1.0))

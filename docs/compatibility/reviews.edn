@@ -4350,24 +4350,24 @@
   {:source-sha256 "57789ce1db49c2ea5760853c2f0e5ea98f85514f0b13fbcf4ea19a1f92e82885"
    :visibility :public
    :arities {:fixed [1 2] :variadic-min 2}
-   :dependencies ["NaN?" ">" "reduce" "max"]
+   :dependencies ["suss.bootstrap/max numeric Object overload" "reduce" "max"]
    :classification :adapted
-   :rationale "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus."
+   :rationale "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature. The scalar helper follows fresh JVM Clojure 1.12.6 Numbers.max/min Object overloads: NaN propagation precedes other-operand checks and ties preserve the second argument. Source primitive overloads are selected separately; no Java code is shipped. Public compatibility remains in progress."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/expression-max.json"
    :alternative nil
-   :tests ["crates/suss-compile/tests/portable_expression_conformance.rs"]}
+   :tests ["crates/suss-compile/tests/portable_expression_conformance.rs" "crates/suss-cli/tests/clojure_numeric_extrema.rs"]}
   "runtime:min:2829"
   {:source-sha256 "818bb4159df03778f744249e72befe75e3c6af92542d4b1f7008e4b18c4eecbe"
    :visibility :public
    :arities {:fixed [1 2] :variadic-min 2}
-   :dependencies ["NaN?" "<" "reduce" "min"]
+   :dependencies ["suss.bootstrap/min numeric Object overload" "reduce" "min"]
    :classification :adapted
-   :rationale "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus."
+   :rationale "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature. The scalar helper follows fresh JVM Clojure 1.12.6 Numbers.max/min Object overloads: NaN propagation precedes other-operand checks and ties preserve the second argument. Source primitive overloads are selected separately; no Java code is shipped. Public compatibility remains in progress."
    :status :in-progress
    :adaptation-path "docs/compatibility/patches/expression-min.json"
    :alternative nil
-   :tests ["crates/suss-compile/tests/portable_expression_conformance.rs"]}
+   :tests ["crates/suss-compile/tests/portable_expression_conformance.rs" "crates/suss-cli/tests/clojure_numeric_extrema.rs"]}
   "runtime:even?:4444"
   {:source-sha256 "bd00f047245484ff36abd6e6b3a7e5dabfebf825a44ce335dafadf3b66c63460"
    :visibility :public

@@ -1,0 +1,3 @@
+(assert (= "1.12.6" (clojure-version)))
+(def ^{:redef true :arglists '(^double [])} extrema-guard (fn ^double [] (identity 1.0)))
+(let [source "(let [run (fn [] (max (extrema-guard) -0.0)) boxed (fn [] ((identity max) (extrema-guard) -0.0))] [(run) (boxed) (with-redefs [extrema-guard (fn [] (identity 5))] [(run) (boxed)]) (with-redefs [extrema-guard (fn [] (identity 0))] [(/ 1.0 (run)) (/ 1.0 (boxed))]) (with-redefs [extrema-guard (fn [] :replacement)] [(try (run) (catch Throwable e :threw)) (try (boxed) (catch Throwable e :threw))])])" result (try (eval (read-string source)) :accepted (catch Throwable e (.getName (class e))))] (prn source result) (assert (= "java.lang.ClassCastException" result)))

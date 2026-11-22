@@ -1,0 +1,53 @@
+Running as unit: run-p3116322-i86995374.scope; invocation ID: a8c0fbe94be5485fb0c93d056815806f
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 14.31s
+     Running tests/clojure_division_overloads.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_division_overloads-d7739722c627dad8)
+
+running 2 tests
+test runtime_and_macro_preserve_source_division_overloads ... ok
+test aot_wrappers_keep_the_inner_helpers_hinted_or_generic ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 16.32s
+
+     Running tests/clojure_local_numeric_hints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_local_numeric_hints-ff9fb880295f6a71)
+
+running 4 tests
+test aot_preserves_local_hint_semantics ... ok
+test hint_diagnostics_use_initial_source_types_before_loop_reanalysis ... ok
+test runtime_and_macro_preserve_local_hint_semantics ... ok
+test aot_rejects_invalid_local_hint_declarations ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 45.77s
+
+     Running tests/clojure_numeric_box_reuse.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_numeric_box_reuse-a3060681a3a0a766)
+
+running 2 tests
+test runtime_and_macro_preserve_numeric_box_reuse ... ok
+test aot_preserves_numeric_box_reuse ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.28s
+
+     Running tests/clojure_numeric_extrema.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_numeric_extrema-5cef05d5f0fdf811)
+
+running 4 tests
+test aot_preserves_numeric_extrema_semantics ... ok
+test extrema_source_return_types_and_initializers_are_checked ... ok
+test runtime_and_macro_preserve_numeric_extrema_semantics ... FAILED
+test aot_rejects_invalid_extrema_return_types ... ok
+
+failures:
+
+---- runtime_and_macro_preserve_numeric_extrema_semantics stdout ----
+
+thread 'runtime_and_macro_preserve_numeric_extrema_semantics' (3121086) panicked at crates/suss-cli/tests/clojure_numeric_extrema.rs:38:35:
+called `Result::unwrap()` on an `Err` value: Compile(Diagnostic { span: 1..5, message: "Unresolved Runtime name defn" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    runtime_and_macro_preserve_numeric_extrema_semantics
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 32.25s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_numeric_extrema`

@@ -56,6 +56,18 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   Guarded long inputs also take the raw path when every input hits its
   primitive entry. On a miss, the original int32 helper converts the boxed
   replacement values and supplies the guaranteed long result.
+- **Extrema.** Direct `max`/`min` calls nest binary source overloads. Long/long
+  results stay raw with an integer comparison/select; double/double uses raw
+  IEEE min/max, including signed zero. Mixed overloads preserve the selected
+  argument type and stay boxed when that type is unknown. Generic Object calls
+  propagate NaN and select the second argument on ties, even when optimization
+  holds both values as raw doubles. Local hints convert at selected primitive
+  formals, before later operands execute. Aliases retain ordinary function-call
+  argument evaluation and generic Object semantics. Guarded double inputs keep
+  their raw hit; a lost signature preserves the original boxed replacement
+  without coercing a long to double merely because of the old declaration.
+  Boxed captures use Math only for genuine doubles. The source classifier keeps
+  primitive return/initializer diagnostics independent of physical storage.
 - **Hashes and identity.** `hash` of a long gives a raw long: an i31 or raw long
   is hashed inline, as `number-hash` hashes it, and core's `hash`, which always
   returns an integer, is cast to a long (#387). `identical?`, `=` of small
@@ -167,20 +179,21 @@ operands, which throws "long overflow" exactly as the boxed path does.
 
 Some source and calling paths retain the following behavior:
 
-- **Other numeric overloads.** `max`/`min` retain incomplete source overload selection.
-  Capture-aware primitive return checks and primitive-function recur diagnostics
-  still require an audit against JVM behavior. Fresh JVM signatures/results and actual AOT negatives
-  are retained in results/m12-local-hints and results/m12-box-reuse/optimized.
-  A local's hint is not an unconditional conversion: the selected formal
-  parameter must be primitive. These cases require that additional selection.
+- **Additional hint diagnostics.** Capture-aware primitive return checks and
+  primitive-function recur diagnostics still require an audit against JVM
+  behavior. A local hint supplies a class; the selected formal parameter must be
+  primitive before the lowering consumes it. Historical overload negatives are
+  retained with their original source identities; results/m12-extrema records
+  the later max/min lowering and its limits.
 - **Additional typed call forms.** Variadic adapters, calls wider than the
   eight fixed entries, and async calls keep the ordinary interface. Primitive
   bodies themselves exist for all source-hinted methods. A live-var guard's
   fixed-entry shape excludes variadic bodies, whose final formal is a rest seq
   rather than a fixed argument; Wasm structural identity must distinguish them.
-- **More raw consumers of guarded results.** Comparisons, identity tests and
-  bitwise operations currently materialize guarded numeric results. Arithmetic,
-  matching loop joins, primitive arguments and casts retain their raw hit.
+- **More raw consumers of guarded results.** Most comparisons, identity tests
+  and bitwise operations materialize guarded numeric results. Double extrema,
+  arithmetic, matching loop joins, primitive arguments and casts retain their
+  raw hit and preserve the original boxed value on a signature miss.
 - **Box reuse across blocks.** See "Where values are boxed" above (#351).
 
 ## Evidence

@@ -1,3 +1,44 @@
+## Clojure extrema source/storage probes (2026-11-21)
+
+results/m12-extrema retains exact source patches and all16 reconstructed input
+hashes, fresh JVM1.12.6 oracles, actual failing-before controls and raw final logs.
+The final matrix executes26 JVM-matched values and four diagnostic rejections in
+Runtime, Macro and actual AOT, plus one separately labeled Suss redefinition case.
+Long/long max/min stays raw; double/double uses IEEE Math zero rules. Mixed and
+Object overloads preserve the selected argument type and generic tie behavior.
+Nary pairs finish conversion/operation before later operand effects. Object source
+loops with raw double storage retain generic NaN/zero behavior. Boxed public
+functions share the scalar helper, which propagates NaN before other-type checks.
+
+The initial double fast path coerced a replacement long after a var lost its
+primitive signature. A frozen before compiler and actual AOT strings show the
+5.0-versus5 and positive-versusnegative infinity regression. The correction keeps
+MaybeDouble's raw hit and original boxed miss, and the same component probe again
+matches before. Suss's ordinary-IFn fallback is ADR-0004's contract; the separate
+JVM reference records IFn$D's ClassCastException rather than treating its result as
+a numeric oracle. No Java code is copied or shipped; EPL references are retained.
+
+Run cargo +stable test --workspace --locked with the ten --test targets in
+receipts.json, then -- --test-threads=2:55 passes, zero failed/ignored. The separate
+portable_unboxed_locals target passes5, including exact execution of both inspected
+1,234,573/1,234,575-iteration components. Their max/min loops have no hot-path helper
+calls or loop-carried boxes. The final CLI fixture rerun passes4 after EOF cleanup.
+Use stable Rust, two Cargo jobs, MemoryMax4G scopes, m12-hints-target and outer
+ target/suss. The final source also passes Java-free scripts/verify-bootstrap.sh
+(two phases byte-exact plus4 execution tests), actual Binaryen133 optimization2,
+and the reviewed vendored-suite comparison1. The complete observations are gzip
+with compressed/uncompressed hashes; known failures remain known failures.
+Core recipes, generated source/manifest and compatibility review dependencies/tests
+are regenerated together. Captured primitive return/recur checks, further escape
+elimination and the full numeric tower remain outside this evidence; no new quiet
+benchmark ratio or current-source full-workspace result is inferred.
+
+The earlier frozen division source1507 full command
+cargo +stable test --workspace --locked -- --test-threads=2 exits0:2263 passed,
+14 existing ignores (10 legacy awaiting compiled support,3 recording,1 doc
+example). results/m12-division-overloads/full-workspace-1507.* retains the complete
+log and exact ignored names. That source predates local-hint/cache/extrema changes.
+
 ## Source numeric overload conversion probes (2026-11-21)
 
 results/m12-local-hints/overload-selection retains fresh JVM1.12.6 value assertions,
@@ -29,8 +70,9 @@ clojure_test_suite_matches_reviewed_baseline one pass (220.54s). The complete
 suite observations are retained as gzip with compressed/uncompressed hashes.
 That comparison preserves the reviewed known failures, not full conformance;
 these gates precede the later overload patch. No new full-workspace or quiet-timing
-result is claimed. max/min source overloads and capture-aware primitive
-return/recur checks require further work.
+result is claimed. At that snapshot, max/min source overloads and capture-aware primitive
+return/recur checks still required further work; the later extrema probes above
+supersede the max/min limitation with their stated scope.
 
 ## Lazy numeric box reuse measurements (2026-11-21)
 

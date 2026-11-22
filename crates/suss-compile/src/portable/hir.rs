@@ -12,6 +12,7 @@ mod collections;
 mod comparisons;
 mod controls;
 mod division_overloads;
+mod extrema;
 mod local_hints;
 mod dynamic;
 mod namespaces;
@@ -285,6 +286,14 @@ pub enum Bitwise {
     UncheckedSubtract,
     UncheckedMultiply,
     UncheckedNegate,
+    /// Source max/min distinguish primitive double/double Math operations,
+    /// primitive long/long results, and Object-returning overloads (#337).
+    Max,
+    Min,
+    LongMax,
+    LongMin,
+    DoubleMax,
+    DoubleMin,
     LongTest,
     DoubleTest,
     /// Private Java `(long)` narrowing of a number, for counts computed with
@@ -393,6 +402,10 @@ impl Bitwise {
             Self::UncheckedSubtract => "number-unchecked-subtract",
             Self::UncheckedMultiply => "number-unchecked-multiply",
             Self::UncheckedNegate => "number-unchecked-negate",
+            Self::Max | Self::LongMax => "number-max",
+            Self::Min | Self::LongMin => "number-min",
+            Self::DoubleMax => "number-double-max",
+            Self::DoubleMin => "number-double-min",
             Self::LongTest => "number-long?",
             Self::DoubleTest => "number-double?",
             Self::ToLong => "number-to-long",
@@ -3427,6 +3440,8 @@ impl Analyzer<'_> {
                 "unchecked-subtract" => Some(Bitwise::UncheckedSubtract),
                 "unchecked-multiply" => Some(Bitwise::UncheckedMultiply),
                 "unchecked-negate" => Some(Bitwise::UncheckedNegate),
+                "max" => Some(Bitwise::Max),
+                "min" => Some(Bitwise::Min),
                 "long?" => Some(Bitwise::LongTest),
                 "double?" => Some(Bitwise::DoubleTest),
                 "to-long" => Some(Bitwise::ToLong),

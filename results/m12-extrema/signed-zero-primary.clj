@@ -1,0 +1,5 @@
+(assert (= "1.12.6" (clojure-version)))
+(let [source "(max 0.0 -0.0)" expected "0.0" actual (pr-str (eval (read-string source)))] (prn source actual) (assert (= expected actual)))
+(let [source "(min -0.0 0.0)" expected "-0.0" actual (pr-str (eval (read-string source)))] (prn source actual) (assert (= expected actual)))
+(let [source "((identity max) 0.0 -0.0)" expected "-0.0" actual (pr-str (eval (read-string source)))] (prn source actual) (assert (= expected actual)))
+(let [source "((identity min) -0.0 0.0)" expected "0.0" actual (pr-str (eval (read-string source)))] (prn source actual) (assert (= expected actual)))

@@ -1,0 +1,723 @@
+diff --git a/crates/suss-compile/src/portable/emit/unboxed.rs b/crates/suss-compile/src/portable/emit/unboxed.rs
+index d4b70687..39fc0dab 100644
+--- a/crates/suss-compile/src/portable/emit/unboxed.rs
++++ b/crates/suss-compile/src/portable/emit/unboxed.rs
+@@ -169,6 +169,25 @@ fn raw_int32(operation: Bitwise, count: usize) -> Option<Instruction<'static>> {
+     })
+ }
+ fn bitwise(operation: Bitwise, arguments: &[Lattice]) -> Lattice {
++    if matches!(operation, Bitwise::DoubleMax | Bitwise::DoubleMin) {
++        // The boxed helper also returns a double, independently of its
++        // operand representations; conversion errors still take that helper.
++        return Lattice::Known(Repr::Double);
++    }
++    if matches!(operation, Bitwise::Max | Bitwise::Min | Bitwise::LongMax | Bitwise::LongMin) {
++        let mut kind = None;
++        for argument in arguments {
++            match argument {
++                Lattice::Top => {},
++                Lattice::Known(repr @ (Repr::Long | Repr::Double)) => {
++                    if kind.is_some_and(|kind| kind != *repr) { return Lattice::Known(Repr::Boxed); }
++                    kind = Some(*repr);
++                }
++                _ => return Lattice::Known(Repr::Boxed),
++            }
++        }
++        return kind.map_or(Lattice::Top, Lattice::Known);
++    }
+     // ToInt32 produces a long or throws even when its input is boxed. Keep
+     // that result fact without bypassing the boxed operand conversions.
+     if raw_int32(operation, arguments.len()).is_some() {
+@@ -1014,7 +1033,9 @@ impl Locals {
+     /// flag; Wasm masks the shift count to six bits, as Java's long shift does.
+     pub(super) fn bitwise(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId, slow: u32) {
+         use Instruction::*;
+-        if raw_int32(operation, arguments.len()).is_some() {
++        if raw_int32(operation, arguments.len()).is_some()
++            || matches!(operation, Bitwise::DoubleMax | Bitwise::DoubleMin)
++        {
+             let inputs = arguments.iter().filter(|value| self.of(**value).maybe()).collect::<Vec<_>>();
+             if !inputs.is_empty() {
+                 for (i, input) in inputs.iter().enumerate() {
+@@ -1026,7 +1047,10 @@ impl Locals {
+                 code.push(Else);
+                 for argument in arguments { self.push_boxed(code, *argument); }
+                 code.extend([Call(slow), LocalSet(self.boxed(result))]);
+-                self.unbox_long(code, result);
++                if self.of(result) == Repr::Double {
++                    code.extend([LocalGet(self.boxed(result)), RefCastNonNull(HeapType::Concrete(runtime_abi::NUMBER)),
++                        StructGet { struct_type_index: runtime_abi::NUMBER, field_index: 0 }, LocalSet(self.raw(result))]);
++                } else { self.unbox_long(code, result); }
+                 code.push(End);
+                 return;
+             }
+@@ -1034,6 +1058,35 @@ impl Locals {
+         self.bitwise_raw(code, operation, arguments, result);
+     }
+     fn bitwise_raw(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId) {
++        use Instruction::*;
++        if matches!(operation, Bitwise::Max | Bitwise::Min | Bitwise::LongMax | Bitwise::LongMin
++            | Bitwise::DoubleMax | Bitwise::DoubleMin)
++        {
++            let kind = self.of(result);
++            let (left, right) = (arguments[0], arguments[1]);
++            if matches!(operation, Bitwise::DoubleMax | Bitwise::DoubleMin) {
++                self.push_as(code, left, Repr::Double);
++                self.push_as(code, right, Repr::Double);
++                code.push(if operation == Bitwise::DoubleMax { F64Max } else { F64Min });
++            } else {
++                let maximum = matches!(operation, Bitwise::Max | Bitwise::LongMax);
++                code.extend([LocalGet(self.raw(left)), LocalGet(self.raw(right))]);
++                if kind == Repr::Double {
++                    // Generic Object calls keep the first NaN, then the
++                    // second, and otherwise select the second value on ties.
++                    code.extend([LocalGet(self.raw(left)), LocalGet(self.raw(right)),
++                        if maximum { F64Gt } else { F64Lt },
++                        LocalGet(self.raw(right)), LocalGet(self.raw(right)), F64Ne, I32Eqz, I32And,
++                        LocalGet(self.raw(left)), LocalGet(self.raw(left)), F64Ne, I32Or]);
++                } else {
++                    code.extend([LocalGet(self.raw(left)), LocalGet(self.raw(right)),
++                        if maximum { I64GtS } else { I64LtS }]);
++                }
++                code.push(Select);
++            }
++            code.push(LocalSet(self.raw(result)));
++            return;
++        }
+         if let Some(operation_code) = raw_int32(operation, arguments.len()) {
+             for argument in arguments {
+                 code.extend([Instruction::LocalGet(self.raw(*argument)), Instruction::I32WrapI64]);
+@@ -1103,6 +1156,9 @@ pub(super) fn raw_small(locals: &Locals, instruction: &ir::Instruction) -> bool
+ 
+ /// Whether an instruction is emitted inline on raw values.
+ pub(super) fn inline(locals: &Locals, instruction: &ir::Instruction) -> bool {
++    if let Operation::Bitwise { operation: Bitwise::DoubleMax | Bitwise::DoubleMin, arguments } = &instruction.operation
++        && arguments.iter().any(|argument| !locals.of(*argument).definite().numeric())
++    { return false; }
+     if let Operation::Bitwise { operation, arguments } = &instruction.operation
+         && raw_int32(*operation, arguments.len()).is_some()
+         && arguments.iter().any(|argument| locals.of(*argument).definite() != Repr::Long)
+diff --git a/crates/suss-compile/src/portable/hir.rs b/crates/suss-compile/src/portable/hir.rs
+index 49b13661..36cbe0b6 100644
+--- a/crates/suss-compile/src/portable/hir.rs
++++ b/crates/suss-compile/src/portable/hir.rs
+@@ -12,6 +12,7 @@ mod collections;
+ mod comparisons;
+ mod controls;
+ mod division_overloads;
++mod extrema;
+ mod local_hints;
+ mod dynamic;
+ mod namespaces;
+@@ -285,6 +286,14 @@ pub enum Bitwise {
+     UncheckedSubtract,
+     UncheckedMultiply,
+     UncheckedNegate,
++    /// Source max/min distinguish primitive double/double Math operations,
++    /// primitive long/long results, and Object-returning overloads (#337).
++    Max,
++    Min,
++    LongMax,
++    LongMin,
++    DoubleMax,
++    DoubleMin,
+     LongTest,
+     DoubleTest,
+     /// Private Java `(long)` narrowing of a number, for counts computed with
+@@ -393,6 +402,10 @@ impl Bitwise {
+             Self::UncheckedSubtract => "number-unchecked-subtract",
+             Self::UncheckedMultiply => "number-unchecked-multiply",
+             Self::UncheckedNegate => "number-unchecked-negate",
++            Self::Max | Self::LongMax => "number-max",
++            Self::Min | Self::LongMin => "number-min",
++            Self::DoubleMax => "number-double-max",
++            Self::DoubleMin => "number-double-min",
+             Self::LongTest => "number-long?",
+             Self::DoubleTest => "number-double?",
+             Self::ToLong => "number-to-long",
+@@ -3427,6 +3440,8 @@ impl Analyzer<'_> {
+                 "unchecked-subtract" => Some(Bitwise::UncheckedSubtract),
+                 "unchecked-multiply" => Some(Bitwise::UncheckedMultiply),
+                 "unchecked-negate" => Some(Bitwise::UncheckedNegate),
++                "max" => Some(Bitwise::Max),
++                "min" => Some(Bitwise::Min),
+                 "long?" => Some(Bitwise::LongTest),
+                 "double?" => Some(Bitwise::DoubleTest),
+                 "to-long" => Some(Bitwise::ToLong),
+diff --git a/crates/suss-compile/src/portable/hir/division_overloads.rs b/crates/suss-compile/src/portable/hir/division_overloads.rs
+index b74e029e..923263a5 100644
+--- a/crates/suss-compile/src/portable/hir/division_overloads.rs
++++ b/crates/suss-compile/src/portable/hir/division_overloads.rs
+@@ -28,9 +28,9 @@ pub(super) fn annotate(
+ }
+ 
+ #[derive(Clone, Copy, Default)]
+-struct Features { division: bool, hints: bool }
++struct Features { division: bool, hints: bool, extrema: bool }
+ impl Features {
+-    fn include(&mut self, other: Self) { self.division |= other.division; self.hints |= other.hints; }
++    fn include(&mut self, other: Self) { self.division |= other.division; self.hints |= other.hints; self.extrema |= other.extrema; }
+ }
+ 
+ struct Pass<'a> {
+@@ -85,13 +85,17 @@ impl Pass<'_> {
+             }
+         })?;
+         needed.hints |= primitive_returns::numeric_hint(&hir.metadata, &hir.span, self.meter)?.is_some();
++        needed.extrema |= extrema::is_call(hir);
+         self.needed.insert(key, needed);
+         Ok(needed)
+     }
+ 
+     fn walk(&mut self, hir: &mut Hir, facts: &mut SourceFacts) -> Result<(), Diagnostic> {
+         (self.meter)(1)?;
+-        if !self.hints && !self.features(hir)?.division { return Ok(()); }
++        if !self.hints {
++            let needed = self.features(hir)?;
++            if !needed.division && !needed.extrema { return Ok(()); }
++        }
+         let key = Arc::as_ptr(&hir.kind) as usize;
+         if let Some((rewritten, ty)) = self.rewritten.get(&key) {
+             hir.kind = rewritten.clone();
+@@ -100,6 +104,7 @@ impl Pass<'_> {
+         }
+         stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
+             if self.hints && !self.validate_only { local_hints::inline(hir, facts, self.meter)?; }
++            if !self.validate_only { extrema::inline(hir, facts, self.meter)?; }
+             // Generated nary comparison pairs are calls on Object temporaries,
+             // not Clojure's binary :inline overloads.
+             let source_comparison = hir.source.is_some();
+diff --git a/crates/suss-compile/src/portable/hir/primitive_returns.rs b/crates/suss-compile/src/portable/hir/primitive_returns.rs
+index 4d40f95e..7784bf61 100644
+--- a/crates/suss-compile/src/portable/hir/primitive_returns.rs
++++ b/crates/suss-compile/src/portable/hir/primitive_returns.rs
+@@ -201,6 +201,13 @@ fn infer(
+                     | "bit-shift-left" | "bit-shift-right" | "unsigned-bit-shift-right", _) =>
+                     bitwise_result(arguments, bindings, meter, loops)?,
+                 ("+" | "*" | "/", 1) | ("-" | "/", 0) => Boxed,
++                ("max" | "min", count) if count > 1 && extrema::is_call(hir) => {
++                    let mut kind = class_in(&arguments[0], bindings, meter, loops)?;
++                    for argument in &arguments[1..] {
++                        kind = extrema::result(kind, class_in(argument, bindings, meter, loops)?);
++                    }
++                    kind
++                }
+                 ("+" | "-" | "*" | "/" | "quot" | "rem", _) => {
+                     let mut kinds = Vec::with_capacity(arguments.len());
+                     for argument in arguments.iter() { kinds.push(class_in(argument, bindings, meter, loops)?); }
+@@ -289,6 +296,8 @@ fn infer(
+                 if array_kind(&arguments[0], meter)?.is_some() { Int } else { Boxed },
+             Expression::NilTest(_) | Expression::Comparison { .. } => Boolean,
+             Expression::Bitwise { operation, arguments } => match operation {
++                Bitwise::LongMax | Bitwise::LongMin => Long,
++                Bitwise::DoubleMax | Bitwise::DoubleMin => Double,
+                 Bitwise::Int => Int,
+                 Bitwise::And | Bitwise::Or | Bitwise::Xor | Bitwise::AndNot | Bitwise::Not
+                 | Bitwise::Left | Bitwise::Right | Bitwise::Unsigned =>
+diff --git a/crates/suss-compile/src/runtime_abi.rs b/crates/suss-compile/src/runtime_abi.rs
+index 07b0f129..b8333404 100644
+--- a/crates/suss-compile/src/runtime_abi.rs
++++ b/crates/suss-compile/src/runtime_abi.rs
+@@ -14,6 +14,7 @@ mod closure_calls;
+ mod closure_properties;
+ mod coercions;
+ mod comparisons;
++mod extrema;
+ mod dynamic;
+ mod error_constructors;
+ mod error_properties;
+@@ -1871,6 +1872,7 @@ fn build_module() -> Vec<u8> {
+     error_constructors::canonical_test_function(&mut b);
+     numeric::intrinsics(&mut b, numeric_info, coercion_types);
+     let primitives = numeric_operands::intrinsics(&mut b);
++    extrema::intrinsics(&mut b);
+     bitwise::intrinsics(&mut b);
+     numeric_hash::intrinsics(&mut b);
+     identity_hash::intrinsics(&mut b);
+diff --git a/crates/suss-compile/src/runtime_abi/numeric_operands.rs b/crates/suss-compile/src/runtime_abi/numeric_operands.rs
+index fd9d2eb0..86fc05a4 100644
+--- a/crates/suss-compile/src/runtime_abi/numeric_operands.rs
++++ b/crates/suss-compile/src/runtime_abi/numeric_operands.rs
+@@ -4,7 +4,7 @@
+ use super::*;
+ 
+ /// Throw unless both (or the only) operands are numbers.
+-fn require_numbers(b: &Builder, code: &mut Vec<Instruction<'static>>, symbol: &str, operands: u32) {
++pub(super) fn require_numbers(b: &Builder, code: &mut Vec<Instruction<'static>>, symbol: &str, operands: u32) {
+     use Instruction::*;
+     let test = b.names["number-test"];
+     code.extend([LocalGet(0), Call(test)]);
+diff --git a/crates/suss-compile/tests/portable_unboxed_locals.rs b/crates/suss-compile/tests/portable_unboxed_locals.rs
+index 6820e90b..e288c028 100644
+--- a/crates/suss-compile/tests/portable_unboxed_locals.rs
++++ b/crates/suss-compile/tests/portable_unboxed_locals.rs
+@@ -96,6 +96,77 @@ fn checked_long_of_a_raw_double_calls_only_when_out_of_range() {
+     }
+ }
+ 
++fn extrema_component(bytes: &[u8]) -> (wasmtime::Store<()>, wasmtime::component::Instance) {
++    use std::sync::OnceLock;
++    use wasmtime::{Config, Engine, Store};
++    use wasmtime::component::{Component, Linker};
++    static ENGINE: OnceLock<Engine> = OnceLock::new();
++    let engine = ENGINE.get_or_init(|| {
++        let mut config = Config::new();
++        config.wasm_gc(true).wasm_function_references(true).wasm_tail_call(true)
++            .wasm_exceptions(true).wasm_component_model(true).wasm_component_model_implements(true)
++            .consume_fuel(true).cranelift_opt_level(wasmtime::OptLevel::None);
++        Engine::new(&config).unwrap()
++    });
++    let component = Component::new(engine, bytes).unwrap();
++    let mut store = Store::new(engine, ());
++    store.set_fuel(500_000_000).unwrap();
++    let instance = Linker::new(engine).instantiate(&mut store, &component).unwrap();
++    (store, instance)
++}
++
++#[test]
++fn long_extrema_loop_stays_raw_and_executes_the_inspected_component() {
++    let source = "(defn ^:export bound [] (loop [i 0 acc 0]
++      (if (< i 1234573) (recur (inc i) (max acc (min i 100))) acc)))";
++    let bytes = Compiler::new().compile(source,
++        "package test:extrema; world api { export bound: func() -> s64; }").unwrap();
++    for operators in functions_with(&bytes, 1234573) {
++        let calls = (0..operators.len()).filter(|&i| matches!(operators[i], Operator::Call { .. })).collect::<Vec<_>>();
++        assert_eq!(calls.len(), 1, "only inc's throwing path calls: {operators:?}");
++        assert!(throwing_call(&operators, calls[0]));
++        assert!(operators.iter().filter(|op| matches!(op, Operator::Select)).count() >= 2);
++        // Every allocation either feeds inc's error or immediately returns.
++        for (index, op) in operators.iter().enumerate() {
++            if !matches!(op, Operator::StructNew { .. }) { continue; }
++            let end = operators[index..].iter().position(|op| matches!(op, Operator::Call { .. } | Operator::Return))
++                .map(|offset| index + offset).unwrap();
++            assert!(!operators[index..end].iter().any(|op| matches!(op, Operator::Br { .. } | Operator::BrIf { .. })));
++            assert!(matches!(operators[end], Operator::Return) || throwing_call(&operators, end));
++        }
++    }
++    let (mut store, instance) = extrema_component(&bytes);
++    let run = instance.get_typed_func::<(), (i64,)>(&mut store, "bound").unwrap();
++    assert_eq!(run.call(&mut store, ()).unwrap().0, 100);
++    run.post_return(&mut store).unwrap();
++}
++
++#[test]
++fn double_extrema_loop_stays_raw_and_executes_the_inspected_component() {
++    let source = "(defn ^:export bound [] (loop [i 0 acc -0.0]
++      (if (< i 1234575) (recur (inc i) (max acc (min (double i) 0.0))) acc)))";
++    let bytes = Compiler::new().compile(source,
++        "package test:extrema; world api { export bound: func() -> f64; }").unwrap();
++    for operators in functions_with(&bytes, 1234575) {
++        assert!(operators.iter().any(|op| matches!(op, Operator::F64Max)));
++        assert!(operators.iter().any(|op| matches!(op, Operator::F64Min)));
++        let calls = (0..operators.len()).filter(|&i| matches!(operators[i], Operator::Call { .. })).collect::<Vec<_>>();
++        assert_eq!(calls.len(), 1, "only inc's throwing path calls: {operators:?}");
++        assert!(throwing_call(&operators, calls[0]));
++        for (index, op) in operators.iter().enumerate() {
++            if !matches!(op, Operator::StructNew { .. }) { continue; }
++            let end = operators[index..].iter().position(|op| matches!(op, Operator::Call { .. } | Operator::Return))
++                .map(|offset| index + offset).unwrap();
++            assert!(!operators[index..end].iter().any(|op| matches!(op, Operator::Br { .. } | Operator::BrIf { .. })));
++            assert!(matches!(operators[end], Operator::Return) || throwing_call(&operators, end));
++        }
++    }
++    let (mut store, instance) = extrema_component(&bytes);
++    let run = instance.get_typed_func::<(), (f64,)>(&mut store, "bound").unwrap();
++    assert_eq!(run.call(&mut store, ()).unwrap().0.to_bits(), 0.0_f64.to_bits());
++    run.post_return(&mut store).unwrap();
++}
++
+ fn check_sum_loop(operators: &[Operator]) {
+     // The loop's two additions each have a throwing path; nothing else calls.
+     let calls = (0..operators.len())
+diff --git a/docs/compatibility/patches/expression-max.json b/docs/compatibility/patches/expression-max.json
+index 4cdac2dc..69941060 100644
+--- a/docs/compatibility/patches/expression-max.json
++++ b/docs/compatibility/patches/expression-max.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": 1,
+   "source-sha256": "57789ce1db49c2ea5760853c2f0e5ea98f85514f0b13fbcf4ea19a1f92e82885",
+-  "replacement": "(def ^number max\n\"Returns the greatest of the nums.\"\n(fn ([x] x)\n  ([x y]\n   (if (and (suss.bootstrap/number? x) (suss.bootstrap/number? y))\n     (cond\n       (NaN? x) x\n       (NaN? y) y\n       (> x y) x\n       :else y)\n     (throw (suss.bootstrap/error \"max requires number operands\"))))\n  ([x y & more]\n   (reduce max (cljs.core/max x y) more))))",
+-  "rationale": "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus. Clojure numeric functions reject non-number operands (#286): the operands are checked first, and a non-number throws a language error naming the function instead of coercing."
++  "replacement": "(def ^number max\n\"Returns the greatest of the nums.\"\n(fn ([x] x)\n  ([x y] (suss.bootstrap/max x y))\n  ([x y & more]\n   (reduce max (suss.bootstrap/max x y) more))))",
++  "rationale": "Retain the pinned declaration metadata, documentation and signatures, with original scalar lowering following JVM Clojure 1.12.6 core.clj and Numbers.java (EPL 1.0, https://github.com/clojure/clojure/tree/clojure-1.12.6). Boxed Object overloads propagate NaN before checking the other operand, preserve the chosen argument type and select the second value on ties; primitive double/double source calls separately use IEEE signed-zero min/max. No upstream Java code is copied or shipped. Public compatibility remains in progress; executed inline/boxed, primitive return and evaluation-order evidence is in results/m12-extrema and clojure_numeric_extrema.rs."
+ }
+diff --git a/docs/compatibility/patches/expression-min.json b/docs/compatibility/patches/expression-min.json
+index ab381284..c4a2db2c 100644
+--- a/docs/compatibility/patches/expression-min.json
++++ b/docs/compatibility/patches/expression-min.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": 1,
+   "source-sha256": "818bb4159df03778f744249e72befe75e3c6af92542d4b1f7008e4b18c4eecbe",
+-  "replacement": "(def ^number min\n\"Returns the least of the nums.\"\n(fn ([x] x)\n  ([x y]\n   (if (and (suss.bootstrap/number? x) (suss.bootstrap/number? y))\n     (cond\n       (NaN? x) x\n       (NaN? y) y\n       (< x y) x\n       :else y)\n     (throw (suss.bootstrap/error \"min requires number operands\"))))\n  ([x y & more]\n   (reduce min (cljs.core/min x y) more))))",
+-  "rationale": "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus. Clojure numeric functions reject non-number operands (#286): the operands are checked first, and a non-number throws a language error naming the function instead of coercing."
++  "replacement": "(def ^number min\n\"Returns the least of the nums.\"\n(fn ([x] x)\n  ([x y] (suss.bootstrap/min x y))\n  ([x y & more]\n   (reduce min (suss.bootstrap/min x y) more))))",
++  "rationale": "Retain the pinned declaration metadata, documentation and signatures, with original scalar lowering following JVM Clojure 1.12.6 core.clj and Numbers.java (EPL 1.0, https://github.com/clojure/clojure/tree/clojure-1.12.6). Boxed Object overloads propagate NaN before checking the other operand, preserve the chosen argument type and select the second value on ties; primitive double/double source calls separately use IEEE signed-zero min/max. No upstream Java code is copied or shipped. Public compatibility remains in progress; executed inline/boxed, primitive return and evaluation-order evidence is in results/m12-extrema and clojure_numeric_extrema.rs."
+ }
+diff --git a/docs/compatibility/reviews.edn b/docs/compatibility/reviews.edn
+index cfaef34e..bee3284b 100644
+--- a/docs/compatibility/reviews.edn
++++ b/docs/compatibility/reviews.edn
+@@ -4350,24 +4350,24 @@
+   {:source-sha256 "57789ce1db49c2ea5760853c2f0e5ea98f85514f0b13fbcf4ea19a1f92e82885"
+    :visibility :public
+    :arities {:fixed [1 2] :variadic-min 2}
+-   :dependencies ["NaN?" ">" "reduce" "max"]
++   :dependencies ["suss.bootstrap/max numeric Object overload" "reduce" "max"]
+    :classification :adapted
+-   :rationale "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus."
++   :rationale "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature. The scalar helper follows fresh JVM Clojure 1.12.6 Numbers.max/min Object overloads: NaN propagation precedes other-operand checks and ties preserve the second argument. Source primitive overloads are selected separately; no Java code is shipped. Public compatibility remains in progress."
+    :status :in-progress
+    :adaptation-path "docs/compatibility/patches/expression-max.json"
+    :alternative nil
+-   :tests ["crates/suss-compile/tests/portable_expression_conformance.rs"]}
++   :tests ["crates/suss-compile/tests/portable_expression_conformance.rs" "crates/suss-cli/tests/clojure_numeric_extrema.rs"]}
+   "runtime:min:2829"
+   {:source-sha256 "818bb4159df03778f744249e72befe75e3c6af92542d4b1f7008e4b18c4eecbe"
+    :visibility :public
+    :arities {:fixed [1 2] :variadic-min 2}
+-   :dependencies ["NaN?" "<" "reduce" "min"]
++   :dependencies ["suss.bootstrap/min numeric Object overload" "reduce" "min"]
+    :classification :adapted
+-   :rationale "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature and source branch. Public core compatibility remains in progress; this is a prerequisite for the unchanged compiled expression corpus."
++   :rationale "Explicit defn-to-def/fn bootstrap retains the pinned declaration metadata, documentation, every signature. The scalar helper follows fresh JVM Clojure 1.12.6 Numbers.max/min Object overloads: NaN propagation precedes other-operand checks and ties preserve the second argument. Source primitive overloads are selected separately; no Java code is shipped. Public compatibility remains in progress."
+    :status :in-progress
+    :adaptation-path "docs/compatibility/patches/expression-min.json"
+    :alternative nil
+-   :tests ["crates/suss-compile/tests/portable_expression_conformance.rs"]}
++   :tests ["crates/suss-compile/tests/portable_expression_conformance.rs" "crates/suss-cli/tests/clojure_numeric_extrema.rs"]}
+   "runtime:even?:4444"
+   {:source-sha256 "bd00f047245484ff36abd6e6b3a7e5dabfebf825a44ce335dafadf3b66c63460"
+    :visibility :public
+diff --git a/runtime/core-import/manifest.json b/runtime/core-import/manifest.json
+index 3de11532..a9a62093 100644
+--- a/runtime/core-import/manifest.json
++++ b/runtime/core-import/manifest.json
+@@ -9,7 +9,7 @@
+   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
+   "recipe": "docs/compatibility/core-import.json",
+   "recipe-sha256": "75c02a197fe3f11e9e64aa35669c2689f99468f0e298ec576734af9d27801430",
+-  "reviews-sha256": "fefd947d0ea5a257a7202f046a8c847926f7ebd1e6b93d3044b25027be3f05ca",
++  "reviews-sha256": "c8baa6f567b96a89f27d02bf1655a2ce4b7436a5dcd20c5424862a5f049a5f13",
+   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
+   "forms": [
+     {
+@@ -8903,19 +8903,19 @@
+       "extracted": "extracted/0287.cljs",
+       "extracted-sha256": "eea7173fae2db63890b68ad9229d58ac5335a366c4a82aed66da4ec6d64a50a8",
+       "patch": "docs/compatibility/patches/expression-max.json",
+-      "patch-sha256": "e6e7ed84459a4d68473b43fd76eefeef81f21ef7a50b7b82a76703dda60fb1f2",
+-      "adapted-form-sha256": "31bd15cff8aacb74e55098f1e755066e252c201f52525bb9c5c255aaa1ab9d97",
++      "patch-sha256": "becd0071fab309d3755424ff18d759713bb2834f24fdc344802807c9aff3938f",
++      "adapted-form-sha256": "05902ce115e1bfe5b25396e4f96c93dd0ac229ac7128a4067520d72558aea319",
+       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+       "review-classification": ":adapted",
+       "review-status": ":in-progress",
+       "dependencies": [
+-        "NaN?",
+-        ">",
++        "suss.bootstrap/max numeric Object overload",
+         "reduce",
+         "max"
+       ],
+       "semantic-tests": [
+-        "crates/suss-compile/tests/portable_expression_conformance.rs"
++        "crates/suss-compile/tests/portable_expression_conformance.rs",
++        "crates/suss-cli/tests/clojure_numeric_extrema.rs"
+       ]
+     },
+     {
+@@ -8934,19 +8934,19 @@
+       "extracted": "extracted/0288.cljs",
+       "extracted-sha256": "63605221456b85dc7a12c299010f37d71dfa839787b97148efcaf097a204a8c6",
+       "patch": "docs/compatibility/patches/expression-min.json",
+-      "patch-sha256": "ace8ffb709161498ddfe9942cbb45898a6727dc574ab4d35e4b5651ce3e1fdf8",
+-      "adapted-form-sha256": "aa9bd578ddcdc901de45a9cf092c773f25da4527de4c3a573c4b774892b4b864",
++      "patch-sha256": "293f72269375c86fdd43fc1146cb05921ab49cd7be2176307f52f3e17e418985",
++      "adapted-form-sha256": "195b46daac59fd15e39a988de263d112ca4105d0ec7e00d0aed4d243d016e764",
+       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
+       "review-classification": ":adapted",
+       "review-status": ":in-progress",
+       "dependencies": [
+-        "NaN?",
+-        "<",
++        "suss.bootstrap/min numeric Object overload",
+         "reduce",
+         "min"
+       ],
+       "semantic-tests": [
+-        "crates/suss-compile/tests/portable_expression_conformance.rs"
++        "crates/suss-compile/tests/portable_expression_conformance.rs",
++        "crates/suss-cli/tests/clojure_numeric_extrema.rs"
+       ]
+     },
+     {
+@@ -16093,6 +16093,6 @@
+     "extracted/0501.cljs": "02b4047a3496243c5528041564a9f8ded2f3aae951be387e8779ab0e956464c3",
+     "extracted/0502.cljs": "d42068d54f1844f88abb73548a3a554a3cc1f5af315fd590533b4fd80de350ec",
+     "extracted/0503.cljs": "072c8a681fd905767f56c48e6c3529b99e9d5f537def64cb299f5bac29c7c59b",
+-    "suss/core.sus": "92bc717a850410230948328a48c12f5dfe34c173f2b3f42b12d4093d0a1da67a"
++    "suss/core.sus": "f3d3a6bfc3de5c2194fda7917ef8dacbce7956aecd7169a482c6fcef3b56c99b"
+   }
+ }
+diff --git a/runtime/core-import/suss/core.sus b/runtime/core-import/suss/core.sus
+index ba484136..6e61f065 100644
+--- a/runtime/core-import/suss/core.sus
++++ b/runtime/core-import/suss/core.sus
+@@ -5387,30 +5387,16 @@
+ (def ^number max
+ "Returns the greatest of the nums."
+ (fn ([x] x)
+-  ([x y]
+-   (if (and (suss.bootstrap/number? x) (suss.bootstrap/number? y))
+-     (cond
+-       (NaN? x) x
+-       (NaN? y) y
+-       (> x y) x
+-       :else y)
+-     (throw (suss.bootstrap/error "max requires number operands"))))
++  ([x y] (suss.bootstrap/max x y))
+   ([x y & more]
+-   (reduce max (cljs.core/max x y) more))))
++   (reduce max (suss.bootstrap/max x y) more))))
+ 
+ (def ^number min
+ "Returns the least of the nums."
+ (fn ([x] x)
+-  ([x y]
+-   (if (and (suss.bootstrap/number? x) (suss.bootstrap/number? y))
+-     (cond
+-       (NaN? x) x
+-       (NaN? y) y
+-       (< x y) x
+-       :else y)
+-     (throw (suss.bootstrap/error "min requires number operands"))))
++  ([x y] (suss.bootstrap/min x y))
+   ([x y & more]
+-   (reduce min (cljs.core/min x y) more))))
++   (reduce min (suss.bootstrap/min x y) more))))
+ 
+ (def even?
+ "Returns true if n is even, throws an exception if n is not an integer"
+diff --git a/crates/suss-cli/tests/clojure_numeric_extrema.rs b/crates/suss-cli/tests/clojure_numeric_extrema.rs
+new file mode 100644
+index 00000000..539505cd
+--- /dev/null
++++ b/crates/suss-cli/tests/clojure_numeric_extrema.rs
+@@ -0,0 +1,114 @@
++//! Clojure max/min source overloads, boxed calls, signed zero and effect order.
++use suss_cli::portable_session::Session;
++const DEFINITIONS: &str = "";
++const CASES: &[(&str, &str)] = &[
++    ("(let [^long x (identity 5.5)] [x (max x 1) (min x 1) (max x) (min x) (max x 1 2)])", "[5.5 5 1 5.5 5.5 5]"),
++    ("(let [^double x (identity 5)] [x (max x 1.0) (min x 6.0) (max x 6) (min x 6)])", "[5 5.0 5.0 6 5.0]"),
++    ("(let [^double x (identity -0.0)] [(/ 1.0 (max x 0.0)) (/ 1.0 (max 0.0 x)) (/ 1.0 (min x 0.0)) (/ 1.0 (min 0.0 x))])", "[##Inf ##Inf ##-Inf ##-Inf]"),
++    ("(let [^double x (identity -0.0)] [(/ 1.0 (max x (identity 0.0))) (/ 1.0 (max (identity 0.0) x)) (/ 1.0 (min x (identity 0.0))) (/ 1.0 (min (identity 0.0) x))])", "[##Inf ##-Inf ##Inf ##-Inf]"),
++    ("(let [f (identity max) g (identity min)] [(/ 1.0 (f -0.0 0.0)) (/ 1.0 (f 0.0 -0.0)) (/ 1.0 (g -0.0 0.0)) (/ 1.0 (g 0.0 -0.0))])", "[##Inf ##-Inf ##Inf ##-Inf]"),
++    ("(let [^long x (identity 5.5) ^double y (identity 6)] [(max x y) (min x y) (max x (identity 6)) (min x (identity 6))])", "[6.0 5 6 5]"),
++    ("(let [^long x (identity 5.5)] [(max x 6) (max x 6.0) (max x 1 2.0) (min x 6.0) (max x 1 6) (min x 6 1) (max x (identity 6) 7.0)])", "[6 6.0 5 5 6 1 7.0]"),
++    ("(let [^long x (identity 1.0E30) events (atom [])] [(try (max x 1 (do (swap! events conj :later) 1)) (catch :default e :cast-error)) @events])", "[:cast-error []]"),
++    ("(let [^long x (identity 1.0E30) events (atom [])] [(try (min x 1 (do (swap! events conj :later) 1)) (catch :default e :cast-error)) @events])", "[:cast-error []]"),
++    ("[((fn ^long [] (max 1 2.0))) ((fn ^double [] (max 1))) ((fn ^long [] (min 1.5)))]", "[2 1.0 1]"),
++    ("(let [^double x (identity ##NaN)] [(max x 1.0) (min 1.0 x) (max x (identity 1)) (min (identity 1) x)])", "[##NaN ##NaN ##NaN ##NaN]"),
++    ("(let [f (identity max) g (identity min)] [(max nil ##NaN) (min ##NaN nil) (f nil ##NaN) (g ##NaN nil)])", "[##NaN ##NaN ##NaN ##NaN]"),
++    ("(let [^long x (identity 5.5) ^double y (identity ##NaN)] [(max x y) (min y x) (max x (identity ##NaN)) (min (identity ##NaN) x)])", "[##NaN ##NaN ##NaN ##NaN]"),
++    ("[(max 9007199254740993 9007199254740995) (min 9007199254740993 9007199254740995) (max 9007199254740993 9007199254740992.0) (min 9007199254740992.0 9007199254740993)]", "[9007199254740995 9007199254740993 9.007199254740992E15 9007199254740993]"),
++    ("(let [f (identity max) g (identity min)] [(try (max :x 1) (catch :default e :error)) (try (f :x 1) (catch :default e :error)) (try (min 1 nil) (catch :default e :error)) (try (g 1 nil) (catch :default e :error))])", "[:error :error :error :error]"),
++    ("(with-redefs [max (fn [a b] :replaced)] [(max 1 2) ((identity max) 1 2)])", "[2 :replaced]"),
++    ("(let [f (identity max) ^long x (identity 5.5) events (atom [])] [(f x 1 (do (swap! events conj :later) 2)) @events])", "[5.5 [:later]]"),
++    ("(let [^long x (identity 5.5) y (max x 1)] [y (+ y 1) (min y 6)])", "[5 6 5]"),
++    ("(let [^double x (identity 5) y (max x 6.0)] [y (+ y 1) (min y 7.0)])", "[6.0 7.0 6.0]"),
++    ("(let [^long x (identity 5.5) y (max x 6.0)] [y (+ y 1) (min y 7)])", "[6.0 7.0 6.0]"),
++    ("(let [^long x (identity 1.0E30) events (atom [])] [(try (max x (zero? (do (swap! events conj :later) 0))) (catch :default e :number-error)) @events])", "[:number-error [:later]]"),
++    ("(let [^long x (identity 5.5) ^double y (identity -0.0)] [(max x) (min y) (max x 1.0 -1.0) (min y 1.0 0.0)])", "[5.5 -0.0 5 -0.0]"),
++    ("(loop [i 0 acc 0] (if (< i 5) (recur (inc i) (max acc (min i 3))) acc))", "3"),
++    ("(let [result (loop [i 0 acc -0.0] (if (< i 5) (recur (inc i) (max acc (min (double i) 0.0))) acc))] (/ 1.0 result))", "##Inf"),
++];
++fn observed(source: &str) -> String {
++    format!("(pr-str (try {source} (catch :default e [:hint-error (ex-message e)])))")
++}
++
++#[test]
++fn runtime_and_macro_preserve_numeric_extrema_semantics() {
++    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
++        session.eval(DEFINITIONS).unwrap();
++        for (source, expected) in CASES {
++            let value = session.eval(&observed(source)).unwrap_or_else(|e| panic!("{source}: {e}"));
++            session.collect().unwrap();
++            let units = session.inspect(&value, |mut store, value| {
++                let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
++                Ok(array.elems(&mut store)?.map(|unit| unit.unwrap_i32() as u16).collect::<Vec<_>>())
++            }).unwrap();
++            assert_eq!(String::from_utf16(&units).unwrap(), *expected, "{source}");
++        }
++    }
++}
++
++#[test]
++fn aot_preserves_numeric_extrema_semantics() {
++    use std::process::Command;
++    let root = tempfile::tempdir().unwrap();
++    let mut source = format!("(ns localhints)\n{DEFINITIONS}\n");
++    let mut wit = String::from("package test:localhints; world w {\n");
++    for (index, (expression, expected)) in CASES.iter().enumerate() {
++        // Only the unused WIT argument is synthesized as a primitive. The
++        // helper and local bindings retain their genuine source hints.
++        source.push_str(&format!("(def case{index} (fn [unused] (if (= {} {expected:?}) 1 0)))\n", observed(expression)));
++        wit.push_str(&format!("export case{index}: func(unused: u32) -> u32;\n"));
++    }
++    wit.push('}');
++    std::fs::write(root.path().join("localhints.sus"), source).unwrap();
++    std::fs::write(root.path().join("localhints.wit"), wit).unwrap();
++    let mut compile = Command::new(env!("CARGO_BIN_EXE_suss"));
++    compile.current_dir(root.path()).args(["compile", "localhints.sus", "-w", "localhints.wit", "-o", "localhints.wasm"]);
++    for index in 0..CASES.len() {
++        compile.args(["--export", &format!("case{index}=localhints/case{index}")]);
++    }
++    let output = compile.output().unwrap();
++    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
++    for (index, (expression, _)) in CASES.iter().enumerate() {
++        let output = Command::new(env!("CARGO_BIN_EXE_suss")).current_dir(root.path())
++            .args(["run", "localhints.wasm", "--invoke", &format!("case{index}"), "--", "0"])
++            .output().unwrap();
++        assert!(output.status.success(), "{expression}: {}", String::from_utf8_lossy(&output.stderr));
++        assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "1", "{expression}");
++    }
++}
++
++
++const DECLARATION_ERRORS: &[(&str, &str)] = &[
++    ("(fn ^double [] (max 1 2))", "Mismatched primitive return, expected: double, had: long"),
++    ("(fn ^long [] (min 1.0 2.0))", "Mismatched primitive return, expected: long, had: double"),
++    ("(let [^long x (max 1 2)] x)", "Can't type hint a local with a primitive initializer"),
++    ("(let [^double x (min 1.0 2.0)] x)", "Can't type hint a local with a primitive initializer"),
++];
++#[test]
++fn extrema_source_return_types_and_initializers_are_checked() {
++    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
++        for (source, expected) in DECLARATION_ERRORS {
++            let error = session.eval(source).err().unwrap_or_else(|| panic!("accepted {source}"));
++            assert!(error.to_string().contains(expected), "{source}: {error}");
++        }
++    }
++}
++
++#[test]
++fn aot_rejects_invalid_extrema_return_types() {
++    use std::process::Command;
++    let root = tempfile::tempdir().unwrap();
++    std::fs::write(root.path().join("invalid.wit"),
++        "package test:invalid-hints; world w { export check: func() -> u32; }").unwrap();
++    for (source, expected) in DECLARATION_ERRORS {
++        std::fs::write(root.path().join("invalid.sus"),
++            format!("(ns invalid) (def check (fn [] {source} 1))")).unwrap();
++        let output = Command::new(env!("CARGO_BIN_EXE_suss")).current_dir(root.path())
++            .args(["compile", "invalid.sus", "-w", "invalid.wit", "-o", "invalid.wasm", "--export", "check=invalid/check"])
++            .output().unwrap();
++        assert!(!output.status.success(), "accepted {source}");
++        assert!(String::from_utf8_lossy(&output.stderr).contains(expected), "{source}: {}", String::from_utf8_lossy(&output.stderr));
++    }
++}
++
+diff --git a/crates/suss-compile/src/portable/hir/extrema.rs b/crates/suss-compile/src/portable/hir/extrema.rs
+new file mode 100644
+index 00000000..6b0766c9
+--- /dev/null
++++ b/crates/suss-compile/src/portable/hir/extrema.rs
+@@ -0,0 +1,56 @@
++//! Original max/min lowering from JVM Clojure 1.12.6 observations (#337).
++//! Core.clj's nary-inline nests binary Numbers calls; Numbers.java returns
++//! primitives only for long/long and double/double. References and EPL provenance
++//! are retained in results/m12-extrema. No Java implementation is shipped.
++use super::*;
++use primitive_returns::{Primitive, SourceFacts};
++
++pub(super) fn is_call(hir: &Hir) -> bool {
++    let Some(source) = &hir.source else { return false };
++    if source.origin.as_ref().is_some_and(|origin| origin.is_privileged()) { return false; }
++    matches!(&source.resolved, Some(SourceBinding::Global { global, .. })
++        if global.namespace() == "suss.core" && matches!(global.name(), "max" | "min"))
++        && matches!(&source.node, Some(node) if matches!(node.as_ref(), SourceNode::Invoke { arguments, .. } if arguments.len() > 1))
++}
++
++/// The selected primitive return, or Object for mixed/unknown/reflected calls.
++pub(super) fn result(left: Primitive, right: Primitive) -> Primitive {
++    use Primitive::*;
++    let widen = |kind| match kind { Byte | Short | Int => Long, Float => Double, kind => kind };
++    match (widen(left), widen(right)) {
++        (Long, Long) => Long, (Double, Double) => Double, _ => Boxed,
++    }
++}
++
++pub(super) fn inline(
++    hir: &mut Hir, facts: &mut SourceFacts,
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++) -> Result<(), Diagnostic> {
++    if !is_call(hir) { return Ok(()); }
++    let source = hir.source.as_ref().unwrap();
++    let Some(SourceBinding::Global { global, .. }) = &source.resolved else { unreachable!() };
++    let SourceNode::Invoke { arguments, .. } = source.node.as_ref().unwrap().as_ref() else { unreachable!() };
++    let maximum = global.name() == "max";
++    let mut left = arguments[0].clone();
++    for right in &arguments[1..] {
++        meter(1)?;
++        let kind = result(primitive_returns::class(&left, facts, meter)?,
++            primitive_returns::class(right, facts, meter)?);
++        let operation = match (maximum, kind) {
++            (true, Primitive::Long) => Bitwise::LongMax, (false, Primitive::Long) => Bitwise::LongMin,
++            (true, Primitive::Double) => Bitwise::DoubleMax, (false, Primitive::Double) => Bitwise::DoubleMin,
++            (true, _) => Bitwise::Max, (false, _) => Bitwise::Min,
++        };
++        let mut pair = vec![left, right.clone()];
++        if local_hints::numeric_operands(&pair, facts, meter)? {
++            for operand in &mut pair { local_hints::operand(operand, facts, meter)?; }
++        }
++        // Synthetic folds have no source syntax. Their operation carries the
++        // selected return kind so the next pair sees the correct source class.
++        left = Hir { source: None, span: hir.span.clone(), metadata: Vec::new(), ty: operation.result(),
++            kind: std::sync::Arc::new(Expression::Bitwise { operation, arguments: pair }) };
++    }
++    hir.kind = left.kind.clone();
++    hir.ty = left.ty;
++    Ok(())
++}
+diff --git a/crates/suss-compile/src/runtime_abi/extrema.rs b/crates/suss-compile/src/runtime_abi/extrema.rs
+new file mode 100644
+index 00000000..c816eb90
+--- /dev/null
++++ b/crates/suss-compile/src/runtime_abi/extrema.rs
+@@ -0,0 +1,33 @@
++//! Original Clojure max/min scalar helpers, from fresh JVM 1.12.6 behavior.
++//! Numbers.java and core.clj are EPL 1.0 references; no source is copied.
++//! Object overloads propagate NaN before checking the other operand and return
++//! the selected original value. Only double/double uses IEEE min/max zero rules.
++use super::*;
++
++pub(super) fn intrinsics(b: &mut Builder) {
++    use Instruction::*;
++    for (name, comparison, floating) in [
++        ("max", "comparison-number-greater", F64Max),
++        ("min", "comparison-number-less", F64Min),
++    ] {
++        let mut generic = Vec::new();
++        for value in 0..2 {
++            generic.extend([LocalGet(value), RefTestNonNull(HeapType::Concrete(NUMBER)), If(BlockType::Empty)]);
++            for _ in 0..2 {
++                generic.extend([LocalGet(value), RefCastNonNull(HeapType::Concrete(NUMBER)),
++                    StructGet { struct_type_index: NUMBER, field_index: 0 }]);
++            }
++            generic.extend([F64Ne, If(BlockType::Empty), LocalGet(value), Return, End, End]);
++        }
++        numeric_operands::require_numbers(b, &mut generic, name, 2);
++        generic.extend([LocalGet(0), LocalGet(1), LocalGet(0), LocalGet(1),
++            Call(b.names[comparison]), sentinel_value(TRUE), RefEq, TypedSelect(VALUE)]);
++        b.function(&format!("number-{name}"), &[VALUE, VALUE], &[VALUE], &generic);
++
++        let mut primitive = Vec::new();
++        numeric_operands::require_numbers(b, &mut primitive, name, 2);
++        primitive.extend([LocalGet(0), Call(b.names["number-unbox"]),
++            LocalGet(1), Call(b.names["number-unbox"]), floating, StructNew(NUMBER)]);
++        b.function(&format!("number-double-{name}"), &[VALUE, VALUE], &[VALUE], &primitive);
++    }
++}

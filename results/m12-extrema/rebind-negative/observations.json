@@ -1,0 +1,16 @@
+[
+  {
+    "name": "before",
+    "executable_sha256": "de3e6e79c4f0b11703435771d35ae22a569a995a9dd4a2a4e9a46c9234424478",
+    "component_sha256": "d830c7b29b53c344e9435b2f256511fd27cc32fed3e8a564c1db4bc732487627",
+    "stdout": "[1.0 1.0 [5 5] [##-Inf ##-Inf] [:threw :threw]]\n",
+    "exit_code": 0
+  },
+  {
+    "name": "current",
+    "executable_sha256": "ec2fafdb4eb4fd286193016d902bc6833670b547713cf35ea6d85e96768468d3",
+    "component_sha256": "e4ff9f9b0adbb62c0d3809cea94ab415f34525fa1cecb8c8b3104ef1ded2f2c4",
+    "stdout": "[1.0 1.0 [5.0 5] [##Inf ##-Inf] [:threw :threw]]\n",
+    "exit_code": 0
+  }
+]

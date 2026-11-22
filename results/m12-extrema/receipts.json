@@ -1,0 +1,211 @@
+{
+  "source_base": "7997770b2ee8bf1b60822574e9a679cdbf6a4417",
+  "source_patch_sha256": "a1a562e852c6e0f7704327229bdbfb9e2c1fe37b9d26aaea24a1708a882815f1",
+  "compiler_executable_sha256": "bb5b357a747babb8f1218bcbe913335227ca8db8027df250651dcc5a26b127a6",
+  "source_inputs": "source-inputs.json",
+  "source_reconstruction": "source-check.py applies the retained patch to the exact base; all16 source/test/provenance inputs match byte-for-byte. An optional commit argument verifies a published revision.",
+  "matrix": {
+    "jvm_version": "1.12.6",
+    "jvm_values": 26,
+    "jvm_diagnostics": 4,
+    "native_values": 27,
+    "native_diagnostics": 4,
+    "routes": [
+      "Runtime",
+      "Macro",
+      "actual AOT"
+    ],
+    "suss_only_case": "ADR-0004 replacement-value fallback, matched against both boxed calls and the frozen before compiler; not a JVM value match"
+  },
+  "focused": {
+    "passed": 55,
+    "failed": 0,
+    "ignored": 0,
+    "targets": 10
+  },
+  "code_generation": {
+    "passed": 5,
+    "failed": 0,
+    "ignored": 0,
+    "executed_exact_inspected_components": 2
+  },
+  "final_fixture": {
+    "passed": 4,
+    "failed": 0,
+    "ignored": 0,
+    "note": "Same fixture content; final rerun after removing an extra EOF blank line."
+  },
+  "gates": [
+    {
+      "name": "final-focused",
+      "command": [
+        "cargo",
+        "+stable",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "clojure_numeric_extrema",
+        "--test",
+        "clojure_local_numeric_hints",
+        "--test",
+        "clojure_division_overloads",
+        "--test",
+        "clojure_unboxed_locals",
+        "--test",
+        "clojure_numeric_box_reuse",
+        "--test",
+        "compiled_core_casts",
+        "--test",
+        "compiled_macro_cumulative_fuel",
+        "--test",
+        "compiled_primitive_params",
+        "--test",
+        "portable_primitive_entries",
+        "--test",
+        "portable_core_expression_dependencies",
+        "--",
+        "--test-threads=2"
+      ],
+      "environment": {},
+      "exit_code": 0,
+      "log": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-extrema-final-focused.log"
+    },
+    {
+      "name": "final-bootstrap",
+      "command": [
+        "sh",
+        "scripts/verify-bootstrap.sh"
+      ],
+      "environment": {
+        "TMPDIR": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/tmp"
+      },
+      "exit_code": 0,
+      "log": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-extrema-final-bootstrap.log"
+    },
+    {
+      "name": "final-binaryen",
+      "command": [
+        "cargo",
+        "+stable",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "compiled_optimize",
+        "--",
+        "--test-threads=2"
+      ],
+      "environment": {},
+      "exit_code": 0,
+      "log": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-extrema-final-binaryen.log"
+    },
+    {
+      "name": "final-suite",
+      "command": [
+        "cargo",
+        "+stable",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "clojure_test_suite",
+        "clojure_test_suite_matches_reviewed_baseline",
+        "--",
+        "--exact",
+        "--test-threads=2"
+      ],
+      "environment": {
+        "SUSS_CLOJURE_TEST_SUITE_CAPTURE": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-extrema-final-suite-capture"
+      },
+      "exit_code": 0,
+      "log": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-extrema-final-suite.log"
+    }
+  ],
+  "suite_capture_uncompressed_sha256": "5523272bb015af2c328e82baeb4251e03867081657ea03767d9e9bebec68db52",
+  "suite_capture_gzip_sha256": "a9f4b7efbfd74c703c28cee2ab0df4a1fcc7745c8a71fef44c1912222eebc9a2",
+  "environment": {
+    "toolchain": "stable",
+    "cargo_jobs": 2,
+    "test_threads": 2,
+    "memory_scope": "4G",
+    "cargo_target": "m12-hints-target",
+    "native_cache": "outer target/suss",
+    "binaryen": "version 133"
+  },
+  "negative_controls": [
+    "Four original failing tests before implementation",
+    "Intermediate direct-session defn setup failure, corrected with canonical def/fn metadata",
+    "Initial F64 guard-miss coercion regression: before [5 5]/[-Inf -Inf], initial [5.0 5]/[Inf -Inf], corrected matches before",
+    "Explicitly interrupted check-profile build, not a passing check"
+  ],
+  "limitations": "Reviewed vendored-suite comparison preserves known failures and is not complete upstream conformance. Initial gates and first-source artifacts precede the guard correction and retain their original identities. The 2263-pass full workspace receipt is the earlier division source1507, not this source. No new quiet performance ratio, numeric tower completion or capture/recur acceptance is claimed.",
+  "python": {
+    "command": "python3 -m unittest discover -s scripts -v",
+    "passed": 361,
+    "failed": 0,
+    "exit_code": 0,
+    "seconds": 34.742
+  },
+  "distinct_focused_tests": 60,
+  "sha256": {
+    "README.md": "e4bf0b294f31ade41b1d626bb67dcc73ac34726fd4f51bafe73e6c93ae6356f9",
+    "baseline-regression.patch": "224a75c73206941b84c5ec58701e9528ac7ff8b1b9c69d21c51fb80c6f48fd84",
+    "baseline.json": "df12eadabb9f5573ff5457ec20e801fc69970009aade313408ba517e8feedf89",
+    "before.log": "69a7e551521dc61e5dc2ec8f3345d1a886fb7b31a1602cce0d4902772678847a",
+    "binaryen.log": "638beeb053278f72afffdb6354734d266dab9e6ef25360d8ed614419d0082690",
+    "bootstrap.log": "e2cb033cecdb18fcb7c46998baaf6e5efad091da852ad52b36a1247c076c6af6",
+    "check-profile-interrupted.json": "6fa2aeb82fad7cfb4a44a47fefcedd241ffc3c7ef1e7459b544c59206e6c515d",
+    "check-profile-interrupted.log": "84839d88664d81d6604efbbdaa17039f7a0665e1f106c62e9a12d34b8810b55e",
+    "commands.json": "78b73d45a003c8cf916ceeb33147c33deace269c785609fa45dd1f23196218b3",
+    "core-import-check.log": "378a64935261aa34b00869e64607756b747a78ae4d4de497893773ad349cde86",
+    "core-import-tests.log": "f0b7071c20ffddf25c55f9df9e3cf4ada4b4258ac4e58f455b97ad95858d38f2",
+    "defn-setup-definition.sus": "7c575aabf26056b5e2301bf602c77bc6ae064ce864e3b610a04b24ebff55bd8a",
+    "defn-setup-failure.log": "94dc09a757a680235c882f2857d8a50a5bad98c0c3177aa3cd04c3da398e4af3",
+    "diagnostics.clj": "28121e5ac56372eec3a87f35ba7d2c1e09687e25a946ec68b8936fe3a2571a60",
+    "diagnostics.log": "bbc4f0f95f6ebf9bcc1ed3c1f799a6c8bce2d1ecbeb49ed044444bb39132a6bd",
+    "final-fixture.log": "bdebc5e28ae82b19589b64bddcf402c81ff8a773162b7479230e1b53e3e36aad",
+    "final-focused.log": "32e94aeb2fe0eac8030d9d1b02185dfee31cc46bf65305028967bac3514ddf40",
+    "first-executable-sha256.txt": "b78f55aed87129405c69f5a8873562766a20d062915e9ad54131ec7d12049fcd",
+    "first-source.patch": "775a56e1dde177a954b1809bac49d000715676c9477dc81a92db171d55ed6d39",
+    "first.log": "198db68f24f7a2180662508d71251737c286fbec8b500db7cd905ee05d7c7bc2",
+    "focused.log": "90223f1c813b11cf6bdf78409dd83ed1c8bb0c996accbfcea212dc56659739da",
+    "initial-gates/binaryen.log": "cfc03d015f217d2baf931dc383c4f55f22f9409c18117ff03fb414f184463b2a",
+    "initial-gates/bootstrap.log": "38142896ef7660a5df131995c21f5596f2febd279266032f2150acef3168066e",
+    "initial-gates/commands.json": "f3a684a84648796de73c52c52577b77d745a330af5d7ecbe228f2046a7ae626c",
+    "initial-gates/suite-observations.json.gz": "a9f4b7efbfd74c703c28cee2ab0df4a1fcc7745c8a71fef44c1912222eebc9a2",
+    "initial-gates/suite.log": "e1c488fc81bd07d26d6a68755ba9dc09d19b6d5449450eb549ccfa1b5704e0cc",
+    "jvm-rebind-reference.clj": "d65455abdc270c38a7202c3ce2f08ecc9bfd99acd72c40f0b30df670ea2977ff",
+    "jvm-rebind-reference.log": "24840a0a6bf30a39cfeb551f59da9984c201ad865724a99406f18c5a9566432f",
+    "oracle-24.clj": "a96c7c85a5d8ddd5f53ce66e3709f7e48dbcb9529cc4546ece1c5a53037d2da0",
+    "oracle-24.log": "402a4257caf60928da6d264ba7a49df174e5c57da03d3f7677007b346ca1ced4",
+    "oracle-25.clj": "5470030bf7cf28fc2e1fca295b2a52005576b233cc4a2c0a45693cda1e1bc116",
+    "oracle-25.log": "94c310d5db35a7d90e51a7727a521c044fa585b44404481d8ce3fa34bc2ac4b7",
+    "oracle-final.clj": "e17e46882a70c11ce39275a2f5102924df1c89fe122f72441b86379ab743e7dc",
+    "oracle-final.log": "c739201dbce1233c5efa62dfe86382c71d7072623d11c19d6c7e5c314b667193",
+    "oracle.clj": "80663c7d71bd585fe9ca6373e0974c7206da1a08ed2151104b6756c36c12edd0",
+    "oracle.log": "1cea12f0008ea76ec70a05dbf494d440eb587f29f5c2fe1411c253867fb37373",
+    "python-final.log": "dd908674acabc744202f8b634ae90e901c7f24d1bd72ce077d58e098d7969759",
+    "python.log": "5ba7839affd4b88c6f447be04d6373b39be9067c2d2f165c522e754d53251b16",
+    "rebind-fixed.log": "399687cbbe55722890c3fd2eb181b334b466011f8104588b701e9141236707ef",
+    "rebind-negative/after-compile.log": "d3860d347db5f93f8e5d369a28d296b712d0f7d16e4cd6d09c6281725f56c3bf",
+    "rebind-negative/after-run.log": "890b680ee2356c5d7a59466a3713c4a2db704a8c98f748f4d79f3363c7e58bea",
+    "rebind-negative/after.json": "e6e4223a9cbe4267536120d476c0b88c45aa600596ef1bda7e7f05a6de135a5f",
+    "rebind-negative/before-compile.log": "1d36b2e1fd8fc1fea255881a7ee85f4e6bbe5f55c23fa92f87aea552e925fbda",
+    "rebind-negative/before-run.log": "890b680ee2356c5d7a59466a3713c4a2db704a8c98f748f4d79f3363c7e58bea",
+    "rebind-negative/current-compile.log": "cd091279e77ea49af10d003ee904d182f646f65e8602d2cc9470bccf80628e12",
+    "rebind-negative/current-run.log": "c9843b760f164fea5f383ab54db927f0d12fdeadee107f17c21e132e5cd8e314",
+    "rebind-negative/input.json": "2da5177447040141dd6d0f6da26e105ce54c7eb5737a1a80f0e998fd36c397f0",
+    "rebind-negative/observations.json": "376d39304d40eef475b5404dac284ca25d9add4e7246e548768808e924f1d051",
+    "rebind-negative/rebind.sus": "d25b73eb04acfb30b5af1db1d8828ab9f20536d9d0b06c37eea029ce3c766271",
+    "rebind-negative/rebind.wit": "c295a6479fc5a8ff9c9a5a6889181b0a5ab49390aadf2c1760c3d5c385926661",
+    "signed-zero-primary.clj": "f0c8d8184dfec6947863992d34a9dc82766e4fe06eb78df356f5315cbeadbc52",
+    "signed-zero-primary.log": "4972f03ccde73016802e37e05fe45871d65e08838840d604147c49ff96fa7880",
+    "source-check.py": "5aeaff2023f0611500fe8c3c1516e0473a09a1fa037e90e9e83e178c0423bb69",
+    "source-inputs.json": "0f7367b1dd6c3357a091296619a818514ad96f4c936c60d9a7e93e1237a11d80",
+    "source-reconstruction.log": "d27d9926ef6d177fb0d3ca2313aab5245191d861e6362b82dad25961370175e6",
+    "source.patch": "a1a562e852c6e0f7704327229bdbfb9e2c1fe37b9d26aaea24a1708a882815f1",
+    "suite-observations.json.gz": "a9f4b7efbfd74c703c28cee2ab0df4a1fcc7745c8a71fef44c1912222eebc9a2",
+    "suite.log": "57bab29ac34cbd7a650a858eacd2586712fbe098f125ec11d1737f0234bfdf31"
+  }
+}

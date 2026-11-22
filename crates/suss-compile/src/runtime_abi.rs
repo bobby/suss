@@ -14,6 +14,7 @@ mod closure_calls;
 mod closure_properties;
 mod coercions;
 mod comparisons;
+mod extrema;
 mod dynamic;
 mod error_constructors;
 mod error_properties;
@@ -1871,6 +1872,7 @@ fn build_module() -> Vec<u8> {
     error_constructors::canonical_test_function(&mut b);
     numeric::intrinsics(&mut b, numeric_info, coercion_types);
     let primitives = numeric_operands::intrinsics(&mut b);
+    extrema::intrinsics(&mut b);
     bitwise::intrinsics(&mut b);
     numeric_hash::intrinsics(&mut b);
     identity_hash::intrinsics(&mut b);

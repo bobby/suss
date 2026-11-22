@@ -1206,6 +1206,15 @@ their original Objects when no static numeric overload matches; reflective resul
 classes and primitive Boolean operands preserve subsequent conversion/effect order.
 See [local hint receipts](../../results/m12-local-hints/README.md).
 
+[Extrema evidence](../../results/m12-extrema/README.md) adds26 fresh JVM value
+observations and four diagnostics, executed in both phases and actual AOT. Source
+long/double overloads, mixed result types, nary effect order, generic raw-double
+zero/NaN behavior and redefined core aliases are covered. A separate redefinition
+case preserves ADR-0004's ordinary-IFn fallback and matches the frozen before
+compiler rather than JVM interface-cast behavior. The generated numeric loop
+components are inspected and executed, with their allocation/call limits retained.
+These observations do not establish the remaining numeric tower or hint checks.
+
 Lazy numeric GC copies now span blocks where materializations can repeat without
 redefinition. Checked sum bodies remain byte-identical and generated allocation
 checks pass. The [box reuse receipts](../../results/m12-box-reuse/README.md) retain

@@ -169,6 +169,28 @@ fn raw_int32(operation: Bitwise, count: usize) -> Option<Instruction<'static>> {
     })
 }
 fn bitwise(operation: Bitwise, arguments: &[Lattice]) -> Lattice {
+    if matches!(operation, Bitwise::DoubleMax | Bitwise::DoubleMin) {
+        if arguments.iter().any(|argument| !matches!(argument,
+            Lattice::Top | Lattice::Known(Repr::Double | Repr::MaybeDouble)))
+        { return Lattice::Known(Repr::Boxed); }
+        return Lattice::Known(if arguments.contains(&Lattice::Known(Repr::MaybeDouble)) {
+            Repr::MaybeDouble
+        } else { Repr::Double });
+    }
+    if matches!(operation, Bitwise::Max | Bitwise::Min | Bitwise::LongMax | Bitwise::LongMin) {
+        let mut kind = None;
+        for argument in arguments {
+            match argument {
+                Lattice::Top => {},
+                Lattice::Known(repr @ (Repr::Long | Repr::Double)) => {
+                    if kind.is_some_and(|kind| kind != *repr) { return Lattice::Known(Repr::Boxed); }
+                    kind = Some(*repr);
+                }
+                _ => return Lattice::Known(Repr::Boxed),
+            }
+        }
+        return kind.map_or(Lattice::Top, Lattice::Known);
+    }
     // ToInt32 produces a long or throws even when its input is boxed. Keep
     // that result fact without bypassing the boxed operand conversions.
     if raw_int32(operation, arguments.len()).is_some() {
@@ -1014,7 +1036,9 @@ impl Locals {
     /// flag; Wasm masks the shift count to six bits, as Java's long shift does.
     pub(super) fn bitwise(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId, slow: u32) {
         use Instruction::*;
-        if raw_int32(operation, arguments.len()).is_some() {
+        if raw_int32(operation, arguments.len()).is_some()
+            || matches!(operation, Bitwise::DoubleMax | Bitwise::DoubleMin)
+        {
             let inputs = arguments.iter().filter(|value| self.of(**value).maybe()).collect::<Vec<_>>();
             if !inputs.is_empty() {
                 for (i, input) in inputs.iter().enumerate() {
@@ -1023,10 +1047,13 @@ impl Locals {
                 }
                 code.push(If(BlockType::Empty));
                 self.bitwise_raw(code, operation, arguments, result);
+                if self.of(result).maybe() { code.extend([I32Const(1), LocalSet(self.valid(result))]); }
                 code.push(Else);
                 for argument in arguments { self.push_boxed(code, *argument); }
                 code.extend([Call(slow), LocalSet(self.boxed(result))]);
-                self.unbox_long(code, result);
+                if self.of(result).maybe() {
+                    code.extend([I32Const(0), LocalSet(self.valid(result))]);
+                } else { self.unbox_long(code, result); }
                 code.push(End);
                 return;
             }
@@ -1034,6 +1061,35 @@ impl Locals {
         self.bitwise_raw(code, operation, arguments, result);
     }
     fn bitwise_raw(&self, code: &mut Vec<Instruction<'static>>, operation: Bitwise, arguments: &[ValueId], result: ValueId) {
+        use Instruction::*;
+        if matches!(operation, Bitwise::Max | Bitwise::Min | Bitwise::LongMax | Bitwise::LongMin
+            | Bitwise::DoubleMax | Bitwise::DoubleMin)
+        {
+            let kind = self.of(result);
+            let (left, right) = (arguments[0], arguments[1]);
+            if matches!(operation, Bitwise::DoubleMax | Bitwise::DoubleMin) {
+                self.push_as(code, left, Repr::Double);
+                self.push_as(code, right, Repr::Double);
+                code.push(if operation == Bitwise::DoubleMax { F64Max } else { F64Min });
+            } else {
+                let maximum = matches!(operation, Bitwise::Max | Bitwise::LongMax);
+                code.extend([LocalGet(self.raw(left)), LocalGet(self.raw(right))]);
+                if kind == Repr::Double {
+                    // Generic Object calls keep the first NaN, then the
+                    // second, and otherwise select the second value on ties.
+                    code.extend([LocalGet(self.raw(left)), LocalGet(self.raw(right)),
+                        if maximum { F64Gt } else { F64Lt },
+                        LocalGet(self.raw(right)), LocalGet(self.raw(right)), F64Ne, I32Eqz, I32And,
+                        LocalGet(self.raw(left)), LocalGet(self.raw(left)), F64Ne, I32Or]);
+                } else {
+                    code.extend([LocalGet(self.raw(left)), LocalGet(self.raw(right)),
+                        if maximum { I64GtS } else { I64LtS }]);
+                }
+                code.push(Select);
+            }
+            code.push(LocalSet(self.raw(result)));
+            return;
+        }
         if let Some(operation_code) = raw_int32(operation, arguments.len()) {
             for argument in arguments {
                 code.extend([Instruction::LocalGet(self.raw(*argument)), Instruction::I32WrapI64]);
@@ -1103,6 +1159,9 @@ pub(super) fn raw_small(locals: &Locals, instruction: &ir::Instruction) -> bool 
 
 /// Whether an instruction is emitted inline on raw values.
 pub(super) fn inline(locals: &Locals, instruction: &ir::Instruction) -> bool {
+    if let Operation::Bitwise { operation: Bitwise::DoubleMax | Bitwise::DoubleMin, arguments } = &instruction.operation
+        && arguments.iter().any(|argument| locals.of(*argument).definite() != Repr::Double)
+    { return false; }
     if let Operation::Bitwise { operation, arguments } = &instruction.operation
         && raw_int32(*operation, arguments.len()).is_some()
         && arguments.iter().any(|argument| locals.of(*argument).definite() != Repr::Long)

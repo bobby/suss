@@ -9,7 +9,7 @@
   "review-validator-sha256": "713c29ff4bccc49dd0eac98f5b8b36ed65b0f559142d5fc19b26b814bb436585",
   "recipe": "docs/compatibility/core-import.json",
   "recipe-sha256": "75c02a197fe3f11e9e64aa35669c2689f99468f0e298ec576734af9d27801430",
-  "reviews-sha256": "fefd947d0ea5a257a7202f046a8c847926f7ebd1e6b93d3044b25027be3f05ca",
+  "reviews-sha256": "c8baa6f567b96a89f27d02bf1655a2ce4b7436a5dcd20c5424862a5f049a5f13",
   "inventory-sha256": "b6f3bce5e2847efd0eabee1b61c83914be1c659f41c6f51b04fdc4bcb8509f8c",
   "forms": [
     {
@@ -8903,19 +8903,19 @@
       "extracted": "extracted/0287.cljs",
       "extracted-sha256": "eea7173fae2db63890b68ad9229d58ac5335a366c4a82aed66da4ec6d64a50a8",
       "patch": "docs/compatibility/patches/expression-max.json",
-      "patch-sha256": "e6e7ed84459a4d68473b43fd76eefeef81f21ef7a50b7b82a76703dda60fb1f2",
-      "adapted-form-sha256": "31bd15cff8aacb74e55098f1e755066e252c201f52525bb9c5c255aaa1ab9d97",
+      "patch-sha256": "becd0071fab309d3755424ff18d759713bb2834f24fdc344802807c9aff3938f",
+      "adapted-form-sha256": "05902ce115e1bfe5b25396e4f96c93dd0ac229ac7128a4067520d72558aea319",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
       "dependencies": [
-        "NaN?",
-        ">",
+        "suss.bootstrap/max numeric Object overload",
         "reduce",
         "max"
       ],
       "semantic-tests": [
-        "crates/suss-compile/tests/portable_expression_conformance.rs"
+        "crates/suss-compile/tests/portable_expression_conformance.rs",
+        "crates/suss-cli/tests/clojure_numeric_extrema.rs"
       ]
     },
     {
@@ -8934,19 +8934,19 @@
       "extracted": "extracted/0288.cljs",
       "extracted-sha256": "63605221456b85dc7a12c299010f37d71dfa839787b97148efcaf097a204a8c6",
       "patch": "docs/compatibility/patches/expression-min.json",
-      "patch-sha256": "ace8ffb709161498ddfe9942cbb45898a6727dc574ab4d35e4b5651ce3e1fdf8",
-      "adapted-form-sha256": "aa9bd578ddcdc901de45a9cf092c773f25da4527de4c3a573c4b774892b4b864",
+      "patch-sha256": "293f72269375c86fdd43fc1146cb05921ab49cd7be2176307f52f3e17e418985",
+      "adapted-form-sha256": "195b46daac59fd15e39a988de263d112ca4105d0ec7e00d0aed4d243d016e764",
       "notice-sha256": "ef94b9f22bd17f9dd4119023a9896a922952defdd99dda00dcf39a34884a71df",
       "review-classification": ":adapted",
       "review-status": ":in-progress",
       "dependencies": [
-        "NaN?",
-        "<",
+        "suss.bootstrap/min numeric Object overload",
         "reduce",
         "min"
       ],
       "semantic-tests": [
-        "crates/suss-compile/tests/portable_expression_conformance.rs"
+        "crates/suss-compile/tests/portable_expression_conformance.rs",
+        "crates/suss-cli/tests/clojure_numeric_extrema.rs"
       ]
     },
     {
@@ -16093,6 +16093,6 @@
     "extracted/0501.cljs": "02b4047a3496243c5528041564a9f8ded2f3aae951be387e8779ab0e956464c3",
     "extracted/0502.cljs": "d42068d54f1844f88abb73548a3a554a3cc1f5af315fd590533b4fd80de350ec",
     "extracted/0503.cljs": "072c8a681fd905767f56c48e6c3529b99e9d5f537def64cb299f5bac29c7c59b",
-    "suss/core.sus": "92bc717a850410230948328a48c12f5dfe34c173f2b3f42b12d4093d0a1da67a"
+    "suss/core.sus": "f3d3a6bfc3de5c2194fda7917ef8dacbce7956aecd7169a482c6fcef3b56c99b"
   }
 }

@@ -4,7 +4,7 @@
 use super::*;
 
 /// Throw unless both (or the only) operands are numbers.
-fn require_numbers(b: &Builder, code: &mut Vec<Instruction<'static>>, symbol: &str, operands: u32) {
+pub(super) fn require_numbers(b: &Builder, code: &mut Vec<Instruction<'static>>, symbol: &str, operands: u32) {
     use Instruction::*;
     let test = b.names["number-test"];
     code.extend([LocalGet(0), Call(test)]);

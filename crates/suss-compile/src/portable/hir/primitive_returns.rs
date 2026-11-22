@@ -201,6 +201,13 @@ fn infer(
                     | "bit-shift-left" | "bit-shift-right" | "unsigned-bit-shift-right", _) =>
                     bitwise_result(arguments, bindings, meter, loops)?,
                 ("+" | "*" | "/", 1) | ("-" | "/", 0) => Boxed,
+                ("max" | "min", count) if count > 1 && extrema::is_call(hir) => {
+                    let mut kind = class_in(&arguments[0], bindings, meter, loops)?;
+                    for argument in &arguments[1..] {
+                        kind = extrema::result(kind, class_in(argument, bindings, meter, loops)?);
+                    }
+                    kind
+                }
                 ("+" | "-" | "*" | "/" | "quot" | "rem", _) => {
                     let mut kinds = Vec::with_capacity(arguments.len());
                     for argument in arguments.iter() { kinds.push(class_in(argument, bindings, meter, loops)?); }
@@ -289,6 +296,8 @@ fn infer(
                 if array_kind(&arguments[0], meter)?.is_some() { Int } else { Boxed },
             Expression::NilTest(_) | Expression::Comparison { .. } => Boolean,
             Expression::Bitwise { operation, arguments } => match operation {
+                Bitwise::LongMax | Bitwise::LongMin => Long,
+                Bitwise::DoubleMax | Bitwise::DoubleMin => Double,
                 Bitwise::Int => Int,
                 Bitwise::And | Bitwise::Or | Bitwise::Xor | Bitwise::AndNot | Bitwise::Not
                 | Bitwise::Left | Bitwise::Right | Bitwise::Unsigned =>

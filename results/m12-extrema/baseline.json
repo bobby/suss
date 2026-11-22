@@ -1,0 +1,10 @@
+{
+  "source_base": "7997770b2ee8bf1b60822574e9a679cdbf6a4417",
+  "compiler_sha256": "610af0748fd61cac6de04ca8735712748f28beaa32dea94c2cf0d20b24617d6a",
+  "command": "cargo +stable test -p suss-cli --locked --test clojure_numeric_extrema -- --test-threads=2",
+  "exit_code": 101,
+  "passed": 0,
+  "failed": 4,
+  "ignored": 0,
+  "limitation": "Native values stop at the first mismatch; AOT diagnostics stop at their first accepted invalid declaration. No later negative value is claimed executed."
+}

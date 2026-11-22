@@ -96,6 +96,77 @@ fn checked_long_of_a_raw_double_calls_only_when_out_of_range() {
     }
 }
 
+fn extrema_component(bytes: &[u8]) -> (wasmtime::Store<()>, wasmtime::component::Instance) {
+    use std::sync::OnceLock;
+    use wasmtime::{Config, Engine, Store};
+    use wasmtime::component::{Component, Linker};
+    static ENGINE: OnceLock<Engine> = OnceLock::new();
+    let engine = ENGINE.get_or_init(|| {
+        let mut config = Config::new();
+        config.wasm_gc(true).wasm_function_references(true).wasm_tail_call(true)
+            .wasm_exceptions(true).wasm_component_model(true).wasm_component_model_implements(true)
+            .consume_fuel(true).cranelift_opt_level(wasmtime::OptLevel::None);
+        Engine::new(&config).unwrap()
+    });
+    let component = Component::new(engine, bytes).unwrap();
+    let mut store = Store::new(engine, ());
+    store.set_fuel(500_000_000).unwrap();
+    let instance = Linker::new(engine).instantiate(&mut store, &component).unwrap();
+    (store, instance)
+}
+
+#[test]
+fn long_extrema_loop_stays_raw_and_executes_the_inspected_component() {
+    let source = "(defn ^:export bound [] (loop [i 0 acc 0]
+      (if (< i 1234573) (recur (inc i) (max acc (min i 100))) acc)))";
+    let bytes = Compiler::new().compile(source,
+        "package test:extrema; world api { export bound: func() -> s64; }").unwrap();
+    for operators in functions_with(&bytes, 1234573) {
+        let calls = (0..operators.len()).filter(|&i| matches!(operators[i], Operator::Call { .. })).collect::<Vec<_>>();
+        assert_eq!(calls.len(), 1, "only inc's throwing path calls: {operators:?}");
+        assert!(throwing_call(&operators, calls[0]));
+        assert!(operators.iter().filter(|op| matches!(op, Operator::Select)).count() >= 2);
+        // Every allocation either feeds inc's error or immediately returns.
+        for (index, op) in operators.iter().enumerate() {
+            if !matches!(op, Operator::StructNew { .. }) { continue; }
+            let end = operators[index..].iter().position(|op| matches!(op, Operator::Call { .. } | Operator::Return))
+                .map(|offset| index + offset).unwrap();
+            assert!(!operators[index..end].iter().any(|op| matches!(op, Operator::Br { .. } | Operator::BrIf { .. })));
+            assert!(matches!(operators[end], Operator::Return) || throwing_call(&operators, end));
+        }
+    }
+    let (mut store, instance) = extrema_component(&bytes);
+    let run = instance.get_typed_func::<(), (i64,)>(&mut store, "bound").unwrap();
+    assert_eq!(run.call(&mut store, ()).unwrap().0, 100);
+    run.post_return(&mut store).unwrap();
+}
+
+#[test]
+fn double_extrema_loop_stays_raw_and_executes_the_inspected_component() {
+    let source = "(defn ^:export bound [] (loop [i 0 acc -0.0]
+      (if (< i 1234575) (recur (inc i) (max acc (min (double i) 0.0))) acc)))";
+    let bytes = Compiler::new().compile(source,
+        "package test:extrema; world api { export bound: func() -> f64; }").unwrap();
+    for operators in functions_with(&bytes, 1234575) {
+        assert!(operators.iter().any(|op| matches!(op, Operator::F64Max)));
+        assert!(operators.iter().any(|op| matches!(op, Operator::F64Min)));
+        let calls = (0..operators.len()).filter(|&i| matches!(operators[i], Operator::Call { .. })).collect::<Vec<_>>();
+        assert_eq!(calls.len(), 1, "only inc's throwing path calls: {operators:?}");
+        assert!(throwing_call(&operators, calls[0]));
+        for (index, op) in operators.iter().enumerate() {
+            if !matches!(op, Operator::StructNew { .. }) { continue; }
+            let end = operators[index..].iter().position(|op| matches!(op, Operator::Call { .. } | Operator::Return))
+                .map(|offset| index + offset).unwrap();
+            assert!(!operators[index..end].iter().any(|op| matches!(op, Operator::Br { .. } | Operator::BrIf { .. })));
+            assert!(matches!(operators[end], Operator::Return) || throwing_call(&operators, end));
+        }
+    }
+    let (mut store, instance) = extrema_component(&bytes);
+    let run = instance.get_typed_func::<(), (f64,)>(&mut store, "bound").unwrap();
+    assert_eq!(run.call(&mut store, ()).unwrap().0.to_bits(), 0.0_f64.to_bits());
+    run.post_return(&mut store).unwrap();
+}
+
 fn check_sum_loop(operators: &[Operator]) {
     // The loop's two additions each have a throwing path; nothing else calls.
     let calls = (0..operators.len())
