@@ -1,0 +1,4 @@
+(ns escapeprobe)
+(def pair (fn [x y] (let [[a b] [x y]] (+ a b))))
+(def local-closure (fn [^long x] (let [f (fn [] (+ x 1))] (f))))
+(def local-recursive (fn [^long x] (letfn [(f [n] (if (zero? n) x (+ 1 (f (dec n)))))] (f 3))))

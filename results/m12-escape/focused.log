@@ -1,0 +1,315 @@
+Running as unit: run-p3760668-i87612127.scope; invocation ID: 7d8c261ccce445719e335c8f9965d2aa
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 2.26s
+     Running tests/apply_fixed_arity.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/apply_fixed_arity-bbefa3ea42ebf0ac)
+
+running 12 tests
+test apply_callback_registration_is_private_and_publishes_atomically ... ok
+test apply_checks_non_null_callees_before_normalizing_the_tail ... ok
+test apply_over_seqs_answers_as_before ... ok
+test apply_sequence_callbacks_follow_clojure_1_12_6 ... ok
+test fixed_apply_reaches_an_error_in_the_unbounded_remainder ... ok
+test callable_apply_preserves_meta_var_and_multifn_traversal_after_gc ... ok
+test list_wrapper_retains_original_and_helper_captures_across_cache_changes ... ok
+test native_apply_families_keep_their_own_lazy_error_boundaries ... ok
+test numeric_apply_respects_chunk_end_boundaries ... ok
+test primitive_var_calls_and_variadic_rests_coexist_after_redefinition ... ok
+test numeric_apply_stops_realizing_at_the_conversion_error ... ok
+test wide_apply_reports_jvm_twenty_one_argument_errors_after_dispatch ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.86s
+
+     Running tests/captured_fn_calls.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/captured_fn_calls-390529da2b47a75e)
+
+running 2 tests
+test captured_fns_answer_in_the_repl ... ok
+test captured_fns_answer_in_a_direct_linked_build ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.10s
+
+     Running tests/clojure_division_overloads.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_division_overloads-d7739722c627dad8)
+
+running 2 tests
+test runtime_and_macro_preserve_source_division_overloads ... ok
+test aot_wrappers_keep_the_inner_helpers_hinted_or_generic ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.07s
+
+     Running tests/clojure_local_numeric_hints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_local_numeric_hints-ff9fb880295f6a71)
+
+running 4 tests
+test aot_preserves_local_hint_semantics ... ok
+test hint_diagnostics_use_initial_source_types_before_loop_reanalysis ... ok
+test runtime_and_macro_preserve_local_hint_semantics ... ok
+test aot_rejects_invalid_local_hint_declarations ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.43s
+
+     Running tests/clojure_nonescaping_closures.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_nonescaping_closures-eca119f52b94d8a1)
+
+running 2 tests
+test runtime_and_macro_preserve_nonescaping_closures ... ok
+test aot_preserves_nonescaping_closures ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.14s
+
+     Running tests/clojure_numeric_box_reuse.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_numeric_box_reuse-a3060681a3a0a766)
+
+running 2 tests
+test runtime_and_macro_preserve_numeric_box_reuse ... ok
+test aot_preserves_numeric_box_reuse ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.00s
+
+     Running tests/clojure_numeric_extrema.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_numeric_extrema-5cef05d5f0fdf811)
+
+running 4 tests
+test aot_preserves_numeric_extrema_semantics ... ok
+test extrema_source_return_types_and_initializers_are_checked ... ok
+test runtime_and_macro_preserve_numeric_extrema_semantics ... ok
+test aot_rejects_invalid_extrema_return_types ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.65s
+
+     Running tests/clojure_primitive_method_types.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_primitive_method_types-c5ca8037cd919178)
+
+running 4 tests
+test aot_preserves_primitive_method_types ... ok
+test primitive_method_diagnostics_use_lexical_source_types ... ok
+test runtime_and_macro_preserve_primitive_method_types ... ok
+test aot_rejects_invalid_primitive_method_types ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 23.18s
+
+     Running tests/clojure_raw_bits_and_casts.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_raw_bits_and_casts-125577e13d1b01d5)
+
+running 2 tests
+test runtime_and_macro_preserve_raw_bits_and_casts ... ok
+test aot_preserves_raw_bits_and_casts ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.64s
+
+     Running tests/clojure_raw_numeric_core.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_raw_numeric_core-adef0af7f969bf49)
+
+running 2 tests
+test runtime_and_macro_preserve_known_numeric_core_results ... ok
+test aot_preserves_known_numeric_core_results ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.54s
+
+     Running tests/clojure_unboxed_locals.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_unboxed_locals-67ac12a7b57e950c)
+
+running 12 tests
+test bit_tests_keep_shift_masking_flags_and_boxed_fallbacks ... ok
+test core_int32_operations_keep_low_bits_shift_masks_and_signed_results ... ok
+test core_known_numeric_math_keeps_overflow_nan_zero_and_coercing_fallbacks ... ok
+test double_zero_division_keeps_source_overloads_separate_from_storage ... ok
+test doubles_keep_nan_and_signed_zero ... ok
+test constant_long_products_keep_both_operand_orders_and_exact_overflow ... ok
+test guarded_numeric_comparisons_keep_redefinitions_and_evaluation_order ... ok
+test long_overflow_throws_on_both_paths ... ok
+test longs_and_doubles_mix_as_in_clojure ... ok
+test guarded_array_indices_keep_aliases_bounds_and_boxed_fallbacks ... ok
+test non_numbers_throw_as_on_the_boxed_path ... ok
+test loops_keep_counters_raw_and_box_where_values_escape ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.38s
+
+     Running tests/compiled_aot_async_command.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/compiled_aot_async_command-18fe59ba7a45fd15)
+
+running 2 tests
+test async_input_validation_precedes_guest_initializers ... ok
+test native_async_invocation_executes_compiled_macros_and_validates_inputs ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.29s
+
+     Running tests/compiled_aot_compile_fuel.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/compiled_aot_compile_fuel-cbaf26c18d305a95)
+
+running 1 test
+test aot_compile_fuel_file_and_namespace_preserve_defaults_and_failed_output ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.90s
+
+     Running tests/compiled_core_casts.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/compiled_core_casts-490047d0859fa9b7)
+
+running 11 tests
+test boxed_bit_functions_do_not_inherit_backend_primitive_kinds ... ok
+test array_length_source_results_require_a_known_array_class ... ok
+test coercions_answer_as_calls_do ... ok
+test checked_long_of_a_raw_double_matches_the_boxed_cast ... ok
+test guarded_primitive_calls_preserve_replacement_values_and_numeric_joins ... ok
+test primitive_return_hints_cast_after_the_body_in_both_phases ... ok
+test raw_operands_coerce_inline ... ok
+test packed_array_source_kinds_are_distinct_from_backend_representations ... ok
+test return_hints_reject_opposite_source_primitives_but_unbox_objects ... ok
+test shared_array_initializers_do_not_expand_source_kind_work_exponentially ... ok
+test unary_and_unchecked_source_results_follow_clojure_overloads ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.05s
+
+     Running tests/compiled_macro_cumulative_fuel.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/compiled_macro_cumulative_fuel-1cd2e2714605e76a)
+
+running 8 tests
+test exhausted_expansion_preserves_effects_already_executed_in_the_macro_store ... ok
+test independent_macro_calls_in_one_fragment_share_fuel_and_next_repl_input_recovers ... ok
+test completed_macro_work::cumulative_exhaustion_follows_multiple_completed_guest_helpers_and_recovers ... ok
+test infinite_lazy_expanded_result_exhausts_without_publication_and_preserves_effects ... ok
+test macros_cannot_mutate_transported_metadata_storage ... ok
+test recursive_macro_reexpansion_does_not_reset_the_fragment_budget ... ok
+test source_metadata_observer_and_nonobserver_survive_macro_input_and_result_transport ... ok
+test interrupted_macro_expansion_recovers_for_repl_and_aot_with_same_fuel_setting ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.71s
+
+     Running tests/compiled_macro_declaration_functions.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/compiled_macro_declaration_functions-a79b3836f8ed166c)
+
+running 2 tests
+test compiled_argument_lists_preserve_quoted_data_and_actual_file_positions ... ok
+test compiled_function_declarations_match_primary_presence_and_parameter_shapes ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.40s
+
+     Running tests/compiled_macro_function_scopes.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/compiled_macro_function_scopes-bfda9236ecf199e8)
+
+running 2 tests
+test function_hints_follow_expansion_without_leaking_into_operands_or_fabricating_origins ... ok
+test genuine_function_scopes_match_pinned_names_and_do_not_invent_hint_bindings ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.67s
+
+     Running tests/compiled_primitive_params.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/compiled_primitive_params-b27d9dd2c1f8f8c7)
+
+running 2 tests
+test wit_parameter_specialization_does_not_change_source_return_typing ... ok
+test primitive_parameter_hints_match_the_repl ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.80s
+
+     Running tests/compiled_record_default_budget.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/compiled_record_default_budget-1e3c35bc33455888)
+
+running 3 tests
+test aot_records_fit_default_budget_and_execute ... ok
+test eval_and_script_records_fit_default_compilation_budget ... ok
+test repeated_repl_records_fit_four_million_and_keep_membership_below_one_tenth_default ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.17s
+
+     Running tests/portable_closure_receivers.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/portable_closure_receivers-97af94f1d2e9c5c7)
+
+running 3 tests
+test ordinary_receivers_restore_after_nested_calls_throws_and_invalid_apply ... ok
+test ordinary_call_and_apply_bind_the_requested_receiver_after_gc ... ok
+test receiver_adapters_keep_ordinary_closure_arity_strict ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.46s
+
+     Running tests/portable_function_parameters.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/portable_function_parameters-0c461169e50345f2)
+
+running 2 tests
+test destructured_callable_sole_host_handle_retains_default_captures_after_gc ... ok
+test function_parameters_match_raw_pinned_values_and_effect_traces_in_both_phases_after_gc ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.30s
+
+     Running tests/repl_default_budgets.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/repl_default_budgets-372d88f5b3bab970)
+
+running 3 tests
+test default_repl_budgets_run_records_protocols_and_large_collections ... ok
+test unbounded_budgets_report_real_errors ... ok
+test explicit_repl_budgets_name_the_exhausted_budget_and_its_flag ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.17s
+
+     Running tests/portable_async_execution.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/portable_async_execution-bd06649e26b2facd)
+
+running 13 tests
+test actual_pending_await_preserves_capture_and_resumes_after_gc ... ok
+test body_throw_is_caught_but_cleanup_throw_overrides_the_pending_result_once ... ok
+test cancelled_dependency_is_catchable_and_suspended_finally_completes_once ... ok
+test cancellation_during_pending_finally_preserves_remaining_cleanup_and_override ... ok
+test cpu_backedges_yield_to_completed_dependency_and_preserve_loop_state ... ok
+test failed_dependency_enters_handler_then_pending_cleanup_and_keeps_payload ... ok
+test invalid_await_registration_throws_to_catch_and_finally_executes_once ... ok
+test nested_future_and_consecutive_awaits_execute_compiled_states ... ok
+test own_cancel_before_first_turn_does_not_execute_body_or_enter_finally ... ok
+test own_cancel_bypasses_catch_and_waits_for_finally_before_terminal_cancel ... ok
+test owner_cancellation_waits_for_cleanup_and_retires_old_dependency ... ok
+test pending_nested_try_binding_and_finally_await_preserve_roots_and_caller ... ok
+test yields_preserve_catch_payload_cleanup_outcome_and_dynamic_frame ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.65s
+
+     Running tests/portable_closures.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/portable_closures-d37aa74e4754122a)
+
+running 14 tests
+test calls_evaluate_computed_callee_then_each_argument_exactly_once ... ok
+test bootstrap_fn_rejects_parameter_metadata_pre_and_post_conditions ... ok
+test dynamic_arity_errors_are_language_exceptions_and_store_remains_usable ... ok
+test captures_use_lexical_identity_and_retain_parameter_metadata ... ok
+test invocation_checks_non_callable_and_malformed_arrays_without_wasm_traps ... ok
+test malformed_public_closure_arity_does_not_allocate_unbounded_entry_metadata ... ok
+test multiple_signatures_verify_exact_methods_captures_and_isolated_recur_targets ... ok
+test non_callable_errors_happen_after_argument_effects ... ok
+test old_closure_values_and_live_global_calls_survive_rebinding_and_gc ... ok
+test source_closures_capture_values_and_execute_universal_calls ... ok
+test source_wrong_arity_and_missing_rest_class_are_located_diagnostics ... ok
+test verified_variadic_entries_require_class_and_valid_persistent_rest_shape ... ok
+test verifier_rejects_malformed_closure_shapes_calls_and_capture_facts ... ok
+test nested_closures_parameters_shadowing_and_computed_callees_execute ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.09s
+
+     Running tests/portable_core_expression_dependencies.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/portable_core_expression_dependencies-3b31f61fa7bef597)
+
+running 7 tests
+test portable_decode::adversarial_owner::canonical_descriptor_does_not_validate_foreign_owner_layout ... ok
+test portable_decode::adversarial_owner::indexed_string_rejects_immutable_utf16_backing ... ok
+test error_message_property_observes_actual_typed_error_after_gc ... ok
+test private_string_concat_rejects_non_strings_after_once_only_operand_effects ... ok
+test retained_internal_string_conversion_keeps_runtime_edges_in_both_phases ... ok
+test retained_parity_error_branch_keeps_actual_scalar_message ... ok
+test retained_numeric_and_stack_definitions_preserve_scalar_edges_in_both_phases ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.32s
+
+     Running tests/portable_hir_resources.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/portable_hir_resources-5c6151be2ff5ffc0)
+
+running 7 tests
+test deep_ir_cache_key_and_emission_remain_stack_safe ... ok
+test deep_hir_clone_and_success_cleanup_use_bounded_native_stack ... ok
+test deep_partial_hir_cleanup_survives_error_and_unwind ... ok
+test ir_closure_depth_is_governed_by_work_and_retains_nested_validation ... ok
+test ir_verification_polls_cancellation_and_recovers_without_publishing ... ok
+test verifier_dominance_crosses_word_boundaries_and_rejects_bypassed_definitions ... ok
+test deep_ir_cleanup_survives_success_rejection_and_unwind ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/portable_primitive_entries.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/portable_primitive_entries-08c49189e22e77fb)
+
+running 3 tests
+test live_var_calls_cache_and_invoke_the_primitive_signature ... ok
+test direct_linked_calls_use_raw_arguments_and_results ... ok
+test primitive_entries_use_numeric_parameters_and_results_without_normal_boxes ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/portable_unboxed_locals.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/portable_unboxed_locals-62894b1b9e3a10d5)
+
+running 13 tests
+test a_long_sum_loop_allocates_only_its_result ... ok
+test checked_long_of_a_raw_double_calls_only_when_out_of_range ... ok
+test core_double_coercion_in_a_loop_does_not_call_or_allocate ... ok
+test double_extrema_loop_stays_raw_and_executes_the_inspected_component ... ok
+test known_double_core_results_stay_raw_and_execute ... ok
+test long_extrema_loop_stays_raw_and_executes_the_inspected_component ... ok
+test known_long_core_results_stay_raw_and_execute ... ok
+test raw_bits_and_casts::float_casts_execute_without_normal_calls_or_boxes ... ok
+test raw_bits_and_casts::local_closure_captures_and_results_execute_without_boxes_or_calls ... ok
+test raw_bits_and_casts::long_bits_execute_without_normal_calls_or_boxes ... ok
+test raw_bits_and_casts::narrow_integer_casts_execute_without_normal_calls_or_boxes ... ok
+test raw_numeric_helpers_return_scalars_without_numeric_boxes ... ok
+test raw_bits_and_casts::object_and_float_overloads_execute_without_normal_calls_or_boxes ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 100.31s
+

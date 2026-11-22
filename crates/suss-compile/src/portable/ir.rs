@@ -1,5 +1,6 @@
 //! Explicit values, blocks and edge parameters. Verification precedes emission.
 pub mod liveness;
+mod escape;
 pub mod r#async;
 use super::{
     hir::{
@@ -1254,6 +1255,7 @@ pub fn lower_metered(
 ) -> Result<Function, Diagnostic> {
     verify_recurrence(hir, &mut Vec::new(), false, meter)?;
     let mut function = Lowerer::new(hir.span.clone(), meter)?.finish(hir)?;
+    escape::eliminate(&mut function, meter)?;
     hoist_loop_invariant_reads(&mut function);
     Ok(function)
 }

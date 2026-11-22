@@ -1,0 +1,26 @@
+"(let [x (+ 3000000000 5) y (+ 1.25 0.5) f (fn [] (+ x y))] (f))" "3.00000000675E9"
+"(let [f (fn [] 127.1)] (byte (f)))" "127"
+"(let [f (fn [] 2147483647.9)] (int (f)))" "2147483647"
+"(let [f (fn [] (unchecked-float 2147483648.0))] (try (int (f)) (catch Throwable e :error)))" ":error"
+"(let [f (fn [x] (if x 1.5 2.5))] [(f true) (f false)])" "[1.5 2.5]"
+"(let [x -0.0 f (fn [] x)] [(f) (/ 1.0 (f))])" "[-0.0 ##-Inf]"
+"(let [x ##NaN f (fn [] (+ x 0.0)) a (f) b (f)] [(= a b) (== a b) (identical? a b)])" "[false false false]"
+"(let [x 9223372036854775807 f (fn [] (inc x))] (try (f) (catch Throwable e (ex-message e))))" "\"long overflow\""
+"(let [events (atom []) f (fn [x y] (swap! events conj :body) (+ x y))] [(f (do (swap! events conj :first) 1) (do (swap! events conj :second) 2)) @events])" "[3 [:first :second :body]]"
+"(let [events (atom []) f (fn [] (swap! events conj :body) 7)] [(f) (f) @events])" "[7 7 [:body :body]]"
+"(let [f (fn [^long x] x)] (try (f 1.0E300) (catch Throwable e :error)))" ":error"
+"(let [f (fn ^long [] (identity 1.0E300))] (f))" "9223372036854775807"
+"(let [f (fn [n] (loop [i n acc 0] (if (zero? i) acc (recur (dec i) (+ acc i)))))] (f 5))" "15"
+"(let [x 3000000000 f (fn [n] (if (zero? n) x (+ x n)))] [(f 0) (f 3)])" "[3000000000 3000000003]"
+"(let [f (fn [x] x)] (try (f 1 2) (catch Throwable e :arity)))" ":arity"
+"(let [x 3000000000 f (fn [] x)] ((identity f)))" "3000000000"
+"(let [x 3000000000 f (fn [] x) out [f]] ((nth out 0)))" "3000000000"
+"(let [x 3000000000 f (fn [] x)] (loop [i 0 acc 0] (if (< i 4) (recur (inc i) (+ acc (f))) acc)))" "12000000000"
+"(let [f (fn [x] (try (if x (throw :bad) 1) (catch Throwable e 2) (finally nil)))] [(f false) (f true)])" "[1 2]"
+"(let [events (atom []) f (fn [] (swap! events conj :body) 7)] [(try (do (f) (throw :bad)) (catch Throwable e (f))) @events])" "[7 [:body :body]]"
+"(try (let [f (fn [] (throw :boom))] (do (f) :after)) (catch Throwable e e))" "#error {\n :cause \"class clojure.lang.Keyword cannot be cast to class java.lang.Throwable (clojure.lang.Keyword is in unnamed module of loader 'app'; java.lang.Throwable is in module java.base of loader 'bootstrap')\"\n :via\n [{:type java.lang.ClassCastException\n   :message \"class clojure.lang.Keyword cannot be cast to class java.lang.Throwable (clojure.lang.Keyword is in unnamed module of loader 'app'; java.lang.Throwable is in module java.base of loader 'bootstrap')\"\n   :at [user$eval260$f__261 invoke \"oracle.clj\" 22]}]\n :trace\n [[user$eval260$f__261 invoke \"oracle.clj\" 22]\n  [user$eval260 invokeStatic \"oracle.clj\" 22]\n  [user$eval260 invoke \"oracle.clj\" 22]\n  [clojure.lang.Compiler eval \"Compiler.java\" 7757]\n  [clojure.lang.Compiler eval \"Compiler.java\" 7712]\n  [clojure.core$eval invokeStatic \"core.clj\" 3236]\n  [clojure.core$eval invoke \"core.clj\" 3232]\n  [user$eval258 invokeStatic \"oracle.clj\" 22]\n  [user$eval258 invoke \"oracle.clj\" 22]\n  [clojure.lang.Compiler eval \"Compiler.java\" 7757]\n  [clojure.lang.Compiler load \"Compiler.java\" 8223]\n  [clojure.lang.Compiler loadFile \"Compiler.java\" 8161]\n  [clojure.main$load_script invokeStatic \"main.clj\" 476]\n  [clojure.main$script_opt invokeStatic \"main.clj\" 536]\n  [clojure.main$script_opt invoke \"main.clj\" 531]\n  [clojure.main$main invokeStatic \"main.clj\" 665]\n  [clojure.main$main doInvoke \"main.clj\" 617]\n  [clojure.lang.RestFn applyTo \"RestFn.java\" 140]\n  [clojure.lang.Var applyTo \"Var.java\" 707]\n  [clojure.main main \"main.java\" 40]]}"
+Execution error (AssertionError) at user/eval258 (oracle.clj:22).
+Assert failed: (= ":boom" actual)
+
+Full report at:
+/tmp/clojure-2024976092068885063.edn

@@ -360,6 +360,21 @@ mod raw_bits_and_casts {
         run.post_return(&mut store).unwrap();
     }
 
+    #[test]
+    fn local_closure_captures_and_results_execute_without_boxes_or_calls() {
+        let source = "(defn ^:export bound [] (loop [i 0 acc 0.0]
+          (if (< i 1234591)
+            (let [x (+ 3000000000 i) y (double i) f (fn [] (+ x y))]
+              (recur (inc i) (unchecked-add acc (double (f))))) acc)))";
+        let bytes = Compiler::new().compile(source,
+            "package test:local-closure; world api { export bound: func() -> f64; }").unwrap();
+        let (mut store, instance) = extrema_component(&bytes);
+        let run = instance.get_typed_func::<(), (f64,)>(&mut store, "bound").unwrap();
+        assert_eq!(run.call(&mut store, ()).unwrap().0.to_bits(), (3705297213702690_f64).to_bits());
+        run.post_return(&mut store).unwrap();
+        for operators in functions_with(&bytes, 1234591) { check(&operators); }
+    }
+
 }
 
 #[test]

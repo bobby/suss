@@ -1,3 +1,48 @@
+## Local closure scalar storage probes (2026-11-21)
+
+results/m12-escape retains30 fresh JVM Clojure1.12.6 value assertions, executed
+in Runtime/Macro and actual AOT. Fixed-arity closures whose complete uses are
+correctly sized calls can be removed after source overload/return/recur checks.
+Captures and evaluated arguments flow through CFG parameters with their declared
+IR types, while raw numeric storage propagates independently. Return paths join
+at the original result; always-throwing paths remove unreachable blocks and
+unused SSA records. Single-use bodies move; repeated sites share a metered,
+source-relative copying allowance. Escaped/general/variadic/CFG-carried closures
+and normalized continuation/spill plans stay conservative. ABI layout unchanged.
+
+Actual before/after components execute identical four-case source with wide longs
+and doubles. Null-GC RSS slopes at1M/2M iterations (two samples) estimate closure
+allocation at119.5–119.8 bytes/iteration before, below resolution after; the direct
+control remains below resolution. Perf user-instruction deltas at100K/200K fall
+from1777.5 to28.0, matching the direct control. Vectors/MapEntries remain about
+168/136 bytes and1629/5579 instructions. All16 perf-run sums and all RSS-run sums
+are checked. These are allocation/instruction measurements, not quiet walltimes.
+Official bench.py adds the four cases; fresh JVM checks their exact loop sources
+at10/1M/2M (12 assertions), with the JVM MapEntry factory adapter recorded.
+
+Run python3 results/m12-escape/run-gates.py from m12-hints-source. Cargo +stable
+test --workspace --locked selects28 --test targets, then -- --test-threads=2:
+144 passed, zero failed/ignored. Java-free bootstrap reproduction passes both
+phases byte-exact plus4 execution tests; actual Binaryen133 passes2; reviewed-suite
+comparison passes1 in156.59s with10 unrelated tests filtered. All2758 assertion
+observations and existing known failures remain unchanged. Builds use stable
+Rust, two jobs/threads, MemoryMax4G, m12-hints-target and outer target/suss.
+No RUSTFLAGS are set. The new exact inspected component executes1,234,591
+iterations and matches JVM's3705297213702690.0 with no normal-path calls or
+loop-carried boxes. Six production/test/benchmark inputs reconstruct byte-exact.
+
+Initial compile/IR failures, the always-throwing regression, unsupported ifn?
+fixture and original verifier fixture are retained. The verifier test now returns
+its closure to retain an escaping call boundary; all seven mutation assertions
+remain. ifn? is also unresolved in the frozen baseline, and fn? is the supported
+observation control. The main oracle was restored/rerun after separating the
+vector probe files; all30 recorded fixture pairs are checked. Vector redefinition
+probes match fresh JVM's3 for both nth and vector replacements. An earlier
+analyzer probe retains unresolved letfn. Next address vector/MapEntry storage
+and that explicit letfn limitation. The helper run-full-workspace.py contains
+the required unfiltered baseline command; no current full-workspace result or
+complete numeric-tower/escape coverage is inferred from the focused gates.
+
 ## Source-selected cast overload probes (2026-11-21)
 
 results/m12-cast-overloads retains48 fresh JVM Clojure1.12.6 assertions, executed

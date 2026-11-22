@@ -1,0 +1,24 @@
+{"case": "control", "count": 1000000, "peak_bytes": 92114944, "stdout": "3000999999000000\n", "stderr": ""}
+{"case": "control", "count": 2000000, "peak_bytes": 92114944, "stdout": "6003999998000000\n", "stderr": ""}
+{"case": "control", "count": 1000000, "peak_bytes": 92114944, "stdout": "3000999999000000\n", "stderr": ""}
+{"case": "control", "count": 2000000, "peak_bytes": 92114944, "stdout": "6003999998000000\n", "stderr": ""}
+{"case": "control", "perf": {"count": 100000, "status": 0, "stdout": "300009999900000\n", "stderr": "272751105,,instructions:u,76949477,100.00,,\n"}}
+{"case": "control", "perf": {"count": 200000, "status": 0, "stdout": "600039999800000\n", "stderr": "275575164,,instructions:u,80161642,100.00,,\n"}}
+{"case": "vector", "count": 1000000, "peak_bytes": 217812992, "stdout": "3000999999000000\n", "stderr": ""}
+{"case": "vector", "count": 2000000, "peak_bytes": 385228800, "stdout": "6003999998000000\n", "stderr": ""}
+{"case": "vector", "count": 1000000, "peak_bytes": 217710592, "stdout": "3000999999000000\n", "stderr": ""}
+{"case": "vector", "count": 2000000, "peak_bytes": 385376256, "stdout": "6003999998000000\n", "stderr": ""}
+{"case": "vector", "perf": {"count": 100000, "status": 0, "stdout": "300009999900000\n", "stderr": "415058173,,instructions:u,106534122,100.00,,\n"}}
+{"case": "vector", "perf": {"count": 200000, "status": 0, "stdout": "600039999800000\n", "stderr": "577940020,,instructions:u,128439547,100.00,,\n"}}
+{"case": "entry", "count": 1000000, "peak_bytes": 185479168, "stdout": "3000999999000000\n", "stderr": ""}
+{"case": "entry", "count": 2000000, "peak_bytes": 321687552, "stdout": "6003999998000000\n", "stderr": ""}
+{"case": "entry", "count": 1000000, "peak_bytes": 185761792, "stdout": "3000999999000000\n", "stderr": ""}
+{"case": "entry", "count": 2000000, "peak_bytes": 321368064, "stdout": "6003999998000000\n", "stderr": ""}
+{"case": "entry", "perf": {"count": 100000, "status": 0, "stdout": "300009999900000\n", "stderr": "810050926,,instructions:u,134956665,100.00,,\n"}}
+{"case": "entry", "perf": {"count": 200000, "status": 0, "stdout": "600039999800000\n", "stderr": "1367946597,,instructions:u,205375068,100.00,,\n"}}
+{"case": "closure", "count": 1000000, "peak_bytes": 92114944, "stdout": "3000999999000000\n", "stderr": ""}
+{"case": "closure", "count": 2000000, "peak_bytes": 92114944, "stdout": "6003999998000000\n", "stderr": ""}
+{"case": "closure", "count": 1000000, "peak_bytes": 92114944, "stdout": "3000999999000000\n", "stderr": ""}
+{"case": "closure", "count": 2000000, "peak_bytes": 92114944, "stdout": "6003999998000000\n", "stderr": ""}
+{"case": "closure", "perf": {"count": 100000, "status": 0, "stdout": "300009999900000\n", "stderr": "272744337,,instructions:u,81764742,100.00,,\n"}}
+{"case": "closure", "perf": {"count": 200000, "status": 0, "stdout": "600039999800000\n", "stderr": "275541548,,instructions:u,83806585,100.00,,\n"}}

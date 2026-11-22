@@ -1,0 +1,102 @@
+{
+  "counts": {
+    "rss": [
+      1000000,
+      2000000
+    ],
+    "perf": [
+      100000,
+      200000
+    ]
+  },
+  "rss_resolution_bytes": 1048576,
+  "source_inputs": "source-inputs.json",
+  "artifacts": {
+    "before": {
+      "compiler_sha256": "c75acc3b63047c0b47408dc34c52fbd4379660814069822d554f13ed62af5f63",
+      "component_sha256": "6ffeace7533dfa39b308582c9d873ab57f6a4634de46c99bbdfe090d12a57f09"
+    },
+    "after": {
+      "compiler_sha256": "c099e8096babbb5b0771148cadfde65b9fad5e589189bf39abcd5d3a6dbbb390",
+      "component_sha256": "d29fee295e23e3f81cb6d55ad37ec75f8d664aa6dc4d776071abce8c6f210254"
+    }
+  },
+  "source_hashes": {
+    "bench.sus": "20b614749127396ab8cf9dedaa9e498ff5747ad32cc4044f5ae153079c84da16",
+    "bench.wit": "e10a21dabac8f17cc882fc48f63f07f01723b6c4bdf75b01f12217f2891fdd35"
+  },
+  "cases": {
+    "control": {
+      "before": {
+        "bytes_per_iteration_samples": [
+          0.0,
+          0.0
+        ],
+        "below_rss_resolution": true,
+        "instructions_per_iteration": 27.91043
+      },
+      "after": {
+        "bytes_per_iteration_samples": [
+          0.0,
+          0.0
+        ],
+        "below_rss_resolution": true,
+        "instructions_per_iteration": 28.24059
+      }
+    },
+    "vector": {
+      "before": {
+        "bytes_per_iteration_samples": [
+          167.69024,
+          168.034304
+        ],
+        "below_rss_resolution": false,
+        "instructions_per_iteration": 1628.11662
+      },
+      "after": {
+        "bytes_per_iteration_samples": [
+          167.415808,
+          167.665664
+        ],
+        "below_rss_resolution": false,
+        "instructions_per_iteration": 1628.81847
+      }
+    },
+    "entry": {
+      "before": {
+        "bytes_per_iteration_samples": [
+          135.7824,
+          136.187904
+        ],
+        "below_rss_resolution": false,
+        "instructions_per_iteration": 5578.57891
+      },
+      "after": {
+        "bytes_per_iteration_samples": [
+          136.208384,
+          135.606272
+        ],
+        "below_rss_resolution": false,
+        "instructions_per_iteration": 5578.95671
+      }
+    },
+    "closure": {
+      "before": {
+        "bytes_per_iteration_samples": [
+          119.5008,
+          119.836672
+        ],
+        "below_rss_resolution": false,
+        "instructions_per_iteration": 1777.47188
+      },
+      "after": {
+        "bytes_per_iteration_samples": [
+          0.0,
+          0.0
+        ],
+        "below_rss_resolution": true,
+        "instructions_per_iteration": 27.97211
+      }
+    }
+  }
+}

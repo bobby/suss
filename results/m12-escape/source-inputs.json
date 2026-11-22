@@ -1,0 +1,16 @@
+{
+  "base": "0ac76af93dd82b2c95ffbf0410308e0950a9667e",
+  "patch_sha256": "07dfcad64262e83eafbd79aca0f2f7607e4aa155c1a539a4f74d19984a9d5faf",
+  "new_files": [
+    "crates/suss-compile/src/portable/ir/escape.rs",
+    "crates/suss-cli/tests/clojure_nonescaping_closures.rs"
+  ],
+  "sha256": {
+    "crates/suss-compile/src/portable/ir.rs": "0919f8de70457f140eee4ed76bb6de2fa67f7d88074af7dfb9fac3dcde7ab9ca",
+    "crates/suss-compile/tests/portable_unboxed_locals.rs": "c5c352ba9b6f50e025e814c8b1a3fe83659951b39f227b621950682bbeae9368",
+    "crates/suss-compile/tests/portable_closures.rs": "e2e4d9b13d2e13b84ff0becad191bceb70c1fda2e639a5849a4a08a46801edd8",
+    "experiments/numeric-representation/suss-jvm/bench.py": "aabbbc718699e6f6b07ea88e5464a3bfc30dd1722ba952433f76e55ae9065cf2",
+    "crates/suss-compile/src/portable/ir/escape.rs": "66b7e9594c8b1476b37eaa1138973026b6266238322d31aa92babfe03282ad71",
+    "crates/suss-cli/tests/clojure_nonescaping_closures.rs": "1a2a82675fbac71ca3c9907fa298d23e19a3138aff79abf409db922dc7e54628"
+  }
+}

@@ -541,7 +541,8 @@ fn verifier_rejects_malformed_closure_shapes_calls_and_capture_facts() {
         }
         assert!(portable::compile_ir(&bad).is_err());
     }
-    let original = ir::lower(&portable::analyze("((fn [x] x) 1)").unwrap()).unwrap();
+    // Returning the closure keeps a real call boundary for these mutations.
+    let original = ir::lower(&portable::analyze("(let [f (fn [x] x)] (do (f 1) f))").unwrap()).unwrap();
     for mutation in 0..3 {
         let mut bad = original.clone();
         let call = bad.blocks[0]

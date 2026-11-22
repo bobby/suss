@@ -1,0 +1,46 @@
+Running as unit: run-p3710852-i87564021.scope; invocation ID: 283d6a1fb15e43b296b5264aaa43fbe6
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 21s
+     Running tests/clojure_nonescaping_closures.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_nonescaping_closures-eca119f52b94d8a1)
+
+running 2 tests
+test runtime_and_macro_preserve_nonescaping_closures ... ok
+test aot_preserves_nonescaping_closures ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 25.91s
+
+     Running tests/compiled_macro_cumulative_fuel.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/compiled_macro_cumulative_fuel-1cd2e2714605e76a)
+
+running 8 tests
+test exhausted_expansion_preserves_effects_already_executed_in_the_macro_store ... ok
+test independent_macro_calls_in_one_fragment_share_fuel_and_next_repl_input_recovers ... ok
+test completed_macro_work::cumulative_exhaustion_follows_multiple_completed_guest_helpers_and_recovers ... ok
+test infinite_lazy_expanded_result_exhausts_without_publication_and_preserves_effects ... ok
+test macros_cannot_mutate_transported_metadata_storage ... ok
+test recursive_macro_reexpansion_does_not_reset_the_fragment_budget ... ok
+test source_metadata_observer_and_nonobserver_survive_macro_input_and_result_transport ... ok
+test interrupted_macro_expansion_recovers_for_repl_and_aot_with_same_fuel_setting ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.65s
+
+     Running tests/portable_unboxed_locals.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/portable_unboxed_locals-62894b1b9e3a10d5)
+
+running 13 tests
+test checked_long_of_a_raw_double_calls_only_when_out_of_range ... ok
+test a_long_sum_loop_allocates_only_its_result ... ok
+test core_double_coercion_in_a_loop_does_not_call_or_allocate ... ok
+test double_extrema_loop_stays_raw_and_executes_the_inspected_component ... ok
+test known_double_core_results_stay_raw_and_execute ... ok
+test long_extrema_loop_stays_raw_and_executes_the_inspected_component ... ok
+test known_long_core_results_stay_raw_and_execute ... ok
+test raw_bits_and_casts::local_closure_captures_and_results_execute_without_boxes_or_calls ... ok
+test raw_bits_and_casts::float_casts_execute_without_normal_calls_or_boxes ... ok
+test raw_bits_and_casts::long_bits_execute_without_normal_calls_or_boxes ... ok
+test raw_bits_and_casts::narrow_integer_casts_execute_without_normal_calls_or_boxes ... ok
+test raw_numeric_helpers_return_scalars_without_numeric_boxes ... ok
+test raw_bits_and_casts::object_and_float_overloads_execute_without_normal_calls_or_boxes ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 94.42s
+

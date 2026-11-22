@@ -1,0 +1,11 @@
+Running as unit: run-p3745557-i87595585.scope; invocation ID: 9f6007384c5f4b0e83a0345e8c28a8db
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 0.68s
+     Running tests/clojure_nonescaping_closures.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_nonescaping_closures-eca119f52b94d8a1)
+
+running 2 tests
+test runtime_and_macro_preserve_nonescaping_closures ... ok
+test aot_preserves_nonescaping_closures ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.91s
+

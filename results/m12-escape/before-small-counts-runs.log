@@ -1,0 +1,24 @@
+{"case": "control", "count": 100000, "peak_bytes": 92872704, "stdout": "300009999900000\n", "stderr": ""}
+{"case": "control", "count": 200000, "peak_bytes": 92872704, "stdout": "600039999800000\n", "stderr": ""}
+{"case": "control", "count": 100000, "peak_bytes": 92872704, "stdout": "300009999900000\n", "stderr": ""}
+{"case": "control", "count": 200000, "peak_bytes": 92872704, "stdout": "600039999800000\n", "stderr": ""}
+{"case": "control", "perf": {"count": 100000, "status": 0, "stdout": "300009999900000\n", "stderr": "272771980,,instructions:u,66488669,100.00,,\n"}}
+{"case": "control", "perf": {"count": 200000, "status": 0, "stdout": "600039999800000\n", "stderr": "275557625,,instructions:u,88578039,100.00,,\n"}}
+{"case": "vector", "count": 100000, "peak_bytes": 92872704, "stdout": "300009999900000\n", "stderr": ""}
+{"case": "vector", "count": 200000, "peak_bytes": 92872704, "stdout": "600039999800000\n", "stderr": ""}
+{"case": "vector", "count": 100000, "peak_bytes": 92872704, "stdout": "300009999900000\n", "stderr": ""}
+{"case": "vector", "count": 200000, "peak_bytes": 92872704, "stdout": "600039999800000\n", "stderr": ""}
+{"case": "vector", "perf": {"count": 100000, "status": 0, "stdout": "300009999900000\n", "stderr": "415080232,,instructions:u,86328322,100.00,,\n"}}
+{"case": "vector", "perf": {"count": 200000, "status": 0, "stdout": "600039999800000\n", "stderr": "577941656,,instructions:u,107048882,100.00,,\n"}}
+{"case": "entry", "count": 100000, "peak_bytes": 92872704, "stdout": "300009999900000\n", "stderr": ""}
+{"case": "entry", "count": 200000, "peak_bytes": 92872704, "stdout": "600039999800000\n", "stderr": ""}
+{"case": "entry", "count": 100000, "peak_bytes": 92872704, "stdout": "300009999900000\n", "stderr": ""}
+{"case": "entry", "count": 200000, "peak_bytes": 92872704, "stdout": "600039999800000\n", "stderr": ""}
+{"case": "entry", "perf": {"count": 100000, "status": 0, "stdout": "300009999900000\n", "stderr": "810087639,,instructions:u,119775258,100.00,,\n"}}
+{"case": "entry", "perf": {"count": 200000, "status": 0, "stdout": "600039999800000\n", "stderr": "1367939807,,instructions:u,173110212,100.00,,\n"}}
+{"case": "closure", "count": 100000, "peak_bytes": 92872704, "stdout": "300009999900000\n", "stderr": ""}
+{"case": "closure", "count": 200000, "peak_bytes": 92872704, "stdout": "600039999800000\n", "stderr": ""}
+{"case": "closure", "count": 100000, "peak_bytes": 92872704, "stdout": "300009999900000\n", "stderr": ""}
+{"case": "closure", "count": 200000, "peak_bytes": 92872704, "stdout": "600039999800000\n", "stderr": ""}
+{"case": "closure", "perf": {"count": 100000, "status": 0, "stdout": "300009999900000\n", "stderr": "429971099,,instructions:u,86154315,100.00,,\n"}}
+{"case": "closure", "perf": {"count": 200000, "status": 0, "stdout": "600039999800000\n", "stderr": "607719969,,instructions:u,104014472,100.00,,\n"}}

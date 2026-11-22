@@ -1253,3 +1253,13 @@ The samples are not quiet timing acceptance. Historical mixed bitwise, equality,
 max/min and unchecked inc/dec mismatches retain their original source identities;
 the later overload/extrema receipts above record their bounded corrections. These
 observations do not establish the complete numeric tower or new inventory counts.
+
+[Local closure receipts](../../results/m12-escape/README.md) add30 fresh JVM value
+assertions in Runtime/Macro and actual AOT. Fixed-arity closures used exclusively
+by correctly sized calls can be removed after source typing; nested captures,
+primitive conversions, arity/escape controls, exceptions and source Object casts
+remain covered. The inspected loop executes1,234,591 iterations and matches JVM.
+Before/after closure allocation falls from about120 estimated bytes per iteration
+to below RSS resolution, with about1777 to28 instructions. The direct control and
+unchanged vector/MapEntry samples remain explicit. No new inventory classifications,
+complete escape coverage, `letfn`/`ifn?` support or quiet timing result is inferred.

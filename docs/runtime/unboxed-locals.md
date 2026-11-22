@@ -164,7 +164,7 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   tags has a typed Wasm entry, retained in a signature-specific subtype of its
   code struct (ABI 7). The ordinary entry checks its arguments, calls that
   body and boxes a primitive result. Numeric operands and results inside the
-  typed body stay raw; captures retain the ordinary closure representation.
+  typed body stay raw; closures which remain materialized retain ordinary captures.
   Variadic and spread adapters still reach the checked ordinary entry.
 - **Fixed primitive calls.** Calls of a known local function, direct-linked
   definition or a var with numeric arglists can use the typed entry. Direct
@@ -175,6 +175,17 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   and a flag until a consumer needs it. Arithmetic, comparisons and matching loop joins
   propagate those alternatives; numeric casts check the boxed alternative.
   The fallback never coerces a replacement merely because of an old hint.
+
+
+- **Locally called closures.** After source overload/return/recur checks, a
+  fixed-arity closure whose complete use set is correctly sized calls can be
+  removed. Its body moves into each call site; captures and evaluated arguments
+  flow through CFG parameters, retaining declared IR types while inference keeps
+  numeric storage raw. Always-throwing bodies remove their unreachable suffix and
+  unused SSA records. One-use bodies move; repeated sites share a bounded graph
+  copying allowance. Returned/stored/unknown-function closures, general/variadic
+  bodies, CFG-carried closure values and normalized continuations remain
+  conservative. This does not infer new source primitive types for call results.
 
 Unhinted parameters, values read from vars, and ordinary call results are boxed.
 Calls without a known primitive signature use the ordinary entry and box their
@@ -224,6 +235,16 @@ Some source and calling paths retain the following behavior:
 
 ## Evidence
 
+- `clojure_nonescaping_closures.rs` compares30 fresh JVM values in Runtime,
+  Macro and actual AOT, including nested/escaping closures, arity, primitive casts,
+  mixed results, NaN, signed zero, overflow and effect/exception order. The new
+  exact inspected loop executes1,234,591 iterations and returns3705297213702690.0
+  as on JVM, with no normal-path calls or loop-carried boxes. Four benchmark
+  cases retain actual before/after instruction and null-GC RSS samples: the local
+  closure falls from about120 estimated bytes/1777 instructions per iteration to
+  below RSS resolution/about28 instructions, matching the direct control.
+  Temporary vectors/MapEntries remain about168/136 bytes. See
+  `results/m12-escape`; these are allocation/instruction results, not quiet times.
 - `clojure_raw_bits_and_casts.rs` executes48 fresh JVM value assertions and4
   separately labeled Suss redefinition controls in both phases and actual AOT.
   `results/m12-cast-overloads` extends the original30 cases with Object/float

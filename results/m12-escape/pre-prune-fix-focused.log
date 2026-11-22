@@ -1,0 +1,77 @@
+Running as unit: run-p3728002-i87598215.scope; invocation ID: a2bd2e6796924b278e8895928ca04797
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 37s
+     Running tests/apply_fixed_arity.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/apply_fixed_arity-bbefa3ea42ebf0ac)
+
+running 12 tests
+test apply_callback_registration_is_private_and_publishes_atomically ... ok
+test apply_checks_non_null_callees_before_normalizing_the_tail ... ok
+test apply_over_seqs_answers_as_before ... ok
+test apply_sequence_callbacks_follow_clojure_1_12_6 ... ok
+test callable_apply_preserves_meta_var_and_multifn_traversal_after_gc ... ok
+test fixed_apply_reaches_an_error_in_the_unbounded_remainder ... ok
+test list_wrapper_retains_original_and_helper_captures_across_cache_changes ... ok
+test numeric_apply_respects_chunk_end_boundaries ... ok
+test native_apply_families_keep_their_own_lazy_error_boundaries ... ok
+test primitive_var_calls_and_variadic_rests_coexist_after_redefinition ... ok
+test numeric_apply_stops_realizing_at_the_conversion_error ... ok
+test wide_apply_reports_jvm_twenty_one_argument_errors_after_dispatch ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 20.14s
+
+     Running tests/captured_fn_calls.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/captured_fn_calls-390529da2b47a75e)
+
+running 2 tests
+test captured_fns_answer_in_the_repl ... ok
+test captured_fns_answer_in_a_direct_linked_build ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.23s
+
+     Running tests/clojure_division_overloads.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_division_overloads-d7739722c627dad8)
+
+running 2 tests
+test runtime_and_macro_preserve_source_division_overloads ... ok
+test aot_wrappers_keep_the_inner_helpers_hinted_or_generic ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.48s
+
+     Running tests/clojure_local_numeric_hints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_local_numeric_hints-ff9fb880295f6a71)
+
+running 4 tests
+test aot_preserves_local_hint_semantics ... ok
+test hint_diagnostics_use_initial_source_types_before_loop_reanalysis ... ok
+test runtime_and_macro_preserve_local_hint_semantics ... ok
+test aot_rejects_invalid_local_hint_declarations ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.10s
+
+     Running tests/clojure_nonescaping_closures.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_nonescaping_closures-eca119f52b94d8a1)
+
+running 2 tests
+test aot_preserves_nonescaping_closures ... FAILED
+test runtime_and_macro_preserve_nonescaping_closures ... FAILED
+
+failures:
+
+---- aot_preserves_nonescaping_closures stdout ----
+
+thread 'aot_preserves_nonescaping_closures' (3733963) panicked at crates/suss-cli/tests/clojure_nonescaping_closures.rs:182:5:
+Compilation error: Semantic error: While compiling localhints.sus: IR value has no definition at bytes 3926..4027
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- runtime_and_macro_preserve_nonescaping_closures stdout ----
+
+thread 'runtime_and_macro_preserve_nonescaping_closures' (3733964) panicked at crates/suss-cli/tests/clojure_nonescaping_closures.rs:135:37:
+(try (let [f (fn [] (throw (ex-info "boom" {})))] (do (f) :after)) (catch :default e (ex-message e))): IR value has no definition at bytes 13..114
+
+
+failures:
+    aot_preserves_nonescaping_closures
+    runtime_and_macro_preserve_nonescaping_closures
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.02s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_nonescaping_closures`
