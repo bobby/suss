@@ -1,0 +1,8 @@
+{
+  "source": "Read-only snapshot of the existing local measurement prototype; the original worktree is unmodified.",
+  "files": {
+    "Cargo.toml": "4b35f6984edda894cf4eeeed03c150598078434926ef4de2c6069c7e51a1d378",
+    "Cargo.lock": "35344cd614823c25606f7f1d028e02d05cbb723c9c64cac6831cdb81c18b03e1",
+    "src/lib.rs": "4d45cf98234a12758f1854baf877685f7ad11926b9cf735abbe12c5d193dc537"
+  }
+}

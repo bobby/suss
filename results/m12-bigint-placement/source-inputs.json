@@ -1,0 +1,20 @@
+{
+  "base_commit": "9ebcedab1bd2bc1ed97d1dc2b0eddc30eb5a4ffe",
+  "files": {
+    "Cargo.lock": "a9fa49b7ae7d85f52999d0c6a2eb7caf1930b1ce161be6d6775a15f60d720453",
+    "runtime/numeric/rust-toolchain.toml": "1cb7c7277a8ab958399e3e18605e77ad27a78e47b8913468c335cb9cc87ee7d2",
+    "experiments/numeric-representation/bigint-helper/Cargo.toml": "4b35f6984edda894cf4eeeed03c150598078434926ef4de2c6069c7e51a1d378",
+    "experiments/numeric-representation/bigint-helper/Cargo.lock": "35344cd614823c25606f7f1d028e02d05cbb723c9c64cac6831cdb81c18b03e1",
+    "experiments/numeric-representation/bigint-helper/src/lib.rs": "401e25620e4a87921122a9bbfb7e1e9eb4b84a3cbeb80887593ad7e8789d2387",
+    "experiments/numeric-representation/src/bigint.wat": "04950b72a22260d0149524d0c1ef7e7da3a9b0caecba3b488225bb33e5ac33d9",
+    "experiments/numeric-representation/src/bigint-generate.py": "ee850666c7c9fb7f3ce64f92c26ddbbbe8f22dfa1c119615b0944a9af071f002",
+    "experiments/numeric-representation/src/bigint-generated.wat": "6cecef710ee8416473df80bf1d5030b9f6e4bf785d1893bf69862aefcf9fa296",
+    "experiments/numeric-representation/src/bigint-host.rs": "21b64dc621692fc713b5916b0c55ca0a690fba190bdeaf861f42d2d4f70ac0d7",
+    "experiments/numeric-representation/bigint-placement-build.py": "159edaaff96bd5ab6847e5b361ad3808014971212ab29c10a37618d877d2c54c",
+    "experiments/numeric-representation/bigint-placement-verify.py": "264440d05fdd9d71d59640e71a1cabdba57e9f52a40eb70b3c31e55ef72c93f3",
+    "experiments/numeric-representation/bigint-placement-oracle.py": "9b2139cef1e5b88d194e65349e2454d1d74374c35bb31fa49801bde82f4f188b",
+    "experiments/numeric-representation/bigint-placement-measure.py": "143974b379fabddbd3c301cbf62c2b48575045650202fa10d3ce70461a90cf9a",
+    "experiments/numeric-representation/bigint_placement_data.py": "ad0f512717faa2b9069662ddceb5decce049fc030a08fe75fa8cc93968452c7a",
+    "crates/suss-compile/examples/bigint_placement.rs": "65bf8da8da9059ef712bfb0de7a0e22f5004cb54d96344b92370082feb459e79"
+  }
+}

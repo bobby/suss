@@ -1,0 +1,87 @@
+[
+  {
+    "command": [
+      "cargo",
+      "+1.98.0",
+      "build",
+      "--manifest-path",
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/experiments/numeric-representation/bigint-helper/Cargo.toml",
+      "--release",
+      "--target",
+      "wasm32-unknown-unknown",
+      "--locked"
+    ],
+    "exit_code": 0,
+    "seconds": 0.29458141326904297,
+    "stdout": "",
+    "stderr": "   Compiling bigint-helper v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/experiments/numeric-representation/bigint-helper)\n    Finished `release` profile [optimized] target(s) in 0.28s\n"
+  },
+  {
+    "command": [
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binaryen/binaryen-version_133/bin/wasm-dis",
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-helper-target/wasm32-unknown-unknown/release/bigint_helper.wasm",
+      "-o",
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/target/probe/bigint-placement/helper.wat"
+    ],
+    "exit_code": 0,
+    "seconds": 0.00410008430480957,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binaryen/binaryen-version_133/bin/wasm-as",
+      "--all-features",
+      "--disable-custom-descriptors",
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/target/probe/bigint-placement/helper-stack.wat",
+      "-o",
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/target/probe/bigint-placement/helper-stack.wasm"
+    ],
+    "exit_code": 0,
+    "seconds": 0.006188631057739258,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "python3",
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/experiments/numeric-representation/src/bigint-generate.py",
+      "1048576"
+    ],
+    "exit_code": 0,
+    "seconds": 0.021401166915893555,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binaryen/binaryen-version_133/bin/wasm-as",
+      "--all-features",
+      "--disable-custom-descriptors",
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/experiments/numeric-representation/src/bigint-generated.wat",
+      "-o",
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/target/probe/bigint-placement/gc.wasm"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003574848175048828,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-binaryen/binaryen-version_133/bin/wasm-merge",
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/target/probe/bigint-placement/helper-stack.wasm",
+      "kernel",
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/target/probe/bigint-placement/gc.wasm",
+      "bench",
+      "--all-features",
+      "--disable-custom-descriptors",
+      "-o",
+      "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/target/probe/bigint-placement/merged.wasm"
+    ],
+    "exit_code": 0,
+    "seconds": 0.008327245712280273,
+    "stdout": "",
+    "stderr": ""
+  }
+]

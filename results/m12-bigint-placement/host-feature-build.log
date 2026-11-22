@@ -1,0 +1,9 @@
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/crates/suss-compile)
+error[E0599]: no method named `wasm_custom_descriptors` found for mutable reference `&mut Config` in the current scope
+  --> crates/suss-compile/examples/../../../experiments/numeric-representation/src/bigint-host.rs:15:78
+   |
+15 |     config.wasm_gc(true).wasm_function_references(true).wasm_tail_call(true).wasm_custom_descriptors(true);
+   |                                                                              ^^^^^^^^^^^^^^^^^^^^^^^ method not found in `&mut Config`
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `suss-compile` (example "bigint_placement") due to 1 previous error

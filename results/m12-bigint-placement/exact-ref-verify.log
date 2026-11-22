@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-bigint-source/experiments/numeric-representation/bigint-placement-verify.py", line 13, in <module>
+    cmd=[str(binary),str(module),collector,'prepare'];r=subprocess.run(cmd,capture_output=True,text=True);assert r.returncode==0,r.stderr
+                                                                                                                 ^^^^^^^^^^^^^^^
+AssertionError: Error: "failed to compile: wasm[0]::function[20]\n\nCaused by:\n    0: WebAssembly translation error\n    1: Invalid input WebAssembly code at offset 2448: custom descriptors required for exact reference types\n\nfailed to compile: wasm[0]::function[20]: WebAssembly translation error: Invalid input WebAssembly code at offset 2448: custom descriptors required for exact reference types"
+

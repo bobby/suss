@@ -32172,3 +32172,26 @@ in both phases and four execution tests pass. Build/test/probe commands remain i
 MemoryMax4G user scopes with two jobs/threads, cargo +stable, named build/compile
 and TMPDIR/output under target/probe. New final-head quiet/correctness CI remains
 required; this evidence does not by itself establish the5× time criterion.
+
+
+## BigInt magnitude placement experiment (2026-11-22)
+
+[Placement receipts](../../results/m12-bigint-placement/README.md) retain
+GC-array and embedded no_std helper kernels, including both operand copies,
+checked scratch growth, stack reset and the result copy into GC storage.
+Run `python3 experiments/numeric-representation/bigint-placement-build.py`,
+build the `bigint_placement` example with the locked workspace, then run
+`bigint-placement-verify.py`, `bigint-placement-oracle.py` and
+`bigint-placement-measure.py` from that experiment directory. The README records
+the isolated executable override and Binaryen133 requirement.
+
+All876 complete magnitude results match independent integer arithmetic in two
+collectors; fresh JVM Clojure1.12.6 checks146 exact arithmetic results. The36
+operation/shape rows retain720 instruction samples and44 allocation samples.
+GC addition wins the measured shapes; larger balanced multiplication favors
+the helper including copies. One-limb by512-limb multiplication still favors
+GC, so the crossover cannot depend only on the larger operand. Both paths
+retain GC-owned magnitude arrays. The initial inherited-RSS samples and feature
+failures remain separately identified. Sign dispatch, value wrappers, division
+and GCD are excluded; this probe does not establish language BigInt/Ratio support
+or a production crossover.
