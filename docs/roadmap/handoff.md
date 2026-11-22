@@ -1,3 +1,47 @@
+## Guarded literal-vector probes (2026-11-22)
+
+results/m12-vectors retains17 fresh JVM value pairs and the original failed NaN
+alias observation. The cached18-case fixture (17 JVM values plus one boxed Suss
+NaN control) passes Runtime/Macro and actual AOT plus both IR checks:4 tests,
+zero failed/ignored. A subsequently added constructor-rebinding control uses a
+fresh frozen-compiler result; both vector execution tests pass all19 pairs
+(57 phase/component observations), retained in focused-progress.log/json.
+The broader36-target gate is still active. The original Runtime/Macro nth-rebinding failure
+is independently confirmed on f5056ffe (14 versus JVM3); the shipped core nth
+now gets indexed vector reads in sessions as well. Clojure1.12.6 metadata and
+EPL1.0 source/JAR provenance are recorded without a shipped Java dependency.
+
+Run python3 results/m12-vectors/source-check.py for exact eight-input
+reconstruction. Cached measurement inputs and the later test-only change remain
+separate, with production hashes and compiler bytes verified unchanged. Run
+SUSS_VECTOR_TARGET=<m12-aggregate-target> python3 results/m12-vectors/measure.py
+after Cargo completes. Identical benchmark source, warmed normal/null-GC caches,
+32 RSS and16 perf runs plus16 warm checks all assert their sums. Vector RSS
+slopes at1M/2M estimate167.96/168.94 bytes per iteration before, below resolution
+after; instruction deltas at100K/200K fall1628.61 to449.00. MapEntry remains about
+136 bytes/5579 instructions; direct/closure controls remain about28 instructions
+and below RSS resolution. These are not quiet walltimes. The uncached guard's
+2771-instruction regression is retained with its source and raw measurements.
+
+The pass handles one eligible1–31-element literal vector per function, constant
+in-bounds projections, complete non-escape use checks and a source-relative copy
+budget. Guard misses execute the original constructor/lookup path after once-only
+ordered elements. Generic SSA types and source overloads remain; earlier CFG
+boundaries must dominate the constructor. Async/region/future plans stay
+conservative. Successful constructor/schema admission is cached, but current
+canonical vector registration is checked on every call. No shared ABI layout
+change. Aliased NaN still differs from JVM as documented; the probe is retained
+as a negative observation, not relabeled as a JVM success.
+
+python3 results/m12-vectors/run-gates.py selects36 focused targets, then
+Java-free bootstrap reproduction, Binaryen133 and reviewed-suite comparison in
+MemoryMax4G user scopes, stable Rust, two jobs/threads, m12-aggregate-target and
+outer target/suss. Raw commands retain actual terminal statuses. This broader
+run is active; do not infer its result from the focused cached snapshot. The
+required original unfiltered workspace command remains separately active on its
+frozen f5056ffe checkout/target. MapEntry storage/rebinding and letfn remain
+explicit next limitations; no complete numeric tower or escape result is claimed.
+
 ## Closure optimization CI fixture checks (2026-11-22)
 
 CI run44990307919, integration6 on f5056ffe, found two code-shape expectations

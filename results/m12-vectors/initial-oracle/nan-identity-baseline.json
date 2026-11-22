@@ -1,0 +1,14 @@
+{
+  "source": "(let [[a] [##NaN]] [(= a a) (== a a) (identical? a a)])",
+  "expected_jvm": "[true false true]",
+  "baseline_source_commit": "f5056ffe",
+  "binary_sha256": "c099e8096babbb5b0771148cadfde65b9fad5e589189bf39abcd5d3a6dbbb390",
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/suss",
+    "-e",
+    "(let [[a] [##NaN]] [(= a a) (== a a) (identical? a a)])"
+  ],
+  "exit_code": 0,
+  "stdout": "[false false false]\n",
+  "stderr": ""
+}

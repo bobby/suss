@@ -1263,3 +1263,15 @@ Before/after closure allocation falls from about120 estimated bytes per iteratio
 to below RSS resolution, with about1777 to28 instructions. The direct control and
 unchanged vector/MapEntry samples remain explicit. No new inventory classifications,
 complete escape coverage, `letfn`/`ifn?` support or quiet timing result is inferred.
+
+
+[Literal vector receipts](../../results/m12-vectors/README.md) add17 fresh JVM
+value assertions and separate boxed-baseline controls, with original failures
+retained. A guarded continuation preserves source Object casts while projected
+numbers stay raw. The measured loop falls from about168 estimated bytes per
+iteration to below RSS resolution, and1629 to449 instructions. Runtime/Macro
+vector `nth` rebinding now matches the recorded JVM result for the shipped core
+definition. The existing aliased-NaN equality/identity difference and MapEntry
+redefinition difference remain explicit; neither is a compatibility success.
+No new inventory classifications, complete escape coverage or quiet timing
+acceptance are inferred from these samples.

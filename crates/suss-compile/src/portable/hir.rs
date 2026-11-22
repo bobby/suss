@@ -544,6 +544,8 @@ pub enum Nominal {
     /// Element n of a PersistentVector, walked by the runtime, or undefined
     /// for the general path (#378).
     VectorNth,
+    /// Internal precondition for virtual literal-vector storage.
+    ScalarVectorGuard,
     /// `map-get(m, k)` (#442): a map's value for a key only its reference
     /// equals, nil when absent, or undefined.
     ArrayMapGet,
@@ -751,6 +753,7 @@ impl Nominal {
             | Self::Satisfies
             | Self::NativeSatisfies
             | Self::IsLongValue
+            | Self::ScalarVectorGuard
             | Self::NativeMarker(_)
             | Self::KeywordCacheEmpty(_) => Type::Bool,
             _ => Type::Value,
@@ -771,7 +774,7 @@ impl Nominal {
                 Self::Identical | Self::SameReference | Self::ChunkIndexAdd => count == 2,
                 Self::AllSmallIntegers => count >= 1,
                 Self::NumberHash => count == 1,
-                Self::IsObject | Self::IsDescriptor => count == 1,
+                Self::IsObject | Self::IsDescriptor | Self::ScalarVectorGuard => count == 1,
                 Self::IsLongValue | Self::StringHash | Self::LongCast | Self::DoubleCast | Self::UncheckedLongCast => count == 1,
                 Self::PackedGet(_) | Self::VectorNth | Self::ArrayMapGet | Self::MapContains => count == 2,
                 Self::ObjectArrayCopy(_) => count == 5,
@@ -3673,7 +3676,14 @@ impl Analyzer<'_> {
         }
         // nth and first read a vector's element inline (#433); its undefined
         // answer, out of range or not a vector, is core's to give.
-        if (2..=3).contains(&args.len()) && self.linked_core_call(&resolved, "nth") {
+        // Clojure's nth has :inline metadata: a vector hit ignores root
+        // rebinding in sessions too. Admit the shipped core definition, while
+        // unknown/user definitions and lexical shadows retain their live call.
+        let inline_nth = self.linked_core_call(&resolved, "nth")
+            || matches!(&resolved, Some(ResolvedBinding::Cell(global))
+                if global.namespace() == "suss.core" && global.name() == "nth"
+                    && self.privileged_definition(global));
+        if (2..=3).contains(&args.len()) && inline_nth {
             return self.lookup_call(form, items, Nominal::VectorNth, 2, None);
         }
         if args.len() == 1 && self.linked_core_call(&resolved, "first") {

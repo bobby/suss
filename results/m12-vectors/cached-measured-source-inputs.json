@@ -1,0 +1,13 @@
+{
+  "base_commit": "8d71c3263aafc1c11c4ac883379961860c6768cd",
+  "files": {
+    "crates/suss-compile/src/portable/emit.rs": "3f3cd054fd3a39d2a43b0938976a07dee1fd3e71042b0bd52df7b9e3e5cea416",
+    "crates/suss-compile/src/portable/hir.rs": "4dee8113db3c38c90ae0a4e1209bfdfc0a49c73b46bf59bdee340b3a341c0e72",
+    "crates/suss-compile/src/portable/ir.rs": "70cf55c9f76db3a0611d4c4fa207605bbcb0c8c160b6e6913dac816dae7308d1",
+    "crates/suss-compile/src/portable/ir/escape.rs": "01cbe94826d7746344d26be6110dc4791aa5bec1b97094fc3246eb976b16cf39",
+    "crates/suss-compile/src/runtime_abi/error_constructors.rs": "defa2c9b41d1b34c17bec407fcc7e9b8f4934349e28baffe98dd40cc83b290bc",
+    "crates/suss-compile/src/portable/ir/aggregates.rs": "455c13a60a76f8d9f5f7083c51ca2329b926b859d9eddc0748571634e098c7a9",
+    "crates/suss-cli/tests/clojure_nonescaping_vectors.rs": "46ed44e41965846d686a53d0314b293cbd94d0cedee7d3cba74b79bcd7606b84",
+    "crates/suss-compile/tests/portable_nonescaping_vectors.rs": "020280fb1b543478a1501bb81ce1aceaf0cb8c0589a5c3c6395f76687430a518"
+  }
+}

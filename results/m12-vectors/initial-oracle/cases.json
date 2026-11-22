@@ -1,0 +1,66 @@
+[
+  [
+    "(let [[a b] [3000000000 1.5]] (+ a b))",
+    "3.0000000015E9"
+  ],
+  [
+    "(let [[a] [2147483648.0]] (try (int a) (catch :default e :error)))",
+    ":error"
+  ],
+  [
+    "(let [[a] [127.1]] (byte a))",
+    "127"
+  ],
+  [
+    "(let [[a] [-0.0]] [a (/ 1.0 a)])",
+    "[-0.0 ##-Inf]"
+  ],
+  [
+    "(let [[a] [##NaN]] [(= a a) (== a a) (identical? a a)])",
+    "[true false true]"
+  ],
+  [
+    "(let [[a b] [9223372036854775807 1]] (try (+ a b) (catch :default e (ex-message e))))",
+    "\"long overflow\""
+  ],
+  [
+    "(let [events (atom []) [a b] [(do (swap! events conj :a) 3000000000) (do (swap! events conj :b) 1.5)]] [(+ a b) @events])",
+    "[3.0000000015E9 [:a :b]]"
+  ],
+  [
+    "(let [events (atom [])] [(try (let [[a b] [(do (swap! events conj :a) (throw (ex-info \"boom\" {}))) (swap! events conj :b)]] (+ a b)) (catch :default e (ex-message e))) @events])",
+    "[\"boom\" [:a]]"
+  ],
+  [
+    "(with-redefs [nth (fn [& xs] 7)] (let [[a b] [1 2]] (+ a b)))",
+    "3"
+  ],
+  [
+    "(with-redefs [vector (fn [& xs] nil)] (let [[a b] [1 2]] (+ a b)))",
+    "3"
+  ],
+  [
+    "(let [v [3000000000 1.5] [a b] v] [v (+ a b)])",
+    "[[3000000000 1.5] 3.0000000015E9]"
+  ],
+  [
+    "(nth [3000000000 1.5] 2 :nf)",
+    ":nf"
+  ],
+  [
+    "(let [[a b] [nil false]] [a b])",
+    "[nil false]"
+  ],
+  [
+    "(let [[a] [3000000000] f (fn [] a)] (f))",
+    "3000000000"
+  ],
+  [
+    "(let [[f] [(fn [x] (+ x 1))]] (f 3))",
+    "4"
+  ],
+  [
+    "(loop [i 0 acc 0.0] (if (< i 4) (let [[a b] [3000000000 1.5]] (recur (inc i) (+ acc (+ a b)))) acc))",
+    "1.2000000006E10"
+  ]
+]

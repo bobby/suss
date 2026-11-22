@@ -329,6 +329,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         Nominal::StringAppendLong => { names.insert("string-append-long"); }
                         Nominal::StringHash => { names.insert("string-hash"); }
                         Nominal::VectorNth => { names.insert("vector-nth"); }
+                        Nominal::ScalarVectorGuard => { names.insert("scalar-vector-guard"); }
                         Nominal::ObjectArrayCopy(backward) => {
                             names.insert(if *backward { "object-array-copy-backward" } else { "object-array-copy-forward" });
                         }
@@ -654,7 +655,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
         .chain(futures.iter().map(|body| &body.continuation.function))
     {
         for inst in function.blocks.iter().flat_map(|block| &block.instructions) {
-            if let Operation::Nominal { operation: Nominal::Construct, .. } = &inst.operation {
+            if let Operation::Nominal { operation: Nominal::Construct | Nominal::ScalarVectorGuard, .. } = &inst.operation {
                 construct_site_list.push((function as *const IrFunction as usize, inst.result.0 as u32));
             }
         }
@@ -876,6 +877,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             | "array-get-indices"
             | "array-set-indices" => (vec![VALUE], vec![VALUE]),
             "predicate-number" | "predicate-string" | "arity-error" | "native-object-factory-function" | "native-object-default-prototype" | "current-this" => (vec![], vec![VALUE]),
+            "scalar-vector-guard" => (vec![VALUE, VALUE], vec![ValType::I32]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
             "closure-source-name-initialize" => (vec![VALUE, VALUE], vec![]),
             "closure-source-name" => (vec![VALUE], vec![VALUE]),
@@ -2411,6 +2413,28 @@ fn emit_function(
                     continue;
                 }
             }
+            // Physical raw numbers/flags cannot be undefined. Guarded numeric
+            // calls retain their boxed replacement slot when the raw flag misses.
+            if let Operation::Nominal { operation: Nominal::IsUndefined, arguments } = &inst.operation
+                && locals.of(arguments[0]) != unboxed::Repr::Boxed
+            {
+                let argument = arguments[0];
+                if locals.of(argument).maybe() {
+                    code.extend([LocalGet(locals.valid(argument)), If(BlockType::Result(ValType::I32)),
+                        I32Const(0), Else, LocalGet(argument.0 as u32 + offset),
+                        runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels), RefEq, End]);
+                } else {
+                    code.push(I32Const(0));
+                }
+                if locals.of(inst.result) == unboxed::Repr::Flag {
+                    code.push(LocalSet(locals.raw(inst.result)));
+                } else {
+                    code.extend(runtime_abi::boolean_in(sentinels));
+                    code.push(LocalSet(inst.result.0 as u32 + offset));
+                }
+                for instruction in code.drain(..) { function.instruction(&instruction); }
+                continue;
+            }
             // A packed access boxes its raw operands itself, only where the
             // generic path needs them (#387).
             if !matches!(inst.operation, Operation::Nominal { operation: Nominal::PackedGet(_) | Nominal::PackedSet(_), .. }) {
@@ -3044,6 +3068,20 @@ fn emit_function(
                     arguments,
                 } => {
                     match operation {
+                        Nominal::ScalarVectorGuard => {
+                            // Reuse the construction-site cache allocation; a
+                            // scalar guard needs only its first slot. Store only
+                            // successful admissions. The helper rechecks current
+                            // canonical registration even when this key matches.
+                            let site = construct_sites[&(ir as *const IrFunction as usize, inst.result.0 as u32)];
+                            let ctor = arguments[0].0 as u32 + offset;
+                            function.instruction(&LocalGet(ctor)).instruction(&GlobalGet(site))
+                                .instruction(&Call(index("scalar-vector-guard")))
+                                .instruction(&If(BlockType::Result(ValType::I32)))
+                                .instruction(&LocalGet(ctor)).instruction(&GlobalSet(site))
+                                .instruction(&I32Const(1)).instruction(&Else)
+                                .instruction(&I32Const(0)).instruction(&End);
+                        }
                         Nominal::IsUndefined => {
                             function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
                                 .instruction(&runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels))

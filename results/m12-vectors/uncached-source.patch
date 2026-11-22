@@ -1,0 +1,941 @@
+diff --git c/crates/suss-compile/src/portable/emit.rs w/crates/suss-compile/src/portable/emit.rs
+index 1f47985c..9dbe81ef 100644
+--- c/crates/suss-compile/src/portable/emit.rs
++++ w/crates/suss-compile/src/portable/emit.rs
+@@ -329,6 +329,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
+                         Nominal::StringAppendLong => { names.insert("string-append-long"); }
+                         Nominal::StringHash => { names.insert("string-hash"); }
+                         Nominal::VectorNth => { names.insert("vector-nth"); }
++                        Nominal::ScalarVectorGuard => { names.insert("scalar-vector-guard"); }
+                         Nominal::ObjectArrayCopy(backward) => {
+                             names.insert(if *backward { "object-array-copy-backward" } else { "object-array-copy-forward" });
+                         }
+@@ -876,6 +877,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
+             | "array-get-indices"
+             | "array-set-indices" => (vec![VALUE], vec![VALUE]),
+             "predicate-number" | "predicate-string" | "arity-error" | "native-object-factory-function" | "native-object-default-prototype" | "current-this" => (vec![], vec![VALUE]),
++            "scalar-vector-guard" => (vec![VALUE], vec![ValType::I32]),
+             "number-box" => (vec![ValType::F64], vec![VALUE]),
+             "closure-source-name-initialize" => (vec![VALUE, VALUE], vec![]),
+             "closure-source-name" => (vec![VALUE], vec![VALUE]),
+@@ -2411,6 +2413,28 @@ fn emit_function(
+                     continue;
+                 }
+             }
++            // Physical raw numbers/flags cannot be undefined. Guarded numeric
++            // calls retain their boxed replacement slot when the raw flag misses.
++            if let Operation::Nominal { operation: Nominal::IsUndefined, arguments } = &inst.operation
++                && locals.of(arguments[0]) != unboxed::Repr::Boxed
++            {
++                let argument = arguments[0];
++                if locals.of(argument).maybe() {
++                    code.extend([LocalGet(locals.valid(argument)), If(BlockType::Result(ValType::I32)),
++                        I32Const(0), Else, LocalGet(argument.0 as u32 + offset),
++                        runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels), RefEq, End]);
++                } else {
++                    code.push(I32Const(0));
++                }
++                if locals.of(inst.result) == unboxed::Repr::Flag {
++                    code.push(LocalSet(locals.raw(inst.result)));
++                } else {
++                    code.extend(runtime_abi::boolean_in(sentinels));
++                    code.push(LocalSet(inst.result.0 as u32 + offset));
++                }
++                for instruction in code.drain(..) { function.instruction(&instruction); }
++                continue;
++            }
+             // A packed access boxes its raw operands itself, only where the
+             // generic path needs them (#387).
+             if !matches!(inst.operation, Operation::Nominal { operation: Nominal::PackedGet(_) | Nominal::PackedSet(_), .. }) {
+@@ -3044,6 +3068,10 @@ fn emit_function(
+                     arguments,
+                 } => {
+                     match operation {
++                        Nominal::ScalarVectorGuard => {
++                            function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
++                                .instruction(&Call(index("scalar-vector-guard")));
++                        }
+                         Nominal::IsUndefined => {
+                             function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                 .instruction(&runtime_abi::sentinel_in(runtime_abi::UNDEFINED, sentinels))
+diff --git c/crates/suss-compile/src/portable/hir.rs w/crates/suss-compile/src/portable/hir.rs
+index 1c048737..6e5f7b6e 100644
+--- c/crates/suss-compile/src/portable/hir.rs
++++ w/crates/suss-compile/src/portable/hir.rs
+@@ -544,6 +544,8 @@ pub enum Nominal {
+     /// Element n of a PersistentVector, walked by the runtime, or undefined
+     /// for the general path (#378).
+     VectorNth,
++    /// Internal precondition for virtual literal-vector storage.
++    ScalarVectorGuard,
+     /// `map-get(m, k)` (#442): a map's value for a key only its reference
+     /// equals, nil when absent, or undefined.
+     ArrayMapGet,
+@@ -751,6 +753,7 @@ impl Nominal {
+             | Self::Satisfies
+             | Self::NativeSatisfies
+             | Self::IsLongValue
++            | Self::ScalarVectorGuard
+             | Self::NativeMarker(_)
+             | Self::KeywordCacheEmpty(_) => Type::Bool,
+             _ => Type::Value,
+@@ -771,7 +774,7 @@ impl Nominal {
+                 Self::Identical | Self::SameReference | Self::ChunkIndexAdd => count == 2,
+                 Self::AllSmallIntegers => count >= 1,
+                 Self::NumberHash => count == 1,
+-                Self::IsObject | Self::IsDescriptor => count == 1,
++                Self::IsObject | Self::IsDescriptor | Self::ScalarVectorGuard => count == 1,
+                 Self::IsLongValue | Self::StringHash | Self::LongCast | Self::DoubleCast | Self::UncheckedLongCast => count == 1,
+                 Self::PackedGet(_) | Self::VectorNth | Self::ArrayMapGet | Self::MapContains => count == 2,
+                 Self::ObjectArrayCopy(_) => count == 5,
+@@ -3673,7 +3676,14 @@ impl Analyzer<'_> {
+         }
+         // nth and first read a vector's element inline (#433); its undefined
+         // answer, out of range or not a vector, is core's to give.
+-        if (2..=3).contains(&args.len()) && self.linked_core_call(&resolved, "nth") {
++        // Clojure's nth has :inline metadata: a vector hit ignores root
++        // rebinding in sessions too. Admit the shipped core definition, while
++        // unknown/user definitions and lexical shadows retain their live call.
++        let inline_nth = self.linked_core_call(&resolved, "nth")
++            || matches!(&resolved, Some(ResolvedBinding::Cell(global))
++                if global.namespace() == "suss.core" && global.name() == "nth"
++                    && self.privileged_definition(global));
++        if (2..=3).contains(&args.len()) && inline_nth {
+             return self.lookup_call(form, items, Nominal::VectorNth, 2, None);
+         }
+         if args.len() == 1 && self.linked_core_call(&resolved, "first") {
+diff --git c/crates/suss-compile/src/portable/ir.rs w/crates/suss-compile/src/portable/ir.rs
+index 2c6389d9..c9e5be5a 100644
+--- c/crates/suss-compile/src/portable/ir.rs
++++ w/crates/suss-compile/src/portable/ir.rs
+@@ -1,6 +1,7 @@
+ //! Explicit values, blocks and edge parameters. Verification precedes emission.
+ pub mod liveness;
+ mod escape;
++mod aggregates;
+ pub mod r#async;
+ use super::{
+     hir::{
+@@ -1256,6 +1257,7 @@ pub fn lower_metered(
+     verify_recurrence(hir, &mut Vec::new(), false, meter)?;
+     let mut function = Lowerer::new(hir.span.clone(), meter)?.finish(hir)?;
+     escape::eliminate(&mut function, meter)?;
++    aggregates::eliminate(&mut function, meter)?;
+     hoist_loop_invariant_reads(&mut function);
+     Ok(function)
+ }
+@@ -1369,7 +1371,7 @@ fn loop_safe(operation: &Operation) -> bool {
+             use super::hir::Nominal as N;
+             matches!(
+                 operation,
+-                N::IsNumber | N::IsLongValue | N::PackedGet(_) | N::PackedSet(_) | N::StringHash
++                N::ScalarVectorGuard | N::IsNumber | N::IsLongValue | N::PackedGet(_) | N::PackedSet(_) | N::StringHash
+                     | N::VectorNth | N::ArrayMapGet | N::MapContains | N::MapGetOr | N::MapAssoc | N::LongCast | N::DoubleCast | N::UncheckedLongCast | N::StringAppendLong | N::IsKeyword
+                     | N::IsString | N::IsBoolean | N::IsUndefined | N::Identical | N::AllSmallIntegers | N::NumberHash
+                     | N::IsObject | N::SameReference | N::IsDescriptor | N::IsClosure | N::Array
+diff --git c/crates/suss-compile/src/portable/ir/escape.rs w/crates/suss-compile/src/portable/ir/escape.rs
+index 2f277b0c..cd074c3d 100644
+--- c/crates/suss-compile/src/portable/ir/escape.rs
++++ w/crates/suss-compile/src/portable/ir/escape.rs
+@@ -13,7 +13,7 @@ fn charge(
+ 
+ /// Count work before copying a graph, including owned literal/closure data.
+ /// Futures carry a separate continuation plan and are never copied by this pass.
+-fn size(
++pub(super) fn size(
+     function: &Function,
+     limit: usize,
+     copying: bool,
+@@ -276,7 +276,7 @@ fn walk(
+     })
+ }
+ 
+-fn map_operation(operation: &mut Operation, ids: &[ValueId]) {
++pub(super) fn map_operation(operation: &mut Operation, ids: &[ValueId]) {
+     let inputs: &mut [ValueId] = match operation {
+         Operation::Arithmetic { arguments, .. }
+         | Operation::Bitwise { arguments, .. }
+@@ -401,7 +401,7 @@ fn splice(
+ 
+ /// A body that only throws or recurs has no return edge to the call's suffix.
+ /// Remove that suffix (and any blocks it alone reached) after all sites split.
+-fn prune_unreachable(
++pub(super) fn prune_unreachable(
+     function: &mut Function,
+     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+ ) -> Result<(), Diagnostic> {
+diff --git c/crates/suss-compile/src/runtime_abi/error_constructors.rs w/crates/suss-compile/src/runtime_abi/error_constructors.rs
+index 5f996569..1203d226 100644
+--- c/crates/suss-compile/src/runtime_abi/error_constructors.rs
++++ w/crates/suss-compile/src/runtime_abi/error_constructors.rs
+@@ -499,4 +499,19 @@ pub(super) fn functions(b: &mut Builder, callback: u32) {
+         "construct-site-admit", &[VALUE, ValType::I32], &[VALUE],
+         &[(1, VALUE), (3, ValType::I32), (2, VALUE), (2, ValType::I32)], &code,
+     );
++    // A literal vector may stay virtual only when its captured constructor is
++    // the registered core vector type and construction needs no field padding
++    // or duplicate-name normalization. A miss retains ordinary construction.
++    let code = vec![Block(BlockType::Empty),
++        LocalGet(0), RefTestNonNull(HeapType::Concrete(UNIVERSAL)), I32Eqz, BrIf(0),
++        LocalGet(0), Call(b.names["closure-environment"]), LocalTee(1),
++        RefTestNonNull(HeapType::Concrete(DESCRIPTOR)), I32Eqz, BrIf(0),
++        LocalGet(1), GlobalGet(VECTOR_DESCRIPTOR_GLOBAL), RefEq, I32Eqz, BrIf(0),
++        LocalGet(1), RefCastNonNull(HeapType::Concrete(DESCRIPTOR)),
++        StructGet { struct_type_index: DESCRIPTOR, field_index: 1 },
++        RefTestNonNull(HeapType::Concrete(ARGS)), I32Eqz, BrIf(0),
++        LocalGet(1), I32Const(6), Call(b.names["construct-site-admit"]),
++        RefIsNull, I32Eqz, Return, End, I32Const(0)];
++    b.function_with_locals("scalar-vector-guard", &[VALUE], &[ValType::I32], &[(1, VALUE)], &code);
++
+ }
+diff --git 1/crates/suss-compile/src/portable/ir/aggregates.rs 2/crates/suss-compile/src/portable/ir/aggregates.rs
+new file mode 100644
+index 00000000..6c7b9ccc
+--- /dev/null
++++ 2/crates/suss-compile/src/portable/ir/aggregates.rs
+@@ -0,0 +1,518 @@
++//! Virtual literal-vector storage after source typing (#351).
++//! A guarded continuation keeps scalar elements on the fast path; the original
++//! construction and lookup paths remain available when a precondition misses.
++use super::*;
++
++struct Plan {
++    block: usize,
++    instruction: usize,
++    array: ValueId,
++    elements: Vec<ValueId>,
++    reads: HashMap<ValueId, ValueId>,
++    conditions: HashSet<ValueId>,
++    region: Vec<usize>,
++}
++
++fn charge(
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++    n: usize,
++    span: &Range<usize>,
++) -> Result<(), Diagnostic> {
++    lower_charge(meter, n, span)
++}
++
++pub(super) fn eliminate(
++    function: &mut Function,
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++) -> Result<(), Diagnostic> {
++    let mut budget = escape::size(function, usize::MAX, false, meter)?.unwrap_or(0);
++    walk(function, &mut budget, meter)
++}
++
++fn synchronous(function: &Function) -> bool {
++    !function
++        .blocks
++        .iter()
++        .flat_map(|b| &b.instructions)
++        .any(|i| {
++            matches!(
++                i.operation,
++                Operation::Await { .. }
++                    | Operation::RegionPush { .. }
++                    | Operation::RegionExit { .. }
++                    | Operation::RegionValue
++                    | Operation::AsyncDynamicEnter { .. }
++            )
++        })
++}
++
++fn walk(
++    function: &mut Function,
++    budget: &mut usize,
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++) -> Result<(), Diagnostic> {
++    stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
++        if !synchronous(function) {
++            return Ok(());
++        }
++        for block in &mut function.blocks {
++            for inst in &mut block.instructions {
++                match &mut inst.operation {
++                    Operation::MakeClosure { body, .. } => walk(&mut body.function, budget, meter)?,
++                    Operation::MakeGeneralClosure { body, .. } => {
++                        for method in &mut body.methods {
++                            walk(&mut method.function, budget, meter)?;
++                        }
++                    }
++                    _ => {}
++                }
++            }
++        }
++        let Some(plan) = analyze(function, meter)? else {
++            return Ok(());
++        };
++        // The complete parent graph is a conservative upper bound for this
++        // continuation copy, including nested owned bodies and literal data.
++        let Some(work) = escape::size(function, *budget, true, meter)? else {
++            return Ok(());
++        };
++        *budget -= work;
++        transform(function, plan, meter)?;
++        escape::prune_unreachable(function, meter)
++    })
++}
++
++fn analyze(
++    function: &Function,
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++) -> Result<Option<Plan>, Diagnostic> {
++    charge(
++        meter,
++        function.values.len().saturating_mul(2),
++        &function.span,
++    )?;
++    let mut definitions = vec![None; function.values.len()];
++    for (b, block) in function.blocks.iter().enumerate() {
++        for (i, inst) in block.instructions.iter().enumerate() {
++            definitions[inst.result.0] = Some((b, i));
++        }
++    }
++    let operation =
++        |v: ValueId| definitions[v.0].map(|(b, i)| &function.blocks[b].instructions[i].operation);
++    let literal = |v: ValueId, n: i64| matches!(operation(v), Some(Operation::Literal(Literal::Long(value))) if *value == n);
++    let nil = |v: ValueId| matches!(operation(v), Some(Operation::Literal(Literal::Nil)));
++    for (b, block) in function.blocks.iter().enumerate() {
++        for (i, inst) in block.instructions.iter().enumerate() {
++            charge(meter, 1, &inst.span)?;
++            let Operation::Nominal {
++                operation: Nominal::Construct,
++                arguments,
++            } = &inst.operation
++            else {
++                continue;
++            };
++            if arguments.len() != 7
++                || !nil(arguments[1])
++                || !nil(arguments[6])
++                || !literal(arguments[3], 5)
++            {
++                continue;
++            }
++            let Some(Operation::GlobalRead(global)) = operation(arguments[0]) else {
++                continue;
++            };
++            let global = global.core_var_of_link().unwrap_or_else(|| global.clone());
++            if global.namespace() != "suss.core" || global.name() != "PersistentVector" {
++                continue;
++            }
++            let array = arguments[5];
++            let Some(Operation::Array {
++                operation: ArrayOperation::Objects,
++                arguments: elements,
++            }) = operation(array)
++            else {
++                continue;
++            };
++            if elements.is_empty()
++                || elements.len() >= 32
++                || !literal(arguments[2], elements.len() as i64)
++            {
++                continue;
++            }
++            let value = inst.result;
++            let mut reads = HashMap::new();
++            let mut array_uses = 0;
++            for other in function.blocks.iter().flat_map(|b| &b.instructions) {
++                charge(meter, 1 + operands(&other.operation).len(), &other.span)?;
++                array_uses += operands(&other.operation)
++                    .iter()
++                    .filter(|v| **v == array)
++                    .count();
++                if let Operation::Nominal {
++                    operation: Nominal::VectorNth,
++                    arguments: args,
++                } = &other.operation
++                {
++                    if args[0] != value {
++                        continue;
++                    }
++                    if let Some(Operation::Literal(Literal::Long(index))) = operation(args[1]) {
++                        if let Ok(index) = usize::try_from(*index) {
++                            if let Some(element) = elements.get(index) {
++                                reads.insert(other.result, *element);
++                            }
++                        }
++                    }
++                }
++            }
++            for block in &function.blocks {
++                charge(
++                    meter,
++                    1 + match &block.terminator {
++                        Terminator::Jump { arguments, .. } => arguments.len(),
++                        _ => 1,
++                    },
++                    &inst.span,
++                )?;
++                array_uses += match &block.terminator {
++                    Terminator::Jump { arguments, .. } => {
++                        arguments.iter().filter(|v| **v == array).count()
++                    }
++                    Terminator::Branch { condition, .. } => usize::from(*condition == array),
++                    Terminator::Return(value) | Terminator::Throw(value) => {
++                        usize::from(*value == array)
++                    }
++                };
++            }
++            if array_uses != 1 || reads.is_empty() {
++                continue;
++            }
++            let mut conditions = HashSet::new();
++            for other in function.blocks.iter().flat_map(|b| &b.instructions) {
++                if let Operation::Nominal {
++                    operation: Nominal::IsUndefined,
++                    arguments: args,
++                } = &other.operation
++                {
++                    if reads.contains_key(&args[0]) {
++                        conditions.insert(other.result);
++                    }
++                }
++            }
++            let mut seen = vec![false; function.blocks.len()];
++            let mut pending = vec![b];
++            let mut valid = true;
++            let mut boundaries = HashSet::new();
++            while let Some(current) = pending.pop() {
++                charge(meter, 1, &inst.span)?;
++                if seen[current] {
++                    continue;
++                }
++                seen[current] = true;
++                let block = &function.blocks[current];
++                let start = if current == b { i + 1 } else { 0 };
++                for other in &block.instructions[start..] {
++                    charge(meter, 1 + operands(&other.operation).len(), &other.span)?;
++                    for input in operands(&other.operation) {
++                        if *input == value && !reads.contains_key(&other.result) {
++                            valid = false;
++                        }
++                        if reads.contains_key(input)
++                            && !matches!(
++                                &other.operation,
++                                Operation::Nominal {
++                                    operation: Nominal::IsUndefined,
++                                    ..
++                                }
++                            )
++                        {
++                            valid = false;
++                        }
++                    }
++                }
++                let mut edge = |target: usize| {
++                    if target <= b {
++                        boundaries.insert(target);
++                    } else if !seen[target] {
++                        pending.push(target);
++                    }
++                };
++                match &block.terminator {
++                    Terminator::Jump { target, arguments } => {
++                        if arguments.contains(&value) {
++                            valid = false;
++                        }
++                        edge(*target);
++                    }
++                    Terminator::Branch {
++                        condition,
++                        consequent,
++                        alternative,
++                    } => {
++                        if *condition == value || reads.contains_key(condition) {
++                            valid = false;
++                        }
++                        if !conditions.contains(condition) {
++                            edge(*consequent);
++                        }
++                        edge(*alternative);
++                    }
++                    Terminator::Return(v) | Terminator::Throw(v) => {
++                        if *v == value || reads.contains_key(v) {
++                            valid = false;
++                        }
++                    }
++                }
++            }
++            if !valid {
++                continue;
++            }
++            // A lower-numbered continuation can follow an inlined closure.
++            // Stop only at actual loop headers dominating this constructor;
++            // otherwise source SSA definitions could leak into an uncloned join.
++            for boundary in boundaries {
++                let mut reached = vec![false; function.blocks.len()];
++                let mut work = vec![0];
++                while let Some(current) = work.pop() {
++                    charge(meter, 1, &inst.span)?;
++                    if current == boundary || reached[current] {
++                        continue;
++                    }
++                    reached[current] = true;
++                    match function.blocks[current].terminator {
++                        Terminator::Jump { target, .. } => work.push(target),
++                        Terminator::Branch {
++                            consequent,
++                            alternative,
++                            ..
++                        } => work.extend([consequent, alternative]),
++                        _ => {}
++                    }
++                }
++                if reached[b] {
++                    valid = false;
++                    break;
++                }
++            }
++            if !valid {
++                continue;
++            }
++            return Ok(Some(Plan {
++                block: b,
++                instruction: i,
++                array,
++                elements: elements.clone(),
++                reads,
++                conditions,
++                region: seen
++                    .iter()
++                    .enumerate()
++                    .filter_map(|(i, v)| v.then_some(i))
++                    .collect(),
++            }));
++        }
++    }
++    Ok(None)
++}
++
++fn transform(
++    function: &mut Function,
++    plan: Plan,
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++) -> Result<(), Diagnostic> {
++    let root = plan.block;
++    let original_blocks = function.blocks.len();
++    let mut block_ids = HashMap::new();
++    for (offset, block) in plan.region.iter().enumerate() {
++        block_ids.insert(*block, original_blocks + offset);
++    }
++    let mut ids: Vec<_> = (0..function.values.len()).map(ValueId).collect();
++    for &block in &plan.region {
++        let source = &function.blocks[block];
++        let start = if block == root {
++            plan.instruction + 1
++        } else {
++            0
++        };
++        let definitions = source
++            .parameters
++            .iter()
++            .copied()
++            .filter(|_| block != root)
++            .chain(source.instructions[start..].iter().map(|inst| inst.result));
++        for old in definitions {
++            charge(meter, 1, &function.span)?;
++            ids[old.0] = ValueId(function.values.len());
++            function.values.push(function.values[old.0].clone());
++        }
++    }
++    // Definitions retain their declared types. Only the uses of private
++    // indexed projections substitute the already evaluated scalar elements.
++    let mut uses = ids.clone();
++    for (&read, &element) in &plan.reads {
++        uses[read.0] = element;
++    }
++    for &block in &plan.region {
++        let source = &function.blocks[block];
++        let start = if block == root {
++            plan.instruction + 1
++        } else {
++            0
++        };
++        let parameters = if block == root {
++            vec![]
++        } else {
++            source.parameters.iter().map(|v| ids[v.0]).collect()
++        };
++        let mut instructions = Vec::new();
++        for inst in &source.instructions[start..] {
++            charge(meter, 1 + operands(&inst.operation).len(), &inst.span)?;
++            let mut inst = inst.clone();
++            let old = inst.result;
++            inst.result = ids[old.0];
++            if plan.reads.contains_key(&old) {
++                inst.operation = Operation::Literal(Literal::Nil);
++                function.values[inst.result.0].ty = Type::Nil;
++            } else if plan.conditions.contains(&old) {
++                inst.operation = Operation::Literal(Literal::Bool(false));
++            } else {
++                escape::map_operation(&mut inst.operation, &uses);
++            }
++            instructions.push(inst);
++        }
++        // Earlier blocks are admitted only as loop headers dominating root.
++        // A back edge recomputes the original prefix and guards next iteration.
++        let target = |old: usize| if old <= root { old } else { block_ids[&old] };
++        let terminator = match &source.terminator {
++            Terminator::Return(value) => Terminator::Return(uses[value.0]),
++            Terminator::Throw(value) => Terminator::Throw(uses[value.0]),
++            Terminator::Jump {
++                target: old,
++                arguments,
++            } => Terminator::Jump {
++                target: target(*old),
++                arguments: arguments.iter().map(|v| uses[v.0]).collect(),
++            },
++            Terminator::Branch {
++                condition,
++                consequent,
++                alternative,
++            } => {
++                if plan.conditions.contains(condition) {
++                    Terminator::Jump {
++                        target: target(*alternative),
++                        arguments: vec![],
++                    }
++                } else {
++                    Terminator::Branch {
++                        condition: uses[condition.0],
++                        consequent: target(*consequent),
++                        alternative: target(*alternative),
++                    }
++                }
++            }
++        };
++        function.blocks.push(Block {
++            parameters,
++            instructions,
++            terminator,
++        });
++    }
++    let mut suffix = function.blocks[root]
++        .instructions
++        .split_off(plan.instruction + 1);
++    let mut constructor = function.blocks[root].instructions.pop().unwrap();
++    let Operation::Nominal { arguments, .. } = &mut constructor.operation else {
++        unreachable!()
++    };
++    let ctor = arguments[0];
++    let span = constructor.span.clone();
++    let array = ValueId(function.values.len());
++    function.values.push(Value {
++        ty: Type::Value,
++        span: span.clone(),
++    });
++    arguments[5] = array;
++    let mut instructions = vec![
++        Instruction {
++            result: array,
++            span: span.clone(),
++            operation: Operation::Array {
++                operation: ArrayOperation::Objects,
++                arguments: plan.elements,
++            },
++        },
++        constructor,
++    ];
++    instructions.append(&mut suffix);
++    let slow = function.blocks.len();
++    let terminator = std::mem::replace(
++        &mut function.blocks[root].terminator,
++        Terminator::Return(array),
++    );
++    function.blocks.push(Block {
++        parameters: vec![],
++        instructions,
++        terminator,
++    });
++    for block in &mut function.blocks[..original_blocks] {
++        for inst in &mut block.instructions {
++            if inst.result == plan.array {
++                inst.operation = Operation::Literal(Literal::Nil);
++                function.values[inst.result.0].ty = Type::Nil;
++            }
++        }
++    }
++    charge(meter, plan.reads.len(), &function.span)?;
++    let projected: HashSet<_> = plan.reads.values().copied().collect();
++    // At most 31 distinct elements: sorting never scales with read-site count.
++    let mut projected: Vec<_> = projected.into_iter().collect();
++    projected.sort_unstable_by_key(|v| v.0);
++    let mut current = root;
++    for element in projected {
++        let result = ValueId(function.values.len());
++        function.values.push(Value {
++            ty: Type::Bool,
++            span: span.clone(),
++        });
++        function.blocks[current].instructions.push(Instruction {
++            result,
++            span: span.clone(),
++            operation: Operation::Nominal {
++                operation: Nominal::IsUndefined,
++                arguments: vec![element],
++            },
++        });
++        let next = function.blocks.len();
++        function.blocks[current].terminator = Terminator::Branch {
++            condition: result,
++            consequent: slow,
++            alternative: next,
++        };
++        function.blocks.push(Block {
++            parameters: vec![],
++            instructions: vec![],
++            terminator: Terminator::Return(array),
++        });
++        current = next;
++    }
++    let result = ValueId(function.values.len());
++    function.values.push(Value {
++        ty: Type::Bool,
++        span: span.clone(),
++    });
++    function.blocks[current].instructions.push(Instruction {
++        result,
++        span,
++        operation: Operation::Nominal {
++            operation: Nominal::ScalarVectorGuard,
++            arguments: vec![ctor],
++        },
++    });
++    function.blocks[current].terminator = Terminator::Branch {
++        condition: result,
++        consequent: block_ids[&root],
++        alternative: slow,
++    };
++    Ok(())
++}
+diff --git 1/crates/suss-cli/tests/clojure_nonescaping_vectors.rs 2/crates/suss-cli/tests/clojure_nonescaping_vectors.rs
+new file mode 100644
+index 00000000..1a310513
+--- /dev/null
++++ 2/crates/suss-cli/tests/clojure_nonescaping_vectors.rs
+@@ -0,0 +1,154 @@
++//! Temporary vector elimination preserves source conversions, identity and effects (#351).
++use suss_cli::portable_session::Session;
++
++// The 17 exact value pairs in results/m12-vectors/cases.json match fresh JVM.
++const CASES: &[(&str, &str)] = &[
++    ("(let [[a b] [3000000000 1.5]] (+ a b))", "3.0000000015E9"),
++    (
++        "(let [[a] [2147483648.0]] (try (int a) (catch :default e :error)))",
++        ":error",
++    ),
++    ("(let [[a] [127.1]] (byte a))", "127"),
++    ("(let [[a] [-0.0]] [a (/ 1.0 a)])", "[-0.0 ##-Inf]"),
++    (
++        "(let [[a b] [9223372036854775807 1]] (try (+ a b) (catch :default e (ex-message e))))",
++        "\"long overflow\"",
++    ),
++    (
++        "(let [events (atom []) [a b] [(do (swap! events conj :a) 3000000000) (do (swap! events conj :b) 1.5)]] [(+ a b) @events])",
++        "[3.0000000015E9 [:a :b]]",
++    ),
++    (
++        "(let [events (atom [])] [(try (let [[a b] [(do (swap! events conj :a) (throw (ex-info \"boom\" {}))) (swap! events conj :b)]] (+ a b)) (catch :default e (ex-message e))) @events])",
++        "[\"boom\" [:a]]",
++    ),
++    (
++        "(with-redefs [nth (fn [& xs] 7)] (let [[a b] [1 2]] (+ a b)))",
++        "3",
++    ),
++    (
++        "(with-redefs [vector (fn [& xs] nil)] (let [[a b] [1 2]] (+ a b)))",
++        "3",
++    ),
++    (
++        "(let [v [3000000000 1.5] [a b] v] [v (+ a b)])",
++        "[[3000000000 1.5] 3.0000000015E9]",
++    ),
++    ("(nth [3000000000 1.5] 2 :nf)", ":nf"),
++    ("(let [[a b] [nil false]] [a b])", "[nil false]"),
++    ("(let [[a] [3000000000] f (fn [] a)] (f))", "3000000000"),
++    ("(let [[f] [(fn [x] (+ x 1))]] (f 3))", "4"),
++    (
++        "(loop [i 0 acc 0.0] (if (< i 4) (let [[a b] [3000000000 1.5]] (recur (inc i) (+ acc (+ a b)))) acc))",
++        "1.2000000006E10",
++    ),
++    (
++        "(let [[a] [##NaN] b (+ a 0.0)] [(= a b) (== a b) (identical? a b)])",
++        "[false false false]",
++    ),
++    (
++        "(let [x (atom 0) [a b] [x x]] [(identical? a b) (= a b)])",
++        "[true true]",
++    ),
++];
++
++// This is a recorded boxed-path control, NOT a JVM-conformance assertion.
++// JVM gives [true false true]; the frozen f5056ffe Suss binary and current
++// documented scalar predicates give [false false false]. Preserve the failed
++// JVM assertion and the independent baseline probe in results/m12-vectors.
++const BOXED_BASELINE_DIFFERENCES: &[(&str, &str)] = &[(
++    "(let [[a] [##NaN]] [(= a a) (== a a) (identical? a a)])",
++    "[false false false]",
++)];
++
++fn cases() -> impl Iterator<Item = &'static (&'static str, &'static str)> {
++    CASES.iter().chain(BOXED_BASELINE_DIFFERENCES.iter())
++}
++
++fn observed(source: &str) -> String {
++    format!("(pr-str (try {source} (catch :default e [:hint-error (ex-message e)])))")
++}
++
++#[test]
++fn runtime_and_macro_preserve_nonescaping_vectors() {
++    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
++        for (source, expected) in cases() {
++            let value = session
++                .eval(&observed(source))
++                .unwrap_or_else(|e| panic!("{source}: {e}"));
++            session.collect().unwrap();
++            let units = session
++                .inspect(&value, |mut store, value| {
++                    let array = value.unwrap_anyref().unwrap().as_array(&store)?.unwrap();
++                    Ok(array
++                        .elems(&mut store)?
++                        .map(|unit| unit.unwrap_i32() as u16)
++                        .collect::<Vec<_>>())
++                })
++                .unwrap();
++            assert_eq!(String::from_utf16(&units).unwrap(), *expected, "{source}");
++        }
++    }
++}
++
++#[test]
++fn aot_preserves_nonescaping_vectors() {
++    use std::process::Command;
++    let root = tempfile::tempdir().unwrap();
++    let mut source = String::from("(ns localvectors)\n");
++    let mut wit = String::from("package test:localvectors; world w {\n");
++    for (index, (expression, expected)) in cases().enumerate() {
++        // Only the unused WIT argument is synthesized as a primitive. The
++        // helper and local bindings retain their genuine source hints.
++        source.push_str(&format!(
++            "(def case{index} (fn [unused] (if (= {} {expected:?}) 1 0)))\n",
++            observed(expression)
++        ));
++        wit.push_str(&format!("export case{index}: func(unused: u32) -> u32;\n"));
++    }
++    wit.push('}');
++    std::fs::write(root.path().join("localvectors.sus"), source).unwrap();
++    std::fs::write(root.path().join("localvectors.wit"), wit).unwrap();
++    let mut compile = Command::new(env!("CARGO_BIN_EXE_suss"));
++    compile.current_dir(root.path()).args([
++        "compile",
++        "localvectors.sus",
++        "-w",
++        "localvectors.wit",
++        "-o",
++        "localvectors.wasm",
++    ]);
++    for index in 0..cases().count() {
++        compile.args(["--export", &format!("case{index}=localvectors/case{index}")]);
++    }
++    let output = compile.output().unwrap();
++    assert!(
++        output.status.success(),
++        "{}",
++        String::from_utf8_lossy(&output.stderr)
++    );
++    for (index, (expression, _)) in cases().enumerate() {
++        let output = Command::new(env!("CARGO_BIN_EXE_suss"))
++            .current_dir(root.path())
++            .args([
++                "run",
++                "localvectors.wasm",
++                "--invoke",
++                &format!("case{index}"),
++                "--",
++                "0",
++            ])
++            .output()
++            .unwrap();
++        assert!(
++            output.status.success(),
++            "{expression}: {}",
++            String::from_utf8_lossy(&output.stderr)
++        );
++        assert_eq!(
++            String::from_utf8_lossy(&output.stdout).trim(),
++            "1",
++            "{expression}"
++        );
++    }
++}
+diff --git 1/crates/suss-compile/tests/portable_nonescaping_vectors.rs 2/crates/suss-compile/tests/portable_nonescaping_vectors.rs
+new file mode 100644
+index 00000000..e4045e0b
+--- /dev/null
++++ 2/crates/suss-compile/tests/portable_nonescaping_vectors.rs
+@@ -0,0 +1,61 @@
++//! Literal-vector scalar storage preserves the generic lookup boundary (#351).
++use suss_compile::portable::{
++    self,
++    hir::Nominal,
++    ir::{self, Operation},
++    resolve::{Environment, Phase},
++};
++
++fn lower(source: &str) -> ir::Function {
++    let mut env = Environment::default();
++    for name in ["PersistentVector", "nth"] {
++        env.declare_cell(Phase::Runtime, "suss.core", name).unwrap();
++    }
++    env.set_direct_linking(true);
++    let hir = portable::analyze_in(source, &env, Phase::Runtime).unwrap();
++    let graph = ir::lower(&hir).unwrap();
++    ir::verify(&graph).unwrap();
++    portable::compile_ir(&graph).unwrap();
++    graph
++}
++fn guards(graph: &ir::Function) -> usize {
++    graph
++        .blocks
++        .iter()
++        .flat_map(|b| &b.instructions)
++        .map(|inst| match &inst.operation {
++            Operation::Nominal {
++                operation: Nominal::ScalarVectorGuard,
++                ..
++            } => 1,
++            Operation::MakeClosure { body, .. } => guards(&body.function),
++            Operation::MakeGeneralClosure { body, .. } => {
++                body.methods.iter().map(|m| guards(&m.function)).sum()
++            }
++            _ => 0,
++        })
++        .sum()
++}
++
++#[test]
++fn known_vector_projections_get_a_guarded_scalar_continuation() {
++    for source in [
++        "(let [v [3000000000 1.5] a (nth v 0 nil) b (nth v 1 nil)] (+ a b))",
++        "(fn [] (let [v [3000000000 1.5] a (nth v 0 nil)] a))",
++        "(loop [i 0 acc 0.0] (if (< i 4) (let [v [3000000000 1.5] a (nth v 0 nil) b (nth v 1 nil)] (recur (+ i 1) (+ acc (+ a b)))) acc))",
++    ] {
++        assert_eq!(guards(&lower(source)), 1, "{source}");
++    }
++}
++
++#[test]
++fn escaping_or_unknown_vector_projections_retain_materialization() {
++    for source in [
++        "(let [v [3000000000 1.5]] v)",
++        "(fn [i] (let [v [3000000000 1.5]] (nth v i nil)))",
++        "(let [v [3000000000 1.5]] (nth v 2 nil))",
++        "(let [v [3000000000 1.5] a (nth v 0 nil)] (if a v nil))",
++    ] {
++        assert_eq!(guards(&lower(source)), 0, "{source}");
++    }
++}

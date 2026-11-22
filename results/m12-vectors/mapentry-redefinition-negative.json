@@ -1,0 +1,15 @@
+{
+  "source": "(with-redefs [nth (fn [& xs] 7)] (let [[a b] (MapEntry. 1 2 nil)] (+ a b)))",
+  "jvm_source_adapter": "(clojure.lang.MapEntry/create 1 2)",
+  "expected_jvm": "3",
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/target/probe/m12-vectors-bench/after-suss",
+    "-e",
+    "(with-redefs [nth (fn [& xs] 7)] (let [[a b] (MapEntry. 1 2 nil)] (+ a b)))"
+  ],
+  "compiler_sha256": "b45ee7386b4aa0fd6f30867e97b9dec76302ebb3656be6447c29bf2976dd8329",
+  "exit_code": 0,
+  "stdout": "14\n",
+  "stderr": "",
+  "classification": "Remaining semantic difference, not a passing JVM assertion."
+}

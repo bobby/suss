@@ -13,7 +13,7 @@ fn charge(
 
 /// Count work before copying a graph, including owned literal/closure data.
 /// Futures carry a separate continuation plan and are never copied by this pass.
-fn size(
+pub(super) fn size(
     function: &Function,
     limit: usize,
     copying: bool,
@@ -276,7 +276,7 @@ fn walk(
     })
 }
 
-fn map_operation(operation: &mut Operation, ids: &[ValueId]) {
+pub(super) fn map_operation(operation: &mut Operation, ids: &[ValueId]) {
     let inputs: &mut [ValueId] = match operation {
         Operation::Arithmetic { arguments, .. }
         | Operation::Bitwise { arguments, .. }
@@ -401,7 +401,7 @@ fn splice(
 
 /// A body that only throws or recurs has no return edge to the call's suffix.
 /// Remove that suffix (and any blocks it alone reached) after all sites split.
-fn prune_unreachable(
+pub(super) fn prune_unreachable(
     function: &mut Function,
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<(), Diagnostic> {

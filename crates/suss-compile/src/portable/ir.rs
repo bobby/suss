@@ -1,6 +1,7 @@
 //! Explicit values, blocks and edge parameters. Verification precedes emission.
 pub mod liveness;
 mod escape;
+mod aggregates;
 pub mod r#async;
 use super::{
     hir::{
@@ -1256,6 +1257,7 @@ pub fn lower_metered(
     verify_recurrence(hir, &mut Vec::new(), false, meter)?;
     let mut function = Lowerer::new(hir.span.clone(), meter)?.finish(hir)?;
     escape::eliminate(&mut function, meter)?;
+    aggregates::eliminate(&mut function, meter)?;
     hoist_loop_invariant_reads(&mut function);
     Ok(function)
 }
@@ -1369,7 +1371,7 @@ fn loop_safe(operation: &Operation) -> bool {
             use super::hir::Nominal as N;
             matches!(
                 operation,
-                N::IsNumber | N::IsLongValue | N::PackedGet(_) | N::PackedSet(_) | N::StringHash
+                N::ScalarVectorGuard | N::IsNumber | N::IsLongValue | N::PackedGet(_) | N::PackedSet(_) | N::StringHash
                     | N::VectorNth | N::ArrayMapGet | N::MapContains | N::MapGetOr | N::MapAssoc | N::LongCast | N::DoubleCast | N::UncheckedLongCast | N::StringAppendLong | N::IsKeyword
                     | N::IsString | N::IsBoolean | N::IsUndefined | N::Identical | N::AllSmallIntegers | N::NumberHash
                     | N::IsObject | N::SameReference | N::IsDescriptor | N::IsClosure | N::Array

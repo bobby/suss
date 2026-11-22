@@ -1,0 +1,12 @@
+{
+  "measured_source_inputs": "cached-measured-source-inputs.json",
+  "current_source_inputs": "source-inputs.json",
+  "changed_inputs": {
+    "crates/suss-cli/tests/clojure_nonescaping_vectors.rs": {
+      "measured": "46ed44e41965846d686a53d0314b293cbd94d0cedee7d3cba74b79bcd7606b84",
+      "with_added_control": "044ec9187631a65d60882dc918f6a85f7cb017c0ff3ddaa400cea05b659c437d"
+    }
+  },
+  "production_input_hashes_unchanged": true,
+  "compiler_sha256_at_measurement_and_after_adding_test": "b45ee7386b4aa0fd6f30867e97b9dec76302ebb3656be6447c29bf2976dd8329"
+}

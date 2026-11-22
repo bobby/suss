@@ -300,3 +300,18 @@ Some source and calling paths retain the following behavior:
   resolution. Code-generation and Runtime/Macro/component tests verify raw
   calls and coercions separately. Loaded-machine walltimes are not used for
   the program-ratio targets; commands and limitations are in the handoff.
+
+
+### Literal vector storage
+
+An eligible non-escaping literal vector can retain its evaluated elements as
+scalars after source typing. Constant in-bounds indexed reads feed parameters
+with their original generic IR types, so physical numeric storage does not
+invent primitive source casts. A current-constructor/undefined guard keeps the
+original construction and lookup continuation available. Successful immutable
+schema admission is cached per fragment site; current canonical registration is
+still checked on every invocation. The bounded pass handles one eligible
+1–31-element vector per function and leaves unknown indices, escapes and
+normalized async/future plans conservative. Source, failing probes, execution and
+allocation/instruction receipts are in [vector evidence](../../results/m12-vectors/README.md).
+The retained aliased-NaN difference is not a JVM compatibility success.

@@ -1,0 +1,12 @@
+{
+  "source": "(let [f (fn [] (let [[a b] [3000000000 1.5]] (+ a b)))] [(f) (with-redefs [PersistentVector nil] (try (f) (catch :default e :ctor-error))) (f)])",
+  "source_commit": "f5056ffe",
+  "command": [
+    "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/suss",
+    "-e",
+    "(let [f (fn [] (let [[a b] [3000000000 1.5]] (+ a b)))] [(f) (with-redefs [PersistentVector nil] (try (f) (catch :default e :ctor-error))) (f)])"
+  ],
+  "exit_code": 0,
+  "stdout": "[3.0000000015E9 :ctor-error 3.0000000015E9]\n",
+  "stderr": ""
+}

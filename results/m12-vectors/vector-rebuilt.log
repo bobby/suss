@@ -1,0 +1,10 @@
+Running as unit: run-p3923561-i87772811.scope; invocation ID: 001956348d384e4381bead1abcbde33e
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-aggregate-source/crates/suss-compile-generator)
+error[E0282]: type annotations needed
+   --> crates/suss-compile-generator/../suss-compile/src/portable/ir/aggregates.rs:227:31
+    |
+227 |                     } else if !seen[target] {
+    |                               ^^^^^^^^^^^^^ cannot infer type
+
+For more information about this error, try `rustc --explain E0282`.
+error: could not compile `suss-compile-generator` (lib) due to 1 previous error

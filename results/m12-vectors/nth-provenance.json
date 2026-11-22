@@ -1,0 +1,13 @@
+{
+  "implementation_reference": "Clojure 1.12.6, clojure/core.clj, nth :inline and :inline-arities metadata",
+  "jar": "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar",
+  "jar_sha256": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+  "core_source_sha256": "66952fe1b060c086804cdfd9e9863277a020fb0cfe27167e709ce75e955ed72c",
+  "licenses": [
+    {
+      "name": "Eclipse Public License 1.0",
+      "url": "http://opensource.org/licenses/eclipse-1.0.php"
+    }
+  ],
+  "use": "Development semantic oracle and metadata reference only; no JVM runtime dependency or copied core implementation body is introduced."
+}

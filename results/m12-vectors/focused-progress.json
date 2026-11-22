@@ -1,0 +1,12 @@
+{
+  "snapshot_time_utc": "2026-11-22T07:02:24.135819+00:00",
+  "status": "active; snapshot is not a terminal result",
+  "vector_fixture_value_pairs": 19,
+  "jvm_value_pairs": 17,
+  "separate_suss_baseline_controls": 2,
+  "vector_execution_tests_passed": 2,
+  "observations_in_runtime_macro_and_aot": 57,
+  "source_inputs": "source-inputs.json",
+  "snapshot_log": "focused-progress.log",
+  "scope": "Only the completed vector execution target is asserted here; the broader 36-target gate continues."
+}
