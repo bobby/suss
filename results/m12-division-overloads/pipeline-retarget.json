@@ -1,0 +1,27 @@
+{
+  "parent": "926fde512e235a539299ca548e772782d6ebd109",
+  "failed_ci": "https://github.com/bobby/suss/actions/runs/44958675908/job/137012466920",
+  "failed_case": "primitive-coercion-10 retargeted (/ nil) to (/ (suss.bootstrap/f64-coerce nil)), incorrectly expecting IEEE infinity from generic unary Clojure division",
+  "correction": "Retarget explicitly selects the binary primitive double overload with numerator1.0. The original (/ nil) must still throw. No oracle values, case IDs or correction count changed.",
+  "command": "cargo +stable test -p suss-compile --locked --test portable_pipeline compiled_source_cases_match_the_pinned_compiler_observations -- --exact --test-threads=2",
+  "exit_code": 0,
+  "passed": 1,
+  "failed": 0,
+  "ignored": 0,
+  "filtered": 18,
+  "corpus_cases": 397,
+  "asserted_correction_count": 142,
+  "seconds": 459.02,
+  "log_sha256": "f181c120202ee09c4d9ad0c80b1d52ee8648c9bb5ad7c4f784da40fb5d7fd898",
+  "interrupted_full_baseline": {
+    "source": "926fde512e235a539299ca548e772782d6ebd109",
+    "command": "cargo +stable test --workspace --locked -- --test-threads=2",
+    "status": "interrupted for verified CI fixture correction",
+    "exit_code": 130,
+    "signal": "SIGINT",
+    "log": "target/probe/m12-division-full-workspace.log",
+    "sha256": "abace338d73e811525bbce54a9ae0f2082156d0aefa204e495f58e88023d067a",
+    "not_a_pass": true
+  },
+  "limitations": "One focused test executes the complete397-case corpus; it is not a full workspace run. New exact-head CI and re-review remain required. Production code is unchanged."
+}

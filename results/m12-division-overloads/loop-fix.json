@@ -1,0 +1,17 @@
+{
+  "source_base": "354cbfd47a29d3a97343138137fc26f8444e65fb",
+  "source_patch_sha256": "80036f000bd0f5e85b78006f4de5157db52a9900ae9208a9444599f08f1347b3",
+  "before_cli_sha256": "32508f7801374bc0fb9beaef911eb7b35c44cff5faf73527695f6dbe47a80aca",
+  "after_cli_sha256": "15ed9dbfc2bf6ac35ccecb7fafc0eb7223e28f769f0a9ad0c8106bb6f4e62abb",
+  "jvm_version": "1.12.6",
+  "jvm_rows": 38,
+  "runtime_macro_aot_rows_each": 38,
+  "focused_tests_passed": 41,
+  "java_free_bootstrap_tests_passed": 4,
+  "actual_binaryen_133_tests_passed": 2,
+  "python_tests_passed": 361,
+  "suite_capture_sha256": "5523272bb015af2c328e82baeb4251e03867081657ea03767d9e9bebec68db52",
+  "suite_comparison": "unchanged reviewed known-failure baseline; not complete compatibility",
+  "review": "354cbfd4 had one confirmed loop/recur P2; source fix requires independent re-review",
+  "full_workspace": "not claimed by focused receipts"
+}

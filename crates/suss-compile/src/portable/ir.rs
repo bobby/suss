@@ -87,6 +87,8 @@ pub enum Operation {
         arguments: Vec<ValueId>,
         /// JavaScript coercion for shipped core; checked Numbers otherwise.
         coercing: bool,
+        /// A source double overload, never inferred from physical storage.
+        division_primitive: bool,
     },
 }
 #[derive(Debug, Clone)]
@@ -958,7 +960,15 @@ impl<'a> Lowerer<'a> {
                 operator,
                 arguments,
                 coercing,
+                division_primitives,
             } => {
+                if !division_primitives.is_empty()
+                    && (*operator != Arithmetic::Divide || *coercing
+                        || division_primitives.len() != arguments.len().saturating_sub(1))
+                {
+                    return Err(Diagnostic { span: hir.span.clone(),
+                        message: "HIR division overload shape mismatch".into() });
+                }
                 // Public HIR can represent Negate directly or malformed call arities.
                 if (*operator == Arithmetic::Negate && arguments.len() != 1)
                     || (matches!(operator, Arithmetic::Subtract | Arithmetic::Divide)
@@ -969,7 +979,27 @@ impl<'a> Lowerer<'a> {
                         message: "HIR arithmetic arity mismatch".into(),
                     });
                 }
-                // Evaluate every operand before entering the arithmetic operation.
+                if *operator == Arithmetic::Divide && arguments.len() > 1 {
+                    // Clojure inlines a nested left fold. A division error
+                    // stops before evaluating a later source operand.
+                    let mut result = operand!(&arguments[0]);
+                    for (index, argument) in arguments[1..].iter().enumerate() {
+                        let next = operand!(argument);
+                        let ty = arithmetic_type(*operator,
+                            &[self.function.values[result.0].ty, self.function.values[next.0].ty],
+                            *coercing).ok_or_else(|| Diagnostic {
+                                span: hir.span.clone(),
+                                message: "HIR unsupported arithmetic operands".into(),
+                            })?;
+                        result = self.emit(Operation::Arithmetic {
+                            operator: *operator, arguments: vec![result, next],
+                            coercing: *coercing,
+                            division_primitive: division_primitives.get(index).copied().unwrap_or(false),
+                        }, ty, hir.span.clone())?;
+                    }
+                    return Ok(Some(result));
+                }
+                // The remaining operations retain their existing lowering.
                 let mut values = Vec::new();
                 for argument in arguments {
                     values.push(operand!(argument));
@@ -989,6 +1019,7 @@ impl<'a> Lowerer<'a> {
                                 operator: *operator,
                                 arguments: values,
                                 coercing: false,
+                                division_primitive: false,
                             },
                             Type::Number,
                             hir.span.clone(),
@@ -1002,6 +1033,7 @@ impl<'a> Lowerer<'a> {
                                 operator: Arithmetic::Negate,
                                 arguments: values,
                                 coercing: *coercing,
+                                division_primitive: false,
                             },
                             Type::Number,
                             hir.span.clone(),
@@ -1014,13 +1046,14 @@ impl<'a> Lowerer<'a> {
                                 operator: *operator,
                                 arguments: vec![one, result],
                                 coercing: *coercing,
+                                division_primitive: false,
                             },
                             Type::Number,
                             hir.span.clone(),
                         )?));
                     }
                 }
-                for value in &values[1..] {
+                for (index, value) in values[1..].iter().enumerate() {
                     let ty = arithmetic_type(
                         *operator,
                         &[
@@ -1038,6 +1071,7 @@ impl<'a> Lowerer<'a> {
                             operator: *operator,
                             arguments: vec![result, *value],
                             coercing: *coercing,
+                            division_primitive: division_primitives.get(index).copied().unwrap_or(false),
                         },
                         ty,
                         hir.span.clone(),
@@ -1880,7 +1914,11 @@ fn verify_function_inner(
                     operator,
                     arguments,
                     coercing,
+                    division_primitive,
                 } => {
+                    if *division_primitive && (*operator != Arithmetic::Divide || *coercing) {
+                        return Err(fail("IR source division overload mismatch"));
+                    }
                     let arity = match operator {
                         Arithmetic::Negate => 1..=1,
                         // Unary + and * check a non-Number operand.

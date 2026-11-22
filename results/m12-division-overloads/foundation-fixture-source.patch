@@ -1,0 +1,12 @@
+diff --git i/crates/suss-compile/src/portable/ir/async.rs w/crates/suss-compile/src/portable/ir/async.rs
+index a9765b4e..66188b01 100644
+--- i/crates/suss-compile/src/portable/ir/async.rs
++++ w/crates/suss-compile/src/portable/ir/async.rs
+@@ -587,6 +587,7 @@ mod tests {
+                             operator: crate::portable::hir::Arithmetic::Add,
+                             arguments: vec![ValueId(2), ValueId(0)],
+                             coercing: false,
++                            division_primitive: false,
+                         },
+                         span: 0..1,
+                     }],

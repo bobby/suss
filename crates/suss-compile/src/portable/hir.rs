@@ -11,6 +11,7 @@ mod cases;
 mod collections;
 mod comparisons;
 mod controls;
+mod division_overloads;
 mod dynamic;
 mod namespaces;
 mod exceptions;
@@ -1123,6 +1124,9 @@ pub enum Expression {
         /// Shipped core keeps JavaScript coercion internally; source arithmetic
         /// rejects non-numbers as Clojure does (#286).
         coercing: bool,
+        /// Source overload for each binary division in the left fold. This
+        /// is independent of the backend's raw/boxed storage inference.
+        division_primitives: Vec<bool>,
     },
 }
 fn fail(span: Range<usize>, message: impl Into<String>) -> Diagnostic {
@@ -3293,6 +3297,7 @@ impl Analyzer<'_> {
                     metadata: form.metadata.clone(), ty: Type::Number,
                     kind: std::sync::Arc::new(Expression::Arithmetic {
                         operator: Arithmetic::Add, arguments, coercing: false,
+                        division_primitives: vec![],
                     }) });
             }
             let operation = match symbol.name.as_str() {
@@ -4174,6 +4179,7 @@ impl Analyzer<'_> {
                         operator,
                         arguments,
                         coercing: self.coercing_operands(),
+                        division_primitives: vec![],
                     },
                     ty,
                 )
@@ -4413,7 +4419,10 @@ pub(crate) fn prepare_with_origin(
         (Some(first), Some(last)) => first.span.start..last.span.end,
         _ => span.clone(),
     };
-    let hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
+    let mut hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
+    let source_span = hir.span.clone();
+    division_overloads::annotate(&mut hir,
+        &mut |work| analyzer.expander.charge_expansion_work(work, source_span.clone()))?;
     if let Expression::Do(items) = &*hir.kind {
         super::analysis_record::analyzed_forms(origin, items);
     }

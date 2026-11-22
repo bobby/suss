@@ -1,0 +1,10 @@
+JVM Clojure 1.12.6
+"(generic-div 1.0 0.0)" "[:division-error \"Divide by zero\"]"
+"(generic-div -1.0 -0.0)" "[:division-error \"Divide by zero\"]"
+"(generic-div 0.0 0.0)" "[:division-error \"Divide by zero\"]"
+"(generic-div ##NaN 0.0)" "##NaN"
+Execution error (AssertionError) at user/eval152 (m12-division-jvm.clj:8).
+Assert failed: (= actual "[:division-error \"Divide by zero\"]")
+
+Full report at:
+/tmp/clojure-1954882336916132635.edn

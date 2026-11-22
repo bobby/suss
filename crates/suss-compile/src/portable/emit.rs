@@ -88,8 +88,12 @@ fn arithmetic_name(
     operator: Arithmetic,
     arguments: &[ir::ValueId],
     coercing: bool,
+    division_primitive: bool,
     function: &IrFunction,
 ) -> &'static str {
+    if operator == Arithmetic::Divide && !coercing {
+        return if division_primitive { "checked-divide-primitive" } else { "checked-divide" };
+    }
     let numeric = arguments
         .iter()
         .all(|arg| function.values[arg.0].ty == Type::Number);
@@ -511,8 +515,9 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         operator,
                         arguments,
                         coercing,
+                        division_primitive,
                     } => {
-                        names.insert(arithmetic_name(*operator, arguments, *coercing, function));
+                        names.insert(arithmetic_name(*operator, arguments, *coercing, *division_primitive, function));
                     }
                     _ => {}
                 }
@@ -2284,9 +2289,9 @@ fn emit_function(
             if unboxed::inline(&locals, inst) {
                 match &inst.operation {
                     Operation::Literal(literal) => locals.literal(&mut code, literal, inst.result),
-                    Operation::Arithmetic { operator, arguments, coercing } => locals.arithmetic(
+                    Operation::Arithmetic { operator, arguments, coercing, division_primitive } => locals.arithmetic(
                         &mut code, *operator, arguments, inst.result,
-                        index(arithmetic_name(*operator, arguments, *coercing, ir)),
+                        index(arithmetic_name(*operator, arguments, *coercing, *division_primitive, ir)),
                     ),
                     Operation::Comparison { operation, arguments } => locals.comparison(
                         &mut code, *operation, arguments, inst.result, index(operation.export()),
@@ -4346,8 +4351,9 @@ fn emit_function(
                     operator,
                     arguments,
                     coercing,
+                    division_primitive,
                 } => {
-                    let name = arithmetic_name(*operator, arguments, *coercing, ir);
+                    let name = arithmetic_name(*operator, arguments, *coercing, *division_primitive, ir);
                     // Two i31 longs add or subtract inline (#361) while the
                     // result is an i31; the runtime boxes a larger one.
                     let inline = match name {

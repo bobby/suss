@@ -38,6 +38,15 @@ pub(super) fn validate(
 
 struct LoopInputs { target: LoopId, kinds: Vec<Primitive> }
 
+/// A genuine Clojure source kind; physical boxing must not select overloads.
+pub(super) fn kind(
+    hir: &Hir,
+    bindings: &mut HashMap<BindingId, Primitive>,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Primitive, Diagnostic> {
+    infer(hir, bindings, meter, &mut Vec::new())
+}
+
 fn infer(
     hir: &Hir,
     bindings: &mut HashMap<BindingId, Primitive>,
@@ -95,7 +104,7 @@ fn infer(
             Expression::Literal(Literal::Number(_)) => Double,
             // Bootstrap inc/dec expand to arithmetic without an Invoke node.
             // Infer from source operands, never the backend's numeric facts.
-            Expression::Arithmetic { operator, arguments, coercing } => {
+            Expression::Arithmetic { operator, arguments, coercing, .. } => {
                 if *coercing { Boxed } else {
                     let mut kinds = Vec::with_capacity(arguments.len());
                     for argument in arguments { kinds.push(infer(argument, bindings, meter, loops)?); }
@@ -121,33 +130,8 @@ fn infer(
                 }
                 result?
             }
-            Expression::Loop { target, bindings: locals, body } => {
-                let mut previous = Vec::with_capacity(locals.len());
-                let mut kinds = Vec::with_capacity(locals.len());
-                for binding in locals {
-                    // Clojure widens int/float loop initializers, while byte
-                    // and short retain their distinct primitive source kind.
-                    let kind = match infer(&binding.value, bindings, meter, loops)? {
-                        Int => Long, Float => Double, kind => kind,
-                    };
-                    kinds.push(kind);
-                    previous.push((binding.id, bindings.insert(binding.id, kind)));
-                }
-                let result = loop {
-                    for (binding, kind) in locals.iter().zip(&kinds) { bindings.insert(binding.id, *kind); }
-                    loops.push(LoopInputs { target: *target, kinds: kinds.clone() });
-                    let result = infer(body, bindings, meter, loops);
-                    let next = loops.pop().expect("source loop inference").kinds;
-                    if result.is_err() || next == kinds { break result; }
-                    // Each binding can only lose its primitive kind once.
-                    // Revisit uses after a mixed recur makes a local boxed.
-                    kinds = next;
-                };
-                for (id, old) in previous.into_iter().rev() {
-                    match old { Some(kind) => { bindings.insert(id, kind); }, None => { bindings.remove(&id); } }
-                }
-                result?
-            }
+            Expression::Loop { target, bindings: locals, body } =>
+                loop_analysis(*target, locals, body, bindings, meter, loops)?.0,
             Expression::If { consequent, alternative, .. } => {
                 let a = infer(consequent, bindings, meter, loops)?;
                 let b = infer(alternative, bindings, meter, loops)?;
@@ -315,4 +299,50 @@ fn numeric(name: &str, kinds: &[Primitive]) -> Primitive {
     if matches!(name, "quot" | "rem") && !all_numeric { return Boxed; }
     if kinds.iter().any(|kind| kind.floating()) { return Double; }
     if all_numeric && name != "/" { Long } else { Boxed }
+}
+
+/// Loop source types settle before any use, including later initializers.
+/// Clojure reanalyzes a loop when a mismatched recur boxes an earlier local.
+/// Each local can lose its primitive source type once, so this terminates.
+pub(super) fn loop_kinds(
+    target: LoopId, locals: &[Binding], body: &Hir,
+    bindings: &mut HashMap<BindingId, Primitive>,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+) -> Result<Vec<Primitive>, Diagnostic> {
+    Ok(loop_analysis(target, locals, body, bindings, meter, &mut Vec::new())?.1)
+}
+
+fn loop_analysis(
+    target: LoopId, locals: &[Binding], body: &Hir,
+    bindings: &mut HashMap<BindingId, Primitive>,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+    loops: &mut Vec<LoopInputs>,
+) -> Result<(Primitive, Vec<Primitive>), Diagnostic> {
+    use Primitive::*;
+    let widen = |kind| match kind { Int => Long, Float => Double, kind => kind };
+    let mut previous = Vec::with_capacity(locals.len());
+    let mut kinds = Vec::with_capacity(locals.len());
+    for binding in locals {
+        let kind = widen(infer(&binding.value, bindings, meter, loops)?);
+        kinds.push(kind);
+        previous.push((binding.id, bindings.insert(binding.id, kind)));
+    }
+    let result = loop {
+        let before = kinds.clone();
+        // An earlier local's lost primitive type also affects the source
+        // type of any later initializer which reads it.
+        for (binding, kind) in locals.iter().zip(&mut kinds) {
+            let initializer = widen(infer(&binding.value, bindings, meter, loops)?);
+            if *kind != initializer { *kind = Boxed; }
+            bindings.insert(binding.id, *kind);
+        }
+        loops.push(LoopInputs { target, kinds: kinds.clone() });
+        let result = infer(body, bindings, meter, loops);
+        kinds = loops.pop().expect("source loop inference").kinds;
+        if result.is_err() || kinds == before { break result; }
+    };
+    for (id, old) in previous.into_iter().rev() {
+        match old { Some(kind) => { bindings.insert(id, kind); }, None => { bindings.remove(&id); } }
+    }
+    Ok((result?, kinds))
 }

@@ -3,8 +3,10 @@
 Inside a compiled function, the compiler keeps a long as a raw `i64` Wasm
 local and a double as a raw `f64`, and boxes a number only where it escapes
 ([ADR-0003](../adr/0003-clojure-numeric-tower.md) "Representation", #337).
-Results are those of the boxed path in every case: the same values, the same
-overflow checks, and the same exceptions with the same messages.
+Storage optimization preserves each selected source operation's values,
+overflow checks and exceptions. Clojure's generic Object division and primitive
+double division are distinct source overloads even when both operands are held
+as boxed doubles.
 
 ## What stays raw
 
@@ -13,7 +15,9 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
 - **Literals.** A long or double literal that feeds raw arithmetic, a raw
   comparison or a raw loop local.
 - **Arithmetic.** `+`, `-` and `*` of longs give a raw long; any double operand
-  gives a raw double. `/` gives a raw double when an operand is a double; a
+  gives a raw double. `/` can give a raw double when its source overload is
+  primitive and an operand is a double. Generic division keeps its checked
+  runtime route, preserving NaN propagation and the boxed zero check. A
   quotient of two longs stays boxed, since only an exact one is a long. `inc`
   and `dec` are `+` and `-` of 1. Core's coercing `+`, `-` and `*` also keep
   two known numeric operands raw, matching the helpers' checked numeric route.
@@ -160,8 +164,10 @@ These parts of #337, #448 and #351 aren't done yet:
 - `crates/suss-cli/tests/clojure_unboxed_locals.rs` computes each case twice:
   once on raw locals, and once on the same numbers passed through `identity`,
   which keeps them boxed. It covers overflow, NaN, -0.0, mixed longs and
-  doubles, division, loops, closures and type errors, with JVM Clojure 1.12's
-  results.
+  doubles, loops, closures and type errors, with JVM Clojure 1.12's results.
+  Division zero cases explicitly distinguish generic source overloads from
+  primitive ones; the expanded overload matrix also executes actual AOT
+  components in `clojure_division_overloads.rs`.
 - `crates/suss-compile/tests/portable_unboxed_locals.rs` checks the compiled
   form of `(loop [i 0 acc 0] (if (< i 1234567) (recur (inc i) (+ acc i)) acc))`.
   Its only calls are the two overflow paths, and its only allocations box the

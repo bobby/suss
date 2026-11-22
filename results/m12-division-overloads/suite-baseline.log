@@ -1,0 +1,10 @@
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-source/crates/suss-compile)
+    Finished `test` profile [optimized] target(s) in 2.99s
+     Running tests/clojure_test_suite.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m11-print-after-target/debug/deps/clojure_test_suite-a012f065a4b1ac2c)
+
+running 1 test
+test clojure_test_suite_matches_reviewed_baseline has been running for over 60 seconds
+test clojure_test_suite_matches_reviewed_baseline ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 161.84s
+

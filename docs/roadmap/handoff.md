@@ -1,3 +1,118 @@
+## Explicit IEEE coercion fixture retarget (2026-11-21)
+
+CI44958675908 shard5 on926fde51 found one stale pipeline fixture. Its recorded
+ClojureScript (/ nil) case was retargeted to unary / of f64-coerce nil and still
+expected infinity. Generic Clojure unary division must check that boxed zero.
+The retarget now uses a literal double numerator1.0, explicitly selecting the
+binary primitive overload. The original (/ nil) error assertion remains.
+Expected oracle values, all397 cases and the142 correction count are unchanged.
+Production code is unchanged.
+
+The exact portable_pipeline compiled_source_cases_match_the_pinned_compiler_observations
+test passes1, zero failed/ignored,18 unrelated tests filtered,459.02s. Its test
+body executes all397 corpus cases and asserts142 corrections. Commands, patch,
+CI failure and log hash are in results/m12-division-overloads/pipeline-retarget.json.
+Use stable Rust, two jobs/threads, MemoryMax4G and the existing print target/cache.
+The frozen926fde51 full baseline was interrupted with SIGINT/exit130 specifically
+for this verified fixture correction; its raw log/hash is retained and is not a
+pass. New final-head CI, re-review and a corrected full local run remain required.
+
+## Arithmetic fixture foundation check (2026-11-21)
+
+CI run44956667953 on9471688d failed to compile the async IR unit-test fixture:
+its Add operation omitted the new division_primitive field. The fixture now
+explicitly sets false; production code is unchanged. Source patch, CI failure
+location, commands, log hashes and results are retained in
+results/m12-division-overloads/foundation-fixture.json.
+
+With stable Rust, two Cargo jobs, MemoryMax4G and the existing print target/native
+cache, cargo +stable test --workspace --locked --lib -- --test-threads=2 passes
+256 tests; --bins --examples passes36. The --doc command succeeds with zero
+executed examples and two existing ignored examples. This is the local foundation
+subset, not a complete workspace baseline. Independent review of9471688d was
+clean; the fixture correction and exact final-head CI still need verification.
+
+## Settled loop source kinds for division (2026-11-21)
+
+Independent review of354cbfd4 reproduced generic zero division incorrectly
+using a loop initializer's primitive kind after Object-valued recur. Fresh JVM
+observations also show later initializers reanalyzed when an earlier local is
+boxed. The correction uses a metered, memoized source pass after HIR analysis,
+settling loop kinds before initializers, aliases and captured bodies. It keeps
+primitive-compatible loop controls primitive. The original review negative and
+pre-fix executable identity remain in results/m12-division-overloads.
+
+The expanded loop oracle verifies38 JVM1.12.6 rows; all38 execute in Runtime,
+Macro and actual AOT. The seven focused targets still pass41 tests, zero failures
+or ignores, including complete default-budget record requests. Java-free
+bootstrap reproduction +4 execution tests, actual Binaryen133 optimized2,
+Python361, core import508 and bootstrap source checks pass on this correction.
+The complete vendored-suite known-failure comparison passes unchanged (one test,
+ten unrelated harness tests filtered); no full compatibility claim. Source patch,
+all logs, exact executable and raw-suite capture identities are retained in
+loop-fix.json. Re-review and exact final-head CI remain required; no full local
+workspace pass is inferred from these results.
+
+## Division suite comparison (2026-11-21)
+
+On b8be026d, `cargo +stable test --workspace --locked --test clojure_test_suite
+clojure_test_suite_matches_reviewed_baseline -- --exact --test-threads=2` passes:
+1 passed, 10 unrelated tests filtered, 0 failed/ignored, 161.84s. It uses the
+same source-frozen 4GiB/two-job setup and SUSS_CLOJURE_TEST_SUITE_CAPTURE pointing
+to target/probe/m12-division-suite-capture. The full raw observations SHA256 and
+path are retained in results/m12-division-overloads/suite-baseline.json. The
+reviewed known-failure baseline and JVM reference are unchanged. This means
+no changed failures in the executed suite, not complete upstream compatibility.
+The earlier focused41 and import-trace1 passes remain separate evidence.
+
+## Division overload and source-order focused evidence (2026-11-21)
+
+The corrected JVM1.12.6 oracle verifies 28 rows. All rows execute in Runtime,
+Macro and real AOT components. Seven focused targets pass 41 tests with zero
+failures/ignores: clojure_division_overloads, clojure_unboxed_locals,
+compiled_core_casts, compiled_macro_cumulative_fuel, compiled_primitive_params,
+portable_primitive_entries and portable_unboxed_locals. The separate pipeline
+arithmetic import-trace case passes (18 unrelated tests filtered). All 361
+Python tests and the vendored-suite source lock pass. Exact commands, logs,
+source patch and executable identities are in results/m12-division-overloads.
+
+Generic division propagates NaN then checks boxed zero; primitive double source
+overloads keep IEEE behavior. HIR/IR carry source overload facts separately from
+backend boxing. Nary division is a nested left fold: a zero error prevents
+later effects. A frozen pre-order-fix executable produced an extra :c effect;
+the JVM and corrected cases stop after :b. The older raw/boxed zero fixture
+retains its inputs with distinct source-overload expectations. No budget is raised;
+M11's bounded complete record requests still pass.
+
+An initial cargo check saw a generator/source mismatch during edits and failed;
+the subsequent source-frozen build executes the 41 passing tests above. The
+first-fix pipeline log is incomplete, stopped for the material source-order
+correction after its new matrix passed and its old import-name fixture failed.
+The full jank capture is a separate live process in target/probe/m12-division-suite.log.
+Do not claim a terminal suite/full-workspace pass or final-head CI from focused
+results. Independent review and exact-head CI remain required for promotion.
+
+## Division source-overload regressions (2026-11-21)
+
+On main 50681542, fresh JVM Clojure1.12.6 passes all 23 division rows in
+results/m12-division-overloads/oracle.clj. The initial oracle's NaN/boxed-zero
+expectation failed and is retained; the corrected oracle explicitly propagates
+NaN before the zero check. The checked-in baseline command
+`cargo +stable test -p suss-cli --locked --test clojure_division_overloads -- --test-threads=2`
+fails both targets on generic-div 1.0 0.0: actual Runtime returns ##Inf and an
+actual AOT component observes the mismatch. The first Runtime failure precedes
+Macro execution, and AOT stops at its first export; do not claim the remaining
+Suss rows executed. Both phases and every AOT row remain required after the fix.
+
+Worktree target/probe/m12-source starts from the integrated main source, branch
+codex/m12-division-overloads. Use stable Rust, CARGO_BUILD_JOBS=2, MemoryMax4G,
+the original M11 workspace's target/probe/m11-print-after-target and target/suss
+native cache. Test/oracle logs remain under the worktree's target/probe; retained
+receipts and exact commands are in results/m12-division-overloads. The existing
+uncommitted hints/helper inputs in the user's old compiler/primitive-hints
+checkout are preserved independently in target/probe/m12-inputs. New source
+primitive overload selection must not depend on backend storage inference.
+
 ## Stack 495 rebase verification (2026-11-21)
 
 Rebase commands: `gh stack checkout 495`, `gh stack rebase`, then

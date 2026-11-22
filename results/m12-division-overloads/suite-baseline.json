@@ -1,0 +1,7 @@
+{
+  "source_commit": "b8be026d",
+  "capture_path": "target/probe/m12-division-suite-capture/suite-observations.json",
+  "capture_sha256": "5523272bb015af2c328e82baeb4251e03867081657ea03767d9e9bebec68db52",
+  "verification": "reviewed known-failure baseline unchanged; this is not complete compatibility",
+  "test_result": "1 passed, 10 unrelated tests filtered, 0 failed/ignored"
+}
