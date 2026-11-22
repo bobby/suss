@@ -299,6 +299,67 @@ pub(super) fn intrinsics(
     let string = HeapType::Concrete(STRING);
     let unsupported = unsupported_object_error();
     let allocation = error("Numeric conversion scratch allocation failed", 5);
+    let mut concat = check(
+        &[
+            LocalGet(0),
+            RefTestNonNull(string),
+            LocalGet(1),
+            RefTestNonNull(string),
+            I32And,
+            I32Eqz,
+        ],
+        &error("String concatenation requires string operands", 4),
+    );
+    concat.extend([
+        LocalGet(0),
+        RefCastNonNull(string),
+        ArrayLen,
+        LocalTee(2),
+        LocalGet(1),
+        RefCastNonNull(string),
+        ArrayLen,
+        LocalTee(3),
+        I32Add,
+        LocalSet(4),
+    ]);
+    concat.extend(check(&[LocalGet(4), LocalGet(2), I32LtU], &allocation));
+    concat.extend([
+        LocalGet(4),
+        ArrayNewDefault(STRING),
+        LocalSet(5),
+        LocalGet(5),
+        RefCastNonNull(string),
+        I32Const(0),
+        LocalGet(0),
+        RefCastNonNull(string),
+        I32Const(0),
+        LocalGet(2),
+        ArrayCopy {
+            array_type_index_dst: STRING,
+            array_type_index_src: STRING,
+        },
+        LocalGet(5),
+        RefCastNonNull(string),
+        LocalGet(2),
+        LocalGet(1),
+        RefCastNonNull(string),
+        I32Const(0),
+        LocalGet(3),
+        ArrayCopy {
+            array_type_index_dst: STRING,
+            array_type_index_src: STRING,
+        },
+        LocalGet(5),
+    ]);
+    let concat = b.function_with_locals(
+        "string-concat",
+        &[VALUE, VALUE],
+        &[VALUE],
+        &[(3, ValType::I32), (1, VALUE)],
+        &concat,
+    );
+
+    ratios::string(b);
     let byte = MemArg {
         offset: 0,
         align: 0,
@@ -460,6 +521,8 @@ pub(super) fn intrinsics(
     ];
     to_string.extend([LocalGet(0), Call(b.names["bigint-test"]), If(BlockType::Empty),
         LocalGet(0), ReturnCall(b.names["bigint-string"]), End]);
+    to_string.extend([LocalGet(0), Call(b.names["ratio-test"]), If(BlockType::Empty),
+        LocalGet(0), ReturnCall(b.names["ratio-string"]), End]);
     for (sentinel, value) in [
         (NIL, "null"),
         (FALSE, "false"),
@@ -571,65 +634,6 @@ pub(super) fn intrinsics(
     ];
     b.function_with_locals("property-key", &[VALUE], &[VALUE], &[(1, ValType::F64)], &key);
 
-    let mut concat = check(
-        &[
-            LocalGet(0),
-            RefTestNonNull(string),
-            LocalGet(1),
-            RefTestNonNull(string),
-            I32And,
-            I32Eqz,
-        ],
-        &error("String concatenation requires string operands", 4),
-    );
-    concat.extend([
-        LocalGet(0),
-        RefCastNonNull(string),
-        ArrayLen,
-        LocalTee(2),
-        LocalGet(1),
-        RefCastNonNull(string),
-        ArrayLen,
-        LocalTee(3),
-        I32Add,
-        LocalSet(4),
-    ]);
-    concat.extend(check(&[LocalGet(4), LocalGet(2), I32LtU], &allocation));
-    concat.extend([
-        LocalGet(4),
-        ArrayNewDefault(STRING),
-        LocalSet(5),
-        LocalGet(5),
-        RefCastNonNull(string),
-        I32Const(0),
-        LocalGet(0),
-        RefCastNonNull(string),
-        I32Const(0),
-        LocalGet(2),
-        ArrayCopy {
-            array_type_index_dst: STRING,
-            array_type_index_src: STRING,
-        },
-        LocalGet(5),
-        RefCastNonNull(string),
-        LocalGet(2),
-        LocalGet(1),
-        RefCastNonNull(string),
-        I32Const(0),
-        LocalGet(3),
-        ArrayCopy {
-            array_type_index_dst: STRING,
-            array_type_index_src: STRING,
-        },
-        LocalGet(5),
-    ]);
-    let concat = b.function_with_locals(
-        "string-concat",
-        &[VALUE, VALUE],
-        &[VALUE],
-        &[(3, ValType::I32), (1, VALUE)],
-        &concat,
-    );
 
     let mut add = vec![];
     coercions::primitive(&mut add, coercion_types, 0, 0);

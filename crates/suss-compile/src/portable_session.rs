@@ -1725,6 +1725,11 @@ impl Session {
         literal: &portable::hir::Literal,
     ) -> Result<SessionValue, SessionError> {
         use portable::hir::Literal;
+        let ratio = if let Literal::Ratio { negative, numerator, denominator } = literal {
+            let numerator = self.data_scalar(&Literal::BigInt { negative: *negative, limbs: numerator.clone(), big_integer: false })?;
+            let denominator = self.data_scalar(&Literal::BigInt { negative: false, limbs: denominator.clone(), big_integer: false })?;
+            Some((numerator, denominator))
+        } else { None };
         self.budget()?;
         let interrupt = self.host_work_interrupt();
         let mut scope = RootScope::new(&mut self.store);
@@ -1769,6 +1774,13 @@ impl Session {
                     self.identity,
                     &self.handles,
                 )
+            }
+            Literal::Ratio { .. } => {
+                let (numerator, denominator) = ratio.expect("prebuilt Ratio children");
+                let arguments = [Val::AnyRef(Some(numerator.object()?.to_rooted(&mut scope))),
+                    Val::AnyRef(Some(denominator.object()?.to_rooted(&mut scope)))];
+                let function = self.runtime.get_func(&mut scope, "ratio-literal").expect("Ratio literal constructor");
+                call(&mut scope, self.runtime, function, &arguments, self.identity, &self.handles)
             }
             Literal::BigInt { negative, limbs, big_integer } => {
                 let length = i32::try_from(limbs.len()).map_err(|_| SessionError::Host(wasmtime::Error::msg("Compiler data BigInt exceeds runtime length")))?;

@@ -249,6 +249,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                     Operation::Literal(Literal::Number(_)) => {
                         names.insert("number-box");
                     }
+                    Operation::Literal(Literal::Ratio { .. }) => { names.insert("bigint-new"); names.insert("ratio-literal"); }
                     Operation::Literal(Literal::String(_)) => {}
                     Operation::Literal(Literal::BigInt { big_integer, .. }) => { names.insert("bigint-new"); if *big_integer { names.insert("integer-biginteger"); } }
                     Operation::GlobalCell(global) => {
@@ -319,7 +320,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                         names.insert(operation.export());
                     }
                     Operation::Nominal { operation, arguments } => match operation {
-                        Nominal::IsNumber | Nominal::IsBigInt | Nominal::IsBigInteger | Nominal::IsString | Nominal::Array => {}
+                        Nominal::IsNumber | Nominal::IsRatio | Nominal::IsBigInt | Nominal::IsBigInteger | Nominal::IsString | Nominal::Array => {}
                         Nominal::IsKeyword => { names.insert("keyword-test"); }
                         Nominal::DirectLinkDefine(_) | Nominal::DirectLinkRead(_) | Nominal::DirectLinkSet(_)
                         | Nominal::KeywordCacheGet(_) | Nominal::KeywordCacheSet(_) | Nominal::KeywordCacheEmpty(_) => {}
@@ -884,6 +885,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
             "scalar-vector-guard" | "scalar-map-entry-guard" => (vec![VALUE, VALUE], vec![ValType::I32]),
             "map-entry-type-register" => (vec![VALUE], vec![VALUE]),
             "number-box" => (vec![ValType::F64], vec![VALUE]),
+            "ratio-new" | "ratio-literal" => (vec![VALUE, VALUE], vec![VALUE]),
             "bigint-new" => (vec![ValType::I32, ValType::Ref(RefType {
                 nullable: true, heap_type: HeapType::Concrete(runtime_abi::PACKED_STORAGE + 2),
             }), ValType::I32], vec![VALUE]),
@@ -901,7 +903,7 @@ pub(super) fn emit_verified(ir: &IrFunction) -> Result<Vec<u8>, Diagnostic> {
                 ],
                 vec![VALUE],
             ),
-            "integer-bigint" | "integer-biginteger" | "number-promote-negate" | "binding-get" | "binding-bound" | "number-negate" | "value-negate"
+            "ratio-numerator" | "ratio-denominator" | "ratio-integer" | "integer-bigint" | "integer-biginteger" | "number-promote-negate" | "binding-get" | "binding-bound" | "number-negate" | "value-negate"
             | "checked-negate" | "checked-identity-add" | "checked-identity-multiply"
             | "primitive-f64-coerce" | "primitive-f64-word0" | "primitive-f64-word4"
             | "primitive-f64-floor" | "primitive-f64-ceil" | "primitive-f64-finite" | "primitive-f64-safe-integer" | "primitive-f64-time-clip" | "identity-uid" | "coerce-string" | "object-coerce-string" | "language-error-new" | "string-from-unit" | "string-join"
@@ -2576,6 +2578,16 @@ fn emit_function(
                     if *big_integer { function.instruction(&Call(index("integer-biginteger"))); }
                     function.instruction(&LocalSet(inst.result.0 as u32 + offset));
                 }
+                Operation::Literal(Literal::Ratio { negative, numerator, denominator }) => {
+                    for (negative, limbs) in [(*negative, numerator), (false, denominator)] {
+                        function.instruction(&I32Const(if negative {-1} else {1}));
+                        for limb in limbs { function.instruction(&I32Const(*limb as i32)); }
+                        function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::PACKED_STORAGE + 2,
+                            array_size: u32::try_from(limbs.len()).map_err(|_| Diagnostic { span: ir.span.clone(), message: "Ratio literal exceeds Wasm array length".into() })? });
+                        function.instruction(&I32Const(limbs.len() as i32)).instruction(&Call(index("bigint-new")));
+                    }
+                    function.instruction(&Call(index("ratio-literal"))).instruction(&LocalSet(inst.result.0 as u32 + offset));
+                }
                 Operation::Literal(Literal::String(units)) => {
                     emit_utf16_literal(&mut function, data, literals, units, inst.result.0 as u32 + offset, &ir.span)?;
                 }
@@ -3227,6 +3239,10 @@ fn emit_function(
                                 .instruction(&LocalGet(value)).instruction(&RefCastNonNull(HeapType::Concrete(runtime_abi::BIGINT)))
                                 .instruction(&StructGet { struct_type_index: runtime_abi::BIGINT, field_index: 3 })
                                 .instruction(&Else).instruction(&I32Const(0)).instruction(&End);
+                        }
+                        Nominal::IsRatio => {
+                            function.instruction(&LocalGet(arguments[0].0 as u32 + offset))
+                                .instruction(&RefTestNonNull(HeapType::Concrete(runtime_abi::RATIO)));
                         }
                         Nominal::IsBigInt => {
                             function.instruction(&LocalGet(arguments[0].0 as u32 + offset))

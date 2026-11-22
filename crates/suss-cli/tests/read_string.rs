@@ -180,18 +180,18 @@ fn malformed_input_fails_with_the_compilers_message_and_position() {
     }
 }
 
-/// Integer exact literals execute in code and runtime readers; unsupported
-/// Ratio/Decimal values retain located failures and unselected-branch behavior.
+/// Exact integer/Ratio literals execute in code and runtime readers; Decimal
+/// values retain located failures and unselected-branch behavior.
 #[test]
 fn exact_numeric_literals_execute_or_preserve_unsupported_boundaries() {
-    let (integers, sources): (Vec<_>, Vec<_>) = corpus("exact").into_iter().partition(|source| {
+    let (values, sources): (Vec<_>, Vec<_>) = corpus("exact").into_iter().partition(|source| {
         matches!(&suss_reader::forms::read_forms(source).unwrap()[0].kind,
-            Kind::Exact(number) if matches!(number.value, suss_reader::forms::ExactValue::Integer { .. }))
+            Kind::Exact(number) if !matches!(number.value, suss_reader::forms::ExactValue::Decimal { .. }))
     });
     for (mut session, mut macros) in sessions() {
-        // BigInt is now a value in compiled code and in both runtime readers.
-        // Keep Ratio/Decimal failures below as explicit, located boundaries.
-        for source in &integers {
+        // Exact integers and Ratios are values in code and both readers.
+        // Decimal failures remain explicit, located boundaries.
+        for source in &values {
             for reader in ["read-string", "edn/read-string"] {
                 truthy(
                     &mut session,
@@ -685,8 +685,8 @@ fn unquoted(text: &str) -> String {
     }
 }
 
-/// Exact macro data preserves supported integer values and the remaining
-/// Ratio/Decimal evaluation-time boundaries (#333, #338, #339).
+/// Exact macro data preserves integer/Ratio values and the remaining Decimal
+/// evaluation-time boundary (#339).
 #[test]
 fn exact_numeric_literals_pass_through_macros() {
     // Expansion runs in the Macro phase; the REPL defines the macros.
@@ -711,7 +711,7 @@ fn exact_numeric_literals_pass_through_macros() {
         };
         literal(&number.unsupported_message())
     };
-    for (expression, literal_text) in [("(same-form 1/3)", "1/3"), ("(quoted 1.50M)", "1.50M")] {
+    for (expression, literal_text) in [("(quoted 1.50M)", "1.50M")] {
         let source = format!(
             "(= {} (try {expression} :evaluated (catch :default e (ex-message e))))",
             message(literal_text)
@@ -719,6 +719,8 @@ fn exact_numeric_literals_pass_through_macros() {
         assert_eq!(evaluate(&source), "true", "{source}");
     }
     for source in [
+        "(= 1/3 (same-form 1/3))",
+        "(= [1 1/3] (in-vector 1/3))",
         "(= [1 9223372036854775808N] (in-vector 9223372036854775808))",
         "(= 18446744073709551616N (quoted 18446744073709551616N))",
     ] {
@@ -729,13 +731,13 @@ fn exact_numeric_literals_pass_through_macros() {
         evaluate("(= \"9223372036854775808\" (pr-str (plain-integer 9223372036854775808N)))"),
         "true"
     );
-    // A case with an exact constant evaluates its expression, then throws.
+    // A case with a Ratio constant evaluates its selector exactly once.
     let source = format!(
         "(let [v (volatile! 0)] [(try (case (vswap! v inc) 1/2 :a :b) (catch :default e (ex-message e))) @v])"
     );
     assert_eq!(
         evaluate(&source),
-        format!("[{} 1]", message("1/2")),
+        "[:b 1]",
         "{source}"
     );
     // A macro call holding one keeps its source position.
@@ -746,14 +748,7 @@ fn exact_numeric_literals_pass_through_macros() {
         evaluate("(= 2 (same-form #?(:clj 1/3 :default 2)))"),
         "true"
     );
-    // A literal in the macro's own code evaluates when the macro runs, so a
-    // template holding one fails to expand until #335; one it never
-    // evaluates is harmless.
+    // The macro's Ratio literal executes and its expansion retains the value.
     assert_eq!(evaluate("(unused)"), ":ok");
-    let error = portable_repl::evaluate_compiled(&mut session, &mut macros, "(templated)")
-        .expect_err("templated");
-    assert!(
-        format!("{error:?}").contains("Compiled macro expansion failed"),
-        "{error:?}"
-    );
+    assert_eq!(evaluate("(templated)"), "4/3");
 }

@@ -47,7 +47,22 @@ fn constant(form: &Form) -> Result<(CaseConstant, (u8, Vec<u8>)), Diagnostic> {
             );
             (CaseConstant::Keyword(fqn.clone()), (4, fqn.into_bytes()))
         }
-        Kind::Exact(number) => return Err(fail(form.span.clone(), number.unsupported_message())),
+        Kind::Exact(number) => match &number.value {
+            suss_reader::forms::ExactValue::Integer { value, big } => {
+                let key = match num_traits::ToPrimitive::to_i64(value) {
+                    Some(long) => (17, long.to_be_bytes().to_vec()),
+                    None => (18, value.to_string().into_bytes()),
+                };
+                (CaseConstant::Scalar(Literal::BigInt { negative: num_traits::Signed::is_negative(value),
+                    limbs: value.to_u32_digits().1, big_integer: !big }), key)
+            }
+            suss_reader::forms::ExactValue::Ratio { numerator, denominator } => (
+                CaseConstant::Scalar(Literal::Ratio { negative: num_traits::Signed::is_negative(numerator),
+                    numerator: numerator.to_u32_digits().1, denominator: denominator.to_u32_digits().1 }),
+                (19, number.canonical().into_bytes()),
+            ),
+            _ => return Err(fail(form.span.clone(), number.unsupported_message())),
+        },
         _ => {
             return Err(fail(
                 form.span.clone(),
@@ -71,11 +86,11 @@ impl Analyzer<'_> {
                 "case bootstrap requires an expression and explicit default",
             ));
         }
-        // No value can hold an exact constant until #335, so such a case
-        // evaluates its expression and then throws as the literal would.
+        // Decimal values retain the explicit unsupported boundary until #339.
+        // Integer and Ratio constants are ordinary immutable numeric values.
         let exact = args[1..args.len() - 1].chunks_exact(2).find_map(|pair| match &pair[0].kind {
-            Kind::List(constants) => constants.iter().find(|c| matches!(c.kind, Kind::Exact(_))),
-            Kind::Exact(_) => Some(&pair[0]),
+            Kind::List(constants) => constants.iter().find(|c| matches!(&c.kind, Kind::Exact(n) if matches!(n.value, suss_reader::forms::ExactValue::Decimal { .. }))),
+            Kind::Exact(n) if matches!(n.value, suss_reader::forms::ExactValue::Decimal { .. }) => Some(&pair[0]),
             _ => None,
         });
         if let Some(exact) = exact {
@@ -115,7 +130,7 @@ impl Analyzer<'_> {
             group.iter().all(|(_, value)| {
                 matches!(
                     value,
-                    CaseConstant::Scalar(Literal::Number(_) | Literal::Long(_) | Literal::String(_))
+                    CaseConstant::Scalar(Literal::Number(_) | Literal::Long(_) | Literal::BigInt { .. } | Literal::Ratio { .. } | Literal::String(_))
                 )
             })
         });

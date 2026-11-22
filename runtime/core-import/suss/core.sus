@@ -10513,7 +10513,7 @@ reduces them without incurring seq initialization"
                    (suss.bootstrap/concat-string
                     (suss.bootstrap/concat-string
                      "Unsupported numeric literal " (suss.bootstrap/string-slice s start end))
-                    ": ratios, BigInts and BigDecimals need Clojure's numeric types (#338, #339)")
+                    ": BigDecimals need Clojure's numeric type (#339)")
                    false))))
 (def ^:private reader-digits?
   (fn [s from to]
@@ -10557,8 +10557,7 @@ reduces them without incurring seq initialization"
               (if (reader-skipping-number? st) nil
                 (let [bn (if (nil? n) (numeric-bigint-digits s d slash 10 negative) (suss.bootstrap/as-bigint n))
                       bq (if (nil? q) (numeric-bigint-digits s (inc slash) end 10 false) (suss.bootstrap/as-bigint q))]
-                  (if (zero? (rem bn bq)) (quot bn bq)
-                    (reader-exact st start s end)))))))
+                  (suss.bootstrap/ratio bn bq))))))
         (reader-fail st start "Invalid ratio" false)))))
 ;; Clojure's floatPat without its M: [0-9]+(\.[0-9]*)?([eE][-+]?[0-9]+)?.
 ;; A BigDecimal's scale, its fraction digits less its exponent, must fit 32
@@ -12071,10 +12070,47 @@ reduces them without incurring seq initialization"
           (throw (suss.bootstrap/error "Invalid BigInt integer text")))))))
 (def bigint
   (fn [x]
-    (if (suss.bootstrap/bigint? x) (suss.bootstrap/as-bigint x)
+    (if (suss.bootstrap/ratio? x) (suss.bootstrap/ratio-integer x)
+      (if (suss.bootstrap/bigint? x) (suss.bootstrap/as-bigint x)
       (if (suss.bootstrap/long? x) (suss.bootstrap/as-bigint x)
         (if (string? x) (numeric-bigint-text x false)
           (if (suss.bootstrap/number? x)
             (numeric-bigint-text (suss.bootstrap/coerce-string x) true)
-            (throw (suss.bootstrap/error "bigint requires a number or integer text"))))))))
+            (throw (suss.bootstrap/error "bigint requires a number or integer text")))))))))
 (def biginteger (fn [x] (if (suss.bootstrap/biginteger? x) x (suss.bootstrap/as-biginteger (bigint x)))))
+
+
+;; Original exact rational API; the runtime owns normalization and magnitudes.
+(def ratio? (fn [x] (suss.bootstrap/ratio? x)))
+(def rational? (fn [x] (or (integer? x) (suss.bootstrap/ratio? x))))
+(def numerator (fn [x] (suss.bootstrap/ratio-numerator x)))
+(def denominator (fn [x] (suss.bootstrap/ratio-denominator x)))
+;; Clojure rationalizes a double's shortest decimal spelling, not its exact
+;; binary significand. Preserve every decimal digit before applying the scale.
+(def ^:private numeric-rationalize-text
+  (fn [s]
+    (let [n (count s) first (.charCodeAt s 0) negative (== first 45)
+          from (if (or negative (== first 43)) 1 0)
+          e (reader-index-of s 69 from n) end (if (< e 0) n e)
+          dot (reader-index-of s 46 from end)
+          exp-from (inc e) exp-sign (if (< exp-from n) (.charCodeAt s exp-from) -1)
+          exp-digits (if (or (== exp-sign 45) (== exp-sign 43)) (inc exp-from) exp-from)
+          exponent (if (< e 0) 0 (suss.bootstrap/parse-long s exp-digits n (if (== exp-sign 45) -10 10)))
+          scale (- (if (< dot 0) 0 (- end (inc dot))) exponent)
+          magnitude (loop [i from value 0N]
+                      (if (< i end)
+                        (let [u (.charCodeAt s i)]
+                          (if (== u 46) (recur (inc i) value)
+                            (if (and (<= 48 u) (<= u 57))
+                              (recur (inc i) (+ (* value 10) (- u 48)))
+                              (throw (suss.bootstrap/error "Invalid rational numeric conversion")))))
+                        (if negative (- value) value)))
+          power (loop [i (if (< scale 0) (- scale) scale) value 1N]
+                  (if (< 0 i) (recur (dec i) (* value 10)) value))]
+      (if (< 0 scale) (suss.bootstrap/ratio magnitude power) (* magnitude power)))))
+(def rationalize
+  (fn [x]
+    (if (suss.bootstrap/double? x)
+      (numeric-rationalize-text (suss.bootstrap/coerce-string x))
+      (if (or (nil? x) (suss.bootstrap/number? x)) x
+        (throw (suss.bootstrap/error "rationalize requires a number"))))))

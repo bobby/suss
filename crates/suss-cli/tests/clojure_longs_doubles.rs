@@ -199,12 +199,10 @@ fn counts_narrow_as_clojure_casts_to_long() {
 }
 
 #[test]
-fn long_min_value_quotients_and_ratio_terms_need_bigints() {
-    // Clojure divides through BigIntegers when either long is MIN, so these
-    // are BigInts or ratios (#338); Suss says so rather than answer wrongly.
-    for source in ["(/ -9223372036854775808 -1)", "(/ -9223372036854775808 1)", "(/ 4 -9223372036854775808)"] {
-        assert!(thrown(source).contains("(#338)"), "{source}");
-    }
+fn long_min_value_quotients_and_ratio_terms_are_exact() {
+    // MIN operands divide through arbitrary-precision integers in Clojure.
+    assert_printed("[(/ -9223372036854775808 -1) (/ -9223372036854775808 1) (/ 4 -9223372036854775808)]",
+        "[9223372036854775808N -9223372036854775808N -1/2305843009213693952]");
     assert_printed("(read-string \"-9223372036854775808/2\")", "-4611686018427387904N");
     // A ratio literal reduced by the reader can now produce a real BigInt.
     assert_printed("-9223372036854775808/1", "-9223372036854775808N");

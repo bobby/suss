@@ -1,0 +1,173 @@
+Running as unit: run-p627053-i88703022.scope; invocation ID: ebecc74b5978497aac58f8c3df43ec5c
+   Compiling suss-core v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-core)
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-ratio-source/crates/suss-reader)
+error[E0422]: cannot find struct, variant or union type `ArrayNewFixed` in this scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:1143:47
+     |
+1143 |                         function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::PACKED_STORAGE + 2,
+     |                                               ^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function `index` in this scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:1145:95
+     |
+1145 |                         function.instruction(&I32Const(limbs.len() as i32)).instruction(&Call(index("bigint-new")));
+     |                                                                                               ^^^^^ not found in this scope
+     |
+note: these functions exist but are inaccessible
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit/unboxed/numeric_casts.rs:3:1
+     |
+   3 | pub(super) fn index(operation: Bitwise, arguments: &[ValueId], literals: &[Option<i64>]) -> Option<usize> {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `crate::portable::emit::unboxed::numeric_casts::index`: not accessible
+     |
+    ::: crates/suss-compile-generator/../suss-compile/src/runtime_abi/packed_arrays.rs:144:1
+     |
+ 144 | fn index(b: &Builder, kind: usize, data: u32, index: u32, value: u32, length: u32) -> Vec<Instruction<'static>> {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `crate::runtime_abi::packed_arrays::index`: not accessible
+
+error[E0425]: cannot find function `index` in this scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:1147:48
+     |
+1147 |                     function.instruction(&Call(index("ratio-new"))).instruction(&LocalSet(inst.result.0 as u32 + offset));
+     |                                                ^^^^^ not found in this scope
+     |
+note: these functions exist but are inaccessible
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit/unboxed/numeric_casts.rs:3:1
+     |
+   3 | pub(super) fn index(operation: Bitwise, arguments: &[ValueId], literals: &[Option<i64>]) -> Option<usize> {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `crate::portable::emit::unboxed::numeric_casts::index`: not accessible
+     |
+    ::: crates/suss-compile-generator/../suss-compile/src/runtime_abi/packed_arrays.rs:144:1
+     |
+ 144 | fn index(b: &Builder, kind: usize, data: u32, index: u32, value: u32, length: u32) -> Vec<Instruction<'static>> {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `crate::runtime_abi::packed_arrays::index`: not accessible
+
+error[E0425]: cannot find value `offset` in this scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:1147:114
+     |
+1147 |                     function.instruction(&Call(index("ratio-new"))).instruction(&LocalSet(inst.result.0 as u32 + offset));
+     |                                                                                                                  ^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `to_string` in this scope
+   --> crates/suss-compile-generator/../suss-compile/src/runtime_abi/numeric.rs:428:5
+    |
+428 |     to_string.extend([LocalGet(0), Call(b.names["ratio-test"]), If(BlockType::Empty),
+    |     ^^^^^^^^^
+    |
+help: a local variable with a similar name exists
+    |
+428 -     to_string.extend([LocalGet(0), Call(b.names["ratio-test"]), If(BlockType::Empty),
+428 +     string.extend([LocalGet(0), Call(b.names["ratio-test"]), If(BlockType::Empty),
+    |
+
+error[E0599]: no method named `instruction` found for reference `&ir::Function` in the current scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:1141:34
+     |
+1141 |                         function.instruction(&I32Const(if negative {-1} else {1}));
+     |                                  ^^^^^^^^^^^ method not found in `&ir::Function`
+     |
+     = help: items from traits can only be used if the trait is implemented and in scope
+     = note: the following trait defines an item `instruction`, perhaps you need to implement it:
+             candidate #1: `Reencode`
+
+error[E0425]: cannot find function, tuple struct or tuple variant `I32Const` in this scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:1141:47
+     |
+1141 |                         function.instruction(&I32Const(if negative {-1} else {1}));
+     |                                               ^^^^^^^^ not found in this scope
+
+error[E0599]: no method named `instruction` found for reference `&ir::Function` in the current scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:1142:54
+     |
+1142 |                         for limb in limbs { function.instruction(&I32Const(*limb as i32)); }
+     |                                                      ^^^^^^^^^^^ method not found in `&ir::Function`
+     |
+     = help: items from traits can only be used if the trait is implemented and in scope
+     = note: the following trait defines an item `instruction`, perhaps you need to implement it:
+             candidate #1: `Reencode`
+
+error[E0425]: cannot find function, tuple struct or tuple variant `I32Const` in this scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:1142:67
+     |
+1142 |                         for limb in limbs { function.instruction(&I32Const(*limb as i32)); }
+     |                                                                   ^^^^^^^^ not found in this scope
+
+error[E0599]: no method named `instruction` found for reference `&ir::Function` in the current scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:1143:34
+     |
+1143 |                         function.instruction(&ArrayNewFixed { array_type_index: runtime_abi::PACKED_STORAGE + 2,
+     |                         ---------^^^^^^^^^^^ method not found in `&ir::Function`
+     |
+     = help: items from traits can only be used if the trait is implemented and in scope
+     = note: the following trait defines an item `instruction`, perhaps you need to implement it:
+             candidate #1: `Reencode`
+
+error[E0599]: no method named `instruction` found for reference `&ir::Function` in the current scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:1145:34
+     |
+1145 |                         function.instruction(&I32Const(limbs.len() as i32)).instruction(&Call(index("bigint-new")));
+     |                                  ^^^^^^^^^^^ method not found in `&ir::Function`
+     |
+     = help: items from traits can only be used if the trait is implemented and in scope
+     = note: the following trait defines an item `instruction`, perhaps you need to implement it:
+             candidate #1: `Reencode`
+
+error[E0425]: cannot find function, tuple struct or tuple variant `I32Const` in this scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:1145:47
+     |
+1145 |                         function.instruction(&I32Const(limbs.len() as i32)).instruction(&Call(index("bigint-new")));
+     |                                               ^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Call` in this scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:1145:90
+     |
+1145 |                         function.instruction(&I32Const(limbs.len() as i32)).instruction(&Call(index("bigint-new")));
+     |                                                                                          ^^^^ not found in this scope
+
+error[E0599]: no method named `instruction` found for reference `&ir::Function` in the current scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:1147:30
+     |
+1147 |                     function.instruction(&Call(index("ratio-new"))).instruction(&LocalSet(inst.result.0 as u32 + offset));
+     |                              ^^^^^^^^^^^ method not found in `&ir::Function`
+     |
+     = help: items from traits can only be used if the trait is implemented and in scope
+     = note: the following trait defines an item `instruction`, perhaps you need to implement it:
+             candidate #1: `Reencode`
+
+error[E0425]: cannot find function, tuple struct or tuple variant `Call` in this scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:1147:43
+     |
+1147 |                     function.instruction(&Call(index("ratio-new"))).instruction(&LocalSet(inst.result.0 as u32 + offset));
+     |                                           ^^^^ not found in this scope
+
+error[E0425]: cannot find function, tuple struct or tuple variant `LocalSet` in this scope
+    --> crates/suss-compile-generator/../suss-compile/src/portable/emit.rs:1147:82
+     |
+1147 |                     function.instruction(&Call(index("ratio-new"))).instruction(&LocalSet(inst.result.0 as u32 + offset));
+     |                                                                                  ^^^^^^^^ not found in this scope
+
+error[E0004]: non-exhaustive patterns: `&hir::Literal::Ratio { .. }` not covered
+   --> crates/suss-compile-generator/../suss-compile/src/portable/hir/source_tags.rs:738:44
+    |
+738 |                 return Ok(Some(named(match value {
+    |                                            ^^^^^ pattern `&hir::Literal::Ratio { .. }` not covered
+    |
+note: `hir::Literal` defined here
+   --> crates/suss-compile-generator/../suss-compile/src/portable/hir.rs:53:10
+    |
+ 53 | pub enum Literal {
+    |          ^^^^^^^
+...
+ 62 |     Ratio { negative: bool, numerator: Vec<u32>, denominator: Vec<u32> },
+    |     ----- not covered
+    = note: the matched value is of type `&hir::Literal`
+help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern or an explicit pattern as shown
+    |
+742 ~                     Literal::String(_) => "string",
+743 ~                     &hir::Literal::Ratio { .. } => todo!(),
+    |
+
+Some errors have detailed explanations: E0004, E0422, E0425, E0599.
+For more information about an error, try `rustc --explain E0004`.
+error: could not compile `suss-compile-generator` (lib) due to 17 previous errors
+warning: build failed, waiting for other jobs to finish...

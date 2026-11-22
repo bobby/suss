@@ -937,7 +937,10 @@ pub(super) fn integer_functions(b: &mut Builder) {
     code.extend(get(0, 2));
     code.extend([Call(b.names["bigint-new"]), Return, End, LocalGet(0)]);
     b.function("integer-bigint", &[VALUE], &[VALUE], &code);
-    let mut code = vec![LocalGet(0), Call(b.names["integer-bigint"]), LocalSet(0)];
+    let mut code = vec![LocalGet(0), Call(b.names["bigint-test"]), If(BlockType::Empty)];
+    code.extend(get(0, 3));
+    code.extend([If(BlockType::Empty), LocalGet(0), Return, End, End,
+        LocalGet(0), Call(b.names["integer-bigint"]), LocalSet(0)]);
     code.extend(get(0, 0));
     code.extend(get(0, 1));
     code.extend(get(0, 2));
@@ -1045,6 +1048,7 @@ pub(super) fn integer_functions(b: &mut Builder) {
     ];
     code.extend(longs::hash_long_in(3, 4));
     code.extend([Call(b.names["long-box-i32"]), Return, End]);
+    let word_start = code.len();
     code.extend(get(0, 1));
     code.push(LocalSet(1));
     code.extend(get(0, 2));
@@ -1067,6 +1071,8 @@ pub(super) fn integer_functions(b: &mut Builder) {
     code.extend([I32Add, LocalSet(4), Br(0), End, End, LocalGet(4)]);
     code.extend(get(0, 0));
     code.extend([I32Mul, Call(b.names["long-box-i32"])]);
+    b.function_with_locals("bigint-word-hash", &[VALUE], &[VALUE],
+        &[(1, array), (1, ValType::I32), (1, ValType::I64), (1, ValType::I32)], &code[word_start..]);
     b.function_with_locals(
         "bigint-hash",
         &[VALUE],

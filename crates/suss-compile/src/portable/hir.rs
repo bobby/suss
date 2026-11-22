@@ -59,6 +59,7 @@ pub enum Literal {
     Number(f64),
     Long(i64),
     BigInt { negative: bool, limbs: Vec<u32>, big_integer: bool },
+    Ratio { negative: bool, numerator: Vec<u32>, denominator: Vec<u32> },
     String(Vec<u16>),
 }
 impl Literal {
@@ -67,7 +68,7 @@ impl Literal {
             Self::Nil => Type::Nil,
             Self::Undefined => Type::Value,
             Self::Bool(_) => Type::Bool,
-            Self::Number(_) | Self::Long(_) | Self::BigInt { .. } => Type::Number,
+            Self::Number(_) | Self::Long(_) | Self::BigInt { .. } | Self::Ratio { .. } => Type::Number,
             Self::String(_) => Type::String,
         }
     }
@@ -292,7 +293,7 @@ pub enum Bitwise {
     UncheckedMultiply,
     UncheckedNegate,
     PromoteAdd, PromoteSubtract, PromoteMultiply, PromoteNegate,
-    ToBigInt, ToBigInteger,
+    ToBigInt, ToBigInteger, MakeRatio, RatioNumerator, RatioDenominator, RatioInteger,
     /// Source max/min distinguish primitive double/double Math operations,
     /// primitive long/long results, and Object-returning overloads (#337).
     Max,
@@ -442,6 +443,10 @@ impl Bitwise {
             Self::PromoteSubtract => "number-promote-subtract",
             Self::PromoteMultiply => "number-promote-multiply",
             Self::PromoteNegate => "number-promote-negate",
+            Self::MakeRatio => "ratio-new",
+            Self::RatioNumerator => "ratio-numerator",
+            Self::RatioDenominator => "ratio-denominator",
+            Self::RatioInteger => "ratio-integer",
             Self::ToBigInt => "integer-bigint",
             Self::ToBigInteger => "integer-biginteger",
             Self::Max | Self::LongMax => "number-max",
@@ -482,7 +487,7 @@ impl Bitwise {
             | Self::IdentityUid
             | Self::Abs
             | Self::UncheckedNegate
-            | Self::PromoteNegate | Self::ToBigInt | Self::ToBigInteger
+            | Self::PromoteNegate | Self::ToBigInt | Self::ToBigInteger | Self::RatioNumerator | Self::RatioDenominator | Self::RatioInteger
             | Self::LongTest
             | Self::DoubleTest
             | Self::ToLong
@@ -538,6 +543,7 @@ pub enum Nominal {
     /// Immutable private tests; public predicate cells remain live.
     IsNumber,
     IsBigInt,
+    IsRatio,
     IsBigInteger,
     /// Whether the operand is a long: an i31 or a boxed long (#388).
     IsLongValue,
@@ -750,7 +756,9 @@ impl Nominal {
             Self::StringIndexOf | Self::ChunkIndexAdd => Type::Number,
             Self::BindingDefined
             | Self::IsNumber
+            | Self::IsRatio
             | Self::IsBigInt
+            | Self::IsRatio
             | Self::IsBigInteger
             | Self::IsKeyword
             | Self::IsString
@@ -809,7 +817,7 @@ impl Nominal {
                 Self::MapGetOr | Self::MapAssoc => count == 3,
                 Self::PackedSet(_) => count == 3,
                 Self::StringAppendLong => count == 2,
-                Self::IsNumber | Self::IsBigInt | Self::IsBigInteger | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
+                Self::IsNumber | Self::IsRatio | Self::IsBigInt | Self::IsBigInteger | Self::IsKeyword | Self::IsString | Self::IsBoolean | Self::IsUndefined | Self::LanguageError | Self::IsLanguageError | Self::IsClosure | Self::IsNativeObject | Self::FixedArityFn | Self::IsTypeConstructor | Self::ValueConstructor | Self::TypeName | Self::DisplayLeaf | Self::SourceFunctionName => count == 1,
                 Self::BindingDefined | Self::CoerceString | Self::ObjectCoerceString | Self::ObjectDescriptor | Self::StringFromUnit | Self::JoinStrings => count == 1,
                 Self::ConcatString | Self::ValueAdd | Self::StringIndexOf => count == 2,
                 Self::StringSlice => count == 3,
@@ -1314,6 +1322,13 @@ impl Analyzer<'_> {
             return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
                 ty: Type::Number, kind: std::sync::Arc::new(Expression::Literal(Literal::BigInt {
                     negative: num_traits::Signed::is_negative(value), limbs, big_integer: !big,
+                })) });
+        }
+        if let suss_reader::forms::ExactValue::Ratio { numerator, denominator } = &number.value {
+            return Ok(Hir { source: None, span: form.span.clone(), metadata: form.metadata.clone(),
+                ty: Type::Number, kind: std::sync::Arc::new(Expression::Literal(Literal::Ratio {
+                    negative: num_traits::Signed::is_negative(numerator), numerator: numerator.to_u32_digits().1,
+                    denominator: denominator.to_u32_digits().1,
                 })) });
         }
         let at = |kind| Form { span: form.span.clone(), metadata: vec![], kind };
@@ -3416,6 +3431,7 @@ impl Analyzer<'_> {
                 "apply-to-seq" => Some(Nominal::ApplyToSeq),
                 "apply-fixed" => Some(Nominal::ApplyFixed),
                 "number?" => Some(Nominal::IsNumber),
+                "ratio?" => Some(Nominal::IsRatio),
                 "bigint?" => Some(Nominal::IsBigInt),
                 "biginteger?" => Some(Nominal::IsBigInteger),
                 "keyword?" => Some(Nominal::IsKeyword),
@@ -3541,6 +3557,10 @@ impl Analyzer<'_> {
                 "promote-subtract" => Some(Bitwise::PromoteSubtract),
                 "promote-multiply" => Some(Bitwise::PromoteMultiply),
                 "promote-negate" => Some(Bitwise::PromoteNegate),
+                "ratio" => Some(Bitwise::MakeRatio),
+                "ratio-numerator" => Some(Bitwise::RatioNumerator),
+                "ratio-denominator" => Some(Bitwise::RatioDenominator),
+                "ratio-integer" => Some(Bitwise::RatioInteger),
                 "as-bigint" => Some(Bitwise::ToBigInt),
                 "as-biginteger" => Some(Bitwise::ToBigInteger),
                 "max" => Some(Bitwise::Max),

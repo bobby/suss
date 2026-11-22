@@ -198,6 +198,13 @@ impl ExactNumber {
         let value = num_bigint::BigInt::new(sign, limbs);
         Self { text: format!("{value}{}", if big { "N" } else { "" }), value: ExactValue::Integer { value, big } }
     }
+    /// Reconstitute normalized GC Ratio data without a binary64 conversion.
+    pub fn ratio(negative: bool, numerator: Vec<u32>, denominator: Vec<u32>) -> Self {
+        let sign = if negative { num_bigint::Sign::Minus } else { num_bigint::Sign::Plus };
+        let numerator = num_bigint::BigInt::new(sign, numerator);
+        let denominator = num_bigint::BigInt::new(num_bigint::Sign::Plus, denominator);
+        Self { text: format!("{numerator}/{denominator}"), value: ExactValue::Ratio { numerator, denominator } }
+    }
     /// The literal a macro-data symbol stands for, if it is one.
     pub fn from_symbol(namespace: Option<&str>, name: &str) -> Option<Self> {
         if namespace != Some(EXACT_NUMBER_NAMESPACE) {
@@ -220,7 +227,7 @@ impl ExactNumber {
     /// The evaluation-time failure for a runtime type not yet implemented.
     pub fn unsupported_message(&self) -> String {
         format!(
-            "Unsupported numeric literal {}: ratios, BigInts and BigDecimals need Clojure's numeric types (#338, #339)",
+            "Unsupported numeric literal {}: BigDecimals need Clojure's numeric type (#339)",
             self.text
         )
     }

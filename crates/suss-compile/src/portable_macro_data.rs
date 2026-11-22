@@ -902,6 +902,10 @@ impl FormBridge {
                             let (_, limbs) = value.to_u32_digits();
                             self.scalar(session, &Literal::BigInt { negative: num_traits::Signed::is_negative(value), limbs, big_integer: !big })?
                         }
+                        Kind::Exact(value) if matches!(value.value, suss_reader::forms::ExactValue::Ratio { .. }) => {
+                            let suss_reader::forms::ExactValue::Ratio { numerator, denominator } = &value.value else { unreachable!() };
+                            self.scalar(session, &Literal::Ratio { negative: num_traits::Signed::is_negative(numerator), numerator: numerator.to_u32_digits().1, denominator: denominator.to_u32_digits().1 })?
+                        }
                         Kind::Exact(value) => self.identifier(
                             session,
                             Some(suss_reader::forms::EXACT_NUMBER_NAMESPACE),
@@ -1336,12 +1340,28 @@ fn decode_datum_inner<T: DatumTarget>(
         // Scalar boxes and nominal objects have fixed ABI widths. Checking
         // metadata first keeps hostile arbitrary-width structs off the copying
         // path; this logical decoder does not admit other representations.
-        if !matches!(structure.ty(&*store)?.fields().len(), 1 | 4) {
+        if !matches!(structure.ty(&*store)?.fields().len(), 1 | 2 | 4) {
             return Err(error("Unexpected structure layout"));
         }
         let values = structure.fields(&mut *store)?.collect::<Vec<_>>();
         if let [Val::F64(bits)] = values.as_slice() {
             DecodedKind::Plain(Kind::Number(f64::from_bits(*bits)))
+        } else if let [Val::AnyRef(Some(_)), Val::AnyRef(Some(_))] = values.as_slice() {
+            let numerator = decode(store, &values[0], classes, span, depth+1, budget)?;
+            let denominator = decode(store, &values[1], classes, span, depth+1, budget)?;
+            let integer = |form: Form| match &form.kind {
+                Kind::Exact(number) => match &number.value {
+                    suss_reader::forms::ExactValue::Integer { value, .. } => Ok(value.clone()),
+                    _ => Err(error("Invalid Ratio integer")),
+                },
+                _ => Err(error("Invalid Ratio integer")),
+            };
+            let numerator = integer(numerator)?;
+            let denominator = integer(denominator)?;
+            if num_traits::Zero::is_zero(&numerator) || !num_traits::Signed::is_positive(&denominator) || num_traits::One::is_one(&denominator) {
+                return Err(error("Invalid normalized Ratio"));
+            }
+            DecodedKind::Plain(Kind::Exact(suss_reader::forms::ExactNumber::ratio(num_traits::Signed::is_negative(&numerator), numerator.to_u32_digits().1, denominator.to_u32_digits().1)))
         } else if let [Val::I32(sign), Val::AnyRef(Some(limbs)), Val::I32(used), Val::I32(display)] = values.as_slice() {
             if !(-1..=1).contains(sign) || *used < 0 || !(0..=1).contains(display) { return Err(error("Invalid BigInt metadata")); }
             let array = limbs.as_array(&*store)?.ok_or_else(|| error("Invalid BigInt magnitude"))?;
