@@ -1,3 +1,31 @@
+## Primitive method lexical source checks (2026-11-21)
+
+results/m12-primitive-methods retains the original failing-before fixture/log,
+compiler and source hashes, exact five-input source reconstruction, fresh JVM
+Clojure1.12.6 assertions and final native logs. The expanded matrix checks17
+values and15 diagnostics in Runtime/Macro and actual AOT. Captured genuine
+primitives now participate in return checking; captured hinted Objects retain
+Object source kind, including reflective bitwise results. Primitive function
+recurrence requires a matching source primitive (Int->Long, Float->Double).
+A hinted Object alone is rejected even when its diagnostic class says long or
+double. Ordinary loop boxing, return-only hints and lexical shadowing remain
+covered. WIT-only conversions keep raw numeric storage without inventing source
+primitive return/capture/recur errors; five actual compiled exports cover this.
+
+Run cargo +stable test --workspace --locked with the twelve --test targets in
+results/m12-primitive-methods/commands.json, then -- --test-threads=2:64 passed,
+zero failed/ignored. The exact inspected long/double extrema components execute,
+and the checked long-sum allocation check passes. Java-free
+sh scripts/verify-bootstrap.sh reproduces both phases byte-for-byte and passes4
+execution tests. Actual Binaryen133 compiled_optimize passes2. Builds use stable
+Rust, two Cargo jobs/threads, MemoryMax4G, m12-hints-target and outer target/suss.
+The reviewed vendored-suite comparison passes1 (208.31s),10 filtered out, zero
+failed/ignored. Its complete observations are retained as gzip with compressed
+and uncompressed hashes; known failures remain known failures.
+No Java implementation is copied or shipped. Broader raw core-result/escape
+coverage, the remaining numeric tower, a new quiet benchmark ratio and a current
+full-workspace result are outside this evidence.
+
 ## Clojure extrema source/storage probes (2026-11-21)
 
 results/m12-extrema retains exact source patches and all16 reconstructed input

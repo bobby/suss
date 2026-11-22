@@ -6,20 +6,30 @@ use std::sync::Arc;
 
 pub(super) fn annotate(
     hir: &mut Hir,
+    methods: &HashMap<LoopId, primitive_returns::Method>,
     meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
 ) -> Result<(), Diagnostic> {
     // Keep original expression addresses alive while the memoized rewrite
     // makes shallow copies. Analyzer BindingIds are unique within this HIR,
     // so every shared expression has one settled lexical source context.
     let original = hir.clone();
-    let mut pass = Pass { hints: false, validate_only: false, needed: HashMap::new(), rewritten: HashMap::new(), meter };
+    let mut validate_methods = false;
+    let mut source_casts = HashMap::new();
+    for method in methods.values() {
+        meter(1 + method.parameters.len() as u64 + method.casts.len() as u64)?;
+        validate_methods |= method.needs_validation();
+        source_casts.extend(method.casts.iter().copied());
+    }
+    let mut pass = Pass { hints: false, validate_methods, methods, source_casts: &source_casts,
+        validate_only: false, needed: HashMap::new(), rewritten: HashMap::new(), meter };
     let hints = pass.features(hir)?.hints;
     pass.hints = hints;
-    if hints {
+    if hints || validate_methods {
         // Clojure diagnoses hints while first parsing the loop, before a
         // mismatched recur triggers boxing/reanalysis. Include captured fn
         // bodies in that initial validation context.
-        Pass { hints, validate_only: true, needed: HashMap::new(), rewritten: HashMap::new(), meter: &mut *pass.meter }
+        Pass { hints, validate_methods, methods, source_casts: &source_casts, validate_only: true,
+            needed: HashMap::new(), rewritten: HashMap::new(), meter: &mut *pass.meter }
             .walk(&mut hir.clone(), &mut SourceFacts::default())?;
     }
     let result = pass.walk(hir, &mut SourceFacts::default());
@@ -35,6 +45,9 @@ impl Features {
 
 struct Pass<'a> {
     hints: bool,
+    validate_methods: bool,
+    methods: &'a HashMap<LoopId, primitive_returns::Method>,
+    source_casts: &'a HashMap<BindingId, Primitive>,
     validate_only: bool,
     needed: HashMap<usize, Features>,
     rewritten: HashMap<usize, (Arc<Expression>, Type)>,
@@ -92,7 +105,7 @@ impl Pass<'_> {
 
     fn walk(&mut self, hir: &mut Hir, facts: &mut SourceFacts) -> Result<(), Diagnostic> {
         (self.meter)(1)?;
-        if !self.hints {
+        if !self.hints && !self.validate_methods {
             let needed = self.features(hir)?;
             if !needed.division && !needed.extrema { return Ok(()); }
         }
@@ -114,8 +127,13 @@ impl Pass<'_> {
                     let mut previous = Vec::with_capacity(bindings.len());
                     for binding in bindings {
                         self.walk(&mut binding.value, facts)?;
-                        let ty = primitive_returns::binding_type(binding, facts, self.meter)?;
-                        previous.push((binding.id, facts.insert_type(binding.id, ty)));
+                        let old = if let Some(kind) = self.source_casts.get(&binding.id) {
+                            facts.insert(binding.id, *kind)
+                        } else {
+                            let ty = primitive_returns::binding_type(binding, facts, self.meter)?;
+                            facts.insert_type(binding.id, ty)
+                        };
+                        previous.push((binding.id, old));
                     }
                     let result = self.walk(body, facts);
                     restore(facts, previous);
@@ -144,6 +162,9 @@ impl Pass<'_> {
                     let result = self.walk(body, facts);
                     restore(facts, previous);
                     result?;
+                    if let Some(method) = self.methods.get(target) {
+                        method.validate_return(facts, self.meter)?;
+                    }
                 }
                 Function { parameters, body, .. } => {
                     let previous = parameters.iter().map(|parameter|
@@ -212,7 +233,13 @@ impl Pass<'_> {
                         if self.hints && !self.validate_only && inline { local_hints::operand(argument, facts, self.meter)?; }
                     }
                 }
-                Array { arguments, .. } | Recur { arguments, .. } | Do(arguments) => {
+                Recur { target, arguments } => {
+                    for argument in arguments.iter_mut() { self.walk(argument, facts)?; }
+                    if let Some(method) = self.methods.get(target) {
+                        method.validate_recur(arguments, facts, self.meter)?;
+                    }
+                }
+                Array { arguments, .. } | Do(arguments) => {
                     for argument in arguments { self.walk(argument, facts)?; }
                 }
                 DynamicScope { bindings, body } | AsyncDynamicScope { bindings, body } => {

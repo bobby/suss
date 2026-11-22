@@ -1213,13 +1213,21 @@ zero/NaN behavior and redefined core aliases are covered. A separate redefinitio
 case preserves ADR-0004's ordinary-IFn fallback and matches the frozen before
 compiler rather than JVM interface-cast behavior. The generated numeric loop
 components are inspected and executed, with their allocation/call limits retained.
-These observations do not establish the remaining numeric tower or hint checks.
+These observations do not establish the remaining numeric tower.
+
+[Primitive method evidence](../../results/m12-primitive-methods/README.md) adds17
+fresh JVM value observations and15 diagnostic checks for captured return hints
+and primitive-function recurrence. Runtime/Macro and actual AOT cover nested
+primitive parameters, named arities, widening, reflective bitwise results and
+initial loop diagnostics. WIT-only numeric storage does not invent source
+primitive-return/recur errors; separate compiled controls execute those paths.
 
 Lazy numeric GC copies now span blocks where materializations can repeat without
 redefinition. Checked sum bodies remain byte-identical and generated allocation
 checks pass. The [box reuse receipts](../../results/m12-box-reuse/README.md) retain
 47 focused passes, expanded value/NaN cases, frozen before/after allocation and
 instruction samples, both boxed controls and the initial broad-cache regression.
-The samples are not quiet timing acceptance. Mixed bitwise and = formal overloads,
-max/min and unchecked inc/dec still have retained JVM/AOT mismatches. These scoped
+The samples are not quiet timing acceptance. Historical mixed bitwise, equality,
+max/min and unchecked inc/dec mismatches retain their original source identities;
+the later overload/extrema receipts above record their bounded corrections. These
 observations do not establish the complete numeric tower or new inventory counts.

@@ -1189,6 +1189,7 @@ struct Analyzer<'a> {
     catch_aliases: Vec<(Form, std::sync::Arc<LocalBinding>)>,
     target: Option<(LoopId, usize)>,
     method_recurrence: Vec<(LoopId, bool)>,
+    primitive_methods: HashMap<LoopId, primitive_returns::Method>,
 }
 impl Analyzer<'_> {
     fn capture_source_namespace(&mut self) -> std::sync::Arc<SourceNamespace> {
@@ -2914,7 +2915,8 @@ impl Analyzer<'_> {
         // fns: its name in the body is the checked cast of the argument, a
         // raw i64 or f64, so arithmetic and loops seeded from it stay raw.
         let mut casts = Vec::new();
-        let mut source_primitives = primitive_returns::SourceFacts::default();
+        let mut source_casts = Vec::new();
+        let mut source_parameters = vec![None; parameters.len()];
         let return_hint = primitive_tag(&args[0])?
             .or(if receiver_type.is_none() { self.pending_return_hint } else { None });
         // An exported fn's numeric WIT parameters, when its arity matches. The
@@ -2931,11 +2933,12 @@ impl Analyzer<'_> {
             let read = self.local(form, current);
             let value = self.nominal(form, cast, vec![read]);
             let binding = self.fresh_binding(form, value);
-            if let Some(declared) = declared {
-                source_primitives.insert(binding.id, if declared == Nominal::LongCast {
-                    primitive_returns::Primitive::Long
-                } else { primitive_returns::Primitive::Double });
-            }
+            let primitive = declared.map(|cast| if cast == Nominal::LongCast {
+                primitive_returns::Primitive::Long
+            } else { primitive_returns::Primitive::Double });
+            source_parameters[position] = primitive;
+            // A WIT-only conversion changes storage, not the source type.
+            source_casts.push((binding.id, primitive.unwrap_or(primitive_returns::Primitive::Boxed)));
             self.remap_local(&parameter.name, binding.id, Type::Value);
             casts.push(binding);
         }
@@ -2946,9 +2949,14 @@ impl Analyzer<'_> {
             super::AnalysisContext::Return,
             true,
         )?;
-        if let Some(hint) = return_hint {
-            primitive_returns::validate(&inner_body, hint, &mut source_primitives,
-                &mut |work| self.expander.charge_expansion_work(work, form.span.clone()))?;
+        if return_hint.is_some() || !source_casts.is_empty() {
+            // Validate after lexical source facts are available, including
+            // captures. Keep the genuine body before parameter conversions.
+            self.primitive_methods.insert(target, primitive_returns::Method {
+                body: inner_body.clone(), return_hint, casts: source_casts,
+                parameters: parameters.iter().zip(source_parameters).skip(usize::from(object_method))
+                    .map(|(parameter, primitive)| (parameter.name.clone(), primitive)).collect(),
+            });
         }
         if exported.is_none() {
             self.pending_param_hints = pending;
@@ -4428,6 +4436,7 @@ pub(crate) fn prepare_with_origin(
         catch_aliases: Vec::new(),
         target: None,
         method_recurrence: Vec::new(),
+        primitive_methods: HashMap::new(),
     };
     // The frame's own forms take the fragment's extent, not the source's, so
     // a fragment's IR and cache key do not change with the rest of its file.
@@ -4437,7 +4446,7 @@ pub(crate) fn prepare_with_origin(
     };
     let mut hir = analyzer.body(forms, span, super::AnalysisContext::Statement, false)?;
     let source_span = hir.span.clone();
-    division_overloads::annotate(&mut hir,
+    division_overloads::annotate(&mut hir, &analyzer.primitive_methods,
         &mut |work| analyzer.expander.charge_expansion_work(work, source_span.clone()))?;
     if let Expression::Do(items) = &*hir.kind {
         super::analysis_record::analyzed_forms(origin, items);

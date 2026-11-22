@@ -1,0 +1,10 @@
+{
+  "production_revision": "ea7af73198d72b721b9e679b6a0968767b02391b",
+  "compiler_sha256": "bb5b357a747babb8f1218bcbe913335227ca8db8027df250651dcc5a26b127a6",
+  "test_result": {
+    "passed": 0,
+    "failed": 4,
+    "ignored": 0
+  },
+  "note": "New fixture on unchanged production compiler; captured return incorrectly accepted and reflective bitwise return incorrectly rejected."
+}

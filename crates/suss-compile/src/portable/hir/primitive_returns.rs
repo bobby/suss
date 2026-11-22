@@ -124,6 +124,55 @@ fn restore(facts: &mut SourceFacts, previous: Vec<(BindingId, Option<SourceType>
     }
 }
 
+/// Analyzer facts retained before the physical parameter/return wrappers.
+/// WIT-only casts have Object source type and do not impose recur diagnostics.
+pub(super) struct Method {
+    pub body: Hir,
+    pub return_hint: Option<Nominal>,
+    pub casts: Vec<(BindingId, Primitive)>,
+    pub parameters: Vec<(String, Option<Primitive>)>,
+}
+impl Method {
+    pub fn needs_validation(&self) -> bool {
+        self.return_hint.is_some() || self.parameters.iter().any(|(_, kind)| kind.is_some())
+    }
+    pub fn validate_return(
+        &self, facts: &mut SourceFacts,
+        meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+    ) -> Result<(), Diagnostic> {
+        let Some(hint) = self.return_hint else { return Ok(()) };
+        meter(self.casts.len() as u64)?;
+        let previous = self.casts.iter().map(|(id, kind)| (*id, facts.insert(*id, *kind))).collect();
+        let result = validate(&self.body, hint, facts, meter);
+        restore(facts, previous);
+        result
+    }
+    pub fn validate_recur(
+        &self, arguments: &[Hir], facts: &mut SourceFacts,
+        meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
+    ) -> Result<(), Diagnostic> {
+        for (argument, (name, expected)) in arguments.iter().zip(&self.parameters) {
+            meter(1)?;
+            let Some(expected) = expected else { continue };
+            let actual = kind(argument, facts, meter)?;
+            if !compatible(*expected, actual) {
+                // A hinted Object still cannot emit a primitive recur operand,
+                // even though the diagnostic reports its hinted Java class.
+                let class = class(argument, facts, meter)?;
+                return Err(fail(argument.span.clone(), format!(
+                    "recur arg for primitive local: {name} is not matching primitive, had: {}, needed: {}",
+                    class.name(), expected.name(),
+                )));
+            }
+        }
+        Ok(())
+    }
+}
+fn compatible(expected: Primitive, actual: Primitive) -> bool {
+    expected == actual || (expected == Primitive::Long && actual == Primitive::Int)
+        || (expected == Primitive::Double && actual == Primitive::Float)
+}
+
 pub(super) fn validate(
     body: &Hir,
     hint: Nominal,
@@ -132,9 +181,7 @@ pub(super) fn validate(
 ) -> Result<(), Diagnostic> {
     let actual = infer(body, bindings, meter, &mut Vec::new())?;
     let expected = if hint == Nominal::LongCast { Primitive::Long } else { Primitive::Double };
-    if actual != Primitive::Boxed && actual != Primitive::Never && actual != expected
-        && !(expected == Primitive::Long && actual == Primitive::Int)
-        && !(expected == Primitive::Double && actual == Primitive::Float)
+    if actual != Primitive::Boxed && actual != Primitive::Never && !compatible(expected, actual)
     {
         return Err(fail(body.span.clone(), format!(
             "Mismatched primitive return, expected: {}, had: {}", expected.name(), actual.name(),

@@ -1,0 +1,151 @@
+{
+  "source_base": "ea7af73198d72b721b9e679b6a0968767b02391b",
+  "source_inputs": "source-inputs.json",
+  "source_reconstruction": "Five production/test inputs reconstructed from exact base plus patch; byte-for-byte equality verified.",
+  "matrix": {
+    "jvm_version": "1.12.6",
+    "values": 17,
+    "diagnostics": 15,
+    "routes": [
+      "Runtime",
+      "Macro",
+      "actual AOT"
+    ],
+    "additional_wit_exports": 5
+  },
+  "focused": {
+    "groups": 12,
+    "passed": 64,
+    "failed": 0,
+    "ignored": 0,
+    "compiler_sha256": "9fd1022ca07b57dca4cea325d63eb2a36c02f08333885157d7e87cdcfb19d79b"
+  },
+  "gates": [
+    {
+      "name": "focused",
+      "command": [
+        "cargo",
+        "+stable",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "clojure_primitive_method_types",
+        "--test",
+        "clojure_numeric_extrema",
+        "--test",
+        "clojure_local_numeric_hints",
+        "--test",
+        "clojure_division_overloads",
+        "--test",
+        "clojure_unboxed_locals",
+        "--test",
+        "clojure_numeric_box_reuse",
+        "--test",
+        "compiled_core_casts",
+        "--test",
+        "compiled_macro_cumulative_fuel",
+        "--test",
+        "compiled_primitive_params",
+        "--test",
+        "portable_primitive_entries",
+        "--test",
+        "portable_core_expression_dependencies",
+        "--test",
+        "portable_unboxed_locals",
+        "--",
+        "--test-threads=2"
+      ],
+      "environment": {},
+      "exit_code": 0,
+      "seconds": 439.13266944885254
+    },
+    {
+      "name": "bootstrap",
+      "command": [
+        "sh",
+        "scripts/verify-bootstrap.sh"
+      ],
+      "environment": {},
+      "exit_code": 0,
+      "seconds": 70.72259759902954
+    },
+    {
+      "name": "binaryen",
+      "command": [
+        "cargo",
+        "+stable",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "compiled_optimize",
+        "--",
+        "--test-threads=2"
+      ],
+      "environment": {},
+      "exit_code": 0,
+      "seconds": 48.422489643096924
+    },
+    {
+      "name": "suite",
+      "command": [
+        "cargo",
+        "+stable",
+        "test",
+        "--workspace",
+        "--locked",
+        "--test",
+        "clojure_test_suite",
+        "clojure_test_suite_matches_reviewed_baseline",
+        "--",
+        "--exact",
+        "--test-threads=2"
+      ],
+      "environment": {
+        "SUSS_CLOJURE_TEST_SUITE_CAPTURE": "/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/target/probe/m12-primitive-methods-suite-capture"
+      },
+      "exit_code": 0,
+      "seconds": 211.74791407585144
+    }
+  ],
+  "suite_observations_uncompressed_sha256": "5523272bb015af2c328e82baeb4251e03867081657ea03767d9e9bebec68db52",
+  "environment": {
+    "toolchain": "stable",
+    "cargo_jobs": 2,
+    "test_threads": 2,
+    "memory_scope": "4G",
+    "cargo_target": "m12-hints-target",
+    "native_cache": "outer target/suss",
+    "binaryen": "wasm-opt version 133 (version_133)"
+  },
+  "limitations": "Reviewed vendored-suite comparison retains known failures, not full conformance. No current-source full-workspace or new quiet timing result. Raw core-result/escape and numeric-tower acceptance remain outside this evidence.",
+  "sha256": {
+    "README.md": "d0bfcecf65ee54a53969ecf27f2406eeb644efe81ace43f5186a0831cdcffa1e",
+    "additional-corrected.clj": "5edfeaa2e541f857828dabd16b17d57d60726de8f588d3850a2909d862c95493",
+    "additional-corrected.log": "f0fdaa0bf2b93328d9afe08dfe93087529fa02791797162be3abdf6095daaebf",
+    "additional.clj": "594273a78e9be7da1c537b14e361fc352cac6b5a443fa9e9ab7d21283058a2ba",
+    "additional.json": "c229bb040c89bc188f5e2dc3ee2dd95508d3de1ed5b6ac3e53d1d96f3dc9d61e",
+    "additional.log": "b4071f022760c52152a478dd5c2ccfff05ead13eea25334cad54471657dcf86b",
+    "before-fixture.rs": "002dc9bc7ec471ac703ff8ef5fe0e50a8bb3c490945c5342eb31493c02fca0a8",
+    "before.json": "92e3ff303882dbb6668297d9f61f3c2318229d43cb3312cfadf92c0b0f199968",
+    "before.log": "389d8135a1a4a381f4c00b7ba5c0bb001e107d86f716d26d0501744df3eda857",
+    "binaryen.log": "7492f26523dbc208f64252286ae78ea435d0245aef9abdbe06a582a6e8502f7b",
+    "bootstrap.log": "3c89f1c58c24dedb606322617be320c97d2b29ff2fb4a96fc8c5b322312c58f0",
+    "cases.json": "ad1715f51021c2e0106a55409d9a668f1ccff6492fe08f3e9b7c738520cd2032",
+    "commands.json": "c14bc87be39646882b6ed788bb34992b9e0815feb138b860e10aa7537f93d28c",
+    "focused.json": "51f7c1cea10bb8ec26b4dbddd731735376e5bde06a02cd7177cc692b8d0914cc",
+    "focused.log": "80f68330c4587acf844124cd0a61531b40f302c19d9f8356d10587144782405c",
+    "oracle-command.json": "867730efb81889f8f5f72246acb2e1e335f6ff0a74f0ec0a4f8ed5150718de19",
+    "oracle.clj": "945bd0c69c16f5373e540cd6ff052652542fa21d95a8fcfce974818f4dc7517c",
+    "oracle.log": "b4f3250afbfd7338c74ed20d0bc67a19f93010585377f3a42bf377a5a1959d6b",
+    "probe.clj": "cd3b5d7b0052cea5c473395be3c57ba00284d797b80a69e55908a2aad1f6cc5f",
+    "probe.log": "de8c3fbbe5d645a02d425844591cd98a415a27f894dd9d1d21f8d4a3c3cbd221",
+    "source-check.py": "4d5cdbe3b76391becae85cfcca48d2204f6a9cf3a8585ee948a4c0f9f2376abb",
+    "source-inputs.json": "fe7645b921d4b41d7667f505e8de224470517136dd6785b53d03f6675e3f8aa2",
+    "source-reconstruction.log": "d9ccdb192dcdb82259be4963cb7ffead1170efda9f3602b1f61476aecd8eb2b0",
+    "source.patch": "bdc5348e325fa86bc7755241003419aaf251d38679ef4339d7eca65d5aeb4f0d",
+    "suite-observations.json.gz": "a9f4b7efbfd74c703c28cee2ab0df4a1fcc7745c8a71fef44c1912222eebc9a2",
+    "suite.log": "7513a2780eb1c0b0083985a14235255528e2990dfdfe6f17ffebe11d78a6ca11"
+  }
+}

@@ -122,16 +122,24 @@ fn primitive_parameter_hints_match_the_repl() {
 fn wit_parameter_specialization_does_not_change_source_return_typing() {
     let root = tempfile::tempdir().unwrap();
     std::fs::write(root.path().join("app.sus"),
-        "(ns app) (defn as-long ^long [x] x) (defn as-double ^double [x] x)").unwrap();
+        "(ns app) (defn as-long ^long [x] x) (defn as-double ^double [x] x)
+         (defn capture-long [x] ((fn ^long [] x)))
+         (defn capture-double [x] ((fn ^double [] x)))
+         (defn recur-wit [x] (if (zero? x) (recur (identity 1)) x))").unwrap();
     std::fs::write(root.path().join("app.wit"),
-        "package test:source-tags; world w { export as-long: func(x: f64) -> s64; export as-double: func(x: s64) -> f64; }").unwrap();
+        "package test:source-tags; world w { export as-long: func(x: f64) -> s64; export as-double: func(x: s64) -> f64;
+         export capture-long: func(x: f64) -> s64; export capture-double: func(x: s64) -> f64;
+         export recur-wit: func(x: s64) -> s64; }").unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_suss"))
         .current_dir(root.path())
         .args(["compile", "app.sus", "-w", "app.wit", "-o", "app.wasm",
-               "--export", "as-long=app/as-long", "--export", "as-double=app/as-double"])
+               "--export", "as-long=app/as-long", "--export", "as-double=app/as-double",
+               "--export", "capture-long=app/capture-long", "--export", "capture-double=app/capture-double",
+               "--export", "recur-wit=app/recur-wit"])
         .output().unwrap();
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
-    for (name, argument, expected) in [("as-long", "1.75", 1.0_f64), ("as-double", "3", 3.0)] {
+    for (name, argument, expected) in [("as-long", "1.75", 1.0_f64), ("as-double", "3", 3.0),
+        ("capture-long", "1.75", 1.0), ("capture-double", "3", 3.0), ("recur-wit", "0", 1.0)] {
         let output = Command::new(env!("CARGO_BIN_EXE_suss"))
             .current_dir(root.path())
             .args(["run", "app.wasm", "--invoke", name, "--", argument])

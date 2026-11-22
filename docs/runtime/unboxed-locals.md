@@ -89,7 +89,10 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   through the runtime's `number-cast-long` or `number-cast-double`, which
   converts a double in range or throws. The result is a raw `i64` or `f64`, so
   arithmetic and loops seeded from it stay unboxed beyond i31, and `recur`
-  rebinds it. A WIT export's numeric parameters are treated as hinted
+  rebinds it. A source primitive parameter requires a matching primitive
+  `recur` operand (int may widen to long and float to double). A hinted Object
+  alone cannot supply that operand; ordinary loop locals can still box on a
+  mismatched recurrence. A WIT export's numeric parameters use the same storage conversion
   ([WIT numbers](wit-numbers.md), "Primitive export parameters").
 - **Hinted locals.** A `^long` or `^double` let/loop local retains its
   original Object value. Its hint supplies a numeric class at primitive uses:
@@ -121,7 +124,9 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
   function's recurrence loop. A body already primitive in the source must
   match the declared kind (an int may widen to long, a float to double); an opposite primitive
   kind is a compile error. This check uses source hints, not WIT specialization
-  or optimizer facts. Boxed bodies, including `try`, can unbox afterward.
+  or optimizer facts, and includes lexical captures and enclosing primitive
+  parameters. Checks run in the initial loop context before boxing/reanalysis;
+  boxed bodies, including `try`, can unbox afterward.
   Clojure's primitive return unboxing differs from
   its parameter casts: a long return narrows a double with Java's saturating
   conversion (`1.0e30` becomes `Long/MAX_VALUE`), whereas a long parameter
@@ -179,12 +184,12 @@ operands, which throws "long overflow" exactly as the boxed path does.
 
 Some source and calling paths retain the following behavior:
 
-- **Additional hint diagnostics.** Capture-aware primitive return checks and
-  primitive-function recur diagnostics still require an audit against JVM
-  behavior. A local hint supplies a class; the selected formal parameter must be
-  primitive before the lowering consumes it. Historical overload negatives are
-  retained with their original source identities; results/m12-extrema records
-  the later max/min lowering and its limits.
+- **Source types and WIT.** A local hint supplies a class; the selected formal
+  parameter must be primitive before lowering consumes it. WIT-only parameter
+  conversions keep their checked numeric storage but do not invent source
+  primitive types for return, capture or recur diagnostics. Historical overload
+  negatives retain their original source identities; the extrema and primitive
+  method receipts record subsequent corrections within their stated scope.
 - **Additional typed call forms.** Variadic adapters, calls wider than the
   eight fixed entries, and async calls keep the ordinary interface. Primitive
   bodies themselves exist for all source-hinted methods. A live-var guard's
@@ -198,6 +203,13 @@ Some source and calling paths retain the following behavior:
 
 ## Evidence
 
+- `crates/suss-cli/tests/clojure_primitive_method_types.rs` compares captured
+  returns and primitive recurrence with fresh JVM Clojure1.12.6:17 values and15
+  diagnostics, in Runtime/Macro and actual AOT. It includes reflective bitwise
+  returns, named arities, primitive parameter captures, widening and loop boxing.
+  `compiled_primitive_params.rs` also executes WIT-only capture/recur controls.
+  Source patches, hashes, failing-before controls and commands are retained in
+  `results/m12-primitive-methods`.
 - `crates/suss-cli/tests/clojure_unboxed_locals.rs` computes each case twice:
   once on raw locals, and once on the same numbers passed through `identity`,
   which keeps them boxed. It covers overflow, NaN, -0.0, mixed longs and
