@@ -1,0 +1,104 @@
+[
+  {
+    "source": "(/ 4)",
+    "class": "clojure.lang.Ratio",
+    "expected": {
+      "tag": "ratio",
+      "numerator": "1",
+      "denominator": "4"
+    }
+  },
+  {
+    "source": "(/ 8 12)",
+    "class": "clojure.lang.Ratio",
+    "expected": {
+      "tag": "ratio",
+      "numerator": "2",
+      "denominator": "3"
+    }
+  },
+  {
+    "source": "(/ -8 12)",
+    "class": "clojure.lang.Ratio",
+    "expected": {
+      "tag": "ratio",
+      "numerator": "-2",
+      "denominator": "3"
+    }
+  },
+  {
+    "source": "(/ 2 1)",
+    "class": "java.lang.Long",
+    "expected": {
+      "tag": "long",
+      "value": "2"
+    }
+  },
+  {
+    "source": "(/ 9223372036854775807 2)",
+    "class": "clojure.lang.Ratio",
+    "expected": {
+      "tag": "ratio",
+      "numerator": "9223372036854775807",
+      "denominator": "2"
+    }
+  },
+  {
+    "source": "(/ 18446744073709551617N 3)",
+    "class": "clojure.lang.Ratio",
+    "expected": {
+      "tag": "ratio",
+      "numerator": "18446744073709551617",
+      "denominator": "3"
+    }
+  },
+  {
+    "source": "(let [x 4] (/ x))",
+    "class": "clojure.lang.Ratio",
+    "expected": {
+      "tag": "ratio",
+      "numerator": "1",
+      "denominator": "4"
+    }
+  },
+  {
+    "source": "(/ 4.0)",
+    "class": "java.lang.Double",
+    "expected": {
+      "tag": "f64",
+      "bits": "3fd0000000000000"
+    }
+  },
+  {
+    "source": "(/ 20 2 5)",
+    "class": "java.lang.Long",
+    "expected": {
+      "tag": "long",
+      "value": "2"
+    }
+  },
+  {
+    "source": "0N",
+    "class": "clojure.lang.BigInt",
+    "expected": {
+      "tag": "bigint",
+      "value": "0"
+    }
+  },
+  {
+    "source": "-18446744073709551617N",
+    "class": "clojure.lang.BigInt",
+    "expected": {
+      "tag": "bigint",
+      "value": "-18446744073709551617"
+    }
+  },
+  {
+    "source": "(/ 18446744073709551617N 18446744073709551617N)",
+    "class": "clojure.lang.BigInt",
+    "expected": {
+      "tag": "bigint",
+      "value": "1"
+    }
+  }
+]

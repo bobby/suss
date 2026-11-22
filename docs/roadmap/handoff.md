@@ -1,3 +1,29 @@
+## Exact numeric observations in pipeline tests (2026-11-22)
+
+The f9d5f91a CI shard0 failure is retained under results/m12-ratio-pipeline.
+Its two pipeline failures were stale observations: unary integer division was
+still expected to return a Double, and the raw observer rejected Ratio storage.
+The observer now anchors canonical numeric types from the shared runtime and
+uses the existing independent field/limb decoder. No guest printer, binary64
+conversion or host normalization supplies the observed result. Unknown layouts
+and malformed fields still fail; both adversarial decoder regressions pass.
+
+python3 results/m12-ratio-pipeline/oracle.py records12 fresh JVM Clojure1.12.6
+observations, original source/stdout and JAR hashes. The historical397-case
+corpus remains unchanged, with an explicit Clojure override for unary division.
+python3 results/m12-ratio-pipeline/run.py terminates0 after635.98s, with22 tests
+passed, zero failed/ignored and frozen tracked inputs verified unchanged. It
+runs cargo test --locked -p suss-compile --test portable_pipeline --
+--test-threads=2 using isolated m12-decimal-target, stable Rust, two jobs and a
+4GiB scope. This test-only repair does not certify a complete workspace pass.
+
+The same f9 CI run's shard5 separately exhausts100M fuel in the unchanged
+long_quoted_strings_preserve_escapes_and_unpaired_utf16_after_gc regression.
+Its original log remains alongside shard0. Production printing and fuel limits
+are unchanged by this repair. The separately frozen f9 full workspace command
+is still active in m12-helper-source; inspect its terminal receipt before
+claiming a result. Complete issue acceptance remains on GitHub.
+
 ## Letfn CI helper and suite review (2026-11-22)
 
 CI exposed two old test helpers with exhaustive matches on the previous

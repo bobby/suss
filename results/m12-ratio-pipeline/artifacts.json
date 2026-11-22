@@ -1,0 +1,10 @@
+{
+  "cases.json": "20109e3c21bffeb9c439bb726b421c239ffcd3a0a1c8806b9e8f861c6505ded4",
+  "oracle.clj": "87a51d3d03b7598bdd17a4a1dcc1004a5d9e1447d4cfd1a3fc7905f2b484bef9",
+  "oracle.py": "28dfc17ca533897ddc7fbf7ade5ee1f6c5d05cfb03089b26f6b6597fdb0447b7",
+  "oracle.log": "358ca42dda3b8adf942275b3c8d935bcc3ec1e75dc419ac5cb119358f23fb8d9",
+  "oracle-command.json": "0cb6dfd1e92583ae2fc65a5bea33876f954061a81f67c54a57e7136091151192",
+  "ci-run.json": "29547139124c687a3c58ab11b4f0adc363c910614fdadd0f0347c38108d2d5de",
+  "ci-integration0.log": "69bf4850f6283e82b9551320dba5d0f1f0af5b63a983bef5be5cfb40a5fe5a42",
+  "ci-integration5.log": "8bde6517dada1eaa6f5c8a0d3c31b559e2b273f428f88699abd288b1cfd046f5"
+}

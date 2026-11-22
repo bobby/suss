@@ -106,6 +106,28 @@ impl Decoder {
         decoder.capture_number_types(session)?;
         Ok(decoder)
     }
+
+    /// Raw fragment tests have the shared runtime but no bootstrapped Session.
+    /// Constructors anchor canonical types only; results are decoded from fields.
+    pub fn capture_runtime_numeric(
+        store: &mut StoreContextMut<'_, ()>,
+        runtime: &wasmtime::Instance,
+        remaining: usize,
+    ) -> wasmtime::Result<Self> {
+        let mut integer = [Val::null_any_ref()];
+        runtime.get_func(&mut *store, "bigint-from-long").unwrap()
+            .call(&mut *store, &[Val::I64(1)], &mut integer)?;
+        let mut denominator = [Val::null_any_ref()];
+        runtime.get_func(&mut *store, "bigint-from-long").unwrap()
+            .call(&mut *store, &[Val::I64(3)], &mut denominator)?;
+        let mut ratio = [Val::null_any_ref()];
+        runtime.get_func(&mut *store, "ratio-literal").unwrap()
+            .call(&mut *store, &[integer[0].clone(), denominator[0].clone()], &mut ratio)?;
+        let mut decoder = Self::new(remaining);
+        decoder.integer_type = Some(non_null_ref(&integer[0])?.as_struct(&*store)?.unwrap().ty(&*store)?);
+        decoder.ratio_type = Some(non_null_ref(&ratio[0])?.as_struct(&*store)?.unwrap().ty(&*store)?);
+        Ok(decoder)
+    }
     fn capture_number_types(&mut self, session: &mut Session) -> Result<(), SessionError> {
         let integer = session.eval_probe("1N")?;
         self.integer_type = Some(session.inspect(&integer, |store, value| {
