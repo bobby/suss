@@ -1388,7 +1388,38 @@ changed assertions in previously loaded namespaces:3739 host/61 guest/459
 failures/2680 unexecuted/90 failed namespaces. BigInt's18 assertions execute;
 four primary opaque-Class recordings remain guest-judged, supplemented by
 independent fresh JVM boolean controls. The primary reference and skips are
-unchanged. Native tooling EDN still retains exact source forms under lossless
-tags rather than accepting raw exact numeric values. Captured protocol
+unchanged. That capture predates the native EDN refinement below. Captured protocol
 functions after extension remain a recorded JVM divergence. Inventory counts
 and full namespace/import support are not inferred from these checks.
+
+## Exact native EDN and analyzer data
+
+Native tooling EDN retains BigInt and Ratio values directly and prints their
+canonical numeric tokens. Its structural Value model retains categories;
+runtime numeric equality is unchanged. Reader key identity coalesces Long and
+BigInt, including nested keys, and the printer rejects data that could not read
+back because of duplicate numeric keys or an integral Ratio representation.
+Serde retains supported signed/unsigned128-bit integer bits and explicitly
+rejects unsupported exact representations. Decimal values and their source
+carriers remain separate; existing conversion still recognizes validated
+legacy exact-number tags.
+
+BigInt/Ratio analyzer literals expose const-node val/type data. Numeric class
+references emit dotted class names instead of invalid slash-qualified vars.
+`results/m12-native-edn` records17 fresh JVM EDN cases, five duplicate-key
+controls,78 reader tests,11 final analyzer checks and29 final decoder/hook
+checks, plus numeric Runtime/Macro/AOT matrices and Java/Node-free bootstrap
+reproduction. Every workspace test target compiles. The full vendored capture
+retains4247 raw assertions and exactly the existing3739/61/459/2680 counts and90
+failed namespaces, with zero changed assertion or namespace diagnostics. No
+baseline, primary reference or skip change accompanies the EDN refinement.
+The expanded25-case class matrix adds independent unequal-class and distinct
+class-key controls. Broader interop and captured-protocol limits remain explicit;
+these observations do not reclassify inventory declarations.
+
+
+Thirty isolated controls also replay exact-number forms whose original cast
+tests remain blocked by whole-test count guards. They match fresh vendored JVM
+assertion reports in Runtime/Macro/actual AOT. The separate Float class form
+has no Suss equivalent under ADR-0003; its primary pass and platform limit stay
+explicit. No original count-guarded row is relabeled as a suite pass.

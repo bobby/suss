@@ -16,6 +16,13 @@ fn cases() -> Vec<(String, String)> {
         })
         .collect()
 }
+
+fn scoped_cast_cases() -> Vec<serde_json::Value> {
+    serde_json::from_str(include_str!(
+        "../../../results/m12-native-edn/scoped-cast-cases.json"
+    ))
+    .unwrap()
+}
 fn printed(session: &mut Session, source: &str) -> String {
     let value = session
         .eval(source)
@@ -71,12 +78,22 @@ fn aot_executes_numeric_classes() {
             &expression[last]
         ));
     }
+    for (i, row) in scoped_cast_cases().iter().enumerate() {
+        source.push_str(&format!(
+            "(def castresult{i} (= (pr-str {}) {:?}))\n",
+            row["source"].as_str().unwrap(),
+            row["expected"].as_str().unwrap()
+        ));
+    }
     source.push_str("(def check (fn [unused] (if (and");
     for i in 0..cases().len() {
         source.push_str(&format!(" result{i}"));
     }
     for i in 0..protocol_cases.len() {
         source.push_str(&format!(" protocolresult{i}"));
+    }
+    for i in 0..scoped_cast_cases().len() {
+        source.push_str(&format!(" castresult{i}"));
     }
     source.push_str(") 1 0)))\n");
     std::fs::write(dir.path().join("probe.sus"), source).unwrap();
@@ -158,6 +175,21 @@ fn numeric_class_extensions_update_sites_after_gc() {
                 printed(&mut session, &format!("(pr-str {source})")),
                 step["expected"].as_str().unwrap(),
                 "{source}"
+            );
+        }
+    }
+}
+
+#[test]
+fn count_guarded_suite_forms_have_independent_exact_numeric_controls() {
+    for mut session in [Session::new_repl().unwrap(), Session::new_macro().unwrap()] {
+        for row in scoped_cast_cases() {
+            let source = row["source"].as_str().unwrap();
+            assert_eq!(
+                printed(&mut session, &format!("(pr-str {source})")),
+                row["expected"].as_str().unwrap(),
+                "{}: {source}",
+                row["id"]
             );
         }
     }

@@ -229,7 +229,7 @@ fn code_only_syntax_and_unknown_tags_fail_with_spans() {
         ("{:a #_ 1}", "Map requires an even number of forms", 0..9),
         ("{:a #queue [] :b}", "Map requires an even number of forms", 0..17),
         ("::a", "Auto-resolved keywords require namespace resolution", 0..3),
-        ("1/2", "Unsupported numeric literal 1/2: ratios, BigInts and BigDecimals need Clojure's numeric types (#338, #339)", 0..3),
+        ("1.0M", "Unsupported numeric literal 1.0M: ratios, BigInts and BigDecimals need Clojure's numeric types (#338, #339)", 0..4),
         ("\"\\ud800\"", "EDN strings must be valid Unicode", 0..8),
         ("[1 2", "Unclosed collection; expected ]", 0..4),
         ("^1 [x]", "Metadata must be a keyword, symbol, string or map", 1..2),
@@ -348,7 +348,7 @@ fn integers_must_be_longs() {
     assert_eq!(edn::to_string(&(1u64 << 53)).unwrap(), "9007199254740992");
     assert_eq!(edn::to_string(&(-(1i64 << 53) - 1)).unwrap(), "-9007199254740993");
     assert_eq!(edn::to_string(&i64::MIN).unwrap(), "-9223372036854775808");
-    assert_eq!(edn::to_string(&u64::MAX).unwrap_err().message, "Integer 18446744073709551615 is not a long");
+    assert_eq!(edn::to_string(&u64::MAX).unwrap(), "18446744073709551615N");
 }
 
 /// The compiler's reader's data, as EDN values, for comparison.
@@ -431,19 +431,23 @@ fn edn_conformance_with_the_compilers_reader() {
         assert!(suss_reader::forms::read_forms(&source).is_ok(), "{source}");
         assert!(edn::read_all(&source, &Options::default()).is_err(), "{source}");
     }
-    // Tooling data keeps an exact literal's text under a tag (#333).
+    // Exact values travel directly in native tooling data.
     let forms = suss_reader::forms::read_forms("[1/3]").unwrap();
     assert_eq!(
         edn::print(&edn::source::form_to_value(&forms[0]).unwrap()).unwrap(),
-        "[#suss/exact-number \"1/3\"]"
+        "[1/3]"
     );
-    // EDN data has no value for an exact literal until #335 (#333).
+    // Decimal remains a separate value category; BigInt/Ratio now read.
     for source in corpus("exact") {
         let forms = suss_reader::forms::read_forms(&source).unwrap_or_else(|error| panic!("{source}: {error:?}"));
         let [form] = forms.as_slice() else { panic!("{source}: one form") };
         let suss_reader::forms::Kind::Exact(number) = &form.kind else { panic!("{source}: {:?}", form.kind) };
-        let error = edn::read_all(&source, &Options::default()).expect_err(&source);
-        assert_eq!((error.message, error.span), (number.unsupported_message(), Some(0..source.len())), "{source}");
+        if matches!(number.value, suss_reader::forms::ExactValue::Decimal { .. }) {
+            let error = edn::read_all(&source, &Options::default()).expect_err(&source);
+            assert_eq!((error.message, error.span), (number.unsupported_message(), Some(0..source.len())), "{source}");
+        } else {
+            assert_eq!(edn::read_one(&source, &Options::default()).unwrap(), edn::source::form_to_value(form).unwrap(), "{source}");
+        }
     }
 }
 

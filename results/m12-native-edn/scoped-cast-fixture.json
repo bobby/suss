@@ -1,0 +1,5 @@
+{
+  "sha256": "4c9dc480d98995dab12c7b18e79e8743b992c79966cd4b96198c1e7ab6cce667",
+  "cases": 30,
+  "note": "Fixture artifact hash; source/command freeze is retained separately in scoped-cast-controls.json.gz."
+}

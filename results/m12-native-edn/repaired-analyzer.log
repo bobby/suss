@@ -1,0 +1,35 @@
+Running as unit: run-p1842497-i89886291.scope; invocation ID: 8aba0a190ca8409aafd34d3ace9933a0
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-compile-generator)
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-reader)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 26s
+     Running tests/analyzer_edn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/analyzer_edn-68e7b87aacd37105)
+
+running 10 tests
+test cli_prints_documents_that_suss_reads ... ok
+test emitted_forms_follow_edited_nodes ... ok
+test conformance_corpus_round_trips ... ok
+test exact_numeric_ast_values_survive_native_edn_and_source_round_trips ... FAILED
+test recur_targets_the_innermost_loop ... ok
+test samples_round_trip ... ok
+test special_forms_have_tools_analyzer_shapes ... ok
+test swapped_branches_compare_unequal ... ok
+test user_forms_round_trip ... ok
+test namespace_mode_prints_only_the_selected_namespace ... ok
+
+failures:
+
+---- exact_numeric_ast_values_survive_native_edn_and_source_round_trips stdout ----
+
+thread 'exact_numeric_ast_values_survive_native_edn_and_source_round_trips' (1846186) panicked at crates/suss-cli/tests/analyzer_edn.rs:86:112:
+no val
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    exact_numeric_ast_values_survive_native_edn_and_source_round_trips
+
+test result: FAILED. 9 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 45.37s
+
+error: test failed, to rerun pass `-p suss-cli --test analyzer_edn`

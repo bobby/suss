@@ -27,7 +27,9 @@ pub use self::serde::{from_str, from_value, to_string, to_string_pretty, to_valu
 /// them. Equality and order are structural and total: numbers compare by
 /// their binary64 bits' total order (so `##NaN` equals itself and `-0.0` is
 /// not `0.0`), lists and vectors differ, and metadata is ignored, as in
-/// Clojure.
+/// Clojure. Exact integer/ratio categories are retained as tooling data, rather
+/// than applying the runtime's cross-category numeric equality. Their canonical
+/// category/value order follows the existing categories.
 #[derive(Debug, Clone)]
 pub enum Value {
     Nil,
@@ -35,6 +37,9 @@ pub enum Value {
     /// A double.
     Number(f64),
     Long(i64),
+    BigInt(num_bigint::BigInt),
+    /// A normalized non-integral ratio. Integral values use BigInt.
+    Ratio(num_rational::BigRational),
     String(String),
     Keyword(Keyword),
     Symbol(Symbol),
@@ -74,12 +79,38 @@ impl Value {
             Value::Set(_) => 9,
             Value::Tagged(..) => 10,
             Value::Meta(value, _) => value.rank(),
+            Value::BigInt(_) => 11,
+            Value::Ratio(_) => 12,
         }
     }
 }
 
 fn symbol_cmp(a: &Symbol, b: &Symbol) -> Ordering {
     (&a.namespace, &a.name).cmp(&(&b.namespace, &b.name))
+}
+
+/// Reader key identity coalesces Long/BigInt values even inside collection
+/// keys. The tooling value itself keeps its numeric category for printing.
+fn reader_key(value: &Value) -> Value {
+    use num_traits::ToPrimitive;
+    stacker::maybe_grow(64 * 1024, 1024 * 1024, || match value.unmeta() {
+        Value::BigInt(n) => n.to_i64().map(Value::Long).unwrap_or_else(|| value.clone()),
+        Value::List(items) => Value::List(items.iter().map(reader_key).collect()),
+        Value::Vector(items) => Value::Vector(items.iter().map(reader_key).collect()),
+        Value::Map(items) => Value::Map(items.iter().map(|(k,v)| (reader_key(k), reader_key(v))).collect()),
+        Value::Set(items) => Value::Set(items.iter().map(reader_key).collect()),
+        _ => value.clone(),
+    })
+}
+
+fn check_reader_keys<'a>(keys: impl Iterator<Item = &'a Value>) -> Result<(), Error> {
+    let mut identities = BTreeSet::new();
+    for key in keys {
+        if !identities.insert(reader_key(key)) {
+            return Err(Error::new("Duplicate numeric key in EDN data"));
+        }
+    }
+    Ok(())
 }
 
 impl Ord for Value {
@@ -91,6 +122,8 @@ impl Ord for Value {
             (Value::String(a), Value::String(b)) => a.cmp(b),
             (Value::Number(a), Value::Number(b)) => number_cmp(*a, *b),
             (Value::Long(a), Value::Long(b)) => a.cmp(b),
+            (Value::BigInt(a), Value::BigInt(b)) => a.cmp(b),
+            (Value::Ratio(a), Value::Ratio(b)) => a.cmp(b),
             // Only collections recurse, so only they need a growable stack.
             (a, b) => stacker::maybe_grow(64 * 1024, 1024 * 1024, || a.cmp_slow(b)),
         }
@@ -203,13 +236,24 @@ fn write(out: &mut String, value: &Value) -> Result<(), Error> {
             Value::Bool(b) => out.push_str(if *b { "true" } else { "false" }),
             Value::Number(x) => out.push_str(&number(*x)),
             Value::Long(x) => out.push_str(&x.to_string()),
+            Value::BigInt(x) => out.push_str(&format!("{x}N")),
+            Value::Ratio(x) => {
+                if x.is_integer() {
+                    return Err(Error::new("Integral Ratio must be a BigInt"));
+                }
+                out.push_str(&format!("{}/{}", x.numer(), x.denom()));
+            }
             Value::String(s) => string(out, s),
             Value::Keyword(k) => out.push_str(&keyword_text(k)?),
             Value::Symbol(s) => out.push_str(&symbol_text(s)?),
             Value::List(items) => sequence(out, "(", items.iter(), ")")?,
             Value::Vector(items) => sequence(out, "[", items.iter(), "]")?,
-            Value::Set(items) => sequence(out, "#{", items.iter(), "}")?,
+            Value::Set(items) => {
+                check_reader_keys(items.iter())?;
+                sequence(out, "#{", items.iter(), "}")?;
+            }
             Value::Map(entries) => {
+                check_reader_keys(entries.keys())?;
                 out.push('{');
                 for (index, (key, value)) in entries.iter().enumerate() {
                     if index > 0 {
@@ -640,9 +684,13 @@ impl<'s> Parser<'s, '_> {
                     return fail(self, "Map requires an even number of forms");
                 }
                 let mut map = BTreeMap::new();
+                let mut identities = BTreeSet::new();
                 let mut items = items.into_iter();
                 let mut spans = spans.into_iter().step_by(2);
                 while let (Some(key), Some(value), Some(key_span)) = (items.next(), items.next(), spans.next()) {
+                    if !identities.insert(reader_key(&key)) {
+                        return Err(duplicate(key_span, &key));
+                    }
                     match map.entry(key) {
                         btree_map::Entry::Vacant(entry) => {
                             entry.insert(value);
@@ -679,10 +727,11 @@ impl<'s> Parser<'s, '_> {
                 Value::Keyword(Keyword::parse(&token[1..]))
             }
             token if forms::numeric_start(token) => {
-                // EDN data has no BigInt, ratio or BigDecimal until #338.
                 match forms::number(token).map_err(|message| fail(self, message))? {
                     forms::NumberToken::Double(value) => Value::Number(value),
                     forms::NumberToken::Long(value) => Value::Long(value),
+                    forms::NumberToken::Exact(forms::ExactNumber { value: forms::ExactValue::Integer { value, .. }, .. }) => Value::BigInt(value),
+                    forms::NumberToken::Exact(forms::ExactNumber { value: forms::ExactValue::Ratio { numerator, denominator }, .. }) => Value::Ratio(num_rational::BigRational::new(numerator, denominator)),
                     forms::NumberToken::Exact(_) if self.discarding > 0 => Value::Nil,
                     forms::NumberToken::Exact(value) => {
                         return Err(fail(self, &value.unsupported_message()))
@@ -703,9 +752,13 @@ impl<'s> Parser<'s, '_> {
             Some('{') => {
                 self.pos += 1;
                 let mut set = BTreeSet::new();
+                let mut identities = BTreeSet::new();
                 let mut spans = Vec::new();
                 let items = self.items(start, b'}', depth + 1, Some(&mut spans))?;
                 for (item, span) in items.into_iter().zip(spans) {
+                    if !identities.insert(reader_key(&item)) {
+                        return Err(duplicate(span, &item));
+                    }
                     if let Some(item) = set.replace(item) {
                         return Err(duplicate(span, &item));
                     }

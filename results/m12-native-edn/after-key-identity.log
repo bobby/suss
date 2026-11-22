@@ -1,0 +1,12 @@
+Running as unit: run-p1820480-i89886969.scope; invocation ID: 09b926dfea7c4602bddbc723df430188
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-reader)
+    Finished `test` profile [optimized] target(s) in 6.27s
+     Running tests/exact_edn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/exact_edn-d1877e999dc968c0)
+
+running 3 tests
+test native_edn_detects_normalized_exact_duplicate_keys ... ok
+test serde_keeps_wide_integer_bits_and_rejects_unrepresentable_ratios ... ok
+test native_edn_reads_and_prints_exact_numbers_without_binary64 ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

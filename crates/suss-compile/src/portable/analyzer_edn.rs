@@ -226,6 +226,11 @@ impl<'o> Projector<'o> {
                 Kind::Bool(_) => Some("bool"),
                 Kind::Number(_) => Some("double"),
                 Kind::Long(_) => Some("long"),
+                Kind::Exact(number) => match &number.value {
+                    suss_reader::forms::ExactValue::Integer { big: true, .. } => Some("bigint"),
+                    suss_reader::forms::ExactValue::Ratio { .. } => Some("ratio"),
+                    _ => None,
+                },
                 Kind::String(_) => Some("string"),
                 Kind::Keyword(_) => Some("keyword"),
                 _ => None,
@@ -234,6 +239,16 @@ impl<'o> Projector<'o> {
             let mut node = Node::new("const");
             node.set("val", self.form(form)?);
             node.set("type", kw(kind));
+            return Ok(node);
+        }
+        if let Expression::Nominal { operation: hir::Nominal::NumericClass(kind), .. } = &*hir.kind {
+            let name = crate::runtime_abi::numeric_classes::NAMES.get(usize::from(*kind))
+                .ok_or("Invalid numeric class selector")?;
+            // A class reference is a dotted class symbol, never a var such as
+            // java.lang/Long. This data representation also emits valid source.
+            let mut node = Node::new("const");
+            node.set("val", sym(None, name));
+            node.set("type", kw("class"));
             return Ok(node);
         }
         if let Kind::Symbol(symbol) = &form.kind {

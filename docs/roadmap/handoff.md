@@ -32615,3 +32615,49 @@ function values captured before extension retain old implementations, whereas
 Suss consults current tables. The passing extension matrix calls the current
 var. Full JVM interop, namespace imports, Decimal and these wider surfaces are
 not inferred from numeric class probes. GitHub holds acceptance/promotion state.
+
+## Exact native EDN and analyzer round-trip evidence (2026-11-22)
+
+`python3 results/m12-native-edn/run-complete.py` passes78 reader,29 compiler
+EDN/decoder/hook,39 CLI analyzer/numeric/reader and4 bootstrap tests. Native
+tooling retains BigInt/Ratio directly, without binary64 or exact-number source
+tags. Normalized reader keys coalesce Long/BigInt even in nested collections;
+both printers reject unreadable duplicate-key or integral-Ratio data. Serde
+preserves supported128-bit integer values and rejects representations it cannot
+retain exactly. The17 fresh JVM samples include discarded distinct numeric
+keys; the original false duplicate-nil error remains in before-discard.
+Decimal data and legacy source carriers remain separate explicit boundaries.
+
+The final analyzer refinement records native numeric class references as class
+constants with dotted names. Its original emitted java.lang/Long error is
+retained in before-class-ast. Exact BigInt/Ratio literal nodes now expose
+val/type fields; their original missing-val probe also remains. The final
+`run-class-ast-gates.py` passes all11 analyzer tests,29 decoder/hook tests,
+Java/Node-free bootstrap reproduction, compiler identity, both manifests and
+`cargo check --workspace --tests --locked`. final-input-diff records only the
+compiler analyzer and its added regression as differences from the earlier
+broad gate. The final analyzer gate and full suite capture have identical
+source inputs.
+
+`python3 results/m12-native-edn/run-suite.py` is terminal0 against the existing
+reviewed baseline, with4247 raw assertions and3739 host matches/61 guest
+judgments/459 failures/2680 unexecuted/90 failed namespaces. Its audit finds
+zero changed assertions or namespace diagnostics; no baseline, reference or
+skip changes are made. The expanded25-case class matrix additionally proves
+unequal class identities and eight distinct class keys against fresh JVM
+results. It passes Runtime/Macro/actual AOT alongside the existing protocol
+and raw/boxed exact-operand matrices in after-native-edn. GitHub holds issue
+acceptance, independent-review and final-head-CI state; no merge is inferred.
+
+
+The acceptance audit additionally retains31 exact-number forms under existing
+whole-test count guards. `scoped-cast-controls.py` obtains fresh JVM reports
+from each original vendored assertion;30 applicable forms match in isolated
+Runtime/Macro/actual AOT controls (90 observations). The sole Float class
+assertion has no Suss equivalent under ADR-0003 Types. Its primary result and
+platform limitation remain explicit. Original count guards and all459 full
+baseline failures are unchanged, with no partial count-mismatch passes inferred.
+`audit-scoped-failures.py` finds no remaining non-Decimal failure rows for the
+eight functions required by the exact-number issue. The isolated controls add
+only a regression target/fixtures after the final full capture; production
+source is unchanged.

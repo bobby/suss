@@ -1,0 +1,18 @@
+{
+  "command": [
+    "java",
+    "-cp",
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar:/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar:/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar",
+    "clojure.main",
+    "-e",
+    "(require '[clojure.edn :as edn])\n(prn (edn/read-string \"[#_ {1N :a 2N :b} :kept]\"))\n(prn (edn/read-string \"[#_ #{1N 2N} :kept]\"))\n(prn (edn/read-string \"[#_ {1/2 :a 2/3 :b} :kept]\"))\n(prn (edn/read-string \"1N\"))\n(prn (edn/read-string \"-0N\"))\n(prn (edn/read-string \"9223372036854775808\"))\n(prn (edn/read-string \"-9223372036854775809\"))\n(prn (edn/read-string \"16rFFFFFFFFFFFFFFFF\"))\n(prn (edn/read-string \"0x10000000000000000\"))\n(prn (edn/read-string \"2/4\"))\n(prn (edn/read-string \"-2/4\"))\n(prn (edn/read-string \"4/2\"))\n(prn (edn/read-string \"0/5\"))\n(prn (edn/read-string \"[1N 2/4 18446744073709551616N]\"))\n(prn (edn/read-string \"{:a 18446744073709551616N}\"))\n(prn (edn/read-string \"(1N 2/3 -7N)\"))\n(prn (edn/read-string \"[1/123456789012345678901234567890 123456789012345678901234567890/7]\"))"
+  ],
+  "jars": {
+    "/home/bobby/.m2/repository/org/clojure/clojure/1.12.6/clojure-1.12.6.jar": "21b578db389a8e74b286ce79c4a7f86ec641e26d88b12f18d69030916b0e18ca",
+    "/home/bobby/.m2/repository/org/clojure/spec.alpha/0.5.238/spec.alpha-0.5.238.jar": "94cd99b6ea639641f37af4860a643b6ed399ee5a8be5d717cff0b663c8d75077",
+    "/home/bobby/.m2/repository/org/clojure/core.specs.alpha/0.4.74/core.specs.alpha-0.4.74.jar": "eb73ac08cf49ba840c88ba67beef11336ca554333d9408808d78946e0feb9ddb"
+  },
+  "exit_code": 0,
+  "stdout": "[:kept]\n[:kept]\n[:kept]\n1N\n0N\n9223372036854775808N\n-9223372036854775809N\n18446744073709551615N\n18446744073709551616N\n1/2\n-1/2\n2\n0\n[1N 1/2 18446744073709551616N]\n{:a 18446744073709551616N}\n(1N 2/3 -7N)\n[1/123456789012345678901234567890 17636684144620811271604938270N]\n",
+  "stderr": ""
+}

@@ -1,0 +1,22 @@
+Running as unit: run-p1871377-i89917793.scope; invocation ID: c7fee7df4b9c4b2abadd42c1fa1987db
+   Compiling suss-compile-generator v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-compile-generator)
+   Compiling suss-compile v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-compile)
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 1m 26s
+     Running tests/analyzer_edn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/analyzer_edn-68e7b87aacd37105)
+
+running 11 tests
+test cli_prints_documents_that_suss_reads ... ok
+test emitted_forms_follow_edited_nodes ... ok
+test conformance_corpus_round_trips ... ok
+test exact_numeric_ast_values_survive_native_edn_and_source_round_trips ... ok
+test native_numeric_class_references_round_trip_as_class_constants ... ok
+test recur_targets_the_innermost_loop ... ok
+test samples_round_trip ... ok
+test special_forms_have_tools_analyzer_shapes ... ok
+test swapped_branches_compare_unequal ... ok
+test user_forms_round_trip ... ok
+test namespace_mode_prints_only_the_selected_namespace ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 45.89s
+

@@ -29,8 +29,16 @@ pub fn form_to_value(form: &Form) -> Result<Value, Error> {
             Kind::Bool(b) => Value::Bool(*b),
             Kind::Number(n) => Value::Number(*n),
             Kind::Long(n) => Value::Long(*n),
-            // Tooling data has no exact numbers until #338: the literal's text
-            // under EXACT_NUMBER_TAG, as a lone surrogate is kept.
+            Kind::Exact(number) if matches!(number.value, crate::forms::ExactValue::Integer { big: true, .. }) => {
+                let crate::forms::ExactValue::Integer { value, .. } = &number.value else { unreachable!() };
+                Value::BigInt(value.clone())
+            }
+            Kind::Exact(number) if matches!(number.value, crate::forms::ExactValue::Ratio { .. }) => {
+                let crate::forms::ExactValue::Ratio { numerator, denominator } = &number.value else { unreachable!() };
+                Value::Ratio(num_rational::BigRational::new(numerator.clone(), denominator.clone()))
+            }
+            // Decimal still lacks a native tooling value. Keep its lossless
+            // carrier and legacy BigInteger macro-data spelling readable.
             Kind::Exact(number) => Value::Tagged(
                 Symbol { namespace: Some("suss".into()), name: EXACT_NUMBER_TAG.into() },
                 Box::new(Value::String(number.text.clone())),
@@ -113,6 +121,8 @@ pub fn value_to_form(value: &Value) -> Form {
             Value::Bool(b) => form(Kind::Bool(*b)),
             Value::Number(n) => form(Kind::Number(*n)),
             Value::Long(n) => form(Kind::Long(*n)),
+            Value::BigInt(n) => form(Kind::Exact(crate::forms::ExactNumber::bigint(num_traits::Signed::is_negative(n), n.to_u32_digits().1))),
+            Value::Ratio(n) => form(Kind::Exact(crate::forms::ExactNumber::ratio(num_traits::Signed::is_negative(n), n.numer().to_u32_digits().1, n.denom().to_u32_digits().1))),
             Value::String(s) => form(Kind::String(s.encode_utf16().collect())),
             Value::Keyword(k) => form(Kind::Keyword(k.clone())),
             Value::Symbol(s) => form(Kind::Symbol(s.clone())),

@@ -1,0 +1,25 @@
+Running as unit: run-p1817760-i89876632.scope; invocation ID: 7088dae0dcf24b1ea00970acf0251b75
+   Compiling suss-reader v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-suite-acceptance-source/crates/suss-reader)
+    Finished `test` profile [optimized] target(s) in 5.99s
+     Running tests/exact_edn.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-helper-target/debug/deps/exact_edn-d1877e999dc968c0)
+
+running 3 tests
+test native_edn_detects_normalized_exact_duplicate_keys ... FAILED
+test native_edn_reads_and_prints_exact_numbers_without_binary64 ... ok
+test serde_keeps_wide_integer_bits_and_rejects_unrepresentable_ratios ... ok
+
+failures:
+
+---- native_edn_detects_normalized_exact_duplicate_keys stdout ----
+
+thread 'native_edn_detects_normalized_exact_duplicate_keys' (1818016) panicked at crates/suss-reader/tests/exact_edn.rs:25:64:
+called `Result::unwrap_err()` on an `Ok` value: Map({Long(2): Keyword(Keyword { namespace: None, name: "a" }), BigInt(2): Keyword(Keyword { namespace: None, name: "b" })})
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    native_edn_detects_normalized_exact_duplicate_keys
+
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p suss-reader --test exact_edn`

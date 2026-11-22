@@ -48,15 +48,13 @@ fn keyword(name: &str) -> Value {
 }
 const EXACT: u128 = 1 << 53;
 fn integer(negative: bool, magnitude: u128) -> Result<Value, Error> {
-    let signed = i128::try_from(magnitude)
-        .ok()
-        .map(|magnitude| if negative { -magnitude } else { magnitude })
-        .and_then(|value| i64::try_from(value).ok());
-    let Some(value) = signed else {
-        let sign = if negative { "-" } else { "" };
-        return Err(Error::new(format!("Integer {sign}{magnitude} is not a long")));
-    };
-    Ok(Value::Long(value))
+    use num_traits::ToPrimitive;
+    let value = num_bigint::BigInt::from(magnitude);
+    let value = if negative { -value } else { value };
+    Ok(match value.to_i64() {
+        Some(value) => Value::Long(value),
+        None => Value::BigInt(value),
+    })
 }
 
 struct Serializer;
@@ -351,6 +349,15 @@ impl<'de> de::Deserializer<'de> for Deserializer {
             Value::Number(x) => visitor.visit_f64(x),
             Value::Long(x) if x >= 0 => visitor.visit_u64(x as u64),
             Value::Long(x) => visitor.visit_i64(x),
+            Value::BigInt(x) => {
+                use num_traits::ToPrimitive;
+                if let Some(x) = x.to_i64() { visitor.visit_i64(x) }
+                else if let Some(x) = x.to_u64() { visitor.visit_u64(x) }
+                else if let Some(x) = x.to_i128() { visitor.visit_i128(x) }
+                else if let Some(x) = x.to_u128() { visitor.visit_u128(x) }
+                else { Err(Error::new("BigInt exceeds Serde's 128-bit integer range")) }
+            }
+            Value::Ratio(_) => Err(Error::new("Serde has no exact ratio representation")),
             Value::String(s) => visitor.visit_string(s),
             Value::Keyword(Keyword { namespace, name: n }) | Value::Symbol(Symbol { namespace, name: n }) => {
                 visitor.visit_string(name(namespace, n))

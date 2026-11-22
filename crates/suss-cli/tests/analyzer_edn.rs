@@ -54,8 +54,8 @@ fn conformance_corpus_round_trips() {
     for file in ["core", "collections", "benchmarks"] {
         let text = std::fs::read_to_string(root().join(format!("reference/cljs-tests/{file}.sus"))).unwrap();
         // Only source expressions/setup are consumed here. The corpus also
-        // contains exact numeric expectations, so use the forms-to-tooling
-        // boundary rather than the native EDN model's narrower numeric reader.
+        // contains exact numeric expectations; the forms-to-tooling boundary
+        // retains the reader's selected source data and categories.
         let forms = suss_reader::forms::read_forms(&text).unwrap();
         assert_eq!(forms.len(), 1, "{file}: one corpus vector");
         let cases = suss_reader::edn::source::form_to_value(&forms[0]).unwrap();
@@ -378,4 +378,44 @@ fn swapped_branches_compare_unequal() {
     let second = hir_document(&analyze_source(&emitted, &path, &[], None, None).unwrap(), &path).unwrap();
     assert_ne!(print(&comparable_asts(&document)).unwrap(), print(&comparable_asts(&second)).unwrap());
     assert_eq!(print(&comparable_asts(&swapped)).unwrap(), print(&comparable_asts(&second)).unwrap());
+}
+
+#[test]
+fn exact_numeric_ast_values_survive_native_edn_and_source_round_trips() {
+    use suss_reader::edn::{self, Options};
+    let source = "1N\n18446744073709551616N\n1/3";
+    let path = root().join("target/exact-data.sus");
+    let fragments = analyze_source(source, &path, &[], None, None).unwrap();
+    let document = hir_document(&fragments, &path).unwrap();
+    let nodes = asts(&document);
+    assert_eq!(nodes.len(), 3);
+    for (node, source) in nodes.iter().zip(source.lines()) {
+        assert_eq!(get(node, "val"), &edn::read_one(source, &Options::default()).unwrap());
+    }
+    let wire = print(&document).unwrap();
+    assert!(!wire.contains("#suss/exact-number"));
+    let restored = edn::read_one(&wire, &Options::default()).unwrap();
+    assert_eq!(restored, document);
+    let emitted = emitted_source(&restored).unwrap();
+    assert_round_trip(&emitted, &path, &[]);
+}
+
+#[test]
+fn native_numeric_class_references_round_trip_as_class_constants() {
+    use suss_reader::edn::{self, Options, Value};
+    let source = "Long\nclojure.lang.BigInt\njava.math.BigInteger\nclojure.lang.Ratio\nNumber\nClass";
+    let path = root().join("target/exact-classes.sus");
+    assert_round_trip(source, &path, &[]);
+    let fragments = analyze_source(source, &path, &[], None, None).unwrap();
+    let document = hir_document(&fragments, &path).unwrap();
+    for node in asts(&document) {
+        assert_eq!(get(node, "op"), &Value::keyword("const"));
+        assert_eq!(get(node, "type"), &Value::keyword("class"));
+        let Value::Symbol(symbol) = get(node, "val") else { panic!("class symbol") };
+        assert!(symbol.namespace.is_none());
+        assert!(symbol.name.contains('.'));
+    }
+    let wire = print(&document).unwrap();
+    assert_eq!(edn::read_one(&wire, &Options::default()).unwrap(), document);
+    assert_round_trip(source, &path, &[]);
 }
