@@ -32269,3 +32269,29 @@ tests, including both core phases and canonical/adversarial decoder checks.
 All34 Python suite-comparison checks pass. Capture command statuses retain the
 old-baseline comparison failures; the primary reference is unchanged. These
 scoped observations do not replace final-head CI or a full workspace baseline.
+
+
+## Exact Ratio execution probes (2026-11-22)
+
+[Ratio receipts](../../results/m12-ratio-values/README.md) retain88 fresh JVM
+Clojure1.12.6 expectations, all passing in Runtime/Macro and actual AOT, plus
+compiled-macro argument/result and retained-child GC checks. The preliminary
+five-target command passes41 tests. Its source predates integration of the
+published analyzer/observation fixes; use the source-frozen run-gates.py on the
+combined source before claiming its numeric/ABI/map/bootstrap results.
+
+ABI10 appends immutable normalized Ratio values with stable BigInteger children.
+Arithmetic, exact integer division, quotient/remainder, conversions, hash/order,
+case constants, runtime readers and rationalize use exact magnitudes. Ratio
+double conversion follows DECIMAL64 HALF_EVEN before binary64 parsing. Checked
+and unchecked cast overloads follow distinct primary paths. Compiler literals
+use already-normalized values; runtime readers/arithmetic still reduce by GCD.
+The largest eight-operation1024-bit stress case uses an explicit10-billion
+test fuel budget; production limits are unchanged. Original unsupported-case,
+cast, fixture-adapter and fuel failures remain in the receipts.
+
+The combined source adds independent Ratio observation decoding and exact pair
+comparison; it reports actual child integers without normalizing guest errors.
+Full numeric-suite acceptance, WIT u64 integration, production helper crossover
+and an unfiltered workspace baseline remain required. BigDecimal remains a
+separate runtime representation and arithmetic task.

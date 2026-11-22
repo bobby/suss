@@ -3,7 +3,7 @@
 //! Byte spans refer to the original UTF-8 source. String contents are UTF-16,
 //! including lone surrogates. Integer literals in the long range are longs and
 //! other decimal literals doubles; BigInt, ratio and BigDecimal literals are
-//! [`ExactNumber`]s. BigInt evaluates as an exact GC value; Ratio and Decimal
+//! [`ExactNumber`]s. BigInt and Ratio evaluate as exact GC values; Decimal
 //! evaluation still needs their runtime types (ADR-0003, #338, #339).
 //! Reader metadata remains syntax until phase analysis interprets it. Reader work
 //! is cumulatively metered; deep syntax uses growable stacks and safe cleanup.
@@ -185,7 +185,7 @@ impl PartialEq for ExactNumber {
     }
 }
 /// Exact literals without a runtime value use this macro-data placeholder
-/// namespace. BigInt has a real runtime value; Ratio and Decimal still use a
+/// namespace. BigInt and Ratio have real runtime values; Decimal still uses a
 /// symbol named by the literal text, which decoding restores.
 pub const EXACT_NUMBER_NAMESPACE: &str = "suss.reader.exact-number";
 impl ExactNumber {

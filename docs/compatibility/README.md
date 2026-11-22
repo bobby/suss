@@ -1332,3 +1332,17 @@ bootstrap phases reproduce without Java, and import/helper manifests pass.
 These observations cover the retained cases; full Ratio values, exact generic
 division, rationalize, WIT integration and helper crossover remain outside them.
 They do not establish full numeric-tower acceptance or change inventory counts.
+
+
+## Exact Ratio execution evidence
+
+[Ratio receipts](../../results/m12-ratio-values/README.md) record88 fresh primary
+observations exercised in both phases and actual AOT, plus macro argument/result
+and retained-child GC checks. The preliminary five-target command passes41
+tests, including both existing BigInt matrices and runtime reader controls.
+Exact fraction dispatch preserves normalization, numeric categories, BigInteger
+projections and DECIMAL64 rounding on conversion to double. Runtime readers now
+produce Ratio values; Decimal retains its explicit unsupported boundary.
+Combined-source numeric/ABI/map/bootstrap checks, complete numeric-suite
+acceptance, WIT integration and the production helper crossover remain separate
+gates. These bounded observations do not change inventory counts.

@@ -1313,8 +1313,8 @@ impl Analyzer<'_> {
             kind: std::sync::Arc::new(Expression::Do(items)),
         })
     }
-    /// BigInt literals retain their exact magnitude. Ratio and Decimal
-    /// literals still throw at evaluation until their runtime types arrive;
+    /// BigInt and Ratio literals retain their exact values. Decimal literals
+    /// still throw at evaluation until their runtime type arrives;
     /// unselected forms can load without silently rounding their values.
     fn exact_literal(&mut self, form: &Form, number: &suss_reader::forms::ExactNumber) -> Result<Hir, Diagnostic> {
         if let suss_reader::forms::ExactValue::Integer { value, big } = &number.value {

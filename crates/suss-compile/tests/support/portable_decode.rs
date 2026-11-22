@@ -18,6 +18,7 @@ pub enum Observation {
     Number(u64),
     Long(i64),
     BigInt(String),
+    Ratio(String, String),
     String(Vec<u16>),
     Keyword(Option<Vec<u16>>, Vec<u16>),
     Symbol(Option<Vec<u16>>, Vec<u16>),
@@ -80,6 +81,7 @@ pub struct Decoder {
     remaining: usize,
     canonical: Vec<Canonical>,
     integer_type: Option<wasmtime::StructType>,
+    ratio_type: Option<wasmtime::StructType>,
 }
 
 impl Decoder {
@@ -93,6 +95,7 @@ impl Decoder {
             remaining,
             canonical: Vec::new(),
             integer_type: None,
+            ratio_type: None,
         }
     }
 
@@ -163,6 +166,11 @@ impl Decoder {
         decoder.integer_type = Some(session.inspect(&integer, |store, value| {
             non_null_ref(&value)?.as_struct(&store)?
                 .ok_or_else(|| wasmtime::Error::msg("Missing canonical BigInt"))?.ty(&store)
+        })?);
+        let ratio = session.eval_probe("1/3")?;
+        decoder.ratio_type = Some(session.inspect(&ratio, |store, value| {
+            non_null_ref(&value)?.as_struct(&store)?
+                .ok_or_else(|| wasmtime::Error::msg("Missing canonical Ratio"))?.ty(&store)
         })?);
         Ok(decoder)
     }
@@ -358,6 +366,22 @@ impl Decoder {
             let fields = structure.fields(&mut *store)?.collect::<Vec<_>>();
             if let [Val::F64(_)] = fields.as_slice() {
                 return Ok(Observation::Number(number_bits(store, value)?));
+            }
+            if self.ratio_type.as_ref().is_some_and(|canonical|
+                wasmtime::StructType::eq(&structure.ty(&*store).expect("live structure type"), canonical)) {
+                if fields.len()!=2 { return Err(wasmtime::Error::msg("Malformed Ratio storage")); }
+                let Observation::BigInt(numerator) = self.value(store, &fields[0], depth+1)? else {
+                    return Err(wasmtime::Error::msg("Malformed Ratio numerator"));
+                };
+                let Observation::BigInt(denominator) = self.value(store, &fields[1], depth+1)? else {
+                    return Err(wasmtime::Error::msg("Malformed Ratio denominator"));
+                };
+                if numerator=="0" || denominator.starts_with('-') || denominator=="0" || denominator=="1" {
+                    return Err(wasmtime::Error::msg("Malformed normalized Ratio"));
+                }
+                // Report the actual pair, without reducing it on the host:
+                // an unnormalized guest result must differ from the oracle.
+                return Ok(Observation::Ratio(numerator, denominator));
             }
             if self.integer_type.as_ref().is_some_and(|canonical|
                 wasmtime::StructType::eq(&structure.ty(&*store).expect("live structure type"), canonical)) {

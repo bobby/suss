@@ -411,14 +411,16 @@ def decide(expected, actual):
 def suite_matches(oracle, suss):
     """oracle_compare.matches, with the JVM oracle's numbers. Since #335 a
     long matches only a Suss long with the same value; nothing matches a
-    ratio or a BigDecimal yet (#338, #339). BigInt observations are exact
-    signed decimal integers decoded independently from immutable GC storage."""
+    BigDecimal yet (#339). BigInt and Ratio observations retain their exact
+    canonical decimal integers decoded independently from immutable GC storage."""
     tag = oracle['tag']
     if tag == 'long':
         return suss['tag'] == 'long' and int(suss['value']) == int(oracle['value'])
     if tag == 'bigint':
-        return suss['tag'] == 'bigint' and int(suss['value']) == int(oracle['value'])
-    if tag in ('ratio', 'decimal'):
+        return suss['tag'] == 'bigint' and suss['value'] == oracle['value']
+    if tag == 'ratio':
+        return suss['tag'] == 'ratio' and all(suss[k] == oracle[k] for k in ('numerator', 'denominator'))
+    if tag == 'decimal':
         return False
     if tag != suss['tag']:
         return False

@@ -59,6 +59,17 @@ class SuiteMatches(unittest.TestCase):
             self.assertFalse(suite.suite_matches(expected, {'tag':'long', 'value':value}))
             self.assertFalse(suite.suite_matches(expected, NUMBER_ONE))
 
+    def test_ratio_observations_preserve_the_exact_normalized_pair(self):
+        ratio = {'tag':'ratio', 'numerator':'-1', 'denominator':'3'}
+        self.assertTrue(suite.suite_matches(ratio, dict(ratio)))
+        for other in [dict(ratio, numerator='1'), dict(ratio, denominator='4'),
+                      dict(ratio, numerator='-2', denominator='6'), {'tag':'long', 'value':'0'}, NUMBER_ONE]:
+            self.assertFalse(suite.suite_matches(ratio, other))
+        # Observation comparison does not depend on Python's int-string limit.
+        large = {'tag':'bigint', 'value':'1'+'0'*5000}
+        self.assertTrue(suite.suite_matches(large, dict(large)))
+        self.assertFalse(suite.suite_matches(large, dict(large, value='2'+'0'*5000)))
+
     def test_exact_types_never_match(self):
         for tag in ({'tag': 'bigint', 'value': '1'}, {'tag': 'ratio', 'numerator': '1', 'denominator': '2'},
                     {'tag': 'decimal', 'unscaled': '1', 'scale': 0}):
