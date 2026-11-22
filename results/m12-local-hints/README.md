@@ -26,7 +26,8 @@ passes, including actual AOT execution and diagnostic rejection. The source patc
 includes the new module. first.log retains an intermediate nominal-node type
 failure; second.log is the intermediate15-row pass, not proof of the expanded
 source. numeric-core-oracle.* retains additional JVM observations for max/min and
-unchecked inc/dec which are not yet implemented by this lowering.
+unchecked inc/dec. Later overload-selection evidence covers unchecked inc/dec;
+max/min still require additional lowering.
 
 Primary implementation reference: JVM Clojure1.12.6 Compiler.LocalBinding,
 LocalBindingExpr and LetExpr distinguish a local's Java class from its ability to
@@ -34,3 +35,14 @@ emit a primitive and diagnose hints before loop reanalysis:
 https://github.com/clojure/clojure/blob/clojure-1.12.6/src/jvm/clojure/lang/Compiler.java
 Clojure is EPL1.0; the Rust lowering is original and behavior is checked by fresh
 JVM execution. No Java code is shipped.
+
+The [overload-selection records](overload-selection/README.md) expand the active
+regression to48 values and eight diagnostics. Fresh JVM values match Runtime,
+Macro and actual AOT; invalid declarations are rejected in each route. Selected
+equality overloads convert only primitive formals and compare same-category
+primitives raw. Floating-class bitwise calls and mixed numeric equality preserve
+the original Objects. Reflective bitwise result classes stay source-Object; a
+primitive Boolean operand suppresses numeric hint consumption, retaining later
+operand effects. Unchecked inc/dec consume primitive hints without changing boxed
+overflow behavior. max/min and capture-aware return/recur checks remain separate
+limits; these focused observations do not establish complete numeric conformance.

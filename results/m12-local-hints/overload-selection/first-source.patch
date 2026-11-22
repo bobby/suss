@@ -1,0 +1,153 @@
+diff --git i/crates/suss-cli/tests/clojure_local_numeric_hints.rs w/crates/suss-cli/tests/clojure_local_numeric_hints.rs
+index a811f233..774ca73f 100644
+--- i/crates/suss-cli/tests/clojure_local_numeric_hints.rs
++++ w/crates/suss-cli/tests/clojure_local_numeric_hints.rs
+@@ -36,6 +36,16 @@ const CASES: &[(&str, &str)] = &[
+     ("(let [^long x (loop [i 0] (if (< i 1) (recur (inc i)) 5.5))] [x (+ x 1)])", "[5.5 6]"),
+     ("(let [^double x (identity 1)] (/ x (identity 0)))", "##Inf"),
+     ("(let [^long x (identity 1.0)] (try (/ x (identity 0.0)) (catch :default e :zero-error)))", ":zero-error"),
++    ("(let [^long x (identity 5.5)] [(= x 5) (= x 5.5) (= x (identity 5)) (= x (identity 5.5))])", "[true true true false]"),
++    ("(let [^double x (identity 5)] [(= x 5.0) (= x 5) (= x (identity 5.0)) (= x (identity 5))])", "[true true true false]"),
++    ("(let [^long x (identity 5.5) ^long y (identity 5.0)] (= x y))", "true"),
++    ("(let [^double x (identity 5) ^double y (identity 5.0)] (= x y))", "true"),
++    ("(let [^double x (identity 5)] [(bit-and x 1) (bit-or x 2) (bit-xor x 1) (bit-not x) (bit-shift-left x 1)])", "[1 7 4 -6 10]"),
++    ("(let [^long x (identity 5.5) ^double y (identity 1)] (try (bit-and x y) (catch :default e :bit-error)))", ":bit-error"),
++    ("(let [^double x (identity 5) ^long y (identity 1.5)] (try (bit-and x y) (catch :default e :bit-error)))", ":bit-error"),
++    ("(let [^long x (identity 5.5)] [(bit-and x (identity 1)) (bit-shift-left x (identity 1))])", "[1 10]"),
++    ("(let [^long x (identity 1.0E30) events (atom [])] [(try (= x (do (swap! events conj :later) 1)) (catch :default e :cast-error)) @events])", "[:cast-error []]"),
++    ("(let [^long x (identity 1.0E30) events (atom [])] [(= x (do (swap! events conj :later) 1.0)) @events])", "[false [:later]]"),
+ ];
+ 
+ fn observed(source: &str) -> String {
+diff --git i/crates/suss-compile/src/portable/hir/division_overloads.rs w/crates/suss-compile/src/portable/hir/division_overloads.rs
+index 96b7f446..a652f6d8 100644
+--- i/crates/suss-compile/src/portable/hir/division_overloads.rs
++++ w/crates/suss-compile/src/portable/hir/division_overloads.rs
+@@ -99,7 +99,7 @@ impl Pass<'_> {
+             return Ok(());
+         }
+         stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
+-            if self.hints && !self.validate_only { local_hints::inline(hir); }
++            if self.hints && !self.validate_only { local_hints::inline(hir, facts, self.meter)?; }
+             // Generated nary comparison pairs are calls on Object temporaries,
+             // not Clojure's binary :inline overloads.
+             let source_comparison = hir.source.is_some();
+@@ -177,11 +177,14 @@ impl Pass<'_> {
+                     }
+                 }
+                 Bitwise { operation, arguments } => {
+-                    let inline = matches!(operation, super::Bitwise::And | super::Bitwise::Or | super::Bitwise::Xor
++                    let long_only = matches!(operation, super::Bitwise::And | super::Bitwise::Or | super::Bitwise::Xor
+                         | super::Bitwise::AndNot | super::Bitwise::Not | super::Bitwise::Left | super::Bitwise::Right
+-                        | super::Bitwise::Unsigned | super::Bitwise::Int | super::Bitwise::Cast | super::Bitwise::Quot
++                        | super::Bitwise::Unsigned);
++                    let inline = matches!(operation, super::Bitwise::Int | super::Bitwise::Cast | super::Bitwise::Quot
+                         | super::Bitwise::Rem | super::Bitwise::Abs | super::Bitwise::UncheckedAdd
+-                        | super::Bitwise::UncheckedSubtract | super::Bitwise::UncheckedMultiply | super::Bitwise::UncheckedNegate);
++                        | super::Bitwise::UncheckedSubtract | super::Bitwise::UncheckedMultiply | super::Bitwise::UncheckedNegate)
++                        || (long_only && self.hints && !self.validate_only
++                            && local_hints::long_operands(arguments, facts, self.meter)?);
+                     for argument in arguments { self.walk(argument, facts)?;
+                         if self.hints && !self.validate_only && inline { local_hints::operand(argument, facts, self.meter)?; }
+                     }
+diff --git i/crates/suss-compile/src/portable/hir/local_hints.rs w/crates/suss-compile/src/portable/hir/local_hints.rs
+index c102dc7a..651d1470 100644
+--- i/crates/suss-compile/src/portable/hir/local_hints.rs
++++ w/crates/suss-compile/src/portable/hir/local_hints.rs
+@@ -7,12 +7,52 @@ use primitive_returns::{Primitive, SourceFacts};
+ 
+ /// These Clojure core functions have :inline primitive implementations. An
+ /// ordinary alias or user function call still takes the original Object.
+-pub(super) fn inline(hir: &mut Hir) {
+-    let Some(source) = &hir.source else { return };
+-    let Some(SourceBinding::Global { global, .. }) = &source.resolved else { return };
+-    if global.namespace() != "suss.core" { return; }
+-    let Some(node) = &source.node else { return };
+-    let SourceNode::Invoke { arguments, .. } = node.as_ref() else { return };
++pub(super) fn inline(
++    hir: &mut Hir, facts: &mut SourceFacts,
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++) -> Result<(), Diagnostic> {
++    let Some(source) = &hir.source else { return Ok(()) };
++    let Some(SourceBinding::Global { global, .. }) = &source.resolved else { return Ok(()) };
++    if global.namespace() != "suss.core" { return Ok(()); }
++    let Some(node) = &source.node else { return Ok(()) };
++    let SourceNode::Invoke { callee, arguments } = node.as_ref() else { return Ok(()) };
++    if global.name() == "=" && arguments.len() == 2 {
++        let mut classes = Vec::with_capacity(2);
++        let mut hinted_object = false;
++        for argument in arguments.iter() {
++            let class = primitive_returns::class(argument, facts, meter)?;
++            hinted_object |= matches!(class, Primitive::Long | Primitive::Double)
++                && primitive_returns::kind(argument, facts, meter)? == Primitive::Boxed;
++            classes.push(class);
++        }
++        // Util.equiv has (long,long), (double,double), and either primitive
++        // paired with Object, but no mixed (long,double) overload. Such a
++        // source call is reflective and must keep both original Objects.
++        let numeric = |class| match class {
++            Primitive::Byte | Primitive::Short | Primitive::Int | Primitive::Long => Some(Primitive::Long),
++            Primitive::Float | Primitive::Double => Some(Primitive::Double),
++            _ => None,
++        };
++        let selected = match (numeric(classes[0]), numeric(classes[1])) {
++            (Some(a), Some(b)) => a == b,
++            (Some(_), None) => classes[1] == Primitive::Boxed,
++            (None, Some(_)) => classes[0] == Primitive::Boxed,
++            _ => false,
++        };
++        if hinted_object && selected {
++            let mut arguments = arguments.to_vec();
++            for argument in &mut arguments { operand(argument, facts, meter)?; }
++            hir.kind = std::sync::Arc::new(if classes.iter().all(|class| numeric(*class).is_some()) {
++                Expression::Bitwise { operation: Bitwise::Equiv, arguments }
++            } else {
++                // Keep ordinary equality dispatch for the unknown Object;
++                // numeric equiv alone cannot stand in for arbitrary IEquiv.
++                Expression::Call { callee: Box::new(callee.as_ref().clone()), arguments }
++            });
++            hir.ty = if classes.iter().all(|class| numeric(*class).is_some()) { Type::Bool } else { Type::Value };
++        }
++        return Ok(());
++    }
+     let operation = match (global.name(), arguments.len()) {
+         ("quot", 2) => Some(Bitwise::Quot), ("rem", 2) => Some(Bitwise::Rem),
+         ("abs", 1) => Some(Bitwise::Abs),
+@@ -25,18 +65,34 @@ pub(super) fn inline(hir: &mut Hir) {
+     if let Some(operation) = operation {
+         hir.kind = std::sync::Arc::new(Expression::Bitwise { operation, arguments: arguments.to_vec() });
+         hir.ty = operation.result();
+-        return;
++        return Ok(());
+     }
+-    if arguments.len() != 1 { return; }
++    if arguments.len() != 1 { return Ok(()); }
+     let index = match global.name() {
+         "byte" => 3, "short" => 2, "int" => 1, "float" => 8,
+         "unchecked-byte" => 7, "unchecked-short" => 6, "unchecked-int" => 5, "unchecked-float" => 9,
+-        _ => return,
++        _ => return Ok(()),
+     };
+     let index = Hir { source: None, span: hir.span.clone(), metadata: Vec::new(), ty: Type::Number,
+         kind: std::sync::Arc::new(Expression::Literal(Literal::Long(index))) };
+     hir.kind = std::sync::Arc::new(Expression::Bitwise { operation: Bitwise::Cast, arguments: vec![arguments[0].clone(), index] });
+     hir.ty = Bitwise::Cast.result();
++    Ok(())
++}
++
++/// Numbers' bitwise overloads take only long or Object. A floating source
++/// class cannot match either formal primitive/reference type, so Clojure
++/// invokes reflectively and none of the Object local hints are consumed.
++pub(super) fn long_operands(
++    arguments: &[Hir], facts: &mut SourceFacts,
++    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>,
++) -> Result<bool, Diagnostic> {
++    for argument in arguments {
++        if !matches!(primitive_returns::class(argument, facts, meter)?,
++            Primitive::Boxed | Primitive::Byte | Primitive::Short | Primitive::Int | Primitive::Long)
++        { return Ok(false); }
++    }
++    Ok(true)
+ }
+ 
+ pub(super) fn operand(

@@ -1,0 +1,36 @@
+{
+  "source_head": "b6252e641ffe70d7ce73178e2b2b03b23c4bf625",
+  "toolchain": "stable / rustc 1.99.1",
+  "gates": [
+    {
+      "name": "bootstrap",
+      "command": "scripts/verify-bootstrap.sh",
+      "exit_code": 0,
+      "log": "bootstrap.log",
+      "sha256": "3b9dbe971dde9b99121ffe12bdc0c2b1faa4e1dbc3e21650bf25786a3908822a"
+    },
+    {
+      "name": "binaryen",
+      "command": "cargo +stable test --workspace --locked --test compiled_optimize -- --test-threads=2",
+      "exit_code": 0,
+      "log": "binaryen.log",
+      "sha256": "203732d7f0df22348951401a578edd4a4b43d6286ea1b1c17c2af8bc32d6e568",
+      "environment": {
+        "SUSS_WASM_OPT": "target/probe/m11-binaryen/binaryen-version_133/bin/wasm-opt (under the outer workspace)",
+        "version": "wasm-opt version 133 (version_133)"
+      }
+    },
+    {
+      "name": "suite",
+      "command": "cargo +stable test --workspace --locked --test clojure_test_suite clojure_test_suite_matches_reviewed_baseline -- --exact --test-threads=2",
+      "exit_code": 0,
+      "log": "suite.log",
+      "sha256": "5a729835ee025ab34d33ccb277ee56eddfa5c2c0f2c1ded0648c3bb32ccdedb2"
+    }
+  ],
+  "suite_capture_sha256": "5523272bb015af2c328e82baeb4251e03867081657ea03767d9e9bebec68db52",
+  "limitations": "Bootstrap reproduces both phases byte-for-byte; Binaryen 133 actually executes; suite check compares the reviewed known-failure baseline, not full upstream conformance. These runs precede the later local-hint overload patch. No full workspace result is claimed for this source.",
+  "suite_capture_file": "suite-observations.json.gz",
+  "suite_capture_encoding": "gzip; SHA256 above covers the uncompressed original JSON",
+  "suite_capture_gzip_sha256": "a9f4b7efbfd74c703c28cee2ab0df4a1fcc7745c8a71fef44c1912222eebc9a2"
+}

@@ -1,3 +1,37 @@
+## Source numeric overload conversion probes (2026-11-21)
+
+results/m12-local-hints/overload-selection retains fresh JVM1.12.6 value assertions,
+AOT/ASM descriptors, actual failing Runtime/AOT controls, immutable source patches,
+compiler hashes and final focused logs. The final matrix executes48 values in
+Runtime, Macro and actual AOT and rejects eight invalid declarations in each route.
+Selected same-category equality compares raw primitives; primitive/Object equality
+converts only selected numeric formals. Mixed long/double equality and floating
+bitwise calls retain original Objects. Reflective bitwise results have Object
+source type, and a primitive Boolean class suppresses numeric hint conversion so
+later operand effects still execute. Unchecked inc/dec consume numeric local hints
+while the boxed overflow controls retain wrapping results.
+
+Run cargo +stable test --workspace --locked with --test for each of
+clojure_local_numeric_hints, clojure_division_overloads, clojure_unboxed_locals,
+clojure_numeric_box_reuse, compiled_core_casts, compiled_macro_cumulative_fuel,
+compiled_primitive_params, portable_primitive_entries and portable_unboxed_locals,
+then -- --test-threads=2. All47 tests pass, zero failed/ignored, including record
+macro default-budget, primitive-entry and checked sum allocation checks. Use
+RUSTUP_TOOLCHAIN=stable, two Cargo jobs, MemoryMax4G user scope, m12-hints-target
+and the outer target/suss native cache. The exact command is in receipts.json.
+The measured dirty-source base b6252e64 and externally rebased941409d6 have the
+same60a685c5 tree; only branch history changed before this evidence was published.
+
+results/m12-box-reuse/gates retains the earlier b625 cache source's Java-free
+scripts/verify-bootstrap.sh byte-exact two-phase reproduction and four execution
+passes, actual Binaryen133 compiled_optimize two passes, and the vendored
+clojure_test_suite_matches_reviewed_baseline one pass (220.54s). The complete
+suite observations are retained as gzip with compressed/uncompressed hashes.
+That comparison preserves the reviewed known failures, not full conformance;
+these gates precede the later overload patch. No new full-workspace or quiet-timing
+result is claimed. max/min source overloads and capture-aware primitive
+return/recur checks require further work.
+
 ## Lazy numeric box reuse measurements (2026-11-21)
 
 results/m12-box-reuse retains frozen source patches, executable/component hashes,
@@ -26,9 +60,10 @@ and both exports execute correctly. This preserves existing checked-loop code,
 not a newly measured quiet time ratio. Builds use stable Rust, two jobs/threads,
 MemoryMax4G, m12-hints-target and the shared native cache.
 
-Fresh JVM method signatures and actual AOT negatives also establish incomplete
-mixed bitwise and = formal overload selection, alongside max/min and unchecked
-inc/dec. Those source cases are retained under results/m12-local-hints and
+At the frozen cache source, fresh JVM signatures and actual AOT negatives
+establish incomplete mixed bitwise and = formal overload selection, alongside
+max/min and unchecked inc/dec. The later overload probes above supersede those
+particular negatives without changing the retained before artifacts. Those source cases are retained under results/m12-local-hints and
 results/m12-box-reuse/optimized. No full workspace or complete numeric-tower
 acceptance is inferred from these focused checks.
 

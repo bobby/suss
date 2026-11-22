@@ -99,7 +99,7 @@ impl Pass<'_> {
             return Ok(());
         }
         stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
-            if self.hints && !self.validate_only { local_hints::inline(hir); }
+            if self.hints && !self.validate_only { local_hints::inline(hir, facts, self.meter)?; }
             // Generated nary comparison pairs are calls on Object temporaries,
             // not Clojure's binary :inline overloads.
             let source_comparison = hir.source.is_some();
@@ -157,7 +157,9 @@ impl Pass<'_> {
                     }
                 }
                 Arithmetic { operator, arguments, coercing, division_primitives } => {
-                    let inline = arguments_len_inline(*operator, arguments.len());
+                    let inline = arguments_len_inline(*operator, arguments.len())
+                        && (!self.hints || self.validate_only
+                            || local_hints::numeric_operands(arguments, facts, self.meter)?);
                     for argument in arguments.iter_mut() {
                         self.walk(argument, facts)?;
                         if self.hints && !self.validate_only && !*coercing && inline {
@@ -177,18 +179,25 @@ impl Pass<'_> {
                     }
                 }
                 Bitwise { operation, arguments } => {
-                    let inline = matches!(operation, super::Bitwise::And | super::Bitwise::Or | super::Bitwise::Xor
+                    let long_only = matches!(operation, super::Bitwise::And | super::Bitwise::Or | super::Bitwise::Xor
                         | super::Bitwise::AndNot | super::Bitwise::Not | super::Bitwise::Left | super::Bitwise::Right
-                        | super::Bitwise::Unsigned | super::Bitwise::Int | super::Bitwise::Cast | super::Bitwise::Quot
+                        | super::Bitwise::Unsigned);
+                    let numeric = matches!(operation, super::Bitwise::Int | super::Bitwise::Cast | super::Bitwise::Quot
                         | super::Bitwise::Rem | super::Bitwise::Abs | super::Bitwise::UncheckedAdd
                         | super::Bitwise::UncheckedSubtract | super::Bitwise::UncheckedMultiply | super::Bitwise::UncheckedNegate);
+                    let inline = (numeric && self.hints && !self.validate_only
+                            && local_hints::numeric_operands(arguments, facts, self.meter)?)
+                        || (long_only && self.hints && !self.validate_only
+                            && local_hints::long_operands(arguments, facts, self.meter)?);
                     for argument in arguments { self.walk(argument, facts)?;
                         if self.hints && !self.validate_only && inline { local_hints::operand(argument, facts, self.meter)?; }
                     }
                 }
                 Comparison { arguments, .. } => {
+                    let inline = self.hints && !self.validate_only && source_comparison
+                        && local_hints::numeric_operands(arguments, facts, self.meter)?;
                     for argument in arguments { self.walk(argument, facts)?;
-                        if self.hints && !self.validate_only && source_comparison { local_hints::operand(argument, facts, self.meter)?; }
+                        if inline { local_hints::operand(argument, facts, self.meter)?; }
                     }
                 }
                 Nominal { operation, arguments } => {

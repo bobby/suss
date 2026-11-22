@@ -197,6 +197,9 @@ fn infer(
                 }
                 ("nil?" | "zero?" | "pos?" | "neg?", 1)
                 | ("identical?" | "=" | "==" | "<" | ">" | "<=" | ">=", 2) => Boolean,
+                ("bit-and" | "bit-or" | "bit-xor" | "bit-and-not" | "bit-not"
+                    | "bit-shift-left" | "bit-shift-right" | "unsigned-bit-shift-right", _) =>
+                    bitwise_result(arguments, bindings, meter, loops)?,
                 ("+" | "*" | "/", 1) | ("-" | "/", 0) => Boxed,
                 ("+" | "-" | "*" | "/" | "quot" | "rem", _) => {
                     let mut kinds = Vec::with_capacity(arguments.len());
@@ -285,10 +288,11 @@ fn infer(
             Expression::Array { operation: ArrayOperation::Length, arguments } if arguments.len() == 1 =>
                 if array_kind(&arguments[0], meter)?.is_some() { Int } else { Boxed },
             Expression::NilTest(_) | Expression::Comparison { .. } => Boolean,
-            Expression::Bitwise { operation, .. } => match operation {
+            Expression::Bitwise { operation, arguments } => match operation {
                 Bitwise::Int => Int,
                 Bitwise::And | Bitwise::Or | Bitwise::Xor | Bitwise::AndNot | Bitwise::Not
-                | Bitwise::Left | Bitwise::Right | Bitwise::Unsigned => Long,
+                | Bitwise::Left | Bitwise::Right | Bitwise::Unsigned =>
+                    bitwise_result(arguments, bindings, meter, loops)?,
                 // Public bit-test/clear/flip/set are boxed calls in Clojure. Private numeric
                 // intrinsics are implementation facts, not source types.
                 _ => Boxed,
@@ -411,10 +415,30 @@ fn numeric(name: &str, kinds: &[Primitive]) -> Primitive {
     use Primitive::*;
     if kinds.is_empty() { return if matches!(name, "+" | "*") { Long } else { Boxed }; }
     if matches!(name, "quot" | "rem") && kinds.len() != 2 { return Boxed; }
+    if kinds.iter().any(|kind| !matches!(kind, Boxed) && !kind.integer() && !kind.floating()) { return Boxed; }
     let all_numeric = kinds.iter().all(|kind| kind.integer() || kind.floating());
     if matches!(name, "quot" | "rem") && !all_numeric { return Boxed; }
     if kinds.iter().any(|kind| kind.floating()) { return Double; }
     if all_numeric && name != "/" { Long } else { Boxed }
+}
+
+/// A selected bitwise method returns primitive long even for Object inputs.
+/// With a floating/boolean primitive class no static method matches, so the
+/// reflective call has Object source type, independently of its runtime value.
+fn bitwise_result(
+    arguments: &[Hir], bindings: &mut SourceFacts,
+    meter: &mut dyn FnMut(u64) -> Result<(), Diagnostic>, loops: &mut Vec<LoopInputs>,
+) -> Result<Primitive, Diagnostic> {
+    use Primitive::*;
+    let Some(first) = arguments.first() else { return Ok(Boxed); };
+    let matches_long = |kind: Primitive| kind == Boxed || kind.integer();
+    let mut left = class_in(first, bindings, meter, loops)?;
+    if arguments.len() == 1 { return Ok(if matches_long(left) { Long } else { Boxed }); }
+    for right in &arguments[1..] {
+        let right = class_in(right, bindings, meter, loops)?;
+        left = if matches_long(left) && matches_long(right) { Long } else { Boxed };
+    }
+    Ok(left)
 }
 
 /// Loop source types settle before any use, including later initializers.

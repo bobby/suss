@@ -1,0 +1,36 @@
+Running as unit: run-p2993089-i86858043.scope; invocation ID: aadc04c737c949e592dfb45a76a8a47d
+   Compiling suss-cli v0.1.0 (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-source/crates/suss-cli)
+    Finished `test` profile [optimized] target(s) in 3.02s
+     Running tests/clojure_local_numeric_hints.rs (/home/bobby/.codex-workspaces/worktrees/ios-cd7ccbc9-1c87-43fe-95e7-2b6b71168849/suss/target/probe/m12-hints-target/debug/deps/clojure_local_numeric_hints-ff9fb880295f6a71)
+
+running 4 tests
+test aot_preserves_local_hint_semantics ... FAILED
+test hint_diagnostics_use_initial_source_types_before_loop_reanalysis ... ok
+test runtime_and_macro_preserve_local_hint_semantics ... FAILED
+test aot_rejects_invalid_local_hint_declarations ... ok
+
+failures:
+
+---- aot_preserves_local_hint_semantics stdout ----
+
+thread 'aot_preserves_local_hint_semantics' (2993443) panicked at crates/suss-cli/tests/clojure_local_numeric_hints.rs:101:9:
+assertion `left == right` failed: (let [^long x (identity 5.5)] [(unchecked-inc x) (unchecked-dec x)])
+  left: "0"
+ right: "1"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- runtime_and_macro_preserve_local_hint_semantics stdout ----
+
+thread 'runtime_and_macro_preserve_local_hint_semantics' (2995355) panicked at crates/suss-cli/tests/clojure_local_numeric_hints.rs:69:13:
+assertion `left == right` failed: (let [^long x (identity 5.5)] [(unchecked-inc x) (unchecked-dec x)])
+  left: "[6.5 4.5]"
+ right: "[6 4]"
+
+
+failures:
+    aot_preserves_local_hint_semantics
+    runtime_and_macro_preserve_local_hint_semantics
+
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 29.80s
+
+error: test failed, to rerun pass `-p suss-cli --test clojure_local_numeric_hints`

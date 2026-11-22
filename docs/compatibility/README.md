@@ -1197,10 +1197,13 @@ workspace baseline, committed-head review, CI, or whole-suite conformance.
 ## Numeric local hints and box reuse evidence
 
 Source numeric classes are distinct from primitive expression kinds and physical
-storage. The retained local-hint matrix verifies31 values and seven diagnostics
+storage. The expanded local-hint matrix verifies48 values and eight diagnostics
 against fresh JVM Clojure1.12.6, with Runtime/Macro and actual AOT execution. Object
 locals retain their original values for ordinary reads/calls and convert at covered
 primitive uses; aliases, captures and initial loop diagnostic order are included.
+Selected primitive equality stays raw. Mixed-family equality/bitwise calls retain
+their original Objects when no static numeric overload matches; reflective result
+classes and primitive Boolean operands preserve subsequent conversion/effect order.
 See [local hint receipts](../../results/m12-local-hints/README.md).
 
 Lazy numeric GC copies now span blocks where materializations can repeat without

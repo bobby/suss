@@ -82,10 +82,13 @@ After lowering to IR, `emit/unboxed.rs` infers each value's representation:
 - **Hinted locals.** A `^long` or `^double` let/loop local retains its
   original Object value. Its hint supplies a numeric class at primitive uses:
   `(let [^long x (identity 5.5)] [x (+ x 1)])` returns `[5.5 6]`.
-  Covered arithmetic, numeric comparisons/predicates, quot/rem/abs and numeric
-  casts consume these hints at primitive uses; ordinary function calls retain
-  the Object. Some overloaded families still need the formal-argument selection
-  described below. Aliases and captures keep the same source
+  Covered arithmetic, numeric comparisons/predicates, quot/rem/abs, unchecked
+  increment/decrement and numeric casts consume these hints at primitive uses;
+  ordinary function calls retain the Object. Binary `=` consumes a numeric hint
+  for the selected long/long, double/double or primitive/Object overload. Mixed
+  long/double `=` and floating-class bitwise calls keep the original Objects,
+  matching Clojure's reflective calls. Same-category primitive equality compares
+  raw values. Some overloaded families still need the selection described below. Aliases and captures keep the same source
   class. Nary comparisons are ordinary calls and ignore local hints. A use-site
   hint overrides an Object local's declaration; a contradictory hint on a
   genuine primitive local is an error. A hinted binding with a primitive
@@ -164,9 +167,9 @@ operands, which throws "long overflow" exactly as the boxed path does.
 
 Some source and calling paths retain the following behavior:
 
-- **Other numeric overloads.** `max`/`min`, `unchecked-inc`/`unchecked-dec`,
-  mixed bitwise operands and some `=` signatures retain incomplete source
-  overload selection. Fresh JVM signatures/results and actual AOT negatives
+- **Other numeric overloads.** `max`/`min` retain incomplete source overload selection.
+  Capture-aware primitive return checks and primitive-function recur diagnostics
+  still require an audit against JVM behavior. Fresh JVM signatures/results and actual AOT negatives
   are retained in results/m12-local-hints and results/m12-box-reuse/optimized.
   A local's hint is not an unconditional conversion: the selected formal
   parameter must be primitive. These cases require that additional selection.

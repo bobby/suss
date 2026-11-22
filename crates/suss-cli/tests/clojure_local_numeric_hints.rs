@@ -36,6 +36,23 @@ const CASES: &[(&str, &str)] = &[
     ("(let [^long x (loop [i 0] (if (< i 1) (recur (inc i)) 5.5))] [x (+ x 1)])", "[5.5 6]"),
     ("(let [^double x (identity 1)] (/ x (identity 0)))", "##Inf"),
     ("(let [^long x (identity 1.0)] (try (/ x (identity 0.0)) (catch :default e :zero-error)))", ":zero-error"),
+    ("(let [^long x (identity 5.5)] [(= x 5) (= x 5.5) (= x (identity 5)) (= x (identity 5.5))])", "[true true true false]"),
+    ("(let [^double x (identity 5)] [(= x 5.0) (= x 5) (= x (identity 5.0)) (= x (identity 5))])", "[true true true false]"),
+    ("(let [^long x (identity 5.5) ^long y (identity 5.0)] (= x y))", "true"),
+    ("(let [^double x (identity 5) ^double y (identity 5.0)] (= x y))", "true"),
+    ("(let [^double x (identity 5)] [(bit-and x 1) (bit-or x 2) (bit-xor x 1) (bit-not x) (bit-shift-left x 1)])", "[1 7 4 -6 10]"),
+    ("(let [^long x (identity 5.5) ^double y (identity 1)] (try (bit-and x y) (catch :default e :bit-error)))", ":bit-error"),
+    ("(let [^double x (identity 5) ^long y (identity 1.5)] (try (bit-and x y) (catch :default e :bit-error)))", ":bit-error"),
+    ("(let [^long x (identity 5.5)] [(bit-and x (identity 1)) (bit-shift-left x (identity 1))])", "[1 10]"),
+    ("(let [^long x (identity 1.0E30) events (atom [])] [(try (= x (do (swap! events conj :later) 1)) (catch :default e :cast-error)) @events])", "[:cast-error []]"),
+    ("(let [^long x (identity 1.0E30) events (atom [])] [(= x (do (swap! events conj :later) 1.0)) @events])", "[false [:later]]"),
+    ("(let [^long x (identity 5.5)] [(unchecked-inc x) (unchecked-dec x)])", "[6 4]"),
+    ("(let [^double x (identity 5)] [(unchecked-inc x) (unchecked-dec x)])", "[6.0 4.0]"),
+    ("[(unchecked-inc (identity 9223372036854775807)) (unchecked-dec (identity -9223372036854775808))]", "[-9223372036854775808 9223372036854775807]"),
+    ("(let [^double x (identity 5) ^double y (identity 1)] [(bit-and x 1) (= (bit-and x 1) y)])", "[1 false]"),
+    ("(let [^long x (identity 1.0E30) events (atom [])] [(try (+ x (zero? (do (swap! events conj :later) 0))) (catch :default e :number-error)) @events])", "[:number-error [:later]]"),
+    ("(let [^long x (identity 1.0E30) events (atom [])] [(try (< x (zero? (do (swap! events conj :later) 0))) (catch :default e :number-error)) @events])", "[:number-error [:later]]"),
+    ("((fn ^double [] (let [^double x (identity 5)] (bit-and x 1))))", "1.0"),
 ];
 
 fn observed(source: &str) -> String {
@@ -90,6 +107,7 @@ fn aot_preserves_local_hint_semantics() {
 }
 
 const DECLARATION_ERRORS: &[(&str, &str)] = &[
+    ("(fn ^double [] (bit-and (identity 5) 1))", "Mismatched primitive return, expected: double, had: long"),
     ("(let [^long x 1] (+ x 1))", "Can't type hint a local with a primitive initializer"),
     ("(let [^double x 1.0] (+ x 1))", "Can't type hint a local with a primitive initializer"),
     ("(let [x (double 1) ^long y x] y)", "Can't type hint a local with a primitive initializer"),
